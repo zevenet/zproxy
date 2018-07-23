@@ -353,38 +353,10 @@ sub get_vlan    # ()
 
 	require Zevenet::Net::Interface;
 
-	my $desc = "Show VLAN interface $vlan";
-	my $interface;
+	my $desc      = "Show VLAN interface $vlan";
+	my $interface = &get_vlan_struct( $vlan );
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
-	{
-		next unless $if_ref->{ name } eq $vlan;
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		$interface = {
-					   alias   => $alias->{ $if_ref->{ name } },
-					   name    => $if_ref->{ name },
-					   ip      => $if_ref->{ addr },
-					   netmask => $if_ref->{ mask },
-					   gateway => $if_ref->{ gateway },
-					   status  => $if_ref->{ status },
-					   mac     => $if_ref->{ mac },
-		};
-	}
-
-	if ( not $interface )
+	unless ( $interface )
 	{
 		my $msg = "VLAN interface not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

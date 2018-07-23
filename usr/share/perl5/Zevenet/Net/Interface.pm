@@ -222,7 +222,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		  ( grep { $iface{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
 	}
 
-	# for virtual inteface, overwrite mask and gw with parent values
+	# for virtual interface, overwrite mask and gw with parent values
 	if ( $iface{ type } eq 'vini' )
 	{
 		my $if_parent = &getInterfaceConfig( $iface{ parent } );
@@ -1478,6 +1478,47 @@ sub get_nic_struct
 	}
 
 	return $interface;
+}
+
+sub get_vlan_struct
+{
+	my ( $vlan ) = @_;
+
+	require Zevenet::Alias;
+
+	my $interface;
+	my $alias = &getAlias( 'interface' );
+
+	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
+	{
+		next unless $if_ref->{ name } eq $vlan;
+
+		$interface = $if_ref;
+	}
+
+	return unless $interface;
+
+	$interface->{ status } = &getInterfaceSystemStatus( $interface );
+
+	# Any key must cotain a value or "" but can't be null
+	if ( !defined $interface->{ name } )    { $interface->{ name }    = ""; }
+	if ( !defined $interface->{ addr } )    { $interface->{ addr }    = ""; }
+	if ( !defined $interface->{ mask } )    { $interface->{ mask }    = ""; }
+	if ( !defined $interface->{ gateway } ) { $interface->{ gateway } = ""; }
+	if ( !defined $interface->{ status } )  { $interface->{ status }  = ""; }
+	if ( !defined $interface->{ mac } )     { $interface->{ mac }     = ""; }
+
+	my $output = {
+				   alias   => $alias->{ $interface->{ name } },
+				   name    => $interface->{ name },
+				   ip      => $interface->{ addr },
+				   netmask => $interface->{ mask },
+				   gateway => $interface->{ gateway },
+				   status  => $interface->{ status },
+				   mac     => $interface->{ mac },
+	};
+
+	return $output;
 }
 
 1;
