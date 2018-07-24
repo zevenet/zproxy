@@ -130,7 +130,7 @@ sub set_rbac_user
 		 "newpassword" => {
 				  'valid_format' => 'rbac_password',
 				  'non_blank'    => 'true',
-				  'format_msg' => 'must be alphanumeric and must have at least 8 characters'
+				  'format_msg' => 'must be alphanumeric and must a value between 8 and 16 characters'
 		 },
 	};
 
