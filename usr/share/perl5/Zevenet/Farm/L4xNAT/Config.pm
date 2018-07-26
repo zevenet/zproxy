@@ -104,7 +104,7 @@ sub loadL4Modules    # ($protocol)
 		&removeNfModule( "nf_conntrack_sip" );
 		if ( $port_list )
 		{
-			&loadNfModule( "nf_conntrack_sip", "ports=\"$port_list\"" );
+			&loadNfModule( "nf_conntrack_sip", "" );
 			&loadNfModule( "nf_nat_sip",       "" );
 		}
 	}
@@ -114,7 +114,7 @@ sub loadL4Modules    # ($protocol)
 		&removeNfModule( "nf_conntrack_ftp" );
 		if ( $port_list )
 		{
-			&loadNfModule( "nf_conntrack_ftp", "ports=\"$port_list\"" );
+			&loadNfModule( "nf_conntrack_ftp", "" );
 			&loadNfModule( "nf_nat_ftp",       "" );
 		}
 	}
@@ -124,7 +124,7 @@ sub loadL4Modules    # ($protocol)
 		&removeNfModule( "nf_conntrack_tftp" );
 		if ( $port_list )
 		{
-			&loadNfModule( "nf_conntrack_tftp", "ports=\"$port_list\"" );
+			&loadNfModule( "nf_conntrack_tftp", "" );
 			&loadNfModule( "nf_nat_tftp",       "" );
 		}
 	}
@@ -667,7 +667,29 @@ sub setFarmProto    # ($proto,$farm_name)
 			my $status = &loadL4Modules( $$farm{ vproto } );
 		}
 
-		$output = &refreshL4FarmRules( $farm );
+		require Zevenet::Netfilter;
+
+		my @rules;
+		my $prio_server = &getL4ServerWithLowestPriority( $farm );
+
+		foreach my $server ( @{ $$farm{ servers } } )
+		{
+			#~ next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
+			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
+
+			my $rule = &genIptHelpers( $farm, $server );
+
+			$rule =
+			  ( $$farm{ vproto } !~ /sip|ftp/ )
+			  ? &getIptRuleDelete( $rule )
+			  : &getIptRuleInsert( $farm, $server, $rule );
+			$output = &applyIptRules( $rule );
+
+			#$rule = &genIptRedirect( $farm, $server );
+			#$rule = &getIptRuleReplace( $farm, $server, $rule );
+
+			#$output = &applyIptRules( $rule );
+		}
 
 		if ( $fg_enabled eq 'true' )
 		{
@@ -1441,6 +1463,18 @@ sub refreshL4FarmRules    # AlgorithmRules
 		if ( $$farm{ persist } ne 'none' )    # persistence
 		{
 			$rule = &genIptMarkPersist( $farm, $server );
+
+			$rule =
+			  ( $$farm{ lbalg } eq 'prio' )
+			  ? &getIptRuleReplace( $farm, undef,   $rule )
+			  : &getIptRuleReplace( $farm, $server, $rule );
+
+			$return_code |= &applyIptRules( $rule );
+		}
+
+		if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
+		{
+			$rule = &genIptHelpers( $farm, $server );
 
 			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )

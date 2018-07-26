@@ -821,6 +821,17 @@ sub getL4ServerActionRules
 
 	push ( @{ $$rules{ t_mangle } }, $rule );
 
+	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
+	{
+		$rule = &genIptHelpers( $farm, $server );
+
+		$rule = ( $switch eq 'off' )
+		  ? &getIptRuleDelete( $rule )        # delete
+		  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
+
+		push ( @{ $$rules{ t_mangle_p } }, $rule );
+	}
+
 	return $rules;
 }
 

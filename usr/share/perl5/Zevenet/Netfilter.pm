@@ -340,6 +340,33 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 }
 
 #
+sub genIptHelpers # ($farm_ref)
+{
+	my $farm   = shift;    # input: first argument should be a farm reference
+	my $server = shift;    # input: second argument should be a server reference
+	my $rule;              # output: iptables rule template string
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $$farm{ name } );
+
+	# Every rule starts with:
+	# table, chain, destination(farm ip) and port(if required) definition
+	$rule = "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING ";
+
+	# include for every rule:
+	# - match related packets/connections with helper
+	# - match per backend mark
+	# - add comment with farm name and backend id number
+	$rule = $rule
+	  . "--match conntrack --ctstate RELATED -m helper --helper $$farm{ vproto } "
+	  . "--match mark --mark $$server{ tag } "
+	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
+	  . "--jump MARK --set-xmark $$server{ tag } ";
+
+	return $rule;
+}
+
+#
 sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 {
 	# remove the first line when all calls to this function are passing
@@ -699,7 +726,9 @@ sub getIptRuleNumber
 	&setIptLock( $ipt_lockfile );
 
 	# pick rule by farm and optionally server id
+	$filter = "RELATED.*$filter" if ( $rule =~ /RELATED/ );
 	my @rules = grep { /$filter/ } `$ipt_cmd`;
+	@rules = grep { !/RELATED/ } @rules if ( $rule !~ /RELATED/ );
 
 	if ( !@rules && &debug() )
 	{
@@ -1067,6 +1096,8 @@ sub runIptables
 	my $command = shift;    # command string to log and run
 
 	my $checking = grep { /--check/ } $command;
+
+	&zenlog( "Executing $command", "debug", "SYSTEM" ) if &debug > 1;
 	my $return_code = system ( "$command >/dev/null 2>&1" );
 
 	if ( $return_code )
