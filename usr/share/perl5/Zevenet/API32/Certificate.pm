@@ -190,7 +190,7 @@ sub create_csr
 # POST /certificates/CERTIFICATE (Upload PEM)
 sub upload_certificate # ()
 {
-	my $upload_filehandle = shift;
+	my $upload_data = shift;
 	my $filename          = shift;
 
 	require Zevenet::File;
@@ -212,7 +212,7 @@ sub upload_certificate # ()
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	unless ( &saveFileHandler( "$configdir/$filename", $upload_filehandle ) )
+	unless ( &setFile( "$configdir/$filename", $upload_data ) )
 	{
 		my $msg = "Could not save the certificate file";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
