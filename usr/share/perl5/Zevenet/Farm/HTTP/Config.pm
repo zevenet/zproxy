@@ -1501,5 +1501,457 @@ sub getHTTPVerbCode
 	return $verb_code;
 }
 
+sub parsePoundConfig
+{
+	my ( $file ) = @_;
+
+	my @lines = split /\n/, $file;
+	chomp @lines;
+
+	my @farm_lines     = ();	# block 1
+	my @listener_lines = ();	# block 2
+	my @services_lines = ();	# block 3
+	my $block = 1;
+	my $listener;
+
+	# Split config in 3 blocks: farm, listener and services
+	for my $line ( @lines )
+	{
+		next unless $line;
+
+		# only one listener is expected
+		if ( $line =~ /^Listen(HTTPS?)/ ) { $block++; $listener = $1; next; }
+		if ( $line =~ /#ZWACL-INI/ )      { $block++; next; }
+		if ( $line =~ /#ZWACL-END/ )      { last; }
+
+		push ( @farm_lines,     $line ) if $block == 1;
+		push ( @listener_lines, $line ) if $block == 2;
+		push ( @services_lines, $line ) if $block == 3;
+	}
+
+	# Parse global farm parameters
+	my %conf = map { if (/^(\w+)\s+(\S.+)/ ){ { $1 => $2 } } } @farm_lines;
+	&cleanHashValues( \%conf );
+	delete $conf{ '' };
+
+	# Parse listener parameters
+	my %listener = map { if (/^\t(\w+)\s+(.+)/ ){ { $1 => $2 } } } @listener_lines;
+	delete $listener{ '' };
+	&cleanHashValues( \%listener );
+	$listener{ type } = lc $listener;
+
+	# AddHeader
+	my @add_header = map { if (/^\tAddHeader "(.+)"$/ ){ $1 } } grep { /AddHeader/ } @listener_lines;
+	$listener{ AddHeader } = \@add_header if scalar @add_header;
+
+	# HeadRemove
+	my @head_remove = map { if (/^\tHeadRemove "(.+)"$/ ){ $1 } } grep { /HeadRemove/ } @listener_lines;
+	$listener{ HeadRemove } = \@head_remove if scalar @head_remove;
+
+	## HTTPS
+
+	# Certificates
+	my @certs = map { if (/^\tCert "(.+)"$/ ){ $1 } } grep { /Cert/ }@listener_lines;
+	$listener{ Cert } = \@certs if $listener{ type } eq 'https';
+
+	# Disable HTTPS protocols
+	# Warning: Doesn't work without grep
+	my @disable = map { if (/^\tDisable (.*)$/ ){ $1 } } grep { /Disable/ } @listener_lines;
+	$listener{ Disable } = \@disable if $listener{ type } eq 'https';
+
+	$conf{ listeners }[0] = \%listener;
+
+	## Parse services
+	my $svc_r;
+	my $svc_name;
+	my $svc_id = 0;
+	my @svc_lines;
+
+	for my $line ( @services_lines )
+	{
+		# Detect the beginnig of a service block
+		if ( $line =~ /^\tService "(.+)"$/ )
+		{
+			$svc_name  = $1;
+			@svc_lines = ();
+			$svc_r     = {};
+			next;
+		}
+
+		# Detect the end of a service block and parse the block
+		if ( $line =~ /^\tEnd$/ )
+		{
+			# Parse service paremeters
+			%$svc_r = map { if (/^\t\t(\S+)\ (\S.+)$/ ){ { $1 => $2 } } } @svc_lines;
+
+			# Clean up empty parameters.
+			# FIXME: With a better parsing this should not be necessary
+			delete $svc_r->{ '' };
+
+			# Remove commented service parameters
+			for my $key ( keys %{ $svc_r } )
+			{
+				delete $svc_r->{ $key } if $key =~ /^#/;
+			}
+
+			## Backends blocks
+			my $bb;      # 'In Backend Block' flag
+			my $be_r;    # Backend hash reference
+			my @be = (); # List of backends
+
+			# Session block
+			my $sb;      # 'In Session Block' flag
+			my $se_r;    # Session hash reference
+
+			for my $line ( @svc_lines )
+			{
+				# Backends blocks
+				if ( $line =~ /^\t\tBackEnd$/ ) { $bb++; $be_r = {}; next; }
+				if ( $line =~ /^\t\t\t(\w+) (.+)$/ && $bb ) { $be_r->{ $1 } = $2; next; }
+				if ( $line =~ /^\t\t\tHTTPS$/ && $bb ) { $be_r->{ 'HTTPS' } = undef; next; }
+				if ( $line =~ /^\t\tEnd$/ && $bb ) {
+					$bb = 0;
+					&cleanHashValues( $be_r );
+					push @be, $be_r;
+					next;
+				}
+
+				# Session block
+				if ( $line =~ /^\t\tSession$/ ) { $sb++; $se_r = {}; next; }
+				if ( $line =~ /^\t\t\t(\w+) (\S.+)$/ && $sb ) { $se_r->{ $1 } = $2; next; }
+				if ( $line =~ /^\t\tEnd$/ && $sb ) {
+					$sb = 0;
+					&cleanHashValues( $se_r );
+					next;
+				}
+			}
+
+			# Backend Cookie
+			if ( exists $svc_r->{ BackendCookie } )
+			{
+				$svc_r->{ BackendCookie } =~ /^"(.+)" "(.+)" "(.+)" ([0-9]+)$/;
+				$svc_r->{ BackendCookie } = {
+											  name   => $1,
+											  domain => $2,
+											  path   => $3,
+											  age    => $4 + 0,
+				};
+			}
+
+			# Populate service hash
+			$svc_r->{ name }     = $svc_name;
+			$svc_r->{ Session }  = $se_r if $se_r;
+			$svc_r->{ backends } = \@be;
+
+			&cleanHashValues( $svc_r );
+
+			# Add service to listener
+			$conf{ listeners }[0]{ services }[$svc_id++] = $svc_r;
+			next;
+		}
+
+		# Every line of a service block is stored
+		push @svc_lines, $line;
+	}
+
+	return \%conf;
+}
+
+sub cleanHashValues
+{
+	my ( $hash_ref ) = @_;
+
+	for my $key ( keys %{ $hash_ref } )
+	{
+		# Convert digits to numeric type
+		$hash_ref->{ $key } += 0 if ( $hash_ref->{ $key } =~ /^[0-9]+$/ );
+
+		# Remove leading and trailing double quotes
+		$hash_ref->{ $key } =~ s/^"|"$//g unless $key eq 'BackendCookie';
+	}
+
+	return $hash_ref if defined wantarray;
+}
+
+sub getPoundConf
+{
+	my ( $farm ) = @_;
+
+	require Zevenet::Config;
+	require Zevenet::System;
+	require Zevenet::Farm::Core;
+
+	my $farmfile = &getFarmFile( $farm );
+	my $configdir = &getGlobalConfiguration('configdir');
+
+	my $file = &slurpFile( "$configdir/$farmfile" );
+
+	return &parsePoundConfig( $file );
+}
+
+
+my $svc_defaults = {
+					 DynScale      => 1,
+					 BackendCookie => '"ZENSESSIONID" "domainname.com" "/" 0',
+					 HeadRequire   => '""',
+					 Url           => '""',
+					 Redirect      => '""',
+					 StrictTransportSecurity => 21600000,
+};
+
+sub print_backends
+{
+	my ( $be_list ) = @_;
+
+	my $be_list_str = '';
+
+	for my $be ( @{ $be_list } )
+	{
+		my $single_be_str = "\t\tBackEnd\n";
+		$single_be_str .= "\t\t\tHTTPS\n" if exists $be->{ HTTPS };
+		$single_be_str .= "\t\t\tAddress $be->{ Address }\n";
+		$single_be_str .= "\t\t\tPort $be->{ Port }\n";
+		$single_be_str .= "\t\t\tTimeOut $be->{ TimeOut }\n" if exists $be->{ TimeOut };
+		$single_be_str .= "\t\t\tPriority $be->{ Priority }\n" if exists $be->{ Priority };
+		$single_be_str .= "\t\tEnd\n";
+
+		$be_list_str .= $single_be_str;
+	}
+
+	return "\t\t#BackEnd\n" . "\n" . $be_list_str . "\t\t#End\n";
+}
+
+sub print_session
+{
+	my ( $session_ref ) = @_;
+
+	my $session_str = '';
+
+	if ( defined $session_ref )
+	{
+		$session_str .= "\t\tSession\n";
+		$session_str .= "\t\t\tType $session_ref->{ Type }\n";
+		$session_str .= "\t\t\tTTL $session_ref->{ TTL }\n";
+		$session_str .= "\t\t\tID \"$session_ref->{ ID }\"\n" if exists $session_ref->{ ID };
+		$session_str .= "\t\tEnd\n";
+	}
+	else
+	{
+		$session_str .= "\t\t#Session\n";
+		$session_str .= "\t\t\t#Type nothing\n";
+		$session_str .= "\t\t\t#TTL 120\n";
+		$session_str .= "\t\t\t#ID \"sessionname\"\n";
+		$session_str .= "\t\t#End\n";
+	}
+
+	return $session_str;
+}
+
+
+sub writePoundConfigToString
+{
+	my ( $conf ) = @_;
+
+	my $listener = $conf->{listeners}[0];
+	my $listener_type = uc $listener->{ type };
+
+	my $global_str = qq(######################################################################
+##GLOBAL OPTIONS
+User		"$conf->{ User }"
+Group		"$conf->{ Group }"
+Name		$conf->{ Name }
+## allow PUT and DELETE also (by default only GET, POST and HEAD)?:
+#ExtendedHTTP	0
+## Logging: (goes to syslog by default)
+##	0	no logging
+##	1	normal
+##	2	extended
+##	3	Apache-style (common log format)
+#LogFacility	local5
+LogLevel 	0
+## check timeouts:
+Timeout		$conf->{ Timeout }
+ConnTO		$conf->{ ConnTO }
+Alive		$conf->{ Alive }
+Client		$conf->{ Client }
+ThreadModel	$conf->{ ThreadModel }
+Control 	"$conf->{ Control }"
+);
+
+if ( $listener_type eq 'http' )
+{
+	$global_str .= qq(#DHParams 	"/usr/local/zevenet/app/pound/etc/dh2048.pem"
+#ECDHCurve	"prime256v1"
+);
+}
+else
+{
+	$global_str .= qq(DHParams 	"$conf->{ DHParams }"
+ECDHCurve	"$conf->{ ECDHCurve }"
+);
+}
+
+
+	## Services
+	my $services_print = '';
+
+	for my $svc ( @{ $conf->{listeners}[0]{ services } } )
+	{
+		my @item_list = qw(
+		  DynScale
+		  BackendCookie
+		  HeadRequire
+		  Url
+		  Redirect
+		  StrictTransportSecurity
+		  Session
+		  BackEnd
+		);
+
+		my $single_service_print = qq(\tService "$svc->{ name }"\n);
+
+		my $https_be = 'False';
+		$https_be = 'True'
+		  if defined $svc->{ backends }[0] && exists $svc->{ backends }[0]{ HTTPS };
+
+		$single_service_print .= qq(\t\t##$https_be##HTTPS-backend##\n);
+
+		for my $i ( @item_list )
+		{
+			#
+			my $exists = exists $svc->{ $i };
+
+			my $prefix = $exists ? '' : '#';
+			my $value = $exists ? $svc->{ $i } : $svc_defaults->{ $i };
+
+
+			my $i_str;
+
+			if ( $i eq 'Session' )
+			{
+				$i_str = &print_session( $svc->{ 'Session' } );
+			}
+			elsif ( $i eq 'BackEnd' )
+			{
+				$i_str =
+				  exists $svc->{ 'backends' } ? &print_backends( $svc->{ 'backends' } ) : '';
+			}
+			elsif ( $i eq 'BackendCookie' )
+			{
+				if ( exists $svc->{ 'BackendCookie' } && ref $svc->{ 'BackendCookie' } eq 'HASH' )
+				{
+					my $ckie = $svc->{ 'BackendCookie' };
+					my $values = qq("$ckie->{name}" "$ckie->{domain}" "$ckie->{path}" $ckie->{age});
+					$i_str = qq(\t\tBackendCookie $values\n);
+				}
+				else
+				{
+					$i_str = '';
+				}
+			}
+			else
+			{
+				$i_str = "\t\t${prefix}${i} $value\n";
+			}
+
+			$single_service_print .= $i_str;
+		}
+
+		$single_service_print .= "\tEnd\n";
+		$services_print .= $single_service_print;
+	}
+
+	chomp $services_print;
+
+	## Listener
+	my $listener_str = qq(
+#HTTP(S) LISTENERS
+Listen${listener_type}
+	Err414 "$listener->{ Err414 }"
+	Err500 "$listener->{ Err500 }"
+	Err501 "$listener->{ Err501 }"
+	Err503 "$listener->{ Err503 }"
+	Address $listener->{ Address }
+	Port $listener->{ Port }
+	xHTTP $listener->{ xHTTP }
+	RewriteLocation $listener->{ RewriteLocation }
+);
+
+
+	# Include AddHeader params
+	if ( exists $listener->{ AddHeader } && ref $listener->{ AddHeader } eq 'ARRAY' )
+	{
+		for my $header ( @{ $listener->{ AddHeader } } )
+		{
+			$listener_str .= qq(\tAddHeader "$header"\n);
+		}
+	}
+
+	# Include AddHeader params
+	if ( exists $listener->{ HeadRemove } && ref $listener->{ HeadRemove } eq 'ARRAY' )
+	{
+		for my $header ( @{ $listener->{ HeadRemove } } )
+		{
+			$listener_str .= qq(\tHeadRemove "$header"\n);
+		}
+	}
+
+	# Include https params
+	if ( $listener->{ type } eq 'https' )
+	{
+		$listener_str .= "\n";
+		$listener_str .= qq(\tCert "$_"\n) for @{ $listener->{ Cert } };
+		$listener_str .= qq(\tCiphers "$listener->{ Ciphers }"\n);
+		$listener_str .= qq(\tDisable "$_"\n) for @{ $listener->{ Disable } };
+		$listener_str .= qq(\tSSLHonorCipherOrder "$listener->{ SSLHonorCipherOrder }"\n);
+	}
+	else
+	{
+		$listener_str .= qq(
+	#Cert "/usr/local/zevenet/config/zencert.pem"
+	#Ciphers "ALL"
+	#Disable SSLv3
+	#SSLHonorCipherOrder 1
+);
+	}
+
+	# Include services and bottom of the configuration
+	$listener_str .= qq(\t#ZWACL-INI
+
+$services_print
+	#ZWACL-END
+
+
+	#Service "$conf->{ Name }"
+		##False##HTTPS-backend##
+		#DynScale 1
+		#BackendCookie "ZENSESSIONID" "domainname.com" "/" 0
+		#HeadRequire "Host: "
+		#Url ""
+		#Redirect ""
+		#StrictTransportSecurity 21600000
+		#Session
+			#Type nothing
+			#TTL 120
+			#ID "sessionname"
+		#End
+		#BackEnd
+
+		#End
+	#End
+
+
+End
+);
+
+	## Global configuration
+	#~ my $out_str = "$global_str\n";
+	#~ $out_str .= "$listener_str\n";
+
+	#~ return $out_str;
+	return "$global_str\n$listener_str";
+}
+
+
 
 1;
