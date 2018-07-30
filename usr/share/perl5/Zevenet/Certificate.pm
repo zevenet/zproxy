@@ -601,9 +601,9 @@ sub getCertInfo    # ($certfile)
 		push ( @eject, "GMT" );
 		$creation = join ( ' ', @eject );
 	}
-	chomp ( $creation );
+	chomp $creation;
 	$creation = `date -d "${creation}" +%F" "%T" "%Z -u`;
-
+	chomp $creation;
 
 	# Cert Expiration Date
 	my $expiration = "";
@@ -611,8 +611,9 @@ sub getCertInfo    # ($certfile)
 	{
 		my ( $line ) = grep /\sNot After/, @cert_data;
 		( undef, $expiration ) = split ( /: /, $line );
-		chomp ( $expiration );
-        $expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
+		chomp $expiration;
+		$expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
+		chomp $expiration;
 	}
 	elsif ( $type eq "CSR" )
 	{
