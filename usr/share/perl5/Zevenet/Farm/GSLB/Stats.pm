@@ -160,4 +160,22 @@ sub getGSLBFarmBackendsStats
 	return $gslb_stats;
 }
 
+sub getGSLBFarmStats    # ($farm_name,$netstat)
+{
+	my ( $farm_name ) = @_;
+
+	include 'Zevenet::Farm::GSLB::Config';
+
+	my $vip = &getGSLBFarmVip( "vip", $farm_name );
+	my $netstat = &getConntrack( "", $vip, "", "", "" );
+
+	# ESTABLISHED connections
+	my $est_conns = &getGSLBFarmEstConns( $farm_name, $netstat );
+
+	return {
+			 syn => 0,
+			 est => $est_conns,
+	};
+}
+
 1;
