@@ -818,8 +818,8 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	# validate BACKEND
 	my $be;
 	{
-		my @be = &getHTTPFarmBackends( $farmname, $service );
-		$be = $be[ $id_server ];
+		my @be_list = @{ &getHTTPFarmBackends( $farmname, $service ) };
+		$be = $be_list[ $id_server ];
 	}
 
 	# check if the backend was found
