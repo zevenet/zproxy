@@ -63,7 +63,7 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 
 	if ( $nattype eq "dnat" )
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
 			# i.e.
 			# tcp      6 431998 ESTABLISHED src=192.168.0.168 dst=192.168.100.241 sport=40130 dport=81 src=192.168.100.254 dst=192.168.100.241 sport=80 dport=40130 [ASSURED] mark=523 use=1
@@ -77,7 +77,7 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 					$netstat
 				) };
 		}
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+		if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
@@ -91,7 +91,7 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 	}
 	else
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
@@ -102,7 +102,7 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 					$netstat
 				) };
 		}
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+		if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
@@ -171,7 +171,7 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 
 			if ( $nattype eq "dnat" )
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
@@ -183,7 +183,7 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 						) };
 				}
 
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+				if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
@@ -197,7 +197,7 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 			}
 			else
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
@@ -209,7 +209,7 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 						) };
 				}
 
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+				if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
@@ -267,7 +267,7 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 
 	if ( $nattype eq "dnat" )
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
@@ -282,7 +282,7 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 	}
 	else
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
@@ -353,7 +353,7 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 
 			if ( $nattype eq "dnat" )
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
@@ -368,7 +368,7 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 			}
 			else
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
