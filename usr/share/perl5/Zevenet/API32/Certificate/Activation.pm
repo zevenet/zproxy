@@ -131,14 +131,14 @@ sub delete_activation_certificate    # ( $cert_filename )
 # curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://1.2.3.4:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
 sub upload_activation_certificate    # ()
 {
-	my $upload_filehandle = shift;
+	my $upload_data = shift;
 
 	require Zevenet::File;
 
 	my $desc     = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
 
-	unless ( $upload_filehandle )
+	unless ( $upload_data )
 	{
 		my $msg = "Error uploading activation certificate file";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -146,7 +146,7 @@ sub upload_activation_certificate    # ()
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
 
-	unless ( &saveFileHandler( "$basedir/$filename", $upload_filehandle ) )
+	unless ( &setFile( "$basedir/$filename", $upload_data ) )
 	{
 		my $msg = "Could not save the activation certificate";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
