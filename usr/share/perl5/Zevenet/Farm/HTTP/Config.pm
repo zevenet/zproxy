@@ -1501,6 +1501,10 @@ sub getHTTPVerbCode
 	return $verb_code;
 }
 
+######### Pound Config
+
+# Reading
+
 sub parsePoundConfig
 {
 	my ( $file ) = @_;
@@ -1606,9 +1610,9 @@ sub parsePoundConfig
 			for my $line ( @svc_lines )
 			{
 				# Backends blocks
-				if ( $line =~ /^\t\tBackEnd$/ ) { $bb++; $be_r = {}; next; }
+				if ( $line =~ /^\t\tBackEnd$/ )             { $bb++; $be_r = {}; next; }
 				if ( $line =~ /^\t\t\t(\w+) (.+)$/ && $bb ) { $be_r->{ $1 } = $2; next; }
-				if ( $line =~ /^\t\t\tHTTPS$/ && $bb ) { $be_r->{ 'HTTPS' } = undef; next; }
+				if ( $line =~ /^\t\t\tHTTPS$/ && $bb )      { $be_r->{ 'HTTPS' } = undef; next; }
 				if ( $line =~ /^\t\tEnd$/ && $bb ) {
 					$bb = 0;
 					&cleanHashValues( $be_r );
@@ -1617,7 +1621,7 @@ sub parsePoundConfig
 				}
 
 				# Session block
-				if ( $line =~ /^\t\tSession$/ ) { $sb++; $se_r = {}; next; }
+				if ( $line =~ /^\t\tSession$/ )               { $sb++; $se_r = {}; next; }
 				if ( $line =~ /^\t\t\t(\w+) (\S.+)$/ && $sb ) { $se_r->{ $1 } = $2; next; }
 				if ( $line =~ /^\t\tEnd$/ && $sb ) {
 					$sb = 0;
@@ -1657,22 +1661,6 @@ sub parsePoundConfig
 	return \%conf;
 }
 
-sub cleanHashValues
-{
-	my ( $hash_ref ) = @_;
-
-	for my $key ( keys %{ $hash_ref } )
-	{
-		# Convert digits to numeric type
-		$hash_ref->{ $key } += 0 if ( $hash_ref->{ $key } =~ /^[0-9]+$/ );
-
-		# Remove leading and trailing double quotes
-		$hash_ref->{ $key } =~ s/^"|"$//g unless $key eq 'BackendCookie';
-	}
-
-	return $hash_ref if defined wantarray;
-}
-
 sub getPoundConf
 {
 	my ( $farm ) = @_;
@@ -1689,6 +1677,7 @@ sub getPoundConf
 	return &parsePoundConfig( $file );
 }
 
+# Writing
 
 my $svc_defaults = {
 					 DynScale      => 1,
@@ -1778,7 +1767,7 @@ ThreadModel	$conf->{ ThreadModel }
 Control 	"$conf->{ Control }"
 );
 
-if ( $listener_type eq 'http' )
+if ( $listener_type eq 'HTTP' )
 {
 	$global_str .= qq(#DHParams 	"/usr/local/zevenet/app/pound/etc/dh2048.pem"
 #ECDHCurve	"prime256v1"
@@ -1887,7 +1876,7 @@ Listen${listener_type}
 		}
 	}
 
-	# Include AddHeader params
+	# Include HeadRemove params
 	if ( exists $listener->{ HeadRemove } && ref $listener->{ HeadRemove } eq 'ARRAY' )
 	{
 		for my $header ( @{ $listener->{ HeadRemove } } )
@@ -1897,7 +1886,7 @@ Listen${listener_type}
 	}
 
 	# Include https params
-	if ( $listener->{ type } eq 'https' )
+	if ( $listener_type eq 'HTTPS' )
 	{
 		$listener_str .= "\n";
 		$listener_str .= qq(\tCert "$_"\n) for @{ $listener->{ Cert } };
@@ -1953,5 +1942,20 @@ End
 }
 
 
+sub cleanHashValues
+{
+	my ( $hash_ref ) = @_;
+
+	for my $key ( keys %{ $hash_ref } )
+	{
+		# Convert digits to numeric type
+		$hash_ref->{ $key } += 0 if ( $hash_ref->{ $key } =~ /^[0-9]+$/ );
+
+		# Remove leading and trailing double quotes
+		$hash_ref->{ $key } =~ s/^"|"$//g unless $key eq 'BackendCookie';
+	}
+
+	return $hash_ref if defined wantarray;
+}
 
 1;
