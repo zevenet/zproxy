@@ -689,18 +689,20 @@ See Also:
 
 sub delCert_activation    # ($certname)
 {
-	my ( $certname ) = @_;
-
-	my $certdir = &getGlobalConfiguration( 'basedir' );
-	# escaping special caracters
-	$certname = quotemeta $certname;
-	$certname = "$certdir\/$certname";
-
+	# zevenet/www/ directory
+	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+	my $cert_filename = 'zlbcertfile.pem';
+	my $cert_path     = "$cert_dir\/$cert_filename";
 	my $files_removed = 1;
-	if ( -f "$certname" )
+
+	if ( -f $cert_path )
 	{
-		$files_removed = unlink ( "$certname" );
-		&zenlog( "Error removing certificate $certname", "error", "Activation" ) if !$files_removed;
+		$files_removed = unlink ( $cert_path );
+
+		unless ( $files_removed )
+		{
+			&zenlog( "Error removing certificate $cert_path", "error", "Activation" );
+		}
 	}
 
 	return $files_removed;

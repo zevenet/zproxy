@@ -106,10 +106,9 @@ sub delete_activation_certificate    # ( $cert_filename )
 {
 	require Zevenet::Certificate;
 
-	my $desc          = "Delete activation certificate";
-	my $cert_filename = 'zlbcertfile.pem';
+	my $desc = "Delete activation certificate";
 
-	unless ( &delCert_activation( $cert_filename ) )
+	unless ( &delCert_activation() )
 	{
 		my $msg = "An error happened deleting the activation certificate";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
