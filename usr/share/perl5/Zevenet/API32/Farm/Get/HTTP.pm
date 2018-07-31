@@ -58,14 +58,14 @@ sub farms_name_http # ( $farmname )
 	if ( $eload )
 	{
 		$services_ref = &eload(
-								module => 'Zevenet::Farm::HTTP::Config',
+								module => 'Zevenet::Farm::HTTP::Service',
 								func   => 'get_http_all_services_struct',
 								args   => [$farmname],
 		);
 	}
 	else
 	{
-		require Zevenet::Farm::HTTP::Config;
+		require Zevenet::Farm::HTTP::Service;
 
 		$services_ref = &get_http_all_services_struct( $farmname );
 	}
