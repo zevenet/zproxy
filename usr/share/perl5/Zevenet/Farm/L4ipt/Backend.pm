@@ -488,7 +488,8 @@ sub _getL4FarmParseServers
 			my @aux = split ( ';', $line );
 
 			# Return port as integer
-			my $port = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
+			my $port;
+			$port = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
 
 			my $status = $aux[7];
 			if ( $status eq "fgDOWN" )

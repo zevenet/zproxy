@@ -54,9 +54,9 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 		 && $type eq "hot"
 		 && -e "$pidfile" )
 	{
-		open FILE, "<$pidfile";
-		my $pid = <FILE>;
-		close FILE;
+		open my $fd, '<', "$pidfile";
+		my $pid = <$fd>;
+		close $fd;
 
 		kill USR1 => $pid;
 		$output = $?;    # FIXME
@@ -224,9 +224,9 @@ sub runNLBStart		# ()
 			return -1;
 		}
 
-		open FO, ">$nlbpidfile";
-		print FO "$nlbpid";
-		close FO;
+		open my $fd, '>', "$nlbpidfile";
+		print $fd "$nlbpid";
+		close $fd;
 	}
 
 	return $nlbpid;
@@ -345,9 +345,9 @@ sub getNLBPid
 		return -1;
 	}
 
-	open FI, "<$nlbpidfile";
-	$nlbpid = <FI>;
-	close FI;
+	open my $fd, '<', "$nlbpidfile";
+	$nlbpid = <$fd>;
+	close $fd;
 
 	if ( $nlbpid eq "") {
 		return -1;

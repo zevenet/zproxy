@@ -54,9 +54,9 @@ sub getL4FarmParam    # ($param, $farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FI, "<", "$configdir/$farm_filename";
-	chomp(my @content = <FI>);
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename";
+	chomp(my @content = <$fd>);
+	close $fd;
 
 	$output = &_getL4ParseFarmConfig( $param, undef, \@content );
 
@@ -1503,9 +1503,9 @@ sub getL4FarmPlainInfo		# ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	open FI, "<", "$configdir/$farm_filename";
-	chomp(my @content = <FI>);
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename";
+	chomp(my @content = <$fd>);
+	close $fd;
 
 	return \@content;
 }

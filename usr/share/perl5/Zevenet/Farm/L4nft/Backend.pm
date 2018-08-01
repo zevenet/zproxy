@@ -153,9 +153,9 @@ sub getL4FarmServers    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	open FI, "<", "$configdir/$farm_filename";
-	chomp(my @content = <FI>);
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename";
+	chomp(my @content = <$fd>);
+	close $fd;
 
 	return &_getL4FarmParseServers( \@content );
 }
