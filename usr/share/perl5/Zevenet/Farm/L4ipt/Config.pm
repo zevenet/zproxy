@@ -157,7 +157,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 	{
 		if ( $line eq "" || $first ne "true" )
 		{
-			break;
+			last;
 		}
 
 		$first = "false";
@@ -166,43 +166,43 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		if ( $param eq 'proto' )
 		{
 			$output = $l[1];
-			break;
+			last;
 		}
 
 		if ( $param eq 'vip' )
 		{
 			$output = $l[2];
-			break;
+			last;
 		}
 
 		if ( $param eq 'vipp' )
 		{
 			$output = $l[3];
-			break;
+			last;
 		}
 
 		if ( $param eq 'mode' )
 		{
 			$output = $l[4];
-			break;
+			last;
 		}
 
 		if ( $param eq 'scheduler' )
 		{
 			$output = $l[5];
-			break;
+			last;
 		}
 
 		if ( $param eq 'persist' )
 		{
 			$output = $l[6];
-			break;
+			last;
 		}
 
 		if ( $param eq 'persist' )
 		{
 			$output = $l[7];
-			break;
+			last;
 		}
 
 		if ( $param eq 'status' )
@@ -215,7 +215,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			{
 				$output = "up";
 			}
-			break;
+			last;
 		}
 	}
 
