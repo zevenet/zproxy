@@ -213,7 +213,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		unless ( $json_obj->{ nattype } =~ /^(nat|dnat)$/ )
+		unless ( $json_obj->{ nattype } =~ /^(nat|dnat|dsr)$/ )
 		{
 			my $msg = "Invalid nattype.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

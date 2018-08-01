@@ -60,6 +60,14 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;                            # output: error code
 
+	if ( $weight == 0 ) {
+		$weight = 1;
+	}
+
+	if ( $priority == 0 ) {
+		$priority = 1;
+	}
+
 	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "ports" : "", "weight" : "$weight", "priority" : "$priority", "state" : "up" } ] } ] })  } );
 
 	return $output;

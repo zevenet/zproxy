@@ -394,7 +394,7 @@ sub getFarmBootStatus    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &getL4FarmParam( 'status', $farm_name );
+		$output = &getL4FarmParam( 'bootstatus', $farm_name );
 	}
 	elsif ( $farm_type eq "gslb" && $eload )
 	{

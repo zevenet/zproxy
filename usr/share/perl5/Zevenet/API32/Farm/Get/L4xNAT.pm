@@ -36,8 +36,9 @@ sub farms_name_l4 # ( $farmname )
 	my $out_p;
 	my $out_b;
 
-	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname );
+	require Zevenet::Farm::L4xNAT::Config;
+	my $vip   = &getL4FarmParam( "vip",  $farmname );
+	my $vport = &getL4FarmParam( "vipp", $farmname );
 
 	if ( $vport =~ /^\d+$/ )
 	{
@@ -56,7 +57,7 @@ sub farms_name_l4 # ( $farmname )
 			   status      => $status,
 			   vip         => $vip,
 			   vport       => $vport,
-			   algorithm   => &getL4FarmParam( 'scheduler', $farmname ),
+			   algorithm   => &getL4FarmParam( 'alg', $farmname );,
 			   nattype     => &getL4FarmParam( 'mode', $farmname ),
 			   persistence => $persistence,
 			   protocol    => &getL4FarmParam( 'proto', $farmname ),

@@ -35,7 +35,8 @@ Parameters:
 	param - requested parameter. The options are:
 		"vip": get the virtual IP
 		"vipp": get the virtual port
-		"status": get the status and boot status
+		"bootstatus": get boot status
+		"status": get the current status
 		"mode": get the topology (or nat type)
 		"alg": get the algorithm
 		"proto": get the protocol
@@ -54,6 +55,15 @@ sub getL4FarmParam    # ($param, $farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
+
+	if ( $param eq "status" )
+	{
+		require Zevenet::Farm::L4xNAT::Action;
+		my $nlbpid = &getNLBPid( );
+		if ( $nlbpid eq "-1" ) {
+			return "down";
+		}
+	}
 
 	open FI, "<", "$configdir/$farm_filename";
 	chomp(my @content = <FI>);
@@ -98,9 +108,13 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	my $srvparam		= "";
 	my $addition		= "";
 
-	if ( $param eq "family" || $param eq "mode" )
+	if ( $param eq "family" )
 	{
 		$srvparam = $param;
+	} elsif ( $param eq "mode" )
+	{
+		$srvparam = $param;
+		$value = "snat" if ( $value eq "nat" );
 	} elsif ( $param eq "vip" )
 	{
 		$srvparam = "virtual-addr";
@@ -189,7 +203,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			$output = $l[3];
 		}
 
-		if ( $line =~ /\"state\"/ && $param eq 'status' ) {
+		if ( $line =~ /\"state\"/ && $param =~ /status/ ) {
 			my @l = split /"/, $line;
 			if ( $l[3] ne "up" )
 			{
@@ -240,7 +254,7 @@ sub getL4FarmStruct
 
 	$farm{ nattype }  = &_getL4ParseFarmConfig( 'mode', undef, $config );
 	$farm{ mode }     = $farm{ nattype };
-	$farm{ lbalg }    = &_getL4ParseFarmConfig( 'scheduler', undef, $config );
+	$farm{ lbalg }    = &_getL4ParseFarmConfig( 'alg', undef, $config );
 	$farm{ vip }      = &_getL4ParseFarmConfig( 'vip', undef, $config );
 	$farm{ vport }    = &_getL4ParseFarmConfig( 'vipp', undef, $config );
 	$farm{ vproto }   = &_getL4ParseFarmConfig( 'proto', undef, $config );
@@ -630,6 +644,16 @@ sub doL4FarmProbability
 	}
 
   #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
+}
+
+# TODO: Obsolete. Eliminate callers.
+sub reloadL4FarmsSNAT
+{
+        require Zevenet::Farm::Core;
+        require Zevenet::Farm::Base;
+        #require Zevenet::Netfilter;
+
+
 }
 
 

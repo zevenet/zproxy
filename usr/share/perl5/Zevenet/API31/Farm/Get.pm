@@ -66,8 +66,6 @@ sub farms    # ()
 sub farms_lslb    # ()
 {
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::HTTP;
-	require Zevenet::Farm::L4xNAT;
 
 	my @out;
 	my @files = &getFarmList();

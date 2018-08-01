@@ -80,4 +80,56 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 	return $output;    # FIXME
 }
 
+=begin nd
+Function: runL4FarmDelete
+
+	Delete a l4xnat farm
+
+Parameters:
+
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or other value on failure
+
+=cut
+sub runL4FarmDelete    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $output    = -1;
+#	my $farm_type = 'l4xnat';
+#	my $farm_filename = "$configdir/$farm_name\_$farm_type.cfg";
+
+	require Zevenet::Farm::L4xNAT::Action;
+#	require Zevenet::Farm::L4xNAT::Config;
+
+#	$vip_port = 80 if not defined $vip_port;
+
+#	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
+	# farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
+#	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
+#	close FO;
+
+	my $pid = &getNLBPid();
+	if ( $pid <= 0 ) {
+		return 0;
+	}
+
+	$output = &httpNLBRequest( { farm => $farm_name, method => "DELETE", uri => "/farms" } );
+
+
+#	my $piddir = &getGlobalConfiguration('piddir');
+#	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
+#	{
+#		# Enable active l4xnat file
+#		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
+#		close FI;
+#	}
+
+#	&_runL4FarmStart( $farm_name );
+
+	return $output;    # FIXME
+}
+
 1;

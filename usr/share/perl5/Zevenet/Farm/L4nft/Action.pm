@@ -159,7 +159,7 @@ sub _runL4FarmStop    # ($farm_name)
 	# Disable active l4xnat file
 	my $pid = &getNLBPid();
 	if ( $pid <= 0 ) {
-		return -1;
+		return 0;
 	}
 
 	&runNLBFarmStop( $farm_name );
@@ -220,7 +220,6 @@ sub runNLBStart		# ()
 	{
 		&logAndRun( "$nftlbd start" );
 		$nlbpid = `$pidof nftlb`;
-
 		if ( $nlbpid eq "") {
 			return -1;
 		}
@@ -285,11 +284,6 @@ sub runNLBFarmStart		# ($farm_name)
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my $farmfile = &getFarmFile( $farm_name );
-	my $nlbpid = &getNLBPid( );
-
-	if ( $nlbpid eq "-1" ) {
-		return -1;
-	}
 
 	my $out = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farmfile", method => "POST", uri => "/farms", body =>  qq(\@$configdir/$farmfile)  } );
 	if ( $out != 0 )
@@ -321,11 +315,6 @@ sub runNLBFarmStop		# ($farm_name)
 	require Zevenet::Farm::Core;
 
 	my $farmfile = &getFarmFile( $farm_name );
-	my $nlbpid = &getNLBPid( );
-
-	if ( $nlbpid eq "-1" ) {
-		return -1;
-	}
 
 	my $out = &setL4FarmParam( 'status', "down", $farm_name );
 
