@@ -203,17 +203,17 @@ sub getFarmGuardianLog    # ($fname,$svice)
 		return -1;
 	}
 
-	open FR, "$configdir/$fgfile";
+	open $fd, '<', "$configdir/$fgfile";
 	my $line;
 	my $lastline;
-	while ( $line = <FR> )
+	while ( $line = <$fd> )
 	{
 		$lastline = $line;
 	}
 
 	my @line_s = split ( "\:\:\:", $lastline );
 	my $value = $line_s[4];
-	close FR;
+	close $fd;
 
 	if ( $value =~ /true/ )
 	{
@@ -584,7 +584,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	}
 
 	# read file
-	open my $fh, "$configdir/$fgfile";
+	open my $fh, '<', "$configdir/$fgfile";
 	my $line;
 	while ( $line = <$fh> )
 	{

@@ -31,7 +31,7 @@ print
   "This script modifies the configuration files from ZEN Load Balancer Enterprise Edition beyond v3.02...\n";
 ### migrate http and https configuration files
 @httpfarms = `ls /usr/local/zevenet/config/*_pound.cfg 2> /dev/null`;
-foreach $file ( @httpfarms )
+foreach my $file ( @httpfarms )
 {
 
 	chomp ( $file );
@@ -58,7 +58,7 @@ foreach $file ( @httpfarms )
 
 ### migrate l4 configuration files
 my @l4farms = `ls /usr/local/zevenet/config/*_l4txnat.cfg 2> /dev/null`;
-foreach $file ( @l4farms )
+foreach my $file ( @l4farms )
 {
 	chomp ( $file );
 	use Tie::File;
@@ -76,7 +76,7 @@ foreach $file ( @l4farms )
 	rename $oldfile, $file;
 }
 my @l4farms = `ls /usr/local/zevenet/config/*_l4uxnat.cfg 2> /dev/null`;
-foreach $file ( @l4farms )
+foreach my $file ( @l4farms )
 {
 	chomp ( $file );
 	use Tie::File;

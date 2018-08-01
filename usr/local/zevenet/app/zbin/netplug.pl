@@ -53,7 +53,7 @@ my $parameter = "";
 foreach my $section (keys %{$config}) {
 &zenlog( "[$section]");
 	#what about rules? they are not deleted after a link down.
-	foreach $parameter (keys %{$config->{$section}}) {
+	foreach my $parameter (keys %{$config->{$section}}) {
 		if ( $section eq "table_$iface" ){
 			&zenlog( "$parameter = $config->{$section}->{$parameter}\n" );
 			my $run_route = `ip route $config->{$section}->{$parameter} table $section 2>&1`;

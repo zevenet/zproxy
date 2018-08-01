@@ -128,7 +128,7 @@ if ( $action eq "start" )
 	#testing interface configured on the installation and gw
 	if ( -e '/etc/network/interfaces' )
 	{
-		open my $fr, '/etc/network/interfaces';
+		open my $fr, '<', '/etc/network/interfaces';
 		my @file = <$fr>;
 		close $fr;
 

@@ -53,7 +53,8 @@ foreach my $farmfile ( &getFarmList() )
 
 	if ( $ftype eq 'gslb' )
 	{
-		my $stats = &eload(
+		my $stats;
+		$stats = &eload(
 							module => 'Zevenet::Farm::GSLB::Stats',
 							func   => 'getGSLBFarmStats',
 							args   => [$farm],
