@@ -313,9 +313,6 @@ Parameters:
 Returns:
 	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
 
-Bugfix:
-	DUPLICATED, do same than getL4FarmServers
-
 =cut
 
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
@@ -327,7 +324,6 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_filename     = &getFarmFile( $farm_name );
 	my $new_farm_filename = "$new_farm_name\_l4xnat.cfg";
 	my $output            = 0;
-	my $status            = &getFarmStatus( $farm_name );
 
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );

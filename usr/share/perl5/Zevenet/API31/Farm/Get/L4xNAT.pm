@@ -36,8 +36,11 @@ sub farms_name_l4 # ( $farmname )
 	my $out_p;
 	my $out_b;
 
-	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname );
+	require Zevenet::Farm::L4xNAT::Config;
+#	$output = &getL4FarmParam( $info, $farm_name );
+
+	my $vip   = &getL4FarmParam( "vip",  $farmname );
+	my $vport = &getL4FarmParam( "vipp", $farmname );
 
 	if ( $vport =~ /^\d+$/ )
 	{
@@ -61,17 +64,17 @@ sub farms_name_l4 # ( $farmname )
 
 	my $status = &getFarmVipStatus( $farmname );
 
-	my $persistence = &getFarmPersistence( $farmname );
+	my $persistence = &getL4FarmParam( 'persist', $farmname );
 	$persistence = "" if $persistence eq 'none';
 
 	$out_p = {
 			   status      => $status,
 			   vip         => $vip,
 			   vport       => $vport,
-			   algorithm   => &getFarmAlgorithm( $farmname ),
-			   nattype     => &getFarmNatType( $farmname ),
+			   algorithm   => &getL4FarmParam( 'alg', $farmname ),
+			   nattype     => &getL4FarmParam( 'mode', $farmname ),
 			   persistence => $persistence,
-			   protocol    => &getFarmProto( $farmname ),
+			   protocol    => &getL4FarmParam( 'proto', $farmname ),
 			   ttl         => $timetolimit,
 			   fgenabled   => $fguse,
 			   fgtimecheck => $fgtimecheck + 0,
@@ -81,7 +84,7 @@ sub farms_name_l4 # ( $farmname )
 	};
 
 	# Backends
-	$out_b = &getL4FarmBackends( $farmname );
+	$out_b = &getL4FarmServers( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",

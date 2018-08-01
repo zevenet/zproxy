@@ -438,7 +438,7 @@ sub backends
 	if ( $type eq 'l4xnat' )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		my $backends = &getL4FarmBackends( $farmname );
+		my $backends = &getL4FarmServers( $farmname );
 
 		my $body = {
 					 description => $desc,
@@ -541,6 +541,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
+		require Zevenet::Net::Validate;
 
 		# Params
 		my $l4_farm = &getL4FarmStruct( $farmname );
@@ -949,12 +950,22 @@ sub delete_backend    # ( $farmname, $id_server )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $exists = 0;
+
 	require Zevenet::Farm::Backend;
+	if ( $type eq 'l4xnat' )
+	{
+		my $servers = &getFarmServers( $farmname );
+		my $nservers = @{ $servers };
+		$exists = ( $nservers ) ? 1 : 0;
+	}
+	else
+	{
+		my $backends = &getFarmServers( $farmname );
+		my $exists = @{ $backends }[$id_server];
+	}
 
-	my @backends     = &getFarmServers( $farmname );
-	my $backend_line = $backends[$id_server];
-
-	if ( !$backend_line )
+	if ( !$exists )
 	{
 		my $msg = "Could not find a backend with such id.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -979,6 +990,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	) if ( $eload );
 
 	my $message = "Backend removed";
+	require Zevenet::Farm::Base;
 	my $body = {
 				 description => $desc,
 				 success     => "true",

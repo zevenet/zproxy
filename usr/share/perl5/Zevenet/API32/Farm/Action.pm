@@ -318,10 +318,11 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	}
 
 	# validate BACKEND
-	my @backends     = &getFarmServers( $farmname );
-	my $backend_line = $backends[$backend_id];
+	require Zevenet::Farm::L4XNAT::Backend;
 
-	if ( !$backend_line )
+	my $exists = defined( @{ &getL4FarmServers( $farmname ) }[$backend_id] );
+
+	if ( !$exists )
 	{
 		my $msg = "Could not find a backend with such id.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

@@ -34,8 +34,8 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
-
+	ref array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
+		
 FIXME:
 	changes output to hash format
 
@@ -69,7 +69,7 @@ sub getDatalinkFarmServers    # ($farm_name)
 	}
 	close $fd;
 
-	return @servers;
+	return \@servers;
 }
 
 =begin nd

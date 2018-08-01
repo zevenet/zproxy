@@ -87,13 +87,13 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	my $iface     = &getDatalinkFarmInterface( $farm_name );
 	my $ip_bin    = &getGlobalConfiguration('ip_bin');
 	my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
-	my @servers   = &getDatalinkFarmServers( $farm_name );
+	my $servers   = &getDatalinkFarmServers( $farm_name );
 	my $algorithm = &getDatalinkFarmAlgorithm( $farm_name );
 	my $routes    = "";
 
 	if ( $algorithm eq "weight" )
 	{
-		foreach my $serv ( @servers )
+		foreach my $serv ( @{ $servers } )
 		{
 			chomp ( $serv );
 			my @line = split ( "\;", $serv );
@@ -115,7 +115,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	if ( $algorithm eq "prio" )
 	{
 		my $bestprio = 100;
-		foreach my $serv ( @servers )
+		foreach my $serv ( @{ $servers } )
 		{
 			chomp ( $serv );
 			my @line = split ( "\;", $serv );

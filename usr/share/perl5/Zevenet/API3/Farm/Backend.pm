@@ -1569,12 +1569,23 @@ sub delete_backend # ( $farmname, $id_server )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::Farm::Backend;
+	my $exists = 0;
 
-	my @backends = &getFarmServers( $farmname );
-	my $backend_line = $backends[$id_server];
+	if ( $type eq 'l4xnat' )
+	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		my @servers = &getL4FarmServers( $farmname );
+		my $nservers = @servers;
+		$exists = ( $nservers ) ? 1 : 0;
+	}
+	else
+	{
+		require Zevenet::Farm::Backend;
+		my @backends = &getFarmServers( $farmname );
+		my $exists = $backends[$id_server];
+	}
 
-	if ( !$backend_line )
+	if ( !$exists )
 	{
 		# Error
 		my $errormsg = "Could not find a backend with such id.";

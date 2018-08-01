@@ -69,4 +69,24 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 	return $output;    # FIXME
 }
 
+=begin nd
+Function: runL4FarmDelete
+
+	Delete a l4xnat farm
+
+Parameters:
+
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or other value on failure
+
+=cut
+sub runL4FarmDelete    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	return 0;
+}
+
 1;

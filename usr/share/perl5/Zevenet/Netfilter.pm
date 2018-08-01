@@ -661,7 +661,8 @@ sub getIptRuleNumber
 	my $table     = $rule_args[2];        # second argument of iptables is the table
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
 
-	my @server_line;
+	my @servers;
+	my %server;
 	my $filter;
 
 	# Get the binary of iptables (iptables or ip6tables)
@@ -674,11 +675,10 @@ sub getIptRuleNumber
 	if ( defined ( $index ) )
 	{
 		# get backend tag
-		@server_line = &getL4FarmServers( $farm_name );
+		@servers = &getL4FarmServers( $farm_name );
 
-		#~ &zenlog("index:$index server_lines:@server_lines", "info", "SYSTEM");
-		@server_line = grep { /^$index;/ } @server_line;
-		$filter = ( split ';', $server_line[0] )[3];
+		%server = @servers[$index];
+		$filter = %server{ tag };
 	}
 	else
 	{
@@ -698,8 +698,8 @@ sub getIptRuleNumber
 	if ( !@rules && &debug() )
 	{
 		&zlog(
-			"index:$index farm_name:$farm_name filter:$filter server:$server_line[0] server list:"
-			  . &getFarmServers( $farm_name ) )
+			"index:$index farm_name:$farm_name filter:$filter server list:"
+			  . &getL4FarmServers( $farm_name ) )
 		  if not defined $filter;
 		&zlog( "filter:$filter iptables command:$ipt_cmd" );
 		&zlog( "rules:@rules" );

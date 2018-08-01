@@ -381,7 +381,11 @@ sub list_gslb_service_backends
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $backends = &getFarmBackends( $farmname, $service );
+	my $backends = &eload(
+						  module => 'Zevenet::Farm::GSLB::Backend',
+						  func   => 'getGSLBFarmBackends',
+						  args   => [$farmname, $service],
+		);
 	my $body = {
 				 description => $desc,
 				 params      => $backends,

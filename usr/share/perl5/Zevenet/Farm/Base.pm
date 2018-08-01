@@ -41,9 +41,6 @@ Parameters:
 Returns:
 	Scalar - return vip or port of farm or -1 on failure
 
-Bugs:
-	WARNING: vipps parameter is only used in tcp farms. Soon this parameter will be obsolete.
-
 See Also:
 	setFarmVirtualConf
 =cut
@@ -62,7 +59,7 @@ sub getFarmVip    # ($info,$farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &getL4FarmVip( $info, $farm_name );
+		$output = &getL4FarmParam( $info, $farm_name );
 	}
 	elsif ( $farm_type eq "datalink" )
 	{
@@ -106,8 +103,25 @@ sub getFarmStatus    # ($farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $piddir = &getGlobalConfiguration('piddir');
 
+	if ( $farm_type eq "l4xnat" )
+	{
+		require Zevenet::Farm::L4xNAT::Config;
+		$output = &getL4FarmParam( 'status', $farm_name );
+	}
+	elsif ( $farm_type eq "datalink" )
+	{
+		# Only for datalink and l4xnat
+		if ( -e "$piddir\/$farm_name\_$farm_type.pid" )
+		{
+			$output = "up";
+		}
+		else
+		{
+			$output = "down";
+		}
+	}
 	# for every farm type but datalink or l4xnat
-	if ( $farm_type ne "datalink" && $farm_type ne "l4xnat" )
+	else
 	{
 		my $pid = &getFarmPid( $farm_name );
 		my $running_pid;
@@ -125,18 +139,6 @@ sub getFarmStatus    # ($farm_name)
 				unlink "$piddir\/$farm_name\_pound.pid"  if ( $farm_type =~ /http/ );
 			}
 
-			$output = "down";
-		}
-	}
-	else
-	{
-		# Only for datalink and l4xnat
-		if ( -e "$piddir\/$farm_name\_$farm_type.pid" )
-		{
-			$output = "up";
-		}
-		else
-		{
 			$output = "down";
 		}
 	}
@@ -199,14 +201,9 @@ sub getFarmVipStatus    # ($farm_name)
 	my $down_flag; 			# almost one backend is not reachable
 	my $maintenance_flag; 	# almost one backend is not reachable
 
-	# Profile without services
-	if ( $type eq "datalink" || $type eq "l4xnat" )
-	{
-		require Zevenet::Farm::Config;
-		$backends = &getFarmBackends( $farm_name );
-	}
+	require Zevenet::Farm::Backend;
 	# HTTP, optimized for many services
-	elsif ( $type =~ /http/ )
+	if ( $type =~ /http/ )
 	{
 		require Zevenet::Farm::HTTP::Stats;
 		my $stats = &getHTTPFarmBackendsStats($farm_name);
@@ -222,9 +219,13 @@ sub getFarmVipStatus    # ($farm_name)
 		);
 		$backends = $stats->{ backends };
 	}
+	else
+	{
+		$backends = &getFarmServers( $farm_name );
+	}
 
 	# checking status
-	foreach my $be ( @{$backends} )
+	foreach my $be ( @{ $backends } )
 	{
 		$up_flag = 1 if $be->{ 'status' } eq "up";
 		$maintenance_flag = 1 if $be->{ 'status' } eq "maintenance";
@@ -412,7 +413,7 @@ sub getFarmBootStatus    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &getL4FarmBootStatus( $farm_name );
+		$output = &getL4FarmParam( 'bootstatus', $farm_name );
 	}
 	elsif ( $farm_type eq "gslb" && $eload )
 	{
@@ -453,21 +454,7 @@ sub getFarmProto    # ($farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		open my $fd, '<', "$configdir/$farm_filename";
-
-		my $first = "true";
-
-		while ( my $line = <$fd> )
-		{
-			if ( $line ne "" && $first eq "true" )
-			{
-				$first = "false";
-				my @line = split ( "\;", $line );
-				$output = $line[1];
-			}
-		}
-
-		close $fd;
+		$output = &getL4FarmParam( 'proto', $farm_name );
 	}
 	elsif ( $farm_type =~ /http/i )
 	{
