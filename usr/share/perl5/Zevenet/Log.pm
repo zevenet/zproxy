@@ -41,13 +41,13 @@ Function: zenlog
 
 	Usage:
 
-		&zenlog($text, $priority);
+		&zenlog($text, $priority, $tag);
 
 	Examples:
 
-		&zenlog("This is test.", "info");
-		&zenlog("Some errors happended.", "err");
-		&zenlog("testing debug mode", "debug");
+		&zenlog("This is a message.", "info", "LSLB");
+		&zenlog("Some errors happened.", "err", "FG");
+		&zenlog("testing debug mode", "debug", "SYSTEM");
 
 Parametes:
 	string - String to be written in log.

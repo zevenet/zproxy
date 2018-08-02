@@ -53,6 +53,8 @@ sub getL4FarmParam    # ($param, $farm_name)
 {
 	my ( $param, $farm_name ) = @_;
 
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input param $param farm_name $farm_name", "debug", "LSLB" );
+
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
@@ -165,6 +167,8 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 {
 	my ( $param, $value, $config )	= @_;
 	my $output		= -1;
+
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input param $param value $value", "debug", "LSLB" );
 
 	if ( $param eq 'persist' || $param eq 'persisttm' ) {
 		$output = "none";
