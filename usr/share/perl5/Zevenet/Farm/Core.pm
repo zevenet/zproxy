@@ -96,12 +96,14 @@ sub getFarmFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input farmname $farm_name", "debug", "LSLB" );
+
 	opendir ( my $dir, "$configdir" ) || return -1;
 	my @farm_files =
 	  grep {
-		     /^$farm_name\_(?:gslb|pound|datalink|l4xnat)\.cfg/
-		  && !/^$farm_name\_.*guardian\.conf/
-		  && !/^$farm_name\_status.cfg/
+		     /^$farm_name\_(?:gslb|pound|datalink|l4xnat)\.cfg$/
+		  && !/^$farm_name\_.*guardian\.conf$/
+		  && !/^$farm_name\_status.cfg$/
 	  } readdir ( $dir );
 	closedir $dir;
 
