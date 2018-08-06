@@ -678,7 +678,7 @@ sub getIptRuleNumber
 		@servers = &getL4FarmServers( $farm_name );
 
 		%server = @servers[$index];
-		$filter = %server{ tag };
+		$filter = $server{ tag };
 	}
 	else
 	{
