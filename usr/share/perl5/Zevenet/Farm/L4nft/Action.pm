@@ -148,7 +148,8 @@ sub _runL4FarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	#require Zevenet::Net::Util;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "($farm_name)", "debug", "LSLB" );
+
 	require Zevenet::Farm::Core;
 
 	&zlog( "Stopping farm $farm_name" ) if &debug > 2;
@@ -248,6 +249,8 @@ Returns:
 
 sub runNLBStop		# ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "()", "debug", "LSLB" );
+
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
 	my $pidof = &getGlobalConfiguration( 'pidof' );
@@ -311,6 +314,8 @@ Returns:
 sub runNLBFarmStop		# ($farm_name)
 {
 	my ( $farm_name ) = @_;
+
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "($farm_name)", "debug", "LSLB" );
 
 	require Zevenet::Farm::Core;
 

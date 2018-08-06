@@ -45,7 +45,6 @@ Returns:
 	Scalar - 0 on success or other value on failure
 
 =cut
-
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
@@ -87,7 +86,6 @@ Returns:
 	Scalar - 0 on success or other value on failure
 
 =cut
-
 sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
@@ -117,7 +115,6 @@ Returns:
 	Integer - 0 on success or other value on failure
 
 =cut
-
 sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
 	my ( $farm_name, $server_id, $status ) = @_;
@@ -146,7 +143,6 @@ Returns:
 	Array - array of hash refs of backend struct
 
 =cut
-
 sub getL4FarmServers    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -174,7 +170,6 @@ Returns:
 		\%backend = { $id, $alias, $family, $ip, $port, $tag, $weight, $priority, $status, $rip = $ip }
 
 =cut
-
 sub _getL4FarmParseServers
 {
 	my $config = shift;
@@ -273,7 +268,6 @@ Returns:
 	Integer - Error code: 0 on success or other value on failure
 
 =cut
-
 sub _runL4ServerStart    # ($farm_name,$server_id)
 {
 	my $farm_name = shift;    # input: farm name string
@@ -333,7 +327,6 @@ Returns:
 	Integer - Error code: 0 on success or other value on failure
 
 =cut
-
 sub _runL4ServerStop    # ($farm_name,$server_id)
 {
 	my $farm_name = shift;    # input: farm name string
@@ -392,7 +385,6 @@ Returns:
 	???
 
 =cut
-
 sub getL4ServerActionRules
 {
 	my $farm   = shift;    # input: farm reference
@@ -477,7 +469,6 @@ Returns:
 	hash ref - reference to the selected server for prio algorithm
 
 =cut
-
 sub getL4ServerWithLowestPriority    # ($farm)
 {
 	my $farm = shift;                # input: farm reference
@@ -510,7 +501,6 @@ Returns:
 	Integer - 0 for backend in maintenance or 1 for backend not in maintenance
 
 =cut
-
 sub getL4FarmBackendMaintenance
 {
 	my ( $farm_name, $backend ) = @_;
@@ -540,7 +530,6 @@ Returns:
 	Integer - 0 on success or other value on failure
 
 =cut
-
 sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 {
 	my ( $farm_name, $backend, $mode ) = @_;
@@ -571,7 +560,6 @@ Returns:
 	Integer - 0 on success or other value on failure
 
 =cut
-
 sub setL4FarmBackendNoMaintenance
 {
 	my ( $farm_name, $backend ) = @_;
@@ -592,7 +580,6 @@ Returns:
 	none - .
 
 =cut
-
 sub getL4BackendsWeightProbability
 {
 	my $farm = shift;    # input: farm reference
@@ -648,6 +635,35 @@ sub resetL4FarmBackendConntrackMark
 	}
 
 	return $return_code;
+}
+
+=begin nd
+Function: getL4FarmBackendAvailableID
+
+	Get next available backend ID
+
+Parameters:
+	farmname - farm name
+
+Returns:
+	integer - .
+
+=cut
+sub getL4FarmBackendAvailableID
+{
+	my $farmname = shift;
+
+	my $id			= 0;
+	my $backends	= &getL4FarmServers( $farmname );
+
+	foreach my $backend ( @{ $backends } )
+	{
+		$id = $backend->{ index } if ( $backend->{ index } > $id );
+	}
+
+	$id++ if @{ $backends };
+
+	return $id;
 }
 
 1;
