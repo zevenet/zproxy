@@ -105,6 +105,13 @@ sub add_blacklists_list
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $max_length = 31;
+	if ( length $json_obj->{ 'name' } > $max_length )
+	{
+		my $msg = "The name length is bigger than $max_length characters.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# Check key format
 	foreach my $key ( keys %$json_obj )
 	{
