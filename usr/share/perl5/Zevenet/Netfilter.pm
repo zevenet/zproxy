@@ -677,7 +677,7 @@ sub getIptRuleNumber
 		# get backend tag
 		@servers = &getL4FarmServers( $farm_name );
 
-		%server = @servers[$index];
+		%server = $servers[$index];
 		$filter = $server{ tag };
 	}
 	else
