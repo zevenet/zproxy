@@ -67,8 +67,8 @@ sub setBLRunList
 	#~ if ( &getBLIpsetStatus ( $listName ) eq 'down' )
 	{
 		&zenlog( "Creating ipset table", "info", "IPDS" );
-		$output = system (
-			   "$ipset create -exist $listName hash:net maxelem $maxelem >/dev/null 2>&1" );
+		$output = &logAndRun (
+			   "$ipset create -exist $listName hash:net maxelem $maxelem" );
 	}
 
 	if ( !$output )
@@ -105,7 +105,7 @@ sub setBLDestroyList
 	#~ if ( &getBLIpsetStatus ( $listName ) eq 'up' )
 	#~ {
 	&zenlog( "Destroying blacklist $listName", "info", "IPDS" );
-	system ( "$ipset destroy $listName >/dev/null 2>&1" );
+	&logAndRun ( "$ipset destroy $listName" );
 
 	#~ }
 
@@ -161,7 +161,7 @@ sub setBLRefreshList
 	my $source_re = &getValidFormat( 'blacklists_source' );
 
 	&zenlog( "refreshing '$listName'... ", "info", "IPDS" );
-	$output = system ( "$ipset flush $listName >/dev/null 2>&1" );
+	$output = &logAndRun ( "$ipset flush $listName" );
 
 	if ( !$output )
 	{
@@ -174,12 +174,12 @@ sub setBLRefreshList
 		grep ( s/($source_re)/add $listName $1/, @ipList );
 		my $touch = &getGlobalConfiguration( 'touch' );
 
-		system ( "$touch $tmp_list >/dev/null 2>&1" );
+		&logAndRun ( "$touch $tmp_list" );
 
 		@list_tmp = @ipList;
 		untie @list_tmp;
 
-		system ( "$ipset restore < $tmp_list >/dev/null 2>&1" );
+		&logAndRun ( "$ipset restore < $tmp_list" );
 
 		unlink $tmp_list;
 	}
