@@ -602,11 +602,12 @@ sub setBLCronTask
 	}
 
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
+	my $zbindir = &getGlobalConfiguration( 'zbindir' );
 
 	# 0 0 * * 1	root	/usr/local/zevenet/app/zenrrd/zenrrd.pl & >/dev/null 2>&1
 	my $cmd =
 	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
-	  . "root\t/usr/local/zevenet/www/ipds/blacklists/updateRemoteList.pl $listName & >/dev/null 2>&1";
+	  . "root\t$zbindir/updateRemoteList $listName & >/dev/null 2>&1";
 	&zenlog( "Added cron task: $cmd", "info", "IPDS" );
 
 	require Zevenet::Lock;
