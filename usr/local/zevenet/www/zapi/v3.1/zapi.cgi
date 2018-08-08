@@ -30,6 +30,9 @@ use Zevenet::CGI;
 use Zevenet::API31::HTTP;
 use Crypt::CBC;
 use POSIX 'strftime';
+use Zevenet::SystemInfo;
+
+&setEnv();
 
 my $q = &getCGI();
 

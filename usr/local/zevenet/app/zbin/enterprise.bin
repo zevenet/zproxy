@@ -29,8 +29,10 @@ use Zevenet::Log;
 use Zevenet::Debug;
 use Zevenet::Config;
 use Data::Dumper;
-
 sub include;
+use Zevenet::SystemInfo;
+
+&setEnv();
 
 my $DEBUG  = &debug();
 my $SYMKEY = "1135628147310";
@@ -123,7 +125,6 @@ if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
 }
 
 require Zevenet::Validate;
-require Zevenet::SystemInfo;
 use Crypt::CBC;
 use POSIX 'strftime';
 

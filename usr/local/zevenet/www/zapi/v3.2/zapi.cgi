@@ -30,6 +30,9 @@ use Zevenet::CGI;
 use Zevenet::API32::HTTP;
 use Crypt::CBC;
 use POSIX 'strftime';
+use Zevenet::SystemInfo;
+
+&setEnv();
 
 my $q = &getCGI();
 
@@ -117,8 +120,6 @@ if ( $rbac_msg )
 
 
 ##### Activation certificates ########################################
-require Zevenet::SystemInfo;
-
 require Zevenet::API32::Routes::Activation
   if ( $q->path_info eq '/certificates/activation' );
 

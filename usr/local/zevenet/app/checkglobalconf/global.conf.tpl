@@ -160,6 +160,9 @@ $groups_bin="/usr/bin/groups";
 #Where is echo?
 $echo_bin="/bin/echo";
 
+#proxy
+$http_proxy="";
+$https_proxy="";
 
 #where is pound binary?
 $pound="/usr/local/zevenet/app/pound/sbin/pound";

@@ -309,4 +309,22 @@ sub getCPUTicks
 	return $ticks;
 }
 
+=begin nd
+Function: setEnv
+
+	Set envorioment variables. It get variables from global.conf
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+=cut
+sub setEnv
+{
+	use Zevenet::Config;
+	$ENV{ http_proxy } = &getGlobalConfiguration( 'http_proxy' ) // "";
+	$ENV{ https_proxy } = &getGlobalConfiguration( 'https_proxy' ) // "";
+}
 1;
