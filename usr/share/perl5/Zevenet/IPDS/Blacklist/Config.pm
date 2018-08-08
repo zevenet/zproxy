@@ -530,7 +530,7 @@ sub setBLAddSource
 		# Add a new source to the list
 		else
 		{
-			$error = system ( "$ipset add $listName $source >/dev/null 2>&1" );
+			$error = &logAndRun ( "$ipset add $listName $source" );
 		}
 	}
 

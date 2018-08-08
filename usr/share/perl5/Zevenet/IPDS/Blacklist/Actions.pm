@@ -181,18 +181,22 @@ sub runBLStartByRule
 	my $error = 0;
 	my @farms = @{ &getBLParam( $ruleName, 'farms' ) };
 
-	# run cron process
-	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
-	{
-		&setBLCronTask( $ruleName );
-	}
-
 	foreach my $farmName ( @farms )
 	{
 		if ( &runBLStart( $ruleName, $farmName ) != 0 )
 		{
 			&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 		}
+	}
+
+	# check error
+	$error = 1 if ( &getBLIpsetStatus( $ruleName ) eq "down" );
+
+	# run cron process
+	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
+	{
+		&setBLCronTask( $ruleName );
+		$error = 0;
 	}
 
 	return $error;
