@@ -174,7 +174,6 @@ sub _getL4FarmParseServers
 {
 	my $config = shift;
 	my $stage = 0;
-	my $index = 0;
 	my $server;
 	my @servers;
 
@@ -203,12 +202,12 @@ sub _getL4FarmParseServers
 
 		if ( $stage == 3 && $line =~ /\"name\"/ ) {
 			my @l = split /"/, $line;
-			$server->{ alias } = $l[3];
-			$server->{ id } = $index;
+			my $index = $l[3];
+			$index =~ s/bck//;
+			$server->{ id } = $index + 0;
 			$server->{ port } = undef;
 			$server->{ tag } = 400;
 			$server->{ max_conns } = 0;
-			$index++;
 		}
 
 		if ( $stage == 3 && $line =~ /\"ip-addr\"/ ) {
@@ -653,17 +652,27 @@ sub getL4FarmBackendAvailableID
 {
 	my $farmname = shift;
 
-	my $id			= 0;
 	my $backends	= &getL4FarmServers( $farmname );
+	my $nbackends	= $#{$backends} + 1;
 
-	foreach my $backend ( @{ $backends } )
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input farmname $farmname backends $nbackends", "debug", "LSLB" );
+
+	for ( my $id = 0; $id < $nbackends; $id++ )
 	{
-		$id = $backend->{ index } if ( $backend->{ index } > $id );
+		my $noexist = 1;
+		foreach my $backend ( @{ $backends } )
+		{
+			if ( $backend->{ id } == $id )
+			{
+				$noexist = 0;
+				last;
+			}
+		}
+
+		return $if if ( $noexist );
 	}
 
-	$id++ if @{ $backends };
-
-	return $id;
+	return $nbackends;
 }
 
 1;
