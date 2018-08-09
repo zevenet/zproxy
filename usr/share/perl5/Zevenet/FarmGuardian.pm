@@ -37,6 +37,19 @@ if ( eval { require Zevenet::ELoad; } )
 	$eload = 1;
 }
 
+=begin nd
+Function: getFGStatusFile
+
+	The function returns the path of the file that is used to save the backend status for a farm.
+
+Parameters:
+	fname - Farm name
+
+Returns:
+	String - file path
+
+=cut
+
 sub getFGStatusFile
 {
 	my $farm = shift;
@@ -44,7 +57,30 @@ sub getFGStatusFile
 	return "$configdir\/$farm\_status.cfg";
 }
 
-# return a struct with the parameters of farm guardian
+=begin nd
+Function: getFGStruct
+
+	It returns a default struct with all farmguardian parameters
+
+Parameters:
+	none - .
+
+Returns:
+	Hash ref - hash with the available parameters of fg
+
+	example:
+	hash => {
+		'description' => "",       # Tiny description about the check
+		'command'     => "",       # Command to check. The check must return 0 on sucess
+		'farms'       => [],       # farm list where the farm guardian is applied
+		'log'         => "false",  # logg farm guardian
+		'interval'    => "10",     # Time between checks
+		'cut_conns' => "false",    # cut the connections with the backend is marked as down
+		'template'  => "false",    # it is a template. The fg cannot be deleted, only reset its configuration
+	};
+
+=cut
+
 sub getFGStruct
 {
 	return {
@@ -58,13 +94,38 @@ sub getFGStruct
 	};
 }
 
-# the templates are not in the hash
+=begin nd
+Function: getFGExistsConfig
+
+	It checks out if the fg already exists in the configuration file.
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 1 if the fg already exists or 0 if it is not
+
+=cut
+
 sub getFGExistsConfig
 {
 	my $fg_name = shift;
 	my $fh      = &getTiny( $fg_conf );
 	return ( exists $fh->{ $fg_name } ) ? 1 : 0;
 }
+
+=begin nd
+Function: getFGExistsTemplate
+
+	It checks out if a template farmguardian exists with this name.
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 1 if the fg exists or 0 if it is not
+
+=cut
 
 sub getFGExistsTemplate
 {
@@ -73,18 +134,56 @@ sub getFGExistsTemplate
 	return ( exists $fh->{ $fg_name } ) ? 1 : 0;
 }
 
+=begin nd
+Function: getFGExists
+
+	It checks out if the fg exists, in the template file or in the configuraton file
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 1 if the fg already exists or 0 if it is not
+
+=cut
+
 sub getFGExists
 {
 	my $fg_name = shift;
 	return ( &getFGExistsTemplate( $fg_name ) or &getFGExistsConfig( $fg_name ) );
 }
 
-# the templates are not in the list
+=begin nd
+Function: getFGConfigList
+
+	It returns a list of farmguardian names of the configuration file
+
+Parameters:
+	None - .
+
+Returns:
+	Array - List of fg names
+
+=cut
+
 sub getFGConfigList
 {
 	my $fg_file = &getTiny( $fg_conf );
 	return keys %{ $fg_file };
 }
+
+=begin nd
+Function: getFGTemplateList
+
+	It returns a list of farmguardian names of the template file
+
+Parameters:
+	None - .
+
+Returns:
+	Array - List of fg names
+
+=cut
 
 sub getFGTemplateList
 {
@@ -92,7 +191,19 @@ sub getFGTemplateList
 	return keys %{ $fg_file };
 }
 
-# it is a list with the available fg and its configuration
+=begin nd
+Function: getFGList
+
+	It is a list with all fg, templates and created by the user
+
+Parameters:
+	None - .
+
+Returns:
+	Array - List of fg names
+
+=cut
+
 sub getFGList
 {
 	my @list = &getFGConfigList();
@@ -106,6 +217,31 @@ sub getFGList
 
 	return @list;
 }
+
+=begin nd
+Function: getFGObject
+
+	Get the configuration of a farmguardian
+
+Parameters:
+	Farmguardian - Farmguardian name
+	template - If this parameter has the value "template", the function returns the object from the template file
+
+Returns:
+	Hash ref - It returns a hash with the configuration of the farmguardian
+
+	example:
+	hash => {
+		'description' => "",       # Tiny description about the check
+		'command'     => "",       # Command to check. The check must return 0 on sucess
+		'farms'       => [],       # farm list where the farm guardian is applied
+		'log'         => "false",  # log farm guardian
+		'interval'    => "10",     # Time between checks
+		'cut_conns' => "false",    # cut the connections with the backend is marked as down
+		'template'  => "false",    # it is a template. The fg cannot be deleted, only reset its configuration
+	};
+
+=cut
 
 sub getFGObject
 {
@@ -129,6 +265,20 @@ sub getFGObject
 	return $obj;
 }
 
+=begin nd
+Function: getFGFarm
+
+	Get the fg name that a farm is using
+
+Parameters:
+	Farm - Farm name
+	service - Service of the farm. This parameter is mandatory for HTTP and GSLB farms
+
+Returns:
+	String - Farmguardian name
+
+=cut
+
 sub getFGFarm
 {
 	my $farm = shift;
@@ -149,7 +299,19 @@ sub getFGFarm
 	return $fg;
 }
 
-# create a farm guardian from a blank template
+=begin nd
+Function: createFGBlank
+
+	Create a fg without configuration
+
+Parameters:
+	Name - Farmguardian name
+
+Returns:
+	none - .
+
+=cut
+
 sub createFGBlank
 {
 	my $name = shift;
@@ -158,7 +320,20 @@ sub createFGBlank
 	&setFGObject( $name, $values );
 }
 
-# create a farm guardian from a blank template
+=begin nd
+Function: createFGTemplate
+
+	Create a fg from a template
+
+Parameters:
+	Farmguardian - Farmguardian name
+	template - If this parameter has the value "template", the function returns the object from the template file
+
+Returns:
+	None - .
+
+=cut
+
 sub createFGTemplate
 {
 	my $name     = shift;
@@ -170,7 +345,20 @@ sub createFGTemplate
 	&setFGObject( $name, $values );
 }
 
-# create a farm guardian from a farm guardian in the config file
+=begin nd
+Function: createFGConfig
+
+	 create a farm guardian from another farm guardian
+
+Parameters:
+	Farmguardian - Farmguardian name
+	template - Farmguardian name of the fg used as template
+
+Returns:
+	None - .
+
+=cut
+
 sub createFGConfig
 {
 	my $name      = shift;
@@ -181,7 +369,20 @@ sub createFGConfig
 	&setFGObject( $name, $values );
 }
 
-# pedir parametro force en zapi, si tiene alguna granja asociada
+=begin nd
+Function: delFGObject
+
+	Remove a farmguardianfrom the configuration file. First, it stops it.
+	This function will restart the fg process.
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub delFGObject
 {
 	my $fg_name = shift;
@@ -192,8 +393,29 @@ sub delFGObject
 	return $out;
 }
 
-# modifico fg, reiniciar todos los fg que esten asociados tanto a granjas como a srv
-# pedir confirmacion, parametro force
+=begin nd
+Function: setFGObject
+
+	Set a configuration for fg.
+	This function has 2 behaviour:
+		* passing to the function a hash with several parameters
+		* passing to the function 2 parameters, key and value. So, only is updated one parater.
+
+	If the farmguardian name is not found in the configuration file, the configuraton will be got
+	from the template file and save it in the configuration file.
+
+	This function will restart the fg process
+
+Parameters:
+	Farmguardian - Farmguardian name
+	object / key - object: hash reference with a set of parameters, or key: parameter name to set
+	value - value for the "key"
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub setFGObject
 {
 	my $fg_name = shift;
@@ -230,6 +452,20 @@ sub setFGObject
 	return $out;
 }
 
+=begin nd
+Function: setFGFarmRename
+
+	Re-asign farmguardian to a farm that has been renamed
+
+Parameters:
+	old name - Old farm name
+	new name - New farm name
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub setFGFarmRename
 {
 	my $farm     = shift;
@@ -263,6 +499,22 @@ sub setFGFarmRename
 	return $out;
 }
 
+=begin nd
+Function: linkFGFarm
+
+	Assign a farmguardian to a farm (or service of a farm).
+	Farmguardian will run if the farm is up.
+
+Parameters:
+	Farmguardian - Farmguardian name
+	Farm - Farm name
+	Service - Service name. It is used for GSLB and HTTP farms
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub linkFGFarm
 {
 	my $fg_name = shift;
@@ -293,7 +545,22 @@ sub linkFGFarm
 	return $out;
 }
 
-# aplicar cuando se borra la granja
+=begin nd
+Function: unlinkFGFarm
+
+	Remove a farmguardian from a farm (or service of a farm).
+	Farmguardian will be stopped if it is running.
+
+Parameters:
+	Farmguardian - Farmguardian name
+	Farm - Farm name
+	Service - Service name. It is used for GSLB and HTTP farms
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub unlinkFGFarm
 {
 	my $fg_name = shift;
@@ -318,6 +585,20 @@ sub unlinkFGFarm
 
 	return $out;
 }
+
+=begin nd
+Function: delFGFarm
+
+	Function used if a farm is deleted. All farmguardian assigned to it will be unliked.
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. It is used for GSLB and HTTP farms
+
+Returns:
+	None - .
+
+=cut
 
 sub delFGFarm
 {
@@ -356,6 +637,20 @@ sub delFGFarm
 
 ############# run process
 
+=begin nd
+Function: getFGPidFile
+
+	Get the path of the file where the pid of the farmguardian is saved.
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. It is used for GSLB and HTTP farms
+
+Returns:
+	String - Pid file path.
+
+=cut
+
 sub getFGPidFile
 {
 	my $fname  = shift;
@@ -377,9 +672,20 @@ sub getFGPidFile
 	return $file;
 }
 
-# get the farmguardian pid for a farm. If the farm is http, this function acts in two ways:
-# 1- farm and service parameters are sent, the function will return the pid for the farma and service requested
-# 2- only farm parameter is sent, then the function will return a list with the running farmguardian pid, one foreach service
+=begin nd
+Function: getFGPidFarm
+
+	It returns the farmguardian PID assigned to a farm (and service)
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. It is used for GSLB and HTTP farms
+
+Returns:
+	Integer - 0 on failure, or a natural number for PID
+
+=cut
+
 sub getFGPidFarm
 {
 	my $farm    = shift;
@@ -407,8 +713,19 @@ sub getFGPidFarm
 	return $pid;
 }
 
-# Reset farm guardian for all farms
-# si reinicio|paro|arranco granja o si borro un servicio, seleccionar todos los fg que tengan algun serivcio de esa granja
+=begin nd
+Function: runFGStop
+
+	It stops all farmguardian process are using the passed fg name
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 0 on failure, or another value on success
+
+=cut
+
 sub runFGStop
 {
 	my $fgname = shift;
@@ -431,6 +748,19 @@ sub runFGStop
 
 	return $out;
 }
+
+=begin nd
+Function: runFGStart
+
+	It runs fg for each farm is using it and it is running
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 0 on failure, or another value on success
+
+=cut
 
 sub runFGStart
 {
@@ -455,6 +785,19 @@ sub runFGStart
 	return $out;
 }
 
+=begin nd
+Function: runFGRestart
+
+	It restarts all farmguardian process for each farm is using the passed fg
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Integer - 0 on failure, or another value on success
+
+=cut
+
 sub runFGRestart
 {
 	my $fgname = shift;
@@ -466,9 +809,21 @@ sub runFGRestart
 	return $out;
 }
 
-# Reset farm guardian for farm
-# si reinicio|paro|arranco granja o si borro un servicio, seleccionar todos los fg que tengan algun serivcio de esa granja
-#
+=begin nd
+Function: runFGFarmStop
+
+	It stops farmguardian process used by the farm. If the farm is GSLB or HTTP
+	and is not passed the service name, all farmguardians will be stoped.
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. This parameter is for HTTP and GSLB farms.
+
+Returns:
+	Integer - 0 on failure, or another value on success
+
+=cut
+
 sub runFGFarmStop
 {
 	my $farm    = shift;
@@ -575,7 +930,22 @@ sub runFGFarmStop
 	return $out;
 }
 
-# the pid file is created by the farmguardian process
+=begin nd
+Function: runFGFarmStart
+
+	It starts the farmguardian process used by the farm. If the farm is GSLB or HTTP
+	and is not passed the service name, all farmguardians will be run.
+	The pid file is created by the farmguardian process.
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. This parameter is for HTTP and GSLB farms.
+
+Returns:
+	Integer - 0 on failure, or another value on success
+
+=cut
+
 sub runFGFarmStart
 {
 	my ( $farm, $svice ) = @_;
@@ -669,6 +1039,21 @@ sub runFGFarmStart
 	return $status;
 }
 
+=begin nd
+Function: runFGFarmRestart
+
+	It restarts the farmguardian process used by the farm. If the farm is GSLB or HTTP
+	and is not passed the service name, all farmguardians will be restarted.
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. This parameter is for HTTP and GSLB farms.
+
+Returns:
+	Integer - 0 on failure, or another value on success
+
+=cut
+
 sub runFGFarmRestart
 {
 	my $farm    = shift;
@@ -681,8 +1066,19 @@ sub runFGFarmRestart
 	return $out;
 }
 
-# if farm guardian is applied some running farm
-# return all running farms where farm guardian is working
+=begin nd
+Function: getFGRunningFarms
+
+	Get a list with all running farms where the farmguardian is applied.
+
+Parameters:
+	Farmguardian - Farmguardian name
+
+Returns:
+	Array ref - list of farm names
+
+=cut
+
 sub getFGRunningFarms
 {
 	my $fg = shift;
@@ -709,6 +1105,20 @@ sub getFGRunningFarms
 	return \@runfarm;
 }
 
+=begin nd
+Function: getFGMigrateFile
+
+	This function returns a standard name used to migrate the old farmguardians.
+
+Parameters:
+	Farm - Farm name
+	Service - Service name. This parameter is for HTTP and GSLB farms.
+
+Returns:
+	String - Farmguardian name
+
+=cut
+
 sub getFGMigrateFile
 {
 	my $farm = shift;
@@ -716,6 +1126,19 @@ sub getFGMigrateFile
 
 	return ( $srv ) ? "_default_${farm}_$srv" : "_default_$farm";
 }
+
+=begin nd
+Function: setOldFarmguardian
+
+	Create a struct of the new fg using the parameters of the old fg
+
+Parameters:
+	Configuration - Hash with the configuration of the old FG
+
+Returns:
+	None - .
+
+=cut
 
 sub setOldFarmguardian
 {
