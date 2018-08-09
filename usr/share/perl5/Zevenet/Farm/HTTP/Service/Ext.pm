@@ -454,6 +454,8 @@ sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 		{
 			$out = $1;
 			last;
+		} else {
+			$out = 21600000;
 		}
 	}
 
