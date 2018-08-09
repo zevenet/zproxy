@@ -238,7 +238,9 @@ sub runIPDSStartByFarm
 	# start BL rules
 	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
+		next if ( $rule->{ status } eq "down" );
 		$name = $rule->{ name };
+		&zenlog (Dumper($rule));
 		&runBLStart( $name, $farmname );
 	}
 

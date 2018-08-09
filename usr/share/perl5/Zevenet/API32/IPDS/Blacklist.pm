@@ -549,13 +549,8 @@ sub actions_blacklists
 
 		include 'Zevenet::IPDS::Blacklist::Config';
 
-		if (&runBLStartByRule( $listName ))
-			{
-				$msg = "The blacklist $listName could not be applied to any farm";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		else
-			{ &setBLParam( $listName, 'status', 'up' ); }
+		&setBLParam( $listName, 'status', 'up' );
+		&runBLStartByRule( $listName );
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{

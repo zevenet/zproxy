@@ -170,7 +170,7 @@ Parameters:
 	Rule - Rule name
 
 Returns:
-	integer - 0 on success or other value on failure
+	integer - number of farms running with the rule applied
 
 =cut
 
@@ -187,6 +187,10 @@ sub runBLStartByRule
 		{
 			&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 		}
+		else
+		{
+			$error++;
+		}
 	}
 
 	# check error
@@ -196,7 +200,6 @@ sub runBLStartByRule
 	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
 	{
 		&setBLCronTask( $ruleName );
-		$error = 0;
 	}
 
 	return $error;

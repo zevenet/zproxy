@@ -33,7 +33,6 @@ include 'Zevenet::IPDS::Blacklist::Core';
 sub setBLRunList
 {
 	my $listName = shift;
-
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my $output;
 

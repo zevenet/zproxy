@@ -30,10 +30,10 @@ Function: getIPDSChain
 
 Parameters:
 	Module - It is a IPDS module. The possible values are "blacklist", "whitelist", "dos" or "rbl"
-				
+
 Returns:
 	String - Name for the chain of a IPDS module
-	
+
 =cut
 
 sub getIPDSChain
@@ -56,9 +56,9 @@ sub getIPDSChain
         Obtein IPv4 iptables rules for a couple table-chain
 
         Parameters:
-				table - 
-				chain - 
-				
+				table -
+				chain -
+
         Returns:
 				== 0	- don't find any rule
              @out	- Array with rules
@@ -175,7 +175,7 @@ sub getIPDSfarmsRules
 	if ( -e $dosConf )
 	{
 		$fileHandle = Config::Tiny->read( $dosConf );
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $key ( sort keys %{ $fileHandle } )
 		{
 			if ( exists $fileHandle->{ $key }->{'farms'} && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
@@ -188,7 +188,7 @@ sub getIPDSfarmsRules
 	if ( -e $blacklistsConf )
 	{
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $key ( sort keys %{ $fileHandle } )
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
@@ -201,7 +201,7 @@ sub getIPDSfarmsRules
 	if ( -e $rblConf )
 	{
 		$fileHandle = Config::Tiny->read( $rblConf );
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $key ( sort keys %{ $fileHandle } )
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{

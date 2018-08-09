@@ -545,7 +545,7 @@ sub actions_blacklists
 		&setBLParam( $listName, 'status', 'up' );
 		my $error = &runBLStartByRule( $listName );
 
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		#~ return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
