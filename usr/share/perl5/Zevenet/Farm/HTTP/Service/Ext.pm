@@ -550,7 +550,7 @@ sub moveService
 
 	# lock file
 	my $farm_filename = &getFarmFile( $farm );
-	my $lock_file = "/tmp/$farm.lock";
+	my $lock_file = &getLockFile( $farm );
 	my $lock_fh   = &openlock( $lock_file, 'w' );
 
 	# reduce a index if service was in a previuos position.
@@ -591,6 +591,7 @@ sub moveService
 
 	# unlock file
 	close $lock_fh;
+	unlink $lock_file;
 
 	# move fg
 	&moveServiceFarmStatus( $farm, $srv, $req_index );
