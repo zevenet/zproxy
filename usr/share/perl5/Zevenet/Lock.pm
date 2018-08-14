@@ -28,43 +28,12 @@ use Fcntl ':flock';    #use of lock functions
 # generate a lock file based on a input path
 sub getLockFile
 {
-	my $path = shift;
-	my $lock = $path;
-
-	my $lock_dir = "/tmp/locks";
-	mkdir $lock_dir if !-d $lock_dir;
+	my $lock = shift;
 
 	$lock =~ s/\//_/g;
-	$lock = "$lock_dir/$lock.lock";
+	$lock = "/tmp/$lock.lock";
 
 	return $lock;
-}
-
-sub lockfile
-{
-	my $lockfile = shift;
-
-	require Zevenet::Debug;
-	## lock iptables use ##
-	my $open_rc = open ( my $lock_fd, '>', $lockfile );
-
-	if ( $open_rc )
-	{
-		if ( flock ( $lock_fd, LOCK_EX ) )
-		{
-			&zenlog( "Success locking IPTABLES", "info", "SYSTEM" ) if &debug == 3;
-		}
-		else
-		{
-			&zenlog( "Cannot lock iptables: $!", "error", "SYSTEM" );
-		}
-	}
-	else
-	{
-		&zenlog( "Cannot open $lockfile: $!", "error", "SYSTEM" );
-	}
-
-	return $lock_fd;
 }
 
 =begin nd

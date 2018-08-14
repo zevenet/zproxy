@@ -192,7 +192,7 @@ sub getTiny
 		}
 		else
 		{
-			&zenlog( "Could not open file $file_path: $!", "error" );
+			&zenlog( "Cannot create file $file_path: $!", "error" );
 			return;
 		}
 		close $fi;
@@ -235,21 +235,6 @@ sub setTinyObj
 		return;
 	}
 
-	if ( !-f $path )
-	{
-		open my $fi, '>', $path;
-		if ( $fi )
-		{
-			&zenlog( "The file was created $path", "info" );
-		}
-		else
-		{
-			&zenlog( "Could not open file $path: $!", "error" );
-			return;
-		}
-		close $fi;
-	}
-
 	&zenlog( "Modify $object from $path", "debug2" );
 
 	require Zevenet::Lock;
@@ -257,7 +242,7 @@ sub setTinyObj
 	my $lock_file = &getLockFile( $path );
 	my $lock_fd   = &openlock( $lock_file, 'w' );
 
-	my $fileHandle = Config::Tiny->read( $path );
+	my $fileHandle = &getTiny( $path );
 
 	unless ( $fileHandle )
 	{
@@ -276,8 +261,6 @@ sub setTinyObj
 			}
 			$fileHandle->{ $object }->{ $param } = $key->{ $param };
 		}
-
-		#~ $fileHandle->{ $object } = $key;
 	}
 
 	# save a parameter
@@ -299,6 +282,7 @@ sub setTinyObj
 
 	my $success = $fileHandle->write( $path );
 	close $lock_fd;
+	unlink $lock_file;
 
 	return ($success)? 0:1;
 }
@@ -322,6 +306,8 @@ sub delTinyObj
 	my $path   = shift;
 	my $object = shift;
 
+	&zenlog( "Delete $object from $path", "debug2" );
+
 	require Zevenet::Lock;
 
 	my $lock_file = &getLockFile( $path );
@@ -332,8 +318,7 @@ sub delTinyObj
 	my $error = $fileHandle->write( $path );
 
 	close $lock_fd;
-
-	&zenlog( "Delete $object from $path", "debug2" );
+	unlink $lock_file;
 
 	return $error;
 }
