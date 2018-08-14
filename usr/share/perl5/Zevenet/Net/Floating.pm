@@ -209,7 +209,7 @@ sub get_floating_struct
 		unless ( $iface->{ addr } )
 		{
 			my $msg = "This interface has no address configured";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, msg => $msg );
 		}
 
 		$floating_ip = undef;
