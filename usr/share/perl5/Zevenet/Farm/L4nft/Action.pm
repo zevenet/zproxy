@@ -32,16 +32,16 @@ Function: runL4FarmRestart
 
 Parameters:
 	farmname - Farm name
-	changes - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
+	type - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
 
 Returns:
 	Integer - Error code: 0 on success or other value on failure
 
 =cut
 
-sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
+sub runL4FarmRestart    # ($farm_name,$type)
 {
-	my ( $farm_name, $writeconf, $type ) = @_;
+	my ( $farm_name, $type ) = @_;
 
 	my $algorithm   = &getL4FarmParam( 'alg', $farm_name );
 	my $fbootstatus = &getL4FarmParam( 'status', $farm_name );
@@ -50,7 +50,6 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 
 	if (    $algorithm eq "leastconn"
 		 && $fbootstatus eq "up"
-		 && $writeconf eq "false"
 		 && $type eq "hot"
 		 && -e "$pidfile" )
 	{
@@ -63,8 +62,8 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 	}
 	else
 	{
-		&_runL4FarmStop( $farm_name, $writeconf );
-		$output = &_runL4FarmStart( $farm_name, $writeconf );
+		&_runL4FarmStop( $farm_name );
+		$output = &_runL4FarmStart( $farm_name );
 	}
 
 	return $output;
@@ -78,33 +77,24 @@ Function: _runL4FarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
 
-FIXME:
-	delete writeconf parameter. It is obsolet
-
 =cut
 
-sub _runL4FarmStart    # ($farm_name, $writeconf)
+sub _runL4FarmStart    # ($farm_name)
 {
-	my $farm_name = shift;    # input
-#	my $writeconf = shift;    # input
-
-#	require Zevenet::Net::Util;
-#	require Zevenet::Netfilter;
+	my $farm_name = shift;
 	require Zevenet::Farm::Core;
 
 	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
-	my $status = 0;           # output
+	my $status = 0;
 
 	&zenlog( "_runL4FarmStart << farm_name:$farm_name" )
 	  if &debug;
 
-#	my $fileconf = &getFarmFile( $farm_file );
 	my $pid = &runNLBStart();
 	if ( $pid <= 0 ) {
 		return -1;
@@ -137,7 +127,6 @@ Function: _runL4FarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or other value on failure

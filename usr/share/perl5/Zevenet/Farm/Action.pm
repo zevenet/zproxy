@@ -36,16 +36,15 @@ Function: _runFarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
 
 =cut
 
-sub _runFarmStart    # ($farm_name, $writeconf)
+sub _runFarmStart    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Base;
 
@@ -70,30 +69,30 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	&zenlog( "running 'Start write $writeconf' for $farm_name farm $farm_type", "info", "FARMS" );
+	&zenlog( "Starting farm $farm_name with type $farm_type", "info", "FARMS" );
 
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Action;
-		$status = &_runHTTPFarmStart( $farm_name, $writeconf );
+		$status = &_runHTTPFarmStart( $farm_name );
 	}
 	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
-		$status = &_runDatalinkFarmStart( $farm_name, $writeconf );
+		$status = &_runDatalinkFarmStart( $farm_name );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
-		$status = &_runL4FarmStart( $farm_name, $writeconf );
+		$status = &_runL4FarmStart( $farm_name );
 	}
 	elsif ( $farm_type eq "gslb" && $eload )
 	{
 		$status = &eload(
 						  module => 'Zevenet::Farm::GSLB::Action',
 						  func   => '_runGSLBFarmStart',
-						  args   => [$farm_name, $writeconf],
+						  args   => [$farm_name],
 		);
 	}
 
@@ -107,7 +106,6 @@ Function: runFarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
@@ -117,11 +115,11 @@ NOTE:
 
 =cut
 
-sub runFarmStart    # ($farm_name,$writeconf)
+sub runFarmStart    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $status = &_runFarmStart( $farm_name, $writeconf );
+	my $status = &_runFarmStart( $farm_name );
 
 	return -1 if ( $status != 0 );
 
@@ -153,7 +151,6 @@ Function: runFarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
@@ -163,9 +160,9 @@ NOTE:
 
 =cut
 
-sub runFarmStop    # ($farm_name,$writeconf)
+sub runFarmStop    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	if ( $eload )
 	{
@@ -186,7 +183,7 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	require Zevenet::FarmGuardian;
 	&runFGFarmStop( $farm_name );
 
-	my $status = &_runFarmStop( $farm_name, $writeconf );
+	my $status = &_runFarmStop( $farm_name );
 
 	return $status;
 }
@@ -198,16 +195,15 @@ Function: _runFarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
 
 =cut
 
-sub _runFarmStop    # ($farm_name,$writeconf)
+sub _runFarmStop    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Base;
 	my $status = &getFarmStatus( $farm_name );
@@ -225,7 +221,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	my $farm_type = &getFarmType( $farm_name );
 	$status = $farm_type;
 
-	&zenlog( "running 'Stop write $writeconf' for $farm_name farm $farm_type", "info", "FARMS" );
+	&zenlog( "Stopping farm $farm_name with type $farm_type", "info", "FARMS" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -235,7 +231,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
-		$status = &_runDatalinkFarmStop( $farm_name, $writeconf );
+		$status = &_runDatalinkFarmStop( $farm_name );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
@@ -247,11 +243,11 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 		$status = &eload(
 						  module => 'Zevenet::Farm::GSLB::Action',
 						  func   => '_runGSLBFarmStop',
-						  args   => [$farm_name, $writeconf],
+						  args   => [$farm_name],
 		);
 	}
 
-	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
+	if ( $farm_type =~ /^https?$/ )
 	{
 		require Zevenet::Farm::HTTP::Config;
 		my $lock_fh = &lockHTTPFile( $farm_name );

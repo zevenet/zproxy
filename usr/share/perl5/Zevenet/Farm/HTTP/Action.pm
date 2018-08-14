@@ -41,7 +41,7 @@ FIXME:
 =cut
 sub _runHTTPFarmStart    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	require Zevenet::System;
 	require Zevenet::Farm::HTTP::Backend;
@@ -65,18 +65,15 @@ sub _runHTTPFarmStart    # ($farm_name)
 		&setHTTPFarmBackendStatus( $farm_name );
 
 		# write status in configuration file
-		if ( $writeconf eq "true" )
-		{
-			require Zevenet::Farm::HTTP::Config;
-			my $lock_fh = &lockHTTPFile( $farm_name );
+		require Zevenet::Farm::HTTP::Config;
+		my $lock_fh = &lockHTTPFile( $farm_name );
 
-			require Tie::File;
-			tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-			@configfile = grep !/^\#down/, @configfile;
+		require Tie::File;
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		@configfile = grep !/^\#down/, @configfile;
 
-			untie @configfile;
-			close $lock_fh;
-		}
+		untie @configfile;
+		close $lock_fh;
 	}
 	else
 	{

@@ -32,19 +32,14 @@ Function: _runDatalinkFarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - Error code: return 0 on success or different of 0 on failure
 
-BUG:
-	writeconf must not exist, always it has to be TRUE
-	status parameter is not useful
-
 =cut
-sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
+sub _runDatalinkFarmStart    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	require Tie::File;
 	require Zevenet::Net::Util;
@@ -54,21 +49,18 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	my $status;
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	if ( $writeconf eq "true" )
-	{
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		my $first = 1;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	my $first = 1;
 
-		foreach ( @configfile )
+	foreach ( @configfile )
+	{
+		if ( $first eq 1 )
 		{
-			if ( $first eq 1 )
-			{
-				s/\;down/\;up/g;
-				$first = 0;
-			}
+			s/\;down/\;up/g;
+			$first = 0;
 		}
-		untie @configfile;
 	}
+	untie @configfile;
 
 	# include cron task to check backends
 	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
@@ -178,48 +170,39 @@ Function: _runDatalinkFarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - Error code: return 0 on success or -1 on failure
 
-BUG:
-	writeconf must not exist, always it has to be TRUE
-
 =cut
-sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
+sub _runDatalinkFarmStop    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	require Tie::File;
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::Datalink::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status = ( $writeconf eq "true" ) ? -1 : 0;
+	my $status = -1;
 
-	if ( $writeconf eq "true" )
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	my $first = 1;
+	foreach ( @configfile )
 	{
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		my $first = 1;
-		foreach ( @configfile )
+		if ( $first == 1 )
 		{
-			if ( $first == 1 )
-			{
-				s/\;up/\;down/g;
-				$status = $?;
-				$first  = 0;
-			}
+			s/\;up/\;down/g;
+			$status = $?;
+			$first  = 0;
 		}
-		untie @configfile;
 	}
+	untie @configfile;
 
 	# delete cron task to check backends
 	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
 	@cron_file = grep !/\# \_\_$farm_name\_\_/, @cron_file;
 	untie @cron_file;
-
-	$status = 0 if $writeconf eq 'false';
 
 	# Apply changes online
 	if ( $status == -1 )

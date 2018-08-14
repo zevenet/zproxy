@@ -354,22 +354,17 @@ Returns:
 BUG:
 	Always return success
 
-FIXME:
-	writeconf is obsolete parameter, always write configuration
 =cut
 
-sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
+sub setGSLBFarmStatus    # ($farm_name, $status)
 {
-	my ( $farm_name, $status, $writeconf ) = @_;
+	my ( $farm_name, $status ) = @_;
 
 	my $command;
 
 	unlink ( "/tmp/$farm_name.lock" );
 
-	if ( $writeconf eq "true" )
-	{
-		&setGSLBFarmBootStatus( $farm_name, $status );
-	}
+	&setGSLBFarmBootStatus( $farm_name, $status );
 
 	if ( $status eq "start" )
 	{

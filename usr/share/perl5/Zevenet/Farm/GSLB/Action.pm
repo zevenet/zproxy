@@ -35,21 +35,17 @@ Function: _runGSLBFarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-
-FIXME:
-	writeconf must not exist, always it has to be TRUE. Obsolet parameter
 
 BUG:
 	the returned variable must be $output and not $status
 
 =cut
-sub _runGSLBFarmStart    # ($fname,$writeconf)
+sub _runGSLBFarmStart    # ($fname)
 {
-	my ( $fname, $writeconf ) = @_;
+	my ( $fname ) = @_;
 
 	require Tie::File;
 	include 'Zevenet::Farm::GSLB::Service';
@@ -86,23 +82,21 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 		}
 	}
 
-	if ( $writeconf eq "true" )
-	{
-		unlink ( "/tmp/$fname.lock" );
-		tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
-		my $first = 1;
+	unlink ( "/tmp/$fname.lock" );
+	tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
+	my $first = 1;
 
-		foreach ( @filelines )
+	foreach ( @filelines )
+	{
+		if ( $first eq 1 )
 		{
-			if ( $first eq 1 )
-			{
-				s/\;down/\;up/g;
-				$first = 0;
-				last;
-			}
+			s/\;down/\;up/g;
+			$first = 0;
+			last;
 		}
-		untie @filelines;
 	}
+	untie @filelines;
+
 	my $exec = &getGSLBStartCommand( $fname );
 
 	&zenlog( "running $exec", "info", "GSLB" );
@@ -126,18 +120,14 @@ Function: _runGSLBFarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - return 0 on success or -1 on failure
 
-FIXME:
-	writeconf must not exist, always it has to be TRUE
-
 =cut
-sub _runGSLBFarmStop    # ($farm_name,$writeconf)
+sub _runGSLBFarmStop    # ($farm_name)
 {
-	my ( $fname, $writeconf ) = @_;
+	my ( $fname ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Validate';
 	include 'Zevenet::Farm::GSLB::Config';
@@ -163,24 +153,20 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		return 1;
 	}
 
-	if ( $writeconf eq "true" )
+	require Tie::File;
+	tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
+	my $first = 1;
+
+	foreach ( @filelines )
 	{
-		require Tie::File;
-		tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
-		my $first = 1;
-
-		foreach ( @filelines )
+		if ( $first eq 1 )
 		{
-			if ( $first eq 1 )
-			{
-				s/\;up/\;down/g;
-				$status = $?;
-				$first  = 0;
-			}
+			s/\;up/\;down/g;
+			$status = $?;
+			$first  = 0;
 		}
-
-		untie @filelines;
 	}
+	untie @filelines;
 
 	my $exec    = &getGSLBStopCommand( $fname );
 	my $pidfile = &getGSLBFarmPidFile( $fname );

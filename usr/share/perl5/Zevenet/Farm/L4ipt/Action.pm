@@ -32,20 +32,15 @@ Function: _runL4FarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
 
-FIXME:
-	delete writeconf parameter. It is obsolet
-
 =cut
 
-sub _runL4FarmStart    # ($farm_name,$writeconf)
+sub _runL4FarmStart    # ($farm_name)
 {
-	my $farm_name = shift;    # input
-	my $writeconf = shift;    # input
+	my $farm_name = shift;
 
 	require Zevenet::Lock;
 	require Zevenet::Net::Util;
@@ -54,26 +49,23 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
-	my $status = 0;           # output
+	my $status = 0;
 
-	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf", "debug", "LSLB" )
+	&zenlog( "_runL4FarmStart << farm_name:$farm_name", "debug", "LSLB" )
 	  if &debug;
 
 	# initialize a farm struct
 	my $farm = &getL4FarmStruct( $farm_name );
 
-	if ( $writeconf eq "true" )
-	{
-		require Tie::File;
+	require Tie::File;
 
-		tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
-		foreach ( @configfile )
-		{
-			s/\;down/\;up/g;
-			last;
-		}
-		untie @configfile;
+	tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
+	foreach ( @configfile )
+	{
+		s/\;down/\;up/g;
+		last;
 	}
+	untie @configfile;
 
 	my $l4sd = &getGlobalConfiguration( 'l4sd' );
 
@@ -192,7 +184,7 @@ Returns:
 
 =cut
 
-sub _runL4FarmStop    # ($farm_name,$writeconf)
+sub _runL4FarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
