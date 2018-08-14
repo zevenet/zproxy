@@ -669,7 +669,7 @@ sub getL4FarmBackendAvailableID
 			}
 		}
 
-		return $if if ( $noexist );
+		return $id if ( $noexist );
 	}
 
 	return $nbackends;
