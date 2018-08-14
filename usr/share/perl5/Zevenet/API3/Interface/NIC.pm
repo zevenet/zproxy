@@ -52,7 +52,7 @@ sub delete_interface_nic # ( $nic )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -255,7 +255,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
-		my $state = &upIf( { name => $nic }, 'writeconf' );
+		my $state = &upIf( { name => $nic } );
 
 		if ( ! $state )
 		{
@@ -283,7 +283,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $nic }, 'writeconf' );
+		my $state = &downIf( { name => $nic } );
 
 		if ( $state )
 		{
@@ -461,7 +461,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		# Put the interface up
 		{
 			my $previous_status = $if_ref->{ status };
-			my $state = &upIf( $if_ref, 'writeconf' );
+			my $state = &upIf( $if_ref );
 
 			if ( $state == 0 )
 			{

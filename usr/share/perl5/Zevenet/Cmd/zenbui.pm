@@ -615,7 +615,7 @@ sub set_net()
 				{
 					my $previous_status = $if_ref->{ status };
 
-					my $state = &upIf( $if_ref, 'writeconf' );
+					my $state = &upIf( $if_ref );
 
 					if ( $state == 0 )
 					{

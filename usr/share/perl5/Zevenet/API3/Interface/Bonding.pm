@@ -256,7 +256,7 @@ sub delete_interface_bond # ( $bond )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -330,7 +330,7 @@ sub delete_bond # ( $bond )
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 		{
-			die if &downIf( $bonds->{ $bond }, 'writeconf' );
+			die if &downIf( $bonds->{ $bond } );
 		}
 
 		die if &setBondMaster( $bond, 'del', 'writeconf' );
@@ -607,7 +607,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
-		my $state = &upIf( { name => $bond }, 'writeconf' );
+		my $state = &upIf( { name => $bond } );
 
 		if ( ! $state )
 		{
@@ -633,7 +633,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond }, 'writeconf' );
+		my $state = &downIf( { name => $bond } );
 
 		if ( $state )
 		{
@@ -830,7 +830,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		# Put the interface up
 		{
 			my $previous_status = $if_ref->{ status };
-			my $state = &upIf( $if_ref, 'writeconf' );
+			my $state = &upIf( $if_ref );
 
 			if ( $state == 0 )
 			{

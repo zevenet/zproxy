@@ -53,15 +53,6 @@ sub createIf    # ($if_ref)
 	{
 		&zenlog( "Creating vlan $$if_ref{name}", "info", "NETWORK" );
 
-# enable the parent physical interface
-#~ my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
-#~ $parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
-
-		#~ if ( $parent_if->{ status } eq 'down' )
-		#~ {
-		#~ $status = &upIf( $parent_if, 'writeconf' );
-		#~ }
-
 		my $ip_cmd =
 		  "$ip_bin link add link $$if_ref{dev} name $$if_ref{name} type vlan id $$if_ref{vlan}";
 		$status = &logAndRun( $ip_cmd );
@@ -77,7 +68,6 @@ Function: upIf
 
 Parameters:
 	if_ref - network interface hash reference.
-	writeconf - true value to apply change in interface configuration file. Optional.
 
 Returns:
 	integer - return code of ip command.
@@ -87,43 +77,40 @@ See Also:
 =cut
 
 # up network interface
-sub upIf    # ($if_ref, $writeconf)
+sub upIf    # ($if_ref)
 {
-	my ( $if_ref, $writeconf ) = @_;
+	my ( $if_ref ) = @_;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $status    = 0;
 	$if_ref->{ status } = 'up';
 
-	if ( $writeconf )
+	my $file = "$configdir/if_$$if_ref{name}_conf";
+
+	if ( -f $file )
 	{
-		my $file = "$configdir/if_$$if_ref{name}_conf";
+		require Tie::File;
 
-		if ( -f $file )
+		my $found = 0;
+		tie my @if_lines, 'Tie::File', "$file";
+		for my $line ( @if_lines )
 		{
-			require Tie::File;
-
-			my $found = 0;
-			tie my @if_lines, 'Tie::File', "$file";
-			for my $line ( @if_lines )
+			if ( $line =~ /^status=/ )
 			{
-				if ( $line =~ /^status=/ )
-				{
-					$line  = "status=up";
-					$found = 1;
-					last;
-				}
+				$line  = "status=up";
+				$found = 1;
+				last;
 			}
+		}
 
-			unshift ( @if_lines, 'status=up' ) if !$found;
-			untie @if_lines;
-		}
-		else
-		{
-			open ( my $fh, '>', $file );
-			print { $fh } "status=up\n";
-			close $fh;
-		}
+		unshift ( @if_lines, 'status=up' ) if !$found;
+		untie @if_lines;
+	}
+	else
+	{
+		open ( my $fh, '>', $file );
+		print { $fh } "status=up\n";
+		close $fh;
 	}
 
 	my $ip_cmd = "$ip_bin link set dev $$if_ref{name} up";
@@ -156,13 +143,6 @@ sub upIf    # ($if_ref, $writeconf)
 			$status = 1;
 			&zenlog( "No link up for $$if_ref{name}", "warning", "NETWORK" );
 		}
-
-		# Start monitoring throughput
-		#~ &eload(
-				#~ module => 'Zevenet::Net::Throughput',
-				#~ func   => 'startTHROUIface',
-				#~ args   => [$$if_ref{ name }],
-		#~ ) if $eload;
 	}
 
 	return $status;
@@ -175,7 +155,6 @@ Function: downIf
 
 Parameters:
 	if_ref - network interface hash reference.
-	writeconf - true value to apply change in interface configuration file. Optional.
 
 Returns:
 	integer - return code of ip command.
@@ -185,9 +164,9 @@ See Also:
 =cut
 
 # down network interface in system and configuration file
-sub downIf    # ($if_ref, $writeconf)
+sub downIf    # ($if_ref)
 {
-	my ( $if_ref, $writeconf ) = @_;
+	my ( $if_ref ) = @_;
 
 	if ( ref $if_ref ne 'HASH' )
 	{
@@ -198,36 +177,26 @@ sub downIf    # ($if_ref, $writeconf)
 	my $ip_cmd;
 
 	# Set down status in configuration file
-	if ( $writeconf )
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $file      = "$configdir/if_$$if_ref{name}_conf";
+
+	require Tie::File;
+	tie my @if_lines, 'Tie::File', "$file";
+
+	for my $line ( @if_lines )
 	{
-		my $configdir = &getGlobalConfiguration( 'configdir' );
-		my $file      = "$configdir/if_$$if_ref{name}_conf";
-
-		require Tie::File;
-		tie my @if_lines, 'Tie::File', "$file";
-
-		for my $line ( @if_lines )
+		if ( $line =~ /^status=/ )
 		{
-			if ( $line =~ /^status=/ )
-			{
-				$line = "status=down";
-				last;
-			}
+			$line = "status=down";
+			last;
 		}
-		untie @if_lines;
 	}
+	untie @if_lines;
 
 	# For Eth and Vlan
 	if ( $$if_ref{ vini } eq '' )
 	{
 		$ip_cmd = "$ip_bin link set dev $$if_ref{name} down";
-
-		# Stop monitoring throughput
-		#~ &eload(
-				#~ module => 'Zevenet::Net::Throughput',
-				#~ func   => 'stopTHROUIface',
-				#~ args   => [$$if_ref{ name }],
-		#~ ) if $eload;
 	}
 
 	# For Vini

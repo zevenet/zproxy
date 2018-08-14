@@ -187,7 +187,7 @@ sub new_vlan    # ( $json_obj )
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{ name } );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{
@@ -250,7 +250,7 @@ sub delete_interface_vlan    # ( $vlan )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' );
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -436,7 +436,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( !$state )
 		{
@@ -456,7 +456,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $vlan }, 'writeconf' );
+		my $state = &downIf( { name => $vlan } );
 
 		if ( $state )
 		{
@@ -614,7 +614,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		die if &addIp( $if_ref );
 		die if &writeRoutes( $if_ref->{ name } );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{

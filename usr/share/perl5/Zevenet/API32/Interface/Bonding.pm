@@ -330,7 +330,7 @@ sub delete_bond    # ( $bond )
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 		{
-			die if &downIf( $bonds->{ $bond }, 'writeconf' );
+			die if &downIf( $bonds->{ $bond } );
 		}
 
 		die if &setBondMaster( $bond, 'del', 'writeconf' );
@@ -477,7 +477,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			&addIp( $if_ref ) if $if_ref;
 		}
 
-		my $state = &upIf( { name => $bond }, 'writeconf' );
+		my $state = &upIf( { name => $bond } );
 
 		if ( !$state )
 		{
@@ -500,7 +500,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond }, 'writeconf' );
+		my $state = &downIf( { name => $bond } );
 
 		if ( $state )
 		{
@@ -734,7 +734,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		my $previous_status = $if_ref->{ status };
 		if ( $previous_status eq "up" )
 		{
-			my $state = &upIf( $if_ref, 'writeconf' );
+			my $state = &upIf( $if_ref );
 
 			if ( $state == 0 )
 			{
