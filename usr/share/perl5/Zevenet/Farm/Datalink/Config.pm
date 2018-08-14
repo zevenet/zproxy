@@ -198,7 +198,7 @@ Function: getDatalinkFarmVip
 	Returns farm vip, vport or vip:vport
 
 Parameters:
-	info - parameter to return: vip, for virtual ip; vipp, for virtual port or vipps, for vip:vipp
+	info - parameter to return: vip, for virtual ip; vipp, for virtual port
 	farmname - Farm name
 
 Returns:
@@ -225,7 +225,6 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 
 			if ( $info eq "vip" )   { $output = $line_a[1]; }
 			if ( $info eq "vipp" )  { $output = $line_a[2]; }
-			if ( $info eq "vipps" ) { $output = "$line_a[1]\:$line_a[2]"; }
 		}
 	}
 	close $fd;

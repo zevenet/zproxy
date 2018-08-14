@@ -174,7 +174,6 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 
 			if ( $info eq "vip" )   { $output = $vip[2]; }
 			if ( $info eq "vipp" )  { $output = $vipp[2]; }
-			if ( $info eq "vipps" ) { $output = "$vip[2]\:$vipp[2]"; }
 		}
 		$i++;
 	}

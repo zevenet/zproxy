@@ -1154,9 +1154,6 @@ Parameters:
 Returns:
 	Scalar - return vip or port of farm or -1 on failure
 
-FIXME
-	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
-
 =cut
 sub getHTTPFarmVip    # ($info,$farm_name)
 {
@@ -1185,7 +1182,6 @@ sub getHTTPFarmVip    # ($info,$farm_name)
 
 			if ( $info eq "vip" )   { $output = $vip[1]; }
 			if ( $info eq "vipp" )  { $output = $vipp[1]; }
-			if ( $info eq "vipps" ) { $output = "$vip[1]\:$vipp[1]"; }
 		}
 		$i++;
 	}
