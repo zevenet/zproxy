@@ -524,7 +524,7 @@ sub sendL4ConfChange    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	my $algorithm   = &getL4FarmParam( 'scheduler', $farm_name );
+	my $algorithm   = &getL4FarmParam( 'alg', $farm_name );
 	my $fbootstatus = &getL4FarmParam( 'status', $farm_name );
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";

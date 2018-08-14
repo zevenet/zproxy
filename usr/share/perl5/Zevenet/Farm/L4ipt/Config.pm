@@ -36,7 +36,7 @@ Parameters:
 		"vipp": get the virtual port
 		"status": get the status and boot status
 		"mode": get the topology (or nat type)
-		"scheduler": get the algorithm
+		"alg": get the algorithm
 		"proto": get the protocol
 		"persist": get persistence
 		"persisttm": get client persistence timeout
@@ -187,7 +187,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			last;
 		}
 
-		if ( $param eq 'scheduler' )
+		if ( $param eq 'alg' )
 		{
 			$output = $l[5];
 			last;
@@ -477,7 +477,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $i             = 0;
-	my $prev_alg      = &getL4FarmParam( 'scheduler', $farm_name );    # previous algorithm
+	my $prev_alg      = &getL4FarmParam( 'alg', $farm_name );    # previous algorithm
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -1124,7 +1124,7 @@ sub getL4FarmStruct
 
 	$farm{ nattype }  = &_getL4ParseFarmConfig( 'mode', undef, $config );
 	$farm{ mode }     = $farm{ nattype };
-	$farm{ lbalg }    = &_getL4ParseFarmConfig( 'scheduler', undef, $config );
+	$farm{ lbalg }    = &_getL4ParseFarmConfig( 'alg', undef, $config );
 	$farm{ vip }      = &_getL4ParseFarmConfig( 'vip', undef, $config );
 	$farm{ vport }    = &_getL4ParseFarmConfig( 'vipp', undef, $config );
 	$farm{ vproto }   = &_getL4ParseFarmConfig( 'proto', undef, $config );

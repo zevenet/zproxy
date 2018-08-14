@@ -287,7 +287,7 @@ sub getFarmAlgorithm    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$algorithm = &getL4FarmParam( 'scheduler', $farm_name );
+		$algorithm = &getL4FarmParam( 'alg', $farm_name );
 	}
 
 	return $algorithm;
