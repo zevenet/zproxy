@@ -502,7 +502,7 @@ sub _getL4FarmParseServers
 				$status = "undefined";
 			}
 
-			my $rip;
+			my $rip = $aux[2];
 			if ( $port ne '' && $fproto ne 'all' )
 			{
 				if ( &ipversion( $aux[2] ) == 4 )

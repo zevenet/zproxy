@@ -186,41 +186,23 @@ Function: _runL4FarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or other value on failure
-
-FIXME:
-	delete writeconf parameter. It is obsolet
 
 =cut
 
 sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name ) = @_;
 
 	require Zevenet::Lock;
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::L4xNAT::Config;
 
-	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() Stopping farm $farm_name", "debug", "LSLB" );
 
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $status;       # output
-
-	if ( $writeconf eq 'true' )
-	{
-		require Tie::File;
-
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		foreach ( @configfile )
-		{
-			s/\;up/\;down/g;
-			last;     # run only for the first line
-		}
-		untie @configfile;
-	}
+	my $status;
 
 	# Remove log rules
 	&reloadL4FarmLogsRule( $farm_name, "false" );
@@ -245,7 +227,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	@allrules = &getIptList( $farm_name, "nat", "POSTROUTING" );
 	$status =
 	  &deleteIptRules( $farm_name, "farm", $farm_name, "nat", "POSTROUTING",
-					   @allrules );
+			   @allrules );
 
 	## unlock iptables use ##
 	close $ipt_lockfile;
@@ -262,6 +244,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	## Delete ip rule mark ##
 	my $farm        = &getL4FarmStruct( $farm_name );
 	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
+	&setL4FarmParam( 'status', "down", $farm_name );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
 	my $vip_if      = &getInterfaceConfig( $vip_if_name );
 	my $table_if =

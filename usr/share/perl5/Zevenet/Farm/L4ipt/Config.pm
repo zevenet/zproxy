@@ -104,6 +104,10 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	{
 		$output = &setL4FarmVirtualConf( undef, $value, $farm_name );
 	}
+	elsif ( $param eq "status" )
+	{
+		$output = &setL4FarmStatus( $value, $farm_name );
+	}
 	elsif ( $param eq "alg" )
 	{
 		$output = &setL4FarmAlgorithm( $value, $farm_name );
@@ -640,6 +644,23 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	}
 
 	return;
+}
+
+sub setL4FarmStatus		#( value, farm_name )
+{
+	my $value		= shift;
+	my $farm_name		= shift;
+	my $farm_filename	= &getFarmFile( $farm_name );
+
+	require Tie::File;
+
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	foreach ( @configfile )
+	{
+		s/\;up/\;down/g;
+		last;     # run only for the first line
+	}
+	untie @configfile;
 }
 
 =begin nd
