@@ -36,6 +36,21 @@ sub getLockFile
 	return $lock;
 }
 
+# return 1 if locked, 0 if not
+sub getLockStatus
+{
+	my $lock = shift;
+
+	my $lfile = &getLockFile( $lock );
+
+	return 0 if ( ! -e $lfile );
+#	my $fh;
+#	$fh = &openlock( $lfile, 'r' ) or return 1;
+#	close $fh;
+
+	return 1;
+}
+
 =begin nd
 Function: openlock
 

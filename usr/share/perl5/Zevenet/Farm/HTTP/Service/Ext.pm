@@ -591,7 +591,6 @@ sub moveService
 
 	# unlock file
 	close $lock_fh;
-	unlink $lock_file;
 
 	# move fg
 	&moveServiceFarmStatus( $farm, $srv, $req_index );

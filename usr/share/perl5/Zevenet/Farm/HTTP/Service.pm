@@ -51,6 +51,7 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 
 	use File::Grep 'fgrep';
 	require Tie::File;
+	require Zevenet::Lock;
 	require Zevenet::Farm::Config;
 
 	my $output = -1;
@@ -109,9 +110,8 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		$newservice[0] =~ s/#//g;
 		$newservice[$#newservice] =~ s/#//g;
 
-		# lock file
-		require Zevenet::Farm::HTTP::Config;
-		my $lock_fh = &lockHTTPFile( $farm_name );
+		my $lock_file = &getLockFile( $farm_name );
+		my $lock_fh = &openlock( $lock_file, 'w' );
 
 		my @fileconf;
 		tie @fileconf, 'Tie::File', "$configdir/$farm_name\_pound.cfg";
@@ -176,6 +176,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	my ( $farm_name, $service ) = @_;
 
 	require Tie::File;
+	require Zevenet::Lock;
 	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::HTTP::Service;
 
@@ -198,9 +199,8 @@ sub deleteFarmService    # ($farm_name,$service)
 	# Stop FG service
 	&delFGFarm( $farm_name, $service );
 
-	# lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
@@ -858,9 +858,9 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	$string =~ s/^\s+//;
 	$string =~ s/\s+$//;
 
-	# lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";

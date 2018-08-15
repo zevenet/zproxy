@@ -182,7 +182,9 @@ sub getFarmVipStatus    # ($farm_name)
 	return $output if !defined ( $farm_name );    # farm name cannot be empty
 
 	$output = "problem";
-	if ( &getFarmLock( $farm_name ) != -1 )
+
+	require Zevenet::Lock;
+	if ( &getLockStatus( $farm_name ) )
 	{
 		return "needed restart";
 	}
@@ -306,82 +308,6 @@ sub getFarmPid    # ($farm_name)
 	}
 
 	return $output;
-}
-
-=begin nd
-Function: getFarmLock
-
-	Check if a farm is locked.
-
-	A locked farm needs to be restarted to apply the latest changes.
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - Return content of lock file if it is locked or -1 the farm is not locked
-
-NOTE:
-	Generic function
-=cut
-sub getFarmLock    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $output = -1;
-	my $lockfile = "/tmp/$farm_name.lock";
-
-	if ( -e $lockfile )
-	{
-		require Zevenet::Lock;
-
-		my $fh = &openlock( $lockfile, 'r' );
-		read $fh, $output, 255;
-		close $fh;
-	}
-
-	return $output;
-}
-
-=begin nd
-Function: setFarmLock
-
-	Set the lock status to "on" or "off"
-	If the new status in "on" it's possible to set a message inside.
-
-	A locked farm needs to be restarted to apply the latest changes.
-
-Parameters:
-	farmname - Farm name
-	status - This parameter can value "on" or "off"
-	message - Text for lock file
-
-Returns:
-	none - No returned value
-
-NOTE:
-	Generic function
-=cut
-sub setFarmLock    # ($farm_name, $status, $msg)
-{
-	my ( $farm_name, $status, $msg ) = @_;
-
-	my $lockfile = "/tmp/$farm_name.lock";
-	my $lockstatus = &getFarmLock( $farm_name );
-
-	if ( $status eq "on" && $lockstatus == -1 )
-	{
-		require Zevenet::Lock;
-
-		my $fh = &openlock( $lockfile, 'w' );
-		print $fh "$msg";
-		close $fh;
-	}
-
-	if ( $status eq "off" )
-	{
-		unlink( $lockfile ) if -e $lockfile;
-	}
 }
 
 =begin nd

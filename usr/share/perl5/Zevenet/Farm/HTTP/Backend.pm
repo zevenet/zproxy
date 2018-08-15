@@ -51,9 +51,9 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	# lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
@@ -255,9 +255,9 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 	my $j             = -1;
 	my $sw            = 0;
 
-	# lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";

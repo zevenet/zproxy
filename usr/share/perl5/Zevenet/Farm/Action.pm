@@ -223,7 +223,7 @@ sub _runFarmStop    # ($farm_name)
 
 	&zenlog( "Stopping farm $farm_name with type $farm_type", "info", "FARMS" );
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	if ( $farm_type =~ /^https?$/ )
 	{
 		require Zevenet::Farm::HTTP::Action;
 		$status = &_runHTTPFarmStop( $farm_name );
@@ -245,18 +245,6 @@ sub _runFarmStop    # ($farm_name)
 						  func   => '_runGSLBFarmStop',
 						  args   => [$farm_name],
 		);
-	}
-
-	if ( $farm_type =~ /^https?$/ )
-	{
-		require Zevenet::Farm::HTTP::Config;
-		my $lock_fh = &lockHTTPFile( $farm_name );
-
-		open my $fw, '>>', "$configdir/$farm_filename";
-		print $fw "#down\n";
-		close $fw;
-
-		close $lock_fh;
 	}
 
 	return $status;
@@ -386,10 +374,12 @@ sub setFarmRestart    # ($farm_name)
 
 	# do nothing if the farm is not running
 	require Zevenet::Farm::Base;
-
 	return if &getFarmStatus( $farm_name ) ne 'up';
 
-	&setFarmLock( $farm_name, "on" );
+	require Zevenet::Lock;
+	my $lf = &getLockFile( $farm_name );
+	my $fh = &openlock( $lf, 'w' );
+	close $fh;
 }
 
 =begin nd
@@ -412,7 +402,9 @@ sub setFarmNoRestart    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	&setFarmLock( $farm_name, "off" );
+	require Zevenet::Lock;
+	my $lf = &getLockFile( $farm_name );
+	unlink ( $lf ) if -e $lf;
 }
 
 =begin nd

@@ -45,7 +45,9 @@ sub getAllFarmStats
 		my $port   = &getFarmVip( 'vipp', $name );
 		my $established = 0;
 		my $pending     = 0;
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+
+		require Zevenet::Lock;
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
 		if ( $status eq "up" )
 		{

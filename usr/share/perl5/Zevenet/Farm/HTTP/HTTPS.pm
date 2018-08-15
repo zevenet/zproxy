@@ -86,10 +86,12 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	my ( $cfile, $farm_name ) = @_;
 
 	require Tie::File;
+	require Zevenet::Lock;
 	require Zevenet::Farm::HTTP::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $lock_fh       = &lockHTTPFile( $farm_name );
+	my $lock_file     = &getLockFile( $farm_name );
+	my $lock_fh       = &openlock( $lock_file, 'w' );
 	my $output        = -1;
 
 	&zenlog( "Setting 'Certificate $cfile' for $farm_name farm https", "info", "LSLB" );
@@ -130,10 +132,12 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	my $cipherc   = shift;
 
 	require Tie::File;
+	require Zevenet::Lock;
 	require Zevenet::Farm::HTTP::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $lock_fh       = &lockHTTPFile( $farm_name );
+	my $lock_file     = &getLockFile( $farm_name );
+	my $lock_fh       = &openlock( $lock_file, 'w' );
 	my $output        = -1;
 
 	tie my @array, 'Tie::File', "$configdir/$farm_filename";
@@ -316,10 +320,12 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 	my ( $farm_name, $protocol, $action ) = @_;
 
 	require Tie::File;
+	require Zevenet::Lock;
 	require Zevenet::Farm::HTTP::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $lock_fh       = &lockHTTPFile( $farm_name );
+	my $lock_file     = &getLockFile( $farm_name );
+	my $lock_fh       = &openlock( $lock_file, 'w' );
 	my $output        = -1;
 
 	tie my @file, 'Tie::File', "$configdir/$farm_filename";

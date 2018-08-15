@@ -29,29 +29,6 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
-Function: lockHTTPFile
-
-	Locks the configuration file for a http farm.
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - lock description
-
-=cut
-sub lockHTTPFile
-{
-	my $farm = shift;
-
-	require Zevenet::Lock;
-
-	my $lock_file = "/tmp/$farm.open";
-
-	return &openlock( $lock_file, 'w' );
-}
-
-=begin nd
 Function: setFarmClientTimeout
 
 	Configure the client time parameter for a HTTP farm.
@@ -71,8 +48,9 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
@@ -155,8 +133,9 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	&zenlog( "Setting 'Session type $session' for $farm_name farm http", "info", "LSLB" );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
@@ -251,8 +230,9 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
@@ -339,8 +319,9 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
@@ -428,15 +409,15 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 {
 	my ( $farm_name, $flisten ) = @_;
 
-	require Tie::File;
-
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $i_f           = -1;
 	my $found         = "false";
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
+	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $array_count = @filefarmhttp;
 
@@ -582,8 +563,9 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 
 	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation", "info", "LSLB" );
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
@@ -663,8 +645,9 @@ sub setFarmConnTO    # ($tout,$farm_name)
 
 	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm http", "info", "LSLB" );
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
@@ -744,8 +727,9 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
@@ -827,8 +811,9 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 	my $i_f           = -1;
 	my $found         = "false";
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $array_count = @filefarmhttp;
@@ -934,12 +919,9 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 
 	if ( -e "$configdir\/$farm_name\_Err$nerr.html" && $nerr != "" )
 	{
-		# lock file
-		my $lock_fh = &lockHTTPFile( $farm_name );
-
 		$output = 0;
 		my @err = split ( "\n", "$content" );
-		open my $fd, '>', "$configdir\/$farm_name\_Err$nerr.html";
+		my $fd = &openlock( "$configdir\/$farm_name\_Err$nerr.html", 'w' );
 
 		foreach my $line ( @err )
 		{
@@ -949,7 +931,6 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 		}
 
 		close $fd;
-		close $lock_fh;
 	}
 
 	return $output;
@@ -1211,8 +1192,9 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat          = 0;
 	my $enter         = 2;
 
-	# lock file
-	my $lock_fh = &lockHTTPFile( $farm_name );
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @array, 'Tie::File', "$configdir\/$farm_filename";

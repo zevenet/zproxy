@@ -41,7 +41,8 @@ sub farms_gslb    # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && !&getFarmLock( $name );
+		require Zevenet::Lock;
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
 		push @out,
 		  {
