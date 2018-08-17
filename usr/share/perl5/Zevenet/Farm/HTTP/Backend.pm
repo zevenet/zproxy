@@ -537,7 +537,6 @@ Returns:
 	none - .
 
 FIXME:
-	Rename the function, something like saveFarmHTTPBackendstatus, not is "get", this function makes changes in the system
 	Not return nothing, do error control
 
 =cut

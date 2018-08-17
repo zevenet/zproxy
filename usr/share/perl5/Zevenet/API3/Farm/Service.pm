@@ -838,7 +838,7 @@ sub delete_service # ( $farmname, $service )
 	my $return;
 	if ( $type eq "http" || $type eq "https" )
 	{
-		$return = &deleteFarmService( $farmname, $service );
+		$return = &delHTTPFarmService( $farmname, $service );
 	}
 	elsif ( $type eq "gslb" )
 	{

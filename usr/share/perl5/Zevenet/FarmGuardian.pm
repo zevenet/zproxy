@@ -905,7 +905,7 @@ Returns:
 Bugs:
 
 See Also:
-	zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi, <deleteFarmService>
+	zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi
 =cut
 
 sub runFarmGuardianRemove    # ($fname,$svice)

@@ -155,7 +155,7 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 }
 
 =begin nd
-Function: deleteFarmService
+Function: delHTTPFarmService
 
 	Delete a service in a Farm
 
@@ -166,12 +166,9 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success, -1 on failure
 
-FIXME:
-	Rename function to delHTTPFarmService
-
 =cut
 
-sub deleteFarmService    # ($farm_name,$service)
+sub delHTTPFarmService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 

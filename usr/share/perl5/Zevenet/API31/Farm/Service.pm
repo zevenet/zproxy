@@ -477,7 +477,7 @@ sub delete_service    # ( $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $error = &deleteFarmService( $farmname, $service );
+	my $error = &delHTTPFarmService( $farmname, $service );
 
 	# check if the service is in use
 	if ( $error == -2 )
