@@ -102,12 +102,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 
 		for ( @array )
 		{
-			if ( $_ =~ /Cert "/ )
-			{
-				#s/.*Cert\ .*/\tCert\ \"$configdir\/$cfile\"/g;
-				#$output = $?;
-				$sw = 1;
-			}
+			$sw = 1 if ( $_ =~ /Cert "/ );
 
 			if ( $_ !~ /Cert "/ && $sw eq 1 )
 			{

@@ -230,47 +230,6 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 
 =begin nd
 
-Function: getFarmBackendStatus_old
-
-	[Deprecated] Get processed information about status and configuration of backends.
-	This function is deprecated, use getFarmBackend to get a complete backend array list
-
-Parameters:
-	farmname - Farm name
-	content - Raw backend info
-
-Returns:
-	Array - List of backend. Each profile has a different output format
-
-=cut
-sub getFarmBackendsStatus_old    # ($farm_name,@content)
-{
-	my ( $farm_name, @content ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my @output;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Zevenet::Farm::HTTP::Backend;
-		@output = &getHTTPFarmBackendsStatus_old( $farm_name, @content );
-	}
-	elsif ( $farm_type eq "datalink" )
-	{
-		require Zevenet::Farm::Datalink::Backend;
-		@output = &getDatalinkFarmBackendsStatus_old( @content );
-	}
-	elsif ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Backend;
-		@output = &getL4FarmServers( $farm_name );
-	}
-
-	return @output;
-}
-
-=begin nd
-
 Function: getFarmBackendsClients
 
 	Function that return the status information of sessions

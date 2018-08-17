@@ -181,7 +181,6 @@ sub getHTTPBackendSYNConns    # ($farm_name, $backend_ip, $backend_port)
 =begin nd
 Function: getHTTPFarmBackendsStats
 
-	This function is the same than getHTTPFarmBackendsStatus_old but return a hash with http farm information
 	This function take data from pounctl and it gives hash format
 
 Parameters:

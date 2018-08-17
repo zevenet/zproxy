@@ -272,39 +272,6 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 }
 
 =begin nd
-Function: getDatalinkFarmBackendsStatus_old
-
-	Get the backend status from a datalink farm
-
-Parameters:
-	content - Not used, it is necessary create a function to generate content
-
-Returns:
-	array - Each item has the next format: "ip;port;backendstatus;weight;priority;clients"
-
-BUG:
-	Not used. This function exist but is not contemplated in zapi v3
-	Use farmname as parameter
-	It is necessary creates backend checks and save backend status
-
-=cut
-
-sub getDatalinkFarmBackendsStatus_old    # (@content)
-{
-	my ( @content ) = @_;
-
-	my @backends_data;
-
-	foreach my $server ( @content )
-	{
-		my @serv = split ( ";", $server );
-		push ( @backends_data, "$serv[2]\;$serv[3]\;$serv[4]\;$serv[5]\;$serv[6]" );
-	}
-
-	return @backends_data;
-}
-
-=begin nd
 Function: getDatalinkFarmBackendStatusCtl
 
 	Return from datalink config file, all backends with theirs parameters and status

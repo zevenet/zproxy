@@ -729,8 +729,8 @@ sub move_services
 						while ( $srv_position != $json_obj->{ 'position' } )
 						{
 							#change configuration file
-							&moveServiceFarmStatus( $farmname, $moveservice, $service );
-							&moveService( $farmname, $moveservice, $service );
+							&setHTTPFarmMoveServiceStatusFile( $farmname, $moveservice, $service );
+							&setHTTPFarmMoveService( $farmname, $moveservice, $service );
 
 							$srv_position = &getFarmVSI( $farmname, $service );
 						}

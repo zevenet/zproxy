@@ -89,7 +89,7 @@ sub move_services
 		&zenlog( "Farm stopped successful.", "info", "LSLB" );
 	}
 
-	&moveService( $farmname, $service, $json_obj->{ 'position' } );
+	&setHTTPFarmMoveService( $farmname, $service, $json_obj->{ 'position' } );
 
 	# start farm if his status was up
 	if ( $farm_status eq 'up' )

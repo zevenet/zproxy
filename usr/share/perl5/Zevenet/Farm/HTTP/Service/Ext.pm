@@ -516,30 +516,25 @@ sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 	return $errno;
 }
 
-# Move/Sort services
-
-
 =begin nd
-Function: moveService
+Function: setHTTPFarmMoveService
 
-	Move a HTTP service to change its preference. This function changes the possition of a service in farm config file
+	Move a HTTP service to change its preference. This function changes
+	the possition of a service in farm config file
 
 Parameters:
 	farmname - Farm name
-	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
 	service - Service to move
+	index - Required index
 
 Returns:
 	integer - Always return 0
 
 FIXME:
-	Rename function to setHTTPFarmMoveService
 	Always return 0, create error control
 
 =cut
-
-
-sub moveService
+sub setHTTPFarmMoveService
 {
 	my $farm      = shift;
 	my $srv       = shift;
@@ -593,32 +588,30 @@ sub moveService
 	close $lock_fh;
 
 	# move fg
-	&moveServiceFarmStatus( $farm, $srv, $req_index );
+	&setHTTPFarmMoveServiceStatusFile( $farm, $srv, $req_index );
 
 	return $out;
 }
 
-
 =begin nd
-Function: moveServiceFarmStatus
+Function: setHTTPFarmMoveServiceStatusFile
 
-	Modify the service index in status file ( farmname_status.cfg ). For updating farmguardian backend status.
+	Modify the service index in status file ( farmname_status.cfg ). For
+	updating farmguardian backend status.
 
 Parameters:
 	farmname - Farm name
-	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
 	service - Service to move
+	index - position to be moved
 
 Returns:
 	integer - Always return 0
 
 FIXME:
-	Rename function to setHTTPFarmMoveServiceStatusFile
 	Always return 0, create error control
 
 =cut
-
-sub moveServiceFarmStatus
+sub setHTTPFarmMoveServiceStatusFile
 {
 	my ( $farmname, $service, $req_index ) = @_;
 
