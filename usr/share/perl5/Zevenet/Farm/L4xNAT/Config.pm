@@ -81,11 +81,7 @@ Parameters:
 	protocol - protocol module to load
 
 Returns:
-	Integer - Always return 0
-
-FIXME:
-	1. The maximum number of ports, when the module is loaded, is 8
-	2. Always return 0
+	Integer - 0 if success, otherwise error
 
 =cut
 
@@ -95,38 +91,42 @@ sub loadL4Modules    # ($protocol)
 
 	require Zevenet::Netfilter;
 
-	my $status    = 0;
-	my $port_list = &getL4FarmsPorts( $protocol );
+	my $status = 0;
 
-	if ( $protocol eq "sip" )
+	if ( $protocol == /sip|tftp|ftp/ )
 	{
-		&removeNfModule( "nf_nat_sip" );
-		&removeNfModule( "nf_conntrack_sip" );
-		if ( $port_list )
-		{
-			&loadNfModule( "nf_conntrack_sip", "" );
-			&loadNfModule( "nf_nat_sip",       "" );
-		}
+		$status = &loadNfModule( "nf_conntrack_$protocol", "" );
+		$status = $status || &loadNfModule( "nf_nat_$protocol", "" );
 	}
-	elsif ( $protocol eq "ftp" )
+
+	return $status;
+}
+
+=begin nd
+Function: unloadL4Modules
+
+	Unload sip, ftp or tftp conntrack module for l4 farms
+
+Parameters:
+	protocol - protocol module to load
+
+Returns:
+	Integer - 0 if success, otherwise error
+
+=cut
+
+sub unloadL4Modules    # ($protocol)
+{
+	my $protocol = shift;
+
+	require Zevenet::Netfilter;
+
+	my $status = 0;
+
+	if ( $protocol == /sip|tftp|ftp/ )
 	{
-		&removeNfModule( "nf_nat_ftp" );
-		&removeNfModule( "nf_conntrack_ftp" );
-		if ( $port_list )
-		{
-			&loadNfModule( "nf_conntrack_ftp", "" );
-			&loadNfModule( "nf_nat_ftp",       "" );
-		}
-	}
-	elsif ( $protocol eq "tftp" )
-	{
-		&removeNfModule( "nf_nat_tftp" );
-		&removeNfModule( "nf_conntrack_tftp" );
-		if ( $port_list )
-		{
-			&loadNfModule( "nf_conntrack_tftp", "" );
-			&loadNfModule( "nf_nat_tftp",       "" );
-		}
+		$status = &removeNfModule( "nf_nat_$protocol" );
+		$status = $status || &removeNfModule( "nf_conntrack_$protocol", "" );
 	}
 
 	return $status;
@@ -624,32 +624,29 @@ sub setFarmProto    # ($proto,$farm_name)
 		}
 	}
 
-	if ( $farm_type eq "l4xnat" )
+	require Tie::File;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
+	my $i = 0;
+	for my $line ( @configfile )
 	{
-		require Tie::File;
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
-		my $i = 0;
-		for my $line ( @configfile )
+		if ( $line =~ /^$farm_name\;/ )
 		{
-			if ( $line =~ /^$farm_name\;/ )
+			my @args = split ( "\;", $line );
+			if ( $proto eq "all" )
 			{
-				my @args = split ( "\;", $line );
-				if ( $proto eq "all" )
-				{
-					$args[3] = "*";
-				}
-				if ( $proto eq "sip" )
-				{
-					#~ $args[4] = "nat";
-				}
-				$line =
-				  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
-				splice @configfile, $i, $line;
+				$args[3] = "*";
 			}
-			$i++;
+			if ( $proto eq "sip" )
+			{
+				#~ $args[4] = "nat";
+			}
+			$line =
+			  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
+			splice @configfile, $i, $line;
 		}
-		untie @configfile;
+		$i++;
 	}
+	untie @configfile;
 
 	$farm = &getL4FarmStruct( $farm_name );
 
@@ -658,37 +655,40 @@ sub setFarmProto    # ($proto,$farm_name)
 		# Remove required modules
 		if ( $old_proto =~ /sip|ftp/ )
 		{
-			my $status = &loadL4Modules( $old_proto );
+			&unloadL4Modules( $old_proto );
 		}
 
 		# Load required modules
 		if ( $$farm{ vproto } =~ /sip|ftp/ )
 		{
-			my $status = &loadL4Modules( $$farm{ vproto } );
+			$output = &loadL4Modules( $$farm{ vproto } );
 		}
 
-		require Zevenet::Netfilter;
+		$output = &refreshL4FarmRules( $farm );
 
-		my @rules;
-		my $prio_server = &getL4ServerWithLowestPriority( $farm );
-
-		foreach my $server ( @{ $$farm{ servers } } )
+		if ( $old_proto =~ /sip|ftp/ || $$farm{ vproto } =~ /sip|ftp/ )
 		{
-			#~ next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
-			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
+			require Zevenet::Netfilter;
+			my @rules;
+			my $prio_server = &getL4ServerWithLowestPriority( $farm );
+			foreach my $server ( @{ $$farm{ servers } } )
+			{
+				#next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
+				next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
 
-			my $rule = &genIptHelpers( $farm, $server );
+				my $rule = &genIptHelpers( $farm, $server );
 
-			$rule =
-			  ( $$farm{ vproto } !~ /sip|ftp/ )
-			  ? &getIptRuleDelete( $rule )
-			  : &getIptRuleInsert( $farm, $server, $rule );
-			$output = &applyIptRules( $rule );
+				$rule =
+				  ( $$farm{ vproto } !~ /sip|ftp/ )
+				  ? &getIptRuleDelete( $rule )
+				  : &getIptRuleInsert( $farm, $server, $rule );
+				$output = &setIptRuleCheck( $rule );
 
-			#$rule = &genIptRedirect( $farm, $server );
-			#$rule = &getIptRuleReplace( $farm, $server, $rule );
+				#$rule = &genIptRedirect( $farm, $server );
+				#$rule = &getIptRuleReplace( $farm, $server, $rule );
 
-			#$output = &applyIptRules( $rule );
+				#$output = &applyIptRules( $rule );
+			}
 		}
 
 		if ( $fg_enabled eq 'true' )

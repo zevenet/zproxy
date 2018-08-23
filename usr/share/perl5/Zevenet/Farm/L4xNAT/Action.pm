@@ -407,7 +407,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	# Reload conntrack modules
 	if ( $$farm{ vproto } =~ /sip|ftp/ )
 	{
-		&loadL4Modules( $$farm{ vproto } );
+		&unloadL4Modules( $$farm{ vproto } );
 	}
 
 	# Stopping L4xNAT Scheduler Daemon
