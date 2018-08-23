@@ -25,52 +25,6 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-=begin nd
-Function: getL4FarmsPorts
-
-	Get all port used of L4xNAT farms in up status and using a protocol
-
-Parameters:
-	protocol - protocol used by l4xnat farm
-
-Returns:
-	String - return a list with the used ports by all L4xNAT farms. Format: "portList1,portList2,..."
-
-=cut
-
-sub getL4FarmsPorts    # ($protocol)
-{
-	my $protocol = shift;
-
-	my $port_list       = "";
-	my @farms_filenames = &getFarmList();
-
-	unless ( $#farms_filenames > -1 )
-	{
-		return $port_list;
-	}
-
-	foreach my $farm_filename ( @farms_filenames )
-	{
-		my $farm_name     = &getFarmName( $farm_filename );
-		my $farm_type     = &getFarmType( $farm_name );
-		my $farm_protocol = &getFarmProto( $farm_name );
-
-		next if not ( $farm_type eq "l4xnat" && $protocol eq $farm_protocol );
-		next if ( &getFarmBootStatus( $farm_name ) ne "up" );
-
-		my $farm_port = &getFarmVip( "vipp", $farm_name );
-		$farm_port = join ( ',', &getFarmPortList( $farm_port ) );
-		next if not &validL4ExtPort( $farm_protocol, $farm_port );
-
-		$port_list .= "$farm_port,";
-	}
-
-	# remove the las comma
-	chop ( $port_list );
-
-	return $port_list;
-}
 
 =begin nd
 Function: loadL4Modules
@@ -129,38 +83,6 @@ sub unloadL4Modules    # ($protocol)
 		$status = $status || &removeNfModule( "nf_conntrack_$protocol", "" );
 	}
 
-	return $status;
-}
-
-=begin nd
-Function: validL4ExtPort
-
-	check if the port is valid for a sip, ftp or tftp farm
-
-Parameters:
-	protocol - protocol module to load
-	ports - port string
-
-Returns:
-	Integer - 1 is valid or 0 is not valid
-
-=cut
-
-sub validL4ExtPort    # ($farm_protocol,$ports)
-{
-	my ( $farm_protocol, $ports ) = @_;
-
-	my $status = 0;
-
-	if (    $farm_protocol eq "sip"
-		 || $farm_protocol eq "ftp"
-		 || $farm_protocol eq "tftp" )
-	{
-		if ( $ports =~ /^\d+$/ || $ports =~ /^((\d+),(\d+))+$/ )
-		{
-			$status = 1;
-		}
-	}
 	return $status;
 }
 
@@ -594,9 +516,6 @@ Returns:
 
 FIXME:
 	It is necessary more error control
-
-BUG:
-	Before change to sip, ftp or tftp protocol, check if farm port is contability
 
 =cut
 
