@@ -545,28 +545,14 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 			if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 			{
-				if ( $$farm{ vproto } eq 'sip' )
-				{
-					$rule = &genIptSourceNat( $farm, $server );
-				}
-				else
-				{
-					$rule = &genIptMasquerade( $farm, $server );
-				}
+				$rule = &genIptMasquerade( $farm, $server );
 
 				$rule_num =
 				  ( $$farm{ lbalg } eq 'prio' )
 				  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
 				  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
 
-				if ( $$farm{ vproto } eq 'sip' )
-				{
-					$rule = &genIptSourceNat( $farm, $server );
-				}
-				else
-				{
-					$rule = &genIptMasquerade( $farm, $server );
-				}
+				$rule = &genIptMasquerade( $farm, $server );
 
 				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
 				push ( @rules, $rule );

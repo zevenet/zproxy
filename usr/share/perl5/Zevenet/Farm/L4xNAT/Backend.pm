@@ -796,14 +796,7 @@ sub getL4ServerActionRules
 	## rules for source nat or nat ##
 	if ( $$farm{ nattype } eq 'nat' )
 	{
-		if ( $$farm{ vproto } eq 'sip' )
-		{
-			$rule = &genIptSourceNat( $farm, $server );
-		}
-		else
-		{
-			$rule = &genIptMasquerade( $farm, $server );
-		}
+		$rule = &genIptMasquerade( $farm, $server );
 
 		$rule = ( $switch eq 'off' )
 		  ? &getIptRuleDelete( $rule )    # delete

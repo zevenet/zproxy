@@ -555,10 +555,6 @@ sub setFarmProto    # ($proto,$farm_name)
 			{
 				$args[3] = "*";
 			}
-			if ( $proto eq "sip" )
-			{
-				#~ $args[4] = "nat";
-			}
 			$line =
 			  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
 			splice @configfile, $i, $line;
@@ -592,7 +588,6 @@ sub setFarmProto    # ($proto,$farm_name)
 			my $prio_server = &getL4ServerWithLowestPriority( $farm );
 			foreach my $server ( @{ $$farm{ servers } } )
 			{
-				#next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
 				next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
 
 				my $rule = &genIptHelpers( $farm, $server );
@@ -602,11 +597,6 @@ sub setFarmProto    # ($proto,$farm_name)
 				  ? &getIptRuleDelete( $rule )
 				  : &getIptRuleInsert( $farm, $server, $rule );
 				$output = &setIptRuleCheck( $rule );
-
-				#$rule = &genIptRedirect( $farm, $server );
-				#$rule = &getIptRuleReplace( $farm, $server, $rule );
-
-				#$output = &applyIptRules( $rule );
 			}
 		}
 
@@ -738,9 +728,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 			my $rule;
 
 			# get the rule 'template'
-			$rule = ( $$farm{ vproto } eq 'sip' )
-			  ? &genIptSourceNat( $farm, $server )    # SIP protocol
-			  : &genIptMasquerade( $farm, $server );  # Masq otherwise
+			$rule = &genIptMasquerade( $farm, $server );
 
 			# apply the desired action to the rule template
 			$rule = ( $$farm{ nattype } eq 'nat' )
@@ -1175,9 +1163,10 @@ sub getL4ProtocolTransportLayer
 	my $vproto = shift;
 
 	return
-	    ( $vproto =~ /sip|tftp/ ) ? 'udp'
-	  : ( $vproto eq 'ftp' )      ? 'tcp'
-	  :                             $vproto;
+	    ( $vproto eq 'sip'  ) ? 'all'
+	  : ( $vproto eq 'tftp' ) ? 'udp'
+	  : ( $vproto eq 'ftp'  ) ? 'tcp'
+	  :                         $vproto;
 }
 
 =begin nd
@@ -1415,14 +1404,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 		if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 		{
-			if ( $$farm{ vproto } eq 'sip' )
-			{
-				$rule = &genIptSourceNat( $farm, $server );
-			}
-			else
-			{
-				$rule = &genIptMasquerade( $farm, $server );
-			}
+			$rule = &genIptMasquerade( $farm, $server );
 
 			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )
@@ -1488,16 +1470,7 @@ sub reloadL4FarmsSNAT
 
 		foreach my $server ( @{ $$l4f_conf{ servers } } )
 		{
-			my $rule;
-
-			if ( $$l4f_conf{ vproto } eq 'sip' )
-			{
-				$rule = &genIptSourceNat( $l4f_conf, $server );
-			}
-			else
-			{
-				$rule = &genIptMasquerade( $l4f_conf, $server );
-			}
+			my $rule = &genIptMasquerade( $l4f_conf, $server );
 
 			$rule = &getIptRuleReplace( $l4f_conf, $server, $rule );
 
