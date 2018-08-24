@@ -333,7 +333,7 @@ sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $ur
 	chomp($curl_cmd);
 
 	$body = qq(-d'$self->{ body }') if ( $self->{ body } );
-	my $execmd = qq($curl_cmd -s -H "Key: HoLa" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
+	my $execmd = qq($curl_cmd -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
 	&zenlog( "Executing nftlb: " . "$execmd" );
 	`$execmd`;
@@ -346,7 +346,7 @@ sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $ur
 
 	if ( $self->{ method } eq "PUT" || $self->{ method } eq "DELETE" )
 	{
-		$execmd = "$curl_cmd -s -H \"Key: HoLa\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm } > '$self->{ configfile }'";
+		$execmd = "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm } > '$self->{ configfile }'";
 		`$execmd`;
 		$output = $?;
 
