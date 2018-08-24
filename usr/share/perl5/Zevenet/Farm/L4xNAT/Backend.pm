@@ -234,8 +234,6 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	{
 		require Zevenet::Net::Util;
 
-		splice @{ $$farm{ servers } }, $ids, 1;    # remove server from structure
-
 		if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'prio' )
 		{
 			$output |= &refreshL4FarmRules( $farm );
