@@ -551,7 +551,7 @@ sub setFarmProto    # ($proto,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			if ( $proto eq "all" )
+			if ( $proto eq /all|sip/ )
 			{
 				$args[3] = "*";
 			}
@@ -1263,7 +1263,7 @@ sub getL4ServerStruct
 	$server{ max_conns } = shift @server_args // 0;    # input 7
 	$server{ rip }       = $server{ vip };
 
-	if ( $server{ vport } ne '' && $$farm{ proto } ne 'all' )
+	if ( $server{ vport } ne '' && $$farm{ proto } ne 'all' && $$farm{ proto } ne 'sip' )
 	{
 		if ( &ipversion( $server{ rip } ) == 4 )
 		{
