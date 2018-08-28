@@ -26,51 +26,6 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
-Function: runL4FarmRestart
-
-	Restart a l4xnat farm
-
-Parameters:
-	farmname - Farm name
-	type - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
-
-Returns:
-	Integer - Error code: 0 on success or other value on failure
-
-=cut
-
-sub runL4FarmRestart    # ($farm_name,$type)
-{
-	my ( $farm_name, $type ) = @_;
-
-	my $algorithm   = &getL4FarmParam( 'alg', $farm_name );
-	my $fbootstatus = &getL4FarmParam( 'status', $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
-
-	if (    $algorithm eq "leastconn"
-		 && $fbootstatus eq "up"
-		 && $type eq "hot"
-		 && -e "$pidfile" )
-	{
-		open my $fd, '<', "$pidfile";
-		my $pid = <$fd>;
-		close $fd;
-
-		kill USR1 => $pid;
-		$output = $?;    # FIXME
-	}
-	else
-	{
-		&_runL4FarmStop( $farm_name );
-		$output = &_runL4FarmStart( $farm_name );
-	}
-
-	return $output;
-}
-
-
-=begin nd
 Function: _runL4FarmStart
 
 	Run a l4xnat farm
