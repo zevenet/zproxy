@@ -26,7 +26,7 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
-Function: _runL4FarmStart
+Function: startL4Farm
 
 	Run a l4xnat farm
 
@@ -38,7 +38,7 @@ Returns:
 
 =cut
 
-sub _runL4FarmStart    # ($farm_name)
+sub startL4Farm    # ($farm_name)
 {
 	my $farm_name = shift;
 
@@ -51,7 +51,7 @@ sub _runL4FarmStart    # ($farm_name)
 
 	my $status = 0;
 
-	&zenlog( "_runL4FarmStart << farm_name:$farm_name", "debug", "LSLB" )
+	&zenlog( "startL4Farm << farm_name:$farm_name", "debug", "LSLB" )
 	  if &debug;
 
 	# initialize a farm struct
@@ -99,7 +99,7 @@ sub _runL4FarmStart    # ($farm_name)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		&zenlog( "_runL4FarmStart :: server:$server->{id}", "debug", "LSLB" ) if &debug;
+		&zenlog( "startL4Farm :: server:$server->{id}", "debug", "LSLB" ) if &debug;
 
 		my $backend_rules;
 
@@ -172,7 +172,7 @@ sub _runL4FarmStart    # ($farm_name)
 }
 
 =begin nd
-Function: _runL4FarmStop
+Function: stopL4Farm
 
 	Stop a l4xnat farm
 
@@ -184,7 +184,7 @@ Returns:
 
 =cut
 
-sub _runL4FarmStop    # ($farm_name)
+sub stopL4Farm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 

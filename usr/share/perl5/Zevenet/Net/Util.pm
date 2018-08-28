@@ -372,7 +372,7 @@ Returns:
 	scalar - return code setting the value.
 
 See Also:
-	<_runL4FarmStart>, <_runDatalinkFarmStart>
+	<_runDatalinkFarmStart>
 =cut
 
 # Enable(true) / Disable(false) IP Forwarding

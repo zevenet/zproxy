@@ -87,7 +87,7 @@ foreach my $farm_name ( @l4_farmnames )
 
 	if ($boot_status eq 'up')
 	{
-		my $status = &_runL4FarmStop( $farm_name, 'false' );
+		my $status = &stopL4Farm( $farm_name, 'false' );
 
 		if ( defined $status && $status == 0 )
 		{
@@ -168,7 +168,7 @@ foreach my $farm_name ( @l4_farmnames )
 
 	if ($boot_status eq 'up')
 	{
-		my $status = &_runL4FarmStart( $farm_name, 'false' );
+		my $status = &startL4Farm( $farm_name, 'false' );
 
 		if ( defined $status && $status == 0 )
 		{

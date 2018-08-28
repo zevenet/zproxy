@@ -64,7 +64,7 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 		close $fd;
 	}
 
-	&_runL4FarmStart( $farm_name );
+	&startL4Farm( $farm_name );
 
 	return $output;    # FIXME
 }

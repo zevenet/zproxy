@@ -85,7 +85,7 @@ sub _runFarmStart    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
-		$status = &_runL4FarmStart( $farm_name );
+		$status = &startL4Farm( $farm_name );
 	}
 	elsif ( $farm_type eq "gslb" && $eload )
 	{
@@ -236,7 +236,7 @@ sub _runFarmStop    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
-		$status = &_runL4FarmStop( $farm_name );
+		$status = &stopL4Farm( $farm_name );
 	}
 	elsif ( $farm_type eq "gslb" && $eload )
 	{

@@ -26,7 +26,7 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
-Function: _runL4FarmStart
+Function: startL4Farm
 
 	Run a l4xnat farm
 
@@ -38,7 +38,7 @@ Returns:
 
 =cut
 
-sub _runL4FarmStart    # ($farm_name)
+sub startL4Farm    # ($farm_name)
 {
 	my $farm_name = shift;
 	require Zevenet::Farm::Core;
@@ -47,7 +47,7 @@ sub _runL4FarmStart    # ($farm_name)
 
 	my $status = 0;
 
-	&zenlog( "_runL4FarmStart << farm_name:$farm_name" )
+	&zenlog( "startL4Farm << farm_name:$farm_name" )
 	  if &debug;
 
 	my $pid = &runNLBStart();
@@ -76,7 +76,7 @@ sub _runL4FarmStart    # ($farm_name)
 }
 
 =begin nd
-Function: _runL4FarmStop
+Function: stopL4Farm
 
 	Stop a l4xnat farm
 
@@ -88,7 +88,7 @@ Returns:
 
 =cut
 
-sub _runL4FarmStop    # ($farm_name)
+sub stopL4Farm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
