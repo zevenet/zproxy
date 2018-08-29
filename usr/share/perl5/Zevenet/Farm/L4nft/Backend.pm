@@ -67,6 +67,19 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		$priority = 1;
 	}
 
+	require Zevenet::Farm::L4xNAT::Action;
+
+	# load the configuration file first if the farm is down
+	my $f_ref = &getL4FarmStruct( $farm_name );
+	if ( $f_ref->{ status } ne "up" )
+	{
+		my $out = &loadNLBFarm( $farm_name );
+		if ( $out != 0 )
+		{
+			return $out;
+		}
+	}
+
 	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "ports" : "", "weight" : "$weight", "priority" : "$priority", "state" : "up" } ] } ] })  } );
 
 	return $output;
@@ -94,6 +107,17 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	my $farm_filename	= &getFarmFile( $farm_name );
 	my $output		= 0;
+
+	# load the configuration file first if the farm is down
+	my $f_ref = &getL4FarmStruct( $farm_name );
+	if ( $f_ref->{ status } ne "up" )
+	{
+		my $out = &loadNLBFarm( $farm_name );
+		if ( $out != 0 )
+		{
+			return $out;
+		}
+	}
 
 	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "DELETE", uri => "/farms/$farm_name/backends/bck$ids", body => undef } );
 

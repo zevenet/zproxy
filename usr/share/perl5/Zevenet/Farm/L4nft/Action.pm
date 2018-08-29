@@ -50,16 +50,10 @@ sub startL4Farm    # ($farm_name)
 	&zenlog( "startL4Farm << farm_name:$farm_name" )
 	  if &debug;
 
-	my $pid = &runNLBStart();
-	if ( $pid <= 0 ) {
-		return -1;
-	}
-
-	$status = &runNLBFarmStart( $farm_name );
+	$status = &startNLBFarm( $farm_name );
 	if ( $status <= 0 ) {
 		return $status;
 	}
-
 
 #	# prio only apply rules to one server
 #	if ( $server_prio && $$farm{ lbalg } eq 'prio' )
@@ -107,7 +101,7 @@ sub stopL4Farm    # ($farm_name)
 		return 0;
 	}
 
-	&runNLBFarmStop( $farm_name );
+	&stopNLBFarm( $farm_name );
 
 	# Reload conntrack modules
 #	if ( $$farm{ vproto } =~ /sip|ftp/ )
@@ -140,7 +134,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 
 =begin nd
-Function: runNLBStart
+Function: startNLB
 
 	Launch the nftlb daemon and create the PID file. Do
 	nothing if already is launched.
@@ -153,7 +147,7 @@ Returns:
 
 =cut
 
-sub runNLBStart		# ()
+sub startNLB		# ()
 {
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
@@ -179,7 +173,7 @@ sub runNLBStart		# ()
 
 
 =begin nd
-Function: runNLBStop
+Function: stopNLB
 
 	Stop the nftlb daemon. Do nothing if is already stopped.
 
@@ -191,7 +185,7 @@ Returns:
 
 =cut
 
-sub runNLBStop		# ()
+sub stopNLB		# ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "()", "debug", "LSLB" );
 
@@ -209,21 +203,20 @@ sub runNLBStop		# ()
 	return $nlbpid;
 }
 
-
 =begin nd
-Function: runNLBFarmStart
+Function: loadNLBFarm
 
-	Start a new farm in nftlb
+	Load farm configuration in nftlb
 
 Parameters:
-	farm_name - farm name to be started
+	farm_name - farm name configuration to be loaded
 
 Returns:
 	Integer - 0 on success or -1 on failure
 
 =cut
 
-sub runNLBFarmStart		# ($farm_name)
+sub loadNLBFarm		# ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -232,18 +225,15 @@ sub runNLBFarmStart		# ($farm_name)
 
 	my $farmfile = &getFarmFile( $farm_name );
 
+	return -1 if ( ! -e "$configdir/$farmfile" );
+
 	my $out = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farmfile", method => "POST", uri => "/farms", body =>  qq(\@$configdir/$farmfile)  } );
-	if ( $out != 0 )
-	{
-		return $out;
-	}
-	&setL4FarmParam( 'status', "up", $farm_name );
 
 	return $out;
 }
 
 =begin nd
-Function: runNLBFarmStop
+Function: startNLBFarm
 
 	Start a new farm in nftlb
 
@@ -255,7 +245,38 @@ Returns:
 
 =cut
 
-sub runNLBFarmStop		# ($farm_name)
+sub startNLBFarm		# ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::L4xNAT::Config;
+
+	my $out = &loadNLBFarm( $farm_name );
+	if ( $out != 0 )
+	{
+		return $out;
+	}
+
+	&setL4FarmParam( 'status', "up", $farm_name );
+
+	return $out;
+}
+
+=begin nd
+Function: stopNLBFarm
+
+	Start a new farm in nftlb
+
+Parameters:
+	farm_name - farm name to be started
+
+Returns:
+	Integer - 0 on success or -1 on failure
+
+=cut
+
+sub stopNLBFarm		# ($farm_name)
 {
 	my ( $farm_name ) = @_;
 

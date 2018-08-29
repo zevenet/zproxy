@@ -139,10 +139,18 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 		return -1;
 	}
 
-	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value"$addition } ] })  } );
+	# load the configuration file first if the farm is down
+	my $f_ref = &getL4FarmStruct( $farm_name );
+	if ( $f_ref->{ status } ne "up" )
+	{
+		my $out = &loadNLBFarm( $farm_name );
+		if ( $out != 0 )
+		{
+			return $out;
+		}
+	}
 
-	# TODO Not needed as its changed through &httpNLBRequest()
-	#$output = &_getL4ParseFarmConfig( $param, $value, $content );
+	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value"$addition } ] })  } );
 
 	return $output;
 }
@@ -329,6 +337,13 @@ sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $ur
 	my $curl_cmd = `which curl`; #TODO
 	my $output = -1;
 	my $body = "";
+
+	require Zevenet::Farm::L4xNAT::Action;
+
+	my $pid = &startNLB();
+	if ( $pid <= 0 ) {
+		return -1;
+	}
 
 	chomp($curl_cmd);
 

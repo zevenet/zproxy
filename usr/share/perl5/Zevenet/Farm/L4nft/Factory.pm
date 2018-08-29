@@ -59,13 +59,7 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 #	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
 #	close FO;
 
-	my $pid = &runNLBStart();
-	if ( $pid <= 0 ) {
-		return -1;
-	}
-
 	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "tcp", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })  } );
-
 
 #	my $piddir = &getGlobalConfiguration('piddir');
 #	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
@@ -87,7 +81,7 @@ Function: runL4FarmDelete
 
 Parameters:
 
-	farmname - Farm name
+	farm_name - Farm name
 
 Returns:
 	Integer - return 0 on success or other value on failure
@@ -98,38 +92,18 @@ sub runL4FarmDelete    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $output    = -1;
-#	my $farm_type = 'l4xnat';
-#	my $farm_filename = "$configdir/$farm_name\_$farm_type.cfg";
 
 	require Zevenet::Farm::L4xNAT::Action;
-#	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::L4xNAT::Config;
 
-#	$vip_port = 80 if not defined $vip_port;
+	my $farmfile = &getFarmFile( $farm_name );
 
-#	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
-	# farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
-#	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
-#	close FO;
-
-	my $pid = &getNLBPid();
-	if ( $pid <= 0 ) {
-		return 0;
-	}
+	unlink ( "$configdir/$farmfile" ) if -e "$configdir/$farmfile";
 
 	$output = &httpNLBRequest( { farm => $farm_name, method => "DELETE", uri => "/farms" } );
 
-
-#	my $piddir = &getGlobalConfiguration('piddir');
-#	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
-#	{
-#		# Enable active l4xnat file
-#		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
-#		close FI;
-#	}
-
-#	&startL4Farm( $farm_name );
-
-	return $output;    # FIXME
+	return $output;
 }
 
 1;
