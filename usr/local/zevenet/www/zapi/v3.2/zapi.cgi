@@ -220,7 +220,7 @@ sub certcontrol
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $swcert = 0;
 
-	if ( ! -e $zlbcertfile )
+	if ( ! -e $zlbcertfile || -z $zlbcertfile )
 	{
 		#swcert = 1 ==> There isn't certificate
 		$swcert = 1;
