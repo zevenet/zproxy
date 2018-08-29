@@ -423,7 +423,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	my $status =
-	  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id,
+	  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id_server,
 							  $json_obj->{ ip } );
 
 	# check if there was an error modifying the backend
