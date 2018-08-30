@@ -580,7 +580,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	unless ( defined $res_aref->[ $id_resource ] )
+	unless ( defined $res_aref->[ $resource ] )
 	{
 		my $msg = "Invalid resource id, please insert a valid value.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
