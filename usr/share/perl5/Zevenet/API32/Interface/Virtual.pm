@@ -454,6 +454,10 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	require Zevenet::Farm::Base;
+
+	@farms = &getFarmListByVip( $if_ref->{ addr } );
+
 	# check if ip exists in other interface
 	if ( $json_obj->{ ip } )
 	{
@@ -461,16 +465,12 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		{
 			require Zevenet::Net::Util;
 
-			if ( grep { $json_obj->{ ip } eq $_ }, &listallips() )
+			if ( grep { $json_obj->{ ip } eq $_ } &listallips() )
 			{
 				my $msg = "The IP address is already in use for other interface.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
-
-		require Zevenet::Farm::Base;
-
-		@farms = &getFarmListByVip( $if_ref->{ addr } );
 
 		if ( @farms and $json_obj->{ force } ne 'true' )
 		{
