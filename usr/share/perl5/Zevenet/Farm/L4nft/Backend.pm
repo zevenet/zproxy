@@ -104,6 +104,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	my ( $ids, $farm_name ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::L4xNAT::Action;
 
 	my $farm_filename	= &getFarmFile( $farm_name );
 	my $output		= 0;

@@ -382,6 +382,7 @@ sub getFarmProto    # ($farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmParam( 'proto', $farm_name );
 	}
 	elsif ( $farm_type =~ /http/i )
