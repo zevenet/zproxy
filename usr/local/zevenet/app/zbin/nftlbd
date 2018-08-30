@@ -17,7 +17,6 @@ do_start()
 {
 	`$NFTBIN flush ruleset`
 	start-stop-daemon --start --quiet --oknodo --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON -- $DAEMON_ARGS
-	echo error $?
 	[ "$?" != 0 ] && return 1
 }
 
