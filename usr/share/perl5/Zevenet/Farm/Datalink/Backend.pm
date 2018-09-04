@@ -112,7 +112,6 @@ sub getDatalinkFarmBackends    # ($farm_name)
 			my @aux = split ( ';', $line );
 			my $status = $aux[6];
 			$status = "undefined" if ( $farmStatus eq "down" );
-
 			push @servers,
 			  {
 				alias     => $alias->{ $aux[2] },

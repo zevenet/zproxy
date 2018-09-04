@@ -303,7 +303,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# HTTP
 	require Zevenet::Net::Validate;
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::HTTP::Config;
+	require Zevenet::Farm::Config;
+	require Zevenet::Farm::Backend;
 	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
 
@@ -404,7 +405,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&setFarmRestart( $farmname );
 	}
 
-	require Zevenet::Farm::Config;
 	my $message = "Added backend to service successfully";
 	my $body = {
 				 description => $desc,
@@ -540,6 +540,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
+		require Zevenet::Net::Validate;
 
 		# Params
 		my $l4_farm = &getL4FarmStruct( $farmname );
@@ -553,7 +554,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 			}
 		}
 
-		if ( !$backend )
+		if ( !$backend || ref( $backend ) ne "HASH" )
 		{
 			my $msg = "Could not find a backend with such id.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -646,7 +647,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 			$be = $be[$id_server];
 		}
 
-		if ( !$be )
+		if ( !$be || ref( $be ) ne "HASH" )
 		{
 			my $msg = "Could not find a backend with such id.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -750,7 +751,6 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		"Success, some parameters have been changed in the backend $id_server in farm $farmname.", "info", "FARMS"
 	);
 
-	require Zevenet::Farm::Base;
 	my $message = "Backend modified";
 	my $body = {
 				 description => $desc,
@@ -930,6 +930,8 @@ sub delete_backend    # ( $farmname, $id_server )
 {
 	my ( $farmname, $id_server ) = @_;
 
+	require Zevenet::Farm::Backend;
+
 	my $desc = "Delete backend";
 
 	# validate FARM NAME
@@ -958,7 +960,6 @@ sub delete_backend    # ( $farmname, $id_server )
 	}
 	else
 	{
-		require Zevenet::Farm::Backend;
 		my @backends = &getFarmServers( $farmname );
 		my $exists = $backends[$id_server];
 	}
