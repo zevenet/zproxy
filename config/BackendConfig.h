@@ -29,5 +29,5 @@ class Backend {
   int backen_id;
   std::string address;
   int port;
-  int timeout;
+  int conn_timeout;
 };

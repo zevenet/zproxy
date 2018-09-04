@@ -340,7 +340,7 @@ void StreamManager::onRequestEvent(int fd) {
                   deleteFd(stream->backend_connection.getFileDescriptor());//TODO:: Client cannot be connected to more than one backend at time
                   stream->backend_connection.closeConnection();
                 }
-                if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
+                if (!stream->backend_connection.doConnect(*bck->address_info, bck->conn_timeout)) {
                   auto response = HttpStatus::getErrorResponse(HttpStatus::Code::ServiceUnavailable);
                   stream->client_connection.write(response.c_str(), response.length());
                   Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503

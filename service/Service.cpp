@@ -11,14 +11,15 @@ Backend *Service::getBackend(Connection &connection) {
   return backend_set[seed % backend_set.size()];
 }
 
-void Service::addBackend(std::string address, int port, int backend_id) {
+void Service::addBackend(BackendConfig *backend_config, std::string address,
+                         int port, int backend_id) {
   Backend *config = new Backend();
   config->address_info = Network::getAddress(address, port);
   if (config->address_info != nullptr) {
     config->address = address;
     config->port = port;
     config->backen_id = backend_id;
-    config->timeout = 0;
+    config->conn_timeout = backend_config->conn_to;
     config->backend_type = BACKEND_TYPE::REMOTE;
     backend_set.push_back(config);
   } else {
@@ -28,13 +29,14 @@ void Service::addBackend(std::string address, int port, int backend_id) {
 
 void Service::addBackend(BackendConfig *backend_config, int backend_id) {
   if (backend_config->be_type == 0) {
-    this->addBackend(backend_config->address, backend_config->port, backend_id);
+    this->addBackend(backend_config, backend_config->address,
+                     backend_config->port, backend_id);
   } else {
     //Redirect
     Backend *config = new Backend();
     config->backend_config = *backend_config;
     config->backen_id = backend_id;
-    config->timeout = 0;
+    config->conn_timeout = backend_config->conn_to;
     config->backend_type = BACKEND_TYPE::REDIRECT;
     backend_set.push_back(config);
   }
@@ -50,7 +52,8 @@ Service::Service(ServiceConfig &service_config_) :
       this->addBackend(bck, backend_id++);
       //this->addBackend(bck->address, bck->port, backend_id++);
     } else {
-      Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) + " disabled.", LOG_NOTICE);
+      Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) +
+                 " disabled.", LOG_NOTICE);
     }
   }
 }
