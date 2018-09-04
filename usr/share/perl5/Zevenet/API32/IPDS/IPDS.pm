@@ -25,6 +25,7 @@ use strict;
 # GET /ipds$
 sub get_ipds_rules_list
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::IPDS::Core';
 
 	my $desc = "List the available IPDS rules.";

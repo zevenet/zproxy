@@ -42,6 +42,7 @@ See Also:
 # Get List of Vinis or Vlans from an interface
 sub getIfacesFromIf    # ($if_name, $type)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 	my @ifaces;
@@ -92,6 +93,7 @@ See Also:
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
 sub setIfacesUp    # ($if_name,$type)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 
@@ -145,6 +147,7 @@ See Also:
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $pif ) = @_;
 
 	my $if_conf = &getInterfaceConfig( $pif );
@@ -183,6 +186,7 @@ See Also:
 #get a random available port
 sub getRandomPort    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Validate;
 
 	#down limit
@@ -224,6 +228,7 @@ See Also:
 # send gratuitous ARP frames
 sub sendGArp    # ($if,$ip)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if, $ip ) = @_;
 
 	require Zevenet::Net::Validate;
@@ -275,6 +280,7 @@ See Also:
 #know if and return ip
 sub iponif    # ($if)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if = shift;
 
 	require IO::Socket;
@@ -313,6 +319,7 @@ See Also:
 # return the mask of an if
 sub maskonif    # ($if)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if = shift;
 
 	require IO::Socket;
@@ -347,6 +354,7 @@ See Also:
 #list ALL IPS UP
 sub listallips    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my @listinterfaces = ();    # output
@@ -378,6 +386,7 @@ See Also:
 # Enable(true) / Disable(false) IP Forwarding
 sub setIpForward    # ($arg)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $arg = shift;
 
 	my $status = -1;
@@ -414,6 +423,7 @@ See Also:
 
 sub getInterfaceOfIp    # ($ip)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift;
 
 	require Zevenet::Net::Interface;

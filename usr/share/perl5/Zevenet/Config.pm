@@ -44,6 +44,7 @@ See Also:
 
 sub getGlobalConfiguration
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $parameter = shift;
 
 	my $global_conf_filepath = "/usr/local/zevenet/config/global.conf";
@@ -111,6 +112,7 @@ See Also:
 
 sub setGlobalConfiguration    # ( parameter, value )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $param, $value ) = @_;
 
 	my $global_conf_file = &getGlobalConfiguration( 'globalcfg' );
@@ -148,6 +150,7 @@ Returns:
 
 sub setConfigStr2Arr
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $obj        = shift;
 	my $param_list = shift;
 
@@ -181,6 +184,7 @@ See Also:
 
 sub getTiny
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file_path = shift;
 
 	if ( !-f $file_path )
@@ -227,6 +231,7 @@ Returns:
 
 sub setTinyObj
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $object, $key, $value, $action ) = @_;
 
 	unless ( $object )
@@ -303,6 +308,7 @@ Returns:
 
 sub delTinyObj
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path   = shift;
 	my $object = shift;
 

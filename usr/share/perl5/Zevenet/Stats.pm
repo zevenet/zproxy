@@ -52,6 +52,7 @@ See Also:
 
 sub getMemStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $meminfo_filename = '/proc/meminfo';
 	my ( $format ) = @_;
 	my @data;
@@ -193,6 +194,7 @@ See Also:
 
 sub getLoadStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $load_filename = '/proc/loadavg';
 
 	my $last;
@@ -272,6 +274,7 @@ See Also:
 
 sub getNetworkStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $format ) = @_;
 
 	$format = "" unless defined $format;    # removes undefined variable warnings
@@ -390,6 +393,7 @@ See Also:
 
 sub getCPU
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @data;
 	my $interval = 1;
 	my $cpuinfo_filename = '/proc/stat';
@@ -527,6 +531,7 @@ sub getCPU
 
 sub getCPUUsageStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $out; # Output
 
 	my @data_cpu = &getCPU();
@@ -577,6 +582,7 @@ See Also:
 
 sub getDiskSpace
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @data;    # output
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
@@ -649,6 +655,7 @@ See Also:
 
 sub getDiskPartitionsInfo
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $partitions;    # output
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
@@ -693,6 +700,7 @@ See Also:
 
 sub getDiskMountPoint
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $dev ) = @_;
 
 	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
@@ -730,6 +738,7 @@ See Also:
 
 sub getCPUTemp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $filename = &getGlobalConfiguration( "temperatureFile" );
 	my $lastline;
 

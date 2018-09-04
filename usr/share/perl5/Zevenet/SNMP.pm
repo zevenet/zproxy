@@ -41,6 +41,7 @@ See Also:
 =cut
 sub setSnmpdStatus    # ($snmpd_status)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# get 'true' string to start, or a 'false' string to stop
 	my ( $snmpd_status ) = @_;
 
@@ -102,6 +103,7 @@ See Also:
 =cut
 sub getSnmpdStatus    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $pidof = &getGlobalConfiguration('pidof');
 	my $status      = `$pidof snmpd`;
 	my $return_code = $?;
@@ -144,6 +146,7 @@ See Also:
 =cut
 sub getSnmpdConfig    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Tie::File;
 
 	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
@@ -189,6 +192,7 @@ See Also:
 =cut
 sub setSnmpdConfig    # ($snmpd_conf)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $snmpd_conf ) = @_;
 
 	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');

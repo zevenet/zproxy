@@ -49,6 +49,7 @@ More info:
 
 sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cmd, $port ) = @_;
 
 	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
@@ -127,6 +128,7 @@ FIXME:
 
 sub getGSLBFarmGuardianParams    # ( farmName, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -160,6 +162,7 @@ Returns:
 
 sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service, $param, $value ) = @_;
 
 	# bugfix
@@ -236,6 +239,7 @@ Returns:
 
 sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	my $err     = -1;
@@ -288,6 +292,7 @@ Returns:
 
 sub getGSLBFarmFGStatus    # ( fname, service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -314,6 +319,7 @@ Returns:
 
 sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service, $option ) = @_;
 
 	my $output = -1;

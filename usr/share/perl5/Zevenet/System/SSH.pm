@@ -46,6 +46,7 @@ See Also:
 =cut
 sub getSsh
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Validate;
 
 	my $sshFile = &getGlobalConfiguration( 'sshConf' );
@@ -107,6 +108,7 @@ See Also:
 =cut
 sub setSsh
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $sshConf ) = @_;
 
 	my $sshFile     = &getGlobalConfiguration( 'sshConf' );

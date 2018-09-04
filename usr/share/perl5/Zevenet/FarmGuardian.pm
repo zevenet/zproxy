@@ -33,6 +33,7 @@ my $fg_template =
 
 sub getFGStatusFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;
 
 	return "$configdir\/$farm\_status.cfg";
@@ -41,6 +42,7 @@ sub getFGStatusFile
 # return a struct with the parameters of farm guardian
 sub getFGStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return {
 		'description' => "",       # Tiny description about the check
 		'command'     => "",       # Command to check. The check must return 0 on sucess
@@ -55,6 +57,7 @@ sub getFGStruct
 # the templates are not in the hash
 sub getFGExistsConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 	my $fh      = &getTiny( $fg_conf );
 	return ( exists $fh->{ $fg_name } ) ? 1 : 0;
@@ -62,6 +65,7 @@ sub getFGExistsConfig
 
 sub getFGExistsTemplate
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 	my $fh      = &getTiny( $fg_template );
 	return ( exists $fh->{ $fg_name } ) ? 1 : 0;
@@ -69,6 +73,7 @@ sub getFGExistsTemplate
 
 sub getFGExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 	return ( &getFGExistsTemplate( $fg_name ) or &getFGExistsConfig( $fg_name ) );
 }
@@ -76,12 +81,14 @@ sub getFGExists
 # the templates are not in the list
 sub getFGConfigList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_file = &getTiny( $fg_conf );
 	return keys %{ $fg_file };
 }
 
 sub getFGTemplateList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_file = &getTiny( $fg_template );
 	return keys %{ $fg_file };
 }
@@ -89,6 +96,7 @@ sub getFGTemplateList
 # it is a list with the available fg and its configuration
 sub getFGList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @list = &getFGConfigList();
 
 	# get from template file
@@ -103,6 +111,7 @@ sub getFGList
 
 sub getFGObject
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name      = shift;
 	my $use_template = shift;
 	my $file = "";
@@ -126,6 +135,7 @@ sub getFGObject
 
 sub getFGFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;
 	my $srv  = shift;
 
@@ -148,6 +158,7 @@ sub getFGFarm
 # create a farm guardian from a blank template
 sub createFGBlank
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 
 	my $values = &getFGStruct();
@@ -157,6 +168,7 @@ sub createFGBlank
 # create a farm guardian from a blank template
 sub createFGTemplate
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name     = shift;
 	my $template = shift;
 
@@ -169,6 +181,7 @@ sub createFGTemplate
 # create a farm guardian from a farm guardian in the config file
 sub createFGConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name      = shift;
 	my $fg_config = shift;
 
@@ -180,6 +193,7 @@ sub createFGConfig
 # pedir parametro force en zapi, si tiene alguna granja asociada
 sub delFGObject
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 
 	my $out = &runFGStop( $fg_name );
@@ -192,6 +206,7 @@ sub delFGObject
 # pedir confirmacion, parametro force
 sub setFGObject
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 	my $key     = shift;
 	my $value   = shift;
@@ -228,6 +243,7 @@ sub setFGObject
 
 sub setFGFarmRename
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm     = shift;
 	my $new_farm = shift;
 
@@ -261,6 +277,7 @@ sub setFGFarmRename
 
 sub linkFGFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 	my $farm    = shift;
 	my $srv     = shift;
@@ -292,6 +309,7 @@ sub linkFGFarm
 # aplicar cuando se borra la granja
 sub unlinkFGFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 	my $farm    = shift;
 	my $srv     = shift;
@@ -316,6 +334,7 @@ sub unlinkFGFarm
 
 sub delFGFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm    = shift;
 	my $service = shift;
 
@@ -353,6 +372,7 @@ sub delFGFarm
 
 sub getFGPidFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fname  = shift;
 	my $svice  = shift;
 	my $piddir = &getGlobalConfiguration( 'piddir' );
@@ -377,6 +397,7 @@ sub getFGPidFile
 # 2- only farm parameter is sent, then the function will return a list with the running farmguardian pid, one foreach service
 sub getFGPidFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm    = shift;
 	my $service = shift;
 	my $pid;
@@ -406,6 +427,7 @@ sub getFGPidFarm
 # si reinicio|paro|arranco granja o si borro un servicio, seleccionar todos los fg que tengan algun serivcio de esa granja
 sub runFGStop
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fgname = shift;
 	my $out;
 
@@ -429,6 +451,7 @@ sub runFGStop
 
 sub runFGStart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fgname = shift;
 	my $out;
 
@@ -452,6 +475,7 @@ sub runFGStart
 
 sub runFGRestart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fgname = shift;
 	my $out;
 
@@ -466,6 +490,7 @@ sub runFGRestart
 #
 sub runFGFarmStop
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm    = shift;
 	my $service = shift
 	  ; # optional, if the farm is http and the service is not sent to the function, all services will be restarted
@@ -572,6 +597,7 @@ sub runFGFarmStop
 # the pid file is created by the farmguardian process
 sub runFGFarmStart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm, $svice ) = @_;
 
 	my $status = 0;
@@ -660,6 +686,7 @@ sub runFGFarmStart
 
 sub runFGFarmRestart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm    = shift;
 	my $service = shift;
 	my $out;
@@ -674,6 +701,7 @@ sub runFGFarmRestart
 # return all running farms where farm guardian is working
 sub getFGRunningFarms
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg = shift;
 	my @runfarm;
 
@@ -699,6 +727,7 @@ sub getFGRunningFarms
 
 sub getFGMigrateFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;
 	my $srv  = shift;
 
@@ -707,6 +736,7 @@ sub getFGMigrateFile
 
 sub setOldFarmguardian
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $obj = shift;
 
 	my $srv  = $obj->{ service } // "";
@@ -779,6 +809,7 @@ See Also:
 
 sub getFarmGuardianLog    # ($fname,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	my $fg = &getFGFarm( $fname, $svice );
@@ -808,6 +839,7 @@ See Also:
 
 sub runFarmGuardianStart    # ($fname,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	return &runFGFarmStart( $fname, $svice );
@@ -831,6 +863,7 @@ See Also:
 
 sub runFarmGuardianStop    # ($fname,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	return &runFGFarmStop( $fname, $svice );
@@ -864,6 +897,7 @@ See Also:
 
 sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
 
 	&zenlog( "runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )", "debug", "FG" );
@@ -910,6 +944,7 @@ See Also:
 
 sub runFarmGuardianRemove    # ($fname,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	my $fg = &getFGFarm( $fname, $svice );
@@ -953,6 +988,7 @@ See Also:
 
 sub getFarmGuardianConf    # ($fname,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	# name for old checks
@@ -1002,6 +1038,7 @@ See Also:
 
 sub getFarmGuardianPid    # ($fname,$svice)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	my @pid_list = &getFGPidFarm( $fname, $svice );

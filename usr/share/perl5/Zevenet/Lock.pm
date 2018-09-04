@@ -28,6 +28,7 @@ use Fcntl ':flock';    #use of lock functions
 # generate a lock file based on a input path
 sub getLockFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $lock = shift;
 
 	$lock =~ s/\//_/g;
@@ -39,6 +40,7 @@ sub getLockFile
 # return 1 if locked, 0 if not
 sub getLockStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $lock = shift;
 
 	my $lfile = &getLockFile( $lock );
@@ -88,6 +90,7 @@ Returns:
 
 sub openlock    # ( $path, $mode )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path = shift;
 	my $mode = shift // '';
 
@@ -147,6 +150,7 @@ Bugs:
 
 sub ztielock    # ($file_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $array_ref = shift;    #parameters
 	my $file_name = shift;    #parameters
 

@@ -26,6 +26,7 @@ use strict;
 #  POST /addvlan/<interface> Create a new vlan network interface
 sub new_vlan # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = "Add a vlan interface";
@@ -266,6 +267,7 @@ sub new_vlan # ( $json_obj )
 
 sub delete_interface_vlan # ( $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	my $description = "Delete VLAN interface";
@@ -323,6 +325,7 @@ sub delete_interface_vlan # ( $vlan )
 
 sub get_vlan_list # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @output_list;
 
 	my $description = "List VLAN interfaces";
@@ -371,6 +374,7 @@ sub get_vlan_list # ()
 
 sub get_vlan # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	my $interface;
@@ -427,6 +431,7 @@ sub get_vlan # ()
 
 sub actions_interface_vlan # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan     = shift;
 
@@ -577,6 +582,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 
 sub modify_interface_vlan # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan = shift;
 

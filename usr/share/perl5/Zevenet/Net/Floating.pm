@@ -39,6 +39,7 @@ See Also:
 =cut
 sub getConfigTiny
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file_path = shift;
 
 	if ( ! -f $file_path )
@@ -71,6 +72,7 @@ See Also:
 =cut
 sub setConfigTiny
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file_path  = shift;
 	my $config_ref = shift;
 
@@ -109,6 +111,7 @@ See Also:
 # get floating interface or output interface
 sub getFloatInterfaceForAddress
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $remote_ip_address = shift;
 
 	require NetAddr::IP;
@@ -161,6 +164,7 @@ sub getFloatInterfaceForAddress
 
 sub getFloatingMasqParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm, $server ) = @_;
 
 	my $out_if = &getFloatInterfaceForAddress( $$server{ vip } );
@@ -175,6 +179,7 @@ sub getFloatingMasqParams
 
 sub getFloatingSnatParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $server ) = @_;
 
 	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
@@ -184,6 +189,7 @@ sub getFloatingSnatParams
 
 sub get_floating_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $floating ) = @_;
 
 	require Zevenet::Alias;
@@ -237,6 +243,7 @@ sub get_floating_struct
 
 sub get_floating_list_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Alias;
 	require Zevenet::Net::Interface;
 

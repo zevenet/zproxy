@@ -36,6 +36,7 @@ my $graph_period = {
 #GET disk
 sub possible_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
 	my @net = grep ( s/iface//, &getGraphs2Show( "Network" ) );
 	my @sys = ( "cpu", "load", "ram", "swap" );
@@ -67,6 +68,7 @@ sub possible_graphs	#()
 # GET all system graphs
 sub get_all_sys_graphs	 #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
 	
@@ -95,6 +97,7 @@ sub get_all_sys_graphs	 #()
 # GET system graphs
 sub get_sys_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $key = shift;
 	my $description = "Get $key graphs";
 
@@ -118,7 +121,8 @@ sub get_sys_graphs	#()
 
 # GET frequency system graphs
 sub get_frec_sys_graphs	#()
-{	
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $key = shift;
 	my $frequency = shift;
 	my $description = "Get $frequency $key graphs";
@@ -140,6 +144,7 @@ sub get_frec_sys_graphs	#()
 # GET all interface graphs
 sub get_all_iface_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @iface = grep ( s/iface//, &getGraphs2Show( "Network" ) );
 	my $body = {
 		description =>
@@ -152,6 +157,7 @@ sub get_all_iface_graphs	#()
 # GET interface graphs
 sub get_iface_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 	my $description = "Get interface graphs";
 	my $errormsg;
@@ -201,6 +207,7 @@ sub get_iface_graphs	#()
 # GET frequency interface graphs
 sub get_frec_iface_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 	my $frequency = shift;
 	my $description = "Get interface graphs";
@@ -249,6 +256,7 @@ sub get_frec_iface_graphs	#()
 # GET all farm graphs
 sub get_all_farm_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
 	my $body = {
 		description =>
@@ -261,6 +269,7 @@ sub get_all_farm_graphs	#()
 # GET farm graphs
 sub get_farm_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $description = "Get farm graphs";
 	my $errormsg;
@@ -304,6 +313,7 @@ sub get_farm_graphs	#()
 # GET frequency farm graphs
 sub get_frec_farm_graphs	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $frequency = shift;
 	my $description = "Get farm graphs";
@@ -347,6 +357,7 @@ sub get_frec_farm_graphs	#()
 #GET mount points list
 sub list_disks	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @mount_points;
@@ -371,6 +382,7 @@ sub list_disks	#()
 #GET disk graphs for all periods
 sub graphs_disk_mount_point_all	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $mount_point = shift;
 
 	$mount_point =~ s/^root[\/]?/\//;
@@ -415,6 +427,7 @@ sub graphs_disk_mount_point_all	#()
 #GET disk graph for a single period
 sub graph_disk_mount_point_freq	#()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $mount_point = shift;
 	my $frequency = shift;
 

@@ -46,6 +46,7 @@ See Also:
 =cut
 sub getLogs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @logs;
 	my $logdir = &getGlobalConfiguration( 'logdir' );
 
@@ -91,6 +92,7 @@ See Also:
 =cut
 sub getLogLines
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $logFile, $lines_number ) = @_;
 
 	my @lines;

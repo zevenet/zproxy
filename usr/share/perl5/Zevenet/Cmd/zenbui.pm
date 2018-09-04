@@ -117,6 +117,7 @@ my $help = $winhelp->add(
 
 sub exit_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $return = $zenui->dialog(
 								 -message  => "Do you really want to exit to shell?",
 								 -title    => "Exit Confirmation",
@@ -137,6 +138,7 @@ sub exit_dialog()
 
 sub confirm_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $message ) = @_;
 	my $return = $zenui->dialog(
 								 -message      => $message,
@@ -156,6 +158,7 @@ sub confirm_dialog()
 
 sub inform_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $message ) = @_;
 	my $return = $zenui->dialog(
 								 -message      => $message,
@@ -173,6 +176,7 @@ sub inform_dialog()
 
 sub error_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $message ) = @_;
 	my $return = $zenui->dialog(
 								 -message      => $message,
@@ -190,12 +194,14 @@ sub error_dialog()
 
 sub refresh_win3()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	$zlbmenu->focus();
 	&manage_sel();
 }
 
 sub manage_sel()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	if ( $win3 )
 	{
 		$win1->delete( 'win3' );
@@ -248,6 +254,7 @@ sub manage_sel()
 
 sub manage_power()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $power = $win3->add(
 		'win3id2',
 		'Buttonbox',
@@ -298,6 +305,7 @@ sub manage_power()
 
 sub manage_keyboard()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $keyboardfile = "/etc/default/keyboard";
 	my ( $keyboard, $zlbkeyboard );
 
@@ -360,6 +368,7 @@ sub manage_keyboard()
 
 sub manage_timezone()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $timezonefile = "/etc/timezone";
 	my ( $timezone, $zlbtimezone );
 
@@ -422,6 +431,7 @@ sub manage_timezone()
 
 sub manage_mgmt()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $mgmtif         = "";
@@ -546,6 +556,7 @@ sub manage_mgmt()
 
 sub set_net()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Validate;
 	my $setchanges = 1;
 
@@ -652,6 +663,7 @@ sub set_net()
 
 sub manage_zlb_services()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @services         = ( 'cherokee', 'zevenet' );
 	my $cherokeestatus   = "STOPPED";
 	my $zlbservicestatus = "STOPPED";
@@ -841,6 +853,7 @@ sub manage_zlb_services()
 
 sub manage_zlb_hostname()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	$zlbhostname = `hostname`;
 	chomp $zlbhostname;
 	$zlbhostinput = $win3->add(
@@ -881,6 +894,7 @@ sub manage_zlb_hostname()
 
 sub set_new_hostname()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	if ( $zlbhostinput )
 	{
 		my $ret =
@@ -905,6 +919,7 @@ sub set_new_hostname()
 
 sub show_status_system()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 	require Zevenet::Stats;
 
@@ -972,6 +987,7 @@ sub show_status_system()
 
 sub create_win3()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $title ) = @_;
 	$win3 = $win1->add(
 						'win3', 'Window',
@@ -993,6 +1009,7 @@ $zenui->mainloop();
 
 sub set_data_string
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( @datain ) = @_;
 
 	my $output = "";

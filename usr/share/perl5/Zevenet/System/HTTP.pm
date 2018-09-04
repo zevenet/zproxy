@@ -39,6 +39,7 @@ See Also:
 =cut
 sub getHttpServerPort
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $gui_port;    # output
 
 	my $confhttp = &getGlobalConfiguration( 'confhttp' );
@@ -82,6 +83,7 @@ See Also:
 =cut
 sub setHttpServerPort
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $httpport ) = @_;
 
 	require Tie::File;
@@ -110,6 +112,7 @@ See Also:
 =cut
 sub getHttpServerIp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $gui_ip;        # output
 
 	my $confhttp = &getGlobalConfiguration( 'confhttp' );
@@ -158,6 +161,7 @@ See Also:
 =cut
 sub setHttpServerIp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift;
 
 	require Tie::File;

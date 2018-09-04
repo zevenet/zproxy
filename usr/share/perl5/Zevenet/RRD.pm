@@ -50,6 +50,7 @@ See Also:
 =cut
 sub printImgFile    #($file)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $file ) = @_;
 
 	if ( open my $png, '<', $file )
@@ -85,6 +86,7 @@ See Also:
 =cut
 sub delGraph	#($name, type)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 	my $type = shift;
 
@@ -121,6 +123,7 @@ See Also:
 =cut
 sub printGraph    #($type,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $time ) = @_;
 
 	my $img_dir = &getGlobalConfiguration('img_dir');
@@ -189,6 +192,7 @@ See Also:
 =cut
 sub genCpuGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_cpu = "$type.rrd";
@@ -280,6 +284,7 @@ See Also:
 =cut
 sub genDiskGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_hd     = "$type.rrd";
@@ -353,6 +358,7 @@ See Also:
 =cut
 sub genLoadGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_load = "$type.rrd";
@@ -415,6 +421,7 @@ See Also:
 =cut
 sub genMemGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_mem = "$type.rrd";
@@ -482,6 +489,7 @@ See Also:
 =cut
 sub genMemSwGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_memsw = "$type.rrd";
@@ -550,6 +558,7 @@ See Also:
 =cut
 sub genNetGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_if   = "$type.rrd";
@@ -612,6 +621,7 @@ See Also:
 =cut
 sub genFarmGraph    #($type,$graph,$time)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_farm = "$type.rrd";
@@ -725,6 +735,7 @@ See Also:
 #function that returns the graph list to show
 sub getGraphs2Show    #($graphtype)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $graphtype ) = @_;
 
 	my @list = -1;

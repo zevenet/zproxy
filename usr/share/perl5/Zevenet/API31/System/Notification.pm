@@ -28,6 +28,7 @@ include 'Zevenet::Notify';
 # GET /system/notifications/methods/METHOD
 sub get_notif_methods
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $key = shift;
 
 	my $desc = "Get notifications email methods";
@@ -42,6 +43,7 @@ sub get_notif_methods
 #  POST /system/notifications/methods/METHOD
 sub set_notif_methods
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $key      = shift;
 
@@ -80,6 +82,7 @@ sub set_notif_methods
 # GET /system/notifications/alerts
 sub get_notif_alert_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "Get notifications alert status";
 	my @output;
 
@@ -100,6 +103,7 @@ sub get_notif_alert_status
 # GET /system/notifications/alerts/ALERT
 sub get_notif_alert
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $alert = shift;
 
 	my $desc = "Get notifications alert $alert settings";
@@ -112,6 +116,7 @@ sub get_notif_alert
 #  POST /system/notifications/alerts/ALERT
 sub set_notif_alert
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $alert    = shift;
 
@@ -154,6 +159,7 @@ sub set_notif_alert
 #  POST /system/notifications/alerts/ALERT/actions
 sub set_notif_alert_actions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $alert    = shift;
 
@@ -190,6 +196,7 @@ sub set_notif_alert_actions
 
 sub send_test_mail
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc        = "Send test mail";

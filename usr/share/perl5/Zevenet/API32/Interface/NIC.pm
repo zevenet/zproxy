@@ -28,6 +28,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 sub delete_interface_nic    # ( $nic )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $nic = shift;
 
 	require Zevenet::Net::Core;
@@ -89,6 +90,7 @@ sub delete_interface_nic    # ( $nic )
 # GET /interfaces Get params of the interfaces
 sub get_nic_list    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $desc         = "List NIC interfaces";
@@ -104,6 +106,7 @@ sub get_nic_list    # ()
 
 sub get_nic    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $nic = shift;
 
 	require Zevenet::Net::Interface;
@@ -127,6 +130,7 @@ sub get_nic    # ()
 
 sub actions_interface_nic    # ( $json_obj, $nic )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $nic      = shift;
 
@@ -210,6 +214,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 
 sub modify_interface_nic    # ( $json_obj, $nic )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $nic      = shift;
 

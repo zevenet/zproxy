@@ -47,6 +47,7 @@ FIXME:
 
 sub setFarmHTTPNewService    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	use File::Grep 'fgrep';
@@ -170,6 +171,7 @@ Returns:
 
 sub delHTTPFarmService    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Tie::File;
@@ -275,6 +277,7 @@ FIXME:
 
 sub getHTTPFarmServices
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -375,6 +378,7 @@ Returns:
 
 sub getHTTPServiceBlocks
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;
 	my $srv  = shift;
 	my $out = {
@@ -486,6 +490,7 @@ Notes:
 
 sub getHTTPServiceStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -591,6 +596,7 @@ FIXME:
 
 sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $tag ) = @_;
 
 	$service = "" unless $service;
@@ -844,6 +850,7 @@ Returns:
 
 sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $tag, $string ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1091,6 +1098,7 @@ FIXME:
 
 sub getFarmVSI    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	# get service position
@@ -1117,6 +1125,7 @@ sub getFarmVSI    # ($farm_name,$service)
 # Similar to getHTTPServiceStruct??
 sub get_http_service_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -1157,6 +1166,7 @@ sub get_http_service_struct
 
 sub get_http_all_services_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname ) = @_;
 
 	# Output
@@ -1174,6 +1184,7 @@ sub get_http_all_services_struct
 
 sub get_http_all_services_summary_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname ) = @_;
 
 	# Output

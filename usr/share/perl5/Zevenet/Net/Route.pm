@@ -41,6 +41,7 @@ Returns:
 # create table route identification, complemented in delIf()
 sub writeRoutes    # ($if_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;
 
 	my $rttables = &getGlobalConfiguration( 'rttables' );
@@ -94,6 +95,7 @@ See Also:
 # add local network into routing table
 sub addlocalnet    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	&zenlog("addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )", "debug", "NETWORK") if &debug();
@@ -177,6 +179,7 @@ See Also:
 # ask for rules
 sub isRule    # ($if_ref, $toif)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref, $toif ) = @_;
 
 	$toif = $$if_ref{ name } if !$toif;
@@ -216,6 +219,7 @@ See Also:
 # apply routes
 sub applyRoutes    # ($table,$if_ref,$gateway)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $table, $if_ref, $gateway ) = @_;
 
 	# $gateway: The 3rd argument, '$gateway', is only used for 'global' table,
@@ -343,6 +347,7 @@ See Also:
 # delete routes
 sub delRoutes    # ($table,$if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $table, $if_ref ) = @_;
 
 	my $status = 0;
@@ -429,6 +434,7 @@ See Also:
 # get default gw for interface
 sub getDefaultGW    # ($if)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if = shift;    # optional argument
 
 	my @line;
@@ -484,6 +490,7 @@ See Also:
 =cut
 sub getIPv6DefaultGW    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @routes = `$ip_bin -6 route list`;
 	my ( $default_line ) = grep { /^default/ } @routes;
 
@@ -512,6 +519,7 @@ See Also:
 =cut
 sub getIPv6IfDefaultGW    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @routes = `$ip_bin -6 route list`;
 	my ( $default_line ) = grep { /^default/ } @routes;
 
@@ -541,6 +549,7 @@ See Also:
 # get interface for default gw
 sub getIfDefaultGW    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @routes = `$ip_bin route list`;
 	my @defgw  = grep ( /^default/, @routes );
 	my @line   = split ( / /, $defgw[0] );
@@ -565,6 +574,7 @@ See Also:
 # from bin/zevenet, almost exactly
 sub configureDefaultGW    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $defaultgw = &getGlobalConfiguration('defaultgw');
 	my $defaultgwif = &getGlobalConfiguration('defaultgwif');
 	my $defaultgw6 = &getGlobalConfiguration('defaultgw6');

@@ -42,6 +42,7 @@ Returns:
 
 sub getGSLBFarmBootStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -83,6 +84,7 @@ FIXME:
 
 sub getGSLBFarmPid    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	my $farm_filename = &getFarmFile( $fname );
@@ -125,6 +127,7 @@ FIXME:
 
 sub getGSLBFarmPidFile    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return "$configdir\/$farm_name\_gslb.cfg\/etc\/gdnsd.pid";
@@ -149,6 +152,7 @@ FIXME:
 
 sub getGSLBFarmVip    # ($info,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $info, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -196,6 +200,7 @@ Returns:
 
 sub runGSLBFarmReload    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	require Zevenet::System;
@@ -231,6 +236,7 @@ Returns:
 
 sub getGSLBControlPort    # ( $farm_name )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $port     = -1;
 	my $ffile    = &getFarmFile( $farmName );
@@ -266,6 +272,7 @@ Returns:
 
 sub setGSLBControlPort    # ( $farm_name )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Zevenet::Net::Util;
@@ -308,6 +315,7 @@ FIXME:
 
 sub setGSLBFarmBootStatus    # ($farm_name, $status)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $status ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -357,6 +365,7 @@ BUG:
 
 sub setGSLBFarmStatus    # ($farm_name, $status)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $status ) = @_;
 
 	my $command;
@@ -404,6 +413,7 @@ Returns:
 
 sub setGSLBRemoveTcpPort
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $port ) = @_;
 
 	my $ffile = &getFarmFile( $fname );
@@ -465,6 +475,7 @@ Bug:
 
 sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $vipp, $fname ) = @_;
 
 	my $fconf = &getFarmFile( $fname );

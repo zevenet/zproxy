@@ -41,6 +41,7 @@ my $iptables = &getGlobalConfiguration( 'iptables' );
 # create the chain where the counters are
 sub createTHROUChain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $error;
 
 	# create chain
@@ -72,6 +73,7 @@ sub createTHROUChain
 # remove the chain where the counters are
 sub deleteTHROUChain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# un link chain
 	&iptSystem( "$iptables -D $in_hook_chain -t $table -j $in_chain" );
 	&iptSystem( "$iptables -D $out_hook_chain -t $table -j $out_chain" );
@@ -88,6 +90,7 @@ sub deleteTHROUChain
 # apply input and output rules
 sub startTHROUIface
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 	if ( &iptSystem( "$iptables -C $in_chain -t $table -i $iface" ) )
 	{
@@ -98,6 +101,7 @@ sub startTHROUIface
 
 sub stopTHROUIface
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 	&iptSystem( "$iptables -D $in_chain -t $table -i $iface" );
 	&iptSystem( "$iptables -D $out_chain -t $table -o $iface" );
@@ -105,6 +109,7 @@ sub stopTHROUIface
 
 sub createTHROUFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fh;
 	open ( $fh, '>', $tmpfile );
 	close $fh;
@@ -112,6 +117,7 @@ sub createTHROUFile
 
 sub getTHROUPid
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $pid;
 	my $cmd = "ps aux |grep $throughput_bin | grep -v grep";
 
@@ -123,6 +129,7 @@ sub getTHROUPid
 
 sub getTHROUStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $pid = &getTHROUPid();
 	my $status = kill ( 0, $pid );
 
@@ -131,6 +138,7 @@ sub getTHROUStatus
 
 sub startTHROUTask
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return if ( &getGlobalConfiguration( "throughput_enabled" ) ne "true" );
 
 	# create iptables chain
@@ -169,6 +177,7 @@ sub startTHROUTask
 
 sub stopTHROUTask
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# kill the process
 	my $pid = &getTHROUPid();
 	if ( $pid ) { kill 9, $pid; }
@@ -181,12 +190,14 @@ sub stopTHROUTask
 
 sub resetTHROUCounter
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&iptSystem( "$iptables -Z $in_chain -t $table" );
 	&iptSystem( "$iptables -Z $out_chain -t $table" );
 }
 
 sub saveTHROUCounters
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# reset file to delete stopped interfaces
 	&createTHROUFile();
 
@@ -223,6 +234,7 @@ sub saveTHROUCounters
 # return a struct from the tmp file with the throutput of all interfaces
 sub getTHROUStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fh = Config::Tiny->read( $tmpfile );
 
 	return $fh;
@@ -230,6 +242,7 @@ sub getTHROUStruct
 
 sub getTHROUStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Config;
 
 	my $throughput_file = &getTHROUStruct();

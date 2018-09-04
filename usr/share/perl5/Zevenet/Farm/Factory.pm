@@ -48,6 +48,7 @@ FIXME:
 
 sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_type, $vip, $vip_port, $farm_name, $fdev ) = @_;
 
 	my $output        = -1;

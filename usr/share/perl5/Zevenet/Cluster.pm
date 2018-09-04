@@ -43,6 +43,7 @@ See Also:
 =cut
 sub getZClusterLocalIp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return if ! &getZClusterStatus();
 
 	my $zcl_conf = getZClusterConfig();
@@ -71,6 +72,7 @@ See Also:
 =cut
 sub getZClusterStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# case filecuster does not exist
 	return if ! -f &getGlobalConfiguration('filecluster');
 
@@ -104,6 +106,7 @@ See Also:
 =cut
 sub getZClusterConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 	require Zevenet::Config;
 
@@ -144,6 +147,7 @@ See Also:
 =cut
 sub setZClusterConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $config = shift;
 
 	# returns true on success or undef on error,
@@ -168,6 +172,7 @@ See Also:
 =cut
 sub getZClusterRunning
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return ( system( "pgrep keepalived >/dev/null" ) == 0 );
 }
 
@@ -189,6 +194,7 @@ See Also:
 =cut
 sub enableZCluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $prio = shift;
 
 	#~ my $zcl_conf = &getZClusterConfig();
@@ -292,6 +298,7 @@ See Also:
 =cut
 sub disableZCluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $error_code = &logAndRun("/etc/init.d/keepalived stop");
 	# confirm keepalived stop
 	my @keepalived_process = `pgrep keepalived 2>/dev/null`;
@@ -344,6 +351,7 @@ See Also:
 =cut
 sub setKeepalivedConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $prio = shift;
 
 	require Zevenet::SystemInfo;
@@ -451,6 +459,7 @@ See Also:
 =cut
 sub getZClusterRemoteHost
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $zcl_conf = &getZClusterConfig();
@@ -532,6 +541,7 @@ See Also:
 =cut
 sub generateIdKey # $rc ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $key_path = &getGlobalConfiguration('key_path');
 	my $keygen_cmd = &getGlobalConfiguration('keygen_cmd');
 
@@ -568,6 +578,7 @@ See Also:
 =cut
 sub copyIdKey # $rc ( $ip_addr, $pass )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip_address = shift;
 	my $password   = shift;
 
@@ -604,6 +615,7 @@ See Also:
 =cut
 sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip_address = shift;
 	my $password   = shift;
 
@@ -700,6 +712,7 @@ See Also:
 =cut
 sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cmd        = shift;
 	my $ip_address = shift;
 	my $port       = shift // '22';
@@ -753,6 +766,7 @@ See Also:
 =cut
 sub zsync
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $args = shift;
 
 	if ( ref $args ne 'HASH' )
@@ -821,6 +835,7 @@ See Also:
 =cut
 sub runSync
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $src_path = shift;
 
 	#~ &zenlog("starting runSync", "info", "CLUSTER");
@@ -912,6 +927,7 @@ See Also:
 =cut
 sub getZClusterNodeStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Config;
 
 	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
@@ -955,6 +971,7 @@ See Also:
 =cut
 sub setZClusterNodeStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $node_status = shift;
 
 	&zenlog(">>>>>>> Requested node status: $node_status <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
@@ -998,6 +1015,7 @@ See Also:
 =cut
 sub disableInterfaceDiscovery
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 
 	if ( $iface->{ ip_v } == 4 )
@@ -1034,6 +1052,7 @@ See Also:
 =cut
 sub enableInterfaceDiscovery
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 
 	if ( $iface->{ ip_v } == 4 )
@@ -1069,6 +1088,7 @@ See Also:
 =cut
 sub enableAllInterfacesDiscovery
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# IPv4
 	my $arptables = &getGlobalConfiguration('arptables');
 	my $rc = &logAndRun( "$arptables -F" );
@@ -1097,6 +1117,7 @@ See Also:
 =cut
 sub broadcastInterfaceDiscovery
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 
 	&zenlog("Sending GArping for $iface->{ name }: $iface->{ addr }", "info", "CLUSTER");
@@ -1151,6 +1172,7 @@ See Also:
 =cut
 sub runZClusterRemoteManager
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $object = shift;
 	my $command = shift;
 
@@ -1198,6 +1220,7 @@ See Also:
 =cut
 sub pgrep
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cmd = shift;
 
 	# return_code
@@ -1210,6 +1233,7 @@ sub pgrep
 
 sub get_zeninotify_process
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return "ps aux | grep -v grep | grep zeninotify >/dev/null 2>&1";
 }
 
@@ -1238,6 +1262,7 @@ See Also:
 =cut
 sub getZClusterNodeStatusInfo
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift; # IP for remote host, or undef for local host
 
 	my $node; # output
@@ -1321,6 +1346,7 @@ See Also:
 =cut
 sub getZClusterNodeStatusDigest
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift; # IP for remote host, or undef for local host
 
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
@@ -1430,6 +1456,7 @@ See Also:
 
 sub setZClusterIptablesException
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $option = shift;
 
 	# return if the node is not in a cluster
@@ -1477,6 +1504,7 @@ sub setZClusterIptablesException
 
 sub zClusterFarmUp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
@@ -1492,6 +1520,7 @@ sub zClusterFarmUp
 
 sub zClusterFarmDown
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
@@ -1507,6 +1536,7 @@ sub zClusterFarmDown
 
 sub getKeepalivedVersion
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $line ) = `keepalived -v 2>&1`;
 	my ( $version ) = $line =~ / v([1-9]+\.[1-9]+\.[1-9]+)/;
 

@@ -25,6 +25,7 @@ use strict;
 
 sub migrate_blacklist_names
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# migration hash
 	my $migration = shift;
 
@@ -61,6 +62,7 @@ sub migrate_blacklist_names
 
 sub remove_blacklists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @lists_to_remove = @_;
 
 	include 'Zevenet::IPDS::Blacklist';
@@ -76,6 +78,7 @@ sub remove_blacklists
 
 sub rename_blacklists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @list_to_rename = @_;
 
 	include 'Zevenet::IPDS::Blacklist';
@@ -93,6 +96,7 @@ sub rename_blacklists
 # populate status parameter for blacklist rules
 sub set_blacklists_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 
 	my $blacklistsConf = "/usr/local/zevenet/config/ipds/blacklists/lists.conf";
@@ -118,6 +122,7 @@ sub set_blacklists_status
 # populate status parameter for dos rules
 sub set_dos_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 
 	my $dosConf    = "/usr/local/zevenet/config/ipds/dos/dos.conf";

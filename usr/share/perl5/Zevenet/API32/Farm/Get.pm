@@ -31,6 +31,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 #GET /farms
 sub farms    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
 
 	my @out;
@@ -76,6 +77,7 @@ sub farms    # ()
 # GET /farms/LSLBFARM
 sub farms_lslb    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::HTTP;
 	require Zevenet::Farm::L4xNAT;
@@ -124,6 +126,7 @@ sub farms_lslb    # ()
 # GET /farms/DATALINKFARM
 sub farms_dslb    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Datalink;
 
@@ -170,6 +173,7 @@ sub farms_dslb    # ()
 #GET /farms/<name>/summary
 sub farms_name_summary    # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $desc = "Show farm $farmname";
@@ -196,6 +200,7 @@ sub farms_name_summary    # ( $farmname )
 #GET /farms/<name>
 sub farms_name    # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $desc = "Show farm $farmname";

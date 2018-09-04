@@ -43,6 +43,7 @@ Returns:
 =cut
 sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $farm_name, $vip_port ) = @_;
 
 	my $output    = -1;
@@ -84,6 +85,7 @@ Returns:
 =cut
 sub runL4FarmDelete    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return 0;

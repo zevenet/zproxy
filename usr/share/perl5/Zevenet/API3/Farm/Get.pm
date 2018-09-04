@@ -29,6 +29,7 @@ use Zevenet::Lock;
 #GET /farms
 sub farms # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
@@ -64,6 +65,7 @@ sub farms # ()
 # GET /farms/LSLBFARM
 sub farms_lslb # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
@@ -100,6 +102,7 @@ sub farms_lslb # ()
 # GET /farms/GSLBFARM
 sub farms_gslb # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
@@ -136,6 +139,7 @@ sub farms_gslb # ()
 # GET /farms/DATALINKFARM
 sub farms_dslb # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
@@ -170,6 +174,7 @@ sub farms_dslb # ()
 #GET /farms/<name>
 sub farms_name # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# Check that the farm exists

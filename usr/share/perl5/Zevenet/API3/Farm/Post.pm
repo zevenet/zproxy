@@ -26,6 +26,7 @@ use Zevenet::Net;
 
 sub new_farm    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
    # 3 Mandatory Parameters ( 1 mandatory for HTTP or GSBL and optional for L4xNAT )

@@ -42,6 +42,7 @@ FIXME:
 =cut
 sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
 	my %farm = &getL4FarmStruct( $farm_name );
@@ -134,6 +135,7 @@ FIXME:
 =cut
 sub getL4FarmEstConns    # ($farm_name,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my %farm = &getL4FarmStruct( $farm_name );
@@ -234,6 +236,7 @@ FIXME:
 =cut
 sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
 	my %farm = &getL4FarmStruct( $farm_name );
@@ -303,6 +306,7 @@ FIXME:
 =cut
 sub getL4FarmSYNConns    # ($farm_name,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my %farm = &getL4FarmStruct( $farm_name );
@@ -376,6 +380,7 @@ Returns:
 =cut
 sub getL4FarmBackendsStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Net::ConnStats;
@@ -427,6 +432,7 @@ Returns:
 
 sub getL4FarmSessions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');

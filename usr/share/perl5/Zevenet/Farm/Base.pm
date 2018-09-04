@@ -46,6 +46,7 @@ See Also:
 =cut
 sub getFarmVip    # ($info,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $info, $farm_name ) = @_;
 
 
@@ -96,6 +97,7 @@ NOTE:
 =cut
 sub getFarmStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $output = -1;
@@ -174,6 +176,7 @@ NOTE:
 =cut
 sub getFarmVipStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $output = -1;
@@ -287,6 +290,7 @@ Returns:
 =cut
 sub getFarmPid    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -322,6 +326,7 @@ Returns:
 =cut
 sub getFarmBootStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -373,6 +378,7 @@ FIXME:
 =cut
 sub getFarmProto    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $farm_type     = &getFarmType( $farm_name );
@@ -409,6 +415,7 @@ Returns:
 =cut
 sub getNumberOfFarmTypeRunning
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $type    = shift;    # input value
 
 	my $counter = 0;        # return value
@@ -433,6 +440,7 @@ sub getNumberOfFarmTypeRunning
 
 sub getFarmListByVip
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift;
 	my @out;
 

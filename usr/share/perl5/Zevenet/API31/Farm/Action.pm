@@ -29,6 +29,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # POST /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -144,6 +145,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 # PUT /farms/<farmname>/services/<service>/backends/<backend>/maintenance
 sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $service    = shift;
@@ -277,6 +279,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 # PUT /farms/<farmname>/backends/<backend>/maintenance
 sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $backend_id = shift;

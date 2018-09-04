@@ -26,6 +26,7 @@ use strict;
 # GET /interfaces Get params of the interfaces
 sub get_interfaces # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @output_list;
 
 	my $description = "List interfaces";

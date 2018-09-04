@@ -44,6 +44,7 @@ Returns:
 
 sub initRBACModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $touch           = &getGlobalConfiguration( "touch" );
 	my $groupadd        = &getGlobalConfiguration( "groupadd_bin" );
 	my $rbacPath        = &getRBACConfPath();

@@ -31,11 +31,13 @@ my $secConf = &getNotifConfFile();
 
 sub getNotifConfFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return &getGlobalConfiguration( "notifConfDir") . "/sec.rules";
 }
 
 sub setNotifCreateConfFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	use Zevenet::SystemInfo;
 
 	my $confdir    = &getGlobalConfiguration( 'notifConfDir' );
@@ -117,6 +119,7 @@ sub setNotifCreateConfFile
 # &setNotifSenders ( $sender, $params );
 sub setNotifSenders
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $sender = shift;
 	my $params = shift;
 
@@ -151,6 +154,7 @@ sub setNotifSenders
 # &setNotifAlerts ( $alert, $params )
 sub setNotifAlerts
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $notif     = shift;
 	my $params    = shift;
 
@@ -184,6 +188,7 @@ sub setNotifAlerts
 # &setNotifAlertsAction ( $alert, $action )
 sub setNotifAlertsAction
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $notif  = shift;
 	my $action = shift // "";
 
@@ -244,6 +249,7 @@ sub setNotifAlertsAction
 # Discomment rule in sec rule file
 sub enableRule    # &enableRule ( $rule )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
@@ -286,6 +292,7 @@ sub enableRule    # &enableRule ( $rule )
 # Change the switch time. This is the time server wait a state change to avoid do spam
 sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $time ) = @_;
 
 	my $fileConf = $secConf;
@@ -326,6 +333,7 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 # Check sec status and boot it if was on
 sub zlbstartNotifications
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' ) ;
 	my $output;
 
@@ -346,6 +354,7 @@ sub zlbstartNotifications
 
 sub zlbstopNotifications
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $sec = &getGlobalConfiguration( 'sec' );
 	return 0 if ( !$sec );
 
@@ -361,6 +370,7 @@ sub zlbstopNotifications
 
 sub createSecConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $template    = &getGlobalConfiguration( 'secTemplate' );
 
 	# Copy the template
@@ -379,6 +389,7 @@ sub createSecConfig
 
 sub runNotifications
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $pidof      = &getGlobalConfiguration( 'pidof' );
 	my $sec        = &getGlobalConfiguration( 'sec' );
 	my $syslogFile = &getGlobalConfiguration( 'syslogFile' );
@@ -409,6 +420,7 @@ sub runNotifications
 
 sub reloadNotifications
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $pidof = &getGlobalConfiguration( 'pidof' );
 	my $pid   = `$pidof -x sec`;
 
@@ -423,6 +435,7 @@ sub reloadNotifications
 #  &getNotifData ( $file, $section, $key, $data )
 sub setNotifData
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $name, $section, $key, $data ) = @_;
 
 	my $errMsg;
@@ -459,6 +472,7 @@ sub setNotifData
 #  &getNotifData ( $file, $section, $key )
 sub getNotifData
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $name, $section, $key ) = @_;
 
 	my $arguments = scalar @_;
@@ -494,6 +508,7 @@ sub getNotifData
 
 sub getNotifSendersSmtp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $method;
 	$method->{ 'method' }   = 'email';
 	$method->{ 'server' }   = &getNotifData( 'senders', 'Smtp', 'server' );
@@ -511,6 +526,7 @@ sub getNotifSendersSmtp
 
 sub getNotifAlert
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $alert = shift;
 
 	my $method;
@@ -552,6 +568,7 @@ sub getNotifAlert
 # &sendByMail ( $subject, $bodycomp );
 sub sendByMail
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $subject, $bodycomp, $section ) = @_;
 
 	my $body;
@@ -629,6 +646,7 @@ sub sendByMail
 # &sendTestMail ( $subject, $bodycomp );
 sub sendTestMail
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bodycomp = "Zevenet notification service.\n\nThis mail confirms that the configuration is correct.";
 	my $subject = "Test mail";
 	my $command;
@@ -700,6 +718,7 @@ sub sendTestMail
 
 sub encryptNotifPass
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Code';
 	if ( !&getNotifData( "senders", "_", "version" ) )
 	{

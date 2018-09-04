@@ -44,6 +44,7 @@ Returns:
 
 sub _runFarmStart    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -117,6 +118,7 @@ NOTE:
 
 sub runFarmStart    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $status = &_runFarmStart( $farm_name );
@@ -162,6 +164,7 @@ NOTE:
 
 sub runFarmStop    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	if ( $eload )
@@ -203,6 +206,7 @@ Returns:
 
 sub _runFarmStop    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -268,6 +272,7 @@ NOTE:
 
 sub runFarmDelete    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	require Zevenet::Netfilter;
@@ -370,6 +375,7 @@ NOTE:
 
 sub setFarmRestart    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	# do nothing if the farm is not running
@@ -400,6 +406,7 @@ NOTE:
 
 sub setFarmNoRestart    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	require Zevenet::Lock;
@@ -423,6 +430,7 @@ Returns:
 
 sub setNewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $new_farm_name ) = @_;
 
 	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );

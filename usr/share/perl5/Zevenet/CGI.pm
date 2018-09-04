@@ -46,6 +46,7 @@ See Also:
 =cut
 sub getCGI
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	state $cgi = CGI::Simple->new();
 
 	return $cgi;
@@ -81,6 +82,7 @@ See Also:
 =cut
 sub getCgiParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $variable = shift;
 
 	my $cgi = getCGI();

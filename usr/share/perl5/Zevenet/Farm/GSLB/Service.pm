@@ -41,6 +41,7 @@ Returns:
 =cut
 sub getGSLBFarmServices    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	require Tie::File;
@@ -96,6 +97,7 @@ Returns:
 =cut
 sub setGSLBFarmDeleteService    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	my $output     = -1;
@@ -229,6 +231,7 @@ Bug:
 =cut
 sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice, $alg ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Service';
@@ -383,6 +386,7 @@ FIXME:
 =cut
 sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice, $tag ) = @_;
 
 	require Tie::File;
@@ -530,6 +534,7 @@ Bug:
 =cut
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice, $tag, $stri ) = @_;
 
 	require Tie::File;
@@ -798,6 +803,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 
 sub getGSLBFarmServicesStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::FarmGuardian;
@@ -835,6 +841,7 @@ sub getGSLBFarmServicesStruct
 
 sub getGSLBFarmServicesStruct31
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::FarmGuardian;

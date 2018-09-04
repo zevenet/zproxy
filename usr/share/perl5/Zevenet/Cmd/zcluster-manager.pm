@@ -573,6 +573,7 @@ if ( $object eq 'gateway' )
 
 sub setNodeStatusMaster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog( "############# Starting setNodeStatusMaster" );
 
 	my $node_status = &getZClusterNodeStatus();
@@ -641,6 +642,7 @@ sub setNodeStatusMaster
 
 sub setNodeStatusBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog( "############### Starting setNodeStatusBackup" );
 
 	my $node_status = &getZClusterNodeStatus();
@@ -714,6 +716,7 @@ sub setNodeStatusBackup
 
 sub setNodeStatusMaintenance
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog( "############### Starting setNodeStatusMaintenance" );
 
 	include 'Zevenet::Ssyncd';
@@ -769,6 +772,7 @@ sub setNodeStatusMaintenance
 
 sub quit
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $msg = shift;
 
 	if ( $msg )

@@ -39,6 +39,7 @@ Returns:
 
 sub getUser
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	if ( ! exists $ENV{ REQ_USER } || ! defined $ENV{ REQ_USER } )
 	{
 		&zenlog('User name not defined', 'Warning');
@@ -62,6 +63,7 @@ Returns:
 
 sub setUser
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user = shift;
 	$ENV{ REQ_USER } = $user;
 }

@@ -67,6 +67,7 @@ See Also:
 =cut
 sub getBondList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
 
 	if ( !-f $bonding_masters_filename )
@@ -133,6 +134,7 @@ See Also:
 =cut
 sub getBondMode
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond_master = shift;
 
 	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
@@ -181,6 +183,7 @@ See Also:
 =cut
 sub getBondSlaves
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond_master = shift;
 
 	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
@@ -232,6 +235,7 @@ See Also:
 =cut
 sub applyBondChange
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond      = shift;
 	my $writeconf = shift;    # bool: write config to disk
 
@@ -350,6 +354,7 @@ See Also:
 =cut
 sub setBondMaster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond_name = shift;
 	my $operation = shift;    # add || del
 	my $writeconf = shift;    # bool: write config to disk
@@ -441,6 +446,7 @@ See Also:
 =cut
 sub setBondMode
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
@@ -489,6 +495,7 @@ See Also:
 =cut
 sub setBondSlave
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond_name  = shift;
 	my $bond_slave = shift;
 	my $operation  = shift;    # add || del
@@ -554,6 +561,7 @@ See Also:
 =cut
 sub getBondConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# returns:	0 on failure
 	#			Config_tiny object on success
 
@@ -607,6 +615,7 @@ See Also:
 =cut
 sub setBondConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond_conf = shift;
 
 	# store slaves as a string
@@ -648,6 +657,7 @@ See Also:
 =cut
 sub getBondAvailableSlaves
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @bond_list = ();
 	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
 
@@ -708,6 +718,7 @@ See Also:
 =cut
 sub getAllBondsSlaves
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @slaves; # output
 
 	my $bond_list_ref = &getBondList();
@@ -725,6 +736,7 @@ sub getAllBondsSlaves
 
 sub get_bond_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $bond ) = @_;
 
 	require Zevenet::Net::Interface;
@@ -778,6 +790,7 @@ sub get_bond_struct
 
 sub get_bond_list_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $output_list = ();
 
 	require Zevenet::Alias;

@@ -38,6 +38,7 @@ Returns:
 =cut
 sub getGSLBFarmZones    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $output    = -1;
@@ -64,6 +65,7 @@ Returns:
 =cut
 sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $id, $fname, $service ) = @_;
 
 	my $ffile  = &getFarmFile( $fname );
@@ -105,6 +107,7 @@ Returns:
 =cut
 sub setGSLBFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $id, $resource, $ttl, $type, $rdata, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -175,6 +178,7 @@ Returns:
 =cut
 sub setGSLBFarmZoneSerial    # ($farm_name,$zone)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $zone ) = @_;
 
 	my $ffile  = &getFarmFile( $fname );
@@ -210,6 +214,7 @@ Returns:
 =cut
 sub setGSLBFarmDeleteZone    # ($farm_name,$zone)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $zone ) = @_;
 
 	return unlink "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/$zone";
@@ -229,6 +234,7 @@ Returns:
 =cut
 sub setGSLBFarmNewZone    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $zone ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -281,6 +287,7 @@ Returns:
 =cut
 sub getGSLBResources	# ( $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Config;
@@ -319,6 +326,7 @@ sub getGSLBResources	# ( $farmname, $zone )
 
 sub getGSLBFarmZonesStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my @zones   = &getGSLBFarmZones( $farmname );

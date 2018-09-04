@@ -47,6 +47,7 @@ See Also:
 
 sub getCertFiles    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	opendir ( DIR, $configdir );
@@ -80,6 +81,7 @@ See Also:
 
 sub getCleanBlanc    # ($vartoclean)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vartoclean ) = @_;
 
 	$vartoclean =~ s/^\s+//;
@@ -112,6 +114,7 @@ See Also:
 
 sub getCertType    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $certtype = "none";
 
@@ -146,6 +149,7 @@ See Also:
 
 sub getCertCN    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $certcn = "";
 
@@ -186,6 +190,7 @@ See Also:
 
 sub getCertIssuer    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $certissu = "";
 
@@ -225,6 +230,7 @@ See Also:
 
 sub getCertCreation    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 
 	#~ use File::stat;
@@ -268,6 +274,7 @@ See Also:
 
 sub getCertExpiration    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $dateexpiration = "";
 
@@ -304,6 +311,7 @@ See Also:
 
 sub getFarmCertUsed    #($cfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cfile ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -347,6 +355,7 @@ See Also:
 
 sub checkFQDN    # ($certfqdn)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfqdn ) = @_;
 	my $valid = "true";
 
@@ -390,6 +399,7 @@ See Also:
 
 sub delCert    # ($certname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certname ) = @_;
 
 	# escaping special caracters
@@ -441,6 +451,7 @@ See Also:
 
 sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my (
 		 $certname,     $certfqdn,         $certcountry,  $certstate,
 		 $certlocality, $certorganization, $certdivision, $certmail,
@@ -493,6 +504,7 @@ See Also:
 
 sub getCertData    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -519,6 +531,7 @@ sub getCertData    # ($certfile)
 
 sub getCertInfo    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile, $path ) = @_;
 
 	my $filepath  = "$path\/$certfile";
@@ -638,6 +651,7 @@ sub getCertInfo    # ($certfile)
 # May 17 15:04:52 2018 GMT
 sub getDateEpoc
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $date_string = shift @_;
 	my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
@@ -650,6 +664,7 @@ sub getDateEpoc
 
 sub getCertDaysToExpire
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cert_ends ) = @_;
 
 	use Time::Local;
@@ -689,6 +704,7 @@ See Also:
 
 sub delCert_activation    # ($certname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# zevenet/www/ directory
 	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
 	my $cert_filename = 'zlbcertfile.pem';

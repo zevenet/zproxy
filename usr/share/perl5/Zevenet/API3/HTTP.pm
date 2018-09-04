@@ -27,6 +27,7 @@ use strict;
 
 sub GET
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -41,6 +42,7 @@ sub GET
 
 sub POST
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -88,6 +90,7 @@ sub POST
 
 sub PUT
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -136,6 +139,7 @@ sub PUT
 
 sub DELETE
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -150,6 +154,7 @@ sub DELETE
 
 sub OPTIONS
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -181,6 +186,7 @@ sub OPTIONS
 =cut
 sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $self = shift;
 
 	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG

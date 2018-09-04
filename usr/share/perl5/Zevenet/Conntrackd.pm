@@ -43,6 +43,7 @@ See Also:
 =cut
 sub setConntrackdConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 	require Zevenet::SystemInfo;
 
@@ -153,6 +154,7 @@ See Also:
 =cut
 sub startConntrackd
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog("Starting conntrackd", "info", "CLUSTER");
 	return system("/etc/init.d/conntrackd start >/dev/null 2>&1");
 }
@@ -175,6 +177,7 @@ See Also:
 =cut
 sub stopConntrackd
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog("Stopping conntrackd", "info", "CLUSTER");
 	system("/etc/init.d/conntrackd stop >/dev/null 2>&1");
 
@@ -205,6 +208,7 @@ See Also:
 =cut
 sub getConntrackdRunning
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return ( system( "pgrep conntrackd >/dev/null" ) == 0 );
 }
 

@@ -50,6 +50,7 @@ Returns:
 
 sub updateRBACGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group  = shift;
 	my $action = shift;
 	my $user   = shift;
@@ -127,6 +128,7 @@ Returns:
 
 sub updateRBACAllGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# delete the removed groups
 	foreach my $group ( @{ &getRBACGroupsSys() } )
 	{

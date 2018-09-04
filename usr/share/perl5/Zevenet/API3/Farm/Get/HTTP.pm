@@ -27,6 +27,7 @@ include 'Zevenet::IPDS::Core';
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $output_params;
@@ -164,6 +165,7 @@ sub farms_name_http # ( $farmname )
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;
@@ -222,6 +224,7 @@ sub getIPDSfarmsRules_zapiv3
 
 sub getZapiHTTPServiceStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service_name ) = @_;
 
 	require Zevenet::FarmGuardian;

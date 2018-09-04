@@ -43,6 +43,7 @@ NOTE:
 
 sub getFarmType    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -94,6 +95,7 @@ NOTE:
 
 sub getFarmFile    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 
@@ -134,6 +136,7 @@ NOTE:
 
 sub getFarmName    # ($farm_filename)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_filename = shift;
 
 	my @filename_split = split ( "_", $farm_filename );
@@ -159,6 +162,7 @@ NOTE:
 
 sub getFarmList    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	opendir ( DIR, $configdir );
 	my @files1 = grep ( /\_pound.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
@@ -198,6 +202,7 @@ NOTE:
 
 sub getFarmsByType    # ($farm_type)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_type ) = @_;
 
 	my @farm_names = ();
@@ -237,6 +242,7 @@ Returns:
 
 sub getFarmNameList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @farm_names;    # output: returned list
 
 	# take every farm filename
@@ -263,6 +269,7 @@ Returns:
 
 sub getFarmExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $out      = 0;
 	$out = 1 if ( grep /^$farmname$/, &getFarmNameList() );

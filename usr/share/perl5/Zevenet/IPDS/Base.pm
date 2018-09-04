@@ -41,6 +41,7 @@ Returns:
 
 sub addIPDSIptablesChain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iptables        = &getGlobalConfiguration( 'iptables' );
 	my $whitelist_chain = &getIPDSChain( "whitelist" );
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
@@ -114,6 +115,7 @@ Returns:
 
 sub delIPDSIptablesChain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iptables        = &getGlobalConfiguration( 'iptables' );
 	my $whitelist_chain = &getIPDSChain( "whitelist" );
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
@@ -160,6 +162,7 @@ Returns:
 
 sub runIPDSStartModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 	include 'Zevenet::IPDS::RBL::Actions';
 	include 'Zevenet::IPDS::DoS::Actions';
@@ -188,6 +191,7 @@ Returns:
 
 sub runIPDSStopModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 	include 'Zevenet::IPDS::RBL::Actions';
 	include 'Zevenet::IPDS::DoS::Actions';
@@ -221,6 +225,7 @@ Returns:
 
 sub runIPDSStartByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	include 'Zevenet::Farm::Base';
@@ -273,6 +278,7 @@ Returns:
 
 sub runIPDSStopByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# get rules and perl modules
@@ -322,6 +328,7 @@ Returns:
 
 sub runIPDSRestartByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Base;
@@ -376,6 +383,7 @@ Returns:
 
 sub runIPDSDeleteByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# get rules and perl modules
@@ -425,6 +433,7 @@ Returns:
 
 sub runIPDSRenameByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $newname  = shift;
 

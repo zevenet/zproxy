@@ -26,6 +26,7 @@ use strict;
 # show license
 sub get_license
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $format = shift;
 
 	require Zevenet::System;
@@ -54,6 +55,7 @@ sub get_license
 
 sub get_supportsave
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "Get supportsave file";
 
 	require Zevenet::System;
@@ -66,6 +68,7 @@ sub get_supportsave
 # GET /system/version
 sub get_version
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 	require Zevenet::Certificate;
 

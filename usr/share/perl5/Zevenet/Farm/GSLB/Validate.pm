@@ -39,6 +39,7 @@ Returns:
 =cut
 sub getGSLBFarmConfigIsOK    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	my $ffile  = &getFarmFile( $fname );
@@ -73,6 +74,7 @@ Returns:
 =cut
 sub getGSLBCheckPort
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $checkPort ) = @_;
 
 	my $servicePorts = 0;
@@ -120,6 +122,7 @@ FIXME:
 =cut
 sub getGSLBCheckConf	#  ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );

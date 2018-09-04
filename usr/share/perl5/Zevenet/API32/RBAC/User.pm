@@ -27,6 +27,7 @@ include 'Zevenet::API32::RBAC::Structs';
 #GET /rbac/users
 sub get_rbac_all_users
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $users = &getZapiRBACAllUsers();
 	my $desc  = "List the RBAC users";
 
@@ -37,6 +38,7 @@ sub get_rbac_all_users
 #  GET /rbac/users/<user>
 sub get_rbac_user
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user = shift;
 
 	my $desc = "Get the user $user";
@@ -56,6 +58,7 @@ sub get_rbac_user
 #  POST /rbac/users
 sub add_rbac_user
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::RBAC::User::Config';
@@ -117,6 +120,7 @@ sub add_rbac_user
 #  PUT /rbac/users/<user>
 sub set_rbac_user
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $user     = shift;
 
@@ -220,6 +224,7 @@ sub set_rbac_user
 #  DELETE /rbac/users/<user>
 sub del_rbac_user
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user = shift;
 
 	include 'Zevenet::RBAC::User::Config';
@@ -258,6 +263,7 @@ sub del_rbac_user
 # 	GET /system/users
 sub get_system_user_rbac
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::User;
 	my $user = &getUser();
 
@@ -279,6 +285,7 @@ sub get_system_user_rbac
 # 	POST /system/users
 sub set_system_user_rbac
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::RBAC::User::Config';

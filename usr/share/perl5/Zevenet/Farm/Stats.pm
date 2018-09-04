@@ -43,6 +43,7 @@ Returns:
 =cut
 sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $ip_backend, $port_backend, $netstat ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -78,6 +79,7 @@ Returns:
 =cut
 sub getFarmEstConns    # ($farm_name,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -128,6 +130,7 @@ Returns:
 =cut
 sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $ip_backend, $port_backend, $netstat ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -164,6 +167,7 @@ Returns:
 =cut
 sub getFarmSYNConns    # ($farm_name, $netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );

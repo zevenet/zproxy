@@ -29,6 +29,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 #  POST /addvlan/<interface> Create a new vlan network interface
 sub new_vlan    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	require Zevenet::Net::Util;
@@ -220,6 +221,7 @@ sub new_vlan    # ( $json_obj )
 
 sub delete_interface_vlan    # ( $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	my $desc = "Delete VLAN interface";
@@ -272,6 +274,7 @@ sub delete_interface_vlan    # ( $vlan )
 
 sub get_vlan_list    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $desc = "List VLAN interfaces";
@@ -327,6 +330,7 @@ sub get_vlan_list    # ()
 
 sub get_vlan    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	require Zevenet::Net::Interface;
@@ -374,6 +378,7 @@ sub get_vlan    # ()
 
 sub actions_interface_vlan    # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan     = shift;
 
@@ -480,6 +485,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 
 sub modify_interface_vlan    # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan     = shift;
 

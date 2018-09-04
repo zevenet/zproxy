@@ -26,6 +26,7 @@ use strict;
 # POST /addvini/<interface> Create a new virtual network interface
 sub new_vini # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = "Add a virtual interface";
@@ -189,6 +190,7 @@ sub new_vini # ( $json_obj )
 
 sub delete_interface_virtual # ( $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $virtual = shift;
@@ -251,6 +253,7 @@ sub delete_interface_virtual # ( $virtual )
 
 sub get_virtual_list # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my @output_list;
@@ -291,6 +294,7 @@ sub get_virtual_list # ()
 
 sub get_virtual # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $virtual = shift;
 
 	my $interface; # output
@@ -347,6 +351,7 @@ sub get_virtual # ()
 
 sub actions_interface_virtual # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -485,6 +490,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 sub modify_interface_virtual # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual = shift;
 

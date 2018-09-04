@@ -46,6 +46,7 @@ FIXME:
 =cut
 sub getFarmServers    # ($farm_name, $service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -104,6 +105,7 @@ FIXME:
 =cut
 sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my (
 		 $ids,      $rip,     $port,      $max, $weight,
 		 $priority, $timeout, $farm_name, $service
@@ -156,6 +158,7 @@ Returns:
 =cut
 sub runFarmServerDelete    # ($ids,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -204,6 +207,7 @@ Returns:
 =cut
 sub getFarmBackendStatusCtl    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -248,6 +252,7 @@ FIXME:
 =cut
 sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $idserver, @content, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -281,6 +286,7 @@ FIXME:
 =cut
 sub getFarmBackendsClientsList    # ($farm_name,@content)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, @content ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );

@@ -25,6 +25,7 @@ use strict;
 # POST /farms/FARM/certificates (Add certificate to farm)
 sub add_farm_certificate # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -117,6 +118,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 # DELETE /farms/FARM/certificates/CERTIFICATE
 sub delete_farm_certificate # ( $farmname, $certfilename )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname     = shift;
 	my $certfilename = shift;
 

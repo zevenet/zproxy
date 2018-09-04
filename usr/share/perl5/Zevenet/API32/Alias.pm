@@ -30,6 +30,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # DELETE /alias/(alias_type)/(alias_re)
 sub delete_alias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $type = shift;
 	my $id   = shift;
 	my $desc = "Delete an alias";
@@ -55,6 +56,7 @@ sub delete_alias
 # PUT /alias/(alias_type)/(alias_re)
 sub set_alias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $type     = shift;
 	my $id       = shift;
@@ -121,6 +123,7 @@ sub set_alias
 # GET /alias/(alias_type)
 sub get_by_type
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $type = shift;
 	my $desc = "List the aliases";
 

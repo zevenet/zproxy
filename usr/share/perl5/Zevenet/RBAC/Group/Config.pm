@@ -46,6 +46,7 @@ Returns:
 
 sub setRBACGroupLockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbac_groups.lock";
@@ -74,6 +75,7 @@ Returns:
 
 sub setRBACGroupConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $group, $key, $value, $action ) = @_;
 
 	# the group root mustn't exist
@@ -127,6 +129,7 @@ Returns:
 
 sub createRBACGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 	my $group_obj;
 
@@ -163,6 +166,7 @@ Returns:
 
 sub delRBACGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	# remove from system
@@ -198,6 +202,7 @@ Returns:
 
 sub addRBACGroupResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group    = shift;
 	my $resource = shift;
 	my $type     = shift;
@@ -236,6 +241,7 @@ Returns:
 
 sub delRBACGroupResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group    = shift;
 	my $resource = shift;
 	my $type     = shift;
@@ -273,6 +279,7 @@ Returns:
 
 sub addRBACUserResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $resource = shift;
 	my $type     = shift;
 
@@ -307,6 +314,7 @@ Returns:
 
 sub delRBACResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $resource = shift;
 	my $type     = shift;
 
@@ -335,6 +343,7 @@ Returns:
 
 sub setRBACRenameByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $old_farmname = shift;
 	my $new_farmname = shift;
 

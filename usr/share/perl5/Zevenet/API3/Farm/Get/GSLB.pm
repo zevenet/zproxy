@@ -27,6 +27,7 @@ include 'Zevenet::IPDS::Core';
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $farm_ref;
@@ -161,6 +162,7 @@ sub farms_name_gslb # ( $farmname )
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;

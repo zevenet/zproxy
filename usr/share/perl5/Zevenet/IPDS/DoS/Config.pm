@@ -40,6 +40,7 @@ Returns:
 
 sub getDOSInitialParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	# get ssh port
@@ -108,6 +109,7 @@ Returns:
 
 sub setDOSCreateFileConf
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
@@ -163,6 +165,7 @@ Returns:
 
 sub setDOSParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name  = shift;
 	my $param = shift;
 	my $value = shift;
@@ -217,6 +220,7 @@ Returns:
 
 sub createDOSRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $rule     = shift;
 	my $params;
@@ -270,6 +274,7 @@ Returns:
 
 sub deleteDOSRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );

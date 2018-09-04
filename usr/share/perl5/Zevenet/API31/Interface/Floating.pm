@@ -25,6 +25,7 @@ use strict;
 
 sub delete_interface_floating    # ( $floating )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';
@@ -81,6 +82,7 @@ sub delete_interface_floating    # ( $floating )
 # address or interface
 sub modify_interface_floating    # ( $json_obj, $floating )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $interface = shift;
 
@@ -181,6 +183,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 sub get_interfaces_floating
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Net::Floating';
 
@@ -226,6 +229,7 @@ sub get_interfaces_floating
 
 sub get_floating
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $floating = shift;
 
 	require Zevenet::Net::Interface;

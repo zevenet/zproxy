@@ -26,6 +26,7 @@ use strict;
 # show license
 sub get_license
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $format = shift;
 	my $description = "Get license";
 	my $file;
@@ -59,6 +60,7 @@ sub get_license
 
 sub get_supportsave
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $description = "Get supportsave file";
 	my @ss_output = `/usr/local/zevenet/bin/supportsave 2>&1`;
 
@@ -102,6 +104,7 @@ sub get_supportsave
 # GET /system/version
 sub get_version
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $description = "Get version";
 
 	my $uname      = &getGlobalConfiguration( 'uname' );

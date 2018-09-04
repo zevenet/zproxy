@@ -27,6 +27,7 @@ include 'Zevenet::Certificate';
 # GET /certificates/activation
 sub get_activation_certificate_info # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $description = "Activation certificate information";
 	my $cert_filename = 'zlbcertfile.pem';
 	my $cert_dir = &getGlobalConfiguration('basedir');
@@ -61,6 +62,7 @@ sub get_activation_certificate_info # ()
 # DELETE /certificates/activation
 sub delete_activation_certificate # ( $cert_filename )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $description = "Delete activation certificate";
@@ -94,6 +96,7 @@ sub delete_activation_certificate # ( $cert_filename )
 # POST /certificates/activation
 sub upload_activation_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 
 #
 # Curl command:

@@ -39,6 +39,7 @@ Returns:
 =cut
 sub _runDatalinkFarmStart    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Tie::File;
@@ -177,6 +178,7 @@ Returns:
 =cut
 sub _runDatalinkFarmStop    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Tie::File;
@@ -255,6 +257,7 @@ Returns:
 =cut
 sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $new_farm_name ) = @_;
 
 	require Tie::File;

@@ -35,6 +35,7 @@ my $ssyncd_enabled = &getGlobalConfiguration('ssyncd_enabled');
 # farm up
 sub setSsyncdFarmUp
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return 0 if $ssyncd_enabled eq 'false';
@@ -64,6 +65,7 @@ sub setSsyncdFarmUp
 # farm down
 sub setSsyncdFarmDown
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return 0 if $ssyncd_enabled eq 'false';
@@ -92,6 +94,7 @@ sub setSsyncdFarmDown
 #~ sub disable_ssyncd
 sub setSsyncdDisabled
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 
 	# /ssyncdctl quit --> Exit ssyncd process
@@ -111,6 +114,7 @@ sub setSsyncdDisabled
 
 sub setSsyncdBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog("/// Starting setSsyncdBackup", "info", "CLUSTER");
 
 	return 0 if $ssyncd_enabled eq 'false';
@@ -155,6 +159,7 @@ sub setSsyncdBackup
 
 sub setSsyncdMaster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );

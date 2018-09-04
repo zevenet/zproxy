@@ -50,6 +50,7 @@ Returns:
 =cut
 sub getHTTPServiceCookieIns    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -139,6 +140,7 @@ Returns:
 =cut
 sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $ci ) = @_;
 
 	# cookieins, cookieins-name, cookieins-domain, cookieins-path, cookieins-ttlc
@@ -185,6 +187,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 
 sub add_service_cookie_insertion
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
@@ -216,6 +219,7 @@ Returns:
 =cut
 sub getHTTPServiceRedirectCode    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -266,6 +270,7 @@ Returns:
 =cut
 sub setHTTPServiceRedirectCode    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $code ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -313,6 +318,7 @@ Returns:
 =cut
 sub getHTTPServiceSTSStatus    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -363,6 +369,7 @@ Returns:
 =cut
 sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $status ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -428,6 +435,7 @@ Returns:
 =cut
 sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -478,6 +486,7 @@ Returns:
 =cut
 sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $time ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -536,6 +545,7 @@ FIXME:
 =cut
 sub setHTTPFarmMoveService
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm      = shift;
 	my $srv       = shift;
 	my $req_index = shift;
@@ -613,6 +623,7 @@ FIXME:
 =cut
 sub setHTTPFarmMoveServiceStatusFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service, $req_index ) = @_;
 
 	use Tie::File;

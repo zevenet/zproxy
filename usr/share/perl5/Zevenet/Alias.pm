@@ -32,6 +32,7 @@ my $lockfile   = "/tmp/alias_file.lock";
 
 sub createAliasFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fh;
 
 	open ( $fh, '>', $alias_file );
@@ -42,6 +43,7 @@ sub createAliasFile
 # Get a backend alias or interface alias
 sub getAlias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $name ) = @_;
 
 	my $out;
@@ -73,6 +75,7 @@ sub getAlias
 # remove a nick
 sub delAlias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip ) = @_;
 
@@ -98,6 +101,7 @@ sub delAlias
 # modify or create a nick
 sub setAlias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip, $alias ) = @_;
 

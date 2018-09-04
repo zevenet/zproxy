@@ -27,6 +27,7 @@ include 'Zevenet::API32::RBAC::Structs';
 #GET /rbac/groups
 sub get_rbac_all_groups
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $groups = &getZapiRBACAllGroups();
 	my $desc   = "List the RBAC groups";
 
@@ -37,6 +38,7 @@ sub get_rbac_all_groups
 #  GET /rbac/groups/<group>
 sub get_rbac_group
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	my $desc = "Get the group $group";
@@ -56,6 +58,7 @@ sub get_rbac_group
 #  POST /rbac/groups
 sub add_rbac_group
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::RBAC::Group::Config';
@@ -110,6 +113,7 @@ sub add_rbac_group
 #  PUT /rbac/groups/<group>
 sub set_rbac_group
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $group    = shift;
 
@@ -165,6 +169,7 @@ sub set_rbac_group
 #  DELETE /rbac/groups/<group>
 sub del_rbac_group
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	include 'Zevenet::RBAC::Group::Config';
@@ -202,6 +207,7 @@ sub del_rbac_group
 #  POST /rbac/groups/<group>/users/(intefarces|farms|users)
 sub add_rbac_group_resource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $group    = shift;
 	my $type     = shift;
@@ -317,6 +323,7 @@ sub add_rbac_group_resource
 #  DELETE /rbac/groups/<group>/users/<users>/(interfaces|farms|users)/<resource_name>
 sub del_rbac_group_resource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group    = shift;
 	my $type     = shift;
 	my $resource = shift;

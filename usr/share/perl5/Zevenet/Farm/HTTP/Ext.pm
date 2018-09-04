@@ -40,6 +40,7 @@ Returns:
 =cut
 sub getHTTPFarm100Continue    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -77,6 +78,7 @@ Returns:
 =cut
 sub setHTTPFarm100Continue    # ($farm_name, $action)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $action ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -118,6 +120,7 @@ Returns:
 =cut
 sub getHTTPFarmLogs    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -155,6 +158,7 @@ Returns:
 =cut
 sub setHTTPFarmLogs    # ($farm_name, $action)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $action ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -195,6 +199,7 @@ Returns:
 =cut
 sub getHTTPAddheader    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my @out = ();
 
@@ -243,6 +248,7 @@ Returns:
 =cut
 sub addHTTPAddheader    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -296,6 +302,7 @@ Returns:
 =cut
 sub delHTTPAddheader    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -348,6 +355,7 @@ Returns:
 =cut
 sub getHTTPHeadremove    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my @out = ();
 
@@ -395,6 +403,7 @@ Returns:
 =cut
 sub addHTTPHeadremove    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -448,6 +457,7 @@ Returns:
 =cut
 sub delHTTPHeadremove    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -487,6 +497,7 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 
 sub get_http_farm_ee_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Config;

@@ -50,6 +50,7 @@ my %http_status_codes = (
 
 sub GET
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'GET' or $ENV{ REQUEST_METHOD } eq 'HEAD';
@@ -71,6 +72,7 @@ sub GET
 
 sub POST
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'POST';
@@ -132,6 +134,7 @@ sub POST
 
 sub PUT
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'PUT';
@@ -193,6 +196,7 @@ sub PUT
 
 sub DELETE
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'DELETE';
@@ -214,6 +218,7 @@ sub DELETE
 
 sub OPTIONS
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'OPTIONS';
@@ -245,6 +250,7 @@ sub OPTIONS
 =cut
 sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $self = shift;
 
 	return $self unless exists $ENV{ GATEWAY_INTERFACE };
@@ -367,6 +373,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 
 sub httpErrorResponse
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $args;
 
 	eval { $args = @_ == 1? shift @_: { @_ }; };
@@ -417,6 +424,7 @@ sub httpErrorResponse
 # WARNING: Function unfinished.
 sub httpSuccessResponse
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $args ) = @_;
 
 	unless ( ref( $args ) eq 'HASH' )
@@ -446,6 +454,7 @@ sub httpSuccessResponse
 
 sub httpDownloadResponse
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $args;
 
 	eval { $args = @_ == 1? shift @_: { @_ }; };

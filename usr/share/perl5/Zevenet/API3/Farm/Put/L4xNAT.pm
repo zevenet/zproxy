@@ -26,6 +26,7 @@ use strict;
 
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -499,6 +500,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;

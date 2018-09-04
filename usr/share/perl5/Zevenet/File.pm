@@ -25,6 +25,7 @@ use strict;
 
 sub getFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path = shift;
 
 	unless ( -f $path )
@@ -56,6 +57,7 @@ sub getFile
 
 sub setFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path = shift;
 	my $content = shift;
 
@@ -87,6 +89,7 @@ sub setFile
 
 sub saveFileHandler
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path = shift;
 	my $content_fh = shift;
 
@@ -121,6 +124,7 @@ sub saveFileHandler
 
 sub getFilenameFromPath
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path = shift;
 
 	my @path_parts = split ( /\\/, $path );

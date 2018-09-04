@@ -31,6 +31,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # DELETE /farms/FARMNAME
 sub delete_farm # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $desc = "Delete farm $farmname";

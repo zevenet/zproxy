@@ -28,6 +28,7 @@ use Zevenet::System;
 # GET /certificates/CERTIFICATE/info
 sub get_certificate_info # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	require Zevenet::Certificate;

@@ -27,6 +27,7 @@ include 'Zevenet::IPDS::DoS';
 # GET /ipds/dos/rules
 sub get_dos_rules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $description = "Get DoS settings.";
 
 	my $body = {
@@ -60,6 +61,7 @@ sub get_dos_rules
 #GET /ipds/dos
 sub get_dos
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $confFile    = &getGlobalConfiguration( 'dosConf' );
 	my $description = "Get DoS settings.";
 
@@ -79,6 +81,7 @@ sub get_dos
 #  POST /ipds/dos
 sub create_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj       = shift;
 	my $description    = "Post a DoS rule";
 	my $rule           = $json_obj->{ 'rule' };
@@ -128,6 +131,7 @@ sub create_dos_rule
 #GET /ipds/dos/RULE
 sub get_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name        = shift;
 	my $description = "Get DoS $name settings";
 	my $refRule     = &getDOSZapiRule( $name );
@@ -156,6 +160,7 @@ sub get_dos_rule
 #PUT /ipds/dos/<rule>
 sub set_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 	my $name        = shift;
 	my $description = "Put DoS rule settings";
@@ -246,6 +251,7 @@ sub set_dos_rule
 # DELETE /ipds/dos/RULE
 sub del_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	#~ my $json_obj = shift;
 	my $name = shift;
 	my $errormsg;
@@ -293,6 +299,7 @@ sub del_dos_rule
 #  POST /farms/<farmname>/ipds/dos
 sub add_dos_to_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 	my $farmName    = shift;
 	my $description = "Apply a rule to a farm";
@@ -374,6 +381,7 @@ sub add_dos_to_farm
 # DELETE /farms/<farmname>/ipds/dos/<ruleName>
 sub del_dos_from_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName    = shift;
 	my $name        = shift;
 	my $description = "Delete a rule from a farm";

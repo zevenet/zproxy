@@ -27,6 +27,7 @@ include 'Zevenet::IPDS::DoS';
 # GET /ipds/dos/rules
 sub get_dos_rules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "List the possible DoS rules";
 
 	my $body = {
@@ -60,6 +61,7 @@ sub get_dos_rules
 #GET /ipds/dos
 sub get_dos
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $desc     = "List the DoS rules";
 
@@ -80,6 +82,7 @@ sub get_dos
 #  POST /ipds/dos
 sub create_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::IPDS::DoS::Config';
@@ -135,6 +138,7 @@ sub create_dos_rule
 #GET /ipds/dos/RULE
 sub get_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 	my $desc    = "Get the DoS rule $name";
 
@@ -153,6 +157,7 @@ sub get_dos_rule
 #PUT /ipds/dos/<rule>
 sub set_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $name     = shift;
 
@@ -229,6 +234,7 @@ sub set_dos_rule
 # DELETE /ipds/dos/RULE
 sub del_dos_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 
 	include 'Zevenet::IPDS::DoS::Config';
@@ -267,6 +273,7 @@ sub del_dos_rule
 #  POST /farms/<farmname>/ipds/dos
 sub add_dos_to_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmName = shift;
 
@@ -344,6 +351,7 @@ sub add_dos_to_farm
 # DELETE /farms/<farmname>/ipds/dos/<ruleName>
 sub del_dos_from_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $name     = shift;
 
@@ -402,6 +410,7 @@ sub del_dos_from_farm
 # POST /ipds/dos/DOS/actions
 sub actions_dos
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $rule     = shift;
 

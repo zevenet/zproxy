@@ -59,6 +59,7 @@ if ( @ARGV && $ARGV[0] eq 'stop' )
 
 sub abort
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $msg = shift;
 
 	&zenlog( $msg ) if $msg ;
@@ -69,6 +70,7 @@ sub abort
 
 sub leave_zeninotify
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	unlink $zeninopid;
 	&zenlog( "Ending zeninotify" );
 	exit 0;
@@ -245,6 +247,7 @@ while ( 1 )
 
 sub getSubdirectories
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $dir_path = shift;
 
 	opendir( my $dir_h, $dir_path );

@@ -39,6 +39,7 @@ Returns:
 =cut
 sub getFarmCertificatesSNI    #($fname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fname = shift;
 
 	my @output;
@@ -78,6 +79,7 @@ Returns:
 =cut
 sub setFarmCertificateSNI    #($cfile,$fname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cfile, $fname ) = @_;
 
 	my $type   = &getFarmType( $fname );
@@ -136,6 +138,7 @@ Returns:
 =cut
 sub setFarmDeleteCertNameSNI    #($certn,$fname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certname, $fname ) = @_;
 
 	my $type   = &getFarmType( $fname );
@@ -188,6 +191,7 @@ Returns:
 =cut
 sub getFarmCipherSSLOffLoadingSupport
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $aes_found = 0;
 	my $proc_cpu = "/proc/cpuinfo";
 
@@ -212,6 +216,7 @@ sub getFarmCipherSSLOffLoadingSupport
 
 sub getExtraCipherProfiles
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @cipher_profiles = ();
 
 	if ( &getFarmCipherSSLOffLoadingSupport() )

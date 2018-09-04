@@ -38,6 +38,7 @@ Returns:
 
 sub getIPDSChain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ipds_module = shift;
 	my %ipds_chains = (
 		'blacklist' => 'BLACKLIST',
@@ -67,6 +68,7 @@ sub getIPDSChain
 
 sub getIptListV4
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $table, $chain ) = @_;
 
 	require Zevenet::Lock;
@@ -97,6 +99,7 @@ sub getIptListV4
 # &setIPDSDropAndLog ( $cmd, $logMsg );
 sub setIPDSDropAndLog
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cmd, $logMsg ) = @_;
 	my $output;
 
@@ -122,6 +125,7 @@ sub setIPDSDropAndLog
 # check if a rule exists. Return 1 if it exists or 0 if it is not
 sub getIPDSRuleExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $check_cmd = shift;
 	my $output    = 0;
 	$check_cmd =~ s/ \-[AI] / --check /;
@@ -135,6 +139,7 @@ sub getIPDSRuleExists
 # &createLogMsg ( module, rule, farm );
 sub createLogMsg
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $module   = shift;
 	my $rule     = shift;
 	my $farmname = shift;
@@ -158,6 +163,7 @@ sub createLogMsg
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;
@@ -220,6 +226,7 @@ sub getIPDSfarmsRules
 # Get all IPDS rules
 sub getIPDSRules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 
 	my @rules;

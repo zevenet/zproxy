@@ -32,6 +32,7 @@ include 'Zevenet::IPDS::Blacklist::Core';
 # &setBLRunList ( $listName );
 sub setBLRunList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $ipset = &getGlobalConfiguration( 'ipset' );
@@ -90,6 +91,7 @@ sub setBLRunList
 #  &setBLDestroyList ( $listName );
 sub setBLDestroyList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $ipset = &getGlobalConfiguration( 'ipset' );
@@ -130,6 +132,7 @@ Returns:
 
 sub setBLRefreshList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	my @ipList = @{ &getBLIpList( $listName ) };
@@ -184,6 +187,7 @@ Returns:
 
 sub setBLDownloadRemoteList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	require Tie::File;
@@ -255,6 +259,7 @@ Returns:
 
 sub setBLCreateRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -400,6 +405,7 @@ Returns:
 
 sub setBLDeleteRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Netfilter;
@@ -452,6 +458,7 @@ sub setBLDeleteRule
 
 sub delBLCronTask
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	require Tie::File;
@@ -483,6 +490,7 @@ sub delBLCronTask
 # &setBLCronTask ( $list );
 sub setBLCronTask
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	my $cronFormat =
@@ -568,6 +576,7 @@ sub setBLCronTask
 # setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -611,6 +620,7 @@ sub setBLApplyToFarm
 # &setBLRemFromFarm ( $farmName, $listName );
 sub setBLRemFromFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	my $output = &setBLDeleteRule( $farmName, $listName );

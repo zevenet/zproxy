@@ -28,6 +28,7 @@ include 'Zevenet::Farm::HTTP::Ext';
 # POST	/farms/<>/addheader
 sub add_addheader    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -87,6 +88,7 @@ sub add_addheader    # ( $json_obj, $farmname )
 #  DELETE	/farms/<>/addheader/<>
 sub del_addheader
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $index    = shift;
 
@@ -134,6 +136,7 @@ sub del_addheader
 # POST	/farms/<>/headremove
 sub add_headremove    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -193,6 +196,7 @@ sub add_headremove    # ( $json_obj, $farmname )
 #  DELETE	/farms/<>/addheader/<>
 sub del_headremove
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $index    = shift;
 

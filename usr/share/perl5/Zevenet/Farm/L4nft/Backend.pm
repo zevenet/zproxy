@@ -47,6 +47,7 @@ Returns:
 =cut
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -101,6 +102,7 @@ Returns:
 =cut
 sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $farm_name ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
@@ -142,6 +144,7 @@ Returns:
 =cut
 sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $server_id, $status ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
@@ -170,6 +173,7 @@ Returns:
 =cut
 sub getL4FarmServers    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -197,6 +201,7 @@ Returns:
 =cut
 sub _getL4FarmParseServers
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $config = shift;
 	my $stage = 0;
 	my $server;
@@ -294,6 +299,7 @@ Returns:
 =cut
 sub _runL4ServerStart    # ($farm_name,$server_id)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;    # input: farm name string
 	my $server_id = shift;    # input: server id number
 
@@ -353,6 +359,7 @@ Returns:
 =cut
 sub _runL4ServerStop    # ($farm_name,$server_id)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;    # input: farm name string
 	my $server_id = shift;    # input: server id number
 
@@ -411,6 +418,7 @@ Returns:
 =cut
 sub getL4ServerActionRules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm   = shift;    # input: farm reference
 	my $server = shift;    # input: server reference
 	my $switch = shift;    # input: on/off
@@ -495,6 +503,7 @@ Returns:
 =cut
 sub getL4ServerWithLowestPriority    # ($farm)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;                # input: farm reference
 
 	my $prio_server;    # reference to the selected server for prio algorithm
@@ -527,6 +536,7 @@ Returns:
 =cut
 sub getL4FarmBackendMaintenance
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend ) = @_;
 
 	my @servers = &getL4FarmServers( $farm_name );
@@ -556,6 +566,7 @@ Returns:
 =cut
 sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $mode ) = @_;
 
 	if ( $mode eq "cut" )
@@ -586,6 +597,7 @@ Returns:
 =cut
 sub setL4FarmBackendNoMaintenance
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend ) = @_;
 
 # TODO
@@ -606,6 +618,7 @@ Returns:
 =cut
 sub getL4BackendsWeightProbability
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;    # input: farm reference
 
 	my $weight_sum = 0;
@@ -633,6 +646,7 @@ sub getL4BackendsWeightProbability
 # called by: refreshL4FarmRules, runL4FarmServerDelete
 sub resetL4FarmBackendConntrackMark
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $server = shift;
 
 	my $conntrack = &getGlobalConfiguration( 'conntrack' );
@@ -675,6 +689,7 @@ Returns:
 =cut
 sub getL4FarmBackendAvailableID
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $backends	= &getL4FarmServers( $farmname );

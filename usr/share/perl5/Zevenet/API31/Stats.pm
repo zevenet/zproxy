@@ -31,6 +31,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # Get all farm stats
 sub getAllFarmStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 
@@ -78,6 +79,7 @@ sub getAllFarmStats
 #Get Farm Stats
 sub farm_stats # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	if ( $farmname eq 'modules' ) {return;}
 	if ( $farmname eq 'total' ) {return;}
@@ -145,6 +147,7 @@ sub farm_stats # ( $farmname )
 #Get Farm Stats
 sub all_farms_stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farms = &getAllFarmStats();
 	my $body = {
 				 description => "List all farms stats",
@@ -157,6 +160,7 @@ sub all_farms_stats # ()
 #GET /stats
 sub stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
@@ -224,6 +228,7 @@ sub stats # ()
 #GET /stats/network
 sub stats_network # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 

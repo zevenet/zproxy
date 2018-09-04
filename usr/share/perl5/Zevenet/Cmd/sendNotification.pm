@@ -48,6 +48,7 @@ exit $error;
 # my ( $subject, $body ) = getSubjectBody( $msg )
 sub getSubjectBody    # &getSubjectBody ( $msg )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $msg ) = @_;
 
 	my @output;
@@ -172,6 +173,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 #   &getGSLBFarm ( $pid )
 sub getGSLBFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $pid ) = @_;
 
 	my $farm;

@@ -44,6 +44,7 @@ my $maint_if = 'cl_maintenance';
 
 sub get_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc = "Show the cluster configuration";
@@ -95,6 +96,7 @@ sub get_cluster
 
 sub modify_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Modifying the cluster configuration";
@@ -236,6 +238,7 @@ sub modify_cluster
 
 sub set_cluster_actions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Setting cluster action";
@@ -367,6 +370,7 @@ sub set_cluster_actions
 
 sub disable_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "Disabling cluster";
 
 	# make sure the cluster is enabled
@@ -457,6 +461,7 @@ sub disable_cluster
 
 sub enable_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Enabling cluster";
@@ -615,6 +620,7 @@ sub enable_cluster
 
 sub get_cluster_localhost_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc = "Cluster status for localhost";
@@ -632,6 +638,7 @@ sub get_cluster_localhost_status
 
 sub get_cluster_nodes_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc      = "Cluster nodes status";

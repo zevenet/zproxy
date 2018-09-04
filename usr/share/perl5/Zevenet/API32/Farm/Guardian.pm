@@ -30,6 +30,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 sub getZapiFG
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name  = shift;
 
 	my $fg = &getFGObject( $fg_name );
@@ -49,6 +50,7 @@ sub getZapiFG
 
 sub getZapiFGList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @out;
 	my @list = &getFGList();
 
@@ -65,6 +67,7 @@ sub getZapiFGList
 #  GET /monitoring/fg/<fg_name>
 sub get_farmguardian
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 
 	my $desc = "Retrive the farm guardian $fg_name";
@@ -84,6 +87,7 @@ sub get_farmguardian
 #  GET /monitoring/fg
 sub list_farmguardian
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg = &getZapiFGList();
 	my $desc = "List farm guardian checks and templates";
 
@@ -94,6 +98,7 @@ sub list_farmguardian
 #  POST /monitoring/fg
 sub create_farmguardian
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $fg_name  = $json_obj->{ name };
 	my $desc     = "Create a farm guardian $fg_name";
@@ -162,6 +167,7 @@ sub create_farmguardian
 #  PUT /monitoring/fg/<fg_name>
 sub modify_farmguardian
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $fgname   = shift;
 
@@ -261,6 +267,7 @@ sub modify_farmguardian
 #  DELETE /monitoring/fg/<fg_name>
 sub delete_farmguardian
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fg_name = shift;
 
 	my $desc = "Delete the farm guardian $fg_name";
@@ -312,6 +319,7 @@ sub delete_farmguardian
 #  POST /farms/<farm>(/services/<service>)?/fg
 sub add_farmguardian_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farm     = shift;
 	my $srv      = shift;
@@ -418,6 +426,7 @@ sub add_farmguardian_farm
 #  DELETE /farms/<farm>(/services/<service>)?/fg/<fg_name>
 sub rem_farmguardian_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;
 	my $srv;
 	my $fgname;

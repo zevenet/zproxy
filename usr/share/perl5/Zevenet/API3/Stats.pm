@@ -29,6 +29,7 @@ use Zevenet::System;
 # Get all farm stats
 sub getAllFarmStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 
@@ -77,6 +78,7 @@ sub getAllFarmStats
 #Get Farm Stats
 sub farm_stats # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $errormsg;
@@ -144,6 +146,7 @@ sub farm_stats # ( $farmname )
 #Get Farm Stats
 sub all_farms_stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farms = &getAllFarmStats();
 
 	# Print Success
@@ -158,6 +161,7 @@ sub all_farms_stats # ()
 # Get the number of farms
 sub farms_number
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 
 	my $number = scalar &getFarmNameList();
@@ -173,6 +177,7 @@ sub farms_number
 #Get a farm status resume
 sub module_stats_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @farms = @{ &getAllFarmStats () };
 	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
 	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
@@ -215,6 +220,7 @@ sub module_stats_status
 #Get lslb|gslb|dslb Farm Stats
 sub module_stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $module = shift;
 	my @farms = @{ &getAllFarmStats () };
 	my @farmModule;
@@ -236,6 +242,7 @@ sub module_stats # ()
 #GET /stats
 sub stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_mem  = &getMemStats();
 	my @data_load = &getLoadStats();
@@ -302,6 +309,7 @@ sub stats # ()
 #GET /stats/mem
 sub stats_mem # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_mem = &getMemStats();
 
@@ -329,6 +337,7 @@ sub stats_mem # ()
 #GET /stats/load
 sub stats_load # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_load = &getLoadStats();
 
@@ -358,6 +367,7 @@ sub stats_load # ()
 #GET /stats/cpu
 sub stats_cpu # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @data_cpu = &getCPU();
@@ -389,6 +399,7 @@ sub stats_cpu # ()
 #GET /stats/system/connections
 sub stats_conns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# Success
 	my $out = &getTotalConnections ();
 	my $body = {
@@ -402,6 +413,7 @@ sub stats_conns
 #GET /stats/network/interfaces
 sub stats_network_interfaces
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
@@ -479,6 +491,7 @@ sub stats_network_interfaces
 #GET /stats/network
 sub stats_network # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @interfaces = &getNetworkStats( 'hash' );

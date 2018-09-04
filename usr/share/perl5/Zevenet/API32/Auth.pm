@@ -28,6 +28,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 sub validCGISession    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::CGI;
 	require CGI::Session;
 
@@ -58,6 +59,7 @@ sub validCGISession    # ()
 
 sub getAuthorizationCredentials    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $base64_digest;
 	my $username;
 	my $password;
@@ -90,6 +92,7 @@ sub getAuthorizationCredentials    # ()
 
 sub authenticateCredentials    #($user,$curpasswd)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $user, $pass ) = @_;
 
 	return if !defined $user or !defined $pass;

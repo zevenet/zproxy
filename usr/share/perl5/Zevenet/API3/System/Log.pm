@@ -26,6 +26,7 @@ use strict;
 #	GET	/system/logs
 sub get_logs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::System::Log;
 
 	my $description = "Get logs";
@@ -38,6 +39,7 @@ sub get_logs
 #	GET	/system/logs/LOG
 sub download_logs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $logFile      = shift;
 	my $description = "Download a log file";
 	my $errormsg    = "$logFile was download successful.";

@@ -40,6 +40,7 @@ Returns:
 
 sub startL4Farm    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 	require Zevenet::Farm::Core;
 
@@ -84,6 +85,7 @@ Returns:
 
 sub stopL4Farm    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 
@@ -127,6 +129,7 @@ Returns:
 
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $new_farm_name ) = @_;
 
 }
@@ -148,6 +151,7 @@ Returns:
 
 sub startNLB		# ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
 	my $pidof = &getGlobalConfiguration( 'pidof' );
@@ -186,6 +190,7 @@ Returns:
 
 sub stopNLB		# ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
@@ -216,6 +221,7 @@ Returns:
 
 sub loadNLBFarm		# ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -245,6 +251,7 @@ Returns:
 
 sub startNLBFarm		# ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -276,6 +283,7 @@ Returns:
 
 sub stopNLBFarm		# ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 
@@ -303,6 +311,7 @@ Returns:
 
 sub getNLBPid
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $nlbpidfile = "$piddir/nftlb.pid";

@@ -44,6 +44,7 @@ FIXME:
 =cut
 sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $vip, $fdev ) = @_;
 
 	open my $fd, '>', "$configdir\/$farm_name\_datalink.cfg";

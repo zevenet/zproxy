@@ -46,6 +46,7 @@ Returns:
 
 sub getRBLFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	return &getRBLObjectRuleParam( $rule, 'farms' );
@@ -66,6 +67,7 @@ Returns:
 
 sub getRBLExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule   = shift;
 	my $output = 0;
 
@@ -88,6 +90,7 @@ Returns:
 
 sub getRBLRuleList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
@@ -122,6 +125,7 @@ Returns:
 
 sub getRBLObjectRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Config::Tiny;
@@ -159,6 +163,7 @@ Returns:
 
 sub getRBLObjectRuleParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 	my $key  = shift;
 
@@ -182,6 +187,7 @@ Returns:
 
 sub getRBLRunningFarmList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Zevenet::Validate;
@@ -218,6 +224,7 @@ Returns:
 
 sub getRBLUserDomains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @domains;
 
 	require Tie::File;
@@ -243,6 +250,7 @@ Returns:
 
 sub getRBLPreloadedDomains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @domains;
 
 	require Tie::File;
@@ -268,6 +276,7 @@ Returns:
 
 sub getRBLDomains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @domains;
 
 	push @domains, @{ &getRBLPreloadedDomains };
@@ -291,6 +300,7 @@ Returns:
 
 sub getRBLPacketblPid
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 	my $pid;
 
@@ -319,6 +329,7 @@ Returns:
 
 sub getRBLPacketblConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 	return "$rblPath/packetbl_$rule.conf";
 }
@@ -356,6 +367,7 @@ Returns:
 
 sub getRBLZapi
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @all_rules;
 
 	foreach my $rule ( sort &getRBLRuleList )
@@ -383,6 +395,7 @@ Returns:
 
 sub getRBLStatusRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule   = shift;
 
 	my $status = "down";
@@ -429,6 +442,7 @@ Returns:
 
 sub getRBLZapiRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Config::Tiny;
@@ -480,6 +494,7 @@ sub getRBLZapiRule
 
 sub setRBLLockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbl.lock";

@@ -46,6 +46,7 @@ Returns:
 
 sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $rip, $port, $priority, $timeout, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -247,6 +248,7 @@ Returns:
 
 sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -311,6 +313,7 @@ Returns:
 
 sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $poundctl = &getGlobalConfiguration( 'poundctl' );
@@ -335,6 +338,7 @@ Returns:
 
 sub getHTTPFarmBackends    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -401,6 +405,7 @@ Returns:
 
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -479,6 +484,7 @@ Returns:
 
 sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -543,6 +549,7 @@ FIXME:
 
 sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $status, $idsv ) = @_;
 
 	require Tie::File;
@@ -641,6 +648,7 @@ Returns:
 
 sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $idserver, @content, $farm_name ) = @_;
 
 	if ( !@content )
@@ -680,6 +688,7 @@ FIXME:
 
 sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, @content ) = @_;
 
 	my @client_list;
@@ -732,6 +741,7 @@ Returns:
 
 sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $mode, $service ) = @_;
 
 	my $output = -1;
@@ -780,6 +790,7 @@ Returns:
 
 sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $service ) = @_;
 
 	my $output = -1;
@@ -828,6 +839,7 @@ FIXME:
 
 sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $service ) = @_;
 
 	require Tie::File;
@@ -885,6 +897,7 @@ FIXME:
 
 sub setHTTPFarmBackendStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	&zenlog( "Setting backends status in farm $farm_name", "info", "LSLB" );
@@ -937,6 +950,7 @@ FIXME:
 
 sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $backendid ) = @_;
 
 	my @content = &getHTTPFarmBackendStatusCtl( $farm_name );
@@ -984,6 +998,7 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 
 sub getHTTPFarmBackendAvailableID
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $service  = shift;
 

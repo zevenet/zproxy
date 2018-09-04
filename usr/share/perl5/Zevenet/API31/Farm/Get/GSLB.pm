@@ -29,6 +29,7 @@ include 'Zevenet::Farm::GSLB::Zone';
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Config;

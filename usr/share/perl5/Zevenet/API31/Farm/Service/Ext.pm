@@ -25,6 +25,7 @@ use strict;
 
 sub modify_service_cookie_insertion
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service, $json_obj ) = @_;
 
 	include 'Zevenet::Farm::HTTP::Service::Ext';

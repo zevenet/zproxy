@@ -27,6 +27,7 @@ use Zevenet::Farm::Core;
 # GET /farms/modules/gslb
 sub farms_gslb    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
 
 	my @out;
@@ -66,6 +67,7 @@ sub farms_gslb    # ()
 # POST /farms/<farmname>/services/<servicename>
 sub new_gslb_farm_service    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -126,6 +128,7 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 # PUT /farms/<farmname>/services/<servicename>
 sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Config';
@@ -198,6 +201,7 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 # DELETE /farms/<farmname>/services/<servicename>
 sub delete_gslb_service    # ( $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -268,6 +272,7 @@ sub delete_gslb_service    # ( $farmname, $service )
 # POST /farms/<farmname>/services/<servicename>/backends
 sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $service  = shift;
@@ -347,6 +352,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 # GET /farms/<name>/services/<service>/backends
 sub list_gslb_service_backends
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Service';
@@ -380,6 +386,7 @@ sub list_gslb_service_backends
 # PUT /farms/<farmname>/services/<servicename>/backends/<backendid>
 sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service, $id_server ) = @_;
 
 	require Zevenet::Farm::Action;
@@ -461,6 +468,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 # DELETE /farms/<farmname>/services/<servicename>/backends/<backendid>
 sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service, $id_server ) = @_;
 
 	require Zevenet::Farm::Action;
@@ -535,6 +543,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 # PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
 sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $service  = shift;

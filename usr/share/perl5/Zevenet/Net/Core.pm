@@ -45,6 +45,7 @@ See Also:
 # create network interface
 sub createIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	my $status = 0;
@@ -79,6 +80,7 @@ See Also:
 # up network interface
 sub upIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -166,6 +168,7 @@ See Also:
 # down network interface in system and configuration file
 sub downIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
 
 	if ( ref $if_ref ne 'HASH' )
@@ -239,6 +242,7 @@ See Also:
 # stop network interface
 sub stopIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	&zenlog( "Stopping interface $$if_ref{ name }", "info", "NETWORK" );
@@ -318,6 +322,7 @@ See Also:
 # delete network interface configuration and from the system
 sub delIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
 
 	my $status;
@@ -443,6 +448,7 @@ See Also:
 # Execute command line to delete an IP from an interface
 sub delIp    # 	($if, $ip ,$netmask)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if, $ip, $netmask ) = @_;
 
 	&zenlog( "Deleting ip $ip/$netmask from interface $if", "info", "NETWORK" );
@@ -477,6 +483,7 @@ See Also:
 # Execute command line to add an IPv4 to an Interface, Vlan or Vini
 sub addIp    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
 
 	&zenlog(

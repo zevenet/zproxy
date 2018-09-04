@@ -40,6 +40,7 @@ FIXME:
 =cut
 sub ismport    # ($string)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $string = shift;
 
 	chomp ( $string );
@@ -71,6 +72,7 @@ Returns:
 =cut
 sub checkmport    # ($port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $port = shift;
 
 	if ( $port =~ /\,|\:|\*/ )

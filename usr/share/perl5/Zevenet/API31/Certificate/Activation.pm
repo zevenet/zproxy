@@ -27,6 +27,7 @@ include 'Zevenet::Certificate';
 # GET /certificates/activation/info
 sub get_activation_certificate_info # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc          = "Activation certificate information";
@@ -67,6 +68,7 @@ sub get_activation_certificate_info # ()
 # GET /certificates/activation
 sub get_activation_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc          = "Activation certificate";
@@ -88,6 +90,7 @@ sub get_activation_certificate # ()
 # DELETE /certificates/activation
 sub delete_activation_certificate # ( $cert_filename )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc          = "Delete activation certificate";
@@ -116,6 +119,7 @@ sub delete_activation_certificate # ( $cert_filename )
 # curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://1.2.3.4:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
 sub upload_activation_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $upload_data = shift;
 
 	require Zevenet::File;

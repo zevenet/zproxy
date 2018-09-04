@@ -46,6 +46,7 @@ See Also:
 
 sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $blacklist_time, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -79,6 +80,7 @@ See Also:
 
 sub getFarmBlacklistTime    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_type      = &getFarmType( $farm_name );
@@ -112,6 +114,7 @@ See Also:
 
 sub setFarmSessionType    # ($session,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $session, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -151,6 +154,7 @@ See Also:
 
 sub setFarmTimeout    # ($timeout,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $timeout, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -186,6 +190,7 @@ See Also:
 
 sub getFarmTimeout    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -227,6 +232,7 @@ See Also:
 
 sub setFarmAlgorithm    # ($algorithm,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $algorithm, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -274,6 +280,7 @@ See Also:
 
 sub getFarmAlgorithm    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -309,6 +316,7 @@ Returns:
 
 sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $max_client_time, $track, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -346,6 +354,7 @@ Returns:
 
 sub getFarmMaxClientTime    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -384,6 +393,7 @@ See Also:
 
 sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -443,6 +453,7 @@ Returns:
 
 sub setAllFarmByVip
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vip      = shift;
 	my $farmList = shift;
 
@@ -486,6 +497,7 @@ NOTE:
 
 sub checkFarmnameOK    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	return ( $farm_name =~ /^[a-zA-Z0-9\-]+$/ )
@@ -509,6 +521,7 @@ Returns:
 
 sub getFarmVS    # ($farm_name, $service, $tag)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $tag ) = @_;
 
 	my $output    = "";
@@ -549,6 +562,7 @@ Returns:
 
 sub setFarmVS    # ($farm_name,$service,$tag,$string)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $tag, $string ) = @_;
 
 	my $output    = "";

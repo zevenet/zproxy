@@ -29,6 +29,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # POST /addvini/<interface> Create a new virtual network interface
 sub new_vini    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Add a virtual interface";
@@ -168,6 +169,7 @@ sub new_vini    # ( $json_obj )
 
 sub delete_interface_virtual    # ( $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $virtual = shift;
 
 	require Zevenet::Net::Interface;
@@ -233,6 +235,7 @@ sub delete_interface_virtual    # ( $virtual )
 
 sub get_virtual_list    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $desc = "List virtual interfaces";
@@ -272,6 +275,7 @@ sub get_virtual_list    # ()
 
 sub get_virtual    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $virtual = shift;
 
 	my $desc = "Show virtual interface $virtual";
@@ -319,6 +323,7 @@ sub get_virtual    # ()
 
 sub actions_interface_virtual    # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -418,6 +423,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 
 sub modify_interface_virtual    # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 

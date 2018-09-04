@@ -40,6 +40,7 @@ Returns:
 
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	include 'Zevenet::Farm::GSLB::Config';
@@ -76,6 +77,7 @@ FIXME:
 
 sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my $vip      = &getFarmVip( "vip",  $farm_name );
@@ -93,6 +95,7 @@ sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 
 sub getGSLBFarmBackendsStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname ) = @_;
 
 	require Zevenet::Farm::Config;
@@ -162,6 +165,7 @@ sub getGSLBFarmBackendsStats
 
 sub getGSLBFarmStats    # ($farm_name,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Config';

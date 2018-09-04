@@ -51,6 +51,7 @@ Returns:
 
 sub getL4FarmParam    # ($param, $farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $param, $farm_name ) = @_;
 
 
@@ -102,6 +103,7 @@ Returns:
 
 sub setL4FarmParam    # ($param, $value, $farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $param, $value, $farm_name ) = @_;
 
 	my $farm_filename	= &getFarmFile( $farm_name );
@@ -172,6 +174,7 @@ Returns:
 
 sub _getL4ParseFarmConfig    # ($param, $value, $config)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $param, $value, $config )	= @_;
 	my $output		= -1;
 
@@ -253,6 +256,7 @@ Returns:
 
 sub getL4FarmStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my %farm;    # declare output hash
 
 	$farm{ name } = shift;    # input: farm name
@@ -305,6 +309,7 @@ Returns:
 
 sub getL4FarmPlainInfo		# ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -331,6 +336,7 @@ Returns:
 
 sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, %headers, $body )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $self = shift;
 	my $curl_cmd = `which curl`; #TODO
 	my $output = -1;
@@ -387,6 +393,7 @@ Returns:
 
 sub getL4FarmsPorts    # ($protocol)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $protocol = shift;
 
 	my $port_list       = "";
@@ -441,6 +448,7 @@ FIXME:
 
 sub loadL4Modules    # ($protocol)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $protocol = shift;
 
 	require Zevenet::Netfilter;
@@ -498,6 +506,7 @@ Returns:
 
 sub validL4ExtPort    # ($farm_protocol,$ports)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_protocol, $ports ) = @_;
 
 	my $status = 0;
@@ -529,6 +538,7 @@ Returns:
 
 sub getFarmPortList    # ($fvipp)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fvipp = shift;
 
 	my @portlist = split ( ',', $fvipp );
@@ -576,6 +586,7 @@ Returns:
 
 sub getL4ProtocolTransportLayer
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vproto = shift;
 
 	return
@@ -600,6 +611,7 @@ Returns:
 
 sub doL4FarmProbability
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;    # input: farm reference
 
 	$$farm{ prob } = 0;
@@ -618,6 +630,7 @@ sub doL4FarmProbability
 # TODO: Obsolete. Eliminate callers.
 sub reloadL4FarmsSNAT
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
         require Zevenet::Farm::Core;
         require Zevenet::Farm::Base;
         #require Zevenet::Netfilter;
@@ -639,11 +652,13 @@ Returns:
 
 sub getL4FarmLogs    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return 0;
 }
 
 sub setL4FarmLogs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return 0;
 }
 

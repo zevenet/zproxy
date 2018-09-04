@@ -30,6 +30,7 @@ my $debug = &getGlobalConfiguration('debug');
 
 sub eload
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my %req = @_;
 
 	my @required = ( qw(module func) );

@@ -43,6 +43,7 @@ Returns:
 =cut
 sub setFarmClientTimeout    # ($client,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $client, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -92,6 +93,7 @@ Returns:
 =cut
 sub getFarmClientTimeout    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -128,6 +130,7 @@ Returns:
 =cut
 sub setHTTPFarmSessionType    # ($session,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $session, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -225,6 +228,7 @@ Returns:
 =cut
 sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $blacklist_time, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -273,6 +277,7 @@ Returns:
 =cut
 sub getHTTPFarmBlacklistTime    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $blacklist_time = -1;
@@ -314,6 +319,7 @@ Returns:
 =cut
 sub setFarmHttpVerb    # ($verb,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $verb, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -368,6 +374,7 @@ Returns:
 =cut
 sub getFarmHttpVerb    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -407,6 +414,7 @@ FIXME
 =cut
 sub setFarmListen    # ( $farm_name, $farmlisten )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $flisten ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -556,6 +564,7 @@ Returns:
 =cut
 sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $rewritelocation ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -602,6 +611,7 @@ Returns:
 =cut
 sub getFarmRewriteL    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -638,6 +648,7 @@ Returns:
 =cut
 sub setFarmConnTO    # ($tout,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $tout, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -686,6 +697,7 @@ Returns:
 =cut
 sub getFarmConnTO    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -722,6 +734,7 @@ Returns:
 =cut
 sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $timeout, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -768,6 +781,7 @@ Returns:
 =cut
 sub getHTTPFarmTimeout    # ($farm_filename)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -804,6 +818,7 @@ Returns:
 =cut
 sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $track, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -849,6 +864,7 @@ Returns:
 =cut
 sub getHTTPFarmMaxClientTime    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -888,6 +904,7 @@ Returns:
 =cut
 sub getHTTPFarmGlobalStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $poundctl = &getGlobalConfiguration('poundctl');
@@ -911,6 +928,7 @@ Returns:
 =cut
 sub setFarmErr    # ($farm_name,$content,$nerr)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $content, $nerr ) = @_;
 
 	my $output    = -1;
@@ -952,6 +970,7 @@ Returns:
 # Only http function
 sub getFarmErr    # ($farm_name,$nerr)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $nerr ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -999,6 +1018,7 @@ Returns:
 =cut
 sub getHTTPFarmBootStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1036,6 +1056,7 @@ Returns:
 =cut
 sub getHTTPFarmSocket       # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return "/tmp/" . $farm_name . "_pound.socket";
@@ -1055,6 +1076,7 @@ Returns:
 =cut
 sub getHTTPFarmPid        # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $output  = -1;
@@ -1101,6 +1123,7 @@ Returns:
 =cut
 sub getFarmChildPid    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	use File::Grep 'fgrep';
@@ -1138,6 +1161,7 @@ Returns:
 =cut
 sub getHTTPFarmVip    # ($info,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $info, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1186,6 +1210,7 @@ Returns:
 =cut
 sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1236,6 +1261,7 @@ Returns:
 =cut
 sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $pound         = &getGlobalConfiguration( 'pound' );
@@ -1270,6 +1296,7 @@ Returns:
 
 sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $pound         = &getGlobalConfiguration( 'pound' );
@@ -1339,6 +1366,7 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 sub get_http_farm_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Core;
@@ -1458,6 +1486,7 @@ sub get_http_farm_struct
 
 sub getHTTPVerbCode
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $verbs_set = shift;
 
 	# Default output value in case of missing verb set
@@ -1485,6 +1514,7 @@ sub getHTTPVerbCode
 
 sub parsePoundConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $file ) = @_;
 
 	my @lines = split /\n/, $file;
@@ -1641,6 +1671,7 @@ sub parsePoundConfig
 
 sub getPoundConf
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm ) = @_;
 
 	require Zevenet::Config;
@@ -1668,6 +1699,7 @@ my $svc_defaults = {
 
 sub print_backends
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $be_list ) = @_;
 
 	my $be_list_str = '';
@@ -1690,6 +1722,7 @@ sub print_backends
 
 sub print_session
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $session_ref ) = @_;
 
 	my $session_str = '';
@@ -1717,6 +1750,7 @@ sub print_session
 
 sub writePoundConfigToString
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $conf ) = @_;
 
 	my $listener = $conf->{listeners}[0];
@@ -1922,6 +1956,7 @@ End
 
 sub cleanHashValues
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $hash_ref ) = @_;
 
 	for my $key ( keys %{ $hash_ref } )

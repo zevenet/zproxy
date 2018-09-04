@@ -32,6 +32,7 @@ my @bond_modes_short = (
 
 sub new_bond    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -133,6 +134,7 @@ sub new_bond    # ( $json_obj )
 # slave: nic
 sub new_bond_slave    # ( $json_obj, $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -202,6 +204,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 sub delete_interface_bond    # ( $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
@@ -267,6 +270,7 @@ sub delete_interface_bond    # ( $bond )
 
 sub delete_bond    # ( $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
@@ -354,6 +358,7 @@ sub delete_bond    # ( $bond )
 
 sub delete_bond_slave    # ( $bond, $slave )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond  = shift;
 	my $slave = shift;
 
@@ -400,6 +405,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 
 sub get_bond_list    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Net::Bonding';
 
 	my $desc        = "List bonding interfaces";
@@ -415,6 +421,7 @@ sub get_bond_list    # ()
 
 sub get_bond    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -439,6 +446,7 @@ sub get_bond    # ()
 
 sub actions_interface_bond    # ( $json_obj, $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -524,6 +532,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 
 sub modify_interface_bond    # ( $json_obj, $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 

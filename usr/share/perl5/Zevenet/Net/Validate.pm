@@ -42,6 +42,7 @@ See Also:
 #check if a port in a ip is up
 sub checkport    # ($host, $port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $host, $port ) = @_;
 
 	# check local ports;
@@ -93,6 +94,7 @@ Returns:
 #check if a ip is ok structure
 sub ipisok    # ($checkip, $version)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $checkip = shift;
 	my $version = shift;
 	my $return  = "false";
@@ -137,6 +139,7 @@ Bugs:
 #check if a ip is IPv4 or IPv6
 sub ipversion    # ($checkip)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $checkip = shift;
 	my $output  = "-";
 
@@ -179,6 +182,7 @@ Returns:
 
 sub getNetValidate    # ($ip, $mask, $ip2)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ip, $mask, $ip2 ) = @_;
 
 	require NetAddr::IP;
@@ -212,6 +216,7 @@ Bugs:
 #function check if interface exist
 sub ifexist    # ($nif)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $nif = shift;
 
 	use IO::Interface qw(:flags);    # Needs to load with 'use'
@@ -261,6 +266,7 @@ See Also:
 
 sub isValidPortNumber    # ($port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $port = shift;
 	my $valid;
 
@@ -295,6 +301,7 @@ Returns:
 
 sub checkNetworkExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $net, $mask, $exception ) = @_;
 
 	require Zevenet::Net::Interface;

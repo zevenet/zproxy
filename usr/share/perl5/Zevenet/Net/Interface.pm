@@ -31,6 +31,7 @@ my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 sub getInterfaceConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name   = shift;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	return "$configdir/if_${if_name}_conf";
@@ -84,6 +85,7 @@ See Also:
 
 sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_name ) = @_;
 
 	unless ( defined $if_name )
@@ -255,6 +257,7 @@ See Also:
 # returns 0 if it wasn't successful
 sub setInterfaceConfig    # $bool ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	if ( ref $if_ref ne 'HASH' )
@@ -352,6 +355,7 @@ See Also:
 
 sub getDevVlanVini    # ($if_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my %if;
 	$if{ dev } = shift;
 
@@ -386,6 +390,7 @@ See Also:
 
 sub getConfigInterfaceList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @configured_interfaces;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -440,6 +445,7 @@ See Also:
 
 sub getInterfaceSystemStatus    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
@@ -513,6 +519,7 @@ See Also:
 
 sub getParentInterfaceName    # ($if_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;
 
 	my $if_ref = &getDevVlanVini( $if_name );
@@ -565,6 +572,7 @@ See Also:
 
 sub getActiveInterfaceList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 	# sort list
@@ -624,6 +632,7 @@ See Also:
 
 sub getSystemInterfaceList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	use IO::Interface qw(:flags);
 
 	my @interfaces;    # output
@@ -738,6 +747,7 @@ See Also:
 
 sub getSystemInterface    # ($if_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = {};
 	$$if_ref{ name } = shift;
 
@@ -808,6 +818,7 @@ See Also:
 # Interface types: nic, virtual, vlan, bond
 sub getInterfaceType
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;
 
 	my $type;
@@ -963,6 +974,7 @@ See Also:
 
 sub getInterfaceTypeList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $list_type = shift;
 
 	my @interfaces = ();
@@ -1039,6 +1051,7 @@ See Also:
 # Get vlan or virtual interfaces appended from a interface
 sub getAppendInterfaces    # ( $iface_name, $type )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_parent, $type ) = @_;
 	my @output = ();
 
@@ -1081,6 +1094,7 @@ See Also:
 
 sub getInterfaceList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @if_list = ();
 
 	#Get link interfaces
@@ -1106,6 +1120,7 @@ Returns:
 
 sub getVirtualInterfaceNameList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Validate;
 
 	opendir ( my $conf_dir, &getGlobalConfiguration( 'configdir' ) );
@@ -1133,6 +1148,7 @@ Returns:
 
 sub getLinkNameList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
 
 	# Get link interfaces (nic, bond and vlan)
@@ -1158,6 +1174,7 @@ Returns:
 
 sub getIpAddressExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift;
 
 	require Zevenet::Net::Validate;
@@ -1211,6 +1228,7 @@ See Also:
 
 sub getInterfaceChild
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name     = shift;
 
 	my @output      = ();
@@ -1242,6 +1260,7 @@ sub getInterfaceChild
 
 sub getAddressNetwork
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $addr, $mask, $ip_v ) = @_;
 
 	require NetAddr::IP;
@@ -1269,6 +1288,7 @@ sub getAddressNetwork
 
 sub get_interface_list_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::User;
 
 	my @output_list;
@@ -1383,6 +1403,7 @@ sub get_interface_list_struct
 
 sub get_nic_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $nic = shift;
 
 	require Zevenet::Alias;
@@ -1422,6 +1443,7 @@ sub get_nic_struct
 
 sub get_nic_list_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @output_list;
 
 	my @vlans = &getInterfaceTypeList( 'vlan' );
@@ -1483,6 +1505,7 @@ sub get_nic_list_struct
 
 sub get_vlan_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vlan ) = @_;
 
 	require Zevenet::Alias;
@@ -1524,6 +1547,7 @@ sub get_vlan_struct
 
 sub get_vlan_list_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Alias;
 
 	my @output_list;
@@ -1572,6 +1596,7 @@ sub get_vlan_list_struct
 
 sub get_virtual_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $virtual ) = @_;
 
 	require Zevenet::Alias;
@@ -1613,6 +1638,7 @@ sub get_virtual_struct
 
 sub get_virtual_list_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Alias;
 
 	my @output_list = ();

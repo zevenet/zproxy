@@ -47,6 +47,7 @@ See Also:
 
 sub getDns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $dns = { 'primary' => '', 'secondary' => '' };
 	my $dnsFile = &getGlobalConfiguration( 'filedns' );
 
@@ -96,6 +97,7 @@ See Also:
 
 sub setDns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $dns, $value ) = @_;
 
 	my $dnsFile = &getGlobalConfiguration( 'filedns' );

@@ -45,6 +45,7 @@ BUG:
 =cut
 sub _runGSLBFarmStart    # ($fname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	require Tie::File;
@@ -127,6 +128,7 @@ Returns:
 =cut
 sub _runGSLBFarmStop    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Validate';
@@ -203,6 +205,7 @@ Returns:
 =cut
 sub getGSLBStartCommand    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
@@ -223,6 +226,7 @@ Returns:
 =cut
 sub getGSLBStopCommand     # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
@@ -244,6 +248,7 @@ Returns:
 =cut
 sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $newfname ) = @_;
 
 	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );

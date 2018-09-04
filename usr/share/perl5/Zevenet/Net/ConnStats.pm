@@ -57,6 +57,7 @@ See Also:
 =cut
 sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $protocol)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $orig_src, $orig_dst, $reply_src, $reply_dst, $protocol ) = @_;
 
 	# remove newlines in every argument
@@ -112,6 +113,7 @@ See Also:
 # Returns array execution of netstat
 sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,$netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $proto, $state, $ninfo, $fpid, $netstat ) = @_;
 
 	my $lfpid = $fpid;
@@ -263,6 +265,7 @@ Returns:
 =cut
 sub getConntrackParams    # ($filter)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $filter ) = @_;
 
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');
@@ -291,6 +294,7 @@ sub getConntrackParams    # ($filter)
 
 sub getConntrackCount
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $conntrack_params ) = @_;
 
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');

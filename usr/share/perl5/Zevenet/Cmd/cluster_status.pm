@@ -147,6 +147,7 @@ exit 1;
 
 sub xor_op
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $a, $b ) = @_;
 
 	return ( ( $a && ! $b ) || ( ! $a && $b ) );
@@ -154,6 +155,7 @@ sub xor_op
 
 sub zdebug
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	print "cl_status:$cl_status\n";
 	print "localhost:$localhost\n";
 	print "remotehost:$remotehost\n";

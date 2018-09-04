@@ -41,6 +41,7 @@ Returns:
 =cut
 sub setFarmBackendMaintenance    # ($farm_name,$backend,$mode,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $mode, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -75,6 +76,7 @@ Returns:
 =cut
 sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
