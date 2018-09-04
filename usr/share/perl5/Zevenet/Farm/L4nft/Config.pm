@@ -624,7 +624,29 @@ sub reloadL4FarmsSNAT
         require Zevenet::Farm::Base;
         #require Zevenet::Netfilter;
 
+}
 
+=begin nd
+Function: getL4FarmLogs
+
+	Return if the farm has activated the log tracking
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return "enable" if log is enabled or "false" if it is not
+
+=cut
+
+sub getL4FarmLogs    # ($farm_name)
+{
+	return 0;
+}
+
+sub setL4FarmLogs
+{
+	return 0;
 }
 
 
