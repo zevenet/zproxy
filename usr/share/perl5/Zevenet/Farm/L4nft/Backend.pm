@@ -680,7 +680,6 @@ sub getL4FarmBackendAvailableID
 	my $backends	= &getL4FarmServers( $farmname );
 	my $nbackends	= $#{$backends} + 1;
 
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input farmname $farmname backends $nbackends", "debug", "LSLB" );
 
 	for ( my $id = 0; $id < $nbackends; $id++ )
 	{

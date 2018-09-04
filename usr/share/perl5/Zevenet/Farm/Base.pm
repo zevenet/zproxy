@@ -48,7 +48,6 @@ sub getFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input info $info farm_name $farm_name", "debug", "LSLB" );
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;

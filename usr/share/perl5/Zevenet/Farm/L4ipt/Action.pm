@@ -192,7 +192,6 @@ sub stopL4Farm    # ($farm_name)
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::L4xNAT::Config;
 
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() Stopping farm $farm_name", "debug", "LSLB" );
 
 	my $status;
 

@@ -86,7 +86,6 @@ sub stopL4Farm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "($farm_name)", "debug", "LSLB" );
 
 	require Zevenet::Farm::Core;
 
@@ -187,7 +186,6 @@ Returns:
 
 sub stopNLB		# ()
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "()", "debug", "LSLB" );
 
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
@@ -280,7 +278,6 @@ sub stopNLBFarm		# ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "($farm_name)", "debug", "LSLB" );
 
 	require Zevenet::Farm::Core;
 

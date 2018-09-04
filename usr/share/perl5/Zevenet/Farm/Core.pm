@@ -96,7 +96,6 @@ sub getFarmFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "() input farmname $farm_name", "debug", "LSLB" );
 
 	opendir ( my $dir, "$configdir" ) || return -1;
 	my @farm_files =
