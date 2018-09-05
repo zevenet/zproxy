@@ -7,12 +7,14 @@
 BackendConnection::BackendConnection() : backend_id(-1) {
 
 }
-int BackendConnection::getBackendId() const {
-  return backend_id;
+Backend * BackendConnection::getBackend() const {
+  return backend;
 }
-void BackendConnection::setBackendId(int backend_id_) {
-  backend_id = backend_id_;
+
+void BackendConnection::setBackend(Backend * bck) {
+  backend = bck;
 }
+
 bool BackendConnection::reConnect() {
 
   return false;

@@ -58,7 +58,7 @@ class Connection {
   bool listen(addrinfo &address);
 
   int doAccept();
-  bool doConnect(addrinfo &address, int timeout);
+  IO::IO_OP doConnect(addrinfo &address, int timeout);
 };
 
 

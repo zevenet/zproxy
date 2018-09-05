@@ -11,6 +11,7 @@
 #include "../connection/backend_connection.h"
 #include "../event/epoll_manager.h"
 #include "../config/BackendConfig.h"
+#include "../event/TimerFd.h"
 
 class HttpStream {
 
@@ -25,6 +26,7 @@ class HttpStream {
 
   Connection client_connection;
   BackendConnection backend_connection;
+  TimerFd timer_fd;
   HttpRequest request;
   HttpResponse response;
   void replyError(HttpStatus::Code code, const char *code_string, const char *string);

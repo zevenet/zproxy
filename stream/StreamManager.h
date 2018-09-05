@@ -13,6 +13,7 @@
 #include "../config/BackendConfig.h"
 #include "../config/pound_struct.h"
 #include "../service/ServiceManager.h"
+#include "../event/TimerFd.h"
 
 using namespace epoll_manager;
 
@@ -26,7 +27,8 @@ class StreamManager : public EpollManager, public ServiceManager {
   std::thread worker;
   bool is_running;
   ListenerConfig listener_config_;
-  std::unordered_map<int, HttpStream *> streams_set; //TODO::Unordered_Map
+  std::unordered_map<int, HttpStream *> streams_set; 
+  std::unordered_map<int, HttpStream *> timers_set; 
   void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
   void doWork();
   HttpStream *getFdStream(int fd);
@@ -43,6 +45,7 @@ class StreamManager : public EpollManager, public ServiceManager {
 
   inline void onResponseEvent(int fd);
   inline void onRequestEvent(int fd);
+  inline void onConnectTimeoutEvent(int fd);
   inline void onResponseTimeoutEvent(int fd);
   inline void onRequestTimeoutEvent(int fd);
   inline void onSignalEvent(int fd);

@@ -12,10 +12,10 @@ class TimerFd {
   int timeout_ms_;
  public:
   ~TimerFd();
-  TimerFd(int timeout_ms, bool one_shot = true);
+  TimerFd(int timeout_ms = -1, bool one_shot = true);
   inline void set(int timeout_ms = -1, bool one_shot = true);
-  inline void unset();
-  inline int getFd() const;
+  /*inline*/ void unset(); //TODO: Fix me
   inline bool isOneShot() const;
-  inline bool isTriggered();
+  /*inline*/ bool isTriggered(); //TODO: Fix me
+  int getFileDescriptor() const;
 };

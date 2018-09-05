@@ -211,6 +211,12 @@ class Network {
         -1;
   }
 
+  inline static bool isConnected(int sock_fd){
+    int error_code = -1;
+    int error_code_size = sizeof(error_code);
+    return ::getsockopt(sock_fd, SOL_SOCKET, SO_ERROR, &error_code, &error_code_size) != -1 && error_code == 0;
+  }
+
   static std::string read(int fd) {
     int size = 65536;
     char buffer[size];

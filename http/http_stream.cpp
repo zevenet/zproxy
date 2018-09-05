@@ -11,7 +11,9 @@ Connection *HttpStream::getConnection(int fd) {
 HttpStream::HttpStream()
     : request(), response(),
       client_connection(),
-      backend_connection() {
+      backend_connection(),
+      timer_fd()
+{
 
 }
 void HttpStream::replyError(HttpStatus::Code code, const char *code_string, const char *string) {

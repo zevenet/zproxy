@@ -6,6 +6,7 @@
 #include <functional>
 #include "../util/Network.h"
 #include "../util/common.h"
+#include "../util/utils.h"
 #if HELLO_WORLD_SERVER
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   switch (event_type) {
@@ -83,7 +84,8 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           break;
         case CLIENT:this->onRequestEvent(fd);
           break;
-        case CONNECT_TIMEOUT:break;
+        case CONNECT_TIMEOUT: this->onConnectTimeoutEvent(fd);
+          break;
         case REQUEST_TIMEOUT: onRequestTimeoutEvent(fd);
           break;
         case RESPONSE_TIMEOUT:onResponseTimeoutEvent(fd);
@@ -113,7 +115,11 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
         case ACCEPTOR:break;
         case SERVER: {
           //Send client request to backend server
-
+            if(stream->backend_connection.getBackend()->conn_timeout > 0 && Network::isConnected(fd)){
+                Debug::Log("Connected ...!!!!", LOG_REMOVE);
+                stream->timer_fd.unset();
+                epoll_manager::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
+            }
           //skip lstn->head_off
 
           auto result = stream->client_connection.writeTo(stream->backend_connection.getFileDescriptor());
@@ -332,29 +338,42 @@ void StreamManager::onRequestEvent(int fd) {
           return;
         } else {
 
+          IO::IO_OP op_state = IO::OP_ERROR;
           switch (bck->backend_type) {
-            case REMOTE:
-              if (stream->backend_connection.getBackendId() != bck->backen_id) {
+            case REMOTE:            
+              if (stream->backend_connection.getBackend() == nullptr || stream->backend_connection.getBackend()->backen_id != bck->backen_id) { //TODO::Comprobar que backend no es null
                 if (stream->backend_connection.getFileDescriptor() != BACKEND_STATUS::NO_BACKEND) {
                   streams_set.erase(stream->backend_connection.getFileDescriptor());
                   deleteFd(stream->backend_connection.getFileDescriptor());//TODO:: Client cannot be connected to more than one backend at time
                   stream->backend_connection.closeConnection();
                 }
-                if (!stream->backend_connection.doConnect(*bck->address_info, bck->conn_timeout)) {
-                  auto response = HttpStatus::getErrorResponse(HttpStatus::Code::ServiceUnavailable);
-                  stream->client_connection.write(response.c_str(), response.length());
-                  Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
-                  stream->backend_connection.closeConnection();
-                  return;
-                } else {
-                  Network::setSocketNonBlocking(stream->backend_connection.getFileDescriptor());
-                  //Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
-                  stream->backend_connection.setBackendId(bck->backen_id);
-                  streams_set[stream->backend_connection.getFileDescriptor()] = stream;
+                op_state = stream->backend_connection.doConnect(*bck->address_info, bck->conn_timeout);
+                switch (op_state) {
+                  case IO::OP_ERROR: {
+                    auto response = HttpStatus::getErrorResponse(HttpStatus::Code::ServiceUnavailable);
+                    stream->client_connection.write(response.c_str(), response.length());
+                    Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
+                    stream->backend_connection.closeConnection();
+                    return;
+                  }
 
-                  addFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
-                }
-              } else {
+                  case IO::OP_IN_PROGRESS: {
+                     stream->timer_fd.set(bck->conn_timeout * 1000);
+                     timers_set[stream->timer_fd.getFileDescriptor()] = stream;
+                     addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::CONNECT_TIMEOUT);
+//                     return;
+                    }
+                  case IO::OP_SUCCESS: {
+                    Network::setSocketNonBlocking(stream->backend_connection.getFileDescriptor());
+                    //Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
+                    stream->backend_connection.setBackend(bck);
+                    streams_set[stream->backend_connection.getFileDescriptor()] = stream;
+
+                    addFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
+                    break;
+                  }
+                  }
+                } else {
 
                 updateFd(stream->backend_connection.getFileDescriptor(),
                          EVENT_TYPE::WRITE,
@@ -442,6 +461,30 @@ void StreamManager::onResponseEvent(int fd) {
 
   updateFd(fd, EVENT_TYPE::READ, EVENT_GROUP::SERVER);
 }
+void StreamManager::onConnectTimeoutEvent(int fd) {
+  HttpStream * stream = timers_set[fd];
+  if (stream == nullptr)
+    Debug::Log("Stream null pointer", LOG_REMOVE);
+  if(stream->timer_fd.isTriggered()) {
+    char caddr[50];
+    if (UNLIKELY(Network::getPeerAddress(stream->client_connection.getFileDescriptor(), caddr, 50) == nullptr)) {
+      Debug::Log("Error getting peer address", LOG_DEBUG);
+    } else {
+      Debug::logmsg(LOG_NOTICE,
+                    "(%lx) e%d %s %s from %s",
+                    std::this_thread::get_id(),
+                    static_cast<int>(HttpStatus::Code::ServiceUnavailable),
+                    validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
+                    stream->client_connection.buffer,
+                    caddr);
+    }
+    stream->replyError(HttpStatus::Code::ServiceUnavailable,
+                       HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable).c_str(),
+                       listener_config_.err503);
+    this->clearStream(stream);
+  }
+}
+
 void StreamManager::onRequestTimeoutEvent(int fd) {
 //TODO::IMPLENET
 }
@@ -525,6 +568,13 @@ void StreamManager::clearStream(HttpStream *stream) {
     streams_set.erase(stream->backend_connection.getFileDescriptor());
     stream->backend_connection.closeConnection();
   }
+
+  if (stream->timer_fd.getFileDescriptor() > 0) {
+      deleteFd(stream->timer_fd.getFileDescriptor());
+      timers_set.erase(stream->timer_fd.getFileDescriptor());
+      stream->timer_fd.unset();
+    }
+
   delete stream;
 }
 

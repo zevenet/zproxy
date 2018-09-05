@@ -5,12 +5,14 @@
 #pragma once
 
 #include "connection.h"
+#include "../config/BackendConfig.h"
 
 class BackendConnection : public Connection {
   int backend_id;
+  Backend  * backend;
  public:
-  int getBackendId() const;
-  void setBackendId(int backend_id);
+  Backend * getBackend() const;
+  void setBackend(Backend * backend);
  public:
   BackendConnection();
 

@@ -66,9 +66,9 @@ IO::IO_RESULT Connection::read() {
 }
 
 int Connection::getFileDescriptor() const {
-  if (socket_fd < 0) {
-    Debug::Log("Socket no valido, que hacer ....", LOG_REMOVE);
-  }
+//  if (socket_fd < 0) {
+//    Debug::Log("Socket no valido, que hacer ....", LOG_REMOVE);
+//  }
   return socket_fd;
 }
 
@@ -161,49 +161,28 @@ void Connection::closeConnection() {
     ::close(socket_fd);
   }
 }
-bool Connection::doConnect(addrinfo &address, int timeout) {
+IO::IO_OP Connection::doConnect(addrinfo &address, int timeout) {
   long arg;
-  //this->address = &address;
-  fd_set sdset{};
-  struct timeval tv{};
   socklen_t len;
   int result = -1, valopt;
   if ((socket_fd = socket(address.ai_family, SOCK_STREAM, 0)) < 0) {
     // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
-    return false;
+    return IO::OP_ERROR;
   }
   if (timeout > 0) Network::setSocketNonBlocking(socket_fd);
   if ((result = ::connect(socket_fd, address.ai_addr, sizeof(address))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
-      tv.tv_sec = timeout;
-      tv.tv_usec = 0;
-      FD_ZERO(&sdset);
-      FD_SET(socket_fd, &sdset);
-      if (select(socket_fd + 1, NULL, &sdset, NULL, &tv) > 0) {
-        len = sizeof(int);
-        getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, (void *) (&valopt), &len);
-        if (valopt != 0) {
-          Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", valopt,
-                        strerror(valopt));
-        }
-          // connection established
-        else {
-          result = 0;
-        }
-      } else if (errno != EINPROGRESS) {
-        Debug::logmsg(LOG_NOTICE, "connect() failed");
-        return false;
-      }
+        return IO::OP_IN_PROGRESS;
 
-    } else {
+      } else {
       Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
                     strerror(errno));
+      return IO::OP_ERROR;
     }
   }
-  if (timeout > 0) Network::setSocketNonBlocking(socket_fd, true);
   // Create stream object if connected
-  return result != -1;
+  return result != -1 ? IO::OP_SUCCESS : IO::OP_ERROR;
 }
 
 int Connection::doAccept() {

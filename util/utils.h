@@ -16,6 +16,12 @@ enum IO_RESULT {
   FD_CLOSED,
   FULL_BUFFER,
 };
+
+enum IO_OP {
+  OP_ERROR,
+  OP_SUCCESS,
+  OP_IN_PROGRESS,
+};
 }
 
 namespace helper {
