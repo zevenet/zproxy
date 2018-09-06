@@ -25,53 +25,6 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-=begin nd
-Function: getDatalinkFarmServers
-
-	List all farm backends and theirs configuration
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	ref array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
-		
-FIXME:
-	changes output to hash format
-
-=cut
-
-sub getDatalinkFarmServers    # ($farm_name)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $first         = "true";
-	my $sindex        = 0;
-	my @servers;
-
-	open my $fd, '<', "$configdir/$farm_filename";
-
-	while ( my $line = <$fd> )
-	{
-		# ;server;45.2.2.3;eth0;1;1;up
-		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
-		{
-			$line =~ s/^\;server/$sindex/g;    #, $line;
-			chomp ( $line );
-			push ( @servers, $line );
-			$sindex = $sindex + 1;
-		}
-		else
-		{
-			$first = "false";
-		}
-	}
-	close $fd;
-
-	return \@servers;
-}
 
 =begin nd
 Function: getDatalinkFarmBackends
@@ -82,7 +35,7 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
+	scalar - backends list array reference with hashes of backends objects
 
 =cut
 
@@ -308,28 +261,17 @@ sub getDatalinkFarmBackendAvailableID
 	my $farmname = shift;
 
 	my $id  = 0;
-	my @run = &getDatalinkFarmServers( $farmname );
+	my $backends = &getDatalinkFarmBackends( $farmname );
 
-	if ( @run > 0 )
+	foreach my $l_serv ( @{ $backends } )
 	{
-		foreach my $l_servers ( @run )
+		if ( $l_serv->{ id } > $id && $l_serv->{ ip } ne "0.0.0.0")
 		{
-			my @l_serv = split ( ";", $l_servers );
-
-			if ( $l_serv[1] ne "0.0.0.0" )
-			{
-				if ( $l_serv[0] > $id )
-				{
-					$id = $l_serv[0];
-				}
-			}
-		}
-
-		if ( $id >= 0 )
-		{
-			$id++;
+			$id = $l_serv->{ id };
 		}
 	}
+
+	$id++ if @{ $backends };
 
 	return $id;
 }

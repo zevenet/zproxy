@@ -80,27 +80,24 @@ sub _runDatalinkFarmStart    # ($farm_name)
 	my $iface     = &getDatalinkFarmInterface( $farm_name );
 	my $ip_bin    = &getGlobalConfiguration('ip_bin');
 	my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
-	my $servers   = &getDatalinkFarmServers( $farm_name );
+	my $backends   = &getDatalinkFarmBackends( $farm_name );
 	my $algorithm = &getDatalinkFarmAlgorithm( $farm_name );
 	my $routes    = "";
 
 	if ( $algorithm eq "weight" )
 	{
-		foreach my $serv ( @{ $servers } )
+		foreach my $serv ( @{ $backends } )
 		{
-			chomp ( $serv );
-			my @line = split ( "\;", $serv );
-			my $stat = $line[5];
-			chomp ( $stat );
+			my $stat = $serv->{ status };
 			my $weight = 1;
 
-			if ( $line[3] ne "" )
+			if ( $serv->{ weight } ne "" )
 			{
-				$weight = $line[3];
+				$weight = $serv->{ weight };
 			}
 			if ( $stat eq "up" )
 			{
-				$routes = "$routes nexthop via $line[1] dev $line[2] weight $weight";
+				$routes = "$routes nexthop via $serv->{ ip } dev $serv->{ interface } weight $weight";
 			}
 		}
 	}
@@ -108,21 +105,17 @@ sub _runDatalinkFarmStart    # ($farm_name)
 	if ( $algorithm eq "prio" )
 	{
 		my $bestprio = 100;
-		foreach my $serv ( @{ $servers } )
+		foreach my $serv ( @{ $backends } )
 		{
-			chomp ( $serv );
-			my @line = split ( "\;", $serv );
-			my $stat = $line[5];
-			my $prio = $line[4];
-			chomp ( $stat );
+			my $stat = $serv->{ status };
 
 			if (    $stat eq "up"
-				 && $prio > 0
-				 && $prio < 10
-				 && $prio < $bestprio )
+				 && $serv->{ priority } > 0
+				 && $serv->{ priority } < 10
+				 && $serv->{ priority } < $bestprio )
 			{
-				$routes   = "nexthop via $line[1] dev $line[2] weight 1";
-				$bestprio = $prio;
+				$routes   = "nexthop via $serv->{ ip } dev $serv->{ interface } weight 1";
+				$bestprio = $serv->{ priority };
 			}
 		}
 	}

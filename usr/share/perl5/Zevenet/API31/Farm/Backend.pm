@@ -650,8 +650,8 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		my $be;
 		{
-			my @be = &getDatalinkFarmBackends( $farmname );
-			$be = $be[$id_server];
+			my $b_ref = &getDatalinkFarmBackends( $farmname );
+			$be = @{ $b_ref }[$id_server];
 		}
 
 		if ( !$be )
@@ -733,7 +733,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		}
 
 		my $status =
-		  &setFarmServer( $id_server,
+		  &setDatalinkFarmServer( $id_server,
 						  $be->{ ip },
 						  $be->{ interface },
 						  "",

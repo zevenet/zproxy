@@ -1046,8 +1046,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		my $be;
 		{
-			my @be = &getDatalinkFarmBackends( $farmname );
-			$be = $be[$id_server];
+			my $b_ref = &getDatalinkFarmBackends( $farmname );
+			$be = @{ $b_ref }[$id_server];
 		}
 
 		if ( !$be )
@@ -1577,20 +1577,8 @@ sub delete_backend # ( $farmname, $id_server )
 	}
 
 	my $exists = 0;
-
-	if ( $type eq 'l4xnat' )
-	{
-		require Zevenet::Farm::L4xNAT::Backend;
-		my @servers = &getL4FarmServers( $farmname );
-		my $nservers = @servers;
-		$exists = ( $nservers ) ? 1 : 0;
-	}
-	else
-	{
-		require Zevenet::Farm::Backend;
-		my @backends = &getFarmServers( $farmname );
-		my $exists = $backends[$id_server];
-	}
+	my $backends = &getFarmServers( $farmname );
+	$exists = @{ $backends }[$id_server];
 
 	if ( !$exists )
 	{
