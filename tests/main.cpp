@@ -1,6 +1,7 @@
 #include "tst_basictest.h"
 #include "t_config.h"
 #include "t_http_parser.h"
+#include "t_timerfd.h"
 #include "../src/debug/Debug.h"
 
 std::mutex Debug::log_lock;
