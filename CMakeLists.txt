@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.9)
-project(s_zhttp)
+project(zhttp)
 #if (NOT CMAKE_BUILD_TYPE)
 #    set(CMAKE_BUILD_TYPE Debug)
 #endif ()
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe   -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
-set(CMAKE_CXX_STANDARD 11)
+SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
+SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/bin")
 
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(PkgConfig)
 pkg_check_modules(PC_PCRE QUIET libpcre)
@@ -46,3 +48,4 @@ include_directories(/usr/include/openssl-1.0)
 link_directories(/usr/lib/openssl-1.0)
 
 add_subdirectory(src)
+add_subdirectory(tests)

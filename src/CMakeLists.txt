@@ -1,16 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
-project(s_zhttp)
 
-add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
-add_definitions(-DPRINT_READ_STADISTICS=0)
-add_definitions(-DDEBUG_CONNECTION_FLOW=0)
-#Features to implement !!
-add_definitions(-DACCEPT_RANGES=0)
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERSION='\"zhttp_abdess\"'")
 
-add_executable(${PROJECT_NAME}
-    main.cpp
+add_library(libzhttp
     event/epoll_manager.cpp
     event/epoll_manager.h
     connection/connection.cpp
@@ -38,4 +30,6 @@ add_executable(${PROJECT_NAME}
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
     event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h)
 
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})
+add_executable(${PROJECT_NAME} main.cpp)
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
+target_link_libraries(zhttp libzhttp)
