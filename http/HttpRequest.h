@@ -16,6 +16,7 @@ enum REQUEST_RESULT {
   REQUEST_TOO_LARGE,
   SERVICE_NOT_FOUND,
   BACKEND_NOT_FOUND,
+  BACKEND_TIMEOUT,
 };
 
 const std::unordered_map<REQUEST_RESULT, char *> request_result_reason = {
@@ -26,6 +27,7 @@ const std::unordered_map<REQUEST_RESULT, char *> request_result_reason = {
     {REQUEST_TOO_LARGE, "Request too large"},
     {SERVICE_NOT_FOUND, "no service"},
     {BACKEND_NOT_FOUND, "no backend"},
+    {BACKEND_TIMEOUT, "Backend response timeout"},
 };
 
 }

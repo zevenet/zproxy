@@ -1297,7 +1297,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
   memset(res, 0, sizeof(BackendConfig));
   res->be_type = 0;
   res->addr.ai_socktype = SOCK_STREAM;
-  res->to = is_emergency ? 120 : be_to;
+  res->rw_timeout = is_emergency ? 120 : be_to;
   res->conn_to = is_emergency ? 120 : be_connto;
   res->alive = 1;
   memset(&res->addr, 0, sizeof(res->addr));
@@ -1355,7 +1355,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
         conf_err("Priority is not supported for Emergency back-ends");
       res->priority = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&TimeOut, lin, 4, matches, 0)) {
-      res->to = atoi(lin + matches[1].rm_so);
+      res->rw_timeout = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&ConnTO, lin, 4, matches, 0)) {
       res->conn_to = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&HAport, lin, 4, matches, 0)) {

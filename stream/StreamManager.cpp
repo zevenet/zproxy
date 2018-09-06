@@ -125,7 +125,11 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           auto result = stream->client_connection.writeTo(stream->backend_connection.getFileDescriptor());
 
           if (result == IO::SUCCESS) {
+            stream->timer_fd.set(stream->backend_connection.getBackend()->response_timeout * 1000);
+            timers_set[stream->timer_fd.getFileDescriptor()] = stream;
+            updateFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::RESPONSE_TIMEOUT);
             updateFd(fd, EVENT_TYPE::READ, event_group);
+
           } else if (result == IO::DONE_TRY_AGAIN) {
             updateFd(fd, EVENT_TYPE::WRITE, event_group);
           } else {
@@ -489,7 +493,27 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 //TODO::IMPLENET
 }
 void StreamManager::onResponseTimeoutEvent(int fd) {
-//TODO::IMPLEMENT
+  HttpStream * stream = timers_set[fd];
+  if (stream == nullptr)
+    Debug::Log("Stream null pointer", LOG_REMOVE);
+  if(stream->timer_fd.isTriggered()) {
+    char caddr[50];
+    if (UNLIKELY(Network::getPeerAddress(stream->client_connection.getFileDescriptor(), caddr, 50) == nullptr)) {
+      Debug::Log("Error getting peer address", LOG_DEBUG);
+    } else {
+      Debug::logmsg(LOG_NOTICE,
+                    "(%lx) e%d %s %s from %s",
+                    std::this_thread::get_id(),
+                    static_cast<int>(HttpStatus::Code::GatewayTimeout),
+                    validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_TIMEOUT),
+                    stream->client_connection.buffer,
+                    caddr);
+    }
+    stream->replyError(HttpStatus::Code::GatewayTimeout,
+                       HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
+                       HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str());
+    this->clearStream(stream);
+  }
 }
 void StreamManager::onSignalEvent(int fd) {
 //TODO::IMPLEMENET
@@ -571,9 +595,9 @@ void StreamManager::clearStream(HttpStream *stream) {
 
   if (stream->timer_fd.getFileDescriptor() > 0) {
       deleteFd(stream->timer_fd.getFileDescriptor());
-      timers_set.erase(stream->timer_fd.getFileDescriptor());
       stream->timer_fd.unset();
-    }
+      timers_set.erase(stream->timer_fd.getFileDescriptor());
+  }
 
   delete stream;
 }

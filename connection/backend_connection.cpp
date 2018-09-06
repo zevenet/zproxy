@@ -12,7 +12,7 @@ Backend * BackendConnection::getBackend() const {
 }
 
 void BackendConnection::setBackend(Backend * bck) {
-  backend = bck;
+  backend = bck; 
 }
 
 bool BackendConnection::reConnect() {

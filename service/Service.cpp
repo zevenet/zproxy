@@ -20,6 +20,7 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
     config->port = port;
     config->backen_id = backend_id;
     config->conn_timeout = backend_config->conn_to;
+    config->response_timeout = backend_config->rw_timeout;
     config->backend_type = BACKEND_TYPE::REMOTE;
     backend_set.push_back(config);
   } else {
@@ -37,6 +38,7 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id) {
     config->backend_config = *backend_config;
     config->backen_id = backend_id;
     config->conn_timeout = backend_config->conn_to;
+    config->response_timeout = backend_config->rw_timeout;
     config->backend_type = BACKEND_TYPE::REDIRECT;
     backend_set.push_back(config);
   }

@@ -30,4 +30,5 @@ class Backend {
   std::string address;
   int port;
   int conn_timeout;
+  int response_timeout;
 };
