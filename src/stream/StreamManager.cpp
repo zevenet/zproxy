@@ -127,7 +127,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           if (result == IO::SUCCESS) {
             stream->timer_fd.set(stream->backend_connection.getBackend()->response_timeout * 1000);
             timers_set[stream->timer_fd.getFileDescriptor()] = stream;
-            updateFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::RESPONSE_TIMEOUT);
+            addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::RESPONSE_TIMEOUT);
             updateFd(fd, EVENT_TYPE::READ, event_group);
 
           } else if (result == IO::DONE_TRY_AGAIN) {
