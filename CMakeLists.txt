@@ -5,16 +5,9 @@ project(s_zhttp)
 #endif ()
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe   -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
-add_definitions(-DPRINT_READ_STADISTICS=0)
-add_definitions(-DDEBUG_CONNECTION_FLOW=0)
-
-#Features to implement !!
-add_definitions(-DACCEPT_RANGES=0)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERSION='\"zhttp_abdess\"'")
 
 find_package(PkgConfig)
 pkg_check_modules(PC_PCRE QUIET libpcre)
@@ -52,35 +45,4 @@ pkg_search_module(OPENSSL REQUIRED openssl)
 include_directories(/usr/include/openssl-1.0)
 link_directories(/usr/lib/openssl-1.0)
 
-add_executable(${PROJECT_NAME}
-    main.cpp
-    event/epoll_manager.cpp
-    event/epoll_manager.h
-    connection/connection.cpp
-    connection/connection.h
-    stream/StreamManager.cpp
-    stream/StreamManager.h
-    http/http_stream.cpp
-    http/http_stream.h
-    util/string_buffer.cpp
-    util/string_buffer.h
-    debug/Debug.h
-    util/Network.h
-    stream/listener.cpp
-    stream/listener.h
-    util/utils.h
-    config/BackendConfig.h
-    tests/test_runner.cpp
-    tests/test_runner.h
-    config/config.cpp
-    config/config.h
-    config/pound_struct.h
-    config/svc.h
-    config/svc.cpp
-    http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
-    http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
-    http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
-    connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h)
-
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})
+add_subdirectory(src)
