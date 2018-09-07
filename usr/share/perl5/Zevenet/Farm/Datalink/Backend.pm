@@ -227,34 +227,6 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-=begin nd
-Function: getDatalinkFarmBackendStatusCtl
-
-	Return from datalink config file, all backends with theirs parameters and status
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	array - Each item has the next format: ";server;ip;interface;weight;priority;status"
-
-=cut
-
-sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my @output;
-
-	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
-	@output = grep /^\;server\;/, @content;
-	untie @content;
-
-	return @output;
-}
-
 sub getDatalinkFarmBackendAvailableID
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );

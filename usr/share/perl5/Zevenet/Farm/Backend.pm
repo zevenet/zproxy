@@ -194,45 +194,6 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 }
 
 =begin nd
-Function: getFarmBackendStatusCtl
-
-	get information about status and configuration of backend
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Array - Each profile has a different output format
-
-=cut
-sub getFarmBackendStatusCtl    # ($farm_name)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my @output;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Zevenet::Farm::HTTP::Backend;
-		@output = &getHTTPFarmBackendStatusCtl( $farm_name );
-	}
-	elsif ( $farm_type eq "datalink" )
-	{
-		require Zevenet::Farm::Datalink::Backend;
-		@output = &getDatalinkFarmBackendStatusCtl( $farm_name );
-	}
-	elsif ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Backend;
-		@output = &getL4FarmServers( $farm_name );
-	}
-
-	return @output;
-}
-
-=begin nd
 
 Function: getFarmBackendsClients
 

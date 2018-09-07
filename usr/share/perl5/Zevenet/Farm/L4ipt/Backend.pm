@@ -478,10 +478,12 @@ sub _getL4FarmParseServers
 	my @servers;
 
 	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Alias;
+	require Zevenet::Net::Validate;
+
 	my $farmStatus = &_getL4ParseFarmConfig( 'status', undef, $config );
 	my $fproto = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
-	require Zevenet::Alias;
 	my $alias = getAlias( 'backend' );
 
 	foreach my $line( @{ $config } )
@@ -804,10 +806,11 @@ sub getL4FarmBackendMaintenance
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend ) = @_;
 
-	my @servers = &getL4FarmServers( $farm_name );
+	my $servers = &getL4FarmServers( $farm_name );
+	my $serv = @{ $servers }[$backend];
 
 	return (    # parentheses required
-		$servers[$backend]{ status } eq 'maintenance'
+		$serv->{ status } eq 'maintenance'
 		? 0                                 # in maintenance
 		: 1                                 # not in maintenance
 	);
@@ -947,20 +950,18 @@ sub getL4FarmBackendAvailableID
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
-	my $id           = 0;
-	my @server_lines = &getL4FarmServers( $farmname );
+	my $id			= 0;
+	my $backends	= &getL4FarmServers( $farmname );
 
-	foreach my $l_servers ( @server_lines )
+	foreach my $l_serv ( @{ $backends } )
 	{
-		my @l_serv = split ( ";", $l_servers );
-
-		if ( $l_serv[0] > $id )
+		if ( $l_serv->{ id } > $id )
 		{
-			$id = $l_serv[0];
+			$id = $l_serv->{ id };
 		}
 	}
 
-	$id++ if @server_lines;
+	$id++ if @{ $backends };
 
 	return $id;
 }

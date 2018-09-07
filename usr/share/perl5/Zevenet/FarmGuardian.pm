@@ -567,22 +567,13 @@ sub runFGFarmStop
 			{
 				require Zevenet::Farm::Backend;
 
-				my @be = &getFarmBackendStatusCtl( $farm );
-				my $i  = -1;
+				my $be = &getFarmServers( $farm );
 
-				foreach my $line ( @be )
+				foreach my $l_serv ( @{ $be } )
 				{
-					my @subbe = split ( ";", $line );
-					$i++;
-					my $backendid     = $i;
-					my $backendserv   = $subbe[2];
-					my $backendport   = $subbe[3];
-					my $backendstatus = $subbe[7];
-					chomp $backendstatus;
-
-					if ( $backendstatus eq "fgDOWN" )
+					if ( $l_serv->{ status } eq "fgDOWN" )
 					{
-						$out |= &setL4FarmBackendStatus( $farm, $i, "up" );
+						$out |= &setL4FarmBackendStatus( $farm, $l_serv->{ id }, "up" );
 					}
 				}
 			}

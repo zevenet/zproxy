@@ -519,22 +519,18 @@ sub runFarmGuardianRemove    # ($fname,$svice)
 		{
 			require Zevenet::Farm::Backend;
 
-			my @be = &getFarmBackendStatusCtl( $fname );
-			my $i  = -1;
+			my $be = &getFarmServers( $fname );
 
-			foreach my $line ( @be )
+			foreach my $l_serv ( @{ $be } )
 			{
-				my @subbe = split ( ";", $line );
-				$i++;
-				my $backendid     = $i;
-				my $backendserv   = $subbe[2];
-				my $backendport   = $subbe[3];
-				my $backendstatus = $subbe[7];
-				chomp $backendstatus;
+				my $backendid     = $l_serv->{ id };
+				my $backendserv   = $l_serv->{ ip };
+				my $backendport   = $l_serv->{ port };
+				my $backendstatus = $l_serv->{ status };
 
 				if ( $backendstatus eq "fgDOWN" )
 				{
-					$status |= &setL4FarmBackendStatus( $fname, $i, "up" );
+					$status |= &setL4FarmBackendStatus( $fname, $backendid, "up" );
 				}
 			}
 		}

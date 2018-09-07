@@ -156,9 +156,12 @@ Returns:
 sub _getL4ParseFarmConfig    # ($param, $value, $config)
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $param, $value, $config )	= @_;
+
+	my $param		= shift;
+	my $value		= shift;
+	my $config		= shift;
 	my $output		= -1;
-	my $first         = "true";
+	my $first		= "true";
 
 	foreach my $line( @{ $config } )
 	{
@@ -1213,8 +1216,6 @@ sub doL4FarmProbability
 			$$farm{ prob } += $$server_ref{ weight };
 		}
 	}
-
-  #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
 =begin nd
@@ -1245,20 +1246,20 @@ sub refreshL4FarmRules    # AlgorithmRules
 	my @rules;
 	my $return_code = 0;
 
-	$prio_server = &getL4ServerWithLowestPriority( $farm );
+	$prio_server = &getL4ServerWithLowestPriority( $farm ) if ( $farm->{ lbalg } eq 'prio' );
 
 	# refresh backends probability values
-	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
+	&getL4BackendsWeightProbability( $farm ) if ( $farm->{ lbalg } eq 'weight' );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	my $ipt_lockfile = &openlock( $iptlock, 'w' );
+	my $ipt_lockfile = &openlock( $iptlock, 'r' );
 
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		# skip cycle for servers not running
-		next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
+		next if ( $farm->{ lbalg } eq 'prio' && $server->{ id } != $prio_server->{ id } );
 
 		my $rule;
 		my $rule_num;
