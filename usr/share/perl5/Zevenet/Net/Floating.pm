@@ -114,6 +114,8 @@ sub getFloatInterfaceForAddress
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $remote_ip_address = shift;
 
+	return '' if !$remote_ip_address;
+
 	require NetAddr::IP;
 	require Zevenet::Net::Interface;
 
@@ -165,13 +167,24 @@ sub getFloatInterfaceForAddress
 sub getFloatingMasqParams
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm, $server ) = @_;
 
-	my $out_if = &getFloatInterfaceForAddress( $$server{ vip } );
+	my $farm = shift;
+	my $server = shift;
+	my $out_if;
 
-	if ( ! $out_if )
+	if ( $server->{ vip } )
 	{
-		$out_if = &getFloatInterfaceForAddress( $$farm{ vip } );
+		$out_if = &getFloatInterfaceForAddress( $server->{ vip } );
+	}
+
+	if ( !$out_if && $farm->{ vip } )
+	{
+		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
+	}
+
+	if ( !$out_if )
+	{
+		return "";
 	}
 
 	return "--jump SNAT --to-source $out_if->{ addr } ";
