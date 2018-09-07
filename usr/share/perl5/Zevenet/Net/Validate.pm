@@ -124,16 +124,14 @@ sub ipisok    # ($checkip, $version)
 =begin nd
 Function: ipversion
 
-	Returns IP version number of input IP address.
+	IP version number of an input IP address
 
 Parameters:
-	checkip - string to .
+	ip - ip to get the version
 
 Returns:
-	list - All IP addresses up.
+	scalar - 4 for ipv4, 6 for ipv6, 0 if unknown
 
-Bugs:
-	Fix return on non IPv4 or IPv6 valid address.
 =cut
 
 #check if a ip is IPv4 or IPv6
@@ -156,7 +154,7 @@ sub ipversion    # ($checkip)
 	}
 	else
 	{
-		$output = '';
+		$output = 0;
 	}
 
 	return $output;
