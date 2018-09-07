@@ -114,7 +114,6 @@ sub openlock    # ( $path, $mode )
 		# exclusive lock for writing
 		flock $fh, LOCK_EX;
 	}
-	#~ elsif ( $mode =~ /</ )
 	else
 	{
 		# shared lock for reading
