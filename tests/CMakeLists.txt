@@ -35,6 +35,8 @@ add_executable(${PROJECT_NAME}
     main.cpp
     tst_basictest.h
     t_timerfd.h
+    t_epoll_manager.h
+    testserver.h
 #    t_backend_connection.h
     t_http_parser.h
     t_config.h

@@ -2,6 +2,7 @@
 #include "t_config.h"
 #include "t_http_parser.h"
 #include "t_timerfd.h"
+#include "t_epoll_manager.h"
 #include "../src/debug/Debug.h"
 
 std::mutex Debug::log_lock;
