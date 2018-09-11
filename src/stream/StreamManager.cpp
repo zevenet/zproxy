@@ -169,13 +169,16 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           auto response = HttpStatus::getErrorResponse(HttpStatus::Code::RequestTimeout);
           stream->client_connection.write(response.c_str(), response.length());
           Debug::Log("Backend closed connection", LOG_INFO);
+          streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
           streams_set.erase(stream->client_connection.getFileDescriptor());
+
           break;
         }
         case CLIENT: {
           Debug::Log("Client closed connection", LOG_INFO);
           if (stream->backend_connection.getFileDescriptor() != BACKEND_STATUS::NO_BACKEND) {
             deleteFd(stream->backend_connection.getFileDescriptor());
+            streams_set[stream->client_connection.getFileDescriptor()] = nullptr;
             streams_set.erase(stream->backend_connection.getFileDescriptor());
           }
           break;
@@ -216,7 +219,7 @@ StreamManager::~StreamManager() {
 void StreamManager::doWork() {
   // TODO::set thread affinty
   while (is_running) {
-    if (loopOnce(0) <= 0) {
+    if (loopOnce() <= 0) {
       // something bad happend
 //      Debug::Log("No events !!");
     }
@@ -240,11 +243,11 @@ void StreamManager::onRequestEvent(int fd) {
 //    stream->client_connection.setFileDescriptor(fd);
 //    streams_set[fd] = stream;
 //  }
-  HttpStream *stream = nullptr;
-  if (streams_set.count(fd) != 0) {
+  HttpStream *stream = streams_set[fd];
+  if (stream != nullptr) {
     stream = streams_set.at(fd);
     if (fd != stream->client_connection.getFileDescriptor()) {
-      Debug::Log("FOUND:: Aqui ha pasado algo raro!!");
+      Debug::Log("FOUND:: Aqui ha pasado algo raro!!", LOG_REMOVE);
     }
   } else {
     stream = new HttpStream();
@@ -345,12 +348,14 @@ void StreamManager::onRequestEvent(int fd) {
           IO::IO_OP op_state = IO::OP_ERROR;
           switch (bck->backend_type) {
             case REMOTE:            
-              if (stream->backend_connection.getBackend() == nullptr || stream->backend_connection.getBackend()->backen_id != bck->backen_id) { //TODO::Comprobar que backend no es null
-                if (stream->backend_connection.getFileDescriptor() != BACKEND_STATUS::NO_BACKEND) {
-                  streams_set.erase(stream->backend_connection.getFileDescriptor());
+              if (stream->backend_connection.getBackend() == nullptr ||
+                  stream->backend_connection.getBackend()->backen_id != bck->backen_id) { //TODO::Comprobar que backend no es null
+                if(stream->backend_connection.getFileDescriptor() != BACKEND_STATUS::NO_BACKEND){
                   deleteFd(stream->backend_connection.getFileDescriptor());//TODO:: Client cannot be connected to more than one backend at time
+                  streams_set.erase(stream->backend_connection.getFileDescriptor());
                   stream->backend_connection.closeConnection();
                 }
+                stream->backend_connection.setBackend(bck);
                 op_state = stream->backend_connection.doConnect(*bck->address_info, bck->conn_timeout);
                 switch (op_state) {
                   case IO::OP_ERROR: {
@@ -431,7 +436,12 @@ void StreamManager::onResponseEvent(int fd) {
   HttpStream *stream = streams_set[fd];
   if (stream == nullptr) {
     Debug::Log("Backend Connection, Stream closed", LOG_DEBUG);
+    ::close(fd);
     return;
+  }
+  if(stream->backend_connection.getBackend()->response_timeout > 0 ){
+    stream->timer_fd.unset();
+    epoll_manager::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   auto result = stream->backend_connection.read();
   if (result == IO::ERROR) {

@@ -60,7 +60,7 @@ Listener::~Listener() {
 
 void Listener::doWork() {
   while (is_running) {
-    if (loopOnce(0) <= 0) {
+    if (loopOnce() <= 0) {
       // something bad happend
 //      Debug::Log("No event received");
     }

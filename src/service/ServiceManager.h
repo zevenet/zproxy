@@ -13,9 +13,10 @@
 
 class ServiceManager {
 
-  std::vector<Service> services;
+  std::vector<Service *> services;
  public:
   ServiceManager();
+  ~ServiceManager();
   Service *getService(HttpRequest &request);
   bool addService(ServiceConfig &service_config);
 

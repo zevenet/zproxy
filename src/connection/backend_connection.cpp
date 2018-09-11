@@ -4,7 +4,7 @@
 
 #include "backend_connection.h"
 
-BackendConnection::BackendConnection() : backend_id(-1) {
+BackendConnection::BackendConnection() : backend_id(-1), backend(nullptr) {
 
 }
 Backend * BackendConnection::getBackend() const {

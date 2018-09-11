@@ -47,9 +47,9 @@ bool EpollManager::deleteFd(int fd) {
 
 int EpollManager::loopOnce(int time_out) {
   int fd, i, ev_count = 0;
-  ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, EPOLL_TIMOUT);
+  ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
   if (ev_count < 0 && EINTR == errno)
-    return 0;
+    return -1;
   if (ev_count < 0)
     return ev_count;
   if (ev_count == 0) Debug::Log("Epoll timeout ");

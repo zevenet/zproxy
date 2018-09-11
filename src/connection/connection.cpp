@@ -59,6 +59,7 @@ IO::IO_RESULT Connection::read() {
         break;
       } else
         result = IO::IO_RESULT::SUCCESS;
+        done = true;
     }
   }
   PRINT_BUFFER_SIZE
