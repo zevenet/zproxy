@@ -607,15 +607,25 @@ sub certcontrol
 		$modification[0] = $modification[0] // '';
 
 		if ( $modification[0] ne $date_today) {
-			# Download CRL
-			my $tmp_file = '/opt/cacrl.crl';
-			my $download = `$wget -q -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
-			if ( -s $tmp_file > 0 ) {
-				&zenlog("CRL Downloaded on $date_today");
-				my $copy = `cp $tmp_file $crl_path`;
+			use Net::Ping;
+            my $p = Net::Ping->new("icmp");
+
+            if ( $p->ping("certs.zevenet.com", 2) ) {
+                    my $tmp_file = '/tmp/cacrl.crl';
+                    require Zevenet::Lock;
+                    my $file_lock = &getLockFile( $tmp_file );
+                    my $lock_fd = &lockfile( $file_lock );
+
+				# Download CRL
+				my $download = `$wget -q -T10 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+				if ( -s $tmp_file > 0 ) {
+					&zenlog("CRL Downloaded on $date_today");
+					my $copy = `cp $tmp_file $crl_path`;
+				}
+				&unlockfile( $lock_fd );
+				unlink $tmp_file;
 			}
-			unlink $tmp_file;
-		}
+	  	}
 
 		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
 		if ( !grep /keyid:$keyid/, @decoded )
