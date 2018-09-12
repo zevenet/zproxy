@@ -277,10 +277,10 @@ sub certcontrol
             my $p = Net::Ping->new("icmp");
 
             if ( $p->ping("certs.zevenet.com", 2) ) {
-                    my $tmp_file = '/tmp/cacrl.crl';
-                    require Zevenet::Lock;
-                    my $file_lock = &getLockFile( $tmp_file );
-                    my $lock_fd = &lockfile( $file_lock );
+                my $tmp_file = '/tmp/cacrl.crl';
+                require Zevenet::Lock;
+                my $file_lock = &getLockFile( $tmp_file );
+                my $lock_fd = &lockfile( $file_lock );
 
 				# Download CRL
 				my $download = `$wget -q -T10 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
