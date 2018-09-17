@@ -151,12 +151,16 @@ if [ -f /sbin/ipset ]; then
     /sbin/ipset save                    >> $backup_dir/ipset_tables.txt 2>&1
 fi
 
+if [ -f /etc/zevenet_version ]; then
+	/bin/cp /etc/zevenet_version $backup_dir/template_version
+fi
+
+package_vers=`perl -MZevenet::Config -e 'print getGlobalConfiguration("version");'`;
+echo $package_vers > $backup_dir/zevenet_pkg_version
 
 echo "Saving configuration files"
 #################################
-echo `dpkg -l | grep zevenet\  | awk '{print $3}'` > /zevenet_version
 /bin/tar zcf $backup_dir/config.tar.gz $config_paths 2>/dev/null
-rm /zevenet_version
 
 
 echo "Saving monitoring files"
