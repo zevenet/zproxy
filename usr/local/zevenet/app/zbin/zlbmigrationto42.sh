@@ -41,8 +41,4 @@ for file in `ls -1 *_pound.cfg 2>/dev/null`; do
 done
 cd - > /dev/null
 
-if [ $sw -eq 0 ]
-then
-	echo "	Nothing to do"
-fi
 exit 0
