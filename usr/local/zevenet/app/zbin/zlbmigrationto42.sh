@@ -25,7 +25,6 @@ confdir="/usr/local/zevenet/config"
 name="Name"
 sw=0
 
-echo "Checking \"Name\" Directive in HTTP profiles"
 cd $confdir
 for file in `ls -1 *_pound.cfg 2>/dev/null`; do
 	grep -P "^Name\t.+" $file 1>/dev/null
