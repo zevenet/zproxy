@@ -80,7 +80,11 @@ sub getGlobalConfiguration
 		}
 
 		# early finish if the requested paremeter is found
-		return $var_value if $parameter && $parameter eq $var_name;
+		if ( $parameter && $parameter eq $var_name )
+		{
+			close $global_conf_file;
+			return $var_value;
+		}
 
 		$global_conf->{ $var_name } = $var_value;
 	}
