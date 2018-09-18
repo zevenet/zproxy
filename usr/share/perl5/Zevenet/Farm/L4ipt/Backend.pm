@@ -66,7 +66,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	$weight   ||= 1;
 	$priority ||= 1;
@@ -75,7 +75,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -148,7 +149,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 
 		&refreshL4FarmRules( $farm );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -188,13 +189,14 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -261,7 +263,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -351,7 +353,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $fg_enabled  = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $caller      = ( caller ( 2 ) )[3];
 	my $stopping_fg = ( $caller =~ /runFarmGuardianStop/ );
-	my $fg_pid      = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	#~ &zlog("(caller(2))[3]:$caller");
 
@@ -359,6 +361,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	{
 		if ( $fg_enabled eq 'true' && !$stopping_fg )
 		{
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+
 			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'STOP' => $fg_pid;
@@ -572,18 +576,19 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	  if &debug;
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
+	my $fg_pid;
 
 	# if calling function is setL4FarmAlgorithm
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $setting_be         = ( $caller =~ /setFarmServer/ );
-	my $fg_pid             = &getFarmGuardianPid( $farm_name );
 
 	#~ &zlog("(caller(2))[3]:$caller");
 
 	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be )
 	{
-		kill 'STOP' => $fg_pid;
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	# initialize a farm struct
@@ -599,7 +604,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	$status |= &applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be )
+	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be && $fg_pid > 0 )
 	{
 		kill 'CONT' => $fg_pid;
 	}
@@ -632,18 +637,19 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
+	my $fg_pid;
 
 	# check calls
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $removing_be        = ( $caller =~ /runL4FarmServerDelete/ );
-	my $fg_pid             = &getFarmGuardianPid( $farm_name );
 
 	#~ &zlog("(caller(2))[3]:$caller");
 
 	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
 	{
-		kill 'STOP' => $fg_pid;
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	$farm = &getL4FarmStruct( $farm_name );
@@ -658,7 +664,7 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	$output |= &applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
+	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be && $fg_pid > 0)
 	{
 		kill 'CONT' => $fg_pid;
 	}

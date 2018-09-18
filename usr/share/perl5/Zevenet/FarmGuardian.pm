@@ -400,17 +400,26 @@ sub getFGPidFarm
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm    = shift;
 	my $service = shift;
-	my $pid;
+	my $pid = 0;
 
 	# get pid
 	my $pidFile = &getFGPidFile( $farm, $service );
+
+	if ( ! -f "$pidFile" )
+	{
+		return $pid;
+	}
 
 	open my $fh, '<', $pidFile or return 0;
 	$pid = <$fh>;
 	close $fh;
 
+	my $run;
 	# check if the pid exists
-	my $run = kill 0, $pid;
+	if ( $pid > 0 )
+	{
+		$run = kill 0, $pid;
+	}
 
 	# if it does not exists, remove the pid file
 	if ( !$run )
@@ -512,7 +521,7 @@ sub runFGFarmStop
 	{
 		my $fgpid = &getFGPidFarm( $farm, $service );
 
-		if ( $fgpid )
+		if ( $fgpid && $fgpid > 0)
 		{
 			&zenlog( "running 'kill 9, $fgpid' stopping FarmGuardian $farm $service",
 					 "debug", "FG" );
@@ -1032,8 +1041,9 @@ sub getFarmGuardianPid    # ($fname,$svice)
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
-	my @pid_list = &getFGPidFarm( $fname, $svice );
-	return $pid_list[0];
+	my $pid = &getFGPidFarm( $fname, $svice );
+
+	return $pid;
 }
 
 1;

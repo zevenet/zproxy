@@ -209,7 +209,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			last;
 		}
 
-		if ( $param eq 'persist' )
+		if ( $param eq 'persisttm' )
 		{
 			$output = $l[7];
 			last;
@@ -400,13 +400,14 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -455,7 +456,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			$output = &applyIptRules( $rule );
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -496,13 +497,14 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -638,7 +640,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 					close $pidfile;
 
 					# close normally
-					kill 'TERM' => $pid;
+					kill 'TERM' => $pid if ( $pid > 0 );
 					&zenlog( "l4sd ended", "info", "LSLB" );
 				}
 				else
@@ -648,7 +650,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -709,13 +711,14 @@ sub setL4FarmProto    # ($proto,$farm_name)
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $old_proto  = $$farm{ vproto };
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -762,7 +765,7 @@ sub setL4FarmProto    # ($proto,$farm_name)
 
 		$output = &refreshL4FarmRules( $farm );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -799,7 +802,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -807,7 +810,8 @@ sub setFarmNatType    # ($nat,$farm_name)
 		{
 			if ( $0 !~ /farmguardian/ )
 			{
-				kill 'STOP' => $fg_pid;
+				$fg_pid = &getFarmGuardianPid( $farm_name );
+				kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 			}
 		}
 	}
@@ -865,7 +869,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 		if ( $fg_enabled eq 'true' )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'CONT' => $fg_pid;
 			}
@@ -903,13 +907,14 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -955,7 +960,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 		require Zevenet::Netfilter;
 		$output = &applyIptRules( @rules );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -992,13 +997,14 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -1009,6 +1015,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
+			$vip = $args[2] if ( ! $vip );
 			$vip_port = $args[3] if ( ! $vip_port );
 			$line =
 			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
@@ -1048,7 +1055,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 		&applyIptRules( @rules );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -1385,7 +1392,6 @@ sub reloadL4FarmsSNAT
 		}
 	}
 }
-
 
 
 =begin nd
