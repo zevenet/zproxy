@@ -84,7 +84,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 
 		if ( !&getIpAddressExists( $ip ) )
 		{
-			my $msg = "The virtual ip $ip is not defined any interface.";
+			my $msg = "The virtual ip $ip is not defined in any interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -114,7 +114,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 
 		if ( !&getIpAddressExists( $ip ) )
 		{
-			my $msg = "The virtual ip $ip is not defined any interface.";
+			my $msg = "The virtual ip $ip is not defined in any interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 

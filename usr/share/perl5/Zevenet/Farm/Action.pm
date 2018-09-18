@@ -63,7 +63,7 @@ sub _runFarmStart    # ($farm_name)
 	require Zevenet::Net::Interface;
 	if ( !&getIpAddressExists( $ip ) )
 	{
-		&zenlog( "The virtual interface $ip is not defined any interface." );
+		&zenlog( "The virtual interface $ip is not defined in any interface." );
 		return $status;
 	}
 
