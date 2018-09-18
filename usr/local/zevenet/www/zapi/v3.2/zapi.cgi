@@ -272,6 +272,12 @@ sub certcontrol
 
 	if ($date_check ne $date_encode)
 	{
+		require Tie::File;
+		tie my @contents, 'Tie::File', "$file_check";
+		@contents = ($date_encode);
+
+		untie @contents;
+
 		my $crl_path = "$configdir/cacrl.crl";
 
 		my $date_mod = '';
@@ -289,17 +295,17 @@ sub certcontrol
 		$modification[0] = $modification[0] // '';
 
 		if ( $modification[0] ne $date_today) {
-			use Net::Ping;
-            my $p = Net::Ping->new("icmp");
+			require IO::Socket;
 
-            if ( $p->ping("certs.zevenet.com", 2) ) {
+            if ( $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) ) {
+                $scan->close();
                 my $tmp_file = '/tmp/cacrl.crl';
                 require Zevenet::Lock;
                 my $file_lock = &getLockFile( $tmp_file );
                 my $lock_fd = &lockfile( $file_lock );
 
 				# Download CRL
-				my $download = `$wget -q -T10 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+				my $download = `$wget -q -T5 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 				if ( -s $tmp_file > 0 ) {
 					&zenlog("CRL Downloaded on $date_today");
 					my $copy = `cp $tmp_file $crl_path`;
@@ -325,11 +331,6 @@ sub certcontrol
 				}
 			}
 		}
-		require Tie::File;
-		tie my @contents, 'Tie::File', "$file_check";
-		@contents = ($date_encode);
-
-		untie @contents;
 	}
 
  	 # Certificate expiring date
