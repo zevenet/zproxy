@@ -552,7 +552,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		{
 			$error = "true";
 			&zenlog(
-				"Error trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank.", "error" "LSLB"
+				"Error trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank.", "error", "LSLB"
 			);
 		}
 		if ( $error eq "false" )
