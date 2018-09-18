@@ -212,6 +212,10 @@ my %format_re = (
 	'rbl_local_traffic' => $boolean,
 	'rbl_actions'       => $run_actions,
 
+	# WAF
+	'waf_set_name'          => qr/[\.\w-]+/,
+	'waf_rule_id'          => qr/\d+/,
+
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
 	'cert_pem'    => qr/\w[\w\.\(\)\@ \-]*\.pem/,

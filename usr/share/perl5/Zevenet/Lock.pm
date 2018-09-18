@@ -102,7 +102,7 @@ sub openlock    # ( $path, $mode )
 	$encoding = ":encoding(UTF-8)" if $textmode;
 	$encoding = ":raw :bytes"      if $binmode;
 
-	open ( my $fh, "$mode $encoding", $path ) || die "Could not open '$path': $!";
+	open ( my $fh, "$mode $encoding", $path ) or do { &zenlog("Error openning the file $path"); return undef; };
 
 	binmode $fh if $fh && $binmode;
 
@@ -154,6 +154,26 @@ sub ztielock    # ($file_name)
 
 	my $o = tie @{ $array_ref }, "Tie::File", $file_name;
 	$o->flock;
+}
+
+
+sub copyLock
+{
+	my $ori = shift;
+	my $dst = shift;
+
+	my $fhOri = &openlock( $ori, 'r' ) or return 1;
+	my $fhDst = &openlock( $dst, 'w' ) or do { close $fhOri; return 1; };
+
+	foreach my $line ( <$fhOri> )
+	{
+		print $fhDst $line;
+	}
+
+	close $fhOri;
+	close $fhDst;
+
+	return 0;
 }
 
 1;
