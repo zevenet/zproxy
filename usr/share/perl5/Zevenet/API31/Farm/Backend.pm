@@ -827,8 +827,8 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	# validate BACKEND
 	my $be;
 	{
-		my @be = &getHTTPFarmBackends( $farmname, $service );
-		$be = $be[ $id_server ];
+		my $servers = &getHTTPFarmBackends( $farmname, $service );
+		$be = @{ $servers }[ $id_server ];
 	}
 
 	# check if the backend was found
@@ -1060,8 +1060,8 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	# check if the backend id is available
 	my $be_found;
 	{
-		my @be = &getHTTPFarmBackends( $farmname, $service );
-		$be_found = defined $be[ $id_server ];
+		my $be = &getHTTPFarmBackends( $farmname, $service );
+		$be_found = defined @{ $be }[ $id_server ];
 	}
 
 	unless ( $be_found )
