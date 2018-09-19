@@ -4,7 +4,9 @@
 
 #include "listener.h"
 
-void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
+void Listener::HandleEvent(int fd,
+                           EVENT_TYPE event_type,
+                           EVENT_GROUP event_group) {
   switch (event_type) {
     case CONNECT: {
       int new_fd;
@@ -13,7 +15,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
         if (new_fd > 0) {
           auto sm = getManager(new_fd);
           if (sm != nullptr) {
-            //sm->stream_set.size() ????
+            // sm->stream_set.size() ????
             sm->addStream(new_fd);
           } else {
             Debug::Log("StreamManager not found");
@@ -31,14 +33,16 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
       //          "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World";
       //      cnt.write(send_e200.c_str(), send_e200.length());
       //    } break;
-    default:Debug::Log("###################Why!!!!!!!! "); //TODO::REMOVE
+    default:
+      Debug::Log("###################Why!!!!!!!! ");  // TODO::REMOVE
       break;
   }
 }
 
 bool Listener::init(std::string address, int port) {
-  if (!listener_connection.listen(address, port)) return false;
-  return handleAccept(listener_connection.getFileDescriptor());
+  if (!listener_connection.listen(address, port))
+    return false;
+  return true;  // handleAccept(listener_connection.getFileDescriptor());
 }
 
 Listener::Listener()
@@ -51,7 +55,7 @@ Listener::Listener()
 
 Listener::~Listener() {
   is_running = false;
-  for (auto &sm : stream_manager_set) {
+  for (auto& sm : stream_manager_set) {
     sm.second->stop();
     delete sm.second;
   }
@@ -62,38 +66,54 @@ void Listener::doWork() {
   while (is_running) {
     if (loopOnce() <= 0) {
       // something bad happend
-//      Debug::Log("No event received");
+      //      Debug::Log("No event received");
     }
   }
 }
 
-void Listener::stop() { is_running = false; }
+void Listener::stop() {
+  is_running = false;
+}
 
 void Listener::start() {
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr && sm->init(listener_config)) {
+      sm->setListenSocket(listener_connection.getFileDescriptor());
       sm->start(i);
     } else {
-      Debug::Log("StreamManager id doesn't exist : " + std::to_string(i), LOG_ERR);
+      Debug::Log("StreamManager id doesn't exist : " + std::to_string(i),
+                 LOG_ERR);
     }
   }
   is_running = true;
   //  worker_thread = std::thread([this] { doWork(); });
-  helper::ThreadHelper::setThreadAffinity(
-      0, pthread_self());  // worker_thread.native_handle());
+  //  helper::ThreadHelper::setThreadAffinity(
+  //      0, pthread_self());  // worker_thread.native_handle());
+#if SM_HANDLE_ACCEPT
+  while (is_running) {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+  }
+#else
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();
+#endif
 }
 
-StreamManager *Listener::getManager(int fd) {
+StreamManager* Listener::getManager(int fd) {
   static unsigned long c;
   ++c;
   unsigned long id = c % stream_manager_set.size();
   return stream_manager_set[id];
 }
-bool Listener::init(ListenerConfig &config) {
+
+bool Listener::init(ListenerConfig& config) {
   listener_config = config;
-  if (!listener_connection.listen(listener_config.addr)) return false;
+  if (!listener_connection.listen(listener_config.addr))
+    return false;
+#if SM_HANDLE_ACCEPT
+  return true;
+#else
   return handleAccept(listener_connection.getFileDescriptor());
-};
+#endif
+}

@@ -5,6 +5,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERSION='\"zhttp_abdess\"'")
 add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
 add_definitions(-DPRINT_READ_STADISTICS=0)
 add_definitions(-DDEBUG_CONNECTION_FLOW=0)
+add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 #Features to implement !!
 add_definitions(-DACCEPT_RANGES=0)
 
