@@ -273,7 +273,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		}
 
 		my $backends = &getL4FarmServers( $farmname );
-		unless ( !$backends
+		unless ( !@{ $backends }[0]
 			 || &ipversion( @{ $backends }[0]->{ ip } ) eq &ipversion( $json_obj->{ vip } ) )
 		{
 			my $msg = "Invalid VIP address, VIP and backends can't be from diferent IP version.";
