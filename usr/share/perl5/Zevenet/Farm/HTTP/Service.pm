@@ -641,7 +641,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 	foreach my $line ( <$fileconf> )
 	{
 		if ( $line =~ /^\tService \"$service\"/ ) { $sw = 1; }
-		if ( $line =~ /^\tEnd$/ ) { $sw = 0; }
+		if ( $line =~ /^\tEnd\s*$/ ) { $sw = 0; }
 
 		# returns all services for this farm
 		if ( $tag eq "" && $service eq "" )
