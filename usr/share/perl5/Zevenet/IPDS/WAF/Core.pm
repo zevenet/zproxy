@@ -66,7 +66,7 @@ sub getWAFRulesStruct
 {
 	return {
 		'type'        => 'rule',
-		'id'          => '',
+		'id'          => '',			# position in set file
 		'information' => {
 						   'rule_id'     => '',
 						   'description' => '',
@@ -88,17 +88,17 @@ sub getWAFRulesStruct
 		},
 		'action'   => '',
 		'http_code' => '',
-		'control'  => [],    # parameter 'ctl' in secrule
+		'modify_directive'  => [],    # parameter 'ctl' in secrule
 		'exec'     => '',
 		'logs'     => {
 					'no_log'      => '',
 					'log'        => '',
 					'audit_log'   => '',
 					'no_audit_log' => '',
-					'log_vdata'    => '',
+					'log_data'    => '',
 		},
 		'set_variables' => {
-							'init_colection' => '',
+							'init_colection' => [],
 							'set_uid'        => '',
 							'set_sid'        => '',
 							'set_var'        => [],
@@ -108,6 +108,7 @@ sub getWAFRulesStruct
 					'chain'     => [],
 					'skip'      => '',
 					'skip_after' => '',
+					'exec' => '',
 		},
 	};
 }

@@ -45,17 +45,20 @@ Returns:
 
 sub parseWAFRule
 {
-	my $txt = shift;
-	my @nested_rules = @_;	# rest of nested rules
+	my $txt          = shift;
+	my @nested_rules = @_;      # rest of nested rules
 	my $line;
 	my $rule;
 	my $directive;
+	my $act;
 
 	# convert text in a line
-	grep ( s/\\$//g, @{ $txt } );
+	grep ( s/\\$//g,  @{ $txt } );
 	grep ( s/^\s*//g, @{ $txt } );
-	chomp $_ for( @{ $txt });
+	chomp $_ for ( @{ $txt } );
 	$line = join ( '', @{ $txt } );
+
+&zenlog( "??????? line:   $line" );
 
 	if ( $line =~ /^\s*(Sec\w+)\s+/s )
 	{
@@ -63,49 +66,64 @@ sub parseWAFRule
 		$rule->{ directive } = $directive;
 	}
 
-	if ( $directive eq 'SecRule' )
+	if ( $directive =~ /(?:SecRule|SecAction)/ )
 	{
 		$rule = &getWAFRulesStruct();
 
-		# parser and remove SecRule header
-		&zenlog ("??????? line:   $line");
-		# example:
-		#	SecRule REQUEST_METHOD "@streq POST" "id:'9001184',phase:1,t:none,pass,nolog,noauditlog,chain"
-		#	SecRule REQUEST_FILENAME "@rx /file/ajax/field_asset_[a-z0-9_]+/[ua]nd/0/form-[a-z0-9A-Z_-]+$" chain
-		# there are 4 mandatory fields: 1:directive 2:variables 3:value 4:actions
-		if ( $line !~ /^\s*SecRule\s+"?([^"]+)"?\s+"?([^"]+)"?\s+"?([^"]+)?"?/s)
-		#~ if ( $line !~ s/^\s*Sec\w+\s+(?<var>[\&\w\|!:]+)\s+"(?<operator>(!?\@\w+)\s+)?(?<value>[^"]+)"//)
+# example:
+#	SecRule REQUEST_METHOD "@streq POST" "id:'9001184',phase:1,t:none,pass,nolog,noauditlog,chain"
+#	SecRule REQUEST_FILENAME "@rx /file/ajax/field_asset_[a-z0-9_]+/[ua]nd/0/form-[a-z0-9A-Z_-]+$" chain
+# there are 4 mandatory fields: 1:directive 2:variables 3:value 4:actions
+
+		if ( $directive eq 'SecRule' )
 		{
-			return undef;
+			if ( $line !~ /^\s*SecRule\s+"?([^"]+)"?\s+"?([^"]+)"?\s+"?([^"]+)?"?/s )
+			{
+				return undef;
+			}
+
+			my $var = $1;
+			my $val = $2;
+			$act = $3;
+
+			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<value>[^"]+)$/ )
+			{
+				$rule->{ match }->{ operator } = $+{ operator } // "";
+				$rule->{ match }->{ value } = $+{ value };
+			}
+
+			my @var_sp = split ( '\|', $var );
+			$rule->{ match }->{ variables } = \@var_sp;
+
+			# set not_operator
+			if ( $rule->{ match }->{ operator } )
+			{
+				$rule->{ match }->{ operator } =~ s/^(!)?\@//;
+				my $not_op = $1 // '';
+				$rule->{ match }->{ operator } = "${not_op}$rule->{ match }->{ operator }";
+				&zenlog( "Not variable found parsing rule: $line ", "debug1", "waf" )
+				  if ( !$rule->{ match }->{ operator } );
+			}
 		}
 
-		my $var = $1;
-		my $val = $2;
-		my $act = $3;
-
-		if ( $val =~ /^(?<operator>(!?\@\w+)\s+)?(?<value>[^"]+)$/ )
+		# parsing SecAction
+		else
 		{
-			$rule->{ match }->{ operator } = $+{operator} // "";
-			$rule->{ match }->{ value }    = $+{value};
-		}
+			$act = $line;
+			$act =~ s/^\s*SecAction\s+//;
+			$act =~ s/^"//;
+			$act =~ s/"\s*$//;
 
-		my @var_sp = split ( '\|', $var );
-		$rule->{ match }->{ variables } = \@var_sp;
+			$rule->{ type } = 'action';
 
-		# set not_operator
-		if ($rule->{ match }->{ operator })
-		{
-			$rule->{ match }->{ operator } =~ s/^(!)?\@//;
-			my $not_op = $1 // '';
-			$rule->{ match }->{ operator } = "${not_op}$rule->{ match }->{ operator }";
-			&zenlog( "Not variable found parsing rule: $line ", "debug1", "waf" )
-				if ( !$rule->{ match }->{ operator } );
+			# delete the exclusive parameters of SecRules
+			delete $rule->{ match }->{ operator };
+			delete $rule->{ match }->{ value };
+			delete $rule->{ match }->{ variables };
 		}
-	#~ }
-	#~ if ( $directive =~ /^SecAction|SecRule$/ )  ## ???? parsear SecAction???
-	#~ {
 
 		my @options = split ( ',', $act );
+
 		foreach my $param ( @options )
 		{
 			$param =~ s/^\s*//;
@@ -113,9 +131,12 @@ sub parseWAFRule
 
 			if ( $param =~ /msg:'?([^']+)'?/ )
 			{
-				$rule->{ definition }->{ description } = $1;
+				$rule->{ information }->{ description } = $1;
 			}
-			elsif ( $param =~ /rule_id:'?([^']+)'?/ ) { $rule->{ definition }->{ id } = $1; }
+			elsif ( $param =~ /id:'?([^']+)'?/ )
+			{
+				$rule->{ information }->{ rule_id } = $1;
+			}
 			elsif ( $param =~ /tag:'?([^']+)'?/ )
 			{
 				push @{ $rule->{ information }->{ tag } }, $1;
@@ -142,7 +163,7 @@ sub parseWAFRule
 			}
 			elsif ( $param =~ /status:'?([^']+)'?/ )
 			{
-				$rule->{ httpCode } = $1;
+				$rule->{ http_code } = $1;
 			}
 			elsif ( $param =~ /phase:'?([^']+)'?/ ) { $rule->{ match }->{ phase } = $1; }
 
@@ -153,36 +174,39 @@ sub parseWAFRule
 			}
 			elsif ( $param =~ /^multimatch$/ )
 			{
-				$rule->{ match }->{ multiMatch } = "true";
+				$rule->{ match }->{ multi_match } = "true";
 			}
 			elsif ( $param =~ /^capture$/ ) { $rule->{ match }->{ capture } = "true"; }
 			elsif ( $param =~ /^(redirect|allow|pass|block|deny)$/ )
 			{
 				$rule->{ action } = $1;
 			}
-			elsif ( $param =~ /^nolog$/ )      { $rule->{ logs }->{ noLog }      = "true"; }
-			elsif ( $param =~ /^log$/ )        { $rule->{ logs }->{ log }        = "true"; }
-			elsif ( $param =~ /^auditlog$/ )   { $rule->{ logs }->{ auditLog }   = "true"; }
-			elsif ( $param =~ /^noauditlog$/ ) { $rule->{ logs }->{ noAuditLog } = "true"; }
+			elsif ( $param =~ /^nolog$/ )    { $rule->{ logs }->{ no_log }    = "true"; }
+			elsif ( $param =~ /^log$/ )      { $rule->{ logs }->{ log }       = "true"; }
+			elsif ( $param =~ /^auditlog$/ ) { $rule->{ logs }->{ audit_log } = "true"; }
+			elsif ( $param =~ /^noauditlog$/ )
+			{
+				$rule->{ logs }->{ no_audit_log } = "true";
+			}
 			elsif ( $param =~ /^logdata:'?([^']+)'?/ )
 			{
-				$rule->{ logs }->{ logdata } = $1;
+				$rule->{ logs }->{ log_data } = $1;
 			}
 			elsif ( $param =~ /initcol:'?([^']+)'?/ )
 			{
-				$rule->{ setVariables }->{ initColection } = $1;
+				push @{ $rule->{ set_variables }->{ init_colection } }, $1;
 			}
 			elsif ( $param =~ /setuid:'?([^']+)'?/ )
 			{
-				$rule->{ setVariables }->{ setUid } = $1;
+				$rule->{ set_variables }->{ set_uid } = $1;
 			}
 			elsif ( $param =~ /setsid:'?([^']+)'?/ )
 			{
-				$rule->{ setVariables }->{ setSid } = $1;
+				$rule->{ set_variables }->{ set_sid } = $1;
 			}
 			elsif ( $param =~ /setvar:'?([^']+)'?/ )
 			{
-				push @{ $rule->{ setVariables }->{ setVar } }, $1;
+				push @{ $rule->{ set_variables }->{ set_var } }, $1;
 			}
 			elsif ( $param =~ /^chain$/ )
 			{
@@ -191,27 +215,28 @@ sub parseWAFRule
 					push @{ $rule->{ flow }->{ chain } }, &parseWAFRule( $ru );
 				}
 			}
-			elsif ( $param =~ /skip:'?([^']+)'?/ ) { $rule->{ flow }->{ skip }  = $1; }
+			elsif ( $param =~ /skip:'?([^']+)'?/ ) { $rule->{ flow }->{ skip } = $1; }
 			elsif ( $param =~ /skipAfter:'?([^']+)'?/ )
 			{
-				$rule->{ flow }->{ skipAfter } = $1;
+				$rule->{ flow }->{ skip_after } = $1;
 			}
 			elsif ( $param =~ /exec:'?([^']+)'?/ ) { $rule->{ exec } = $1; }
-			elsif ( $param =~ /ctl:'?([^']+)'?/ ) { $rule->{ control } = $1; }
+			elsif ( $param =~ /ctl:'?([^']+)'?/ )
+			{
+				push @{ $rule->{ modify_directive } }, $1;
+			}
 		}
 	}
-	elsif ( $line =~ /^\s*Sec\w+\s+(.+)$/s )
+	elsif ( $line =~ /^\s*SecMarker\s+(.+)$/s )
 	{
-		$rule->{ 'type' } = 'directive';
+		$rule->{ 'type' }  = 'marker';
 		$rule->{ 'value' } = $1;
-		chomp $rule->{ 'value' };
 	}
-
-	#another directive
 	else
 	{
-		&zenlog( "Error parsing Rule: $line", 'warning', 'waf' );
-		return undef;
+		$rule->{ 'type' }  = 'custom';
+		$rule->{ 'value' } = $line;
+		chomp $rule->{ 'value' };
 	}
 
 	return $rule;
@@ -232,75 +257,82 @@ Returns:
 
 sub buildWAFRule
 {
-	my $st       = shift;
-	my $secrule  = "";
+	my $st      = shift;
+	my $secrule = "";
 
 	if ( $st->{ type } eq 'rule' )
 	{
-		my $vars     = join ( '|', @{ $st->{ match }->{ variables } } );
+		my $vars = join ( '|', @{ $st->{ match }->{ variables } } );
 		my $operator = $st->{ match }->{ operator };
 		$operator =~ s/^(!)?//;
 		my $not_op = $1 // '';
 
 		$secrule =
-			'SecRule '
+		    'SecRule '
 		  . $vars . ' "'
 		  . $not_op . '@'
 		  . $operator . ' '
 		  . $st->{ match }->{ value } . '"\\' . "\n";
 		$secrule .= "\t \"";
-		$secrule .= "rule_id:" . $st->{ definition }->{ rule_id } . ",\\\n";
-		$secrule .= "\tmsg:'" . $st->{ definition }->{ description } . "',\\\n"
-		  if ( $st->{ definition }->{ description } );
+		$secrule .= "rule_id:" . $st->{ information }->{ rule_id } . ",\\\n";
+		$secrule .= "\tmsg:'" . $st->{ information }->{ description } . "',\\\n"
+		  if ( $st->{ information }->{ description } );
 
 		foreach my $tag ( @{ $st->{ information }->{ tag } } )
 		{
 			$secrule .= "\ttag:$tag,\\\n";
 		}
-		$secrule .= "\tver:" . $st->{ definition }->{ version } . ",\\\n"
-		  if ( $st->{ definition }->{ version } );
-		$secrule .= "\tmaturity:" . $st->{ definition }->{ maturity } . ",\\\n"
-		  if ( $st->{ definition }->{ maturity } =~ /\d/ );
-		$secrule .= "\tseverity:" . $st->{ definition }->{ severity } . ",\\\n"
-		  if ( $st->{ definition }->{ severity } =~ /\d/ );
-		$secrule .= "\taccuracy:" . $st->{ definition }->{ accuracy } . ",\\\n"
-		  if ( $st->{ definition }->{ accuracy } =~ /\d/ );
-		$secrule .= "\trev:" . $st->{ definition }->{ revision } . ",\\\n"
-		  if ( $st->{ definition }->{ revision } =~ /\d/ );
+		$secrule .= "\tver:" . $st->{ information }->{ version } . ",\\\n"
+		  if ( $st->{ information }->{ version } );
+		$secrule .= "\tmaturity:" . $st->{ information }->{ maturity } . ",\\\n"
+		  if ( $st->{ information }->{ maturity } =~ /\d/ );
+		$secrule .= "\tseverity:" . $st->{ information }->{ severity } . ",\\\n"
+		  if ( $st->{ information }->{ severity } =~ /\d/ );
+		$secrule .= "\taccuracy:" . $st->{ information }->{ accuracy } . ",\\\n"
+		  if ( $st->{ information }->{ accuracy } =~ /\d/ );
+		$secrule .= "\trev:" . $st->{ information }->{ revision } . ",\\\n"
+		  if ( $st->{ information }->{ revision } =~ /\d/ );
 		$secrule .= "\tphase:" . $st->{ match }->{ phase } . ",\\\n"
 		  if ( $st->{ match }->{ phase } );
 		foreach my $t ( @{ $st->{ match }->{ transformations } } )
 		{
 			$secrule .= "\tt:$t,\\\n";
 		}
-		$secrule .= "\tmultimatch,\\\n"    if ( $st->{ match }->{ multiMatch } );
+		$secrule .= "\tmultimatch,\\\n"    if ( $st->{ match }->{ multi_match } );
 		$secrule .= "\tcapture,\\\n"       if ( $st->{ match }->{ capture } );
 		$secrule .= "\t$st->{action},\\\n" if ( $st->{ action } );
-		$secrule .= "\tstatus:" . $st->{httpCode} . ",\\\n" if ( $st->{ httpCode } );
-		$secrule .= "\tnolog,\\\n"         if ( $st->{ logs }->{ noLog } );
-		$secrule .= "\tlog,\\\n"           if ( $st->{ logs }->{ log } );
-		$secrule .= "\tauditlog,\\\n"      if ( $st->{ logs }->{ auditLog } );
-		$secrule .= "\tnoauditlog,\\\n"    if ( $st->{ logs }->{ noAuditLog } );
-		$secrule .= "\tlogdata:" . $st->{ logs }->{ logData } . ",\\\n"
-		  if ( $st->{ logs }->{ logData } );
-		$secrule .= "\tinitcol:" . $st->{ setVariables }->{ initColection } . ",\\\n"
-		  if ( $st->{ setVariables }->{ initColection } );
-		$secrule .= "\tsetuid:" . $st->{ setVariables }->{ setUid } . ",\\\n"
-		  if ( $st->{ setVariables }->{ setUid } );
-		$secrule .= "\tsetsid:" . $st->{ setVariables }->{ setSid } . ",\\\n"
-		  if ( $st->{ setVariables }->{ setSid } );
-		foreach my $it ( @{ $st->{ setVariables }->{ setVar } } )
+		$secrule .= "\tstatus:" . $st->{ http_code } . ",\\\n"
+		  if ( $st->{ http_code } );
+		$secrule .= "\tnolog,\\\n"      if ( $st->{ logs }->{ no_log } );
+		$secrule .= "\tlog,\\\n"        if ( $st->{ logs }->{ log } );
+		$secrule .= "\tauditlog,\\\n"   if ( $st->{ logs }->{ audit_log } );
+		$secrule .= "\tnoauditlog,\\\n" if ( $st->{ logs }->{ no_audit_log } );
+		$secrule .= "\tlogdata:" . $st->{ logs }->{ log_data } . ",\\\n"
+		  if ( $st->{ logs }->{ log_data } );
+		foreach my $t ( @{ $st->{ set_variables }->{ init_colection } } )
 		{
-			$secrule .= "\tsetvar:$it,\\\n"
+			$secrule .= "\tinitcol:$t,\\\n";
+		}
+		$secrule .= "\tsetuid:" . $st->{ setVariables }->{ setUid } . ",\\\n"
+		  if ( $st->{ set_variables }->{ set_uid } );
+		$secrule .= "\tsetsid:" . $st->{ set_variables }->{ set_sid } . ",\\\n"
+		  if ( $st->{ set_variables }->{ set_sid } );
+
+		foreach my $it ( @{ $st->{ set_variables }->{ set_var } } )
+		{
+			$secrule .= "\tsetvar:$it,\\\n";
 		}
 		$secrule .= "\tchain,\\\n" if ( $st->{ flow }->{ chain } );
 		$secrule .= "\tskip:" . $st->{ flow }->{ skip } . ",\\\n"
 		  if ( $st->{ flow }->{ skip } =~ /\d/ );
-		$secrule .= "\tskipAfter:" . $st->{ flow }->{ skipAfter } . ",\\\n"
-		  if ( $st->{ flow }->{ skipAfter } );
-		$secrule .= "\texec:" . $st->{ flow }->{ exec } . ",\\\n"
-		  if ( $st->{ flow }->{ exec } );
-		$secrule .= "\tctl:" . $st->{ control } . ",\\\n" if ( $st->{ control } );
+		$secrule .= "\tskipAfter:" . $st->{ flow }->{ skip_after } . ",\\\n"
+		  if ( $st->{ flow }->{ skip_after } );
+		$secrule .= "\texec:" . $st->{ exec } . ",\\\n"
+		  if ( $st->{ exec } );
+		foreach my $it ( @{ $st->{ modify_directive } } )
+		{
+			$secrule .= "\tctl:$it,\\\n";
+		}
 
 		# remove last terminator
 		$secrule =~ s/,\\\n$//;
@@ -319,36 +351,40 @@ sub buildWAFRule
 
 sub parseWAFSet
 {
-	my $set = shift;
+	my $set         = shift;
 	my @file_parsed = ();
 	my $flag;
 	my @rules_nested;
 	my $rule = [];
-	my $fh = &openlock ( &getWAFSetFile( $set ), 'r' ) or return \@file_parsed;
+	my $fh = &openlock( &getWAFSetFile( $set ), 'r' ) or return \@file_parsed;
+	my $id = 0;
 
-	my $chain = 0;		# if chain is found, sent the next rule too
+	my $chain = 0;    # if chain is found, sent the next rule too
 	while ( my $line = <$fh> )
 	{
-		next if ( $line =~ /^\s*$/ ); 	# skip blank lines
-		next if ( $line =~ /^\s*#/ ); 	# skip commentaries
+		next if ( $line =~ /^\s*$/ );    # skip blank lines
+		next if ( $line =~ /^\s*#/ );    # skip commentaries
 
 		$chain = 1 if ( $line =~ /[\"\s,]chain[\"\s,]/ );
-		push @{$rule}, $line;
-&zenlog ("??????  $line");
-		if ( $line !~ /\\\s*$/ )		# if the line is not splitted '\', it is the final
+		push @{ $rule }, $line;
+
+		if ( $line !~ /\\\s*$/ )    # if the line is not splitted '\', it is the final
 		{
 			push @rules_nested, $rule;
 			if ( $chain )
 			{
-				&zenlog ("??????  +1 ");
-				$rule = [];
+				$rule  = [];
 				$chain = 0;
 			}
 			else
 			{
-				&zenlog ("?????? ----- checking");
-				push @file_parsed, &parseWAFRule( @rules_nested ) if @rules_nested; # add the last rule
+				my $hash_rule = &parseWAFRule( @rules_nested );
+				$hash_rule->{ id } = $id;
+				$id++;
+				push @file_parsed, $hash_rule
+				  if @rules_nested;    # add the last rule
 				$rule = [];
+				@rules_nested = ();
 			}
 		}
 	}
@@ -389,7 +425,7 @@ sub buildWAFSet
 	}
 	else
 	{
-		&zenlog ("Error checking set syntax $set: $err", "error", "waf");
+		&zenlog( "Error checking set syntax $set: $err", "error", "waf" );
 		$err = 1;
 	}
 
@@ -408,7 +444,7 @@ sub checkWAFSetSyntax
 	# ...
 
 	my $pound   = &getGlobalConfiguration( 'pound' );
-	my @out = `$pound -W $file 2>&1`;
+	my @out     = `$pound -W $file 2>&1`;
 	my $err_msg = $out[1];
 	chomp $err_msg;
 
@@ -420,13 +456,13 @@ sub checkWAFSetSyntax
 
 sub checkWAFRuleSyntax
 {
-	my $rule = shift;
-	my $pound   = &getGlobalConfiguration( 'pound' );
+	my $rule  = shift;
+	my $pound = &getGlobalConfiguration( 'pound' );
 
 	# is it necessary change rule format
 	my $rule =~ s/"/\\"/g;
 
-	my @out = `$pound -w "$rule" 2>&1`;
+	my @out     = `$pound -w "$rule" 2>&1`;
 	my $err_msg = $out[1];
 	chomp $err_msg;
 

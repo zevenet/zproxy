@@ -41,11 +41,9 @@ sub getZapiWAFRule
 
 	include 'Zevenet::IPDS::WAF::Core';
 	my $out = {
-		'definition' => {
-						  'id'          => $rule->{ definition }->{ id }          // '',
-						  'description' => $rule->{ definition }->{ description } // '',
-		},
 		'information' => {
+						   'rule_id'     => $rule->{ information }->{ rule_id }     // '',
+						   'description' => $rule->{ information }->{ description } // '',
 						   'tag'      => $rule->{ information }->{ tag }      // [],
 						   'version'  => $rule->{ information }->{ version }  // '',
 						   'maturity' => $rule->{ information }->{ maturity } // '',
@@ -57,32 +55,34 @@ sub getZapiWAFRule
 					 'phase'           => $rule->{ match }->{ phase }           // '',
 					 'variables'       => $rule->{ match }->{ variables }       // [],
 					 'transformations' => $rule->{ match }->{ transformations } // [],
-					 'multiMatch'      => $rule->{ match }->{ multiMatch }      // '',
+					 'multi_match'      => $rule->{ match }->{ multi_match }    // '',
 					 'operator'        => $rule->{ match }->{ operator }        // '',
 					 'capture'         => $rule->{ match }->{ capture }         // '',
 					 'value'           => $rule->{ match }->{ value }           // '',
 		},
 		'action' => $rule->{ action } // '',
 		'logs' => {
-					'noLog'      => $rule->{ logs }->{ noLog }      // '',
+					'no_log'      => $rule->{ logs }->{ no_log }      // '',
 					'log'        => $rule->{ logs }->{ log }        // '',
-					'auditLog'   => $rule->{ logs }->{ auditLog }   // '',
-					'noAuditLog' => $rule->{ logs }->{ noAuditLog } // '',
-					'logData'    => $rule->{ logs }->{ logData }    // '',
+					'audit_log'   => $rule->{ logs }->{ audit_log }   // '',
+					'no_audit_log' => $rule->{ logs }->{ no_audit_log } // '',
+					'log_data'    => $rule->{ logs }->{ log_data }    // '',
 		},
-		'setVariables' => {
-						'initColection' => $rule->{ setVariables }->{ initColection } // '',
-						'setUid'        => $rule->{ setVariables }->{ setUid }        // '',
-						'setSid'        => $rule->{ setVariables }->{ setSid }        // '',
-						'setVar'        => $rule->{ setVariables }->{ setVar }        // [],
+		'set_variables' => {
+						'init_colection' => $rule->{ set_variables }->{ init_colection } // [],
+						'set_uid'        => $rule->{ set_variables }->{ set_uid }        // '',
+						'set_sid'        => $rule->{ set_variables }->{ set_sid }        // '',
+						'set_var'        => $rule->{ set_variables }->{ set_var }        // [],
+						'expire_var'        => $rule->{ set_variables }->{ expire_var }        // [],
 		},
 		'flow' => {
-					'chain'     => $rule->{ flow }->{ chain }     // '',
+					'chain'     => $rule->{ flow }->{ chain }     // [],
 					'skip'      => $rule->{ flow }->{ skip }      // '',
-					'skipAfter' => $rule->{ flow }->{ skipAfter } // '',
-					'exec'      => $rule->{ flow }->{ exec }      // '',
+					'skip_after' => $rule->{ flow }->{ skip_after } // '',
 		},
-		'control' => $rule->{ control } // '',    # parameter 'ctl' in secrule
+		'modify_directive' => $rule->{ modify_directive } // [],    # parameter 'ctl' in secrule
+		'http_code' => $rule->{ http_code } // [],    # parameter 'ctl' in secrule
+		'exec' => $rule->{ exec } // '',    # parameter 'ctl' in secrule
 	};
 
 
