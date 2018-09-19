@@ -615,7 +615,7 @@ sub certcontrol
 		if ( $modification[0] ne $date_today) {
 			require IO::Socket;
 
-            if ( $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) ) {
+            if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) ) {
             	$scan->close();
                 my $tmp_file = '/tmp/cacrl.crl';
                 require Zevenet::Lock;
