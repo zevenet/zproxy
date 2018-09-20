@@ -267,16 +267,21 @@ sub certcontrol
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $file_check = "$configdir/config_check";
-	my $date_check = `cat $file_check 2>/dev/null`;
-	$date_check =~ s/\s*$//;
+
+    require Zevenet::Lock;
+    my $file_lock = &getLockFile( $file_check );
+    my $lock_fd = &lockfile( $file_lock );
+
+    my $open_check = open ( my $read_check, '<', $file_check );
+    my $date_check = <$read_check>;
+    $date_check =~ s/\s*$//;
+    close $read_check;
 
 	if ($date_check ne $date_encode)
 	{
-		require Tie::File;
-		tie my @contents, 'Tie::File', "$file_check";
-		@contents = ($date_encode);
-
-		untie @contents;
+		my $open_check2 = open ( my $write_check, '>', $file_check );
+		print $write_check $date_encode;
+		close $write_check;
 
 		my $crl_path = "$configdir/cacrl.crl";
 
@@ -300,17 +305,13 @@ sub certcontrol
             if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) ) {
                 $scan->close();
                 my $tmp_file = '/tmp/cacrl.crl';
-                require Zevenet::Lock;
-                my $file_lock = &getLockFile( $tmp_file );
-                my $lock_fd = &lockfile( $file_lock );
 
 				# Download CRL
 				my $download = `$wget -q -T5 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 				if ( -s $tmp_file > 0 ) {
 					&zenlog("CRL Downloaded on $date_today");
 					my $copy = `cp $tmp_file $crl_path`;
-				}
-				&unlockfile( $lock_fd );
+				}				
 				unlink $tmp_file;
 			}
 	  	}
@@ -330,8 +331,9 @@ sub certcontrol
 					return $swcert;
 				}
 			}
-		}
+		}		
 	}
+	&unlockfile( $lock_fd );
 
  	 # Certificate expiring date
     my ( $na ) = grep /Not After/i, @zen_cert;
