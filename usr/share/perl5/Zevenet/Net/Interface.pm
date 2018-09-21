@@ -1125,13 +1125,16 @@ sub getVirtualInterfaceNameList
 
 	opendir ( my $conf_dir, &getGlobalConfiguration( 'configdir' ) );
 	my $virt_if_re = &getValidFormat( 'virt_interface' );
+	my @interfaces;
 
-	my @filenames = grep { /^if_($virt_if_re)_conf$/ } readdir ( $conf_dir );
-	@filenames =~ /^if_($virt_if_re)_conf$/;
+	foreach my $filename ( readdir( $conf_dir ) )
+	{
+		push @interfaces, $1 if ( $filename =~ /^if_($virt_if_re)_conf$/ );
+	}
 
 	closedir ( $conf_dir );
 
-	return @filenames;
+	return @interfaces;
 }
 
 =begin nd
