@@ -260,7 +260,7 @@ sub genIptMark				# ( $farm_ref, $server_ref )
 	my $server = shift;    # input: second argument should be a server reference
 	my $rule;              # output: iptables rule template string
 
-	my $layer;
+	my $layer = "";
 	if ( $farm->{ proto } ne 'all' )
 	{
 		$layer = "--protocol $farm->{ proto } -m multiport --dports $farm->{ vport }";
