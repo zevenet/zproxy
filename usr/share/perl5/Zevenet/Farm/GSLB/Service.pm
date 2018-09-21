@@ -807,7 +807,7 @@ sub getGSLBFarmServicesStruct
 	my $farmname = shift;
 
 	require Zevenet::FarmGuardian;
-	include 'Zevenet::Farm::GSLB::Backends';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my @out_s = ();
 
