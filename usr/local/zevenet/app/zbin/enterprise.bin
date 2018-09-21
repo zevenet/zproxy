@@ -350,7 +350,7 @@ sub getModuleInfo
 	{
 		use Data::Dumper;
 		$mod->{ key } = '';
-		&zenlog( "FAILURE!!! \$mod->{ lib_path }/\$mod->{ key }: $mod->{ lib_path }/$mod->{ key }" );
+		&zenlog( "FAILURE!!! Not found module $mod->{ name } : $mod->{ lib_path }/$mod->{ path }(.e)" );
 	}
 
 	# Store in $mod->{ fullpath } the full path to the module
