@@ -197,7 +197,8 @@ See Also:
 =cut
 sub uploadBackup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( )", "debug", "PROFILING" );
+
 	my $filename          = shift;
 	my $upload_filehandle = shift;
 
