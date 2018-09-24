@@ -64,13 +64,15 @@ sub zenlog    # ($string, $type)
 	my $type   = shift // 'info';    # type   = log level (Default: info))
 	my $tag    = shift // "";
 
+	require Zevenet::Debug;
+
 	if ( $type =~ /^(debug)(\d*)$/ )
 	{
 		# debug lvl
 		my $debug_lvl = $2;
 		$debug_lvl = 1 if not $debug_lvl;
 		$type = $1;
-		return 0 if ( &debug lt $debug_lvl );
+		return 0 if ( &debug() lt $debug_lvl );
 	}
 
 	$tag = "$tag :: " if $tag;
@@ -152,8 +154,6 @@ sub logAndRun    # ($command)
 {
 	my $command = shift;    # command string to log and run
 
-	require Zevenet::Debug;
-
 	my $program     = $basename;
 	my @cmd_output  = `$command 2>&1`;
 	my $return_code = $?;
@@ -188,8 +188,6 @@ Returns:
 sub logAndRunBG    # ($command)
 {
 	my $command = shift;    # command string to log and run
-
-	require Zevenet::Debug;
 
 	my $program = $basename;
 
