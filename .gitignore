@@ -3,6 +3,7 @@
 
 # exceptions
 !/license.txt
+!/build-pkg/
 
 #!/etc/cron.d/zevenet
 !/etc/profile
