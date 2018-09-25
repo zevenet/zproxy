@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 my @bond_modes_short = (
 						 'balance-rr',  'active-backup',
 						 'balance-xor', 'broadcast',

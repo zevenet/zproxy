@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::IPDS::Blacklist::Core';
 
 # GET /ipds/blacklists

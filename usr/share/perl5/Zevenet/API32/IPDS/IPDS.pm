@@ -22,6 +22,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 # GET /ipds$
 sub get_ipds_rules_list
 {

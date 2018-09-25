@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 use Zevenet::System;
 
 my $eload;

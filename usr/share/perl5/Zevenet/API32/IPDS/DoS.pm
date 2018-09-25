@@ -22,6 +22,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 include 'Zevenet::IPDS::DoS';
 
 # GET /ipds/dos/rules

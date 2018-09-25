@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::RBAC::Group::Core';
 include 'Zevenet::API32::RBAC::Structs';
 

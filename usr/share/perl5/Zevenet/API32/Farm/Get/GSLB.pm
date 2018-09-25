@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::Farm::GSLB::Service';
 include 'Zevenet::Farm::GSLB::Backend';
 include 'Zevenet::Farm::GSLB::FarmGuardian';

@@ -22,6 +22,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 use Zevenet::Farm::Core;
 
 # GET /farms/modules/gslb

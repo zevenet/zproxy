@@ -22,6 +22,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 include 'Zevenet::Cluster';
 
 # disable smartmatch experimental warnings for perl >= 5.18

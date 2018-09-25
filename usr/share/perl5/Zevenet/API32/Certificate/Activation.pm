@@ -22,6 +22,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 # Check RBAC permissions
 include 'Zevenet::Certificate';
 require Zevenet::User;

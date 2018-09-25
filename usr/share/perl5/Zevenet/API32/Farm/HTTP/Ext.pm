@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::Farm::Base';
 include 'Zevenet::Farm::Config';
 include 'Zevenet::Farm::HTTP::Ext';
