@@ -1,0 +1,43 @@
+#!/bin/bash
+
+perl_version=`dpkg -l perl | grep perl | awk '{print $3}' | cut -d. -f-2`
+tempdir="/tmp/zlb"
+
+# Payload format
+uuencode=0
+binary=1
+
+# Untar package in $tempdir
+function untar_payload ()
+{
+        # Payload must be in tar.gz format
+        tar_extract="tar -xf - --directory $tempdir"
+        match=$(grep --text --line-number '^PAYLOAD:$' $0 | cut -d ':' -f 1)
+        payload_start=$((match + 1))
+        if [[ $binary -ne 0 ]]; then
+                tail -n +$payload_start $0 | $tar_extract
+        fi
+        if [[ $uuencode -ne 0 ]]; then
+                tail -n +$payload_start $0 | uudecode | $tar_extract
+        fi
+}
+
+if [[ -d "$tempdir" ]]; then
+	rm -rf "$tempdir"
+fi
+mkdir "$tempdir"
+
+untar_payload
+error=0
+
+if [[ -f $tempdir/preinst.$perl_version ]]; then
+	$tempdir/preinst.$perl_version $@
+	error=$?
+else
+	echo "This package supports the following perl versions:"
+	ls "$tempdir/preinst.*" | cut -d. -f2-
+	error=2
+fi
+
+rm -rf "$tempdir" && exit $error
+PAYLOAD:
