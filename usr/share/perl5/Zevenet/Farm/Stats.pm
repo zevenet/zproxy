@@ -27,44 +27,6 @@ my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 =begin nd
-Function: getBackendEstConns
-
-	Get all ESTABLISHED connections for a backend
-
-Parameters:
-	farmname     - Farm name
-	ip_backend   - IP backend
-	port_backend - backend port
-	netstat      - reference to array with Conntrack -L output
-
-Returns:
-	unsigned integer - Return number of ESTABLISHED conntrack lines for the backend
-
-=cut
-sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,$netstat)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name, $ip_backend, $port_backend, $netstat ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my $connections = 0;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Zevenet::Farm::HTTP::Stats;
-		$connections =
-		  &getHTTPBackendEstConns( $farm_name, $ip_backend, $port_backend, $netstat );
-	}
-	elsif ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Stats;
-		$connections = &getL4BackendEstConns( $farm_name, $ip_backend, $port_backend, $netstat );
-	}
-
-	return $connections;
-}
-
-=begin nd
 Function: getFarmEstConns
 
 	Get all ESTABLISHED connections for a farm

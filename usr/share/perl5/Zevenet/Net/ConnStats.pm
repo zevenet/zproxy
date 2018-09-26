@@ -45,15 +45,6 @@ Parameters:
 Returns:
 	array ref - Filtered netstat array reference.
 
-See Also:
-	Output to: <getNetstatFilter>
-
-	<farm-rrd.pl>, zapi/v?/system_stats.cgi
-
-	<getBackendEstConns>, <getFarmEstConns>, <getBackendSYNConns>, <getFarmSYNConns>
-
-	<getL4BackendEstConns>, <getL4FarmEstConns>, <getL4BackendSYNConns>, <getL4FarmSYNConns>
-	<getHTTPBackendEstConns>, <getHTTPFarmEstConns>, <getHTTPBackendTWConns>, <getHTTPBackendSYNConns>, <getHTTPFarmSYNConns>, <getGSLBFarmEstConns>
 =cut
 sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $protocol)
 {
@@ -100,15 +91,6 @@ Parameters:
 Returns:
 	array ref - Filtered netstat array reference.
 
-See Also:
-	Input from: <getConntrack>
-
-	<farm-rrd.pl>, zapi/v?/system_stats.cgi
-
-	<getBackendEstConns>, <getFarmEstConns>, <getBackendSYNConns>, <getFarmSYNConns>
-
-	<getL4BackendEstConns>, <getL4FarmEstConns>, <getL4BackendSYNConns>, <getL4FarmSYNConns>
-	<getHTTPBackendEstConns>, <getHTTPFarmEstConns>, <getHTTPBackendTWConns>, <getHTTPBackendSYNConns>, <getHTTPFarmSYNConns>, <getGSLBFarmEstConns>
 =cut
 # Returns array execution of netstat
 sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,$netstat)
