@@ -105,7 +105,7 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	eval { die if &applyBondChange( $json_obj, 'writeconf' ); };
+	eval { die if &applyBondChange( $json_obj ); };
 
 	if ( $@ )
 	{
@@ -178,7 +178,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
 
-	eval { die if &applyBondChange( $bonds->{ $bond }, 'writeconf' ); };
+	eval { die if &applyBondChange( $bonds->{ $bond } ); };
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
@@ -340,7 +340,7 @@ sub delete_bond    # ( $bond )
 			die if &downIf( $bonds->{ $bond } );
 		}
 
-		die if &setBondMaster( $bond, 'del', 'writeconf' );
+		die if &setBondMaster( $bond, 'del' );
 	};
 
 	if ( $@ )
@@ -387,7 +387,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	eval {
 		@{ $bonds->{ $bond }{ slaves } } =
 		  grep ( { $slave ne $_ } @{ $bonds->{ $bond }{ slaves } } );
-		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
+		die if &applyBondChange( $bonds->{ $bond } );
 	};
 
 	if ( $@ )
