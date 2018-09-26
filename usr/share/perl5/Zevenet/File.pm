@@ -122,14 +122,4 @@ sub saveFileHandler
 	return 1;
 }
 
-sub getFilenameFromPath
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $path = shift;
-
-	my @path_parts = split ( /\\/, $path );
-
-	return $path_parts[-1];
-}
-
 1;
