@@ -382,8 +382,6 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success or other value on failure
 
-FIXME:
-	only used in zapi v2. Obsolet
 =cut
 
 sub setL4FarmSessionType    # ($session,$farm_name)
