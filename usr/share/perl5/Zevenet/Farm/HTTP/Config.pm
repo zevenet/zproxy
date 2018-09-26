@@ -1110,43 +1110,6 @@ sub getHTTPFarmPid        # ($farm_name)
 }
 
 =begin nd
-Function: getFarmChildPid
-
-	Returns farm Child PID
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - return child pid of farm or -1 on failure
-
-=cut
-sub getFarmChildPid    # ($farm_name)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name ) = @_;
-
-	use File::Grep 'fgrep';
-
-	my $fpid      = &getFarmPid( $farm_name );
-	my $output    = -1;
-
-	my $pids = `pidof -o $fpid pound`;
-	my @pids = split ( " ", $pids );
-
-	foreach my $pid ( @pids )
-	{
-		if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" )
-		{
-			$output = $pid;
-			last;
-		}
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: getHTTPFarmVip
 
 	Returns farm vip or farm port
