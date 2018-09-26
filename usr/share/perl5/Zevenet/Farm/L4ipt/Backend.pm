@@ -794,35 +794,6 @@ sub getL4ServerWithLowestPriority    # ($farm)
 }
 
 =begin nd
-Function: getL4FarmBackendMaintenance
-
-	Check if a backend on a farm is on maintenance mode
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-
-Returns:
-	Integer - 0 for backend in maintenance or 1 for backend not in maintenance
-
-=cut
-
-sub getL4FarmBackendMaintenance
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name, $backend ) = @_;
-
-	my $servers = &getL4FarmServers( $farm_name );
-	my $serv = @{ $servers }[$backend];
-
-	return (    # parentheses required
-		$serv->{ status } eq 'maintenance'
-		? 0                                 # in maintenance
-		: 1                                 # not in maintenance
-	);
-}
-
-=begin nd
 Function: setL4FarmBackendMaintenance
 
 	Enable the maintenance mode for backend
