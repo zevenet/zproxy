@@ -22,6 +22,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API31::HTTP;
+
 use Zevenet::Net::Interface;
 include 'Zevenet::System::HTTP';
 

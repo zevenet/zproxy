@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
+
 # GET /system/ssh
 sub get_ssh
 {

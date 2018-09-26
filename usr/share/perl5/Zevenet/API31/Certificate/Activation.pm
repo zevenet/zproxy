@@ -22,6 +22,9 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
+
 include 'Zevenet::Certificate';
 
 # GET /certificates/activation/info

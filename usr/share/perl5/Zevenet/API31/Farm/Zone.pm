@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
+
 # POST
 
 # POST /farms/<farmname>/zones Create a new zone in a gslb Farm

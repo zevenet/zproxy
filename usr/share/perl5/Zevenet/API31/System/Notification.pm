@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
+
 include 'Zevenet::Notify';
 
 # GET /system/notifications/methods/METHOD

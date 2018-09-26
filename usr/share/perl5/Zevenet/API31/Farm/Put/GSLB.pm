@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API31::HTTP;
+
 use Zevenet::Farm::Action;
 use Zevenet::Farm::Base;
 include 'Zevenet::Farm::GSLB::Config';

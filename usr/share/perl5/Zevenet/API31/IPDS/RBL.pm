@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API31::HTTP;
+
 include 'Zevenet::IPDS::RBL::Core';
 
 # GET /ipds/rbl
