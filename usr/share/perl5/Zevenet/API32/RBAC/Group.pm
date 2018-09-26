@@ -152,15 +152,7 @@ sub set_rbac_group
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# modify zapi permissions
-	if ( exists $json_obj->{ 'role' } )
-	{
-		if ( &setRBACGroupConfigFile( $group, 'role', $json_obj->{ 'role' } ) )
-		{
-			my $msg = "Changing RBAC $group role.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
+	&setRBACGroupConfigFile( $group, 'role', $json_obj->{ 'role' } );
 
 	my $msg    = "Settings were changed successful.";
 	my $output = &getZapiRBACGroups( $group );

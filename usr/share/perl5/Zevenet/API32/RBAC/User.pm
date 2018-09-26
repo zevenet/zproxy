@@ -183,11 +183,8 @@ sub set_rbac_user
 			my $msg = "The zapikey is not valid.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		if ( &setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } ) )
-		{
-			my $msg = "Changing RBAC $user zapikey.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+
+		&setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } );
 	}
 
 	# modify zapi permissions
@@ -207,11 +204,7 @@ sub set_rbac_user
 	}
 
 	# change password
-	if ( &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } ) )
-	{
-		my $msg = "Changing RBAC $user password.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	&setRBACUserPassword( $user, $json_obj->{ 'newpassword' } );
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'rbac_user', 'update', $user );
