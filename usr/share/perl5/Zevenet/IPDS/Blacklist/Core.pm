@@ -314,6 +314,9 @@ sub getBLSourceNumber
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $list    = shift;
 	my $wc      = &getGlobalConfiguration( "wc_bin" );
+
+	return 0 if ( ! -f "$blacklistsPath/$list.txt" );
+
 	my $sources = `$wc -l $blacklistsPath/$list.txt`;
 
 	if ( $sources =~ /\s*(\d+)\s/ )
