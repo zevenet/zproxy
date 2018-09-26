@@ -23,6 +23,7 @@
 
 use strict;
 use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
 
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
@@ -34,8 +35,6 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
-
-	require Zevenet::Farm::Base;
 
 	# Initial parameters
 	my $desc = "New farm backend";
@@ -53,7 +52,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 	if ( $type eq "l4xnat" )
 	{
-		require Zevenet::Net::Validate;
+		require Zevenet::Net::Vaalidate;
 		require Zevenet::Farm::L4xNAT::Backend;
 
 		my $id = &getL4FarmBackendAvailableID( $farmname );
@@ -304,7 +303,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 	# HTTP
 	require Zevenet::Net::Validate;
-	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Config;
 	require Zevenet::Farm::Backend;
 	require Zevenet::Farm::HTTP::Backend;
@@ -804,7 +802,6 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# HTTP
-	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Action;
 	require Zevenet::Farm::HTTP::Config;
 	require Zevenet::Farm::HTTP::Backend;
@@ -1028,7 +1025,6 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	}
 
 	# HTTP
-	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Action;
 	require Zevenet::Farm::HTTP::Config;
 	require Zevenet::Farm::HTTP::Backend;
@@ -1080,7 +1076,6 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	}
 
 	my $message = "Backend removed";
-	require Zevenet::Farm::Base;
 	my $body = {
 				 description => $desc,
 				 success     => "true",
