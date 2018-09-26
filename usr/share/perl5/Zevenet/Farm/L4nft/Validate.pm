@@ -58,31 +58,4 @@ sub ismport    # ($string)
 	}
 }
 
-=begin nd
-Function: checkmport
-
-	Check if the port has more than 1 port
-	
-Parameters:
-	port - Port string
-
-Returns:
-	String - "true" if port string has more then one port or "false" if port has only a port
-	
-=cut
-sub checkmport    # ($port)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $port = shift;
-
-	if ( $port =~ /\,|\:|\*/ )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
-}
-
 1;
