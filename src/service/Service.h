@@ -1,32 +1,34 @@
 //
 // Created by abdess on 4/25/18.
 //
-
-#ifndef S_ZHTTP_SERVICE_H
-#define S_ZHTTP_SERVICE_H
+#pragma once
 
 #include <vector>
+#include "../config/BackendConfig.h"
 #include "../config/pound_struct.h"
 #include "../connection/connection.h"
-#include "../config/BackendConfig.h"
 #include "../http/HttpRequest.h"
+#include "httpsessionmanager.h"
 
-class Service {
-
+class Service : public sessions::HttpSessionManager {
   std::vector<Backend *> backend_set;
- public:
+  std::vector<Backend *> emergency_backend_set;
+  //if no backend available, return an emergency backend if possible.
+  Backend *getNextBackend(bool only_emergency = false);
 
+ public:
   bool disabled;
   bool ignore_case;
 
  public:
   ServiceConfig &service_config;
-  Backend *getBackend(Connection &connection);
-  Service(ServiceConfig &service_config_);
+  Backend *getBackend(HttpStream &stream);
+  explicit Service(ServiceConfig &service_config_);
 
-  void addBackend(BackendConfig *backend_config, std::string address, int port, int backend_id);
-  void addBackend(BackendConfig *backend_config, int backend_id);
+  void addBackend(BackendConfig *backend_config,
+                  std::string address,
+                  int port,
+                  int backend_id, bool emergency = false);
+  void addBackend(BackendConfig *backend_config, int backend_id, bool emergency = true);
   bool doMatch(HttpRequest &request);
 };
-
-#endif //S_ZHTTP_SERVICE_H

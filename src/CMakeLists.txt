@@ -35,8 +35,8 @@ add_library(libzhttp
     http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h)
+    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h service/httpsessionmanager.h service/httpsessionmanager.cpp)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp )
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
 target_link_libraries(zhttp libzhttp)

@@ -5,8 +5,8 @@
 #ifndef NEW_ZHTTP_LISTENER_H
 #define NEW_ZHTTP_LISTENER_H
 
-#include <vector>
 #include <thread>
+#include <vector>
 #include "../event/epoll_manager.h"
 #include "StreamManager.h"
 
@@ -16,10 +16,9 @@ class Listener : public EpollManager {
   Connection listener_connection;
   std::map<int, StreamManager *> stream_manager_set;
   ListenerConfig listener_config;
-
+  TimerFd timer_maintenance;
   void doWork();
-  StreamManager *
-  getManager(int fd);
+  StreamManager *getManager(int fd);
 
  public:
   Listener();
@@ -28,7 +27,8 @@ class Listener : public EpollManager {
   bool init(ListenerConfig &config);
   void start();
   void stop();
-  void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
+  void HandleEvent(int fd, EVENT_TYPE event_type,
+                   EVENT_GROUP event_group) override;
 };
 
-#endif //NEW_ZHTTP_LISTENER_H
+#endif  // NEW_ZHTTP_LISTENER_H

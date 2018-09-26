@@ -8,8 +8,7 @@
 #include "../util/common.h"
 #include "../util/utils.h"
 #if HELLO_WORLD_SERVER
-void StreamManager::HandleEvent(int fd,
-                                EVENT_TYPE event_type,
+void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
   switch (event_type) {
     case READ_ONESHOT: {
@@ -82,8 +81,7 @@ void StreamManager::HandleEvent(int fd,
   }
 }
 #else
-void StreamManager::HandleEvent(int fd,
-                                EVENT_TYPE event_type,
+void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
   switch (event_type) {
 #if SM_HANDLE_ACCEPT
@@ -212,9 +210,7 @@ void StreamManager::HandleEvent(int fd,
 }
 #endif
 
-void StreamManager::stop() {
-  is_running = false;
-}
+void StreamManager::stop() { is_running = false; }
 
 void StreamManager::start(int thread_id_) {
   is_running = true;
@@ -235,8 +231,7 @@ StreamManager::StreamManager(){};
 
 StreamManager::~StreamManager() {
   stop();
-  if (worker.joinable())
-    worker.join();
+  if (worker.joinable()) worker.join();
 
   for (auto& key_pair : streams_set) {
     delete key_pair.second;
@@ -260,9 +255,7 @@ void StreamManager::addStream(int fd) {
   }
 }
 
-int StreamManager::getWorkerId() {
-  return worker_id;
-}
+int StreamManager::getWorkerId() { return worker_id; }
 
 void StreamManager::onRequestEvent(int fd) {
   HttpStream* stream = streams_set[fd];
@@ -276,7 +269,7 @@ void StreamManager::onRequestEvent(int fd) {
     stream->client_connection.setFileDescriptor(fd);
     streams_set[fd] = stream;
     if (fd != stream->client_connection.getFileDescriptor()) {
-      Debug::Log("FOUND:: Aqui ha pasado algo raro!!");
+      Debug::Log("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
   }
 
@@ -288,6 +281,9 @@ void StreamManager::onRequestEvent(int fd) {
   }
   //  stream->client_stadistics.update();
   // TODO::Process all buffer
+  Debug::logmsg(
+      LOG_INFO, "Data % from %s ", stream->client_connection.buffer,
+      stream->client_connection.getPeerAddress().c_str());  // TODO: remove
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   do {
@@ -344,7 +340,7 @@ void StreamManager::onRequestEvent(int fd) {
           this->clearStream(stream);
           return;
         }
-        auto bck = service->getBackend(stream->client_connection);
+        auto bck = service->getBackend(*stream);
         // if (stream->backend_connection.getFileDescriptor() ==
         // BACKEND_STATUS::NO_BACKEND) {
         if (bck == nullptr) {
@@ -371,12 +367,16 @@ void StreamManager::onRequestEvent(int fd) {
           return;
         } else {
           IO::IO_OP op_state = IO::OP_ERROR;
+          Debug::logmsg(LOG_REMOVE, "Backend assigned %s",
+                        bck->address.c_str());
           switch (bck->backend_type) {
             case REMOTE:
               if (stream->backend_connection.getBackend() == nullptr ||
-                  stream->backend_connection.getBackend()->backen_id !=
-                      bck->backen_id) {  // TODO::Comprobar que backend no es
-                                         // null
+                  !stream->backend_connection.isConnected()
+                  /*   stream->backend_connection.getBackend()
+                              ->backen_id !=
+                      bck->backen_id*/) {  // TODO::Comprobar que backend no es
+                                           // null
                 if (stream->backend_connection.getFileDescriptor() !=
                     BACKEND_STATUS::NO_BACKEND) {
                   deleteFd(stream->backend_connection
@@ -528,8 +528,7 @@ void StreamManager::onResponseEvent(int fd) {
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
   HttpStream* stream = timers_set[fd];
-  if (stream == nullptr)
-    Debug::Log("Stream null pointer", LOG_REMOVE);
+  if (stream == nullptr) Debug::Log("Stream null pointer", LOG_REMOVE);
   if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
@@ -557,8 +556,7 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 }
 void StreamManager::onResponseTimeoutEvent(int fd) {
   HttpStream* stream = timers_set[fd];
-  if (stream == nullptr)
-    Debug::Log("Stream null pointer", LOG_REMOVE);
+  if (stream == nullptr) Debug::Log("Stream null pointer", LOG_REMOVE);
   if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
@@ -589,7 +587,6 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   // Send client request to backend server
   if (stream->backend_connection.getBackend()->conn_timeout > 0 &&
       Network::isConnected(fd)) {
-    Debug::Log("Connected ...!!!!", LOG_REMOVE);
     stream->timer_fd.unset();
     epoll_manager::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }

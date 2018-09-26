@@ -4,11 +4,11 @@
 #pragma once
 
 #include <netdb.h>
+#include <unistd.h>
 #include "../util/string_buffer.h"
 #include "../util/utils.h"
-#include <unistd.h>
 
-#define MAX_DATA_SIZE  65000
+#define MAX_DATA_SIZE 65000
 struct ConnectionStadistic_t {
   long last_read = 0;
   double avr_read_time = 0;
@@ -36,17 +36,18 @@ class Connection {
  protected:
   int socket_fd;
   bool is_connected;
- public:
 
-  addrinfo *address;
+ public:
+  std::string address_str;
+  addrinfo* address;
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
   size_t buffer_size;
-
+  std::string getPeerAddress();
   int getFileDescriptor() const;
   void setFileDescriptor(int fd);
 
-  IO::IO_RESULT write(const char *data, size_t size);
+  IO::IO_RESULT write(const char* data, size_t size);
   IO::IO_RESULT writeTo(int fd);
   IO::IO_RESULT read();
 
@@ -54,11 +55,10 @@ class Connection {
   Connection();
   virtual ~Connection();
 
-  bool listen(std::string &address_str, int port);
-  bool listen(addrinfo &address);
+  bool listen(std::string& address_str, int port);
+  bool listen(addrinfo& address);
 
   int doAccept();
-  IO::IO_OP doConnect(addrinfo &address, int timeout);
+  IO::IO_OP doConnect(addrinfo& address, int timeout);
+  bool isConnected();
 };
-
-
