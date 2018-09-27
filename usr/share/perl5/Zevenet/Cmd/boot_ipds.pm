@@ -24,8 +24,7 @@
 use strict;
 use warnings;
 
-include 'Zevenet::IPDS::Blacklist';
-include 'Zevenet::IPDS::DoS';
+include 'Zevenet::IPDS::DoS::Config';
 
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 my $touch          = &getGlobalConfiguration( 'touch' );
@@ -44,9 +43,6 @@ if ( !-e $blacklistsConf )
 	system ( "$touch $blacklistsConf" );
 	&zenlog( "Created $blacklistsConf file." );
 }
-
-# load preload lists
-#~ &setBLAddPreloadLists();
 
 #dos
 &setDOSCreateFileConf();

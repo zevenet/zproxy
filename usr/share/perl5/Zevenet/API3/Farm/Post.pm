@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::Net;
+use Zevenet::Net::Util;
 
 sub new_farm    # ( $json_obj )
 {

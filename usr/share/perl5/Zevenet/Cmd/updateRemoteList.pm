@@ -25,7 +25,8 @@ use strict;
 use warnings;
 
 use Zevenet::Config;
-include 'Zevenet::IPDS::Blacklist';
+include 'Zevenet::IPDS::Blacklist::Core';
+include 'Zevenet::IPDS::Blacklist::Runtime';
 
 my ( $listName ) = @ARGV;
 my $logger = &getGlobalConfiguration ( 'logger' );

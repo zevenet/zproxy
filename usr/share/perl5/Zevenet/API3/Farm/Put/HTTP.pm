@@ -30,8 +30,6 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	include 'Zevenet::IPDS::Base';
-	include 'Zevenet::IPDS::Blacklist';
-	include 'Zevenet::IPDS::DoS';
 
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;

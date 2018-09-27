@@ -22,7 +22,8 @@
 
 use strict;
 
-include 'Zevenet::IPDS::DoS';
+include 'Zevenet::IPDS::DoS::Core';
+include 'Zevenet::IPDS::DoS::Config';
 
 # GET /ipds/dos/rules
 sub get_dos_rules

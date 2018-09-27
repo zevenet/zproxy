@@ -22,6 +22,9 @@
 
 use strict;
 
+include 'Zevenet::IPDS::Blacklist::Core';
+include 'Zevenet::IPDS::Blacklist::Config';
+
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
@@ -66,8 +69,6 @@ sub get_blacklists_list
 	my $description = "Get list $listName";
 	my $errormsg;
 
-	include 'Zevenet::IPDS::Blacklist';
-
 	if ( &getBLExists( $listName ) )
 	{
 		my $listHash = &getBLzapi ( $listName );
@@ -102,8 +103,6 @@ sub add_blacklists_list
 	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
-		include 'Zevenet::IPDS::Blacklist';
-
 		# A list already exists with this name
 		if ( &getBLExists( $listName ) )
 		{
@@ -200,8 +199,6 @@ sub set_blacklists_list
 
 	my @allowParams =
 	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -502,8 +499,6 @@ sub update_remote_blacklists
 	my $json_obj    = shift;
 	my $listName    = shift;
 
-	include 'Zevenet::IPDS::Blacklist';
-
 	my $description = "Update a remote list";
 	my $errormsg;
 
@@ -575,8 +570,6 @@ sub get_blacklists_source
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName    = shift;
 
-	include 'Zevenet::IPDS::Blacklist';
-
 	my $description = "Get $listName sources";
 	my %listHash;
 
@@ -622,8 +615,6 @@ sub add_blacklists_source
 	my $description    = "Post source to $listName.";
 	my @requiredParams = ( "source" );
 	my @optionalParams;
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -721,8 +712,6 @@ sub set_blacklists_source
 	my $errormsg;
 	my @allowParams = ( "source" );
 
-	include 'Zevenet::IPDS::Blacklist';
-
 	# check list exists
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -794,8 +783,6 @@ sub del_blacklists_source
 	my $errormsg;
 	my $description = "Delete source from the list $listName";
 
-	include 'Zevenet::IPDS::Blacklist';
-
 	if (! &getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
@@ -860,8 +847,6 @@ sub add_blacklists_to_farm
 
 	if ( !$errormsg )
 	{
-		include 'Zevenet::IPDS::Blacklist';
-
 		if ( !&getFarmExists( $farmName ) )
 		{
 			$errormsg = "$farmName doesn't exist.";
@@ -935,8 +920,6 @@ sub del_blacklists_from_farm
 
 	my $errormsg;
 	my $description = "Delete a rule from a farm";
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( !&getFarmExists( $farmName ) )
 	{

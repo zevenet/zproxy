@@ -26,7 +26,6 @@ use warnings;
 
 use Zevenet::Core;
 use Zevenet::Lock;
-include 'Zevenet::IPDS::Blacklist';
 include 'Zevenet::IPDS::Base';
 
 &runIPDSStopModule();

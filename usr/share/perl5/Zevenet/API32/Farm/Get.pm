@@ -79,8 +79,6 @@ sub farms_lslb    # ()
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::HTTP;
-	require Zevenet::Farm::L4xNAT;
 
 	my @out;
 	my @files = &getFarmList();
@@ -128,7 +126,6 @@ sub farms_dslb    # ()
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::Datalink;
 
 	my @out;
 	my @files = &getFarmList();

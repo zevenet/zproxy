@@ -23,7 +23,6 @@
 
 use strict;
 
-use Zevenet::Farm;
 include 'Zevenet::Farm::GSLB::Config';
 
 my $configdir = &getGlobalConfiguration('configdir');

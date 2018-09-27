@@ -23,8 +23,17 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::Farm;
 use Zevenet::Lock;
+
+use Zevenet::Farm::L4xNAT;
+
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Stats;
+use Zevenet::Farm::Factory;
+use Zevenet::Farm::Action;
+use Zevenet::Farm::Config;
+use Zevenet::Farm::Backend;
 
 #GET /farms
 sub farms # ()

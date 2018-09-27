@@ -23,7 +23,6 @@
 
 use strict;
 
-#~ use Zevenet::Net;
 use Zevenet::System;
 
 # Get all farm stats

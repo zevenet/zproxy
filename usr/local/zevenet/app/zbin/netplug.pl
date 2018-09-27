@@ -18,7 +18,8 @@ if ($iface =~ /^$/ )
 }
 
 use Zevenet::Config;
-use Zevenet::Net;
+use Zevenet::Net::Core;
+use Zevenet::Net::Route;
 
 &zenlog("Call to Network config through netplugd... for $iface");
 use strict;

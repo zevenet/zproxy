@@ -58,7 +58,7 @@ sub farms_name_gslb # ( $farmname )
 				 zones       => $zones_aref,
 	};
 
-	include 'Zevenet::IPDS';
+	include 'Zevenet::IPDS::Core';
 
 	$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 
