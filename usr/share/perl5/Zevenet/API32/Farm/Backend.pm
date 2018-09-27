@@ -24,6 +24,7 @@
 use strict;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
+use Zevenet::Net::Validate;
 
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
@@ -52,7 +53,6 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 	if ( $type eq "l4xnat" )
 	{
-		require Zevenet::Net::Vaalidate;
 		require Zevenet::Farm::L4xNAT::Backend;
 
 		my $id = &getL4FarmBackendAvailableID( $farmname );
@@ -156,7 +156,6 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	}
 	elsif ( $type eq "datalink" )
 	{
-		require Zevenet::Net::Validate;
 		require Zevenet::Net::Interface;
 		require Zevenet::Farm::Datalink::Backend;
 
@@ -302,7 +301,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# HTTP
-	require Zevenet::Net::Validate;
 	require Zevenet::Farm::Config;
 	require Zevenet::Farm::Backend;
 	require Zevenet::Farm::HTTP::Backend;
@@ -543,7 +541,6 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		require Zevenet::Net::Validate;
 
 		# Params
 		my $l4_farm = &getL4FarmStruct( $farmname );
@@ -697,7 +694,6 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		}
 
 		# check that IP is in network than interface
-		require Zevenet::Net::Validate;
 		my $iface_ref = &getInterfaceConfig( $be->{ interface } );
 		if (
 			 !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $be->{ ip } ) )
@@ -848,8 +844,6 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	# validate BACKEND new port
 	if ( exists ( $json_obj->{ port } ) )
 	{
-		require Zevenet::Net::Validate;
-
 		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 		{
 			my $msg = "Invalid port.";
