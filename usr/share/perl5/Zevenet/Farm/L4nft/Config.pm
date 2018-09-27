@@ -42,6 +42,7 @@ Parameters:
 		"proto": get the protocol
 		"persist": get persistence
 		"persisttm": get client persistence timeout
+		"logs": write the logs option
 	farmname - Farm name
 
 Returns:
@@ -93,6 +94,7 @@ Parameters:
 		"proto": write the protocol
 		"persist": write persistence
 		"persisttm": write client persistence timeout
+		"logs": write the logs option
 	value - the new value of the given parameter of a certain farm
 	farmname - Farm name
 
@@ -135,6 +137,12 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	} elsif ( $param eq "status" )
 	{
 		$srvparam = "state";
+	} elsif ( $param =~ /persist/ )
+	{
+		return 0; # TODO
+	} elsif ( $param eq "logs" )
+	{
+		return 0; # TODO
 	} else
 	{
 		return -1;
@@ -163,7 +171,7 @@ Function: _getL4ParseFarmConfig
 	Parse the farm file configuration and read/write a certain parameter
 
 Parameters:
-	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm"
+	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm", "logs"
 	value - value to be changed in case of write operation, undef for read only cases
 	config - reference of an array with the full configuration file
 
@@ -214,6 +222,10 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		if ( $line =~ /\"scheduler\"/ && $param eq 'alg' ) {
 			my @l = split /"/, $line;
 			$output = $l[3];
+		}
+
+		if ( $param eq 'logs' ) {
+			$output = "false"; # TODO
 		}
 
 		if ( $line =~ /\"state\"/ && $param =~ /status/ ) {
@@ -276,7 +288,7 @@ sub getL4FarmStruct
 	$farm{ ttl }      = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ status }   = &_getL4ParseFarmConfig( 'status', undef, $config );
-	#$farm{ logs }   = &getL4FarmLogs( $farm{ name } );
+	$farm{ logs }     = &_getL4ParseFarmConfig( 'logs', undef, $config );
 	$farm{ servers }  = &_getL4FarmParseServers( $config );
 
 	# replace port * for all the range
@@ -633,34 +645,6 @@ sub reloadL4FarmsSNAT
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
         require Zevenet::Farm::Core;
         require Zevenet::Farm::Base;
-        #require Zevenet::Netfilter;
-
 }
-
-=begin nd
-Function: getL4FarmLogs
-
-	Return if the farm has activated the log tracking
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - return "enable" if log is enabled or "false" if it is not
-
-=cut
-
-sub getL4FarmLogs    # ($farm_name)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	return 0;
-}
-
-sub setL4FarmLogs
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	return 0;
-}
-
 
 1;

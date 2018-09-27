@@ -40,6 +40,7 @@ Parameters:
 		"proto": get the protocol
 		"persist": get persistence
 		"persisttm": get client persistence timeout
+		"logs": write the logs option
 	farmname - Farm name
 
 Returns:
@@ -81,6 +82,7 @@ Parameters:
 		"proto": write the protocol
 		"persist": write persistence
 		"persisttm": write client persistence timeout
+		"logs": write the logs option
 	value - the new value of the given parameter of a certain farm
 	farmname - Farm name
 
@@ -129,6 +131,10 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	elsif ( $param eq "persisttm" )
 	{
 		$output = &setL4FarmMaxClientTime( $value, $farm_name );
+	}
+	elsif ( $param eq "logs" )
+	{
+		$output = &setL4FarmLogs( $farm_name, $value );
 	} else
 	{
 		return -1;
@@ -144,7 +150,7 @@ Function: _getL4ParseFarmConfig
 	Parse the farm file configuration and read/write a certain parameter
 
 Parameters:
-	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm"
+	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm", "logs"
 	value - value to be changed in case of write operation, undef for read only cases
 	config - reference of an array with the full configuration file
 
@@ -212,6 +218,12 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		if ( $param eq 'persisttm' )
 		{
 			$output = $l[7];
+			last;
+		}
+
+		if ( $param eq 'logs' )
+		{
+			$output = $l[9];
 			last;
 		}
 
@@ -1177,7 +1189,7 @@ sub getL4FarmStruct
 	$farm{ ttl }      = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ status }   = &_getL4ParseFarmConfig( 'status', undef, $config );
-	$farm{ logs }   = &getL4FarmLogs( $farm{ name } );
+	$farm{ logs }     = &_getL4ParseFarmConfig( 'logs', undef, $config );
 	$farm{ servers }  = &_getL4FarmParseServers( $config );
 
 	# replace port * for all the range
@@ -1392,45 +1404,6 @@ sub reloadL4FarmsSNAT
 }
 
 
-=begin nd
-Function: getL4FarmLogs
-
-	Return if the farm has activated the log tracking
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - return "enable" if log is enabled or "false" if it is not
-
-=cut
-
-sub getL4FarmLogs    # ($farm_name)
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = "false";
-
-	open my $fd, '<', "$configdir/$farm_filename";
-
-	while ( my $line = <$fd> )
-	{
-		if ( $line ne "" )
-		{
-			my @line_a = split ( "\;", $line );
-			chomp($line_a[9]);
-			$output = 'true' if ($line_a[9] eq 'true');
-			last;
-		}
-	}
-	close $fd;
-
-	return $output;
-}
-
-
 sub setL4FarmLogs
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
@@ -1500,7 +1473,7 @@ sub reloadL4FarmLogsRule
 
 	# not to apply rules if:
 	return if ( $action eq 'false' );
-	return if ( &getL4FarmLogs( $farmname ) ne "true" and $action ne "true" );
+	return if ( &getL4FarmParam( 'logs', $farmname ) ne "true" and $action ne "true" );
 	return if ( &getL4FarmParam( 'status', $farmname ) ne 'up' );
 
 	my $comment_tag = "-m comment --comment \"$comment\"";

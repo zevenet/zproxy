@@ -164,7 +164,7 @@ sub startL4Farm    # ($farm_name)
 	}
 
 	#enable log rule
-	if ( &getL4FarmLogs( $farm_name ) eq "true" )
+	if ( &getL4FarmParam( 'logs', $farm_name ) eq "true" )
 	{
 		&reloadL4FarmLogsRule( $farm_name, "true" );
 	}

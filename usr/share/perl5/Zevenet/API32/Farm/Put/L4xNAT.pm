@@ -339,11 +339,11 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify logs
 	if ( exists ( $json_obj->{ logs } ) )
 	{
-		require Zevenet::Farm::Config;
+		#require Zevenet::Farm::Config;
 		my $err;
 		if ( $json_obj->{ logs } =~ /(?:true|false)/ )
 		{
-			$err = &setL4FarmLogs( $farmname, $json_obj->{ logs } );
+			$err = &setL4FarmParam( 'logs', $json_obj->{ logs }, $farmname );
 		}
 		else
 		{
