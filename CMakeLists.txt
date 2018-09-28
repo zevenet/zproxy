@@ -48,4 +48,42 @@ include_directories(/usr/include/openssl-1.0)
 link_directories(/usr/lib/openssl-1.0)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+#add_subdirectory(tests)
+# Doxygen Build
+option(BUILD_DOC "Build Documentation" OFF)
+
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  set(BUILD_DOC_DIR ${CMAKE_SOURCE_DIR}/build/docs)
+  if (NOT EXISTS ${BUILD_DOC_DIR})
+    file(MAKE_DIRECTORY ${BUILD_DOC_DIR})
+  endif ()
+
+  set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
+  set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+  configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+
+  message("Doxygen buld started")
+  add_custom_target(Doxygen ALL
+      COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen"
+      VERBATIM)
+else (DOXYGEN_FOUND)
+  message("Doxygen needs to be installed to generate the documentation.")
+endif (DOXYGEN_FOUND)
+
+#file(WRITE "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "/root\n")
+
+#macro(add_deployment_file SRC DEST)
+#    file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+#    file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
+#endmacro()
+
+#macro(add_deployment_directory SRC DEST)
+#    file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
+#    foreach(filename ${files})
+#	get_filename_component(path ${filename} PATH)
+#	add_deployment_file("${filename}" "${DEST}/${path}")
+#    endforeach(filename)
+#endmacro()
