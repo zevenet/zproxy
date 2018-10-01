@@ -168,7 +168,7 @@ if [[ $devel == "false" ]]; then
 		echo -e "\n>> Compiling binaries in ${version}"
 		dockerimg="zvn-ee-builder-${version}"
 
-		docker run -ti --rm -v "$(pwd)":/workdir \
+		docker run --rm -v "$(pwd)":/workdir \
 			"$dockerimg" \
 			encryption/compile_all.sh || die " compiling files"
 	done
@@ -180,7 +180,7 @@ if [[ $devel == "false" ]]; then
 
 	# Encrypt modules using the most recent debian version
 	msg "Encripting perl modules..."
-	docker run -ti --rm -v "$(pwd)":/workdir \
+	docker run --rm -v "$(pwd)":/workdir \
 		"$dockerimg" \
 		encryption/encrypt_all.sh || die " encrypting files"
 
@@ -215,18 +215,9 @@ msg "Generating .deb package..."
 cd "$BASE_DIR"
 
 # Generate package using the most recent debian version
-docker run -v "$(pwd)":/workdir \
+docker run --rm -v "$(pwd)":/workdir \
 	"$dockerimg" \
-	fakeroot dpkg-deb --build workdir packages/"$pkgname"
-# We can't use tty due to a problem with fakeroot [1], so we can't
-# remove the container automatically because the exit code is lost.
-# [1] https://github.com/moby/moby/issues/27195#issuecomment-254752853
-build_exit=$?
-
-# Remove latest exited container and exit on error
-docker rm "$(docker ps -q --latest -f "status=exited")" >/dev/null
-if [ $build_exit -eq 1 ]; then
-	die " generating the package"
-fi
+	fakeroot dpkg-deb --build workdir packages/"$pkgname" \
+	|| die " generating the package"
 
 msg "Success: package ready"
