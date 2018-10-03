@@ -125,8 +125,8 @@ sub set_rbac_user
 	my $desc = "Modify the RBAC user $user";
 	my $params = {
 		 "zapikey"            => { 'valid_format' => 'zapi_key' },
-		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_black' => 'true' },
-		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_black' => 'true' },
+		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
+		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
 		 "newpassword" => {
 				  'valid_format' => 'rbac_password',
 				  'non_blank'    => 'true',

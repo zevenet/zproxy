@@ -416,7 +416,7 @@ foreach my $file ( readdir $dir )
 
 	unless ( eval { require $module; } )
 	{
-		&zenlog( $@, "info", "SYSTEM" );
+		&zenlog( $@, "error", "SYSTEM" );
 		die $@;
 	}
 }

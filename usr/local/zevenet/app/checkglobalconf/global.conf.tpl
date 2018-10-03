@@ -171,6 +171,8 @@ $poundctl="/usr/local/zevenet/app/pound/sbin/poundctl";
 $poundtpl="/usr/local/zevenet/app/pound/etc/poundtpl.cfg";
 #piddir
 $piddir="/var/run";
+#maximum value of http body to pass to modsecurity
+$waf_body_size="";
 
 ## Network global configuration options ##
 $fwmarksconf = "$configdir/fwmarks.conf";

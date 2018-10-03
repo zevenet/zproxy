@@ -64,52 +64,61 @@ Returns:
 
 sub getWAFRulesStruct
 {
+	my $type = shift;
+	my $out = {
+				'type'             => $type,
+				'id'               => '',        # position in set file
+				'rule_id'          => '',        # id of the rule
+				'description'      => '',
+				'tag'              => [],
+				'version'          => '',
+				'maturity'         => '',
+				'severity'         => '',
+				'accuracy'         => '',
+				'revision'         => '',
+				'phase'            => '',
+				'transformations'  => [],
+				'multi_match'      => 'false',
+				'capture'          => 'false',
+				'action'           => '',
+				'http_code'        => '',
+				'modify_directive' => [],        # parameter 'ctl' in secrule
+				'execute'          => '',
+				'no_log'           => 'false',
+				'log'              => 'false',
+				'audit_log'        => 'false',
+				'no_audit_log'     => 'false',
+				'log_data'         => '',
+				'init_colection'   => [],
+				'set_uid'          => '',
+				'set_sid'          => '',
+				'set_var'          => [],
+				'expire_var'       => [],
+				'chain'            => [],
+				'skip'             => '',
+				'skip_after'       => '',
+	};
+
+	if ( $type eq 'rule' )
+	{
+		$out->{ 'value' }     = '';
+		$out->{ 'operator' }  = '';
+		$out->{ 'variables' } = [];
+	}
+
+	return $out;
+}
+
+sub getWAFSetStructConf
+{
 	return {
-		'type'        => 'rule',
-		'id'          => '',			# position in set file
-		'information' => {
-						   'rule_id'     => '',
-						   'description' => '',
-						   'tag'         => [],
-						   'version'     => '',
-						   'maturity'    => '',
-						   'severity'    => '',
-						   'accuracy'    => '',
-						   'revision'    => '',
-		},
-		'match' => {
-					 'phase'           => '',
-					 'variables'       => [],
-					 'transformations' => [],
-					 'multi_match'      => '',
-					 'operator'        => '',
-					 'capture'         => '',
-					 'value'           => '',
-		},
-		'action'   => '',
-		'http_code' => '',
-		'modify_directive'  => [],    # parameter 'ctl' in secrule
-		'exec'     => '',
-		'logs'     => {
-					'no_log'      => '',
-					'log'        => '',
-					'audit_log'   => '',
-					'no_audit_log' => '',
-					'log_data'    => '',
-		},
-		'set_variables' => {
-							'init_colection' => [],
-							'set_uid'        => '',
-							'set_sid'        => '',
-							'set_var'        => [],
-							'expire_var'     => [],
-		},
-		'flow' => {
-					'chain'     => [],
-					'skip'      => '',
-					'skip_after' => '',
-					'exec' => '',
-		},
+		auditory              => 'false',    #SecAuditEngine: on|off|RelevantOnly
+		process_request_body  => 'false',    # SecRequestBodyAccess on|off
+		process_response_body => 'false',    # SecResponseBodyAccess on|off
+		request_body_limit    => '',    # SecRequestBodyNoFilesLimit SIZE
+		status                => 'false',    # SecRuleEngine on|off|DetectionOnly
+		default_action => &getWAFRulesStruct( 'action' ),    # SecDefaultAction
+		disable_rules  => [],                                # SecRuleRemoveById
 	};
 }
 
@@ -152,8 +161,7 @@ sub getWAFSetByRuleId
 	}
 
 	closedir ( $fd );
-
-	$set =~ s/\·.*$//g;
+	$set =~ s/\..*$//g;
 	return $set;
 }
 
@@ -161,6 +169,55 @@ sub existWAFRuleId
 {
 	my $id = shift;
 	return &getWAFSetByRuleId( $id ) ? 1 : 0;
+}
+
+sub listWAFByFarm
+{
+	my $farm  = shift;
+	my @rules = ();
+
+	require Zevenet::Farm::Core;
+	require Zevenet::Lock;
+
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $farm_file = &getFarmFile( $farm );
+
+	my $fh        = &openlock( "$configdir/$farm_file", 'r' );
+	my @rules     = grep ( s/^WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
+	chomp @rules;
+	close $fh;
+
+	return @rules;
+}
+
+# Get all farms where a WAF set is applied
+sub listWAFBySet
+{
+	my $set   = shift;
+	my @farms = ();
+	my $farm_file;
+	my $fh;
+	my $find;
+
+	require Zevenet::Farm::Core;
+	require Zevenet::Lock;
+
+	my $confdir = &getGlobalConfiguration( 'configdir' );
+	my $set_file = &getWAFSetFile($set);
+	my @httpfarms = &getFarmsByType( 'http' );
+	push @httpfarms, &getFarmsByType( 'https' );
+
+	foreach my $farm ( @httpfarms )
+	{
+		$farm_file = &getFarmFile( $farm );
+		$fh        = &openlock( "$confdir/$farm_file", 'r' );
+		$find      = grep ( /WafRules\s+$set_file/, <$fh> );
+		close $fh;
+
+		push @farms, $farm if $find;
+	}
+
+	return @farms;
 }
 
 1;

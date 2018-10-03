@@ -28,10 +28,10 @@ include 'Zevenet::API33::IPDS::WAF::Structs';
 sub list_waf_sets
 {
 	my @sets = &listWAFSet();
-	my $desc   = "List the WAF sets";
+	my $desc = "List the WAF sets";
 
 	return &httpResponse(
-				 { code => 200, body => { description => $desc, params => \@sets } } );
+				  { code => 200, body => { description => $desc, params => \@sets } } );
 }
 
 #  GET /ipds/waf/<set>
@@ -47,8 +47,6 @@ sub get_waf_set
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# ????? temporal
-	include 'Zevenet::IPDS::WAF::Parser';
 	my $set_st = &getZapiWAFSet( $set );
 	my $body = { description => $desc, params => $set_st };
 
@@ -56,23 +54,27 @@ sub get_waf_set
 }
 
 #  POST ipds/waf
-sub create_waf_sets
+sub create_waf_set
 {
 	my $json_obj = shift;
 
-	include 'Zevenet::RBAC::Group::Config';
+	include 'Zevenet::IPDS::WAF::Config';
 
-	my $desc = "Create the RBAC group, $json_obj->{ 'name' }";
+	my $desc = "Create the WAF set, $json_obj->{ 'name' }";
 	my $params = {
 				   "name" => {
-							   'valid_format' => 'group_name',
+							   'valid_format' => 'waf_set_name',
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
+				   },
+				   "copy_from" => {
+									'valid_format' => 'waf_set_name',
+									'non_blank'    => 'true',
 				   },
 	};
 
 	# Check if it exists
-	if ( &getRBACGroupExists( $json_obj->{ 'name' } ) )
+	if ( &existWAFSet( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -84,55 +86,126 @@ sub create_waf_sets
 	  if ( $error_msg );
 
 	# executing the action
-	&createRBACGroup( $json_obj->{ 'name' }, $json_obj->{ 'password' } );
+	if ( exists $json_obj->{ 'copy_from' } )
+	{
+		unless ( &existWAFSet( $json_obj->{ 'copy_from' } ) )
+		{
+			my $msg = "$json_obj->{ 'copy_from' } does not exist.";
+			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		}
 
-	my $output = &getZapiRBACGroups( $json_obj->{ 'name' } );
+		&copyWAFSet( $json_obj->{ 'name' }, $json_obj->{ 'copy_from' } );
+	}
+	else
+	{
+		&createWAFSet( $json_obj->{ 'name' } );
+	}
+
+	my $output = &getZapiWAFSet( $json_obj->{ 'name' } );
 
 	# check result and return success or failure
 	if ( $output )
 	{
-		include 'Zevenet::Cluster';
-		&runZClusterRemoteManager( 'rbac_group', 'add', $json_obj->{ 'name' } );
-
-		my $msg = "Added the RBAC group $json_obj->{ 'name' }";
+		my $msg = "Added the WAF set $json_obj->{ 'name' }";
 		my $body = {
 					 description => $desc,
-					 params      => { 'group' => $output },
+					 params      => $output,
 					 message     => $msg,
 		};
 		return &httpResponse( { code => 201, body => $body } );
 	}
 	else
 	{
-		my $msg = "Error, trying to create the RBAC group $json_obj->{ name }";
+		my $msg = "Error, trying to create the WAF set $json_obj->{ name }";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }
 
+#  PUT ipds/waf/<set>
+sub modify_waf_set
+{
+	my $json_obj = shift;
+	my $set      = shift;
+
+	include 'Zevenet::IPDS::WAF::Config';
+
+	my $desc = "Modify the WAF set $set";
+	my $params = {
+				   "auditory" => {
+								   'valid_format' => 'boolean',
+								   'non_blank'    => 'true',
+				   },
+				   "process_request_body" => {
+											   'valid_format' => 'boolean',
+											   'non_blank'    => 'true',
+				   },
+				   "process_response_body" => {
+												'valid_format' => 'boolean',
+												'non_blank'    => 'true',
+				   },
+				   "request_body_limit" => {
+											 'valid_format' => 'natural_num',
+				   },
+				   "status" => {
+								 'valid_format' => 'waf_set_status',
+								 'non_blank'    => 'true',
+				   },
+				   "disable_rules" => {},
+	};
+
+	unless ( &existWAFSet( $set ) )
+	{
+		my $msg = "Requested set $set does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	my $err = &setWAFSet( $set, $json_obj );
+	if ( $err )
+	{
+		my $msg = "Modifying the set.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $set_st = &getZapiWAFSet( $set );
+	my $body = { description => $desc, params => $set_st };
+
+	return &httpResponse( { code => 200, body => $body } );
+
+}
 
 #  DELETE /ipds/waf/<set>
 sub delete_waf_set
 {
-	my $group = shift;
+	my $set = shift;
 
-	include 'Zevenet::RBAC::Group::Config';
+	include 'Zevenet::IPDS::WAF::Config';
 
-	my $desc = "Delete the RBAC group $group";
+	my $desc = "Delete the WAF set $set";
 
-	unless ( &getRBACGroupExists( $group ) )
+	unless ( &existWAFSet( $set ) )
 	{
-		my $msg = "The RBAC group $group doesn't exist";
+		my $msg = "The WAF set $set does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	&delRBACGroup( $group );
+	my @farms = &listWAFBySet( $set );
 
-	if ( !&getRBACGroupExists( $group ) )
+	&deleteWAFSet( $set );
+
+	if ( !&existWAFSet( $set ) )
 	{
 		include 'Zevenet::Cluster';
-		&runZClusterRemoteManager( 'rbac_group', 'delete', $group );
+		foreach my $farm ( @farms )
+		{
+			&runZClusterRemoteManager( 'ipds_waf', 'reload_farm', $farm );
+		}
 
-		my $msg = "The RBAC group $group has been deleted successful.";
+		my $msg = "The WAF set $set has been deleted successful.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -142,9 +215,199 @@ sub delete_waf_set
 	}
 	else
 	{
-		my $msg = "Deleting the RBAC group $group.";
+		my $msg = "Deleting the WAF set $set.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+}
+
+#  POST /farms/<farm>/ipds/waf
+sub add_farm_waf_set
+{
+	my $json_obj = shift;
+	my $farm     = shift;
+
+	require Zevenet::Farm::Core;
+	include 'Zevenet::IPDS::WAF::Runtime';
+
+	my $desc = "Apply a WAF set to a farm";
+
+	if ( !&getFarmExists( $farm ) )
+	{
+		my $msg = "$farm does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $params = {
+				   "name" => {
+							   'valid_format' => 'waf_set_name',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+				   }
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	unless ( &existWAFSet( $json_obj->{ name } ) )
+	{
+		my $msg = "Requested set $json_obj->{name} does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( grep ( /^$json_obj->{ name }$/, &listWAFByFarm( $farm ) ) )
+	{
+		my $msg = "$json_obj->{ name } is already applied to $farm.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( &getFarmType( $farm ) !~ /http/ )
+	{
+		my $msg = "The farm must be of type HTTP.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $error = &addWAFsetToFarm( $farm, $json_obj->{ name } );
+	if ( $error )
+	{
+		my $msg = "Applying $json_obj->{ name } to $farm";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'ipds_waf', 'reload_farm', $farm );
+
+	my $msg = "WAF set $json_obj->{ name } was applied properly to the farm $farm.";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg
+	};
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+#  DELETE /farms/<farm>/ipds/waf
+sub remove_farm_waf_set
+{
+	my $farm = shift;
+	my $set  = shift;
+
+	include 'Zevenet::IPDS::WAF::Runtime';
+	require Zevenet::Farm::Core;
+
+	my $desc = "Unset a WAF set from a farm";
+
+	if ( !&getFarmExists( $farm ) )
+	{
+		my $msg = "$farm does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( !&existWAFSet( $set ) )
+	{
+		my $msg = "The set $set does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( !grep ( /^$set$/, &listWAFByFarm( $farm ) ) )
+	{
+		my $msg = "Not found the set $set in the farm $farm.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $error = &removeWAFSetFromFarm( $farm, $set );
+	if ( $error )
+	{
+		my $msg = "Error, removing the set $set from the farm $farm.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $msg = "The WAF set $set was removed successful from the farm $farm.";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg,
+	};
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'ipds_waf', 'reload_farm', $farm );
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+#  POST /farms/<farm>/ipds/waf/<set>/actions
+sub move_farm_waf_set
+{
+	my $json_obj = shift;
+	my $farm     = shift;
+	my $set      = shift;
+	my $err;
+
+	require Zevenet::Farm::Core;
+	include 'Zevenet::IPDS::WAF::Config';
+	my $desc = "Move a set in farm";
+
+	# check if the set exists
+	if ( !&getFarmExists( $farm ) )
+	{
+		my $msg = "The farm $farm does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# check if the set exists
+	if ( !&existWAFSet( $set ) )
+	{
+		my $msg = "The WAF set $set does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $params =
+	  { "position" =>
+		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+	  };
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# check if the set exists
+	my @sets = &listWAFByFarm( $farm );
+	my $size = scalar @sets;
+	if ( !grep ( /^$set$/, @sets ) )
+	{
+		my $msg = "Not found the set $set in the farm $farm.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( $sets[$json_obj->{position}] eq $set )
+	{
+		my $msg = "The set $set is already in the position $json_obj->{position}.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( $json_obj->{position} >= $size )
+	{
+		my $ind = $size-1;
+		my $msg = "The biggest index for the farm $farm is $ind.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	$err = &moveWAFSet( $farm, $set, $json_obj->{ position } );
+	if ( $err )
+	{
+		my $msg = "Error moving the set $set";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'ipds_waf', 'reload_farm', $farm );
+
+	my $msg = "The set was moved properly to the position $json_obj->{ position }.";
+	my $body = { description => $desc, message => $msg };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

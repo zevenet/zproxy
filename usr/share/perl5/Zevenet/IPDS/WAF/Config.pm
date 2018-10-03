@@ -25,22 +25,19 @@ use strict;
 use Zevenet::Core;
 use Zevenet::Lock;
 
-use Zevenet::IPDS::WAF::Core;
-use Zevenet::IPDS::WAF::Parser;
-
-#~ include 'Zevenet::IPDS::WAF::Core';
-#~ include 'Zevenet::IPDS::WAF::Parser';
+include 'Zevenet::IPDS::WAF::Core';
+include 'Zevenet::IPDS::WAF::Parser';
 
 sub genWAFRuleId
 {
 	my $interval_limit_up   = 99999;
 	my $interval_limit_down = 1;
 	my $id                  = $interval_limit_down;
-	my $fin = 0;
+	my $fin                 = 0;
 
 	do
 	{
-		if ( ! &existWAFRuleId( $id ) )
+		if ( !&existWAFRuleId( $id ) )
 		{
 			$fin = 1;
 		}
@@ -48,7 +45,7 @@ sub genWAFRuleId
 		{
 			$id++;
 		}
-	} while ( $id <= $interval_limit_up and ! $fin);
+	} while ( $id <= $interval_limit_up and !$fin );
 
 	if ( $id > $interval_limit_up )
 	{
@@ -59,16 +56,14 @@ sub genWAFRuleId
 	return $id;
 }
 
-
-
 # add a new rule in the end of the set file
-# debe mandarse el id a modificar, la nueva regla puede tener un id differente
+# debe mandarse el id a modificar, la nueva regla puede tener un id diferente
 sub setWAFRule
 {
 	my $set      = shift;
+	my $id       = shift;
 	my $rule_ref = shift;
-	my $id = shift;
- 	my $rule;
+	my $rule;
 
 	if ( ref $rule_ref eq 'HASH' )
 	{
@@ -80,24 +75,28 @@ sub setWAFRule
 		$rule = join ( '\n', @{ $rule_ref } );
 		$rule_ref = &parseWAFRule( $rule_ref );
 	}
+	else
+	{
+		$rule     = $rule_ref;
+		$rule_ref = &parseWAFRule( $rule_ref );
 
-	# check syntax
-	my $err_msg = &checkWAFRuleSyntax( $rule );
+	}
+
+	# not to check syntax if the rule has chains
+	my $err_msg;
+
+	#~ unless ( @{ $rule_ref->{chain} } and $rule-> )
+	#~ {
+	#~ $err_msg = &checkWAFRuleSyntax( $rule );
+	#~ }
+
 	if ( not $err_msg )
 	{
 		# get struct
-		my $set_st = &parseWAFSet($set);
-		foreach my $ru ( @{ $set_st } )
-		{
-			if ( $ru->{id} == $id )
-			{
-				$ru = $rule_ref;
-				last;
-			}
-		}
-		$err_msg = &buildWAFSet ( $set, $set_st );
+		my $set_st = &getWAFSet( $set );
+		$set_st->{ rules }->[$id] = $rule_ref;
+		$err_msg = &buildWAFSet( $set, $set_st );
 	}
-
 	return $err_msg;
 }
 
@@ -109,30 +108,18 @@ sub createWAFRule
 	my $err_msg  = 0;
 	my $rule;
 
-	# In this way, the user has to add the rule id
-	if ( ref $rule_ref eq 'ARRAY' )
-	{
-		$rule = join ( '\n', @{ $rule_ref } );
-		$rule_ref = &parseWAFRule( $rule_ref );
-		return "Error parsing the rule" if not defined $rule_ref;
-		if ( &existWAFRuleId( $rule_ref->{ definition }->{ rule_id } ) and $rule_ref->{ definition }->{ rule_id } )
-		{
-			return "The rule id already exists";
-		}
-	}
-	elsif ( ref $rule_ref eq 'HASH' )
-	{}
-	else
+	if ( ref $rule_ref ne 'HASH' )
 	{
 		return "Rule format does not expected";
 	}
 
-	$rule_ref->{ definition }->{ rule_id } = &genWAFRuleId() if not $rule_ref->{ definition }->{ rule_id };
+	$rule_ref->{ rule_id } = &genWAFRuleId()
+	  if not $rule_ref->{ rule_id };
 
 	# check syntax
 	$rule = &buildWAFRule( $rule_ref );
 	my $err_msg = &checkWAFRuleSyntax( $rule );
-	if ( not $err_msg )
+	if ( !$err_msg )
 	{
 		my $set_file = &getWAFSetFile( $set );
 		my $fh = &openlock( $set_file, 'a' )
@@ -147,15 +134,78 @@ sub createWAFRule
 	return $err_msg;
 }
 
+
+# el set debe ser mandado por referencia, aunque sea una linea
+sub setWAFSetRaw
+{
+	my $set      = shift;
+	my $set_raw  = shift;
+	my $position = shift
+	  ; # optional. if it is not defined, the set is appended else it the rule in the position is replaced
+
+	my $err;
+
+	# check new set
+	my $tmp_file = '/tmp/batch_waf.build';
+	require Tie::File;
+	tie my @file, 'Tie::File', $tmp_file;
+	@file = @{ $set_raw };
+	untie @file;
+	$err = &checkWAFSetSyntax( $tmp_file );
+	unlink $tmp_file;
+	return $err if $err;
+
+	# parse and get only the rules, not the global conf
+	my $set_new_st = &parseWAFBatch( $set_raw );
+
+	# get set
+	my $set_st = &getWAFSet( $set );
+	if ( defined $position )
+	{
+		my @tmp_rules = @{ $set_st->{ rules } };
+		splice @tmp_rules, $position, 1, @{ $set_new_st };
+		$set_st->{rules} = \@tmp_rules;
+	}
+	else
+	{
+		push @{ $set_st->{ rules } }, @{ $set_new_st };
+	}
+	$err = &buildWAFSet( $set, $set_st );
+
+	return $err;
+}
+
+sub createWAFMark
+{
+	my $set  = shift;
+	my $mark = shift;
+
+	my $sentence = "SecMarker $mark";
+
+	return &setWAFSetRaw( $set, [$sentence] );
+}
+
+sub setWAFMark
+{
+	my $set  = shift;
+	my $id   = shift;
+	my $mark = shift;
+
+	my $sentence = "SecMarker $mark";
+
+	return &setWAFSetRaw( $set, [$sentence], $id );
+}
+
 sub copyWAFRule
 {
 	my $set = shift;
-	my $id = shift;
+	my $id  = shift;
 
 	# get rule
 	my $rule = &getWAFRuleById( $id );
 
 	# create rule
+	$rule->{ rule_id } = &genWAFRuleId();
 	my $err = &createWAFRule( $set, $rule );
 
 	return $err;
@@ -180,12 +230,12 @@ sub copyWAFSet
 
 	my $err = &copyLock( &getWAFSetFile( $originSet ), &getWAFSetFile( $dstSet ) );
 
-	my $set = &parseWAFSet( $dstSet );
-	foreach my $rule ( @{$set} )
+	my $set_st = &getWAFSet( $dstSet );
+	foreach my $rule ( @{ $set_st->{ rules } } )
 	{
 		$rule->{ id } = &genWAFRuleId();
 	}
-	&buildWAFSet( $dstSet );
+	&buildWAFSet( $dstSet, $set_st );
 
 	return $err;
 }
@@ -198,13 +248,14 @@ sub getWAFRuleById
 
 	# get set,
 	my $setRule = &getWAFSetByRuleId( $id );
+
 	# parse the set
-	my $setParsed = &parseWAFSet( $setRule );
+	my $setParsed = &getWAFSet( $setRule );
 
 	# get rule
-	foreach my $ru ( @{$setParsed} )
+	foreach my $ru ( @{ $setParsed->{ rules } } )
 	{
-		if ( $ru->{ definition }->{ id } eq $id )
+		if ( $ru->{ rule_id } eq $id )
 		{
 			$rule = $ru;
 			last;
@@ -216,23 +267,29 @@ sub getWAFRuleById
 
 sub deleteWAFRule
 {
-	my $set = shift;
-	my $rule_id = shift;
-	my $err = 0;
-	my $index = -1;
+	my $set         = shift;
+	my $rule_index  = shift;
+	my $chain_index = shift;    # if exists, the chain index will be deleted
+	my $err         = 0;
 
-	my $set_st = &parseWAFSet($set);
+	my $set_st = &getWAFSet( $set );
 
-	# look for id rule index
-	foreach my $ru ( @{$set_st} )
+	# delete a rule
+	if ( !defined $chain_index )
 	{
-		$index++;
-		last if ( $ru->{definition}->{id} eq $rule_id);
+		return 1
+		  if ( !splice ( @{ $set_st->{ rules } }, $rule_index, 1 ) )
+		  ;                     # error if any item is deleted
 	}
-	return 1 if ( $index == scalar @{$set_st} );  # it has not been found
 
-	# delete
-	return 1 if ( ! splice( @{$set_st}, $index, 1 ) );	# error if any item is deleted
+	# delete a chain from a rule
+	else
+	{
+		return 1
+		  if (
+			  !splice ( @{ $set_st->{ rules }->[$rule_index]->{ chain } }, $chain_index, 1 )
+		  );                    # error if any item is deleted
+	}
 
 	# save
 	$err = &buildWAFSet( $set, $set_st );
@@ -243,17 +300,112 @@ sub deleteWAFRule
 sub deleteWAFSet
 {
 	my $set = shift;
-	my $err = unlink &getWAFSetFile($set);
+	my $err = 0;
+
+	# delete from all farms where is applied and restart them
+	foreach my $farm ( &listWAFBySet( $set ) )
+	{
+		$err = &removeWAFSetFromFarm( $set, $farm );
+		return $err if $err;
+	}
+
+	$err = unlink &getWAFSetFile( $set );
 	return $err;
 }
 
-
 sub getWAFRuleLast
 {
-	my $set = shift;
-	my $set_st = &parseWAFSet($set);
-	return @{ $set_st }[-1];
+	my $set    = shift;
+	my $set_st = &getWAFSet( $set );
+	return ( scalar @{ $set_st->{ rules } } ) ? $set_st->{ rules }->[-1] : undef;
 }
 
+sub moveWAFRule
+{
+	my $set = shift;
+	my $id  = shift;
+	my $pos = shift;
+
+	require Zevenet::Arrays;
+
+	my $err    = 0;
+	my $set_st = &getWAFSet( $set );
+
+	&moveByIndex( $set_st->{ rules }, $id => $pos );
+
+	# save the change
+	$err = &buildWAFSet( $set, $set_st );
+
+	return $err;
+}
+
+sub setWAFSet
+{
+	my $setname = shift;
+	my $params  = shift;
+
+	my $struct = &getWAFSet( $setname );
+
+	foreach my $key ( keys %{ $params } )
+	{
+		$struct->{ configuration }->{ $key } = $params->{ $key };
+	}
+	return &buildWAFSet( $setname, $struct );
+}
+
+sub moveWAFSet
+{
+	my $farm     = shift;
+	my $set      = shift;
+	my $position = shift;
+	my $err      = 0;
+
+	require Zevenet::Farm::Core;
+
+	my $set_file  = &getWAFSetFile( $set );
+	my $farm_file = &getFarmFile( $farm );
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+
+	# write conf
+	my $lock_file = &getLockFile( $farm );
+	my $lock_fh   = &openlock( $lock_file, 'w' );
+	my $flag_sets = 0;
+
+	require Tie::File;
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_file";
+
+	# get line where waf rules begins
+	my $waf_ind = -1;
+	foreach my $line ( @filefarmhttp )
+	{
+		$waf_ind++;
+		last if ( $line =~ /^WafRules/ );
+	}
+
+	# get set id
+	my $set_ind   = -1;
+	my @sets_list = &listWAFByFarm( $farm );
+	foreach my $line ( @sets_list )
+	{
+		$set_ind++;
+		last if ( $line =~ /^$set$/ );
+	}
+
+	require Zevenet::Arrays;
+	&moveByIndex( \@filefarmhttp, $waf_ind + $set_ind, $waf_ind + $position );
+
+	untie @filefarmhttp;
+	close $lock_fh;
+
+	# reload farm
+	require Zevenet::Farm::Base;
+	if ( &getFarmStatus( $farm ) eq 'up' and !$err )
+	{
+		include 'Zevenet::IPDS::WAF::Runtime';
+		$err = &reloadWAFByFarm( $farm );
+	}
+
+	return $err;
+}
 
 1;

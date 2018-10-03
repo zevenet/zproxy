@@ -78,7 +78,7 @@ sub POST
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	#~ &zenlog("POST captures( @captures )", "info", $LOG_TAG) if &debug();
+	#~ &zenlog("POST captures( @captures )", "debug1", $LOG_TAG);
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -357,7 +357,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			&zenlog( "Error Message: $self->{ body }->{ message }", "error", $LOG_TAG )
+			&zenlog( "$self->{ body }->{ message }", "error", $LOG_TAG )
 			  if ( exists $self->{ body }->{ message } );
 		}
 	}

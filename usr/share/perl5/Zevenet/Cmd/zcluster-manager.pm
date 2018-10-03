@@ -52,6 +52,7 @@
 # zcluster-manager ipds_bl [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_dos [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_rbl [start|stop|restart] <rule> [farm]
+# zcluster-manager ipds_waf [reload_farm|reload_rule] <rule|farm>
 #
 # zcluster-manager rbac_user [add|delete|modify] <user>
 # zcluster-manager rbac_group [add|delete|add_user|del_user] <group> [user]
@@ -472,7 +473,20 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 
 		exit 0;
 	}
-
+	elsif ( $module eq 'waf' )
+	{
+		# zcluster-manager ipds_waf [reload_farm|reload_rule] <rule|farm>
+		if ( $command eq 'reload_rule' )
+		{
+			&reloadWAFByRule( $rule );
+		}
+		elsif ( $command eq 'reload_farm' )
+		{
+			# although the parameter is called rule, it is a farm name when the
+			# command to execute is reload_farm
+			&reloadWAFByFarm( $rule );
+		}
+	}
 	else
 	{
 		&quit( "Unrecognized ipds command" );

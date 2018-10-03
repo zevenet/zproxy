@@ -232,6 +232,7 @@ sub runIPDSStartByFarm
 	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
 	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
 	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+	include 'Zevenet::IPDS::WAF::Runtime'       if ( @{ $rules->{ waf } } );
 
 	my $name;
 
@@ -255,6 +256,9 @@ sub runIPDSStartByFarm
 		$name = $rule->{ name };
 		&runRBLStart( $name, $farmname );
 	}
+
+	# start waf rules
+	&reloadWAFByFarm( $farmname );
 }
 
 =begin nd

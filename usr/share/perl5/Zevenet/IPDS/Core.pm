@@ -161,12 +161,14 @@ sub getIPDSfarmsRules
 	my $farmName = shift;
 
 	require Config::Tiny;
+	include 'Zevenet::IPDS::WAF::Core';
 
 	my $rules;
 	my $fileHandle;
 	my @dosRules        = ();
 	my @blacklistsRules = ();
 	my @rblRules        = ();
+	my @wafRules        = &listWAFByFarm( $farmName );
 
 	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -213,7 +215,7 @@ sub getIPDSfarmsRules
 	}
 
 	$rules =
-	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
+	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules, waf => \@wafRules };
 	return $rules;
 }
 

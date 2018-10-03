@@ -29,14 +29,15 @@ use Regexp::IPv6 qw($IPv6_re);
 # \w matches the 63 characters [a-zA-Z0-9_] (most of the time)
 #
 
-my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
-my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;  # (0-128)
+my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;           # (0-255)
+my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;    # (0-128)
 my $ipv6_word     = qr/(?:[A-Fa-f0-9]+){1,4}/;
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 my $ipv6_addr     = $IPv6_re;
 my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
 my $enable        = qr/(?:enable|disable)/;
+my $integer = qr/\d+/;
 my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
 my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)/;
 my $minutes  = qr/(?:\d|[0-5]\d)/;
@@ -53,7 +54,7 @@ my $virtual_tag = qr/[a-zA-Z0-9\-]{1,13}/;
 my $nic_if      = qr/[a-zA-Z0-9\-]{1,15}/;
 my $bond_if     = qr/[a-zA-Z0-9\-]{1,15}/;
 my $vlan_if     = qr/[a-zA-Z0-9\-]{1,13}\.$vlan_tag/;
-my $interface    = qr/$nic_if(?:\.$vlan_tag)?(?:\:$virtual_tag)?/;
+my $interface   = qr/$nic_if(?:\.$vlan_tag)?(?:\:$virtual_tag)?/;
 my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
@@ -68,6 +69,7 @@ my $run_actions = qr/^(?:stop|start|restart)$/;
 my %format_re = (
 
 	# generic types
+	'integer' => $integer,
 	'natural_num' => $natural,
 	'boolean'     => $boolean,
 
@@ -125,9 +127,9 @@ my %format_re = (
 	'mount_point'      => qr/root[\w\-\.\/]*/,
 
 	# http
-	'redirect_code'          => qr/(?:301|302|307)/,
-	'http_sts_status'        => qr/(?:true|false)/,
-	'http_sts_timeout'          => qr/(?:\d+)/,
+	'redirect_code'    => qr/(?:301|302|307)/,
+	'http_sts_status'  => qr/(?:true|false)/,
+	'http_sts_timeout' => qr/(?:\d+)/,
 
 	# GSLB
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
@@ -213,8 +215,18 @@ my %format_re = (
 	'rbl_actions'       => $run_actions,
 
 	# WAF
-	'waf_set_name'          => qr/[\.\w-]+/,
-	'waf_rule_id'          => qr/\d+/,
+	'http_code'      => qr/[0-9]{3}/,
+	'waf_set_name'   => qr/[\.\w-]+/,
+	'waf_rule_id'    => qr/\d+/,
+	'waf_chain_id'    => qr/\d+/,
+	'waf_severity'   => qr/[0-9]/,
+	'waf_phase'      => qr/(?:[1-5]|request|response|logging)/,
+	'waf_log'        => qr/(?:$boolean|)/,
+	'waf_audit_log'  => qr/(?:$boolean|)/,
+	'waf_skip'       => qr/[0-9]+/,
+	'waf_skip_after' => qr/\w+/,
+	'waf_action'     => qr/(?:allow|block|redirect|pass|deny)/,
+	'waf_set_status'     => qr/(?:$boolean|detection)/,
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
@@ -246,11 +258,11 @@ my %format_re = (
 	'role_name'     => qr/[\w-]+/,
 
 	# alias
-	'alias_id'   => qr/(?:$ipv4v6|$interface)/,
+	'alias_id'        => qr/(?:$ipv4v6|$interface)/,
 	'alias_backend'   => qr/$ipv4v6/,
-	'alias_interface'   => qr/$interface/,
-	'alias_name' => qr/[\w-]+/,
-	'alias_type' => qr/(?:backend|interface)/,
+	'alias_interface' => qr/$interface/,
+	'alias_name'      => qr/[\w-]+/,
+	'alias_type'      => qr/(?:backend|interface)/,
 
 );
 
@@ -531,8 +543,10 @@ sub checkZAPIParams
 
 	# All required parameters must exist
 	my @miss_params;
+
 	foreach my $param ( keys %{ $param_obj } )
 	{
+		next if ( ! exists $param_obj->{ $param }->{ 'required' } );
 		if ( $param_obj->{ $param }->{ 'required' } eq 'true' )
 		{
 			push @miss_params, $param if ( !grep ( /^$param$/, keys %{ $json_obj } ) );
