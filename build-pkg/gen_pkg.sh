@@ -3,7 +3,6 @@
 # Exit at the first error
 set -e
 
-source config
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 DATE=$(date +%y%m%d_%H%M%S)
 arch="amd64"
@@ -79,6 +78,7 @@ done
 
 # Ensure we are in the correct directory
 cd "$BASE_DIR"
+source config
 
 # Setup docker images
 msg "Setting up the docker environment..."
