@@ -151,9 +151,8 @@ done
 
 # Release or development
 if [[ $devel == "false" ]]; then
-	# Remove warnings
+	msg "Removing warnings and profiling instrumentation..."
 	# Don't include API 3
-	msg "Removing warnings..."
 	find -L usr/local/zevenet/bin \
 			usr/local/zevenet/lib \
 			usr/local/zevenet/www/zapi/v3.1 \
