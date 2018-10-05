@@ -9,15 +9,9 @@
 #include <mutex>
 #include "../connection/connection.h"
 
-namespace epoll_manager {
+namespace events {
 
 #define MAX_EPOLL_EVENT 100000
-
-//#define READ_MASK (EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP)
-//#define  READ_ONESHOT_MASK  (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP
-//|EPOLLHUP) #define  WRITE_MASK  (EPOLLOUT | EPOLLET | EPOLLONESHOT |
-// EPOLLRDHUP | EPOLLHUP) //is always one shot #define  ACCEPT_MASK (EPOLLIN |
-// EPOLLET)
 
 enum EVENT_GROUP {
   ACCEPTOR = 0x1,
@@ -28,6 +22,7 @@ enum EVENT_GROUP {
   RESPONSE_TIMEOUT,
   SIGNAL,
   MAINTENANCE,
+  CTL_INTERFACE
 };
 
 enum EVENT_TYPE {
@@ -54,8 +49,7 @@ class EpollManager {
   epoll_event events[MAX_EPOLL_EVENT];
 
  protected:
-  inline virtual void HandleEvent(int fd,
-                                  EVENT_TYPE event_type,
+  inline virtual void HandleEvent(int fd, EVENT_TYPE event_type,
                                   EVENT_GROUP event_group) = 0;
   inline void onReadEvent(epoll_event& event);
   inline void onWriteEvent(epoll_event& event);
@@ -64,11 +58,10 @@ class EpollManager {
  public:
   EpollManager();
   int loopOnce(int time_out = -1);
-  virtual ~EpollManager();
+  ~EpollManager();
   bool handleAccept(int listener_fd);
   bool addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
   bool deleteFd(int fd);
   bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
-  //  inline unsigned int getMask(EVENT_TYPE event_type);
 };
 };

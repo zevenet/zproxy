@@ -9,7 +9,7 @@
 #include <thread>
 #include <unordered_map>
 
-using namespace epoll_manager;
+using namespace events;
 
 class ServerHandler : public EpollManager
 {

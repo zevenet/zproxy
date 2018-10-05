@@ -10,7 +10,7 @@
 #include "HttpStatus.h"
 #include "../connection/backend_connection.h"
 #include "../event/epoll_manager.h"
-#include "../config/BackendConfig.h"
+#include "../service/backend.h"
 #include "../event/TimerFd.h"
 
 class HttpStream {

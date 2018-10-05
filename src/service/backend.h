@@ -3,11 +3,16 @@
 //
 #pragma once
 
-#include <string>
 #include <netdb.h>
-#include "pound_struct.h"
+#include <string>
+#include "../config/pound_struct.h"
+#include "../ctl/ControlManager.h"
+#include "../ctl/ctl.h"
+#include "../ctl/observer.h"
+#include "../debug/Debug.h"
+
 enum BACKEND_STATUS {
-  NO_BACKEND = -1, // this should be used for first assigned backends
+  NO_BACKEND = -1,  // this should be used for first assigned backends
   BACKEND_CONNECTED = 0,
   BACKEND_DISCONECTED,
 };
@@ -19,9 +24,10 @@ enum BACKEND_TYPE {
   CACHE_SYSTEM,
 };
 
-class Backend {
+class Backend : public CtlObserver<ctl::CtlTask, std::string> {
  public:
-  Backend() = default;
+  Backend();
+  ~Backend();
   BACKEND_TYPE backend_type;
   BackendConfig backend_config;
   addrinfo *address_info{};
@@ -31,4 +37,7 @@ class Backend {
   int conn_timeout{};
   int response_timeout{};
   bool disabled{};
+
+  std::string handleTask(ctl::CtlTask &task) override;
+  bool isHandler(ctl::CtlTask &task) override;
 };

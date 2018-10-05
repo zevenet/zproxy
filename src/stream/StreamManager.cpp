@@ -46,9 +46,8 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         Debug::Log("Connection closed prematurely" + std::to_string(fd));
         return;
       }
-      auto connection = stream->getConnection(fd);
-      auto io_result =
-          connection->write(this->e200.c_str(), this->e200.length());
+      auto io_result = stream->client_connection.write(this->e200.c_str(),
+                                                       this->e200.length());
       switch (io_result) {
         case IO::ERROR:
         case IO::FD_CLOSED:
@@ -57,25 +56,35 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
           break;
         case IO::SUCCESS:
         case IO::DONE_TRY_AGAIN:
-          updateFd(fd, READ_ONESHOT, EVENT_GROUP::CLIENT);
+          updateFd(fd, READ, EVENT_GROUP::CLIENT);
           break;
       }
 
       break;
     }
-    case CONNECT:
-      break;
+    case CONNECT: {
+      int new_fd;
+      //      do {
+      new_fd = listener_connection.doAccept();
+      if (new_fd > 0) {
+        addStream(new_fd);
+      }
+      //      } while (new_fd > 0);
+      return;
+    }
     case ACCEPT:
       break;
     case DISCONNECT: {
       auto stream = streams_set[fd];
       if (stream == nullptr) {
         Debug::Log("Stream doesn't exist for " + std::to_string(fd));
+        deleteFd(fd);
         ::close(fd);
         return;
       }
-      streams_set.erase(fd);
-      delete stream;
+      /*      streams_set.erase(fd);
+      delete stream*/;
+      clearStream(stream);
       break;
     }
   }
@@ -121,6 +130,8 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
           break;
         case MAINTENANCE:  // TODO:: Handle health checkers, sessions ...
           break;
+        default:  // should not enter here
+          break;
       }
       return;
     }
@@ -141,6 +152,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                        std::to_string(fd));
             break;
         }
+
         deleteFd(fd);
         ::close(fd);
         return;
@@ -170,38 +182,25 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         return;
       }
       switch (event_group) {
-        case ACCEPTOR:
-          break;
         case SERVER: {
-          //          auto response =
-          //          HttpStatus::getErrorResponse(HttpStatus::Code::RequestTimeout);
-          //          stream->client_connection.write(response.c_str(),
-          //          response.length());
-          Debug::Log("Backend closed connection", LOG_INFO);
-          if (stream->client_connection.getFileDescriptor() > 0) {
-            deleteFd(stream->client_connection.getFileDescriptor());
-            streams_set[stream->client_connection.getFileDescriptor()] =
-                nullptr;
-            streams_set.erase(stream->client_connection.getFileDescriptor());
+          if (!stream->backend_connection.isConnected()) {
+            auto response =
+                HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
+            stream->client_connection.write(response.c_str(),
+                                            response.length());
+            Debug::Log("Backend closed connection", LOG_INFO);
           }
           break;
         }
         case CLIENT: {
           Debug::Log("Client closed connection", LOG_INFO);
-          if (stream->backend_connection.getFileDescriptor() !=
-              BACKEND_STATUS::NO_BACKEND) {
-            deleteFd(stream->backend_connection.getFileDescriptor());
-            streams_set[stream->backend_connection.getFileDescriptor()] =
-                nullptr;
-            streams_set.erase(stream->backend_connection.getFileDescriptor());
-          }
           break;
         }
+        default:
+          Debug::Log("Why this happends!!", LOG_INFO);
+          break;
       }
-      streams_set[fd] = nullptr;
-      streams_set.erase(fd);
-      delete stream; /*Clean stream resources, this also will close client and
-                        backend connection*/
+      clearStream(stream);
       break;
     }
     default:
@@ -232,13 +231,11 @@ StreamManager::StreamManager(){};
 StreamManager::~StreamManager() {
   stop();
   if (worker.joinable()) worker.join();
-
   for (auto& key_pair : streams_set) {
     delete key_pair.second;
   }
 }
 void StreamManager::doWork() {
-  // TODO::set thread affinty
   while (is_running) {
     if (loopOnce() <= 0) {
       // something bad happend
@@ -281,9 +278,6 @@ void StreamManager::onRequestEvent(int fd) {
   }
   //  stream->client_stadistics.update();
   // TODO::Process all buffer
-  Debug::logmsg(
-      LOG_INFO, "Data % from %s ", stream->client_connection.buffer,
-      stream->client_connection.getPeerAddress().c_str());  // TODO: remove
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   do {
@@ -317,7 +311,7 @@ void StreamManager::onRequestEvent(int fd) {
           this->clearStream(stream);
           return;
         }
-        auto service = getService(stream->request);
+        auto service = service_manager->getService(stream->request);
         if (service == nullptr) {
           char caddr[50];
           // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
@@ -393,7 +387,7 @@ void StreamManager::onRequestEvent(int fd) {
                     *bck->address_info, bck->conn_timeout);
                 switch (op_state) {
                   case IO::OP_ERROR: {
-                    auto response = HttpStatus::getErrorResponse(
+                    auto response = HttpStatus::getHttpResponse(
                         HttpStatus::Code::ServiceUnavailable);
                     stream->client_connection.write(response.c_str(),
                                                     response.length());
@@ -447,8 +441,6 @@ void StreamManager::onRequestEvent(int fd) {
               stream->replyRedirect(bck->backend_config);
               clearStream(stream);
               return;
-              ;
-              break;
             case CACHE_SYSTEM:
               break;
           }
@@ -493,7 +485,7 @@ void StreamManager::onResponseEvent(int fd) {
   }
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
-    epoll_manager::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
+    events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   auto result = stream->backend_connection.read();
   if (result == IO::ERROR) {
@@ -588,7 +580,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   if (stream->backend_connection.getBackend()->conn_timeout > 0 &&
       Network::isConnected(fd)) {
     stream->timer_fd.unset();
-    epoll_manager::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
+    events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   // skip lstn->head_off
 
@@ -680,16 +672,17 @@ validation::REQUEST_RESULT StreamManager::validateRequest(
 
 bool StreamManager::init(ListenerConfig& listener_config) {
   listener_config_ = listener_config;
-  for (auto service_config = listener_config.services;
-       service_config != nullptr; service_config = service_config->next) {
-    if (!service_config->disabled) {
-      this->addService(*service_config);
-    } else {
-      Debug::Log("Backend " + std::string(service_config->name) +
-                     " disabled in config file",
-                 LOG_NOTICE);
-    }
-  }
+  service_manager = ServiceManager::getInstance();
+  //  for (auto service_config = listener_config.services;
+  //       service_config != nullptr; service_config = service_config->next) {
+  //    if (!service_config->disabled) {
+  //      service_manager->addService(*service_config);
+  //    } else {
+  //      Debug::Log("Backend " + std::string(service_config->name) +
+  //                     " disabled in config file",
+  //                 LOG_NOTICE);
+  //    }
+  //  }
   return true;
 }
 
@@ -697,23 +690,22 @@ void StreamManager::clearStream(HttpStream* stream) {
   if (stream == nullptr) {
     return;
   }
-  if (stream->client_connection.getFileDescriptor() > 0) {
-    deleteFd(stream->client_connection.getFileDescriptor());
-    streams_set.erase(stream->client_connection.getFileDescriptor());
-    stream->client_connection.closeConnection();
-  }
-  if (stream->backend_connection.getFileDescriptor() > 0) {
-    deleteFd(stream->backend_connection.getFileDescriptor());
-    streams_set.erase(stream->backend_connection.getFileDescriptor());
-    stream->backend_connection.closeConnection();
-  }
-
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());
     stream->timer_fd.unset();
+    timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
     timers_set.erase(stream->timer_fd.getFileDescriptor());
   }
-
+  if (stream->client_connection.getFileDescriptor() > 0) {
+    deleteFd(stream->client_connection.getFileDescriptor());
+    streams_set[stream->client_connection.getFileDescriptor()] = nullptr;
+    streams_set.erase(stream->client_connection.getFileDescriptor());
+  }
+  if (stream->backend_connection.getFileDescriptor() > 0) {
+    deleteFd(stream->backend_connection.getFileDescriptor());
+    streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
+    streams_set.erase(stream->backend_connection.getFileDescriptor());
+  }
   delete stream;
 }
 

@@ -2,24 +2,24 @@
 // Created by abdess on 4/25/18.
 //
 
-#ifndef S_ZHTTP_SERVICEMANAGER_H
-#define S_ZHTTP_SERVICEMANAGER_H
+#pragma once
 
 #include <map>
 #include <ostream>
 #include <vector>
-#include "Service.h"
 #include "../http/HttpRequest.h"
+#include "Service.h"
 
-class ServiceManager {
-
+class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
   std::vector<Service *> services;
+
  public:
+  static ServiceManager *instance;
+  static ServiceManager *getInstance();
   ServiceManager();
   ~ServiceManager();
   Service *getService(HttpRequest &request);
-  bool addService(ServiceConfig &service_config);
-
+  bool addService(ServiceConfig &service_config, int id);
+  std::string handleTask(ctl::CtlTask &task) override;
+  bool isHandler(ctl::CtlTask &task) override;
 };
-
-#endif //S_ZHTTP_SERVICEMANAGER_H

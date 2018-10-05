@@ -5,10 +5,11 @@
 #include "TimerFd.h"
 #include "../debug/Debug.h"
 
-#define GET_SECONDS(ms)  ms/1000
-#define GET_NSECONDS(ms)  (ms % 1000) *1000000
+#define GET_SECONDS(ms) ms / 1000
+#define GET_NSECONDS(ms) (ms % 1000) * 1000000
 
-TimerFd::TimerFd(int timeout_ms, bool one_shot) : timeout_ms_(timeout_ms), one_shot_(one_shot) {
+TimerFd::TimerFd(int timeout_ms, bool one_shot)
+    : timeout_ms_(timeout_ms), one_shot_(one_shot) {
   timer_fd_ = ::timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
   if (timer_fd_ < 0) {
     std::string error = "timerfd_create() failed: ";
@@ -16,20 +17,20 @@ TimerFd::TimerFd(int timeout_ms, bool one_shot) : timeout_ms_(timeout_ms), one_s
     Debug::Log(error, LOG_ERR);
     throw std::system_error(errno, std::system_category());
   }
-  if(timeout_ms > 0)
-    set();
+  if (timeout_ms > 0) set();
 }
 
-void TimerFd::unset() {
-  if (timer_fd_ > 0) {
-    itimerspec timer_spec{{0, 0}, {0, 0}};
-    ::timerfd_settime(timer_fd_, 0, &timer_spec, nullptr);
+bool TimerFd::unset() {
+  if (timer_fd_ <= 0) {
+    return false;
   }
+  itimerspec timer_spec{{0, 0}, {0, 0}};
+  ::timerfd_settime(timer_fd_, 0, &timer_spec, nullptr);
+  return true;
 }
 
-void TimerFd::set(int timeout_ms, bool one_shot) {
-  if (timer_fd_ < 0)
-    return;
+bool TimerFd::set(int timeout_ms, bool one_shot) {
+  if (timer_fd_ <= 0) return false;
   if (timeout_ms > 0) {
     timeout_ms_ = timeout_ms;
     one_shot_ = one_shot;
@@ -43,13 +44,13 @@ void TimerFd::set(int timeout_ms, bool one_shot) {
     std::string error = "timerfd_settime() failed: ";
     error += std::strerror(errno);
     Debug::Log(error, LOG_ERR);
-    throw std::system_error(errno, std::system_category());
+    //    throw std::system_error(errno, std::system_category());
+    return false;
   }
+  return true;
 }
 
-bool TimerFd::isOneShot() const {
-  return one_shot_;
-}
+bool TimerFd::isOneShot() const { return one_shot_; }
 
 TimerFd::~TimerFd() {
   if (timer_fd_ > 0) ::close(timer_fd_);
@@ -62,8 +63,7 @@ bool TimerFd::isTriggered() {
 
 int TimerFd::getFileDescriptor() const {
   if (timer_fd_ < 0) {
-      Debug::Log("The timer is not valid.", LOG_REMOVE);
-    }
+    Debug::Log("The timer is not valid.", LOG_REMOVE);
+  }
   return timer_fd_;
 }
-

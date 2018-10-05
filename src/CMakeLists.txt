@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.7)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERSION='\"zhttp_abdess\"'")
 
@@ -10,6 +10,13 @@ add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 add_definitions(-DACCEPT_RANGES=0)
 
 add_library(libzhttp
+    json/json.h
+    json/json.cpp
+    json/JsonDataValue.h
+    json/JsonDataValue.cpp
+    json/JsonDataValueTypes.h
+    json/JsonData.h
+    json/JsonData.cpp
     event/epoll_manager.cpp
     event/epoll_manager.h
     connection/connection.cpp
@@ -25,7 +32,8 @@ add_library(libzhttp
     stream/listener.cpp
     stream/listener.h
     util/utils.h
-    config/BackendConfig.h
+    service/backend.h
+    service/backend.cpp
     config/config.cpp
     config/config.h
     config/pound_struct.h
@@ -35,8 +43,9 @@ add_library(libzhttp
     http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h service/httpsessionmanager.h service/httpsessionmanager.cpp)
+    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h service/httpsessionmanager.h
+    service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h)
 
-add_executable(${PROJECT_NAME} main.cpp )
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
-target_link_libraries(zhttp libzhttp)
+link_libraries(${JSONCPP_LIBRARIES})
+
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES}  ${JSONCPP_LIBRARIES})

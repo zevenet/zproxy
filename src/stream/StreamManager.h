@@ -8,16 +8,16 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#include "../config/BackendConfig.h"
 #include "../config/pound_struct.h"
 #include "../event/TimerFd.h"
 #include "../event/epoll_manager.h"
 #include "../http/http_stream.h"
 #include "../service/ServiceManager.h"
+#include "../service/backend.h"
 
-using namespace epoll_manager;
+using namespace events;
 
-class StreamManager : public EpollManager, public ServiceManager {
+class StreamManager : public EpollManager /*, public ServiceManager*/ {
   // TODO::REMOVE
   std::string e200 =
       "HTTP/1.1 200 OK\r\nServer: zhttp 1.0\r\nExpires: now\r\nPragma: "
@@ -26,16 +26,15 @@ class StreamManager : public EpollManager, public ServiceManager {
 
   int worker_id;
   std::thread worker;
+  ServiceManager* service_manager;
   Connection listener_connection;
   bool is_running;
   ListenerConfig listener_config_;
   std::unordered_map<int, HttpStream*> streams_set;
   std::unordered_map<int, HttpStream*> timers_set;
-  void HandleEvent(int fd,
-                   EVENT_TYPE event_type,
+  void HandleEvent(int fd, EVENT_TYPE event_type,
                    EVENT_GROUP event_group) override;
   void doWork();
-  HttpStream* getFdStream(int fd);
 
  public:
   StreamManager();

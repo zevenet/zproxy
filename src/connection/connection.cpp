@@ -3,6 +3,7 @@
 //
 
 #include "connection.h"
+#include <sys/un.h>
 #include "../util/Network.h"
 
 #define PRINT_BUFFER_SIZE \
@@ -22,7 +23,7 @@ Connection::Connection()
 }
 Connection::~Connection() {
   is_connected = false;
-  this->closeConnection();
+  if (socket_fd > 0) this->closeConnection();
   if (address != nullptr) {
     if (address->ai_addr != nullptr) delete address->ai_addr;
   }
@@ -30,9 +31,6 @@ Connection::~Connection() {
 }
 
 IO::IO_RESULT Connection::read() {
-  if (this == nullptr) {
-    Debug::Log("Something bad happends");
-  }
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
@@ -205,7 +203,7 @@ bool Connection::isConnected() {
 }
 
 int Connection::doAccept() {
-  int new_fd;
+  int new_fd = -1;
   sockaddr_in clnt_addr{};
   socklen_t clnt_length = sizeof(clnt_addr);
 
@@ -220,9 +218,9 @@ int Connection::doAccept() {
     // break;
     return -1;
   }
-  if ((&clnt_addr)->sin_family == AF_INET ||
-      (&clnt_addr)->sin_family == AF_INET6) {
-    // TODO::
+  if (clnt_addr.sin_family == AF_INET || clnt_addr.sin_family == AF_INET6 ||
+      clnt_addr.sin_family == AF_UNIX) {
+    //   TODO::
     return new_fd;
   } else {
     ::close(new_fd);
@@ -231,7 +229,7 @@ int Connection::doAccept() {
 
   return -1;
 }
-bool Connection::listen(std::string& address_str, int port) {
+bool Connection::listen(std::string address_str, int port) {
   this->address = Network::getAddress(address_str, port);
   if (this->address != nullptr) return listen(*this->address);
   return false;
@@ -261,4 +259,29 @@ bool Connection::listen(addrinfo& address_) {
 
   ::listen(socket_fd, 2048);
   return true;
+}
+bool Connection::listen(std::string af_unix_name) {
+  if (af_unix_name.empty()) return false;
+  // unlink possible previously created path.
+  unlink(af_unix_name.c_str());
+
+  // Initialize AF_UNIX socket
+  sockaddr_un ctrl{};
+  ::memset(&ctrl, 0, sizeof(ctrl));
+  ctrl.sun_family = AF_UNIX;
+  ::strncpy(ctrl.sun_path, af_unix_name.c_str(), sizeof(ctrl.sun_path) - 1);
+
+  if ((socket_fd = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+    Debug::logmsg(LOG_ERR, "Control \"%s\" create: %s", ctrl.sun_path,
+                  strerror(errno));
+    return false;
+  }
+  if (::bind(socket_fd, (struct sockaddr*)&ctrl, (socklen_t)sizeof(ctrl)) < 0) {
+    Debug::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
+                  strerror(errno));
+    return false;
+  }
+  ::listen(socket_fd, 512);
+
+  return false;
 }

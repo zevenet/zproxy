@@ -1,15 +1,17 @@
 #ifndef HTTPPARSER_H
 #define HTTPPARSER_H
 #include <string>
-#include "picohttpparser.h"
 #include "http.h"
+#include "picohttpparser.h"
 
 namespace http_parser {
 
 #define cmp_header_name(header, val) \
-  header->name_len == strlen(val) && strncasecmp(header->name, val, header->name_len) == 0
+  header->name_len == strlen(val) && \
+      strncasecmp(header->name, val, header->name_len) == 0
 #define cmp_header_value(header, val) \
-  header->value_len == strlen(val) && strncasecmp(header->value, val, header->value_len) == 0
+  header->value_len == strlen(val) && \
+      strncasecmp(header->value, val, header->value_len) == 0
 
 enum PARSE_RESULT { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
 
@@ -25,40 +27,47 @@ class HttpParser {
  public:
   HttpParser();
 
-  PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes, bool reset = true);
-  PARSE_RESULT parseRequest(const char *data, const size_t data_size, size_t *used_bytes, bool reset = true);
+  PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes,
+                            bool reset = true);
+  PARSE_RESULT parseRequest(const char *data, const size_t data_size,
+                            size_t *used_bytes, bool reset = true);
 
-  PARSE_RESULT parseResponse(const std::string &data, size_t *used_bytes, bool reset = true);
-  PARSE_RESULT parseResponse(const char *data, const size_t data_size, size_t *used_bytes, bool reset = true);
+  PARSE_RESULT parseResponse(const std::string &data, size_t *used_bytes,
+                             bool reset = true);
+  PARSE_RESULT parseResponse(const char *data, const size_t data_size,
+                             size_t *used_bytes, bool reset = true);
 
   void printRequest();
   void printResponse();
   void reset_parser();
+  void setBuffer(char *ext_buffer, int buffer_size);
 
  public:
   phr_header headers[50];
+  char *buffer;
+  size_t buffer_size;
 
   size_t num_headers;
 
   size_t last_length;
 
   int headers_length;
-  //request
+  // request
   const char *method;
   size_t method_len;
   int minor_version;
 
   const char *path;
   size_t path_length;
-  //response
+  // response
   int http_status_code;
 
   const char *status_message;
 
   size_t message_length;
-  //headers
+  // headers
   EVENT_TYPE events;
-  //TODO::
+  // TODO::
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
 

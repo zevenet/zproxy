@@ -9,15 +9,14 @@ Connection *HttpStream::getConnection(int fd) {
                                                      : &backend_connection;
 }
 HttpStream::HttpStream()
-    : request(), response(),
+    : request(),
+      response(),
       client_connection(),
       backend_connection(),
-      timer_fd()
-{
-
-}
-void HttpStream::replyError(HttpStatus::Code code, const char *code_string, const char *string) {
-  auto response_ = HttpStatus::getErrorResponse(code, code_string, string);
+      timer_fd() {}
+void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
+                            const char *string) {
+  auto response_ = HttpStatus::getHttpResponse(code, code_string, string);
   client_connection.write(response_.c_str(), response_.length());
 }
 
@@ -28,15 +27,17 @@ HttpStream::~HttpStream() {
 #endif
 }
 
-void HttpStream::printReadStadistics(ConnectionStadistic_t &stadistic, std::string tag) {
+void HttpStream::printReadStadistics(ConnectionStadistic_t &stadistic,
+                                     std::string tag) {
   Debug::logmsg(LOG_DEBUG,
                 "%s\nThread Stats   Avg      Min     Max   +/- Stdev\n"
-                "    Latency    %d s     %d s      %d s         --%\n", tag.c_str(),
-                stadistic.avr_read_time / CLOCKS_PER_SEC,
+                "    Latency    %d s     %d s      %d s         --%\n",
+                tag.c_str(), stadistic.avr_read_time / CLOCKS_PER_SEC,
                 stadistic.min_read_time / CLOCKS_PER_SEC,
                 stadistic.max_read_time / CLOCKS_PER_SEC);
 }
 void HttpStream::replyRedirect(BackendConfig &backend_config) {
-  auto response_ = HttpStatus::getRedirectResponse((HttpStatus::Code) backend_config.be_type, backend_config.url);
+  auto response_ = HttpStatus::getRedirectResponse(
+      (HttpStatus::Code) backend_config.be_type, backend_config.url);
   client_connection.write(response_.c_str(), response_.length());
 }

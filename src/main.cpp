@@ -4,11 +4,13 @@
 #include <csignal>
 #include <iostream>
 #include "config/config.h"
+#include "ctl/ControlManager.h"
 #include "debug/Debug.h"
 #include "stream/listener.h"
+#include "util/environment.h"
 #include "util/system.h"
 
-//Log initilization
+// Log initilization
 std::mutex Debug::log_lock;
 int Debug::log_level = 8;
 int Debug::log_facility = -1;
@@ -20,13 +22,14 @@ void handleInterrupt(int sig) {
   exit(1);
 }
 
-void redirectLogOutput(std::string name, std::string chroot_path, std::string outfile, std::string errfile,
+void redirectLogOutput(std::string name, std::string chroot_path,
+                       std::string outfile, std::string errfile,
                        std::string infile) {
   if (chroot_path.empty()) {
     chroot_path = "/";
   }
   if (name.empty()) {
-    name = "ssyncd";
+    name = "zhttp";
   }
   if (infile.empty()) {
     infile = "/dev/null";
@@ -41,11 +44,11 @@ void redirectLogOutput(std::string name, std::string chroot_path, std::string ou
   umask(0);
   // change to path directory
   chdir(chroot_path.c_str());
-  //TODO:: Carefull Close all open file descriptors
-  int fd;
-  for (fd = sysconf(_SC_OPEN_MAX); fd > 0; --fd) {
-    close(fd);
-  }
+  // TODO:: Carefull Close all open file descriptors
+  //  int fd;
+  //  for (fd = ::sysconf(_SC_OPEN_MAX); fd > 0; --fd) {
+  //    close(fd);
+  //  }
   // reopen stdin, stdout, stderr
   stdin = fopen(infile.c_str(), "r");
   stdout = fopen(outfile.c_str(), "w+");
@@ -58,11 +61,12 @@ bool daemonize() {
     std::cerr << "error: failed fork\n";
     exit(EXIT_FAILURE);
   }
-  if (child > 0) { // parent
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); wait for childs to starts
+  if (child > 0) {  // parent
+    //    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); wait for
+    //    childs to starts
     exit(EXIT_SUCCESS);
   }
-  if (setsid() < 0) { // failed to become session leader
+  if (setsid() < 0) {  // failed to become session leader
     std::cerr << "error: failed setsid\n";
     exit(EXIT_FAILURE);
   }
@@ -72,7 +76,7 @@ bool daemonize() {
   signal(SIGHUP, SIG_IGN);
 
   // fork second time
-  if ((child = fork()) < 0) { // failed fork
+  if ((child = fork()) < 0) {  // failed fork
     std::cerr << "error: failed fork\n";
     exit(EXIT_FAILURE);
   }
@@ -81,15 +85,15 @@ bool daemonize() {
   }
   return true;
 }
+
 int main(int argc, char *argv[]) {
   Config config;
-  //inicializar la interfaz de control (poundctl)
+  // inicializar la interfaz de control (poundctl)
   // ControlInterface control_interface;
   config.parseConfig(argc, argv);
   Debug::log_level = config.listeners->log_level;
   Debug::log_facility = config.log_facility;
-  openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY,
-          LOG_DAEMON);
+  openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   // Syslog initialization
   if (config.daemonize) {
     if (!daemonize()) {
@@ -99,10 +103,10 @@ int main(int argc, char *argv[]) {
   }
 
   Debug::logmsg(LOG_NOTICE, "zhttp starting...");
-//  /* block all signals. we take signals synchronously via signalfd */
-//  sigset_t all;
-//  sigfillset(&all);
-//  sigprocmask(SIG_SETMASK,&all,NULL);
+  //  /* block all signals. we take signals synchronously via signalfd */
+  //  sigset_t all;
+  //  sigfillset(&all);
+  //  sigprocmask(SIG_SETMASK,&all,NULL);
 
   ::signal(SIGPIPE, SIG_IGN);
   ::signal(SIGINT, handleInterrupt);
@@ -115,16 +119,19 @@ int main(int argc, char *argv[]) {
   // Increase num file descriptor ulimit
   // TODO:: take outside main initialization
   Debug::Log("System info:");
-  Debug::Log("\tL1 Data cache size: " + std::to_string(SystemInfo::data()->getL1DataCacheSize()));
-  Debug::Log("\t\tCache line size: " + std::to_string(SystemInfo::data()->getL1DataCacheLineSize())
-  );
-  Debug::Log("\tL2 Cache size: " + std::to_string(SystemInfo::data()->getL2DataCacheSize()));
-  Debug::Log("\t\tCache line size: " + std::to_string(SystemInfo::data()->getL2DataCacheLineSize())
-  );
+  Debug::Log("\tL1 Data cache size: " +
+             std::to_string(SystemInfo::data()->getL1DataCacheSize()));
+  Debug::Log("\t\tCache line size: " +
+             std::to_string(SystemInfo::data()->getL1DataCacheLineSize()));
+  Debug::Log("\tL2 Cache size: " +
+             std::to_string(SystemInfo::data()->getL2DataCacheSize()));
+  Debug::Log("\t\tCache line size: " +
+             std::to_string(SystemInfo::data()->getL2DataCacheLineSize()));
   rlimit r{};
-  getrlimit(RLIMIT_NOFILE, &r);
+  ::getrlimit(RLIMIT_NOFILE, &r);
   Debug::Log("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur));
-  Debug::Log("\tRLIMIT_NOFILE\tMaximum " + std::to_string(r.rlim_max));
+  Debug::Log("\tRLIMIT_NOFILE\tMaximum " +
+             std::to_string(::sysconf(_SC_OPEN_MAX)));
   if (r.rlim_cur != r.rlim_max) {
     r.rlim_cur = r.rlim_max;
     if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
@@ -132,8 +139,12 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
   }
-  getrlimit(RLIMIT_NOFILE, &r);
+  ::getrlimit(RLIMIT_NOFILE, &r);
   Debug::Log("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur));
+  /*Set process user and group*/
+  Environment::setUid(std::string(config.user));
+  Environment::setGid(std::string(config.group));
+
   /* SSL stuff */
   SSL_load_error_strings();
   SSL_library_init();
@@ -142,7 +153,13 @@ int main(int argc, char *argv[]) {
   //  init_thr_arg();
   //  CRYPTO_set_id_callback(l_id);
   //  CRYPTO_set_locking_callback(l_lock);
-  //Se carga el fichero de configuracion de pound,
+  // Se carga el fichero de configuracion de pound,
+
+  auto control_manager = ctl::ControlManager::getInstance();
+  if (config.ctrl_name != nullptr) {
+    control_manager->init(config);
+    control_manager->start();
+  }
 
   Listener listener;
   listener.init(config.listeners[0]);

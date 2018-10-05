@@ -55,8 +55,9 @@ class Connection {
   Connection();
   virtual ~Connection();
 
-  bool listen(std::string& address_str, int port);
+  bool listen(std::string address_str, int port);
   bool listen(addrinfo& address);
+  bool listen(std::string af_unix_name);
 
   int doAccept();
   IO::IO_OP doConnect(addrinfo& address, int timeout);

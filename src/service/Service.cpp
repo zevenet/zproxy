@@ -83,6 +83,7 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
 
 Service::Service(ServiceConfig &service_config_)
     : service_config(service_config_) {
+  ctl::ControlManager::getInstance()->attach(std::ref(*this));
   // session data initialization
   this->session_type =
       static_cast<sessions::HttpSessionType>(service_config_.sess_type);
@@ -140,14 +141,27 @@ bool Service::doMatch(HttpRequest &request) {
   }
   return true;
 }
+
+std::string Service::handleTask(ctl::CtlTask &task) {
+  Debug::logmsg(LOG_DEBUG, "Service handling task");
+  switch (task.command) {}
+
+  return "{id:0;type:service}";
+}
+
+bool Service::isHandler(ctl::CtlTask &task) {
+  return task.target == ctl::CTL_HANDLER_TYPE::CTL_SERVICE;
+}
+
 Backend *Service::getNextBackend(bool only_emergency) {
   // if no backend available, return next emergency backend from
   // emergency_backend_set ...
+  std::lock_guard<std::mutex> locker(mtx_lock);
   Backend *bck;
   if (UNLIKELY(!only_emergency)) {
     do {
       bck = nullptr;
-      static unsigned long long seed;
+      static uint64_t seed;
       seed++;
       bck = backend_set[seed % backend_set.size()];
     } while (bck != nullptr && bck->disabled);
@@ -155,8 +169,11 @@ Backend *Service::getNextBackend(bool only_emergency) {
   }
   do {
     bck = nullptr;
-    static unsigned long long emergency_seed;
+    static uint64_t emergency_seed;
     emergency_seed++;
     bck = emergency_backend_set[emergency_seed % backend_set.size()];
   } while (bck != nullptr && bck->disabled);
+}
+Service::~Service() {
+  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }

@@ -1,4 +1,5 @@
 #include "httpsessionmanager.h"
+
 using namespace sessions;
 
 std::unordered_map<std::string, SessionInfo *> HttpSessionManager::sessions_set;
@@ -45,7 +46,6 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
     sessions_set.insert({key, new_session});
     return new_session;
   }
-
   return nullptr;
 }
 
@@ -72,13 +72,15 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
       return nullptr;
     case sessions::SESS_IP: {
       session_key = stream.client_connection.getPeerAddress();
+      // TODO::This must change !! no try catch !!!
       // sessions_set[ip_address];
       try {
         session = this->sessions_set.at(session_key);
       } catch (std::exception ex) {
         Debug::logmsg(LOG_REMOVE, "Something went wrong with the set");
+        return nullptr;
       }
-      return nullptr;
+      break;
     }
     case sessions::SESS_URL:
       break;

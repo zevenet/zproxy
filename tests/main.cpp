@@ -4,6 +4,9 @@
 #include "t_timerfd.h"
 #include "t_epoll_manager.h"
 #include "../src/debug/Debug.h"
+#include "t_observer.h"
+#include "t_control_manager.h"
+#include "t_json.h"
 
 std::mutex Debug::log_lock;
 int Debug::log_level = 8;

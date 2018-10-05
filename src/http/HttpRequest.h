@@ -39,6 +39,12 @@ class HttpRequest : public http_parser::HttpParser {
   void setRequestMethod() {
     request_method = http::http_verbs[getMethod()];
   }
+
+  http::REQUEST_METHOD getRequestMethod() {
+    setRequestMethod();
+    return request_method;
+  }
+
   void printRequestMethod() {
     Debug::logmsg(LOG_DEBUG, "Request method: %s", http::http_verb_strings.at(request_method));
   }

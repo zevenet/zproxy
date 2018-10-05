@@ -5,7 +5,7 @@
 #pragma once
 
 #include "connection.h"
-#include "../config/BackendConfig.h"
+#include "../service/backend.h"
 
 class BackendConnection : public Connection {
   int backend_id;

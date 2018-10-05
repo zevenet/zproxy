@@ -4,6 +4,8 @@
 #pragma once
 
 #include <pthread.h>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <thread>
 
@@ -22,9 +24,18 @@ enum IO_OP {
   OP_SUCCESS,
   OP_IN_PROGRESS,
 };
-}
+}  // namespace IO
 
 namespace helper {
+
+template <typename T>
+T try_lexical_cast(const std::string& s, T& out) {
+  std::stringstream ss(s);
+  if ((ss >> out).fail() || !(ss >> std::ws).eof()) {
+    return false;
+  }
+  return true;
+}
 
 struct DateTime {
   inline static std::string getDayTime() {
@@ -34,13 +45,11 @@ struct DateTime {
 };
 
 struct ThreadHelper {
-
   static bool setThreadAffinity(int cpu_id, pthread_t native_handle) {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpu_id, &cpuset);
-    int rc = pthread_setaffinity_np(native_handle,
-                                    sizeof(cpu_set_t), &cpuset);
+    int rc = pthread_setaffinity_np(native_handle, sizeof(cpu_set_t), &cpuset);
     return rc == 0;
   }
 
@@ -57,22 +66,20 @@ struct ThreadHelper {
   }
 
   static void setMaximumFilesLimit(int maximum) {
-//    // Increase num file descriptor ulimit
-//    //TODO:: take outside main initialization
-//    struct rlimit r;
-//    getrlimit(RLIMIT_NOFILE, &r);
-//    Debug::Log("current::RLIMIT_NOFILE\n\tCurrent " +
-//        std::to_string(r.rlim_cur));
-//    Debug::Log("\tMaximum " + std::to_string(r.rlim_cur));
-//    if (r.rlim_cur != r.rlim_max) {
-//      r.rlim_cur = r.rlim_max;
-//      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-//        Debug::logmsg(LOG_ERR, "setrlimit failed ");
-//        return EXIT_FAILURE;
-//      }
-//    }
-
+    //    // Increase num file descriptor ulimit
+    //    //TODO:: take outside main initialization
+    //    struct rlimit r;
+    //    getrlimit(RLIMIT_NOFILE, &r);
+    //    Debug::Log("current::RLIMIT_NOFILE\n\tCurrent " +
+    //        std::to_string(r.rlim_cur));
+    //    Debug::Log("\tMaximum " + std::to_string(r.rlim_cur));
+    //    if (r.rlim_cur != r.rlim_max) {
+    //      r.rlim_cur = r.rlim_max;
+    //      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
+    //        Debug::logmsg(LOG_ERR, "setrlimit failed ");
+    //        return EXIT_FAILURE;
+    //      }
+    //    }
   }
-
 };
-}
+}  // namespace helper

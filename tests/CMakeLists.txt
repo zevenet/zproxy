@@ -40,6 +40,9 @@ add_executable(${PROJECT_NAME}
 #    t_backend_connection.h
     t_http_parser.h
     t_config.h
+    t_observer.h
+    t_control_manager.h
+    t_json.h
     )
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})

@@ -1,5 +1,4 @@
 #pragma once
-
 #include <chrono>
 #include <string>
 #include "../http/http_stream.h"
@@ -37,8 +36,7 @@ class HttpSessionManager {
  protected:
   HttpSessionType session_type;
   unsigned int ttl;
-  std::string id;
-
+  std::string sessions_id;
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
 
@@ -50,7 +48,6 @@ class HttpSessionManager {
   virtual ~HttpSessionManager();  // TODO:: WARNING, multiple derived clasess
   // may exist, so which one is going to release
   // the map resources!!
-
   // return the created SessionInfo
   // must check if it already exist !!!
   SessionInfo *addSession(HttpStream &stream, Backend &backend_to_assign);

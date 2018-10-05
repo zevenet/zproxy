@@ -11,15 +11,15 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
                            EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE &&
       fd == timer_maintenance.getFileDescriptor()) {
-    Debug::Log("Doing maintenance", LOG_ALERT);
-    Debug::Log("Session table\n\t\tKey\tbackend", LOG_ALERT);
+    Debug::Log("Doing maintenance", LOG_REMOVE);
+    Debug::Log("Session table\n\t\tKey\tbackend", LOG_REMOVE);
     std::vector<std::string> keys_to_delete;
     if (!sessions::HttpSessionManager::sessions_set.empty()) {
       for (auto session : sessions::HttpSessionManager::sessions_set) {
         if (session.second->hasExpired(10)) {
           keys_to_delete.push_back(session.first);
         }
-        Debug::logmsg(LOG_ALERT, "\t%s\t%s", session.first.c_str(),
+        Debug::logmsg(LOG_REMOVE, "\t%s\t%s", session.first.c_str(),
                       session.second->assigned_backend->address.c_str());
       }
 
@@ -68,13 +68,23 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
   }
 }
 
+std::string Listener::handleTask(ctl::CtlTask& task) {
+  Debug::logmsg(LOG_DEBUG, "listener handling task");
+  return "{id:0;type:listener}";
+}
+
+bool Listener::isHandler(ctl::CtlTask& task) {
+  return task.target != ctl::CTL_LISTENER ? false : true;
+}
+
 bool Listener::init(std::string address, int port) {
   if (!listener_connection.listen(address, port)) return false;
   return true;  // handleAccept(listener_connection.getFileDescriptor());
 }
 
 Listener::Listener()
-    : listener_connection(), stream_manager_set(), is_running(false) {
+    : is_running(false), listener_connection(), stream_manager_set() {
+  ctl::ControlManager::getInstance()->attach(std::ref(*this));
   auto concurrency_lever = std::thread::hardware_concurrency() - 1;
   for (int sm = 0; sm < concurrency_lever; sm++) {
     stream_manager_set[sm] = new StreamManager();
@@ -102,6 +112,18 @@ void Listener::doWork() {
 void Listener::stop() { is_running = false; }
 
 void Listener::start() {
+  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+  int service_id = 0;
+  for (auto service_config = listener_config.services;
+       service_config != nullptr; service_config = service_config->next) {
+    if (!service_config->disabled) {
+      ServiceManager::getInstance()->addService(*service_config, ++service_id);
+    } else {
+      Debug::Log("Backend " + std::string(service_config->name) +
+                     " disabled in config file",
+                 LOG_NOTICE);
+    }
+  }
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr && sm->init(listener_config)) {
@@ -122,9 +144,9 @@ void Listener::start() {
   //  }
   //#else
 
-  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
-  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
-        EVENT_GROUP::MAINTENANCE);
+  //  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
+  //  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
+  //        EVENT_GROUP::MAINTENANCE);
 
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();
