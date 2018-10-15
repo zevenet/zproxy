@@ -50,6 +50,7 @@ sub _runGSLBFarmStart    # ($fname)
 	require Tie::File;
 	include 'Zevenet::Farm::GSLB::Service';
 	include 'Zevenet::Farm::GSLB::FarmGuardian';
+	require Zevenet::Farm::Base;
 	require Zevenet::FarmGuardian;
 
 	my $output;
@@ -132,6 +133,7 @@ sub _runGSLBFarmStop    # ($farm_name)
 
 	include 'Zevenet::Farm::GSLB::Validate';
 	include 'Zevenet::Farm::GSLB::Config';
+	require Zevenet::Farm::Base;
 
 	my $status = &getFarmStatus( $fname );
 	if ( $status eq "down" )

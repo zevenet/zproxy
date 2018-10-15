@@ -23,6 +23,8 @@
 use strict;
 
 use Zevenet::API32::HTTP;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
 
 include 'Zevenet::IPDS::DoS::Core';
 

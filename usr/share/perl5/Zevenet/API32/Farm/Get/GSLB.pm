@@ -36,6 +36,7 @@ sub farms_name_gslb # ( $farmname )
 	my $farmname = shift;
 
 	require Zevenet::Farm::Config;
+	require Zevenet::Farm::Base;
 
 	my $status = &getFarmVipStatus( $farmname );
 	my $vip    = &getFarmVip( "vip", $farmname );

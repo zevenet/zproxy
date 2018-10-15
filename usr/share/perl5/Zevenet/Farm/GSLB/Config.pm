@@ -23,6 +23,8 @@
 
 use strict;
 
+use Zevenet::Farm::Core;
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
