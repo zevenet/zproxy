@@ -85,6 +85,7 @@ Function: setL4FarmParam
 
 Parameters:
 	param - requested parameter. The options are:
+		"name": new farm name
 		"family": write ipv4 or ipv6
 		"vip": write the virtual IP
 		"vipp": write the virtual port
@@ -113,7 +114,11 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	my $srvparam		= "";
 	my $addition		= "";
 
-	if ( $param eq "family" )
+	if ( $param eq "name" )
+	{
+		$srvparam = "newname";
+		$farm_filename	= &getFarmFile( $value );
+	} elsif ( $param eq "family" )
 	{
 		$srvparam = $param;
 	} elsif ( $param eq "mode" )
@@ -375,19 +380,26 @@ sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $ur
 		return -1;
 	}
 
-	if ( $self->{ method } eq "PUT" || $self->{ method } eq "DELETE" )
+	if ( $self->{ method } eq "GET" )
 	{
-		$execmd = "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm } > '$self->{ configfile }'";
-		`$execmd`;
-		$output = $?;
-
-		if ( $output != 0 )
-		{
-			return -1;
-		}
+		return $output;
 	}
 
-	return $output;
+	my $execmd = "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm }";
+	if ( $self->{ method } eq "PUT" )
+	{
+		$execmd = $execmd . " > '$self->{ configfile }'";
+	}
+
+	`$execmd`;
+	$output = $?;
+
+	if ( $output != 0 )
+	{
+		return -1;
+	}
+
+	return 0;
 }
 
 =begin nd

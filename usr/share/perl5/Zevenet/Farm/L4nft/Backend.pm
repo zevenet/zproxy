@@ -81,7 +81,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		}
 	}
 
-	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "ports" : "", "weight" : "$weight", "priority" : "$priority", "state" : "up" } ] } ] })  } );
+	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "ports" : "", "weight" : "$weight", "priority" : "$priority", "state" : "up" } ] } ] })  } );
 
 	return $output;
 }

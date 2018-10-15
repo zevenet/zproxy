@@ -119,19 +119,28 @@ Function: setL4NewFarmName
 	Function that renames a farm
 
 Parameters:
-	newfarmname - New farm name
 	farmname - Farm name
+	newfarmname - New farm name
 
 Returns:
-	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
+	Integer - return 0 on success or <> 0 on failure
 
 =cut
 
-sub setL4NewFarmName    # ($farm_name,$new_farm_name)
+sub setL4NewFarmName    # ($farm_name, $new_farm_name)
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $farm_name, $new_farm_name ) = @_;
+	my $farm_name		= shift;
+	my $new_farm_name	= shift;
 
+	my $out = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
+	if ( $out == 0 )
+	{
+		#rename "${farm_name}_l4xnat.cfg", "${new_farm_name}_l4xnat.cfg";
+		unlink "$farm_name\_l4xnat.cfg";
+	}
+
+	return $out;
 }
 
 

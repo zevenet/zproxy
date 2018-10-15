@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DESC="Description of the service"
+DESC="nftlb daemon service"
 NAME=nftlb
 DAEMON=/usr/local/sbin/nftlb
 DAEMON_ARGS="-l 9 -H 127.0.0.1 -k HoLa -P 27"
@@ -17,31 +17,31 @@ do_start()
 {
 	`$NFTBIN flush ruleset`
 	start-stop-daemon --start --quiet --oknodo --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON -- $DAEMON_ARGS
-	[ "$?" != 0 ] && return 1
+	[ "$?" -ne 0 ] && return 2
 }
 
 do_stop() {
 	`$NFTBIN flush ruleset`
 	start-stop-daemon --stop --signal 1 --quiet --remove-pidfile --pidfile $PIDFILE --name $NAME
-	return 0
+	[ "$?" -ne 0 ] && return 2
 }
 
 case "$1" in
 	start)
-		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+		echo "Starting $DESC" "$NAME"
 		do_start
 		case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		0|1) return 0 ;;
+		2) return 1 ;;
 		esac
 		;;
 
 	stop)
-		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+		echo "Stopping $DESC" "$NAME"
 		do_stop
 		case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		0|1) return 0 ;;
+		2) return 1 ;;
 		esac
 		;;
 
@@ -50,19 +50,19 @@ case "$1" in
 		;;
 
 	restart)
-		log_daemon_msg "Restarting $DESC" "$NAME"
+		echo "Restarting $DESC" "$NAME"
 		do_stop
 		case "$?" in
 		0|1)
 			do_start
 			case "$?" in
-				0) log_end_msg 0 ;;
-				1) log_end_msg 1 ;;
-				*) log_end_msg 1 ;;
+				0) return 0 ;;
+				1) return 1 ;;
+				*) return 1 ;;
 			esac
 			;;
 		*)
-			log_end_msg 1	;;
+			return 1	;;
 		esac
 		;;
 
