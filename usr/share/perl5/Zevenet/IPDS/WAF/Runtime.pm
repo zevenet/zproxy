@@ -41,7 +41,7 @@ sub reloadWAFByFarm
 	foreach my $set ( &listWAFByFarm( $farm ) )
 	{
 		$set_file = &getWAFSetFile( $set );
-		return 1 if (&checkWAFSetSyntax( $set ));
+		return 1 if ( &checkWAFSetSyntax( $set ) );
 	}
 
 	$err = &logAndRun( "$pound_ctl -c $socket -R" );
@@ -149,7 +149,6 @@ sub removeWAFSetFromFarm
 	return $err;
 }
 
-
 sub reloadWAFByRule
 {
 	my $set = shift;
@@ -172,7 +171,7 @@ sub reloadWAFByRule
 # ???? add function to change wafbodysize. It is needed to restart
 #~ my $bodysize = &getGlobalConfiguration( 'waf_body_size' );
 #~ ... tener en cuenta que debe borrarse o comentarse la directiva si en
-  #~ globalconf esta vacia ... cambiar este parametro en el reload de la granja
-  #~ . Si cambia ... pedir un restart
+#~ globalconf esta vacia ... cambiar este parametro en el reload de la granja
+#~ . Si cambia ... pedir un restart
 
 1;

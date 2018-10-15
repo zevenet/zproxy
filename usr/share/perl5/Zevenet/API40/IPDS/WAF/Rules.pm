@@ -24,7 +24,7 @@ use strict;
 
 include 'Zevenet::IPDS::WAF::Core';
 include 'Zevenet::IPDS::WAF::Parser';
-include 'Zevenet::API33::IPDS::WAF::Structs';
+include 'Zevenet::API40::IPDS::WAF::Structs';
 
 =begin nd
 Object: sets
@@ -88,14 +88,14 @@ example:
 		'multi_match' => boolean,
 		'operator'    => "string",			# debe match en la lista
 		'capture'     => boolean,
-		'value'       => "string",
+		'operating'       => "string",
 		'action'    => allow|block|redirect|pass|deny,
 		'http_code' => numero,
 		'execute' => "string",
 		'log'       => boolean|"",
 		'audit_log' => boolean|"",
 		'log_data'  => "string",
-		'set_var'    => [ "strings" ],
+		'set_variable'    => [ "strings" ],
 		'skip'       => "string",
 		'skip_after' => "string",
 	}
@@ -139,6 +139,7 @@ sub create_waf_rule
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Create a rule in the set $set";
 	my $params;
+	my $type;
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -147,43 +148,44 @@ sub create_waf_rule
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( !exists $json_obj->{ type }
-		 or $json_obj->{ type } !~ /^(?:action|rule|custom|copy_rule|marker)$/ )
+	if ( exists $json_obj->{ copy_from } )
 	{
-		my $msg = "The parameter 'type' is missing";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		$type = 'copy';
+		$params =
+		  { "copy_from" => { 'required' => 'true', 'valid_format' => 'waf_rule_id' }, };
 	}
-	elsif ( $json_obj->{ type } eq 'copy_rule' )
+	elsif ( exists $json_obj->{ raw } )
 	{
-		$params = {
-				   "copy_from" => { 'required' => 'true', 'valid_format' => 'waf_rule_id' },
-				   "type"      => { 'required' => 'true' },
-		};
+		$type = 'custom';
+		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
 	}
-	elsif ( $json_obj->{ type } eq 'custom' )
+	elsif ( exists $json_obj->{ mark } )
 	{
-		$params = {
-					"raw"  => { 'required' => 'true', 'non_blank' => 'true' },
-					"type" => { 'required' => 'true' },
-		};
-	}
-	elsif ( $json_obj->{ type } eq 'marker' )
-	{
-		$params = {
-					"mark" => { 'required' => 'true', 'non_blank' => 'true' },
-					"type" => { 'required' => 'true' },
-		};
+		$type = 'mark';
+		$params = { "mark" => { 'required' => 'true', 'non_blank' => 'true' }, };
 	}
 
 	# rule or action
 	else
 	{
-		$params = &getWafRuleModel( $json_obj->{ type } );
+		$type = 'action';
+		if (    exists $json_obj->{ variables }
+			 or exists $json_obj->{ operator }
+			 or exists $json_obj->{ operating } )
+		{
+			$type = 'match_action';
+		}
 
-# to create a new rule it is necessary to send the fields: value, variables or operators
-		$params->{ variables }->{ required } = 'true';
-		$params->{ operator }->{ required }  = 'true';
-		$params->{ value }->{ required }     = 'true';
+		$params = &getWafRuleModel( $type );
+
+# to create a new rule it is necessary to send the fields: operating, variables or operators
+		if ( $type eq 'match_action' )
+		{
+			$params->{ variables }->{ required } = 'true';
+			$params->{ operator }->{ required }  = 'true';
+
+			# The operating parameter is not required
+		}
 	}
 
 	# Check allowed parameters
@@ -191,7 +193,7 @@ sub create_waf_rule
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( $json_obj->{ type } eq 'copy_rule' )
+	if ( $type eq 'copy' )
 	{
 		# check if the source of the copy exists
 		unless ( &existWAFRuleId( $json_obj->{ copy_from } ) )
@@ -203,12 +205,12 @@ sub create_waf_rule
 		# Copy
 		$err = &copyWAFRule( $set, $json_obj->{ copy_from } );
 	}
-	elsif ( $json_obj->{ type } eq 'custom' )
+	elsif ( $type eq 'custom' )
 	{
 		my @rule_aux = split ( '\n', $json_obj->{ raw } );
 		$err = &setWAFSetRaw( $set, \@rule_aux );
 	}
-	elsif ( $json_obj->{ type } eq 'marker' )
+	elsif ( $type eq 'mark' )
 	{
 		### create marker
 		$err = &createWAFMark( $set, $json_obj->{ mark } );
@@ -217,7 +219,7 @@ sub create_waf_rule
 	# rule and action
 	else
 	{
-		my $rule = &getWAFRulesStruct( $json_obj->{ type } );
+		my $rule = &getWAFRulesStruct( $type );
 		$err = &translateWafInputs( $json_obj, $rule );
 
 		if ( $err )
@@ -257,6 +259,7 @@ sub modify_waf_rule
 
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Modify the rule $id from the set $set";
+	my $type;
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -277,7 +280,7 @@ sub modify_waf_rule
 	{
 		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
 	}
-	elsif ( $rule->{ type } eq 'marker' )
+	elsif ( exists $json_obj->{ mark } )
 	{
 		$params = { "mark" => { 'required' => 'true', 'non_blank' => 'true' }, };
 	}
@@ -370,6 +373,7 @@ sub delete_waf_rule
 	&httpResponse( { code => 200, body => $body } );
 }
 
+#  POST /ipds/waf/<set>/rules/<id>/actions
 sub move_waf_rule
 {
 	my $json_obj = shift;
@@ -424,123 +428,6 @@ sub move_waf_rule
 	&httpResponse( { code => 200, body => $body } );
 }
 
-sub getWafRuleModel
-{
-	my $type = shift;
-	my $out;
-
-	$out = {
-			 'type'            => { 'regexp'       => '(?:rule|action)' },
-			 'rule_id'         => { 'valid_format' => 'waf_rule_id' },
-			 'description'     => {},
-			 'tag'             => {},
-			 'severity'        => { 'valid_format' => 'waf_severity' },
-			 'phase'           => { 'valid_format' => 'waf_phase' },
-			 'transformations' => {},
-			 'multi_match'     => { 'valid_format' => 'boolean' },
-			 'capture'         => { 'valid_format' => 'boolean' },
-			 'action'          => { 'valid_format' => 'waf_action' },
-			 'http_code'       => { 'valid_format' => 'http_code' },
-			 'execute'         => {},
-			 'log'             => { 'valid_format' => 'waf_log' },
-			 'auditory'        => { 'valid_format' => 'waf_audit_log' },
-			 'log_data'        => {},
-			 'set_var'         => {},
-			 'skip'            => { 'valid_format' => 'waf_skip' },
-			 'skip_after'      => { 'valid_format' => 'waf_skip_after' },
-	};
-
-	if ( $type eq 'rule' )
-	{
-		$out->{ variables } = { 'non_blank' => 'true' };
-		$out->{ operator }  = { 'non_blank' => 'true' };
-		$out->{ value }     = { 'non_blank' => 'true' };
-	}
-
-	return $out;
-}
-
-sub translateWafInputs
-{
-	my $json_obj = shift;
-	my $rule     = shift;
-
-	if ( exists $json_obj->{ log } )
-	{
-		$rule->{ log }    = '';
-		$rule->{ no_log } = '';
-
-		if    ( $json_obj->{ log } eq 'true' )  { $rule->{ log }    = 'true'; }
-		elsif ( $json_obj->{ log } eq 'false' ) { $rule->{ no_log } = 'true'; }
-	}
-	if ( exists $json_obj->{ auditory } )
-	{
-		$rule->{ audit_log }    = '';
-		$rule->{ no_audit_log } = '';
-
-		if ( $json_obj->{ auditory } eq 'true' ) { $rule->{ audit_log } = 'true'; }
-		elsif ( $json_obj->{ auditory } eq 'false' )
-		{
-			$rule->{ no_audit_log } = 'true';
-		}
-	}
-
-	if ( exists $json_obj->{ transformations } )
-	{
-		my @transf = &getWafTransformations();
-		foreach my $tr ( @{ $json_obj->{ transformations } } )
-		{
-			if ( !grep ( /^$tr$/, @transf ) )
-			{
-				return "The transformation $tr is not recognized.";
-			}
-		}
-		$rule->{ transformations } = $json_obj->{ transformations };
-	}
-
-	if ( exists $json_obj->{ operator } )
-	{
-		my $oper = &getWafOperators();
-		if ( !exists $oper->{ $json_obj->{ operator } } )
-		{
-			return "The operator $json_obj->{ operator } is not recognized.";
-		}
-
-		$rule->{ operator } = $oper->{ $json_obj->{ operator } };
-	}
-
-	$rule->{ rule_id } = $json_obj->{ rule_id }
-	  if ( exists $json_obj->{ rule_id } );
-	$rule->{ description } = $json_obj->{ description }
-	  if ( exists $json_obj->{ description } );
-	$rule->{ tag } = $json_obj->{ tag } if ( exists $json_obj->{ tag } );
-	$rule->{ severity } = $json_obj->{ severity }
-	  if ( exists $json_obj->{ severity } );
-	$rule->{ phase } = $json_obj->{ phase } if ( exists $json_obj->{ phase } );
-	$rule->{ value } = $json_obj->{ value }
-	  if ( exists $json_obj->{ value } );
-	$rule->{ variables } = $json_obj->{ variables }
-	  if ( exists $json_obj->{ variables } );
-	$rule->{ multi_match } = $json_obj->{ multi_match }
-	  if ( exists $json_obj->{ multi_match } );
-	$rule->{ capture } = $json_obj->{ capture }
-	  if ( exists $json_obj->{ capture } );
-	$rule->{ action } = $json_obj->{ action } if ( exists $json_obj->{ action } );
-	$rule->{ http_code } = $json_obj->{ http_code }
-	  if ( exists $json_obj->{ http_code } );
-	$rule->{ execute } = $json_obj->{ execute }
-	  if ( exists $json_obj->{ execute } );
-	$rule->{ log_data } = $json_obj->{ log_data }
-	  if ( exists $json_obj->{ log_data } );
-	$rule->{ set_var } = $json_obj->{ set_var }
-	  if ( exists $json_obj->{ set_var } );
-	$rule->{ skip } = $json_obj->{ skip } if ( exists $json_obj->{ skip } );
-	$rule->{ skip_after } = $json_obj->{ skip_after }
-	  if ( exists $json_obj->{ skip_after } );
-
-	return undef;
-}
-
 #  POST /ipds/waf/<set>/rules/<id>/chain
 sub create_waf_rule_chain
 {
@@ -567,34 +454,12 @@ sub create_waf_rule_chain
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( !exists $json_obj->{ type }
-		 or $json_obj->{ type } !~ /^(?:rule|custom|copy_rule)$/ )
+	# get parameter for a chain
+	my @chains_params = &getWAFChainParameters();
+	$params = &getWafRuleModel('rule');
+	foreach my $key ( keys %{$params} )
 	{
-		my $msg = "The parameter 'type' is missing";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-	elsif ( $json_obj->{ type } eq 'copy_rule' )
-	{
-		$params = {
-				   "copy_from" => { 'required' => 'true', 'valid_format' => 'waf_rule_id' },
-				   "type"      => { 'required' => 'true' },
-		};
-	}
-	elsif ( $json_obj->{ type } eq 'custom' )
-	{
-		$params = {
-					"raw"  => { 'required' => 'true', 'non_blank' => 'true' },
-					"type" => { 'required' => 'true' },
-		};
-	}
-
-	# rule or action
-	else
-	{
-		$params = &getWafRuleModel( 'rule' );
-
-		#the phase must be same than the father rule
-		delete $params->{ phase };
+		delete $params->{ $key } if ( !grep( $key, @chains_params ) );
 	}
 
 	# Check allowed parameters
@@ -602,30 +467,8 @@ sub create_waf_rule_chain
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( $json_obj->{ type } eq 'copy_rule' )
-	{
-		# check if the source of the copy exists
-		unless ( &existWAFRuleId( $json_obj->{ copy_from } ) )
-		{
-			my $msg = "The WAF rule $json_obj->{ copy_from } does not exist";
-			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-		}
-
-		# Copy
-		$rule_chain_st = &getWAFRuleById( $json_obj->{ copy_from } );
-	}
-	elsif ( $json_obj->{ type } eq 'custom' )
-	{
-		my @rule_aux = split ( '\n', $json_obj->{ raw } );
-		$rule_chain_st = &parseWAFRule( \@rule_aux );
-	}
-
-	# rule and action
-	else
-	{
-		$rule_chain_st = &getWAFRulesStruct( $json_obj->{ type } );
-		$err = &translateWafInputs( $json_obj, $rule_chain_st );
-	}
+	$rule_chain_st = &getWAFRulesStruct( $json_obj->{ type } );
+	$err = &translateWafInputs( $json_obj, $rule_chain_st );
 	if ( $err )
 	{
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
@@ -634,8 +477,6 @@ sub create_waf_rule_chain
 	# create a rule
 	$params->{ phase } = $rule_st->{ phase };
 	push @{ $rule_st->{ chain } }, $rule_chain_st;
-	&zenlog( "????" );
-	&zenlog( Dumper $rule_st);
 	$err = &setWAFRule( $set, $rule_index, $rule_st );
 	if ( $err )
 	{
@@ -688,26 +529,12 @@ sub modify_waf_rule_chain
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $params;
-	if ( exists $json_obj->{ raw } )
+	# get parameter for a chain
+	my @chains_params = &getWAFChainParameters();
+	my $params = &getWafRuleModel('rule');
+	foreach my $key ( keys %{$params} )
 	{
-		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
-		$chain_st = &parseWAFRule( $json_obj->{ raw } );
-		unless ( $chain_st->{ type } eq 'rule' )
-		{
-			my $msg = "The WAF sentence could not be detect as type rule.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-	else
-	{
-		$params = &getWafRuleModel( $rule_st->{ type } );
-		delete $params->{ type };
-		my $err = &translateWafInputs( $json_obj, $rule_st );
-		if ( $err )
-		{
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
-		}
+		delete $params->{ $key } if ( !grep( $key, @chains_params ) );
 	}
 
 	# Check allowed parameters
@@ -718,10 +545,12 @@ sub modify_waf_rule_chain
 	# modify a rule
 	my $err;
 	my $chain_ref = $rule_st->{ chain }->[$chain_index];
-	foreach my $key ( keys %{ $chain_st } )
+	my $err = &translateWafInputs( $json_obj, $chain_ref );
+	if ( $err )
 	{
-		$chain_ref = $chain_st->{ $key };
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
 	}
+
 	$err = &setWAFRule( $set, $rule_index, $rule_st );
 	if ( $err )
 	{

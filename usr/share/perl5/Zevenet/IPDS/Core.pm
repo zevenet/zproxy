@@ -168,7 +168,6 @@ sub getIPDSfarmsRules
 	my @dosRules        = ();
 	my @blacklistsRules = ();
 	my @rblRules        = ();
-	my @wafRules        = &listWAFByFarm( $farmName );
 
 	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -215,7 +214,19 @@ sub getIPDSfarmsRules
 	}
 
 	$rules =
-	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules, waf => \@wafRules };
+	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
+
+	# add waf if the rule is HTTP
+	require Zevenet::Farm::Core;
+	if ( &getFarmType( $farmName) =~ /http/ )
+	{
+		$rules->{waf}=[];
+		foreach my $ru ( &listWAFByFarm( $farmName ) )
+		{
+			push @{ $rules->{waf} }, { 'name' => $ru };
+		}
+	}
+
 	return $rules;
 }
 
@@ -223,8 +234,9 @@ sub getIPDSfarmsRules
 sub getIPDSRules
 {
 	require Config::Tiny;
+	include 'Zevenet::IPDS::WAF::Core';
 
-	my @rules;
+	my @rules = ();
 	my $fileHandle;
 
 	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
@@ -262,6 +274,11 @@ sub getIPDSRules
 		{
 			push @rules, { 'name' => $key, 'rule' => 'rbl' };
 		}
+	}
+
+	foreach my $ru ( &listWAFSet() )
+	{
+		push @rules, { 'name' => $ru, 'rule' => 'waf' };
 	}
 
 	return \@rules;

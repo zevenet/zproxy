@@ -92,16 +92,16 @@ sub getWAFRulesStruct
 				'init_colection'   => [],
 				'set_uid'          => '',
 				'set_sid'          => '',
-				'set_var'          => [],
+				'set_variable'     => [],
 				'expire_var'       => [],
 				'chain'            => [],
 				'skip'             => '',
 				'skip_after'       => '',
 	};
 
-	if ( $type eq 'rule' )
+	if ( $type eq 'match_action' )
 	{
-		$out->{ 'value' }     = '';
+		$out->{ 'operating' } = '';
 		$out->{ 'operator' }  = '';
 		$out->{ 'variables' } = [];
 	}
@@ -112,13 +112,15 @@ sub getWAFRulesStruct
 sub getWAFSetStructConf
 {
 	return {
-		auditory              => 'false',    #SecAuditEngine: on|off|RelevantOnly
+		audit                 => 'false',    #SecAuditEngine: on|off|RelevantOnly
 		process_request_body  => 'false',    # SecRequestBodyAccess on|off
 		process_response_body => 'false',    # SecResponseBodyAccess on|off
-		request_body_limit    => '',    # SecRequestBodyNoFilesLimit SIZE
+		request_body_limit    => '',         # SecRequestBodyNoFilesLimit SIZE
 		status                => 'false',    # SecRuleEngine on|off|DetectionOnly
-		default_action => &getWAFRulesStruct( 'action' ),    # SecDefaultAction
 		disable_rules  => [],                                # SecRuleRemoveById
+		default_action => 'allow',
+		default_log => '',
+		default_phase => '1',
 	};
 }
 
@@ -182,8 +184,8 @@ sub listWAFByFarm
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $farm_file = &getFarmFile( $farm );
 
-	my $fh        = &openlock( "$configdir/$farm_file", 'r' );
-	my @rules     = grep ( s/^WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
+	my $fh = &openlock( "$configdir/$farm_file", 'r' );
+	my @rules = grep ( s/^WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
 	chomp @rules;
 	close $fh;
 
@@ -202,8 +204,8 @@ sub listWAFBySet
 	require Zevenet::Farm::Core;
 	require Zevenet::Lock;
 
-	my $confdir = &getGlobalConfiguration( 'configdir' );
-	my $set_file = &getWAFSetFile($set);
+	my $confdir   = &getGlobalConfiguration( 'configdir' );
+	my $set_file  = &getWAFSetFile( $set );
 	my @httpfarms = &getFarmsByType( 'http' );
 	push @httpfarms, &getFarmsByType( 'https' );
 

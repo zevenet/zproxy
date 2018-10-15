@@ -22,7 +22,7 @@
 
 use strict;
 include 'Zevenet::IPDS::WAF::Core';
-include 'Zevenet::API33::IPDS::WAF::Structs';
+include 'Zevenet::API40::IPDS::WAF::Structs';
 
 #GET /ipds/waf
 sub list_waf_sets
@@ -131,9 +131,9 @@ sub modify_waf_set
 
 	my $desc = "Modify the WAF set $set";
 	my $params = {
-				   "auditory" => {
-								   'valid_format' => 'boolean',
-								   'non_blank'    => 'true',
+				   "audit" => {
+								'valid_format' => 'boolean',
+								'non_blank'    => 'true',
 				   },
 				   "process_request_body" => {
 											   'valid_format' => 'boolean',
@@ -148,6 +148,17 @@ sub modify_waf_set
 				   },
 				   "status" => {
 								 'valid_format' => 'waf_set_status',
+								 'non_blank'    => 'true',
+				   },
+				   "default_action" => {
+								 'valid_format' => 'waf_action',
+								 'non_blank'    => 'true',
+				   },
+				   "default_log" => {
+								 'valid_format' => 'waf_log',
+				   },
+				   "default_phase" => {
+								 'valid_format' => 'waf_phase',
 								 'non_blank'    => 'true',
 				   },
 				   "disable_rules" => {},
@@ -195,16 +206,17 @@ sub delete_waf_set
 
 	my @farms = &listWAFBySet( $set );
 
+	if ( @farms )
+	{
+		my $str = join ( ', ', @farms );
+		my $msg = "This rule set is being used in the farm(s): $str.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	&deleteWAFSet( $set );
 
 	if ( !&existWAFSet( $set ) )
 	{
-		include 'Zevenet::Cluster';
-		foreach my $farm ( @farms )
-		{
-			&runZClusterRemoteManager( 'ipds_waf', 'reload_farm', $farm );
-		}
-
 		my $msg = "The WAF set $set has been deleted successful.";
 		my $body = {
 					 description => $desc,
@@ -381,15 +393,15 @@ sub move_farm_waf_set
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( $sets[$json_obj->{position}] eq $set )
+	if ( $sets[$json_obj->{ position }] eq $set )
 	{
 		my $msg = "The set $set is already in the position $json_obj->{position}.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $json_obj->{position} >= $size )
+	if ( $json_obj->{ position } >= $size )
 	{
-		my $ind = $size-1;
+		my $ind = $size - 1;
 		my $msg = "The biggest index for the farm $farm is $ind.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

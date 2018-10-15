@@ -23,15 +23,14 @@
 
 use strict;
 
-
 my $farm_re  = &getValidFormat( 'farm_name' );
-my $set_name  = &getValidFormat( 'waf_set_name' );
+my $set_name = &getValidFormat( 'waf_set_name' );
 my $rule_id  = &getValidFormat( 'waf_rule_id' );
-my $index  = &getValidFormat( 'waf_chain_id' );
+my $index    = &getValidFormat( 'waf_chain_id' );
 
 if ( $ENV{ PATH_INFO } =~ qr{^/ipds/waf/$set_name/rules} )
 {
-	my $mod = 'Zevenet::API33::IPDS::WAF::Rules';
+	my $mod = 'Zevenet::API40::IPDS::WAF::Rules';
 
 	#  GET /ipds/waf/<set>/rules/<id>
 	GET qr{^/ipds/waf/($set_name)/rules/($rule_id)$}, 'get_waf_rule', $mod;
@@ -46,21 +45,25 @@ if ( $ENV{ PATH_INFO } =~ qr{^/ipds/waf/$set_name/rules} )
 	DELETE qr{^/ipds/waf/($set_name)/rules/($rule_id)$}, 'delete_waf_rule', $mod;
 
 	#  POST /ipds/waf/<set>/rules/<id>/actions
-	POST qr{^/ipds/waf/($set_name)/rules/($rule_id)/actions$}, 'move_waf_rule', $mod;
+	POST qr{^/ipds/waf/($set_name)/rules/($rule_id)/actions$}, 'move_waf_rule',
+	  $mod;
 
 	#  POST /ipds/waf/<set>/rules/<id>/chain
-	POST qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains$}, 'create_waf_rule_chain', $mod;
+	POST qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains$},
+	  'create_waf_rule_chain', $mod;
 
 	#  PUT /ipds/waf/<set>/rules/<id>/chain/($index)
-	PUT qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains/($index)$}, 'modify_waf_rule_chain', $mod;
+	PUT qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains/($index)$},
+	  'modify_waf_rule_chain', $mod;
 
 	#  DELETE /ipds/waf/<set>/rules/<id>/chain/index
-	DELETE qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains/($index)$}, 'delete_waf_rule_chain', $mod;
+	DELETE qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains/($index)$},
+	  'delete_waf_rule_chain', $mod;
 }
 
 if ( $ENV{ PATH_INFO } =~ qr{/ipds/waf} )
 {
-	my $mod = 'Zevenet::API33::IPDS::WAF::Sets';
+	my $mod = 'Zevenet::API40::IPDS::WAF::Sets';
 
 	#  GET /ipds/waf
 	GET qr{^/ipds/waf$}, 'list_waf_sets', $mod;
@@ -81,12 +84,13 @@ if ( $ENV{ PATH_INFO } =~ qr{/ipds/waf} )
 	POST qr{^/farms/($farm_re)/ipds/waf$}, 'add_farm_waf_set', $mod;
 
 	#  DELETE /farms/<farm>/ipds/waf/<set>
-	DELETE qr{^/farms/($farm_re)/ipds/waf/($set_name)$}, 'remove_farm_waf_set', $mod;
+	DELETE qr{^/farms/($farm_re)/ipds/waf/($set_name)$}, 'remove_farm_waf_set',
+	  $mod;
 
 	#  POST /farms/<farm>/ipds/waf/<set>/actions
-	POST qr{^/farms/($farm_re)/ipds/waf/($set_name)/actions$}, 'move_farm_waf_set', $mod;
+	POST qr{^/farms/($farm_re)/ipds/waf/($set_name)/actions$}, 'move_farm_waf_set',
+	  $mod;
 }
-
 
 1;
 

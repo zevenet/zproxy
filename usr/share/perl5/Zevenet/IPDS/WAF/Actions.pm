@@ -24,7 +24,7 @@
 use strict;
 
 use Zevenet::Core;
-#~ include 'Zevenet::IPDS::WAF::Core';
+include 'Zevenet::IPDS::WAF::Core';
 
 =begin nd
 Function: initWAFModule

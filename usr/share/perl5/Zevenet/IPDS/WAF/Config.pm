@@ -65,11 +65,13 @@ sub setWAFRule
 	my $rule_ref = shift;
 	my $rule;
 
+#NO SE ESTA USANDO RULE   ????
+
+
 	if ( ref $rule_ref eq 'HASH' )
 	{
 		$rule = &buildWAFRule( $rule_ref );
 	}
-
 	elsif ( ref $rule_ref eq 'ARRAY' )
 	{
 		$rule = join ( '\n', @{ $rule_ref } );
@@ -79,24 +81,13 @@ sub setWAFRule
 	{
 		$rule     = $rule_ref;
 		$rule_ref = &parseWAFRule( $rule_ref );
-
 	}
 
 	# not to check syntax if the rule has chains
-	my $err_msg;
+	my $set_st = &getWAFSet( $set );
+	$set_st->{ rules }->[$id] = $rule_ref;
+	my $err_msg = &buildWAFSet( $set, $set_st );
 
-	#~ unless ( @{ $rule_ref->{chain} } and $rule-> )
-	#~ {
-	#~ $err_msg = &checkWAFRuleSyntax( $rule );
-	#~ }
-
-	if ( not $err_msg )
-	{
-		# get struct
-		my $set_st = &getWAFSet( $set );
-		$set_st->{ rules }->[$id] = $rule_ref;
-		$err_msg = &buildWAFSet( $set, $set_st );
-	}
 	return $err_msg;
 }
 
@@ -134,7 +125,6 @@ sub createWAFRule
 	return $err_msg;
 }
 
-
 # el set debe ser mandado por referencia, aunque sea una linea
 sub setWAFSetRaw
 {
@@ -152,7 +142,8 @@ sub setWAFSetRaw
 	@file = @{ $set_raw };
 	untie @file;
 	$err = &checkWAFSetSyntax( $tmp_file );
-	unlink $tmp_file;
+
+	#~ unlink $tmp_file;
 	return $err if $err;
 
 	# parse and get only the rules, not the global conf
@@ -164,7 +155,7 @@ sub setWAFSetRaw
 	{
 		my @tmp_rules = @{ $set_st->{ rules } };
 		splice @tmp_rules, $position, 1, @{ $set_new_st };
-		$set_st->{rules} = \@tmp_rules;
+		$set_st->{ rules } = \@tmp_rules;
 	}
 	else
 	{

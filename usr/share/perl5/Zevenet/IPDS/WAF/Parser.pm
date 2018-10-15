@@ -28,6 +28,8 @@ use Zevenet::Lock;
 my $mark_conf_begin = "## begin conf";
 my $mark_conf_end   = "## end conf";
 
+my $audit_file = "/var/log/waf_audit.log";
+
 =begin nd
 Function: parseWAFRule
 
@@ -45,6 +47,7 @@ Returns:
 	}
 
 =cut
+
 sub convertWAFLine
 {
 	my $txt = shift;
@@ -56,7 +59,6 @@ sub convertWAFLine
 	$line = join ( '', @{ $txt } );
 	return $line;
 }
-
 
 sub parseWAFRule
 {
@@ -84,13 +86,13 @@ sub parseWAFRule
 
 	if ( $directive =~ /(?:SecRule|SecAction)$/ )
 	{
-		my $type = ( $directive eq 'SecRule' ) ? 'rule' : 'action';
+		my $type = ( $directive eq 'SecRule' ) ? 'match_action' : 'action';
 		$rule = &getWAFRulesStruct( $type );
 
 # example:
 #	SecRule REQUEST_METHOD "@streq POST" "id:'9001184',phase:1,t:none,pass,nolog,noauditlog,chain"
 #	SecRule REQUEST_FILENAME "@rx /file/ajax/field_asset_[a-z0-9_]+/[ua]nd/0/form-[a-z0-9A-Z_-]+$" chain
-# there are 4 mandatory fields: 1:directive 2:variables 3:value 4:actions
+# there are 4 mandatory fields: 1:directive 2:variables 3:operating 4:actions
 
 		if ( $directive eq 'SecRule' )
 		{
@@ -103,10 +105,10 @@ sub parseWAFRule
 			my $val = $2;
 			$act = $3;
 
-			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<value>[^"]+)$/ )
+			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)$/ )
 			{
 				$rule->{ operator } = $+{ operator } // "";
-				$rule->{ value } = $+{ value };
+				$rule->{ operating } = $+{ operating };
 			}
 
 			my @var_sp = split ( '\|', $var );
@@ -135,7 +137,7 @@ sub parseWAFRule
 
 			# delete the exclusive parameters of SecRules
 			delete $rule->{ operator };
-			delete $rule->{ value };
+			delete $rule->{ operating };
 			delete $rule->{ variables };
 		}
 
@@ -223,7 +225,7 @@ sub parseWAFRule
 			}
 			elsif ( $param =~ /setvar:'?([^']+)'?/ )
 			{
-				push @{ $rule->{ set_var } }, $1;
+				push @{ $rule->{ set_variable } }, $1;
 			}
 			elsif ( $param =~ /^chain$/ )
 			{
@@ -231,6 +233,7 @@ sub parseWAFRule
 				{
 					$rule->{ raw } .= "\n" . &convertWAFLine( $ru );
 					push @{ $rule->{ chain } }, &parseWAFRule( $ru );
+					$rule->{ chain }->[-1]->{ type } = 'match_action';
 				}
 			}
 			elsif ( $param =~ /skip:'?([^']+)'?/ ) { $rule->{ skip } = $1; }
@@ -282,9 +285,9 @@ sub buildWAFRule
 	my $chain_flag = shift;
 	my $secrule    = "";
 
-	if ( $st->{ type } =~ /(?:rule|action)/ )
+	if ( $st->{ type } =~ /(?:match_action|action)/ )
 	{
-		if ( $st->{ type } eq 'rule' )
+		if ( $st->{ type } eq 'match_action' )
 		{
 			my $vars = join ( '|', @{ $st->{ variables } } );
 			my $operator = $st->{ operator };
@@ -295,7 +298,7 @@ sub buildWAFRule
 			  . $vars . ' "'
 			  . $not_op . '@'
 			  . $operator . ' '
-			  . $st->{ value } . '" ';
+			  . $st->{ operating } . '" ';
 			$secrule .= "\"\\\n";
 		}
 		else
@@ -349,7 +352,7 @@ sub buildWAFRule
 		$secrule .= "\tsetsid:" . $st->{ set_sid } . ",\\\n"
 		  if ( $st->{ set_sid } );
 
-		foreach my $it ( @{ $st->{ set_var } } )
+		foreach my $it ( @{ $st->{ set_variable } } )
 		{
 			$secrule .= "\tsetvar:$it,\\\n";
 		}
@@ -376,6 +379,7 @@ sub buildWAFRule
 		{
 			foreach my $chained ( @{ $st->{ chain } } )
 			{
+				$chained->{ type } = 'match_action';
 				$secrule .= "\n\n" . &buildWAFRule( $chained, --$num_chain );
 			}
 		}
@@ -405,8 +409,8 @@ sub parseWAFSetConf
 		if ( $line =~ /^\s*SecAuditEngine\s+(on|off)/ )
 		{
 			my $value = $1;
-			$conf->{ auditory } = 'true'  if ( $value eq 'on' );
-			$conf->{ auditory } = 'false' if ( $value eq 'off' );
+			$conf->{ audit } = 'true'  if ( $value eq 'on' );
+			$conf->{ audit } = 'false' if ( $value eq 'off' );
 		}
 		if ( $line =~ /^\s*SecRequestBodyAccess\s+(on|off)/ )
 		{
@@ -431,11 +435,14 @@ sub parseWAFSetConf
 			$conf->{ status } = 'off'       if ( $value eq 'off' );
 			$conf->{ status } = 'detection' if ( $value eq 'DetectionOnly' );
 		}
-		if ( $line =~ /^\s*SecDefaultAction\s+(on|off)/ )
+		if ( $line =~ /^\s*SecDefaultAction\s/ )
 		{
 			my $value = $1;
 			$value =~ s/SecDefaultAction/SecAction/;
-			$conf->{ default_action } = &parseWAFRule( $value );
+			my $def = &parseWAFRule( $value );
+			$conf->{ default_action } = $def->{ action };
+			$conf->{ default_log } = $def->{ log };
+			$conf->{ default_phase } = $def->{ action };
 		}
 		if ( $line =~ /^\s*SecRuleRemoveById\s+(.*)/ )
 		{
@@ -454,9 +461,10 @@ sub buildWAFSetConf
 
 	push @txt, $mark_conf_begin;
 
-	if ( $conf->{ auditory } eq 'true' )
+	if ( $conf->{ audit } eq 'true' )
 	{
 		push @txt, "SecAuditEngine on";
+		push @txt, "SecAuditLog $audit_file";
 	}
 	if ( $conf->{ process_request_body } eq 'true' )
 	{
@@ -477,14 +485,6 @@ sub buildWAFSetConf
 		push @txt, "SecRuleEngine DetectionOnly";
 	}
 
-	if ( $conf->{ default_action } )
-	{
-		my $rule = &buildWAFRule( $conf->{ default_action } );
-		$rule =~ s/SecAction/SecDefaultAction/g;
-
-		#~ push @txt, $rule;	# ?????
-	}
-
 	if ( exists $conf->{ disable_rules } )
 	{
 		if ( @{ $conf->{ disable_rules } } )
@@ -493,6 +493,14 @@ sub buildWAFSetConf
 			push @txt, "SecRuleRemoveById $ids";
 		}
 	}
+
+	$conf->{ default_action } // 'allow';
+	$conf->{ default_phase }  // '1';
+	my $defaults =
+	  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
+	$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
+	$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
+	push @txt, $defaults . '"';
 
 	push @txt, $mark_conf_end . "\n";
 
@@ -525,7 +533,6 @@ sub buildWAFSet
 	{
 		my $index++;
 		my $rule = &buildWAFRule( $rule_st );
-
 		if ( $rule )
 		{
 			print $fh $rule . "\n\n";
@@ -636,8 +643,8 @@ sub parseWAFBatch
 	my @rules = ();
 
 	my @rules_nested;
-	my $rule = [];
-	my $id   = 0;
+	my $rule  = [];
+	my $id    = 0;
 	my $chain = 0;    # if chain is found, sent the next rule too
 
 	foreach my $line ( @{ $batch } )
