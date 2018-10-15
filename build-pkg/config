@@ -106,6 +106,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API3/System/User.pm
 	usr/share/perl5/Zevenet/BUI.pm
+	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
 	usr/share/perl5/Zevenet/Cmd/boot_ipds.pm
