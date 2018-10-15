@@ -722,6 +722,51 @@ sub certcontrol
 	return $swcert;
 }
 
+sub checkActivationCertificate
+{
+	my $swcert = &certcontrol();
+
+	# if $swcert is greater than 0 zapi should not work
+	if ( $swcert > 0 )
+	{
+		my $msg;
+
+		if ( $swcert == 1 )
+		{
+			$msg = "There isn't a valid Zevenet Load Balancer certificate file, please request a new one";
+		}
+		elsif ( $swcert == 2 )
+		{
+			$msg = "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
+		}
+		elsif ( $swcert == 3 )
+		{
+			# Policy: expired testing certificates would not stop zen service,
+			# but rebooting the service would not start the service,
+			# interfaces should always be available.
+			$msg = "The Zevenet Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
+		}
+		elsif ( $swcert == 4 )
+		{
+			$msg = "The Zevenet Load Balancer certificate file has been revoked, please request a new one";
+		}
+		elsif ( $swcert == 5 )
+		{
+			$msg = "The Zevenet Load Balancer certificate file isn't valid for this machine.";
+		}
+
+		my $body = {
+				message         => $msg,
+				certificate_key => &keycert(),
+				hostname        => &getHostname(),
+		};
+
+		return &httpResponse( { code => 402, body => $body } );
+	}
+
+	return $swcert;
+}
+
 sub get_sys_uuid
 {
 	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
