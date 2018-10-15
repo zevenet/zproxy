@@ -24,18 +24,13 @@
 use strict;
 
 use Zevenet::Core;
-
 use Zevenet::Log;
 use Zevenet::Config;
 use Zevenet::Validate;
-
 use Zevenet::Debug;
-
 use Zevenet::Netfilter;
-use Zevenet::Farm;
+use Zevenet::Net::Interface;
 use Zevenet::FarmGuardian;
-use Zevenet::Net;
-
 use Zevenet::Backup;
 use Zevenet::RRD;
 use Zevenet::SNMP;
@@ -44,6 +39,6 @@ use Zevenet::SystemInfo;
 use Zevenet::System;
 use Zevenet::Zapi;
 
-require Zevenet::CGI if defined $ENV{GATEWAY_INTERFACE};
+require Zevenet::CGI if defined $ENV{ GATEWAY_INTERFACE };
 
 1;

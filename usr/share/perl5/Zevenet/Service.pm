@@ -22,8 +22,8 @@
 ###############################################################################
 
 use strict;
-#~ use warnings;
-use Zevenet;
+
+use Zevenet::Net::Interface;
 
 # error codes:
 #
@@ -40,13 +40,15 @@ my $enable_fg = 1;
 
 sub getEnableFarmGuardian
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return $enable_fg;
 }
 
 sub setSystemOptimizations
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $appliance_version = &getApplianceVersion();
 	&zenlog( "Appliance version: $appliance_version", "info", "SYSTEM" );
 
@@ -167,7 +169,8 @@ sub setSystemOptimizations
 
 sub start_service
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog( "Zevenet Service: Starting...", "info", "SYSTEM" );
 
 	if ( $swcert > 0 )
@@ -180,7 +183,8 @@ sub start_service
 
 	&setSystemOptimizations();
 
-	&zenlog( "Zevenet Service: Loading Bonding configuration...", "info", "SYSTEM" );
+	&zenlog( "Zevenet Service: Loading Bonding configuration...", "info",
+			 "SYSTEM" );
 	include 'Zevenet::Net::Bonding';
 
 	# bonding
@@ -219,7 +223,7 @@ sub start_service
 	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 	# bonding adresses configuration
-	foreach my $iface ( &getInterfaceTypeList('bond') )
+	foreach my $iface ( &getInterfaceTypeList( 'bond' ) )
 	{
 		# interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
@@ -228,16 +232,16 @@ sub start_service
 
 			if ( $$iface{ status } eq "up" )
 			{
-				print( STDERR "  * Starting interface $$iface{name}" );
+				print ( STDERR "  * Starting interface $$iface{name}" );
 				&upIf( $iface );
 
 				if ( exists $$iface{ addr } && length $$iface{ addr } )
 				{
-					print( STDERR "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+					print ( STDERR "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 					if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
 					{
-						print( STDERR " Gateway:$$iface{gateway}" );
+						print ( STDERR " Gateway:$$iface{gateway}" );
 					}
 
 					my $return_code = &addIp( $iface );
@@ -276,8 +280,10 @@ sub start_service
 
 sub start_modules
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	&zenlog( "Zevenet Service: Loading Notification configuration...", "info", "NOTIFICATIONS" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	&zenlog( "Zevenet Service: Loading Notification configuration...",
+			 "info", "NOTIFICATIONS" );
 
 	# Notifications
 	include 'Zevenet::Notify';
@@ -306,7 +312,9 @@ sub start_modules
 # starts the cluster services with low priority
 sub enable_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# check activation certificate
 	if ( $swcert > 0 )
 	{
@@ -383,7 +391,8 @@ sub enable_cluster
 
 sub start_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 
 	# check activation certificate
@@ -428,7 +437,8 @@ sub start_cluster
 
 sub stop_service
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Notify';
 	include 'Zevenet::IPDS::Base';
 	include 'Zevenet::Net::Throughput';
@@ -437,14 +447,15 @@ sub stop_service
 	# stop all modules
 	&zlbstopNotifications();
 	&runIPDSStopModule();
+
 	#~ &stopTHROUTask();
 
 	if ( &getZClusterStatus() )
 	{
-		&zenlog( "Stopping ZCluster...", "info", "CLUSTER");
+		&zenlog( "Stopping ZCluster...", "info", "CLUSTER" );
 		my $zenino_proc = &get_zeninotify_process();
 
-		unless ( system( $zenino_proc ) )
+		unless ( system ( $zenino_proc ) )
 		{
 			my $zenino = &getGlobalConfiguration( 'zenino' );
 			system ( "$zenino stop" );
@@ -461,7 +472,8 @@ sub stop_service
 
 sub disable_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 
 	my $zcl_configured = &getZClusterStatus();

@@ -24,7 +24,11 @@
 use strict;
 use warnings;
 
-use Zevenet;
+use Zevenet::Farm::Core;
+use Zevenet::Net::Core;
+use Zevenet::Net::Interface;
+use Zevenet::Net::Route;
+use Zevenet::Net::Util;
 use Zevenet::Log;
 
 my $eload;
