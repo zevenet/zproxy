@@ -24,20 +24,24 @@
 use strict;
 
 use Zevenet::System;
+use Zevenet::API32::HTTP;
 
 # GET /certificates/CERTIFICATE/info
-sub get_certificate_info # ()
+sub get_certificate_info    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	require Zevenet::Certificate;
 
-	my $desc = "Show certificate details";
-	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	my $desc     = "Show certificate details";
+	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	$cert_dir = &getGlobalConfiguration( 'basedir' )
+	  if $cert_filename eq 'zlbcertfile.pem';
 
-	if ( &getValidFormat( 'certificate', $cert_filename ) && -f "$cert_dir\/$cert_filename" )
+	if ( &getValidFormat( 'certificate', $cert_filename )
+		 && -f "$cert_dir\/$cert_filename" )
 	{
 		my @cert_info = &getCertData( $cert_filename );
 		my $body;
@@ -47,7 +51,7 @@ sub get_certificate_info # ()
 			$body .= $line;
 		}
 
-		&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+		&httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 	}
 	else
 	{

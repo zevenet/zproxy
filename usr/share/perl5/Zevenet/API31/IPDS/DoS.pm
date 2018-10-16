@@ -29,7 +29,8 @@ include 'Zevenet::IPDS::DoS::Core';
 # GET /ipds/dos/rules
 sub get_dos_rules
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $desc = "List the possible DoS rules";
 
 	my $body = {
@@ -63,7 +64,8 @@ sub get_dos_rules
 #GET /ipds/dos
 sub get_dos
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $desc     = "List the DoS rules";
 
@@ -84,7 +86,8 @@ sub get_dos
 #  POST /ipds/dos
 sub create_dos_rule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::IPDS::DoS::Config';
@@ -140,7 +143,8 @@ sub create_dos_rule
 #GET /ipds/dos/RULE
 sub get_dos_rule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $name = shift;
 
 	my $desc    = "Get the DoS rule $name";
@@ -159,7 +163,8 @@ sub get_dos_rule
 #PUT /ipds/dos/<rule>
 sub set_dos_rule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $name     = shift;
 
@@ -236,7 +241,8 @@ sub set_dos_rule
 # DELETE /ipds/dos/RULE
 sub del_dos_rule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $name = shift;
 
 	include 'Zevenet::IPDS::DoS::Config';
@@ -275,7 +281,8 @@ sub del_dos_rule
 #  POST /farms/<farmname>/ipds/dos
 sub add_dos_to_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmName = shift;
 
@@ -284,6 +291,8 @@ sub add_dos_to_farm
 	my $name     = $json_obj->{ 'name' };
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $desc     = "Apply the DoS rule $name to the farm $farmName";
+
+	require Zevenet::Farm::Core;
 
 	if ( !&getFarmExists( $farmName ) )
 	{
@@ -353,12 +362,15 @@ sub add_dos_to_farm
 # DELETE /farms/<farmname>/ipds/dos/<ruleName>
 sub del_dos_from_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 	my $name     = shift;
 
 	my $desc     = "Unset the DoS rule $name from the farm $farmName";
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
+
+	require Zevenet::Farm::Core;
 
 	if ( !&getFarmExists( $farmName ) )
 	{
@@ -412,11 +424,13 @@ sub del_dos_from_farm
 # POST /ipds/dos/DOS/actions
 sub actions_dos
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $rule     = shift;
 
 	include 'Zevenet::IPDS::DoS::Actions';
+	include 'Zevenet::IPDS::DoS::Config';
 
 	my $desc = "Apply a action to the DoS rule $rule";
 	my $msg  = "Error, applying the action to the DoS rule.";
@@ -445,8 +459,6 @@ sub actions_dos
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
-		include 'Zevenet::IPDS::Blacklist::Config';
-
 		&setDOSParam( $rule, 'status', 'down' );
 		my $error = &runDOSStopByRule( $rule );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;

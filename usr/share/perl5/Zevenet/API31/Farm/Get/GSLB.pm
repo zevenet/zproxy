@@ -30,12 +30,14 @@ include 'Zevenet::Farm::GSLB::FarmGuardian';
 include 'Zevenet::Farm::GSLB::Zone';
 
 #	/farms/<GSLBfarm>
-sub farms_name_gslb # ( $farmname )
+sub farms_name_gslb    # ( $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Config;
+	require Zevenet::Farm::Base;
 
 	my $farm_ref;
 	my @out_s;
@@ -65,7 +67,7 @@ sub farms_name_gslb # ( $farmname )
 
 	$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
