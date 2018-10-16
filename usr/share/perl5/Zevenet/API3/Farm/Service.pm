@@ -56,7 +56,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, invalid service name.", "error", "LSLB"
+				"Error trying to create a new service in farm $farmname, invalid service name.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -76,7 +77,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "0" )
 		{
 			&zenlog(
-				"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "LSLB"
+				"Success, a new service has been created in farm $farmname with id $json_obj->{id}.",
+				"info", "LSLB"
 			);
 
 			# Success
@@ -99,7 +101,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "2" )
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty.", "error", "LSLB"
+				"Error trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -115,7 +118,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "1" )
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, the service $json_obj->{id} already exists.", "error", "LSLB"
+				"Error trying to create a new service in farm $farmname, the service $json_obj->{id} already exists.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -131,7 +135,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "3" )
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens.", "error", "LSLB"
+				"Error trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -154,7 +159,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, invalid service name.", "error", "LSLB"
+				"Error trying to create a new service in farm $farmname, invalid service name.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -171,8 +177,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $json_obj->{ algorithm } =~ /^$/ )
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, invalid algorithm.", "error", "LSLB"
-			);
+				   "Error trying to create a new service in farm $farmname, invalid algorithm.",
+				   "error", "LSLB" );
 
 			# Error
 			my $errormsg = "Invalid algorithm, please insert a valid value.";
@@ -191,7 +197,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "LSLB"
+				"Success, a new service has been created in farm $farmname with id $json_obj->{id}.",
+				"info", "LSLB"
 			);
 
 			# Success
@@ -218,7 +225,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-				"Error trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}.", "error", "LSLB"
+				"Error trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -241,7 +249,7 @@ sub farm_services
 {
 	my ( $farmname, $servicename ) = @_;
 
-	require Zevenet::API3::Farm::Get::HTTP;
+	include 'Zevenet::API3::Farm::Get::HTTP';
 	my $service;
 	my $description = "Get services of a farm";
 
@@ -251,12 +259,12 @@ sub farm_services
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -265,49 +273,48 @@ sub farm_services
 		# Error
 		my $errormsg = "This functionality only is available for HTTP farms.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	require Zevenet::Farm::HTTP::Service;
 	my @services = &getHTTPFarmServices( $farmname );
-	if ( ! grep ( /^$servicename$/, @services ) )
+	if ( !grep ( /^$servicename$/, @services ) )
 	{
 		# Error
 		my $errormsg = "The required service does not exist.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	require Zevenet::Farm::Config;
-	$service = &getZapiHTTPServiceStruct ( $farmname, $servicename );
-	foreach my $be ( @{ $service->{backends} } )
+	$service = &getZapiHTTPServiceStruct( $farmname, $servicename );
+	foreach my $be ( @{ $service->{ backends } } )
 	{
-		$be->{status} = "up" if $be->{status} eq "undefined";
+		$be->{ status } = "up" if $be->{ status } eq "undefined";
 	}
-
 
 	# Success
 	my $body = {
 				 description => $description,
-				 services    	=> $service,
+				 services    => $service,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # PUT
 
-sub modify_services # ( $json_obj, $farmname, $service )
+sub modify_services    # ( $json_obj, $farmname, $service )
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
@@ -342,12 +349,12 @@ sub modify_services # ( $json_obj, $farmname, $service )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# validate SERVICE
 	require Zevenet::Farm::Service;
-	my @services = &getFarmServices($farmname);
+	my @services = &getFarmServices( $farmname );
 
 	my $found_service = grep { $service eq $_ } @services;
 
@@ -361,7 +368,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $error = "false";
@@ -387,7 +394,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		{
 			my $redirect = $json_obj->{ redirect };
 
-			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect eq '' )
+			if (    $redirect =~ /^http\:\/\//i
+				 || $redirect =~ /^https:\/\//i
+				 || $redirect eq '' )
 			{
 				&setFarmVS( $farmname, $service, "redirect", $redirect );
 			}
@@ -395,7 +404,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid redirect.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid redirect.",
+					"error", "LSLB"
 				);
 			}
 		}
@@ -418,7 +428,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid redirecttype.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid redirecttype.",
+					"error", "LSLB"
 				);
 			}
 		}
@@ -434,7 +445,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank.",
+					"error", "LSLB"
 				);
 			}
 			elsif ( $json_obj->{ ttl } =~ /^\d+/ )
@@ -444,7 +456,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 				{
 					$error = "true";
 					&zenlog(
-						"Error trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter.", "error", "LSLB"
+						"Error trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter.",
+						"error", "LSLB"
 					);
 				}
 			}
@@ -452,7 +465,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric.",
+					"error", "LSLB"
 				);
 			}
 		}
@@ -470,7 +484,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 				{
 					$error = "true";
 					&zenlog(
-						"Error trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter.", "error", "LSLB"
+						"Error trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter.",
+						"error", "LSLB"
 					);
 				}
 			}
@@ -482,7 +497,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank.",
+					"error", "LSLB"
 				);
 			}
 			elsif ( $json_obj->{ leastresp } =~ /^true|false$/ )
@@ -500,7 +516,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid leastresp.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid leastresp.",
+					"error", "LSLB"
 				);
 			}
 		}
@@ -519,7 +536,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank.",
+					"error", "LSLB"
 				);
 			}
 			elsif ( $json_obj->{ httpsb } =~ /^true|false$/ )
@@ -537,7 +555,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, invalid httpsb.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, invalid httpsb.",
+					"error", "LSLB"
 				);
 			}
 		}
@@ -552,7 +571,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		{
 			$error = "true";
 			&zenlog(
-				"Error trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank.", "error", "LSLB"
+				"Error trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank.",
+				"error", "LSLB"
 			);
 		}
 		if ( $error eq "false" )
@@ -560,7 +580,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			# change to number format
 			$json_obj->{ deftcpport } += 0;
 
-			my $old_deftcpport = &getGSLBFarmVS ($farmname,$service, 'dpc');
+			my $old_deftcpport = &getGSLBFarmVS( $farmname, $service, 'dpc' );
 			require Zevenet::Farm::Config;
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
 
@@ -583,7 +603,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"Error trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter.", "error", "LSLB"
+					"Error trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter.",
+					"error", "LSLB"
 				);
 			}
 		}
@@ -598,13 +619,14 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		require Zevenet::Farm::Base;
 
 		&zenlog(
-			"Success, parameters have been changed in service $service in farm $farmname.", "info", "LSLB"
+			 "Success, parameters have been changed in service $service in farm $farmname.",
+			 "info", "LSLB"
 		);
 
 		# Success
 		my $body = {
-			description => "Modify service $service in farm $farmname",
-			params      => $output_params,
+					 description => "Modify service $service in farm $farmname",
+					 params      => $output_params,
 		};
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -613,15 +635,17 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 			&setFarmRestart( $farmname );
 			$body->{ status } = 'needed restart';
-			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+			$body->{ info } =
+			  "There're changes that need to be applied, stop and start farm to apply them!";
 		}
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to modify the zones in a farm $farmname, it's not possible to modify the service $service.", "error", "LSLB"
+			"Error trying to modify the zones in a farm $farmname, it's not possible to modify the service $service.",
+			"error", "LSLB"
 		);
 
 		# Error
@@ -633,7 +657,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
@@ -644,14 +668,15 @@ sub move_services
 	require Zevenet::Farm::HTTP::Service;
 	include 'Zevenet::Farm::HTTP::Service::Ext';
 
-	my @services = &getHTTPFarmServices( $farmname );
+	my @services     = &getHTTPFarmServices( $farmname );
 	my $services_num = scalar @services;
-	my $description = "Move service";
+	my $description  = "Move service";
 	my $moveservice;
 	my $errormsg;
 
 	# validate FARM NAME
-	if ( !&getFarmExists( $farmname ) ) {
+	if ( !&getFarmExists( $farmname ) )
+	{
 		# Error
 		$errormsg = "The farmname $farmname does not exists.";
 		my $body = {
@@ -660,9 +685,9 @@ sub move_services
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( ! grep ( /^$service$/, @services ) )
+	elsif ( !grep ( /^$service$/, @services ) )
 	{
 		$errormsg = "$service not found.";
 		my $body = {
@@ -670,7 +695,7 @@ sub move_services
 					 error       => "true",
 					 message     => $errormsg
 		};
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# Move services
@@ -777,7 +802,7 @@ sub move_services
 # DELETE
 
 # DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
-sub delete_service # ( $farmname, $service )
+sub delete_service    # ( $farmname, $service )
 {
 	my ( $farmname, $service ) = @_;
 
@@ -792,46 +817,46 @@ sub delete_service # ( $farmname, $service )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $type = &getFarmType( $farmname );
 
 	# Check that the provided service is configured in the farm
 	my @services;
-	if ($type eq "gslb")
+	if ( $type eq "gslb" )
 	{
 		include 'Zevenet::Farm::GSLB::Service';
-		@services = &getGSLBFarmServices($farmname);
+		@services = &getGSLBFarmServices( $farmname );
 	}
 	else
 	{
 		require Zevenet::Farm::HTTP::Service;
-		@services = &getHTTPFarmServices($farmname);
+		@services = &getHTTPFarmServices( $farmname );
 	}
 
 	my $found = 0;
-	foreach my $farmservice (@services)
+	foreach my $farmservice ( @services )
 	{
 		#print "service: $farmservice";
-		if ($service eq $farmservice)
+		if ( $service eq $farmservice )
 		{
 			$found = 1;
 			last;
 		}
 	}
 
-	if ($found == 0)
+	if ( $found == 0 )
 	{
 		# Error
 		my $errormsg = "Invalid service name, please insert a valid value.";
 		my $body = {
-				description => "Delete service",
-				error => "true",
-				message => $errormsg
+					 description => "Delete service",
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	my $return;
@@ -847,22 +872,25 @@ sub delete_service # ( $farmname, $service )
 	if ( $return == -2 )
 	{
 		&zenlog(
-				 "Error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone.", "error", "LSLB" );
+			"Error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone.",
+			"error", "LSLB"
+		);
 
 		# Error
-		my $message = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
+		my $message =
+		  "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
 		my $body = {
 					 description => "Delete service $service in farm $farmname.",
 					 error       => "true",
 					 message     => $message
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 	elsif ( $return == 0 )
 	{
-		&zenlog(
-				 "Success, the service $service in farm $farmname has been deleted.", "info", "LSLB" );
+		&zenlog( "Success, the service $service in farm $farmname has been deleted.",
+				 "info", "LSLB" );
 
 		# Success
 		my $message = "The service $service in farm $farmname has been deleted.";
@@ -882,12 +910,13 @@ sub delete_service # ( $farmname, $service )
 			&setFarmRestart( $farmname );
 		}
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to delete the service $service in farm $farmname, the service hasn't been deleted.", "error", "LSLB"
+			"Error trying to delete the service $service in farm $farmname, the service hasn't been deleted.",
+			"error", "LSLB"
 		);
 
 		# Error
@@ -898,7 +927,7 @@ sub delete_service # ( $farmname, $service )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
