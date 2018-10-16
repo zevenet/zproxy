@@ -31,20 +31,19 @@ my $mark_conf_end   = "## end conf";
 my $audit_file = "/var/log/waf_audit.log";
 
 =begin nd
-Function: parseWAFRule
+Function: convertWAFLine
 
-	It takes a SecRule and it parsers the data to create a WAF rule struct
+	This function concatenates a set of lines in a one line.
 
 Parameters:
 
-	SecRule - It is an array reference with a SecRule
+	lines - It is an array reference with the parameters of a SecLang directive.
 
 Returns:
-	Hash ref - Rule struct
+	String - String with the SecLang directive.
 
-	{
-
-	}
+Output example:
+	$VAR = "SecRule REQUEST_METHOD "@streq POST" "id:'9001184',phase:1,t:none,pass,nolog,noauditlog,chain";
 
 =cut
 
@@ -59,6 +58,80 @@ sub convertWAFLine
 	$line = join ( '', @{ $txt } );
 	return $line;
 }
+
+=begin nd
+Function: parseWAFRule
+
+	It parses a SecLang directive and it returns an object with all parameters of the directive.
+
+	This function parses the next type of rules:
+	* match_action, the SecRule directive
+	* action, the SecAction directive
+	* mark, the SecMark directive
+	* custom, another directive
+
+Parameters:
+
+	Lines - It is an array reference with the parameters of a SecLang directive.
+
+Returns:
+	Hash ref - It is a rule parsed. The possible values are shown in the output example.
+
+Output example:
+	$VAR1 = {
+		'init_colection' => [],
+		'set_variable' => [
+							'tx.php_injection_score=+%{tx.critical_anomaly_score}',
+							'tx.anomaly_score=+%{tx.critical_anomaly_score}',
+							'tx.%{rule.id}-OWASP_CRS/WEB_ATTACK/PHP_INJECTION-%{matched_var_name}=%{tx.0}'
+							],
+		'tag' => [
+					'testing',
+					'Api tests'
+				],
+		'raw' => 'SecRule REQUEST_URI|REQUEST_BODY "@contains index" "id:100,msg:\'Testing rule\',tag:testing,tag:Api tests,severity:2,phase:2,t:base64Decode,t:escapeSeqDecode,t:urlDecode,multimatch,pass,status:200,log,noauditlog,logdata:match in rule 41,setvar:tx.php_injection_score=+%{tx.critical_anomaly_score},setvar:tx.anomaly_score=+%{tx.critical_anomaly_score},setvar:tx.%{rule.id}-OWASP_CRS/WEB_ATTACK/PHP_INJECTION-%{matched_var_name}=%{tx.0},skip:2,skipAfter:100,exec:/opt/example_script.lua"',
+		'no_audit_log' => 'true',
+		'skip' => '2',
+		'type' => 'match_action',
+		'capture' => 'false',
+		'set_sid' => '',
+		'skip_after' => '100',
+		'accuracy' => '',
+		'operator' => 'contains',
+		'id' => '',
+		'action' => 'pass',
+		'variables' => [
+						'REQUEST_URI',
+						'REQUEST_BODY'
+						],
+		'chain' => [],
+		'expire_var' => [],
+		'multi_match' => 'true',
+		'operating' => 'index',
+		'audit_log' => 'false',
+		'log' => 'true',
+		'no_log' => 'false',
+		'http_code' => '200',
+		'rule_id' => '100',
+		'version' => '',
+		'transformations' => [
+								'base64Decode',
+								'escapeSeqDecode',
+								'urlDecode'
+							],
+		'phase' => '2',
+		'log_data' => 'match in rule 41',
+		'revision' => '',
+		'description' => 'Testing rule',
+		'severity' => '2',
+		'set_uid' => '',
+		'maturity' => '',
+		'execute' => '/opt/example_script.lua',
+		'modify_directive' => []
+	};
+
+
+=cut
 
 sub parseWAFRule
 {
@@ -269,13 +342,13 @@ sub parseWAFRule
 =begin nd
 Function: buildWAFRule
 
-	Create a SecRule with the data of a WAF rule
+	Create a SecLang directive through a Zevenet WAF rule.
 
 Parameters:
-	WAF rule - hash reference with the WAF rule configuration
+	WAF rule - It is a hash reference with the WAF rule configuration.
 
 Returns:
-	String - text with the SecRule
+	String - text with the SecLang directive
 
 =cut
 
@@ -399,6 +472,34 @@ sub buildWAFRule
 	return $secrule;
 }
 
+=begin nd
+Function: parseWAFSetConf
+
+	It parses the set configuration. This set appears between two marks in the top of the configuration file.
+
+Parameters:
+	Conf block - It is an array reference with the configuration directives.
+
+Returns:
+	hash ref - text with the SecLang directive
+
+Output example:
+$VAR1 = {
+          'status' => 'detection',
+          'process_response_body' => 'true',
+          'request_body_limit' => '6456456',
+          'process_request_body' => 'true',
+          'default_log' => 'true',
+          'default_action' => 'pass',
+          'disable_rules' => [
+                               '100'
+                             ],
+          'default_phase' => 'pass',
+          'audit' => 'true'
+        };
+
+=cut
+
 sub parseWAFSetConf
 {
 	my $txt  = shift;
@@ -437,12 +538,12 @@ sub parseWAFSetConf
 		}
 		if ( $line =~ /^\s*SecDefaultAction\s/ )
 		{
-			my $value = $1;
+			my $value = $line;
 			$value =~ s/SecDefaultAction/SecAction/;
 			my $def = &parseWAFRule( $value );
 			$conf->{ default_action } = $def->{ action };
-			$conf->{ default_log } = $def->{ log };
-			$conf->{ default_phase } = $def->{ action };
+			$conf->{ default_log }    = $def->{ log };
+			$conf->{ default_phase }  = $def->{ action };
 		}
 		if ( $line =~ /^\s*SecRuleRemoveById\s+(.*)/ )
 		{
@@ -453,6 +554,33 @@ sub parseWAFSetConf
 
 	return $conf;
 }
+
+=begin nd
+Function: buildWAFSetConf
+
+	It gets the set configuration object and returns the directives to configuration file
+
+Parameters:
+	Conf block - It is an array reference with the configuration directives.
+
+Returns:
+	hash ref - text with the SecLang directive.
+
+Output example:
+$VAR1 = [
+          '## begin conf',
+          'SecAuditEngine on',
+          'SecAuditLog /var/log/waf_audit.log',
+          'SecRequestBodyAccess on',
+          'SecResponseBodyAccess on',
+          'SecRequestBodyNoFilesLimit 6456456',
+          'SecRuleEngine DetectionOnly',
+          'SecRuleRemoveById 100',
+          'SecDefaultAction "pass,phase:2,log"',
+          '## end conf'
+        ];
+
+=cut
 
 sub buildWAFSetConf
 {
@@ -506,6 +634,20 @@ sub buildWAFSetConf
 
 	return @txt;
 }
+
+=begin nd
+Function: buildWAFSet
+
+	It gets an object with the configuration and the directives and creates a set of directive lines for the configuration file
+
+Parameters:
+	Set name - It is the name of the set of rules.
+	Set struct - It is a set with two keys: rules, they are a list of rules objects; and configuration, it is a object with the configuration of the set.
+
+Returns:
+	String - Returns a message with a description about the file is bad-formed. It will return a blank string if the file is well-formed.
+
+=cut
 
 sub buildWAFSet
 {
@@ -570,6 +712,19 @@ sub buildWAFSet
 	return $err;
 }
 
+=begin nd
+Function: checkWAFSetSyntax
+
+	It checks if a file has a correct SecLang syntax
+
+Parameters:
+	Set file - It is a path with WAF rules.
+
+Returns:
+	String - Returns a message with a description about the file is bad-formed. It will return a blank string if the file is well-formed.
+
+=cut
+
 sub checkWAFSetSyntax
 {
 	my $file = shift;
@@ -595,6 +750,19 @@ sub checkWAFSetSyntax
 	}
 	return $out;
 }
+
+=begin nd
+Function: checkWAFRuleSyntax
+
+	It checks if a WAF directive is well-formed.
+
+Parameters:
+	Rule string - It is a string with a SecLang directive.
+
+Returns:
+	String - Returns a message with a description about the rule is bad-formed. It will return a blank string if the rule is well-formed.
+
+=cut
 
 sub checkWAFRuleSyntax
 {
@@ -626,6 +794,20 @@ sub checkWAFRuleSyntax
 	return $out;
 }
 
+=begin nd
+Function: getWAFRule
+
+	It returns a waf rule of a set using its index.
+
+Parameters:
+	Set path - It is the path of a WAF set
+	Rule index - It is a index of the WAF rule
+
+Returns:
+	Hash ref - Returns a object with the parmeters of the rule.
+
+=cut
+
 sub getWAFRule
 {
 	my $set   = shift;
@@ -636,6 +818,19 @@ sub getWAFRule
 
 	return $set_st->{ rules }->[$index];
 }
+
+=begin nd
+Function: parseWAFBatch
+
+	It parses a batch of WAF rules and it returns list with the rules object.
+
+Parameters:
+	Rules - It is an array reference with a set of directives lines
+
+Returns:
+	Array ref - It is a list of rules object.
+
+=cut
 
 sub parseWAFBatch
 {
@@ -677,7 +872,20 @@ sub parseWAFBatch
 	return \@rules;
 }
 
-# parse the file and returns a struct with the configuration and its rules
+=begin nd
+Function: getWAFSet
+
+	It parses a set file and returns a object with two keys: configuration, is a object with the configuration of the set;
+	rules, is a list with WAF rules objects.
+
+Parameters:
+	Set name - It is the name of a WAF set rule
+
+Returns:
+	Array ref - It is a list of rules object.
+
+=cut
+
 sub getWAFSet
 {
 	my $set = shift;

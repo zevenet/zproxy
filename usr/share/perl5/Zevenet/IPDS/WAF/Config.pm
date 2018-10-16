@@ -28,6 +28,19 @@ use Zevenet::Lock;
 include 'Zevenet::IPDS::WAF::Core';
 include 'Zevenet::IPDS::WAF::Parser';
 
+=begin nd
+Function: genWAFRuleId
+
+	Returns a rule ID available
+
+Parameters:
+	None - .
+
+Returns:
+	Integer - The rule id
+
+=cut
+
 sub genWAFRuleId
 {
 	my $interval_limit_up   = 99999;
@@ -56,8 +69,21 @@ sub genWAFRuleId
 	return $id;
 }
 
-# add a new rule in the end of the set file
-# debe mandarse el id a modificar, la nueva regla puede tener un id diferente
+=begin nd
+Function: setWAFRule
+
+	It replaces a rule inside of a set, using the rule index, by anther one.
+
+Parameters:
+	Set - It is the WAF set name.
+	Index - It is the rule index to replace.
+	Set - It is the rule object to set.
+
+Returns:
+	String - It returns a blank string on success or it returns a string with a message for the error.
+
+=cut
+
 sub setWAFRule
 {
 	my $set      = shift;
@@ -65,21 +91,15 @@ sub setWAFRule
 	my $rule_ref = shift;
 	my $rule;
 
-#NO SE ESTA USANDO RULE   ????
-
-
 	if ( ref $rule_ref eq 'HASH' )
 	{
-		$rule = &buildWAFRule( $rule_ref );
 	}
 	elsif ( ref $rule_ref eq 'ARRAY' )
 	{
-		$rule = join ( '\n', @{ $rule_ref } );
 		$rule_ref = &parseWAFRule( $rule_ref );
 	}
 	else
 	{
-		$rule     = $rule_ref;
 		$rule_ref = &parseWAFRule( $rule_ref );
 	}
 
@@ -91,7 +111,20 @@ sub setWAFRule
 	return $err_msg;
 }
 
-# add a new rule in the end of the set file
+=begin nd
+Function: createWAFRule
+
+	It appends a rule in a set.
+
+Parameters:
+	Set - It is the WAF set name.
+	Set - It is the rule object to add.
+
+Returns:
+	String - It returns a blank string on success or it returns a string with a message for the error.
+
+=cut
+
 sub createWAFRule
 {
 	my $set      = shift;
@@ -125,7 +158,21 @@ sub createWAFRule
 	return $err_msg;
 }
 
-# el set debe ser mandado por referencia, aunque sea una linea
+=begin nd
+Function: setWAFSetRaw
+
+	It adds a batch of rules in a position of a WAF set.
+
+Parameters:
+	Set - It is the WAF set name.
+	Rules batch - It is an array reference with a list of SecLang directives.
+	index - It is the index to set the batch of rules. If the index is not defined, the batch will set in the last position.
+
+Returns:
+	String - It returns a blank string on success or it returns a string with a message for the error.
+
+=cut
+
 sub setWAFSetRaw
 {
 	my $set      = shift;
@@ -166,6 +213,20 @@ sub setWAFSetRaw
 	return $err;
 }
 
+=begin nd
+Function: createWAFMark
+
+	It appends a mark in a WAF set.
+
+Parameters:
+	Set - It is the WAF set name.
+	Mark - It is a string with the the mark.
+
+Returns:
+	String - It returns a blank string on success or it returns a string with a message for the error.
+
+=cut
+
 sub createWAFMark
 {
 	my $set  = shift;
@@ -175,6 +236,21 @@ sub createWAFMark
 
 	return &setWAFSetRaw( $set, [$sentence] );
 }
+
+=begin nd
+Function: setWAFMark
+
+	It adds a mark in a WAF set.
+
+Parameters:
+	Set - It is the WAF set name.
+	Mark - It is a string with the the mark.
+	index - It is the index to set the mark. If the index is not defined, the mark will set in the last position.
+
+Returns:
+	String - It returns a blank string on success or it returns a string with a message for the error.
+
+=cut
 
 sub setWAFMark
 {
@@ -186,6 +262,20 @@ sub setWAFMark
 
 	return &setWAFSetRaw( $set, [$sentence], $id );
 }
+
+=begin nd
+Function: copyWAFRule
+
+	It copies a WAF rule by its rule id and it adds it to a set.
+
+Parameters:
+	Set - It is the WAF set name.
+	rule id - It is the rule id to copy.
+
+Returns:
+	String - It returns a blank string on success or it returns a string with a message for the error.
+
+=cut
 
 sub copyWAFRule
 {
@@ -214,6 +304,20 @@ sub createWAFSet
 	return $err;
 }
 
+=begin nd
+Function: copyWAFSet
+
+	It gets a set file and it copies in another file, changing the ID of each rule.
+
+Parameters:
+	Destine Set - It is the new set name where the set will be copied.
+	Origin Set - It is the set name to copy.
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
+
 sub copyWAFSet
 {
 	my $dstSet    = shift;
@@ -231,7 +335,20 @@ sub copyWAFSet
 	return $err;
 }
 
-# util para copiar reglas
+=begin nd
+Function: getWAFRuleById
+
+	It looks for a rule in all the sets and it retuns it.
+	This function is useful to copy rules.
+
+Parameters:
+	Id rule - It is the rule id.
+
+Returns:
+	Hash ref - It is the rule object.
+
+=cut
+
 sub getWAFRuleById
 {
 	my $id = shift;
@@ -255,6 +372,21 @@ sub getWAFRuleById
 
 	return $rule;
 }
+
+=begin nd
+Function: deleteWAFRule
+
+	It deletes a SecLang directive from a set file. It can delete a chained rule if the chain index is sent.
+
+Parameters:
+	Set - It is the name of the set.
+	Rule index - It is the rule index in the set file.
+	Chain index - It is the index of a chained rule in a rule.
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
 
 sub deleteWAFRule
 {
@@ -288,6 +420,19 @@ sub deleteWAFRule
 	return $err;
 }
 
+=begin nd
+Function: deleteWAFSet
+
+	It deletes a WAF set from the system.
+
+Parameters:
+	Set - It is the name of the set.
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
+
 sub deleteWAFSet
 {
 	my $set = shift;
@@ -304,12 +449,40 @@ sub deleteWAFSet
 	return $err;
 }
 
+=begin nd
+Function: getWAFRuleLast
+
+	It returns the last rule from a set. It is useful to get the last created rule.
+
+Parameters:
+	Set - It is the name of the set.
+
+Returns:
+	Hash ref - It is a WAF rule object.
+
+=cut
+
 sub getWAFRuleLast
 {
 	my $set    = shift;
 	my $set_st = &getWAFSet( $set );
 	return ( scalar @{ $set_st->{ rules } } ) ? $set_st->{ rules }->[-1] : undef;
 }
+
+=begin nd
+Function: moveWAFRule
+
+	It moves a rule to another position. It is used the rule index and the desired position.
+
+Parameters:
+	Set - It is the name of the set.
+	Rule index - It is index of the rule in the set.
+	Position - It is the required position for the rule.
+
+Returns:
+	String - Returns a message with a description about the file is bad-formed. It will return a blank string if the file is well-formed.
+
+=cut
 
 sub moveWAFRule
 {
@@ -330,6 +503,29 @@ sub moveWAFRule
 	return $err;
 }
 
+=begin nd
+Function: setWAFSet
+
+	It modifies the configuration of a WAF set.
+
+Parameters:
+	Set - It is the name of the set.
+	Params - It is a hash ref with the parameters to modify. The possible parameters and theirs values are:
+		audit: on, off or RelevantOnly;
+		process_request_body: true or false;
+		process_response_body: true or false;
+		request_body_limit: a interger;
+		status: on, off, DetectionOnly;
+		disable_rules: it is an array of integers, each integer is a rule id;
+		default_action: pass, allow, deny or redirect:url;
+		default_log: true, false or blank;
+		default_phase: 1-5;
+
+Returns:
+	String - Returns a message with a description about the file is bad-formed. It will return a blank string if the file is well-formed.
+
+=cut
+
 sub setWAFSet
 {
 	my $setname = shift;
@@ -343,6 +539,22 @@ sub setWAFSet
 	}
 	return &buildWAFSet( $setname, $struct );
 }
+
+=begin nd
+Function: moveWAFSet
+
+	It moves a WAF set in the list of set linked to a farm. The set order is the same
+	in which they will be executed.
+
+Parameters:
+	Farm - It is farm name.
+	Set - It is the name of the set.
+	Position - It is the desired position for the set
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
 
 sub moveWAFSet
 {

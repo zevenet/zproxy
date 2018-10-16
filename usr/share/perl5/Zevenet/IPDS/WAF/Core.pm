@@ -29,15 +29,54 @@ my $wafDir    = $configdir . "/ipds/waf";
 my $wafSetDir = $configdir . "/ipds/waf/sets";
 my $wafConf   = $configdir . "/ipds/waf/waf.conf";
 
+=begin nd
+Function: getWAFFile
+
+	?????
+
+Parameters:
+	None - .
+
+Returns:
+	String - Returns a message with a description about the file is bad-formed. It will return a blank string if the file is well-formed.
+
+=cut
+
 sub getWAFFile
 {
 	return $wafConf;
 }
 
+=begin nd
+Function: getWAFSetDir
+
+	It returns the WAF configruation directory.
+
+Parameters:
+	None - .
+
+Returns:
+	String - It is the path.
+
+=cut
+
 sub getWAFSetDir
 {
 	return $wafSetDir;
 }
+
+=begin nd
+Function: getWAFSetFile
+
+	It returns the configuration file for a set.
+
+Parameters:
+	Set - It is the set name.
+
+Returns:
+	String - It is the path.
+
+=cut
 
 sub getWAFSetFile
 {
@@ -46,19 +85,52 @@ sub getWAFSetFile
 }
 
 =begin nd
-Function: getWAFRuleStruct
+Function: getWAFRulesStruct
 
-	Returns a waf rule struct with all parameters available by default
+	It returns a struct with all parameters a WAF rule. It returns a different struct for rules of type "action"
+	and rules of type "match_action".
 
 Parameters:
-	None - .
+	Type - It is the struct requiered. The possible values are "action" or "match_action".
 
 Returns:
-	Hash ref - Rule struct
+	Hash ref - It is a WAF rule object. The values are:
+				'type'             => '',		# type of rule
+				'id'               => '',       # position in set file
+				'rule_id'          => '',       # id of the rule
+				'description'      => '',		# desciption message
+				'tag'              => [],		# tags to classify an attack
+				'version'          => '',		# version of modsecurity necessary for the rule
+				'maturity'         => '',		# madurity of the rule
+				'severity'         => '',		# severtiy of the rule
+				'accuracy'         => '',		# accuracy level
+				'revision'         => '',		# revision of the rule
+				'phase'            => '',		# phase, when the rule will be executed
+				'transformations'  => [],		# transformations for the variables before than apply the
+				'multi_match'      => 'false',	# apply a match for each transformation
+				'capture'          => 'false',	# capture data from a regular expresion
+				'action'           => '',		# action to apply if a rule matches
+				'http_code'        => '',		# http response ccode for denies or redirect actions
+				'modify_directive' => [],       # parameter 'ctl' in secrule
+				'execute'          => '',		# execute LUA script if the rule matches
+				'no_log'           => 'false',	# force no logging
+				'log'              => 'false',	# force logging
+				'audit_log'        => 'false',	# force audit logging
+				'no_audit_log'     => 'false',	# force no audit logging
+				'log_data'         => '',		# log a variable or a chunk of message
+				'init_colection'   => [],		# initializate a colection
+				'set_uid'          => '',		# set a uid
+				'set_sid'          => '',		# set a sid
+				'set_variable'     => [],		# set or initializate variables
+				'expire_var'       => [],		# expire set valiables
+				'chain'            => [],		# list of additional rules to match
+				'skip'             => '',		# skip a number of rules if the current rule match
+				'skip_after'       => '',		# skip until find a rule id or mark if the current rule match
 
-	{
-
-	}
+	The rules of type "match_action" add the parameters:
+				'operating',				# valor to apply with the operator
+				'operator',					# operation used to look for in a variable
+				'variables'					# side where search a match
 
 =cut
 
@@ -109,20 +181,57 @@ sub getWAFRulesStruct
 	return $out;
 }
 
+=begin nd
+Function: getWAFSetStructConf
+
+	It returns a object with the common configuration for a WAF set.
+
+Parameters:
+	none - .
+
+Returns:
+	Hash ref - It is a object with the configuration.
+
+	The possible keys and values are:
+		audit: on, off or RelevantOnly;
+		process_request_body: true or false;
+		process_response_body: true or false;
+		request_body_limit: a interger;
+		status: on, off, DetectionOnly;
+		disable_rules: it is an array of integers, each integer is a rule id;
+		default_action: pass, allow, deny or redirect:url;
+		default_log: true, false or blank;
+		default_phase: 1-5;
+
+=cut
+
 sub getWAFSetStructConf
 {
 	return {
-		audit                 => 'false',    #SecAuditEngine: on|off|RelevantOnly
-		process_request_body  => 'false',    # SecRequestBodyAccess on|off
-		process_response_body => 'false',    # SecResponseBodyAccess on|off
-		request_body_limit    => '',         # SecRequestBodyNoFilesLimit SIZE
-		status                => 'false',    # SecRuleEngine on|off|DetectionOnly
-		disable_rules  => [],                                # SecRuleRemoveById
-		default_action => 'allow',
-		default_log => '',
-		default_phase => '1',
+			 audit                 => 'false',    #SecAuditEngine: on|off|RelevantOnly
+			 process_request_body  => 'false',    # SecRequestBodyAccess on|off
+			 process_response_body => 'false',    # SecResponseBodyAccess on|off
+			 request_body_limit    => '',         # SecRequestBodyNoFilesLimit SIZE
+			 status                => 'false',    # SecRuleEngine on|off|DetectionOnly
+			 disable_rules         => [],         # SecRuleRemoveById
+			 default_action        => 'allow',
+			 default_log           => '',
+			 default_phase         => '1',
 	};
 }
+
+=begin nd
+Function: listWAFSet
+
+	It returns all existing WAF sets in the system.
+
+Parameters:
+	none - .
+
+Returns:
+	Array - It is a list of set names.
+
+=cut
 
 sub listWAFSet
 {
@@ -137,11 +246,37 @@ sub listWAFSet
 	return @listSet;
 }
 
+=begin nd
+Function: existWAFSet
+
+	It checks if a WAF set already exists in the system.
+
+Parameters:
+	Set - It is the set name.
+
+Returns:
+	Integer - It returns 1 if the set already exists or 0 if it is not exist
+
+=cut
+
 sub existWAFSet
 {
 	my $set = shift;
 	return ( grep ( /^$set$/, &listWAFSet() ) ) ? 1 : 0;
 }
+
+=begin nd
+Function: getWAFSetByRuleId
+
+	It returns the set name where a WAF rule is.
+
+Parameters:
+	Rule id - It is the rule id.
+
+Returns:
+	String - It is the set name
+
+=cut
 
 sub getWAFSetByRuleId
 {
@@ -167,11 +302,37 @@ sub getWAFSetByRuleId
 	return $set;
 }
 
+=begin nd
+Function: existWAFRuleId
+
+	It checks if a WAF rule already exists in the system.
+
+Parameters:
+	Rule id - It is the rule id.
+
+Returns:
+	Integer - It returns 1 if the rule already exists or 0 if it is not exist
+
+=cut
+
 sub existWAFRuleId
 {
 	my $id = shift;
 	return &getWAFSetByRuleId( $id ) ? 1 : 0;
 }
+
+=begin nd
+Function: listWAFByFarm
+
+	List all WAF sets that are applied to a farm.
+
+Parameters:
+	Farm - It is the farm id.
+
+Returns:
+	Array - It is a list with the set names.
+
+=cut
 
 sub listWAFByFarm
 {
@@ -192,7 +353,19 @@ sub listWAFByFarm
 	return @rules;
 }
 
-# Get all farms where a WAF set is applied
+=begin nd
+Function: listWAFBySet
+
+	It list all farms where a WAF set is applied.
+
+Parameters:
+	Set - It is the set name.
+
+Returns:
+	String - It is a list with farm names.
+
+=cut
+
 sub listWAFBySet
 {
 	my $set   = shift;

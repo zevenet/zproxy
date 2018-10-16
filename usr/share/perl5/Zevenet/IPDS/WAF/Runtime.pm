@@ -27,6 +27,19 @@ use Zevenet::Lock;
 
 include 'Zevenet::IPDS::WAF::Core';
 
+=begin nd
+Function: reloadWAFByFarm
+
+	It reloads a farm to update the WAF configuration.
+
+Parameters:
+	Farm - It is the farm name
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
+
 sub reloadWAFByFarm
 {
 	my $farm = shift;
@@ -48,6 +61,20 @@ sub reloadWAFByFarm
 
 	return $err;
 }
+
+=begin nd
+Function: addWAFsetToFarm
+
+	It applies a WAF set to a HTTP farm.
+
+Parameters:
+	Farm - It is the farm name
+	Set  - It is the WAF set name
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
 
 sub addWAFsetToFarm
 {
@@ -110,6 +137,20 @@ sub addWAFsetToFarm
 	return $err;
 }
 
+=begin nd
+Function: removeWAFSetFromFarm
+
+	It removes a WAF set from a HTTP farm.
+
+Parameters:
+	Farm - It is the farm name
+	Set  - It is the WAF set name
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
+
 sub removeWAFSetFromFarm
 {
 	my $farm = shift;
@@ -148,6 +189,19 @@ sub removeWAFSetFromFarm
 
 	return $err;
 }
+
+=begin nd
+Function: reloadWAFByRule
+
+	It reloads all farms where the WAF set is applied
+
+Parameters:
+	Set  - It is the WAF set name
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
 
 sub reloadWAFByRule
 {
