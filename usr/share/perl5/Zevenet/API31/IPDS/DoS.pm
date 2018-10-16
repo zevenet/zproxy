@@ -293,6 +293,7 @@ sub add_dos_to_farm
 	my $desc     = "Apply the DoS rule $name to the farm $farmName";
 
 	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
 
 	if ( !&getFarmExists( $farmName ) )
 	{
@@ -371,6 +372,7 @@ sub del_dos_from_farm
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
 	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
 
 	if ( !&getFarmExists( $farmName ) )
 	{
