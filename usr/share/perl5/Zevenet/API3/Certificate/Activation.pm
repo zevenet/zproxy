@@ -25,12 +25,13 @@ use strict;
 include 'Zevenet::Certificate';
 
 # GET /certificates/activation
-sub get_activation_certificate_info # ()
+sub get_activation_certificate_info    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $description = "Activation certificate information";
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $description   = "Activation certificate information";
 	my $cert_filename = 'zlbcertfile.pem';
-	my $cert_dir = &getGlobalConfiguration('basedir');
+	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
 
 	if ( -f "$cert_dir\/$cert_filename" )
 	{
@@ -44,7 +45,7 @@ sub get_activation_certificate_info # ()
 			$body .= $line;
 		}
 
-		&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+		&httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 	}
 	else
 	{
@@ -55,17 +56,18 @@ sub get_activation_certificate_info # ()
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # DELETE /certificates/activation
-sub delete_activation_certificate # ( $cert_filename )
+sub delete_activation_certificate    # ( $cert_filename )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
-	my $description = "Delete activation certificate";
+	my $description   = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 
 	if ( &delCert_activation( $cert_filename ) )
@@ -78,7 +80,7 @@ sub delete_activation_certificate # ( $cert_filename )
 					 message     => $message
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -89,14 +91,15 @@ sub delete_activation_certificate # ( $cert_filename )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # POST /certificates/activation
-sub upload_activation_certificate # ()
+sub upload_activation_certificate    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 #
 # Curl command:
@@ -107,11 +110,11 @@ sub upload_activation_certificate # ()
 	my $upload_filehandle = shift;
 
 	my $description = "Upload activation certificate";
-	my $filename = 'zlbcertfile.pem';
+	my $filename    = 'zlbcertfile.pem';
 
 	if ( $upload_filehandle )
 	{
-		my $basedir = &getGlobalConfiguration('basedir');
+		my $basedir = &getGlobalConfiguration( 'basedir' );
 
 		open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
 		binmode $cert_filehandle;
@@ -126,8 +129,9 @@ sub upload_activation_certificate # ()
 					 success     => "true",
 					 message     => $message
 		};
-
-		&httpResponse({ code => 200, body => $body });
+		include 'Zevenet::Apt';
+		&setAPTRepo;
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -137,12 +141,12 @@ sub upload_activation_certificate # ()
 		my $errormsg = "Error uploading activation certificate file";
 
 		my $body = {
-					   description => $description,
-					   error       => "true",
-					   message     => $errormsg,
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
