@@ -218,7 +218,8 @@ sub certcontrol
 	require Zevenet::SystemInfo;
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
-	my $zlbcertfile = "$basedir/zlbcertfile.pem";
+  my $zlbcertfilename =  shift // "zlbcertfile.pem";
+  my $zlbcertfile = "$basedir/$zlbcertfilename";
 	my $swcert = 0;
 
 	if ( ! -e $zlbcertfile )
@@ -311,7 +312,7 @@ sub certcontrol
 				if ( -s $tmp_file > 0 ) {
 					&zenlog("CRL Downloaded on $date_today");
 					my $copy = `cp $tmp_file $crl_path`;
-				}				
+				}
 				unlink $tmp_file;
 			}
 	  	}
@@ -331,7 +332,7 @@ sub certcontrol
 					return $swcert;
 				}
 			}
-		}		
+		}
 	}
 	&unlockfile( $lock_fd );
 
@@ -416,8 +417,16 @@ sub certcontrol
 
 sub checkActivationCertificate
 {
-	my $swcert = &certcontrol();
-
+  my $swcert = 0;
+	if ( scalar (@_) > 0 )
+	{
+		my $tmpCertFile = $_[0];
+		$swcert = &certcontrol("$tmpCertFile");
+	}
+	else
+	{
+		$swcert = &certcontrol();
+	}
 	# if $swcert is greater than 0 zapi should not work
 	if ( $swcert > 0 )
 	{

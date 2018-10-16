@@ -106,9 +106,9 @@ sub delete_activation_certificate    # ( $cert_filename )
 {
 	require Zevenet::Certificate;
 
-	my $desc          = "Delete activation certificate";
+	my $desc = "Delete activation certificate";
 
-	unless ( &delCert_activation( ) )
+	unless ( &delCert_activation() )
 	{
 		my $msg = "An error happened deleting the activation certificate";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -133,8 +133,9 @@ sub upload_activation_certificate    # ()
 {
 	my $upload_filehandle = shift;
 
-	my $desc     = "Upload activation certificate";
-	my $filename = 'zlbcertfile.pem';
+	my $desc        = "Upload activation certificate";
+	my $tmpFilename = 'zlbcertfile.tmp.pem';
+	my $filename    = 'zlbcertfile.pem';
 
 	unless ( $upload_filehandle )
 	{
@@ -144,15 +145,34 @@ sub upload_activation_certificate    # ()
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
 
-	open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
+	open ( my $cert_filehandle, '>', "$basedir/$tmpFilename" ) or die "$!";
 	binmode $cert_filehandle;
 	print { $cert_filehandle } $upload_filehandle;
 	close $cert_filehandle;
 
-	my $response = &checkActivationCertificate();
+	my $response = &checkActivationCertificate( "$tmpFilename" );
 
 	# A hash reference will be returned for non valid activation certificates
-	return $response if ref $response;
+	if ( ref $response )
+	{
+		# Delete the tmp certificate file
+		&zenlog(
+				 "The cerfile is incorrect, removing uploaded temporary certificate file",
+				 "debug", "certificate" );
+		unless ( unlink "$basedir/$tmpFilename" )
+		{
+			my $msg = "Error deleting new invalid activation certificate file";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		return $response;
+	}
+	else
+	{
+		&zenlog(
+			   "The certfile is correct, moving the uploaded certificate to the right path",
+			   "debug", "certificate" );
+		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
+	}
 
 	my $msg = "Activation certificate uploaded";
 	my $body = {

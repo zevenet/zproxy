@@ -25,7 +25,7 @@ use strict;
 include 'Zevenet::Certificate';
 
 # GET /certificates/activation/info
-sub get_activation_certificate_info # ()
+sub get_activation_certificate_info    # ()
 {
 	require Zevenet::Certificate;
 
@@ -42,16 +42,20 @@ sub get_activation_certificate_info # ()
 	my $cert = &getCertInfo( $cert_filename, $cert_dir );
 	my $c_type = 'temporal';
 
-	if ($cert->{ key } =~ m/-/)
+	if ( $cert->{ key } =~ m/-/ )
 	{
-		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
-	    $c_type = ( $c_days > 364 )? 'permanent': 'temporal';
+		my $c_days = (
+			 &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) /
+		  86400;
+		$c_type = ( $c_days > 364 ) ? 'permanent' : 'temporal';
 	}
 	else
 	{
 		my $cert_type = $cert->{ type_cert };
-		$c_type = ( $cert_type eq 'DE' )? 'permanent': 'temporal';
-		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
+		$c_type = ( $cert_type eq 'DE' ) ? 'permanent' : 'temporal';
+		my $c_days = (
+			 &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) /
+		  86400;
 	}
 
 	my $params = {
@@ -61,11 +65,11 @@ sub get_activation_certificate_info # ()
 	};
 	my $body = { description => $desc, params => $params };
 
-	return &httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 }
 
 # GET /certificates/activation
-sub get_activation_certificate # ()
+sub get_activation_certificate    # ()
 {
 	require Zevenet::Certificate;
 
@@ -80,19 +84,19 @@ sub get_activation_certificate # ()
 	}
 
 	my @cert_info = &getCertData( $cert_filename );
-	my $body = "@cert_info";
+	my $body      = "@cert_info";
 
-	return &httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 }
 
 # DELETE /certificates/activation
-sub delete_activation_certificate # ( $cert_filename )
+sub delete_activation_certificate    # ( $cert_filename )
 {
 	require Zevenet::Certificate;
 
-	my $desc          = "Delete activation certificate";
+	my $desc = "Delete activation certificate";
 
-	unless ( &delCert_activation( ) )
+	unless ( &delCert_activation() )
 	{
 		my $msg = "An error happened deleting the activation certificate";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -105,7 +109,7 @@ sub delete_activation_certificate # ( $cert_filename )
 				 message     => $msg,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # POST /certificates/activation
@@ -113,12 +117,13 @@ sub delete_activation_certificate # ( $cert_filename )
 # Curl command:
 #
 # curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://1.2.3.4:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
-sub upload_activation_certificate # ()
+sub upload_activation_certificate    # ()
 {
 	my $upload_filehandle = shift;
 
-	my $desc = "Upload activation certificate";
-	my $filename = 'zlbcertfile.pem';
+	my $desc        = "Upload activation certificate";
+	my $tmpFilename = 'zlbcertfile.tmp.pem';
+	my $filename    = 'zlbcertfile.pem';
 
 	unless ( $upload_filehandle )
 	{
@@ -126,17 +131,36 @@ sub upload_activation_certificate # ()
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $basedir = &getGlobalConfiguration('basedir');
+	my $basedir = &getGlobalConfiguration( 'basedir' );
 
-	open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
+	open ( my $cert_filehandle, '>', "$basedir/$tmpFilename" ) or die "$!";
 	binmode $cert_filehandle;
 	print { $cert_filehandle } $upload_filehandle;
 	close $cert_filehandle;
 
-	my $response = &checkActivationCertificate();
+	my $response = &checkActivationCertificate( "$tmpFilename" );
 
 	# A hash reference will be returned for non valid activation certificates
-	return $response if ref $response;
+	if ( ref $response )
+	{
+		# Delete the tmp certificate file
+		&zenlog(
+				 "The cerfile is incorrect, removing uploaded temporary certificate file",
+				 "debug", "certificate" );
+		unless ( unlink "$basedir/$tmpFilename" )
+		{
+			my $msg = "Error deleting new invalid activation certificate file";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		return $response;
+	}
+	else
+	{
+		&zenlog(
+			   "The certfile is correct, moving the uploaded certificate to the right path",
+			   "debug", "certificate" );
+		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
+	}
 
 	my $msg = "Activation certificate uploaded";
 	my $body = {
@@ -145,7 +169,7 @@ sub upload_activation_certificate # ()
 				 message     => $msg,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;
