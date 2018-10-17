@@ -104,6 +104,7 @@ class ServiceConfig {
   bool disabled; /* true if the service is disabled */
   int sts;      /* strict transport security */
   int max_headers_allowed;
+  int routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
   ServiceConfig *next;
 };
 

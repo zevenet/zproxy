@@ -25,6 +25,13 @@ class Service : public sessions::HttpSessionManager,
   int id;
   bool ignore_case;
 
+  enum LOAD_POLICY {
+    LP_ROUND_ROBIN,
+    LP_LEAST_CONNECTIONS,
+    LP_RESPONSE_TIME,
+    LP_PENDING_CONNECTIONS,
+  };
+
  public:
   ServiceConfig &service_config;
   Backend *getBackend(HttpStream &stream);
@@ -35,6 +42,8 @@ class Service : public sessions::HttpSessionManager,
   void addBackend(BackendConfig *backend_config, int backend_id,
                   bool emergency = true);
   bool doMatch(HttpRequest &request);
+  static void setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
+
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;
 };

@@ -4,6 +4,7 @@
 // Created by abdess on 4/25/18.
 //
 
+#include <vector>
 #include "Service.h"
 #include "../debug/debug.h"
 #include "../util/Network.h"
@@ -142,6 +143,11 @@ bool Service::doMatch(HttpRequest &request) {
   return true;
 }
 
+void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER)
+{
+  //TODO: DYNSCALE DEPENDING ON BACKENDSTAT PARAMETER
+}
+
 std::string Service::handleTask(ctl::CtlTask &task) {
   Debug::logmsg(LOG_DEBUG, "Service handling task");
   switch (task.command) {}
@@ -158,6 +164,71 @@ Backend *Service::getNextBackend(bool only_emergency) {
   // emergency_backend_set ...
   std::lock_guard<std::mutex> locker(mtx_lock);
   Backend *bck;
+  if (backend_set.size() == 0) return nullptr;
+    switch(service_config.routing_policy) {
+      case LP_ROUND_ROBIN: {
+          static unsigned long long seed;
+          seed++;
+          return backend_set[seed % backend_set.size()];
+      };
+
+      case LP_LEAST_CONNECTIONS: {
+        Backend* selected_backend = nullptr;
+        std::vector<Backend *>::iterator it;
+        for (it = backend_set.begin(); it != backend_set.end(); ++it)
+        {
+          if (selected_backend == nullptr) {
+            selected_backend = *it;
+          } else {
+            Backend* current_backend = *it;
+            if (selected_backend->getEstablishedConn() == 0)
+              return selected_backend;
+            if (selected_backend->getEstablishedConn()/selected_backend->backend_config.priority >
+                current_backend->getEstablishedConn()/selected_backend->backend_config.priority)
+              selected_backend = current_backend;
+          }
+        }
+        return selected_backend;
+      };
+
+      case LP_RESPONSE_TIME: {
+        Backend* selected_backend = nullptr;
+        for (auto it = backend_set.begin(); it != backend_set.end(); ++it)
+          {
+            if (selected_backend == nullptr) {
+              selected_backend = *it;
+            } else {
+              Backend* current_backend = *it;
+              if (selected_backend->getAvgLatency() < 0)
+                return selected_backend;
+              if (current_backend->getAvgLatency()/current_backend->backend_config.priority <
+                  selected_backend->getAvgLatency()/selected_backend->backend_config.priority)
+                selected_backend = current_backend;
+            }
+          }
+        return selected_backend;
+      };
+
+      case LP_PENDING_CONNECTIONS: {
+          Backend* selected_backend = nullptr;
+          std::vector<Backend*>::iterator it;
+          for (it = backend_set.begin(); it != backend_set.end(); ++it)
+          {
+            if (selected_backend == nullptr) {
+              selected_backend = *it;
+            } else {
+              Backend* current_backend = *it;
+              if (selected_backend->getPendingConn() == 0)
+                return selected_backend;
+              if (selected_backend->getPendingConn() < current_backend->getPendingConn())
+                selected_backend = current_backend;
+            }
+          }
+          return selected_backend;
+      };
+
+
+    }
   if (UNLIKELY(!only_emergency)) {
     do {
       bck = nullptr;
@@ -174,6 +245,7 @@ Backend *Service::getNextBackend(bool only_emergency) {
     bck = emergency_backend_set[emergency_seed % backend_set.size()];
   } while (bck != nullptr && bck->disabled);
 }
+
 Service::~Service() {
   ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }

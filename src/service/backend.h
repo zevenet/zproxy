@@ -4,12 +4,14 @@
 #pragma once
 
 #include <netdb.h>
-#include <string>
+#include <atomic>
 #include "../config/pound_struct.h"
 #include "../ctl/ControlManager.h"
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
 #include "../debug/Debug.h"
+#include "../util/utils.h"
+#include "../stats/backend_stats.h"
 
 enum BACKEND_STATUS {
   NO_BACKEND = -1,  // this should be used for first assigned backends
@@ -23,8 +25,9 @@ enum BACKEND_TYPE {
   REDIRECT,
   CACHE_SYSTEM,
 };
+using namespace Statistics;
 
-class Backend : public CtlObserver<ctl::CtlTask, std::string> {
+class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo{
  public:
   Backend();
   ~Backend();

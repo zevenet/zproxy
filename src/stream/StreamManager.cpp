@@ -373,6 +373,7 @@ void StreamManager::onRequestEvent(int fd) {
                                            // null
                 if (stream->backend_connection.getFileDescriptor() !=
                     BACKEND_STATUS::NO_BACKEND) {
+                  stream->backend_connection.setBackend(stream->backend_connection.getBackend(), false);
                   deleteFd(stream->backend_connection
                                .getFileDescriptor());  // TODO:: Client cannot
                                                        // be connected to more
@@ -382,7 +383,8 @@ void StreamManager::onRequestEvent(int fd) {
                       stream->backend_connection.getFileDescriptor());
                   stream->backend_connection.closeConnection();
                 }
-                stream->backend_connection.setBackend(bck);
+                stream->backend_connection.setBackend(bck, true);
+                stream->backend_connection.conn_start = std::chrono::steady_clock::now();
                 op_state = stream->backend_connection.doConnect(
                     *bck->address_info, bck->conn_timeout);
                 switch (op_state) {
@@ -393,12 +395,14 @@ void StreamManager::onRequestEvent(int fd) {
                                                     response.length());
                     Debug::Log("Error connecting to backend " + bck->address,
                                LOG_NOTICE);  // TODO:: respond e503
+                    stream->backend_connection.setBackend(bck, false);
                     stream->backend_connection.closeConnection();
                     return;
                   }
 
                   case IO::OP_IN_PROGRESS: {
                     stream->timer_fd.set(bck->conn_timeout * 1000);
+                    stream->backend_connection.getBackend()->increaseConnTimeoutAlive();
                     timers_set[stream->timer_fd.getFileDescriptor()] = stream;
                     addFd(stream->timer_fd.getFileDescriptor(),
                           EVENT_TYPE::READ, EVENT_GROUP::CONNECT_TIMEOUT);
@@ -409,7 +413,6 @@ void StreamManager::onRequestEvent(int fd) {
                         stream->backend_connection.getFileDescriptor());
                     // Debug::Log("Connected to backend : " + bck->address + ":"
                     // + std::to_string(bck->port), LOG_DEBUG);
-                    stream->backend_connection.setBackend(bck);
                     streams_set[stream->backend_connection
                                     .getFileDescriptor()] = stream;
 
@@ -488,6 +491,11 @@ void StreamManager::onResponseEvent(int fd) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   auto result = stream->backend_connection.read();
+  stream->backend_connection.data_end = std::chrono::steady_clock::now();
+  stream->backend_connection.getBackend()->calculateLatency(
+          std::chrono::duration_cast<std::chrono::duration<double>>
+          (stream->backend_connection.data_end - stream->backend_connection.data_start).count());
+
   if (result == IO::ERROR) {
     Debug::Log("Error reading response ", LOG_DEBUG);
     // TODO:: What to do if backend down!!
@@ -501,6 +509,10 @@ void StreamManager::onResponseEvent(int fd) {
       &parsed);  // parsing http data as response structured
   updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE,
            EVENT_GROUP::CLIENT);
+  stream->backend_connection.data_completly_end = std::chrono::steady_clock::now();
+  stream->backend_connection.getBackend()->setAvgTransferTime(
+          std::chrono::duration_cast<std::chrono::duration<double>>
+          (stream->backend_connection.data_completly_end - stream->backend_connection.data_start).count());
 
   //  switch (ret) {
   //    case http_parser::SUCCESS:
@@ -580,6 +592,8 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   if (stream->backend_connection.getBackend()->conn_timeout > 0 &&
       Network::isConnected(fd)) {
     stream->timer_fd.unset();
+    stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
+    stream->backend_connection.conn_end = std::chrono::steady_clock::now();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   // skip lstn->head_off
@@ -594,6 +608,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
     addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
           EVENT_GROUP::RESPONSE_TIMEOUT);
     updateFd(fd, EVENT_TYPE::READ, SERVER);
+    stream->backend_connection.data_start = std::chrono::steady_clock::now();
 
   } else if (result == IO::DONE_TRY_AGAIN) {
     updateFd(fd, EVENT_TYPE::WRITE, SERVER);
@@ -705,6 +720,7 @@ void StreamManager::clearStream(HttpStream* stream) {
     deleteFd(stream->backend_connection.getFileDescriptor());
     streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->backend_connection.getFileDescriptor());
+    stream->backend_connection.setBackend(stream->backend_connection.getBackend(), false);
   }
   delete stream;
 }
