@@ -54,7 +54,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	require Zevenet::Farm::L4xNAT::Config;
 
 	&zenlog(
-		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns", "debug", "LSLB", "debug", "LSLB"
+		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns",
+		"debug", "LSLB", "debug", "LSLB"
 	) if &debug;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -268,7 +269,6 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-
 =begin nd
 Function: setL4FarmBackendsSessionsRemove
 
@@ -340,7 +340,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $serverid = 0;         # server index tracker
 
 	&zenlog(
-		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)", "debug", "LSLB"
+		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)",
+		"debug", "LSLB"
 	);
 
 	my $farm        = &getL4FarmStruct( $farm_name );
@@ -396,7 +397,9 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	{
 		$output |= &refreshL4FarmRules( \%farm );
 
-		if ( $status eq 'fgDOWN' && $farm{ lbalg } ne 'prio' && $farm{ persist } eq 'ip' )
+		if (    $status eq 'fgDOWN'
+			 && $farm{ lbalg } ne 'prio'
+			 && $farm{ persist } eq 'ip' )
 		{
 			&setL4FarmBackendsSessionsRemove( $farm{ name }, $server_id );
 		}
@@ -419,7 +422,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	return $output;
 }
 
-
 =begin nd
 Function: getL4FarmServers
 
@@ -440,14 +442,14 @@ sub getL4FarmServers    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	open my $fd, '<', "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error",
+				  "LSLB" );
 
-	chomp(my @content = <$fd>);
+	chomp ( my @content = <$fd> );
 	close $fd;
 
 	return &_getL4FarmParseServers( \@content );
 }
-
 
 =begin nd
 Function: _getL4FarmParseServers
@@ -466,19 +468,19 @@ Returns:
 sub _getL4FarmParseServers
 {
 	my $config = shift;
-	my $stage = 0;
+	my $stage  = 0;
 	my $sindex = 0;
 	my $server;
 	my @servers;
 
 	require Zevenet::Farm::L4xNAT::Config;
 	my $farmStatus = &_getL4ParseFarmConfig( 'status', undef, $config );
-	my $fproto = &_getL4ParseFarmConfig( 'proto', undef, $config );
+	my $fproto     = &_getL4ParseFarmConfig( 'proto',  undef, $config );
 
 	require Zevenet::Alias;
 	my $alias = getAlias( 'backend' );
 
-	foreach my $line( @{ $config } )
+	foreach my $line ( @{ $config } )
 	{
 		chomp ( $line );
 
@@ -505,6 +507,7 @@ sub _getL4FarmParseServers
 			my $rip = $aux[2];
 			if ( $port ne '' && $fproto ne 'all' )
 			{
+				require Zevenet::Net::Validate;
 				if ( &ipversion( $aux[2] ) == 4 )
 				{
 					$rip = "$aux[2]\:$port";
@@ -515,18 +518,19 @@ sub _getL4FarmParseServers
 				}
 			}
 
-			push @servers, {
-				alias		=> $alias->{ $aux[2] },
-				id		=> $sindex,
-				ip		=> $aux[2],
-				port		=> ( $aux[3] ) ? $aux[3] : undef,
-				tag		=> $aux[4],
-				weight		=> $aux[5] + 0,
-				priority	=> $aux[6] + 0,
-				max_conns	=> $aux[8] + 0,
-				status		=> $status,
-				rip		=> $rip,
-			};
+			push @servers,
+			  {
+				alias     => $alias->{ $aux[2] },
+				id        => $sindex,
+				ip        => $aux[2],
+				port      => ( $aux[3] ) ? $aux[3] : undef,
+				tag       => $aux[4],
+				weight    => $aux[5] + 0,
+				priority  => $aux[6] + 0,
+				max_conns => $aux[8] + 0,
+				status    => $status,
+				rip       => $rip,
+			  };
 
 			$sindex++;
 		}
@@ -534,7 +538,6 @@ sub _getL4FarmParseServers
 
 	return \@servers;    # return reference
 }
-
 
 =begin nd
 Function: _runL4ServerStart
@@ -559,7 +562,8 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $status = 0;
 	my $rules;
 
-	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id", "debug", "LSLB" )
+	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id",
+			 "debug", "LSLB" )
 	  if &debug;
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
@@ -797,8 +801,8 @@ sub getL4FarmBackendMaintenance
 
 	return (    # parentheses required
 		$servers[$backend]{ status } eq 'maintenance'
-		? 0                                 # in maintenance
-		: 1                                 # not in maintenance
+		? 0                                             # in maintenance
+		: 1                                             # not in maintenance
 	);
 }
 
@@ -916,7 +920,8 @@ sub resetL4FarmBackendConntrackMark
 	{
 		if ( $return_code )
 		{
-			&zenlog( "Connection tracking for $server->{ vip } not found.", "info", "LSLB" );
+			&zenlog( "Connection tracking for $server->{ vip } not found.", "info",
+					 "LSLB" );
 		}
 		else
 		{

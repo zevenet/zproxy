@@ -258,7 +258,7 @@ sub runIPDSStartByFarm
 	}
 
 	# start waf rules
-	&reloadWAFByFarm( $farmname );
+	&reloadWAFByFarm( $farmname ) if ( @{ $rules->{ waf } } );
 }
 
 =begin nd
