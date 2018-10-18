@@ -27,9 +27,10 @@ include 'Zevenet::IPDS::Core';
 ########### GET L4XNAT
 # GET /farms/<farmname> Request info of a l4xnat Farm
 
-sub farms_name_l4 # ( $farmname )
+sub farms_name_l4    # ( $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $out_p;
@@ -48,48 +49,49 @@ sub farms_name_l4 # ( $farmname )
 	my $fgcommand   = $fgconfig[2];
 	my $fgtimecheck = $fgconfig[1];
 	my $fglog       = $fgconfig[4];
-	
+
 	if ( !$fgtimecheck ) { $fgtimecheck = 5; }
-	if ( !$fguse ) { $fguse = "false"; }
-	if ( !$fglog  ) { $fglog = "false"; }
-	if ( !$fgcommand ) { $fgcommand = ""; }
+	if ( !$fguse )       { $fguse       = "false"; }
+	if ( !$fglog )       { $fglog       = "false"; }
+	if ( !$fgcommand )   { $fgcommand   = ""; }
 
 	$out_p = {
-			status      => $farm_st{ status },
-			vip         => $farm_st{ vip },
-			vport       => $farm_st{ vport },
-			algorithm   => $farm_st{ lbalg },
-			nattype     => $farm_st{ mode },
-			persistence => $farm_st{ persist },
-			protocol    => $farm_st{ vproto },
-			ttl         => $farm_st{ ttl },
-			fgenabled   => $fguse,
-			fgtimecheck => $fgtimecheck + 0,
-			fgscript    => $fgcommand,
-			fglog       => $fglog,
-			listener    => 'l4xnat',
+			   status      => $farm_st{ status },
+			   vip         => $farm_st{ vip },
+			   vport       => $farm_st{ vport },
+			   algorithm   => $farm_st{ lbalg },
+			   nattype     => $farm_st{ mode },
+			   persistence => $farm_st{ persist },
+			   protocol    => $farm_st{ vproto },
+			   ttl         => $farm_st{ ttl },
+			   fgenabled   => $fguse,
+			   fgtimecheck => $fgtimecheck + 0,
+			   fgscript    => $fgcommand,
+			   fglog       => $fglog,
+			   listener    => 'l4xnat',
 	};
 
 	########### backends
 	my @out_b = $farm_st{ servers };
 
+	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	my $body = {
-			description	=> "List farm $farmname",
-			params		=> $out_p,
-			backends	=> \@out_b,
-			ipds		=> $ipds,
+				 description => "List farm $farmname",
+				 params      => $out_p,
+				 backends    => \@out_b,
+				 ipds        => $ipds,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
-
 
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;
@@ -110,7 +112,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -122,7 +125,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -134,7 +138,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}
