@@ -40,7 +40,8 @@ include 'Zevenet::Net::Bonding';
 include 'Zevenet::Net::Floating';
 include 'Zevenet::System::SSH';
 
-package GLOBAL {
+package GLOBAL
+{
 	our $http_status_codes = {
 
 		# 2xx Success codes
@@ -81,9 +82,6 @@ require Zevenet::Config;
 require Zevenet::Validate;
 include 'Zevenet::API3::Auth';
 
-&zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
-&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
-
 ################################################################################
 #
 # Start [Method URI] calls
@@ -112,14 +110,14 @@ POST qr{^/session$} => sub {
 
 			my ( $header ) = split ( "\r\n", $session->header() );
 			my ( undef, $session_cookie ) = split ( ': ', $header );
-			my $key =  &keycert();
+			my $key  = &keycert();
 			my $host = &getHostname();
 
 			&httpResponse(
 						   {
-								body => { key	=> $key, host => $host },
-								code    => 200,
-								headers => { 'Set-cookie' => $session_cookie },
+							 body => { key => $key, host => $host },
+							 code => 200,
+							 headers => { 'Set-cookie' => $session_cookie },
 						   }
 			);
 		}
@@ -650,7 +648,6 @@ if ( $q->path_info =~ qr{^/stats} )
 		&stats_conns();
 	};
 
-
 	# Farm stats
 	my $modules_re = &getValidFormat( 'farm_modules' );
 	GET qr{^/stats/farms$} => sub {
@@ -780,7 +777,7 @@ if ( $q->path_info =~ qr{^/system/cluster} )
 	include 'Zevenet::API3::System::Cluster';
 
 	#### /system/cluster
-	_cluster:
+  _cluster:
 	GET qr{^/system/cluster$} => sub {
 		&get_cluster( @_ );
 	};
@@ -1153,7 +1150,6 @@ if ( $q->path_info =~ qr{/ipds/dos} )
 		&del_dos_from_farm( @_ );
 	};
 }
-
 
 &httpResponse(
 			   {
