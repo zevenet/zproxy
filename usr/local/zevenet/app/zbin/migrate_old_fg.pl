@@ -201,7 +201,7 @@ sub getFarmGuardianLog    # ($fname,$svice)
 
 	return -1 if ( $fgfile == -1 || !-f "$configdir/$fgfile" );
 
-	open $fd, '<', "$configdir/$fgfile";
+	open my $fd, '<', "$configdir/$fgfile";
 	my $line;
 	my $lastline;
 	while ( $line = <$fd> )
