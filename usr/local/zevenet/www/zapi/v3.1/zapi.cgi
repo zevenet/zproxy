@@ -403,9 +403,11 @@ sub certcontrol
 sub checkActivationCertificate
 {
 	my $swcert = 0;
+	my $uploadCertFlag = 0;
 	if ( scalar (@_) > 0 )
 	{
 		my $tmpCertFile = $_[0];
+		$uploadCertFlag = 1;
 		$swcert = &certcontrol("$tmpCertFile");
 	}
 	else
@@ -451,7 +453,7 @@ sub checkActivationCertificate
 					 certificate_key => &keycert(),
 					 hostname        => &getHostname(),
 		};
-
+		return ( { "msg" => $msg } ) if $uploadCertFlag == 1;
 		return &httpResponse( { code => 403, body => $body } );
 	}
 

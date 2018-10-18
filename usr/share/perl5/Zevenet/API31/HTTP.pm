@@ -24,7 +24,10 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 my %http_status_codes = (
 
@@ -36,6 +39,7 @@ my %http_status_codes = (
 	# 4xx Client Error codes
 	400 => 'Bad Request',
 	401 => 'Unauthorized',
+	402 => 'Certificate not valid',
 	403 => 'Forbidden',
 	404 => 'Not Found',
 	406 => 'Not Acceptable',
@@ -47,12 +51,14 @@ sub GET
 {
 	my ( $path, $code, $mod ) = @_;
 
-	return unless $ENV{ REQUEST_METHOD } eq 'GET' or $ENV{ REQUEST_METHOD } eq 'HEAD';
+	return
+	  unless $ENV{ REQUEST_METHOD } eq 'GET'
+	  or $ENV{ REQUEST_METHOD } eq 'HEAD';
 
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("GET captures( @captures )", "debug", "ZAPI") if &debug();
+	&zenlog( "GET captures( @captures )", "debug", "ZAPI" ) if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -73,7 +79,7 @@ sub POST
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("POST captures( @captures )", "debug", "ZAPI") if &debug();
+	&zenlog( "POST captures( @captures )", "debug", "ZAPI" ) if &debug();
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -107,7 +113,8 @@ sub POST
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "warning", "ZAPI" );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "warning",
+				 "ZAPI" );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -134,7 +141,7 @@ sub PUT
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("PUT captures( @captures )", "debug", "ZAPI") if &debug();
+	&zenlog( "PUT captures( @captures )", "debug", "ZAPI" ) if &debug();
 
 	my $data = &getCgiParam( 'PUTDATA' );
 	my $input_ref;
@@ -168,7 +175,8 @@ sub PUT
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "warning", "ZAPI" );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "warning",
+				 "ZAPI" );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -195,7 +203,7 @@ sub DELETE
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("DELETE captures( @captures )", "debug", "ZAPI") if &debug();
+	&zenlog( "DELETE captures( @captures )", "debug", "ZAPI" ) if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -216,7 +224,7 @@ sub OPTIONS
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("OPTIONS captures( @captures )", "debug", "ZAPI") if &debug();
+	&zenlog( "OPTIONS captures( @captures )", "debug", "ZAPI" ) if &debug();
 
 	$code->( @captures );
 }
@@ -238,13 +246,14 @@ sub OPTIONS
 
 		This function exits the execution uf the current process.
 =cut
+
 sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
 	my $self = shift;
 
 	return $self unless exists $ENV{ GATEWAY_INTERFACE };
 
-	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG
+  #~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG
 
 	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
@@ -274,7 +283,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		  ;
 	}
 
-	if ( exists $ENV{HTTP_COOKIE} && $ENV{HTTP_COOKIE} =~ /CGISESSID/ )
+	if ( exists $ENV{ HTTP_COOKIE } && $ENV{ HTTP_COOKIE } =~ /CGISESSID/ )
 	{
 		require Zevenet::API31::Auth;
 
@@ -344,7 +353,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 	if ( &debug )
 	{
 		# log request if debug is enabled
-		my $req_msg = "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+		my $req_msg =
+		  "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+
 		# include memory usage if debug is 2 or higher
 		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
 		&zenlog( $req_msg, "debug", "ZAPI" );
@@ -364,7 +375,7 @@ sub httpErrorResponse
 {
 	my $args;
 
-	eval { $args = @_ == 1? shift @_: { @_ }; };
+	eval { $args = @_ == 1 ? shift @_ : { @_ }; };
 
 	# check errors loading the hash reference
 	if ( $@ )
@@ -373,7 +384,7 @@ sub httpErrorResponse
 	}
 
 	# verify we have a hash reference
-	unless ( ref( $args ) eq 'HASH' )
+	unless ( ref ( $args ) eq 'HASH' )
 	{
 		&zdie( "httpErrorResponse: Argument is not a hash reference." );
 	}
@@ -414,7 +425,7 @@ sub httpSuccessResponse
 {
 	my ( $args ) = @_;
 
-	unless ( ref( $args ) eq 'HASH' )
+	unless ( ref ( $args ) eq 'HASH' )
 	{
 		&zdie( "httpSuccessResponse: Argument is not a hash reference" );
 	}
@@ -436,14 +447,14 @@ sub httpSuccessResponse
 	};
 
 	&zenlog( $args->{ log_msg }, "info", "ZAPI" ) if exists $args->{ log_msg };
-	&httpResponse({ code => $args->{ code }, body => $body });
+	&httpResponse( { code => $args->{ code }, body => $body } );
 }
 
 sub httpDownloadResponse
 {
 	my $args;
 
-	eval { $args = @_ == 1? shift @_: { @_ }; };
+	eval { $args = @_ == 1 ? shift @_ : { @_ }; };
 
 	# check errors loading the hash reference
 	if ( $@ )
@@ -451,7 +462,7 @@ sub httpDownloadResponse
 		&zdie( "httpDownloadResponse: Wrong argument received" );
 	}
 
-	unless ( ref( $args ) eq 'HASH' )
+	unless ( ref ( $args ) eq 'HASH' )
 	{
 		&zdie( "httpDownloadResponse: Argument is not a hash reference" );
 	}
@@ -502,7 +513,7 @@ sub httpDownloadResponse
 
 	&zenlog( "[Download] $args->{ desc }: $path", "info", "ZAPI" );
 
-	&httpResponse({ code => 200, headers => $headers, body => $body });
+	&httpResponse( { code => 200, headers => $headers, body => $body } );
 }
 
 1;
