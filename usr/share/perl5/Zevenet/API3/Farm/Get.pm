@@ -23,7 +23,6 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::Farm;
 use Zevenet::Lock;
 
 use Zevenet::Farm::L4xNAT;
