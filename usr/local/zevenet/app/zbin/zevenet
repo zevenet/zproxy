@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
 use Zevenet::Net::Core;
 use Zevenet::Net::Interface;
 use Zevenet::Net::Route;
