@@ -82,9 +82,9 @@ foreach my $farm ( &getFarmNameList() )
 								args   => [$farm, $srv],
 				);
 				my $status_fg = &eload(
-								module => 'Zevenet::Farm::GSLB::FarmGuardian',
-								func   => 'getGSLBFarmFGStatus',
-								args   => [$farm, $srv],
+										module => 'Zevenet::Farm::GSLB::FarmGuardian',
+										func   => 'getGSLBFarmFGStatus',
+										args   => [$farm, $srv],
 				);
 
 				next if not $conf[2];
@@ -126,7 +126,6 @@ foreach my $farm ( &getFarmNameList() )
 }
 system ( "rm $configdir/*_guardian.conf 2>/dev/null" );
 
-
 ### ### ### functions ### ### ###
 
 =begin nd
@@ -153,6 +152,8 @@ sub getFarmGuardianFile    # ($fname,$svice)
 	my ( $fname, $svice ) = @_;
 
 	my $output = -1;
+
+	return $output if ( !-e "$configdir" or !-d "$configdir" );
 
 	opendir ( my $dir, "$configdir" );
 
@@ -198,10 +199,7 @@ sub getFarmGuardianLog    # ($fname,$svice)
 
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
 
-	if ( $fgfile == -1 )
-	{
-		return -1;
-	}
+	return -1 if ( $fgfile == -1 || !-f "$configdir/$fgfile" );
 
 	open $fd, '<', "$configdir/$fgfile";
 	my $line;
@@ -578,6 +576,8 @@ sub getFarmGuardianConf    # ($fname,$svice)
 		}
 		$fgfile = "${fname}_${svice}guardian.conf";
 	}
+
+	return -1 if ( !-f "$configdir/$fgfile" );
 
 	# read file
 	open my $fh, '<', "$configdir/$fgfile";
