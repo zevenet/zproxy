@@ -25,7 +25,6 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-
 =begin nd
 Function: loadL4Modules
 
@@ -451,7 +450,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				}
 				else
 				{
-					&zenlog( "Error opening file l4sd_pidfile: $!", "error", "LSLB" ) if !defined $pidfile;
+					&zenlog( "Error opening file l4sd_pidfile: $!", "error", "LSLB" )
+					  if !defined $pidfile;
 				}
 			}
 		}
@@ -524,11 +524,14 @@ sub setFarmProto    # ($proto,$farm_name)
 	my ( $proto, $farm_name ) = @_;
 
 	require Zevenet::FarmGuardian;
+	require Zevenet::Netfilter;
+
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
-	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type",
+			 "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $old_proto  = $$farm{ vproto };
@@ -565,40 +568,20 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
+	# Remove required modules
+	if ( $old_proto =~ /sip|ftp/ )
+	{
+		my @allrules = &getIptList( $farm_name, "raw", "PREROUTING" );
+		&deleteIptRules( $farm_name, "farm", $farm_name, "raw", "PREROUTING",
+						 @allrules );
+
+		&unloadL4Modules( $old_proto );
+	}
+
 	if ( $$farm{ status } eq 'up' )
 	{
-		# Remove required modules
-		if ( $old_proto =~ /sip|ftp/ )
-		{
-			&unloadL4Modules( $old_proto );
-		}
 
-		# Load required modules
-		if ( $$farm{ vproto } =~ /sip|ftp/ )
-		{
-			$output = &loadL4Modules( $$farm{ vproto } );
-		}
-
-		$output = &refreshL4FarmRules( $farm );
-
-		if ( $old_proto =~ /sip|ftp/ || $$farm{ vproto } =~ /sip|ftp/ )
-		{
-			require Zevenet::Netfilter;
-			my @rules;
-			my $prio_server = &getL4ServerWithLowestPriority( $farm );
-			foreach my $server ( @{ $$farm{ servers } } )
-			{
-				next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
-
-				my $rule = &genIptHelpers( $farm, $server );
-
-				$rule =
-				  ( $$farm{ vproto } !~ /sip|ftp/ )
-				  ? &getIptRuleDelete( $rule )
-				  : &getIptRuleInsert( $farm, $server, $rule );
-				$output = &setIptRuleCheck( $rule );
-			}
-		}
+		$output |= &refreshL4FarmRules( $farm );
 
 		if ( $fg_enabled eq 'true' )
 		{
@@ -673,7 +656,8 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	require Zevenet::FarmGuardian;
 
-	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type",
+			 "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -732,8 +716,8 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 			# apply the desired action to the rule template
 			$rule = ( $$farm{ nattype } eq 'nat' )
-			  ? &getIptRuleAppend( $rule )            # append for SNAT aka NAT
-			  : &getIptRuleDelete( $rule );           # delete for DNAT
+			  ? &getIptRuleAppend( $rule )     # append for SNAT aka NAT
+			  : &getIptRuleDelete( $rule );    # delete for DNAT
 
 			# apply rules as they are generated, so rule numbers are right
 			$output = &applyIptRules( $rule );
@@ -1044,7 +1028,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$vip_port = $args[3] if ( ! $vip_port );
+			$vip_port = $args[3] if ( !$vip_port );
 			$line =
 			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
 			splice @configfile, $i, $line;
@@ -1088,14 +1072,17 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			kill 'CONT' => $fg_pid;
 		}
 
-		# Reload required modules
-		if ( $$farm{ vproto } =~ /sip|ftp/ )
+		if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 		{
-			my $status = &loadL4Modules( $$farm{ vproto } );
+			&loadL4Modules( $$farm{ vproto } );
+
+			my $rule = &genIptHelpers( $farm );
+			$rule = &getIptRuleReplace( $farm, undef, $rule );
+			&applyIptRules( $rule );
 		}
 	}
 
-	return 0;    # FIXME?
+	return 0;                                   # FIXME?
 }
 
 =begin nd
@@ -1163,9 +1150,9 @@ sub getL4ProtocolTransportLayer
 	my $vproto = shift;
 
 	return
-	    ( $vproto eq 'sip'  ) ? 'all'
+	    ( $vproto eq 'sip' )  ? 'all'
 	  : ( $vproto eq 'tftp' ) ? 'udp'
-	  : ( $vproto eq 'ftp'  ) ? 'tcp'
+	  : ( $vproto eq 'ftp' )  ? 'tcp'
 	  :                         $vproto;
 }
 
@@ -1203,7 +1190,7 @@ sub getL4FarmStruct
 	$farm{ ttl }      = ( &getL4FarmMaxClientTime( $farm{ name } ) )[0];
 	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ status }   = &getFarmStatus( $farm{ name } );
-	$farm{ logs }   = &getL4FarmLogs( $farm{ name } );
+	$farm{ logs }     = &getL4FarmLogs( $farm{ name } );
 	$farm{ servers }  = [];
 
 	foreach my $server_line ( &getL4FarmServers( $farm{ name } ) )
@@ -1263,7 +1250,9 @@ sub getL4ServerStruct
 	$server{ max_conns } = shift @server_args // 0;    # input 7
 	$server{ rip }       = $server{ vip };
 
-	if ( $server{ vport } ne '' && $$farm{ proto } ne 'all' && $$farm{ proto } ne 'sip' )
+	if (    $server{ vport } ne ''
+		 && $$farm{ proto } ne 'all'
+		 && $$farm{ proto } ne 'sip' )
 	{
 		if ( &ipversion( $server{ rip } ) == 4 )
 		{
@@ -1349,6 +1338,15 @@ sub refreshL4FarmRules    # AlgorithmRules
 		return 1;
 	}
 
+	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
+	{
+		&loadL4Modules( $$farm{ vproto } );
+
+		my $rule = &genIptHelpers( $farm );
+		$rule = &getIptRuleInsert( $farm, undef, $rule );
+		$return_code |= &applyIptRules( $rule );
+	}
+
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
@@ -1371,18 +1369,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 		if ( $$farm{ persist } ne 'none' )    # persistence
 		{
 			$rule = &genIptMarkPersist( $farm, $server );
-
-			$rule =
-			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleReplace( $farm, undef,   $rule )
-			  : &getIptRuleReplace( $farm, $server, $rule );
-
-			$return_code |= &applyIptRules( $rule );
-		}
-
-		if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
-		{
-			$rule = &genIptHelpers( $farm, $server );
 
 			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )
@@ -1480,8 +1466,6 @@ sub reloadL4FarmsSNAT
 	}
 }
 
-
-
 =begin nd
 Function: getL4FarmLogs
 
@@ -1508,8 +1492,8 @@ sub getL4FarmLogs    # ($farm_name)
 		if ( $line ne "" )
 		{
 			my @line_a = split ( "\;", $line );
-			chomp($line_a[9]);
-			$output = 'true' if ($line_a[9] eq 'true');
+			chomp ( $line_a[9] );
+			$output = 'true' if ( $line_a[9] eq 'true' );
 			last;
 		}
 	}
@@ -1518,11 +1502,10 @@ sub getL4FarmLogs    # ($farm_name)
 	return $output;
 }
 
-
 sub setL4FarmLogs
 {
 	my $farmname = shift;
-	my $action = shift; 	# true or false
+	my $action   = shift;    # true or false
 	my $out;
 
 	# execute action
@@ -1550,7 +1533,6 @@ sub setL4FarmLogs
 	return $out;
 }
 
-
 # if action is false, the rule won't be started
 # if farm is in down status, the farm won't be started
 
@@ -1561,21 +1543,20 @@ sub reloadL4FarmLogsRule
 	require Zevenet::Netfilter;
 
 	my $error;
-	my $table = "mangle";
-	my $ipt_hook = "FORWARD";
+	my $table     = "mangle";
+	my $ipt_hook  = "FORWARD";
 	my $log_chain = "LOG_CONNS";
-	my $bin = &getBinVersion( $farmname );
-	my $farm = &getL4FarmStruct( $farmname );
+	my $bin       = &getBinVersion( $farmname );
+	my $farm      = &getL4FarmStruct( $farmname );
 
 	my $comment = "conns,$farmname";
-
 
 	# delete current rules
 	&runIptDeleteByComment( $comment, $log_chain, $table );
 
 	# delete chain if it was the last rule
 	my @ipt_list = `$bin -S $log_chain -t $table 2>/dev/null`;
-	my $err = $?;
+	my $err      = $?;
 
 	# If the CHAIN is created, has a rule: -N LOG_CONNS
 	if ( scalar @ipt_list <= 1 and !$err )
@@ -1590,7 +1571,7 @@ sub reloadL4FarmLogsRule
 	return if ( &getFarmStatus( $farmname ) ne 'up' );
 
 	my $comment_tag = "-m comment --comment \"$comment\"";
-	my $log_tag = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
+	my $log_tag     = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
 
 	# create chain if it does not exist
 	if ( &iptSystem( "$bin -S $log_chain -t $table" ) )
@@ -1599,29 +1580,28 @@ sub reloadL4FarmLogsRule
 		$error = &iptSystem( "$bin -A $ipt_hook -t $table -j $log_chain" );
 	}
 
-	my %farm_st        = %{ &getL4FarmStruct( $farmname ) };
+	my %farm_st = %{ &getL4FarmStruct( $farmname ) };
 	foreach my $bk ( @{ $farm_st{ servers } } )
 	{
 		my $mark = "-m mark --mark $bk->{tag}";
+
 		# log only the new connections
 		if ( &getGlobalConfiguration( 'full_farm_logs' ) ne 'true' )
 		{
-			$error |= &iptSystem( "$bin -A $log_chain -t $table -m state --state NEW $mark $log_tag $comment_tag" );
+			$error |= &iptSystem(
+				 "$bin -A $log_chain -t $table -m state --state NEW $mark $log_tag $comment_tag"
+			);
 		}
+
 		# log all trace
 		else
 		{
-			$error |= &iptSystem( "$bin -A $log_chain -t $table $mark $log_tag $comment_tag" );
+			$error |=
+			  &iptSystem( "$bin -A $log_chain -t $table $mark $log_tag $comment_tag" );
 		}
 	}
 
 	#~ return $error;
 }
-
-
-
-
-
-
 
 1;

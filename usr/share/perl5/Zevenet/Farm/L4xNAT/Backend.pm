@@ -26,7 +26,11 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 my $eload;
 
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 =begin nd
 Function: setL4FarmServer
 
@@ -56,7 +60,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	require Zevenet::Farm::L4xNAT::Config;
 
 	&zenlog(
-		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns", "debug", "LSLB", "debug", "LSLB"
+		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns",
+		"debug", "LSLB", "debug", "LSLB"
 	) if &debug;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -376,7 +381,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $serverid = 0;         # server index tracker
 
 	&zenlog(
-		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)", "debug", "LSLB"
+		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)",
+		"debug", "LSLB"
 	);
 
 	my $farm        = &getL4FarmStruct( $farm_name );
@@ -432,7 +438,9 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	{
 		$output |= &refreshL4FarmRules( \%farm );
 
-		if ( $status eq 'fgDOWN' && $farm{ lbalg } ne 'prio' && $farm{ persist } eq 'ip' )
+		if (    $status eq 'fgDOWN'
+			 && $farm{ lbalg } ne 'prio'
+			 && $farm{ persist } eq 'ip' )
 		{
 			&setL4FarmBackendsSessionsRemove( $farm{ name }, $server_id );
 		}
@@ -481,7 +489,8 @@ sub getL4FarmServers    # ($farm_name)
 	my @servers;
 
 	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error",
+				  "LSLB" );
 
 	while ( my $line = <FI> )
 	{
@@ -527,18 +536,19 @@ sub getL4FarmBackends    # ($farm_name)
 	my $farmStatus = &getFarmStatus( $farm_name );
 
 	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error",
+				  "LSLB" );
 
 	my $permission = 0;
 	if ( $eload )
 	{
 		$permission = &eload(
-					module => 'Zevenet::RBAC::Core',
-					func   => 'getRBACRolePermission',
-					args   => ['alias', 'list'],
-			)
+							  module => 'Zevenet::RBAC::Core',
+							  func   => 'getRBACRolePermission',
+							  args   => ['alias', 'list'],
+		);
 	}
-	require Zevenet::Alias if ( $permission );	
+	require Zevenet::Alias if ( $permission );
 	my $alias = getAlias( 'backend' ) if ( $permission );
 
 	while ( my $line = <FI> )
@@ -567,7 +577,7 @@ sub getL4FarmBackends    # ($farm_name)
 				alias => $permission ? $alias->{ $aux[2] } : undef,
 				id    => $sindex,
 				ip    => $aux[2],
-				port  => ( $aux[3] ) ? $aux[3] : undef,
+				port  => ( $aux[3] ) ? $aux[3]             : undef,
 
 				#~ mark=>$aux[4],
 				weight    => $aux[5] + 0,
@@ -638,7 +648,8 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $status = 0;
 	my $rules;
 
-	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id", "debug", "LSLB" )
+	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id",
+			 "debug", "LSLB" )
 	  if &debug;
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
@@ -797,7 +808,7 @@ sub getL4ServerActionRules
 		$rule = &genIptMasquerade( $farm, $server );
 
 		$rule = ( $switch eq 'off' )
-		  ? &getIptRuleDelete( $rule )    # delete
+		  ? &getIptRuleDelete( $rule )                         # delete
 		  : &getIptRuleAppend( $rule );
 
 		push ( @{ $$rules{ t_snat } }, $rule );
@@ -807,21 +818,10 @@ sub getL4ServerActionRules
 	$rule = &genIptMark( $farm, $server );
 
 	$rule = ( $switch eq 'off' )
-	  ? &getIptRuleDelete( $rule )        # delete
-	  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
+	  ? &getIptRuleDelete( $rule )                             # delete
+	  : &getIptRuleInsert( $farm, $server, $rule );            # insert second
 
 	push ( @{ $$rules{ t_mangle } }, $rule );
-
-	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
-	{
-		$rule = &genIptHelpers( $farm, $server );
-
-		$rule = ( $switch eq 'off' )
-		  ? &getIptRuleDelete( $rule )        # delete
-		  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
-
-		push ( @{ $$rules{ t_mangle_p } }, $rule );
-	}
 
 	return $rules;
 }
@@ -1001,7 +1001,8 @@ sub resetL4FarmBackendConntrackMark
 	{
 		if ( $return_code )
 		{
-			&zenlog( "Connection tracking for $server->{ vip } not found.", "info", "LSLB" );
+			&zenlog( "Connection tracking for $server->{ vip } not found.", "info",
+					 "LSLB" );
 		}
 		else
 		{

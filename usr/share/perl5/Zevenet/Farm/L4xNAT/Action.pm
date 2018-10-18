@@ -158,7 +158,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	my $status = 0;           # output
 
-	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf", "debug", "LSLB" )
+	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf",
+			 "debug", "LSLB" )
 	  if &debug;
 
 	# initialize a farm struct
@@ -185,10 +186,12 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		system ( "$l4sd >/dev/null 2>&1 &" );
 	}
 
-	# Load required modules
-	if ( $$farm{ vproto } =~ /sip|ftp/ )
+	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 	{
 		&loadL4Modules( $$farm{ vproto } );
+
+		my $rule = &genIptHelpers( $farm );
+		$rule = &runIptables( &applyIptRuleAction( $rule, 'append' ) );
 	}
 
 	my $rules;
@@ -364,6 +367,11 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	  &deleteIptRules( $farm_name, "farm", $farm_name, "nat", "POSTROUTING",
 					   @allrules );
 
+	@allrules = &getIptList( $farm_name, "raw", "PREROUTING" );
+	$status =
+	  &deleteIptRules( $farm_name,   "farm", $farm_name, "raw",
+					   "PREROUTING", @allrules );
+
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
@@ -392,7 +400,10 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 		unless ( defined $table_if )
 		{
-			&zenlog("Warning: Skipping removal of backend $server->{ tag } routing rule. Interface table not found.", "warning", "LSLB");
+			&zenlog(
+				"Warning: Skipping removal of backend $server->{ tag } routing rule. Interface table not found.",
+				"warning", "LSLB"
+			);
 			next;
 		}
 
