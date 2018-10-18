@@ -164,7 +164,9 @@ sub upload_activation_certificate    # ()
 			my $msg = "Error deleting new invalid activation certificate file";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		return $response;
+		my $msg =
+		  "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	else
 	{
