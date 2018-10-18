@@ -27,6 +27,7 @@ use warnings;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 use Zevenet::Farm::Action;
+use Zevenet::FarmGuardian;
 use Zevenet::Net::Core;
 use Zevenet::Net::Interface;
 use Zevenet::Net::Route;
