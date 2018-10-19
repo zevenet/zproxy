@@ -195,13 +195,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
-	{
-		if ( $fg_enabled eq 'true' )
-		{
-			kill 'STOP' => $fg_pid;
-		}
-	}
+	kill 'STOP' => $fg_pid if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' );
 
 	if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
 	{
@@ -719,12 +713,8 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $removing_be        = ( $caller =~ /runL4FarmServerDelete/ );
 	my $fg_pid             = &getFarmGuardianPid( $farm_name );
 
-	#~ &zlog("(caller(2))[3]:$caller");
-
-	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
-	{
-		kill 'STOP' => $fg_pid;
-	}
+	kill 'STOP' => $fg_pid
+	  if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be );
 
 	$farm = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
@@ -734,14 +724,12 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 
 	$output |= &applyIptRules( @{ $$rules{ t_mangle_p } } );
 	$output |= &applyIptRules( @{ $$rules{ t_mangle } } );
-	$output |= &applyIptRules( @{ $$rules{ t_nat } } );
-	$output |= &applyIptRules( @{ $$rules{ t_snat } } );
+	$output |= &applyIptRules( reverse @{ $$rules{ t_nat } } );
+	$output |= &applyIptRules( reverse @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
-	{
-		kill 'CONT' => $fg_pid;
-	}
+	kill 'CONT' => $fg_pid
+	  if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be );
 
 	return $output;
 }
@@ -783,45 +771,54 @@ sub getL4ServerActionRules
 				  && ( $$farm{ lbalg } eq 'prio' || $$server{ status } ne 'maintenance' ) )
 		  )
 		{
-			$rule = &genIptMarkPersist( $farm, $server );
+			my $prules_ref = &genIptMarkPersist( $farm, $server );
 
-			$rule = ( $switch eq 'off' )
-			  ? &getIptRuleDelete( $rule )    # delete
-			  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
-
-			push ( @{ $$rules{ t_mangle_p } }, $rule );
+			foreach my $rule ( @{ $prules_ref } )
+			{
+				$rule =
+				  ( $switch eq 'off' )
+				  ? &getIptRuleDelete( $rule )
+				  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
+				push ( @{ $$rules{ t_mangle_p } }, $rule );
+			}
 		}
 	}
 
 	## dnat (redirect) rules ##
-	$rule = &genIptRedirect( $farm, $server );
+	my $rule_ref = &genIptRedirect( $farm, $server );
+	foreach my $rule ( @{ $rule_ref } )
+	{
+		$rule = ( $switch eq 'off' )
+		  ? &getIptRuleDelete( $rule )                             # delete
+		  : &getIptRuleAppend( $rule );
 
-	$rule = ( $switch eq 'off' )
-	  ? &getIptRuleDelete( $rule )                             # delete
-	  : &getIptRuleAppend( $rule );
-
-	push ( @{ $$rules{ t_nat } }, $rule );
+		push ( @{ $$rules{ t_nat } }, $rule );
+	}
 
 	## rules for source nat or nat ##
 	if ( $$farm{ nattype } eq 'nat' )
 	{
-		$rule = &genIptMasquerade( $farm, $server );
+		my $rule_ref = &genIptMasquerade( $farm, $server );
+		foreach my $rule ( @{ $rule_ref } )
+		{
+			$rule = ( $switch eq 'off' )
+			  ? &getIptRuleDelete( $rule )    # delete
+			  : &getIptRuleAppend( $rule );
 
-		$rule = ( $switch eq 'off' )
-		  ? &getIptRuleDelete( $rule )                         # delete
-		  : &getIptRuleAppend( $rule );
-
-		push ( @{ $$rules{ t_snat } }, $rule );
+			push ( @{ $$rules{ t_snat } }, $rule );
+		}
 	}
 
 	## packet marking rules ##
-	$rule = &genIptMark( $farm, $server );
+	my $rule_ref = &genIptMark( $farm, $server );
+	foreach my $rule ( @{ $rule_ref } )
+	{
+		$rule = ( $switch eq 'off' )
+		  ? &getIptRuleDelete( $rule )        # delete
+		  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
 
-	$rule = ( $switch eq 'off' )
-	  ? &getIptRuleDelete( $rule )                             # delete
-	  : &getIptRuleInsert( $farm, $server, $rule );            # insert second
-
-	push ( @{ $$rules{ t_mangle } }, $rule );
+		push ( @{ $$rules{ t_mangle } }, $rule );
+	}
 
 	return $rules;
 }

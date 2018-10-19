@@ -190,8 +190,11 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	{
 		&loadL4Modules( $$farm{ vproto } );
 
-		my $rule = &genIptHelpers( $farm );
-		$rule = &runIptables( &applyIptRuleAction( $rule, 'append' ) );
+		my $rule_ref = &genIptHelpers( $farm );
+		foreach my $rule ( @{ $rule_ref } )
+		{
+			$status |= &runIptables( &applyIptRuleAction( $rule, 'append' ) );
+		}
 	}
 
 	my $rules;
@@ -522,51 +525,65 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 			my $rule_num;
 
 			# refresh marks
-			$rule = &genIptMark( $prev_farm, $server );
-
-			$rule_num =
-			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-			  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
-			$rule = &genIptMark( $farm, $server );
-			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-			push ( @rules, $rule );
-
-			if ( $$farm{ persist } ne 'none' )    # persistence
+			my $rule_ref = &genIptMark( $prev_farm, $server );
+			foreach my $rule ( @{ $rule_ref } )
 			{
-				$rule = &genIptMarkPersist( $prev_farm, $server );
 				$rule_num =
 				  ( $$farm{ lbalg } eq 'prio' )
 				  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
 				  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
-				$rule = &genIptMarkPersist( $farm, $server );
+				my $rule_ref = &genIptMark( $farm, $server );
+				foreach my $rule ( @{ $rule_ref } )
+				{
+					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+					push ( @rules, $rule );
+				}
+			}
+
+			if ( $$farm{ persist } ne 'none' )    # persistence
+			{
+				my $prule_ref = &genIptMarkPersist( $prev_farm, $server );
+				foreach my $rule ( @{ $prule_ref } )
+				{
+					$rule_num =
+					  ( $$farm{ lbalg } eq 'prio' )
+					  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
+					  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
+					my $rule_ref = &genIptMarkPersist( $farm, $server );
+					foreach my $rule ( @{ $rule_ref } )
+					{
+						$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+						push ( @rules, $rule );
+					}
+				}
+			}
+
+			# redirect
+			my $rule_ref = &genIptRedirect( $prev_farm, $server );
+			foreach my $rule ( @{ $rule_ref } )
+			{
+				$rule_num =
+				  ( $$farm{ lbalg } eq 'prio' )
+				  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
+				  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
+				$rule = &genIptRedirect( $farm, $server );
 				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
 				push ( @rules, $rule );
 			}
 
-			# redirect
-			$rule = &genIptRedirect( $prev_farm, $server );
-			$rule_num =
-			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-			  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
-			$rule = &genIptRedirect( $farm, $server );
-			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-			push ( @rules, $rule );
-
 			if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 			{
-				$rule = &genIptMasquerade( $farm, $server );
+				my $rule_ref = &genIptMasquerade( $farm, $server );
+				foreach my $rule ( @{ $rule_ref } )
+				{
+					my $rule_num =
+					  ( $$farm{ lbalg } eq 'prio' )
+					  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
+					  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
 
-				$rule_num =
-				  ( $$farm{ lbalg } eq 'prio' )
-				  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-				  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
-
-				$rule = &genIptMasquerade( $farm, $server );
-
-				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-				push ( @rules, $rule );
+					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+					push ( @rules, $rule );
+				}
 			}
 		}
 

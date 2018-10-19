@@ -226,11 +226,8 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
-	my $rule;              # output: iptables rule template string
-	if ( defined $farm )
-	{
-		$farm_name = $$farm{ name };
-	}
+	my @rules;             # output: iptables rule template string
+	my @protos = qw/tcp udp/;
 
 	if ( defined $farm )
 	{
@@ -243,23 +240,30 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer = '';
-	if ( $$farm{ proto } ne 'all' )
+	my $iptables_bin = &getBinVersion( $$farm{ name } );
+
+	foreach my $proto ( @protos )
 	{
-		$layer = "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }";
+		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
+
+		my $layer = '';
+		if ( $$farm{ proto } ne 'all' )
+		{
+			$layer = "--protocol $proto -m multiport --dports $$farm{ vport }";
+		}
+
+		my $rule =
+		    "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
+		  . "--destination $$farm{ vip } "
+		  . "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --rcheck --seconds $$farm{ ttl } "
+		  . "$layer "
+		  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
+		  . "--jump MARK --set-xmark $$server{ tag } ";
+
+		push ( @rules, $rule );
 	}
 
-	# Get the binary of iptables (iptables or ip6tables)
-	my $iptables_bin = &getBinVersion( $farm_name );
-
-	$rule =
-	    "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
-	  . "--destination $$farm{ vip } "
-	  . "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --rcheck --seconds $$farm{ ttl } "
-	  . "$layer "
-	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump MARK --set-xmark $$server{ tag } ";
-	return $rule;
+	return \@rules;
 }
 
 #
@@ -272,7 +276,8 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 
 	my $farm   = shift;    # input: first argument should be a farm reference
 	my $server = shift;    # input: second argument should be a server reference
-	my $rule;              # output: iptables rule template string
+	my @rules;             # output: iptables rule template string
+	my @protos = qw/tcp udp/;
 
 	if ( defined $farm )
 	{
@@ -286,83 +291,82 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer;
-	if ( $$farm{ proto } ne 'all' )
-	{
-		$layer = "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }";
-	}
-
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
-	# Every rule starts with:
-	# table, chain, destination(farm ip) and port(if required) definition
-	$rule = "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
-
-	  #~ . "--destination $$farm{ vip } "
-	  #~ . "$layer "
-	  ;
-
-	if ( $$farm{ lbalg } eq 'weight' )
+	foreach my $proto ( @protos )
 	{
-		$rule .= "--match statistic --mode random --probability $$server{ prob } ";
+		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
+
+		my $layer;
+		if ( $$farm{ proto } ne 'all' )
+		{
+			$layer = "--protocol $proto -m multiport --dports $$farm{ vport }";
+		}
+
+		my $rule = "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING ";
+
+		if ( $$farm{ lbalg } eq 'weight' )
+		{
+			$rule .= "--match statistic --mode random --probability $$server{ prob } ";
+		}
+
+		if ( $$farm{ lbalg } eq 'leastconn' )
+		{
+			$rule .= "--match condition --condition '\_$$farm{ name }\_$$server{ tag }\_' ";
+		}
+
+		$rule =
+		    $rule
+		  . "--destination $$farm{ vip } "
+		  . "$layer "
+		  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
+		  . "--jump MARK --set-xmark $$server{ tag } ";
+
+		push ( @rules, $rule );
 	}
 
-	if ( $$farm{ lbalg } eq 'leastconn' )
-	{
-		$rule .= "--match condition --condition '\_$$farm{ name }\_$$server{ tag }\_' ";
-	}
-
-	#~ if ( $$farm{ lbalg } eq 'prio' )
-	#~ {
-	#~ $rule = $rule;
-	#~ }
-
-	# include for every rule:
-	# - match new packets/connections
-	# - add comment with farm name and backend id number
-	# - set mark
-	$rule =
-	    $rule
-	  . "--destination $$farm{ vip } "
-	  . "$layer "
-	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump MARK --set-xmark $$server{ tag } ";
-
-	return $rule;
+	return \@rules;
 }
 
 #
 sub genIptHelpers    # ($farm_ref)
 {
 	my $farm = shift;    # input: first argument should be a farm reference
-	my $rule;            # output: iptables rule template string
+	my @rules;           # output: iptables rules
+	my @protos = qw/tcp udp/;
 
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $$farm{ name } );
 
-	# Every rule starts with:
-	# table, chain, destination(farm ip) and port(if required) definition
-	$rule = "$iptables_bin --table raw --::ACTION_TAG:: PREROUTING ";
-
-	# include for every rule:
-	# - match related packets/connections with helper
-	# - match per backend mark
-	# - add comment with farm name and backend id number
-	$rule = $rule . "--destination $$farm{ vip } ";
-
-	if ( $$farm{ proto } ne "all" )
+	foreach my $proto ( @protos )
 	{
-		$rule = $rule
-		  . "--protocol $$farm{ proto } --match multiport --dports $$farm{ vport } ";
+		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
+
+		# Every rule starts with:
+		# table, chain, destination(farm ip) and port(if required) definition
+		my $rule = "$iptables_bin --table raw --::ACTION_TAG:: PREROUTING ";
+
+		# include for every rule:
+		# - match related packets/connections with helper
+		# - match per backend mark
+		# - add comment with farm name and backend id number
+		$rule = $rule . "--destination $$farm{ vip } ";
+
+		if ( $$farm{ proto } ne "all" )
+		{
+			$rule = $rule . "--protocol $proto --match multiport --dports $$farm{ vport } ";
+		}
+
+		$rule =
+		    $rule
+		  . "--match comment --comment ' FARM\_$$farm{ name }\_ ' "
+		  . "--jump CT --helper $$farm{ vproto } ";
+
+		push ( @rules, $rule );
 	}
 
-	$rule =
-	    $rule
-	  . "--match comment --comment ' FARM\_$$farm{ name }\_ ' "
-	  . "--jump CT --helper $$farm{ vproto } ";
-
-	return $rule;
+	return \@rules;
 }
 
 #
@@ -374,6 +378,8 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
+	my @rules;             # output: iptables rule template string
+	my @protos = qw/tcp udp/;
 
 	if ( defined $farm )
 	{
@@ -386,39 +392,44 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer = '';
-	if ( $$farm{ proto } ne "all" )
+	my $iptables_bin = &getBinVersion( $$farm{ name } );
+
+	foreach my $proto ( @protos )
 	{
-		$layer = "--protocol $$farm{ proto }";
+		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
+
+		my $layer = '';
+		if ( $$farm{ proto } ne "all" )
+		{
+			$layer = "--protocol $proto";
+		}
+
+		my $persist_match = '';
+		if ( $$farm{ persist } ne "none" )
+		{
+			$persist_match =
+			  "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set";
+		}
+
+		my $connlimit_match = '';
+		if ( $$server{ max_conns } )
+		{
+			$connlimit_match .=
+			  "--match connlimit --connlimit-upto $$server{ max_conns } --connlimit-daddr";
+		}
+
+		my $rule =
+		    "$iptables_bin --table nat --::ACTION_TAG:: PREROUTING "
+		  . "--match mark --mark $$server{ tag } "
+		  . "$persist_match "
+		  . "$connlimit_match "
+		  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
+		  . "--jump DNAT $layer --to-destination $$server{ rip } ";
+
+		push ( @rules, $rule );
 	}
 
-	my $persist_match = '';
-	if ( $$farm{ persist } ne "none" )
-	{
-		$persist_match =
-		  "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set";
-	}
-
-	my $connlimit_match = '';
-	if ( $$server{ max_conns } )
-	{
-		$connlimit_match .=
-		  "--match connlimit --connlimit-upto $$server{ max_conns } --connlimit-daddr";
-	}
-
-	# Get the binary of iptables (iptables or ip6tables)
-	my $iptables_bin = &getBinVersion( $farm_name );
-
-	# output: iptables rule template string
-	my $rule =
-	    "$iptables_bin --table nat --::ACTION_TAG:: PREROUTING "
-	  . "--match mark --mark $$server{ tag } "
-	  . "$persist_match "
-	  . "$connlimit_match "
-	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump DNAT $layer --to-destination $$server{ rip } ";
-
-	return $rule;
+	return \@rules;
 }
 
 #
@@ -430,6 +441,8 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
+	my @rules;             # output: iptables rule template string
+	my @protos = qw/tcp udp/;
 
 	if ( defined $farm )
 	{
@@ -442,34 +455,39 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer = '';
-	if ( $$farm{ proto } ne "all" )
-	{
-		$layer = "--protocol $$farm{ proto }";
-	}
-
-	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
-	my $nat_params   = "--jump SNAT --to-source $$server{ vip }";
-
-	if ( $eload )
+	foreach my $proto ( @protos )
 	{
-		$nat_params = &eload(
-							  module => 'Zevenet::Net::Floating',
-							  func   => 'getFloatingSnatParams',
-							  args   => [$server],
-		);
+		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
+
+		my $layer = '';
+		if ( $$farm{ proto } ne "all" )
+		{
+			$layer = "--protocol $proto";
+		}
+
+		my $nat_params = "--jump SNAT --to-source $$server{ vip }";
+
+		if ( $eload )
+		{
+			$nat_params = &eload(
+								  module => 'Zevenet::Net::Floating',
+								  func   => 'getFloatingSnatParams',
+								  args   => [$server],
+			);
+		}
+
+		my $rule =
+		    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
+		  . "$layer "
+		  . "--match mark --mark $$server{ tag } "
+		  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
+		  . "$nat_params ";
+
+		push ( @rules, $rule );
 	}
 
-	# output: iptables rule template string
-	my $rule =
-	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
-	  . "$layer "
-	  . "--match mark --mark $$server{ tag } "
-	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "$nat_params ";
-
-	return $rule;
+	return \@rules;
 }
 
 #
@@ -481,6 +499,8 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
+	my @rules;             # output: iptables rule template string
+	my @protos = qw/tcp udp/;
 
 	if ( defined $farm )
 	{
@@ -493,34 +513,39 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer = '';
-	if ( $$farm{ proto } ne "all" )
-	{
-		$layer = "--protocol $$farm{ proto }";
-	}
-
-	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
-	my $nat_params   = "--jump MASQUERADE";
-
-	if ( $eload )
+	foreach my $proto ( @protos )
 	{
-		$nat_params = &eload(
-							  module => 'Zevenet::Net::Floating',
-							  func   => 'getFloatingMasqParams',
-							  args   => [$farm, $server],
-		);
+		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
+
+		my $layer = '';
+		if ( $$farm{ proto } ne "all" )
+		{
+			$layer = "--protocol $proto";
+		}
+
+		my $nat_params = "--jump MASQUERADE";
+
+		if ( $eload )
+		{
+			$nat_params = &eload(
+								  module => 'Zevenet::Net::Floating',
+								  func   => 'getFloatingMasqParams',
+								  args   => [$farm, $server],
+			);
+		}
+
+		my $rule =
+		    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
+		  . "$layer "
+		  . "--match mark --mark $$server{ tag } "
+		  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
+		  . "$nat_params ";
+
+		push ( @rules, $rule );
 	}
 
-	# output: iptables rule template string
-	my $rule =
-	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
-	  . "$layer "
-	  . "--match mark --mark $$server{ tag } "
-	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "$nat_params ";
-
-	return $rule;
+	return \@rules;
 }
 
 # insert restore mark on top of
@@ -709,14 +734,22 @@ sub getIptRuleNumber
 	{
 		# get backend tag
 		@server_line = &getL4FarmServers( $farm_name );
-
-		#~ &zenlog("index:$index server_lines:@server_lines", "info", "SYSTEM");
 		@server_line = grep { /^$index;/ } @server_line;
-		$filter = ( split ';', $server_line[0] )[3];
+		$filter      = ( split ';', $server_line[0] )[3];
 	}
 	else
 	{
 		$filter = "FARM\_$farm_name\_";
+	}
+
+	if ( $rule =~ /--protocol tcp/ )
+	{
+		$filter = " tcp .*$filter";
+	}
+
+	if ( $rule =~ /--protocol udp/ )
+	{
+		$filter = " udp .*$filter";
 	}
 
 	## lock iptables use ##
