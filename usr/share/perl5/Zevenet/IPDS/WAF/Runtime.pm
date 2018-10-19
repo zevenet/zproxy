@@ -53,8 +53,9 @@ sub reloadWAFByFarm
 	# check set
 	foreach my $set ( &listWAFByFarm( $farm ) )
 	{
+		include 'Zevenet::IPDS::WAF::Parser';
 		$set_file = &getWAFSetFile( $set );
-		return 1 if ( &checkWAFSetSyntax( $set ) );
+		return 1 if ( &checkWAFFileSyntax( $set_file ) );
 	}
 
 	$err = &logAndRun( "$pound_ctl -c $socket -R" );
@@ -208,6 +209,7 @@ sub reloadWAFByRule
 	my $set = shift;
 	my $err;
 
+	require Zevenet::Farm::Base;
 	foreach my $farm ( &listWAFBySet( $set ) )
 	{
 		if ( &getFarmStatus( $farm ) eq 'up' )

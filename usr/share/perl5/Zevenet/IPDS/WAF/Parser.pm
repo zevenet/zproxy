@@ -178,7 +178,7 @@ sub parseWAFRule
 			my $val = $2;
 			$act = $3;
 
-			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)$/ )
+			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)?$/ )
 			{
 				$rule->{ operator } = $+{ operator } // "";
 				$rule->{ operating } = $+{ operating };
@@ -532,8 +532,8 @@ sub parseWAFSetConf
 		if ( $line =~ /^\s*SecRuleEngine\s+(on|off|DetectionOnly)/ )
 		{
 			my $value = $1;
-			$conf->{ status } = 'on'        if ( $value eq 'on' );
-			$conf->{ status } = 'off'       if ( $value eq 'off' );
+			$conf->{ status } = 'true'      if ( $value eq 'on' );
+			$conf->{ status } = 'false'     if ( $value eq 'off' );
 			$conf->{ status } = 'detection' if ( $value eq 'DetectionOnly' );
 		}
 		if ( $line =~ /^\s*SecDefaultAction\s/ )
@@ -543,7 +543,7 @@ sub parseWAFSetConf
 			my $def = &parseWAFRule( $value );
 			$conf->{ default_action } = $def->{ action };
 			$conf->{ default_log }    = $def->{ log };
-			$conf->{ default_phase }  = $def->{ action };
+			$conf->{ default_phase }  = $def->{ phase };
 		}
 		if ( $line =~ /^\s*SecRuleRemoveById\s+(.*)/ )
 		{
@@ -690,7 +690,7 @@ sub buildWAFSet
 	return $err if $err;
 
 	# check syntax
-	$err = &checkWAFSetSyntax( $tmp );
+	$err = &checkWAFFileSyntax( $tmp );
 
 	# copy to definitive
 	if ( not $err )
@@ -707,13 +707,13 @@ sub buildWAFSet
 	}
 
 	# remove tmp file
-	#~ unlink $tmp;   # ?????? uncomment
+	#~ unlink $tmp;
 
 	return $err;
 }
 
 =begin nd
-Function: checkWAFSetSyntax
+Function: checkWAFFileSyntax
 
 	It checks if a file has a correct SecLang syntax
 
@@ -725,7 +725,7 @@ Returns:
 
 =cut
 
-sub checkWAFSetSyntax
+sub checkWAFFileSyntax
 {
 	my $file = shift;
 

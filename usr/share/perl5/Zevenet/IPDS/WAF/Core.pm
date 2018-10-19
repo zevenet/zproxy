@@ -385,8 +385,9 @@ sub listWAFBySet
 	foreach my $farm ( @httpfarms )
 	{
 		$farm_file = &getFarmFile( $farm );
-		$fh        = &openlock( "$confdir/$farm_file", 'r' );
-		$find      = grep ( /WafRules\s+$set_file/, <$fh> );
+		$fh = &openlock( "$confdir/$farm_file", 'r' );
+
+		$find = grep ( /WafRules\s+"$set_file"/, <$fh> );
 		close $fh;
 
 		push @farms, $farm if $find;

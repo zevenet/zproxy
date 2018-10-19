@@ -258,7 +258,7 @@ sub runIPDSStartByFarm
 	}
 
 	# start waf rules
-	&reloadWAFByFarm( $farmname ) if ( @{ $rules->{ waf } } );
+	# it is not necesssary start WAF. It is started automaticaly with the farms
 }
 
 =begin nd

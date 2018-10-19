@@ -94,10 +94,6 @@ sub setWAFRule
 	if ( ref $rule_ref eq 'HASH' )
 	{
 	}
-	elsif ( ref $rule_ref eq 'ARRAY' )
-	{
-		$rule_ref = &parseWAFRule( $rule_ref );
-	}
 	else
 	{
 		$rule_ref = &parseWAFRule( $rule_ref );
@@ -188,7 +184,7 @@ sub setWAFSetRaw
 	tie my @file, 'Tie::File', $tmp_file;
 	@file = @{ $set_raw };
 	untie @file;
-	$err = &checkWAFSetSyntax( $tmp_file );
+	$err = &checkWAFFileSyntax( $tmp_file );
 
 	#~ unlink $tmp_file;
 	return $err if $err;

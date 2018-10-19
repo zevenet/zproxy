@@ -22,7 +22,6 @@
 ###############################################################################
 
 use strict;
-use feature 'state';
 
 =begin nd
 Function: getUser
@@ -39,9 +38,9 @@ Returns:
 
 sub getUser
 {
-	if ( ! exists $ENV{ REQ_USER } || ! defined $ENV{ REQ_USER } )
+	if ( !exists $ENV{ REQ_USER } || !defined $ENV{ REQ_USER } )
 	{
-		&zenlog('User name not defined', 'Warning');
+		&zenlog( 'User name not defined', 'Warning' );
 	}
 
 	return $ENV{ REQ_USER } // '';

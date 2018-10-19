@@ -456,10 +456,10 @@ sub create_waf_rule_chain
 
 	# get parameter for a chain
 	my @chains_params = &getWAFChainParameters();
-	$params = &getWafRuleModel('rule');
-	foreach my $key ( keys %{$params} )
+	$params = &getWafRuleModel( 'match_action' );
+	foreach my $key ( keys %{ $params } )
 	{
-		delete $params->{ $key } if ( !grep( $key, @chains_params ) );
+		delete $params->{ $key } if ( !grep ( $key, @chains_params ) );
 	}
 
 	# Check allowed parameters
@@ -531,10 +531,10 @@ sub modify_waf_rule_chain
 
 	# get parameter for a chain
 	my @chains_params = &getWAFChainParameters();
-	my $params = &getWafRuleModel('rule');
-	foreach my $key ( keys %{$params} )
+	my $params        = &getWafRuleModel( 'match_action' );
+	foreach my $key ( keys %{ $params } )
 	{
-		delete $params->{ $key } if ( !grep( $key, @chains_params ) );
+		delete $params->{ $key } if ( !grep ( $key, @chains_params ) );
 	}
 
 	# Check allowed parameters

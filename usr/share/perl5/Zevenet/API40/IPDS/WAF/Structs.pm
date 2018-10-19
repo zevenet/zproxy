@@ -56,7 +56,7 @@ sub getZapiWAFRule
 				 'capture'         => $rule->{ capture }         // '',
 				 'action'          => $rule->{ action }          // '',
 				 'log'             => $rule->{ log }             // '',
-				 'audit'       => $rule->{ audit_log }       // '',
+				 'audit'           => $rule->{ audit_log }       // '',
 				 'log_data'        => $rule->{ log_data }        // '',
 				 'set_variable'    => $rule->{ set_variable }    // [],
 				 'chain'           => $rule->{ chain }           // [],
@@ -71,17 +71,19 @@ sub getZapiWAFRule
 		foreach my $chained ( @chains )
 		{
 			my $ch_rule = {};
+
 			# the parameters must match with the list of getWAFChainParameters
-			push @{ $out->{ chain } }, {
-				'transformations' => $chained->{transformations} // [],
-				'multi_match' => $chained->{multi_match} // '',
-				'capture' => $chained->{capture} // '',
-				'execute' => $chained->{execute} // '',
-				'set_variable' => $chained->{set_variable} // [],
-				'variables' => $chained->{variables} // [],
-				'operator' => $chained->{operator} // '',
-				'operating' => $chained->{operating} // '',
-			};
+			push @{ $out->{ chain } },
+			  {
+				'transformations' => $chained->{ transformations } // [],
+				'multi_match'     => $chained->{ multi_match }     // '',
+				'capture'         => $chained->{ capture }         // '',
+				'execute'         => $chained->{ execute }         // '',
+				'set_variable'    => $chained->{ set_variable }    // [],
+				'variables'       => $chained->{ variables }       // [],
+				'operator'        => $chained->{ operator }        // '',
+				'operating'       => $chained->{ operating }       // '',
+			  };
 		}
 
 		$out->{ log } = 'true'  if ( $rule->{ log } eq 'true' );
@@ -110,16 +112,6 @@ sub getZapiWAFRule
 	$out->{ raw } = $rule->{ raw } // '';
 	$out->{ id }  = $rule->{ id }  // 0;
 
-	## ?????? debug
-	#~ foreach my $key ( keys %{ $out } )
-	#~ {
-	#~ if ( !$out->{ $key } )
-	#~ {
-	#~ delete $out->{ $key };
-	#~ }
-	#~ }
-	### ?????? end debug
-
 	return $out;
 }
 
@@ -132,15 +124,15 @@ sub getZapiWAFSet
 	my $set_st = &getWAFSet( $set );
 
 	my $conf = $set_st->{ configuration };
-	$conf->{ default_action } //= '';
-	$conf->{ default_log } //= '';
-	$conf->{ default_phase } //= '';
-	$conf->{ audit } //= '';
-	$conf->{ process_request_body } //= '';
+	$conf->{ default_action }        //= '';
+	$conf->{ default_log }           //= '';
+	$conf->{ default_phase }         //= '';
+	$conf->{ audit }                 //= '';
+	$conf->{ process_request_body }  //= '';
 	$conf->{ process_response_body } //= '';
-	$conf->{ request_body_limit } //= '';
-	$conf->{ status } //= '';
-	$conf->{ disable_rules } //= [];
+	$conf->{ request_body_limit }    //= '';
+	$conf->{ status }                //= '';
+	$conf->{ disable_rules }         //= [];
 
 	foreach my $ru ( @{ $set_st->{ rules } } )
 	{
@@ -153,8 +145,8 @@ sub getZapiWAFSet
 sub getWAFChainParameters
 {
 	return [
-			 'transformations', 'multi_match', 'capture', 'execute',
-			 'set_variable', 'variables', 'operator', 'operating'
+			'transformations', 'multi_match', 'capture',  'execute',
+			'set_variable',    'variables',   'operator', 'operating'
 	];
 }
 
@@ -254,7 +246,7 @@ sub getWafRuleModel
 	{
 		$out->{ variables } = { 'non_blank' => 'true' };
 		$out->{ operator }  = { 'non_blank' => 'true' };
-		$out->{ operating } = { 'non_blank' => 'true' };
+		$out->{ operating } = {};
 	}
 
 	return $out;
@@ -300,13 +292,20 @@ sub translateWafInputs
 
 	if ( exists $json_obj->{ operator } )
 	{
+		my $not  = 0;
 		my $oper = &getWafOperators();
+		if ( $json_obj->{ operator } =~ s/^!// )
+		{
+			$not = 1;
+		}
+
 		if ( !exists $oper->{ $json_obj->{ operator } } )
 		{
 			return "The operator $json_obj->{ operator } is not recognized.";
 		}
 
 		$rule->{ operator } = $oper->{ $json_obj->{ operator } };
+		$rule->{ operator } = "!$rule->{ operator }" if ( $not );
 	}
 
 	$rule->{ rule_id } = $json_obj->{ rule_id }
