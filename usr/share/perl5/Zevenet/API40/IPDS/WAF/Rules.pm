@@ -108,7 +108,7 @@ sub get_waf_rule
 	my $id  = shift;
 	my $err;
 
-	my $desc = "Get the WAF set $set";
+	my $desc = "Get the WAF rule $id of the set $set";
 
 	unless ( &existWAFSet( $set ) )
 	{
@@ -207,8 +207,7 @@ sub create_waf_rule
 	}
 	elsif ( $type eq 'custom' )
 	{
-		my @rule_aux = split ( '\n', $json_obj->{ raw } );
-		$err = &setWAFSetRaw( $set, \@rule_aux );
+		$err = &setWAFSetRaw( $set, $json_obj->{ raw } );
 	}
 	elsif ( $type eq 'mark' )
 	{

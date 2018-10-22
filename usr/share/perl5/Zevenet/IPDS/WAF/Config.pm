@@ -161,7 +161,7 @@ Function: setWAFSetRaw
 
 Parameters:
 	Set - It is the WAF set name.
-	Rules batch - It is an array reference with a list of SecLang directives.
+	Rules batch - It is a string with on or a list of SecLang directives.
 	index - It is the index to set the batch of rules. If the index is not defined, the batch will set in the last position.
 
 Returns:
@@ -171,18 +171,19 @@ Returns:
 
 sub setWAFSetRaw
 {
-	my $set      = shift;
-	my $set_raw  = shift;
-	my $position = shift
+	my $set        = shift;
+	my $set_string = shift;
+	my $position   = shift
 	  ; # optional. if it is not defined, the set is appended else it the rule in the position is replaced
 
 	my $err;
+	my @set_raw = split ( '\n', $set_string );
 
 	# check new set
 	my $tmp_file = '/tmp/batch_waf.build';
 	require Tie::File;
 	tie my @file, 'Tie::File', $tmp_file;
-	@file = @{ $set_raw };
+	@file = @set_raw;
 	untie @file;
 	$err = &checkWAFFileSyntax( $tmp_file );
 
@@ -190,7 +191,7 @@ sub setWAFSetRaw
 	return $err if $err;
 
 	# parse and get only the rules, not the global conf
-	my $set_new_st = &parseWAFBatch( $set_raw );
+	my $set_new_st = &parseWAFBatch( \@set_raw );
 
 	# get set
 	my $set_st = &getWAFSet( $set );
@@ -230,7 +231,7 @@ sub createWAFMark
 
 	my $sentence = "SecMarker $mark";
 
-	return &setWAFSetRaw( $set, [$sentence] );
+	return &setWAFSetRaw( $set, $sentence );
 }
 
 =begin nd
@@ -256,7 +257,7 @@ sub setWAFMark
 
 	my $sentence = "SecMarker $mark";
 
-	return &setWAFSetRaw( $set, [$sentence], $id );
+	return &setWAFSetRaw( $set, $sentence, $id );
 }
 
 =begin nd
