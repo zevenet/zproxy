@@ -22,11 +22,10 @@
 ###############################################################################
 
 use strict;
-#~ use warnings;
+use warnings;
 use Curses::UI;
 use Zevenet::Config;
 use Zevenet::Debug;
-include 'Zevenet::BUI';
 
 # This two sentences should make zenbui behave like zenbui.sh
 $ENV{ NCURSES_NO_UTF8_ACS } = 1;
@@ -118,6 +117,7 @@ my $help = $winhelp->add(
 
 sub exit_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $return = $zenui->dialog(
 								 -message  => "Do you really want to exit to shell?",
 								 -title    => "Exit Confirmation",
@@ -138,6 +138,7 @@ sub exit_dialog()
 
 sub confirm_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $message ) = @_;
 	my $return = $zenui->dialog(
 								 -message      => $message,
@@ -157,6 +158,7 @@ sub confirm_dialog()
 
 sub inform_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $message ) = @_;
 	my $return = $zenui->dialog(
 								 -message      => $message,
@@ -174,6 +176,7 @@ sub inform_dialog()
 
 sub error_dialog()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $message ) = @_;
 	my $return = $zenui->dialog(
 								 -message      => $message,
@@ -191,12 +194,14 @@ sub error_dialog()
 
 sub refresh_win3()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	$zlbmenu->focus();
 	&manage_sel();
 }
 
 sub manage_sel()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	if ( $win3 )
 	{
 		$win1->delete( 'win3' );
@@ -249,6 +254,7 @@ sub manage_sel()
 
 sub manage_power()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $power = $win3->add(
 		'win3id2',
 		'Buttonbox',
@@ -299,22 +305,24 @@ sub manage_power()
 
 sub manage_keyboard()
 {
-	my $line;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $keyboardfile = "/etc/default/keyboard";
 	my ( $keyboard, $zlbkeyboard );
+
 	if ( -f $keyboardfile )
 	{
-		open FR, $keyboardfile;
+		open my $fd, '<', $keyboardfile;
 
-		while ( $line = <FR> )
+		while ( my $line = <$fd> )
 		{
 			if ( $line =~ 'XKBLAYOUT' )
 			{
 				$keyboard = $line;
 			}
 		}
-		close FR;
+		close $fd;
 	}
+
 	$zlbkeyboard = $win3->add(
 							   'win3id1', 'TextEntry',
 							   -bg       => 'black',
@@ -326,6 +334,7 @@ sub manage_keyboard()
 							   -text     => $keyboard,
 							   -readonly => 1,
 	);
+
 	my $confirm = $win3->add(
 		'win3id2',
 		'Buttonbox',
@@ -359,19 +368,21 @@ sub manage_keyboard()
 
 sub manage_timezone()
 {
-	my $line;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $timezonefile = "/etc/timezone";
 	my ( $timezone, $zlbtimezone );
+
 	if ( -f $timezonefile )
 	{
-		open FR, $timezonefile;
+		open my $fd, '<', $timezonefile;
 
-		while ( $line = <FR> )
+		while ( my $line = <$fd> )
 		{
 			$timezone = $line;
 		}
-		close FR;
+		close $fd;
 	}
+
 	$zlbtimezone = $win3->add(
 							   'win3id1', 'TextEntry',
 							   -bg       => 'black',
@@ -383,6 +394,7 @@ sub manage_timezone()
 							   -text     => $timezone,
 							   -readonly => 1,
 	);
+
 	my $confirm = $win3->add(
 		'win3id2',
 		'Buttonbox',
@@ -419,6 +431,7 @@ sub manage_timezone()
 
 sub manage_mgmt()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $mgmtif         = "";
@@ -543,6 +556,7 @@ sub manage_mgmt()
 
 sub set_net()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Validate;
 	my $setchanges = 1;
 
@@ -612,7 +626,7 @@ sub set_net()
 				{
 					my $previous_status = $if_ref->{ status };
 
-					my $state = &upIf( $if_ref, 'writeconf' );
+					my $state = &upIf( $if_ref );
 
 					if ( $state == 0 )
 					{
@@ -649,6 +663,7 @@ sub set_net()
 
 sub manage_zlb_services()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @services         = ( 'cherokee', 'zevenet' );
 	my $cherokeestatus   = "STOPPED";
 	my $zlbservicestatus = "STOPPED";
@@ -838,6 +853,7 @@ sub manage_zlb_services()
 
 sub manage_zlb_hostname()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	$zlbhostname = `hostname`;
 	chomp $zlbhostname;
 	$zlbhostinput = $win3->add(
@@ -878,6 +894,7 @@ sub manage_zlb_hostname()
 
 sub set_new_hostname()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	if ( $zlbhostinput )
 	{
 		my $ret =
@@ -902,13 +919,15 @@ sub set_new_hostname()
 
 sub show_status_system()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
+	require Zevenet::Stats;
 
-	my @memdata       = &get_system_mem();
+	my @memdata       = &getMemStats();
 	my $memstring     = &set_data_string( @memdata );
-	my @loadavgdata   = &get_system_loadavg();
+	my @loadavgdata   = &getLoadStats();
 	my $loadavgstring = &set_data_string( @loadavgdata );
-	my @cpudata       = &get_system_cpu();
+	my @cpudata       = &getCPU();
 	my $cpustring     = &set_data_string( @cpudata );
 	my $zlbversion    = &getGlobalConfiguration( 'version' );
 	my $zaversion     = &getApplianceVersion();
@@ -968,6 +987,7 @@ sub show_status_system()
 
 sub create_win3()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $title ) = @_;
 	$win3 = $win1->add(
 						'win3', 'Window',
@@ -985,3 +1005,20 @@ $zenui->set_binding( sub { $zlbmenu->focus() }, "\cX" );
 $zenui->set_binding( \&exit_dialog, "\cQ" );
 
 $zenui->mainloop();
+
+
+sub set_data_string
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( @datain ) = @_;
+
+	my $output = "";
+
+	for my $i ( 0 .. $#datain )
+	{
+		$output .= "\t$datain[$i][0]: $datain[$i][1]\n";
+	}
+
+	return $output;
+}
+

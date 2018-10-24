@@ -28,6 +28,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 sub get_farm_struct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $output_params;
 
@@ -36,7 +37,6 @@ sub get_farm_struct
 	my $timeout         = 0 + &getHTTPFarmTimeout( $farmname );
 	my $alive           = 0 + &getHTTPFarmBlacklistTime( $farmname );
 	my $client          = 0 + &getFarmClientTimeout( $farmname );
-	my $conn_max        = 0 + &getHTTPFarmMaxConn( $farmname );
 	my $rewritelocation = 0 + &getFarmRewriteL( $farmname );
 	my $httpverb        = 0 + &getFarmHttpVerb( $farmname );
 
@@ -50,7 +50,7 @@ sub get_farm_struct
 	elsif ( $httpverb == 3 ) { $httpverb = "MSextWebDAV"; }
 	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
 
-	my $type    = &getFarmType( $farmname );
+	my $type = &getFarmType( $farmname );
 	my $certname;
 	my $cipher  = '';
 	my $ciphers = 'all';
@@ -63,9 +63,9 @@ sub get_farm_struct
 		if ( $eload )
 		{
 			@cnames = &eload(
-				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-				func   => 'getFarmCertificatesSNI',
-				args   => [$farmname],
+							  module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+							  func   => 'getFarmCertificatesSNI',
+							  args   => [$farmname],
 			);
 		}
 		else
@@ -127,9 +127,9 @@ sub get_farm_struct
 	if ( $eload )
 	{
 		my $flag = &eload(
-			module => 'Zevenet::Farm::HTTP::Ext',
-			func   => 'getHTTPFarm100Continue',
-			args   => [$farmname],
+						   module => 'Zevenet::Farm::HTTP::Ext',
+						   func   => 'getHTTPFarm100Continue',
+						   args   => [$farmname],
 		);
 		$output_params->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
 	}
@@ -151,8 +151,9 @@ sub get_farm_struct
 
 
 # GET /farms/<farmname> Request info of a http|https Farm
-sub farms_name_http # ( $farmname )
+sub farms_name_http    # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -162,17 +163,16 @@ sub farms_name_http # ( $farmname )
 	my @out_s;
 
 	# Services
-	my $services = &getHTTPFarmVS( $farmname, '', '' );
-	my @serv = split ( ' ', $services );
+	my @serv = &getHTTPFarmServices( $farmname );
 
 	foreach my $s ( @serv )
 	{
-		my $serviceStruct = &getZapiHTTPServiceStruct ( $farmname, $s );
+		my $serviceStruct = &getZapiHTTPServiceStruct( $farmname, $s );
 
 		# Remove backend status 'undefined', it is for news api versions
-		foreach my $be (@{$serviceStruct->{ 'backends' }})
+		foreach my $be ( @{ $serviceStruct->{ 'backends' } } )
 		{
-			$be->{ 'status' } = 'up'  if ($be->{ 'status' } eq 'undefined');
+			$be->{ 'status' } = 'up' if ( $be->{ 'status' } eq 'undefined' );
 		}
 		push @out_s, $serviceStruct;
 	}
@@ -184,17 +184,18 @@ sub farms_name_http # ( $farmname )
 	};
 
 	$body->{ ipds } = &eload(
-				module => 'Zevenet::IPDS::Core',
-				func   => 'getIPDSfarmsRules',
-				args   => [$farmname],
+							  module => 'Zevenet::IPDS::Core',
+							  func   => 'getIPDSfarmsRules',
+							  args   => [$farmname],
 	) if ( $eload );
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /farms/<farmname>/summary
 sub farms_name_http_summary
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -203,8 +204,7 @@ sub farms_name_http_summary
 	my @out_s;
 
 	# Services
-	my $services = &getHTTPFarmVS( $farmname, "", "" );
-	my @serv = split ( "\ ", $services );
+	my @serv = &getHTTPFarmServices( $farmname );
 
 	foreach my $s ( @serv )
 	{
@@ -218,17 +218,18 @@ sub farms_name_http_summary
 	};
 
 	$body->{ ipds } = &eload(
-				module => 'Zevenet::IPDS::Core',
-				func   => 'getIPDSfarmsRules',
-				args   => [$farmname],
+							  module => 'Zevenet::IPDS::Core',
+							  func   => 'getIPDSfarmsRules',
+							  args   => [$farmname],
 	) if ( $eload );
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 
 sub getZapiHTTPServiceStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -237,8 +238,7 @@ sub getZapiHTTPServiceStruct
 	my $service_ref = -1;
 
 	# http services
-	my $services = &getHTTPFarmVS( $farmname, "", "" );
-	my @serv = split ( ' ', $services );
+	my @serv = &getHTTPFarmServices( $farmname );
 
 	# return error if service is not found
 	return $service_ref unless grep( { $service_name eq $_ } @serv );
@@ -311,7 +311,5 @@ sub getZapiHTTPServiceStruct
 
 	return $service_ref;
 }
-
-
 
 1;

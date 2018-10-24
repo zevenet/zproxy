@@ -45,6 +45,7 @@ See Also:
 # create network interface
 sub createIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	my $status = 0;
@@ -52,15 +53,6 @@ sub createIf    # ($if_ref)
 	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
 	{
 		&zenlog( "Creating vlan $$if_ref{name}", "info", "NETWORK" );
-
-# enable the parent physical interface
-#~ my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
-#~ $parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
-
-		#~ if ( $parent_if->{ status } eq 'down' )
-		#~ {
-		#~ $status = &upIf( $parent_if, 'writeconf' );
-		#~ }
 
 		my $ip_cmd =
 		  "$ip_bin link add link $$if_ref{dev} name $$if_ref{name} type vlan id $$if_ref{vlan}";
@@ -77,7 +69,6 @@ Function: upIf
 
 Parameters:
 	if_ref - network interface hash reference.
-	writeconf - true value to apply change in interface configuration file. Optional.
 
 Returns:
 	integer - return code of ip command.
@@ -87,9 +78,10 @@ See Also:
 =cut
 
 # up network interface
-sub upIf    # ($if_ref, $writeconf)
+sub upIf    # ($if_ref)
 {
-	my ( $if_ref, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $if_ref ) = @_;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $status    = 0;
@@ -126,15 +118,8 @@ sub upIf    # ($if_ref, $writeconf)
 			&zenlog( "No link up for $$if_ref{name}", "warning", "NETWORK" );
 			&downIf( { name => $if_ref->{name} }, '' );
 		}
-
-		# Start monitoring throughput
-		#~ &eload(
-				#~ module => 'Zevenet::Net::Throughput',
-				#~ func   => 'startTHROUIface',
-				#~ args   => [$$if_ref{ name }],
-		#~ ) if $eload;
 	}
-	if ( !$status and $writeconf )
+	if ( !$status )
 	{
 		my $file = "$configdir/if_$$if_ref{name}_conf";
 
@@ -175,7 +160,6 @@ Function: downIf
 
 Parameters:
 	if_ref - network interface hash reference.
-	writeconf - true value to apply change in interface configuration file. Optional.
 
 Returns:
 	integer - return code of ip command.
@@ -185,9 +169,10 @@ See Also:
 =cut
 
 # down network interface in system and configuration file
-sub downIf    # ($if_ref, $writeconf)
+sub downIf    # ($if_ref)
 {
-	my ( $if_ref, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $if_ref ) = @_;
 
 	if ( ref $if_ref ne 'HASH' )
 	{
@@ -201,13 +186,6 @@ sub downIf    # ($if_ref, $writeconf)
 	if ( $$if_ref{ vini } eq '' )
 	{
 		$ip_cmd = "$ip_bin link set dev $$if_ref{name} down";
-
-		# Stop monitoring throughput
-		#~ &eload(
-				#~ module => 'Zevenet::Net::Throughput',
-				#~ func   => 'stopTHROUIface',
-				#~ args   => [$$if_ref{ name }],
-		#~ ) if $eload;
 	}
 
 	# For Vini
@@ -221,7 +199,7 @@ sub downIf    # ($if_ref, $writeconf)
 	my $status = &logAndRun( $ip_cmd );
 
 	# Set down status in configuration file
-	if ( !$status and $writeconf )
+	if ( !$status )
 	{
 		my $configdir = &getGlobalConfiguration( 'configdir' );
 		my $file      = "$configdir/if_$$if_ref{name}_conf";
@@ -270,6 +248,7 @@ See Also:
 # stop network interface
 sub stopIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	&zenlog( "Stopping interface $$if_ref{ name }", "info", "NETWORK" );
@@ -301,15 +280,15 @@ sub stopIf    # ($if_ref)
 		my $rttables = &getGlobalConfiguration( 'rttables' );
 
 		# Delete routes table
-		open ROUTINGFILE, '<', $rttables;
-		my @contents = <ROUTINGFILE>;
-		close ROUTINGFILE;
+		open my $rt_fd, '<', $rttables;
+		my @contents = <$rt_fd>;
+		close $rt_fd;
 
 		@contents = grep !/^...\ttable_$if$/, @contents;
 
-		open ROUTINGFILE, '>', $rttables;
-		print ROUTINGFILE @contents;
-		close ROUTINGFILE;
+		open $rt_fd, '>', $rttables;
+		print $rt_fd @contents;
+		close $rt_fd;
 	}
 
 	#if virtual interface
@@ -349,6 +328,7 @@ See Also:
 # delete network interface configuration and from the system
 sub delIf    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
 
 	my $status;
@@ -421,15 +401,15 @@ sub delIf    # ($if_ref)
 			my $rttables = &getGlobalConfiguration( 'rttables' );
 
 			# Delete routes table, complementing writeRoutes()
-			open ROUTINGFILE, '<', $rttables;
-			my @contents = <ROUTINGFILE>;
-			close ROUTINGFILE;
+			open my $rt_fd, '<', $rttables;
+			my @contents = <$rt_fd>;
+			close $rt_fd;
 
 			@contents = grep !/^...\ttable_$$if_ref{name}$/, @contents;
 
-			open ROUTINGFILE, '>', $rttables;
-			print ROUTINGFILE @contents;
-			close ROUTINGFILE;
+			open $rt_fd, '>', $rttables;
+			print $rt_fd @contents;
+			close $rt_fd;
 		}
 	}
 
@@ -474,6 +454,7 @@ See Also:
 # Execute command line to delete an IP from an interface
 sub delIp    # 	($if, $ip ,$netmask)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if, $ip, $netmask ) = @_;
 
 	&zenlog( "Deleting ip $ip/$netmask from interface $if", "info", "NETWORK" );
@@ -508,6 +489,7 @@ See Also:
 # Execute command line to add an IPv4 to an Interface, Vlan or Vini
 sub addIp    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
 
 	&zenlog(

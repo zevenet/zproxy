@@ -47,6 +47,7 @@ See Also:
 
 sub getCertFiles    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	opendir ( DIR, $configdir );
@@ -80,6 +81,7 @@ See Also:
 
 sub getCleanBlanc    # ($vartoclean)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vartoclean ) = @_;
 
 	$vartoclean =~ s/^\s+//;
@@ -112,6 +114,7 @@ See Also:
 
 sub getCertType    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $certtype = "none";
 
@@ -146,6 +149,7 @@ See Also:
 
 sub getCertCN    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $certcn = "";
 
@@ -186,6 +190,7 @@ See Also:
 
 sub getCertIssuer    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $certissu = "";
 
@@ -225,6 +230,7 @@ See Also:
 
 sub getCertCreation    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 
 	#~ use File::stat;
@@ -268,6 +274,7 @@ See Also:
 
 sub getCertExpiration    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 	my $dateexpiration = "";
 
@@ -304,6 +311,7 @@ See Also:
 
 sub getFarmCertUsed    #($cfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cfile ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -347,6 +355,7 @@ See Also:
 
 sub checkFQDN    # ($certfqdn)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfqdn ) = @_;
 	my $valid = "true";
 
@@ -390,6 +399,7 @@ See Also:
 
 sub delCert    # ($certname)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certname ) = @_;
 
 	# escaping special caracters
@@ -409,7 +419,6 @@ sub delCert    # ($certname)
 
 	return $files_removed;
 }
-
 
 =begin nd
 Function: createCSR
@@ -442,6 +451,7 @@ See Also:
 
 sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my (
 		 $certname,     $certfqdn,         $certcountry,  $certstate,
 		 $certlocality, $certorganization, $certdivision, $certmail,
@@ -494,6 +504,7 @@ See Also:
 
 sub getCertData    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -518,62 +529,9 @@ sub getCertData    # ($certfile)
 	return @eject;
 }
 
-=begin nd
-Function: createPemFromKeyCRT
-
-	NOT USED. Create PEM certificate from key, crt and certaut.
-
-Parameters:
-	keyfile - .
-	crtfile - .
-	certautfile - .
-	tmpdir - .
-
-Returns:
-	null - .
-
-Bugs:
-	NOT USED.
-
-See Also:
-
-=cut
-
-sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
-{
-	my ( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
-
-	my $path    = &getGlobalConfiguration( 'configdir' );
-	my $buff    = "";
-	my $pemfile = $keyfile;
-	$pemfile =~ s/\.key$/\.pem/;
-
-	my @files = ( "$path/$keyfile", "$tmpdir/$crtfile", "$tmpdir/$certautfile" );
-
-	foreach my $file ( @files )
-	{
-		# Open key files
-		open FILE, "<", $file or die $!;
-
-	  # Now get every line in the file, and attach it to the full ‘buffer’ variable.
-		while ( my $line = <FILE> )
-		{
-			$buff .= $line;
-		}
-
-		# Close this particular file.
-		close FILE;
-	}
-	open my $pemhandler, ">", "$path/$pemfile" or die $!;
-
-	# Write the buffer into the output file.
-	print $pemhandler $buff;
-
-	close $pemhandler;
-}
-
 sub getCertInfo    # ($certfile)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $certfile, $path ) = @_;
 
 	my $filepath  = "$path\/$certfile";
@@ -656,9 +614,9 @@ sub getCertInfo    # ($certfile)
 		push ( @eject, "GMT" );
 		$creation = join ( ' ', @eject );
 	}
-	chomp ( $creation );
+	chomp $creation;
 	$creation = `date -d "${creation}" +%F" "%T" "%Z -u`;
-
+	chomp $creation;
 
 	# Cert Expiration Date
 	my $expiration = "";
@@ -666,8 +624,9 @@ sub getCertInfo    # ($certfile)
 	{
 		my ( $line ) = grep /\sNot After/, @cert_data;
 		( undef, $expiration ) = split ( /: /, $line );
-		chomp ( $expiration );
-        $expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
+		chomp $expiration;
+		$expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
+		chomp $expiration;
 	}
 	elsif ( $type eq "CSR" )
 	{
@@ -688,25 +647,27 @@ sub getCertInfo    # ($certfile)
     return \%response;
 }
 
+# 2018-05-17 15:04:52 UTC
+# May 17 15:04:52 2018 GMT
+sub getDateEpoc
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $date_string = shift @_;
+	my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+	my ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
+
+	# the range of the month is from 0 to 11
+	$month--;
+	return timegm( $sec, $min, $hours, $day, $month, $year );
+}
+
 sub getCertDaysToExpire
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cert_ends ) = @_;
 
 	use Time::Local;
-
-	# 2018-05-17 15:04:52 UTC
-	# May 17 15:04:52 2018 GMT
-	sub getDateEpoc
-	{
-		my $date_string = shift @_;
-		my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-
-		my ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
-
-		# the range of the month is from 0 to 11
-		$month--;
-		return timegm( $sec, $min, $hours, $day, $month, $year );
-	}
 
 	my $end = &getDateEpoc( $cert_ends );
 	my $days_left = ( $end - time () ) / 86400;
@@ -743,20 +704,25 @@ See Also:
 
 sub delCert_activation    # ($certname)
 {
-	my $certdir = &getGlobalConfiguration( 'basedir' );
-	my $certname = 'zlbcertfile.pem';
-
-	$certname = "$certdir/$certname";
-
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	# zevenet/www/ directory
+	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+	my $cert_filename = 'zlbcertfile.pem';
+	my $cert_path     = "$cert_dir\/$cert_filename";
 	my $files_removed = 1;
-	if ( -f "$certname" )
+
+	if ( -f $cert_path )
 	{
-		$files_removed = unlink ( "$certname" );
-		&zenlog( "Error removing certificate $certname", "error", "Activation" ) if !$files_removed;
+		$files_removed = unlink ( $cert_path );
+
+		unless ( $files_removed )
+		{
+			&zenlog( "Error removing certificate $cert_path", "error", "Activation" );
+		}
 	}
 	else
 	{
-		&zenlog( "The activation certificate $certname is not found", "error", "Activation" );
+		&zenlog( "The activation certificate $cert_path is not found", "error", "Activation" );
 	}
 
 	return $files_removed;

@@ -44,6 +44,7 @@ Returns:
 
 sub runRBACCreateUserCmd
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user    = shift;
 	my $adduser = &getGlobalConfiguration( "adduser_bin" );
 
@@ -70,6 +71,7 @@ Returns:
 
 sub runRBACDeleteUserCmd
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user    = shift;
 	my $deluser = &getGlobalConfiguration( "deluser_bin" );
 
@@ -94,6 +96,7 @@ Returns:
 
 sub runRBACAddUserToGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $user, $group ) = @_;
 	my $adduser = &getGlobalConfiguration( "adduser_bin" );
 	my $cmd     = "$adduser $user $group";
@@ -116,6 +119,7 @@ Returns:
 
 sub runRBACDelUserToGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $user, $group ) = @_;
 	my $deluser = &getGlobalConfiguration( "deluser_bin" );
 	my $cmd     = "$deluser $user $group";

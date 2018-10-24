@@ -204,7 +204,7 @@ sub certcontrol
 	my $zlbcertfile = "$basedir/$zlbcertfilename";
 	my $swcert = 0;
 
-	if ( ! -e $zlbcertfile )
+	if ( ! -e $zlbcertfile || -z $zlbcertfile )
 	{
 		#swcert = 1 ==> There isn't certificate
 		$swcert = 1;
@@ -301,7 +301,8 @@ sub certcontrol
 			}
 	  	}
 
-		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
+		my @decoded;
+		@decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
 		if ( !grep /keyid:$keyid/, @decoded ) {
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;

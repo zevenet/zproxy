@@ -48,6 +48,7 @@ Returns:
 
 sub updateRBACUser
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user   = shift;
 	my $action = shift;
 
@@ -167,6 +168,7 @@ Returns:
 
 sub updateRBACAllUser
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @userList = &getRBACUserList();
 
 	# delete the removed users
@@ -202,6 +204,7 @@ Returns:
 
 sub setRBACUserPasswordInSystem
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user     = shift;
 	my $password = shift;
 

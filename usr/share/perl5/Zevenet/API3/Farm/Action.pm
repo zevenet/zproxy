@@ -27,6 +27,7 @@ use Zevenet::Farm::Core;
 # POST /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -187,6 +188,7 @@ sub farm_actions # ( $json_obj, $farmname )
 # POST /farms/<farmname>/maintenance Set an action in a backend of http|https farm
 sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $service    = shift;
@@ -293,8 +295,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# Not allow modificate the maintenance status if the farm needs to restart
-	require Zevenet::Farm::Base;
-	if ( &getFarmLock ($farmname) != -1 )
+	require Zevenet::Lock;
+	if ( &getLockStatus( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farm needs to be restarted before to apply this action.";
@@ -379,6 +381,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 # PUT backend in maintenance
 sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $backend_id = shift;
@@ -414,12 +417,11 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	}
 
 	# validate BACKEND
-	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::L4XNAT::Backend;
 
-	my @backends = &getFarmServers( $farmname );
-	my $backend_line = $backends[$backend_id];
+	my $exists = defined( @{ &getL4FarmServers( $farmname ) }[$backend_id] );
 
-	if ( !$backend_line )
+	if ( !$exists )
 	{
 		# Error
 		my $errormsg = "Could not find a backend with such id.";

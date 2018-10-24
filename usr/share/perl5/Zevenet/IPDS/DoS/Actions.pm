@@ -40,6 +40,7 @@ Returns:
 
 sub runDOSStartModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::IPDS::DoS::Config';
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
@@ -107,6 +108,7 @@ sub runDOSStartModule
 
 sub runDOStopModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $output   = 0;
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
@@ -143,24 +145,6 @@ sub runDOStopModule
 }
 
 =begin nd
-Function: runDOSRestartModule
-
-	Stop the module
-
-Parameters:
-
-Returns:
-
-=cut
-
-# this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
-sub runDOSRestartModule
-{
-	&runDOStopModule;
-	&runDOStartModule;
-}
-
-=begin nd
 Function: runDOSStartByRule
 
 	Start the runtime of a DOS rule and link with all farm that are using this rule.
@@ -175,6 +159,7 @@ Returns:
 
 sub runDOSStartByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 	my $error = 0;
 
@@ -218,6 +203,7 @@ Returns:
 
 sub runDOSStopByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 	my $error = 0;
 
@@ -255,6 +241,7 @@ Returns:
 
 sub runDOSRestartByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $error = &runDOSStopByRule( $rule );
@@ -283,6 +270,7 @@ Returns:
 
 sub runDOSStart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 	my $error;
 
@@ -309,36 +297,9 @@ Returns:
 
 sub runDOSStop
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 	my $error = &setDOSStopRule( $rule, $farm );
-	return $error;
-}
-
-=begin nd
-Function: runDOSRestart
-
-	Restart the runtime of a DOS rule with a farm.
-
-Parameters:
-	Rule - Rule name
-	Farmname - Farm name
-
-Returns:
-	integer - 0 on success or other value on failure
-
-=cut
-
-sub runDOSrestart
-{
-	my ( $rule, $farm ) = @_;
-
-	my $error = &runDOSStop( $rule, $farm );
-
-	if ( !$error )
-	{
-		$error = &runDOSStart( $rule, $farm );
-	}
-
 	return $error;
 }
 

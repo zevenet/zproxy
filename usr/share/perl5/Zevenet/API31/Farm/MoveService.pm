@@ -23,8 +23,12 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
+
 sub move_services
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -89,7 +93,7 @@ sub move_services
 		&zenlog( "Farm stopped successful.", "info", "LSLB"  );
 	}
 
-	&moveService( $farmname, $service, $json_obj->{ 'position' } );
+	&setHTTPFarmMoveService( $farmname, $service, $json_obj->{ 'position' } );
 
 	# start farm if his status was up
 	if ( $farm_status eq 'up' )

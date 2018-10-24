@@ -32,6 +32,7 @@ use POSIX 'strftime';
 #build CBC Object
 sub buildcbc
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cipher = Crypt::CBC->new(
 		-literal_key => 1,
 		-key => 'wg2kx8VY2NVYDdQSAdqffmHYMd2d97ypYdJ4hwczAm8YBPtHv28EJJ66',
@@ -47,6 +48,7 @@ sub buildcbc
 #encrypt CBC and return result
 sub encrypt # string for encrypt
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $data = shift;
 
 	my $cipher = &buildcbc();
@@ -57,6 +59,7 @@ sub encrypt # string for encrypt
 
 sub decrypt # string for decrypt
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $data = shift;
 
 	my $cipher = &buildcbc();
@@ -68,6 +71,7 @@ sub decrypt # string for decrypt
 # build local key
 sub keycert
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	#~ use Zevenet::SystemInfo;
 
 	my $dmi      = &get_sys_uuid();
@@ -83,6 +87,7 @@ sub keycert
 # build local old key
 sub keycert_old
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
     #~ use Zevenet::SystemInfo;
 	my $dmi      = get_sys_uuid();
 	my $hostname = &getHostname();
@@ -103,6 +108,7 @@ sub keycert_old
 # evaluate certificate
 sub certcontrol
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	#~ require Time::Local;
 	#~ use Zevenet::Config;
 	require Zevenet::SystemInfo;
@@ -190,7 +196,7 @@ sub certcontrol
 		my @modification = split /\ /, $date_mod;
 		$modification[0] = $modification[0] // '';
 
-		if ( $modification[0] ne $date_today) {			
+		if ( $modification[0] ne $date_today) {
 			require IO::Socket;
 
             if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) ) {
@@ -207,7 +213,8 @@ sub certcontrol
 			}
 	  	}
 
-		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
+		my @decoded = ();
+		@decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
 		if ( !grep /keyid:$keyid/, @decoded ) {
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;
@@ -306,6 +313,7 @@ sub certcontrol
 
 sub checkActivationCertificate
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $swcert = &certcontrol();
 
 	# if $swcert is greater than 0 zapi should not work
@@ -356,6 +364,7 @@ sub checkActivationCertificate
 
 sub get_sys_uuid
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
 	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
@@ -366,6 +375,7 @@ sub get_sys_uuid
 
 sub get_mod_appl
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @mod = grep ( /\w{3} ?\d{4}/, `cat /etc/zevenet_version` );
 	$mod[0] =~ /(\w{3} ?\d{4})/;
 

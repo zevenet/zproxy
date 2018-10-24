@@ -47,17 +47,18 @@ See Also:
 
 sub getDns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $dns = { 'primary' => '', 'secondary' => '' };
 	my $dnsFile = &getGlobalConfiguration( 'filedns' );
 
 	if ( !-f $dnsFile )
 	{
-		return undef;
+		return;
 	}
 
-	open FI, '<', $dnsFile;
-	my @file = <FI>;
-	close FI;
+	open ( my $fd, '<', $dnsFile );
+	my @file = <$fd>;
+	close $fd;
 
 	my $index = 1;
 	foreach my $line ( @file )
@@ -96,6 +97,7 @@ See Also:
 
 sub setDns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $dns, $value ) = @_;
 
 	my $dnsFile = &getGlobalConfiguration( 'filedns' );

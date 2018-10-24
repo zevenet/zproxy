@@ -26,6 +26,7 @@ use strict;
 #  POST /addvlan/<interface> Create a new vlan network interface
 sub new_vlan # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = "Add a vlan interface";
@@ -223,7 +224,7 @@ sub new_vlan # ( $json_obj )
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{name} );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{
@@ -266,6 +267,7 @@ sub new_vlan # ( $json_obj )
 
 sub delete_interface_vlan # ( $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	my $description = "Delete VLAN interface";
@@ -291,7 +293,7 @@ sub delete_interface_vlan # ( $vlan )
 	require Zevenet::Net::Route;
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' );
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -323,6 +325,7 @@ sub delete_interface_vlan # ( $vlan )
 
 sub get_vlan_list # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @output_list;
 
 	my $description = "List VLAN interfaces";
@@ -371,6 +374,7 @@ sub get_vlan_list # ()
 
 sub get_vlan # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	my $interface;
@@ -427,6 +431,7 @@ sub get_vlan # ()
 
 sub actions_interface_vlan # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan     = shift;
 
@@ -511,7 +516,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( ! $state )
 		{
@@ -538,7 +543,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $vlan }, 'writeconf' );
+		my $state = &downIf( { name => $vlan } );
 
 		if ( $state )
 		{
@@ -577,6 +582,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 
 sub modify_interface_vlan # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan = shift;
 
@@ -700,7 +706,7 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 		die if &addIp( $if_ref );
 		die if &writeRoutes( $if_ref->{name} );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{

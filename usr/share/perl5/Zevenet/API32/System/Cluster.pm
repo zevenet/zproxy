@@ -22,6 +22,9 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 include 'Zevenet::Cluster';
 
 # disable smartmatch experimental warnings for perl >= 5.18
@@ -44,6 +47,7 @@ my $maint_if = 'cl_maintenance';
 
 sub get_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc = "Show the cluster configuration";
@@ -95,6 +99,7 @@ sub get_cluster
 
 sub modify_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Modifying the cluster configuration";
@@ -185,7 +190,7 @@ sub modify_cluster
 			my $rhost = &getZClusterRemoteHost();
 			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 
-			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
+			&logAndRun( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
 			# reconfigure local conntrackd
 			include 'Zevenet::Conntrackd';
@@ -236,6 +241,7 @@ sub modify_cluster
 
 sub set_cluster_actions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Setting cluster action";
@@ -281,7 +287,7 @@ sub set_cluster_actions
 			if ( &getKeepalivedVersion() eq '1.2.13' )
 			{
 				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-				system("$zcluster_manager notify_fault");
+				&logAndRun("$zcluster_manager notify_fault");
 
 				my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
 				&logAndRun( $ka_cmd );
@@ -300,7 +306,7 @@ sub set_cluster_actions
 				}
 
 				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-				system("$ip_bin link set $maint_if down");
+				&logAndRun("$ip_bin link set $maint_if down");
 
 				# required for no failback configuration
 				if ( &getZClusterNodeStatus() eq 'backup' )
@@ -318,7 +324,7 @@ sub set_cluster_actions
 				&setZClusterNodeStatus('backup');
 
 				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-				system("$zcluster_manager notify_backup");
+				&logAndRun("$zcluster_manager notify_backup");
 
 				my $ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
 				&logAndRun( $ka_cmd );
@@ -337,7 +343,7 @@ sub set_cluster_actions
 				}
 
 				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-				system("$ip_bin link set $maint_if up");
+				&logAndRun("$ip_bin link set $maint_if up");
 
 				# required for no failback configuration
 				&setZClusterNodeStatus('backup');
@@ -367,6 +373,7 @@ sub set_cluster_actions
 
 sub disable_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "Disabling cluster";
 
 	# make sure the cluster is enabled
@@ -385,7 +392,7 @@ sub disable_cluster
 	if ( &getZClusterNodeStatus() eq 'master' )
 	{
 		# 1 stop master zeninotify
-		system( "$zenino stop" );
+		&logAndRun( "$zenino stop" );
 
 		# 2 stop backup node zevenet
 		&zenlog(
@@ -409,7 +416,7 @@ sub disable_cluster
 		);
 
 		# 2 stop slave zevenet
-		system( "/etc/init.d/zevenet stop >/dev/null 2>&1" );
+		&logAndRun( "/etc/init.d/zevenet stop >/dev/null 2>&1" );
 
 		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 
@@ -457,6 +464,7 @@ sub disable_cluster
 
 sub enable_cluster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Enabling cluster";
@@ -567,7 +575,7 @@ sub enable_cluster
 
 		# force cluster file sync
 		my $filecluster = &getGlobalConfiguration('filecluster');
-		system( "scp $filecluster root\@$zcl_conf->{$remote_hostname}->{ip}:$filecluster" );
+		&logAndRun( "scp $filecluster root\@$zcl_conf->{$remote_hostname}->{ip}:$filecluster" );
 
 		# local conntrackd configuration
 		&setConntrackdConfig();
@@ -615,6 +623,7 @@ sub enable_cluster
 
 sub get_cluster_localhost_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc = "Cluster status for localhost";
@@ -632,6 +641,7 @@ sub get_cluster_localhost_status
 
 sub get_cluster_nodes_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc      = "Cluster nodes status";

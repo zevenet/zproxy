@@ -43,6 +43,7 @@ Returns:
 =cut
 sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $farm_name, $vip_port ) = @_;
 
 	my $output    = -1;
@@ -50,23 +51,44 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 
 	$vip_port = 80 if not defined $vip_port;
 
-	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
+	open my $fd, '>', "$configdir\/$farm_name\_$farm_type.cfg";
 	# farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
-	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
-	close FO;
+	print $fd "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
+	close $fd;
 	$output = $?;      # FIXME
 
 	my $piddir = &getGlobalConfiguration('piddir');
 	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
 	{
 		# Enable active l4xnat file
-		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
-		close FI;
+		open my $fd, '>', "$piddir\/$farm_name\_$farm_type.pid";
+		close $fd;
 	}
 
-	&_runL4FarmStart( $farm_name );
+	&startL4Farm( $farm_name );
 
 	return $output;    # FIXME
+}
+
+=begin nd
+Function: runL4FarmDelete
+
+	Delete a l4xnat farm
+
+Parameters:
+
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or other value on failure
+
+=cut
+sub runL4FarmDelete    # ($farm_name)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
+
+	return 0;
 }
 
 1;

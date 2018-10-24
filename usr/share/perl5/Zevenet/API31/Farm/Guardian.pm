@@ -22,10 +22,14 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 #  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Farm
 #  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
 sub modify_farmguardian    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -128,9 +132,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		}
 	}
 
-	if ( $type eq 'gslb' )
+	if ( $type eq 'gslb' && $eload )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API31::Farm::GSLB',
 				func   => 'modify_gslb_farmguardian',

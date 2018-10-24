@@ -42,6 +42,7 @@ See Also:
 #check if a port in a ip is up
 sub checkport    # ($host, $port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $host, $port ) = @_;
 
 	# check local ports;
@@ -93,6 +94,7 @@ Returns:
 #check if a ip is ok structure
 sub ipisok    # ($checkip, $version)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $checkip = shift;
 	my $version = shift;
 	my $return  = "false";
@@ -122,21 +124,20 @@ sub ipisok    # ($checkip, $version)
 =begin nd
 Function: ipversion
 
-	Returns IP version number of input IP address.
+	IP version number of an input IP address
 
 Parameters:
-	checkip - string to .
+	ip - ip to get the version
 
 Returns:
-	list - All IP addresses up.
+	scalar - 4 for ipv4, 6 for ipv6, 0 if unknown
 
-Bugs:
-	Fix return on non IPv4 or IPv6 valid address.
 =cut
 
 #check if a ip is IPv4 or IPv6
 sub ipversion    # ($checkip)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $checkip = shift;
 	my $output  = "-";
 
@@ -153,49 +154,10 @@ sub ipversion    # ($checkip)
 	}
 	else
 	{
-		$output = '';
+		$output = 0;
 	}
 
 	return $output;
-}
-
-=begin nd
-Function: ipinrange
-
-	[NOT USED] Check if an IP is in a range.
-
-Parameters:
-	netmask - .
-	toip - .
-	newip - .
-
-Returns:
-	boolean - string "true" or "false".
-
-Bugs:
-	NOT USED
-=cut
-
-#function checks if ip is in a range
-sub ipinrange    # ($netmask, $toip, $newip)
-{
-	my ( $netmask, $toip, $newip ) = @_;
-
-	require Net::IPv4Addr;
-	Net::IPv4Addr->import( qw( :all ) );
-
-	#$ip_str1="10.234.18.13";
-	#$mask_str1="255.255.255.0";
-	#$cidr_str2="10.234.18.23";
-	#print "true" if ipv4_in_network( $toip, $netmask, $newip );
-	if ( ipv4_in_network( $toip, $netmask, $newip ) )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
 }
 
 =begin nd
@@ -218,6 +180,7 @@ Returns:
 
 sub getNetValidate    # ($ip, $mask, $ip2)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ip, $mask, $ip2 ) = @_;
 
 	require NetAddr::IP;
@@ -251,6 +214,7 @@ Bugs:
 #function check if interface exist
 sub ifexist    # ($nif)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $nif = shift;
 
 	use IO::Interface qw(:flags);    # Needs to load with 'use'
@@ -300,6 +264,7 @@ See Also:
 
 sub isValidPortNumber    # ($port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $port = shift;
 	my $valid;
 
@@ -334,6 +299,7 @@ Returns:
 
 sub checkNetworkExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $net, $mask, $exception ) = @_;
 
 	require Zevenet::Net::Interface;

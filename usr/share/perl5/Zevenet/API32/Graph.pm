@@ -39,6 +39,7 @@ my $graph_period = {
 #GET disk
 sub possible_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
@@ -72,7 +73,7 @@ sub possible_graphs    #()
 
 	my $body = {
 		description =>
-		  "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		system     => \@sys,
 		interfaces => \@net,
 		farms      => \@farms
@@ -84,6 +85,7 @@ sub possible_graphs    #()
 # GET all system graphs
 sub get_all_sys_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	# System values
@@ -106,7 +108,7 @@ sub get_all_sys_graphs    #()
 
 	my $body = {
 		description =>
-		  "These are the possible system graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible system graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		system => \@sys
 	};
 
@@ -116,6 +118,7 @@ sub get_all_sys_graphs    #()
 # GET system graphs
 sub get_sys_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $key = shift;
 
 	my $desc = "Get $key graphs";
@@ -142,6 +145,7 @@ sub get_sys_graphs    #()
 # GET frequency system graphs
 sub get_frec_sys_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $key       = shift;
 	my $frequency = shift;
 
@@ -164,10 +168,11 @@ sub get_frec_sys_graphs    #()
 # GET all interface graphs
 sub get_all_iface_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @iface = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my $body = {
 		description =>
-		  "These are the possible interface graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible interface graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		interfaces => \@iface
 	};
 
@@ -177,6 +182,7 @@ sub get_all_iface_graphs    #()
 # GET interface graphs
 sub get_iface_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface = shift;
 
 	require Zevenet::Net::Interface;
@@ -221,6 +227,7 @@ sub get_iface_graphs    #()
 # GET frequency interface graphs
 sub get_frec_iface_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $iface     = shift;
 	my $frequency = shift;
 
@@ -259,6 +266,7 @@ sub get_frec_iface_graphs    #()
 # GET all farm graphs
 sub get_all_farm_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 
 	if ( $eload )
@@ -273,7 +281,7 @@ sub get_all_farm_graphs    #()
 
 	my $body = {
 		description =>
-		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible farm graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		farms => \@farms
 	};
 
@@ -283,6 +291,7 @@ sub get_all_farm_graphs    #()
 # GET farm graphs
 sub get_farm_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Zevenet::Farm::Core;
@@ -326,6 +335,7 @@ sub get_farm_graphs    #()
 # GET frequency farm graphs
 sub get_frec_farm_graphs    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName  = shift;
 	my $frequency = shift;
 
@@ -365,6 +375,7 @@ sub get_frec_farm_graphs    #()
 #GET mount points list
 sub list_disks    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @mount_points;
@@ -389,6 +400,7 @@ sub list_disks    #()
 #GET disk graphs for all periods
 sub graphs_disk_mount_point_all    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $mount_point = shift;
 
 	require Zevenet::Stats;
@@ -424,6 +436,7 @@ sub graphs_disk_mount_point_all    #()
 #GET disk graph for a single period
 sub graph_disk_mount_point_freq    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $mount_point = shift;
 	my $frequency   = shift;
 

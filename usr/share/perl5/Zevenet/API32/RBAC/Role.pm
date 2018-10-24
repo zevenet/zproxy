@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::RBAC::Core';
 include 'Zevenet::RBAC::Role::Config';
 include 'Zevenet::API32::RBAC::Structs';
@@ -29,6 +32,7 @@ include 'Zevenet::API32::RBAC::Structs';
 #list
 sub get_rbac_all_roles
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @roleList = sort &getRBACRolesList();
 	my $desc     = "List the RBAC roles";
 
@@ -40,6 +44,7 @@ sub get_rbac_all_roles
 #show
 sub get_rbac_role
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $role = shift;
 	my $desc = "Get the role $role";
 
@@ -59,6 +64,7 @@ sub get_rbac_role
 # create
 sub add_rbac_role
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Create the RBAC role, $json_obj->{ 'name' }";
@@ -109,6 +115,7 @@ sub add_rbac_role
 # delete
 sub del_rbac_role
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $role = shift;
 
 	my $desc = "Delete the RBAC role $role";
@@ -158,6 +165,7 @@ sub del_rbac_role
 # modify
 sub set_rbac_role
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $role     = shift;
 

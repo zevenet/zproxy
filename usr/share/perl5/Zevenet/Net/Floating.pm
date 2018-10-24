@@ -39,6 +39,7 @@ See Also:
 =cut
 sub getConfigTiny
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file_path = shift;
 
 	if ( ! -f $file_path )
@@ -71,19 +72,20 @@ See Also:
 =cut
 sub setConfigTiny
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file_path  = shift;
 	my $config_ref = shift;
 
 	if ( ! -f $file_path )
 	{
-		&zenlog("Could not find $file_path: $!", "error", "SYSTEM");
-		return undef;
+		&zenlog("Could not find $file_path.", "error", "SYSTEM");
+		return;
 	}
 
 	if ( ref $config_ref ne 'Config::Tiny' )
 	{
 		&zenlog("Ilegal configuration argument.", "error", "SYSTEM");
-		return undef;
+		return;
 	}
 
 	require Config::Tiny;
@@ -109,7 +111,10 @@ See Also:
 # get floating interface or output interface
 sub getFloatInterfaceForAddress
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $remote_ip_address = shift;
+
+	return '' if !$remote_ip_address;
 
 	require NetAddr::IP;
 	require Zevenet::Net::Interface;
@@ -161,13 +166,25 @@ sub getFloatInterfaceForAddress
 
 sub getFloatingMasqParams
 {
-	my ( $farm, $server ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 
-	my $out_if = &getFloatInterfaceForAddress( $$server{ vip } );
+	my $farm = shift;
+	my $server = shift;
+	my $out_if;
 
-	if ( ! $out_if )
+	if ( $server->{ vip } )
 	{
-		$out_if = &getFloatInterfaceForAddress( $$farm{ vip } );
+		$out_if = &getFloatInterfaceForAddress( $server->{ vip } );
+	}
+
+	if ( !$out_if && $farm->{ vip } )
+	{
+		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
+	}
+
+	if ( !$out_if )
+	{
+		return "";
 	}
 
 	return "--jump SNAT --to-source $out_if->{ addr } ";
@@ -175,11 +192,109 @@ sub getFloatingMasqParams
 
 sub getFloatingSnatParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $server ) = @_;
 
 	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
 
 	return "--jump SNAT --to-source $float_if->{ addr }";
+}
+
+sub get_floating_struct
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $floating ) = @_;
+
+	require Zevenet::Alias;
+	require Zevenet::Net::Interface;
+
+	# Interfaces
+	my $output;
+	my @ifaces            = @{ &getSystemInterfaceList() };
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
+	my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+	my $alias = &getAlias( 'interface' );
+
+	for my $iface ( @ifaces )
+	{
+		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
+		next if $iface->{ type } eq 'virtual';
+		next unless $iface->{ name } eq $floating;
+
+		my $floating_ip        = undef;
+		my $floating_interface = undef;
+
+		unless ( $iface->{ addr } )
+		{
+			my $msg = "This interface has no address configured";
+			return &httpErrorResponse( code => 400, msg => $msg );
+		}
+
+		$floating_ip = undef;
+
+		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
+		{
+			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
+			my $if_ref = &getInterfaceConfig( $floating_interface );
+			$floating_ip = $if_ref->{ addr };
+		}
+
+		$output = {
+					alias             => $alias->{ $iface->{ name } },
+					interface         => $iface->{ name },
+					floating_ip       => $floating_ip,
+					floating_alias    => $alias->{ $floating_interface },
+					interface_virtual => $floating_interface,
+		};
+
+		last;
+	}
+
+	return $output;
+}
+
+sub get_floating_list_struct
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	require Zevenet::Alias;
+	require Zevenet::Net::Interface;
+
+	# Interfaces
+	my @output;
+	my @ifaces            = @{ &getSystemInterfaceList() };
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
+	my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+	my $alias = &getAlias( 'interface' );
+
+	for my $iface ( @ifaces )
+	{
+		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
+		next if $iface->{ type } eq 'virtual';
+		next unless $iface->{ addr };
+
+		my $floating_ip        = undef;
+		my $floating_interface = undef;
+
+		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
+		{
+			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
+			my $if_ref = &getInterfaceConfig( $floating_interface );
+			$floating_ip = $if_ref->{ addr };
+		}
+
+		push @output,
+		  {
+			alias             => $alias->{ $iface->{ name } },
+			interface         => $iface->{ name },
+			floating_ip       => $floating_ip,
+			floating_alias    => $alias->{ $floating_interface },
+			interface_virtual => $floating_interface,
+		  };
+	}
+
+	return \@output;
 }
 
 1;

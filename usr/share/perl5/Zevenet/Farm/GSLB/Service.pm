@@ -23,8 +23,6 @@
 
 use strict;
 
-require Zevenet::Farm;
-
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
@@ -41,15 +39,15 @@ Returns:
 =cut
 sub getGSLBFarmServices    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	require Tie::File;
 
 	my $output = -1;
-	my $ftype  = &getFarmType( $fname );
 	my @srvarr = ();
 
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
 
@@ -58,7 +56,7 @@ sub getGSLBFarmServices    # ($farm_name)
 		next if $plugin =~ /^\./;
 
 		tie my @fileconf, 'Tie::File',
-		  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+		  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 
 		my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, @fileconf );
 
@@ -97,22 +95,22 @@ Returns:
 =cut
 sub setGSLBFarmDeleteService    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	my $output     = -1;
-	my $ftype      = &getFarmType( $fname );
 	my $pluginfile = "";
 	my $srv_port;
 
 	#Find the plugin file
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 
 	# look for the plugin file including the service
 	foreach my $plugin ( @pluginlist )
 	{
 		tie my @fileconf, 'Tie::File',
-		  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+		  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 		if ( grep ( /^\t$svice => /, @fileconf ) )
 		{
 			$pluginfile = $plugin;
@@ -131,7 +129,7 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 		# do not remove service if it is still in use
 		my ( $plugin_name ) = split ( '.cfg', $pluginfile );
 		my $grep_cmd =
-		  qq{grep '$plugin_name!$svice ;' $configdir\/$fname\_$ftype.cfg\/etc\/zones/* 2>/dev/null};
+		  qq{grep '$plugin_name!$svice ;' $configdir\/$fname\_gslb.cfg\/etc\/zones/* 2>/dev/null};
 
 		my $grep_output = `$grep_cmd`;
 
@@ -148,7 +146,7 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 
 		#Delete section from the plugin file
 		tie my @fileconf, 'Tie::File',
-		  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$pluginfile";
+		  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$pluginfile";
 
 		while ( $deleted == 0 )
 		{
@@ -186,7 +184,7 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 		# if the plugin file has no services
 		if ( scalar @fileconf < 5 )    #=3
 		{
-			tie my @config_file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+			tie my @config_file, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 
 			# remove the line of that plugin
 			@config_file = grep { !/plugins\/$pluginfile/ } @config_file;
@@ -231,12 +229,12 @@ Bug:
 =cut
 sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice, $alg ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Service';
 
 	my $output = -1;
-	my $ftype  = &getFarmType( $fname );
 	my $gsalg  = "simplefo";
 
 	if ( $alg eq "roundrobin" )
@@ -259,29 +257,29 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 	}
 	else
 	{
-		if ( !( -e "$configdir/${fname}_${ftype}.cfg/etc/plugins/${gsalg}.cfg" ) )
+		if ( !( -e "$configdir/${fname}_gslb.cfg/etc/plugins/${gsalg}.cfg" ) )
 		{
-			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
-			print FO "$gsalg => {\n\tservice_types = up\n";
-			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
+			open my $fd, '>', "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$gsalg.cfg";
+			print $fd "$gsalg => {\n\tservice_types = up\n";
+			print $fd "\t$svice => {\n\t\tservice_types = tcp_80\n";
 			if ( $gsalg eq "simplefo" )
 			{
-				print FO "\t\tprimary => 127.0.0.1\n";
-				print FO "\t\tsecondary => 127.0.0.1\n";
+				print $fd "\t\tprimary => 127.0.0.1\n";
+				print $fd "\t\tsecondary => 127.0.0.1\n";
 			}
 			else
 			{
-				print FO "\t\t1 => 127.0.0.1\n";
+				print $fd "\t\t1 => 127.0.0.1\n";
 			}
-			print FO "\t}\n}\n";
-			close FO;
+			print $fd "\t}\n}\n";
+			close $fd;
 			$output = 0;
 		}
 		else
 		{
 			# Include the service in the plugin file
 			tie my @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
+			  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$gsalg.cfg";
 			if ( grep ( /^\t$svice =>.*/, @fileconf ) )
 			{
 				$output = -1;
@@ -290,6 +288,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 			{
 				my $found = 0;
 				my $index = 0;
+
 				foreach my $line ( @fileconf )
 				{
 					if ( $line =~ /$gsalg => / )
@@ -330,7 +329,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		if ( $output == 0 )
 		{
 			# Include the plugin file in the main configuration
-			tie my @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+			tie my @fileconf, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 			if ( ( grep ( /include\{plugins\/$gsalg\.cfg\}/, @fileconf ) ) == 0 )
 			{
 				my $found = 0;
@@ -385,23 +384,22 @@ FIXME:
 =cut
 sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice, $tag ) = @_;
 
 	require Tie::File;
 	require Zevenet::Farm::Core;
 
 	my $output = "";
-	my $type   = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my @linesplt;
 
 	if ( $tag eq "ns" || $tag eq "resources" )
 	{
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $tag eq "ns" )
 			{
@@ -427,23 +425,25 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 	{
 		my $found      = 0;
 		my $pluginfile = "";
-		opendir ( DIR, "$configdir\/$fname\_$type.cfg\/etc\/plugins\/" );
+		opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
 		my @pluginlist = readdir ( DIR );
 
 		foreach my $plugin ( @pluginlist )
 		{
 			tie @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$plugin";
+			  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 			if ( grep ( /^\t$svice => /, @fileconf ) )
 			{
 				$pluginfile = $plugin;
 			}
 			untie @fileconf;
 		}
+
 		closedir ( DIR );
 		tie @fileconf, 'Tie::File',
-		  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$pluginfile";
-		foreach $line ( @fileconf )
+		  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$pluginfile";
+
+		foreach my $line ( @fileconf )
 		{
 			if ( $tag eq "backends" )
 			{
@@ -532,15 +532,14 @@ Bug:
 =cut
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $svice, $tag, $stri ) = @_;
 
 	require Tie::File;
 
-	my $type  = &getFarmType( $fname );
 	my $ffile = &getFarmFile( $fname );
 	my $pluginfile;
 	my @fileconf;
-	my $line;
 	my $param;
 	my @linesplt;
 	my $tcp_port;
@@ -549,7 +548,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	if ( $tag eq "ns" )
 	{
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $line =~ /^@\tSOA .* hostmaster / )
 			{
@@ -627,7 +626,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		# Change configuration in plugin file
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $found == 1 && $line =~ /.*}.*/ )
 			{
@@ -762,7 +761,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			my $firstIndex = 0;
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 
-			foreach $line ( @fileconf )
+			foreach my $line ( @fileconf )
 			{
 				if ( $line =~ /service_types => / )
 				{
@@ -798,6 +797,70 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	}
 
 	return $output;
+}
+
+sub getGSLBFarmServicesStruct
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
+
+	require Zevenet::FarmGuardian;
+	include 'Zevenet::Farm::GSLB::Backend';
+
+	my @out_s = ();
+
+	# Services
+	my @services = &getGSLBFarmServices( $farmname );
+
+	foreach my $srv_it ( @services )
+	{
+		my @serv = split ( ".cfg", $srv_it );
+		my $srv  = $serv[0];
+		my $lb   = &getGSLBFarmVS( $farmname, $srv, "algorithm" );
+
+		# Default port health check
+		my $dpc = &getGSLBFarmVS( $farmname, $srv, "dpc" );
+
+		# Backends
+		my $out_b = &getGSLBFarmBackends( $farmname, $srv );
+
+		push @out_s,
+		  {
+			id           => $srv,
+			algorithm    => $lb,
+			deftcpport   => $dpc + 0,
+			farmguardian => &getFGFarm( $farmname, $srv ),
+			backends     => $out_b,
+		  };
+	}
+
+	return \@out_s;
+}
+
+sub getGSLBFarmServicesStruct31
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
+
+	require Zevenet::FarmGuardian;
+
+	# Services
+	my @services = @{ &getGSLBFarmServicesStruct( $farmname ) };
+
+	foreach my $srv ( @services )
+	{
+		delete $srv->{ farmguardian };
+
+		# Farmguardian
+		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv->{ id } );
+		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv->{ id } );
+
+		$srv->{ fgenabled }   = $fgStatus;
+		$srv->{ fgscript }    = $fgScrip;
+		$srv->{ fgtimecheck } = $fgTime + 0;
+	}
+
+	return \@services;
 }
 
 1;

@@ -30,6 +30,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # POST
 sub new_farm_service    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -54,10 +55,13 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $type = &getFarmType( $farmname );
 
 	# validate farm profile
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API31::Farm::GSLB', func => 'new_gslb_farm_service', args => [ $json_obj, $farmname ] );
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'new_gslb_farm_service',
+				args   => [$json_obj, $farmname]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -135,6 +139,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 #GET /farms/<name>/services/<service>
 sub farm_services
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $servicename ) = @_;
 
 	require Zevenet::Farm::Config;
@@ -189,6 +194,7 @@ sub farm_services
 
 sub modify_services    # ( $json_obj, $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -225,10 +231,13 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	}
 
 	# check if the farm profile gslb is supported
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API31::Farm::GSLB', func => 'modify_gslb_service', args => [ $json_obj, $farmname, $service ] );
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'modify_gslb_service',
+				args   => [$json_obj, $farmname, $service]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -421,6 +430,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 # DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
 sub delete_service    # ( $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $desc = "Delete service";
@@ -471,7 +481,7 @@ sub delete_service    # ( $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $error = &deleteFarmService( $farmname, $service );
+	my $error = &delHTTPFarmService( $farmname, $service );
 
 	# check if the service is in use
 	if ( $error == -2 )

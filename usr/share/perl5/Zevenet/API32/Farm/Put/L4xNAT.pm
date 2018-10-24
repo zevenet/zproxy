@@ -30,6 +30,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # PUT /farms/<farmname> Modify a l4xnat Farm
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -40,7 +41,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $restart_flag = "false";
 	my $error        = "false";
 	my $status;
-	my $initialStatus = &getFarmStatus( $farmname );
+	my $initialStatus = &getL4FarmParam( 'status', $farmname );
 
 	# Check that the farm exists
 	if ( ! &getFarmExists( $farmname ) )
@@ -80,7 +81,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify Farm's Name
 	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
-		unless ( &getFarmStatus( $farmname ) eq 'down' )
+		unless ( &getL4FarmParam( 'status', $farmname ) eq 'down' )
 		{
 			my $msg = 'Cannot change the farm name while running';
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -161,7 +162,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		my $persistence = $json_obj->{ persistence };
 		$persistence = 'none' if $persistence eq '';
 
-		if ( &getFarmPersistence( $farmname ) ne $persistence )
+		if ( &getL4FarmParam( 'persist', $farmname ) ne $persistence )
 		{
 			my $statusp = &setFarmSessionType( $persistence, $farmname, "" );
 			if ( $statusp )
@@ -189,7 +190,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $error = &setFarmProto( $json_obj->{ protocol }, $farmname );
+		my $error = &setL4FarmParam( 'proto', $json_obj->{ protocol }, $farmname );
 		if ( $error )
 		{
 			my $msg = "Some errors happened trying to modify the protocol.";
@@ -213,15 +214,15 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		unless ( $json_obj->{ nattype } =~ /^(nat|dnat)$/ )
+		unless ( $json_obj->{ nattype } =~ /^(nat|dnat|dsr)$/ )
 		{
 			my $msg = "Invalid nattype.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( &getFarmNatType( $farmname ) ne $json_obj->{ nattype } )
+		if ( &getL4FarmParam( 'mode', $farmname ) ne $json_obj->{ nattype } )
 		{
-			my $error = &setFarmNatType( $json_obj->{ nattype }, $farmname );
+			my $error = &setL4FarmParam( 'mode', $json_obj->{ nattype }, $farmname );
 			if ( $error )
 			{
 				my $msg = "Some errors happened trying to modify the nattype.";
@@ -271,10 +272,9 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my @backends = @{ &getL4FarmBackends( $farmname ) };
-
-		unless ( !@backends
-			 || &ipversion( $backends[0]->{ ip } ) eq &ipversion( $json_obj->{ vip } ) )
+		my $backends = &getL4FarmServers( $farmname );
+		unless ( !@{ $backends }[0]
+			 || &ipversion( @{ $backends }[0]->{ ip } ) eq &ipversion( $json_obj->{ vip } ) )
 		{
 			my $msg = "Invalid VIP address, VIP and backends can't be from diferent IP version.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -339,11 +339,11 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify logs
 	if ( exists ( $json_obj->{ logs } ) )
 	{
-		require Zevenet::Farm::Config;
+		#require Zevenet::Farm::Config;
 		my $err;
 		if ( $json_obj->{ logs } =~ /(?:true|false)/ )
 		{
-			$err = &setL4FarmLogs( $farmname, $json_obj->{ logs } );
+			$err = &setL4FarmParam( 'logs', $json_obj->{ logs }, $farmname );
 		}
 		else
 		{
@@ -361,7 +361,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# no error found, return successful response
 	&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "LSLB" );
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getL4FarmParam( 'status', $farmname ) eq 'up' )
 	{
 		# Reset ip rule mark when changing the farm's vip
 		if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )

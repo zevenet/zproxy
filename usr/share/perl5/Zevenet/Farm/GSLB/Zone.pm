@@ -38,12 +38,12 @@ Returns:
 =cut
 sub getGSLBFarmZones    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $output    = -1;
-	my $farm_type = &getFarmType( $farm_name );
 
-	opendir ( DIR, "$configdir\/$farm_name\_$farm_type.cfg\/etc\/zones\/" );
+	opendir ( DIR, "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^[a-zA-Z]/ } readdir ( DIR );
 	closedir ( DIR );
 
@@ -65,19 +65,18 @@ Returns:
 =cut
 sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $id, $fname, $service ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my $index = 0;
 
 	require Tie::File;
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /\;index_$id/ )
 		{
@@ -108,6 +107,7 @@ Returns:
 =cut
 sub setGSLBFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $id, $resource, $ttl, $type, $rdata, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -178,9 +178,9 @@ Returns:
 =cut
 sub setGSLBFarmZoneSerial    # ($farm_name,$zone)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $zone ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 	my $index = 0;
 
@@ -214,6 +214,7 @@ Returns:
 =cut
 sub setGSLBFarmDeleteZone    # ($farm_name,$zone)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $zone ) = @_;
 
 	return unlink "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/$zone";
@@ -233,22 +234,22 @@ Returns:
 =cut
 sub setGSLBFarmNewZone    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $zone ) = @_;
 
 	require Zevenet::Farm::Base;
 
 	my $output = -1;
-	my $ftype  = &getFarmType( $fname );
 	my $fvip   = &getFarmVip( "vip", $fname );
 
-	opendir ( my $dirh, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/" );
+	opendir ( my $dirh, "$configdir\/$fname\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^$zone/ } readdir ( $dirh );
 	closedir ( $dirh );
 
 	if ( scalar @files == 0 )
 	{
-		open ( my $file, ">", "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$zone" )
-		  or warn "cannot open > $configdir\/$fname\_$ftype.cfg\/etc\/zones\/$zone: $!";
+		open ( my $file, ">", "$configdir\/$fname\_gslb.cfg\/etc\/zones\/$zone" )
+		  or warn "cannot open > $configdir\/$fname\_gslb.cfg\/etc\/zones\/$zone: $!";
 
 		print $file "@	SOA ns1 hostmaster (\n" . "	1\n"
 		  . "	7200\n"
@@ -286,6 +287,7 @@ Returns:
 =cut
 sub getGSLBResources	# ( $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Config;
@@ -320,6 +322,47 @@ sub getGSLBResources	# ( $farmname, $zone )
 	}
 
 	return \@resourcesArray;
+}
+
+sub getGSLBFarmZonesStruct
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
+
+	my @zones   = &getGSLBFarmZones( $farmname );
+	my $first   = 0;
+	my $vserver = 0;
+	my $pos     = 0;
+
+	my @out_z = ();
+
+	foreach my $zone ( @zones )
+	{
+		$pos++;
+		$first = 1;
+		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
+		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
+		my @be = split ( "\n", $backendsvs );
+		my @out_re;
+		my $resources = &getGSLBResources  ( $farmname, $zone );
+
+		for my $resource ( @{ $resources } )
+		{
+			$resource->{ ttl } = undef if ! $resource->{ ttl };
+			$resource->{ ttl } += 0 if $resource->{ ttl };
+		}
+
+		push (
+			   @out_z,
+			   {
+				  id        => $zone,
+				  defnamesv => $ns,
+				  resources => $resources,
+			   }
+		);
+	}
+
+	return \@out_z;
 }
 
 1;

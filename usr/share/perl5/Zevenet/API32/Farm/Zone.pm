@@ -23,11 +23,15 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 # POST
 
 # POST /farms/<farmname>/zones Create a new zone in a gslb Farm
 sub new_farm_zone # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -89,6 +93,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 # POST /farms/<farmname>/zoneresources Create a new resource of a zone in a gslb Farm
 sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $zone     = shift;
@@ -228,6 +233,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 #	/farms/<GSLBfarm>/zones/<zone>/resources
 sub gslb_zone_resources # ( $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $zone = shift;
 
@@ -282,6 +288,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 
 sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $zone, $id_resource ) = @_;
 
 	my $desc = "Modify zone resource";
@@ -311,24 +318,24 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::Config;
-
-	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-	my @be = split ( "\n", $backendsvs );
-	my ( $resource_line ) = grep { /;index_$id_resource$/ } @be;
+	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	unless ( $resource_line )
+	unless ( defined $res_aref->[ $id_resource ] )
 	{
 		my $msg = "Could not find the requested resource.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# read resource
-	my $rsc;
-
-	( $rsc->{ name }, $rsc->{ ttl }, $rsc->{ type }, $rsc->{ data }, $rsc->{ id } )
-	  = split ( /(?:\t| ;index_)/, $resource_line );
+	my $resource = $res_aref->[$id_resource];
+	my $rsc = {
+				name => $resource->{ rname },
+				ttl  => $resource->{ ttl },
+				type => $resource->{ type },
+				data => $resource->{ rdata },
+				id   => $resource->{ id },
+	};
 
 	# Functions
 	if ( exists ( $json_obj->{ rname } ) )
@@ -447,6 +454,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 sub modify_zones # ( $json_obj, $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $zone ) = @_;
 
 	my $desc = "Modify zone";
@@ -500,6 +508,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 # DELETE /farms/<farmname>/zones/<zonename> Delete a zone of a  gslb Farm
 sub delete_zone # ( $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -548,6 +557,7 @@ sub delete_zone # ( $farmname, $zone )
 #  @api {delete} /farms/<farmname>/zones/<zonename>/resources/<resourceid> Delete a resource of a Zone
 sub delete_zone_resource # ( $farmname, $zone, $resource )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $zone, $resource ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -577,17 +587,13 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::Config;
-
-	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-	my @be = split ( "\n", $backendsvs );
-	my ( $resource_line ) = grep { /;index_$resource$/ } @be;
+	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	if ( ! $resource_line )
+	unless ( defined $res_aref->[ $resource ] )
 	{
-		my $msg = "Invalid resource id, please insert a valid value.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		my $msg = "Could not find the requested resource.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $status = &remGSLBFarmZoneResource( $resource, $farmname, $zone );

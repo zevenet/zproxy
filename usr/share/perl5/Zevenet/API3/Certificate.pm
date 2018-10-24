@@ -27,6 +27,7 @@ my $CSR_KEY_SIZE = 2048;
 # GET /certificates
 sub certificates # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Certificate;
 	my @certificates = &getCertFiles();
 	my @out;
@@ -70,6 +71,7 @@ sub certificates # ()
 # GET /certificates/CERTIFICATE
 sub download_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	my $cert_dir = &getGlobalConfiguration('configdir');
@@ -108,6 +110,7 @@ sub download_certificate # ()
 # GET /certificates/CERTIFICATE/info
 sub get_certificate_info # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	my $cert_dir = &getGlobalConfiguration('configdir');
@@ -144,6 +147,7 @@ sub get_certificate_info # ()
 # DELETE /certificates/CERTIFICATE
 sub delete_certificate # ( $cert_filename )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cert_filename = shift;
 	my $description = "Delete certificate";
 	my $errormsg;
@@ -206,6 +210,7 @@ sub delete_certificate # ( $cert_filename )
 # POST /certificates (Create CSR)
 sub create_csr
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = 'Create CSR';
@@ -326,6 +331,7 @@ sub create_csr
 # POST /certificates/CERTIFICATE (Upload PEM)
 sub upload_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 
 #
 # Curl command:

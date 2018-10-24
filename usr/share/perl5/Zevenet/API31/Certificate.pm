@@ -27,6 +27,7 @@ my $CSR_KEY_SIZE = 2048;
 # GET /certificates
 sub certificates # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc         = "List certificates";
@@ -50,38 +51,27 @@ sub certificates # ()
 # GET /certificates/CERTIFICATE
 sub download_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cert_filename = shift;
 
-	my $desc = "Download certificate";
-	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	my $desc      = "Download certificate";
+	my $cert_dir  = &getGlobalConfiguration( 'configdir' );
+	$cert_dir     = &getGlobalConfiguration( 'basedir' ) if $cert_filename eq 'zlbcertfile.pem';
+	my $cert_path = "$cert_dir/$cert_filename";
 
-	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
-
-	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" && $download_fh )
+	unless ( $cert_filename =~ /\.(pem|csr)$/ && -f $cert_path )
 	{
-		my $cgi = &getCGI();
-		print $cgi->header(
-						  -type            => 'application/x-download',
-						  -attachment      => $cert_filename,
-						  'Content-length' => -s "$cert_dir/$cert_filename",
-		);
+		my $msg = "Could not find such certificate";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
-		binmode $download_fh;
-		print while <$download_fh>;
-		close $download_fh;
-		exit;
-	}
-	else
-	{
-		my $msg = "Could not send such certificate";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	&httpDownloadResponse( desc => $desc, dir => $cert_dir, file => $cert_filename );
 }
 
 # DELETE /certificates/CERTIFICATE
 sub delete_certificate # ( $cert_filename )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	require Zevenet::Certificate;
@@ -108,7 +98,7 @@ sub delete_certificate # ( $cert_filename )
 	}
 
 	&delCert( $cert_filename );
-	
+
 	# check if the certificate exists
 	if ( -f "$cert_dir\/$cert_filename" )
 	{
@@ -130,6 +120,7 @@ sub delete_certificate # ( $cert_filename )
 # POST /certificates (Create CSR)
 sub create_csr
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	require Zevenet::Certificate;
@@ -209,8 +200,11 @@ sub create_csr
 # POST /certificates/CERTIFICATE (Upload PEM)
 sub upload_certificate # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $upload_filehandle = shift;
 	my $filename          = shift;
+
+	require Zevenet::File;
 
 	my $desc      = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -229,15 +223,11 @@ sub upload_certificate # ()
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $filename =~ /\\/ )
+	unless ( &saveFileHandler( "$configdir/$filename", $upload_filehandle ) )
 	{
-		my @filen = split ( /\\/, $filename );
-		$filename = $filen[-1];
+		my $msg = "Could not save the certificate file";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	open ( my $cert_filehandle, '>', "$configdir/$filename" ) or die "$!";
-	print $cert_filehandle $upload_filehandle;
-	close $cert_filehandle;
 
 	# no errors found, return sucessful response
 	my $message = "Certificate uploaded";

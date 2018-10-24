@@ -37,6 +37,7 @@ Returns:
 
 sub getZapiRBACUsers
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user = shift;
 
 	include 'Zevenet::RBAC::User::Core';
@@ -70,6 +71,7 @@ Returns:
 
 sub getZapiRBACAllUsers
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @allUsers = ();
 
 	foreach my $user ( sort &getRBACUserList() )
@@ -94,6 +96,7 @@ Returns:
 
 sub getZapiRBACGroups
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	include 'Zevenet::RBAC::Group::Core';
@@ -124,6 +127,7 @@ Returns:
 
 sub getZapiRBACAllGroups
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @allGroups = ();
 
 	foreach my $group ( sort &getRBACGroupList() )
@@ -136,6 +140,7 @@ sub getZapiRBACAllGroups
 
 sub getZapiRBACRole
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $role = shift;
 	require Config::Tiny;
 	my $roleFile   = &getRBACRoleFile( $role );

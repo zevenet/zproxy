@@ -42,6 +42,7 @@ Returns:
 
 sub getRBACGroupConf
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rbacPath = &getRBACConfPath();
 	return "$rbacPath/groups.conf";
 }
@@ -61,6 +62,7 @@ Returns:
 
 sub getRBACGroupList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rbacGroupConfig );
 
@@ -82,6 +84,7 @@ Returns:
 
 sub getRBACGroupExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	my $out = 0;
@@ -105,6 +108,7 @@ Returns:
 
 sub getRBACGroupObject
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	require Config::Tiny;
@@ -145,6 +149,7 @@ Returns:
 
 sub getRBACGroupParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group  = shift;
 	my $param  = shift;
 	my $object = &getRBACGroupObject( $group );
@@ -167,6 +172,7 @@ Returns:
 
 sub getRBACUsersResources
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user = shift;
 	my $type = shift;
 
@@ -190,6 +196,7 @@ Returns:
 
 sub getRBACGroupsSys
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $groups_bin = &getGlobalConfiguration( "groups_bin" );
 	my $users      = `$groups_bin rbac`;
 	chomp $users;
@@ -221,6 +228,7 @@ Example:
 
 sub getRBACUserSet
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $type    = shift;
 	my $rawSet  = shift;
 	my @userSet = ();
@@ -268,6 +276,7 @@ Example:
 
 sub getRBACResourcesFromList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $type    = shift;
 	my $rawSet  = shift;
 	my @userSet = ();

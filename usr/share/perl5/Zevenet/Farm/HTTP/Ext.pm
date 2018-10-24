@@ -40,26 +40,24 @@ Returns:
 =cut
 sub getHTTPFarm100Continue    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
+	$output = 1;	# if the directive is not in config file, it is enabled
+	my @file = <$fd>;
+	close $fd;
+
+	foreach my $line ( @file )
 	{
-		open FR, '<', "$configdir\/$farm_filename" or return $output;
-		$output = 1;	# if the directive is not in config file, it is enabled
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /Ignore100Continue (\d).*/ )
 		{
-			if ( $line =~ /Ignore100Continue (\d).*/ )
-			{
-				$output = $1;
-				last;
-			}
+			$output = $1;
+			last;
 		}
-		close FR;
 	}
 
 	return $output;
@@ -80,33 +78,31 @@ Returns:
 =cut
 sub setHTTPFarm100Continue    # ($farm_name, $action)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $action ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Tie::File;
-		tie my @file, 'Tie::File', "$configdir/$farm_filename";
+	require Tie::File;
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
-		# check if 100 continue directive exists
-		if ( ! grep(s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file) )
+	# check if 100 continue directive exists
+	if ( ! grep(s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file) )
+	{
+		foreach my $line (@file)
 		{
-			foreach my $line (@file)
+			# put ignore below than rewritelocation
+			if ( $line =~ /^Control\s/ )
 			{
-				# put ignore below than rewritelocation
-				if ( $line =~ /^Control\s/ )
-				{
-					$line = "$line\nIgnore100Continue $action";
-					last;
-				}
+				$line = "$line\nIgnore100Continue $action";
+				last;
 			}
 		}
-		$output = 0;
-		untie @file;
 	}
+	$output = 0;
+	untie @file;
+
 	return $output;
 }
 
@@ -124,26 +120,24 @@ Returns:
 =cut
 sub getHTTPFarmLogs    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
+	$output = 0;	# if the directive is not in config file, it is disabled
+	my @file = <$fd>;
+	close $fd;
+
+	foreach my $line ( @file )
 	{
-		open FR, '<', "$configdir\/$farm_filename" or return $output;
-		$output = 0;	# if the directive is not in config file, it is disabled
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /LogLevel\s+(\d).*/ )
 		{
-			if ( $line =~ /LogLevel\s+(\d).*/ )
-			{
-				$output = $1;
-				last;
-			}
+			$output = $1;
+			last;
 		}
-		close FR;
 	}
 
 	return $output;
@@ -164,33 +158,30 @@ Returns:
 =cut
 sub setHTTPFarmLogs    # ($farm_name, $action)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $action ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
 	my $loglvl = ( $action eq "true" ) ? 5 : 0;
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Tie::File;
-		tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
-		# check if 100 continue directive exists
-		if ( ! grep( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file) )
-		{
-			&zenlog( "Error modifying http logs", "error", "HTTP");
-		}
-		else
-		{
-			$output = 0;
-		}
-		untie @file;
+	require Tie::File;
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
+
+	# check if 100 continue directive exists
+	if ( ! grep( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file) )
+	{
+		&zenlog( "Error modifying http logs", "error", "HTTP");
 	}
+	else
+	{
+		$output = 0;
+	}
+	untie @file;
+
 	return $output;
 }
-
-
 
 # Add headers
 
@@ -208,6 +199,7 @@ Returns:
 =cut
 sub getHTTPAddheader    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my @out = ();
 
@@ -215,24 +207,23 @@ sub getHTTPAddheader    # ($farm_name,$service)
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw = 0;
-	my $out = "false";
+	my $sw            = 0;
+	my $out           = "false";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
-    
-    my $index = 0;
+
+	my $index = 0;
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^[#\s]*Service \"/ )
-			{ last; }
+		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
 		elsif ( $line =~ /^[#\s]*AddHeader\s+"(.+)"/ )
 		{
-	        my %hash = (
-	                "id"            => $index,
-	                "header"        => $1
-	        );
-	        push @out, \%hash;
-	        $index++;
+			my %hash = (
+						 "id"     => $index,
+						 "header" => $1
+			);
+			push @out, \%hash;
+			$index++;
 		}
 	}
 
@@ -257,6 +248,7 @@ Returns:
 =cut
 sub addHTTPAddheader    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -310,6 +302,7 @@ Returns:
 =cut
 sub delHTTPAddheader    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -362,6 +355,7 @@ Returns:
 =cut
 sub getHTTPHeadremove    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my @out = ();
 
@@ -374,19 +368,18 @@ sub getHTTPHeadremove    # ($farm_name,$service)
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
-    my $index = 0;
+	my $index = 0;
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^[#\s]*Service \"/ )
-			{ last; }
+		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
 		elsif ( $line =~ /^[#\s]*HeadRemove\s+"(.+)"/ )
 		{
-            my %hash = (
-                    "id"            => $index,
-                    "pattern"       => $1
-            );
-            push @out, \%hash;
-            $index++;
+			my %hash = (
+						 "id"      => $index,
+						 "pattern" => $1
+			);
+			push @out, \%hash;
+			$index++;
 		}
 	}
 
@@ -410,6 +403,7 @@ Returns:
 =cut
 sub addHTTPHeadremove    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -463,6 +457,7 @@ Returns:
 =cut
 sub delHTTPHeadremove    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -500,5 +495,32 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 }
 
 
+sub get_http_farm_ee_struct
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
+
+	require Zevenet::Farm::HTTP::Config;
+
+	# Output hash reference or undef if the farm does not exist.
+	my $farm = &get_http_farm_struct( $farmname );
+
+	return unless $farm;
+
+	# 100 Continue
+	my $flag = &getHTTPFarm100Continue( $farmname );
+	$farm->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
+
+
+	# Logs
+	my $flag = &getHTTPFarmLogs( $farmname );
+	$farm->{ logs } = ( $flag ) ? "true" : "false";
+
+	# Add/remove header
+	$farm->{ addheader }  = &getHTTPAddheader( $farmname );
+	$farm->{ headremove } = &getHTTPHeadremove( $farmname );
+
+	return $farm;
+}
 
 1;

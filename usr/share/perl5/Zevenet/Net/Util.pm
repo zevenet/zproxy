@@ -24,28 +24,6 @@
 use strict;
 
 =begin nd
-Function: getIOSocket
-
-	Get a IO Socket. Used to get information about interfaces.
-
-Parameters:
-	none - .
-
-Returns:
-	scalar - IO::Socket::INET object reference.
-
-See Also:
-	<getVipOutputIp>, <zevenet>
-=cut
-
-# IO Socket is needed to get information about interfaces
-sub getIOSocket
-{
-	# udp for a basic socket
-	return IO::Socket::INET->new( Proto => 'udp' );
-}
-
-=begin nd
 Function: getIfacesFromIf
 
 	Get List of Vinis or Vlans from a network interface.
@@ -64,6 +42,7 @@ See Also:
 # Get List of Vinis or Vlans from an interface
 sub getIfacesFromIf    # ($if_name, $type)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 	my @ifaces;
@@ -114,6 +93,7 @@ See Also:
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
 sub setIfacesUp    # ($if_name,$type)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 
@@ -167,6 +147,7 @@ See Also:
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $pif ) = @_;
 
 	my $if_conf = &getInterfaceConfig( $pif );
@@ -205,6 +186,7 @@ See Also:
 #get a random available port
 sub getRandomPort    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Validate;
 
 	#down limit
@@ -246,6 +228,7 @@ See Also:
 # send gratuitous ARP frames
 sub sendGArp    # ($if,$ip)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if, $ip ) = @_;
 
 	require Zevenet::Net::Validate;
@@ -297,6 +280,7 @@ See Also:
 #know if and return ip
 sub iponif    # ($if)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if = shift;
 
 	require IO::Socket;
@@ -335,6 +319,7 @@ See Also:
 # return the mask of an if
 sub maskonif    # ($if)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if = shift;
 
 	require IO::Socket;
@@ -369,9 +354,10 @@ See Also:
 #list ALL IPS UP
 sub listallips    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
-	my @listinterfaces = ();    # output
+	my @listinterfaces = ();
 
 	for my $if_name ( &getInterfaceList() )
 	{
@@ -394,12 +380,13 @@ Returns:
 	scalar - return code setting the value.
 
 See Also:
-	<_runL4FarmStart>, <_runDatalinkFarmStart>
+	<_runDatalinkFarmStart>
 =cut
 
 # Enable(true) / Disable(false) IP Forwarding
 sub setIpForward    # ($arg)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $arg = shift;
 
 	my $status = -1;
@@ -436,6 +423,7 @@ See Also:
 
 sub getInterfaceOfIp    # ($ip)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip = shift;
 
 	require Zevenet::Net::Interface;
@@ -453,49 +441,7 @@ sub getInterfaceOfIp    # ($ip)
 	# returns an invalid interface name, an undefined variable
 	&zenlog("Warning: No interface was found configured with IP address $ip", "info", "NETWORK" );
 
-	return undef;
-}
-
-=begin nd
-Function: getVipOutputIp
-
-	[NOT USED] Get outbound IP address (actually NIC) of vip.
-
-Parameters:
-	vip - vip address.
-
-Returns:
-	scalar - IP address string.
-
-Bugs:
-	NOT USED
-=cut
-
-sub getVipOutputIp    # ($vip)
-{
-	my $vip = shift;
-
-	my $socket = &getIOSocket();
-	my $device;
-
-	foreach my $interface ( &getInterfaceList( $socket ) )
-	{
-		# ignore/skip localhost
-		next if $interface eq "lo";
-
-		# get interface ip
-		my $ip = $socket->if_addr( $interface );
-
-		# get NIC of our vip
-		if ( $ip eq $vip )
-		{
-			# remove alias part of interface name
-			( $device ) = split ( ":", $interface );
-			last;
-		}
-	}
-
-	return $socket->if_addr( $device );
+	return;
 }
 
 1;

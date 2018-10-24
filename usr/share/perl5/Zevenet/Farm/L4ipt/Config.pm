@@ -26,6 +26,269 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
+Function: getL4FarmParam
+
+	Returns farm parameter
+
+Parameters:
+	param - requested parameter. The options are:
+		"vip": get the virtual IP
+		"vipp": get the virtual port
+		"status": get the status and boot status
+		"mode": get the topology (or nat type)
+		"alg": get the algorithm
+		"proto": get the protocol
+		"persist": get persistence
+		"persisttm": get client persistence timeout
+		"logs": write the logs option
+	farmname - Farm name
+
+Returns:
+	Scalar - return the parameter as a string or -1 on failure
+
+=cut
+
+sub getL4FarmParam    # ($param, $farm_name)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $param, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	open my $fd, '<', "$configdir/$farm_filename";
+	chomp(my @content = <$fd>);
+	close $fd;
+
+	$output = &_getL4ParseFarmConfig( $param, undef, \@content );
+
+	return $output;
+}
+
+
+=begin nd
+Function: setL4FarmParam
+
+	Writes a farm parameter
+
+Parameters:
+	param - requested parameter. The options are:
+		"family": write ipv4 or ipv6
+		"vip": write the virtual IP
+		"vipp": write the virtual port
+		"status": write the status and boot status
+		"mode": write the topology (or nat type)
+		"alg": write the algorithm
+		"proto": write the protocol
+		"persist": write persistence
+		"persisttm": write client persistence timeout
+		"logs": write the logs option
+	value - the new value of the given parameter of a certain farm
+	farmname - Farm name
+
+Returns:
+	Scalar - return the parameter as a string or -1 on failure
+
+=cut
+
+sub setL4FarmParam    # ($param, $value, $farm_name)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $param, $value, $farm_name ) = @_;
+
+	my $farm_filename	= &getFarmFile( $farm_name );
+	my $output		= -1;
+	my $srvparam		= "";
+
+	if ( $param eq "vip" )
+	{
+		$output = &setL4FarmVirtualConf( $value, undef, $farm_name );
+	}
+	elsif ( $param eq "vipp" )
+	{
+		$output = &setL4FarmVirtualConf( undef, $value, $farm_name );
+	}
+	elsif ( $param eq "status" )
+	{
+		$output = &setL4FarmStatus( $value, $farm_name );
+	}
+	elsif ( $param eq "alg" )
+	{
+		$output = &setL4FarmAlgorithm( $value, $farm_name );
+	}
+	elsif ( $param eq "proto" )
+	{
+		$output = &setL4FarmProto( $value, $farm_name );
+	}
+	elsif ( $param eq "mode" )
+	{
+		$output = &setFarmNatType( $value, $farm_name );
+	}
+	elsif ( $param eq "persist" )
+	{
+		$output = &setL4FarmSessionType( $value, $farm_name );
+	}
+	elsif ( $param eq "persisttm" )
+	{
+		$output = &setL4FarmMaxClientTime( $value, $farm_name );
+	}
+	elsif ( $param eq "logs" )
+	{
+		$output = &setL4FarmLogs( $farm_name, $value );
+	} else
+	{
+		return -1;
+	}
+
+	return $output;
+}
+
+
+=begin nd
+Function: _getL4ParseFarmConfig
+
+	Parse the farm file configuration and read/write a certain parameter
+
+Parameters:
+	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm", "logs"
+	value - value to be changed in case of write operation, undef for read only cases
+	config - reference of an array with the full configuration file
+
+Returns:
+	Scalar - return the parameter value on read or the changed value in case of write as a string or -1 in other case
+
+=cut
+
+sub _getL4ParseFarmConfig    # ($param, $value, $config)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+
+	my $param		= shift;
+	my $value		= shift;
+	my $config		= shift;
+	my $output		= -1;
+	my $first		= "true";
+
+	foreach my $line( @{ $config } )
+	{
+		if ( $line eq "" || $first ne "true" )
+		{
+			last;
+		}
+
+		$first = "false";
+		my @l = split ( "\;", $line );
+
+		if ( $param eq 'proto' )
+		{
+			$output = $l[1];
+			last;
+		}
+
+		if ( $param eq 'vip' )
+		{
+			$output = $l[2];
+			last;
+		}
+
+		if ( $param eq 'vipp' )
+		{
+			$output = $l[3];
+			last;
+		}
+
+		if ( $param eq 'mode' )
+		{
+			$output = $l[4];
+			last;
+		}
+
+		if ( $param eq 'alg' )
+		{
+			$output = $l[5];
+			last;
+		}
+
+		if ( $param eq 'persist' )
+		{
+			$output = $l[6];
+			last;
+		}
+
+		if ( $param eq 'persisttm' )
+		{
+			$output = $l[7];
+			last;
+		}
+
+		if ( $param eq 'logs' )
+		{
+			$output = $l[9];
+			last;
+		}
+
+		if ( $param eq 'status' )
+		{
+			if ( $l[8] ne "up" )
+			{
+				$output = "down";
+			}
+			else
+			{
+				$output = "up";
+			}
+			last;
+		}
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: getL4FarmsPorts
+
+	Get all port used of L4xNAT farms in up status and using a protocol
+
+Parameters:
+	protocol - protocol used by l4xnat farm
+
+Returns:
+	String - return a list with the used ports by all L4xNAT farms. Format: "portList1,portList2,..."
+
+=cut
+
+sub getL4FarmsPorts    # ($protocol)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $protocol = shift;
+
+	my @port_list = ();
+	my @farms     = &getFarmsByType( 'l4xnat' );
+
+	unless ( $#farms > -1 )
+	{
+		return "";
+	}
+
+	foreach my $farm_name ( @farms )
+	{
+		my $farm_protocol = &getL4FarmParam( 'proto', $farm_name );
+
+		next if not ( $protocol eq $farm_protocol );
+		next if ( &getL4FarmParam( 'status', $farm_name ) ne "up" );
+
+		my $farm_port = &getL4FarmParam( 'vipp', $farm_name );
+		$farm_port = join ( ',', &getFarmPortList( $farm_port ) );
+
+		next if not &validL4ExtPort( $farm_protocol, $farm_port );
+
+		push @port_list, $farm_port;
+	}
+
+	return join ( ',', @port_list );
+}
+
+=begin nd
 Function: loadL4Modules
 
 	Load sip, ftp or tftp conntrack module for l4 farms
@@ -40,6 +303,7 @@ Returns:
 
 sub loadL4Modules    # ($protocol)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $protocol = shift;
 
 	require Zevenet::Netfilter;
@@ -70,66 +334,19 @@ Returns:
 
 sub unloadL4Modules    # ($protocol)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $protocol = shift;
+	my $status = 0;
 
 	require Zevenet::Netfilter;
 
-	my $status = 0;
-
-	if ( $protocol == /sip|tftp|ftp/ )
+	if ( $protocol =~ /sip|tftp|ftp/ )
 	{
 		$status = &removeNfModule( "nf_nat_$protocol" );
 		$status = $status || &removeNfModule( "nf_conntrack_$protocol", "" );
 	}
 
 	return $status;
-}
-
-=begin nd
-Function: sendL4ConfChange
-
-	Run a l4xnat farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - Error code: 0 on success or other value on failure
-
-FIXME:
-	only used in zapi v2. Obsolet
-
-BUG:
-	same functionlity than _runL4FarmRestart and runL4FarmRestart
-
-=cut
-
-sub sendL4ConfChange    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
-
-	if ( $algorithm eq "leastconn" && -e "$pidfile" )
-	{
-		# read pid number
-		open my $file, "<", "$pidfile";
-		my $pid = <$file>;
-		close $file;
-
-		kill USR1 => $pid;
-		$output = $?;    # FIXME
-	}
-	else
-	{
-		&zenlog( "Running L4 restart for $farm_name", "info", "LSLB" );
-		&_runL4FarmRestart( $farm_name, "false", "" );
-	}
-
-	return $output;      # FIXME
 }
 
 =begin nd
@@ -144,16 +361,11 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success or other value on failure
 
-FIXME:
-	only used in zapi v2. Obsolet
-
-BUG:
-	same functionlity than _runL4FarmRestart and runL4FarmRestart
-
 =cut
 
 sub setL4FarmSessionType    # ($session,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $session, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -165,13 +377,14 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -224,53 +437,11 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
 	}
-
-	return $output;
-}
-
-=begin nd
-Function: getL4FarmSessionType
-
-	Get type of persistence session
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - "none" not use persistence, "ip" for ip persistencia or -1 on failure
-
-BUG:
-	DUPLICATE with getL4FarmPersistence
-	Not used
-	Use get and set with same name
-
-=cut
-
-sub getL4FarmSessionType    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-	my $first         = "true";
-
-	open FI, "<$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		if ( $line ne "" && $first eq "true" )
-		{
-			$first = "false";
-			my @line = split ( "\;", $line );
-			$output = $line[6];
-		}
-	}
-	close FI;
 
 	return $output;
 }
@@ -294,6 +465,7 @@ FIXME:
 
 sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $algorithm, $farm_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -302,17 +474,18 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $i             = 0;
-	my $prev_alg      = getL4FarmAlgorithm( $farm_name );    # previous algorithm
+	my $prev_alg      = &getL4FarmParam( 'alg', $farm_name );    # previous algorithm
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -338,8 +511,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		require Zevenet::Netfilter;
-		my @rules;
 
+		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
 		foreach my $server ( @{ $$farm{ servers } } )
@@ -436,11 +609,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		}
 		elsif ( -e $l4sd_pidfile )
 		{
-			require Zevenet::Netfilter;
+			require Zevenet::Lock;
+
 			## lock iptables use ##
 			my $iptlock = &getGlobalConfiguration( 'iptlock' );
-			open my $ipt_lockfile, '>', $iptlock;
-			&setIptLock( $ipt_lockfile );
+			my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 			# Get the binary of iptables (iptables or ip6tables)
 			my $iptables_bin = &getBinVersion( $farm_name );
@@ -449,7 +622,6 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			  `$iptables_bin --numeric --table mangle --list PREROUTING`;
 
 			## unlock iptables use ##
-			&setIptUnlock( $ipt_lockfile );
 			close $ipt_lockfile;
 
 			if ( $num_lines == 0 )
@@ -461,7 +633,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 					close $pidfile;
 
 					# close normally
-					kill 'TERM' => $pid;
+					kill 'TERM' => $pid if ( $pid > 0 );
 					&zenlog( "l4sd ended", "info", "LSLB" );
 				}
 				else
@@ -472,7 +644,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -481,45 +653,26 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	return;
 }
 
-=begin nd
-Function: getL4FarmAlgorithm
-
-	Get the load balancing algorithm for a farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - "leastconn" , "weight", "prio" or -1 on failure
-
-=cut
-
-sub getL4FarmAlgorithm    # ($farm_name)
+sub setL4FarmStatus		#( value, farm_name )
 {
-	my $farm_name = shift;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $value		= shift;
+	my $farm_name		= shift;
+	my $farm_filename	= &getFarmFile( $farm_name );
 
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-	my $first         = 'true';
+	require Tie::File;
 
-	open FI, "<", "$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	foreach ( @configfile )
 	{
-		if ( $line ne '' && $first eq 'true' )
-		{
-			$first = 'false';
-			my @line = split ( "\;", $line );
-			$output = $line[5];
-		}
+		s/\;up/\;down/g;
+		last;     # run only for the first line
 	}
-	close FI;
-
-	return $output;
+	untie @configfile;
 }
 
 =begin nd
-Function: setFarmProto
+Function: setL4FarmProto
 
 	Set the protocol to a L4 farm
 
@@ -535,43 +688,44 @@ FIXME:
 
 =cut
 
-sub setFarmProto    # ($proto,$farm_name)
+sub setL4FarmProto    # ($proto,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $proto, $farm_name ) = @_;
 
 	require Zevenet::FarmGuardian;
 	require Zevenet::Netfilter;
 	require Zevenet::Farm::L4xNAT::Action;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
-	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type",
-			 "info", "LSLB" );
+	&zenlog( "setting 'Protocol $proto' for $farm_name farm L4xNAT", "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $old_proto  = $$farm{ vproto };
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
 	require Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
 	my $i = 0;
+
 	for my $line ( @configfile )
 	{
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			if ( $proto eq /all/ )
+			if ( $proto eq "all" )
 			{
 				$args[3] = "*";
 			}
@@ -599,47 +753,12 @@ sub setFarmProto    # ($proto,$farm_name)
 			$output |= &refreshL4FarmRules( $farm );
 		}
 
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
-	}
+		$output = &refreshL4FarmRules( $farm );
 
-	return $output;
-}
-
-=begin nd
-Function: getFarmNatType
-
-	Get the NAT type for a L4 farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - "nat", "dnat" or -1 on failure
-
-=cut
-
-sub getFarmNatType    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $farm_type     = &getFarmType( $farm_name );
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
-	if ( $farm_type eq "l4xnat" )
-	{
-		open FI, "<", "$configdir/$farm_filename";
-		my $first = "true";
-		while ( my $line = <FI> )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
-			if ( $line ne "" && $first eq "true" )
-			{
-				$first = "false";
-				my @line = split ( "\;", $line );
-				$output = $line[4];
-			}
+			kill 'CONT' => $fg_pid;
 		}
-		close FI;
 	}
 
 	return $output;
@@ -661,20 +780,19 @@ Returns:
 
 sub setFarmNatType    # ($nat,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $nat, $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
 	require Zevenet::FarmGuardian;
 
-	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type",
-			 "info", "LSLB" );
+	&zenlog( "setting 'NAT type $nat' for $farm_name farm L4xNAT", "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -682,29 +800,30 @@ sub setFarmNatType    # ($nat,$farm_name)
 		{
 			if ( $0 !~ /farmguardian/ )
 			{
-				kill 'STOP' => $fg_pid;
+				$fg_pid = &getFarmGuardianPid( $farm_name );
+				kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 			}
 		}
 	}
 
-	if ( $farm_type eq "l4xnat" )
+	require Tie::File;
+
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	my $i = 0;
+
+	for my $line ( @configfile )
 	{
-		require Tie::File;
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		my $i = 0;
-		for my $line ( @configfile )
+		if ( $line =~ /^$farm_name\;/ )
 		{
-			if ( $line =~ /^$farm_name\;/ )
-			{
-				my @args = split ( "\;", $line );
-				$line =
-				  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
-				splice @configfile, $i, $line;
-			}
-			$i++;
+			my @args = split ( "\;", $line );
+			$line =
+			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
+			splice @configfile, $i, $line;
 		}
-		untie @configfile;
+		$i++;
 	}
+
+	untie @configfile;
 
 	$farm = &getL4FarmStruct( $farm_name );
 
@@ -740,7 +859,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 		if ( $fg_enabled eq 'true' )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'CONT' => $fg_pid;
 			}
@@ -748,43 +867,6 @@ sub setFarmNatType    # ($nat,$farm_name)
 	}
 
 	return $output;
-}
-
-=begin nd
-Function: getL4FarmPersistence
-
-	Get type of persistence session for a l4 farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - "none" not use persistence, "ip" for ip persistencia or -1 on failure
-
-=cut
-
-sub getL4FarmPersistence    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $persistence   = -1;
-	my $first         = "true";
-
-	open FI, "<", "$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		if ( $line ne "" && $first eq "true" )
-		{
-			$first = "false";
-			my @line = split ( "\;", $line );
-			$persistence = $line[6];
-		}
-	}
-	close FI;
-
-	return $persistence;
 }
 
 =begin nd
@@ -803,6 +885,7 @@ Returns:
 
 sub setL4FarmMaxClientTime    # ($track,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $track, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -814,13 +897,14 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -867,135 +951,11 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 		require Zevenet::Netfilter;
 		$output = &applyIptRules( @rules );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
 	}
-
-	return $output;
-}
-
-=begin nd
-Function: getL4FarmMaxClientTime
-
-	 Get the max client time of a farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - Time to Live (TTL) or -1 on failure
-
-FIXME:
-	The returned value must to be a integer. Fit output like in the description
-
-=cut
-
-sub getL4FarmMaxClientTime    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $first         = "true";
-	my @max_client_time;
-
-	open FI, "<", "$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		if ( $line ne "" && $first eq "true" )
-		{
-			$first = "false";
-			my @line = split ( "\;", $line );
-			@max_client_time = $line[7];
-		}
-	}
-	close FI;
-
-	return @max_client_time;
-}
-
-=begin nd
-Function: getL4FarmBootStatus
-
-	Return the farm status at boot zevenet
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
-
-=cut
-
-sub getL4FarmBootStatus    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = "down";
-	my $first         = "true";
-
-	open FI, "<$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		if ( $line ne "" && $first eq "true" )
-		{
-			$first = "false";
-			my @line_a = split ( "\;", $line );
-			$output = $line_a[8];
-			chomp ( $output );
-		}
-	}
-	close FI;
-
-	$output = "down" if ( !$output );
-
-	return $output;
-}
-
-=begin nd
-Function: getL4FarmVip
-
-	Returns farm vip or farm port
-
-Parameters:
-	tag - requested parameter. The options are "vip"for virtual ip or "vipp" for virtual port
-	farmname - Farm name
-
-Returns:
-	Scalar - return vip, port of farm or -1 on failure
-
-FIXME
-	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
-
-=cut
-
-sub getL4FarmVip    # ($info,$farm_name)
-{
-	my ( $info, $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $first         = 'true';
-	my $output        = -1;
-
-	open FI, "<", "$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		if ( $line ne '' && $first eq 'true' )
-		{
-			$first = 'false';
-			my @line_a = split ( "\;", $line );
-
-			if ( $info eq 'vip' )   { $output = $line_a[2]; }
-			if ( $info eq 'vipp' )  { $output = $line_a[3]; }
-			if ( $info eq 'vipps' ) { $output = "$line_a[2]\:$line_a[3]"; }
-		}
-	}
-	close FI;
 
 	return $output;
 }
@@ -1017,6 +977,7 @@ Returns:
 
 sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	require Tie::File;
@@ -1027,9 +988,13 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
-	kill 'STOP' => $fg_pid if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' );
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
+	{
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
+	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -1039,7 +1004,8 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$vip_port = $args[3] if ( !$vip_port );
+			$vip = $args[2] if ( ! $vip );
+			$vip_port = $args[3] if ( ! $vip_port );
 			$line =
 			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
 			splice @configfile, $i, $line;
@@ -1082,7 +1048,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 		&applyIptRules( @rules );
 
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
+		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 
 		if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 		{
@@ -1115,6 +1081,7 @@ Returns:
 
 sub getFarmPortList    # ($fvipp)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fvipp = shift;
 
 	my @portlist = split ( ',', $fvipp );
@@ -1162,6 +1129,7 @@ Returns:
 
 sub getL4ProtocolTransportLayer
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vproto = shift;
 
 	return
@@ -1188,30 +1156,28 @@ Returns:
 
 sub getL4FarmStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my %farm;    # declare output hash
 
 	$farm{ name } = shift;    # input: farm name
 
-	require Zevenet::Farm::Base;
 	require Zevenet::Farm::L4xNAT::Backend;
 
 	$farm{ filename } = &getFarmFile( $farm{ name } );
-	$farm{ nattype }  = &getFarmNatType( $farm{ name } );
-	$farm{ lbalg }    = &getL4FarmAlgorithm( $farm{ name } );
-	$farm{ vip }      = &getL4FarmVip( 'vip', $farm{ name } );
-	$farm{ vport }    = &getL4FarmVip( 'vipp', $farm{ name } );
-	$farm{ vproto }   = &getFarmProto( $farm{ name } );
-	$farm{ persist }  = &getL4FarmPersistence( $farm{ name } );
-	$farm{ ttl }      = ( &getL4FarmMaxClientTime( $farm{ name } ) )[0];
-	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
-	$farm{ status }   = &getFarmStatus( $farm{ name } );
-	$farm{ logs }     = &getL4FarmLogs( $farm{ name } );
-	$farm{ servers }  = [];
+	my $config = &getL4FarmPlainInfo( $farm{ name } );
 
-	foreach my $server_line ( &getL4FarmServers( $farm{ name } ) )
-	{
-		push ( @{ $farm{ servers } }, &getL4ServerStruct( \%farm, $server_line ) );
-	}
+	$farm{ nattype }  = &_getL4ParseFarmConfig( 'mode', undef, $config );
+	$farm{ mode }     = $farm{ nattype };
+	$farm{ lbalg }    = &_getL4ParseFarmConfig( 'alg', undef, $config );
+	$farm{ vip }      = &_getL4ParseFarmConfig( 'vip', undef, $config );
+	$farm{ vport }    = &_getL4ParseFarmConfig( 'vipp', undef, $config );
+	$farm{ vproto }   = &_getL4ParseFarmConfig( 'proto', undef, $config );
+	$farm{ persist }  = &_getL4ParseFarmConfig( 'persist', undef, $config );
+	$farm{ ttl }      = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
+	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
+	$farm{ status }   = &_getL4ParseFarmConfig( 'status', undef, $config );
+	$farm{ logs }     = &_getL4ParseFarmConfig( 'logs', undef, $config );
+	$farm{ servers }  = &_getL4FarmParseServers( $config );
 
 	# replace port * for all the range
 	if ( $farm{ vport } eq '*' )
@@ -1225,61 +1191,6 @@ sub getL4FarmStruct
 	}
 
 	return \%farm;    # return a hash reference
-}
-
-=begin nd
-Function: getL4ServerStruct
-
-	Return a hash with all data about a backend in a l4 farm
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-
-Returns:
-	hash ref -
-		\%backend = { $id, $vip, $vport, $tag, $weight, $priority, $status, $rip = $vip }
-
-=cut
-
-sub getL4ServerStruct
-{
-	my $farm        = shift;
-	my $server_line = shift;    # input example: ;0;192.168.101.252;80;0x20a;1;1;up
-
-	require Zevenet::Net::Validate;
-
-	my @server_args = split ( "\;", $server_line );    # split server line
-	chomp ( @server_args );
-
-	# server args example: ( 0, 192.168.101.252, 80, 0x20a, 1, 1 ,up )
-	my %server;                                        # output hash
-
-	$server{ id }        = shift @server_args;         # input 0
-	$server{ vip }       = shift @server_args;         # input 1
-	$server{ vport }     = shift @server_args;         # input 2
-	$server{ tag }       = shift @server_args;         # input 3
-	$server{ weight }    = shift @server_args;         # input 4
-	$server{ priority }  = shift @server_args;         # input 5
-	$server{ status }    = shift @server_args;         # input 6
-	$server{ max_conns } = shift @server_args // 0;    # input 7
-	$server{ rip }       = $server{ vip };
-
-	if (    $server{ vport } ne ''
-		 && $$farm{ proto } ne 'all'
-		 && $$farm{ proto } ne 'sip' )
-	{
-		if ( &ipversion( $server{ rip } ) == 4 )
-		{
-			$server{ rip } = "$server{vip}\:$server{vport}";
-		}
-		elsif ( &ipversion( $server{ rip } ) == 6 )
-		{
-			$server{ rip } = "[$server{vip}]\:$server{vport}";
-		}
-	}
-
-	return \%server;    # return reference
 }
 
 =begin nd
@@ -1297,6 +1208,7 @@ Returns:
 
 sub doL4FarmProbability
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;    # input: farm reference
 
 	$$farm{ prob } = 0;
@@ -1308,8 +1220,6 @@ sub doL4FarmProbability
 			$$farm{ prob } += $$server_ref{ weight };
 		}
 	}
-
-  #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
 =begin nd
@@ -1330,34 +1240,30 @@ FIXME:
 
 sub refreshL4FarmRules    # AlgorithmRules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;     # input: reference to farm structure
 
+	require Zevenet::Lock;
 	require Zevenet::Netfilter;
 
 	my $prio_server;
 	my @rules;
 	my $return_code = 0;
 
-	$prio_server = &getL4ServerWithLowestPriority( $farm );
+	$prio_server = &getL4ServerWithLowestPriority( $farm ) if ( $farm->{ lbalg } eq 'prio' );
 
 	# refresh backends probability values
-	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
+	&getL4BackendsWeightProbability( $farm ) if ( $farm->{ lbalg } eq 'weight' );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
+	my $ipt_lockfile = &openlock( $iptlock, 'r' );
 
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		# skip cycle for servers not running
-		next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
+		next if ( $farm->{ lbalg } eq 'prio' && $server->{ id } != $prio_server->{ id } );
 
 		my $rule;
 		my $rule_num;
@@ -1426,7 +1332,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	}
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	&reloadL4FarmLogsRule( $$farm{ name } );
@@ -1453,16 +1358,14 @@ FIXME:
 
 sub reloadL4FarmsSNAT
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 	require Zevenet::Netfilter;
 
-	for my $farm_name ( &getFarmNameList() )
+	for my $farm_name ( &getFarmsByType( 'l4xnat' ) )
 	{
-		my $farm_type = &getFarmType( $farm_name );
-
-		next if $farm_type ne 'l4xnat';
-		next if &getFarmStatus( $farm_name ) ne 'up';
+		next if &getL4FarmParam( 'status', $farm_name ) ne 'up';
 
 		my $l4f_conf = &getL4FarmStruct( $farm_name );
 
@@ -1480,44 +1383,10 @@ sub reloadL4FarmsSNAT
 	}
 }
 
-=begin nd
-Function: getL4FarmLogs
-
-	Return if the farm has activated the log tracking
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - return "enable" if log is enabled or "false" if it is not
-
-=cut
-
-sub getL4FarmLogs    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = "false";
-
-	open FI, "<$configdir/$farm_filename";
-	while ( my $line = <FI> )
-	{
-		if ( $line ne "" )
-		{
-			my @line_a = split ( "\;", $line );
-			chomp ( $line_a[9] );
-			$output = 'true' if ( $line_a[9] eq 'true' );
-			last;
-		}
-	}
-	close FI;
-
-	return $output;
-}
 
 sub setL4FarmLogs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $action   = shift;    # true or false
 	my $out;
@@ -1552,6 +1421,7 @@ sub setL4FarmLogs
 
 sub reloadL4FarmLogsRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $action ) = @_;
 
 	require Zevenet::Netfilter;
@@ -1581,8 +1451,8 @@ sub reloadL4FarmLogsRule
 
 	# not to apply rules if:
 	return if ( $action eq 'false' );
-	return if ( &getL4FarmLogs( $farmname ) ne "true" and $action ne "true" );
-	return if ( &getFarmStatus( $farmname ) ne 'up' );
+	return if ( &getL4FarmParam( 'logs', $farmname ) ne "true" and $action ne "true" );
+	return if ( &getL4FarmParam( 'status', $farmname ) ne 'up' );
 
 	my $comment_tag = "-m comment --comment \"$comment\"";
 	my $log_tag     = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
@@ -1616,6 +1486,33 @@ sub reloadL4FarmLogsRule
 	}
 
 	#~ return $error;
+}
+
+=begin nd
+Function: getL4FarmPlainInfo
+
+	Return the L4 farm text configuration
+
+Parameters:
+	farm_name - farm name to get the status
+
+Returns:
+	Scalar - Reference of the file content in plain text
+
+=cut
+
+sub getL4FarmPlainInfo		# ($farm_name)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	open my $fd, '<', "$configdir/$farm_filename";
+	chomp(my @content = <$fd>);
+	close $fd;
+
+	return \@content;
 }
 
 1;

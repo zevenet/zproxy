@@ -40,6 +40,7 @@ Returns:
 
 sub getRBACRolesList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $dir = &getRBACRolePath();
 	opendir ( DIR, $dir );
 	my @roles = grep ( s/.conf$//, readdir ( DIR ) );
@@ -63,6 +64,7 @@ Returns:
 
 sub getRBACRoleExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $role = shift;
 	my $out  = 0;
 	$out = 1 if ( grep /^$role$/, &getRBACRolesList() );
@@ -86,6 +88,7 @@ Returns:
 #~ }
 sub getRBACRoleParamDefaultStruct
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $struct;
 
 	# list of functions with hashes permissions
@@ -128,6 +131,7 @@ Returns:
 
 sub createRBACRole
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $role = shift;
 
 	my $conf     = &getRBACRoleParamDefaultStruct();
@@ -164,6 +168,7 @@ Returns:
 
 sub delRBACRole
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $role = shift;
 	my $file = &getRBACRoleFile( $role );
 	unlink $file;
@@ -186,6 +191,7 @@ Returns:
 
 sub setRBACRoleConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $role, $obj ) = @_;
 
 	require Zevenet::Lock;
@@ -193,7 +199,7 @@ sub setRBACRoleConfigFile
 
 	my $rbacRoleFileConfig = &getRBACRoleFile( $role );
 	my $lockfile           = "/tmp/rbac_role_$role.lock";
-	my $lh                 = &lockfile( $lockfile );
+	my $lh                 = &openlock( $lockfile, 'w' );
 	my $fileHandle         = Config::Tiny->read( $rbacRoleFileConfig );
 
 	# save all struct
@@ -208,7 +214,7 @@ sub setRBACRoleConfigFile
 		}
 	}
 	$fileHandle->write( $rbacRoleFileConfig );
-	&unlockfile( $lh );
+	close $lh;
 }
 
 1;

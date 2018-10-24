@@ -28,6 +28,9 @@ use Zevenet::Farm::Base;
 use Zevenet::Farm::Stats;
 use Zevenet::Net::ConnStats;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
@@ -44,11 +47,30 @@ foreach my $farmfile ( &getFarmList() )
 
 	my $ERROR;
 	my $db_farm = "$farm-farm.rrd";
-	my $vip     = &getFarmVip( "vip", $farm );
 
-	my $netstat     = &getConntrack( "", $vip, "", "", "" );
-	my $synconns    = &getFarmSYNConns( $farm, $netstat ); # SYN_RECV connections
-	my $globalconns = &getFarmEstConns( $farm, $netstat ); # ESTABLISHED connections
+	my $synconns;
+	my $globalconns;
+
+	if ( $ftype eq 'gslb' )
+	{
+		my $stats;
+		$stats = &eload(
+							module => 'Zevenet::Farm::GSLB::Stats',
+							func   => 'getGSLBFarmStats',
+							args   => [$farm],
+		) if $eload;
+
+		$synconns    = $stats->{ syn };
+		$globalconns = $stats->{ est };
+	}
+	else
+	{
+		my $vip = &getFarmVip( "vip", $farm );
+		my $netstat = &getConntrack( "", $vip, "", "", "" );
+
+		$synconns    = &getFarmSYNConns( $farm, $netstat ); # SYN_RECV connections
+		$globalconns = &getFarmEstConns( $farm, $netstat ); # ESTABLISHED connections
+	}
 
 	if ( $globalconns eq '' || $synconns eq '' )
 	{

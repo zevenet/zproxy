@@ -44,6 +44,7 @@ See Also:
 
 sub getCodeEncode
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $clear_msg = shift;    # output
 	my $encode_msg;
 
@@ -93,6 +94,7 @@ See Also:
 
 sub getCodeDecode
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $encode_msg = shift;
 	my $clear_msg;    # output
 
@@ -139,6 +141,7 @@ Returns:
 
 sub setCryptString
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $clearString = shift;
 
 	require Crypt::CBC;
@@ -167,6 +170,7 @@ Returns:
 
 sub validateCryptString
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $encryptString = shift;
 	my $clearString   = shift;
 
@@ -196,6 +200,7 @@ sub validateCryptString
 
 sub migrate_zapi_to_52
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Config;
 
 	my $zapikey = &getGlobalConfiguration( 'zapikey' );

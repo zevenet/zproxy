@@ -42,6 +42,7 @@ See Also:
 =cut
 sub getBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @backups;
 	my $backupdir = &getGlobalConfiguration( 'backupdir' );
 	my $backup_re = &getValidFormat( 'backup' );
@@ -85,6 +86,7 @@ See Also:
 =cut
 sub getExistsBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 	my $find;
 
@@ -115,6 +117,7 @@ See Also:
 =cut
 sub createBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name      = shift;
 	my $zenbackup = &getGlobalConfiguration( 'zenbackup' );
 	my $error     = system ( "$zenbackup $name -c 2> /dev/null" );
@@ -145,6 +148,7 @@ See Also:
 =cut
 sub downloadBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $backup = shift;
 	my $error;
 
@@ -193,6 +197,8 @@ See Also:
 =cut
 sub uploadBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( )", "debug", "PROFILING" );
+
 	my $filename          = shift;
 	my $upload_filehandle = shift;
 
@@ -236,6 +242,7 @@ See Also:
 =cut
 sub deleteBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file      = shift;
 	$file      = "backup-$file.tar.gz";
 	my $backupdir = &getGlobalConfiguration( "backupdir" );
@@ -272,6 +279,7 @@ See Also:
 =cut
 sub applyBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $backup = shift;
 	my $error;
 	my $tar  = &getGlobalConfiguration( 'tar' );

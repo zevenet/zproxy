@@ -30,6 +30,7 @@ include 'Zevenet::System::HTTP';
 # GET /system/http
 sub get_http
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $description       = "Get http";
 	my $httpIp            = &getHttpServerIp();
 	my $allInterfaces_aux = &getActiveInterfaceList();
@@ -56,7 +57,7 @@ sub get_http
 	}
 	else
 	{
-		$http->{ 'ip' } = $interface->{ 'ip' }; 
+		$http->{ 'ip' } = $interface->{ 'ip' };
 	}
 	$http->{ 'port' } = &getHttpServerPort;
 
@@ -67,11 +68,13 @@ sub get_http
 # POST /system/http
 sub set_http
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 
 	my $description = "Post http";
 	my @allowParams = ( "ip", "port" );
-	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
+	my $httpIp;
+	$httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( !$errormsg )

@@ -22,9 +22,13 @@
 
 use strict;
 
+include 'Zevenet::IPDS::Blacklist::Core';
+include 'Zevenet::IPDS::Blacklist::Config';
+
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Config::Tiny;
 
 	my $description = "Get black lists";
@@ -59,12 +63,11 @@ sub get_blacklists_all_lists
 #GET /ipds/blacklists/<listname>
 sub get_blacklists_list
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $description = "Get list $listName";
 	my $errormsg;
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( &getBLExists( $listName ) )
 	{
@@ -85,6 +88,7 @@ sub get_blacklists_list
 #  POST /ipds/blacklists
 sub add_blacklists_list
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $errormsg;
 	my $listParams;
@@ -99,8 +103,6 @@ sub add_blacklists_list
 	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
-		include 'Zevenet::IPDS::Blacklist';
-
 		# A list already exists with this name
 		if ( &getBLExists( $listName ) )
 		{
@@ -178,6 +180,7 @@ sub add_blacklists_list
 #  PUT /ipds/blacklists/<listname>
 sub set_blacklists_list
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 	my $listName    = shift;
 
@@ -196,8 +199,6 @@ sub set_blacklists_list
 
 	my @allowParams =
 	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -442,6 +443,7 @@ sub set_blacklists_list
 #  DELETE /ipds/blacklists/<listname> Delete a Farm
 sub del_blacklists_list
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName    = shift;
 
 	my $description = "Delete list '$listName'",
@@ -493,10 +495,9 @@ sub del_blacklists_list
 # POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
 sub update_remote_blacklists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 	my $listName    = shift;
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	my $description = "Update a remote list";
 	my $errormsg;
@@ -566,9 +567,8 @@ sub update_remote_blacklists
 #GET /ipds/blacklists/<listname>/sources
 sub get_blacklists_source
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName    = shift;
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	my $description = "Get $listName sources";
 	my %listHash;
@@ -607,6 +607,7 @@ sub get_blacklists_source
 #  POST /ipds/blacklists/<listname>/sources
 sub add_blacklists_source
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $listName = shift;
 
@@ -614,8 +615,6 @@ sub add_blacklists_source
 	my $description    = "Post source to $listName.";
 	my @requiredParams = ( "source" );
 	my @optionalParams;
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -704,6 +703,7 @@ sub add_blacklists_source
 #  PUT /ipds/blacklists/<listname>/sources/<id>
 sub set_blacklists_source
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 	my $listName    = shift;
 	my $id          = shift;
@@ -711,8 +711,6 @@ sub set_blacklists_source
 	my $description = "Put source into $listName";
 	my $errormsg;
 	my @allowParams = ( "source" );
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	# check list exists
 	if ( ! &getBLExists( $listName ) )
@@ -778,13 +776,12 @@ sub set_blacklists_source
 #  DELETE /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
 sub del_blacklists_source
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 	my $id       = shift;
 
 	my $errormsg;
 	my $description = "Delete source from the list $listName";
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if (! &getBLExists( $listName ) )
 	{
@@ -840,6 +837,7 @@ sub del_blacklists_source
 #  POST /farms/<farmname>/ipds/blacklists
 sub add_blacklists_to_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmName = shift;
 
@@ -849,8 +847,6 @@ sub add_blacklists_to_farm
 
 	if ( !$errormsg )
 	{
-		include 'Zevenet::IPDS::Blacklist';
-
 		if ( !&getFarmExists( $farmName ) )
 		{
 			$errormsg = "$farmName doesn't exist.";
@@ -918,13 +914,12 @@ sub add_blacklists_to_farm
 # DELETE /farms/<farmname>/ipds/blacklists/<listname>
 sub del_blacklists_from_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $listName = shift;
 
 	my $errormsg;
 	my $description = "Delete a rule from a farm";
-
-	include 'Zevenet::IPDS::Blacklist';
 
 	if ( !&getFarmExists( $farmName ) )
 	{

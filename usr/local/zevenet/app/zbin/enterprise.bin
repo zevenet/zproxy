@@ -22,7 +22,7 @@
 ###############################################################################
 
 use strict;
-#~ use warnings;
+use warnings;
 
 use Time::Local;
 use Zevenet::Log;
@@ -229,7 +229,6 @@ my $input;
 # &zenlog( "#### Function input: $input" ) if $input ne '["1"]';
 
 # decode JSON
-require Zevenet::API31::HTTP;
 require JSON;
 JSON->import();
 
@@ -351,7 +350,7 @@ sub getModuleInfo
 	{
 		use Data::Dumper;
 		$mod->{ key } = '';
-		&zenlog( "FAILURE!!! \$mod->{ lib_path }/\$mod->{ key }: $mod->{ lib_path }/$mod->{ key }" );
+		&zenlog( "FAILURE!!! Not found module $mod->{ name } : $mod->{ lib_path }/$mod->{ path }(.e)" );
 	}
 
 	# Store in $mod->{ fullpath } the full path to the module
@@ -635,7 +634,8 @@ sub certcontrol
 			}
 	  	}
 
-		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
+		my @decoded;
+		@decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
 		if ( !grep /keyid:$keyid/, @decoded )
 		{
 			#swcert = 2 ==> Cert isn't signed OK
@@ -758,37 +758,32 @@ sub checkActivationCertificate
 
 		if ( $swcert == 1 )
 		{
-			$msg =
-			  "There isn't a valid Zevenet Load Balancer certificate file, please request a new one";
+			$msg = "There isn't a valid Zevenet Load Balancer certificate file, please request a new one";
 		}
 		elsif ( $swcert == 2 )
 		{
-			$msg =
-			  "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
+			$msg = "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
 		}
 		elsif ( $swcert == 3 )
 		{
 			# Policy: expired testing certificates would not stop zen service,
 			# but rebooting the service would not start the service,
 			# interfaces should always be available.
-			$msg =
-			  "The Zevenet Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
+			$msg = "The Zevenet Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
 		}
 		elsif ( $swcert == 4 )
 		{
-			$msg =
-			  "The Zevenet Load Balancer certificate file has been revoked, please request a new one";
+			$msg = "The Zevenet Load Balancer certificate file has been revoked, please request a new one";
 		}
 		elsif ( $swcert == 5 )
 		{
-			$msg =
-			  "The Zevenet Load Balancer certificate file isn't valid for this machine.";
+			$msg = "The Zevenet Load Balancer certificate file isn't valid for this machine.";
 		}
 
 		my $body = {
-					 message         => $msg,
-					 certificate_key => &keycert(),
-					 hostname        => &getHostname(),
+				message         => $msg,
+				certificate_key => &keycert(),
+				hostname        => &getHostname(),
 		};
 		return ( { "msg" => $msg } ) if $uploadCertFlag == 1;
 		return &httpResponse( { code => 402, body => $body } );

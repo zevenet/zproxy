@@ -44,6 +44,7 @@ Returns:
 
 sub setDOSRunRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -156,6 +157,7 @@ Returns:
 
 sub setDOSStopRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	my $output = 0;
@@ -193,6 +195,7 @@ Returns:
 
 sub setDOSBogusTcpFlagsRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -363,6 +366,7 @@ Returns:
 
 sub setDOSLimitConnsRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -415,6 +419,7 @@ Returns:
 
 sub setDOSLimitRstRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -471,6 +476,7 @@ Returns:
 
 sub setDOSLimitSecRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -528,6 +534,7 @@ Returns:
 
 sub setDOSDropIcmpRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = "drop_icmp";
 
 	#~ my $rule    = "dropicmp";
@@ -564,6 +571,7 @@ Returns:
 
 sub setDOSSshBruteForceRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::System::SSH';
 	include 'Zevenet::IPDS::Core';
 
@@ -624,6 +632,7 @@ Returns:
 
 sub setDOSApplyRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -656,11 +665,11 @@ sub setDOSApplyRule
 		$fileHandle = Config::Tiny->read( $confFile );
 		$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
 		$fileHandle->write( $confFile );
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 	}
 	else
 	{
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 		&zenlog( "Rule $ruleName already is applied", "warning", "IPDS" );
 		return 0;
 	}
@@ -700,6 +709,7 @@ Returns:
 
 sub setDOSUnsetRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Config::Tiny;
@@ -720,7 +730,7 @@ sub setDOSUnsetRule
 		}
 		$fileHandle->write( $confFile );
 
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $output;
@@ -743,6 +753,7 @@ Returns:
 
 sub getDOSAcceptLine
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $line;
 
 	my $chain = &getIPDSChain( "dos" );

@@ -25,6 +25,7 @@ use strict;
 
 sub get_gateway
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ip_ver ) = @_;
 
 	require Zevenet::Net::Route;
@@ -51,6 +52,7 @@ sub get_gateway
 
 sub modify_gateway # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $ip_ver   = shift;
 
@@ -155,6 +157,7 @@ sub modify_gateway # ( $json_obj )
 
 sub delete_gateway
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ip_ver ) = @_;
 
 	require Zevenet::Net::Route;

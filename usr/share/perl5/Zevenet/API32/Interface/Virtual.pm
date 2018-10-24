@@ -29,6 +29,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # POST /interfaces/virtual Create a new virtual network interface
 sub new_vini    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Add a virtual interface";
@@ -134,7 +135,7 @@ sub new_vini    # ( $json_obj )
 	eval {
 		die if &addIp( $if_ref );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{
@@ -181,6 +182,7 @@ sub new_vini    # ( $json_obj )
 
 sub delete_interface_virtual    # ( $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $virtual = shift;
 
 	require Zevenet::Net::Interface;
@@ -197,7 +199,9 @@ sub delete_interface_virtual    # ( $virtual )
 
 	# check if some farm is using this ip
 	require Zevenet::Farm::Base;
+
 	my @farms = &getFarmListByVip( $if_ref->{ addr } );
+
 	if ( @farms )
 	{
 		my $str = join ( ', ', @farms );
@@ -206,6 +210,7 @@ sub delete_interface_virtual    # ( $virtual )
 	}
 
 	my @child = &getInterfaceChild( $virtual );
+
 	if ( @child )
 	{
 		my $child_string = join ( ', ', @child );
@@ -229,7 +234,7 @@ sub delete_interface_virtual    # ( $virtual )
 
 
 			die if &delRoutes( "local", $if_ref );
-			die if &downIf( $if_ref, 'writeconf' );
+			die if &downIf( $if_ref );
 		}
 		die if &delIf( $if_ref );
 	};
@@ -240,11 +245,14 @@ sub delete_interface_virtual    # ( $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&eload(
-			module => 'Zevenet::Cluster',
-			func   => 'runZClusterRemoteManager',
-			args   => ['interface', 'delete', $if_ref->{ name }],
-	) if ( $eload );
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['interface', 'delete', $if_ref->{ name }],
+		);
+	}
 
 	my $message = "The virtual interface $virtual has been deleted.";
 	my $body = {
@@ -258,50 +266,24 @@ sub delete_interface_virtual    # ( $virtual )
 
 sub get_virtual_list    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
-	my $desc = "List virtual interfaces";
-	my @output_list;
+	my $desc        = "List virtual interfaces";
+	my $output_list = &get_virtual_list_struct();
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
+	if ( $eload )
 	{
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		push @output_list,
-		  {
-			alias   => $alias->{ $if_ref->{ name } },
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
-			parent  => $if_ref->{ parent },
-		  };
+		$output_list = &eload(
+							   module => 'Zevenet::RBAC::Group::Core',
+							   func   => 'getRBACUserSet',
+							   args   => ['interfaces', $output_list],
+		);
 	}
-
-	@output_list = @{
-		&eload(
-				module => 'Zevenet::RBAC::Group::Core',
-				func   => 'getRBACUserSet',
-				args   => ['interfaces', \@output_list],
-		)
-	} if $eload;
 
 	my $body = {
 				 description => $desc,
-				 interfaces  => \@output_list,
+				 interfaces  => $output_list,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -309,42 +291,15 @@ sub get_virtual_list    # ()
 
 sub get_virtual    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $virtual = shift;
-
-	my $desc = "Show virtual interface $virtual";
-	my $interface;    # output
 
 	require Zevenet::Net::Interface;
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
+	my $desc      = "Show virtual interface $virtual";
+	my $interface = &get_virtual_struct( $virtual );
 
-	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
-	{
-		next unless $if_ref->{ name } eq $virtual;
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		$interface = {
-					   alias   => $alias->{ $if_ref->{ name } },
-					   name    => $if_ref->{ name },
-					   ip      => $if_ref->{ addr },
-					   netmask => $if_ref->{ mask },
-					   gateway => $if_ref->{ gateway },
-					   status  => $if_ref->{ status },
-					   mac     => $if_ref->{ mac },
-		};
-	}
-
-	if ( not $interface )
+	unless ( $interface )
 	{
 		my $msg = "Virtual interface not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -360,6 +315,7 @@ sub get_virtual    # ()
 
 sub actions_interface_virtual    # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -407,7 +363,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 		if ( !$state )
 		{
 			require Zevenet::Net::Route;
@@ -429,7 +385,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( $if_ref, 'writeconf' );
+		my $state = &downIf( $if_ref );
 
 		if ( $state )
 		{
@@ -437,15 +393,18 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		&eload(
-			module => 'Zevenet::Cluster',
-			func   => 'runZClusterRemoteManager',
-			args   => ['interface', 'stop', $if_ref->{ name }],
-		) if ( $eload );
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['interface', 'stop', $if_ref->{ name }],
+			);
+		}
 	}
 	else
 	{
-		my $msg = "Action accepted values are: up or down";
+		my $msg = "Action accepted values are: 'up' or 'down'";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -459,6 +418,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 
 sub modify_interface_virtual    # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -491,6 +451,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	}
 
 	my @child = &getInterfaceChild( $virtual );
+
 	if ( @child )
 	{
 		my $child_string = join ( ', ', @child );
@@ -499,21 +460,24 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	require Zevenet::Farm::Base;
+
+	@farms = &getFarmListByVip( $if_ref->{ addr } );
+
 	# check if ip exists in other interface
 	if ( $json_obj->{ ip } )
 	{
 		if ( $json_obj->{ ip } ne $if_ref->{ addr } )
 		{
 			require Zevenet::Net::Util;
-			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
+
+			if ( grep { $json_obj->{ ip } eq $_ } &listallips() )
 			{
 				my $msg = "The IP address is already in use for other interface.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 
-		require Zevenet::Farm::Base;
-		@farms = &getFarmListByVip( $if_ref->{ addr } );
 		if ( @farms and $json_obj->{ force } ne 'true' )
 		{
 			my $str = join ( ', ', @farms );
@@ -524,7 +488,9 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	}
 
 	require Zevenet::Net::Validate;
+
 	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent } );
+
 	unless (
 			 &getNetValidate(
 							  $if_ref_parent->{ addr },
@@ -542,11 +508,14 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	my $state = $if_ref->{ 'status' };
 	&downIf( $if_ref ) if $state eq 'up';
 
-	&eload(
-		module => 'Zevenet::Cluster',
-		func   => 'runZClusterRemoteManager',
-		args   => ['interface', 'stop', $if_ref->{ name }],
-	) if ( $eload );
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['interface', 'stop', $if_ref->{ name }],
+		);
+	}
 
 	eval {
 		# Set the new params
@@ -555,6 +524,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		if ( $state eq 'up' )
 		{
 			require Zevenet::Net::Route;
+
 			die if &addIp( $if_ref );
 			&upIf( $if_ref );
 			&applyRoutes( "local", $if_ref );
@@ -567,6 +537,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		if ( @farms )
 		{
 			require Zevenet::Farm::Config;
+
 			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
 		}
 	};
@@ -577,11 +548,14 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&eload(
-		module => 'Zevenet::Cluster',
-		func   => 'runZClusterRemoteManager',
-		args   => ['interface', 'start', $if_ref->{ name }],
-	) if ( $eload );
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['interface', 'start', $if_ref->{ name }],
+		);
+	}
 
 	my $body = {
 				 description => $desc,

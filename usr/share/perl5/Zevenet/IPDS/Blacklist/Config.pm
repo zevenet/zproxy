@@ -41,6 +41,7 @@ include 'Zevenet::IPDS::Blacklist::Core';
 # &setBLCreateList ( $listName, $paramsRef );
 sub setBLCreateList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName   = shift;
 	my $listParams = shift;
 
@@ -89,7 +90,7 @@ sub setBLCreateList
 	}
 
 	$fileHandle->write( $blacklistsConf );
-	&setBLUnlockConfigFile( $lock );
+	close $lock;
 
 	# specific to remote lists
 	if ( $type eq 'remote' )
@@ -136,6 +137,7 @@ Returns:
 
 sub setBLDeleteList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	my $fileHandle;
@@ -161,7 +163,7 @@ sub setBLDeleteList
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
 	delete $fileHandle->{ $listName };
 	$fileHandle->write( $blacklistsConf );
-	&setBLUnlockConfigFile( $lock );
+	close $lock;
 
 	if ( -f "$blacklistsPath/$listName.txt" )
 	{
@@ -196,6 +198,7 @@ Returns:
 
 sub setBLAddPreloadLists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $local_list     = shift;
 	my $preload_remote = shift;
 
@@ -276,6 +279,7 @@ sub setBLAddPreloadLists
 
 sub getBLMaxelem
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $list    = shift;
 	my $ipset   = &getGlobalConfiguration( "ipset" );
 	my $maxelem = 0;
@@ -313,6 +317,7 @@ Returns:
 
 sub setBLParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $name, $key, $value ) = @_;
 
 	my $output;
@@ -345,7 +350,7 @@ sub setBLParam
 			$fileHandle->{ $value } = $fileHandle->{ $name };
 			delete $fileHandle->{ $name };
 			$fileHandle->write( $blacklistsConf );
-			&setBLUnlockConfigFile( $lock );
+			close $lock;
 
 			return $output;
 		}
@@ -379,7 +384,7 @@ sub setBLParam
 			$fileHandle->write( $blacklistsConf );
 		}
 
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 	elsif ( 'farms-del' eq $key )
 	{
@@ -388,7 +393,7 @@ sub setBLParam
 		$conf       = $fileHandle->{ $name };
 		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
 		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 	elsif ( 'update_status' eq $key )
 	{
@@ -417,7 +422,7 @@ sub setBLParam
 			$fileHandle->{ $name }->{ $key } = $value;
 		}
 		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	# other value  of the file conf
@@ -427,7 +432,7 @@ sub setBLParam
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		$fileHandle->{ $name }->{ $key } = $value;
 		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $output;
@@ -436,6 +441,7 @@ sub setBLParam
 # &delBLParam ( $listName, $key )
 sub delBLParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName, $key ) = @_;
 
 	my $output;
@@ -452,7 +458,7 @@ sub delBLParam
 		delete $fileHandle->{ $listName }->{ $key };
 		$fileHandle->write( $blacklistsConf );
 	}
-	&setBLUnlockConfigFile( $lock );
+	close $lock;
 }
 
 =begin nd
@@ -470,6 +476,7 @@ Returns:
 
 sub setBLAddToList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName, $listRef ) = @_;
 
 	require Zevenet::Validate;
@@ -506,6 +513,7 @@ Returns:
 
 sub setBLAddSource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName, $source ) = @_;
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
@@ -554,6 +562,7 @@ Returns:
 
 sub setBLModifSource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName, $id, $source ) = @_;
 
 	my $policy         = &getBLParam( $listName, 'policy' );
@@ -593,6 +602,7 @@ Returns:
 
 sub setBLDeleteSource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName, $id ) = @_;
 
 	my $policy         = &getBLParam( $listName, 'policy' );

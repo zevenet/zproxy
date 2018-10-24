@@ -31,6 +31,11 @@ if [ -f /usr/local/zevenet/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zevenet/app/zennetname/write_net_rules /lib/udev/
 fi
 
+if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
+        rmdir "/usr/share/perl5/Zevenet/Farm/L4xNAT"
+        ln -sf L4ipt /usr/share/perl5/Zevenet/Farm/L4xNAT
+fi
+
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(

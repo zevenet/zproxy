@@ -30,6 +30,7 @@ my $debug = &getGlobalConfiguration('debug');
 
 sub eload
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my %req = @_;
 
 	my @required = ( qw(module func) );
@@ -64,8 +65,7 @@ sub eload
 	# Run directly Already running inside enterprise.bin
 	if ( defined &main::include )
 	{
-		sub include;
-		#~ &include( $req{ module } );
+		sub include; # WARNING: DO NOT REMOVE THIS
 
 		include $req{ module };
 

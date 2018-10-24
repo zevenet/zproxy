@@ -22,10 +22,11 @@
 
 use strict;
 
-use Zevenet::Net;
+use Zevenet::Net::Util;
 
 sub new_farm    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
    # 3 Mandatory Parameters ( 1 mandatory for HTTP or GSBL and optional for L4xNAT )
@@ -35,7 +36,6 @@ sub new_farm    # ( $json_obj )
    #	- vip
    #	- vport: optional for L4xNAT and not used in Datalink profile.
 
-	#~ &setFarmName( $json_obj->{ farmname } );
 	my $error       = "false";
 	my $description = "Creating farm '$json_obj->{ farmname }'";
 

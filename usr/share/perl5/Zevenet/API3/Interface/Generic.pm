@@ -26,6 +26,7 @@ use strict;
 # GET /interfaces Get params of the interfaces
 sub get_interfaces # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @output_list;
 
 	my $description = "List interfaces";
@@ -33,7 +34,7 @@ sub get_interfaces # ()
 	# Configured interfaces list
 	require Zevenet::Net::Interface;
 	my @interfaces = @{ &getSystemInterfaceList() };
-	
+
 	# get cluster interface
 	include 'Zevenet::Cluster';
 	my $zcl_conf  = &getZClusterConfig();
@@ -91,7 +92,7 @@ sub get_interfaces # ()
 		}
 
 		$if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
-		  
+
 		push @output_list, $if_conf;
 	}
 
@@ -101,101 +102,6 @@ sub get_interfaces # ()
 		};
 
 	&httpResponse({ code => 200, body => $body });
-}
-
-# DELETE /deleteif/<interface>/<ip_version> Delete a interface
-sub delete_interface # ( $if )
-{
-	my $if = shift;
-	my $ip_v;
-
-	my $error = "false";
-
-	# If $if contain '/' means that we have received 2 parameters, interface_name and ip_version
-	if ( $if =~ /\// )
-	{
-		# Get interface_name and ip_version from $if
-		my @ifandipv = split ( '/', $if );
-		$if = $ifandipv[0];
-		$ip_v = $ifandipv[1];
-		
-		# If $ip_v is empty, establish IPv4 like default protocol
-		$ip_v = 4 if not $ip_v;
-		
-		if ( $ip_v != 4 && $ip_v != 6 )
-		{
-			# Error
-			my $errormsg = "The ip version value $ip_v must be 4 or 6";
-			my $body = {
-						 description => "Delete interface $if",
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-	}
-	
-	# If ip_v is empty, default value is 4
-	if ( !$ip_v ) { $ip_v = 4; }
-
-	# Check input errors and delete interface
-	if ( $if =~ /^$/ )
-	{
-		# Error
-		my $errormsg = "Interface name $if can't be empty";
-		my $body = {
-					 description => "Delete interface $if",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	my $if_ref = &getInterfaceConfig( $if, $ip_v );
-	
-	if ( !$if_ref )
-	{
-		# Error
-		my $errormsg = "The stack IPv$ip_v in Network interface $if doesn't exist.";
-		my $body = {
-					 description => "Delete interface $if",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $error eq "false" )
-	{
-		&delRoutes( "local", $if_ref );
-		&downIf( $if_ref, 'writeconf' );
-		&delIf( $if_ref );
-
-		# Success
-		my $message = "The stack IPv$ip_v in Network interface $if has been deleted.";
-		my $body = {
-					 description => "Delete interface $if",
-					 success     => "true",
-					 message     => $message,
-		};
-
-		&httpResponse({ code => 200, body => $body });
-	}
-	else
-	{
-		# Error
-		my $errormsg = "The stack IPv$ip_v in Network interface $if can't be deleted";
-		my $body = {
-					 description => "Delete interface $if",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
 }
 
 1;

@@ -43,6 +43,7 @@ Returns:
 
 sub setRBLCreateDirectory
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	if ( !-d $rblPath )
 	{
 		&logAndRun( &getGlobalConfiguration( 'mkdir' ) . " -p $rblPath" );
@@ -78,6 +79,7 @@ Returns:
 
 sub getRBLInitialParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $initial = {
 
 # save a list of farms split by space character. These farms are the farms where this rule is applied
@@ -132,6 +134,7 @@ Returns:
 
 sub addRBLCreateObjectRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	# check that the rule is not exist
@@ -152,44 +155,9 @@ sub addRBLCreateObjectRule
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $rule } = $params;
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	&zenlog( "The RBL rule \"$rule\" was successfully created." );
-
-	return 0;
-}
-
-=begin nd
-Function: setRBLObjectRule
-
-	Modify an object, receive a hash with all parameters to modify.
-
-Parameters:
-	Rule - Rule name
-	Hash ref - Hash with the value to change and its values
-
-Returns:
-	Integer - 0 on success or -1 on failure
-
-=cut
-
-sub setRBLObjectRule
-{
-	my $rule   = shift;
-	my $params = shift;
-
-	require Config::Tiny;
-
-	my $lock       = &setRBLLockConfigFile();
-	my $fileHandle = Config::Tiny->read( $rblConfigFile );
-
-	foreach my $key ( keys %{ $params } )
-	{
-		$fileHandle->{ $rule }->{ $key } = $params->{ $key };
-	}
-
-	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
 
 	return 0;
 }
@@ -211,6 +179,7 @@ Returns:
 
 sub setRBLObjectRuleParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name  = shift;
 	my $key   = shift;
 	my $value = shift;
@@ -248,7 +217,7 @@ sub setRBLObjectRuleParam
 	}
 
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	return 0;
 }
@@ -268,6 +237,7 @@ Returns:
 
 sub addRBLDomains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $new_domain = shift;
 
 	require Zevenet::Lock;
@@ -293,6 +263,7 @@ Returns:
 
 sub setRBLDomains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $domain     = shift;
 	my $new_domain = shift;
 
@@ -316,6 +287,7 @@ Returns:
 
 sub delRBLDomains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $domain = shift;
 
 	require Zevenet::Lock;
@@ -355,6 +327,7 @@ Returns:
 
 sub addRBLCopyObjectRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule    = shift;
 	my $newrule = shift;
 
@@ -379,7 +352,7 @@ sub addRBLCopyObjectRule
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $newrule } = $params;
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	return 0;
 }
@@ -400,6 +373,7 @@ Returns:
 
 sub addRBLFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
@@ -458,6 +432,7 @@ Returns:
 
 sub delRBLFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
@@ -500,6 +475,7 @@ Returns:
 
 sub setRBLRenameObjectRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule    = shift;
 	my $newname = shift;
 
@@ -542,6 +518,7 @@ Returns:
 
 sub delRBLDeleteObjectRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	# check that the rule is not exist
@@ -557,7 +534,7 @@ sub delRBLDeleteObjectRule
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	delete $fileHandle->{ $rule };
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	# Remove packetbl config file
 	my $config_file = &getRBLPacketblConfig( $rule );

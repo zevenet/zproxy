@@ -23,11 +23,23 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::Farm;
+use Zevenet::Lock;
+
+use Zevenet::Farm::L4xNAT;
+
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Stats;
+use Zevenet::Farm::Factory;
+use Zevenet::Farm::Action;
+use Zevenet::Farm::Config;
+use Zevenet::Farm::Backend;
 
 #GET /farms
-sub farms # ()
+sub farms    # ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
@@ -39,7 +51,7 @@ sub farms # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
 		push @out,
 		  {
@@ -52,30 +64,32 @@ sub farms # ()
 	}
 
 	my $body = {
-				description => "List farms",
-				params      => \@out,
+				 description => "List farms",
+				 params      => \@out,
 	};
 
 	# Success
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /farms/LSLBFARM
-sub farms_lslb # ()
+sub farms_lslb    # ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
 	foreach my $file ( @files )
 	{
-		my $name   = &getFarmName( $file );
-		my $type   = &getFarmType( $name );
+		my $name = &getFarmName( $file );
+		my $type = &getFarmType( $name );
 		next unless $type =~ /^(?:http|https|l4xnat)$/;
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
 		push @out,
 		  {
@@ -88,87 +102,93 @@ sub farms_lslb # ()
 	}
 
 	my $body = {
-				description => "List LSLB farms",
-				params      => \@out,
+				 description => "List LSLB farms",
+				 params      => \@out,
 	};
 
 	# Success
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /farms/GSLBFARM
-sub farms_gslb # ()
+sub farms_gslb    # ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
 	foreach my $file ( @files )
 	{
-		my $name   = &getFarmName( $file );
-		my $type   = &getFarmType( $name );
+		my $name = &getFarmName( $file );
+		my $type = &getFarmType( $name );
 		next unless $type eq 'gslb';
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
-		push @out,
-		  {
+		push @out, {
 			farmname => $name,
+
 			#~ profile  => $type,
-			status   => $status,
-			vip      => $vip,
-			vport    => $port
-		  };
+			status => $status,
+			vip    => $vip,
+			vport  => $port
+		};
 	}
 
 	my $body = {
-				description => "List GSLB farms",
-				params      => \@out,
+				 description => "List GSLB farms",
+				 params      => \@out,
 	};
 
 	# Success
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /farms/DATALINKFARM
-sub farms_dslb # ()
+sub farms_dslb    # ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @out;
 	my @files = &getFarmList();
 
 	foreach my $file ( @files )
 	{
-		my $name   = &getFarmName( $file );
-		my $type   = &getFarmType( $name );
+		my $name = &getFarmName( $file );
+		my $type = &getFarmType( $name );
 		next unless $type eq 'datalink';
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $iface  = &getFarmVip( 'vipp', $name );
 
-		push @out,
-		  {
+		push @out, {
 			farmname => $name,
+
 			#~ profile  => $type,
-			status   => $status,
-			vip      => $vip,
+			status    => $status,
+			vip       => $vip,
 			interface => $iface
-		  };
+		};
 	}
 
 	my $body = {
-				description => "List DSLB farms",
-				params      => \@out,
+				 description => "List DSLB farms",
+				 params      => \@out,
 	};
 
 	# Success
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /farms/<name>
-sub farms_name # ( $farmname )
+sub farms_name    # ( $farmname )
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# Check that the farm exists
@@ -177,12 +197,12 @@ sub farms_name # ( $farmname )
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
-				description => "Get farm",
-				error => "true",
-				message => $errormsg
+					 description => "Get farm",
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $type = &getFarmType( $farmname );

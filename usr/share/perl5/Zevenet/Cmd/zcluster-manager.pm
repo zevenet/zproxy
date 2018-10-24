@@ -58,16 +58,13 @@
 #
 
 use strict;
-#~ use warnings;
+
 use feature 'say';
 use Zevenet::Log;
 use Zevenet::Config;
 use Zevenet::Debug;
 
-#~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
-
 &zenlog( "zcluster-manager args: @ARGV", 'debug', 'cluster' );
-
 
 my $object  = shift @ARGV // '';
 my $command = shift @ARGV // '';
@@ -483,7 +480,9 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 # WARNING: only virtual interfaces are handled
 if ( $object eq 'interface' )
 {
-	require Zevenet::Net;
+	require Net::Interface;
+	require Net::Core;
+	require Net::Route;
 
 	if ( $command eq 'float-update' )
 	{
@@ -544,7 +543,9 @@ if ( $object eq 'gateway' )
 	my $iface_name = shift @ARGV;
 	my $ip_version = shift @ARGV;
 
-	require Zevenet::Net;
+	require Net::Interface;
+	require Net::Core;
+	require Net::Route;
 
 	my $status;
 
@@ -573,6 +574,7 @@ if ( $object eq 'gateway' )
 
 sub setNodeStatusMaster
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog( "############# Starting setNodeStatusMaster" );
 
 	my $node_status = &getZClusterNodeStatus();
@@ -641,6 +643,7 @@ sub setNodeStatusMaster
 
 sub setNodeStatusBackup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog( "############### Starting setNodeStatusBackup" );
 
 	my $node_status = &getZClusterNodeStatus();
@@ -714,6 +717,7 @@ sub setNodeStatusBackup
 
 sub setNodeStatusMaintenance
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&zenlog( "############### Starting setNodeStatusMaintenance" );
 
 	include 'Zevenet::Ssyncd';
@@ -769,6 +773,7 @@ sub setNodeStatusMaintenance
 
 sub quit
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $msg = shift;
 
 	if ( $msg )

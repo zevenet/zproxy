@@ -25,8 +25,9 @@ use strict;
 
 #~ use Zevenet::CGI;
 
-sub GET($$)
+sub GET
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -39,8 +40,9 @@ sub GET($$)
 	$code->( @captures );
 }
 
-sub POST($$)
+sub POST
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -86,8 +88,9 @@ sub POST($$)
 	$code->( $input_ref, @captures );
 }
 
-sub PUT($$)
+sub PUT
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -134,8 +137,9 @@ sub PUT($$)
 	$code->( $input_ref, @captures );
 }
 
-sub DELETE($$)
+sub DELETE
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -148,8 +152,9 @@ sub DELETE($$)
 	$code->( @captures );
 }
 
-sub OPTIONS($$)
+sub OPTIONS
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -181,6 +186,7 @@ sub OPTIONS($$)
 =cut
 sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $self = shift;
 
 	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG

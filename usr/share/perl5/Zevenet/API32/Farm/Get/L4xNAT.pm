@@ -24,6 +24,7 @@ use strict;
 use Zevenet::FarmGuardian;
 use Zevenet::Farm::Config;
 use Zevenet::Farm::L4xNAT::Backend;
+use Zevenet::Farm::L4xNAT::Config;
 
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
@@ -31,13 +32,14 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # GET /farms/<farmname> Request info of a l4xnat Farm
 sub farms_name_l4 # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $out_p;
 	my $out_b;
 
-	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname );
+	my $vip   = &getL4FarmParam( "vip",  $farmname );
+	my $vport = &getL4FarmParam( "vipp", $farmname );
 
 	if ( $vport =~ /^\d+$/ )
 	{
@@ -49,25 +51,25 @@ sub farms_name_l4 # ( $farmname )
 
 	my $status = &getFarmVipStatus( $farmname );
 
-	my $persistence = &getFarmPersistence( $farmname );
+	my $persistence = &getL4FarmParam( 'persist', $farmname );
 	$persistence = "" if $persistence eq 'none';
 
 	$out_p = {
 			   status      => $status,
 			   vip         => $vip,
 			   vport       => $vport,
-			   algorithm   => &getFarmAlgorithm( $farmname ),
-			   nattype     => &getFarmNatType( $farmname ),
+			   algorithm   => &getL4FarmParam( 'alg', $farmname ),
+			   nattype     => &getL4FarmParam( 'mode', $farmname ),
 			   persistence => $persistence,
-			   protocol    => &getFarmProto( $farmname ),
+			   protocol    => &getL4FarmParam( 'proto', $farmname ),
 			   ttl         => $timetolimit,
 			   farmguardian => &getFGFarm( $farmname ),
-			   logs 		=> &getL4FarmLogs( $farmname ),
+			   logs 		=> &getL4FarmParam( 'logs', $farmname ),
 			   listener    => 'l4xnat',
 	};
 
 	# Backends
-	$out_b = &getL4FarmBackends( $farmname );
+	$out_b = &getL4FarmServers( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",

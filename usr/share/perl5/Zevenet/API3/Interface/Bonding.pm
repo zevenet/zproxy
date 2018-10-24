@@ -35,6 +35,7 @@ my @bond_modes_short = (
 
 sub new_bond # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = "Add a bond interface";
@@ -101,7 +102,7 @@ sub new_bond # ( $json_obj )
 	}
 
 	eval {
-		die if &applyBondChange( $json_obj, 'writeconf' );
+		die if &applyBondChange( $json_obj );
 	};
 
 	if ( ! $@ )
@@ -144,6 +145,7 @@ sub new_bond # ( $json_obj )
 # slave: nic
 sub new_bond_slave # ( $json_obj, $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -190,7 +192,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
 
 	eval {
-		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
+		die if &applyBondChange( $bonds->{ $bond } );
 	};
 	if ( ! $@ )
 	{
@@ -230,6 +232,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 
 sub delete_interface_bond # ( $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Interface;
@@ -256,7 +259,7 @@ sub delete_interface_bond # ( $bond )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -288,6 +291,7 @@ sub delete_interface_bond # ( $bond )
 
 sub delete_bond # ( $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	my $description = "Remove bonding interface";
@@ -330,10 +334,10 @@ sub delete_bond # ( $bond )
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 		{
-			die if &downIf( $bonds->{ $bond }, 'writeconf' );
+			die if &downIf( $bonds->{ $bond } );
 		}
 
-		die if &setBondMaster( $bond, 'del', 'writeconf' );
+		die if &setBondMaster( $bond, 'del' );
 	};
 
 	if ( ! $@ )
@@ -364,6 +368,7 @@ sub delete_bond # ( $bond )
 
 sub delete_bond_slave # ( $bond, $slave )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond  = shift;
 	my $slave = shift;
 
@@ -402,7 +407,7 @@ sub delete_bond_slave # ( $bond, $slave )
 
 	eval {
 		@{ $bonds->{ $bond }->{ slaves } } = grep ( { $slave ne $_ } @{ $bonds->{ $bond }->{ slaves } } );
-		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
+		die if &applyBondChange( $bonds->{ $bond } );
 	};
 	if ( ! $@ )
 	{
@@ -432,6 +437,7 @@ sub delete_bond_slave # ( $bond, $slave )
 
 sub get_bond_list # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Net::Bonding';
 	include 'Zevenet::Cluster';
 	require Zevenet::Net::Interface;
@@ -490,6 +496,7 @@ sub get_bond_list # ()
 
 sub get_bond # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $bond = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -554,6 +561,7 @@ sub get_bond # ()
 
 sub actions_interface_bond # ( $json_obj, $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond 	 = shift;
 
@@ -607,7 +615,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
-		my $state = &upIf( { name => $bond }, 'writeconf' );
+		my $state = &upIf( { name => $bond } );
 
 		if ( ! $state )
 		{
@@ -633,7 +641,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond }, 'writeconf' );
+		my $state = &downIf( { name => $bond } );
 
 		if ( $state )
 		{
@@ -672,6 +680,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 
 sub modify_interface_bond # ( $json_obj, $bond )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond = shift;
 
@@ -830,7 +839,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		# Put the interface up
 		{
 			my $previous_status = $if_ref->{ status };
-			my $state = &upIf( $if_ref, 'writeconf' );
+			my $state = &upIf( $if_ref );
 
 			if ( $state == 0 )
 			{

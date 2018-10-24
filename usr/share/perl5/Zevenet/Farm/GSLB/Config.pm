@@ -23,7 +23,7 @@
 
 use strict;
 
-use Zevenet::Farm;
+use Zevenet::Farm::Core;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -42,6 +42,7 @@ Returns:
 
 sub getGSLBFarmBootStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -83,6 +84,7 @@ FIXME:
 
 sub getGSLBFarmPid    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	my $farm_filename = &getFarmFile( $fname );
@@ -125,6 +127,7 @@ FIXME:
 
 sub getGSLBFarmPidFile    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return "$configdir\/$farm_name\_gslb.cfg\/etc\/gdnsd.pid";
@@ -149,15 +152,16 @@ FIXME:
 
 sub getGSLBFarmVip    # ($info,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $info, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $i             = 0;
 
-	open FI, "<$configdir/$farm_filename/etc/config";
-	my @file = <FI>;
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename/etc/config";
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{
@@ -174,7 +178,6 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 
 			if ( $info eq "vip" )   { $output = $vip[2]; }
 			if ( $info eq "vipp" )  { $output = $vipp[2]; }
-			if ( $info eq "vipps" ) { $output = "$vip[2]\:$vipp[2]"; }
 		}
 		$i++;
 	}
@@ -197,15 +200,15 @@ Returns:
 
 sub runGSLBFarmReload    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	require Zevenet::System;
 
-	my $type = &getFarmType( $fname );
 	my $output;
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
 
-	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones";
+	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_gslb.cfg/etc reload-zones";
 
 	&zenlog( "running $gdnsd_command", "info", "GSLB" );
 
@@ -233,6 +236,7 @@ Returns:
 
 sub getGSLBControlPort    # ( $farm_name )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $port     = -1;
 	my $ffile    = &getFarmFile( $farmName );
@@ -268,6 +272,7 @@ Returns:
 
 sub setGSLBControlPort    # ( $farm_name )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Zevenet::Net::Util;
@@ -310,6 +315,7 @@ FIXME:
 
 sub setGSLBFarmBootStatus    # ($farm_name, $status)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $status ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -355,22 +361,18 @@ Returns:
 BUG:
 	Always return success
 
-FIXME:
-	writeconf is obsolete parameter, always write configuration
 =cut
 
-sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
+sub setGSLBFarmStatus    # ($farm_name, $status)
 {
-	my ( $farm_name, $status, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $farm_name, $status ) = @_;
 
 	my $command;
 
 	unlink ( "/tmp/$farm_name.lock" );
 
-	if ( $writeconf eq "true" )
-	{
-		&setGSLBFarmBootStatus( $farm_name, $status );
-	}
+	&setGSLBFarmBootStatus( $farm_name, $status );
 
 	if ( $status eq "start" )
 	{
@@ -411,6 +413,7 @@ Returns:
 
 sub setGSLBRemoveTcpPort
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $port ) = @_;
 
 	my $ffile = &getFarmFile( $fname );
@@ -472,12 +475,12 @@ Bug:
 
 sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $vipp, $fname ) = @_;
 
 	my $fconf = &getFarmFile( $fname );
-	my $type  = &getFarmType( $fname );
 
-	&zenlog( "setting 'VirtualConf $vip $vipp' for $fname farm $type", "info", "GSLB" );
+	&zenlog( "setting 'VirtualConf $vip $vipp' for $fname farm gslb", "info", "GSLB" );
 
 	my $index = 0;
 	my $found = 0;

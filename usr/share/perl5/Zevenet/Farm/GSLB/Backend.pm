@@ -42,14 +42,13 @@ Returns:
 
 sub remFarmServiceBackend    # ($id,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $id, $fname, $srv ) = @_;
 
 	my $output = 0;
-	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my $index      = 0;
 	my $pluginfile = "";
 	my $found;
@@ -84,7 +83,7 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /^\t$srv => / )
 		{
@@ -143,6 +142,7 @@ BUG:
 
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -187,13 +187,12 @@ Returns:
 
 sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
 
-	my $ftype = &getFarmType( $fname );
 	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my @linesplt;
 	my $found      = 0;
 	my $index      = 0;
@@ -218,7 +217,7 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	closedir ( DIR );
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /^\t$srv => / )
 		{
@@ -293,6 +292,7 @@ Returns:
 
 sub getGSLBFarmBackends    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -369,6 +369,29 @@ sub getGSLBFarmBackends    # ($farm_name)
 	}
 
 	return \@backendStats;
+}
+
+sub getGSLBFarmServiceBackendAvailableID
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
+	my $service  = shift;
+
+	include 'Zevenet::Farm::GSLB::Service';
+
+	# Get an ID for the new backend
+	my $id         = 1;
+	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
+	my @be         = split ( "\n", $backendsvs );
+
+	foreach my $subline ( @be )
+	{
+		$subline =~ s/^\s+//;
+		next unless length $subline;
+		$id++;
+	}
+
+	return $id;
 }
 
 1;

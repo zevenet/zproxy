@@ -26,6 +26,7 @@ use strict;
 
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -34,11 +35,9 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $restart_flag = "false";
 	my $error        = "false";
 	my $status;
-	my $initialStatus = &getFarmStatus( $farmname );
+	my $initialStatus = &getL4FarmParam( 'status', $farmname );
 
 	include 'Zevenet::IPDS::Base';
-	include 'Zevenet::IPDS::Blacklist';
-	include 'Zevenet::IPDS::DoS';
 
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
@@ -68,7 +67,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify Farm's Name
 	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
-		unless ( &getFarmStatus( $farmname ) eq 'down' )
+		unless ( &getL4FarmParam( 'status', $farmname ) eq 'down' )
 		{
 			&zenlog(
 				"Error trying to modify a l4xnat farm $farmname, cannot change the farm name while running", "error", "LSLB"
@@ -181,7 +180,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			my $persistence = $json_obj->{ persistence };
 			$persistence = 'none' if $persistence eq '';
 
-			if (&getFarmPersistence($farmname) ne $persistence)
+			if (&getL4FarmParam('persist', $farmname) ne $persistence)
 			{
 				my $statusp = &setFarmSessionType( $persistence, $farmname, "" );
 				if ( $statusp != 0 )
@@ -217,7 +216,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		}
 		if ( $json_obj->{ protocol } =~ /^all|tcp|udp|sip|ftp|tftp$/ )
 		{
-			$status = &setFarmProto( $json_obj->{ protocol }, $farmname );
+			$status = &setL4FarmParam( 'proto', $json_obj->{ protocol }, $farmname );
 			if ( $status != 0 )
 			{
 				$error = "true";
@@ -254,9 +253,9 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		}
 		if ( $json_obj->{ nattype } =~ /^nat|dnat$/ )
 		{
-			if (&getFarmNatType($farmname) ne $json_obj->{nattype})
+			if ( &getL4FarmParam( 'mode', $farmname) ne $json_obj->{nattype} )
 			{
-				$status = &setFarmNatType( $json_obj->{ nattype }, $farmname );
+				$status = &setL4FarmParam( 'mode', $json_obj->{ nattype }, $farmname );
 				if ( $status != 0 )
 				{
 					$error = "true";
@@ -440,7 +439,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		&zenlog(
 				  "Success, some parameters have been changed in farm $farmname.", "info", "LSLB" );
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getL4FarmParam( 'status', $farmname ) eq 'up' )
 		{
 			# Reset ip rule mark when changing the farm's vip
 			if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )
@@ -499,6 +498,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;

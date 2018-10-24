@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::Farm::GSLB::Service';
 include 'Zevenet::Farm::GSLB::Backend';
 include 'Zevenet::Farm::GSLB::FarmGuardian';
@@ -29,86 +32,34 @@ include 'Zevenet::Farm::GSLB::Zone';
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Config;
-	my $farm_ref;
-	my @out_s;
-	my @out_z;
+	require Zevenet::Farm::Base;
 
 	my $status = &getFarmVipStatus( $farmname );
-	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname ) + 0;
+	my $vip    = &getFarmVip( "vip", $farmname );
+	my $vport  = &getFarmVip( "vipp", $farmname ) + 0;
 
-	$farm_ref = { vip => $vip, vport => $vport, status => $status };
+	my $farm_ref = {
+					 vip    => $vip,
+					 vport  => $vport,
+					 status => $status,
+	};
 
-	# Services
-	my @services = &getGSLBFarmServices( $farmname );
-
-	foreach my $srv_it ( @services )
-	{
-		my @serv = split ( ".cfg", $srv_it );
-		my $srv  = $serv[0];
-		my $lb   = &getGSLBFarmVS( $farmname, $srv, "algorithm" );
-
-		# Default port health check
-		my $dpc = &getGSLBFarmVS( $farmname, $srv, "dpc" );
-
-		# Backends
-		my $out_b = &getGSLBFarmBackends( $farmname, $srv );
-
-		# Farmguardian
-		require Zevenet::FarmGuardian;
-		push @out_s,
-		  {
-			id          => $srv,
-			algorithm   => $lb,
-			deftcpport  => $dpc + 0,
-			farmguardian => &getFGFarm( $farmname, $srv ),
-			backends    => $out_b,
-		  };
-	}
-
-	# Zones
-	my @zones   = &getGSLBFarmZones( $farmname );
-	my $first   = 0;
-	my $vserver = 0;
-	my $pos     = 0;
-
-	foreach my $zone ( @zones )
-	{
-		$pos++;
-		$first = 1;
-		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
-		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-		my @be = split ( "\n", $backendsvs );
-		my @out_re;
-		my $resources = &getGSLBResources  ( $farmname, $zone );
-
-		for my $resource ( @{ $resources } )
-		{
-			$resource->{ ttl } = undef if ! $resource->{ ttl };
-			$resource->{ ttl } += 0 if $resource->{ ttl };
-		}
-
-		push (
-			   @out_z,
-			   {
-				  id        => $zone,
-				  defnamesv => $ns,
-				  resources => $resources,
-			   }
-		);
-	}
+	# Services and zones
+	my $services_aref = &getGSLBFarmServicesStruct( $farmname );
+	my $zones_aref    = &getGSLBFarmZonesStruct( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $farm_ref,
-				 services    => \@out_s,
-				 zones       => \@out_z,
+				 services    => $services_aref,
+				 zones       => $zones_aref,
 	};
 
-	include 'Zevenet::IPDS';
+	include 'Zevenet::IPDS::Core';
 
 	$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 

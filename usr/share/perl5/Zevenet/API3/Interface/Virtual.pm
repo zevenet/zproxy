@@ -26,6 +26,7 @@ use strict;
 # POST /addvini/<interface> Create a new virtual network interface
 sub new_vini # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = "Add a virtual interface";
@@ -143,7 +144,7 @@ sub new_vini # ( $json_obj )
 	eval {
 		die if &addIp( $if_ref );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{
@@ -189,6 +190,7 @@ sub new_vini # ( $json_obj )
 
 sub delete_interface_virtual # ( $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $virtual = shift;
@@ -215,7 +217,7 @@ sub delete_interface_virtual # ( $virtual )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' );
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -251,6 +253,7 @@ sub delete_interface_virtual # ( $virtual )
 
 sub get_virtual_list # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my @output_list;
@@ -291,6 +294,7 @@ sub get_virtual_list # ()
 
 sub get_virtual # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $virtual = shift;
 
 	my $interface; # output
@@ -347,6 +351,7 @@ sub get_virtual # ()
 
 sub actions_interface_virtual # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -417,7 +422,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 		if ( ! $state )
 		{
 			require Zevenet::Net::Route;
@@ -443,7 +448,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( $if_ref, 'writeconf' );
+		my $state = &downIf( $if_ref );
 
 		if ( $state )
 		{
@@ -485,6 +490,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 sub modify_interface_virtual # ( $json_obj, $virtual )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual = shift;
 

@@ -46,31 +46,11 @@ Returns:
 
 sub setRBACGroupLockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbac_groups.lock";
-	return &lockfile( $lockfile );
-}
-
-=begin nd
-Function: setRBACGroupUnlockConfigFile
-
-	Unlock the group configuration file
-
-Parameters:
-	Integer - Lock file identifier
-
-Returns:
-	None - .
-
-=cut
-
-sub setRBACGroupUnlockConfigFile
-{
-	my $lock_fd = shift;
-
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	return &openlock( $lockfile, 'w' );
 }
 
 =begin nd
@@ -95,6 +75,7 @@ Returns:
 
 sub setRBACGroupConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $group, $key, $value, $action ) = @_;
 
 	# the group root mustn't exist
@@ -130,7 +111,7 @@ sub setRBACGroupConfigFile
 		}
 	}
 	$fileHandle->write( $rbacGroupConfig );
-	&setRBACGroupUnlockConfigFile( $lock );
+	close $lock;
 }
 
 =begin nd
@@ -148,6 +129,7 @@ Returns:
 
 sub createRBACGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 	my $group_obj;
 
@@ -184,6 +166,7 @@ Returns:
 
 sub delRBACGroup
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group = shift;
 
 	# remove from system
@@ -196,7 +179,7 @@ sub delRBACGroup
 		my $fileHandle = Config::Tiny->read( $rbacGroupConfig );
 		delete $fileHandle->{ $group };
 		$fileHandle->write( $rbacGroupConfig );
-		&setRBACGroupUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $error;
@@ -219,6 +202,7 @@ Returns:
 
 sub addRBACGroupResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group    = shift;
 	my $resource = shift;
 	my $type     = shift;
@@ -257,6 +241,7 @@ Returns:
 
 sub delRBACGroupResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $group    = shift;
 	my $resource = shift;
 	my $type     = shift;
@@ -294,6 +279,7 @@ Returns:
 
 sub addRBACUserResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $resource = shift;
 	my $type     = shift;
 
@@ -328,6 +314,7 @@ Returns:
 
 sub delRBACResource
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $resource = shift;
 	my $type     = shift;
 
@@ -356,6 +343,7 @@ Returns:
 
 sub setRBACRenameByFarm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $old_farmname = shift;
 	my $new_farmname = shift;
 

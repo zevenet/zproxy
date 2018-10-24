@@ -41,6 +41,7 @@ Returns:
 
 sub getHTTPFarmEstConns    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my $vip      = &getFarmVip( "vip",  $farm_name );
@@ -76,6 +77,7 @@ Returns:
 
 sub getHTTPFarmSYNConns    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $netstat ) = @_;
 
 	my $vip      = &getFarmVip( "vip",  $farm_name );
@@ -120,6 +122,7 @@ BUG:
 
 sub getHTTPBackendEstConns    # ($farm_name,$backend_ip,$backend_port, $netstat)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend_ip, $backend_port, $netstat ) = @_;
 
 	my $filter = {
@@ -156,6 +159,7 @@ BUG:
 
 sub getHTTPBackendSYNConns    # ($farm_name, $backend_ip, $backend_port)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend_ip, $backend_port, $netstat ) = @_;
 
 	my $filter = {
@@ -181,7 +185,6 @@ sub getHTTPBackendSYNConns    # ($farm_name, $backend_ip, $backend_port)
 =begin nd
 Function: getHTTPFarmBackendsStats
 
-	This function is the same than getHTTPFarmBackendsStatus_old but return a hash with http farm information
 	This function take data from pounctl and it gives hash format
 
 Parameters:
@@ -217,6 +220,7 @@ FIXME:
 
 sub getHTTPFarmBackendsStats    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Base;

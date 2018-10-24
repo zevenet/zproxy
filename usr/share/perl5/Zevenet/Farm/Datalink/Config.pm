@@ -28,27 +28,28 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 =begin nd
 Function: getDatalinkFarmAlgorithm
 
-	Get type of balancing algorithm. 
-	
+	Get type of balancing algorithm.
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	scalar - The possible values are "weight", "priority" or -1 on failure
-	
+
 =cut
 
 sub getDatalinkFarmAlgorithm    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $algorithm     = -1;
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -57,7 +58,7 @@ sub getDatalinkFarmAlgorithm    # ($farm_name)
 			$algorithm = $line[3];
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $algorithm;
 }
@@ -66,21 +67,22 @@ sub getDatalinkFarmAlgorithm    # ($farm_name)
 Function: setDatalinkFarmAlgorithm
 
 	Set the load balancing algorithm to a farm
-	
+
 Parameters:
 	algorithm - Type of balancing mode: "weight" or "priority"
 	farmname - Farm name
 
 Returns:
 	none - .
-	
+
 FIXME:
 	set a return value, and do error control
-	
+
 =cut
 
 sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $algorithm, $farm_name ) = @_;
 
 	require Tie::File;
@@ -117,7 +119,7 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 Function: getDatalinkFarmBootStatus
 
 	Return the farm status at boot zevenet
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -128,15 +130,16 @@ Returns:
 
 sub getDatalinkFarmBootStatus    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "down";
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -146,7 +149,7 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 			chomp ( $output );
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -155,7 +158,7 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 Function: getDatalinkFarmInterface
 
 	 Get network physical interface used by the farm vip
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -166,29 +169,29 @@ Returns:
 
 sub getDatalinkFarmInterface    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $farm_name );
 	my $output = -1;
-	my $line;
 
-	if ( $type eq "datalink" )
+	my $line;
+	my $first = "true";
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	open my $fd, '<', "$configdir/$farm_filename";
+
+	while ( $line = <$fd> )
 	{
-		my $farm_filename = &getFarmFile( $farm_name );
-		open FI, "<$configdir/$farm_filename";
-		my $first = "true";
-		while ( $line = <FI> )
+		if ( $line ne "" && $first eq "true" )
 		{
-			if ( $line ne "" && $first eq "true" )
-			{
-				$first = "false";
-				my @line_a = split ( "\;", $line );
-				my @line_b = split ( "\:", $line_a[2] );
-				$output = $line_b[0];
-			}
+			$first = "false";
+			my @line_a = split ( "\;", $line );
+			my @line_b = split ( "\:", $line_a[2] );
+			$output = $line_b[0];
 		}
-		close FI;
 	}
+
+	close $fd;
 
 	return $output;
 }
@@ -197,27 +200,28 @@ sub getDatalinkFarmInterface    # ($farm_name)
 Function: getDatalinkFarmVip
 
 	Returns farm vip, vport or vip:vport
-	
+
 Parameters:
-	info - parameter to return: vip, for virtual ip; vipp, for virtual port or vipps, for vip:vipp
+	info - parameter to return: vip, for virtual ip; vipp, for virtual port
 	farmname - Farm name
 
 Returns:
 	Scalar - return request parameter on success or -1 on failure
-		
+
 =cut
 
 sub getDatalinkFarmVip    # ($info,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $info, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -226,10 +230,9 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 
 			if ( $info eq "vip" )   { $output = $line_a[1]; }
 			if ( $info eq "vipp" )  { $output = $line_a[2]; }
-			if ( $info eq "vipps" ) { $output = "$line_a[1]\:$line_a[2]"; }
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -238,7 +241,7 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 Function: setDatalinkFarmVirtualConf
 
 	Set farm virtual IP and virtual PORT
-	
+
 Parameters:
 	vip - virtual ip
 	interface - interface
@@ -246,11 +249,12 @@ Parameters:
 
 Returns:
 	Scalar - Error code: 0 on success or -1 on failure
-		
+
 =cut
 
 sub setDatalinkFarmVirtualConf    # ($vip,$interface,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $vip, $interface, $farm_name ) = @_;
 
 	require Tie::File;

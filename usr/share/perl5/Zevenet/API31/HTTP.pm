@@ -49,6 +49,7 @@ my %http_status_codes = (
 
 sub GET
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return
@@ -72,6 +73,7 @@ sub GET
 
 sub POST
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'POST';
@@ -134,6 +136,7 @@ sub POST
 
 sub PUT
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'PUT';
@@ -196,6 +199,7 @@ sub PUT
 
 sub DELETE
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'DELETE';
@@ -217,6 +221,7 @@ sub DELETE
 
 sub OPTIONS
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'OPTIONS';
@@ -249,6 +254,7 @@ sub OPTIONS
 
 sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $self = shift;
 
 	return $self unless exists $ENV{ GATEWAY_INTERFACE };
@@ -373,6 +379,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 
 sub httpErrorResponse
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $args;
 
 	eval { $args = @_ == 1 ? shift @_ : { @_ }; };
@@ -423,6 +430,7 @@ sub httpErrorResponse
 # WARNING: Function unfinished.
 sub httpSuccessResponse
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $args ) = @_;
 
 	unless ( ref ( $args ) eq 'HASH' )
@@ -452,6 +460,7 @@ sub httpSuccessResponse
 
 sub httpDownloadResponse
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $args;
 
 	eval { $args = @_ == 1 ? shift @_ : { @_ }; };
@@ -485,8 +494,11 @@ sub httpDownloadResponse
 		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
 	}
 
-	open ( my $fh, '<', $path );
-	unless ( $fh )
+	require Zevenet::File;
+
+	my $body = &getFile( $path );
+
+	unless ( defined $body )
 	{
 		my $msg = "Could not open file $path: $!";
 		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
@@ -498,15 +510,6 @@ sub httpDownloadResponse
 					-attachment      => $args->{ file },
 					'Content-length' => -s $path,
 	};
-
-	# make body
-	my $body;
-	binmode $fh;
-	{
-		local $/ = undef;
-		$body = <$fh>;
-	}
-	close $fh;
 
 	# optionally, remove the downloaded file, useful for temporal files
 	unlink $path if $args->{ remove } eq 'true';

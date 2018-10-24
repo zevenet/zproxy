@@ -21,11 +21,15 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
+
 include 'Zevenet::IPDS::RBL::Core';
 
 # GET /ipds/rbl
 sub get_rbl_all_rules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rules = &getRBLZapi();
 	my $desc  = "List the RBL rules";
 
@@ -36,6 +40,7 @@ sub get_rbl_all_rules
 #GET /ipds/rbl/<name>
 sub get_rbl_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 
 	my $desc = "Get the RBL $name";
@@ -55,6 +60,7 @@ sub get_rbl_rule
 #  POST /ipds/rbl
 sub add_rbl_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';
@@ -99,6 +105,7 @@ sub add_rbl_rule
 #  POST /ipds/rbl/<name>
 sub copy_rbl_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $name     = shift;
 
@@ -147,6 +154,7 @@ sub copy_rbl_rule
 #  PUT /ipds/rbl/<name>
 sub set_rbl_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $name     = shift;
 
@@ -348,6 +356,7 @@ sub set_rbl_rule
 #  DELETE /ipds/rbl/<name>
 sub del_rbl_rule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';
@@ -385,6 +394,7 @@ sub del_rbl_rule
 #  GET /ipds/rbl/domains
 sub get_rbl_domains
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "List the available RBL domains";
 
 	my @user;
@@ -413,6 +423,7 @@ sub get_rbl_domains
 #  POST /ipds/rbl/domains
 sub add_rbl_domain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';
@@ -463,6 +474,7 @@ sub add_rbl_domain
 #  PUT /ipds/rbl/domains/<domain>
 sub set_rbl_domain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $domain_id = shift;
 
@@ -544,6 +556,7 @@ sub set_rbl_domain
 #  DELETE /ipds/rbl/domains/<domain>
 sub del_rbl_domain
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $domain_id = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';
@@ -590,6 +603,7 @@ sub del_rbl_domain
 #  POST /ipds/rbl/<name>/domains
 sub add_domain_to_rbl
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $name     = shift;
 
@@ -655,6 +669,7 @@ sub add_domain_to_rbl
 #  DELETE /ipds/rbl/<name>/domains/<domain>
 sub del_domain_from_rbl
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name   = shift;
 	my $domain = shift;
 
@@ -704,6 +719,7 @@ sub del_domain_from_rbl
 #  POST /farms/<farmname>/ipds/rbl
 sub add_rbl_to_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmName = shift;
 
@@ -771,6 +787,7 @@ sub add_rbl_to_farm
 # DELETE /farms/<farmname>/ipds/rbl/<name>
 sub del_rbl_from_farm
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmName = shift;
 	my $name     = shift;
 
@@ -824,6 +841,7 @@ sub del_rbl_from_farm
 # POST /ipds/rbl/<name>/actions
 sub set_rbl_actions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $name     = shift;
 

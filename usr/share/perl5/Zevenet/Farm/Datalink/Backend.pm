@@ -25,71 +25,22 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
-=begin nd
-Function: getDatalinkFarmServers
-
-	List all farm backends and theirs configuration
-	
-Parameters:
-	farmname - Farm name
-
-Returns:
-	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
-		
-FIXME:
-	changes output to hash format
-	
-=cut
-
-sub getDatalinkFarmServers    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
-	my $first         = "true";
-	my $sindex        = 0;
-	my @servers;
-
-	open FI, "<$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		# ;server;45.2.2.3;eth0;1;1;up
-		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
-		{
-			$line =~ s/^\;server/$sindex/g;    #, $line;
-			chomp ( $line );
-			push ( @servers, $line );
-			$sindex = $sindex + 1;
-		}
-		else
-		{
-			$first = "false";
-		}
-	}
-	close FI;
-
-	return @servers;
-}
-
 =begin nd
 Function: getDatalinkFarmBackends
 
 	List all farm backends and theirs configuration
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
-	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
-	
+	scalar - backends list array reference with hashes of backends objects
+
 =cut
 
 sub getDatalinkFarmBackends    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -112,9 +63,9 @@ sub getDatalinkFarmBackends    # ($farm_name)
 	require Zevenet::Alias if ( $permission );
 	my $alias = &getAlias( "backend" ) if ( $permission );
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		chomp ( $line );
 
@@ -124,7 +75,6 @@ sub getDatalinkFarmBackends    # ($farm_name)
 			my @aux = split ( ';', $line );
 			my $status = $aux[6];
 			$status = "undefined" if ( $farmStatus eq "down" );
-
 			push @servers,
 			  {
 				alias     => $permission ? $alias->{ $aux[2] } : undef,
@@ -142,7 +92,7 @@ sub getDatalinkFarmBackends    # ($farm_name)
 			$first = "false";
 		}
 	}
-	close FI;
+	close $fd;
 
 	return \@servers;
 }
@@ -151,7 +101,7 @@ sub getDatalinkFarmBackends    # ($farm_name)
 Function: setDatalinkFarmServer
 
 	Set a backend or create it if it doesn't exist
-	
+
 Parameters:
 	id - Backend id, if this id doesn't exist, it will create a new backend
 	ip - Real server ip
@@ -162,14 +112,15 @@ Parameters:
 
 Returns:
 	none - .
-	
+
 FIXME:
 	Not return nothing, do error control
-		
+
 =cut
 
 sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
 
 	require Tie::File;
@@ -228,18 +179,19 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 Function: runDatalinkFarmServerDelete
 
 	Delete a backend from a datalink farm
-	
+
 Parameters:
 	id - Backend id
 	farmname - Farm name
 
 Returns:
 	Integer - Error code: return 0 on success or -1 on failure
-	
+
 =cut
 
 sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $farm_name ) = @_;
 
 	require Tie::File;
@@ -283,121 +235,25 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-=begin nd
-Function: getDatalinkFarmBackendsStatus_old
-
-	Get the backend status from a datalink farm
-	
-Parameters:
-	content - Not used, it is necessary create a function to generate content
-
-Returns:
-	array - Each item has the next format: "ip;port;backendstatus;weight;priority;clients"
-	
-BUG:
-	Not used. This function exist but is not contemplated in zapi v3
-	Use farmname as parameter
-	It is necessary creates backend checks and save backend status
-	
-=cut
-
-sub getDatalinkFarmBackendsStatus_old    # (@content)
+sub getDatalinkFarmBackendAvailableID
 {
-	my ( @content ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
 
-	my @backends_data;
+	my $id  = 0;
+	my $backends = &getDatalinkFarmBackends( $farmname );
 
-	foreach my $server ( @content )
+	foreach my $l_serv ( @{ $backends } )
 	{
-		my @serv = split ( ";", $server );
-		push ( @backends_data, "$serv[2]\;$serv[3]\;$serv[4]\;$serv[5]\;$serv[6]" );
-	}
-
-	return @backends_data;
-}
-
-=begin nd
-Function: setDatalinkFarmBackendStatus
-
-	Change backend status to up or down
-	
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-	status - Backend status, "up" or "down"
-
-Returns:
-	none - .
-	
-FIXME:
-	Not return nothing, do error control	
-	
-=cut
-
-sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
-{
-	my ( $farm_name, $index, $stat ) = @_;
-
-	require Tie::File;
-	require Zevenet::Farm::Base;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $fileid        = 0;
-	my $serverid      = 0;
-
-	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-
-	foreach my $line ( @configfile )
-	{
-		if ( $line =~ /\;server\;/ )
+		if ( $l_serv->{ id } > $id && $l_serv->{ ip } ne "0.0.0.0")
 		{
-			if ( $serverid eq $index )
-			{
-				my @lineargs = split ( "\;", $line );
-				@lineargs[6] = $stat;
-				@configfile[$fileid] = join ( "\;", @lineargs );
-			}
-			$serverid++;
+			$id = $l_serv->{ id };
 		}
-		$fileid++;
-	}
-	untie @configfile;
-
-	# Apply changes online
-	if ( &getFarmStatus( $farm_name ) eq 'up' )
-	{
-		&runFarmStop( $farm_name, "true" );
-		&runFarmStart( $farm_name, "true" );
 	}
 
-	return;
-}
+	$id++ if @{ $backends };
 
-=begin nd
-Function: getDatalinkFarmBackendStatusCtl
-
-	Return from datalink config file, all backends with theirs parameters and status
-	
-Parameters:
-	farmname - Farm name
-
-Returns:
-	array - Each item has the next format: ";server;ip;interface;weight;priority;status"
-	
-=cut
-
-sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my @output;
-
-	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
-	@output = grep /^\;server\;/, @content;
-	untie @content;
-
-	return @output;
+	return $id;
 }
 
 1;

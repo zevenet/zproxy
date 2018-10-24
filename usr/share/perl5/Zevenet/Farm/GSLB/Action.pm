@@ -23,7 +23,6 @@
 
 use strict;
 
-use Zevenet::Farm;
 include 'Zevenet::Farm::GSLB::Config';
 
 my $configdir = &getGlobalConfiguration('configdir');
@@ -35,30 +34,27 @@ Function: _runGSLBFarmStart
 
 Parameters:
 	farmname - Farm name
-	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-
-FIXME:
-	writeconf must not exist, always it has to be TRUE. Obsolet parameter
 
 BUG:
 	the returned variable must be $output and not $status
 
 =cut
-sub _runGSLBFarmStart    # ($fname,$writeconf)
+sub _runGSLBFarmStart    # ($fname)
 {
-	my ( $fname, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $fname ) = @_;
 
 	require Tie::File;
 	include 'Zevenet::Farm::GSLB::Service';
 	include 'Zevenet::Farm::GSLB::FarmGuardian';
+	require Zevenet::Farm::Base;
 	require Zevenet::FarmGuardian;
 
 	my $output;
 	my $status = &getFarmStatus( $fname );
-	my $type   = &getFarmType( $fname );
 	my $file   = &getFarmFile( $fname );
 
 	chomp ( $status );
@@ -85,23 +81,21 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 		}
 	}
 
-	if ( $writeconf eq "true" )
-	{
-		unlink ( "/tmp/$fname.lock" );
-		tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
-		my $first = 1;
+	unlink ( "/tmp/$fname.lock" );
+	tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
+	my $first = 1;
 
-		foreach ( @filelines )
+	foreach ( @filelines )
+	{
+		if ( $first eq 1 )
 		{
-			if ( $first eq 1 )
-			{
-				s/\;down/\;up/g;
-				$first = 0;
-				last;
-			}
+			s/\;down/\;up/g;
+			$first = 0;
+			last;
 		}
-		untie @filelines;
 	}
+	untie @filelines;
+
 	my $exec = &getGSLBStartCommand( $fname );
 
 	&zenlog( "running $exec", "info", "GSLB" );
@@ -125,21 +119,19 @@ Function: _runGSLBFarmStop
 
 Parameters:
 	farmname - Farm name
-	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - return 0 on success or -1 on failure
 
-FIXME:
-	writeconf must not exist, always it has to be TRUE
-
 =cut
-sub _runGSLBFarmStop    # ($farm_name,$writeconf)
+sub _runGSLBFarmStop    # ($farm_name)
 {
-	my ( $fname, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $fname ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Validate';
 	include 'Zevenet::Farm::GSLB::Config';
+	require Zevenet::Farm::Base;
 
 	my $status = &getFarmStatus( $fname );
 	if ( $status eq "down" )
@@ -153,7 +145,6 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		return -1;
 	}
 
-	my $type = &getFarmType( $fname );
 	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
 
 	if ( $checkfarm )
@@ -163,24 +154,20 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		return 1;
 	}
 
-	if ( $writeconf eq "true" )
+	require Tie::File;
+	tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
+	my $first = 1;
+
+	foreach ( @filelines )
 	{
-		require Tie::File;
-		tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
-		my $first = 1;
-
-		foreach ( @filelines )
+		if ( $first eq 1 )
 		{
-			if ( $first eq 1 )
-			{
-				s/\;up/\;down/g;
-				$status = $?;
-				$first  = 0;
-			}
+			s/\;up/\;down/g;
+			$status = $?;
+			$first  = 0;
 		}
-
-		untie @filelines;
 	}
+	untie @filelines;
 
 	my $exec    = &getGSLBStopCommand( $fname );
 	my $pidfile = &getGSLBFarmPidFile( $fname );
@@ -217,6 +204,7 @@ Returns:
 =cut
 sub getGSLBStartCommand    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
@@ -237,6 +225,7 @@ Returns:
 =cut
 sub getGSLBStopCommand     # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
@@ -258,12 +247,12 @@ Returns:
 =cut
 sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $newfname ) = @_;
 
 	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );
 	my $rrd_dir   = &getGlobalConfiguration( "rrd_dir" );
 	my $configdir = &getGlobalConfiguration( "configdir" );
-	my $type      = &getFarmType( $fname );
 	my $ffile     = &getFarmFile( $fname );
 	my $output    = -1;
 	my $file;
@@ -274,9 +263,9 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 		return -2;
 	}
 
-	&zenlog( "setting 'NewFarmName $newfname' for $fname farm $type", "info", "GSLB" );
+	&zenlog( "setting 'NewFarmName $newfname' for $fname farm gslb", "info", "GSLB" );
 
-	my $newffile = "$newfname\_$type.cfg";
+	my $newffile = "$newfname\_gslb.cfg";
 	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );
 	$output = 0;
 

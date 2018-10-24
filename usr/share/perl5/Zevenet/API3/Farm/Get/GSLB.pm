@@ -25,8 +25,10 @@ use strict;
 include 'Zevenet::IPDS::Core';
 
 #	/farms/<GSLBfarm>
-sub farms_name_gslb # ( $farmname )
+sub farms_name_gslb    # ( $farmname )
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $farm_ref;
@@ -34,8 +36,8 @@ sub farms_name_gslb # ( $farmname )
 	my @out_z;
 
 	my $status = &getFarmStatus( $farmname );
-	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname );
+	my $vip    = &getFarmVip( "vip", $farmname );
+	my $vport  = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
 
 	if ( $status eq 'up' && -e "/tmp/$farmname.lock" )
@@ -69,7 +71,7 @@ sub farms_name_gslb # ( $farmname )
 
 		my @out_b;
 		$backendsvs = &getFarmVS( $farmname, $srv, "backends" );
-		@be         = split ( "\n", $backendsvs );
+		@be = split ( "\n", $backendsvs );
 
 		foreach my $subline ( @be )
 		{
@@ -83,11 +85,12 @@ sub farms_name_gslb # ( $farmname )
 
 			$subbe[0] =~ s/^primary$/1/;
 			$subbe[0] =~ s/^secondary$/2/;
+
 			#~ @subbe[0]+0 if @subbe[0] =~ /^\d+$/;
 
 			push @out_b,
 			  {
-				id => $subbe[0]+0,
+				id => $subbe[0] + 0,
 				ip => $subbe[1],
 			  };
 		}
@@ -98,13 +101,13 @@ sub farms_name_gslb # ( $farmname )
 
 		push @out_s,
 		  {
-			id        => $srv,
-			algorithm => $lb,
-			deftcpport      => $dpc + 0,
-			fgenabled => $fgStatus,
-			fgscript => $fgScrip,
+			id          => $srv,
+			algorithm   => $lb,
+			deftcpport  => $dpc + 0,
+			fgenabled   => $fgStatus,
+			fgscript    => $fgScrip,
 			fgtimecheck => $fgTime + 0,
-			backends  => \@out_b,
+			backends    => \@out_b,
 		  };
 	}
 
@@ -126,11 +129,11 @@ sub farms_name_gslb # ( $farmname )
 		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 		my @be = split ( "\n", $backendsvs );
 		my @out_re;
-		my $resources = &getGSLBResources  ( $farmname, $zone );
+		my $resources = &getGSLBResources( $farmname, $zone );
 
 		for my $resource ( @{ $resources } )
 		{
-			$resource->{ ttl } = undef if ! $resource->{ ttl };
+			$resource->{ ttl } = undef if !$resource->{ ttl };
 			$resource->{ ttl } += 0 if $resource->{ ttl };
 		}
 
@@ -151,16 +154,17 @@ sub farms_name_gslb # ( $farmname )
 				 params      => $farm_ref,
 				 services    => \@out_s,
 				 zones       => \@out_z,
-				 ipds			=>  $ipds,
+				 ipds        => $ipds,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
-
 
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;
@@ -181,7 +185,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -193,7 +198,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -205,7 +211,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}

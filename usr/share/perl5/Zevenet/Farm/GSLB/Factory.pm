@@ -40,6 +40,7 @@ Returns:
 =cut
 sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fvip, $fvipp, $fname ) = @_;
 
 	require Zevenet::Farm::Core;

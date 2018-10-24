@@ -28,6 +28,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # GET /ciphers
 sub ciphers_available # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $desc = "Get the ciphers available";
 
 	my @out = (

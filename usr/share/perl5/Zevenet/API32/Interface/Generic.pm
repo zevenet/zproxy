@@ -29,191 +29,27 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # GET /interfaces Get params of the interfaces
 sub get_interfaces    # ()
 {
-	my @output_list;
-
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
-	my $desc = "List interfaces";
+	my $desc        = "List interfaces";
+	my $if_list_ref;
 
-	# Configured interfaces list
-	my @interfaces = @{ &getSystemInterfaceList() };
-
-	# get cluster interface
-	my $cluster_if;
 	if ( $eload )
 	{
-		my $zcl_conf = &eload(
-			module => 'Zevenet::Cluster',
-			func   => 'getZClusterConfig',
-		);
-
-		if ( exists $zcl_conf->{ _ }->{ interface } ) {
-			$cluster_if = $zcl_conf->{ _ }->{ interface };
-		}
-	}
-
-	my $rbac_mod;
-	my $rbac_if_list = [];
-	my $user         = &getUser();
-
-	if ( $eload && ( $user ne 'root' ) )
-	{
-		$rbac_mod = 1;
-		$rbac_if_list = &eload(
-								module => 'Zevenet::RBAC::Group::Core',
-								func   => 'getRBACUsersResources',
-								args   => [$user, 'interfaces'],
+		$if_list_ref = &eload(
+							   module => 'Zevenet::Net::Interface',
+							   func   => 'get_interface_list_struct',    # 100
 		);
 	}
-
-	# to include 'has_vlan' to nics
-	my @vlans = &getInterfaceTypeList( 'vlan' );
-
-	my $permission = 0;
-	if ( $eload )
+	else
 	{
-		$permission = &eload(
-					module => 'Zevenet::RBAC::Core',
-					func   => 'getRBACRolePermission',
-					args   => ['alias', 'list'],
-			)
-	}
-
-	require Zevenet::Alias if ($permission);
-	my $alias = &getAlias( "interface" ) if ($permission);
-
-	for my $if_ref ( @interfaces )
-	{
-		# Exclude cluster maintenance interface
-		next if $if_ref->{ type } eq 'dummy';
-
-		# Exclude no user's virtual interfaces
-		next
-		  if (    $rbac_mod
-			   && !grep ( /^$if_ref->{ name }$/, @{ $rbac_if_list } )
-			   && ( $if_ref->{ type } eq 'virtual' ) );
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		my $if_conf = {
-			alias   => $permission ? $alias->{ $if_ref->{ name } } : undef,
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
-			type    => $if_ref->{ type },
-
-			#~ ipv     => $if_ref->{ ip_v },
-		};
-
-		if ( $if_ref->{ type } eq 'nic' )
-		{
-			my @bond_slaves = ();
-
-			@bond_slaves = &eload(
-					module => 'Zevenet::Net::Bonding',
-					func   => 'getAllBondsSlaves',
-			) if ( $eload );
-
-			$if_conf->{ is_slave } =
-			  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
-
-			# include 'has_vlan'
-			for my $vlan_ref ( @vlans )
-			{
-				if ( $vlan_ref->{ parent } eq $if_ref->{ name } )
-				{
-					$if_conf->{ has_vlan } = 'true';
-					last;
-				}
-			}
-
-			$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
-		}
-
-		$if_conf->{ is_cluster } = 'true'
-		  if $cluster_if && $cluster_if eq $if_ref->{ name };
-		push @output_list, $if_conf;
+		$if_list_ref = &get_interface_list_struct();
 	}
 
 	my $body = {
 				 description => $desc,
-				 interfaces  => \@output_list,
-	};
-
-	&httpResponse( { code => 200, body => $body } );
-}
-
-# DELETE /deleteif/<interface>/<ip_version> Delete a interface
-sub delete_interface    # ( $if )
-{
-	my $if = shift;
-
-	my $desc = "Delete interface";
-	my $ip_v;
-	my $error = "false";
-
-# If $if contain '/' means that we have received 2 parameters, interface_name and ip_version
-	if ( $if =~ /\// )
-	{
-		# Get interface_name and ip_version from $if
-		my @ifandipv = split ( '/', $if );
-		$if   = $ifandipv[0];
-		$ip_v = $ifandipv[1];
-
-		# If $ip_v is empty, establish IPv4 like default protocol
-		$ip_v = 4 if not $ip_v;
-
-		if ( $ip_v != 4 && $ip_v != 6 )
-		{
-			my $msg = "The ip version value $ip_v must be 4 or 6";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# If ip_v is empty, default value is 4
-	if ( !$ip_v ) { $ip_v = 4; }
-
-	# Check input errors and delete interface
-	unless ( length $if )
-	{
-		my $msg = "Interface name $if can't be empty";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	my $if_ref = &getInterfaceConfig( $if, $ip_v );
-
-	if ( !$if_ref )
-	{
-		my $msg = "The stack IPv$ip_v in Network interface $if doesn't exist.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $error ne "false" )
-	{
-		my $msg = "The stack IPv$ip_v in Network interface $if can't be deleted";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	&delRoutes( "local", $if_ref );
-	&downIf( $if_ref, 'writeconf' );
-	&delIf( $if_ref );
-
-	my $msg = "The stack IPv$ip_v in Network interface $if has been deleted.";
-	my $body = {
-				 description => $desc,
-				 success     => "true",
-				 message     => $msg,
+				 interfaces  => $if_list_ref,
 	};
 
 	&httpResponse( { code => 200, body => $body } );

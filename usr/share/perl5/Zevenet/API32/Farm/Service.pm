@@ -30,6 +30,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # POST
 sub new_farm_service    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -56,7 +57,6 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	# validate farm profile
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'new_gslb_farm_service',
@@ -139,6 +139,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 #GET /farms/<name>/services/<service>
 sub farm_services
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $servicename ) = @_;
 
 	require Zevenet::API32::Farm::Get::HTTP;
@@ -176,11 +177,6 @@ sub farm_services
 	# no error found, return successful response
 	my $service = &get_http_service_struct( $farmname, $servicename );
 
-	foreach my $be ( @{ $service->{ backends } } )
-	{
-		$be->{ status } = "up" if $be->{ status } eq "undefined";
-	}
-
 	my $body = {
 				 description => $desc,
 				 params      => $service,
@@ -193,6 +189,7 @@ sub farm_services
 
 sub modify_services    # ( $json_obj, $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -232,17 +229,11 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	# check if the farm profile gslb is supported
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'modify_gslb_service',
 				args   => [$json_obj, $farmname, $service]
 		);
-	}
-	elsif ( $type !~ /^https?$/ )
-	{
-		my $msg = "Farm profile not supported";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( exists $json_obj->{ vhost } )
@@ -429,9 +420,9 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			}
 
 			my $err = &eload(
-							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-							  func     => 'setHTTPServiceRedirectCode',
-							  args     => [$farmname, $service, $json_obj->{ redirect_code } ],
+							  module => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func   => 'setHTTPServiceRedirectCode',
+							  args   => [$farmname, $service, $json_obj->{ redirect_code }],
 			);
 
 			if ( $err )
@@ -466,9 +457,9 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			}
 
 			my $err = &eload(
-							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-							  func     => 'setHTTPServiceSTSStatus',
-							  args     => [$farmname, $service, $json_obj->{ sts_status } ],
+							  module => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func   => 'setHTTPServiceSTSStatus',
+							  args   => [$farmname, $service, $json_obj->{ sts_status }],
 			);
 
 			if ( $err )
@@ -502,9 +493,9 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			}
 
 			my $err = &eload(
-							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-							  func     => 'setHTTPServiceSTSTimeout',
-							  args     => [$farmname, $service, $json_obj->{ sts_timeout } ],
+							  module => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func   => 'setHTTPServiceSTSTimeout',
+							  args   => [$farmname, $service, $json_obj->{ sts_timeout }],
 			);
 
 			if ( $err )
@@ -553,6 +544,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 # DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
 sub delete_service    # ( $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $desc = "Delete service";
@@ -603,7 +595,7 @@ sub delete_service    # ( $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $error = &deleteFarmService( $farmname, $service );
+	my $error = &delHTTPFarmService( $farmname, $service );
 
 	# check if the service is in use
 	if ( $error == -2 )

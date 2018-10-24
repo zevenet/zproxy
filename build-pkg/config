@@ -69,7 +69,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/Farm/Get/L4xNAT.pm
 	usr/share/perl5/Zevenet/API3/Farm/Get.pm
 	usr/share/perl5/Zevenet/API3/Farm/Guardian.pm
-	usr/share/perl5/Zevenet/API3/Farm.pm
 	usr/share/perl5/Zevenet/API3/Farm/Post.pm
 	usr/share/perl5/Zevenet/API3/Farm/Put/Datalink.pm
 	usr/share/perl5/Zevenet/API3/Farm/Put/GSLB.pm
@@ -86,26 +85,23 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/Interface/Gateway.pm
 	usr/share/perl5/Zevenet/API3/Interface/Generic.pm
 	usr/share/perl5/Zevenet/API3/Interface/NIC.pm
-	usr/share/perl5/Zevenet/API3/Interface.pm
 	usr/share/perl5/Zevenet/API3/Interface/Virtual.pm
 	usr/share/perl5/Zevenet/API3/Interface/VLAN.pm
 	usr/share/perl5/Zevenet/API3/IPDS/Blacklist.pm
 	usr/share/perl5/Zevenet/API3/IPDS/DoS.pm
-	usr/share/perl5/Zevenet/API3.pm
 	usr/share/perl5/Zevenet/API3/Stats.pm
 	usr/share/perl5/Zevenet/API3/System/Backup.pm
 	usr/share/perl5/Zevenet/API3/System/Cluster.pm
 	usr/share/perl5/Zevenet/API3/System/Info.pm
 	usr/share/perl5/Zevenet/API3/System/Log.pm
 	usr/share/perl5/Zevenet/API3/System/Notification.pm
-	usr/share/perl5/Zevenet/API3/System.pm
 	usr/share/perl5/Zevenet/API3/System/Service/DNS.pm
 	usr/share/perl5/Zevenet/API3/System/Service/HTTP.pm
 	usr/share/perl5/Zevenet/API3/System/Service/NTP.pm
 	usr/share/perl5/Zevenet/API3/System/Service/SNMP.pm
 	usr/share/perl5/Zevenet/API3/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API3/System/User.pm
-	usr/share/perl5/Zevenet/BUI.pm
+	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
 	usr/share/perl5/Zevenet/Cmd/boot_ipds.pm
@@ -136,19 +132,15 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Actions.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Config.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Core.pm
-	usr/share/perl5/Zevenet/IPDS/Blacklist.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Runtime.pm
 	usr/share/perl5/Zevenet/IPDS/Core.pm
 	usr/share/perl5/Zevenet/IPDS/DoS/Actions.pm
 	usr/share/perl5/Zevenet/IPDS/DoS/Config.pm
 	usr/share/perl5/Zevenet/IPDS/DoS/Core.pm
-	usr/share/perl5/Zevenet/IPDS/DoS.pm
 	usr/share/perl5/Zevenet/IPDS/DoS/Runtime.pm
-	usr/share/perl5/Zevenet/IPDS.pm
 	usr/share/perl5/Zevenet/IPDS/RBL/Actions.pm
 	usr/share/perl5/Zevenet/IPDS/RBL/Config.pm
 	usr/share/perl5/Zevenet/IPDS/RBL/Core.pm
-	usr/share/perl5/Zevenet/IPDS/RBL.pm
 	usr/share/perl5/Zevenet/IPDS/RBL/Runtime.pm
 	usr/share/perl5/Zevenet/IPDS/Setup.pm
 	usr/share/perl5/Zevenet/Net/Bonding.pm

@@ -21,14 +21,20 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
+
+use Fcntl 'SEEK_SET';
 use Tie::File;
 use File::Basename;
 use Zevenet::Config;
+use Zevenet::Farm::Core;
 use Zevenet::Farm::L4xNAT::Action;
 use Zevenet::Farm::L4xNAT::Config;
 
-my $fwmarksconf = &getGlobalConfiguration('fwmarksconf');
-my $BASENAME = basename $0;
+my $configdir   = &getGlobalConfiguration( 'configdir' );
+my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
+my $BASENAME    = basename $0;
 
 &zenlog("Running $BASENAME...");
 
@@ -72,17 +78,7 @@ my $last_hex_tag = $marks[-1];
 my $last_dec_tag = hex $last_hex_tag;
 
 # Get L4 farm names
-my @l4_farmnames;
-
-opendir my $cfg_dirh, $configdir or die $!;
-while ( my $file = readdir $cfg_dirh )
-{
-	if ( $file =~ /_l4xnat\.cfg$/ )
-	{
-		my $farm_name = ( split '_l4xnat.cfg', $file )[0];
-		push ( @l4_farmnames, $farm_name );
-	}
-}
+my @l4_farmnames = &getFarmsByType( 'l4xnat' );
 
 # Stop L4 farms
 foreach my $farm_name ( @l4_farmnames )
@@ -91,8 +87,8 @@ foreach my $farm_name ( @l4_farmnames )
 
 	if ($boot_status eq 'up')
 	{
-		my $status = &_runL4FarmStop( $farm_name, 'false' );
-		
+		my $status = &stopL4Farm( $farm_name, 'false' );
+
 		if ( defined $status && $status == 0 )
 		{
 			&zenlog("$BASENAME: $farm_name stopped");
@@ -172,8 +168,8 @@ foreach my $farm_name ( @l4_farmnames )
 
 	if ($boot_status eq 'up')
 	{
-		my $status = &_runL4FarmStart( $farm_name, 'false' );
-		
+		my $status = &startL4Farm( $farm_name, 'false' );
+
 		if ( defined $status && $status == 0 )
 		{
 			&zenlog("$BASENAME: $farm_name started");

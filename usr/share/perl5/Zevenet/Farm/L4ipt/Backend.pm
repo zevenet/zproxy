@@ -54,6 +54,7 @@ Returns:
 
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -72,7 +73,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	$weight   ||= 1;
 	$priority ||= 1;
@@ -81,7 +82,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -154,7 +156,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 
 		&refreshL4FarmRules( $farm );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -179,6 +181,7 @@ Returns:
 
 sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ids, $farm_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -193,9 +196,16 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
-	kill 'STOP' => $fg_pid if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' );
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
+		}
+	}
 
 	if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
 	{
@@ -258,7 +268,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -267,42 +277,6 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-=begin nd
-Function: getL4FarmBackendsStatus_old
-
-	function that return the status information of a farm:
-	ip, port, backendstatus, weight, priority, clients
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Array - one backed per line. The line format is: "ip;port;weight;priority;status"
-
-FIXME:
-	Change output to hash
-
-=cut
-
-sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
-{
-	my ( $farm_name, @content ) = @_;
-
-	my @backends_data;             # output
-
-	foreach my $server ( @content )
-	{
-		my @serv = split ( "\;", $server );
-		my $port = $serv[3];
-		if ( $port eq "" )
-		{
-			$port = &getFarmVip( "vipp", $farm_name );
-		}
-		push ( @backends_data, "$serv[2]\;$port\;$serv[5]\;$serv[6]\;$serv[7]" );
-	}
-
-	return @backends_data;
-}
 
 =begin nd
 Function: setL4FarmBackendsSessionsRemove
@@ -323,6 +297,7 @@ FIXME:
 
 sub setL4FarmBackendsSessionsRemove
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $backend ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
@@ -363,6 +338,7 @@ Returns:
 
 sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $server_id, $status ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -383,7 +359,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $fg_enabled  = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $caller      = ( caller ( 2 ) )[3];
 	my $stopping_fg = ( $caller =~ /runFarmGuardianStop/ );
-	my $fg_pid      = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	#~ &zlog("(caller(2))[3]:$caller");
 
@@ -391,6 +367,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	{
 		if ( $fg_enabled eq 'true' && !$stopping_fg )
 		{
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+
 			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'STOP' => $fg_pid;
@@ -457,81 +435,63 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	return $output;
 }
 
+
 =begin nd
 Function: getL4FarmServers
 
-	 Get all backends and theris configuration
+	 Get all backends and their configuration
 
 Parameters:
 	farmname - Farm name
 
 Returns:
-	Array - one backed per line. The line format is:
-	"index;ip;port;mark;weight;priority;status"
-
-FIXME:
-	Return as array of hash refs
+	Array - array of hash refs of backend struct
 
 =cut
 
 sub getL4FarmServers    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sindex        = 0;
-	my @servers;
 
-	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error",
-				  "LSLB" );
+	open my $fd, '<', "$configdir/$farm_filename"
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
 
-	while ( my $line = <FI> )
-	{
-		chomp ( $line );
+	chomp(my @content = <$fd>);
+	close $fd;
 
-		if ( $line =~ /^\;server\;/ )
-		{
-			$line =~ s/^\;server/$sindex/g;    #, $line;
-			push ( @servers, $line );
-			$sindex++;
-		}
-	}
-	close FI;
-
-	chomp @servers;
-
-	return @servers;
+	return &_getL4FarmParseServers( \@content );
 }
 
-=begin nd
-Function: getL4FarmBackends
 
-	 Get all backends and theirs configuration
+=begin nd
+Function: _getL4FarmParseServers
+
+	Return the list of backends with all data about a backend in a l4 farm
 
 Parameters:
-	farmname - Farm name
+	config - plain text server list
 
 Returns:
-	Array ref - Return a array in each element is a hash with the backend
-	configuration. The array index is the backend id
+	backends array - array of backends structure
+		\%backend = { $id, $alias, $family, $ip, $port, $tag, $weight, $priority, $status, $rip = $ip }
 
 =cut
 
-sub getL4FarmBackends    # ($farm_name)
+sub _getL4FarmParseServers
 {
-	my $farm_name = shift;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $sindex        = 0;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $config = shift;
+	my $stage = 0;
+	my $sindex = 0;
+	my $server;
 	my @servers;
 
-	require Zevenet::Farm::Base;
-	my $farmStatus = &getFarmStatus( $farm_name );
-
-	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error",
-				  "LSLB" );
+	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Alias;
+	require Zevenet::Net::Validate;
 
 	my $permission = 0;
 	if ( $eload )
@@ -544,8 +504,10 @@ sub getL4FarmBackends    # ($farm_name)
 	}
 	require Zevenet::Alias if ( $permission );
 	my $alias = getAlias( 'backend' ) if ( $permission );
+	my $farmStatus = &_getL4ParseFarmConfig( 'status', undef, $config );
+	my $fproto = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
-	while ( my $line = <FI> )
+	foreach my $line( @{ $config } )
 	{
 		chomp ( $line );
 
@@ -555,69 +517,53 @@ sub getL4FarmBackends    # ($farm_name)
 			my @aux = split ( ';', $line );
 
 			# Return port as integer
-			$aux[3] = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
+			my $port;
+			$port = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
 
 			my $status = $aux[7];
 			if ( $status eq "fgDOWN" )
 			{
 				$status = "down";
 			}
+
 			if ( ( $status ne "maintenance" ) && ( $farmStatus eq "down" ) )
 			{
 				$status = "undefined";
 			}
 
+			my $rip = $aux[2];
+			if ( $port ne '' && $fproto ne 'all' )
+			{
+				if ( &ipversion( $aux[2] ) == 4 )
+				{
+					$rip = "$aux[2]\:$port";
+				}
+				elsif ( &ipversion( $aux[2] ) == 6 )
+				{
+					$rip = "[$aux[2]]\:$port";
+				}
+			}
+
 			push @servers, {
 				alias => $permission ? $alias->{ $aux[2] } : undef,
-				id    => $sindex,
-				ip    => $aux[2],
-				port  => ( $aux[3] ) ? $aux[3]             : undef,
-
-				#~ mark=>$aux[4],
-				weight    => $aux[5] + 0,
-				priority  => $aux[6] + 0,
-				max_conns => $aux[8] + 0,
-				status    => $status,
+				id		=> $sindex,
+				ip		=> $aux[2],
+				port		=> ( $aux[3] ) ? $aux[3] : undef,
+				tag		=> $aux[4],
+				weight		=> $aux[5] + 0,
+				priority	=> $aux[6] + 0,
+				max_conns	=> $aux[8] + 0,
+				status		=> $status,
+				rip		=> $rip,
 			};
 
 			$sindex++;
 		}
 	}
-	close FI;
 
-	return \@servers;
+	return \@servers;    # return reference
 }
 
-=begin nd
-Function: getL4FarmBackendStatusCtl
-
-	Returns backends information lines
-
-Parameters:
-	farmname - Farmname
-
-Returns:
-	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
-
-Bugfix:
-	DUPLICATED, do same than getL4FarmServers
-
-=cut
-
-sub getL4FarmBackendStatusCtl    # ($farm_name)
-{
-	my $farm_name     = shift;
-	my $farm_filename = &getFarmFile( $farm_name );
-	my @output;
-
-	open my $farm_file, '<', "$configdir\/$farm_filename";
-	@output = grep { /^\;server\;/ } <$farm_file>;
-	close $farm_file;
-
-	chomp @output;
-
-	return @output;
-}
 
 =begin nd
 Function: _runL4ServerStart
@@ -636,6 +582,7 @@ Returns:
 
 sub _runL4ServerStart    # ($farm_name,$server_id)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;    # input: farm name string
 	my $server_id = shift;    # input: server id number
 
@@ -647,18 +594,19 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	  if &debug;
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
+	my $fg_pid;
 
 	# if calling function is setL4FarmAlgorithm
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $setting_be         = ( $caller =~ /setFarmServer/ );
-	my $fg_pid             = &getFarmGuardianPid( $farm_name );
 
 	#~ &zlog("(caller(2))[3]:$caller");
 
 	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be )
 	{
-		kill 'STOP' => $fg_pid;
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	# initialize a farm struct
@@ -674,7 +622,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	$status |= &applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be )
+	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be && $fg_pid > 0 )
 	{
 		kill 'CONT' => $fg_pid;
 	}
@@ -698,6 +646,7 @@ Returns:
 
 sub _runL4ServerStop    # ($farm_name,$server_id)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm_name = shift;    # input: farm name string
 	my $server_id = shift;    # input: server id number
 
@@ -706,15 +655,20 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
+	my $fg_pid;
 
 	# check calls
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $removing_be        = ( $caller =~ /runL4FarmServerDelete/ );
-	my $fg_pid             = &getFarmGuardianPid( $farm_name );
 
-	kill 'STOP' => $fg_pid
-	  if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be );
+	#~ &zlog("(caller(2))[3]:$caller");
+
+	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
+	{
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
+	}
 
 	$farm = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
@@ -728,8 +682,10 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	$output |= &applyIptRules( reverse @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	kill 'CONT' => $fg_pid
-	  if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be );
+	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be && $fg_pid > 0)
+	{
+		kill 'CONT' => $fg_pid;
+	}
 
 	return $output;
 }
@@ -751,6 +707,7 @@ Returns:
 
 sub getL4ServerActionRules
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm   = shift;    # input: farm reference
 	my $server = shift;    # input: server reference
 	my $switch = shift;    # input: on/off
@@ -838,6 +795,7 @@ Returns:
 
 sub getL4ServerWithLowestPriority    # ($farm)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;                # input: farm reference
 
 	my $prio_server;    # reference to the selected server for prio algorithm
@@ -853,35 +811,6 @@ sub getL4ServerWithLowestPriority    # ($farm)
 	}
 
 	return $prio_server;
-}
-
-=begin nd
-Function: getL4FarmBackendMaintenance
-
-	Check if a backend on a farm is on maintenance mode
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-
-Returns:
-	Integer - 0 for backend in maintenance or 1 for backend not in maintenance
-
-=cut
-
-sub getL4FarmBackendMaintenance
-{
-	my ( $farm_name, $backend ) = @_;
-
-	my @servers = &getL4FarmServers( $farm_name );
-	my @backend_args = split "\;", $servers[$backend];
-	chomp ( @backend_args );
-
-	return (    # parentheses required
-		$backend_args[6] eq 'maintenance'
-		? 0                                 # in maintenance
-		: 1                                 # not in maintenance
-	);
 }
 
 =begin nd
@@ -903,6 +832,7 @@ Returns:
 
 sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend, $mode ) = @_;
 
 	if ( $mode eq "cut" )
@@ -934,6 +864,7 @@ Returns:
 
 sub setL4FarmBackendNoMaintenance
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $backend ) = @_;
 
 	return &setL4FarmBackendStatus( $farm_name, $backend, 'up' );
@@ -954,6 +885,7 @@ Returns:
 
 sub getL4BackendsWeightProbability
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm = shift;    # input: farm reference
 
 	my $weight_sum = 0;
@@ -981,6 +913,7 @@ sub getL4BackendsWeightProbability
 # called by: refreshL4FarmRules, runL4FarmServerDelete
 sub resetL4FarmBackendConntrackMark
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $server = shift;
 
 	my $conntrack = &getGlobalConfiguration( 'conntrack' );
@@ -1008,6 +941,27 @@ sub resetL4FarmBackendConntrackMark
 	}
 
 	return $return_code;
+}
+
+sub getL4FarmBackendAvailableID
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farmname = shift;
+
+	my $id			= 0;
+	my $backends	= &getL4FarmServers( $farmname );
+
+	foreach my $l_serv ( @{ $backends } )
+	{
+		if ( $l_serv->{ id } > $id )
+		{
+			$id = $l_serv->{ id };
+		}
+	}
+
+	$id++ if @{ $backends };
+
+	return $id;
 }
 
 1;

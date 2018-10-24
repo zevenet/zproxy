@@ -24,6 +24,7 @@
 # Execute script in postinst
 
 use strict;
+use warnings;
 
 use Zevenet;
 use Zevenet::Log;
@@ -125,7 +126,6 @@ foreach my $farm ( &getFarmNameList() )
 }
 system ( "rm $configdir/*_guardian.conf 2>/dev/null" );
 
-
 ### ### ### functions ### ### ###
 
 =begin nd
@@ -153,6 +153,8 @@ sub getFarmGuardianFile    # ($fname,$svice)
 
 	my $output = -1;
 
+	return $output if ( !-e "$configdir" or !-d "$configdir" );
+
 	opendir ( my $dir, "$configdir" );
 
 	if ( $dir )
@@ -167,56 +169,6 @@ sub getFarmGuardianFile    # ($fname,$svice)
 			$output = $files[0];
 		}
 	}
-
-	return $output;
-}
-
-=begin nd
-Function: getFarmGuardianStatus
-
-	Returns if FarmGuardian is activated for this farm
-
-Parameters:
-	fname - Farm name.
-	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
-
-Returns:
-	-1 - If farmguardian file was not found.
-	 0 - If farmguardian is disabled.
-	 1 - If farmguardian is enabled.
-
-Bugs:
-
-See Also:
-	zcluster-manager, zevenet, <setNewFarmName>
-=cut
-
-sub getFarmGuardianStatus    # ($fname,$svice)
-{
-	my ( $fname, $svice ) = @_;
-
-	my $fgfile = &getFarmGuardianFile( $fname, $svice );
-	my $output = -1;
-
-	if ( $fgfile == -1 )
-	{
-		return $output;
-	}
-
-	open FR, "$configdir/$fgfile";
-	my $line;
-	my $lastline;
-	while ( $line = <FR> )
-	{
-		$lastline = $line;
-	}
-
-	my @line_s = split ( "\:\:\:", $lastline );
-	my $value = $line_s[3];
-	close FR;
-
-	if   ( $value =~ /true/ ) { $output = 1; }
-	else                      { $output = 0; }
 
 	return $output;
 }
@@ -247,22 +199,19 @@ sub getFarmGuardianLog    # ($fname,$svice)
 
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
 
-	if ( $fgfile == -1 )
-	{
-		return -1;
-	}
+	return -1 if ( $fgfile == -1 || !-f "$configdir/$fgfile" );
 
-	open FR, "$configdir/$fgfile";
+	open my $fd, '<', "$configdir/$fgfile";
 	my $line;
 	my $lastline;
-	while ( $line = <FR> )
+	while ( $line = <$fd> )
 	{
 		$lastline = $line;
 	}
 
 	my @line_s = split ( "\:\:\:", $lastline );
 	my $value = $line_s[4];
-	close FR;
+	close $fd;
 
 	if ( $value =~ /true/ )
 	{
@@ -568,22 +517,18 @@ sub runFarmGuardianRemove    # ($fname,$svice)
 		{
 			require Zevenet::Farm::Backend;
 
-			my @be = &getFarmBackendStatusCtl( $fname );
-			my $i  = -1;
+			my $be = &getFarmServers( $fname );
 
-			foreach my $line ( @be )
+			foreach my $l_serv ( @{ $be } )
 			{
-				my @subbe = split ( ";", $line );
-				$i++;
-				my $backendid     = $i;
-				my $backendserv   = $subbe[2];
-				my $backendport   = $subbe[3];
-				my $backendstatus = $subbe[7];
-				chomp $backendstatus;
+				my $backendid     = $l_serv->{ id };
+				my $backendserv   = $l_serv->{ ip };
+				my $backendport   = $l_serv->{ port };
+				my $backendstatus = $l_serv->{ status };
 
 				if ( $backendstatus eq "fgDOWN" )
 				{
-					$status |= &setL4FarmBackendStatus( $fname, $i, "up" );
+					$status |= &setL4FarmBackendStatus( $fname, $backendid, "up" );
 				}
 			}
 		}
@@ -632,8 +577,10 @@ sub getFarmGuardianConf    # ($fname,$svice)
 		$fgfile = "${fname}_${svice}guardian.conf";
 	}
 
+	return -1 if ( !-f "$configdir/$fgfile" );
+
 	# read file
-	open my $fh, "$configdir/$fgfile";
+	open my $fh, '<', "$configdir/$fgfile";
 	my $line;
 	while ( $line = <$fh> )
 	{

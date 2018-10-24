@@ -29,6 +29,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 #  POST /interfaces/vlan Create a new vlan network interface
 sub new_vlan    # ( $json_obj )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	require Zevenet::Net::Util;
@@ -196,7 +197,7 @@ sub new_vlan    # ( $json_obj )
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{ name } );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{
@@ -229,6 +230,7 @@ sub new_vlan    # ( $json_obj )
 
 sub delete_interface_vlan    # ( $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	my $desc = "Delete VLAN interface";
@@ -269,7 +271,7 @@ sub delete_interface_vlan    # ( $vlan )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' );
+		die if &downIf( $if_ref );
 		die if &delIf( $if_ref );
 	};
 
@@ -291,57 +293,15 @@ sub delete_interface_vlan    # ( $vlan )
 
 sub get_vlan_list    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
-	my $desc = "List VLAN interfaces";
-	my @output_list;
-
-	# get cluster interface
-	my $cluster_if;
-	if ( $eload )
-	{
-		my $zcl_conf = &eload(
-			module => 'Zevenet::Cluster',
-			func   => 'getZClusterConfig',
-		);
-		$cluster_if = $zcl_conf->{ _ }->{ interface };
-	}
-
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
-	{
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		my $if_conf = {
-						alias   => $alias->{ $if_ref->{ name } },
-						name    => $if_ref->{ name },
-						ip      => $if_ref->{ addr },
-						netmask => $if_ref->{ mask },
-						gateway => $if_ref->{ gateway },
-						status  => $if_ref->{ status },
-						mac     => $if_ref->{ mac },
-						parent  => $if_ref->{ parent },
-		};
-
-		$if_conf->{ is_cluster } = 'true'
-		  if $cluster_if && $cluster_if eq $if_ref->{ name };
-
-		push @output_list, $if_conf;
-	}
+	my $desc        = "List VLAN interfaces";
+	my $output_list = &get_vlan_list_struct();
 
 	my $body = {
 				 description => $desc,
-				 interfaces  => \@output_list,
+				 interfaces  => $output_list,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -349,42 +309,15 @@ sub get_vlan_list    # ()
 
 sub get_vlan    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $vlan = shift;
 
 	require Zevenet::Net::Interface;
 
-	my $desc = "Show VLAN interface $vlan";
-	my $interface;
+	my $desc      = "Show VLAN interface $vlan";
+	my $interface = &get_vlan_struct( $vlan );
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
-	{
-		next unless $if_ref->{ name } eq $vlan;
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		$interface = {
-					   alias   => $alias->{ $if_ref->{ name } },
-					   name    => $if_ref->{ name },
-					   ip      => $if_ref->{ addr },
-					   netmask => $if_ref->{ mask },
-					   gateway => $if_ref->{ gateway },
-					   status  => $if_ref->{ status },
-					   mac     => $if_ref->{ mac },
-		};
-	}
-
-	if ( not $interface )
+	unless ( $interface )
 	{
 		my $msg = "VLAN interface not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -400,6 +333,7 @@ sub get_vlan    # ()
 
 sub actions_interface_vlan    # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan     = shift;
 
@@ -462,7 +396,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( !$state )
 		{
@@ -482,7 +416,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $vlan }, 'writeconf' );
+		my $state = &downIf( { name => $vlan } );
 
 		if ( $state )
 		{
@@ -506,6 +440,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 
 sub modify_interface_vlan    # ( $json_obj, $vlan )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $vlan     = shift;
 
@@ -684,7 +619,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		die if &addIp( $if_ref );
 		die if &writeRoutes( $if_ref->{ name } );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		my $state = &upIf( $if_ref );
 
 		if ( $state == 0 )
 		{

@@ -44,6 +44,7 @@ Returns: None.
 
 sub runBLStartModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
@@ -113,6 +114,7 @@ Returns:
 
 sub runBLStopModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $error;
 
 	require Zevenet::Netfilter;
@@ -157,6 +159,7 @@ Returns:
 
 sub runBLRestartModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	&runBLStopModule;
 	&runBLStartModule;
 }
@@ -176,6 +179,7 @@ Returns:
 
 sub runBLStartByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 
 	my $error = 0;
@@ -220,6 +224,7 @@ Returns:
 
 sub runBLStopByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 
 	my $error = 0;
@@ -260,6 +265,7 @@ Returns:
 
 sub runBLRestartByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $error = &runBLStopByRule( $rule );
@@ -288,6 +294,7 @@ Returns:
 
 sub runBLStart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $list, $farm ) = @_;
 	my $error;
 
@@ -327,6 +334,7 @@ Returns:
 
 sub runBLStop
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 
 	&setBLDeleteRule( $farm, $rule );
@@ -340,34 +348,6 @@ sub runBLStop
 	}
 
 	#~ return $error;
-}
-
-=begin nd
-Function: runBLRestart
-
-	Restart the runtime of a blacklist rule with a farm.
-
-Parameters:
-	Rule - Rule name
-	Farmname - Farm name
-
-Returns:
-	integer - 0 on success or other value on failure
-
-=cut
-
-sub runBLrestart
-{
-	my ( $rule, $farm ) = @_;
-
-	my $error = &runBLStop( $rule, $farm );
-
-	if ( !$error )
-	{
-		$error = &runBLStart( $rule, $farm );
-	}
-
-	return $error;
 }
 
 1;

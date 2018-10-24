@@ -159,6 +159,8 @@ $groupdel_bin="/usr/sbin/groupdel";
 $groups_bin="/usr/bin/groups";
 #Where is echo?
 $echo_bin="/bin/echo";
+#Where is nftlb?
+$nftlb_bin="/usr/local/sbin/nftlb";
 
 #proxy
 $http_proxy="";

@@ -32,7 +32,9 @@ my $lockfile   = "/tmp/alias_file.lock";
 
 sub createAliasFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $fh;
+
 	open ( $fh, '>', $alias_file );
 	print $fh "[backend]\n\n[interface]\n";
 	close $fh;
@@ -41,7 +43,9 @@ sub createAliasFile
 # Get a backend alias or interface alias
 sub getAlias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $type, $name ) = @_;
+
 	my $out;
 
 	if ( !-f $alias_file )
@@ -71,16 +75,18 @@ sub getAlias
 # remove a nick
 sub delAlias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip ) = @_;
+
+	require Zevenet::Lock;
 
 	if ( !-f $alias_file )
 	{
 		&createAliasFile();
 	}
 
-	require Zevenet::Lock;
-	my $lock       = &lockfile( $lockfile );
+	my $lock       = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
 	if ( exists $fileHandle->{ $type }->{ $ip } )
@@ -89,29 +95,31 @@ sub delAlias
 	}
 
 	$fileHandle->write( $alias_file );
-	&unlockfile( $lock );
+	close $lock;
 }
 
 # modify or create a nick
 sub setAlias
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip, $alias ) = @_;
+
+	require Zevenet::Lock;
 
 	if ( !-f $alias_file )
 	{
 		&createAliasFile();
 	}
 
-	require Zevenet::Lock;
-	my $lock       = &lockfile( $lockfile );
+	my $lock       = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
 	# save all struct
 	$fileHandle->{ $type }->{ $ip } = $alias;
 
 	$fileHandle->write( $alias_file );
-	&unlockfile( $lock );
+	close $lock;
 }
 
 1;

@@ -49,6 +49,7 @@ More info:
 
 sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $cmd, $port ) = @_;
 
 	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
@@ -109,69 +110,6 @@ sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
 }
 
 =begin nd
-Function: getGSLBCommandInFGFormat
-
-	Transform command with extmon format to command with fg format,
-	this function is used to show the command in GUI.
-
-Parameters:
-	cmd - command with extmon format
-	port - port where service is checking
-
-Returns:
-	newCmd  - command with farm guardian format
-
-See Also:
-	changeCmdToExtmonFormat
-
-More info:
-	Farmguardian Fotmat: bin -x option...
-	Extmon Format: "bin", "-x", "option"...
-
-=cut
-
-sub getGSLBCommandInFGFormat    # ( $cmd, $port )
-{
-	my ( $cmd, $port ) = @_;
-
-	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
-	my @aux         = split ( ', ', $cmd );
-	my $newCmd      = $aux[0];
-	my $flagPort;
-
-	splice @aux, 0, 1;
-
-	$newCmd =~ s/$libexec_dir\///;
-	$newCmd =~ s/^"(.+)"$/$1/;
-
-	foreach my $word ( @aux )
-	{
-		if ( $word =~ '-p' )
-		{
-			$flagPort = 1;
-		}
-
-		# dns only can check one port
-		if ( $flagPort && $word =~ /^"$port"$/ )
-		{
-			$word     = "PORT";
-			$flagPort = 0;
-		}
-
-		# change HOST param from FG to %%ITEM%% from extmon
-		$word =~ s/%%ITEM%%/HOST/;
-
-		# remove " only if $word isn't a string
-		if ( $word !~ / / )
-		{
-			$word =~ s/^"(.+)"$/$1/;
-		}
-		$newCmd .= " $word";
-	}
-	return $newCmd;
-}
-
-=begin nd
 Function: getGSLBFarmGuardianParams
 
 	Get farmguardian configuration
@@ -190,6 +128,7 @@ FIXME:
 
 sub getGSLBFarmGuardianParams    # ( farmName, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -223,18 +162,18 @@ Returns:
 
 sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service, $param, $value ) = @_;
 
 	# bugfix
 	$param = 'interval' if ( $param eq 'time' );
 
-	my $ftype = &getFarmType( $fname );
 	my @file;
 	my $flagSvc = 0;
 	my $err     = -1;
 	my $port    = &getGSLBFarmVS( $fname, $service, 'dpc' );
 
-	tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+	tie @file, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 
 	foreach my $line ( @file )
 	{
@@ -300,14 +239,14 @@ Returns:
 
 sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
-	my $ftype   = &getFarmType( $fname );
 	my $err     = -1;
 	my $index   = 0;
 	my $flagSvc = 0;
 
-	tie my @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+	tie my @file, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 
 	my $start_i;
 	my $end_i;
@@ -353,6 +292,7 @@ Returns:
 
 sub getGSLBFarmFGStatus    # ( fname, service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -379,15 +319,15 @@ Returns:
 
 sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $fname, $service, $option ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
 	my $output = -1;
 
 	require Tie::File;
 
 	# select all ports used in plugins
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
 
@@ -398,7 +338,7 @@ sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 			my @fileconf = ();
 
 			tie @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 
 			foreach my $line ( @fileconf )
 			{

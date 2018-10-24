@@ -26,157 +26,47 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
-Function: runL4FarmRestart
-
-	Restart a l4xnat farm
-
-Parameters:
-	farmname - Farm name
-	writeconf - Write start on configuration file
-	changes - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
-
-Returns:
-	Integer - Error code: 0 on success or other value on failure
-
-FIXME:
-	writeconf is a obsolet parameter
-
-=cut
-
-sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
-{
-	my ( $farm_name, $writeconf, $type ) = @_;
-
-	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
-
-	if (    $algorithm eq "leastconn"
-		 && $fbootstatus eq "up"
-		 && $writeconf eq "false"
-		 && $type eq "hot"
-		 && -e "$pidfile" )
-	{
-		open FILE, "<$pidfile";
-		my $pid = <FILE>;
-		close FILE;
-
-		kill USR1 => $pid;
-		$output = $?;    # FIXME
-	}
-	else
-	{
-		&_runL4FarmStop( $farm_name, $writeconf );
-		$output = &_runL4FarmStart( $farm_name, $writeconf );
-	}
-
-	return $output;
-}
-
-=begin nd
-Function: _runL4FarmRestart
-
-	Restart a l4xnat farm
-
-Parameters:
-	farmname - Farm name
-	writeconf - Write start on configuration file
-	changes - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
-
-Returns:
-	Integer - Error code: 0 on success or other value on failure
-
-FIXME:
-	writeconf is a obsolet parameter
-	$type parameter never is used
-
-BUG:
-	DUPLICATED FUNCTION, do the same than &runL4FarmRestart function.
-
-=cut
-
-sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
-{
-	my ( $farm_name, $writeconf, $type ) = @_;
-
-	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
-
-	if (    $algorithm eq "leastconn"
-		 && $fbootstatus eq "up"
-		 && $writeconf eq "false"
-		 && $type eq "hot"
-		 && -e $pidfile )
-	{
-		open FILE, "<$pidfile";
-		my $pid = <FILE>;
-		close FILE;
-
-		# reload config file
-		kill USR1 => $pid;
-		$output = $?;    # FIXME
-	}
-	else
-	{
-		&_runL4FarmStop( $farm_name, $writeconf );
-		$output = &_runL4FarmStart( $farm_name, $writeconf );
-	}
-
-	return $output;
-}
-
-=begin nd
-Function: _runL4FarmStart
+Function: startL4Farm
 
 	Run a l4xnat farm
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
 
-FIXME:
-	delete writeconf parameter. It is obsolet
-
 =cut
 
-sub _runL4FarmStart    # ($farm_name,$writeconf)
+sub startL4Farm    # ($farm_name)
 {
-	my $farm_name = shift;    # input
-	my $writeconf = shift;    # input
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $farm_name = shift;
 
+	require Zevenet::Lock;
 	require Zevenet::Net::Util;
 	require Zevenet::Netfilter;
 	require Zevenet::Farm::L4xNAT::Config;
 
 	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
-	my $status = 0;           # output
+	my $status = 0;
 
-	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf",
-			 "debug", "LSLB" )
+	&zenlog( "startL4Farm << farm_name:$farm_name", "debug", "LSLB" )
 	  if &debug;
 
 	# initialize a farm struct
 	my $farm = &getL4FarmStruct( $farm_name );
 
-	if ( $writeconf eq "true" )
-	{
-		require Tie::File;
+	require Tie::File;
 
-		tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
-		foreach ( @configfile )
-		{
-			s/\;down/\;up/g;
-			last;
-		}
-		untie @configfile;
+	tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
+	foreach ( @configfile )
+	{
+		s/\;down/\;up/g;
+		last;
 	}
+	untie @configfile;
 
 	my $l4sd = &getGlobalConfiguration( 'l4sd' );
 
@@ -215,7 +105,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		&zenlog( "_runL4FarmStart :: server:$server->{id}", "debug", "LSLB" ) if &debug;
+		&zenlog( "startL4Farm :: server:$server->{id}", "debug", "LSLB" ) if &debug;
 
 		my $backend_rules;
 
@@ -256,13 +146,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	for my $table ( qw(t_mangle_p t_mangle t_nat t_snat) )
 	{
@@ -271,7 +155,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	}
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	# Enable IP forwarding
@@ -286,7 +169,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	}
 
 	#enable log rule
-	if ( &getL4FarmLogs( $farm_name ) eq "true" )
+	if ( &getL4FarmParam( 'logs', $farm_name ) eq "true" )
 	{
 		&reloadL4FarmLogsRule( $farm_name, "true" );
 	}
@@ -295,62 +178,36 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 }
 
 =begin nd
-Function: _runL4FarmStop
+Function: stopL4Farm
 
 	Stop a l4xnat farm
 
 Parameters:
 	farmname - Farm name
-	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or other value on failure
 
-FIXME:
-	delete writeconf parameter. It is obsolet
-
 =cut
 
-sub _runL4FarmStop    # ($farm_name,$writeconf)
+sub stopL4Farm    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
 
+	require Zevenet::Lock;
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::L4xNAT::Config;
 
-	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
 
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $status;       # output
-
-	if ( $writeconf eq 'true' )
-	{
-		require Tie::File;
-
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		foreach ( @configfile )
-		{
-			s/\;up/\;down/g;
-			last;     # run only for the first line
-		}
-		untie @configfile;
-	}
+	my $status;
 
 	# Remove log rules
 	&reloadL4FarmLogsRule( $farm_name, "false" );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
-
-	require Zevenet::Netfilter;
-	&setIptLock( $ipt_lockfile );
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	# Disable rules
 	my @allrules;
@@ -368,7 +225,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	@allrules = &getIptList( $farm_name, "nat", "POSTROUTING" );
 	$status =
 	  &deleteIptRules( $farm_name, "farm", $farm_name, "nat", "POSTROUTING",
-					   @allrules );
+			   @allrules );
 
 	@allrules = &getIptList( $farm_name, "raw", "PREROUTING" );
 	$status =
@@ -376,7 +233,6 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 					   "PREROUTING", @allrules );
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	# Disable active l4xnat file
@@ -391,6 +247,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	## Delete ip rule mark ##
 	my $farm        = &getL4FarmStruct( $farm_name );
 	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
+	&setL4FarmParam( 'status', "down", $farm_name );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
 	my $vip_if      = &getInterfaceConfig( $vip_if_name );
 	my $table_if =
@@ -445,35 +302,32 @@ Parameters:
 Returns:
 	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
 
-Bugfix:
-	DUPLICATED, do same than getL4FarmServers
-
 =cut
 
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $new_farm_name ) = @_;
 
 	require Tie::File;
 
 	my $farm_filename     = &getFarmFile( $farm_name );
-	my $farm_type         = &getFarmType( $farm_name );
-	my $new_farm_filename = "$new_farm_name\_$farm_type.cfg";
+	my $new_farm_filename = "$new_farm_name\_l4xnat.cfg";
 	my $output            = 0;
-	my $status            = &getFarmStatus( $farm_name );
 
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
+	my $fg_pid;
 
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			kill 'STOP' => $fg_pid;
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -488,10 +342,10 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" )
 	  or $output = -1;
-	if ( -f "$piddir\/$farm_name\_$farm_type.pid" )
+	if ( -f "$piddir\/$farm_name\_l4xnat.pid" )
 	{
-		rename ( "$piddir\/$farm_name\_$farm_type.pid",
-				 "$piddir\/$new_farm_name\_$farm_type.pid" )
+		rename ( "$piddir\/$farm_name\_l4xnat.pid",
+				 "$piddir\/$new_farm_name\_l4xnat.pid" )
 		  or $output = -1;
 	}
 
@@ -507,7 +361,8 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	{
 		my @rules;
 
-		my $prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
+		my $prio_server;
+		$prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
 		  if ( $$farm{ lbalg } eq 'prio' );
 
 		# refresh backends probability values
@@ -589,7 +444,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 		if ( $fg_enabled eq 'true' )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'CONT' => $fg_pid;
 			}

@@ -41,7 +41,8 @@ FIXME:
 =cut
 sub _runHTTPFarmStart    # ($farm_name)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
 
 	require Zevenet::System;
 	require Zevenet::Farm::HTTP::Backend;
@@ -64,19 +65,16 @@ sub _runHTTPFarmStart    # ($farm_name)
 		# set backend at status before that the farm stopped
 		&setHTTPFarmBackendStatus( $farm_name );
 
-		# write status in configuration file
-		if ( $writeconf eq "true" )
-		{
-			require Zevenet::Farm::HTTP::Config;
-			my $lock_fh = &lockHTTPFile( $farm_name );
+		require Zevenet::Lock;
+		my $lock_file = &getLockFile( $farm_name );
+		my $lock_fh = &openlock( $lock_file, 'w' );
 
-			require Tie::File;
-			tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-			@configfile = grep !/^\#down/, @configfile;
-			untie @configfile;
+		require Tie::File;
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		@configfile = grep !/^\#down/, @configfile;
 
-			&unlockfile ( $lock_fh );
-		}
+		untie @configfile;
+		close $lock_fh;
 	}
 	else
 	{
@@ -99,6 +97,7 @@ Returns:
 =cut
 sub _runHTTPFarmStop    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -126,7 +125,10 @@ sub _runHTTPFarmStop    # ($farm_name)
 
 		unlink ( "$piddir\/$farm_name\_pound.pid" ) if -e "$piddir\/$farm_name\_pound.pid";
 		unlink ( "\/tmp\/$farm_name\_pound.socket" ) if -e "\/tmp\/$farm_name\_pound.socket";
-		&setFarmLock( $farm_name, "off" );
+
+		require Zevenet::Lock;
+		my $lf = &getLockFile( $farm_name );
+		unlink ( $lf ) if -e $lf;
 	}
 	else
 	{
@@ -153,6 +155,7 @@ Returns:
 =cut
 sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $new_farm_name ) = @_;
 
 	my $output = 0;

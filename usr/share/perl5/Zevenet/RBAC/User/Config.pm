@@ -46,31 +46,11 @@ Returns:
 
 sub setRBACUserLockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbac_users.lock";
-	return &lockfile( $lockfile );
-}
-
-=begin nd
-Function: setRBACUserUnlockConfigFile
-
-	Unlock the user configuration file
-
-Parameters:
-	Integer - Lock file identifier
-
-Returns:
-	None - .
-
-=cut
-
-sub setRBACUserUnlockConfigFile
-{
-	my $lock_fd = shift;
-
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	return &openlock( $lockfile, 'w' );
 }
 
 =begin nd
@@ -93,6 +73,7 @@ Returns:
 
 sub setRBACUserConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $user, $key, $value ) = @_;
 
 	my $lock       = &setRBACUserLockConfigFile();
@@ -110,7 +91,7 @@ sub setRBACUserConfigFile
 		$fileHandle->{ $user }->{ $key } = $value;
 	}
 	$fileHandle->write( $rbacUserConfig );
-	&setRBACUserUnlockConfigFile( $lock );
+	close $lock;
 }
 
 =begin nd
@@ -129,6 +110,7 @@ Returns:
 
 sub createRBACUser
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user   = shift;
 	my $passwd = shift;
 	my $user_obj;
@@ -173,13 +155,15 @@ Returns:
 
 sub delRBACUser
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user = shift;
 
 	include 'Zevenet::RBAC::Group::Config';
 
 	# delete from its group
 	my $group = &getRBACUserGroup( $user );
-	my $error = &delRBACGroupResource( $group, $user, 'users' ) if ( $group );
+	my $error;
+	$error = &delRBACGroupResource( $group, $user, 'users' ) if ( $group );
 
 	# remove from system. It removes the user of the groups
 	$error = &runRBACDeleteUserCmd( $user ) if ( !$error );
@@ -191,7 +175,7 @@ sub delRBACUser
 		my $fileHandle = Config::Tiny->read( $rbacUserConfig );
 		delete $fileHandle->{ $user };
 		$fileHandle->write( $rbacUserConfig );
-		&setRBACUserUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $error;
@@ -213,6 +197,7 @@ Returns:
 
 sub setRBACUserWebPermissions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user    = shift;
 	my $actived = shift;
 
@@ -248,6 +233,7 @@ Returns:
 
 sub setRBACUserZapiPermissions
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user    = shift;
 	my $actived = shift;
 
@@ -283,6 +269,7 @@ Returns:
 
 sub setRBACUserZapikey
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $user, $zapikey ) = @_;
 
 	include 'Zevenet::Code';
@@ -310,6 +297,7 @@ Returns:
 
 sub setRBACUserPassword
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user     = shift;
 	my $password = shift;
 

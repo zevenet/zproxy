@@ -50,6 +50,7 @@ Returns:
 =cut
 sub getHTTPServiceCookieIns    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -139,6 +140,7 @@ Returns:
 =cut
 sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $ci ) = @_;
 
 	# cookieins, cookieins-name, cookieins-domain, cookieins-path, cookieins-ttlc
@@ -185,6 +187,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 
 sub add_service_cookie_insertion
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
@@ -216,12 +219,13 @@ Returns:
 =cut
 sub getHTTPServiceRedirectCode    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
 
 	# input control
-	return undef unless $service;
+	return unless $service;
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -266,6 +270,7 @@ Returns:
 =cut
 sub setHTTPServiceRedirectCode    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $code ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -313,12 +318,13 @@ Returns:
 =cut
 sub getHTTPServiceSTSStatus    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
 
 	# input control
-	return undef unless $service;
+	return unless $service;
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -363,6 +369,7 @@ Returns:
 =cut
 sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $status ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -428,12 +435,13 @@ Returns:
 =cut
 sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
 
 	# input control
-	return undef unless $service;
+	return unless $service;
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -480,6 +488,7 @@ Returns:
 =cut
 sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name, $service, $time ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -518,41 +527,38 @@ sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 	return $errno;
 }
 
-# Move/Sort services
-
-
 =begin nd
-Function: moveService
+Function: setHTTPFarmMoveService
 
-	Move a HTTP service to change its preference. This function changes the possition of a service in farm config file
+	Move a HTTP service to change its preference. This function changes
+	the possition of a service in farm config file
 
 Parameters:
 	farmname - Farm name
-	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
 	service - Service to move
+	index - Required index
 
 Returns:
 	integer - Always return 0
 
 FIXME:
-	Rename function to setHTTPFarmMoveService
 	Always return 0, create error control
 
 =cut
-
-
-sub moveService
+sub setHTTPFarmMoveService
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farm      = shift;
 	my $srv       = shift;
 	my $req_index = shift;
 	my $out;
 
+	require Zevenet::Lock;
+
 	# lock file
 	my $farm_filename = &getFarmFile( $farm );
-	require Zevenet::Lock;
-	my $lock_file = "/tmp/$farm.lock";
-	my $lock_fh   = &lockfile( $lock_file );
+	my $lock_file = &getLockFile( $farm );
+	my $lock_fh   = &openlock( $lock_file, 'w' );
 
 	# reduce a index if service was in a previuos position.
 	my $srv_index = &getFarmVSI( $farm, $srv );
@@ -591,36 +597,35 @@ sub moveService
 	untie @file;
 
 	# unlock file
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	# move fg
-	&moveServiceFarmStatus( $farm, $srv, $req_index );
+	&setHTTPFarmMoveServiceStatusFile( $farm, $srv, $req_index );
 
 	return $out;
 }
 
-
 =begin nd
-Function: moveServiceFarmStatus
+Function: setHTTPFarmMoveServiceStatusFile
 
-	Modify the service index in status file ( farmname_status.cfg ). For updating farmguardian backend status.
+	Modify the service index in status file ( farmname_status.cfg ). For
+	updating farmguardian backend status.
 
 Parameters:
 	farmname - Farm name
-	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
 	service - Service to move
+	index - position to be moved
 
 Returns:
 	integer - Always return 0
 
 FIXME:
-	Rename function to setHTTPFarmMoveServiceStatusFile
 	Always return 0, create error control
 
 =cut
-
-sub moveServiceFarmStatus
+sub setHTTPFarmMoveServiceStatusFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service, $req_index ) = @_;
 
 	use Tie::File;

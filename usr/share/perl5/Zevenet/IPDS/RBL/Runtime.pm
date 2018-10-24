@@ -47,6 +47,7 @@ Returns:
 
 sub getRBLFarmMatch
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Base;
@@ -124,6 +125,7 @@ FIXME: Define the chain and the table for iptables
 
 sub runRBLIptablesRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farmname, $action ) = @_;
 	my $error;
 
@@ -206,6 +208,7 @@ Returns:
 
 sub runRBLStartPacketbl
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	# Get packetbl bin
@@ -248,6 +251,7 @@ FIXME:
 
 sub runRBLStopPacketbl
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule  = shift;
 	my $error = 0;
 
@@ -261,29 +265,6 @@ sub runRBLStopPacketbl
 	{
 		$error = &logAndRun( "kill $pid" );
 	}
-
-	return $error;
-}
-
-=begin nd
-Function: runRBLRestartPacketbl
-
-	Restart packetbl bin. It is useful to reload configuration
-
-Parameters:
-	String - Rule name
-
-Returns:
-	integer - 0 on success or other value on failure
-
-=cut
-
-sub runRBLRestartPacketbl
-{
-	my $rule = shift;
-
-	&runRBLStopPacketbl( $rule );
-	my $error = &runRBLStartPacketbl( $rule );
 
 	return $error;
 }
@@ -303,6 +284,7 @@ Returns:
 
 sub setRBLPacketblConfig
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Zevenet::Lock;
@@ -349,7 +331,7 @@ LogLevel	$params->{'log_level'}
 	# save file
 	my $fh;
 	my $filename = &getRBLPacketblConfig( $rule );
-	$fh = &openlock( '>', $filename );
+	$fh = &openlock( $filename, 'w' );
 
 	unless ( $fh )
 	{
@@ -358,7 +340,7 @@ LogLevel	$params->{'log_level'}
 	}
 
 	print $fh $fileContent;
-	&closelock( $fh );
+	close $fh;
 
 	return $error;
 }
@@ -378,6 +360,7 @@ Returns:
 
 sub setRBLCreateNfqueue
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Config::Tiny;
@@ -424,6 +407,7 @@ Returns:
 
 sub setRBLRemoveNfqueue
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';

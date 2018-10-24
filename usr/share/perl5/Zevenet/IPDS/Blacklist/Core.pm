@@ -50,6 +50,7 @@ Returns:
 
 sub getBLExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $output         = 0;
@@ -67,6 +68,7 @@ sub getBLExists
 #  &getBLIpsetStatus ( $listName );
 sub getBLIpsetStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $ipset  = &getGlobalConfiguration( 'ipset' );
@@ -87,6 +89,7 @@ sub getBLIpsetStatus
 #  &getBLStatus ( $listName );
 sub getBLStatus
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $output = &getBLParam( $listName, 'status' );
@@ -100,6 +103,7 @@ sub getBLStatus
 # $lists = &getListNoUsed ();
 sub getBLListNoUsed
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $blacklist = shift;
 
 	my $ipset  = &getGlobalConfiguration( 'ipset' );
@@ -144,6 +148,7 @@ Returns:
 
 sub getBLParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName, $key ) = @_;
 
 	my $output;
@@ -182,89 +187,10 @@ sub getBLParam
 	return $output;
 }
 
-=begin nd
-Function: getBLFarmApplied
-
-	Return a list with all rules where the farm is applied
-
-Parameters:
-	Farmname -  Farm name
-
-Returns:
-	Array - list of BL rules
-
-=cut
-
-sub getBLFarmApplied
-{
-	my $farmname = shift;
-
-	my @rules;
-
-	foreach my $rule ( @{ &getBLRuleList() } )
-	{
-		if ( grep ( /^$farmname$/, @{ &getBLParam( $rule, 'farms' ) } ) )
-		{
-			push @rules, $rule;
-		}
-	}
-	return @rules;
-}
-
-=begin nd
-Function: getBLRunningRules
-
-	List all running BL rules.
-
-Parameters: None.
-
-Returns:
-
-	@array  - BL applied rules
-	== 0	- error
-
-=cut
-
-sub getBLRunningRules
-{
-	include 'Zevenet::IPDS::Core';
-
-	# look for blacklist rules
-	my $blacklist_chain = &getIPDSChain( "blacklist" );
-	my @rules           = &getIptListV4( 'raw', $blacklist_chain );
-	my @blRules         = grep ( /BL_/, @rules );
-
-	# look for whitelist rules
-	$blacklist_chain = &getIPDSChain( "whitelist" );
-	@rules           = &getIptListV4( 'raw', $blacklist_chain );
-	@blRules         = grep ( /BL_/, @rules );
-
-	return \@blRules;
-}
-
-=begin nd
-Function: getBLRuleList
-
-	Get an array with all BL rule names
-
-Parameters:
-
-Returns:
-	Array - BL name list
-
-=cut
-
-sub getBLRuleList
-{
-	require Config::Tiny;
-	my $fileHandle = Config::Tiny->read( $blacklistsConf );
-
-	return keys %{ $fileHandle };
-}
-
 # &getBLlastUptdate ( list );
 sub getBLlastUptdate
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $date;
@@ -293,6 +219,7 @@ sub getBLlastUptdate
 
 sub getBLzapi
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $listName = shift;
 
 	my %listHash;
@@ -350,6 +277,7 @@ Returns:
 
 sub getBLIpList
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	require Zevenet::Validate;
@@ -383,8 +311,12 @@ sub getBLIpList
 
 sub getBLSourceNumber
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $list    = shift;
 	my $wc      = &getGlobalConfiguration( "wc_bin" );
+
+	return 0 if ( ! -f "$blacklistsPath/$list.txt" );
+
 	my $sources = `$wc -l $blacklistsPath/$list.txt`;
 
 	if ( $sources =~ /\s*(\d+)\s/ )
@@ -400,19 +332,49 @@ sub getBLSourceNumber
 
 sub setBLLockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/blacklist.lock";
 
-	return &lockfile( $lockfile );
+	return &openlock( $lockfile, 'w' );
 }
 
-sub setBLUnlockConfigFile
+sub getBLAllLists
 {
-	my $lock_fd = shift;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	require Config::Tiny;
+	require Zevenet::Config;
 
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	my @lists;    # Output
+
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $ipset          = &getGlobalConfiguration( 'ipset' );
+	my %all_bl         = %{ Config::Tiny->read( $blacklistsConf ) };
+
+	delete $all_bl{ _ };
+
+	foreach my $list_name ( sort keys %all_bl )
+	{
+		my $bl        = $all_bl{ $list_name };
+		my $bl_status = $bl->{ status };
+		my @bl_farms  = split ( ' ', $bl->{ farms } );
+
+		$bl_status = "down" if ( !$bl_status );
+
+		my %listHash = (
+						 name    => $list_name,
+						 farms   => ( @bl_farms ) ? \@bl_farms : [],
+						 policy  => $bl->{ policy },
+						 type    => $bl->{ type },
+						 status  => $bl_status,
+						 preload => $bl->{ preload },
+		);
+
+		push @lists, \%listHash;
+	}
+
+	return \@lists;
 }
 
 1;

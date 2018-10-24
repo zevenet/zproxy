@@ -23,18 +23,39 @@
 
 use strict;
 
-# Dependencies
-use Zevenet::Farm::HTTP;
-use Zevenet::Farm::L4xNAT;
-use Zevenet::Farm::Datalink;
+=begin nd
+Function: ismport
 
-# Modules
-use Zevenet::Farm::Core;
-use Zevenet::Farm::Base;
-use Zevenet::Farm::Stats;
-use Zevenet::Farm::Factory;
-use Zevenet::Farm::Action;
-use Zevenet::Farm::Config;
-use Zevenet::Farm::Backend;
+	Check if the string is a valid multiport definition
+	
+Parameters:
+	port - Multiport string
+
+Returns:
+	String - "true" if port has a correct format or "false" if port has a wrong format
+	
+FIXME: 
+	Define regexp in check_functions.cgi and use it here
+	
+=cut
+sub ismport    # ($string)
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $string = shift;
+
+	chomp ( $string );
+	if ( $string eq "*" )
+	{
+		return "true";
+	}
+	elsif ( $string =~ /^([1-9][0-9]*|[1-9][0-9]*\:[1-9][0-9]*)(,([1-9][0-9]*|[1-9][0-9]*\:[1-9][0-9]*))*$/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
 
 1;

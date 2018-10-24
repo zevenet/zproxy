@@ -22,9 +22,16 @@
 ###############################################################################
 
 use strict;
-#~ use warnings;
+use warnings;
 
-use Zevenet;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Action;
+use Zevenet::FarmGuardian;
+use Zevenet::Net::Core;
+use Zevenet::Net::Interface;
+use Zevenet::Net::Route;
+use Zevenet::Net::Util;
 use Zevenet::Log;
 
 my $eload;
@@ -128,7 +135,7 @@ if ( $action eq "start" )
 	#testing interface configured on the installation and gw
 	if ( -e '/etc/network/interfaces' )
 	{
-		open my $fr, '/etc/network/interfaces';
+		open my $fr, '<', '/etc/network/interfaces';
 		my @file = <$fr>;
 		close $fr;
 

@@ -22,11 +22,15 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
 include 'Zevenet::Certificate';
 
 # GET /certificates/activation/info
 sub get_activation_certificate_info    # ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc          = "Activation certificate information";
@@ -71,6 +75,8 @@ sub get_activation_certificate_info    # ()
 # GET /certificates/activation
 sub get_activation_certificate    # ()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc          = "Activation certificate";
@@ -92,6 +98,8 @@ sub get_activation_certificate    # ()
 # DELETE /certificates/activation
 sub delete_activation_certificate    # ( $cert_filename )
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc = "Delete activation certificate";
@@ -119,13 +127,17 @@ sub delete_activation_certificate    # ( $cert_filename )
 # curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://1.2.3.4:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
 sub upload_activation_certificate    # ()
 {
-	my $upload_filehandle = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $upload_data = shift;
+
+	require Zevenet::File;
 
 	my $desc        = "Upload activation certificate";
 	my $tmpFilename = 'zlbcertfile.tmp.pem';
 	my $filename    = 'zlbcertfile.pem';
 
-	unless ( $upload_filehandle )
+	unless ( $upload_data )
 	{
 		my $msg = "Error uploading activation certificate file";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -133,12 +145,13 @@ sub upload_activation_certificate    # ()
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
 
-	open ( my $cert_filehandle, '>', "$basedir/$tmpFilename" ) or die "$!";
-	binmode $cert_filehandle;
-	print { $cert_filehandle } $upload_filehandle;
-	close $cert_filehandle;
+	unless ( &setFile( "$basedir/$tmpFilename", $upload_data ) )
+	{
+		my $msg = "Could not save the activation certificate";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-	my $response = &checkActivationCertificate( "$tmpFilename" );
+	my $response = &checkActivationCertificate( $tmpFilename );
 
 	# A hash reference will be returned for non valid activation certificates
 	if ( ref $response )
@@ -162,6 +175,10 @@ sub upload_activation_certificate    # ()
 			   "debug", "certificate" );
 		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
 	}
+
+	# If the cert is correct, set the APT repositorie
+	include 'Zevenet::Apt';
+	&setAPTRepo;
 
 	my $msg = "Activation certificate uploaded";
 	my $body = {

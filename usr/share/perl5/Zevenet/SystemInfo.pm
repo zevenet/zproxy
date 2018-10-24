@@ -44,6 +44,7 @@ See Also:
 
 sub getDate
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	return scalar CORE::localtime ();
 }
 
@@ -72,6 +73,7 @@ See Also:
 
 sub getHostname
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $hostname = `uname -n`;
 	chomp $hostname;
 
@@ -97,6 +99,7 @@ See Also:
 
 sub getApplianceVersion
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $version;
 	my $hyperv;
 	my $applianceFile = &getGlobalConfiguration( 'applianceVersionFile' );
@@ -199,9 +202,11 @@ See Also:
 
 sub getCpuCores
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	my $cpuinfo_filename = '/proc/stat';
 	my $cores = 1;
 
-	open my $stat_file, "/proc/stat";
+	open my $stat_file, '<', $cpuinfo_filename;
 
 	while ( my $line = <$stat_file> )
 	{
@@ -230,6 +235,7 @@ Returns:
 
 sub getCPUSecondToJiffy
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $sec = shift // 1;
 	my $ticks = &getCPUTicks();
 
@@ -253,6 +259,7 @@ Returns:
 
 sub getCPUJiffiesNow
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $jiffies = -1;
 	my $file    = '/proc/timer_list';
 	open my $fh, '<', $file or return -1;
@@ -286,6 +293,7 @@ Returns:
 
 sub getCPUTicks
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ticks = -1;
 	my $file  = '/boot/config-';    # end file with the kernel version
 
@@ -327,4 +335,18 @@ sub setEnv
 	$ENV{ http_proxy } = &getGlobalConfiguration( 'http_proxy' ) // "";
 	$ENV{ https_proxy } = &getGlobalConfiguration( 'https_proxy' ) // "";
 }
+
+sub getKernelVersion
+{
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	require Zevenet::Config;
+
+	my $uname = &getGlobalConfiguration( 'uname' );
+	my $version = `$uname -r`;
+
+	chomp $version;
+
+	return $version;
+}
+
 1;

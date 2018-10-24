@@ -29,6 +29,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # POST /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -70,7 +71,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 		require Zevenet::Net::Interface;
 		if ( !&getIpAddressExists( $ip ) )
 		{
-			my $msg = "The virtual ip $ip is not defined any interface.";
+			my $msg = "The virtual ip $ip is not defined in any interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -98,7 +99,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 		require Zevenet::Net::Interface;
 		if ( !&getIpAddressExists( $ip ) )
 		{
-			my $msg = "The virtual ip $ip is not defined any interface.";
+			my $msg = "The virtual ip $ip is not defined in any interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -144,6 +145,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 # PUT /farms/<farmname>/services/<service>/backends/<backend>/maintenance
 sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $service    = shift;
@@ -190,26 +192,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# validate BACKEND
-	my $be;
-	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
-	my @be_list = split ( "\n", $backendsvs );
-
-	foreach my $be_line ( @be_list )
-	{
-		my @current_be = split ( " ", $be_line );
-
-		next if $current_be[1] != $backend_id;
-
-		$be = {
-				id       => $current_be[1],
-				ip       => $current_be[3],
-				port     => $current_be[5],
-				timeout  => $current_be[7],
-				priority => $current_be[9],
-		};
-
-		last;
-	}
+	my $be_aref = &getHTTPFarmBackends( $farmname, $service );
+	my $be = $be_aref->[$backend_id - 1];
 
 	if ( !$be )
 	{
@@ -217,8 +201,9 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-   # Do not allow to modify the maintenance status if the farm needs to be restarted
-	if ( &getFarmLock( $farmname ) != -1 )
+	# Do not allow to modify the maintenance status if the farm needs to be restarted
+	require Zevenet::Lock;
+	if ( &getLockStatus( $farmname ) )
 	{
 		my $msg = "The farm needs to be restarted before to apply this action.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -294,11 +279,10 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 # PUT /farms/<farmname>/backends/<backend>/maintenance
 sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $backend_id = shift;
-
-	require Zevenet::Farm::Backend;
 
 	my $desc = "Set backend status";
 
@@ -317,10 +301,11 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	}
 
 	# validate BACKEND
-	my @backends     = &getFarmServers( $farmname );
-	my $backend_line = $backends[$backend_id];
+	require Zevenet::Farm::L4XNAT::Backend;
 
-	if ( !$backend_line )
+	my $exists = defined( @{ &getL4FarmServers( $farmname ) }[$backend_id] );
+
+	if ( !$exists )
 	{
 		my $msg = "Could not find a backend with such id.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

@@ -41,13 +41,14 @@ Returns:
 # create table route identification, complemented in delIf()
 sub writeRoutes    # ($if_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_name = shift;
 
 	my $rttables = &getGlobalConfiguration( 'rttables' );
 
-	open ROUTINGFILE, '<', $rttables;
-	my @contents = <ROUTINGFILE>;
-	close ROUTINGFILE;
+	open my $rt_fd, '<', $rttables;
+	my @contents = <$rt_fd>;
+	close $rt_fd;
 
 	if ( grep /^...\ttable_$if_name$/, @contents )
 	{
@@ -69,9 +70,9 @@ sub writeRoutes    # ($if_name)
 
 	if ( $found eq "true" )
 	{
-		open ( ROUTINGFILE, ">>", "$rttables" );
-		print ROUTINGFILE "$rtnumber\ttable_$if_name\n";
-		close ROUTINGFILE;
+		open ( my $rt_fd, ">>", "$rttables" );
+		print $rt_fd "$rtnumber\ttable_$if_name\n";
+		close $rt_fd;
 	}
 
 	return;
@@ -94,6 +95,7 @@ See Also:
 # add local network into routing table
 sub addlocalnet    # ($if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	&zenlog("addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )", "debug", "NETWORK") if &debug();
@@ -177,6 +179,7 @@ See Also:
 # ask for rules
 sub isRule    # ($if_ref, $toif)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $if_ref, $toif ) = @_;
 
 	$toif = $$if_ref{ name } if !$toif;
@@ -216,6 +219,7 @@ See Also:
 # apply routes
 sub applyRoutes    # ($table,$if_ref,$gateway)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $table, $if_ref, $gateway ) = @_;
 
 	# $gateway: The 3rd argument, '$gateway', is only used for 'global' table,
@@ -350,6 +354,7 @@ See Also:
 # delete routes
 sub delRoutes    # ($table,$if_ref)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $table, $if_ref ) = @_;
 
 	my $status = 0;
@@ -436,6 +441,7 @@ See Also:
 # get default gw for interface
 sub getDefaultGW    # ($if)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $if = shift;    # optional argument
 
 	my @line;
@@ -452,14 +458,14 @@ sub getDefaultGW    # ($if)
 			$cif = $iface[0];
 		}
 
-		open ( ROUTINGFILE, &getGlobalConfiguration( 'rttables' ) );
+		open ( my $rt_fd, '<', &getGlobalConfiguration( 'rttables' ) );
 
-		if ( grep { /^...\ttable_$cif$/ } <ROUTINGFILE> )
+		if ( grep { /^...\ttable_$cif$/ } <$rt_fd> )
 		{
 			@routes = `$ip_bin route list table table_$cif`;
 		}
 
-		close ROUTINGFILE;
+		close $rt_fd;
 		@defgw = grep ( /^default/, @routes );
 		@line = split ( / /, $defgw[0] );
 		$gw = $line[2];
@@ -491,6 +497,7 @@ See Also:
 =cut
 sub getIPv6DefaultGW    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @routes = `$ip_bin -6 route list`;
 	my ( $default_line ) = grep { /^default/ } @routes;
 
@@ -519,6 +526,7 @@ See Also:
 =cut
 sub getIPv6IfDefaultGW    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @routes = `$ip_bin -6 route list`;
 	my ( $default_line ) = grep { /^default/ } @routes;
 
@@ -548,6 +556,7 @@ See Also:
 # get interface for default gw
 sub getIfDefaultGW    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @routes = `$ip_bin route list`;
 	my @defgw  = grep ( /^default/, @routes );
 	my @line   = split ( / /, $defgw[0] );
@@ -572,6 +581,7 @@ See Also:
 # from bin/zevenet, almost exactly
 sub configureDefaultGW    #()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $defaultgw = &getGlobalConfiguration('defaultgw');
 	my $defaultgwif = &getGlobalConfiguration('defaultgwif');
 	my $defaultgw6 = &getGlobalConfiguration('defaultgw6');
@@ -598,27 +608,6 @@ sub configureDefaultGW    #()
 			&applyRoutes( "global", $if_ref, $defaultgw6 );
 		}
 	}
-}
-
-=begin nd
-Function: flushCacheRoutes
-
-	[NOT USED] Flush cache routes
-
-Parameters:
-	none - .
-
-Returns:
-	none - .
-
-Bugs:
-	NOT USED
-=cut
-# Flush cache routes
-sub flushCacheRoutes    # ()
-{
-	&zenlog( "flushing routes cache", "info", "NETWORK" );
-	system ( "$ip_bin route flush cache >/dev/null 2>$1" );
 }
 
 1;

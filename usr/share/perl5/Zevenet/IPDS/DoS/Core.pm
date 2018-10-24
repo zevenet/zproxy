@@ -41,6 +41,7 @@ Returns:
 
 sub getDOSExists
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name       = shift;
 
 	my $output     = 0;
@@ -50,28 +51,6 @@ sub getDOSExists
 	$output = 1 if ( exists $fileHandle->{ $name } );
 
 	return $output;
-}
-
-=begin nd
-Function: getDOSRuleList
-
-	Get an array with all DOS rule names
-
-Parameters:
-
-Returns:
-	Array - DOS name list
-
-=cut
-
-sub getDOSRuleList
-{
-	require Config::Tiny;
-
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-
-	return keys %{ $fileHandle };
 }
 
 =begin nd
@@ -105,6 +84,7 @@ Returns:
 
 sub getDOSParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $param    = shift;
 
@@ -120,35 +100,6 @@ sub getDOSParam
 	}
 
 	return $output;
-}
-
-=begin nd
-Function: getDOSFarmApplied
-
-	Return a list with all rules where the farm is applied
-
-Parameters:
-	Farmname -  Farm name
-
-Returns:
-	Array ref - list of DOS rules
-
-=cut
-
-sub getDOSFarmApplied
-{
-	my $farmname = shift;
-
-	my @rules;
-
-	foreach my $rule ( @{ &getDOSRuleList() } )
-	{
-		if ( grep ( /^$farmname$/, @{ &getDOSParam( $rule, 'farms' ) } ) )
-		{
-			push @rules, $rule;
-		}
-	}
-	return \@rules;
 }
 
 =begin nd
@@ -174,6 +125,7 @@ sub getDOSFarmApplied
 
 sub getDOSLookForRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Validate;
@@ -249,6 +201,7 @@ Returns:
 
 sub getDOSStatusRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	# check system rules
@@ -273,6 +226,7 @@ Returns:
 
 sub getDOSZapiRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $output;
 
@@ -303,19 +257,20 @@ sub getDOSZapiRule
 
 sub setDOSLockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/dos.lock";
 
-	return &lockfile( $lockfile );
+	return &openlock( $lockfile, 'w' );
 }
 
 sub setDOSUnlockConfigFile
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $lock_fd = shift;
 
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 }
 
 1;

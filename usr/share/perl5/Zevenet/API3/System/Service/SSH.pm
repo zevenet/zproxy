@@ -26,6 +26,7 @@ use strict;
 # GET /system/ssh
 sub get_ssh
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::System::SSH';
 
 	my $description = "Get ssh";
@@ -38,11 +39,13 @@ sub get_ssh
 #  POST /system/ssh
 sub set_ssh
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 
 	my $description = "Post ssh";
 	my @allowParams = ( "port", "listen" );
-	my $sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
+	my $sshIp;
+	$sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( !$errormsg )

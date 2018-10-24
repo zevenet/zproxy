@@ -23,30 +23,31 @@
 
 use strict;
 
-#~ use Zevenet::Net;
 use Zevenet::System;
 
 # Get all farm stats
 sub getAllFarmStats
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 
-	my @files = &getFarmList();
+	my @farm_names = &getFarmNameList();
 	my @farms;
 
 	# FIXME: Verify stats are working with every type of farm
 
-	foreach my $file ( @files )
+	foreach my $name ( @farm_names )
 	{
-		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 		my $established = 0;
 		my $pending     = 0;
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+
+		require Zevenet::Lock;
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
 		if ( $status eq "up" )
 		{
@@ -76,6 +77,7 @@ sub getAllFarmStats
 #Get Farm Stats
 sub farm_stats # ( $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $errormsg;
@@ -83,7 +85,7 @@ sub farm_stats # ( $farmname )
 
 	require Zevenet::Farm::Core;
 
-	if ( !&getFarmFile( $farmname ) )
+	unless ( &getFarmExists( $farmname ) )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
 		my $body = { description => $description, error  => "true", message => $errormsg };
@@ -94,277 +96,56 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		my @out_rss;
-		my @out_css;
-		my $netstat;
+		require Zevenet::Farm::HTTP::Stats;
 
-		require Zevenet::Farm::Base;
+                my $stats = &getHTTPFarmBackendsStats( $farmname );
+                my $body = {
+                                         description => $description,
+                                         backends    => $stats->{ backends },
+                                         sessions    => $stats->{ sessions },
+                };
 
-		my $fvip = &getFarmVip( "vip", $farmname );
-		my $fpid = &getFarmChildPid( $farmname );
-
-		require Zevenet::Farm::Backend;
-
-		my @content = &getFarmBackendStatusCtl( $farmname );
-		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
-
-		# List of services
-		my @a_service;
-		my $sv;
-
-		foreach ( @content )
-		{
-			if ( $_ =~ /\d+\. Service/ )
-			{
-				my @l = split ( "\ ", $_ );
-				$sv = $l[2];
-				$sv =~ s/"//g;
-				chomp ( $sv );
-				push ( @a_service, $sv );
-			}
-		}
-
-		# List of backends
-		my $backendsize    = @backends;
-		my $activebackends = 0;
-		my $activesessions = 0;
-
-		foreach ( @backends )
-		{
-			my @backends_data = split ( "\t", $_ );
-			if ( $backends_data[3] eq "up" )
-			{
-				$activebackends++;
-			}
-		}
-
-		my $i = -1;
-
-		foreach ( @backends )
-		{
-			my @backends_data = split ( "\t", $_ );
-			$activesessions = $activesessions + $backends_data[6];
-
-			if ( $backends_data[0] == 0 )
-			{
-				$i++;
-			}
-
-			my $ip_backend   = $backends_data[1];
-			my $port_backend = $backends_data[2];
-
-			require Zevenet::Net::ConnStats;
-			require Zevenet::Farm::Stats;
-
-			$netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
-			my $npend =
-			  scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, $netstat );
-
-			if ( $backends_data[3] == -1 || $backends_data[3] eq "fgDOWN" )
-			{
-				$backends_data[3] = "down";
-			}
-
-			push @out_rss,
-			  {
-				service     => $a_service[$i],
-				id          => $backends_data[0]+0,
-				ip          => $backends_data[1],
-				port        => $backends_data[2]+0,
-				status      => $backends_data[3],
-				pending     => $npend,
-				established => $backends_data[7]+0,
-			  };
-		}
-
-		# Client Session Table
-		my @sessions = &getFarmBackendsClientsList( $farmname, @content );
-		my $t_sessions = $#sessions + 1;
-
-		foreach ( @sessions )
-		{
-			my @sessions_data = split ( "\t", $_ );
-
-			push @out_css,
-			  {
-				service => $sessions_data[0],
-				client  => $sessions_data[1],
-				session => $sessions_data[2],
-				id      => $sessions_data[3]
-			  };
-		}
-
-		# Print Success
-		my $body = {
-					 description => "List farm stats",
-					 backends    => \@out_rss,
-					 sessions    => \@out_css,
-		};
-
-		&httpResponse({ code => 200, body => $body });
+                &httpResponse({ code => 200, body => $body });
 	}
 
 	if ( $type eq "l4xnat" )
 	{
-		require Zevenet::Farm::L4xNAT::Config;
+                require Zevenet::Farm::L4xNAT::Stats;
 
-		# Parameters
-		my @out_rss;
+                my $stats = &getL4FarmBackendsStats( $farmname );
+                my $body = {
+                                         description => $description,
+                                         backends    => $stats,
+                };
 
-		my @args;
-		my $nattype = &getFarmNatType( $farmname );
-		my $proto   = &getFarmProto( $farmname );
-
-		if ( $proto eq "all" )
-		{
-			$proto = "";
-		}
-
-		my $fvip     = &getFarmVip( "vip", $farmname );
-		my @content  = &getFarmBackendStatusCtl( $farmname );
-		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
-
-		# List of backends
-		my $backendsize    = @backends;
-		my $activebackends = 0;
-
-		foreach ( @backends )
-		{
-			my @backends_data = split ( ";", $_ );
-			if ( $backends_data[4] eq "up" )
-			{
-				$activebackends++;
-			}
-		}
-
-		my $index = 0;
-
-		foreach ( @backends )
-		{
-			my @backends_data = split ( ";", $_ );
-			chomp @backends_data;
-			my $ip_backend   = $backends_data[0];
-			my $port_backend = $backends_data[1];
-
-			# Pending Conns
-			my $netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
-
-			my $established = &getBackendEstConns( $farmname, $ip_backend, $port_backend, $netstat );
-
-			my $pending = 0;
-			if ( $proto ne "udp" )
-			{
-				$pending = &getBackendSYNConns( $farmname, $ip_backend, $port_backend, $netstat );
-			}
-
-			if ( $backends_data[4] == -1 )
-			{
-				$backends_data[4] = "down";
-			}
-
-			push @out_rss,
-			  {
-				id          => $index,
-				ip          => $ip_backend,
-				port        => $port_backend,
-				status      => $backends_data[4],
-				pending     => $pending,
-				established => $established,
-			  };
-
-			$index = $index + 1;
-		}
-
-		# Print Success
-		my $body = {
-					description       => "List farm stats",
-					backends => \@out_rss,
-		};
-
-		&httpResponse({ code => 200, body => $body });
+                &httpResponse({ code => 200, body => $body });
 	}
 
 	if ( $type eq "gslb" )
 	{
-		include 'Zevenet::Farm::GSLB::Stats';
-		include 'Zevenet::Farm::GSLB::Service';
+                my $gslb_stats = &eload(
+                                                                 module => 'Zevenet::Farm::GSLB::Stats',
+                                                                 func   => 'getGSLBFarmBackendsStats',
+                                                                 args   => [$farmname],
+                                                                 decode => 'true'
+                );
 
-		my $out_rss;
-		my $gslb_stats = &getGSLBGdnsdStats( $farmname );
-		my @backendStats;
-		my @services = &getGSLBFarmServices( $farmname );
+                my $body = {
+                                         description => $description,
+                                         backends    => $gslb_stats->{ 'backends' },
+                                         client      => $gslb_stats->{ 'udp' },
+                                         server      => $gslb_stats->{ 'tcp' },
+                                         extended    => $gslb_stats->{ 'stats' },
+                };
 
-		require Zevenet::Farm::Config;
-
-		foreach my $srv ( @services )
-		{
-			# Default port health check
-			my $port       = &getFarmVS( $farmname, $srv, "dpc" );
-			my $lb         = &getFarmVS( $farmname, $srv, "algorithm" );
-			my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
-			my @be = split ( "\n", $backendsvs );
-			my $out_b = [];
-
-			#
-			# Backends
-			#
-
-			foreach my $subline ( @be )
-			{
-				$subline =~ s/^\s+//;
-
-				if ($subline =~ /^$/)
-				{
-					next;
-				}
-
-				# ID and IP
-				my @subbe = split(" => ",$subline);
-				my $id = $subbe[0];
-				my $addr = $subbe[1];
-				my $status;
-
-				# look for backend status in stats
-				foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
-				{
-					if ( $st_srv->{ 'service' } =~ /^$addr\/[\w\-]+$port$/ )
-					{
-						$status = $st_srv->{ 'real_state' };
-						last;
-					}
-				}
-
-				$id =~ s/^primary$/1/;
-				$id =~ s/^secondary$/2/;
-				$status = lc $status if defined $status;
-
-				push @backendStats,
-				  {
-					id      => $id + 0,
-					ip      => $addr,
-					service => $srv,
-					port    => $port + 0,
-					status  => $status
-				  };
-			}
-		}
-
-		# Print Success
-		my $body = {
-					 description => "List farm stats",
-					 backends    => \@backendStats,
-					 client      => $gslb_stats->{ 'udp' },
-					 server      => $gslb_stats->{ 'tcp' },
-					 extended    => $gslb_stats->{ 'stats' },
-		};
-
-		&httpResponse({ code => 200, body => $body });
+                &httpResponse({ code => 200, body => $body });
 	}
 }
 
 #Get Farm Stats
 sub all_farms_stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farms = &getAllFarmStats();
 
 	# Print Success
@@ -379,6 +160,7 @@ sub all_farms_stats # ()
 # Get the number of farms
 sub farms_number
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 
 	my $number = scalar &getFarmNameList();
@@ -394,6 +176,7 @@ sub farms_number
 #Get a farm status resume
 sub module_stats_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my @farms = @{ &getAllFarmStats () };
 	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
 	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
@@ -436,6 +219,7 @@ sub module_stats_status
 #Get lslb|gslb|dslb Farm Stats
 sub module_stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $module = shift;
 	my @farms = @{ &getAllFarmStats () };
 	my @farmModule;
@@ -457,6 +241,7 @@ sub module_stats # ()
 #GET /stats
 sub stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_mem  = &getMemStats();
 	my @data_load = &getLoadStats();
@@ -523,6 +308,7 @@ sub stats # ()
 #GET /stats/mem
 sub stats_mem # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_mem = &getMemStats();
 
@@ -550,6 +336,7 @@ sub stats_mem # ()
 #GET /stats/load
 sub stats_load # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_load = &getLoadStats();
 
@@ -579,6 +366,7 @@ sub stats_load # ()
 #GET /stats/cpu
 sub stats_cpu # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @data_cpu = &getCPU();
@@ -610,6 +398,7 @@ sub stats_cpu # ()
 #GET /stats/system/connections
 sub stats_conns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# Success
 	my $out = &getTotalConnections ();
 	my $body = {
@@ -623,6 +412,7 @@ sub stats_conns
 #GET /stats/network/interfaces
 sub stats_network_interfaces
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
@@ -700,6 +490,7 @@ sub stats_network_interfaces
 #GET /stats/network
 sub stats_network # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @interfaces = &getNetworkStats( 'hash' );

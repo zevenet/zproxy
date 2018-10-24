@@ -22,11 +22,15 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API31::HTTP;
+
 use Zevenet::Farm::Core;
 
 # GET /farms/modules/gslb
 sub farms_gslb    # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Base;
 
 	my @out;
@@ -41,7 +45,8 @@ sub farms_gslb    # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && !&getFarmLock( $name );
+		require Zevenet::Lock;
+		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
 
 		push @out,
 		  {
@@ -65,6 +70,7 @@ sub farms_gslb    # ()
 # POST /farms/<farmname>/services/<servicename>
 sub new_gslb_farm_service    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -125,6 +131,7 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 # PUT /farms/<farmname>/services/<servicename>
 sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Config';
@@ -197,6 +204,7 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 # DELETE /farms/<farmname>/services/<servicename>
 sub delete_gslb_service    # ( $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -267,6 +275,7 @@ sub delete_gslb_service    # ( $farmname, $service )
 # POST /farms/<farmname>/services/<servicename>/backends
 sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $service  = shift;
@@ -296,16 +305,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# Get an ID for the new backend
-	my $id         = 1;
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-	my @be         = split ( "\n", $backendsvs );
-
-	foreach my $subline ( @be )
-	{
-		$subline =~ s/^\s+//;
-		next unless length $subline;
-		$id++;
-	}
+	my $id = &getGSLBFarmServiceBackendAvailableID( $farmname, $service );
 
 	# validate IP
 	unless ( &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
@@ -355,13 +355,13 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 # GET /farms/<name>/services/<service>/backends
 sub list_gslb_service_backends
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
-	require Zevenet::Farm::Config;
 	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc          = "List service backends";
-	my $type          = &getFarmType( $farmname );
 	my @services_list = &getGSLBFarmServices( $farmname );
 	my @backends;    # output
 
@@ -372,7 +372,12 @@ sub list_gslb_service_backends
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $backends = &getFarmBackends( $farmname, $service );
+	my $backends = &eload(
+						  module => 'Zevenet::Farm::GSLB::Backend',
+						  func   => 'getGSLBFarmBackends',
+						  args   => [$farmname, $service],
+		);
+
 	my $body = {
 				 description => $desc,
 				 params      => $backends,
@@ -384,6 +389,7 @@ sub list_gslb_service_backends
 # PUT /farms/<farmname>/services/<servicename>/backends/<backendid>
 sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service, $id_server ) = @_;
 
 	require Zevenet::Farm::Action;
@@ -401,40 +407,8 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $be;
-	my $backend_id = $id_server;
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-	my @be_list    = split ( "\n", $backendsvs );
-	my $algorithm  = &getFarmVS( $farmname, $service, "algorithm" )
-	  ;    # convert backend_id for prio algorithm
-
-	if ( $algorithm eq 'prio' )
-	{
-		$backend_id = 'primary'   if $id_server == 1;
-		$backend_id = 'secondary' if $id_server == 2;
-	}
-
-	# get requested backend info
-	foreach my $be_line ( @be_list )
-	{
-		$be_line =~ s/^\s+//;
-		next if !$be_line;
-
-		my @current_be = split ( " => ", $be_line );
-
-		if ( $current_be[0] eq $backend_id )
-		{
-			$be = {
-					id       => $current_be[1],
-					ip       => $current_be[3],
-					port     => $current_be[5],
-					timeout  => $current_be[7],
-					priority => $current_be[9],
-			};
-
-			last;
-		}
-	}
+	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
+	my $be = $be_aref->[ $id_server - 1 ];
 
 	# check if the BACKEND exists
 	if ( !$be )
@@ -459,7 +433,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	my $status =
-	  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id,
+	  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id_server,
 							  $json_obj->{ ip } );
 
 	# check if there was an error modifying the backend
@@ -497,6 +471,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 # DELETE /farms/<farmname>/services/<servicename>/backends/<backendid>
 sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $service, $id_server ) = @_;
 
 	require Zevenet::Farm::Action;
@@ -522,8 +497,8 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 	}
 
 	# check if the backend id is available
-	my @backends = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-	my $be_found = grep ( /\s*$id_server\s=>\s/, @backends );
+	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
+	my $be_found = defined $be_aref->[ $id_server - 1 ];
 
 	unless ( $be_found )
 	{
@@ -571,6 +546,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 # PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
 sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $service  = shift;

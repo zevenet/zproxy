@@ -283,6 +283,7 @@ See also:
 # &getValidFormat ( $format_name, $value );
 sub getValidFormat
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $format_name, $value ) = @_;
 
 	#~ print "getValidFormat type:$format_name value:$value\n"; # DEBUG
@@ -329,6 +330,7 @@ See Also:
 
 sub getValidPort    # ( $ip, $port, $profile )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ip      = shift;    # mandatory for HTTP, GSLB or no profile
 	my $port    = shift;
 	my $profile = shift;    # farm profile, optional
@@ -382,6 +384,7 @@ See Also:
 
 sub getValidOptParams    # ( \%json_obj, \@allowParams )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $params         = shift;
 	my $allowParamsRef = shift;
 	my @allowParams    = @{ $allowParamsRef };
@@ -431,6 +434,7 @@ See Also:
 
 sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $params            = shift;
 	my $requiredParamsRef = shift;
 	my $allowParamsRef    = shift || [];
@@ -519,6 +523,7 @@ Returns:
 
 sub checkZAPIParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $param_obj = shift;
 
@@ -611,7 +616,7 @@ sub checkZAPIParams
 
 	}
 
-	return undef;
+	return;
 }
 
 =begin nd
@@ -644,6 +649,7 @@ Returns:
 
 sub putArrayAsText
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $array_ref = shift;
 	my $msg       = shift;
 	my @array     = @{ $array_ref };

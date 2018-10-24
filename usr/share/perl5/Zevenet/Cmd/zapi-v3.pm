@@ -22,35 +22,26 @@
 ###############################################################################
 
 use strict;
+use warnings;
 use Zevenet;
-use Zevenet::Farm;
+
 use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Stats;
+use Zevenet::Farm::Factory;
+use Zevenet::Farm::Action;
+use Zevenet::Farm::Config;
+use Zevenet::Farm::Backend;
+
 include 'Zevenet::API3';
 include 'Zevenet::Zapi';
-include 'Zevenet::IPDS';
 include 'Zevenet::Cluster';
 include 'Zevenet::Net::Bonding';
 include 'Zevenet::Net::Floating';
-include 'Zevenet::Farm::GSLB';
-include 'Zevenet::Farm::HTTP::HTTPS::Ext';
 include 'Zevenet::System::SSH';
 
-#~ use CGI;
-#~ use CGI::Session;
-
-#~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
-#~ use MIME::Base64;
-#~ use URI::Escape;
-
-# Certificate requrements
-#~ require Date::Parse;
-#~ require Time::localtime;
-
-# Debugging
-#~ use Data::Dumper;
-#~ use Devel::Size qw(size total_size);
-
-package GLOBAL {
+package GLOBAL
+{
 	our $http_status_codes = {
 
 		# 2xx Success codes
@@ -69,21 +60,12 @@ package GLOBAL {
 	};
 };
 
-# all libs, tmp
-#~ use Zevenet;
-#~ use Zevenet::Net;
-#~ use Zevenet::Zapi;
-#~ use Zevenet::Config;
-#~ use Zevenet::Log;
-#~ use Zevenet::SystemInfo;
-
 sub OPTIONS;
 sub GET;
 sub POST;
 sub PUT;
 sub DELETE;
 
-#~ use Zevenet::Core;
 use Zevenet::Log;
 use Zevenet::Debug;
 use Zevenet::CGI;
@@ -99,212 +81,12 @@ OPTIONS qr{^/.*$} => sub {
 require Zevenet::Config;
 require Zevenet::Validate;
 include 'Zevenet::API3::Auth';
-#~ require JSON::XS;
-#~ require Date::Parse;
-#~ require Time::localtime;
-
-############################
-# Check certificate
-############################
-
-#sub get_sys_uuid
-#{
-#	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
-#	( undef, $dmi ) = split ( /:\s+/, $dmi );
-#
-#	chomp $dmi;
-#
-#	return $dmi;
-#}
-#
-## evaluate certificate
-#sub certcontrol
-#{
-#	use Time::Local;
-#	#~ use Zevenet::Config;
-#	#~ use Zevenet::SystemInfo;
-#
-#	my $basedir = &getGlobalConfiguration( 'basedir' );
-#	my $zlbcertfile = "$basedir/zlbcertfile.pem";
-#	my $swcert = 0;
-#
-#	if ( ! -e $zlbcertfile )
-#	{
-#		#swcert = 1 ==> There isn't certificate
-#		$swcert = 1;
-#		return $swcert;
-#	}
-#
-#	my $openssl_bin = "/usr/bin/openssl";
-#	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
-#	my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-#	my $hostname    = &getHostname();
-#	my $key         = &keycert();
-#	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
-#
-#	if (    ( !grep /$key/, @zen_cert )
-#		 || ( !grep /keyid:$keyid/, @zen_cert )
-#		 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert ) )
-#	{
-#		#swcert = 2 ==> Cert isn't signed OK
-#		$swcert = 2;
-#		return $swcert;
-#	}
-#
-#	# Certificate validity date
-#	my ( $nb ) = grep /Not Before/i, @zen_cert;
-#	$nb =~ s/.*not before.*:\ //i;
-#
-#	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $nb;
-#	( $month ) = grep { $months[$_] eq $month } 0..$#months;
-#	my $ini = timegm( $sec, $min, $hours, $day, $month, $year );
-#
-#	# Certificate expiring date
-#	my ( $na ) = grep /Not After/i, @zen_cert;
-#	$na =~ s/.*not after.*:\ //i;
-#
-#	( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $na;
-#	( $month ) = grep { $months[$_] eq $month } 0..$#months;
-#	my $end = timegm( $sec, $min, $hours, $day, $month, $year );
-#
-#	# Validity remaining
-#	my $totaldays = ( $end - $ini ) / 86400;
-#	$totaldays =~ s/\-//g;
-#	my $dayright = ( $end - time () ) / 86400;
-#
-#	if ( $dayright < 0 )
-#	{
-#		#control errors
-#		if ( $totaldays < 364 )
-#		{
-#			# Policy: expired testing certificates would not stop zen service,
-#			# but rebooting the service would not start the service,
-#			# interfaces should always be available.
-#			$swcert = 3;
-#		}
-#
-#		if ( $totaldays > 364 )
-#		{
-#			# The contract support plan is expired you have to request a
-#			# new contract support. Only message alert!
-#			$swcert = -1;
-#		}
-#	}
-#
-#	# error codes
-#	#swcert = 0 ==> OK
-#	#swcert = 1 ==> There isn't certificate
-#	#swcert = 2 ==> Cert isn't signed OK
-#	#swcert = 3 ==> Cert test and it's expired
-#	#swcert = -1 ==> Cert support and it's expired
-#
-#	#output
-#	return $swcert;
-#}
-#
-#
-## build local key
-#sub keycert
-#{
-#	#~ use Zevenet::SystemInfo;
-#
-#	my $dmi      = get_sys_uuid();
-#	my $hostname = &getHostname();
-#
-#	my $block1 = crypt ( "${dmi}${hostname}", "93" );
-#	my $block2 = crypt ( "${hostname}${dmi}", "a3" );
-#	my $block3 = crypt ( "${dmi}${hostname}", "ZH" );
-#	my $block4 = crypt ( "${hostname}${dmi}", "h7" );
-#	$block1 =~ s/^93//;
-#	$block2 =~ s/^a3//;
-#	$block3 =~ s/^ZH//;
-#	$block4 =~ s/^h7//;
-#
-#	my $str = "${block1}-${block2}-${block3}-${block4}";
-#
-#	return $str;
-#}
-#
-#sub checkActivationCertificate
-#{
-#	my $swcert = &certcontrol();
-#
-#	# if $swcert is greater than 0 zapi should not work
-#	if ( $swcert > 0 )
-#	{
-#		my $msg;
-#
-#		if ( $swcert == 1 )
-#		{
-#			$msg =
-#			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
-#		}
-#		elsif ( $swcert == 2 )
-#		{
-#			$msg =
-#			  "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
-#		}
-#		elsif ( $swcert == 3 )
-#		{
-#			# Policy: expired testing certificates would not stop zen service,
-#			# but rebooting the service would not start the service,
-#			# interfaces should always be available.
-#			$msg =
-#			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
-#		}
-#
-#		my $body = {
-#					 message         => $msg,
-#					 certificate_key => &keycert(),
-#					 hostname        => &getHostname(),
-#		};
-#
-#		return &httpResponse( { code => 403, body => $body } );
-#	}
-#
-#	return $swcert;
-#}
-#
-#########################################
-#
-# Debugging messages
-#
-#########################################
-#
-#~ use Data::Dumper;
-#~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
-#~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
-#~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
-#~ if exists $ENV{ HTTP_AUTHORIZATION };
-#~ &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
-#~ if exists $ENV{ HTTP_ZAPI_KEY };
-#~
-#~ #my $session = new CGI::Session( $q );
-#~
-#~ my $param_zapikey = $ENV{'HTTP_ZAPI_KEY'};
-#~ my $param_session = new CGI::Session( $q );
-#~
-#~ my $param_client = $q->param('client');
-#~
-#~
-#~ &zenlog("CGI PARAMS: " . Dumper $params );
-#~ &zenlog("CGI OBJECT: " . Dumper $q );
-#~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
-#~ &zenlog("PERL ENV: " . Dumper \%ENV );
-
-my $post_data = $q->param( 'POSTDATA' );
-my $put_data  = $q->param( 'PUTDATA' );
-
-&zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
-&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
 
 ################################################################################
 #
 # Start [Method URI] calls
 #
 ################################################################################
-
-#~ require CGI::Session;
 
 #  POST CGISESSID
 POST qr{^/session$} => sub {
@@ -328,14 +110,14 @@ POST qr{^/session$} => sub {
 
 			my ( $header ) = split ( "\r\n", $session->header() );
 			my ( undef, $session_cookie ) = split ( ': ', $header );
-			my $key =  &keycert();
+			my $key  = &keycert();
 			my $host = &getHostname();
 
 			&httpResponse(
 						   {
-								body => { key	=> $key, host => $host },
-								code    => 200,
-								headers => { 'Set-cookie' => $session_cookie },
+							 body => { key => $key, host => $host },
+							 code => 200,
+							 headers => { 'Set-cookie' => $session_cookie },
 						   }
 			);
 		}
@@ -355,7 +137,6 @@ POST qr{^/session$} => sub {
 
 #	Above this part are calls allowed without authentication
 ######################################################################
-#~ if ( not ( &validZapiKey() or &validCGISession() ) )
 unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 		 or ( exists $ENV{ HTTP_COOKIE } && &validCGISession() ) )
 {
@@ -867,7 +648,6 @@ if ( $q->path_info =~ qr{^/stats} )
 		&stats_conns();
 	};
 
-
 	# Farm stats
 	my $modules_re = &getValidFormat( 'farm_modules' );
 	GET qr{^/stats/farms$} => sub {
@@ -913,9 +693,6 @@ if ( $q->path_info =~ qr{^/graphs} )
 	my $system_id_re = &getValidFormat( 'graphs_system_id' );
 
 	#  GET graphs
-	#~ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
-	#~ &get_graphs( @_ );
-	#~ };
 
 	#  GET possible graphs
 	GET qr{^/graphs$} => sub {
@@ -1000,7 +777,7 @@ if ( $q->path_info =~ qr{^/system/cluster} )
 	include 'Zevenet::API3::System::Cluster';
 
 	#### /system/cluster
-	_cluster:
+  _cluster:
 	GET qr{^/system/cluster$} => sub {
 		&get_cluster( @_ );
 	};
@@ -1373,7 +1150,6 @@ if ( $q->path_info =~ qr{/ipds/dos} )
 		&del_dos_from_farm( @_ );
 	};
 }
-
 
 &httpResponse(
 			   {

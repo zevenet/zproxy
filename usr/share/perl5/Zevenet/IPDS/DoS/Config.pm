@@ -40,6 +40,7 @@ Returns:
 
 sub getDOSInitialParams
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $rule = shift;
 
 	# get ssh port
@@ -108,6 +109,7 @@ Returns:
 
 sub setDOSCreateFileConf
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
@@ -163,6 +165,7 @@ Returns:
 
 sub setDOSParam
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name  = shift;
 	my $param = shift;
 	my $value = shift;
@@ -217,6 +220,7 @@ Returns:
 
 sub createDOSRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $rule     = shift;
 	my $params;
@@ -236,7 +240,7 @@ sub createDOSRule
 
 	if ( exists $fileHandle->{ $ruleName } )
 	{
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 		&zenlog( "$ruleName rule already exists.", "warning", "IPDS" );
 		return -1;
 	}
@@ -249,7 +253,7 @@ sub createDOSRule
 		$fileHandle->{ $ruleName }->{ 'name' } = $ruleName;
 	}
 	$fileHandle->write( $confFile );
-	&setDOSUnlockConfigFile( $lock );
+	close $lock;
 
 	&zenlog( "$ruleName rule created successful.", "info", "IPDS" );
 	return 0;
@@ -270,6 +274,7 @@ Returns:
 
 sub deleteDOSRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $name = shift;
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
@@ -280,14 +285,14 @@ sub deleteDOSRule
 
 	if ( !exists $fileHandle->{ $name } )
 	{
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 		&zenlog( "$name rule doesn't exist.", "warning", "IPDS" );
 		return -1;
 	}
 
 	delete $fileHandle->{ $name };
 	$fileHandle->write( $confFile );
-	&setDOSUnlockConfigFile( $lock );
+	close $lock;
 
 	return 0;
 }

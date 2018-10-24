@@ -23,8 +23,12 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
+
+
 sub delete_interface_floating    # ( $floating )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';
@@ -82,6 +86,7 @@ sub delete_interface_floating    # ( $floating )
 # address or interface
 sub modify_interface_floating    # ( $json_obj, $floating )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $interface = shift;
 
@@ -180,49 +185,15 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 sub get_interfaces_floating
 {
-	require Zevenet::Net::Interface;
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::Net::Floating';
 
-	my $desc = "List floating interfaces";
-
-	# Interfaces
-	my @output;
-	my @ifaces            = @{ &getSystemInterfaceList() };
-	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
-	my $float_ifaces_conf = &getConfigTiny( $floatfile );
-
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $iface ( @ifaces )
-	{
-		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
-		next if $iface->{ type } eq 'virtual';
-		next unless $iface->{ addr };
-
-		my $floating_ip        = undef;
-		my $floating_interface = undef;
-
-		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
-		{
-			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
-			my $if_ref = &getInterfaceConfig( $floating_interface );
-			$floating_ip = $if_ref->{ addr };
-		}
-
-		push @output,
-		  {
-			alias             => $alias->{ $iface->{ name } },
-			interface         => $iface->{ name },
-			floating_ip       => $floating_ip,
-			floating_alias    => $alias->{ $floating_interface },
-			interface_virtual => $floating_interface,
-		  };
-	}
+	my $desc   = "List floating interfaces";
+	my $output = &get_floating_list_struct();
 
 	my $body = {
 				 description => $desc,
-				 params      => \@output,
+				 params      => $output,
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -230,54 +201,13 @@ sub get_interfaces_floating
 
 sub get_floating
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $floating = shift;
 
-	require Zevenet::Net::Interface;
 	include 'Zevenet::Net::Floating';
 
-	my $desc = "Show floating interface";
-
-	# Interfaces
-	my $output;
-	my @ifaces            = @{ &getSystemInterfaceList() };
-	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
-	my $float_ifaces_conf = &getConfigTiny( $floatfile );
-
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $iface ( @ifaces )
-	{
-		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
-		next if $iface->{ type } eq 'virtual';
-		next unless $iface->{ name } eq $floating;
-
-		my $floating_ip        = undef;
-		my $floating_interface = undef;
-
-		unless ( $iface->{ addr } )
-		{
-			my $msg = "This interface has no address configured";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		$floating_ip = undef;
-
-		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
-		{
-			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
-			my $if_ref = &getInterfaceConfig( $floating_interface );
-			$floating_ip = $if_ref->{ addr };
-		}
-
-		$output = {
-					alias             => $alias->{ $iface->{ name } },
-					interface         => $iface->{ name },
-					floating_ip       => $floating_ip,
-					floating_alias    => $alias->{ $floating_interface },
-					interface_virtual => $floating_interface,
-		};
-	}
+	my $desc   = "Show floating interface";
+	my $output = &get_floating_struct( $floating );
 
 	my $body = {
 				 description => $desc,

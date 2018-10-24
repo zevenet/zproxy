@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::API31::HTTP;
+
+
 use Zevenet::System;
 
 my $eload;
@@ -32,6 +35,7 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 #Get a farm status resume
 sub module_stats_status
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::API31::Stats;
 	my @farms = @{ &getAllFarmStats() };
 	my $lslb = {
@@ -135,6 +139,7 @@ sub module_stats_status
 #Get lslb|gslb|dslb Farm Stats
 sub module_stats # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $module = shift;
 
 	require Zevenet::API31::Stats;
@@ -179,6 +184,7 @@ sub module_stats # ()
 # Get the number of farms
 sub farms_number
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 
 	my $number = scalar &getFarmNameList();
@@ -193,6 +199,7 @@ sub farms_number
 #GET /stats/mem
 sub stats_mem # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
@@ -220,6 +227,7 @@ sub stats_mem # ()
 #GET /stats/load
 sub stats_load # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
@@ -249,25 +257,15 @@ sub stats_load # ()
 #GET /stats/cpu
 sub stats_cpu # ()
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
-	my @data_cpu = &getCPU();
+	my $out = &getCPUUsageStats();
 
-	my $out = {
-				'hostname' => &getHostname(),
-				'date'     => &getDate(),
-	};
-
-	foreach my $x ( 0 .. @data_cpu - 1 )
-	{
-		my $name  = $data_cpu[$x][0];
-		my $value = $data_cpu[$x][1] + 0;
-		( undef, $name ) = split ( 'CPU', $name );
-		$out->{ $name } = $value;
-	}
-
-	$out->{ cores } = &getCpuCores();
+	$out->{ hostname } = &getHostname();
+	$out->{ date }     = &getDate();
+	$out->{ cores }    = &getCpuCores();
 
 	my $body = {
 				 description => "System CPU usage",
@@ -280,6 +278,7 @@ sub stats_cpu # ()
 #GET /stats/system/connections
 sub stats_conns
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $out = &getTotalConnections();
 	my $body = {
 				 description => "System connections",
@@ -292,6 +291,7 @@ sub stats_conns
 #GET /stats/network/interfaces
 sub stats_network_interfaces
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 

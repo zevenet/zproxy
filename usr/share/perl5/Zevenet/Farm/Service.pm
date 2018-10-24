@@ -42,6 +42,7 @@ Returns:
 =cut
 sub getFarmServices    # ($farm_name)
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );

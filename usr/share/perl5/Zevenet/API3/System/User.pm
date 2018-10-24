@@ -26,6 +26,7 @@ use strict;
 #	GET	/system/users
 sub get_all_users
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::Zapi;
 
 	my $description = "Get users";
@@ -39,6 +40,7 @@ sub get_all_users
 #	GET	/system/users/zapi
 sub get_user
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $user        = shift;
 
 	my $description = "Zapi user configuration.";
@@ -68,6 +70,7 @@ sub get_user
 # POST /system/users/zapi
 sub set_user_zapi
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj    = shift;
 
 	require Zevenet::Login;
@@ -137,6 +140,7 @@ sub set_user_zapi
 # POST /system/users/root
 sub set_user
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj       = shift;
 	my $user           = shift;
 

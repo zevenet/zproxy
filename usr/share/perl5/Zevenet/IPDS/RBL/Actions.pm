@@ -39,6 +39,7 @@ Returns:
 # when start a module load the blocked sources from logs
 sub runRBLStartModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	include 'Zevenet::IPDS::RBL::Config';
 
 	# create config directory if it doesn't exist and config file
@@ -65,32 +66,11 @@ Returns:
 # this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
 sub runRBLStopModule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	# stop all rules
 	foreach my $rule ( &getRBLRuleList() )
 	{
 		&runRBLStopByRule( $rule );
-	}
-}
-
-=begin nd
-Function: runRBLRestartModule
-
-	Restart the module
-
-Parameters:
-
-Returns:
-
-=cut
-
-# this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
-sub runRBLRestartModule
-{
-	# Get RBL rules
-	foreach my $rule ( &getRBLRuleList() )
-	{
-		&runRBLStopByRule( $rule );
-		&runRBLStartByRule( $rule );
 	}
 }
 
@@ -109,6 +89,7 @@ Returns:
 
 sub runRBLStartByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $error = 0;
@@ -150,6 +131,7 @@ Returns:
 
 sub runRBLStopByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 	my $error = 0;
 
@@ -178,6 +160,7 @@ Returns:
 
 sub runRBLRestartByRule
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $error = &runRBLStopByRule( $rule );
@@ -206,6 +189,7 @@ Returns:
 
 sub runRBLStart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 	my $error = 0;
 
@@ -266,6 +250,7 @@ Returns:
 
 sub runRBLStop
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 	my $error = 0;
 
@@ -298,6 +283,7 @@ Returns:
 
 sub runRBLRestart
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 
 	my $error = &runRBLStop( $rule, $farm );

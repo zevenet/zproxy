@@ -44,6 +44,7 @@ See Also:
 
 sub getGlobalConfiguration
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $parameter = shift;
 
 	my $global_conf_filepath = "/usr/local/zevenet/config/global.conf";
@@ -79,7 +80,11 @@ sub getGlobalConfiguration
 		}
 
 		# early finish if the requested paremeter is found
-		return $var_value if $parameter && $parameter eq $var_name;
+		if ( $parameter && $parameter eq $var_name )
+		{
+			close $global_conf_file;
+			return $var_value;
+		}
 
 		$global_conf->{ $var_name } = $var_value;
 	}
@@ -106,13 +111,12 @@ Bugs:
 	Control file handling errors.
 
 See Also:
-	<applySnmpChanges>
-
 	Zapi v3: <set_ntp>
 =cut
 
 sub setGlobalConfiguration    # ( parameter, value )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $param, $value ) = @_;
 
 	my $global_conf_file = &getGlobalConfiguration( 'globalcfg' );
@@ -150,6 +154,7 @@ Returns:
 
 sub setConfigStr2Arr
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $obj        = shift;
 	my $param_list = shift;
 
@@ -183,6 +188,7 @@ See Also:
 
 sub getTiny
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $file_path = shift;
 
 	if ( !-f $file_path )
@@ -194,8 +200,8 @@ sub getTiny
 		}
 		else
 		{
-			&zenlog( "Could not open file $file_path: $!", "error" );
-			return undef;
+			&zenlog( "Cannot create file $file_path: $!", "error" );
+			return;
 		}
 		close $fi;
 	}
@@ -229,6 +235,7 @@ Returns:
 
 sub setTinyObj
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $path, $object, $key, $value, $action ) = @_;
 
 	unless ( $object )
@@ -237,28 +244,14 @@ sub setTinyObj
 		return;
 	}
 
-	if ( !-f $path )
-	{
-		open my $fi, '>', $path;
-		if ( $fi )
-		{
-			&zenlog( "The file was created $path", "info" );
-		}
-		else
-		{
-			&zenlog( "Could not open file $path: $!", "error" );
-			return undef;
-		}
-		close $fi;
-	}
-
 	&zenlog( "Modify $object from $path", "debug2" );
 
 	require Zevenet::Lock;
-	my $lock_file = &getLockFile( $path );
-	my $lock_fd   = &lockfile( $lock_file );
 
-	my $fileHandle = Config::Tiny->read( $path );
+	my $lock_file = &getLockFile( $path );
+	my $lock_fd   = &openlock( $lock_file, 'w' );
+
+	my $fileHandle = &getTiny( $path );
 
 	unless ( $fileHandle )
 	{
@@ -277,8 +270,6 @@ sub setTinyObj
 			}
 			$fileHandle->{ $object }->{ $param } = $key->{ $param };
 		}
-
-		#~ $fileHandle->{ $object } = $key;
 	}
 
 	# save a parameter
@@ -299,7 +290,8 @@ sub setTinyObj
 	}
 
 	my $success = $fileHandle->write( $path );
-	&unlockfile( $lock_fd );
+	close $lock_fd;
+	unlink $lock_file;
 
 	return ($success)? 0:1;
 }
@@ -320,20 +312,23 @@ Returns:
 
 sub delTinyObj
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path   = shift;
 	my $object = shift;
 
+	&zenlog( "Delete $object from $path", "debug2" );
+
 	require Zevenet::Lock;
+
 	my $lock_file = &getLockFile( $path );
-	my $lock_fd   = &lockfile( $lock_file );
+	my $lock_fd   = &openlock( $lock_file, 'w' );
 
 	my $fileHandle = Config::Tiny->read( $path );
 	delete $fileHandle->{ $object };
 	my $error = $fileHandle->write( $path );
 
-	&unlockfile( $lock_fd );
-
-	&zenlog( "Delete $object from $path", "debug2" );
+	close $lock_fd;
+	unlink $lock_file;
 
 	return $error;
 }

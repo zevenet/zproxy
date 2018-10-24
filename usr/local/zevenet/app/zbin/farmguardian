@@ -34,6 +34,7 @@
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
 
 use strict;
+use warnings;
 
 #~ use Data::Dumper;
 use Proc::Daemon;
@@ -219,16 +220,14 @@ while ( 1 )
 	}
 	elsif ( $type eq 'l4xnat' )    # Collect L4xNAT farm variables values
 	{
-		my @be = &getL4FarmBackendStatusCtl( $farmname );
+		my $be = &getL4FarmServers( $farmname );
 
-		foreach my $line ( @be )
+		foreach my $l_serv ( @{ $be } )
 		{
-			my @subbe = split ( ';', $line );
-			$backendid[$i]   = $i;
-			$backendserv[$i] = $subbe[2];
-			$backendport[$i] = $subbe[3];
-			chomp ( $backendstatus[$i] = $subbe[7] );
-			$i++;
+			$backendid[$i]   = $l_serv->{ id };
+			$backendserv[$i] = $l_serv->{ ip };
+			$backendport[$i] = $l_serv->{ port };
+			$backendstatus[$i] = $l_serv->{ status };
 		}
 	}
 

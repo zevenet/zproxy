@@ -28,6 +28,7 @@ use strict;
 # POST /farms/<farmname>/zones Create a new zone in a gslb Farm
 sub new_farm_zone # ( $json_obj, $farmname )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -129,6 +130,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 # POST /farms/<farmname>/zoneresources Create a new resource of a zone in a gslb Farm
 sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $zone     = shift;
@@ -348,6 +350,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 #	/farms/<GSLBfarm>/zones/<zone>/resources
 sub gslb_zone_resources # ( $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $farmname = shift;
 	my $zone = shift;
 
@@ -422,6 +425,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 
 sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $zone, $id_resource ) = @_;
 
 	my $description = "Modify zone resource";
@@ -667,6 +671,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 sub modify_zones # ( $json_obj, $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $zone ) = @_;
 
 	my $error;
@@ -754,6 +759,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 # DELETE /farms/<farmname>/zones/<zonename> Delete a zone of a  gslb Farm
 sub delete_zone # ( $farmname, $zone )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -821,6 +827,7 @@ sub delete_zone # ( $farmname, $zone )
 #  @api {delete} /farms/<farmname>/zones/<zonename>/resources/<resourceid> Delete a resource of a Zone
 sub delete_zone_resource # ( $farmname, $zone, $resource )
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my ( $farmname, $zone, $resource ) = @_;
 
 	my $description = "Delete zone resource";

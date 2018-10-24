@@ -26,6 +26,7 @@ use strict;
 #	GET	/system/logs
 sub get_logs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	require Zevenet::System::Log;
 
 	my $description = "Get logs";
@@ -38,6 +39,7 @@ sub get_logs
 #	GET	/system/logs/LOG
 sub download_logs
 {
+	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $logFile      = shift;
 	my $description = "Download a log file";
 	my $errormsg    = "$logFile was download successful.";
@@ -55,7 +57,6 @@ sub download_logs
 	{
 # Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
 		require Zevenet::System::Log;
-		#~ $errormsg = &downloadLog( $logFile );
 
 		open ( my $fh, '<', $logPath );
 		unless ( $fh )
@@ -82,7 +83,7 @@ sub download_logs
 
 		&zenlog( "[Download] $description: $logPath", "info", "SYSTEM" );
 
-		return &httpResponse({ code => 200, headers => $headers, body => $body });		
+		return &httpResponse({ code => 200, headers => $headers, body => $body });
 	}
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
