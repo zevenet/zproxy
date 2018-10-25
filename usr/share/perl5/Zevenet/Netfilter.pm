@@ -35,7 +35,8 @@ if ( eval { require Zevenet::ELoad; } )
 #
 sub loadNfModule    # ($modname,$params)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $modname, $params ) = @_;
 
 	my $status  = 0;
@@ -58,7 +59,8 @@ sub loadNfModule    # ($modname,$params)
 #
 sub removeNfModule    # ($modname)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $modname = shift;
 
 	my $modprobe         = &getGlobalConfiguration( 'modprobe' );
@@ -72,7 +74,8 @@ sub removeNfModule    # ($modname)
 #
 sub getIptFilter    # ($type, $desc, @iptables)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $type, $desc, @iptables ) = @_;    # input args
 
 	my @selected_rules;
@@ -86,7 +89,8 @@ sub getIptFilter    # ($type, $desc, @iptables)
 #
 sub getIptList                              # ($table,$chain)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $table, $chain ) = @_;
 
 	if ( $table ne '' )
@@ -107,7 +111,8 @@ sub getIptList                              # ($table,$chain)
 #
 sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $type, $desc, $table, $chain, @allrules ) = @_;
 
 	my $status = 0;
@@ -138,7 +143,8 @@ sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 #
 sub getNewMark    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $found;
@@ -175,7 +181,8 @@ sub getNewMark    # ($farm_name)
 #
 sub delMarks    # ($farm_name,$mark)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $mark ) = @_;
 
 	my $status      = 0;
@@ -203,12 +210,13 @@ sub delMarks    # ($farm_name,$mark)
 }
 
 #
-sub renameMarks					# ( $farm_name, $newfname )
+sub renameMarks        # ( $farm_name, $newfname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
-	my $farm_name		= shift;
-	my $newfname		= shift;
+	my $farm_name = shift;
+	my $newfname  = shift;
 
 	my $status = 0;
 
@@ -230,23 +238,13 @@ sub renameMarks					# ( $farm_name, $newfname )
 #
 sub genIptMarkPersist    # ( $farm_ref, $server_ref )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my @rules;             # output: iptables rule template string
 	my @protos = qw/tcp udp/;
-
-	if ( defined $farm )
-	{
-		$farm_name = $$farm{ name };
-	}
-
-	if ( defined $index )
-	{
-		$farm   = &getL4FarmStruct( $farm_name );
-		$server = $$farm{ servers }[$index];
-	}
 
 	my $iptables_bin = &getBinVersion( $$farm{ name } );
 
@@ -275,9 +273,10 @@ sub genIptMarkPersist    # ( $farm_ref, $server_ref )
 }
 
 #
-sub genIptMark				# ( $farm_ref, $server_ref )
+sub genIptMark    # ( $farm_ref, $server_ref )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: first argument should be a farm reference
 	my $server = shift;    # input: second argument should be a server reference
@@ -290,10 +289,8 @@ sub genIptMark				# ( $farm_ref, $server_ref )
 		$layer = "--protocol $farm->{ proto } -m multiport --dports $farm->{ vport }";
 	}
 
-	my $iptables_bin = &getBinVersion( $farm->{ name } );
-
 	# Get the binary of iptables (iptables or ip6tables)
-	my $iptables_bin = &getBinVersion( $farm_name );
+	my $iptables_bin = &getBinVersion( $farm->{ name } );
 
 	foreach my $proto ( @protos )
 	{
@@ -371,25 +368,15 @@ sub genIptHelpers    # ($farm_ref)
 }
 
 #
-sub genIptRedirect				# ( $farm_ref, $server_ref )
+sub genIptRedirect    # ( $farm_ref, $server_ref )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my @rules;             # output: iptables rule template string
 	my @protos = qw/tcp udp/;
-
-	if ( defined $farm )
-	{
-		$farm_name = $$farm{ name };
-	}
-
-	if ( defined $vip )
-	{
-		$farm   = &getL4FarmStruct( $farm_name );
-		$server = $$farm{ servers }[$index];
-	}
 
 	my $iptables_bin = &getBinVersion( $$farm{ name } );
 
@@ -434,25 +421,15 @@ sub genIptRedirect				# ( $farm_ref, $server_ref )
 #
 sub genIptSourceNat    # ( $farm_ref, $server_ref )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my @rules;             # output: iptables rule template string
 	my @protos = qw/tcp udp/;
 
-	if ( defined $farm )
-	{
-		$farm_name = $$farm{ name };
-	}
-
-	if ( defined $index )
-	{
-		$farm   = &getL4FarmStruct( $farm_name );
-		$server = $$farm{ servers }[$index];
-	}
-
-	my $iptables_bin = &getBinVersion( $farm_name );
+	my $iptables_bin = &getBinVersion( $farm );
 	foreach my $proto ( @protos )
 	{
 		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
@@ -488,27 +465,17 @@ sub genIptSourceNat    # ( $farm_ref, $server_ref )
 }
 
 #
-sub genIptMasquerade		# ( $farm_ref, $server_ref )
+sub genIptMasquerade    # ( $farm_ref, $server_ref )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my @rules;             # output: iptables rule template string
 	my @protos = qw/tcp udp/;
 
-	if ( defined $farm )
-	{
-		$farm_name = $$farm{ name };
-	}
-
-	if ( defined $protocol )
-	{
-		$farm   = &getL4FarmStruct( $farm_name );
-		$server = $$farm{ servers }[$index];
-	}
-
-	my $iptables_bin = &getBinVersion( $farm_name );
+	my $iptables_bin = &getBinVersion( $$farm{ name } );
 	foreach my $proto ( @protos )
 	{
 		next unless ( $$farm{ proto } =~ /$proto/ || $$farm{ proto } eq "all" );
@@ -546,7 +513,8 @@ sub genIptMasquerade		# ( $farm_ref, $server_ref )
 # insert restore mark on top of
 sub getIptStringConnmarkRestore
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm_name = shift;
 
@@ -559,7 +527,8 @@ sub getIptStringConnmarkRestore
 # append restore mark at the end of
 sub getIptStringConnmarkSave
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm_name = shift;
 
@@ -573,15 +542,16 @@ sub getIptStringConnmarkSave
 
 sub setIptConnmarkRestore
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
-	my $farm_name   = shift;    # farmname
-	my $switch      = shift;    # 'true' or not true value
+	my $farm_name = shift;    # farmname
+	my $switch    = shift;    # 'true' or not true value
 	$switch ||= 'false';
 
 	require Zevenet::Lock;
 
-	my $return_code = -1;       # return value
+	my $return_code = -1;     # return value
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
@@ -612,17 +582,18 @@ sub setIptConnmarkRestore
 
 sub setIptConnmarkSave
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $farm_name   = shift;    # farmname
-	my $switch      = shift;    # 'true' or not true value
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farm_name = shift;    # farmname
+	my $switch    = shift;    # 'true' or not true value
 	$switch ||= 'false';
 
 	require Zevenet::Lock;
 
-	my $return_code = -1;       # return value
+	my $return_code = -1;     # return value
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	my $rule = &getIptStringConnmarkSave( $farm_name );
@@ -650,7 +621,8 @@ sub setIptConnmarkSave
 
 sub applyIptRuleAction
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $rule    = shift;    # rule string with ::ACTION_TAG:: instead of action
 	my $action  = shift;    # must be append|check|delete|insert|replace
@@ -658,7 +630,7 @@ sub applyIptRuleAction
 
 	# return the action requested if not supported
 	return $action if $action !~ /append|check|delete|insert|replace/x;
-	$rulenum = 0 if ! $rulenum;
+	$rulenum = 0 if !$rulenum;
 
 	if ( $action =~ /insert|replace|delete/ && $rulenum > 0 )
 	{
@@ -690,7 +662,8 @@ sub applyIptRuleAction
 
 sub getIptRuleNumber
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my (
 		 $rule,         # rule string
@@ -708,7 +681,7 @@ sub getIptRuleNumber
 	( defined ( $index ) && !ref $index )
 	  or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid', "error", "SYSTEM" );
 
-	my $rule_num;      # output: rule number for requested rule
+	my $rule_num;    # output: rule number for requested rule
 
 	# read rule table and chain
 	my @rule_args = split / +/, $rule;    # divide rule by blanks
@@ -761,9 +734,8 @@ sub getIptRuleNumber
 
 	if ( !@rules && &debug() )
 	{
-		&zlog(
-			"index:$index farm_name:$farm_name filter:$filter server list:"
-			  . &getL4FarmServers( $farm_name ) )
+		&zlog( "index:$index farm_name:$farm_name filter:$filter server list:"
+			   . &getL4FarmServers( $farm_name ) )
 		  if not defined $filter;
 		&zlog( "filter:$filter iptables command:$ipt_cmd" );
 		&zlog( "rules:@rules" );
@@ -810,7 +782,8 @@ sub getIptRuleNumber
 # apply every rule in the input
 sub applyIptRules
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my @rules       = @_;    # input: rule array
 	my $return_code = 0;     # output:
@@ -829,7 +802,8 @@ sub applyIptRules
 
 sub setIptRuleCheck
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $rule = shift;        # input: iptables rule string
 
@@ -838,7 +812,8 @@ sub setIptRuleCheck
 
 sub getIptRuleCheck
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $rule = shift;        # input: iptables rule string
 
@@ -847,7 +822,8 @@ sub getIptRuleCheck
 
 sub getIptRuleInsert
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm     = shift;    # input: farm struc reference
 	my $server   = shift;    # input: server struc reference
@@ -875,7 +851,7 @@ sub getIptRuleInsert
 			my $chain     = $rule_args[4];       # forth argument of iptables is the chain
 
 			## lock iptables use ##
-			my $iptlock = &getGlobalConfiguration('iptlock');
+			my $iptlock = &getGlobalConfiguration( 'iptlock' );
 			my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 			my @rule_list = `$iptables_bin -n --line-number --table $table --list $chain`;
@@ -913,7 +889,8 @@ sub getIptRuleInsert
 
 sub getIptRuleDelete
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $rule = shift;    # input: iptables rule string
 
@@ -953,7 +930,8 @@ sub getIptRuleDelete
 
 sub setIptRuleReplace    # $return_code ( \%farm, \%server, $rule)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: farm struc reference
 	my $server = shift;    # input: server struc reference
@@ -965,7 +943,8 @@ sub setIptRuleReplace    # $return_code ( \%farm, \%server, $rule)
 
 sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm   = shift;    # input: farm struc reference
 	my $server = shift;    # input: server struc reference
@@ -980,7 +959,8 @@ sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 
 sub getIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $rule = shift;      # input: iptables rule string
 
@@ -989,7 +969,8 @@ sub getIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 
 sub getIptRulesStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	return {
 			 t_mangle   => [],
@@ -1002,7 +983,8 @@ sub getIptRulesStruct
 # Get the binary of iptables (for IPv4 or IPv6)
 sub getBinVersion    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $farm_name = shift;
 
@@ -1024,7 +1006,7 @@ sub getBinVersion    # ($farm_name)
 	}
 	else
 	{
-		$binary = &getGlobalConfiguration('iptables');
+		$binary = &getGlobalConfiguration( 'iptables' );
 	}
 
 	return $binary;
@@ -1033,7 +1015,8 @@ sub getBinVersion    # ($farm_name)
 # log and run the command string input parameter returning execution error code
 sub iptSystem
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $command = shift;    # command string to log and run
 
@@ -1046,7 +1029,7 @@ sub iptSystem
 	$program .= ' ';
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	$return_code = system ( "$command >/dev/null 2>&1" );    # run
@@ -1077,7 +1060,8 @@ sub iptSystem
 
 sub runIptables
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $command = shift;    # command string to log and run
 
@@ -1114,7 +1098,8 @@ sub runIptables
 
 sub runIptDeleteByComment
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 	my $comment = shift;
 	my $chain   = shift;

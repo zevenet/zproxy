@@ -253,18 +253,18 @@ sub certcontrol
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $file_check = "$configdir/config_check";
 
-    require Zevenet::Lock;
+      require Zevenet::Lock;
     my $file_lock = &getLockFile( $file_check );
-    my $lock_fd = &lockfile( $file_lock );
+    my $lock_fd = &openlock( $file_lock, '>' );
 
-    my $open_check = open ( my $read_check, '<', $file_check );
+    my $read_check = &openlock ( $file_check, '<' );
     my $date_check = <$read_check>;
     $date_check =~ s/\s*$//;
     close $read_check;
 
 	if ($date_check ne $date_encode)
 	{
-		my $open_check2 = open ( my $write_check, '>', $file_check );
+		my $write_check = &openlock ( $file_check, '>' );
 		print $write_check $date_encode;
 		close $write_check;
 
@@ -320,7 +320,7 @@ sub certcontrol
 			}
 		}
 	}
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 
  	 # Certificate expiring date
     my ( $na ) = grep /Not After/i, @zen_cert;
