@@ -28,6 +28,59 @@ use Zevenet::Lock;
 include 'Zevenet::IPDS::WAF::Core';
 include 'Zevenet::IPDS::WAF::Parser';
 
+my $deleted_reg = "/usr/local/zevenet/config/ipds/waf/deleted";
+
+??
+  ? ? mandar el campo modified true cuando la regla sea modificada por la api. y chains tb.   para< los batch NO,
+	???? al modificar una sentencia añadirla al registro si es la primera vez que se modifica
+
+sub getWAFDelRegisterFile
+{
+	my $set = shift;
+	my $file = "$deleted_reg/${set}.conf";
+	return ( -f $file ) ? $file : undef;
+}
+
+sub addWAFDelRegister
+{
+	my $set = shift;
+	my $chain = shift;
+	my $err=0;
+	my $file = &getWAFDelRegisterFile($set);
+	my $fh;
+
+	if ( ! -f $file )
+	{
+		$fh = &openlock( $file, 'w' );
+	}
+	else
+	{
+		$fh = &openlock( $file, 'a' );
+	}
+	print $fh $chain;
+	close $fh;
+
+	&zenlog("Error registering deleting rule of set $set and rule \"$chain\"","error",'waf') if $error;
+
+	return $err;
+}
+
+
+sub checkWAFDelRegister
+{
+	my $set = shift;
+	my $chain = shift;
+	my $flag=0;
+	my $file = &getWAFDelRegisterFile($set);
+	my $fh = &openlock( $file, 'r' );
+	my $flag = grep ( /^$chain$/, <$fh> );
+	close $fh;
+
+	return $flag;
+}
+
+
+
 =begin nd
 Function: genWAFRuleId
 
@@ -136,6 +189,8 @@ sub createWAFRule
 	$rule_ref->{ rule_id } = &genWAFRuleId()
 	  if not $rule_ref->{ rule_id };
 
+	$rule->{ modified } = 'refresh';
+
 	# check syntax
 	$rule = &buildWAFRule( $rule_ref );
 	my $err_msg = &checkWAFRuleSyntax( $rule );
@@ -192,6 +247,11 @@ sub setWAFSetRaw
 
 	# parse and get only the rules, not the global conf
 	my $set_new_st = &parseWAFBatch( \@set_raw );
+	# add mark to specify that the rule was modified by the user
+	foreach my $ru (@{ $set_new_st })
+	{
+		$ru->{ modified } = 'yes';
+	}
 
 	# get set
 	my $set_st = &getWAFSet( $set );
@@ -397,6 +457,7 @@ sub deleteWAFRule
 	# delete a rule
 	if ( !defined $chain_index )
 	{
+		return 1 if &addWAFDelRegister( $set, $set_st->{ rules }->{ raw } );
 		return 1
 		  if ( !splice ( @{ $set_st->{ rules } }, $rule_index, 1 ) )
 		  ;                     # error if any item is deleted
@@ -443,6 +504,8 @@ sub deleteWAFSet
 	}
 
 	$err = unlink &getWAFSetFile( $set );
+	unlink &getWAFDelRegisterFile($set);
+
 	return $err;
 }
 
@@ -491,6 +554,10 @@ sub moveWAFRule
 
 	my $err    = 0;
 	my $set_st = &getWAFSet( $set );
+
+?????? add to delete register  if ()
+
+	$set_st->{ rules }->[$id]->{modified} = 'yes';
 
 	&moveByIndex( $set_st->{ rules }, $id => $pos );
 

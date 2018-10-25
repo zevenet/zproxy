@@ -157,6 +157,12 @@ sub parseWAFRule
 		$directive = $1;
 	}
 
+	my $modified = 'no';
+	if ( $line =~ s/\s*#\s*$// )
+	{
+		$modified = 'yes';
+	}
+
 	if ( $directive =~ /(?:SecRule|SecAction)$/ )
 	{
 		my $type = ( $directive eq 'SecRule' ) ? 'match_action' : 'action';
@@ -321,7 +327,7 @@ sub parseWAFRule
 			}
 		}
 	}
-	elsif ( $line =~ /^\s*SecMarker\s+(.+)$/s )
+	elsif ( $line =~ /^\s*SecMarker\s+(.+)/s )
 	{
 		$rule->{ 'type' } = 'marker';
 		$rule->{ 'mark' } = $1;
@@ -332,6 +338,7 @@ sub parseWAFRule
 	}
 
 	# save rule
+	$rule->{ modified } = $modified;
 	$rule->{ raw } //= "";
 	$rule->{ raw } = $line . $rule->{ raw };
 	chomp $rule->{ raw };
@@ -343,6 +350,11 @@ sub parseWAFRule
 Function: buildWAFRule
 
 	Create a SecLang directive through a Zevenet WAF rule.
+
+	The parameter modified of the rule struct is important. It is used to choose if
+	build a rule or write the rule saved in the field raw. The raw rule must be written
+	if it has been modfied in raw format or if it has not been modified yet.
+	If the field modified has the value 'refreh', the rule will be buit.
 
 Parameters:
 	WAF rule - It is a hash reference with the WAF rule configuration.
@@ -357,6 +369,18 @@ sub buildWAFRule
 	my $st         = shift;
 	my $chain_flag = shift;
 	my $secrule    = "";
+
+	# respect the original chain if it is not been modified
+	if ( $st->{ modified } eq 'no' )
+	{
+		return $st->{ raw };
+	}
+	elsif ( $st->{ modified } eq 'yes' )
+	{
+		return "$st->{ raw } #";
+	}
+
+	# else, modified eq 'refresh'
 
 	if ( $st->{ type } =~ /(?:match_action|action)/ )
 	{
@@ -445,6 +469,7 @@ sub buildWAFRule
 		# remove last terminator
 		$secrule =~ s/,\\\n$//;
 		$secrule .= '"';
+		$secrule .= ' #';
 
 		# print all chained rules
 		my $num_chain = scalar @{ $st->{ chain } };
@@ -461,12 +486,14 @@ sub buildWAFRule
 	elsif ( $st->{ type } eq 'marker' )
 	{
 		$secrule = "SecMarker " . $st->{ mark };
+		$secrule .= ' #';
 	}
 
 	# custom
 	else
 	{
 		$secrule = $st->{ raw };
+		$secrule .= ' #';
 	}
 
 	return $secrule;

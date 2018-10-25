@@ -126,6 +126,7 @@ Returns:
 				'chain'            => [],		# list of additional rules to match
 				'skip'             => '',		# skip a number of rules if the current rule match
 				'skip_after'       => '',		# skip until find a rule id or mark if the current rule match
+				'modified'         => 'no|yes|refresh',		# it is used to detect if a rule has been modified by a user in the migration process. It is used to not to lost any parameter when a rule it is built by the helper
 
 	The rules of type "match_action" add the parameters:
 				'operating',				# valor to apply with the operator
@@ -138,37 +139,39 @@ sub getWAFRulesStruct
 {
 	my $type = shift;
 	my $out = {
-				'type'             => $type,
-				'id'               => '',        # position in set file
-				'rule_id'          => '',        # id of the rule
-				'description'      => '',
-				'tag'              => [],
-				'version'          => '',
-				'maturity'         => '',
-				'severity'         => '',
-				'accuracy'         => '',
-				'revision'         => '',
-				'phase'            => '',
-				'transformations'  => [],
-				'multi_match'      => 'false',
-				'capture'          => 'false',
-				'action'           => '',
-				'http_code'        => '',
-				'modify_directive' => [],        # parameter 'ctl' in secrule
-				'execute'          => '',
-				'no_log'           => 'false',
-				'log'              => 'false',
-				'audit_log'        => 'false',
-				'no_audit_log'     => 'false',
-				'log_data'         => '',
-				'init_colection'   => [],
-				'set_uid'          => '',
-				'set_sid'          => '',
-				'set_variable'     => [],
-				'expire_var'       => [],
-				'chain'            => [],
-				'skip'             => '',
-				'skip_after'       => '',
+		'type'             => $type,
+		'id'               => '',        # position in set file
+		'rule_id'          => '',        # id of the rule
+		'description'      => '',
+		'tag'              => [],
+		'version'          => '',
+		'maturity'         => '',
+		'severity'         => '',
+		'accuracy'         => '',
+		'revision'         => '',
+		'phase'            => '',
+		'transformations'  => [],
+		'multi_match'      => 'false',
+		'capture'          => 'false',
+		'action'           => '',
+		'http_code'        => '',
+		'modify_directive' => [],        # parameter 'ctl' in secrule
+		'execute'          => '',
+		'no_log'           => 'false',
+		'log'              => 'false',
+		'audit_log'        => 'false',
+		'no_audit_log'     => 'false',
+		'log_data'         => '',
+		'init_colection'   => [],
+		'set_uid'          => '',
+		'set_sid'          => '',
+		'set_variable'     => [],
+		'expire_var'       => [],
+		'chain'            => [],
+		'skip'             => '',
+		'skip_after'       => '',
+		'modifed'          => 'no'
+		, # shows if the rule has been modified by the user. it is used to not overwrite modified rules
 	};
 
 	if ( $type eq 'match_action' )
