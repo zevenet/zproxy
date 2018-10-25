@@ -23,6 +23,12 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -40,7 +46,8 @@ Returns:
 
 sub getDatalinkFarmBackends    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -55,10 +62,10 @@ sub getDatalinkFarmBackends    # ($farm_name)
 	if ( $eload )
 	{
 		$permission = &eload(
-					module => 'Zevenet::RBAC::Core',
-					func   => 'getRBACRolePermission',
-					args   => ['alias', 'list'],
-			)
+							  module => 'Zevenet::RBAC::Core',
+							  func   => 'getRBACRolePermission',
+							  args   => ['alias', 'list'],
+		);
 	}
 	require Zevenet::Alias if ( $permission );
 	my $alias = &getAlias( "backend" ) if ( $permission );
@@ -77,9 +84,9 @@ sub getDatalinkFarmBackends    # ($farm_name)
 			$status = "undefined" if ( $farmStatus eq "down" );
 			push @servers,
 			  {
-				alias     => $permission ? $alias->{ $aux[2] } : undef,
-				id        => $sindex,
-				ip        => $aux[2],
+				alias => $permission ? $alias->{ $aux[2] } : undef,
+				id    => $sindex,
+				ip    => $aux[2],
 				interface => $aux[3],
 				weight    => $aux[4] + 0,
 				priority  => $aux[5] + 0,
@@ -120,7 +127,8 @@ FIXME:
 
 sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
 
 	require Tie::File;
@@ -191,7 +199,8 @@ Returns:
 
 sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ids, $farm_name ) = @_;
 
 	require Tie::File;
@@ -237,15 +246,16 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 
 sub getDatalinkFarmBackendAvailableID
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
-	my $id  = 0;
+	my $id       = 0;
 	my $backends = &getDatalinkFarmBackends( $farmname );
 
 	foreach my $l_serv ( @{ $backends } )
 	{
-		if ( $l_serv->{ id } > $id && $l_serv->{ ip } ne "0.0.0.0")
+		if ( $l_serv->{ id } > $id && $l_serv->{ ip } ne "0.0.0.0" )
 		{
 			$id = $l_serv->{ id };
 		}
