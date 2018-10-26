@@ -40,7 +40,8 @@ Returns:
 
 sub startL4Farm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	require Zevenet::Lock;
@@ -192,13 +193,13 @@ Returns:
 
 sub stopL4Farm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Lock;
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::L4xNAT::Config;
-
 
 	my $status;
 
@@ -225,7 +226,7 @@ sub stopL4Farm    # ($farm_name)
 	@allrules = &getIptList( $farm_name, "nat", "POSTROUTING" );
 	$status =
 	  &deleteIptRules( $farm_name, "farm", $farm_name, "nat", "POSTROUTING",
-			   @allrules );
+					   @allrules );
 
 	@allrules = &getIptList( $farm_name, "raw", "PREROUTING" );
 	$status =
@@ -245,8 +246,8 @@ sub stopL4Farm    # ($farm_name)
 	}
 
 	## Delete ip rule mark ##
-	my $farm        = &getL4FarmStruct( $farm_name );
-	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
+	my $farm   = &getL4FarmStruct( $farm_name );
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 	&setL4FarmParam( 'status', "down", $farm_name );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
 	my $vip_if      = &getInterfaceConfig( $vip_if_name );
@@ -306,7 +307,8 @@ Returns:
 
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $new_farm_name ) = @_;
 
 	require Tie::File;
@@ -318,11 +320,10 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );
 
-	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$prev_farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
 		{
