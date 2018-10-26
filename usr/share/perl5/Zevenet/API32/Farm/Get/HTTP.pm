@@ -24,15 +24,17 @@ use strict;
 use Zevenet::Farm::HTTP::Config;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
-
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # GET /farms/<farmname> Request info of a http|https Farm
-sub farms_name_http # ( $farmname )
+sub farms_name_http    # ( $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
-
 
 	# Get farm reference
 	my $farm_ref;
@@ -40,18 +42,17 @@ sub farms_name_http # ( $farmname )
 	if ( $eload )
 	{
 		$farm_ref = &eload(
-						   module => 'Zevenet::Farm::HTTP::Ext',
-						   func   => 'get_http_farm_ee_struct',
-						   args   => [$farmname],
+							module => 'Zevenet::Farm::HTTP::Ext',
+							func   => 'get_http_farm_ee_struct',
+							args   => [$farmname],
 		);
 	}
 	else
 	{
 		require Zevenet::Farm::HTTP::Config;
 
-		$farm_ref = &get_http_farm_struct( $farmname );
+		$farm_ref = &getHTTPFarmStruct( $farmname );
 	}
-
 
 	# Get farm services reference
 	my $services_ref;
@@ -71,7 +72,6 @@ sub farms_name_http # ( $farmname )
 		$services_ref = &get_http_all_services_struct( $farmname );
 	}
 
-
 	# Output
 	my $body = {
 				 description => "List farm $farmname",
@@ -88,13 +88,14 @@ sub farms_name_http # ( $farmname )
 		);
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /farms/<farmname>/summary
 sub farms_name_http_summary
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# Get farm reference
@@ -103,16 +104,16 @@ sub farms_name_http_summary
 	if ( $eload )
 	{
 		$farm_ref = &eload(
-						   module => 'Zevenet::Farm::HTTP::Ext',
-						   func   => 'get_http_farm_ee_struct',
-						   args   => [$farmname],
+							module => 'Zevenet::Farm::HTTP::Ext',
+							func   => 'get_http_farm_ee_struct',
+							args   => [$farmname],
 		);
 	}
 	else
 	{
 		require Zevenet::Farm::HTTP::Config;
 
-		$farm_ref = &get_http_farm_struct( $farmname );
+		$farm_ref = &getHTTPFarmStruct( $farmname );
 	}
 
 	# Services
@@ -135,7 +136,7 @@ sub farms_name_http_summary
 		);
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

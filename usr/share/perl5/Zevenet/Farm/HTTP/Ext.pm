@@ -24,7 +24,7 @@
 use strict;
 use Zevenet::Farm::Core;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getHTTPFarm100Continue
@@ -38,16 +38,18 @@ Returns:
 	scalar - The possible values are: 0 on disabled, 1 on enabled or -1 on failure
 
 =cut
+
 sub getHTTPFarm100Continue    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
 	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
-	$output = 1;	# if the directive is not in config file, it is enabled
+	$output = 1;    # if the directive is not in config file, it is enabled
 	my @file = <$fd>;
 	close $fd;
 
@@ -76,9 +78,11 @@ Returns:
 	scalar - The possible values are: 0 on success or -1 on failure
 
 =cut
+
 sub setHTTPFarm100Continue    # ($farm_name, $action)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $action ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -88,9 +92,9 @@ sub setHTTPFarm100Continue    # ($farm_name, $action)
 	tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
 	# check if 100 continue directive exists
-	if ( ! grep(s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file) )
+	if ( !grep ( s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file ) )
 	{
-		foreach my $line (@file)
+		foreach my $line ( @file )
 		{
 			# put ignore below than rewritelocation
 			if ( $line =~ /^Control\s/ )
@@ -118,16 +122,18 @@ Returns:
 	scalar - The possible values are: 0 on disabled, possitive value on enabled or -1 on failure
 
 =cut
+
 sub getHTTPFarmLogs    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
 	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
-	$output = 0;	# if the directive is not in config file, it is disabled
+	$output = 0;       # if the directive is not in config file, it is disabled
 	my @file = <$fd>;
 	close $fd;
 
@@ -156,9 +162,11 @@ Returns:
 	scalar - The possible values are: 0 on success or -1 on failure
 
 =cut
+
 sub setHTTPFarmLogs    # ($farm_name, $action)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $action ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -170,9 +178,9 @@ sub setHTTPFarmLogs    # ($farm_name, $action)
 	tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
 	# check if 100 continue directive exists
-	if ( ! grep( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file) )
+	if ( !grep ( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file ) )
 	{
-		&zenlog( "Error modifying http logs", "error", "HTTP");
+		&zenlog( "Error modifying http logs", "error", "HTTP" );
 	}
 	else
 	{
@@ -197,9 +205,11 @@ Returns:
 	Array ref - headers list
 
 =cut
+
 sub getHTTPAddheader    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my @out = ();
 
@@ -232,7 +242,6 @@ sub getHTTPAddheader    # ($farm_name,$service)
 	return \@out;
 }
 
-
 =begin nd
 Function: addHTTPHeadremove
 
@@ -246,26 +255,28 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub addHTTPAddheader    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
-	my $srv_flag  = 0;
-	my $errno     = 1;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
-	my $index = 0;
-	my $rewrite_flag=0;		# it is used to add HeadRemove before than AddHeader
+	my $index        = 0;
+	my $rewrite_flag = 0;    # it is used to add HeadRemove before than AddHeader
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /[#\s]*RewriteLocation/ )
 		{
-			$rewrite_flag=1;
+			$rewrite_flag = 1;
 		}
 		elsif ( $rewrite_flag )
 		{
@@ -282,7 +293,7 @@ sub addHTTPAddheader    # ($farm_name,$service,$code)
 	}
 	untie @fileconf;
 
-	&zenlog("Could not add AddHeader") if $errno;
+	&zenlog( "Could not add AddHeader" ) if $errno;
 
 	return $errno;
 }
@@ -300,26 +311,28 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub delHTTPAddheader    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
-	my $srv_flag  = 0;
-	my $errno     = 1;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
 	my $index = 0;
-	my $ind = 0;
+	my $ind   = 0;
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /^\s*AddHeader\s+"/ )
 		{
-			if( $header_ind == $ind )
+			if ( $header_ind == $ind )
 			{
 				$errno = 0;
 				splice @fileconf, $index, 1;
@@ -334,7 +347,7 @@ sub delHTTPAddheader    # ($farm_name,$service,$code)
 	}
 	untie @fileconf;
 
-	&zenlog("Could not remove HeadRemove") if $errno;
+	&zenlog( "Could not remove HeadRemove" ) if $errno;
 
 	return $errno;
 }
@@ -353,9 +366,11 @@ Returns:
 	Array ref - headers list
 
 =cut
+
 sub getHTTPHeadremove    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 	my @out = ();
 
@@ -363,8 +378,8 @@ sub getHTTPHeadremove    # ($farm_name,$service)
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw = 0;
-	my $out = "false";
+	my $sw            = 0;
+	my $out           = "false";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
@@ -401,26 +416,28 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub addHTTPHeadremove    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
-	my $srv_flag  = 0;
-	my $errno     = 1;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
-	my $index = 0;
-	my $rewrite_flag=0;		# it is used to add HeadRemove before than AddHeader
+	my $index        = 0;
+	my $rewrite_flag = 0;    # it is used to add HeadRemove before than AddHeader
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /[#\s]*RewriteLocation/ )
 		{
-			$rewrite_flag=1;
+			$rewrite_flag = 1;
 		}
 		elsif ( $rewrite_flag )
 		{
@@ -437,7 +454,7 @@ sub addHTTPHeadremove    # ($farm_name,$service,$code)
 	}
 	untie @fileconf;
 
-	&zenlog("Could not add HeadRemove") if $errno;
+	&zenlog( "Could not add HeadRemove" ) if $errno;
 
 	return $errno;
 }
@@ -455,26 +472,28 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub delHTTPHeadremove    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
-	my $srv_flag  = 0;
-	my $errno     = 1;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
 	my $index = 0;
-	my $ind = 0;
+	my $ind   = 0;
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /^\s*HeadRemove\s+"/ )
 		{
-			if( $header_ind == $ind )
+			if ( $header_ind == $ind )
 			{
 				$errno = 0;
 				splice @fileconf, $index, 1;
@@ -489,28 +508,27 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 	}
 	untie @fileconf;
 
-	&zenlog("Could not remove HeadRemove") if $errno;
+	&zenlog( "Could not remove HeadRemove" ) if $errno;
 
 	return $errno;
 }
 
-
 sub get_http_farm_ee_struct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Config;
 
 	# Output hash reference or undef if the farm does not exist.
-	my $farm = &get_http_farm_struct( $farmname );
+	my $farm = &getHTTPFarmStruct( $farmname );
 
 	return unless $farm;
 
 	# 100 Continue
 	my $flag = &getHTTPFarm100Continue( $farmname );
 	$farm->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
-
 
 	# Logs
 	my $flag = &getHTTPFarmLogs( $farmname );
