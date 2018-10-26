@@ -54,34 +54,146 @@ sub initWAFModule
 }
 
 my $preload_sets = "/usr/local/zevenet/config/ipds/waf/preload_sets.conf";
+my $pkg_dir      = "/usr/local/zevenet/share/waf";
+use Tie::File;
 
-sub listWAFSetPreload { }
+=begin nd
+Function: getWAFSetPreloadPkg
 
-#??? ??
-sub addWAFSetPreload { }
-sub delWAFSetPreload { }
+	Return a list with all the set path in the template directory
 
-#~ eliminar set del paquete:
-#~ - si no se esta usando
-#~ - directiva en fichero conf que no coincida con share
+Parameters:
+	None - .
 
-#~ añadir set del paquete:
-#~ - añadir configuracion
+Returns:
+	Array - list of paths
 
-#~ modificar set del paquete:
+=cut
 
-sub migrateWAF
+sub getWAFSetPreloadPkg
 {
-	my $pkg_dir = "/usr/local/zevenet/share/waf";
-	my $err     = 0;
+	opendir my $dir, $pkg_dir;
+	my @files = readdir $dir;
+	closedir $dir;
 
+	return @files;
+}
+
+=begin nd
+Function: listWAFSetPreload
+
+	Return a list with all the preloaded set has been added to the configuration directory
+
+Parameters:
+	None - .
+
+Returns:
+	Array - list of set names
+
+=cut
+
+sub listWAFSetPreload
+{
+	my @list_sets = ();
+	tie my @array, 'Tie::File', $preload_sets
+	  or &zenlog( "the file $path could not be opened", "warning", "waf" );
+	if ( @array )
+	{
+		@list_sets = @array;
+		untie @array;
+	}
+
+	return @list_sets;
+}
+
+=begin nd
+Function: addWAFSetPreload
+
+	Add a set name to the list of preloaded set already loaded in the config directory
+
+Parameters:
+	Set - Set name
+
+Returns:
+	Integer - 0 on sucess or 1 on failure
+
+=cut
+
+sub addWAFSetPreload
+{
+	my $set = shift;
+
+	tie my @array, 'Tie::File', $preload_sets or return 1;
+
+	push @array, $set;
+	untie @array;
+
+	return 0;
+}
+
+=begin nd
+Function: delWAFSetPreload
+
+	Delete a set of the preloaded list.
+
+Parameters:
+	Set - Set name
+
+Returns:
+	Integer - 0 on success or 1 on failure
+
+=cut
+
+sub delWAFSetPreload
+{
+	my $set = shift;
+
+	tie my @array, 'Tie::File', $preload_sets or return 1;
+
+	for my $it ( 0 .. $#array )
+	{
+		if ( $array[$i] eq $set )
+		{
+			splice @array, $i, 1;
+			last;
+		}
+	}
+
+	untie @array;
+	return 0;
+}
+
+=begin nd
+Function: updateWAFSetPreload
+
+	Main function to update the preloaded sets. It applies the following changes:
+	- Remove a preloaded set that is not used and it has been deleted from the ipds package
+	- Replace the set in the config directory
+	- Delete de rules that has been deleted o modfied by the user
+	- Add the rules that has been created, moved or modified by the use
+
+Parameters:
+	None - .
+
+Returns:
+	Integer - 0 on success or 1 on failure
+
+=cut
+
+sub updateWAFSetPreload
+{
+	my $err = 0;
+
+	include 'Zevenet::IPDS::WAF::Config';
 	use File::Copy qw(copy);
+
+	my @prel_path = &getWAFSetPreloadPkg();
 
 	# deleting deprecated sets
 	foreach my $set ( &listWAFSetPreload() )
 	{
 		# do not to delete it if it is in the package
-		next if ( grep ( "^$pkg_dir/${set}\.conf$", ) );
+		next if ( grep ( "^$pkg_dir/${set}\.conf$", @prel_path ) );
 
 		# Delete it only if it is not used by any farm
 		next if ( &listWAFBySet( $set ) );
@@ -92,12 +204,14 @@ sub migrateWAF
 # delete it from the register log. Only add and delete entries in Preload file the migration process
 		$err = &delWAFSetPreload( $set );
 
-		&zenlog( "The WAF set $setname has been deleted properly", 'info', 'waf' );
+		&zenlog( "The WAF set $setname has been deleted properly", 'info', 'waf' )
+		  if !$err;
+		&zenlog( "Error deleting the WAF set $setname", 'error', 'waf' ) if $err;
 	}
 	return $err if $err;
 
 	# add and modify the sets
-	foreach my $pre_set ( &getWAFSetPreload() )
+	foreach my $pre_set ( @prel_path )
 	{
 		# get data of the test
 		my $setname = "";
@@ -120,18 +234,21 @@ sub migrateWAF
 		# copy template to the config directory, overwritting the set
 		copy $pre_set, $set_file;
 
+		# delete the rules that appear in the deleted register
+		tie my @raw_rules, 'Tie::File', $set_file or return $err++;
+		my @edit_rules = ();
+		foreach my $chain ( @raw_rules )
+		{
+			push @edit_rules, $chain if ( !&checkWAFDelRegister( $set, $chain ) );
+		}
+		@raw_rules = @edit_rules;
+		untie @raw_rules;
+
 		# if set already exists, migrate the configuration
 		if ( defined $cur_set )
 		{
 			# open the new created set
 			$new_set = &getWAFSet( $setname );
-
-			# delete the deleted rules
-			??
-			  ? ??
-
-			  # add the configuration
-			  $new_set->{ configuration } = $cur_set->{ configuration };
 
 			# add the rules are been created by de user and move it of position
 			my $ind   = 0;
@@ -141,10 +258,13 @@ sub migrateWAF
 				if ( $rule->{ modified } eq 'yes' )
 				{
 					push @{ $new_set->{ rules } }, $rule;
-					&moveByIndex( $new_set->{ rules }, $#rules, $ind );
+					&moveByIndex( $new_set->{ rules }, scalar @{ $new_set->{ rules } }, $ind );
 				}
 				$ind++;
 			}
+
+			# add the configuration
+			$new_set->{ configuration } = $cur_set->{ configuration };
 
 			# save set
 			$err = &buildWAFSet( $new_set );
@@ -159,18 +279,7 @@ sub migrateWAF
 		}
 	}
 
-	return $err;
-
-	# ???? controlar;
-}
-
-sub getWAFSetPreload
-{
-	opendir my $dir, $preload_path;
-	my @files = readdir $dir;
-	closedir $dir
-
-	  return @files;
+	return $err;    # ???? controlar;
 }
 
 1;

@@ -55,18 +55,18 @@ sub addWAFDelRegister
 
 	if ( !-f $file )
 	{
-		$fh = &openlock( $file, 'w' );
+		$fh = &openlock( $file, 'w' ) or $err = 1;
 	}
 	else
 	{
-		$fh = &openlock( $file, 'a' );
+		$fh = &openlock( $file, 'a' ) or $err = 1;
 	}
 	print $fh $chain;
 	close $fh;
 
 	&zenlog( "Error registering deleting rule of set $set and rule \"$chain\"",
 			 "error", 'waf' )
-	  if $error;
+	  if $err;
 
 	return $err;
 }
@@ -169,11 +169,11 @@ sub setWAFRule
 	# not to check syntax if the rule has chains
 	my $set_st = &getWAFSet( $set );
 
-	if ( $rule_ref->{ modify } eq 'no' )
+	if ( $rule_ref->{ modified } eq 'no' )
 	{
 		&addWAFDelRegister( $set, $rule_ref->{ raw } );
 	}
-	$rule_ref->{ modify } = 'refresh';
+	$rule_ref->{ modified } = 'refresh';
 
 	$set_st->{ rules }->[$id] = $rule_ref;
 	my $err_msg = &buildWAFSet( $set, $set_st );
@@ -279,9 +279,9 @@ sub setWAFSetRaw
 	my $set_st = &getWAFSet( $set );
 	if ( defined $position )
 	{
-		if ( $set_st->{ rules }->[$id]->{ modified } eq 'no' )
+		if ( $set_st->{ rules }->[$position]->{ modified } eq 'no' )
 		{
-			&addWAFDelRegister( $set, $set_st->{ rules }->[$id]->{ raw } );
+			&addWAFDelRegister( $set, $set_st->{ rules }->[$position]->{ raw } );
 		}
 
 		my @tmp_rules = @{ $set_st->{ rules } };
@@ -494,16 +494,16 @@ sub deleteWAFRule
 	# delete a chain from a rule
 	else
 	{
-		if ( $rule_ref->{ modify } eq 'no' )
+		my $rule_ref = $set_st->{ rules }->[$rule_index];
+		if ( $rule_ref->{ modified } eq 'no' )
 		{
 			&addWAFDelRegister( $set, $set_st->{ rules }->{ raw } );
 		}
-		$rule_ref->{ modify } = 'refresh';
+		$rule_ref->{ modified } = 'refresh';
 
 		return 1
-		  if (
-			  !splice ( @{ $set_st->{ rules }->[$rule_index]->{ chain } }, $chain_index, 1 )
-		  );    # error if any item is deleted
+		  if ( !splice ( @{ $rule_ref->{ chain } }, $chain_index, 1 ) )
+		  ;    # error if any item is deleted
 	}
 
 	# save
