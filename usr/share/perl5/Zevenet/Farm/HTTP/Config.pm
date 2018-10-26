@@ -24,9 +24,12 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: setFarmClientTimeout
@@ -41,9 +44,11 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmClientTimeout    # ($client,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $client, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -66,7 +71,8 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 		if ( $filefarmhttp[$i_f] =~ /^Client/ )
 		{
-			&zenlog( "setting 'ClientTimeout $client' for $farm_name farm http", "info", "LSLB" );
+			&zenlog( "setting 'ClientTimeout $client' for $farm_name farm http",
+					 "info", "LSLB" );
 			$filefarmhttp[$i_f] = "Client\t\t $client";
 			$output             = $?;
 			$found              = "true";
@@ -91,9 +97,11 @@ Returns:
 	Integer - Return the seconds for client request timeout or -1 on failure.
 
 =cut
+
 sub getFarmClientTimeout    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -128,9 +136,11 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmSessionType    # ($session,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $session, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -140,7 +150,8 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	my $lock_file = &getLockFile( $farm_name );
 	my $lock_fh = &openlock( $lock_file, 'w' );
 
-	&zenlog( "Setting 'Session type $session' for $farm_name farm http", "info", "LSLB" );
+	&zenlog( "Setting 'Session type $session' for $farm_name farm http",
+			 "info", "LSLB" );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 	my $i     = -1;
 	my $found = "false";
@@ -226,9 +237,11 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $blacklist_time, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -249,8 +262,8 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 		$i_f++;
 		if ( $filefarmhttp[$i_f] =~ /^Alive/ )
 		{
-			&zenlog(
-					"Setting 'Blacklist time $blacklist_time' for $farm_name farm http", "info", "LSLB" );
+			&zenlog( "Setting 'Blacklist time $blacklist_time' for $farm_name farm http",
+					 "info", "LSLB" );
 			$filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
 			$output             = $?;
 			$found              = "true";
@@ -275,16 +288,18 @@ Returns:
 	integer - seconds for check or -1 on failure.
 
 =cut
+
 sub getHTTPFarmBlacklistTime    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $blacklist_time = -1;
 	my $conf_file      = &getFarmFile( $farm_name );
 	my $conf_path      = "$configdir/$conf_file";
 
-	open( my $fh, '<', $conf_path ) or die "Could not open $conf_path: $!";
+	open ( my $fh, '<', $conf_path ) or die "Could not open $conf_path: $!";
 	while ( my $line = <$fh> )
 	{
 		next unless $line =~ /^Alive/i;
@@ -317,9 +332,11 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmHttpVerb    # ($verb,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $verb, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -372,9 +389,11 @@ Returns:
 	integer - return the verb set identier or -1 on failure.
 
 =cut
+
 sub getFarmHttpVerb    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -412,9 +431,11 @@ FIXME
 	not return nothing, use $found variable to return success or error
 
 =cut
+
 sub setFarmListen    # ( $farm_name, $farmlisten )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $flisten ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -536,6 +557,7 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "https" )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/DHParams/;
+
 			#$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
 		}
 
@@ -562,15 +584,18 @@ Returns:
 	none - .
 
 =cut
+
 sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $rewritelocation ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation", "info", "LSLB" );
+	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation",
+			 "info", "LSLB" );
 
 	require Zevenet::Lock;
 	my $lock_file = &getLockFile( $farm_name );
@@ -609,9 +634,11 @@ Returns:
 	scalar - The possible values are: disabled, enabled, enabled-backends or -1 on failure
 
 =cut
+
 sub getFarmRewriteL    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -646,15 +673,18 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmConnTO    # ($tout,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $tout, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm http", "info", "LSLB" );
+	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm http",
+			 "info", "LSLB" );
 
 	require Zevenet::Lock;
 	my $lock_file = &getLockFile( $farm_name );
@@ -695,9 +725,11 @@ Returns:
 	integer - return the connection time out or -1 on failure
 
 =cut
+
 sub getFarmConnTO    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -732,9 +764,11 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $timeout, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -779,9 +813,11 @@ Returns:
 	Integer - Return time out, or -1 on failure.
 
 =cut
+
 sub getHTTPFarmTimeout    # ($farm_filename)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -816,9 +852,11 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $track, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -862,9 +900,11 @@ Returns:
 	Integer - Return maximum time, or -1 on failure.
 
 =cut
+
 sub getHTTPFarmMaxClientTime    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -902,12 +942,14 @@ Returns:
 	array - Return poundctl output
 
 =cut
+
 sub getHTTPFarmGlobalStatus    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
+	my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
 	return `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 }
@@ -926,12 +968,14 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmErr    # ($farm_name,$content,$nerr)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $content, $nerr ) = @_;
 
-	my $output    = -1;
+	my $output = -1;
 
 	&zenlog( "Setting 'Err $nerr' for $farm_name farm http", "info", "LSLB" );
 
@@ -967,10 +1011,12 @@ Returns:
 	Array - Message body for the error
 
 =cut
+
 # Only http function
 sub getFarmErr    # ($farm_name,$nerr)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $nerr ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -996,7 +1042,7 @@ sub getFarmErr    # ($farm_name,$nerr)
 					$output .= $_;
 				}
 				close $fd;
-				chomp ($output);
+				chomp ( $output );
 			}
 		}
 	}
@@ -1016,9 +1062,11 @@ Returns:
 	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
 
 =cut
+
 sub getHTTPFarmBootStatus    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1054,9 +1102,11 @@ Parameters:
 Returns:
 	String - return socket file
 =cut
-sub getHTTPFarmSocket       # ($farm_name)
+
+sub getHTTPFarmSocket    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return "/tmp/" . $farm_name . "_pound.socket";
@@ -1074,9 +1124,11 @@ Returns:
 	Integer - return pid of farm, '-' if pid not exist or -1 on failure
 
 =cut
-sub getHTTPFarmPid        # ($farm_name)
+
+sub getHTTPFarmPid    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $output  = -1;
@@ -1122,9 +1174,11 @@ Returns:
 	Scalar - return vip or port of farm or -1 on failure
 
 =cut
+
 sub getHTTPFarmVip    # ($info,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $info, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1148,8 +1202,8 @@ sub getHTTPFarmVip    # ($info,$farm_name)
 			my @vip  = split ( "\ ", $vip );
 			my @vipp = split ( "\ ", $vipp );
 
-			if ( $info eq "vip" )   { $output = $vip[1]; }
-			if ( $info eq "vipp" )  { $output = $vipp[1]; }
+			if ( $info eq "vip" )  { $output = $vip[1]; }
+			if ( $info eq "vipp" ) { $output = $vipp[1]; }
 		}
 		$i++;
 	}
@@ -1171,9 +1225,11 @@ Returns:
 	Integer - return 0 on success or different on failure
 
 =cut
+
 sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1222,9 +1278,11 @@ Returns:
 	scalar - return 0 on success or different on failure
 
 =cut
+
 sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $pound         = &getGlobalConfiguration( 'pound' );
@@ -1238,7 +1296,7 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	{
 		my $message = $rc ? 'failed' : 'running';
 		&zenlog( "$message: $pound_command", "error", "LSLB" );
-		&zenlog( "output: $run ", "error", "LSLB" );
+		&zenlog( "output: $run ",            "error", "LSLB" );
 	}
 
 	return $rc;
@@ -1259,7 +1317,8 @@ Returns:
 
 sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm_name = shift;
 
 	my $pound         = &getGlobalConfiguration( 'pound' );
@@ -1286,8 +1345,8 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService \"(.+)\"/ )    { $srv = $1; }
-		if ( $file_id == $line_num-1 )
+		if ( $line =~ /^\tService \"(.+)\"/ ) { $srv = $1; }
+		if ( $file_id == $line_num - 1 )
 		{
 			$file_line = $line;
 			last;
@@ -1297,14 +1356,14 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	close $fileconf;
 
-	# examples of error msg
-	#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 36: unknown directive
-	#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 40: SSL_CTX_use_PrivateKey_file failed - aborted
+# examples of error msg
+#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 36: unknown directive
+#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 40: SSL_CTX_use_PrivateKey_file failed - aborted
 	$file_line =~ /\s*([\w-]+)/;
 	my $param = $1;
 
 	# parse line
-	if( $param eq "Cert" )
+	if ( $param eq "Cert" )
 	{
 		# return pem name if the pem file is not correct
 		$file_line =~ /([^\/]+)\"$/;
@@ -1318,18 +1377,19 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	if ( not $msg )
 	{
-		if ( &debug() ) 	{ $msg = $run[-1]; }
-		else 	{ $msg = "Error in the configuration file"; }
+		if   ( &debug() ) { $msg = $run[-1]; }
+		else              { $msg = "Error in the configuration file"; }
 	}
 
-	&zenlog("Error checking config file: $msg",'debug');
+	&zenlog( "Error checking config file: $msg", 'debug' );
 
 	return $msg;
 }
 
-sub get_http_farm_struct
+sub getHTTPFarmStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Core;
@@ -1389,16 +1449,15 @@ sub get_http_farm_struct
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
 
-
 		## Get farm certificate(s)
 		my @cnames;
 
 		if ( $eload )
 		{
 			@cnames = &eload(
-				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-				func   => 'getFarmCertificatesSNI',
-				args   => [$farmname],
+							  module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+							  func   => 'getFarmCertificatesSNI',
+							  args   => [$farmname],
 			);
 		}
 		else
@@ -1413,7 +1472,6 @@ sub get_http_farm_struct
 		{
 			push @cert_list, { file => $cnames[$i], id => $i + 1 };
 		}
-
 
 		## Get cipher set
 		my $ciphers = &getFarmCipherSet( $farmname );
@@ -1432,16 +1490,20 @@ sub get_http_farm_struct
 			$ciphers = "highsecurity";
 		}
 
-
 		## All HTTPS parameters
-		$farm->{ certlist }        = \@cert_list;
-		$farm->{ ciphers }         = $ciphers;
-		$farm->{ cipherc }         = &getFarmCipherList( $farmname );
-		$farm->{ disable_sslv2 }   = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )?   "true": "false";
-		$farm->{ disable_sslv3 }   = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )?   "true": "false";
-		$farm->{ disable_tlsv1 }   = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )?   "true": "false";
-		$farm->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
-		$farm->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
+		$farm->{ certlist } = \@cert_list;
+		$farm->{ ciphers }  = $ciphers;
+		$farm->{ cipherc }  = &getFarmCipherList( $farmname );
+		$farm->{ disable_sslv2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv2" ) ) ? "true" : "false";
+		$farm->{ disable_sslv3 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv3" ) ) ? "true" : "false";
+		$farm->{ disable_tlsv1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1" ) ) ? "true" : "false";
+		$farm->{ disable_tlsv1_1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_1" ) ) ? "true" : "false";
+		$farm->{ disable_tlsv1_2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_2" ) ) ? "true" : "false";
 	}
 
 	return $farm;
@@ -1449,7 +1511,8 @@ sub get_http_farm_struct
 
 sub getHTTPVerbCode
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $verbs_set = shift;
 
 	# Default output value in case of missing verb set
@@ -1477,16 +1540,17 @@ sub getHTTPVerbCode
 
 sub parsePoundConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $file ) = @_;
 
 	my @lines = split /\n/, $file;
 	chomp @lines;
 
-	my @farm_lines     = ();	# block 1
-	my @listener_lines = ();	# block 2
-	my @services_lines = ();	# block 3
-	my $block = 1;
+	my @farm_lines     = ();    # block 1
+	my @listener_lines = ();    # block 2
+	my @services_lines = ();    # block 3
+	my $block          = 1;
 	my $listener;
 
 	# Split config in 3 blocks: farm, listener and services
@@ -1505,33 +1569,57 @@ sub parsePoundConfig
 	}
 
 	# Parse global farm parameters
-	my %conf = map { if (/^(\w+)\s+(\S.+)/ ){ { $1 => $2 } } } @farm_lines;
+	my %conf = map
+	{
+		if ( /^(\w+)\s+(\S.+)/ )
+		{
+			{ $1 => $2 }
+		}
+	} @farm_lines;
 	&cleanHashValues( \%conf );
 	delete $conf{ '' };
 
 	# Parse listener parameters
-	my %listener = map { if (/^\t(\w+)\s+(.+)/ ){ { $1 => $2 } } } @listener_lines;
+	my %listener = map
+	{
+		if ( /^\t(\w+)\s+(.+)/ )
+		{
+			{ $1 => $2 }
+		}
+	} @listener_lines;
 	delete $listener{ '' };
 	&cleanHashValues( \%listener );
 	$listener{ type } = lc $listener;
 
 	# AddHeader
-	my @add_header = map { if (/^\tAddHeader "(.+)"$/ ){ $1 } } grep { /AddHeader/ } @listener_lines;
+	my @add_header = map
+	{
+		if ( /^\tAddHeader "(.+)"$/ ) { $1 }
+	} grep { /AddHeader/ } @listener_lines;
 	$listener{ AddHeader } = \@add_header if scalar @add_header;
 
 	# HeadRemove
-	my @head_remove = map { if (/^\tHeadRemove "(.+)"$/ ){ $1 } } grep { /HeadRemove/ } @listener_lines;
+	my @head_remove = map
+	{
+		if ( /^\tHeadRemove "(.+)"$/ ) { $1 }
+	} grep { /HeadRemove/ } @listener_lines;
 	$listener{ HeadRemove } = \@head_remove if scalar @head_remove;
 
 	## HTTPS
 
 	# Certificates
-	my @certs = map { if (/^\tCert "(.+)"$/ ){ $1 } } grep { /Cert/ }@listener_lines;
+	my @certs = map
+	{
+		if ( /^\tCert "(.+)"$/ ) { $1 }
+	} grep { /Cert/ } @listener_lines;
 	$listener{ Cert } = \@certs if $listener{ type } eq 'https';
 
 	# Disable HTTPS protocols
 	# Warning: Doesn't work without grep
-	my @disable = map { if (/^\tDisable (.*)$/ ){ $1 } } grep { /Disable/ } @listener_lines;
+	my @disable = map
+	{
+		if ( /^\tDisable (.*)$/ ) { $1 }
+	} grep { /Disable/ } @listener_lines;
 	$listener{ Disable } = \@disable if $listener{ type } eq 'https';
 
 	$conf{ listeners }[0] = \%listener;
@@ -1557,7 +1645,13 @@ sub parsePoundConfig
 		if ( $line =~ /^\tEnd$/ )
 		{
 			# Parse service paremeters
-			%$svc_r = map { if (/^\t\t(\S+)\ (\S.+)$/ ){ { $1 => $2 } } } @svc_lines;
+			%$svc_r = map
+			{
+				if ( /^\t\t(\S+)\ (\S.+)$/ )
+				{
+					{ $1 => $2 }
+				}
+			} @svc_lines;
 
 			# Clean up empty parameters.
 			# FIXME: With a better parsing this should not be necessary
@@ -1581,10 +1675,11 @@ sub parsePoundConfig
 			for my $line ( @svc_lines )
 			{
 				# Backends blocks
-				if ( $line =~ /^\t\tBackEnd$/ )             { $bb++; $be_r = {}; next; }
+				if ( $line =~ /^\t\tBackEnd$/ ) { $bb++; $be_r = {}; next; }
 				if ( $line =~ /^\t\t\t(\w+) (.+)$/ && $bb ) { $be_r->{ $1 } = $2; next; }
-				if ( $line =~ /^\t\t\tHTTPS$/ && $bb )      { $be_r->{ 'HTTPS' } = undef; next; }
-				if ( $line =~ /^\t\tEnd$/ && $bb ) {
+				if ( $line =~ /^\t\t\tHTTPS$/ && $bb ) { $be_r->{ 'HTTPS' } = undef; next; }
+				if ( $line =~ /^\t\tEnd$/ && $bb )
+				{
 					$bb = 0;
 					&cleanHashValues( $be_r );
 					push @be, $be_r;
@@ -1592,9 +1687,10 @@ sub parsePoundConfig
 				}
 
 				# Session block
-				if ( $line =~ /^\t\tSession$/ )               { $sb++; $se_r = {}; next; }
+				if ( $line =~ /^\t\tSession$/ ) { $sb++; $se_r = {}; next; }
 				if ( $line =~ /^\t\t\t(\w+) (\S.+)$/ && $sb ) { $se_r->{ $1 } = $2; next; }
-				if ( $line =~ /^\t\tEnd$/ && $sb ) {
+				if ( $line =~ /^\t\tEnd$/ && $sb )
+				{
 					$sb = 0;
 					&cleanHashValues( $se_r );
 					next;
@@ -1634,15 +1730,16 @@ sub parsePoundConfig
 
 sub getPoundConf
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm ) = @_;
 
 	require Zevenet::Config;
 	require Zevenet::System;
 	require Zevenet::Farm::Core;
 
-	my $farmfile = &getFarmFile( $farm );
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $farmfile  = &getFarmFile( $farm );
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	my $file = &slurpFile( "$configdir/$farmfile" );
 
@@ -1662,7 +1759,8 @@ my $svc_defaults = {
 
 sub print_backends
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $be_list ) = @_;
 
 	my $be_list_str = '';
@@ -1670,11 +1768,12 @@ sub print_backends
 	for my $be ( @{ $be_list } )
 	{
 		my $single_be_str = "\t\tBackEnd\n";
-		$single_be_str .= "\t\t\tHTTPS\n" if exists $be->{ HTTPS };
+		$single_be_str .= "\t\t\tHTTPS\n"                    if exists $be->{ HTTPS };
 		$single_be_str .= "\t\t\tAddress $be->{ Address }\n";
 		$single_be_str .= "\t\t\tPort $be->{ Port }\n";
 		$single_be_str .= "\t\t\tTimeOut $be->{ TimeOut }\n" if exists $be->{ TimeOut };
-		$single_be_str .= "\t\t\tPriority $be->{ Priority }\n" if exists $be->{ Priority };
+		$single_be_str .= "\t\t\tPriority $be->{ Priority }\n"
+		  if exists $be->{ Priority };
 		$single_be_str .= "\t\tEnd\n";
 
 		$be_list_str .= $single_be_str;
@@ -1685,7 +1784,8 @@ sub print_backends
 
 sub print_session
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $session_ref ) = @_;
 
 	my $session_str = '';
@@ -1695,7 +1795,8 @@ sub print_session
 		$session_str .= "\t\tSession\n";
 		$session_str .= "\t\t\tType $session_ref->{ Type }\n";
 		$session_str .= "\t\t\tTTL $session_ref->{ TTL }\n";
-		$session_str .= "\t\t\tID \"$session_ref->{ ID }\"\n" if exists $session_ref->{ ID };
+		$session_str .= "\t\t\tID \"$session_ref->{ ID }\"\n"
+		  if exists $session_ref->{ ID };
 		$session_str .= "\t\tEnd\n";
 	}
 	else
@@ -1710,16 +1811,17 @@ sub print_session
 	return $session_str;
 }
 
-
 sub writePoundConfigToString
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $conf ) = @_;
 
-	my $listener = $conf->{listeners}[0];
+	my $listener      = $conf->{ listeners }[0];
 	my $listener_type = uc $listener->{ type };
 
-	my $global_str = qq(######################################################################
+	my $global_str =
+	  qq(######################################################################
 ##GLOBAL OPTIONS
 User		"$conf->{ User }"
 Group		"$conf->{ Group }"
@@ -1742,24 +1844,23 @@ ThreadModel	$conf->{ ThreadModel }
 Control 	"$conf->{ Control }"
 );
 
-if ( $listener_type eq 'HTTP' )
-{
-	$global_str .= qq(#DHParams 	"/usr/local/zevenet/app/pound/etc/dh2048.pem"
+	if ( $listener_type eq 'HTTP' )
+	{
+		$global_str .= qq(#DHParams 	"/usr/local/zevenet/app/pound/etc/dh2048.pem"
 #ECDHCurve	"prime256v1"
 );
-}
-else
-{
-	$global_str .= qq(DHParams 	"$conf->{ DHParams }"
+	}
+	else
+	{
+		$global_str .= qq(DHParams 	"$conf->{ DHParams }"
 ECDHCurve	"$conf->{ ECDHCurve }"
 );
-}
-
+	}
 
 	## Services
 	my $services_print = '';
 
-	for my $svc ( @{ $conf->{listeners}[0]{ services } } )
+	for my $svc ( @{ $conf->{ listeners }[0]{ services } } )
 	{
 		my @item_list = qw(
 		  DynScale
@@ -1785,9 +1886,8 @@ ECDHCurve	"$conf->{ ECDHCurve }"
 			#
 			my $exists = exists $svc->{ $i };
 
-			my $prefix = $exists ? '' : '#';
-			my $value = $exists ? $svc->{ $i } : $svc_defaults->{ $i };
-
+			my $prefix = $exists ? ''           : '#';
+			my $value  = $exists ? $svc->{ $i } : $svc_defaults->{ $i };
 
 			my $i_str;
 
@@ -1802,9 +1902,10 @@ ECDHCurve	"$conf->{ ECDHCurve }"
 			}
 			elsif ( $i eq 'BackendCookie' )
 			{
-				if ( exists $svc->{ 'BackendCookie' } && ref $svc->{ 'BackendCookie' } eq 'HASH' )
+				if ( exists $svc->{ 'BackendCookie' }
+					 && ref $svc->{ 'BackendCookie' } eq 'HASH' )
 				{
-					my $ckie = $svc->{ 'BackendCookie' };
+					my $ckie   = $svc->{ 'BackendCookie' };
 					my $values = qq("$ckie->{name}" "$ckie->{domain}" "$ckie->{path}" $ckie->{age});
 					$i_str = qq(\t\tBackendCookie $values\n);
 				}
@@ -1841,9 +1942,9 @@ Listen${listener_type}
 	RewriteLocation $listener->{ RewriteLocation }
 );
 
-
 	# Include AddHeader params
-	if ( exists $listener->{ AddHeader } && ref $listener->{ AddHeader } eq 'ARRAY' )
+	if ( exists $listener->{ AddHeader }
+		 && ref $listener->{ AddHeader } eq 'ARRAY' )
 	{
 		for my $header ( @{ $listener->{ AddHeader } } )
 		{
@@ -1852,7 +1953,8 @@ Listen${listener_type}
 	}
 
 	# Include HeadRemove params
-	if ( exists $listener->{ HeadRemove } && ref $listener->{ HeadRemove } eq 'ARRAY' )
+	if ( exists $listener->{ HeadRemove }
+		 && ref $listener->{ HeadRemove } eq 'ARRAY' )
 	{
 		for my $header ( @{ $listener->{ HeadRemove } } )
 		{
@@ -1867,7 +1969,8 @@ Listen${listener_type}
 		$listener_str .= qq(\tCert "$_"\n) for @{ $listener->{ Cert } };
 		$listener_str .= qq(\tCiphers "$listener->{ Ciphers }"\n);
 		$listener_str .= qq(\tDisable "$_"\n) for @{ $listener->{ Disable } };
-		$listener_str .= qq(\tSSLHonorCipherOrder "$listener->{ SSLHonorCipherOrder }"\n);
+		$listener_str .=
+		  qq(\tSSLHonorCipherOrder "$listener->{ SSLHonorCipherOrder }"\n);
 	}
 	else
 	{
@@ -1916,10 +2019,10 @@ End
 	return "$global_str\n$listener_str";
 }
 
-
 sub cleanHashValues
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $hash_ref ) = @_;
 
 	for my $key ( keys %{ $hash_ref } )
