@@ -11,9 +11,7 @@
 
 class Network {
  public:
-  inline static char* getPeerAddress(int socket_fd,
-                                     char* buf,
-                                     size_t bufsiz,
+  inline static char* getPeerAddress(int socket_fd, char* buf, size_t bufsiz,
                                      bool include_port = false) {
     int result;
     sockaddr_in adr_inet{};
@@ -47,8 +45,7 @@ class Network {
     hints.ai_flags = AI_CANONNAME;
     if ((ret_val = getaddrinfo(name, NULL, &hints, &chain)) == 0) {
       for (ap = chain; ap != NULL; ap = ap->ai_next)
-        if (ap->ai_socktype == SOCK_STREAM)
-          break;
+        if (ap->ai_socktype == SOCK_STREAM) break;
 
       if (ap == NULL) {
         freeaddrinfo(chain);
@@ -100,10 +97,8 @@ class Network {
   /*
    * Translate inet/inet6 address/port into a string
    */
-  static void addr2str(char* const res,
-                       const int res_len,
-                       const struct addrinfo* addr,
-                       const int no_port) {
+  static void addr2str(char* const res, const int res_len,
+                       const struct addrinfo* addr, const int no_port) {
     char buf[MAXBUF];
     int port;
     void* src;

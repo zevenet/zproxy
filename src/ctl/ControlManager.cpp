@@ -3,9 +3,6 @@
 //
 
 #include "ControlManager.h"
-#include "../http/HttpRequest.h"
-#include "../http/HttpStatus.h"
-#include "../util/environment.h"
 
 #define CTL_DEFAULT_IP "127.0.0.1"
 #define CTL_DEFAULT_PORT 6001
@@ -25,7 +22,7 @@ bool ctl::ControlManager::init(Config &configuration,
   ctl_listener_mode = ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode
                           ? listener_mode
                           : ctl_listener_mode;
-  if (listener_mode == CTL_UNIX) {
+  if (listener_mode == CTL_INTERFACE_MODE::CTL_UNIX) {
     std::string control_path_name(configuration.ctrl_name);
     control_listener.listen(control_path_name);
     if (configuration.ctrl_user)
@@ -125,29 +122,35 @@ ctl::ControlManager *ctl::ControlManager::getInstance() {
 }
 std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   /* https://www.restapitutorial.com/lessons/httpmethods.html */
-
+  /*
+   *PUT: create or replace the object
+    PATCH: set properties of the object
+    POST: perform an operation on the object
+    GET: retrieve the object
+    DELETE: delete the object
+   */
   CtlTask task;
   // get task action
   switch (request.getRequestMethod()) {
     case http::RM_DELETE:
-      task.command = CTL_CMD_DELETE;
+      task.command = CTL_COMMAND::DELETE;
       break;
     case http::RM_POST:
-      task.command = CTL_CMD_ADD;
-      break;
     case http::RM_PUT:
+      task.command = CTL_COMMAND::ADD;
+      break;
     case http::RM_PATCH:
     case http::RM_UPDATE:
-      task.command = CTL_CMD_UPDATE;
+      task.command = CTL_COMMAND::UPDATE;
       break;
     case http::RM_GET:
-      task.command = CTL_CMD_GET;
+      task.command = CTL_COMMAND::GET;
       break;
     case http::RM_SUBSCRIBE:
-      task.command = CTL_CMD_SUSCRIBE;
+      task.command = CTL_COMMAND::SUSCRIBE;
       break;
     case http::RM_UNSUBSCRIBE:
-      task.command = CTL_CMD_UNSUSCRIBE;
+      task.command = CTL_COMMAND::UNSUSCRIBE;
       break;
     default:
       return HttpStatus::getHttpResponse(HttpStatus::Code::MethodNotAllowed, "",
@@ -156,22 +159,21 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
 
   // remove tailing "/"
 
-  if (!setTaskTarget(request, task) && task.target == CTL_NONE) {
+  if (!setTaskTarget(request, task) && task.target == CTL_HANDLER_TYPE::NONE) {
     Debug::logmsg(LOG_WARNING, "Bad API request : %s",
                   request.getUrl().c_str());
     return HttpStatus::getHttpResponse(HttpStatus::Code::BadRequest, "", "");
   }
-  if (task.command == CTL_CMD_ADD || task.command == CTL_CMD_UPDATE) {
-    task.data = std::string(request.buffer + request.headers_length,
-                            request.buffer_size - request.headers_length);
+  if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE) {
+    task.data = std::string(request.message, request.message_length);
   }
 
   auto result = notify(task, false);
-  std::string res = "{";
+  std::string res = "";
   for (auto &future_result : result) {
     res += future_result.get();
   }
-  res += "}";
+  res += "";
 
   auto response = HttpStatus::getHttpResponse(HttpStatus::Code::OK, "", res);
   return response;
@@ -184,7 +186,7 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
   while (getline(f, str, '/') && !done) {
     switch (str[0]) {
       case 'l': {
-        if (str == "listener") {
+        if (str == JSON_KEYS::LISTENER) {
           if (setListenerTarget(task, f)) {
             return true;
           }
@@ -192,7 +194,7 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
         break;
       }
       case 's': {
-        if (str == "service") {
+        if (str == JSON_KEYS::SERVICE) {
           if (setServiceTarget(task, f)) {
             return true;
           }
@@ -200,7 +202,7 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
         break;
       }
       case 'b': {
-        if (str == "backend") {
+        if (str == JSON_KEYS::BACKEND) {
           if (setBackendTarget(task, f)) {
             return true;
           }
@@ -214,18 +216,18 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
 
 bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss) {
   std::string str;
-  task.target = CTL_LISTENER;
+  task.target = CTL_HANDLER_TYPE::LISTENER;
   if (getline(ss, str, '/')) {
     if (!helper::try_lexical_cast<int>(str, task.listener_id)) {
       return false;
     }
     if (getline(ss, str, '/')) {
-      if (str == "service") {
+      if (str == JSON_KEYS::SERVICE || str == JSON_KEYS::SERVICES) {
         return setServiceTarget(task, ss);
-      } else if (str == "config") {
-        task.subject = CTL_SB_CONFIG;
-      } else if (str == "status") {
-        task.subject = CTL_SB_STATUS;
+      } else if (str == JSON_KEYS::CONFIG) {
+        task.subject = CTL_SUBJECT::CONFIG;
+      } else if (str == JSON_KEYS::STATUS) {
+        task.subject = CTL_SUBJECT::STATUS;
       } else {
         return false;
       }
@@ -236,22 +238,22 @@ bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss) {
 
 bool ControlManager::setServiceTarget(CtlTask &task, std::istringstream &ss) {
   std::string str;
-  task.target = CTL_SERVICE_MANAGER;
+  task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
   if (getline(ss, str, '/')) {
     if (!helper::try_lexical_cast<int>(str, task.service_id)) {
       task.service_id = -1;
       task.service_name = str;
     }
-    task.target = CTL_SERVICE;
+    // TODO:: Enable???    task.target = CTL_HANDLER_TYPE::SERVICE;
     if (getline(ss, str, '/')) {
-      if (str == "backend") {
+      if (str == JSON_KEYS::BACKEND) {
         return setBackendTarget(task, ss);
-      } else if (str == "config") {
-        task.subject = CTL_SB_CONFIG;
-      } else if (str == "status") {
-        task.subject = CTL_SB_STATUS;
-      } else if (str == "session") {
-        task.subject = CTL_SB_STATUS;
+      } else if (str == JSON_KEYS::CONFIG) {
+        task.subject = CTL_SUBJECT::CONFIG;
+      } else if (str == JSON_KEYS::STATUS) {
+        task.subject = CTL_SUBJECT::STATUS;
+      } else if (str == JSON_KEYS::SESSION || str == JSON_KEYS::SESSIONS) {
+        task.subject = CTL_SUBJECT::SESSION;
       } else {
         return false;
       }
@@ -262,17 +264,17 @@ bool ControlManager::setServiceTarget(CtlTask &task, std::istringstream &ss) {
 
 bool ControlManager::setBackendTarget(CtlTask &task, std::istringstream &ss) {
   std::string str;
-  task.target = CTL_BACKEND;
+  // TODO:: Enable???   task.target = CTL_HANDLER_TYPE::BACKEND;
   if (getline(ss, str, '/')) {
     if (!helper::try_lexical_cast<int>(str, task.backend_id)) {
       task.backend_id = -1;
       task.backend_name = str;
     }
     if (getline(ss, str, '/')) {
-      if (str == "config") {
-        task.subject = CTL_SB_CONFIG;
-      } else if (str == "status") {
-        task.subject = CTL_SB_STATUS;
+      if (str == JSON_KEYS::CONFIG) {
+        task.subject = CTL_SUBJECT::CONFIG;
+      } else if (str == JSON_KEYS::STATUS) {
+        task.subject = CTL_SUBJECT::STATUS;
       } else {
         return false;
       }

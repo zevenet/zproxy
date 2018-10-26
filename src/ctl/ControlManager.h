@@ -9,12 +9,15 @@
 #include "../connection/connection.h"
 #include "../event/epoll_manager.h"
 #include "../http/HttpRequest.h"
+#include "../http/HttpStatus.h"
+#include "../json/json.h"
+#include "../util/environment.h"
 #include "ctl.h"
 #include "observer.h"
 
 namespace ctl {
 using namespace events;
-
+using namespace json;
 class ControlManager : public EpollManager,
                        public CtlNotify<CtlTask, std::string> {
   static std::unique_ptr<ControlManager> instance;

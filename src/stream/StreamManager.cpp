@@ -226,7 +226,9 @@ void StreamManager::start(int thread_id_) {
 #endif
 }
 
-StreamManager::StreamManager(){};
+StreamManager::StreamManager(){
+    // TODO:: do attach for config changes
+};
 
 StreamManager::~StreamManager() {
   stop();
@@ -687,7 +689,7 @@ validation::REQUEST_RESULT StreamManager::validateRequest(
 
 bool StreamManager::init(ListenerConfig& listener_config) {
   listener_config_ = listener_config;
-  service_manager = ServiceManager::getInstance();
+  service_manager = ServiceManager::getInstance(listener_config);
   //  for (auto service_config = listener_config.services;
   //       service_config != nullptr; service_config = service_config->next) {
   //    if (!service_config->disabled) {

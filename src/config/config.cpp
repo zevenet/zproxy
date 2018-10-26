@@ -350,6 +350,7 @@ ListenerConfig *Config::parse_HTTP() {
       if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
       has_addr = 1;
+      res->address = lin + matches[1].rm_so;
     } else if (!regexec(&Port, lin, 4, matches, 0)) {
       switch (res->addr.ai_family) {
         case AF_INET:memcpy(&in, res->addr.ai_addr, sizeof(in));
@@ -363,6 +364,7 @@ ListenerConfig *Config::parse_HTTP() {
         default:conf_err("Unknown Listener address family");
       }
       has_port = 1;
+      res->port = std::atoi(lin + matches[1].rm_so);
     } else if (!regexec(&xHTTP, lin, 4, matches, 0)) {
       int n;
 

@@ -2,7 +2,6 @@
 
 using namespace sessions;
 
-std::unordered_map<std::string, SessionInfo *> HttpSessionManager::sessions_set;
 std::mutex HttpSessionManager::lock_mtx;
 
 HttpSessionManager::HttpSessionManager() : session_type(SESS_NONE) {}
@@ -106,4 +105,21 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
   }
 
   return nullptr;
+}
+
+json::JsonArray *HttpSessionManager::getSessionsJson() {
+  auto data = new json::JsonArray();
+  for (auto &session : sessions_set) {
+    auto json_data = new json::JsonObject();
+    json_data->emplace(JSON_KEYS::ID,
+                       new json::JsonDataValue(session.first));
+    json_data->emplace(
+        JSON_KEYS::BACKEND_ID,
+        new json::JsonDataValue(session.second->assigned_backend->backend_id));
+
+    json_data->emplace(JSON_KEYS::LAST_SEEN_TS,
+                       new json::JsonDataValue(session.second->getTimeStamp()));
+    data->push_back(json_data);
+  }
+  return data;
 }

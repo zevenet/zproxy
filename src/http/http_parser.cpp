@@ -38,6 +38,8 @@ void http_parser::HttpParser::setBuffer(char *ext_buffer, int buffer_size) {
   buffer = ext_buffer;
 }
 
+char *http_parser::HttpParser::getBuffer() const { return buffer; }
+
 http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
     const std::string &data, size_t *used_bytes, bool reset) {
   return parseRequest(data.c_str(), data.length(), used_bytes, reset);
@@ -46,8 +48,8 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
 http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
     const char *data, const size_t data_size, size_t *used_bytes, bool reset) {
   if (LIKELY(reset)) reset_parser();
-  //  buffer = data;
-  //  buffer_size = data_size;
+  buffer = const_cast<char *>(data);
+  buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);
   auto pret = phr_parse_request(data, data_size, &method, &method_len, &path,
                                 &path_length, &minor_version, headers,
@@ -56,10 +58,13 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
   //  Debug::logmsg(LOG_DEBUG, "request is %d bytes long\n", pret);
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
+    headers_length = pret;
 #if DEBUG_HTTP_PARSER
     printRequest();
 #endif
     http_version = minor_version == 1 ? HTTP_1_1 : HTTP_1_0;
+    message = &buffer[pret];
+    message_length = buffer_size - static_cast<size_t>(pret);
     return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
   } else if (pret == -2) {        /* request is incomplete, continue the loop */
     return PARSE_RESULT::INCOMPLETE;
@@ -73,6 +78,8 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(
 http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(
     const char *data, const size_t data_size, size_t *used_bytes, bool reset) {
   if (LIKELY(reset)) reset_parser();
+  buffer = const_cast<char *>(data);
+  buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);
   auto pret = phr_parse_response(
       data, data_size, &minor_version, &http_status_code, &status_message,
@@ -82,6 +89,8 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
     headers_length = pret;
+    message = &buffer[pret];
+    message_length = buffer_size - static_cast<size_t>(pret);
 #if DEBUG_HTTP_PARSER
     printResponse();
 #endif

@@ -14,9 +14,12 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
   std::vector<Service *> services;
 
  public:
+  ListenerConfig listener_config_;
+
+ public:
   static ServiceManager *instance;
-  static ServiceManager *getInstance();
-  ServiceManager();
+  static ServiceManager *getInstance(ListenerConfig &listener_config);
+  ServiceManager(ListenerConfig &listener_config);
   ~ServiceManager();
   Service *getService(HttpRequest &request);
   bool addService(ServiceConfig &service_config, int id);

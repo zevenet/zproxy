@@ -2,64 +2,47 @@
 // Created by abdess on 10/11/18.
 //
 #pragma once
-#include <vector>
 #include <map>
+#include <vector>
 #include "json.h"
-#include "JsonDataValue.h"
 
 namespace json {
 
-template <typename JsonType>
-class JsonArray : public Json, private std::vector<JsonType> {
-  typedef JsonType T;
-  typedef std::vector<JsonType> vector;
+// template <typename JsonType>
+class JsonArray : public Json, private std::vector<Json *> {
+  //  typedef JsonType T;
+  typedef std::vector<Json *> vector;
+
  public:
   using vector::push_back;
   using vector::operator[];
   using vector::begin;
-  using vector::erase;
   using vector::end;
-//  JsonArray operator=(const JsonArray & ) const;
-  JsonArray() {}
-  virtual ~JsonArray() {}
+  using vector::erase;
 
-  bool isArray() override { return true; }
-  std::string stringify() override {
-    std::string res = "[";
-    for (auto it = this->begin(); it != this->end(); it++) {
-      res += it->stringify();
-      if (it != this->end()) res += ",";
-    }
-    return res + "]";
-  }
+  void freeJson() override;
+  bool isArray() override;
+  std::string stringify(bool prettyfy = false, int tabs = -1) override;
 };
 
-template <typename JsonType>
-class JsonObject : public Json, private std::map<std::string, JsonType> {
+// template <typename JsonType>
+class JsonObject : public Json, private std::map<std::string, Json *> {
+  //  typedef Json T;
+  typedef std::map<std::string, Json *> map;
 
-  typedef Json T;
-  typedef std::map<std::string, JsonType> map;
  public:
-  using map::insert;
   using map::at;
   using map::erase;
+  using map::insert;
   using map::operator[];
   using map::begin;
+  using map::emplace;
+  using map::empty;
   using map::end;
 
-  JsonObject() {}
-  virtual ~JsonObject() {}
-
-  bool isObject() override { return true; }
-  std::string stringify() override {
-    std::string res = "{";
-    for (auto it = this->begin(); it != this->end(); it++) {
-      if (it != this->begin()) res += ",";
-      res += "\"" + it->first +" : "+ it->second.stringify();
-    }
-    return res + "}";
-  }
-
+  bool isObject() override;
+  void freeJson() override;
+  JsonObject *parse(std::string json_string);
+  std::string stringify(bool prettyfy = false, int tabs = -1) override;
 };
-
-}
+}  // namespace json

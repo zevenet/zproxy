@@ -15,8 +15,12 @@ add_library(libzhttp
     json/JsonDataValue.h
     json/JsonDataValue.cpp
     json/JsonDataValueTypes.h
+    json/JsonDataValueTypes.cpp
     json/JsonData.h
     json/JsonData.cpp
+    json/jsonparser.h
+    json/jsonparser.cpp
+    config/config_node.h
     event/epoll_manager.cpp
     event/epoll_manager.h
     connection/connection.cpp

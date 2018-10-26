@@ -7,7 +7,7 @@ project(zhttp LANGUAGES CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe   -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
-#SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/bin")
+SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin/${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_STANDARD 11)
 

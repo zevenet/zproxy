@@ -9,8 +9,11 @@
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
 #include "../http/HttpRequest.h"
+#include "../json/JsonDataValueTypes.h"
 #include "backend.h"
 #include "httpsessionmanager.h"
+
+using namespace json;
 
 class Service : public sessions::HttpSessionManager,
                 public CtlObserver<ctl::CtlTask, std::string> {
@@ -24,6 +27,7 @@ class Service : public sessions::HttpSessionManager,
   std::atomic<bool> disabled;
   int id;
   bool ignore_case;
+  std::string name;
 
   enum LOAD_POLICY {
     LP_ROUND_ROBIN,
@@ -46,4 +50,5 @@ class Service : public sessions::HttpSessionManager,
 
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;
+  JsonObject *getServiceJson();
 };

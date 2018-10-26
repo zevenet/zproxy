@@ -13,24 +13,24 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
       fd == timer_maintenance.getFileDescriptor()) {
     Debug::Log("Doing maintenance", LOG_REMOVE);
     Debug::Log("Session table\n\t\tKey\tbackend", LOG_REMOVE);
-    std::vector<std::string> keys_to_delete;
-    if (!sessions::HttpSessionManager::sessions_set.empty()) {
-      for (auto session : sessions::HttpSessionManager::sessions_set) {
-        if (session.second->hasExpired(10)) {
-          keys_to_delete.push_back(session.first);
-        }
-        Debug::logmsg(LOG_REMOVE, "\t%s\t%s", session.first.c_str(),
-                      session.second->assigned_backend->address.c_str());
-      }
+    //    std::vector<std::string> keys_to_delete;
+    //    if (!sessions::HttpSessionManager::sessions_set.empty()) {
+    //      for (auto session : sessions::HttpSessionManager::sessions_set) {
+    //        if (session.second->hasExpired(10)) {
+    //          keys_to_delete.push_back(session.first);
+    //        }
+    //        Debug::logmsg(LOG_REMOVE, "\t%s\t%s", session.first.c_str(),
+    //                      session.second->assigned_backend->address.c_str());
+    //      }
 
-      for (auto& key : keys_to_delete) {
-        std::lock_guard<std::mutex> locked(
-            sessions::HttpSessionManager::lock_mtx);
-        auto session = sessions::HttpSessionManager::sessions_set.at(key);
-        sessions::HttpSessionManager::sessions_set.erase(key);
-        delete session;
-      }
-    }
+    //      for (auto& key : keys_to_delete) {
+    //        std::lock_guard<std::mutex> locked(
+    //            sessions::HttpSessionManager::lock_mtx);
+    //        auto session = sessions::HttpSessionManager::sessions_set.at(key);
+    //        sessions::HttpSessionManager::sessions_set.erase(key);
+    //        delete session;
+    //      }
+    //    }
     timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
     updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
              EVENT_GROUP::MAINTENANCE);
@@ -74,7 +74,7 @@ std::string Listener::handleTask(ctl::CtlTask& task) {
 }
 
 bool Listener::isHandler(ctl::CtlTask& task) {
-  return task.target != ctl::CTL_LISTENER ? false : true;
+  return task.target != ctl::CTL_HANDLER_TYPE::LISTENER ? false : true;
 }
 
 bool Listener::init(std::string address, int port) {
@@ -117,7 +117,8 @@ void Listener::start() {
   for (auto service_config = listener_config.services;
        service_config != nullptr; service_config = service_config->next) {
     if (!service_config->disabled) {
-      ServiceManager::getInstance()->addService(*service_config, ++service_id);
+      ServiceManager::getInstance(listener_config)
+          ->addService(*service_config, ++service_id);
     } else {
       Debug::Log("Backend " + std::string(service_config->name) +
                      " disabled in config file",

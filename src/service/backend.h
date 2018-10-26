@@ -12,11 +12,15 @@
 #include "../debug/Debug.h"
 #include "../util/utils.h"
 #include "../stats/backend_stats.h"
+#include "../json/JsonDataValue.h"
+#include "../json/JsonDataValueTypes.h"
+#include "../json/jsonparser.h"
 
 enum BACKEND_STATUS {
   NO_BACKEND = -1,  // this should be used for first assigned backends
-  BACKEND_CONNECTED = 0,
-  BACKEND_DISCONECTED,
+  BACKEND_UP = 0,
+  BACKEND_DOWN,
+  BACKEND_DISABLED
 };
 
 enum BACKEND_TYPE {
@@ -26,21 +30,27 @@ enum BACKEND_TYPE {
   CACHE_SYSTEM,
 };
 using namespace Statistics;
+using namespace json;
 
 class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo{
  public:
   Backend();
   ~Backend();
+  BACKEND_STATUS status = NO_BACKEND;
   BACKEND_TYPE backend_type;
   BackendConfig backend_config;
   addrinfo *address_info{};
-  int backen_id{};
+  int backend_id;
+  std::string name;  // TODO::
+  int weight;        // TODO:: set priority
   std::string address;
-  int port{};
+  int port;
   int conn_timeout{};
   int response_timeout{};
-  bool disabled{};
+  //  bool disabled;
 
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;
+
+  JsonObject *getBackendJson();
 };

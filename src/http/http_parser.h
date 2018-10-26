@@ -46,10 +46,8 @@ class HttpParser {
   phr_header headers[50];
   char *buffer;
   size_t buffer_size;
-
-  size_t num_headers;
-
   size_t last_length;
+  size_t num_headers;
 
   int headers_length;
   // request
@@ -63,15 +61,15 @@ class HttpParser {
   int http_status_code;
 
   const char *status_message;
-
+  char *message;
   size_t message_length;
   // headers
   EVENT_TYPE events;
   // TODO::
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
-
   http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
+  char *getBuffer() const;
 };
 }  // namespace http_parser
 #endif  // HTTPPARSER_H

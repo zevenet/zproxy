@@ -43,6 +43,7 @@ add_executable(${PROJECT_NAME}
     t_observer.h
     t_control_manager.h
     t_json.h
+    t_ctlclient.h
     )
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})

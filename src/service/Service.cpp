@@ -7,6 +7,8 @@
 #include <vector>
 #include "Service.h"
 #include "../debug/debug.h"
+#include "../json/JsonDataValueTypes.h"
+#include "../json/jsonparser.h"
 #include "../util/Network.h"
 #include "../util/common.h"
 
@@ -44,20 +46,24 @@ Backend *Service::getBackend(HttpStream &stream) {
 
 void Service::addBackend(BackendConfig *backend_config, std::string address,
                          int port, int backend_id, bool emergency) {
-  auto *config = new Backend();
-  config->address_info = Network::getAddress(address, port);
-  if (config->address_info != nullptr) {
-    config->address = std::move(address);
-    config->port = port;
-    config->backen_id = backend_id;
-    config->conn_timeout = backend_config->conn_to;
-    config->response_timeout = backend_config->rw_timeout;
-    config->backend_type = BACKEND_TYPE::REMOTE;
+  auto *backend = new Backend();
+  backend->address_info = Network::getAddress(address, port);
+  if (backend->address_info != nullptr) {
+    backend->address = std::move(address);
+    backend->port = port;
+    backend->backend_id = backend_id;
+    backend->weight = backend_config->priority;
+    backend->name = "bck_" + std::to_string(backend_id);
+    backend->conn_timeout = backend_config->conn_to;
+    backend->response_timeout = backend_config->rw_timeout;
+    backend->status = backend_config->disabled ? BACKEND_DISABLED : BACKEND_UP;
+    backend->backend_type = BACKEND_TYPE::REMOTE;
     if (emergency)
-      emergency_backend_set.push_back(config);
+      emergency_backend_set.push_back(backend);
     else
-      backend_set.push_back(config);
+      backend_set.push_back(backend);
   } else {
+    delete backend;
     Debug::Log("Backend Configuration not valid ", LOG_NOTICE);
   }
 }
@@ -71,8 +77,11 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
     // Redirect
     auto *config = new Backend();
     config->backend_config = *backend_config;
-    config->backen_id = backend_id;
+    config->backend_id = backend_id;
+    config->weight = backend_config->priority;
+    config->name = "bck_" + backend_id;
     config->conn_timeout = backend_config->conn_to;
+    config->status = backend_config->disabled ? BACKEND_DISABLED : BACKEND_UP;
     config->response_timeout = backend_config->rw_timeout;
     config->backend_type = BACKEND_TYPE::REDIRECT;
     if (emergency)
@@ -84,7 +93,7 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
 
 Service::Service(ServiceConfig &service_config_)
     : service_config(service_config_) {
-  ctl::ControlManager::getInstance()->attach(std::ref(*this));
+  //  ctl::ControlManager::getInstance()->attach(std::ref(*this));
   // session data initialization
   this->session_type =
       static_cast<sessions::HttpSessionType>(service_config_.sess_type);
@@ -143,20 +152,129 @@ bool Service::doMatch(HttpRequest &request) {
   return true;
 }
 
+
 void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER)
 {
   //TODO: DYNSCALE DEPENDING ON BACKENDSTAT PARAMETER
 }
 
-std::string Service::handleTask(ctl::CtlTask &task) {
-  Debug::logmsg(LOG_DEBUG, "Service handling task");
-  switch (task.command) {}
+// TODO:: Add boolean resultado (std::pair<bool[Error?], std::string[Error text
+// | json response] >
 
-  return "{id:0;type:service}";
+std::string Service::handleTask(ctl::CtlTask &task) {
+  if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
+  Debug::logmsg(LOG_REMOVE, "Service %d handling task", id);
+  if (task.backend_id > -1) {
+    for (auto backend : backend_set) {
+      if (backend->isHandler(task)) return backend->handleTask(task);
+    }
+    return JSON_OP_RESULT::ERROR;
+  }
+  switch (task.command) {
+    case ctl::CTL_COMMAND::DELETE: {
+      // TODO:: delete session (by id, backend_id, source_ip), delete backend,
+      // delete config ??
+      JsonObject *json_data = JsonParser::parse(task.data);
+      if (task.subject == ctl::CTL_SUBJECT::SESSION) {
+        if (json_data != nullptr) {
+          return "";
+        }
+      } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
+      } else if (task.subject == ctl::CTL_SUBJECT::CONFIG) {
+      } else
+        return "";
+      break;
+    }
+    case ctl::CTL_COMMAND::ADD: {
+      // TODO::Add new Session!!
+      switch (task.subject) {
+        case ctl::CTL_SUBJECT::SESSION:
+          break;
+        default:
+          break;
+      }
+      break;
+    }
+    case ctl::CTL_COMMAND::GET:
+      switch (task.subject) {
+        case ctl::CTL_SUBJECT::SESSION: {
+          JsonObject response;
+          response.emplace(JSON_KEYS::SESSIONS, getSessionsJson());
+          return response.stringify();
+        }
+        case ctl::CTL_SUBJECT::STATUS: {
+          JsonObject status;
+          status.emplace(
+              JSON_KEYS::STATUS,
+              new JsonDataValue(this->disabled ? JSON_KEYS::STATUS_DOWN
+                                               : JSON_KEYS::STATUS_ACTIVE));
+          return status.stringify();
+        }
+        case ctl::CTL_SUBJECT::BACKEND:
+        default:
+          auto response = std::unique_ptr<JsonObject>(
+              getServiceJson());  // TODO:: importante usar un unique_ptr!!!!!!
+          return response != nullptr ? response->stringify() : "";
+      }
+    case ctl::CTL_COMMAND::UPDATE:
+      switch (task.subject) {
+        case ctl::CTL_SUBJECT::CONFIG:
+          // TODO:: update service config (timeouts, headers, routing policy)
+          break;
+        case ctl::CTL_SUBJECT::SESSION: {
+          // TODO:: update / create new session
+          return getSessionsJson()->stringify();
+        }
+        case ctl::CTL_SUBJECT::STATUS: {
+          std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
+          if (status.get() == nullptr) return "";
+          if (status->at(JSON_KEYS::STATUS)->isValue()) {
+            auto value =
+                static_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS))
+                    ->string_value;
+            if (value == JSON_KEYS::STATUS_ACTIVE ||
+                value == JSON_KEYS::STATUS_UP) {
+              this->disabled = false;
+            } else if (value == JSON_KEYS::STATUS_DOWN) {
+              this->disabled = true;
+            } else if (value == JSON_KEYS::STATUS_DISABLED) {
+              this->disabled = true;
+            }
+            Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", id, value.c_str());
+            return JSON_OP_RESULT::OK;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      break;
+    default:
+      return "{\"result\",\"ok\"}";
+  }
+  return "";
 }
 
 bool Service::isHandler(ctl::CtlTask &task) {
-  return task.target == ctl::CTL_HANDLER_TYPE::CTL_SERVICE;
+  return /*task.target == ctl::CTL_HANDLER_TYPE::SERVICE &&*/
+      (task.service_id == this->id || task.service_id == -1);
+}
+
+JsonObject *Service::getServiceJson() {
+  auto root = new JsonObject();
+  root->emplace(JSON_KEYS::NAME, new JsonDataValue(this->name));
+  root->emplace(JSON_KEYS::ID, new JsonDataValue(this->id));
+  root->emplace(JSON_KEYS::STATUS,
+                new JsonDataValue(this->disabled ? JSON_KEYS::STATUS_DISABLED
+                                                 : JSON_KEYS::STATUS_ACTIVE));
+  auto backends_array = new JsonArray();
+  for (auto backend : backend_set) {
+    auto bck = backend->getBackendJson();
+    backends_array->push_back(bck);
+  }
+  root->emplace(JSON_KEYS::BACKENDS, backends_array);
+  root->emplace(JSON_KEYS::SESSIONS, this->getSessionsJson());
+  return root;
 }
 
 Backend *Service::getNextBackend(bool only_emergency) {
@@ -235,7 +353,7 @@ Backend *Service::getNextBackend(bool only_emergency) {
       static uint64_t seed;
       seed++;
       bck = backend_set[seed % backend_set.size()];
-    } while (bck != nullptr && bck->disabled);
+    } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
     if (bck != nullptr) return bck;
   }
   do {
@@ -243,9 +361,9 @@ Backend *Service::getNextBackend(bool only_emergency) {
     static uint64_t emergency_seed;
     emergency_seed++;
     bck = emergency_backend_set[emergency_seed % backend_set.size()];
-  } while (bck != nullptr && bck->disabled);
+  } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
 }
 
 Service::~Service() {
-  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+  //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }

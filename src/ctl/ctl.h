@@ -8,44 +8,44 @@
 
 namespace ctl {
 
-enum CTL_COMMAND {
-  CTL_CMD_NONE,
-  CTL_CMD_ADD,
-  CTL_CMD_DELETE,
-  CTL_CMD_ENABLE,
-  CTL_CMD_DISABLE,
-  CTL_CMD_UPDATE,
-  CTL_CMD_GET,
-  CTL_CMD_SUSCRIBE,
-  CTL_CMD_UNSUSCRIBE
+enum class CTL_COMMAND {
+  NONE,
+  ADD,
+  DELETE,
+  ENABLE,
+  DISABLE,
+  UPDATE,
+  GET,
+  SUSCRIBE,
+  UNSUSCRIBE
 };
 
-enum CTL_HANDLER_TYPE {
-  CTL_NONE,
-  CTL_LISTENER,
-  CTL_BACKEND,
-  CTL_SERVICE,
-  CTL_SERVICE_MANAGER,
-  CTL_GLOBAL_CONF,
-  CTL_STREAM_MANAGER,
-  CTL_ENVIORONMENT
+enum class CTL_HANDLER_TYPE {
+  NONE,
+  LISTENER,
+  BACKEND,
+  SERVICE,
+  SERVICE_MANAGER,
+  GLOBAL_CONF,
+  STREAM_MANAGER,
+  ENVIORONMENT
 };
 
-enum CTL_SUBJECT {
-  CTL_SB_NONE,
-  CTL_SB_SESSION,
-  CTL_SB_BACKEND,
-  CTL_SB_SERVICE,
-  CTL_SB_LISTENER,
-  CTL_SB_CONFIG,
-  CTL_SB_STATUS,
+enum class CTL_SUBJECT {
+  NONE,
+  SESSION,
+  BACKEND,
+  SERVICE,
+  LISTENER,
+  CONFIG,
+  STATUS,
 };
 
 struct CtlTask {
   HttpRequest* request;
-  CTL_COMMAND command = CTL_CMD_NONE;
-  CTL_HANDLER_TYPE target = CTL_NONE;
-  CTL_SUBJECT subject = CTL_SB_NONE;
+  CTL_COMMAND command = CTL_COMMAND::NONE;
+  CTL_HANDLER_TYPE target = CTL_HANDLER_TYPE::NONE;
+  CTL_SUBJECT subject = CTL_SUBJECT::NONE;
 
   int listener_id = -1;
   int service_id = -1;
@@ -58,9 +58,10 @@ struct CtlTask {
   std::string data;
 };
 
-enum CTL_INTERFACE_MODE {
+enum class CTL_INTERFACE_MODE {
   CTL_UNIX,
   CTL_AF_INET,
+  CTL_NONE,
 };
 
 }  // namespace ctl

@@ -8,7 +8,7 @@
 
 using namespace ctl;
 TEST(ControlManagerTest, ControlManagerTest1) {
+  //ControlManager control_manager;
 
-  ControlManager control_manager;
 
 }

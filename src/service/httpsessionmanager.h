@@ -2,6 +2,7 @@
 #include <chrono>
 #include <string>
 #include "../http/http_stream.h"
+#include "../json/JsonDataValue.h"
 
 using namespace std::chrono;
 
@@ -15,19 +16,30 @@ enum HttpSessionType {
   SESS_HEADER,
   SESS_BASIC
 };
+typedef std::chrono::duration<long double> SessionDurationSeconds;
 
 struct SessionInfo {
-  SessionInfo() : last_seen(steady_clock::now()), assigned_backend(nullptr) {}
-  steady_clock::time_point last_seen;
+  SessionInfo() : last_seen(system_clock::now()), assigned_backend(nullptr) {}
+  system_clock::time_point last_seen;
   Backend *assigned_backend;
   bool hasExpired(unsigned int ttl) {
-    duration<double> time_span =
-        duration_cast<duration<double>>(steady_clock::now() - last_seen);
+    SessionDurationSeconds time_span(system_clock::now() - last_seen);
 
     // check if has not reached ttl
+
     return time_span.count() > ttl;
   }
-  void update() { last_seen = steady_clock::now(); }
+  void update() { last_seen = system_clock::now(); }
+  long getTimeStamp() {
+    return std::chrono::duration_cast<std::chrono::seconds>(
+               last_seen.time_since_epoch())
+        .count();
+  }
+  void setTimeStamp(long seconds_since_epoch_count) {
+    std::chrono::seconds dur(seconds_since_epoch_count);
+    std::chrono::time_point<std::chrono::system_clock> dt(dur);
+    last_seen = dt;
+  }
 };
 
 class HttpSessionManager {
@@ -42,10 +54,10 @@ class HttpSessionManager {
 
  public:
   static std::mutex lock_mtx;
-  static std::unordered_map<std::string, SessionInfo *>
+  std::unordered_map<std::string, SessionInfo *>
       sessions_set;  // key can be anything, deppending on the type of session
   HttpSessionManager();
-  virtual ~HttpSessionManager();  // TODO:: WARNING, multiple derived clasess
+  ~HttpSessionManager();  // TODO:: WARNING, multiple derived clasess
   // may exist, so which one is going to release
   // the map resources!!
   // return the created SessionInfo
@@ -56,6 +68,7 @@ class HttpSessionManager {
   // return the assigned backend or nullptr if no session is found or sesssion
   // has expired
   SessionInfo *getSession(HttpStream &stream, bool update_if_exist = false);
+  json::JsonArray *getSessionsJson();
 };
 
 }  // namespace sessions

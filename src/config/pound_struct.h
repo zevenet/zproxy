@@ -43,7 +43,7 @@ class BackendConfig {
   int be_type; /* 0 if real back-end, otherwise code (301, 302/default, 307) */
   struct addrinfo addr;    /* IPv4/6 address */
   int priority;            /* priority */
-  int rw_timeout;                  /* read/write time-out */
+  int rw_timeout;          /* read/write time-out */
   int conn_to;             /* connection time-out */
   struct addrinfo ha_addr; /* HA address/port */
   char *url;               /* for redirectors */
@@ -91,7 +91,7 @@ class ServiceConfig {
   regex_t sess_pat;   /* pattern to match the session data */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
-  LHASH_OF(TABNODE) *sessions; /* currently active sessions */
+  LHASH_OF(TABNODE) * sessions; /* currently active sessions */
 #else
   LHASH *sessions; /* currently active sessions */
 #endif
@@ -102,7 +102,7 @@ class ServiceConfig {
   int becage;          /* Backend cookie age */
   bool dynscale; /* true if the back-ends should be dynamically rescaled */
   bool disabled; /* true if the service is disabled */
-  int sts;      /* strict transport security */
+  int sts;       /* strict transport security */
   int max_headers_allowed;
   int routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
   ServiceConfig *next;
@@ -119,6 +119,8 @@ typedef struct _pound_ctx {
 /* Listener definition */
 struct ListenerConfig {
   int key_id;
+  std::string address;
+  int port;
   struct addrinfo addr; /* IPv4/6 address */
   int sock;             /* listening socket */
   POUND_CTX *ctx;       /* CTX for SSL connections */
