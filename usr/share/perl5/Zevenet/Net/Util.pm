@@ -42,7 +42,8 @@ See Also:
 # Get List of Vinis or Vlans from an interface
 sub getIfacesFromIf    # ($if_name, $type)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 	my @ifaces;
@@ -93,7 +94,8 @@ See Also:
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
 sub setIfacesUp    # ($if_name,$type)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 
@@ -118,7 +120,8 @@ sub setIfacesUp    # ($if_name,$type)
 
 		if ( $type eq "vini" )
 		{
-			&zenlog( "Virtual interfaces of $if_name have been put up.", "info", "NETWORK" );
+			&zenlog( "Virtual interfaces of $if_name have been put up.", "info",
+					 "NETWORK" );
 		}
 		elsif ( $type eq "vlan" )
 		{
@@ -147,7 +150,8 @@ See Also:
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $pif ) = @_;
 
 	my $if_conf = &getInterfaceConfig( $pif );
@@ -186,7 +190,8 @@ See Also:
 #get a random available port
 sub getRandomPort    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Validate;
 
 	#down limit
@@ -228,7 +233,8 @@ See Also:
 # send gratuitous ARP frames
 sub sendGArp    # ($if,$ip)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $if, $ip ) = @_;
 
 	require Zevenet::Net::Validate;
@@ -250,8 +256,9 @@ sub sendGArp    # ($if,$ip)
 	elsif ( $ip_v == 6 )
 	{
 		my $arpsend_bin = '/usr/sbin/arpsend';
+
 		#~ my $arpsend_bin = &getGlobalConfiguration( 'arping_bin' );
-		my $arping_cmd  = "$arpsend_bin -U -i $ip $iface[0]";
+		my $arping_cmd = "$arpsend_bin -U -i $ip $iface[0]";
 
 		&zenlog( "$arping_cmd", "info", "NETWORK" );
 		system ( "$arping_cmd >/dev/null &" );
@@ -280,7 +287,8 @@ See Also:
 #know if and return ip
 sub iponif    # ($if)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if = shift;
 
 	require IO::Socket;
@@ -319,7 +327,8 @@ See Also:
 # return the mask of an if
 sub maskonif    # ($if)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if = shift;
 
 	require IO::Socket;
@@ -354,7 +363,8 @@ See Also:
 #list ALL IPS UP
 sub listallips    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my @listinterfaces = ();
@@ -386,7 +396,8 @@ See Also:
 # Enable(true) / Disable(false) IP Forwarding
 sub setIpForward    # ($arg)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $arg = shift;
 
 	my $status = -1;
@@ -423,23 +434,29 @@ See Also:
 
 sub getInterfaceOfIp    # ($ip)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ip = shift;
 
 	require Zevenet::Net::Interface;
+	require NetAddr::IP;
 
 	my $ref_addr = NetAddr::IP->new( $ip );
 
 	foreach my $iface ( &getInterfaceList() )
 	{
-		# return interface if found in the list
-		my $if_addr = NetAddr::IP->new( &iponif( $iface ) );
+		# return interface if found in the listç
+		my $if_ip = &iponif( $iface );
+		next if ( !$if_ip );
 
-		return $iface if $if_addr eq $ref_addr;
+		my $if_addr = NetAddr::IP->new( $if_ip );
+
+		return $iface if ( $if_addr eq $ref_addr );
 	}
 
 	# returns an invalid interface name, an undefined variable
-	&zenlog("Warning: No interface was found configured with IP address $ip", "info", "NETWORK" );
+	&zenlog( "Warning: No interface was found configured with IP address $ip",
+			 "info", "NETWORK" );
 
 	return;
 }

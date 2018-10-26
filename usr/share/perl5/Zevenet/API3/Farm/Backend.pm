@@ -29,7 +29,8 @@ use Zevenet::Farm::Core;
 
 sub new_farm_backend    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -66,7 +67,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"Error trying to create a new backend l4xnat in farm $farmname, invalid backend IP value.", "error", "LSLB"
+				"Error trying to create a new backend l4xnat in farm $farmname, invalid backend IP value.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -85,7 +87,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				 || $json_obj->{ port } eq '' )
 		{
 			&zenlog(
-				"Error trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a backend, ir can't be blank.", "error", "LSLB"
+				"Error trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a backend, ir can't be blank.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -134,7 +137,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		#validate MAX_CONNS
 		$json_obj->{ max_conns } = 0 unless exists $json_obj->{ max_conns };
 
-		if ( $json_obj->{ max_conns } !~ /^[0-9]+$/ ) # (0 or higher)
+		if ( $json_obj->{ max_conns } !~ /^[0-9]+$/ )    # (0 or higher)
 		{
 			# Error
 			my $errormsg =
@@ -162,7 +165,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.", "info", "LSLB"
+				"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.",
+				"info", "LSLB"
 			);
 
 			$json_obj->{ port }     += 0 if $json_obj->{ port };
@@ -174,11 +178,11 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			my $body = {
 						 description => $description,
 						 params      => {
-									 id       => $id,
-									 ip       => $json_obj->{ ip },
-									 port     => $json_obj->{ port },
-									 weight   => $json_obj->{ weight },
-									 priority => $json_obj->{ priority },
+									 id        => $id,
+									 ip        => $json_obj->{ ip },
+									 port      => $json_obj->{ port },
+									 weight    => $json_obj->{ weight },
+									 priority  => $json_obj->{ priority },
 									 max_conns => $json_obj->{ max_conns },
 						 },
 						 message => $message,
@@ -218,7 +222,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"Error trying to create a new backend datalink in farm $farmname, invalid backend IP value.", "error", "DSLB"
+				"Error trying to create a new backend datalink in farm $farmname, invalid backend IP value.",
+				"error", "DSLB"
 			);
 
 			# Error
@@ -251,7 +256,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !$valid_interface )
 		{
 			&zenlog(
-				"Error trying to create a new backend in the farm $farmname, invalid interface.", "error", "NETWORK"
+				"Error trying to create a new backend in the farm $farmname, invalid interface.",
+				"error", "NETWORK"
 			);
 
 			my $errormsg =
@@ -270,8 +276,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				 || $json_obj->{ weight } == undef )    # 1 or higher or undef
 		{
 			&zenlog(
-				"Error trying to create a new backend in the farm $farmname, invalid weight.", "error", ""
-			);
+				  "Error trying to create a new backend in the farm $farmname, invalid weight.",
+				  "error", "" );
 
 			my $errormsg = "Invalid weight value, please insert a valid weight value.";
 			my $body = {
@@ -288,7 +294,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				 || $json_obj->{ priority } == undef )    # (1-9)
 		{
 			&zenlog(
-				"Error trying to create a new backend in the farm $farmname, invalid priority.", "error", ""
+				"Error trying to create a new backend in the farm $farmname, invalid priority.",
+				"error", ""
 			);
 
 			my $errormsg = "Invalid priority value, please insert a valid priority value.";
@@ -314,13 +321,16 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.", "info", ""
+				"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.",
+				"info", ""
 			);
 
 			# Success
 			my $message = "Backend added";
-			my $weight = ( $json_obj->{ weight } ne '' ) ? $json_obj->{ weight } + 0 : undef;
-			my $prio = ( $json_obj->{ priority } ne '' ) ? $json_obj->{ priority } + 0 : undef;
+			my $weight =
+			  ( $json_obj->{ weight } ne '' ) ? $json_obj->{ weight } + 0 : undef;
+			my $prio =
+			  ( $json_obj->{ priority } ne '' ) ? $json_obj->{ priority } + 0 : undef;
 
 			my $body = {
 						 description => $description,
@@ -342,7 +352,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-				"Error trying to create a new backend datalink in farm $farmname, it's not possible to create the backend.", "error", "DSLB"
+				"Error trying to create a new backend datalink in farm $farmname, it's not possible to create the backend.",
+				"error", "DSLB"
 			);
 
 			# Error
@@ -378,7 +389,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 sub new_service_backend    # ( $json_obj, $farmname, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $service  = shift;
@@ -436,6 +448,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 		# get an ID
 		require Zevenet::Farm::HTTP::Service;
+		require Zevenet::Farm::HTTP::Backend;
 
 		my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
@@ -444,7 +457,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"Error trying to create a new backend http in service $service in farm $farmname, invalid backend IP value.", "error", "LSLB"
+				"Error trying to create a new backend http in service $service in farm $farmname, invalid backend IP value.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -463,7 +477,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 		{
 			&zenlog(
-				"Error trying to create a new backend http in service $service in farm $farmname, invalid IP address and port for a backend, ir can't be blank.", "error", "LSLB"
+				"Error trying to create a new backend http in service $service in farm $farmname, invalid IP address and port for a backend, ir can't be blank.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -482,7 +497,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				 || $json_obj->{ weight } =~ /^[1-9]$/ )
 		{
 			&zenlog(
-				"Error trying to create a new backend http in service $service in farm $farmname, invalid weight value for a backend, it must be 1-9.", "error", "LSLB"
+				"Error trying to create a new backend http in service $service in farm $farmname, invalid weight value for a backend, it must be 1-9.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -501,8 +517,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 			   || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
 		{
 			&zenlog(
-				"Error trying to modify the backends in a farm $farmname, invalid timeout.", "error", ""
-			);
+					"Error trying to modify the backends in a farm $farmname, invalid timeout.",
+					"error", "" );
 
 			# Error
 			my $errormsg =
@@ -532,7 +548,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", ""
+				"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.",
+				"info", ""
 			);
 
 			# Success
@@ -611,9 +628,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		# validate ALGORITHM
 		unless ( $lb eq 'roundrobin' )
 		{
-			&zenlog(
-				   "Error, this service algorithm does not support adding new backends.", "error", ""
-			);
+			&zenlog( "Error, this service algorithm does not support adding new backends.",
+					 "error", "" );
 
 			# Error
 			my $errormsg = "This service algorithm does not support adding new backends.";
@@ -633,7 +649,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		unless ( &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"Error trying to create a new backend in the service $service of the farm $farmname, invalid IP.", "error", ""
+				"Error trying to create a new backend in the service $service of the farm $farmname, invalid IP.",
+				"error", ""
 			);
 
 			# Error
@@ -656,7 +673,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", ""
+				"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.",
+				"info", ""
 			);
 
 			# Success
@@ -716,7 +734,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 #GET /farms/<name>/backends
 sub backends
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $description = "List backends";
@@ -727,12 +746,12 @@ sub backends
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -763,12 +782,12 @@ sub backends
 		}
 
 		my $body = {
-					description => $description,
-					params      => \@backends,
+					 description => $description,
+					 params      => \@backends,
 		};
 
 		# Success
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	elsif ( $type eq 'datalink' )
 	{
@@ -776,30 +795,32 @@ sub backends
 		my $backends = &getDatalinkFarmBackends( $farmname );
 
 		my $body = {
-					 description => $desc,
+					 description => $description,
 					 params      => $backends,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		# Error
-		my $errormsg = "The farm $farmname with profile $type does not support this request.";
+		my $errormsg =
+		  "The farm $farmname with profile $type does not support this request.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 #GET /farms/<name>/services/<service>/backends
 sub service_backends
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $backendstatus;
@@ -811,12 +832,12 @@ sub service_backends
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -833,21 +854,21 @@ sub service_backends
 			# Error
 			my $errormsg = "The service $service does not exist.";
 			my $body = {
-					description => $description,
-					error => "true",
-					message => $errormsg
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 
 		my $body = {
-					description => $description,
-					params      => $service_ref->{ backends },
+					 description => $description,
+					 params      => $service_ref->{ backends },
 		};
 
 		# Success
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	elsif ( $type eq 'gslb' )
 	{
@@ -864,12 +885,12 @@ sub service_backends
 			# Error
 			my $errormsg = "The service $service does not exist.";
 			my $body = {
-					description => $desc,
-					error => "true",
-					message => $errormsg
+						 description => $desc,
+						 error       => "true",
+						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 
 		my $backends = &getGSLBFarmBackends( $farmname, $service );
@@ -878,27 +899,29 @@ sub service_backends
 					 params      => $backends,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		# Error
-		my $errormsg = "The farm $farmname with profile $type does not support this request.";
+		my $errormsg =
+		  "The farm $farmname with profile $type does not support this request.";
 		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # PUT
 
-sub modify_backends #( $json_obj, $farmname, $id_server )
+sub modify_backends    #( $json_obj, $farmname, $id_server )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $id_server ) = @_;
 
 	my $description = "Modify backend";
@@ -915,7 +938,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $error;
@@ -929,15 +952,15 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		my $l4_farm = &getL4FarmStruct( $farmname );
 		my $backend;
 
-		for my $be ( @{ $l4_farm->{'servers'} } )
+		for my $be ( @{ $l4_farm->{ 'servers' } } )
 		{
-			if ( $be->{'id'} eq $id_server )
+			if ( $be->{ 'id' } eq $id_server )
 			{
 				$backend = $be;
 			}
 		}
 
-		if ( ! $backend )
+		if ( !$backend )
 		{
 			# Error
 			my $errormsg = "Could not find a backend with such id.";
@@ -947,75 +970,83 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$backend->{ vip } = $json_obj->{ ip };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backend in the farm $farmname, invalid IP.";
+				$zapierror =
+				  "Error trying to modify the backend in the farm $farmname, invalid IP.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
-			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } == undef )
+			if (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
+				 || $json_obj->{ port } == undef )
 			{
 				$backend->{ vport } = $json_obj->{ port };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backend in the farm $farmname, invalid port number.";
+				$zapierror =
+				  "Error trying to modify the backend in the farm $farmname, invalid port number.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ /^\d*[1-9]$/ || $json_obj->{ weight } == undef ) # 1 or higher
+			if (    $json_obj->{ weight } =~ /^\d*[1-9]$/
+				 || $json_obj->{ weight } == undef )    # 1 or higher
 			{
 				$backend->{ weight } = $json_obj->{ weight };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid weight.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, invalid weight.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ priority } ) )
 		{
-			if ( $json_obj->{ priority } =~ /^\d$/ || $json_obj->{ priority } == undef ) # (0-9)
+			if (    $json_obj->{ priority } =~ /^\d$/
+				 || $json_obj->{ priority } == undef )    # (0-9)
 			{
 				$backend->{ priority } = $json_obj->{ priority };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid priority.";
+				$zapierror =
+				  "Error trying to modify the backends in the farm $farmname, invalid priority.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ max_conns } ) )
 		{
-			if ( $json_obj->{ max_conns } =~ /^\d+$/ ) # (0 or higher)
+			if ( $json_obj->{ max_conns } =~ /^\d+$/ )    # (0 or higher)
 			{
 				$backend->{ max_conns } = $json_obj->{ max_conns };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the connection limit in the farm $farmname, invalid value.";
+				$zapierror =
+				  "Error trying to modify the connection limit in the farm $farmname, invalid value.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1035,7 +1066,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with ip $json_obj->{ip}.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with ip $json_obj->{ip}.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1060,20 +1092,21 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid IP.";
+				$zapierror =
+				  "Error trying to modify the backends in the farm $farmname, invalid IP.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1086,8 +1119,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 			for my $iface ( @{ &getActiveInterfaceList() } )
 			{
-				next if $iface->{ vini }; # discard virtual interfaces
-				next if !$iface->{ addr }; # discard interfaces without address
+				next if $iface->{ vini };     # discard virtual interfaces
+				next if !$iface->{ addr };    # discard interfaces without address
 
 				if ( $iface->{ name } eq $json_obj->{ interface } )
 				{
@@ -1102,35 +1135,40 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid interface.";
+				$zapierror =
+				  "Error trying to modify the backends in the farm $farmname, invalid interface.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ &getValidFormat('natural_num') || $json_obj->{ weight } == undef ) # 1 or higher
+			if (    $json_obj->{ weight } =~ &getValidFormat( 'natural_num' )
+				 || $json_obj->{ weight } == undef )    # 1 or higher
 			{
 				$be->{ weight } = $json_obj->{ weight };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid weight.";
+				$zapierror =
+				  "Error trying to modify the backends in the farm $farmname, invalid weight.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ priority } ) )
 		{
-			if ( $json_obj->{ priority } =~ /^[1-9]$/ || $json_obj->{ priority } == undef ) # (1-9)
+			if (    $json_obj->{ priority } =~ /^[1-9]$/
+				 || $json_obj->{ priority } == undef )    # (1-9)
 			{
 				$be->{ priority } = $json_obj->{ priority };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid priority.";
+				$zapierror =
+				  "Error trying to modify the backends in the farm $farmname, invalid priority.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1148,7 +1186,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in the farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}.";
+				$zapierror =
+				  "Error trying to modify the backends in the farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1163,14 +1202,15 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# Print params
 	if ( !$error )
 	{
 		&zenlog(
-			"Success, some parameters have been changed in the backend $id_server in farm $farmname.", "info", ""
+			"Success, some parameters have been changed in the backend $id_server in farm $farmname.",
+			"info", ""
 		);
 
 		# Success
@@ -1178,7 +1218,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		my $body = {
 					 description => $description,
 					 params      => $json_obj,
-					 message => $message,
+					 message     => $message,
 		};
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -1187,12 +1227,13 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to modify the backend in the farm $farmname, it's not possible to modify the backend.", "error", ""
+			"Error trying to modify the backend in the farm $farmname, it's not possible to modify the backend.",
+			"error", ""
 		);
 
 		# Error
@@ -1207,13 +1248,14 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
-sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
+sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service, $id_server ) = @_;
 
 	my $description = "Modify service backend";
@@ -1230,7 +1272,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $error;
@@ -1243,7 +1285,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		# validate SERVICE
 		{
-			my @services = &getHTTPFarmServices($farmname);
+			my @services = &getHTTPFarmServices( $farmname );
 			my $found_service = grep { $service eq $_ } @services;
 
 			if ( !$found_service )
@@ -1256,7 +1298,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 							 message     => $errormsg
 				};
 
-				&httpResponse({ code => 404, body => $body });
+				&httpResponse( { code => 404, body => $body } );
 			}
 		}
 
@@ -1264,7 +1306,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		my $be;
 		{
 			my $servers = &getHTTPFarmBackends( $farmname, $service );
-			$be = @{ $servers }[ $id_server ];
+			$be = @{ $servers }[$id_server];
 		}
 
 		# check if the backend was found
@@ -1273,25 +1315,26 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			# Error
 			my $errormsg = "Could not find a service backend with such id.";
 			my $body = {
-						 description => $desc,
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid IP.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, invalid IP.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1307,7 +1350,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid port.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, invalid port.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1321,21 +1365,24 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid weight.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, invalid weight.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
 		if ( !$error && exists ( $json_obj->{ timeout } ) )
 		{
-			if ( $json_obj->{ timeout } eq '' || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
+			if ( $json_obj->{ timeout } eq ''
+				 || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
 			{
 				$be->{ timeout } = $json_obj->{ timeout };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid timeout.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, invalid timeout.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1355,7 +1402,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 			else
@@ -1372,7 +1420,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		{
 			include 'Zevenet::Farm::GSLB::Service';
 
-			my @services = &getGSLBFarmServices($farmname);
+			my @services = &getGSLBFarmServices( $farmname );
 			my $found_service = grep { $service eq $_ } @services;
 
 			if ( !$found_service )
@@ -1385,7 +1433,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 							 message     => $errormsg
 				};
 
-				&httpResponse({ code => 404, body => $body });
+				&httpResponse( { code => 404, body => $body } );
 			}
 		}
 
@@ -1402,7 +1450,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			my $algorithm = &getFarmVS( $farmname, $service, "algorithm" );
 			if ( $algorithm eq 'prio' )
 			{
-				$backend_id = 'primary' if $id_server == 1;
+				$backend_id = 'primary'   if $id_server == 1;
 				$backend_id = 'secondary' if $id_server == 2;
 			}
 
@@ -1437,7 +1485,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 							 message     => $errormsg,
 				};
 
-				&httpResponse({ code => 404, body => $body });
+				&httpResponse( { code => 404, body => $body } );
 			}
 		}
 
@@ -1446,14 +1494,15 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
 			else
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid IP.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, invalid IP.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 		}
@@ -1463,12 +1512,14 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			include 'Zevenet::Farm::GSLB::Backend';
 
 			my $status =
-			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id, $json_obj->{ ip } );
+			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id,
+									  $json_obj->{ ip } );
 
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
+				$zapierror =
+				  "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
 				&zenlog( "$zapierror", "error", "" );
 			}
 			else
@@ -1488,14 +1539,15 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# Print params
 	if ( !$error )
 	{
 		&zenlog(
-			"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.", "info", ""
+			"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.",
+			"info", ""
 		);
 
 		# Success
@@ -1513,12 +1565,13 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			  "There're changes that need to be applied, stop and start farm to apply them!";
 		}
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend.", "error", ""
+			"Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend.",
+			"error", ""
 		);
 
 		# Error
@@ -1533,16 +1586,17 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # DELETE
 
 # DELETE /farms/<farmname>/backends/<backendid> Delete a backend of a Farm
-sub delete_backend # ( $farmname, $id_server )
+sub delete_backend    # ( $farmname, $id_server )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $id_server ) = @_;
 
 	my $description = "Delete backend";
@@ -1558,7 +1612,7 @@ sub delete_backend # ( $farmname, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate FARM TYPE
@@ -1573,10 +1627,10 @@ sub delete_backend # ( $farmname, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
-	my $exists = 0;
+	my $exists   = 0;
 	my $backends = &getFarmServers( $farmname );
 	$exists = @{ $backends }[$id_server];
 
@@ -1590,21 +1644,21 @@ sub delete_backend # ( $farmname, $id_server )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $status = &runFarmServerDelete( $id_server, $farmname );
 
 	if ( $status != -1 )
 	{
-		&zenlog(
-			   "Success, the backend $id_server in farm $farmname has been deleted.", "info", "" );
+		&zenlog( "Success, the backend $id_server in farm $farmname has been deleted.",
+				 "info", "" );
 
 		# Success
 		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
-		#~ my $message = "The backend with ID $id_server of the $farmname farm has been deleted.";
+#~ my $message = "The backend with ID $id_server of the $farmname farm has been deleted.";
 		my $message = "Backend removed";
 
 		my $body = {
@@ -1613,12 +1667,13 @@ sub delete_backend # ( $farmname, $id_server )
 					 message     => $message
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to delete the backend $id_server in farm $farmname, it's not possible to delete the backend.", "error", ""
+			"Error trying to delete the backend $id_server in farm $farmname, it's not possible to delete the backend.",
+			"error", ""
 		);
 
 		# Error
@@ -1630,14 +1685,15 @@ sub delete_backend # ( $farmname, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 #  DELETE /farms/<farmname>/services/<servicename>/backends/<backendid> Delete a backend of a Service
-sub delete_service_backend # ( $farmname, $service, $id_server )
+sub delete_service_backend    # ( $farmname, $service, $id_server )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service, $id_server ) = @_;
 
 	my $description = "Delete service backend";
@@ -1653,7 +1709,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate FARM TYPE
@@ -1668,22 +1724,22 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# validate SERVICE
 	{
 		my @services;
 
-		if ($type eq "gslb")
+		if ( $type eq "gslb" )
 		{
 			include 'Zevenet::Farm::GSLB::Service';
-			@services = &getGSLBFarmServices($farmname);
+			@services = &getGSLBFarmServices( $farmname );
 		}
 		else
 		{
 			require Zevenet::Farm::HTTP::Service;
-			@services = &getHTTPFarmServices($farmname);
+			@services = &getHTTPFarmServices( $farmname );
 		}
 
 		my $found_service = grep { $service eq $_ } @services;
@@ -1698,7 +1754,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 
 		# validate ALGORITHM
@@ -1706,8 +1762,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 		if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'prio' )
 		{
-			&zenlog(
-				 "Error this service algorithm does not support removing backends.", "error", "" );
+			&zenlog( "Error this service algorithm does not support removing backends.",
+					 "error", "" );
 
 			# Error
 			my $errormsg = "This service algorithm does not support removing backends.";
@@ -1717,7 +1773,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		# check if the backend id is available
@@ -1726,23 +1782,23 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 		if ( $type eq "gslb" )
 		{
-			$be_found = grep( /\s*$id_server\s=>\s/, @backends);
+			$be_found = grep ( /\s*$id_server\s=>\s/, @backends );
 		}
 		else
 		{
-			$be_found = grep { (split ( " ", $_ ))[1] == $id_server } @backends;
+			$be_found = grep { ( split ( " ", $_ ) )[1] == $id_server } @backends;
 		}
 
 		unless ( $be_found )
 		{
 			my $errormsg = "Could not find the requested backend.";
 			my $body = {
-						description => $description,
-						error       => "true",
-						message     => $errormsg
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 	}
 
@@ -1762,7 +1818,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	if ( $status != -1 )
 	{
 		&zenlog(
-			"Success, the backend $id_server in service $service in farm $farmname has been deleted.", "info", ""
+			"Success, the backend $id_server in service $service in farm $farmname has been deleted.",
+			"info", ""
 		);
 
 		require Zevenet::Farm::Action;
@@ -1781,24 +1838,25 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 			&setFarmRestart( $farmname );
 		}
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the backend.", "error", ""
+			"Error trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the backend.",
+			"error", ""
 		);
 
 		# Error
 		my $errormsg =
 		  "Could not find the backend with ID $id_server of the $farmname farm.";
 		my $body = {
-			   description => $description,
-			   error   => "true",
-			   message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 }
 

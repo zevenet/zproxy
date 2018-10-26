@@ -24,18 +24,20 @@ use strict;
 
 include 'Zevenet::IPDS::Blacklist::Core';
 include 'Zevenet::IPDS::Blacklist::Config';
+include 'Zevenet::IPDS::Blacklist::Runtime';
 
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Config::Tiny;
 
-	my $description = "Get black lists";
+	my $description    = "Get black lists";
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-	my %bl = %{ Config::Tiny->read( $blacklistsConf ) };
+	my %bl             = %{ Config::Tiny->read( $blacklistsConf ) };
 	my @lists;
-	delete $bl{_};
+	delete $bl{ _ };
 
 	foreach my $list_name ( sort keys %bl )
 	{
@@ -63,7 +65,8 @@ sub get_blacklists_all_lists
 #GET /ipds/blacklists/<listname>
 sub get_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $description = "Get list $listName";
@@ -71,10 +74,9 @@ sub get_blacklists_list
 
 	if ( &getBLExists( $listName ) )
 	{
-		my $listHash = &getBLzapi ( $listName );
+		my $listHash = &getBLzapi( $listName );
 		&httpResponse(
-			  { code => 200, body => { description => $description, params => $listHash } }
-		);
+			{ code => 200, body => { description => $description, params => $listHash } } );
 	}
 	else
 	{
@@ -88,14 +90,15 @@ sub get_blacklists_list
 #  POST /ipds/blacklists
 sub add_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $errormsg;
 	my $listParams;
 	my $listName    = $json_obj->{ 'name' };
 	my $description = "Create a blacklist.";
 
-	my @requiredParams = ( "name", "type" );
+	my @requiredParams = ( "name",   "type" );
 	my @optionalParams = ( "policy", "url" );
 
 	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
@@ -142,8 +145,8 @@ sub add_blacklists_list
 
 			if ( !$errormsg )
 			{
-				$listParams->{ 'type' } = $json_obj->{ 'type' };
-				$listParams->{ 'policy' }     = $json_obj->{ 'policy' }
+				$listParams->{ 'type' }   = $json_obj->{ 'type' };
+				$listParams->{ 'policy' } = $json_obj->{ 'policy' }
 				  if ( exists $json_obj->{ 'policy' } );
 
 				if ( &setBLCreateList( $listName, $listParams ) )
@@ -156,6 +159,7 @@ sub add_blacklists_list
 				{
 					my $listHash = &getBLParam( $listName );
 					delete $listHash->{ 'source' };
+
 					#~ delete $listHash->{ 'preload' };
 					&httpResponse(
 								{
@@ -180,9 +184,10 @@ sub add_blacklists_list
 #  PUT /ipds/blacklists/<listname>
 sub set_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj    = shift;
-	my $listName    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $listName = shift;
 
 	my $description = "Modify list $listName.";
 	my $errormsg;
@@ -197,10 +202,13 @@ sub set_blacklists_list
 	}
 	delete $json_obj->{ 'time' };
 
-	my @allowParams =
-	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
+	my @allowParams = (
+						"policy",         "url",    "source", "name",
+						"minutes",        "hour",   "day",    "frequency",
+						"frequency_type", "period", "unit"
+	);
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "The list '$listName' doesn't exist.";
 		my $body = {
@@ -212,8 +220,9 @@ sub set_blacklists_list
 	}
 	elsif ( &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
-		$errormsg = &getValidOptParams( $json_obj, [ "policy" ] );
-		$errormsg = "In preload lists only is allowed to change the policy" if ( $errormsg );
+		$errormsg = &getValidOptParams( $json_obj, ["policy"] );
+		$errormsg = "In preload lists only is allowed to change the policy"
+		  if ( $errormsg );
 	}
 
 	my $type = &getBLParam( $listName, 'type' );
@@ -237,8 +246,12 @@ sub set_blacklists_list
 			# Cron params and url only is used in remote lists
 			if ( $type ne 'remote' )
 			{
-				if ( grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/ , keys %{ $json_obj } ) )
-				#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" ] ) )
+				if (
+					 grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/,
+							keys %{ $json_obj } )
+				  )
+
+#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" ] ) )
 				{
 					$errormsg = "Error, trying to change a remote list parameter in a local list.";
 				}
@@ -246,7 +259,7 @@ sub set_blacklists_list
 
 			# Sources only is used in local lists
 			if ( exists $json_obj->{ 'sources' }
-					&& $type ne 'local' )
+				 && $type ne 'local' )
 			{
 				$errormsg = "Source parameter only is available in local lists.";
 			}
@@ -255,55 +268,68 @@ sub set_blacklists_list
 			{
 				my $cronFlag;
 
-				# if there is a new update time configuration to remote lists, delete old configuration
-				#checking available configurations
-				if ( grep ( /^(minutes|hour|day|frequency|frequency_type|period|unit)$/ , keys %{ $json_obj } ) )
+		 # if there is a new update time configuration to remote lists, delete old configuration
+		 #checking available configurations
+				if (
+					 grep ( /^(minutes|hour|day|frequency|frequency_type|period|unit)$/,
+							keys %{ $json_obj } )
+				  )
 				{
-					$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
+					$json_obj->{ 'frequency' } ||= &getBLParam( $listName, "frequency" );
 
 					if ( $json_obj->{ 'frequency' } eq 'daily' )
 					{
-						$json_obj->{ 'frequency_type' }	||= &getBLParam ( $listName, "frequency_type" );
+						$json_obj->{ 'frequency_type' } ||= &getBLParam( $listName, "frequency_type" );
 
 						if ( $json_obj->{ 'frequency_type' } eq 'period' )
 						{
-							$json_obj->{ 'period' } =&getBLParam ( $listName, "period" ) if ( ! exists $json_obj->{ 'period' } );
+							$json_obj->{ 'period' } = &getBLParam( $listName, "period" )
+							  if ( !exists $json_obj->{ 'period' } );
 
-							$json_obj->{ 'unit' } 	=&getBLParam ( $listName, "unit" ) if ( ! exists $json_obj->{ 'unit' } );
+							$json_obj->{ 'unit' } = &getBLParam( $listName, "unit" )
+							  if ( !exists $json_obj->{ 'unit' } );
 
 							foreach my $timeParam ( "period", "unit" )
 							{
-								if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
+								if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
+									 || $json_obj->{ $timeParam } eq '' )
 								{
-									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+									$errormsg =
+									  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 									last;
 								}
 							}
 
-							if ( ! $errormsg )
+							if ( !$errormsg )
 							{
-								&delBLParam ( $listName, $_ ) for ( "minutes", "hour", "day" );
+								&delBLParam( $listName, $_ ) for ( "minutes", "hour", "day" );
+
 								# rewrite cron task if exists some of the next keys
 								$cronFlag = 1;
 							}
 						}
 						elsif ( $json_obj->{ 'frequency_type' } eq 'exact' )
 						{
-							$json_obj->{ 'minutes' } =&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } );
-							$json_obj->{ 'hour' } 		=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
+							$json_obj->{ 'minutes' } = &getBLParam( $listName, "minutes" )
+							  if ( !exists $json_obj->{ 'minutes' } );
+							$json_obj->{ 'hour' } = &getBLParam( $listName, "hour" )
+							  if ( !exists $json_obj->{ 'hour' } );
 
 							foreach my $timeParam ( "minutes", "hour" )
 							{
-								if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
+								if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
+									 || $json_obj->{ $timeParam } eq '' )
 								{
-									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+									$errormsg =
+									  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 									last;
 								}
 							}
 
-							if ( ! $errormsg )
+							if ( !$errormsg )
 							{
-								&delBLParam ( $listName, $_ ) for ( "unit", "period", "day" );
+								&delBLParam( $listName, $_ ) for ( "unit", "period", "day" );
+
 								# rewrite cron task if exists some of the next keys
 								$cronFlag = 1;
 							}
@@ -313,57 +339,71 @@ sub set_blacklists_list
 							$errormsg = "It's neccessary indicate frequency type for daily frequency.";
 						}
 					}
-					elsif ( $json_obj->{ 'frequency' } eq 'weekly'  )
+					elsif ( $json_obj->{ 'frequency' } eq 'weekly' )
 					{
-						$json_obj->{ 'minutes' } =&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } );
-						$json_obj->{ 'hour' } 		=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
-						$json_obj->{ 'day' } 		=&getBLParam ( $listName, "day" ) if ( ! exists $json_obj->{ 'day' } );
+						$json_obj->{ 'minutes' } = &getBLParam( $listName, "minutes" )
+						  if ( !exists $json_obj->{ 'minutes' } );
+						$json_obj->{ 'hour' } = &getBLParam( $listName, "hour" )
+						  if ( !exists $json_obj->{ 'hour' } );
+						$json_obj->{ 'day' } = &getBLParam( $listName, "day" )
+						  if ( !exists $json_obj->{ 'day' } );
 
 						foreach my $timeParam ( "minutes", "hour", "day" )
 						{
-							if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
+							if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
+								 || $json_obj->{ $timeParam } eq '' )
 							{
-								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+								$errormsg =
+								  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 								last;
 							}
 						}
 
-						if ( ! &getValidFormat ('weekdays', $json_obj->{ 'day' }) )
+						if ( !&getValidFormat( 'weekdays', $json_obj->{ 'day' } ) )
 						{
-							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
+							$errormsg =
+							  "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
 						}
 
-						if ( ! $errormsg )
+						if ( !$errormsg )
 						{
-							&delBLParam ( $listName, $_ ) for ( "frequency_type", "period", "unit" );
+							&delBLParam( $listName, $_ ) for ( "frequency_type", "period", "unit" );
+
 							# rewrite cron task if exists some of the next keys
 							$cronFlag = 1;
 						}
 					}
 					elsif ( $json_obj->{ 'frequency' } eq 'monthly' )
 					{
-						$json_obj->{ 'minutes' }=&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } );
-						$json_obj->{ 'hour' } 	=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
-						$json_obj->{ 'day' }	=&getBLParam ( $listName, "day" ) + 0 if ( ! exists $json_obj->{ 'day' } );  # number format
+						$json_obj->{ 'minutes' } = &getBLParam( $listName, "minutes" )
+						  if ( !exists $json_obj->{ 'minutes' } );
+						$json_obj->{ 'hour' } = &getBLParam( $listName, "hour" )
+						  if ( !exists $json_obj->{ 'hour' } );
+						$json_obj->{ 'day' } = &getBLParam( $listName, "day" ) + 0
+						  if ( !exists $json_obj->{ 'day' } );    # number format
 
 						# check if exists all paramameters
-						foreach my $timeParam ( "hour","minutes", "day" )
+						foreach my $timeParam ( "hour", "minutes", "day" )
 						{
-							if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
+							if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
+								 || $json_obj->{ $timeParam } eq '' )
 							{
-								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+								$errormsg =
+								  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 								last;
 							}
 						}
 
-						if ( ! &getValidFormat ('day_of_month', $json_obj->{ 'day' }) )
+						if ( !&getValidFormat( 'day_of_month', $json_obj->{ 'day' } ) )
 						{
-							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
+							$errormsg =
+							  "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
 						}
 
-						if ( ! $errormsg )
+						if ( !$errormsg )
 						{
-							&delBLParam ( $listName, $_ ) for ( "unit", "period", "frequency_type" );
+							&delBLParam( $listName, $_ ) for ( "unit", "period", "frequency_type" );
+
 							# rewrite cron task if exists some of the next keys
 							$cronFlag = 1;
 						}
@@ -411,6 +451,7 @@ sub set_blacklists_list
 					{
 						if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
 						{
+							include 'Zevenet::IPDS::Blacklist::Runtime';
 							&setBLCronTask( $listName );
 						}
 
@@ -424,7 +465,7 @@ sub set_blacklists_list
 						include 'Zevenet::Cluster';
 						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
-						&httpResponse({ code => 200, body => $body } );
+						&httpResponse( { code => 200, body => $body } );
 					}
 				}
 			}
@@ -443,13 +484,13 @@ sub set_blacklists_list
 #  DELETE /ipds/blacklists/<listname> Delete a Farm
 sub del_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $listName    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $listName = shift;
 
-	my $description = "Delete list '$listName'",
-	my $errormsg;
+	my $description = "Delete list '$listName'", my $errormsg;
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -459,7 +500,7 @@ sub del_blacklists_list
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( @{ &getBLParam ($listName, 'farms' ) }  )
+	elsif ( @{ &getBLParam( $listName, 'farms' ) } )
 	{
 		$errormsg = "Delete this list from all farms before than delete it.";
 	}
@@ -472,7 +513,7 @@ sub del_blacklists_list
 			$errormsg = "The list $listName has been deleted successful.";
 			my $body = {
 						 description => $description,
-						 success  => "true",
+						 success     => "true",
 						 message     => $errormsg,
 			};
 			&httpResponse( { code => 200, body => $body } );
@@ -495,9 +536,10 @@ sub del_blacklists_list
 # POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
 sub update_remote_blacklists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj    = shift;
-	my $listName    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $listName = shift;
 
 	my $description = "Update a remote list";
 	my $errormsg;
@@ -512,7 +554,7 @@ sub update_remote_blacklists
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getBLParam ( $listName, 'type' ) ne 'remote' )
+	elsif ( &getBLParam( $listName, 'type' ) ne 'remote' )
 	{
 		$errormsg = "Error, only remote lists can be updated.";
 	}
@@ -528,12 +570,13 @@ sub update_remote_blacklists
 				$errormsg = "Error, the action available is 'update'.";
 
 				my $body =
-				{ description => $description, error => "true", message => $errormsg };
+				  { description => $description, error => "true", message => $errormsg };
 
 				&httpResponse( { code => 404, body => $body } );
 			}
 			else
 			{
+				include 'IPDS::Blacklist::Runtime';
 				$errormsg = &setBLDownloadRemoteList( $listName );
 				my $statusUpd = &getBLParam( $listName, 'update_status' );
 
@@ -548,7 +591,8 @@ sub update_remote_blacklists
 					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 					&httpResponse(
-						{ code => 200, body => { description => $description, update => $statusUpd } } );
+						  { code => 200, body => { description => $description, update => $statusUpd } }
+					);
 				}
 				else
 				{
@@ -567,8 +611,9 @@ sub update_remote_blacklists
 #GET /ipds/blacklists/<listname>/sources
 sub get_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $listName    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $listName = shift;
 
 	my $description = "Get $listName sources";
 	my %listHash;
@@ -607,7 +652,8 @@ sub get_blacklists_source
 #  POST /ipds/blacklists/<listname>/sources
 sub add_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $listName = shift;
 
@@ -616,7 +662,7 @@ sub add_blacklists_source
 	my @requiredParams = ( "source" );
 	my @optionalParams;
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -637,21 +683,22 @@ sub add_blacklists_source
 				$errormsg = "It's necessary to introduce a correct source.";
 			}
 			elsif (
-				  grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
+				   grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
 			{
 				$errormsg = "$json_obj->{'source'} already exists in the list.";
 			}
 			else
 			{
-				# ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
+# ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
 				if ( $json_obj->{ 'source' } eq '0.0.0.0/0' )
 				{
-					$errormsg = "Error, the source $json_obj->{'source'} is not valid, for this action, use the list \"All\".";
+					$errormsg =
+					  "Error, the source $json_obj->{'source'} is not valid, for this action, use the list \"All\".";
 
 					my $body = {
-						description => $description,
-						error       => "true",
-						message     => $errormsg,
+								 description => $description,
+								 error       => "true",
+								 message     => $errormsg,
 					};
 
 					&httpResponse( { code => 400, body => $body } );
@@ -703,17 +750,18 @@ sub add_blacklists_source
 #  PUT /ipds/blacklists/<listname>/sources/<id>
 sub set_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj    = shift;
-	my $listName    = shift;
-	my $id          = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $listName = shift;
+	my $id       = shift;
 
 	my $description = "Put source into $listName";
 	my $errormsg;
 	my @allowParams = ( "source" );
 
 	# check list exists
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "$listName not found";
 		my $body = {
@@ -754,8 +802,9 @@ sub set_blacklists_source
 				my $source = &getBLParam( $listName, 'source' );
 				$errormsg = "Source $id has been modified successful.";
 				my $body = {
-							 description => $description, message     => $errormsg,
-							 params      => { "source" => $json_obj->{'source'}, 'id' => $id }
+							 description => $description,
+							 message     => $errormsg,
+							 params      => { "source" => $json_obj->{ 'source' }, 'id' => $id }
 				};
 
 				include 'Zevenet::Cluster';
@@ -776,14 +825,15 @@ sub set_blacklists_source
 #  DELETE /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
 sub del_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 	my $id       = shift;
 
 	my $errormsg;
 	my $description = "Delete source from the list $listName";
 
-	if (! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -837,7 +887,8 @@ sub del_blacklists_source
 #  POST /farms/<farmname>/ipds/blacklists
 sub add_blacklists_to_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmName = shift;
 
@@ -857,7 +908,7 @@ sub add_blacklists_to_farm
 			};
 			&httpResponse( { code => 404, body => $body } );
 		}
-		elsif ( ! &getBLExists( $listName ) )
+		elsif ( !&getBLExists( $listName ) )
 		{
 			$errormsg = "$listName doesn't exist.";
 			my $body = {
@@ -875,14 +926,16 @@ sub add_blacklists_to_farm
 			}
 			else
 			{
+				include 'Zevenet::IPDS::Blacklist::Runtime';
 				$errormsg = &setBLApplyToFarm( $farmName, $listName );
 
 				if ( !$errormsg )
 				{
-					my $errormsg = "Blacklist rule $listName was applied successful to the farm $farmName.";
+					my $errormsg =
+					  "Blacklist rule $listName was applied successful to the farm $farmName.";
 					my $body = {
 								 description => $description,
-								 success      => "true",
+								 success     => "true",
 								 message     => $errormsg
 					};
 
@@ -914,7 +967,8 @@ sub add_blacklists_to_farm
 # DELETE /farms/<farmname>/ipds/blacklists/<listname>
 sub del_blacklists_from_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 	my $listName = shift;
 
@@ -931,7 +985,7 @@ sub del_blacklists_from_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( ! &getBLExists( $listName ) )
+	elsif ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -953,11 +1007,13 @@ sub del_blacklists_from_farm
 	}
 	else
 	{
+		include 'Zevenet::IPDS::Blacklist::Runtime';
 		$errormsg = &setBLRemFromFarm( $farmName, $listName );
 
 		if ( !$errormsg )
 		{
-			$errormsg = "Blacklist rule $listName was removed successful from the farm $farmName.";
+			$errormsg =
+			  "Blacklist rule $listName was removed successful from the farm $farmName.";
 			my $body = {
 						 description => $description,
 						 success     => "true",

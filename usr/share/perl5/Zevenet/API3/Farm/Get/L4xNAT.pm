@@ -38,9 +38,9 @@ sub farms_name_l4    # ( $farmname )
 
 	my $farm_st = &getL4FarmStruct( $farmname );
 
-	if ( $farm_st{ vport } =~ /^\d+$/ )
+	if ( $farm_st->{ vport } =~ /^\d+$/ )
 	{
-		$farm_st{ vport } = $farm_st{ vport } + 0;
+		$farm_st->{ vport } = $farm_st->{ vport } + 0;
 	}
 
 	############ FG
@@ -56,14 +56,14 @@ sub farms_name_l4    # ( $farmname )
 	if ( !$fgcommand )   { $fgcommand   = ""; }
 
 	$out_p = {
-			   status      => $farm_st{ status },
-			   vip         => $farm_st{ vip },
-			   vport       => $farm_st{ vport },
-			   algorithm   => $farm_st{ lbalg },
-			   nattype     => $farm_st{ mode },
-			   persistence => $farm_st{ persist },
-			   protocol    => $farm_st{ vproto },
-			   ttl         => $farm_st{ ttl },
+			   status      => $farm_st->{ status },
+			   vip         => $farm_st->{ vip },
+			   vport       => $farm_st->{ vport },
+			   algorithm   => $farm_st->{ lbalg },
+			   nattype     => $farm_st->{ mode },
+			   persistence => $farm_st->{ persist },
+			   protocol    => $farm_st->{ vproto },
+			   ttl         => $farm_st->{ ttl },
 			   fgenabled   => $fguse,
 			   fgtimecheck => $fgtimecheck + 0,
 			   fgscript    => $fgcommand,
@@ -72,7 +72,7 @@ sub farms_name_l4    # ( $farmname )
 	};
 
 	########### backends
-	my @out_b = $farm_st{ servers };
+	my @out_b = $farm_st->{ servers };
 
 	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );

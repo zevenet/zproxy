@@ -52,6 +52,7 @@ sub farms_name_gslb    # ( $farmname )
 	#
 
 	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::FarmGuardian';
 	my @services = &getGSLBFarmServices( $farmname );
 
 	foreach my $srv_it ( @services )

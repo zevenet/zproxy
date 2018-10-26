@@ -31,6 +31,8 @@ sub farms_name_http    # ( $farmname )
 			 "debug", "PROFILING" );
 	my $farmname = shift;
 
+	require Zevenet::Farm::HTTP::Config;
+
 	my $output_params;
 	my @out_s;
 	my @out_cn;
