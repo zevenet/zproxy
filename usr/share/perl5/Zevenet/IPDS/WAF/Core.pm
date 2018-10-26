@@ -24,27 +24,29 @@
 use strict;
 use Zevenet::Core;
 
-my $configdir = &getGlobalConfiguration( 'configdir' );
-my $wafDir    = $configdir . "/ipds/waf";
-my $wafSetDir = $configdir . "/ipds/waf/sets";
-my $wafConf   = $configdir . "/ipds/waf/waf.conf";
+my $configdir   = &getGlobalConfiguration( 'configdir' );
+my $wafDir      = $configdir . "/ipds/waf";
+my $wafSetDir   = $configdir . "/ipds/waf/sets";
+my $deleted_reg = $configdir . "/ipds/waf/delreg";
 
 =begin nd
-Function: getWAFFile
+Function: getWAFDelRegisterFile
 
-	?????
+	Returns the path of the delete register for a set.
 
 Parameters:
-	None - .
+	Set - Set name
 
 Returns:
-	String - Returns a message with a description about the file is bad-formed. It will return a blank string if the file is well-formed.
+	String - The path of the file or undef on failure.
 
 =cut
 
-sub getWAFFile
+sub getWAFDelRegisterFile
 {
-	return $wafConf;
+	my $set  = shift;
+	my $file = "$deleted_reg/${set}.conf";
+	return ( -f $file ) ? $file : undef;
 }
 
 =begin nd

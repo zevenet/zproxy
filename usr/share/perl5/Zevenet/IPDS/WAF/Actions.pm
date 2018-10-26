@@ -56,123 +56,121 @@ sub initWAFModule
 my $preload_sets = "/usr/local/zevenet/config/ipds/waf/preload_sets.conf";
 
 sub listWAFSetPreload { }
-??
-  ? ??
-	  ? ?? sub addWAFSetPreload { }
-	sub delWAFSetPreload { }
 
-	#~ eliminar set del paquete:
-	#~ - si no se esta usando
-	#~ - directiva en fichero conf que no coincida con share
+#??? ??
+sub addWAFSetPreload { }
+sub delWAFSetPreload { }
 
-	#~ añadir set del paquete:
-	#~ - añadir configuracion
+#~ eliminar set del paquete:
+#~ - si no se esta usando
+#~ - directiva en fichero conf que no coincida con share
 
-	#~ modificar set del paquete:
+#~ añadir set del paquete:
+#~ - añadir configuracion
 
-	sub migrateWAF
-	  {
-		  my $pkg_dir = "/usr/local/zevenet/share/waf";
-		  my $err     = 0;
+#~ modificar set del paquete:
 
-		  use File::Copy qw(copy);
+sub migrateWAF
+{
+	my $pkg_dir = "/usr/local/zevenet/share/waf";
+	my $err     = 0;
 
-		  # deleting deprecated sets
-		  foreach my $set ( &listWAFSetPreload() )
-		  {
-			  # do not to delete it if it is in the package
-			  next if ( grep ( "^$pkg_dir/${set}\.conf$", ) );
+	use File::Copy qw(copy);
 
-			  # Delete it only if it is not used by any farm
-			  next if ( &listWAFBySet( $set ) );
+	# deleting deprecated sets
+	foreach my $set ( &listWAFSetPreload() )
+	{
+		# do not to delete it if it is in the package
+		next if ( grep ( "^$pkg_dir/${set}\.conf$", ) );
 
-			  # delete it
-			  $err = &deleteWAFSet( $set );
+		# Delete it only if it is not used by any farm
+		next if ( &listWAFBySet( $set ) );
+
+		# delete it
+		$err = &deleteWAFSet( $set );
 
 # delete it from the register log. Only add and delete entries in Preload file the migration process
-			  $err = &delWAFSetPreload( $set );
+		$err = &delWAFSetPreload( $set );
 
-			  &zenlog( "The WAF set $setname has been deleted properly", 'info', 'waf' );
-		  }
-		  return $err if $err;
+		&zenlog( "The WAF set $setname has been deleted properly", 'info', 'waf' );
+	}
+	return $err if $err;
 
-		  # add and modify the sets
-		  foreach my $pre_set ( &getWAFSetPreload() )
-		  {
-			  # get data of the test
-			  my $setname = "";
-			  if ( $setname =~ /([\w-]+).conf$/ )
-			  {
-				  $setname = $1;
-			  }
-			  else
-			  {
-				  &zenlog( "Set name does not correct", "debug", "WAF" );
-				  next;
-			  }
+	# add and modify the sets
+	foreach my $pre_set ( &getWAFSetPreload() )
+	{
+		# get data of the test
+		my $setname = "";
+		if ( $setname =~ /([\w-]+).conf$/ )
+		{
+			$setname = $1;
+		}
+		else
+		{
+			&zenlog( "Set name does not correct", "debug", "WAF" );
+			next;
+		}
 
-			  my $set_file = &getWAFSetFile( $setname );
+		my $set_file = &getWAFSetFile( $setname );
 
-			  # load the current set
-			  my $cur_set;
-			  $cur_set = &getWAFSet( $setname ) if ( -f $set_file );
+		# load the current set
+		my $cur_set;
+		$cur_set = &getWAFSet( $setname ) if ( -f $set_file );
 
-			  # copy template to the config directory, overwritting the set
-			  copy $pre_set, $set_file;
+		# copy template to the config directory, overwritting the set
+		copy $pre_set, $set_file;
 
-			  # if set already exists, migrate the configuration
-			  if ( defined $cur_set )
-			  {
-				  # open the new created set
-				  $new_set = &getWAFSet( $setname );
+		# if set already exists, migrate the configuration
+		if ( defined $cur_set )
+		{
+			# open the new created set
+			$new_set = &getWAFSet( $setname );
 
-				  # delete the deleted rules
-				  ??
-					? ??
+			# delete the deleted rules
+			??
+			  ? ??
 
-					# add the configuration
-					$new_set->{ configuration } = $cur_set->{ configuration };
+			  # add the configuration
+			  $new_set->{ configuration } = $cur_set->{ configuration };
 
-				  # add the rules are been created by de user and move it of position
-				  my $ind   = 0;
-				  my @rules = @{ $cur_set->{ rules } };
-				  foreach my $rule ( @rules )
-				  {
-					  if ( $rule->{ modified } eq 'yes' )
-					  {
-						  push @{ $new_set->{ rules } }, $rule;
-						  &moveByIndex( $new_set->{ rules }, $#rules, $ind );
-					  }
-					  $ind++;
-				  }
-
-				  # save set
-				  $err = &buildWAFSet( $new_set );
-
-				  &zenlog( "The WAF set $setname has been updated properly", 'info', 'waf' );
-			  }
-			  else
-			  {
-				  # log the new set in the register to know is a preloaded set
-				  $err = &addWAFSetPreload( $set );
-				  &zenlog( "The WAF set $setname has been created properly", 'info', 'waf' );
-			  }
-		  }
-
-		  return $err;
-		      ??
-			? ??
-				? ??
-					? controlar;
-			  }
-
-			  sub getWAFSetPreload
+			# add the rules are been created by de user and move it of position
+			my $ind   = 0;
+			my @rules = @{ $cur_set->{ rules } };
+			foreach my $rule ( @rules )
+			{
+				if ( $rule->{ modified } eq 'yes' )
 				{
-					opendir my $dir, $preload_path;
-					my @files = readdir $dir;
-					closedir $dir
+					push @{ $new_set->{ rules } }, $rule;
+					&moveByIndex( $new_set->{ rules }, $#rules, $ind );
+				}
+				$ind++;
+			}
 
-					  return @files;
-			  }
+			# save set
+			$err = &buildWAFSet( $new_set );
 
-			  1;
+			&zenlog( "The WAF set $setname has been updated properly", 'info', 'waf' );
+		}
+		else
+		{
+			# log the new set in the register to know is a preloaded set
+			$err = &addWAFSetPreload( $set );
+			&zenlog( "The WAF set $setname has been created properly", 'info', 'waf' );
+		}
+	}
+
+	return $err;
+
+	# ???? controlar;
+}
+
+sub getWAFSetPreload
+{
+	opendir my $dir, $preload_path;
+	my @files = readdir $dir;
+	closedir $dir
+
+	  return @files;
+}
+
+1;

@@ -28,28 +28,32 @@ use Zevenet::Lock;
 include 'Zevenet::IPDS::WAF::Core';
 include 'Zevenet::IPDS::WAF::Parser';
 
-my $deleted_reg = "/usr/local/zevenet/config/ipds/waf/deleted";
+=begin nd
+Function: addWAFDelRegister
 
-??
-  ? ? mandar el campo modified true cuando la regla sea modificada por la api. y chains tb.   para< los batch NO,
-	???? al modificar una sentencia añadirla al registro si es la primera vez que se modifica
+	Add a new entry in the delete register.
+	The delete register is a register to note the rule has been modified, moved or deleted by the user.
+	If a rule is moved or modified it is deleted from the set in the migration process, and it is added a
+	new rule with the new configuration.
 
-sub getWAFDelRegisterFile
-{
-	my $set = shift;
-	my $file = "$deleted_reg/${set}.conf";
-	return ( -f $file ) ? $file : undef;
-}
+Parameters:
+	Set - Name of the rule
+	Chain - Rule string
+
+Returns:
+	Integer - Return 0 on success or another value on failure
+
+=cut
 
 sub addWAFDelRegister
 {
-	my $set = shift;
+	my $set   = shift;
 	my $chain = shift;
-	my $err=0;
-	my $file = &getWAFDelRegisterFile($set);
+	my $err   = 0;
+	my $file  = &getWAFDelRegisterFile( $set );
 	my $fh;
 
-	if ( ! -f $file )
+	if ( !-f $file )
 	{
 		$fh = &openlock( $file, 'w' );
 	}
@@ -60,26 +64,39 @@ sub addWAFDelRegister
 	print $fh $chain;
 	close $fh;
 
-	&zenlog("Error registering deleting rule of set $set and rule \"$chain\"","error",'waf') if $error;
+	&zenlog( "Error registering deleting rule of set $set and rule \"$chain\"",
+			 "error", 'waf' )
+	  if $error;
 
 	return $err;
 }
 
+=begin nd
+Function: checkWAFDelRegister
+
+	Check if a rule is added in the delete register
+
+Parameters:
+	Set - Name of the rule
+	Chain - Rule string
+
+Returns:
+	Integer - Return 0 if the rule is not in the register or another value if the rule has been found
+
+=cut
 
 sub checkWAFDelRegister
 {
-	my $set = shift;
+	my $set   = shift;
 	my $chain = shift;
-	my $flag=0;
-	my $file = &getWAFDelRegisterFile($set);
-	my $fh = &openlock( $file, 'r' );
-	my $flag = grep ( /^$chain$/, <$fh> );
+	my $flag  = 0;
+	my $file  = &getWAFDelRegisterFile( $set );
+	my $fh    = &openlock( $file, 'r' );
+	my $flag  = grep ( /^$chain$/, <$fh> );
 	close $fh;
 
 	return $flag;
 }
-
-
 
 =begin nd
 Function: genWAFRuleId
@@ -144,16 +161,20 @@ sub setWAFRule
 	my $rule_ref = shift;
 	my $rule;
 
-	if ( ref $rule_ref eq 'HASH' )
-	{
-	}
-	else
+	if ( ref $rule_ref ne 'HASH' )
 	{
 		$rule_ref = &parseWAFRule( $rule_ref );
 	}
 
 	# not to check syntax if the rule has chains
 	my $set_st = &getWAFSet( $set );
+
+	if ( $rule_ref->{ modify } eq 'no' )
+	{
+		&addWAFDelRegister( $set, $rule_ref->{ raw } );
+	}
+	$rule_ref->{ modify } = 'refresh';
+
 	$set_st->{ rules }->[$id] = $rule_ref;
 	my $err_msg = &buildWAFSet( $set, $set_st );
 
@@ -247,8 +268,9 @@ sub setWAFSetRaw
 
 	# parse and get only the rules, not the global conf
 	my $set_new_st = &parseWAFBatch( \@set_raw );
+
 	# add mark to specify that the rule was modified by the user
-	foreach my $ru (@{ $set_new_st })
+	foreach my $ru ( @{ $set_new_st } )
 	{
 		$ru->{ modified } = 'yes';
 	}
@@ -257,6 +279,11 @@ sub setWAFSetRaw
 	my $set_st = &getWAFSet( $set );
 	if ( defined $position )
 	{
+		if ( $set_st->{ rules }->[$id]->{ modified } eq 'no' )
+		{
+			&addWAFDelRegister( $set, $set_st->{ rules }->[$id]->{ raw } );
+		}
+
 		my @tmp_rules = @{ $set_st->{ rules } };
 		splice @tmp_rules, $position, 1, @{ $set_new_st };
 		$set_st->{ rules } = \@tmp_rules;
@@ -385,6 +412,7 @@ sub copyWAFSet
 	my $set_st = &getWAFSet( $dstSet );
 	foreach my $rule ( @{ $set_st->{ rules } } )
 	{
+		## ?????? cambiar el id mediante expresion regular
 		$rule->{ id } = &genWAFRuleId();
 	}
 	&buildWAFSet( $dstSet, $set_st );
@@ -466,10 +494,16 @@ sub deleteWAFRule
 	# delete a chain from a rule
 	else
 	{
+		if ( $rule_ref->{ modify } eq 'no' )
+		{
+			&addWAFDelRegister( $set, $set_st->{ rules }->{ raw } );
+		}
+		$rule_ref->{ modify } = 'refresh';
+
 		return 1
 		  if (
 			  !splice ( @{ $set_st->{ rules }->[$rule_index]->{ chain } }, $chain_index, 1 )
-		  );                    # error if any item is deleted
+		  );    # error if any item is deleted
 	}
 
 	# save
@@ -504,7 +538,7 @@ sub deleteWAFSet
 	}
 
 	$err = unlink &getWAFSetFile( $set );
-	unlink &getWAFDelRegisterFile($set);
+	unlink &getWAFDelRegisterFile( $set );
 
 	return $err;
 }
@@ -533,6 +567,7 @@ sub getWAFRuleLast
 Function: moveWAFRule
 
 	It moves a rule to another position. It is used the rule index and the desired position.
+	If the rule is without modify, add a new entry in the delete register.
 
 Parameters:
 	Set - It is the name of the set.
@@ -555,9 +590,11 @@ sub moveWAFRule
 	my $err    = 0;
 	my $set_st = &getWAFSet( $set );
 
-?????? add to delete register  if ()
-
-	$set_st->{ rules }->[$id]->{modified} = 'yes';
+	if ( $set_st->{ rules }->[$id]->{ modified } eq 'no' )
+	{
+		&addWAFDelRegister( $set, $set_st->{ rules }->[$id]->{ raw } );
+		$set_st->{ rules }->[$id]->{ modified } = 'yes';
+	}
 
 	&moveByIndex( $set_st->{ rules }, $id => $pos );
 
