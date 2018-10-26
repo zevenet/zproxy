@@ -40,7 +40,8 @@ Returns:
 
 sub startL4Farm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm_name = shift;
 	require Zevenet::Farm::Core;
 
@@ -52,20 +53,20 @@ sub startL4Farm    # ($farm_name)
 	  if &debug;
 
 	$status = &startNLBFarm( $farm_name );
-	if ( $status <= 0 ) {
+	if ( $status <= 0 )
+	{
 		return $status;
 	}
 
-#	# prio only apply rules to one server
-#	if ( $server_prio && $$farm{ lbalg } eq 'prio' )
-#	{
-#		system ( "echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream" );
-#		system ( "echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout" );
-#	}
+  #	# prio only apply rules to one server
+  #	if ( $server_prio && $$farm{ lbalg } eq 'prio' )
+  #	{
+  #		system ( "echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream" );
+  #		system ( "echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout" );
+  #	}
 
 	# Enable IP forwarding
 	&setIpForward( 'true' );
-
 
 	return $status;
 }
@@ -85,30 +86,31 @@ Returns:
 
 sub stopL4Farm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-
 
 	require Zevenet::Farm::Core;
 
 	&zlog( "Stopping farm $farm_name" ) if &debug > 2;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status;       # output
+	my $status;    # output
 
 	# Disable active l4xnat file
 	my $pid = &getNLBPid();
-	if ( $pid <= 0 ) {
+	if ( $pid <= 0 )
+	{
 		return 0;
 	}
 
 	&stopNLBFarm( $farm_name );
 
 	# Reload conntrack modules
-#	if ( $$farm{ vproto } =~ /sip|ftp/ )
-#	{
-#		&loadL4Modules( $$farm{ vproto } );
-#	}
+	#	if ( $$farm{ vproto } =~ /sip|ftp/ )
+	#	{
+	#		&loadL4Modules( $$farm{ vproto } );
+	#	}
 
 	return $status;
 }
@@ -129,20 +131,20 @@ Returns:
 
 sub setL4NewFarmName    # ($farm_name, $new_farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $farm_name		= shift;
-	my $new_farm_name	= shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farm_name     = shift;
+	my $new_farm_name = shift;
+	my $output        = 0;
 
-	my $out = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
-	if ( $out == 0 )
-	{
-		#rename "${farm_name}_l4xnat.cfg", "${new_farm_name}_l4xnat.cfg";
-		unlink "$farm_name\_l4xnat.cfg";
-	}
+	require Tie::File;
 
-	return $out;
+	my $output = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
+
+	unlink "$configdir\/${farm_name}_l4xnat.cfg";
+
+	return $output;
 }
-
 
 =begin nd
 Function: startNLB
@@ -158,20 +160,22 @@ Returns:
 
 =cut
 
-sub startNLB		# ()
+sub startNLB    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $piddir = &getGlobalConfiguration( 'piddir' );
-	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
-	my $pidof = &getGlobalConfiguration( 'pidof' );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $piddir     = &getGlobalConfiguration( 'piddir' );
+	my $nftlbd     = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
+	my $pidof      = &getGlobalConfiguration( 'pidof' );
 	my $nlbpidfile = "$piddir/nftlb.pid";
-	my $nlbpid = &getNLBPid( );
+	my $nlbpid     = &getNLBPid();
 
 	if ( $nlbpid eq "-1" )
 	{
 		&logAndRun( "$nftlbd start" );
 		$nlbpid = `$pidof nftlb`;
-		if ( $nlbpid eq "") {
+		if ( $nlbpid eq "" )
+		{
 			return -1;
 		}
 
@@ -182,7 +186,6 @@ sub startNLB		# ()
 
 	return $nlbpid;
 }
-
 
 =begin nd
 Function: stopNLB
@@ -197,15 +200,16 @@ Returns:
 
 =cut
 
-sub stopNLB		# ()
+sub stopNLB    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
-	my $piddir = &getGlobalConfiguration( 'piddir' );
-	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
-	my $pidof = &getGlobalConfiguration( 'pidof' );
+	my $piddir     = &getGlobalConfiguration( 'piddir' );
+	my $nftlbd     = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
+	my $pidof      = &getGlobalConfiguration( 'pidof' );
 	my $nlbpidfile = "$piddir/nftlb.pid";
-	my $nlbpid = &getNLBPid( );
+	my $nlbpid     = &getNLBPid();
 
 	if ( $nlbpid ne "-1" )
 	{
@@ -228,9 +232,10 @@ Returns:
 
 =cut
 
-sub loadNLBFarm		# ($farm_name)
+sub loadNLBFarm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -238,9 +243,17 @@ sub loadNLBFarm		# ($farm_name)
 
 	my $farmfile = &getFarmFile( $farm_name );
 
-	return -1 if ( ! -e "$configdir/$farmfile" );
+	return -1 if ( !-e "$configdir/$farmfile" );
 
-	my $out = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farmfile", method => "POST", uri => "/farms", body =>  qq(\@$configdir/$farmfile)  } );
+	my $out = &httpNLBRequest(
+							   {
+								 farm       => $farm_name,
+								 configfile => "$configdir/$farmfile",
+								 method     => "POST",
+								 uri        => "/farms",
+								 body       => qq(\@$configdir/$farmfile)
+							   }
+	);
 
 	return $out;
 }
@@ -258,9 +271,10 @@ Returns:
 
 =cut
 
-sub startNLBFarm		# ($farm_name)
+sub startNLBFarm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -290,11 +304,11 @@ Returns:
 
 =cut
 
-sub stopNLBFarm		# ($farm_name)
+sub stopNLBFarm    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-
 
 	require Zevenet::Farm::Core;
 
@@ -320,13 +334,15 @@ Returns:
 
 sub getNLBPid
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-	my $piddir = &getGlobalConfiguration( 'piddir' );
-	my $nlbpidfile = "$piddir/nftlb.pid";
-	my $nlbpid = -1;
+	my $piddir        = &getGlobalConfiguration( 'piddir' );
+	my $nlbpidfile    = "$piddir/nftlb.pid";
+	my $nlbpid        = -1;
 
-	if ( ! -f "$nlbpidfile" ) {
+	if ( !-f "$nlbpidfile" )
+	{
 		return -1;
 	}
 
@@ -334,12 +350,12 @@ sub getNLBPid
 	$nlbpid = <$fd>;
 	close $fd;
 
-	if ( $nlbpid eq "") {
+	if ( $nlbpid eq "" )
+	{
 		return -1;
 	}
-	
+
 	return $nlbpid;
 }
-
 
 1;

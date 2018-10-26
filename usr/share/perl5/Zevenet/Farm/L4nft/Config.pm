@@ -25,7 +25,6 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-
 =begin nd
 Function: getL4FarmParam
 
@@ -52,9 +51,9 @@ Returns:
 
 sub getL4FarmParam    # ($param, $farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $param, $farm_name ) = @_;
-
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
@@ -62,21 +61,21 @@ sub getL4FarmParam    # ($param, $farm_name)
 	if ( $param eq "status" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
-		my $nlbpid = &getNLBPid( );
-		if ( $nlbpid eq "-1" ) {
+		my $nlbpid = &getNLBPid();
+		if ( $nlbpid eq "-1" )
+		{
 			return "down";
 		}
 	}
 
 	open my $fd, '<', "$configdir/$farm_filename";
-	chomp(my @content = <$fd>);
+	chomp ( my @content = <$fd> );
 	close $fd;
 
 	$output = &_getL4ParseFarmConfig( $param, undef, \@content );
 
 	return $output;
 }
-
 
 =begin nd
 Function: setL4FarmParam
@@ -106,49 +105,62 @@ Returns:
 
 sub setL4FarmParam    # ($param, $value, $farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $param, $value, $farm_name ) = @_;
 
-	my $farm_filename	= &getFarmFile( $farm_name );
-	my $output		= -1;
-	my $srvparam		= "";
-	my $addition		= "";
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $srvparam      = "";
+	my $addition      = "";
+	my $farm_req      = $farm_name;
 
 	if ( $param eq "name" )
 	{
-		$srvparam = "newname";
-		$farm_filename	= &getFarmFile( $value );
-	} elsif ( $param eq "family" )
+		$srvparam      = "newname";
+		$farm_filename = "${value}_l4xnat.cfg";
+		$farm_req      = $value;
+	}
+	elsif ( $param eq "family" )
 	{
 		$srvparam = $param;
-	} elsif ( $param eq "mode" )
+	}
+	elsif ( $param eq "mode" )
 	{
 		$srvparam = $param;
 		$value = "snat" if ( $value eq "nat" );
-	} elsif ( $param eq "vip" )
+	}
+	elsif ( $param eq "vip" )
 	{
 		$srvparam = "virtual-addr";
-	} elsif ( $param eq "vipp" )
+	}
+	elsif ( $param eq "vipp" )
 	{
 		$srvparam = "virtual-ports";
 		$value =~ s/\:/\-/g, $value;
-	} elsif ( $param eq "alg" )
+	}
+	elsif ( $param eq "alg" )
 	{
 		$srvparam = "scheduler";
-	} elsif ( $param eq "proto" )
+	}
+	elsif ( $param eq "proto" )
 	{
 		$srvparam = "protocol";
-		$addition=qq( , "vport" : "" ) if ( $value eq "all" );
-	} elsif ( $param eq "status" )
+		$addition = qq( , "vport" : "" ) if ( $value eq "all" );
+	}
+	elsif ( $param eq "status" )
 	{
 		$srvparam = "state";
-	} elsif ( $param =~ /persist/ )
+	}
+	elsif ( $param =~ /persist/ )
 	{
-		return 0; # TODO
-	} elsif ( $param eq "logs" )
+		return 0;    # TODO
+	}
+	elsif ( $param eq "logs" )
 	{
-		return 0; # TODO
-	} else
+		return 0;    # TODO
+	}
+	else
 	{
 		return -1;
 	}
@@ -164,11 +176,19 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 		}
 	}
 
-	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$configdir/$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value"$addition } ] })  } );
+	$output = &httpNLBRequest(
+		{
+		   farm       => $farm_req,
+		   configfile => "$configdir/$farm_filename",
+		   method     => "PUT",
+		   uri        => "/farms",
+		   body =>
+			 qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value"$addition } ] })
+		}
+	);
 
 	return $output;
 }
-
 
 =begin nd
 Function: _getL4ParseFarmConfig
@@ -187,53 +207,62 @@ Returns:
 
 sub _getL4ParseFarmConfig    # ($param, $value, $config)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $param, $value, $config )	= @_;
-	my $output		= -1;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $param, $value, $config ) = @_;
+	my $output = -1;
 
-
-	if ( $param eq 'persist' || $param eq 'persisttm' ) {
+	if ( $param eq 'persist' || $param eq 'persisttm' )
+	{
 		$output = "none";
 		return $output;
 	}
 
-	foreach my $line( @{ $config } )
+	foreach my $line ( @{ $config } )
 	{
-		if ( $line =~ /\"family\"/ && $param eq 'family' ) {
+		if ( $line =~ /\"family\"/ && $param eq 'family' )
+		{
 			my @l = split /"/, $line;
 			$output = $l[3];
 		}
 
-		if ( $line =~ /\"virtual-addr\"/ && $param eq 'vip' ) {
+		if ( $line =~ /\"virtual-addr\"/ && $param eq 'vip' )
+		{
 			my @l = split /"/, $line;
 			$output = $l[3];
 		}
 
-		if ( $line =~ /\"virtual-ports\"/ && $param eq 'vipp' ) {
+		if ( $line =~ /\"virtual-ports\"/ && $param eq 'vipp' )
+		{
 			my @l = split /"/, $line;
 			$output = $l[3];
 		}
 
-		if ( $line =~ /\"mode\"/ && $param eq 'mode' ) {
+		if ( $line =~ /\"mode\"/ && $param eq 'mode' )
+		{
 			my @l = split /"/, $line;
 			$output = $l[3];
 		}
 
-		if ( $line =~ /\"protocol\"/ && $param eq 'proto' ) {
+		if ( $line =~ /\"protocol\"/ && $param eq 'proto' )
+		{
 			my @l = split /"/, $line;
 			$output = $l[3];
 		}
 
-		if ( $line =~ /\"scheduler\"/ && $param eq 'alg' ) {
+		if ( $line =~ /\"scheduler\"/ && $param eq 'alg' )
+		{
 			my @l = split /"/, $line;
 			$output = $l[3];
 		}
 
-		if ( $param eq 'logs' ) {
-			$output = "false"; # TODO
+		if ( $param eq 'logs' )
+		{
+			$output = "false";    # TODO
 		}
 
-		if ( $line =~ /\"state\"/ && $param =~ /status/ ) {
+		if ( $line =~ /\"state\"/ && $param =~ /status/ )
+		{
 			my @l = split /"/, $line;
 			if ( $l[3] ne "up" )
 			{
@@ -245,7 +274,8 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			}
 		}
 
-		if ( $output ne "-1" ) {
+		if ( $output ne "-1" )
+		{
 			$line =~ s/$output/$value/r if $value != undef;
 			return $output;
 		}
@@ -254,7 +284,6 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 
 	return $output;
 }
-
 
 =begin nd
 Function: getL4FarmStruct
@@ -273,7 +302,8 @@ Returns:
 
 sub getL4FarmStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my %farm;    # declare output hash
 
 	$farm{ name } = shift;    # input: farm name
@@ -283,18 +313,18 @@ sub getL4FarmStruct
 	$farm{ filename } = &getFarmFile( $farm{ name } );
 	my $config = &getL4FarmPlainInfo( $farm{ name } );
 
-	$farm{ nattype }  = &_getL4ParseFarmConfig( 'mode', undef, $config );
-	$farm{ mode }     = $farm{ nattype };
-	$farm{ lbalg }    = &_getL4ParseFarmConfig( 'alg', undef, $config );
-	$farm{ vip }      = &_getL4ParseFarmConfig( 'vip', undef, $config );
-	$farm{ vport }    = &_getL4ParseFarmConfig( 'vipp', undef, $config );
-	$farm{ vproto }   = &_getL4ParseFarmConfig( 'proto', undef, $config );
-	$farm{ persist }  = &_getL4ParseFarmConfig( 'persist', undef, $config );
-	$farm{ ttl }      = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
-	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
-	$farm{ status }   = &_getL4ParseFarmConfig( 'status', undef, $config );
-	$farm{ logs }     = &_getL4ParseFarmConfig( 'logs', undef, $config );
-	$farm{ servers }  = &_getL4FarmParseServers( $config );
+	$farm{ nattype } = &_getL4ParseFarmConfig( 'mode', undef, $config );
+	$farm{ mode }    = $farm{ nattype };
+	$farm{ lbalg }   = &_getL4ParseFarmConfig( 'alg', undef, $config );
+	$farm{ vip }     = &_getL4ParseFarmConfig( 'vip', undef, $config );
+	$farm{ vport }   = &_getL4ParseFarmConfig( 'vipp', undef, $config );
+	$farm{ vproto }  = &_getL4ParseFarmConfig( 'proto', undef, $config );
+	$farm{ persist } = &_getL4ParseFarmConfig( 'persist', undef, $config );
+	$farm{ ttl }     = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
+	$farm{ proto }   = &getL4ProtocolTransportLayer( $farm{ vproto } );
+	$farm{ status }  = &_getL4ParseFarmConfig( 'status', undef, $config );
+	$farm{ logs }    = &_getL4ParseFarmConfig( 'logs', undef, $config );
+	$farm{ servers } = &_getL4FarmParseServers( $config );
 
 	# replace port * for all the range
 	if ( $farm{ vport } eq '*' )
@@ -310,7 +340,6 @@ sub getL4FarmStruct
 	return \%farm;    # return a hash reference
 }
 
-
 =begin nd
 Function: getL4FarmPlainInfo
 
@@ -324,15 +353,16 @@ Returns:
 
 =cut
 
-sub getL4FarmPlainInfo		# ($farm_name)
+sub getL4FarmPlainInfo    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	open my $fd, '<', "$configdir/$farm_filename";
-	chomp(my @content = <$fd>);
+	chomp ( my @content = <$fd> );
 	close $fd;
 
 	return \@content;
@@ -351,25 +381,28 @@ Returns:
 
 =cut
 
-sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, %headers, $body )
+sub httpNLBRequest # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, %headers, $body )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $self = shift;
-	my $curl_cmd = `which curl`; #TODO
-	my $output = -1;
-	my $body = "";
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $self     = shift;
+	my $curl_cmd = `which curl`;    #TODO
+	my $output   = -1;
+	my $body     = "";
 
 	require Zevenet::Farm::L4xNAT::Action;
 
 	my $pid = &startNLB();
-	if ( $pid <= 0 ) {
+	if ( $pid <= 0 )
+	{
 		return -1;
 	}
 
-	chomp($curl_cmd);
+	chomp ( $curl_cmd );
 
 	$body = qq(-d'$self->{ body }') if ( $self->{ body } );
-	my $execmd = qq($curl_cmd -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
+	my $execmd =
+	  qq($curl_cmd -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
 	&zenlog( "Executing nftlb: " . "$execmd" );
 	`$execmd`;
@@ -385,7 +418,8 @@ sub httpNLBRequest    # ( \%hash ) hash_keys->( $farm, $configfile, $method, $ur
 		return $output;
 	}
 
-	my $execmd = "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm }";
+	my $execmd =
+	  "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm }";
 	if ( $self->{ method } eq "PUT" )
 	{
 		$execmd = $execmd . " > '$self->{ configfile }'";
@@ -417,7 +451,8 @@ Returns:
 
 sub getL4FarmsPorts    # ($protocol)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $protocol = shift;
 
 	my $port_list       = "";
@@ -430,8 +465,8 @@ sub getL4FarmsPorts    # ($protocol)
 
 	foreach my $farm_filename ( @farms_filenames )
 	{
-		my $farm_name     = &getFarmName( $farm_filename );
-		my $farm_type     = &getFarmType( $farm_name );
+		my $farm_name = &getFarmName( $farm_filename );
+		my $farm_type = &getFarmType( $farm_name );
 
 		next if not ( $farm_type eq "l4xnat" );
 
@@ -472,7 +507,8 @@ FIXME:
 
 sub loadL4Modules    # ($protocol)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $protocol = shift;
 
 	require Zevenet::Netfilter;
@@ -530,7 +566,8 @@ Returns:
 
 sub validL4ExtPort    # ($farm_protocol,$ports)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_protocol, $ports ) = @_;
 
 	my $status = 0;
@@ -562,7 +599,8 @@ Returns:
 
 sub getFarmPortList    # ($fvipp)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $fvipp = shift;
 
 	my @portlist = split ( ',', $fvipp );
@@ -610,7 +648,8 @@ Returns:
 
 sub getL4ProtocolTransportLayer
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $vproto = shift;
 
 	return
@@ -618,7 +657,6 @@ sub getL4ProtocolTransportLayer
 	  : ( $vproto eq 'ftp' )      ? 'tcp'
 	  :                             $vproto;
 }
-
 
 =begin nd
 Function: doL4FarmProbability
@@ -635,7 +673,8 @@ Returns:
 
 sub doL4FarmProbability
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = shift;    # input: farm reference
 
 	$$farm{ prob } = 0;
@@ -654,9 +693,10 @@ sub doL4FarmProbability
 # TODO: Obsolete. Eliminate callers.
 sub reloadL4FarmsSNAT
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-        require Zevenet::Farm::Core;
-        require Zevenet::Farm::Base;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
 }
 
 1;
