@@ -320,7 +320,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );
 
-	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+	my $fg_enabled = ( &getFarmGuardianConf( $$prev_farm{ name } ) )[3];
 	my $fg_pid;
 
 	if ( $$prev_farm{ status } eq 'up' )
@@ -354,7 +354,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	require Zevenet::Netfilter;
 	&renameMarks( $farm_name, $new_farm_name );
 
-	$farm = &getL4FarmStruct( $new_farm_name );
+	my $farm       = &getL4FarmStruct( $new_farm_name );
 	my $apply_farm = $farm;
 	$apply_farm = $prev_farm if $$farm{ lbalg } eq 'prio';
 
