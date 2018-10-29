@@ -13,6 +13,7 @@ namespace Statistics {
   };
 
   class BackendInfo {
+  protected:
     std::chrono::steady_clock::time_point current_time;
     double max_response_time;
     double avg_response_time;

@@ -47,7 +47,7 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
 
 std::string ServiceManager::handleTask(ctl::CtlTask &task) {
   if (!this->isHandler(task)) return "";
-  Debug::logmsg(LOG_DEBUG, "Service Manager handling task");
+//  Debug::logmsg(LOG_DEBUG, "Service Manager handling task");
   if (task.service_id > -1) {
     for (auto service : services) {
       if (service->isHandler(task)) return service->handleTask(task);

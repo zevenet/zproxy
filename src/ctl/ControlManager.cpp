@@ -87,7 +87,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
         connection.closeConnection();
         return;
       }
-      Debug::logmsg(LOG_INFO, "CTL API Request: %s", connection.buffer);
+      Debug::logmsg(LOG_DEBUG, "CTL API Request: %s", connection.buffer);
 
       std::string response = handleCommand(request);
 

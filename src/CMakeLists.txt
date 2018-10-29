@@ -41,6 +41,8 @@ add_library(libzhttp
     config/config.cpp
     config/config.h
     config/pound_struct.h
+    stats/backend_stats.h
+    stats/backend_stats.cpp
     config/svc.h
     config/svc.cpp
     http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp

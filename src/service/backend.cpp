@@ -10,7 +10,7 @@ Backend::~Backend() {
 
 std::string Backend::handleTask(ctl::CtlTask& task) {
   if (!isHandler(task)) return "";
-  Debug::logmsg(LOG_REMOVE, "Backend %d handling task", backend_id);
+//  Debug::logmsg(LOG_REMOVE, "Backend %d handling task", backend_id);
   if (task.command == ctl::CTL_COMMAND::GET) {
     switch (task.subject) {
       case ctl::CTL_SUBJECT::STATUS: {
@@ -104,10 +104,10 @@ JsonObject* Backend::getBackendJson() {
       root->emplace(JSON_KEYS::STATUS, new JsonDataValue(JSON_KEYS::UNKNOWN));
       break;
   }
-  root->emplace(JSON_KEYS::CONNECTIONS, new JsonDataValue(0));
-  root->emplace(JSON_KEYS::PENDING_CONNS, new JsonDataValue(0));
-  root->emplace(JSON_KEYS::RESPONSE_TIME, new JsonDataValue(0));
-  root->emplace(JSON_KEYS::CONNECT_TIME, new JsonDataValue(0));
+  root->emplace(JSON_KEYS::CONNECTIONS, new JsonDataValue(this->established_conn));
+  root->emplace(JSON_KEYS::PENDING_CONNS, new JsonDataValue(this->pending_connections));
+  root->emplace(JSON_KEYS::RESPONSE_TIME, new JsonDataValue(this->avg_response_time));
+  root->emplace(JSON_KEYS::CONNECT_TIME, new JsonDataValue(this->avg_conn_time));
 
   return root;
 }

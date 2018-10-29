@@ -163,7 +163,7 @@ void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER)
 
 std::string Service::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
-  Debug::logmsg(LOG_REMOVE, "Service %d handling task", id);
+//  Debug::logmsg(LOG_REMOVE, "Service %d handling task", id);
   if (task.backend_id > -1) {
     for (auto backend : backend_set) {
       if (backend->isHandler(task)) return backend->handleTask(task);
