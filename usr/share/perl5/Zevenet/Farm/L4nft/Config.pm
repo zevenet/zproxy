@@ -158,7 +158,9 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	}
 	elsif ( $param eq "logs" )
 	{
-		return 0;    # TODO
+		$srvparam = "log";
+		$value    = "input" if ( $value eq "true" );
+		$value    = "none" if ( $value eq "false" );
 	}
 	else
 	{
@@ -236,6 +238,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		{
 			my @l = split /"/, $line;
 			$output = $l[3];
+			$output =~ s/-/:/g;
 		}
 
 		if ( $line =~ /\"mode\"/ && $param eq 'mode' )
@@ -256,9 +259,11 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			$output = $l[3];
 		}
 
-		if ( $param eq 'logs' )
+		if ( $line =~ /\"log\"/ && $param eq 'logs' )
 		{
-			$output = "false";    # TODO
+			my @l = split /"/, $line;
+			$output = "false";
+			$output = "true" if ( $l[3] ne "none" );
 		}
 
 		if ( $line =~ /\"state\"/ && $param =~ /status/ )
