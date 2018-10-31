@@ -42,7 +42,7 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
     auto new_session = new SessionInfo();
     new_session->assigned_backend = &backend_to_assign;
     std::lock_guard<std::mutex> locker(lock_mtx);
-    sessions_set.insert({key, new_session});
+    sessions_set.emplace(std::make_pair(key, new_session));
     return new_session;
   }
   return nullptr;
@@ -73,9 +73,9 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
       session_key = stream.client_connection.getPeerAddress();
       // TODO::This must change !! no try catch !!!
       // sessions_set[ip_address];
-      try {
-        session = this->sessions_set.at(session_key);
-      } catch (std::exception ex) {
+      if(sessions_set.count(session_key) > 0){
+        session = this->sessions_set[session_key];
+      } else{
         Debug::logmsg(LOG_REMOVE, "Something went wrong with the set");
         return nullptr;
       }

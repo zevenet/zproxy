@@ -15,7 +15,12 @@ json::JsonDataValue::JsonDataValue(const std::string &value) {
   setValue(value);
 }
 json::JsonDataValue::JsonDataValue(const char *value) { setValue(value); }
-json::JsonDataValue::JsonDataValue(int value) {
+
+json::JsonDataValue::JsonDataValue(int value)
+{
+    setValue(static_cast<long>(value));
+}
+json::JsonDataValue::JsonDataValue(unsigned int value) {
   setValue(static_cast<long>(value));
 }
 json::JsonDataValue::JsonDataValue(double value) { setValue(value); }

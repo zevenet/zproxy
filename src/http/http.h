@@ -1,6 +1,9 @@
 //
 // Created by abdess on 5/9/18.
 //
+
+//TODO:: Conver to struct with static members
+
 #pragma once
 /*//TODO::HTTPHEADER
  *

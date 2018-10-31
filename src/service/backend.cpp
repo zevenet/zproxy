@@ -35,19 +35,27 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
         }
         return status.stringify();
       }
+      case ctl::CTL_SUBJECT::WEIGHT:{
+        JsonObject weight;
+        weight.emplace(JSON_KEYS::WEIGHT,
+                       new JsonDataValue(this->weight));
+        return weight.stringify();
+      }
       default:
         std::unique_ptr<JsonObject> status(this->getBackendJson());
         if (status.get() != nullptr) return status->stringify();
         return JSON_OP_RESULT::ERROR;
     }
   } else if (task.command == ctl::CTL_COMMAND::UPDATE) {
+      std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
+      if (status.get() == nullptr) return JSON_OP_RESULT::ERROR;
     switch (task.subject) {
       case ctl::CTL_SUBJECT::CONFIG:
         // TODO:: update  config (timeouts, headers)
         break;
       case ctl::CTL_SUBJECT::STATUS: {
-        std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
-        if (status.get() == nullptr) return JSON_OP_RESULT::ERROR;
+
+
         if (status->at(JSON_KEYS::STATUS)->isValue()) {
           auto value =
               static_cast<JsonDataValue*>(status->at(JSON_KEYS::STATUS))
@@ -62,10 +70,21 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
           }
           Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", backend_id,
                         value.c_str());
+          //TODO:: Cut mode?
           return JSON_OP_RESULT::OK;
         }
         break;
       }
+    case ctl::CTL_SUBJECT::WEIGHT:{
+        if (status->at(JSON_KEYS::WEIGHT)->isValue()) {
+          auto value =
+              static_cast<JsonDataValue*>(status->at(JSON_KEYS::WEIGHT))
+                  ->number_value;
+          this->weight = value;
+          return JSON_OP_RESULT::OK;}
+        return JSON_OP_RESULT::ERROR;
+        break;
+    }
       default:
         break;
     }

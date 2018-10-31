@@ -26,6 +26,7 @@ bool TimerFd::unset() {
   }
   itimerspec timer_spec{{0, 0}, {0, 0}};
   ::timerfd_settime(timer_fd_, 0, &timer_spec, nullptr);
+  is_set = false;
   return true;
 }
 
@@ -47,6 +48,7 @@ bool TimerFd::set(int timeout_ms, bool one_shot) {
     //    throw std::system_error(errno, std::system_category());
     return false;
   }
+ is_set = true;
   return true;
 }
 

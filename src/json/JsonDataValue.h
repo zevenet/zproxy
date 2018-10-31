@@ -26,6 +26,7 @@ class JsonDataValue : public Json {
   JsonDataValue(const std::string &value);
   JsonDataValue(const char *value);
   JsonDataValue(int value);
+    JsonDataValue(unsigned int value);
   JsonDataValue(long value);
   JsonDataValue(double value);
   JsonDataValue(bool value);

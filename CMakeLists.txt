@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.9)
 project(zhttp LANGUAGES CXX)
-#if (NOT CMAKE_BUILD_TYPE)
-#    set(CMAKE_BUILD_TYPE Debug)
-#endif ()
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif ()
 #set(CMAKE_CXX_FLAGS_RELEASE "{CMAKE_CXX_FLAGS_RELEASE} -O2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe   -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe  -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
 
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
-SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin/${CMAKE_BUILD_TYPE}")
+#SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin/${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_STANDARD 11)
 

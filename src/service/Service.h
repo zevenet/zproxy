@@ -31,7 +31,7 @@ class Service : public sessions::HttpSessionManager,
 
   enum LOAD_POLICY {
     LP_ROUND_ROBIN,
-    LP_LEAST_CONNECTIONS,
+    LP_W_LEAST_CONNECTIONS, //we are using weighted
     LP_RESPONSE_TIME,
     LP_PENDING_CONNECTIONS,
   };

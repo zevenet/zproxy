@@ -11,6 +11,7 @@
 #include "../json/jsonparser.h"
 #include "../util/Network.h"
 #include "../util/common.h"
+#include <numeric>
 
 Backend *Service::getBackend(HttpStream &stream) {
   if (backend_set.empty())
@@ -277,7 +278,7 @@ JsonObject *Service::getServiceJson() {
   return root;
 }
 
-Backend *Service::getNextBackend(bool only_emergency) {
+Backend *Service::  getNextBackend(bool only_emergency) {
   // if no backend available, return next emergency backend from
   // emergency_backend_set ...
   std::lock_guard<std::mutex> locker(mtx_lock);
@@ -292,17 +293,23 @@ Backend *Service::getNextBackend(bool only_emergency) {
 
       case LP_LEAST_CONNECTIONS: {
         Backend* selected_backend = nullptr;
+//        int total_connections = std::accumulate(std::next(backend_set.begin()), backend_set.end(),
+//                                         backend_set[0]->getEstablishedConn(), // start with first element
+//                                         [](Backend* a, Backend* b) {
+//                                             return a->getEstablishedConn() + b->getEstablishedConn();
+//                                         });
         std::vector<Backend *>::iterator it;
         for (it = backend_set.begin(); it != backend_set.end(); ++it)
         {
+          if((*it)->weight <= 0 || (*it)->status != BACKEND_STATUS::BACKEND_UP) continue;
           if (selected_backend == nullptr) {
             selected_backend = *it;
           } else {
             Backend* current_backend = *it;
             if (selected_backend->getEstablishedConn() == 0)
               return selected_backend;
-            if (selected_backend->getEstablishedConn()/selected_backend->backend_config.priority >
-                current_backend->getEstablishedConn()/selected_backend->backend_config.priority)
+            if (selected_backend->getEstablishedConn()*current_backend->weight >
+                current_backend->getEstablishedConn()*selected_backend->weight)
               selected_backend = current_backend;
           }
         }
@@ -319,8 +326,8 @@ Backend *Service::getNextBackend(bool only_emergency) {
               Backend* current_backend = *it;
               if (selected_backend->getAvgLatency() < 0)
                 return selected_backend;
-              if (current_backend->getAvgLatency()/current_backend->backend_config.priority <
-                  selected_backend->getAvgLatency()/selected_backend->backend_config.priority)
+              if (current_backend->getAvgLatency()/selected_backend->weight <
+                  selected_backend->getAvgLatency()/selected_backend->weight)
                 selected_backend = current_backend;
             }
           }

@@ -167,7 +167,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE) {
     task.data = std::string(request.message, request.message_length);
   }
-
+//TODO:: Concatenate more than one future result
   auto result = notify(task, false);
   std::string res = "";
   for (auto &future_result : result) {
@@ -275,7 +275,9 @@ bool ControlManager::setBackendTarget(CtlTask &task, std::istringstream &ss) {
         task.subject = CTL_SUBJECT::CONFIG;
       } else if (str == JSON_KEYS::STATUS) {
         task.subject = CTL_SUBJECT::STATUS;
-      } else {
+      } else if (str == JSON_KEYS::WEIGHT) {
+        task.subject = CTL_SUBJECT::WEIGHT;
+      }else {
         return false;
       }
     }

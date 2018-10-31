@@ -386,7 +386,7 @@ void StreamManager::onRequestEvent(int fd) {
                   stream->backend_connection.closeConnection();
                 }
                 stream->backend_connection.setBackend(bck, true);
-                stream->backend_connection.conn_start = std::chrono::steady_clock::now();
+                stream->backend_connection.time_start = std::chrono::steady_clock::now();
                 op_state = stream->backend_connection.doConnect(
                     *bck->address_info, bck->conn_timeout);
                 switch (op_state) {
@@ -493,10 +493,10 @@ void StreamManager::onResponseEvent(int fd) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   auto result = stream->backend_connection.read();
-  stream->backend_connection.data_end = std::chrono::steady_clock::now();
+
   stream->backend_connection.getBackend()->calculateLatency(
           std::chrono::duration_cast<std::chrono::duration<double>>
-          (stream->backend_connection.data_end - stream->backend_connection.data_start).count());
+          (std::chrono::steady_clock::now() - stream->backend_connection.time_start).count());
 
   if (result == IO::ERROR) {
     Debug::Log("Error reading response ", LOG_DEBUG);
@@ -511,10 +511,10 @@ void StreamManager::onResponseEvent(int fd) {
       &parsed);  // parsing http data as response structured
   updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE,
            EVENT_GROUP::CLIENT);
-  stream->backend_connection.data_completly_end = std::chrono::steady_clock::now();
+
   stream->backend_connection.getBackend()->setAvgTransferTime(
           std::chrono::duration_cast<std::chrono::duration<double>>
-          (stream->backend_connection.data_completly_end - stream->backend_connection.data_start).count());
+          (std::chrono::steady_clock::now() - stream->backend_connection.time_start).count());
 
   //  switch (ret) {
   //    case http_parser::SUCCESS:
@@ -592,16 +592,28 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   int fd = stream->backend_connection.getFileDescriptor();
   // Send client request to backend server
   if (stream->backend_connection.getBackend()->conn_timeout > 0 &&
-      Network::isConnected(fd)) {
+      Network::isConnected(fd) && stream->timer_fd.is_set) {
     stream->timer_fd.unset();
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
-    stream->backend_connection.conn_end = std::chrono::steady_clock::now();
+
+stream->backend_connection.getBackend()->setAvgConnTime  (
+          std::chrono::duration_cast<std::chrono::duration<double>>
+          (std::chrono::steady_clock::now() - stream->backend_connection.time_start).count());
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   // skip lstn->head_off
 
   auto result = stream->client_connection.writeTo(
       stream->backend_connection.getFileDescriptor());
+
+  for (size_t i = 0; i != stream->request.num_headers; ++i) {
+      if(!stream->request.headers[i].head_off){
+
+      }
+  }
+   //TODO::rewrite destination
+   //TODO::add X-forwarded-for
+
 
   if (result == IO::SUCCESS) {
     stream->timer_fd.set(
@@ -610,7 +622,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
     addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
           EVENT_GROUP::RESPONSE_TIMEOUT);
     updateFd(fd, EVENT_TYPE::READ, SERVER);
-    stream->backend_connection.data_start = std::chrono::steady_clock::now();
+    stream->backend_connection.time_start = std::chrono::steady_clock::now();
 
   } else if (result == IO::DONE_TRY_AGAIN) {
     updateFd(fd, EVENT_TYPE::WRITE, SERVER);
@@ -681,6 +693,14 @@ validation::REQUEST_RESULT StreamManager::validateRequest(
       // TODO::Unknown header, What to do ??
       Debug::logmsg(LOG_DEBUG, "\tUnknown: %s", header_value.c_str());
     }
+
+        /* maybe header to be removed */
+        MATCHER *m;
+
+for(m = listener_config_.head_off; m; m = m->next){
+            if((request.headers[i].head_off = ::regexec(&m->pat, request.headers[i].name, 0, nullptr, 0) != 0))
+                break;
+        }
   }
   // waf
 
