@@ -585,20 +585,11 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	&_runL4FarmStop( $farm_name )
-	  if ( $old_proto =~ /sip|ftp/ || $$farm{ vproto } =~ /sip|ftp/ );
+	&_runL4FarmStop( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $old_proto =~ /sip|ftp/ || $$farm{ vproto } =~ /sip|ftp/ )
-		{
-			$output |= &_runL4FarmStart( $farm_name );
-		}
-		else
-		{
-			$output |= &refreshL4FarmRules( $farm );
-		}
-
+		$output |= &_runL4FarmStart( $farm_name );
 		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
 	}
 
