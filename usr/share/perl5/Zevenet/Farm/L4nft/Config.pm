@@ -425,7 +425,7 @@ sub httpNLBRequest # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, 
 
 	my $execmd =
 	  "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm }";
-	if ( $self->{ method } eq "PUT" )
+	if ( $self->{ method } =~ /PUT|DELETE/ )
 	{
 		$execmd = $execmd . " > '$self->{ configfile }'";
 	}
