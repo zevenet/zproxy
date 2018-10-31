@@ -25,7 +25,7 @@ use strict;
 
 use Zevenet::Farm::L4xNAT::Action;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: runL4FarmCreate
@@ -41,13 +41,15 @@ Returns:
 	Integer - return 0 on success or other value on failure
 
 =cut
+
 sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $vip, $farm_name, $vip_port ) = @_;
 
-	my $output    = -1;
-	my $farm_type = 'l4xnat';
+	my $output        = -1;
+	my $farm_type     = 'l4xnat';
 	my $farm_filename = "$configdir/$farm_name\_$farm_type.cfg";
 
 	require Zevenet::Farm::L4xNAT::Action;
@@ -55,20 +57,29 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 
 	$vip_port = 80 if not defined $vip_port;
 
-#	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
-	# farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
-#	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
-#	close FO;
+  #	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
+  # farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
+  #	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
+  #	close FO;
 
-	$output = &httpNLBRequest( { farm => $farm_name, configfile => "$farm_filename", method => "PUT", uri => "/farms", body =>  qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "tcp", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })  } );
+	$output = &httpNLBRequest(
+		{
+		   farm       => $farm_name,
+		   configfile => "$farm_filename",
+		   method     => "PUT",
+		   uri        => "/farms",
+		   body =>
+			 qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "tcp", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })
+		}
+	);
 
-#	my $piddir = &getGlobalConfiguration('piddir');
-#	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
-#	{
-#		# Enable active l4xnat file
-#		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
-#		close FI;
-#	}
+	#	my $piddir = &getGlobalConfiguration('piddir');
+	#	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
+	#	{
+	#		# Enable active l4xnat file
+	#		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
+	#		close FI;
+	#	}
 
 	&startL4Farm( $farm_name );
 
@@ -88,12 +99,14 @@ Returns:
 	Integer - return 0 on success or other value on failure
 
 =cut
+
 sub runL4FarmDelete    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $output    = -1;
+	my $output = -1;
 
 	require Zevenet::Farm::L4xNAT::Action;
 	require Zevenet::Farm::Core;
@@ -101,9 +114,10 @@ sub runL4FarmDelete    # ($farm_name)
 
 	my $farmfile = &getFarmFile( $farm_name );
 
-	unlink ( "$configdir/$farmfile" ) if -e "$configdir/$farmfile";
+	$output = &httpNLBRequest(
+						  { farm => $farm_name, method => "DELETE", uri => "/farms" } );
 
-	$output = &httpNLBRequest( { farm => $farm_name, method => "DELETE", uri => "/farms" } );
+	unlink ( "$configdir/$farmfile" ) if -e "$configdir/$farmfile";
 
 	return $output;
 }
