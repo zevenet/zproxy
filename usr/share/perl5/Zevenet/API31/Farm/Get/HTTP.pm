@@ -24,11 +24,15 @@ use strict;
 use Zevenet::Farm::HTTP::Config;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 sub get_farm_struct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 	my $output_params;
 
@@ -87,17 +91,21 @@ sub get_farm_struct
 		{
 			$ciphers = "all";
 		}
-		elsif ( $ciphers eq "ciphercustom" )
+		elsif ( $ciphers eq "cipherssloffloading" )
 		{
-			$ciphers = "customsecurity";
+			$ciphers = "cipherssloffloading";
 		}
 		elsif ( $ciphers eq "cipherpci" )
 		{
 			$ciphers = "highsecurity";
 		}
+		else
+		{
+			$ciphers = "customsecurity";
+		}
 	}
 
-	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vip = &getFarmVip( "vip", $farmname );
 	my $vport = 0 + &getFarmVip( "vipp", $farmname );
 
 	my $err414 = &getFarmErr( $farmname, "414" );
@@ -108,20 +116,20 @@ sub get_farm_struct
 	my $status = &getFarmVipStatus( $farmname );
 
 	my $output_params = {
-						  status              => $status,
-						  restimeout          => $timeout,
-						  contimeout          => $connto,
-						  resurrectime        => $alive,
-						  reqtimeout          => $client,
-						  rewritelocation     => $rewritelocation,
-						  httpverb            => $httpverb,
-						  listener            => $type,
-						  vip                 => $vip,
-						  vport               => $vport,
-						  error500            => $err500,
-						  error414            => $err414,
-						  error501            => $err501,
-						  error503            => $err503
+						  status          => $status,
+						  restimeout      => $timeout,
+						  contimeout      => $connto,
+						  resurrectime    => $alive,
+						  reqtimeout      => $client,
+						  rewritelocation => $rewritelocation,
+						  httpverb        => $httpverb,
+						  listener        => $type,
+						  vip             => $vip,
+						  vport           => $vport,
+						  error500        => $err500,
+						  error414        => $err414,
+						  error501        => $err501,
+						  error503        => $err503
 	};
 
 	if ( $eload )
@@ -139,21 +147,26 @@ sub get_farm_struct
 		$output_params->{ certlist } = \@out_cn;
 		$output_params->{ ciphers }  = $ciphers;
 		$output_params->{ cipherc }  = $cipher;
-		$output_params->{ disable_sslv2 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )? "true": "false";
-		$output_params->{ disable_sslv3 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )? "true": "false";
-		$output_params->{ disable_tlsv1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )? "true": "false";
-		$output_params->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
-		$output_params->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
+		$output_params->{ disable_sslv2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv2" ) ) ? "true" : "false";
+		$output_params->{ disable_sslv3 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv3" ) ) ? "true" : "false";
+		$output_params->{ disable_tlsv1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1" ) ) ? "true" : "false";
+		$output_params->{ disable_tlsv1_1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_1" ) ) ? "true" : "false";
+		$output_params->{ disable_tlsv1_2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_2" ) ) ? "true" : "false";
 	}
 
 	return $output_params;
 }
 
-
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http    # ( $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -195,7 +208,8 @@ sub farms_name_http    # ( $farmname )
 # GET /farms/<farmname>/summary
 sub farms_name_http_summary
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -226,10 +240,10 @@ sub farms_name_http_summary
 	&httpResponse( { code => 200, body => $body } );
 }
 
-
 sub getZapiHTTPServiceStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service_name ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -241,7 +255,7 @@ sub getZapiHTTPServiceStruct
 	my @serv = &getHTTPFarmServices( $farmname );
 
 	# return error if service is not found
-	return $service_ref unless grep( { $service_name eq $_ } @serv );
+	return $service_ref unless grep ( { $service_name eq $_ } @serv );
 
 	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
 	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
@@ -263,7 +277,7 @@ sub getZapiHTTPServiceStruct
 	}
 
 	my @fgconfig  = &getFarmGuardianConf( $farmname, $service_name );
-	my $fgttcheck = $fgconfig[1]+0;
+	my $fgttcheck = $fgconfig[1] + 0;
 	my $fgscript  = $fgconfig[2];
 	my $fguse     = $fgconfig[3];
 	my $fglog     = $fgconfig[4];

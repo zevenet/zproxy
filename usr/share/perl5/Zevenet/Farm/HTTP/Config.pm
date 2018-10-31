@@ -1481,13 +1481,17 @@ sub getHTTPFarmStruct
 		{
 			$ciphers = "all";
 		}
-		elsif ( $ciphers eq "ciphercustom" )
+		elsif ( $ciphers eq "cipherssloffloading" )
 		{
-			$ciphers = "customsecurity";
+			$ciphers = "cipherssloffloading";
 		}
 		elsif ( $ciphers eq "cipherpci" )
 		{
 			$ciphers = "highsecurity";
+		}
+		else
+		{
+			$ciphers = "customsecurity";
 		}
 
 		## All HTTPS parameters
@@ -1569,8 +1573,7 @@ sub parsePoundConfig
 	}
 
 	# Parse global farm parameters
-	my %conf = map
-	{
+	my %conf = map {
 		if ( /^(\w+)\s+(\S.+)/ )
 		{
 			{ $1 => $2 }
@@ -1580,8 +1583,7 @@ sub parsePoundConfig
 	delete $conf{ '' };
 
 	# Parse listener parameters
-	my %listener = map
-	{
+	my %listener = map {
 		if ( /^\t(\w+)\s+(.+)/ )
 		{
 			{ $1 => $2 }
@@ -1592,15 +1594,13 @@ sub parsePoundConfig
 	$listener{ type } = lc $listener;
 
 	# AddHeader
-	my @add_header = map
-	{
+	my @add_header = map {
 		if ( /^\tAddHeader "(.+)"$/ ) { $1 }
 	} grep { /AddHeader/ } @listener_lines;
 	$listener{ AddHeader } = \@add_header if scalar @add_header;
 
 	# HeadRemove
-	my @head_remove = map
-	{
+	my @head_remove = map {
 		if ( /^\tHeadRemove "(.+)"$/ ) { $1 }
 	} grep { /HeadRemove/ } @listener_lines;
 	$listener{ HeadRemove } = \@head_remove if scalar @head_remove;
@@ -1608,16 +1608,14 @@ sub parsePoundConfig
 	## HTTPS
 
 	# Certificates
-	my @certs = map
-	{
+	my @certs = map {
 		if ( /^\tCert "(.+)"$/ ) { $1 }
 	} grep { /Cert/ } @listener_lines;
 	$listener{ Cert } = \@certs if $listener{ type } eq 'https';
 
 	# Disable HTTPS protocols
 	# Warning: Doesn't work without grep
-	my @disable = map
-	{
+	my @disable = map {
 		if ( /^\tDisable (.*)$/ ) { $1 }
 	} grep { /Disable/ } @listener_lines;
 	$listener{ Disable } = \@disable if $listener{ type } eq 'https';
@@ -1645,8 +1643,7 @@ sub parsePoundConfig
 		if ( $line =~ /^\tEnd$/ )
 		{
 			# Parse service paremeters
-			%$svc_r = map
-			{
+			%$svc_r = map {
 				if ( /^\t\t(\S+)\ (\S.+)$/ )
 				{
 					{ $1 => $2 }
