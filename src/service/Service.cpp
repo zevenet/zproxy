@@ -291,7 +291,7 @@ Backend *Service::  getNextBackend(bool only_emergency) {
           return backend_set[seed % backend_set.size()];
       };
 
-      case LP_LEAST_CONNECTIONS: {
+      case LP_W_LEAST_CONNECTIONS: {
         Backend* selected_backend = nullptr;
 //        int total_connections = std::accumulate(std::next(backend_set.begin()), backend_set.end(),
 //                                         backend_set[0]->getEstablishedConn(), // start with first element
