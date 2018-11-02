@@ -5,17 +5,18 @@
 #ifndef NEW_ZHTTP_WORKER_H
 #define NEW_ZHTTP_WORKER_H
 
-#include <thread>
-#include <unordered_map>
-#include <vector>
 #include "../config/pound_struct.h"
 #include "../event/TimerFd.h"
 #include "../event/epoll_manager.h"
 #include "../http/http_stream.h"
 #include "../service/ServiceManager.h"
 #include "../service/backend.h"
+#include <thread>
+#include <unordered_map>
+#include <vector>
 
 using namespace events;
+using namespace http;
 
 class StreamManager : public EpollManager /*, public ServiceManager*/ {
   // TODO::REMOVE
@@ -26,24 +27,24 @@ class StreamManager : public EpollManager /*, public ServiceManager*/ {
 
   int worker_id;
   std::thread worker;
-  ServiceManager* service_manager;
+  ServiceManager *service_manager;
   Connection listener_connection;
   bool is_running;
   ListenerConfig listener_config_;
-  std::unordered_map<int, HttpStream*> streams_set;
-  std::unordered_map<int, HttpStream*> timers_set;
+  std::unordered_map<int, HttpStream *> streams_set;
+  std::unordered_map<int, HttpStream *> timers_set;
   void HandleEvent(int fd, EVENT_TYPE event_type,
                    EVENT_GROUP event_group) override;
   void doWork();
 
- public:
+public:
   StreamManager();
-  StreamManager(const StreamManager&) = delete;
+  StreamManager(const StreamManager &) = delete;
   ~StreamManager();
 
   void addStream(int fd);
   int getWorkerId();
-  bool init(ListenerConfig& listener_config);
+  bool init(ListenerConfig &listener_config);
   void start(int thread_id_ = 0);
   void stop();
   void setListenSocket(int fd);
@@ -53,11 +54,11 @@ class StreamManager : public EpollManager /*, public ServiceManager*/ {
   inline void onResponseTimeoutEvent(int fd);
   inline void onRequestTimeoutEvent(int fd);
   inline void onSignalEvent(int fd);
-  inline void onServerWriteEvent(HttpStream* stream);
-  inline void onClientWriteEvent(HttpStream* stream);
+  inline void onServerWriteEvent(HttpStream *stream);
+  inline void onClientWriteEvent(HttpStream *stream);
 
-  validation::REQUEST_RESULT validateRequest(HttpRequest& request);
-  void clearStream(HttpStream* stream);
+  validation::REQUEST_RESULT validateRequest(HttpRequest &request);
+  void clearStream(HttpStream *stream);
 };
 
-#endif  // NEW_ZHTTP_WORKER_H
+#endif // NEW_ZHTTP_WORKER_H

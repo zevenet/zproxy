@@ -7,13 +7,13 @@
 namespace json {
 
 class JsonDataValue : public Json {
- public:
+public:
   JSON_VALUE_TYPE json_type = JSON_VALUE_TYPE::JSON_T_NULL;
   //  union {
   std::string string_value;
   bool bool_value;
-  long number_value;
-  double double_value;
+  long number_value = 0;
+  double double_value = 0;
   JsonArray *array_value;
   JsonObject *object_value;
   //  };
@@ -26,7 +26,7 @@ class JsonDataValue : public Json {
   JsonDataValue(const std::string &value);
   JsonDataValue(const char *value);
   JsonDataValue(int value);
-    JsonDataValue(unsigned int value);
+  JsonDataValue(unsigned int value);
   JsonDataValue(long value);
   JsonDataValue(double value);
   JsonDataValue(bool value);
@@ -49,4 +49,4 @@ class JsonDataValue : public Json {
   std::string stringify(bool prettyfy = false, int tabs = -1) override;
 };
 
-}  // namespace json
+} // namespace json

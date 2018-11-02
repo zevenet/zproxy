@@ -60,50 +60,50 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
   }
 
   switch (event_type) {
-    case CONNECT: {
-      int new_fd;
-      new_fd = control_listener.doAccept();
-      if (new_fd > 0) {
-        addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::CTL_INTERFACE);
-      }
-      break;
+  case CONNECT: {
+    int new_fd;
+    new_fd = control_listener.doAccept();
+    if (new_fd > 0) {
+      addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::CTL_INTERFACE);
     }
-    case READ: {
-      Connection connection;
-      HttpRequest request;
-      connection.setFileDescriptor(fd);
-      auto res = connection.read();
-      if (res != IO::SUCCESS && res != IO::DONE_TRY_AGAIN) {
-        deleteFd(fd);
-        ::close(fd);
-        return;
-      }
-      size_t parsed = 0;
-      auto parse_result = request.parseRequest(connection.buffer,
-                                               connection.buffer_size, &parsed);
+    break;
+  }
+  case READ: {
+    Connection connection;
+    HttpRequest request;
+    connection.setFileDescriptor(fd);
+    auto res = connection.read();
+    if (res != IO::IO_RESULT::SUCCESS && res != IO::IO_RESULT::DONE_TRY_AGAIN) {
+      deleteFd(fd);
+      ::close(fd);
+      return;
+    }
+    size_t parsed = 0;
+    auto parse_result = request.parseRequest(connection.buffer,
+                                             connection.buffer_size, &parsed);
 
-      if (parse_result != http_parser::PARSE_RESULT::SUCCESS) {
-        deleteFd(fd);
-        connection.closeConnection();
-        return;
-      }
-      Debug::logmsg(LOG_DEBUG, "CTL API Request: %s", connection.buffer);
-
-      std::string response = handleCommand(request);
-
-      if (!response.empty()) {
-        connection.write(response.c_str(), response.length());
-      }
-
+    if (parse_result != http_parser::PARSE_RESULT::SUCCESS) {
       deleteFd(fd);
       connection.closeConnection();
       return;
     }
-    default:
-      // why would we be here???
-      deleteFd(fd);
-      ::close(fd);
-      break;
+    Debug::logmsg(LOG_DEBUG, "CTL API Request: %s", connection.buffer);
+
+    std::string response = handleCommand(request);
+
+    if (!response.empty()) {
+      connection.write(response.c_str(), response.length());
+    }
+
+    deleteFd(fd);
+    connection.closeConnection();
+    return;
+  }
+  default:
+    // why would we be here???
+    deleteFd(fd);
+    ::close(fd);
+    break;
   }
 }
 
@@ -132,29 +132,29 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   CtlTask task;
   // get task action
   switch (request.getRequestMethod()) {
-    case http::RM_DELETE:
-      task.command = CTL_COMMAND::DELETE;
-      break;
-    case http::RM_POST:
-    case http::RM_PUT:
-      task.command = CTL_COMMAND::ADD;
-      break;
-    case http::RM_PATCH:
-    case http::RM_UPDATE:
-      task.command = CTL_COMMAND::UPDATE;
-      break;
-    case http::RM_GET:
-      task.command = CTL_COMMAND::GET;
-      break;
-    case http::RM_SUBSCRIBE:
-      task.command = CTL_COMMAND::SUSCRIBE;
-      break;
-    case http::RM_UNSUBSCRIBE:
-      task.command = CTL_COMMAND::UNSUSCRIBE;
-      break;
-    default:
-      return HttpStatus::getHttpResponse(HttpStatus::Code::MethodNotAllowed, "",
-                                         "");
+  case http::REQUEST_METHOD::RM_DELETE:
+    task.command = CTL_COMMAND::DELETE;
+    break;
+  case http::REQUEST_METHOD::RM_POST:
+  case http::REQUEST_METHOD::RM_PUT:
+    task.command = CTL_COMMAND::ADD;
+    break;
+  case http::REQUEST_METHOD::RM_PATCH:
+  case http::REQUEST_METHOD::RM_UPDATE:
+    task.command = CTL_COMMAND::UPDATE;
+    break;
+  case http::REQUEST_METHOD::RM_GET:
+    task.command = CTL_COMMAND::GET;
+    break;
+  case http::REQUEST_METHOD::RM_SUBSCRIBE:
+    task.command = CTL_COMMAND::SUSCRIBE;
+    break;
+  case http::REQUEST_METHOD::RM_UNSUBSCRIBE:
+    task.command = CTL_COMMAND::UNSUSCRIBE;
+    break;
+  default:
+    return HttpStatus::getHttpResponse(HttpStatus::Code::MethodNotAllowed, "",
+                                       "");
   }
 
   // remove tailing "/"
@@ -167,7 +167,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE) {
     task.data = std::string(request.message, request.message_length);
   }
-//TODO:: Concatenate more than one future result
+  // TODO:: Concatenate more than one future result
   auto result = notify(task, false);
   std::string res = "";
   for (auto &future_result : result) {
@@ -185,30 +185,30 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
   bool done = false;
   while (getline(f, str, '/') && !done) {
     switch (str[0]) {
-      case 'l': {
-        if (str == JSON_KEYS::LISTENER) {
-          if (setListenerTarget(task, f)) {
-            return true;
-          }
+    case 'l': {
+      if (str == JSON_KEYS::LISTENER) {
+        if (setListenerTarget(task, f)) {
+          return true;
         }
-        break;
       }
-      case 's': {
-        if (str == JSON_KEYS::SERVICE) {
-          if (setServiceTarget(task, f)) {
-            return true;
-          }
+      break;
+    }
+    case 's': {
+      if (str == JSON_KEYS::SERVICE) {
+        if (setServiceTarget(task, f)) {
+          return true;
         }
-        break;
       }
-      case 'b': {
-        if (str == JSON_KEYS::BACKEND) {
-          if (setBackendTarget(task, f)) {
-            return true;
-          }
+      break;
+    }
+    case 'b': {
+      if (str == JSON_KEYS::BACKEND) {
+        if (setBackendTarget(task, f)) {
+          return true;
         }
-        break;
       }
+      break;
+    }
     }
   }
   return false;
@@ -277,7 +277,7 @@ bool ControlManager::setBackendTarget(CtlTask &task, std::istringstream &ss) {
         task.subject = CTL_SUBJECT::STATUS;
       } else if (str == JSON_KEYS::WEIGHT) {
         task.subject = CTL_SUBJECT::WEIGHT;
-      }else {
+      } else {
         return false;
       }
     }

@@ -6,7 +6,8 @@
 ServiceManager *ServiceManager::instance /*= new ServiceManager()*/;
 
 ServiceManager *ServiceManager::getInstance(ListenerConfig &listener_config) {
-  if (instance == nullptr) instance = new ServiceManager(listener_config);
+  if (instance == nullptr)
+    instance = new ServiceManager(listener_config);
   return instance;
 }
 
@@ -27,8 +28,8 @@ Service *ServiceManager::getService(HttpRequest &request) {
   for (auto srv : services) {
     if (!srv->service_config.disabled) {
       if (srv->doMatch(request)) {
-        Debug::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id,
-                      srv->service_config.name, LOG_DEBUG);
+//        Debug::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id,
+//                      srv->service_config.name, LOG_DEBUG);
         return srv;
       }
     }
@@ -46,16 +47,18 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
 }
 
 std::string ServiceManager::handleTask(ctl::CtlTask &task) {
-  if (!this->isHandler(task)) return "";
-//  Debug::logmsg(LOG_DEBUG, "Service Manager handling task");
+  if (!this->isHandler(task))
+    return "";
+  //  Debug::logmsg(LOG_DEBUG, "Service Manager handling task");
   if (task.service_id > -1) {
     for (auto service : services) {
-      if (service->isHandler(task)) return service->handleTask(task);
+      if (service->isHandler(task))
+        return service->handleTask(task);
     }
     return JSON_OP_RESULT::ERROR;
   }
 
-  json::JsonObject *root = new json::JsonObject();
+  std::unique_ptr<json::JsonObject> root(new json::JsonObject());
   root->emplace(JSON_KEYS::ADDRESS,
                 new json::JsonDataValue(listener_config_.address));
   root->emplace(JSON_KEYS::PORT,

@@ -4,14 +4,10 @@
 
 #include "backend_connection.h"
 
-BackendConnection::BackendConnection() : backend_id(-1), backend(nullptr) {
+BackendConnection::BackendConnection() : backend_id(-1), backend(nullptr) {}
+Backend *BackendConnection::getBackend() const { return backend; }
 
-}
-Backend * BackendConnection::getBackend() const {
-  return backend;
-}
-
-void BackendConnection::setBackend(Backend * bck, bool connected) {
+void BackendConnection::setBackend(Backend *bck, bool connected) {
   backend = bck;
   if (bck != nullptr) {
     backend = bck;
@@ -23,7 +19,4 @@ void BackendConnection::setBackend(Backend * bck, bool connected) {
   }
 }
 
-bool BackendConnection::reConnect() {
-
-  return false;
-}
+bool BackendConnection::reConnect() { return false; }

@@ -3,15 +3,15 @@
 //
 #pragma once
 
-#include <pthread.h>
 #include <iostream>
+#include <pthread.h>
 #include <sstream>
 #include <string>
 #include <thread>
 
 namespace IO {
 
-enum IO_RESULT {
+enum class IO_RESULT {
   ERROR,
   SUCCESS,
   DONE_TRY_AGAIN,
@@ -19,17 +19,16 @@ enum IO_RESULT {
   FULL_BUFFER,
 };
 
-enum IO_OP {
+enum class IO_OP {
   OP_ERROR,
   OP_SUCCESS,
   OP_IN_PROGRESS,
 };
-}  // namespace IO
+} // namespace IO
 
 namespace helper {
 
-template <typename T>
-T try_lexical_cast(const std::string& s, T& out) {
+template <typename T> T try_lexical_cast(const std::string &s, T &out) {
   std::stringstream ss(s);
   if ((ss >> out).fail() || !(ss >> std::ws).eof()) {
     return false;
@@ -82,4 +81,4 @@ struct ThreadHelper {
     //    }
   }
 };
-}  // namespace helper
+} // namespace helper

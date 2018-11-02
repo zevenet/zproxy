@@ -1,22 +1,22 @@
 #ifndef NETWORK_H
 #define NETWORK_H
+#include "../debug/Debug.h"
 #include <arpa/inet.h>
+#include <cstring>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <cstring>
-#include "../debug/Debug.h"
 
 class Network {
- public:
-  inline static char* getPeerAddress(int socket_fd, char* buf, size_t bufsiz,
+public:
+  inline static char *getPeerAddress(int socket_fd, char *buf, size_t bufsiz,
                                      bool include_port = false) {
     int result;
     sockaddr_in adr_inet{};
-    int len_inet = sizeof adr_inet;
-    result = getpeername(socket_fd, (struct sockaddr*)&adr_inet, &len_inet);
+    socklen_t len_inet = sizeof adr_inet;
+    result = ::getpeername(socket_fd, (struct sockaddr *)&adr_inet, &len_inet);
     if (result == -1) {
       return nullptr;
     }
@@ -35,7 +35,7 @@ class Network {
     return buf;
   }
 
-  inline static int getHost(const char* name, addrinfo* res, int ai_family) {
+  inline static int getHost(const char *name, addrinfo *res, int ai_family) {
     struct addrinfo *chain, *ap;
     struct addrinfo hints;
     int ret_val;
@@ -45,14 +45,15 @@ class Network {
     hints.ai_flags = AI_CANONNAME;
     if ((ret_val = getaddrinfo(name, NULL, &hints, &chain)) == 0) {
       for (ap = chain; ap != NULL; ap = ap->ai_next)
-        if (ap->ai_socktype == SOCK_STREAM) break;
+        if (ap->ai_socktype == SOCK_STREAM)
+          break;
 
       if (ap == NULL) {
         freeaddrinfo(chain);
         return EAI_NONAME;
       }
       *res = *ap;
-      if ((res->ai_addr = (struct sockaddr*)malloc(ap->ai_addrlen)) == NULL) {
+      if ((res->ai_addr = (struct sockaddr *)malloc(ap->ai_addrlen)) == NULL) {
         freeaddrinfo(chain);
         return EAI_MEMORY;
       }
@@ -62,10 +63,10 @@ class Network {
     return ret_val;
   }
 
-  inline static addrinfo* getAddress(std::string& address, int port) {
+  inline static addrinfo *getAddress(std::string &address, int port) {
     struct sockaddr_in in {};
     struct sockaddr_in6 in6 {};
-    auto* addr = new addrinfo(); /* IPv4/6 address */
+    auto *addr = new addrinfo(); /* IPv4/6 address */
 
     if (getHost(address.c_str(), addr, PF_UNSPEC)) {
       Debug::Log("Unknown Listener address");
@@ -78,18 +79,18 @@ class Network {
       return nullptr;
     }
     switch (addr->ai_family) {
-      case AF_INET:
-        memcpy(&in, addr->ai_addr, sizeof(in));
-        in.sin_port = (in_port_t)htons(port);
-        memcpy(addr->ai_addr, &in, sizeof(in));
-        break;
-      case AF_INET6:
-        memcpy(&in6, addr->ai_addr, sizeof(in6));
-        in6.sin6_port = htons(port);
-        memcpy(addr->ai_addr, &in6, sizeof(in6));
-        break;
-      default:
-        Debug::Log("Unknown Listener address family", LOG_ERR);
+    case AF_INET:
+      memcpy(&in, addr->ai_addr, sizeof(in));
+      in.sin_port = (in_port_t)htons(port);
+      memcpy(addr->ai_addr, &in, sizeof(in));
+      break;
+    case AF_INET6:
+      memcpy(&in6, addr->ai_addr, sizeof(in6));
+      in6.sin6_port = htons(port);
+      memcpy(addr->ai_addr, &in6, sizeof(in6));
+      break;
+    default:
+      Debug::Log("Unknown Listener address family", LOG_ERR);
     }
     return addr;
   }
@@ -97,42 +98,42 @@ class Network {
   /*
    * Translate inet/inet6 address/port into a string
    */
-  static void addr2str(char* const res, const int res_len,
-                       const struct addrinfo* addr, const int no_port) {
+  static void addr2str(char *const res, const int res_len,
+                       const struct addrinfo *addr, const int no_port) {
     char buf[MAXBUF];
     int port;
-    void* src;
+    void *src;
 
     ::memset(res, 0, res_len);
     switch (addr->ai_family) {
-      case AF_INET:
-        src = (void*)&((struct sockaddr_in*)addr->ai_addr)->sin_addr.s_addr;
-        port = ntohs(((struct sockaddr_in*)addr->ai_addr)->sin_port);
+    case AF_INET:
+      src = (void *)&((struct sockaddr_in *)addr->ai_addr)->sin_addr.s_addr;
+      port = ntohs(((struct sockaddr_in *)addr->ai_addr)->sin_port);
+      if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == NULL)
+        strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+      break;
+    case AF_INET6:
+      src = (void *)&((struct sockaddr_in6 *)addr->ai_addr)->sin6_addr.s6_addr;
+      port = ntohs(((struct sockaddr_in6 *)addr->ai_addr)->sin6_port);
+      if (IN6_IS_ADDR_V4MAPPED(
+              &(((struct sockaddr_in6 *)addr->ai_addr)->sin6_addr))) {
+        src = (void *)&((struct sockaddr_in6 *)addr->ai_addr)
+                  ->sin6_addr.s6_addr[12];
         if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == NULL)
           strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
-        break;
-      case AF_INET6:
-        src = (void*)&((struct sockaddr_in6*)addr->ai_addr)->sin6_addr.s6_addr;
-        port = ntohs(((struct sockaddr_in6*)addr->ai_addr)->sin6_port);
-        if (IN6_IS_ADDR_V4MAPPED(
-                &(((struct sockaddr_in6*)addr->ai_addr)->sin6_addr))) {
-          src = (void*)&((struct sockaddr_in6*)addr->ai_addr)
-                    ->sin6_addr.s6_addr[12];
-          if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == NULL)
-            strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
-        } else {
-          if (inet_ntop(AF_INET6, src, buf, MAXBUF - 1) == NULL)
-            strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
-        }
-        break;
-      case AF_UNIX:
-        strncpy(buf, (char*)addr->ai_addr, MAXBUF - 1);
-        port = 0;
-        break;
-      default:
-        strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
-        port = 0;
-        break;
+      } else {
+        if (inet_ntop(AF_INET6, src, buf, MAXBUF - 1) == NULL)
+          strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+      }
+      break;
+    case AF_UNIX:
+      strncpy(buf, (char *)addr->ai_addr, MAXBUF - 1);
+      port = 0;
+      break;
+    default:
+      strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+      port = 0;
+      break;
     }
     if (no_port)
       ::snprintf(res, res_len, "%s", buf);
@@ -162,7 +163,7 @@ class Network {
   inline static bool setSocketTimeOut(int sock_fd, unsigned int seconds) {
     struct timeval tv;
     tv.tv_sec = seconds; /* 30 Secs Timeout */
-    return setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv,
+    return setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv,
                       sizeof(struct timeval)) != -1;
   }
 
@@ -218,7 +219,7 @@ class Network {
 
   inline static bool isConnected(int sock_fd) {
     int error_code = -1;
-    int error_code_size = sizeof(error_code);
+    socklen_t error_code_size = sizeof(error_code);
     return ::getsockopt(sock_fd, SOL_SOCKET, SO_ERROR, &error_code,
                         &error_code_size) != -1 &&
            error_code == 0;
@@ -256,7 +257,7 @@ class Network {
   static int getSocketSendBufferSize_(int socket_fd) {
     int res, size;
     unsigned int m = sizeof(size);
-    res = getsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (void*)&size, &m);
+    res = getsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (void *)&size, &m);
     return res != 0 ? -1 : size;
   }
 
@@ -264,8 +265,8 @@ class Network {
   static int getSocketReceiveBufferSize_(int socket_fd) {
     int res, size;
     unsigned int m = sizeof(size);
-    res = getsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, (void*)&size, &m);
+    res = getsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, (void *)&size, &m);
     return res != 0 ? -1 : size;
   }
 };
-#endif  // NETWORK_H
+#endif // NETWORK_H

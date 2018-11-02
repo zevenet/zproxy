@@ -58,7 +58,7 @@ enum class JSON_VALUE_TYPE {
 };
 
 class Json {
- public:
+public:
   Json() = default;
   virtual ~Json();
   int json_size;
@@ -66,8 +66,10 @@ class Json {
   virtual bool isObject() { return false; }
   virtual bool isData() { return false; }
   virtual bool isValue() { return false; }
-  virtual std::string stringify(bool prettyfy = false, int tabs = -1) {}
+  virtual std::string stringify(bool prettyfy = false, int tabs = -1) {
+    return std::string();
+  }
   virtual void freeJson() {}
 };
 
-}  // namespace json
+} // namespace json

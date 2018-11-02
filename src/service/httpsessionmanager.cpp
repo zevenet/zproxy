@@ -14,28 +14,29 @@ HttpSessionManager::~HttpSessionManager() {
 
 SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
                                             Backend &backend_to_assign) {
-  if (this->session_type == sessions::SESS_NONE) return nullptr;
+  if (this->session_type == sessions::SESS_NONE)
+    return nullptr;
   // TODO::Implement
 
   std::string key("");
   switch (this->session_type) {
-    case SESS_NONE:
-      return nullptr;
-    case SESS_IP: {
-      key = stream.client_connection.getPeerAddress();
-      break;
-    }
-      // TODO:: to Implement
-    case SESS_COOKIE:
-      break;
-    case SESS_URL:
-      break;
-    case SESS_PARM:
-      break;
-    case SESS_HEADER:
-      break;
-    case SESS_BASIC:
-      break;
+  case SESS_NONE:
+    return nullptr;
+  case SESS_IP: {
+    key = stream.client_connection.getPeerAddress();
+    break;
+  }
+    // TODO:: to Implement
+  case SESS_COOKIE:
+    break;
+  case SESS_URL:
+    break;
+  case SESS_PARM:
+    break;
+  case SESS_HEADER:
+    break;
+  case SESS_BASIC:
+    break;
   }
   // check if we have a new key to insert,
   if (!key.empty()) {
@@ -67,32 +68,30 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
   std::string session_key("");
   SessionInfo *session = nullptr;
   switch (session_type) {
-    case sessions::SESS_NONE:
-      return nullptr;
-    case sessions::SESS_IP: {
-      session_key = stream.client_connection.getPeerAddress();
-      // TODO::This must change !! no try catch !!!
-      // sessions_set[ip_address];
-      if(sessions_set.count(session_key) > 0){
-        session = this->sessions_set[session_key];
-      } else{
-        Debug::logmsg(LOG_REMOVE, "Something went wrong with the set");
-        return nullptr;
-      }
-      break;
+  case sessions::SESS_NONE:
+    return nullptr;
+  case sessions::SESS_IP: {
+    session_key = stream.client_connection.getPeerAddress();
+    // TODO::This must change !! no try catch !!!
+    // sessions_set[ip_address];
+    if (sessions_set.count(session_key) > 0) {
+      session = this->sessions_set[session_key];
     }
-    case sessions::SESS_URL:
-      break;
-    case sessions::SESS_PARM:
-      break;
-    default: {  // For SESS_BASIC, SESS_HEADER and SESS_COOKIE
-      break;
-    }
+    break;
+  }
+  case sessions::SESS_URL:
+    break;
+  case sessions::SESS_PARM:
+    break;
+  default: { // For SESS_BASIC, SESS_HEADER and SESS_COOKIE
+    break;
+  }
   }
   if (session != nullptr) {
     // we have a stored session, check if it has not expired.
     if (!session->hasExpired(this->ttl)) {
-      if (update_if_exist) session->update();
+      if (update_if_exist)
+        session->update();
       return session;
     } else {
       // TODO::free session info ?? maybe  not and avoid reallocation of new
@@ -111,8 +110,7 @@ json::JsonArray *HttpSessionManager::getSessionsJson() {
   auto data = new json::JsonArray();
   for (auto &session : sessions_set) {
     auto json_data = new json::JsonObject();
-    json_data->emplace(JSON_KEYS::ID,
-                       new json::JsonDataValue(session.first));
+    json_data->emplace(JSON_KEYS::ID, new json::JsonDataValue(session.first));
     json_data->emplace(
         JSON_KEYS::BACKEND_ID,
         new json::JsonDataValue(session.second->assigned_backend->backend_id));

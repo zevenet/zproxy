@@ -4,7 +4,6 @@
 // Created by abdess on 4/25/18.
 //
 
-#include <vector>
 #include "Service.h"
 #include "../debug/debug.h"
 #include "../json/JsonDataValueTypes.h"
@@ -12,10 +11,11 @@
 #include "../util/Network.h"
 #include "../util/common.h"
 #include <numeric>
+#include <vector>
 
 Backend *Service::getBackend(HttpStream &stream) {
   if (backend_set.empty())
-    return getNextBackend(true);  // TODO:: return emergency backend ???
+    return getNextBackend(true); // TODO:: return emergency backend ???
 
   if (session_type != sessions::SESS_NONE) {
     auto session = getSession(stream);
@@ -80,7 +80,7 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
     config->backend_config = *backend_config;
     config->backend_id = backend_id;
     config->weight = backend_config->priority;
-    config->name = "bck_" + backend_id;
+    config->name = "bck_" + std::to_string(backend_id);
     config->conn_timeout = backend_config->conn_to;
     config->status = backend_config->disabled ? BACKEND_DISABLED : BACKEND_UP;
     config->response_timeout = backend_config->rw_timeout;
@@ -135,123 +135,126 @@ bool Service::doMatch(HttpRequest &request) {
 
   /* check for request */
   for (m = service_config.url; m; m = m->next)
-    if (regexec(&m->pat, request.getRequestLine().c_str(), 0, NULL, 0))
+    if (regexec(&m->pat, request.getRequestLine().c_str(), 0, nullptr, 0))
       return false;
 
   /* check for required headers */
   for (m = service_config.req_head; m; m = m->next) {
     for (found = i = 0; i < (request.num_headers - 1) && !found; i++)
-      if (!regexec(&m->pat, request.headers[i].name, 0, NULL, 0)) found = 1;
-    if (!found) return false;
+      if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0))
+        found = 1;
+    if (!found)
+      return false;
   }
 
   /* check for forbidden headers */
   for (m = service_config.deny_head; m; m = m->next) {
     for (found = i = 0; i < (request.num_headers - 1) && !found; i++)
-      if (!regexec(&m->pat, request.headers[i].name, 0, NULL, 0)) return false;
+      if (!regexec(&m->pat, request.headers[i].name, 0, NULL, 0))
+        return false;
   }
   return true;
 }
 
-
-void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER)
-{
-  //TODO: DYNSCALE DEPENDING ON BACKENDSTAT PARAMETER
+void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER) {
+  // TODO: DYNSCALE DEPENDING ON BACKENDSTAT PARAMETER
 }
 
 // TODO:: Add boolean resultado (std::pair<bool[Error?], std::string[Error text
 // | json response] >
 
 std::string Service::handleTask(ctl::CtlTask &task) {
-  if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
-//  Debug::logmsg(LOG_REMOVE, "Service %d handling task", id);
+  if (!isHandler(task))
+    return JSON_OP_RESULT::ERROR;
+  //  Debug::logmsg(LOG_REMOVE, "Service %d handling task", id);
   if (task.backend_id > -1) {
     for (auto backend : backend_set) {
-      if (backend->isHandler(task)) return backend->handleTask(task);
+      if (backend->isHandler(task))
+        return backend->handleTask(task);
     }
     return JSON_OP_RESULT::ERROR;
   }
   switch (task.command) {
-    case ctl::CTL_COMMAND::DELETE: {
-      // TODO:: delete session (by id, backend_id, source_ip), delete backend,
-      // delete config ??
-      JsonObject *json_data = JsonParser::parse(task.data);
-      if (task.subject == ctl::CTL_SUBJECT::SESSION) {
-        if (json_data != nullptr) {
-          return "";
-        }
-      } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
-      } else if (task.subject == ctl::CTL_SUBJECT::CONFIG) {
-      } else
+  case ctl::CTL_COMMAND::DELETE: {
+    // TODO:: delete session (by id, backend_id, source_ip), delete backend,
+    // delete config ??
+    JsonObject *json_data = JsonParser::parse(task.data);
+    if (task.subject == ctl::CTL_SUBJECT::SESSION) {
+      if (json_data != nullptr) {
         return "";
-      break;
-    }
-    case ctl::CTL_COMMAND::ADD: {
-      // TODO::Add new Session!!
-      switch (task.subject) {
-        case ctl::CTL_SUBJECT::SESSION:
-          break;
-        default:
-          break;
       }
-      break;
-    }
-    case ctl::CTL_COMMAND::GET:
-      switch (task.subject) {
-        case ctl::CTL_SUBJECT::SESSION: {
-          JsonObject response;
-          response.emplace(JSON_KEYS::SESSIONS, getSessionsJson());
-          return response.stringify();
-        }
-        case ctl::CTL_SUBJECT::STATUS: {
-          JsonObject status;
-          status.emplace(
-              JSON_KEYS::STATUS,
-              new JsonDataValue(this->disabled ? JSON_KEYS::STATUS_DOWN
-                                               : JSON_KEYS::STATUS_ACTIVE));
-          return status.stringify();
-        }
-        case ctl::CTL_SUBJECT::BACKEND:
-        default:
-          auto response = std::unique_ptr<JsonObject>(
-              getServiceJson());  // TODO:: importante usar un unique_ptr!!!!!!
-          return response != nullptr ? response->stringify() : "";
-      }
-    case ctl::CTL_COMMAND::UPDATE:
-      switch (task.subject) {
-        case ctl::CTL_SUBJECT::CONFIG:
-          // TODO:: update service config (timeouts, headers, routing policy)
-          break;
-        case ctl::CTL_SUBJECT::SESSION: {
-          // TODO:: update / create new session
-          return getSessionsJson()->stringify();
-        }
-        case ctl::CTL_SUBJECT::STATUS: {
-          std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
-          if (status.get() == nullptr) return "";
-          if (status->at(JSON_KEYS::STATUS)->isValue()) {
-            auto value =
-                static_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS))
-                    ->string_value;
-            if (value == JSON_KEYS::STATUS_ACTIVE ||
-                value == JSON_KEYS::STATUS_UP) {
-              this->disabled = false;
-            } else if (value == JSON_KEYS::STATUS_DOWN) {
-              this->disabled = true;
-            } else if (value == JSON_KEYS::STATUS_DISABLED) {
-              this->disabled = true;
-            }
-            Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", id, value.c_str());
-            return JSON_OP_RESULT::OK;
-          }
-          break;
-        }
-        default:
-          break;
-      }
+    } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
+    } else if (task.subject == ctl::CTL_SUBJECT::CONFIG) {
+    } else
+      return "";
+    break;
+  }
+  case ctl::CTL_COMMAND::ADD: {
+    // TODO::Add new Session!!
+    switch (task.subject) {
+    case ctl::CTL_SUBJECT::SESSION:
       break;
     default:
-      return "{\"result\",\"ok\"}";
+      break;
+    }
+    break;
+  }
+  case ctl::CTL_COMMAND::GET:
+    switch (task.subject) {
+    case ctl::CTL_SUBJECT::SESSION: {
+      JsonObject response;
+      response.emplace(JSON_KEYS::SESSIONS, getSessionsJson());
+      return response.stringify();
+    }
+    case ctl::CTL_SUBJECT::STATUS: {
+      JsonObject status;
+      status.emplace(JSON_KEYS::STATUS,
+                     new JsonDataValue(this->disabled
+                                           ? JSON_KEYS::STATUS_DOWN
+                                           : JSON_KEYS::STATUS_ACTIVE));
+      return status.stringify();
+    }
+    case ctl::CTL_SUBJECT::BACKEND:
+    default:
+      auto response = std::unique_ptr<JsonObject>(
+          getServiceJson()); // TODO:: importante usar un unique_ptr!!!!!!
+      return response != nullptr ? response->stringify() : "";
+    }
+  case ctl::CTL_COMMAND::UPDATE:
+    switch (task.subject) {
+    case ctl::CTL_SUBJECT::CONFIG:
+      // TODO:: update service config (timeouts, headers, routing policy)
+      break;
+    case ctl::CTL_SUBJECT::SESSION: {
+      // TODO:: update / create new session
+      return getSessionsJson()->stringify();
+    }
+    case ctl::CTL_SUBJECT::STATUS: {
+      std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
+      if (status.get() == nullptr)
+        return "";
+      if (status->at(JSON_KEYS::STATUS)->isValue()) {
+        auto value = static_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS))
+                         ->string_value;
+        if (value == JSON_KEYS::STATUS_ACTIVE ||
+            value == JSON_KEYS::STATUS_UP) {
+          this->disabled = false;
+        } else if (value == JSON_KEYS::STATUS_DOWN) {
+          this->disabled = true;
+        } else if (value == JSON_KEYS::STATUS_DISABLED) {
+          this->disabled = true;
+        }
+        Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", id, value.c_str());
+        return JSON_OP_RESULT::OK;
+      }
+      break;
+    }
+    default:
+      break;
+    }
+    break;
+  default:
+    return "{\"result\",\"ok\"}";
   }
   return "";
 }
@@ -278,82 +281,84 @@ JsonObject *Service::getServiceJson() {
   return root;
 }
 
-Backend *Service::  getNextBackend(bool only_emergency) {
+Backend *Service::getNextBackend(bool only_emergency) {
   // if no backend available, return next emergency backend from
   // emergency_backend_set ...
   std::lock_guard<std::mutex> locker(mtx_lock);
   Backend *bck;
-  if (backend_set.size() == 0) return nullptr;
-    switch(service_config.routing_policy) {
-      case LP_ROUND_ROBIN: {
-          static unsigned long long seed;
-          seed++;
-          return backend_set[seed % backend_set.size()];
-      };
+  if (backend_set.size() == 0)
+    return nullptr;
+  switch (service_config.routing_policy) {
+  case LP_ROUND_ROBIN: {
+    static unsigned long long seed;
+    seed++;
+    return backend_set[seed % backend_set.size()];
+  };
 
-      case LP_W_LEAST_CONNECTIONS: {
-        Backend* selected_backend = nullptr;
-//        int total_connections = std::accumulate(std::next(backend_set.begin()), backend_set.end(),
-//                                         backend_set[0]->getEstablishedConn(), // start with first element
-//                                         [](Backend* a, Backend* b) {
-//                                             return a->getEstablishedConn() + b->getEstablishedConn();
-//                                         });
-        std::vector<Backend *>::iterator it;
-        for (it = backend_set.begin(); it != backend_set.end(); ++it)
-        {
-          if((*it)->weight <= 0 || (*it)->status != BACKEND_STATUS::BACKEND_UP) continue;
-          if (selected_backend == nullptr) {
-            selected_backend = *it;
-          } else {
-            Backend* current_backend = *it;
-            if (selected_backend->getEstablishedConn() == 0)
-              return selected_backend;
-            if (selected_backend->getEstablishedConn()*current_backend->weight >
-                current_backend->getEstablishedConn()*selected_backend->weight)
-              selected_backend = current_backend;
-          }
-        }
-        return selected_backend;
-      };
-
-      case LP_RESPONSE_TIME: {
-        Backend* selected_backend = nullptr;
-        for (auto it = backend_set.begin(); it != backend_set.end(); ++it)
-          {
-            if (selected_backend == nullptr) {
-              selected_backend = *it;
-            } else {
-              Backend* current_backend = *it;
-              if (selected_backend->getAvgLatency() < 0)
-                return selected_backend;
-              if (current_backend->getAvgLatency()/selected_backend->weight <
-                  selected_backend->getAvgLatency()/selected_backend->weight)
-                selected_backend = current_backend;
-            }
-          }
-        return selected_backend;
-      };
-
-      case LP_PENDING_CONNECTIONS: {
-          Backend* selected_backend = nullptr;
-          std::vector<Backend*>::iterator it;
-          for (it = backend_set.begin(); it != backend_set.end(); ++it)
-          {
-            if (selected_backend == nullptr) {
-              selected_backend = *it;
-            } else {
-              Backend* current_backend = *it;
-              if (selected_backend->getPendingConn() == 0)
-                return selected_backend;
-              if (selected_backend->getPendingConn() < current_backend->getPendingConn())
-                selected_backend = current_backend;
-            }
-          }
+  case LP_W_LEAST_CONNECTIONS: {
+    Backend *selected_backend = nullptr;
+    //        int total_connections =
+    //        std::accumulate(std::next(backend_set.begin()), backend_set.end(),
+    //                                         backend_set[0]->getEstablishedConn(),
+    //                                         // start with first element
+    //                                         [](Backend* a, Backend* b) {
+    //                                             return
+    //                                             a->getEstablishedConn() +
+    //                                             b->getEstablishedConn();
+    //                                         });
+    std::vector<Backend *>::iterator it;
+    for (it = backend_set.begin(); it != backend_set.end(); ++it) {
+      if ((*it)->weight <= 0 || (*it)->status != BACKEND_STATUS::BACKEND_UP)
+        continue;
+      if (selected_backend == nullptr) {
+        selected_backend = *it;
+      } else {
+        Backend *current_backend = *it;
+        if (selected_backend->getEstablishedConn() == 0)
           return selected_backend;
-      };
-
-
+        if (selected_backend->getEstablishedConn() * current_backend->weight >
+            current_backend->getEstablishedConn() * selected_backend->weight)
+          selected_backend = current_backend;
+      }
     }
+    return selected_backend;
+  };
+
+  case LP_RESPONSE_TIME: {
+    Backend *selected_backend = nullptr;
+    for (auto it = backend_set.begin(); it != backend_set.end(); ++it) {
+      if (selected_backend == nullptr) {
+        selected_backend = *it;
+      } else {
+        Backend *current_backend = *it;
+        if (selected_backend->getAvgLatency() < 0)
+          return selected_backend;
+        if (current_backend->getAvgLatency() / selected_backend->weight <
+            selected_backend->getAvgLatency() / selected_backend->weight)
+          selected_backend = current_backend;
+      }
+    }
+    return selected_backend;
+  };
+
+  case LP_PENDING_CONNECTIONS: {
+    Backend *selected_backend = nullptr;
+    std::vector<Backend *>::iterator it;
+    for (it = backend_set.begin(); it != backend_set.end(); ++it) {
+      if (selected_backend == nullptr) {
+        selected_backend = *it;
+      } else {
+        Backend *current_backend = *it;
+        if (selected_backend->getPendingConn() == 0)
+          return selected_backend;
+        if (selected_backend->getPendingConn() <
+            current_backend->getPendingConn())
+          selected_backend = current_backend;
+      }
+    }
+    return selected_backend;
+  };
+  }
   if (UNLIKELY(!only_emergency)) {
     do {
       bck = nullptr;
@@ -361,7 +366,8 @@ Backend *Service::  getNextBackend(bool only_emergency) {
       seed++;
       bck = backend_set[seed % backend_set.size()];
     } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
-    if (bck != nullptr) return bck;
+    if (bck != nullptr)
+      return bck;
   }
   do {
     bck = nullptr;
@@ -369,6 +375,7 @@ Backend *Service::  getNextBackend(bool only_emergency) {
     emergency_seed++;
     bck = emergency_backend_set[emergency_seed % backend_set.size()];
   } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
+  return nullptr;
 }
 
 Service::~Service() {

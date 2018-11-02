@@ -3,29 +3,26 @@
 //
 
 #include "connection.h"
-#include <sys/un.h>
 #include "../util/Network.h"
+#include <sys/un.h>
 
-#define PRINT_BUFFER_SIZE \
+#define PRINT_BUFFER_SIZE                                                      \
   //  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG); \
 //  Debug::Log("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
 
 Connection::Connection()
-    : buffer_size(0),
-      address(nullptr),
-      last_read_(0),
-      last_write_(0),
+    : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
       // string_buffer(),
-      socket_fd(-1),
-      address_str(""),
-      is_connected(false) {
+      socket_fd(-1), address_str(""), is_connected(false) {
   // address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
   is_connected = false;
-  if (socket_fd > 0) this->closeConnection();
+  if (socket_fd > 0)
+    this->closeConnection();
   if (address != nullptr) {
-    if (address->ai_addr != nullptr) delete address->ai_addr;
+    if (address->ai_addr != nullptr)
+      delete address->ai_addr;
   }
   delete address;
 }
@@ -33,7 +30,7 @@ Connection::~Connection() {
 IO::IO_RESULT Connection::read() {
   bool done = false;
   ssize_t count;
-  IO::IO_RESULT result = IO::ERROR;
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   //  Debug::Log("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
   PRINT_BUFFER_SIZE
@@ -58,7 +55,7 @@ IO::IO_RESULT Connection::read() {
       buffer_size += static_cast<size_t>(count);
       if ((MAX_DATA_SIZE - buffer_size) < 5) {
         Debug::Log("Buffer maximum size reached !!1", LOG_DEBUG);
-        result = IO::FULL_BUFFER;
+        result = IO::IO_RESULT::FULL_BUFFER;
         break;
       } else
         result = IO::IO_RESULT::SUCCESS;
@@ -96,7 +93,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   bool done = false;
   size_t sent = 0;
   ssize_t count;
-  IO::IO_RESULT result = IO::ERROR;
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
   //  Debug::Log("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
@@ -109,7 +106,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_NOTICE);
-        result = IO::ERROR;
+        result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
       }
@@ -120,10 +117,10 @@ IO::IO_RESULT Connection::writeTo(int fd) {
       break;
     } else {
       sent += static_cast<size_t>(count);
-      result = IO::SUCCESS;
+      result = IO::IO_RESULT::SUCCESS;
     }
   }
-  if (sent > 0 && result != IO::ERROR) {
+  if (sent > 0 && result != IO::IO_RESULT::ERROR) {
     buffer_size -= sent;
     //    string_buffer.erase(static_cast<unsigned int>(sent));
   }
@@ -133,41 +130,79 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   return result;
 }
 
-IO::IO_RESULT Connection::writeRequest(HttpRequest& request,
-                                       ssize_t& out_total_written) {
-  const char* return_value = "\r\n";
+IO::IO_RESULT Connection::writeTo(int target_fd,
+                                  http_parser::HttpData &http_data) {
+  const char *return_value = "\r\n";
+  auto vector_size = http_data.num_headers +
+                     (http_data.message_length > 0 ? 3 : 2) +
+                     http_data.extra_headers.size();
+  iovec iov[vector_size];
+  char *last_buffer_pos_written;
 
-  iovec iov[request.num_headers + (request.message_length > 0 ? 3 : 2)];
-  ssize_t nwritten = 0;
-  int total = 0;
-  iov[0].iov_base = request.request_line;
-  iov[0].iov_len = request.request_line_length;
-  total += request.request_line_length;
+  int total_to_send = 0;
+  iov[0].iov_base = http_data.request_line;
+  iov[0].iov_len = http_data.request_line_length;
+  total_to_send += http_data.request_line_length;
   int x = 1;
-  for (size_t i = 0; i != request.num_headers; i++) {
-    if (request.headers[i].header_off) continue;  // skip unwanted headers
-    iov[x].iov_base = const_cast<char*>(request.headers[i].name);
-    iov[x].iov_len = request.headers[i].line_size;
-    total += request.headers[i].line_size;
-    x++;
+  for (size_t i = 0; i != http_data.num_headers; i++) {
+    if (http_data.headers[i].header_off)
+      continue; // skip unwanted headers
+    iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
+    iov[x++].iov_len = http_data.headers[i].line_size;
+    total_to_send += http_data.headers[i].line_size;
   }
-  iov[x].iov_base = const_cast<char*>(return_value);
+  for (auto &header :
+       http_data.extra_headers) { // header must be always  used as reference,
+    // it's copied it invalidate c_str() reference.
+    iov[x].iov_base = const_cast<char *>(header.second.c_str());
+    iov[x++].iov_len = header.second.length();
+    total_to_send += header.second.length();
+  }
+  iov[x].iov_base = const_cast<char *>(return_value);
   iov[x++].iov_len = 2;
-  total += 2;
-  if (request.message_length > 0) {
-    iov[x].iov_base = request.message;
-    iov[x++].iov_len = request.message_length;
-    total += request.message_length;
+  total_to_send += 2;
+
+  last_buffer_pos_written =
+      const_cast<char *>(
+          http_data.headers[http_data.num_headers - 1].name +
+          http_data.headers[http_data.num_headers - 1].line_size) +
+      2;
+  if (http_data.message_length > 0) {
+    iov[x].iov_base = http_data.message;
+    iov[x++].iov_len = http_data.message_length;
+    last_buffer_pos_written += http_data.message_length;
+    total_to_send += http_data.message_length;
   }
-  out_total_written = ::writev(socket_fd, iov, x);
-  return IO::SUCCESS;
+  ssize_t nwritten = ::writev(target_fd, iov, x);
+
+  if (nwritten < 0) {
+    if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
+          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+      std::string error = "write() failed  ";
+      error += std::strerror(errno);
+      Debug::Log(error, LOG_NOTICE);
+      return IO::IO_RESULT::ERROR;
+    } else {
+      return IO::IO_RESULT::DONE_TRY_AGAIN;
+    }
+  } else if (nwritten != total_to_send) {
+    return IO::IO_RESULT::ERROR;
+  }
+  buffer_size -=
+      static_cast<size_t>(last_buffer_pos_written - http_data.buffer);
+  return IO::IO_RESULT::SUCCESS;
 }
-IO::IO_RESULT Connection::write(const char* data,
-                                size_t size) {  //}, size_t *sent) {
+
+IO::IO_RESULT Connection::writeTo(const Connection &target_connection,
+                                  http_parser::HttpData &http_data) {
+  return writeTo(target_connection.getFileDescriptor(), http_data);
+}
+
+IO::IO_RESULT Connection::write(const char *data, size_t size) {
   bool done = false;
   size_t sent = 0;
   ssize_t count;
-  IO::IO_RESULT result = IO::ERROR;
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
   //  Debug::Log("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
@@ -180,7 +215,7 @@ IO::IO_RESULT Connection::write(const char* data,
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_NOTICE);
-        result = IO::ERROR;
+        result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
       }
@@ -191,10 +226,10 @@ IO::IO_RESULT Connection::write(const char* data,
       break;
     } else {
       sent += static_cast<size_t>(count);
-      result = IO::SUCCESS;
+      result = IO::IO_RESULT::SUCCESS;
     }
   }
-  if (sent > 0 && result != IO::ERROR) {
+  if (sent > 0 && result != IO::IO_RESULT::ERROR) {
     //    size -= sent;
     //    string_buffer.erase(static_cast<unsigned int>(sent));
   }
@@ -211,28 +246,29 @@ void Connection::closeConnection() {
     ::close(socket_fd);
   }
 }
-IO::IO_OP Connection::doConnect(addrinfo& address, int timeout) {
+IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
   long arg;
   socklen_t len;
   int result = -1, valopt;
-  if ((socket_fd = socket(address.ai_family, SOCK_STREAM, 0)) < 0) {
+  if ((socket_fd = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
     // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
-    return IO::OP_ERROR;
+    return IO::IO_OP::OP_ERROR;
   }
-  if (timeout > 0) Network::setSocketNonBlocking(socket_fd);
-  if ((result = ::connect(socket_fd, address.ai_addr, sizeof(address))) < 0) {
+  if (timeout > 0)
+    Network::setSocketNonBlocking(socket_fd);
+  if ((result = ::connect(socket_fd, address_.ai_addr, sizeof(address_))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
-      return IO::OP_IN_PROGRESS;
+      return IO::IO_OP::OP_IN_PROGRESS;
 
     } else {
       Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
                     strerror(errno));
-      return IO::OP_ERROR;
+      return IO::IO_OP::OP_ERROR;
     }
   }
   // Create stream object if connected
-  return result != -1 ? IO::OP_SUCCESS : IO::OP_ERROR;
+  return result != -1 ? IO::IO_OP::OP_SUCCESS : IO::IO_OP::OP_ERROR;
 }
 
 bool Connection::isConnected() {
@@ -247,10 +283,10 @@ int Connection::doAccept() {
   sockaddr_in clnt_addr{};
   socklen_t clnt_length = sizeof(clnt_addr);
 
-  if ((new_fd = accept4(socket_fd, (sockaddr*)&clnt_addr, &clnt_length,
+  if ((new_fd = accept4(socket_fd, (sockaddr *)&clnt_addr, &clnt_length,
                         SOCK_NONBLOCK | SOCK_CLOEXEC)) < 0) {
     if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-      return 0;  // We have processed all incoming connections.
+      return 0; // We have processed all incoming connections.
     }
     std::string error = "accept() failed  ";
     error += std::strerror(errno);
@@ -269,13 +305,14 @@ int Connection::doAccept() {
 
   return -1;
 }
-bool Connection::listen(std::string address_str, int port) {
-  this->address = Network::getAddress(address_str, port);
-  if (this->address != nullptr) return listen(*this->address);
+bool Connection::listen(std::string address_str_, int port) {
+  this->address = Network::getAddress(address_str_, port);
+  if (this->address != nullptr)
+    return listen(*this->address);
   return false;
 }
 
-bool Connection::listen(addrinfo& address_) {
+bool Connection::listen(addrinfo &address_) {
   this->address = &address_;
   /* prepare the socket */
   if ((socket_fd =
@@ -301,7 +338,8 @@ bool Connection::listen(addrinfo& address_) {
   return true;
 }
 bool Connection::listen(std::string af_unix_name) {
-  if (af_unix_name.empty()) return false;
+  if (af_unix_name.empty())
+    return false;
   // unlink possible previously created path.
   unlink(af_unix_name.c_str());
 
@@ -316,7 +354,8 @@ bool Connection::listen(std::string af_unix_name) {
                   strerror(errno));
     return false;
   }
-  if (::bind(socket_fd, (struct sockaddr*)&ctrl, (socklen_t)sizeof(ctrl)) < 0) {
+  if (::bind(socket_fd, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) <
+      0) {
     Debug::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
                   strerror(errno));
     return false;

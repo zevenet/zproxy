@@ -2,9 +2,9 @@
 // Created by abdess on 10/11/18.
 //
 #pragma once
+#include "json.h"
 #include <map>
 #include <vector>
-#include "json.h"
 
 namespace json {
 
@@ -13,7 +13,7 @@ class JsonArray : public Json, private std::vector<Json *> {
   //  typedef JsonType T;
   typedef std::vector<Json *> vector;
 
- public:
+public:
   using vector::push_back;
   using vector::operator[];
   using vector::begin;
@@ -30,7 +30,7 @@ class JsonObject : public Json, private std::map<std::string, Json *> {
   //  typedef Json T;
   typedef std::map<std::string, Json *> map;
 
- public:
+public:
   using map::at;
   using map::erase;
   using map::insert;
@@ -42,7 +42,6 @@ class JsonObject : public Json, private std::map<std::string, Json *> {
 
   bool isObject() override;
   void freeJson() override;
-  JsonObject *parse(std::string json_string);
   std::string stringify(bool prettyfy = false, int tabs = -1) override;
 };
-}  // namespace json
+} // namespace json

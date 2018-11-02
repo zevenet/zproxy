@@ -18,20 +18,26 @@ std::string JsonArray::stringify(bool prettyfy, int tabs) {
   std::string res = "";
   if (prettyfy) {
     res += '\n';
-    for (auto num = tabs; num > 0; num--) res += '\t';
+    for (auto num = tabs; num > 0; num--)
+      res += '\t';
   }
   res += "[";
-  if (prettyfy) res += '\n';
+  if (prettyfy)
+    res += '\n';
   for (auto it = this->begin(); it != this->end(); it++) {
-    for (auto num = tabs; num > 0 && prettyfy; num--) res += '\t';
-    if ((*it) == nullptr) continue;
+    for (auto num = tabs; num > 0 && prettyfy; num--)
+      res += '\t';
+    if ((*it) == nullptr)
+      continue;
     res += (*it)->stringify(tabs + 1);
     if (it != --this->end()) {
       res += ",";
     }
-    if (prettyfy) res += '\n';
+    if (prettyfy)
+      res += '\n';
   }
-  for (auto num = tabs; num > 0 && prettyfy; num--) res += '\t';
+  for (auto num = tabs; num > 0 && prettyfy; num--)
+    res += '\t';
   return res + "]";
 }
 
@@ -41,33 +47,37 @@ void JsonObject::freeJson() {
   for (auto &data : *this) {
     data.second->freeJson();
     Json *data_ptr = data.second;
-    delete data_ptr;  // TODO:: FIX SIGABRT
+    delete data_ptr; // TODO:: FIX SIGABRT
   }
   this->clear();
 }
-
-JsonObject *JsonObject::parse(std::string json_string) {}
 
 std::string JsonObject::stringify(bool prettyfy, int tabs) {
   std::string res = "";
   if (prettyfy) {
     res += '\n';
-    for (auto num = tabs; num > 0 && prettyfy; num--) res += '\t';
+    for (auto num = tabs; num > 0 && prettyfy; num--)
+      res += '\t';
   }
   res += "{";
-  if (prettyfy) res += '\n';
+  if (prettyfy)
+    res += '\n';
   for (auto it = this->begin(); it != this->end(); it++) {
-    for (auto num = tabs; num > 0 && prettyfy; num--) res += '\t';
-    if (it->second == nullptr) continue;
+    for (auto num = tabs; num > 0 && prettyfy; num--)
+      res += '\t';
+    if (it->second == nullptr)
+      continue;
     res += "\"" + it->first + "\" : " + it->second->stringify(tabs + 1);
     if (it != --this->end()) {
       res += ",";
     }
-    if (prettyfy) res += '\n';
+    if (prettyfy)
+      res += '\n';
   }
-  for (auto num = tabs; num > 0 && prettyfy; num--) res += '\t';
+  for (auto num = tabs; num > 0 && prettyfy; num--)
+    res += '\t';
   return res + "}";
 }
 
 bool JsonObject::isObject() { return true; }
-}  // namespace json
+} // namespace json

@@ -7,7 +7,7 @@
 
 #define DEBUG_HTTP_PARSER 0
 
-http_parser::HttpParser::HttpParser()
+http_parser::HttpData::HttpData()
     : method(nullptr),
       method_len(0),
       path(nullptr),
@@ -21,7 +21,7 @@ http_parser::HttpParser::HttpParser()
       buffer(nullptr),
       buffer_size(0) {}
 
-void http_parser::HttpParser::reset_parser() {
+void http_parser::HttpData::reset_parser() {
   method = nullptr;
   method_len = 0;
   path = nullptr;
@@ -34,18 +34,18 @@ void http_parser::HttpParser::reset_parser() {
   message_length = 0;
 }
 
-void http_parser::HttpParser::setBuffer(char *ext_buffer, int buffer_size) {
+void http_parser::HttpData::setBuffer(char *ext_buffer, int buffer_size) {
   buffer = ext_buffer;
 }
 
-char *http_parser::HttpParser::getBuffer() const { return buffer; }
+char *http_parser::HttpData::getBuffer() const { return buffer; }
 
-http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
+http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
     const std::string &data, size_t *used_bytes, bool reset) {
   return parseRequest(data.c_str(), data.length(), used_bytes, reset);
 }
 
-http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
+http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
     const char *data, const size_t data_size, size_t *used_bytes, bool reset) {
   if (LIKELY(reset)) reset_parser();
   buffer = const_cast<char *>(data);
@@ -73,11 +73,11 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
   }
   return PARSE_RESULT::FAILED;
 }
-http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(
+http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
     const std::string &data, size_t *used_bytes, bool reset) {
   return parseResponse(data.c_str(), data.length(), used_bytes);
 }
-http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(
+http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
     const char *data, const size_t data_size, size_t *used_bytes, bool reset) {
   if (LIKELY(reset)) reset_parser();
   buffer = const_cast<char *>(data);
@@ -102,7 +102,7 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(
   }
   return PARSE_RESULT::FAILED;
 }
-void http_parser::HttpParser::printResponse() {
+void http_parser::HttpData::printResponse() {
   Debug::logmsg(LOG_DEBUG, "HTTP 1.%d %d %s", minor_version, http_status_code,
                 HttpStatus::reasonPhrase(http_status_code).c_str());
   Debug::logmsg(LOG_DEBUG, "headers:");
@@ -111,7 +111,7 @@ void http_parser::HttpParser::printResponse() {
                   headers[i].name, (int)headers[i].value_len, headers[i].value);
   }
 }
-void http_parser::HttpParser::printRequest() {
+void http_parser::HttpData::printRequest() {
   Debug::logmsg(LOG_DEBUG, "method is %.*s", (int)method_len, method);
   Debug::logmsg(LOG_DEBUG, "path is %.*s", (int)path_length, path);
   Debug::logmsg(LOG_DEBUG, "HTTP version is 1.%d", minor_version);
