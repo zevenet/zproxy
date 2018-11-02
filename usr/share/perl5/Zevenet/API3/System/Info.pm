@@ -26,8 +26,9 @@ use strict;
 # show license
 sub get_license
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $format = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $format      = shift;
 	my $description = "Get license";
 	my $file;
 
@@ -36,18 +37,20 @@ sub get_license
 		my $licenseFile = &getGlobalConfiguration( 'licenseFileTxt' );
 		open ( my $license_fh, '<', "$licenseFile" );
 		$file .= $_ while ( <$license_fh> );
+
 		# Close this particular file.
 		close $license_fh;
-		&httpResponse({ code => 200, body => $file, type => 'text/plain' });
+		&httpResponse( { code => 200, body => $file, type => 'text/plain' } );
 	}
 	elsif ( $format eq 'html' )
 	{
 		my $licenseFile = &getGlobalConfiguration( 'licenseFileHtml' );
 		open ( my $license_fh, '<', "$licenseFile" );
 		$file .= $_ while ( <$license_fh> );
+
 		# Close this particular file.
 		close $license_fh;
-		&httpResponse({ code => 200, body => $file, type => 'text/html' });
+		&httpResponse( { code => 200, body => $file, type => 'text/html' } );
 	}
 	else
 	{
@@ -60,9 +63,10 @@ sub get_license
 
 sub get_supportsave
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $description = "Get supportsave file";
-	my @ss_output = `/usr/local/zevenet/bin/supportsave 2>&1`;
+	my @ss_output   = `/usr/local/zevenet/bin/supportsave 2>&1`;
 
 	# get the last "word" from the first line
 	my $first_line = shift @ss_output;
@@ -104,7 +108,8 @@ sub get_supportsave
 # GET /system/version
 sub get_version
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $description = "Get version";
 
 	my $uname      = &getGlobalConfiguration( 'uname' );
@@ -114,19 +119,23 @@ sub get_version
 	my $date       = &getDate();
 	my $applicance = getApplianceVersion();
 
-	chop $kernel;
-	chop $hostname;
+	chomp $kernel;
+	chomp $hostname;
 
 	&httpResponse(
-		{ 	code => 200, body => { description => $description,
-				params => {
-					'kernel_version' => $kernel,
-					'zevenet_version' => $zevenet,
-					'hostname' => $hostname,
-					'system_date' => $date,
-					'appliance_version' => $applicance,
-				} }
-		}
+				   {
+					 code => 200,
+					 body => {
+							   description => $description,
+							   params      => {
+										   'kernel_version'    => $kernel,
+										   'zevenet_version'   => $zevenet,
+										   'hostname'          => $hostname,
+										   'system_date'       => $date,
+										   'appliance_version' => $applicance,
+							   }
+					 }
+				   }
 	);
 }
 
