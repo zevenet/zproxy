@@ -727,7 +727,7 @@ sub setL4FarmProto    # ($proto,$farm_name)
 	}
 
 	require Tie::File;
-	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return 1;
 	my $i = 0;
 
 	for my $line ( @configfile )
@@ -749,26 +749,12 @@ sub setL4FarmProto    # ($proto,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
+	&_runL4FarmStop( $farm_name );
+
 	if ( $$farm{ status } eq 'up' )
 	{
-		# Remove required modules
-		if ( $old_proto =~ /sip|ftp/ )
-		{
-			my $status = &loadL4Modules( $old_proto );
-		}
-
-		# Load required modules
-		if ( $$farm{ vproto } =~ /sip|ftp/ )
-		{
-			my $status = &loadL4Modules( $$farm{ vproto } );
-		}
-
-		$output = &refreshL4FarmRules( $farm );
-
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'CONT' => $fg_pid;
-		}
+		$output |= &_runL4FarmStart( $farm_name );
+		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
 	}
 
 	return $output;
