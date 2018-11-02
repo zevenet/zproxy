@@ -64,27 +64,26 @@ struct phr_header {
   size_t name_len;
   const char *value;
   size_t value_len;
+  bool header_off;
+  size_t line_size;
 };
 
 /* returns number of bytes consumed if successful, -2 if request is partial,
  * -1 if failed */
-int phr_parse_request(const char *buf,
-                      size_t len,
-                      const char **method,
-                      size_t *method_len,
-                      const char **path,
-                      size_t *path_len,
-                      int *minor_version,
-                      struct phr_header *headers,
-                      size_t *num_headers,
-                      size_t last_len);
+int phr_parse_request(const char *buf, size_t len, const char **method,
+                      size_t *method_len, const char **path, size_t *path_len,
+                      int *minor_version, struct phr_header *headers,
+                      size_t *num_headers, size_t last_len);
 
 /* ditto */
-int phr_parse_response(const char *_buf, size_t len, int *minor_version, int *status, const char **msg, size_t *msg_len,
-                       struct phr_header *headers, size_t *num_headers, size_t last_len);
+int phr_parse_response(const char *_buf, size_t len, int *minor_version,
+                       int *status, const char **msg, size_t *msg_len,
+                       struct phr_header *headers, size_t *num_headers,
+                       size_t last_len);
 
 /* ditto */
-int phr_parse_headers(const char *buf, size_t len, struct phr_header *headers, size_t *num_headers, size_t last_len);
+int phr_parse_headers(const char *buf, size_t len, struct phr_header *headers,
+                      size_t *num_headers, size_t last_len);
 
 /* should be zero-filled before start */
 struct phr_chunked_decoder {
@@ -103,7 +102,8 @@ struct phr_chunked_decoder {
  * octets left undecoded at the tail of the supplied buffer.  Returns -1 on
  * error.
  */
-ssize_t phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf, size_t *bufsz);
+ssize_t phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
+                           size_t *bufsz);
 
 /* returns if the chunked decoder is in middle of chunked data */
 int phr_decode_chunked_is_in_data(struct phr_chunked_decoder *decoder);

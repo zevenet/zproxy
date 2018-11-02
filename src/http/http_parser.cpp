@@ -65,6 +65,8 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseRequest(
     http_version = minor_version == 1 ? HTTP_1_1 : HTTP_1_0;
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
+    request_line = const_cast<char *>(method);
+    request_line_length = static_cast<int>(headers[0].name - method);
     return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
   } else if (pret == -2) {        /* request is incomplete, continue the loop */
     return PARSE_RESULT::INCOMPLETE;

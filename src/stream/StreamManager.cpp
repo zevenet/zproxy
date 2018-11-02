@@ -83,7 +83,8 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         return;
       }
       /*      streams_set.erase(fd);
-      delete stream*/;
+      delete stream*/
+      ;
       clearStream(stream);
       break;
     }
@@ -375,7 +376,8 @@ void StreamManager::onRequestEvent(int fd) {
                                            // null
                 if (stream->backend_connection.getFileDescriptor() !=
                     BACKEND_STATUS::NO_BACKEND) {
-                  stream->backend_connection.setBackend(stream->backend_connection.getBackend(), false);
+                  stream->backend_connection.setBackend(
+                      stream->backend_connection.getBackend(), false);
                   deleteFd(stream->backend_connection
                                .getFileDescriptor());  // TODO:: Client cannot
                                                        // be connected to more
@@ -386,7 +388,8 @@ void StreamManager::onRequestEvent(int fd) {
                   stream->backend_connection.closeConnection();
                 }
                 stream->backend_connection.setBackend(bck, true);
-                stream->backend_connection.time_start = std::chrono::steady_clock::now();
+                stream->backend_connection.time_start =
+                    std::chrono::steady_clock::now();
                 op_state = stream->backend_connection.doConnect(
                     *bck->address_info, bck->conn_timeout);
                 switch (op_state) {
@@ -404,7 +407,8 @@ void StreamManager::onRequestEvent(int fd) {
 
                   case IO::OP_IN_PROGRESS: {
                     stream->timer_fd.set(bck->conn_timeout * 1000);
-                    stream->backend_connection.getBackend()->increaseConnTimeoutAlive();
+                    stream->backend_connection.getBackend()
+                        ->increaseConnTimeoutAlive();
                     timers_set[stream->timer_fd.getFileDescriptor()] = stream;
                     addFd(stream->timer_fd.getFileDescriptor(),
                           EVENT_TYPE::READ, EVENT_GROUP::CONNECT_TIMEOUT);
@@ -495,8 +499,10 @@ void StreamManager::onResponseEvent(int fd) {
   auto result = stream->backend_connection.read();
 
   stream->backend_connection.getBackend()->calculateLatency(
-          std::chrono::duration_cast<std::chrono::duration<double>>
-          (std::chrono::steady_clock::now() - stream->backend_connection.time_start).count());
+      std::chrono::duration_cast<std::chrono::duration<double>>(
+          std::chrono::steady_clock::now() -
+          stream->backend_connection.time_start)
+          .count());
 
   if (result == IO::ERROR) {
     Debug::Log("Error reading response ", LOG_DEBUG);
@@ -513,8 +519,10 @@ void StreamManager::onResponseEvent(int fd) {
            EVENT_GROUP::CLIENT);
 
   stream->backend_connection.getBackend()->setAvgTransferTime(
-          std::chrono::duration_cast<std::chrono::duration<double>>
-          (std::chrono::steady_clock::now() - stream->backend_connection.time_start).count());
+      std::chrono::duration_cast<std::chrono::duration<double>>(
+          std::chrono::steady_clock::now() -
+          stream->backend_connection.time_start)
+          .count());
 
   //  switch (ret) {
   //    case http_parser::SUCCESS:
@@ -596,24 +604,23 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
     stream->timer_fd.unset();
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
 
-stream->backend_connection.getBackend()->setAvgConnTime  (
-          std::chrono::duration_cast<std::chrono::duration<double>>
-          (std::chrono::steady_clock::now() - stream->backend_connection.time_start).count());
+    stream->backend_connection.getBackend()->setAvgConnTime(
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            std::chrono::steady_clock::now() -
+            stream->backend_connection.time_start)
+            .count());
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   // skip lstn->head_off
 
-  auto result = stream->client_connection.writeTo(
-      stream->backend_connection.getFileDescriptor());
-
-  for (size_t i = 0; i != stream->request.num_headers; ++i) {
-      if(!stream->request.headers[i].head_off){
-
-      }
-  }
-   //TODO::rewrite destination
-   //TODO::add X-forwarded-for
-
+  //    auto result = stream->client_connection.writeTo(
+  //        stream->backend_connection.getFileDescriptor());
+  ssize_t total_writen = 0;
+  auto result =
+      stream->backend_connection.writeRequest(stream->request, total_writen);
+  stream->client_connection.buffer_size -= static_cast<size_t>(total_writen);
+  // TODO::rewrite destination
+  // TODO::add X-forwarded-for
 
   if (result == IO::SUCCESS) {
     stream->timer_fd.set(
@@ -679,7 +686,7 @@ validation::REQUEST_RESULT StreamManager::validateRequest(
   }
 
   // TODO:: Check for correct headers
-  for (auto i = 0; i != request.num_headers; ++i) {
+  for (auto i = 0; i != request.num_headers; i++) {
     std::string header(request.headers[i].name, request.headers[i].name_len);
     std::string header_value(request.headers[i].value,
                              request.headers[i].value_len);
@@ -694,13 +701,14 @@ validation::REQUEST_RESULT StreamManager::validateRequest(
       Debug::logmsg(LOG_DEBUG, "\tUnknown: %s", header_value.c_str());
     }
 
-        /* maybe header to be removed */
-        MATCHER *m;
+    /* maybe header to be removed */
+    MATCHER* m;
 
-for(m = listener_config_.head_off; m; m = m->next){
-            if((request.headers[i].head_off = ::regexec(&m->pat, request.headers[i].name, 0, nullptr, 0) != 0))
-                break;
-        }
+    for (m = listener_config_.head_off; m; m = m->next) {
+      if ((request.headers[i].header_off =
+               ::regexec(&m->pat, request.headers[i].name, 0, nullptr, 0) != 0))
+        break;
+    }
   }
   // waf
 
@@ -742,7 +750,8 @@ void StreamManager::clearStream(HttpStream* stream) {
     deleteFd(stream->backend_connection.getFileDescriptor());
     streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->backend_connection.getFileDescriptor());
-    stream->backend_connection.setBackend(stream->backend_connection.getBackend(), false);
+    stream->backend_connection.setBackend(
+        stream->backend_connection.getBackend(), false);
   }
   delete stream;
 }

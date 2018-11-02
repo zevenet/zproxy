@@ -132,23 +132,57 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   PRINT_BUFFER_SIZE
   return result;
 }
+
+IO::IO_RESULT Connection::writeRequest(HttpRequest& request,
+                                       ssize_t& out_total_written) {
+  const char* return_value = "\r\n";
+
+  iovec iov[request.num_headers + (request.message_length > 0 ? 3 : 2)];
+  ssize_t nwritten = 0;
+  int total = 0;
+  iov[0].iov_base = request.request_line;
+  iov[0].iov_len = request.request_line_length;
+  total += request.request_line_length;
+  int x = 1;
+  for (size_t i = 0; i != request.num_headers; i++) {
+    if (request.headers[i].header_off) continue;  // skip unwanted headers
+    iov[x].iov_base = const_cast<char*>(request.headers[i].name);
+    iov[x].iov_len = request.headers[i].line_size;
+    total += request.headers[i].line_size;
+    x++;
+  }
+  iov[x].iov_base = const_cast<char*>(return_value);
+  iov[x++].iov_len = 2;
+  total += 2;
+  if (request.message_length > 0) {
+    iov[x].iov_base = request.message;
+    iov[x++].iov_len = request.message_length;
+    total += request.message_length;
+  }
+  out_total_written = ::writev(socket_fd, iov, x);
+  return IO::SUCCESS;
+}
 IO::IO_RESULT Connection::write(const char* data,
                                 size_t size) {  //}, size_t *sent) {
   bool done = false;
+  size_t sent = 0;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
-  int sent = 0;
+
+  //  Debug::Log("#IN#bufer_size" +
+  //  std::to_string(string_buffer.string().length()));
+  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::send(socket_fd, data + sent, size - sent, MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {  // TODO:: What to do if connection closes
+          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::Log(error, LOG_DEBUG);
-        result = IO::DONE_TRY_AGAIN;
-      } else {
+        Debug::Log(error, LOG_NOTICE);
         result = IO::ERROR;
+      } else {
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;
       }
       done = true;
       break;
@@ -160,7 +194,13 @@ IO::IO_RESULT Connection::write(const char* data,
       result = IO::SUCCESS;
     }
   }
-
+  if (sent > 0 && result != IO::ERROR) {
+    //    size -= sent;
+    //    string_buffer.erase(static_cast<unsigned int>(sent));
+  }
+  //  Debug::Log("#OUT#bufer_size" +
+  //  std::to_string(string_buffer.string().length()));
+  PRINT_BUFFER_SIZE
   return result;
 }
 

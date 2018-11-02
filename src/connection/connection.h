@@ -4,7 +4,9 @@
 #pragma once
 
 #include <netdb.h>
+#include <sys/uio.h>
 #include <unistd.h>
+#include "../http/HttpRequest.h"
 #include "../util/string_buffer.h"
 #include "../util/utils.h"
 
@@ -49,6 +51,8 @@ class Connection {
 
   IO::IO_RESULT write(const char* data, size_t size);
   IO::IO_RESULT writeTo(int fd);
+  IO::IO_RESULT writeRequest(HttpRequest& request, ssize_t& out_total_written);
+
   IO::IO_RESULT read();
 
   void closeConnection();
