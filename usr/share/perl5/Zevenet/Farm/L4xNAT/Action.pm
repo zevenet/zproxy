@@ -233,7 +233,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 			push ( @{ $$rules{ t_nat } },      @{ $$backend_rules{ t_nat } } );
 			push ( @{ $$rules{ t_snat } },     @{ $$backend_rules{ t_snat } } );
 		}
-		elsif ( $$farm{ lbalg } eq 'prio' && $$server{ status } ne 'fgDOWN' )
+		elsif ( $$farm{ lbalg } eq 'prio' && $$server{ status } eq 'up' )
 		{
 			# find the lowest priority server
 			if ( $$server{ priority } ne ''
