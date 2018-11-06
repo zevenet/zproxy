@@ -749,11 +749,11 @@ sub setL4FarmProto    # ($proto,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	&_runL4FarmStop( $farm_name );
+	&stopL4Farm( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		$output |= &_runL4FarmStart( $farm_name );
+		$output |= &startL4Farm( $farm_name );
 		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
 	}
 
