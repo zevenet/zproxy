@@ -701,8 +701,9 @@ StreamManager::validateRequest(HttpRequest &request) { // TODO:: why use of e501
     std::string header(request.headers[i].name, request.headers[i].name_len);
     std::string header_value(request.headers[i].value,
                              request.headers[i].value_len);
-    auto header_name = http::http_info::headers_names.at(header);
-    if (header_name != http::HTTP_HEADER_NAME::H_NONE) {
+
+    if (http::http_info::headers_names.count(header) >  0) {
+      auto header_name = http::http_info::headers_names.at(header);
       auto header_name_string =
           http::http_info::headers_names_strings.at(header_name);
       //      Debug::
@@ -710,7 +711,7 @@ StreamManager::validateRequest(HttpRequest &request) { // TODO:: why use of e501
       //          header_value.c_str());
     } else {
       // TODO::Unknown header, What to do ??
-      Debug::logmsg(LOG_DEBUG, "\tUnknown: %s", header_value.c_str());
+      Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s", header.c_str(), header_value.c_str());
     }
 
     /* maybe header to be removed */

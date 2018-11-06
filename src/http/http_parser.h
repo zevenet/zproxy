@@ -4,6 +4,7 @@
 #include "picohttpparser.h"
 #include <map>
 #include <string>
+#include "regex"
 
 namespace http_parser {
 
@@ -36,6 +37,10 @@ public:
   void printResponse();
   void reset_parser();
   void setBuffer(char *ext_buffer, int buffer_size);
+  bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);
+  bool getHeaderValue(std::string header_name, std::string &out_key);
+  std::string getUrlParameter(std::string url);
+  std::string getQueryParameter(std::string url, std::string sess_id);
 
 public:
   std::map<http::HTTP_HEADER_NAME, const std::string> extra_headers;

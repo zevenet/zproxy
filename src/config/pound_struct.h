@@ -87,6 +87,7 @@ class ServiceConfig {
   pthread_mutex_t mut; /* mutex for this service */
   SESS_TYPE sess_type;
   int sess_ttl;       /* session time-to-live */
+  std::string sess_id;    /* id used to track the session */
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
 

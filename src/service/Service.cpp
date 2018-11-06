@@ -99,9 +99,9 @@ Service::Service(ServiceConfig &service_config_)
   this->session_type =
       static_cast<sessions::HttpSessionType>(service_config_.sess_type);
   this->ttl = static_cast<unsigned int>(service_config_.sess_ttl);
+  this->sess_id = service_config_.sess_id;
   this->sess_pat = service_config_.sess_pat;
   this->sess_start = service_config_.sess_start;
-
   // backend initialization
   int backend_id = 1;
   for (auto bck = service_config_.backends; bck != nullptr; bck = bck->next) {

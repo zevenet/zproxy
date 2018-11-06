@@ -3,6 +3,7 @@
 #include <string>
 #include "../http/http_stream.h"
 #include "../json/JsonDataValue.h"
+#include <unordered_map>
 
 using namespace std::chrono;
 
@@ -44,11 +45,10 @@ struct SessionInfo {
 
 class HttpSessionManager {
   // used
-
  protected:
   HttpSessionType session_type;
   unsigned int ttl;
-  std::string sessions_id;
+  std::string sess_id; /* id to construct the pattern */
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
 
@@ -70,5 +70,4 @@ class HttpSessionManager {
   SessionInfo *getSession(HttpStream &stream, bool update_if_exist = false);
   json::JsonArray *getSessionsJson();
 };
-
 }  // namespace sessions

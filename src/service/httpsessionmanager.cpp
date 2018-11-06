@@ -1,4 +1,5 @@
 #include "httpsessionmanager.h"
+#include <regex>
 
 using namespace sessions;
 
@@ -20,23 +21,50 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
 
   std::string key("");
   switch (this->session_type) {
-  case SESS_NONE:
-    return nullptr;
-  case SESS_IP: {
-    key = stream.client_connection.getPeerAddress();
-    break;
-  }
-    // TODO:: to Implement
-  case SESS_COOKIE:
-    break;
-  case SESS_URL:
-    break;
-  case SESS_PARM:
-    break;
-  case SESS_HEADER:
-    break;
-  case SESS_BASIC:
-    break;
+    case SESS_NONE:
+      return nullptr;
+    case SESS_IP: {
+      key = stream.client_connection.getPeerAddress();
+      break;
+    }
+    case SESS_COOKIE: {
+      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_COOKIE, key)){
+        return nullptr;
+      }
+      break;
+    }
+    case SESS_URL: {
+      std::string url = stream.request.getUrl();
+      key = stream.request.getQueryParameter(url, sess_id);
+      break;
+    }
+    case SESS_PARM: {
+      std::string url = stream.request.getUrl();
+      key = stream.request.getUrlParameter(url);
+      break;
+    }
+    case SESS_HEADER: {
+      if(!stream.request.getHeaderValue(sess_id, key))
+        key = "";
+      break;
+    }
+    case SESS_BASIC:
+      //TODO: IMPLEMENTAR IGUAL QUE POUND (NO HACER FALTA AUTHENTICATION)
+      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_AUTHORIZATION, key)) {
+          key = "";
+      } else {
+        std::stringstream string_to_iterate(key);
+        std::istream_iterator<std::string> begin(string_to_iterate);
+        std::istream_iterator<std::string> end;
+        std::vector<std::string> header_value_parts(begin, end);
+        //TODO: Decode base64
+        if (header_value_parts[0] != "Basic") {
+          key = "";
+        } else {
+          key = header_value_parts[1]; //Currently it stores username:password
+        }
+      }
+      break;
   }
   // check if we have a new key to insert,
   if (!key.empty()) {
@@ -79,10 +107,63 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     }
     break;
   }
-  case sessions::SESS_URL:
+  case sessions::SESS_COOKIE: {
+    std::string session_key;
+    if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_COOKIE, session_key)){
+      session_key = "";
+    } else {
+      if (sessions_set.count(session_key) > 0) {
+        session = this->sessions_set[session_key];
+      }
+    }
     break;
-  case sessions::SESS_PARM:
+  }
+  case sessions::SESS_URL: {
+    std::string url = stream.request.getUrl();
+    session_key = stream.request.getQueryParameter(url, sess_id);
+    if (!session_key.empty() && sessions_set.count(session_key) > 0) {
+      session = this->sessions_set[session_key];
+    }
     break;
+  }
+  case sessions::SESS_PARM: {
+      std::string url = stream.request.getUrl();
+      session_key = stream.request.getUrlParameter(url);
+      if (!session_key.empty() && sessions_set.count(session_key) > 0) {
+          session = this->sessions_set[session_key];
+      }
+      break;
+  }
+  case sessions::SESS_HEADER: {
+    std::string session_key;
+    if (!stream.request.getHeaderValue(sess_id, session_key)) {
+      session_key = "";
+    } else {
+      if (sessions_set.count(session_key) > 0)
+        session = this->sessions_set[session_key];
+    }
+    break;
+  }
+    case sessions::SESS_BASIC: {
+        if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_AUTHORIZATION, session_key)) {
+            session_key = "";
+        } else {
+          std::stringstream string_to_iterate(session_key);
+          std::istream_iterator<std::string> begin(string_to_iterate);
+          std::istream_iterator<std::string> end;
+          std::vector<std::string> header_value_parts(begin, end);
+          //TODO: Decode base64
+          if (header_value_parts[0] != "Basic") {
+            session_key = "";
+          } else {
+            session_key = header_value_parts[1]; //Currently it stores username:password
+            if (sessions_set.count(session_key) > 0) {
+              session = this->sessions_set[session_key];
+            }
+          }
+        }
+      }
+  //TODO:
   default: { // For SESS_BASIC, SESS_HEADER and SESS_COOKIE
     break;
   }

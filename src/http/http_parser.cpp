@@ -1,4 +1,3 @@
-
 #include "http_parser.h"
 #include <strings.h>
 #include "../debug/Debug.h"
@@ -40,6 +39,61 @@ void http_parser::HttpData::setBuffer(char *ext_buffer, int buffer_size) {
 
 char *http_parser::HttpData::getBuffer() const { return buffer; }
 
+bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key)
+{
+  for (auto i = 0; i != num_headers; ++i) {
+    std::string header(headers[i].name, headers[i].name_len);
+    std::string header_value(headers[i].value,
+                             headers[i].value_len);
+    auto header_name_ = http_info::headers_names[header];
+    if (header_name_ == header_name) {
+        out_key = header_value;
+        return true;
+    }
+  }
+
+  return false;
+}
+
+bool http_parser::HttpData::getHeaderValue(std::string header_name, std::string &out_key)
+{
+  for (auto i = 0; i != num_headers; ++i) {
+    std::string header(headers[i].name, headers[i].name_len);
+
+    if (header_name == header) {
+      out_key = std::string(headers[i].value, headers[i].value_len);
+      return true;
+    }
+  }
+  out_key = "";
+  return false;
+}
+
+std::string http_parser::HttpData::getUrlParameter(std::string url) {
+  std::string expr_= "[;][^?]*";
+  std::smatch match;
+  std::regex rgx(expr_);
+  if (std::regex_search(url, match, rgx)) {
+    std::string result = match[0];
+    return result.substr(1);
+  } else {
+    return std::string();
+  }
+}
+
+std::string http_parser::HttpData::getQueryParameter(std::string url, std::string sess_id) {
+  std::string expr_= "[?&]" + sess_id +"=[^&;#]*";
+  std::smatch match;
+  //TODO: Sacarlo y hacerlo por test para comprobarlo por PCREPOSIX en bench
+  std::regex rgx (expr_);
+  if (std::regex_search(url, match, rgx)) {
+    std::string result = match[0];
+    return result.substr(1);
+  } else {
+    return std::string();
+  }
+}
+
 http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
     const std::string &data, size_t *used_bytes, bool reset) {
   return parseRequest(data.c_str(), data.length(), used_bytes, reset);
@@ -73,8 +127,7 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
   }
   return PARSE_RESULT::FAILED;
 }
-http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
-    const std::string &data, size_t *used_bytes, bool reset) {
+http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(const std::string &data, size_t *used_bytes, bool reset) {
   return parseResponse(data.c_str(), data.length(), used_bytes);
 }
 http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
