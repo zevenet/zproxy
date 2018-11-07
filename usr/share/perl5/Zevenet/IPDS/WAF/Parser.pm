@@ -496,7 +496,8 @@ sub buildWAFRule
 		{
 			foreach my $chained ( @{ $st->{ chain } } )
 			{
-				$chained->{ type } = 'match_action';
+				$chained->{ modified } = 'refresh';
+				$chained->{ type }     = 'match_action';
 				$secrule .= "\n\n" . &buildWAFRule( $chained, --$num_chain );
 			}
 		}
