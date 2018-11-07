@@ -109,7 +109,7 @@ sub getZapiWAFRule
 		$out->{ 'operator' }  = &translateWafOperator( $rule->{ operator } ) // '';
 		$out->{ 'operating' } = $rule->{ operating }                         // '';
 	}
-	$out->{ raw } = $rule->{ raw } // '';
+	$out->{ raw } = $rule->{ raw } // [];
 	$out->{ id }  = $rule->{ id }  // 0;
 
 	return $out;

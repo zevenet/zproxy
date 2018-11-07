@@ -49,13 +49,15 @@ Output example:
 
 sub convertWAFLine
 {
-	my $txt = shift;
+	my $ref_arr = shift;
+
+	my @txt = @{ $ref_arr };
 
 	my $line;
-	grep ( s/\\$//g,  @{ $txt } );
-	grep ( s/^\s*//g, @{ $txt } );
-	chomp $_ for ( @{ $txt } );
-	$line = join ( '', @{ $txt } );
+	grep ( s/\\$//g,  @txt );
+	grep ( s/^\s*//g, @txt );
+	chomp $_ for ( @txt );
+	$line = join ( '', @txt );
 	return $line;
 }
 
@@ -141,16 +143,20 @@ sub parseWAFRule
 	my $rule;
 	my $directive;
 	my $act;
+	my $raw = "";
 
 	# convert text in a line
 	if ( ref $txt eq 'ARRAY' )
 	{
+		$raw  = $txt;
 		$line = &convertWAFLine( $txt );
 	}
 	else
 	{
 		$line = $txt;
+		$raw  = [$txt];
 	}
+	$raw->[-1] =~ s/\s*#\s*$//s;    # remove modify tag
 
 	if ( $line =~ /^\s*(Sec\w+)\s+/s )
 	{
@@ -310,9 +316,11 @@ sub parseWAFRule
 			{
 				foreach my $ru ( @nested_rules )
 				{
-					$rule->{ raw } .= "\n" . &convertWAFLine( $ru );
 					push @{ $rule->{ chain } }, &parseWAFRule( $ru );
 					$rule->{ chain }->[-1]->{ type } = 'match_action';
+
+					push @{ $raw },
+					  @{ $rule->{ chain }->[-1]->{ raw } };    # TODO: tab the nested rule
 				}
 			}
 			elsif ( $param =~ /skip:'?([^']+)'?/ ) { $rule->{ skip } = $1; }
@@ -339,9 +347,8 @@ sub parseWAFRule
 
 	# save rule
 	$rule->{ modified } = $modified;
-	$rule->{ raw } //= "";
-	$rule->{ raw } = $line . $rule->{ raw };
-	chomp $rule->{ raw };
+	chomp @{ $raw };
+	$rule->{ raw } = $raw;
 
 	return $rule;
 }
@@ -371,17 +378,29 @@ sub buildWAFRule
 	my $secrule    = "";
 
 	# respect the original chain if it is not been modified
-	if ( $st->{ modified } eq 'no' )
+	if ( $st->{ modified } ne 'refresh' )
 	{
-		return $st->{ raw };
-	}
-	elsif ( $st->{ modified } eq 'yes' )
-	{
-		return "$st->{ raw } #";
+		my $ruleString = "";
+
+		my $raw = $st->{ raw };
+		my $it  = 0;
+		foreach my $line ( @{ $raw } )
+		{
+			$ruleString .= $line;
+			$ruleString .= "\n";
+			$it++;
+		}
+
+		if ( $st->{ modified } eq 'yes' )
+		{
+			chomp $ruleString;
+			$ruleString .= " #\n";
+		}
+
+		return $ruleString;
 	}
 
 	# else, modified eq 'refresh'
-
 	if ( $st->{ type } =~ /(?:match_action|action)/ )
 	{
 		if ( $st->{ type } eq 'match_action' )
@@ -888,6 +907,7 @@ sub parseWAFBatch
 				my $hash_rule = &parseWAFRule( @rules_nested );
 				$hash_rule->{ id } = $id;
 				$id++;
+
 				push @rules, $hash_rule
 				  if @rules_nested;    # add the last rule
 				$rule         = [];

@@ -38,7 +38,7 @@ Function: addWAFDelRegister
 
 Parameters:
 	Set - Name of the rule
-	Chain - Rule string
+	Raw rule - Array ref. Each item is a line of the rule
 
 Returns:
 	Integer - Return 0 on success or another value on failure
@@ -48,9 +48,10 @@ Returns:
 sub addWAFDelRegister
 {
 	my $set   = shift;
-	my $chain = shift;
+	my $raw   = shift;
 	my $err   = 0;
 	my $file  = &getWAFDelRegisterFile( $set );
+	my $chain = &convertWAFLine( $raw );
 	my $fh;
 
 	if ( !-f $file )
@@ -74,11 +75,11 @@ sub addWAFDelRegister
 =begin nd
 Function: checkWAFDelRegister
 
-	Check if a rule is added in the delete register
+	Serializate the rule and check if a rule is added in the delete register
 
 Parameters:
 	Set - Name of the rule
-	Chain - Rule string
+	Raw rule - Array ref. Each item is a line of the rule
 
 Returns:
 	Integer - Return 0 if the rule is not in the register or another value if the rule has been found
@@ -88,12 +89,24 @@ Returns:
 sub checkWAFDelRegister
 {
 	my $set   = shift;
-	my $chain = shift;
+	my $raw   = shift;
 	my $flag  = 0;
+	my $chain = &convertWAFLine( $raw );
 	my $file  = &getWAFDelRegisterFile( $set );
 	my $fh    = &openlock( $file, 'r' );
-	my $flag  = grep ( /^$chain$/, <$fh> );
-	close $fh;
+	if ( defined $fh )
+	{
+
+		foreach my $line ( <$fh> )
+		{
+			chomp $line;
+			if ( $chain eq $line )
+			{
+				$flag = 1;
+				last;
+			}
+		}
+	}
 
 	return $flag;
 }
@@ -210,22 +223,11 @@ sub createWAFRule
 	$rule_ref->{ rule_id } = &genWAFRuleId()
 	  if not $rule_ref->{ rule_id };
 
-	$rule->{ modified } = 'refresh';
+	$rule_ref->{ modified } = 'refresh';
 
-	# check syntax
-	$rule = &buildWAFRule( $rule_ref );
-	my $err_msg = &checkWAFRuleSyntax( $rule );
-	if ( !$err_msg )
-	{
-		my $set_file = &getWAFSetFile( $set );
-		my $fh = &openlock( $set_file, 'a' )
-		  or $err_msg = "Error writting the set $set";
-		if ( !$err_msg )
-		{
-			print $fh $rule . "\n\n";
-			close $fh;
-		}
-	}
+	my $set_st = &getWAFSet( $set );
+	push @{ $set_st->{ rules } }, $rule_ref;
+	my $err_msg = &buildWAFSet( $set, $set_st );
 
 	return $err_msg;
 }
@@ -237,7 +239,7 @@ Function: setWAFSetRaw
 
 Parameters:
 	Set - It is the WAF set name.
-	Rules batch - It is a string with on or a list of SecLang directives.
+	Rules batch - It is an array reference with a list of lines.
 	index - It is the index to set the batch of rules. If the index is not defined, the batch will set in the last position.
 
 Returns:
@@ -247,27 +249,15 @@ Returns:
 
 sub setWAFSetRaw
 {
-	my $set        = shift;
-	my $set_string = shift;
-	my $position   = shift
+	my $set      = shift;
+	my $set_raw  = shift;
+	my $position = shift
 	  ; # optional. if it is not defined, the set is appended else it the rule in the position is replaced
-
 	my $err;
-	my @set_raw = split ( '\n', $set_string );
-
-	# check new set
-	my $tmp_file = '/tmp/batch_waf.build';
-	require Tie::File;
-	tie my @file, 'Tie::File', $tmp_file;
-	@file = @set_raw;
-	untie @file;
-	$err = &checkWAFFileSyntax( $tmp_file );
-
-	#~ unlink $tmp_file;
-	return $err if $err;
 
 	# parse and get only the rules, not the global conf
-	my $set_new_st = &parseWAFBatch( \@set_raw );
+	my $set_new_st = &parseWAFBatch( $set_raw );
+	return "It has not been found any valid rule" if ( !@{ $set_new_st } );
 
 	# add mark to specify that the rule was modified by the user
 	foreach my $ru ( @{ $set_new_st } )
@@ -318,7 +308,7 @@ sub createWAFMark
 
 	my $sentence = "SecMarker $mark";
 
-	return &setWAFSetRaw( $set, $sentence );
+	return &setWAFSetRaw( $set, [$sentence] );
 }
 
 =begin nd
@@ -344,7 +334,7 @@ sub setWAFMark
 
 	my $sentence = "SecMarker $mark";
 
-	return &setWAFSetRaw( $set, $sentence, $id );
+	return &setWAFSetRaw( $set, [$sentence], $id );
 }
 
 =begin nd
@@ -485,7 +475,8 @@ sub deleteWAFRule
 	# delete a rule
 	if ( !defined $chain_index )
 	{
-		return 1 if &addWAFDelRegister( $set, $set_st->{ rules }->{ raw } );
+		return 1
+		  if &addWAFDelRegister( $set, $set_st->{ rules }->[$rule_index]->{ raw } );
 		return 1
 		  if ( !splice ( @{ $set_st->{ rules } }, $rule_index, 1 ) )
 		  ;                     # error if any item is deleted

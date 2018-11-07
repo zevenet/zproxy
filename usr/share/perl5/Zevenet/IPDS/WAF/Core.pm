@@ -32,6 +32,24 @@ my $deleted_reg = $configdir . "/ipds/waf/delreg";
 =begin nd
 Function: getWAFDelRegisterFile
 
+	Returns the directory for the delete registers
+
+Parameters:
+	none - .
+
+Returns:
+	String - The path of the delete register directory
+
+=cut
+
+sub getWAFDelRegisterDir
+{
+	return $deleted_reg;
+}
+
+=begin nd
+Function: getWAFDelRegisterFile
+
 	Returns the path of the delete register for a set.
 
 Parameters:
@@ -44,9 +62,8 @@ Returns:
 
 sub getWAFDelRegisterFile
 {
-	my $set  = shift;
-	my $file = "$deleted_reg/${set}.conf";
-	return ( -f $file ) ? $file : undef;
+	my $set = shift;
+	return "$deleted_reg/${set}.conf";
 }
 
 =begin nd

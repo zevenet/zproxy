@@ -26,7 +26,7 @@ use strict;
 require Zevenet::Config;
 require Zevenet::Debug;
 
-my $debug = &getGlobalConfiguration('debug');
+my $debug = &getGlobalConfiguration( 'debug' );
 
 sub eload
 {
@@ -41,7 +41,7 @@ sub eload
 		my $msg = "Required eload parameter '$required' missing";
 
 		&zenlog( $msg, "error", "SYSTEM" );
-		die( $msg );
+		die ( $msg );
 	}
 
 	#~ use Carp qw(cluck);
@@ -50,26 +50,25 @@ sub eload
 	# check not used params
 	if ( grep { not exists $req{ $_ } } @required )
 	{
-		my $params = join( ', ', @required );
+		my $params = join ( ', ', @required );
 		my $msg = "Detected unused eload parameter: $params";
 
-		&zenlog( $msg, "warning", "SYSTEM"  );
+		&zenlog( $msg, "warning", "SYSTEM" );
 	}
 
 	# make sure $req{ args } is always an array reference
 	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
 	$req{ args } = [] unless $validArrayRef;
 
-
 	# Run directly Already running inside enterprise.bin
 	if ( defined &main::include )
 	{
-		sub include; # WARNING: DO NOT REMOVE THIS
+		sub include;    # WARNING: DO NOT REMOVE THIS
 
 		include $req{ module };
 
 		my $code_ref = \&{ $req{ func } };
-		return $code_ref->( @{  $req{ args }  } );
+		return $code_ref->( @{ $req{ args } } );
 	}
 
 	my $zbin_path = '/usr/local/zevenet/bin';
@@ -79,12 +78,13 @@ sub eload
 	require JSON;
 	JSON->import( qw( encode_json decode_json ) );
 
-	unless ( ref( $req{ args } ) eq 'ARRAY' )
+	unless ( ref ( $req{ args } ) eq 'ARRAY' )
 	{
-		&zenlog("eload: ARGS is ARRAY ref: Failed!", "info", "SYSTEM");
+		&zenlog( "eload: ARGS is ARRAY ref: Failed!", "info", "SYSTEM" );
 	}
 
-	if ( exists $ENV{ PATH_INFO } && $ENV{ PATH_INFO } eq '/certificates/activation' )
+	if ( exists $ENV{ PATH_INFO }
+		 && $ENV{ PATH_INFO } eq '/certificates/activation' )
 	{
 		# escape '\n' characters in activation certificate
 		$req{ args }->[0] =~ s/\n/\\n/g;
@@ -97,12 +97,14 @@ sub eload
 		zenlog( $msg, "error", "SYSTEM" );
 		die $msg;
 	}
+	$input =~ s/\\/\\\\/g;
 
 	my $cmd = "$bin $req{ module } $req{ func }";
 
 	if ( $debug )
 	{
-		&zenlog("eload: CMD: '$cmd'", "debug", "SYSTEM");
+		&zenlog( "eload: CMD: '$cmd'", "debug", "SYSTEM" );
+
 		#~ &zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
 	}
 
@@ -129,9 +131,9 @@ sub eload
 
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
-		&zenlog( "$msg. $ret_output", "error". "SYSTEM" );
+		&zenlog( "$msg. $ret_output", "error" . "SYSTEM" );
 		exit 1 if $0 =~ /zevenet$/;
-		die( $msg );
+		die ( $msg );
 	}
 
 	# condition flags
@@ -140,8 +142,9 @@ sub eload
 
 	#~ &zenlog( $ret_output ) if $debug;
 
-	my $output = ( not $ret_f && $api_f ) ?	decode_json( $ret_output ): $ret_output;
-	my @output = eval{ @{ decode_json( $ret_output ) } };
+	my $output =
+	  ( not $ret_f && $api_f ) ? decode_json( $ret_output ) : $ret_output;
+	my @output = eval { @{ decode_json( $ret_output ) } };
 
 	if ( $@ )
 	{
@@ -150,7 +153,8 @@ sub eload
 	}
 
 	use Data::Dumper;
-	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output ) if @output && $rc;
+	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output )
+	  if @output && $rc;
 
 	# return function output for non-API functions (service)
 	if ( $ret_f || not $api_f )
