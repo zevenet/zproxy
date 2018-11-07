@@ -24,12 +24,16 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # 	GET /system/users
 sub get_system_user
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::User;
 	my $user = &getUser();
 
@@ -39,8 +43,9 @@ sub get_system_user
 	{
 		require Zevenet::Zapi;
 		my $params = {
-			'user' => $user,
+			'user'             => $user,
 			'zapi_permissions' => &getZAPI( "status" ),
+
 			# 'zapikey'	=> &getZAPI( "zapikey" ), # it is configured if the status is up
 		};
 
@@ -70,7 +75,8 @@ sub get_system_user
 #  POST /system/users
 sub set_system_user
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	require Zevenet::User;
@@ -82,8 +88,8 @@ sub set_system_user
 
 	$desc = "Modify the user $user";
 	my $params = {
-		"zapikey" => { 'valid_format' => 'zapi_key' },
-		"zapi_permissions"  => { 'valid_format' => 'boolean', 'non_black' => 'true' }
+		"zapikey"          => { 'valid_format' => 'zapi_key' },
+		"zapi_permissions" => { 'valid_format' => 'boolean', 'non_blank' => 'true' }
 		,    # it is the permissions value
 		"password" => {
 						'non_blank' => 'true',
@@ -141,12 +147,12 @@ sub set_system_user
 		# modify zapikey. change this parameter before than zapi permissions
 		if ( exists $json_obj->{ 'zapikey' } )
 		{
-			if ( $eload)
+			if ( $eload )
 			{
 				my $zapi_user = &eload(
-					module  => 'Zevenet::RBAC::User::Core',
-					func => 'getRBACUserbyZapikey',
-					args   => [$json_obj->{ 'zapikey' }],
+										module => 'Zevenet::RBAC::User::Core',
+										func   => 'getRBACUserbyZapikey',
+										args   => [$json_obj->{ 'zapikey' }],
 				);
 				if ( $zapi_user and $zapi_user ne $user )
 				{

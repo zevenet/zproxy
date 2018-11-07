@@ -52,6 +52,7 @@
 # zcluster-manager ipds_bl [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_dos [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_rbl [start|stop|restart] <rule> [farm]
+# zcluster-manager ipds_waf [reload_farm|reload_rule] <rule|farm>
 #
 # zcluster-manager rbac_user [add|delete|modify] <user>
 # zcluster-manager rbac_group [add|delete|add_user|del_user] <group> [user]
@@ -469,7 +470,20 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 
 		exit 0;
 	}
-
+	elsif ( $module eq 'waf' )
+	{
+		# zcluster-manager ipds_waf [reload_farm|reload_rule] <rule|farm>
+		if ( $command eq 'reload_rule' )
+		{
+			&reloadWAFByRule( $rule );
+		}
+		elsif ( $command eq 'reload_farm' )
+		{
+			# although the parameter is called rule, it is a farm name when the
+			# command to execute is reload_farm
+			&reloadWAFByFarm( $rule );
+		}
+	}
 	else
 	{
 		&quit( "Unrecognized ipds command" );
@@ -574,7 +588,8 @@ if ( $object eq 'gateway' )
 
 sub setNodeStatusMaster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog( "############# Starting setNodeStatusMaster" );
 
 	my $node_status = &getZClusterNodeStatus();
@@ -620,14 +635,14 @@ sub setNodeStatusMaster
 		local %ENV = ( %ENV );
 		$ENV{ _ } = $zenino;
 
-		system( "$zenino >dev/null 2>&1 &" );
+		system ( "$zenino >dev/null 2>&1 &" );
 	}
 
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
-	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref = &getSystemInterface( $maint_if );
-	system("$ip_bin link set $maint_if up");
+	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref   = &getSystemInterface( $maint_if );
+	system ( "$ip_bin link set $maint_if up" );
 
 	# start farmguardians
 	require Zevenet::FarmGuardian;
@@ -643,7 +658,8 @@ sub setNodeStatusMaster
 
 sub setNodeStatusBackup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog( "############### Starting setNodeStatusBackup" );
 
 	my $node_status = &getZClusterNodeStatus();
@@ -684,11 +700,11 @@ sub setNodeStatusBackup
 
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
-	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref = &getSystemInterface( $maint_if );
-	system("$ip_bin link set $maint_if up");
+	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref   = &getSystemInterface( $maint_if );
+	system ( "$ip_bin link set $maint_if up" );
 
-	unless ( system( $zenino_proc ) )
+	unless ( system ( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -717,7 +733,8 @@ sub setNodeStatusBackup
 
 sub setNodeStatusMaintenance
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog( "############### Starting setNodeStatusMaintenance" );
 
 	include 'Zevenet::Ssyncd';
@@ -733,9 +750,9 @@ sub setNodeStatusMaintenance
 
 	# put interface as down
 	my $maint_if = 'cl_maintenance';
-	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref = &getSystemInterface( $maint_if );
-	system("$ip_bin link set $maint_if down");
+	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref   = &getSystemInterface( $maint_if );
+	system ( "$ip_bin link set $maint_if down" );
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
@@ -745,7 +762,7 @@ sub setNodeStatusMaintenance
 	&setSsyncdDisabled();
 
 	# stop zeninotify
-	unless ( system( $zenino_proc ) )
+	unless ( system ( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -773,7 +790,8 @@ sub setNodeStatusMaintenance
 
 sub quit
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $msg = shift;
 
 	if ( $msg )

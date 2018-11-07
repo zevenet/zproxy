@@ -24,11 +24,14 @@
 use strict;
 
 my $LOG_TAG = "";
-$LOG_TAG = "ZAPI" if ( exists $ENV{ HTTP_ZAPI_KEY } );
+$LOG_TAG = "ZAPI"   if ( exists $ENV{ HTTP_ZAPI_KEY } );
 $LOG_TAG = "WEBGUI" if ( exists $ENV{ HTTP_COOKIE } );
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 my %http_status_codes = (
 
@@ -50,10 +53,13 @@ my %http_status_codes = (
 
 sub GET
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
-	return unless $ENV{ REQUEST_METHOD } eq 'GET' or $ENV{ REQUEST_METHOD } eq 'HEAD';
+	return
+	  unless $ENV{ REQUEST_METHOD } eq 'GET'
+	  or $ENV{ REQUEST_METHOD } eq 'HEAD';
 
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
@@ -72,7 +78,8 @@ sub GET
 
 sub POST
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'POST';
@@ -80,7 +87,7 @@ sub POST
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	#~ &zenlog("POST captures( @captures )", "info", $LOG_TAG) if &debug();
+	#~ &zenlog("POST captures( @captures )", "debug1", $LOG_TAG);
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -114,7 +121,8 @@ sub POST
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "error", $LOG_TAG );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "error",
+				 $LOG_TAG );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -134,7 +142,8 @@ sub POST
 
 sub PUT
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'PUT';
@@ -176,7 +185,8 @@ sub PUT
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "error", $LOG_TAG );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "error",
+				 $LOG_TAG );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -196,7 +206,8 @@ sub PUT
 
 sub DELETE
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code, $mod ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'DELETE';
@@ -218,7 +229,8 @@ sub DELETE
 
 sub OPTIONS
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	return unless $ENV{ REQUEST_METHOD } eq 'OPTIONS';
@@ -226,7 +238,7 @@ sub OPTIONS
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("OPTIONS captures( @captures )", "debug", $LOG_TAG) if &debug();
+	&zenlog( "OPTIONS captures( @captures )", "debug", $LOG_TAG ) if &debug();
 
 	$code->( @captures );
 }
@@ -248,14 +260,16 @@ sub OPTIONS
 
 		This function exits the execution uf the current process.
 =cut
+
 sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $self = shift;
 
 	return $self unless exists $ENV{ GATEWAY_INTERFACE };
 
-	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", $LOG_TAG ); # DEBUG
+#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", $LOG_TAG ); # DEBUG
 
 	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
@@ -285,7 +299,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		  ;
 	}
 
-	if ( exists $ENV{HTTP_COOKIE} && $ENV{HTTP_COOKIE} =~ /CGISESSID/ )
+	if ( exists $ENV{ HTTP_COOKIE } && $ENV{ HTTP_COOKIE } =~ /CGISESSID/ )
 	{
 		require Zevenet::API32::Auth;
 
@@ -355,7 +369,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 	if ( &debug )
 	{
 		# log request if debug is enabled
-		my $req_msg = "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+		my $req_msg =
+		  "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+
 		# include memory usage if debug is 2 or higher
 		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
 		&zenlog( $req_msg, "info", $LOG_TAG );
@@ -363,7 +379,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			&zenlog( "Error Message: $self->{ body }->{ message }", "error", $LOG_TAG )
+			&zenlog( "$self->{ body }->{ message }", "error", $LOG_TAG )
 			  if ( exists $self->{ body }->{ message } );
 		}
 	}
@@ -373,10 +389,11 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 
 sub httpErrorResponse
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $args;
 
-	eval { $args = @_ == 1? shift @_: { @_ }; };
+	eval { $args = @_ == 1 ? shift @_ : { @_ }; };
 
 	# check errors loading the hash reference
 	if ( $@ )
@@ -385,7 +402,7 @@ sub httpErrorResponse
 	}
 
 	# verify we have a hash reference
-	unless ( ref( $args ) eq 'HASH' )
+	unless ( ref ( $args ) eq 'HASH' )
 	{
 		&zdie( "httpErrorResponse: Argument is not a hash reference." );
 	}
@@ -409,7 +426,7 @@ sub httpErrorResponse
 	};
 
 	&zenlog( "$args->{ desc }: $args->{ msg }", "error", $LOG_TAG );
-	&zenlog( $args->{ log_msg } , "info", $LOG_TAG) if exists $args->{ log_msg };
+	&zenlog( $args->{ log_msg }, "info", $LOG_TAG ) if exists $args->{ log_msg };
 
 	my $response = { code => $args->{ code }, body => $body };
 
@@ -424,10 +441,11 @@ sub httpErrorResponse
 # WARNING: Function unfinished.
 sub httpSuccessResponse
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $args ) = @_;
 
-	unless ( ref( $args ) eq 'HASH' )
+	unless ( ref ( $args ) eq 'HASH' )
 	{
 		&zdie( "httpSuccessResponse: Argument is not a hash reference" );
 	}
@@ -448,16 +466,17 @@ sub httpSuccessResponse
 				 message     => $args->{ msg },
 	};
 
-	&zenlog( $args->{ log_msg } , "info", $LOG_TAG) if exists $args->{ log_msg };
-	&httpResponse({ code => $args->{ code }, body => $body });
+	&zenlog( $args->{ log_msg }, "info", $LOG_TAG ) if exists $args->{ log_msg };
+	&httpResponse( { code => $args->{ code }, body => $body } );
 }
 
 sub httpDownloadResponse
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $args;
 
-	eval { $args = @_ == 1? shift @_: { @_ }; };
+	eval { $args = @_ == 1 ? shift @_ : { @_ }; };
 
 	# check errors loading the hash reference
 	if ( $@ )
@@ -465,7 +484,7 @@ sub httpDownloadResponse
 		&zdie( "httpDownloadResponse: Wrong argument received" );
 	}
 
-	unless ( ref( $args ) eq 'HASH' )
+	unless ( ref ( $args ) eq 'HASH' )
 	{
 		&zdie( "httpDownloadResponse: Argument is not a hash reference" );
 	}
@@ -500,11 +519,11 @@ sub httpDownloadResponse
 
 	# make headers
 	my $headers = {
-					-type            					=> 'application/x-download',
-					-attachment      					=> $args->{ file },
-					'Content-length' 					=> -s $path,
-					'Access-Control-Allow-Origin'      	=> "https://$ENV{ HTTP_HOST }/",
-					'Access-Control-Allow-Credentials' 	=> 'true'
+					-type                              => 'application/x-download',
+					-attachment                        => $args->{ file },
+					'Content-length'                   => -s $path,
+					'Access-Control-Allow-Origin'      => "https://$ENV{ HTTP_HOST }/",
+					'Access-Control-Allow-Credentials' => 'true'
 	};
 
 	# optionally, remove the downloaded file, useful for temporal files
@@ -512,7 +531,7 @@ sub httpDownloadResponse
 
 	&zenlog( "[Download] $args->{ desc }: $path", "info", $LOG_TAG );
 
-	&httpResponse({ code => 200, headers => $headers, body => $body });
+	&httpResponse( { code => 200, headers => $headers, body => $body } );
 }
 
 1;

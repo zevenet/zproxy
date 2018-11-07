@@ -28,7 +28,8 @@ use Fcntl ':flock';    #use of lock functions
 # generate a lock file based on a input path
 sub getLockFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $lock = shift;
 
 	$lock =~ s/\//_/g;
@@ -40,15 +41,17 @@ sub getLockFile
 # return 1 if locked, 0 if not
 sub getLockStatus
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $lock = shift;
 
 	my $lfile = &getLockFile( $lock );
 
-	return 0 if ( ! -e $lfile );
-#	my $fh;
-#	$fh = &openlock( $lfile, 'r' ) or return 1;
-#	close $fh;
+	return 0 if ( !-e $lfile );
+
+	#	my $fh;
+	#	$fh = &openlock( $lfile, 'r' ) or return 1;
+	#	close $fh;
 
 	return 1;
 }
@@ -90,13 +93,14 @@ Returns:
 
 sub openlock    # ( $path, $mode )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path = shift;
 	my $mode = shift // '';
 
-	$mode =~ s/a/>>/;	# append
-	$mode =~ s/w/>/;	# write
-	$mode =~ s/r/</;	# read
+	$mode =~ s/a/>>/;    # append
+	$mode =~ s/w/>/;     # write
+	$mode =~ s/r/</;     # read
 
 	my $binmode  = $mode =~ s/b//;
 	my $textmode = $mode =~ s/t//;
@@ -105,7 +109,8 @@ sub openlock    # ( $path, $mode )
 	$encoding = ":encoding(UTF-8)" if $textmode;
 	$encoding = ":raw :bytes"      if $binmode;
 
-	open ( my $fh, "$mode $encoding", $path ) || die "Could not open '$path': $!";
+	open ( my $fh, "$mode $encoding", $path )
+	  or do { &zenlog( "Error openning the file $path" ); return undef; };
 
 	binmode $fh if $fh && $binmode;
 
@@ -149,7 +154,8 @@ Bugs:
 
 sub ztielock    # ($file_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $array_ref = shift;    #parameters
 	my $file_name = shift;    #parameters
 
@@ -157,6 +163,25 @@ sub ztielock    # ($file_name)
 
 	my $o = tie @{ $array_ref }, "Tie::File", $file_name;
 	$o->flock;
+}
+
+sub copyLock
+{
+	my $ori = shift;
+	my $dst = shift;
+
+	my $fhOri = &openlock( $ori, 'r' ) or return 1;
+	my $fhDst = &openlock( $dst, 'w' ) or do { close $fhOri; return 1; };
+
+	foreach my $line ( <$fhOri> )
+	{
+		print $fhDst $line;
+	}
+
+	close $fhOri;
+	close $fhDst;
+
+	return 0;
 }
 
 1;

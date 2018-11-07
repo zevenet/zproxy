@@ -38,14 +38,15 @@ Returns:
 
 sub getIPDSChain
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ipds_module = shift;
 	my %ipds_chains = (
 		'blacklist' => 'BLACKLIST',
 		'whitelist' => 'WHITELIST',
 		'rbl'       => 'RBL',
 
-		'dos' => 'DOS',	# DoS uses different chains of netfilter
+		'dos' => 'DOS',    # DoS uses different chains of netfilter
 	);
 
 	return $ipds_chains{ $ipds_module };
@@ -68,7 +69,8 @@ sub getIPDSChain
 
 sub getIptListV4
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $table, $chain ) = @_;
 
 	require Zevenet::Lock;
@@ -99,7 +101,8 @@ sub getIptListV4
 # &setIPDSDropAndLog ( $cmd, $logMsg );
 sub setIPDSDropAndLog
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $cmd, $logMsg ) = @_;
 	my $output;
 
@@ -125,7 +128,8 @@ sub setIPDSDropAndLog
 # check if a rule exists. Return 1 if it exists or 0 if it is not
 sub getIPDSRuleExists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $check_cmd = shift;
 	my $output    = 0;
 	$check_cmd =~ s/ \-[AI] / --check /;
@@ -139,7 +143,8 @@ sub getIPDSRuleExists
 # &createLogMsg ( module, rule, farm );
 sub createLogMsg
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $module   = shift;
 	my $rule     = shift;
 	my $farmname = shift;
@@ -163,10 +168,12 @@ sub createLogMsg
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;
+	include 'Zevenet::IPDS::WAF::Core';
 
 	my $rules;
 	my $fileHandle;
@@ -184,7 +191,8 @@ sub getIPDSfarmsRules
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( sort keys %{ $fileHandle } )
 		{
-			if ( exists $fileHandle->{ $key }->{'farms'} && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( exists $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
 				push @dosRules, { 'name' => $key, 'status' => $status };
@@ -220,16 +228,30 @@ sub getIPDSfarmsRules
 
 	$rules =
 	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
+
+	# add waf if the rule is HTTP
+	require Zevenet::Farm::Core;
+	if ( &getFarmType( $farmName ) =~ /http/ )
+	{
+		$rules->{ waf } = [];
+		foreach my $ru ( &listWAFByFarm( $farmName ) )
+		{
+			push @{ $rules->{ waf } }, { 'name' => $ru };
+		}
+	}
+
 	return $rules;
 }
 
 # Get all IPDS rules
 sub getIPDSRules
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Config::Tiny;
+	include 'Zevenet::IPDS::WAF::Core';
 
-	my @rules;
+	my @rules = ();
 	my $fileHandle;
 
 	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
@@ -267,6 +289,11 @@ sub getIPDSRules
 		{
 			push @rules, { 'name' => $key, 'rule' => 'rbl' };
 		}
+	}
+
+	foreach my $ru ( &listWAFSet() )
+	{
+		push @rules, { 'name' => $ru, 'rule' => 'waf' };
 	}
 
 	return \@rules;

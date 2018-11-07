@@ -333,6 +333,7 @@ sub getModuleInfo
 	$mod->{ path } = "$mod->{ name }.pm";
 	$mod->{ path } =~ s#\:\:#\/#g;    # Replace :: with /
 	$mod->{ epath } = "$mod->{ path }e";
+	$mod->{ enc } = '';   # to remove a warning
 
 	# Store in $mod->{ key } the correct path relative to $mod->{ lib_path }
 

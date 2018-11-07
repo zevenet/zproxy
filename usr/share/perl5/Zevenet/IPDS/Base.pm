@@ -41,7 +41,8 @@ Returns:
 
 sub addIPDSIptablesChain
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iptables        = &getGlobalConfiguration( 'iptables' );
 	my $whitelist_chain = &getIPDSChain( "whitelist" );
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
@@ -115,7 +116,8 @@ Returns:
 
 sub delIPDSIptablesChain
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iptables        = &getGlobalConfiguration( 'iptables' );
 	my $whitelist_chain = &getIPDSChain( "whitelist" );
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
@@ -162,7 +164,8 @@ Returns:
 
 sub runIPDSStartModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 	include 'Zevenet::IPDS::RBL::Actions';
 	include 'Zevenet::IPDS::DoS::Actions';
@@ -191,7 +194,8 @@ Returns:
 
 sub runIPDSStopModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 	include 'Zevenet::IPDS::RBL::Actions';
 	include 'Zevenet::IPDS::DoS::Actions';
@@ -225,7 +229,8 @@ Returns:
 
 sub runIPDSStartByFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	include 'Zevenet::Farm::Base';
@@ -237,6 +242,7 @@ sub runIPDSStartByFarm
 	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
 	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
 	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+	include 'Zevenet::IPDS::WAF::Runtime'       if ( @{ $rules->{ waf } } );
 
 	my $name;
 
@@ -245,7 +251,7 @@ sub runIPDSStartByFarm
 	{
 		next if ( $rule->{ status } eq "down" );
 		$name = $rule->{ name };
-		&zenlog (Dumper($rule));
+		&zenlog( Dumper( $rule ) );
 		&runBLStart( $name, $farmname );
 	}
 
@@ -262,6 +268,9 @@ sub runIPDSStartByFarm
 		$name = $rule->{ name };
 		&runRBLStart( $name, $farmname );
 	}
+
+	# start waf rules
+	# it is not necesssary start WAF. It is started automaticaly with the farms
 }
 
 =begin nd
@@ -280,7 +289,8 @@ Returns:
 
 sub runIPDSStopByFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# get rules and perl modules
@@ -330,7 +340,8 @@ Returns:
 
 sub runIPDSRestartByFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Base;
@@ -385,7 +396,8 @@ Returns:
 
 sub runIPDSDeleteByFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	# get rules and perl modules
@@ -435,7 +447,8 @@ Returns:
 
 sub runIPDSRenameByFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 	my $newname  = shift;
 

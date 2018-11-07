@@ -24,49 +24,32 @@
 use strict;
 
 =begin nd
-Function: getUser
+Function: moveByIndex
 
-	Get the user that is executing the API or WEBGUI
+	This function moves an element of an list to another position using its index.
+	This funcion uses the original array to apply the changes, so it does not return anything.
 
 Parameters:
-	User - User name
+	Array - Array reference with the list to modify.
+	Origin index - Index of the element will be moved.
+	Destination index - Position in the list that the element will have.
 
 Returns:
-	String - User name
-
-=cut
-
-sub getUser
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	if ( !exists $ENV{ REQ_USER } || !defined $ENV{ REQ_USER } )
-	{
-		&zenlog( 'User name not defined', 'Warning' );
-	}
-
-	return $ENV{ REQ_USER } // '';
-}
-
-=begin nd
-Function: setUser
-
-	Save the user that is executing the API or WEBGUI
-
-Parameters:
 	None - .
 
-Returns:
-	String - User name
-
 =cut
 
-sub setUser
+sub moveByIndex
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $user = shift;
-	$ENV{ REQ_USER } = $user;
+	my ( $list, $ori_index, $dst_index ) = @_;
+
+	my $elem = $list->[$ori_index];
+
+	# delete item
+	splice ( @{ $list }, $ori_index, 1 );
+
+	# add item
+	splice ( @{ $list }, $dst_index, 0, $elem );
 }
 
 1;
