@@ -6,7 +6,7 @@ PROJECT(zhttp_test
 add_definitions(-DGTEST_LANGUAGE_CXX11 -DGTEST_BUILD_SAMPLES=OFF -DGTEST_HAS_POSIX_RE=0)
 #add_definitions(-DGTEST_USES_PCRE=1)
 
-find_package(Threads REQUIRED)
+#find_package(Threads REQUIRED)
 
 SET(GOOGLETEST_DIR ${CMAKE_SOURCE_DIR}/tests/lib/gtest)
 
@@ -48,6 +48,6 @@ add_executable(${PROJECT_NAME}
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads libzhttp gtest ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE libzhttp gtest ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 #

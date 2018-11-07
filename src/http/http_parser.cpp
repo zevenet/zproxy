@@ -7,18 +7,18 @@
 #define DEBUG_HTTP_PARSER 0
 
 http_parser::HttpData::HttpData()
-    : method(nullptr),
+    : buffer(nullptr),
+      buffer_size(0),
+      last_length(0),
+      num_headers(0),
+      method(nullptr),
       method_len(0),
+      minor_version(-1),
       path(nullptr),
       path_length(0),
-      minor_version(-1),
-      num_headers(0),
-      last_length(0),
       http_status_code(0),
       status_message(nullptr),
-      message_length(0),
-      buffer(nullptr),
-      buffer_size(0) {}
+      message_length(0) {}
 
 void http_parser::HttpData::reset_parser() {
   method = nullptr;
@@ -31,10 +31,13 @@ void http_parser::HttpData::reset_parser() {
   http_status_code = 0;
   status_message = nullptr;
   message_length = 0;
+  message_bytes_left = 0;
 }
 
-void http_parser::HttpData::setBuffer(char *ext_buffer, int buffer_size) {
+void http_parser::HttpData::setBuffer(char *ext_buffer,
+                                      size_t ext_buffer_size) {
   buffer = ext_buffer;
+  buffer_size = ext_buffer_size;
 }
 
 char *http_parser::HttpData::getBuffer() const { return buffer; }
@@ -119,8 +122,16 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
     http_version = minor_version == 1 ? HTTP_1_1 : HTTP_1_0;
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
-    request_line = const_cast<char *>(method);
-    request_line_length = static_cast<int>(headers[0].name - method);
+    http_message = const_cast<char *>(method);
+    http_message_length = static_cast<size_t>(headers[0].name - method);
+    //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
+    //      if (std::string(headers[i].name, headers[i].name_len) !=
+    //          http::http_info::headers_names_strings.at(
+    //              http::HTTP_HEADER_NAME::H_CONTENT_LENGTH))
+    //        continue;
+    //      message_bytes_left =
+    //      static_cast<size_t>(std::atoi(headers[i].value)); break;
+    //    }
     return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
   } else if (pret == -2) {        /* request is incomplete, continue the loop */
     return PARSE_RESULT::INCOMPLETE;
@@ -144,6 +155,16 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
     headers_length = pret;
+    http_message = const_cast<char *>(buffer);
+    http_message_length = static_cast<size_t>(headers[0].name - buffer);
+    //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
+    //      if (std::string(headers[i].name, headers[i].name_len) !=
+    //          http::http_info::headers_names_strings.at(
+    //              http::HTTP_HEADER_NAME::H_CONTENT_LENGTH))
+    //        continue;
+    //      message_bytes_left =
+    //      static_cast<size_t>(std::atoi(headers[i].value)); break;
+    //    }
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
 #if DEBUG_HTTP_PARSER

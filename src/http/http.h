@@ -168,10 +168,10 @@ enum class REQUEST_METHOD {
 };
 struct http_info {
   static const std::unordered_map<std::string, HTTP_HEADER_NAME> headers_names;
-  static const std::unordered_map<HTTP_HEADER_NAME, const char *>
+  static const std::unordered_map<HTTP_HEADER_NAME, const std::string >
       headers_names_strings;
   static const std::unordered_map<std::string, REQUEST_METHOD> http_verbs;
-  static const std::unordered_map<REQUEST_METHOD, const char *>
+  static const std::unordered_map<REQUEST_METHOD, const std::string >
       http_verb_strings;
 };
 

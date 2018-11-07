@@ -130,6 +130,46 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   return result;
 }
 
+IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
+                                         http_parser::HttpData &http_data) {
+  bool done = false;
+  size_t sent = 0;
+  auto total_to_send = http_data.message_bytes_left > buffer_size
+                           ? buffer_size
+                           : http_data.message_bytes_left;
+  ssize_t count;
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+  PRINT_BUFFER_SIZE
+  while (!done) {
+    count = ::send(target_connection.getFileDescriptor(), buffer + sent,
+                   total_to_send, MSG_NOSIGNAL);
+    if (count < 0) {
+      if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
+          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+        std::string error = "write() failed  ";
+        error += std::strerror(errno);
+        Debug::Log(error, LOG_NOTICE);
+        result = IO::IO_RESULT::ERROR;
+      } else {
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;
+      }
+      done = true;
+      break;
+    } else if (count == 0) {
+      done = true;
+      break;
+    } else {
+      result = IO::IO_RESULT::SUCCESS;
+      sent += static_cast<size_t>(count);
+      total_to_send -= count;
+      buffer_size -= count;
+      http_data.message_bytes_left -= count;
+    }
+  }
+  PRINT_BUFFER_SIZE
+  return result;
+}
+
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   const char *return_value = "\r\n";
@@ -140,13 +180,23 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   char *last_buffer_pos_written;
 
   int total_to_send = 0;
-  iov[0].iov_base = http_data.request_line;
-  iov[0].iov_len = http_data.request_line_length;
-  total_to_send += http_data.request_line_length;
+  iov[0].iov_base = http_data.http_message;
+  iov[0].iov_len = http_data.http_message_length;
+  total_to_send += http_data.http_message_length;
   int x = 1;
   for (size_t i = 0; i != http_data.num_headers; i++) {
     if (http_data.headers[i].header_off)
       continue; // skip unwanted headers
+    if (http_data.headers[i].name_len ==
+            http::http_info::headers_names_strings
+                .at(http::HTTP_HEADER_NAME::H_CONTENT_LENGTH)
+                .length() &&
+        std::string(http_data.headers[i].name, http_data.headers[i].name_len) ==
+            http::http_info::headers_names_strings.at(
+                http::HTTP_HEADER_NAME::H_CONTENT_LENGTH)) {
+      http_data.message_bytes_left =
+          static_cast<size_t>(std::atoi(http_data.headers[i].value));
+    }
     iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
@@ -172,6 +222,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x++].iov_len = http_data.message_length;
     last_buffer_pos_written += http_data.message_length;
     total_to_send += http_data.message_length;
+    http_data.message_bytes_left -= http_data.message_length;
   }
   ssize_t nwritten = ::writev(target_fd, iov, x);
 

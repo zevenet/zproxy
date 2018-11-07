@@ -57,7 +57,7 @@ class Debug {
   static int log_level;
   static int log_facility;
   static std::mutex log_lock;
-  inline static void Log2(const std::string file, const std::string function,
+  inline static void Log2(const std::string &file, const std::string &function,
                           int line, const std::string &str,
                           int level = LOG_NOTICE) {
     if (level > log_level) {
@@ -86,7 +86,7 @@ class Debug {
     std::cout << std::endl;
   }
 
-  static void logmsg2(const std::string file, const std::string function,
+  static void logmsg2(const std::string &file, const std::string &function,
                       int line, const int priority, const char *fmt, ...) {
     if (priority > log_level) {
       return;

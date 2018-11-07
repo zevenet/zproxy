@@ -504,8 +504,15 @@ void StreamManager::onResponseEvent(int fd) {
     stream->timer_fd.unset();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
+  Debug::logmsg(LOG_REMOVE, "IN READ buffer_size: %d bytes left: %d",
+                stream->backend_connection.buffer_size,
+                stream->response.message_bytes_left);
   auto result = stream->backend_connection.read();
-
+  Debug::logmsg(LOG_REMOVE, "OUT READ buffer_size: %d bytes left: %d",
+                stream->backend_connection.buffer_size,
+                stream->response.message_bytes_left);
+  // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de tomar
+  // muestra si se la lectura ha sido success.
   stream->backend_connection.getBackend()->calculateLatency(
       std::chrono::duration_cast<std::chrono::duration<double>>(
           std::chrono::steady_clock::now() -
@@ -520,17 +527,26 @@ void StreamManager::onResponseEvent(int fd) {
   }
   //  stream->backend_stadistics.update();
   size_t parsed = 0;
-  auto ret = stream->response.parseResponse(
-      stream->backend_connection.buffer, stream->backend_connection.buffer_size,
-      &parsed); // parsing http data as response structured
-  updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE,
-           EVENT_GROUP::CLIENT);
+  if (stream->response.message_bytes_left < 1) {
+    auto ret = stream->response.parseResponse(
+        stream->backend_connection.buffer,
+        stream->backend_connection.buffer_size,
+        &parsed); // parsing http data as response structured
+    Debug::logmsg(
+        LOG_REMOVE,
+        "PARSE buffer_size: %d bytes left: %d current_message_size=%d",
+        stream->backend_connection.buffer_size,
+        stream->response.message_bytes_left, stream->response.message_length);
+    // get content-lengt
+  }
 
   stream->backend_connection.getBackend()->setAvgTransferTime(
       std::chrono::duration_cast<std::chrono::duration<double>>(
           std::chrono::steady_clock::now() -
           stream->backend_connection.time_start)
           .count());
+  updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE,
+           EVENT_GROUP::CLIENT);
 
   //  switch (ret) {
   //    case http_parser::SUCCESS:
@@ -652,8 +668,23 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
 
 void StreamManager::onClientWriteEvent(HttpStream *stream) {
   int fd = stream->client_connection.getFileDescriptor();
-  auto result = stream->backend_connection.writeTo(
-      stream->client_connection.getFileDescriptor());
+  //  auto result = stream->backend_connection.writeTo(
+  //      stream->client_connection.getFileDescriptor());
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+  Debug::logmsg(LOG_REMOVE, "IN WRITE buffer_size: %d bytes left: %d",
+                stream->backend_connection.buffer_size,
+                stream->response.message_bytes_left);
+  if (stream->response.message_bytes_left > 0) {
+    result = stream->backend_connection.writeContentTo(
+        stream->client_connection, stream->response);
+  } else {
+    result = stream->backend_connection.writeTo(stream->client_connection,
+                                                stream->response);
+  }
+
+  Debug::logmsg(LOG_REMOVE, "OUT WRITE buffer_size: %d bytes left: %d",
+                stream->backend_connection.buffer_size,
+                stream->response.message_bytes_left);
   if (result == IO::IO_RESULT::SUCCESS) {
     updateFd(fd, EVENT_TYPE::READ, CLIENT);
   } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
@@ -661,12 +692,13 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   } else {
     Debug::Log("Error sending data to client", LOG_DEBUG);
     // updateFd(fd, EVENT_TYPE::ANY, event_group);
+    clearStream(stream);
     return; // TODO:: what to do
   }
 }
 
 validation::REQUEST_RESULT
-StreamManager::validateRequest(HttpRequest &request) { // TODO:: why use of e501
+StreamManager::validateRequest(HttpRequest &request) {
   regmatch_t matches[4];
   std::string request_line = request.getRequestLine();
   //  Debug::Log("Request line " + request_line, LOG_REMOVE); // TODO: remove
@@ -698,11 +730,12 @@ StreamManager::validateRequest(HttpRequest &request) { // TODO:: why use of e501
 
   // TODO:: Check for correct headers
   for (auto i = 0; i != request.num_headers; i++) {
+
     std::string header(request.headers[i].name, request.headers[i].name_len);
     std::string header_value(request.headers[i].value,
                              request.headers[i].value_len);
 
-    if (http::http_info::headers_names.count(header) >  0) {
+    if (http::http_info::headers_names.count(header) > 0) {
       auto header_name = http::http_info::headers_names.at(header);
       auto header_name_string =
           http::http_info::headers_names_strings.at(header_name);
@@ -711,7 +744,8 @@ StreamManager::validateRequest(HttpRequest &request) { // TODO:: why use of e501
       //          header_value.c_str());
     } else {
       // TODO::Unknown header, What to do ??
-      Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s", header.c_str(), header_value.c_str());
+      Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
+                    header.c_str(), header_value.c_str());
     }
 
     /* maybe header to be removed */

@@ -20,6 +20,8 @@ protected:
   int socket_fd;
   bool is_connected;
 
+  IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
+
 public:
   std::string address_str;
   addrinfo *address;
@@ -32,7 +34,8 @@ public:
 
   IO::IO_RESULT write(const char *data, size_t size);
   IO::IO_RESULT writeTo(int fd);
-  IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
+  IO::IO_RESULT writeContentTo(const Connection &target_connection,
+                               http_parser::HttpData &http_data);
   IO::IO_RESULT writeTo(const Connection &target_connection,
                         http_parser::HttpData &http_data);
 

@@ -2,11 +2,9 @@
 #define HTTPPARSER_H
 #include "http.h"
 #include "picohttpparser.h"
+#include "regex"
 #include <map>
 #include <string>
-#include "regex"
-
-namespace http_parser {
 
 #define cmp_header_name(header, val)                                           \
   header->name_len == strlen(val) &&                                           \
@@ -14,6 +12,8 @@ namespace http_parser {
 #define cmp_header_value(header, val)                                          \
   header->value_len == strlen(val) &&                                          \
       strncasecmp(header->value, val, header->value_len) == 0
+
+namespace http_parser {
 
 enum class PARSE_RESULT { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
 
@@ -36,11 +36,13 @@ public:
   void printRequest();
   void printResponse();
   void reset_parser();
+
   void setBuffer(char *ext_buffer, int buffer_size);
   bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);
   bool getHeaderValue(std::string header_name, std::string &out_key);
   std::string getUrlParameter(std::string url);
   std::string getQueryParameter(std::string url, std::string sess_id);
+  void setBuffer(char *ext_buffer, size_t ext_buffer_size);
 
 public:
   std::map<http::HTTP_HEADER_NAME, const std::string> extra_headers;
@@ -48,7 +50,7 @@ public:
                         const std::string &header_value) {
     char extra_header[MAX_HEADER_LEN];
     sprintf(extra_header, "%s: %s\r\n",
-            http::http_info::headers_names_strings.at(header_name),
+            http::http_info::headers_names_strings.at(header_name).c_str(),
             header_value.c_str());
     extra_headers.emplace(header_name, std::string(extra_header));
   }
@@ -57,8 +59,8 @@ public:
   size_t buffer_size;
   size_t last_length;
   size_t num_headers;
-  char *request_line;
-  size_t request_line_length;
+  char *http_message; // indicate firl line in a http request / response
+  size_t http_message_length;
   size_t headers_length;
   // request
   const char *method;
@@ -71,8 +73,9 @@ public:
   int http_status_code;
 
   const char *status_message;
-  char *message;
-  size_t message_length;
+  char *message;             // body data start
+  size_t message_length;     // body data lenght in current received message
+  size_t message_bytes_left; // content-lenght
 
   // TODO::
   http::HTTP_VERSION http_version;

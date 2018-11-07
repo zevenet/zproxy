@@ -96,7 +96,7 @@ const std::unordered_map<std::string, HTTP_HEADER_NAME>
         {"X-Forwarded-Proto", HTTP_HEADER_NAME::H_X_FORWARDED_PROTO},
         {"X-Frame-Options", HTTP_HEADER_NAME::H_X_FRAME_OPTIONS},
         {"X-XSS-Protection", HTTP_HEADER_NAME::H_X_XSS_PROTECTION}};
-const std::unordered_map<HTTP_HEADER_NAME, const char *>
+const std::unordered_map<HTTP_HEADER_NAME, const std::string>
     http_info::headers_names_strings = {
         {HTTP_HEADER_NAME::H_NONE, ""},
         {HTTP_HEADER_NAME::H_ACCEPT, "Accept"},
@@ -192,7 +192,7 @@ const std::unordered_map<HTTP_HEADER_NAME, const char *>
         {HTTP_HEADER_NAME::H_X_FRAME_OPTIONS, "X-Frame-Options"},
         {HTTP_HEADER_NAME::H_X_XSS_PROTECTION, "X-XSS-Protection"}};
 
-const std::unordered_map<REQUEST_METHOD, const char *>
+const std::unordered_map<REQUEST_METHOD, const std::string >
     http_info::http_verb_strings{
         {REQUEST_METHOD::RM_ACL, "ACL"},
         {REQUEST_METHOD::RM_BASELINE_CONTROL, "BASELINE-CONTROL"},

@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <cstring>
 #include <iostream>
 #include <pthread.h>
 #include <sstream>
@@ -27,6 +28,13 @@ enum class IO_OP {
 } // namespace IO
 
 namespace helper {
+inline bool stringEqual(const std::string &str1, const std::string &str2) {
+  if (str1.size() == str2.size() /*&& str1[0] == str2[0]*/ &&
+      std::strcmp(str1.c_str(), str2.c_str()) == 0) {
+    return true;
+  }
+  return false;
+}
 
 template <typename T> T try_lexical_cast(const std::string &s, T &out) {
   std::stringstream ss(s);
