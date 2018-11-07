@@ -26,6 +26,8 @@ use strict;
 use Zevenet::Core;
 include 'Zevenet::IPDS::WAF::Core';
 
+my $wafSetDir = &getWAFSetDir();
+
 =begin nd
 Function: initWAFModule
 
@@ -44,38 +46,16 @@ sub initWAFModule
 	use File::Path qw(make_path);
 
 	#~ my $touch     = &getGlobalConfiguration( "touch" );
-	my $wafSetDir     = &getWAFSetDir();
+
 	my $deleted_rules = &getWAFDelRegisterDir();
 
 	make_path( $wafSetDir )     if ( !-d $wafSetDir );
 	make_path( $deleted_rules ) if ( !-d $deleted_rules );
 }
 
-my $preload_sets = "/usr/local/zevenet/config/ipds/waf/preload_sets.conf";
-my $pkg_dir      = "/usr/local/zevenet/share/waf";
 use Tie::File;
-
-=begin nd
-Function: getWAFSetPreloadPkg
-
-	Return a list with all the set path in the template directory
-
-Parameters:
-	None - .
-
-Returns:
-	Array - list of paths
-
-=cut
-
-sub getWAFSetPreloadPkg
-{
-	opendir my $dir, $pkg_dir;
-	my @files = readdir $dir;
-	closedir $dir;
-
-	return @files;
-}
+my $preload_sets = &getWAFDir() . "/preload_sets.conf";
+my $waf_pkg_dir  = &getGlobalConfiguration( 'templatedir' ) . "/waf";
 
 =begin nd
 Function: listWAFSetPreload
@@ -162,6 +142,28 @@ sub delWAFSetPreload
 }
 
 =begin nd
+Function: getWAFSetPreloadPkg
+
+	Return a list with all the set path in the template directory
+
+Parameters:
+	None - .
+
+Returns:
+	Array - list of paths
+
+=cut
+
+sub getWAFSetPreloadPkg
+{
+	opendir my $dir, $waf_pkg_dir;
+	my @files = readdir $dir;
+	closedir $dir;
+
+	return @files;
+}
+
+=begin nd
 Function: updateWAFSetPreload
 
 	Main function to update the preloaded sets. It applies the following changes:
@@ -180,8 +182,10 @@ Returns:
 
 sub updateWAFSetPreload
 {
-	my $err = 0;
+	my $err        = 0;
+	my $err_global = 0;
 
+	include 'Zevenet::IPDS::WAF::Actions';
 	include 'Zevenet::IPDS::WAF::Config';
 	use File::Copy qw(copy);
 
@@ -191,7 +195,7 @@ sub updateWAFSetPreload
 	foreach my $set ( &listWAFSetPreload() )
 	{
 		# do not to delete it if it is in the package
-		next if ( grep ( /^$pkg_dir\/${set}\.conf$/, @prel_path ) );
+		next if ( grep ( /^$waf_pkg_dir\/${set}\.conf$/, @prel_path ) );
 
 		# Delete it only if it is not used by any farm
 		next if ( &listWAFBySet( $set ) );
@@ -212,25 +216,48 @@ sub updateWAFSetPreload
 	foreach my $pre_set ( @prel_path )
 	{
 		# get data of the test
-		my $setname = "";
+		my $setname  = "";
+		my $filename = "";
+		my $set_file;
+		my $cur_set;
+		my $file_type = "";
+
+		if ( $err )
+		{
+			$err_global++;
+			$err = 0;
+		}
+
+		# the file is a file with rules
 		if ( $pre_set =~ /([\w-]+)\.conf$/ )
 		{
-			$setname = $1;
+			$setname   = $1;
+			$file_type = "sets";
+			$set_file  = &getWAFSetFile( $setname );
+
+			# load the current set
+			$cur_set = &getWAFSet( $setname ) if ( -f $set_file );
 		}
+
+		# the file is a file with data
+		elsif ( $pre_set =~ /([\w-]+\.\w+)$/ )
+		{
+			$setname  = $1;
+			$set_file = "$wafSetDir/$setname";
+		}
+
+		# the file is not recognoized
 		else
 		{
 			&zenlog( "Set name does not correct in the string $pre_set", "debug", "WAF" );
 			next;
 		}
 
-		my $set_file = &getWAFSetFile( $setname );
-
-		# load the current set
-		my $cur_set;
-		$cur_set = &getWAFSet( $setname ) if ( -f $set_file );
-
 		# copy template to the config directory, overwritting the set
-		copy( "$pkg_dir/$pre_set" => $set_file );
+		copy( "$waf_pkg_dir/$pre_set" => $set_file );
+
+		# finish if the rule is not
+		next if ( $file_type ne 'sets' );
 
 		# open the new created set
 		my $new_set = &getWAFSet( $setname );
@@ -288,7 +315,7 @@ sub updateWAFSetPreload
 		}
 	}
 
-	return $err;
+	return $err_global;
 }
 
 1;

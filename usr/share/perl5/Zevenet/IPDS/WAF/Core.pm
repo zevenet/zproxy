@@ -29,6 +29,11 @@ my $wafDir      = $configdir . "/ipds/waf";
 my $wafSetDir   = $configdir . "/ipds/waf/sets";
 my $deleted_reg = $configdir . "/ipds/waf/delreg";
 
+sub getWAFDir
+{
+	return $wafDir;
+}
+
 =begin nd
 Function: getWAFDelRegisterFile
 
