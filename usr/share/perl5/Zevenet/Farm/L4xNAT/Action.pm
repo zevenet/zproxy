@@ -471,7 +471,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'STOP' => $fg_pid;
 		}
@@ -589,7 +589,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 		if ( $fg_enabled eq 'true' )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'CONT' => $fg_pid;
 			}

@@ -169,7 +169,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'STOP' => $fg_pid;
 		}
@@ -224,7 +224,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -310,7 +310,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'STOP' => $fg_pid;
 		}
@@ -472,7 +472,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -557,7 +557,7 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'STOP' => $fg_pid;
 		}
@@ -590,7 +590,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		$output |= &_runL4FarmStart( $farm_name );
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
+		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 	}
 
 	return $output;
@@ -671,7 +671,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 	{
 		if ( $fg_enabled eq 'true' )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'STOP' => $fg_pid;
 			}
@@ -731,7 +731,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 		if ( $fg_enabled eq 'true' )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'CONT' => $fg_pid;
 			}
@@ -809,7 +809,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'STOP' => $fg_pid;
 		}
@@ -858,7 +858,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 		require Zevenet::Netfilter;
 		$output = &applyIptRules( @rules );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			kill 'CONT' => $fg_pid;
 		}
@@ -1020,7 +1020,8 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	kill 'STOP' => $fg_pid if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' );
+	kill 'STOP' => $fg_pid
+	  if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' && $fg_pid > 0 );
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -1073,7 +1074,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 		&applyIptRules( @rules );
 
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
+		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 
 		if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 		{
