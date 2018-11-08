@@ -554,7 +554,7 @@ sub _getL4FarmParseServers
 				alias => $permission ? $alias->{ $aux[2] } : undef,
 				id    => $sindex,
 				ip    => $aux[2],
-				port  => ( $aux[3] ) ? $aux[3]             : undef,
+				port  => ( $aux[3] ) ? $aux[3] + 0         : undef,
 				tag   => $aux[4],
 				weight    => $aux[5] + 0,
 				priority  => $aux[6] + 0,
