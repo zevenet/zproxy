@@ -7,8 +7,6 @@ add_definitions(-DPRINT_READ_STADISTICS=0)
 add_definitions(-DDEBUG_CONNECTION_FLOW=0)
 add_definitions(-DMAXBUF=4096)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
-#Features to implement !!
-add_definitions(-DACCEPT_RANGES=0)
 
 add_library(libzhttp
     json/json.h

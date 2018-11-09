@@ -28,7 +28,7 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
       break;
     }
     case SESS_COOKIE: {
-      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_COOKIE, key)){
+      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key)){
         return nullptr;
       }
       break;
@@ -50,7 +50,7 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
     }
     case SESS_BASIC:
       //TODO: IMPLEMENTAR IGUAL QUE POUND (NO HACER FALTA AUTHENTICATION)
-      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_AUTHORIZATION, key)) {
+      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, key)) {
           key = "";
       } else {
         std::stringstream string_to_iterate(key);
@@ -109,7 +109,7 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
   }
   case sessions::SESS_COOKIE: {
     std::string session_key;
-    if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_COOKIE, session_key)){
+    if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, session_key)){
       session_key = "";
     } else {
       if (sessions_set.count(session_key) > 0) {
@@ -145,7 +145,7 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     break;
   }
     case sessions::SESS_BASIC: {
-        if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::H_AUTHORIZATION, session_key)) {
+        if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, session_key)) {
             session_key = "";
         } else {
           std::stringstream string_to_iterate(session_key);

@@ -132,24 +132,24 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   CtlTask task;
   // get task action
   switch (request.getRequestMethod()) {
-  case http::REQUEST_METHOD::RM_DELETE:
+  case http::REQUEST_METHOD::DELETE:
     task.command = CTL_COMMAND::DELETE;
     break;
-  case http::REQUEST_METHOD::RM_POST:
-  case http::REQUEST_METHOD::RM_PUT:
+  case http::REQUEST_METHOD::POST:
+  case http::REQUEST_METHOD::PUT:
     task.command = CTL_COMMAND::ADD;
     break;
-  case http::REQUEST_METHOD::RM_PATCH:
-  case http::REQUEST_METHOD::RM_UPDATE:
+  case http::REQUEST_METHOD::PATCH:
+  case http::REQUEST_METHOD::UPDATE:
     task.command = CTL_COMMAND::UPDATE;
     break;
-  case http::REQUEST_METHOD::RM_GET:
+  case http::REQUEST_METHOD::GET:
     task.command = CTL_COMMAND::GET;
     break;
-  case http::REQUEST_METHOD::RM_SUBSCRIBE:
+  case http::REQUEST_METHOD::SUBSCRIBE:
     task.command = CTL_COMMAND::SUSCRIBE;
     break;
-  case http::REQUEST_METHOD::RM_UNSUBSCRIBE:
+  case http::REQUEST_METHOD::UNSUBSCRIBE:
     task.command = CTL_COMMAND::UNSUSCRIBE;
     break;
   default:

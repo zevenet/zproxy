@@ -13,165 +13,165 @@
 #endif
 namespace http {
 
-enum HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
+enum class HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 
-enum TRANSFER_ENCODING_TYPE {
-  TE_NONE = 0,
-  TE_CHUNKED = 0x1,
-  TE_COMPRESS = 0x1 << 1,
-  TE_DEFLATE = 0x1 << 2,
-  TE_GZIP = 0x01 << 3,
-  TE_IDENTITY = 0x1 << 4
+enum class TRANSFER_ENCODING_TYPE : uint8_t {
+  NONE = 0,
+  CHUNKED = 0x1,
+  COMPRESS = 0x1 << 1,
+  DEFLATE = 0x1 << 2,
+  GZIP = 0x01 << 3,
+  IDENTITY = 0x1 << 4
 };
 
-enum class HTTP_HEADER_NAME {
-  H_NONE,
-  H_ACCEPT,
-  H_ACCEPT_CHARSET,
-  H_ACCEPT_ENCODING,
-  H_ACCEPT_LANGUAGE,
-  H_ACCEPT_RANGES,
-  H_ACCESS_CONTROL_ALLOW_CREDENTIALS,
-  H_ACCESS_CONTROL_ALLOW_HEADERS,
-  H_ACCESS_CONTROL_ALLOW_METHODS,
-  H_ACCESS_CONTROL_ALLOW_ORIGIN,
-  H_ACCESS_CONTROL_EXPOSE_HEADERS,
-  H_ACCESS_CONTROL_MAX_AGE,
-  H_ACCESS_CONTROL_REQUEST_HEADERS,
-  H_ACCESS_CONTROL_REQUEST_METHOD,
-  H_AGE,
-  H_ALLOW,
-  H_AUTHORIZATION,
-  H_CACHE_CONTROL,
-  H_CONNECTION,
-  H_CONTENT_DISPOSITION,
-  H_CONTENT_ENCODING,
-  H_CONTENT_LANGUAGE,
-  H_CONTENT_LENGTH,
-  H_CONTENT_LOCATION,
-  H_CONTENT_RANGE,
-  H_CONTENT_SECURITY_POLICY,
-  H_CONTENT_SECURITY_POLICY_REPORT_ONLY,
-  H_CONTENT_TYPE,
-  H_COOKIE,
-  H_COOKIE2,
-  H_DNT,
-  H_DATE,
-  H_ETAG,
-  H_EXPECT,
-  H_EXPECT_CT,
-  H_EXPIRES,
-  H_FORWARDED,
-  H_FROM,
-  H_HOST,
-  H_IF_MATCH,
-  H_IF_MODIFIED_SINCE,
-  H_IF_NONE_MATCH,
-  H_IF_RANGE,
-  H_IF_UNMODIFIED_SINCE,
-  H_KEEP_ALIVE,
-  H_LARGE_ALLOCATION,
-  H_LAST_MODIFIED,
-  H_LOCATION,
-  H_ORIGIN,
-  H_PRAGMA,
-  H_PROXY_AUTHENTICATE,
-  H_PROXY_AUTHORIZATION,
-  H_PUBLIC_KEY_PINS,
-  H_PUBLIC_KEY_PINS_REPORT_ONLY,
-  H_RANGE,
-  H_REFERER,
-  H_REFERRER_POLICY,
-  H_RETRY_AFTER,
-  H_SERVER,
-  H_SET_COOKIE,
-  H_SET_COOKIE2,
-  H_SOURCEMAP,
-  H_STRICT_TRANSPORT_SECURITY,
-  H_TE,
-  H_TIMING_ALLOW_ORIGIN,
-  H_TK,
-  H_TRAILER,
-  H_TRANSFER_ENCODING,
-  H_UPGRADE_INSECURE_REQUESTS,
-  H_USER_AGENT,
-  H_VARY,
-  H_VIA,
-  H_WWW_AUTHENTICATE,
-  H_WARNING,
-  H_X_CONTENT_TYPE_OPTIONS,
-  H_X_DNS_PREFETCH_CONTROL,
-  H_X_FORWARDED_FOR,
-  H_X_FORWARDED_HOST,
-  H_X_FORWARDED_PROTO,
-  H_X_FRAME_OPTIONS,
-  H_X_XSS_PROTECTION,
+enum class HTTP_HEADER_NAME : uint16_t {
+  NONE,
+  ACCEPT,
+  ACCEPT_CHARSET,
+  ACCEPT_ENCODING,
+  ACCEPT_LANGUAGE,
+  ACCEPT_RANGES,
+  ACCESS_CONTROL_ALLOW_CREDENTIALS,
+  ACCESS_CONTROL_ALLOW_HEADERS,
+  ACCESS_CONTROL_ALLOW_METHODS,
+  ACCESS_CONTROL_ALLOW_ORIGIN,
+  ACCESS_CONTROL_EXPOSE_HEADERS,
+  ACCESS_CONTROL_MAX_AGE,
+  ACCESS_CONTROL_REQUEST_HEADERS,
+  ACCESS_CONTROL_REQUEST_METHOD,
+  AGE,
+  ALLOW,
+  AUTHORIZATION,
+  CACHE_CONTROL,
+  CONNECTION,
+  CONTENT_DISPOSITION,
+  CONTENT_ENCODING,
+  CONTENT_LANGUAGE,
+  CONTENT_LENGTH,
+  CONTENT_LOCATION,
+  CONTENT_RANGE,
+  CONTENT_SECURITY_POLICY,
+  CONTENT_SECURITY_POLICY_REPORT_ONLY,
+  CONTENT_TYPE,
+  COOKIE,
+  COOKIE2,
+  DNT,
+  DATE,
+  ETAG,
+  EXPECT,
+  EXPECT_CT,
+  EXPIRES,
+  FORWARDED,
+  FROM,
+  HOST,
+  IF_MATCH,
+  IF_MODIFIED_SINCE,
+  IF_NONE_MATCH,
+  IF_RANGE,
+  IF_UNMODIFIED_SINCE,
+  KEEP_ALIVE,
+  LARGE_ALLOCATION,
+  LAST_MODIFIED,
+  LOCATION,
+  ORIGIN,
+  PRAGMA,
+  PROXY_AUTHENTICATE,
+  PROXY_AUTHORIZATION,
+  PUBLIC_KEY_PINS,
+  PUBLIC_KEY_PINS_REPORT_ONLY,
+  RANGE,
+  REFERER,
+  REFERRER_POLICY,
+  RETRY_AFTER,
+  SERVER,
+  SET_COOKIE,
+  SET_COOKIE2,
+  SOURCEMAP,
+  STRICT_TRANSPORT_SECURITY,
+  TE,
+  TIMING_ALLOW_ORIGIN,
+  TK,
+  TRAILER,
+  TRANSFER_ENCODING,
+  UPGRADE_INSECURE_REQUESTS,
+  USER_AGENT,
+  VARY,
+  VIA,
+  WWW_AUTHENTICATE,
+  WARNING,
+  X_CONTENT_TYPE_OPTIONS,
+  X_DNS_PREFETCH_CONTROL,
+  X_FORWARDED_FOR,
+  X_FORWARDED_HOST,
+  X_FORWARDED_PROTO,
+  X_FRAME_OPTIONS,
+  X_XSS_PROTECTION,
 };
 
-enum class REQUEST_METHOD {
+enum class REQUEST_METHOD : uint16_t {
   // https://www.iana.org/assignments/http-methods/http-methods.xhtml
-  RM_NONE,
+  NONE,
   // Method Name    Saf,//e Idempotent                            Reference
-  RM_ACL,              // no   yes        [RFC3744, Section 8.1]
-  RM_BASELINE_CONTROL, // no   yes        [RFC3253, Section 12.6]
-  RM_BIND,             // no   yes        [RFC5842, Section 4]
-  RM_CHECKIN,          // no   yes        [RFC3253, Section 4.4, Section 9.4]
-  RM_CHECKOUT,         // no   yes        [RFC3253, Section 4.3, Section 8.8]
-  RM_CONNECT,          // no   no         [RFC7231, Section 4.3.6]
-  RM_COPY,             // no   yes        [RFC4918, Section 9.8]
-  RM_DELETE,           // no   yes        [RFC7231, Section 4.3.5]
-  RM_GET,              // yes  yes        [RFC7231, Section 4.3.1]
-  RM_HEAD,             // yes  yes        [RFC7231, Section 4.3.2]
-  RM_LABEL,            // no   yes        [RFC3253, Section 8.2]
-  RM_LINK,             // no   yes        [RFC2068, Section 19.6.1.2]
-  RM_LOCK,             // no   no         [RFC4918, Section 9.10]
-  RM_MERGE,            // no   yes        [RFC3253, Section 11.2]
-  RM_MKACTIVITY,       // no   yes        [RFC3253, Section 13.5]
-  RM_MKCALENDAR,       // no   yes        [RFC4791, Section 5.3.1][RFC8144,
-                       // Section 2.3]
-  RM_MKCOL,         // no   yes        [RFC4918, Section 9.3][RFC5689, Section
+  ACL,              // no   yes        [RFC3744, Section 8.1]
+  BASELINE_CONTROL, // no   yes        [RFC3253, Section 12.6]
+  BIND,             // no   yes        [RFC5842, Section 4]
+  CHECKIN,          // no   yes        [RFC3253, Section 4.4, Section 9.4]
+  CHECKOUT,         // no   yes        [RFC3253, Section 4.3, Section 8.8]
+  CONNECT,          // no   no         [RFC7231, Section 4.3.6]
+  COPY,             // no   yes        [RFC4918, Section 9.8]
+  DELETE,           // no   yes        [RFC7231, Section 4.3.5]
+  GET,              // yes  yes        [RFC7231, Section 4.3.1]
+  HEAD,             // yes  yes        [RFC7231, Section 4.3.2]
+  LABEL,            // no   yes        [RFC3253, Section 8.2]
+  LINK,             // no   yes        [RFC2068, Section 19.6.1.2]
+  LOCK,             // no   no         [RFC4918, Section 9.10]
+  MERGE,            // no   yes        [RFC3253, Section 11.2]
+  MKACTIVITY,       // no   yes        [RFC3253, Section 13.5]
+  MKCALENDAR,       // no   yes        [RFC4791, Section 5.3.1][RFC8144,
+                    // Section 2.3]
+  MKCOL,            // no   yes        [RFC4918, Section 9.3][RFC5689, Section
                     // 3][RFC8144, Section 2.3]
-  RM_MKREDIRECTREF, // no   yes        [RFC4437, Section 6]
-  RM_MKWORKSPACE,   // no   yes        [RFC3253, Section 6.3]
-  RM_MOVE,          // no   yes        [RFC4918, Section 9.9]
-  RM_OPTIONS,       // yes  yes        [RFC7231, Section 4.3.7]
-  RM_ORDERPATCH,    // no   yes        [RFC3648, Section 7]
-  RM_PATCH,         // no   no         [RFC5789, Section 2]
-  RM_POST,          // no   no         [RFC7231, Section 4.3.3]
-  RM_PRI,           // yes  yes        [RFC7540, Section 3.5]
-  RM_PROPFIND,   // yes  yes        [RFC4918, Section 9.1][RFC8144, Section 2.1]
-  RM_PROPPATCH,  // no   yes        [RFC4918, Section 9.2][RFC8144, Section 2.2]
-  RM_PUT,        // no   yes        [RFC7231, Section 4.3.4]
-  RM_REBIND,     // no   yes        [RFC5842, Section 6]
-  RM_REPORT,     // yes  yes        [RFC3253, Section 3.6][RFC8144, Section 2.1]
-  RM_SEARCH,     // yes  yes        [RFC5323, Section 2]
-  RM_TRACE,      // yes  yes        [RFC7231, Section 4.3.8]
-  RM_UNBIND,     // no   yes        [RFC5842, Section 5]
-  RM_UNCHECKOUT, // no   yes        [RFC3253, Section 4.5]
-  RM_UNLINK,     // no   yes        [RFC2068, Section 19.6.1.3]
-  RM_UNLOCK,     // no   yes        [RFC4918, Section 9.11]
-  RM_UPDATE,     // no   yes        [RFC3253, Section 7.1]
-  RM_UPDATEREDIRECTREF, // no   yes        [RFC4437, Section 7]
-  RM_VERSION_CONTROL,   // no   yes        [RFC3253, Section 3.5]
-  RM_SUBSCRIBE,
-  RM_UNSUBSCRIBE,
-  RM_BPROPPATCH,
-  RM_POLL,
-  RM_BMOVE,
-  RM_BCOPY,
-  RM_BDELETE,
-  RM_BPROPFIND,
-  RM_NOTIFY,
-  RM_X_MS_ENUMATTS,
-  RM_RPC_IN_DATA,
-  RM_RPC_OUT_DATA,
+  MKREDIRECTREF,    // no   yes        [RFC4437, Section 6]
+  MKWORKSPACE,      // no   yes        [RFC3253, Section 6.3]
+  MOVE,             // no   yes        [RFC4918, Section 9.9]
+  OPTIONS,          // yes  yes        [RFC7231, Section 4.3.7]
+  ORDERPATCH,       // no   yes        [RFC3648, Section 7]
+  PATCH,            // no   no         [RFC5789, Section 2]
+  POST,             // no   no         [RFC7231, Section 4.3.3]
+  PRI,              // yes  yes        [RFC7540, Section 3.5]
+  PROPFIND,   // yes  yes        [RFC4918, Section 9.1][RFC8144, Section 2.1]
+  PROPPATCH,  // no   yes        [RFC4918, Section 9.2][RFC8144, Section 2.2]
+  PUT,        // no   yes        [RFC7231, Section 4.3.4]
+  REBIND,     // no   yes        [RFC5842, Section 6]
+  REPORT,     // yes  yes        [RFC3253, Section 3.6][RFC8144, Section 2.1]
+  SEARCH,     // yes  yes        [RFC5323, Section 2]
+  TRACE,      // yes  yes        [RFC7231, Section 4.3.8]
+  UNBIND,     // no   yes        [RFC5842, Section 5]
+  UNCHECKOUT, // no   yes        [RFC3253, Section 4.5]
+  UNLINK,     // no   yes        [RFC2068, Section 19.6.1.3]
+  UNLOCK,     // no   yes        [RFC4918, Section 9.11]
+  UPDATE,     // no   yes        [RFC3253, Section 7.1]
+  UPDATEREDIRECTREF, // no   yes        [RFC4437, Section 7]
+  VERSION_CONTROL,   // no   yes        [RFC3253, Section 3.5]
+  SUBSCRIBE,
+  UNSUBSCRIBE,
+  BPROPPATCH,
+  POLL,
+  BMOVE,
+  BCOPY,
+  BDELETE,
+  BPROPFIND,
+  NOTIFY,
+  X_MS_ENUMATTS,
+  RPC_IN_DATA,
+  RPC_OUT_DATA,
 };
 struct http_info {
   static const std::unordered_map<std::string, HTTP_HEADER_NAME> headers_names;
-  static const std::unordered_map<HTTP_HEADER_NAME, const std::string >
+  static const std::unordered_map<HTTP_HEADER_NAME, const std::string>
       headers_names_strings;
   static const std::unordered_map<std::string, REQUEST_METHOD> http_verbs;
-  static const std::unordered_map<REQUEST_METHOD, const std::string >
+  static const std::unordered_map<REQUEST_METHOD, const std::string>
       http_verb_strings;
 };
 
@@ -197,7 +197,7 @@ class http_request_data {
 public:
   HTTP_VERSION http_version;
   REQUEST_METHOD request_method;
-  TRANSFER_ENCODING_TYPE transfer_encoding_type;
+  http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
   std::pair<std::string, std::string>
       autorization_data; // Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l
                          // //base64 encoded

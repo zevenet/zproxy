@@ -189,11 +189,11 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
       continue; // skip unwanted headers
     if (http_data.headers[i].name_len ==
             http::http_info::headers_names_strings
-                .at(http::HTTP_HEADER_NAME::H_CONTENT_LENGTH)
+                .at(http::HTTP_HEADER_NAME::CONTENT_LENGTH)
                 .length() &&
         std::string(http_data.headers[i].name, http_data.headers[i].name_len) ==
             http::http_info::headers_names_strings.at(
-                http::HTTP_HEADER_NAME::H_CONTENT_LENGTH)) {
+                http::HTTP_HEADER_NAME::CONTENT_LENGTH)) {
       http_data.message_bytes_left =
           static_cast<size_t>(std::atoi(http_data.headers[i].value));
     }

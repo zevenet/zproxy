@@ -268,7 +268,7 @@ void StreamManager::onRequestEvent(int fd) {
     stream = new HttpStream();
     stream->client_connection.setFileDescriptor(fd);
     // set extra header to forward to the backends
-    stream->request.addHeader(http::HTTP_HEADER_NAME::H_X_FORWARDED_FOR,
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
                               stream->client_connection.getPeerAddress());
     streams_set[fd] = stream;
     if (fd != stream->client_connection.getFileDescriptor()) {
@@ -704,6 +704,16 @@ StreamManager::validateRequest(HttpRequest &request) {
   //  Debug::Log("Request line " + request_line, LOG_REMOVE); // TODO: remove
   if (UNLIKELY(::regexec(&listener_config_.verb, request_line.c_str(), 3,
                          matches, 0) != 0)) {
+    // TODO:: check RPC
+
+    /*
+     * if(!strncasecmp(request + matches[1].rm_so, "RPC_IN_DATA",
+       matches[1].rm_eo - matches[1].rm_so)) is_rpc = 1; else
+       if(!strncasecmp(request + matches[1].rm_so, "RPC_OUT_DATA",
+       matches[1].rm_eo - matches[1].rm_so)) is_rpc = 0;
+      *
+      */
+
     return validation::REQUEST_RESULT::METHOD_NOT_ALLOWED;
   } else {
     request.setRequestMethod();
@@ -722,9 +732,8 @@ StreamManager::validateRequest(HttpRequest &request) {
   // TODO:: Check reqeuest size .
   if (UNLIKELY(listener_config_.max_req > 0 &&
                request.headers_length > listener_config_.max_req &&
-               request.request_method != http::REQUEST_METHOD::RM_RPC_IN_DATA &&
-               request.request_method !=
-                   http::REQUEST_METHOD::RM_RPC_OUT_DATA)) {
+               request.request_method != http::REQUEST_METHOD::RPC_IN_DATA &&
+               request.request_method != http::REQUEST_METHOD::RPC_OUT_DATA)) {
     return validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
   }
 
@@ -742,6 +751,17 @@ StreamManager::validateRequest(HttpRequest &request) {
       //      Debug::
       //          logmsg(LOG_DEBUG, "\t%s: %s", header_name_string,
       //          header_value.c_str());
+
+      switch (header_name) {
+      case http::HTTP_HEADER_NAME::CONNECTION:
+        // todo check connection close??
+      case http::HTTP_HEADER_NAME::HOST:
+        break;
+
+      default:
+        break;
+      }
+
     } else {
       // TODO::Unknown header, What to do ??
       Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
