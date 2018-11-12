@@ -54,7 +54,7 @@ public:
             header_value.c_str());
     extra_headers.emplace(header_name, std::string(extra_header));
   }
-  phr_header headers[50];
+  phr_header headers[MAX_HEADERS_SIZE];
   char *buffer;
   size_t buffer_size;
   size_t last_length;

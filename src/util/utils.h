@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include "../http/picohttpparser.h"
+#include "string_view.h"
 #include <cstring>
 #include <iostream>
 #include <pthread.h>
@@ -30,10 +32,21 @@ enum class IO_OP {
 namespace helper {
 inline bool stringEqual(const std::string &str1, const std::string &str2) {
   if (str1.size() == str2.size() /*&& str1[0] == str2[0]*/ &&
-      std::strcmp(str1.c_str(), str2.c_str()) == 0) {
+      std::strncmp(str1.c_str(), str2.c_str(), str1.length()) == 0) {
     return true;
   }
   return false;
+}
+
+inline bool headerEqual(const phr_header &header,
+                        const std::string &header_name) {
+  if (header.name == nullptr)
+    return false;
+  if (header.name_len != header_name.size() || header.name[0] != header_name[0])
+    return false;
+  if (std::strncmp(header.name, header_name.c_str(), header.name_len) != 0)
+    return false;
+  return true;
 }
 
 template <typename T> T try_lexical_cast(const std::string &s, T &out) {

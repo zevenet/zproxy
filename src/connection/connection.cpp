@@ -187,13 +187,9 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   for (size_t i = 0; i != http_data.num_headers; i++) {
     if (http_data.headers[i].header_off)
       continue; // skip unwanted headers
-    if (http_data.headers[i].name_len ==
-            http::http_info::headers_names_strings
-                .at(http::HTTP_HEADER_NAME::CONTENT_LENGTH)
-                .length() &&
-        std::string(http_data.headers[i].name, http_data.headers[i].name_len) ==
-            http::http_info::headers_names_strings.at(
-                http::HTTP_HEADER_NAME::CONTENT_LENGTH)) {
+    if (helper::headerEqual(http_data.headers[i],
+                            http::http_info::headers_names_strings.at(
+                                http::HTTP_HEADER_NAME::CONTENT_LENGTH))) {
       http_data.message_bytes_left =
           static_cast<size_t>(std::atoi(http_data.headers[i].value));
     }

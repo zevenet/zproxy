@@ -20,27 +20,26 @@ public:
   }
 
   void printRequestMethod() {
-    Debug::logmsg(LOG_DEBUG, "Request method: %s",
-                  http::http_info::http_verb_strings.at(request_method));
+    Debug::logmsg(
+        LOG_DEBUG, "Request method: %s",
+        http::http_info::http_verb_strings.at(request_method).c_str());
   }
 
 public:
-  std::string getMethod() {
-    return method != nullptr ? std::move(std::string(method, method_len))
-                             : std::string();
+  inline std::string getMethod() {
+    return method != nullptr ? std::string(method, method_len) : std::string();
   }
-  std::string getRequestLine() {
-    std::string res(method, method_len + path_length);
-    for (auto index = method_len + path_length; method[index] != '\r';
-         index++) {
-      res += method[index];
-    }
-    return std::move(res);
+  inline std::string getRequestLine() {
+    std::string res(http_message, http_message_length);
+    //    for (auto index = method_len + path_length; method[index] != '\r';
+    //         index++) {
+    //      res += method[index];
+    //    }
+    return res;
   }
 
   std::string getUrl() {
-    return path != nullptr ? std::move(std::string(path, path_length))
-                           : std::string();
+    return path != nullptr ? std::string(path, path_length) : std::string();
   }
 };
 

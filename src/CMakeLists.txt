@@ -6,6 +6,12 @@ add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
 add_definitions(-DPRINT_READ_STADISTICS=0)
 add_definitions(-DDEBUG_CONNECTION_FLOW=0)
 add_definitions(-DMAXBUF=4096)
+add_definitions(-DMAX_URI_SIZE=8000)
+add_definitions(-DMAX_HEADER_VALUE_SIZE=4000)
+add_definitions(-DMAX_NUM_HEADERS=50)
+
+#add_definitions(-Dnssv_CONFIG_CONVERSION_STD_STRING=1)
+
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 
 add_library(libzhttp
@@ -19,6 +25,7 @@ add_library(libzhttp
     json/JsonData.cpp
     json/jsonparser.h
     json/jsonparser.cpp
+    util/string_view.h
     config/config_node.h
     event/epoll_manager.cpp
     event/epoll_manager.h

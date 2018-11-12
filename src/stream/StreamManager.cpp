@@ -5,6 +5,7 @@
 #include "StreamManager.h"
 #include "../util/Network.h"
 #include "../util/common.h"
+#include "../util/string_view.h"
 #include "../util/utils.h"
 #include <functional>
 #if HELLO_WORLD_SERVER
@@ -349,8 +350,6 @@ void StreamManager::onRequestEvent(int fd) {
       if (bck == nullptr) {
         // No backend available
         char caddr[50];
-        // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
-        // 1);
         if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
           Debug::Log("Error getting peer address", LOG_DEBUG);
         } else {
@@ -372,8 +371,7 @@ void StreamManager::onRequestEvent(int fd) {
         return;
       } else {
         IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
-        //        Debug::logmsg(LOG_REMOVE, "Backend assigned %s",
-        //        bck->address.c_str());
+        Debug::logmsg(LOG_REMOVE, "Backend assigned %s", bck->address.c_str());
         switch (bck->backend_type) {
         case REMOTE:
           if (stream->backend_connection.getBackend() == nullptr ||
@@ -642,7 +640,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
 
   //      auto result = stream->client_connection.writeTo(
   //          stream->backend_connection.getFileDescriptor());
-  size_t total_writen = 0;
+
   auto result = stream->client_connection.writeTo(stream->backend_connection,
                                                   stream->request);
 
@@ -700,8 +698,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
 validation::REQUEST_RESULT
 StreamManager::validateRequest(HttpRequest &request) {
   regmatch_t matches[4];
-  std::string request_line = request.getRequestLine();
-  //  Debug::Log("Request line " + request_line, LOG_REMOVE); // TODO: remove
+  auto request_line = nonstd::string_view(request.http_message,
+                                          request.http_message_length - 2)
+                          .to_string(); // request.getRequestLine();
+  Debug::Log("Request line " + request_line, LOG_REMOVE); // TODO: remove
   if (UNLIKELY(::regexec(&listener_config_.verb, request_line.c_str(), 3,
                          matches, 0) != 0)) {
     // TODO:: check RPC
@@ -714,11 +714,12 @@ StreamManager::validateRequest(HttpRequest &request) {
       *
       */
 
+    // TODO:: Content lentgh required on POST command
+    // error 411 Length Required
     return validation::REQUEST_RESULT::METHOD_NOT_ALLOWED;
   } else {
     request.setRequestMethod();
   }
-
   auto request_url = request.getUrl();
   if (request_url.find("%00") != std::string::npos) {
     return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
@@ -739,33 +740,43 @@ StreamManager::validateRequest(HttpRequest &request) {
 
   // TODO:: Check for correct headers
   for (auto i = 0; i != request.num_headers; i++) {
+    // check header values length
 
-    std::string header(request.headers[i].name, request.headers[i].name_len);
-    std::string header_value(request.headers[i].value,
-                             request.headers[i].value_len);
+    if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
+      return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
 
-    if (http::http_info::headers_names.count(header) > 0) {
-      auto header_name = http::http_info::headers_names.at(header);
+    nonstd::string_view header(request.headers[i].name,
+                               request.headers[i].name_len);
+    nonstd::string_view header_value(request.headers[i].value,
+                                     request.headers[i].value_len);
+
+    if (http::http_info::headers_names.count(header.to_string()) > 0) {
+      auto header_name = http::http_info::headers_names.at(header.to_string());
       auto header_name_string =
           http::http_info::headers_names_strings.at(header_name);
       //      Debug::
       //          logmsg(LOG_DEBUG, "\t%s: %s", header_name_string,
       //          header_value.c_str());
 
-      switch (header_name) {
-      case http::HTTP_HEADER_NAME::CONNECTION:
-        // todo check connection close??
-      case http::HTTP_HEADER_NAME::HOST:
-        break;
+      //      switch (header_name) {
+      //      case http::HTTP_HEADER_NAME::CONNECTION: {
+      //        // todo check connection close??
+      //            if(!strcasecmp("close", header_value.))
+      //                conn_closed = 1;
 
-      default:
-        break;
-      }
+      //        break;
+      //      }
+      //      case http::HTTP_HEADER_NAME::HOST:
+      //        break;
 
+      //      default:
+      //        break;
+      //      }
     } else {
       // TODO::Unknown header, What to do ??
       Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
-                    header.c_str(), header_value.c_str());
+                    header.to_string().c_str(),
+                    header_value.to_string().c_str());
     }
 
     /* maybe header to be removed */
