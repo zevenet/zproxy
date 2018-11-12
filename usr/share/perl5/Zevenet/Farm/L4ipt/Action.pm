@@ -124,7 +124,7 @@ sub startL4Farm    # ($farm_name)
 			push ( @{ $$rules{ t_nat } },      @{ $$backend_rules{ t_nat } } );
 			push ( @{ $$rules{ t_snat } },     @{ $$backend_rules{ t_snat } } );
 		}
-		elsif ( $$farm{ lbalg } eq 'prio' && $$server{ status } ne 'fgDOWN' )
+		elsif ( $$farm{ lbalg } eq 'prio' && $$server{ status } eq 'up' )
 		{
 			# find the lowest priority server
 			if ( $$server{ priority } ne ''
@@ -325,7 +325,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $$prev_farm{ status } eq 'up' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
 			$fg_pid = &getFarmGuardianPid( $farm_name );
 			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );

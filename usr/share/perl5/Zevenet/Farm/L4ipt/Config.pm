@@ -385,13 +385,10 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' )
-		{
-			$fg_pid = &getFarmGuardianPid( $farm_name );
-			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
-		}
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	&zlog( "setL4FarmSessionType: SessionType" ) if &debug;
@@ -487,13 +484,10 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' )
-		{
-			$fg_pid = &getFarmGuardianPid( $farm_name );
-			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
-		}
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -717,13 +711,10 @@ sub setL4FarmProto    # ($proto,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' )
-		{
-			$fg_pid = &getFarmGuardianPid( $farm_name );
-			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
-		}
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	require Tie::File;
@@ -754,7 +745,7 @@ sub setL4FarmProto    # ($proto,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		$output |= &startL4Farm( $farm_name );
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' );
+		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 	}
 
 	return $output;
@@ -791,15 +782,12 @@ sub setFarmNatType    # ($nat,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' )
+		if ( $0 !~ /farmguardian/ )
 		{
-			if ( $0 !~ /farmguardian/ )
-			{
-				$fg_pid = &getFarmGuardianPid( $farm_name );
-				kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
-			}
+			$fg_pid = &getFarmGuardianPid( $farm_name );
+			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 		}
 	}
 
@@ -897,13 +885,10 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' )
-		{
-			$fg_pid = &getFarmGuardianPid( $farm_name );
-			kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
-		}
+		$fg_pid = &getFarmGuardianPid( $farm_name );
+		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
 	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -1015,53 +1000,24 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	return $output if ( $$farm{ status } ne 'up' );
+
+	&refreshL4FarmRules( $farm );
+
+	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
+
+	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 	{
 		require Zevenet::Netfilter;
+		&loadL4Modules( $$farm{ vproto } );
 
-		my @rules;
-
-		foreach my $server ( @{ $$farm{ servers } } )
+		my $rule_ref = &genIptHelpers( $farm );
+		foreach my $rule ( @{ $rule_ref } )
 		{
-			my $rule_ref = &genIptMark( $farm, $server );
-			foreach my $rule ( @{ $rule_ref } )
-			{
-				my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-
-				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-
-				push ( @rules, $rule );    # collect rule
-			}
-
-			if ( $$farm{ persist } eq 'ip' )
-			{
-				my $prule_ref = &genIptMarkPersist( $farm, $server );
-				foreach my $rule ( @{ $prule_ref } )
-				{
-					my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-					push ( @rules, $rule );    # collect rule
-				}
-			}
-		}
-
-		&applyIptRules( @rules );
-
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
-
-		if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
-		{
-			&loadL4Modules( $$farm{ vproto } );
-
-			my $rule_ref = &genIptHelpers( $farm );
-			foreach my $rule ( @{ $rule_ref } )
-			{
-				$output |= &runIptables( &applyIptRuleAction( $rule, 'delete' ) );
-				$output |= &runIptables( &applyIptRuleAction( $rule, 'append' ) );
-			}
+			$output |= &runIptables( &applyIptRuleAction( $rule, 'delete' ) );
+			$output |= &runIptables( &applyIptRuleAction( $rule, 'append' ) );
 		}
 	}
-
 	return $output;
 }
 

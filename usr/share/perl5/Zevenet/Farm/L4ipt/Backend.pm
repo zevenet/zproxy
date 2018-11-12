@@ -609,7 +609,9 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 
 	#~ &zlog("(caller(2))[3]:$caller");
 
-	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$setting_be )
+	if (    $fg_enabled eq 'true'
+		 && !$changing_algorithm
+		 && !$setting_be )
 	{
 		$fg_pid = &getFarmGuardianPid( $farm_name );
 		kill 'STOP' => $fg_pid if ( $fg_pid > 0 );
@@ -671,8 +673,6 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $removing_be        = ( $caller =~ /runL4FarmServerDelete/ );
-
-	#~ &zlog("(caller(2))[3]:$caller");
 
 	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
 	{
