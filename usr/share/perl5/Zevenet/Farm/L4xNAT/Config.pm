@@ -1043,35 +1043,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	$farm = &getL4FarmStruct( $farm_name );
 
 	return $output if ( $$farm{ status } ne 'up' );
-	#
-	#
-	# my @rules;
-	#
-	# foreach my $server ( @{ $$farm{ servers } } )
-	# {
-	# 	my $rule_ref = &genIptMark( $farm, $server );
-	# 	foreach my $rule ( @{ $rule_ref } )
-	# 	{
-	# 		my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-	#
-	# 		$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-	#
-	# 		push ( @rules, $rule );    # collect rule
-	# 	}
-	#
-	# 	if ( $$farm{ persist } eq 'ip' )
-	# 	{
-	# 		my $prule_ref = &genIptMarkPersist( $farm, $server );
-	# 		foreach my $rule ( @{ $prule_ref } )
-	# 		{
-	# 			my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-	# 			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-	# 			push ( @rules, $rule );    # collect rule
-	# 		}
-	# 	}
-	# }
-	#
-	# &applyIptRules( @rules );
+
 	&refreshL4FarmRules( $farm );
 
 	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
