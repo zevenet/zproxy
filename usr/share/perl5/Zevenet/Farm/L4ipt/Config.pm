@@ -901,44 +901,20 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$track\;$args[8];$args[9]";
 			splice @configfile, $i, $line;
-			$output = $?;    # FIXME
+			$output = $?;
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;            # FIXME
+	$output = $?;
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
-	{
-		require Zevenet::Netfilter;
+	return $output if ( $$farm{ status } ne 'up' );
 
-		my @rules;
-		my $prio_server = &getL4ServerWithLowestPriority( $farm );
+	&refreshL4FarmRules( $farm );
 
-		foreach my $server ( @{ $$farm{ servers } } )
-		{
-			next if $$server{ status } != /up|maintenance/;
-			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
-
-			my $prule_ref = &genIptMarkPersist( $farm, $server );
-			foreach my $rule ( @{ $prule_ref } )
-			{
-				my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-				push ( @rules, $rule );    # collect rule
-			}
-		}
-
-		require Zevenet::Netfilter;
-		$output = &applyIptRules( @rules );
-
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'CONT' => $fg_pid;
-		}
-	}
+	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 
 	return $output;
 }
