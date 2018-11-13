@@ -85,13 +85,6 @@ sub eload
 		&zenlog( "eload: ARGS is ARRAY ref: Failed!", "info", "SYSTEM" );
 	}
 
-	if ( exists $ENV{ PATH_INFO }
-		 && $ENV{ PATH_INFO } eq '/certificates/activation' )
-	{
-		# escape '\n' characters in activation certificate
-		$req{ args }->[0] =~ s/\n/\\n/g;
-	}
-
 	unless ( eval { $input = encode_json( $req{ args } ) } )
 	{
 		my $msg = "eload: Error encoding JSON: $@";
