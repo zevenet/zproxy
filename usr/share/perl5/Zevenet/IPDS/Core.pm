@@ -226,14 +226,17 @@ sub getIPDSfarmsRules
 		}
 	}
 
-	$rules =
-	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
+	$rules = {
+			   dos        => \@dosRules,
+			   blacklists => \@blacklistsRules,
+			   rbl        => \@rblRules,
+			   waf        => []
+	};
 
 	# add waf if the rule is HTTP
 	require Zevenet::Farm::Core;
 	if ( &getFarmType( $farmName ) =~ /http/ )
 	{
-		$rules->{ waf } = [];
 		foreach my $ru ( &listWAFByFarm( $farmName ) )
 		{
 			push @{ $rules->{ waf } }, { 'name' => $ru };
