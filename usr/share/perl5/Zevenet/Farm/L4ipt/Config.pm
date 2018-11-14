@@ -410,41 +410,11 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
-	{
-		require Zevenet::Netfilter;
+	return $output if ( $$farm{ status } ne 'up' );
 
-		my @rules;
-		my $prio_server = &getL4ServerWithLowestPriority( $farm );
+	&refreshL4FarmRules( $farm );
 
-		foreach my $server ( @{ $$farm{ servers } } )
-		{
-			#~ next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
-			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
-
-			my $prule_ref = &genIptMarkPersist( $farm, $server );
-			foreach my $rule ( @{ $prule_ref } )
-			{
-				$rule =
-				  ( $$farm{ persist } eq 'none' )
-				  ? &getIptRuleDelete( $rule )
-				  : &getIptRuleInsert( $farm, $server, $rule );
-				&applyIptRules( $rule );
-			}
-
-			my $rule_ref = &genIptRedirect( $farm, $server );
-			foreach my $rule ( @{ $rule_ref } )
-			{
-				$rule = &getIptRuleReplace( $farm, $server, $rule );
-				$output = &applyIptRules( $rule );
-			}
-		}
-
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'CONT' => $fg_pid;
-		}
-	}
+	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 
 	return $output;
 }
@@ -500,156 +470,65 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$algorithm\;$args[6]\;$args[7]\;$args[8];$args[9]";
 			splice @configfile, $i, $line;
-			$output = $?;    # FIXME
+			$output = $?;
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;            # FIXME
+	$output = $?;
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	return $output if ( $$farm{ status } ne 'up' );
+
+	&refreshL4FarmRules( $farm );
+
+	# manage l4sd
+	my $l4sd_pidfile = '/var/run/l4sd.pid';
+	my $l4sd         = &getGlobalConfiguration( 'l4sd' );
+
+	if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 	{
-		require Zevenet::Netfilter;
+		system ( "$l4sd >/dev/null 2>&1 &" );
+	}
+	elsif ( -e $l4sd_pidfile )
+	{
+		require Zevenet::Lock;
 
-		my @rules;
-		my $prio_server = &getL4ServerWithLowestPriority( $farm );
+		## lock iptables use ##
+		my $iptlock = &getGlobalConfiguration( 'iptlock' );
+		my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
-		foreach my $server ( @{ $$farm{ servers } } )
+		# Get the binary of iptables (iptables or ip6tables)
+		my $iptables_bin = &getBinVersion( $farm_name );
+
+		my $num_lines = grep { /-m condition --condition/ }
+		  `$iptables_bin --numeric --table mangle --list PREROUTING`;
+
+		## unlock iptables use ##
+		close $ipt_lockfile;
+
+		if ( $num_lines == 0 )
 		{
-			my $rule;
-
-			# weight    => leastconn or (many to many)
-			# leastconn => weight
-			if (    ( $prev_alg eq 'weight' && $$farm{ lbalg } eq 'leastconn' )
-				 || ( $prev_alg eq 'leastconn' && $$farm{ lbalg } eq 'weight' ) )
+			# stop l4sd
+			if ( open my $pidfile, '<', $l4sd_pidfile )
 			{
-				# replace packet marking rules
-				# every thing else stays the same way
-				my $rule_ref = &genIptMark( $farm, $server );
-				foreach my $rule ( @{ $rule_ref } )
-				{
-					my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+				my $pid = <$pidfile>;
+				close $pidfile;
 
-					&applyIptRules( $rule );
-				}
-
-				if ( $$farm{ persist } ne 'none' )    # persistence
-				{
-					my $prule_ref = &genIptMarkPersist( $farm, $server );
-					foreach my $rule ( @{ $prule_ref } )
-					{
-						my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-						$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-						&applyIptRules( $rule );
-					}
-				}
+				# close normally
+				kill 'TERM' => $pid if ( $pid > 0 );
+				&zenlog( "l4sd ended", "info", "LSLB" );
 			}
-
-			# prio => weight or (one to many)
-			# prio => leastconn
-			elsif ( ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
-					&& $prev_alg eq 'prio' )
+			else
 			{
-				my $rule_ref = &genIptMark( $farm, $server );
-				foreach my $rule ( @{ $rule_ref } )
-				{
-					my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-
-					# start not started servers
-					if ( $rule_num == -1 )    # no rule was found
-					{
-						&_runL4ServerStart( $$farm{ name }, $$server{ id } );
-						$rule = undef;        # changes are already done
-					}
-
-					# refresh already started server
-					else
-					{
-						&_runL4ServerStop( $$farm{ name }, $$server{ id } );
-						&_runL4ServerStart( $$farm{ name }, $$server{ id } );
-						$rule = undef;        # changes are already done
-					}
-					&applyIptRules( $rule ) if defined ( $rule );
-				}
+				&zenlog( "Error opening file l4sd_pidfile: $!", "error", "LSLB" )
+				  if !defined $pidfile;
 			}
-
-			# weight    => prio or (many to one)
-			# leastconn => prio
-			elsif ( ( $prev_alg eq 'weight' || $prev_alg eq 'leastconn' )
-					&& $$farm{ lbalg } eq 'prio' )
-			{
-				if ( $server == $prio_server )    # no rule was found
-				{
-					my $rule_ref = &genIptMark( $farm, $server );
-					foreach my $rule ( @{ $rule_ref } )
-					{
-						my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-						$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-
-						&applyIptRules( $rule ) if defined ( $rule );
-					}
-				}
-				else
-				{
-					&_runL4ServerStop( $$farm{ name }, $$server{ id } );
-					$rule = undef;    # changes are already done
-				}
-			}
-		}
-
-		# manage l4sd
-		my $l4sd_pidfile = '/var/run/l4sd.pid';
-		my $l4sd         = &getGlobalConfiguration( 'l4sd' );
-
-		if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
-		{
-			system ( "$l4sd >/dev/null 2>&1 &" );
-		}
-		elsif ( -e $l4sd_pidfile )
-		{
-			require Zevenet::Lock;
-
-			## lock iptables use ##
-			my $iptlock = &getGlobalConfiguration( 'iptlock' );
-			my $ipt_lockfile = &openlock( $iptlock, 'w' );
-
-			# Get the binary of iptables (iptables or ip6tables)
-			my $iptables_bin = &getBinVersion( $farm_name );
-
-			my $num_lines = grep { /-m condition --condition/ }
-			  `$iptables_bin --numeric --table mangle --list PREROUTING`;
-
-			## unlock iptables use ##
-			close $ipt_lockfile;
-
-			if ( $num_lines == 0 )
-			{
-				# stop l4sd
-				if ( open my $pidfile, '<', $l4sd_pidfile )
-				{
-					my $pid = <$pidfile>;
-					close $pidfile;
-
-					# close normally
-					kill 'TERM' => $pid if ( $pid > 0 );
-					&zenlog( "l4sd ended", "info", "LSLB" );
-				}
-				else
-				{
-					&zenlog( "Error opening file l4sd_pidfile: $!", "error", "LSLB" )
-					  if !defined $pidfile;
-				}
-			}
-		}
-
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'CONT' => $fg_pid;
 		}
 	}
+
+	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 
 	return;
 }
@@ -812,44 +691,12 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	$farm = &getL4FarmStruct( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
-	{
-		require Zevenet::Netfilter;
+	return $output if ( $$farm{ status } ne 'up' );
 
-		my @rules;
-		my $prio_server = &getL4ServerWithLowestPriority( $farm );
+	&refreshL4FarmRules( $farm );
 
-		foreach my $server ( @{ $$farm{ servers } } )
-		{
-			&zlog( "server:$$server{id}" ) if &debug == 2;
-
-			#~ next if $$server{ status } !~ /up|maintenance/;
-			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
-
-			my $rule;
-
-			# get the rule 'template'
-			my $rule_ref = &genIptMasquerade( $farm, $server );
-			foreach my $rule ( @{ $rule_ref } )
-			{
-				# apply the desired action to the rule template
-				$rule = ( $$farm{ nattype } eq 'nat' )
-				  ? &getIptRuleAppend( $rule )     # append for SNAT aka NAT
-				  : &getIptRuleDelete( $rule );    # delete for DNAT
-
-				# apply rules as they are generated, so rule numbers are right
-				$output |= &applyIptRules( $rule );
-			}
-		}
-
-		if ( $fg_enabled eq 'true' )
-		{
-			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
-			{
-				kill 'CONT' => $fg_pid;
-			}
-		}
-	}
+	kill 'CONT' => $fg_pid
+	  if ( $fg_enabled eq 'true' && $0 !~ /farmguardian/ && $fg_pid > 0 );
 
 	return $output;
 }
