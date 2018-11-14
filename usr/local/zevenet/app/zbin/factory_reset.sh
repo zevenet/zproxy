@@ -64,16 +64,13 @@ sed -i "s/$SERVER/\#server\!bind\!1\!interface = \;/g" /usr/local/zevenet/app/ch
 PORT=`grep "server!bind!1!port =" /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf`
 sed -i "s/$PORT/server\!bind\!1\!port = 444/g" /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf
 
-START_MSG="#make your own script in your favorite language, it will be called
-#at the end of the procedure /etc/init.d/zenloadbalacer start
-#and replicated to the other node if zen cluster is running."
+echo "#make your own script in your favorite language, it will be called" > ${CONF_DIR}/zlb-start
+echo "#at the end of the procedure /etc/init.d/zenloadbalacer start" >> ${CONF_DIR}/zlb-start
+echo "#and replicated to the other node if zen cluster is running." >> ${CONF_DIR}/zlb-start
 
-STOP_MSG="#make your own script in your favorite language, it will be called
-#at the end of the procedure /etc/init.d/zenloadbalacer stop
-#and replicated to the other node if zen cluster is running."
-
-echo $START_MSG > zlb-start
-echo $STOP_MSG > zlb-stop
+echo "#make your own script in your favorite language, it will be called" > ${CONF_DIR}/zlb-stop
+echo "#at the end of the procedure /etc/init.d/zenloadbalacer stop" >> ${CONF_DIR}/zlb-stop
+echo "#and replicated to the other node if zen cluster is running." >> ${CONF_DIR}/zlb-stop
 
 
 echo "Cleaning apt"
