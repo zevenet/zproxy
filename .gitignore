@@ -42,6 +42,8 @@ usr/local/zevenet/node_status
 
 /usr/local/zevenet/logs
 
+/usr/local/zevenet/share/waf/
+
 !/usr/local/zevenet/www
 /usr/local/zevenet/www/assets/
 /usr/local/zevenet/www/commit
