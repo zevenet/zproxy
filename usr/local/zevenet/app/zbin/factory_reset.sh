@@ -43,7 +43,7 @@ rm -fr /usr/local/zevenet/www/zlbcertfile.pem
 rm -fr /usr/local/zevenet/app/zenrrd/rrd/*
 rm -fr /usr/local/zevenet/www/img/graphs/*
 
-read -p "Do you want delete the backups [N|y]? " -n 1 -r
+read -p "Do you want to delete the backups [N|y]? " -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     rm -fr /usr/local/zevenet/backups/*
