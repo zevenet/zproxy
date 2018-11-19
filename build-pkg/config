@@ -23,7 +23,6 @@ community_files=(
 enterprise_files=(
 	usr/local/zevenet/app/farmguardian/
 	usr/local/zevenet/app/l4s/
-	usr/local/zevenet/app/zbin/boot_ipds.pl
 	usr/local/zevenet/app/zbin/migrate_ipds_to_51.pl
 	usr/local/zevenet/app/zbin/sendNotification.pl
 	usr/local/zevenet/app/zbin/updateRemoteList.pl
@@ -248,7 +247,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
-	usr/share/perl5/Zevenet/Cmd/boot_ipds.pm
 	usr/share/perl5/Zevenet/Cmd/cluster_status.pm
 	usr/share/perl5/Zevenet/Cmd/migrate_ipds_to_51.pm
 	usr/share/perl5/Zevenet/Cmd/sendNotification.pm

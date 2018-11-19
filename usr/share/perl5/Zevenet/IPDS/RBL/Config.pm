@@ -30,7 +30,7 @@ my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
 my $userDomainsFile      = "$rblPath/user_domains.conf";
 
 =begin nd
-Function: setRBLCreateDirectory
+Function: initRBLModule
 
 	This function creates the RBL directory and RBL config file if they are not exist.
 
@@ -41,9 +41,10 @@ Returns:
 
 =cut
 
-sub setRBLCreateDirectory
+sub initRBLModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	if ( !-d $rblPath )
 	{
 		&logAndRun( &getGlobalConfiguration( 'mkdir' ) . " -p $rblPath" );
@@ -79,7 +80,8 @@ Returns:
 
 sub getRBLInitialParams
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $initial = {
 
 # save a list of farms split by space character. These farms are the farms where this rule is applied
@@ -134,7 +136,8 @@ Returns:
 
 sub addRBLCreateObjectRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	# check that the rule is not exist
@@ -179,7 +182,8 @@ Returns:
 
 sub setRBLObjectRuleParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $name  = shift;
 	my $key   = shift;
 	my $value = shift;
@@ -237,7 +241,8 @@ Returns:
 
 sub addRBLDomains
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $new_domain = shift;
 
 	require Zevenet::Lock;
@@ -263,7 +268,8 @@ Returns:
 
 sub setRBLDomains
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $domain     = shift;
 	my $new_domain = shift;
 
@@ -287,7 +293,8 @@ Returns:
 
 sub delRBLDomains
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $domain = shift;
 
 	require Zevenet::Lock;
@@ -327,7 +334,8 @@ Returns:
 
 sub addRBLCopyObjectRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule    = shift;
 	my $newrule = shift;
 
@@ -373,7 +381,8 @@ Returns:
 
 sub addRBLFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
@@ -432,7 +441,8 @@ Returns:
 
 sub delRBLFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
@@ -475,7 +485,8 @@ Returns:
 
 sub setRBLRenameObjectRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule    = shift;
 	my $newname = shift;
 
@@ -518,7 +529,8 @@ Returns:
 
 sub delRBLDeleteObjectRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	# check that the rule is not exist

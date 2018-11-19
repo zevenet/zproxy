@@ -40,7 +40,8 @@ Returns:
 
 sub getDOSInitialParams
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	# get ssh port
@@ -95,21 +96,22 @@ sub getDOSInitialParams
 }
 
 =begin nd
-Function: setDOSCreateFileConf
+Function: initDOSModule
 
-	Create the directory and DoS configuration files if they are not exist
+	Create configuration files and run all needed commands requested to DoS module
 
 Parameters:
-	none	 - .
+	None - .
 
 Returns:
-	Integer - Error code. 0 on success or other value on failure
+	None - .
 
 =cut
 
-sub setDOSCreateFileConf
+sub initDOSModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
@@ -130,7 +132,8 @@ sub setDOSCreateFileConf
 			$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
 			if ( $output )
 			{
-				&zenlog( "Error, creating DoS configuration directory: $dosConfDir", "error", "IPDS" );
+				&zenlog( "Error, creating DoS configuration directory: $dosConfDir",
+						 "error", "IPDS" );
 			}
 			else
 			{
@@ -138,9 +141,6 @@ sub setDOSCreateFileConf
 			}
 		}
 	}
-
-	#~ $output = &createDOSRule( 'drop_icmp', 'dropicmp' )		# Next version
-	#~ if ( ! &getDOSExists( 'drop_icmp' ) );
 
 	$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
 	  if ( !&getDOSExists( 'ssh_brute_force' ) );
@@ -165,7 +165,8 @@ Returns:
 
 sub setDOSParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $name  = shift;
 	my $param = shift;
 	my $value = shift;
@@ -220,7 +221,8 @@ Returns:
 
 sub createDOSRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $rule     = shift;
 	my $params;
@@ -274,7 +276,8 @@ Returns:
 
 sub deleteDOSRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $name = shift;
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );

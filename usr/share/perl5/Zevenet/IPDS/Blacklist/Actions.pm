@@ -44,7 +44,8 @@ Returns: None.
 
 sub runBLStartModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
@@ -114,7 +115,8 @@ Returns:
 
 sub runBLStopModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $error;
 
 	require Zevenet::Netfilter;
@@ -159,7 +161,8 @@ Returns:
 
 sub runBLRestartModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&runBLStopModule;
 	&runBLStartModule;
 }
@@ -179,7 +182,8 @@ Returns:
 
 sub runBLStartByRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 
 	my $error = 0;
@@ -189,7 +193,8 @@ sub runBLStartByRule
 	{
 		if ( &runBLStart( $ruleName, $farmName ) != 0 )
 		{
-			&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
+			&zenlog( "Error running the rule $ruleName in the farm $farmName.",
+					 "error", "IPDS" );
 		}
 		else
 		{
@@ -224,7 +229,8 @@ Returns:
 
 sub runBLStopByRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 
 	my $error = 0;
@@ -242,7 +248,8 @@ sub runBLStopByRule
 	{
 		if ( &runBLStop( $ruleName, $farmName ) != 0 )
 		{
-			&zenlog( "Error stopping the rule $ruleName in the farm $farmName.", "error", "IPDS" );
+			&zenlog( "Error stopping the rule $ruleName in the farm $farmName.",
+					 "error", "IPDS" );
 		}
 	}
 
@@ -265,7 +272,8 @@ Returns:
 
 sub runBLRestartByRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $error = &runBLStopByRule( $rule );
@@ -294,7 +302,8 @@ Returns:
 
 sub runBLStart
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $list, $farm ) = @_;
 	my $error;
 
@@ -334,7 +343,8 @@ Returns:
 
 sub runBLStop
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 
 	&setBLDeleteRule( $farm, $rule );
@@ -348,6 +358,40 @@ sub runBLStop
 	}
 
 	#~ return $error;
+}
+
+=begin nd
+Function: initBLModule
+
+	Create configuration files and run all needed commands requested to blacklist module
+
+Parameters:
+	None - .
+
+Returns:
+	None - .
+
+=cut
+
+sub initBLModule
+{
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $touch          = &getGlobalConfiguration( 'touch' );
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
+
+	# blacklists
+	if ( !-d $blacklistsPath )
+	{
+		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		&zenlog( "Created $blacklistsPath directory." );
+	}
+
+	# create list config if doesn't exist
+	if ( !-e $blacklistsConf )
+	{
+		system ( "$touch $blacklistsConf" );
+		&zenlog( "Created $blacklistsConf file." );
+	}
 }
 
 1;
