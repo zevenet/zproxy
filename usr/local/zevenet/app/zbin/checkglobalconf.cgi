@@ -1,1 +1,0 @@
-../checkglobalconf/checkglobalconf.cgi

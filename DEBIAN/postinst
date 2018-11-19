@@ -22,7 +22,7 @@
 ###############################################################################
 
 GLOBALCF="/usr/local/zevenet/config/global.conf"
-GLOBALCFT="/usr/local/zevenet/app/checkglobalconf/global.conf.tpl"
+GLOBALCFT="/usr/local/zevenet/share/global.conf.tpl"
 
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" && exit 1
 [ "$1" == "configure" ] && echo "Completing the Zevenet installation..."
@@ -63,7 +63,7 @@ do
 done
 
 #upgrading global.conf
-/usr/local/zevenet/app/checkglobalconf/checkglobalconf.cgi
+/usr/local/zevenet/app/zbin/checkglobalconf
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
@@ -98,7 +98,7 @@ rm -rf /var/log/conntrackd-stats* 2>/dev/null
 
 # SNMP and sec services
 if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
-	cp /usr/local/zevenet/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+	cp /usr/local/zevenet/share/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
 if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
         sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd

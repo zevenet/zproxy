@@ -22,7 +22,7 @@
 ###############################################################################
 
 GLOBALCF="/usr/local/zevenet/config/global.conf"
-GLOBALCFT="/usr/local/zevenet/app/checkglobalconf/global.conf.tpl"
+GLOBALCFT="/usr/local/zevenet/share/global.conf.tpl"
 
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" && exit 1
 [ "$1" == "configure" ] && echo "Completing the ZLB installation..."
@@ -53,7 +53,7 @@ do
 done
 
 #upgrading global.conf
-/usr/local/zevenet/app/checkglobalconf/checkglobalconf.cgi
+/usr/local/zevenet/app/zbin/checkglobalconf
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
@@ -106,11 +106,11 @@ sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 
 # disable SNMP service
 if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
-	cp /usr/local/zevenet/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+	cp /usr/local/zevenet/share/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
 
 # Create IPDS directories
-/usr/local/zevenet/bin/boot_ipds
+/usr/local/zevenet/app/zbin/boot_ipds
 
 # boot dependencies
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh

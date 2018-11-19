@@ -33,60 +33,65 @@ use strict;
 use warnings;
 use File::Copy;
 
-my $tmp_global = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
-my $global     = "/usr/local/zevenet/config/global.conf";
-my $globaltpl  = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
+my $gc_tmp_fn = "/tmp/global.conf.tmp";
+my $gc_fn     = "/usr/local/zevenet/config/global.conf";
+my $gc_tpl_fn = "/usr/local/zevenet/share/global.conf.template";
+my $tag       = '#update';
 
-unless ( -f $global )
+unless ( -f $gc_fn )
 {
-	system( "cp $globaltpl $global" );
+	system( "cp $gc_tpl_fn $gc_fn" );
 	exit 0;
 }
 
-open my $fw,            '>', $tmp_global;
-open my $file_template, '<', $globaltpl;
+open my $gc_tmp, '>', $gc_tmp_fn;
+open my $gc_tpl, '<', $gc_tpl_fn;
 
-while ( my $tpl_line = <$file_template> )
+while ( my $tpl_line = <$gc_tpl> )
 {
 	my $newline = $tpl_line;
 
+	# for lines starting with $
 	if ( $tpl_line =~ /^\$/ )
 	{
-		my @vble = split ( '=', $tpl_line );
-		$vble[0] =~ s/\$//;
-		my $exit = 'true';
+		my ( $var, $new_value ) = $tpl_line =~ /(.+)\s*=\s*(.+)/;
 
-		open my $fr, '<', $global;
+		# strip variable name
+		$var =~ s/\$//;
+		$var =~ s/\s*$//; # important
 
-		while ( my $line = <$fr> || $exit eq 'false' )
+		open my $gconf, '<', $gc_fn;
+
+		while ( my $gc_line = <$gconf> )
 		{
-			if ( $line =~ /^\$$vble[0] ?\=/ )
+			next unless $gc_line =~ /^\$$var\s*=/;
+
+			my ( $gc_var, $gc_value ) = $gc_line =~ /(.+)\s*=\s*(.+)/;
+			$gc_value  =~ s/^\s+//;
+			$new_value =~ s/^\s+//;
+
+			# update if the line is tagged to be updated
+			if ( $new_value =~ /$tag/i )
 			{
-				my @vblegconf = split ( "\=", $line );
-				$vblegconf[1] =~ s/^\s?//g;
-				$vble[1] =~ s/^\s?//g;
-
-				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] && $vble[1] !~ /\#update/ )
-				{
-					$newline = $line;
-				}
-
-				if ( $vble[1] =~ /\#update/i )
-				{
-					$tpl_line =~ s/\#update//i;
-					$newline = $tpl_line;
-				}
+				$tpl_line =~ s/\s*$tag//i;
+				$newline = $tpl_line;
 			}
+			elsif ( $gc_value !~ $new_value )
+			{
+				$newline = $gc_line;
+			}
+
+			last;
 		}
 
-		close $fr;
+		close $gconf;
 	}
 
-	print $fw "$newline";
+	print $gc_tmp "$newline";
 }
 
-close $fw;
-close $file_template;
+close $gc_tmp;
+close $gc_tpl;
 
-move( $tmp_global, $global );
+move( $gc_tmp_fn, $gc_fn );
 print "Update global.conf file done...\n";

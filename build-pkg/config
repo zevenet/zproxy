@@ -8,7 +8,6 @@ community_files=(
 	DEBIAN/postinst
 	etc/motd.tail
 	usr/local/zevenet/app/zbin/check_uplink
-	usr/local/zevenet/app/zbin/checkglobalconf.cgi
 	usr/local/zevenet/app/zbin/farmguardian
 	usr/local/zevenet/app/zbin/l4sd
 	usr/local/zevenet/app/zbin/zenbackup.pl
@@ -23,7 +22,6 @@ community_files=(
 enterprise_files=(
 	usr/local/zevenet/app/farmguardian/
 	usr/local/zevenet/app/l4s/
-	usr/local/zevenet/app/zbin/migrate_ipds_to_51.pl
 	usr/local/zevenet/app/zbin/sendNotification.pl
 	usr/local/zevenet/app/zbin/updateRemoteList.pl
 	usr/local/zevenet/app/zbin/zenbui.pl
@@ -39,7 +37,6 @@ enterprise_files=(
 	etc/profile_packetbl
 	license.txt
 	sbin/
-	usr/local/zevenet/app/checkglobalconf/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/app/zbin/boot_ipds
@@ -62,7 +59,6 @@ enterprise_files=(
 	usr/local/zevenet/app/zbin/zenntp
 	usr/local/zevenet/app/zbin/zenrrd
 	usr/local/zevenet/config/routing.conf
-	usr/local/zevenet/lib/
 	usr/local/zevenet/license.html
 	usr/local/zevenet/license.txt
 	usr/local/zevenet/share/rbac_roles/
@@ -248,7 +244,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
 	usr/share/perl5/Zevenet/Cmd/cluster_status.pm
-	usr/share/perl5/Zevenet/Cmd/migrate_ipds_to_51.pm
 	usr/share/perl5/Zevenet/Cmd/sendNotification.pm
 	usr/share/perl5/Zevenet/Cmd/updateRemoteList.pm
 	usr/share/perl5/Zevenet/Cmd/zapi-v3.pm
