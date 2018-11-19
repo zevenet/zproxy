@@ -43,15 +43,11 @@ enterprise_files=(
 	usr/local/zevenet/app/checkglobalconf/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
-	usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
 	usr/local/zevenet/app/zbin/boot_ipds
 	usr/local/zevenet/app/zbin/cluster_status
 	usr/local/zevenet/app/zbin/cluster_status.pl
 	usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
 	usr/local/zevenet/app/zbin/if_throughput.pl
-	usr/local/zevenet/app/zbin/migrate_ipds_to_51
-	usr/local/zevenet/app/zbin/migrate_old_fg.pl
-	usr/local/zevenet/app/zbin/migrate_tcp_to_l4xnat.pl
 	usr/local/zevenet/app/zbin/netplug.pl
 	usr/local/zevenet/app/zbin/nftlbd
 	usr/local/zevenet/app/zbin/persistent-nics
@@ -66,10 +62,6 @@ enterprise_files=(
 	usr/local/zevenet/app/zbin/zeninotify
 	usr/local/zevenet/app/zbin/zenntp
 	usr/local/zevenet/app/zbin/zenrrd
-	usr/local/zevenet/app/zbin/zlbmigration302to303.pl
-	usr/local/zevenet/app/zbin/zlbmigrationto402.sh
-	usr/local/zevenet/app/zbin/zlbmigrationto42.sh
-	usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/lib/
 	usr/local/zevenet/license.html
