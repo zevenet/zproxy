@@ -304,7 +304,7 @@ sub genIptMark    # ( $farm_ref, $server_ref )
 
 		my $rule = "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING ";
 
-		if ( $$farm{ lbalg } eq 'weight' )
+		if ( $$farm{ lbalg } =~ /weight|prio/ )
 		{
 			$rule .= "--match statistic --mode random --probability $$server{ prob } ";
 		}
@@ -867,7 +867,6 @@ sub getIptRuleInsert
 				@rule_args = split / +/, $rule_list[-1];
 				my $recent_rule_num = $rule_args[0];
 
-				#~ $rule_num = $recent_rule_num if $recent_rule_num > $rule_num;
 				$rule_num = $recent_rule_num;    #
 			}
 		}
@@ -937,7 +936,6 @@ sub setIptRuleReplace    # $return_code ( \%farm, \%server, $rule)
 	my $server = shift;    # input: server struc reference
 	my $rule   = shift;    # input: iptables rule string
 
-	#~ &zlog();
 	return &applyIptRules( &getIptRuleReplace( $farm, $server, $rule ) );
 }
 

@@ -378,6 +378,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	my $output        = 0;
 	my $i             = 0;
 
+	require Zevenet::Farm::L4xNAT::Action;
 	require Zevenet::FarmGuardian;
 	require Tie::File;
 
@@ -412,7 +413,8 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	return $output if ( $$farm{ status } ne 'up' );
 
-	&refreshL4FarmRules( $farm );
+	&stopL4Farm( $farm_name );
+	$output |= &startL4Farm( $farm_name );
 
 	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
 
@@ -544,11 +546,15 @@ sub setL4FarmStatus    #( value, farm_name )
 	require Tie::File;
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-	foreach ( @configfile )
+	for my $line ( @configfile )
 	{
-		s/\;up/\;down/g;
+		my @args = split ( "\;", $line );
+		$line =
+		  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$value;$args[9]";
+		splice @configfile, 0, $line;
 		last;    # run only for the first line
 	}
+
 	untie @configfile;
 }
 
@@ -966,7 +972,7 @@ sub getL4FarmStruct
 		$farm{ vport } = '0:65535';
 	}
 
-	if ( $farm{ lbalg } eq 'weight' )
+	if ( $farm{ lbalg } =~ /weight|prio/ )
 	{
 		&getL4BackendsWeightProbability( \%farm );
 	}
@@ -1029,15 +1035,11 @@ sub refreshL4FarmRules    # AlgorithmRules
 	require Zevenet::Lock;
 	require Zevenet::Netfilter;
 
-	my $prio_server;
 	my @rules;
 	my $return_code = 0;
 
-	$prio_server = &getL4ServerWithLowestPriority( $farm )
-	  if ( $farm->{ lbalg } eq 'prio' );
-
 	# refresh backends probability values
-	&getL4BackendsWeightProbability( $farm ) if ( $farm->{ lbalg } eq 'weight' );
+	&getL4BackendsWeightProbability( $farm );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
@@ -1046,10 +1048,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		# skip cycle for servers not running
-		next
-		  if ( $farm->{ lbalg } eq 'prio' && $server->{ id } != $prio_server->{ id } );
-
 		my $rule;
 		my $rule_num;
 
@@ -1057,11 +1055,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 		my $rule_ref = &genIptMark( $farm, $server );
 		foreach my $rule ( @{ $rule_ref } )
 		{
-			$rule =
-			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleReplace( $farm, undef,   $rule )
-			  : &getIptRuleReplace( $farm, $server, $rule );
-
+			$rule = &getIptRuleReplace( $farm, $server, $rule );
 			$return_code |= &applyIptRules( $rule );
 		}
 
@@ -1070,11 +1064,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 			my $prule_ref = &genIptMarkPersist( $farm, $server );
 			foreach my $rule ( @{ $prule_ref } )
 			{
-				$rule =
-				  ( $$farm{ lbalg } eq 'prio' )
-				  ? &getIptRuleReplace( $farm, undef,   $rule )
-				  : &getIptRuleReplace( $farm, $server, $rule );
-
+				$rule = &getIptRuleReplace( $farm, $server, $rule );
 				$return_code |= &applyIptRules( $rule );
 			}
 		}
@@ -1083,11 +1073,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 		my $rule_ref = &genIptRedirect( $farm, $server );
 		foreach my $rule ( @{ $rule_ref } )
 		{
-			$rule =
-			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleReplace( $farm, undef,   $rule )
-			  : &getIptRuleReplace( $farm, $server, $rule );
-
+			$rule = &getIptRuleReplace( $farm, $server, $rule );
 			$return_code |= &applyIptRules( $rule );
 		}
 
@@ -1096,11 +1082,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 			my $rule_ref = &genIptMasquerade( $farm, $server );
 			foreach my $rule ( @{ $rule_ref } )
 			{
-				$rule =
-				  ( $$farm{ lbalg } eq 'prio' )
-				  ? &getIptRuleReplace( $farm, undef,   $rule )
-				  : &getIptRuleReplace( $farm, $server, $rule );
-
+				$rule = &getIptRuleReplace( $farm, $server, $rule );
 				$return_code |= &applyIptRules( $rule );
 			}
 		}
@@ -1113,7 +1095,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 				&resetL4FarmBackendConntrackMark( $be );
 			}
 		}
-
 	}
 
 	## unlock iptables use ##
@@ -1273,7 +1254,6 @@ sub reloadL4FarmLogsRule
 		}
 	}
 
-	#~ return $error;
 }
 
 =begin nd

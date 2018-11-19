@@ -138,10 +138,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		{
 			require Zevenet::Net::Util;
 
-			if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
-			{
-				$output |= &_runL4ServerStart( $farm_name, $ids );
-			}
+			$output |= &_runL4ServerStart( $farm_name, $ids );
 
 			## Set ip rule mark ##
 			my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
@@ -209,10 +206,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 		}
 	}
 
-	if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
-	{
-		$output |= &_runL4ServerStop( $farm_name, $ids ) if $$farm{ status } eq 'up';
-	}
+	$output |= &_runL4ServerStop( $farm_name, $ids ) if $$farm{ status } eq 'up';
 
 	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
@@ -364,8 +358,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $stopping_fg = ( $caller =~ /runFarmGuardianStop/ );
 	my $fg_pid;
 
-	#~ &zlog("(caller(2))[3]:$caller");
-
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' && !$stopping_fg )
@@ -403,8 +395,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 	$farm{ servers } = undef;
 
-	#~ %farm = undef;
-
 	%farm = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
 
@@ -414,7 +404,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 		$output |= &refreshL4FarmRules( \%farm );
 
 		if (    $status eq 'fgDOWN'
-			 && $farm{ lbalg } ne 'prio'
 			 && $farm{ persist } eq 'ip' )
 		{
 			&setL4FarmBackendsSessionsRemove( $farm{ name }, $server_id );
@@ -431,7 +420,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 	$farm{ servers } = undef;
 
-	#~ %farm             = undef;
 	$$farm{ servers } = undef;
 	$farm = undef;
 
@@ -607,8 +595,6 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $setting_be         = ( $caller =~ /setFarmServer/ );
 
-	#~ &zlog("(caller(2))[3]:$caller");
-
 	if (    $fg_enabled eq 'true'
 		 && !$changing_algorithm
 		 && !$setting_be )
@@ -738,8 +724,8 @@ sub getL4ServerActionRules
 		# but if algorithm is set to prio remove anyway
 		if (
 			 $switch eq 'on'
-			 || ( $switch eq 'off'
-				  && ( $$farm{ lbalg } eq 'prio' || $$server{ status } ne 'maintenance' ) )
+			 || (    $switch eq 'off'
+				  && $$server{ status } ne 'maintenance' )
 		  )
 		{
 			my $prules_ref = &genIptMarkPersist( $farm, $server );
@@ -906,22 +892,36 @@ sub getL4BackendsWeightProbability
 			 "debug", "PROFILING" );
 	my $farm = shift;    # input: farm reference
 
-	my $weight_sum = 0;
+	my $weight_sum  = 0;
+	my $prio_server = -1;
+
+	$prio_server = &getL4ServerWithLowestPriority( $farm )
+	  if ( $farm->{ lbalg } eq 'prio' );
 
 	&doL4FarmProbability( $farm );    # calculate farm weight sum
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		# only calculate probability for servers running
-		if ( $$server{ status } eq 'up' )
+		if ( $$server{ status } ne 'up' )
+		{
+			$$server{ prob } = 0;
+			next;
+		}
+
+		if ( $farm->{ lbalg } eq 'prio' )
+		{
+			$$server{ prob } = 0;
+			if ( $prio_server->{ id } eq $$server{ id } )
+			{
+				$$server{ prob } = 1;
+			}
+		}
+		else
 		{
 			my $delta = $$server{ weight };
 			$weight_sum += $$server{ weight };
 			$$server{ prob } = $weight_sum / $$farm{ prob };
-		}
-		else
-		{
-			$$server{ prob } = 0;
 		}
 	}
 }

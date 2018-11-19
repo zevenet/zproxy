@@ -56,18 +56,10 @@ sub startL4Farm    # ($farm_name)
 	&zenlog( "startL4Farm << farm_name:$farm_name", "debug", "LSLB" )
 	  if &debug;
 
+	&setL4FarmParam( 'status', "up", $farm_name );
+
 	# initialize a farm struct
 	my $farm = &getL4FarmStruct( $farm_name );
-
-	require Tie::File;
-
-	tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
-	foreach ( @configfile )
-	{
-		s/\;down/\;up/g;
-		last;
-	}
-	untie @configfile;
 
 	my $l4sd = &getGlobalConfiguration( 'l4sd' );
 
@@ -89,8 +81,6 @@ sub startL4Farm    # ($farm_name)
 	}
 
 	my $rules;
-	my $lowest_prio;
-	my $server_prio;    # reference to the selected server for prio algorithm
 
 	## Set ip rule mark ##
 	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
@@ -114,36 +104,16 @@ sub startL4Farm    # ($farm_name)
 		my $ip_cmd = "$ip_bin rule add fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
 
-		# TMP: leastconn dynamic backend status check
-		if ( $$farm{ lbalg } =~ /weight|leastconn/ )
-		{
-			$backend_rules = &getL4ServerActionRules( $farm, $server, 'on' );
+		$backend_rules = &getL4ServerActionRules( $farm, $server, 'on' );
 
-			push ( @{ $$rules{ t_mangle_p } }, @{ $$backend_rules{ t_mangle_p } } );
-			push ( @{ $$rules{ t_mangle } },   @{ $$backend_rules{ t_mangle } } );
-			push ( @{ $$rules{ t_nat } },      @{ $$backend_rules{ t_nat } } );
-			push ( @{ $$rules{ t_snat } },     @{ $$backend_rules{ t_snat } } );
-		}
-		elsif ( $$farm{ lbalg } eq 'prio' && $$server{ status } eq 'up' )
-		{
-			# find the lowest priority server
-			if ( $$server{ priority } ne ''
-				 && ( $$server{ priority } < $lowest_prio || !defined $lowest_prio ) )
-			{
-				$server_prio = $server;
-				$lowest_prio = $$server{ priority };
-			}
-		}
+		push ( @{ $$rules{ t_mangle_p } }, @{ $$backend_rules{ t_mangle_p } } );
+		push ( @{ $$rules{ t_mangle } },   @{ $$backend_rules{ t_mangle } } );
+		push ( @{ $$rules{ t_nat } },      @{ $$backend_rules{ t_nat } } );
+		push ( @{ $$rules{ t_snat } },     @{ $$backend_rules{ t_snat } } );
 	}
 
-	# prio only apply rules to one server
-	if ( $server_prio && $$farm{ lbalg } eq 'prio' )
-	{
-		system ( "echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream" );
-		system ( "echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout" );
-
-		$rules = &getL4ServerActionRules( $farm, $server_prio, 'on' );
-	}
+	system ( "echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream" );
+	system ( "echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout" );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
@@ -362,21 +332,12 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	{
 		my @rules;
 
-		my $prio_server;
-		$prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
-		  if ( $$farm{ lbalg } eq 'prio' );
-
 		# refresh backends probability values
-		&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
+		&getL4BackendsWeightProbability( $farm );
 
 		# get new rules
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
-			# skip cycle for servers not running
-			#~ next if ( $$server{ status } !~ /up|maintenance/ );
-
-			next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
-
 			my $rule;
 			my $rule_num;
 
@@ -384,10 +345,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 			my $rule_ref = &genIptMark( $prev_farm, $server );
 			foreach my $rule ( @{ $rule_ref } )
 			{
-				$rule_num =
-				  ( $$farm{ lbalg } eq 'prio' )
-				  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-				  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
+				$rule_num = &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
 				my $rule_ref = &genIptMark( $farm, $server );
 				foreach my $rule ( @{ $rule_ref } )
 				{
@@ -401,10 +359,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 				my $prule_ref = &genIptMarkPersist( $prev_farm, $server );
 				foreach my $rule ( @{ $prule_ref } )
 				{
-					$rule_num =
-					  ( $$farm{ lbalg } eq 'prio' )
-					  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-					  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
+					$rule_num = &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
 					my $rule_ref = &genIptMarkPersist( $farm, $server );
 					foreach my $rule ( @{ $rule_ref } )
 					{
@@ -418,10 +373,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 			my $rule_ref = &genIptRedirect( $prev_farm, $server );
 			foreach my $rule ( @{ $rule_ref } )
 			{
-				$rule_num =
-				  ( $$farm{ lbalg } eq 'prio' )
-				  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-				  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
+				$rule_num = &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
 				$rule = &genIptRedirect( $farm, $server );
 				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
 				push ( @rules, $rule );
@@ -432,10 +384,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 				my $rule_ref = &genIptMasquerade( $farm, $server );
 				foreach my $rule ( @{ $rule_ref } )
 				{
-					my $rule_num =
-					  ( $$farm{ lbalg } eq 'prio' )
-					  ? &getIptRuleNumber( $rule, $$apply_farm{ name } )
-					  : &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
+					my $rule_num = &getIptRuleNumber( $rule, $$apply_farm{ name }, $$server{ id } );
 
 					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
 					push ( @rules, $rule );
