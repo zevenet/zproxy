@@ -16,6 +16,10 @@ community_files=(
 	usr/local/zevenet/app/zbin/zenrrd.pl
 )
 
+# ???? reducir esta lista al minimo:
+#	quitar enlaces simbolicos
+#	dejar ficheros de rutas API
+#	eliminar directorios temporales antiguios www
 enterprise_files=(
 	usr/local/zevenet/app/farmguardian/
 	usr/local/zevenet/app/l4s/
@@ -29,13 +33,7 @@ enterprise_files=(
 	usr/local/zevenet/app/zenbui/
 	usr/local/zevenet/app/zeninotify/
 	usr/local/zevenet/app/zenntp/
-	usr/local/zevenet/www/Notifications/
-	usr/share/perl5/Zevenet/BUI.pm
-	usr/share/perl5/Zevenet/Farm/GSLB.pm
 	usr/share/perl5/Zevenet/Farm/L4xNAT/
-	usr/share/perl5/Zevenet/IPDS.pm
-	usr/share/perl5/Zevenet/Non-used.pm
-	usr/share/perl5/Zevenet/Thread.pm
 	DEBIAN/postinst_BM
 	DEBIAN/preinst_BM
 	etc/profile
@@ -72,17 +70,15 @@ enterprise_files=(
 	usr/local/zevenet/app/zbin/zlbmigrationto402.sh
 	usr/local/zevenet/app/zbin/zlbmigrationto42.sh
 	usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
-	usr/local/zevenet/config/notifications/
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/lib/
 	usr/local/zevenet/license.html
 	usr/local/zevenet/license.txt
-	usr/local/zevenet/share/farmguardian.template
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
 	usr/local/zevenet/share/zevenet.cron
-	usr/local/zevenet/www/ipds/
 	usr/local/zevenet/www/zapi/v3/
+	usr/local/zevenet/www/zapi/v3.2/
 	usr/share/perl5/Zevenet/API3.pm
 	usr/share/perl5/Zevenet/API3/
 	usr/share/perl5/Zevenet/API31/Certificate/Certificate.pm
@@ -102,7 +98,7 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API31/Routes/SSH.pm
 	usr/share/perl5/Zevenet/API31/Routes/Statistics.pm
 	usr/share/perl5/Zevenet/API32/
-	usr/share/perl5/Zevenet/API40/Certificate/Certificate.pm
+	usr/share/perl5/Zevenet/API40/Certificate/
 	usr/share/perl5/Zevenet/API40/Routes/Activation.pm
 	usr/share/perl5/Zevenet/API40/Routes/Blacklists.pm
 	usr/share/perl5/Zevenet/API40/Routes/Bonding.pm
@@ -117,8 +113,12 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Routes/Notifications.pm
 	usr/share/perl5/Zevenet/API40/Routes/RBL.pm
 	usr/share/perl5/Zevenet/API40/Routes/SSH.pm
+	usr/share/perl5/Zevenet/API40/Routes/RBAC.pm
+	usr/share/perl5/Zevenet/API40/Routes/Ciphers.pm
+	usr/share/perl5/Zevenet/API40/Routes/WAF.pm
 	usr/share/perl5/Zevenet/API40/Routes/Statistics.pm
-	usr/share/perl5/Zevenet/Alias.pm
+	usr/share/perl5/Zevenet/API40/Farm/HTTP/
+	usr/share/perl5/Zevenet/API40/Farm/Service/
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
 	usr/share/perl5/Zevenet/User.pm
@@ -157,6 +157,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API31/System/Notification.pm
 	usr/share/perl5/Zevenet/API31/System/Service/HTTP.pm
 	usr/share/perl5/Zevenet/API31/System/Service/SSH.pm
+	usr/share/perl5/Zevenet/API32/Alias.pm
 	usr/share/perl5/Zevenet/API32/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/API32/Farm/Get/GSLB.pm
 	usr/share/perl5/Zevenet/API32/Farm/GSLB.pm
@@ -225,6 +226,33 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/System/Service/SNMP.pm
 	usr/share/perl5/Zevenet/API3/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API3/System/User.pm
+	usr/share/perl5/Zevenet/API40/Alias.pm
+	usr/share/perl5/Zevenet/API40/Certificate/Activation.pm
+	usr/share/perl5/Zevenet/API40/Farm/Get/GSLB.pm
+	usr/share/perl5/Zevenet/API40/Farm/GSLB.pm
+	usr/share/perl5/Zevenet/API40/Farm/HTTP/Ext.pm
+	usr/share/perl5/Zevenet/API40/Farm/MoveService.pm
+	usr/share/perl5/Zevenet/API40/Farm/Put/GSLB.pm
+	usr/share/perl5/Zevenet/API40/Farm/Service/Ext.pm
+	usr/share/perl5/Zevenet/API40/Farm/Zone.pm
+	usr/share/perl5/Zevenet/API40/Interface/Bonding.pm
+	usr/share/perl5/Zevenet/API40/Interface/Floating.pm
+	usr/share/perl5/Zevenet/API40/IPDS/Blacklist.pm
+	usr/share/perl5/Zevenet/API40/IPDS/DoS.pm
+	usr/share/perl5/Zevenet/API40/IPDS/IPDS.pm
+	usr/share/perl5/Zevenet/API40/IPDS/RBL.pm
+	usr/share/perl5/Zevenet/API40/IPDS/WAF/Rules.pm
+	usr/share/perl5/Zevenet/API40/IPDS/WAF/Sets.pm
+	usr/share/perl5/Zevenet/API40/IPDS/WAF/Structs.pm
+	usr/share/perl5/Zevenet/API40/RBAC/Group.pm
+	usr/share/perl5/Zevenet/API40/RBAC/Role.pm
+	usr/share/perl5/Zevenet/API40/RBAC/Structs.pm
+	usr/share/perl5/Zevenet/API40/RBAC/User.pm
+	usr/share/perl5/Zevenet/API40/Stats/Statistics.pm
+	usr/share/perl5/Zevenet/API40/System/Cluster.pm
+	usr/share/perl5/Zevenet/API40/System/Notification.pm
+	usr/share/perl5/Zevenet/API40/System/Service/HTTP.pm
+	usr/share/perl5/Zevenet/API40/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
@@ -291,4 +319,5 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Ssyncd.pm
 	usr/share/perl5/Zevenet/System/HTTP.pm
 	usr/share/perl5/Zevenet/System/SSH.pm
+	usr/share/perl5/Zevenet/Alias.pm
 )
