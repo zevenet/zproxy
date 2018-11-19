@@ -8,8 +8,6 @@ community_files=(
 	DEBIAN/postinst
 	etc/motd.tail
 	usr/local/zevenet/app/zbin/check_uplink
-	usr/local/zevenet/app/zbin/farmguardian
-	usr/local/zevenet/app/zbin/l4sd
 	usr/local/zevenet/app/zbin/zenbackup.pl
 	usr/local/zevenet/app/zbin/zenntp.pl
 	usr/local/zevenet/app/zbin/zenrrd.pl
@@ -20,12 +18,6 @@ community_files=(
 #	dejar ficheros de rutas API
 #	eliminar directorios temporales antiguios www
 enterprise_files=(
-	usr/local/zevenet/app/farmguardian/
-	usr/local/zevenet/app/l4s/
-	usr/local/zevenet/app/zbin/sendNotification.pl
-	usr/local/zevenet/app/zbin/updateRemoteList.pl
-	usr/local/zevenet/app/zbin/zenbui.pl
-	usr/local/zevenet/app/zbin/zeninotify.pl
 	usr/local/zevenet/app/zenbackup/
 	usr/local/zevenet/app/zenbui/
 	usr/local/zevenet/app/zeninotify/
@@ -36,7 +28,6 @@ enterprise_files=(
 	etc/profile
 	etc/profile_packetbl
 	license.txt
-	sbin/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/app/zbin/boot_ipds
