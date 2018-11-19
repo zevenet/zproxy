@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# e2c
+# This script create a commit with the last EE changes in the merge-ee branch of the community repository.
+# The script uses the current content of the EE repository, it does not use the last commit.
+
+
+function msg() {
+	echo -e "\n#### ${1} ####\n"
+}
+
+function path_file() {
+	echo $1 |sed -E 's"/?[^/]+$""'
+}
+
+CE_REPO="git@gitlab.zevenet.com:cristina.guerra/zevenet-ce.git"
+CE_BRANCH="merge-ee"
+
+zevenet_home='usr/local/zevenet'
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+com_dir=${BASE_DIR}/CE_WORKDIR
+ent_dir=${BASE_DIR}/EE_WORKDIR
+
+
+# clone CE repository
+msg "Cloning the community repository..."
+rm -rf $com_dir
+git clone $CE_REPO $com_dir
+cd $com_dir
+git fetch --all --tags --prune
+git checkout $CE_BRANCH
+cd ..
+
+
+# Setup a clean EE environment
+msg "Cleaning the EE directory..."
+rm -rf $ent_dir
+mkdir $ent_dir
+rsync -a --exclude "/$(basename "$BASE_DIR")" ../* $ent_dir/
+
+
+# load files
+source config
+
+msg "Copying EE files..."
+# remove EE files
+for file in "${compiled_files[@]}"; do
+	rm -rf ${ent_dir}/$file
+done
+for file in "${encrypted_files[@]}"; do
+	rm -rf ${ent_dir}/$file
+done
+for file in "${enterprise_files[@]}"; do
+	rm -rf ${ent_dir}/$file
+done
+
+# copy community files
+for file in "${community_files[@]}"; do
+	cp ${com_dir}/$file ${ent_dir}/$(path_file $file)
+done
+
+# copy all EE to the CE
+echo "cp -r ${ent_dir}/* $com_dir"
+cp -r ${ent_dir}/* $com_dir
+
+
+
+
+## ??? apply the commit to CE
+#cd $com_dir
+#git add .
+#git commit -s  ???EE commit hash
+#git push
+
+

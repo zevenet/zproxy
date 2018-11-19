@@ -77,4 +77,6 @@ usr/local/zevenet/app/zbin/zlbgennet.sh
 usr/local/zevenet/app/zendisplayinfo/
 usr/local/zevenet/app/zennetname/
 
+build-pkg/CE_WORKDIR/
+build-pkg/EE_WORKDIR/
 

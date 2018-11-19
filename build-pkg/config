@@ -1,6 +1,129 @@
 # Target environments
 debian_versions=(jessie stretch)
 
+# files of CE
+community_files=(
+	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	DEBIAN/control
+	DEBIAN/postinst
+	etc/motd.tail
+	usr/local/zevenet/app/zbin/check_uplink
+	usr/local/zevenet/app/zbin/checkglobalconf.cgi
+	usr/local/zevenet/app/zbin/farmguardian
+	usr/local/zevenet/app/zbin/l4sd
+	usr/local/zevenet/app/zbin/zenbackup.pl
+	usr/local/zevenet/app/zbin/zenntp.pl
+	usr/local/zevenet/app/zbin/zenrrd.pl
+)
+
+enterprise_files=(
+	usr/local/zevenet/app/farmguardian/
+	usr/local/zevenet/app/l4s/
+	usr/local/zevenet/app/zbin/boot_ipds.pl
+	usr/local/zevenet/app/zbin/migrate_ipds_to_51.pl
+	usr/local/zevenet/app/zbin/sendNotification.pl
+	usr/local/zevenet/app/zbin/updateRemoteList.pl
+	usr/local/zevenet/app/zbin/zenbui.pl
+	usr/local/zevenet/app/zbin/zeninotify.pl
+	usr/local/zevenet/app/zenbackup/
+	usr/local/zevenet/app/zenbui/
+	usr/local/zevenet/app/zeninotify/
+	usr/local/zevenet/app/zenntp/
+	usr/local/zevenet/www/Notifications/
+	usr/share/perl5/Zevenet/BUI.pm
+	usr/share/perl5/Zevenet/Farm/GSLB.pm
+	usr/share/perl5/Zevenet/Farm/L4xNAT/
+	usr/share/perl5/Zevenet/IPDS.pm
+	usr/share/perl5/Zevenet/Non-used.pm
+	usr/share/perl5/Zevenet/Thread.pm
+	DEBIAN/postinst_BM
+	DEBIAN/preinst_BM
+	etc/profile
+	etc/profile_packetbl
+	license.txt
+	sbin/
+	usr/local/zevenet/app/checkglobalconf/
+	usr/local/zevenet/app/libexec/
+	usr/local/zevenet/app/swaks/
+	usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
+	usr/local/zevenet/app/zbin/boot_ipds
+	usr/local/zevenet/app/zbin/cluster_status
+	usr/local/zevenet/app/zbin/cluster_status.pl
+	usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
+	usr/local/zevenet/app/zbin/if_throughput.pl
+	usr/local/zevenet/app/zbin/migrate_ipds_to_51
+	usr/local/zevenet/app/zbin/migrate_old_fg.pl
+	usr/local/zevenet/app/zbin/migrate_tcp_to_l4xnat.pl
+	usr/local/zevenet/app/zbin/netplug.pl
+	usr/local/zevenet/app/zbin/nftlbd
+	usr/local/zevenet/app/zbin/persistent-nics
+	usr/local/zevenet/app/zbin/rename_nics.sh
+	usr/local/zevenet/app/zbin/sendNotification
+	usr/local/zevenet/app/zbin/ssh-copy-id.sh
+	usr/local/zevenet/app/zbin/ssh_nodns.sh
+	usr/local/zevenet/app/zbin/updateRemoteList
+	usr/local/zevenet/app/zbin/zcluster-manager
+	usr/local/zevenet/app/zbin/zcluster-send-action
+	usr/local/zevenet/app/zbin/zenbui
+	usr/local/zevenet/app/zbin/zeninotify
+	usr/local/zevenet/app/zbin/zenntp
+	usr/local/zevenet/app/zbin/zenrrd
+	usr/local/zevenet/app/zbin/zlbmigration302to303.pl
+	usr/local/zevenet/app/zbin/zlbmigrationto402.sh
+	usr/local/zevenet/app/zbin/zlbmigrationto42.sh
+	usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
+	usr/local/zevenet/config/notifications/
+	usr/local/zevenet/config/routing.conf
+	usr/local/zevenet/lib/
+	usr/local/zevenet/license.html
+	usr/local/zevenet/license.txt
+	usr/local/zevenet/share/farmguardian.template
+	usr/local/zevenet/share/rbac_roles/
+	usr/local/zevenet/share/sec.rules
+	usr/local/zevenet/share/zevenet.cron
+	usr/local/zevenet/www/ipds/
+	usr/local/zevenet/www/zapi/v3/
+	usr/share/perl5/Zevenet/API3.pm
+	usr/share/perl5/Zevenet/API3/
+	usr/share/perl5/Zevenet/API31/Certificate/Certificate.pm
+	usr/share/perl5/Zevenet/API31/Routes/Activation.pm
+	usr/share/perl5/Zevenet/API31/Routes/Blacklists.pm
+	usr/share/perl5/Zevenet/API31/Routes/Bonding.pm
+	usr/share/perl5/Zevenet/API31/Routes/Certificate.pm
+	usr/share/perl5/Zevenet/API31/Routes/Cluster.pm
+	usr/share/perl5/Zevenet/API31/Routes/DoS.pm
+	usr/share/perl5/Zevenet/API31/Routes/Floating.pm
+	usr/share/perl5/Zevenet/API31/Routes/GSLB.pm
+	usr/share/perl5/Zevenet/API31/Routes/HTTP.pm
+	usr/share/perl5/Zevenet/API31/Routes/HTTP_GUI.pm
+	usr/share/perl5/Zevenet/API31/Routes/IPDS.pm
+	usr/share/perl5/Zevenet/API31/Routes/Notifications.pm
+	usr/share/perl5/Zevenet/API31/Routes/RBL.pm
+	usr/share/perl5/Zevenet/API31/Routes/SSH.pm
+	usr/share/perl5/Zevenet/API31/Routes/Statistics.pm
+	usr/share/perl5/Zevenet/API32/
+	usr/share/perl5/Zevenet/API40/Certificate/Certificate.pm
+	usr/share/perl5/Zevenet/API40/Routes/Activation.pm
+	usr/share/perl5/Zevenet/API40/Routes/Blacklists.pm
+	usr/share/perl5/Zevenet/API40/Routes/Bonding.pm
+	usr/share/perl5/Zevenet/API40/Routes/Certificate.pm
+	usr/share/perl5/Zevenet/API40/Routes/Cluster.pm
+	usr/share/perl5/Zevenet/API40/Routes/DoS.pm
+	usr/share/perl5/Zevenet/API40/Routes/Floating.pm
+	usr/share/perl5/Zevenet/API40/Routes/GSLB.pm
+	usr/share/perl5/Zevenet/API40/Routes/HTTP.pm
+	usr/share/perl5/Zevenet/API40/Routes/HTTP_GUI.pm
+	usr/share/perl5/Zevenet/API40/Routes/IPDS.pm
+	usr/share/perl5/Zevenet/API40/Routes/Notifications.pm
+	usr/share/perl5/Zevenet/API40/Routes/RBL.pm
+	usr/share/perl5/Zevenet/API40/Routes/SSH.pm
+	usr/share/perl5/Zevenet/API40/Routes/Statistics.pm
+	usr/share/perl5/Zevenet/Alias.pm
+	usr/share/perl5/Zevenet/ELoad.pm
+	usr/share/perl5/Zevenet/IPDS/
+	usr/share/perl5/Zevenet/User.pm
+)
+
 installation_files=(
 	DEBIAN/preinst_BM
 	DEBIAN/postinst_BM
@@ -10,6 +133,7 @@ compiled_files=(
 	DEBIAN/preinst
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	usr/local/zevenet/www/zapi/v3.2/zapi.cgi
+	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
 	usr/local/zevenet/app/zbin/zevenet
 	usr/local/zevenet/app/zbin/enterprise.bin
 )
@@ -142,6 +266,11 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/IPDS/RBL/Config.pm
 	usr/share/perl5/Zevenet/IPDS/RBL/Core.pm
 	usr/share/perl5/Zevenet/IPDS/RBL/Runtime.pm
+	usr/share/perl5/Zevenet/IPDS/WAF/Actions.pm
+	usr/share/perl5/Zevenet/IPDS/WAF/Config.pm
+	usr/share/perl5/Zevenet/IPDS/WAF/Core.pm
+	usr/share/perl5/Zevenet/IPDS/WAF/Runtime.pm
+	usr/share/perl5/Zevenet/IPDS/WAF/Parser.pm
 	usr/share/perl5/Zevenet/IPDS/Setup.pm
 	usr/share/perl5/Zevenet/Net/Bonding.pm
 	usr/share/perl5/Zevenet/Net/Floating.pm
