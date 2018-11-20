@@ -5,6 +5,7 @@ debian_versions=(jessie stretch)
 community_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	zlb-debian-installer.sh
+	README.md
 	DEBIAN/control
 	DEBIAN/preinst
 	DEBIAN/postinst
@@ -23,7 +24,6 @@ enterprise_files=(
 	DEBIAN/preinst_BM
 	etc/profile
 	etc/profile_packetbl
-	license.txt
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/app/zbin/check_uplink
@@ -47,8 +47,6 @@ enterprise_files=(
 	usr/local/zevenet/app/zbin/zenntp
 	usr/local/zevenet/app/zbin/zenrrd
 	usr/local/zevenet/config/routing.conf
-	usr/local/zevenet/license.html
-	usr/local/zevenet/license.txt
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
 	usr/local/zevenet/share/zevenet.cron
