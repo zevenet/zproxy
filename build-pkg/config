@@ -5,12 +5,12 @@ debian_versions=(jessie stretch)
 community_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	DEBIAN/control
+	DEBIAN/preinst
 	DEBIAN/postinst
+	etc/zevenet_version
 	etc/motd.tail
 	usr/local/zevenet/app/zbin/check_uplink
-	usr/local/zevenet/app/zbin/zenbackup.pl
-	usr/local/zevenet/app/zbin/zenntp.pl
-	usr/local/zevenet/app/zbin/zenrrd.pl
+	usr/local/zevenet/share/global.conf.tpl
 )
 
 # ???? reducir esta lista al minimo:
@@ -18,11 +18,6 @@ community_files=(
 #	dejar ficheros de rutas API
 #	eliminar directorios temporales antiguios www
 enterprise_files=(
-	usr/local/zevenet/app/zenbackup/
-	usr/local/zevenet/app/zenbui/
-	usr/local/zevenet/app/zeninotify/
-	usr/local/zevenet/app/zenntp/
-	usr/share/perl5/Zevenet/Farm/L4xNAT/
 	DEBIAN/postinst_BM
 	DEBIAN/preinst_BM
 	etc/profile
@@ -30,6 +25,7 @@ enterprise_files=(
 	license.txt
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
+	usr/local/zevenet/app/zbin/check_uplink
 	usr/local/zevenet/app/zbin/boot_ipds
 	usr/local/zevenet/app/zbin/cluster_status
 	usr/local/zevenet/app/zbin/cluster_status.pl
@@ -99,7 +95,6 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Service/
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
-	usr/share/perl5/Zevenet/User.pm
 )
 
 installation_files=(

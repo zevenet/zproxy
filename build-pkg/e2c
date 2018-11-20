@@ -45,25 +45,13 @@ source config
 msg "Copying EE files..."
 # remove EE files
 for file in "${compiled_files[@]}"; do
-	if [ -e "${ent_dir}/$file" ]; then
-		rm -rf ${ent_dir}/$file
-	else
-		echo "The EE file/dir is not found: ${ent_dir}/$file"
-	fi
+	rm -rf ${ent_dir}/$file
 done
 for file in "${encrypted_files[@]}"; do
-	if [ -e "${ent_dir}/$file" ]; then
 		rm -rf ${ent_dir}/$file
-	else
-		echo "The EE file/dir is not found: ${ent_dir}/$file"
-	fi
 done
 for file in "${enterprise_files[@]}"; do
-	if [ -e "${ent_dir}/$file" ]; then
-		rm -rf ${ent_dir}/$file
-	else
-		echo "The EE file/dir is not found: ${ent_dir}/$file"
-	fi
+	rm -rf ${ent_dir}/$file
 done
 
 # copy community files
@@ -74,6 +62,8 @@ for file in "${community_files[@]}"; do
 		echo "The CE file/dir is not found: ${ent_dir}/$file"
 	fi
 done
+
+rm -rf ${com_dir}/*
 
 # copy all EE to the CE
 echo "cp -r ${ent_dir}/* $com_dir"
