@@ -313,6 +313,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	my $backend_id = shift;
 
 	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::Base;
 
 	my $desc = "Set backend status";
 
