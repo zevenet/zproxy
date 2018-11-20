@@ -62,8 +62,10 @@ class HttpSessionManager {
   // the map resources!!
   // return the created SessionInfo
   // must check if it already exist !!!
+  bool addSession(JsonObject *json_object, std::vector<Backend *> backend_set);
   SessionInfo *addSession(HttpStream &stream, Backend &backend_to_assign);
 
+  bool deleteSession(JsonObject &json_object, std::vector<Backend *> backend_set);
   void deleteSession(HttpStream &stream);
   // return the assigned backend or nullptr if no session is found or sesssion
   // has expired

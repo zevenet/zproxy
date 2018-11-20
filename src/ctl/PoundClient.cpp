@@ -31,6 +31,8 @@ void PoundClient::trySetAllTargetId(char *argv[], int &option_index) {
         if (!argv[option_index]) show_usage("no valid session key found");
         session_key = std::string(argv[next_index--]);
         if (session_key.empty()) show_usage("no valid session key found");
+
+
       }
     }
     case CTL_SUBJECT::SERVICE:
@@ -90,6 +92,44 @@ bool PoundClient::executeCommand() {
   // 1. connect to zhttp daemon depending on interface mode selected
   // 2. compose a http request
   // 3. print result in pound format
+
+  //switch(interface_mode) {
+  //  case:
+  //}
+
+  switch (ctl_command) {
+    case CTL_ACTION::ADD_SESSION: {
+        switch (ctl_command_subject) {
+          case CTL_SUBJECT::SESSION: {
+            CtlTask task;
+            task.listener_id = listener_id;
+            task.service_id = service_id;
+            task.data = "{backend-id:" + std::to_string(backend_id) + ", id: \"" + session_key + "\"}";
+            return true;
+          }
+        }
+      }
+    case CTL_ACTION::DELETE_SESSION: {
+      switch (ctl_command_subject) {
+        case CTL_SUBJECT::SESSION: {
+          CtlTask task;
+          task.listener_id = listener_id;
+          task.service_id = service_id;
+          task.data = "{id: \"" +  session_key + "\"}";
+        }
+      }
+    }
+    case CTL_ACTION::FLUSH_SESSIONS: {
+      switch (ctl_command_subject) {
+        case CTL_SUBJECT::SESSION: {
+          CtlTask task;
+          task.listener_id = listener_id;
+          task.service_id = service_id;
+          task.data = "{backend-id: " + std::to_string(backend_id) + "}";
+        }
+      }
+    }
+  }
   return true;
 }
 

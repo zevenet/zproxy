@@ -164,7 +164,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
                   request.getUrl().c_str());
     return HttpStatus::getHttpResponse(HttpStatus::Code::BadRequest, "", "");
   }
-  if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE) {
+  if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE || task.command == CTL_COMMAND::DELETE) {
     task.data = std::string(request.message, request.message_length);
   }
   // TODO:: Concatenate more than one future result

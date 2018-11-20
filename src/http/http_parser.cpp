@@ -83,7 +83,8 @@ std::string http_parser::HttpData::getQueryParameter(std::string url,
   std::regex rgx(expr_);
   if (std::regex_search(url, match, rgx)) {
     std::string result = match[0];
-    return result.substr(1);
+    auto cpos = result.find('=');
+    return result.substr(cpos);
   } else {
     return std::string();
   }

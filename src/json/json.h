@@ -11,6 +11,7 @@ namespace json {
 struct JSON_OP_RESULT {
   static const std::string OK;
   static const std::string ERROR;
+  static const std::string WRONG_JSON_FORMAT;
 };
 
 struct JSON_KEYS {

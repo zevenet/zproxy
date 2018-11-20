@@ -202,3 +202,56 @@ json::JsonArray *HttpSessionManager::getSessionsJson() {
   }
   return data;
 }
+
+bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend *> backend_set) {
+    if (json_object == nullptr)
+      return false;
+    auto new_session = new SessionInfo();
+    if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() && json_object->at(JSON_KEYS::ID)->isValue()) {
+      int session_json_backend_id = static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::BACKEND_ID))->number_value;
+      for(auto backend : backend_set){
+        if(backend->backend_id != session_json_backend_id) continue;
+        new_session->assigned_backend = backend;
+      }
+      if (new_session->assigned_backend == nullptr)
+        return false;
+      std::lock_guard<std::mutex> locker(lock_mtx);
+      std::string key = static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::ID))->string_value;
+      sessions_set.emplace(std::make_pair(key, new_session));
+      return true;
+    } else {
+      return false;
+    }
+}
+
+bool HttpSessionManager::deleteSession(JsonObject &json_object, std::vector<Backend *> backend_set) {
+  if (json_object.count(JSON_KEYS::BACKEND_ID) > 0 && json_object.at(JSON_KEYS::BACKEND_ID)->isValue()) {
+    Backend *bck = nullptr;
+    int session_json_backend_id = static_cast<JsonDataValue*>(json_object.at(JSON_KEYS::BACKEND_ID))->number_value;
+    for (auto backend : backend_set) {
+        if(backend->backend_id != session_json_backend_id) continue;
+        bck = backend;
+    }
+
+    if (bck == nullptr) return false;
+    auto itr = sessions_set.begin();
+    while (itr != sessions_set.end()) {
+        if (itr->second->assigned_backend == bck) {
+          sessions_set.erase(itr++);
+        } else {
+           ++itr;
+        }
+    }
+    return true;
+  } else  {
+    if (json_object.count(JSON_KEYS::ID) > 0 && json_object.at(JSON_KEYS::ID)->isValue()) {
+      std::string key = static_cast<JsonDataValue*>(json_object.at(JSON_KEYS::ID))->string_value;
+      for(auto session : sessions_set) {
+        if (session.first != key) continue;
+        sessions_set.erase(key);
+        return true;
+      }
+    }
+    return false;
+  }
+}
