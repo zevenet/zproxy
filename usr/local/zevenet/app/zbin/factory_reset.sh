@@ -56,7 +56,7 @@ mv /tmp/zencert* $CONF_DIR
 #borrar todo excpeto: zencert*, zlb-*, global.conf, if_eth0_conf
 
 # Reseting global.conf
-cp /usr/local/zevenet/share/global.conf.tpl ${CONF_DIR}/global.conf
+cp /usr/local/zevenet/share/global.conf.template ${CONF_DIR}/global.conf
 
 echo "Deleting cherokee configuration"
 SERVER=`grep "server!bind!1!interface =" /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf`

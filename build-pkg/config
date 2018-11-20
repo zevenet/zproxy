@@ -11,7 +11,7 @@ community_files=(
 	etc/zevenet_version
 	etc/motd.tail
 	usr/local/zevenet/app/zbin/check_uplink
-	usr/local/zevenet/share/global.conf.tpl
+	usr/local/zevenet/share/global.conf.template
 )
 
 # ???? reducir esta lista al minimo:
