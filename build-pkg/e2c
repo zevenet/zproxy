@@ -9,10 +9,6 @@ function msg() {
 	echo -e "\n#### ${1} ####\n"
 }
 
-function path_file() {
-	echo $1 |sed -E 's"/?[^/]+$""'
-}
-
 CE_REPO="git@gitlab.zevenet.com:cristina.guerra/zevenet-ce.git"
 CE_BRANCH="merge-ee"
 
@@ -57,7 +53,7 @@ done
 # copy community files
 for file in "${community_files[@]}"; do
 	if [ -e "${com_dir}/$file" ]; then
-		cp ${com_dir}/$file ${ent_dir}/$(path_file $file)
+		cp ${com_dir}/$file ${ent_dir}/$(dirname $file)
 	else
 		echo "The CE file/dir is not found: ${ent_dir}/$file"
 	fi
