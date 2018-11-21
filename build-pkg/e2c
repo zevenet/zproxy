@@ -9,6 +9,30 @@ function msg() {
 	echo -e "\n#### ${1} ####\n"
 }
 
+
+
+function print_usage_and_exit() {
+	echo "Usage: $(basename "$0") [options]
+
+	Options:
+	--auto-merge		Apply automatly a commit in the CE branch 'merge-ee'"
+	exit 1
+}
+
+while [ $# -gt 0 ]; do
+	case $1 in
+	--auto-merge)
+		AUTO_MERGE=1
+		;;
+	*)
+		echo "Invalid option: $1"
+		print_usage_and_exit
+		;;
+	esac
+
+	shift
+done
+
 CE_REPO="git@gitlab.zevenet.com:cristina.guerra/zevenet-ce.git"
 CE_BRANCH="merge-ee"
 
@@ -28,6 +52,9 @@ git checkout $CE_BRANCH
 cd ..
 
 
+# get commit hash
+EE_COMMIT=$(git log --oneline | head -1 | cut -d' ' -f1)
+
 # Setup a clean EE environment
 msg "Cleaning the EE directory..."
 rm -rf $ent_dir
@@ -40,9 +67,6 @@ source config
 
 msg "Copying EE files..."
 # remove EE files
-for file in "${compiled_files[@]}"; do
-	rm -rf ${ent_dir}/$file
-done
 for file in "${encrypted_files[@]}"; do
 		rm -rf ${ent_dir}/$file
 done
@@ -59,20 +83,27 @@ for file in "${community_files[@]}"; do
 	fi
 done
 
+# keep the CE build-pkg dir
+rm -rf ${ent_dir}/build-pkg
+cp -r ${com_dir}/build-pkg ${ent_dir}
+
+# keep the CE DEBIAN dir
+rm -rf ${ent_dir}/DEBIAN
+cp -r ${com_dir}/DEBIAN ${ent_dir}
+
 # clean the CE to detect if a file has been deleted
 rm -rf ${com_dir}/*
 
 # copy all EE to the CE
-echo "cp -r ${ent_dir}/* $com_dir"
 cp -r ${ent_dir}/* $com_dir
 
 
-
-
-## ??? apply the commit to CE
-#cd $com_dir
-#git add .
-#git commit -s  ???EE commit hash
-#git push
-
+# apply the commit to CE
+if [ $AUTO_MERGE ]; then
+	DATE=$(date +%H:%M:%S_%d/%m/%y)
+	cd $com_dir
+	git add .
+	git commit -m "[auto_merge] EE commit: $EE_COMMIT, date: $DATE"
+	git push
+fi
 
