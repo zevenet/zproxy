@@ -292,7 +292,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name)
 								pending => 0,
 								service => $serviceName,
 			};
-			$backend->{ alias } = $alias->{ $2 } if $eload;
+			$backendHash->{ alias } = $alias->{ $2 } if $eload;
 
 			if ( defined $6 )
 			{
