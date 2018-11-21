@@ -28,7 +28,7 @@ GLOBALCFT="/usr/local/zevenet/share/global.conf.template"
 [ "$1" == "configure" ] && echo "Completing the Zevenet installation..."
 
 if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
-	rmdir "/usr/share/perl5/Zevenet/Farm/L4xNAT"
+	rm -rf "/usr/share/perl5/Zevenet/Farm/L4xNAT"
 	ln -sf L4ipt /usr/share/perl5/Zevenet/Farm/L4xNAT
 fi
 
