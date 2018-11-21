@@ -151,15 +151,15 @@ sub getGSLBFarmBackendsStats
 			$status = lc $status if defined $status;
 
 			push (
-				@{ $gslb_stats->{ 'backends' } },
-				{
-				   alias => ( permission ) ? $alias->{ $addr } : undef;
-					 id => $id + 0,
-				   ip      => $addr,
-				   service => $srv,
-				   port    => $port + 0,
-				   status  => $status,
-				}
+				   @{ $gslb_stats->{ 'backends' } },
+				   {
+					  alias => ( permission ) ? $alias->{ $addr } : undef,
+					  id    => $id + 0,
+					  ip    => $addr,
+					  service => $srv,
+					  port    => $port + 0,
+					  status  => $status,
+				   }
 			);
 		}
 	}
