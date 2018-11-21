@@ -32,15 +32,6 @@ if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	ln -sf L4ipt /usr/share/perl5/Zevenet/Farm/L4xNAT
 fi
 
-# Migration script
-MSCRIPT="/usr/local/zevenet/app/zbin/zlbmigration302to303.pl"
-if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
-	oldver=`cat $GLOBALCF | grep "version=" | awk -F'"' '{printf $2}'`
-	newver=`cat $GLOBALCFT | grep "version=" | awk -F'"' '{printf $2}'`
-	if [ "$oldver" == "3.02" ]; then
-		$MSCRIPT
-	fi
-fi
 
 if [ -f /usr/local/zevenet/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zevenet/app/zennetname/write_net_rules /lib/udev/
@@ -170,34 +161,10 @@ fi
 chmod +x /usr/local/zevenet/config/zlb-start
 chmod +x /usr/local/zevenet/config/zlb-stop
 
-# Migrate TCP farms to L4xNAT
-if [ "-f /usr/local/zevenet/config/*_pen.cfg" ]; then
-	/usr/local/zevenet/app/zbin/migrate_tcp_to_l4xnat.pl
-fi
-
-# HTTP profile directives migration to 4.2
-if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto42.sh ]; then
-	/usr/local/zevenet/app/zbin/zlbmigrationto42.sh
-fi
-
-# Http profile directives migration
-if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto402.sh ]; then
-	/usr/local/zevenet/app/zbin/zlbmigrationto402.sh
-fi
 
 # Fix fwmarks for L4xNAT backends
 if [ -f /usr/local/zevenet/app/zbin/fwmark_tag_fix.pl ]; then
 	/usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
-fi
-
-# add #ZWACL-END tag to pound configuration files
-if [ -f /usr/local/zevenet/app/zbin/add_srv_tag_pound.pl ]; then
-	/usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
-fi
-
-# Migrate FG
-if [ -f /usr/local/zevenet/app/zbin/migrate_old_fg.pl ]; then
-	/usr/local/zevenet/app/zbin/migrate_old_fg.pl
 fi
 
 # Migrate HTTP farms to dynamic thread model, without tcmalloc
@@ -208,11 +175,6 @@ do
 		sed -i -e 's/Threads\t\t[0-9]*$/ThreadModel\tdynamic/' $i
 	fi
 done
-
-# Migrate interface configuration files to IPv6 ready format
-if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
-	/usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
-fi
 
 # Disable DNS resolution for SSH service
 if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
