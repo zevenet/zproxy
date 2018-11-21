@@ -29,7 +29,7 @@ include 'Zevenet::IPDS::Blacklist::Config';
 sub initIPDSModule
 {
 	include 'Zevenet::IPDS::Blacklist::Actions';
-	include 'Zevenet::IPDS::DoS::Actions';
+	include 'Zevenet::IPDS::DoS::Config';
 	include 'Zevenet::IPDS::RBL::Config';
 	include 'Zevenet::IPDS::WAF::Actions';
 
