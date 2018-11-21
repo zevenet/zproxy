@@ -59,6 +59,7 @@ for file in "${community_files[@]}"; do
 	fi
 done
 
+# clean the CE to detect if a file has been deleted
 rm -rf ${com_dir}/*
 
 # copy all EE to the CE
