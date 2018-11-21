@@ -6,27 +6,24 @@ community_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	zlb-debian-installer.sh
 	README.md
+	build-pkg
 	DEBIAN/control
 	DEBIAN/preinst
 	DEBIAN/postinst
 	etc/zevenet_version
 	etc/motd.tail
-	usr/local/zevenet/app/zbin/check_uplink
 	usr/local/zevenet/share/global.conf.template
 )
 
-# ???? reducir esta lista al minimo:
-#	quitar enlaces simbolicos
-#	dejar ficheros de rutas API
-#	eliminar directorios temporales antiguios www
+# excepciones que no deben ser copiadas y no se encriptan
 enterprise_files=(
 	DEBIAN/postinst_BM
 	DEBIAN/preinst_BM
 	etc/profile
 	etc/profile_packetbl
+	build-pkg/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
-	usr/local/zevenet/app/zbin/check_uplink
 	usr/local/zevenet/app/zbin/boot_ipds
 	usr/local/zevenet/app/zbin/cluster_status
 	usr/local/zevenet/app/zbin/cluster_status.pl
