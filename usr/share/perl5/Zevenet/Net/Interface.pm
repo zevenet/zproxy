@@ -1444,10 +1444,11 @@ sub get_nic_struct
 	my $nic = shift;
 
 	my $interface;
-	my $alias $alias = &eload(
-							   module => 'Zevenet::Alias',
-							   func   => 'getAlias',
-							   args   => ['interface']
+	my $alias;
+	$alias = &eload(
+					 module => 'Zevenet::Alias',
+					 func   => 'getAlias',
+					 args   => ['interface']
 	) if $eload;
 
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
