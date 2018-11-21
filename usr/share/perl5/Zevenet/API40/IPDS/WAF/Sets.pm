@@ -21,6 +21,8 @@
 ###############################################################################
 
 use strict;
+require Zevenet::API40::HTTP;
+
 include 'Zevenet::IPDS::WAF::Core';
 include 'Zevenet::API40::IPDS::WAF::Structs';
 

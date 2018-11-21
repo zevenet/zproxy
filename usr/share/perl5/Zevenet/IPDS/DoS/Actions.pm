@@ -40,14 +40,15 @@ Returns:
 
 sub runDOSStartModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::IPDS::DoS::Config';
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
 
-	&zenlog( "Booting dos system... ", "info", "IPDS"  );
-	&setDOSCreateFileConf();
+	&zenlog( "Booting dos system... ", "info", "IPDS" );
+	&initDOSModule();
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 	foreach my $ruleName ( keys %{ $fileHandle } )
@@ -66,7 +67,8 @@ sub runDOSStartModule
 				{
 					if ( &runDOSStart( $ruleName, $farmName ) != 0 )
 					{
-						&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
+						&zenlog( "Error running the rule $ruleName in the farm $farmName.",
+								 "error", "IPDS" );
 					}
 				}
 			}
@@ -108,7 +110,8 @@ sub runDOSStartModule
 
 sub runDOStopModule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $output   = 0;
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
@@ -159,7 +162,8 @@ Returns:
 
 sub runDOSStartByRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 	my $error = 0;
 
@@ -179,7 +183,8 @@ sub runDOSStartByRule
 			{
 				if ( &runDOSStart( $ruleName, $farmName ) != 0 )
 				{
-					&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
+					&zenlog( "Error running the rule $ruleName in the farm $farmName.",
+							 "error", "IPDS" );
 				}
 			}
 		}
@@ -203,7 +208,8 @@ Returns:
 
 sub runDOSStopByRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName ) = @_;
 	my $error = 0;
 
@@ -217,7 +223,8 @@ sub runDOSStopByRule
 		{
 			if ( &setDOSStopRule( $ruleName, $farmName ) != 0 )
 			{
-				&zenlog( "Error stopping the rule $ruleName in the farm $farmName.", "error", "IPDS" );
+				&zenlog( "Error stopping the rule $ruleName in the farm $farmName.",
+						 "error", "IPDS" );
 			}
 		}
 	}
@@ -241,7 +248,8 @@ Returns:
 
 sub runDOSRestartByRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $error = &runDOSStopByRule( $rule );
@@ -270,7 +278,8 @@ Returns:
 
 sub runDOSStart
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 	my $error;
 
@@ -297,7 +306,8 @@ Returns:
 
 sub runDOSStop
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
 	my $error = &setDOSStopRule( $rule, $farm );
 	return $error;

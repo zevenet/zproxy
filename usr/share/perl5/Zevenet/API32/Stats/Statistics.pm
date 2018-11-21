@@ -25,17 +25,20 @@ use strict;
 
 use Zevenet::API32::HTTP;
 
-
 use Zevenet::System;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # GET /stats/farms/modules
 #Get a farm status resume
 sub module_stats_status
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::API32::Stats;
 	my @farms = @{ &getAllFarmStats() };
 	my $lslb = {
@@ -139,7 +142,8 @@ sub module_stats_status
 #Get lslb|gslb|dslb Farm Stats
 sub module_stats    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $module = shift;
 
 	require Zevenet::API32::Stats;
@@ -187,7 +191,8 @@ sub module_stats    # ()
 # Get the number of farms
 sub farms_number
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 
 	my $number = scalar &getFarmNameList();
@@ -202,7 +207,8 @@ sub farms_number
 #GET /stats/mem
 sub stats_mem    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
@@ -230,7 +236,8 @@ sub stats_mem    # ()
 #GET /stats/load
 sub stats_load    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
@@ -260,7 +267,8 @@ sub stats_load    # ()
 #GET /stats/cpu
 sub stats_cpu    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
@@ -281,7 +289,8 @@ sub stats_cpu    # ()
 #GET /stats/system/connections
 sub stats_conns
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $out = &getTotalConnections();
 	my $body = {
 				 description => "System connections",
@@ -294,7 +303,8 @@ sub stats_conns
 #GET /stats/network/interfaces
 sub stats_network_interfaces
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
@@ -307,8 +317,12 @@ sub stats_network_interfaces
 	my @restIfaces;
 	@bond = &getInterfaceTypeList( 'bond' ) if $eload;
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
+	my $alias;
+	$alias = &eload(
+					 module => 'Zevenet::Alias',
+					 func   => 'getAlias',
+					 args   => ['interface']
+	) if $eload;
 
 	foreach my $iface ( @interfaces )
 	{
@@ -327,13 +341,12 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias }   = $alias->{ $iface->{ interface } };
+			$iface->{ alias }   = $alias->{ $iface->{ interface } } if $eload;
 			$iface->{ mac }     = $extrainfo->{ mac };
 			$iface->{ ip }      = $extrainfo->{ addr };
 			$iface->{ status }  = $extrainfo->{ status };
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
-
 
 			push @nicList, $iface;
 		}
@@ -350,7 +363,7 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias }   = $alias->{ $iface->{ interface } };
+			$iface->{ alias }   = $alias->{ $iface->{ interface } } if $eload;
 			$iface->{ mac }     = $extrainfo->{ mac };
 			$iface->{ ip }      = $extrainfo->{ addr };
 			$iface->{ status }  = $extrainfo->{ status };
@@ -384,7 +397,8 @@ sub stats_network_interfaces
 # /stats/throughput
 sub stats_throughput
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Net::Throughput';
 
 	my $out = &getTHROUStats();

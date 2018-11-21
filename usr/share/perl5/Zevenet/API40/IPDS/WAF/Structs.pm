@@ -21,6 +21,7 @@
 ###############################################################################
 
 use strict;
+require Zevenet::API40::HTTP;
 
 =begin nd
 Function: getZapiWAFRule

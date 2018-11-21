@@ -27,23 +27,20 @@ use Config::Tiny;
 
 # global variable for bonding modes names
 my @bond_modes = (
-				'Round-robin policy',
-				'Active-backup policy',
-				'XOR policy',
-				'Broadcast policy',
-				'IEEE 802.3ad LACP',
-				'Adaptive transmit load balancing',
-				'Adaptive load balancing',
+				   'Round-robin policy',
+				   'Active-backup policy',
+				   'XOR policy',
+				   'Broadcast policy',
+				   'IEEE 802.3ad LACP',
+				   'Adaptive transmit load balancing',
+				   'Adaptive load balancing',
 );
 
 my @bond_modes_short = (
-				'balance-rr',
-				'active-backup',
-				'balance-xor',
-				'broadcast',
-				'802.3ad',
-				'balance-tlb',
-				'balance-alb',
+						 'balance-rr',  'active-backup',
+						 'balance-xor', 'broadcast',
+						 '802.3ad',     'balance-tlb',
+						 'balance-alb',
 );
 
 =begin nd
@@ -65,10 +62,13 @@ Returns:
 See Also:
 	<applyBondChange>, <getAllBondsSlaves>
 =cut
+
 sub getBondList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bonding_masters_filename =
+	  &getGlobalConfiguration( 'bonding_masters_filename' );
 
 	if ( !-f $bonding_masters_filename )
 	{
@@ -80,7 +80,8 @@ sub getBondList
 
 	if ( !$bond_file )
 	{
-		&zenlog( "Could not open file $bonding_masters_filename: $!", "error", "NETWORK" );
+		&zenlog( "Could not open file $bonding_masters_filename: $!",
+				 "error", "NETWORK" );
 		return;
 	}
 
@@ -132,13 +133,15 @@ Bugs:
 See Also:
 
 =cut
+
 sub getBondMode
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond_master = shift;
 
-	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
-	my $bond_path = "$sys_net_dir/$bond_master";
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
+	my $bond_path   = "$sys_net_dir/$bond_master";
 
 	if ( !-d $bond_path )
 	{
@@ -146,13 +149,14 @@ sub getBondMode
 		return;
 	}
 
-	my $bonding_mode_filename = &getGlobalConfiguration('bonding_mode_filename');
+	my $bonding_mode_filename = &getGlobalConfiguration( 'bonding_mode_filename' );
 
 	open ( my $bond_mode_file, '<', "$bond_path/$bonding_mode_filename" );
 
 	if ( !$bond_mode_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!", "error", "NETWORK" );
+		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!",
+				 "error", "NETWORK" );
 		return;
 	}
 
@@ -181,13 +185,15 @@ Returns:
 See Also:
 
 =cut
+
 sub getBondSlaves
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond_master = shift;
 
-	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
-	my $bond_path = "$sys_net_dir/$bond_master";
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
+	my $bond_path   = "$sys_net_dir/$bond_master";
 
 	if ( !-d $bond_path )
 	{
@@ -195,13 +201,15 @@ sub getBondSlaves
 		return;
 	}
 
-	my $bonding_slaves_filename = &getGlobalConfiguration('bonding_slaves_filename');
+	my $bonding_slaves_filename =
+	  &getGlobalConfiguration( 'bonding_slaves_filename' );
 
 	open ( my $bond_slaves_file, '<', "$bond_path/$bonding_slaves_filename" );
 
 	if ( !$bond_slaves_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!", "error", "NETWORK" );
+		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!",
+				 "error", "NETWORK" );
 		return;
 	}
 
@@ -232,10 +240,12 @@ Bugs:
 See Also:
 
 =cut
+
 sub applyBondChange
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $bond      = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond = shift;
 
 	my $return_code = -1;
 
@@ -346,9 +356,11 @@ Returns:
 See Also:
 
 =cut
+
 sub setBondMaster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond_name = shift;
 	my $operation = shift;    # add || del
 
@@ -369,11 +381,12 @@ sub setBondMaster
 		return $return_code;
 	}
 
-	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
+	my $bonding_masters_filename =
+	  &getGlobalConfiguration( 'bonding_masters_filename' );
 
 	if ( !-f $bonding_masters_filename )
 	{
-		&zenlog( "Bonding module seems missing" , "error", "NETWORK" );
+		&zenlog( "Bonding module seems missing", "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -381,7 +394,8 @@ sub setBondMaster
 
 	if ( !$bond_file )
 	{
-		&zenlog( "Could not open file $bonding_masters_filename: $!", "error", "NETWORK" );
+		&zenlog( "Could not open file $bonding_masters_filename: $!",
+				 "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -389,8 +403,9 @@ sub setBondMaster
 	close $bond_file;
 
 	# miimon
-	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
-	my $bonding_miimon_filename = &getGlobalConfiguration('bonding_miimon_filename');
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
+	my $bonding_miimon_filename =
+	  &getGlobalConfiguration( 'bonding_miimon_filename' );
 	my $miimon_filepath = "$sys_net_dir/$bond_name/$bonding_miimon_filename";
 
 	open ( my $miimon_file, '>', $miimon_filepath );
@@ -409,11 +424,11 @@ sub setBondMaster
 	delete $bond_conf->{ $bond_name };
 	&setBondConfig( $bond_conf );
 
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	unlink "$configdir/if_${bond_name}_conf";
 	require Zevenet::RRD;
-	&delGraph ( $bond_name, "iface" );
+	&delGraph( $bond_name, "iface" );
 
 	$return_code = 0;
 
@@ -434,12 +449,14 @@ Returns:
 See Also:
 
 =cut
+
 sub setBondMode
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
-	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
 	my $bond_path   = "$sys_net_dir/$bond->{name}";
 	my $return_code = 1;
 
@@ -449,13 +466,14 @@ sub setBondMode
 		return $return_code;
 	}
 
-	my $bonding_mode_filename = &getGlobalConfiguration('bonding_mode_filename');
+	my $bonding_mode_filename = &getGlobalConfiguration( 'bonding_mode_filename' );
 
 	open ( my $bond_mode_file, '>', "$bond_path/$bonding_mode_filename" );
 
 	if ( !$bond_mode_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!", "error", "NETWORK" );
+		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!",
+				 "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -483,15 +501,17 @@ Returns:
 See Also:
 
 =cut
+
 sub setBondSlave
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond_name  = shift;
 	my $bond_slave = shift;
 	my $operation  = shift;    # add || del
 
-	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
-	my $bond_path = "$sys_net_dir/$bond_name";
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
+	my $bond_path   = "$sys_net_dir/$bond_name";
 	my $operator;
 	my $return_code = 1;
 
@@ -511,23 +531,28 @@ sub setBondSlave
 
 	if ( !-d $bond_path )
 	{
-		&zenlog( "Could not find bonding $bond_name in path $bond_path", "error", "NETWORK" );
-	#	return $return_code;
+		&zenlog( "Could not find bonding $bond_name in path $bond_path",
+				 "error", "NETWORK" );
+
+		#	return $return_code;
 	}
 
-	my $bonding_slaves_filename = &getGlobalConfiguration('bonding_slaves_filename');
+	my $bonding_slaves_filename =
+	  &getGlobalConfiguration( 'bonding_slaves_filename' );
 
 	#open ( my $bond_slaves_file, '>', "$bond_path/$bonding_slaves_filename" );
 	my $bond_slaves_file = "${bond_path}\/${bonding_slaves_filename}";
-	my $bondslave = "$bond_path/$bonding_slaves_filename";
+	my $bondslave        = "$bond_path/$bonding_slaves_filename";
 
-	if ( ! -f $bond_slaves_file )
+	if ( !-f $bond_slaves_file )
 	{
 		&zenlog( "Could not open file $bondslave: $!", "error", "NETWORK" );
+
 		#return $return_code;
 	}
 
-	system("echo $operator$bond_slave > $bondslave");
+	system ( "echo $operator$bond_slave > $bondslave" );
+
 	#close $bond_slaves_file;
 
 	$return_code = 0;
@@ -549,24 +574,29 @@ Returns:
 See Also:
 
 =cut
+
 sub getBondConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# returns:	0 on failure
 	#			Config_tiny object on success
 
 	# requires:
 	#~ use Config::Tiny;
-	my $bond_config_file = &getGlobalConfiguration('bond_config_file');
+	my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
 
 	if ( !-f $bond_config_file )
 	{
-		&zenlog( "Creating bonding configuration file $bond_config_file", "info", "NETWORK" );
+		&zenlog( "Creating bonding configuration file $bond_config_file",
+				 "info", "NETWORK" );
 		open my $bond_file, '>', $bond_config_file;
 
 		if ( !$bond_file )
 		{
-			&zenlog( "Could not create bonding configuration file $bond_config_file: $!", "error", "NETWORK" );
+			&zenlog( "Could not create bonding configuration file $bond_config_file: $!",
+					 "error", "NETWORK" );
 			return 0;
 		}
 
@@ -603,9 +633,11 @@ Returns:
 See Also:
 
 =cut
+
 sub setBondConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond_conf = shift;
 
 	# store slaves as a string
@@ -616,7 +648,7 @@ sub setBondConfig
 		$bond_conf->{ $bond }->{ slaves } = "@{ $bond_conf->{ $bond }->{ slaves } }";
 	}
 
-	my $bond_config_file = &getGlobalConfiguration('bond_config_file');
+	my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
 	$bond_conf->write( $bond_config_file );
 
 	# put slaves back as array elements
@@ -645,11 +677,14 @@ Returns:
 See Also:
 
 =cut
+
 sub getBondAvailableSlaves
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @bond_list = ();
-	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
+	my $bonding_masters_filename =
+	  &getGlobalConfiguration( 'bonding_masters_filename' );
 
 	# get bonding interfaces
 	open my $bond_list_file, '<', $bonding_masters_filename;
@@ -661,7 +696,7 @@ sub getBondAvailableSlaves
 	}
 
 	# get list of all the interfaces
-	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
 	opendir ( my $dir_h, $sys_net_dir );
 
 	if ( !$dir_h )
@@ -681,7 +716,9 @@ sub getBondAvailableSlaves
 		next if $dir_entry =~ /(:|\.)/;                 # not vlan nor vini
 		next if grep ( /^$dir_entry$/, @bond_list );    # not a bond
 		my $iface = &getSystemInterface( $dir_entry );
-		next if $iface->{ status } ne 'down';           # must be down		next if $iface->{ addr };                       # without address
+		next
+		  if $iface->{ status } ne 'down'
+		  ; # must be down		next if $iface->{ addr };                       # without address
 		$iface = &getInterfaceConfig( $iface->{ name } );
 		next if $iface->{ addr };
 
@@ -706,10 +743,12 @@ Returns:
 See Also:
 
 =cut
+
 sub getAllBondsSlaves
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my @slaves; # output
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my @slaves;    # output
 
 	my $bond_list_ref = &getBondList();
 
@@ -726,7 +765,8 @@ sub getAllBondsSlaves
 
 sub get_bond_struct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $bond ) = @_;
 
 	require Zevenet::Net::Interface;
@@ -743,9 +783,9 @@ sub get_bond_struct
 	# End here if the bonding interface was not found
 	return unless $bond_ref;
 
-	require Zevenet::Alias;
+	include 'Zevenet::Alias';
+	my $alias = &getAlias( 'interface' );
 
-	my $alias     = &getAlias( 'interface' );
 	my $bond_conf = &getBondConfig();
 
 	$bond_ref->{ status } = &getInterfaceSystemStatus( $bond_ref );
@@ -780,10 +820,10 @@ sub get_bond_struct
 
 sub get_bond_list_struct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $output_list = ();
 
-	require Zevenet::Alias;
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Cluster';
 
@@ -796,6 +836,7 @@ sub get_bond_list_struct
 	my $zcl_conf = &getZClusterConfig();
 	$cluster_if = $zcl_conf->{ _ }->{ interface } if $zcl_conf;
 
+	include 'Zevenet::Alias';
 	my $alias = &getAlias( 'interface' );
 
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )

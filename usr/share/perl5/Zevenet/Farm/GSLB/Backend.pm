@@ -42,7 +42,8 @@ Returns:
 
 sub remFarmServiceBackend    # ($id,$farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $id, $fname, $srv ) = @_;
 
 	my $output = 0;
@@ -142,7 +143,8 @@ BUG:
 
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -187,7 +189,8 @@ Returns:
 
 sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
 
 	my $ffile = &getFarmFile( $fname );
@@ -292,7 +295,8 @@ Returns:
 
 sub getGSLBFarmBackends    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -318,10 +322,14 @@ sub getGSLBFarmBackends    # ($farm_name)
 
 	# get backend Alias
 	include 'Zevenet::RBAC::Core';
-	my $permission =  &getRBACRolePermission( 'alias', 'list' );
+	my $permission = &getRBACRolePermission( 'alias', 'list' );
 
-	require Zevenet::Alias if ($permission);
-	my $alias = &getAlias( 'backend' ) if ($permission);
+	my $alias;
+	if ( $permission )
+	{
+		include 'Zevenet::Alias';
+		$alias = &getAlias( 'backend' );
+	}
 
 	#
 	# Backends
@@ -373,7 +381,8 @@ sub getGSLBFarmBackends    # ($farm_name)
 
 sub getGSLBFarmServiceBackendAvailableID
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 	my $service  = shift;
 

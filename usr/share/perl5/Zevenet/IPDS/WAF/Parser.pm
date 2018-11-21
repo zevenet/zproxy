@@ -669,7 +669,7 @@ sub buildWAFSetConf
 		}
 	}
 
-	$conf->{ default_action } // 'allow';
+	$conf->{ default_action } // 'pass';
 	$conf->{ default_phase }  // '1';
 	my $defaults =
 	  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
