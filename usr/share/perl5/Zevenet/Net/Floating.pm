@@ -37,15 +37,17 @@ Returns:
 See Also:
 
 =cut
+
 sub getConfigTiny
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $file_path = shift;
 
-	if ( ! -f $file_path )
+	if ( !-f $file_path )
 	{
 		open my $fi, '>', $file_path;
-		&zenlog("Could not open file $file_path: $!", "error", "SYSTEM") if ! $fi;
+		&zenlog( "Could not open file $file_path: $!", "error", "SYSTEM" ) if !$fi;
 		close $fi;
 	}
 
@@ -70,21 +72,23 @@ Returns:
 See Also:
 
 =cut
+
 sub setConfigTiny
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $file_path  = shift;
 	my $config_ref = shift;
 
-	if ( ! -f $file_path )
+	if ( !-f $file_path )
 	{
-		&zenlog("Could not find $file_path.", "error", "SYSTEM");
+		&zenlog( "Could not find $file_path.", "error", "SYSTEM" );
 		return;
 	}
 
 	if ( ref $config_ref ne 'Config::Tiny' )
 	{
-		&zenlog("Ilegal configuration argument.", "error", "SYSTEM");
+		&zenlog( "Ilegal configuration argument.", "error", "SYSTEM" );
 		return;
 	}
 
@@ -108,10 +112,12 @@ Returns:
 See Also:
 
 =cut
+
 # get floating interface or output interface
 sub getFloatInterfaceForAddress
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $remote_ip_address = shift;
 
 	return '' if !$remote_ip_address;
@@ -136,7 +142,7 @@ sub getFloatInterfaceForAddress
 		}
 	}
 
-	if ( ! $subnet_interface )
+	if ( !$subnet_interface )
 	{
 		return;
 	}
@@ -166,9 +172,10 @@ sub getFloatInterfaceForAddress
 
 sub getFloatingMasqParams
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
-	my $farm = shift;
+	my $farm   = shift;
 	my $server = shift;
 	my $out_if;
 
@@ -192,7 +199,8 @@ sub getFloatingMasqParams
 
 sub getFloatingSnatParams
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $server ) = @_;
 
 	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
@@ -202,10 +210,10 @@ sub getFloatingSnatParams
 
 sub get_floating_struct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $floating ) = @_;
 
-	require Zevenet::Alias;
 	require Zevenet::Net::Interface;
 
 	# Interfaces
@@ -214,6 +222,7 @@ sub get_floating_struct
 	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
+	include 'Zevenet::Alias';
 	my $alias = &getAlias( 'interface' );
 
 	for my $iface ( @ifaces )
@@ -242,9 +251,9 @@ sub get_floating_struct
 
 		$output = {
 					alias             => $alias->{ $iface->{ name } },
+					floating_alias    => $alias->{ $floating_interface },
 					interface         => $iface->{ name },
 					floating_ip       => $floating_ip,
-					floating_alias    => $alias->{ $floating_interface },
 					interface_virtual => $floating_interface,
 		};
 
@@ -256,8 +265,8 @@ sub get_floating_struct
 
 sub get_floating_list_struct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	require Zevenet::Alias;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	# Interfaces
@@ -266,6 +275,7 @@ sub get_floating_list_struct
 	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
+	include 'Zevenet::Alias';
 	my $alias = &getAlias( 'interface' );
 
 	for my $iface ( @ifaces )
@@ -287,11 +297,12 @@ sub get_floating_list_struct
 		push @output,
 		  {
 			alias             => $alias->{ $iface->{ name } },
+			floating_alias    => $alias->{ $floating_interface },
 			interface         => $iface->{ name },
 			floating_ip       => $floating_ip,
-			floating_alias    => $alias->{ $floating_interface },
 			interface_virtual => $floating_interface,
 		  };
+
 	}
 
 	return \@output;

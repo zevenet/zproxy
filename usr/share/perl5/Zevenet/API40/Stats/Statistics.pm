@@ -317,8 +317,12 @@ sub stats_network_interfaces
 	my @restIfaces;
 	@bond = &getInterfaceTypeList( 'bond' ) if $eload;
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
+	my $alias;
+	$alias = &eload(
+					 module => 'Zevenet::Alias',
+					 func   => 'getAlias',
+					 args   => ['interface']
+	) if $eload;
 
 	foreach my $iface ( @interfaces )
 	{
@@ -337,7 +341,7 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias }   = $alias->{ $iface->{ interface } };
+			$iface->{ alias }   = $alias->{ $iface->{ interface } } if $eload;
 			$iface->{ mac }     = $extrainfo->{ mac };
 			$iface->{ ip }      = $extrainfo->{ addr };
 			$iface->{ status }  = $extrainfo->{ status };
@@ -359,7 +363,7 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias }   = $alias->{ $iface->{ interface } };
+			$iface->{ alias }   = $alias->{ $iface->{ interface } } if $eload;
 			$iface->{ mac }     = $extrainfo->{ mac };
 			$iface->{ ip }      = $extrainfo->{ addr };
 			$iface->{ status }  = $extrainfo->{ status };
