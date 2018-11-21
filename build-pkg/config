@@ -6,22 +6,19 @@ community_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	zlb-debian-installer.sh
 	README.md
-	build-pkg
 	DEBIAN/control
 	DEBIAN/preinst
 	DEBIAN/postinst
 	etc/zevenet_version
 	etc/motd.tail
 	usr/local/zevenet/share/global.conf.template
+	usr/local/zevenet/share/pound.cfg.template
 )
 
-# excepciones que no deben ser copiadas y no se encriptan
+# excepciones que no deben ser copiadas y no se encriptan. No deben estar en la CE
 enterprise_files=(
-	DEBIAN/postinst_BM
-	DEBIAN/preinst_BM
 	etc/profile
 	etc/profile_packetbl
-	build-pkg/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/app/zbin/boot_ipds
@@ -46,9 +43,6 @@ enterprise_files=(
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
-	usr/local/zevenet/share/zevenet.cron
-	usr/local/zevenet/www/zapi/v3/
-	usr/local/zevenet/www/zapi/v3.2/
 	usr/share/perl5/Zevenet/API3.pm
 	usr/share/perl5/Zevenet/API3/
 	usr/share/perl5/Zevenet/API31/Certificate/Certificate.pm
@@ -91,6 +85,12 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Service/
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
+	usr/local/zevenet/www/zapi/v3
+	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	usr/local/zevenet/www/zapi/v3.2
+	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
+
+	usr/local/zevenet/app/zbin/enterprise.bin
 )
 
 installation_files=(
