@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-require Zevenet::Eload;
+require Zevenet::ELoad;
 &eload(
 	module => 'Zevenet::IPDS::Setup',
 	func   => 'initIPDSModule',

@@ -43,7 +43,7 @@ sub runRBLStartModule
 	include 'Zevenet::IPDS::RBL::Config';
 
 	# create config directory if it doesn't exist and config file
-	my $error = &setRBLCreateDirectory();
+	my $error = &initRBLModule();
 
 	# Run all rules
 	foreach my $rule ( &getRBLRuleList() )
