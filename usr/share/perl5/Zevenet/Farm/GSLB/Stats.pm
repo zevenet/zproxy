@@ -153,7 +153,7 @@ sub getGSLBFarmBackendsStats
 			push (
 				   @{ $gslb_stats->{ 'backends' } },
 				   {
-					  alias => ( permission ) ? $alias->{ $addr } : undef,
+					  alias => ( $permission ) ? $alias->{ $addr } : undef,
 					  id    => $id + 0,
 					  ip    => $addr,
 					  service => $srv,
