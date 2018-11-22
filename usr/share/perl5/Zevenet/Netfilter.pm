@@ -200,6 +200,8 @@ sub renameMarks    # ($farm_name,$newfname)
 {
 	my ( $farm_name, $newfname ) = @_;
 
+	require Tie::File;
+
 	my $status = 0;
 
 	if ( $farm_name ne "" )
