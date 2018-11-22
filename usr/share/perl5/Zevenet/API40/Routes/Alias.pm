@@ -24,9 +24,10 @@
 use strict;
 
 # Alias
-if ( $q->path_info =~ qr{^/aliases} )
+if ( $ENV{ PATH_INFO } =~ qr{^/aliases} )
 {
-	my $mod = 'Zevenet::API40::Alias';
+	my $mod        = 'Zevenet::API40::Alias';
+	my $alias_type = &getValidFormat( 'alias_type' );
 
 	# /aliases/(backend)s, not match the charater 's'
 	GET qr{^/aliases/($alias_type)s$},            'get_by_type',  $mod;
