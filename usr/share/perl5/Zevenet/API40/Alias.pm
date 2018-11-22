@@ -23,6 +23,7 @@
 
 use strict;
 
+use Zevenet::API40::HTTP;
 use Zevenet::Alias;
 
 my $eload;

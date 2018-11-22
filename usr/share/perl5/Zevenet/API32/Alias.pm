@@ -23,14 +23,20 @@
 
 use strict;
 
+use Zevenet::API32::HTTP;
 use Zevenet::Alias;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 # DELETE /alias/(alias_type)/(alias_re)
 sub delete_alias
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $type = shift;
 	my $id   = shift;
 	my $desc = "Delete an alias";
@@ -56,7 +62,8 @@ sub delete_alias
 # PUT /alias/(alias_type)/(alias_re)
 sub set_alias
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $type     = shift;
 	my $id       = shift;
@@ -76,7 +83,7 @@ sub set_alias
 	  if ( $error_msg );
 
 	unless ( ( $type eq 'interface' and &getValidFormat( 'alias_interface', $id ) )
-		or ( $type eq 'backend' and &getValidFormat( 'alias_backend', $id ) ) )
+			 or ( $type eq 'backend' and &getValidFormat( 'alias_backend', $id ) ) )
 	{
 		my $msg = "The id $id is not correct";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -123,18 +130,23 @@ sub set_alias
 # GET /alias/(alias_type)
 sub get_by_type
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $type = shift;
 	my $desc = "List the aliases";
 
-	my $alias_list = &getAlias( $type );
+	my $alias_list   = &getAlias( $type );
 	my $user         = &getUser();
 	my @others_alias = [];
 
-	if ( $type eq 'interface' and $user ne 'root')
-	{	
-		my @virtual_alias = map { { name => $_, alias => $alias_list->{$_} } } grep { /:/ } keys %{$alias_list};
-		@others_alias = map { { name => $_, alias => $alias_list->{$_} } } grep { !/:/ } keys %{$alias_list};		
+	if ( $type eq 'interface' and $user ne 'root' )
+	{
+		my @virtual_alias =
+		  map { { name => $_, alias => $alias_list->{ $_ } } }
+		  grep { /:/ } keys %{ $alias_list };
+		@others_alias =
+		  map { { name => $_, alias => $alias_list->{ $_ } } }
+		  grep { !/:/ } keys %{ $alias_list };
 
 		if ( $eload )
 		{
@@ -145,13 +157,16 @@ sub get_by_type
 						args   => ['interfaces', \@virtual_alias],
 				)
 			};
-			push (@others_alias, @out2);
+			push ( @others_alias, @out2 );
 		}
-	} else {
-		@others_alias = map { { name => $_, alias => $alias_list->{$_} } } keys %{$alias_list};
+	}
+	else
+	{
+		@others_alias =
+		  map { { name => $_, alias => $alias_list->{ $_ } } } keys %{ $alias_list };
 	}
 
-	my @out = map { {id => $_->{name}, alias => $_->{alias} } } @others_alias;		
+	my @out = map { { id => $_->{ name }, alias => $_->{ alias } } } @others_alias;
 	my $body = {
 				 description => $desc,
 				 params      => \@out
