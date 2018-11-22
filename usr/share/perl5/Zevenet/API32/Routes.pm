@@ -392,19 +392,6 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 	GET qr{^/system/license/($license_re)$} => \&get_license;
 }
 
-# Alias
-if ( $q->path_info =~ qr{^/aliases} )
-{
-	require Zevenet::API32::Alias;
-	my $alias_re   = &getValidFormat( 'alias_id' );
-	my $alias_type = &getValidFormat( 'alias_type' );
-
-	# /aliases/(backend)s, not match the charater 's'
-	GET qr{^/aliases/($alias_type)s$}            => \&get_by_type;
-	PUT qr{^/aliases/($alias_type)s/([^/]+)$}    => \&set_alias;
-	DELETE qr{^/aliases/($alias_type)s/([^/]+)$} => \&delete_alias;
-}
-
 ##### Load modules dynamically #######################################
 my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API32/Routes';
 opendir ( my $dir, $routes_path );

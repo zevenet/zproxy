@@ -47,6 +47,7 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API3/
 	usr/share/perl5/Zevenet/API31/Certificate/Certificate.pm
 	usr/share/perl5/Zevenet/API31/Routes/Activation.pm
+	usr/share/perl5/Zevenet/API31/Routes/Alias.pm
 	usr/share/perl5/Zevenet/API31/Routes/Blacklists.pm
 	usr/share/perl5/Zevenet/API31/Routes/Bonding.pm
 	usr/share/perl5/Zevenet/API31/Routes/Certificate.pm
@@ -64,6 +65,7 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API32/
 	usr/share/perl5/Zevenet/API40/Certificate/
 	usr/share/perl5/Zevenet/API40/Routes/Activation.pm
+	usr/share/perl5/Zevenet/API40/Routes/Alias.pm
 	usr/share/perl5/Zevenet/API40/Routes/Blacklists.pm
 	usr/share/perl5/Zevenet/API40/Routes/Bonding.pm
 	usr/share/perl5/Zevenet/API40/Routes/Certificate.pm
