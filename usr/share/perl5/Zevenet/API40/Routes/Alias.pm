@@ -34,3 +34,5 @@ if ( $ENV{ PATH_INFO } =~ qr{^/aliases} )
 	PUT qr{^/aliases/($alias_type)s/([^/]+)$},    'set_alias',    $mod;
 	DELETE qr{^/aliases/($alias_type)s/([^/]+)$}, 'delete_alias', $mod;
 }
+
+1;
