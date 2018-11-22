@@ -102,6 +102,10 @@ cp -r ${ent_dir}/* $com_dir
 if [ $AUTO_MERGE ]; then
 	DATE=$(date +%H:%M:%S_%d/%m/%y)
 	cd $com_dir
+
+	git config user.email "devel@zevenet.com"
+	git config user.name "AutoCommit"
+
 	git add .
 	git commit -m "[auto_merge] EE commit: $EE_COMMIT, date: $DATE"
 	git push
