@@ -25,6 +25,7 @@ use strict;
 
 use Zevenet::API32::HTTP;
 use Zevenet::Alias;
+use Zevenet::User;
 
 my $eload;
 if ( eval { require Zevenet::ELoad; } )
