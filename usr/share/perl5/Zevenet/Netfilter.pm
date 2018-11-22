@@ -200,8 +200,7 @@ sub delMarks    # ($farm_name,$mark)
 	if ( $mark ne "" )
 	{
 		tie my @contents, 'Tie::File', "$fwmarksconf";
-		$mark =~ s/0x0*//;
-		@contents = grep { !/^0x0*$mark \// } @contents;
+		@contents = grep { !/^$mark \// } @contents;
 		$status = $?;
 		untie @contents;
 	}
