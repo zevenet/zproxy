@@ -23,7 +23,6 @@
 
 use strict;
 
-use Data::Dumper;
 use Fcntl qw(:flock SEEK_END);
 
 my $eload;
@@ -134,6 +133,8 @@ sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 sub getNewMark    # ($farm_name)
 {
 	my $farm_name = shift;
+
+	require Tie::File;
 
 	my $found;
 	my $marknum     = 0x200;
