@@ -178,8 +178,8 @@ sub delMarks    # ($farm_name,$mark)
 	{
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$fwmarksconf";
-		@contents = grep { !/ \/\/ FARM\_$farm_name\_$/x } @contents;
-		$status = $?;    # FIXME
+		@contents = grep { !/ \/\/ FARM\_$farm_name\_$/ } @contents;
+		$status = $?;
 		untie @contents;
 	}
 
@@ -187,16 +187,16 @@ sub delMarks    # ($farm_name,$mark)
 	{
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$fwmarksconf";
-		@contents = grep { !/^$mark \/\//x } @contents;
-		$status = $?;    # FIXME
+		@contents = grep { !/^$mark \// } @contents;
+		$status = $?;
 		untie @contents;
 	}
 
-	return $status;    # FIXME
+	return $status;
 }
 
 #
-sub renameMarks        # ($farm_name,$newfname)
+sub renameMarks    # ($farm_name,$newfname)
 {
 	my ( $farm_name, $newfname ) = @_;
 
