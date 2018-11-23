@@ -198,6 +198,8 @@ sub start_service
 		system ( "echo -bond0 > $bonding_masters_filename" );
 	}
 
+	require Zevenet::Net::Core;
+
 	# interface configuration
 	my $bond_conf = &getBondConfig();
 	for my $bond_k ( keys %{ $bond_conf } )
