@@ -24,14 +24,9 @@
 use strict;
 
 use Zevenet::API32::HTTP;
-use Zevenet::Alias;
 use Zevenet::User;
 
-my $eload;
-if ( eval { require Zevenet::ELoad; } )
-{
-	$eload = 1;
-}
+include 'Zevenet::Alias';
 
 # DELETE /alias/(alias_type)/(alias_re)
 sub delete_alias
@@ -149,17 +144,9 @@ sub get_by_type
 		  map { { name => $_, alias => $alias_list->{ $_ } } }
 		  grep { !/:/ } keys %{ $alias_list };
 
-		if ( $eload )
-		{
-			my @out2 = @{
-				&eload(
-						module => 'Zevenet::RBAC::Group::Core',
-						func   => 'getRBACUserSet',
-						args   => ['interfaces', \@virtual_alias],
-				)
-			};
-			push ( @others_alias, @out2 );
-		}
+		include 'Zevenet::RBAC::Group::Core';
+		my @out2 = @{ &getRBACUserSet( 'interfaces', \@virtual_alias ) };
+		push ( @others_alias, @out2 );
 	}
 	else
 	{
