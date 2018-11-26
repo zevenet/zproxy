@@ -51,10 +51,11 @@ sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
+	my ( $farm_name, $ids, $rip, $port, $weight, $priority, $max_conns ) = @_;
 
 	#	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::L4xNAT::Action;
 	require Zevenet::Netfilter;
 
 	&zenlog(
@@ -74,8 +75,6 @@ sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
 	{
 		$priority = 1;
 	}
-
-	require Zevenet::Farm::L4xNAT::Action;
 
 	# load the configuration file first if the farm is down
 	my $f_ref = &getL4FarmStruct( $farm_name );
@@ -180,19 +179,40 @@ Returns:
 
 =cut
 
-sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
+sub setL4FarmBackendStatus    # ($farm_name,$backend,$status)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $server_id, $status ) = @_;
+	my ( $farm_name, $backend, $status ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::L4xNAT::Action;
 
-	my %farm = %{ &getL4FarmStruct( $farm_name ) };
+	my $farm_filename = &getFarmFile( $farm_name );
 
-	my $output = 0;
+	$status = 'off' if ( $status eq "maintenance" );
 
-	# TODO
+	# load the configuration file first if the farm is down
+	my $f_ref = &getL4FarmStruct( $farm_name );
+	if ( $f_ref->{ status } ne "up" )
+	{
+		my $out = &loadNLBFarm( $farm_name );
+		if ( $out != 0 )
+		{
+			return $out;
+		}
+	}
+
+	my $output = &httpNLBRequest(
+		{
+		   farm       => $farm_name,
+		   configfile => "$configdir/$farm_filename",
+		   method     => "PUT",
+		   uri        => "/farms",
+		   body =>
+			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$backend", "state" : "$status" } ] } ] })
+		}
+	);
 
 	return $output;
 }
@@ -641,8 +661,7 @@ sub setL4FarmBackendNoMaintenance
 			 "debug", "PROFILING" );
 	my ( $farm_name, $backend ) = @_;
 
-	# TODO
-
+	return &setL4FarmBackendStatus( $farm_name, $backend, 'up' );
 }
 
 =begin nd

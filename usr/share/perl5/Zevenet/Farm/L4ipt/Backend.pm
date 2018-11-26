@@ -57,7 +57,7 @@ sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
+	my ( $farm_name, $ids, $rip, $port, $weight, $priority, $max_conns ) = @_;
 
 	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::L4xNAT::Config;
