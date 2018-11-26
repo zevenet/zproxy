@@ -24,12 +24,16 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # POST /interfaces/virtual Create a new virtual network interface
 sub new_vini    # ( $json_obj )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Add a virtual interface";
@@ -135,7 +139,7 @@ sub new_vini    # ( $json_obj )
 	eval {
 		die if &addIp( $if_ref );
 
-		my $state = &upIf( $if_ref );
+		my $state = &upIf( $if_ref, 'writeconf' );
 
 		if ( $state == 0 )
 		{
@@ -182,7 +186,8 @@ sub new_vini    # ( $json_obj )
 
 sub delete_interface_virtual    # ( $virtual )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $virtual = shift;
 
 	require Zevenet::Net::Interface;
@@ -227,14 +232,13 @@ sub delete_interface_virtual    # ( $virtual )
 		{
 			# removing before in the remote node
 			&eload(
-				module => 'Zevenet::Cluster',
-				func   => 'runZClusterRemoteManager',
-				args   => ['interface', 'stop', $if_ref->{ name }],
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['interface', 'stop', $if_ref->{ name }],
 			) if ( $eload );
 
-
 			die if &delRoutes( "local", $if_ref );
-			die if &downIf( $if_ref );
+			die if &downIf( $if_ref, 'writeconf' );
 		}
 		die if &delIf( $if_ref );
 	};
@@ -266,7 +270,8 @@ sub delete_interface_virtual    # ( $virtual )
 
 sub get_virtual_list    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $desc        = "List virtual interfaces";
@@ -291,7 +296,8 @@ sub get_virtual_list    # ()
 
 sub get_virtual    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $virtual = shift;
 
 	require Zevenet::Net::Interface;
@@ -315,7 +321,8 @@ sub get_virtual    # ()
 
 sub actions_interface_virtual    # ( $json_obj, $virtual )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -363,7 +370,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $state = &upIf( $if_ref );
+		my $state = &upIf( $if_ref, 'writeconf' );
 		if ( !$state )
 		{
 			require Zevenet::Net::Route;
@@ -385,7 +392,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( $if_ref );
+		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
 		{
@@ -418,7 +425,8 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 
 sub modify_interface_virtual    # ( $json_obj, $virtual )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $virtual  = shift;
 
@@ -499,7 +507,8 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 			 )
 	  )
 	{
-		my $msg = "IP address $json_obj->{ip} must be on the same network than the parent interface.";
+		my $msg =
+		  "IP address $json_obj->{ip} must be on the same network than the parent interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

@@ -230,6 +230,7 @@ Function: applyBondChange
 
 Parameters:
 	bond - reference to bonding interface.
+	writeconf - Boolean, true to store the configuration, or false to only apply it.
 
 Returns:
 	scalar - 0 on success, -1 on failure.
@@ -245,7 +246,8 @@ sub applyBondChange
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $bond = shift;
+	my $bond      = shift;
+	my $writeconf = shift;
 
 	my $return_code = -1;
 
@@ -332,9 +334,12 @@ sub applyBondChange
 	}
 
 	# write bonding configuration
-	my $bond_conf = &getBondConfig();
-	$bond_conf->{ $bond->{ name } } = $bond;
-	&setBondConfig( $bond_conf );
+	if ( $writeconf )
+	{
+		my $bond_conf = &getBondConfig();
+		$bond_conf->{ $bond->{ name } } = $bond;
+		&setBondConfig( $bond_conf );
+	}
 
 	$return_code = 0;
 
@@ -349,6 +354,7 @@ Function: setBondMaster
 Parameters:
 	bond_name - Name of bonding interface.
 	operation - 'add' to or 'del'.
+	writeconf - Boolean, true to store configuration changes.
 
 Returns:
 	scalar - 0 on success, or 1 on failure.
@@ -363,6 +369,7 @@ sub setBondMaster
 			 "debug", "PROFILING" );
 	my $bond_name = shift;
 	my $operation = shift;    # add || del
+	my $writeconf = shift;
 
 	my $operator;
 	my $return_code = 1;
@@ -420,15 +427,18 @@ sub setBondMaster
 		close $miimon_file;
 	}    # end miimon
 
-	my $bond_conf = &getBondConfig();
-	delete $bond_conf->{ $bond_name };
-	&setBondConfig( $bond_conf );
+	if ( $writeconf )
+	{
+		my $bond_conf = &getBondConfig();
+		delete $bond_conf->{ $bond_name };
+		&setBondConfig( $bond_conf );
 
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+		my $configdir = &getGlobalConfiguration( 'configdir' );
 
-	unlink "$configdir/if_${bond_name}_conf";
-	require Zevenet::RRD;
-	&delGraph( $bond_name, "iface" );
+		unlink "$configdir/if_${bond_name}_conf";
+		require Zevenet::RRD;
+		&delGraph( $bond_name, "iface" );
+	}
 
 	$return_code = 0;
 

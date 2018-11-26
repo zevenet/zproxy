@@ -25,7 +25,6 @@ use strict;
 
 use Zevenet::API31::HTTP;
 
-
 my @bond_modes_short = (
 						 'balance-rr',  'active-backup',
 						 'balance-xor', 'broadcast',
@@ -35,7 +34,8 @@ my @bond_modes_short = (
 
 sub new_bond    # ( $json_obj )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -99,7 +99,7 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	eval { die if &applyBondChange( $json_obj ); };
+	eval { die if &applyBondChange( $json_obj, 'writeconf' ); };
 
 	if ( $@ )
 	{
@@ -131,7 +131,8 @@ sub new_bond    # ( $json_obj )
 # slave: nic
 sub new_bond_slave    # ( $json_obj, $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -172,7 +173,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
 
-	eval { die if &applyBondChange( $bonds->{ $bond } ); };
+	eval { die if &applyBondChange( $bonds->{ $bond }, 'writeconf' ); };
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
@@ -201,7 +202,8 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 sub delete_interface_bond    # ( $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
@@ -254,7 +256,8 @@ sub delete_interface_bond    # ( $bond )
 
 sub delete_bond    # ( $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
@@ -291,10 +294,10 @@ sub delete_bond    # ( $bond )
 	}
 
 	my $bond_in_use = 0;
-	my $bond_hash   = &getInterfaceConfig( $bond, 4 );
+	my $bond_hash = &getInterfaceConfig( $bond, 4 );
 	$bond_in_use = 1 if ( $bond_hash and exists $bond_hash->{ addr } );
 
-	$bond_hash   = &getInterfaceConfig( $bond, 6 );
+	$bond_hash = &getInterfaceConfig( $bond, 6 );
 	$bond_in_use = 1 if ( $bond_hash and exists $bond_hash->{ addr } );
 
 	if ( $bond_in_use )
@@ -306,10 +309,10 @@ sub delete_bond    # ( $bond )
 	#~ eval {
 	if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 	{
-		die if &downIf( $bonds->{ $bond } );
+		die if &downIf( $bonds->{ $bond }, 'writeconf' );
 	}
 
-	die if &setBondMaster( $bond, 'del' );
+	die if &setBondMaster( $bond, 'del', 'writeconf' );
 
 	#~ };
 
@@ -331,7 +334,8 @@ sub delete_bond    # ( $bond )
 
 sub delete_bond_slave    # ( $bond, $slave )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond  = shift;
 	my $slave = shift;
 
@@ -357,7 +361,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	eval {
 		@{ $bonds->{ $bond }{ slaves } } =
 		  grep ( { $slave ne $_ } @{ $bonds->{ $bond }{ slaves } } );
-		die if &applyBondChange( $bonds->{ $bond } );
+		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
 	};
 	if ( $@ )
 	{
@@ -377,7 +381,8 @@ sub delete_bond_slave    # ( $bond, $slave )
 
 sub get_bond_list    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
@@ -440,7 +445,8 @@ sub get_bond_list    # ()
 
 sub get_bond    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -496,7 +502,8 @@ sub get_bond    # ()
 
 sub actions_interface_bond    # ( $json_obj, $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -537,7 +544,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			&addIp( $if_ref ) if $if_ref;
 		}
 
-		my $state = &upIf( { name => $bond } );
+		my $state = &upIf( { name => $bond }, 'writeconf' );
 
 		if ( !$state )
 		{
@@ -560,7 +567,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond } );
+		my $state = &downIf( { name => $bond }, 'writeconf' );
 
 		if ( $state )
 		{
@@ -584,7 +591,8 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 
 sub modify_interface_bond    # ( $json_obj, $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -747,7 +755,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		my $previous_status = $if_ref->{ status };
 		if ( $previous_status eq "up" )
 		{
-			my $state = &upIf( $if_ref );
+			my $state = &upIf( $if_ref, 'writeconf' );
 
 			if ( $state == 0 )
 			{

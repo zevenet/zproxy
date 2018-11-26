@@ -23,13 +23,14 @@
 
 use strict;
 
-sub delete_interface_nic # ( $nic )
+sub delete_interface_nic    # ( $nic )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $nic = shift;
 
 	my $description = "Delete nic interface";
-	my $ip_v = 4;
+	my $ip_v        = 4;
 
 	require Zevenet::Net::Interface;
 
@@ -45,7 +46,7 @@ sub delete_interface_nic # ( $nic )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	require Zevenet::Net::Core;
@@ -53,40 +54,43 @@ sub delete_interface_nic # ( $nic )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref );
+		die if &downIf( $if_ref, 'writeconf' );
 		die if &delIf( $if_ref );
 	};
 
-	if ( ! $@ )
+	if ( !$@ )
 	{
 		# Success
-		my $message = "The configuration for the network interface $nic has been deleted.";
+		my $message =
+		  "The configuration for the network interface $nic has been deleted.";
 		my $body = {
 					 description => $description,
 					 success     => "true",
 					 message     => $message,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		# Error
-		my $errormsg = "The configuration for the network interface $nic can't be deleted.";
+		my $errormsg =
+		  "The configuration for the network interface $nic can't be deleted.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # GET /interfaces Get params of the interfaces
-sub get_nic_list # ()
+sub get_nic_list    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Net::Bonding';
@@ -96,21 +100,21 @@ sub get_nic_list # ()
 	my $description = "List NIC interfaces";
 
 	# get cluster interface
-	my $zcl_conf  = &getZClusterConfig();
+	my $zcl_conf   = &getZClusterConfig();
 	my $cluster_if = $zcl_conf->{ _ }->{ interface };
-	my @vlans = &getInterfaceTypeList( 'vlan' );
+	my @vlans      = &getInterfaceTypeList( 'vlan' );
 
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
 						name     => $if_ref->{ name },
@@ -122,7 +126,8 @@ sub get_nic_list # ()
 						is_slave => $if_ref->{ is_slave },
 		};
 
-		$if_conf->{ is_cluster } = 'true' if ( defined $cluster_if && $cluster_if eq $if_ref->{ name } );
+		$if_conf->{ is_cluster } = 'true'
+		  if ( defined $cluster_if && $cluster_if eq $if_ref->{ name } );
 
 		# include 'has_vlan'
 		for my $vlan_ref ( @vlans )
@@ -135,21 +140,22 @@ sub get_nic_list # ()
 		}
 
 		$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
-		  
+
 		push @output_list, $if_conf;
 	}
 
 	my $body = {
-			description => $description,
-			interfaces  => \@output_list,
-		};
+				 description => $description,
+				 interfaces  => \@output_list,
+	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub get_nic # ()
+sub get_nic    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Net::Bonding';
 
@@ -165,32 +171,32 @@ sub get_nic # ()
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
-			is_slave => $if_ref->{ is_slave },
+					   name     => $if_ref->{ name },
+					   ip       => $if_ref->{ addr },
+					   netmask  => $if_ref->{ mask },
+					   gateway  => $if_ref->{ gateway },
+					   status   => $if_ref->{ status },
+					   mac      => $if_ref->{ mac },
+					   is_slave => $if_ref->{ is_slave },
 		};
 	}
 
 	if ( $interface )
 	{
 		my $body = {
-				description => $description,
-				interface  => $interface,
-			};
+					 description => $description,
+					 interface   => $interface,
+		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -202,18 +208,19 @@ sub get_nic # ()
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 }
 
-sub actions_interface_nic # ( $json_obj, $nic )
+sub actions_interface_nic    # ( $json_obj, $nic )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
-	my $nic 	 = shift;
+	my $nic      = shift;
 
 	my $description = "Action on nic interface";
-	my $ip_v = 4;
+	my $ip_v        = 4;
 
 	require Zevenet::Net::Interface;
 
@@ -228,7 +235,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# reject not accepted parameters
@@ -242,7 +249,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# validate action parameter
@@ -259,9 +266,9 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
-		my $state = &upIf( { name => $nic } );
+		my $state = &upIf( { name => $nic }, 'writeconf' );
 
-		if ( ! $state )
+		if ( !$state )
 		{
 			&applyRoutes( "local", $if_ref ) if $if_ref;
 
@@ -280,14 +287,14 @@ sub actions_interface_nic # ( $json_obj, $nic )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $nic } );
+		my $state = &downIf( { name => $nic }, 'writeconf' );
 
 		if ( $state )
 		{
@@ -299,7 +306,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	else
@@ -312,37 +319,39 @@ sub actions_interface_nic # ( $json_obj, $nic )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# Success
 	my $body = {
 				 description => $description,
-				 params      =>  { action => $json_obj->{ action } },
+				 params      => { action => $json_obj->{ action } },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub modify_interface_nic # ( $json_obj, $nic )
+sub modify_interface_nic    # ( $json_obj, $nic )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
+
 	#~ include 'Zevenet::Net::Bonding';
 
 	my $json_obj = shift;
-	my $nic = shift;
+	my $nic      = shift;
 
 	my $description = "Configure nic interface";
-	my $ip_v = 4;
+	my $ip_v        = 4;
 
 	# validate NIC NAME
 	my @system_interfaces = &getInterfaceList();
-	my $type = &getInterfaceType( $nic );
+	my $type              = &getInterfaceType( $nic );
 
-	unless ( grep( { $nic eq $_ } @system_interfaces ) && $type eq 'nic' )
+	unless ( grep ( { $nic eq $_ } @system_interfaces ) && $type eq 'nic' )
 	{
 		# Error
 		my $errormsg = "Nic interface not found.";
@@ -352,10 +361,12 @@ sub modify_interface_nic # ( $json_obj, $nic )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
-	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	unless (    exists $json_obj->{ ip }
+			 || exists $json_obj->{ netmask }
+			 || exists $json_obj->{ gateway } )
 	{
 		# Error
 		my $errormsg = "No parameter received to be configured";
@@ -365,13 +376,15 @@ sub modify_interface_nic # ( $json_obj, $nic )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# Check address errors
 	if ( exists $json_obj->{ ip } )
 	{
-		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) || $json_obj->{ ip } eq '' )
+		unless ( defined ( $json_obj->{ ip } )
+				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } )
+				 || $json_obj->{ ip } eq '' )
 		{
 			# Error
 			my $errormsg = "IP Address is not valid.";
@@ -381,31 +394,35 @@ sub modify_interface_nic # ( $json_obj, $nic )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 
 	# Check netmask errors
 	if ( exists $json_obj->{ netmask } )
 	{
-		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+		unless ( defined ( $json_obj->{ netmask } )
+				 && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
 		{
 			# Error
-			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			my $errormsg =
+			  "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 
 	# Check gateway errors
 	if ( exists $json_obj->{ gateway } )
 	{
-		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
+		unless ( defined ( $json_obj->{ gateway } )
+				 && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } )
+				 || $json_obj->{ gateway } eq '' )
 		{
 			# Error
 			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
@@ -415,7 +432,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 
@@ -425,7 +442,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	if ( $if_ref->{ addr } )
 	{
 		# Delete old IP and Netmask from system to replace it
-		&delIp( $if_ref->{name}, $if_ref->{addr}, $if_ref->{mask} );
+		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
 
 		# Remove routes if the interface has its own route table: nic and vlan
 		&delRoutes( "local", $if_ref );
@@ -434,8 +451,8 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	}
 
 	# Setup new interface configuration structure
-	$if_ref              = &getInterfaceConfig( $nic ) // &getSystemInterface( $nic );
-	$if_ref->{ addr }    = $json_obj->{ ip } if exists $json_obj->{ ip };
+	$if_ref = &getInterfaceConfig( $nic ) // &getSystemInterface( $nic );
+	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ ip_v }    = 4;
@@ -443,14 +460,15 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
 		# Error
-		my $errormsg = "Cannot configure the interface without address or without netmask.";
+		my $errormsg =
+		  "Cannot configure the interface without address or without netmask.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	eval {
@@ -466,7 +484,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		# Put the interface up
 		{
 			my $previous_status = $if_ref->{ status };
-			my $state = &upIf( $if_ref );
+			my $state = &upIf( $if_ref, 'writeconf' );
 
 			if ( $state == 0 )
 			{
@@ -483,7 +501,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	};
 
 	# Print params
-	if ( ! $@ )
+	if ( !$@ )
 	{
 		# Success
 		my $body = {
@@ -491,7 +509,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 					 params      => $json_obj,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -503,9 +521,8 @@ sub modify_interface_nic # ( $json_obj, $nic )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
-
 
 1;

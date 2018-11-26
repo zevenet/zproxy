@@ -105,7 +105,7 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	eval { die if &applyBondChange( $json_obj ); };
+	eval { die if &applyBondChange( $json_obj, 'writeconf' ); };
 
 	if ( $@ )
 	{
@@ -179,7 +179,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
 
-	eval { die if &applyBondChange( $bonds->{ $bond } ); };
+	eval { die if &applyBondChange( $bonds->{ $bond }, 'writeconf' ); };
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
@@ -341,10 +341,10 @@ sub delete_bond    # ( $bond )
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 		{
-			die if &downIf( $bonds->{ $bond } );
+			die if &downIf( $bonds->{ $bond }, 'writeconf' );
 		}
 
-		die if &setBondMaster( $bond, 'del' );
+		die if &setBondMaster( $bond, 'del', 'writeconf' );
 	};
 
 	if ( $@ )
@@ -392,7 +392,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	eval {
 		@{ $bonds->{ $bond }{ slaves } } =
 		  grep ( { $slave ne $_ } @{ $bonds->{ $bond }{ slaves } } );
-		die if &applyBondChange( $bonds->{ $bond } );
+		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
 	};
 
 	if ( $@ )
@@ -496,7 +496,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			&addIp( $if_ref ) if $if_ref;
 		}
 
-		my $state = &upIf( { name => $bond } );
+		my $state = &upIf( { name => $bond }, 'writeconf' );
 
 		if ( !$state )
 		{
@@ -519,7 +519,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond } );
+		my $state = &downIf( { name => $bond }, 'writeconf' );
 
 		if ( $state )
 		{
@@ -755,7 +755,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		my $previous_status = $if_ref->{ status };
 		if ( $previous_status eq "up" )
 		{
-			my $state = &upIf( $if_ref );
+			my $state = &upIf( $if_ref, 'writeconf' );
 
 			if ( $state == 0 )
 			{

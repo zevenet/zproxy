@@ -24,11 +24,15 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 sub delete_interface_nic    # ( $nic )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $nic = shift;
 
 	require Zevenet::Net::Core;
@@ -90,7 +94,8 @@ sub delete_interface_nic    # ( $nic )
 # GET /interfaces Get params of the interfaces
 sub get_nic_list    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
 	my $desc         = "List NIC interfaces";
@@ -106,7 +111,8 @@ sub get_nic_list    # ()
 
 sub get_nic    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $nic = shift;
 
 	require Zevenet::Net::Interface;
@@ -130,7 +136,8 @@ sub get_nic    # ()
 
 sub actions_interface_nic    # ( $json_obj, $nic )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $nic      = shift;
 
@@ -169,7 +176,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 
 		&addIp( $if_ref ) if $if_ref;
 
-		my $state = &upIf( { name => $nic } );
+		my $state = &upIf( { name => $nic }, 'writeconf' );
 
 		if ( !$state )
 		{
@@ -190,7 +197,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $nic } );
+		my $state = &downIf( { name => $nic }, 'writeconf' );
 
 		if ( $state )
 		{
@@ -214,7 +221,8 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 
 sub modify_interface_nic    # ( $json_obj, $nic )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $nic      = shift;
 
@@ -322,7 +330,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 	}
 
-	# Do not modify gateway or netmask if exists a virtual interface using this interface
+# Do not modify gateway or netmask if exists a virtual interface using this interface
 	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $nic );
@@ -403,8 +411,9 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
-	$if_ref->{ net }     = &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ net } =
+	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
@@ -425,7 +434,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 
 		if ( $previous_status eq "up" )
 		{
-			if ( &upIf( $if_ref ) == 0 )
+			if ( &upIf( $if_ref, 'writeconf' ) == 0 )
 			{
 				$if_ref->{ status } = "up";
 				&applyRoutes( "local", $if_ref );

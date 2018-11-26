@@ -25,7 +25,6 @@ use strict;
 
 use Zevenet::API32::HTTP;
 
-
 my @bond_modes_short = (
 						 'balance-rr',  'active-backup',
 						 'balance-xor', 'broadcast',
@@ -35,7 +34,8 @@ my @bond_modes_short = (
 
 sub new_bond    # ( $json_obj )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -105,7 +105,7 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	eval { die if &applyBondChange( $json_obj ); };
+	eval { die if &applyBondChange( $json_obj, 'writeconf' ); };
 
 	if ( $@ )
 	{
@@ -137,7 +137,8 @@ sub new_bond    # ( $json_obj )
 # slave: nic
 sub new_bond_slave    # ( $json_obj, $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -178,7 +179,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
 
-	eval { die if &applyBondChange( $bonds->{ $bond } ); };
+	eval { die if &applyBondChange( $bonds->{ $bond }, 'writeconf' ); };
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
@@ -207,7 +208,8 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 sub delete_interface_bond    # ( $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
@@ -250,7 +252,7 @@ sub delete_interface_bond    # ( $bond )
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &delIf( $if_ref );
-		unlink &getInterfaceConfigFile( $if_ref->{name} );
+		unlink &getInterfaceConfigFile( $if_ref->{ name } );
 	};
 
 	if ( $@ )
@@ -273,7 +275,8 @@ sub delete_interface_bond    # ( $bond )
 
 sub delete_bond    # ( $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
@@ -330,17 +333,18 @@ sub delete_bond    # ( $bond )
 
 	if ( $bond_in_use )
 	{
-		my $msg = "It is not possible to delete the bonding interface because it is configured. First you should unset the bonding configuration.";
+		my $msg =
+		  "It is not possible to delete the bonding interface because it is configured. First you should unset the bonding configuration.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 		{
-			die if &downIf( $bonds->{ $bond } );
+			die if &downIf( $bonds->{ $bond }, 'writeconf' );
 		}
 
-		die if &setBondMaster( $bond, 'del' );
+		die if &setBondMaster( $bond, 'del', 'writeconf' );
 	};
 
 	if ( $@ )
@@ -361,7 +365,8 @@ sub delete_bond    # ( $bond )
 
 sub delete_bond_slave    # ( $bond, $slave )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond  = shift;
 	my $slave = shift;
 
@@ -387,7 +392,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	eval {
 		@{ $bonds->{ $bond }{ slaves } } =
 		  grep ( { $slave ne $_ } @{ $bonds->{ $bond }{ slaves } } );
-		die if &applyBondChange( $bonds->{ $bond } );
+		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
 	};
 
 	if ( $@ )
@@ -408,10 +413,11 @@ sub delete_bond_slave    # ( $bond, $slave )
 
 sub get_bond_list    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Net::Bonding';
 
-	my $desc        = "List bonding interfaces";
+	my $desc            = "List bonding interfaces";
 	my $output_list_ref = &get_bond_list_struct();
 
 	my $body = {
@@ -424,7 +430,8 @@ sub get_bond_list    # ()
 
 sub get_bond    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $bond = shift;
 
 	include 'Zevenet::Net::Bonding';
@@ -449,7 +456,8 @@ sub get_bond    # ()
 
 sub actions_interface_bond    # ( $json_obj, $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -488,7 +496,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			&addIp( $if_ref ) if $if_ref;
 		}
 
-		my $state = &upIf( { name => $bond } );
+		my $state = &upIf( { name => $bond }, 'writeconf' );
 
 		if ( !$state )
 		{
@@ -511,7 +519,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond } );
+		my $state = &downIf( { name => $bond }, 'writeconf' );
 
 		if ( $state )
 		{
@@ -535,7 +543,8 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 
 sub modify_interface_bond    # ( $json_obj, $bond )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $bond     = shift;
 
@@ -644,7 +653,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 	}
 
-	# Do not modify gateway or netmask if exists a virtual interface using this interface
+# Do not modify gateway or netmask if exists a virtual interface using this interface
 	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $bond );
@@ -726,7 +735,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
@@ -746,7 +755,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		my $previous_status = $if_ref->{ status };
 		if ( $previous_status eq "up" )
 		{
-			my $state = &upIf( $if_ref );
+			my $state = &upIf( $if_ref, 'writeconf' );
 
 			if ( $state == 0 )
 			{
