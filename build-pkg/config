@@ -4,6 +4,7 @@ debian_versions=(jessie stretch)
 # files of CE
 community_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
 	zlb-debian-installer.sh
 	README.md
 	DEBIAN/control
