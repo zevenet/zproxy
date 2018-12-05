@@ -392,6 +392,13 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 	GET qr{^/system/license/($license_re)$} => \&get_license;
 }
 
+if ( $q->path_info =~ qr{/ciphers$} )
+{
+	require Zevenet::API40::Certificate::Ciphers;
+
+	GET qr{^/ciphers$} => \&ciphers_available;
+}
+
 ##### Load modules dynamically #######################################
 my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API32/Routes';
 opendir ( my $dir, $routes_path );
