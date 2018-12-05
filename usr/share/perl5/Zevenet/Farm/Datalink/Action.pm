@@ -179,7 +179,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	require Zevenet::Farm::Datalink::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status = ( $writeconf ) ? -1 : 0;
+	my $status        = 0;
 
 	if ( $writeconf )
 	{
@@ -190,14 +190,6 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
 	@cron_file = grep !/\# \_\_$farm_name\_\_/, @cron_file;
 	untie @cron_file;
-
-	$status = 0 if $writeconf eq 'false';
-
-	# Apply changes online
-	if ( $status == -1 )
-	{
-		return $status;
-	}
 
 	my $iface  = &getDatalinkFarmInterface( $farm_name );
 	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );

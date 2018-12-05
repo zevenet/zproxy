@@ -219,15 +219,9 @@ sub getDatalinkFarmStatus    # ($farm_name)
 	my $output;
 
 	my $piddir = &getGlobalConfiguration( 'piddir' );
+	my $output = "down";
 
-	if ( -e "$piddir\/$farm_name\_datalink.pid" )
-	{
-		$output = "up";
-	}
-	else
-	{
-		$output = "down";
-	}
+	$output = "up" if ( -e "$piddir\/$farm_name\_datalink.pid" );
 
 	return $output;
 }

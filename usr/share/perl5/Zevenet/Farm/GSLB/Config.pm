@@ -68,6 +68,43 @@ sub getGSLBFarmBootStatus    # ($farm_name)
 }
 
 =begin nd
+Function: getGSLBFarmStatus
+
+	Return current farm process status
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	string - return "up" if the process is running or "down" if it isn't
+
+=cut
+
+sub getGSLBFarmStatus    # ($farm_name)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
+
+	my $pid    = &getGSLBFarmPid( $farm_name );
+	my $output = -1;
+	my $running_pid;
+	$running_pid = kill ( 0, $pid ) if $pid ne "-";
+
+	if ( $pid ne "-" && $running_pid )
+	{
+		$output = "up";
+	}
+	else
+	{
+		unlink &getGSLBFarmPidFile( $farm_name ) if ( $pid ne "-" && !$running_pid );
+		$output = "down";
+	}
+
+	return $output;
+}
+
+=begin nd
 Function: getGSLBFarmPid
 
 	Returns farm PID. Through ps command

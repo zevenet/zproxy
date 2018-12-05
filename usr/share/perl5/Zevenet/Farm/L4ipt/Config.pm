@@ -951,11 +951,11 @@ sub getL4FarmStatus
 	my $farm_name = shift;
 
 	my $piddir = &getGlobalConfiguration( 'piddir' );
-	open my $fi, '<', "$piddir\/$farm_name\_l4xnat.pid";
-	close $fi;
+	my $output = "down";
 
-	return "up" if ( $fi );
-	return "down";
+	$output = "up" if ( -e "$piddir\/$farm_name\_l4xnat.pid" );
+
+	return $output;
 }
 
 =begin nd
