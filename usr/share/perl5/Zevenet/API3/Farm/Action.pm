@@ -25,9 +25,10 @@ use strict;
 use Zevenet::Farm::Core;
 
 # POST /farms/<farmname>/actions Set an action in a Farm
-sub farm_actions # ( $json_obj, $farmname )
+sub farm_actions    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -45,7 +46,7 @@ sub farm_actions # ( $json_obj, $farmname )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# Check input errors
@@ -57,14 +58,15 @@ sub farm_actions # ( $json_obj, $farmname )
 	{
 		&zenlog( "Error trying to set an action.", "error", "ZAPI" );
 
-		my $errormsg = "Invalid action; the possible actions are stop, start and restart";
+		my $errormsg =
+		  "Invalid action; the possible actions are stop, start and restart";
 		my $body = {
 					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# Functions
@@ -84,12 +86,12 @@ sub farm_actions # ( $json_obj, $farmname )
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 		else
 		{
-			&zenlog(
-					  "Success, the action stop has been established in farm $farmname.", "info", "ZAPI" );
+			&zenlog( "Success, the action stop has been established in farm $farmname.",
+					 "info", "ZAPI" );
 
 			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
@@ -111,12 +113,12 @@ sub farm_actions # ( $json_obj, $farmname )
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 		else
 		{
-			&zenlog(
-					 "Success, the action start has been established in farm $farmname.", "info", "ZAPI" );
+			&zenlog( "Success, the action start has been established in farm $farmname.",
+					 "info", "ZAPI" );
 
 			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'start', $farmname );
@@ -130,7 +132,8 @@ sub farm_actions # ( $json_obj, $farmname )
 
 		if ( $status != 0 )
 		{
-			my $errormsg = "Error trying to stop the farm in the action restart in farm $farmname.";
+			my $errormsg =
+			  "Error trying to stop the farm in the action restart in farm $farmname.";
 			&zenlog( $errormsg, "error", "ZAPI" );
 
 			my $body = {
@@ -139,7 +142,7 @@ sub farm_actions # ( $json_obj, $farmname )
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		$status = &runFarmStart( $farmname, "true" );
@@ -154,15 +157,16 @@ sub farm_actions # ( $json_obj, $farmname )
 			}
 
 			&setFarmNoRestart( $farmname );
-			&zenlog(
-				   "Success, the action restart has been established in farm $farmname.", "info", "ZAPI" );
+			&zenlog( "Success, the action restart has been established in farm $farmname.",
+					 "info", "ZAPI" );
 
 			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 		else
 		{
-			my $errormsg = "Error trying to start the farm in the action restart in farm $farmname.";
+			my $errormsg =
+			  "Error trying to start the farm in the action restart in farm $farmname.";
 			&zenlog( $errormsg, "error", "ZAPI" );
 
 			my $body = {
@@ -171,7 +175,7 @@ sub farm_actions # ( $json_obj, $farmname )
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 
@@ -182,13 +186,14 @@ sub farm_actions # ( $json_obj, $farmname )
 				 params      => { action => $json_obj->{ action } },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # POST /farms/<farmname>/maintenance Set an action in a backend of http|https farm
 sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $service    = shift;
@@ -207,7 +212,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate FARM TYPE
@@ -221,14 +226,14 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate SERVICE
 	{
 		require Zevenet::Farm::HTTP::Service;
 
-		my @services = &getHTTPFarmServices($farmname);
+		my @services = &getHTTPFarmServices( $farmname );
 		my $found_service;
 
 		foreach my $service_name ( @services )
@@ -250,7 +255,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 	}
 
@@ -290,7 +295,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 	}
 
@@ -306,7 +311,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	require Zevenet::Farm::Backend::Maintenance;
@@ -314,10 +319,12 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
 	{
-		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, "drain", $service );
+		my $status =
+		  &setFarmBackendMaintenance( $farmname, $backend_id, "drain", $service );
 
 		&zenlog(
-			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname", "info", "ZAPI"
+			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname",
+			"info", "ZAPI"
 		);
 
 		if ( $? ne 0 )
@@ -329,7 +336,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	elsif ( $json_obj->{ action } eq "up" )
@@ -337,7 +344,9 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id, $service );
 
 		&zenlog(
-			 "Changing status to up of backend $backend_id in service $service in farm $farmname", "info", "ZAPI" );
+			"Changing status to up of backend $backend_id in service $service in farm $farmname",
+			"info", "ZAPI"
+		);
 
 		if ( $? ne 0 )
 		{
@@ -348,7 +357,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	else
@@ -360,7 +369,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# Success
@@ -375,13 +384,14 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # PUT backend in maintenance
-sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
+sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $farmname   = shift;
 	my $backend_id = shift;
@@ -399,7 +409,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate FARM TYPE
@@ -413,13 +423,13 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate BACKEND
-	require Zevenet::Farm::L4XNAT::Backend;
+	require Zevenet::Farm::L4xNAT::Backend;
 
-	my $exists = defined( @{ &getL4FarmServers( $farmname ) }[$backend_id] );
+	my $exists = defined ( @{ &getL4FarmServers( $farmname ) }[$backend_id] );
 
 	if ( !$exists )
 	{
@@ -431,7 +441,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate STATUS
@@ -440,8 +450,8 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, "drain" );
 
 		&zenlog(
-			"Changing status to maintenance of backend $backend_id in farm $farmname", "info", "ZAPI"
-		);
+				 "Changing status to maintenance of backend $backend_id in farm $farmname",
+				 "info", "ZAPI" );
 
 		if ( $status != 0 )
 		{
@@ -452,15 +462,15 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
 		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id );
 
-		&zenlog(
-			 "Changing status to up of backend $backend_id in farm $farmname", "info", "ZAPI" );
+		&zenlog( "Changing status to up of backend $backend_id in farm $farmname",
+				 "info", "ZAPI" );
 
 		if ( $status != 0 )
 		{
@@ -471,7 +481,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	else
@@ -483,7 +493,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# Success
@@ -498,7 +508,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
