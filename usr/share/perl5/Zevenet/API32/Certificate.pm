@@ -22,12 +22,19 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 my $CSR_KEY_SIZE = 2048;
 
 # GET /certificates
-sub certificates # ()
+sub certificates    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
 	my $desc         = "List certificates";
@@ -45,13 +52,14 @@ sub certificates # ()
 				 params      => \@out,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /certificates/CERTIFICATE
-sub download_certificate # ()
+sub download_certificate    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	my $desc      = "Download certificate";
@@ -64,13 +72,18 @@ sub download_certificate # ()
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	&httpDownloadResponse( desc => $desc, dir => $cert_dir, file => $cert_filename );
+	&httpDownloadResponse(
+						   desc => $desc,
+						   dir  => $cert_dir,
+						   file => $cert_filename
+	);
 }
 
 # DELETE /certificates/CERTIFICATE
-sub delete_certificate # ( $cert_filename )
+sub delete_certificate    # ( $cert_filename )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
 	require Zevenet::Certificate;
@@ -79,7 +92,7 @@ sub delete_certificate # ( $cert_filename )
 	my $cert_dir = &getGlobalConfiguration( 'configdir' );
 
 	# check is the certificate file exists
-	if ( ! -f "$cert_dir\/$cert_filename" )
+	if ( !-f "$cert_dir\/$cert_filename" )
 	{
 		my $msg = "Certificate file not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -111,13 +124,14 @@ sub delete_certificate # ( $cert_filename )
 				 message     => $msg,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # POST /certificates (Create CSR)
 sub create_csr
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	require Zevenet::Certificate;
@@ -147,8 +161,7 @@ sub create_csr
 		 || $json_obj->{ locality } =~ /^$/
 		 || $json_obj->{ state } =~ /^$/
 		 || $json_obj->{ country } =~ /^$/
-		 || $json_obj->{ mail } =~ /^$/
-		 )
+		 || $json_obj->{ mail } =~ /^$/ )
 	{
 		my $msg = "Fields can not be empty. Try again.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -156,21 +169,29 @@ sub create_csr
 
 	if ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
 	{
-		my $msg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
+		my $msg =
+		  "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
 	{
-		my $msg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
+		my $msg =
+		  "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &createCSR(
-				$json_obj->{ name },     $json_obj->{ fqdn },     $json_obj->{ country },
-				$json_obj->{ state },    $json_obj->{ locality }, $json_obj->{ organization },
-				$json_obj->{ division }, $json_obj->{ mail },     $CSR_KEY_SIZE,
-				""
+							$json_obj->{ name },
+							$json_obj->{ fqdn },
+							$json_obj->{ country },
+							$json_obj->{ state },
+							$json_obj->{ locality },
+							$json_obj->{ organization },
+							$json_obj->{ division },
+							$json_obj->{ mail },
+							$CSR_KEY_SIZE,
+							""
 	);
 
 	if ( $error )
@@ -183,20 +204,21 @@ sub create_csr
 	&zenlog( $message, "info", "LSLB" );
 
 	my $body = {
-				description => $desc,
-				success     => "true",
-				message     => $message,
+				 description => $desc,
+				 success     => "true",
+				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # POST /certificates/CERTIFICATE (Upload PEM)
-sub upload_certificate # ()
+sub upload_certificate    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $upload_data = shift;
-	my $filename          = shift;
+	my $filename    = shift;
 
 	require Zevenet::File;
 
@@ -231,7 +253,39 @@ sub upload_certificate # ()
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
+}
+
+# GET /ciphers
+sub ciphers_available    # ( $json_obj, $farmname )
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $desc = "Get the ciphers available";
+
+	my @out = (
+				{ 'ciphers' => "all",            "description" => "All" },
+				{ 'ciphers' => "highsecurity",   "description" => "High security" },
+				{ 'ciphers' => "customsecurity", "description" => "Custom security" }
+	);
+
+	if ( $eload )
+	{
+		push (
+			   @out,
+			   &eload(
+					   module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+					   func   => 'getExtraCipherProfiles',
+			   )
+		);
+	}
+
+	my $body = {
+				 description => $desc,
+				 params      => \@out,
+	};
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

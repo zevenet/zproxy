@@ -394,7 +394,7 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 
 if ( $q->path_info =~ qr{/ciphers$} )
 {
-	require Zevenet::API40::Certificate::Ciphers;
+	require Zevenet::API32::Certificate;
 
 	GET qr{^/ciphers$} => \&ciphers_available;
 }
