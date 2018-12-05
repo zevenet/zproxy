@@ -1493,6 +1493,7 @@ sub getHTTPFarmStruct
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
+	my $type = shift // &getFarmType( $farmname );
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
@@ -1502,9 +1503,8 @@ sub getHTTPFarmStruct
 
 	return unless $farmname;
 
-	my $type   = &getFarmType( $farmname );
-	my $vip    = &getFarmVip( "vip", $farmname );
-	my $vport  = &getFarmVip( "vipp", $farmname ) + 0;
+	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vport = &getFarmVip( "vipp", $farmname ) + 0;
 	my $status = &getFarmVipStatus( $farmname );
 
 	my $connto          = 0 + &getFarmConnTO( $farmname );

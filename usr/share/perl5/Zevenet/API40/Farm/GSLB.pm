@@ -42,9 +42,12 @@ sub farms_gslb    # ()
 		my $name = &getFarmName( $file );
 		my $type = &getFarmType( $name );
 		next unless $type eq 'gslb';
-		my $status = &getFarmVipStatus( $name );
-		my $vip    = &getFarmVip( 'vip', $name );
-		my $port   = &getFarmVip( 'vipp', $name );
+
+		require Zevenet::Farm::Config;
+		my $farm   = &getFarmStruct( $name );
+		my $status = $farm->{ status };
+		my $vip    = $farm->{ vip };
+		my $port   = $farm->{ vport };
 
 		require Zevenet::Lock;
 		$status = "needed restart" if $status ne 'down' && &getLockStatus( $name );

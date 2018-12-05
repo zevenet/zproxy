@@ -397,9 +397,8 @@ Function: setGSLBFarmStatus
 	Start or stop a gslb farm
 
 Parameters:
-	farm_name - Farm name
-	status    - The new status "up" or "down"
-	writeconf - write this change in configuration status "writeconf" for true or omit it for false
+	farmname - Farm name
+	zone - Zone name
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
@@ -409,20 +408,17 @@ BUG:
 
 =cut
 
-sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
+sub setGSLBFarmStatus    # ($farm_name, $status)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $status, $writeconf ) = @_;
+	my ( $farm_name, $status ) = @_;
 
 	my $command;
 
 	unlink ( "/tmp/$farm_name.lock" );
 
-	if ( $writeconf )
-	{
-		&setGSLBFarmBootStatus( $farm_name, $status );
-	}
+	&setGSLBFarmBootStatus( $farm_name, $status );
 
 	if ( $status eq "start" )
 	{
@@ -565,6 +561,183 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	untie @fileconf;
 
 	return 0;
+}
+
+=begin nd
+Function: getGSLBFarmStruct
+
+	Get the GSLB farm struct.
+
+Parameters:
+	name - The farm name which is wanted to be retrieved
+
+Returns:
+hash ref
+
+=cut
+
+sub getGSLBFarmStruct
+{
+	my $farmName     = shift;                       # declare output hash
+	my $farmFileName = &getFarmFile( $farmName );
+	my $farm         = {};
+
+	require Zevenet::Farm::Config;
+	my $config = &getFarmPlainInfo( $farmName, "etc/config" );
+
+	$farm =
+	  &getGSLBParseFarmConfig( $config, ["vip", "vport", "state", "services"] );
+	$config = &getFarmPlainInfo( $farmName, "etc/plugins/simplefo.cfg" );
+	&getGSLBParseBe( $config, $farm );
+	$config = &getFarmPlainInfo( $farmName, "etc/plugins/multifo.cfg" );
+	&getGSLBParseBe( $config, $farm );
+	$farm->{ status } = &getFarmVipStatus( $farmName )
+	  if ( $farm->{ status } ne &getFarmVipStatus( $farmName ) );
+	$farm->{ type } = "gslb";
+
+	return $farm;
+}
+
+=begin nd
+Function: _getL4ParseFarmConfig
+
+	Parse the farm file configuration and read/write a certain parameter
+
+Parameters:
+	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm", "logs"
+	value - value to be changed in case of write operation, undef for read only cases
+	config - reference of an array with the full configuration file
+
+Returns:
+	Scalar - return the parameter value on read or the changed value in case of write as a string or -1 in other case
+
+=cut
+
+sub getGSLBParseFarmConfig    # ($param, $value, $config)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $generalConfig = shift;
+	my $paramArray    = shift;
+	my $output        = { services => [], };
+
+	# Temporal hash for iteration saving a service
+	my $tmpServiceHashRef = { backends => [], cmd => undef };
+	my $index = 0;
+
+	# Parsing Flags
+	my $serviceFlag = 0;
+
+	# regEx
+	my $stateRegex   = qr/\;(?<status>\w+)$/;
+	my $vipRegex     = qr/\s+listen\s=\s(?<vip>\d*\.\d*\.\d*\.\d*)/;
+	my $vportRegex   = qr/\s*dns_port\s=\s(?<vport>\d*)$/;
+	my $serviceRegex = qr/\s*(?<service>.*)_fg_(?<servicePort>\d*)\s+/;
+	my $fgRegex      = qr/\s*cmd\s=\s\[(?<cmd>.*)\]/;
+
+	foreach my $line ( @{ $generalConfig } )
+	{
+		# Let's clean \t from the line
+		$line =~ s/(\t)/ /g;
+		if ( $line =~ $stateRegex && grep ( /^state$/, @{ $paramArray } ) )
+		{
+			$output->{ status } = $+{ status };
+			next;
+		}
+
+		# VIP
+		elsif ( $line =~ $vipRegex && grep ( /^vip$/, @{ $paramArray } ) )
+		{
+			$output->{ vip } = $+{ vip };
+			next;
+		}
+
+		# VPORT
+		elsif ( $line =~ $vportRegex && grep ( /^vport$/, @{ $paramArray } ) )
+		{
+			$output->{ vport } = $+{ vport };
+			next;
+		}
+
+		# SERVICE RR
+		if ( grep ( /^services$/, @{ $paramArray } ) )
+		{
+			if ( $line =~ $serviceRegex )
+			{
+				$serviceFlag                 = 1;
+				$tmpServiceHashRef->{ name } = $+{ service };
+				$tmpServiceHashRef->{ port } = $+{ servicePort };
+				next;
+			}
+			if ( $line =~ $fgRegex && $serviceFlag == 1 )
+			{
+				$tmpServiceHashRef->{ cmd } = $+{ cmd };
+				next;
+			}
+			elsif ( $line =~ /\s*}/ && ( $serviceFlag == 1 ) )
+			{
+				$serviceFlag = 0;
+				my %tmpHash = %{ $tmpServiceHashRef };
+				push ( @{ $output->{ services } }, \%tmpHash );
+				$tmpServiceHashRef = { backends => [], cmd => undef };
+				next;
+			}
+		}
+	}
+
+	return $output;
+}
+
+sub getGSLBParseBe
+{
+	my $plainText    = shift;
+	my $hashRef      = shift;
+	my $serviceFlag  = 0;
+	my $indexService = 0;
+
+	my $beRegex      = qr/\s*(?<type>.*)\s=>\s(?<ip>(\d+\.?)+)/;
+	my $serviceRegex = qr/\s*(?<service>.*)\s=>\s\{/;
+
+	shift @{ $plainText };
+
+	foreach my $line ( @{ $plainText } )
+	{
+		# Let's clean \t from the line
+		$line =~ s/(\t)/  /g;
+
+		# There is a service name, check it's index in array
+		if ( $line =~ $serviceRegex && $serviceFlag == 0 )
+		{
+			$indexService = 0;
+			$serviceFlag  = 1;
+			foreach my $ref ( @{ $hashRef->{ services } } )
+			{
+				if ( $+{ service } eq $ref->{ name } )
+				{
+					last;
+				}
+				$indexService += 1;
+			}
+			next;
+		}
+
+		# There is a backend for the actual array
+		elsif ( $line =~ $beRegex && $serviceFlag == 1 )
+		{
+			push (
+				   @{ $hashRef->{ services }[$indexService]->{ backends } },
+				   { $+{ type } => $+{ ip } }
+			);
+			next;
+		}
+		elsif ( $line =~ /\s*}/ && ( $serviceFlag == 1 ) )
+		{
+			$serviceFlag  = 0;
+			$indexService = 0;
+			next;
+		}
+	}
 }
 
 1;
