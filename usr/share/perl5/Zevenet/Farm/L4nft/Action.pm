@@ -25,7 +25,6 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-
 =begin nd
 Function: startL4Farm
 
@@ -84,7 +83,7 @@ sub stopL4Farm    # ($farm_name)
 			 "debug", "PROFILING" );
 
 	my $farm_name = shift;
-	my $pidfile = &getL4FarmPidFile( $farm_name );
+	my $pidfile   = &getL4FarmPidFile( $farm_name );
 
 	require Zevenet::Farm::Core;
 
@@ -241,9 +240,9 @@ sub loadNLBFarm    # ($farm_name)
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my $farmfile = &getFarmFile( $farm_name );
-	my $pidfile = &getL4FarmPidFile( $farm_name );
+	my $pidfile  = &getL4FarmPidFile( $farm_name );
 
-	return -1 if ( ! -e "$configdir/$farmfile" );
+	return -1 if ( !-e "$configdir/$farmfile" );
 
 	my $out = &httpNLBRequest(
 							   {
@@ -255,7 +254,7 @@ sub loadNLBFarm    # ($farm_name)
 							   }
 	);
 
-	if ( ! -e "$pidfile" )
+	if ( !-e "$pidfile" )
 	{
 		open my $fi, '>', "$pidfile";
 		close $fi;
@@ -283,7 +282,7 @@ sub startNLBFarm    # ($farm_name)
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-#	require Zevenet::Farm::Core;
+	#	require Zevenet::Farm::Core;
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my $out = &loadNLBFarm( $farm_name );
@@ -343,8 +342,8 @@ sub getNLBPid
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $nlbpidfile    = &getNLBPidFile();
-	my $nlbpid        = -1;
+	my $nlbpidfile = &getNLBPidFile();
+	my $nlbpid     = -1;
 
 	if ( !-f "$nlbpidfile" )
 	{
@@ -381,8 +380,8 @@ sub getNLBPidFile
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $piddir        = &getGlobalConfiguration( 'piddir' );
-	my $nlbpidfile    = "$piddir/nftlb.pid";
+	my $piddir     = &getGlobalConfiguration( 'piddir' );
+	my $nlbpidfile = "$piddir/nftlb.pid";
 
 	return $nlbpidfile;
 }
@@ -406,7 +405,7 @@ sub getL4FarmPidFile
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $piddir = &getGlobalConfiguration( 'piddir' );
+	my $piddir  = &getGlobalConfiguration( 'piddir' );
 	my $pidfile = "$piddir/$farm_name\_l4xnat.pid";
 
 	return $pidfile;

@@ -53,36 +53,32 @@ sub setSystemOptimizations
 	&zenlog( "Appliance version: $appliance_version", "info", "SYSTEM" );
 
 	#### Starts node tuning ####
-	my $recent_ip_list_tot = &getGlobalConfiguration( 'recent_ip_list_tot' );
-	my $recent_ip_list_hash_size =
-	  &getGlobalConfiguration( 'recent_ip_list_hash_size' );
-	system ( '/sbin/rmmod xt_recent >/dev/null 2>&1' );
-	system (
-		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size >/dev/null 2>&1"
-	);
+	require Zevenet::Farm::L4xNAT::Service;
+	&loadL4FarmModules();
 
 	system ( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
 
 	# Set system tuning with sysctl
 	my %sysctl = (
-		"fs.file-max"                        => "100000",
-		"kernel.threads-max"                 => "120000",                # packetbl
-		"kernel.pid_max"                     => "200000",                # packetbl
-		"vm.max_map_count"                   => "1048576",
-		"vm.swappiness"                      => "10",
-		"net.ipv4.conf.all.log_martians"     => "0",
-		"net.ipv4.ip_local_port_range"       => "1024 65535",
-		"net.ipv4.tcp_max_tw_buckets"        => "2000000",
-		"net.ipv4.tcp_max_syn_backlog"       => "30000",
-		"net.ipv4.tcp_window_scaling"        => "1",
-		"net.ipv4.tcp_timestamps"            => "0",
-		"net.ipv4.tcp_rmem"                  => "4096 87380 16777216",
-		"net.ipv4.tcp_wmem"                  => "4096 65536 16777216",
-		"net.ipv4.udp_rmem_min"              => "65536",
-		"net.ipv4.udp_wmem_min"              => "65536",
-		"net.ipv4.tcp_low_latency"           => "1",
-		"net.ipv4.tcp_tw_reuse"              => "1",
-		"net.ipv4.tcp_tw_recycle"            => "0",
+		"fs.file-max"                    => "100000",
+		"kernel.threads-max"             => "120000",                # packetbl
+		"kernel.pid_max"                 => "200000",                # packetbl
+		"vm.max_map_count"               => "1048576",
+		"vm.swappiness"                  => "10",
+		"net.ipv4.conf.all.log_martians" => "0",
+		"net.ipv4.ip_local_port_range"   => "1024 65535",
+		"net.ipv4.tcp_max_tw_buckets"    => "2000000",
+		"net.ipv4.tcp_max_syn_backlog"   => "30000",
+		"net.ipv4.tcp_window_scaling"    => "1",
+		"net.ipv4.tcp_timestamps"        => "0",
+		"net.ipv4.tcp_rmem"              => "4096 87380 16777216",
+		"net.ipv4.tcp_wmem"              => "4096 65536 16777216",
+		"net.ipv4.udp_rmem_min"          => "65536",
+		"net.ipv4.udp_wmem_min"          => "65536",
+		"net.ipv4.tcp_low_latency"       => "1",
+		"net.ipv4.tcp_tw_reuse"          => "1",
+
+		#		"net.ipv4.tcp_tw_recycle"            => "0",
 		"net.ipv4.tcp_keepalive_time"        => "512",
 		"net.ipv4.tcp_fin_timeout"           => "5",
 		"net.ipv4.inet_peer_maxttl"          => "5",
@@ -116,7 +112,7 @@ sub setSystemOptimizations
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait" }   = "2";
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established" } = "86400";
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout" }             = "2";
-		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" }      = 2;
+		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" }      = "2";
 	}
 
 	#  ZVA equal or higher than 5000
