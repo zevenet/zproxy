@@ -583,17 +583,25 @@ sub getGSLBFarmStruct
 	my $farm         = {};
 
 	require Zevenet::Farm::Config;
-	my $config = &getFarmPlainInfo( $farmName, "etc/config" );
+	my $config         = &getFarmPlainInfo( $farmName, "etc/config" );
+	my $configSimplefo = &getFarmPlainInfo( $farmName, "etc/plugins/simplefo.cfg" );
+	my $configMultifo  = &getFarmPlainInfo( $farmName, "etc/plugins/multifo.cfg" );
 
+	if ( !( defined $config ) )
+	{
+		&zenlog(
+			"Not able to load as plain text the main configuration file for farm $farmName",
+			"error", "GSLB"
+		);
+		return undef;
+	}
 	$farm =
 	  &getGSLBParseFarmConfig( $config, ["vip", "vport", "state", "services"] );
-	$config = &getFarmPlainInfo( $farmName, "etc/plugins/simplefo.cfg" );
-	&getGSLBParseBe( $config, $farm );
-	$config = &getFarmPlainInfo( $farmName, "etc/plugins/multifo.cfg" );
-	&getGSLBParseBe( $config, $farm );
-	$farm->{ status } = &getFarmVipStatus( $farmName )
-	  if ( $farm->{ status } ne &getFarmVipStatus( $farmName ) );
-	$farm->{ type } = "gslb";
+	&getGSLBParseBe( $configSimplefo, $farm ) if ( defined $configSimplefo );
+	&getGSLBParseBe( $configMultifo,  $farm ) if ( defined $configMultifo );
+
+	$farm->{ filename } = $farmFileName;
+	$farm->{ type }     = "gslb";
 
 	return $farm;
 }
