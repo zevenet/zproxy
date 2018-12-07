@@ -578,30 +578,36 @@ hash ref
 
 sub getGSLBFarmStruct
 {
-	my $farmName     = shift;                       # declare output hash
-	my $farmFileName = &getFarmFile( $farmName );
-	my $farm         = {};
+	my $farm = {};
+	$farm->{ name }     = shift;
+	$farm->{ filename } = &getFarmFile( $farm->{ name } );
+	$farm->{ type }     = "gslb";
 
 	require Zevenet::Farm::Config;
-	my $config         = &getFarmPlainInfo( $farmName, "etc/config" );
-	my $configSimplefo = &getFarmPlainInfo( $farmName, "etc/plugins/simplefo.cfg" );
-	my $configMultifo  = &getFarmPlainInfo( $farmName, "etc/plugins/multifo.cfg" );
+	my $config = &getFarmPlainInfo( $farm->{ name }, "etc/config" );
+	my $configSimplefo =
+	  &getFarmPlainInfo( $farm->{ name }, "etc/plugins/simplefo.cfg" );
+	my $configMultifo =
+	  &getFarmPlainInfo( $farm->{ name }, "etc/plugins/multifo.cfg" );
 
 	if ( !( defined $config ) )
 	{
 		&zenlog(
-			"Not able to load as plain text the main configuration file for farm $farmName",
-			"error", "GSLB"
+				 "Not able to load as plain text the main configuration file for farm "
+				   . $farm->{ name },
+				 "error",
+				 "GSLB"
 		);
 		return undef;
 	}
-	$farm =
-	  &getGSLBParseFarmConfig( $config, ["vip", "vport", "state", "services"] );
+	$farm = {
+			  %$farm,
+			  %{
+				  &getGSLBParseFarmConfig( $config, ["vip", "vport", "state", "services"] )
+			  }
+	};
 	&getGSLBParseBe( $configSimplefo, $farm ) if ( defined $configSimplefo );
 	&getGSLBParseBe( $configMultifo,  $farm ) if ( defined $configMultifo );
-
-	$farm->{ filename } = $farmFileName;
-	$farm->{ type }     = "gslb";
 
 	return $farm;
 }
