@@ -219,6 +219,7 @@ sub start_service
 	}
 
 	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	require Zevenet::Net::Route;
 
 	# bonding adresses configuration
 	foreach my $iface ( &getInterfaceTypeList( 'bond' ) )
