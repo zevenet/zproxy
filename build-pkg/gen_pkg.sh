@@ -154,9 +154,10 @@ if [[ $devel == "false" ]]; then
 	msg "Removing warnings and profiling instrumentation..."
 	# Don't include API 3
 	find -L usr/local/zevenet/bin \
-			usr/local/zevenet/lib \
+			usr/share/perl5/Zevenet \
 			usr/local/zevenet/www/zapi/v3.1 \
 			usr/local/zevenet/www/zapi/v3.2 \
+			usr/local/zevenet/www/zapi/v4.0 \
 			usr/local/zevenet/app/libexec/check_uplink \
 			-type f \
 			-exec sed --follow-symlinks -i 's/^use warnings.*//' {} \; \

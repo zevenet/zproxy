@@ -36,8 +36,8 @@ use strict;
 use warnings;
 use Zevenet::Config;
 
-my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
-my $lockfile = "/tmp/rrd.lock";
+my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+my $lockfile  = "/tmp/rrd.lock";
 
 if ( -e $lockfile )
 {
@@ -59,7 +59,7 @@ foreach my $script_rrd ( @rrd_scripts )
 {
 	print "Executing $script_rrd...\n";
 
-	system( "$rrdap_dir/$script_rrd" );
+	system ( "$rrdap_dir/$script_rrd" );
 }
 
 if ( -e $lockfile )

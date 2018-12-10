@@ -22,25 +22,26 @@ enterprise_files=(
 	etc/profile_packetbl
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
-	usr/local/zevenet/app/zbin/boot_ipds
-	usr/local/zevenet/app/zbin/cluster_status
-	usr/local/zevenet/app/zbin/cluster_status.pl
-	usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
-	usr/local/zevenet/app/zbin/if_throughput.pl
-	usr/local/zevenet/app/zbin/netplug.pl
-	usr/local/zevenet/app/zbin/nftlbd
-	usr/local/zevenet/app/zbin/persistent-nics
-	usr/local/zevenet/app/zbin/rename_nics.sh
-	usr/local/zevenet/app/zbin/sendNotification
-	usr/local/zevenet/app/zbin/ssh-copy-id.sh
-	usr/local/zevenet/app/zbin/ssh_nodns.sh
-	usr/local/zevenet/app/zbin/updateRemoteList
-	usr/local/zevenet/app/zbin/zcluster-manager
-	usr/local/zevenet/app/zbin/zcluster-send-action
-	usr/local/zevenet/app/zbin/zenbui
-	usr/local/zevenet/app/zbin/zeninotify
-	usr/local/zevenet/app/zbin/zenntp
-	usr/local/zevenet/app/zbin/zenrrd
+	usr/local/zevenet/bin/enterprise.bin
+	usr/local/zevenet/bin/boot_ipds
+	usr/local/zevenet/bin/cluster_status
+	usr/local/zevenet/bin/cluster_status.pl
+	usr/local/zevenet/bin/fwmark_tag_fix.pl
+	usr/local/zevenet/bin/if_throughput.pl
+	usr/local/zevenet/bin/netplug.pl
+	usr/local/zevenet/bin/nftlbd
+	usr/local/zevenet/bin/persistent-nics
+	usr/local/zevenet/bin/rename_nics.sh
+	usr/local/zevenet/bin/sendNotification
+	usr/local/zevenet/bin/ssh-copy-id.sh
+	usr/local/zevenet/bin/ssh_nodns.sh
+	usr/local/zevenet/bin/updateRemoteList
+	usr/local/zevenet/bin/zcluster-manager
+	usr/local/zevenet/bin/zcluster-send-action
+	usr/local/zevenet/bin/zenbui
+	usr/local/zevenet/bin/zeninotify
+	usr/local/zevenet/bin/zenntp
+	usr/local/zevenet/bin/zenrrd
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
@@ -91,8 +92,6 @@ enterprise_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	usr/local/zevenet/www/zapi/v3.2
 	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
-
-	usr/local/zevenet/app/zbin/enterprise.bin
 )
 
 installation_files=(
@@ -105,8 +104,8 @@ compiled_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	usr/local/zevenet/www/zapi/v3.2/zapi.cgi
 	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
-	usr/local/zevenet/app/zbin/zevenet
-	usr/local/zevenet/app/zbin/enterprise.bin
+	usr/local/zevenet/app/bin/zevenet
+	usr/local/zevenet/app/bin/enterprise.bin
 )
 
 encrypted_files=(

@@ -30,7 +30,7 @@ my $name   = $ARGV[0];
 my $action = $ARGV[1];
 
 my $backupdir = &getGlobalConfiguration( 'backupdir' );
-my $tar = &getGlobalConfiguration( 'tar' );
+my $tar       = &getGlobalConfiguration( 'tar' );
 
 if ( $action eq "-c" )
 {
@@ -43,10 +43,10 @@ if ( $action eq "-c" )
 	print $file "$version";
 	close $file;
 
-	zenlog("Creating backup $backup_file");
+	zenlog( "Creating backup $backup_file" );
 
 	my $cmd = "$tar -czf $backup_file $backupfor";
-	zenlog (`$cmd 2>&1`);
+	zenlog( `$cmd 2>&1` );
 
 	unlink $z_version_file;
 }

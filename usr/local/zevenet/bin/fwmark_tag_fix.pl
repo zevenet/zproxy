@@ -36,22 +36,22 @@ my $configdir   = &getGlobalConfiguration( 'configdir' );
 my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
 my $BASENAME    = basename $0;
 
-&zenlog("Running $BASENAME...");
+&zenlog( "Running $BASENAME..." );
 
 # check if fwmarks file exist
 if ( !-e $fwmarksconf )
 {
-	&zenlog("$BASENAME: File $fwmarksconf not found. Nothing to be migrated.");
+	&zenlog( "$BASENAME: File $fwmarksconf not found. Nothing to be migrated." );
 	exit 0;
 }
 
 open my $input_file, '<', "$fwmarksconf" or die "Cannot open $fwmarksconf: $!";
-my $decimal_found = grep { !/^0x... \/\/ / } <$input_file>; # FIXME
+my $decimal_found = grep { !/^0x... \/\/ / } <$input_file>;    # FIXME
 
 # check if there are decimal tags to be fixed
 if ( $decimal_found == 0 )
 {
-	&zenlog("$BASENAME: File $fwmarksconf has no tags to be migrated.");
+	&zenlog( "$BASENAME: File $fwmarksconf has no tags to be migrated." );
 	exit 0;
 }
 
@@ -66,7 +66,7 @@ while ( my $line = <$input_file> )
 	# skip hexadecimal tags
 	if ( $line =~ /^0x... \/\/ / )
 	{
-		my ($tag, undef, $comment) = split ' ', $line;
+		my ( $tag, undef, $comment ) = split ' ', $line;
 		my $farm_name = ( split '_', $comment )[1];
 		push @marks, $tag;
 	}
@@ -83,27 +83,27 @@ my @l4_farmnames = &getFarmsByType( 'l4xnat' );
 # Stop L4 farms
 foreach my $farm_name ( @l4_farmnames )
 {
-	my $boot_status = &getL4FarmBootStatus($farm_name);
+	my $boot_status = &getL4FarmBootStatus( $farm_name );
 
-	if ($boot_status eq 'up')
+	if ( $boot_status eq 'up' )
 	{
 		my $status = &stopL4Farm( $farm_name, 'false' );
 
 		if ( defined $status && $status == 0 )
 		{
-			&zenlog("$BASENAME: $farm_name stopped");
+			&zenlog( "$BASENAME: $farm_name stopped" );
 		}
 		else
 		{
-			&zenlog("$BASENAME: failed to stop $farm_name");
+			&zenlog( "$BASENAME: failed to stop $farm_name" );
 		}
 	}
 }
-# flush mangle and nat tables to make sure they are clean
-my $iptables = &getGlobalConfiguration('iptables');
-system("$iptables -t nat -F");
-system("$iptables -t mangle -F");
 
+# flush mangle and nat tables to make sure they are clean
+my $iptables = &getGlobalConfiguration( 'iptables' );
+system ( "$iptables -t nat -F" );
+system ( "$iptables -t mangle -F" );
 
 # Make new fwmarks file
 seek ( $input_file, 0, SEEK_SET );
@@ -129,13 +129,14 @@ while ( my $line = <$input_file> )
 
 		my $farm_name = ( split '_', $farm_comment )[1];
 
-		if ( grep {/^$farm_name$/} @l4_farmnames )
+		if ( grep { /^$farm_name$/ } @l4_farmnames )
 		{
 			# get ready for next tag
 			$last_dec_tag++;
 			$last_hex_tag = sprintf ( "0x%x", $last_dec_tag );
 
-			&zenlog("$BASENAME: Migrating tag $mark to $last_hex_tag for farm $farm_name.");
+			&zenlog(
+					 "$BASENAME: Migrating tag $mark to $last_hex_tag for farm $farm_name." );
 
 			# Fix fwmarks line
 			print $output_file "$last_hex_tag // FARM_${farm_name}_\n";
@@ -164,21 +165,21 @@ rename "$fwmarksconf.tmp", "$fwmarksconf";
 # Start L4 farms
 foreach my $farm_name ( @l4_farmnames )
 {
-	my $boot_status = &getL4FarmBootStatus($farm_name);
+	my $boot_status = &getL4FarmBootStatus( $farm_name );
 
-	if ($boot_status eq 'up')
+	if ( $boot_status eq 'up' )
 	{
 		my $status = &startL4Farm( $farm_name, 'false' );
 
 		if ( defined $status && $status == 0 )
 		{
-			&zenlog("$BASENAME: $farm_name started");
+			&zenlog( "$BASENAME: $farm_name started" );
 		}
 		else
 		{
-			&zenlog("$BASENAME: failed to start $farm_name");
+			&zenlog( "$BASENAME: failed to start $farm_name" );
 		}
 	}
 }
 
-&zenlog("Finished running $BASENAME");
+&zenlog( "Finished running $BASENAME" );

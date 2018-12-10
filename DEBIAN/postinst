@@ -43,8 +43,8 @@ compiled_files=(
 	/usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	/usr/local/zevenet/www/zapi/v3.2/zapi.cgi
 	/usr/local/zevenet/www/zapi/v4.0/zapi.cgi
-	/usr/local/zevenet/app/zbin/zevenet
-	/usr/local/zevenet/app/zbin/enterprise.bin
+	/usr/local/zevenet/bin/zevenet
+	/usr/local/zevenet/bin/enterprise.bin
 )
 for i in ${compiled_files[@]}
 do
@@ -55,7 +55,7 @@ do
 done
 
 #upgrading global.conf
-/usr/local/zevenet/app/zbin/checkglobalconf
+/usr/local/zevenet/bin/checkglobalconf
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
@@ -164,8 +164,8 @@ chmod +x /usr/local/zevenet/config/zlb-stop
 
 
 # Fix fwmarks for L4xNAT backends
-if [ -f /usr/local/zevenet/app/zbin/fwmark_tag_fix.pl ]; then
-	/usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
+if [ -f /usr/local/zevenet/bin/fwmark_tag_fix.pl ]; then
+	/usr/local/zevenet/bin/fwmark_tag_fix.pl
 fi
 
 # Migrate HTTP farms to dynamic thread model, without tcmalloc
@@ -178,8 +178,8 @@ do
 done
 
 # Disable DNS resolution for SSH service
-if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
-        /usr/local/zevenet/app/zbin/ssh_nodns.sh
+if [ -f /usr/local/zevenet/bin/ssh_nodns.sh ]; then
+        /usr/local/zevenet/bin/ssh_nodns.sh
 fi
 
 # Correct file DNS
