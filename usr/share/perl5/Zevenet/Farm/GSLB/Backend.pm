@@ -204,6 +204,13 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 
 	require Tie::File;
 
+	# Translate to GSLB priority format the BE id.
+	if ( $lb eq 'prio' )
+	{
+		$id = 'primary'   if $id == 1;
+		$id = 'secondary' if $id == 2;
+	}
+
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
