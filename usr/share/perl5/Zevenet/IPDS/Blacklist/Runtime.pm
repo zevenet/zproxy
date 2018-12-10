@@ -32,9 +32,10 @@ include 'Zevenet::IPDS::Blacklist::Core';
 # &setBLRunList ( $listName );
 sub setBLRunList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
-	my $ipset = &getGlobalConfiguration( 'ipset' );
+	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
 
 	# Maximum number of sources in the list
@@ -67,8 +68,8 @@ sub setBLRunList
 	#~ if ( &getBLIpsetStatus ( $listName ) eq 'down' )
 	{
 		&zenlog( "Creating ipset table", "info", "IPDS" );
-		$output = &logAndRun (
-			   "$ipset create -exist $listName hash:net maxelem $maxelem" );
+		$output =
+		  &logAndRun( "$ipset create -exist $listName hash:net maxelem $maxelem" );
 	}
 
 	if ( !$output )
@@ -90,7 +91,8 @@ sub setBLRunList
 #  &setBLDestroyList ( $listName );
 sub setBLDestroyList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $ipset = &getGlobalConfiguration( 'ipset' );
@@ -106,7 +108,7 @@ sub setBLDestroyList
 	#~ if ( &getBLIpsetStatus ( $listName ) eq 'up' )
 	#~ {
 	&zenlog( "Destroying blacklist $listName", "info", "IPDS" );
-	&logAndRun ( "$ipset destroy $listName" );
+	&logAndRun( "$ipset destroy $listName" );
 
 	#~ }
 
@@ -131,7 +133,8 @@ Returns:
 
 sub setBLRefreshList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	my @ipList = @{ &getBLIpList( $listName ) };
@@ -140,7 +143,7 @@ sub setBLRefreshList
 	my $source_re = &getValidFormat( 'blacklists_source' );
 
 	&zenlog( "refreshing '$listName'... ", "info", "IPDS" );
-	$output = &logAndRun ( "$ipset flush $listName" );
+	$output = &logAndRun( "$ipset flush $listName" );
 
 	if ( !$output )
 	{
@@ -153,12 +156,12 @@ sub setBLRefreshList
 		grep ( s/($source_re)/add $listName $1/, @ipList );
 		my $touch = &getGlobalConfiguration( 'touch' );
 
-		&logAndRun ( "$touch $tmp_list" );
+		&logAndRun( "$touch $tmp_list" );
 
 		@list_tmp = @ipList;
 		untie @list_tmp;
 
-		&logAndRun ( "$ipset restore < $tmp_list" );
+		&logAndRun( "$ipset restore < $tmp_list" );
 
 		unlink $tmp_list;
 	}
@@ -186,7 +189,8 @@ Returns:
 
 sub setBLDownloadRemoteList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	require Tie::File;
@@ -219,7 +223,8 @@ sub setBLDownloadRemoteList
 	if ( !@ipList )
 	{
 		&setBLParam( $listName, 'update_status', 'down' );
-		&zenlog( "Failed downloading $listName from url '$url'. Not found any source.", "error", "IPDS" );
+		&zenlog( "Failed downloading $listName from url '$url'. Not found any source.",
+				 "error", "IPDS" );
 		$error = 1;
 	}
 	else
@@ -258,7 +263,8 @@ Returns:
 
 sub setBLCreateRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -294,7 +300,8 @@ sub setBLCreateRule
 	else
 	{
 		&zenlog(
-				"The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'.", "warning", "IPDS" );
+				 "The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'.",
+				 "warning", "IPDS" );
 		return -1;
 	}
 
@@ -349,12 +356,12 @@ sub setBLCreateRule
 	#~ #not valid datlink farms
 	elsif ( $type eq 'datalink' )
 	{
-	push @match, "-d $vip";
+		push @match, "-d $vip";
 	}
 
-	foreach my $farmOpt (@match)
+	foreach my $farmOpt ( @match )
 	{
-		foreach my $table (@tables	)
+		foreach my $table ( @tables )
 		{
 
 # iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL,rulename,farmname"
@@ -377,7 +384,8 @@ sub setBLCreateRule
 
 			if ( !$output )
 			{
-				&zenlog( "List '$listName' was applied successful to the farm '$farmName'.", "info", "IPDS" );
+				&zenlog( "List '$listName' was applied successful to the farm '$farmName'.",
+						 "info", "IPDS" );
 			}
 		}
 	}
@@ -404,7 +412,8 @@ Returns:
 
 sub setBLDeleteRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Netfilter;
@@ -457,7 +466,8 @@ sub setBLDeleteRule
 
 sub delBLCronTask
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	require Tie::File;
@@ -489,7 +499,8 @@ sub delBLCronTask
 # &setBLCronTask ( $list );
 sub setBLCronTask
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	my $cronFormat =
@@ -546,9 +557,9 @@ sub setBLCronTask
 	}
 
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
-	my $zbindir = &getGlobalConfiguration( 'zbindir' );
+	my $zbindir            = &getGlobalConfiguration( 'zbindir' );
 
-	# 0 0 * * 1	root	/usr/local/zevenet/app/zenrrd/zenrrd.pl & >/dev/null 2>&1
+	# 0 0 * * 1	root	/usr/local/zevenet/app/zenrrd/zenrrd & >/dev/null 2>&1
 	my $cmd =
 	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
 	  . "root\t$zbindir/updateRemoteList $listName & >/dev/null 2>&1";
@@ -576,7 +587,8 @@ sub setBLCronTask
 # setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -620,7 +632,8 @@ sub setBLApplyToFarm
 # &setBLRemFromFarm ( $farmName, $listName );
 sub setBLRemFromFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
 	my $output = &setBLDeleteRule( $farmName, $listName );
