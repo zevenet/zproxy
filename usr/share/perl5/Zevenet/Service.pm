@@ -253,6 +253,7 @@ sub start_service
 					}
 
 					# kept in case it is required for first interface
+					require Zevenet::Net::Route;
 					&writeRoutes( $$iface{ name } );
 
 					&applyRoutes( "local", $iface );
@@ -269,6 +270,7 @@ sub start_service
 
 				if ( defined $$iface{ ip_v } && $$iface{ ip_v } == 4 )
 				{
+					require Zevenet::Net::Util;
 					&sendGPing( $$iface{ name } );
 				}
 			}
