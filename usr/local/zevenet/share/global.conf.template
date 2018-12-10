@@ -305,8 +305,6 @@ $syslogFile="/var/log/syslog";
 #IPDS Module
 $blacklistsPath = "/usr/local/zevenet/config/ipds/blacklists/lists";
 $blacklistsConf = "/usr/local/zevenet/config/ipds/blacklists/lists.conf";
-$blacklistsLocalPreload = "/usr/local/zevenet/www/ipds/blacklists/local";#update
-$blacklistsRemotePreload = "/usr/local/zevenet/www/ipds/blacklists/remote_lists.conf";#update
 $blacklistsCronFile = "/etc/cron.d/blacklists";
 $dosConf = "/usr/local/zevenet/config/ipds/dos/dos.conf";
 $dosConfDir = "/usr/local/zevenet/config/ipds/dos";
