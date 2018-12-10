@@ -1,58 +1,81 @@
-#!!!!!!NO REMOVE COMMENTS LINES!!!!!!
-#!!!!!!comments lines have a special patron that web application have to process
-
 #::INI Global information
+
+
+## version ZEVENET
+$version="5.2.7";#update
+
+
+## Variables
+# debug level
+$debug="0";
+#ZAPI KEY
+$zapikey="";
+#proxy
+$http_proxy="";
+$https_proxy="";
+# connection logs for farms. If this parameter is "true" all traffic will be logged
+# else only the new connections will be logged
+$full_farm_logs = "false";
+
+
+## Zevenet Paths
 #Zevenet root directory
 $zdir="/usr/local/zevenet";
 #Zevenet bin directory
 $zbindir = "/usr/local/zevenet/bin";
-#Zevenet bin directory
-$templatedir = "/usr/local/zevenet/share";
 #Zevenet lib directory
 $zlibdir="/usr/share/perl5/Zevenet";#update
 #Document Root for Web Aplication directory
 $basedir="/usr/local/zevenet/www";
 #configuration directory.In this section all config files are saved.
 $configdir="/usr/local/zevenet/config";
+#Directory where is check script. In this directory you can save your own check scripts.
+$libexec_dir="/usr/local/zevenet/app/libexec";
+#Zevenet bin directory
+$templatedir = "/usr/local/zevenet/share";
 #Log directory
 $logdir="/var/log";#update
-#File configuration Zen Cluster
-$filecluster="/usr/local/zevenet/config/cluster.conf";
-#File configuration GUI
-$confhttp="/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";#update
-#ntp server
-$ntp="pool.ntp.org";
-#Do backup to
-$backupfor="/usr/local/zevenet/config /usr/local/zevenet/www/*.pem /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /etc/iproute2/rt_tables /etc/ssh/sshd_config /etc/snmp/snmpd.conf /etc/keepalived/keepalived.conf /etc/conntrackd/conntrackd.conf /etc/hostname /etc/resolv.conf /etc/cron.d/zevenet /zevenet_version";#update
+#piddir
+$piddir="/var/run";
 #Save backups on
 $backupdir="/usr/local/zevenet/backups/";
-#rt tables file
-$rttables = "/etc/iproute2/rt_tables";
-#this file
-$globalcfg = "/usr/local/zevenet/config/global.conf";
-#version ZEVENET
-$version="5.2.7";#update
+
+
+## Zevenet Files
 #appliance version file
 $applianceVersionFile="/etc/zevenet_version";
-#Cipher PCI
-$cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
-#Cipher ssloffloading
-$cipher_ssloffloading="AES";
-#HTPASSWD file
-$htpass="/etc/passwd";#update
-#shadow file
-$shadow_file="/etc/shadow";
-#ZAPI KEY
-$zapikey="";
+#this file
+$globalcfg = "/usr/local/zevenet/config/global.conf";
 # Zen license
 $licenseFileTxt="/usr/local/zevenet/license.txt";
 # Zen license
 $licenseFileHtml="/usr/local/zevenet/license.html";
-# debug level
-$debug="0";
+#File configuration Zen Cluster
+$filecluster="/usr/local/zevenet/config/cluster.conf";
+#File configuration GUI
+$confhttp="/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";#update
+#Do backup to
+$backupfor="/usr/local/zevenet/config /usr/local/zevenet/www/*.pem /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /etc/iproute2/rt_tables /etc/ssh/sshd_config /etc/snmp/snmpd.conf /etc/keepalived/keepalived.conf /etc/conntrackd/conntrackd.conf /etc/hostname /etc/resolv.conf /etc/cron.d/zevenet /zevenet_version";#update
+#Where is temperature file?
+$temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 
+
+# System files
+#rt tables file
+$rttables = "/etc/iproute2/rt_tables";
+#HTPASSWD file
+$htpass="/etc/passwd";#update
+#shadow file
+$shadow_file="/etc/shadow";
 #dns file server?
 $filedns="/etc/resolv.conf";
+# apt sources configuration file
+$fileapt = "/etc/apt/sources.list";
+#SNMP Service
+$snmpdconfig_file="/etc/snmp/snmpd.conf";
+
+
+## binaries
 #Where is hostname binary?
 $hostname="/bin/hostname";
 #Where is kill binary?
@@ -141,8 +164,6 @@ $conntrack="/usr/sbin/conntrack";
 $systemctl="/bin/systemctl";
 #Where is insserv?
 $insserv="/sbin/insserv";
-#Where is temperature file?
-$temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 #Where is update-rc.d?
 $updatercd="/usr/sbin/update-rc.d";
 #Where is packetbl?
@@ -162,20 +183,25 @@ $echo_bin="/bin/echo";
 #Where is nftlb?
 $nftlb_bin="/usr/local/sbin/nftlb";
 
-#proxy
-$http_proxy="";
-$https_proxy="";
 
+# Pound
 #where is pound binary?
 $pound="/usr/local/zevenet/app/pound/sbin/pound";
 #where is pound ctl?
 $poundctl="/usr/local/zevenet/app/pound/sbin/poundctl";
 #pound file configuration template?
-$poundtpl="/usr/local/zevenet/app/pound/etc/poundtpl.cfg";
-#piddir
-$piddir="/var/run";
+$poundtpl="/usr/local/zevenet/app/pound/etc/poundtpl.cfg";#update
 #maximum value of http body to pass to modsecurity
 $waf_body_size="";
+
+
+#Cipher PCI
+$cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
+#Cipher ssloffloading
+$cipher_ssloffloading="AES";
+#ntp server
+$ntp="pool.ntp.org";
+
 
 ## Network global configuration options ##
 $fwmarksconf = "$configdir/fwmarks.conf";
@@ -194,6 +220,7 @@ $routeparams="initcwnd 10 initrwnd 10";
 #IPv6
 $ipv6_enabled="false";
 
+
 ## L4xNat - netfilter
 # Maximum recent ip list
 $recent_ip_list_tot="6000";#update
@@ -202,10 +229,10 @@ $recent_ip_list_hash_size="6000";#update
 # Iptables lock filename
 $iptlock = "/tmp/iptables.lock";
 
-#Directory where is check script. In this directory you can save your own check scripts.
-$libexec_dir="/usr/local/zevenet/app/libexec";
+
 #FarmGuardian binary, create advanced check for backend servers
 $farmguardian="/usr/local/zevenet/bin/farmguardian";#update
+
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
@@ -213,6 +240,7 @@ $rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
 $img_dir="/tmp";#update
 #Relative path where is rrd databases from ZenRRD * no modify
 $rrd_dir="rrd";#update
+
 
 #Service for configure Zen directory replication
 $zenino="/usr/local/zevenet/bin/enterprise.bin zeninotify";#update
@@ -224,6 +252,7 @@ $zenrsync="-azvr --delete";#update
 $arptables="/sbin/arptables";
 #ARP unsolicited
 $arp_unsolicited="";
+
 
 # cron service
 $cron_service = "/etc/init.d/cron";
@@ -258,8 +287,7 @@ $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 #Zen backup
 $zenbackup="/usr/local/zevenet/bin/zenbackup.pl";#update
 
-#SNMP Service
-$snmpdconfig_file="/etc/snmp/snmpd.conf";
+
 
 #Bonding interfaces
 $bond_config_file="/usr/local/zevenet/config/bonding.conf";
@@ -293,11 +321,4 @@ $ssyncd_port    = "9999";
 $throughput_period = "5";
 $throughput_enabled = "false";
 
-# connection logs for farms. If this parameter is "true" all traffic will be logged
-# else only the new connections will be logged
-$full_farm_logs = "false";
-
 #::END Global Section
-
-#!!!!NOT REMOVE NEXT LINE!!!!!!
-1;
