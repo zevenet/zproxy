@@ -178,7 +178,7 @@ my $basedir  = &getGlobalConfiguration( 'basedir' );
 
 ### Exceptions to activation certificate check ### BEGIN
 # Upload activation certificate
-my $upload_cert = ( $mod->{ name } =~ /Zevenet::API3\d::Certificate::Activation/
+my $upload_cert = ( $mod->{ name } =~ /Zevenet::API\d+::Certificate::Activation/
 					&& $func eq 'upload_activation_certificate' );
 
 # Stopping zevenet service
