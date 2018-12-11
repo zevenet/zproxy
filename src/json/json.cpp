@@ -32,6 +32,7 @@ const std::string JSON_KEYS::STATUS_DOWN = "down";
 const std::string JSON_KEYS::STATUS_DISABLED = "disabled";
 const std::string JSON_KEYS::ADDRESS = "address";
 const std::string JSON_KEYS::PORT = "port";
+const std::string JSON_KEYS::HTTPS = "https";
 const std::string JSON_KEYS::BACKEND_ID = "backend-id";
 const std::string JSON_KEYS::FROM = "from";
 const std::string JSON_KEYS::TO = "to";
@@ -42,6 +43,9 @@ const std::string JSON_KEYS::RESPONSE_TIME = "response-time";
 const std::string JSON_KEYS::CONNECT_TIME = "connect-time";
 const std::string JSON_KEYS::WEIGHT = "weight";
 const std::string JSON_KEYS::CONFIG = "config";
+
+const std::string JSON_KEYS::RESULT = "result";
+
 }  // namespace json
 
 json::Json::~Json() { freeJson(); }

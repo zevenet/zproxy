@@ -91,6 +91,7 @@ json::Json *json::JsonParser::parseValue(char current_char,
     case 'n': {
       return new JsonDataValue();
     }
+    case '-':
     case '0':
     case '1':
     case '2':

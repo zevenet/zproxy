@@ -1,7 +1,10 @@
-//
+﻿//
 // Created by abdess on 9/28/18.
 //
 #include "PoundClient.h"
+#include "../util/Network.h"
+#include <unordered_map>
+#include <set>
 
 bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
   if (possible_value)  // thorow error and show help
@@ -12,8 +15,7 @@ bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
 }
 
 void PoundClient::trySetAllTargetId(char *argv[], int &option_index) {
-  // TODO: Fix reverse parsing
-  int to_consume = 2;
+  int to_consume = 1;
   int next_index = option_index + to_consume;
   switch (ctl_command_subject) { /*Intentional fallthrough*/
     case CTL_SUBJECT::SESSION:
@@ -22,18 +24,17 @@ void PoundClient::trySetAllTargetId(char *argv[], int &option_index) {
         next_index++;
       }
     case CTL_SUBJECT::BACKEND: {
-      if (ctl_command != CTL_ACTION::DELETE_SESSION &&
-          !trySetTargetId(this->backend_id, argv[next_index--]))
-        show_usage("no valid backend id found");
+      next_index++;
+        if (ctl_command != CTL_ACTION::DELETE_SESSION &&
+            !trySetTargetId(this->backend_id, argv[next_index--]))
+          show_usage("no valid backend id found");
 
-      if (ctl_command == CTL_ACTION::ADD_SESSION ||
-          ctl_command == CTL_ACTION::DELETE_SESSION) {
-        if (!argv[option_index]) show_usage("no valid session key found");
-        session_key = std::string(argv[next_index--]);
-        if (session_key.empty()) show_usage("no valid session key found");
-
-
-      }
+        if (ctl_command == CTL_ACTION::ADD_SESSION ||
+            ctl_command == CTL_ACTION::DELETE_SESSION) {
+          if (!argv[option_index]) show_usage("no valid session key found");
+          session_key = std::string(argv[next_index--]);
+          if (session_key.empty()) show_usage("no valid session key found");
+        }
     }
     case CTL_SUBJECT::SERVICE:
       if (!trySetTargetId(this->service_id, argv[next_index--]))
@@ -89,22 +90,114 @@ void PoundClient::show_usage(const std::string error) {
 }
 
 bool PoundClient::executeCommand() {
-  // 1. connect to zhttp daemon depending on interface mode selected
-  // 2. compose a http request
-  // 3. print result in pound format
+  Connection client;
+  switch(interface_mode) {
+    case CTL_INTERFACE_MODE::CTL_NONE: {
+    //Lanzar error: "No se ha especificado metodo de conexion"
+    }
 
-  //switch(interface_mode) {
-  //  case:
-  //}
+    case CTL_INTERFACE_MODE::CTL_AF_INET: {
+      int port;
+
+      size_t pos = this->address.rfind(':');
+      if (pos == std::string::npos)
+        return false;
+
+      port = std::stoi(this->address.substr(pos+1, this->address.size() - pos));
+      this->address = this->address.substr(0, pos);
+      client.address = Network::getAddress(this->address, port);
+      client.doConnect(*client.address, 0);
+      break;
+    }
+
+    default: {
+      client.doConnect(control_socket, 0);
+    }
+  }
+
+  json::JsonObject json_object;
+  std::string buffer;
 
   switch (ctl_command) {
+    case CTL_ACTION::ENABLE: {
+        switch (ctl_command_subject) {
+          case CTL_SUBJECT::LISTENER: {
+              std::string path = "/listener/" + std::to_string(listener_id) + "/status";
+              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_ACTIVE));
+              if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                  verboseLog(buffer);
+              }
+              client.write(buffer.c_str(), buffer.size());
+              client.read();
+              return true;
+         }
+         case CTL_SUBJECT::SERVICE: {
+              std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/status";
+              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_ACTIVE));
+              if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                  verboseLog(buffer);
+              }
+              client.write(buffer.c_str(), buffer.size());
+              client.read();
+              return true;
+         }
+         case CTL_SUBJECT::BACKEND: {
+               std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/backend/" + std::to_string(backend_id) + "/status";
+               json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_UP));
+               if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                   verboseLog(buffer);
+               }
+               client.write(buffer.c_str(), buffer.size());
+               client.read();
+               return true;
+          }
+      }
+    }
+    case CTL_ACTION::DISABLE: {
+        switch (ctl_command_subject) {
+          case CTL_SUBJECT::LISTENER: {
+              std::string path = "/listener/" + std::to_string(listener_id) + "/status";
+              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_DISABLED));
+              if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                  verboseLog(buffer);
+              }
+              client.write(buffer.c_str(), buffer.size());
+              client.read();
+              return true;
+          }
+          case CTL_SUBJECT::SERVICE: {
+              std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/status";
+              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_DISABLED));
+              if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                  verboseLog(buffer);
+              }
+              client.write(buffer.c_str(), buffer.size());
+              client.read();
+              return true;
+          }
+          case CTL_SUBJECT::BACKEND: {
+              std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/backend/" + std::to_string(backend_id) + "/status";
+              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_DOWN));
+              if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                  verboseLog(buffer);
+              }
+              client.write(buffer.c_str(), buffer.size());
+              client.read();
+              return true;
+          }
+        }
+    }
     case CTL_ACTION::ADD_SESSION: {
         switch (ctl_command_subject) {
           case CTL_SUBJECT::SESSION: {
-            CtlTask task;
-            task.listener_id = listener_id;
-            task.service_id = service_id;
-            task.data = "{backend-id:" + std::to_string(backend_id) + ", id: \"" + session_key + "\"}";
+            std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/session/";
+            json_object.emplace(json::JSON_KEYS::BACKEND_ID, new json::JsonDataValue(this->backend_id));
+            json_object.emplace(json::JSON_KEYS::ID, new json::JsonDataValue(this->session_key));
+            if (doRequest(http::REQUEST_METHOD::PUT, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                verboseLog(buffer);
+            }
+            client.write(buffer.c_str(), buffer.size());
+            client.read();
             return true;
           }
         }
@@ -112,22 +205,45 @@ bool PoundClient::executeCommand() {
     case CTL_ACTION::DELETE_SESSION: {
       switch (ctl_command_subject) {
         case CTL_SUBJECT::SESSION: {
-          CtlTask task;
-          task.listener_id = listener_id;
-          task.service_id = service_id;
-          task.data = "{id: \"" +  session_key + "\"}";
+          std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/session/";
+          json_object.emplace(json::JSON_KEYS::ID, new json::JsonDataValue(this->session_key));
+          if (doRequest(http::REQUEST_METHOD::DELETE, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+              verboseLog(buffer);
+            }
+          client.write(buffer.c_str(), buffer.size());
+          client.read();
+          return true;
         }
       }
     }
     case CTL_ACTION::FLUSH_SESSIONS: {
       switch (ctl_command_subject) {
         case CTL_SUBJECT::SESSION: {
-          CtlTask task;
-          task.listener_id = listener_id;
-          task.service_id = service_id;
-          task.data = "{backend-id: " + std::to_string(backend_id) + "}";
+            std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/session/";
+            json_object.emplace(json::JSON_KEYS::BACKEND_ID, new json::JsonDataValue(this->backend_id));
+            if (doRequest(http::REQUEST_METHOD::DELETE, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
+                verboseLog(buffer);
+              }
+            client.write(buffer.c_str(), buffer.size());
+            client.read();
+            return true;
         }
       }
+    }
+    default: {
+        std::string path = "/listener/" + std::to_string(listener_id) + "/service";
+        if (doRequest(http::REQUEST_METHOD::GET, http::HTTP_VERSION::HTTP_1_0, "", path, buffer)){
+            verboseLog(buffer);
+        }
+        client.write(buffer.c_str(), buffer.size());
+        client.read();
+        //TODO: AÑADIR COMPROBACIONES
+        HttpResponse response;
+        size_t used_bytes;
+        response.parseResponse(std::string(client.buffer, client.buffer_size), &used_bytes);
+        json::JsonObject *json_response(json::JsonParser::parse(std::string(response.message, response.message_length)));
+        outputStatus(json_response);
+        return true;
     }
   }
   return true;
@@ -230,9 +346,6 @@ bool PoundClient::init(int argc, char *argv[]) {
     }
   }
 
-  if (ctl_command == CTL_ACTION::NONE) {
-    show_usage("No action specified");
-  }
   if (verbose) {
     std::string action_message = "";
     switch (ctl_command) {
@@ -277,5 +390,102 @@ bool PoundClient::init(int argc, char *argv[]) {
     //    for (int i = 0; i < argc; i++) std::cout << argv[i] << " ";
     std::cout << "\n" << action_message << std::endl;
   }
+  executeCommand();
   return true;
+}
+
+bool PoundClient::doRequest(http::REQUEST_METHOD request_method,http::HTTP_VERSION http_version, std::string json_object, std::string path, std::string &buffer) {
+  if (http::http_info::http_verb_strings.count(request_method) > 0) {
+    buffer = http::http_info::http_verb_strings.at(request_method);
+    buffer = buffer + " ";
+  } else {
+    return false;
+  }
+
+  buffer = buffer + path + " ";
+
+  switch (http_version) {
+    case http::HTTP_VERSION::HTTP_1_0: {
+      buffer = buffer + "HTTP/1.0\r\n";
+      break;
+    }
+    case http::HTTP_VERSION::HTTP_1_1: {
+      buffer = buffer + "HTTP/1.1\r\n";
+      break;
+    }
+    case http::HTTP_VERSION::HTTP_2_0: {
+      //buffer = buffer + "HTTP/2.O\r\";
+      //break;
+      return false; //TODO: COMPROBAR SI ES ASÍ LA LINE REQUEST.
+    }
+  }
+
+  buffer = buffer + "Connection: close\r\n";
+  buffer = buffer + "Accept: application/json\r\n";
+
+  buffer = buffer + "\r\n";
+
+  buffer = buffer + json_object;
+  buffer = buffer + "\r\n";
+
+  return true;
+}
+
+void PoundClient::verboseLog(const std::string &str){
+  if (verbose)
+    std::cout << str << std::endl;
+}
+
+void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
+  std::string buffer;
+  buffer += "Requests in queue: 0\n";
+  std::string protocol = "HTTP";
+  if(static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::HTTPS)))
+    protocol += "HTTPS";
+  buffer += "  0. " + protocol + " Listener " + static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::ADDRESS))->string_value + " a\n";
+
+  auto services = static_cast<json::JsonArray *>(json_response_listener->at(json::JSON_KEYS::SERVICES));
+  //TODO recorrer servicios
+  for (auto service : *services) {
+      //TODO: AQUI DESAPARECE EL RESPONSE-TIME (ES POSIBLE QUE POR EL -1)
+      auto service_json = reinterpret_cast<json::JsonObject *>(service);
+      auto backends = static_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::BACKENDS));
+      int total_weight = 0;
+      int service_counter = 0;
+      for (auto backend : *backends) {
+        auto backend_json = reinterpret_cast<json::JsonObject *>(backend);
+        total_weight += static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT))->number_value;
+      }
+      std::string service_name = static_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::NAME))->string_value;
+      std::string service_status = static_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::STATUS))->string_value;
+      buffer += "    " + std::to_string(service_counter) + ". Service \"" + service_name + "\" " + service_status + " (" + std::to_string(total_weight) + ")\n";
+      service_counter++;
+
+      int backend_counter = 0;
+      for (auto backend : *backends) {
+        auto backend_json = reinterpret_cast<json::JsonObject *>(backend);
+        int weight = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT))->number_value;
+        std::string backend_address = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ADDRESS))->string_value;
+        std::string backend_status = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::STATUS))->string_value;
+        int backend_port = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PORT))->number_value;
+        double response_time = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::RESPONSE_TIME))->double_value;
+
+        double pending_connections = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PENDING_CONNS))->number_value;
+
+        buffer += "      " + std::to_string(backend_counter) + ". Backend " + backend_address + ":" + std::to_string(backend_port) + " " + backend_status + " (" + std::to_string(weight) + " " + std::to_string(response_time) + ") alive (" + std::to_string(pending_connections) + ")\n";
+        backend_counter++;
+      }
+
+      auto sessions = static_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::SESSIONS));
+      int session_counter = 0;
+      for (auto session : *sessions) {
+        auto session_json = reinterpret_cast<json::JsonObject *>(session);
+        std::string session_id = static_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::ID))->string_value;
+        int session_backend = static_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::BACKEND_ID))->number_value;
+        buffer += "      " + std::to_string(session_counter) + ". Session " + session_id + " -> " + std::to_string(session_backend-1) + "\n";
+        session_counter++;
+      }
+
+  }
+  std::cout << buffer << std::endl;
 }

@@ -3,9 +3,13 @@
 //
 #pragma once
 #include <getopt.h>
+#include <set>
 #include "../connection/connection.h"
 #include "../event/epoll_manager.h"
 #include "../http/HttpRequest.h"
+#include "../json/json.h"
+#include "../json/JsonDataValue.h"
+#include "../json/jsonparser.h"
 #include "ctl.h"
 
 #define NO_VALUE -1
@@ -48,7 +52,7 @@ class PoundClient /*: public EpollManager*/ {
   std::string session_key;    /* -k option */
   std::string address;
 
-  int listener_id = NO_VALUE;
+  int listener_id = 0;
   int service_id = NO_VALUE;
   int backend_id = NO_VALUE;
 
@@ -64,7 +68,9 @@ class PoundClient /*: public EpollManager*/ {
   bool trySetTargetId(int &target_id, char *possible_value);
   void trySetAllTargetId(char *argv[], int &option_index);
   void show_usage(const std::string error = "");
-
+  bool doRequest(http::REQUEST_METHOD request_method,http::HTTP_VERSION http_version, std::string json_object, std::string path, std::string &buffer);
+  void verboseLog(const std::string& str);
+  void outputStatus(json::JsonObject *json_response_listener);
   bool executeCommand();
 
  public:

@@ -51,5 +51,6 @@ public:
 
   int doAccept();
   IO::IO_OP doConnect(addrinfo &address, int timeout);
+  IO::IO_OP doConnect(const std::string &af_unix_socket_path, int timeout);
   bool isConnected();
 };

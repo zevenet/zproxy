@@ -29,7 +29,7 @@ std::string JsonArray::stringify(bool prettyfy, int tabs) {
       res += '\t';
     if ((*it) == nullptr)
       continue;
-    res += (*it)->stringify(tabs + 1);
+    res += (*it)->stringify(prettyfy, tabs + 1);
     if (it != --this->end()) {
       res += ",";
     }
@@ -67,7 +67,7 @@ std::string JsonObject::stringify(bool prettyfy, int tabs) {
       res += '\t';
     if (it->second == nullptr)
       continue;
-    res += "\"" + it->first + "\" : " + it->second->stringify(tabs + 1);
+    res += "\"" + it->first + "\" : " + it->second->stringify(prettyfy, tabs + 1);
     if (it != --this->end()) {
       res += ",";
     }

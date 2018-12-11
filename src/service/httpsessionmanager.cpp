@@ -217,6 +217,8 @@ bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend
         return false;
       std::lock_guard<std::mutex> locker(lock_mtx);
       std::string key = static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::ID))->string_value;
+      if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 && json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
+        new_session->setTimeStamp(static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::LAST_SEEN_TS))->number_value);
       sessions_set.emplace(std::make_pair(key, new_session));
       return true;
     } else {

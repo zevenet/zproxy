@@ -36,6 +36,7 @@ struct JSON_KEYS {
 
   static const std::string ADDRESS;
   static const std::string PORT;
+  static const std::string HTTPS;
   static const std::string BACKEND_ID;
   static const std::string FROM;
   static const std::string TO;
@@ -46,6 +47,8 @@ struct JSON_KEYS {
   static const std::string CONNECT_TIME;
   static const std::string WEIGHT;
   static const std::string CONFIG;
+
+  static const std::string RESULT;
 };
 
 enum class JSON_VALUE_TYPE {

@@ -142,7 +142,9 @@ int main(int argc, char *argv[]) {
   ::getrlimit(RLIMIT_NOFILE, &r);
   Debug::Log("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur));
   /*Set process user and group*/
+  if (config.user != nullptr)
   Environment::setUid(std::string(config.user));
+  if(config.group !=nullptr)
   Environment::setGid(std::string(config.group));
 
   /* SSL stuff */

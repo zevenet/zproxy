@@ -9,7 +9,7 @@
 namespace json {
 
 // template <typename JsonType>
-class JsonArray : public Json, private std::vector<Json *> {
+class JsonArray : public Json, protected std::vector<Json *> {
   //  typedef JsonType T;
   typedef std::vector<Json *> vector;
 
@@ -26,7 +26,7 @@ public:
 };
 
 // template <typename JsonType>
-class JsonObject : public Json, private std::map<std::string, Json *> {
+class JsonObject : public Json, protected std::map<std::string, Json *> {
   //  typedef Json T;
   typedef std::map<std::string, Json *> map;
 
@@ -39,6 +39,7 @@ public:
   using map::emplace;
   using map::empty;
   using map::end;
+  using map::count;
 
   bool isObject() override;
   void freeJson() override;

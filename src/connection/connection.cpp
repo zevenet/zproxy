@@ -294,9 +294,7 @@ void Connection::closeConnection() {
   }
 }
 IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
-  long arg;
-  socklen_t len;
-  int result = -1, valopt;
+  int result = -1;
   if ((socket_fd = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
     // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
@@ -305,6 +303,34 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
   if (timeout > 0)
     Network::setSocketNonBlocking(socket_fd);
   if ((result = ::connect(socket_fd, address_.ai_addr, sizeof(address_))) < 0) {
+    if (errno == EINPROGRESS && timeout > 0) {
+      return IO::IO_OP::OP_IN_PROGRESS;
+
+    } else {
+      Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
+                    strerror(errno));
+      return IO::IO_OP::OP_ERROR;
+    }
+  }
+  // Create stream object if connected
+  return result != -1 ? IO::IO_OP::OP_SUCCESS : IO::IO_OP::OP_ERROR;
+}
+
+IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path, int timeout)
+{
+  int result = -1;
+  if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+    // TODO::LOG message
+    Debug::logmsg(LOG_WARNING, "socket() failed ");
+    return IO::IO_OP::OP_ERROR;
+  }
+  if (timeout > 0)
+    Network::setSocketNonBlocking(socket_fd);
+
+  struct sockaddr_un serveraddr;
+  strcpy(serveraddr.sun_path, af_unix_socket_path.c_str());
+  serveraddr.sun_family = AF_UNIX;
+  if ((result = ::connect(socket_fd, (struct sockaddr *)&serveraddr, SUN_LEN(&serveraddr))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
 

@@ -180,7 +180,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
     // delete config ??
     JsonObject *json_data = JsonParser::parse(task.data);
     if (task.subject == ctl::CTL_SUBJECT::SESSION) {
-        if (!deleteSession(json_data, backend_set))
+        if (!deleteSession(*json_data, backend_set))
           return JSON_OP_RESULT::ERROR;
         return JSON_OP_RESULT::OK;
     } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
@@ -248,7 +248,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
         } else if (value == JSON_KEYS::STATUS_DISABLED) {
           this->disabled = true;
         }
-        Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", id, value.c_str());
+        Debug::logmsg(LOG_NOTICE, "Set Service %d %s", id, value.c_str());
         return JSON_OP_RESULT::OK;
       }
       break;

@@ -63,6 +63,8 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
                 new json::JsonDataValue(listener_config_.address));
   root->emplace(JSON_KEYS::PORT,
                 new json::JsonDataValue(listener_config_.port));
+  root->emplace(JSON_KEYS::HTTPS,
+                new json::JsonDataValue(listener_config_.ctx != nullptr));
   auto services_array = new json::JsonArray();
   for (auto service : services)
     services_array->push_back(service->getServiceJson());
