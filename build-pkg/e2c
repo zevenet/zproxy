@@ -40,7 +40,12 @@ zevenet_home='usr/local/zevenet'
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 com_dir=${BASE_DIR}/CE_WORKDIR
 ent_dir=${BASE_DIR}/EE_WORKDIR
+rsync_bin=`which rsync`
 
+if [[ -z "$rsync_bin" ]]; then
+	echo "ERROR: Please install rsync first. Thanks ;)"
+	exit 1;
+fi
 
 # clone CE repository
 msg "Cloning the community repository..."
@@ -59,7 +64,7 @@ EE_COMMIT=$(git log --oneline | head -1 | cut -d' ' -f1)
 msg "Cleaning the EE directory..."
 rm -rf $ent_dir
 mkdir $ent_dir
-rsync -a --exclude "/$(basename "$BASE_DIR")" ../* $ent_dir/
+$rsync_bin -a --exclude "/$(basename "$BASE_DIR")" ../* $ent_dir/
 
 
 # load files
