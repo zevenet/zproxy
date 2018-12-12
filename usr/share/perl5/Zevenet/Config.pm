@@ -92,8 +92,6 @@ sub parseGlobalConfiguration
 	}
 	close $global_conf_file;
 
-	print Dumper $global_conf;
-
 	# expand the variables
 	my $var;
 	my $value;
