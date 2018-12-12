@@ -2,19 +2,8 @@
 debian_versions=(jessie stretch)
 
 # files of CE
-community_files=(
-	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
-	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
-	zlb-debian-installer.sh
-	README.md
-	DEBIAN/control
-	DEBIAN/preinst
-	DEBIAN/postinst
-	etc/zevenet_version
-	etc/motd.tail
-	usr/local/zevenet/share/global.conf.template
-	usr/local/zevenet/share/pound.cfg.template
-)
+# All files from the directory: /build-pkg/files-ce
+
 
 # excepciones que no deben ser copiadas y no se encriptan. No deben estar en la CE
 enterprise_files=(
@@ -92,6 +81,8 @@ enterprise_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	usr/local/zevenet/www/zapi/v3.2
 	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
+	DEBIAN/
+	build-pkg/
 )
 
 installation_files=(
