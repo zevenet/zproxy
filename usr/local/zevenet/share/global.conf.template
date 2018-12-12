@@ -34,7 +34,7 @@ $libexec_dir="$zdir/app/libexec";#update
 #Zevenet bin directory
 $templatedir = "$zdir/share";#update
 #Save backups on
-$backupdir="$zdir/backups/";#update
+$backupdir="$zdir/backups";#update
 #Log directory
 $logdir="/var/log";#update
 #piddir
