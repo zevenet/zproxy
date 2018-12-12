@@ -20,44 +20,25 @@ $full_farm_logs = "false";
 
 ## Zevenet Paths
 #Zevenet root directory
-$zdir="/usr/local/zevenet";
-#Zevenet bin directory
-$zbindir = "/usr/local/zevenet/bin";
+$zdir="/usr/local/zevenet";#update
 #Zevenet lib directory
 $zlibdir="/usr/share/perl5/Zevenet";#update
-#Document Root for Web Aplication directory
-$basedir="/usr/local/zevenet/www";
-#configuration directory.In this section all config files are saved.
-$configdir="/usr/local/zevenet/config";
-#Directory where is check script. In this directory you can save your own check scripts.
-$libexec_dir="/usr/local/zevenet/app/libexec";
 #Zevenet bin directory
-$templatedir = "/usr/local/zevenet/share";
+$zbindir = "$zdir/bin";#update
+#Document Root for Web Aplication directory
+$basedir="$zdir/www";#update
+#configuration directory.In this section all config files are saved.
+$configdir="$zdir/config";#update
+#Directory where is check script. In this directory you can save your own check scripts.
+$libexec_dir="$zdir/app/libexec";#update
+#Zevenet bin directory
+$templatedir = "$zdir/share";#update
+#Save backups on
+$backupdir="$zdir/backups/";#update
 #Log directory
 $logdir="/var/log";#update
 #piddir
 $piddir="/var/run";
-#Save backups on
-$backupdir="/usr/local/zevenet/backups/";
-
-
-## Zevenet Files
-#appliance version file
-$applianceVersionFile="/etc/zevenet_version";
-#this file
-$globalcfg = "/usr/local/zevenet/config/global.conf";
-# Zen license
-$licenseFileTxt="/usr/local/zevenet/license.txt";
-# Zen license
-$licenseFileHtml="/usr/local/zevenet/license.html";
-#File configuration Zen Cluster
-$filecluster="/usr/local/zevenet/config/cluster.conf";
-#File configuration GUI
-$confhttp="/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";#update
-#Do backup to
-$backupfor="/usr/local/zevenet/config /usr/local/zevenet/www/*.pem /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /etc/iproute2/rt_tables /etc/ssh/sshd_config /etc/snmp/snmpd.conf /etc/keepalived/keepalived.conf /etc/conntrackd/conntrackd.conf /etc/hostname /etc/resolv.conf /etc/cron.d/zevenet /zevenet_version";#update
-#Where is temperature file?
-$temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 
 
 # System files
@@ -73,6 +54,23 @@ $filedns="/etc/resolv.conf";
 $fileapt = "/etc/apt/sources.list";
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";
+
+
+## Zevenet Files
+#appliance version file
+$applianceVersionFile="/etc/zevenet_version";
+#this file
+$globalcfg = "$configdir/global.conf";#update
+# Zen license
+$licenseFileTxt="$zdir/license.txt";#update
+# Zen license
+$licenseFileHtml="$zdir/license.html";#update
+#File configuration Zen Cluster
+$filecluster="$configdir/cluster.conf";#update
+#File configuration GUI
+$confhttp="$zdir/app/cherokee/etc/cherokee/cherokee.conf";#update
+#Where is temperature file?
+$temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 
 
 ## binaries
@@ -151,9 +149,9 @@ $modprobe="/sbin/modprobe";
 #Where is lsmod?
 $lsmod="/sbin/lsmod";
 #Where is gdnsd?
-$gdnsd="/usr/local/zevenet/app/gdnsd/sbin/gdnsd";
+$gdnsd="$zdir/app/gdnsd/sbin/gdnsd";#update
 #Where is l4sd?
-$l4sd="/usr/local/zevenet/bin/l4sd";#update
+$l4sd="$zbindir/l4sd";#update
 #Where is id binary?
 $bin_id="/usr/bin/id";
 #Where is wget binary?
@@ -186,11 +184,13 @@ $nftlb_bin="/usr/local/sbin/nftlb";
 
 # Pound
 #where is pound binary?
-$pound="/usr/local/zevenet/app/pound/sbin/pound";
+$base_pound="$zdir/app/pound";#update
+#where is pound binary?
+$pound="$base_pound/sbin/pound";#update
 #where is pound ctl?
-$poundctl="/usr/local/zevenet/app/pound/sbin/poundctl";
+$poundctl="$base_pound/sbin/poundctl";#update
 #pound file configuration template?
-$poundtpl="/usr/local/zevenet/app/pound/etc/poundtpl.cfg";#update
+$poundtpl="$base_pound/etc/poundtpl.cfg";#update
 #maximum value of http body to pass to modsecurity
 $waf_body_size="";
 
@@ -231,11 +231,11 @@ $iptlock = "/tmp/iptables.lock";
 
 
 #FarmGuardian binary, create advanced check for backend servers
-$farmguardian="/usr/local/zevenet/bin/farmguardian";#update
+$farmguardian="$zbindir/farmguardian";#update
 
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
-$rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
+$rrdap_dir="$zdir/app/zenrrd";#update
 #Relative path in Web Root directory ($basedir) where is graphs from ZenRRD *no modify
 $img_dir="/tmp";#update
 #Relative path where is rrd databases from ZenRRD * no modify
@@ -243,7 +243,7 @@ $rrd_dir="rrd";#update
 
 
 #Service for configure Zen directory replication
-$zenino="/usr/local/zevenet/bin/enterprise.bin zeninotify";#update
+$zenino="$zbindir/enterprise.bin zeninotify";#update
 #Zen Inotify pid file
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
@@ -262,14 +262,14 @@ $keepalived_conf="/etc/keepalived/keepalived.conf";
 # conntrackd configuration file
 $conntrackd_conf="/etc/conntrackd/conntrackd.conf";
 # cluster floating interfaces configuration file path
-$floatfile="/usr/local/zevenet/config/float.conf";
+$floatfile="$configdir/float.conf";#update
 # node_status file path
-$znode_status_file="/usr/local/zevenet/node_status";
+$znode_status_file="$zdir/node_status";#update
 
 # zcluster-manager command path
-$zcluster_manager="/usr/local/zevenet/bin/zcluster-manager";#update
+$zcluster_manager="$zbindir/zcluster-manager";#update
 # ssh-copy-id file path
-$ssh_copy_id="/usr/local/zevenet/bin/ssh-copy-id.sh";#update
+$ssh_copy_id="$zbindir/ssh-copy-id.sh";#update
 # primary-backup conntrackd script
 $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
@@ -285,12 +285,13 @@ $key_id="id_rsa";
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
-$zenbackup="/usr/local/zevenet/bin/zenbackup.pl";#update
+$zenbackup="$zbindir/zenbackup.pl";#update
 
-
+#Do backup to
+$backupfor="$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file $keepalived_conf $conntrackd_conf /etc/hostname $filedns /etc/cron.d/zevenet $applianceVersionFile";#update
 
 #Bonding interfaces
-$bond_config_file="/usr/local/zevenet/config/bonding.conf";
+$bond_config_file="$configdir/bonding.conf";#update
 $sys_net_dir="/sys/class/net";
 $bonding_masters_filename="/sys/class/net/bonding_masters";
 $bonding_mode_filename="bonding/mode";
@@ -298,21 +299,21 @@ $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
-$notifConfDir = "/usr/local/zevenet/config/notifications";
-$secTemplate="/usr/local/zevenet/share/sec.rules";
+$notifConfDir = "$configdir/notifications";#update
+$secTemplate="$zdir/share/sec.rules";#update
 $syslogFile="/var/log/syslog";
 
 #IPDS Module
-$blacklistsPath = "/usr/local/zevenet/config/ipds/blacklists/lists";
-$blacklistsConf = "/usr/local/zevenet/config/ipds/blacklists/lists.conf";
+$blacklistsPath = "$configdir/ipds/blacklists/lists";#update
+$blacklistsConf = "$configdir/ipds/blacklists/lists.conf";#update
 $blacklistsCronFile = "/etc/cron.d/blacklists";
-$dosConf = "/usr/local/zevenet/config/ipds/dos/dos.conf";
-$dosConfDir = "/usr/local/zevenet/config/ipds/dos";
+$dosConf = "$configdir/ipds/dos/dos.conf";#update
+$dosConfDir = "$configdir/ipds/dos";#update
 
 #Ssyncd
 $ssyncd_enabled = "true";
-$ssyncd_bin     = "/usr/local/zevenet/app/ssyncd/bin/ssyncd";
-$ssyncdctl_bin  = "/usr/local/zevenet/app/ssyncd/bin/ssyncdctl";
+$ssyncd_bin     = "$zdir/app/ssyncd/bin/ssyncd";#update
+$ssyncdctl_bin  = "$zdir/app/ssyncd/bin/ssyncdctl";#update
 $ssyncd_port    = "9999";
 
 # time period to get the interface throughput stats
