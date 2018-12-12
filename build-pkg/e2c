@@ -74,9 +74,7 @@ done
 
 # copy community files
 msg "Copying CE files..."
-for file in "${community_files[@]}"; do
-	cp -r $ce_files_dir ${tmp_dir}
-done
+cp -r ${ce_files_dir}/* ${tmp_dir}
 
 
 # clone CE repository
@@ -93,7 +91,7 @@ rm -rf ${com_dir}/*
 
 # copy all EE to the CE
 cp -r ${tmp_dir}/* $com_dir
-rm -rf ${tmp_dir}/*
+rm -rf ${tmp_dir}
 
 
 # apply the commit to CE
