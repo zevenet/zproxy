@@ -77,10 +77,13 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Service/
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
-	usr/local/zevenet/www/zapi/v3
-	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
-	usr/local/zevenet/www/zapi/v3.2
-	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
+	usr/share/perl5/Zevenet/RBAC/
+	usr/share/perl5/Zevenet/Cmd/
+	usr/share/perl5/Zevenet/Certificate/
+	usr/share/perl5/Zevenet/Farm/GSLB
+	usr/share/perl5/Zevenet/Farm/HTTP/Service
+	usr/share/perl5/Zevenet/Farm/HTTP/HTTPS
+	usr/local/zevenet/www/zapi/
 	DEBIAN/
 	build-pkg/
 )
