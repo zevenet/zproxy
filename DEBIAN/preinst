@@ -229,7 +229,7 @@ sub certcontrol
 			$nb        = join '', @notbefore;
 			$nb =~ s/not before.*:\ //i;
 			$ini = str2time( $nb );
-			my $totaldays = ( $end - $ini ) / 86400;
+			$totaldays = ( $end - $ini ) / 86400;
 			$totaldays =~ s/\-//g;
 
 		} else {
