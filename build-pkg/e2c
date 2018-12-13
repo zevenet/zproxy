@@ -96,7 +96,6 @@ cp -r ${ce_files_dir}/* ${tmp_dir}
 
 
 # Overwrite CE global.conf parameters
-overwrite_param "version" "\"5.0.2\""
 overwrite_param "base_pound" "\"/usr\";#update"
 overwrite_param "poundtpl" "\"$templatedir/pound.cfg.template\""
 overwrite_param "libexec_dir" "\"/usr/lib/nagios/plugins\""
