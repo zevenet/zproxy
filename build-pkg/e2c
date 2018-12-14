@@ -97,13 +97,13 @@ cp -r ${ce_files_dir}/* ${tmp_dir}
 
 # Overwrite CE global.conf parameters
 overwrite_param "base_pound" '"/usr";#update'
-overwrite_param "poundtpl" '"$templatedir/pound.cfg.template"'
-overwrite_param "libexec_dir" '"/usr/lib/nagios/plugins"'
-overwrite_param "routeparams" '""'
+overwrite_param "poundtpl" '"$templatedir/pound.cfg.template";'
+overwrite_param "libexec_dir" '"/usr/lib/nagios/plugins";'
+overwrite_param "routeparams" '"";'
 overwrite_param "backupfor" '"$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file /etc/hostname $filedns /etc/cron.d/zevenet $applianceVersionFile";#update'
-overwrite_param "recent_ip_list_tot" '""'
-overwrite_param "recent_ip_list_hash_size" '""'
-overwrite_param "ssyncd_enabled" '"false"'
+overwrite_param "recent_ip_list_tot" '"";'
+overwrite_param "recent_ip_list_hash_size" '"";'
+overwrite_param "ssyncd_enabled" '"false";'
 
 # Remove EE params
 # ....
