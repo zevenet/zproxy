@@ -742,10 +742,9 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		  &setDatalinkFarmServer( $id_server,
 								  $be->{ ip },
 								  $be->{ interface },
-								  "",
 								  $be->{ weight },
 								  $be->{ priority },
-								  "", $farmname );
+								  $farmname );
 
 		if ( $status == -1 )
 		{
