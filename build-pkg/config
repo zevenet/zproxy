@@ -18,7 +18,6 @@ enterprise_files=(
 	usr/local/zevenet/bin/fwmark_tag_fix.pl
 	usr/local/zevenet/bin/if_throughput.pl
 	usr/local/zevenet/bin/netplug.pl
-	usr/local/zevenet/bin/nftlbd
 	usr/local/zevenet/bin/persistent-nics
 	usr/local/zevenet/bin/rename_nics.sh
 	usr/local/zevenet/bin/sendNotification
@@ -29,8 +28,6 @@ enterprise_files=(
 	usr/local/zevenet/bin/zcluster-send-action
 	usr/local/zevenet/bin/zenbui
 	usr/local/zevenet/bin/zeninotify
-	usr/local/zevenet/bin/zenntp
-	usr/local/zevenet/bin/zenrrd
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
