@@ -74,8 +74,8 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Routes/RBAC.pm
 	usr/share/perl5/Zevenet/API40/Routes/WAF.pm
 	usr/share/perl5/Zevenet/API40/Routes/Statistics.pm
-	usr/share/perl5/Zevenet/API40/Farm/RBAC/
-	usr/share/perl5/Zevenet/API40/Farm/IPDS/
+	usr/share/perl5/Zevenet/API40/RBAC/
+	usr/share/perl5/Zevenet/API40/IPDS/
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
