@@ -50,6 +50,10 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API31/Routes/RBL.pm
 	usr/share/perl5/Zevenet/API31/Routes/SSH.pm
 	usr/share/perl5/Zevenet/API31/Routes/Statistics.pm
+	usr/share/perl5/Zevenet/API31/IPDS/
+	usr/share/perl5/Zevenet/API31/Stats/
+	usr/share/perl5/Zevenet/API31/Farm/HTTP/
+	usr/share/perl5/Zevenet/API31/Farm/Service/
 	usr/share/perl5/Zevenet/API32/
 	usr/share/perl5/Zevenet/API40/Certificate/
 	usr/share/perl5/Zevenet/API40/Routes/Activation.pm
@@ -70,6 +74,9 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Routes/RBAC.pm
 	usr/share/perl5/Zevenet/API40/Routes/WAF.pm
 	usr/share/perl5/Zevenet/API40/Routes/Statistics.pm
+	usr/share/perl5/Zevenet/API40/Farm/RBAC/
+	usr/share/perl5/Zevenet/API40/Farm/IPDS/
+	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
 	usr/share/perl5/Zevenet/ELoad.pm
