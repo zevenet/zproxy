@@ -3,6 +3,7 @@
 //
 #include "PoundClient.h"
 #include "../util/Network.h"
+#include "../util/utils.h"
 #include <unordered_map>
 #include <set>
 
@@ -440,9 +441,15 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
   std::string buffer;
   buffer += "Requests in queue: 0\n";
   std::string protocol = "HTTP";
+  std::string listener_status = "a";
+
+//  Use this if we have multiple listeners
+//  if(static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::STATUS))->string_value == "disabled")
+//    listener_status = "*D";
+
   if(static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::HTTPS)))
     protocol += "HTTPS";
-  buffer += "  0. " + protocol + " Listener " + static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::ADDRESS))->string_value + " a\n";
+  buffer += "  0. " + protocol + " Listener " + static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::ADDRESS))->string_value + " " + listener_status + "\n";
 
   auto services = static_cast<json::JsonArray *>(json_response_listener->at(json::JSON_KEYS::SERVICES));
   //TODO recorrer servicios
@@ -469,10 +476,9 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         std::string backend_status = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::STATUS))->string_value;
         int backend_port = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PORT))->number_value;
         double response_time = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::RESPONSE_TIME))->double_value;
+        int connections = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::CONNECTIONS))->number_value;
 
-        double pending_connections = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PENDING_CONNS))->number_value;
-
-        buffer += "      " + std::to_string(backend_counter) + ". Backend " + backend_address + ":" + std::to_string(backend_port) + " " + backend_status + " (" + std::to_string(weight) + " " + std::to_string(response_time) + ") alive (" + std::to_string(pending_connections) + ")\n";
+        buffer += "      " + std::to_string(backend_counter) + ". Backend " + backend_address + ":" + std::to_string(backend_port) + " " + backend_status + " (" + std::to_string(weight) + " " + conversionHelper::to_string_with_precision(response_time) + ") alive (" + std::to_string(connections) + ")\n";
         backend_counter++;
       }
 
@@ -487,5 +493,6 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
       }
 
   }
+
   std::cout << buffer << std::endl;
 }

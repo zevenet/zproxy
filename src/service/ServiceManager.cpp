@@ -37,6 +37,10 @@ Service *ServiceManager::getService(HttpRequest &request) {
   return nullptr;
 }
 
+std::vector<Service *> ServiceManager::getServices(){
+  return services;
+}
+
 bool ServiceManager::addService(ServiceConfig &service_config, int id) {
   Service *service = new Service(service_config);
   service->id = id;

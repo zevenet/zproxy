@@ -47,12 +47,12 @@ class HttpSessionManager {
   // used
  protected:
   HttpSessionType session_type;
-  unsigned int ttl;
   std::string sess_id; /* id to construct the pattern */
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
 
  public:
+  unsigned int ttl;
   static std::mutex lock_mtx;
   std::unordered_map<std::string, SessionInfo *>
       sessions_set;  // key can be anything, deppending on the type of session

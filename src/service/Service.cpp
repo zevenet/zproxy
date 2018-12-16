@@ -1,5 +1,3 @@
-
-
 //
 // Created by abdess on 4/25/18.
 //
@@ -380,6 +378,19 @@ Backend *Service::getNextBackend(bool only_emergency) {
     bck = emergency_backend_set[emergency_seed % backend_set.size()];
   } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
   return nullptr;
+}
+
+void Service::doMaintenance() {
+  for (Backend* bck : this->backend_set) {
+    bck->doMaintenance();
+  }
+
+  for (auto session : sessions_set) {
+    if (session.second->hasExpired(ttl)) {
+      sessions_set.erase(session.first);
+    }
+  }
+  return;
 }
 
 Service::~Service() {

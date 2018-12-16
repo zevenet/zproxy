@@ -18,6 +18,7 @@ class Listener : public EpollManager,
   Connection listener_connection;
   std::map<int, StreamManager *> stream_manager_set;
   ListenerConfig listener_config;
+   ServiceManager *service_manager;
   TimerFd timer_maintenance;
   void doWork();
   StreamManager *getManager(int fd);

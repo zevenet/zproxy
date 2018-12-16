@@ -49,6 +49,7 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   int response_timeout{};
   //  bool disabled;
 
+  void doMaintenance();
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;
 

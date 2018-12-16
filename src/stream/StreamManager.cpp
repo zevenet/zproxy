@@ -130,8 +130,6 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case SIGNAL:
       onSignalEvent(fd);
       break;
-    case MAINTENANCE: // TODO:: Handle health checkers, sessions ...
-      break;
     default: // should not enter here
       break;
     }
@@ -224,6 +222,7 @@ void StreamManager::start(int thread_id_) {
   }
 #if SM_HANDLE_ACCEPT
   handleAccept(listener_connection.getFileDescriptor());
+  //TODO: AÑADIR TIMER_FD de MAINTENANCE
 #endif
 }
 
@@ -672,6 +671,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   Debug::logmsg(LOG_REMOVE, "IN WRITE buffer_size: %d bytes left: %d",
                 stream->backend_connection.buffer_size,
                 stream->response.message_bytes_left);
+  //TODO: Comprobar si estan las sesiones activas y añadir setCookie al extra headers de response (como puntero)
   if (stream->response.message_bytes_left > 0) {
     result = stream->backend_connection.writeContentTo(
         stream->client_connection, stream->response);

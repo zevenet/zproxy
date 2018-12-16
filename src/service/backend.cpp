@@ -120,6 +120,7 @@ JsonObject* Backend::getBackendJson() {
                     new JsonDataValue(JSON_KEYS::STATUS_DISABLED));
       break;
     default:
+
       root->emplace(JSON_KEYS::STATUS, new JsonDataValue(JSON_KEYS::UNKNOWN));
       break;
   }
@@ -129,4 +130,13 @@ JsonObject* Backend::getBackendJson() {
   root->emplace(JSON_KEYS::CONNECT_TIME, new JsonDataValue(this->avg_conn_time));
 
   return root;
+}
+
+void Backend::doMaintenance() {
+  Connection checkOut;
+  if (checkOut.doConnect(*address_info, 0) != IO::IO_OP::OP_SUCCESS) {
+    this->status = BACKEND_STATUS::BACKEND_DOWN;
+    checkOut.closeConnection();
+  }
+  return;
 }

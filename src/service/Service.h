@@ -45,6 +45,7 @@ class Service : public sessions::HttpSessionManager,
                   int backend_id, bool emergency = false);
   void addBackend(BackendConfig *backend_config, int backend_id,
                   bool emergency = true);
+  void doMaintenance();
   bool doMatch(HttpRequest &request);
   static void setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
 

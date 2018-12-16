@@ -12,7 +12,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
   if (event_group == EVENT_GROUP::MAINTENANCE &&
       fd == timer_maintenance.getFileDescriptor()) {
     Debug::Log("Doing maintenance", LOG_REMOVE);
-    Debug::Log("Session table\n\t\tKey\tbackend", LOG_REMOVE);
+    //Debug::Log("Session table\n\t\tKey\tbackend", LOG_REMOVE);
     //    std::vector<std::string> keys_to_delete;
     //    if (!sessions::HttpSessionManager::sessions_set.empty()) {
     //      for (auto session : sessions::HttpSessionManager::sessions_set) {
@@ -31,9 +31,16 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
     //        delete session;
     //      }
     //    }
+    //for (auto service : service_manager->services) {
+    //  service->doMaintenance();
+    //}
     timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
     updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
              EVENT_GROUP::MAINTENANCE);
+
+    for (auto serv : service_manager->getServices()) {
+      serv->doMaintenance();
+    }
     return;
   }
   switch (event_type) {
@@ -145,9 +152,9 @@ void Listener::start() {
   //  }
   //#else
 
-  //  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
-  //  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
-  //        EVENT_GROUP::MAINTENANCE);
+    timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
+    addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
+          EVENT_GROUP::MAINTENANCE);
 
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();
@@ -163,6 +170,8 @@ StreamManager* Listener::getManager(int fd) {
 
 bool Listener::init(ListenerConfig& config) {
   listener_config = config;
+  service_manager = ServiceManager::getInstance(listener_config);
+
   if (!listener_connection.listen(listener_config.addr)) return false;
 #if SM_HANDLE_ACCEPT
   return true;

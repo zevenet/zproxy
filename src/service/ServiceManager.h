@@ -22,6 +22,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
   ServiceManager(ListenerConfig &listener_config);
   ~ServiceManager();
   Service *getService(HttpRequest &request);
+  std::vector<Service *> getServices();
   bool addService(ServiceConfig &service_config, int id);
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;

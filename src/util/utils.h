@@ -103,3 +103,14 @@ struct ThreadHelper {
   }
 };
 } // namespace helper
+
+namespace conversionHelper {
+  template <typename T>
+  std::string to_string_with_precision(const T a_value, const int n = 4)
+  {
+      std::ostringstream out;
+      out.precision(n);
+      out << std::fixed << a_value;
+      return out.str();
+  }
+} // namespace conversionHelper
