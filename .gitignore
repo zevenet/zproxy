@@ -1,9 +1,11 @@
 # ignore all by default
 /*
 
+
 # exceptions
 !/license.txt
 !/build-pkg/
+!/DEBIAN/
 
 #!/etc/cron.d/zevenet
 !/etc/profile
