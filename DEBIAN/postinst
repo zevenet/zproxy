@@ -96,7 +96,7 @@ rm -rf /var/log/conntrackd-stats* 2>/dev/null
 
 # SNMP and sec services
 if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
-	cp /usr/local/zevenet/share/snmpd.conf.tpl /etc/snmp/snmpd.conf
+	cp /usr/local/zevenet/share/snmpd.conf.template /etc/snmp/snmpd.conf
 fi
 if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
         sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd

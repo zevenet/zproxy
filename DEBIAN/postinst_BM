@@ -113,7 +113,7 @@ sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 
 # disable SNMP service
 if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
-	cp /usr/local/zevenet/share/snmpd.conf.tpl /etc/snmp/snmpd.conf
+	cp /usr/local/zevenet/share/snmpd.conf.template /etc/snmp/snmpd.conf
 fi
 
 # Create IPDS directories
