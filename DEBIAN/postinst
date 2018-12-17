@@ -217,6 +217,11 @@ ip6tables -F INPUT 2>/dev/null
 # restarting zevenet service
 echo "Zevenet will be unavailable while the service is restarting."
 /etc/init.d/zevenet stop
+
+	#migrating config files
+MIG_DIR="/usr/local/zevenet/migrating/"
+for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
+
 /etc/init.d/zevenet start
 
 # Load conntrack modules
