@@ -401,7 +401,7 @@ if ( $action eq "start" )
 		if ( $bstatus eq "up" )
 		{
 			print ( "  * Starting Farm $farmname:" );
-			my $status = &_runFarmStart( $farmname, "false" );
+			my $status = &runFarmStart( $farmname, "false" );
 
 			if ( $status == 0 )
 			{
@@ -488,7 +488,7 @@ if ( $action eq "stop" )
 			}
 
 			print ( "  * Stopping Farm $farmname:" );
-			my $status = &_runFarmStop( $farmname, "false" );
+			my $status = &runFarmStop( $farmname, "false" );
 
 			if ( $status == 0 )
 			{
