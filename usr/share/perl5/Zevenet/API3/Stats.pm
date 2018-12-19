@@ -28,7 +28,8 @@ use Zevenet::System;
 # Get all farm stats
 sub getAllFarmStats
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 
@@ -39,10 +40,14 @@ sub getAllFarmStats
 
 	foreach my $name ( @farm_names )
 	{
-		my $type   = &getFarmType( $name );
-		my $status = &getFarmStatus( $name );
-		my $vip    = &getFarmVip( 'vip', $name );
-		my $port   = &getFarmVip( 'vipp', $name );
+		my $type = &getFarmType( $name );
+
+		# datalink has not got stats
+		next if ( $type eq 'datalink' );
+
+		my $status      = &getFarmStatus( $name );
+		my $vip         = &getFarmVip( 'vip', $name );
+		my $port        = &getFarmVip( 'vipp', $name );
 		my $established = 0;
 		my $pending     = 0;
 
@@ -56,7 +61,7 @@ sub getAllFarmStats
 
 			my $netstat = &getConntrack( "", $vip, "", "", "" );
 
-			$pending     = &getFarmSYNConns( $name, $netstat );
+			$pending = &getFarmSYNConns( $name, $netstat );
 			$established = &getFarmEstConns( $name, $netstat );
 		}
 
@@ -75,9 +80,10 @@ sub getAllFarmStats
 }
 
 #Get Farm Stats
-sub farm_stats # ( $farmname )
+sub farm_stats    # ( $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $errormsg;
@@ -88,7 +94,8 @@ sub farm_stats # ( $farmname )
 	unless ( &getFarmExists( $farmname ) )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
-		my $body = { description => $description, error  => "true", message => $errormsg };
+		my $body =
+		  { description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 
@@ -98,69 +105,71 @@ sub farm_stats # ( $farmname )
 	{
 		require Zevenet::Farm::HTTP::Stats;
 
-                my $stats = &getHTTPFarmBackendsStats( $farmname );
-                my $body = {
-                                         description => $description,
-                                         backends    => $stats->{ backends },
-                                         sessions    => $stats->{ sessions },
-                };
+		my $stats = &getHTTPFarmBackendsStats( $farmname );
+		my $body = {
+					 description => $description,
+					 backends    => $stats->{ backends },
+					 sessions    => $stats->{ sessions },
+		};
 
-                &httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 
 	if ( $type eq "l4xnat" )
 	{
-                require Zevenet::Farm::L4xNAT::Stats;
+		require Zevenet::Farm::L4xNAT::Stats;
 
-                my $stats = &getL4FarmBackendsStats( $farmname );
-                my $body = {
-                                         description => $description,
-                                         backends    => $stats,
-                };
+		my $stats = &getL4FarmBackendsStats( $farmname );
+		my $body = {
+					 description => $description,
+					 backends    => $stats,
+		};
 
-                &httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 
 	if ( $type eq "gslb" )
 	{
-                my $gslb_stats = &eload(
-                                                                 module => 'Zevenet::Farm::GSLB::Stats',
-                                                                 func   => 'getGSLBFarmBackendsStats',
-                                                                 args   => [$farmname],
-                                                                 decode => 'true'
-                );
+		my $gslb_stats = &eload(
+								 module => 'Zevenet::Farm::GSLB::Stats',
+								 func   => 'getGSLBFarmBackendsStats',
+								 args   => [$farmname],
+								 decode => 'true'
+		);
 
-                my $body = {
-                                         description => $description,
-                                         backends    => $gslb_stats->{ 'backends' },
-                                         client      => $gslb_stats->{ 'udp' },
-                                         server      => $gslb_stats->{ 'tcp' },
-                                         extended    => $gslb_stats->{ 'stats' },
-                };
+		my $body = {
+					 description => $description,
+					 backends    => $gslb_stats->{ 'backends' },
+					 client      => $gslb_stats->{ 'udp' },
+					 server      => $gslb_stats->{ 'tcp' },
+					 extended    => $gslb_stats->{ 'stats' },
+		};
 
-                &httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 }
 
 #Get Farm Stats
-sub all_farms_stats # ()
+sub all_farms_stats    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farms = &getAllFarmStats();
 
 	# Print Success
 	my $body = {
-				 description       => "List all farms stats",
-				 farms => $farms,
+				 description => "List all farms stats",
+				 farms       => $farms,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # Get the number of farms
 sub farms_number
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Farm::Core;
 
 	my $number = scalar &getFarmNameList();
@@ -169,79 +178,89 @@ sub farms_number
 				 number      => $number,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /stats/farms/modules
 #Get a farm status resume
 sub module_stats_status
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my @farms = @{ &getAllFarmStats () };
-	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
-	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
-	my $dslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my @farms = @{ &getAllFarmStats() };
+	my $lslb  = { 'total' => 0, 'up' => 0, 'down' => 0, };
+	my $gslb  = { 'total' => 0, 'up' => 0, 'down' => 0, };
+	my $dslb  = { 'total' => 0, 'up' => 0, 'down' => 0, };
 
 	foreach my $farm ( @farms )
 	{
 		if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ )
 		{
-			$lslb->{ 'total' } ++;
-			$lslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$lslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
+			$lslb->{ 'total' }++;
+			$lslb->{ 'down' }++ if ( $farm->{ 'status' } eq 'down' );
+			$lslb->{ 'up' }++
+			  if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 		elsif ( $farm->{ 'profile' } =~ /gslb/ )
 		{
-			$gslb->{ 'total' } ++;
-			$gslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$gslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
+			$gslb->{ 'total' }++;
+			$gslb->{ 'down' }++ if ( $farm->{ 'status' } eq 'down' );
+			$gslb->{ 'up' }++
+			  if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 		elsif ( $farm->{ 'profile' } =~ /datalink/ )
 		{
-			$dslb->{ 'total' } ++;
-			$dslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$dslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
+			$dslb->{ 'total' }++;
+			$dslb->{ 'down' }++ if ( $farm->{ 'status' } eq 'down' );
+			$dslb->{ 'up' }++
+			  if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 	}
 
 	# Print Success
 	my $body = {
 				 description => "Module status",
-				 params 		=> {
-					 "lslb" => $lslb,
-					 "gslb" => $gslb,
-					 "dslb" => $dslb,
-					 },
+				 params      => {
+							 "lslb" => $lslb,
+							 "gslb" => $gslb,
+							 "dslb" => $dslb,
+				 },
 	};
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #Get lslb|gslb|dslb Farm Stats
-sub module_stats # ()
+sub module_stats    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $module = shift;
-	my @farms = @{ &getAllFarmStats () };
+	my @farms  = @{ &getAllFarmStats() };
 	my @farmModule;
 
 	foreach my $farm ( @farms )
 	{
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ && $module eq 'lslb' );
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
+		push @farmModule, $farm
+		  if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ && $module eq 'lslb' );
+		push @farmModule, $farm
+		  if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
+		push @farmModule, $farm
+		  if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
 	}
 
 	# Print Success
 	my $body = {
-				 description       => "List lslb farms stats", farms => \@farmModule,
+				 description => "List lslb farms stats",
+				 farms       => \@farmModule,
 	};
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats
-sub stats # ()
+sub stats    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_mem  = &getMemStats();
 	my @data_load = &getLoadStats();
@@ -249,8 +268,8 @@ sub stats # ()
 	my @data_cpu  = &getCPU();
 
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_mem - 1 )
@@ -302,19 +321,20 @@ sub stats # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/mem
-sub stats_mem # ()
+sub stats_mem    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_mem = &getMemStats();
 
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_mem - 1 )
@@ -330,24 +350,25 @@ sub stats_mem # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/load
-sub stats_load # ()
+sub stats_load    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	my @data_load = &getLoadStats();
 
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_load - 1 )
 	{
-		my $name  = $data_load[$x][0];
+		my $name = $data_load[$x][0];
 		$name =~ s/ /_/;
 		$name = 'Last_1' if $name eq 'Last';
 		my $value = $data_load[$x][1] + 0;
@@ -360,27 +381,28 @@ sub stats_load # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/cpu
-sub stats_cpu # ()
+sub stats_cpu    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @data_cpu = &getCPU();
 
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_cpu - 1 )
 	{
 		my $name  = $data_cpu[$x][0];
 		my $value = $data_cpu[$x][1] + 0;
-		(undef, $name) = split( 'CPU', $name );
+		( undef, $name ) = split ( 'CPU', $name );
 		$out->{ $name } = $value;
 	}
 
@@ -392,34 +414,37 @@ sub stats_cpu # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/system/connections
 sub stats_conns
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# Success
-	my $out = &getTotalConnections ();
+	my $out = &getTotalConnections();
 	my $body = {
 				 description => "System connections",
 				 params      => { "connections" => $out },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/network/interfaces
 sub stats_network_interfaces
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
 	my $description = "Interfaces info";
-	my @interfaces = &getNetworkStats( 'hash' );
+	my @interfaces  = &getNetworkStats( 'hash' );
 
-	my @nic = &getInterfaceTypeList( 'nic' );
+	my @nic  = &getInterfaceTypeList( 'nic' );
 	my @bond = &getInterfaceTypeList( 'bond' );
 
 	my @nicList;
@@ -430,7 +455,8 @@ sub stats_network_interfaces
 	foreach my $iface ( @interfaces )
 	{
 		my $extrainfo;
-		my $type = &getInterfaceType ( $iface->{ interface } );
+		my $type = &getInterfaceType( $iface->{ interface } );
+
 		# Fill nic interface list
 		if ( $type eq 'nic' )
 		{
@@ -442,11 +468,11 @@ sub stats_network_interfaces
 					last;
 				}
 			}
-			$iface->{ mac }	= $extrainfo->{ mac };
-			$iface->{ ip } 		= $extrainfo->{ addr };
-			$iface->{ status } = $extrainfo->{ status };
-			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
-			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
+			$iface->{ mac }     = $extrainfo->{ mac };
+			$iface->{ ip }      = $extrainfo->{ addr };
+			$iface->{ status }  = $extrainfo->{ status };
+			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
+			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 
 			push @nicList, $iface;
 		}
@@ -462,13 +488,13 @@ sub stats_network_interfaces
 					last;
 				}
 			}
-			$iface->{ mac }	= $extrainfo->{ mac };
-			$iface->{ ip } 		= $extrainfo->{ addr };
-			$iface->{ status } = $extrainfo->{ status };
-			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
-			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
+			$iface->{ mac }     = $extrainfo->{ mac };
+			$iface->{ ip }      = $extrainfo->{ addr };
+			$iface->{ status }  = $extrainfo->{ status };
+			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
+			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 
-			$iface->{ slaves } = &getBondSlaves ( $iface->{ interface } );
+			$iface->{ slaves } = &getBondSlaves( $iface->{ interface } );
 
 			push @bondList, $iface;
 		}
@@ -484,20 +510,21 @@ sub stats_network_interfaces
 				 description => $description,
 				 params      => { nic => \@nicList, bond => \@bondList, }
 	};
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/network
-sub stats_network # ()
+sub stats_network    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @interfaces = &getNetworkStats( 'hash' );
 
 	my $output;
-	$output->{ 'hostname'} = &getHostname();
-	$output->{ 'date' } 		= &getDate();
+	$output->{ 'hostname' }   = &getHostname();
+	$output->{ 'date' }       = &getDate();
 	$output->{ 'interfaces' } = \@interfaces;
 
 	# Success
@@ -506,7 +533,7 @@ sub stats_network # ()
 				 params      => $output
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
