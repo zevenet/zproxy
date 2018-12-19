@@ -108,25 +108,20 @@ sub sendL4ConfChange    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
+	require Zevenet::Farm::Config;
+	my $algorithm = &getFarmAlgorithm( $farm_name );
+	my $output    = 0;
+	my $pidfile   = "/var/run/l4sd.pid";
 
-	if ( $algorithm eq "leastconn" && -e "$pidfile" )
+	# read pid number
+	open my $file, "<", "$pidfile" or $output = -1;
+	if ( $output >= 0 )
 	{
-		# read pid number
-		open my $file, "<", "$pidfile";
 		my $pid = <$file>;
 		close $file;
 
 		kill USR1 => $pid;
 		$output = $?;    # FIXME
-	}
-	else
-	{
-		&zenlog( "Running L4 restart for $farm_name", "info", "LSLB" );
-		&_runL4FarmRestart( $farm_name, "false", "" );
 	}
 
 	return $output;      # FIXME

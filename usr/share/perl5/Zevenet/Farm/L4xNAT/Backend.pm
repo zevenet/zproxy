@@ -449,6 +449,11 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 		}
 	}
 
+	if ( $farm{ lbalg } eq 'leastconn' )
+	{
+		&sendL4ConfChange( $farm{ name } );
+	}
+
 	$farm{ servers } = undef;
 
 	#~ %farm             = undef;
@@ -918,6 +923,8 @@ sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 {
 	my ( $farm_name, $backend, $mode ) = @_;
 
+	my $output = &setL4FarmBackendStatus( $farm_name, $backend, 'maintenance' );
+
 	if ( $mode eq "cut" )
 	{
 		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
@@ -928,7 +935,7 @@ sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 		&resetL4FarmBackendConntrackMark( $server );
 	}
 
-	return &setL4FarmBackendStatus( $farm_name, $backend, 'maintenance' );
+	return $output;
 }
 
 =begin nd
