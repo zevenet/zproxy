@@ -57,11 +57,6 @@ done
 #upgrading global.conf
 /usr/local/zevenet/bin/checkglobalconf
 
-# Update Zevenet version
-perl -E '
-require Zevenet::SystemInfo;
-&setZevenetVersion();
-'
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
