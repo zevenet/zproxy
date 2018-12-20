@@ -102,8 +102,8 @@ compiled_files=(
 	usr/local/zevenet/www/zapi/v3.1/zapi.cgi
 	usr/local/zevenet/www/zapi/v3.2/zapi.cgi
 	usr/local/zevenet/www/zapi/v4.0/zapi.cgi
-	usr/local/zevenet/app/bin/zevenet
-	usr/local/zevenet/app/bin/enterprise.bin
+	usr/local/zevenet/bin/zevenet
+	usr/local/zevenet/bin/enterprise.bin
 )
 
 encrypted_files=(
