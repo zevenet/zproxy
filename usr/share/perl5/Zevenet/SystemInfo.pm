@@ -362,6 +362,8 @@ sub getKernelVersion
 sub setZevenetVersion
 {
 	require Zevenet::Config;
+	require Zevenet::Log;
+
 	my @out = `dpkg -l zevenet`;
 	if ( $out[-1] =~ /\szevenet\s+([\.\w-]+)\s/ )
 	{
@@ -369,7 +371,8 @@ sub setZevenetVersion
 	}
 	else
 	{
-		print "Error getting Zevenet version";
+		&zenlog( "Error getting the Zevenet version", 'error', 'zlbinstaller' );
+		&zenlog( @out, 'error' );
 	}
 }
 
