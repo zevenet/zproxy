@@ -50,7 +50,8 @@ include 'Zevenet::System::SSH';
 #~ use Data::Dumper;
 #~ use Devel::Size qw(size total_size);
 
-package GLOBAL {
+package GLOBAL
+{
 	our $http_status_codes = {
 
 		# 2xx Success codes
@@ -61,6 +62,7 @@ package GLOBAL {
 		# 4xx Client Error codes
 		400 => 'Bad Request',
 		401 => 'Unauthorized',
+		402 => 'Certificate not valid',
 		403 => 'Forbidden',
 		404 => 'Not Found',
 		406 => 'Not Acceptable',
@@ -99,6 +101,7 @@ OPTIONS qr{^/.*$} => sub {
 require Zevenet::Config;
 require Zevenet::Validate;
 include 'Zevenet::API3::Auth';
+
 #~ require JSON::XS;
 #~ require Date::Parse;
 #~ require Time::localtime;
@@ -295,8 +298,10 @@ include 'Zevenet::API3::Auth';
 my $post_data = $q->param( 'POSTDATA' );
 my $put_data  = $q->param( 'PUTDATA' );
 
-&zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
-&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
+&zenlog( "CGI POST DATA: " . $post_data )
+  if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
+&zenlog( "CGI PUT DATA: " . $put_data )
+  if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
 
 ################################################################################
 #
@@ -328,14 +333,14 @@ POST qr{^/session$} => sub {
 
 			my ( $header ) = split ( "\r\n", $session->header() );
 			my ( undef, $session_cookie ) = split ( ': ', $header );
-			my $key =  &keycert();
+			my $key  = &keycert();
 			my $host = &getHostname();
 
 			&httpResponse(
 						   {
-								body => { key	=> $key, host => $host },
-								code    => 200,
-								headers => { 'Set-cookie' => $session_cookie },
+							 body => { key => $key, host => $host },
+							 code => 200,
+							 headers => { 'Set-cookie' => $session_cookie },
 						   }
 			);
 		}
@@ -867,7 +872,6 @@ if ( $q->path_info =~ qr{^/stats} )
 		&stats_conns();
 	};
 
-
 	# Farm stats
 	my $modules_re = &getValidFormat( 'farm_modules' );
 	GET qr{^/stats/farms$} => sub {
@@ -1000,7 +1004,7 @@ if ( $q->path_info =~ qr{^/system/cluster} )
 	include 'Zevenet::API3::System::Cluster';
 
 	#### /system/cluster
-	_cluster:
+  _cluster:
 	GET qr{^/system/cluster$} => sub {
 		&get_cluster( @_ );
 	};
@@ -1373,7 +1377,6 @@ if ( $q->path_info =~ qr{/ipds/dos} )
 		&del_dos_from_farm( @_ );
 	};
 }
-
 
 &httpResponse(
 			   {
