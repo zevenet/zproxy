@@ -105,6 +105,10 @@ overwrite_param "recent_ip_list_tot" '"";'
 overwrite_param "recent_ip_list_hash_size" '"";'
 overwrite_param "ssyncd_enabled" '"false";'
 
+# link to nft
+rm -f ${tmp_dir}/usr/share/perl5/Zevenet/Farm/L4xNAT
+ln -sf L4nft ${tmp_dir}/usr/share/perl5/Zevenet/Farm/L4xNAT
+
 # Remove EE params
 # ....
 
@@ -124,7 +128,6 @@ rm -rf ${com_dir}/*
 # copy all EE to the CE
 cp -r ${tmp_dir}/* $com_dir
 rm -rf ${tmp_dir}
-
 
 # apply the commit to CE
 if [ $AUTO_MERGE ]; then
