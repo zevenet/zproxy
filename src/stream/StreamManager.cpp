@@ -462,8 +462,25 @@ void StreamManager::onRequestEvent(int fd) {
     }
 
     case http_parser::PARSE_RESULT::FAILED:
-      Debug::Log("Parser FAILED", LOG_DEBUG);
-      break;
+      char caddr[50];
+      // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
+      // 1);
+      if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
+        Debug::Log("Error getting peer address", LOG_DEBUG);
+      } else {
+
+          Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
+                        std::this_thread::get_id(),
+                        static_cast<int>(HttpStatus::Code::BadRequest),
+                        HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
+                        stream->client_connection.buffer, caddr);
+        }
+        stream->replyError(
+            HttpStatus::Code::BadRequest,
+            HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
+            listener_config_.err501);
+        this->clearStream(stream);
+      return;
     case http_parser::PARSE_RESULT::INCOMPLETE:
       Debug::Log("Parser INCOMPLETE", LOG_DEBUG);
       break;

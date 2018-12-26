@@ -49,6 +49,8 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
   return false;
 }
 
+
+
 bool http_parser::HttpData::getHeaderValue(std::string header_name,
                                            std::string &out_key) {
   for (auto i = 0; i != num_headers; ++i) {
@@ -106,7 +108,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
   num_headers = sizeof(headers) / sizeof(headers[0]);
   auto pret = phr_parse_request(data, data_size, &method, &method_len, &path,
                                 &path_length, &minor_version, headers,
-                                &num_headers, last_length);
+                                &num_headers, last_length, &http_message_length);
   last_length = data_size;
   //  Debug::logmsg(LOG_DEBUG, "request is %d bytes long\n", pret);
   if (pret > 0) {
@@ -120,7 +122,6 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
     http_message = const_cast<char *>(method);
-    http_message_length = static_cast<size_t>(headers[0].name - method);
     //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
     //      if (std::string(headers[i].name, headers[i].name_len) !=
     //          http::http_info::headers_names_strings.at(

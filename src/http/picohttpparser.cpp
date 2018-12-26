@@ -350,7 +350,7 @@ static const char *parse_request(const char *buf, const char *buf_end,
                                  const char **path, size_t *path_len,
                                  int *minor_version, struct phr_header *headers,
                                  size_t *num_headers, size_t max_headers,
-                                 int *ret) {
+                                 int *ret, size_t * http_message_length) {
   /* skip first empty line (some clients add CRLF after POST content) */
   CHECK_EOF();
   if (*buf == '\015') {
@@ -378,13 +378,14 @@ static const char *parse_request(const char *buf, const char *buf_end,
     return NULL;
   }
 
+  *http_message_length = buf - *method;
   return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
 }
 
 int phr_parse_request(const char *buf_start, size_t len, const char **method,
                       size_t *method_len, const char **path, size_t *path_len,
                       int *minor_version, struct phr_header *headers,
-                      size_t *num_headers, size_t last_len) {
+                      size_t *num_headers, size_t last_len, size_t * http_message_length) {
   const char *buf = buf_start, *buf_end = buf_start + len;
   size_t max_headers = *num_headers;
   int r;
@@ -404,7 +405,7 @@ int phr_parse_request(const char *buf_start, size_t len, const char **method,
 
   if ((buf = parse_request(buf, buf_end, method, method_len, path, path_len,
                            minor_version, headers, num_headers, max_headers,
-                           &r)) == NULL) {
+                           &r, http_message_length)) == NULL) {
     return r;
   }
 
