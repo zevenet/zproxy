@@ -20,7 +20,7 @@ class Service : public sessions::HttpSessionManager,
   std::vector<Backend *> backend_set;
   std::vector<Backend *> emergency_backend_set;
   // if no backend available, return an emergency backend if possible.
-  Backend *getNextBackend(bool only_emergency = false);
+  Backend *getNextBackend();
   std::mutex mtx_lock;
 
  public:
@@ -48,6 +48,7 @@ class Service : public sessions::HttpSessionManager,
   void doMaintenance();
   bool doMatch(HttpRequest &request);
   static void setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
+  Backend * getEmergencyBackend();
 
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;

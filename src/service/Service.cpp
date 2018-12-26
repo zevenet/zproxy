@@ -13,7 +13,7 @@
 
 Backend *Service::getBackend(HttpStream &stream) {
   if (backend_set.empty())
-    return getNextBackend(true); // TODO:: return emergency backend ???
+    return getEmergencyBackend(); // TODO:: return emergency backend ???
 
   if (session_type != sessions::SESS_NONE) {
     auto session = getSession(stream);
@@ -283,7 +283,7 @@ JsonObject *Service::getServiceJson() {
   return root;
 }
 
-Backend *Service::getNextBackend(bool only_emergency) {
+Backend *Service::getNextBackend() {
   // if no backend available, return next emergency backend from
   // emergency_backend_set ...
   std::lock_guard<std::mutex> locker(mtx_lock);
@@ -356,28 +356,19 @@ Backend *Service::getNextBackend(bool only_emergency) {
     return selected_backend;
   };
   }
-  if (UNLIKELY(!only_emergency)) {
-    do {
-      bck = nullptr;
-      static uint64_t seed;
-      seed++;
-      bck = backend_set[seed % backend_set.size()];
-    } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
-    if (bck != nullptr)
-      return bck;
-  }
-  do {
-    bck = nullptr;
-    static uint64_t emergency_seed;
-    emergency_seed++;
-    bck = emergency_backend_set[emergency_seed % backend_set.size()];
-  } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
-  return nullptr;
+  return getEmergencyBackend();
 }
 
 void Service::doMaintenance() {
   for (Backend* bck : this->backend_set) {
     bck->doMaintenance();
+    if (bck->status == BACKEND_DOWN) {
+        for (auto session : sessions_set) {
+          if (session.second->assigned_backend->backend_id == bck->backend_id) {
+            sessions_set.erase(session.first);
+          }
+        }
+    }
   }
 
   for (auto session : sessions_set) {
@@ -388,6 +379,19 @@ void Service::doMaintenance() {
   return;
 }
 
+Backend * Service::getEmergencyBackend() {
+  // There is no backend available, looking for an emergency backend.
+    if (emergency_backend_set.empty())
+      return nullptr;
+    Backend *bck;
+      do {
+        bck = nullptr;
+        static uint64_t emergency_seed;
+        emergency_seed++;
+        bck = emergency_backend_set[emergency_seed % backend_set.size()];
+      } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
+      return nullptr;
+}
 Service::~Service() {
   //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
