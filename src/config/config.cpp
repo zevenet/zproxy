@@ -1333,7 +1333,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
         strcpy(res->addr.ai_addr->sa_data, lin + matches[1].rm_so);
         res->addr.ai_addrlen = sizeof(struct sockaddr_un);
       }
-      res->address = std::string(lin + matches[1].rm_so);
+      res->address = lin + matches[1].rm_so;
       has_addr = 1;
     } else if (!regexec(&Port, lin, 4, matches, 0)) {
       switch (res->addr.ai_family) {
@@ -1551,7 +1551,8 @@ void Config::parseSession(ServiceConfig *const svc) {
     } else if (!regexec(&TTL, lin, 4, matches, 0)) {
       svc->sess_ttl = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&ID, lin, 4, matches, 0)) {
-      svc->sess_id = std::string(lin + matches[1].rm_so,static_cast<int>(matches[1].rm_eo - matches[1].rm_so));
+      svc->sess_id = lin + matches[1].rm_so;
+      svc->sess_id = svc->sess_id.substr(0, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
       if (svc->sess_type != SESS_COOKIE && svc->sess_type != SESS_URL &&
           svc->sess_type != SESS_HEADER)
         conf_err("no ID permitted unless COOKIE/URL/HEADER Session - aborted");
