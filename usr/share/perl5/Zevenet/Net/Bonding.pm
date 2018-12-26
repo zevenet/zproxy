@@ -230,7 +230,7 @@ Function: applyBondChange
 
 Parameters:
 	bond - reference to bonding interface.
-	writeconf - Boolean, true to store the configuration, or false to only apply it.
+	writeconf - Boolean, true to store the configuration, or omit it for false.
 
 Returns:
 	scalar - 0 on success, -1 on failure.
