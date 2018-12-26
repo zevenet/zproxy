@@ -95,6 +95,7 @@ bool PoundClient::executeCommand() {
   switch(interface_mode) {
     case CTL_INTERFACE_MODE::CTL_NONE: {
     //Lanzar error: "No se ha especificado metodo de conexion"
+    show_usage("Unspecified connection method.");
     }
 
     case CTL_INTERFACE_MODE::CTL_AF_INET: {
