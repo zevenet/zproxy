@@ -261,6 +261,7 @@ sub certcontrol
        $swcert = 5;
        return $swcert;
  	}
+
 	# Verify date of check
 	my $date_today = strftime "%F", localtime;
 	my $date_encode = &encrypt($date_today);
@@ -280,10 +281,6 @@ sub certcontrol
 
 	if ($date_check ne $date_encode)
 	{
-		my $open_check2 = open ( my $write_check, '>', $file_check );
-		print $write_check $date_encode;
-		close $write_check;
-
 		my $crl_path = "$configdir/cacrl.crl";
 
 		my $date_mod = '';
@@ -300,12 +297,29 @@ sub certcontrol
 		my @modification = split /\ /, $date_mod;
 		$modification[0] = $modification[0] // '';
 
-		if ( $modification[0] ne $date_today) {
+		# check proxy in global.conf and use it if configured
+    my $proxy_https = $ENV{ https_proxy };
+    if ( $proxy_https )
+    {
+      require IO::Socket::Socks::Wrapped;
+
+      our @proxy = split /\:(?=\d)/, $proxy_https;
+
+      use IO::Socket::Socks::Wrapper
+        {
+            ProxyAddr => $proxy[0],
+            ProxyPort => $proxy[1] ? $proxy[1] : 443,
+        };
+    }
+
+		if ( $modification[0] ne $date_today)
+    {
 			require IO::Socket;
 
-            if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) ) {
-                $scan->close();
-                my $tmp_file = '/tmp/cacrl.crl';
+      if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) )
+      {
+        $scan->close();
+        my $tmp_file = '/tmp/cacrl.crl';
 
 				# Download CRL
 				my $download = `$wget -q -T5 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
@@ -314,15 +328,24 @@ sub certcontrol
 					my $copy = `cp $tmp_file $crl_path`;
 				}
 				unlink $tmp_file;
-			}
-	  	}
+		  }
+  	}
 
-		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
-		if ( !grep /keyid:$keyid/, @decoded ) {
+    if ( ! -f $crl_path  )
+		{
+      #swcert = 6 ==> crl is missing
+      $swcert = 6;
+      return $swcert;
+		}
+
+    my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
+
+    if ( !grep /keyid:$keyid/, @decoded ) {
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;
 			return $swcert;
 		}
+
 		foreach my $line (@decoded) {
 			if (grep /Serial Number\: ?$serial/, $line) {
 				my $isRevoked = grep /Serial Number\: ?$serial/, $line;
@@ -333,6 +356,16 @@ sub certcontrol
 				}
 			}
 		}
+    my $open_check2 = open ( my $write_check, '>', $file_check );
+    if ( $open_check2 )
+    {
+      print $write_check $date_encode;
+      close $write_check;
+    }
+    else
+    {
+      &zenlog( "Error opening $file_check", "ERROR", "certificate" );
+    }
 	}
 	&unlockfile( $lock_fd );
 
@@ -408,6 +441,7 @@ sub certcontrol
 	#swcert = 3 ==> Cert test and it's expired
 	#swcert = 4 ==> Cert is revoked
 	#swcert = 5 ==> Cert isn't valid
+  #swcert = 6 ==> Crl missing
 
 	#swcert = -1 ==> Cert support and it's expired
 
@@ -462,6 +496,11 @@ sub checkActivationCertificate
 			$msg =
 			  "The Zevenet Load Balancer certificate file isn't valid for this machine.";
 		}
+    elsif ( $swcert == 6 )
+    {
+      $msg =
+        "The Zevenet crl file is missing.";
+    }
 
 		my $body = {
 					 message         => $msg,
