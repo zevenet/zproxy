@@ -101,7 +101,7 @@ Service::Service(ServiceConfig &service_config_)
   this->sess_pat = service_config_.sess_pat;
   this->sess_start = service_config_.sess_start;
   // backend initialization
-  int backend_id = 1;
+  int backend_id = 0;
   for (auto bck = service_config_.backends; bck != nullptr; bck = bck->next) {
     if (!bck->disabled) {
       this->addBackend(bck, backend_id++);

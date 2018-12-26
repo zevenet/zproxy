@@ -178,7 +178,7 @@ bool PoundClient::executeCommand() {
           }
           case CTL_SUBJECT::BACKEND: {
               std::string path = "/listener/" + std::to_string(listener_id) + "/service/" + std::to_string(service_id) + "/backend/" + std::to_string(backend_id) + "/status";
-              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_DOWN));
+              json_object.emplace(json::JSON_KEYS::STATUS, new json::JsonDataValue(json::JSON_KEYS::STATUS_DISABLED));
               if (doRequest(http::REQUEST_METHOD::PATCH, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)){
                   verboseLog(buffer);
               }

@@ -133,10 +133,18 @@ JsonObject* Backend::getBackendJson() {
 }
 
 void Backend::doMaintenance() {
+  if (this->status == BACKEND_DISABLED)
+    return;
+
   Connection checkOut;
-  if (checkOut.doConnect(*address_info, 0) != IO::IO_OP::OP_SUCCESS) {
-    this->status = BACKEND_STATUS::BACKEND_DOWN;
-    checkOut.closeConnection();
+  auto res = checkOut.doConnect(*address_info, 0);
+
+  switch(res) {
+    case IO::IO_OP::OP_SUCCESS: {
+      this->status = BACKEND_UP;
+      break;
+    }
+    default:
+       this->status = BACKEND_DOWN;
   }
-  return;
 }
