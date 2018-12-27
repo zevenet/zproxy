@@ -59,6 +59,7 @@ enum class HTTP_HEADER_NAME : uint16_t {
   COOKIE2,
   DNT,
   DATE,
+  DESTINATION,
   ETAG,
   EXPECT,
   EXPECT_CT,
