@@ -270,6 +270,12 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			$output = $l[3];
 		}
 
+		if ( $line =~ /\"helper\"/ && $param eq 'helper' )
+		{
+			my @l = split /"/, $line;
+			$output = $l[3];
+		}
+
 		if ( $line =~ /\"scheduler\"/ && $param eq 'alg' )
 		{
 			my @l = split /"/, $line;
