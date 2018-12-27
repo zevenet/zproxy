@@ -54,7 +54,7 @@ void ctl::ControlManager::stop() {
 
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                       EVENT_GROUP event_group) {
-  if (event_group != CTL_INTERFACE && event_group != ACCEPTOR) {
+  if (event_group != EVENT_GROUP::CTL_INTERFACE && event_group != EVENT_GROUP::ACCEPTOR) {
     ::close(fd);
     return;
   }

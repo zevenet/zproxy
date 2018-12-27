@@ -3,9 +3,9 @@
 //
 
 #include "epoll_manager.h"
-#include <climits>
 #include "../debug/Debug.h"
 #include "../util/Network.h"
+#include <climits>
 namespace events {
 
 EpollManager::EpollManager() : accept_fd(-1) {
@@ -18,16 +18,28 @@ EpollManager::EpollManager() : accept_fd(-1) {
 }
 
 void EpollManager::onConnectEvent(epoll_event &event) {
+#if DEBUG_EVENT_MANAGER
+  Debug::logmsg(LOG_DEBUG, "~~ONConnectEvent fd: %d",
+                static_cast<int>(event.data.u64 >> CHAR_BIT));
+#endif
   HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), CONNECT,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
 
 void EpollManager::onWriteEvent(epoll_event &event) {
+#if DEBUG_EVENT_MANAGER
+  Debug::logmsg(LOG_DEBUG, "~~ONWriteEvent fd: %d",
+                static_cast<int>(event.data.u64 >> CHAR_BIT));
+#endif
   HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), WRITE,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
 
 void EpollManager::onReadEvent(epoll_event &event) {
+#if DEBUG_EVENT_MANAGER
+  Debug::logmsg(LOG_DEBUG, "~~ONReadEvent fd: %d",
+                static_cast<int>(event.data.u64 >> CHAR_BIT));
+#endif
   HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), READ,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
@@ -51,7 +63,8 @@ bool EpollManager::deleteFd(int fd) {
 int EpollManager::loopOnce(int time_out) {
   int fd, i, ev_count = 0;
   ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
-  if (ev_count <= 0) return ev_count;
+  if (ev_count <= 0)
+    return ev_count;
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
     if (fd == accept_fd) {
@@ -94,7 +107,7 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
   epevent.events = event_type;
   epevent.data.u64 = static_cast<uint64_t>(fd);
   epevent.data.u64 <<= CHAR_BIT;
-  epevent.data.u64 |= event_group & 0xff;
+  epevent.data.u64 |= static_cast<char>(event_group) & 0xff;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &epevent) < 0) {
     if (errno == EEXIST) {
       return updateFd(fd, event_type, event_group);
@@ -116,11 +129,14 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
 bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
                             EVENT_GROUP event_group) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
+#if DEBUG_EVENT_MANAGER
+  Debug::Log("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
+#endif
   struct epoll_event epevent = {};
   epevent.events = event_type;
   epevent.data.u64 = static_cast<uint64_t>(fd);
   epevent.data.u64 <<= CHAR_BIT;
-  epevent.data.u64 |= event_group & 0xff;
+  epevent.data.u64 |= static_cast<char>(event_group) & 0xff;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &epevent) < 0) {
     if (errno == ENOENT) {
       std::string error = "epoll_ctl(update) failed, fd reopened, adding .. ";
@@ -134,9 +150,7 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
       return false;
     }
   }
-#if DEBUG_EVENT_MANAGER
-  Debug::Log("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
-#endif
+
   return true;
 }
-};  // namespace events
+}; // namespace events

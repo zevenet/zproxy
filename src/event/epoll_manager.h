@@ -4,16 +4,16 @@
 
 #pragma once
 
-#include <sys/epoll.h>
 #include <map>
 #include <mutex>
-#include "../connection/connection.h"
+#include <sys/epoll.h>
+#include <unistd.h>
 
 namespace events {
 
 #define MAX_EPOLL_EVENT 100000
 
-enum EVENT_GROUP {
+enum class EVENT_GROUP: char {
   ACCEPTOR = 0x1,
   SERVER,
   CLIENT,
@@ -22,7 +22,8 @@ enum EVENT_GROUP {
   RESPONSE_TIMEOUT,
   SIGNAL,
   MAINTENANCE,
-  CTL_INTERFACE
+  CTL_INTERFACE,
+  NONE,
 };
 
 enum EVENT_TYPE {
@@ -35,10 +36,11 @@ enum EVENT_TYPE {
   READ = (EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP),
   READ_ONESHOT = (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
   WRITE = (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP |
-           EPOLLHUP),  // is always one shot
+           EPOLLHUP), // is always one shot
   ANY = (EPOLLONESHOT | EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLOUT),
   CONNECT,
   DISCONNECT,
+  NONE
 };
 
 // TODO:: Make it static polimorphosm, template<typename Handler>
@@ -48,14 +50,14 @@ class EpollManager {
   int accept_fd;
   epoll_event events[MAX_EPOLL_EVENT];
 
- protected:
+protected:
   inline virtual void HandleEvent(int fd, EVENT_TYPE event_type,
                                   EVENT_GROUP event_group) = 0;
-  inline void onReadEvent(epoll_event& event);
-  inline void onWriteEvent(epoll_event& event);
-  inline void onConnectEvent(epoll_event& event);
+  inline void onReadEvent(epoll_event &event);
+  inline void onWriteEvent(epoll_event &event);
+  inline void onConnectEvent(epoll_event &event);
 
- public:
+public:
   EpollManager();
   int loopOnce(int time_out = -1);
   ~EpollManager();
@@ -64,4 +66,4 @@ class EpollManager {
   bool deleteFd(int fd);
   bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
 };
-};
+}; // namespace events
