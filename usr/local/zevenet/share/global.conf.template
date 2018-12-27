@@ -320,4 +320,6 @@ $ssyncd_port    = "9999";
 $throughput_period = "5";
 $throughput_enabled = "false";
 
+$doc_v4_0 = "https://www.zevenet.com/zapidocv4.0";
+
 #::END Global Section
