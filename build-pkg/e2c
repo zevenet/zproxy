@@ -34,7 +34,7 @@ function print_usage_and_exit() {
 	exit 1
 }
 
-function overwrite_param() {
+function overwrite_globalconf_param() {
 	local KEY=$1
 	# excape character: /
 	local VALUE="$(echo $2 | sed 's:/:\\/:g')"
@@ -51,6 +51,16 @@ function overwrite_param() {
 	eval $CMD
 }
 
+function delete_globalconf_param() {
+	local KEY=$1
+
+	local CMD="sed -i '/\\$"
+	CMD+=$KEY
+	CMD+="\s*=/d' "
+	CMD+=$GLOBAL_CONF_TPL
+
+	eval $CMD
+}
 
 while [ $# -gt 0 ]; do
 	case $1 in
@@ -96,21 +106,52 @@ cp -r ${ce_files_dir}/* ${tmp_dir}
 
 
 # Overwrite CE global.conf parameters
-overwrite_param "base_pound" '"/usr";#update'
-overwrite_param "poundtpl" '"$templatedir/pound.cfg.template";'
-overwrite_param "libexec_dir" '"/usr/lib/nagios/plugins";'
-overwrite_param "routeparams" '"";'
-overwrite_param "backupfor" '"$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file /etc/hostname $filedns /etc/cron.d/zevenet $applianceVersionFile";#update'
-overwrite_param "recent_ip_list_tot" '"";'
-overwrite_param "recent_ip_list_hash_size" '"";'
-overwrite_param "ssyncd_enabled" '"false";'
+overwrite_globalconf_param "base_pound" '"/usr";#update'
+overwrite_globalconf_param "poundtpl" '"$templatedir/pound.cfg.template";'
+overwrite_globalconf_param "libexec_dir" '"/usr/lib/nagios/plugins";'
+overwrite_globalconf_param "routeparams" '"";'
+overwrite_globalconf_param "backupfor" '"$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file /etc/hostname $filedns /etc/cron.d/zevenet $applianceVersionFile";#update'
+#~ overwrite_globalconf_param "recent_ip_list_tot" '"";'
+#~ overwrite_globalconf_param "recent_ip_list_hash_size" '"";'
+overwrite_globalconf_param "doc_v4_0" '"https://www.zevenet.com/zapidoc_ce_v4.0/";'
+
+# Remove EE params from global.conf
+delete_globalconf_param "blacklistsPath"
+delete_globalconf_param "blacklistsConf"
+delete_globalconf_param "blacklistsCronFile"
+delete_globalconf_param "dosConf"
+delete_globalconf_param "dosConfDir"
+delete_globalconf_param "waf_body_size"
+
+delete_globalconf_param "bond_config_file"
+delete_globalconf_param "sys_net_dir"
+delete_globalconf_param "bonding_masters_filename"
+delete_globalconf_param "bonding_mode_filename"
+delete_globalconf_param "bonding_slaves_filename"
+delete_globalconf_param "bonding_miimon_filename"
+
+delete_globalconf_param "notifConfDir"
+delete_globalconf_param "secTemplate"
+delete_globalconf_param "syslogFile"
+
+delete_globalconf_param "ssyncd_enabled"
+delete_globalconf_param "ssyncd_bin"
+delete_globalconf_param "ssyncdctl_bin"
+delete_globalconf_param "ssyncd_port"
+
+delete_globalconf_param "throughput_period"
+delete_globalconf_param "throughput_enabled"
+
+delete_globalconf_param "recent_ip_list_tot"
+delete_globalconf_param "recent_ip_list_hash_size"
+
+delete_globalconf_param "zcluster_manager"
+delete_globalconf_param "ssh_copy_id"
+
 
 # link to nft
 rm -f ${tmp_dir}/usr/share/perl5/Zevenet/Farm/L4xNAT
 ln -sf L4nft ${tmp_dir}/usr/share/perl5/Zevenet/Farm/L4xNAT
-
-# Remove EE params
-# ....
 
 
 # clone CE repository
