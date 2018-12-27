@@ -5,3 +5,4 @@ bin/
 CMakeLists.txt.user
 CMakeLists.txt.user.*
 build/
+cmake-build-*/
