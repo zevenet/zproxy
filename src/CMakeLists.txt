@@ -58,8 +58,8 @@ add_library(libzhttp
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
     event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
     service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
-    stats/backend_stats.h stats/backend_stats.cpp)
+    stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h)
 
-link_libraries(${JSONCPP_LIBRARIES})
+#link_libraries(${JSONCPP_LIBRARIES})
 
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES}  ${JSONCPP_LIBRARIES})
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})

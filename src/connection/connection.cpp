@@ -7,18 +7,18 @@
 #include <sys/un.h>
 
 #define PRINT_BUFFER_SIZE                                                      \
-  //  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG); \
+  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
 //  Debug::Log("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
 
 Connection::Connection()
     : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
       // string_buffer(),
-      socket_fd(-1), address_str(""), is_connected(false) {
+      address_str(""), is_connected(false) {
   // address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
   is_connected = false;
-  if (socket_fd > 0)
+  if (fd_ > 0)
     this->closeConnection();
   if (address != nullptr) {
     if (address->ai_addr != nullptr)
@@ -31,13 +31,11 @@ IO::IO_RESULT Connection::read() {
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  //  Debug::Log("#IN#bufer_size" +
-  //  std::to_string(string_buffer.string().length()));
-  PRINT_BUFFER_SIZE
+//  PRINT_BUFFER_SIZE
   while (!done) {
-    count = ::recv(socket_fd, buffer + buffer_size, MAX_DATA_SIZE - buffer_size,
+    count = ::recv(fd_, buffer + buffer_size, MAX_DATA_SIZE - buffer_size,
                    MSG_NOSIGNAL);
-    if (count == -1) {
+    if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
         std::string error = "read() failed  ";
         error += std::strerror(errno);
@@ -52,44 +50,84 @@ IO::IO_RESULT Connection::read() {
       done = true;
       result = IO::IO_RESULT::FD_CLOSED;
     } else {
+     // PRINT_BUFFER_SIZE
       buffer_size += static_cast<size_t>(count);
-      if ((MAX_DATA_SIZE - buffer_size) < 5) {
-        Debug::Log("Buffer maximum size reached !!1", LOG_DEBUG);
-        result = IO::IO_RESULT::FULL_BUFFER;
-        break;
+     // PRINT_BUFFER_SIZE
+      if ((MAX_DATA_SIZE - buffer_size) == 0) {
+        PRINT_BUFFER_SIZE
+        Debug::Log("Buffer maximum size reached !!", LOG_DEBUG);
+        return IO::IO_RESULT::FULL_BUFFER;
       } else
         result = IO::IO_RESULT::SUCCESS;
       done = true;
     }
   }
-  PRINT_BUFFER_SIZE
+  //PRINT_BUFFER_SIZE
   return result;
 }
 
 std::string Connection::getPeerAddress() {
-  if (this->socket_fd > 0 && address_str.empty()) {
+  if (this->fd_ > 0 && address_str.empty()) {
     char addr[50];
-    Network::getPeerAddress(this->socket_fd, addr, 50);
+    Network::getPeerAddress(this->fd_, addr, 50);
     address_str = std::string(addr);
   }
   return address_str;
 }
 
-int Connection::getFileDescriptor() const {
-  //  if (socket_fd < 0) {
-  //    Debug::Log("Socket no valido, que hacer ....", LOG_REMOVE);
-  //  }
-  return socket_fd;
-}
 
-void Connection::setFileDescriptor(int fd) {
-  if (fd < 0) {
-    Debug::Log("Esto que es!!", LOG_REMOVE);
+
+#if ENABLE_ZERO_COPY
+
+IO::IO_RESULT Connection::zeroRead() {
+
+  for (;;) {
+    if(splice_pipe.bytes >= BUFSZ){
+      return  IO::IO_RESULT::FULL_BUFFER;
+    }
+    auto n = splice(fd_, nullptr, splice_pipe.pipe[1], nullptr, BUFSZ,
+                   SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+    if (n > 0)
+      splice_pipe.bytes += n;
+    if (n == 0)
+      return IO::IO_RESULT::FD_CLOSED;
+    if (n < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return IO::IO_RESULT::DONE_TRY_AGAIN;
+      return IO::IO_RESULT::ERROR;
+    }
   }
-  socket_fd = fd;
+  return IO::IO_RESULT::SUCCESS;
 }
 
+IO::IO_RESULT Connection::zeroWrite(int dst_fd,
+                                    http_parser::HttpData &http_data) {
+//  Debug::Log("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
+  while (splice_pipe.bytes > 0) {
+    int bytes = splice_pipe.bytes;
+    if (bytes > BUFSZ)
+      bytes = BUFSZ;
+    auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr, bytes,
+                     SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+//    Debug::Log("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
+    if (n == 0)
+      break;
+    if (n < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return IO::IO_RESULT::DONE_TRY_AGAIN;
+      return IO::IO_RESULT::ERROR;
+    }
+    splice_pipe.bytes -= n;
+    http_data.message_bytes_left -= n;
+  }
+  /* bytes > 0, add dst to epoll set */
+  /* else remove if it was added */
+  return IO::IO_RESULT::SUCCESS;
+}
+
+#endif
 IO::IO_RESULT Connection::writeTo(int fd) {
+
   bool done = false;
   size_t sent = 0;
   ssize_t count;
@@ -172,6 +210,7 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
 
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
+//  PRINT_BUFFER_SIZE
   const char *return_value = "\r\n";
   auto vector_size = http_data.num_headers +
                      (http_data.message_length > 0 ? 3 : 2) +
@@ -213,6 +252,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
           http_data.headers[http_data.num_headers - 1].name +
           http_data.headers[http_data.num_headers - 1].line_size) +
       2;
+//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
   if (http_data.message_length > 0) {
     iov[x].iov_base = http_data.message;
     iov[x++].iov_len = http_data.message_length;
@@ -220,6 +260,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     total_to_send += http_data.message_length;
     http_data.message_bytes_left -= http_data.message_length;
   }
+//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
   ssize_t nwritten = ::writev(target_fd, iov, x);
 
   if (nwritten < 0) {
@@ -235,8 +276,11 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   } else if (nwritten != total_to_send) {
     return IO::IO_RESULT::ERROR;
   }
+//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
+//  Debug::logmsg(LOG_REMOVE,"http_data.buffer = %p " ,http_data.buffer);
   buffer_size -=
       static_cast<size_t>(last_buffer_pos_written - http_data.buffer);
+//  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
 
@@ -253,9 +297,9 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
 
   //  Debug::Log("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
-  PRINT_BUFFER_SIZE
+//  PRINT_BUFFER_SIZE
   while (!done) {
-    count = ::send(socket_fd, data + sent, size - sent, MSG_NOSIGNAL);
+    count = ::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
           errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
@@ -282,27 +326,27 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
   }
   //  Debug::Log("#OUT#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
-  PRINT_BUFFER_SIZE
+//  PRINT_BUFFER_SIZE
   return result;
 }
 
 void Connection::closeConnection() {
   is_connected = false;
-  if (socket_fd > 0) {
-    ::shutdown(socket_fd, 2);
-    ::close(socket_fd);
+  if (fd_ > 0) {
+    ::shutdown(fd_, 2);
+    ::close(fd_);
   }
 }
 IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
   int result = -1;
-  if ((socket_fd = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
+  if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
     // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
   if (timeout > 0)
-    Network::setSocketNonBlocking(socket_fd);
-  if ((result = ::connect(socket_fd, address_.ai_addr, sizeof(address_))) < 0) {
+    Network::setSocketNonBlocking(fd_);
+  if ((result = ::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
 
@@ -316,21 +360,22 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
   return result != -1 ? IO::IO_OP::OP_SUCCESS : IO::IO_OP::OP_ERROR;
 }
 
-IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path, int timeout)
-{
+IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
+                                int timeout) {
   int result = -1;
-  if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+  if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
     // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
   if (timeout > 0)
-    Network::setSocketNonBlocking(socket_fd);
+    Network::setSocketNonBlocking(fd_);
 
   struct sockaddr_un serveraddr;
   strcpy(serveraddr.sun_path, af_unix_socket_path.c_str());
   serveraddr.sun_family = AF_UNIX;
-  if ((result = ::connect(socket_fd, (struct sockaddr *)&serveraddr, SUN_LEN(&serveraddr))) < 0) {
+  if ((result = ::connect(fd_, (struct sockaddr *)&serveraddr,
+                          SUN_LEN(&serveraddr))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
 
@@ -345,8 +390,8 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path, int time
 }
 
 bool Connection::isConnected() {
-  if (socket_fd > 0)
-    return Network::isConnected(this->socket_fd);
+  if (fd_ > 0)
+    return Network::isConnected(this->fd_);
   else
     return false;
 }
@@ -356,7 +401,7 @@ int Connection::doAccept() {
   sockaddr_in clnt_addr{};
   socklen_t clnt_length = sizeof(clnt_addr);
 
-  if ((new_fd = accept4(socket_fd, (sockaddr *)&clnt_addr, &clnt_length,
+  if ((new_fd = accept4(fd_, (sockaddr *)&clnt_addr, &clnt_length,
                         SOCK_NONBLOCK | SOCK_CLOEXEC)) < 0) {
     if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
       return 0; // We have processed all incoming connections.
@@ -388,26 +433,26 @@ bool Connection::listen(std::string address_str_, int port) {
 bool Connection::listen(addrinfo &address_) {
   this->address = &address_;
   /* prepare the socket */
-  if ((socket_fd =
+  if ((fd_ =
            socket(this->address->ai_family == AF_INET ? PF_INET : PF_INET6,
                   SOCK_STREAM, 0)) < 0) {
     Debug::logmsg(LOG_ERR, "socket () failed %s s - aborted", strerror(errno));
     return false;
   }
 
-  Network::setSoLingerOption(socket_fd);
-  Network::setSoReuseAddrOption(socket_fd);
-  Network::setTcpDeferAcceptOption(socket_fd);
+  Network::setSoLingerOption(fd_);
+  Network::setSoReuseAddrOption(fd_);
+  Network::setTcpDeferAcceptOption(fd_);
 
-  if (::bind(socket_fd, address->ai_addr,
+  if (::bind(fd_, address->ai_addr,
              static_cast<socklen_t>(address->ai_addrlen)) < 0) {
     Debug::logmsg(LOG_ERR, "bind () failed %s s - aborted", strerror(errno));
-    ::close(socket_fd);
-    socket_fd = -1;
+    ::close(fd_);
+    fd_ = -1;
     return false;
   }
 
-  ::listen(socket_fd, 2048);
+  ::listen(fd_, 2048);
   return true;
 }
 bool Connection::listen(std::string af_unix_name) {
@@ -422,18 +467,18 @@ bool Connection::listen(std::string af_unix_name) {
   ctrl.sun_family = AF_UNIX;
   ::strncpy(ctrl.sun_path, af_unix_name.c_str(), sizeof(ctrl.sun_path) - 1);
 
-  if ((socket_fd = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+  if ((fd_ = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
     Debug::logmsg(LOG_ERR, "Control \"%s\" create: %s", ctrl.sun_path,
                   strerror(errno));
     return false;
   }
-  if (::bind(socket_fd, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) <
+  if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) <
       0) {
     Debug::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
                   strerror(errno));
     return false;
   }
-  ::listen(socket_fd, 512);
+  ::listen(fd_, 512);
 
   return false;
 }

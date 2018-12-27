@@ -9,28 +9,62 @@
 #include <netdb.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "../event/descriptor.h"
 
 #define MAX_DATA_SIZE 65000
 
-class Connection {
+#define ENABLE_ZERO_COPY 1
+
+#if ENABLE_ZERO_COPY
+
+#define BUFSZ MAX_DATA_SIZE
+
+struct SplicePipe {
+    int pipe[2];
+    int bytes;
+    SplicePipe()
+    {
+        if (pipe2(pipe, O_NONBLOCK) < 0) {
+            perror("pipe");
+        }
+    }
+    ~SplicePipe()
+    {
+        close(pipe[0]);
+        close(pipe[1]);
+    }
+};
+
+#endif
+
+
+class Connection: public Descriptor {
   long last_read_;
   long last_write_;
 
 protected:
-  int socket_fd;
-  bool is_connected;
 
+  bool is_connected; 
   IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
 
 public:
+#if ENABLE_ZERO_COPY
+  SplicePipe splice_pipe;
+#endif
   std::string address_str;
   addrinfo *address;
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
   size_t buffer_size;
   std::string getPeerAddress();
-  int getFileDescriptor() const;
-  void setFileDescriptor(int fd);
+
+
+#if ENABLE_ZERO_COPY
+  IO::IO_RESULT zeroRead();
+  IO::IO_RESULT zeroWrite(int dst_fd, http_parser::HttpData &http_data);
+#endif
 
   IO::IO_RESULT write(const char *data, size_t size);
   IO::IO_RESULT writeTo(int fd);
