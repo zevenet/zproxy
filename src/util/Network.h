@@ -192,7 +192,7 @@ public:
   }
   inline static bool setSoLingerOption(int sock_fd, bool enable = false) {
     struct linger l {};
-    l.l_onoff = 1;
+    l.l_onoff = enable ? 1: 0;
     l.l_linger = enable ? 10 : 0;
     return setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) != -1;
   }
