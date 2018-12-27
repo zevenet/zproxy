@@ -110,25 +110,27 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   case READ:
   case READ_ONESHOT: {
     switch (event_group) {
-    case ACCEPTOR:
+    case EVENT_GROUP::ACCEPTOR:
       break;
-    case SERVER:
+    case EVENT_GROUP::SERVER:
       onResponseEvent(fd);
       break;
-    case CLIENT:
+    case EVENT_GROUP::CLIENT:
       this->onRequestEvent(fd);
       break;
-    case CONNECT_TIMEOUT:
+    case EVENT_GROUP::CONNECT_TIMEOUT:
       onConnectTimeoutEvent(fd);
       break;
-    case REQUEST_TIMEOUT:
+    case EVENT_GROUP::REQUEST_TIMEOUT:
       onRequestTimeoutEvent(fd);
       break;
-    case RESPONSE_TIMEOUT:
+    case EVENT_GROUP::RESPONSE_TIMEOUT:
       onResponseTimeoutEvent(fd);
       break;
-    case SIGNAL:
+    case EVENT_GROUP::SIGNAL:
       onSignalEvent(fd);
+      break;
+    case EVENT_GROUP::MAINTENANCE: // TODO:: Handle health checkers, sessions ...
       break;
     default: // should not enter here
       break;
@@ -141,13 +143,13 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       // We should not be here without a stream created, so we remove the fd
       // from the eventloop
       switch (event_group) {
-      case ACCEPTOR:
+      case EVENT_GROUP::ACCEPTOR:
         break;
-      case SERVER:
+      case EVENT_GROUP::SERVER:
         Debug::Log("SERVER_WRITE : Stream doesn't exist for " +
                    std::to_string(fd));
         break;
-      case CLIENT:
+      case EVENT_GROUP::CLIENT:
         Debug::Log("CLIENT_WRITE : Stream doesn't exist for " +
                    std::to_string(fd));
         break;
@@ -159,18 +161,18 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     }
 
     switch (event_group) {
-    case ACCEPTOR:
+    case EVENT_GROUP::ACCEPTOR:
       break;
-    case SERVER: {
+    case EVENT_GROUP::SERVER: {
       onServerWriteEvent(stream);
       break;
     }
-    case CLIENT: {
+    case EVENT_GROUP::CLIENT: {
       onClientWriteEvent(stream);
       break;
     }
     }
-    //      updateFd(fd, EVENT_TYPE::READ, event_group);
+
     return;
   }
   case DISCONNECT: {
@@ -182,7 +184,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       return;
     }
     switch (event_group) {
-    case SERVER: {
+    case EVENT_GROUP::SERVER: {
       if (!stream->backend_connection.isConnected()) {
         auto response =
             HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
@@ -191,7 +193,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       }
       break;
     }
-    case CLIENT: {
+    case EVENT_GROUP::CLIENT: {
       Debug::Log("Client closed connection", LOG_INFO);
       break;
     }
@@ -250,9 +252,19 @@ void StreamManager::doWork() {
 }
 
 void StreamManager::addStream(int fd) {
+#if SM_HANDLE_ACCEPT
+  auto stream = new HttpStream();
+  stream->client_connection.setFileDescriptor(fd);
+  streams_set[fd] = stream;
+  stream->client_connection.enableEvents (this,READ,EVENT_GROUP::CLIENT);
+  // set extra header to forward to the backends
+  stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
+                            stream->client_connection.getPeerAddress());
+#else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
     Debug::Log("Error adding to epoll manager", LOG_NOTICE);
   }
+#endif
 }
 
 int StreamManager::getWorkerId() { return worker_id; }
@@ -275,7 +287,10 @@ void StreamManager::onRequestEvent(int fd) {
       Debug::Log("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
   }
-
+  if(UNLIKELY(stream->client_connection.isCancelled())){
+    clearStream(stream);
+    return;
+  }
   auto result = stream->client_connection.read();
   if (result == IO::IO_RESULT::ERROR) {
     Debug::Log("Error reading request ", LOG_DEBUG);
@@ -372,7 +387,7 @@ void StreamManager::onRequestEvent(int fd) {
         IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
         Debug::logmsg(LOG_REMOVE, "Backend assigned %s", bck->address.c_str());
         switch (bck->backend_type) {
-        case REMOTE:
+        case REMOTE:{
           if (stream->backend_connection.getBackend() == nullptr ||
                   !stream->backend_connection.isConnected()
                   /*   stream->backend_connection.getBackend()
@@ -426,20 +441,19 @@ void StreamManager::onRequestEvent(int fd) {
               streams_set[stream->backend_connection.getFileDescriptor()] =
                   stream;
 
-              addFd(stream->backend_connection.getFileDescriptor(),
-                    EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
+              stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
+
               break;
             }
             }
           } else {
-            updateFd(stream->backend_connection.getFileDescriptor(),
-                     EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
+              stream->backend_connection.enableWriteEvent();
           }
-          break;
+          break;}
         case EMERGENCY_SERVER:
 
           break;
-        case REDIRECT:
+        case REDIRECT: {
           /*Check redirect request type ::> 0 - redirect is absolute, 1 -
            * the redirect should include the request path, or 2 if it should
            * use perl dynamic replacement */
@@ -454,6 +468,7 @@ void StreamManager::onRequestEvent(int fd) {
           stream->replyRedirect(bck->backend_config);
           clearStream(stream);
           return;
+        }
         case CACHE_SYSTEM:
           break;
         }
@@ -504,7 +519,7 @@ void StreamManager::onRequestEvent(int fd) {
            parse_result ==
                http_parser::PARSE_RESULT::SUCCESS); // TODO:: Add support for
                                                     // http pipeline
-  updateFd(fd, EVENT_TYPE::READ, EVENT_GROUP::CLIENT);
+    stream->client_connection.enableReadEvent();
 }
 
 void StreamManager::onResponseEvent(int fd) {
@@ -514,17 +529,37 @@ void StreamManager::onResponseEvent(int fd) {
     ::close(fd);
     return;
   }
+  if(UNLIKELY(stream->backend_connection.isCancelled())){
+    clearStream(stream);
+    return;
+  }
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
-  Debug::logmsg(LOG_REMOVE, "IN READ buffer_size: %d bytes left: %d",
-                stream->backend_connection.buffer_size,
-                stream->response.message_bytes_left);
-  auto result = stream->backend_connection.read();
-  Debug::logmsg(LOG_REMOVE, "OUT READ buffer_size: %d bytes left: %d",
-                stream->backend_connection.buffer_size,
-                stream->response.message_bytes_left);
+  IO::IO_RESULT result;
+  if (stream->response.message_bytes_left > 0){
+    result = stream->backend_connection.zeroRead();
+    if (result == IO::IO_RESULT::ERROR) {
+      Debug::Log("Error reading response ", LOG_DEBUG);
+      clearStream(stream);
+      return;
+    }
+    //TODO::Evaluar
+//    result = stream->backend_connection.zeroWrite(stream->client_connection.getFileDescriptor(),stream->response);
+//    if (result == IO::IO_RESULT::ERROR) {
+//      Debug::Log("Error reading response ", LOG_DEBUG);
+//      clearStream(stream);
+//      return;
+//    }
+  }else{
+
+    result = stream->backend_connection.read();
+    if (result == IO::IO_RESULT::ERROR) {
+      Debug::Log("Error reading response ", LOG_DEBUG);
+      clearStream(stream);
+      return;
+    }
   // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de tomar
   // muestra si se la lectura ha sido success.
   stream->backend_connection.getBackend()->calculateLatency(
@@ -533,12 +568,6 @@ void StreamManager::onResponseEvent(int fd) {
           stream->backend_connection.time_start)
           .count());
 
-  if (result == IO::IO_RESULT::ERROR) {
-    Debug::Log("Error reading response ", LOG_DEBUG);
-    // TODO:: What to do if backend down!!
-    clearStream(stream);
-    return;
-  }
   //  stream->backend_stadistics.update();
   size_t parsed = 0;
   if (stream->response.message_bytes_left < 1) {
@@ -546,11 +575,11 @@ void StreamManager::onResponseEvent(int fd) {
         stream->backend_connection.buffer,
         stream->backend_connection.buffer_size,
         &parsed); // parsing http data as response structured
-    Debug::logmsg(
-        LOG_REMOVE,
-        "PARSE buffer_size: %d bytes left: %d current_message_size=%d",
-        stream->backend_connection.buffer_size,
-        stream->response.message_bytes_left, stream->response.message_length);
+//    Debug::logmsg(
+//        LOG_REMOVE,
+//        "PARSE buffer_size: %d bytes left: %d current_message_size=%d",
+//        stream->backend_connection.buffer_size,
+//        stream->response.message_bytes_left, stream->response.message_length);
     // get content-lengt
   }
 
@@ -559,24 +588,8 @@ void StreamManager::onResponseEvent(int fd) {
           std::chrono::steady_clock::now() -
           stream->backend_connection.time_start)
           .count());
-  updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE,
-           EVENT_GROUP::CLIENT);
-
-  //  switch (ret) {
-  //    case http_parser::SUCCESS:
-  //      updateFd(stream->client_connection.getFileDescriptor(),
-  //               EVENT_TYPE::WRITE,
-  //               EVENT_GROUP::CLIENT);
-  //      break;
-  //    case http_parser::FAILED:Debug::Log("Parser FAILED", LOG_DEBUG);
-  //      break;
-  //    case http_parser::INCOMPLETE:Debug::Log("Parser INCOMPLETE", LOG_DEBUG);
-  //      break;
-  //    case http_parser::TOOLONG:Debug::Log("Parser TOOLONG", LOG_DEBUG);
-  //      break;
-  //  }
-
-  updateFd(fd, EVENT_TYPE::READ, EVENT_GROUP::SERVER);
+  }
+  stream->client_connection.enableWriteEvent();
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
   HttpStream *stream = timers_set[fd];
@@ -639,6 +652,10 @@ void StreamManager::onSignalEvent(int fd) {
 }
 
 void StreamManager::onServerWriteEvent(HttpStream *stream) {
+  if(UNLIKELY(stream->backend_connection.isCancelled())){
+    clearStream(stream);
+    return;
+  }
   int fd = stream->backend_connection.getFileDescriptor();
   // Send client request to backend server
   if (stream->backend_connection.getBackend()->conn_timeout > 0 &&
@@ -654,9 +671,6 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
 
-  //      auto result = stream->client_connection.writeTo(
-  //          stream->backend_connection.getFileDescriptor());
-
   auto result = stream->client_connection.writeTo(stream->backend_connection,
                                                   stream->request);
 
@@ -668,42 +682,46 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     timers_set[stream->timer_fd.getFileDescriptor()] = stream;
     addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
           EVENT_GROUP::RESPONSE_TIMEOUT);
-    updateFd(fd, EVENT_TYPE::READ, SERVER);
+    stream->backend_connection.enableReadEvent();
     stream->backend_connection.time_start = std::chrono::steady_clock::now();
 
   } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
-    updateFd(fd, EVENT_TYPE::WRITE, SERVER);
+    stream->backend_connection.enableWriteEvent();
   } else {
-    // updateFd(fd, EVENT_TYPE::ANY, event_group);
     Debug::Log("Error sending data to client", LOG_DEBUG);
+    clearStream(stream);
     return; // TODO:: What to do??
   }
 }
 
 void StreamManager::onClientWriteEvent(HttpStream *stream) {
+  if(UNLIKELY(stream->backend_connection.isCancelled())){
+    clearStream(stream);
+    return;
+  }
   int fd = stream->client_connection.getFileDescriptor();
-  //  auto result = stream->backend_connection.writeTo(
-  //      stream->client_connection.getFileDescriptor());
+
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  Debug::logmsg(LOG_REMOVE, "IN WRITE buffer_size: %d bytes left: %d",
-                stream->backend_connection.buffer_size,
-                stream->response.message_bytes_left);
+
   //TODO: Comprobar si estan las sesiones activas y añadir setCookie al extra headers de response (como puntero)
   if (stream->response.message_bytes_left > 0) {
-    result = stream->backend_connection.writeContentTo(
-        stream->client_connection, stream->response);
+    if(UNLIKELY(stream->backend_connection.buffer_size > 0))
+      result = stream->backend_connection.writeTo(stream->client_connection,stream->response);
+      //result = stream->backend_connection.writeContentTo(stream->client_connection, stream->response);
+    if(LIKELY(stream->backend_connection.splice_pipe.bytes > 0))
+      result = stream->backend_connection.zeroWrite(stream->client_connection.getFileDescriptor(),stream->response);
   } else {
     result = stream->backend_connection.writeTo(stream->client_connection,
                                                 stream->response);
   }
 
-  Debug::logmsg(LOG_REMOVE, "OUT WRITE buffer_size: %d bytes left: %d",
-                stream->backend_connection.buffer_size,
-                stream->response.message_bytes_left);
   if (result == IO::IO_RESULT::SUCCESS) {
-    updateFd(fd, EVENT_TYPE::READ, CLIENT);
+    stream->backend_connection.enableReadEvent();
+    stream->client_connection.enableReadEvent();
   } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
-    updateFd(fd, EVENT_TYPE::WRITE, CLIENT);
+//    Debug::Log("EAGAIN", LOG_DEBUG);
+    stream->backend_connection.enableReadEvent();
+    stream->client_connection.enableWriteEvent();
   } else {
     Debug::Log("Error sending data to client", LOG_DEBUG);
     // updateFd(fd, EVENT_TYPE::ANY, event_group);
