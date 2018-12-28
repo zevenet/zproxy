@@ -58,9 +58,6 @@ sub farms_name_l4    # ( $farmname )
 	my $persistence = &getL4FarmParam( 'persist', $farmname );
 	$persistence = "" if $persistence eq 'none';
 
-	my $protocol = &getL4FarmParam( 'helper', $farmname );
-	$protocol = &getL4FarmParam( 'proto', $farmname ) if $protocol eq 'none';
-
 	$out_p = {
 			   status       => $status,
 			   vip          => $vip,
@@ -68,7 +65,7 @@ sub farms_name_l4    # ( $farmname )
 			   algorithm    => &getL4FarmParam( 'alg', $farmname ),
 			   nattype      => &getL4FarmParam( 'mode', $farmname ),
 			   persistence  => $persistence,
-			   protocol     => $protocol,
+			   protocol     => &getL4FarmParam( 'proto', $farmname ),
 			   ttl          => $timetolimit,
 			   farmguardian => &getFGFarm( $farmname ),
 			   logs         => &getL4FarmParam( 'logs', $farmname ),

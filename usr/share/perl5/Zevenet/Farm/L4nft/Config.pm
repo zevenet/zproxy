@@ -69,6 +69,12 @@ sub getL4FarmParam    # ($param, $farm_name)
 
 	$output = &_getL4ParseFarmConfig( $param, undef, \@content );
 
+	if ( $param eq "proto" )
+	{
+		my $helper = &_getL4ParseFarmConfig( "helper", undef, \@content );
+		return $helper if ( $helper ne "none" );
+	}
+
 	return $output;
 }
 
