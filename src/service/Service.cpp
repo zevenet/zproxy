@@ -63,7 +63,7 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
       backend_set.push_back(backend);
   } else {
     delete backend;
-    Debug::Log("Backend Configuration not valid ", LOG_NOTICE);
+    Debug::LogInfo("Backend Configuration not valid ", LOG_NOTICE);
   }
 }
 
@@ -107,7 +107,7 @@ Service::Service(ServiceConfig &service_config_)
       this->addBackend(bck, backend_id++);
       // this->addBackend(bck->address, bck->port, backend_id++);
     } else {
-      Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) +
+      Debug::LogInfo("Backend " + bck->address + ":" + std::to_string(bck->port) +
                      " disabled.",
                  LOG_NOTICE);
     }
@@ -117,7 +117,7 @@ Service::Service(ServiceConfig &service_config_)
       this->addBackend(bck, backend_id++, true);
       // this->addBackend(bck->address, bck->port, backend_id++);
     } else {
-      Debug::Log("Emergency Backend " + bck->address + ":" +
+      Debug::LogInfo("Emergency Backend " + bck->address + ":" +
                      std::to_string(bck->port) + " disabled.",
                  LOG_NOTICE);
     }

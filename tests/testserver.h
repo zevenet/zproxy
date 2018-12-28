@@ -32,11 +32,11 @@ public:
       }
       case CONNECT: {
           switch (event_group) {
-            case ACCEPTOR: {
+          case EVENT_GROUP::ACCEPTOR: {
                 do {
                     new_fd = lst.doAccept();
                     if (new_fd > 0)
-                      addFd(new_fd, READ, SERVER);
+                      addFd(new_fd, READ, EVENT_GROUP::SERVER);
                   }while(new_fd > 0);
               }
             }
@@ -44,20 +44,20 @@ public:
         }
       case READ: {
           switch(event_group) {
-            case SERVER: {
+          case EVENT_GROUP::SERVER: {
                 auto data = Network::read(fd);
                 if (data.length() > 0)
                    EXPECT_EQ(data.length(),22);
-                updateFd(fd, WRITE, SERVER);
+                updateFd(fd, WRITE, EVENT_GROUP::SERVER);
               }
             }
           break;
         }
       case WRITE: {
           switch(event_group) {
-            case SERVER: {
+          case EVENT_GROUP::SERVER: {
                 write(fd, buf, strlen(buf));
-                updateFd(fd, READ, SERVER);
+                updateFd(fd, READ, EVENT_GROUP::SERVER);
               }
             }
         }
@@ -81,7 +81,7 @@ public:
         connection->doConnect(*connection->address, 30);
         connections_set[connection->getFileDescriptor()] = connection;
         if(connection->getFileDescriptor() > 0)
-            addFd(connection->getFileDescriptor(), EVENT_TYPE::WRITE, CLIENT);
+            addFd(connection->getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
       }
   }
 
@@ -91,16 +91,16 @@ public:
     switch(event_type){
       case WRITE: {
         switch(event_group) {
-          case CLIENT: {
+        case EVENT_GROUP::CLIENT: {
             connections_set.at(fd)->write(buf, strlen(buf));
-            updateFd(fd, READ, CLIENT);
+            updateFd(fd, READ, EVENT_GROUP::CLIENT);
           }
         }
         break;
       }
       case READ: {
         switch(event_group) {
-          case CLIENT: {
+        case EVENT_GROUP::CLIENT: {
             auto connect = connections_set.at(fd);
             auto a = connect->read();
             if (connect->buffer_size > 0)

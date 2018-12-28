@@ -44,7 +44,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   case WRITE: {
     auto stream = streams_set[fd];
     if (stream == nullptr) {
-      Debug::Log("Connection closed prematurely" + std::to_string(fd));
+      Debug::LogInfo("Connection closed prematurely" + std::to_string(fd));
       return;
     }
     auto io_result = stream->client_connection.write(this->e200.c_str(),
@@ -53,7 +53,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case IO::ERROR:
     case IO::FD_CLOSED:
     case IO::FULL_BUFFER:
-      Debug::Log("Something happend sentid e200", LOG_DEBUG);
+      Debug::LogInfo("Something happend sentid e200", LOG_DEBUG);
       break;
     case IO::SUCCESS:
     case IO::DONE_TRY_AGAIN:
@@ -78,7 +78,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   case DISCONNECT: {
     auto stream = streams_set[fd];
     if (stream == nullptr) {
-      Debug::Log("Stream doesn't exist for " + std::to_string(fd));
+      Debug::LogInfo("Stream doesn't exist for " + std::to_string(fd));
       deleteFd(fd);
       ::close(fd);
       return;
@@ -146,11 +146,11 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       case EVENT_GROUP::ACCEPTOR:
         break;
       case EVENT_GROUP::SERVER:
-        Debug::Log("SERVER_WRITE : Stream doesn't exist for " +
+        Debug::LogInfo("SERVER_WRITE : Stream doesn't exist for " +
                    std::to_string(fd));
         break;
       case EVENT_GROUP::CLIENT:
-        Debug::Log("CLIENT_WRITE : Stream doesn't exist for " +
+        Debug::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
                    std::to_string(fd));
         break;
       }
@@ -178,7 +178,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   case DISCONNECT: {
     auto stream = streams_set[fd];
     if (stream == nullptr) {
-      Debug::Log("Remote host closed connection prematurely ", LOG_INFO);
+      Debug::LogInfo("Remote host closed connection prematurely ", LOG_INFO);
       deleteFd(fd);
       ::close(fd);
       return;
@@ -189,23 +189,23 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         auto response =
             HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
         stream->client_connection.write(response.c_str(), response.length());
-        Debug::Log("Backend closed connection", LOG_INFO);
+        Debug::LogInfo("Backend closed connection", LOG_INFO);
       }
       break;
     }
     case EVENT_GROUP::CLIENT: {
-      Debug::Log("Client closed connection", LOG_INFO);
+      Debug::LogInfo("Client closed connection", LOG_INFO);
       break;
     }
     default:
-      Debug::Log("Why this happends!!", LOG_INFO);
+      Debug::LogInfo("Why this happends!!", LOG_INFO);
       break;
     }
     clearStream(stream);
     break;
   }
   default:
-    Debug::Log("Unexpected  event type", LOG_DEBUG);
+    Debug::LogInfo("Unexpected  event type", LOG_DEBUG);
   }
 }
 #endif
@@ -244,7 +244,7 @@ void StreamManager::doWork() {
   while (is_running) {
     if (loopOnce() <= 0) {
       // something bad happend
-      //      Debug::Log("No events !!");
+      //      Debug::LogInfo("No events !!");
     }
     // if(needMainatance)
     //    doMaintenance();
@@ -262,7 +262,7 @@ void StreamManager::addStream(int fd) {
                             stream->client_connection.getPeerAddress());
 #else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
-    Debug::Log("Error adding to epoll manager", LOG_NOTICE);
+    Debug::LogInfo("Error adding to epoll manager", LOG_NOTICE);
   }
 #endif
 }
@@ -274,7 +274,7 @@ void StreamManager::onRequestEvent(int fd) {
   if (stream != nullptr) {
     stream = streams_set.at(fd);
     if (fd != stream->client_connection.getFileDescriptor()) {
-      Debug::Log("FOUND:: Aqui ha pasado algo raro!!", LOG_REMOVE);
+      Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_REMOVE);
     }
   } else {
     stream = new HttpStream();
@@ -284,7 +284,7 @@ void StreamManager::onRequestEvent(int fd) {
                               stream->client_connection.getPeerAddress());
     streams_set[fd] = stream;
     if (fd != stream->client_connection.getFileDescriptor()) {
-      Debug::Log("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
+      Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
   }
   if(UNLIKELY(stream->client_connection.isCancelled())){
@@ -293,7 +293,7 @@ void StreamManager::onRequestEvent(int fd) {
   }
   auto result = stream->client_connection.read();
   if (result == IO::IO_RESULT::ERROR) {
-    Debug::Log("Error reading request ", LOG_DEBUG);
+    Debug::LogInfo("Error reading request ", LOG_DEBUG);
     clearStream(stream);
     return;
   }
@@ -306,7 +306,7 @@ void StreamManager::onRequestEvent(int fd) {
         stream->client_connection.buffer, stream->client_connection.buffer_size,
         &parsed); // parsing http data as response structured
     if (stream->client_connection.buffer_size != parsed) {
-      Debug::Log("Buffer size: " +
+      Debug::LogInfo("Buffer size: " +
                  std::to_string(stream->client_connection.buffer_size) +
                  "\nparsed data: " + std::to_string(parsed));
     }
@@ -318,7 +318,7 @@ void StreamManager::onRequestEvent(int fd) {
         // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
         // 1);
         if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-          Debug::Log("Error getting peer address", LOG_DEBUG);
+          Debug::LogInfo("Error getting peer address", LOG_DEBUG);
         } else {
           Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
                         std::this_thread::get_id(),
@@ -338,7 +338,7 @@ void StreamManager::onRequestEvent(int fd) {
         // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
         // 1);
         if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-          Debug::Log("Error getting peer address", LOG_DEBUG);
+          Debug::LogInfo("Error getting peer address", LOG_DEBUG);
         } else {
           Debug::logmsg(LOG_WARNING, "(%lx) e%d %s from %s",
                         std::this_thread::get_id(),
@@ -365,7 +365,7 @@ void StreamManager::onRequestEvent(int fd) {
         // No backend available
         char caddr[50];
         if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-          Debug::Log("Error getting peer address", LOG_DEBUG);
+          Debug::LogInfo("Error getting peer address", LOG_DEBUG);
         } else {
           Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
                         std::this_thread::get_id(),
@@ -417,7 +417,7 @@ void StreamManager::onRequestEvent(int fd) {
                   HttpStatus::Code::ServiceUnavailable);
               stream->client_connection.write(response.c_str(),
                                               response.length());
-              Debug::Log("Error connecting to backend " + bck->address,
+              Debug::LogInfo("Error connecting to backend " + bck->address,
                          LOG_NOTICE); // TODO:: respond e503
               stream->backend_connection.setBackend(bck, false);
               stream->backend_connection.closeConnection();
@@ -436,7 +436,7 @@ void StreamManager::onRequestEvent(int fd) {
             case IO::IO_OP::OP_SUCCESS: {
               Network::setSocketNonBlocking(
                   stream->backend_connection.getFileDescriptor());
-              // Debug::Log("Connected to backend : " + bck->address + ":"
+              // Debug::LogInfo("Connected to backend : " + bck->address + ":"
               // + std::to_string(bck->port), LOG_DEBUG);
               streams_set[stream->backend_connection.getFileDescriptor()] =
                   stream;
@@ -481,7 +481,7 @@ void StreamManager::onRequestEvent(int fd) {
       // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
       // 1);
       if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-        Debug::Log("Error getting peer address", LOG_DEBUG);
+        Debug::LogInfo("Error getting peer address", LOG_DEBUG);
       } else {
 
           Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
@@ -497,22 +497,22 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
       return;
     case http_parser::PARSE_RESULT::INCOMPLETE:
-      Debug::Log("Parser INCOMPLETE", LOG_DEBUG);
+      Debug::LogInfo("Parser INCOMPLETE", LOG_DEBUG);
       break;
     case http_parser::PARSE_RESULT::TOOLONG:
-      Debug::Log("Parser TOOLONG", LOG_DEBUG);
+      Debug::LogInfo("Parser TOOLONG", LOG_DEBUG);
       break;
     }
 
     if ((stream->client_connection.buffer_size - parsed) > 0) {
-      Debug::Log("Buffer size: left size: " +
+      Debug::LogInfo("Buffer size: left size: " +
                      std::to_string(stream->client_connection.buffer_size),
                  LOG_DEBUG);
-      Debug::Log("Current request buffer: \n " +
+      Debug::LogInfo("Current request buffer: \n " +
                      std::string(stream->client_connection.buffer,
                                  stream->client_connection.buffer_size),
                  LOG_DEBUG);
-      Debug::Log("Parsed data size: " + std::to_string(parsed), LOG_DEBUG);
+      Debug::LogInfo("Parsed data size: " + std::to_string(parsed), LOG_DEBUG);
     }
 
   } while (stream->client_connection.buffer_size > parsed &&
@@ -525,7 +525,7 @@ void StreamManager::onRequestEvent(int fd) {
 void StreamManager::onResponseEvent(int fd) {
   HttpStream *stream = streams_set[fd];
   if (stream == nullptr) {
-    Debug::Log("Backend Connection, Stream closed", LOG_DEBUG);
+    Debug::LogInfo("Backend Connection, Stream closed", LOG_DEBUG);
     ::close(fd);
     return;
   }
@@ -541,14 +541,14 @@ void StreamManager::onResponseEvent(int fd) {
   if (stream->response.message_bytes_left > 0){
     result = stream->backend_connection.zeroRead();
     if (result == IO::IO_RESULT::ERROR) {
-      Debug::Log("Error reading response ", LOG_DEBUG);
+      Debug::LogInfo("Error reading response ", LOG_DEBUG);
       clearStream(stream);
       return;
     }
     //TODO::Evaluar
 //    result = stream->backend_connection.zeroWrite(stream->client_connection.getFileDescriptor(),stream->response);
 //    if (result == IO::IO_RESULT::ERROR) {
-//      Debug::Log("Error reading response ", LOG_DEBUG);
+//      Debug::LogInfo("Error reading response ", LOG_DEBUG);
 //      clearStream(stream);
 //      return;
 //    }
@@ -556,7 +556,7 @@ void StreamManager::onResponseEvent(int fd) {
 
     result = stream->backend_connection.read();
     if (result == IO::IO_RESULT::ERROR) {
-      Debug::Log("Error reading response ", LOG_DEBUG);
+      Debug::LogInfo("Error reading response ", LOG_DEBUG);
       clearStream(stream);
       return;
     }
@@ -594,13 +594,13 @@ void StreamManager::onResponseEvent(int fd) {
 void StreamManager::onConnectTimeoutEvent(int fd) {
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr)
-    Debug::Log("Stream null pointer", LOG_REMOVE);
+    Debug::LogInfo("Stream null pointer", LOG_REMOVE);
   if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
                      stream->client_connection.getFileDescriptor(), caddr,
                      50) == nullptr)) {
-      Debug::Log("Error getting peer address", LOG_DEBUG);
+      Debug::LogInfo("Error getting peer address", LOG_DEBUG);
     } else {
       Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
                     std::this_thread::get_id(),
@@ -624,13 +624,13 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 void StreamManager::onResponseTimeoutEvent(int fd) {
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr)
-    Debug::Log("Stream null pointer", LOG_REMOVE);
+    Debug::LogInfo("Stream null pointer", LOG_REMOVE);
   if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
                      stream->client_connection.getFileDescriptor(), caddr,
                      50) == nullptr)) {
-      Debug::Log("Error getting peer address", LOG_DEBUG);
+      Debug::LogInfo("Error getting peer address", LOG_DEBUG);
     } else {
       Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
                     std::this_thread::get_id(),
@@ -688,7 +688,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
     stream->backend_connection.enableWriteEvent();
   } else {
-    Debug::Log("Error sending data to client", LOG_DEBUG);
+    Debug::LogInfo("Error sending data to client", LOG_DEBUG);
     clearStream(stream);
     return; // TODO:: What to do??
   }
@@ -719,11 +719,11 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
   } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
-//    Debug::Log("EAGAIN", LOG_DEBUG);
+//    Debug::LogInfo("EAGAIN", LOG_DEBUG);
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableWriteEvent();
   } else {
-    Debug::Log("Error sending data to client", LOG_DEBUG);
+    Debug::LogInfo("Error sending data to client", LOG_DEBUG);
     // updateFd(fd, EVENT_TYPE::ANY, event_group);
     clearStream(stream);
     return; // TODO:: what to do
@@ -736,7 +736,7 @@ StreamManager::validateRequest(HttpRequest &request) {
   auto request_line = nonstd::string_view(request.http_message,
                                           request.http_message_length - 2)
                           .to_string(); // request.getRequestLine();
-  Debug::Log("Request line " + request_line, LOG_REMOVE); // TODO: remove
+  Debug::LogInfo("Request line " + request_line, LOG_REMOVE); // TODO: remove
   if (UNLIKELY(::regexec(&listener_config_.verb, request_line.c_str(), 3,
                          matches, 0) != 0)) {
     // TODO:: check RPC
@@ -836,7 +836,7 @@ bool StreamManager::init(ListenerConfig &listener_config) {
   //    if (!service_config->disabled) {
   //      service_manager->addService(*service_config);
   //    } else {
-  //      Debug::Log("Backend " + std::string(service_config->name) +
+  //      Debug::LogInfo("Backend " + std::string(service_config->name) +
   //                     " disabled in config file",
   //                 LOG_NOTICE);
   //    }

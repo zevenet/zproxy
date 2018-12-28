@@ -14,7 +14,7 @@ TimerFd::TimerFd(int timeout_ms, bool one_shot)
   if (timer_fd_ < 0) {
     std::string error = "timerfd_create() failed: ";
     error += std::strerror(errno);
-    Debug::Log(error, LOG_ERR);
+    Debug::LogInfo(error, LOG_ERR);
     throw std::system_error(errno, std::system_category());
   }
   if (timeout_ms > 0) set();
@@ -44,7 +44,7 @@ bool TimerFd::set(int timeout_ms, bool one_shot) {
   if (::timerfd_settime(timer_fd_, 0, &timer_spec, nullptr) == -1) {
     std::string error = "timerfd_settime() failed: ";
     error += std::strerror(errno);
-    Debug::Log(error, LOG_ERR);
+    Debug::LogInfo(error, LOG_ERR);
     //    throw std::system_error(errno, std::system_category());
     return false;
   }
@@ -65,7 +65,7 @@ bool TimerFd::isTriggered() {
 
 int TimerFd::getFileDescriptor() const {
   if (timer_fd_ < 0) {
-    Debug::Log("The timer is not valid.", LOG_REMOVE);
+    Debug::LogInfo("The timer is not valid.", LOG_REMOVE);
   }
   return timer_fd_;
 }

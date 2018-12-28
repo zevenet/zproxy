@@ -33,7 +33,7 @@ class Teacher : public CtlNotify<Task, Result> {
     auto res = notify({"Who are you?"});
     //    std::this_thread::sleep_for(std::chrono::seconds(5));
     for (auto &data : res) {
-      Debug::Log("Yielding result from: " + std::to_string(data.get().i));
+      Debug::LogInfo("Yielding result from: " + std::to_string(data.get().i));
     }
     return static_cast<int>(res.size());
   }
@@ -41,13 +41,13 @@ class Teacher : public CtlNotify<Task, Result> {
   void onResponseReady(CtlObserver<Task, Result> &obj, Result arg) override {}
 
   void onAttach(CtlObserver<Task, Result> &obj) override {
-    Debug::Log("Attached student id: " +
+    Debug::LogInfo("Attached student id: " +
                std::to_string(dynamic_cast<Student *>(&obj)->id));
   }
 };
 
 TEST(IObserver, IObserver1) {
-  Debug::Log("Starting Observer test");
+  Debug::LogInfo("Starting Observer test");
   std::vector<Student *> students;
   Teacher teacher;
   int num_student = 20;
@@ -57,6 +57,6 @@ TEST(IObserver, IObserver1) {
     students.push_back(student);
   }
   auto res = teacher.run();
-  Debug::Log("Result " + std::to_string(res));
+  Debug::LogInfo("Result " + std::to_string(res));
   ASSERT_TRUE(res == num_student);
 }

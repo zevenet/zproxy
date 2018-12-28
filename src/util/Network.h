@@ -69,12 +69,12 @@ public:
     auto *addr = new addrinfo(); /* IPv4/6 address */
 
     if (getHost(address.c_str(), addr, PF_UNSPEC)) {
-      Debug::Log("Unknown Listener address");
+      Debug::LogInfo("Unknown Listener address");
       delete addr;
       return nullptr;
     }
     if (addr->ai_family != AF_INET && addr->ai_family != AF_INET6) {
-      Debug::Log("Unknown Listener address family");
+      Debug::LogInfo("Unknown Listener address family");
       delete addr;
       return nullptr;
     }
@@ -90,7 +90,7 @@ public:
       memcpy(addr->ai_addr, &in6, sizeof(in6));
       break;
     default:
-      Debug::Log("Unknown Listener address family", LOG_ERR);
+      Debug::LogInfo("Unknown Listener address family", LOG_ERR);
     }
     return addr;
   }
@@ -154,7 +154,7 @@ public:
     if (::fcntl(fd, F_SETFL, flags) < 0) {
       std::string error = "fcntl(2) failed";
       error += std::strerror(errno);
-      Debug::Log(error);
+      Debug::LogInfo(error);
       return false;
     }
     return true;
@@ -238,7 +238,7 @@ public:
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
           std::string error = "read() failed  ";
           error += std::strerror(errno);
-          Debug::Log(error, LOG_NOTICE);
+          Debug::LogInfo(error, LOG_NOTICE);
           should_close = true;
         }
         done = true;

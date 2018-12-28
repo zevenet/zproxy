@@ -38,24 +38,24 @@ TEST(EpollManagerTest, EpollManagerBasicOp) {
   bool success;
 
   /* Check that we are not getting errors when a file descriptor is first time added. */
-  success = e.addFd(t_fd.getFileDescriptor(), READ, SERVER);
+  success = e.addFd(t_fd.getFileDescriptor(), READ, EVENT_GROUP::SERVER);
   EXPECT_TRUE(errno != EEXIST && success);
 
   /* Check that we get EEXIST error if the file descriptor have been already added. */
-  success = e.addFd(t_fd.getFileDescriptor(), READ, SERVER);
+  success = e.addFd(t_fd.getFileDescriptor(), READ, EVENT_GROUP::SERVER);
   EXPECT_TRUE(errno == EEXIST && success);
 
   /* Check that we are cannot add a not valid file descriptor. */
-  success = e.addFd(-1, READ, SERVER);
+  success = e.addFd(-1, READ, EVENT_GROUP::SERVER);
   EXPECT_FALSE(success);
   EXPECT_TRUE(errno == EBADF);
 
   /* Check that we are not getting errors when an existing file descriptor is updated. */
-  success = e.updateFd(t_fd.getFileDescriptor(), READ, SERVER);
+  success = e.updateFd(t_fd.getFileDescriptor(), READ, EVENT_GROUP::SERVER);
   EXPECT_TRUE(errno != ENOENT && success);
 
   /* Check that we are cannot update a not valid file descriptor. */
-  success = e.updateFd(-1, READ, SERVER);
+  success = e.updateFd(-1, READ, EVENT_GROUP::SERVER);
   EXPECT_FALSE(success);
   EXPECT_TRUE(errno == EBADF);
 
@@ -69,7 +69,7 @@ TEST(EpollManagerTest, EpollManagerBasicOp) {
   EXPECT_TRUE(errno == ENOENT);
 
   /* Check that we get ENOENT error if the file descriptor have not been already added. */
-  success = e.updateFd(t_fd.getFileDescriptor(), READ, SERVER);
+  success = e.updateFd(t_fd.getFileDescriptor(), READ, EVENT_GROUP::SERVER);
   EXPECT_TRUE(success);
   EXPECT_TRUE(errno == ENOENT);
 

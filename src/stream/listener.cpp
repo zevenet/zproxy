@@ -11,8 +11,8 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
                            EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE &&
       fd == timer_maintenance.getFileDescriptor()) {
-    Debug::Log("Doing maintenance", LOG_REMOVE);
-    //Debug::Log("Session table\n\t\tKey\tbackend", LOG_REMOVE);
+    Debug::LogInfo("Doing maintenance", LOG_REMOVE);
+    //Debug::LogInfo("Session table\n\t\tKey\tbackend", LOG_REMOVE);
     //    std::vector<std::string> keys_to_delete;
     //    if (!sessions::HttpSessionManager::sessions_set.empty()) {
     //      for (auto session : sessions::HttpSessionManager::sessions_set) {
@@ -54,7 +54,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
             // sm->stream_set.size() ????
             sm->addStream(new_fd);
           } else {
-            Debug::Log("StreamManager not found");
+            Debug::LogInfo("StreamManager not found");
           }
         }
       } while (new_fd > 0);
@@ -64,13 +64,13 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
       //      Connection cnt;
       //      cnt.setFileDescriptor(fd);
       //      cnt.read();
-      //      //      Debug::Log(cnt.string_buffer.string());
+      //      //      Debug::LogInfo(cnt.string_buffer.string());
       //      std::string send_e200 =
       //          "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World";
       //      cnt.write(send_e200.c_str(), send_e200.length());
       //    } break;
     default:
-      Debug::Log("###################Why!!!!!!!! ");  // TODO::REMOVE
+      Debug::LogInfo("###################Why!!!!!!!! ");  // TODO::REMOVE
       break;
   }
 }
@@ -111,7 +111,7 @@ void Listener::doWork() {
   while (is_running) {
     if (loopOnce() <= 0) {
       // something bad happend
-      //      Debug::Log("No event received");
+      //      Debug::LogInfo("No event received");
     }
   }
 }
@@ -127,7 +127,7 @@ void Listener::start() {
       ServiceManager::getInstance(listener_config)
           ->addService(*service_config, ++service_id);
     } else {
-      Debug::Log("Backend " + std::string(service_config->name) +
+      Debug::LogInfo("Backend " + std::string(service_config->name) +
                      " disabled in config file",
                  LOG_NOTICE);
     }
@@ -138,7 +138,7 @@ void Listener::start() {
       sm->setListenSocket(listener_connection.getFileDescriptor());
       sm->start(i);
     } else {
-      Debug::Log("StreamManager id doesn't exist : " + std::to_string(i),
+      Debug::LogInfo("StreamManager id doesn't exist : " + std::to_string(i),
                  LOG_ERR);
     }
   }

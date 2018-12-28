@@ -3,7 +3,7 @@ project(zhttp LANGUAGES CXX)
 
 #options
 option(BUILD_DOC "Build Documentation" ON)
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests" ON)
 option(UNIQUE_BUILD_DIRECTORY "enable built output build/bin directory" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)

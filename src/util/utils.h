@@ -90,9 +90,9 @@ struct ThreadHelper {
     //    //TODO:: take outside main initialization
     //    struct rlimit r;
     //    getrlimit(RLIMIT_NOFILE, &r);
-    //    Debug::Log("current::RLIMIT_NOFILE\n\tCurrent " +
+    //    Debug::LogInfo("current::RLIMIT_NOFILE\n\tCurrent " +
     //        std::to_string(r.rlim_cur));
-    //    Debug::Log("\tMaximum " + std::to_string(r.rlim_cur));
+    //    Debug::LogInfo("\tMaximum " + std::to_string(r.rlim_cur));
     //    if (r.rlim_cur != r.rlim_max) {
     //      r.rlim_cur = r.rlim_max;
     //      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {

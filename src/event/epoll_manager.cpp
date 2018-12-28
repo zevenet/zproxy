@@ -12,7 +12,7 @@ EpollManager::EpollManager() : accept_fd(-1) {
   if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
     std::string error = "epoll_create(2) failed: ";
     error += std::strerror(errno);
-    Debug::Log(error, LOG_ERR);
+    Debug::LogInfo(error, LOG_ERR);
     throw std::system_error(errno, std::system_category());
   }
 }
@@ -49,12 +49,12 @@ bool EpollManager::deleteFd(int fd) {
     if (errno == ENOENT || errno == EBADF || errno == EPERM) {
       //      std::string error = "epoll_ctl(delete) unnecessary. ";
       //      error += std::strerror(errno);
-      //      Debug::Log(error, LOG_DEBUG);
+      //      Debug::LogInfo(error, LOG_DEBUG);
       return true;
     }
     std::string error = "epoll_ctl(delete) failed ";
     error += std::strerror(errno);
-    Debug::Log(error, LOG_DEBUG);
+    Debug::LogInfo(error, LOG_DEBUG);
     return false;
   }
   return true;
@@ -114,12 +114,12 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
     } else {
       std::string error = "epoll_ctl(add) failed ";
       error += std::strerror(errno);
-      Debug::Log(error, LOG_DEBUG);
+      Debug::LogInfo(error, LOG_DEBUG);
       return false;
     }
   }
 #if DEBUG_EVENT_MANAGER
-  Debug::Log("Epoll::AddFD " + std::to_string(fd) +
+  Debug::LogInfo("Epoll::AddFD " + std::to_string(fd) +
                  " To EpollFD: " + std::to_string(epoll_fd),
              LOG_DEBUG);
 #endif
@@ -130,7 +130,7 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
                             EVENT_GROUP event_group) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
 #if DEBUG_EVENT_MANAGER
-  Debug::Log("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
+  Debug::LogInfo("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
 #endif
   struct epoll_event epevent = {};
   epevent.events = event_type;
@@ -141,12 +141,12 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
     if (errno == ENOENT) {
       std::string error = "epoll_ctl(update) failed, fd reopened, adding .. ";
       error += std::strerror(errno);
-      Debug::Log(error, LOG_DEBUG);
+      Debug::LogInfo(error, LOG_DEBUG);
       return addFd(fd, event_type, event_group);
     } else {
       std::string error = "epoll_ctl(update) failed ";
       error += std::strerror(errno);
-      Debug::Log(error, LOG_DEBUG);
+      Debug::LogInfo(error, LOG_DEBUG);
       return false;
     }
   }

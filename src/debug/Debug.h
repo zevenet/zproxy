@@ -45,7 +45,7 @@ static CODE facilitynames[] = {
     {"local7", LOG_LOCAL7},     {NULL, -1}};
 #endif
 
-#define Log(...) Debug::Log2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define LogInfo(...) Debug::Log2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 
 #define logmsg(...) \
   Debug::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
@@ -113,7 +113,7 @@ class Debug {
     //
     //    } else {
     //      //      if (print_log)
-    //      Log(std::string(buf));
+    //      LogInfo(std::string(buf));
     //      //      else /*if (name)*/
     //      //        syslog(LOGFACILITY | priority, "%s, %s\n", name, buf);
     //    }

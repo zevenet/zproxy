@@ -21,8 +21,10 @@ TEST(HttpParserTest, HttpParserTest1) {
   struct phr_header headers[4];
   size_t num_headers;
   size_t last_len = 0;
+  size_t http_message_length = 0;
   std::string s = "GET /hoge HTTP/1.1\r\nHost: example.com\r\nUser-Agent: \343\201\262\343/1.0\r\n\r\n";
   num_headers = sizeof(headers) / sizeof(headers[0]);
+
   auto ret =
       phr_parse_request(s.c_str(),
                         s.length(),
@@ -33,7 +35,8 @@ TEST(HttpParserTest, HttpParserTest1) {
                         &minor_version,
                         headers,
                         &num_headers,
-                        last_len);
+                        last_len,
+                        &http_message_length);
   ASSERT_TRUE(s.length() == s.size());
   ASSERT_TRUE(ret == s.length());
   Debug::logmsg(LOG_DEBUG, "method is %.*s\n", (int) method_len, method);

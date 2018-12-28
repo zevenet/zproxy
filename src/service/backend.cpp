@@ -147,4 +147,6 @@ void Backend::doMaintenance() {
     default:
        this->status = BACKEND_DOWN;
   }
+
+  //TODO:: Send http request and check response code
 }

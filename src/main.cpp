@@ -1,18 +1,18 @@
-#include <openssl/ssl.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
-#include <csignal>
-#include <iostream>
 #include "config/config.h"
 #include "ctl/ControlManager.h"
 #include "debug/Debug.h"
 #include "stream/listener.h"
 #include "util/environment.h"
 #include "util/system.h"
+#include <csignal>
+#include <iostream>
+#include <openssl/ssl.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
 
 // Log initilization
 std::mutex Debug::log_lock;
-int Debug::log_level = 8;
+int Debug::log_level = 6;
 int Debug::log_facility = -1;
 
 void cleanExit() { closelog(); }
@@ -61,12 +61,12 @@ bool daemonize() {
     std::cerr << "error: failed fork\n";
     exit(EXIT_FAILURE);
   }
-  if (child > 0) {  // parent
+  if (child > 0) { // parent
     //    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); wait for
     //    childs to starts
     exit(EXIT_SUCCESS);
   }
-  if (setsid() < 0) {  // failed to become session leader
+  if (setsid() < 0) { // failed to become session leader
     std::cerr << "error: failed setsid\n";
     exit(EXIT_FAILURE);
   }
@@ -76,7 +76,7 @@ bool daemonize() {
   signal(SIGHUP, SIG_IGN);
 
   // fork second time
-  if ((child = fork()) < 0) {  // failed fork
+  if ((child = fork()) < 0) { // failed fork
     std::cerr << "error: failed fork\n";
     exit(EXIT_FAILURE);
   }
@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
   Config config;
   // inicializar la interfaz de control (poundctl)
   // ControlInterface control_interface;
+  Debug::logmsg(LOG_NOTICE, "zhttp starting...");
   config.parseConfig(argc, argv);
   Debug::log_level = config.listeners->log_level;
   Debug::log_facility = config.log_facility;
@@ -102,7 +103,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  Debug::logmsg(LOG_NOTICE, "zhttp starting...");
   //  /* block all signals. we take signals synchronously via signalfd */
   //  sigset_t all;
   //  sigfillset(&all);
@@ -118,19 +118,19 @@ int main(int argc, char *argv[]) {
 
   // Increase num file descriptor ulimit
   // TODO:: take outside main initialization
-  Debug::Log("System info:");
-  Debug::Log("\tL1 Data cache size: " +
+  Debug::LogInfo("System info:");
+  Debug::LogInfo("\tL1 Data cache size: " +
              std::to_string(SystemInfo::data()->getL1DataCacheSize()));
-  Debug::Log("\t\tCache line size: " +
+  Debug::LogInfo("\t\tCache line size: " +
              std::to_string(SystemInfo::data()->getL1DataCacheLineSize()));
-  Debug::Log("\tL2 Cache size: " +
+  Debug::LogInfo("\tL2 Cache size: " +
              std::to_string(SystemInfo::data()->getL2DataCacheSize()));
-  Debug::Log("\t\tCache line size: " +
+  Debug::LogInfo("\t\tCache line size: " +
              std::to_string(SystemInfo::data()->getL2DataCacheLineSize()));
   rlimit r{};
   ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::Log("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur));
-  Debug::Log("\tRLIMIT_NOFILE\tMaximum " +
+  Debug::LogInfo("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur));
+  Debug::LogInfo("\tRLIMIT_NOFILE\tMaximum " +
              std::to_string(::sysconf(_SC_OPEN_MAX)));
   if (r.rlim_cur != r.rlim_max) {
     r.rlim_cur = r.rlim_max;
@@ -140,12 +140,12 @@ int main(int argc, char *argv[]) {
     }
   }
   ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::Log("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur));
+  Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur));
   /*Set process user and group*/
   if (config.user != nullptr)
-  Environment::setUid(std::string(config.user));
-  if(config.group !=nullptr)
-  Environment::setGid(std::string(config.group));
+    Environment::setUid(std::string(config.user));
+  if (config.group != nullptr)
+    Environment::setGid(std::string(config.group));
 
   /* SSL stuff */
   SSL_load_error_strings();

@@ -7,8 +7,8 @@
 #include <sys/un.h>
 
 #define PRINT_BUFFER_SIZE                                                      \
-  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
-//  Debug::Log("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
+  Debug::LogInfo("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
+//  Debug::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
 
 Connection::Connection()
     : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
@@ -39,7 +39,7 @@ IO::IO_RESULT Connection::read() {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
         std::string error = "read() failed  ";
         error += std::strerror(errno);
-        Debug::Log(error, LOG_NOTICE);
+        Debug::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -55,7 +55,7 @@ IO::IO_RESULT Connection::read() {
      // PRINT_BUFFER_SIZE
       if ((MAX_DATA_SIZE - buffer_size) == 0) {
         PRINT_BUFFER_SIZE
-        Debug::Log("Buffer maximum size reached !!", LOG_DEBUG);
+        Debug::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
         return IO::IO_RESULT::FULL_BUFFER;
       } else
         result = IO::IO_RESULT::SUCCESS;
@@ -102,14 +102,14 @@ IO::IO_RESULT Connection::zeroRead() {
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
-//  Debug::Log("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
+//  Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
     if (bytes > BUFSZ)
       bytes = BUFSZ;
     auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr, bytes,
                      SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-//    Debug::Log("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
+//    Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
     if (n == 0)
       break;
     if (n < 0) {
@@ -133,7 +133,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
-  //  Debug::Log("#IN#bufer_size" +
+  //  Debug::LogInfo("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
   PRINT_BUFFER_SIZE
   while (!done) {
@@ -143,7 +143,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
           errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::Log(error, LOG_NOTICE);
+        Debug::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -162,7 +162,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
     buffer_size -= sent;
     //    string_buffer.erase(static_cast<unsigned int>(sent));
   }
-  //  Debug::Log("#OUT#bufer_size" +
+  //  Debug::LogInfo("#OUT#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
   PRINT_BUFFER_SIZE
   return result;
@@ -186,7 +186,7 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
           errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::Log(error, LOG_NOTICE);
+        Debug::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -268,7 +268,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
           errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
       std::string error = "write() failed  ";
       error += std::strerror(errno);
-      Debug::Log(error, LOG_NOTICE);
+      Debug::LogInfo(error, LOG_NOTICE);
       return IO::IO_RESULT::ERROR;
     } else {
       return IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -295,7 +295,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
-  //  Debug::Log("#IN#bufer_size" +
+  //  Debug::LogInfo("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
 //  PRINT_BUFFER_SIZE
   while (!done) {
@@ -305,7 +305,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
           errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::Log(error, LOG_NOTICE);
+        Debug::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -324,7 +324,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
     //    size -= sent;
     //    string_buffer.erase(static_cast<unsigned int>(sent));
   }
-  //  Debug::Log("#OUT#bufer_size" +
+  //  Debug::LogInfo("#OUT#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
 //  PRINT_BUFFER_SIZE
   return result;
@@ -408,7 +408,7 @@ int Connection::doAccept() {
     }
     std::string error = "accept() failed  ";
     error += std::strerror(errno);
-    Debug::Log(error);
+    Debug::LogInfo(error);
     // break;
     return -1;
   }
