@@ -124,7 +124,6 @@ delete_globalconf_param "dosConfDir"
 delete_globalconf_param "waf_body_size"
 
 delete_globalconf_param "bond_config_file"
-delete_globalconf_param "sys_net_dir"
 delete_globalconf_param "bonding_masters_filename"
 delete_globalconf_param "bonding_mode_filename"
 delete_globalconf_param "bonding_slaves_filename"

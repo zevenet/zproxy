@@ -71,6 +71,8 @@ $filecluster="$configdir/cluster.conf";#update
 $confhttp="$zdir/app/cherokee/etc/cherokee/cherokee.conf";#update
 #Where is temperature file?
 $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
+# network files
+$sys_net_dir="/sys/class/net";
 
 
 ## binaries
@@ -292,7 +294,6 @@ $backupfor="$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_
 
 #Bonding interfaces
 $bond_config_file="$configdir/bonding.conf";#update
-$sys_net_dir="/sys/class/net";
 $bonding_masters_filename="/sys/class/net/bonding_masters";
 $bonding_mode_filename="bonding/mode";
 $bonding_slaves_filename="bonding/slaves";
