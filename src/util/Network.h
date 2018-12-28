@@ -209,14 +209,14 @@ public:
     return setsockopt(sock_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag)) !=
            -1;
   }
-
+#ifdef SO_ZEROCOPY
   /*useful for use with send file, wait 200 ms to to fill TCP packet*/
   inline static bool setSoZeroCopy(int sock_fd) {
     int flag = 1;
     return setsockopt(sock_fd, SOL_SOCKET, SO_ZEROCOPY, &flag, sizeof(flag)) !=
            -1;
   }
-
+#endif
   inline static bool isConnected(int sock_fd) {
     int error_code = -1;
     socklen_t error_code_size = sizeof(error_code);

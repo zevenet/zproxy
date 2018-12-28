@@ -48,8 +48,9 @@ void ctl::ControlManager::start() {
 }
 
 void ctl::ControlManager::stop() {
+  if(is_running)
+    control_thread.join();
   is_running = false;
-  control_thread.join();
 }
 
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
