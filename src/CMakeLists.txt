@@ -9,9 +9,6 @@ add_definitions(-DMAXBUF=4096)
 add_definitions(-DMAX_URI_SIZE=8000)
 add_definitions(-DMAX_HEADER_VALUE_SIZE=4000)
 add_definitions(-DMAX_NUM_HEADERS=50)
-
-#add_definitions(-Dnssv_CONFIG_CONVERSION_STD_STRING=1)
-
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 
 add_library(libzhttp
@@ -59,7 +56,5 @@ add_library(libzhttp
     event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
     service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
     stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h)
-
-#link_libraries(${JSONCPP_LIBRARIES})
 
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
