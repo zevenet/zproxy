@@ -53,11 +53,12 @@ sub startL4Farm    # ($farm_name)
 	  if &debug;
 
 	$status = &startNLBFarm( $farm_name );
-	if ( $status <= 0 )
+	if ( $status != 0 )
 	{
 		return $status;
 	}
 
+	require Zevenet::Net::Util;
 	# Enable IP forwarding
 	&setIpForward( 'true' );
 
