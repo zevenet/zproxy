@@ -26,10 +26,8 @@ use strict;
 use Zevenet::API40::HTTP;
 
 my @bond_modes_short = (
-						 'balance-rr',  'active-backup',
-						 'balance-xor', 'broadcast',
-						 '802.3ad',     'balance-tlb',
-						 'balance-alb',
+						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+						 '802.3ad',    'balance-tlb',   'balance-alb',
 );
 
 sub new_bond    # ( $json_obj )
@@ -52,7 +50,7 @@ sub new_bond    # ( $json_obj )
 	if ( length $json_obj->{ name } > 11 )
 	{
 		my $msg = "Bonding interface name has a maximum length of 11 characters";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	unless (    $json_obj->{ name } =~ /^$bond_re$/
@@ -629,7 +627,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	# check if network is correct
 	my $new_if = {
-				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+				   addr    => $json_obj->{ ip } // $if_ref->{ addr },
 				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
@@ -649,7 +647,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			 || ( $new_if->{ gateway } && $ip_v ne $gw_v ) )
 		{
 			my $msg = "Invalid IP stack version match.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -699,7 +697,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		if ( $if_used )
 		{
 			my $msg = "The network already exists in the interface $if_used.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -735,7 +733,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{

@@ -136,7 +136,7 @@ sub module_stats_status
 				 },
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #Get lslb|gslb|dslb Farm Stats
@@ -164,7 +164,7 @@ sub module_stats    # ()
 		my $desc = "List module farms stats";
 		my $msg  = "Incorrect module";
 
-		&httpErrorResponse( { code => 400, msg => $msg, desc => $desc } );
+		return &httpErrorResponse( { code => 400, msg => $msg, desc => $desc } );
 	}
 
 	my @farms = @{ &getAllFarmStats() };
@@ -185,7 +185,7 @@ sub module_stats    # ()
 				 farms       => \@farmModule,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # Get the number of farms
@@ -201,7 +201,7 @@ sub farms_number
 				 number      => $number,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/mem
@@ -230,7 +230,7 @@ sub stats_mem    # ()
 				 params      => $out
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/load
@@ -261,7 +261,7 @@ sub stats_load    # ()
 				 params      => $out
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/cpu
@@ -283,7 +283,7 @@ sub stats_cpu    # ()
 				 params      => $out
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/system/connections
@@ -297,7 +297,7 @@ sub stats_conns
 				 params      => { "connections" => $out },
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/network/interfaces
@@ -391,7 +391,7 @@ sub stats_network_interfaces
 				 params      => $params,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # /stats/throughput
@@ -408,7 +408,7 @@ sub stats_throughput
 				 params      => $out
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

@@ -86,7 +86,7 @@ sub add_addheader    # ( $json_obj, $farmname )
 
 	# error
 	my $msg = "Error adding a new addheader";
-	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 }
 
 #  DELETE	/farms/<>/addheader/<>
@@ -196,7 +196,7 @@ sub add_headremove    # ( $json_obj, $farmname )
 
 	# error
 	my $msg = "Error adding a new headremove";
-	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 }
 
 #  DELETE	/farms/<>/addheader/<>

@@ -160,7 +160,7 @@ sub upload_activation_certificate    # ()
 	unless ( &setFile( "$basedir/$tmpFilename", $upload_data ) )
 	{
 		my $msg = "Could not save the activation certificate";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $response = &checkActivationCertificate( "$tmpFilename" );

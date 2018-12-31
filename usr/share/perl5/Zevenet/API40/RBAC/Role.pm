@@ -208,7 +208,7 @@ sub set_rbac_role
 	my $output = &getZapiRBACRole( $role );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 
 }
 

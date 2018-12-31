@@ -224,7 +224,7 @@ sub set_rbac_user
 	my $output = &getZapiRBACUsers( $user );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 
 }
 
@@ -285,7 +285,7 @@ sub get_system_user_rbac
 					   'zapi_permissions' => $obj->{ 'zapi_permissions' },
 		};
 
-		&httpResponse(
+		return &httpResponse(
 					 { code => 200, body => { description => $desc, params => $params } } );
 	}
 }
@@ -309,7 +309,7 @@ sub set_system_user_rbac
 	if ( !&getRBACUserExists( $user ) )
 	{
 		my $msg = "The user is not a RBAC user";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# modify password

@@ -64,7 +64,7 @@ sub get_http
 	}
 	$http->{ 'port' } = &getHttpServerPort;
 
-	&httpResponse(
+	return &httpResponse(
 				   { code => 200, body => { description => $desc, params => $http } } );
 }
 
@@ -84,13 +84,13 @@ sub set_http
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
 	{
 		my $msg = "Port hasn't a correct format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( exists $json_obj->{ 'ip' } && $json_obj->{ 'ip' } ne '*' )
@@ -104,7 +104,7 @@ sub set_http
 			if ( $iface->{ type } eq 'virtual' )    # discard virtual interfaces
 			{
 				my $msg = "Virtual interface canot be configurate as http interface.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
 			$flag = 1;
@@ -114,7 +114,7 @@ sub set_http
 		unless ( $flag )
 		{
 			my $msg = "Ip not found in system.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -124,7 +124,7 @@ sub set_http
 
 	my $body = { description => $desc, params => $json_obj };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

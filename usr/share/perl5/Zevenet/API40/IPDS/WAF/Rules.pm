@@ -246,7 +246,7 @@ sub create_waf_rule
 	my $output = &getZapiWAFRule( $rule );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
-	&httpResponse( { code => 201, body => $body } );
+	return &httpResponse( { code => 201, body => $body } );
 }
 
 #  PUT /ipds/waf/<set>/rules/<id>
@@ -369,7 +369,7 @@ sub delete_waf_rule
 	my $msg = "The rule $id has been deleted properly";
 	my $body = { description => $desc, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/waf/<set>/rules/<id>/actions
@@ -401,7 +401,7 @@ sub move_waf_rule
 
 	my $params =
 	  { "position" =>
-		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters
@@ -424,7 +424,7 @@ sub move_waf_rule
 	  "The rule was moved properly to the position $json_obj->{ position }.";
 	my $body = { description => $desc, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/waf/<set>/rules/<id>/chain
@@ -492,7 +492,7 @@ sub create_waf_rule_chain
 	my $output = &getZapiWAFRule( $rule_out );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
-	&httpResponse( { code => 201, body => $body } );
+	return &httpResponse( { code => 201, body => $body } );
 }
 
 #  PUT /ipds/waf/<set>/rules/<id>/chain/index
@@ -611,7 +611,7 @@ sub delete_waf_rule_chain
 	my $msg = "The chain $chain_index has been deleted properly";
 	my $body = { description => $desc, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

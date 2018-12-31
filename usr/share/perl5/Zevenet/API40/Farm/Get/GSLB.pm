@@ -64,7 +64,7 @@ sub farms_name_gslb    # ( $farmname )
 
 	$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

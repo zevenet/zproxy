@@ -162,7 +162,7 @@ sub set_rbac_group
 	my $output = &getZapiRBACGroups( $group );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /rbac/groups/<group>

@@ -378,7 +378,7 @@ sub move_farm_waf_set
 
 	my $params =
 	  { "position" =>
-		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters
@@ -421,7 +421,7 @@ sub move_farm_waf_set
 	my $msg = "The set was moved properly to the position $json_obj->{ position }.";
 	my $body = { description => $desc, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;
