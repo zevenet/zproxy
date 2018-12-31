@@ -69,12 +69,6 @@ sub getL4FarmParam    # ($param, $farm_name)
 
 	$output = &_getL4ParseFarmConfig( $param, undef, \@content );
 
-	if ( $param eq "proto" )
-	{
-		my $helper = &_getL4ParseFarmConfig( "helper", undef, \@content );
-		return $helper if ( $helper ne "none" );
-	}
-
 	return $output;
 }
 
@@ -144,6 +138,18 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	elsif ( $param eq "alg" )
 	{
 		$srvparam = "scheduler";
+
+		if ( $value eq "hash_srcip_srcport" )
+		{
+			$value    = "hash";
+			$addition = $addition . qq( , "sched-param" : "srcip srcport" );
+		}
+
+		if ( $value eq "hash_srcip" )
+		{
+			$value    = "hash";
+			$addition = $addition . qq( , "sched-param" : "srcip" );
+		}
 	}
 	elsif ( $param eq "proto" )
 	{
@@ -236,6 +242,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 			 "debug", "PROFILING" );
 	my ( $param, $value, $config ) = @_;
 	my $output = -1;
+	my $exit   = 1;
 
 	if ( $param eq 'persist' || $param eq 'persisttm' )
 	{
@@ -276,18 +283,39 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		{
 			my @l = split /"/, $line;
 			$output = $l[3];
+			$exit   = 0;
 		}
 
-		if ( $line =~ /\"helper\"/ && $param eq 'helper' )
+		if ( $line =~ /\"helper\"/ && $param eq 'proto' )
 		{
 			my @l = split /"/, $line;
-			$output = $l[3];
+			$out = $l[3];
+
+			$output = $out if ( $out ne "none" );
+			$exit = 1;
 		}
 
 		if ( $line =~ /\"scheduler\"/ && $param eq 'alg' )
 		{
 			my @l = split /"/, $line;
 			$output = $l[3];
+			$exit   = 0;
+		}
+
+		if ( $line =~ /\"sched-param\"/ && $param eq 'alg' )
+		{
+			my @l = split /"/, $line;
+			my $out = $l[3];
+
+			if ( $output eq "hash" )
+			{
+				if ( $out =~ /scrip/ )
+				{
+					$output = "hash_srcip";
+					$output = "hash_srcip_srcport" if ( $out =~ /srcport/ );
+				}
+			}
+			$exit = 1;
 		}
 
 		if ( $line =~ /\"log\"/ && $param eq 'logs' )
@@ -313,9 +341,8 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		if ( $output ne "-1" )
 		{
 			$line =~ s/$output/$value/r if $value != undef;
-			return $output;
+			return $output if ( $exit );
 		}
-
 	}
 
 	return $output;
