@@ -631,9 +631,25 @@ sub checkZAPIParams
 			{
 				my ( $low_limit, $high_limit ) =
 				  split ( ',', $param_obj->{ $param }->{ 'interval' } );
-				return "The parameter $param has not a valid value."
-				  if (    ( $json_obj->{ $param } < $low_limit )
+				my $low_str =
+				  ( $low_limit ) ? "$param has to be greater than or equal to $low_limit" : "";
+				my $high_str =
+				  ( $high_limit ) ? "$param has to be lower than or equal to $high_limit" : "";
+				my $msg = $low_str if $low_str;
+
+				if ( $high_str )
+				{
+					$msg .= ". " if $msg;
+					$msg .= $high_str;
+				}
+				return $msg
+				  if (    ( $json_obj->{ $param } !~ /^\d*$/ )
+					   || ( $json_obj->{ $param } > $high_limit )
 					   || ( $json_obj->{ $param } > $high_limit ) );
+			}
+			else
+			{
+				die "Expected a interval string, got: $param_obj->{ $param }->{ 'interval' }";
 			}
 		}
 
@@ -650,6 +666,11 @@ sub checkZAPIParams
 		# aditionals
 
 		# regex
+		if ( exists $param_obj->{ $param }->{ 'regex' } )
+		{
+			return "The value $json_obj->{ $param } is not valid for the parameter $param."
+			  if ( $json_obj->{ $param } !~ /$param_obj->{ $param }->{ 'regex' }/ );
+		}
 
 	}
 
