@@ -385,14 +385,15 @@ sub getL4FarmStruct
 	require Zevenet::Farm::Config;
 	my $config = &getFarmPlainInfo( $farm{ name } );
 
-	$farm{ nattype }    = &_getL4ParseFarmConfig( 'mode', undef, $config );
-	$farm{ mode }       = $farm{ nattype };
-	$farm{ lbalg }      = &_getL4ParseFarmConfig( 'alg', undef, $config );
-	$farm{ vip }        = &_getL4ParseFarmConfig( 'vip', undef, $config );
-	$farm{ vport }      = &_getL4ParseFarmConfig( 'vipp', undef, $config );
-	$farm{ vproto }     = &_getL4ParseFarmConfig( 'proto', undef, $config );
-	$farm{ persist }    = &_getL4ParseFarmConfig( 'persist', undef, $config );
-	$farm{ ttl }        = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
+	$farm{ nattype } = &_getL4ParseFarmConfig( 'mode', undef, $config );
+	$farm{ mode }    = $farm{ nattype };
+	$farm{ lbalg }   = &_getL4ParseFarmConfig( 'alg', undef, $config );
+	$farm{ vip }     = &_getL4ParseFarmConfig( 'vip', undef, $config );
+	$farm{ vport }   = &_getL4ParseFarmConfig( 'vipp', undef, $config );
+	$farm{ vproto }  = &_getL4ParseFarmConfig( 'proto', undef, $config );
+
+#	$farm{ persist }    = &_getL4ParseFarmConfig( 'persist', undef, $config ); #TODO: not yet supported
+#	$farm{ ttl }        = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ proto }      = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ bootstatus } = &_getL4ParseFarmConfig( 'bootstatus', undef, $config );
 	$farm{ status }     = &getL4FarmStatus( $farm{ name } );
