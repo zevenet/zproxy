@@ -309,7 +309,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 
 			if ( $output eq "hash" )
 			{
-				if ( $out =~ /scrip/ )
+				if ( $out =~ /srcip/ )
 				{
 					$output = "hash_srcip";
 					$output = "hash_srcip_srcport" if ( $out =~ /srcport/ );
