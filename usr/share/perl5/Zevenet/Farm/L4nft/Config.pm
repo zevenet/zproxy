@@ -289,7 +289,7 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		if ( $line =~ /\"helper\"/ && $param eq 'proto' )
 		{
 			my @l = split /"/, $line;
-			$out = $l[3];
+			my $out = $l[3];
 
 			$output = $out if ( $out ne "none" );
 			$exit = 1;
