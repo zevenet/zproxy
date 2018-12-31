@@ -210,7 +210,7 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	$output = &httpNLBRequest(
 		{
 		   farm       => $farm_req,
-		   configfile => "$configdir/$farm_filename",
+		   configfile => ( $param ne 'status' ) ? "$configdir/$farm_filename" : undef,
 		   method     => "PUT",
 		   uri        => "/farms",
 		   body =>
@@ -477,9 +477,8 @@ sub httpNLBRequest # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, 
 	my $execmd =
 	  qq($curl_cmd -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
-	&zenlog( "Executing nftlb: " . "$execmd" );
-	`$execmd`;
-	$output = $?;
+	#~ &zenlog( "Executing nftlb: " . "$execmd" );
+	$output = &logAndRun( $execmd );
 
 	if ( $output != 0 )
 	{
@@ -493,13 +492,13 @@ sub httpNLBRequest # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, 
 
 	my $execmd =
 	  "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm }";
-	if ( $self->{ method } =~ /PUT|DELETE/ )
+
+	if ( $self->{ method } =~ /PUT|DELETE/ and $self->{ configfile } )
 	{
 		$execmd = $execmd . " > '$self->{ configfile }'";
 	}
 
-	`$execmd`;
-	$output = $?;
+	$output = &logAndRun( $execmd );
 
 	if ( $output != 0 )
 	{
