@@ -307,11 +307,14 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setDatalinkFarmServer( $id,
+		my $status = &setDatalinkFarmServer(
+											 $id,
 											 $json_obj->{ ip },
 											 $json_obj->{ interface },
 											 $json_obj->{ weight },
-											 $json_obj->{ priority }, $farmname, );
+											 $json_obj->{ priority },
+											 $farmname,
+		);
 
 		if ( $status != -1 )
 		{
@@ -530,12 +533,15 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
 		require Zevenet::Farm::Backend;
 
-		my $status = &setHTTPFarmServer( "",
+		my $status = &setHTTPFarmServer(
+										 "",
 										 $json_obj->{ ip },
 										 $json_obj->{ port },
 										 $json_obj->{ weight },
 										 $json_obj->{ timeout },
-										 $farmname, $service, );
+										 $farmname,
+										 $service,
+		);
 
 		if ( $status != -1 )
 		{
@@ -1166,14 +1172,8 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		if ( !$error )
 		{
-			my $status =
-			  &setFarmServer( $id_server,
-							  $be->{ ip },
-							  $be->{ interface },
-							  "",
-							  $be->{ weight },
-							  $be->{ priority },
-							  "", $farmname );
+			my $status = &setFarmServer( $farmname, undef, $id_server, $be );
+
 			if ( $status == -1 )
 			{
 				$error = "true";
@@ -1382,11 +1382,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 		{
 			require Zevenet::Farm::Backend;
 
-			my $status = &setFarmServer(
-										 $id_server, $be->{ ip }, $be->{ port }, "",
-										 "", $be->{ weight }, $be->{ timeout }, $farmname,
-										 $service
-			);
+			my $status = &setFarmServer( $farmname, $service, $id_server, $be );
 
 			if ( $status == -1 )
 			{
