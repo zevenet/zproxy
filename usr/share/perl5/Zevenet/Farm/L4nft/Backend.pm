@@ -190,7 +190,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$backend,$status)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	$status = 'off' if ( $status eq "maintenance" );
+	$status = 'off'  if ( $status eq "maintenance" );
+	$status = 'down' if ( $status eq "fgDOWN" );
 
 	# load the configuration file first if the farm is down
 	my $f_ref = &getL4FarmStruct( $farm_name );
@@ -456,8 +457,6 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $changing_algorithm = ( $caller =~ /setL4FarmParam/ );
 	my $removing_be        = ( $caller =~ /runL4FarmServerDelete/ );
 	my $fg_pid             = &getFarmGuardianPid( $farm_name );
-
-	#~ &zlog("(caller(2))[3]:$caller");
 
 	if ( $fg_enabled eq 'true' && !$changing_algorithm && !$removing_be )
 	{
