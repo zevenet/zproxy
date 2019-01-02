@@ -675,8 +675,9 @@ sub checkZAPIParams
 
 		if ( exists $param_obj->{ $param }->{ 'function' } )
 		{
-			my $result = &$param_obj->{ $param }->{ 'function' }( $json_obj->{ $param } );
-			if ( $result == 0 or $result eq 'false' )
+			my $result =
+			  &{ $param_obj->{ $param }->{ 'function' } }( $json_obj->{ $param } );
+			if ( !$result or $result eq 'false' )
 			{
 				if ( exists $param_obj->{ $param }->{ format_msg } )
 				{

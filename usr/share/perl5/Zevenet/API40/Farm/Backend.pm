@@ -589,11 +589,14 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		$params->{ "interface" } = { 'non_black' => 'true', };
 	}
 
-	# temporality
-	if ( exists $json_obj->{ port } )
+	# Disabled temporality
+	foreach my $pa ( 'port', 'max_conns' )
 	{
-		my $msg = "Not implemented yet.";
-		&httpErrorResponse( code => 406, desc => $desc, msg => $msg );
+		if ( exists $json_obj->{ $pa } )
+		{
+			my $msg = "$pa is not implemented yet.";
+			&httpErrorResponse( code => 406, desc => $desc, msg => $msg );
+		}
 	}
 
 	# Check allowed parameters
