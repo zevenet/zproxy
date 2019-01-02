@@ -213,14 +213,11 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setDatalinkFarmServer(
-											 $id,
+		my $status = &setDatalinkFarmServer( $id,
 											 $json_obj->{ ip },
 											 $json_obj->{ interface },
 											 $json_obj->{ weight },
-											 $json_obj->{ priority },
-											 $farmname,
-		);
+											 $json_obj->{ priority }, $farmname, );
 
 		# check error adding a new backend
 		if ( $status == -1 )
@@ -380,15 +377,12 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
-	my $status = &setHTTPFarmServer(
-									 "",
+	my $status = &setHTTPFarmServer( "",
 									 $json_obj->{ ip },
 									 $json_obj->{ port },
 									 $json_obj->{ weight },
 									 $json_obj->{ timeout },
-									 $farmname,
-									 $service,
-	);
+									 $farmname, $service, );
 
 	# check if there was an error adding a new backend
 	if ( $status == -1 )
@@ -595,6 +589,13 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		$params->{ "interface" } = { 'non_black' => 'true', };
 	}
 
+	# temporality
+	if ( exists $json_obj->{ port } )
+	{
+		my $msg = "Not implemented yet.";
+		&httpErrorResponse( code => 406, desc => $desc, msg => $msg );
+	}
+
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
@@ -611,41 +612,42 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	$backend->{ interface } = $json_obj->{ interface }
 	  if exists $json_obj->{ interface };    # datalink
 
-	if ( exists ( $json_obj->{ interface } ) )
+	if ( $type eq 'datalink' )
 	{
-		require Zevenet::Farm::Datalink::Backend;
 		require Zevenet::Net::Interface;
-		my $valid_interface;
-
-		for my $iface ( @{ &getActiveInterfaceList() } )
+		if ( exists ( $json_obj->{ interface } ) )
 		{
-			next if $iface->{ vini };        # discard virtual interfaces
-			next if !$iface->{ addr };       # discard interfaces without address
+			my $valid_interface;
 
-			if ( $iface->{ name } eq $json_obj->{ interface } )
+			for my $iface ( @{ &getActiveInterfaceList() } )
 			{
-				$valid_interface = 'true';
-				last;
+				next if $iface->{ vini };     # discard virtual interfaces
+				next if !$iface->{ addr };    # discard interfaces without address
+
+				if ( $iface->{ name } eq $json_obj->{ interface } )
+				{
+					$valid_interface = 'true';
+					last;
+				}
+			}
+
+			unless ( $valid_interface )
+			{
+				my $msg = "Invalid interface.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 
-		unless ( $valid_interface )
+		# check that IP is in network than interface
+		my $iface_ref = &getInterfaceConfig( $backend->{ interface } );
+		if (
+			 !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
+			 )
+		  )
 		{
-			my $msg = "Invalid interface.";
+			my $msg = "The IP must be in the same network than the local interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
-	}
-
-	# check that IP is in network than interface
-	my $iface_ref = &getInterfaceConfig( $backend->{ interface } );
-	if (
-		 !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
-		 )
-	  )
-	{
-		my $msg = "The IP must be in the same network than the local interface.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	$error = &setFarmServer( $farmname, undef, $id_server, $backend );

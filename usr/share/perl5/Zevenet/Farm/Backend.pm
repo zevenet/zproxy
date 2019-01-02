@@ -121,7 +121,7 @@ sub setFarmServer    # $output ($farm_name,$service,$bk_id,$bk_params)
 		$output =
 		  &setDatalinkFarmServer( $ids,
 								  $bk->{ ip },
-								  $bk->{ port },
+								  $bk->{ interface },
 								  $bk->{ weight },
 								  $bk->{ priority }, $farm_name );
 	}
