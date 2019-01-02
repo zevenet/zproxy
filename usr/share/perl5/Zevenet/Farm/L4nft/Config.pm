@@ -139,6 +139,8 @@ sub setL4FarmParam    # ($param, $value, $farm_name)
 	{
 		$srvparam = "scheduler";
 
+		$value = "rr" if ( $value eq "roundrobin" );
+
 		if ( $value eq "hash_srcip_srcport" )
 		{
 			$value    = "hash";
@@ -299,7 +301,9 @@ sub _getL4ParseFarmConfig    # ($param, $value, $config)
 		{
 			my @l = split /"/, $line;
 			$output = $l[3];
-			$exit   = 0;
+
+			$exit   = 0            if ( $output =~ /hash/ );
+			$output = "roundrobin" if ( $output eq "rr" );
 		}
 
 		if ( $line =~ /\"sched-param\"/ && $param eq 'alg' )
