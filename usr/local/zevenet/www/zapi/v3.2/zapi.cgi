@@ -297,30 +297,38 @@ sub certcontrol
 		my @modification = split /\ /, $date_mod;
 		$modification[0] = $modification[0] // '';
 
-		# check proxy in global.conf and use it if configured
-    my $proxy_https = $ENV{ https_proxy };
-    if ( $proxy_https )
-    {
-      require IO::Socket::Socks::Wrapped;
-
-      our @proxy = split /\:(?=\d)/, $proxy_https;
-
-      use IO::Socket::Socks::Wrapper
-        {
-            ProxyAddr => $proxy[0],
-            ProxyPort => $proxy[1] ? $proxy[1] : 443,
-        };
-    }
-
 		if ( $modification[0] ne $date_today)
     {
-			require IO::Socket;
 
-      if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) )
+      my $portCheck;
+      my $proxy_https = $ENV{ https_proxy };
+
+      # If proxy, use openssl
+      if ( $proxy_https )
       {
-        $scan->close();
-        my $tmp_file = '/tmp/cacrl.crl';
+          # delete https:// if exists
+          $proxy_https =~ s/https\:\/\// /;
+          ( my $proxyIp, my $proxyPort ) = split /\:(?=\d)/, $proxy_https;
+          $proxyPort = "443" if ( ! defined $proxyPort );
+          my $cmd = "echo -e 'GET / HTTP/1.1\\r\\n' | timeout 2 openssl s_client -connect certs.zevenet.com:443 -proxy $proxyIp:$proxyPort";
+          $portCheck = &logAndRun ($cmd);
 
+      }
+      # If !proxy, use IO::Socket::INET
+      else
+      {
+        require IO::Socket;
+
+        if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) )
+        {
+          $portCheck = 0;
+          $scan->close();
+        }
+      }
+
+      if ( !$portCheck )
+      {
+        my $tmp_file = '/tmp/cacrl.crl';
 				# Download CRL
 				my $download = `$wget -q -T5 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 				if ( -s $tmp_file > 0 ) {
