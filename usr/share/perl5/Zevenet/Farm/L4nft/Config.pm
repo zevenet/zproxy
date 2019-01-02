@@ -485,15 +485,16 @@ sub httpNLBRequest # ( \%hash ) hash_keys->( $farm, $configfile, $method, $uri, 
 		return -1;
 	}
 
-	if ( $self->{ method } eq "GET" )
+	if ( $self->{ method } eq "GET" or !$self->{ configfile } )
 	{
 		return $output;
 	}
 
+	# update farm configuration file
 	my $execmd =
 	  "$curl_cmd -s -H \"Key: HoLa\" -H \"Expect:\" -X \"GET\" http://127.0.0.1:27/farms/$self->{ farm }";
 
-	if ( $self->{ method } =~ /PUT|DELETE/ and $self->{ configfile } )
+	if ( $self->{ method } =~ /PUT|DELETE/ )
 	{
 		$execmd = $execmd . " > '$self->{ configfile }'";
 	}
