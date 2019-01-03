@@ -1,8 +1,6 @@
 
-#include <unistd.h>
 #include <cstdlib>
 #include <iostream>
-#include <string>
 #include "PoundClient.h"
 
 #define POUND_CTL_MODE 1

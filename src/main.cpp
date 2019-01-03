@@ -1,14 +1,9 @@
 #include "config/config.h"
 #include "ctl/ControlManager.h"
-#include "debug/Debug.h"
 #include "stream/listener.h"
-#include "util/environment.h"
 #include "util/system.h"
 #include <csignal>
-#include <iostream>
-#include <openssl/ssl.h>
 #include <sys/resource.h>
-#include <sys/stat.h>
 
 // Log initilization
 std::mutex Debug::log_lock;
@@ -19,7 +14,7 @@ void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
   // stop listener
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 void redirectLogOutput(std::string name, std::string chroot_path,
@@ -164,7 +159,10 @@ int main(int argc, char *argv[]) {
   }
 
   Listener listener;
-  listener.init(config.listeners[0]);
+  if(!listener.init(config.listeners[0])){
+    Debug::LogInfo("Error initializing listener socket", LOG_ERR);
+    return EXIT_FAILURE;
+  }
   //  listener.init("127.0.0.1", 9999);
   listener.start();
 

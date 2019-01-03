@@ -3,9 +3,6 @@
 //
 #include "PoundClient.h"
 #include "../util/Network.h"
-#include "../util/utils.h"
-#include <unordered_map>
-#include <set>
 
 bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
   if (possible_value)  // thorow error and show help

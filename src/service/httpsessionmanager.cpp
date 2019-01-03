@@ -1,5 +1,4 @@
 #include "httpsessionmanager.h"
-#include <regex>
 
 using namespace sessions;
 

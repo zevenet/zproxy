@@ -2,7 +2,6 @@
 #include "../debug/Debug.h"
 #include "../util/common.h"
 #include "HttpStatus.h"
-#include <strings.h>
 
 #define DEBUG_HTTP_PARSER 0
 

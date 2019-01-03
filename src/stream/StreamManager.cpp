@@ -5,9 +5,6 @@
 #include "StreamManager.h"
 #include "../util/Network.h"
 #include "../util/common.h"
-#include "../util/string_view.h"
-#include "../util/utils.h"
-#include <functional>
 #if HELLO_WORLD_SERVER
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
@@ -260,6 +257,7 @@ void StreamManager::addStream(int fd) {
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
                             stream->client_connection.getPeerAddress());
+  //configurar
 #else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
     Debug::LogInfo("Error adding to epoll manager", LOG_NOTICE);

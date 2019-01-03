@@ -3,7 +3,6 @@
 //
 
 #include "listener.h"
-#include "../service/httpsessionmanager.h"
 
 #define DEFAULT_MAINTENANCE_INTERVAL 2000
 
