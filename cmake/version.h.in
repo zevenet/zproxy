@@ -1,0 +1,44 @@
+#pragma once
+#include <string>
+
+#define ZHTTP_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define ZHTTP_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define ZHTTP_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define ZHTTP_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
+#define ZHTTP_VERSION "@PROJECT_VERSION@"
+#define ZHTTP_GIT_REF "@PROJECT_GIT_REF@"
+#define ZHTTP_SOURCE_VERSION "@PROJECT_SOURCE_VERSION@"
+#define ZHTTP_BUILD_DATE "@PROJECT_BUILD_DATE@"
+#define ZHTTP_BUILD_TIME "@PROJECT_BUILD_TIME@"
+#define ZHTTP_BUILD_INFO "@PROJECT_COMPILER_INFO@ @PROJECT_BUILD_TYPE@ @PROJECT_BUILD_INFO@ @PROJECT_BUILD_DATE@ @PROJECT_BUILD_TIME@"
+#define ZHTTP_HOST_INFO "@PROJECT_HOST_INFO@"
+
+struct ZhttpInfo{
+    static const std::string version_major;
+    static const std::string version_minor;
+    static const std::string version_patch;
+    static const std::string version_tweak;
+    static const std::string version;
+    static const std::string git_ref;
+    static const std::string source_version;
+    static const std::string build_date;
+    static const std::string build_time;
+    static const std::string build_info ;
+    static const std::string host_info ;
+};
+
+const std::string ZhttpInfo::version_major = "@PROJECT_VERSION_MAJOR@";
+const std::string ZhttpInfo::version_minor = "@PROJECT_VERSION_MINOR@";
+const std::string ZhttpInfo::version_patch = "@PROJECT_VERSION_PATCH@";
+const std::string ZhttpInfo::version_tweak = "@PROJECT_VERSION_TWEAK@";
+const std::string ZhttpInfo::version = "@PROJECT_VERSION@";
+const std::string ZhttpInfo::git_ref = "@PROJECT_GIT_REF@";
+const std::string ZhttpInfo::source_version = "@PROJECT_SOURCE_VERSION@";
+const std::string ZhttpInfo::build_date = "@PROJECT_BUILD_DATE@";
+const std::string ZhttpInfo::build_time = "@PROJECT_BUILD_TIME@";
+const std::string ZhttpInfo::build_info = "@PROJECT_COMPILER_INFO@ @PROJECT_BUILD_TYPE@ @PROJECT_BUILD_INFO@ @PROJECT_BUILD_DATE@ @PROJECT_BUILD_TIME@";
+const std::string ZhttpInfo::host_info = "@PROJECT_HOST_INFO@";
+
+
+
+

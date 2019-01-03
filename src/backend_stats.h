@@ -1,4 +1,0 @@
-#ifndef BACKEND_STATS_H
-#define BACKEND_STATS_H
-
-#endif // BACKEND_STATS_H
