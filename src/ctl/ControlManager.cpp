@@ -6,7 +6,7 @@
 
 #define CTL_DEFAULT_IP "127.0.0.1"
 #define CTL_DEFAULT_PORT 6001
-
+#define CTL_EVENTS_TIMEOUT 2000
 using namespace ctl;
 
 std::unique_ptr<ControlManager> ControlManager::instance =
@@ -48,9 +48,8 @@ void ctl::ControlManager::start() {
 }
 
 void ctl::ControlManager::stop() {
-  if(is_running)
-    control_thread.join();
   is_running = false;
+  control_thread.join();
 }
 
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
@@ -110,7 +109,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 
 void ctl::ControlManager::doWork() {
   while (is_running) {
-    if (loopOnce() < 1) {
+    if (loopOnce(CTL_EVENTS_TIMEOUT) < 1) {
       // this should not happends
     }
   }

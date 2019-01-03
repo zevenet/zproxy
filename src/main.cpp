@@ -161,10 +161,9 @@ int main(int argc, char *argv[]) {
   Listener listener;
   if(!listener.init(config.listeners[0])){
     Debug::LogInfo("Error initializing listener socket", LOG_ERR);
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
   }
   //  listener.init("127.0.0.1", 9999);
   listener.start();
-
-  return EXIT_SUCCESS;
+  exit(EXIT_SUCCESS);
 }
