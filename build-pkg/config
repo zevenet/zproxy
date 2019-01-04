@@ -246,6 +246,8 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Farm/HTTP/Ext.pm
 	usr/share/perl5/Zevenet/Farm/HTTP/HTTPS/Ext.pm
 	usr/share/perl5/Zevenet/Farm/HTTP/Service/Ext.pm
+	usr/share/perl5/Zevenet/Farm/L4ipt/Config/Ext.pm
+	usr/share/perl5/Zevenet/Farm/L4nft/Config/Ext.pm
 	usr/share/perl5/Zevenet/IPDS/Base.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Actions.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Config.pm
