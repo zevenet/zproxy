@@ -262,12 +262,15 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
-	my $status = &setHTTPFarmServer( "",
+	my $status = &setHTTPFarmServer(
+									 "",
 									 $json_obj->{ ip },
 									 $json_obj->{ port },
 									 $json_obj->{ weight },
 									 $json_obj->{ timeout },
-									 $farmname, $service, );
+									 $farmname,
+									 $service,
+	);
 
 	# check if there was an error adding a new backend
 	if ( $status == -1 )
@@ -706,9 +709,8 @@ sub delete_backend    # ( $farmname, $id_server )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $exists   = 0;
 	my $backends = &getFarmServers( $farmname );
-	$exists = @{ $backends }[$id_server];
+	my $exists = &getFarmBackendExists( $backends, $id_server );
 
 	if ( !$exists )
 	{
@@ -858,8 +860,8 @@ sub validateDatalinkBackendIface
 		$msg = "It is not possible to configure vlan interface for datalink backends";
 	}
 	elsif (
-			!&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
-			)
+		  !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
+		  )
 	  )
 	{
 		$msg =

@@ -240,4 +240,40 @@ sub getFarmBackendAvailableID
 
 	return $nbackends;
 }
+
+=begin nd
+Function: getFarmBackendExists
+
+	Search for a certain backend ID
+
+Parameters:
+	bcks_ref - reference to the backends structure.
+	id - backend identifier to be search.
+
+Returns:
+	integer - 0 if not found, 1 if found.
+
+=cut
+
+sub getFarmBackendExists
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bcks_ref = shift;
+	my $id       = shift;
+
+	my $exists = 0;
+
+	foreach my $backend ( @{ $bcks_ref } )
+	{
+		if ( $backend->{ id } == $id )
+		{
+			$exists = 1;
+			last;
+		}
+	}
+
+	return $exists;
+}
+
 1;

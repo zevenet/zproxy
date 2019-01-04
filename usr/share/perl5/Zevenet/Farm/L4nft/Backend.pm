@@ -552,22 +552,15 @@ sub getL4FarmBackendAvailableID
 			 "debug", "PROFILING" );
 	my $farmname = shift;
 
+	require Zevenet::Farm::Backend;
+
 	my $backends  = &getL4FarmServers( $farmname );
 	my $nbackends = $#{ $backends } + 1;
 
 	for ( my $id = 0 ; $id < $nbackends ; $id++ )
 	{
-		my $noexist = 1;
-		foreach my $backend ( @{ $backends } )
-		{
-			if ( $backend->{ id } == $id )
-			{
-				$noexist = 0;
-				last;
-			}
-		}
-
-		return $id if ( $noexist );
+		my $exists = &getFarmBackendExists( $backends, $id );
+		return $id if ( !$exists );
 	}
 
 	return $nbackends;
