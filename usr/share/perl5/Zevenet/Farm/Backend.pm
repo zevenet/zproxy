@@ -225,9 +225,18 @@ sub getFarmBackendAvailableID
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
+	my $nbackends;
 
-	my $backends  = &getFarmServers( $farmname );
-	my $nbackends = $#{ $backends } + 1;
+	if ( &getFarmType( $farmname ) eq 'l4xnat' )
+	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		$nbackends = &getL4FarmBackendAvailableID( $farmname );
+	}
+	else
+	{
+		my $backends = &getFarmServers( $farmname );
+		$nbackends = $#{ $backends } + 1;
+	}
 
 	return $nbackends;
 }
