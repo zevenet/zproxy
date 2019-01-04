@@ -90,7 +90,7 @@ IO::IO_RESULT Connection::zeroRead() {
     if (n > 0)
       splice_pipe.bytes += n;
     if (n == 0)
-      return IO::IO_RESULT::FD_CLOSED;
+      break;
     if (n < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
         return IO::IO_RESULT::DONE_TRY_AGAIN;

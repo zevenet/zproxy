@@ -37,7 +37,6 @@ public:
   void printResponse();
   void reset_parser();
 
-  void setBuffer(char *ext_buffer, int buffer_size);
   bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);
   bool getHeaderValue(std::string header_name, std::string &out_key);
   std::string getUrlParameter(std::string url);

@@ -82,7 +82,6 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
           this->weight = value;
           return JSON_OP_RESULT::OK;}
         return JSON_OP_RESULT::ERROR;
-        break;
     }
       default:
         break;

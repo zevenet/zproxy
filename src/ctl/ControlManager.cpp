@@ -183,8 +183,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
 bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
   std::istringstream f(request.getUrl());
   std::string str;
-  bool done = false;
-  while (getline(f, str, '/') && !done) {
+  while (getline(f, str, '/')) {
     switch (str[0]) {
     case 'l': {
       if (str == JSON_KEYS::LISTENER) {
