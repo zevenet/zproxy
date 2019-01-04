@@ -366,7 +366,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 			#require Zevenet::Farm::Config;
 			my $msg = &eload(
 									module   => 'Zevenet::Farm::L4xNAT::Config::Ext',
-									func     => 'modify_service_cookie_insertion',
+									func     => 'modifyLogsParam',
 									args     => [$farmname, $json_obj->{ logs }],
 									just_ret => 1,
 				);

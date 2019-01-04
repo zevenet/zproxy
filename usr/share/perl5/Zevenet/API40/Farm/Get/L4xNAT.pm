@@ -68,9 +68,13 @@ sub farms_name_l4    # ( $farmname )
 			   protocol     => &getL4FarmParam( 'proto', $farmname ),
 			   ttl          => $timetolimit,
 			   farmguardian => &getFGFarm( $farmname ),
-			   logs         => &getL4FarmParam( 'logs', $farmname ),
 			   listener     => 'l4xnat',
 	};
+
+	if ( $eload )
+	{
+	 $out_p->{ logs } = &getL4FarmParam( 'logs', $farmname ),
+	}
 
 	# Backends
 	my $out_b = &getFarmServers( $farmname );

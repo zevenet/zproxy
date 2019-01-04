@@ -20,26 +20,77 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
+require Zevenet::Farm::L4xNAT::Config;
 
-sub modify_logs_param
+sub setL4FarmParamExt    # ($param, $value, $farm_name)
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $param, $value, $farm_name ) = @_;
+
+  require Zevenet::Farm::Core;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $srvparam      = "";
+	my $addition      = "";
+	my $farm_req      = $farm_name;
+
+	if ( $param eq "logs" )
+	{
+		$srvparam = "log";
+		$value    = "input" if ( $value eq "true" );
+		$value    = "none" if ( $value eq "false" );
+	}
+	else
+	{
+		return -1;
+	}
+
+	# load the configuration file first if the farm is down
+	my $f_ref = &getL4FarmStruct( $farm_name );
+	if ( $f_ref->{ status } ne "up" )
+	{
+    require Zevenet::Farm::L4xNAT::Action;
+		my $out = &loadNLBFarm( $farm_name );
+		if ( $out != 0 )
+		{
+			return $out;
+		}
+	}
+
+	$output = &httpNLBRequest(
+		{
+		   farm       => $farm_req,
+		   configfile => ( $param ne 'status' ) ? "$configdir/$farm_filename" : undef,
+		   method     => "PUT",
+		   uri        => "/farms",
+		   body =>
+			 qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value"$addition } ] })
+		}
+	);
+
+	return $output;
+}
+
+sub modifyLogsParam
+{
+  my $farmname  = shift;
+  my $logsValue = shift;
+
+  my $msg;
   my $err = 0;
   if ( $json_obj->{ logs } =~ /(?:true|false)/ )
   {
-    $err = &setL4FarmParam( 'logs', $json_obj->{ logs }, $farmname );
+    $err = &setL4FarmParamExt( 'logs', $logsValue, $farmname );
   }
   else
   {
-    my $msg = "Invalid value for logs parameter.";
+    $msg = "Invalid value for logs parameter.";
   }
 
   if ( $err )
   {
-    my $msg = "Error modifying the parameter logs.";
-  }
-  else
-  {
-    my $msg = "Logs feature not available.";
+    $msg = "Error modifying the parameter logs.";
   }
   return $msg;
 }
