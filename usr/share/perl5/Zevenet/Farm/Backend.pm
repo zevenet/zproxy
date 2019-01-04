@@ -207,4 +207,28 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 	return $output;
 }
 
+=begin nd
+Function: getFarmBackendAvailableID
+
+	Get next available backend ID
+
+Parameters:
+	farmname - farm name
+
+Returns:
+	integer - .
+
+=cut
+
+sub getFarmBackendAvailableID
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farmname = shift;
+
+	my $backends  = &getFarmServers( $farmname );
+	my $nbackends = $#{ $backends } + 1;
+
+	return $nbackends;
+}
 1;
