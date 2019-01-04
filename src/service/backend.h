@@ -41,8 +41,8 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   BackendConfig backend_config;
   addrinfo *address_info{};
   int backend_id;
-  std::string name;  // TODO::
-  int weight;        // TODO:: set priority
+  std::string name;
+  int weight;
   std::string address;
   int port;
   int conn_timeout{};

@@ -39,7 +39,7 @@ void redirectLogOutput(std::string name, std::string chroot_path,
   umask(0);
   // change to path directory
   chdir(chroot_path.c_str());
-  // TODO:: Carefull Close all open file descriptors
+  // Carefull Close all open file descriptors
   //  int fd;
   //  for (fd = ::sysconf(_SC_OPEN_MAX); fd > 0; --fd) {
   //    close(fd);
@@ -115,18 +115,17 @@ int main(int argc, char *argv[]) {
   // TODO:: take outside main initialization
   Debug::LogInfo("System info:");
   Debug::LogInfo("\tL1 Data cache size: " +
-             std::to_string(SystemInfo::data()->getL1DataCacheSize()));
+      std::to_string(SystemInfo::data()->getL1DataCacheSize()), LOG_DEBUG);
   Debug::LogInfo("\t\tCache line size: " +
-             std::to_string(SystemInfo::data()->getL1DataCacheLineSize()));
+      std::to_string(SystemInfo::data()->getL1DataCacheLineSize()), LOG_DEBUG);
   Debug::LogInfo("\tL2 Cache size: " +
-             std::to_string(SystemInfo::data()->getL2DataCacheSize()));
+      std::to_string(SystemInfo::data()->getL2DataCacheSize()), LOG_DEBUG);
   Debug::LogInfo("\t\tCache line size: " +
-             std::to_string(SystemInfo::data()->getL2DataCacheLineSize()));
+      std::to_string(SystemInfo::data()->getL2DataCacheLineSize()), LOG_DEBUG);
   rlimit r{};
   ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur));
-  Debug::LogInfo("\tRLIMIT_NOFILE\tMaximum " +
-             std::to_string(::sysconf(_SC_OPEN_MAX)));
+  Debug::LogInfo("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+  Debug::LogInfo("\tRLIMIT_NOFILE\tMaximum " + std::to_string(::sysconf(_SC_OPEN_MAX)), LOG_DEBUG);
   if (r.rlim_cur != r.rlim_max) {
     r.rlim_cur = r.rlim_max;
     if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
@@ -135,7 +134,8 @@ int main(int argc, char *argv[]) {
     }
   }
   ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur));
+  Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+
   /*Set process user and group*/
   if (config.user != nullptr)
     Environment::setUid(std::string(config.user));

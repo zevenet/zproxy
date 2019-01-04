@@ -11,28 +11,6 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
   if (event_group == EVENT_GROUP::MAINTENANCE &&
       fd == timer_maintenance.getFileDescriptor()) {
     Debug::LogInfo("Doing maintenance", LOG_REMOVE);
-    //Debug::LogInfo("Session table\n\t\tKey\tbackend", LOG_REMOVE);
-    //    std::vector<std::string> keys_to_delete;
-    //    if (!sessions::HttpSessionManager::sessions_set.empty()) {
-    //      for (auto session : sessions::HttpSessionManager::sessions_set) {
-    //        if (session.second->hasExpired(10)) {
-    //          keys_to_delete.push_back(session.first);
-    //        }
-    //        Debug::logmsg(LOG_REMOVE, "\t%s\t%s", session.first.c_str(),
-    //                      session.second->assigned_backend->address.c_str());
-    //      }
-
-    //      for (auto& key : keys_to_delete) {
-    //        std::lock_guard<std::mutex> locked(
-    //            sessions::HttpSessionManager::lock_mtx);
-    //        auto session = sessions::HttpSessionManager::sessions_set.at(key);
-    //        sessions::HttpSessionManager::sessions_set.erase(key);
-    //        delete session;
-    //      }
-    //    }
-    //for (auto service : service_manager->services) {
-    //  service->doMaintenance();
-    //}
     timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
     updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
              EVENT_GROUP::MAINTENANCE);
@@ -43,34 +21,24 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
     return;
   }
   switch (event_type) {
-    case CONNECT: {
-      int new_fd;
-      do {
-        new_fd = listener_connection.doAccept();
-        if (new_fd > 0) {
-          auto sm = getManager(new_fd);
-          if (sm != nullptr) {
-            // sm->stream_set.size() ????
-            sm->addStream(new_fd);
-          } else {
-            Debug::LogInfo("StreamManager not found");
-          }
+  case CONNECT: {
+    int new_fd;
+    do {
+      new_fd = listener_connection.doAccept();
+      if (new_fd > 0) {
+        auto sm = getManager(new_fd);
+        if (sm != nullptr) {
+          // sm->stream_set.size() ????
+          sm->addStream(new_fd);
+        } else {
+          Debug::LogInfo("StreamManager not found");
         }
-      } while (new_fd > 0);
-      break;
-    }
-      //    case READ: {
-      //      Connection cnt;
-      //      cnt.setFileDescriptor(fd);
-      //      cnt.read();
-      //      //      Debug::LogInfo(cnt.string_buffer.string());
-      //      std::string send_e200 =
-      //          "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World";
-      //      cnt.write(send_e200.c_str(), send_e200.length());
-      //    } break;
-    default:
-      Debug::LogInfo("###################Why!!!!!!!! ");  // TODO::REMOVE
-      break;
+      }
+    } while (new_fd > 0);
+    break;
+  }
+  default: ::close(fd);
+    break;
   }
 }
 
@@ -127,8 +95,8 @@ void Listener::start() {
           ->addService(*service_config, ++service_id);
     } else {
       Debug::LogInfo("Backend " + std::string(service_config->name) +
-                     " disabled in config file",
-                 LOG_NOTICE);
+          " disabled in config file",
+                     LOG_NOTICE);
     }
   }
   for (int i = 0; i < stream_manager_set.size(); i++) {
@@ -138,7 +106,7 @@ void Listener::start() {
       sm->start(i);
     } else {
       Debug::LogInfo("StreamManager id doesn't exist : " + std::to_string(i),
-                 LOG_ERR);
+                     LOG_ERR);
     }
   }
   is_running = true;
@@ -151,9 +119,9 @@ void Listener::start() {
   //  }
   //#else
 
-    timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
-    addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
-          EVENT_GROUP::MAINTENANCE);
+  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
+  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
+        EVENT_GROUP::MAINTENANCE);
 
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();

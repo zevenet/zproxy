@@ -57,7 +57,7 @@ class HttpSessionManager {
   std::unordered_map<std::string, SessionInfo *>
       sessions_set;  // key can be anything, deppending on the type of session
   HttpSessionManager();
-  ~HttpSessionManager();  // TODO:: WARNING, multiple derived clasess
+  ~HttpSessionManager();
   // may exist, so which one is going to release
   // the map resources!!
   // return the created SessionInfo

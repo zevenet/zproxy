@@ -5,18 +5,17 @@
 
 #include <sys/timerfd.h>
 #include <unistd.h>
+#include "../event/descriptor.h"
 
-class TimerFd {
-  int timer_fd_;
+class TimerFd : public Descriptor {
   bool one_shot_;
   int timeout_ms_;
  public:
   ~TimerFd();
   TimerFd(int timeout_ms = -1, bool one_shot = true);
   bool set(int timeout_ms = -1, bool one_shot = true);
-  bool unset();  // TODO: Fix me
+  bool unset();
   bool isOneShot() const;
-  bool isTriggered();  // TODO: Fix me
-  int getFileDescriptor() const;
+  bool isTriggered();
   bool is_set;
 };

@@ -49,7 +49,8 @@ void ctl::ControlManager::start() {
 
 void ctl::ControlManager::stop() {
   is_running = false;
-  control_thread.join();
+  if(control_thread.joinable())
+    control_thread.join();
 }
 
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
@@ -167,7 +168,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE || task.command == CTL_COMMAND::DELETE) {
     task.data = std::string(request.message, request.message_length);
   }
-  // TODO:: Concatenate more than one future result
+
   auto result = notify(task, false);
   std::string res = "";
   for (auto &future_result : result) {
@@ -244,7 +245,6 @@ bool ControlManager::setServiceTarget(CtlTask &task, std::istringstream &ss) {
       task.service_id = -1;
       task.service_name = str;
     }
-    // TODO:: Enable???    task.target = CTL_HANDLER_TYPE::SERVICE;
     if (getline(ss, str, '/')) {
       if (str == JSON_KEYS::BACKEND) {
         return setBackendTarget(task, ss);
@@ -264,7 +264,6 @@ bool ControlManager::setServiceTarget(CtlTask &task, std::istringstream &ss) {
 
 bool ControlManager::setBackendTarget(CtlTask &task, std::istringstream &ss) {
   std::string str;
-  // TODO:: Enable???   task.target = CTL_HANDLER_TYPE::BACKEND;
   if (getline(ss, str, '/')) {
     if (!helper::try_lexical_cast<int>(str, task.backend_id)) {
       task.backend_id = -1;

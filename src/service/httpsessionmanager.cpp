@@ -16,54 +16,52 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
                                             Backend &backend_to_assign) {
   if (this->session_type == sessions::SESS_NONE)
     return nullptr;
-  // TODO::Implement
 
   std::string key("");
   switch (this->session_type) {
-    case SESS_NONE:
+  case SESS_NONE:return nullptr;
+  case SESS_IP: {
+    key = stream.client_connection.getPeerAddress();
+    break;
+  }
+  case SESS_COOKIE: {
+    if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key)) {
       return nullptr;
-    case SESS_IP: {
-      key = stream.client_connection.getPeerAddress();
-      break;
     }
-    case SESS_COOKIE: {
-      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key)){
-        return nullptr;
-      }
-      break;
-    }
-    case SESS_URL: {
-      std::string url = stream.request.getUrl();
-      key = stream.request.getQueryParameter(url, sess_id);
-      break;
-    }
-    case SESS_PARM: {
-      std::string url = stream.request.getUrl();
-      key = stream.request.getUrlParameter(url);
-      break;
-    }
-    case SESS_HEADER: {
-      if(!stream.request.getHeaderValue(sess_id, key))
+    break;
+  }
+  case SESS_URL: {
+    std::string url = stream.request.getUrl();
+    key = stream.request.getQueryParameter(url, sess_id);
+    break;
+  }
+  case SESS_PARM: {
+    std::string url = stream.request.getUrl();
+    key = stream.request.getUrlParameter(url);
+    break;
+  }
+  case SESS_HEADER: {
+    if (!stream.request.getHeaderValue(sess_id, key))
+      key = "";
+    break;
+  }
+  case SESS_BASIC:
+    //TODO: IMPLEMENTAR IGUAL QUE POUND (NO HACER FALTA AUTHENTICATION)
+    if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, key)) {
+      key = "";
+    } else {
+      std::stringstream string_to_iterate(key);
+      std::istream_iterator<std::string> begin(string_to_iterate);
+      std::istream_iterator<std::string> end;
+      std::vector<std::string> header_value_parts(begin, end);
+      //TODO: Decode base64
+      if (header_value_parts[0] != "Basic") {
         key = "";
-      break;
-    }
-    case SESS_BASIC:
-      //TODO: IMPLEMENTAR IGUAL QUE POUND (NO HACER FALTA AUTHENTICATION)
-      if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, key)) {
-          key = "";
       } else {
-        std::stringstream string_to_iterate(key);
-        std::istream_iterator<std::string> begin(string_to_iterate);
-        std::istream_iterator<std::string> end;
-        std::vector<std::string> header_value_parts(begin, end);
-        //TODO: Decode base64
-        if (header_value_parts[0] != "Basic") {
-          key = "";
-        } else {
-          key = header_value_parts[1]; //Currently it stores username:password
-        }
+        key = header_value_parts[1]; //Currently it stores username:password
       }
-      break;
+    }
+    break;
   }
   // check if we have a new key to insert,
   if (!key.empty()) {
@@ -99,7 +97,6 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     return nullptr;
   case sessions::SESS_IP: {
     session_key = stream.client_connection.getPeerAddress();
-    // TODO::This must change !! no try catch !!!
     // sessions_set[ip_address];
     if (sessions_set.count(session_key) > 0) {
       session = this->sessions_set[session_key];
@@ -126,12 +123,12 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     break;
   }
   case sessions::SESS_PARM: {
-      std::string url = stream.request.getUrl();
-      session_key = stream.request.getUrlParameter(url);
-      if (!session_key.empty() && sessions_set.count(session_key) > 0) {
-          session = this->sessions_set[session_key];
-      }
-      break;
+    std::string url = stream.request.getUrl();
+    session_key = stream.request.getUrlParameter(url);
+    if (!session_key.empty() && sessions_set.count(session_key) > 0) {
+      session = this->sessions_set[session_key];
+    }
+    break;
   }
   case sessions::SESS_HEADER: {
     std::string session_key;
@@ -143,27 +140,26 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     }
     break;
   }
-    case sessions::SESS_BASIC: {
-        if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, session_key)) {
-            session_key = "";
-        } else {
-          std::stringstream string_to_iterate(session_key);
-          std::istream_iterator<std::string> begin(string_to_iterate);
-          std::istream_iterator<std::string> end;
-          std::vector<std::string> header_value_parts(begin, end);
-          //TODO: Decode base64
-          if (header_value_parts[0] != "Basic") {
-            session_key = "";
-          } else {
-            session_key = header_value_parts[1]; //Currently it stores username:password
-            if (sessions_set.count(session_key) > 0) {
-              session = this->sessions_set[session_key];
-            }
-          }
+  case sessions::SESS_BASIC: {
+    if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, session_key)) {
+      session_key = "";
+    } else {
+      std::stringstream string_to_iterate(session_key);
+      std::istream_iterator<std::string> begin(string_to_iterate);
+      std::istream_iterator<std::string> end;
+      std::vector<std::string> header_value_parts(begin, end);
+      //TODO: Decode base64
+      if (header_value_parts[0] != "Basic") {
+        session_key = "";
+      } else {
+        session_key = header_value_parts[1]; //Currently it stores username:password
+        if (sessions_set.count(session_key) > 0) {
+          session = this->sessions_set[session_key];
         }
       }
-  //TODO:
-  default: { // For SESS_BASIC, SESS_HEADER and SESS_COOKIE
+    }
+  }
+  default: {
     break;
   }
   }
@@ -174,8 +170,6 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
         session->update();
       return session;
     } else {
-      // TODO::free session info ?? maybe  not and avoid reallocation of new
-      // SessionInfo struct
       if (!update_if_exist) {
         sessions_set.erase(session_key);
         delete session;
@@ -203,26 +197,27 @@ json::JsonArray *HttpSessionManager::getSessionsJson() {
 }
 
 bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend *> backend_set) {
-    if (json_object == nullptr)
-      return false;
-    auto new_session = new SessionInfo();
-    if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() && json_object->at(JSON_KEYS::ID)->isValue()) {
-      int session_json_backend_id = static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::BACKEND_ID))->number_value;
-      for(auto backend : backend_set){
-        if(backend->backend_id != session_json_backend_id) continue;
-        new_session->assigned_backend = backend;
-      }
-      if (new_session->assigned_backend == nullptr)
-        return false;
-      std::lock_guard<std::mutex> locker(lock_mtx);
-      std::string key = static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::ID))->string_value;
-      if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 && json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
-        new_session->setTimeStamp(static_cast<JsonDataValue*>(json_object->at(JSON_KEYS::LAST_SEEN_TS))->number_value);
-      sessions_set.emplace(std::make_pair(key, new_session));
-      return true;
-    } else {
-      return false;
+  if (json_object == nullptr)
+    return false;
+  auto new_session = new SessionInfo();
+  if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() && json_object->at(JSON_KEYS::ID)->isValue()) {
+    int session_json_backend_id = static_cast<JsonDataValue *>(json_object->at(JSON_KEYS::BACKEND_ID))->number_value;
+    for (auto backend : backend_set) {
+      if (backend->backend_id != session_json_backend_id)
+        continue;
+      new_session->assigned_backend = backend;
     }
+    if (new_session->assigned_backend == nullptr)
+      return false;
+    std::lock_guard<std::mutex> locker(lock_mtx);
+    std::string key = static_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID))->string_value;
+    if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 && json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
+      new_session->setTimeStamp(static_cast<JsonDataValue *>(json_object->at(JSON_KEYS::LAST_SEEN_TS))->number_value);
+    sessions_set.emplace(std::make_pair(key, new_session));
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool HttpSessionManager::deleteSession(JsonObject &json_object, std::vector<Backend *> backend_set) {
@@ -230,18 +225,19 @@ bool HttpSessionManager::deleteSession(JsonObject &json_object, std::vector<Back
     Backend *bck = nullptr;
     int session_json_backend_id = static_cast<JsonDataValue*>(json_object.at(JSON_KEYS::BACKEND_ID))->number_value;
     for (auto backend : backend_set) {
-        if(backend->backend_id != session_json_backend_id) continue;
-        bck = backend;
+      if (backend->backend_id != session_json_backend_id)
+        continue;
+      bck = backend;
     }
 
     if (bck == nullptr) return false;
     auto itr = sessions_set.begin();
     while (itr != sessions_set.end()) {
-        if (itr->second->assigned_backend == bck) {
-          sessions_set.erase(itr++);
-        } else {
-           ++itr;
-        }
+      if (itr->second->assigned_backend == bck) {
+        sessions_set.erase(itr++);
+      } else {
+        ++itr;
+      }
     }
     return true;
   } else  {

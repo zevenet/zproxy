@@ -1,9 +1,6 @@
 //
 // Created by abdess on 5/9/18.
 //
-
-// TODO:: Conver to struct with static members
-
 #pragma once
 
 #include <string>
@@ -178,7 +175,7 @@ struct http_info {
       http_verb_strings;
 };
 
-struct validation { // TODO::FIX this
+struct validation {
   enum class REQUEST_RESULT {
     OK,
     METHOD_NOT_ALLOWED,

@@ -70,7 +70,6 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
           }
           Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", backend_id,
                         value.c_str());
-          //TODO:: Cut mode?
           return JSON_OP_RESULT::OK;
         }
         break;
@@ -99,7 +98,6 @@ bool Backend::isHandler(ctl::CtlTask& task) {
 
 JsonObject* Backend::getBackendJson() {
   JsonObject* root = new JsonObject();
-  // TODO:: Add backend stats info.
 
   root->emplace(JSON_KEYS::NAME, new JsonDataValue(this->name));
   root->emplace(JSON_KEYS::ID, new JsonDataValue(this->backend_id));
@@ -147,6 +145,4 @@ void Backend::doMaintenance() {
     default:
        this->status = BACKEND_DOWN;
   }
-
-  //TODO:: Send http request and check response code
 }

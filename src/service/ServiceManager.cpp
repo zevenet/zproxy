@@ -24,12 +24,10 @@ ServiceManager::~ServiceManager() {
 }
 
 Service *ServiceManager::getService(HttpRequest &request) {
-  // TODO::Impelement::
   for (auto srv : services) {
     if (!srv->service_config.disabled) {
       if (srv->doMatch(request)) {
-//        Debug::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id,
-//                      srv->service_config.name, LOG_DEBUG);
+        //Debug::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id, srv->service_config.name, LOG_DEBUG);
         return srv;
       }
     }

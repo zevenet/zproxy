@@ -140,7 +140,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
     count = ::send(fd, buffer + sent, buffer_size - sent, MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+          errno != ECONNRESET*/) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::LogInfo(error, LOG_NOTICE);
@@ -183,7 +183,7 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
                    total_to_send, MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+          errno != ECONNRESET*/) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::LogInfo(error, LOG_NOTICE);
@@ -265,7 +265,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 
   if (nwritten < 0) {
     if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+          errno != ECONNRESET*/) {
       std::string error = "write() failed  ";
       error += std::strerror(errno);
       Debug::LogInfo(error, LOG_NOTICE);
@@ -302,7 +302,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
     count = ::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+          errno != ECONNRESET*/) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::LogInfo(error, LOG_NOTICE);
@@ -340,7 +340,6 @@ void Connection::closeConnection() {
 IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
   int result = -1;
   if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
-    // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
@@ -364,7 +363,6 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
                                 int timeout) {
   int result = -1;
   if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-    // TODO::LOG message
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
@@ -414,8 +412,7 @@ int Connection::doAccept() {
   }
   if (clnt_addr.sin_family == AF_INET || clnt_addr.sin_family == AF_INET6 ||
       clnt_addr.sin_family == AF_UNIX) {
-    //   TODO::
-    return new_fd;
+      return new_fd;
   } else {
     ::close(new_fd);
     Debug::logmsg(LOG_WARNING, "HTTP connection prematurely closed by peer");

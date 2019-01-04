@@ -14,7 +14,7 @@
 #define HTTPSTATUSCODES_CPP11_H_
 
 #include <string>
-
+#include "../version.h"
 /*! Namespace for HTTP status codes and reason phrases.
  */
 namespace HttpStatus {
@@ -419,7 +419,7 @@ inline std::string reasonPhrase(Code code) {
 inline std::string getHttpResponse(Code status_code,
                                    const std::string &status_code_string = "",
                                    const std::string &content_message = "") {
-  // FIXME:: Add dynamic zhttp version
+
   std::string code_error = status_code_string.empty()
                                ? reasonPhrase(status_code)
                                : status_code_string;
@@ -443,8 +443,10 @@ inline std::string getHttpResponse(Code status_code,
       "HTTP/1.0 " + std::to_string((int)status_code) + " " + code_error +
       "\r\nContent-Type: text/html\r\nContent-Length: " +
       std::to_string(body.length() + 1) +
-      "\r\nExpires: now\r\nPragma: no-cache\r\nServer: "
-      "zhttp/0.1\r\nCache-control: no-cache,no-store\r\n\r\n" +
+          "\r\nExpires: now\r\nPragma: no-cache\r\nServer: "
+          "zhttp/"
+          ZHTTP_VERSION
+          "\r\nCache-control: no-cache,no-store\r\n\r\n" +
       body + "\n";
 
   return err_response;

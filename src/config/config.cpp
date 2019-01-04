@@ -1,5 +1,6 @@
 #include "config.h"
 #include "../debug/Debug.h"
+#include "../version.h"
 
 Config::Config() {
   log_level = 1;
@@ -209,8 +210,13 @@ void Config::parseConfig(const int argc, char **const argv) {
       case 'v':print_log = 1;
         break;
       case 'V':print_log = 1;
-        Debug::logmsg(LOG_DEBUG, "Version %s", VERSION);
-        Debug::logmsg(LOG_DEBUG, "  Configuration switches:");
+      {
+        Debug::logmsg(LOG_ALERT, "Zhttp version %s", ZHTTP_VERSION);
+        Debug::logmsg(LOG_ALERT, "Build: %s %s", ZHTTP_HOST_INFO,ZHTTP_BUILD_INFO);
+        Debug::logmsg(LOG_ALERT, "%s",ZHTTP_COPYRIGHT);
+        exit(EXIT_SUCCESS);
+      }
+
 #ifdef C_SUPER
       if (strcmp(C_SUPER, "0"))
         Debug::logmsg(LOG_DEBUG, "    --disable-super");

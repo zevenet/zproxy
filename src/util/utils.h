@@ -86,8 +86,7 @@ struct ThreadHelper {
   }
 
   static void setMaximumFilesLimit(int maximum) {
-    //    // Increase num file descriptor ulimit
-    //    //TODO:: take outside main initialization
+    //    // Increase num file descriptor ulimit    //
     //    struct rlimit r;
     //    getrlimit(RLIMIT_NOFILE, &r);
     //    Debug::LogInfo("current::RLIMIT_NOFILE\n\tCurrent " +

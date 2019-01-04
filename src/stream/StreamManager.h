@@ -19,11 +19,12 @@ using namespace events;
 using namespace http;
 
 class StreamManager : public EpollManager /*, public ServiceManager*/ {
-  // TODO::REMOVE
+#if HELLO_WORLD_SERVER
   std::string e200 =
       "HTTP/1.1 200 OK\r\nServer: zhttp 1.0\r\nExpires: now\r\nPragma: "
       "no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: "
       "text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
+#endif
 
   int worker_id;
   std::thread worker;

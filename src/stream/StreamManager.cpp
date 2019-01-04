@@ -113,7 +113,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       onResponseEvent(fd);
       break;
     case EVENT_GROUP::CLIENT:
-      this->onRequestEvent(fd);
+      onRequestEvent(fd);
       break;
     case EVENT_GROUP::CONNECT_TIMEOUT:
       onConnectTimeoutEvent(fd);
@@ -127,9 +127,9 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_GROUP::SIGNAL:
       onSignalEvent(fd);
       break;
-    case EVENT_GROUP::MAINTENANCE: // TODO:: Handle health checkers, sessions ...
+    case EVENT_GROUP::MAINTENANCE:
       break;
-    default: // should not enter here
+    default: close(fd);
       break;
     }
     return;
@@ -144,11 +144,11 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         break;
       case EVENT_GROUP::SERVER:
         Debug::LogInfo("SERVER_WRITE : Stream doesn't exist for " +
-                   std::to_string(fd));
+            std::to_string(fd));
         break;
       case EVENT_GROUP::CLIENT:
         Debug::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
-                   std::to_string(fd));
+            std::to_string(fd));
         break;
       }
 
@@ -221,12 +221,11 @@ void StreamManager::start(int thread_id_) {
   }
 #if SM_HANDLE_ACCEPT
   handleAccept(listener_connection.getFileDescriptor());
-  //TODO: AÑADIR TIMER_FD de MAINTENANCE
 #endif
 }
 
 StreamManager::StreamManager(){
-    // TODO:: do attach for config changes
+  // TODO:: do attach for config changes
 };
 
 StreamManager::~StreamManager() {
@@ -295,8 +294,7 @@ void StreamManager::onRequestEvent(int fd) {
     clearStream(stream);
     return;
   }
-  //  stream->client_stadistics.update();
-  // TODO::Process all buffer
+
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   do {
@@ -305,8 +303,8 @@ void StreamManager::onRequestEvent(int fd) {
         &parsed); // parsing http data as response structured
     if (stream->client_connection.buffer_size != parsed) {
       Debug::LogInfo("Buffer size: " +
-                 std::to_string(stream->client_connection.buffer_size) +
-                 "\nparsed data: " + std::to_string(parsed));
+          std::to_string(stream->client_connection.buffer_size) +
+          "\nparsed data: " + std::to_string(parsed));
     }
     switch (parse_result) {
     case http_parser::PARSE_RESULT::SUCCESS: {
@@ -344,7 +342,7 @@ void StreamManager::onRequestEvent(int fd) {
                         validation::request_result_reason
                             .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
                             .c_str(),
-                        // stream->client_connection.buffer,
+          // stream->client_connection.buffer,
                         caddr);
         }
         stream->replyError(
@@ -387,20 +385,18 @@ void StreamManager::onRequestEvent(int fd) {
         switch (bck->backend_type) {
         case REMOTE:{
           if (stream->backend_connection.getBackend() == nullptr ||
-                  !stream->backend_connection.isConnected()
-                  /*   stream->backend_connection.getBackend()
-                              ->backen_id !=
-                      bck->backen_id*/) {  // TODO::Comprobar que backend no es
-                                           // null
+              !stream->backend_connection.isConnected()
+              ) {
+            // null
             if (stream->backend_connection.getFileDescriptor() !=
                 BACKEND_STATUS::NO_BACKEND) {
               stream->backend_connection.setBackend(
                   stream->backend_connection.getBackend(), false);
               deleteFd(stream->backend_connection
-                           .getFileDescriptor()); // TODO:: Client cannot
-                                                  // be connected to more
-                                                  // than one backend at
-                                                  // time
+                           .getFileDescriptor()); // Client cannot
+              // be connected to more
+              // than one backend at
+              // time
               streams_set.erase(stream->backend_connection.getFileDescriptor());
               stream->backend_connection.closeConnection();
             }
@@ -416,7 +412,7 @@ void StreamManager::onRequestEvent(int fd) {
               stream->client_connection.write(response.c_str(),
                                               response.length());
               Debug::LogInfo("Error connecting to backend " + bck->address,
-                         LOG_NOTICE); // TODO:: respond e503
+                             LOG_NOTICE);
               stream->backend_connection.setBackend(bck, false);
               stream->backend_connection.closeConnection();
               return;
@@ -445,7 +441,7 @@ void StreamManager::onRequestEvent(int fd) {
             }
             }
           } else {
-              stream->backend_connection.enableWriteEvent();
+            stream->backend_connection.enableWriteEvent();
           }
           break;}
         case EMERGENCY_SERVER:
@@ -482,17 +478,17 @@ void StreamManager::onRequestEvent(int fd) {
         Debug::LogInfo("Error getting peer address", LOG_DEBUG);
       } else {
 
-          Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
-                        std::this_thread::get_id(),
-                        static_cast<int>(HttpStatus::Code::BadRequest),
-                        HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-                        stream->client_connection.buffer, caddr);
-        }
-        stream->replyError(
-            HttpStatus::Code::BadRequest,
-            HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-            listener_config_.err501);
-        this->clearStream(stream);
+        Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
+                      std::this_thread::get_id(),
+                      static_cast<int>(HttpStatus::Code::BadRequest),
+                      HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
+                      stream->client_connection.buffer, caddr);
+      }
+      stream->replyError(
+          HttpStatus::Code::BadRequest,
+          HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
+          listener_config_.err501);
+      this->clearStream(stream);
       return;
     case http_parser::PARSE_RESULT::INCOMPLETE:
       Debug::LogInfo("Parser INCOMPLETE", LOG_DEBUG);
@@ -504,20 +500,19 @@ void StreamManager::onRequestEvent(int fd) {
 
     if ((stream->client_connection.buffer_size - parsed) > 0) {
       Debug::LogInfo("Buffer size: left size: " +
-                     std::to_string(stream->client_connection.buffer_size),
-                 LOG_DEBUG);
+          std::to_string(stream->client_connection.buffer_size),
+                     LOG_DEBUG);
       Debug::LogInfo("Current request buffer: \n " +
-                     std::string(stream->client_connection.buffer,
-                                 stream->client_connection.buffer_size),
-                 LOG_DEBUG);
+          std::string(stream->client_connection.buffer,
+                      stream->client_connection.buffer_size),
+                     LOG_DEBUG);
       Debug::LogInfo("Parsed data size: " + std::to_string(parsed), LOG_DEBUG);
     }
 
   } while (stream->client_connection.buffer_size > parsed &&
-           parse_result ==
-               http_parser::PARSE_RESULT::SUCCESS); // TODO:: Add support for
-                                                    // http pipeline
-    stream->client_connection.enableReadEvent();
+      parse_result ==
+          http_parser::PARSE_RESULT::SUCCESS);
+  stream->client_connection.enableReadEvent();
 }
 
 void StreamManager::onResponseEvent(int fd) {
@@ -544,12 +539,21 @@ void StreamManager::onResponseEvent(int fd) {
       return;
     }
     //TODO::Evaluar
-//    result = stream->backend_connection.zeroWrite(stream->client_connection.getFileDescriptor(),stream->response);
-//    if (result == IO::IO_RESULT::ERROR) {
-//      Debug::LogInfo("Error reading response ", LOG_DEBUG);
-//      clearStream(stream);
-//      return;
-//    }
+#ifdef  ENABLE_QUICK_RESPONSE
+    result = stream->backend_connection.zeroWrite(stream->client_connection.getFileDescriptor(), stream->response);
+    switch (result) {
+    case IO::IO_RESULT::FD_CLOSED:
+    case IO::IO_RESULT::ERROR: {
+      Debug::LogInfo("Error Writing response ", LOG_NOTICE);
+      clearStream(stream);
+      return;
+    }
+    case IO::IO_RESULT::SUCCESS: return;
+    case IO::IO_RESULT::DONE_TRY_AGAIN:stream->client_connection.enableWriteEvent();
+      return;
+    case IO::IO_RESULT::FULL_BUFFER:break;
+    }
+#endif
   }else{
 
     result = stream->backend_connection.read();
@@ -558,34 +562,34 @@ void StreamManager::onResponseEvent(int fd) {
       clearStream(stream);
       return;
     }
-  // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de tomar
-  // muestra si se la lectura ha sido success.
-  stream->backend_connection.getBackend()->calculateLatency(
-      std::chrono::duration_cast<std::chrono::duration<double>>(
-          std::chrono::steady_clock::now() -
-          stream->backend_connection.time_start)
-          .count());
+    // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de tomar
+    // muestra si se la lectura ha sido success.
+    stream->backend_connection.getBackend()->calculateLatency(
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            std::chrono::steady_clock::now() -
+                stream->backend_connection.time_start)
+            .count());
 
-  //  stream->backend_stadistics.update();
-  size_t parsed = 0;
-  if (stream->response.message_bytes_left < 1) {
-    auto ret = stream->response.parseResponse(
-        stream->backend_connection.buffer,
-        stream->backend_connection.buffer_size,
-        &parsed); // parsing http data as response structured
+    //  stream->backend_stadistics.update();
+    size_t parsed = 0;
+    if (stream->response.message_bytes_left < 1) {
+      auto ret = stream->response.parseResponse(
+          stream->backend_connection.buffer,
+          stream->backend_connection.buffer_size,
+          &parsed); // parsing http data as response structured
 //    Debug::logmsg(
 //        LOG_REMOVE,
 //        "PARSE buffer_size: %d bytes left: %d current_message_size=%d",
 //        stream->backend_connection.buffer_size,
 //        stream->response.message_bytes_left, stream->response.message_length);
-    // get content-lengt
-  }
+      // get content-lengt
+    }
 
-  stream->backend_connection.getBackend()->setAvgTransferTime(
-      std::chrono::duration_cast<std::chrono::duration<double>>(
-          std::chrono::steady_clock::now() -
-          stream->backend_connection.time_start)
-          .count());
+    stream->backend_connection.getBackend()->setAvgTransferTime(
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            std::chrono::steady_clock::now() -
+                stream->backend_connection.time_start)
+            .count());
   }
   stream->client_connection.enableWriteEvent();
 }
@@ -596,8 +600,8 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
   if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
-                     stream->client_connection.getFileDescriptor(), caddr,
-                     50) == nullptr)) {
+        stream->client_connection.getFileDescriptor(), caddr,
+        50) == nullptr)) {
       Debug::LogInfo("Error getting peer address", LOG_DEBUG);
     } else {
       Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
@@ -626,8 +630,8 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
   if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
-                     stream->client_connection.getFileDescriptor(), caddr,
-                     50) == nullptr)) {
+        stream->client_connection.getFileDescriptor(), caddr,
+        50) == nullptr)) {
       Debug::LogInfo("Error getting peer address", LOG_DEBUG);
     } else {
       Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
@@ -664,15 +668,13 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     stream->backend_connection.getBackend()->setAvgConnTime(
         std::chrono::duration_cast<std::chrono::duration<double>>(
             std::chrono::steady_clock::now() -
-            stream->backend_connection.time_start)
+                stream->backend_connection.time_start)
             .count());
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
 
   auto result = stream->client_connection.writeTo(stream->backend_connection,
                                                   stream->request);
-
-  // TODO::rewrite destination
 
   if (result == IO::IO_RESULT::SUCCESS) {
     stream->timer_fd.set(
@@ -688,7 +690,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   } else {
     Debug::LogInfo("Error sending data to client", LOG_DEBUG);
     clearStream(stream);
-    return; // TODO:: What to do??
+    return;
   }
 }
 
@@ -697,15 +699,11 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
-  int fd = stream->client_connection.getFileDescriptor();
-
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-
-  //TODO: Comprobar si estan las sesiones activas y añadir setCookie al extra headers de response (como puntero)
   if (stream->response.message_bytes_left > 0) {
     if(UNLIKELY(stream->backend_connection.buffer_size > 0))
       result = stream->backend_connection.writeTo(stream->client_connection,stream->response);
-      //result = stream->backend_connection.writeContentTo(stream->client_connection, stream->response);
+    //result = stream->backend_connection.writeContentTo(stream->client_connection, stream->response);
     if(LIKELY(stream->backend_connection.splice_pipe.bytes > 0))
       result = stream->backend_connection.zeroWrite(stream->client_connection.getFileDescriptor(),stream->response);
   } else {
@@ -717,14 +715,12 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
   } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
-//    Debug::LogInfo("EAGAIN", LOG_DEBUG);
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableWriteEvent();
   } else {
     Debug::LogInfo("Error sending data to client", LOG_DEBUG);
-    // updateFd(fd, EVENT_TYPE::ANY, event_group);
     clearStream(stream);
-    return; // TODO:: what to do
+    return;
   }
 }
 
@@ -733,7 +729,7 @@ StreamManager::validateRequest(HttpRequest &request) {
   regmatch_t matches[4];
   auto request_line = nonstd::string_view(request.http_message,
                                           request.http_message_length - 2)
-                          .to_string(); // request.getRequestLine();
+      .to_string(); // request.getRequestLine();
   Debug::LogInfo("Request line " + request_line, LOG_REMOVE); // TODO: remove
   if (UNLIKELY(::regexec(&listener_config_.verb, request_line.c_str(), 3,
                          matches, 0) != 0)) {
@@ -763,26 +759,23 @@ StreamManager::validateRequest(HttpRequest &request) {
     return validation::REQUEST_RESULT::BAD_URL;
   }
 
-  // TODO:: Check reqeuest size .
+  // Check reqeuest size .
   if (UNLIKELY(listener_config_.max_req > 0 &&
-               request.headers_length > listener_config_.max_req &&
-               request.request_method != http::REQUEST_METHOD::RPC_IN_DATA &&
-               request.request_method != http::REQUEST_METHOD::RPC_OUT_DATA)) {
+      request.headers_length > listener_config_.max_req &&
+      request.request_method != http::REQUEST_METHOD::RPC_IN_DATA &&
+      request.request_method != http::REQUEST_METHOD::RPC_OUT_DATA)) {
     return validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
   }
 
-  // TODO:: Check for correct headers
+  //Check for correct headers
   for (auto i = 0; i != request.num_headers; i++) {
     // check header values length
-
     if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
       return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
-
     nonstd::string_view header(request.headers[i].name,
                                request.headers[i].name_len);
     nonstd::string_view header_value(request.headers[i].value,
                                      request.headers[i].value_len);
-
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
       auto header_name = http::http_info::headers_names.at(header.to_string());
       auto header_name_string =
@@ -806,7 +799,6 @@ StreamManager::validateRequest(HttpRequest &request) {
       //        break;
       //      }
     } else {
-      // TODO::Unknown header, What to do ??
       Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
                     header.to_string().c_str(),
                     header_value.to_string().c_str());
@@ -814,7 +806,6 @@ StreamManager::validateRequest(HttpRequest &request) {
 
     /* maybe header to be removed */
     MATCHER *m;
-
     for (m = listener_config_.head_off; m; m = m->next) {
       if ((request.headers[i].header_off =
                ::regexec(&m->pat, request.headers[i].name, 0, nullptr, 0) != 0))

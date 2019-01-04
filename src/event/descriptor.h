@@ -5,6 +5,7 @@
 #pragma once
 
 #include "epoll_manager.h"
+#include "../debug/Debug.h"
 
 class Descriptor {
   events::EpollManager *event_manager_;

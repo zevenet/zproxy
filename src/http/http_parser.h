@@ -77,7 +77,7 @@ public:
   size_t message_length;     // body data lenght in current received message
   size_t message_bytes_left; // content-lenght
 
-  // TODO::
+
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
   http::TRANSFER_ENCODING_TYPE transfer_encoding_type;

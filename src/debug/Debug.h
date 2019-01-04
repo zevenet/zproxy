@@ -12,7 +12,7 @@
 #include <type_traits>
 #include "../util/utils.h"
 
-#define LOG_REMOVE LOG_DEBUG  // TODO:: REMOVE
+#define LOG_REMOVE LOG_DEBUG
 
 #define MAXBUF 4096
 
@@ -76,7 +76,6 @@ class Debug {
       // std::cout << "\033[0m";
       std::cout << COUT_GREEN_COLOR(str);
     } else {
-      // TODO:: send to syslog
       if (log_facility == -1) {
         fprintf(level >= LOG_DEBUG ? stdout : stderr, "%s\n", str.c_str());
       } else {
