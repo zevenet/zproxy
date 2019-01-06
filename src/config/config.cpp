@@ -343,6 +343,7 @@ ListenerConfig *Config::parse_HTTP() {
   res->nossl_url = NULL;
   res->nossl_redir = 0;
   res->log_level = log_level;
+  res->alive_to = alive_to;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = 0;
@@ -519,6 +520,7 @@ ListenerConfig *Config::parse_HTTPS() {
   res->nossl_url = NULL;
   res->nossl_redir = 0;
   res->log_level = log_level;
+  res->alive_to = alive_to;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = has_other = 0;

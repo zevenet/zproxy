@@ -148,6 +148,7 @@ struct ListenerConfig {
   int log_level;          /* log level for this listener */
   int allow_client_reneg; /* Allow Client SSL Renegotiation */
   int disable_ssl_v2;     /* Disable SSL version 2 */
+  int alive_to;
   ServiceConfig *services;
   ListenerConfig *next;
 };

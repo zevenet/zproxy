@@ -10,8 +10,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
                            EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE &&
       fd == timer_maintenance.getFileDescriptor()) {
-    Debug::LogInfo("Doing maintenance", LOG_REMOVE);
-    timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
+    timer_maintenance.set(listener_config.alive_to);
     updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
              EVENT_GROUP::MAINTENANCE);
 
