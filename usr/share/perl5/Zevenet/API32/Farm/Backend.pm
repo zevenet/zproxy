@@ -964,7 +964,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	}
 
 	my $backends = &getFarmServers( $farmname );
-	my $exists = &getFarmBackendExists( $backends, $id_server );
+	my $exists = &getFarmServer( $backends, $id_server );
 
 	if ( !$exists )
 	{
