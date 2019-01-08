@@ -235,11 +235,15 @@ bool PoundClient::executeCommand() {
             verboseLog(buffer);
         }
         client.write(buffer.c_str(), buffer.size());
-        client.read();
+        IO::IO_RESULT read_result = client.read();
+        if (read_result != IO::IO_RESULT::SUCCESS)
+          exit(EXIT_FAILURE);
         //TODO: AÑADIR COMPROBACIONES
         HttpResponse response;
         size_t used_bytes;
-        response.parseResponse(std::string(client.buffer, client.buffer_size), &used_bytes);
+        auto parse_result = response.parseResponse(std::string(client.buffer, client.buffer_size), &used_bytes);
+        if (parse_result != http_parser::PARSE_RESULT::SUCCESS)
+          exit(EXIT_FAILURE);
         json::JsonObject *json_response(json::JsonParser::parse(std::string(response.message, response.message_length)));
         outputStatus(json_response);
         return true;
