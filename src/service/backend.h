@@ -45,8 +45,10 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   int weight;
   std::string address;
   int port;
+  std::string bekey;
   int conn_timeout{};
   int response_timeout{};
+  bool cut;
   //  bool disabled;
 
   void doMaintenance();

@@ -52,6 +52,7 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
     backend->response_timeout = backend_config->rw_timeout;
     backend->status = backend_config->disabled ? BACKEND_DISABLED : BACKEND_UP;
     backend->backend_type = BACKEND_TYPE::REMOTE;
+    backend->bekey = backend_config->bekey;
     if (emergency)
       emergency_backend_set.push_back(backend);
     else

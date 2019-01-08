@@ -44,6 +44,15 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
   service->id = id;
   service->name = std::string(service_config.name);
   service->disabled = service_config.disabled;
+
+  // Information related with the setCookie
+  if(service_config.becookie != nullptr)
+    service->becookie = std::string(service_config.becookie);
+  if(service_config.becdomain != nullptr)
+    service->becdomain = std::string(service_config.becdomain);
+  if(service_config.becpath != nullptr)
+    service->becpath = std::string(service_config.becpath);
+  service->becage = service_config.becage;
   services.push_back(service);
   return true;
 }

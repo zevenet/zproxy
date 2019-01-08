@@ -5,6 +5,10 @@
 #include "StreamManager.h"
 #include "../util/Network.h"
 #include "../util/common.h"
+#include "../util/string_view.h"
+#include "../util/utils.h"
+#include <functional>
+#include <cstdio>
 #if HELLO_WORLD_SERVER
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
@@ -252,6 +256,9 @@ void StreamManager::addStream(int fd) {
   auto stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
+  stream->timer_fd.set(listener_config_.to);
+  addFd(stream->timer_fd.getFileDescriptor(), TIMEOUT, EVENT_GROUP::REQUEST_TIMEOUT);
+  timers_set[stream->timer_fd.getFileDescriptor()] = stream;
   stream->client_connection.enableEvents (this,READ,EVENT_GROUP::CLIENT);
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
@@ -288,6 +295,7 @@ void StreamManager::onRequestEvent(int fd) {
     clearStream(stream);
     return;
   }
+  //TODO: Clean extra headers
   auto result = stream->client_connection.read();
   if (result == IO::IO_RESULT::ERROR) {
     Debug::LogInfo("Error reading request ", LOG_DEBUG);
@@ -328,6 +336,10 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
+     stream->timer_fd.unset();
+     deleteFd(stream->timer_fd.getFileDescriptor());
+     timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
+
       auto service = service_manager->getService(stream->request);
       if (service == nullptr) {
         char caddr[50];
@@ -513,6 +525,13 @@ void StreamManager::onRequestEvent(int fd) {
       parse_result ==
           http_parser::PARSE_RESULT::SUCCESS);
   stream->client_connection.enableReadEvent();
+    // TODO:: Add support for http pipeline
+    // Rewrite destination
+    if (listener_config_.rewr_dest > 0)
+      //if ()
+      stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION, stream->backend_connection.getPeerAddress());
+    stream->client_connection.enableReadEvent();
+
 }
 
 void StreamManager::onResponseEvent(int fd) {
@@ -555,6 +574,14 @@ void StreamManager::onResponseEvent(int fd) {
     }
 #endif
   }else{
+
+    if (listener_config_.rewr_loc == 1) {
+      stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, "");
+      stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, "");
+    } else if (listener_config_.rewr_loc == 2){
+      stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, "");
+      stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, "");
+    }
 
     result = stream->backend_connection.read();
     if (result == IO::IO_RESULT::ERROR) {
@@ -622,7 +649,17 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 
 void StreamManager::onRequestTimeoutEvent(int fd) {
   // TODO::IMPLENET
+  HttpStream *stream = timers_set[fd];
+  if (stream == nullptr)
+    Debug::LogInfo("Stream null pointer", LOG_REMOVE);
+  if (stream->timer_fd.isTriggered()) {
+    stream->timer_fd.unset();
+    deleteFd(stream->timer_fd.getFileDescriptor());
+    ::close(fd);
+    clearStream(stream);
+  }
 }
+
 void StreamManager::onResponseTimeoutEvent(int fd) {
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr)
@@ -700,6 +737,30 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     return;
   }
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+
+  //TODO: Añadir setCookie al extra headers de response
+  Service *service = service_manager->getService(stream->request);
+
+  if (!service->becookie.empty()) {
+
+    std::string set_cookie_header = service->becookie + "=" + stream->backend_connection.getBackend()->bekey;
+    if (!service->becdomain.empty())
+      set_cookie_header += "; Domain=" + service->becdomain;
+    if (!service->becpath.empty())
+      set_cookie_header += "; Path=" + service->becpath;
+
+    auto time = std::time(nullptr);
+    auto localtime = *std::localtime(&time);
+    if (service->becage > 0) {
+      localtime.tm_sec += service->becage;
+    } else {
+      localtime.tm_sec += service->ttl;
+    }
+    //TODO: ¿Parsear la fecha, que estructura deberíamos usar?
+    //set_cookie_header += "; expires=" + localtime.);
+    stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE, set_cookie_header);
+  }
+
   if (stream->response.message_bytes_left > 0) {
     if(UNLIKELY(stream->backend_connection.buffer_size > 0))
       result = stream->backend_connection.writeTo(stream->client_connection,stream->response);

@@ -28,6 +28,10 @@ class Service : public sessions::HttpSessionManager,
   int id;
   bool ignore_case;
   std::string name;
+  std::string becookie,      /* Backend Cookie Name */
+      becdomain,      /* Backend Cookie domain */
+      becpath;        /* Backend cookie path */
+  int becage;         /* Backend cookie age */
 
   enum LOAD_POLICY {
     LP_ROUND_ROBIN,
