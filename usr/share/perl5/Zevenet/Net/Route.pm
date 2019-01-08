@@ -197,11 +197,11 @@ sub isRule
 	my $fwmark = shift;
 	my $iplist = shift;
 
-	$table  = "lookup $table"  if ( defined $table  && $table ne "" );
-	$from   = "from $from"     if ( defined $from   && $from ne "" );
-	$fwmark = "fwmark $fwmark" if ( defined $fwmark && $fwmark ne "" );
+	$table  = "lookup $table"   if ( defined $table  && $table ne "" );
+	$from   = "from $from "     if ( defined $from   && $from ne "" );
+	$fwmark = "fwmark $fwmark " if ( defined $fwmark && $fwmark ne "" );
 
-	my $exist = grep /$from.*$fwmark.*$table/, @{ $iplist };
+	my $exist = grep /$from$fwmark$table/, @{ $iplist };
 
 	return $exist;
 }
@@ -290,8 +290,7 @@ sub setRule
 	$ifname = $if_ref->{ name } if ( !defined $ifname );
 	$table  = "table_$ifname"   if ( $ifname ne "" );
 
-	my @iplist = ();
-	@iplist = `$ip_bin -$ipv rule list`;
+	my @iplist = `$ip_bin -$ipv rule list`;
 
 	if ( defined $from )
 	{
