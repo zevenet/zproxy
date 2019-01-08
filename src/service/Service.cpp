@@ -281,8 +281,12 @@ Backend *Service::getNextBackend() {
   switch (service_config.routing_policy) {
   case LP_ROUND_ROBIN: {
     static unsigned long long seed;
-    seed++;
-    return backend_set[seed % backend_set.size()];
+    Backend *bck_res = nullptr;
+    do {
+      seed++;
+      bck_res = backend_set[seed % backend_set.size()];
+    } while (bck_res != nullptr && bck_res->status != BACKEND_STATUS::BACKEND_UP);
+    return bck_res;
   };
 
   case LP_W_LEAST_CONNECTIONS: {
