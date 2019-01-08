@@ -300,9 +300,9 @@ sub setRule
 	else
 	{
 		$isrule =
-		  &isRule( $table, "$if_ref->{ net }/$if_ref->{ mask }", $fwmark, @iplist )
+		  &isRule( $table, "$if_ref->{ net }/$if_ref->{ mask }", $fwmark, \@iplist )
 		  || &isRule( $table, NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } ),
-					  $fwmark, @iplist );
+					  $fwmark, \@iplist );
 	}
 
 	if (    ( $action eq "add" && $isrule == 0 )
