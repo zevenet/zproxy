@@ -290,7 +290,8 @@ sub setRule
 	$ifname = $if_ref->{ name } if ( !defined $ifname );
 	$table  = "table_$ifname"   if ( $ifname ne "" );
 
-	my @iplist = `$ip_bin -$ipv rule list`;
+	my @iplist = ();
+	@iplist = `$ip_bin -$ipv rule list`;
 
 	if ( defined $from )
 	{
