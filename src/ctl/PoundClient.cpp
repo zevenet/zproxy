@@ -105,7 +105,9 @@ bool PoundClient::executeCommand() {
       port = std::stoi(this->address.substr(pos+1, this->address.size() - pos));
       this->address = this->address.substr(0, pos);
       client.address = Network::getAddress(this->address, port);
-      client.doConnect(*client.address, 0);
+      IO::IO_OP res_connect = client.doConnect(*client.address, 0);
+      if (res_connect != IO::IO_OP::OP_SUCCESS)
+        exit(EXIT_FAILURE);
       break;
     }
 
