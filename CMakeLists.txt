@@ -13,7 +13,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 #options
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_TESTS "Build tests" OFF)
-option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
+option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
 
 SET(PROJECT_DESCRIPTION "L7 proxy core for zevenet load balancer")
 SET(PROJECT_CODENAME "${PROJECT_NAME}")
@@ -79,7 +79,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -m64 -fpermissive  -Wsha
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
 
 if (UNIQUE_BUILD_DIRECTORY)
-    SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/bin")
+    SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
 endif ()
 
 

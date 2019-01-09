@@ -243,12 +243,20 @@ bool PoundClient::executeCommand() {
         //TODO: AÑADIR COMPROBACIONES
         HttpResponse response;
         size_t used_bytes;
-        auto parse_result = response.parseResponse(std::string(client.buffer, client.buffer_size), &used_bytes);
-        if (parse_result != http_parser::PARSE_RESULT::SUCCESS)
+      auto str = std::string(client.buffer, client.buffer_size);
+      auto parse_result = response.parseResponse(str, &used_bytes);
+      if (parse_result != http_parser::PARSE_RESULT::SUCCESS) {
+        Debug::LogInfo("Error reading response", LOG_ERR);
           exit(EXIT_FAILURE);
-        json::JsonObject *json_response(json::JsonParser::parse(std::string(response.message, response.message_length)));
-        outputStatus(json_response);
-        return true;
+      }
+      str = std::string(response.message, response.message_length);
+      auto json_object_ptr = json::JsonParser::parse(str);
+      if (json_object_ptr == nullptr) {
+        Debug::LogInfo("Error parsing response data", LOG_ERR);
+        exit(EXIT_FAILURE);
+      }
+      std::unique_ptr<json::JsonObject> json_response(json_object_ptr);
+      outputStatus(json_response.get());
     }
   }
   return true;
