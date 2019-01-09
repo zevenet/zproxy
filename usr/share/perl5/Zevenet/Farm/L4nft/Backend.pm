@@ -96,6 +96,14 @@ sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
 		}
 	}
 
+	my $exists = &getFarmServer( $f_ref->{ servers }, $ids );
+
+	# It's a backend modification
+	if ( $exists )
+	{
+		$mark = $exists->{ tag };
+	}
+
 	$output = &httpNLBRequest(
 		{
 		   farm       => $farm_name,
