@@ -400,8 +400,7 @@ void StreamManager::onRequestEvent(int fd) {
               !stream->backend_connection.isConnected()
               ) {
             // null
-            if (stream->backend_connection.getFileDescriptor() !=
-                BACKEND_STATUS::NO_BACKEND) {
+            if (stream->backend_connection.getFileDescriptor() > 0) { //
               stream->backend_connection.setBackend(
                   stream->backend_connection.getBackend(), false);
               deleteFd(stream->backend_connection
@@ -426,6 +425,7 @@ void StreamManager::onRequestEvent(int fd) {
               Debug::LogInfo("Error connecting to backend " + bck->address,
                              LOG_NOTICE);
               stream->backend_connection.setBackend(bck, false);
+              stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
               stream->backend_connection.closeConnection();
               return;
             }

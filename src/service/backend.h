@@ -16,7 +16,7 @@
 #include "../json/JsonDataValueTypes.h"
 #include "../json/jsonparser.h"
 
-enum BACKEND_STATUS {
+enum class BACKEND_STATUS {
   NO_BACKEND = -1,  // this should be used for first assigned backends
   BACKEND_UP = 0,
   BACKEND_DOWN,
@@ -36,7 +36,7 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
 public:
   Backend();
   ~Backend();
-  BACKEND_STATUS status = NO_BACKEND;
+  std::atomic<BACKEND_STATUS> status;
   BACKEND_TYPE backend_type;
   BackendConfig backend_config;
   addrinfo *address_info{};

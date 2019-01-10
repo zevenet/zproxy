@@ -50,7 +50,7 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
     backend->name = "bck_" + std::to_string(backend_id);
     backend->conn_timeout = backend_config->conn_to;
     backend->response_timeout = backend_config->rw_timeout;
-    backend->status = backend_config->disabled ? BACKEND_DISABLED : BACKEND_UP;
+    backend->status = backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED : BACKEND_STATUS::BACKEND_UP;
     backend->backend_type = BACKEND_TYPE::REMOTE;
     backend->bekey = backend_config->bekey;
     if (emergency)
@@ -76,7 +76,7 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
     config->weight = backend_config->priority;
     config->name = "bck_" + std::to_string(backend_id);
     config->conn_timeout = backend_config->conn_to;
-    config->status = backend_config->disabled ? BACKEND_DISABLED : BACKEND_UP;
+    config->status = backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED : BACKEND_STATUS::BACKEND_UP;
     config->response_timeout = backend_config->rw_timeout;
     config->backend_type = BACKEND_TYPE::REDIRECT;
     if (emergency)
@@ -354,7 +354,7 @@ Backend *Service::getNextBackend() {
 void Service::doMaintenance() {
   for (Backend* bck : this->backend_set) {
     bck->doMaintenance();
-    if (bck->status == BACKEND_DOWN) {
+    if (bck->status == BACKEND_STATUS::BACKEND_DOWN) {
       for (auto session : sessions_set) {
         if (session.second->assigned_backend->backend_id == bck->backend_id) {
           sessions_set.erase(session.first);
@@ -368,7 +368,6 @@ void Service::doMaintenance() {
       sessions_set.erase(session.first);
     }
   }
-  return;
 }
 
 Backend * Service::getEmergencyBackend() {

@@ -1,6 +1,6 @@
 #include "backend.h"
 
-Backend::Backend() {
+Backend::Backend() : status(BACKEND_STATUS::NO_BACKEND) {
   //  ctl::ControlManager::getInstance()->attach(std::ref(*this));
 }
 
@@ -16,15 +16,15 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
     case ctl::CTL_SUBJECT::STATUS: {
       JsonObject status_;
       switch (this->status) {
-      case BACKEND_UP:
+      case BACKEND_STATUS::BACKEND_UP:
         status_.emplace(JSON_KEYS::STATUS,
                         new JsonDataValue(JSON_KEYS::STATUS_UP));
         break;
-      case BACKEND_DOWN:
+      case BACKEND_STATUS::BACKEND_DOWN:
         status_.emplace(JSON_KEYS::STATUS,
                         new JsonDataValue(JSON_KEYS::STATUS_DOWN));
         break;
-      case BACKEND_DISABLED:
+      case BACKEND_STATUS::BACKEND_DISABLED:
         status_.emplace(JSON_KEYS::STATUS,
                         new JsonDataValue(JSON_KEYS::STATUS_DISABLED));
         break;
@@ -62,11 +62,11 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
                 ->string_value;
         if (value == JSON_KEYS::STATUS_ACTIVE ||
             value == JSON_KEYS::STATUS_UP) {
-          this->status = BACKEND_UP;
+          this->status = BACKEND_STATUS::BACKEND_UP;
         } else if (value == JSON_KEYS::STATUS_DOWN) {
-          this->status = BACKEND_DOWN;
+          this->status = BACKEND_STATUS::BACKEND_DOWN;
         } else if (value == JSON_KEYS::STATUS_DISABLED) {
-          this->status = BACKEND_DISABLED;
+          this->status = BACKEND_STATUS::BACKEND_DISABLED;
         }
         Debug::logmsg(LOG_NOTICE, "Set Backend %d %s", backend_id,
                       value.c_str());
@@ -104,15 +104,15 @@ std::unique_ptr<JsonObject> Backend::getBackendJson() {
   root->emplace(JSON_KEYS::PORT, std::unique_ptr<JsonDataValue>(new JsonDataValue(this->port)));
   root->emplace(JSON_KEYS::WEIGHT, std::unique_ptr<JsonDataValue>(new JsonDataValue(this->weight)));
   switch (this->status) {
-  case BACKEND_UP:
+  case BACKEND_STATUS::BACKEND_UP:
     root->emplace(JSON_KEYS::STATUS, std::unique_ptr<JsonDataValue>(
         new JsonDataValue(JSON_KEYS::STATUS_ACTIVE)));
     break;
-  case BACKEND_DOWN:
+  case BACKEND_STATUS::BACKEND_DOWN:
     root->emplace(JSON_KEYS::STATUS, std::unique_ptr<JsonDataValue>(
         new JsonDataValue(JSON_KEYS::STATUS_DOWN)));
     break;
-  case BACKEND_DISABLED:
+  case BACKEND_STATUS::BACKEND_DISABLED:
     root->emplace(JSON_KEYS::STATUS, std::unique_ptr<JsonDataValue>(
         new JsonDataValue(JSON_KEYS::STATUS_DISABLED)));
     break;
@@ -130,7 +130,7 @@ std::unique_ptr<JsonObject> Backend::getBackendJson() {
 }
 
 void Backend::doMaintenance() {
-  if (this->status == BACKEND_DISABLED)
+  if (this->status != BACKEND_STATUS::BACKEND_DOWN)
     return;
 
   Connection checkOut;
@@ -138,9 +138,9 @@ void Backend::doMaintenance() {
 
   switch(res) {
   case IO::IO_OP::OP_SUCCESS: {
-    this->status = BACKEND_UP;
+    this->status = BACKEND_STATUS::BACKEND_UP;
     break;
   }
-  default:this->status = BACKEND_DOWN;
+  default:this->status = BACKEND_STATUS::BACKEND_DOWN;
   }
 }
