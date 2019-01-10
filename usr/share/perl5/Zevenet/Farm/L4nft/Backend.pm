@@ -589,7 +589,11 @@ sub setL4BackendRule
 	my $farm_ref = shift;
 	my $mark     = shift;
 
-	return -1 if ( $action != /add|del/ || !defined $farm_ref || $mark eq "" );
+	return -1
+	  if (    $action != /add|del/
+		   || !defined $farm_ref
+		   || $mark eq ""
+		   || $mark eq "0x0" );
 
 	require Zevenet::Net::Util;
 	require Zevenet::Net::Route;
