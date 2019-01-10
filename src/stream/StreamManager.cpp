@@ -527,9 +527,14 @@ void StreamManager::onRequestEvent(int fd) {
   stream->client_connection.enableReadEvent();
     // TODO:: Add support for http pipeline
     // Rewrite destination
-    if (listener_config_.rewr_dest > 0)
-      //if ()
-      stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION, stream->backend_connection.getPeerAddress());
+    std::string destination_value;
+    if (listener_config_.rewr_dest > 0 && stream->request.getHeaderValue(http::HTTP_HEADER_NAME::DESTINATION, destination_value)) {
+      std::string header_value = "http://";
+      header_value += stream->backend_connection.getPeerAddress();
+      header_value += ':';
+      header_value += stream->request.path;
+      stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION, header_value);
+    }
     stream->client_connection.enableReadEvent();
 
 }
@@ -575,13 +580,11 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
   }else{
 
-    if (listener_config_.rewr_loc == 1) {
+    //TODO: Rewrite location if we can using HTTPS Listener
+    /*else if (listener_config_.rewr_loc == 2){
       stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, "");
       stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, "");
-    } else if (listener_config_.rewr_loc == 2){
-      stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, "");
-      stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, "");
-    }
+    }*/
 
     result = stream->backend_connection.read();
     if (result == IO::IO_RESULT::ERROR) {
@@ -841,6 +844,17 @@ StreamManager::validateRequest(HttpRequest &request) {
       auto header_name = http::http_info::headers_names.at(header.to_string());
       auto header_name_string =
           http::http_info::headers_names_strings.at(header_name);
+
+      switch(header_name) {
+        case http::HTTP_HEADER_NAME::DESTINATION:
+          if (listener_config_.rewr_dest == 1)
+            request.headers[i].header_off = true;
+          break;
+        case http::HTTP_HEADER_NAME::LOCATION:
+          if (listener_config_.rewr_dest == 1)
+            request.headers[i].header_off = true;
+          break;
+      }
       //      Debug::
       //          logmsg(LOG_DEBUG, "\t%s: %s", header_name_string,
       //          header_value.c_str());
