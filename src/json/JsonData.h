@@ -14,7 +14,7 @@ class JsonData : Json {
   std::string name_;
   JsonDataValue *data;
 
- public:
+public:
   JsonData(const JsonData &other);
   ~JsonData();
   JsonData(const JsonData &&other);

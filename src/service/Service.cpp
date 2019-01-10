@@ -164,7 +164,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
   }
   switch (task.command) {
   case ctl::CTL_COMMAND::DELETE: {
-    JsonObject *json_data = JsonParser::parse(task.data);
+    auto json_data = JsonParser::parse(task.data);
     if (task.subject == ctl::CTL_SUBJECT::SESSION) {
       if (!deleteSession(*json_data, backend_set))
         return JSON_OP_RESULT::ERROR;
@@ -180,8 +180,8 @@ std::string Service::handleTask(ctl::CtlTask &task) {
   case ctl::CTL_COMMAND::ADD: {
     switch (task.subject) {
     case ctl::CTL_SUBJECT::SESSION: {
-      JsonObject *json_data = JsonParser::parse(task.data);
-      if (!addSession(json_data, backend_set))
+      auto json_data = JsonParser::parse(task.data);
+      if (!addSession(json_data.get(), backend_set))
         return JSON_OP_RESULT::ERROR;
       return JSON_OP_RESULT::OK;
     }
@@ -224,7 +224,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
       if (status.get() == nullptr)
         return "";
       if (status->at(JSON_KEYS::STATUS)->isValue()) {
-        auto value = static_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS))
+        auto value = dynamic_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS).get())
             ->string_value;
         if (value == JSON_KEYS::STATUS_ACTIVE ||
             value == JSON_KEYS::STATUS_UP) {
@@ -264,7 +264,7 @@ JsonObject *Service::getServiceJson() {
   auto backends_array = new JsonArray();
   for (auto backend : backend_set) {
     auto bck = backend->getBackendJson();
-    backends_array->push_back(bck);
+    backends_array->emplace_back(std::move(bck));
   }
   root->emplace(JSON_KEYS::BACKENDS, backends_array);
   root->emplace(JSON_KEYS::SESSIONS, this->getSessionsJson());

@@ -180,10 +180,10 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
   return nullptr;
 }
 
-json::JsonArray *HttpSessionManager::getSessionsJson() {
-  auto data = new json::JsonArray();
+std::unique_ptr<json::JsonArray> HttpSessionManager::getSessionsJson() {
+  std::unique_ptr<json::JsonArray> data { new json::JsonArray()};
   for (auto &session : sessions_set) {
-    auto json_data = new json::JsonObject();
+    std::unique_ptr<JsonObject> json_data {new json::JsonObject()};
     json_data->emplace(JSON_KEYS::ID, new json::JsonDataValue(session.first));
     json_data->emplace(
         JSON_KEYS::BACKEND_ID,
@@ -191,7 +191,7 @@ json::JsonArray *HttpSessionManager::getSessionsJson() {
 
     json_data->emplace(JSON_KEYS::LAST_SEEN_TS,
                        new json::JsonDataValue(session.second->getTimeStamp()));
-    data->push_back(json_data);
+    data->emplace_back(std::move(json_data));
   }
   return data;
 }
@@ -201,7 +201,7 @@ bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend
     return false;
   auto new_session = new SessionInfo();
   if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() && json_object->at(JSON_KEYS::ID)->isValue()) {
-    int session_json_backend_id = static_cast<JsonDataValue *>(json_object->at(JSON_KEYS::BACKEND_ID))->number_value;
+    auto session_json_backend_id = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::BACKEND_ID).get())->number_value;
     for (auto backend : backend_set) {
       if (backend->backend_id != session_json_backend_id)
         continue;
@@ -210,9 +210,9 @@ bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend
     if (new_session->assigned_backend == nullptr)
       return false;
     std::lock_guard<std::mutex> locker(lock_mtx);
-    std::string key = static_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID))->string_value;
+    std::string key = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID).get())->string_value;
     if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 && json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
-      new_session->setTimeStamp(static_cast<JsonDataValue *>(json_object->at(JSON_KEYS::LAST_SEEN_TS))->number_value);
+      new_session->setTimeStamp(dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::LAST_SEEN_TS).get())->number_value);
     sessions_set.emplace(std::make_pair(key, new_session));
     return true;
   } else {
@@ -220,10 +220,10 @@ bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend
   }
 }
 
-bool HttpSessionManager::deleteSession(JsonObject &json_object, std::vector<Backend *> backend_set) {
+bool HttpSessionManager::deleteSession(const JsonObject &json_object, std::vector<Backend *> backend_set) {
   if (json_object.count(JSON_KEYS::BACKEND_ID) > 0 && json_object.at(JSON_KEYS::BACKEND_ID)->isValue()) {
     Backend *bck = nullptr;
-    int session_json_backend_id = static_cast<JsonDataValue*>(json_object.at(JSON_KEYS::BACKEND_ID))->number_value;
+    auto session_json_backend_id = dynamic_cast<JsonDataValue*>(json_object.at(JSON_KEYS::BACKEND_ID).get())->number_value;
     for (auto backend : backend_set) {
       if (backend->backend_id != session_json_backend_id)
         continue;
@@ -242,8 +242,8 @@ bool HttpSessionManager::deleteSession(JsonObject &json_object, std::vector<Back
     return true;
   } else  {
     if (json_object.count(JSON_KEYS::ID) > 0 && json_object.at(JSON_KEYS::ID)->isValue()) {
-      std::string key = static_cast<JsonDataValue*>(json_object.at(JSON_KEYS::ID))->string_value;
-      for(auto session : sessions_set) {
+      std::string key = dynamic_cast<JsonDataValue*>(json_object.at(JSON_KEYS::ID).get())->string_value;
+      for(const auto &session : sessions_set) {
         if (session.first != key) continue;
         sessions_set.erase(key);
         return true;

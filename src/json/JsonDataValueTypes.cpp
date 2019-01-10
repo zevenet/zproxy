@@ -5,15 +5,6 @@
 
 namespace json {
 
-void JsonArray::freeJson() {
-  for (auto data : *this) {
-    Json *data_ptr = data;
-    data_ptr->freeJson();
-    delete data_ptr;
-  }
-  this->clear();
-}
-
 std::string JsonArray::stringify(bool prettyfy, int tabs) {
   std::string res = "";
   if (prettyfy) {
@@ -42,14 +33,8 @@ std::string JsonArray::stringify(bool prettyfy, int tabs) {
 }
 
 bool JsonArray::isArray() { return true; }
-
-void JsonObject::freeJson() {
-  for (auto &data : *this) {
-    data.second->freeJson();
-    Json *data_ptr = data.second;
-    delete data_ptr; // TODO:: FIX SIGABRT
-  }
-  this->clear();
+JsonArray::JsonArray(const JsonArray &json_array) {
+  //TODO::Implement
 }
 
 std::string JsonObject::stringify(bool prettyfy, int tabs) {
@@ -80,4 +65,7 @@ std::string JsonObject::stringify(bool prettyfy, int tabs) {
 }
 
 bool JsonObject::isObject() { return true; }
+JsonObject::JsonObject(const JsonObject &json_object) {
+//TODO:: implement
+}
 } // namespace json

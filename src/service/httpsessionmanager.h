@@ -33,7 +33,7 @@ struct SessionInfo {
   void update() { last_seen = system_clock::now(); }
   long getTimeStamp() {
     return std::chrono::duration_cast<std::chrono::seconds>(
-               last_seen.time_since_epoch())
+        last_seen.time_since_epoch())
         .count();
   }
   void setTimeStamp(long seconds_since_epoch_count) {
@@ -45,13 +45,13 @@ struct SessionInfo {
 
 class HttpSessionManager {
   // used
- protected:
+protected:
   HttpSessionType session_type;
   std::string sess_id; /* id to construct the pattern */
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
 
- public:
+public:
   unsigned int ttl;
   static std::mutex lock_mtx;
   std::unordered_map<std::string, SessionInfo *>
@@ -65,11 +65,11 @@ class HttpSessionManager {
   bool addSession(JsonObject *json_object, std::vector<Backend *> backend_set);
   SessionInfo *addSession(HttpStream &stream, Backend &backend_to_assign);
 
-  bool deleteSession(JsonObject &json_object, std::vector<Backend *> backend_set);
+  bool deleteSession(const JsonObject &json_object, std::vector<Backend *> backend_set);
   void deleteSession(HttpStream &stream);
   // return the assigned backend or nullptr if no session is found or sesssion
   // has expired
   SessionInfo *getSession(HttpStream &stream, bool update_if_exist = false);
-  json::JsonArray *getSessionsJson();
+  std::unique_ptr<json::JsonArray> getSessionsJson();
 };
 }  // namespace sessions

@@ -48,6 +48,7 @@ const std::string JSON_KEYS::RESULT = "result";
 
 }  // namespace json
 
-json::Json::~Json() { freeJson(); }
+json::Json::~Json() { }
 
 bool json::Json::isArray() { return false; }
+

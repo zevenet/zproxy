@@ -78,7 +78,7 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
                 new json::JsonDataValue(listener_config_.ctx != nullptr));
   auto services_array = new json::JsonArray();
   for (auto service : services)
-    services_array->push_back(service->getServiceJson());
+    services_array->emplace_back(service->getServiceJson());
   root->emplace(JSON_KEYS::SERVICES, services_array);
   auto data = root->stringify();
   return data;

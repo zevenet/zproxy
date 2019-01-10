@@ -33,7 +33,7 @@ using namespace Statistics;
 using namespace json;
 
 class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo{
- public:
+public:
   Backend();
   ~Backend();
   BACKEND_STATUS status = NO_BACKEND;
@@ -55,5 +55,5 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   std::string handleTask(ctl::CtlTask &task) override;
   bool isHandler(ctl::CtlTask &task) override;
 
-  JsonObject *getBackendJson();
+  std::unique_ptr<JsonObject> getBackendJson();
 };

@@ -4,7 +4,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 namespace json {
 // JSON Keys
 
@@ -64,6 +63,7 @@ enum class JSON_VALUE_TYPE {
 class Json {
 public:
   Json() = default;
+  Json(Json&) = default;
   virtual ~Json();
   int json_size;
   virtual bool isArray();
@@ -73,7 +73,6 @@ public:
   virtual std::string stringify(bool prettyfy = false, int tabs = -1) {
     return std::string();
   }
-  virtual void freeJson() {}
 };
 
 } // namespace json
