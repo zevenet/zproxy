@@ -580,8 +580,10 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
   }else{
 
-    //TODO: Rewrite location if we can using HTTPS Listener
+    //Rewrite location
     std::string location_header_value;
+
+    //We need this check even with validateResponse because we are using the header value in order to check if we need or not to rewrite it.
     bool location_header_exists = stream->response.getHeaderValue(http::HTTP_HEADER_NAME::LOCATION, location_header_value);
     std::string protocol;
 
@@ -917,6 +919,38 @@ StreamManager::validateRequest(HttpRequest &request) {
   // waf
 
   return validation::REQUEST_RESULT::OK;
+}
+
+validation::REQUEST_RESULT
+StreamManager::validateResponse(HttpResponse &response) {
+  for (auto i = 0; i != response.num_headers; i++) {
+    // check header values length
+    if (response.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
+      return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
+    nonstd::string_view header(response.headers[i].name,
+                               response.headers[i].name_len);
+    nonstd::string_view header_value(response.headers[i].value,
+                                     response.headers[i].value_len);
+    if (http::http_info::headers_names.count(header.to_string()) > 0) {
+      auto header_name = http::http_info::headers_names.at(header.to_string());
+      auto header_name_string =
+          http::http_info::headers_names_strings.at(header_name);
+
+    } else {
+        Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
+                      header.to_string().c_str(),
+                      header_value.to_string().c_str());
+    }
+      /* maybe header to be removed */
+      MATCHER *m;
+      for (m = listener_config_.head_off; m; m = m->next) {
+        if ((response.headers[i].header_off =
+                 ::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) != 0))
+          break;
+      }
+
+  return validation::REQUEST_RESULT::OK;
+  }
 }
 
 bool StreamManager::init(ListenerConfig &listener_config) {

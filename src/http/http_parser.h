@@ -54,6 +54,7 @@ public:
     extra_headers.emplace(header_name, std::string(extra_header));
   }
 
+  //We need this function in order to implement rewriteLocation, we cannot do that in the validateResponse function.
   inline void removeHeader(http::HTTP_HEADER_NAME header_name) {
       for (int i=0;i != num_headers; i++) {
         if (headers[i].name == http::http_info::headers_names_strings.at(header_name)) {
@@ -84,8 +85,6 @@ public:
   char *message;             // body data start
   size_t message_length;     // body data lenght in current received message
   size_t message_bytes_left; // content-lenght
-
-  bool add_destination_header;
 
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
