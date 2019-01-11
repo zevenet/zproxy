@@ -255,7 +255,7 @@ bool PoundClient::executeCommand() {
         Debug::LogInfo("Error parsing response data", LOG_ERR);
         exit(EXIT_FAILURE);
       }
-      std::unique_ptr<json::JsonObject> json_response(json_object_ptr);
+      std::unique_ptr<json::JsonObject> json_response(std::move(json_object_ptr));
       outputStatus(json_response.get());
     }
   }
@@ -456,50 +456,51 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
   std::string listener_status = "a";
 
 //  Use this if we have multiple listeners
-//  if(static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::STATUS))->string_value == "disabled")
+//  if(dynamic_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::STATUS))->string_value == "disabled")
 //    listener_status = "*D";
 
-  if(static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::HTTPS)))
+  if(dynamic_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::HTTPS).get()))
     protocol += "HTTPS";
-  buffer += "  0. " + protocol + " Listener " + static_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::ADDRESS))->string_value + " " + listener_status + "\n";
+  buffer += "  0. " + protocol + " Listener " + dynamic_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::ADDRESS).get())->string_value + " " + listener_status + "\n";
 
-  auto services = static_cast<json::JsonArray *>(json_response_listener->at(json::JSON_KEYS::SERVICES));
+  auto services = dynamic_cast<json::JsonArray *>(json_response_listener->at(json::JSON_KEYS::SERVICES).get());
   //TODO recorrer servicios
-  for (auto service : *services) {
+  for (const auto & service : *services) {
       //TODO: AQUI DESAPARECE EL RESPONSE-TIME (ES POSIBLE QUE POR EL -1)
-      auto service_json = reinterpret_cast<json::JsonObject *>(service);
-      auto backends = static_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::BACKENDS));
+      auto service_json = dynamic_cast<json::JsonObject *>(service.get());
+      auto backends = dynamic_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::BACKENDS).get());
       int total_weight = 0;
       int service_counter = 0;
-      for (auto backend : *backends) {
-        auto backend_json = reinterpret_cast<json::JsonObject *>(backend);
-        total_weight += static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT))->number_value;
+      for (const auto &backend : *backends) {
+        auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
+        total_weight += dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT).get())->number_value;
       }
-      std::string service_name = static_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::NAME))->string_value;
-      std::string service_status = static_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::STATUS))->string_value;
+      std::string service_name = dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::NAME).get())->string_value;
+      std::string service_status = dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::STATUS).get())->string_value;
       buffer += "    " + std::to_string(service_counter) + ". Service \"" + service_name + "\" " + service_status + " (" + std::to_string(total_weight) + ")\n";
       service_counter++;
 
       int backend_counter = 0;
-      for (auto backend : *backends) {
-        auto backend_json = reinterpret_cast<json::JsonObject *>(backend);
-        int weight = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT))->number_value;
-        std::string backend_address = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ADDRESS))->string_value;
-        std::string backend_status = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::STATUS))->string_value;
-        int backend_port = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PORT))->number_value;
-        double response_time = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::RESPONSE_TIME))->double_value;
-        int connections = static_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::CONNECTIONS))->number_value;
+      for (const auto& backend : *backends) {
+        auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
+        auto weight = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT).get())->number_value;
+        std::string backend_address = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ADDRESS).get())->string_value;
+        std::string backend_status = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::STATUS).get())->string_value;
+        auto backend_port = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PORT).get())->number_value;
+        double response_time = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::RESPONSE_TIME).get())->double_value;
+        auto connections = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::CONNECTIONS).get())->number_value;
 
         buffer += "      " + std::to_string(backend_counter) + ". Backend " + backend_address + ":" + std::to_string(backend_port) + " " + backend_status + " (" + std::to_string(weight) + " " + conversionHelper::to_string_with_precision(response_time) + ") alive (" + std::to_string(connections) + ")\n";
         backend_counter++;
       }
 
-      auto sessions = static_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::SESSIONS));
+      auto sessions = dynamic_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::SESSIONS).get());
       int session_counter = 0;
-      for (auto session : *sessions) {
-        auto session_json = reinterpret_cast<json::JsonObject *>(session);
-        std::string session_id = static_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::ID))->string_value;
-        int session_backend = static_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::BACKEND_ID))->number_value;
+      for (const auto &session : *sessions) {
+        auto session_json = dynamic_cast<json::JsonObject *>(session.get());
+        std::string session_id = dynamic_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::ID).get())->string_value;
+        auto session_backend =
+            dynamic_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::BACKEND_ID).get())->number_value;
         buffer += "      " + std::to_string(session_counter) + ". Session " + session_id + " -> " + std::to_string(session_backend-1) + "\n";
         session_counter++;
       }
