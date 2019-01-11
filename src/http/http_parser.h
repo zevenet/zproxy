@@ -53,6 +53,15 @@ public:
             header_value.c_str());
     extra_headers.emplace(header_name, std::string(extra_header));
   }
+
+  inline void removeHeader(http::HTTP_HEADER_NAME header_name) {
+      for (int i=0;i != num_headers; i++) {
+        if (headers[i].name == http::http_info::headers_names_strings.at(header_name)) {
+            headers[i].header_off = true;
+        }
+      }
+  }
+
   phr_header headers[MAX_HEADERS_SIZE];
   char *buffer;
   size_t buffer_size;
@@ -76,6 +85,7 @@ public:
   size_t message_length;     // body data lenght in current received message
   size_t message_bytes_left; // content-lenght
 
+  bool add_destination_header;
 
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;

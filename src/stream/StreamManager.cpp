@@ -528,7 +528,7 @@ void StreamManager::onRequestEvent(int fd) {
     // TODO:: Add support for http pipeline
     // Rewrite destination
     std::string destination_value;
-    if (listener_config_.rewr_dest > 0 && stream->request.getHeaderValue(http::HTTP_HEADER_NAME::DESTINATION, destination_value)) {
+    if (listener_config_.rewr_dest > 0 && stream->request.add_destination_header) {
       std::string header_value = "http://";
       header_value += stream->backend_connection.getPeerAddress();
       header_value += ':';
@@ -581,10 +581,39 @@ void StreamManager::onResponseEvent(int fd) {
   }else{
 
     //TODO: Rewrite location if we can using HTTPS Listener
-    /*else if (listener_config_.rewr_loc == 2){
-      stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, "");
-      stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, "");
-    }*/
+    std::string location_header_value;
+    bool location_header_exists = stream->response.getHeaderValue(http::HTTP_HEADER_NAME::LOCATION, location_header_value);
+    std::string protocol;
+
+    if (listener_config_.rewr_loc > 0 && location_header_exists) {
+        std::string expr_ = "[A-Za-z.0-9-]+";
+        std::smatch match;
+        std::regex rgx(expr_);
+        if (std::regex_search(location_header_value, match, rgx)) {
+          std::string result = match[1];
+          if (listener_config_.rewr_loc == 1) {
+              if (result == listener_config_.address || result == stream->backend_connection.getPeerAddress()) {
+                  stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
+                  std::string header_value = "http://";
+                  header_value += listener_config_.address;
+                  header_value += stream->response.path;
+                  stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
+                  stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
+              }
+          } else {
+              if (result == stream->backend_connection.getPeerAddress()) {
+                  stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
+                  std::string header_value = "http://";
+                  header_value += listener_config_.address;
+                  header_value += stream->response.path;
+                  stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
+                  stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
+              }
+          }
+        } else {
+          Debug::LogInfo("Invalid location header", LOG_REMOVE);
+        }
+    }
 
     result = stream->backend_connection.read();
     if (result == IO::IO_RESULT::ERROR) {
@@ -847,12 +876,10 @@ StreamManager::validateRequest(HttpRequest &request) {
 
       switch(header_name) {
         case http::HTTP_HEADER_NAME::DESTINATION:
-          if (listener_config_.rewr_dest == 1)
+          if (listener_config_.rewr_dest == 1) {
             request.headers[i].header_off = true;
-          break;
-        case http::HTTP_HEADER_NAME::LOCATION:
-          if (listener_config_.rewr_dest == 1)
-            request.headers[i].header_off = true;
+            request.add_destination_header = true;
+          }
           break;
       }
       //      Debug::
