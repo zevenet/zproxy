@@ -783,15 +783,17 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     if (!service->becpath.empty())
       set_cookie_header += "; Path=" + service->becpath;
 
-    auto time = std::time(nullptr);
-    auto localtime = *std::localtime(&time);
+    time_t time = std::time(nullptr);
     if (service->becage > 0) {
-      localtime.tm_sec += service->becage;
+      time += service->becage;
     } else {
-      localtime.tm_sec += service->ttl;
+      time += service->ttl;
     }
     //TODO: ¿Parsear la fecha, que estructura deberíamos usar?
-    //set_cookie_header += "; expires=" + localtime.);
+    char time_string[MAXBUF];
+    strftime(time_string, MAXBUF-1, "%a, %e-%b-%Y %H:%M:%S GMT", gmtime(&time));
+    set_cookie_header += "; expires=";
+    set_cookie_header += time_string;
     stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE, set_cookie_header);
   }
 
