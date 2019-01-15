@@ -7,16 +7,8 @@
 BackendConnection::BackendConnection() : backend_id(-1), backend(nullptr) {}
 Backend *BackendConnection::getBackend() const { return backend; }
 
-void BackendConnection::setBackend(Backend *bck, bool connected) {
+void BackendConnection::setBackend(Backend *bck) {
   backend = bck;
-  if (bck != nullptr) {
-    backend = bck;
-    if (connected) {
-      bck->increaseConnection();
-    } else {
-      bck->decreaseConnection();
-    }
-  }
 }
 
 bool BackendConnection::reConnect() { return false; }

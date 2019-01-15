@@ -133,7 +133,9 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       break;
     case EVENT_GROUP::MAINTENANCE:
       break;
-    default: close(fd);
+    default:
+      deleteFd(fd);
+      close(fd);
       break;
     }
     return;
@@ -190,16 +192,16 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         auto response =
             HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
         stream->client_connection.write(response.c_str(), response.length());
-        Debug::LogInfo("Backend closed connection", LOG_INFO);
+        Debug::LogInfo("Backend closed connection", LOG_DEBUG);
       }
       break;
     }
     case EVENT_GROUP::CLIENT: {
-      Debug::LogInfo("Client closed connection", LOG_INFO);
+      Debug::LogInfo("Client closed connection", LOG_DEBUG);
       break;
     }
     default:
-      Debug::LogInfo("Why this happends!!", LOG_INFO);
+      Debug::LogInfo("Why this happends!!", LOG_DEBUG);
       break;
     }
     clearStream(stream);
@@ -253,7 +255,11 @@ void StreamManager::doWork() {
 
 void StreamManager::addStream(int fd) {
 #if SM_HANDLE_ACCEPT
-  auto stream = new HttpStream();
+  HttpStream *stream = streams_set[fd];
+  if (UNLIKELY(stream != nullptr)) {
+    clearStream(stream);
+  }
+  stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
   stream->timer_fd.set(listener_config_.to);
@@ -309,11 +315,7 @@ void StreamManager::onRequestEvent(int fd) {
     parse_result = stream->request.parseRequest(
         stream->client_connection.buffer, stream->client_connection.buffer_size,
         &parsed); // parsing http data as response structured
-    if (stream->client_connection.buffer_size != parsed) {
-      Debug::LogInfo("Buffer size: " +
-          std::to_string(stream->client_connection.buffer_size) +
-          "\nparsed data: " + std::to_string(parsed));
-    }
+
     switch (parse_result) {
     case http_parser::PARSE_RESULT::SUCCESS: {
       auto valid = validateRequest(stream->request);
@@ -401,8 +403,7 @@ void StreamManager::onRequestEvent(int fd) {
               ) {
             // null
             if (stream->backend_connection.getFileDescriptor() > 0) { //
-              stream->backend_connection.setBackend(
-                  stream->backend_connection.getBackend(), false);
+              stream->backend_connection.setBackend(nullptr);
               deleteFd(stream->backend_connection
                            .getFileDescriptor()); // Client cannot
               // be connected to more
@@ -411,7 +412,7 @@ void StreamManager::onRequestEvent(int fd) {
               streams_set.erase(stream->backend_connection.getFileDescriptor());
               stream->backend_connection.closeConnection();
             }
-            stream->backend_connection.setBackend(bck, true);
+            stream->backend_connection.setBackend(bck);
             stream->backend_connection.time_start =
                 std::chrono::steady_clock::now();
             op_state = stream->backend_connection.doConnect(*bck->address_info,
@@ -424,7 +425,7 @@ void StreamManager::onRequestEvent(int fd) {
                                               response.length());
               Debug::LogInfo("Error connecting to backend " + bck->address,
                              LOG_NOTICE);
-              stream->backend_connection.setBackend(bck, false);
+              stream->backend_connection.getBackend()->decreaseConnection();
               stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
               stream->backend_connection.closeConnection();
               return;
@@ -440,15 +441,14 @@ void StreamManager::onRequestEvent(int fd) {
               //                     return;
             }
             case IO::IO_OP::OP_SUCCESS: {
+              stream->backend_connection.getBackend()->increaseConnection();
               Network::setSocketNonBlocking(
                   stream->backend_connection.getFileDescriptor());
               // Debug::LogInfo("Connected to backend : " + bck->address + ":"
               // + std::to_string(bck->port), LOG_DEBUG);
               streams_set[stream->backend_connection.getFileDescriptor()] =
                   stream;
-
               stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
-
               break;
             }
             }
@@ -543,6 +543,7 @@ void StreamManager::onResponseEvent(int fd) {
   HttpStream *stream = streams_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Backend Connection, Stream closed", LOG_DEBUG);
+    deleteFd(fd);
     ::close(fd);
     return;
   }
@@ -656,9 +657,11 @@ void StreamManager::onResponseEvent(int fd) {
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
   HttpStream *stream = timers_set[fd];
-  if (stream == nullptr)
+  if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
-  if (stream->timer_fd.isTriggered()) {
+    deleteFd(fd);
+    ::close(fd);
+  }else if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
         stream->client_connection.getFileDescriptor(), caddr,
@@ -677,6 +680,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
         HttpStatus::Code::ServiceUnavailable,
         HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable).c_str(),
         listener_config_.err503);
+
     this->clearStream(stream);
   }
 }
@@ -684,21 +688,22 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 void StreamManager::onRequestTimeoutEvent(int fd) {
   // TODO::IMPLENET
   HttpStream *stream = timers_set[fd];
-  if (stream == nullptr)
+  if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
-  if (stream->timer_fd.isTriggered()) {
-    stream->timer_fd.unset();
-    deleteFd(stream->timer_fd.getFileDescriptor());
+    deleteFd(fd);
     ::close(fd);
+  }else if (stream->timer_fd.isTriggered()) {
     clearStream(stream);
   }
 }
 
 void StreamManager::onResponseTimeoutEvent(int fd) {
   HttpStream *stream = timers_set[fd];
-  if (stream == nullptr)
+  if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
-  if (stream->timer_fd.isTriggered()) {
+    deleteFd(fd);
+    ::close(fd);
+  }else if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
         stream->client_connection.getFileDescriptor(), caddr,
@@ -987,11 +992,12 @@ void StreamManager::clearStream(HttpStream *stream) {
     streams_set.erase(stream->client_connection.getFileDescriptor());
   }
   if (stream->backend_connection.getFileDescriptor() > 0) {
+    if (stream->backend_connection.isConnected())
+      stream->backend_connection.getBackend()->decreaseConnection();
     deleteFd(stream->backend_connection.getFileDescriptor());
     streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->backend_connection.getFileDescriptor());
-    stream->backend_connection.setBackend(
-        stream->backend_connection.getBackend(), false);
+
   }
   delete stream;
 }

@@ -45,6 +45,12 @@ const std::string JSON_KEYS::WEIGHT = "weight";
 const std::string JSON_KEYS::CONFIG = "config";
 
 const std::string JSON_KEYS::RESULT = "result";
+const std::string JSON_KEYS::DEBUG = "debug";
+const std::string JSON_KEYS::DEBUG1 = "debug1";
+const std::string JSON_KEYS::DEBUG2 = "debug2";
+const std::string JSON_KEYS::DEBUG3 = "debug3";
+const std::string JSON_KEYS::DEBUG4 = "debug4";
+const std::string JSON_KEYS::DEBUG5 = "debug5";
 
 }  // namespace json
 

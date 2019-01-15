@@ -228,7 +228,9 @@ bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss) {
         task.subject = CTL_SUBJECT::CONFIG;
       } else if (str == JSON_KEYS::STATUS) {
         task.subject = CTL_SUBJECT::STATUS;
-      } else {
+      } else if (str == JSON_KEYS::DEBUG) {
+      task.subject = CTL_SUBJECT::DEBUG;
+    } else {
         return false;
       }
     }

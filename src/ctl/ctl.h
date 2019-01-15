@@ -39,7 +39,8 @@ enum class CTL_SUBJECT {
   LISTENER,
   CONFIG,
   STATUS,
-  WEIGHT
+  WEIGHT,
+  DEBUG
 };
 
 struct CtlTask {

@@ -48,6 +48,13 @@ struct JSON_KEYS {
   static const std::string CONFIG;
 
   static const std::string RESULT;
+
+  static const std::string DEBUG;
+  static const std::string DEBUG1;
+  static const std::string DEBUG2;
+  static const std::string DEBUG3;
+  static const std::string DEBUG4;
+  static const std::string DEBUG5;
 };
 
 enum class JSON_VALUE_TYPE {

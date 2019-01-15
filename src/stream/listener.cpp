@@ -42,17 +42,32 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
 }
 
 std::string Listener::handleTask(ctl::CtlTask& task) {
-  Debug::logmsg(LOG_DEBUG, "listener handling task");
-  return "{id:0;type:listener}";
+  if(!isHandler(task))
+    return  JSON_OP_RESULT::ERROR;
+
+  switch (task.subject){
+  case ctl::CTL_SUBJECT::DEBUG:{
+    std::unique_ptr<JsonObject> root{new JsonObject()};
+    root->emplace("ClientConnection", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<ClientConnection>::count)));
+    root->emplace("BackendConnection", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<BackendConnection>::count)));
+    root->emplace("HttpStream", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<HttpStream>::count)));
+    //root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<HttpStream>)));
+    return root->stringify();
+  }
+  default:{
+    return JSON_OP_RESULT::ERROR;
+  }
+  }
+
 }
 
 bool Listener::isHandler(ctl::CtlTask& task) {
-  return task.target != ctl::CTL_HANDLER_TYPE::LISTENER ? false : true;
+  return !(task.target != ctl::CTL_HANDLER_TYPE::LISTENER);
 }
 
 bool Listener::init(std::string address, int port) {
-  if (!listener_connection.listen(address, port)) return false;
-  return true;  // handleAccept(listener_connection.getFileDescriptor());
+  return listener_connection.listen(address, port);
+  // handleAccept(listener_connection.getFileDescriptor());
 }
 
 Listener::Listener()
