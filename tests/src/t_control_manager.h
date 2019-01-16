@@ -4,7 +4,7 @@
 
 #pragma once
 #include "gtest/gtest.h"
-#include "../src/ctl/ControlManager.h"
+#include "../../src/ctl/ControlManager.h"
 
 using namespace ctl;
 TEST(ControlManagerTest, ControlManagerTest1) {

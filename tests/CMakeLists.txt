@@ -32,18 +32,18 @@ target_include_directories(gtest
     )
 
 add_executable(${PROJECT_NAME}
-    main.cpp
-    tst_basictest.h
-    t_timerfd.h
-    t_epoll_manager.h
-    testserver.h
+        src/main.cpp
+        src/tst_basictest.h
+        src/t_timerfd.h
+        src/t_epoll_manager.h
+        src/testserver.h
 #    t_backend_connection.h
-    t_http_parser.h
-    t_config.h
-    t_observer.h
-    t_control_manager.h
-    t_json.h
-    t_ctlclient.h
+        src/t_http_parser.h
+        src/t_config.h
+        src/t_observer.h
+        src/t_control_manager.h
+        src/t_json.h
+        src/t_ctlclient.h
     )
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})

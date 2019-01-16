@@ -5,8 +5,8 @@
 
 //#include "gmock/gmock-matchers.h"
 #include <string>
-#include "../src/ctl/observer.h"
-#include "../src/debug/Debug.h"
+#include "../../src/ctl/observer.h"
+#include "../../src/debug/Debug.h"
 #include "gtest/gtest.h"
 
 struct Task {

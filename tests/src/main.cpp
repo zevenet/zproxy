@@ -1,4 +1,4 @@
-#include "../src/debug/Debug.h"
+#include "../../src/debug/Debug.h"
 #include "t_config.h"
 #include "t_control_manager.h"
 #include "t_crypto.h"

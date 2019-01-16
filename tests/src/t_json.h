@@ -4,62 +4,66 @@
 #pragma once
 
 #include <string>
-#include "../src/debug/Debug.h"
-#include "../src/json/JsonData.h"
-#include "../src/json/JsonDataValueTypes.h"
-#include "../src/json/json.h"
-#include "../src/json/jsonparser.h"
+#include "../../src/debug/Debug.h"
+#include "../../src/json/JsonData.h"
+#include "../../src/json/JsonDataValueTypes.h"
+#include "../../src/json/json.h"
+#include "../../src/json/jsonparser.h"
 #include "gtest/gtest.h"
+#include "../../src/util/common.h"
 
 using namespace json;
 
 TEST(JSON_TEST, JSON_TEST1) {
   JsonObject root;
-  root["description"] = new JsonDataValue("get services of farm");
-  JsonObject services;
-  root["services"] = &services;
-  JsonArray backends;
-  JsonObject backends1;
-  JsonObject backends2;
-  backends.push_back(&backends1);
-  backends.push_back(&backends2);
-  services["backends"] = &backends;
+  root.emplace("description",make_unique<JsonDataValue>("get services of farm"));
+  auto services = make_unique<JsonObject>();
 
-  backends1["alias"] = new JsonDataValue("http-server-1");
-  backends1["id"] = new JsonDataValue(0);
-  backends1["ip"] = new JsonDataValue("192.168.100.254");
-  backends1["port"] = new JsonDataValue(80);
-  backends1["status"] = new JsonDataValue("up");
-  backends1["timeout"] = new JsonDataValue(20);
-  backends1["weight"] = new JsonDataValue();
+  auto backends = make_unique<JsonArray>();
+  auto backends1= make_unique<JsonObject>();
+  auto backends2= make_unique<JsonObject>();
 
-  backends2["alias"] = new JsonDataValue("http-server-2");
-  backends2["id"] = new JsonDataValue(0);
-  backends2["ip"] = new JsonDataValue("192.168.100.253");
-  backends2["port"] = new JsonDataValue(80);
-  backends2["status"] = new JsonDataValue("up");
-  backends2["timeout"] = new JsonDataValue(20);
-  backends2["weight"] = new JsonDataValue();
 
-  services["cookiedomain"] = new JsonDataValue("zevenet.cpm");
-  services["cookieinsert"] = new JsonDataValue("true");
-  services["cookiename"] = new JsonDataValue("peasocookie");
-  services["cookiepath"] = new JsonDataValue("/patfh");
-  services["cookiettl"] = new JsonDataValue(20);
-  services["farmguardian"] = new JsonDataValue("check_tcp-cut_conns");
-  services["httpsb"] = new JsonDataValue(false);
-  services["id"] = new JsonDataValue("serv");
-  services["leastresp"] = new JsonDataValue(false);
-  services["persistence"] = new JsonDataValue("COOKIE");
-  services["redirect"] = new JsonDataValue("");
-  services["redirect_code"] = new JsonDataValue("");
-  services["redirecttype"] = new JsonDataValue("");
-  services["sessionid"] = new JsonDataValue("JSESSIONID");
-  services["sts_status"] = new JsonDataValue("false");
-  services["sts_timeout"] = new JsonDataValue(0);
-  services["ttl"] = new JsonDataValue(18);
-  services["urlp"] = new JsonDataValue("(?i)^/music$");
-  services["vhost"] = new JsonDataValue();
+  backends1->emplace("alias",make_unique<JsonDataValue>("http-server-1"));
+  backends1->emplace("id",make_unique<JsonDataValue>(0));
+  backends1->emplace("ip",make_unique<JsonDataValue>("192.168.100.254"));
+  backends1->emplace("port",make_unique<JsonDataValue>(80));
+  backends1->emplace("status",make_unique<JsonDataValue>("up"));
+  backends1->emplace("timeout",make_unique<JsonDataValue>(20));
+  backends1->emplace("weight",make_unique<JsonDataValue>());
+
+  backends2->emplace("alias",make_unique<JsonDataValue>("http-server-2"));
+  backends2->emplace("id",make_unique<JsonDataValue>(0));
+  backends2->emplace("ip",make_unique<JsonDataValue>("192.168.100.253"));
+  backends2->emplace("port",make_unique<JsonDataValue>(80));
+  backends2->emplace("status",make_unique<JsonDataValue>("up"));
+  backends2->emplace("timeout",make_unique<JsonDataValue>(20));
+  backends2->emplace("weight",make_unique<JsonDataValue>());
+
+  backends->emplace_back(std::move(backends1));
+  backends->emplace_back(std::move(backends2));
+  services->emplace("backends",std::move(backends));
+
+  services->emplace("cookiedomain",make_unique<JsonDataValue>("zevenet.cpm"));
+  services->emplace("cookieinsert",make_unique<JsonDataValue>("true"));
+  services->emplace("cookiename",make_unique<JsonDataValue>("peasocookie"));
+  services->emplace("cookiepath",make_unique<JsonDataValue>("/patfh"));
+  services->emplace("cookiettl",make_unique<JsonDataValue>(20));
+  services->emplace("farmguardian",make_unique<JsonDataValue>("check_tcp-cut_conns"));
+  services->emplace("httpsb",make_unique<JsonDataValue>(false));
+  services->emplace("id",make_unique<JsonDataValue>("serv"));
+  services->emplace("leastresp",make_unique<JsonDataValue>(false));
+  services->emplace("persistence",make_unique<JsonDataValue>("COOKIE"));
+  services->emplace("redirect",make_unique<JsonDataValue>(""));
+  services->emplace("redirect_code",make_unique<JsonDataValue>(""));
+  services->emplace("redirecttype",make_unique<JsonDataValue>(""));
+  services->emplace("sessionid",make_unique<JsonDataValue>("JSESSIONID"));
+  services->emplace("sts_status",make_unique<JsonDataValue>("false"));
+  services->emplace("sts_timeout",make_unique<JsonDataValue>(0));
+  services->emplace("ttl",make_unique<JsonDataValue>(18));
+  services->emplace("vhost",make_unique<JsonDataValue>());
+
+  root.emplace("services",std::move(services));
   std::string json_str = root.stringify();
 
   // TODO::fixme  root.freeJson();

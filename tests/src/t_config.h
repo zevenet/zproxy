@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../src/config/config.h"
-#include "gtest/gtest.h"
+#include "../../src/config/config.h"
+#include "../lib/gtest/googletest/include/gtest/gtest.h"
 
 TEST(ConfigTest, ConfigTest1) {
   char *argv[] = {"../bin/zhttp", "-f",

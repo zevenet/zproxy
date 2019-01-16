@@ -4,9 +4,9 @@
 
 //#include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
-#include "../src/http/http_parser.h"
+#include "../../src/http/http_parser.h"
 #include <string>
-#include "../src/debug/Debug.h"
+#include "../../src/debug/Debug.h"
 
 static int bufis(const char *s, size_t l, const char *t) {
   return strlen(t) == l && memcmp(s, t, l) == 0;

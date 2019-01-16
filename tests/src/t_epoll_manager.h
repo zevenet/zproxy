@@ -1,9 +1,9 @@
 // Created by fernando on 09/06/18.
 #pragma once
 
-#include "../src/event/epoll_manager.h"
+#include "../../src/event/epoll_manager.h"
 #include "testserver.h"
-#include "../src/event/TimerFd.h"
+#include "../../src/event/TimerFd.h"
 #include "gtest/gtest.h"
 #include <thread>
 

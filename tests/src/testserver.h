@@ -1,10 +1,10 @@
 // Created by fernando on 09/07/18.
 #pragma once
 
-#include "../src/event/epoll_manager.h"
-#include "../src/connection/connection.h"
-#include "../src/util/Network.h"
-#include "../src/debug/Debug.h"
+#include "../../src/event/epoll_manager.h"
+#include "../../src/connection/connection.h"
+#include "../../src/util/Network.h"
+#include "../../src/debug/Debug.h"
 #include "gtest/gtest.h"
 #include <thread>
 #include <unordered_map>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../src/ctl/main.cpp"
+#include "../../src/ctl/main.cpp"
 #include "gtest/gtest.h"
 
 TEST(CTL_CLIENT, CTL_CLIENT_ARGS) {

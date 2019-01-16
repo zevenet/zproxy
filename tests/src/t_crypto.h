@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include "../src/debug/Debug.h"
-#include "../src/util/crypto.h"
+#include "../../src/debug/Debug.h"
+#include "../../src/util/crypto.h"
 #include "gtest/gtest.h"
 
 using namespace crypto;
