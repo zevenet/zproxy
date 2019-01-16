@@ -327,6 +327,7 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 		  . "--jump MARK --set-xmark $$server{ tag } ";
 
 		push ( @rules, $rule );
+		last if ( $$farm{ proto } eq "all" );
 	}
 
 	return \@rules;
@@ -430,6 +431,7 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 		  . "--jump DNAT $layer --to-destination $$server{ rip } ";
 
 		push ( @rules, $rule );
+		last if ( $$farm{ proto } eq "all" );
 	}
 
 	return \@rules;
@@ -546,6 +548,7 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 		  . "$nat_params ";
 
 		push ( @rules, $rule );
+		last if ( $$farm{ proto } eq "all" );
 	}
 
 	return \@rules;
