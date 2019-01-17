@@ -268,7 +268,7 @@ void StreamManager::addStream(int fd) {
   stream->client_connection.enableEvents (this,READ,EVENT_GROUP::CLIENT);
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
-                            stream->client_connection.getPeerAddress());
+                            stream->client_connection.getPeerAddress(), true);
   //configurar
 #else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
@@ -292,16 +292,16 @@ void StreamManager::onRequestEvent(int fd) {
   } else {
     stream = new HttpStream();
     stream->client_connection.setFileDescriptor(fd);
-    // set extra header to forward to the backends
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
-                              stream->client_connection.getPeerAddress());
+
+
     streams_set[fd] = stream;
     if (fd != stream->client_connection.getFileDescriptor()) {
       Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
   }
 
-  //TODO: Clean extra headers
+
+
   auto result = stream->client_connection.read();
   if (result == IO::IO_RESULT::ERROR) {
     Debug::LogInfo("Error reading request ", LOG_DEBUG);
@@ -320,45 +320,18 @@ void StreamManager::onRequestEvent(int fd) {
     case http_parser::PARSE_RESULT::SUCCESS: {
       auto valid = validateRequest(stream->request);
       if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
-        char caddr[50];
-        // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
-        // 1);
-        if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-          Debug::LogInfo("Error getting peer address", LOG_DEBUG);
-        } else {
-          Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
-                        std::this_thread::get_id(),
-                        static_cast<int>(HttpStatus::Code::NotImplemented),
-                        validation::request_result_reason.at(valid).c_str(),
-                        stream->client_connection.buffer, caddr);
-        }
         stream->replyError(HttpStatus::Code::NotImplemented,
                            validation::request_result_reason.at(valid).c_str(),
                            listener_config_.err501);
         this->clearStream(stream);
         return;
       }
-     stream->timer_fd.unset();
-     deleteFd(stream->timer_fd.getFileDescriptor());
-     timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
+      stream->timer_fd.unset();
+      deleteFd(stream->timer_fd.getFileDescriptor());
+      timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
 
       auto service = service_manager->getService(stream->request);
       if (service == nullptr) {
-        char caddr[50];
-        // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
-        // 1);
-        if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-          Debug::LogInfo("Error getting peer address", LOG_DEBUG);
-        } else {
-          Debug::logmsg(LOG_WARNING, "(%lx) e%d %s from %s",
-                        std::this_thread::get_id(),
-                        static_cast<int>(HttpStatus::Code::ServiceUnavailable),
-                        validation::request_result_reason
-                            .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
-                            .c_str(),
-          // stream->client_connection.buffer,
-                        caddr);
-        }
         stream->replyError(
             HttpStatus::Code::ServiceUnavailable,
             validation::request_result_reason
@@ -368,23 +341,14 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
+
+
+
       auto bck = service->getBackend(*stream);
       // if (stream->backend_connection.getFileDescriptor() ==
       // BACKEND_STATUS::NO_BACKEND) {
       if (bck == nullptr) {
         // No backend available
-        char caddr[50];
-        if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-          Debug::LogInfo("Error getting peer address", LOG_DEBUG);
-        } else {
-          Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
-                        std::this_thread::get_id(),
-                        static_cast<int>(HttpStatus::Code::ServiceUnavailable),
-                        validation::request_result_reason
-                            .at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND)
-                            .c_str(),
-                        stream->client_connection.buffer, caddr);
-        }
         stream->replyError(
             HttpStatus::Code::ServiceUnavailable,
             validation::request_result_reason
@@ -395,7 +359,10 @@ void StreamManager::onRequestEvent(int fd) {
         return;
       } else {
         IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
-        Debug::logmsg(LOG_REMOVE, "Backend assigned %s", bck->address.c_str());
+        Debug::logmsg(LOG_DEBUG, "[%s] %s (%s) -> %s",service->name.c_str(),
+            stream->client_connection.getPeerAddress().c_str(),
+            stream->request.getRequestLine().c_str(),
+            bck->address.c_str());
         switch (bck->backend_type) {
         case REMOTE:{
           if (stream->backend_connection.getBackend() == nullptr ||
@@ -430,6 +397,7 @@ void StreamManager::onRequestEvent(int fd) {
 
               stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
               stream->backend_connection.closeConnection();
+              clearStream(stream);
               return;
             }
 
@@ -449,9 +417,19 @@ void StreamManager::onRequestEvent(int fd) {
               break;
             }
             }
-          } else {
-            stream->backend_connection.enableWriteEvent();
           }
+
+          // Rewrite destination
+          if (stream->request.add_destination_header) {
+            std::string destination_value;
+            std::string header_value = "http://";
+            header_value += stream->backend_connection.getPeerAddress();
+            header_value += ':';
+            header_value += stream->request.path;
+            stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION, header_value);
+          }
+
+          stream->backend_connection.enableWriteEvent();
           break;}
         case EMERGENCY_SERVER:
 
@@ -480,19 +458,7 @@ void StreamManager::onRequestEvent(int fd) {
     }
 
     case http_parser::PARSE_RESULT::FAILED:
-      char caddr[50];
-      // Network::addr2str(caddr, 50 - 1, stream->client_connection.address,
-      // 1);
-      if (UNLIKELY(Network::getPeerAddress(fd, caddr, 50) == nullptr)) {
-        Debug::LogInfo("Error getting peer address", LOG_DEBUG);
-      } else {
 
-        Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
-                      std::this_thread::get_id(),
-                      static_cast<int>(HttpStatus::Code::BadRequest),
-                      HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-                      stream->client_connection.buffer, caddr);
-      }
       stream->replyError(
           HttpStatus::Code::BadRequest,
           HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
@@ -521,18 +487,8 @@ void StreamManager::onRequestEvent(int fd) {
   } while (stream->client_connection.buffer_size > parsed &&
       parse_result ==
           http_parser::PARSE_RESULT::SUCCESS);
+
   stream->client_connection.enableReadEvent();
-    // TODO:: Add support for http pipeline
-    // Rewrite destination
-    std::string destination_value;
-    if (listener_config_.rewr_dest > 0 && stream->request.add_destination_header) {
-      std::string header_value = "http://";
-      header_value += stream->backend_connection.getPeerAddress();
-      header_value += ':';
-      header_value += stream->request.path;
-      stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION, header_value);
-    }
-    stream->client_connection.enableReadEvent();
 
 }
 
@@ -586,33 +542,33 @@ void StreamManager::onResponseEvent(int fd) {
     std::string protocol;
 
     if (listener_config_.rewr_loc > 0 && location_header_exists) {
-        std::string expr_ = "[A-Za-z.0-9-]+";
-        std::smatch match;
-        std::regex rgx(expr_);
-        if (std::regex_search(location_header_value, match, rgx)) {
-          std::string result = match[1];
-          if (listener_config_.rewr_loc == 1) {
-              if (result == listener_config_.address || result == stream->backend_connection.getPeerAddress()) {
-                  stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
-                  std::string header_value = "http://";
-                  header_value += listener_config_.address;
-                  header_value += stream->response.path;
-                  stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
-                  stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
-              }
-          } else {
-              if (result == stream->backend_connection.getPeerAddress()) {
-                  stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
-                  std::string header_value = "http://";
-                  header_value += listener_config_.address;
-                  header_value += stream->response.path;
-                  stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
-                  stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
-              }
+      std::string expr_ = "[A-Za-z.0-9-]+";
+      std::smatch match;
+      std::regex rgx(expr_);
+      if (std::regex_search(location_header_value, match, rgx)) {
+        std::string result = match[1];
+        if (listener_config_.rewr_loc == 1) {
+          if (result == listener_config_.address || result == stream->backend_connection.getPeerAddress()) {
+            stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
+            std::string header_value = "http://";
+            header_value += listener_config_.address;
+            header_value += stream->response.path;
+            stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
+            stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
           }
         } else {
-          Debug::LogInfo("Invalid location header", LOG_REMOVE);
+          if (result == stream->backend_connection.getPeerAddress()) {
+            stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
+            std::string header_value = "http://";
+            header_value += listener_config_.address;
+            header_value += stream->response.path;
+            stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
+            stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
+          }
         }
+      } else {
+        Debug::LogInfo("Invalid location header", LOG_REMOVE);
+      }
     }
 
     result = stream->backend_connection.read();
@@ -659,25 +615,14 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
     deleteFd(fd);
     ::close(fd);
   }else if (stream->timer_fd.isTriggered()) {
-    char caddr[50];
-    if (UNLIKELY(Network::getPeerAddress(
-        stream->client_connection.getFileDescriptor(), caddr,
-        50) == nullptr)) {
-      Debug::LogInfo("Error getting peer address", LOG_DEBUG);
-    } else {
-      Debug::logmsg(LOG_NOTICE, "(%lx) e%d %s %s from %s",
-                    std::this_thread::get_id(),
-                    static_cast<int>(HttpStatus::Code::ServiceUnavailable),
-                    validation::request_result_reason
-                        .at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND)
-                        .c_str(),
-                    stream->client_connection.buffer, caddr);
-    }
+    stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
+    Debug::logmsg(LOG_NOTICE, "(%lx) backend %s connection timeout after %d",
+                  std::this_thread::get_id(), stream->backend_connection.getBackend()->address.c_str(),
+                  stream->backend_connection.getBackend()->conn_timeout);
     stream->replyError(
         HttpStatus::Code::ServiceUnavailable,
         HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable).c_str(),
         listener_config_.err503);
-
     this->clearStream(stream);
   }
 }
@@ -826,10 +771,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
 validation::REQUEST_RESULT
 StreamManager::validateRequest(HttpRequest &request) {
   regmatch_t matches[4];
-  auto request_line = nonstd::string_view(request.http_message,
-                                          request.http_message_length - 2)
+  const auto &request_line = nonstd::string_view(request.http_message,
+                                                 request.http_message_length - 2)
       .to_string(); // request.getRequestLine();
-  Debug::LogInfo("Request line " + request_line, LOG_REMOVE); // TODO: remove
+
   if (UNLIKELY(::regexec(&listener_config_.verb, request_line.c_str(), 3,
                          matches, 0) != 0)) {
     // TODO:: check RPC
@@ -848,7 +793,7 @@ StreamManager::validateRequest(HttpRequest &request) {
   } else {
     request.setRequestMethod();
   }
-  auto request_url = nonstd::string_view(request.path, request.path_length);// request.getUrl();
+  const auto &request_url = nonstd::string_view(request.path, request.path_length);
   if (request_url.find("%00") != std::string::npos) {
     return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
   }
@@ -871,40 +816,22 @@ StreamManager::validateRequest(HttpRequest &request) {
     // check header values length
     if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
       return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
-    nonstd::string_view header(request.headers[i].name,
-                               request.headers[i].name_len);
-    nonstd::string_view header_value(request.headers[i].value,
-                                     request.headers[i].value_len);
+    const auto &header = nonstd::string_view(request.headers[i].name,
+                                             request.headers[i].name_len);
+    const auto &header_value = nonstd::string_view(request.headers[i].value,
+                                                   request.headers[i].value_len);
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
       const auto &header_name = http::http_info::headers_names.at(header.to_string());
       const auto &header_name_string = http::http_info::headers_names_strings.at(header_name);
 
       switch(header_name) {
-        case http::HTTP_HEADER_NAME::DESTINATION:
-          if (listener_config_.rewr_dest == 1) {
-            request.headers[i].header_off = true;
-            request.add_destination_header = true;
-          }
-          break;
+      case http::HTTP_HEADER_NAME::DESTINATION:
+        if (listener_config_.rewr_dest != 0) {
+          request.headers[i].header_off = true;
+          request.add_destination_header = true;
+        }
+        break;
       }
-      //      Debug::
-      //          logmsg(LOG_DEBUG, "\t%s: %s", header_name_string,
-      //          header_value.c_str());
-
-      //      switch (header_name) {
-      //      case http::HTTP_HEADER_NAME::CONNECTION: {
-      //        // todo check connection close??
-      //            if(!strcasecmp("close", header_value.))
-      //                conn_closed = 1;
-
-      //        break;
-      //      }
-      //      case http::HTTP_HEADER_NAME::HOST:
-      //        break;
-
-      //      default:
-      //        break;
-      //      }
     } else {
       Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
                     header.to_string().c_str(),
@@ -929,28 +856,28 @@ StreamManager::validateResponse(HttpResponse &response) {
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
 
-    nonstd::string_view header(response.headers[i].name,
-                               response.headers[i].name_len);
-    nonstd::string_view header_value(response.headers[i].value,
-                                     response.headers[i].value_len);
+    const auto &header = nonstd::string_view(response.headers[i].name,
+                                             response.headers[i].name_len);
+    const auto &header_value = nonstd::string_view(response.headers[i].value,
+                                                   response.headers[i].value_len);
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
-     const auto& header_name = http::http_info::headers_names.at(header.to_string());
+      const auto &header_name = http::http_info::headers_names.at(header.to_string());
       const auto& header_name_string = http::http_info::headers_names_strings.at(header_name);
 
     } else {
-        Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
-                      header.to_string().c_str(),
-                      header_value.to_string().c_str());
+      Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
+                    header.to_string().c_str(),
+                    header_value.to_string().c_str());
     }
-      /* maybe header to be removed from responses */
+    /* maybe header to be removed from responses */
     //  MATCHER *m;
-     // for (m = listener_config_.head_off; m; m = m->next) {
-      //  if ((response.headers[i].header_off =
-       //          ::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) != 0))
-      //    break;
-     // }
+    // for (m = listener_config_.head_off; m; m = m->next) {
+    //  if ((response.headers[i].header_off =
+    //          ::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) != 0))
+    //    break;
+    // }
 
-  return validation::REQUEST_RESULT::OK;
+    return validation::REQUEST_RESULT::OK;
   }
 }
 

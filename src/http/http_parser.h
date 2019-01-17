@@ -22,7 +22,10 @@ using namespace http;
 class HttpData {
 public:
   HttpData();
-
+  ~HttpData(){
+//    extra_headers.clear();
+  //  permanent_extra_headers.clear();
+  }
   PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes,
                             bool reset = true);
   PARSE_RESULT parseRequest(const char *data, const size_t data_size,
@@ -44,14 +47,23 @@ public:
   void setBuffer(char *ext_buffer, size_t ext_buffer_size);
 
 public:
-  std::map<http::HTTP_HEADER_NAME, const std::string> extra_headers;
+  std::unordered_map<http::HTTP_HEADER_NAME, const std::string> extra_headers;
+  std::unordered_map<http::HTTP_HEADER_NAME, const std::string> permanent_extra_headers;
   inline void addHeader(http::HTTP_HEADER_NAME header_name,
-                        const std::string &header_value) {
-    char extra_header[MAX_HEADER_LEN];
-    sprintf(extra_header, "%s: %s\r\n",
-            http::http_info::headers_names_strings.at(header_name).c_str(),
-            header_value.c_str());
-    extra_headers.emplace(header_name, std::string(extra_header));
+                         const std::string &header_value, bool permanent = false) {
+        /* char extra_header[MAX_HEADER_LEN];
+       sprintf(extra_header, "%s: %s\r\n",
+               http::http_info::headers_names_strings.at(header_name).c_str(),
+               header_value.c_str());
+       extra_headers.emplace(header_name, std::string(extra_head));
+       * */
+       std::string newh;
+       newh.reserve(http::http_info::headers_names_strings.at(header_name).size() + 2 + header_value.size() + 2);
+       newh += http::http_info::headers_names_strings.at(header_name);
+       newh += ": ";
+       newh += header_value;
+       newh += "\r\n";
+       permanent ? extra_headers.insert({header_name,std::move(newh)}): permanent_extra_headers.insert({header_name,std::move(newh)});
   }
 
   //We need this function in order to implement rewriteLocation, we cannot do that in the validateResponse function.

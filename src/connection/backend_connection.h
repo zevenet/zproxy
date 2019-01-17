@@ -20,5 +20,4 @@ public:
 
 public:
   BackendConnection();
-  bool reConnect();
 };

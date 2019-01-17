@@ -38,7 +38,7 @@ public:
     //         index++) {
     //      res += method[index];
     //    }
-    return res;
+    return std::move(res);
   }
 
   std::string getUrl() {

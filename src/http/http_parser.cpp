@@ -23,6 +23,7 @@ void http_parser::HttpData::reset_parser() {
   status_message = nullptr;
   message_length = 0;
   message_bytes_left = 0;
+  extra_headers.clear();
 }
 
 void http_parser::HttpData::setBuffer(char *ext_buffer,
@@ -102,6 +103,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
                                     size_t *used_bytes, bool reset) {
   if (LIKELY(reset))
     reset_parser();
+
   buffer = const_cast<char *>(data);
   buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);

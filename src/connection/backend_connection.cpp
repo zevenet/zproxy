@@ -11,4 +11,4 @@ void BackendConnection::setBackend(Backend *bck) {
   backend = bck;
 }
 
-bool BackendConnection::reConnect() { return false; }
+

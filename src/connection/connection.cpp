@@ -4,6 +4,7 @@
 
 #include "connection.h"
 #include "../util/Network.h"
+#include "../util/common.h"
 #include <sys/un.h>
 
 #define PRINT_BUFFER_SIZE                                                      \
@@ -236,13 +237,22 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
   }
-  for (auto &header :
+  for (const auto &header :
        http_data.extra_headers) { // header must be always  used as reference,
     // it's copied it invalidate c_str() reference.
     iov[x].iov_base = const_cast<char *>(header.second.c_str());
     iov[x++].iov_len = header.second.length();
     total_to_send += header.second.length();
   }
+
+  for (const auto &header :
+      http_data.permanent_extra_headers) { // header must be always  used as reference,
+    // it's copied it invalidate c_str() reference.
+    iov[x].iov_base = const_cast<char *>(header.second.c_str());
+    iov[x++].iov_len = header.second.length();
+    total_to_send += header.second.length();
+  }
+
   iov[x].iov_base = const_cast<char *>(return_value);
   iov[x++].iov_len = 2;
   total_to_send += 2;
@@ -337,13 +347,13 @@ void Connection::closeConnection() {
     ::close(fd_);
   }
 }
-IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout) {
+IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
   int result = -1;
   if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
-  if (timeout > 0)
+  if (LIKELY(async))
     Network::setSocketNonBlocking(fd_);
   if ((result = ::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
