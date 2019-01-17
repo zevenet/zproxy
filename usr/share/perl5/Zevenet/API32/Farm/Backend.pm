@@ -128,6 +128,11 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			  . " and port $json_obj->{ port } for the $farmname farm";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+		if ( $status == -2 )
+		{
+			my $msg = "The IP $json_obj->{ip} is already set in farm $farmname";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 
 		&zenlog( "New backend created in farm $farmname with IP $json_obj->{ip}.",
 				 "info", "FARMS", "info", "FARMS" );
@@ -449,6 +454,7 @@ sub backends
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		my $backends = &getL4FarmServers( $farmname );
+		&getAPIFarmBackends( $backends, $type );
 
 		my $body = {
 					 description => $desc,
@@ -648,6 +654,11 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		if ( $status == -1 )
 		{
 			my $msg = "It's not possible to modify the backend with ip $json_obj->{ip}.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		if ( $status == -2 )
+		{
+			my $msg = "The IP $json_obj->{ip} is already set in farm $farmname";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
