@@ -282,8 +282,11 @@ int StreamManager::getWorkerId() { return worker_id; }
 void StreamManager::onRequestEvent(int fd) {
   HttpStream *stream = streams_set[fd];
   if (stream != nullptr) {
-    stream = streams_set.at(fd);
-    if (fd != stream->client_connection.getFileDescriptor()) {
+    if(stream->client_connection.isCancelled()){
+      clearStream(stream);
+      return;
+    }
+    if (UNLIKELY(fd != stream->client_connection.getFileDescriptor())) {
       Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_REMOVE);
     }
   } else {
@@ -297,10 +300,7 @@ void StreamManager::onRequestEvent(int fd) {
       Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
   }
-  if(UNLIKELY(stream->client_connection.isCancelled())){
-    clearStream(stream);
-    return;
-  }
+
   //TODO: Clean extra headers
   auto result = stream->client_connection.read();
   if (result == IO::IO_RESULT::ERROR) {
@@ -403,7 +403,7 @@ void StreamManager::onRequestEvent(int fd) {
               ) {
             // null
             if (stream->backend_connection.getFileDescriptor() > 0) { //
-              stream->backend_connection.setBackend(nullptr);
+
               deleteFd(stream->backend_connection
                            .getFileDescriptor()); // Client cannot
               // be connected to more
@@ -411,6 +411,8 @@ void StreamManager::onRequestEvent(int fd) {
               // time
               streams_set.erase(stream->backend_connection.getFileDescriptor());
               stream->backend_connection.closeConnection();
+              if(stream->backend_connection.isConnected())
+                stream->backend_connection.getBackend()->decreaseConnection();
             }
             stream->backend_connection.setBackend(bck);
             stream->backend_connection.time_start =
@@ -425,7 +427,7 @@ void StreamManager::onRequestEvent(int fd) {
                                               response.length());
               Debug::LogInfo("Error connecting to backend " + bck->address,
                              LOG_NOTICE);
-              stream->backend_connection.getBackend()->decreaseConnection();
+
               stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
               stream->backend_connection.closeConnection();
               return;
@@ -438,14 +440,9 @@ void StreamManager::onRequestEvent(int fd) {
               timers_set[stream->timer_fd.getFileDescriptor()] = stream;
               addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
                     EVENT_GROUP::CONNECT_TIMEOUT);
-              //                     return;
             }
             case IO::IO_OP::OP_SUCCESS: {
               stream->backend_connection.getBackend()->increaseConnection();
-              Network::setSocketNonBlocking(
-                  stream->backend_connection.getFileDescriptor());
-              // Debug::LogInfo("Connected to backend : " + bck->address + ":"
-              // + std::to_string(bck->port), LOG_DEBUG);
               streams_set[stream->backend_connection.getFileDescriptor()] =
                   stream;
               stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
@@ -851,13 +848,13 @@ StreamManager::validateRequest(HttpRequest &request) {
   } else {
     request.setRequestMethod();
   }
-  auto request_url = request.getUrl();
+  auto request_url = nonstd::string_view(request.path, request.path_length);// request.getUrl();
   if (request_url.find("%00") != std::string::npos) {
     return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
   }
 
   if (listener_config_.has_pat &&
-      regexec(&listener_config_.url_pat, request_url.c_str(), 0, NULL, 0)) {
+      regexec(&listener_config_.url_pat, request.path, 0, NULL, 0)) {
     return validation::REQUEST_RESULT::BAD_URL;
   }
 
@@ -879,9 +876,8 @@ StreamManager::validateRequest(HttpRequest &request) {
     nonstd::string_view header_value(request.headers[i].value,
                                      request.headers[i].value_len);
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
-      auto header_name = http::http_info::headers_names.at(header.to_string());
-      auto header_name_string =
-          http::http_info::headers_names_strings.at(header_name);
+      const auto &header_name = http::http_info::headers_names.at(header.to_string());
+      const auto &header_name_string = http::http_info::headers_names_strings.at(header_name);
 
       switch(header_name) {
         case http::HTTP_HEADER_NAME::DESTINATION:
@@ -932,29 +928,27 @@ validation::REQUEST_RESULT
 StreamManager::validateResponse(HttpResponse &response) {
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
-    if (response.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
-      return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
+
     nonstd::string_view header(response.headers[i].name,
                                response.headers[i].name_len);
     nonstd::string_view header_value(response.headers[i].value,
                                      response.headers[i].value_len);
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
-      auto header_name = http::http_info::headers_names.at(header.to_string());
-      auto header_name_string =
-          http::http_info::headers_names_strings.at(header_name);
+     const auto& header_name = http::http_info::headers_names.at(header.to_string());
+      const auto& header_name_string = http::http_info::headers_names_strings.at(header_name);
 
     } else {
         Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
                       header.to_string().c_str(),
                       header_value.to_string().c_str());
     }
-      /* maybe header to be removed */
-      MATCHER *m;
-      for (m = listener_config_.head_off; m; m = m->next) {
-        if ((response.headers[i].header_off =
-                 ::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) != 0))
-          break;
-      }
+      /* maybe header to be removed from responses */
+    //  MATCHER *m;
+     // for (m = listener_config_.head_off; m; m = m->next) {
+      //  if ((response.headers[i].header_off =
+       //          ::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) != 0))
+      //    break;
+     // }
 
   return validation::REQUEST_RESULT::OK;
   }
