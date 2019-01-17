@@ -47,8 +47,8 @@ public:
   void setBuffer(char *ext_buffer, size_t ext_buffer_size);
 
 public:
-  std::unordered_map<http::HTTP_HEADER_NAME, const std::string> extra_headers;
-  std::unordered_map<http::HTTP_HEADER_NAME, const std::string> permanent_extra_headers;
+  std::vector< std::string> extra_headers;
+  std::vector< std::string> permanent_extra_headers;
   inline void addHeader(http::HTTP_HEADER_NAME header_name,
                          const std::string &header_value, bool permanent = false) {
         /* char extra_header[MAX_HEADER_LEN];
@@ -63,9 +63,16 @@ public:
        newh += ": ";
        newh += header_value;
        newh += "\r\n";
-       permanent ? extra_headers.insert({header_name,std::move(newh)}): permanent_extra_headers.insert({header_name,std::move(newh)});
+       permanent ? extra_headers.push_back(std::move(newh)): permanent_extra_headers.push_back(std::move(newh));
   }
 
+  inline void addHeader(const std::string &header_value, bool permanent = false) {
+    std::string newh;
+    newh.reserve(header_value.size() + 2);
+    newh += header_value;
+    newh += "\r\n";
+    permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
+  }
   //We need this function in order to implement rewriteLocation, we cannot do that in the validateResponse function.
   inline void removeHeader(http::HTTP_HEADER_NAME header_name) {
       for (int i=0;i != num_headers; i++) {

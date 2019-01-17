@@ -269,6 +269,9 @@ void StreamManager::addStream(int fd) {
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
                             stream->client_connection.getPeerAddress(), true);
+  if(listener_config_.add_head != NULL) {
+    stream->request.addHeader(listener_config_.add_head, true);
+  }
   //configurar
 #else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {

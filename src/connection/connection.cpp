@@ -215,7 +215,9 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   const char *return_value = "\r\n";
   auto vector_size = http_data.num_headers +
                      (http_data.message_length > 0 ? 3 : 2) +
-                     http_data.extra_headers.size();
+                     http_data.extra_headers.size() +
+                      http_data.permanent_extra_headers.size();
+
   iovec iov[vector_size];
   char *last_buffer_pos_written;
 
@@ -240,17 +242,17 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   for (const auto &header :
        http_data.extra_headers) { // header must be always  used as reference,
     // it's copied it invalidate c_str() reference.
-    iov[x].iov_base = const_cast<char *>(header.second.c_str());
-    iov[x++].iov_len = header.second.length();
-    total_to_send += header.second.length();
+    iov[x].iov_base = const_cast<char *>(header.c_str());
+    iov[x++].iov_len = header.length();
+    total_to_send += header.length();
   }
 
   for (const auto &header :
       http_data.permanent_extra_headers) { // header must be always  used as reference,
     // it's copied it invalidate c_str() reference.
-    iov[x].iov_base = const_cast<char *>(header.second.c_str());
-    iov[x++].iov_len = header.second.length();
-    total_to_send += header.second.length();
+    iov[x].iov_base = const_cast<char *>(header.c_str());
+    iov[x++].iov_len = header.length();
+    total_to_send += header.length();
   }
 
   iov[x].iov_base = const_cast<char *>(return_value);
