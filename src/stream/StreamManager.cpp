@@ -314,7 +314,7 @@ void StreamManager::onRequestEvent(int fd) {
 
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
-  do {
+  //do {
     parse_result = stream->request.parseRequest(
         stream->client_connection.buffer, stream->client_connection.buffer_size,
         &parsed); // parsing http data as response structured
@@ -332,7 +332,6 @@ void StreamManager::onRequestEvent(int fd) {
       stream->timer_fd.unset();
       deleteFd(stream->timer_fd.getFileDescriptor());
       timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
-
       auto service = service_manager->getService(stream->request);
       if (service == nullptr) {
         stream->replyError(
@@ -344,12 +343,7 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
-
-
-
       auto bck = service->getBackend(*stream);
-      // if (stream->backend_connection.getFileDescriptor() ==
-      // BACKEND_STATUS::NO_BACKEND) {
       if (bck == nullptr) {
         // No backend available
         stream->replyError(
@@ -431,7 +425,6 @@ void StreamManager::onRequestEvent(int fd) {
             header_value += stream->request.path;
             stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION, header_value);
           }
-
           stream->backend_connection.enableWriteEvent();
           break;}
         case EMERGENCY_SERVER:
@@ -459,24 +452,21 @@ void StreamManager::onRequestEvent(int fd) {
       }
       break;
     }
-
+    case http_parser::PARSE_RESULT::TOOLONG:
+      Debug::LogInfo("Parser TOOLONG", LOG_DEBUG);
     case http_parser::PARSE_RESULT::FAILED:
-
-      stream->replyError(
-          HttpStatus::Code::BadRequest,
+      stream->replyError(HttpStatus::Code::BadRequest,
           HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
           listener_config_.err501);
       this->clearStream(stream);
       return;
     case http_parser::PARSE_RESULT::INCOMPLETE:
       Debug::LogInfo("Parser INCOMPLETE", LOG_DEBUG);
-      break;
-    case http_parser::PARSE_RESULT::TOOLONG:
-      Debug::LogInfo("Parser TOOLONG", LOG_DEBUG);
-      break;
+      stream->client_connection.enableReadEvent();
+      return;
     }
 
-    if ((stream->client_connection.buffer_size - parsed) > 0) {
+    /*if ((stream->client_connection.buffer_size - parsed) > 0) {
       Debug::LogInfo("Buffer size: left size: " +
           std::to_string(stream->client_connection.buffer_size),
                      LOG_DEBUG);
@@ -486,10 +476,10 @@ void StreamManager::onRequestEvent(int fd) {
                      LOG_DEBUG);
       Debug::LogInfo("Parsed data size: " + std::to_string(parsed), LOG_DEBUG);
     }
-
-  } while (stream->client_connection.buffer_size > parsed &&
-      parse_result ==
-          http_parser::PARSE_RESULT::SUCCESS);
+  */
+  //} while (stream->client_connection.buffer_size > parsed &&
+    //  parse_result ==
+     //     http_parser::PARSE_RESULT::SUCCESS);
 
   stream->client_connection.enableReadEvent();
 
