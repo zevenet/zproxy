@@ -171,6 +171,32 @@ rm -rf ${tmp_dir}
 
 # apply the commit to CE
 if [ $AUTO_MERGE ]; then
+
+	# get CE commit SHA
+	cd $com_dir
+	LAST_CE_COMMIT=$(git log --oneline -n1 | sed -E 's/^.*Commit //' | sed -E 's/:.*$//')
+
+	# get list of msg from last commit applied in CE to the EE HEAD
+	cd $BASE_DIR
+	DESCR=""
+
+	while read -r lin ; do
+
+		echo $lin | grep '\[CE\]' >/dev/null
+
+		if [ $? -eq 0 ]; then
+			FILTER=$(echo $lin | sed 's/\[CE\]//')
+			DESCR="${DESCR}
+	${FILTER}"
+		fi
+
+	done < <(git log $LAST_CE_COMMIT..HEAD)
+
+	# does not do commit if there are not any commit for CE
+	if [[ -z $DESCR ]]; then
+		exit 0
+	fi
+
 	DATE=$(date +%H:%M:%S_%d/%m/%y)
 	cd $com_dir
 
@@ -178,7 +204,11 @@ if [ $AUTO_MERGE ]; then
 	git config user.name "AutoCommit"
 
 	git add .
-	git commit -m "[auto_merge] EE commit: $EE_COMMIT, date: $DATE"
+	git commit -m "Commit $EE_COMMIT:
+$DESCR
+
+date: $DATE"
+
 	git push
 fi
 
