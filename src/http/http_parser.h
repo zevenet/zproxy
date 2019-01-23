@@ -73,14 +73,6 @@ public:
     newh += "\r\n";
     permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
   }
-  //We need this function in order to implement rewriteLocation, we cannot do that in the validateResponse function.
-  inline void removeHeader(http::HTTP_HEADER_NAME header_name) {
-      for (int i=0;i != num_headers; i++) {
-        if (headers[i].name == http::http_info::headers_names_strings.at(header_name)) {
-            headers[i].header_off = true;
-        }
-      }
-  }
 
   phr_header headers[MAX_HEADERS_SIZE];
   char *buffer;

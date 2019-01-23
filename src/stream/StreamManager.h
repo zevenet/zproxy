@@ -59,7 +59,7 @@ public:
   inline void onClientWriteEvent(HttpStream *stream);
 
   validation::REQUEST_RESULT validateRequest(HttpRequest &request);
-  validation::REQUEST_RESULT validateResponse(HttpResponse &response);
+  validation::REQUEST_RESULT validateResponse(HttpStream &stream);
 
   void clearStream(HttpStream *stream);
 };

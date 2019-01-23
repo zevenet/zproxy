@@ -527,43 +527,6 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
   }else{
 
-    //Rewrite location
-    std::string location_header_value;
-
-    //We need this check even with validateResponse because we are using the header value in order to check if we need or not to rewrite it.
-    bool location_header_exists = stream->response.getHeaderValue(http::HTTP_HEADER_NAME::LOCATION, location_header_value);
-    std::string protocol;
-
-    if (listener_config_.rewr_loc > 0 && location_header_exists) {
-      std::string expr_ = "[A-Za-z.0-9-]+";
-      std::smatch match;
-      std::regex rgx(expr_);
-      if (std::regex_search(location_header_value, match, rgx)) {
-        std::string result = match[1];
-        if (listener_config_.rewr_loc == 1) {
-          if (result == listener_config_.address || result == stream->backend_connection.getPeerAddress()) {
-            stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
-            std::string header_value = "http://";
-            header_value += listener_config_.address;
-            header_value += stream->response.path;
-            stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
-            stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
-          }
-        } else {
-          if (result == stream->backend_connection.getPeerAddress()) {
-            stream->response.removeHeader(http::HTTP_HEADER_NAME::LOCATION);
-            std::string header_value = "http://";
-            header_value += listener_config_.address;
-            header_value += stream->response.path;
-            stream->response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
-            stream->response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
-          }
-        }
-      } else {
-        Debug::LogInfo("Invalid location header", LOG_REMOVE);
-      }
-    }
-
     result = stream->backend_connection.read();
     if (result == IO::IO_RESULT::ERROR) {
       Debug::LogInfo("Error reading response ", LOG_DEBUG);
@@ -845,7 +808,8 @@ StreamManager::validateRequest(HttpRequest &request) {
 }
 
 validation::REQUEST_RESULT
-StreamManager::validateResponse(HttpResponse &response) {
+StreamManager::validateResponse(HttpStream &stream) {
+  auto response = stream.response;
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
 
@@ -855,7 +819,47 @@ StreamManager::validateResponse(HttpResponse &response) {
                                                    response.headers[i].value_len);
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
       const auto &header_name = http::http_info::headers_names.at(header.to_string());
-      const auto& header_name_string = http::http_info::headers_names_strings.at(header_name);
+      const auto &header_name_string = http::http_info::headers_names_strings.at(header_name);
+
+      switch(header_name) {
+      case http::HTTP_HEADER_NAME::LOCATION: {
+          //Rewrite location
+          std::string location_header_value;
+          std::string protocol;
+
+          if (listener_config_.rewr_loc > 0) {
+            std::string expr_ = "[A-Za-z.0-9-]+";
+            std::smatch match;
+            std::regex rgx(expr_);
+            if (std::regex_search(location_header_value, match, rgx)) {
+              std::string result = match[1];
+              if (listener_config_.rewr_loc == 1) {
+                if (result == listener_config_.address || result == stream.backend_connection.getBackend()->address) {
+                  std::string header_value = "http://";
+                  header_value += listener_config_.address;
+                  header_value += response.path;
+                  response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
+                  response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
+                  response.headers[i].header_off = true;
+                }
+              } else {
+                if (result == stream.backend_connection.getBackend()->address) {
+                  std::string header_value = "http://";
+                  header_value += listener_config_.address;
+                  header_value += response.path;
+                  response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value);
+                  response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value);
+                  response.headers[i].header_off = true;
+                }
+              }
+            } else {
+              Debug::LogInfo("Invalid location header", LOG_REMOVE);
+            }
+          }
+        break;
+        }
+        default: break;
+      }
 
     } else {
       Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
