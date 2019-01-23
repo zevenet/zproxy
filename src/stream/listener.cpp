@@ -106,7 +106,7 @@ void Listener::start() {
        service_config != nullptr; service_config = service_config->next) {
     if (!service_config->disabled) {
       ServiceManager::getInstance(listener_config)
-          ->addService(*service_config, ++service_id);
+          ->addService(*service_config, service_id++);
     } else {
       Debug::LogInfo("Backend " + std::string(service_config->name) +
           " disabled in config file",
