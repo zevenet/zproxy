@@ -39,16 +39,17 @@ class Service : public sessions::HttpSessionManager,
     LP_RESPONSE_TIME,
     LP_PENDING_CONNECTIONS,
   };
-
+private:
+  void addBackend(BackendConfig *backend_config, std::string address, int port,
+                  int backend_id, bool emergency = false);
  public:
   ServiceConfig &service_config;
   Backend *getBackend(HttpStream &stream);
   explicit Service(ServiceConfig &service_config_);
   ~Service();
-  void addBackend(BackendConfig *backend_config, std::string address, int port,
-                  int backend_id, bool emergency = false);
+
   void addBackend(BackendConfig *backend_config, int backend_id,
-                  bool emergency = true);
+                  bool emergency = false);
   void doMaintenance();
   bool doMatch(HttpRequest &request);
   static void setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
