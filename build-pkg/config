@@ -225,7 +225,9 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Cmd/sendNotification.pm
 	usr/share/perl5/Zevenet/Cmd/updateRemoteList.pm
 	usr/share/perl5/Zevenet/Cmd/zapi-v3.pm
-	usr/share/perl5/Zevenet/Cmd/zapi-v4.pm
+	usr/share/perl5/Zevenet/Cmd/zapi-v3.1.pm
+	usr/share/perl5/Zevenet/Cmd/zapi-v3.2.pm
+	usr/share/perl5/Zevenet/Cmd/zapi-v4.0.pm
 	usr/share/perl5/Zevenet/Cmd/zcluster-manager.pm
 	usr/share/perl5/Zevenet/Cmd/zcluster-send-action.pm
 	usr/share/perl5/Zevenet/Cmd/zenbui.pm
