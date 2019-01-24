@@ -96,8 +96,6 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
-&zenlog( "Todo va bien ???????????????????????????????" );
-
 ##### Verify RBAC permissions ########################################
 require Zevenet::Core;
 
