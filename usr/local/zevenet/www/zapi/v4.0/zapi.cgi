@@ -1,1 +1,1 @@
-/usr/local/zevenet/bin/enterprise.bin zapi-v4 "$@"
+../../../bin/enterprise.bin

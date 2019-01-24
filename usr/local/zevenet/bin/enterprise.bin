@@ -55,7 +55,7 @@ else
 	$symbolic_link = ( exists $ENV{ _ } and -l $ENV{ _ } ) ? readlink( $ENV{ _ } ) : "";
 	$program_name =
 		( $0 ne '-e' ) ? $0
-	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
+	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
 	: ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
 	:															$^X;
 
