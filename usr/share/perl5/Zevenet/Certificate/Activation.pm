@@ -21,19 +21,11 @@
 #
 ###############################################################################
 
-use strict;
-
 use Time::Local;
-use Zevenet::Config;
-use Zevenet::SystemInfo;
-use Crypt::CBC;
-use POSIX 'strftime';
 
 #build CBC Object
 sub buildcbc
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my $cipher = Crypt::CBC->new(
 					 -literal_key => 1,
 					 -key => 'wg2kx8VY2NVYDdQSAdqffmHYMd2d97ypYdJ4hwczAm8YBPtHv28EJJ66',
@@ -49,8 +41,6 @@ sub buildcbc
 #encrypt CBC and return result
 sub encrypt    # string for encrypt
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my $data = shift;
 
 	my $cipher = &buildcbc();
@@ -61,8 +51,6 @@ sub encrypt    # string for encrypt
 
 sub decrypt    # string for decrypt
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my $data = shift;
 
 	my $cipher = &buildcbc();
@@ -74,9 +62,6 @@ sub decrypt    # string for decrypt
 # build local key
 sub keycert
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
 	#~ use Zevenet::SystemInfo;
 
 	my $dmi      = &get_sys_uuid();
@@ -89,12 +74,8 @@ sub keycert
 	return $str;
 }
 
-# build local old key
 sub keycert_old
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
 	#~ use Zevenet::SystemInfo;
 	my $dmi      = get_sys_uuid();
 	my $hostname = &getHostname();
@@ -115,16 +96,14 @@ sub keycert_old
 # evaluate certificate
 sub certcontrol
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
 	#~ require Time::Local;
 	#~ use Zevenet::Config;
 	require Zevenet::SystemInfo;
 
-	my $basedir     = &getGlobalConfiguration( 'basedir' );
-	my $zlbcertfile = "$basedir/zlbcertfile.pem";
-	my $swcert      = 0;
+	my $basedir         = &getGlobalConfiguration( 'basedir' );
+	my $zlbcertfilename = shift // "zlbcertfile.pem";
+	my $zlbcertfile     = "$basedir/$zlbcertfilename";
+	my $swcert          = 0;
 
 	if ( !-e $zlbcertfile )
 	{
@@ -154,6 +133,13 @@ sub certcontrol
 		my $cert_ou = $1;
 		$key = &keycert();
 	}
+### ???? revisar init
+	if ( $cert_ou =~ m/-/ && $func eq 'upload_activation_certificate' )
+	{
+		$swcert = 5;
+		return $swcert;
+	}
+### ???? revisar fin
 
 	if ( !grep /keyid:$keyid/, @zen_cert )
 	{
@@ -188,10 +174,6 @@ sub certcontrol
 
 	if ( $date_check ne $date_encode )
 	{
-		my $write_check = &openlock( $file_check, '>' );
-		print $write_check $date_encode;
-		close $write_check;
-
 		my $crl_path = "$configdir/cacrl.crl";
 
 		my $date_mod = '';
@@ -210,18 +192,42 @@ sub certcontrol
 
 		if ( $modification[0] ne $date_today )
 		{
-			require IO::Socket;
+			my $portCheck;
+			my $proxy_https = $ENV{ https_proxy };
 
-			if (
-				 my $scan = IO::Socket::INET->new(
-												   PeerAddr => "certs.zevenet.com",
-												   PeerPort => 443,
-												   Proto    => 'tcp',
-												   Timeout  => 2
-				 )
-			  )
+			# If proxy, use openssl
+			if ( $proxy_https )
 			{
-				$scan->close();
+				# delete https:// if exists
+				$proxy_https =~ s/https\:\/\// /;
+				( my $proxyIp, my $proxyPort ) = split /\:(?=\d)/, $proxy_https;
+				$proxyPort = "443" if ( !defined $proxyPort );
+				my $cmd =
+				  "echo -e 'GET / HTTP/1.1\\r\\n' | timeout 2 openssl s_client -connect certs.zevenet.com:443 -proxy $proxyIp:$proxyPort";
+				$portCheck = &logAndRun( $cmd );
+			}
+
+			# If !proxy, use IO::Socket::INET
+			else
+			{
+				require IO::Socket;
+
+				if (
+					 my $scan = IO::Socket::INET->new(
+													   PeerAddr => "certs.zevenet.com",
+													   PeerPort => 443,
+													   Proto    => 'tcp',
+													   Timeout  => 2
+					 )
+				  )
+				{
+					$portCheck = 0;
+					$scan->close();
+				}
+			}
+
+			if ( !$portCheck )
+			{
 				my $tmp_file = '/tmp/cacrl.crl';
 
 				# Download CRL
@@ -236,9 +242,16 @@ sub certcontrol
 			}
 		}
 
-		my @decoded = ();
-		@decoded = `$openssl crl -inform DER -text -noout -in $crl_path`
+		if ( !-f $crl_path )
+		{
+			#swcert = 6 ==> crl is missing
+			$swcert = 6;
+			return $swcert;
+		}
+
+		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path`
 		  if -f $crl_path;
+
 		if ( !grep /keyid:$keyid/, @decoded )
 		{
 			#swcert = 2 ==> Cert isn't signed OK
@@ -259,18 +272,30 @@ sub certcontrol
 				}
 			}
 		}
+		my $write_check = &openlock( $file_check, '>' );
+		if ( $write_check )
+		{
+			print $write_check $date_encode;
+			close $write_check;
+		}
+		else
+		{
+			&zenlog( "Error opening $file_check", "ERROR", "certificate" );
+		}
 	}
 	close $lock_fd;
 
 	# Certificate expiring date
 	my ( $na ) = grep /Not After/i, @zen_cert;
 	$na =~ s/.*not after.*:\ //i;
+
 	my ( $month2, $day2, $hours2, $min2, $sec2, $year2 ) = split /[ :]+/, $na;
 	( $month2 ) = grep { $months[$_] eq $month2 } 0 .. $#months;
 	my $end       = timegm( $sec2, $min2, $hours2, $day2, $month2, $year2 );
 	my $totaldays = '';
 	my $type_cert = '';
 
+	#Certificate with old format
 	if ( $cert_ou =~ m/-/ )
 	{
 		# Certificate validity date
@@ -284,6 +309,7 @@ sub certcontrol
 		$totaldays = ( $end - $ini ) / 86400;
 		$totaldays =~ s/\-//g;
 
+		#Certificate with new format
 	}
 	else
 	{
@@ -337,6 +363,7 @@ sub certcontrol
 	#swcert = 3 ==> Cert test and it's expired
 	#swcert = 4 ==> Cert is revoked
 	#swcert = 5 ==> Cert isn't valid
+	#swcert = 6 ==> Crl missing
 
 	#swcert = -1 ==> Cert support and it's expired
 
@@ -346,9 +373,18 @@ sub certcontrol
 
 sub checkActivationCertificate
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $swcert = &certcontrol();
+	my $swcert         = 0;
+	my $uploadCertFlag = 0;
+	if ( scalar ( @_ ) > 0 )
+	{
+		my $tmpCertFile = $_[0];
+		$uploadCertFlag = 1;
+		$swcert         = &certcontrol( "$tmpCertFile" );
+	}
+	else
+	{
+		$swcert = &certcontrol();
+	}
 
 	# if $swcert is greater than 0 zapi should not work
 	if ( $swcert > 0 )
@@ -383,13 +419,17 @@ sub checkActivationCertificate
 			$msg =
 			  "The Zevenet Load Balancer certificate file isn't valid for this machine.";
 		}
+		elsif ( $swcert == 6 )
+		{
+			$msg = "The Zevenet crl file is missing.";
+		}
 
 		my $body = {
 					 message         => $msg,
 					 certificate_key => &keycert(),
 					 hostname        => &getHostname(),
 		};
-
+		return ( { "msg" => $msg } ) if $uploadCertFlag == 1;
 		return &httpResponse( { code => 402, body => $body } );
 	}
 
@@ -398,8 +438,6 @@ sub checkActivationCertificate
 
 sub get_sys_uuid
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
 	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
@@ -410,8 +448,6 @@ sub get_sys_uuid
 
 sub get_mod_appl
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my @mod = grep ( /\w{3} ?\d{4}/, `cat /etc/zevenet_version` );
 	$mod[0] =~ /(\w{3} ?\d{4})/;
 
