@@ -41,35 +41,35 @@ SET (PROJECT_HOST_INFO "${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} $
 # get current git info
 if (EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD")
     file(READ "${PROJECT_SOURCE_DIR}/.git/HEAD"
-            PROJECT_SOURCE_VERSION)
+        PROJECT_SOURCE_VERSION)
     if ("${PROJECT_SOURCE_VERSION}" MATCHES "^ref:")
         string(REGEX REPLACE "^ref: *([^ \n\r]*).*" "\\1"
-                PROJECT_GIT_REF "${PROJECT_SOURCE_VERSION}")
+            PROJECT_GIT_REF "${PROJECT_SOURCE_VERSION}")
         file(READ "${PROJECT_SOURCE_DIR}/.git/${PROJECT_GIT_REF}"
-                PROJECT_SOURCE_VERSION)
+            PROJECT_SOURCE_VERSION)
     endif ()
     string(STRIP "${PROJECT_SOURCE_VERSION}"
-            PROJECT_SOURCE_VERSION)
+        PROJECT_SOURCE_VERSION)
 endif ()
 
 # get build date and time
 
 execute_process(COMMAND "date" "+%d %b %Y/%H:%M:%S"
-        OUTPUT_VARIABLE DATE_TIME)
+    OUTPUT_VARIABLE DATE_TIME)
 string(REGEX REPLACE "([^/]*)/.*" "\\1"
-        PROJECT_BUILD_DATE "${DATE_TIME}")
+    PROJECT_BUILD_DATE "${DATE_TIME}")
 string(REGEX REPLACE "[^/]*/([0-9:]*).*" "\\1"
-        PROJECT_BUILD_TIME "${DATE_TIME}")
+    PROJECT_BUILD_TIME "${DATE_TIME}")
 
 configure_file(
-        "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
-        "${PROJECT_SOURCE_DIR}/src/version.h"
-)
+    "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
+    "${PROJECT_SOURCE_DIR}/src/version.h"
+    )
 
 configure_file(
-        "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
-        "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
-)
+    "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
+    "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
+    )
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
@@ -87,8 +87,8 @@ find_package(PkgConfig)
 pkg_check_modules(PC_PCRE QUIET libpcre)
 set(PCRE_DEFINITIONS ${PC_PCRE_CFLAGS_OTHER})
 find_path(PCRE_INCLUDE_DIR pcre.h
-        HINTS ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS}
-        PATH_SUFFIXES pcre)
+    HINTS ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS}
+    PATH_SUFFIXES pcre)
 
 find_library(PCRE_PCRE_LIBRARY NAMES pcre HINTS ${PC_PCRE_LIBDIR} ${PC_PCRE_LIBRARY_DIRS})
 
@@ -101,23 +101,22 @@ set(PCRE_LIBRARIES ${PCRE_PCREPOSIX_LIBRARY} ${PCRE_PCRE_LIBRARY})
 mark_as_advanced(PCRE_INCLUDE_DIR PCRE_LIBRARIES PCRE_PCRE_LIBRARY)
 
 find_package(Threads)
-set(ENV{PKG_CONFIG_PATH} "/usr/lib/openssl-1.0/pkgconfig")
+
 # Search OpenSSL
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(OPENSSL REQUIRED openssl)
-#if (OPENSSL_FOUND)
-#  status_message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
-#  status_message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
-#  include_directories(${OPENSSL_INCLUDE_DIRS})
-#  status_message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
-#else ()
-#  # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
-#endif ()
-#
-
-include_directories(/usr/include/openssl-1.0)
-link_directories(/usr/lib/openssl-1.0)
+if (OPENSSL_FOUND)
+    message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
+    message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
+    include_directories(${OPENSSL_INCLUDE_DIRS})
+    message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+else ()
+    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
+    #set(ENV{PKG_CONFIG_PATH} "/usr/lib/openssl-1.0/pkgconfig")
+    #include_directories(/usr/include/openssl-1.0)
+    #link_directories(/usr/lib/openssl-1.0)
+endif ()
 
 if (BUILD_TESTS)
     add_subdirectory(tests)
@@ -143,10 +142,10 @@ if (BUILD_DOC)
 
         message("Doxygen buld started")
         add_custom_target(Doxygen ALL
-                COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                COMMENT "Generating API documentation with Doxygen"
-                VERBATIM)
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            VERBATIM)
     else (DOXYGEN_FOUND)
         message("Doxygen needs to be installed to generate the documentation.")
     endif (DOXYGEN_FOUND)

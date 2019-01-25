@@ -688,6 +688,10 @@ ListenerConfig *Config::parse_HTTPS() {
         ssl_op_enable |= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 |
             SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
 #endif
+#ifdef SSL_OP_NO_TLSv1_3
+            else if(strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0)
+                ssl_op_enable |= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3;
+#endif
     } else if (!regexec(&SSLAllowClientRenegotiation, lin, 4, matches, 0)) {
       res->allow_client_reneg = atoi(lin + matches[1].rm_so);
       if (res->allow_client_reneg == 2) {
@@ -862,8 +866,7 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count) {
     name = sk_GENERAL_NAME_pop(san_stack);
     switch (name->type) {
       case GEN_DNS:
-        temp[local_count] = strndup(ASN1_STRING_data(name->d.dNSName),
-                                    ASN1_STRING_length(name->d.dNSName) + 1);
+        temp[local_count] = general_name_string(name);
         if (temp[local_count] == NULL) conf_err("out of memory");
         local_count++;
         break;
@@ -1039,10 +1042,13 @@ ServiceConfig *Config::parseService(const char *svc_name) {
   res->sts = -1;
   pthread_mutex_init(&res->mut, NULL);
   if (svc_name) strncpy(res->name, svc_name, KEY_SIZE);
-  //# define LHM_lh_new(type, name) \
-  //  ((LHASH_OF(type) *)lh_new(LHASH_HASH_FN(name), LHASH_COMP_FN(name)))
-  // res->sessions = (LHASH_OF(TABNODE) *)lh_new(t_LHASH_HASH, t_LHASH_COMP);
-  if ((res->sessions = LHM_lh_new(TABNODE, t)) == NULL)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    if((res->sessions = lh_TABNODE_new(t_hash, t_cmp)) == NULL)
+#elif OPENSSL_VERSION_NUMBER >= 0x10000000L
+    if((res->sessions = LHM_lh_new(TABNODE, t)) == NULL)
+#else
+    if((res->sessions = lh_new(LHASH_HASH_FN(t_hash), LHASH_COMP_FN(t_cmp))) == NULL)
+#endif
     conf_err("lh_new failed - aborted");
   if (res->sessions == NULL) conf_err("lh_new failed - aborted");
   ign_case = ignore_case;
@@ -1246,7 +1252,7 @@ int Config::SNI_server_name(SSL *ssl, int *dummy, POUND_CTX *ctx) {
       int i;
 
       for (i = 0; i < pc->subjectAltNameCount; i++) {
-        if (fnmatch(pc->subjectAltNames[i], server_name, 0) == 0) {
+        if (fnmatch((char*)pc->subjectAltNames[i], server_name, 0) == 0) {
           SSL_set_SSL_CTX(ssl, pc->ctx);
           return SSL_TLSEXT_ERR_OK;
         }

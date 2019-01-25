@@ -18,6 +18,7 @@
 #include "config_defines.h"
 #include "pound_struct.h"
 #include "svc.h"
+#include <openssl/lhash.h>
 
 #ifndef F_CONF
 #define F_CONF "/usr/local/etc/pound.cfg"
@@ -27,7 +28,29 @@
 #define F_PID "/var/run/pound.pid"
 #endif
 
+/* Timeout for RSA ephemeral keys generation */
+#define T_RSA_KEYS 7200
+
 #define MAX_FIN 100
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+# define general_name_string(n) \
+	(unsigned char*) \
+	strndup((char*)ASN1_STRING_get0_data(n->d.dNSName),	\
+	        ASN1_STRING_length(n->d.dNSName) + 1)
+#else
+# define general_name_string(n) \
+	(unsigned char*) \
+	strndup((char*)ASN1_STRING_data(n->d.dNSName),	\
+	       ASN1_STRING_length(n->d.dNSName) + 1)
+#endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+  DEFINE_LHASH_OF(TABNODE);
+#elif OPENSSL_VERSION_NUMBER >= 0x10000000L
+DECLARE_LHASH_OF(TABNODE);
+#endif
+
 
 class Config {
   const char *xhttp[5] = {
@@ -184,52 +207,60 @@ class Config {
    */
   void parse_file(void);
 
- public:
-  ServiceConfig *services;   /* global services (if any) */
-  ListenerConfig *listeners; /* all available listeners */
 
- public:
-  Config();
-  ~Config();
-
-  /*
-   * prepare to parse the arguments/config file
-   */
-  void parseConfig(const int argc, char **const argv);
-  bool exportConfigToJsonFile(std::string save_path);
  private:
   // LHASH
 
-  /*
-   * basic hashing function, based on fmv
-   */
-  static unsigned long t_hash(const TABNODE *e) {
-    unsigned long res;
-    char *k;
+/*
+ * basic hashing function, based on fmv
+ */
+  static unsigned long
+  t_hash(const TABNODE *e)
+  {
+    unsigned long   res;
+    char            *k;
 
     k = e->key;
     res = 2166136261;
-    while (*k) res = ((res ^ *k++) * 16777619) & 0xFFFFFFFF;
+    while(*k)
+      res = ((res ^ *k++) * 16777619) & 0xFFFFFFFF;
     return res;
   }
 
-  static int t_cmp(const TABNODE *d1, const TABNODE *d2) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+# if OPENSSL_VERSION_NUMBER >= 0x10000000L
+  static IMPLEMENT_LHASH_HASH_FN(t, TABNODE)
+# else
+  static IMPLEMENT_LHASH_HASH_FN(t_hash, const TABNODE *)
+# endif
+#endif
+
+  static int
+  t_cmp(const TABNODE *d1, const TABNODE *d2)
+  {
     return strcmp(d1->key, d2->key);
   }
 
-  static IMPLEMENT_LHASH_HASH_FN(t, TABNODE)
-
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+# if OPENSSL_VERSION_NUMBER >= 0x10000000L
   static IMPLEMENT_LHASH_COMP_FN(t, TABNODE)
+# else
+  static IMPLEMENT_LHASH_COMP_FN(t_cmp, const TABNODE *)
+# endif
+#endif
+  public:
+   ServiceConfig *services;   /* global services (if any) */
+   ListenerConfig *listeners; /* all available listeners */
 
-  //  static unsigned long t_LHASH_HASH(const void *arg) {
-  //    const TABNODE *a = arg;
-  //    return t_hash(a);
-  //  }
-  //  static int t_LHASH_COMP(const void *arg1, const void *arg2) {
-  //    const TABNODE *a = arg1;
-  //    const TABNODE *b = arg2;
-  //    return t_cmp(a, b);
-  //  }
+  public:
+   Config();
+   ~Config();
+
+   /*
+    * prepare to parse the arguments/config file
+    */
+   void parseConfig(const int argc, char **const argv);
+   bool exportConfigToJsonFile(std::string save_path);
 };
 
 #endif  // ZHTTP_CONFIG_H

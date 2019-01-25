@@ -16,31 +16,37 @@ RSA *RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_export,
   return res;
 }
 
-int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g) {
-  /* If the fields p and g in d are NULL, the corresponding input
-   * parameters MUST be non-NULL.  q may remain NULL.
-   */
-  if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL)) return 0;
+//int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g) {
+//  /* If the fields p and g in d are NULL, the corresponding input
+//   * parameters MUST be non-NULL.  q may remain NULL.
+//   */
+//  if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL)) return 0;
 
-  if (p != NULL) {
-    BN_free(dh->p);
-    dh->p = p;
-  }
-  if (q != NULL) {
-    BN_free(dh->q);
-    dh->q = q;
-  }
-  if (g != NULL) {
-    BN_free(dh->g);
-    dh->g = g;
-  }
+//  if (p != NULL) {
+//    BN_free(dh->p);
+//    dh->p = p;
+//  }
+//  if (q != NULL) {
+//    BN_free(dh->q);
+//    dh->q = q;
+//  }
+//  if (g != NULL) {
+//    BN_free(dh->g);
+//    dh->g = g;
+//  }
 
-  if (q != NULL) {
-    dh->length = BN_num_bits(q);
-  }
+//  if (q != NULL) {
+//    dh->length = BN_num_bits(q);
+//  }
 
-  return 1;
-}
+//  return 1;
+//}
+#ifndef SSL3_ST_SR_CLNT_HELLO_A
+# define SSL3_ST_SR_CLNT_HELLO_A (0x110|SSL_ST_ACCEPT)
+#endif
+#ifndef SSL23_ST_SR_CLNT_HELLO_A
+# define SSL23_ST_SR_CLNT_HELLO_A (0x210|SSL_ST_ACCEPT)
+#endif
 
 void SSLINFO_callback(const SSL *ssl, int where, int rc) {
   RENEG_STATE *reneg_state;
@@ -72,11 +78,11 @@ int get_host(char *const name, addrinfo *res, int ai_family) {
   hints.ai_family = ai_family;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_CANONNAME;
-  if ((ret_val = getaddrinfo(name, NULL, &hints, &chain)) == 0) {
-    for (ap = chain; ap != NULL; ap = ap->ai_next)
+  if ((ret_val = getaddrinfo(name, nullptr, &hints, &chain)) == 0) {
+    for (ap = chain; ap != nullptr; ap = ap->ai_next)
       if (ap->ai_socktype == SOCK_STREAM) break;
 
-    if (ap == NULL) {
+    if (ap == nullptr) {
       freeaddrinfo(chain);
       return EAI_NONAME;
     }
