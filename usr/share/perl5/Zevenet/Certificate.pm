@@ -405,11 +405,11 @@ sub delCert    # ($certname)
 
 	my $files_removed = unlink ( "$certdir\/$file[0]" );
 
-	&zenlog( "Error removing certificate $certdir\/$file[0]", "error", "LSLB" ) if !$files_removed;
+	&zenlog( "Error removing certificate $certdir\/$file[0]", "error", "LSLB" )
+	  if !$files_removed;
 
 	return $files_removed;
 }
-
 
 =begin nd
 Function: createCSR
@@ -455,8 +455,9 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 	if ( $certpassword eq "" )
 	{
 		&zenlog(
-			"Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
-		, "info", "LSLB");
+			"Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\"",
+			"info", "LSLB"
+		);
 		$output =
 		  system (
 			"$openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null"
@@ -469,7 +470,8 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 			"$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null"
 		  );
 		&zenlog(
-			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\"", "info", "LSLB"
+			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\"",
+			"info", "LSLB"
 		);
 	}
 	return $output;
@@ -576,7 +578,7 @@ sub getCertInfo    # ($certfile)
 {
 	my ( $certfile, $path ) = @_;
 
-	my $filepath  = "$path\/$certfile";
+	my $filepath = "$path\/$certfile";
 	my @cert_data;
 
 	# Cert type
@@ -585,17 +587,19 @@ sub getCertInfo    # ($certfile)
 	if    ( $certfile =~ /\.(?:pem|crt)$/ ) { $type = "Certificate"; }
 	elsif ( $certfile =~ /\.csr$/ )         { $type = "CSR"; }
 
-	if    ( $type eq "Certificate" ) { @cert_data = `$openssl x509 -in $filepath -text`; }
-	elsif ( $type eq "CSR" )         { @cert_data = `$openssl req -in $filepath -text`; }
+	if ( $type eq "Certificate" )
+	{
+		@cert_data = `$openssl x509 -in $filepath -text`;
+	}
+	elsif ( $type eq "CSR" ) { @cert_data = `$openssl req -in $filepath -text`; }
 
-
-	# Cert CN
-	# Stretch: Subject: C = SP, ST = SP, L = SP, O = Test, O = f9**3b, OU = al**X6, CN = zevenet-hostname, emailAddress = cr**@zevenet.com
-	# Jessie:  Subject: C=SP, ST=SP, L=SP, O=Test, O=f9**3b, OU=al**X6, CN=zevenet-hostname/emailAddress=cr**@zevenet.com
+# Cert CN
+# Stretch: Subject: C = SP, ST = SP, L = SP, O = Test, O = f9**3b, OU = al**X6, CN = zevenet-hostname, emailAddress = cr**@zevenet.com
+# Jessie:  Subject: C=SP, ST=SP, L=SP, O=Test, O=f9**3b, OU=al**X6, CN=zevenet-hostname/emailAddress=cr**@zevenet.com
 	my $cn;
 	my $key;
 	{
-		my ( $string ) = grep( /\sSubject: /, @cert_data );
+		my ( $string ) = grep ( /\sSubject: /, @cert_data );
 		chomp $string;
 		$string =~ s/Subject://;
 
@@ -606,11 +610,13 @@ sub getCertInfo    # ($certfile)
 			$cn = $1 if ( $param =~ /CN ?= ?(.+)/ );
 			( $cn ) = split ( /\/emailAddress=/, $cn );
 			$key = $1 if ( $param =~ /OU ?= ?(.+)/ );
-			if ($key eq 'false') {
+			if ( $key eq 'false' )
+			{
 				$key = $1 if ( $param =~ /1\.2\.3\.4\.5\.8 ?= ?(.+)/ );
 			}
 		}
 	}
+
 	#~ $cn = &getCleanBlanc( $cn );
 
 	# Cert Issuer
@@ -625,8 +631,8 @@ sub getCertInfo    # ($certfile)
 	{
 		$issuer = "NA";
 	}
-	#~ $issuer = &getCleanBlanc( $issuer );
 
+	#~ $issuer = &getCleanBlanc( $issuer );
 
 	#Cert type (definitive or temporal)
 	my $type_cert = "";
@@ -646,19 +652,19 @@ sub getCertInfo    # ($certfile)
 	if ( $type eq "Certificate" )
 	{
 		my ( $line ) = grep /\sNot Before/, @cert_data;
+
 		#~ my @eject = `$openssl x509 -noout -in $certfile -dates`;
 		( undef, $creation ) = split ( /: /, $line );
 	}
 	elsif ( $type eq "CSR" )
 	{
-		my @eject = split ( / /, gmtime ( stat( $filepath )->mtime ) );
+		my @eject = split ( / /, gmtime ( stat ( $filepath )->mtime ) );
 		splice ( @eject, 0, 1 );
 		push ( @eject, "GMT" );
 		$creation = join ( ' ', @eject );
 	}
 	chomp ( $creation );
 	$creation = `date -d "${creation}" +%F" "%T" "%Z -u`;
-
 
 	# Cert Expiration Date
 	my $expiration = "";
@@ -667,25 +673,27 @@ sub getCertInfo    # ($certfile)
 		my ( $line ) = grep /\sNot After/, @cert_data;
 		( undef, $expiration ) = split ( /: /, $line );
 		chomp ( $expiration );
-        $expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
+		$expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
 	}
 	elsif ( $type eq "CSR" )
 	{
 		$expiration = "NA";
 	}
 
-    my %response = (
-                     file       => $certfile,
-                     type       => $type,
-                     CN         => $cn,
-                     key        => $key,
-                     issuer     => $issuer,
-                     creation   => $creation,
-                     expiration => $expiration,
-    );
-    $response{type_cert} = $type_cert if ($filepath eq 'zlbcertfile.pem');
+	my %response = (
+					 file       => $certfile,
+					 type       => $type,
+					 CN         => $cn,
+					 key        => $key,
+					 issuer     => $issuer,
+					 creation   => $creation,
+					 expiration => $expiration,
+	);
+	&zenlog( "FILEPATH: $filepath" );
+	$response{ type_cert } = $type_cert
+	  if ( $filepath =~ '(\b|^)zlbcertfile.pem$' );
 
-    return \%response;
+	return \%response;
 }
 
 sub getCertDaysToExpire
@@ -699,7 +707,7 @@ sub getCertDaysToExpire
 	sub getDateEpoc
 	{
 		my $date_string = shift @_;
-		my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+		my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
 		my ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
 
@@ -708,15 +716,18 @@ sub getCertDaysToExpire
 		return timegm( $sec, $min, $hours, $day, $month, $year );
 	}
 
-	my $end = &getDateEpoc( $cert_ends );
+	my $end       = &getDateEpoc( $cert_ends );
 	my $days_left = ( $end - time () ) / 86400;
 
 	# leave only two decimals
-	if ( $days_left < 1 ) {
+	if ( $days_left < 1 )
+	{
 		$days_left *= 100;
 		$days_left =~ s/\..*//g;
 		$days_left /= 100;
-	} else {
+	}
+	else
+	{
 		$days_left =~ s/\..*//g;
 	}
 
@@ -743,7 +754,7 @@ See Also:
 
 sub delCert_activation    # ($certname)
 {
-	my $certdir = &getGlobalConfiguration( 'basedir' );
+	my $certdir  = &getGlobalConfiguration( 'basedir' );
 	my $certname = 'zlbcertfile.pem';
 
 	$certname = "$certdir/$certname";
@@ -752,11 +763,13 @@ sub delCert_activation    # ($certname)
 	if ( -f "$certname" )
 	{
 		$files_removed = unlink ( "$certname" );
-		&zenlog( "Error removing certificate $certname", "error", "Activation" ) if !$files_removed;
+		&zenlog( "Error removing certificate $certname", "error", "Activation" )
+		  if !$files_removed;
 	}
 	else
 	{
-		&zenlog( "The activation certificate $certname is not found", "error", "Activation" );
+		&zenlog( "The activation certificate $certname is not found",
+				 "error", "Activation" );
 	}
 
 	return $files_removed;
