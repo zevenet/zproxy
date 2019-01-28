@@ -268,23 +268,23 @@ sub certcontrol
 		# update crl if the server has connectivity
 		&updateCRL( $date_today ) if ( &checkCRLHost() );
 
-		#swcert = 6 ==> crl is missing
-		return 6 if ( !-f $crl_path );
-
-		my @decoded_crl = `$openssl crl -inform DER -text -noout -in $crl_path`;
-
-		#swcert = 8 ==> The crl is not signed
-		return 8 if ( !grep /keyid:$keyid/, @decoded_crl );
-
-		#swcert = 4 ==> Revoked in CRL
-		return 4 if ( &certRevoked( $zlbcertfile, \@decoded_crl ) );
-
 		# update date of the check
 		&setCRLDate( $date_today );
 	}
 
 	# free the crl download resource
 	close $lock_crl_download;
+
+	#swcert = 6 ==> crl is missing
+	return 6 if ( !-f $crl_path );
+
+	my @decoded_crl = `$openssl crl -inform DER -text -noout -in $crl_path`;
+
+	#swcert = 8 ==> The crl is not signed
+	return 8 if ( !grep /keyid:$keyid/, @decoded_crl );
+
+	#swcert = 4 ==> Revoked in CRL
+	return 4 if ( &certRevoked( $zlbcertfile, \@decoded_crl ) );
 
 	# Certificate expiring date
 	my $end_cert = &getCertExpiring( \@zen_cert );
@@ -294,6 +294,8 @@ sub certcontrol
 	{
 		if ( &getCertDefinitive( \@zen_cert, $cert_type, $end_cert ) )
 		{
+			# It is not allow to upgrade without support
+
 			# The contract support plan is expired you have to request a
 			# new contract support. Only message alert!
 			$swcert = -1;
@@ -761,9 +763,9 @@ sub validateCertificate
 		my @data_key = split /::/, $key_decrypy;
 
 		return 0
-		  if (    ( !grep /$hostname/, $data_key[0] )
-			   || ( !grep /$dmi/,      $data_key[1] )
-			   || ( !grep /$mod_appl/, $data_key[2] ) );
+		  if (    ( $hostname ne $data_key[0] )
+			   || ( $dmi ne $data_key[1] )
+			   || ( $mod_appl ne $data_key[2] ) );
 	}
 
 	return 1;
