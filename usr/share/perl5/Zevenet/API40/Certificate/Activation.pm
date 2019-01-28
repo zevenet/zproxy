@@ -26,6 +26,7 @@ use Zevenet::API40::HTTP;
 
 # Check RBAC permissions
 include 'Zevenet::Certificate';
+include 'Zevenet::Certificate::Activation';
 require Zevenet::User;
 
 # GET /certificates/activation/info
@@ -163,10 +164,8 @@ sub upload_activation_certificate    # ()
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $response = &checkActivationCertificate( "$tmpFilename" );
-
-	# A hash reference will be returned for non valid activation certificates
-	if ( ref $response )
+	my $checkCert = &certcontrol( $tmpFilename );
+	if ( $checkCert > 0 )
 	{
 		# Delete the tmp certificate file
 		&zenlog(
@@ -181,7 +180,7 @@ sub upload_activation_certificate    # ()
 		  &httpErrorResponse(
 							  code => 400,
 							  desc => $desc,
-							  msg  => $response->{ 'msg' }
+							  msg  => &getCertErrorMessage( $checkCert )
 		  );
 	}
 	else
