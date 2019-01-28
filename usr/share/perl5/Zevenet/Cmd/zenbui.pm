@@ -41,7 +41,7 @@ my (
 	 $mgmtgwinput, $mgmthttpinput, $mgmthttpsinput
 );
 
-my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 0 );
+my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 1 );
 
 #my $co = $Curses::UI::color_object;
 #$co->define_color('white', 70, 185, 113);
