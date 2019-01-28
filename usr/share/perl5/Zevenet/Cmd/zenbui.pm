@@ -30,16 +30,18 @@ use Zevenet::Debug;
 # This two sentences should make zenbui behave like zenbui.sh
 $ENV{ NCURSES_NO_UTF8_ACS } = 1;
 open ( STDERR, '>', '/dev/null' ) if &debug();
-
 my $ifconfig_bin = &getGlobalConfiguration( 'ifconfig_bin' );
 my $zlbmenu;
 my $win3;
 my $winhelp;
 my $zlbhostinput;
-my ( $mgmtif,      $mgmtip,      $mgmtmask,      $mgmtgw );
-my ( $mgmtifinput, $mgmtipinput, $mgmtmaskinput, $mgmtgwinput );
+my ( $mgmtif, $mgmtip, $mgmtmask, $mgmtgw, $mgmthttp, $mgmthttps );
+my (
+	 $mgmtifinput, $mgmtipinput,   $mgmtmaskinput,
+	 $mgmtgwinput, $mgmthttpinput, $mgmthttpsinput
+);
 
-my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 1 );
+my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 0 );
 
 #my $co = $Curses::UI::color_object;
 #$co->define_color('white', 70, 185, 113);
@@ -77,12 +79,13 @@ $zlbmenu = $win2->add(
 					   -selectmode => 'single',
 					   -fg         => 'white',
 					   -bg         => 'black',
-					   -values     => [1, 2, 3, 4, 5, 6, 7, 8],
+					   -values     => [1, 2, 3, 4, 9, 5, 6, 7, 8],
 					   -labels     => {
 									1 => 'Status',
 									2 => 'Services',
 									3 => 'Hostname',
 									4 => 'MGMT Interface',
+									9 => 'Proxy Settings',
 									5 => 'Time Zone',
 									6 => 'Keyboard Map',
 									7 => 'Reboot/Shutdown',
@@ -235,6 +238,11 @@ sub manage_sel()
 			&create_win3( 'ZEVENET MGMT Interface' );
 			&manage_mgmt();
 		}
+		elsif ( $selected == 9 )
+		{
+			&create_win3( ' ZEVENET Proxy Setting' );
+			&manage_proxy();
+		}
 		elsif ( $selected == 5 )
 		{
 			&create_win3( 'ZEVENET Time Zone' );
@@ -299,7 +307,7 @@ sub manage_power()
 			   },
 			},
 			{
-			   -label    => '< Cancel >',
+			   -label    => '< Return >',
 			   -value    => 3,
 			   -shortcut => 3,
 			   -onpress  => sub { $zlbmenu->focus(); },
@@ -363,7 +371,7 @@ sub manage_keyboard()
 			   },
 			},
 			{
-			   -label    => '< Cancel >',
+			   -label    => '< Return >',
 			   -value    => 2,
 			   -shortcut => 2,
 			   -onpress  => sub { $zlbmenu->focus(); },
@@ -427,7 +435,7 @@ sub manage_timezone()
 			   },
 			},
 			{
-			   -label    => '< Cancel >',
+			   -label    => '< Return >',
 			   -value    => 2,
 			   -shortcut => 2,
 			   -onpress  => sub { $zlbmenu->focus(); },
@@ -435,6 +443,75 @@ sub manage_timezone()
 		],
 	);
 	$confirm->focus();
+}
+
+sub manage_proxy()
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $mgmthttp = &getGlobalConfiguration( 'http_proxy' ) // '';
+	if ( $mgmthttpinput )
+	{
+		$mgmthttpinput->text( $mgmthttp );
+	}
+	my $mgmthttps = &getGlobalConfiguration( 'https_proxy' ) // '';
+	if ( $mgmthttpsinput )
+	{
+		$mgmthttpsinput->text( $mgmthttps );
+	}
+
+	$mgmthttpinput = $win3->add(
+		'win3id1', 'TextEntry',
+		-bg     => 'black',
+		-tfg    => 'black',
+		-tbg    => 'white',
+		-border => 1,
+		-y      => 1,
+		-title  => 'HTTP Proxy Configuration',
+		-text   => $mgmthttp,
+
+	);
+
+	#$mgmthttpinput->focus();
+
+	$mgmthttpsinput = $win3->add(
+		'win3id2', 'TextEntry',
+		-bg     => 'black',
+		-tfg    => 'black',
+		-tbg    => 'white',
+		-border => 1,
+		-y      => 4,
+		-title  => 'HTTPS Proxy Configuration',
+		-text   => $mgmthttps,
+
+	);
+
+	my $confirm = $win3->add(
+							  'win3id3',
+							  'Buttonbox',
+							  -bg       => 'black',
+							  -tfg      => 'black',
+							  -tbg      => 'white',
+							  -y        => 8,
+							  -selected => 1,
+							  -buttons  => [
+										   {
+											 -label    => '< Save >',
+											 -value    => 1,
+											 -shortcut => 1,
+											 -onpress  => sub { &set_proxy(); },
+										   },
+										   {
+											 -label    => '< Return >',
+											 -value    => 2,
+											 -shortcut => 2,
+											 -onpress  => sub { $zlbmenu->focus(); },
+										   },
+							  ],
+	);
+	$confirm->focus();
+
 }
 
 sub manage_mgmt()
@@ -501,9 +578,11 @@ sub manage_mgmt()
 	$mgmtifinput->set_selection( $mgmtindex );
 	$mgmtif = $mgmtifinput->get();
 	my $if_ref = &getInterfaceConfig( $mgmtif );
-	$mgmtip   = $if_ref->{ addr };
-	$mgmtmask = $if_ref->{ mask };
-	$mgmtgw   = $if_ref->{ gateway };
+	$mgmtip    = $if_ref->{ addr };
+	$mgmtmask  = $if_ref->{ mask };
+	$mgmtgw    = $if_ref->{ gateway };
+	$mgmthttp  = &getGlobalConfiguration( 'http_proxy' );
+	$mgmthttps = &getGlobalConfiguration( 'https_proxy' );
 
 	$mgmtipinput = $win3->add(
 							   'win3id2', 'TextEntry',
@@ -534,16 +613,17 @@ sub manage_mgmt()
 							   -tbg    => 'white',
 							   -border => 1,
 							   -y      => 10,
-							   -title  => 'MGMT GateWay Configuration',
+							   -title  => 'MGMT Gateway Configuration',
 							   -text   => $mgmtgw,
 	);
+
 	my $confirm = $win3->add(
 							  'win3id5',
 							  'Buttonbox',
 							  -bg       => 'black',
 							  -tfg      => 'black',
 							  -tbg      => 'white',
-							  -y        => 13,
+							  -y        => 14,
 							  -selected => 1,
 							  -buttons  => [
 										   {
@@ -553,7 +633,7 @@ sub manage_mgmt()
 											 -onpress  => sub { &set_net(); },
 										   },
 										   {
-											 -label    => '< Cancel >',
+											 -label    => '< Return >',
 											 -value    => 2,
 											 -shortcut => 2,
 											 -onpress  => sub { $zlbmenu->focus(); },
@@ -561,6 +641,25 @@ sub manage_mgmt()
 							  ],
 	);
 	$confirm->focus();
+}
+
+sub set_proxy()
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $newhttp  = $mgmthttpinput->get();
+	my $newhttps = $mgmthttpsinput->get();
+
+	my $ret = &confirm_dialog(
+						 "Are you sure you want to change your ZEVENET Proxy Settin?" );
+	if ( $ret )
+	{
+		&setGlobalConfiguration( 'http_proxy',  $newhttp );
+		&setGlobalConfiguration( 'https_proxy', $newhttps );
+		&refresh_win3();
+	}
+
 }
 
 sub set_net()
@@ -572,10 +671,12 @@ sub set_net()
 
 	if ( $mgmtifinput && $mgmtipinput && $mgmtmaskinput && $mgmtgwinput )
 	{
-		my $newif   = $mgmtifinput->get();
-		my $newip   = $mgmtipinput->get();
-		my $newmask = $mgmtmaskinput->get();
-		my $newgw   = $mgmtgwinput->get();
+		my $newif    = $mgmtifinput->get();
+		my $newip    = $mgmtipinput->get();
+		my $newmask  = $mgmtmaskinput->get();
+		my $newgw    = $mgmtgwinput->get();
+		my $newhttp  = $mgmthttpinput->get();
+		my $newhttps = $mgmthttpsinput->get();
 
 		if ( &ipisok( $newip ) eq "false" )
 		{
@@ -849,7 +950,7 @@ sub manage_zlb_services()
 											 -onpress  => sub { refresh_win3(); },
 										   },
 										   {
-											 -label    => '< Cancel >',
+											 -label    => '< Return >',
 											 -value    => 2,
 											 -shortcut => 2,
 											 -onpress  => sub { $zlbmenu->focus(); },
@@ -893,7 +994,7 @@ sub manage_zlb_hostname()
 											 -onpress  => sub { &set_new_hostname(); },
 										   },
 										   {
-											 -label    => '< Cancel >',
+											 -label    => '< Return >',
 											 -value    => 2,
 											 -shortcut => 2,
 											 -onpress  => sub { $zlbmenu->focus(); },
@@ -964,7 +1065,7 @@ sub show_status_system()
 											 -onpress  => sub { refresh_win3(); },
 										   },
 										   {
-											 -label    => '< Cancel >',
+											 -label    => '< Return >',
 											 -value    => 2,
 											 -shortcut => 2,
 											 -onpress  => sub { $zlbmenu->focus(); },
