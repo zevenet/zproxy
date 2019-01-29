@@ -11,8 +11,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <openssl/ssl.h>
 #include "../event/descriptor.h"
-
+#include <atomic>
 #define MAX_DATA_SIZE 65000
 
 #define ENABLE_ZERO_COPY 1
@@ -87,4 +88,9 @@ public:
   IO::IO_OP doConnect(addrinfo &address, int timeout,bool async = true);
   IO::IO_OP doConnect(const std::string &af_unix_socket_path, int timeout);
   bool isConnected();
+
+  //SSL stuff
+public:
+  SSL *ssl_context{nullptr};
+  std::atomic<bool> sslConnected_;
 };

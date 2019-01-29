@@ -11,6 +11,7 @@
 #include "../http/http_stream.h"
 #include "../service/ServiceManager.h"
 #include "../service/backend.h"
+#include "../ssl/SSLConnectionManager.h"
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -18,7 +19,7 @@
 using namespace events;
 using namespace http;
 
-class StreamManager : public EpollManager /*, public ServiceManager*/ {
+class StreamManager : public EpollManager {
 #if HELLO_WORLD_SERVER
   std::string e200 =
       "HTTP/1.1 200 OK\r\nServer: zhttp 1.0\r\nExpires: now\r\nPragma: "
@@ -29,6 +30,7 @@ class StreamManager : public EpollManager /*, public ServiceManager*/ {
   int worker_id;
   std::thread worker;
   ServiceManager *service_manager;
+  ssl::SSLConnectionManager * ssl_manager;
   Connection listener_connection;
   bool is_running;
   ListenerConfig listener_config_;
@@ -62,6 +64,7 @@ public:
   validation::REQUEST_RESULT validateResponse(HttpStream &stream);
 
   void clearStream(HttpStream *stream);
+  bool is_https_listener;
 };
 
 #endif // NEW_ZHTTP_WORKER_H

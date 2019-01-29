@@ -142,15 +142,6 @@ int main(int argc, char *argv[]) {
   if (config.group != nullptr)
     Environment::setGid(std::string(config.group));
 
-  /* SSL stuff */
-  SSL_load_error_strings();
-  SSL_library_init();
-  OpenSSL_add_all_algorithms();
-  //  l_init();
-  //  init_thr_arg();
-  //  CRYPTO_set_id_callback(l_id);
-  //  CRYPTO_set_locking_callback(l_lock);
-  // Se carga el fichero de configuracion de pound,
 
   auto control_manager = ctl::ControlManager::getInstance();
   if (config.ctrl_name != nullptr) {

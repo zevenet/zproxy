@@ -11,6 +11,10 @@ add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 
 add_library(libzhttp
+    ssl/SSLContext.cpp
+    ssl/SSLContext.h
+    ssl/SSLConnectionManager.cpp
+    ssl/SSLConnectionManager.h
     json/json.h
     json/json.cpp
     json/JsonDataValue.h

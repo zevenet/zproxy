@@ -20,6 +20,13 @@ enum class IO_RESULT {
   DONE_TRY_AGAIN,
   FD_CLOSED,
   FULL_BUFFER,
+  CANCELLED,
+  SSL_NEED_HANDSHAKE,
+  SSL_HANDSHAKE_ERROR,
+  //SSL_HANDSHAKE_START,
+  //SSL_HANDSHAKE_DONE,
+
+
 };
 
 enum class IO_OP {
@@ -104,12 +111,11 @@ struct ThreadHelper {
 } // namespace helper
 
 namespace conversionHelper {
-  template <typename T>
-  std::string to_string_with_precision(const T a_value, const int n = 4)
-  {
-      std::ostringstream out;
-      out.precision(n);
-      out << std::fixed << a_value;
-      return out.str();
-  }
+template <typename T>
+std::string to_string_with_precision(const T a_value, const int n = 4) {
+  std::ostringstream out;
+  out.precision(n);
+  out << std::fixed << a_value;
+  return out.str();
+}
 } // namespace conversionHelper
