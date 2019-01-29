@@ -151,10 +151,8 @@ sub upload_activation_certificate    # ()
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $response = &checkActivationCertificate( $tmpFilename );
-
-	# A hash reference will be returned for non valid activation certificates
-	if ( ref $response )
+	my $checkCert = &certcontrol( $tmpFilename );
+	if ( $checkCert > 0 )
 	{
 		# Delete the tmp certificate file
 		&zenlog(
@@ -165,8 +163,12 @@ sub upload_activation_certificate    # ()
 			my $msg = "Error deleting new invalid activation certificate file";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		return &httpErrorResponse( code => 400, desc => $desc,
-								   msg => $response->{ 'msg' } );
+		return
+		  &httpErrorResponse(
+							  code => 400,
+							  desc => $desc,
+							  msg  => &getCertErrorMessage( $checkCert )
+		  );
 	}
 	else
 	{

@@ -21,28 +21,23 @@
 #
 ###############################################################################
 
+BM_tag=0 # _BM_tag_
+
 GLOBALCF="/usr/local/zevenet/config/global.conf"
 GLOBALCFT="/usr/local/zevenet/share/global.conf.template"
 
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" && exit 1
 [ "$1" == "configure" ] && echo "Completing the Zevenet installation..."
 
+# link l4xnat with iptables or nftables
 if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	rm -rf "/usr/share/perl5/Zevenet/Farm/L4xNAT"
 	ln -sf L4ipt /usr/share/perl5/Zevenet/Farm/L4xNAT
 fi
 
-
-if [ -f /usr/local/zevenet/app/zennetname/write_net_rules ]; then
-	cp -f /usr/local/zevenet/app/zennetname/write_net_rules /lib/udev/
-fi
-
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
-	/usr/local/zevenet/www/zapi/v3.1/zapi.cgi
-	/usr/local/zevenet/www/zapi/v3.2/zapi.cgi
-	/usr/local/zevenet/www/zapi/v4.0/zapi.cgi
 	/usr/local/zevenet/bin/zevenet
 	/usr/local/zevenet/bin/enterprise.bin
 )
@@ -56,7 +51,6 @@ done
 
 #upgrading global.conf
 /usr/local/zevenet/bin/checkglobalconf
-
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
@@ -82,14 +76,14 @@ if [ -f /etc/keepalived/keepalived.conf ]; then
 	fi
 fi
 
-#Disable conntrackd stats
+# Disable conntrackd stats
 sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
-#delete old conntrackd-stats logs
+# Delete old conntrackd-stats logs
 rm -rf /var/log/conntrackd-stats* 2>/dev/null
 
-# Disable services
+## Disable services
 
-# SNMP and sec services
+# SNMP services
 if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
 	cp /usr/local/zevenet/share/snmpd.conf.template /etc/snmp/snmpd.conf
 fi
@@ -152,7 +146,7 @@ sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zevenet\/logs        ext4    d
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 
-#move zlb-stop & zlb-start
+# Move zlb-stop & zlb-start. They were moved in the preinst
 if [ -f /tmp/zlb-stop ]; then
 	mv /tmp/zlb-stop /usr/local/zevenet/config/
 fi
@@ -163,70 +157,38 @@ fi
 chmod +x /usr/local/zevenet/config/zlb-start
 chmod +x /usr/local/zevenet/config/zlb-stop
 
-
-# Fix fwmarks for L4xNAT backends
-if [ -f /usr/local/zevenet/bin/fwmark_tag_fix.pl ]; then
-	/usr/local/zevenet/bin/fwmark_tag_fix.pl
-fi
-
-# Migrate HTTP farms to dynamic thread model, without tcmalloc
-for i in $(find /usr/local/zevenet/config/ -name *pound.cfg);
-do
-	if [[ `grep -c ThreadModel $i` == '0' ]]; then
-		echo Migrating $i
-		sed -i -e 's/Threads\t\t[0-9]*$/ThreadModel\tdynamic/' $i
-	fi
-done
-
 # Disable DNS resolution for SSH service
 if [ -f /usr/local/zevenet/bin/ssh_nodns.sh ]; then
-        /usr/local/zevenet/bin/ssh_nodns.sh
+	/usr/local/zevenet/bin/ssh_nodns.sh
 fi
-
-# Correct file DNS
-if [ -f /etc/resolv.conf ]; then
-        sed -i -r '/nameserver ?$/d' /etc/resolv.conf
-fi;
 
 # Create IPDS directories
 /usr/local/zevenet/bin/boot_ipds
 
-# Do not show warning messages from bonding module on syslog
-ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"
-if [ ! -f ${ZEVENET_SYSLOG_FILE} ];
-then
-	KERNEL_VERSION=`uname -r | cut -d. -f1-2`
-	if [ ${KERNEL_VERSION} == '3.2' ];
-	then
-		STOP_TAG='~'
-	else
-		STOP_TAG='stop'
-	fi
-	echo ':msg,contains,"Loading kernel module for a network device with CAP_SYS_MODULE (deprecated).  Use CAP_NET_ADMIN and alias netdev- instead"' ${STOP_TAG} > ${ZEVENET_SYSLOG_FILE}
-	/etc/init.d/rsyslog restart
+# Remove residual cluster DROP(s) on ip6tables
+if [ $BM_tag -ne 0 ]; then
+	ip6tables -F INPUT 2>/dev/null
 fi
 
-# Remove residual cluster DROP(s) on ip6tables
-ip6tables -F INPUT 2>/dev/null
+# Apply all migrating scripts to zevenet
+if [ $BM_tag -ne 0 ]; then
+	#migrating config files
+	MIG_DIR="/usr/local/zevenet/migrating/"
+	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
+fi
 
-
-#migrating config files
-MIG_DIR="/usr/local/zevenet/migrating/"
-for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
-
-# restarting zevenet service
-echo "Zevenet will be unavailable while the service is restarting."
-/etc/init.d/zevenet stop
-/etc/init.d/zevenet start
+if [ $BM_tag -eq 0 ]; then
+	# restarting zevenet service
+	echo "Zevenet will be unavailable while the service is restarting."
+	/etc/init.d/zevenet stop
+	/etc/init.d/zevenet start
+fi
 
 # Load conntrack modules
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
 
-# Delete manually setup ZenLB services
-rm -f /etc/rc*.d/*zenloadbalancer
-
-# Add ZenLB services to boot process including dependencies
+# Add Zevenet services to boot process including dependencies
 update-rc.d zevenet defaults
 
 # Link zenbui
@@ -251,4 +213,11 @@ done
 #Change prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
-echo "Zevenet Load Balancer update completed..."
+if [ $BM_tag -eq 1 ]; then
+	#Flush apt sources
+	echo > /etc/apt/sources.list
+
+	echo "Zevenet Load Balancer installed..."
+else
+	echo "Zevenet Load Balancer update completed..."
+fi

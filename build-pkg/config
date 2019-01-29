@@ -9,13 +9,13 @@ debian_versions=(jessie stretch)
 enterprise_files=(
 	etc/profile
 	etc/profile_packetbl
+	usr/local/zevenet/migrating/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/bin/enterprise.bin
 	usr/local/zevenet/bin/boot_ipds
 	usr/local/zevenet/bin/cluster_status
 	usr/local/zevenet/bin/cluster_status.pl
-	usr/local/zevenet/bin/fwmark_tag_fix.pl
 	usr/local/zevenet/bin/if_throughput.pl
 	usr/local/zevenet/bin/netplug.pl
 	usr/local/zevenet/bin/persistent-nics
@@ -90,11 +90,6 @@ enterprise_files=(
 	usr/local/zevenet/www/zapi/
 	DEBIAN/
 	build-pkg/
-)
-
-installation_files=(
-	DEBIAN/preinst_BM
-	DEBIAN/postinst_BM
 )
 
 compiled_files=(
