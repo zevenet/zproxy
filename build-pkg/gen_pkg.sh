@@ -3,9 +3,12 @@
 # Exit at the first error
 set -e
 
+CRL_URL='https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl'
+
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 DATE=$(date +%y%m%d_%H%M%S)
 arch="amd64"
+CERT_FUNCTIONS="usr/share/perl5/Zevenet/Certificate/Activation.pm"
 
 # Default options
 devel="false"
@@ -140,19 +143,17 @@ msg "Preparing package..."
 find . -name .keep -exec rm {} \;
 
 # Bare-metal/installation files
-for install_file in "${installation_files[@]}"; do
-	# Bash built-in string substitution
-	orig_file=${install_file//_BM/}
-
-	if [[ $distribution == "install" ]]; then
-		echo "Overwriting $orig_file with $install_file"
-		mv "${install_file}" "${orig_file}"
-	else
-		echo "Deleting $install_file"
-		rm "${install_file}"
-	fi
-done
-
+if [[ $distribution == "install" ]]; then
+	echo "Enabling BM preinst and postinst flag"
+	# perl script
+	sed -E -i 's/^.+_BM_tag_/my $BM_tag = 1;/' DEBIAN/preinst
+	# bash script
+	sed -E -i 's/^.+_BM_tag_/BM_tag=1/' DEBIAN/postinst
+else
+	# add certificate module to preinst. I has to be in the head of the file
+	cat $CERT_FUNCTIONS | cat - DEBIAN/preinst > temp && mv temp DEBIAN/preinst
+	chmod +x DEBIAN/preinst
+fi
 
 # Release or development
 if [[ $devel == "false" ]]; then
@@ -197,7 +198,7 @@ if [[ $devel == "false" ]]; then
 	msg "Preparing preinst..."
 
 	crl="DEBIAN/cacrl.crl"
-	wget -t 1 -T 3 -q -O "$crl" https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl \
+	wget -t 1 -T 3 -q -O "$crl" $CRL_URL \
 		|| die " downloading crl"
 	cp "$crl" usr/local/zevenet/config/cacrl.crl
 
