@@ -45,6 +45,7 @@ my $defaultgwif  = &getGlobalConfiguration( 'defaultgwif' );
 my $defaultgw6   = &getGlobalConfiguration( 'defaultgw6' );
 my $defaultgwif6 = &getGlobalConfiguration( 'defaultgwif6' );
 my $action       = shift @ARGV // '';
+my $print_msg = "";
 
 if ( $action !~ /^(start|stop|restart)$/ )
 {
@@ -126,11 +127,11 @@ if ( $action eq "start" )
 
 	if ($eload)
 	{
-		my $msg = &eload(
+		$print_msg = &eload(
 				module => $mod,
 				func   => 'service_cert_message',
 		);
-		print $msg;
+		print $print_msg . "\n";
 	}
 
 	# Load required modules
@@ -234,6 +235,13 @@ if ( $action eq "start" )
 
 	print ( "* Starting Interfaces:\n" );
 
+	# enterprise hook
+	if ($eload)
+	{
+		$print_msg = &eload( module => $mod, func => 'start_service' );
+		print $print_msg . "\n";
+	}
+
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
 	my @interfaces = @{ &getConfigInterfaceList() };
 
@@ -293,9 +301,6 @@ if ( $action eq "start" )
 		}
 	}
 
-	# enterprise hook
-	&eload( module => $mod, func => 'start_service' ) if $eload;
-
 	&zenlog("zevenet: Setting up VLAN interfaces...");
 	@interfaces = @{ &getConfigInterfaceList() };
 
@@ -352,10 +357,12 @@ if ( $action eq "start" )
 	if ( $eload )
 	{
 		&zenlog("zevenet: Setting up Cluster...");
-		&eload( module => $mod, func => 'enable_cluster' );
+		$print_msg = &eload( module => $mod, func => 'enable_cluster' );
+		print $print_msg . "\n";
 
 		# enable modules
-		&eload( module => $mod, func => 'start_modules' );
+		$print_msg = &eload( module => $mod, func => 'start_modules' );
+		print $print_msg . "\n";
 	}
 
 	&zenlog("zevenet: Setting up virtual interfaces...");
@@ -431,8 +438,8 @@ if ( $action eq "start" )
 			#farmguardian configured and up?
 			if ( $status == 0 )
 			{
+				print ( "  * Starting FarmGuardian for $farmname:" );
 				my $stat = &runFGFarmStart( $farmname );
-
 				if ( $stat == 0 )
 				{
 					print ( " \033[1;32m OK \033[0m \n" );
@@ -476,13 +483,14 @@ if ( $action eq "stop" )
 
 	if ($eload)
 	{
-		my $msg = &eload(
+		$print_msg = &eload(
 				module => $mod,
 				func   => 'service_cert_message',
 		);
-		print $msg;
+		print $print_msg . "\n";
 
-		&eload( module => $mod, func => 'stop_service' );
+		$print_msg = &eload( module => $mod, func => 'stop_service' );
+		print $print_msg . "\n";
 	}
 
 	print ( "* Stopping Farms:\n" );

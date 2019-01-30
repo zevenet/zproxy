@@ -167,20 +167,24 @@ sub start_service
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
+
+	my $out_msg = "";
+	my $msg     = "";
+
 	&zenlog( "Zevenet Service: Starting...", "info", "SYSTEM" );
 
-	if ( $swcert > 0 )
-	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
-		return 1;
-	}
+	return "" if ( $swcert > 0 );
 
-	&zenlog( "Zevenet Service: Loading Optimizations...", "info", "SYSTEM" );
+	$msg = "Loading Optimizations...";
+	$out_msg .= "\n* $msg";
+	&zenlog( "Zevenet service: $msg", "info", "SYSTEM" );
 
 	&setSystemOptimizations();
 
-	&zenlog( "Zevenet Service: Loading Bonding configuration...", "info",
-			 "SYSTEM" );
+	$msg = "Loading Bonding configuration...";
+	$out_msg .= "\n* $msg";
+	&zenlog( "Zevenet service: $msg", "info", "SYSTEM" );
+
 	include 'Zevenet::Net::Bonding';
 
 	# bonding
@@ -204,17 +208,17 @@ sub start_service
 
 		my $bond = $bond_conf->{ $bond_k };
 
-		print STDERR "  * Up bonding master $$bond{name} ";
+		$out_msg .= "\n  Up bonding master $$bond{name} ";
 
 		my $error_code = &applyBondChange( $bond );
 
 		if ( $error_code == 0 )
 		{
-			print STDERR " \033[1;32m OK \033[0m \n";
+			$out_msg .= " \033[1;32m OK \033[0m \n";
 		}
 		else
 		{
-			print STDERR " \033[1;31m ERROR \033[0m \n";
+			$out_msg .= " \033[1;31m ERROR \033[0m \n";
 		}
 	}
 
@@ -232,16 +236,16 @@ sub start_service
 
 			if ( $$iface{ status } eq "up" )
 			{
-				print ( STDERR "  * Starting interface $$iface{name}" );
+				$out_msg .= "\n  * Starting interface $$iface{name}";
 				&upIf( $iface );
 
 				if ( exists $$iface{ addr } && length $$iface{ addr } )
 				{
-					print ( STDERR "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+					$out_msg .= "\n    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
 					if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
 					{
-						print ( STDERR " Gateway:$$iface{gateway}" );
+						$out_msg .= " Gateway:$$iface{gateway}";
 					}
 
 					my $return_code = &addIp( $iface );
@@ -260,11 +264,11 @@ sub start_service
 
 					if ( $return_code == 0 )
 					{
-						print ( STDERR " \033[1;32m OK \033[0m \n" );
+						$out_msg .= " \033[1;32m OK \033[0m \n";
 					}
 					else
 					{
-						print ( STDERR " \033[1;31m ERROR \033[0m \n" );
+						$out_msg .= " \033[1;31m ERROR \033[0m \n";
 					}
 				}
 
@@ -284,23 +288,33 @@ sub start_modules
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	&zenlog( "Zevenet Service: Loading Notification configuration...",
-			 "info", "NOTIFICATIONS" );
+
+	my $out_msg = "";
+	my $msg     = "";
+
+	# do not run cluster if the certificate is not valid
+	return "" if ( $swcert > 0 );
 
 	# Notifications
+	$msg     = "Starting Notification...";
+	$out_msg = "* $msg";
+	&zenlog( "Zevenet Service: $msg", "info", "NOTIFICATIONS" );
+
 	include 'Zevenet::Notify';
 	&zlbstartNotifications();
 
-	&zenlog( "Zevenet Service: Starting RBAC system...", "info", "RBAC" );
-
 	# rbac
-	&zenlog( "Zevenet Service: Starting RBAC system..." );
+	$msg = "Starting RBAC system...";
+	$out_msg .= "\n* $msg";
+	&zenlog( "Zevenet Service: $msg", "info", "RBAC" );
 
 	include 'Zevenet::RBAC::Action';
 	&initRBACModule();
 
 	# ipds
-	&zenlog( "Zevenet Service: Starting IPDS system...", "info", "IPDS" );
+	$msg = "Starting IPDS system...";
+	$out_msg .= "\n* $msg";
+	&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
 
 	include 'Zevenet::IPDS::Base';
 	&runIPDSStartModule();
@@ -308,6 +322,8 @@ sub start_modules
 	# enable monitoring interface throughput
 	#~ include 'Zevenet::Net::Throughput';
 	#~ &startTHROUTask();
+
+	return $out_msg;
 }
 
 # this function syncs files with the other node before starting the cluster and
@@ -317,15 +333,11 @@ sub enable_cluster
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	# check activation certificate
-	if ( $swcert > 0 )
-	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
+	# do not run cluster if the certificate is not valid
+	return "" if ( $swcert > 0 );
 
-		# stop zevenet service if the certificate is not valid
-		# WARNING: this MUST be 'exec' and not other way of running a program
-		exec ( '/usr/local/zevenet/bin/zevenet stop' );
-	}
+	my $msg;
+	my $out_msg = "";
 
 	include 'Zevenet::Cluster';
 
@@ -337,11 +349,14 @@ sub enable_cluster
 	# end this function if the cluster is not configured
 	unless ( $zcl_configured )
 	{
-		&zenlog( "Cluster configuration not found", "info", "CLUSTER" );
-		return 0;
+		$out_msg = "Cluster configuration NOT found";
+		&zenlog( "Zevenet Service: $out_msg", "info", "CLUSTER" );
+		return $out_msg;
 	}
 
-	&zenlog( "Cluster configuration found", "info", "CLUSTER" );
+	$msg     = "Configuring Cluster...";
+	$out_msg = $msg;
+	&zenlog( "Zevenet Service: $msg", "info", "CLUSTER" );
 
 	# check node status if node_status_file exists
 	if ( -f $znode_status_file )
@@ -388,7 +403,12 @@ sub enable_cluster
 		}
 	}
 
-	return 0;
+	$msg =
+	  "The nodo has been configured with the role \033[1;32m $local_node_status \033[0m";
+	$out_msg .= "\n  $msg";
+	&zenlog( "Zevenet Service: $msg", "info", "RBAC" );
+
+	return $out_msg;
 }
 
 sub start_cluster
@@ -397,15 +417,8 @@ sub start_cluster
 			 "debug", "PROFILING" );
 	include 'Zevenet::Cluster';
 
-	# check activation certificate
-	if ( $swcert > 0 )
-	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
-
-		# stop zevenet service if the certificate is not valid
-		# WARNING: this MUST be 'exec' and not other execution
-		exec ( '/usr/local/zevenet/bin/zevenet stop' );
-	}
+	# do not run cluster if the certificate is not valid
+	return "" if ( $swcert > 0 );
 
 	my $zcl_configured = &getZClusterStatus();
 
@@ -446,6 +459,8 @@ sub stop_service
 	include 'Zevenet::Net::Throughput';
 	include 'Zevenet::Cluster';
 
+	my $out_msg = "";
+
 	# stop all modules
 	&zlbstopNotifications();
 	&runIPDSStopModule();
@@ -454,7 +469,8 @@ sub stop_service
 
 	if ( &getZClusterStatus() )
 	{
-		&zenlog( "Stopping ZCluster...", "info", "CLUSTER" );
+		$out_msg = "Stopping ZCluster...";
+		&zenlog( "$out_msg", "info", "CLUSTER" );
 		my $zenino_proc = &get_zeninotify_process();
 
 		unless ( system ( $zenino_proc ) )
@@ -469,7 +485,7 @@ sub stop_service
 		}
 	}
 
-	return 0;
+	return $out_msg;
 }
 
 sub disable_cluster
@@ -502,7 +518,8 @@ sub service_cert_message
 	else
 	{
 		$tag = "\033[1;31m ERROR \033[0m";
-		$msg = &getCertErrorMessage( $swcert );
+		$msg = "No valid ZLB certificate was found, no farm started\n    ";
+		$msg .= &getCertErrorMessage( $swcert );
 	}
 
 	$output = "  $tag $msg\n\n";

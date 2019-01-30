@@ -37,6 +37,7 @@ my $mod;
 my $symbolic_link = "";
 my $program_name = "";
 my $basename;
+my $zvn_exec = 0;	# check if the process has been executed from zevenet
 
 sub include;
 include 'Zevenet::Certificate::Activation';
@@ -77,6 +78,7 @@ else
 	#~ }
 	######################################################################
 
+	$zvn_exec = 1 if ( ( split ( '/', $ENV{_} ) )[-1] eq 'zevenet' );
 	$basename = ( split ( '/', $program_name ) )[-1];
 }
 
@@ -193,7 +195,7 @@ my $stop_zevenet = (
 my $exception = ( $mod->{ name } eq 'Zevenet::RBAC::User::Core' and $func eq 'validateRBACUserZapi' );
 my $exception_rbac = ( $mod->{ name } eq 'Zevenet::RBAC::Core' and $func eq 'getRBACPermissionsMsg' );
 
-my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception || $exception_rbac);
+my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception || $exception_rbac || $zvn_exec );
 
 unless ( $skip_cert_check )
 {
@@ -201,7 +203,8 @@ unless ( $skip_cert_check )
 
 	if ( $swcert > 0 )
 	{
-		die "$basename: Invalid activation certificate ($swcert)";
+		my $msg = "$basename: Invalid activation certificate ($swcert)";
+		die $msg;
 	}
 }
 
