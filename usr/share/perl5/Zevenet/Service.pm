@@ -484,4 +484,30 @@ sub disable_cluster
 	return 0;
 }
 
+sub service_cert_message
+{
+	my $output = "";
+	my $tag    = "";
+	my $msg    = "";
+
+	if ( $swcert == 0 )
+	{
+		return "";
+	}
+	elsif ( $swcert < 0 )
+	{
+		$tag = "\033[1;33m Warning \033[0m";
+		$msg = "The support contract is expired";
+	}
+	else
+	{
+		$tag = "\033[1;31m ERROR \033[0m";
+		$msg = &getCertErrorMessage( $swcert );
+	}
+
+	$output = "  $tag $msg\n\n";
+
+	return $output;
+}
+
 1;

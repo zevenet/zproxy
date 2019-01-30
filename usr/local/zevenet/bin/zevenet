@@ -124,6 +124,15 @@ if ( $action eq "start" )
 
 	&printAndLog( "Starting Zevenet Load Balancer v$version" );
 
+	if ($eload)
+	{
+		my $msg = &eload(
+				module => $mod,
+				func   => 'service_cert_message',
+		);
+		print $msg;
+	}
+
 	# Load required modules
 	require Zevenet::Farm::L4xNAT::Service;
 	&loadL4FarmModules();
@@ -465,7 +474,16 @@ if ( $action eq "stop" )
 {
 	&printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
-	&eload( module => $mod, func => 'stop_service' ) if $eload;
+	if ($eload)
+	{
+		my $msg = &eload(
+				module => $mod,
+				func   => 'service_cert_message',
+		);
+		print $msg;
+
+		&eload( module => $mod, func => 'stop_service' );
+	}
 
 	print ( "* Stopping Farms:\n" );
 
