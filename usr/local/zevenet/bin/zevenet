@@ -409,40 +409,28 @@ if ( $action eq "start" )
 		}
 	}
 
-	print ( "* Starting Farms:\n" );
-
-	my @farmsf = &getFarmList();
-	my $enable_fg = 1;
-
-	$enable_fg = &eload( module => $mod, func => 'getEnableFarmGuardian' ) if $eload;
-
-	&zenlog("zevenet: Setting up farms...");
-
-	foreach my $ffile ( @farmsf )
+	if ( ! $eload or ! &eload( module => $mod, func => 'service_start_farms' ) )
 	{
-		my $farmname = &getFarmName( $ffile );
-		my $bstatus  = &getFarmBootStatus( $farmname );
+		print ( "* Starting Farms:\n" );
 
-		if ( $bstatus eq "up" )
+		my @farmsf = &getFarmList();
+		my $enable_fg = 1;
+
+		$enable_fg = &eload( module => $mod, func => 'getEnableFarmGuardian' ) if $eload;
+
+		&zenlog("zevenet: Setting up farms...");
+
+		foreach my $ffile ( @farmsf )
 		{
-			print ( "  * Starting Farm $farmname:" );
-			my $status = &runFarmStart( $farmname, "false" );
+			my $farmname = &getFarmName( $ffile );
+			my $bstatus  = &getFarmBootStatus( $farmname );
 
-			if ( $status == 0 )
+			if ( $bstatus eq "up" )
 			{
-				print ( " \033[1;32m OK \033[0m \n" );
-			}
-			else
-			{
-				print ( " \033[1;31m ERROR \033[0m \n" );
-			}
+				print ( "  * Starting Farm $farmname:" );
+				my $status = &runFarmStart( $farmname, "false" );
 
-			#farmguardian configured and up?
-			if ( $status == 0 )
-			{
-				print ( "  * Starting FarmGuardian for $farmname:" );
-				my $stat = &runFGFarmStart( $farmname );
-				if ( $stat == 0 )
+				if ( $status == 0 )
 				{
 					print ( " \033[1;32m OK \033[0m \n" );
 				}
@@ -450,11 +438,26 @@ if ( $action eq "start" )
 				{
 					print ( " \033[1;31m ERROR \033[0m \n" );
 				}
+
+				#farmguardian configured and up?
+				if ( $status == 0 )
+				{
+					print ( "  * Starting FarmGuardian for $farmname:" );
+					my $stat = &runFGFarmStart( $farmname );
+					if ( $stat == 0 )
+					{
+						print ( " \033[1;32m OK \033[0m \n" );
+					}
+					else
+					{
+						print ( " \033[1;31m ERROR \033[0m \n" );
+					}
+				}
 			}
-		}
-		else
-		{
-			print ( "  Farm $farmname configured DOWN\n" );
+			else
+			{
+				print ( "  Farm $farmname configured DOWN\n" );
+			}
 		}
 	}
 
