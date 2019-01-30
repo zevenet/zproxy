@@ -281,7 +281,7 @@ sub start_service
 		}
 	}
 
-	return 0;
+	return $out_msg;
 }
 
 sub start_modules
@@ -297,7 +297,7 @@ sub start_modules
 
 	# Notifications
 	$msg     = "Starting Notification...";
-	$out_msg = "* $msg";
+	$out_msg = "* $msg\n\n";
 	&zenlog( "Zevenet Service: $msg", "info", "NOTIFICATIONS" );
 
 	include 'Zevenet::Notify';
@@ -305,7 +305,7 @@ sub start_modules
 
 	# rbac
 	$msg = "Starting RBAC system...";
-	$out_msg .= "\n* $msg";
+	$out_msg .= "* $msg\n\n";
 	&zenlog( "Zevenet Service: $msg", "info", "RBAC" );
 
 	include 'Zevenet::RBAC::Action';
@@ -313,7 +313,7 @@ sub start_modules
 
 	# ipds
 	$msg = "Starting IPDS system...";
-	$out_msg .= "\n* $msg";
+	$out_msg .= "* $msg\n";
 	&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
 
 	include 'Zevenet::IPDS::Base';
@@ -349,12 +349,12 @@ sub enable_cluster
 	# end this function if the cluster is not configured
 	unless ( $zcl_configured )
 	{
-		$out_msg = "Cluster configuration NOT found";
+		$out_msg = "* Cluster configuration NOT found";
 		&zenlog( "Zevenet Service: $out_msg", "info", "CLUSTER" );
 		return $out_msg;
 	}
 
-	$msg     = "Configuring Cluster...";
+	$msg     = "* Configuring Cluster...";
 	$out_msg = $msg;
 	&zenlog( "Zevenet Service: $msg", "info", "CLUSTER" );
 

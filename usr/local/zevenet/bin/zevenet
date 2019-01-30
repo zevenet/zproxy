@@ -358,7 +358,7 @@ if ( $action eq "start" )
 	{
 		&zenlog("zevenet: Setting up Cluster...");
 		$print_msg = &eload( module => $mod, func => 'enable_cluster' );
-		print $print_msg . "\n";
+		print $print_msg . "\n\n";
 
 		# enable modules
 		$print_msg = &eload( module => $mod, func => 'start_modules' );
