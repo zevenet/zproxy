@@ -34,10 +34,6 @@ if ( ! $BM_tag )
 		exit 1;    #Abort deploy
 	}
 }
-else
-{
-	exit 1;        #Abort deploy
-}
 
 # Reset the sysctl in order to establish the new parameters
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
