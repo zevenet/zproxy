@@ -233,14 +233,15 @@ if ( $action eq "start" )
 		}
 	}
 
-	print ( "* Starting Interfaces:\n" );
-
 	# enterprise hook
 	if ($eload)
 	{
 		$print_msg = &eload( module => $mod, func => 'start_service' );
 		print $print_msg . "\n";
 	}
+
+
+	print ( "* Starting Interfaces:\n" );
 
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
 	my @interfaces = @{ &getConfigInterfaceList() };

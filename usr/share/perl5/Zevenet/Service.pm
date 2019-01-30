@@ -171,9 +171,10 @@ sub start_service
 	my $out_msg = "";
 	my $msg     = "";
 
-	&zenlog( "Zevenet Service: Starting...", "info", "SYSTEM" );
+   # IMPORTANT
+   # all thing in this module must be applied although the certificate will be wrong
 
-	return "" if ( $swcert > 0 );
+	&zenlog( "Zevenet Service: Starting...", "info", "SYSTEM" );
 
 	$msg = "Loading Optimizations...";
 	$out_msg .= "\n* $msg";
