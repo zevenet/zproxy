@@ -412,6 +412,8 @@ void StreamManager::onRequestEvent(int fd) {
             timers_set[stream->timer_fd.getFileDescriptor()] = stream;
             addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
                   EVENT_GROUP::CONNECT_TIMEOUT);
+            if(stream->backend_connection.getBackend()->nf_mark > 0)
+              Network::setSOMarkOption(stream->backend_connection.getFileDescriptor(),stream->backend_connection.getBackend()->nf_mark);
           }
           case IO::IO_OP::OP_SUCCESS: {
             stream->backend_connection.getBackend()->increaseConnection();

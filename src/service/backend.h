@@ -56,4 +56,5 @@ public:
   bool isHandler(ctl::CtlTask &task) override;
 
   std::unique_ptr<JsonObject> getBackendJson();
+  int nf_mark;
 };

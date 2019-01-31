@@ -53,6 +53,7 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
     backend->status = backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED : BACKEND_STATUS::BACKEND_UP;
     backend->backend_type = BACKEND_TYPE::REMOTE;
     backend->bekey = backend_config->bekey;
+    backend->nf_mark = backend_config->nf_mark;
     if (emergency)
       emergency_backend_set.push_back(backend);
     else
@@ -79,6 +80,7 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
     config->status = backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED : BACKEND_STATUS::BACKEND_UP;
     config->response_timeout = backend_config->rw_timeout;
     config->backend_type = BACKEND_TYPE::REDIRECT;
+    config->nf_mark = backend_config->nf_mark;
     if (emergency)
       emergency_backend_set.push_back(config);
     else

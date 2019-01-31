@@ -1336,6 +1336,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
   res->bekey = NULL;
   res->connections;
   res->next = NULL;
+  res->nf_mark = 0;
   has_addr = has_port = 0;
   pthread_mutex_init(&res->mut, NULL);
   while (conf_fgets(lin, MAXBUF)) {
@@ -1385,6 +1386,8 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
       res->priority = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&TimeOut, lin, 4, matches, 0)) {
       res->rw_timeout = atoi(lin + matches[1].rm_so);
+    }else if (!regexec(&NfMark, lin, 4, matches, 0)) {
+      res->nf_mark = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&ConnTO, lin, 4, matches, 0)) {
       res->conn_to = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&HAport, lin, 4, matches, 0)) {
@@ -1837,7 +1840,8 @@ bool Config::compile_regex() {
      || regcomp(&RESP_IGN, "^HTTP/1.[01] (10[1-9]|1[1-9][0-9]|204|30[456]).*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
      || regcomp(&LOCATION, "(http|https)://([^/]+)(.*)", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
      || regcomp(&AUTHORIZATION, "Authorization:[ \t]*Basic[ \t]*\"?([^ \t]*)\"?[ \t]*", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
-     ) {
+     || regcomp(&NfMark, "^[ \t]*NfMark[ \t]+([1-9][0-9]*)[ \t]*$",REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+         ) {
          logmsg(LOG_ERR, "bad essential Regex - aborted");
          return false;
      }
@@ -1932,6 +1936,7 @@ void Config::clean_regex() {
 #endif
 #endif
   regfree(&DHParams);
+  regfree(&NfMark);
   if (DHCustom_params) DH_free(DHCustom_params);
 }
 

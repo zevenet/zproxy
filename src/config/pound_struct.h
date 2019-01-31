@@ -62,6 +62,7 @@ class BackendConfig {
   int connections;
   BackendConfig *next = nullptr;
   int key_id;
+  int nf_mark;
 };
 
 typedef struct _tn {

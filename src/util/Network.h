@@ -217,6 +217,13 @@ public:
            -1;
   }
 #endif
+  //set netfilter mark, need root privileges
+  inline static bool setSOMarkOption(int sock_fd, int nf_mark) {
+    //enter_suid()/leave_suid().
+    return nf_mark != 0 && setsockopt(sock_fd, SOL_SOCKET, SO_MARK, &nf_mark, sizeof(nf_mark)) !=
+        -1;
+
+  }
   inline static bool isConnected(int sock_fd) {
     int error_code = -1;
     socklen_t error_code_size = sizeof(error_code);
