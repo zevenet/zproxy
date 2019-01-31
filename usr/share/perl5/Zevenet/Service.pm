@@ -503,7 +503,7 @@ sub disable_cluster
 
 sub service_start_farms
 {
-	return ( $swcert >= 0 );    # return 1 if the certificate is not valid
+	return ( $swcert > 0 );    # return 1 if the certificate is not valid
 }
 
 sub service_cert_message
