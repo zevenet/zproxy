@@ -268,8 +268,8 @@ sub certcontrol
 		# update crl if the server has connectivity
 		&updateCRL( $date_today ) if ( &checkCRLHost() );
 
-		# update date of the check
-		&setCRLDate( $date_today );
+		# update date of the check if the CRL was downloaded
+		&setCRLDate( $date_today ) if ( -f $crl_path );
 	}
 
 	# free the crl download resource
