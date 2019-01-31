@@ -181,21 +181,14 @@ unless ( $func )
 my $hostname = &getHostname();
 my $basedir  = &getGlobalConfiguration( 'basedir' );
 
-### Exceptions to activation certificate check ### BEGIN
-# Upload activation certificate
-my $upload_cert = ( $mod->{ name } =~ /Zevenet::API\d+::Certificate::Activation/
-					&& $func eq 'upload_activation_certificate' );
-
 # Stopping zevenet service
 my $stop_zevenet = (
 				   $mod->{ name } eq 'Zevenet::Service' && ( $func eq 'stop_service'
 													 || $func eq 'disable_cluster' )
 );
-### Exceptions to activation certificate check ### END
-my $exception = ( $mod->{ name } eq 'Zevenet::RBAC::User::Core' and $func eq 'validateRBACUserZapi' );
-my $exception_rbac = ( $mod->{ name } eq 'Zevenet::RBAC::Core' and $func eq 'getRBACPermissionsMsg' );
 
-my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception || $exception_rbac || $zvn_exec );
+### Exceptions to activation certificate check ### END
+my $skip_cert_check = ( $stop_zevenet || $zvn_exec );
 
 unless ( $skip_cert_check )
 {
