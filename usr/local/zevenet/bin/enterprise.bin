@@ -95,6 +95,11 @@ if ( $DEBUG > 5 )
 	#~ &zenlog('[ENTERPRISE.BIN] %ENV                     = ' . Dumper \%ENV );
 }
 
+
+# Rewrite script variable. It is necessary to avoid looping calls from the API
+$ENV{ SCRIPT_NAME } = 'enterprise.bin';
+
+
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
 {
