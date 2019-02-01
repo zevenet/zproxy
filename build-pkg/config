@@ -216,6 +216,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
+	usr/share/perl5/Zevenet/Cmd/supportsave_ext.pm
 	usr/share/perl5/Zevenet/Cmd/cluster_status.pm
 	usr/share/perl5/Zevenet/Cmd/sendNotification.pm
 	usr/share/perl5/Zevenet/Cmd/updateRemoteList.pm

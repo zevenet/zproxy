@@ -185,6 +185,12 @@ echo "Saving monitoring files"
 /bin/cp ${home_dir}/www/*.pem $backup_dir 2>/dev/null
 /bin/tar zcf $backup_dir/monitoring.tar.gz $monitoring_paths 2>/dev/null
 
+if [ -f /usr/local/zevenet/bin/enterprise.bin ]; then
+	echo "Saving monitoring files"
+	/usr/local/zevenet/bin/supportsave_ext $backup_dir
+	# copiar al dir
+fi
+
 
 echo "Packing supportsave"
 ##########################

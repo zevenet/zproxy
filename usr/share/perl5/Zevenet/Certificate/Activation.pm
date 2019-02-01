@@ -26,6 +26,7 @@ use Crypt::CBC;
 use POSIX qw(strftime);
 
 require Zevenet::Config;
+require Zevenet::SystemInfo;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 my $openssl   = &getGlobalConfiguration( 'openssl' );
@@ -230,7 +231,6 @@ sub certcontrol
 	my $zlbcertfile = "$basedir/$zlbcertfilename";
 	my $swcert      = 0;
 
-	require Zevenet::SystemInfo;
 	require Zevenet::Lock;
 
 	#swcert = 1 ==> There isn't certificate
