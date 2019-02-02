@@ -460,7 +460,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         buffer += ". Session ";
         buffer += session_id;
         buffer += " -> ";
-        buffer += std::to_string(session_backend-1);
+        buffer += std::to_string(session_backend);
         buffer += "\n";
         session_counter++;
       }
