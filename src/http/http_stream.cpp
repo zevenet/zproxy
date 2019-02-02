@@ -28,7 +28,9 @@ void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
 HttpStream::~HttpStream() {}
 
 void HttpStream::replyRedirect(BackendConfig &backend_config) {
+  std::string new_url = backend_config.url;
+  new_url += this->request.getUrl();
   auto response_ = HttpStatus::getRedirectResponse(
-      (HttpStatus::Code)backend_config.be_type, backend_config.url);
+      (HttpStatus::Code)backend_config.be_type, new_url);
   client_connection.write(response_.c_str(), response_.length());
 }
