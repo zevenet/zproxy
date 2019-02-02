@@ -72,6 +72,7 @@ class PoundClient /*: public EpollManager*/ {
   void verboseLog(const std::string& str);
   void outputStatus(json::JsonObject *json_response_listener);
   bool executeCommand();
+  void showError(std::string error);
 
  public:
   bool init(int argc, char *argv[]);

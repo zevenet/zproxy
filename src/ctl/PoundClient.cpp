@@ -105,14 +105,13 @@ bool PoundClient::executeCommand() {
     client.address = Network::getAddress(this->address, port);
     IO::IO_OP res_connect = client.doConnect(*client.address, 0);
     if (res_connect != IO::IO_OP::OP_SUCCESS)
-      exit(EXIT_FAILURE);
+      showError("Error: TCP mode connection failed.");
     break;
   }
   default: {
     auto res = client.doConnect(control_socket, 0);
     if (res != IO::IO_OP::OP_SUCCESS) {
-      //TODO:: Check connection error, print error and exit
-      exit(EXIT_FAILURE);
+      showError("Error: local connection failed.");
     }
   }
   }
@@ -139,7 +138,7 @@ bool PoundClient::executeCommand() {
       path += "/service/" + std::to_string(service_id) + "/backend/" + std::to_string(backend_id) + "/status";
       break;
     }
-    default: //TODO:: ??
+    default:
       exit(EXIT_FAILURE);
     }
 
@@ -164,7 +163,7 @@ bool PoundClient::executeCommand() {
       break;
     }
     default: {
-      //TODO:: error ?
+      exit(EXIT_FAILURE);
     }
     }
   }
@@ -177,25 +176,20 @@ bool PoundClient::executeCommand() {
   }
   IO::IO_RESULT read_result = client.write(buffer.c_str(), buffer.size());
   if (read_result != IO::IO_RESULT::SUCCESS)
-    exit(EXIT_FAILURE);//TODO::print error
+    showError("Error: Request sending failed.");//TODO::print error
   read_result = client.read();
   if (read_result != IO::IO_RESULT::SUCCESS)
-    exit(EXIT_FAILURE);
-//TODO: AÑADIR COMPROBACIONES
+    showError("Error: Response reading failed.");
   HttpResponse response;
   size_t used_bytes;
   auto str = std::string(client.buffer, client.buffer_size);
   auto parse_result = response.parseResponse(str, &used_bytes);
-  if (parse_result != http_parser::PARSE_RESULT::SUCCESS) {
-    Debug::LogInfo("Error reading response", LOG_ERR);
-    exit(EXIT_FAILURE);
-  }
+  if (parse_result != http_parser::PARSE_RESULT::SUCCESS)
+    showError("Error parsing response");
   str = std::string(response.message, response.message_length);
   auto json_object_ptr = json::JsonParser::parse(str);
-  if (json_object_ptr == nullptr) {
-    Debug::LogInfo("Error parsing response data", LOG_ERR);
-    exit(EXIT_FAILURE);
-  }
+  if (json_object_ptr == nullptr)
+    showError("Error parsing response json");
   std::unique_ptr<json::JsonObject> json_response(std::move(json_object_ptr));
   if (ctl_command == CTL_ACTION::NONE)
     outputStatus(json_response.get());
@@ -347,7 +341,8 @@ bool PoundClient::doRequest(http::REQUEST_METHOD request_method,http::HTTP_VERSI
     return false;
   }
 
-  buffer = buffer + path + " ";
+  buffer += path;
+  buffer += " ";
 
   switch (http_version) {
     case http::HTTP_VERSION::HTTP_1_0: {
@@ -468,4 +463,9 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
   }
 
   std::cout << buffer << std::endl;
+}
+
+void PoundClient::showError(std::string error) {
+  Debug::LogInfo(error, LOG_ERR);
+  exit(EXIT_FAILURE);
 }
