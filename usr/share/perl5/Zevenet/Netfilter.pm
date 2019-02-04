@@ -211,11 +211,7 @@ sub delMarks    # ($farm_name,$mark)
 }
 
 #
-<<<< <<< HEAD
 sub renameMarks    # ( $farm_name, $newfname )
-=======
-sub renameMarks    # ($farm_name,$newfname)
->>>>>>> 9756e7fdaa4768f415bde4e59dc7aea3d66ab0aa
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -223,23 +219,23 @@ sub renameMarks    # ($farm_name,$newfname)
 	my $farm_name = shift;
 	my $newfname  = shift;
 
-  require Tie::File;
+	require Tie::File;
 
-my $status = 0;
+	my $status = 0;
 
-if ( $farm_name ne "" )
-{
-	my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
-	tie my @contents, 'Tie::File', "$fwmarksconf";
-	foreach my $line ( @contents )
+	if ( $farm_name ne "" )
 	{
-		$line =~ s/ \/\/ FARM\_$farm_name\_/ \/\/ FARM\_$newfname\_/x;
+		my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
+		tie my @contents, 'Tie::File', "$fwmarksconf";
+		foreach my $line ( @contents )
+		{
+			$line =~ s/ \/\/ FARM\_$farm_name\_/ \/\/ FARM\_$newfname\_/x;
+		}
+		$status = $?;    # FIXME
+		untie @contents;
 	}
-	$status = $?;    # FIXME
-	untie @contents;
-}
 
-return $status;      # FIXME
+	return $status;      # FIXME
 }
 
 #
