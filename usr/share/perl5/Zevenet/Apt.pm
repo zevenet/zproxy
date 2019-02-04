@@ -3,6 +3,7 @@ use strict;
 use Zevenet::SystemInfo;
 use Zevenet::Log;
 
+# no imput params
 sub setAPTRepo
 {
 
@@ -19,32 +20,36 @@ sub setAPTRepo
 	my $kernel2       = "3.16.7-ckt20";
 	my $kernel3       = "4.9.0-4-amd64";
 	my $kernel4       = "3.16.0-4-amd64";
+	my $kernel5       = "4.9.110-z5000";
 	my $file          = "/etc/apt/sources.list.d/zevenet.list";
 	my $gpgkey        = "ee.zevenet.com.gpg.key";
-	my $from_version  = "5.2.5";
+	my $from_version  = "5.2.10";
 
 	# Function call to configure proxy (Zevenet::SystemInfo)
 	&setEnv();
 
 	# telnet
-	require IO::Socket::INET;
-	my $socket;
-	if (
-		 !(
-			$socket = IO::Socket::INET->new(
-											 PeerAddr => "$host",
-											 PeerPort => $port,
-											 Proto    => 'tcp',
-											 Timeout  => 2
-			)
-		 )
-	  )
+	if ( $ENV{ 'https_proxy' } eq "" )
 	{
-		return 1;
+		require IO::Socket::INET;
+		my $socket;
+		if (
+			 !(
+				$socket = IO::Socket::INET->new(
+												 PeerAddr => "$host",
+												 PeerPort => $port,
+												 Proto    => 'tcp',
+												 Timeout  => 2
+				)
+			 )
+		  )
+		{
+			return 1;
+		}
+		$socket->close();
 	}
-	$socket->close();
 
-	# check zevenet version. Versions prior to 5.2.5 will not be able to subscribe.
+	# check zevenet version. Versions prior to 5.2.10 will not be able to subscribe.
 	my $cmd = "dpkg -l | grep \"^ii\\s\\szevenet\\s*[0-9]\"";
 
 	my $version = `$cmd`;
@@ -55,6 +60,8 @@ sub setAPTRepo
 
 	if ( $version lt $from_version )
 	{
+		&zenlog( "version is $version and moust the version be >= $from_version",
+				 "error", "SYSTEM" );
 		return 1;
 	}
 
@@ -80,10 +87,11 @@ sub setAPTRepo
 
 	# adding key
 	my $error = &logAndRun(
-		"wget --no-check-certificate -T5 -t1 --header=\"User-Agent: $serial\" -O - https://$host/ee/$gpgkey | apt-key add -"
+		"wget -q --no-check-certificate -T5 -t1 --header=\"User-Agent: $serial\" -O - https://$host/ee/$gpgkey | apt-key add -"
 	);
 	if ( $error )
 	{
+		&zenlog( "error adding key gpg", "error", "SYSTEM" );
 		return 1;
 	}
 
@@ -97,6 +105,7 @@ sub setAPTRepo
 	my $kernelversion = `uname -r`;
 	if ( $? != 0 )
 	{
+		&zenlog( "error getting kernel version", "error", "SYSTEM" );
 		return 1;
 	}
 
@@ -108,38 +117,30 @@ sub setAPTRepo
 
 	if ( $kernelversion eq $kernel1 )
 	{
-
 		print $FH "deb https://$host/ee/v5/$kernel1 $distribution1 main\n";
-
 	}
 	if ( $kernelversion eq $kernel2 )
 	{
-
 		print $FH "deb https://$host/ee/v5/$kernel2 $distribution2 main\n";
-
 	}
 	if ( $kernelversion eq $kernel3 )
 	{
-
 		print $FH "deb https://$host/ee/v5/$kernel3 $distribution1 main\n";
-
 	}
 	if ( $kernelversion eq $kernel4 )
 	{
-
 		print $FH "deb https://$host/ee/v5/$kernel4 $distribution2 main\n";
-
+	}
+	if ( $kernelversion eq "$kernel5" )
+	{
+		print $FH "deb https://$host/ee/v5/$kernel5 $distribution1 main\n";
 	}
 
 	close $fh;
 
 	# update repositories
-	$error = &logAndRun( "apt-get update" );
-	if ( $error )
-	{
-		return 1;
-	}
-
+	system ( "apt-get update | logger &" );
 	return 0;
 }
 1;
+
