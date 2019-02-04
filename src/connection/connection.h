@@ -88,9 +88,8 @@ public:
   IO::IO_OP doConnect(addrinfo &address, int timeout,bool async = true);
   IO::IO_OP doConnect(const std::string &af_unix_socket_path, int timeout);
   bool isConnected();
-
   //SSL stuff
 public:
   SSL *ssl_context{nullptr};
-  std::atomic<bool> sslConnected_;
+  std::atomic<bool> ssl_connected;
 };

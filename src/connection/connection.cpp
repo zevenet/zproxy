@@ -14,11 +14,15 @@
 Connection::Connection()
     : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
       // string_buffer(),
-      address_str(""), is_connected(false) {
+      address_str(""), is_connected(false), ssl_context(nullptr) , ssl_connected(false){
   // address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
   is_connected = false;
+  if (ssl_context != nullptr) {
+    SSL_shutdown(ssl_context);
+    SSL_free(ssl_context);
+  }
   if (fd_ > 0)
     this->closeConnection();
   if (address != nullptr) {
