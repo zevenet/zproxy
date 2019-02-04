@@ -145,6 +145,8 @@ sub getNewMark    # ($farm_name)
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
 
+	require Tie::File;
+
 	my $found;
 	my $marknum     = 0x200;
 	my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
@@ -209,7 +211,11 @@ sub delMarks    # ($farm_name,$mark)
 }
 
 #
+<<<< <<< HEAD
 sub renameMarks    # ( $farm_name, $newfname )
+=======
+sub renameMarks    # ($farm_name,$newfname)
+>>>>>>> 9756e7fdaa4768f415bde4e59dc7aea3d66ab0aa
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -217,25 +223,23 @@ sub renameMarks    # ( $farm_name, $newfname )
 	my $farm_name = shift;
 	my $newfname  = shift;
 
-	require Tie::File;
+  require Tie::File;
 
-	require Tie::File;
+my $status = 0;
 
-	my $status = 0;
-
-	if ( $farm_name ne "" )
+if ( $farm_name ne "" )
+{
+	my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
+	tie my @contents, 'Tie::File', "$fwmarksconf";
+	foreach my $line ( @contents )
 	{
-		my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
-		tie my @contents, 'Tie::File', "$fwmarksconf";
-		foreach my $line ( @contents )
-		{
-			$line =~ s/ \/\/ FARM\_$farm_name\_/ \/\/ FARM\_$newfname\_/x;
-		}
-		$status = $?;    # FIXME
-		untie @contents;
+		$line =~ s/ \/\/ FARM\_$farm_name\_/ \/\/ FARM\_$newfname\_/x;
 	}
+	$status = $?;    # FIXME
+	untie @contents;
+}
 
-	return $status;      # FIXME
+return $status;      # FIXME
 }
 
 #
@@ -325,6 +329,7 @@ sub genIptMark    # ( $farm_ref, $server_ref )
 		  . "--jump MARK --set-xmark $$server{ tag } ";
 
 		push ( @rules, $rule );
+		last if ( $$farm{ proto } eq "all" );
 	}
 
 	return \@rules;
@@ -416,6 +421,7 @@ sub genIptRedirect    # ( $farm_ref, $server_ref )
 		  . "--jump DNAT $layer --to-destination $$server{ rip } ";
 
 		push ( @rules, $rule );
+		last if ( $$farm{ proto } eq "all" );
 	}
 
 	return \@rules;
@@ -508,6 +514,7 @@ sub genIptMasquerade    # ( $farm_ref, $server_ref )
 		  . "$nat_params ";
 
 		push ( @rules, $rule );
+		last if ( $$farm{ proto } eq "all" );
 	}
 
 	return \@rules;

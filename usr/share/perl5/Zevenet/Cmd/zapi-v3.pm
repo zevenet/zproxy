@@ -52,6 +52,7 @@ package GLOBAL
 		# 4xx Client Error codes
 		400 => 'Bad Request',
 		401 => 'Unauthorized',
+		402 => 'Certificate not valid',
 		403 => 'Forbidden',
 		404 => 'Not Found',
 		406 => 'Not Acceptable',
