@@ -154,6 +154,8 @@ $lsmod="/sbin/lsmod";
 $gdnsd="$zdir/app/gdnsd/sbin/gdnsd";#update
 #Where is l4sd?
 $l4sd="$zbindir/l4sd";#update
+#Where is factory_reset?
+$factory_reset_bin="$zbindir/factory_reset.sh";
 #Where is id binary?
 $bin_id="/usr/bin/id";
 #Where is wget binary?

@@ -37,9 +37,11 @@ Returns:
 See Also:
 	<runFarmGuardianStart>, <_runHTTPFarmStart>, <runHTTPFarmCreate>, <_runGSLBFarmStart>, <_runGSLBFarmStop>, <runGSLBFarmReload>, <runGSLBFarmCreate>, <setGSLBFarmStatus>
 =cut
+
 sub zsystem
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( @exec ) = @_;
 
 	my $out   = `. /etc/profile && @exec`;
@@ -69,11 +71,13 @@ Returns:
 See Also:
 	zapi/v3/system_stats.cgi
 =cut
+
 sub getTotalConnections
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $conntrack = &getGlobalConfiguration ( "conntrack" );
-	my $conns = `$conntrack -C`;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $conntrack = &getGlobalConfiguration( "conntrack" );
+	my $conns     = `$conntrack -C`;
 	$conns =~ s/(\d+)/$1/;
 	$conns += 0;
 
@@ -95,11 +99,13 @@ Returns:
 See Also:
 	Zapi v3: <new_bond>
 =cut
+
 sub indexOfElementInArray
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $searched_element = shift;
-	my $array_ref = shift;
+	my $array_ref        = shift;
 
 	if ( ref $array_ref ne 'ARRAY' )
 	{
@@ -107,7 +113,7 @@ sub indexOfElementInArray
 	}
 
 	my @arrayOfElements = @{ $array_ref };
-	my $index = 0;
+	my $index           = 0;
 
 	for my $list_element ( @arrayOfElements )
 	{
@@ -131,7 +137,8 @@ sub indexOfElementInArray
 
 sub slurpFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path = shift;
 
 	# Slurp: store an entire file in a variable.
@@ -162,8 +169,9 @@ sub slurpFile
 
 sub getSupportSave
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $zbindir = &getGlobalConfiguration( 'zbindir' );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $zbindir   = &getGlobalConfiguration( 'zbindir' );
 	my @ss_output = `${zbindir}/supportsave 2>&1`;
 
 	# get the last "word" from the first line
@@ -175,6 +183,17 @@ sub getSupportSave
 	my ( undef, $ss_filename ) = split ( '/tmp/', $ss_path );
 
 	return $ss_filename;
+}
+
+sub applyFactoryReset
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $cmd = &getGlobalConfiguration( 'factory_reset_bin' );
+	my $err = &logAndRun( $cmd );
+
+	return $err;
 }
 
 1;
