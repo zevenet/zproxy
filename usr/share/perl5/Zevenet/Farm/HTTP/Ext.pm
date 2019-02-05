@@ -513,32 +513,39 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 	return $errno;
 }
 
+=begin nd
+Function: get_http_farm_ee_struct
+
+	It extends farm struct with the parameters exclusives of the EE
+
+Parameters:
+	farmname - Farm name
+	farm struct - Struct with the farm configuration parameters
+
+Returns:
+	Hash ref - Farm struct updated with EE parameters
+
+=cut
+
 sub get_http_farm_ee_struct
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
-
-	require Zevenet::Farm::HTTP::Config;
-
-	# Output hash reference or undef if the farm does not exist.
-	my $farm = &getHTTPFarmStruct( $farmname );
-
-	return unless $farm;
+	my $farm_st  = shift;
 
 	# 100 Continue
-	my $flag = &getHTTPFarm100Continue( $farmname );
-	$farm->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
+	$farm_st->{ ignore_100_continue } =
+	  ( &getHTTPFarm100Continue( $farmname ) ) ? "true" : "false";
 
 	# Logs
-	my $flag = &getHTTPFarmLogs( $farmname );
-	$farm->{ logs } = ( $flag ) ? "true" : "false";
+	$farm_st->{ logs } = ( &getHTTPFarmLogs( $farmname ) ) ? "true" : "false";
 
 	# Add/remove header
-	$farm->{ addheader }  = &getHTTPAddheader( $farmname );
-	$farm->{ headremove } = &getHTTPHeadremove( $farmname );
+	$farm_st->{ addheader }  = &getHTTPAddheader( $farmname );
+	$farm_st->{ headremove } = &getHTTPHeadremove( $farmname );
 
-	return $farm;
+	return $farm_st;
 }
 
 1;
