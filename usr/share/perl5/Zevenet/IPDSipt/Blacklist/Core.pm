@@ -50,7 +50,8 @@ Returns:
 
 sub getBLExists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $output         = 0;
@@ -68,7 +69,8 @@ sub getBLExists
 #  &getBLIpsetStatus ( $listName );
 sub getBLIpsetStatus
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $ipset  = &getGlobalConfiguration( 'ipset' );
@@ -89,7 +91,8 @@ sub getBLIpsetStatus
 #  &getBLStatus ( $listName );
 sub getBLStatus
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $output = &getBLParam( $listName, 'status' );
@@ -103,7 +106,8 @@ sub getBLStatus
 # $lists = &getListNoUsed ();
 sub getBLListNoUsed
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $blacklist = shift;
 
 	my $ipset  = &getGlobalConfiguration( 'ipset' );
@@ -148,7 +152,8 @@ Returns:
 
 sub getBLParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName, $key ) = @_;
 
 	my $output;
@@ -190,7 +195,8 @@ sub getBLParam
 # &getBLlastUptdate ( list );
 sub getBLlastUptdate
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $date;
@@ -219,7 +225,8 @@ sub getBLlastUptdate
 
 sub getBLzapi
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my %listHash;
@@ -277,7 +284,8 @@ Returns:
 
 sub getBLIpList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	require Zevenet::Validate;
@@ -311,11 +319,12 @@ sub getBLIpList
 
 sub getBLSourceNumber
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $list    = shift;
-	my $wc      = &getGlobalConfiguration( "wc_bin" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $list = shift;
+	my $wc   = &getGlobalConfiguration( "wc_bin" );
 
-	return 0 if ( ! -f "$blacklistsPath/$list.txt" );
+	return 0 if ( !-f "$blacklistsPath/$list.txt" );
 
 	my $sources = `$wc -l $blacklistsPath/$list.txt`;
 
@@ -332,7 +341,8 @@ sub getBLSourceNumber
 
 sub setBLLockConfigFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/blacklist.lock";
@@ -342,7 +352,8 @@ sub setBLLockConfigFile
 
 sub getBLAllLists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Config::Tiny;
 	require Zevenet::Config;
 

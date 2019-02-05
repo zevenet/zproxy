@@ -47,7 +47,8 @@ Returns:
 
 sub getRBLFarmMatch
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::Farm::Base;
@@ -125,14 +126,15 @@ FIXME: Define the chain and the table for iptables
 
 sub runRBLIptablesRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule, $farmname, $action ) = @_;
 	my $error;
 
 	require Zevenet::Netfilter;
 	include 'Zevenet::IPDS::Core';
 
-	my $nfqueue = "";
+	my $nfqueue   = "";
 	my $rbl_chain = &getIPDSChain( "rbl" );
 	my $ruleParam = &getRBLFarmMatch( $farmname );
 
@@ -208,13 +210,14 @@ Returns:
 
 sub runRBLStartPacketbl
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	# Get packetbl bin
 	my $packetbl = &getGlobalConfiguration( "packetbl_bin" );
 
-	# WARNING: to not choose a new nt queue if it exists. This is a bugfix for backup node
+# WARNING: to not choose a new nt queue if it exists. This is a bugfix for backup node
 	if ( &getRBLObjectRuleParam( $rule, "nf_queue_number" ) eq "" )
 	{
 		# Look for a not used nf queue and assign it to this rule
@@ -251,7 +254,8 @@ FIXME:
 
 sub runRBLStopPacketbl
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule  = shift;
 	my $error = 0;
 
@@ -284,7 +288,8 @@ Returns:
 
 sub setRBLPacketblConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Zevenet::Lock;
@@ -360,7 +365,8 @@ Returns:
 
 sub setRBLCreateNfqueue
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	require Config::Tiny;
@@ -407,7 +413,8 @@ Returns:
 
 sub setRBLRemoveNfqueue
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';

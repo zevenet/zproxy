@@ -41,7 +41,8 @@ include 'Zevenet::IPDS::Blacklist::Core';
 # &setBLCreateList ( $listName, $paramsRef );
 sub setBLCreateList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName   = shift;
 	my $listParams = shift;
 
@@ -137,7 +138,8 @@ Returns:
 
 sub setBLDeleteList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
 	my $fileHandle;
@@ -153,7 +155,8 @@ sub setBLDeleteList
 	if ( &getBLIpsetStatus( $listName ) eq "up" )
 	{
 		&zenlog(
-			"Error deleting the list, it is not possible remove the rule while it is running.", "error", "IPDS"
+			"Error deleting the list, it is not possible remove the rule while it is running.",
+			"error", "IPDS"
 		);
 		return -1;
 	}
@@ -198,7 +201,8 @@ Returns:
 
 sub setBLAddPreloadLists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $local_list     = shift;
 	my $preload_remote = shift;
 
@@ -258,7 +262,8 @@ sub setBLAddPreloadLists
 		else
 		{
 			&zenlog(
-				"The preload list '$list' can't be loaded because other list exists with the same name.", "warning", "IPDS"
+				"The preload list '$list' can't be loaded because other list exists with the same name.",
+				"warning", "IPDS"
 			);
 		}
 	}
@@ -279,7 +284,8 @@ sub setBLAddPreloadLists
 
 sub getBLMaxelem
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $list    = shift;
 	my $ipset   = &getGlobalConfiguration( "ipset" );
 	my $maxelem = 0;
@@ -317,7 +323,8 @@ Returns:
 
 sub setBLParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $name, $key, $value ) = @_;
 
 	my $output;
@@ -441,7 +448,8 @@ sub setBLParam
 # &delBLParam ( $listName, $key )
 sub delBLParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName, $key ) = @_;
 
 	my $output;
@@ -476,7 +484,8 @@ Returns:
 
 sub setBLAddToList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName, $listRef ) = @_;
 
 	require Zevenet::Validate;
@@ -513,7 +522,8 @@ Returns:
 
 sub setBLAddSource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName, $source ) = @_;
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
@@ -538,7 +548,7 @@ sub setBLAddSource
 		# Add a new source to the list
 		else
 		{
-			$error = &logAndRun ( "$ipset add $listName $source" );
+			$error = &logAndRun( "$ipset add $listName $source" );
 		}
 	}
 
@@ -562,7 +572,8 @@ Returns:
 
 sub setBLModifSource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName, $id, $source ) = @_;
 
 	my $policy         = &getBLParam( $listName, 'policy' );
@@ -581,7 +592,8 @@ sub setBLModifSource
 		$err = system ( "$ipset add $listName $source >/dev/null 2>&1" ) if ( !$err );
 	}
 
-	&zenlog( "$oldSource was replaced for $source in the list $listName", "info", "IPDS" )
+	&zenlog( "$oldSource was replaced for $source in the list $listName",
+			 "info", "IPDS" )
 	  if ( !$err );
 
 	return $err;
@@ -602,7 +614,8 @@ Returns:
 
 sub setBLDeleteSource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $listName, $id ) = @_;
 
 	my $policy         = &getBLParam( $listName, 'policy' );

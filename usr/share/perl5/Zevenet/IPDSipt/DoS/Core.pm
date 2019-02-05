@@ -41,8 +41,9 @@ Returns:
 
 sub getDOSExists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $name       = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $name = shift;
 
 	my $output     = 0;
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
@@ -84,7 +85,8 @@ Returns:
 
 sub getDOSParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $param    = shift;
 
@@ -125,7 +127,8 @@ sub getDOSParam
 
 sub getDOSLookForRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Validate;
@@ -201,7 +204,8 @@ Returns:
 
 sub getDOSStatusRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	# check system rules
@@ -226,7 +230,8 @@ Returns:
 
 sub getDOSZapiRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ruleName = shift;
 	my $output;
 
@@ -257,7 +262,8 @@ sub getDOSZapiRule
 
 sub setDOSLockConfigFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/dos.lock";
@@ -267,7 +273,8 @@ sub setDOSLockConfigFile
 
 sub setDOSUnlockConfigFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $lock_fd = shift;
 
 	close $lock_fd;

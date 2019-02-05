@@ -25,6 +25,8 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
+use Zevenet::Nft;
+
 =begin nd
 Function: setL4FarmServer
 
@@ -47,13 +49,12 @@ Returns:
 	FIXME: Stop returning -2 when IP duplicated, nftlb should do this
 =cut
 
-sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
+sub setL4FarmServer
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $farm_name, $ids, $rip, $port, $weight, $priority, $max_conns ) = @_;
 
-	#	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::L4xNAT::Config;
 	require Zevenet::Farm::L4xNAT::Action;
 	require Zevenet::Farm::Backend;
@@ -81,11 +82,8 @@ sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
 	my $f_ref = &getL4FarmStruct( $farm_name );
 	if ( $f_ref->{ status } ne "up" )
 	{
-		my $out = &loadNLBFarm( $farm_name );
-		if ( $out != 0 )
-		{
-			return $out;
-		}
+		my $out = &loadL4FarmNlb( $farm_name );
+		return $out if ( $out != 0 );
 	}
 
 	my $exists = &getFarmServer( $f_ref->{ servers }, $ids );
@@ -99,12 +97,11 @@ sub setL4FarmServer    # ($farm_name,$ids,$rip,$port,$weight,$priority,$maxconn)
 	$exists = &getFarmServer( $f_ref->{ servers }, $rip, "rip" );
 	return -2 if ( $exists && ( $exists->{ id } ne $ids ) );
 
-	$output = &httpNLBRequest(
+	$output = &sendL4NlbCmd(
 		{
-		   farm       => $farm_name,
-		   configfile => "$configdir/$farm_filename",
-		   method     => "PUT",
-		   uri        => "/farms",
+		   farm   => $farm_name,
+		   file   => "$configdir/$farm_filename",
+		   method => "PUT",
 		   body =>
 			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "ports" : "", "weight" : "$weight", "priority" : "$priority", "mark" : "$mark", "state" : "up" } ] } ] })
 		}
@@ -129,7 +126,7 @@ Returns:
 
 =cut
 
-sub runL4FarmServerDelete    # ($ids,$farm_name)
+sub runL4FarmServerDelete
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -145,23 +142,14 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	# load the configuration file first if the farm is down
 	my $f_ref = &getL4FarmStruct( $farm_name );
-	if ( $f_ref->{ status } ne "up" )
-	{
-		my $out = &loadNLBFarm( $farm_name );
-		if ( $out != 0 )
-		{
-			return $out;
-		}
-	}
 
-	$output = &httpNLBRequest(
-							   {
-								 farm       => $farm_name,
-								 configfile => "$configdir/$farm_filename",
-								 method     => "DELETE",
-								 uri        => "/farms/$farm_name/backends/bck$ids",
-								 body       => undef
-							   }
+	$output = &sendL4NlbCmd(
+							 {
+							   farm    => $farm_name,
+							   backend => "bck" . $ids,
+							   file    => "$configdir/$farm_filename",
+							   method  => "DELETE",
+							 }
 	);
 
 	foreach my $server ( @{ $f_ref->{ servers } } )
@@ -194,7 +182,7 @@ Returns:
 
 =cut
 
-sub setL4FarmBackendStatus    # ($farm_name,$backend,$status)
+sub setL4FarmBackendStatus
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -208,29 +196,16 @@ sub setL4FarmBackendStatus    # ($farm_name,$backend,$status)
 	$status = 'off'  if ( $status eq "maintenance" );
 	$status = 'down' if ( $status eq "fgDOWN" );
 
-	# load the configuration file first if the farm is down
-	my $f_ref = &getL4FarmStruct( $farm_name );
-	if ( $f_ref->{ status } ne "up" )
-	{
-		my $out = &loadNLBFarm( $farm_name );
-		if ( $out != 0 )
+	return
+	  &sendL4NlbCmd(
 		{
-			return $out;
-		}
-	}
-
-	my $output = &httpNLBRequest(
-		{
-		   farm       => $farm_name,
-		   configfile => "$configdir/$farm_filename",
-		   method     => "PUT",
-		   uri        => "/farms",
+		   farm   => $farm_name,
+		   file   => "$configdir/$farm_filename",
+		   method => "PUT",
 		   body =>
 			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$backend", "state" : "$status" } ] } ] })
 		}
-	);
-
-	return $output;
+	  );
 }
 
 =begin nd
@@ -246,7 +221,7 @@ Returns:
 
 =cut
 
-sub getL4FarmServers    # ($farm_name)
+sub getL4FarmServers
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -390,13 +365,13 @@ Returns:
 
 =cut
 
-sub getL4ServerWithLowestPriority    # ($farm)
+sub getL4ServerWithLowestPriority
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $farm = shift;                # input: farm reference
+	my $farm = shift;
 
-	my $prio_server;    # reference to the selected server for prio algorithm
+	my $prio_server;
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
@@ -428,7 +403,7 @@ Returns:
 
 =cut
 
-sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
+sub setL4FarmBackendMaintenance
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -488,15 +463,15 @@ sub getL4BackendsWeightProbability
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $farm = shift;    # input: farm reference
+	my $farm = shift;
 
 	my $weight_sum = 0;
 
-	&doL4FarmProbability( $farm );    # calculate farm weight sum
+	&doL4FarmProbability( $farm );
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		# only calculate probability for servers running
+		# only calculate probability for the servers running
 		if ( $$server{ status } eq 'up' )
 		{
 			my $delta = $$server{ weight };
@@ -510,9 +485,19 @@ sub getL4BackendsWeightProbability
 	}
 }
 
-# reset connection tracking for a backend
-# used in udp protocol
-# called by: refreshL4FarmRules, runL4FarmServerDelete
+=begin nd
+Function: getL4BackendsWeightProbability
+
+	Reset Connection tracking for a given backend
+
+Parameters:
+	server - Backend hash reference. It uses the backend unique mark in order to deletes the conntrack entries.
+
+Returns:
+	scalar - 0 if deleted, 1 if not found or not deleted
+
+=cut
+
 sub resetL4FarmBackendConntrackMark
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -526,8 +511,6 @@ sub resetL4FarmBackendConntrackMark
 
 	# return_code = 0 -> deleted
 	# return_code = 1 -> not found/deleted
-	# WARNIG: STDOUT must be null so cherokee does not receive this output
-	# as http headers.
 	my $return_code = system ( "$cmd >/dev/null 2>&1" );
 
 	if ( &debug() )

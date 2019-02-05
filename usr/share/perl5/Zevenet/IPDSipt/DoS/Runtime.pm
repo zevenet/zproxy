@@ -44,7 +44,8 @@ Returns:
 
 sub setDOSRunRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -62,9 +63,9 @@ sub setDOSRunRule
 
 		# get farm struct
 		%options = (
-				  farmName => $farmName,
-				  vip      => "-d " . &getFarmVip( 'vip', $farmName ),
-				  vport    => "",
+					 farmName => $farmName,
+					 vip      => "-d " . &getFarmVip( 'vip', $farmName ),
+					 vport    => "",
 		);
 
 		my $port = &getFarmVip( 'vipp', $farmName );
@@ -99,42 +100,48 @@ sub setDOSRunRule
 
 	my $rule = &getDOSParam( $ruleName, "rule" );
 
-	if    ( $rule eq 'sshbruteforce' ){ &setDOSSshBruteForceRule() }
-	elsif ( $rule eq 'dropicmp' )     { &setDOSDropIcmpRule() }
-	elsif ( $rule eq 'limitconns' )   { &setDOSLimitConnsRule( $ruleName, \%options ) }
-	elsif ( $rule eq 'limitsec' )     { &setDOSLimitSecRule( $ruleName, \%options ) }
-	elsif ( $rule eq 'bogustcpflags' ){ &setDOSBogusTcpFlagsRule( $ruleName, \%options ) }
-	elsif ( $rule eq 'limitrst' )     { &setDOSLimitRstRule( $ruleName, \%options ) }
+	if    ( $rule eq 'sshbruteforce' ) { &setDOSSshBruteForceRule() }
+	elsif ( $rule eq 'dropicmp' )      { &setDOSDropIcmpRule() }
+	elsif ( $rule eq 'limitconns' )
+	{
+		&setDOSLimitConnsRule( $ruleName, \%options );
+	}
+	elsif ( $rule eq 'limitsec' ) { &setDOSLimitSecRule( $ruleName, \%options ) }
+	elsif ( $rule eq 'bogustcpflags' )
+	{
+		&setDOSBogusTcpFlagsRule( $ruleName, \%options );
+	}
+	elsif ( $rule eq 'limitrst' ) { &setDOSLimitRstRule( $ruleName, \%options ) }
 
-#	use Switch;
-#	switch ( &getDOSParam( $ruleName, "rule" ) )
-#	{
-#		# comented rules aren't finished
-#		# global rules
-#		case 'sshbruteforce' { $output = &setDOSSshBruteForceRule(); }
-#		case 'dropicmp'      { $output = &setDOSDropIcmpRule(); }
-#
-#		#~ case 'PORTSCANNING'		{ $output = &setDOSPortScanningRule();		}
-#
-#		# rules for farms
-#		case 'limitconns' { $output = &setDOSLimitConnsRule( $ruleName, \%hash ); }
-#		case 'limitsec' { $output = &setDOSLimitSecRule( $ruleName, \%hash ); }
-#
-#		#~ case 'INVALID'				{ $output = &setDOSInvalidPacketRule();	}
-#		#~ case 'BLOCKSPOOFED'	{ $output = &setDOSBlockSpoofedRule();	}
-#
-#		# rules for tcp farms
-#		case 'bogustcpflags'
-#		{
-#			$output = &setDOSBogusTcpFlagsRule( $ruleName, \%hash );
-#		}
-#		case 'limitrst' { $output = &setDOSLimitRstRule( $ruleName, \%hash ); }
-#
-#		#~ case 'DROPFRAGMENTS'	{ $output = &setDOSDropFragmentsRule(); }
-#		#~ case 'NEWNOSYN'				{ $output = &setDOSNewNoSynRule();		 }
-#		#~ case 'SYNWITHMSS'			{ $output = &setDOSSynWithMssRule();	 }
-#		#~ case 'SYNPROXY'				{ $output = &setDOSynProxyRule();			 }
-#	}
+	#	use Switch;
+	#	switch ( &getDOSParam( $ruleName, "rule" ) )
+	#	{
+	#		# comented rules aren't finished
+	#		# global rules
+	#		case 'sshbruteforce' { $output = &setDOSSshBruteForceRule(); }
+	#		case 'dropicmp'      { $output = &setDOSDropIcmpRule(); }
+	#
+	#		#~ case 'PORTSCANNING'		{ $output = &setDOSPortScanningRule();		}
+	#
+	#		# rules for farms
+	#		case 'limitconns' { $output = &setDOSLimitConnsRule( $ruleName, \%hash ); }
+	#		case 'limitsec' { $output = &setDOSLimitSecRule( $ruleName, \%hash ); }
+	#
+	#		#~ case 'INVALID'				{ $output = &setDOSInvalidPacketRule();	}
+	#		#~ case 'BLOCKSPOOFED'	{ $output = &setDOSBlockSpoofedRule();	}
+	#
+	#		# rules for tcp farms
+	#		case 'bogustcpflags'
+	#		{
+	#			$output = &setDOSBogusTcpFlagsRule( $ruleName, \%hash );
+	#		}
+	#		case 'limitrst' { $output = &setDOSLimitRstRule( $ruleName, \%hash ); }
+	#
+	#		#~ case 'DROPFRAGMENTS'	{ $output = &setDOSDropFragmentsRule(); }
+	#		#~ case 'NEWNOSYN'				{ $output = &setDOSNewNoSynRule();		 }
+	#		#~ case 'SYNWITHMSS'			{ $output = &setDOSSynWithMssRule();	 }
+	#		#~ case 'SYNPROXY'				{ $output = &setDOSynProxyRule();			 }
+	#	}
 
 	$output = ( @{ &getDOSLookForRule( $ruleName, $farmName ) } ) ? 0 : 1;
 
@@ -157,7 +164,8 @@ Returns:
 
 sub setDOSStopRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	my $output = 0;
@@ -195,7 +203,8 @@ Returns:
 
 sub setDOSBogusTcpFlagsRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -366,7 +375,8 @@ Returns:
 
 sub setDOSLimitConnsRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -419,7 +429,8 @@ Returns:
 
 sub setDOSLimitRstRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -476,7 +487,8 @@ Returns:
 
 sub setDOSLimitSecRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $ruleOptRef ) = @_;
 
 	include 'Zevenet::IPDS::Core';
@@ -534,7 +546,8 @@ Returns:
 
 sub setDOSDropIcmpRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = "drop_icmp";
 
 	#~ my $rule    = "dropicmp";
@@ -571,7 +584,8 @@ Returns:
 
 sub setDOSSshBruteForceRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::System::SSH';
 	include 'Zevenet::IPDS::Core';
 
@@ -632,7 +646,8 @@ Returns:
 
 sub setDOSApplyRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -709,7 +724,8 @@ Returns:
 
 sub setDOSUnsetRule
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $ruleName, $farmName ) = @_;
 
 	require Config::Tiny;
@@ -753,7 +769,8 @@ Returns:
 
 sub getDOSAcceptLine
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $line;
 
 	my $chain = &getIPDSChain( "dos" );
