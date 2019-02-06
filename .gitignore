@@ -36,9 +36,7 @@ usr/local/zevenet/node_status
 # config
 /usr/local/zevenet/config/
 !/usr/local/zevenet/config/zencert.pem
-!/usr/local/zevenet/config/zlb-start
 !/usr/local/zevenet/config/routing.conf
-!/usr/local/zevenet/config/zlb-stop
 !/usr/local/zevenet/config/zencert-c.key
 !/usr/local/zevenet/config/notifications/.keep
 

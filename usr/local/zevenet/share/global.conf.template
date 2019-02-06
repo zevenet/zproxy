@@ -15,7 +15,7 @@ $http_proxy="";
 $https_proxy="";
 # connection logs for farms. If this parameter is "true" all traffic will be logged
 # else only the new connections will be logged
-$full_farm_logs = "false";
+$full_farm_logs="false";
 
 
 ## Zevenet Paths
@@ -24,7 +24,7 @@ $zdir="/usr/local/zevenet";#update
 #Zevenet lib directory
 $zlibdir="/usr/share/perl5/Zevenet";#update
 #Zevenet bin directory
-$zbindir = "$zdir/bin";#update
+$zbindir="$zdir/bin";#update
 #Document Root for Web Aplication directory
 $basedir="$zdir/www";#update
 #configuration directory.In this section all config files are saved.
@@ -32,7 +32,7 @@ $configdir="$zdir/config";#update
 #Directory where is check script. In this directory you can save your own check scripts.
 $libexec_dir="$zdir/app/libexec";#update
 #Zevenet bin directory
-$templatedir = "$zdir/share";#update
+$templatedir="$zdir/share";#update
 #Save backups on
 $backupdir="$zdir/backups";#update
 #Log directory
@@ -43,7 +43,7 @@ $piddir="/var/run";
 
 # System files
 #rt tables file
-$rttables = "/etc/iproute2/rt_tables";
+$rttables="/etc/iproute2/rt_tables";
 #HTPASSWD file
 $htpass="/etc/passwd";#update
 #shadow file
@@ -51,24 +51,38 @@ $shadow_file="/etc/shadow";
 #dns file server?
 $filedns="/etc/resolv.conf";
 # apt sources configuration file
-$fileapt = "/etc/apt/sources.list";
-#SNMP Service
-$snmpdconfig_file="/etc/snmp/snmpd.conf";
+$fileapt="/etc/apt/sources.list";
 
+
+#SNMP Service
+$snmpdconfig_tpl="$templatedir/snmpd.conf.template";
+$snmpdconfig_file="/etc/snmp/snmpd.conf";
+$snmpd_service="/etc/init.d/snmpd";
+
+# start / stop scripts
+$zlb_start_script="$configdir/zlb-start";
+$zlb_stop_script="$configdir/zlb-stop";
+$zlb_start_tpl="$templatedir/zlb-start.template";
+$zlb_stop_tpl="$templatedir/zlb-stop.template";
 
 ## Zevenet Files
 #appliance version file
 $applianceVersionFile="/etc/zevenet_version";
 #this file
-$globalcfg = "$configdir/global.conf";#update
+$globalcfg="$configdir/global.conf";#update
+$globalcfg_tpl="$templatedir/global.conf.template";
 # Zen license
 $licenseFileTxt="$zdir/license.txt";#update
 # Zen license
 $licenseFileHtml="$zdir/license.html";#update
 #File configuration Zen Cluster
 $filecluster="$configdir/cluster.conf";#update
+
 #File configuration GUI
-$confhttp="$zdir/app/cherokee/etc/cherokee/cherokee.conf";#update
+$http_server_dir="$zdir/app/cherokee";
+$confhttp="$http_server_dir/etc/cherokee/cherokee.conf";#update
+$confhttp_tpl="$http_server_dir/etc/cherokee/cherokee.conf.template";#update
+
 #Where is temperature file?
 $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 # network files
@@ -131,9 +145,9 @@ $logger="/usr/bin/logger";
 #Where is sec?
 $sec="/usr/bin/sec";
 #Where is ipset?
-$ipset = "/sbin/ipset";
+$ipset="/sbin/ipset";
 #Where is touch?
-$touch = "/usr/bin/touch";
+$touch="/usr/bin/touch";
 #Where is ls?
 $ls="/bin/ls";
 #Where is stat?
@@ -208,7 +222,7 @@ $ntp="pool.ntp.org";
 
 
 ## Network global configuration options ##
-$fwmarksconf = "$configdir/fwmarks.conf";
+$fwmarksconf="$configdir/fwmarks.conf";
 #System Default Gateway
 $defaultgw="";
 #Interface Default Gateway
@@ -231,7 +245,7 @@ $recent_ip_list_tot="6000";#update
 # Recent ip hash
 $recent_ip_list_hash_size="6000";#update
 # Iptables lock filename
-$iptlock = "/tmp/iptables.lock";
+$iptlock="/tmp/iptables.lock";
 
 
 #FarmGuardian binary, create advanced check for backend servers
@@ -259,7 +273,7 @@ $arp_unsolicited="";
 
 
 # cron service
-$cron_service = "/etc/init.d/cron";
+$cron_service="/etc/init.d/cron";
 
 # keepalived configuration file
 $keepalived_conf="/etc/keepalived/keepalived.conf";
@@ -275,7 +289,7 @@ $zcluster_manager="$zbindir/zcluster-manager";#update
 # ssh-copy-id file path
 $ssh_copy_id="$zbindir/ssh-copy-id.sh";#update
 # primary-backup conntrackd script
-$primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
+$primary_backup="/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
 # sshd file
 $sshConf="/etc/ssh/sshd_config";
@@ -302,27 +316,27 @@ $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
-$notifConfDir = "$configdir/notifications";#update
+$notifConfDir="$configdir/notifications";#update
 $secTemplate="$zdir/share/sec.rules";#update
 $syslogFile="/var/log/syslog";
 
 #IPDS Module
-$blacklistsPath = "$configdir/ipds/blacklists/lists";#update
-$blacklistsConf = "$configdir/ipds/blacklists/lists.conf";#update
-$blacklistsCronFile = "/etc/cron.d/blacklists";
-$dosConf = "$configdir/ipds/dos/dos.conf";#update
-$dosConfDir = "$configdir/ipds/dos";#update
+$blacklistsPath="$configdir/ipds/blacklists/lists";#update
+$blacklistsConf="$configdir/ipds/blacklists/lists.conf";#update
+$blacklistsCronFile="/etc/cron.d/blacklists";
+$dosConf="$configdir/ipds/dos/dos.conf";#update
+$dosConfDir="$configdir/ipds/dos";#update
 
 #Ssyncd
-$ssyncd_enabled = "true";
-$ssyncd_bin     = "$zdir/app/ssyncd/bin/ssyncd";#update
-$ssyncdctl_bin  = "$zdir/app/ssyncd/bin/ssyncdctl";#update
-$ssyncd_port    = "9999";
+$ssyncd_enabled="true";
+$ssyncd_bin="$zdir/app/ssyncd/bin/ssyncd";#update
+$ssyncdctl_bin="$zdir/app/ssyncd/bin/ssyncdctl";#update
+$ssyncd_port="9999";
 
 # time period to get the interface throughput stats
-$throughput_period = "5";
-$throughput_enabled = "false";
+$throughput_period="5";
+$throughput_enabled="false";
 
-$doc_v4_0 = "https://www.zevenet.com/zapidocv4.0";
+$doc_v4_0="https://www.zevenet.com/zapidocv4.0";
 
 #::END Global Section

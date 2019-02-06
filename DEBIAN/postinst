@@ -23,11 +23,21 @@
 
 BM_tag=0 # _BM_tag_
 
-GLOBALCF="/usr/local/zevenet/config/global.conf"
-GLOBALCFT="/usr/local/zevenet/share/global.conf.template"
 
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" && exit 1
 [ "$1" == "configure" ] && echo "Completing the Zevenet installation..."
+
+
+# upgrading global.conf
+/usr/local/zevenet/bin/checkglobalconf
+
+# load LB variables
+source ./usr/local/zevenet/bin/load_global_conf.sh
+load_global_conf
+
+GLOBALCF=$globalcfg
+GLOBALCFT=$globalcfg_tpl
+
 
 # link l4xnat with iptables or nftables
 if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
@@ -50,8 +60,6 @@ do
 	fi
 done
 
-#upgrading global.conf
-/usr/local/zevenet/bin/checkglobalconf
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
@@ -140,23 +148,18 @@ fi
 sed -i -e 's!^. /lib/lsb/init-functions!#. /lib/lsb/init-functions!' /etc/init.d/keepalived
 sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 
-# Do not mount /usr/local/zevenet/logs for zlb 4000 series
-sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zevenet\/logs        ext4    defaults        0       2//' /etc/fstab
-
 # boot dependencies
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 
-# Move zlb-stop & zlb-start. They were moved in the preinst
-if [ -f /tmp/zlb-stop ]; then
-	mv /tmp/zlb-stop /usr/local/zevenet/config/
+# Move zlb-stop & zlb-start
+if [ ! -f $zlb_start_script ]; then
+	cp $zlb_start_tpl $zlb_start_script
 fi
-if [ -f /tmp/zlb-start ]; then
-	mv /tmp/zlb-start /usr/local/zevenet/config/
+if [ ! -f $zlb_stop_script ]; then
+	cp $zlb_stop_tpl $zlb_stop_script
 fi
 
-chmod +x /usr/local/zevenet/config/zlb-start
-chmod +x /usr/local/zevenet/config/zlb-stop
 
 # Disable DNS resolution for SSH service
 if [ -f /usr/local/zevenet/bin/ssh_nodns.sh ]; then

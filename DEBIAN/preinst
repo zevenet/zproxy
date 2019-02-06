@@ -39,17 +39,6 @@ if ( ! $BM_tag )
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
-#Move zlb-stop & zlb-start
-my $zlbstop = "/usr/local/zevenet/config/zlb-stop";
-my $zlbstart = "/usr/local/zevenet/config/zlb-start";
-if ( -e $zlbstop )
-{
-	move $zlbstop, "/tmp/zlb-stop";
-}
-if ( -e $zlbstart )
-{
-	move $zlbstart, "/tmp/zlb-start";
-}
 
 # Create the new GUI system group
 system ( "groupadd -f webgui" );
