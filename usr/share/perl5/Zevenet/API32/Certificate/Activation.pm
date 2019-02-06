@@ -177,7 +177,7 @@ sub upload_activation_certificate    # ()
 			   "The certfile is correct, moving the uploaded certificate to the right path",
 			   "debug", "certificate" );
 		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
-		require Zevenet::Apt;
+		include "Zevenet::Apt";
 		&setAPTRepo();
 	}
 
