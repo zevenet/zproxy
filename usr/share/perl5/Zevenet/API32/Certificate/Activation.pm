@@ -164,8 +164,12 @@ sub upload_activation_certificate    # ()
 			my $msg = "Error deleting new invalid activation certificate file";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		return &httpErrorResponse( code => 400, desc => $desc,
-								   msg => $response->{ 'msg' } );
+		return
+		  &httpErrorResponse(
+							  code => 400,
+							  desc => $desc,
+							  msg  => $response->{ 'msg' }
+		  );
 	}
 	else
 	{
@@ -173,6 +177,8 @@ sub upload_activation_certificate    # ()
 			   "The certfile is correct, moving the uploaded certificate to the right path",
 			   "debug", "certificate" );
 		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
+		require Zevenet::Apt;
+		&setAPTRepo();
 	}
 
 	my $msg = "Activation certificate uploaded";
