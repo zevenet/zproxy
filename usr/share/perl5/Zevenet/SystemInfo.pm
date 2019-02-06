@@ -132,7 +132,7 @@ sub getApplianceVersion
 		my $ifconfig = &getGlobalConfiguration( 'ifconfig' );
 
 		# look for mgmt interface
-		my @ifaces = `ifconfig -s | awk '{print $1}'`;
+		my @ifaces = `$ifconfig -s | $awk '{print $1}'`;
 
 		# Network appliance
 		if ( grep ( /mgmt/, @ifaces ) )
