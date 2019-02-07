@@ -32,9 +32,10 @@ GLOBALCFT="/usr/local/zevenet/share/global.conf.template"
 # link l4xnat with iptables or nftables
 if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	rm -rf "/usr/share/perl5/Zevenet/Farm/L4xNAT"
-	ln -sf L4ipt /usr/share/perl5/Zevenet/Farm/L4xNAT
 fi
-
+if [ ! -e "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
+	ln -sf /usr/share/perl5/Zevenet/Farm/L4ipt /usr/share/perl5/Zevenet/Farm/L4xNAT
+fi
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
