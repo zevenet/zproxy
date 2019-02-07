@@ -24,7 +24,10 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 #  POST /interfaces/vlan Create a new vlan network interface
 sub new_vlan    # ( $json_obj )
@@ -152,10 +155,11 @@ sub new_vlan    # ( $json_obj )
 				mask    => $json_obj->{ netmask },
 				gateway => $json_obj->{ gateway } // '',
 				ip_v    => &ipversion( $json_obj->{ ip } ),
-				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
+				mac     => $socket->if_hwaddr( $json_obj->{ parent } ),
 	};
 
-	$if_ref->{ net } = &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
+	$if_ref->{ net } =
+	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
 	# Make sure the address, mask and gateway belong to the same stack
 	if ( $if_ref->{ addr } )
@@ -300,10 +304,8 @@ sub get_vlan_list    # ()
 	my $cluster_if;
 	if ( $eload )
 	{
-		my $zcl_conf = &eload(
-			module => 'Zevenet::Cluster',
-			func   => 'getZClusterConfig',
-		);
+		my $zcl_conf = &eload( module => 'Zevenet::Cluster',
+							   func   => 'getZClusterConfig', );
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
@@ -561,7 +563,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	# Check netmask errors
 	if ( exists $json_obj->{ netmask } )
 	{
-		unless ( $json_obj->{ netmask }
+		unless (    $json_obj->{ netmask }
 				 && &getValidFormat( 'ip_mask', $json_obj->{ netmask } ) )
 		{
 			my $msg = "Invalid network mask.";
@@ -572,9 +574,11 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	# Check gateway errors
 	if ( exists $json_obj->{ gateway } )
 	{
-		unless ( defined ( $json_obj->{ gateway } )
-				 && ( $json_obj->{ gateway } eq ""
-				 || &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) ) )
+		unless (
+				 defined ( $json_obj->{ gateway } )
+				 && (    $json_obj->{ gateway } eq ""
+					  || &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
+		  )
 		{
 			my $msg = "Invalid gateway address.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -606,7 +610,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		}
 	}
 
-	# Do not modify gateway or netmask if exists a virtual interface using this interface
+# Do not modify gateway or netmask if exists a virtual interface using this interface
 	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $vlan );
@@ -670,8 +674,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
-	$if_ref->{ net }     = &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ net } =
+	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
