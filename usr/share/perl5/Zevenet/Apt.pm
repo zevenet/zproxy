@@ -99,6 +99,8 @@ sub setAPTRepo
 	open ( my $fh, '>', '/etc/apt/apt.conf' )
 	  or die "Could not open file '/etc/apt/apt.conf' $!";
 	print $fh "Acquire { http::User-Agent \"$serial\"; };\n";
+	print $fh "Acquire::http::Timeout \"5\";\n";
+	print $fh "Acquire::https::Timeout \"5\";\n";
 	close $fh;
 
 	# get the kernel version
