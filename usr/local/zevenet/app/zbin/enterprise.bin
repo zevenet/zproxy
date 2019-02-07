@@ -616,44 +616,16 @@ sub certcontrol
 
 		if ( $modification[0] ne $date_today)
 		{
+               		my $proxy_https = $ENV{ https_proxy };
 
-			my $portCheck;
-			my $proxy_https = $ENV{ https_proxy };
-
-			# If proxy, use openssl
-			if ( $proxy_https )
-			{
-				# delete https:// if exists
-				$proxy_https =~ s/https\:\/\// /;
-				( my $proxyIp, my $proxyPort ) = split /\:(?=\d)/, $proxy_https;
-				$proxyPort = "443" if ( ! defined $proxyPort );
-				my $cmd = "echo -e 'GET / HTTP/1.1\\r\\n' | timeout 2 openssl s_client -connect certs.zevenet.com:443 -proxy $proxyIp:$proxyPort";
-				$portCheck = &logAndRun ($cmd);
-			}
-			# If !proxy, use IO::Socket::INET
-			else
-			{
-				require IO::Socket;
-
-				if ( my $scan = IO::Socket::INET->new(PeerAddr => "certs.zevenet.com" , PeerPort => 443 , Proto => 'tcp' , Timeout => 2) )
-				{
-					$portCheck = 0;
-					$scan->close();
-				}
-			}
-
-			if ( !$portCheck )
-			{
-        my $tmp_file = '/tmp/cacrl.crl';
-				# Download CRL
-				my $download = `$wget -q -T5 -t1 -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
-				if ( -s $tmp_file > 0 ) {
-					&zenlog("CRL Downloaded on $date_today");
-					my $copy = `cp $tmp_file $crl_path`;
-				}
-				unlink $tmp_file;
-		  }
-  	}
+                	my $tmp_file = '/tmp/cacrl.crl';
+                	my $download = `curl -f -k https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl -o $tmp_file --connect-timeout 2 &>/dev/null`;
+                	if ( -f $tmp_file && -s $tmp_file > 0 ) {
+                        	&zenlog("CRL Downloaded on $date_today");
+                        	my $copy = `cp $tmp_file $crl_path`;
+                	}
+                unlink $tmp_file;
+  		}
 
     if ( ! -f $crl_path  )
 		{
