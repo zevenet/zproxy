@@ -193,28 +193,8 @@ sub new_vlan    # ( $json_obj )
 		}
 	}
 
-	require Zevenet::Net::Core;
-	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
-
-	eval {
-		&zenlog( "new_vlan: $if_ref->{name}", "info", "NETWORK" );
-		die if &createIf( $if_ref );
-		die if &addIp( $if_ref );
-		&writeRoutes( $if_ref->{ name } );
-
-		my $state = &upIf( $if_ref, 'writeconf' );
-
-		if ( $state == 0 )
-		{
-			$if_ref->{ status } = "up";
-			&applyRoutes( "local", $if_ref );
-		}
-
-		&setInterfaceConfig( $if_ref ) or die;
-	};
-
-	if ( $@ )
+	if ( &setVlan( $if_ref ) )
 	{
 		my $msg = "The $json_obj->{ name } vlan network interface can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

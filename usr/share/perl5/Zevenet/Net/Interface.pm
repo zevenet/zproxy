@@ -278,11 +278,8 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	  if &debug() > 2;
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
-	my $vlan_name_re = qw/eth\d+\.[0-9]+/; # ES CORRECTO? TODO: MOVERLO A VALIDPARAM
-	if ( $if_ref->{ name } =~ $vlan_name_re )
-	{
-		push @if_params, "mac";
-	}
+	push @if_params, "mac"
+	  if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' );
 
 	my $if_line         = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
@@ -1744,6 +1741,64 @@ sub get_virtual_list_struct
 	}
 
 	return \@output_list;
+}
+
+=begin nd
+Function: setInterfaceConfig
+
+	Store a network interface configuration.
+
+Parameters:
+	if_ref - Reference to a network interface hash.
+
+Returns:
+	boolean - 1 on success, or 0 on failure.
+
+See Also:
+	<getInterfaceConfig>, <setInterfaceUp>, zevenet, zenbui.pl, zapi/v?/interface.cgi
+=cut
+
+sub setVlan    # if_ref
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $if_ref = shift;
+
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
+
+	&zenlog( "Creating new vlan: $if_ref->{name}", "info", "NETWORK" );
+	my $oldIf_ref = &getInterfaceConfig( $if_ref->{ name } );
+
+	# Creating a new interface
+	if ( !defined $oldIf_ref )
+	{
+		my $status = 0;
+
+		$status = 1 if &createIf( $if_ref );
+		$status = 1 if &addIp( $if_ref );
+		$status = 1 if &addMAC( $if_ref );
+
+		if ( $status == 1 )
+		{
+			&delif( $if_ref );
+			return 1;
+		}
+	}
+
+	&writeRoutes( $if_ref->{ name } );
+
+	my $state = &upIf( $if_ref, 'writeconf' );
+
+	if ( $state == 0 )
+	{
+		$if_ref->{ status } = "up";
+		&applyRoutes( "local", $if_ref );
+	}
+
+	return 1 if ( !&setInterfaceConfig( $if_ref ) );
+
+	return 0;
 }
 
 1;

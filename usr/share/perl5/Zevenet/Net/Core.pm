@@ -564,4 +564,34 @@ sub addIp    # ($if_ref)
 	return $status;
 }
 
+=begin nd
+Function: addMAC
+
+	Add a MAC Address to an Interface, Vlan or Bonding
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - ip link set command return code.
+
+=cut
+
+# Execute command line to add a MAC Address to a VLAN or Bonding
+sub addMAC    # ($if_ref)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $if_ref ) = shift;
+
+	&zenlog( "Adding MAC address $if_ref->{mac} to VLAN $if_ref->{name}",
+			 "info", "NETWORK" );
+
+	my $ip_cmd = "$ip_bin link set $if_ref->{name} address $if_ref->{mac}";
+
+	my $status = &logAndRun( $ip_cmd );
+
+	return $status;
+}
+
 1;
