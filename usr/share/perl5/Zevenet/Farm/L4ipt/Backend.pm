@@ -415,9 +415,9 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 		}
 	}
 
-	if ( $farm{ lbalg } eq 'leastconn' )
+	if ( $farm->{ lbalg } eq 'leastconn' )
 	{
-		&sendL4ConfChange( $farm{ name } );
+		&sendL4ConfChange( $farm->{ name } );
 	}
 
 	return $output;
