@@ -35,26 +35,14 @@ usr/local/zevenet/node_status
 
 # config
 /usr/local/zevenet/config/
-!/usr/local/zevenet/config/zencert.pem
-!/usr/local/zevenet/config/routing.conf
-!/usr/local/zevenet/config/zencert-c.key
 !/usr/local/zevenet/config/notifications/.keep
 
 /usr/local/zevenet/logs
 
 /usr/local/zevenet/share/waf/
 
-!/usr/local/zevenet/www
-/usr/local/zevenet/www/assets/
-/usr/local/zevenet/www/commit
-/usr/local/zevenet/www/index.html
-/usr/local/zevenet/www/ipds/blacklists/local/
-/usr/local/zevenet/www/main.bundle.js
-/usr/local/zevenet/www/main.bundle.js.gz
-/usr/local/zevenet/www/main.map*
-/usr/local/zevenet/www/polyfills.*.bundle.js
-/usr/local/zevenet/www/polyfills.*
-/usr/local/zevenet/www/zlbcertfile.pem
+/usr/local/zevenet/www/
+!/usr/local/zevenet/www/zapi
 
 !/usr/share
 /usr/share/*
@@ -63,6 +51,8 @@ usr/local/zevenet/node_status
 !/usr/share/perl5/Zevenet
 !/usr/share/perl5/Zevenet/API3
 !/usr/share/perl5/Zevenet.pm
+
+/usr/share/perl5/Zevenet/Farm/L4xNAT
 
 # other
 .rnd

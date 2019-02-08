@@ -135,6 +135,19 @@ sub indexOfElementInArray
 	return $index;
 }
 
+=begin nd
+Function: slurpFile
+
+	It returns a file as a byte stream. It interpretes the '\n' character and it is not used to split the lines in different chains.
+
+Parameters:
+	none - .
+
+Returns:
+	String - The supportsave file name is returned.
+
+=cut
+
 sub slurpFile
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -167,6 +180,19 @@ sub slurpFile
 	return $file;
 }
 
+=begin nd
+Function: getSupportSave
+
+	It creates a support save file used for supporting purpose. It is created in the '/tmp/' directory
+
+Parameters:
+	none - .
+
+Returns:
+	String - The supportsave file name is returned.
+
+=cut
+
 sub getSupportSave
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -185,13 +211,50 @@ sub getSupportSave
 	return $ss_filename;
 }
 
+=begin nd
+Function: applyFactoryReset
+
+	Run a factory reset in the load balancer. It can be executed using several modes. The modes are described in the type parameter.
+
+Parameters:
+	Interface - Management interface that will not me delete while the factory reset process.
+	Reset Type - Type of reset factory. The options are:
+			'remove-backups', expecifies that the backups will be deleted.
+			'hard-reset', reset factory is executed in its hard mode, deleting the zevenet certificate.
+			'hardware', is a hard reset, and set up the management interface with the hardware default IP.
+			If no paratemers are used in the function, the reset factory does not delete the backups and it will executed in its soft mode.
+
+Returns:
+	Integer - The function will return 0 on success, or another value on failure
+
+=cut
+
 sub applyFactoryReset
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $cmd = &getGlobalConfiguration( 'factory_reset_bin' );
-	my $err = &logAndRun( $cmd );
+	my $if_name = shift;
+	my $reset_type = shift // '';
+
+	if ( !$if_name )
+	{
+		&zenlog( "Factory reset needs a interface", "error", "Factory" );
+		return -1;
+	}
+
+	unless ( $reset_type =~ /^(?:remove-backups|hardware||hard-reset)$/ )
+	{
+		&zenlog( "Reset type do not recognized: $reset_type", "error", "Factory" );
+		return -2;
+	}
+
+	$reset_type = "--$reset_type" if ( $reset_type ne '' );
+
+	my $cmd =
+	  &getGlobalConfiguration( 'factory_reset_bin' ) . " -i $if_name $reset_type";
+	my $err = &logAndRunBG( $cmd )
+	  ;    # it has to be executed in background for being used from api
 
 	return $err;
 }

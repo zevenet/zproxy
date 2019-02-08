@@ -39,7 +39,13 @@ $backupdir="$zdir/backups";#update
 $logdir="/var/log";#update
 #piddir
 $piddir="/var/run";
-
+#zevenet activation certificate path
+$zlbcertfile_name="zlbcertfile.pem";
+$zlbcertfile_path="$basedir/$zlbcertfile_name";
+#first boot flag
+$first_boot_flag="/etc/firstzlbboot";
+#zevenet service
+$zevenet_service="/etc/init.d/zevenet";
 
 # System files
 #rt tables file
@@ -80,8 +86,13 @@ $filecluster="$configdir/cluster.conf";#update
 
 #File configuration GUI
 $http_server_dir="$zdir/app/cherokee";
+$http_server_service="/etc/init.d/cherokee";
 $confhttp="$http_server_dir/etc/cherokee/cherokee.conf";#update
 $confhttp_tpl="$http_server_dir/etc/cherokee/cherokee.conf.template";#update
+$http_server_cert="$configdir/zencert.pem";
+$http_server_key="$configdir/zencert-c.key";
+$http_server_cert_tpl="$templatedir/zencert.pem";
+$http_server_key_tpl="$templatedir/zencert-c.key";
 
 #Where is temperature file?
 $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
@@ -272,8 +283,15 @@ $arptables="/sbin/arptables";
 $arp_unsolicited="";
 
 
-# cron service
+# Cron service
 $cron_service="/etc/init.d/cron";
+$cron_conf="/etc/cron.d/zevenet";
+$cron_tpl="/usr/local/zevenet/share/zevenet.cron";
+
+
+#syslog service
+$syslog_service="/etc/init.d/rsyslog";
+
 
 # keepalived configuration file
 $keepalived_conf="/etc/keepalived/keepalived.conf";
@@ -306,7 +324,7 @@ $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 $zenbackup="$zbindir/zenbackup.pl";#update
 
 #Do backup to
-$backupfor="$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file $keepalived_conf $conntrackd_conf /etc/hostname $filedns /etc/cron.d/zevenet $applianceVersionFile";#update
+$backupfor="$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file $keepalived_conf $conntrackd_conf /etc/hostname $filedns $cron_conf $applianceVersionFile";#update
 
 #Bonding interfaces
 $bond_config_file="$configdir/bonding.conf";#update

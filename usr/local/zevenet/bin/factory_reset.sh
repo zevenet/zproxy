@@ -2,17 +2,21 @@
 
 
 # load LB variables
-source ./usr/local/zevenet/bin/load_global_conf.sh
+source /usr/local/zevenet/bin/load_global_conf.sh
 load_global_conf
-
 
 # vars
 IP_MANAGEMENT="192.168.0.99"
+GW_MANAGEMENT="192.168.100.5"
+NETMASK_MANAGEMENT="255.255.255.0"
 
 GLOBALCONF_TPL=$globalcfg_tpl
 CONF_DIR=$configdir
 TEMPLATE_DIR=$templatedir
 
+REM_BACKUPS=0
+HARD=0
+HW=0
 
 # functions
 show_usage() {
@@ -23,21 +27,20 @@ show_usage() {
   echo "  Optional parameters: "
   echo "      --remove-backups, removes the load balancer backups in the reset process"
   echo "      --hard-reset, removes all user configuration: Activation certificate, backups, "
-  echo "      --hardware, is a hard reset but set by default the ip $IP_MANAGEMENT in the manager interface"
+  echo "      -hw|--hardware, is a hard reset but set by default the ip $IP_MANAGEMENT in the manager interface"
   echo ""
   echo "  The factory reset, in its soft version, will delete:"
-  echo "      *) All the interfaces configuration, excepts the interface received as argument. "
-  echo "      *) All farm configuration. "
-  echo "      *) All certificates. "
-  echo "      *) Logs. "
-  echo "      *) Graphs. "
-  echo "      *) Graphs. "
+  echo "      *) All the interfaces configuration, excepts the interface received as argument "
+  echo "      *) All farm configuration "
+  echo "      *) All SSL certificates "
+  echo "      *) Web server SSL certificate"
+  echo "      *) Logs "
+  echo "      *) Graphs "
   echo "      *) System directories: /opt, /root, /tmp "
   echo "      *) Command history"
   echo "      *) Users and API configuration"
   echo ""
-  echo "  After a hard reset in the system will keep:"
-  echo "      *) Cherokee SSL certificate"
+  echo "  After a hard reset, the system will keep:"
   echo "      *) Zevenet updates"
   echo "      *) The host name"
   echo "      *) The password for the root user"
@@ -46,30 +49,45 @@ show_usage() {
   exit 1
 }
 
+# stop all interfaces except the management iface
+function stop_ifaces(){
+	BOND_FILE=$bonding_masters_filename
+
+	for iface in `ip l l | grep '^[0-9]' | cut -d':' -f2 | sed 's/ //;s/\@.*$//'`; do
+
+		if [[ "$iface" != "$if_mgmt" ]]; then
+			OUT=`grep -E "(^|\b)$iface($|\b)" $BOND_FILE`
+			if [[ ! -z $OUT ]]; then
+				echo "-$iface" >$BOND_FILE
+			else
+				# not to try to delete nic ifaces
+				if [[ "$iface" =~ "[:]" ]]; then
+					ip link del dev $iface
+				fi
+			fi
+		fi
+
+	done
+}
 
 # script
-
 while [ $# -gt 0 ]; do
 	case $1 in
 	"-interface"|"-i")
-			if_mgmt=$2
-			shift
-			shift
+		if_mgmt=$2
+		shift
 		;;
 	"--hard-reset")
 		HARD=1
 		REM_BACKUPS=1
-		shift
 		;;
 	"--remove-backups")
 		REM_BACKUPS=1
-		shift
 		;;
-	"--hardware")
+	"--hardware"|"-hw")
 		REM_BACKUPS=1
 		HARD=1
 		HW=1
-		shift
 		;;
 	*)
 		echo "Invalid option: $1"
@@ -77,9 +95,9 @@ while [ $# -gt 0 ]; do
 		exit 1
 		;;
 	esac
-
 	shift
 done
+
 
 if [ -z "${if_mgmt}" ]; then
   show_usage
@@ -87,12 +105,16 @@ fi
 
 if [ ! -d "/sys/class/net/${if_mgmt}" ]; then
         echo "Specified interface does not exist"
+        exit 1
 fi
 
 # save interface conf file
-IF_CONF="${CONF_DIR}/if_${if_mgmt}_conf"
-IF_CONF_TMP="/tmp/if_conf_file_tmp"
-cp $IF_CONF $IF_CONF_TMP
+IF_NAME="if_${if_mgmt}_conf"
+IF_CONF="${CONF_DIR}/$IF_NAME"
+if [ ! -f "$IF_CONF" ]; then
+        echo "Not found the iface ${if_mgmt}"
+        exit 1
+fi
 
 echo "Stopping processes"
 for AP in $(ps aux | grep zen | grep -v grep | awk '{print $2}')
@@ -101,89 +123,108 @@ do
         ps -ef | grep $AP |grep -v grep
         pkill $AP
 done
-kill -9 `ps aux | grep sec |grep -v grep | awk '{print $2}'`
+
+PROC=`ps aux | grep sec |grep -v grep | awk '{print $2}'`
+if [ ! -z $PROC ]; then
+	kill -9 $PROC
+fi
+
 
 echo "Stopping cron process"
-/etc/init.d/cron stop
-echo "Stopping cherokee process"
-/etc/init.d/cherokee stop
+$cron_service stop
 echo "Stopping zevenet process"
-/etc/init.d/zevenet stop
-
-echo "Deleting configuration files"
-rm -fr /var/log/*
-rm -fr /opt/*
-rm -fr /tmp/*
-rm -fr /usr/local/zevenet/logs/*
-rm -fr /usr/local/zevenet/app/zenrrd/rrd/*
-rm -fr /usr/local/zevenet/www/img/graphs/*
+$zevenet_service stop
+echo "Stopping interfaces"
+stop_ifaces
 
 if [ $HARD -eq 1 ]
 then
+	# WARNING: not to stop cherokee process from the API, that kills this script
+	echo "Stopping cherokee process"
+	$http_server_service stop
+
 	echo "Deleting Zevenet certificate"
-	rm -fr /usr/local/zevenet/www/zlbcertfile.pem
+	rm -fr $zlbcertfile
 fi
 
 if [ $REM_BACKUPS -eq 1 ]
 then
 	echo "Deleting backups"
-    rm -fr /usr/local/zevenet/backups/*
+    rm -fr $backupdir/*
 fi
 
 
 #Delete all except: zlb-*, iface management, global.conf and cherokee conf and ssl cert
+echo "Cleaning up config"
 
-mv ${CONF_DIR}/zencert* /tmp/
-rm -fr ${CONF_DIR}
-mv /tmp/zencert* $CONF_DIR
+# saving permanent config files
+PERMANENT_FILES=($IF_NAME cacrl.crl)
+TMP_CONF_DIR="/tmp/config_factorying"
 
-echo "Creating interface config file if_${if_mgmt}_conf"
-mv $IF_CONF_TMP $IF_CONF
-sed -i -E 's/status=.*$/status=up/' $IF_CONF
+mkdir $TMP_CONF_DIR
+for file in "${PERMANENT_FILES[@]}"
+do
+	cp $CONF_DIR/$file $TMP_CONF_DIR
+done
+
+
+# cleaning up config
+rm -fr ${CONF_DIR}/*
+mv $TMP_CONF_DIR/* ${CONF_DIR}
 
 # set template
+cp $http_server_key_tpl $http_server_key
+cp $http_server_cert_tpl $http_server_cert
 cp $GLOBALCONF_TPL ${CONF_DIR}/global.conf
 cp $snmpdconfig_tpl $snmpdconfig_file
-#~ cp $TEMPLATE_DIR/zevenet.cron ${CONF_DIR}/ ?????
-cp $TEMPLATE_DIR/rbac ${CONF_DIR}/
-cp $TEMPLATE_DIR/ipds ${CONF_DIR}/
+cp $cron_tpl $cron_conf
 cp $confhttp_tpl $confhttp
 cp $zlb_start_tpl $zlb_start_script && chmod +x $zlb_start_script
 cp $zlb_stop_tpl $zlb_stop_script && chmod +x $zlb_stop_script
 
 
-echo "#make your own script in your favorite language, it will be called" > ${CONF_DIR}/zlb-start
-echo "#at the end of the procedure /etc/init.d/zevenet start" >> ${CONF_DIR}/zlb-start
-echo "#and replicated to the other node if zen cluster is running." >> ${CONF_DIR}/zlb-start
-
-echo "#make your own script in your favorite language, it will be called" > ${CONF_DIR}/zlb-stop
-echo "#at the end of the procedure /etc/init.d/zevenet stop" >> ${CONF_DIR}/zlb-stop
-echo "#and replicated to the other node if zen cluster is running." >> ${CONF_DIR}/zlb-stop
+if [ -d "$TEMPLATE_DIR/rbac_roles" ]; then
+	mkdir ${CONF_DIR}/rbac/
+	cp -r $TEMPLATE_DIR/rbac_roles ${CONF_DIR}/rbac/roles
+fi
 
 
 if [ $HARD -eq 1 ]; then
 	echo "Cleaning apt"
-	rm -fr /etc/apt/sources.list
+	rm -fr $fileapt
 	apt-get update
 	apt-get clean
 
 	echo "Preparing the firt boot"
-	if [ ! -f /etc/firstzlbboot ]; then
-			touch /etc/firstzlbboot
+	if [ ! -f $first_boot_flag ]; then
+			touch $first_boot_flag
 	fi
 fi
 
 
+# Set up the management iface
 if [ $HW -eq 1 ]; then
 	echo "Rewriting interface config file $IF_CONF"
 	echo "status=up" > $IF_CONF
-	echo "${if_mgmt};$IP_MANAGEMENT;255.255.255.0;192.168.100.5" >> $IF_CONF
+	echo "${if_mgmt};$IP_MANAGEMENT;$NETMASK_MANAGEMENT;$GW_MANAGEMENT" >> $IF_CONF
 fi
+sed -i -E 's/status=.*$/status=up/' $IF_CONF
 
 
-echo "Deleting the root's home"
+echo "Cleaning up directories"
+rm -fr /var/log/*
+rm -fr /opt/*
+rm -fr /tmp/*
+rm -fr $rrdap_dir/$rrd_dir/*
 rm -rf /root/.bash_history
 rm -rf /root/* {.bashrc}
 
+# Do not run process in HW
+echo "Running syslog process"
+$syslog_service start
+echo "Running cron process"
+$cron_service start
 echo "Running zevenet process"
-/etc/init.d/zevenet start
+$zevenet_service start
+echo "Running web server process"
+$http_server_service restart &

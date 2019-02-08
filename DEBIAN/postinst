@@ -39,6 +39,15 @@ GLOBALCF=$globalcfg
 GLOBALCFT=$globalcfg_tpl
 
 
+# create Web server
+if [ ! -f "$http_server_cert" ]; then
+	cp -rf $http_server_cert_tpl $http_server_cert
+fi
+if [ ! -f "$http_server_key" ]; then
+	cp -rf $http_server_key_tpl $http_server_key
+fi
+
+
 # link l4xnat with iptables or nftables
 if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	rm -rf "/usr/share/perl5/Zevenet/Farm/L4xNAT"
@@ -70,20 +79,10 @@ fi
 
 # Set crontab
 if [ ! -f /etc/cron.d/zevenet ]; then
-	cp /usr/local/zevenet/share/zevenet.cron /etc/cron.d/zevenet
-else
-	sed -i 's!zevenet/app/zenrrd/zenrrd.pl!zevenet/bin/zenrrd!' /etc/cron.d/zevenet
-	sed -i 's!zevenet/app/zenntp/zenntp.pl!zevenet/bin/zenntp!' /etc/cron.d/zevenet
+	cp $cron_tpl $cron_conf
+	$cron_service restart
 fi
 
-# Migrate keepalived.conf
-if [ -f /etc/keepalived/keepalived.conf ]; then
-	sed -i 's"/usr/local/zevenet/bin/enterprise.bin zcluster-manager"/usr/local/zevenet/bin/zcluster-manager"' /etc/keepalived/keepalived.conf
-
-	if [[ `pgrep keepalived` ]]; then
-		/etc/init.d/keepalived reload;
-	fi
-fi
 
 # Disable conntrackd stats
 sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
@@ -93,8 +92,8 @@ rm -rf /var/log/conntrackd-stats* 2>/dev/null
 ## Disable services
 
 # SNMP services
-if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
-	cp /usr/local/zevenet/share/snmpd.conf.template /etc/snmp/snmpd.conf
+if [[ -f $snmpdconfig_file && `grep -c '#zenlb' $snmpdconfig_file` == '0' ]]; then
+	cp $snmpdconfig_tpl $snmpdconfig_file
 fi
 if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
         sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
