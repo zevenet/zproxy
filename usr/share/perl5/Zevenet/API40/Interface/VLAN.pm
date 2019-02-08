@@ -62,6 +62,10 @@ sub new_vlan    # ( $json_obj )
 				   "gateway" => {
 								  'valid_format' => 'ip_addr',
 				   },
+				   "mac" => {
+								  'valid_format' => 'mac_addr',
+								  'required'     => 'true',
+				   },
 	};
 
 	# Check allowed parameters
@@ -146,15 +150,15 @@ sub new_vlan    # ( $json_obj )
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
 	$if_ref = {
-				name    => $json_obj->{ name },
-				dev     => $json_obj->{ parent },
-				status  => "up",
-				vlan    => $json_obj->{ tag },
-				addr    => $json_obj->{ ip },
-				mask    => $json_obj->{ netmask },
-				gateway => $json_obj->{ gateway } // '',
-				ip_v    => &ipversion( $json_obj->{ ip } ),
-				mac     => $socket->if_hwaddr( $json_obj->{ parent } ),
+			   name    => $json_obj->{ name },
+			   dev     => $json_obj->{ parent },
+			   status  => "up",
+			   vlan    => $json_obj->{ tag },
+			   addr    => $json_obj->{ ip },
+			   mask    => $json_obj->{ netmask },
+			   gateway => $json_obj->{ gateway } // '',
+			   ip_v    => &ipversion( $json_obj->{ ip } ),
+			   mac => $json_obj->{ mac } // $socket->if_hwaddr( $json_obj->{ parent } ),
 	};
 
 	$if_ref->{ net } =
@@ -482,6 +486,10 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 								'non_blank' => 'true',
 								'values'    => ['true'],
 				   },
+				   "mac" => {
+								  'valid_format' => 'mac_addr',
+								  'required'     => 'true',
+				   },
 	};
 
 	# Check allowed parameters
@@ -507,6 +515,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
 				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
+				   mac     => $json_obj->{ mac }     // $if_ref->{ mac },
 	};
 
 	# Make sure the address, mask and gateway belong to the same stack
@@ -590,6 +599,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	}
 
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
+	$if_ref->{ mac }     = $json_obj->{ mac }     if exists $json_obj->{ mac };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );

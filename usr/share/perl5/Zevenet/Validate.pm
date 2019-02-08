@@ -29,11 +29,13 @@ use Regexp::IPv6 qw($IPv6_re);
 # \w matches the 63 characters [a-zA-Z0-9_] (most of the time)
 #
 
-my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;           # (0-255)
-my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;    # (0-128)
-my $ipv6_word     = qr/(?:[A-Fa-f0-9]+){1,4}/;
+my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;             # (0-255)
+my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;      # (0-128)
+my $HEXCHAR       = qr/(?:[A-Fa-f0-9])/;
+my $ipv6_word     = qr/(?:$HEXCHAR+){1,4}/;
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 my $ipv6_addr     = $IPv6_re;
+my $mac_addr      = qr/(?:$HEXCHAR$HEXCHAR\:){5}$HEXCHAR$HEXCHAR/;
 my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
 my $enable        = qr/(?:enable|disable)/;
@@ -152,6 +154,7 @@ my %format_re = (
 	'resource_data_NAPTR' => qr/.+/,              # all characters allow
 
 	# interfaces ( WARNING: length in characters < 16  )
+	'mac_addr'         => $mac_addr,
 	'nic_interface'    => $nic_if,
 	'bond_interface'   => $bond_if,
 	'vlan_interface'   => $vlan_if,

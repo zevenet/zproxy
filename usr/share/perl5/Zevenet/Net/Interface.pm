@@ -278,6 +278,12 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	  if &debug() > 2;
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
+	my $vlan_name_re = qw/eth\d+\.[0-9]+/; # ES CORRECTO? TODO: MOVERLO A VALIDPARAM
+	if ( $if_ref->{ name } =~ $vlan_name_re )
+	{
+		push @if_params, "mac";
+	}
+
 	my $if_line         = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
