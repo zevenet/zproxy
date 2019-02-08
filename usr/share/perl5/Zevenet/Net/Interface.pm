@@ -1763,6 +1763,7 @@ sub setVlan    # if_ref
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $if_ref = shift;
+	my $params = shift;
 
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
@@ -1775,28 +1776,84 @@ sub setVlan    # if_ref
 	{
 		my $status = 0;
 
-		$status = 1 if &createIf( $if_ref );
-		$status = 1 if &addIp( $if_ref );
-		$status = 1 if &addMAC( $if_ref );
+		$status = 1                  if &createIf( $if_ref );
+		$status = 1                  if &addIp( $if_ref );
+		$status = &addMAC( $if_ref ) if ( exists $params->{ mac } );
 
-		if ( $status == 1 )
+		if ( $status != 0 )
 		{
 			&delif( $if_ref );
 			return 1;
 		}
+		&writeRoutes( $if_ref->{ name } );
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref->{ status } = "up";
+			&applyRoutes( "local", $if_ref );
+		}
+
+		return 1 if ( !&setInterfaceConfig( $if_ref ) );
 	}
-
-	&writeRoutes( $if_ref->{ name } );
-
-	my $state = &upIf( $if_ref, 'writeconf' );
-
-	if ( $state == 0 )
+	elsif ( defined $params )
 	{
-		$if_ref->{ status } = "up";
-		&applyRoutes( "local", $if_ref );
-	}
+		my $old_vlan_addr;
 
-	return 1 if ( !&setInterfaceConfig( $if_ref ) );
+		# Add new IP, netmask and gateway
+		if ( exists $params->{ ip } )
+		{
+			return 1 if &addIp( $if_ref );
+			return 1 if &writeRoutes( $if_ref->{ name } );
+
+			$old_vlan_addr = &get_vlan_struct( $if_ref->{ name } )->{ ip };
+		}
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref->{ status } = "up";
+			return 1 if &applyRoutes( "local", $if_ref );
+		}
+		if ( exists $params->{ mac } )
+		{
+			return 1 if &addMAC( $if_ref );
+		}
+
+		return 1 if ( !&setInterfaceConfig( $if_ref ) );
+
+		# if the GW is changed, change it in all appending virtual interfaces
+		if ( exists $params->{ gateway } )
+		{
+			foreach my $appending ( &getInterfaceChild( $if_ref->{ vlan } ) )
+			{
+				my $app_config = &getInterfaceConfig( $appending );
+				$app_config->{ gateway } = $params->{ gateway };
+				&setInterfaceConfig( $app_config );
+			}
+		}
+
+		# put all dependant interfaces up
+		require Zevenet::Net::Util;
+		&setIfacesUp( $if_ref->{ name }, "vini" );
+
+		require Zevenet::Farm::Base;
+		my @farms = &getFarmListByVip( $old_vlan_addr );
+
+		# change farm vip,
+		if ( @farms )
+		{
+			require Zevenet::Farm::Config;
+			&setAllFarmByVip( $params->{ ip }, \@farms );
+		}
+
+	}
+	else
+	{
+		return 1;
+	}
 
 	return 0;
 }

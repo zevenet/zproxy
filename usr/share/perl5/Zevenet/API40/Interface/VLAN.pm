@@ -194,7 +194,7 @@ sub new_vlan    # ( $json_obj )
 	}
 
 	require Zevenet::Net::Interface;
-	if ( &setVlan( $if_ref ) )
+	if ( &setVlan( $if_ref, $json_obj ) )
 	{
 		my $msg = "The $json_obj->{ name } vlan network interface can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -592,45 +592,8 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	eval {
-		# Add new IP, netmask and gateway
-		die if &addIp( $if_ref );
-		die if &writeRoutes( $if_ref->{ name } );
-
-		my $state = &upIf( $if_ref, 'writeconf' );
-
-		if ( $state == 0 )
-		{
-			$if_ref->{ status } = "up";
-			die if &applyRoutes( "local", $if_ref );
-		}
-
-		&setInterfaceConfig( $if_ref ) or die;
-
-		# if the GW is changed, change it in all appending virtual interfaces
-		if ( exists $json_obj->{ gateway } )
-		{
-			foreach my $appending ( &getInterfaceChild( $vlan ) )
-			{
-				my $app_config = &getInterfaceConfig( $appending );
-				$app_config->{ gateway } = $json_obj->{ gateway };
-				&setInterfaceConfig( $app_config );
-			}
-		}
-
-		# put all dependant interfaces up
-		require Zevenet::Net::Util;
-		&setIfacesUp( $vlan, "vini" );
-
-		# change farm vip,
-		if ( @farms )
-		{
-			require Zevenet::Farm::Config;
-			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
-		}
-	};
-
-	if ( $@ )
+	require Zevenet::Net::Interface;
+	if ( &setVlan( $if_ref, $json_obj ) )
 	{
 		my $msg = "Errors found trying to modify interface $vlan";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
