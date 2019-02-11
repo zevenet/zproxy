@@ -58,8 +58,8 @@ fi
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
-	/usr/local/zevenet/bin/zevenet
-	/usr/local/zevenet/bin/enterprise.bin
+	$zbindir/zevenet
+	$zbindir/enterprise.bin
 )
 for i in ${compiled_files[@]}
 do
@@ -161,12 +161,12 @@ fi
 
 
 # Disable DNS resolution for SSH service
-if [ -f /usr/local/zevenet/bin/ssh_nodns.sh ]; then
-	/usr/local/zevenet/bin/ssh_nodns.sh
+if [ -f $zbindir/ssh_nodns.sh ]; then
+	$zbindir/ssh_nodns.sh
 fi
 
 # Create IPDS directories
-/usr/local/zevenet/bin/boot_ipds
+$zbindir/boot_ipds
 
 # Remove residual cluster DROP(s) on ip6tables
 if [ $BM_tag -ne 0 ]; then
@@ -195,10 +195,10 @@ fi
 update-rc.d zevenet defaults
 
 # Link zenbui
-if [ -f /usr/local/zevenet/bin/zenbui ];
+if [ -f $zbindir/zenbui ];
 then
 	rm /usr/bin/zenbui 2>/dev/null
-	ln -sf /usr/local/zevenet/bin/zenbui /usr/bin/zenbui
+	ln -sf $zbindir/zenbui /usr/bin/zenbui
 fi
 
 # copy rbac roles template to config if they do not exist
