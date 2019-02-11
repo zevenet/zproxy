@@ -25,28 +25,29 @@ use strict;
 my $CSR_KEY_SIZE = 2048;
 
 # GET /certificates
-sub certificates # ()
+sub certificates    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 	my @certificates = &getCertFiles();
 	my @out;
 
-	my $cert_dh2048_re = &getValidFormat('cert_dh2048');
-	@certificates = grep {! /$cert_dh2048_re/ } @certificates;
+	my $cert_dh2048_re = &getValidFormat( 'cert_dh2048' );
+	@certificates = grep { !/$cert_dh2048_re/ } @certificates;
 
 	foreach my $certificate ( @certificates )
 	{
-		my $configdir = &getGlobalConfiguration('configdir');
+		my $configdir       = &getGlobalConfiguration( 'configdir' );
 		my $certificateFile = "$configdir\/$certificate";
 
-		my $type       = &getCertType( $certificateFile );
-		my $cn         = &getCertCN( $certificateFile );
-		my $issuer     = &getCertIssuer( $certificateFile );
-		my $creation   = &getCertCreation( $certificateFile );
-		chomp($creation);
+		my $type     = &getCertType( $certificateFile );
+		my $cn       = &getCertCN( $certificateFile );
+		my $issuer   = &getCertIssuer( $certificateFile );
+		my $creation = &getCertCreation( $certificateFile );
+		chomp ( $creation );
 		my $expiration = &getCertExpiration( $certificateFile );
-		chomp($expiration);
+		chomp ( $expiration );
 
 		push @out,
 		  {
@@ -65,27 +66,31 @@ sub certificates # ()
 				 params      => \@out,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /certificates/CERTIFICATE
-sub download_certificate # ()
+sub download_certificate    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
-	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	$cert_dir = &getGlobalConfiguration( 'basedir' )
+	  if $cert_filename eq 'zlbcertfile.pem';
 
 	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
 
-	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" && $download_fh )
+	if (    $cert_filename =~ /\.(pem|csr)$/
+		 && -f "$cert_dir\/$cert_filename"
+		 && $download_fh )
 	{
 		my $cgi = &getCGI();
 		print $cgi->header(
-						  -type            => 'application/x-download',
-						  -attachment      => $cert_filename,
-						  'Content-length' => -s "$cert_dir/$cert_filename",
+							-type            => 'application/x-download',
+							-attachment      => $cert_filename,
+							'Content-length' => -s "$cert_dir/$cert_filename",
 		);
 
 		binmode $download_fh;
@@ -103,24 +108,26 @@ sub download_certificate # ()
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # GET /certificates/CERTIFICATE/info
-sub get_certificate_info # ()
+sub get_certificate_info    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
-	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	$cert_dir = &getGlobalConfiguration( 'basedir' )
+	  if $cert_filename eq 'zlbcertfile.pem';
 
 	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
 	{
 		require Zevenet::Certificate;
 
-		my @cert_info = &getCertData( $cert_filename );
+		my @cert_info = &getCertData( "$cert_dir\/$cert_filename" );
 		my $body;
 
 		# Success
@@ -129,7 +136,7 @@ sub get_certificate_info # ()
 			$body .= $line;
 		}
 
-		&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+		&httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 	}
 	else
 	{
@@ -140,30 +147,32 @@ sub get_certificate_info # ()
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # DELETE /certificates/CERTIFICATE
-sub delete_certificate # ( $cert_filename )
+sub delete_certificate    # ( $cert_filename )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_filename = shift;
-	my $description = "Delete certificate";
+	my $description   = "Delete certificate";
 	my $errormsg;
 
-	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	$cert_dir = &getGlobalConfiguration( 'basedir' )
+	  if $cert_filename eq 'zlbcertfile.pem';
 
 	if ( !-f "$cert_dir\/$cert_filename" )
 	{
 		$errormsg = "Certificate file not found.";
 		my $body = {
-			 description => $description,
-			 error       => "true",
-			 message     => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
-	&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 	else
 	{
@@ -182,13 +191,14 @@ sub delete_certificate # ( $cert_filename )
 			if ( !-f "$cert_dir\/$cert_filename" )
 			{
 				$errormsg = "The Certificate $cert_filename has been deleted.";
+
 				# Success
 				my $body = {
-					description => $description,
-					success     => "true",
-					message     => $errormsg
+							 description => $description,
+							 success     => "true",
+							 message     => $errormsg
 				};
-				&httpResponse({ code => 200, body => $body });
+				&httpResponse( { code => 200, body => $body } );
 			}
 			else
 			{
@@ -202,25 +212,26 @@ sub delete_certificate # ( $cert_filename )
 				 error       => "true",
 				 message     => $errormsg
 	};
-	&httpResponse({ code => 400, body => $body });
+	&httpResponse( { code => 400, body => $body } );
 
 }
-
 
 # POST /certificates (Create CSR)
 sub create_csr
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $description = 'Create CSR';
 	my $errormsg;
 
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	if ( -f "$configdir/$json_obj->{name}.csr" )
 	{
 		&zenlog( "Error $json_obj->{name} already exists.", "error", "LSLB" );
+
 		# Error
 		my $errormsg = "$json_obj->{name} already exists.";
 		my $body = {
@@ -228,12 +239,13 @@ sub create_csr
 					 error       => "true",
 					 message     => $errormsg
 		};
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	require Zevenet::Certificate;
 
-	$json_obj->{ name }         = &getCleanBlanc( $json_obj->{ name } );
+	$json_obj->{ name } = &getCleanBlanc( $json_obj->{ name } );
+
 	#~ $json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
 	$json_obj->{ fqdn }         = &getCleanBlanc( $json_obj->{ fqdn } );
 	$json_obj->{ division }     = &getCleanBlanc( $json_obj->{ division } );
@@ -243,17 +255,20 @@ sub create_csr
 	$json_obj->{ country }      = &getCleanBlanc( $json_obj->{ country } );
 	$json_obj->{ mail }         = &getCleanBlanc( $json_obj->{ mail } );
 
-	if (    $json_obj->{ name } =~ /^$/
-		 #~ || $json_obj->{ issuer } =~ /^$/
-		 || $json_obj->{ fqdn } =~ /^$/
-		 || $json_obj->{ division } =~ /^$/
-		 || $json_obj->{ organization } =~ /^$/
-		 || $json_obj->{ locality } =~ /^$/
-		 || $json_obj->{ state } =~ /^$/
-		 || $json_obj->{ country } =~ /^$/
-		 || $json_obj->{ mail } =~ /^$/
-		 #~ || $json_obj->{ key } =~ /^$/
-		 )
+	if (
+		$json_obj->{ name } =~ /^$/
+
+		#~ || $json_obj->{ issuer } =~ /^$/
+		|| $json_obj->{ fqdn } =~ /^$/
+		|| $json_obj->{ division } =~ /^$/
+		|| $json_obj->{ organization } =~ /^$/
+		|| $json_obj->{ locality } =~ /^$/
+		|| $json_obj->{ state } =~ /^$/
+		|| $json_obj->{ country } =~ /^$/
+		|| $json_obj->{ mail } =~ /^$/
+
+		#~ || $json_obj->{ key } =~ /^$/
+	  )
 	{
 		$errormsg = "Fields can not be empty. Try again.";
 		&zenlog( $errormsg, "error", "LSLB" );
@@ -264,12 +279,13 @@ sub create_csr
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	if ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
 	{
-		$errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
+		$errormsg =
+		  "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
 		&zenlog( $errormsg, "error", "LSLB" );
 
 		my $body = {
@@ -278,12 +294,13 @@ sub create_csr
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	if ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
 	{
-		$errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
+		$errormsg =
+		  "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
 		&zenlog( $errormsg, "error", "LSLB" );
 
 		my $body = {
@@ -292,14 +309,20 @@ sub create_csr
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	$errormsg = &createCSR(
-				$json_obj->{ name },     $json_obj->{ fqdn },     $json_obj->{ country },
-				$json_obj->{ state },    $json_obj->{ locality }, $json_obj->{ organization },
-				$json_obj->{ division }, $json_obj->{ mail },     $CSR_KEY_SIZE,
-				""
+							$json_obj->{ name },
+							$json_obj->{ fqdn },
+							$json_obj->{ country },
+							$json_obj->{ state },
+							$json_obj->{ locality },
+							$json_obj->{ organization },
+							$json_obj->{ division },
+							$json_obj->{ mail },
+							$CSR_KEY_SIZE,
+							""
 	);
 
 	if ( !$errormsg )
@@ -308,11 +331,11 @@ sub create_csr
 		&zenlog( $message, "info", "LSLB" );
 
 		my $body = {
-					description => $description,
-					success     => "true",
-					message     => $message
+					 description => $description,
+					 success     => "true",
+					 message     => $message
 		};
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -320,18 +343,19 @@ sub create_csr
 		&zenlog( $errormsg, "error", "LSLB" );
 
 		my $body = {
-					description => $description,
-					error     => "true",
-					message     => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # POST /certificates/CERTIFICATE (Upload PEM)
-sub upload_certificate # ()
+sub upload_certificate    # ()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 
 #
 # Curl command:
@@ -340,10 +364,10 @@ sub upload_certificate # ()
 #
 
 	my $upload_filehandle = shift;
-	my $filename = shift;
+	my $filename          = shift;
 
 	my $description = "Upload PEM certificate";
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir   = &getGlobalConfiguration( 'configdir' );
 
 	if ( $filename =~ /^\w.+\.pem$/ )
 	{
@@ -357,7 +381,7 @@ sub upload_certificate # ()
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		if ( $filename =~ /\\/ )
@@ -373,15 +397,15 @@ sub upload_certificate # ()
 		my $message = "Certificate uploaded";
 		my $body = {
 					 description => $description,
-					 success       => "true",
+					 success     => "true",
 					 message     => $message
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
-		&zenlog( "Error trying to upload a certificate.", "error", "LSLB");
+		&zenlog( "Error trying to upload a certificate.", "error", "LSLB" );
 
 		# Error
 		my $errormsg = "Invalid certificate file name";
@@ -391,7 +415,7 @@ sub upload_certificate # ()
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 

@@ -27,9 +27,11 @@ use POSIX qw(strftime);
 
 require Zevenet::Config;
 require Zevenet::SystemInfo;
+require Zevenet::Certificate;
 
-my $configdir = &getGlobalConfiguration( 'configdir' );
-my $openssl   = &getGlobalConfiguration( 'openssl' );
+my $configdir        = &getGlobalConfiguration( 'configdir' );
+my $openssl          = &getGlobalConfiguration( 'openssl' );
+my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' );
 
 # error codes
 #swcert = -1 ==> Cert support and it's expired
@@ -66,6 +68,11 @@ my $file_check = "$configdir/config_check";
 my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 
 my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+sub getKeySigned
+{
+	return $keyid;
+}
 
 =begin nd
 Function: buildcbc
@@ -141,6 +148,26 @@ sub decrypt    # string for decrypt
 }
 
 =begin nd
+Function: getCertActivationData
+
+	It returns the certificate data without parsing
+
+Parameters:
+	Certificate path - Path of the zevenet activation certificate
+
+Returns:
+	Ref Array - reference to the certificate text
+
+=cut
+
+sub getCertActivationData
+{
+	my $zlbcertfile = shift;
+	my @data        = `$openssl x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+	return \@data;
+}
+
+=begin nd
 Function: keycert
 
 	Build the activation certificate key of the current host
@@ -168,7 +195,8 @@ sub keycert
 =begin nd
 Function: keycert_old
 
-	Build the old activation certificate key of the current host
+	Build the old activation certificate key of the current host.
+	IMPORTANT: This key is used only to validate the old keys.
 
 Parameters:
 	none - .
@@ -197,9 +225,56 @@ sub keycert_old
 }
 
 =begin nd
+Function: crlcontrol
+
+	Build the old activation certificate key of the current host.
+	IMPORTANT: This key is used only to validate the old keys.
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - It returns 0 on success, 1 if the CRL could not be updated (host without connection or error dowloading the CRL)
+
+=cut
+
+sub crlcontrol
+{
+	my $err = 1;
+
+# lock the downloading crl resource.
+# this is useful to another process does not try to download CRL when this process is dowloading it
+	my $crl_file_lock = &getLockFile( $file_check );
+	my $lock_crl_download = &openlock( $crl_file_lock, '>' );
+
+	# download crl if it is not updated
+	my $date_today = strftime( "%F", localtime );
+	if ( !&checkCRLUpdated( $date_today ) )
+	{
+		# update crl if the server has connectivity
+		$err = &updateCRL( $date_today ) if ( &checkCRLHost() );
+
+		# update date of the check if the CRL was downloaded
+		&setCRLDate( $date_today ) if ( -f $crl_path );
+	}
+	else
+	{
+		$err = 0;
+	}
+
+	# free the crl download resource
+	close $lock_crl_download;
+
+	#swcert = 6 ==> crl is missing
+	return -1 if ( !-f $crl_path );
+
+	return $err;
+}
+
+=begin nd
 Function: certcontrol
 
-	This function returns a error code relates on the certificate status, if it is correct, revocked, expired...
+	This function returns a error code relates on the certificate status, if it is correct, revoked, expired...
 
 Parameters:
 	certificate - This parameter is optional. It is the certificate that will be checked.. It is useful to check the certificate status before than overwriting the current certificate.
@@ -225,74 +300,35 @@ Returns:
 
 sub certcontrol
 {
-	my $zlbcertfilename = shift // "zlbcertfile.pem";
+	my $zlbcertfile = shift // $zlbcertfile_path;
 
-	my $basedir     = &getGlobalConfiguration( 'basedir' );
-	my $zlbcertfile = "$basedir/$zlbcertfilename";
-	my $swcert      = 0;
+	my $swcert = 0;
 
 	require Zevenet::Lock;
 
 	#swcert = 1 ==> There isn't certificate
 	return 1 if ( !-e $zlbcertfile );
 
-	my $hostname = &getHostname();
+	# CRL control. Update the revoked certificates
+	# system can not work without CRL
+	return 6 if ( &crlcontrol() < 0 );
 
-	my @zen_cert = `$openssl x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+	my $cert_info = &getCertActivationInfo( $zlbcertfile );
 
 	#swcert = 2 ==> Cert isn't signed OK
-	return 2 if ( !grep /keyid:$keyid/, @zen_cert );
+	return 2 if ( $cert_info->{ signed } ne 'true' );
 
-	my ( $key, $cert_type ) = &getCertKey( \@zen_cert );
-
-	# does not allow to upload old certificates
-	# it is executed when is uploading a certificate by the api
-	if ( $zlbcertfilename ne "zlbcertfile.pem" )
-	{
-		return 7 if ( $cert_type eq 'old' );
-	}
+	my $cert_data = &getCertActivationData( $zlbcertfile );
 
 	#swcert = 5 ==> Cert isn't valid
-	return 5
-	  if ( !&validateCertificate( \@zen_cert, $key, $hostname, $cert_type ) );
-
-# lock the downloading crl resource.
-# this is useful to another process does not try to download CRL when this process is dowloading it
-	my $crl_file_lock = &getLockFile( $file_check );
-	my $lock_crl_download = &openlock( $crl_file_lock, '>' );
-
-	# download crl if it is not updated
-	my $date_today = strftime( "%F", localtime );
-	if ( !&checkCRLUpdated( $date_today ) )
-	{
-		# update crl if the server has connectivity
-		&updateCRL( $date_today ) if ( &checkCRLHost() );
-
-		# update date of the check if the CRL was downloaded
-		&setCRLDate( $date_today ) if ( -f $crl_path );
-	}
-
-	# free the crl download resource
-	close $lock_crl_download;
-
-	#swcert = 6 ==> crl is missing
-	return 6 if ( !-f $crl_path );
-
-	my @decoded_crl = `$openssl crl -inform DER -text -noout -in $crl_path`;
-
-	#swcert = 8 ==> The crl is not signed
-	return 8 if ( !grep /keyid:$keyid/, @decoded_crl );
+	return 5 if ( $cert_info->{ valid } ne 'true' );
 
 	#swcert = 4 ==> Revoked in CRL
-	return 4 if ( &certRevoked( $zlbcertfile, \@decoded_crl ) );
+	return 4 if ( $cert_info->{ revoked } eq 'true' );
 
-	# Certificate expiring date
-	my $end_cert = &getCertExpiring( \@zen_cert );
-	my $dayright = ( $end_cert - time () ) / 86400;
-
-	if ( $dayright < 0 )
+	if ( $cert_info->{ support } ne 'true' )
 	{
-		if ( &getCertDefinitive( \@zen_cert, $cert_type, $end_cert ) )
+		if ( $cert_info->{ cert_type } eq 'permanent' )
 		{
 			# It is not allow to upgrade without support
 
@@ -465,7 +501,7 @@ Parameters:
 	time - current time
 
 Returns:
-	none - .
+	Integer - It returns 0 on success or 1 on failure
 
 =cut
 
@@ -474,6 +510,7 @@ sub updateCRL
 	my $date_today = $_[0];
 	my $tmp_file   = '/tmp/cacrl.crl';
 	my $wget       = &getGlobalConfiguration( 'wget' );
+	my $err        = 1;
 
 	# Download CRL
 	my $download = `$wget -q -T5 -t1 -O $tmp_file $crl_url`;
@@ -481,7 +518,8 @@ sub updateCRL
 	if ( -s $tmp_file > 0 )
 	{
 		&zenlog( "CRL Downloaded on $date_today", 'info', 'certifcate' );
-		my $copy = `cp $tmp_file $crl_path`;
+		rename $tmp_file, $crl_path;
+		$err = 0;
 	}
 	else
 	{
@@ -489,6 +527,7 @@ sub updateCRL
 	}
 
 	unlink $tmp_file;
+	return $err;
 }
 
 =begin nd
@@ -558,11 +597,17 @@ Returns:
 
 sub certRevoked
 {
-	my ( $zlbcertfile, $decoded ) = @_;
+	my ( $zlbcertfile ) = @_;
+
+	# check crl y descargar
+	my @decoded_crl = `$openssl crl -inform DER -text -noout -in $crl_path`;
+
+	#swcert = 8 ==> The crl is not signed
+	return 8 if ( !grep /keyid:$keyid/, @decoded_crl );
 
 	my $serial = &getCertSerial( $zlbcertfile );
 
-	foreach my $line ( @{ $decoded } )
+	foreach my $line ( @decoded_crl )
 	{
 		if ( grep /Serial Number\: ?$serial/, $line )
 		{
@@ -750,6 +795,8 @@ sub validateCertificate
 	my $hostname  = $_[2];
 	my $cert_type = $_[3];
 
+	my $hostname = &getHostname();
+
 	return 0 if ( !$key );
 	return 0 if ( !grep ( /CN ?= ?$hostname\b/, @{ $zen_cert } ) );
 
@@ -769,6 +816,164 @@ sub validateCertificate
 	}
 
 	return 1;
+}
+
+=begin nd
+Function: delCert_activation
+
+	Removes the activation certificate
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	Integer - Number of files removed.
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
+
+sub delCert_activation    # ($certname)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $files_removed = 1;
+
+	if ( -f $zlbcertfile_path )
+	{
+		unlink ( $zlbcertfile_path );
+	}
+	else
+	{
+		&zenlog( "The activation certificate $zlbcertfile_path is not found",
+				 "error", "Activation" );
+	}
+
+	$files_removed = 0 if ( !-f $zlbcertfile_path );
+
+	return $files_removed;
+}
+
+=begin nd
+Function: getCertActivationInfo
+
+	Retrieve the activation certification information. It shows the information and the status
+
+Parameters:
+	Certificate - Certificate path.
+
+Returns:
+	hash ref -
+	{
+          'issuer' => ' ZLB Certificate Authority, emailAddress = support@sofintel.net',
+          'key' => '64701fe98a4ff3143364d9be1c39915ccc27d65327869fe9a50a6eef34445874',
+          'version' => 'new',
+          'days_to_expire' => 216,
+          'crl_signed' => 'false',
+          'signed' => 'true',
+          'support' => 'true',
+          'type' => 'Certificate',
+          'expiration' => '2019-09-16 06:21:38 UTC',
+          'type_cert' => 'temporal',
+          'creation' => '2018-10-18 06:21:38 UTC',
+          'valid' => 'true',
+          'file' => 'zlbcertfile.pem',
+          'revoked' => 'false',
+          'CN' => 'zva500nodeA'
+    };
+
+
+=cut
+
+sub getCertActivationInfo
+{
+	my $zlbcertfile = shift;
+	my $cert_data   = &getCertActivationData( $zlbcertfile );
+
+	# get basic info
+	my $info = &getCertInfo( $zlbcertfile );
+
+	# get activation cert
+	my ( $key, $cert_version ) = &getCertKey( $cert_data );
+	$info->{ key }     = $key;
+	$info->{ version } = $cert_version;
+	$info->{ type_cert } =
+	  ( &getCertDefinitive( $cert_data, $key, $cert_version ) )
+	  ? 'permanent'
+	  : 'temporal';
+	$info->{ signed } = ( grep /keyid:$keyid/, @{ $cert_data } ) ? 'true' : 'false';
+	$info->{ valid } =
+	  ( &validateCertificate( $cert_data, $key, $hostname, $cert_version ) )
+	  ? 'true'
+	  : 'false';
+
+	# check with CRL
+	my $crl_err = &certRevoked( $zlbcertfile );
+
+	$info->{ revoked }    = ( !$crl_err )     ? 'false' : 'true';
+	$info->{ crl_signed } = ( $crl_err != 8 ) ? 'false' : 'true';
+
+	# Certificate expiring date
+	$info->{ days_to_expire } = &getCertDaysToExpire( $info->{ expiration } );
+	$info->{ support } = ( $info->{ days_to_expire } < 0 ) ? 'false' : 'true';
+
+	return $info;
+}
+
+=begin nd
+Function: uploadCertActivation
+
+	Retrieve the activation certification information. It shows the information and the status
+
+Parameters:
+	Certificate - Certificate path.
+
+Returns:
+	String - It returns undef on success or a string with a error message on failure
+
+=cut
+
+sub uploadCertActivation
+{
+	my $upload_data = shift;
+	my $errmsg;
+	my $tmpFilename = '/tmp/zlbcertfile.tmp.pem';
+
+	require Zevenet::File;
+
+	# do not allow to upload certificates with old key
+	my ( undef, $cert_type ) = &getCertKey( $upload_data );
+	if ( $cert_type eq 'old' )
+	{
+		return &getCertErrorMessage( 7 );
+	}
+
+	unless ( &setFile( $tmpFilename, $upload_data ) )
+	{
+		return "Could not save the activation certificate";
+	}
+
+	my $checkCert = &certcontrol( $tmpFilename );
+	if ( $checkCert > 0 )
+	{
+		unlink $tmpFilename;
+		return &getCertErrorMessage( $checkCert );
+	}
+
+	&zenlog(
+		   "The certfile is correct, moving the uploaded certificate to the right path",
+		   "debug", "certificate" );
+	rename ( $tmpFilename, $zlbcertfile_path );
+
+	# If the cert is correct, set the APT repository
+	include 'Zevenet::Apt';
+	if ( &setAPTRepo )
+	{
+		return "An error occurred configuring the Zevenet repository";
+	}
+
+	return undef;
 }
 
 1;

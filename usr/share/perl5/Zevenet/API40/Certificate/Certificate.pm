@@ -41,7 +41,7 @@ sub get_certificate_info    # ()
 	if ( &getValidFormat( 'certificate', $cert_filename )
 		 && -f "$cert_dir\/$cert_filename" )
 	{
-		my @cert_info = &getCertData( $cert_filename );
+		my @cert_info = &getCertData( "$cert_dir\/$cert_filename" );
 		my $body;
 
 		foreach my $line ( @cert_info )

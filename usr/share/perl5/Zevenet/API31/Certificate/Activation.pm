@@ -22,54 +22,35 @@
 
 use strict;
 
-use Zevenet::API31::HTTP;
+my $cert_path = &getGlobalConfiguration( 'zlbcertfile_path' );
 
-include 'Zevenet::Certificate';
+require Zevenet::Certificate;
+include 'Zevenet::Certificate::Activation';
 
 # GET /certificates/activation/info
 sub get_activation_certificate_info    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	require Zevenet::Certificate;
 
-	my $desc          = "Activation certificate information";
-	my $cert_filename = 'zlbcertfile.pem';
-	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+	my $desc = "Activation certificate information";
 
-	unless ( -f "$cert_dir\/$cert_filename" )
+	unless ( -f $cert_path )
 	{
 		my $msg = "There is no activation certificate installed";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $cert = &getCertInfo( $cert_filename, $cert_dir );
-	my $c_type = 'temporal';
-
-	if ( $cert->{ key } =~ m/-/ )
-	{
-		my $c_days = (
-			 &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) /
-		  86400;
-		$c_type = ( $c_days > 364 ) ? 'permanent' : 'temporal';
-	}
-	else
-	{
-		my $cert_type = $cert->{ type_cert };
-		$c_type = ( $cert_type eq 'DE' ) ? 'permanent' : 'temporal';
-		my $c_days = (
-			 &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) /
-		  86400;
-	}
+	my $cert = &getCertActivationInfo( $cert_path );
 
 	my $params = {
-				   days_to_expire => &getCertDaysToExpire( $cert->{ expiration } ),
+				   days_to_expire => $cert->{ days_to_expire },
 				   hostname       => $cert->{ CN },
-				   type           => $c_type,
+				   type           => $cert->{ type_cert },
 	};
 	my $body = { description => $desc, params => $params };
 
-	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # GET /certificates/activation
@@ -79,17 +60,15 @@ sub get_activation_certificate    # ()
 			 "debug", "PROFILING" );
 	require Zevenet::Certificate;
 
-	my $desc          = "Activation certificate";
-	my $cert_filename = 'zlbcertfile.pem';
-	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+	my $desc = "Activation certificate";
 
-	unless ( -f "$cert_dir\/$cert_filename" )
+	unless ( -f $cert_path )
 	{
 		my $msg = "There is no activation certificate installed";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @cert_info = &getCertData( $cert_filename );
+	my @cert_info = &getCertData( $cert_path );
 	my $body      = "@cert_info";
 
 	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
@@ -100,11 +79,10 @@ sub delete_activation_certificate    # ( $cert_filename )
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	require Zevenet::Certificate;
 
 	my $desc = "Delete activation certificate";
 
-	unless ( &delCert_activation() )
+	if ( &delCert_activation() )
 	{
 		my $msg = "An error happened deleting the activation certificate";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -131,11 +109,7 @@ sub upload_activation_certificate    # ()
 			 "debug", "PROFILING" );
 	my $upload_data = shift;
 
-	require Zevenet::File;
-
-	my $desc        = "Upload activation certificate";
-	my $tmpFilename = 'zlbcertfile.tmp.pem';
-	my $filename    = 'zlbcertfile.pem';
+	my $desc = "Upload activation certificate";
 
 	unless ( $upload_data )
 	{
@@ -143,44 +117,16 @@ sub upload_activation_certificate    # ()
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $basedir = &getGlobalConfiguration( 'basedir' );
-
-	unless ( &setFile( "$basedir/$tmpFilename", $upload_data ) )
+	my $errmsg = &uploadCertActivation( $upload_data );
+	if ( $errmsg )
 	{
-		my $msg = "Could not save the activation certificate";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	my $checkCert = &certcontrol( $tmpFilename );
-	if ( $checkCert > 0 )
-	{
-		# Delete the tmp certificate file
-		&zenlog(
-				 "The cerfile is incorrect, removing uploaded temporary certificate file",
-				 "debug", "certificate" );
-		unless ( unlink "$basedir/$tmpFilename" )
-		{
-			my $msg = "Error deleting new invalid activation certificate file";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
 		return
 		  &httpErrorResponse(
 							  code => 400,
 							  desc => $desc,
-							  msg  => &getCertErrorMessage( $checkCert )
+							  msg  => $errmsg
 		  );
 	}
-	else
-	{
-		&zenlog(
-			   "The certfile is correct, moving the uploaded certificate to the right path",
-			   "debug", "certificate" );
-		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
-	}
-
-	# If the cert is correct, set the APT repositorie
-	include 'Zevenet::Apt';
-	&setAPTRepo;
 
 	my $msg = "Activation certificate uploaded";
 	my $body = {

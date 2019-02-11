@@ -505,7 +505,7 @@ Function: getCertData
 	Returns the information stored in a certificate.
 
 Parameters:
-	String - Certificate filename.
+	String - Certificate path.
 
 Returns:
 	list - List of lines with the information stored in the certificate.
@@ -520,17 +520,9 @@ sub getCertData    # ($certfile)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $certfile ) = @_;
+	my ( $filepath ) = @_;
 
-	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $filepath  = "$configdir\/$certfile";
 	my @eject;
-
-	if ( $certfile eq "zlbcertfile.pem" )
-	{
-		my $basedir = &getGlobalConfiguration( 'basedir' );
-		$filepath = "$basedir\/$certfile";
-	}
 
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{
@@ -548,9 +540,15 @@ sub getCertInfo    # ($certfile)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $certfile, $path ) = @_;
 
-	my $filepath = "$path\/$certfile";
+	my $filepath = shift;
+	my $certfile;
+
+	if ( $filepath =~ /([^\/]+)$/ )
+	{
+		$certfile = $1;
+	}
+
 	my @cert_data;
 
 	# Cert type
@@ -589,8 +587,6 @@ sub getCertInfo    # ($certfile)
 		}
 	}
 
-	#~ $cn = &getCleanBlanc( $cn );
-
 	# Cert Issuer
 	my $issuer = "";
 	if ( $type eq "Certificate" )
@@ -602,21 +598,6 @@ sub getCertInfo    # ($certfile)
 	elsif ( $type eq "CSR" )
 	{
 		$issuer = "NA";
-	}
-
-	#~ $issuer = &getCleanBlanc( $issuer );
-
-	#Cert type (definitive or temporal)
-	my $type_cert = "";
-	if ( $type eq "Certificate" )
-	{
-		my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @cert_data;
-		$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
-		$type_cert = $1;
-	}
-	elsif ( $type eq "CSR" )
-	{
-		$type_cert = "NA";
 	}
 
 	# Cert Creation Date
@@ -663,8 +644,6 @@ sub getCertInfo    # ($certfile)
 					 creation   => $creation,
 					 expiration => $expiration,
 	);
-	$response{ type_cert } = $type_cert
-	  if ( $filepath =~ '(\b|^)zlbcertfile.pem$' );
 
 	return \%response;
 }
@@ -709,53 +688,6 @@ sub getCertDaysToExpire
 	}
 
 	return $days_left;
-}
-
-=begin nd
-Function: delCert_activation
-
-	Removes the activation certificate
-
-Parameters:
-	String - Certificate filename.
-
-Returns:
-	Integer - Number of files removed.
-
-Bugs:
-	Removes the _first_ file found _starting_ with the given certificate name.
-
-See Also:
-	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
-=cut
-
-sub delCert_activation    # ($certname)
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
-	# zevenet/www/ directory
-	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
-	my $cert_filename = 'zlbcertfile.pem';
-	my $cert_path     = "$cert_dir\/$cert_filename";
-	my $files_removed = 1;
-
-	if ( -f $cert_path )
-	{
-		$files_removed = unlink ( $cert_path );
-
-		unless ( $files_removed )
-		{
-			&zenlog( "Error removing certificate $cert_path", "error", "Activation" );
-		}
-	}
-	else
-	{
-		&zenlog( "The activation certificate $cert_path is not found",
-				 "error", "Activation" );
-	}
-
-	return $files_removed;
 }
 
 1;

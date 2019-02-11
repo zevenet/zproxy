@@ -24,19 +24,19 @@ use strict;
 
 include 'Zevenet::Certificate';
 
+my $cert_path = &getGlobalConfiguration( 'zlbcertfile_path' );
+
 # GET /certificates/activation
 sub get_activation_certificate_info    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $description   = "Activation certificate information";
-	my $cert_filename = 'zlbcertfile.pem';
-	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+	my $description = "Activation certificate information";
 
-	if ( -f "$cert_dir\/$cert_filename" )
+	if ( -f $cert_path )
 	{
 		require Zevenet::Certificate;
-		my @cert_info = &getCertData( $cert_filename );
+		my @cert_info = &getCertData( $cert_path );
 		my $body;
 
 		# Success
@@ -65,12 +65,10 @@ sub delete_activation_certificate    # ( $cert_filename )
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	require Zevenet::Certificate;
 
-	my $description   = "Delete activation certificate";
-	my $cert_filename = 'zlbcertfile.pem';
+	my $description = "Delete activation certificate";
 
-	if ( &delCert_activation( $cert_filename ) )
+	if ( &delCert_activation() )
 	{
 		# Success
 		my $message = "The activation certificate has been deleted";
@@ -107,47 +105,35 @@ sub upload_activation_certificate    # ()
 # curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
 #
 
-	my $upload_filehandle = shift;
+	my $upload_data = shift;
 
-	my $description = "Upload activation certificate";
-	my $filename    = 'zlbcertfile.pem';
+	my $desc = "Upload activation certificate";
 
-	if ( $upload_filehandle )
+	unless ( $upload_data )
 	{
-		my $basedir = &getGlobalConfiguration( 'basedir' );
-
-		open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
-		binmode $cert_filehandle;
-		print { $cert_filehandle } $upload_filehandle;
-		close $cert_filehandle;
-
-		&checkActivationCertificate();
-
-		my $message = "Activation certificate uploaded";
-		my $body = {
-					 description => $description,
-					 success     => "true",
-					 message     => $message
-		};
-		include 'Zevenet::Apt';
-		&setAPTRepo;
-		&httpResponse( { code => 200, body => $body } );
+		my $msg = "Error uploading activation certificate file";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
+
+	my $errmsg = &uploadCertActivation( $upload_data );
+	if ( $errmsg )
 	{
-		&zenlog( "Error trying to upload activation certificate.", "error", "SYSTEM" );
-
-		# Error
-		my $errormsg = "Error uploading activation certificate file";
-
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		return
+		  &httpErrorResponse(
+							  code => 400,
+							  desc => $desc,
+							  msg  => $errmsg
+		  );
 	}
+
+	my $msg = "Activation certificate uploaded";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg,
+	};
+
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

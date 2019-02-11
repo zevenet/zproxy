@@ -40,8 +40,7 @@ $logdir="/var/log";#update
 #piddir
 $piddir="/var/run";
 #zevenet activation certificate path
-$zlbcertfile_name="zlbcertfile.pem";
-$zlbcertfile_path="$basedir/$zlbcertfile_name";
+$zlbcertfile_path="/usr/local/zevenet/www/zlbcertfile.pem";
 #first boot flag
 $first_boot_flag="/etc/firstzlbboot";
 #zevenet service
@@ -58,6 +57,15 @@ $shadow_file="/etc/shadow";
 $filedns="/etc/resolv.conf";
 # apt sources configuration file
 $fileapt="/etc/apt/sources.list";
+# apt Zevenet source
+$apt_source_zevenet="/etc/apt/sources.list.d/zevenet.list";
+# apt user conf
+$apt_conf_file="/etc/apt/apt.conf";
+# Zevenet URL repo
+$repo_url_zevenet="repo.zevenet.com";
+# Zevenet GPG key
+$gpg_key_zevenet="ee.zevenet.com.gpg.key";
+
 
 
 #SNMP Service
@@ -207,6 +215,10 @@ $groupdel_bin="/usr/sbin/groupdel";
 $groups_bin="/usr/bin/groups";
 #Where is echo?
 $echo_bin="/bin/echo";
+#Where is dpkg?
+$dpkg_bin="/usr/bin/dpkg";
+#Where is grep?
+$grep_bin="/bin/grep";
 #Where is nftlb?
 $nftlb_bin="/usr/local/sbin/nftlb";
 
