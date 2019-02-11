@@ -93,6 +93,7 @@ enum class HTTP_HEADER_NAME : uint16_t {
   TK,
   TRAILER,                   // hop-by-hop
   TRANSFER_ENCODING,         // hop-by-hop
+  UPGRADE,
   UPGRADE_INSECURE_REQUESTS, // hop-by-hop?
   USER_AGENT,
   VARY,

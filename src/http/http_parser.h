@@ -17,6 +17,11 @@ namespace http_parser {
 
 enum class PARSE_RESULT { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
 
+enum class UPGRADE_PROTOCOLS {
+  WEBSOCKET,
+  H2C
+};
+
 using namespace http;
 
 class HttpData {
