@@ -1,5 +1,6 @@
 # Target environments
-debian_versions=(jessie stretch buster)
+#debian_versions=(jessie stretch buster)
+debian_versions=(buster)
 
 # files of CE
 # All files from the directory: /build-pkg/files-ce

@@ -401,7 +401,7 @@ sub include
 		my $kernel_release = `$uname -r`;
 
 		my $cmd = "openssl aes-256-cbc -d -a -nosalt -k \"${SYMKEY}\" -in $mod->{ fullpath }";
-		$cmd .= " -md md5" if $kernel_release =~ /^4.9/;
+		$cmd .= " -md md5" if $kernel_release =~ /^4/;
 
 		# get code
 		$code = `$cmd`;
