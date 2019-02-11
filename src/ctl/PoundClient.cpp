@@ -2,6 +2,7 @@
 // Created by abdess on 9/28/18.
 //
 #include "PoundClient.h"
+#include "../service/backend.h"
 #include "../util/Network.h"
 
 bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
@@ -400,6 +401,8 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
       int service_counter = 0;
       for (const auto &backend : *backends) {
         auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
+        auto backend_type = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::TYPE).get())->number_value;
+        if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT) continue;
         total_weight += dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT).get())->number_value;
       }
       std::string service_name = dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::NAME).get())->string_value;
@@ -418,6 +421,8 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
       int backend_counter = 0;
       for (const auto& backend : *backends) {
         auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
+        auto backend_type = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::TYPE).get())->number_value;
+        if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT) continue;
         auto weight = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT).get())->number_value;
         std::string backend_address = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ADDRESS).get())->string_value;
         std::string backend_status = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::STATUS).get())->string_value;
@@ -459,7 +464,6 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         buffer += "\n";
         session_counter++;
       }
-
   }
 
   std::cout << buffer << std::endl;

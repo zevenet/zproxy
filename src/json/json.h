@@ -46,6 +46,7 @@ struct JSON_KEYS {
   static const std::string CONNECT_TIME;
   static const std::string WEIGHT;
   static const std::string CONFIG;
+  static const std::string TYPE;
 
   static const std::string RESULT;
 
