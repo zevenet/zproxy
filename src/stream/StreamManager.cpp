@@ -369,7 +369,7 @@ void StreamManager::onRequestEvent(int fd) {
                     stream->request.getRequestLine().c_str(),
                     bck->address.c_str());
       switch (bck->backend_type) {
-      case REMOTE: {
+      case BACKEND_TYPE::REMOTE: {
         if (stream->backend_connection.getBackend() == nullptr ||
             !stream->backend_connection.isConnected()) {
           // null
@@ -439,10 +439,10 @@ void StreamManager::onRequestEvent(int fd) {
         stream->backend_connection.enableWriteEvent();
         break;
       }
-      case EMERGENCY_SERVER:
+      case BACKEND_TYPE::EMERGENCY_SERVER:
 
         break;
-      case REDIRECT: {
+      case BACKEND_TYPE::REDIRECT: {
         /*Check redirect request type ::> 0 - redirect is absolute, 1 -
          * the redirect should include the request path, or 2 if it should
          * use perl dynamic replacement */
@@ -458,7 +458,7 @@ void StreamManager::onRequestEvent(int fd) {
         clearStream(stream);
         return;
       }
-      case CACHE_SYSTEM:break;
+      case BACKEND_TYPE::CACHE_SYSTEM:break;
       }
     }
     break;
