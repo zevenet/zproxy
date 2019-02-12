@@ -34,8 +34,8 @@ usr/local/zevenet/node_status
 !/usr/local/zevenet/backups/.keep
 
 # config
-/usr/local/zevenet/config/
-!/usr/local/zevenet/config/notifications/.keep
+/usr/local/zevenet/config/*
+!/usr/local/zevenet/config/.keep
 
 /usr/local/zevenet/logs
 
