@@ -38,8 +38,14 @@ sub get_certificate_info    # ()
 	my $desc     = "Show certificate details";
 	my $cert_dir = &getGlobalConfiguration( 'configdir' );
 
-	if ( &getValidFormat( 'certificate', $cert_filename )
-		 && -f "$cert_dir\/$cert_filename" )
+	# check is the certificate file exists
+	if ( !-f "$cert_dir\/$cert_filename" )
+	{
+		my $msg = "Certificate file not found.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( &getValidFormat( 'certificate', $cert_filename ) )
 	{
 		my @cert_info = &getCertData( "$cert_dir\/$cert_filename" );
 		my $body;
