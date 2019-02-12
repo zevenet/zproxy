@@ -79,17 +79,18 @@ $zlbmenu = $win2->add(
 					   -selectmode => 'single',
 					   -fg         => 'white',
 					   -bg         => 'black',
-					   -values     => [1, 2, 3, 4, 9, 5, 6, 7, 8],
+					   -values     => [1, 2, 3, 4, 9, 5, 6, 10, 7, 8],
 					   -labels     => {
-									1 => 'Status',
-									2 => 'Services',
-									3 => 'Hostname',
-									4 => 'MGMT Interface',
-									9 => 'Proxy Settings',
-									5 => 'Time Zone',
-									6 => 'Keyboard Map',
-									7 => 'Reboot/Shutdown',
-									8 => 'Exit to shell',
+									1  => 'Status',
+									2  => 'Services',
+									3  => 'Hostname',
+									4  => 'MGMT Interface',
+									9  => 'Proxy Settings',
+									5  => 'Time Zone',
+									6  => 'Keyboard Map',
+									10 => 'Factory Reset',
+									7  => 'Reboot/Shutdown',
+									8  => 'Exit to shell',
 					   },
 					   -onchange => \&manage_sel,
 );
@@ -253,6 +254,11 @@ sub manage_sel()
 			&create_win3( 'ZEVENET Keyboard Layout' );
 			&manage_keyboard();
 		}
+		elsif ( $selected == 10 )
+		{
+			&create_win3( 'ZEVENET Factory Reset' );
+			&manage_factory_reset();
+		}
 		elsif ( $selected == 7 )
 		{
 			&create_win3( 'ZEVENET Reboot/Shutdown' );
@@ -263,6 +269,86 @@ sub manage_sel()
 			\&exit_dialog();
 		}
 	}
+}
+
+sub manage_factory_reset
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	require Zevenet::Net::Interface;
+
+	my $nic_hash = {};
+	my $label    = ();
+	foreach my $if ( &getInterfaceTypeList( 'nic' ) )
+	{
+		if ( $if->{ addr } )
+		{
+			$nic_hash->{ $if->{ name } } = $if->{ addr };
+			$label->{ $if->{ name } }    = "$if->{name}, $if->{addr}";
+		}
+	}
+	my @nic_list = keys %{ $nic_hash };
+
+	my $nicselect = $win3->add(
+								'win3id1',
+								'Listbox',
+								-bg         => 'black',
+								-tfg        => 'black',
+								-tbg        => 'white',
+								-border     => 1,
+								-vscrollbar => 1,
+								-y          => 0,
+								-height     => 4,
+								-selected   => 0,
+								-values     => \@nic_list,
+								-labels     => $label,
+								-title      => 'Select the management interface',
+								-vscrollbar => 1,
+	);
+
+	$nicselect->focus();
+
+	my $reset = $win3->add(
+		'win3id2',
+		'Buttonbox',
+		-bg       => 'black',
+		-tfg      => 'black',
+		-tbg      => 'white',
+		-title    => 'Factory Reset',
+		-border   => 1,
+		-y        => 5,
+		-selected => 2,
+		-buttons  => [
+			{
+			   -label    => '< Apply >',
+			   -value    => 1,
+			   -shortcut => 1,
+			   -onpress  => sub {
+				   my $if_sel = $nicselect->get();
+				   my $ip_sel = $nic_hash->{ $if_sel };
+				   my $ret = &confirm_dialog(
+					   "A factory reset will REMOVE all services and will DELETE compleatily the load balancer configuration.
+Are you SURE about applying the factory reset to your ZEVENET?
+After the reset the load balancer will be accesible by the IP $ip_sel"
+				   );
+				   if ( $ret )
+				   {
+					   require Zevenet::System;
+					   &applyFactoryReset( $if_sel, 'hard-reset' );
+					   exit 0;
+				   }
+			   },
+			},
+			{
+			   -label    => '< Return >',
+			   -value    => 3,
+			   -shortcut => 3,
+			   -onpress  => sub { $zlbmenu->focus(); },
+			},
+		],
+	);
+	$reset->focus();
 }
 
 sub manage_power()
@@ -652,7 +738,7 @@ sub set_proxy()
 	my $newhttps = $mgmthttpsinput->get();
 
 	my $ret = &confirm_dialog(
-						 "Are you sure you want to change your ZEVENET Proxy Settin?" );
+						"Are you sure you want to change your ZEVENET Proxy Setting?" );
 	if ( $ret )
 	{
 		&setGlobalConfiguration( 'http_proxy',  $newhttp );
