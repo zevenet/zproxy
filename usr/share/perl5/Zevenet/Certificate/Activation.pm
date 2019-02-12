@@ -29,8 +29,6 @@ require Zevenet::Config;
 require Zevenet::SystemInfo;
 require Zevenet::Certificate;
 
-sub include {}
-
 my $configdir        = &getGlobalConfiguration( 'configdir' );
 my $openssl          = &getGlobalConfiguration( 'openssl' );
 my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' );
@@ -968,11 +966,16 @@ sub uploadCertActivation
 		   "debug", "certificate" );
 	rename ( $tmpFilename, $zlbcertfile_path );
 
-	# If the cert is correct, set the APT repository
-	include 'Zevenet::Apt';
-	if ( &setAPTRepo() )
+	# This is a BUGFIX for the zevenet preinst! In that script is not defined "include"
+	eval{ &include(); };
+	if ( $@ )
 	{
-		return "An error occurred configuring the Zevenet repository";
+		# If the cert is correct, set the APT repository
+		&include ('Zevenet::Apt');
+		if ( &setAPTRepo() )
+		{
+			return "An error occurred configuring the Zevenet repository";
+		}
 	}
 
 	return undef;
