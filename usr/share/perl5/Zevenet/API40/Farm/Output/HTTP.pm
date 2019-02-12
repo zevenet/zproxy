@@ -26,6 +26,7 @@ use Zevenet::Farm::HTTP::Config;
 # farm parameters
 sub getHTTPOutFarm
 {
+	require Zevenet::Farm::Config;
 	my $farmname = shift;
 	my $farm_ref = &getFarmStruct( $farmname );
 	return $farm_ref;
@@ -33,6 +34,7 @@ sub getHTTPOutFarm
 
 sub getHTTPOutService
 {
+	require Zevenet::Farm::HTTP::Service;
 	my $farmname     = shift;
 	my $services_ref = &get_http_all_services_struct( $farmname );
 	return $services_ref;
