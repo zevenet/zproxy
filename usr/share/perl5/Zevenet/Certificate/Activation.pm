@@ -29,6 +29,8 @@ require Zevenet::Config;
 require Zevenet::SystemInfo;
 require Zevenet::Certificate;
 
+sub include {}
+
 my $configdir        = &getGlobalConfiguration( 'configdir' );
 my $openssl          = &getGlobalConfiguration( 'openssl' );
 my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' );
@@ -968,7 +970,7 @@ sub uploadCertActivation
 
 	# If the cert is correct, set the APT repository
 	include 'Zevenet::Apt';
-	if ( &setAPTRepo )
+	if ( &setAPTRepo() )
 	{
 		return "An error occurred configuring the Zevenet repository";
 	}
