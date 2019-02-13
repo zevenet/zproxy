@@ -196,9 +196,6 @@ if [[ $devel == "false" ]]; then
 		"$dockerimg" \
 		encryption/encrypt_all.sh || die " encrypting files"
 
-	# Delete perl comilation stuff
-	rm -r encryption/
-
 	# Generate preinst
 	msg "Preparing preinst..."
 

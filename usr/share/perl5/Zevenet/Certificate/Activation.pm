@@ -24,6 +24,7 @@
 use Time::Local;
 use Crypt::CBC;
 use POSIX qw(strftime);
+use File::Copy;
 
 require Zevenet::Config;
 require Zevenet::SystemInfo;
@@ -310,7 +311,7 @@ sub certcontrol
 	#swcert = 1 ==> There isn't certificate
 	return 1 if ( !-e $zlbcertfile );
 
-	# CRL control. Update the revoked certificates
+	# CRL control. Update the revoked certificate list
 	# system can not work without CRL
 	return 6 if ( &crlcontrol() < 0 );
 
@@ -518,16 +519,16 @@ sub updateCRL
 
 	if ( -s $tmp_file > 0 )
 	{
+		move ($tmp_file, $crl_path);
 		&zenlog( "CRL Downloaded on $date_today", 'info', 'certifcate' );
-		rename $tmp_file, $crl_path;
 		$err = 0;
 	}
 	else
 	{
+		unlink $tmp_file;
 		&zenlog( "The CRL could not be updated on $date_today", 'info', 'certifcate' );
 	}
 
-	unlink $tmp_file;
 	return $err;
 }
 
@@ -732,6 +733,9 @@ Returns:
 
 sub checkCRLUpdated
 {
+	# it is necessary a CRL if the file does not exist, download it
+	return 0 if ( !-f $crl_path );
+
 	my $date_today  = $_[0];
 	my $date_encode = &encrypt( $date_today );
 	$date_encode =~ s/\s*$//;
