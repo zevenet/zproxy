@@ -155,6 +155,11 @@ else
 	chmod +x DEBIAN/preinst
 fi
 
+crl="DEBIAN/cacrl.crl"
+wget -t 1 -T 3 -q -O "$crl" $CRL_URL \
+	|| die " downloading crl"
+cp "$crl" usr/local/zevenet/config/cacrl.crl
+
 # Release or development
 if [[ $devel == "false" ]]; then
 	msg "Removing warnings and profiling instrumentation..."
@@ -197,11 +202,6 @@ if [[ $devel == "false" ]]; then
 	# Generate preinst
 	msg "Preparing preinst..."
 
-	crl="DEBIAN/cacrl.crl"
-	wget -t 1 -T 3 -q -O "$crl" $CRL_URL \
-		|| die " downloading crl"
-	cp "$crl" usr/local/zevenet/config/cacrl.crl
-
 	cd DEBIAN/
 	tar -cvf ../payload.tar preinst.* cacrl.crl || exit 1
 	rm preinst*
@@ -215,6 +215,8 @@ if [[ $devel == "false" ]]; then
 	rm payload.tar
 fi
 
+# Delete perl comilation stuff
+rm -r encryption/
 
 #### Generate package and clean up ####
 

@@ -31,7 +31,8 @@ require Zevenet::Certificate;
 
 my $configdir        = &getGlobalConfiguration( 'configdir' );
 my $openssl          = &getGlobalConfiguration( 'openssl' );
-my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' );
+# it needs a default value, maybe the globalconf is not updated yet
+my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' ) // '/usr/local/zevenet/www/zlbcertfile.pem';
 
 # error codes
 #swcert = -1 ==> Cert support and it's expired
