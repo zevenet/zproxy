@@ -364,8 +364,9 @@ void StreamManager::onRequestEvent(int fd) {
       return;
     } else {
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
-      Debug::logmsg(LOG_DEBUG, "[%s] %s (%s) -> %s", service->name.c_str(),
+      Debug::logmsg(LOG_DEBUG, "[%s] %s (%.*s) -> %s", service->name.c_str(),
                     stream->client_connection.getPeerAddress().c_str(),
+                    stream->request.getRequestLine().length() - 2,
                     stream->request.getRequestLine().c_str(),
                     bck->address.c_str());
       switch (bck->backend_type) {

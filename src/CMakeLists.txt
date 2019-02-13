@@ -9,6 +9,8 @@ add_definitions(-DMAX_URI_SIZE=8000)
 add_definitions(-DMAX_HEADER_VALUE_SIZE=4000)
 add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
+#SSL stuff
+add_definitions(-DDEBUG_SSL=0)
 
 add_library(libzhttp
     ssl/SSLContext.cpp
@@ -51,6 +53,7 @@ add_library(libzhttp
     stats/backend_stats.h
     stats/backend_stats.cpp
     config/svc.h
+    ssl/ssl_common.h
     config/svc.cpp
     http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
     http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h

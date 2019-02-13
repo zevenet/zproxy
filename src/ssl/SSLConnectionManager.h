@@ -12,7 +12,7 @@ namespace ssl {
 
 class SSLConnectionManager {
   void setSslInfoCallback(Connection &ssl_connection, SslInfoCallback callback);
-
+  IO::IO_RESULT getSslErrorResult(SSL *ssl_connection_context, int &rc);
 public:
   SSLContext *ssl_context;
   IO::IO_RESULT handleDataRead(Connection &ssl_connection);
@@ -26,5 +26,6 @@ public:
   bool init(const ListenerConfig &listener_config);
 
   bool initSslConnection(Connection &ssl_connection, bool client_mode = false);
+  bool initSslConnection_BIO(Connection &ssl_connection, bool client_mode = false);
 };
 } // namespace ssl

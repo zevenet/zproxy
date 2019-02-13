@@ -9,19 +9,21 @@
 
 #define PRINT_BUFFER_SIZE                                                      \
   Debug::LogInfo("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
-//  Debug::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
+//  Debug::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)),
+//  LOG_DEBUG);
 
 Connection::Connection()
     : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
       // string_buffer(),
-      address_str(""), is_connected(false), ssl_context(nullptr) , ssl_connected(false){
+      address_str(""), is_connected(false), ssl(nullptr),
+      ssl_connected(false) {
   // address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
   is_connected = false;
-  if (ssl_context != nullptr) {
-    SSL_shutdown(ssl_context);
-    SSL_free(ssl_context);
+  if (ssl != nullptr) {
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
   }
   if (fd_ > 0)
     this->closeConnection();
@@ -36,7 +38,7 @@ IO::IO_RESULT Connection::read() {
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::recv(fd_, buffer + buffer_size, MAX_DATA_SIZE - buffer_size,
                    MSG_NOSIGNAL);
@@ -55,9 +57,9 @@ IO::IO_RESULT Connection::read() {
       done = true;
       result = IO::IO_RESULT::FD_CLOSED;
     } else {
-     // PRINT_BUFFER_SIZE
+      // PRINT_BUFFER_SIZE
       buffer_size += static_cast<size_t>(count);
-     // PRINT_BUFFER_SIZE
+      // PRINT_BUFFER_SIZE
       if ((MAX_DATA_SIZE - buffer_size) == 0) {
         PRINT_BUFFER_SIZE
         Debug::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
@@ -67,7 +69,7 @@ IO::IO_RESULT Connection::read() {
       done = true;
     }
   }
-  //PRINT_BUFFER_SIZE
+  // PRINT_BUFFER_SIZE
   return result;
 }
 
@@ -80,18 +82,16 @@ std::string Connection::getPeerAddress() {
   return address_str;
 }
 
-
-
 #if ENABLE_ZERO_COPY
 
 IO::IO_RESULT Connection::zeroRead() {
 
   for (;;) {
-    if(splice_pipe.bytes >= BUFSZ){
-      return  IO::IO_RESULT::FULL_BUFFER;
+    if (splice_pipe.bytes >= BUFSZ) {
+      return IO::IO_RESULT::FULL_BUFFER;
     }
     auto n = splice(fd_, nullptr, splice_pipe.pipe[1], nullptr, BUFSZ,
-                   SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+                    SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
     if (n > 0)
       splice_pipe.bytes += n;
     if (n == 0)
@@ -107,14 +107,16 @@ IO::IO_RESULT Connection::zeroRead() {
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
-//  Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
+  //  Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes),
+  //  LOG_DEBUG);
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
     if (bytes > BUFSZ)
       bytes = BUFSZ;
     auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr, bytes,
-                     SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-//    Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes), LOG_DEBUG);
+                      SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+    //    Debug::LogInfo("ZERO_BUFFER::SIZE = " +
+    //    std::to_string(splice_pipe.bytes), LOG_DEBUG);
     if (n == 0)
       break;
     if (n < 0) {
@@ -215,12 +217,11 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
 
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   const char *return_value = "\r\n";
-  auto vector_size = http_data.num_headers +
-                     (http_data.message_length > 0 ? 3 : 2) +
-                     http_data.extra_headers.size() +
-                      http_data.permanent_extra_headers.size();
+  auto vector_size =
+      http_data.num_headers + (http_data.message_length > 0 ? 3 : 2) +
+      http_data.extra_headers.size() + http_data.permanent_extra_headers.size();
 
   iovec iov[vector_size];
   char *last_buffer_pos_written;
@@ -252,7 +253,8 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   }
 
   for (const auto &header :
-      http_data.permanent_extra_headers) { // header must be always  used as reference,
+       http_data.permanent_extra_headers) { // header must be always  used as
+                                            // reference,
     // it's copied it invalidate c_str() reference.
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
@@ -268,7 +270,8 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
           http_data.headers[http_data.num_headers - 1].name +
           http_data.headers[http_data.num_headers - 1].line_size) +
       2;
-//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
+  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
+  //  ,last_buffer_pos_written);
   if (http_data.message_length > 0) {
     iov[x].iov_base = http_data.message;
     iov[x++].iov_len = http_data.message_length;
@@ -276,7 +279,8 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     total_to_send += http_data.message_length;
     http_data.message_bytes_left -= http_data.message_length;
   }
-//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
+  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
+  //  ,last_buffer_pos_written);
   ssize_t nwritten = ::writev(target_fd, iov, x);
 
   if (nwritten < 0) {
@@ -292,11 +296,12 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   } else if (nwritten != total_to_send) {
     return IO::IO_RESULT::ERROR;
   }
-//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
-//  Debug::logmsg(LOG_REMOVE,"http_data.buffer = %p " ,http_data.buffer);
+  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
+  //  ,last_buffer_pos_written); Debug::logmsg(LOG_REMOVE,"http_data.buffer = %p
+  //  " ,http_data.buffer);
   buffer_size -=
       static_cast<size_t>(last_buffer_pos_written - http_data.buffer);
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
 
@@ -313,7 +318,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
 
   //  Debug::LogInfo("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
     if (count < 0) {
@@ -342,7 +347,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
   }
   //  Debug::LogInfo("#OUT#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   return result;
 }
 
@@ -428,7 +433,7 @@ int Connection::doAccept() {
   }
   if (clnt_addr.sin_family == AF_INET || clnt_addr.sin_family == AF_INET6 ||
       clnt_addr.sin_family == AF_UNIX) {
-      return new_fd;
+    return new_fd;
   } else {
     ::close(new_fd);
     Debug::logmsg(LOG_WARNING, "HTTP connection prematurely closed by peer");
@@ -446,9 +451,8 @@ bool Connection::listen(std::string address_str_, int port) {
 bool Connection::listen(addrinfo &address_) {
   this->address = &address_;
   /* prepare the socket */
-  if ((fd_ =
-           socket(this->address->ai_family == AF_INET ? PF_INET : PF_INET6,
-                  SOCK_STREAM, 0)) < 0) {
+  if ((fd_ = socket(this->address->ai_family == AF_INET ? PF_INET : PF_INET6,
+                    SOCK_STREAM, 0)) < 0) {
     Debug::logmsg(LOG_ERR, "socket () failed %s s - aborted", strerror(errno));
     return false;
   }
@@ -465,7 +469,7 @@ bool Connection::listen(addrinfo &address_) {
     return false;
   }
 
-  ::listen(fd_, 2048);
+  ::listen(fd_, SOMAXCONN);
   return true;
 }
 bool Connection::listen(std::string af_unix_name) {
@@ -485,13 +489,12 @@ bool Connection::listen(std::string af_unix_name) {
                   strerror(errno));
     return false;
   }
-  if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) <
-      0) {
+  if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) < 0) {
     Debug::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
                   strerror(errno));
     return false;
   }
-  ::listen(fd_, 512);
+  ::listen(fd_, SOMAXCONN);
 
   return false;
 }

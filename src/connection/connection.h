@@ -90,6 +90,9 @@ public:
   bool isConnected();
   //SSL stuff
 public:
-  SSL *ssl_context{nullptr};
+  SSL *ssl{nullptr};
+  BIO *sbio{nullptr};
+  BIO *io{nullptr};
+  BIO *ssl_bio{nullptr};
   std::atomic<bool> ssl_connected;
 };
