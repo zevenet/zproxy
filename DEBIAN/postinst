@@ -226,3 +226,10 @@ if [ $BM_tag -eq 1 ]; then
 else
 	echo "Zevenet Load Balancer update completed..."
 fi
+
+# Link checkupgrades
+if [ -f $zbindir/checkupgrades ];
+then
+	rm /usr/sbin/checkupgrades 2>/dev/null
+	ln -sf $zbindir/checkupgrades /usr/sbin/checkupgrades
+fi
