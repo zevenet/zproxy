@@ -161,7 +161,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ dev }     = $if_name;
 	$iface{ vini }    = undef;
 	$iface{ vlan }    = undef;
-	$iface{ mac }     = undef;
+	$iface{ mac }     = shift @if_params // undef;
 	$iface{ type }    = &getInterfaceType( $if_name );
 	$iface{ parent }  = &getParentInterfaceName( $iface{ name } );
 	$iface{ ip_v } =
@@ -185,7 +185,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		( $iface{ dev }, $iface{ vlan } ) = split '\.', $iface{ dev };
 	}
 
-	$iface{ mac } = $socket->if_hwaddr( $iface{ dev } );
+	$iface{ mac } = $socket->if_hwaddr( $iface{ dev } )
+	  if ( !defined $iface{ mac } );
 
 	# Interfaces without ip do not get HW addr via socket,
 	# in those cases get the MAC from the OS.
@@ -1750,12 +1751,11 @@ Function: setInterfaceConfig
 
 Parameters:
 	if_ref - Reference to a network interface hash.
+	params - Reference to the hash of params to modify.
 
 Returns:
-	boolean - 1 on success, or 0 on failure.
+	boolean - 0 on success, or 1 on failure.
 
-See Also:
-	<getInterfaceConfig>, <setInterfaceUp>, zevenet, zenbui.pl, zapi/v?/interface.cgi
 =cut
 
 sub setVlan    # if_ref
@@ -1768,28 +1768,38 @@ sub setVlan    # if_ref
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 
-	&zenlog( "Creating new vlan: $if_ref->{name}", "info", "NETWORK" );
 	my $oldIf_ref = &getInterfaceConfig( $if_ref->{ name } );
 
 	# Creating a new interface
 	if ( !defined $oldIf_ref )
 	{
+		&zenlog( "Creating new vlan: $if_ref->{name}", "info", "NETWORK" );
+
 		my $status = 0;
 
-		$status = 1                  if &createIf( $if_ref );
-		$status = 1                  if &addIp( $if_ref );
-		$status = &addMAC( $if_ref ) if ( exists $params->{ mac } );
+		$status = 1 if &createIf( $if_ref );    # Create interface
+		$status = 1 if &addIp( $if_ref );       # Set IP address
+
+		if ( $eload && exists $params->{ mac } )
+		{
+			$status = &eload(
+							  module => 'Zevenet::Net::Mac',
+							  func   => 'addMAC',
+							  args   => [$if_ref->{ name }, $if_ref->{ mac }]
+			);
+		}
 
 		if ( $status != 0 )
 		{
 			&delif( $if_ref );
 			return 1;
 		}
+
 		&writeRoutes( $if_ref->{ name } );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		$status = &upIf( $if_ref, 'writeconf' );
 
-		if ( $state == 0 )
+		if ( $status == 0 )
 		{
 			$if_ref->{ status } = "up";
 			&applyRoutes( "local", $if_ref );
@@ -1797,9 +1807,11 @@ sub setVlan    # if_ref
 
 		return 1 if ( !&setInterfaceConfig( $if_ref ) );
 	}
-	elsif ( defined $params )
+
+	# Modifying
+	else
 	{
-		my $old_vlan_addr;
+		my $oldAddr;
 
 		# Add new IP, netmask and gateway
 		if ( exists $params->{ ip } )
@@ -1807,7 +1819,7 @@ sub setVlan    # if_ref
 			return 1 if &addIp( $if_ref );
 			return 1 if &writeRoutes( $if_ref->{ name } );
 
-			$old_vlan_addr = &get_vlan_struct( $if_ref->{ name } )->{ ip };
+			$oldAddr = $oldIf_ref->{ addr };
 		}
 
 		my $state = &upIf( $if_ref, 'writeconf' );
@@ -1817,9 +1829,17 @@ sub setVlan    # if_ref
 			$if_ref->{ status } = "up";
 			return 1 if &applyRoutes( "local", $if_ref );
 		}
-		if ( exists $params->{ mac } )
+
+		if ( $eload && exists $params->{ mac } )
 		{
-			return 1 if &addMAC( $if_ref );
+			return 1
+			  if (
+				   &eload(
+						   module => 'Zevenet::Net::Mac',
+						   func   => 'addMAC',
+						   args   => [$if_ref->{ name }, $if_ref->{ mac }]
+				   )
+			  );
 		}
 
 		return 1 if ( !&setInterfaceConfig( $if_ref ) );
@@ -1840,7 +1860,7 @@ sub setVlan    # if_ref
 		&setIfacesUp( $if_ref->{ name }, "vini" );
 
 		require Zevenet::Farm::Base;
-		my @farms = &getFarmListByVip( $old_vlan_addr );
+		my @farms = &getFarmListByVip( $oldAddr );
 
 		# change farm vip,
 		if ( @farms )
@@ -1849,10 +1869,6 @@ sub setVlan    # if_ref
 			&setAllFarmByVip( $params->{ ip }, \@farms );
 		}
 
-	}
-	else
-	{
-		return 1;
 	}
 
 	return 0;

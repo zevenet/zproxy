@@ -150,16 +150,18 @@ sub new_vlan    # ( $json_obj )
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
 	$if_ref = {
-			   name    => $json_obj->{ name },
-			   dev     => $json_obj->{ parent },
-			   status  => "up",
-			   vlan    => $json_obj->{ tag },
-			   addr    => $json_obj->{ ip },
-			   mask    => $json_obj->{ netmask },
-			   gateway => $json_obj->{ gateway } // '',
-			   ip_v    => &ipversion( $json_obj->{ ip } ),
-			   mac => $json_obj->{ mac } // $socket->if_hwaddr( $json_obj->{ parent } ),
+				name    => $json_obj->{ name },
+				dev     => $json_obj->{ parent },
+				status  => "up",
+				vlan    => $json_obj->{ tag },
+				addr    => $json_obj->{ ip },
+				mask    => $json_obj->{ netmask },
+				gateway => $json_obj->{ gateway } // '',
+				ip_v    => &ipversion( $json_obj->{ ip } ),
+				mac     => $socket->if_hwaddr( $json_obj->{ parent } ),
 	};
+	$if_ref->{ mac } = lc $json_obj->{ mac }
+	  if ( $eload && exists $json_obj->{ mac } );
 
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
@@ -578,8 +580,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		&delRoutes( "local", $if_ref );
 	}
 
-	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
-	$if_ref->{ mac }     = $json_obj->{ mac }     if exists $json_obj->{ mac };
+	$if_ref->{ addr } = $json_obj->{ ip } if exists $json_obj->{ ip };
+	$if_ref->{ mac } = lc $json_obj->{ mac }
+	  if ( $eload && exists $json_obj->{ mac } );
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
