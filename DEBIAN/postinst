@@ -166,7 +166,9 @@ if [ -f $zbindir/ssh_nodns.sh ]; then
 fi
 
 # Create IPDS directories
-$zbindir/boot_ipds
+if [ $BM_tag -eq 0 ]; then
+	$zbindir/boot_ipds
+fi
 
 # Remove residual cluster DROP(s) on ip6tables
 if [ $BM_tag -ne 0 ]; then
