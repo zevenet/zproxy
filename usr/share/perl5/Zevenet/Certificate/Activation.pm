@@ -322,8 +322,6 @@ sub certcontrol
 	#swcert = 2 ==> Cert isn't signed OK
 	return 2 if ( $cert_info->{ signed } ne 'true' );
 
-	my $cert_data = &getCertActivationData( $zlbcertfile );
-
 	#swcert = 5 ==> Cert isn't valid
 	return 5 if ( $cert_info->{ valid } ne 'true' );
 
@@ -681,9 +679,20 @@ sub getCertKey
 		$cert_type = "old";
 		$host_key  = &keycert_old();
 	}
+	else
+	{
+		&zenlog( "It has not been found any valid key in the certificate",
+				 "error", "certificate" );
+	}
 
 	# return blank key if it is not correct for the current host
-	$key = "" if ( $key ne $host_key );
+	if ( $key ne $host_key )
+	{
+		&zenlog(
+				"The certificate key: '$key' does not match with the host key: '$host_key'",
+				"error", "certificate" );
+		$key = "";
+	}
 
 	return ( $key, $cert_type );
 }

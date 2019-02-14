@@ -31,4 +31,20 @@ if ( $ENV{ PATH_INFO } =~ qr{^/system/ssh} )
 	POST qr{^/system/ssh$}, 'set_ssh', $mod;
 }
 
+if ( $ENV{ PATH_INFO } =~ qr{^/system/proxy} )
+{
+	my $mod = 'Zevenet::API40::System::Service::Proxy';
+
+	GET qr{^/system/proxy$},  'get_proxy', $mod;
+	POST qr{^/system/proxy$}, 'set_proxy', $mod;
+}
+
+if ( $ENV{ PATH_INFO } =~ qr{^/system/http} )
+{
+	my $mod = 'Zevenet::API40::System::Service::HTTP';
+
+	GET qr{^/system/http$},  'get_http', $mod;
+	POST qr{^/system/http$}, 'set_http', $mod;
+}
+
 1;

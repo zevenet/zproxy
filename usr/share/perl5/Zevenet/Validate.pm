@@ -103,6 +103,7 @@ my %format_re = (
 	'snmp_community' => qr{[\w]+},
 	'snmp_scope'     => qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},    # ip/mask
 	'ntp'            => qr{[\w\.\-]+},
+	'http_proxy' => qr{\S*},    # use any character except the spaces
 
 	# farms
 	'farm_name'             => qr/[a-zA-Z0-9\-]+/,
