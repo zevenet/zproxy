@@ -118,13 +118,13 @@ $uname="/bin/uname";
 #Where is tar binary?
 $tar="/bin/tar";
 #where is ifconfig binary?
-$ifconfig_bin="/sbin/ifconfig";
+$ifconfig_bin="/usr/sbin/ifconfig";
 #Where is ip bynary?
-$ip_bin="/sbin/ip";
+$ip_bin="/usr/sbin/ip";
 #Where is wc binary?
 $wc_bin="/usr/bin/wc";
 #Where is fdisk binary?
-$fdisk_bin="/sbin/fdisk";
+$fdisk_bin="/usr/sbin/fdisk";
 #Where is df binary?
 $df_bin="/bin/df";
 #Where is ssh-keygen binary?
@@ -180,9 +180,9 @@ $iptables="/sbin/iptables";
 #Where is ip6tables?
 $ip6tables="/sbin/ip6tables";
 #Where is modprobe?
-$modprobe="/sbin/modprobe";
+$modprobe="/usr/sbin/modprobe";
 #Where is lsmod?
-$lsmod="/sbin/lsmod";
+$lsmod="/usr/sbin/lsmod";
 #Where is gdnsd?
 $gdnsd="$zdir/app/gdnsd/sbin/gdnsd";#update
 #Where is l4sd?
@@ -220,7 +220,7 @@ $dpkg_bin="/usr/bin/dpkg";
 #Where is grep?
 $grep_bin="/bin/grep";
 #Where is nftlb?
-$nftlb_bin="/usr/local/sbin/nftlb";
+$nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
 
 
 # Pound
