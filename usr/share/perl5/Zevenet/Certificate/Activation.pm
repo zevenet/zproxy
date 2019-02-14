@@ -190,7 +190,7 @@ sub keycert
 	my $hostname = &getHostname();
 	my $mod_appl = &get_mod_appl();
 
-	my $key = "$hostname::$dmi::$mod_appl";
+	my $key = "${hostname}::${dmi}::${mod_appl}";
 	my $str = &encrypt( $key );
 
 	return $str;
