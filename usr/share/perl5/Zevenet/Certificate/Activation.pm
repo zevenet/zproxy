@@ -30,10 +30,12 @@ require Zevenet::Config;
 require Zevenet::SystemInfo;
 require Zevenet::Certificate;
 
-my $configdir        = &getGlobalConfiguration( 'configdir' );
-my $openssl          = &getGlobalConfiguration( 'openssl' );
+my $configdir = &getGlobalConfiguration( 'configdir' );
+my $openssl   = &getGlobalConfiguration( 'openssl' );
+
 # it needs a default value, maybe the globalconf is not updated yet
-my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' ) // '/usr/local/zevenet/www/zlbcertfile.pem';
+my $zlbcertfile_path = &getGlobalConfiguration( 'zlbcertfile_path' )
+  // '/usr/local/zevenet/www/zlbcertfile.pem';
 
 # error codes
 #swcert = -1 ==> Cert support and it's expired
@@ -519,7 +521,7 @@ sub updateCRL
 
 	if ( -s $tmp_file > 0 )
 	{
-		move ($tmp_file, $crl_path);
+		move( $tmp_file, $crl_path );
 		&zenlog( "CRL Downloaded on $date_today", 'info', 'certifcate' );
 		$err = 0;
 	}
@@ -855,7 +857,7 @@ sub delCert_activation    # ($certname)
 				 "error", "Activation" );
 	}
 
-	$files_removed = 0 if ( !-f $zlbcertfile_path );
+	$files_removed = 0 if ( -f $zlbcertfile_path );
 
 	return $files_removed;
 }
@@ -971,12 +973,12 @@ sub uploadCertActivation
 		   "debug", "certificate" );
 	rename ( $tmpFilename, $zlbcertfile_path );
 
-	# This is a BUGFIX for the zevenet preinst! In that script is not defined "include"
-	eval{ &include(); };
+ # This is a BUGFIX for the zevenet preinst! In that script is not defined "include"
+	eval { &include(); };
 	if ( $@ )
 	{
 		# If the cert is correct, set the APT repository
-		&include ('Zevenet::Apt');
+		&include( 'Zevenet::Apt' );
 		if ( &setAPTRepo() )
 		{
 			return "An error occurred configuring the Zevenet repository";
