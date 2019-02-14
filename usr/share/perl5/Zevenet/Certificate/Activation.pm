@@ -950,7 +950,8 @@ sub uploadCertActivation
 	require Zevenet::File;
 
 	# do not allow to upload certificates with old key
-	my ( undef, $cert_type ) = &getCertKey( $upload_data );
+	my @cert_array = split ( "\n", $upload_data );
+	my ( undef, $cert_type ) = &getCertKey( \@cert_array );
 	if ( $cert_type eq 'old' )
 	{
 		return &getCertErrorMessage( 7 );
