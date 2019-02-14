@@ -172,7 +172,8 @@ if [[ $devel == "false" ]]; then
 			usr/local/zevenet/app/libexec/check_uplink \
 			-type f \
 			-exec sed --follow-symlinks -i 's/^use warnings.*//' {} \; \
-			-exec sed --follow-symlinks -i '/zenlog.*PROFILING/d' {} \;
+			-exec sed --follow-symlinks -i '/zenlog.*FILE.*LINE.*caller/d' {} \; \
+			-exec sed --follow-symlinks -i '/debug.*PROFILING/d' {} \;
 
 	# Compile files for all debian versions
 	msg "Compiling perl files"
