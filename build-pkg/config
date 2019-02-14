@@ -66,11 +66,10 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Routes/Floating.pm
 	usr/share/perl5/Zevenet/API40/Routes/GSLB.pm
 	usr/share/perl5/Zevenet/API40/Routes/HTTP.pm
-	usr/share/perl5/Zevenet/API40/Routes/HTTP_GUI.pm
 	usr/share/perl5/Zevenet/API40/Routes/IPDS.pm
 	usr/share/perl5/Zevenet/API40/Routes/Notifications.pm
 	usr/share/perl5/Zevenet/API40/Routes/RBL.pm
-	usr/share/perl5/Zevenet/API40/Routes/SSH.pm
+	usr/share/perl5/Zevenet/API40/Routes/System.pm
 	usr/share/perl5/Zevenet/API40/Routes/RBAC.pm
 	usr/share/perl5/Zevenet/API40/Routes/WAF.pm
 	usr/share/perl5/Zevenet/API40/Routes/Statistics.pm
@@ -186,6 +185,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/System/Service/SNMP.pm
 	usr/share/perl5/Zevenet/API3/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API3/System/User.pm
+	usr/share/perl5/Zevenet/API3/System/Proxy.pm
 	usr/share/perl5/Zevenet/API40/Alias.pm
 	usr/share/perl5/Zevenet/API40/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/API40/Farm/Get/GSLB.pm
@@ -213,6 +213,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Notification.pm
 	usr/share/perl5/Zevenet/API40/System/Service/HTTP.pm
 	usr/share/perl5/Zevenet/API40/System/Service/SSH.pm
+	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
