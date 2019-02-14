@@ -834,10 +834,8 @@ Parameters:
 	String - Certificate filename.
 
 Returns:
-	Integer - Number of files removed.
+	Integer - 0 on success, other on failure.
 
-See Also:
-	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
 
 sub delCert_activation    # ($certname)
@@ -857,7 +855,7 @@ sub delCert_activation    # ($certname)
 				 "error", "Activation" );
 	}
 
-	$files_removed = 0 if ( -f $zlbcertfile_path );
+	$files_removed = 0 if ( !-f $zlbcertfile_path );
 
 	return $files_removed;
 }

@@ -68,7 +68,7 @@ sub delete_activation_certificate    # ( $cert_filename )
 
 	my $description = "Delete activation certificate";
 
-	if ( &delCert_activation() )
+	if ( !&delCert_activation() )
 	{
 		# Success
 		my $message = "The activation certificate has been deleted";
