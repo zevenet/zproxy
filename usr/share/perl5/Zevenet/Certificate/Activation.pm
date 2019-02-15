@@ -749,12 +749,16 @@ sub checkCRLUpdated
 
 	my $date_today  = $_[0];
 	my $date_encode = &encrypt( $date_today );
-	$date_encode =~ s/\s*$//;
+	my $date_check  = "";
 
-	my $read_check = &openlock( $file_check, '<' );
-	my $date_check = <$read_check>;
-	$date_check =~ s/\s*$//;
-	close $read_check;
+	$date_encode =~ s/\s*$//;
+	if ( -f $file_check )
+	{
+		my $read_check = &openlock( $file_check, '<' );
+		$date_check = <$read_check>;
+		$date_check =~ s/\s*$//;
+		close $read_check;
+	}
 
 	return ( $date_check eq $date_encode ) ? 1 : 0;
 }
