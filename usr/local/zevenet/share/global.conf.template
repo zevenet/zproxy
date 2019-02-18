@@ -223,6 +223,8 @@ $grep_bin="/bin/grep";
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
 #Where is poweroff
 $poweroff_bin="/usr/sbin/poweroff";
+#Where is reboot
+$reboot_bin="/usr/sbin/reboot";
 
 
 # Pound

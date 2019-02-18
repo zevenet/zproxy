@@ -374,7 +374,8 @@ sub manage_power()
 				   my $ret = &confirm_dialog( "Are you sure you want to reboot your ZEVENET?" );
 				   if ( $ret )
 				   {
-					   my @run = `reboot &`;
+					   my $reboot_bin = &getGlobalConfiguration( 'reboot_bin' );
+					   my @run        = `$reboot_bin &`;
 					   exit ( 0 );
 				   }
 			   },
