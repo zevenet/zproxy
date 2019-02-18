@@ -7,7 +7,7 @@ load_global_conf
 
 # vars
 IP_MANAGEMENT="192.168.0.99"
-GW_MANAGEMENT="192.168.100.5"
+GW_MANAGEMENT="192.168.0.5"
 NETMASK_MANAGEMENT="255.255.255.0"
 
 GLOBALCONF_TPL=$globalcfg_tpl
@@ -22,16 +22,16 @@ HW=0
 show_usage() {
   echo usage: `basename $0` -i interface_name
   echo "  Mandatory parameters:"
-  echo "      -i|--interface, this interface will not be deleted. It will set with the same configuration. It is recomentadable set the management interface here."
+  echo "      -i|--interface, this interface will not be deleted. It is recommendable to use this interface only for management purpose."
   echo ""
   echo "  Optional parameters: "
   echo "      --remove-backups, removes the load balancer backups in the reset process"
-  echo "      --hard-reset, removes all user configuration: Activation certificate, backups, "
-  echo "      -hw|--hardware, is a hard reset but set by default the ip $IP_MANAGEMENT in the manager interface"
+  echo "      --hard-reset, removes configuration related to users: Activation certificates and backups, RBAC "
+  echo "      -hw|--hardware, is a hard reset but set by default the ip $IP_MANAGEMENT in the management interface"
   echo ""
   echo "  The factory reset, in its soft version, will delete:"
-  echo "      *) All the interfaces configuration, excepts the interface received as argument "
-  echo "      *) All farm configuration "
+  echo "      *) All the interfaces configuration, excepts the interface received as argument, see -i parameter "
+  echo "      *) All farms configuration "
   echo "      *) All SSL certificates "
   echo "      *) Web server SSL certificate"
   echo "      *) Logs "

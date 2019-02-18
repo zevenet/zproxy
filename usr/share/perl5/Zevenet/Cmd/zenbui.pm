@@ -867,7 +867,8 @@ sub manage_zlb_services()
 	my @services         = ( 'cherokee', 'zevenet' );
 	my $cherokeestatus   = "STOPPED";
 	my $zlbservicestatus = "STOPPED";
-	my @run              = `ps ex`;
+	my $ps_bin           = &getGlobalConfiguration( 'ps' );
+	my @run              = `$ps_bin ex`;
 	if ( grep ( /$services[0]/, @run ) )
 	{
 		$cherokeestatus = "ACTIVE";
