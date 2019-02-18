@@ -225,6 +225,8 @@ $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
 $poweroff_bin="/usr/sbin/poweroff";
 #Where is reboot
 $reboot_bin="/usr/sbin/reboot";
+#Where is arpsend
+$arpsend_bin="/usr/sbin/arpsend";
 
 
 # Pound
