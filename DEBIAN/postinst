@@ -39,15 +39,6 @@ GLOBALCF=$globalcfg
 GLOBALCFT=$globalcfg_tpl
 
 
-# create Web server
-if [ ! -f "$http_server_cert" ]; then
-	cp -rf $http_server_cert_tpl $http_server_cert
-fi
-if [ ! -f "$http_server_key" ]; then
-	cp -rf $http_server_key_tpl $http_server_key
-fi
-
-
 # link l4xnat with iptables or nftables
 if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	rm -rf "/usr/share/perl5/Zevenet/Farm/L4xNAT"
@@ -55,7 +46,8 @@ fi
 if [ ! -e "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	ln -sf /usr/share/perl5/Zevenet/Farm/L4nft /usr/share/perl5/Zevenet/Farm/L4xNAT
 fi
-# Check for binaries
+
+# Choose the binaries version according to the OS version
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
 	$zbindir/zevenet
@@ -70,6 +62,17 @@ do
 done
 
 
+## Apply system configurations
+
+if [ $BM_tag -eq 1 ]; then
+	#Flush apt sources
+	echo > /etc/apt/sources.list
+
+	echo "Zevenet Load Balancer installed..."
+else
+	echo "Zevenet Load Balancer update completed..."
+fi
+
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
 if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
@@ -77,22 +80,22 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 fi
 
+
+## Disable services
+
 # Set crontab
 if [ ! -f /etc/cron.d/zevenet ]; then
 	cp $cron_tpl $cron_conf
 	$cron_service restart
 fi
 
-
 # Disable conntrackd stats
 sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
 # Delete old conntrackd-stats logs
 rm -rf /var/log/conntrackd-stats* 2>/dev/null
 
-## Disable services
-
 # SNMP services
-if [[ -f $snmpdconfig_file && `grep -c '#zenlb' $snmpdconfig_file` == '0' ]]; then
+if [[ `grep -c '#zenlb' $snmpdconfig_file` == '0' || ! -f $snmpdconfig_file ]]; then
 	cp $snmpdconfig_tpl $snmpdconfig_file
 fi
 if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
@@ -151,6 +154,17 @@ sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 
+# Disable DNS resolution for SSH service
+if [ -f $zbindir/ssh_nodns.sh ]; then
+	$zbindir/ssh_nodns.sh
+fi
+
+# Add Zevenet services to boot process including dependencies
+update-rc.d zevenet defaults
+
+
+## Create configuration files
+
 # Move zlb-stop & zlb-start
 if [ ! -f $zlb_start_script ]; then
 	cp $zlb_start_tpl $zlb_start_script
@@ -159,15 +173,12 @@ if [ ! -f $zlb_stop_script ]; then
 	cp $zlb_stop_tpl $zlb_stop_script
 fi
 
-
-# Disable DNS resolution for SSH service
-if [ -f $zbindir/ssh_nodns.sh ]; then
-	$zbindir/ssh_nodns.sh
+# create Web server
+if [ ! -f "$http_server_cert" ]; then
+	cp -rf $http_server_cert_tpl $http_server_cert
 fi
-
-# Create IPDS directories
-if [ $BM_tag -eq 0 ]; then
-	$zbindir/boot_ipds
+if [ ! -f "$http_server_key" ]; then
+	cp -rf $http_server_key_tpl $http_server_key
 fi
 
 # Remove residual cluster DROP(s) on ip6tables
@@ -182,50 +193,31 @@ if [ $BM_tag -ne 0 ]; then
 	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
 fi
 
+
+## Restarting zevenet service
 if [ $BM_tag -eq 0 ]; then
-	# restarting zevenet service
 	echo "Zevenet will be unavailable while the service is restarting."
 	/etc/init.d/zevenet stop
 	/etc/init.d/zevenet start
 fi
 
+# Run EE modules
+#  this action is done here because zevenet service does not allow start EE modules withoout certificates
+perl -E '
+	$ENV{ SCRIPT_NAME }="postinst";
+
+	require Zevenet::ELoad;
+	&eload(
+		module => "Zevenet::Service",
+		func   => "start_modules_without_cert",
+	);'
+
+
+## Allthings necessary after restarting the service
 # Load conntrack modules
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
 
-# Add Zevenet services to boot process including dependencies
-update-rc.d zevenet defaults
-
-# Link zenbui
-if [ -f $zbindir/zenbui ];
-then
-	rm /usr/bin/zenbui 2>/dev/null
-	ln -sf $zbindir/zenbui /usr/bin/zenbui
-fi
-
-# copy rbac roles template to config if they do not exist
-TMPROLE="/usr/local/zevenet/share/rbac_roles"
-CONFROLE="/usr/local/zevenet/config/rbac/roles"
-for i in `ls $TMPROLE`
-do
-	FILE=`echo $i | sed "s,$TMPROLE,,"`
-	if [ ! -f "${CONFROLE}/$FILE" ]
-	then
-		cp "$TMPROLE/$FILE" "$CONFROLE/$FILE"
-	fi
-done
-
-#Change prompt color
-sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
-
-if [ $BM_tag -eq 1 ]; then
-	#Flush apt sources
-	echo > /etc/apt/sources.list
-
-	echo "Zevenet Load Balancer installed..."
-else
-	echo "Zevenet Load Balancer update completed..."
-fi
 
 # Link checkupgrades
 if [ -f $zbindir/checkupgrades ];

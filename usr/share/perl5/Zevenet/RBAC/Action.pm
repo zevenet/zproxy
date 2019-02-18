@@ -23,6 +23,7 @@
 
 use strict;
 
+use File::Copy "cp";
 use Zevenet::Core;
 include 'Zevenet::RBAC::User::Action';
 include 'Zevenet::RBAC::Group::Action';
@@ -47,6 +48,7 @@ sub initRBACModule
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $touch           = &getGlobalConfiguration( "touch" );
 	my $groupadd        = &getGlobalConfiguration( "groupadd_bin" );
+	my $rbacRolesTpl_dir = &getGlobalConfiguration('rbacRolesTpl_dir');
 	my $rbacPath        = &getRBACConfPath();
 	my $rbacRolePath    = &getRBACRolePath();
 	my $rbacUserConfig  = &getRBACUserConf();
@@ -55,6 +57,18 @@ sub initRBACModule
 	mkdir $rbacRolePath                     if ( !-d $rbacRolePath );
 	&logAndRun( "$touch $rbacUserConfig" )  if ( !-f $rbacUserConfig );
 	&logAndRun( "$touch $rbacGroupConfig" ) if ( !-f $rbacGroupConfig );
+
+	# update roles templates
+	opendir (my $dir, $rbacRolesTpl_dir);
+	foreach my $file ( readdir $dir )
+	{
+		next if ( $file =~ /^\./ );
+		if ( ! -f "$rbacRolePath/$file" )
+		{
+			cp ("$rbacRolesTpl_dir/$file", "$rbacRolePath/$file") or &zenlog ("The role template $file could not be imported","error","rbac");
+		}
+	}
+	closedir $dir;
 
 	# create  rbac user
 	my $adduser = &getGlobalConfiguration( "adduser_bin" );

@@ -59,6 +59,7 @@ else
 	$program_name =
 		( $0 ne '-e' ) ? $0
 	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
+	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /^postinst$/ ) ? $ENV{ SCRIPT_NAME }
 	: ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
 	: ( exists $ENV{ SCRIPT_NAME } ) ? $ENV{ SCRIPT_NAME }
 	:															$^X;
@@ -101,7 +102,7 @@ $ENV{ SCRIPT_NAME } = 'enterprise.bin';
 
 
 # Run encrypted command
-if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
+if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' && $basename ne 'postinst' )
 {
 	$basename =~ s!\.(?:pl|cgi)$!!; # Remove trailing .pl or .cgi if exists
 
@@ -187,7 +188,8 @@ my $basedir  = &getGlobalConfiguration( 'basedir' );
 
 ### Exceptions to activation certificate check ### END
 # the zevenet script, check certificate itself
-my $skip_cert_check = ( $basename eq 'zevenet' );
+my $postinst_exec = ($basename eq 'postinst' and $func eq 'start_modules_without_cert' );
+my $skip_cert_check = ( ($basename eq 'zevenet') || $postinst_exec );
 
 unless ( $skip_cert_check )
 {
