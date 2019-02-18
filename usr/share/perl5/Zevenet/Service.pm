@@ -285,16 +285,14 @@ sub start_service
 	return $out_msg;
 }
 
-sub start_modules
+# Warning! this function is used only from the postinst.
+# to use it from another side, use: "start_modules"
+sub start_modules_without_cert
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-
 	my $out_msg = "";
 	my $msg     = "";
-
-	# do not run cluster if the certificate is not valid
-	return "" if ( $swcert > 0 );
 
 	# Notifications
 	$msg     = "Starting Notification...";
@@ -325,6 +323,17 @@ sub start_modules
 	#~ &startTHROUTask();
 
 	return $out_msg;
+}
+
+sub start_modules
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	# do not run cluster if the certificate is not valid
+	return "" if ( $swcert > 0 );
+
+	return &start_modules_without_cert();
 }
 
 # this function syncs files with the other node before starting the cluster and

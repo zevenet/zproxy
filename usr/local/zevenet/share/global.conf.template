@@ -361,6 +361,9 @@ $blacklistsCronFile="/etc/cron.d/blacklists";
 $dosConf="$configdir/ipds/dos/dos.conf";#update
 $dosConfDir="$configdir/ipds/dos";#update
 
+# Rabc Module
+$rbacRolesTpl_dir="$templatedir/rbac_roles";
+
 #Ssyncd
 $ssyncd_enabled="true";
 $ssyncd_bin="$zdir/app/ssyncd/bin/ssyncd";#update

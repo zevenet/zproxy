@@ -51,21 +51,7 @@ sub runBLStartModule
 	my $touch          = &getGlobalConfiguration( 'touch' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-	if ( !-d $blacklistsPath )
-	{
-		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
-		&zenlog( "Created $blacklistsPath directory.", "info", "IPDS" );
-	}
-
-	# create list config if doesn't exist
-	if ( !-e $blacklistsConf )
-	{
-		system ( "$touch $blacklistsConf" );
-		&zenlog( "Created $blacklistsConf file.", "info", "IPDS" );
-	}
-
-	# load preload lists
-	#~ &setBLAddPreloadLists();
+	&initBLModule();
 
 	my $allLists = Config::Tiny->read( $blacklistsConf );
 

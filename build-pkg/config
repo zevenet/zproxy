@@ -13,7 +13,6 @@ enterprise_files=(
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/bin/enterprise.bin
-	usr/local/zevenet/bin/boot_ipds
 	usr/local/zevenet/bin/cluster_status
 	usr/local/zevenet/bin/cluster_status.pl
 	usr/local/zevenet/bin/if_throughput.pl
