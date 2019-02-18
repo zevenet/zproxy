@@ -32,7 +32,7 @@ BM_tag=0 # _BM_tag_
 /usr/local/zevenet/bin/checkglobalconf
 
 # load LB variables
-source ./usr/local/zevenet/bin/load_global_conf.sh
+source /usr/local/zevenet/bin/load_global_conf
 load_global_conf
 
 GLOBALCF=$globalcfg
