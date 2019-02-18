@@ -184,7 +184,7 @@ $modprobe="/usr/sbin/modprobe";
 #Where is lsmod?
 $lsmod="/usr/sbin/lsmod";
 #Where is gdnsd?
-$gdnsd="$zdir/app/gdnsd/sbin/gdnsd";#update
+$gdnsd="/usr/sbin/gdnsd";#update
 #Where is l4sd?
 $l4sd="$zbindir/l4sd";#update
 #Where is factory_reset?
