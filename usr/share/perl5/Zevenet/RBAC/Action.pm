@@ -65,7 +65,7 @@ sub initRBACModule
 		next if ( $file =~ /^\./ );
 		if ( ! -f "$rbacRolePath/$file" )
 		{
-			cp ("$dir/$file", "$rbacRolePath/$file") or &zenlog ("The role template $file could not be imported","error","rbac");
+			cp ("$rbacRolesTpl_dir/$file", "$rbacRolePath/$file") or &zenlog ("The role template $file could not be imported","error","rbac");
 		}
 	}
 	closedir $dir;

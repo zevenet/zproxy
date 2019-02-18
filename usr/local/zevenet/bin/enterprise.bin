@@ -188,7 +188,8 @@ my $basedir  = &getGlobalConfiguration( 'basedir' );
 
 ### Exceptions to activation certificate check ### END
 # the zevenet script, check certificate itself
-my $skip_cert_check = ( ($basename eq 'zevenet') || ($basename eq 'postinst') );
+my $postinst_exec = ($basename eq 'postinst' and $func eq 'start_modules_without_cert' );
+my $skip_cert_check = ( ($basename eq 'zevenet') || $postinst_exec );
 
 unless ( $skip_cert_check )
 {
