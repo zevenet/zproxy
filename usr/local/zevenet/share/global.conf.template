@@ -221,6 +221,8 @@ $dpkg_bin="/usr/bin/dpkg";
 $grep_bin="/bin/grep";
 #Where is nftlb?
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
+#Where is poweroff
+$poweroff_bin="/usr/sbin/poweroff";
 
 
 # Pound

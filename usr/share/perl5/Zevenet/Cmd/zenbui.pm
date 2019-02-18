@@ -387,7 +387,8 @@ sub manage_power()
 				   my $ret = &confirm_dialog( "Are you sure you want to shutdown your ZEVENET?" );
 				   if ( $ret )
 				   {
-					   my @run = `poweroff &`;
+					   my $poweroff_bin = &getGlobalConfiguration( 'poweroff_bin' );
+					   my @run          = `$poweroff_bin &`;
 					   exit ( 0 );
 				   }
 			   },
