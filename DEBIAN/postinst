@@ -217,11 +217,3 @@ perl -E '
 # Load conntrack modules
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
-
-
-# Link checkupgrades
-if [ -f $zbindir/checkupgrades ];
-then
-	rm /usr/sbin/checkupgrades 2>/dev/null
-	ln -sf $zbindir/checkupgrades /usr/sbin/checkupgrades
-fi
