@@ -12,9 +12,9 @@ packages=`apt list --upgradable 2>/dev/null | grep -v Listing | wc -l`
 if [ $packages \> 0 ]
 then
 	echo "$packages packages require upgrade"
-	echo "To upgrading, execute: apt-get upgrade"
+	echo "To upgrade, execute: apt-get upgrade"
 	echo "last check at `date` - $packages packages require upgrade, update this information with: checkupgrades" > /usr/local/zevenet/app/checkupgrades/share/message.txt
-	echo "To upgrading, execute: apt-get upgrade" >> /usr/local/zevenet/app/checkupgrades/share/message.txt
+	echo "To upgrade, execute: apt-get upgrade" >> /usr/local/zevenet/app/checkupgrades/share/message.txt
 	apt list --upgradable 2>/dev/null | cut -d"/" -f 1  | tr  '\n' ' ' > /usr/local/zevenet/app/checkupgrades/share/package_upgradables.txt
 else
 	echo "Zevenet Packages are up-to-date."
