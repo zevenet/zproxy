@@ -36,6 +36,7 @@ my $SYMKEY = "1135628147310";
 my $mod;
 my $symbolic_link = "";
 my $program_name = "";
+my $skipcert = undef;
 my $basename;
 
 sub include;
@@ -60,10 +61,12 @@ else
 		( $0 ne '-e' ) ? $0
 	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
 	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /^postinst$/ ) ? $ENV{ SCRIPT_NAME }
+	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /^preinst$/ ) ? $ENV{ SCRIPT_NAME }
 	: ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
 	: ( exists $ENV{ SCRIPT_NAME } ) ? $ENV{ SCRIPT_NAME }
 	:															$^X;
-
+	# Variable INST_DIS_CHK: first instalation disable certificate check;
+	$skipcert  = exists $ENV{ INST_DIS_CHK };
 	# Exception for keepalived running zcluster-manager
 	# %ENV  = {
 	#           'PATH' => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
@@ -102,7 +105,7 @@ $ENV{ SCRIPT_NAME } = 'enterprise.bin';
 
 
 # Run encrypted command
-if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' && $basename ne 'postinst' )
+if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' && $basename ne 'postinst' && $basename ne 'preinst' )
 {
 	$basename =~ s!\.(?:pl|cgi)$!!; # Remove trailing .pl or .cgi if exists
 
@@ -189,7 +192,8 @@ my $basedir  = &getGlobalConfiguration( 'basedir' );
 ### Exceptions to activation certificate check ### END
 # the zevenet script, check certificate itself
 my $postinst_exec = ($basename eq 'postinst' and $func eq 'start_modules_without_cert' );
-my $skip_cert_check = ( ($basename eq 'zevenet') || $postinst_exec );
+my $newinst_exec = (($basename eq 'postinst' || $basename eq 'preinst') and $skipcert );
+my $skip_cert_check = ( ($basename eq 'zevenet') || $postinst_exec || $newinst_exec );
 
 unless ( $skip_cert_check )
 {
@@ -442,4 +446,3 @@ sub include
 		}
 	}
 }
-
