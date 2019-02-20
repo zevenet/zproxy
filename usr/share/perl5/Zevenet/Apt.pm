@@ -107,7 +107,7 @@ sub setAPTRepo
 
 	# configuring repository
 	open ( my $FH, '>', $file ) or die "Could not open file '$file' $!";
-	print $FH "deb https://$host/ee/v5/$kernel $distro main\n";
+	print $FH "deb https://$host/ee/v6/$kernel $distro main\n";
 	close $fh;
 
 	# update repositories
