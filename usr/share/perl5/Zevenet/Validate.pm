@@ -589,20 +589,16 @@ sub checkZAPIParams
 	# check for each parameter
 	foreach my $param ( @rec_keys )
 	{
-		# if blank value is allowed
-		if ( $param_obj->{ $param }->{ 'non_blank' } eq 'true' )
+		if ( $json_obj->{ $param } eq '' )
 		{
-			return "The parameter $param can't be in blank."
-			  if ( $json_obj->{ $param } eq '' );
-		}
+			# if blank value is allowed
+			if ( $param_obj->{ $param }->{ 'non_blank' } eq 'true' )
+			{
+				return "The parameter $param can't be in blank.";
+			}
 
-		if ( exists $param_obj->{ $param }->{ 'values' } )
-		{
-			return "The parameter $param expects once of the following values: "
-			  . join ( ', ', @{ $param_obj->{ $param }->{ 'values' } } )
-			  if (
-				  !grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } )
-			  );
+			# parameter validated
+			next;
 		}
 
 		# getValidFormat funcion:
@@ -615,7 +611,6 @@ sub checkZAPIParams
 				 )
 			  )
 			{
-
 				if ( exists $param_obj->{ $param }->{ format_msg } )
 				{
 					return "$param $param_obj->{ $param }->{ format_msg }";
@@ -625,6 +620,15 @@ sub checkZAPIParams
 					return "The parameter $param has not a valid value.";
 				}
 			}
+		}
+
+		if ( exists $param_obj->{ $param }->{ 'values' } )
+		{
+			return "The parameter $param expects once of the following values: "
+			  . join ( ', ', @{ $param_obj->{ $param }->{ 'values' } } )
+			  if (
+				  !grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } )
+			  );
 		}
 
 		# intervals
