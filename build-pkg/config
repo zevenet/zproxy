@@ -184,7 +184,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/System/Service/SNMP.pm
 	usr/share/perl5/Zevenet/API3/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API3/System/User.pm
-	usr/share/perl5/Zevenet/API3/System/Proxy.pm
 	usr/share/perl5/Zevenet/API40/Alias.pm
 	usr/share/perl5/Zevenet/API40/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/API40/Farm/Get/GSLB.pm
@@ -213,7 +212,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Service/HTTP.pm
 	usr/share/perl5/Zevenet/API40/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
-	usr/share/perl5/Zevenet/BUI.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
@@ -284,5 +282,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Ssyncd.pm
 	usr/share/perl5/Zevenet/System/HTTP.pm
 	usr/share/perl5/Zevenet/System/SSH.pm
+	usr/share/perl5/Zevenet/System/Proxy.pm
 	usr/share/perl5/Zevenet/Alias.pm
 )
