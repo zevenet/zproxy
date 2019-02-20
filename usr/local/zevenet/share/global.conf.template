@@ -193,6 +193,8 @@ $factory_reset_bin="$zbindir/factory_reset.sh";
 $bin_id="/usr/bin/id";
 #Where is wget binary?
 $wget="/usr/bin/wget";
+#Where is curl binary?
+$curl_bin="/usr/bin/curl";
 #Where is conntrack binary?
 $conntrack="/usr/sbin/conntrack";
 #systemctl

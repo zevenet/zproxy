@@ -43,7 +43,7 @@ usr/local/zevenet/app/nftlb/
 /usr/local/zevenet/share/waf/
 
 /usr/local/zevenet/www/
-!/usr/local/zevenet/www/zapi
+!/usr/local/zevenet/www/zapi/*
 
 !/usr/share
 /usr/share/*

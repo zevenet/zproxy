@@ -256,10 +256,7 @@ sub crlcontrol
 	if ( !&checkCRLUpdated( $date_today ) )
 	{
 		# update crl if the server has connectivity
-		$err = &updateCRL( $date_today ) if ( &checkCRLHost() );
-
-		# update date of the check if the CRL was downloaded
-		&setCRLDate( $date_today ) if ( -f $crl_path );
+		$err = &updateCRL( $date_today );
 	}
 	else
 	{
@@ -511,17 +508,21 @@ sub updateCRL
 {
 	my $date_today = $_[0];
 	my $tmp_file   = '/tmp/cacrl.crl';
-	my $wget       = &getGlobalConfiguration( 'wget' );
+	my $curl       = &getGlobalConfiguration( 'curl_bin' );
 	my $err        = 1;
 
 	# Download CRL
-	my $download = `$wget -q -T5 -t1 -O $tmp_file $crl_url`;
+	my $cmd = `$curl -f -k $crl_url -o $tmp_file --connect-timeout 2`;
+	&logAndRun( $cmd );
 
 	if ( -s $tmp_file > 0 )
 	{
 		move( $tmp_file, $crl_path );
 		&zenlog( "CRL Downloaded on $date_today", 'info', 'certifcate' );
 		$err = 0;
+
+		# update date of the check if the CRL was downloaded
+		&setCRLDate( $date_today );
 	}
 	else
 	{
@@ -530,57 +531,6 @@ sub updateCRL
 	}
 
 	return $err;
-}
-
-=begin nd
-Function: checkCRLHost
-
-	It does a network check to validate if Zevenet certificate server is UP.
-	This function uses proxy if it is configured
-
-Parameters:
-	none - .
-
-Returns:
-	Integer - It returns 1 if the server is UP or 0 if it is not
-
-=cut
-
-sub checkCRLHost
-{
-	my $isUp        = 0;
-	my $proxy_https = $ENV{ https_proxy };
-
-	# If proxy, use openssl
-	if ( $proxy_https )
-	{
-		# delete https:// if exists
-		$proxy_https =~ s/https\:\/\// /;
-		( my $proxyIp, my $proxyPort ) = split /\:(?=\d)/, $proxy_https;
-		$proxyPort = "443" if ( !defined $proxyPort );
-		my $cmd =
-		  "echo -e 'GET / HTTP/1.1\\r\\n' | timeout 2 $openssl s_client -connect $cert_host:443 -proxy $proxyIp:$proxyPort";
-		$isUp = ( &logAndRun( $cmd ) ) ? 0 : 1;    # invert the value returned
-	}
-
-	# If !proxy, use IO::Socket::INET
-	else
-	{
-		require IO::Socket;
-		if (
-			 my $scan = IO::Socket::INET->new(
-											   PeerAddr => $cert_host,
-											   PeerPort => 443,
-											   Proto    => 'tcp',
-											   Timeout  => 2
-			 )
-		  )
-		{
-			$isUp = 1;
-			$scan->close();
-		}
-	}
-	return $isUp;
 }
 
 =begin nd
