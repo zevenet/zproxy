@@ -43,8 +43,8 @@ sub include;
 include 'Zevenet::Certificate::Activation';
 
 &setEnv();
+
 my $DEBUG  = &debug();
-&setEnv();
 
 
 my $cmd_dir = "/usr/share/perl5/Zevenet/Cmd";
