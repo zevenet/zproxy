@@ -21,6 +21,7 @@
 #
 ###############################################################################
 require Zevenet::Farm::L4xNAT::Config;
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 sub setL4FarmParamExt    # ($param, $value, $farm_name)
 {
@@ -28,7 +29,7 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 			 "debug", "PROFILING" );
 	my ( $param, $value, $farm_name ) = @_;
 
-  require Zevenet::Farm::Core;
+	require Zevenet::Farm::Core;
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $srvparam      = "";
@@ -50,7 +51,7 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 	my $f_ref = &getL4FarmStruct( $farm_name );
 	if ( $f_ref->{ status } ne "up" )
 	{
-    require Zevenet::Farm::L4xNAT::Action;
+		require Zevenet::Farm::L4xNAT::Action;
 		my $out = &loadNLBFarm( $farm_name );
 		if ( $out != 0 )
 		{
@@ -74,25 +75,25 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 
 sub modifyLogsParam
 {
-  my $farmname  = shift;
-  my $logsValue = shift;
+	my $farmname  = shift;
+	my $logsValue = shift;
 
-  my $msg;
-  my $err = 0;
-  if ( $json_obj->{ logs } =~ /(?:true|false)/ )
-  {
-    $err = &setL4FarmParamExt( 'logs', $logsValue, $farmname );
-  }
-  else
-  {
-    $msg = "Invalid value for logs parameter.";
-  }
+	my $msg;
+	my $err = 0;
+	if ( $logsValue =~ /(?:true|false)/ )
+	{
+		$err = &setL4FarmParamExt( 'logs', $logsValue, $farmname );
+	}
+	else
+	{
+		$msg = "Invalid value for logs parameter.";
+	}
 
-  if ( $err )
-  {
-    $msg = "Error modifying the parameter logs.";
-  }
-  return $msg;
+	if ( $err )
+	{
+		$msg = "Error modifying the parameter logs.";
+	}
+	return $msg;
 }
 
 1;
