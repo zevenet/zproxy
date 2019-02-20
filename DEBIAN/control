@@ -1,9 +1,5 @@
 Package: zevenet
-<<<<<<< HEAD
 Version: 6.0.0
-=======
-Version: 5.2.11
->>>>>>> hotfix-5.2
 Maintainer: ZEVENET Company SL <support@zevenet.com>
 Architecture: amd64
 Section: admin
