@@ -323,7 +323,7 @@ if ( $object eq "ipds" )
 }
 
 #  object = ipds_(rbl|bl|dos)
-if ( $object =~ /^ipds_(rbl|bl|dos)/ )
+if ( $object =~ /^ipds_(rbl|bl|dos|waf)/ )
 {
 	my $module    = $1;
 	my $rule_name = shift @ARGV;
@@ -475,13 +475,13 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		# zcluster-manager ipds_waf [reload_farm|reload_rule] <rule|farm>
 		if ( $command eq 'reload_rule' )
 		{
-			&reloadWAFByRule( $rule );
+			&reloadWAFByRule( $rule_name );
 		}
 		elsif ( $command eq 'reload_farm' )
 		{
 			# although the parameter is called rule, it is a farm name when the
 			# command to execute is reload_farm
-			&reloadWAFByFarm( $rule );
+			&reloadWAFByFarm( $rule_name );
 		}
 	}
 	else
