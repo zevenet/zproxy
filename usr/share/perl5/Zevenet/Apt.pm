@@ -17,13 +17,8 @@ sub setAPTRepo
 	my $file      = &getGlobalConfiguration( 'apt_source_zevenet' );
 	my $apt_conf_file = &getGlobalConfiguration( 'apt_conf_file' );
 	my $gpgkey        = &getGlobalConfiguration( 'gpg_key_zevenet' );
-	my $distribution1 = "stretch";
-	my $distribution2 = "jessie";
-	my $kernel1       = "4.9.13zva5000";
-	my $kernel2       = "3.16.7-ckt20";
-	my $kernel3       = "4.9.0-4-amd64";
-	my $kernel4       = "3.16.0-4-amd64";
-	my $kernel5       = "4.9.110-z5000";
+	my $distro        = "buster";
+	my $kernel        = "4.19.0-1-amd64";
 
 	#get binaries
 	my $dpkg         = &getGlobalConfiguration( 'dpkg_bin' );
@@ -110,41 +105,9 @@ sub setAPTRepo
 	print $fh "Acquire::https::Timeout \"5\";\n";
 	close $fh;
 
-	# get the kernel version
-	my $kernelversion = `uname -r`;
-	if ( $? != 0 )
-	{
-		&zenlog( "error getting kernel version", "error", "SYSTEM" );
-		return 1;
-	}
-
-	# delete line break of the variable
-	$kernelversion =~ s/[\r\n]//g;
-
 	# configuring repository
 	open ( my $FH, '>', $file ) or die "Could not open file '$file' $!";
-
-	if ( $kernelversion eq $kernel1 )
-	{
-		print $FH "deb https://$host/ee/v5/$kernel1 $distribution1 main\n";
-	}
-	if ( $kernelversion eq $kernel2 )
-	{
-		print $FH "deb https://$host/ee/v5/$kernel2 $distribution2 main\n";
-	}
-	if ( $kernelversion eq $kernel3 )
-	{
-		print $FH "deb https://$host/ee/v5/$kernel3 $distribution1 main\n";
-	}
-	if ( $kernelversion eq $kernel4 )
-	{
-		print $FH "deb https://$host/ee/v5/$kernel4 $distribution2 main\n";
-	}
-	if ( $kernelversion eq "$kernel5" )
-	{
-		print $FH "deb https://$host/ee/v5/$kernel5 $distribution1 main\n";
-	}
-
+	print $FH "deb https://$host/ee/v5/$kernel $distro main\n";
 	close $fh;
 
 	# update repositories
