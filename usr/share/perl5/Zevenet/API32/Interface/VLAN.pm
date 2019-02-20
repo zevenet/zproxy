@@ -157,7 +157,7 @@ sub new_vlan    # ( $json_obj )
 				mask    => $json_obj->{ netmask },
 				gateway => $json_obj->{ gateway } // '',
 				ip_v    => &ipversion( $json_obj->{ ip } ),
-				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
+				mac     => $socket->if_hwaddr( $json_obj->{ parent } ),
 	};
 
 	$if_ref->{ net } =
