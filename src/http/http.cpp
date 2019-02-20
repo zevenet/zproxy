@@ -104,7 +104,7 @@ const std::unordered_map<HTTP_HEADER_NAME, const std::string>
         {HTTP_HEADER_NAME::ACCEPT_CHARSET, "Accept-Charset"},
         {HTTP_HEADER_NAME::ACCEPT_ENCODING, "Accept-Encoding"},
         {HTTP_HEADER_NAME::ACCEPT_LANGUAGE, "Accept-Language"},
-        //        {HTTP_HEADER_NAME::ACCEPT_RANGES, "Accept-Ranges"},
+        {HTTP_HEADER_NAME::ACCEPT_RANGES, "Accept-Ranges"},
         {HTTP_HEADER_NAME::ACCESS_CONTROL_ALLOW_CREDENTIALS,
          "Access-Control-Allow-Credentials"},
         {HTTP_HEADER_NAME::ACCESS_CONTROL_ALLOW_HEADERS,

@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include <thread>
-#include <vector>
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
+#include "../event/SignalFd.h"
 #include "../event/epoll_manager.h"
 #include "StreamManager.h"
+#include <thread>
+#include <vector>
 
 class Listener : public EpollManager,
                  public CtlObserver<ctl::CtlTask, std::string> {
@@ -18,12 +19,13 @@ class Listener : public EpollManager,
   Connection listener_connection;
   std::map<int, StreamManager *> stream_manager_set;
   ListenerConfig listener_config;
-   ServiceManager *service_manager;
+  ServiceManager *service_manager;
   TimerFd timer_maintenance;
+  SignalFd signal_fd;
   void doWork();
   StreamManager *getManager(int fd);
 
- public:
+public:
   Listener();
   ~Listener();
   bool init(std::string address, int port);

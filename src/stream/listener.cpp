@@ -18,6 +18,14 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
       serv->doMaintenance();
     }
     return;
+  } else if (event_group == EVENT_GROUP::SIGNAL &&
+             fd == signal_fd.getFileDescriptor()) {
+    Debug::logmsg(LOG_DEBUG, "Received singal %x", signal_fd.getSignal());
+    if (signal_fd.getSignal() == SIGTERM) {
+      stop();
+      exit(EXIT_SUCCESS);
+    }
+    return;
   }
   switch (event_type) {
   case CONNECT: {
@@ -36,32 +44,37 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
     } while (new_fd > 0);
     break;
   }
-  default: ::close(fd);
+  default:
+    ::close(fd);
     break;
   }
 }
 
-std::string Listener::handleTask(ctl::CtlTask& task) {
-  if(!isHandler(task))
-    return  JSON_OP_RESULT::ERROR;
+std::string Listener::handleTask(ctl::CtlTask &task) {
+  if (!isHandler(task))
+    return JSON_OP_RESULT::ERROR;
 
-  switch (task.subject){
-  case ctl::CTL_SUBJECT::DEBUG:{
+  switch (task.subject) {
+  case ctl::CTL_SUBJECT::DEBUG: {
     std::unique_ptr<JsonObject> root{new JsonObject()};
-    root->emplace("ClientConnection", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<ClientConnection>::count)));
-    root->emplace("BackendConnection", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<BackendConnection>::count)));
-    root->emplace("HttpStream", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<HttpStream>::count)));
-    //root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<HttpStream>)));
+    root->emplace("ClientConnection",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<ClientConnection>::count)));
+    root->emplace("BackendConnection",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<BackendConnection>::count)));
+    root->emplace("HttpStream",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<HttpStream>::count)));
+    // root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new
+    // JsonDataValue(Counter<HttpStream>)));
     return root->stringify();
   }
-  default:{
-    return JSON_OP_RESULT::ERROR;
+  default: { return JSON_OP_RESULT::ERROR; }
   }
-  }
-
 }
 
-bool Listener::isHandler(ctl::CtlTask& task) {
+bool Listener::isHandler(ctl::CtlTask &task) {
   return !(task.target != ctl::CTL_HANDLER_TYPE::LISTENER);
 }
 
@@ -81,7 +94,7 @@ Listener::Listener()
 
 Listener::~Listener() {
   is_running = false;
-  for (auto& sm : stream_manager_set) {
+  for (auto &sm : stream_manager_set) {
     sm.second->stop();
     delete sm.second;
   }
@@ -109,7 +122,7 @@ void Listener::start() {
           ->addService(*service_config, service_id++);
     } else {
       Debug::LogInfo("Backend " + std::string(service_config->name) +
-          " disabled in config file",
+                         " disabled in config file",
                      LOG_NOTICE);
     }
   }
@@ -132,8 +145,10 @@ void Listener::start() {
   //    std::this_thread::sleep_for(std::chrono::seconds(5));
   //  }
   //#else
-
+  signal_fd.init();
   timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
+  //  addFd(signal_fd.getFileDescriptor(), EVENT_TYPE::READ,
+  //  EVENT_GROUP::SIGNAL);
   addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
         EVENT_GROUP::MAINTENANCE);
 
@@ -142,18 +157,19 @@ void Listener::start() {
   //#endif
 }
 
-StreamManager* Listener::getManager(int fd) {
+StreamManager *Listener::getManager(int fd) {
   static unsigned long c;
   ++c;
   unsigned long id = c % stream_manager_set.size();
   return stream_manager_set[id];
 }
 
-bool Listener::init(ListenerConfig& config) {
+bool Listener::init(ListenerConfig &config) {
   listener_config = config;
   service_manager = ServiceManager::getInstance(listener_config);
 
-  if (!listener_connection.listen(listener_config.addr)) return false;
+  if (!listener_connection.listen(listener_config.addr))
+    return false;
 #if SM_HANDLE_ACCEPT
   return true;
 #else
