@@ -327,8 +327,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $configdir   = &getGlobalConfiguration( 'configdir' );
-	my $cert_pem_re = &getValidFormat( 'cert_pem' );
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	# validate certificate filename and format
 	unless ( -f $configdir . "/" . $json_obj->{ file } )
