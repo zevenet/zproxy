@@ -19,7 +19,11 @@ public:
   bool handleHandshake(Connection &ssl_connection);
   IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data,
                             size_t data_size, size_t &written);
-
+  IO::IO_RESULT sslRead(Connection & ssl_connection);
+  IO::IO_RESULT sslWrite(Connection &ssl_connection,
+                         const char *data,
+                         size_t data_size,
+                         size_t &written);
   SSLConnectionManager();
   virtual ~SSLConnectionManager();
   bool init(SSLContext &context);

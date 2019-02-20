@@ -18,17 +18,46 @@ enum class IO_RESULT {
   ERROR,
   SUCCESS,
   DONE_TRY_AGAIN,
+  ZERO_DATA,
   FD_CLOSED,
   FULL_BUFFER,
   CANCELLED,
   SSL_NEED_HANDSHAKE,
   SSL_HANDSHAKE_ERROR,
   SSL_WANT_RENEGOTIATION,
-  //SSL_HANDSHAKE_START,
-  //SSL_HANDSHAKE_DONE,
-
+  // SSL_HANDSHAKE_START,
+  // SSL_HANDSHAKE_DONE,
 
 };
+
+inline std::string getResultString(IO_RESULT result) {
+  switch (result) {
+  case IO_RESULT::ERROR:
+    return "ERROR";
+  case IO_RESULT::SUCCESS:
+    return "SUCCESS";
+  case IO_RESULT::DONE_TRY_AGAIN:
+    return "DONE_TRY_AGAIN";
+  case IO_RESULT::ZERO_DATA:
+    return "ZERO_DATA";
+  case IO_RESULT::FD_CLOSED:
+    return "FD_CLOSED";
+  case IO_RESULT::FULL_BUFFER:
+    return "FULL_BUFFER";
+  case IO_RESULT::CANCELLED:
+    return "CANCELLED";
+  case IO_RESULT::SSL_NEED_HANDSHAKE:
+    return "SSL_NEED_HANDSHAKE";
+  case IO_RESULT::SSL_HANDSHAKE_ERROR:
+    return "SSL_HANDSHAKE_ERROR";
+  case IO_RESULT::SSL_WANT_RENEGOTIATION:
+    return "SSL_WANT_RENEGOTIATION";
+  // case  IO_RESULT::SSL_HANDSHAKE_START: return "// SSL_HANDSHAKE_START";
+  // case  IO_RESULT::SSL_HANDSHAKE_DONE: return "// SSL_HANDSHAKE_DONE";
+  default:
+    return "result reason not found";
+  }
+}
 
 enum class IO_OP {
   OP_ERROR,

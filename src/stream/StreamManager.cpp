@@ -291,37 +291,36 @@ void StreamManager::onRequestEvent(int fd) {
       Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
   }
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (this->is_https_listener) {
-    auto result = this->ssl_manager->handleDataRead(stream->client_connection);
-    switch (result) {
-    case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
-    case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-      if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
-        Debug::logmsg(LOG_INFO, "Handshake error with %s ",
-                      stream->client_connection.getPeerAddress().c_str());
-        clearStream(stream);
-      }
-      return;
-    }
+    result = this->ssl_manager->handleDataRead(stream->client_connection);
 
-    case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
-    case IO::IO_RESULT::FD_CLOSED:
-    case IO::IO_RESULT::CANCELLED:clearStream(stream);
-      return;
-    case IO::IO_RESULT::SUCCESS:break;
-    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
-    case IO::IO_RESULT::FULL_BUFFER:break;
-    }
   } else {
-
-    auto result = stream->client_connection.read();
-    if (result == IO::IO_RESULT::ERROR) {
-      Debug::LogInfo("Error reading request ", LOG_DEBUG);
-      clearStream(stream);
-      return;
-    }
+    result = stream->client_connection.read();
   }
-
+  switch (result) {
+  case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
+  case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+    if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
+      Debug::logmsg(LOG_INFO, "Handshake error with %s ",
+                    stream->client_connection.getPeerAddress().c_str());
+      clearStream(stream);
+    }
+    return;
+  }
+  case IO::IO_RESULT::SUCCESS:break;
+  case IO::IO_RESULT::DONE_TRY_AGAIN:break;
+  case IO::IO_RESULT::FULL_BUFFER:break;
+  case IO::IO_RESULT::ZERO_DATA: return;
+  case IO::IO_RESULT::FD_CLOSED:return; //wait for EPOLLRDHUP
+  case IO::IO_RESULT::ERROR:
+  case IO::IO_RESULT::CANCELLED:
+  default: {
+    Debug::LogInfo("Error reading request ", LOG_DEBUG);
+    clearStream(stream);
+    return;
+  }
+  }
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   // do {
@@ -413,8 +412,9 @@ void StreamManager::onRequestEvent(int fd) {
             timers_set[stream->timer_fd.getFileDescriptor()] = stream;
             addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
                   EVENT_GROUP::CONNECT_TIMEOUT);
-            if(stream->backend_connection.getBackend()->nf_mark > 0)
-              Network::setSOMarkOption(stream->backend_connection.getFileDescriptor(),stream->backend_connection.getBackend()->nf_mark);
+            if (stream->backend_connection.getBackend()->nf_mark > 0)
+              Network::setSOMarkOption(stream->backend_connection.getFileDescriptor(),
+                                       stream->backend_connection.getBackend()->nf_mark);
           }
           case IO::IO_OP::OP_SUCCESS: {
             stream->backend_connection.getBackend()->increaseConnection();
@@ -541,10 +541,30 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
   } else {
     result = stream->backend_connection.read();
-    if (result == IO::IO_RESULT::ERROR) {
+    switch (result) {
+    case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
+    case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+      if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
+        Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
+                      stream->client_connection.getPeerAddress().c_str());
+        clearStream(stream);
+      }
+      return;
+    }
+    case IO::IO_RESULT::SUCCESS:break;
+    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
+    case IO::IO_RESULT::FULL_BUFFER:
+      Debug::logmsg(LOG_DEBUG, "Backend buffer full");
+      break;
+    case IO::IO_RESULT::ZERO_DATA: return;
+    case IO::IO_RESULT::FD_CLOSED: return ; //wait for EPOLLRDHUP
+    case IO::IO_RESULT::ERROR:
+    case IO::IO_RESULT::CANCELLED:
+    default: {
       Debug::LogInfo("Error reading response ", LOG_DEBUG);
       clearStream(stream);
       return;
+    }
     }
     // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de
     // tomar muestra si se la lectura ha sido success.
@@ -567,6 +587,21 @@ void StreamManager::onResponseEvent(int fd) {
       //        stream->response.message_bytes_left,
       //        stream->response.message_length);
       // get content-lengt
+      if (validateResponse(*stream) != validation::REQUEST_RESULT::OK) {
+        Debug::logmsg(LOG_NOTICE,
+                      "(%lx) backend %s response validation error\n %.*s",
+                      std::this_thread::get_id(),
+                      stream->backend_connection.getBackend()->address.c_str(),
+                      stream->backend_connection.buffer_size,
+                      stream->backend_connection.buffer);
+        stream->replyError(
+            HttpStatus::Code::ServiceUnavailable,
+            HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
+                .c_str(),
+            listener_config_.err503);
+        this->clearStream(stream);
+        return;
+      }
     }
 
     stream->backend_connection.getBackend()->setAvgTransferTime(
@@ -840,10 +875,6 @@ StreamManager::validateRequest(HttpRequest &request) {
         }
         break;
       }
-    } else {
-      Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
-                    header.to_string().c_str(),
-                    header_value.to_string().c_str());
     }
 
     /* maybe header to be removed */
@@ -875,6 +906,11 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
           http::http_info::headers_names_strings.at(header_name);
 
       switch (header_name) {
+      case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
+        stream.response.message_bytes_left =
+            static_cast<size_t>(std::atoi(response.headers[i].value));
+        break;
+      }
       case http::HTTP_HEADER_NAME::LOCATION: {
         // Rewrite location
         std::string location_header_value;
@@ -916,7 +952,7 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
         }
         break;
       }
-      default:break;
+      default:continue;
       }
 
     } else {
