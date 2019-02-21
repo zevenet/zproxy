@@ -27,6 +27,13 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 
 use Zevenet::Nft;
 
+my $eload;
+
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 =begin nd
 Function: setL4FarmServer
 
@@ -262,6 +269,22 @@ sub _getL4FarmParseServers
 	require Zevenet::Farm::L4xNAT::Config;
 	my $fproto = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
+	my $permission = 0;
+	my $alias;
+	if ( $eload )
+	{
+		$permission = &eload(
+							  module => 'Zevenet::RBAC::Core',
+							  func   => 'getRBACRolePermission',
+							  args   => ['alias', 'list'],
+		);
+		$alias = &eload(
+						 module => 'Zevenet::Alias',
+						 func   => 'getAlias',
+						 args   => ['backend']
+		) if $permission;
+	}
+
 	foreach my $line ( @{ $config } )
 	{
 		if ( $line =~ /\"farms\"/ )
@@ -300,8 +323,9 @@ sub _getL4FarmParseServers
 		if ( $stage == 3 && $line =~ /\"ip-addr\"/ )
 		{
 			my @l = split /"/, $line;
-			$server->{ ip }  = $l[3];
-			$server->{ rip } = $l[3];
+			$server->{ ip }    = $l[3];
+			$server->{ rip }   = $l[3];
+			$server->{ alias } = $permission ? $alias->{ $l[3] } : undef if $eload;
 		}
 
 		if ( $stage == 3 && $line =~ /\"port\"/ )
