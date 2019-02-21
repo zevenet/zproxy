@@ -71,7 +71,7 @@ sub farms_name_http_summary
 	my $farmname = shift;
 
 	# Get farm reference
-	require Zevenet::Farm::Output::HTTP;
+	require Zevenet::API40::Farm::Output::HTTP;
 	my $farm_ref = &getHTTPOutFarm( $farmname );
 
 	# Services
