@@ -617,7 +617,7 @@ sub checkZAPIParams
 				}
 				else
 				{
-					return "The parameter $param has not a valid value.";
+					return "The parameter '$param' has not a valid value.";
 				}
 			}
 		}
