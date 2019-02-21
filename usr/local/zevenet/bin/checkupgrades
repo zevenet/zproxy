@@ -9,7 +9,7 @@ fi
 
 if [ -z $1 ]
 then
-	packages=`apt list --upgradable 2>/dev/null | grep -v Listing | wc -l`
+	packages=`apt list --upgradable 2>/dev/null | awk 'FNR > 1' | wc -l`
 	if [ $packages \> 0 ]
 	then
 		echo "$packages packages require upgrade"
