@@ -261,16 +261,21 @@ sub updateWAFSetPreload
 
 		# open the new created set
 		my $new_set = &getWAFSet( $setname );
-		my $index   = 0;
-		foreach my $rule ( @{ $new_set->{ rules } } )
+
+		# delete the rules that has been deleted or modified by the user
+		if ( -f &getWAFDelRegisterFile( $setname ) )
 		{
-			if ( &checkWAFDelRegister( $setname, $rule->{ raw } ) )
+			my $index = 0;
+			foreach my $rule ( @{ $new_set->{ rules } } )
 			{
-				splice @{ $new_set->{ rules } }, $index, 1;
-			}
-			else
-			{
-				$index++;
+				if ( &checkWAFDelRegister( $setname, $rule->{ raw } ) )
+				{
+					splice @{ $new_set->{ rules } }, $index, 1;
+				}
+				else
+				{
+					$index++;
+				}
 			}
 		}
 
