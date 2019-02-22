@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -23,7 +24,7 @@
 use strict;
 
 use Zevenet::API40::HTTP;
-use Zevenet::IPDS::Setup;
+include "Zevenet::IPDS::Setup";
 
 # GET /ipds$
 sub get_ipds_rules_list
