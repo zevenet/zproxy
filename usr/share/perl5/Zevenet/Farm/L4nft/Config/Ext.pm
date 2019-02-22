@@ -59,7 +59,8 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 		}
 	}
 
-	$output = &httpNLBRequest(
+	require Zevenet::Nft;
+	$output = &httpNlbRequest(
 		{
 		   farm       => $farm_req,
 		   configfile => ( $param ne 'status' ) ? "$configdir/$farm_filename" : undef,
