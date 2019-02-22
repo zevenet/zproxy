@@ -624,7 +624,7 @@ sub checkZAPIParams
 
 		if ( exists $param_obj->{ $param }->{ 'values' } )
 		{
-			return "The parameter $param expects once of the following values: "
+			return "The parameter $param expects one of the following values: "
 			  . join ( ', ', @{ $param_obj->{ $param }->{ 'values' } } )
 			  if (
 				  !grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } )
@@ -652,7 +652,7 @@ sub checkZAPIParams
 				return $msg
 				  if (    ( $json_obj->{ $param } !~ /^\d*$/ )
 					   || ( $json_obj->{ $param } > $high_limit )
-					   || ( $json_obj->{ $param } > $high_limit ) );
+					   || ( $json_obj->{ $param } < $low_limit ) );
 			}
 			else
 			{

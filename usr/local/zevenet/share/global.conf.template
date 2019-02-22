@@ -149,6 +149,12 @@ $datentp="/usr/sbin/ntpdate";
 $arping_bin="/usr/bin/arping";
 #Where is ping?
 $ping_bin="/bin/ping";
+#Where is apt-get?
+$aptget_bin="/usr/bin/apt-get";
+#Where is apt-key?
+$aptkey_bin="/usr/bin/apt-key";
+#Where is checkupgrades?
+$checkupgrades_bin="/usr/sbin/checkupgrades";
 #Where is openssl?
 $openssl="/usr/bin/openssl";
 #Where is unzip?
@@ -193,8 +199,6 @@ $factory_reset_bin="$zbindir/factory_reset.sh";
 $bin_id="/usr/bin/id";
 #Where is wget binary?
 $wget="/usr/bin/wget";
-#Where is curl binary?
-$curl_bin="/usr/bin/curl";
 #Where is conntrack binary?
 $conntrack="/usr/sbin/conntrack";
 #systemctl
@@ -359,6 +363,7 @@ $secTemplate="$zdir/share/sec.rules";#update
 $syslogFile="/var/log/syslog";
 
 #IPDS Module
+$ipdsCronFile="/etc/cron.d/ipds";
 $blacklistsPath="$configdir/ipds/blacklists/lists";#update
 $blacklistsConf="$configdir/ipds/blacklists/lists.conf";#update
 $blacklistsCronFile="/etc/cron.d/blacklists";

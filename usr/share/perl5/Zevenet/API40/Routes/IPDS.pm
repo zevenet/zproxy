@@ -23,11 +23,14 @@
 
 use strict;
 
-if ( $ENV{ PATH_INFO } =~ qr{/ipds$} )
+if ( $ENV{ PATH_INFO } =~ qr{^/ipds} )
 {
 	my $mod = 'Zevenet::API40::IPDS::IPDS';
 
-	GET qr{^/ipds$}, 'get_ipds_rules_list', $mod;
+	GET qr{^/ipds$},         'get_ipds_rules_list', $mod;
+	GET qr{^/ipds/package$}, 'get_ipds_package',    $mod;
+
+	PUT qr{^/ipds/package/actions$}, 'set_ipds_package', $mod;
 }
 
 1;
