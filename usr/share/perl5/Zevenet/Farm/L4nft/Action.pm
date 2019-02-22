@@ -49,12 +49,17 @@ sub startL4Farm    # ($farm_name)
 	my $farm_name = shift;
 	my $writeconf = shift;
 
+	require Zevenet::Farm::L4xNAT::Config;
+
 	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
 	my $status = 0;
+	my $farm   = &getL4FarmStruct( $farm_name );
 
 	&zenlog( "startL4Farm << farm_name:$farm_name" )
 	  if &debug;
+
+	&loadL4Modules( $$farm{ vproto } );
 
 	$status = &startL4FarmNlb( $farm_name, $writeconf );
 	if ( $status != 0 )
@@ -95,8 +100,11 @@ sub stopL4Farm    # ($farm_name)
 	my $pidfile   = &getL4FarmPidFile( $farm_name );
 
 	require Zevenet::Farm::Core;
+	require Zevenet::Farm::L4xNAT::Config;
 
 	&zlog( "Stopping farm $farm_name" ) if &debug > 2;
+
+	my $farm = &getL4FarmStruct( $farm_name );
 
 	doL4FarmRules( "stop", $farm_name );
 
@@ -109,6 +117,8 @@ sub stopL4Farm    # ($farm_name)
 	my $status = &stopL4FarmNlb( $farm_name, $writeconf );
 
 	unlink "$pidfile" if ( -e "$pidfile" );
+
+	&unloadL4Modules( $$farm{ vproto } );
 
 	return $status;
 }
