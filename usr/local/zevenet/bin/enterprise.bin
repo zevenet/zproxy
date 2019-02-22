@@ -273,6 +273,9 @@ if ( ref $returned_value )
 	# Encode output in JSON and print it
 	my $json = JSON->new();
 
+	#unbless
+	use Data::Structure::Util qw(unbless);
+	unbless($returned_value);
 	#~ unless ( eval { $json_out = encode_json( $returned_value ); } )
 	unless ( eval { $output = $json->pretty->indent->canonical->allow_blessed->convert_blessed->encode( $returned_value ); } )
 	{ &zenlog( "#### Function output JSON encode: Failed!" ); }
