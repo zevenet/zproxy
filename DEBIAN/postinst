@@ -76,10 +76,12 @@ fi
 ## Disable services
 
 # Set crontab
-#if [ ! -f /etc/cron.d/zevenet ]; then
 cp $cron_tpl $cron_conf
 $cron_service restart
-#fi
+
+#set netplug conf
+cp $netplug_init_tpl $netplug_init
+cp $netplugd_conf_tpl $netplugd_conf
 
 # SNMP services
 if [[ `grep -c '#zenlb' $snmpdconfig_file` == '0' || ! -f $snmpdconfig_file ]]; then
@@ -116,6 +118,7 @@ sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 # netplug
+sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$local_fs zevenet/g' /etc/init.d/netplug
 
 # Add Zevenet services to boot process including dependencies
 update-rc.d zevenet defaults

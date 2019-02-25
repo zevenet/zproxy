@@ -310,7 +310,13 @@ $arp_unsolicited="";
 # Cron service
 $cron_service="/etc/init.d/cron";
 $cron_conf="/etc/cron.d/zevenet";
-$cron_tpl="/usr/local/zevenet/share/zevenet.cron";
+$cron_tpl="$templatedir/zevenet.cron";
+
+# Netplug service
+$netplug_init_tpl="$templatedir/netplug.template";
+$netplugd_conf_tpl="$templatedir/netplugd.conf.template";
+$netplug_init="/etc/netplug/netplug";
+$netplugd_conf="/etc/netplug/netplugd.conf";
 
 
 #syslog service
@@ -359,7 +365,7 @@ $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
 $notifConfDir="$configdir/notifications";#update
-$secTemplate="$zdir/share/sec.rules";#update
+$secTemplate="$templatedir/sec.rules";#update
 $syslogFile="/var/log/syslog";
 
 #IPDS Module
