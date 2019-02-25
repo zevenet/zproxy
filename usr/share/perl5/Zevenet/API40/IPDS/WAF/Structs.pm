@@ -46,45 +46,57 @@ sub getZapiWAFRule
 	if ( $rule->{ type } =~ /(?:match_action|action)/ )
 	{
 		$out = {
-				 'type'            => $rule->{ type }            // '',
-				 'rule_id'         => $rule->{ rule_id }         // '',
-				 'description'     => $rule->{ description }     // '',
-				 'tag'             => $rule->{ tag }             // [],
-				 'severity'        => $rule->{ severity }        // '',
-				 'phase'           => $rule->{ phase }           // '',
-				 'transformations' => $rule->{ transformations } // [],
-				 'multi_match'     => $rule->{ multi_match }     // '',
-				 'capture'         => $rule->{ capture }         // '',
-				 'action'          => $rule->{ action }          // '',
-				 'log'             => $rule->{ log }             // '',
-				 'audit'           => $rule->{ audit_log }       // '',
-				 'log_data'        => $rule->{ log_data }        // '',
-				 'set_variable'    => $rule->{ set_variable }    // [],
-				 'chain'           => $rule->{ chain }           // [],
-				 'skip'            => $rule->{ skip }            // '',
-				 'skip_after'      => $rule->{ skip_after }      // '',
-				 'http_code'       => $rule->{ http_code }       // '',
-				 'execute'         => $rule->{ execute }         // '',
+				 'type'         => $rule->{ type } // '',
+				 'rule_id'      => $rule->{ rule_id } // '',
+				 'description'  => $rule->{ description } // '',
+				 'tag'          => $rule->{ tag } // [],
+				 'phase'        => $rule->{ phase } // '',
+				 'resolution'   => $rule->{ action } // '',
+				 'log'          => $rule->{ log } // '',
+				 'audit'        => $rule->{ audit_log } // '',
+				 'log_data'     => $rule->{ log_data } // '',
+				 'set_variable' => $rule->{ set_variable } // [],
+				 'chain'        => $rule->{ chain } // [],
+				 'skip'         => $rule->{ skip } // '',
+				 'skip_after'   => $rule->{ skip_after } // '',
+				 'http_code'    => $rule->{ http_code } // '',
+				 'execute'      => $rule->{ execute } // '',
+				 'modified'     => $rule->{ modified } // '',       # ???
 		};
 
 		my @chains = @{ $out->{ chain } };
 		$out->{ chain } = [];
+		my $index = 0;
+
+		# add match condition to the first place
+		if ( $rule->{ type } eq 'match_action' )
+		{
+			push @{ $out->{ matches } },
+			  {
+				'match_index'     => $index,
+				'transformations' => $rule->{ transformations } // [],
+				'multi_match'     => $rule->{ multi_match } // '',
+				'capture'         => $rule->{ capture } // '',
+				'variables'       => $rule->{ variables } // [],
+				'operator'        => $rule->{ operator } // '',
+				'operating'       => $rule->{ operating } // '',
+			  };
+		}
+
 		foreach my $chained ( @chains )
 		{
-			my $ch_rule = {};
-
 			# the parameters must match with the list of getWAFChainParameters
-			push @{ $out->{ chain } },
+			push @{ $out->{ matches } },
 			  {
+				'match_index'     => $index,
 				'transformations' => $chained->{ transformations } // [],
-				'multi_match'     => $chained->{ multi_match }     // '',
-				'capture'         => $chained->{ capture }         // '',
-				'execute'         => $chained->{ execute }         // '',
-				'set_variable'    => $chained->{ set_variable }    // [],
-				'variables'       => $chained->{ variables }       // [],
-				'operator'        => $chained->{ operator }        // '',
-				'operating'       => $chained->{ operating }       // '',
+				'multi_match'     => $chained->{ multi_match } // '',
+				'capture'         => $chained->{ capture } // '',
+				'variables'       => $chained->{ variables } =~ s/ARGS:json./ARGS_JSON:/g // [],
+				'operator'        => $chained->{ operator } // '',
+				'operating'       => $chained->{ operating } // '',
 			  };
+			$index++;
 		}
 
 		$out->{ log } = 'true'  if ( $rule->{ log } eq 'true' );
@@ -92,6 +104,8 @@ sub getZapiWAFRule
 
 		$out->{ audit } = 'true'  if ( $rule->{ audit_log } eq 'true' );
 		$out->{ audit } = 'false' if ( $rule->{ no_audit_log } eq 'true' );
+
+		$rule->{ type } = 'action';
 	}
 
 	elsif ( $rule->{ type } eq 'marker' )
@@ -104,14 +118,8 @@ sub getZapiWAFRule
 		$out->{ type } = 'custom';
 	}
 
-	if ( $rule->{ type } eq 'match_action' )
-	{
-		$out->{ 'variables' } = $rule->{ variables }                         // [];
-		$out->{ 'operator' }  = &translateWafOperator( $rule->{ operator } ) // '';
-		$out->{ 'operating' } = $rule->{ operating }                         // '';
-	}
 	$out->{ raw } = $rule->{ raw } // [];
-	$out->{ id }  = $rule->{ id }  // 0;
+	$out->{ id } = $rule->{ id } // 0;
 
 	return $out;
 }
@@ -125,14 +133,15 @@ sub getZapiWAFSet
 	my $set_st = &getWAFSet( $set );
 
 	my $conf = $set_st->{ configuration };
-	$conf->{ default_action }        //= '';
-	$conf->{ default_log }           //= '';
-	$conf->{ default_phase }         //= '';
-	$conf->{ audit }                 //= '';
-	$conf->{ process_request_body }  //= '';
-	$conf->{ process_response_body } //= '';
-	$conf->{ request_body_limit }    //= '';
-	$conf->{ status }                //= '';
+	$conf->{ default_action }        //= 'pass';
+	$conf->{ default_log }           //= 'true';
+	$conf->{ default_phase }         //= '2';
+	$conf->{ audit }                 //= 'true';
+	$conf->{ process_request_body }  //= 'false';
+	$conf->{ process_response_body } //= 'false';
+	$conf->{ request_body_limit }    //= 0;
+	$conf->{ status }                //= 'down';
+	$conf->{ only_logging }          //= 'false';
 	$conf->{ disable_rules }         //= [];
 
 	foreach my $ru ( @{ $set_st->{ rules } } )
@@ -146,8 +155,8 @@ sub getZapiWAFSet
 sub getWAFChainParameters
 {
 	return [
-			'transformations', 'multi_match', 'capture',  'execute',
-			'set_variable',    'variables',   'operator', 'operating'
+			'transformations', 'multi_match', 'capture',
+			'variables',       'operator',    'operating'
 	];
 }
 
