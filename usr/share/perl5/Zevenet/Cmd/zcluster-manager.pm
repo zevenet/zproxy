@@ -494,9 +494,9 @@ if ( $object =~ /^ipds_(rbl|bl|dos|waf)/ )
 # WARNING: only virtual interfaces are handled
 if ( $object eq 'interface' )
 {
-	require Net::Interface;
-	require Net::Core;
-	require Net::Route;
+	require Zevenet::Net::Interface;
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 
 	if ( $command eq 'float-update' )
 	{
@@ -508,13 +508,13 @@ if ( $object eq 'interface' )
 	}
 
 	# common interface initial tasks
-	my $if_name = shift @ARGV;      # virtual interface name
-	my $ip_v = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
+	my $if_name = shift @ARGV;         # virtual interface name
+	my $ip_v    = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
 
 	# must have an interface argument
 	&quit( "Interface action not defined." ) if !$if_name;
 	&quit( "Only virtual interfaces are supported." )
-	  if $if_name !~ /.+:.+/;       # only accept virtual interfaces
+	  if $if_name !~ /.+:.+/;          # only accept virtual interfaces
 
 	my $if_ref = &getInterfaceConfig( $if_name, $ip_v );
 
@@ -557,9 +557,9 @@ if ( $object eq 'gateway' )
 	my $iface_name = shift @ARGV;
 	my $ip_version = shift @ARGV;
 
-	require Net::Interface;
-	require Net::Core;
-	require Net::Route;
+	require Zevenet::Net::Interface;
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 
 	my $status;
 
