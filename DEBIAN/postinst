@@ -73,91 +73,49 @@ else
 	echo "Zevenet Load Balancer update completed..."
 fi
 
-# Enable root access through SSH
-SSHDCONFIG="/etc/ssh/sshd_config"
-if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
-	sed -i -e 's/^PermitRootLogin.*/PermitRootLogin yes/' $SSHDCONFIG
-	/etc/init.d/ssh reload 2> /dev/null
-fi
-
-
 ## Disable services
 
 # Set crontab
-if [ ! -f /etc/cron.d/zevenet ]; then
-	cp $cron_tpl $cron_conf
-	$cron_service restart
-fi
-
-# Disable conntrackd stats
-sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
-# Delete old conntrackd-stats logs
-rm -rf /var/log/conntrackd-stats* 2>/dev/null
+#if [ ! -f /etc/cron.d/zevenet ]; then
+cp $cron_tpl $cron_conf
+$cron_service restart
+#fi
 
 # SNMP services
 if [[ `grep -c '#zenlb' $snmpdconfig_file` == '0' || ! -f $snmpdconfig_file ]]; then
 	cp $snmpdconfig_tpl $snmpdconfig_file
 fi
-if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
-        sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
-fi
 
 # Disable systemd-sysctl
 systemctl disable systemd-sysctl
 systemctl mask systemd-sysctl.service
-systemctl daemon-reload
 
 # Disable apt-daily.timer
 systemctl stop apt-daily.timer
 systemctl disable apt-daily.timer
 systemctl mask apt-daily.service
-systemctl daemon-reload
-
-# Disable OpenVZ (arpsend)
-systemctl stop vz
-systemctl disable vz 2>/dev/null
-systemctl mask vz.service
-systemctl daemon-reload
-
-# Disable vzeventd
-systemctl stop vzeventd
-systemctl disable vzeventd 2>/dev/null
-systemctl mask vzeventd.service
-systemctl daemon-reload
 
 # sec service for zevenet notifications
-if [ -f /bin/systemctl ]
-then
-	systemctl stop sec 2>/dev/null
-	systemctl disable sec 2>/dev/null
-	systemctl stop systemd-timesyncd 2>/dev/null
-	systemctl disable systemd-timesyncd 2>/dev/null
-else
-	/etc/init.d/sec stop > /dev/null
-	insserv -r sec
-fi
+systemctl stop sec 2>/dev/null
+systemctl disable sec 2>/dev/null
+systemctl stop systemd-timesyncd 2>/dev/null
+systemctl disable systemd-timesyncd 2>/dev/null
 
 # keepalived service for zevenet cluster
-if [ -f /bin/systemctl ]
-then
-	systemctl disable keepalived 2>/dev/null
-else
-	insserv -r keepalived
-fi
+systemctl disable keepalived 2>/dev/null
 
+#
+systemctl daemon-reload
 # Do not load init-functions on keepalived service
 # This allows keepalived to stop correctly
 sed -i -e 's!^. /lib/lsb/init-functions!#. /lib/lsb/init-functions!' /etc/init.d/keepalived
 sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 
 # boot dependencies
+# ssh
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
-
-# Disable DNS resolution for SSH service
-if [ -f $zbindir/ssh_nodns.sh ]; then
-	$zbindir/ssh_nodns.sh
-fi
+# netplug
 
 # Add Zevenet services to boot process including dependencies
 update-rc.d zevenet defaults
@@ -181,11 +139,6 @@ if [ ! -f "$http_server_key" ]; then
 	cp -rf $http_server_key_tpl $http_server_key
 fi
 
-# Remove residual cluster DROP(s) on ip6tables
-if [ $BM_tag -ne 0 ]; then
-	ip6tables -F INPUT 2>/dev/null
-fi
-
 # Apply all migrating scripts to zevenet
 if [ $BM_tag -ne 0 ]; then
 	#migrating config files
@@ -193,13 +146,12 @@ if [ $BM_tag -ne 0 ]; then
 	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
 fi
 
-
 ## Restarting zevenet service
 if [ $BM_tag -eq 0 ]; then
 	echo "Zevenet will be unavailable while the service is restarting."
 	/etc/init.d/zevenet stop
 	/etc/init.d/zevenet start
-fi
+else
 
 # Run EE modules
 #  this action is done here because zevenet service does not allow start EE modules withoout certificates
@@ -212,8 +164,7 @@ perl -E '
 		func   => "start_modules_without_cert",
 	);'
 
-
+fi
 ## Allthings necessary after restarting the service
 # Load conntrack modules
 /sbin/modprobe nf_conntrack 2> /dev/null
-/sbin/modprobe ip_conntrack 2> /dev/null
