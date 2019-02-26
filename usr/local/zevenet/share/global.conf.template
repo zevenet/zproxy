@@ -149,10 +149,14 @@ $datentp="/usr/sbin/ntpdate";
 $arping_bin="/usr/bin/arping";
 #Where is ping?
 $ping_bin="/bin/ping";
+#Where is apt?
+$apt_bin="/usr/bin/apt";
 #Where is apt-get?
 $aptget_bin="/usr/bin/apt-get";
 #Where is apt-key?
 $aptkey_bin="/usr/bin/apt-key";
+#Where is apt-cache?
+$aptcache_bin="/usr/bin/apt-cache";
 #Where is checkupgrades?
 $checkupgrades_bin="/usr/sbin/checkupgrades";
 #Where is openssl?
