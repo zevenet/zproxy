@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -24,7 +23,7 @@
 use strict;
 
 use Zevenet::API40::HTTP;
-include "Zevenet::IPDS::Setup";
+use Zevenet::IPDS::Setup;
 
 # GET /ipds$
 sub get_ipds_rules_list
@@ -133,13 +132,15 @@ sub set_ipds_package
 	my $msg      = "";
 
 	my $params = {
-		action => {
-					required   => "true",
-					non_blank  => "true",
-					values     => ["upgrade", "schedule"],
-					format_msg => "Invalid value for action parameter"
-		},
-
+				   action => {
+							   required   => "true",
+							   non_blank  => "true",
+							   values     => ["upgrade", "schedule"],
+							   format_msg => "Invalid value for action parameter"
+				   },
+				   mode      => { required => "false" },
+				   frequency => { required => "false" },
+				   time      => { required => "false" },
 	};
 
 	#Check input format for schedule
@@ -151,6 +152,7 @@ sub set_ipds_package
 							  values => ["hour", "daily", "weekly", "monthly", "disable"],
 							  format_msg => "Invalid value for mode parameter",
 		};
+
 		if ( $json_obj->{ mode } eq "daily" )
 		{
 			$params->{ frequency } = {
@@ -158,6 +160,10 @@ sub set_ipds_package
 							non_blank  => "true",
 							interval   => "0,23",
 							format_msg => "Invalid value for frequency parameter in daily mode",
+			};
+			$params->{ time } = {
+								  required  => "true",
+								  non_blank => "true",
 			};
 		}
 		elsif ( $json_obj->{ mode } eq "weekly" )
@@ -168,6 +174,10 @@ sub set_ipds_package
 						   interval   => "1,7",
 						   format_msg => "Invalid value for frequency parameter in weekly mode",
 			};
+			$params->{ time } = {
+								  required  => "true",
+								  non_blank => "true",
+			};
 		}
 		elsif ( $json_obj->{ mode } eq "monthly" )
 		{
@@ -177,22 +187,11 @@ sub set_ipds_package
 						  interval   => "1,31",
 						  format_msg => "Invalid value for frequency parameter in monthly mode",
 			};
-		}
-		if ( $json_obj->{ mode } ne "disable" )
-		{
 			$params->{ time } = {
 								  required  => "true",
 								  non_blank => "true",
 			};
 		}
-	}
-
-	# When action is wrong, there could be other fields
-	elsif ( $json_obj->{ action } ne "upgrade" )
-	{
-		$params->{ mode }      = { required => "false", };
-		$params->{ frequency } = { required => "false", };
-		$params->{ frequency } = { required => "false", };
 	}
 
 	require Zevenet::Validate;
@@ -203,7 +202,7 @@ sub set_ipds_package
 	  if ( $error_msg );
 
 	#Check time parameter -> {hour, minutes }
-	if ( ref $json_obj->{ time } && $json_obj->{ action } eq "schedule" )
+	if ( $json_obj->{ action } eq "schedule" && $json_obj->{ mode } ne "disable" )
 	{
 		my $params = {
 					   hour => {
@@ -225,20 +224,6 @@ sub set_ipds_package
 		  if ( $error_msg );
 		$msg =
 		  "IPDS upgrade $json_obj->{ mode } $json_obj->{ action } successfully done";
-	}
-
-	# Is not a reference, so it's wrong
-	elsif (    $json_obj->{ action } eq "schedule"
-			&& $json_obj->{ mode } ne "disable" )
-	{
-		$error_msg =
-		  "Invalid value for time parameter. Please, try with: minutes, hour";
-		return &httpErrorResponse( { code => 400, desc => $desc, msg => $error_msg } )
-		  if ( $error_msg );
-	}
-	else
-	{
-		$msg = "IPDS package action successfully done";
 	}
 
 	my $error = &runIpdsUpgrade( $json_obj );
