@@ -369,7 +369,8 @@ sub setCronConfig
 					 user  => "root",
 	};
 
-	$cronOpts->{ cmd } = "$aptget_bin update && $aptget_bin install zevenet-ipds";
+	$cronOpts->{ cmd } =
+	  "$aptget_bin update && $aptget_bin install -y zevenet-ipds";
 
 	# One day each week at fixed hour
 	if ( $params->{ mode } eq "weekly" )
