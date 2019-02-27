@@ -40,13 +40,14 @@ FIXME:
 	dnat and nat regexp is duplicated
 
 =cut
+
 sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
 	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
-	my $fvip        = &getFarmVip( "vip",  $farm_name );
-	my $fvipp       = &getFarmVip( "vipp", $farm_name );
-	my $proto       = &getFarmProto( $farm_name );
+	my $fvip  = &getFarmVip( "vip",  $farm_name );
+	my $fvipp = &getFarmVip( "vipp", $farm_name );
+	my $proto = &getFarmProto( $farm_name );
 	my $nattype     = &getFarmNatType( $farm_name );
 	my @fportlist   = &getFarmPortList( $fvipp );
 	my $regexp      = "";
@@ -65,53 +66,51 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 	{
 		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
-			# i.e.
-			# tcp      6 431998 ESTABLISHED src=192.168.0.168 dst=192.168.100.241 sport=40130 dport=81 src=192.168.100.254 dst=192.168.100.241 sport=80 dport=40130 [ASSURED] mark=523 use=1
-			#protocol				 status		      client                         vip                                                           vport          backend_ip                   (vip, but can change)    backend_port
+# i.e.
+# tcp      6 431998 ESTABLISHED src=192.168.0.168 dst=192.168.100.241 sport=40130 dport=81 src=192.168.100.254 dst=192.168.100.241 sport=80 dport=40130 [ASSURED] mark=523 use=1
+#protocol				 status		      client                         vip                                                           vport          backend_ip                   (vip, but can change)    backend_port
 			$connections += scalar @{
-				&getNetstatFilter(
-					"tcp",
-					"",
-					"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$be_ip \.*",
-					"",
-					$netstat
-				) };
+				&getNetstatFilter( "tcp", "",
+						 "\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$be_ip \.*",
+						 "", $netstat )
+			};
 		}
 		if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter(
-					"udp",
-					"",
-					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
-					"",
-					$netstat
-				) };
+				&getNetstatFilter( "udp", "",
+								   "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
+								   "", $netstat )
+			};
 		}
 	}
 	else
 	{
 		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
+			#if there is backend port then use in the search
+			my $beport_search = "";
+			if ( $be_port =~ /^[+-]?\d+$/ )
+			{
+				$beport_search = "sport=$be_port";
+			}
 			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$be_ip \.*",
+					"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$be_ip \.*$beport_search",
 					"",
 					$netstat
-				) };
+				)
+			};
 		}
 		if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter(
-					"udp",
-					"",
-					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
-					"",
-					$netstat
-				) };
+				&getNetstatFilter( "udp", "",
+								   "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
+								   "", $netstat )
+			};
 		}
 	}
 
@@ -134,18 +133,19 @@ FIXME:
 	dnat and nat regexp is duplicated
 
 =cut
+
 sub getL4FarmEstConns    # ($farm_name,$netstat)
 {
 	my ( $farm_name, $netstat ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Backend;
 
-	my $proto     = &getFarmProto( $farm_name );
-	my $nattype   = &getFarmNatType( $farm_name );
-	my $fvip      = &getFarmVip( "vip", $farm_name );
-	my $fvipp     = &getFarmVip( "vipp", $farm_name );
-	my @fportlist = &getFarmPortList( $fvipp );
-	my $regexp    = "";
+	my $proto       = &getFarmProto( $farm_name );
+	my $nattype     = &getFarmNatType( $farm_name );
+	my $fvip        = &getFarmVip( "vip", $farm_name );
+	my $fvipp       = &getFarmVip( "vipp", $farm_name );
+	my @fportlist   = &getFarmPortList( $fvipp );
+	my $regexp      = "";
 	my $connections = 0;
 
 	if ( $fportlist[0] !~ /\*/ )
@@ -157,68 +157,68 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 		$regexp = "\.*";
 	}
 
-	my @content  = &getL4FarmBackendStatusCtl( $farm_name );
+	my @content = &getL4FarmBackendStatusCtl( $farm_name );
 	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
 
 	foreach ( @backends )
 	{
-		chomp($_);
+		chomp ( $_ );
 		my @backends_data = split ( ";", $_ );
 
 		if ( $backends_data[4] eq "up" )
 		{
 			my $ip_backend = $backends_data[0];
+			my $ip_port    = $backends_data[1];
 
 			if ( $nattype eq "dnat" )
 			{
 				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
-						&getNetstatFilter(
-							"tcp",
-							"",
-							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
-							"",
-							$netstat
-						) };
+						&getNetstatFilter( "tcp", "",
+							 "\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+							 "", $netstat )
+					};
 				}
 
 				if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
 					$connections += scalar @{
-						&getNetstatFilter(
-							"udp",
-							"",
-							"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
-							"",
-							$netstat
-						) };
+						&getNetstatFilter( "udp", "",
+										 "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+										 "", $netstat )
+					};
 				}
 			}
 			else
 			{
+				#if there is backend port then use in the search
+				my $beport_search = "";
+				if ( $ip_port =~ /^[+-]?\d+$/ )
+				{
+					$beport_search = "sport=$ip_port";
+				}
+
 				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 							"tcp",
 							"",
-							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.* $beport_search",
 							"",
 							$netstat
-						) };
+						)
+					};
 				}
 
 				if ( $proto eq "tftp" || $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
 					$connections += scalar @{
-						&getNetstatFilter(
-							"udp",
-							"",
-							"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend",
-							"",
-							$netstat
-						) };
+						&getNetstatFilter( "udp", "",
+										   "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend",
+										   "", $netstat )
+					};
 				}
 			}
 		}
@@ -244,16 +244,17 @@ FIXME:
 	dnat and nat regexp is duplicated
 
 =cut
+
 sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
 	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
-	my $proto     = &getFarmProto( $farm_name );
-	my $nattype   = &getFarmNatType( $farm_name );
-	my $fvip      = &getFarmVip( "vip", $farm_name );
-	my $fvipp     = &getFarmVip( "vipp", $farm_name );
-	my @fportlist = &getFarmPortList( $fvipp );
-	my $regexp    = "";
+	my $proto       = &getFarmProto( $farm_name );
+	my $nattype     = &getFarmNatType( $farm_name );
+	my $fvip        = &getFarmVip( "vip", $farm_name );
+	my $fvipp       = &getFarmVip( "vipp", $farm_name );
+	my @fportlist   = &getFarmPortList( $fvipp );
+	my $regexp      = "";
 	my $connections = 0;
 
 	if ( $fportlist[0] !~ /\*/ )
@@ -270,14 +271,12 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter(
-					"tcp",
-					"",
-					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
-					"",
-					$netstat
-				) };
+				&getNetstatFilter( "tcp", "",
+							 "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
+							 "", $netstat )
+			};
 		}
+
 		# udp doesn't have pending connections
 	}
 	else
@@ -285,14 +284,12 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter(
-					"tcp",
-					"",
-					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
-					"",
-					$netstat
-				) };
+				&getNetstatFilter( "tcp", "",
+							 "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
+							 "", $netstat )
+			};
 		}
+
 		# udp doesn't have pending connections
 	}
 
@@ -315,6 +312,7 @@ FIXME:
 	dnat and nat regexp is duplicated
 
 =cut
+
 sub getL4FarmSYNConns    # ($farm_name,$netstat)
 {
 	my ( $farm_name, $netstat ) = @_;
@@ -324,9 +322,9 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 	my $fvip  = &getFarmVip( "vip",  $farm_name );
 	my $fvipp = &getFarmVip( "vipp", $farm_name );
 	my $proto = &getFarmProto( $farm_name );
-	my $nattype   = &getFarmNatType( $farm_name );
-	my @fportlist = &getFarmPortList( $fvipp );
-	my $regexp    = "";
+	my $nattype     = &getFarmNatType( $farm_name );
+	my @fportlist   = &getFarmPortList( $fvipp );
+	my $regexp      = "";
 	my $connections = 0;
 
 	if ( $fportlist[0] !~ /\*/ )
@@ -338,10 +336,10 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 		$regexp = ".*";
 	}
 
-	my @content  = &getL4FarmBackendStatusCtl( $farm_name );
+	my @content = &getL4FarmBackendStatusCtl( $farm_name );
 	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
 
-	# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
+# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
 	foreach ( @backends )
 	{
 		my @backends_data = split ( ";", $_ );
@@ -356,14 +354,12 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
-						&getNetstatFilter(
-								"tcp",
-								"",
+						&getNetstatFilter( "tcp", "",
 								"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
-								"",
-								$netstat
-						) };
+								"", $netstat )
+					};
 				}
+
 				# udp doesn't have pending connections
 			}
 			else
@@ -371,14 +367,12 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 				if ( $proto eq "ftp" || $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
 					$connections += scalar @{
-						&getNetstatFilter(
-								"tcp",
-								"",
+						&getNetstatFilter( "tcp", "",
 								"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
-								"",
-								$netstat
-						) };
+								"", $netstat )
+					};
 				}
+
 				# udp doesn't have pending connections
 			}
 		}
@@ -398,6 +392,7 @@ Parameters:
 Returns:
 	array ref -
 =cut
+
 sub getL4FarmBackendsStats
 {
 	my $farmname = shift;
@@ -454,10 +449,11 @@ sub getL4FarmSessions
 {
 	my $farmname = shift;
 
-	my $conntrack_bin = &getGlobalConfiguration('conntrack');
-	my $farm_st = &getL4FarmStruct( $farmname );
+	my $conntrack_bin = &getGlobalConfiguration( 'conntrack' );
+	my $farm_st       = &getL4FarmStruct( $farmname );
 
 	my $sessions = [];
+
 	# non continue if persistence is not configured
 	return $sessions if ( $farm_st->{ persist } ne 'ip' );
 
@@ -476,16 +472,16 @@ sub getL4FarmSessions
 		# parse and add to the struct
 		foreach my $line ( <$fh> )
 		{
-			# src=192.168.0.186 ttl: 63 last_seen: 4752489960 oldest_pkt: 2 4752266477, 4752489960
+	  # src=192.168.0.186 ttl: 63 last_seen: 4752489960 oldest_pkt: 2 4752266477, 4752489960
 			$line =~ /src=(.+) ttl: .+ last_seen: (\d+)/;
-			$client = $1;
+			$client          = $1;
 			$jiffies_session = $2;
 			if ( ( $jiffies_now - $jiffies_session ) < $ttl_jiffies )
 			{
 				push @{ $sessions }, {
-					'session' => $client,
-					'id' => $bk->{ id }, # backend id
-					};
+									   'session' => $client,
+									   'id'      => $bk->{ id },    # backend id
+				};
 			}
 		}
 
@@ -494,6 +490,5 @@ sub getL4FarmSessions
 
 	return $sessions;
 }
-
 
 1;
