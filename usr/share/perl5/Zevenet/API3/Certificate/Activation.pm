@@ -112,7 +112,13 @@ sub upload_activation_certificate    # ()
 	unless ( $upload_data )
 	{
 		my $msg = "Error uploading activation certificate file";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return
+		  &httpResponse(
+					   {
+						 code => 400,
+						 body => { description => $desc, message => $msg, error => "true" }
+					   }
+		  );
 	}
 
 	my $errmsg = &uploadCertActivation( $upload_data );

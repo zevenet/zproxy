@@ -26,11 +26,12 @@ use strict;
 #	GET	/system/logs
 sub get_logs
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::System::Log;
 
 	my $description = "Get logs";
-	my $backups = &getLogs;
+	my $backups     = &getLogs;
 
 	&httpResponse(
 		 { code => 200, body => { description => $description, params => $backups } } );
@@ -39,14 +40,15 @@ sub get_logs
 #	GET	/system/logs/LOG
 sub download_logs
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $logFile      = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $logFile     = shift;
 	my $description = "Download a log file";
 	my $errormsg    = "$logFile was download successful.";
-	my $logDir = &getGlobalConfiguration( 'logdir');
-	my $logPath = &getGlobalConfiguration( 'logdir') . "/$logFile";
+	my $logDir      = &getGlobalConfiguration( 'logdir' );
+	my $logPath     = &getGlobalConfiguration( 'logdir' ) . "/$logFile";
 
-	if ( ! -f $logPath )
+	if ( !-f $logPath )
 	{
 		$errormsg = "Not found $logFile file.";
 		my $body =
@@ -62,7 +64,12 @@ sub download_logs
 		unless ( $fh )
 		{
 			my $msg = "Could not open file $logPath: $!";
-			&httpErrorResponse( code => 400, desc => $description, msg => $msg );
+			&httpResponse(
+					{
+					  code => 400,
+					  body => { description => $description, message => $msg, error => "true" }
+					}
+			);
 		}
 
 		# make headers
@@ -83,13 +90,12 @@ sub download_logs
 
 		&zenlog( "[Download] $description: $logPath", "info", "SYSTEM" );
 
-		return &httpResponse({ code => 200, headers => $headers, body => $body });
+		return &httpResponse( { code => 200, headers => $headers, body => $body } );
 	}
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
 
 	&httpResponse( { code => 404, body => $body } );
 }
-
 
 1;

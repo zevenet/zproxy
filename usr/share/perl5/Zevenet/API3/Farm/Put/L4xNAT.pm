@@ -158,8 +158,14 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		}
 		if ( $json_obj->{ algorithm } =~ /^(prio)$/ )
 		{
-			my $msg = "Not supported anymore.";
-			&httpErrorResponse( code => 410, desc => $desc, msg => $msg );
+			my $desc = "Modify L4xNAT farm";
+			my $msg  = "Not supported anymore.";
+			&httpResponse(
+						   {
+							 code => 410,
+							 body => { description => $desc, message => $msg, error => "true" }
+						   }
+			);
 		}
 		if ( $json_obj->{ algorithm } =~ /^leastconn|weight$/ )
 		{
