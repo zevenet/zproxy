@@ -74,38 +74,9 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 #protocol				 status		      client                         vip                                                           vport          backend_ip                   (vip, but can change)    backend_port
 			$connections += scalar @{
 				&getNetstatFilter(
-					 "tcp",
-					 "",
-					 "\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp \.*src=$be_ip \.*",
-					 "",
-					 $netstat
-				)
-			};
-		}
-		if (    $farm->{ proto } eq "tftp"
-			 || $farm->{ proto } eq "sip"
-			 || $farm->{ proto } eq "all"
-			 || $farm->{ proto } eq "udp" )
-		{
-			$connections += scalar @{
-				&getNetstatFilter( "udp", "",
-							   "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*",
-							   "", $netstat )
-			};
-		}
-	}
-	else
-	{
-		if (    $farm->{ proto } eq "ftp"
-			 || $farm->{ proto } eq "sip"
-			 || $farm->{ proto } eq "all"
-			 || $farm->{ proto } eq "tcp" )
-		{
-			$connections += scalar @{
-				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.*ESTABLISHED src=\.* dst=$farm->{ vip } sport=\.* dport=$regexp \.*src=$be_ip \.*",
+					"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp \.*src=$be_ip \.*",
 					"",
 					$netstat
 				)
@@ -118,8 +89,43 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		{
 			$connections += scalar @{
 				&getNetstatFilter( "udp", "",
-							   "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*",
-							   "", $netstat )
+							 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*",
+							 "", $netstat )
+			};
+		}
+	}
+	else
+	{
+		if (    $farm->{ proto } eq "ftp"
+			 || $farm->{ proto } eq "sip"
+			 || $farm->{ proto } eq "all"
+			 || $farm->{ proto } eq "tcp" )
+		{
+			#if there is backend port then use in the search
+			my $beport_search = "";
+			if ( $be_port =~ /^[+-]?\d+$/ )
+			{
+				$beport_search = "sport=$be_port";
+			}
+			$connections += scalar @{
+				&getNetstatFilter(
+					"tcp",
+					"",
+					"\.*ESTABLISHED src=\.* dst=$farm->{ vip } sport=\.* dport=$regexp \.*src=$be_ip \.*$beport_search",
+					"",
+					$netstat
+				)
+			};
+		}
+		if (    $farm->{ proto } eq "tftp"
+			 || $farm->{ proto } eq "sip"
+			 || $farm->{ proto } eq "all"
+			 || $farm->{ proto } eq "udp" )
+		{
+			$connections += scalar @{
+				&getNetstatFilter( "udp", "",
+							 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*",
+							 "", $netstat )
 			};
 		}
 	}
@@ -196,13 +202,20 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 				{
 					$connections += scalar @{
 						&getNetstatFilter( "udp", "",
-							 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
-							 "", $netstat )
+							"\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
+							"", $netstat )
 					};
 				}
 			}
 			else
 			{
+				#if there is backend port then use in the search
+				my $beport_search = "";
+				if ( $backend->{ port } =~ /^[+-]?\d+$/ )
+				{
+					$beport_search = "sport=$backend->{ port }";
+				}
+
 				if (    $farm->{ proto } eq "ftp"
 					 || $farm->{ proto } eq "sip"
 					 || $farm->{ proto } eq "all"
@@ -212,7 +225,7 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 						&getNetstatFilter(
 							"tcp",
 							"",
-							"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
+							"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.* $beport_search",
 							"",
 							$netstat
 						)
@@ -226,8 +239,8 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 				{
 					$connections += scalar @{
 						&getNetstatFilter( "udp", "",
-								 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip }",
-								 "", $netstat )
+							   "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip }",
+							   "", $netstat )
 					};
 				}
 			}
@@ -285,8 +298,8 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		{
 			$connections += scalar @{
 				&getNetstatFilter( "tcp", "",
-					  "\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
-					  "", $netstat )
+					"\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
+					"", $netstat )
 			};
 		}
 
@@ -301,8 +314,8 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		{
 			$connections += scalar @{
 				&getNetstatFilter( "tcp", "",
-					  "\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
-					  "", $netstat )
+					"\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
+					"", $netstat )
 			};
 		}
 
@@ -505,7 +518,7 @@ sub getL4FarmSessions
 			if ( ( $jiffies_now - $jiffies_session ) < $ttl_jiffies )
 			{
 				push @{ $sessions }, {
-									'session' => $client,
+									   'session' => $client,
 									   'id'      => $bk->{ id },    # backend id
 				};
 			}
