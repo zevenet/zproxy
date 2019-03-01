@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -318,7 +319,7 @@ sub sendL4NlbCmd
 		$self->{ file } = "";
 	}
 
-	if ( defined $self->{ backend } && $self->{ backend } != "" )
+	if ( defined $self->{ backend } && $self->{ backend } ne "" )
 	{
 		$self->{ uri } =
 		  "/farms/" . $self->{ farm } . "/backends/" . $self->{ backend };
