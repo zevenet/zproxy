@@ -148,7 +148,7 @@ sub setL4NewFarmName    # ($farm_name, $new_farm_name)
 
 	require Tie::File;
 
-	my $output = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
+	$output = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
 
 	unlink "$configdir\/${farm_name}_l4xnat.cfg";
 
