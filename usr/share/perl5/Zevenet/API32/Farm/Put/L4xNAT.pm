@@ -142,14 +142,18 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 			my $msg = "Invalid algorithm, can't be blank.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
+		if ( $json_obj->{ algorithm } =~ /^(leastconn)$/ )
+		{
+			my $msg = "Not implemented yet.";
+			&httpErrorResponse( code => 406, desc => $desc, msg => $msg );
+		}
 		if ( $json_obj->{ algorithm } =~ /^(prio)$/ )
 		{
 			my $msg = "Not supported anymore.";
 			&httpErrorResponse( code => 410, desc => $desc, msg => $msg );
 		}
 
-		unless ( $json_obj->{ algorithm } =~ /^(leastconn|weight)$/ )
+		unless ( $json_obj->{ algorithm } =~ /^(weight)$/ )
 		{
 			my $msg = "Invalid algorithm.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
