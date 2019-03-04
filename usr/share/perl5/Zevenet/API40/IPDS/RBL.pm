@@ -87,69 +87,38 @@ sub add_rbl_rule
 		my $msg = "The RBL name has not a valid format.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+	elsif ( !&getRBLExists( $json_obj->{ copy_from } ) )
+	{
+		my $msg = "The RBL rule '$json_obj->{copy_from}' doesn't exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 	elsif ( $name eq "domains" )
 	{
 		my $msg = "Error, \"domains\" is a reserved word.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( &addRBLCreateObjectRule( $name ) )
+	# copy rule
+	if ( exists $json_obj->{ copy_from } )
 	{
-		my $msg = "Error, creating a new RBL rule.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if ( &addRBLCopyObjectRule( $json_obj->{ copy_from }, $name ) )
+		{
+			my $msg = "Error, copying a RBL rule.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	# create a new one
+	else
+	{
+		if ( &addRBLCreateObjectRule( $name ) )
+		{
+			my $msg = "Error, creating a new RBL rule.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	my $listHash = &getRBLZapiRule( $name );
-	my $body = { description => $desc, params => $listHash };
-
-	return &httpResponse( { code => 200, body => $body } );
-}
-
-#  POST /ipds/rbl/<name>
-sub copy_rbl_rule
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $json_obj = shift;
-	my $name     = shift;
-
-	include 'Zevenet::IPDS::RBL::Config';
-
-	my $desc    = "Copy the RBL rule $name";
-	my $newrule = $json_obj->{ 'name' };
-
-	# A list already exists with this name
-	if ( !&getRBLExists( $name ) )
-	{
-		my $msg = "The RBL rule '$name' doesn't exist.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	if ( &getRBLExists( $newrule ) )
-	{
-		my $msg = "A RBL rule already exists with the name '$newrule'.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( !&getValidFormat( "rbl_name", $newrule ) )
-	{
-		my $msg = "The RBL name has not a valid format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $newrule eq "domains" )
-	{
-		my $msg = "Error, \"domains\" is a reserved word.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( &addRBLCopyObjectRule( $name, $newrule ) )
-	{
-		my $msg = "Error, copying a RBL rule.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	my $listHash = &getRBLZapiRule( $newrule );
 	my $body = { description => $desc, params => $listHash };
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -167,10 +136,8 @@ sub set_rbl_rule
 
 	my $desc = "Modify the RBL rule $name.";
 	my @allowParams = (
-						"name",         "cache_size",
-						"cache_time",   "queue_size",
-						"threadmax",    "local_traffic",
-						"only_logging", "log_level"
+						"name",      "cache_size",    "cache_time",   "queue_size",
+						"threadmax", "local_traffic", "only_logging", "log_level"
 	);
 
 	if ( !&getRBLExists( $name ) )

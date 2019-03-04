@@ -52,9 +52,6 @@ if ( $ENV{ PATH_INFO } =~ qr{/ipds/rbl} )
 	#  POST /ipds/rbl
 	POST qr{^/ipds/rbl$}, 'add_rbl_rule', $mod;
 
-	#  POST /ipds/rbl/<name>
-	POST qr{^/ipds/rbl/($rbl_name)$}, 'copy_rbl_rule', $mod;
-
 	#  PUT /ipds/rbl/<name>
 	PUT qr{^/ipds/rbl/($rbl_name)$}, 'set_rbl_rule', $mod;
 
