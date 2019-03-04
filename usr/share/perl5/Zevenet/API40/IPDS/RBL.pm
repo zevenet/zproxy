@@ -87,9 +87,9 @@ sub add_rbl_rule
 		my $msg = "The RBL name has not a valid format.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	elsif ( !&getRBLExists( $json_obj->{ copy_from } ) )
+	elsif ( &getRBLExists( $json_obj->{ copy_from } ) )
 	{
-		my $msg = "The RBL rule '$json_obj->{copy_from}' doesn't exist.";
+		my $msg = "The RBL rule '$json_obj->{copy_from}' already exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	elsif ( $name eq "domains" )
