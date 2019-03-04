@@ -22,6 +22,210 @@
 
 use strict;
 require Zevenet::API40::HTTP;
+require Zevenet::Translator;
+
+# default value for variables
+my $DEFAULT_PHASE      = 2;
+my $DEFAULT_RESOLUTION = 'pass';
+my $DEFAULT_SKIP       = 0;
+
+# translate
+
+my $trOperator = &createTRANSLATE(
+								  {
+									strContains          => "contains",
+									strContainsWord      => "containsWord",
+									strEnds              => "endsWith",
+									strWithin            => "within",
+									strMatch             => "strmatch",
+									strEq                => "streq",
+									strRegex             => "rx",
+									strPhrases           => "pm",
+									strPhrasesFromFile   => "pmFromFile",
+									intEQ                => "eq",
+									intGE                => "ge",
+									intGT                => "gt",
+									intLE                => "le",
+									intLT                => "lt",
+									detectSQLi           => "detectSQLi",
+									detectXSS            => "detectXSS",
+									geoLookup            => "geoLookup",
+									ipMatch              => "ipMatch",
+									ipMatchFromFile      => "ipMatchFromFile",
+									validateByteRange    => "validateByteRange",
+									validateDTD          => "validateDTD",
+									validateSchema       => "validateSchema",
+									validateUrlEncoding  => "validateUrlEncoding",
+									validateUtf8Encoding => "validateUtf8Encoding",
+									verifyCreditCard     => "verifyCC",
+									verifySSN            => "verifySSN",
+									matchAllways         => "unconditionalMatch",
+									matchNever           => "noMatch",
+								  }
+);
+
+sub getWafOperators
+{
+	return @{ &getTRANSLATEInputs( $trOperator ) };
+}
+
+sub getWafTransformations
+{
+	return (
+			 "base64Decode",     "sqlHexDecode",     "base64DecodeExt",
+			 "base64Encode",     "cmdLine",          "compressWhitespace",
+			 "cssDecode",        "escapeSeqDecode",  "hexDecode",
+			 "hexEncode",        "htmlEntityDecode", "jsDecode",
+			 "length",           "lowercase",        "md5",
+			 "none",             "normalisePath",    "normalizePath",
+			 "normalisePathWin", "normalizePathWin", "parityEven7bit",
+			 "parityOdd7bit",    "parityZero7bit",   "removeNulls",
+			 "removeWhitespace", "replaceComments",  "removeCommentsChar",
+			 "removeComments",   "replaceNulls",     "urlDecode",
+			 "uppercase",        "urlDecodeUni",     "urlEncode",
+			 "utf8toUnicode",    "sha1",             "trimLeft",
+			 "trimRight",        "trim",
+	);
+}
+
+sub getWafVariables
+{
+	return (
+			 "ARGS_COMBINED_SIZE",           "ARGS",
+			 "ARGS_JSON",                    "ARGS_GET",
+			 "ARGS_POST",                    "ARGS_NAMES",
+			 "ARGS_GET_NAMES",               "ARGS_POST_NAMES",
+			 "FILES",                        "FILES_COMBINED_SIZE",
+			 "FILES_NAMES",                  "FILES_SIZES",
+			 "FILES_TMPNAMES",               "FILES_TMP_CONTENT",
+			 "REQBODY_ERROR",                "REQBODY_ERROR_MSG",
+			 "REQBODY_PROCESSOR",            "REQUEST_BASENAME",
+			 "REQUEST_BODY",                 "REQUEST_BODY_LENGTH",
+			 "REQUEST_COOKIES",              "REQUEST_COOKIES_NAMES",
+			 "REQUEST_FILENAME",             "REQUEST_HEADERS",
+			 "REQUEST_HEADERS_NAMES",        "REQUEST_LINE",
+			 "REQUEST_METHOD",               "REQUEST_PROTOCOL",
+			 "REQUEST_URI",                  "REQUEST_URI_RAW",
+			 "RESPONSE_BODY",                "RESPONSE_CONTENT_LENGTH",
+			 "RESPONSE_CONTENT_TYPE",        "RESPONSE_HEADERS",
+			 "RESPONSE_HEADERS_NAMES",       "RESPONSE_PROTOCOL",
+			 "RESPONSE_STATUS",              "REMOTE_ADDR",
+			 "REMOTE_HOST",                  "REMOTE_PORT",
+			 "REMOTE_USER",                  "TIME",
+			 "TIME_DAY",                     "TIME_EPOCH",
+			 "TIME_HOUR",                    "TIME_MIN",
+			 "TIME_MON",                     "TIME_SEC",
+			 "TIME_WDAY",                    "TIME_YEAR",
+			 "MULTIPART_CRLF_LF_LINES",      "MULTIPART_FILENAME",
+			 "MULTIPART_NAME",               "MULTIPART_STRICT_ERROR",
+			 "MULTIPART_UNMATCHED_BOUNDARY", "MATCHED_VAR",
+			 "MATCHED_VARS",                 "MATCHED_VAR_NAME",
+			 "MATCHED_VARS_NAMES",           "SESSION",
+			 "SESSIONID",                    "SERVER_ADDR",
+			 "SERVER_NAME",                  "SERVER_PORT",
+			 "AUTH_TYPE",                    "DURATION",
+			 "ENV",                          "FULL_REQUEST",
+			 "FULL_REQUEST_LENGTH",          "HIGHEST_SEVERITY",
+			 "INBOUND_DATA_ERROR",           "MODSEC_BUILD",
+			 "OUTBOUND_DATA_ERROR",          "PATH_INFO",
+			 "QUERY_STRING",                 "RULE",
+			 "TX",                           "UNIQUE_ID",
+			 "URLENCODED_ERROR",             "USERID",
+			 "XML"
+	);
+}
+
+sub translateWafVariables
+{
+	my $var    = shift;
+	my $output = shift;
+	my @list;
+
+	if ( $output eq 'toApi' )
+	{
+		foreach my $it ( @{ $var } )
+		{
+			$it =~ s/ARGS:json\./ARGS_JSON:/;
+		}
+	}
+	elsif ( $output eq 'toLib' )
+	{
+		foreach my $it ( @{ $var } )
+		{
+			$it =~ s/ARGS_JSON:/ARGS:json\./;
+		}
+	}
+	else
+	{
+		&zenlog( 'translating the inputs WAF variables', 'Error', 'Api' );
+	}
+
+	return $var;
+}
+
+sub translateWafRule
+{
+	my $json_obj = shift;
+	my $rule     = shift;
+
+	if ( exists $json_obj->{ log } )
+	{
+		$rule->{ log }    = '';
+		$rule->{ no_log } = '';
+
+		if    ( $json_obj->{ log } eq 'true' )  { $rule->{ log }    = 'true'; }
+		elsif ( $json_obj->{ log } eq 'false' ) { $rule->{ no_log } = 'true'; }
+	}
+
+	if ( exists $json_obj->{ audit } )
+	{
+		$rule->{ audit_log }    = '';
+		$rule->{ no_audit_log } = '';
+
+		if ( $json_obj->{ audit } eq 'true' )
+		{
+			$rule->{ audit_log } = 'true';
+		}
+		elsif ( $json_obj->{ audit } eq 'false' )
+		{
+			$rule->{ no_audit_log } = 'true';
+		}
+	}
+
+	# the parameter action has another name in the api
+	if ( exists $json_obj->{ resolution } )
+	{
+		$rule->{ action } = $json_obj->{ resolution };
+		$rule->{ action } =~ s/default_action/block/;
+	}
+
+	return undef;
+}
+
+sub translateWafMatch
+{
+	my $json_obj = shift;
+
+	if ( exists $json_obj->{ operator } )
+	{
+		my $not = 0;
+		if ( $json_obj->{ operator } =~ s/^!// )
+		{
+			$not = 1;
+		}
+
+		$json_obj->{ operator } = $trOperator->{ api }->{ $json_obj->{ operator } };
+		$json_obj->{ operator } = "!$json_obj->{ operator }" if ( $not );
+	}
+
+	$json_obj->{ variables } =
+	  &translateWafVariables( $json_obj->{ variables }, 'toLib' )
+	  if ( exists $json_obj->{ variables } );
+
+	return undef;
+}
+
+# standardize outputs
 
 =begin nd
 Function: getZapiWAFRule
@@ -46,27 +250,27 @@ sub getZapiWAFRule
 	if ( $rule->{ type } =~ /(?:match_action|action)/ )
 	{
 		$out = {
-				 'type'         => $rule->{ type } // '',
-				 'rule_id'      => $rule->{ rule_id } // '',
-				 'description'  => $rule->{ description } // '',
-				 'tag'          => $rule->{ tag } // [],
-				 'phase'        => $rule->{ phase } // '',
-				 'resolution'   => $rule->{ action } // '',
+				 'type'        => 'action',
+				 'rule_id'     => $rule->{ rule_id } // '',
+				 'description' => $rule->{ description } // '',
+				 'tag'         => $rule->{ tag } // [],
+				 'phase'       => $rule->{ phase } // $DEFAULT_PHASE,
+				 'resolution'  => ( $rule->{ action } eq 'block' )
+				 ? 'default_action'
+				 : $rule->{ action } // $DEFAULT_RESOLUTION,
 				 'log'          => $rule->{ log } // '',
 				 'audit'        => $rule->{ audit_log } // '',
-				 'log_data'     => $rule->{ log_data } // '',
-				 'set_variable' => $rule->{ set_variable } // [],
-				 'chain'        => $rule->{ chain } // [],
-				 'skip'         => $rule->{ skip } // '',
+				 'skip'         => $rule->{ skip } // $DEFAULT_SKIP,
 				 'skip_after'   => $rule->{ skip_after } // '',
-				 'http_code'    => $rule->{ http_code } // '',
 				 'execute'      => $rule->{ execute } // '',
-				 'modified'     => $rule->{ modified } // '',       # ???
+				 'modified'     => $rule->{ modified } // '',
+				 'redirect_url' => $rule->{ redirect_url } // '',
+				 'matches'      => [],
 		};
 
-		my @chains = @{ $out->{ chain } };
-		$out->{ chain } = [];
 		my $index = 0;
+		my $operator;
+		my $not_match;
 
 		# add match condition to the first place
 		if ( $rule->{ type } eq 'match_action' )
@@ -75,25 +279,28 @@ sub getZapiWAFRule
 			  {
 				'match_index'     => $index,
 				'transformations' => $rule->{ transformations } // [],
+				'not_match'       => $rule->{ not_match } // 'false',
 				'multi_match'     => $rule->{ multi_match } // '',
 				'capture'         => $rule->{ capture } // '',
-				'variables'       => $rule->{ variables } // [],
-				'operator'        => $rule->{ operator } // '',
+				'variables'       => &translateWafVariables( $rule->{ variables }, 'toApi' ),
+				'operator'        => $trOperator->{ lib }->{ $rule->{ operator } } // '',
 				'operating'       => $rule->{ operating } // '',
 			  };
+			$index++;
 		}
 
-		foreach my $chained ( @chains )
+		foreach my $chained ( @{ $rule->{ chain } } )
 		{
 			# the parameters must match with the list of getWAFChainParameters
 			push @{ $out->{ matches } },
 			  {
 				'match_index'     => $index,
 				'transformations' => $chained->{ transformations } // [],
+				'not_match'       => $rule->{ not_match } // 'false',
 				'multi_match'     => $chained->{ multi_match } // '',
 				'capture'         => $chained->{ capture } // '',
-				'variables'       => $chained->{ variables } =~ s/ARGS:json./ARGS_JSON:/g // [],
-				'operator'        => $chained->{ operator } // '',
+				'variables'       => &translateWafVariables( $chained->{ variables }, 'toApi' ),
+				'operator'        => $trOperator->{ lib }->{ $chained->{ operator } } // '',
 				'operating'       => $chained->{ operating } // '',
 			  };
 			$index++;
@@ -133,16 +340,18 @@ sub getZapiWAFSet
 	my $set_st = &getWAFSet( $set );
 
 	my $conf = $set_st->{ configuration };
-	$conf->{ default_action }        //= 'pass';
-	$conf->{ default_log }           //= 'true';
+	$conf->{ default_action } //= 'pass';
+	$conf->{ default_log } =
+	  ( $conf->{ default_log } ne 'false' ) ? 'true' : 'false';
 	$conf->{ default_phase }         //= '2';
 	$conf->{ audit }                 //= 'true';
 	$conf->{ process_request_body }  //= 'false';
 	$conf->{ process_response_body } //= 'false';
 	$conf->{ request_body_limit }    //= 0;
-	$conf->{ status }                //= 'down';
-	$conf->{ only_logging }          //= 'false';
-	$conf->{ disable_rules }         //= [];
+	$conf->{ status } = ( $conf->{ status } eq 'false' ) ? 'down' : 'up';
+	$conf->{ only_logging } =
+	  ( $conf->{ status } eq 'detection' ) ? 'true' : 'false';
+	$conf->{ disable_rules } //= [];
 
 	foreach my $ru ( @{ $set_st->{ rules } } )
 	{
@@ -152,202 +361,63 @@ sub getZapiWAFSet
 	return $set_st;
 }
 
-sub getWAFChainParameters
+# input models
+
+sub getWafRuleParameters
 {
-	return [
-			'transformations', 'multi_match', 'capture',
-			'variables',       'operator',    'operating'
-	];
-}
-
-sub getWafTransformations
-{
-	return (
-			 "base64Decode",     "sqlHexDecode",     "base64DecodeExt",
-			 "base64Encode",     "cmdLine",          "compressWhitespace",
-			 "cssDecode",        "escapeSeqDecode",  "hexDecode",
-			 "hexEncode",        "htmlEntityDecode", "jsDecode",
-			 "length",           "lowercase",        "md5",
-			 "none",             "normalisePath",    "normalizePath",
-			 "normalisePathWin", "normalizePathWin", "parityEven7bit",
-			 "parityOdd7bit",    "parityZero7bit",   "removeNulls",
-			 "removeWhitespace", "replaceComments",  "removeCommentsChar",
-			 "removeComments",   "replaceNulls",     "urlDecode",
-			 "uppercase",        "urlDecodeUni",     "urlEncode",
-			 "utf8toUnicode",    "sha1",             "trimLeft",
-			 "trimRight",        "trim",
-	);
-}
-
-sub getWafOperators
-{
-	return {
-			 strBegins            => "beginsWith",
-			 strContains          => "contains",
-			 strContainsWord      => "containsWord",
-			 strEnds              => "endsWith",
-			 strWithin            => "within",
-			 strMatch             => "strmatch",
-			 strEq                => "streq",
-			 strRegex             => "rx",
-			 strPhrases           => "pm",
-			 strPhrasesFromFile   => "pmFromFile",
-			 intEQ                => "eq",
-			 intGE                => "ge",
-			 intGT                => "gt",
-			 intLE                => "le",
-			 intLT                => "lt",
-			 detectSQLi           => "detectSQLi",
-			 detectXSS            => "detectXSS",
-			 geoLookup            => "geoLookup",
-			 ipMatch              => "ipMatch",
-			 ipMatchFromFile      => "ipMatchFromFile",
-			 validateByteRange    => "validateByteRange",
-			 validateDTD          => "validateDTD",
-			 validateSchema       => "validateSchema",
-			 validateUrlEncoding  => "validateUrlEncoding",
-			 validateUtf8Encoding => "validateUtf8Encoding",
-			 verifyCreditCard     => "verifyCC",
-			 verifySSN            => "verifySSN",
-			 matchAllways         => "unconditionalMatch",
-			 matchNever           => "noMatch",
-	};
-}
-
-sub translateWafOperator
-{
-	my $req       = shift;
-	my $operators = &getWafOperators();
-
-	foreach my $key ( keys %{ $operators } )
-	{
-		return $key if ( $operators->{ $key } eq $req );
-	}
-
-	return '';
-}
-
-sub getWafRuleModel
-{
-	my $type = shift;
 	my $out;
 
 	$out = {
-			 'rule_id'         => { 'valid_format' => 'waf_rule_id' },
-			 'description'     => {},
-			 'tag'             => {},
-			 'severity'        => { 'valid_format' => 'waf_severity' },
-			 'phase'           => { 'valid_format' => 'waf_phase' },
-			 'transformations' => {},
-			 'multi_match'     => { 'valid_format' => 'boolean' },
-			 'capture'         => { 'valid_format' => 'boolean' },
-			 'action'          => { 'valid_format' => 'waf_action' },
-			 'http_code'       => { 'valid_format' => 'http_code' },
-			 'execute'         => {},
-			 'log'             => { 'valid_format' => 'waf_log' },
-			 'audit'           => { 'valid_format' => 'waf_audit_log' },
-			 'log_data'        => {},
-			 'set_variable'    => {},
-			 'skip'            => { 'valid_format' => 'waf_skip' },
-			 'skip_after'      => { 'valid_format' => 'waf_skip_after' },
+			 'rule_id'     => { 'valid_format' => 'waf_rule_id' },
+			 'description' => {},
+			 'tag'         => {},
+			 'severity'    => { 'valid_format' => 'waf_severity' },
+			 'phase'       => { 'valid_format' => 'waf_phase' },
+			 'resolution' =>
+			   { 'values' => ['pass', 'allow', 'deny', 'redirect', 'default_action'] },
+			 'execute'      => {},
+			 'log'          => { 'valid_format' => 'waf_log' },
+			 'audit'        => { 'valid_format' => 'waf_audit_log' },
+			 'skip'         => { 'valid_format' => 'waf_skip' },
+			 'skip_after'   => { 'valid_format' => 'waf_skip_after' },
+			 'redirect_url' => {},
 	};
-
-	if ( $type eq 'match_action' )
-	{
-		$out->{ variables } = { 'non_blank' => 'true' };
-		$out->{ operator }  = { 'non_blank' => 'true' };
-		$out->{ operating } = {};
-	}
 
 	return $out;
 }
 
-sub translateWafInputs
+my @transformations = &getWafTransformations();
+
+sub getWafMatchParameters
 {
-	my $json_obj = shift;
-	my $rule     = shift;
+	my @operators = &getWafOperators();
 
-	if ( exists $json_obj->{ log } )
+	return {
+			 'not_match'       => { 'valid_format' => 'boolean' },
+			 'variables'       => {},
+			 'operator'        => { 'non_blank' => 'true', 'values' => \@operators },
+			 'operating'       => {},
+			 'transformations' => {
+									'non_blank'  => 'true',
+									'function'   => \&validateTransformations,
+									'format_msg' => "accepts the following values: \""
+									  . join ( '", "', @transformations ) . '"'
+			 },
+			 'multi_match' => { 'valid_format' => 'boolean' },
+			 'capture'     => { 'valid_format' => 'boolean' },
+	};
+}
+
+sub validateTransformations
+{
+	my $transf = shift;
+
+	foreach my $t ( @{ $transf } )
 	{
-		$rule->{ log }    = '';
-		$rule->{ no_log } = '';
-
-		if    ( $json_obj->{ log } eq 'true' )  { $rule->{ log }    = 'true'; }
-		elsif ( $json_obj->{ log } eq 'false' ) { $rule->{ no_log } = 'true'; }
-	}
-	if ( exists $json_obj->{ audit } )
-	{
-		$rule->{ audit_log }    = '';
-		$rule->{ no_audit_log } = '';
-
-		if ( $json_obj->{ audit } eq 'true' ) { $rule->{ audit_log } = 'true'; }
-		elsif ( $json_obj->{ audit } eq 'false' )
-		{
-			$rule->{ no_audit_log } = 'true';
-		}
-	}
-
-	if ( exists $json_obj->{ transformations } )
-	{
-		my @transf = &getWafTransformations();
-		foreach my $tr ( @{ $json_obj->{ transformations } } )
-		{
-			if ( !grep ( /^$tr$/, @transf ) )
-			{
-				return "The transformation $tr is not recognized.";
-			}
-		}
-		$rule->{ transformations } = $json_obj->{ transformations };
+		return 0 if !( grep ( /^$t$/, @transformations ) );
 	}
 
-	if ( exists $json_obj->{ operator } )
-	{
-		my $not  = 0;
-		my $oper = &getWafOperators();
-		if ( $json_obj->{ operator } =~ s/^!// )
-		{
-			$not = 1;
-		}
-
-		if ( !exists $oper->{ $json_obj->{ operator } } )
-		{
-			return "The operator $json_obj->{ operator } is not recognized.";
-		}
-
-		$rule->{ operator } = $oper->{ $json_obj->{ operator } };
-		$rule->{ operator } = "!$rule->{ operator }" if ( $not );
-	}
-
-	$rule->{ rule_id } = $json_obj->{ rule_id }
-	  if ( exists $json_obj->{ rule_id } );
-	$rule->{ description } = $json_obj->{ description }
-	  if ( exists $json_obj->{ description } );
-	$rule->{ tag } = $json_obj->{ tag } if ( exists $json_obj->{ tag } );
-	$rule->{ severity } = $json_obj->{ severity }
-	  if ( exists $json_obj->{ severity } );
-	$rule->{ phase } = $json_obj->{ phase } if ( exists $json_obj->{ phase } );
-	$rule->{ operating } = $json_obj->{ operating }
-	  if ( exists $json_obj->{ operating } );
-	$rule->{ variables } = $json_obj->{ variables }
-	  if ( exists $json_obj->{ variables } );
-	$rule->{ multi_match } = $json_obj->{ multi_match }
-	  if ( exists $json_obj->{ multi_match } );
-	$rule->{ capture } = $json_obj->{ capture }
-	  if ( exists $json_obj->{ capture } );
-	$rule->{ action } = $json_obj->{ action } if ( exists $json_obj->{ action } );
-	$rule->{ http_code } = $json_obj->{ http_code }
-	  if ( exists $json_obj->{ http_code } );
-	$rule->{ execute } = $json_obj->{ execute }
-	  if ( exists $json_obj->{ execute } );
-	$rule->{ log_data } = $json_obj->{ log_data }
-	  if ( exists $json_obj->{ log_data } );
-	$rule->{ set_variable } = $json_obj->{ set_variable }
-	  if ( exists $json_obj->{ set_variable } );
-	$rule->{ skip } = $json_obj->{ skip } if ( exists $json_obj->{ skip } );
-	$rule->{ skip_after } = $json_obj->{ skip_after }
-	  if ( exists $json_obj->{ skip_after } );
-
-	return undef;
+	return 1;
 }
 
 1;

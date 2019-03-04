@@ -192,7 +192,7 @@ sub parseWAFRule
 
 			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)?$/ )
 			{
-				$rule->{ operator } = $+{ operator } // "";
+				$rule->{ operator }  = $+{ operator } // "rx";
 				$rule->{ operating } = $+{ operating };
 			}
 
@@ -203,8 +203,7 @@ sub parseWAFRule
 			if ( $rule->{ operator } )
 			{
 				$rule->{ operator } =~ s/^(!)?\@//;
-				my $not_op = $1 // '';
-				$rule->{ operator } = "${not_op}$rule->{ operator }";
+				$rule->{ not_match } = ( $1 ) ? 'true' : 'false';
 				&zenlog( "Not variable found parsing rule: $line ", "debug1", "waf" )
 				  if ( !$rule->{ operator } );
 			}
@@ -280,14 +279,28 @@ sub parseWAFRule
 			{
 				$rule->{ multi_match } = "true";
 			}
-			elsif ( $param =~ /^capture$/ ) { $rule->{ capture } = "true"; }
-			elsif ( $param =~ /^(redirect|allow|pass|block|deny)$/ )
+			elsif ( $param =~ /^capture$/ )
 			{
-				$rule->{ action } = $1;
+				$rule->{ capture } = "true";
 			}
-			elsif ( $param =~ /^nolog$/ )    { $rule->{ no_log }    = "true"; }
-			elsif ( $param =~ /^log$/ )      { $rule->{ log }       = "true"; }
-			elsif ( $param =~ /^auditlog$/ ) { $rule->{ audit_log } = "true"; }
+			elsif ( $param =~ /^(redirect(:.*)|allow|pass|block|deny)$/ )
+			{
+				$rule->{ action }       = $1;
+				$rule->{ redirect_url } = $2;
+				$rule->{ redirect_url } =~ s/^://;
+			}
+			elsif ( $param =~ /^nolog$/ )
+			{
+				$rule->{ no_log } = "true";
+			}
+			elsif ( $param =~ /^log$/ )
+			{
+				$rule->{ log } = "true";
+			}
+			elsif ( $param =~ /^auditlog$/ )
+			{
+				$rule->{ audit_log } = "true";
+			}
 			elsif ( $param =~ /^noauditlog$/ )
 			{
 				$rule->{ no_audit_log } = "true";
@@ -403,17 +416,15 @@ sub buildWAFRule
 	# else, modified eq 'refresh'
 	if ( $st->{ type } =~ /(?:match_action|action)/ )
 	{
-		if ( $st->{ type } eq 'match_action' )
+		if ( exists $st->{ variables } and @{ $st->{ variables } } )
 		{
 			my $vars = join ( '|', @{ $st->{ variables } } );
-			my $operator = $st->{ operator };
-			$operator =~ s/^(!)?//;
-			my $not_op = $1 // '';
+			my $not = ( $st->{ not_match } eq 'true' ) ? '!' : '';
 			$secrule =
 			    'SecRule '
 			  . $vars . ' "'
-			  . $not_op . '@'
-			  . $operator . ' '
+			  . $not . '@'
+			  . $st->{ operator } . ' '
 			  . $st->{ operating } . '" ';
 			$secrule .= "\"\\\n";
 		}
@@ -447,9 +458,16 @@ sub buildWAFRule
 		{
 			$secrule .= "\tt:$t,\\\n";
 		}
-		$secrule .= "\tmultimatch,\\\n"    if ( $st->{ multi_match } eq 'true' );
-		$secrule .= "\tcapture,\\\n"       if ( $st->{ capture } eq 'true' );
-		$secrule .= "\t$st->{action},\\\n" if ( $st->{ action } );
+		$secrule .= "\tmultimatch,\\\n" if ( $st->{ multi_match } eq 'true' );
+		$secrule .= "\tcapture,\\\n"    if ( $st->{ capture } eq 'true' );
+		if ( $st->{ action } )
+		{
+			$secrule .=
+			  ( $st->{ action } eq 'redirect' )
+			  ? "\t$st->{action}:$st->{redirect_url},\\\n"
+			  : "\t$st->{action},\\\n";
+		}
+
 		$secrule .= "\tstatus:" . $st->{ http_code } . ",\\\n"
 		  if ( $st->{ http_code } );
 		$secrule .= "\tnolog,\\\n"      if ( $st->{ no_log } eq 'true' );
@@ -670,7 +688,7 @@ sub buildWAFSetConf
 	}
 
 	$conf->{ default_action } // 'pass';
-	$conf->{ default_phase }  // '1';
+	$conf->{ default_phase } // '1';
 	my $defaults =
 	  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
 	$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );

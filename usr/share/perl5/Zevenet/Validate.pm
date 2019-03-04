@@ -226,7 +226,6 @@ my %format_re = (
 	'waf_audit_log'  => qr/(?:$boolean|)/,
 	'waf_skip'       => qr/[0-9]+/,
 	'waf_skip_after' => qr/\w+/,
-	'waf_action'     => qr/(?:allow|block|redirect|pass|deny)/,
 	'waf_set_status' => qr/(?:$boolean|detection)/,
 
 	# certificates filenames
@@ -578,12 +577,13 @@ sub checkZAPIParams
 	my @non_valid;
 	foreach my $param ( @rec_keys )
 	{
-		push @non_valid, $param if ( !grep ( /^$param$/, keys %{ $param_obj } ) );
+		push @non_valid, "\"$param\"" if ( !grep ( /^$param$/, keys %{ $param_obj } ) );
 	}
 	return
 	  &putArrayAsText( \@non_valid,
-		"The parameter<sp>s</sp> <pl> <bs>is<|>are</bp> not correct for this call. Please, try with: "
-		  . join ( ', ', @expect_params ) )
+		"The parameter<sp>s</sp> <pl> <bs>is<|>are</bp> not correct for this call. Please, try with: \""
+		  . join ( '", "', @expect_params )
+		  . '"' )
 	  if ( @non_valid );
 
 	# check for each parameter
@@ -599,6 +599,16 @@ sub checkZAPIParams
 
 			# parameter validated
 			next;
+		}
+
+		if ( exists $param_obj->{ $param }->{ 'values' } )
+		{
+			return
+			  "The parameter \"$param\" expects once of the following values: \""
+			  . join ( '", "', @{ $param_obj->{ $param }->{ 'values' } } ) . '"'
+			  if (
+				  !grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } )
+			  );
 		}
 
 		# getValidFormat funcion:

@@ -26,14 +26,41 @@ require Zevenet::API40::HTTP;
 include 'Zevenet::IPDS::WAF::Core';
 include 'Zevenet::API40::IPDS::WAF::Structs';
 
+sub get_waf_options
+{
+	my $desc = "List the available options to create a rule match";
+
+	my @operators       = &getWafOperators();
+	my @variables       = &getWafVariables();
+	my @transformations = &getWafTransformations();
+
+	my $params = {
+				   operators       => \@operators,
+				   variables       => \@variables,
+				   transformations => \@transformations,
+	};
+
+	my $body = { description => $desc, params => $params };
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
 #GET /ipds/waf
 sub list_waf_sets
 {
 	my @sets = &listWAFSet();
 	my $desc = "List the WAF sets";
 
+	my @out = ();
+
+	foreach my $set ( @sets )
+	{
+		my $status = &getWAFSetStatus( $set );
+		push @out, { status => $status, name => $set };
+	}
+
 	return &httpResponse(
-				  { code => 200, body => { description => $desc, params => \@sets } } );
+				   { code => 200, body => { description => $desc, params => \@out } } );
 }
 
 #  GET /ipds/waf/<set>
@@ -68,6 +95,7 @@ sub create_waf_set
 							   'valid_format' => 'waf_set_name',
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
+							   'exceptions'   => ['options'],
 				   },
 				   "copy_from" => {
 									'valid_format' => 'waf_set_name',
@@ -133,37 +161,37 @@ sub modify_waf_set
 
 	my $desc = "Modify the WAF set $set";
 	my $params = {
-				   "audit" => {
-								'valid_format' => 'boolean',
-								'non_blank'    => 'true',
-				   },
-				   "process_request_body" => {
-											   'valid_format' => 'boolean',
-											   'non_blank'    => 'true',
-				   },
-				   "process_response_body" => {
-												'valid_format' => 'boolean',
-												'non_blank'    => 'true',
-				   },
-				   "request_body_limit" => {
-											 'valid_format' => 'natural_num',
-				   },
-				   "status" => {
-								 'valid_format' => 'waf_set_status',
-								 'non_blank'    => 'true',
-				   },
-				   "default_action" => {
-										 'valid_format' => 'waf_action',
-										 'non_blank'    => 'true',
-				   },
-				   "default_log" => {
-									  'valid_format' => 'waf_log',
-				   },
-				   "default_phase" => {
-										'valid_format' => 'waf_phase',
-										'non_blank'    => 'true',
-				   },
-				   "disable_rules" => {},
+		"audit" => {
+					 'valid_format' => 'boolean',
+					 'non_blank'    => 'true',
+		},
+		"process_request_body" => {
+									'valid_format' => 'boolean',
+									'non_blank'    => 'true',
+		},
+		"process_response_body" => {
+									 'valid_format' => 'boolean',
+									 'non_blank'    => 'true',
+		},
+		"request_body_limit" => {
+								  'valid_format' => 'natural_num',
+		},
+		"only_logging" => {
+							'valid_format' => 'boolean',
+							'non_blank'    => 'true',
+		},
+		"default_action" => {
+							  'values'    => ["allow", "redirect", "pass", "deny"],
+							  'non_blank' => 'true',
+		},
+		"default_log" => {
+						   'valid_format' => 'waf_log',
+		},
+		"default_phase" => {
+							 'valid_format' => 'waf_phase',
+							 'non_blank'    => 'true',
+		},
+		"disable_rules" => {},    # bugfix: set a stronger check
 	};
 
 	unless ( &existWAFSet( $set ) )
@@ -420,6 +448,63 @@ sub move_farm_waf_set
 
 	my $msg = "The set was moved properly to the position $json_obj->{ position }.";
 	my $body = { description => $desc, message => $msg };
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+# POST /ipds/waf/WAF/actions
+sub actions_waf
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $set      = shift;
+	my $error;
+
+	include 'Zevenet::IPDS::WAF::Config';
+
+	my $desc = "Apply a action to the set rule $set";
+	my $msg  = "Error, applying the action to the set rule.";
+
+	# check if the set exists
+	if ( !&existWAFSet( $set ) )
+	{
+		my $msg = "The WAF set $set does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $params = {
+				   "action" => {
+								 'values'    => ['start', 'stop'],
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+				   }
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# set the status
+	my $rule_param->{ status } =
+	  ( $json_obj->{ action } eq 'start' ) ? 'true' : 'false';
+	$error = &setWAFSet( $set, $rule_param );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error )
+	  if $error;
+
+	# reload the set
+	$error = &reloadWAFByRule( $set );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
+
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 params      => $json_obj->{ action }
+	};
 
 	return &httpResponse( { code => 200, body => $body } );
 }

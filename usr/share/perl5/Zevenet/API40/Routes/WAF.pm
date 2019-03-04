@@ -49,16 +49,16 @@ if ( $ENV{ PATH_INFO } =~ qr{^/ipds/waf/$set_name/rules} )
 	  $mod;
 
 	#  POST /ipds/waf/<set>/rules/<id>/chain
-	POST qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains$},
-	  'create_waf_rule_chain', $mod;
+	POST qr{^/ipds/waf/($set_name)/rules/($rule_id)/matches$},
+	  'create_waf_rule_match', $mod;
 
-	#  PUT /ipds/waf/<set>/rules/<id>/chain/($index)
-	PUT qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains/($index)$},
-	  'modify_waf_rule_chain', $mod;
+	#  PUT /ipds/waf/<set>/rules/<id>/chain/<index>
+	PUT qr{^/ipds/waf/($set_name)/rules/($rule_id)/matches/($index)$},
+	  'modify_waf_rule_match', $mod;
 
-	#  DELETE /ipds/waf/<set>/rules/<id>/chain/index
-	DELETE qr{^/ipds/waf/($set_name)/rules/($rule_id)/chains/($index)$},
-	  'delete_waf_rule_chain', $mod;
+	#  DELETE /ipds/waf/<set>/rules/<id>/chain/<index>
+	DELETE qr{^/ipds/waf/($set_name)/rules/($rule_id)/matches/($index)$},
+	  'delete_waf_rule_match', $mod;
 }
 
 if ( $ENV{ PATH_INFO } =~ qr{/ipds/waf} )
@@ -71,6 +71,9 @@ if ( $ENV{ PATH_INFO } =~ qr{/ipds/waf} )
 	#  POST /ipds/waf
 	POST qr{^/ipds/waf$}, 'create_waf_set', $mod;
 
+	#  GET /ipds/waf/options
+	GET qr{^/ipds/waf/options$}, 'get_waf_options', $mod;
+
 	#  GET /ipds/waf/<set>
 	GET qr{^/ipds/waf/($set_name)$}, 'get_waf_set', $mod;
 
@@ -79,6 +82,9 @@ if ( $ENV{ PATH_INFO } =~ qr{/ipds/waf} )
 
 	#  DELETE /ipds/waf/<set>
 	DELETE qr{^/ipds/waf/($set_name)$}, 'delete_waf_set', $mod;
+
+	#  POST /ipds/waf/<set>
+	POST qr{^/ipds/waf/($set_name)/actions$}, 'actions_waf', $mod;
 
 	#  POST /farms/<farm>/ipds/waf
 	POST qr{^/farms/($farm_re)/ipds/waf$}, 'add_farm_waf_set', $mod;

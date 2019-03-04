@@ -402,7 +402,6 @@ sub copyWAFSet
 	my $set_st = &getWAFSet( $dstSet );
 	foreach my $rule ( @{ $set_st->{ rules } } )
 	{
-		## ?????? cambiar el id mediante expresion regular
 		$rule->{ id } = &genWAFRuleId();
 	}
 	&buildWAFSet( $dstSet, $set_st );
@@ -701,6 +700,95 @@ sub moveWAFSet
 	}
 
 	return $err;
+}
+
+# diferenciar que esto es de *alto nivel*
+
+sub createWAFMatch
+{
+	my ( $set, $rule_index, $rule_st, $rule_updates ) = @_;
+	my $err_msg;
+
+	# check if the rule set already has a chain
+	# modify the rule and chain the type of rule
+	if ( @{ $rule_st->{ chain } } == 0 )
+	{
+		&updateWAFRule( $rule_st, $rule_updates );
+	}
+
+	# add a new chain
+	else
+	{
+		my $chain_st = &getWAFRulesStruct( 'match_action' );
+		&updateWAFRule( $chain_st, $rule_updates );
+
+		push @{ $rule_st->{ chain } }, $chain_st;
+	}
+
+	$err_msg = &setWAFRule( $set, $rule_index, $rule_st );
+	return $err_msg if ( $err_msg );
+
+	# if has been created properly, the rule id is the last in the config file
+	my $rule_st = &getWAFRule( $set, $rule_index );
+
+	return undef;
+}
+
+# el primer elemento de la tabla match corresponde a la regla, no al chain
+sub setWAFMatch
+{
+	my ( $set, $rule_index, $chain_index, $rule_st, $rule_updates ) = @_;
+	my $err;
+
+	$chain_index--;    # the first match position are the SecRule match parameters
+	if ( $chain_index < 0 )
+	{
+		&updateWAFRule( $rule_st, $rule_updates );
+	}
+
+	# add a new chain
+	else
+	{
+		&updateWAFRule( $rule_st->{ chain }->[$chain_index], $rule_updates );
+	}
+
+	$err = &setWAFRule( $set, $rule_index, $rule_st );
+	return $err;
+}
+
+# delWAFMatch ( $set, $id, $chain_index )
+sub delWAFMatch
+{
+	my ( $set, $id, $match_index, $rule_st ) = @_;
+	my $err;
+
+	# Remove the chain
+	if ( $match_index > 0 )
+	{
+		$err = &deleteWAFRule( $set, $id, $match_index + 1 );
+	}
+
+	# Clean match parameters of the rule. Match index = 1
+	else
+	{
+		$rule_st->{ variables } = [];
+		$rule_st->{ operator }  = '';
+		$rule_st->{ operating } = '';
+		$rule_st->{ not_match } = 'false';
+		$err = &setWAFRule( $set, $id, $rule_st );
+	}
+
+	return $err;
+}
+
+sub updateWAFRule
+{
+	my ( $rule_st, $updates ) = @_;
+
+	foreach my $key ( keys %{ $updates } )
+	{
+		$rule_st->{ $key } = $updates->{ $key };
+	}
 }
 
 1;

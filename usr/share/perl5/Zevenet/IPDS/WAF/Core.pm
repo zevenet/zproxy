@@ -181,10 +181,10 @@ sub getWAFRulesStruct
 		'http_code'        => '',
 		'modify_directive' => [],        # parameter 'ctl' in secrule
 		'execute'          => '',
-		'no_log'           => 'false',
-		'log'              => 'false',
-		'audit_log'        => 'false',
-		'no_audit_log'     => 'false',
+		'no_log'           => '',
+		'log'              => '',
+		'audit_log'        => '',
+		'no_audit_log'     => '',
 		'log_data'         => '',
 		'init_colection'   => [],
 		'set_uid'          => '',
@@ -194,6 +194,7 @@ sub getWAFRulesStruct
 		'chain'            => [],
 		'skip'             => '',
 		'skip_after'       => '',
+		'redirect_url'     => '',
 		'modifed'          => 'no'
 		, # shows if the rule has been modified by the user. it is used to not overwrite modified rules
 	};
@@ -202,6 +203,7 @@ sub getWAFRulesStruct
 	{
 		$out->{ 'operating' } = '';
 		$out->{ 'operator' }  = '';
+		$out->{ 'not_match' } = 'false';
 		$out->{ 'variables' } = [];
 	}
 
@@ -238,12 +240,12 @@ sub getWAFSetStructConf
 			 audit                 => 'false',    #SecAuditEngine: on|off|RelevantOnly
 			 process_request_body  => 'false',    # SecRequestBodyAccess on|off
 			 process_response_body => 'false',    # SecResponseBodyAccess on|off
-			 request_body_limit    => '',         # SecRequestBodyNoFilesLimit SIZE
+			 request_body_limit    => 0,          # SecRequestBodyNoFilesLimit SIZE
 			 status                => 'false',    # SecRuleEngine on|off|DetectionOnly
 			 disable_rules         => [],         # SecRuleRemoveById
-			 default_action        => 'allow',
-			 default_log           => '',
-			 default_phase         => '1',
+			 default_action        => 'pass',
+			 default_log           => 'true',
+			 default_phase         => 2,
 	};
 }
 
@@ -290,6 +292,20 @@ sub existWAFSet
 {
 	my $set = shift;
 	return ( grep ( /^$set$/, &listWAFSet() ) ) ? 1 : 0;
+}
+
+sub getWAFSetStatus
+{
+	my $set = shift;
+
+	my $file = &getWAFSetFile( $set );
+
+	# looking for the "SecRuleEngine" directive
+	my $fh = &openlock( $file, 'r' );
+	my $find = grep ( /SecRuleEngine\s+(on|DetectionOnly)/, <$fh> );
+	close $fh;
+
+	return ( $find ) ? "up" : "down";
 }
 
 =begin nd

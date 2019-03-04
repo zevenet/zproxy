@@ -168,24 +168,8 @@ sub create_waf_rule
 	# rule or action
 	else
 	{
-		$type = 'action';
-		if (    exists $json_obj->{ variables }
-			 or exists $json_obj->{ operator }
-			 or exists $json_obj->{ operating } )
-		{
-			$type = 'match_action';
-		}
-
-		$params = &getWafRuleModel( $type );
-
-# to create a new rule it is necessary to send the fields: operating, variables or operators
-		if ( $type eq 'match_action' )
-		{
-			$params->{ variables }->{ required } = 'true';
-			$params->{ operator }->{ required }  = 'true';
-
-			# The operating parameter is not required
-		}
+		$type   = 'action';
+		$params = &getWafRuleParameters();
 	}
 
 	# Check allowed parameters
@@ -219,7 +203,7 @@ sub create_waf_rule
 	else
 	{
 		my $rule = &getWAFRulesStruct( $type );
-		$err = &translateWafInputs( $json_obj, $rule );
+		$err = &translateWafRule( $json_obj, $rule );
 
 		if ( $err )
 		{
@@ -227,6 +211,7 @@ sub create_waf_rule
 		}
 
 		# create a rule
+		&updateWAFRule( $rule, $json_obj );
 		$err = &createWAFRule( $set, $rule );
 	}
 
@@ -285,14 +270,7 @@ sub modify_waf_rule
 	}
 	else
 	{
-		$params = &getWafRuleModel( $rule->{ type } );
-		delete $params->{ type };
-		my $err = &translateWafInputs( $json_obj, $rule );
-
-		if ( $err )
-		{
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
-		}
+		$params = &getWafRuleParameters();
 	}
 
 	# Check allowed parameters
@@ -313,6 +291,12 @@ sub modify_waf_rule
 	}
 	else
 	{
+		$err = &translateWafRule( $json_obj, $rule );
+		if ( $err )
+		{
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
+		}
+		&updateWAFRule( $rule, $json_obj );
 		$err = &setWAFRule( $set, $id, $rule );
 	}
 
@@ -427,8 +411,8 @@ sub move_waf_rule
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-#  POST /ipds/waf/<set>/rules/<id>/chain
-sub create_waf_rule_chain
+#  POST /ipds/waf/<set>/rules/<id>/matches
+sub create_waf_rule_match
 {
 	my $json_obj   = shift;
 	my $set        = shift;
@@ -436,9 +420,7 @@ sub create_waf_rule_chain
 	my $err;
 
 	include 'Zevenet::IPDS::WAF::Config';
-	my $desc = "Create a chain in the rule $rule_index for the set $set";
-	my $params;
-	my $rule_chain_st;
+	my $desc = "Create a match in the rule $rule_index for the set $set";
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -453,60 +435,42 @@ sub create_waf_rule_chain
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# get parameter for a chain
-	my @chains_params = &getWAFChainParameters();
-	$params = &getWafRuleModel( 'match_action' );
-	foreach my $key ( keys %{ $params } )
-	{
-		delete $params->{ $key } if ( !grep ( $key, @chains_params ) );
-	}
+	# get parameter for a match
+	my $params = &getWafMatchParameters();
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
+	$err = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $err )
+	  if ( $err );
 
-	$rule_chain_st = &getWAFRulesStruct( $json_obj->{ type } );
-	$err = &translateWafInputs( $json_obj, $rule_chain_st );
-	if ( $err )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
-	}
+	&translateWafMatch( $json_obj );
 
-	# create a rule
-	$params->{ phase } = $rule_st->{ phase };
-	push @{ $rule_st->{ chain } }, $rule_chain_st;
-	$err = &setWAFRule( $set, $rule_index, $rule_st );
-	if ( $err )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
-	}
-
-	# if has been created properly, the rule id is the last in the config file
-	my $rule_out = &getWAFRule( $set, $rule_index );
+	$err = &createWAFMatch( $set, $rule_index, $rule_st, $json_obj )
+	  ;    # this function returns the struct rule_st updated
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $err )
+	  if ( defined $err );
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg    = "Settings were changed successful.";
-	my $output = &getZapiWAFRule( $rule_out );
+	my $msg    = "The new match was created successfully.";
+	my $output = &getZapiWAFRule( $rule_st );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
 	return &httpResponse( { code => 201, body => $body } );
 }
 
-#  PUT /ipds/waf/<set>/rules/<id>/chain/index
-sub modify_waf_rule_chain
+#  PUT /ipds/waf/<set>/rules/<id>/matches/index
+sub modify_waf_rule_match
 {
 	my $json_obj    = shift;
 	my $set         = shift;
 	my $rule_index  = shift;
 	my $chain_index = shift;
 	my $rule_st;
-	my $chain_st;
 
 	include 'Zevenet::IPDS::WAF::Config';
-	my $desc = "Modify the chain $chain_index in rule $rule_index for the set $set";
+	my $desc = "Modify the match $chain_index in rule $rule_index for the set $set";
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -522,19 +486,15 @@ sub modify_waf_rule_chain
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	unless ( $rule_st->{ chain }->[$chain_index] )
+	unless ( ( $chain_index == 0 and $rule_st->{ type } eq 'match_action' )
+		or ( $chain_index > 0 and defined $rule_st->{ chain }->[$chain_index - 1] ) )
 	{
-		my $msg = "Requested chain $chain_index has not been found.";
+		my $msg = "The match $chain_index has not been found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# get parameter for a chain
-	my @chains_params = &getWAFChainParameters();
-	my $params        = &getWafRuleModel( 'match_action' );
-	foreach my $key ( keys %{ $params } )
-	{
-		delete $params->{ $key } if ( !grep ( $key, @chains_params ) );
-	}
+	my $params = &getWafMatchParameters();
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
@@ -542,19 +502,14 @@ sub modify_waf_rule_chain
 	  if ( $error_msg );
 
 	# modify a rule
-	my $err;
-	my $chain_ref = $rule_st->{ chain }->[$chain_index];
-	my $err = &translateWafInputs( $json_obj, $chain_ref );
-	if ( $err )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
-	}
+	&translateWafMatch( $json_obj );
 
-	$err = &setWAFRule( $set, $rule_index, $rule_st );
-	if ( $err )
+	$error_msg =
+	  &setWAFMatch( $set, $rule_index, $chain_index, $rule_st, $json_obj );
+	if ( $error_msg )
 	{
-		my $msg = "Modifying the rule $rule_index";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
+		my $msg = "Modifying the match $chain_index of the rule $rule_index";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 	}
 
 	include 'Zevenet::Cluster';
@@ -568,8 +523,8 @@ sub modify_waf_rule_chain
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-#  DELETE /ipds/waf/<set>/rules/<id>/chain/index
-sub delete_waf_rule_chain
+#  DELETE /ipds/waf/<set>/rules/<id>/matches/<index>
+sub delete_waf_rule_match
 {
 	my $set         = shift;
 	my $id          = shift;
@@ -577,7 +532,7 @@ sub delete_waf_rule_chain
 	my $err;
 
 	include 'Zevenet::IPDS::WAF::Config';
-	my $desc = "Delete the chain $chain_index from rule $id for the set $set";
+	my $desc = "Delete the match $chain_index from rule $id for the set $set";
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -593,22 +548,23 @@ sub delete_waf_rule_chain
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	unless ( $rule->{ chain }->[$chain_index] )
+	unless ( ( $chain_index == 0 and $rule->{ type } eq 'match_action' )
+		  or ( $chain_index > 0 and defined $rule->{ chain }->[$chain_index - 1] ) )
 	{
-		my $msg = "The chain $chain_index has not been found";
+		my $msg = "The match $chain_index has not been found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &deleteWAFRule( $set, $id, $chain_index ) )
+	my $msg = &delWAFMatch( $set, $id, $chain_index, $rule );
+	if ( $msg )
 	{
-		my $msg = "Deleting the chain $chain_index";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg = "The chain $chain_index has been deleted properly";
+	my $msg = "The match $chain_index has been deleted properly";
 	my $body = { description => $desc, message => $msg };
 
 	return &httpResponse( { code => 200, body => $body } );
