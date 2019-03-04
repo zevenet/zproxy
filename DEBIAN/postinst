@@ -168,6 +168,3 @@ perl -E '
 	);'
 
 fi
-## Allthings necessary after restarting the service
-# Load conntrack modules
-/sbin/modprobe nf_conntrack 2> /dev/null
