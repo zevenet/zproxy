@@ -35,9 +35,7 @@ sub move_services
 	require Zevenet::Farm::HTTP::Service;
 	include 'Zevenet::Farm::HTTP::Service::Ext';    # Load MoveService functions
 
-	my $desc         = "Move service";
-	my @services     = &getHTTPFarmServices( $farmname );
-	my $services_num = scalar @services;
+	my $desc = "Move service";
 	my $moveservice;
 
 	# validate FARM NAME
@@ -47,35 +45,32 @@ sub move_services
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my @services     = &getHTTPFarmServices( $farmname );
+	my $services_num = scalar @services;
+
 	if ( !grep ( /^$service$/, @services ) )
 	{
 		my $msg = "$service not found.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# Move services
-	my $param_msg = &getValidOptParams( $json_obj, ["position"] );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	my $params = {
+				   "position" => {
+								   'interval'  => "0,$services_num",
+								   'non_blank' => 'true',
+								   'required'  => 'true',
+				   },
+	};
 
-	if ( !&getValidFormat( 'service_position', $json_obj->{ 'position' } ) )
-	{
-		my $msg = "Error in service position format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	my $srv_position = &getFarmVSI( $farmname, $service );
 	if ( $srv_position == $json_obj->{ 'position' } )
 	{
 		my $msg = "The service already is in required position.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $services_num <= $json_obj->{ 'position' } )
-	{
-		my $msg = "The required position is bigger than number of services.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
