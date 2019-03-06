@@ -87,7 +87,8 @@ sub upIf    # ($if_ref, $writeconf)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $if_ref, $writeconf ) = @_;
+	my $if_ref    = shift;
+	my $writeconf = shift;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $status    = 0;
@@ -130,35 +131,17 @@ sub upIf    # ($if_ref, $writeconf)
 	{
 		my $file = "$configdir/if_$$if_ref{name}_conf";
 
-		if ( -f $file )
-		{
-			require Tie::File;
+		require Config::Tiny;
+		my $fileHandler = Config::Tiny->new();
+		$fileHandler = Config::Tiny->read( $file ) if ( -f $file );
 
-			my $found = 0;
-			tie my @if_lines, 'Tie::File', "$file";
-			for my $line ( @if_lines )
-			{
-				if ( $line =~ /^status=/ )
-				{
-					$line  = "status=up";
-					$found = 1;
-					last;
-				}
-			}
-
-			unshift ( @if_lines, 'status=up' ) if !$found;
-			untie @if_lines;
-		}
-		else
-		{
-			open ( my $fh, '>', $file );
-			print { $fh } "status=up\n";
-			close $fh;
-		}
+		$fileHandler->{ $if_ref->{ name } }->{ status } = "up";
+		$fileHandler->write( $file );
 	}
 
 	return $status;
 }
+
 
 =begin nd
 Function: downIf
@@ -181,7 +164,8 @@ sub downIf    # ($if_ref, $writeconf)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $if_ref, $writeconf ) = @_;
+	my $if_ref    = shift;
+	my $writeconf = shift;
 
 	if ( ref $if_ref ne 'HASH' )
 	{
@@ -213,18 +197,12 @@ sub downIf    # ($if_ref, $writeconf)
 		my $configdir = &getGlobalConfiguration( 'configdir' );
 		my $file      = "$configdir/if_$$if_ref{name}_conf";
 
-		require Tie::File;
-		tie my @if_lines, 'Tie::File', "$file";
+		require Config::Tiny;
+		my $fileHandler = Config::Tiny->new();
+		$fileHandler = Config::Tiny->read( $file ) if ( -f $file );
 
-		for my $line ( @if_lines )
-		{
-			if ( $line =~ /^status=/ )
-			{
-				$line = "status=down";
-				last;
-			}
-		}
-		untie @if_lines;
+		$fileHandler->{ $if_ref->{ name } }->{ status } = "down";
+		$fileHandler->write( $file );
 	}
 
 	return $status;
@@ -560,7 +538,7 @@ sub addIp    # ($if_ref)
 	}
 
 	my $status = &logAndRun( $ip_cmd );
-
+	&zenlog("----------------------$status ----------------------- $ip_cmd");
 	return $status;
 }
 

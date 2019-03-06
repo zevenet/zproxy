@@ -99,6 +99,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 				 'debug2', 'network' );
 	}
 
+
 	#~ &zenlog( "[CALL] getInterfaceConfig( $if_name )" );
 
 	my $ip_version;
@@ -107,115 +108,83 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_${if_name}_conf";
 
-	if ( open my $file, '<', "$config_filename" )
-	{
-		my @lines = grep { !/^(\s*#|$)/ } <$file>;
+	require Config::Tiny;
+	my $fileHandler = Config::Tiny->new();
+	$fileHandler = Config::Tiny->read( $config_filename ) if ( -f $config_filename );
+	&zenlog( ".-.-.-.-.-.-.- READING: $config_filename");
+	&zenlog("-----------------.-----------".Dumper $fileHandler);
 
-		for my $line ( @lines )
-		{
-			my ( undef, $ip ) = split ';', $line;
-
-			if ( defined $ip )
-			{
-				$ip_version =
-				    ( $ip =~ /:/ )  ? 6
-				  : ( $ip =~ /\./ ) ? 4
-				  :                   undef;
-			}
-
-			if ( defined $ip_version && !$if_line )
-			{
-				$if_line = $line;
-			}
-			elsif ( $line =~ /^status=/ )
-			{
-				$if_status = $line;
-				$if_status =~ s/^status=//;
-				chomp $if_status;
-			}
-		}
-		close $file;
-	}
-
-	# includes !$if_status to avoid warning
-	if ( !$if_line && ( !$if_status || $if_status !~ /up/ ) )
-	{
-		return;
-	}
-
-	chomp ( $if_line );
-	my @if_params = split ( ';', $if_line );
-
-	# Example: eth0;10.0.0.5;255.255.255.0;up;10.0.0.1;
+	return unless ( -f $config_filename );
+	#### TODO: IF DOWN WITH NO CONFIG?
 
 	require IO::Socket;
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
-	my %iface;
+	my $iface = {};
 
-	$iface{ name }    = shift @if_params // $if_name;
-	$iface{ addr }    = shift @if_params;
-	$iface{ mask }    = shift @if_params;
-	$iface{ gateway } = shift @if_params;                            # optional
-	$iface{ status }  = $if_status;
-	$iface{ dev }     = $if_name;
-	$iface{ vini }    = undef;
-	$iface{ vlan }    = undef;
-	$iface{ mac }     = shift @if_params // undef;
-	$iface{ type }    = &getInterfaceType( $if_name );
-	$iface{ parent }  = &getParentInterfaceName( $iface{ name } );
-	$iface{ ip_v } =
-	  ( $iface{ addr } =~ /:/ ) ? '6' : ( $iface{ addr } =~ /\./ ) ? '4' : 0;
-	$iface{ net } =
-	  &getAddressNetwork( $iface{ addr }, $iface{ mask }, $iface{ ip_v } );
+	$iface->{ name }    = $fileHandler->{$if_name}->{name}// $if_name;
+	$iface->{ addr }    = $fileHandler->{$if_name}->{ addr };
+	$iface->{ mask }    = $fileHandler->{$if_name}->{ mask };
+	$iface->{ gateway } = $fileHandler->{$if_name}->{ gateway };                            # optional
+	$iface->{ status }  = $fileHandler->{$if_name}->{ status };
+	$iface->{ dev }     = $if_name;
+	$iface->{ vini }    = undef;
+	$iface->{ vlan }    = undef;
+	$iface->{ mac }     = $fileHandler->{$if_name}->{ mac } // undef;
+	$iface->{ type }    = &getInterfaceType( $if_name );
+	$iface->{ parent }  = &getParentInterfaceName( $iface->{ name } );
+	$iface->{ ip_v } =
+	  ( $iface->{ addr } =~ /:/ ) ? '6' : ( $iface->{ addr } =~ /\./ ) ? '4' : 0;
+	$iface->{ net } =
+	  &getAddressNetwork( $iface->{ addr }, $iface->{ mask }, $iface->{ ip_v } );
 
-	if ( $iface{ dev } =~ /:/ )
+	if ( $iface->{ dev } =~ /:/ )
 	{
-		( $iface{ dev }, $iface{ vini } ) = split ':', $iface{ dev };
+		( $iface->{ dev }, $iface->{ vini } ) = split ':', $iface->{ dev };
 	}
 
-	if ( !$iface{ name } )
+	if ( !$iface->{ name } )
 	{
-		$iface{ name } = $if_name;
+		$iface->{ name } = $if_name;
 	}
 
-	if ( $iface{ dev } =~ /./ )
+	if ( $iface->{ dev } =~ /./ )
 	{
 		# dot must be escaped
-		( $iface{ dev }, $iface{ vlan } ) = split '\.', $iface{ dev };
+		( $iface->{ dev }, $iface->{ vlan } ) = split '\.', $iface->{ dev };
 	}
 
-	$iface{ mac } = $socket->if_hwaddr( $iface{ dev } )
-	  if ( !defined $iface{ mac } );
+	$iface->{ mac } = $socket->if_hwaddr( $iface->{ dev } )
+	  if ( !defined $iface->{ mac } );
 
 	# Interfaces without ip do not get HW addr via socket,
 	# in those cases get the MAC from the OS.
-	unless ( $iface{ mac } )
+	unless ( $iface->{ mac } )
 	{
 		open my $fh, '<', "/sys/class/net/$if_name/address";
-		chomp ( $iface{ mac } = <$fh> );
+		chomp ( $iface->{ mac } = <$fh> );
 		close $fh;
 	}
 
 	# complex check to avoid warnings
 	if (
 		 (
-		      !exists ( $iface{ vini } )
-		   || !defined ( $iface{ vini } )
-		   || $iface{ vini } eq ''
+		      !exists ( $iface->{ vini } )
+		   || !defined ( $iface->{ vini } )
+		   || $iface->{ vini } eq ''
 		 )
-		 && $iface{ addr }
+		 && $iface->{ addr }
 	  )
 	{
 		require Config::Tiny;
 		my $float = Config::Tiny->read( &getGlobalConfiguration( 'floatfile' ) );
 
-		$iface{ float } = $float->{ _ }->{ $iface{ name } } // '';
+		$iface->{ float } = $float->{ _ }->{ $iface->{ name } } // '';
 	}
 
 	state $saved_bond_slaves = 0;
 
-	if ( $eload && $iface{ type } eq 'nic' )
+	if ( $eload && $iface->{ type } eq 'nic' )
 	{
 		# not die if the appliance has not a certificate
 		eval {
@@ -228,22 +197,22 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 			}
 		};
 
-		$iface{ is_slave } =
-		  ( grep { $iface{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
+		$iface->{ is_slave } =
+		  ( grep { $iface->{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
 	}
 
 	# for virtual interface, overwrite mask and gw with parent values
-	if ( $iface{ type } eq 'vini' )
+	if ( $iface->{ type } eq 'vini' )
 	{
-		my $if_parent = &getInterfaceConfig( $iface{ parent } );
-		$iface{ mask }    = $if_parent->{ mask };
-		$iface{ gateway } = $if_parent->{ gateway };
+		my $if_parent = &getInterfaceConfig( $iface->{ parent } );
+		$iface->{ mask }    = $if_parent->{ mask };
+		$iface->{ gateway } = $if_parent->{ gateway };
 	}
 
 	#~ &zenlog(
 	#~ "getInterfaceConfig( $if_name ) returns " . Dumper \%iface );
 
-	return \%iface;
+	return $iface;
 }
 
 =begin nd
@@ -263,7 +232,7 @@ See Also:
 
 # returns 1 if it was successful
 # returns 0 if it wasn't successful
-sub setInterfaceConfig    # $bool ($if_ref)
+sub setInterfaceConfigNoTiny    # $bool ($if_ref)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -274,7 +243,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
 		return;
 	}
-
+	&zenlog( Dumper $if_ref );
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
@@ -285,6 +254,8 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my $if_line         = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
+
+	&zenlog( "-----------------------------------" . Dumper $if_ref);
 
 	if ( $if_ref->{ addr } && !$if_ref->{ ip_v } )
 	{
@@ -344,6 +315,46 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		# returns zero on failure
 		return 0;
 	}
+
+	# returns a true value on success
+	return 1;
+}
+
+sub setInterfaceConfig    # $bool ($if_ref)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $if_ref = shift;
+	require Config::Tiny;
+	my $fileHandle = Config::Tiny->new;
+	if ( ref $if_ref ne 'HASH' )
+	{
+		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
+		return;
+	}
+	&zenlog( Dumper $if_ref );
+	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
+	  if &debug() > 2;
+	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac' );
+
+	my $configdir       = &getGlobalConfiguration( 'configdir' );
+	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
+
+	$fileHandle = Config::Tiny->read( $config_filename ) if ( -f $config_filename );
+
+	foreach my $field ( @if_params )
+	{
+		$fileHandle->{ $if_ref->{ name } }->{ $field } = $if_ref->{ $field };
+	}
+
+	if ( !-f $config_filename )
+	{
+
+		$fileHandle->{ $if_ref->{ name } }->{ status } = "up";
+	}
+
+	return 0
+	  unless ( $fileHandle->write( $config_filename ) );
 
 	# returns a true value on success
 	return 1;
@@ -539,7 +550,7 @@ sub getParentInterfaceName    # ($if_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $if_name = shift;
-
+	&zenlog("********************************* IFNAME: $if_name");
 	my $if_ref = &getDevVlanVini( $if_name );
 	my $parent_if_name;
 
