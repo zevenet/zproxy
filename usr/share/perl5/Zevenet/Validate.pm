@@ -110,6 +110,7 @@ my %format_re = (
 	'farm_profile'          => qr/HTTP|GSLB|L4XNAT|DATALINK/,
 	'backend'               => qr/\d+/,
 	'service'               => $service,
+	'http_service'          => qr/[a-zA-Z0-9\-]+/,
 	'gslb_service'          => qr/[a-zA-Z0-9][\w\-]*/,
 	'farm_modules'          => qr/(?:gslb|dslb|lslb)/,
 	'service_position'      => qr/\d+/,
@@ -589,7 +590,7 @@ sub checkZAPIParams
 	# check for each parameter
 	foreach my $param ( @rec_keys )
 	{
-		if ( $json_obj->{ $param } eq '' )
+		if ( $json_obj->{ $param } eq '' or not defined $json_obj->{ $param } )
 		{
 			# if blank value is allowed
 			if ( $param_obj->{ $param }->{ 'non_blank' } eq 'true' )
