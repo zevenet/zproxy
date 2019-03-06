@@ -96,6 +96,18 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
+# log parameters passed
+if ( $ENV{ CONTENT_TYPE } eq 'application/json' )
+{
+	my $json_data = $q->param( 'POSTDATA' ) || $q->param( 'PUTDATA' );
+
+	# not to print password
+	$json_data =~ s/(password\w*)"\s*:\s*"[^"]*"/$1":"*******"/g;
+	$json_data =~ s/(zapikey\w*)"\s*:\s*"[^"]*"/$1":"*******"/g;
+
+	&zenlog( "$ENV{ REQUEST_METHOD } DATA: " . $json_data, 'info', 'API' );
+}
+
 ##### Verify RBAC permissions ########################################
 require Zevenet::Core;
 
