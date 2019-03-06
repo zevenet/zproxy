@@ -60,18 +60,22 @@ sub set_notif_methods
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my @allowParams = ( "user", "server", "password", "from", "to", "tls" );
-	my $msg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( $msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $params = {
+				   "user"     => {},
+				   "password" => {},
+				   "server"   => {},
+				   "from"     => {},
+				   "to"       => {},
+				   "tls"      => {
+							  'valid_format' => 'boolean',
+							  'non_blank'    => 'true',
+				   },
+	};
 
-	if ( !&getValidFormat( "notif_tls", $json_obj->{ 'tls' } ) )
-	{
-		my $msg = "TLS only can be true or false.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	my $error = &setNotifSenders( $key, $json_obj );
 	if ( $error )
@@ -129,24 +133,25 @@ sub set_notif_alert
 
 	my $desc = "Set notifications alert $alert";
 
-	my @allowParams = ( "avoidflappingtime", "prefix" );
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+	my $params = {
+				   "prefix" => {
+								 'values'    => ['enable', 'disable'],
+								 'non_blank' => 'true',
+				   },
+	};
 
-	if ( $param_msg )
+	if ( $alert eq 'cluster' )
 	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		$params->{ "avoidflappingtime" } = {
+											 'valid_format' => 'notif_time',
+											 'non_blank'    => 'true',
+		};
 	}
 
-	if ( !&getValidFormat( 'notif_time', $json_obj->{ 'avoidflappingtime' } ) )
-	{
-		my $msg = "Error, it's necessary add a valid action.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-	elsif ( exists $json_obj->{ 'avoidflappingtime' } && $alert eq 'cluster' )
-	{
-		my $msg = "Avoid flapping time is not configurable in cluster alerts.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	my $params;
 	$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
@@ -175,18 +180,18 @@ sub set_notif_alert_actions
 
 	my $desc = "Set notifications alert $alert actions";
 
-	my @allowParams = ( "action" );
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	my $params = {
+				   "action" => {
+								 'values'    => ['enable', 'disable'],
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+				   },
+	};
 
-	if ( !&getValidFormat( 'notif_action', $json_obj->{ 'action' } ) )
-	{
-		my $msg = "Error, it's necessary add a valid action";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	my $error = &setNotifAlertsAction( $alert, $json_obj->{ 'action' } );
 	if ( $error eq '-2' )
@@ -212,18 +217,18 @@ sub send_test_mail
 
 	my $desc = "Send test mail";
 
-	my @allowParams = ( "action" );
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	my $params = {
+				   "action" => {
+								 'values'    => ['test'],
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+				   },
+	};
 
-	if ( $json_obj->{ 'action' } ne "test" )
-	{
-		my $msg = "Error, it's necessary add a valid action";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	my $error = &sendTestMail();
 	if ( $error )

@@ -79,19 +79,22 @@ sub set_http
 	my $httpIp;
 	$httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
 
-	my @allowParams = ( "ip", "port" );
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+	my $params = {
+		"ip" => {
+			'non_blank'    => 'true',
+			'valid_format' => 'ssh_listen',
 
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+		},
+		"port" => {
+					'valid_format' => 'port',
+					'non_blank'    => 'true',
+		},
+	};
 
-	if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
-	{
-		my $msg = "Port hasn't a correct format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( exists $json_obj->{ 'ip' } && $json_obj->{ 'ip' } ne '*' )
 	{
@@ -103,7 +106,7 @@ sub set_http
 
 			if ( $iface->{ type } eq 'virtual' )    # discard virtual interfaces
 			{
-				my $msg = "Virtual interface canot be configurate as http interface.";
+				my $msg = "Virtual interface cannot be configurate as http interface.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 

@@ -71,31 +71,34 @@ sub add_rbl_rule
 	my $desc = "Create the RBL rule '$json_obj->{ 'name' }'";
 	my $name = $json_obj->{ 'name' };
 
+	my $params = {
+				   "name" => {
+							   'valid_format' => 'rbl_name',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+							   'exceptions'   => ['domains'],
+				   },
+				   "copy_from" => {
+									'valid_format' => 'rbl_name',
+									'non_blank'    => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	# A list already exists with this name
 	if ( &getRBLExists( $name ) )
 	{
 		my $msg = "A RBL rule already exists with the name '$name'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	elsif ( not $name )
-	{
-		my $msg = "The RBL name cannot be in blank.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-	elsif ( !&getValidFormat( "rbl_name", $name ) )
-	{
-		my $msg = "The RBL name has not a valid format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
 	elsif ( &getRBLExists( $json_obj->{ copy_from } ) )
 	{
 		my $msg = "The RBL rule '$json_obj->{copy_from}' already exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-	elsif ( $name eq "domains" )
-	{
-		my $msg = "Error, \"domains\" is a reserved word.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# copy rule
@@ -135,10 +138,47 @@ sub set_rbl_rule
 	include 'Zevenet::IPDS::RBL::Config';
 
 	my $desc = "Modify the RBL rule $name.";
-	my @allowParams = (
-						"name",      "cache_size",    "cache_time",   "queue_size",
-						"threadmax", "local_traffic", "only_logging", "log_level"
-	);
+
+	my $params = {
+				   "name" => {
+							   'valid_format' => 'rbl_name',
+							   'non_blank'    => 'true',
+							   'exceptions'   => ['domains'],
+				   },
+				   "threadmax" => {
+									'valid_format' => 'natural_num',
+									'non_blank'    => 'true',
+				   },
+				   "only_logging" => {
+									   'valid_format' => 'boolean',
+									   'non_blank'    => 'true',
+				   },
+				   "log_level" => {
+									'interval'  => '0,7',
+									'non_blank' => 'true',
+				   },
+				   "queue_size" => {
+									 'valid_format' => 'natural_num',
+									 'non_blank'    => 'true',
+				   },
+				   "cache_size" => {
+									 'valid_format' => 'natural_num',
+									 'non_blank'    => 'true',
+				   },
+				   "cache_time" => {
+									 'valid_format' => 'natural_num',
+									 'non_blank'    => 'true',
+				   },
+				   "local_traffic" => {
+										'valid_format' => 'boolean',
+										'non_blank'    => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( !&getRBLExists( $name ) )
 	{
@@ -146,33 +186,11 @@ sub set_rbl_rule
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
-
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
-
 	if ( exists $json_obj->{ 'name' } )
 	{
-		if ( !&getValidFormat( 'rbl_name', $json_obj->{ 'name' } ) )
-		{
-			my $msg = "The RBL name has not a valid format.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-		elsif ( not $json_obj->{ 'name' } )
-		{
-			my $msg = "The RBL name cannot be in blank.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-		elsif ( &getRBLExists( $json_obj->{ 'name' } ) )
+		if ( &getRBLExists( $json_obj->{ 'name' } ) )
 		{
 			my $msg = "A RBL rule already exists with the name '$json_obj->{'name'}'.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-		elsif ( $json_obj->{ 'name' } eq "domains" )
-		{
-			my $msg = "Error, \"domains\" is a reserved word.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		else
@@ -196,12 +214,6 @@ sub set_rbl_rule
 	# only_logging
 	if ( exists $json_obj->{ 'only_logging' } )
 	{
-		if ( !&getValidFormat( 'rbl_only_logging', $json_obj->{ 'only_logging' } ) )
-		{
-			my $msg = "Error, only level must be true or false.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		my $option = 'yes';
 		$option = 'no' if ( $json_obj->{ 'only_logging' } eq 'false' );
 		if ( &setRBLObjectRuleParam( $name, 'only_logging', $option ) )
@@ -214,12 +226,6 @@ sub set_rbl_rule
 	# log_level
 	if ( exists $json_obj->{ 'log_level' } )
 	{
-		if ( !&getValidFormat( 'rbl_log_level', $json_obj->{ 'log_level' } ) )
-		{
-			my $msg = "Error, log level must be a number between 0 and 7.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		if ( &setRBLObjectRuleParam( $name, 'log_level', $json_obj->{ 'log_level' } ) )
 		{
 			my $msg = "Error, setting log level.";
@@ -230,12 +236,6 @@ sub set_rbl_rule
 	# queue_size
 	if ( exists $json_obj->{ 'queue_size' } )
 	{
-		if ( !&getValidFormat( 'rbl_queue_size', $json_obj->{ 'queue_size' } ) )
-		{
-			my $msg = "Error, queue size must be a number.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		if (
 			 &setRBLObjectRuleParam( $name, 'queue_size', $json_obj->{ 'queue_size' } ) )
 		{
@@ -247,12 +247,6 @@ sub set_rbl_rule
 	# thread max
 	if ( exists $json_obj->{ 'threadmax' } )
 	{
-		if ( !&getValidFormat( 'rbl_thread_max', $json_obj->{ 'threadmax' } ) )
-		{
-			my $msg = "Error, thread maximum must be a number.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		if ( &setRBLObjectRuleParam( $name, 'threadmax', $json_obj->{ 'threadmax' } ) )
 		{
 			my $msg = "Error, setting thread maximum.";
@@ -263,12 +257,6 @@ sub set_rbl_rule
 	# cache size
 	if ( exists $json_obj->{ 'cache_size' } )
 	{
-		if ( !&getValidFormat( 'rbl_cache_size', $json_obj->{ 'cache_size' } ) )
-		{
-			my $msg = "Error, cache size must be a number.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		if (
 			 &setRBLObjectRuleParam( $name, 'cache_size', $json_obj->{ 'cache_size' } ) )
 		{
@@ -280,12 +268,6 @@ sub set_rbl_rule
 	# cache time
 	if ( exists $json_obj->{ 'cache_time' } )
 	{
-		if ( !&getValidFormat( 'rbl_cache_time', $json_obj->{ 'cache_time' } ) )
-		{
-			my $msg = "Error, cache time must be a number.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		if (
 			 &setRBLObjectRuleParam( $name, 'cache_time', $json_obj->{ 'cache_time' } ) )
 		{
@@ -297,12 +279,6 @@ sub set_rbl_rule
 	# local traffic
 	if ( exists $json_obj->{ 'local_traffic' } )
 	{
-		if ( !&getValidFormat( 'rbl_local_traffic', $json_obj->{ 'local_traffic' } ) )
-		{
-			my $msg = "Error, cache time must be a number.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		my $option = "no";
 		$option = "yes" if ( $json_obj->{ 'local_traffic' } eq 'true' );
 		if ( &setRBLObjectRuleParam( $name, 'local_traffic', $option ) )
@@ -403,10 +379,22 @@ sub add_rbl_domain
 
 	include 'Zevenet::IPDS::RBL::Config';
 
-	my $desc           = "Add the domain '$json_obj->{ 'domain' }'";
-	my $domain         = $json_obj->{ 'domain' };
-	my @requiredParams = ( "domain" );
+	my $desc   = "Add the domain '$json_obj->{ 'domain' }'";
+	my $domain = $json_obj->{ 'domain' };
 	my @optionalParams;
+
+	my $params = {
+				   "domain" => {
+								 'valid_format' => 'rbl_domain',
+								 'non_blank'    => 'true',
+								 'required'     => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( grep ( /^$domain$/, @{ &getRBLUserDomains() } ) )
 	{
@@ -417,19 +405,6 @@ sub add_rbl_domain
 	if ( grep ( /^$domain$/, @{ &getRBLPreloadedDomains() } ) )
 	{
 		my $msg = "$domain already exists.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	my $param_msg =
-	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
-
-	if ( !&getValidFormat( 'rbl_domain', $domain ) )
-	{
-		my $msg = "Error, the RBL domain format is not valid.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -457,7 +432,6 @@ sub set_rbl_domain
 	include 'Zevenet::IPDS::RBL::Config';
 
 	my $desc             = "Replace the domain $domain_id";
-	my @allowParams      = ( "domain" );
 	my $new_domain       = $json_obj->{ 'domain' };
 	my @user_domain_list = @{ &getRBLUserDomains() };
 
@@ -469,21 +443,22 @@ sub set_rbl_domain
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $params = {
+				   "domain" => {
+								 'valid_format' => 'rbl_domain',
+								 'non_blank'    => 'true',
+								 'required'     => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	if ( grep ( /^$new_domain$/, @{ &getRBLDomains() } ) )
 	{
 		my $msg = "$new_domain already exists.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
-
-	if ( !&getValidFormat( 'rbl_domain', $new_domain ) )
-	{
-		my $msg = "Error, Wrong domain format.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -589,26 +564,24 @@ sub add_domain_to_rbl
 
 	my $desc   = "Add the domain '$json_obj->{ 'domain' }' to the RBL rule $name";
 	my $domain = $json_obj->{ 'domain' };
-	my @requiredParams = ( "domain" );
-	my @optionalParams;
+
+	my $params = {
+				   "domain" => {
+								 'valid_format' => 'rbl_domain',
+								 'non_blank'    => 'true',
+								 'required'     => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	if ( !&getValidFormat( 'rbl_domain', $domain ) )
-	{
-		my $msg = "The domain has not a correct format.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	my $param_msg =
-	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( grep ( /^$domain$/, @{ &getRBLObjectRuleParam( $name, 'domains' ) } ) )
@@ -708,11 +681,18 @@ sub add_rbl_to_farm
 	my $desc = "Apply the RBL rule $json_obj->{ 'name' } to the farm $farmName";
 	my $name = $json_obj->{ 'name' };
 
-	my $param_msg = &getValidReqParams( $json_obj, ["name"] );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	my $params = {
+				   "name" => {
+							   'valid_format' => 'rbl_name',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	require Zevenet::Farm::Core;
 	if ( !&getFarmExists( $farmName ) )
@@ -736,7 +716,8 @@ sub add_rbl_to_farm
 	# for start a RBL rule it is necessary that the rule has almost one domain
 	elsif ( !@{ &getRBLObjectRuleParam( $name, 'domains' ) } )
 	{
-		my $msg = "RBL rule, $name, was not started because doesn't have any domain.";
+		my $msg =
+		  "The RBL rule '$name' was not started because it has not got any domain.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -832,11 +813,18 @@ sub set_rbl_actions
 	my $desc   = "Apply a action to the RBL rule $name";
 	my $action = $json_obj->{ 'action' };
 
-	my $param_msg = &getValidReqParams( $json_obj, ["action"] );
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	my $params = {
+				   "action" => {
+								 'non_blank' => 'true',
+								 'values'    => ['stop', 'start'],
+								 'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( !&getRBLExists( $name ) )
 	{
@@ -844,16 +832,10 @@ sub set_rbl_actions
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( !&getValidFormat( 'rbl_actions', $json_obj->{ 'action' } ) )
-	{
-		my $msg = "Invalid action; the possible actions are stop, start and restart";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
 	# to start a RBL rule it is necessary that the rule has almost one domain
 	if ( !@{ &getRBLObjectRuleParam( $name, 'domains' ) } )
 	{
-		my $msg = "RBL rule, $name, was not started because doesn't have any domain.";
+		my $msg = "RBL rule '$name' was not started because it has not got any domain.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -864,7 +846,7 @@ sub set_rbl_actions
 	{
 		if ( !@{ &getRBLFarm( $name ) } )
 		{
-			$msg = "The rule has to be applied to some farm to start it.";
+			$msg = "The rule has to be applied to some farm to be started it.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 

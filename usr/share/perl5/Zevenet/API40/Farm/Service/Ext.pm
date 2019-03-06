@@ -44,10 +44,6 @@ sub modify_service_cookie_insertion
 		{
 			$ci->{ enabled } = 0;
 		}
-		else
-		{
-			return "Invalid cookieinsert value.";
-		}
 	}
 
 	if ( exists $json_obj->{ cookiename } )
@@ -67,11 +63,6 @@ sub modify_service_cookie_insertion
 
 	if ( exists $json_obj->{ cookiettl } )
 	{
-		unless ( $json_obj->{ cookiettl } =~ /^[0-9]+$/ )
-		{
-			return "Invalid cookiettl value, must be an integer number.";
-		}
-
 		$ci->{ ttl } = $json_obj->{ cookiettl };
 	}
 

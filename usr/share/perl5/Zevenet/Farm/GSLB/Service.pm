@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getGSLBFarmServices
@@ -37,9 +37,11 @@ Returns:
 	Array - list of service names or -1 on failure
 
 =cut
+
 sub getGSLBFarmServices    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
 	require Tie::File;
@@ -93,9 +95,11 @@ Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 
 =cut
+
 sub setGSLBFarmDeleteService    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $svice ) = @_;
 
 	my $output     = -1;
@@ -227,9 +231,11 @@ Bug:
 	Output is not well controlled
 
 =cut
+
 sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $svice, $alg ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Service';
@@ -382,9 +388,11 @@ FIXME:
 	return a hash with all parameters
 
 =cut
+
 sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $svice, $tag ) = @_;
 
 	require Tie::File;
@@ -530,9 +538,11 @@ Bug:
 	Always return 0, do error control
 
 =cut
+
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $svice, $tag, $stri ) = @_;
 
 	require Tie::File;
@@ -579,13 +589,13 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		my $actualPort;
 		my $srvConf;
 		my @srvCp;
-		my $firstIndNew = 0;
+		my $firstIndNew  = 0;
 		my $offsetIndNew = 0;
 		my $firstIndOld;
 		my $offsetIndOld;
 		my $newPortFlag;
-		my $found         = 0;
-		my $existFG       = 0;
+		my $found   = 0;
+		my $existFG = 0;
 		my $newTcp =
 		    "\ttcp_$stri => {\n"
 		  . "\t\tplugin = tcp_connect,\n"
@@ -801,7 +811,8 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 
 sub getGSLBFarmServicesStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::FarmGuardian;
@@ -839,7 +850,8 @@ sub getGSLBFarmServicesStruct
 
 sub getGSLBFarmServicesStruct31
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	require Zevenet::FarmGuardian;
@@ -852,7 +864,8 @@ sub getGSLBFarmServicesStruct31
 		delete $srv->{ farmguardian };
 
 		# Farmguardian
-		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv->{ id } );
+		my ( $fgTime, $fgScrip ) =
+		  &getGSLBFarmGuardianParams( $farmname, $srv->{ id } );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv->{ id } );
 
 		$srv->{ fgenabled }   = $fgStatus;
@@ -861,6 +874,35 @@ sub getGSLBFarmServicesStruct31
 	}
 
 	return \@services;
+}
+
+sub setGSLBFarmPort
+{
+	my $defport = shift;
+	my $error   = 0;
+
+	include 'Zevenet::Farm::GSLB::FarmGuardian';
+	include 'Zevenet::Farm::GSLB::Config';
+
+	my $old_deftcpport = &getGSLBFarmVS( $farmname, $service, 'dpc' );
+	&setFarmVS( $farmname, $service, "dpc", $defport );
+
+	# Update farmguardian
+	my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
+
+	# Changing farm guardian port check
+	if ( $fgScript =~ s/-p $old_deftcpport/-p$defport/ )
+	{
+		$error = &setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $fgScript );
+	}
+
+	# check if setting FG params failed
+	if ( !$error )
+	{
+		&runGSLBFarmReload( $farmname );
+	}
+
+	return $error;
 }
 
 1;

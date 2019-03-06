@@ -47,13 +47,41 @@ sub new_farm    # ( $json_obj )
 	my $error = "false";
 	my $desc  = "Creating farm '$json_obj->{ farmname }'";
 
-	# validate FARM NAME
-	unless (    $json_obj->{ farmname }
-			 && &getValidFormat( 'farm_name', $json_obj->{ farmname } ) )
+	my $params = {
+		"profile" => {
+					   'required'  => 'true',
+					   'non_blank' => 'true',
+					   'values'    => ['HTTP', 'GSLB', 'L4XNAT', 'DATALINK'],
+		},
+		"farmname" => {
+			'required'     => 'true',
+			'non_blank'    => 'true',
+			'valid_format' => 'farm_name',
+			'format_msg' =>
+			  "The farm name is required to have alphabet letters, numbers or hypens (-) only.",
+		},
+		"vip" => {
+				   'valid_format' => 'ip_addr',
+				   'non_blank'    => 'true',
+				   'required'     => 'true',
+		},
+	};
+
+	if ( $json_obj->{ profile } ne 'DATALINK' )
 	{
-		my $msg =
-		  "The farm name is required to have alphabet letters, numbers or hypens (-) only.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		$params->{ "port" } => {
+								 'valid_format' => 'port',
+								 'format_msg'   => 'expects a port',
+								 'non_blank'    => 'true',
+								 'required'     => 'true',
+		};
+		if ( $json_obj->{ profile } eq 'L4XNAT' )
+		{
+			delete $params->{ "port" }->{ 'valid_format' };
+			$params->{ "port" }->{ 'function' } = \&isValidPortNumber;
+			$params->{ "port" }->{ 'format_msg' } =
+			  'expects a port, a range of ports or "*"';
+		}
 	}
 
 	# check if FARM NAME already exists
@@ -63,12 +91,10 @@ sub new_farm    # ( $json_obj )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# Farm PROFILE validation
-	if ( $json_obj->{ profile } !~ /^(:?HTTP|GSLB|L4XNAT|DATALINK)$/i )
-	{
-		my $msg = "The farm's profile is not supported.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# VIP validation
 	if ( $json_obj->{ profile } =~ /^DATALINK$/i )
@@ -116,11 +142,6 @@ sub new_farm    # ( $json_obj )
 
 	if ( $status == -1 )
 	{
-		&zenlog(
-			 "Error trying to create a new farm $json_obj->{ farmname }, can't be created.",
-			 "error", "FARMS"
-		);
-
 		my $msg = "The $json_obj->{ farmname } farm can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -129,27 +150,8 @@ sub new_farm    # ( $json_obj )
 			 "Success, the farm $json_obj->{ farmname } has been created successfully.",
 			 "info", "FARMS" );
 
-	my $out_p;
-
-	if ( $json_obj->{ profile } =~ /^DATALINK$/i )
-	{
-		$out_p = {
-				   farmname  => $json_obj->{ farmname },
-				   profile   => $json_obj->{ profile },
-				   vip       => $json_obj->{ vip },
-				   interface => $json_obj->{ interface },
-		};
-	}
-	else
-	{
-		$out_p = {
-				   farmname  => $json_obj->{ farmname },
-				   profile   => $json_obj->{ profile },
-				   vip       => $json_obj->{ vip },
-				   vport     => $json_obj->{ vport },
-				   interface => $json_obj->{ interface },
-		};
-	}
+	my $out_p = $json_obj;
+	$out_p->{ interface } = $json_obj->{ interface };
 
 	my $body = {
 				 description => $desc,

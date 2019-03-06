@@ -73,15 +73,36 @@ sub add_blacklists_list
 	my $listName = $json_obj->{ 'name' };
 	my $listParams;
 
-	my @requiredParams = ( "name",   "type" );
-	my @optionalParams = ( "policy", "url" );
-	my $param_msg =
-	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+	my $params = {
+				   "name" => {
+							   'valid_format' => 'blacklists_name',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+				   },
+				   "type" => {
+							   'valid_format' => 'blacklists_type',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+				   },
+				   "policy" => {
+								 'valid_format' => 'blacklists_policy',
+								 'non_blank'    => 'true',
+				   },
+	};
 
-	if ( $param_msg )
+	if ( $json_obj->{ type } eq 'remote' )
 	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		$params->{ "url" } = {
+							   'valid_format' => 'blacklists_url',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+		};
 	}
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# A list already exists with this name
 	if ( &getBLExists( $listName ) )
@@ -97,36 +118,9 @@ sub add_blacklists_list
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# Check key format
-	foreach my $key ( keys %$json_obj )
-	{
-		if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
-		{
-			my $msg = "$key hasn't a correct format.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	if ( exists $json_obj->{ 'url' } )
-	{
-		if ( $json_obj->{ 'type' } ne 'remote' )
-		{
-			my $msg = "Url only is available in remote lists.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		$listParams->{ 'url' } = $json_obj->{ 'url' };
-	}
-	else
-	{
-		if ( $json_obj->{ 'type' } eq 'remote' )
-		{
-			my $msg = "It's necessary to add the url where is allocated the list.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	$listParams->{ 'type' }   = $json_obj->{ 'type' };
+	$listParams->{ 'type' } = $json_obj->{ 'type' };
+	$listParams->{ 'url' }  = $json_obj->{ 'url' }
+	  if ( exists $json_obj->{ 'url' } );
 	$listParams->{ 'policy' } = $json_obj->{ 'policy' }
 	  if ( exists $json_obj->{ 'policy' } );
 
@@ -521,6 +515,19 @@ sub actions_blacklists
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $params = {
+				   "action" => {
+								 'values'    => ['start', 'stop', 'update'],
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	# allow only available actions
 	if ( $json_obj->{ action } eq 'update' )
 	{
@@ -663,9 +670,7 @@ sub add_blacklists_source
 	my $json_obj = shift;
 	my $listName = shift;
 
-	my $desc           = "Add a source to the blacklist $listName.";
-	my @requiredParams = ( "source" );
-	my @optionalParams;
+	my $desc = "Add a source to the blacklist $listName.";
 
 	if ( !&getBLExists( $listName ) )
 	{
@@ -680,18 +685,18 @@ sub add_blacklists_source
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+	my $params = {
+				   "source" => {
+								 'valid_format' => 'blacklists_source',
+								 'non_blank'    => 'true',
+								 'required'     => 'true',
+				   },
+	};
 
-	if ( $msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
-	{
-		my $msg = "It's necessary to introduce a correct source.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if (
 		 grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
@@ -774,18 +779,18 @@ sub set_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+	my $params = {
+				   "source" => {
+								 'valid_format' => 'blacklists_source',
+								 'non_blank'    => 'true',
+								 'required'     => 'true',
+				   },
+	};
 
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
-
-	if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
-	{
-		my $msg = "Wrong source format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( &setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
 	{
@@ -867,14 +872,20 @@ sub add_blacklists_to_farm
 	require Zevenet::Farm::Core;
 	include 'Zevenet::IPDS::Blacklist::Runtime';
 
-	my $desc = "Apply the blacklist $json_obj->{ 'name' } to the farm $farmName";
+	my $desc     = "Apply a blacklist to the farm $farmName";
 	my $listName = $json_obj->{ 'name' };
-	my $param_msg = &getValidReqParams( $json_obj, ["name"] );
 
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	my $params = {
+				   "name" => {
+							   'non_blank' => 'true',
+							   'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( !&getFarmExists( $farmName ) )
 	{

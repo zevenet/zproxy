@@ -52,19 +52,21 @@ sub set_ssh
 	my $sshIp;
 	$sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
 
-	my @allowParams = ( "port", "listen" );
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+	my $params = {
+				   "listen" => {
+								 'non_blank'    => 'true',
+								 'valid_format' => 'ssh_listen',
+				   },
+				   "port" => {
+							   'valid_format' => 'port',
+							   'non_blank'    => 'true',
+				   },
+	};
 
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
-
-	if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
-	{
-		my $msg = "Port hasn't a correct format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# check if listen exists
 	if ( exists $json_obj->{ 'listen' } && $json_obj->{ 'listen' } ne '*' )

@@ -97,17 +97,18 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 	my $desc = "Modify floating interface";
 
-	if ( grep { $_ ne 'floating_ip' } keys %{ $json_obj } )
-	{
-		my $msg = "Parameter not recognized";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $params = {
+				   "floating_ip" => {
+									  'valid_format' => 'ip_addr',
+									  'non_blank'    => 'true',
+									  'required'     => 'true',
+				   },
+	};
 
-	unless ( keys %{ $json_obj } )
-	{
-		my $msg = "Need to use floating_ip parameter";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	my $if_ref = &getInterfaceConfig( $interface );
 
@@ -123,12 +124,6 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	{
 		# validate ADDRESS format
 		require Zevenet::Validate;
-		unless (    $json_obj->{ floating_ip }
-				 && &getValidFormat( 'ip_addr', $json_obj->{ floating_ip } ) )
-		{
-			my $msg = "Invalid floating address format";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
 		( $if_ref ) = grep {

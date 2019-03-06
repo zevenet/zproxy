@@ -385,6 +385,8 @@ sub getValidPort    # ( $ip, $port, $profile )
 =begin nd
 Function: getValidOptParams
 
+[DEPRECATED]: use checkZAPIParams
+
 	Check parameters when all params are optional
 
 	Before called:	getValidPutParams
@@ -434,6 +436,8 @@ sub getValidOptParams    # ( \%json_obj, \@allowParams )
 
 =begin nd
 Function: getValidReqParams
+
+[DEPRECATED]: use checkZAPIParams
 
 	Check parameters when there are required params
 

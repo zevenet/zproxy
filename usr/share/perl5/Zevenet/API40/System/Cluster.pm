@@ -62,7 +62,7 @@ sub get_cluster
 
 		my $cluster = {
 					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
+					failback       => $zcl_conf->{ _ }->{ primary } // $local_hn,
 					interface      => $zcl_conf->{ _ }->{ interface },
 					nodes          => [
 							  {
@@ -113,37 +113,31 @@ sub modify_cluster
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my @cl_opts = ( 'check_interval', 'failback' );
-
-	# validate CLUSTER parameters
-	if ( grep { !( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
-	{
-		my $msg = "Cluster parameter not recognized";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# do not allow request without parameters
-	unless ( scalar keys %$json_obj )
-	{
-		my $msg = "Cluster setting requires at least one parameter";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
 	my $zcl_conf        = &getZClusterConfig();
 	my $local_hostname  = &getHostname();
 	my $remote_hostname = &getZClusterRemoteHost();
 	my $changed_config;
 
+	my @failback_opts = ( 'disabled', $local_hostname, $remote_hostname );
+	my $params = {
+				   "check_interval" => {
+										 'non_blank'    => 'true',
+										 'valid_format' => 'natural_num',
+				   },
+				   "failback" => {
+								   'non_blank' => 'true',
+								   'values'    => \@failback_opts,
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	# validate CHECK_INTERVAL / DEADRATIO
 	if ( exists $json_obj->{ check_interval } )
 	{
-		unless (    $json_obj->{ check_interval }
-				 && &getValidFormat( 'natural_num', $json_obj->{ check_interval } ) )
-		{
-			my $msg = "Invalid check interval value";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		# change deadratio
 		if ( $zcl_conf->{ _ }->{ deadratio } != $json_obj->{ check_interval } )
 		{
@@ -158,14 +152,6 @@ sub modify_cluster
 		unless ( &getZClusterStatus() )
 		{
 			my $msg = "Setting a primary node Error configuring the cluster";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		my @failback_opts = ( 'disabled', $local_hostname, $remote_hostname );
-
-		unless ( @failback_opts ~~ /^$json_obj->{ failback }$/ )
-		{
-			my $msg = "Primary node value not recognized";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -211,10 +197,8 @@ sub modify_cluster
 			my $error_code = &enableZCluster();
 
 			&zenlog(
-					 &runRemotely(
-								   "$zcluster_manager enableZCluster",
-								   $zcl_conf->{ $rhost }->{ ip }
-					   )
+					 &runRemotely( "$zcluster_manager enableZCluster",
+								   $zcl_conf->{ $rhost }->{ ip } )
 					   . "",
 					 "info",
 					 "CLUSTER"
@@ -224,14 +208,19 @@ sub modify_cluster
 	if ( $@ )
 	{
 		my $msg = "Error configuring the cluster";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg,
-								   log_msg => $@ );
+		return
+		  &httpErrorResponse(
+							  code    => 400,
+							  desc    => $desc,
+							  msg     => $msg,
+							  log_msg => $@
+		  );
 	}
 
 	my $local_hn = &getHostname();
 	my $cluster = {
 				check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-				failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
+				failback       => $zcl_conf->{ _ }->{ primary } // $local_hn,
 	};
 
 	$cluster->{ check_interval } += 0;
@@ -252,130 +241,118 @@ sub set_cluster_actions
 
 	my $desc = "Setting cluster action";
 
-	# validate ACTION parameter
-	unless ( exists $json_obj->{ action } )
-	{
-		my $msg = "Action parameter required";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $params = {
+				   "action" => {
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+								 'values'    => ['maintenance'],
+				   },
+				   "status" => {
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+								 'values'    => ['enable', 'disable'],
+				   },
+	};
 
-	# do not allow requests without parameters
-	unless ( scalar keys %$json_obj )
-	{
-		my $msg = "Cluster actions requires at least the action parameter";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# ACTIONS: maintenance
-	if ( $json_obj->{ action } eq 'maintenance' )
+	my $desc = "Setting maintenance mode";
+
+	# make sure the cluster is enabled
+	unless ( &getZClusterStatus() )
 	{
-		my $desc = "Setting maintenance mode";
+		my $msg = "The cluster must be enabled";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-		# make sure the cluster is enabled
-		unless ( &getZClusterStatus() )
+	# Enable maintenance mode
+	if ( $json_obj->{ status } eq 'enable' )
+	{
+		# workaround for keepalived 1.2.13
+		if ( &getKeepalivedVersion() eq '1.2.13' )
 		{
-			my $msg = "The cluster must be enabled";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+			my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+			&logAndRun( "$zcluster_manager notify_fault" );
 
-		# validate parameters
-		my @cl_opts = ( 'action', 'status' );
-		unless ( grep { @cl_opts ~~ /^(?:$_)$/ } keys %$json_obj )
-		{
-			my $msg = "Unrecognized parameter received";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		# Enable maintenance mode
-		if ( $json_obj->{ status } eq 'enable' )
-		{
-			# workaround for keepalived 1.2.13
-			if ( &getKeepalivedVersion() eq '1.2.13' )
-			{
-				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-				&logAndRun( "$zcluster_manager notify_fault" );
-
-				my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
-				&logAndRun( $ka_cmd );
-			}
-			else
-			{
-				require Zevenet::Net::Interface;
-
-				# make sure the node is not already under maintenance
-				my $if_ref = getSystemInterface( $maint_if );
-
-				if ( $if_ref->{ status } eq 'down' )
-				{
-					my $msg = "The node is already under maintenance";
-					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-				}
-
-				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-				&logAndRun( "$ip_bin link set $maint_if down" );
-
-				# required for no failback configuration
-				if ( &getZClusterNodeStatus() eq 'backup' )
-				{
-					&setZClusterNodeStatus( 'maintenance' );
-				}
-			}
-		}
-
-		# Disable maintenance mode
-		elsif ( $json_obj->{ status } eq 'disable' )
-		{
-			# workaround for keepalived 1.2.13
-			if ( &getKeepalivedVersion() eq '1.2.13' )
-			{
-				&setZClusterNodeStatus( 'backup' );
-
-				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-				&logAndRun( "$zcluster_manager notify_backup" );
-
-				my $ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
-				&logAndRun( $ka_cmd );
-			}
-			else
-			{
-				require Zevenet::Net::Interface;
-
-				# make sure the node is under maintenance
-				my $if_ref = getSystemInterface( $maint_if );
-
-				if ( $if_ref->{ status } eq 'up' )
-				{
-					my $msg = "The node is not under maintenance";
-					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-				}
-
-				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-				&logAndRun( "$ip_bin link set $maint_if up" );
-
-				# required for no failback configuration
-				&setZClusterNodeStatus( 'backup' );
-			}
+			my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
+			&logAndRun( $ka_cmd );
 		}
 		else
 		{
-			my $msg = "Status parameter not recognized";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			require Zevenet::Net::Interface;
+
+			# make sure the node is not already under maintenance
+			my $if_ref = getSystemInterface( $maint_if );
+
+			if ( $if_ref->{ status } eq 'down' )
+			{
+				my $msg = "The node is already under maintenance";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+			&logAndRun( "$ip_bin link set $maint_if down" );
+
+			# required for no failback configuration
+			if ( &getZClusterNodeStatus() eq 'backup' )
+			{
+				&setZClusterNodeStatus( 'maintenance' );
+			}
 		}
+	}
 
-		my $message = "Cluster status changed to $json_obj->{status} successfully";
-		my $body = {
-					 description => $desc,
-					 success     => 'true',
-					 message     => $message,
-		};
+	# Disable maintenance mode
+	elsif ( $json_obj->{ status } eq 'disable' )
+	{
+		# workaround for keepalived 1.2.13
+		if ( &getKeepalivedVersion() eq '1.2.13' )
+		{
+			&setZClusterNodeStatus( 'backup' );
 
-		return &httpResponse( { code => 200, body => $body } );
+			my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+			&logAndRun( "$zcluster_manager notify_backup" );
+
+			my $ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
+			&logAndRun( $ka_cmd );
+		}
+		else
+		{
+			require Zevenet::Net::Interface;
+
+			# make sure the node is under maintenance
+			my $if_ref = getSystemInterface( $maint_if );
+
+			if ( $if_ref->{ status } eq 'up' )
+			{
+				my $msg = "The node is not under maintenance";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+			&logAndRun( "$ip_bin link set $maint_if up" );
+
+			# required for no failback configuration
+			&setZClusterNodeStatus( 'backup' );
+		}
 	}
 	else
 	{
-		my $msg = "Cluster action not recognized";
+		my $msg = "Status parameter not recognized";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	my $message = "Cluster status changed to $json_obj->{status} successfully";
+	my $body = {
+				 description => $desc,
+				 success     => 'true',
+				 message     => $message,
+	};
+
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub disable_cluster
@@ -453,13 +430,8 @@ sub disable_cluster
 					  $conntrackd_conf )    # FIXME: Global variables
 	{
 		&zenlog(
-				 &runRemotely(
-							   "rm $cl_file >/dev/null 2>&1",
-							   $zcl_conf->{ $rhost }->{ ip }
-				 ),
-				 "info",
-				 "CLUSTER"
-		);
+			   &runRemotely( "rm $cl_file >/dev/null 2>&1", $zcl_conf->{ $rhost }->{ ip } ),
+			   "info", "CLUSTER" );
 		unlink $cl_file;
 	}
 
@@ -481,20 +453,27 @@ sub enable_cluster
 
 	my $desc = "Enabling cluster";
 
-	# do not allow requests without parameters
-	unless ( scalar keys %$json_obj )
-	{
-		my $msg = "Cluster actions requires at least the action parameter";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $params = {
+				   "local_ip" => {
+								   'valid_format' => 'IPv4_addr',
+								   'non_blank'    => 'true',
+								   'required'     => 'true',
+				   },
+				   "remote_ip" => {
+									'valid_format' => 'IPv4_addr',
+									'non_blank'    => 'true',
+									'required'     => 'true',
+				   },
+				   "remote_password" => {
+										  'non_blank' => 'true',
+										  'required'  => 'true',
+				   },
+	};
 
-	# validate parameters
-	my @cl_opts = ( 'local_ip', 'remote_ip', 'remote_password' );
-	if ( grep { !( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
-	{
-		my $msg = "Unrecognized parameter received";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# the cluster cannot be already enabled
 	if ( &getZClusterStatus() )
@@ -514,22 +493,6 @@ sub enable_cluster
 			 @cl_if_candidates )
 	{
 		my $msg = "Local IP address value is not valid";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# validate REMOTE IP format
-	unless (    $json_obj->{ remote_ip }
-			 && &getValidFormat( 'IPv4_addr', $json_obj->{ remote_ip } ) )
-	{
-		my $msg = "Remote IP address has invalid format";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# validate REMOTE PASSWORD
-	unless ( exists $json_obj->{ remote_password }
-			 && defined $json_obj->{ remote_password } )
-	{
-		my $msg = "A remote node password must be defined";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -621,8 +584,13 @@ sub enable_cluster
 	if ( $@ )
 	{
 		my $msg = "An error happened configuring the cluster.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg,
-								   log_msg => $@ );
+		return
+		  &httpErrorResponse(
+							  code    => 400,
+							  desc    => $desc,
+							  msg     => $msg,
+							  log_msg => $@
+		  );
 	}
 
 	my $message = "Cluster enabled successfully";
