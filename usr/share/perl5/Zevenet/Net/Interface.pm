@@ -111,11 +111,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	require Config::Tiny;
 	my $fileHandler = Config::Tiny->new();
 	$fileHandler = Config::Tiny->read( $config_filename ) if ( -f $config_filename );
-	&zenlog( ".-.-.-.-.-.-.- READING: $config_filename");
-	&zenlog("-----------------.-----------".Dumper $fileHandler);
 
 	return unless ( -f $config_filename );
-	#### TODO: IF DOWN WITH NO CONFIG?
 
 	require IO::Socket;
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
@@ -232,93 +229,6 @@ See Also:
 
 # returns 1 if it was successful
 # returns 0 if it wasn't successful
-sub setInterfaceConfigNoTiny    # $bool ($if_ref)
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $if_ref = shift;
-
-	if ( ref $if_ref ne 'HASH' )
-	{
-		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
-		return;
-	}
-	&zenlog( Dumper $if_ref );
-	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
-	  if &debug() > 2;
-	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
-
-	push @if_params, "mac"
-	  if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' );
-
-	my $if_line         = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
-	my $configdir       = &getGlobalConfiguration( 'configdir' );
-	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
-
-	&zenlog( "-----------------------------------" . Dumper $if_ref);
-
-	if ( $if_ref->{ addr } && !$if_ref->{ ip_v } )
-	{
-		require Zevenet::Net::Validate;
-		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
-	}
-
-	if ( !-f $config_filename )
-	{
-		open my $fh, '>', $config_filename;
-		print $fh "status=up\n";
-		close $fh;
-	}
-
-	# Example: eth0;10.0.0.5;255.255.255.0;up;10.0.0.1;
-	require Tie::File;
-
-	if ( tie my @file_lines, 'Tie::File', "$config_filename" )
-	{
-		require Zevenet::Net::Validate;
-		my $ip_line_found = 0;
-
-		for my $line ( @file_lines )
-		{
-			# skip commented and empty lines
-			if ( grep { /^(\s*#|$)/ } $line )
-			{
-				next;
-			}
-
-			my ( undef, $ip ) = split ';', $line;
-
-			#if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
-			if ( defined ( $ip ) && !$ip_line_found )
-			{
-				# replace line
-				$line          = $if_line;
-				$ip_line_found = 'true';
-			}
-			elsif ( $line =~ /^status=/ )
-			{
-				$line = "status=$$if_ref{status}";
-			}
-		}
-
-		if ( !$ip_line_found )
-		{
-			push ( @file_lines, $if_line );
-		}
-
-		untie @file_lines;
-	}
-	else
-	{
-		&zenlog( "$config_filename: $!", "info", "NETWORK" );
-
-		# returns zero on failure
-		return 0;
-	}
-
-	# returns a true value on success
-	return 1;
-}
 
 sub setInterfaceConfig    # $bool ($if_ref)
 {
@@ -332,7 +242,6 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
 		return;
 	}
-	&zenlog( Dumper $if_ref );
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
 	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac' );
@@ -550,7 +459,7 @@ sub getParentInterfaceName    # ($if_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $if_name = shift;
-	&zenlog("********************************* IFNAME: $if_name");
+
 	my $if_ref = &getDevVlanVini( $if_name );
 	my $parent_if_name;
 

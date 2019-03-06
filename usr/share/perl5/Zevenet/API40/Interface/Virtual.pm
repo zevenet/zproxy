@@ -169,7 +169,6 @@ sub new_vini    # ( $json_obj )
 
 	if ( $@ )
 	{
-		&zenlog("-----------------------VALUE: $@");
 		my $msg = "The $json_obj->{ name } virtual network interface can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -507,10 +506,8 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	}
 
 	require Zevenet::Net::Validate;
-	&zenlog("----------------PARENT". Dumper $if_ref->{parent});
 	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent } );
-	&zenlog("----------------IF_REF_PARENT". Dumper $if_ref_parent);
-	&zenlog("----------------IF_REF". Dumper $if_ref);
+
 	unless (
 			 &getNetValidate(
 							  $if_ref_parent->{ addr },
@@ -545,7 +542,6 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		if ( $state eq 'up' )
 		{
 			require Zevenet::Net::Route;
-			&zenlog("-----AQUI----------------".Dumper $if_ref);
 			die if &addIp( $if_ref );
 			&upIf( $if_ref );
 			&applyRoutes( "local", $if_ref );
@@ -565,7 +561,6 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 
 	if ( $@ )
 	{
-		&zenlog("---------------------------------$@");
 		my $msg = "Errors found trying to modify interface $virtual";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

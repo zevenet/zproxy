@@ -142,7 +142,6 @@ sub upIf    # ($if_ref, $writeconf)
 	return $status;
 }
 
-
 =begin nd
 Function: downIf
 
@@ -322,39 +321,22 @@ sub delIf    # ($if_ref)
 	my ( $if_ref ) = @_;
 
 	my $status;
+	my $has_more_ips;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $file      = "$configdir/if_$$if_ref{name}\_conf";
-	my $has_more_ips;
 
-	# remove stack line
-	open ( my $in_fh,  '<', "$file" );
-	open ( my $out_fh, '>', "$file.new" );
-
-	if ( $in_fh && $out_fh )
+	require Config::Tiny;
+	my $fileHandler = Config::Tiny->new();
+	if ( -f $file )
 	{
-		while ( my $line = <$in_fh> )
-		{
-			if ( $line !~ /$$if_ref{addr}/ )
-			{
-				print $out_fh $line;
-				$has_more_ips++ if $line =~ /;/;
-			}
-		}
-
-		close $in_fh;
-		close $out_fh;
-
-		rename "$file.new", "$file";
-
-		if ( !$has_more_ips )
-		{
-			# remove file only if not a nic interface
-			# nics need to store status even if not configured, for vlans
-			if ( $$if_ref{ name } ne $$if_ref{ dev } )
-			{
-				unlink ( $file ) or return 1;
-			}
-		}
+		$fileHandler = Config::Tiny->read( $file );
+		$fileHandler->{ $if_ref->{ name } } =
+		  { status => $fileHandler->{ $if_ref->{ name } }->{ status } };
+		$fileHandler->write( "$file" );
+ 		if ( $$if_ref{ name } ne $$if_ref{ dev } )
+    {
+	    unlink ( $file ) or return 1;
+    }
 	}
 	else
 	{
@@ -368,7 +350,7 @@ sub delIf    # ($if_ref)
 	}
 
 	# If $if is Vini do nothing
-	if ( $$if_ref{ vini } eq '' )
+	if ( $$if_ref{ vini } eq '' && $if_ref->{ status } eq "up" )
 	{
 		# If $if is a Interface, delete that IP
 		my $ip_cmd =
@@ -538,7 +520,7 @@ sub addIp    # ($if_ref)
 	}
 
 	my $status = &logAndRun( $ip_cmd );
-	&zenlog("----------------------$status ----------------------- $ip_cmd");
+
 	return $status;
 }
 
