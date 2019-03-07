@@ -135,8 +135,7 @@ sub set_notif_alert
 
 	my $params = {
 				   "prefix" => {
-								 'values'    => ['enable', 'disable'],
-								 'non_blank' => 'true',
+								 'regex' => '[\w-]+',
 				   },
 	};
 
@@ -153,13 +152,13 @@ sub set_notif_alert
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $params;
-	$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
+	my $args;
+	$args->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
 	  if ( exists $json_obj->{ 'prefix' } );
-	$params->{ 'SwitchTime' } = $json_obj->{ 'avoidflappingtime' }
+	$args->{ 'SwitchTime' } = $json_obj->{ 'avoidflappingtime' }
 	  if ( $json_obj->{ 'avoidflappingtime' } );
 
-	my $error = &setNotifAlerts( $alert, $params );
+	my $error = &setNotifAlerts( $alert, $args );
 	if ( $error )
 	{
 		my $msg = "There was a error modifiying $alert.";

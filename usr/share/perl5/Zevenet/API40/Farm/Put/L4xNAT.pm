@@ -85,8 +85,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 							 'non_blank'    => 'true',
 		  },
 		  "vport" => {
-					   'valid_format' => \&isValidPortNumber,
-					   'non_blank'    => 'true',
+					   'non_blank' => 'true',
 		  },
 		  "vip" => {
 					 'function'   => \&getIpAddressExists,

@@ -51,7 +51,7 @@ sub new_farm    # ( $json_obj )
 		"profile" => {
 					   'required'  => 'true',
 					   'non_blank' => 'true',
-					   'values'    => ['HTTP', 'GSLB', 'L4XNAT', 'DATALINK'],
+					   'values'    => ['http', 'gslb', 'l4xnat', 'datalink'],
 		},
 		"farmname" => {
 			'required'     => 'true',
@@ -67,21 +67,15 @@ sub new_farm    # ( $json_obj )
 		},
 	};
 
-	if ( $json_obj->{ profile } ne 'DATALINK' )
+	if ( $json_obj->{ profile } ne 'datalink' )
 	{
-		$params->{ "port" } => {
-								 'valid_format' => 'port',
-								 'format_msg'   => 'expects a port',
-								 'non_blank'    => 'true',
-								 'required'     => 'true',
+		$params->{ "vport" } = {
+
+			# the format is checked before
+			'format_msg' => 'expects a port',
+			'non_blank'  => 'true',
+			'required'   => 'true',
 		};
-		if ( $json_obj->{ profile } eq 'L4XNAT' )
-		{
-			delete $params->{ "port" }->{ 'valid_format' };
-			$params->{ "port" }->{ 'function' } = \&isValidPortNumber;
-			$params->{ "port" }->{ 'format_msg' } =
-			  'expects a port, a range of ports or "*"';
-		}
 	}
 
 	# check if FARM NAME already exists

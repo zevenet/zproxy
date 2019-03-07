@@ -79,8 +79,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	if ( $type eq 'l4xnat' )
 	{
 		$params->{ "port" } = {
-								'function'   => \&isValidPortNumber,
-								'format_msg' => 'expects a port or port range'
+								'valid_format' => 'port',
+								'format_msg'   => 'expects a port or port range'
 		};
 		$params->{ "max_conns" } = {
 									 'valid_format' => 'natural_num',
@@ -192,10 +192,10 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 							 'required'     => 'true',
 				   },
 				   "port" => {
-							   'function'   => 'port',
-							   'format_msg' => 'expects a port',
-							   'non_blank'  => 'true',
-							   'required'   => 'true',
+							   'valid_format' => 'port',
+							   'format_msg'   => 'expects a port',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
 				   },
 	};
 
@@ -256,12 +256,15 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
-	my $status = &setHTTPFarmServer( "",
+	my $status = &setHTTPFarmServer(
+									 "",
 									 $json_obj->{ ip },
 									 $json_obj->{ port },
 									 $json_obj->{ weight },
 									 $json_obj->{ timeout },
-									 $farmname, $service, );
+									 $farmname,
+									 $service,
+	);
 
 	# check if there was an error adding a new backend
 	if ( $status == -1 )

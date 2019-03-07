@@ -93,10 +93,10 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 							 'non_blank'    => 'true',
 							 'required'     => 'true',
 				   },
-				   "id" => {
-							 'values'    => ['roundrobin', 'prio'],
-							 'non_blank' => 'true',
-							 'required'  => 'true',
+				   "algorithm" => {
+									'values'    => ['roundrobin', 'prio'],
+									'non_blank' => 'true',
+									'required'  => 'true',
 				   },
 	};
 
@@ -169,7 +169,7 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 	# change to number format
 	$json_obj->{ deftcpport } += 0;
 
-	my $error = &setGSLBFarmPort( $json_obj->{ deftcpport } );
+	my $error = &setGSLBFarmPort( $farmname, $service, $json_obj->{ deftcpport } );
 
 	# check if setting FG params failed
 	if ( $error )
@@ -314,14 +314,6 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 
 	# get requested backend info
 	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
-	my $be = $be_aref->[$id_server - 1];
-
-	# check if the BACKEND exists
-	if ( !$be )
-	{
-		my $msg = "Could not find a service backend with such id.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
 
 	my $params = {
 				   "ip" => {

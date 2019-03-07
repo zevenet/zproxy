@@ -878,8 +878,8 @@ sub getGSLBFarmServicesStruct31
 
 sub setGSLBFarmPort
 {
-	my $defport = shift;
-	my $error   = 0;
+	my ( $farmname, $service, $defport ) = @_;
+	my $error = 0;
 
 	include 'Zevenet::Farm::GSLB::FarmGuardian';
 	include 'Zevenet::Farm::GSLB::Config';

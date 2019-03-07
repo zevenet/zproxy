@@ -734,7 +734,7 @@ sub add_blacklists_source
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	# no error found, send successful response
-	$msg = "Added $json_obj->{'source'} successful.";
+	my $msg = "Added $json_obj->{'source'} successful.";
 	my $body = {
 				 description => $desc,
 				 params      => \@ipList,

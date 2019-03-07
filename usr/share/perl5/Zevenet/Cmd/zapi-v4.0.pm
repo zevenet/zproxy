@@ -97,7 +97,8 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 }
 
 # log parameters passed
-if ( $ENV{ CONTENT_TYPE } eq 'application/json' )
+if ( exists $ENV{ CONTENT_TYPE }
+	 and ( $ENV{ CONTENT_TYPE } eq 'application/json' ) )
 {
 	my $json_data = $q->param( 'POSTDATA' ) || $q->param( 'PUTDATA' );
 

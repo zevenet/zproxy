@@ -350,7 +350,7 @@ sub validBackendStack
 	foreach my $be ( @{ $be_aref } )
 	{
 		my $current_stack = &ipversion( $be->{ ip } );
-		$ipv_mismatch = $current_stack ne $service_stack;
+		$ipv_mismatch = $current_stack ne $ip_stack;
 		last if $ipv_mismatch;
 	}
 
