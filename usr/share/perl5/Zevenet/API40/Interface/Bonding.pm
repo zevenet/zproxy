@@ -43,8 +43,29 @@ sub new_bond    # ( $json_obj )
 
 	my $desc = "Add a bond interface";
 
-	# validate BOND NAME
-	my $bond_re = &getValidFormat( 'bond_interface' );
+	my $params = {
+			 "name" => {
+						 'valid_format' => 'bond_interface',
+						 'required'     => 'true',
+						 'non_blank'    => 'true',
+			 },
+			 "slaves" => {
+						   'required' => 'true',
+			 },
+			 "mode" => {
+					 'values' => [
+								  'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+								  '802.3ad',    'balance-tlb',   'balance-alb'
+					 ],
+					 'required'  => 'true',
+					 'non_blank' => 'true',
+			 },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# size < 16: size = bonding_name.vlan_name:virtual_name
 	if ( length $json_obj->{ name } > 11 )
@@ -53,18 +74,9 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	unless (    $json_obj->{ name } =~ /^$bond_re$/
-			 && &ifexist( $json_obj->{ name } ) eq 'false' )
+	unless ( &ifexist( $json_obj->{ name } ) eq 'false' )
 	{
 		my $msg = "Interface name is not valid";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# validate BOND MODE
-	unless (    $json_obj->{ mode }
-			 && &getValidFormat( 'bond_mode_short', $json_obj->{ mode } ) )
-	{
-		my $msg = "Bond mode is not valid";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -153,6 +165,19 @@ sub new_bond_slave    # ( $json_obj, $bond )
 		my $msg = "Bond interface name not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	my $params = {
+				   "name" => {
+							   'valid_format' => 'nic_interface',
+							   'required'     => 'true',
+							   'non_blank'    => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( &getInterfaceConfig( $json_obj->{ name } )
 		 && ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
@@ -465,16 +490,23 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	my $desc = "Action on bond interface";
 	my $ip_v = 4;
 
+	my $params = {
+				   "action" => {
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+								 'values'    => ['destroy', 'up', 'down'],
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	unless ( grep { $bond eq $_->{ name } } &getInterfaceTypeList( 'bond' ) )
 	{
 		my $msg = "Bond interface not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	if ( grep { $_ ne 'action' } keys %$json_obj )
-	{
-		my $msg = "Only the parameter 'action' is accepted";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate action parameter
@@ -525,11 +557,6 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	else
-	{
-		my $msg = "Action accepted values are: up, down or destroy";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
 
 	my $body = {
 				 description => $desc,
@@ -563,62 +590,34 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( grep { !/^(?:ip|netmask|gateway|force)$/ } keys %$json_obj )
-	{
-		my $msg = "Parameter not recognized";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $params = {
+				   "ip" => {
+							 'valid_format' => 'ip_addr',
+				   },
+				   "netmask" => {
+								  'valid_format' => 'ip_mask',
+				   },
+				   "gateway" => {
+								  'valid_format' => 'ip_addr',
+				   },
+				   "force" => {
+								'non_blank' => 'true',
+								'values'    => ['true'],
+				   },
+	};
 
-	unless (    exists $json_obj->{ ip }
-			 || exists $json_obj->{ netmask }
-			 || exists $json_obj->{ gateway } )
-	{
-		my $msg = "No parameter received to be configured";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# Check address errors
 	if ( exists $json_obj->{ ip } )
 	{
-		my $defined_ip = defined $json_obj->{ ip } && $json_obj->{ ip } ne '';
-		my $ip_ver = &ipversion( $json_obj->{ ip } );
-
-		unless ( !$defined_ip || $ip_ver )
-		{
-			my $msg = "Invalid IP address.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		if ( $json_obj->{ ip } eq '' )
 		{
 			$json_obj->{ netmask } = '';
 			$json_obj->{ gateway } = '';
-		}
-	}
-
-	# Check netmask errors
-	if ( exists $json_obj->{ netmask } )
-	{
-		my $defined_mask =
-		  defined $json_obj->{ netmask } && $json_obj->{ netmask } ne '';
-
-		unless (   !$defined_mask
-				 || &getValidFormat( 'ip_mask', $json_obj->{ netmask } ) )
-		{
-			my $msg = "Invalid network mask.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# Check gateway errors
-	if ( exists $json_obj->{ gateway } )
-	{
-		my $defined_gw = defined $json_obj->{ gateway } && $json_obj->{ gateway } ne '';
-
-		unless ( !$defined_gw || &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
-		{
-			my $msg = "Invalid gateway address.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
