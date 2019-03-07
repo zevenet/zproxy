@@ -556,6 +556,30 @@ sub checkZAPIParams
 	my $json_obj  = shift;
 	my $param_obj = shift;
 
+	# Returns the input expected
+	if ( exists $json_obj->{ 'help' } and ( $json_obj->{ 'help' } eq 'true' ) )
+	{
+	# returns regexp
+	# foreach my $p (keys %{$param_obj})
+	# {
+	# 	if (exists $param_obj->{$p}->{valid_format})
+	# 	{
+	# 		$param_obj->{$p}->{regex} = &getValidFormat( $param_obj->{$p}->{valid_format} );
+	# 		delete $param_obj->{$p}->{valid_format};
+	# 	}
+	# }
+
+		require JSON::XS;
+		JSON::XS->import;
+
+		my $json           = JSON::XS->new->utf8->pretty( 1 );
+		my $json_canonical = 1;
+		$json->canonical( [$json_canonical] );
+
+		my $params_enc = $json->encode( $param_obj );
+		return "The accepted parameters are:\n\n" . $params_enc;
+	}
+
 	my @rec_keys      = keys %{ $json_obj };
 	my @expect_params = keys %{ $param_obj };
 
@@ -766,7 +790,7 @@ sub putArrayAsText
 		$msg =~ s/<bs>(.+)<\|>.+<\/bp>/$1/g;
 
 		# put list
-		$msg =~ s/<pl>/$array[0]/;
+		$msg =~ s/<pl>/'$array[0]'/;
 	}
 
 	# more than one element
@@ -784,11 +808,11 @@ sub putArrayAsText
 		$msg =~ s/<bs>.+<\|>(.+)<\/bp>/$1/g;
 
 		my $lastItem = pop @array;
-		my $list = join ( ', ', @array );
+		my $list = join ( "', '", @array );
 		$list .= " and $lastItem";
 
 		# put list
-		$msg =~ s/<pl>/$list/;
+		$msg =~ s/<pl>/'$list'/;
 	}
 
 	return $msg;
