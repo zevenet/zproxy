@@ -45,6 +45,7 @@ add_executable(${PROJECT_NAME}
         src/t_control_manager.h
         src/t_json.h
         src/t_ctlclient.h
+        src/t_compression.h
     )
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})

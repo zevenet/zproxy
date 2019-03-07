@@ -7,6 +7,7 @@
 #include "t_json.h"
 #include "t_observer.h"
 #include "t_timerfd.h"
+#include "t_compression.h"
 #include "tst_basictest.h"
 
 std::mutex Debug::log_lock;
