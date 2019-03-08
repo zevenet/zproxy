@@ -512,13 +512,13 @@ sub updateCRL
 	my $err        = 1;
 
 	# Download CRL
-	my $cmd = `$curl -f -k $crl_url -o $tmp_file --connect-timeout 2`;
+	my $cmd = "$curl -f -k $crl_url -o $tmp_file --connect-timeout 2";
 	&logAndRun( $cmd );
 
 	if ( -s $tmp_file > 0 )
 	{
 		move( $tmp_file, $crl_path );
-		&zenlog( "CRL Downloaded on $date_today", 'info', 'certifcate' );
+		&zenlog( "CRL downloaded on $date_today", 'info', 'certifcate' );
 		$err = 0;
 
 		# update date of the check if the CRL was downloaded

@@ -331,6 +331,8 @@ $syslog_service="/etc/init.d/rsyslog";
 $keepalived_conf="/etc/keepalived/keepalived.conf";
 # conntrackd configuration file
 $conntrackd_conf="/etc/conntrackd/conntrackd.conf";
+#Where is curl binary?
+$curl_bin="/usr/bin/curl";
 # cluster floating interfaces configuration file path
 $floatfile="$configdir/float.conf";#update
 # node_status file path
