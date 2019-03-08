@@ -555,188 +555,312 @@ sub checkZAPIParams
 			 "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $param_obj = shift;
+	my $err_msg;
 
-	# Returns the input expected
-	if ( exists $json_obj->{ 'help' } and ( $json_obj->{ 'help' } eq 'true' ) )
+	my @rec_keys = keys %{ $json_obj };
+
+	# Returns a help with the expected input parameters
+	if ( !@rec_keys )
 	{
-	# returns regexp
-	# foreach my $p (keys %{$param_obj})
-	# {
-	# 	if (exists $param_obj->{$p}->{valid_format})
-	# 	{
-	# 		$param_obj->{$p}->{regex} = &getValidFormat( $param_obj->{$p}->{valid_format} );
-	# 		delete $param_obj->{$p}->{valid_format};
-	# 	}
-	# }
-
-		require JSON::XS;
-		JSON::XS->import;
-
-		my $json           = JSON::XS->new->utf8->pretty( 1 );
-		my $json_canonical = 1;
-		$json->canonical( [$json_canonical] );
-
-		my $params_enc = $json->encode( $param_obj );
-		return "The accepted parameters are:\n\n" . $params_enc;
+		&httpResponseHelp( $param_obj );
 	}
-
-	my @rec_keys      = keys %{ $json_obj };
-	my @expect_params = keys %{ $param_obj };
-
-	# Almost 1 parameter
-	return "At least a parameters is expected." if ( !keys %{ $json_obj } );
 
 	# All required parameters must exist
-	my @miss_params;
+	my @expect_params = keys %{ $param_obj };
 
-	foreach my $param ( @expect_params )
-	{
-		next if ( !exists $param_obj->{ $param }->{ 'required' } );
-		if ( $param_obj->{ $param }->{ 'required' } eq 'true' )
-		{
-			push @miss_params, $param if ( !grep ( /^$param$/, keys %{ $json_obj } ) );
-		}
-	}
-	return
-	  &putArrayAsText( \@miss_params,
-				   "The required parameter<sp>s</sp> <pl> <bs>is<|>are</bp> missing." )
-	  if ( @miss_params );
+	$err_msg = &checkParamsRequired( \@rec_keys, \@expect_params, $param_obj );
+	return $err_msg if ( $err_msg );
 
 	# All sent parameters are correct
-	my @non_valid;
-	foreach my $param ( @rec_keys )
-	{
-		push @non_valid, "\"$param\"" if ( !grep ( /^$param$/, keys %{ $param_obj } ) );
-	}
-	return
-	  &putArrayAsText( \@non_valid,
-		"The parameter<sp>s</sp> <pl> <bs>is<|>are</bp> not correct for this call. Please, try with: \""
-		  . join ( '", "', @expect_params )
-		  . '"' )
-	  if ( @non_valid );
+	$err_msg = &checkParamsInvalid( \@rec_keys, \@expect_params );
+	return $err_msg if ( $err_msg );
 
 	# check for each parameter
 	foreach my $param ( @rec_keys )
 	{
+		my $custom_msg =
+		  ( exists $param_obj->{ $param }->{ format_msg } )
+		  ? "$param $param_obj->{ $param }->{ format_msg }"
+		  : "The parameter '$param' has not a valid value.";
+
 		if ( $json_obj->{ $param } eq '' or not defined $json_obj->{ $param } )
 		{
 			# if blank value is allowed
 			if ( $param_obj->{ $param }->{ 'non_blank' } eq 'true' )
 			{
-				return "The parameter $param can't be in blank.";
+				return "The parameter '$param' can't be in blank.";
 			}
 
-			# parameter validated
+			# parameter validated, pass to next one
 			next;
 		}
 
-		if ( exists $param_obj->{ $param }->{ 'values' } )
+		if (
+			( exists $param_obj->{ $param }->{ 'values' } )
+			and (
+				!grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } ) )
+		  )
 		{
 			return
-			  "The parameter \"$param\" expects once of the following values: \""
-			  . join ( '", "', @{ $param_obj->{ $param }->{ 'values' } } ) . '"'
-			  if (
-				  !grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } )
-			  );
+			  "The parameter '$param' expects once of the following values: '"
+			  . join ( "', '", @{ $param_obj->{ $param }->{ 'values' } } ) . "'";
 		}
 
 		# getValidFormat funcion:
-		if ( exists $param_obj->{ $param }->{ 'valid_format' } )
+		if (
+			 ( exists $param_obj->{ $param }->{ 'valid_format' } )
+			 and (
+				   !&getValidFormat(
+									 $param_obj->{ $param }->{ 'valid_format' },
+									 $json_obj->{ $param }
+				   )
+			 )
+		  )
 		{
-			if (
-				 !&getValidFormat(
-								   $param_obj->{ $param }->{ 'valid_format' },
-								   $json_obj->{ $param }
-				 )
-			  )
-			{
-				if ( exists $param_obj->{ $param }->{ format_msg } )
-				{
-					return "$param $param_obj->{ $param }->{ format_msg }";
-				}
-				else
-				{
-					return "The parameter '$param' has not a valid value.";
-				}
-			}
+			return $custom_msg;
 		}
 
-		if ( exists $param_obj->{ $param }->{ 'values' } )
+		if (
+			( exists $param_obj->{ $param }->{ 'values' } )
+			and (
+				!grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } ) )
+		  )
 		{
-			return "The parameter $param expects one of the following values: "
-			  . join ( ', ', @{ $param_obj->{ $param }->{ 'values' } } )
-			  if (
-				  !grep ( /^$json_obj->{ $param }$/, @{ $param_obj->{ $param }->{ 'values' } } )
-			  );
+			return "The parameter '$param' expects one of the following values: "
+			  . join ( "', '", @{ $param_obj->{ $param }->{ 'values' } } );
 		}
 
 		# intervals
 		if ( exists $param_obj->{ $param }->{ 'interval' } )
 		{
-			if ( $param_obj->{ $param }->{ 'interval' } =~ /,/ )
-			{
-				my ( $low_limit, $high_limit ) =
-				  split ( ',', $param_obj->{ $param }->{ 'interval' } );
-				my $low_str =
-				  ( $low_limit ) ? "$param has to be greater than or equal to $low_limit" : "";
-				my $high_str =
-				  ( $high_limit ) ? "$param has to be lower than or equal to $high_limit" : "";
-				my $msg = $low_str if $low_str;
-
-				if ( $high_str )
-				{
-					$msg .= ". " if $msg;
-					$msg .= $high_str;
-				}
-				return $msg
-				  if (    ( $json_obj->{ $param } !~ /^\d*$/ )
-					   || ( $json_obj->{ $param } > $high_limit )
-					   || ( $json_obj->{ $param } < $low_limit ) );
-			}
-			else
-			{
-				die "Expected a interval string, got: $param_obj->{ $param }->{ 'interval' }";
-			}
+			$err_msg = &checkParamsInterval( $param_obj->{ $param }->{ 'interval' },
+											 $param, $json_obj->{ $param } );
+			return $err_msg if $err_msg;
 		}
 
 		# exceptions
-		if ( exists $param_obj->{ $param }->{ 'exceptions' } )
+		if (
+			 ( exists $param_obj->{ $param }->{ 'exceptions' } )
+			 and (
+				   grep ( /^$json_obj->{ $param }$/,
+						  @{ $param_obj->{ $param }->{ 'exceptions' } } ) )
+		  )
 		{
 			return
-			  "The value $json_obj->{ $param } is a reserved word of the parameter $param."
-			  if (
-				   grep ( /^$json_obj->{ $param }$/,
-						  @{ $param_obj->{ $param }->{ 'exceptions' } } ) );
+			  "The value '$json_obj->{ $param }' is a reserved word of the parameter '$param'.";
 		}
 
-		# aditionals
-
 		# regex
-		if ( exists $param_obj->{ $param }->{ 'regex' } )
+		if (    ( exists $param_obj->{ $param }->{ 'regex' } )
+			and ( ( $json_obj->{ $param } !~ /$param_obj->{ $param }->{ 'regex' }/ ) ) )
 		{
-			return "The value $json_obj->{ $param } is not valid for the parameter $param."
-			  if ( $json_obj->{ $param } !~ /$param_obj->{ $param }->{ 'regex' }/ );
+			return
+			  "The value '$json_obj->{ $param }' is not valid for the parameter '$param'.";
 		}
 
 		if ( exists $param_obj->{ $param }->{ 'function' } )
 		{
 			my $result =
 			  &{ $param_obj->{ $param }->{ 'function' } }( $json_obj->{ $param } );
-			if ( !$result or $result eq 'false' )
-			{
-				if ( exists $param_obj->{ $param }->{ format_msg } )
-				{
-					return "$param $param_obj->{ $param }->{ format_msg }";
-				}
-				else
-				{
-					return "The parameter $param has not a valid value.";
-				}
-			}
+
+			return $custom_msg if ( !$result or $result eq 'false' );
 		}
 	}
 
 	return;
+}
+
+=begin nd
+Function: checkParamsInterval
+
+	Check parameters when there are required params
+
+Parameters:
+	Interval - String with the expected interval. The low and high limits must be splitted with a comma character ','
+	Parameter - Parameter name
+	Value - Parameter value
+
+Returns:
+	String - It returns a string with the error message or undef on success
+
+=cut
+
+sub checkParamsInterval
+{
+	my ( $interval, $param, $value ) = @_;
+	my $err_msg;
+
+	if ( $interval =~ /,/ )
+	{
+		my ( $low_limit, $high_limit ) = split ( ',', $interval );
+		my $low_str =
+		  ( $low_limit )
+		  ? "'$param' has to be greater than or equal to '$low_limit'"
+		  : "";
+		my $high_str =
+		  ( $high_limit )
+		  ? "'$param' has to be lower than or equal to '$high_limit'"
+		  : "";
+		my $msg = $low_str if $low_str;
+
+		if ( $high_str )
+		{
+			$msg .= ". " if $msg;
+			$msg .= $high_str;
+		}
+		$err_msg = $msg
+		  if (    ( $value !~ /^\d*$/ )
+			   || ( $value > $high_limit )
+			   || ( $value < $low_limit ) );
+	}
+	else
+	{
+		die "Expected a interval string, got: $interval";
+	}
+
+	return $err_msg;
+}
+
+=begin nd
+Function: checkParamsInvalid
+
+	Check if some of the sent parameters is invalid for the current API call
+
+Parameters:
+	Receive Parameters - It is the list of sent parameters in the API call
+	Expected parameters - It is the list of expected parameters for a API call
+
+Returns:
+	String - It returns a string with the error message or undef on success
+
+=cut
+
+sub checkParamsInvalid
+{
+	my ( $rec_keys, $expect_params ) = @_;
+	my $err_msg;
+	my @non_valid;
+
+	foreach my $param ( @{ $rec_keys } )
+	{
+		push @non_valid, "'$param'" if ( !grep ( /^$param$/, @{ $expect_params } ) );
+	}
+
+	if ( @non_valid )
+	{
+		&putArrayAsText( \@non_valid,
+			"The parameter<sp>s</sp> <pl> <bs>is<|>are</bp> not correct for this call. Please, try with: '"
+			  . join ( "', '", @{ $expect_params } )
+			  . "'" );
+	}
+
+	return $err_msg;
+}
+
+=begin nd
+Function: checkParamsRequired
+
+	Check if all the mandatory parameters has been sent in the current API call
+
+Parameters:
+	Receive Parameters - It is the list of sent parameters in the API call
+	Expected parameters - It is the list of expected parameters for a API call
+	Model - It is the struct with all allowed parameters and its possible values and options
+
+Returns:
+	String - It returns a string with the error message or undef on success
+
+=cut
+
+sub checkParamsRequired
+{
+	my ( $rec_keys, $expect_params, $param_obj ) = @_;
+	my @miss_params;
+	my $err_msg;
+
+	foreach my $param ( @{ $expect_params } )
+	{
+		next if ( !exists $param_obj->{ $param }->{ 'required' } );
+
+		if ( $param_obj->{ $param }->{ 'required' } eq 'true' )
+		{
+			push @miss_params, "'$param'"
+			  if ( !grep ( /^$param$/, @{ $rec_keys } ) );
+		}
+	}
+
+	if ( @miss_params )
+	{
+		$err_msg = &putArrayAsText( \@miss_params,
+					   "The required parameter<sp>s</sp> <pl> <bs>is<|>are</bp> missing." );
+	}
+	return $err_msg;
+}
+
+=begin nd
+Function: httpResponseHelp
+
+	This function sends a response to client with the expected input parameters model.
+
+	This function returns a 400 HTTP error code
+
+Parameters:
+	Model - It is the struct with all allowed parameters and its possible values and options
+
+Returns:
+	None - .
+
+=cut
+
+sub httpResponseHelp
+{
+	my $param_obj  = shift;
+	my $resp_param = [];
+
+	# build the output
+	foreach my $p ( keys %{ $param_obj } )
+	{
+		my $param->{ name } = $p;
+		if ( exists $param_obj->{ $p }->{ valid_format } )
+		{
+			$param->{ format } = $param_obj->{ $p }->{ valid_format };
+		}
+		if ( exists $param_obj->{ $p }->{ values } )
+		{
+			$param->{ possible_values } = $param_obj->{ $p }->{ values };
+		}
+		if ( exists $param_obj->{ $p }->{ interval } )
+		{
+			my ( $ll, $hl ) = split ( ',', $param_obj->{ $p }->{ values } );
+			$ll = '-' if ( !defined $ll );
+			$hl = '-' if ( !defined $hl );
+			$param->{ interval } = "Expects a value between '$ll' and '$hl'.";
+		}
+		unless ( exists $param_obj->{ $p }->{ non_blank }
+				 and $param_obj->{ $p }->{ non_blank } eq 'true' )
+		{
+			push @{ $param->{ options } }, "non_blank";
+		}
+		if ( exists $param_obj->{ $p }->{ required }
+			 and $param_obj->{ $p }->{ required } eq 'true' )
+		{
+			push @{ $param->{ options } }, "required";
+		}
+		if ( exists $param_obj->{ $p }->{ format_msg } )
+		{
+			$param->{ description } = $param_obj->{ $p }->{ format_msg };
+		}
+
+		push @{ $resp_param }, $param;
+	}
+
+	my $msg = "No parameter has been sent. Please, try with:";
+	my $body = {
+				 description => $msg,
+				 params      => $resp_param,
+	};
+
+	return &httpResponse( { code => 400, body => $body } );
 }
 
 =begin nd
@@ -790,7 +914,7 @@ sub putArrayAsText
 		$msg =~ s/<bs>(.+)<\|>.+<\/bp>/$1/g;
 
 		# put list
-		$msg =~ s/<pl>/'$array[0]'/;
+		$msg =~ s/<pl>/$array[0]/;
 	}
 
 	# more than one element
@@ -808,11 +932,11 @@ sub putArrayAsText
 		$msg =~ s/<bs>.+<\|>(.+)<\/bp>/$1/g;
 
 		my $lastItem = pop @array;
-		my $list = join ( "', '", @array );
+		my $list = join ( ", ", @array );
 		$list .= " and $lastItem";
 
 		# put list
-		$msg =~ s/<pl>/'$list'/;
+		$msg =~ s/<pl>/$list/;
 	}
 
 	return $msg;
