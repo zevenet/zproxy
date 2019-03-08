@@ -759,12 +759,10 @@ sub set_net()
 
 	if ( $mgmtifinput && $mgmtipinput && $mgmtmaskinput && $mgmtgwinput )
 	{
-		my $newif    = $mgmtifinput->get();
-		my $newip    = $mgmtipinput->get();
-		my $newmask  = $mgmtmaskinput->get();
-		my $newgw    = $mgmtgwinput->get();
-		my $newhttp  = $mgmthttpinput->get();
-		my $newhttps = $mgmthttpsinput->get();
+		my $newif   = $mgmtifinput->get();
+		my $newip   = $mgmtipinput->get();
+		my $newmask = $mgmtmaskinput->get();
+		my $newgw   = $mgmtgwinput->get();
 
 		if ( &ipisok( $newip ) eq "false" )
 		{
