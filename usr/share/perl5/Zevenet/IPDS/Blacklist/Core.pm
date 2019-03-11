@@ -76,7 +76,7 @@ sub getBLIpsetStatus
 	my $listName = shift;
 	my $output   = "down";
 
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::IPDS::Core';
 
 	$output = "up" if ( &getIPDSPolicyParam( 'name', $listName ) > 0 );
 
@@ -106,7 +106,7 @@ sub getBLListNoUsed
 	my $listName = shift;
 	my $matches  = 0;
 
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::IPDS::Core';
 
 	$matches = &getIPDSPolicyParam( 'farms', $listName );
 	$matches = 0 if ( $matches < 0 );
