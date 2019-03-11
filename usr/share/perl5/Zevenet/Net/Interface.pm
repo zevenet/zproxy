@@ -1712,7 +1712,7 @@ sub setVlan    # if_ref
 
 		if ( $status != 0 )
 		{
-			&delif( $if_ref );
+			&delIf( $if_ref );
 			return 1;
 		}
 
