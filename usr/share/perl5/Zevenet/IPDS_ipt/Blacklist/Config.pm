@@ -37,6 +37,8 @@ use Zevenet::Debug;
 
 include 'Zevenet::IPDS::Blacklist::Core';
 
+# $listParams = \ %paramsRef;
+# &setBLCreateList ( $listName, $paramsRef );
 sub setBLCreateList
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -105,6 +107,8 @@ sub setBLCreateList
 		&setBLParam( $listName, 'hour',      '00' );
 		&setBLParam( $listName, 'day',       'monday' );
 		&setBLParam( $listName, 'frequency', 'weekly' );
+
+		#~ &setBLDownloadRemoteList ( $listName );
 	}
 
 	# specific to local lists
@@ -441,6 +445,7 @@ sub setBLParam
 	return $output;
 }
 
+# &delBLParam ( $listName, $key )
 sub delBLParam
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -533,7 +538,18 @@ sub setBLAddSource
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$error = &setIPDSPolicyParam( 'element', $source, $listName );
+		# The list is full,  re-create it
+		if ( &getBLSourceNumber( $listName ) > &getBLMaxelem( $listName ) )
+		{
+			include 'Zevenet::IPDS::Blacklist::Actions';
+			&runBLStartByRule( $listName );
+		}
+
+		# Add a new source to the list
+		else
+		{
+			$error = &logAndRun( "$ipset add $listName $source" );
+		}
 	}
 
 	&zenlog( "$source was added to $listName", "info", "IPDS" ) if ( !$error );

@@ -22,150 +22,21 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 =begin nd
-Function: getIPDSChain
+Function: getIPDSfarmsRules
 
-	Return the name of a iptables chain where there are rules of a module.
+	Gather all the IPDS rules applied to a given farm
 
 Parameters:
-	Module - It is a IPDS module. The possible values are "blacklist", "whitelist", "dos" or "rbl"
+	farmName - farm name to get its IPDS rules
 
 Returns:
-	String - Name for the chain of a IPDS module
+	scalar - array reference of array references ('dos', 'blacklists', 'rbl', 'waf') hashes in the form of ('name', 'rule', 'type')
 
 =cut
 
-sub getIPDSChain
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $ipds_module = shift;
-	my %ipds_chains = (
-		'blacklist' => 'BLACKLIST',
-		'whitelist' => 'WHITELIST',
-		'rbl'       => 'RBL',
-
-		'dos' => 'DOS',    # DoS uses different chains of netfilter
-	);
-
-	return $ipds_chains{ $ipds_module };
-}
-
-=begin nd
-        Function: getIptListV4
-
-        Obtein IPv4 iptables rules for a couple table-chain
-
-        Parameters:
-				table -
-				chain -
-
-        Returns:
-				== 0	- don't find any rule
-             @out	- Array with rules
-
-=cut
-
-sub getIptListV4
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $table, $chain ) = @_;
-
-	require Zevenet::Lock;
-
-	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-
-	if ( $table ne '' )
-	{
-		$table = "--table $table";
-	}
-
-	my $iptables_command = &getGlobalConfiguration( 'iptables' )
-	  . " $table -L $chain -n -v --line-numbers 2>/dev/null";
-
-	## lock iptables use ##
-	my $ipt_lockfile = &openlock( $iptlock, 'w' );
-
-	my @ipt_output = `$iptables_command`;
-	&zenlog( "failed: $iptables_command", "error", "IPDS" ) if $?;
-
-	## unlock iptables use ##
-	close $ipt_lockfile;
-
-	return @ipt_output;
-}
-
-# LOGS
-# &setIPDSDropAndLog ( $cmd, $logMsg );
-sub setIPDSDropAndLog
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $cmd, $logMsg ) = @_;
-	my $output;
-
-	return 0 if ( &getIPDSRuleExists( "$cmd -j DROP" ) );
-
-	# Always LOG rule has to be above than DROP rule
-	if ( $cmd =~ / -I / )
-	{
-		$output = &iptSystem( "$cmd -j DROP" );
-		$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
-	}
-
-	# $cmd =~ / -A /
-	else
-	{
-		$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
-		$output = &iptSystem( "$cmd -j DROP" );
-	}
-
-	return $output;
-}
-
-# check if a rule exists. Return 1 if it exists or 0 if it is not
-sub getIPDSRuleExists
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $check_cmd = shift;
-	my $output    = 0;
-	$check_cmd =~ s/ \-[AI] / --check /;
-
-	$output = 1 if ( !&iptSystem( $check_cmd ) );
-
-	return $output;
-}
-
-#
-# &createLogMsg ( module, rule, farm );
-sub createLogMsg
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $module   = shift;
-	my $rule     = shift;
-	my $farmname = shift;
-
-	my $max_size = 29;
-
-	my $msg  = "[$module,$rule,$farmname]";
-	my $size = length $msg;
-	if ( $size > $max_size )
-	{
-		$farmname = substr ( $farmname, 0, 9 );
-		chop $farmname;
-		$farmname = "$farmname#";
-		$rule     = substr ( $rule, 0, 9 );
-		$msg      = "[$module,$rule,$farmname]";
-	}
-
-	return $msg;
-}
-
-# Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -246,7 +117,19 @@ sub getIPDSfarmsRules
 	return $rules;
 }
 
-# Get all IPDS rules
+=begin nd
+Function: getIPDSRules
+
+	Gather all the IPDS rules
+
+Parameters:
+	none
+
+Returns:
+	scalar - array reference of hashes in the form of ('name', 'rule', 'type')
+
+=cut
+
 sub getIPDSRules
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -300,6 +183,452 @@ sub getIPDSRules
 	}
 
 	return \@rules;
+}
+
+=begin nd
+Function: setIPDSFarmParam
+
+	Apply an IPDS parameter to a farm independently of the profile
+
+Parameters:
+	param - ipds parameter to set to the farm
+	value - value to set to the given parameter
+	farm - name of the farm to be applied the new value
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
+
+=cut
+
+sub setIPDSFarmParam
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $param = shift;
+	my $value = shift;
+	my $farm  = shift;
+
+	require Zevenet::Farm::Core;
+
+	my $output = 0;
+	my $type   = &getFarmType( $farm );
+	my $attrib = "";
+	my $delete = 0;
+
+	if ( $type eq "l4xnat" )
+	{
+		require Zevenet::Farm::L4xNAT::Config;
+		$output = &setL4FarmParam( $param, $value, $farm );
+	}
+	else
+	{
+		if ( $param eq 'sshbruteforce' )
+		{
+			return 0;
+		}
+		elsif ( $param eq 'dropicmp' )
+		{
+			return 0;
+		}
+		elsif ( $param eq 'limitconns' )
+		{
+			$attrib = qq(, "est-connlimit" : "$value" );
+			$delete = 1 if ( $value eq "0" );
+		}
+		elsif ( $param eq 'limitsec' )
+		{
+			$attrib = qq(, "new-rtlimit" : "$value" );
+		}
+		elsif ( $param eq 'limitsecbrst' )
+		{
+			$attrib = qq(, "new-rtlimit-burst" : "$value" );
+			$delete = 1 if ( $value eq "0" );
+		}
+		elsif ( $param eq 'limitrst' )
+		{
+			$attrib = qq(, "rst-rtlimit" : "$value" );
+		}
+		elsif ( $param eq 'limitrstbrst' )
+		{
+			$attrib = qq(, "rst-rtlimit-burst" : "$value" );
+			$delete = 1 if ( $value eq "0" );
+		}
+		elsif ( $param eq 'bogustcpflags' )
+		{
+			$attrib = qq(, "tcp-strict" : "$value" );
+			$delete = 1 if ( $value eq "off" );
+		}
+		elsif ( $param eq 'nfqueue' )
+		{
+			$attrib = qq(, "queue" : "$value" );
+			$delete = 1 if ( $value eq "-1" );
+		}
+		elsif ( $param eq 'policy' )
+		{
+			$attrib = qq(, "policies" : [ { "name" : "$value" } ] );
+		}
+		else
+		{
+			return -1;
+		}
+
+		my $vip  = &getFarmVip( 'vip',  $farm );
+		my $port = &getFarmVip( 'vipp', $farm );
+		my $proto = "tcp";
+		$proto = "udp" if ( &getFarmProto( $farm ) eq "UDP" );
+
+		require Zevenet::Nft;
+
+		$output = httpNlbRequest(
+			{
+			   farm   => $farm,
+			   method => "PUT",
+			   uri    => "/farms",
+			   body =>
+				 qq({"farms" : [ { "name" : "$farm", "virtual-addr" : "$vip", "virtual-ports" : "$port", "protocol" : "$proto", "mode" : "dnat"$attrib } ] })
+			}
+		);
+
+		if ( $delete == 1 )
+		{
+			# if there is no rule remaining, delete the service
+			my $rules = &getIPDSfarmsRules( $farm );
+			if (    !@{ $rules->{ 'dos' } }
+				 && !@{ $rules->{ 'blacklists' } }
+				 && !@{ $rules->{ 'rbl' } }
+				 && !@{ $rules->{ 'waf' } } )
+			{
+				$output = httpNlbRequest(
+										  {
+											farm   => $farm,
+											method => "DELETE",
+											uri    => "/farms/" . $farm,
+										  }
+				);
+			}
+		}
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: delIPDSFarmParam
+
+	Delete an IPDS object of a farm independently of the profile
+
+Parameters:
+	param - ipds parameter to set to the farm
+	value - value to set to the given parameter
+	farm - name of the farm to be applied the new value
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
+
+=cut
+
+sub delIPDSFarmParam
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $param = shift;
+	my $value = shift;
+	my $farm  = shift;
+
+	my $output = 0;
+	my $attrib = "";
+	my $type   = &getFarmType( $farm );
+
+	if ( $param eq "policy" )
+	{
+		$attrib = "/policies";
+		$attrib = $attrib . "/$value" if ( defined $value && $value ne "" );
+	}
+	else
+	{
+		return -1;
+	}
+
+	require Zevenet::Nft;
+
+	$output = httpNlbRequest(
+							  {
+								method => "DELETE",
+								uri    => "/farms/" . $farm . $attrib,
+							  }
+	);
+
+	if ( $type eq "l4xnat" )
+	{
+		require Zevenet::Farm::Core;
+		my $farm_filename = &getFarmFile( $farm );
+		my $configdir     = &getGlobalConfiguration( 'configdir' );
+
+		$output = httpNlbRequest(
+								  {
+									method => "GET",
+									uri    => "/farms/" . $farm,
+									file   => "$configdir/$farm_filename",
+								  }
+		);
+	}
+	else
+	{
+		# if there is no rule remaining, delete the service
+		my $rules = &getIPDSfarmsRules( $farm );
+		if (    !@{ $rules->{ 'dos' } }
+			 && !@{ $rules->{ 'blacklists' } }
+			 && !@{ $rules->{ 'rbl' } }
+			 && !@{ $rules->{ 'waf' } } )
+		{
+			$output = httpNlbRequest(
+									  {
+										farm   => $farm,
+										method => "DELETE",
+										uri    => "/farms/" . $farm,
+									  }
+			);
+		}
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: setIPDSPolicyParam
+
+	Apply an IPDS parameter to a policy
+
+Parameters:
+	param - ipds parameter to set to the list. Values are: name, type, element, elements
+	value - value to set to the given parameter
+	list - name of the policy to be applied the new value
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
+
+=cut
+
+sub setIPDSPolicyParam
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $param = shift;
+	my $value = shift;
+	my $list  = shift;
+
+	my $output = 0;
+	my $attrib = "";
+
+	if ( $param eq "name" )
+	{
+	}
+	elsif ( $param eq "element" )
+	{
+		$attrib = qq(, "elements" : [{ "data" : "$value" }]);
+	}
+	elsif (    $param eq "elements"
+			&& ref ( $value ) eq "ARRAY"
+			&& scalar ( @{ $value } ) > 0 )
+	{
+		my $first = 1;
+		$attrib = qq(, "elements" : [);
+
+		foreach my $item ( @{ $value } )
+		{
+			if ( !$first )
+			{
+				$attrib = qq($attrib, { "data" : "$item" });
+			}
+			else
+			{
+				$attrib = qq($attrib { "data" : "$item" });
+				$first--;
+			}
+		}
+		$attrib = qq($attrib ]);
+	}
+	elsif ( $param eq "type" )
+	{
+		$attrib = qq(, "type" : "$value" );
+	}
+	else
+	{
+		return -1;
+	}
+
+	require Zevenet::Nft;
+
+	my $file = "/tmp/ipds_$$";
+
+	open ( my $fh, '>', "$file" );
+	print $fh qq({"policies" : [ { "name" : "$list"$attrib } ] });
+	close $fh;
+
+	$output = httpNlbRequest(
+							  {
+								method => "PUT",
+								uri    => "/policies",
+								body   => "@" . "$file"
+							  }
+	);
+
+	unlink ( $file );
+
+	return $output;
+}
+
+=begin nd
+Function: getIPDSPolicyParam
+
+	Obtain an IPDS parameter to a policy
+
+Parameters:
+	param - ipds parameter to set to the farm. Valid values are: name, type, farms, elements
+	value - value expected for the param
+	list - name of the policy to be applied the new value
+
+Returns:
+	Scalar - array reference if a list
+
+=cut
+
+sub getIPDSPolicyParam
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $param = shift;
+	my $list  = shift;
+
+	my $output = -1;
+	my $attrib = "";
+	my $name   = "";
+	my $file   = "/tmp/ipds_$$";
+
+	if ( defined $list && $list ne "" )
+	{
+		$attrib = "/$list";
+	}
+
+	require Zevenet::Nft;
+
+	$output = httpNlbRequest(
+							  {
+								method => "GET",
+								file   => $file,
+								uri    => "/policies$attrib",
+							  }
+	);
+
+	if ( !-e "$file" )
+	{
+		return -2;
+	}
+
+	open my $fd, '<', "$file";
+	chomp ( my @content = <$fd> );
+	close $fd;
+
+	unlink ( $file );
+
+	my @policies = ();
+
+	if ( !defined $list || $list eq "" )
+	{
+		foreach my $line ( @content )
+		{
+			if ( $line =~ /\"name\"/ )
+			{
+				my @l = split /"/, $line;
+				my $val = $l[3];
+				push @policies, { $val };
+			}
+		}
+		return \@policies;
+	}
+
+	foreach my $line ( @content )
+	{
+		if ( $line =~ /\"name\"/ )
+		{
+			my @l = split /"/, $line;
+			$name = $l[3];
+		}
+
+		if ( $param eq 'name' )
+		{
+			return 1 if ( $list eq $name );
+			next;
+		}
+
+		if ( $list eq $name && $line =~ /\"farms-used\"/ && $param eq 'farms' )
+		{
+			my @l = split /"/, $line;
+			my $val = $l[3];
+			return $val;
+		}
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: delIPDSPolicy
+
+	Delete policy objects
+
+Parameters:
+	param - ipds parameter to set to the list. Values are: element, elements, policy
+	value - list element to delete, only required when 'element' parameter is set
+	list - name of the policy to be applied the new value
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
+
+=cut
+
+sub delIPDSPolicy
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( )",
+			 "debug", "PROFILING" );
+	my $param = shift;
+	my $value = shift;
+	my $list  = shift;
+
+	my $output = 0;
+	my $attrib = "";
+
+	if ( $param eq "policies" )
+	{
+		$attrib = "";
+	}
+	elsif ( $param eq "policy" )
+	{
+		$attrib = "/$list";
+	}
+	elsif ( $param eq "elements" )
+	{
+		$attrib = "/$list/elements";
+	}
+	elsif ( $param eq "element" && defined $value && $value ne "" )
+	{
+		$attrib = "/$list/element/$value";
+	}
+	else
+	{
+		return -1;
+	}
+
+	require Zevenet::Nft;
+
+	$output = httpNlbRequest(
+							  {
+								method => "DELETE",
+								uri    => "/policies$attrib",
+							  }
+	);
+
+	return $output;
 }
 
 1;

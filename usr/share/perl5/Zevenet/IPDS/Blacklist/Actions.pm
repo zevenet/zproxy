@@ -25,6 +25,7 @@
 # restart actions to blacklist rules
 
 use strict;
+use warnings;
 
 use Zevenet::Farm::Base;
 include 'Zevenet::IPDS::Blacklist::Runtime';
@@ -47,11 +48,22 @@ sub runBLStartModule
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-	my $ipset          = &getGlobalConfiguration( 'ipset' );
+
 	my $touch          = &getGlobalConfiguration( 'touch' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-	&initBLModule();
+	if ( !-d $blacklistsPath )
+	{
+		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		&zenlog( "Created $blacklistsPath directory.", "info", "IPDS" );
+	}
+
+	# create list config if doesn't exist
+	if ( !-e $blacklistsConf )
+	{
+		system ( "$touch $blacklistsConf" );
+		&zenlog( "Created $blacklistsConf file.", "info", "IPDS" );
+	}
 
 	my $allLists = Config::Tiny->read( $blacklistsConf );
 
@@ -103,35 +115,21 @@ sub runBLStopModule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $error;
+	my $output;
 
-	require Zevenet::Netfilter;
 	include 'Zevenet::IPDS::Core';
+	include 'Zevenet::IPDS::Blacklist::Core';
 
-	foreach my $typelist ( 'blacklist', 'whitelist' )
-	{
-		my $chain = &getIPDSChain( $typelist );
-		my $cmd   = &getGlobalConfiguration( 'iptables' ) . " --table raw -F $chain";
-		&iptSystem( $cmd );
-	}
-
-	# destroy lists
-	my $ipset = &getGlobalConfiguration( 'ipset' );
-	my @lists = `$ipset list -name`;
+	my @lists = &getBLAllLists();
 
 	foreach my $rule ( @lists )
 	{
-		chomp ( $rule );
-
-		# run cron process
-		if ( &getBLParam( $rule, 'type' ) eq "remote" )
-		{
-			&delBLCronTask( $rule );
-		}
 		&setBLDestroyList( $rule );
 	}
 
-	return $error;
+	$output = &delIPDSPolicy( 'policies', undef, undef );
+
+	return $output;
 }
 
 =begin nd
@@ -220,15 +218,13 @@ sub runBLStopByRule
 	my ( $ruleName ) = @_;
 
 	my $error = 0;
-	my $ipset = &getGlobalConfiguration( 'ipset' );
 
-	# run cron process
 	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
 	{
 		&delBLCronTask( $ruleName );
 	}
 
-	return if ( &getBLIpsetStatus() eq 'down' );
+	return if ( &getBLIpsetStatus( $ruleName ) eq 'down' );
 
 	foreach my $farmName ( @{ &getBLParam( $ruleName, 'farms' ) } )
 	{
@@ -342,8 +338,6 @@ sub runBLStop
 			&setBLDestroyList( $rule );
 		}
 	}
-
-	#~ return $error;
 }
 
 =begin nd

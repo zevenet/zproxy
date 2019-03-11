@@ -386,38 +386,41 @@ sub addRBLFarm
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
-	if ( &getRBLObjectRuleParam( $rule, 'status' ) ne 'up' )
+	if ( &getRBLObjectRuleParam( $rule, 'status' ) eq 'up' )
 	{
-		return $error;
+		require Zevenet::Farm::Base;
+
+		# if the farm is in UP status, apply it the rule
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			# to start a RBL rule it is necessary that the rule has almost one domain
+			if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
+			{
+				&zenlog( "RBL rule, $rule, was not started because doesn't have any domain." );
+				return -1;
+			}
+
+			include 'Zevenet::IPDS::RBL::Runtime';
+
+			# if rule is not running, start it
+			if ( &getRBLStatusRule( $rule ) eq 'down' )
+			{
+				$error = &runRBLStartPacketbl( $rule );
+			}
+
+			if ( !$error )
+			{
+				# create iptables rule to link with rbl rule
+				$error = &runRBLIptablesRule( $rule, $farmname, 'insert' );
+			}
+		}
 	}
 
-	require Zevenet::Farm::Base;
-
-	# if the farm is in UP status, apply the rule
-	if ( &getFarmStatus( $farmname ) ne 'up' )
+	if ( !$error )
 	{
-		return $error;
+		# Add to configuration file
+		&setRBLObjectRuleParam( $rule, 'farms-add', $farmname );
 	}
-
-	# to start a RBL rule it is necessary that the rule has almost one domain
-	if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
-	{
-		&zenlog( "RBL rule, $rule, was not started because doesn't have any domain." );
-		return -1;
-	}
-
-	include 'Zevenet::IPDS::RBL::Runtime';
-
-	# if rule is not running, start it
-	if ( &getRBLStatusRule( $rule ) eq 'down' )
-	{
-		$error = &runRBLStartPacketbl( $rule );
-	}
-
-	$error = $error || &runRBLFarmRule( $rule, $farmname, 'add' );
-
-	# Add to configuration file
-	$error = $error || &setRBLObjectRuleParam( $rule, 'farms-add', $farmname );
 
 	return $error;
 }
@@ -445,7 +448,8 @@ sub delRBLFarm
 
 	include 'Zevenet::IPDS::RBL::Runtime';
 
-	$error = &runRBLFarmRule( $rule, $farmname, 'delete' );
+	# create iptables rule to link with rbl rule
+	$error = &runRBLIptablesRule( $rule, $farmname, 'delete' );
 
 	# if another farm is not using this rule, the rule is stopped
 	if ( !$error && !&getRBLRunningFarmList( $rule ) )

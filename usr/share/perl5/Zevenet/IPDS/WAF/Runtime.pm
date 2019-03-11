@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+use warnings;
+
 use Zevenet::Core;
 use Zevenet::Lock;
 

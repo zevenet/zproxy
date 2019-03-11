@@ -72,9 +72,18 @@ sub getBLIpsetStatus
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $listName = shift;
-	my $output   = "down";
 
-	$output = "up" if ( &getIPDSPolicyParam( 'name', $listName ) > 0 );
+	my $ipset  = &getGlobalConfiguration( 'ipset' );
+	my $output = system ( "$ipset list $listName -name >/dev/null 2>&1" );
+
+	if ( $output )
+	{
+		$output = 'down';
+	}
+	else
+	{
+		$output = 'up';
+	}
 
 	return $output;
 }
@@ -92,20 +101,29 @@ sub getBLStatus
 	return $output;
 }
 
-# return 0 if the list has no rules applied
+# return 0 if the list has not iptable rules applied
 #  else return the number of farms that are using the list
 # $lists = &getListNoUsed ();
 sub getBLListNoUsed
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $listName = shift;
-	my $matches  = 0;
+	my $blacklist = shift;
 
-	$matches = &getIPDSPolicyParam( 'farms', $listName );
-	$matches = 0 if ( $matches < 0 );
+	my $ipset  = &getGlobalConfiguration( 'ipset' );
+	my @cmd    = `$ipset -L -terse $blacklist 2>/dev/null`;
+	my $matchs = 0;
 
-	return $matches;
+	foreach my $line ( @cmd )
+	{
+		if ( $line =~ /References: (\d+)/ )
+		{
+			$matchs = $1;
+			last;
+		}
+	}
+
+	return $matchs;
 }
 
 =begin nd
@@ -174,6 +192,7 @@ sub getBLParam
 	return $output;
 }
 
+# &getBLlastUptdate ( list );
 sub getBLlastUptdate
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -188,6 +207,7 @@ sub getBLlastUptdate
 	return -1 if ( &getBLParam( $listName, 'type' ) eq 'local' );
 	return 0 if ( !-f $listFile );
 
+	# comand
 	my $outCmd = `$stat -c %y $listFile`;
 
 	# 2016-12-22 10:21:07.000000000 -0500
@@ -229,6 +249,8 @@ sub getBLzapi
 
 	# save hour, minute, period and unit parameters in 'time' hash
 	my @timeParameters = ( 'period', 'unit', 'hour', 'minutes' );
+
+	#~ $listHash{ 'time'};
 
 	foreach my $param ( @timeParameters )
 	{
@@ -282,6 +304,41 @@ sub getBLIpList
 	return $output;
 }
 
+=begin nd
+	Function: getBLSourceNumber
+
+        Get the number of sources from the source config file
+
+        Parameters:
+        list - list name
+
+        Returns:
+			integer - number of sources
+
+=cut
+
+sub getBLSourceNumber
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $list = shift;
+	my $wc   = &getGlobalConfiguration( "wc_bin" );
+
+	return 0 if ( !-f "$blacklistsPath/$list.txt" );
+
+	my $sources = `$wc -l $blacklistsPath/$list.txt`;
+
+	if ( $sources =~ /\s*(\d+)\s/ )
+	{
+		$sources = $1;
+	}
+	else
+	{
+		$sources = 0;
+	}
+	return $sources;
+}
+
 sub setBLLockConfigFile
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -300,9 +357,10 @@ sub getBLAllLists
 	require Config::Tiny;
 	require Zevenet::Config;
 
-	my @lists;
+	my @lists;    # Output
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my %all_bl         = %{ Config::Tiny->read( $blacklistsConf ) };
 
 	delete $all_bl{ _ };

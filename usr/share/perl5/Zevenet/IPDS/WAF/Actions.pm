@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 use Zevenet::Core;
 include 'Zevenet::IPDS::WAF::Core';

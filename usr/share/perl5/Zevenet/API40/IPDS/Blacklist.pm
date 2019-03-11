@@ -21,6 +21,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 use Zevenet::API40::HTTP;
 
@@ -792,7 +793,7 @@ sub set_blacklists_source
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( &setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
+	if ( !&setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) )
 	{
 		my $msg = "Error, putting the source to the list.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -842,7 +843,7 @@ sub del_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &setBLDeleteSource( $listName, $id ) != 0 )
+	if ( !&setBLDeleteSource( $listName, $id ) )
 	{
 		my $msg = "Error deleting source $id";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

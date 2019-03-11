@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 use Zevenet::Farm::Base;
 include 'Zevenet::IPDS::DoS::Runtime';

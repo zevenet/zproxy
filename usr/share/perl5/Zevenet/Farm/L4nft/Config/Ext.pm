@@ -20,6 +20,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
+
+use strict;
+use warnings;
+
 require Zevenet::Farm::L4xNAT::Config;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 

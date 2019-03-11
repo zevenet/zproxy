@@ -28,6 +28,7 @@
 # action to system if it is necessary using Zevenet::IPDS::Blacklist::Runtime module
 
 use strict;
+use warnings;
 
 use Config::Tiny;
 
@@ -37,8 +38,6 @@ use Zevenet::Debug;
 
 include 'Zevenet::IPDS::Blacklist::Core';
 
-# $listParams = \ %paramsRef;
-# &setBLCreateList ( $listName, $paramsRef );
 sub setBLCreateList
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -48,12 +47,12 @@ sub setBLCreateList
 
 	my $def_policy  = 'deny';
 	my $def_preload = 'false';
-	my $output;
+	my $output      = 0;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
-	my $type           = $listParams->{ 'type' };
+	my $type           = $listParams->{ 'type' } // 'local';
 
 	if ( !-e $blacklistsConf )
 	{
@@ -61,7 +60,7 @@ sub setBLCreateList
 		&zenlog( "blacklists configuration file was created.", "info", "IPDS" );
 	}
 
-	if ( $listParams->{ 'type' } eq 'remote' && !exists $listParams->{ 'url' } )
+	if ( $type eq 'remote' && !exists $listParams->{ 'url' } )
 	{
 		&zenlog( "Remote lists need an url", "warning", "IPDS" );
 		return -1;
@@ -70,7 +69,7 @@ sub setBLCreateList
 	# share params
 	my $lock       = &setBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $blacklistsConf );
-	$fileHandle->{ $listName }->{ 'type' }   = $listParams->{ 'type' };
+	$fileHandle->{ $listName }->{ 'type' }   = $type;
 	$fileHandle->{ $listName }->{ 'status' } = "down";
 	$fileHandle->{ $listName }->{ 'farms' }  = "";
 	if ( exists $listParams->{ 'preload' } )
@@ -107,14 +106,20 @@ sub setBLCreateList
 		&setBLParam( $listName, 'hour',      '00' );
 		&setBLParam( $listName, 'day',       'monday' );
 		&setBLParam( $listName, 'frequency', 'weekly' );
-
-		#~ &setBLDownloadRemoteList ( $listName );
 	}
 
 	# specific to local lists
 	elsif ( $type eq 'local' )
 	{
-		$output = system ( "$touch $blacklistsPath/$listName.txt 2>/dev/null" );
+		$output = system ( "$touch $blacklistsPath/$listName.txt 2> /dev/null" );
+		&zenlog( "unable to create list sources file $blacklistsPath/$listName.txt .",
+				 "error", "IPDS" )
+		  if ( !$output );
+	}
+
+	else
+	{
+		&zenlog( "Unknown list type $type .", "warning", "IPDS" );
 	}
 
 	return $output;
@@ -143,7 +148,7 @@ sub setBLDeleteList
 	my ( $listName ) = @_;
 
 	my $fileHandle;
-	my $output;
+	my $output = 0;
 	my $error;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -174,7 +179,7 @@ sub setBLDeleteList
 		$output = ( $output ) ? 0 : 1;
 	}
 
-	if ( $output != 0 )
+	if ( !$output )
 	{
 		&zenlog( "Error deleting the list '$listName'.", "error", "IPDS" );
 	}
@@ -384,7 +389,7 @@ sub setBLParam
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		$conf       = $fileHandle->{ $name };
 
-		if ( $conf->{ $key } !~ /(^| )$value( |$)/ )
+		if ( $conf->{ 'farms' } !~ /(^| )$value( |$)/ )
 		{
 			my $farmList = $fileHandle->{ $name }->{ 'farms' };
 			$fileHandle->{ $name }->{ 'farms' } = "$farmList $value";
@@ -445,7 +450,6 @@ sub setBLParam
 	return $output;
 }
 
-# &delBLParam ( $listName, $key )
 sub delBLParam
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -538,18 +542,7 @@ sub setBLAddSource
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		# The list is full,  re-create it
-		if ( &getBLSourceNumber( $listName ) > &getBLMaxelem( $listName ) )
-		{
-			include 'Zevenet::IPDS::Blacklist::Actions';
-			&runBLStartByRule( $listName );
-		}
-
-		# Add a new source to the list
-		else
-		{
-			$error = &logAndRun( "$ipset add $listName $source" );
-		}
+		$error = &setIPDSPolicyParam( 'element', $source, $listName );
 	}
 
 	&zenlog( "$source was added to $listName", "info", "IPDS" ) if ( !$error );

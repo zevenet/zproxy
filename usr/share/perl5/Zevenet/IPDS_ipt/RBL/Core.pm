@@ -180,7 +180,7 @@ sub getRBLObjectRuleParam
 =begin nd
 Function: getRBLRunningFarmList
 
-	Return a list with all farms that are using currently this rule.
+	Return a list with all farms that are using currently this rule. Looking and greping iptables list
 
 Parameters:
 	Rule - Rule name
@@ -199,9 +199,19 @@ sub getRBLRunningFarmList
 	require Zevenet::Validate;
 	include 'Zevenet::IPDS::Core';
 
-	#TODO: implement this
-
 	my @farms;
+	my $table           = "raw";
+	my $chain           = &getIPDSChain( "rbl" );
+	my @iptables_output = &getIptListV4( $table, $chain );
+	my $farm_re         = &getValidFormat( 'farm_name' );
+
+	foreach my $line ( @iptables_output )
+	{
+		if ( $line =~ /RBL,${rule},($farm_re)/ )
+		{
+			push @farms, $1;
+		}
+	}
 
 	return @farms;
 }

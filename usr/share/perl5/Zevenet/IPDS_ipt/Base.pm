@@ -27,6 +27,130 @@ use Config::Tiny;
 include 'Zevenet::IPDS::Core';
 
 =begin nd
+Function: addIPDSIptablesChain
+
+	This function create the iptables chains where the IPDS rules will be created
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+
+=cut
+
+sub addIPDSIptablesChain
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $iptables        = &getGlobalConfiguration( 'iptables' );
+	my $whitelist_chain = &getIPDSChain( "whitelist" );
+	my $blacklist_chain = &getIPDSChain( "blacklist" );
+	my $rbl_chain       = &getIPDSChain( "rbl" );
+	my $dos_chain       = &getIPDSChain( "dos" );
+	my @chains          = ( $whitelist_chain, $blacklist_chain, $rbl_chain );
+	my $error;
+
+	# creating chains
+	$error |= &iptSystem( "$iptables -N $whitelist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -N $blacklist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -N $rbl_chain -t raw" );
+
+	$error |= &iptSystem( "$iptables -N $whitelist_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -N $dos_chain -t mangle" );
+
+	# link this chains
+	if (
+		&iptSystem( "$iptables -C PREROUTING -t raw -j $whitelist_chain 2>/dev/null" ) )
+	{
+		$error |= &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" );
+	}
+	if (
+		 &iptSystem( "$iptables -C $whitelist_chain -t raw -j $blacklist_chain 2>/dev/null"
+		 )
+	  )
+	{
+		$error |=
+		  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
+	}
+	if (
+		&iptSystem( "$iptables -C $blacklist_chain -t raw -j $rbl_chain 2>/dev/null" ) )
+	{
+		$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" );
+	}
+	if (
+		 &iptSystem( "$iptables -C PREROUTING -t mangle -j $whitelist_chain 2>/dev/null"
+		 )
+	  )
+	{
+		$error |= &iptSystem( "$iptables -A PREROUTING -t mangle -j $whitelist_chain" );
+	}
+	if (
+		 &iptSystem( "$iptables -C $whitelist_chain -t mangle -j $dos_chain 2>/dev/null"
+		 )
+	  )
+	{
+		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j $dos_chain" );
+	}
+
+	if ( $error )
+	{
+		&zenlog( "Error creating iptables chains", "error", "IPDS" );
+	}
+
+	return $error;
+}
+
+=begin nd
+Function: delIPDSIptablesChain
+
+	This function delete the iptables chains where the IPDS rules are created
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+
+=cut
+
+sub delIPDSIptablesChain
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $iptables        = &getGlobalConfiguration( 'iptables' );
+	my $whitelist_chain = &getIPDSChain( "whitelist" );
+	my $blacklist_chain = &getIPDSChain( "blacklist" );
+	my $rbl_chain       = &getIPDSChain( "rbl" );
+	my $dos_chain       = &getIPDSChain( "dos" );
+	my $error;
+
+	$error |= &iptSystem( "$iptables -F $whitelist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -F $blacklist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -F $rbl_chain -t raw" );
+	$error |= &iptSystem( "$iptables -F $whitelist_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -F $dos_chain -t mangle" );
+
+	$error |= &iptSystem( "$iptables -D PREROUTING -t raw -j $whitelist_chain" );
+	$error |= &iptSystem( "$iptables -D PREROUTING -t mangle -j $whitelist_chain" );
+
+	$error |= &iptSystem( "$iptables -X $rbl_chain -t raw" );
+	$error |= &iptSystem( "$iptables -X $blacklist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -X $whitelist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -X $dos_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -X $whitelist_chain -t mangle" );
+
+	if ( $error )
+	{
+		&zenlog( "Error deleting iptables chains", "error", "IPDS" );
+	}
+
+	return $error;
+}
+
+actions:
+
+=begin nd
 Function: runIPDSStartModule
 
 	Boot the IPDS module
@@ -46,6 +170,8 @@ sub runIPDSStartModule
 	include 'Zevenet::IPDS::RBL::Actions';
 	include 'Zevenet::IPDS::DoS::Actions';
 	include 'Zevenet::IPDS::Blacklist::Actions';
+
+	&addIPDSIptablesChain();
 
 	# Add cluster exception not to block traffic from the other node of cluster
 	&setZClusterIptablesException( "insert" );
@@ -81,6 +207,8 @@ sub runIPDSStopModule
 
 	# Remove cluster exception not to block traffic from the other node of cluster
 	&setZClusterIptablesException( "delete" );
+
+	&delIPDSIptablesChain();
 }
 
 actions_by_farm:

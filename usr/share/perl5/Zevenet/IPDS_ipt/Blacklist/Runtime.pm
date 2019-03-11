@@ -28,29 +28,56 @@ use strict;
 
 use Zevenet::Core;
 include 'Zevenet::IPDS::Blacklist::Core';
-include 'Zevenet::IPDS::Core';
 
+# &setBLRunList ( $listName );
 sub setBLRunList
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $listName = shift;
+	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
-	my $action;
-	my $type = "blacklist";
 
-	&zenlog( "Loading the list $listName", "info", "IPDS" );
+	# Maximum number of sources in the list
+	my $maxelem = &getBLSourceNumber( $listName );
 
-	$action = &getBLParam( $listName, 'policy' );
-	$type = "whitelist" if ( $action eq "allow" );
-
-	$output = &setIPDSPolicyParam( 'type', $type, $listName );
-
-	if ( $output == 0 )
+	# ipset create the list with a minimum value of 64
+	if ( $maxelem < 64 )
 	{
+		$maxelem = 64;
+	}
+
+	# looking for 2 power for maxelem
+	else
+	{
+		# exponent = log2( maxelem )
+		my $exponent = log ( $maxelem ) / log ( 2 );
+
+		# the maxelem is not 2 power
+		if ( $exponent - ( int $exponent ) > 0 )
+		{
+			# take a expoenent greater
+			$maxelem = 2**( int $exponent + 1 );
+		}
+
+		# the maxelem was 2 power
+		# else
+		# maxelem = 2^n
+	}
+
+	#~ if ( &getBLIpsetStatus ( $listName ) eq 'down' )
+	{
+		&zenlog( "Creating ipset table", "info", "IPDS" );
+		$output =
+		  &logAndRun( "$ipset create -exist $listName hash:net maxelem $maxelem" );
+	}
+
+	if ( !$output )
+	{
+		&zenlog( "Refreshing list $listName", "info", "IPDS" );
 		$output = &setBLRefreshList( $listName );
-		&zenlog( "Error, refreshing the list $listName", "error", "IPDS" )
-		  if ( $output );
+
+		&zenlog( "Error, refreshing list $listName", "error", "IPDS" ) if ( $output );
 	}
 
 	if ( &getBLParam( $listName, 'type' ) eq 'remote' )
@@ -61,12 +88,14 @@ sub setBLRunList
 	return $output;
 }
 
+#  &setBLDestroyList ( $listName );
 sub setBLDestroyList
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $listName = shift;
 
+	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my $output;
 
 	# delete task from cron
@@ -75,8 +104,13 @@ sub setBLDestroyList
 		&delBLCronTask( $listName );
 	}
 
+	# FIXME:  lunch consecutively this ipset command and below return error
+	#~ if ( &getBLIpsetStatus ( $listName ) eq 'up' )
+	#~ {
 	&zenlog( "Destroying blacklist $listName", "info", "IPDS" );
-	$output = &delIPDSPolicy( 'policy', undef, $listName );
+	&logAndRun( "$ipset destroy $listName" );
+
+	#~ }
 
 	return $output;
 }
@@ -103,15 +137,34 @@ sub setBLRefreshList
 			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
-	my $ipList    = &getBLIpList( $listName );
-	my $source_re = &getValidFormat( 'blacklists_source' );
+	my @ipList = @{ &getBLIpList( $listName ) };
 	my $output;
+	my $ipset     = &getGlobalConfiguration( 'ipset' );
+	my $source_re = &getValidFormat( 'blacklists_source' );
 
-	&zenlog( "Refreshing the list $listName", "info", "IPDS" );
+	&zenlog( "refreshing '$listName'... ", "info", "IPDS" );
+	$output = &logAndRun( "$ipset flush $listName" );
 
-	$output = &delIPDSPolicy( 'elements', undef, $listName );
+	if ( !$output )
+	{
+		require Tie::File;
+		require Zevenet::Lock;
 
-	$output = &setIPDSPolicyParam( 'elements', $ipList, $listName );
+		my $tmp_list = "/tmp/tmp_blacklist.txt";
+		&ztielock( \my @list_tmp, $tmp_list );
+
+		grep ( s/($source_re)/add $listName $1/, @ipList );
+		my $touch = &getGlobalConfiguration( 'touch' );
+
+		&logAndRun( "$touch $tmp_list" );
+
+		@list_tmp = @ipList;
+		untie @list_tmp;
+
+		&logAndRun( "$ipset restore < $tmp_list" );
+
+		unlink $tmp_list;
+	}
 
 	if ( $output )
 	{
@@ -149,6 +202,8 @@ sub setBLDownloadRemoteList
 	my $error;
 
 	&zenlog( "Downloading $listName...", "info", "IPDS" );
+
+	# if ( $fileHandle->{ $listName }->{ 'update_status' } ne 'dis' )
 
 	# Not direct standard output to null, this output is used for web variable
 	my @web           = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`;
@@ -192,12 +247,12 @@ sub setBLDownloadRemoteList
 =begin nd
 Function: setBLCreateRule
 
-	Assign a policy to a farm.
+	Block / accept connections from a ip list for a determinate farm.
 
 Parameters:
 
-	farmName - farm where the list will be applied
-	listName - ip list name
+	farmName - farm where rules will be applied
+	name	 - ip list name
 
 Returns:
 
@@ -212,21 +267,127 @@ sub setBLCreateRule
 			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
+	require Zevenet::Farm::Base;
+	require Zevenet::Netfilter;
 	include 'Zevenet::IPDS::Core';
 
+	my $add;
+	my $cmd;
 	my $output;
+	my $chain;
+	my @tables;
 	my $action = &getBLParam( $listName, 'policy' );
 
 	if ( &getBLIpsetStatus( $listName ) eq "down" )
 	{
+		# load in memory the list
 		&setBLRunList( $listName );
 	}
 
-	$output = &setIPDSFarmParam( 'policy', $listName, $farmName );
-	if ( !$output )
+	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
+	my $logMsg = &createLogMsg( "BL", $listName, $farmName );
+
+	if ( $action eq "allow" )
 	{
-		&zenlog( "List '$listName' was applied successful to the farm '$farmName'.",
-				 "info", "IPDS" );
+		$chain = &getIPDSChain( "whitelist" );
+		@tables = ( 'raw', 'mangle' );
+	}
+	elsif ( $action eq "deny" )
+	{
+		$chain  = &getIPDSChain( "blacklist" );
+		@tables = ( 'raw' );
+	}
+	else
+	{
+		&zenlog(
+				 "The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'.",
+				 "warning", "IPDS" );
+		return -1;
+	}
+
+	$add = '-I';
+
+	my @match;
+	my $type       = &getFarmType( $farmName );
+	my $protocol   = &getFarmProto( $farmName );
+	my $protocolL4 = &getFarmProto( $farmName );
+	my $vip        = &getFarmVip( 'vip', $farmName );
+	my $vport      = &getFarmVip( 'vipp', $farmName );
+
+	# no farm
+	# blank chain
+	if ( $type eq 'l4xnat' )
+	{
+		require Zevenet::Farm::L4xNAT::Validate;
+
+		# all ports
+		if ( $vport eq '*' )
+		{
+			push @match, "-d $vip --protocol tcp";
+		}
+
+		# l4 farm multiport
+		elsif ( &ismport( $vport ) eq "true" )
+		{
+			push @match, "-d $vip --protocol tcp -m multiport --dports $vport";
+		}
+
+		# unique port
+		else
+		{
+			push @match, "-d $vip --protocol tcp --dport $vport";
+			push @match, "-d $vip --protocol udp --dport $vport";
+		}
+	}
+
+	# farm using tcp and udp protocol
+	elsif ( $type eq 'gslb' )
+	{
+		push @match, "-d $vip --protocol tcp --dport $vport";
+		push @match, "-d $vip --protocol udp --dport $vport";
+	}
+
+	# http farms
+	elsif ( $type =~ /http/ )
+	{
+		push @match, "-d $vip --protocol tcp --dport $vport";
+	}
+
+	#~ #not valid datlink farms
+	elsif ( $type eq 'datalink' )
+	{
+		push @match, "-d $vip";
+	}
+
+	foreach my $farmOpt ( @match )
+	{
+		foreach my $table ( @tables )
+		{
+
+# iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL,rulename,farmname"
+			$cmd = &getGlobalConfiguration( 'iptables' )
+			  . " $add $chain -t $table -m set --match-set $listName src $farmOpt -m comment --comment \"BL,$listName,$farmName\"";
+
+			if ( $action eq "deny" )
+			{
+				# check inside of function
+				$output = &setIPDSDropAndLog( $cmd, $logMsg );
+			}
+			else
+			{
+				# the rule already exists
+				if ( !&getIPDSRuleExists( $cmd ) )
+				{
+					$output = &iptSystem( "$cmd -j ACCEPT" );
+				}
+			}
+
+			if ( !$output )
+			{
+				&zenlog( "List '$listName' was applied successful to the farm '$farmName'.",
+						 "info", "IPDS" );
+			}
+		}
 	}
 
 	return $output;
@@ -255,11 +416,44 @@ sub setBLDeleteRule
 			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
-	my $output;
-
+	require Zevenet::Netfilter;
 	include 'Zevenet::IPDS::Core';
 
-	$output = &delIPDSFarmParam( 'policy', $listName, $farmName );
+	my $chain  = 'blacklist';
+	my @tables = ( 'raw' );
+	if ( &getBLParam( $listName, 'policy' ) eq "allow" )
+	{
+		$chain = "whitelist";
+		@tables = ( 'raw', 'mangle' );
+	}
+
+	$chain = &getIPDSChain( $chain );
+	my $output;
+
+	foreach my $table ( @tables )
+	{
+		# Get line number
+		my @rules = &getIptListV4( $table, $chain );
+		@rules =
+		  grep ( /^(\d+) .+match-set $listName src .+BL,$listName,$farmName/, @rules );
+
+		my $lineNum = 0;
+		my $size    = scalar @rules - 1;
+		my $cmd;
+		for ( ; $size >= 0 ; $size-- )
+		{
+			if ( $rules[$size] =~ /^(\d+) / )
+			{
+				$lineNum = $1;
+
+				# Delete
+				#	iptables -D PREROUTING -t raw 3
+				$cmd =
+				  &getGlobalConfiguration( 'iptables' ) . " --table $table -D $chain $lineNum";
+				&iptSystem( $cmd );
+			}
+		}
+	}
 
 	# delete list if it isn't used. This has to be the last call.
 	if ( !&getBLListNoUsed( $listName ) )
@@ -390,6 +584,7 @@ sub setBLCronTask
 	&zenlog( "Created a cron task for the list $listName", "info", "IPDS" );
 }
 
+# setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -434,6 +629,7 @@ sub setBLApplyToFarm
 	return $output;
 }
 
+# &setBLRemFromFarm ( $farmName, $listName );
 sub setBLRemFromFarm
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",

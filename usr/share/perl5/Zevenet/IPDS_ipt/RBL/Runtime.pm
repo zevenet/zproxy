@@ -32,47 +32,165 @@ my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
 my $userDomainsFile      = "$rblPath/user_domains.conf";
 
 =begin nd
-Function: runRBLFarmRule
+Function: getRBLFarmMatch
 
-	Create RBL rules for a farm with an action
+	Return the iptables match string for a farm. Depend of the parameter, this function check:
+	All farms (rule applies to all vip and ports), farm with multiport, farm with udp and tcp simultaneous listeners on same port
+
+Parameters:
+	Farmname -  Farm name. If farm name is in blank, the rule applies to all destine IPs and ports
+
+Returns:
+	Scalar - iptables chain that matches with the farm
+
+=cut
+
+sub getRBLFarmMatch
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farmname = shift;
+
+	require Zevenet::Farm::Base;
+
+	my $match;
+	my $type       = &getFarmType( $farmname );
+	my $protocol   = &getFarmProto( $farmname );
+	my $protocolL4 = &getFarmProto( $farmname );
+	my $vip        = &getFarmVip( 'vip', $farmname );
+	my $vport      = &getFarmVip( 'vipp', $farmname );
+
+	# no farm
+	# blank chain
+	if ( $type eq 'l4xnat' )
+	{
+		require Zevenet::Farm::L4xNAT::Validate;
+
+		# all ports
+		if ( $vport eq '*' )
+		{
+			$match = "-d $vip --protocol tcp";
+		}
+
+		# l4 farm multiport
+		elsif ( &ismport( $vport ) eq "true" )
+		{
+			$match = "-d $vip --protocol tcp -m multiport --dports $vport";
+		}
+
+		# unique port
+		else
+		{
+			$match = "-d $vip --protocol tcp --dport $vport";
+		}
+	}
+
+	# farm using tcp and udp protocol
+	elsif ( $type eq 'gslb' )
+	{
+		$match = "-d $vip --protocol tcp --dport $vport";
+	}
+
+	# http farms
+	elsif ( $type =~ /http/ )
+	{
+		$match = "-d $vip --protocol tcp --dport $vport";
+	}
+
+	#not valid datlink farms
+	#~ elsif ( $type eq 'datalink' )
+	#~ {
+	#~ push @match, "-d $vip";
+	#~ }
+
+	return $match;
+}
+
+=begin nd
+Function: runRBLIptablesRule
+
+	Create a iptables for a farm with a action ( -A, -I, -D )
 
 Parameters:
 	Rulename -  Rule name
 	Farmname -  Farm name. If farm name is in blank, the rule applies to all destine IPs and ports
-	Action - Action to apply rules. The available options are: 'add' to set a new queue for a farm;
-	  or 'delete' to remove the queue for a farm
+	Action - Action to apply to iptables. The available options are: 'append', create the rule the last in the iptables list;
+	  'insert', create the rule the first in the iptables list; or 'delete' delete the rule from iptables list
 
 Returns:
 	Integer - 0 on success or other value on failure
 
+FIXME: Define the chain and the table for iptables
+
 =cut
 
-sub runRBLFarmRule
+sub runRBLIptablesRule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $rule, $farmname, $action ) = @_;
 	my $error;
-	my $nfqueue = "";
 
+	require Zevenet::Netfilter;
 	include 'Zevenet::IPDS::Core';
 
-	if ( $action eq "add" )
+	my $nfqueue   = "";
+	my $rbl_chain = &getIPDSChain( "rbl" );
+	my $ruleParam = &getRBLFarmMatch( $farmname );
+
+	# look for nfqueue in iptables
+	if ( $action eq "delete" )
 	{
-		my $nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
-		return 0 if ( $nfqueue !~ /\d+/ );
-	}
-	elsif ( $action eq "delete" )
-	{
-		$nfqueue = '-1';
+		foreach my $iptrule ( &getIptListV4( "raw", $rbl_chain ) )
+		{
+			if ( $iptrule =~ / RBL,${rule},$farmname \*\/ NFQUEUE num (\d+) / )
+			{
+				$nfqueue = $1;
+				last;
+			}
+		}
 	}
 	else
 	{
-		&zenlog( "Wrong action to create the rule ", "error", "IPDS" );
-		return -1;
+		$nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
 	}
 
-	$error = &setIPDSFarmParam( 'nfqueue', $nfqueue, $farmname );
+	# The rule doesn't exist
+	return 0 if ( $nfqueue !~ /\d+/ );
+
+	if ( $action eq "insert" )
+	{
+		$action = "-I";
+	}
+	elsif ( $action eq "append" )
+	{
+		$action = "-A";
+	}
+	elsif ( $action eq "delete" )
+	{
+		$action = "-D";
+	}
+	else
+	{
+		$error = -1;
+		&zenlog( "Wrong action to create the rule ", "error", "IPDS" );
+	}
+
+	# only check packets with SYN flag: "--tcp-flags SYN SYN"
+	# if packetbl is not running, return packet to netfilter flow: "--queue-bypass"
+
+# iptables -I INPUT -p tcp --tcp-flags SYN SYN -i eth0 --dport 80 -j NFQUEUE --queue-num 0 --queue-bypass
+
+	# execute without interblock
+	my $cmd =
+	    &getGlobalConfiguration( 'iptables' )
+	  . " $action $rbl_chain -t raw $ruleParam --tcp-flags SYN SYN -j NFQUEUE --queue-num $nfqueue --queue-bypass"
+	  . " -m comment --comment \"RBL,${rule},$farmname\"";
+
+	# thre rule already exists
+	return 0 if ( &getIPDSRuleExists( $cmd ) );
+
+	$error = &iptSystem( $cmd );
 
 	return $error;
 }

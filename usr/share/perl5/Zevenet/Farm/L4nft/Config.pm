@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -158,7 +159,7 @@ sub setL4FarmParam
 	}
 	elsif ( $param eq "vipp" )
 	{
-		$value =~ s/\:/\-/g, $value;
+		$value =~ s/\:/\-/g;
 		$parameters = qq(, "virtual-ports" : "$value" );
 	}
 	elsif ( $param eq "alg" )
@@ -290,7 +291,7 @@ Returns:
 
 sub _getL4ParseFarmConfig
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( )",
 			 "debug", "PROFILING" );
 	my ( $param, $value, $config ) = @_;
 	my $output = -1;
@@ -436,7 +437,7 @@ sub _getL4ParseFarmConfig
 
 		if ( $output ne "-1" )
 		{
-			$line =~ s/$output/$value/r if $value != undef;
+			$line =~ s/$output/$value/g if defined $value;
 			return $output if ( $exit );
 		}
 	}

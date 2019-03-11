@@ -207,7 +207,7 @@ Returns:
 
 sub startL4FarmNlb    # ($farm_name)
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( )",
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
 	my $writeconf = shift;

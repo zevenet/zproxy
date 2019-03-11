@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+use warnings;
+
 use Zevenet::Core;
 
 my $configdir   = &getGlobalConfiguration( 'configdir' );
@@ -389,7 +391,7 @@ sub listWAFByFarm
 	my $farm_file = &getFarmFile( $farm );
 
 	my $fh = &openlock( "$configdir/$farm_file", 'r' );
-	my @rules = grep ( s/^WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
+	@rules = grep ( s/^WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
 	chomp @rules;
 	close $fh;
 

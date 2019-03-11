@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -292,7 +293,8 @@ sub _getL4FarmParseServers
 			$stage = 1;
 		}
 
-		if ( $line =~ /\"backends\"/ )
+		# do not go to the next level if empty
+		if ( $line =~ /\"backends\"/ && $line !~ /\[\],/ )
 		{
 			$stage = 2;
 		}

@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+use warnings;
+
 use Config::Tiny;
 include 'Zevenet::IPDS::DoS::Core';
 
@@ -174,7 +176,7 @@ sub setDOSParam
 	include 'Zevenet::IPDS::DoS::Actions';
 
 	#Stop related rules
-	my $status = ( &getDOSLookForRule( $name ) ) ? "up" : "down";
+	my $status = &getDOSStatusRule( $name );
 	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );

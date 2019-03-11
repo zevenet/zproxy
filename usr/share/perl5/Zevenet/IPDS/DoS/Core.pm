@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+use warnings;
+
 use Config::Tiny;
 use Zevenet::Core;
 use Zevenet::Debug;
@@ -134,65 +136,15 @@ sub getDOSLookForRule
 	require Zevenet::Validate;
 	include 'Zevenet::IPDS::Core';
 
-	# table and chain where there are saved dos rules
-	#~ my @table = ( 'raw',        'filter', 'filter',  'mangle' );
-	#~ my @chain = ( 'PREROUTING', 'INPUT',  'FORWARD', 'PREROUTING' );
-	my $dos_chain = &getIPDSChain( 'dos' );
-	my @table     = ( 'mangle' );
-	my @chain     = ( $dos_chain );
-	my $farmNameRule;
-
 	my @output;
-	my $ind = -1;
 
-	for ( @table )
-	{
-		$ind++;
-
-		# Get line number
-		my @rules = &getIptListV4( $table[$ind], $chain[$ind] );
-
-		# Reverse @rules to delete first last rules
-		@rules = reverse ( @rules );
-
-		# Delete DoS global conf
-		foreach my $rule ( @rules )
-		{
-			my $flag = 0;
-			my $lineNum;
-
-			# Look for farm rule
-			if ( $farmName )
-			{
-				if ( $rule =~ /^(\d+) .+DOS,${ruleName},$farmName \*/ )
-				{
-					$lineNum = $1;
-					$flag    = 1;
-				}
-			}
-
-			# Look for global rule
-			else
-			{
-				my $farmNameFormat = &getValidFormat( 'farm_name' );
-				if ( $rule =~ /^(\d+) .+DOS,$ruleName/ )
-				{
-					$lineNum      = $1;
-					$flag         = 1;
-					$farmNameRule = $2;
-				}
-			}
-			push @output, { line => $lineNum, table => $table[$ind], chain => $chain[$ind] }
-			  if ( $flag );
-		}
-	}
 	return \@output;
 }
 
 =begin nd
 Function: getDOSStatusRule
 
-	Check if a DoS rule is applied in iptables
+	Check if a DoS rule is applied
 
 Parameters:
 	String - Rule name

@@ -101,6 +101,7 @@ sub runRBLStartByRule
 
 	if ( !@farms )
 	{
+		#~ &zenlog( "RBL rule \"$rule\" has not any farm linked" );
 		return -1;
 	}
 
@@ -139,6 +140,7 @@ sub runRBLStopByRule
 	my ( $rule ) = @_;
 	my $error = 0;
 
+	# remove all iptables rules
 	foreach my $farmname ( @{ &getRBLObjectRuleParam( $rule, 'farms' ) } )
 	{
 		$error = &runRBLStop( $rule, $farmname );
@@ -233,7 +235,7 @@ sub runRBLStart
 	# if all is success link with the farm
 	if ( !$error )
 	{
-		$error = &runRBLFarmRule( $rule, $farm, 'add' );
+		$error = &runRBLIptablesRule( $rule, $farm, 'insert' );
 	}
 
 	return $error;
@@ -262,7 +264,8 @@ sub runRBLStop
 
 	require Zevenet::Farm::Base;
 
-	&runRBLFarmRule( $rule, $farm, 'delete' );
+	# remove all iptables rules
+	&runRBLIptablesRule( $rule, $farm, 'delete' );
 
 	# if are not another farm using this rule, the rule is stopped
 	if ( !&getRBLRunningFarmList( $rule ) )
