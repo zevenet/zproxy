@@ -63,8 +63,8 @@ sub new_vlan    # ( $json_obj )
 								  'valid_format' => 'ip_addr',
 				   },
 				   "mac" => {
-								  'valid_format' => 'mac_addr',
-								  'required'     => 'true',
+							  'valid_format' => 'mac_addr',
+							  'required'     => 'true',
 				   },
 	};
 
@@ -469,8 +469,8 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 								'values'    => ['true'],
 				   },
 				   "mac" => {
-								  'valid_format' => 'mac_addr',
-								  'required'     => 'true',
+							  'valid_format' => 'mac_addr',
+							  'required'     => 'true',
 				   },
 	};
 
