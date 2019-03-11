@@ -333,10 +333,10 @@ sub delIf    # ($if_ref)
 		$fileHandler->{ $if_ref->{ name } } =
 		  { status => $fileHandler->{ $if_ref->{ name } }->{ status } };
 		$fileHandler->write( "$file" );
- 		if ( $$if_ref{ name } ne $$if_ref{ dev } )
-    {
-	    unlink ( $file ) or return 1;
-    }
+		if ( $$if_ref{ name } ne $$if_ref{ dev } )
+		{
+			unlink ( $file ) or return 1;
+		}
 	}
 	else
 	{
@@ -356,7 +356,6 @@ sub delIf    # ($if_ref)
 		my $ip_cmd =
 		  "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
 
-		&zenlog("DELETING: $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}");
 		$status = &logAndRun( $ip_cmd );
 
 		# If $if is a Vlan, delete Vlan
