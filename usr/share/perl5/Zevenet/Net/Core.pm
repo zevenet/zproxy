@@ -350,11 +350,13 @@ sub delIf    # ($if_ref)
 	}
 
 	# If $if is Vini do nothing
-	if ( $$if_ref{ vini } eq '' && $if_ref->{ status } eq "up" )
+	if ( $$if_ref{ vini } eq '' )
 	{
 		# If $if is a Interface, delete that IP
 		my $ip_cmd =
 		  "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
+
+		&zenlog("DELETING: $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}");
 		$status = &logAndRun( $ip_cmd );
 
 		# If $if is a Vlan, delete Vlan

@@ -99,7 +99,6 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 				 'debug2', 'network' );
 	}
 
-
 	#~ &zenlog( "[CALL] getInterfaceConfig( $if_name )" );
 
 	my $ip_version;
@@ -110,7 +109,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	require Config::Tiny;
 	my $fileHandler = Config::Tiny->new();
-	$fileHandler = Config::Tiny->read( $config_filename ) if ( -f $config_filename );
+	$fileHandler = Config::Tiny->read( $config_filename )
+	  if ( -f $config_filename );
 
 	return unless ( -f $config_filename );
 
@@ -119,15 +119,15 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	my $iface = {};
 
-	$iface->{ name }    = $fileHandler->{$if_name}->{name}// $if_name;
-	$iface->{ addr }    = $fileHandler->{$if_name}->{ addr };
-	$iface->{ mask }    = $fileHandler->{$if_name}->{ mask };
-	$iface->{ gateway } = $fileHandler->{$if_name}->{ gateway };                            # optional
-	$iface->{ status }  = $fileHandler->{$if_name}->{ status };
+	$iface->{ name } = $fileHandler->{ $if_name }->{ name } // $if_name;
+	$iface->{ addr } = $fileHandler->{ $if_name }->{ addr };
+	$iface->{ mask } = $fileHandler->{ $if_name }->{ mask };
+	$iface->{ gateway } = $fileHandler->{ $if_name }->{ gateway };        # optional
+	$iface->{ status }  = $fileHandler->{ $if_name }->{ status };
 	$iface->{ dev }     = $if_name;
 	$iface->{ vini }    = undef;
 	$iface->{ vlan }    = undef;
-	$iface->{ mac }     = $fileHandler->{$if_name}->{ mac } // undef;
+	$iface->{ mac }     = $fileHandler->{ $if_name }->{ mac } // undef;
 	$iface->{ type }    = &getInterfaceType( $if_name );
 	$iface->{ parent }  = &getParentInterfaceName( $iface->{ name } );
 	$iface->{ ip_v } =
@@ -244,8 +244,9 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	}
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
-	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac' );
-
+	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway' );
+	push @if_params, "mac"
+	  if ( $if_ref->{ name } =~ &getValidFormat( 'vlan_interface' ) );
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
