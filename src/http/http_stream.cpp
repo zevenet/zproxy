@@ -34,3 +34,8 @@ void HttpStream::replyRedirect(BackendConfig &backend_config) {
       (HttpStatus::Code)backend_config.be_type, new_url);
   client_connection.write(response_.c_str(), response_.length());
 }
+void HttpStream::replyRedirect(int code, const char *url) {
+  auto response_ = HttpStatus::getRedirectResponse(
+      (HttpStatus::Code)code, url);
+  client_connection.write(response_.c_str(), response_.length());
+}

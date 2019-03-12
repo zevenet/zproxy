@@ -30,6 +30,7 @@ public:
   void replyError(HttpStatus::Code code, const char *code_string,
                   const char *string);
   void replyRedirect(BackendConfig &backend_config);
+  void replyRedirect(int code, const char * url);
 };
 
 #endif // NEW_ZHTTP_HTTP_STREAM_H

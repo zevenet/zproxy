@@ -4,6 +4,8 @@
 
 #include "SSLConnectionManager.h"
 #include "../util/common.h"
+#include <openssl/err.h>
+
 using namespace ssl;
 
 bool SSLConnectionManager::init(SSLContext &context) {
@@ -12,6 +14,8 @@ bool SSLConnectionManager::init(SSLContext &context) {
 }
 
 bool SSLConnectionManager::init(const ListenerConfig &listener_config) {
+//  CRYPTO_set_mem_debug(1);
+//  CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
   if (listener_config.ctx != nullptr) {
     if (ssl_context != nullptr)
       delete ssl_context;
@@ -67,17 +71,19 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
     Debug::logmsg(LOG_ERR, "SSL_new failed");
     return false;
   }
-  SSL_set_mode(
-      ssl_connection.ssl,
-      SSL_MODE_ENABLE_PARTIAL_WRITE | // enablle return if not all buffer has
+//  SSL_set_mode( ssl_connection.ssl,
+ //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enablle return if not all buffer has
           // been writen to the underlying socket,
           // need to check for sizes after writes
-          SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+//          SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
   ssl_connection.sbio =
       BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_CLOSE);
+  BIO_set_nbio(ssl_connection.sbio, 1);
   SSL_set_bio(ssl_connection.ssl, ssl_connection.sbio, ssl_connection.sbio);
   ssl_connection.io = BIO_new(BIO_f_buffer());
   ssl_connection.ssl_bio = BIO_new(BIO_f_ssl());
+  BIO_set_nbio( ssl_connection.io, 1);
+  BIO_set_nbio(ssl_connection.ssl_bio, 1); //set BIO non blocking
   BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_CLOSE);
   BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
   Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: SSL_set_accept_state for fd %d",
@@ -179,7 +185,7 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection) {
       return false;
     }
   }
-  int r = SSL_do_handshake(ssl_connection.ssl);
+  int r = SSL_do_handshake(ssl_connection.ssl); //TODO:: Memory leak!! check heaptrack
   if (r == 1) {
     ssl_connection.ssl_connected = true;
     Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
@@ -202,7 +208,7 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection) {
     Debug::logmsg(LOG_ERR,
                   "SSL_do_handshake return %d error %d errno %d msg %s", r, err,
                   errno, strerror(errno));
-    ERR_print_errors(ssl_context->error_bio);
+    //ERR_print_errors(ssl_context->error_bio);
     return false;
   }
   return true;
@@ -260,7 +266,6 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
     } else if (BIO_should_retry(ssl_connection.io))
       result = IO::IO_RESULT::DONE_TRY_AGAIN;
   } while (rc > 0);
-  return result;
 
   int ssle = SSL_get_error(ssl_connection.ssl, rc);
   if (rc < 0 && ssle != SSL_ERROR_WANT_READ) {
@@ -291,22 +296,17 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   int sent = 0;
   int rc = -1;
   //  // FIXME: Buggy, used just for test
-  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+ // Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   do {
-    rc = BIO_write(ssl_connection.io, data + sent,
+    rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent)); //, &written);
     if (rc > 0)
       sent += rc;
-    Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
+    //Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
   } while (rc > 0 && rc < (data_size - sent));
 
-  if (BIO_should_retry(ssl_connection.io)) {
-    return IO::IO_RESULT::DONE_TRY_AGAIN;
-  }
-  BIO_flush(ssl_connection.io);
-
   if (sent > 0) {
-    written = sent;
+    written = static_cast<size_t>(sent);
     return IO::IO_RESULT::SUCCESS;
   }
   int ssle = SSL_get_error(ssl_connection.ssl, rc);
@@ -325,4 +325,21 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
     return IO::IO_RESULT::FD_CLOSED;
   }
   return IO::IO_RESULT::ERROR;;
+}
+bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
+  if (ssl_connection.ssl == nullptr) {
+    if (!initSslConnection_BIO(ssl_connection)) {
+      return false;
+    }
+  }
+  int res =BIO_do_handshake(ssl_connection.io);
+  if(res <= 0) {
+   return BIO_should_retry(ssl_connection.io) ? true : false;
+  } else {
+    if((ssl_connection.x509 = SSL_get_peer_certificate(ssl_connection.ssl)) != NULL && ssl_context->listener_config.clnt_check < 3
+        && SSL_get_verify_result(ssl_connection.ssl) != X509_V_OK) {
+      logmsg(LOG_NOTICE, "Bad certificate from %s", ssl_connection.getPeerAddress().c_str());
+      return false;
+    }
+  }
 }

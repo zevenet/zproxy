@@ -38,6 +38,7 @@ Statistics::BackendInfo::BackendInfo() {
   max_response_time = -1;
   avg_response_time = -1;
   min_response_time = -1;
+  avg_conn_time = -1;
   avg_complete_response_time = -1;
 }
 

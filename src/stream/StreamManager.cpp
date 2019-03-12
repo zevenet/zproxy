@@ -144,6 +144,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
         Debug::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
             std::to_string(fd));
         break;
+      default: break;
       }
       deleteFd(fd);
       ::close(fd);
@@ -220,7 +221,7 @@ void StreamManager::start(int thread_id_) {
 #endif
 }
 
-StreamManager::StreamManager() {
+StreamManager::StreamManager(): is_https_listener(false) {
   // TODO:: do attach for config changes
 };
 
@@ -301,11 +302,30 @@ void StreamManager::onRequestEvent(int fd) {
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+
     if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
-      Debug::logmsg(LOG_INFO, "Handshake error with %s ",
-                    stream->client_connection.getPeerAddress().c_str());
+      if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST)
+          && (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
+        /* the client speaks plain HTTP on our HTTPS port */
+        Debug::logmsg(LOG_NOTICE, "Client %s sent a plain HTTP message to an SSL port", stream->client_connection.getPeerAddress().c_str());
+        if (listener_config_.nossl_redir > 0) {
+          Debug::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s redirecting to \"%s\"", pthread_self(),
+                        stream->client_connection.getPeerAddress().c_str(), listener_config_.nossl_url);
+          stream->replyRedirect(listener_config_.nossl_redir, listener_config_.nossl_url);
+        } else {
+          Debug::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s sending error",
+                        pthread_self(), stream->client_connection.getPeerAddress().c_str());
+          stream->replyError(HttpStatus::Code::BadRequest,
+                             HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
+                             listener_config_.errnossl);
+        }
+      } else {
+        Debug::logmsg(LOG_INFO, "Handshake error with %s ",
+                      stream->client_connection.getPeerAddress().c_str());
+      }
       clearStream(stream);
     }
+
     return;
   }
   case IO::IO_RESULT::SUCCESS:break;
@@ -553,11 +573,10 @@ void StreamManager::onResponseEvent(int fd) {
     }
     case IO::IO_RESULT::SUCCESS:break;
     case IO::IO_RESULT::DONE_TRY_AGAIN:break;
-    case IO::IO_RESULT::FULL_BUFFER:
-      Debug::logmsg(LOG_DEBUG, "Backend buffer full");
+    case IO::IO_RESULT::FULL_BUFFER:Debug::logmsg(LOG_DEBUG, "Backend buffer full");
       break;
     case IO::IO_RESULT::ZERO_DATA: return;
-    case IO::IO_RESULT::FD_CLOSED: return ; //wait for EPOLLRDHUP
+    case IO::IO_RESULT::FD_CLOSED: return; //wait for EPOLLRDHUP
     case IO::IO_RESULT::ERROR:
     case IO::IO_RESULT::CANCELLED:
     default: {
@@ -969,8 +988,8 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
     //    break;
     // }
 
-    return validation::REQUEST_RESULT::OK;
   }
+  return validation::REQUEST_RESULT::OK;
 }
 
 bool StreamManager::init(ListenerConfig &listener_config) {

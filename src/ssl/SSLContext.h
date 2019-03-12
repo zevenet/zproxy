@@ -14,11 +14,11 @@ class SSLContext {
 public:
   BIO *error_bio{nullptr};
   SSL_CTX *ssl_ctx{nullptr};
-
+  ListenerConfig listener_config;
   SSLContext();
   virtual ~SSLContext();
   bool init();
   bool init(const std::string &cert_file, const std::string &key_file);
-  bool init(const ListenerConfig &listener_config);
+  bool init(const ListenerConfig &listener_config_);
 };
 } // namespace ssl

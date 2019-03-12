@@ -41,8 +41,9 @@ bool SSLContext::init(const std::string &cert_file,
   return true;
 }
 
-bool SSLContext::init(const ListenerConfig &listener_config) {
+bool SSLContext::init(const ListenerConfig &listener_config_) {
   init();
+  listener_config = listener_config_;
   if (listener_config.ctx != nullptr) {
     ssl_ctx = listener_config.ctx->ctx;
     return true;
@@ -61,6 +62,8 @@ SSLContext::~SSLContext() {
 
 bool SSLContext::init() {
   error_bio = BIO_new_fd(2, BIO_NOCLOSE);
+  ERR_load_crypto_strings();
+  ERR_load_SSL_strings();
   SSL_load_error_strings();
   OpenSSL_add_all_algorithms();
   int r = SSL_library_init();
