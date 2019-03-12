@@ -45,6 +45,11 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
   service->name = std::string(service_config.name);
   service->disabled = service_config.disabled;
 
+  if (service_config.pinned_connection == 1) {
+    service->pinned_connection = true;
+  } else {
+    service->pinned_connection = false;
+  }
   // Information related with the setCookie
   if(service_config.becookie != nullptr)
     service->becookie = std::string(service_config.becookie);

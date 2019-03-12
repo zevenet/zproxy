@@ -32,6 +32,7 @@ class Service : public sessions::HttpSessionManager,
       becdomain,      /* Backend Cookie domain */
       becpath;        /* Backend cookie path */
   int becage;         /* Backend cookie age */
+  bool pinned_connection;
 
   enum LOAD_POLICY {
     LP_ROUND_ROBIN,

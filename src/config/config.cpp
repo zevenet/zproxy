@@ -1212,6 +1212,8 @@ ServiceConfig *Config::parseService(const char *svc_name) {
       parseSession(res);
     } else if (!regexec(&DynScale, lin, 4, matches, 0)) {
       res->dynscale = atoi(lin + matches[1].rm_so) == 1;
+    } else if (!regexec(&PinnedConnection, lin, 4, matches, 0)) {
+      res->pinned_connection = atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&RoutingPolicy, lin, 4, matches, 0)) {
         lin[matches[1].rm_eo] = '\0';
         std::string cp = lin + matches[1].rm_so;
@@ -1791,6 +1793,8 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&DynScale, "^[ \t]*DynScale[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&PinnedConnection, "^[ \t]*PinnedConnection[ \t]+([01])[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&RoutingPolicy, "^[ \t]*RoutingPolicy[ \t]+([^ \t]+)[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&ClientCert, "^[ \t]*ClientCert[ \t]+([0-3])[ \t]+([1-9])[ \t]*$",
@@ -1929,6 +1933,7 @@ void Config::clean_regex() {
   regfree(&TTL);
   regfree(&ID);
   regfree(&DynScale);
+  regfree(&PinnedConnection);
   regfree(&RoutingPolicy);
   regfree(&ClientCert);
   regfree(&AddHeader);

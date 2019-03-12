@@ -125,7 +125,7 @@ class Config {
       HeadRemove, RewriteLocation, RewriteDestination;
   regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd,
       Emergency, Priority, HAport, HAportAddr, StrictTransportSecurity;
-  regex_t Redirect, TimeOut, Session, Type, TTL, ID, DynScale, RoutingPolicy, NfMark;
+  regex_t Redirect, TimeOut, Session, Type, TTL, ID, DynScale,  PinnedConnection, RoutingPolicy, NfMark;
   regex_t ClientCert, AddHeader, DisableProto, SSLAllowClientRenegotiation,
       SSLHonorCipherOrder, Ciphers;
   regex_t CAlist, VerifyList, CRLlist, NoHTTPS11, Grace, Include, ConnTO,
