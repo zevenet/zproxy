@@ -606,6 +606,9 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 								'non_blank' => 'true',
 								'values'    => ['true'],
 				   },
+				   "mac" => {
+							  'valid_format' => 'mac_addr',
+				   },
 	};
 
 	# Check allowed parameters
@@ -717,84 +720,37 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 	}
 
-	# hash reference may exist without key-value pairs
-	if ( $if_ref->{ addr } )
-	{
-		# Delete old IP and Netmask from system to replace it
-		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
-
-		# Remove routes if the interface has its own route table: nic and vlan
-		&delRoutes( "local", $if_ref );
-
-		$if_ref = undef;
-	}
-
 	# Setup new interface configuration structure
 	$if_ref = &getInterfaceConfig( $bond ) // &getSystemInterface( $bond );
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ mac }     = lc $json_obj->{ mac }  if exists $json_obj->{ mac };
+	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ name }    = $bond;
 
-	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
+	unless ( $if_ref->{ addr } && $if_ref->{ mask } || $if_ref->{ mac } )
 	{
 		my $msg = "Cannot configure the interface without address or without netmask.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	eval {
+	#Change MAC Address
+	include 'Zevenet::Net::Bonding';
+	my $error = &setBondMac( $if_ref ) if ( $if_ref->{ mac } );
 
-		# Add new IP, netmask and gateway
-		die if &addIp( $if_ref );
-
-		# Writing new parameters in configuration file
-		die if &writeRoutes( $if_ref->{ name } );
-
-		# Put the interface up
-		my $previous_status = $if_ref->{ status };
-		if ( $previous_status eq "up" )
-		{
-			my $state = &upIf( $if_ref, 'writeconf' );
-
-			if ( $state == 0 )
-			{
-				$if_ref->{ status } = "up";
-				&applyRoutes( "local", $if_ref );
-			}
-			else
-			{
-				$if_ref->{ status } = $previous_status;
-			}
-		}
-
-		&setInterfaceConfig( $if_ref ) or die;
-
-		# if the GW is changed, change it in all appending virtual interfaces
-		if ( exists $json_obj->{ gateway } )
-		{
-			foreach my $appending ( &getInterfaceChild( $bond ) )
-			{
-				my $app_config = &getInterfaceConfig( $appending );
-				$app_config->{ gateway } = $json_obj->{ gateway };
-				&setInterfaceConfig( $app_config );
-			}
-		}
-
-		# put all dependant interfaces up
-		require Zevenet::Net::Util;
-		&setIfacesUp( $bond, "vini" );
-
-		# change farm vip,
-		if ( @farms )
-		{
-			require Zevenet::Farm::Config;
-			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
-		}
-	};
-
-	if ( $@ )
+	if ( $error )
 	{
-		my $msg = "Errors found trying to modify interface $bond";
+		my $msg = "Errors found trying to modify MAC address on interface $bond";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	#Change Bonding IP Address
+	$error = &setBondIP( $if_ref );
+
+	if ( $error )
+	{
+		my $msg = "Errors found trying to modify IP address on interface $bond";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

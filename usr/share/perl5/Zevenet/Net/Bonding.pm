@@ -891,4 +891,139 @@ sub get_bond_list_struct
 	return $output_list;
 }
 
+=begin nd
+Function: setBondIP
+
+	Handle all the operations to modify the bonding IP,
+
+Parameters:
+	if_ref - Hash reference with the new configuration.
+
+Returns:
+	Integer - 0 on success other value on error.
+
+See Also:
+
+=cut
+
+sub setBondIP
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $if_ref = shift;
+
+	# Retrieve old configuration
+	my $old_ref = &getInterfaceConfig( $if_ref->{ name } );
+
+	#Retrieve list of farm using this interface
+	require Zevenet::Farm::Base;
+	my $farms_ref = &getFarmListByVip( $if_ref->{ addr } );
+
+	# Delete old IP and Netmask from system to replace it
+	if ( $old_ref->{ addr } )
+	{
+		return 1
+		  if &delIp( $old_ref->{ name }, $old_ref->{ addr }, $old_ref->{ mask } );
+
+		# Remove routes if the interface has its own route table: nic and vlan
+		return 1 if &delRoutes( "local", $old_ref );
+	}
+
+	# Add new IP, netmask and gateway
+	return 1 if ( &addIp( $if_ref ) );
+
+	# Writing new parameters in configuration file
+	return 1 if ( &writeRoutes( $if_ref->{ name } ) );
+
+	# Put the interface up
+	my $previous_status = $if_ref->{ status };
+	if ( $previous_status eq "up" )
+	{
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref->{ status } = "up";
+			&applyRoutes( "local", $if_ref );
+		}
+		else
+		{
+			$if_ref->{ status } = $previous_status;
+		}
+	}
+	return 1 if ( !&setInterfaceConfig( $if_ref ) );
+
+	# if the GW is changed, change it in all appending virtual interfaces
+	if ( exists $if_ref->{ gateway } )
+	{
+		foreach my $appending ( &getInterfaceChild( $if_ref->{ name } ) )
+		{
+			my $app_config = &getInterfaceConfig( $appending );
+			$app_config->{ gateway } = $if_ref->{ gateway };
+			&setInterfaceConfig( $app_config );
+		}
+	}
+
+	# put all dependant interfaces up
+	require Zevenet::Net::Util;
+	&setIfacesUp( $if_ref->{ name }, "vini" );
+
+	# change farm vip,
+	if ( $farms_ref )
+	{
+		require Zevenet::Farm::Config;
+		&setAllFarmByVip( $if_ref->{ ip }, $farms_ref );
+	}
+	return 0;
+}
+
+=begin nd
+Function: setBondMac
+
+	Set slaves down to allow the mac change, then set the new mac and finally
+	put slaves up again.
+
+Parameters:
+	if_ref - Hash reference with the bonding interface configuration to be used.
+
+Returns:
+	status - 0 on success, other than 0 in other case.
+
+See Also:
+
+=cut
+
+sub setBondMac
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $if_ref     = shift;
+	my $status     = 0;
+	my $bondSlaves = getBondSlaves( $if_ref->{ name } );
+
+	#Error if not mac in the hash reference
+	return 1 unless ( $if_ref->{ mac } );
+
+	&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
+	foreach my $slave ( @{ $bondSlaves } )
+	{
+		my $slaveConf = getInterfaceConfig( $slave );
+		$status += downIf( $slaveConf );
+	}
+	include 'Zevenet::Net::Mac';
+	$status += addMAC( $if_ref->{ name }, $if_ref->{ mac } );
+
+	&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
+	foreach my $slave ( @{ $bondSlaves } )
+	{
+		my $slaveConf = getInterfaceConfig( $slave );
+		$status += upIf( $slaveConf );
+	}
+
+	my $config_ref = &getInterfaceConfig( $if_ref->{ name } );
+	$config_ref->{ mac } = $if_ref->{ mac };
+	&setInterfaceConfig( $config_ref );
+
+	return $status;
+}
 1;

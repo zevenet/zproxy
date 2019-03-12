@@ -266,6 +266,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Net/Bonding.pm
 	usr/share/perl5/Zevenet/Net/Floating.pm
 	usr/share/perl5/Zevenet/Net/Throughput.pm
+	usr/share/perl5/Zevenet/Net/Mac.pm
 	usr/share/perl5/Zevenet/Notify.pm
 	usr/share/perl5/Zevenet/RBAC/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Core.pm
@@ -284,5 +285,4 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/System/SSH.pm
 	usr/share/perl5/Zevenet/System/Proxy.pm
 	usr/share/perl5/Zevenet/Alias.pm
-	usr/share/perl5/Zevenet/Net/Mac.pm
 )

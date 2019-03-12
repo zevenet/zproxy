@@ -27,41 +27,6 @@ require Zevenet::Config;
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 =begin nd
-Function: genRandomMac
-
-	Generate a random locally administered unicast MAC
-
-Returns:
-	scalar - the unicast locally administered mac address randomly generated
-
-=cut
-
-sub genRandomMac
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
-	#!/usr/bin/perl
-	my $mac_addr;
-
-	require Zevenet::Certificate::Activation;
-	my $rstring = &keycert . rand () . time ();
-
-	my $md5hash = `echo -n $rstring | openssl md5 | awk '{print \$2}'`;
-	chomp $md5hash;
-
-	#truncate to 12 characters
-	$mac_addr = $1 if ( $md5hash =~ /^(.{12})/ );
-
-	# If not unicast and locally administered (X2,X6,XA,XE), set first byte to 02
-	$mac_addr =~ s/^.[01345789b-dfB-DF]/02/;
-
-	# Insert colons
-	$mac_addr =~ s/^(..)(..)(..)(..)(..)(..)/$1:$2:$3:$4:$5:$6/;
-	return $mac_addr;
-}
-
-=begin nd
 Function: addMAC
 
 	Add a MAC Address to an Interface, Vlan or Bonding
