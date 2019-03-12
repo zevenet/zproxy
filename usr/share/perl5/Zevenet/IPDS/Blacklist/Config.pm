@@ -128,7 +128,7 @@ sub setBLCreateList
 =begin nd
 Function: setBLDeleteList
 
-	Delete a list from iptables, ipset and configuration file
+	Delete a list from the configuration file and sources file
 
 Parameters:
 
@@ -153,7 +153,6 @@ sub setBLDeleteList
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
-	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my @farms          = @{ &getBLParam( $listName, 'farms' ) };
 
 	# Check if the rule is down
@@ -272,39 +271,6 @@ sub setBLAddPreloadLists
 			);
 		}
 	}
-}
-
-=begin nd
-	Function: getBLMaxelem
-
-        Get the maxelem configurated when the list was created
-
-        Parameters:
-        list - list name
-
-        Returns:
-			integer - maxelem of the set
-
-=cut
-
-sub getBLMaxelem
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $list    = shift;
-	my $ipset   = &getGlobalConfiguration( "ipset" );
-	my $maxelem = 0;
-
-	my @aux = `$ipset list $list -terse`;
-	for my $line ( @aux )
-	{
-		if ( $line =~ /maxelem (\d+)/ )
-		{
-			$maxelem = $1;
-			last;
-		}
-	}
-	return $maxelem;
 }
 
 =begin nd
@@ -505,7 +471,7 @@ sub setBLAddToList
 		&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
 		@list = @ipList;
 		untie @list;
-		&zenlog( "IPs of '$listName' were modificated.", "info", "IPDS" );
+		&zenlog( "IPs of '$listName' were modified.", "info", "IPDS" );
 		$output = 0;
 	}
 
@@ -530,9 +496,8 @@ sub setBLAddSource
 			 "debug", "PROFILING" );
 	my ( $listName, $source ) = @_;
 
-	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
-	my $policy         = &getBLParam( $listName, 'policy' );
+	my $policy = &getBLParam( $listName, 'policy' );
 	my $error;
 
 	require Zevenet::Lock;
@@ -569,8 +534,7 @@ sub setBLModifSource
 			 "debug", "PROFILING" );
 	my ( $listName, $id, $source ) = @_;
 
-	my $policy         = &getBLParam( $listName, 'policy' );
-	my $ipset          = &getGlobalConfiguration( 'ipset' );
+	my $policy = &getBLParam( $listName, 'policy' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
@@ -581,8 +545,8 @@ sub setBLModifSource
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$err = system ( "$ipset del $listName $oldSource >/dev/null 2>&1" );
-		$err = system ( "$ipset add $listName $source >/dev/null 2>&1" ) if ( !$err );
+		$err = &delIPDSPolicy( 'elements', $oldSource, $listName );
+		$err = &setIPDSPolicyParam( 'element', $source, $listName ) if ( !$err );
 	}
 
 	&zenlog( "$oldSource was replaced for $source in the list $listName",
@@ -611,8 +575,7 @@ sub setBLDeleteSource
 			 "debug", "PROFILING" );
 	my ( $listName, $id ) = @_;
 
-	my $policy         = &getBLParam( $listName, 'policy' );
-	my $ipset          = &getGlobalConfiguration( 'ipset' );
+	my $policy = &getBLParam( $listName, 'policy' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
@@ -623,7 +586,7 @@ sub setBLDeleteSource
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$err = system ( "$ipset del $listName $source >/dev/null 2>&1" );
+		$err = &delIPDSPolicy( 'elements', $source, $listName );
 	}
 
 	&zenlog( "$source was deleted from $listName", "info", "IPDS" ) if ( !$err );

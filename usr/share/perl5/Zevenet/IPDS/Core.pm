@@ -589,7 +589,7 @@ Returns:
 
 sub delIPDSPolicy
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $param = shift;
 	my $value = shift;

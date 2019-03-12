@@ -107,7 +107,7 @@ sub runIPDSStartByFarm
 	my $farmname = shift;
 
 	include 'Zevenet::Farm::Base';
-	return 0 if ( &getFarmBootStatus( $farmname ) eq "down" );
+	return if ( &getFarmBootStatus( $farmname ) eq "down" );
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
@@ -115,30 +115,28 @@ sub runIPDSStartByFarm
 	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
 	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
 	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
-	include 'Zevenet::IPDS::WAF::Runtime'       if ( @{ $rules->{ waf } } );
-
-	my $name;
 
 	# start BL rules
 	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
 		next if ( $rule->{ status } eq "down" );
-		$name = $rule->{ name };
-		&zenlog( Dumper( $rule ) );
+		my $name = $rule->{ name };
 		&runBLStart( $name, $farmname );
 	}
 
 	# start dos rules
 	foreach my $rule ( @{ $rules->{ dos } } )
 	{
-		$name = $rule->{ name };
+		next if ( $rule->{ status } eq "down" );
+		my $name = $rule->{ name };
 		&runDOSStart( $name, $farmname );
 	}
 
 	# start rbl rules
 	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
-		$name = $rule->{ name };
+		next if ( $rule->{ status } eq "down" );
+		my $name = $rule->{ name };
 		&runRBLStart( $name, $farmname );
 	}
 
@@ -166,6 +164,9 @@ sub runIPDSStopByFarm
 			 "debug", "PROFILING" );
 	my $farmname = shift;
 
+	include 'Zevenet::Farm::Base';
+	return if ( &getFarmStatus( $farmname ) eq "down" );
+
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
 
@@ -178,6 +179,7 @@ sub runIPDSStopByFarm
 	# start BL rules
 	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
+		next if ( $rule->{ status } eq "down" );
 		$name = $rule->{ name };
 		&runBLStop( $name, $farmname );
 	}
@@ -185,6 +187,7 @@ sub runIPDSStopByFarm
 	# start dos rules
 	foreach my $rule ( @{ $rules->{ dos } } )
 	{
+		next if ( $rule->{ status } eq "down" );
 		$name = $rule->{ name };
 		&runDOSStop( $name, $farmname );
 	}
@@ -192,6 +195,7 @@ sub runIPDSStopByFarm
 	# start rbl rules
 	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
+		next if ( $rule->{ status } eq "down" );
 		$name = $rule->{ name };
 		&runRBLStop( $name, $farmname );
 	}
