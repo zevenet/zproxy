@@ -176,6 +176,54 @@ sub runL4FarmServerDelete
 }
 
 =begin nd
+Function: setL4FarmBackendsSessionsRemove
+
+	Remove all the active sessions enabled to a backend in a given service
+	Used by farmguardian
+
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - 0 on success or -1 on failure
+
+=cut
+
+sub setL4FarmBackendsSessionsRemove
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farmname, $backend ) = @_;
+	my $output = 0;
+
+	#~ require Zevenet::Farm::L4xNAT::Config;
+
+	#~ # TODO: only if there is persistence
+
+	#~ my $farm	= &getL4FarmStruct( $farmname );
+	#~ my %be		= %{ $farm->{ servers }[$backend] };
+
+	#~ nft list map @persist-$farmname;
+	#~ #LGL
+
+	#~ my $recent_file = "/proc/net/xt_recent/_${farmname}_$be{tag}_sessions";
+
+	#~ if ( open ( my $file, '>', $recent_file ) )
+	#~ {
+	#~ print $file "/\n";    # flush recent file!!
+	#~ close $file;
+	#~ $output = 0;
+	#~ }
+	#~ else
+	#~ {
+	#~ &zenlog( "Could not open file $recent_file: $!", "warning", "LSLB" );
+	#~ }
+
+	return $output;
+}
+
+=begin nd
 Function: setL4FarmBackendStatus
 
 	Set backend status for a l4 farm
@@ -184,6 +232,7 @@ Parameters:
 	farmname - Farm name
 	backend - Backend id
 	status - Backend status. The possible values are: "up" or "down"
+	cutmode - true or false to force the traffic stop for such backend
 
 Returns:
 	Integer - 0 on success or other value on failure
@@ -194,17 +243,19 @@ sub setL4FarmBackendStatus
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $backend, $status ) = @_;
+	my ( $farm_name, $backend, $status, $cutmode ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
 	require Zevenet::Farm::L4xNAT::Action;
 
-	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = 0;
+	my $farm          = &getL4FarmStruct( $farm_name );
+	my $farm_filename = $farm->{ filename };
 
 	$status = 'off'  if ( $status eq "maintenance" );
 	$status = 'down' if ( $status eq "fgDOWN" );
 
-	return
+	$output =
 	  &sendL4NlbCmd(
 		{
 		   farm   => $farm_name,
@@ -214,6 +265,32 @@ sub setL4FarmBackendStatus
 			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$backend", "state" : "$status" } ] } ] })
 		}
 	  );
+
+	if ( $status ne "up" && $cutmode eq "true" )
+	{
+		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
+
+		# remove conntrack
+		my $server = $$farm{ servers }[$backend];
+		&resetL4FarmBackendConntrackMark( $server );
+	}
+
+	#~ my $stopping_fg = ( $caller =~ /runFarmGuardianStop/ );
+	#~ if ( $fg_enabled eq 'true' && !$stopping_fg )
+	#~ {
+	#~ if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
+	#~ {
+	#~ kill 'CONT' => $fg_pid;
+	#~ }
+	#~ }
+
+	#~ TODO
+	#~ if ( $farm->{ lbalg } eq 'leastconn' )
+	#~ {
+	#~ &sendL4ConfChange( $farm->{ name } );
+	#~ }
+
+	return $output;
 }
 
 =begin nd
@@ -413,66 +490,6 @@ sub getL4ServerWithLowestPriority
 }
 
 =begin nd
-Function: setL4FarmBackendMaintenance
-
-	Enable the maintenance mode for backend
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-	mode - Maintenance mode, the options are: drain, the backend continues working with
-	  the established connections; or cut, the backend cuts all the established
-	  connections
-
-Returns:
-	Integer - 0 on success or other value on failure
-
-=cut
-
-sub setL4FarmBackendMaintenance
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $farm_name, $backend, $mode ) = @_;
-
-	if ( $mode eq "cut" )
-	{
-		# TODO: Remove persistence
-		#&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
-
-		# remove conntrack
-		my $farm   = &getL4FarmStruct( $farm_name );
-		my $server = $$farm{ servers }[$backend];
-		&resetL4FarmBackendConntrackMark( $server );
-	}
-
-	return &setL4FarmBackendStatus( $farm_name, $backend, 'maintenance' );
-}
-
-=begin nd
-Function: setL4FarmBackendNoMaintenance
-
-	Disable the maintenance mode for backend
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-
-Returns:
-	Integer - 0 on success or other value on failure
-
-=cut
-
-sub setL4FarmBackendNoMaintenance
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $farm_name, $backend ) = @_;
-
-	return &setL4FarmBackendStatus( $farm_name, $backend, 'up' );
-}
-
-=begin nd
 Function: getL4BackendsWeightProbability
 
 	Get probability for every backend
@@ -611,7 +628,7 @@ sub setL4BackendRule
 	my $mark     = shift;
 
 	return -1
-	  if (    $action != /add|del/
+	  if (    $action !~ /add|del/
 		   || !defined $farm_ref
 		   || $mark eq ""
 		   || $mark eq "0x0" );
