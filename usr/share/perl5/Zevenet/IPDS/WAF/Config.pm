@@ -64,8 +64,11 @@ sub addWAFDelRegister
 	{
 		$fh = &openlock( $file, 'a' ) or $err = 1;
 	}
-	print $fh $chain;
-	close $fh;
+	if ( defined $fh )
+	{
+		print $fh $chain;
+		close $fh;
+	}
 
 	&zenlog( "Error registering deleting rule of set $set and rule \"$chain\"",
 			 "error", 'waf' )

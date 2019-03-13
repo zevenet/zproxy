@@ -289,7 +289,7 @@ sub parseWAFRule
 			{
 				$rule->{ action }       = $1;
 				$rule->{ redirect_url } = $2;
-				$rule->{ redirect_url } =~ s/^://;
+				$rule->{ redirect_url } =~ s/^:// if ( $rule->{ redirect_url } );
 			}
 			elsif ( $param =~ /^nolog$/ )
 			{
