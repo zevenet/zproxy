@@ -463,6 +463,14 @@ void StreamManager::onRequestEvent(int fd) {
           stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION,
                                     header_value);
         }
+
+        /* After setting the backend and the service in the first request,
+         * pin the connection if the PinnedConnection service config parameter
+         * is true. Note: The first request must be HTTP. */
+        if (service->service_config.pinned_connection) {
+          stream->upgrade.pinned_connection = true;
+        }
+
         stream->backend_connection.enableWriteEvent();
         break;
       }
