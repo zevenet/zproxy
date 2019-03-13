@@ -30,6 +30,17 @@ my $rblConfigFile        = "$rblPath/rbl.conf";
 my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
 my $userDomainsFile      = "$rblPath/user_domains.conf";
 
+sub setRBLLockConfigFile
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	require Zevenet::Lock;
+
+	my $lockfile = "/tmp/rbl.lock";
+
+	return &openlock( $lockfile, 'w' );
+}
+
 =begin nd
 Function: initRBLModule
 

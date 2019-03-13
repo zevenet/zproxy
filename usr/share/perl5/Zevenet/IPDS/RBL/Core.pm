@@ -497,15 +497,4 @@ sub getRBLZapiRule
 	return $output;
 }
 
-sub setRBLLockConfigFile
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	require Zevenet::Lock;
-
-	my $lockfile = "/tmp/rbl.lock";
-
-	return &openlock( $lockfile, 'w' );
-}
-
 1;
