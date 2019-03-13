@@ -111,10 +111,7 @@ sub setBLCreateList
 	# specific to local lists
 	elsif ( $type eq 'local' )
 	{
-		$output = system ( "$touch $blacklistsPath/$listName.txt 2> /dev/null" );
-		&zenlog( "unable to create list sources file $blacklistsPath/$listName.txt .",
-				 "error", "IPDS" )
-		  if ( !$output );
+		$output = &logAndRun( "$touch $blacklistsPath/$listName.txt" );
 	}
 
 	else

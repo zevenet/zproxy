@@ -29,7 +29,8 @@ include 'Zevenet::IPDS::Blacklist::Core';
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $desc = "List the available blacklists";
 
 	my $lists_ref = &getBLAllLists();
@@ -41,7 +42,8 @@ sub get_blacklists_all_lists
 #GET /ipds/blacklists/<listname>
 sub get_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $desc = "Get the blacklist $listName";
@@ -61,7 +63,8 @@ sub get_blacklists_list
 #  POST /ipds/blacklists
 sub add_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::IPDS::Blacklist::Config';
@@ -148,7 +151,8 @@ sub add_blacklists_list
 #  PUT /ipds/blacklists/<listname>
 sub set_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $listName = shift;
 
@@ -451,7 +455,8 @@ sub set_blacklists_list
 #  DELETE /ipds/blacklists/<listname> Delete a Farm
 sub del_blacklists_list
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	include 'Zevenet::IPDS::Blacklist::Config';
@@ -500,7 +505,8 @@ sub del_blacklists_list
 # POST /ipds/blacklists/BLACKLIST/actions
 sub actions_blacklists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $listName = shift;
 
@@ -579,7 +585,8 @@ sub actions_blacklists
 # POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
 sub update_remote_blacklists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	include 'Zevenet::IPDS::Blacklist::Runtime';
@@ -624,7 +631,8 @@ sub update_remote_blacklists
 #GET /ipds/blacklists/<listname>/sources
 sub get_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 
 	my $desc = "List the sources of the blacklist $listName";
@@ -650,7 +658,8 @@ sub get_blacklists_source
 #  POST /ipds/blacklists/<listname>/sources
 sub add_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $listName = shift;
 
@@ -733,14 +742,15 @@ sub add_blacklists_source
 #  PUT /ipds/blacklists/<listname>/sources/<id>
 sub set_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $listName = shift;
 	my $id       = shift;
 
 	include 'Zevenet::IPDS::Blacklist::Config';
 
-	my $desc        = "Modify a source of the blacklsit $listName";
+	my $desc        = "Modify a source of the blacklist $listName";
 	my @allowParams = ( "source" );
 
 	# check list exists
@@ -799,7 +809,8 @@ sub set_blacklists_source
 #  DELETE /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
 sub del_blacklists_source
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $listName = shift;
 	my $id       = shift;
 
@@ -848,7 +859,8 @@ sub del_blacklists_source
 #  POST /farms/<farmname>/ipds/blacklists
 sub add_blacklists_to_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmName = shift;
 
@@ -864,7 +876,7 @@ sub add_blacklists_to_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
-	if ( ! &getFarmExists( $farmName ) )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -906,7 +918,8 @@ sub add_blacklists_to_farm
 # DELETE /farms/<farmname>/ipds/blacklists/<listname>
 sub del_blacklists_from_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 	my $listName = shift;
 
@@ -915,7 +928,7 @@ sub del_blacklists_from_farm
 
 	my $desc = "Unset the blacklist $listName from the farm $farmName";
 
-	if ( ! &getFarmExists( $farmName ) )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

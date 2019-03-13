@@ -756,7 +756,7 @@ sub set_blacklists_source
 
 	include 'Zevenet::IPDS::Blacklist::Config';
 
-	my $desc        = "Modify a source of the blacklsit $listName";
+	my $desc        = "Modify a source of the blacklist $listName";
 	my @allowParams = ( "source" );
 
 	# check list exists
