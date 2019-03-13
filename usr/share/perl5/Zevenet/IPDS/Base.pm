@@ -115,6 +115,7 @@ sub runIPDSStartByFarm
 	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
 	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
 	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+	include 'Zevenet::IPDS::WAF::Runtime'       if ( @{ $rules->{ waf } } );
 
 	# start BL rules
 	foreach my $rule ( @{ $rules->{ blacklists } } )
