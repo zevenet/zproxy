@@ -120,11 +120,11 @@ sub runBLStopModule
 	include 'Zevenet::IPDS::Core';
 	include 'Zevenet::IPDS::Blacklist::Core';
 
-	my @lists = &getBLAllLists();
+	my $lists = &getBLAllLists();
 
-	foreach my $rule ( @lists )
+	foreach my $rule ( @{ $lists } )
 	{
-		&setBLDestroyList( $rule );
+		&setBLDestroyList( $rule->{ name } );
 	}
 
 	$output = &delIPDSPolicy( 'policies', undef, undef );
