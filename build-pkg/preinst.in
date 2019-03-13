@@ -28,16 +28,9 @@ fi
 mkdir "$tempdir"
 
 untar_payload
-error=0
 
-if [[ -f $tempdir/preinst.$perl_version ]]; then
-	$tempdir/preinst.$perl_version $@
-	error=$?
-else
-	echo "This package supports the following perl versions:"
-	ls "$tempdir/preinst.*" | cut -d. -f2-
-	error=2
-fi
+$tempdir/preinst $@
+error=$?
 
 rm -rf "$tempdir" && exit $error
 PAYLOAD:

@@ -176,20 +176,13 @@ if [[ $devel == "false" ]]; then
 			-exec sed --follow-symlinks -i '/debug.*PROFILING/d' {} \;
 
 	# Compile files for all debian versions
-	msg "Compiling perl files"
-	for version in "${debian_versions[@]}"; do
-		echo -e "\n>> Compiling binaries in ${version}"
-		dockerimg="zvn-ee-builder-${version}"
+	msg "Compiling perl files for debian $debian_versions"
+	echo -e "\n>> Compiling binaries in ${debian_versions}"
+	dockerimg="zvn-ee-builder-${debian_versions}"
 
-		docker run --rm -v "$(pwd)":/workdir \
-			"$dockerimg" \
-			encryption/compile_all.sh || die " compiling files"
-	done
-
-	# Delete source code of compiled files
-	for file in "${compiled_files[@]}"; do
-		rm -f "$file"
-	done
+	docker run --rm -v "$(pwd)":/workdir \
+		"$dockerimg" \
+		encryption/compile_all.sh || die " compiling files"
 
 	# Encrypt modules using the most recent debian version
 	msg "Encripting perl modules..."
@@ -201,7 +194,7 @@ if [[ $devel == "false" ]]; then
 	msg "Preparing preinst..."
 
 	cd DEBIAN/
-	tar -cvf ../payload.tar preinst.* cacrl.crl || exit 1
+	tar -cvf ../payload.tar preinst cacrl.crl || exit 1
 	rm preinst*
 	cd ../
 

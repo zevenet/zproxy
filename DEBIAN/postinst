@@ -47,20 +47,6 @@ if [ ! -e "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
 	ln -sf /usr/share/perl5/Zevenet/Farm/L4nft /usr/share/perl5/Zevenet/Farm/L4xNAT
 fi
 
-# Choose the binaries version according to the OS version
-PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
-compiled_files=(
-	$zbindir/zevenet
-	$zbindir/enterprise.bin
-)
-for i in ${compiled_files[@]}
-do
-	if [ -e ${i}.${PERLVER} ]; then
-		mv ${i}.${PERLVER} ${i}
-		rm ${i}.*
-	fi
-done
-
 
 ## Apply system configurations
 

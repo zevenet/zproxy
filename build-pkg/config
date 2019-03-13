@@ -1,9 +1,9 @@
 # Target environments
-debian_versions=(buster)
+# now, this parameter only accepts one value!
+debian_versions="buster"
 
 # files of CE
 # All files from the directory: /build-pkg/files-ce
-
 
 # excepciones que no deben ser copiadas y no se encriptan. No deben estar en la CE
 enterprise_files=(
