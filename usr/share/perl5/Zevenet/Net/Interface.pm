@@ -1739,7 +1739,7 @@ sub setVlan    # if_ref
 		my $oldAddr;
 
 		# Add new IP, netmask and gateway
-		if ( exists $params->{ ip } )
+		if ( exists $if_ref->{ addr } )
 		{
 			return 1 if &addIp( $if_ref );
 			return 1 if &writeRoutes( $if_ref->{ name } );
