@@ -109,8 +109,8 @@ sub local_http_service
 {
 	my ( $command ) = @_;
 
-	die "local_http_service command not recognized"
-		unless $command =~ /^(?:start|stop)$/;
+	die "local_http_service '$command' command not recognized"
+		unless $command =~ /^(?:start|stop|restart)$/;
 
 	system ( "/etc/init.d/cherokee $command >/dev/null &" );
 }
