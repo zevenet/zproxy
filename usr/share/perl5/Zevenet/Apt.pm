@@ -21,6 +21,7 @@ sub setAPTRepo
 	my $kernel3       = "4.9.0-4-amd64";
 	my $kernel4       = "3.16.0-4-amd64";
 	my $kernel5       = "4.9.110-z5000";
+	my $kernel6       = "4.9.0-7-amd64";
 	my $file          = "/etc/apt/sources.list.d/zevenet.list";
 	my $gpgkey        = "ee.zevenet.com.gpg.key";
 	my $from_version  = "5.2.10";
@@ -133,9 +134,13 @@ sub setAPTRepo
 	{
 		print $FH "deb https://$host/ee/v5/$kernel4 $distribution2 main\n";
 	}
-	if ( $kernelversion eq "$kernel5" )
+	if ( $kernelversion eq $kernel5 )
 	{
 		print $FH "deb https://$host/ee/v5/$kernel5 $distribution1 main\n";
+	}
+	if ( $kernelversion eq $kernel6 )
+	{
+		print $FH "deb https://$host/ee/v5/$kernel6 $distribution1 main\n";
 	}
 
 	close $fh;
