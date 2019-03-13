@@ -229,7 +229,7 @@ sub createWAFRule
 
 	my $set_st = &getWAFSet( $set );
 	push @{ $set_st->{ rules } }, $rule_ref;
-	my $err_msg = &buildWAFSet( $set, $set_st );
+	$err_msg = &buildWAFSet( $set, $set_st );
 
 	return $err_msg;
 }
@@ -375,7 +375,7 @@ sub createWAFSet
 	my $err     = 0;
 
 	my $fh = &openlock( &getWAFSetFile( $setName ), 'w' ) or $err = 1;
-	close $fh;
+	close $fh if ( defined $fh );
 
 	return $err;
 }
@@ -731,7 +731,7 @@ sub createWAFMatch
 	return $err_msg if ( $err_msg );
 
 	# if has been created properly, the rule id is the last in the config file
-	my $rule_st = &getWAFRule( $set, $rule_index );
+	$rule_st = &getWAFRule( $set, $rule_index );
 
 	return undef;
 }

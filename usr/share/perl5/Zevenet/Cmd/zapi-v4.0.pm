@@ -102,11 +102,21 @@ if ( exists $ENV{ CONTENT_TYPE }
 {
 	my $json_data = $q->param( 'POSTDATA' ) || $q->param( 'PUTDATA' );
 
-	# not to print password
-	$json_data =~ s/(password\w*)"\s*:\s*"[^"]*"/$1":"*******"/g;
-	$json_data =~ s/(zapikey\w*)"\s*:\s*"[^"]*"/$1":"*******"/g;
+	if ( $json_data )
+	{
+		# not to print password
+		#if ($json_data =~ /(password\w*)"\s*:\s*"[^"]*"/)
+		#{
+		$json_data =~ s/(password\w*)"\s*:\s*"[^"]*"/$1":"*******"/g;
 
-	&zenlog( "$ENV{ REQUEST_METHOD } DATA: " . $json_data, 'info', 'API' );
+		#}
+		#if ($json_data =~ /(zapikey\w*)"\s*:\s*"[^"]*"/)
+		{
+			$json_data =~ s/(zapikey\w*)"\s*:\s*"[^"]*"/$1":"*******"/g;
+		}
+
+		&zenlog( "$ENV{ REQUEST_METHOD } DATA: " . $json_data, 'info', 'API' );
+	}
 }
 
 ##### Verify RBAC permissions ########################################

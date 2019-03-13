@@ -194,7 +194,7 @@ sub parseWAFRule
 
 			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)?$/ )
 			{
-				$rule->{ operator }  = $+{ operator } // "rx";
+				$rule->{ operator } = $+{ operator } // "rx";
 				$rule->{ operating } = $+{ operating };
 			}
 
@@ -689,8 +689,8 @@ sub buildWAFSetConf
 		}
 	}
 
-	$conf->{ default_action } // 'pass';
-	$conf->{ default_phase } // '1';
+	$conf->{ default_action } //= 'pass';
+	$conf->{ default_phase }  //= '1';
 	my $defaults =
 	  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
 	$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
