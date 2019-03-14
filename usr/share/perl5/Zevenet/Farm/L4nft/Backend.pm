@@ -197,28 +197,35 @@ sub setL4FarmBackendsSessionsRemove
 	my ( $farmname, $backend ) = @_;
 	my $output = 0;
 
-	#~ require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::L4xNAT::Config;
 
-	#~ # TODO: only if there is persistence
+	my $farm = &getL4FarmStruct( $farmname );
 
-	#~ my $farm	= &getL4FarmStruct( $farmname );
-	#~ my %be		= %{ $farm->{ servers }[$backend] };
+	return 0 if ( $farm->{ persist } eq "none" );
 
-	#~ nft list map @persist-$farmname;
-	#~ #LGL
+	my $be = $farm->{ servers }[$backend];
+	my $tag =~ s/0x//g;
+	my $map_name   = "persist-$farmname";
+	my @persistmap = `/usr/local/sbin/nft list map nftlb $map_name`;
+	my $data       = 0;
 
-	#~ my $recent_file = "/proc/net/xt_recent/_${farmname}_$be{tag}_sessions";
+	foreach my $line ( @persistmap )
+	{
+		$data = 1 if ( $line =~ /elements = / );
+		next if ( !$data );
 
-	#~ if ( open ( my $file, '>', $recent_file ) )
-	#~ {
-	#~ print $file "/\n";    # flush recent file!!
-	#~ close $file;
-	#~ $output = 0;
-	#~ }
-	#~ else
-	#~ {
-	#~ &zenlog( "Could not open file $recent_file: $!", "warning", "LSLB" );
-	#~ }
+		my ( $key, $time, $value ) =
+		  ( $line =~ / ([\w\.\s\:]+) expires (\w+) : (\w+)[\s,]/ );
+		&logAndRun( "/usr/local/sbin/nft delete element nftlb $map_name { $key }" )
+		  if ( $value =~ /^0x.0*$tag/ );
+
+		my ( $key, $time, $value ) =
+		  ( $line =~ /, ([\w\.\s\:]+) expires (\w+) : (\w+)[\s,]/ );
+		&logAndRun( "/usr/local/sbin/nft delete element nftlb $map_name { $key }" )
+		  if ( $value ne "" && $value =~ /^0x.0*$tag/ );
+
+		last if ( $data && $line =~ /\}/ );
+	}
 
 	return $output;
 }
@@ -232,7 +239,7 @@ Parameters:
 	farmname - Farm name
 	backend - Backend id
 	status - Backend status. The possible values are: "up" or "down"
-	cutmode - true or false to force the traffic stop for such backend
+	cutmode - cut to force the traffic stop for such backend
 
 Returns:
 	Integer - 0 on success or other value on failure
@@ -266,7 +273,7 @@ sub setL4FarmBackendStatus
 		}
 	  );
 
-	if ( $status ne "up" && $cutmode eq "true" )
+	if ( $status ne "up" && $cutmode eq "cut" )
 	{
 		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
 
@@ -548,7 +555,7 @@ sub resetL4FarmBackendConntrackMark
 	my $server = shift;
 
 	my $conntrack = &getGlobalConfiguration( 'conntrack' );
-	my $cmd       = "$conntrack -D -m $server->{ tag }";
+	my $cmd       = "$conntrack -D -m $server->{ tag }/0x7fffffff";
 
 	&zenlog( "running: $cmd" ) if &debug();
 

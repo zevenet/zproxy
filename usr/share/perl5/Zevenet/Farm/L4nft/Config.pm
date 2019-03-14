@@ -213,9 +213,14 @@ sub setL4FarmParam
 	{
 		$parameters = qq(, "state" : "$value" );
 	}
-	elsif ( $param =~ /persist/ )
+	elsif ( $param eq "persist" )
 	{
-		return 0;
+		$value = "srcip" if ( $value eq "ip" );
+		$parameters = qq(, "persistence" : "$value" );
+	}
+	elsif ( $param eq "persisttm" )
+	{
+		$parameters = qq(, "persist-ttl" : "$value" );
 	}
 	elsif ( $param eq "limitrst" )
 	{
@@ -291,17 +296,11 @@ Returns:
 
 sub _getL4ParseFarmConfig
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $param, $value, $config ) = @_;
 	my $output = -1;
 	my $exit   = 1;
-
-	if ( $param eq 'persist' || $param eq 'persisttm' )
-	{
-		$output = "none";
-		return $output;
-	}
 
 	foreach my $line ( @{ $config } )
 	{
@@ -333,6 +332,21 @@ sub _getL4ParseFarmConfig
 		}
 
 		if ( $line =~ /\"protocol\"/ && $param eq 'proto' )
+		{
+			my @l = split /"/, $line;
+			$output = $l[3];
+			$exit   = 0;
+		}
+
+		if ( $line =~ /\"persistence\"/ && $param eq 'persist' )
+		{
+			my @l = split /"/, $line;
+			$output = $l[3];
+			$output = "ip" if ( $output eq "srcip " );
+			$exit   = 0;
+		}
+
+		if ( $line =~ /\"persist-ttl\"/ && $param eq 'persisttm' )
 		{
 			my @l = split /"/, $line;
 			$output = $l[3];
@@ -516,8 +530,8 @@ sub getL4FarmStruct
 	$farm{ vport }   = &_getL4ParseFarmConfig( 'vipp', undef, $config );
 	$farm{ vproto }  = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
-#	$farm{ persist }    = &_getL4ParseFarmConfig( 'persist', undef, $config ); #TODO: not yet supported
-#	$farm{ ttl }        = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
+	$farm{ persist } = &_getL4ParseFarmConfig( 'persist',   undef, $config );
+	$farm{ ttl }     = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ proto }      = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ bootstatus } = &_getL4ParseFarmConfig( 'bootstatus', undef, $config );
 	$farm{ status }     = &getL4FarmStatus( $farm{ name } );

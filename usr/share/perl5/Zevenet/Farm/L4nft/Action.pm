@@ -48,7 +48,7 @@ sub startL4Farm    # ($farm_name)
 			 "debug", "PROFILING" );
 
 	my $farm_name = shift;
-	my $writeconf = shift;
+	my $writeconf = shift // 0;
 
 	require Zevenet::Farm::L4xNAT::Config;
 
@@ -207,7 +207,7 @@ Returns:
 
 sub startL4FarmNlb    # ($farm_name)
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
 	my $writeconf = shift;
