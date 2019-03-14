@@ -25,13 +25,13 @@ case "$1" in
         if [ $packages \> 0 ]
        	then
                	echo "$packages packages require upgrade"
-                echo "To upgrade, execute: apt-get upgrade"
+                echo "To upgrade, execute: apt-get --with-new-pkgs upgrade"
        	        echo "last check at `date` - $packages packages require upgrade, update this information with: checkupgrades" > /usr/local/zevenet/app/checkupgrades/share/message.txt
-               	echo "To upgrade, execute: apt-get upgrade" >> /usr/local/zevenet/app/checkupgrades/share/message.txt
+             	echo "To upgrade, execute: apt-get --with-new-pkgs upgrade" >> /usr/local/zevenet/app/checkupgrades/share/message.txt
                 $apt_bin list --upgradable 2>/dev/null | cut -d"/" -f 1  | tr  '\n' ' ' > /usr/local/zevenet/app/checkupgrades/share/package_upgradables.txt
        	else
                	echo "Zevenet Packages are up-to-date."
-                echo "Zevenet Packages are up-to-date." > /usr/local/zevenet/app/checkupgrades/share/message.txt
+		echo "Zevenet Packages are up-to-date." > /usr/local/zevenet/app/checkupgrades/share/message.txt
        	fi
 ;;
 
