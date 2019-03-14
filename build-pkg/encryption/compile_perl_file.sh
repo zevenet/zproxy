@@ -18,3 +18,7 @@ sed "s|#{FILECONTENTB64}|${FILECONTENTB64}|g" "${BASE_DIR}/perlembed.c" > "${BAS
 sync
 gcc -o "${BASE_DIR}/${NAME}" "${BASE_DIR}/${NAME}.c" "${BASE_DIR}/perlxsi.c" $(perl -MExtUtils::Embed -e ccopts -e ldopts) -lcrypto
 strip "${BASE_DIR}/${NAME}"
+
+cp "${BASE_DIR}/${NAME}" ${FILE}
+echo -n "Compiled file: "
+ls ${FILE}
