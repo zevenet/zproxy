@@ -912,8 +912,6 @@ sub setBondIP
 
 	# Retrieve old configuration
 	my $old_ref = &getInterfaceConfig( $if_ref->{ name } );
-	&zenlog( "OLDREF" . Dumper $if_ref);
-	&zenlog( "IFREF" . Dumper $if_ref);
 
 	#Retrieve list of farm using this interface
 	require Zevenet::Farm::Base;

@@ -127,7 +127,6 @@ sub new_bond    # ( $json_obj )
 	my @bond_slaves = @{ $json_obj->{ slaves } };
 	my @output_slaves;
 
-	&zenlog( Dumper $if_ref );
 	push ( @output_slaves, { name => $_ } ) for @bond_slaves;
 	&setInterfaceConfig( $if_ref );
 	my $body = {
