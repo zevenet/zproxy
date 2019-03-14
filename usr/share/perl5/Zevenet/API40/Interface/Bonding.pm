@@ -26,10 +26,8 @@ use strict;
 use Zevenet::API40::HTTP;
 
 my @bond_modes_short = (
-						 'balance-rr',  'active-backup',
-						 'balance-xor', 'broadcast',
-						 '802.3ad',     'balance-tlb',
-						 'balance-alb',
+						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+						 '802.3ad',    'balance-tlb',   'balance-alb',
 );
 
 sub new_bond    # ( $json_obj )
@@ -129,8 +127,9 @@ sub new_bond    # ( $json_obj )
 	my @bond_slaves = @{ $json_obj->{ slaves } };
 	my @output_slaves;
 
+	&zenlog( Dumper $if_ref );
 	push ( @output_slaves, { name => $_ } ) for @bond_slaves;
-
+	&setInterfaceConfig( $if_ref );
 	my $body = {
 				 description => $desc,
 				 params      => {
@@ -595,9 +594,11 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	my $params = {
 				   "ip" => {
 							 'valid_format' => 'ip_addr',
+							 'non_blank'    => 'true',
 				   },
 				   "netmask" => {
 								  'valid_format' => 'ip_mask',
+								  'non_blank'    => 'true',
 				   },
 				   "gateway" => {
 								  'valid_format' => 'ip_addr',
@@ -631,7 +632,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	# check if network is correct
 	my $new_if = {
-				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+				   addr    => $json_obj->{ ip } // $if_ref->{ addr },
 				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
@@ -729,7 +730,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ name }    = $bond;
 
-	unless ( $if_ref->{ addr } && $if_ref->{ mask } || $if_ref->{ mac } )
+	unless (    exists $if_ref->{ addr } && exists $if_ref->{ mask }
+			 || exists $if_ref->{ mac } )
 	{
 		my $msg = "Cannot configure the interface without address or without netmask.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -737,7 +739,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	#Change MAC Address
 	include 'Zevenet::Net::Bonding';
-	my $error = &setBondMac( $if_ref ) if ( $if_ref->{ mac } );
+	my $error = &setBondMac( $if_ref ) if ( exists $json_obj->{ mac } );
 
 	if ( $error )
 	{
@@ -746,7 +748,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	}
 
 	#Change Bonding IP Address
-	$error = &setBondIP( $if_ref );
+	$error = &setBondIP( $if_ref )
+	  if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } );
 
 	if ( $error )
 	{

@@ -37,10 +37,8 @@ my @bond_modes = (
 );
 
 my @bond_modes_short = (
-						 'balance-rr',  'active-backup',
-						 'balance-xor', 'broadcast',
-						 '802.3ad',     'balance-tlb',
-						 'balance-alb',
+						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+						 '802.3ad',    'balance-tlb',   'balance-alb',
 );
 
 =begin nd
@@ -914,13 +912,15 @@ sub setBondIP
 
 	# Retrieve old configuration
 	my $old_ref = &getInterfaceConfig( $if_ref->{ name } );
+	&zenlog( "OLDREF" . Dumper $if_ref);
+	&zenlog( "IFREF" . Dumper $if_ref);
 
 	#Retrieve list of farm using this interface
 	require Zevenet::Farm::Base;
 	my $farms_ref = &getFarmListByVip( $if_ref->{ addr } );
 
 	# Delete old IP and Netmask from system to replace it
-	if ( $old_ref->{ addr } )
+	if ( defined $old_ref->{ addr } && $old_ref->{ addr } ne "" )
 	{
 		return 1
 		  if &delIp( $old_ref->{ name }, $old_ref->{ addr }, $old_ref->{ mask } );
@@ -936,7 +936,8 @@ sub setBondIP
 	return 1 if ( &writeRoutes( $if_ref->{ name } ) );
 
 	# Put the interface up
-	my $previous_status = $if_ref->{ status };
+	my $previous_status = $old_ref->{ status };
+
 	if ( $previous_status eq "up" )
 	{
 		my $state = &upIf( $if_ref, 'writeconf' );
@@ -1007,20 +1008,21 @@ sub setBondMac
 	&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
 	{
-		my $slaveConf = getInterfaceConfig( $slave );
-		$status += downIf( $slaveConf );
+		my $slaveConf = &getInterfaceConfig( $slave );
+		$status += &downIf( $slaveConf );
 	}
 	include 'Zevenet::Net::Mac';
-	$status += addMAC( $if_ref->{ name }, $if_ref->{ mac } );
+	$status += &addMAC( $if_ref->{ name }, $if_ref->{ mac } );
 
 	&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
 	{
-		my $slaveConf = getInterfaceConfig( $slave );
-		$status += upIf( $slaveConf );
+		my $slaveConf = &getInterfaceConfig( $slave );
+		$status += &upIf( $slaveConf );
 	}
 
-	my $config_ref = &getInterfaceConfig( $if_ref->{ name } );
+	my $config_ref = &getInterfaceConfig( $if_ref->{ name } )
+	  // &getSystemInterface( $if_ref->{ name } );
 	$config_ref->{ mac } = $if_ref->{ mac };
 	&setInterfaceConfig( $config_ref );
 

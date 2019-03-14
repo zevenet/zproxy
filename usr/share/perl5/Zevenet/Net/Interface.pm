@@ -264,7 +264,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	if ( !-f $config_filename )
 	{
 
-		$fileHandle->{ $if_ref->{ name } }->{ status } = "up";
+		$fileHandle->{ $if_ref->{ name } }->{ status } = $if_ref->{ status } // "up";
 	}
 
 	return 0
