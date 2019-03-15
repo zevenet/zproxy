@@ -1,1 +1,1 @@
-enterprise.bin
+/usr/local/zevenet/bin/enterprise.bin updateRemoteList "$@"
