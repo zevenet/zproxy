@@ -8,8 +8,13 @@
 
 using namespace ssl;
 
-bool SSLConnectionManager::init(SSLContext &context) {
-  // TODO:: not impelemented
+bool SSLConnectionManager::init(const BackendConfig &backend_config) {
+  if (backend_config.ctx != nullptr) {
+    if (ssl_context != nullptr)
+      delete ssl_context;
+    ssl_context = new SSLContext();
+    return ssl_context->init(backend_config);
+  }
   return false;
 }
 
@@ -436,6 +441,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
+
 /*
 bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
   if (ssl_connection.ssl == nullptr) {

@@ -29,6 +29,7 @@ public:
   SSLConnectionManager();
   virtual ~SSLConnectionManager();
   bool init(SSLContext &context);
+  bool init(const BackendConfig &backend_config);
   bool init(const ListenerConfig &listener_config);
 
   bool initSslConnection(Connection &ssl_connection, bool client_mode = false);

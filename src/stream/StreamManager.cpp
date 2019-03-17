@@ -455,6 +455,7 @@ void StreamManager::onRequestEvent(int fd) {
           stream->backend_connection.setBackend(bck);
           stream->backend_connection.time_start =
               std::chrono::steady_clock::now();
+
           op_state = stream->backend_connection.doConnect(*bck->address_info,
                                                           bck->conn_timeout);
           switch (op_state) {
@@ -486,8 +487,11 @@ void StreamManager::onRequestEvent(int fd) {
           case IO::IO_OP::OP_SUCCESS: {
               DEBUG_COUNTER_HIT(debug__::on_backend_connect);
             stream->backend_connection.getBackend()->increaseConnection();
-            streams_set[stream->backend_connection.getFileDescriptor()] =
-                stream;
+            streams_set[stream->backend_connection.getFileDescriptor()] = stream;
+/*
+            if (stream->backend_connection.getBackend()->backend_config.ctx != nullptr)
+              ssl_manager->init(stream->backend_connection.getBackend()->backend_config);
+*/
             stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE,
                                                     EVENT_GROUP::SERVER);
             break;
@@ -624,11 +628,15 @@ void StreamManager::onResponseEvent(int fd) {
     }
 #endif
   } else {
-    result = stream->backend_connection.read();
+    if (stream->backend_connection.getBackend()->backend_config.ctx != nullptr) {
+      result = this->ssl_manager->handleDataRead(stream->backend_connection);
+    } else {
+      result = stream->backend_connection.read();
+    }
     switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-      if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
+      if (!this->ssl_manager->handleHandshake(stream->backend_connection)) {
         Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
                       stream->client_connection.getPeerAddress().c_str());
         clearStream(stream);
@@ -812,10 +820,41 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
 
-  /* If the connection is pinned, then we need to write the buffer
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+
+  if (stream->backend_connection.getBackend()->backend_config.ctx != nullptr) {
+    size_t written = 0;
+    result = this->ssl_manager->handleWrite(
+        stream->backend_connection, stream->client_connection.buffer,
+        stream->client_connection.buffer_size, written);
+    switch (result) {
+    case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
+    case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+      if (!this->ssl_manager->handleHandshake(stream->backend_connection)) {
+        Debug::logmsg(LOG_INFO, "Handshake error with %s ",
+                      stream->backend_connection.getPeerAddress().c_str());
+        clearStream(stream);
+      }
+      return;
+    }
+    case IO::IO_RESULT::FD_CLOSED:
+    case IO::IO_RESULT::CANCELLED:
+    case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
+      clearStream(stream);
+      return;
+    case IO::IO_RESULT::SUCCESS:break;
+    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
+    case IO::IO_RESULT::FULL_BUFFER:break;
+    }
+    stream->client_connection.buffer_size -= written;
+
+  } else {
+    result = stream->client_connection.writeTo(stream->backend_connection,
+                                                stream->request);
+  }
+    /* If the connection is pinned, then we need to write the buffer
    * content without applying any kind of modification. */
-  if (stream->upgrade.pinned_connection) {
-    stream->client_connection.writeTo(stream->backend_connection.getFileDescriptor());
+  if (stream->upgrade.pinned_connection) {   
     stream->client_connection.enableReadEvent();
     stream->backend_connection.enableReadEvent();
     return;
@@ -826,13 +865,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
     stream->chunked_status = stream->chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK ?
                              http::CHUNKED_STATUS::CHUNKED_DISABLED :
-                             http::CHUNKED_STATUS::CHUNKED_ENABLED;
-
-    result = stream->backend_connection.write(stream->client_connection.buffer, stream->client_connection.buffer_size);
-    /* We need to indicate that all the buffer content has been written. */
+                             http::CHUNKED_STATUS::CHUNKED_ENABLED;   
     stream->client_connection.buffer_size = 0;
-  } else {
-    result = stream->client_connection.writeTo(stream->backend_connection, stream->request);
   }
 
   if (result == IO::IO_RESULT::SUCCESS) {

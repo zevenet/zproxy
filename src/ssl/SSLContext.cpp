@@ -52,6 +52,17 @@ bool SSLContext::init(const std::string &cert_file,
   return true;
 }
 
+bool SSLContext::init(const BackendConfig &backend_config_) {
+  init();
+  if (backend_config_.ctx != nullptr) {
+    ssl_ctx = backend_config_.ctx;
+    return true;
+  }
+  Debug::LogInfo("SSL initialized", LOG_DEBUG);
+  return true;
+}
+
+
 bool SSLContext::init(const ListenerConfig &listener_config_) {
   init();
   listener_config = listener_config_;
