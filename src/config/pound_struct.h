@@ -52,6 +52,7 @@ class BackendConfig {
                     replacement */
   char *bekey;   /* Backend Key for Cookie */
   SSL_CTX *ctx;  /* CTX for SSL connections */
+  std::string ssl_config_file; /* ssl config file path */
   pthread_mutex_t mut; /* mutex for this back-end */
   int n_requests;      /* number of requests seen */
   double t_requests;   /* time to answer these requests */
@@ -138,6 +139,7 @@ struct ListenerConfig {
   regex_t url_pat;      /* pattern to match the request URL against */
   char *err414,         /* error messages */
       *err500, *err501, *err503, *errnossl;
+  std::string ssl_config_file; /* ssl config file path */
   char *nossl_url; /* If a user goes to a https port with a http: url, redirect
                       them to this url */
   int nossl_redir; /* Code to use for redirect (301 302 307)*/

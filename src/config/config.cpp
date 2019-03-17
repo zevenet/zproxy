@@ -573,6 +573,9 @@ ListenerConfig *Config::parse_HTTPS() {
     } else if (!regexec(&Err503, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->err503 = file2str(lin + matches[1].rm_so);
+    } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      res->ssl_config_file = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&ErrNoSsl, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->errnossl = file2str(lin + matches[1].rm_so);
@@ -1380,6 +1383,9 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
       lin[matches[1].rm_eo] = '\0';
       if ((res->bekey = strdup(lin + matches[1].rm_so)) == NULL)
         conf_err("out of memory");
+    } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      res->ssl_config_file = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&Priority, lin, 4, matches, 0)) {
       if (is_emergency)
         conf_err("Priority is not supported for Emergency back-ends");
@@ -1711,6 +1717,8 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&Err503, "^[ \t]*Err503[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&SSLConfigFile, "^[ \t]*SSLConfigFile[ \t]+\"(.+)\"[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&ErrNoSsl, "^[ \t]*ErrNoSsl[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&NoSslRedirect,
@@ -1882,6 +1890,7 @@ void Config::clean_regex() {
   regfree(&Err500);
   regfree(&Err501);
   regfree(&Err503);
+  regfree(&SSLConfigFile);
   regfree(&ErrNoSsl);
   regfree(&NoSslRedirect);
   regfree(&MaxRequest);

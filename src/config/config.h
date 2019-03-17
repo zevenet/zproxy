@@ -121,7 +121,7 @@ class Config {
       LogLevel, Alive, SSLEngine, Control;
   regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP,
       Client, CheckURL;
-  regex_t Err414, Err500, Err501, Err503, ErrNoSsl, NoSslRedirect, MaxRequest,
+  regex_t Err414, Err500, Err501, Err503, SSLConfigFile, ErrNoSsl, NoSslRedirect, MaxRequest,
       HeadRemove, RewriteLocation, RewriteDestination;
   regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd,
       Emergency, Priority, HAport, HAportAddr, StrictTransportSecurity;
