@@ -326,6 +326,7 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   }
   return IO::IO_RESULT::ERROR;;
 }
+/*
 bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
   if (ssl_connection.ssl == nullptr) {
     if (!initSslConnection_BIO(ssl_connection)) {
@@ -343,3 +344,4 @@ bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
     }
   }
 }
+*/

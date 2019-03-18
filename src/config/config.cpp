@@ -573,9 +573,6 @@ ListenerConfig *Config::parse_HTTPS() {
     } else if (!regexec(&Err503, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->err503 = file2str(lin + matches[1].rm_so);
-    } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
-      lin[matches[1].rm_eo] = '\0';
-      res->ssl_config_file = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&ErrNoSsl, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->errnossl = file2str(lin + matches[1].rm_so);

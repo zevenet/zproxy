@@ -73,3 +73,28 @@ bool SSLContext::init() {
   }
   return true;
 }
+
+/* This function loads the OpenSSL configuration file. */
+bool SSLContext::loadOpensslConfig(const std::string path) {
+  /* We use FILE instead of c++ ifstream because it is not
+   * compatible with the NCONF functions. */
+  FILE *fp;
+  CONF *cnf = NULL;
+  long eline;
+
+  fp = fopen(path.c_str(), "r");
+  if (fp == NULL) {
+    return false;
+  } else {
+      cnf = NCONF_new(NULL);
+      if (NCONF_load_fp(cnf, fp, &eline) == 0) {
+        return false;
+          /* Other malformed configuration file behaviour */
+      } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
+        return false;
+          /* Other configuration error behaviour */
+      }
+      fclose(fp);
+      NCONF_free(cnf);
+  }
+}
