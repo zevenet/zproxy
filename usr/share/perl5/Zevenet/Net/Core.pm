@@ -330,8 +330,14 @@ sub delIf    # ($if_ref)
 	if ( -f $file )
 	{
 		$fileHandler = Config::Tiny->read( $file );
-		$fileHandler->{ $if_ref->{ name } } =
-		  { status => $fileHandler->{ $if_ref->{ name } }->{ status } };
+		$fileHandler->{ $if_ref->{ name } } = {
+								  mask   => "",
+								  status => $fileHandler->{ $if_ref->{ name } }->{ status },
+								  addr   => "",
+								  mac    => $if_ref->{ mac },
+								  gateway => ""
+		};
+
 		$fileHandler->write( "$file" );
 		if ( $$if_ref{ name } ne $$if_ref{ dev } )
 		{
@@ -356,7 +362,8 @@ sub delIf    # ($if_ref)
 		my $ip_cmd =
 		  "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
 
-		$status = &logAndRun( $ip_cmd );
+		$status = &logAndRun( $ip_cmd )
+		  if ( length $if_ref->{ addr } && length $if_ref->{ mask } );
 
 		# If $if is a Vlan, delete Vlan
 		if ( $$if_ref{ vlan } ne '' )

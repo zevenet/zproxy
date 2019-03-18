@@ -275,7 +275,6 @@ sub delete_interface_bond    # ( $bond )
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &delIf( $if_ref );
-		unlink &getInterfaceConfigFile( $if_ref->{ name } );
 	};
 
 	if ( $@ )
