@@ -348,10 +348,16 @@ sub delete_bond    # ( $bond )
 
 	my $bond_in_use = 0;
 	my $bond_hash = &getInterfaceConfig( $bond, 4 );
-	$bond_in_use = 1 if ( $bond_hash and defined $bond_hash->{ addr } );
+	$bond_in_use = 1
+	  if (     $bond_hash
+		   and defined $bond_hash->{ addr }
+		   and length $bond_hash->{ addr } );
 
 	$bond_hash = &getInterfaceConfig( $bond, 6 );
-	$bond_in_use = 1 if ( $bond_hash and defined $bond_hash->{ addr } );
+	$bond_in_use = 1
+	  if (     $bond_hash
+		   and defined $bond_hash->{ addr }
+		   and length $bond_hash->{ addr } );
 
 	if ( $bond_in_use )
 	{
