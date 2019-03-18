@@ -60,7 +60,7 @@ sub runRBLFarmRule
 
 	if ( $action eq "add" )
 	{
-		my $nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
+		$nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
 		return 0 if ( $nfqueue !~ /\d+/ );
 	}
 	elsif ( $action eq "delete" )
