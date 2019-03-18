@@ -93,18 +93,25 @@ sub get_ipds_package
 	{
 		$params->{ scheduled } =
 		  "$output->{mode}, each day $output->{frequency} at $output->{time}->{hour}:"
-		  . sprintf ( "%02d", $output->{ time }->{ minutes } )
+		  . sprintf ( "%02d", $output->{ time }->{ minute } )
 		  if ( $output->{ mode } ne "" && $output->{ mode } ne "daily" );
 		$params->{ scheduled } =
 		  "$output->{mode} at $output->{time}->{hour}:"
-		  . sprintf ( "%02d", $output->{ time }->{ minutes } )
+		  . sprintf ( "%02d", $output->{ time }->{ minute } )
 		  if ( $output->{ mode } eq "daily" and $output->{ frequency } == 0 );
 		$params->{ scheduled } =
 		    "$output->{mode} from $output->{time}->{hour}:"
-		  . sprintf ( "%02d", $output->{ time }->{ minutes } )
+		  . sprintf ( "%02d", $output->{ time }->{ minute } )
 		  . " each $output->{frequency} hours"
 		  if ( $output->{ mode } eq "daily" and $output->{ frequency } != 0 );
 		$params->{ scheduled } = "none" if ( $output->{ mode } eq "" );
+		$params->{ mode }      = $output->{ mode };
+		$params->{ frequency } = 0;
+		$params->{ frequency } = $output->{ frequency }
+		  if ( $output->{ frequency } ne "" );
+		$params->{ time }->{ hour }   = $output->{ time }->{ hour } + 0;
+		$params->{ time }->{ minute } = $output->{ time }->{ minute } + 0;
+
 	}
 	else
 	{
@@ -201,7 +208,7 @@ sub set_ipds_package
 	return &httpErrorResponse( { code => 400, desc => $desc, msg => $error_msg } )
 	  if ( $error_msg );
 
-	#Check time parameter -> {hour, minutes }
+	#Check time parameter -> {hour, minute }
 	if ( $json_obj->{ action } eq "schedule" && $json_obj->{ mode } ne "disable" )
 	{
 		my $params = {
@@ -211,11 +218,11 @@ sub set_ipds_package
 								 interval   => "0,23",
 								 format_msg => "Invalid hour value"
 					   },
-					   minutes => {
-									required   => "true",
-									non_blank  => "true",
-									interval   => "00,59",
-									format_msg => "Invalid minutes value"
+					   minute => {
+								   required   => "true",
+								   non_blank  => "true",
+								   interval   => "00,59",
+								   format_msg => "Invalid minute value"
 					   },
 		};
 		$error_msg = &checkZAPIParams( $json_obj->{ time }, $params );

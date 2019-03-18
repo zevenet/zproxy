@@ -245,8 +245,8 @@ sub getIpdsSchedule
 				mode      => "",
 				frequency => "",
 				time      => {
-						  hour    => "",
-						  minutes => "",
+						  hour   => "",
+						  minute => "",
 				},
 	};
 	if ( -e $ipdsCronFile )
@@ -264,8 +264,8 @@ sub getIpdsSchedule
 
 			if ( $out->{ mode } eq "weekly" or $out->{ mode } eq "monthly" )
 			{
-				$out->{ time }->{ hour }    = $+{ hour };
-				$out->{ time }->{ minutes } = $+{ min };
+				$out->{ time }->{ hour }   = $+{ hour };
+				$out->{ time }->{ minute } = $+{ min };
 				$out->{ frequency } = $+{ dow } if ( $out->{ mode } eq "weekly" );
 				$out->{ frequency } = $+{ dom } if ( $out->{ mode } eq "monthly" );
 			}
@@ -274,7 +274,7 @@ sub getIpdsSchedule
 			elsif ( $out->{ mode } eq "daily" )
 			{
 				my $hour = $+{ hour };
-				$out->{ time }->{ minutes } = $+{ min };
+				$out->{ time }->{ minute } = $+{ min };
 
 				if ( $hour =~ /(^\d+)(\-23\/)?(\d*)?/ )
 				{
@@ -380,7 +380,7 @@ sub setCronConfig
 		$cronOpts->{ dom }   = "*";
 		$cronOpts->{ month } = "*";
 		$cronOpts->{ hour }  = $params->{ time }->{ hour };
-		$cronOpts->{ min }   = $params->{ time }->{ minutes };
+		$cronOpts->{ min }   = $params->{ time }->{ minute };
 	}
 
 	# One day each month at fixed hour
@@ -390,7 +390,7 @@ sub setCronConfig
 		$cronOpts->{ dom }   = $params->{ frequency };
 		$cronOpts->{ month } = "*";
 		$cronOpts->{ hour }  = $params->{ time }->{ hour };
-		$cronOpts->{ min }   = $params->{ time }->{ minutes };
+		$cronOpts->{ min }   = $params->{ time }->{ minute };
 	}
 	elsif ( $params->{ mode } eq "daily" )
 	{
@@ -401,7 +401,7 @@ sub setCronConfig
 		  if ( $params->{ frequency } != 0 );
 		$cronOpts->{ hour } = $params->{ time }->{ hour }
 		  if ( $params->{ frequency } == 0 );
-		$cronOpts->{ min } = $params->{ time }->{ minutes };
+		$cronOpts->{ min } = $params->{ time }->{ minute };
 	}
 	elsif ( $params->{ mode } eq "disable" )
 	{
