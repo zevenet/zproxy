@@ -70,7 +70,7 @@ sub get_ipds_package
 	{
 		my $error  = 0;
 		my $output = &getIpdsRulesetDate();
-		if ( defined $output && $output =~ s/(\d\d)(\d\d)(\d\d)/$1\-$2\-20$3/ )
+		if ( defined $output && $output =~ s/(\d\d)(\d\d)(\d\d)/$3\-$2\-20$1/ )
 		{
 			$params->{ ruleset_date } = $output;
 		}
@@ -136,6 +136,7 @@ sub set_ipds_package
 	my $json_obj = shift;
 	my $dpkg_bin = &getGlobalConfiguration( 'dpkg_bin' );
 	my $desc     = "Execute an action over the zevenet-ipds package";
+	my $outParam = {};
 	my $msg      = "";
 
 	my $params = {
@@ -229,8 +230,11 @@ sub set_ipds_package
 
 		return &httpErrorResponse( { code => 400, desc => $desc, msg => $error_msg } )
 		  if ( $error_msg );
-		$msg =
-		  "IPDS upgrade $json_obj->{ mode } $json_obj->{ action } successfully done";
+		$outParam = {
+					  'mode'      => $json_obj->{ mode },
+					  'frequency' => $json_obj->{ frequency },
+					  'time'      => $json_obj->{ time },
+		};
 	}
 
 	my $error = &runIpdsUpgrade( $json_obj );
@@ -247,7 +251,15 @@ sub set_ipds_package
 		return &httpErrorResponse( { code => 400, desc => $desc, msg => $msg } );
 	}
 
-	return &httpResponse( { code => 200, body => { desc => $desc, msg => $msg } } );
+	if ( $json_obj->{ action } eq "upgrade" )
+	{
+		my $date = &getIpdsRulesetDate();
+		$date =~ s/(\d\d)(\d\d)(\d\d)/$3\-$2\-20$1/;
+		$outParam = { 'ruleset_date' => $date };
+	}
+
+	return &httpResponse(
+					  { code => 200, body => { params => $outParam, desc => $desc } } );
 }
 
 1;
