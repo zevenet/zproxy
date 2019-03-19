@@ -107,7 +107,7 @@ sub get_ipds_package
 		$params->{ scheduled } = "none" if ( $output->{ mode } eq "" );
 		$params->{ mode }      = $output->{ mode };
 		$params->{ frequency } = 0;
-		$params->{ frequency } = $output->{ frequency }
+		$params->{ frequency } = $output->{ frequency } + 0
 		  if ( $output->{ frequency } ne "" );
 		$params->{ time }->{ hour }   = $output->{ time }->{ hour } + 0;
 		$params->{ time }->{ minute } = $output->{ time }->{ minute } + 0;
@@ -232,9 +232,26 @@ sub set_ipds_package
 		  if ( $error_msg );
 		$outParam = {
 					  'mode'      => $json_obj->{ mode },
-					  'frequency' => $json_obj->{ frequency },
-					  'time'      => $json_obj->{ time },
+					  'frequency' => $json_obj->{ frequency } + 0,
+					  'time'      => {
+								  'hour'   => $json_obj->{ time }->{ hour } + 0,
+								  'minute' => $json_obj->{ time }->{ minute } + 0
+					  },
 		};
+		$outParam->{ scheduled } =
+		  "$json_obj->{mode}, each day $json_obj->{frequency} at $json_obj->{time}->{hour}:"
+		  . sprintf ( "%02d", $json_obj->{ time }->{ minute } )
+		  if ( $json_obj->{ mode } ne "" && $json_obj->{ mode } ne "daily" );
+		$outParam->{ scheduled } =
+		  "$json_obj->{mode} at $json_obj->{time}->{hour}:"
+		  . sprintf ( "%02d", $json_obj->{ time }->{ minute } )
+		  if ( $json_obj->{ mode } eq "daily" and $json_obj->{ frequency } == 0 );
+		$outParam->{ scheduled } =
+		    "$json_obj->{mode} from $json_obj->{time}->{hour}:"
+		  . sprintf ( "%02d", $json_obj->{ time }->{ minute } )
+		  . " each $json_obj->{frequency} hours"
+		  if ( $json_obj->{ mode } eq "daily" and $json_obj->{ frequency } != 0 );
+		$outParam->{ scheduled } = "none" if ( $json_obj->{ mode } eq "" );
 	}
 
 	my $error = &runIpdsUpgrade( $json_obj );
