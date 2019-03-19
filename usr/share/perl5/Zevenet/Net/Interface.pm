@@ -244,12 +244,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	}
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
-	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway' );
-
-	#Store mac if it is a VLAN (check name format) or Bonding (check if has mode)
-	push @if_params, "mac"
-	  if (    $if_ref->{ name } =~ &getValidFormat( 'vlan_interface' )
-		   || &getBondMode( $if_ref->{ name } ) );
+	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac' );
 
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
