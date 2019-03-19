@@ -235,6 +235,12 @@ sub start_service
 		{
 			use IO::Interface ':flags';
 
+			if ( exists $$iface{ mac } )
+			{
+				include 'Zevenet::Net::Bonding';
+				&setBondMac( $iface );
+			}
+
 			if ( $$iface{ status } eq "up" )
 			{
 				$out_msg .= "\n  * Starting interface $$iface{name}";

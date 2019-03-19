@@ -37,8 +37,10 @@ my @bond_modes = (
 );
 
 my @bond_modes_short = (
-						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
-						 '802.3ad',    'balance-tlb',   'balance-alb',
+						 'balance-rr',  'active-backup',
+						 'balance-xor', 'broadcast',
+						 '802.3ad',     'balance-tlb',
+						 'balance-alb',
 );
 
 =begin nd
@@ -1006,8 +1008,8 @@ sub setBondMac
 	&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
 	{
-		my $slaveConf = &getInterfaceConfig( $slave );
-		$status += &downIf( $slaveConf );
+		my $slaveConf = &getSystemInterface( $slave );
+		$status += &downIf( $slaveConf ) if ( $slaveConf->{ status } ne "down" );
 	}
 	include 'Zevenet::Net::Mac';
 	$status += &addMAC( $if_ref->{ name }, $if_ref->{ mac } );
@@ -1015,7 +1017,7 @@ sub setBondMac
 	&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
 	{
-		my $slaveConf = &getInterfaceConfig( $slave );
+		my $slaveConf = &getSystemInterface( $slave );
 		$status += &upIf( $slaveConf );
 	}
 

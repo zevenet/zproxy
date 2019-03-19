@@ -97,7 +97,6 @@ sub _getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	# includes !$if_status to avoid warning
 	if ( !$if_line && ( !$if_status || $if_status !~ /up/ ) )
 	{
-		say "exiting $if_status";
 		return;
 	}
 
