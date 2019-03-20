@@ -343,7 +343,7 @@ sub delete_waf_rule
 
 	if ( &deleteWAFRule( $set, $id ) )
 	{
-		my $msg = "Deleting the rule $id";
+		my $msg = "There was an error deleting the rule $id";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
