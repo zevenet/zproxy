@@ -497,13 +497,20 @@ sub actions_waf
 	$error = &reloadWAFByRule( $set );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 
+	my $status = &getWAFSetStatus( $set );
+	if (    ( $status ne 'up' and $json_obj->{ action } eq 'start' )
+		 or ( $status ne 'down' and $json_obj->{ action } eq 'stop' ) )
+	{
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 params      => $json_obj->{ action }
+				 params      => { status => $status }
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
