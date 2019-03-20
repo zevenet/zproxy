@@ -627,8 +627,8 @@ sub unlinkFGFarm
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
 	my $out;
 
-	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'del' ) return $out
-	  if !$out;
+	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'del' );
+	return $out if !$out;
 
 	if ( $type eq 'gslb' and $eload )
 	{
