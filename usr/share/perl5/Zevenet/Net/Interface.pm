@@ -112,7 +112,12 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$fileHandler = Config::Tiny->read( $config_filename )
 	  if ( -f $config_filename );
 
-	return unless ( -f $config_filename );
+	return undef
+	  if (
+		   !-f $config_filename
+		   || (    !length $fileHandler->{ $if_name }->{ addr }
+				&& !length $fileHandler->{ $if_name }->{ mask } )
+	  );
 
 	require IO::Socket;
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
