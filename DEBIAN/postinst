@@ -129,7 +129,7 @@ if [ ! -f "$http_server_key" ]; then
 fi
 
 # Apply all migrating scripts to zevenet
-if [ $BM_tag -ne 0 ]; then
+if [ $BM_tag -eq 0 ]; then
 	#migrating config files
 	MIG_DIR="/usr/local/zevenet/migrating/"
 	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
