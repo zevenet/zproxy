@@ -23,36 +23,37 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getGSLBFarmConfigIsOK
 
 	Function that check if the config file is OK.
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Scalar - 0 on success or -1 on failure
-	
+
 =cut
+
 sub getGSLBFarmConfigIsOK    # ($farm_name)
 {
 	my ( $fname ) = @_;
 
-	my $ffile  = &getFarmFile( $fname );
-	my $gdnsd  = &getGlobalConfiguration( 'gdnsd' );
+	my $ffile         = &getFarmFile( $fname );
+	my $gdnsd         = &getGlobalConfiguration( 'gdnsd' );
 	my $gdnsd_command = "$gdnsd -c $configdir\/$ffile/etc checkconf";
 
-	my $run = `$gdnsd_command 2>&1`;
+	my $run         = `$gdnsd_command 2>&1`;
 	my $return_code = $?;
 
 	if ( $return_code or &debug() )
 	{
 		my $message = $return_code ? 'failure' : 'running';
 		&zenlog( "$message: $gdnsd_command", "info", "GSLB" );
-		&zenlog( "output: $run ", "info", "GSLB" );
+		&zenlog( "output: $run ",            "info", "GSLB" );
 	}
 
 	return $return_code;
@@ -65,12 +66,13 @@ Function: getGSLBCheckPort
 
 Parameters:
 	farmname - Farm name
-	checkport - Port to check 
+	checkport - Port to check
 
 Returns:
 	Integer - Number of services that are using the port
-               
+
 =cut
+
 sub getGSLBCheckPort
 {
 	my ( $fname, $checkPort ) = @_;
@@ -89,16 +91,9 @@ sub getGSLBCheckPort
 	{
 		if ( $plugin !~ /^\./ )
 		{
-			my @fileconf = ();
-
-			tie @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-
-			#~ tie @fileconf, 'Tie::File', "plugins\/$plugin";
-			$servicePorts += grep ( /service_types = tcp_$checkPort/,   @fileconf );
-			$servicePorts += grep ( /service_types = .+_fg_$checkPort/, @fileconf );
-
-			untie @fileconf;
+			open my $fh, '<', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			$servicePorts = grep ( /service_types = tcp_$checkPort([^\d]*)$/, <$fh> );
+			close $fh;
 		}
 	}
 
@@ -119,7 +114,8 @@ Returns:
 FIXME:
 	Rename with same name used for http farms: getGLSBFarmConfigIsOK
 =cut
-sub getGSLBCheckConf	#  ( $farmname )
+
+sub getGSLBCheckConf    #  ( $farmname )
 {
 	my $farmname = shift;
 
@@ -129,12 +125,11 @@ sub getGSLBCheckConf	#  ( $farmname )
 
 	if ( $error )
 	{
-		my @run =
-		  `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1`;
+		my @run = `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1`;
 		@run = grep ( /# error:/, @run );
 		$error = $run[0];
 		$error =~ s/# error:\s*//;
-		chomp ($error);
+		chomp ( $error );
 
 		if ( $error =~ /Zone ([\w\.]+).: Zonefile parse error at line (\d+)/ )
 		{
@@ -143,7 +138,8 @@ sub getGSLBCheckConf	#  ( $farmname )
 
 			require Tie::File;
 			tie my @filelines, 'Tie::File', $fileZone;
-			$error = "The resource $filelines[$numLine] gslb farm break the configuration. Please check the configuration";
+			$error =
+			  "The resource $filelines[$numLine] gslb farm break the configuration. Please check the configuration";
 			untie @filelines;
 		}
 	}

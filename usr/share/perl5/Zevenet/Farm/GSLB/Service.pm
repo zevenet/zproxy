@@ -25,7 +25,7 @@ use strict;
 
 require Zevenet::Farm;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getGSLBFarmServices
@@ -39,6 +39,7 @@ Returns:
 	Array - list of service names or -1 on failure
 
 =cut
+
 sub getGSLBFarmServices    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -95,6 +96,7 @@ Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 
 =cut
+
 sub setGSLBFarmDeleteService    # ($farm_name,$service)
 {
 	my ( $fname, $svice ) = @_;
@@ -229,6 +231,7 @@ Bug:
 	Output is not well controlled
 
 =cut
+
 sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
 	my ( $fname, $svice, $alg ) = @_;
@@ -383,6 +386,7 @@ FIXME:
 	return a hash with all parameters
 
 =cut
+
 sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $fname, $svice, $tag ) = @_;
@@ -530,20 +534,20 @@ Bug:
 	Always return 0, do error control
 
 =cut
+
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $fname, $svice, $tag, $stri ) = @_;
 
 	require Tie::File;
 
-	my $type  = &getFarmType( $fname );
-	my $ffile = &getFarmFile( $fname );
+	my $ffile     = &getFarmFile( $fname );
+	my $farm_file = "$configdir/$ffile/etc/config";
 	my $pluginfile;
 	my @fileconf;
 	my $line;
 	my $param;
 	my @linesplt;
-	my $tcp_port;
 	my $output = "";
 
 	if ( $tag eq "ns" )
@@ -574,41 +578,12 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 
 	if ( $tag eq "dpc" )
 	{
+		my $old_port;
 		include 'Zevenet::Farm::GSLB::Validate';
+		require Zevenet::FarmGuardian;
+		my $fg = &getFGFarm( $fname, $svice );
 
-		my $existPortFlag = &getGSLBCheckPort( $fname, $stri );
-		my $actualPort;
-		my $srvConf;
-		my @srvCp;
-		my $firstIndNew = 0;
-		my $offsetIndNew = 0;
-		my $firstIndOld;
-		my $offsetIndOld;
-		my $newPortFlag;
-		my $found         = 0;
-		my $existFG       = 0;
-		my $newTcp =
-		    "\ttcp_$stri => {\n"
-		  . "\t\tplugin = tcp_connect,\n"
-		  . "\t\tport = $stri,\n"
-		  . "\t\tup_thresh = 2,\n"
-		  . "\t\tok_thresh = 2,\n"
-		  . "\t\tdown_thresh = 2,\n"
-		  . "\t\tinterval = 5,\n"
-		  . "\t\ttimeout = 3,\n" . "\t}\n";
-		my $newFG =
-		    "\t${svice}_fg_$stri => {\n"
-		  . "\t\tplugin = extmon,\n"
-		  . "\t\tup_thresh = 2,\n"
-		  . "\t\tok_thresh = 2,\n"
-		  . "\t\tdown_thresh = 2,\n"
-		  . "\t\tinterval = 5,\n"
-		  . "\t\ttimeout = 3,\n"
-		  . "\t\tcmd = [1],\n" . "\t}\n";
-
-		# cmd = [1], it's a initial value for avoiding syntasis error in config file,
-		# but can't be active it with this value.
-
+		# overwrite in the service file
 		#Find the plugin file
 		opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 		my @pluginlist = readdir ( DIR );
@@ -627,6 +602,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		# Change configuration in plugin file
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
+		my $found = 0;
 		foreach $line ( @fileconf )
 		{
 			if ( $found == 1 && $line =~ /.*}.*/ )
@@ -636,9 +612,9 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 
 			if ( $found == 1 && $line =~ /service_types = (${svice}_fg_|tcp_)(\d+)/ )
 			{
-				$actualPort = $2;
-				$line       = "\t\tservice_types = $1$stri";
-				$output     = 0;
+				$old_port = $2;
+				$line     = "\t\tservice_types = $1$stri";
+				$output   = 0;
 				last;
 			}
 
@@ -649,155 +625,58 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 		untie @fileconf;
 
-		if ( $output == 0 )
+		if ( $output )
 		{
-			my $srvAsocFlag = &getGSLBCheckPort( $fname, $actualPort );
-			my $found       = 0;
-			my $index       = 1;
+			&zenlog( "Error modifying the service port", 'error', 'GSLB' );
+			return 1;
+		}
 
-			# Checking if tcp_port is defined
-			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
-			my $existTcp = grep ( /tcp_$actualPort =>/, @fileconf );
-			untie @fileconf;
+		# if exists fg, change the port using fg functions
+		if ( $fg )
+		{
+			$output = &unlinkGSLBFg( $fname, $svice );
+			$output += &linkGSLBFg( $fg, $fname, $svice );
+		}
+		else
+		{
+			# create a new check port srv if the service is not using FG
+			$output = &addGSLBDefCheck( $fname, $stri );
 
-			if ( !$existTcp )
+			# If the port is used for another service, do not delete it
+			my $srvAsocFlag = &getGSLBCheckPort( $fname, $old_port );
+			if ( !$srvAsocFlag and !$output )
 			{
-				$newPortFlag = 1;
-			}
-			else
-			{
-				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
-				while ( $fileconf[$index] !~ /^plugins => / )
-				{
-					my $line = $fileconf[$index];
-
-					# Checking if exist conf block for the new port. Keeping its index
-					if ( $fileconf[$index] =~ s/(${svice}_fg_)\d+/$1$stri/ )
-					{
-						$existFG = 1;
-					}
-
-					if ( $found == 1 )
-					{
-						my $line2 = $line;
-						$line2 =~ s/port =.*,/port = $stri,/;
-						$line2 =~ s/cmd = \[(.+), "-p", "\d+"/cmd = \[$1, "-p", "$stri"/;
-						push @srvCp, $line2;
-						$offsetIndOld++;
-
-						# block finished
-						if ( $line =~ /.*}.*/ )
-						{
-							$found = 0;
-						}
-					}
-					if ( $line =~ /tcp_$actualPort => / )
-					{
-						my $line2 = $line;
-						$line2 =~ s/tcp_$actualPort => /tcp_$stri => /;
-						$found = 1;
-						push @srvCp, $line2;
-						$firstIndOld = $index;
-						$offsetIndOld++;
-					}
-
-					# keeping index for actual tcp_port
-					if ( $found == 2 )
-					{
-						$offsetIndNew++;
-
-						# conf block finished
-						if ( $line =~ /.*}.*/ )
-						{
-							$found = 0;
-						}
-					}
-					if ( ( $line =~ /tcp_$stri => / ) && ( $stri ne $actualPort ) )
-					{
-						$found = 2;
-						$offsetIndNew++;
-						$firstIndNew = $index;
-					}
-
-					$index++;
-				}
-				untie @fileconf;
-
-				# delete tcp_port if this is not used
-				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
-				if ( ( $stri eq $actualPort ) && $existPortFlag )
-				{
-					splice ( @fileconf, $firstIndOld, $offsetIndOld );
-				}
-				else
-				{
-					if ( $firstIndNew > $firstIndOld )
-					{
-						if ( $existPortFlag )
-						{
-							splice ( @fileconf, $firstIndNew, $offsetIndNew );
-						}
-						if ( !$srvAsocFlag )
-						{
-							splice ( @fileconf, $firstIndOld, $offsetIndOld );
-						}
-					}
-					else
-					{
-						if ( !$srvAsocFlag )
-						{
-							splice ( @fileconf, $firstIndOld, $offsetIndOld );
-						}
-						if ( $existPortFlag )
-						{
-							splice ( @fileconf, $firstIndNew, $offsetIndNew );
-						}
-					}
-				}
-				untie @fileconf;
-			}
-
-			# create the new port configuration
-			$index = 0;
-			my $firstIndex = 0;
-			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
-
-			foreach $line ( @fileconf )
-			{
-				if ( $line =~ /service_types => / )
-				{
-					$index++;
-					$firstIndex = $index;
-
-					# New port
-					if ( $newPortFlag )
-					{
-						splice @fileconf, $index, 0, $newTcp;
-					}
-					else
-					{
-						foreach my $confline ( @srvCp )
-						{
-							splice @fileconf, $index++, 0, $confline;
-						}
-					}
-					last;
-				}
-				$index++;
-			}
-			untie @fileconf;
-
-			# if it's a new service, it creates fg config
-			if ( !$existFG )
-			{
-				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
-				splice @fileconf, $firstIndex, 0, $newFG;
-				untie @fileconf;
+				include 'Zevenet::Farm::GSLB::Config';
+				$output = &setGSLBRemoveTcpPort( $fname, $old_port );
 			}
 		}
 	}
 
 	return $output;
+}
+
+sub addGSLBDefCheck
+{
+	my ( $farm, $port ) = @_;
+
+	require Zevenet::File;
+	my $newTcp =
+	    "\ttcp_$port => {\n"
+	  . "\t\tplugin = tcp_connect,\n"
+	  . "\t\tport = $port,\n"
+	  . "\t\tup_thresh = 2,\n"
+	  . "\t\tok_thresh = 2,\n"
+	  . "\t\tdown_thresh = 2,\n"
+	  . "\t\tinterval = 5,\n"
+	  . "\t\ttimeout = 3,\n" . "\t}\n";
+
+	my $ffile     = &getFarmFile( $farm );
+	my $farm_file = "$configdir/$ffile/etc/config";
+
+	my $err = &insertFileWithPattern( $farm_file, [$newTcp], "service_types => \\{",
+									  'after' );
+
+	return $err;
 }
 
 1;

@@ -103,7 +103,8 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 
 	# no error found, return a succesful response
 	&zenlog(
-		"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "GSLB"
+		"Success, a new service has been created in farm $farmname with id $json_obj->{id}.",
+		"info", "GSLB"
 	);
 
 	my $body = {
@@ -176,7 +177,8 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 
 	# no errors found, return succesful response
 	&zenlog(
-		"Success, some parameters have been changed in service $service in farm $farmname.", "info", "GSLB"
+		"Success, some parameters have been changed in service $service in farm $farmname.",
+		"info", "GSLB"
 	);
 
 	my $body = {
@@ -245,8 +247,8 @@ sub delete_gslb_service    # ( $farmname, $service )
 	}
 
 	# no error found, return succesful response
-	&zenlog(
-			 "Success, the service $service in farm $farmname has been deleted.", "info", "GSLB" );
+	&zenlog( "Success, the service $service in farm $farmname has been deleted.",
+			 "info", "GSLB" );
 
 	my $msg = "The service $service in farm $farmname has been deleted.";
 	my $body = {
@@ -322,7 +324,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	my ( undef, undef, $be_ip ) = split /\s+/, $be[0];
 
 	# match ip stack version
-	unless ( ! @be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be_ip ) )
+	unless ( !@be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be_ip ) )
 	{
 		my $msg = "Invalid IP version.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -342,7 +344,8 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 
 	# no error found, return successful response
 	&zenlog(
-		"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", "GSLB"
+		"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.",
+		"info", "GSLB"
 	);
 
 	my $message = "Added backend to service successfully";
@@ -488,9 +491,9 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	&setFarmRestart( $farmname );
 
 	&zenlog(
-		"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.", "info", "GSLB"
+		"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.",
+		"info", "GSLB"
 	);
-
 
 	# Check IP stack version
 	require Zevenet::Net::Validate;
@@ -521,10 +524,10 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 		last if $ipv_mismatch;
 	}
 
-
 	# Get farm status. If farm is down the restart is not required.
 	my $msg = "Backend modified";
-	$msg .= ". IPv4 and IPv6 addresses on the same service are not supported." if $ipv_mismatch;
+	$msg .= ". IPv4 and IPv6 addresses on the same service are not supported."
+	  if $ipv_mismatch;
 
 	my $body = {
 				 description => $desc,
@@ -593,7 +596,8 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 
 	# no error found, return successful response
 	&zenlog(
-		"Success, the backend $id_server in service $service in farm $farmname has been deleted.", "info", "GSLB"
+		"Success, the backend $id_server in service $service in farm $farmname has been deleted.",
+		"info", "GSLB"
 	);
 
 	&setFarmRestart( $farmname );
@@ -609,133 +613,6 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 	{
 		$body->{ status } = "needed restart";
 		&setFarmRestart( $farmname );
-	}
-
-	return &httpResponse( { code => 200, body => $body } );
-}
-
-## FarmGuardian
-
-# PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
-sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
-{
-	my $json_obj = shift;
-	my $farmname = shift;
-	my $service  = shift;
-
-	require Zevenet::Farm::Base;
-	include 'Zevenet::Farm::GSLB::Service';
-	include 'Zevenet::Farm::GSLB::FarmGuardian';
-
-	my $desc = "Modify farm guardian";
-
-	# validate exist service for gslb farms
-	if ( !grep ( /^$service$/, &getGSLBFarmServices( $farmname ) ) )
-	{
-		my $msg = "Invalid service name, please insert a valid value.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	# check farm guardian logs are not enabled
-	if ( exists ( $json_obj->{ fglog } ) )
-	{
-		my $msg = "GSLB profile does not support Farm Guardian logs.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# Change check script
-	if ( exists $json_obj->{ fgscript } )
-	{
-		if (
-			 &setGSLBFarmGuardianParams( $farmname, $service, 'cmd',
-										 $json_obj->{ fgscript } ) == -1
-		  )
-		{
-			my $msg =
-			  "Error, trying to modify farm guardian script in farm $farmname, service $service";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# local variables
-	my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
-	my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
-
-	# Change check time
-	if ( exists $json_obj->{ fgtimecheck } )
-	{
-		if (
-			 &setGSLBFarmGuardianParams(
-										 $farmname,  $service,
-										 'interval', $json_obj->{ fgtimecheck }
-			 ) == -1
-		  )
-		{
-			my $msg =
-			  "Error, found trying to enable farm guardian check time in farm $farmname, service $service";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# check if farm guardian is being enabled or disabled
-	if ( exists $json_obj->{ fgenabled } )
-	{
-		# enable farmguardian
-		if ( $json_obj->{ fgenabled } eq 'true' && $fgStatus eq 'false' )
-		{
-			if ( $fgCmd )
-			{
-				my $error = &enableGSLBFarmGuardian( $farmname, $service, 'true' );
-				if ( $error )
-				{
-					my $msg =
-					  "Error, trying to enable farm guardian in farm $farmname, service $service.";
-					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-				}
-			}
-			else
-			{
-				my $msg = "Error, it's necesary add a check script to enable farm guardian";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
-		# disable farmguardian
-		elsif ( $json_obj->{ fgenabled } eq 'false' && $fgStatus eq 'true' )
-		{
-			my $error = &enableGSLBFarmGuardian( $farmname, $service, 'false' );
-
-			if ( $error )
-			{
-				my $msg =
-				  "ZAPI error, trying to disable farm guardian in farm $farmname, service $service";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-	}
-
-	# no error found, return successful response
-	( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
-	$fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
-
-	my $msg =
-	  "Success, some parameters have been changed in farm guardian in farm $farmname.";
-	my $body = {
-				 description => $desc,
-				 params      => {
-							 fgenabled   => $fgStatus,
-							 fgscript    => $fgCmd,
-							 fgtimecheck => $fgTime + 0,
-				 },
-				 message => $msg,
-	};
-
-	if ( &getFarmStatus( $farmname ) ne 'down' )
-	{
-		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
 	}
 
 	return &httpResponse( { code => 200, body => $body } );
