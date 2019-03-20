@@ -467,17 +467,30 @@ sub createGSLBFg
 	# get port
 	include 'Zevenet::Farm::GSLB::Service';
 	my $port = &getGSLBFarmVS( $farm, $srv, 'dpc' );
-	my $cmd = &getGSLBCommandInExtmonFormat( $fg_st->{ command }, $port );
+
+	my $cmd      = $fg_st->{ command };
+	my $interval = $fg_st->{ interval } // 6;
+	my $timeout  = 3;
+	{
+		# it is the recommended value
+		use integer;
+		$timeout = $fg_st->{ interval } / 2;
+	}
+
+# force to gslb timeout will be same than check timeout, to avoid problems when it is not defined
+	if ( $cmd =~ / -t\s+(\d+)/ )
+	{
+		$timeout = $1;
+	}
+	$cmd = &getGSLBCommandInExtmonFormat( $cmd, $port );
 
 	# apply conf
 	my $newFG =
 	    "\t${srv}_fg_$port => {\n"
 	  . "\t\tplugin = extmon,\n"
-	  . "\t\tup_thresh = 2,\n"
-	  . "\t\tok_thresh = 2,\n"
-	  . "\t\tdown_thresh = 2,\n"
-	  . "\t\tinterval = $fg_st->{interval},\n"
-	  . "\t\ttimeout = 3,\n"
+	  . "\t\tdirect = true,\n"
+	  . "\t\tinterval = $interval,\n"
+	  . "\t\ttimeout = $timeout,\n"
 	  . "\t\tcmd = [$cmd],\n" . "\t}\n";
 
 	# create the new port configuration
