@@ -49,7 +49,6 @@ sub runDOSStartModule
 	my $output;
 
 	&zenlog( "Booting dos system... ", "info", "IPDS" );
-	&initDOSModule();
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 	foreach my $ruleName ( keys %{ $fileHandle } )

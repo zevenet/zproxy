@@ -46,8 +46,6 @@ sub initWAFModule
 {
 	use File::Path qw(make_path);
 
-	#~ my $touch     = &getGlobalConfiguration( "touch" );
-
 	my $deleted_rules = &getWAFDelRegisterDir();
 
 	make_path( $wafSetDir )     if ( !-d $wafSetDir );

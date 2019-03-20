@@ -43,10 +43,15 @@ sub runIPDSStartModule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
+
 	include 'Zevenet::Cluster';
+	include 'Zevenet::IPDS::Setup';
 	include 'Zevenet::IPDS::RBL::Actions';
 	include 'Zevenet::IPDS::DoS::Actions';
 	include 'Zevenet::IPDS::Blacklist::Actions';
+
+	# create the configuration files
+	&initIPDSModule();
 
 	# Add cluster exception not to block traffic from the other node of cluster
 	&setZClusterIptablesException( "insert" );
