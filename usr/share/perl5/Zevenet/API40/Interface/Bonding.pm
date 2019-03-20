@@ -26,8 +26,10 @@ use strict;
 use Zevenet::API40::HTTP;
 
 my @bond_modes_short = (
-						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
-						 '802.3ad',    'balance-tlb',   'balance-alb',
+						 'balance-rr',  'active-backup',
+						 'balance-xor', 'broadcast',
+						 '802.3ad',     'balance-tlb',
+						 'balance-alb',
 );
 
 sub new_bond    # ( $json_obj )
@@ -128,7 +130,7 @@ sub new_bond    # ( $json_obj )
 	my @output_slaves;
 
 	push ( @output_slaves, { name => $_ } ) for @bond_slaves;
-	&setInterfaceConfig( $if_ref );
+
 	my $body = {
 				 description => $desc,
 				 params      => {
@@ -275,6 +277,7 @@ sub delete_interface_bond    # ( $bond )
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &delIf( $if_ref );
+		unlink &getInterfaceConfigFile( $if_ref->{ name } );
 	};
 
 	if ( $@ )
@@ -636,7 +639,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	# check if network is correct
 	my $new_if = {
-				   addr    => $json_obj->{ ip } // $if_ref->{ addr },
+				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
 				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
@@ -731,8 +734,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ mac }     = lc $json_obj->{ mac }  if exists $json_obj->{ mac };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
-	$if_ref->{ name }    = $bond;
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ name } = $bond;
 
 	unless (    exists $if_ref->{ addr } && exists $if_ref->{ mask }
 			 || exists $if_ref->{ mac } )
