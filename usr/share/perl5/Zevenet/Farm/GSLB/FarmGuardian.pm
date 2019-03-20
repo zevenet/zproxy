@@ -25,6 +25,10 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
+require Zevenet::FarmGuardian;
+require Zevenet::Farm::Core;
+require Tie::File;
+
 =begin nd
 Function: getGSLBCommandInExtmonFormat
 
@@ -49,7 +53,8 @@ More info:
 
 sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $cmd, $port ) = @_;
 
 	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
@@ -128,7 +133,8 @@ FIXME:
 
 sub getGSLBFarmGuardianParams    # ( farmName, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -162,7 +168,8 @@ Returns:
 
 sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $service, $param, $value ) = @_;
 
 	# bugfix
@@ -239,7 +246,8 @@ Returns:
 
 sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	my $err     = -1;
@@ -292,7 +300,8 @@ Returns:
 
 sub getGSLBFarmFGStatus    # ( fname, service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	require Zevenet::FarmGuardian;
@@ -310,7 +319,7 @@ Function: enableGSLBFarmGuardian
 Parameters:
 	farmname - Farm name
 	service - Service name
-	option - The options are "up" to enable fg or "down" to disable fg
+	option - The options are "true" to enable fg or "false" to disable fg
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
@@ -319,10 +328,12 @@ Returns:
 
 sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $service, $option ) = @_;
 
 	my $output = -1;
+	my $port;
 
 	require Tie::File;
 
@@ -350,13 +361,15 @@ sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 				{
 					if ( $option =~ /true/ && $line =~ /service_types = tcp_(\d+)/ )
 					{
-						$line   = "\t\tservice_types = ${service}_fg_$1";
+						$port   = $1;
+						$line   = "\t\tservice_types = ${service}_fg_$port";
 						$output = 0;
 						last;
 					}
 					elsif ( $option =~ /false/ && $line =~ /service_types = ${service}_fg_(\d+)/ )
 					{
-						$line   = "\t\tservice_types = tcp_$1";
+						$port   = $1;
+						$line   = "\t\tservice_types = tcp_$port";
 						$output = 0;
 						last;
 					}
@@ -367,7 +380,131 @@ sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 		}
 	}
 
+	include 'Zevenet::Farm::GSLB::Validate';
+	my $n_used = &getGSLBCheckPort( $fname, $port );
+	if ( !$output )
+	{
+		# create default check if this does not exist
+		if ( $option =~ /false/ and $n_used == 1 )
+		{
+			include 'Zevenet::Farm::GSLB::Service';
+			$output = &addGSLBDefCheck( $fname, $port );
+		}
+
+		# no other service is using it, delete it
+		elsif ( $option =~ /true/ and $n_used == 0 )
+		{
+			include 'Zevenet::Farm::GSLB::Config';
+			$output = &setGSLBRemoveTcpPort( $fname, $port );
+		}
+
+		return 3 if ( $output );
+	}
+
 	return $output;
+}
+
+sub createGSLBFg
+{
+	my ( $fg_name, $farm, $srv ) = @_;
+
+	my $fg_st = &getFGObject( $fg_name );
+
+	# get port
+	include 'Zevenet::Farm::GSLB::Service';
+	my $port = &getGSLBFarmVS( $farm, $srv, 'dpc' );
+	my $cmd = &getGSLBCommandInExtmonFormat( $fg_st->{ command }, $port );
+
+	# apply conf
+	my $newFG =
+	    "\t${srv}_fg_$port => {\n"
+	  . "\t\tplugin = extmon,\n"
+	  . "\t\tup_thresh = 2,\n"
+	  . "\t\tok_thresh = 2,\n"
+	  . "\t\tdown_thresh = 2,\n"
+	  . "\t\tinterval = $fg_st->{interval},\n"
+	  . "\t\ttimeout = 3,\n"
+	  . "\t\tcmd = [$cmd],\n" . "\t}\n";
+
+	# create the new port configuration
+	require Zevenet::File;
+	my $ffile = &getFarmFile( $farm );
+	my $err = &insertFileWithPattern( "$configdir/$ffile/etc/config", [$newFG],
+									  "service_types => \\{", 'after' );
+
+	return $err;
+}
+
+sub linkGSLBFg    # ( $fg_name, $farm, $srv );
+{
+	my ( $fg_name, $farm, $srv ) = @_;
+	my $err = 0;
+
+	$err = &createGSLBFg( $fg_name, $farm, $srv );
+	return 1 if ( $err );
+
+	$err = &enableGSLBFarmGuardian( $farm, $srv, 'true' );
+
+	if ( $err )
+	{
+		#~ &setGSLBDeleteFarmGuardian( $farm, $srv );
+		return 2;
+	}
+
+# the gslb fg is put in the start process, then, it is necessary to restart the farm
+	require Zevenet::Farm::Action;
+	&setFarmRestart( $farm );
+
+	return $err;
+}
+
+sub unlinkGSLBFg
+{
+	my ( $fname, $service ) = @_;
+
+	my $out = &setGSLBDeleteFarmGuardian( $fname, $service );
+
+	$out += &enableGSLBFarmGuardian( $fname, $service, 'false' );
+
+	return 1 if ( $out );
+
+	if ( !$out )
+	{
+		require Zevenet::Farm::Action;
+		&setFarmRestart( $fname );
+	}
+
+	return $out;
+}
+
+sub updateGSLBFg
+{
+	my $fg_name = shift;
+
+	my $fg_st = &getFGObject( $fg_name );
+	my $farm;
+	my $srv;
+	my $err = 0;
+
+	foreach my $f ( @{ $fg_st->{ farms } } )
+	{
+		if ( $f =~ /^([^_]+)_(.+)/ )
+		{
+			$farm = $1;
+			$srv  = $2;
+		}
+		else
+		{
+			next;
+		}
+
+		next if ( &getFarmType( $farm ) ne 'gslb' );
+
+		$err += &unlinkGSLBFg( $farm, $srv );
+		$err += &linkGSLBFg( $fg_name, $farm, $srv );
+	}
+
+	return $err;
 }
 
 1;
