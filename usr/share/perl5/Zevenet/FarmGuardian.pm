@@ -591,9 +591,9 @@ sub unlinkFGFarm
 	my $out;
 
 	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'del' );
-	return $out if !$out;
+	return $out if $out;
 
-	if ( $type eq 'gslb' and $eload )
+	if ( ( $type eq 'gslb' ) and $eload )
 	{
 		$out = &eload(
 					   module => 'Zevenet::Farm::GSLB::FarmGuardian',
