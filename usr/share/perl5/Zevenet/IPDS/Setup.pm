@@ -253,7 +253,7 @@ sub getIpdsSchedule
 	{
 		require Zevenet::Lock;
 		&ztielock( \my @list, $ipdsCronFile );
-		if ( @list[0] =~ $cronFormat_re )
+		if ( $list[0] =~ $cronFormat_re )
 		{
 			$out->{ mode } = "daily"
 			  if ( $+{ dom } eq "*" && $+{ month } eq "*" && $+{ dow } eq "*" );
@@ -403,14 +403,14 @@ sub setCronConfig
 		  if ( $params->{ frequency } == 0 );
 		$cronOpts->{ min } = $params->{ time }->{ minute };
 	}
-	elsif ( $params->{ mode } eq "disable" )
+	elsif ( $params->{ mode } eq "disabled" )
 	{
 		return 1 if ( !-f $ipdsCronFile );
 		unlink $ipdsCronFile;
 		&zenlog( "IPDS package: Successfully removed from cron", "info", "IPDS" );
 	}
 
-	if ( $params->{ mode } ne "disable" )
+	if ( $params->{ mode } ne "disabled" )
 	{
 		require Zevenet::Lock;
 		&ztielock( \my @list, $ipdsCronFile );

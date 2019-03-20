@@ -111,7 +111,7 @@ sub get_ipds_package
 		  if ( $output->{ frequency } ne "" );
 		$params->{ time }->{ hour }   = $output->{ time }->{ hour } + 0;
 		$params->{ time }->{ minute } = $output->{ time }->{ minute } + 0;
-
+		$params->{ mode } = "disabled" if ( !length $output->{ mode } );
 	}
 	else
 	{
@@ -157,7 +157,7 @@ sub set_ipds_package
 		$params->{ mode } = {
 							  required  => "true",
 							  non_blank => "true",
-							  values => ["hour", "daily", "weekly", "monthly", "disable"],
+							  values => ["hour", "daily", "weekly", "monthly", "disabled"],
 							  format_msg => "Invalid value for mode parameter",
 		};
 
@@ -210,7 +210,7 @@ sub set_ipds_package
 	  if ( $error_msg );
 
 	#Check time parameter -> {hour, minute }
-	if ( $json_obj->{ action } eq "schedule" && $json_obj->{ mode } ne "disable" )
+	if ( $json_obj->{ action } eq "schedule" && $json_obj->{ mode } ne "disabled" )
 	{
 		my $params = {
 					   hour => {
@@ -253,12 +253,22 @@ sub set_ipds_package
 		  if ( $json_obj->{ mode } eq "daily" and $json_obj->{ frequency } != 0 );
 		$outParam->{ scheduled } = "none" if ( $json_obj->{ mode } eq "" );
 	}
+	elsif (    $json_obj->{ action } eq "schedule"
+			&& $json_obj->{ mode } eq "disabled" )
+	{
+		$outParam = {
+					  frequency => 0,
+					  mode      => "disabled",
+					  scheduled => "none",
+					  time      => { hour => 0, minute => 0, },
+		};
+	}
 
 	my $error = &runIpdsUpgrade( $json_obj );
-	if ( $error && $json_obj->{ mode } eq "disable" )
+	if ( $error && $json_obj->{ mode } eq "disabled" )
 	{
 		$msg =
-		  "Error disabling the IPDS package upgrade schedule, It is already disable";
+		  "Error disabling the IPDS package upgrade schedule, It is already disabled";
 		return &httpErrorResponse( { code => 400, desc => $desc, msg => $msg } );
 	}
 
@@ -274,6 +284,14 @@ sub set_ipds_package
 		$date =~ s/(\d\d)(\d\d)(\d\d)/$3\-$2\-20$1/;
 		$outParam = { 'ruleset_date' => $date };
 	}
+
+	# Set Status
+	my $status = &getIpdsPackageStatus();
+
+	# 0 if success (installed and updated) 1 updates available 2 not installed,
+	$outParam->{ status } = "Installed and updated" if ( $status == 0 );
+	$outParam->{ status } = "Updates available"     if ( $status == 1 );
+	$outParam->{ status } = "Not installed"         if ( $status == 2 );
 
 	return &httpResponse(
 					  { code => 200, body => { params => $outParam, desc => $desc } } );
