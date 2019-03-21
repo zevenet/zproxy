@@ -284,14 +284,14 @@ sub certcontrol
 	    		my $proxy_https = $ENV{ https_proxy };
 
                 	my $tmp_file = '/tmp/cacrl.crl';
-                	my $download = `curl -f -k https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl -o $tmp_file --connect-timeout 2 &>/dev/null`;
+                	my $download = `curl -s -f -k https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl -o $tmp_file --connect-timeout 2 &>/dev/null`;
                 	if ( -f $tmp_file && -s $tmp_file > 0 ) {
                 	        &zenlog("CRL Downloaded on $date_today");
                         	my $copy = `cp $tmp_file $crl_path`;
                 	}
                 unlink $tmp_file;
 
-  		}	
+  		}
 
     if ( ! -f $crl_path  )
 		{
