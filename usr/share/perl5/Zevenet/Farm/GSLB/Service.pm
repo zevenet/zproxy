@@ -655,9 +655,27 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	return $output;
 }
 
+sub existGSLBDefCheck
+{
+	my $farm      = shift;
+	my $port      = shift;
+	my $ffile     = &getFarmFile( $farm );
+	my $farm_file = "$configdir/$ffile/etc/config";
+	my $exist     = 0;
+
+	open my $fh, '<', $farm_file or return 0;
+	$exist = grep ( /tcp_$port =>)/, <$fh> );
+	close $fh;
+
+	return $exist;
+}
+
 sub addGSLBDefCheck
 {
 	my ( $farm, $port ) = @_;
+
+	# do not add if it already exists
+	return 0 & existGSLBDefCheck( $farm, $port );
 
 	require Zevenet::File;
 	my $newTcp =
