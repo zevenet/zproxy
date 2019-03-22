@@ -335,7 +335,12 @@ sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
 		}
 		$index++;
 	}
-	splice @file, $start_i, $end_i - $start_i + 1;
+
+	if ( $flagSvc )
+	{
+		splice @file, $start_i, $end_i - $start_i + 1;
+	}
+
 	untie @file;
 
 	return $err;
