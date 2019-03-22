@@ -152,7 +152,6 @@ sub farms_name_http    # ( $farmname )
 		push @out_s, $serviceStruct;
 	}
 
-	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Success

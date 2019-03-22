@@ -576,7 +576,7 @@ sub update_remote_blacklists
 			}
 			else
 			{
-				include 'IPDS::Blacklist::Runtime';
+				include 'Zevenet::IPDS::Blacklist::Runtime';
 				$errormsg = &setBLDownloadRemoteList( $listName );
 				my $statusUpd = &getBLParam( $listName, 'update_status' );
 

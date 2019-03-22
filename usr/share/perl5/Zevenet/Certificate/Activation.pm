@@ -512,7 +512,7 @@ sub updateCRL
 	my $err        = 1;
 
 	# Download CRL
-	my $cmd = "$curl -f -k $crl_url -o $tmp_file --connect-timeout 2";
+	my $cmd = "$curl -s -f -k $crl_url -o $tmp_file --connect-timeout 2";
 	&logAndRun( $cmd );
 
 	if ( -s $tmp_file > 0 )

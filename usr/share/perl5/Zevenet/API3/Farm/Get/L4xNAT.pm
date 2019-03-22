@@ -74,7 +74,6 @@ sub farms_name_l4    # ( $farmname )
 	########### backends
 	my @out_b = $farm_st->{ servers };
 
-	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	my $body = {
