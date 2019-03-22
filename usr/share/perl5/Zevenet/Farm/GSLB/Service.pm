@@ -766,7 +766,7 @@ sub existGSLBDefCheck
 	my $exist     = 0;
 
 	open my $fh, '<', $farm_file or return 0;
-	$exist = grep ( /tcp_$port =>)/, <$fh> );
+	$exist = grep ( /tcp_$port =>/, <$fh> );
 	close $fh;
 
 	return $exist;
@@ -777,7 +777,10 @@ sub addGSLBDefCheck
 	my ( $farm, $port ) = @_;
 
 	# do not add if it already exists
-	return 0 if ( &existGSLBDefCheck( $farm, $port ) );
+	if ( &existGSLBDefCheck( $farm, $port ) )
+	{
+		return 0;
+	}
 
 	require Zevenet::File;
 	my $newTcp =
