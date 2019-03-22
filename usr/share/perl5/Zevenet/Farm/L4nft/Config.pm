@@ -157,7 +157,7 @@ sub setL4FarmParam
 		$prev_config = &getFarmStruct( $farm_name );
 		$parameters  = qq(, "virtual-addr" : "$value" );
 	}
-	elsif ( $param eq "vipp" )
+	elsif ( $param eq "vipp" or $param eq "vport" )
 	{
 		$value =~ s/\:/\-/g;
 		$parameters = qq(, "virtual-ports" : "$value" );
@@ -530,8 +530,8 @@ sub getL4FarmStruct
 	$farm{ vport }   = &_getL4ParseFarmConfig( 'vipp', undef, $config );
 	$farm{ vproto }  = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
-	$farm{ persist } = &_getL4ParseFarmConfig( 'persist',   undef, $config );
-	$farm{ ttl }     = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
+	$farm{ persist }    = &_getL4ParseFarmConfig( 'persist',    undef, $config );
+	$farm{ ttl }        = &_getL4ParseFarmConfig( 'persisttm',  undef, $config );
 	$farm{ proto }      = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ bootstatus } = &_getL4ParseFarmConfig( 'bootstatus', undef, $config );
 	$farm{ status }     = &getL4FarmStatus( $farm{ name } );
