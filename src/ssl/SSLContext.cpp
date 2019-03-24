@@ -74,25 +74,37 @@ bool SSLContext::init() {
   return true;
 }
 
-/* This function loads the OpenSSL configuration file. */
-bool SSLContext::loadOpensslConfig(const std::string path) {
+/* This function loads the OpenSSL configuration file.
+ * Documentation related with the config file syntax:
+ * https://www.openssl.org/docs/manmaster/man5/config.html*/
+bool SSLContext::loadOpensslConfig(const std::string &config_file_path, SSL_CTX *ctx) {
   /* We use FILE instead of c++ ifstream because it is not
    * compatible with the NCONF functions. */
   FILE *fp;
   CONF *cnf = NULL;
   long eline;
 
-  fp = fopen(path.c_str(), "r");
+  fp = fopen(config_file_path.c_str(), "r");
   if (fp == NULL) {
     return false;
   } else {
       cnf = NCONF_new(NULL);
       if (NCONF_load_fp(cnf, fp, &eline) == 0) {
-        return false;
+         Debug::logmsg(LOG_ERR, "Error on line %ld of configuration file\n", eline);
+         return false;
           /* Other malformed configuration file behaviour */
-      } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
+      } else if (CONF_modules_load(cnf, "zhttp", CONF_MFLAGS_NO_DSO) <= 0) {
+        Debug::logmsg(LOG_ERR, "Error configuring the application");
+        ERR_print_errors_fp(stderr);
         return false;
           /* Other configuration error behaviour */
+
+      }
+
+      if (SSL_CTX_config(ctx, "lis") == 0) {
+          Debug::logmsg(LOG_ERR, "Error configuring SSL_CTX");
+          ERR_print_errors_fp(stderr);
+          return false;
       }
       fclose(fp);
       NCONF_free(cnf);

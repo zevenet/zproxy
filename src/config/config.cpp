@@ -496,6 +496,7 @@ ListenerConfig *Config::parse_HTTPS() {
   struct sockaddr_in6 in6;
   POUND_CTX *pc;
   regmatch_t matches[5];
+  bool openssl_file_exists = false;
   ssl_op_enable = SSL_OP_ALL;
 #ifdef SSL_OP_NO_COMPRESSION
   ssl_op_enable |= SSL_OP_NO_COMPRESSION;
@@ -737,6 +738,10 @@ ListenerConfig *Config::parse_HTTPS() {
         if (SSL_CTX_load_verify_locations(pc->ctx, lin + matches[1].rm_so,
                                           NULL) != 1)
           conf_err("SSL_CTX_load_verify_locations failed - aborted");
+    } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      res->ssl_config_file = std::string(lin + matches[1].rm_so);
+      openssl_file_exists = true;
     } else if (!regexec(&CRLlist, lin, 4, matches, 0)) {
       //#if HAVE_X509_STORE_SET_FLAGS
       X509_STORE *store;
@@ -800,8 +805,15 @@ ListenerConfig *Config::parse_HTTPS() {
     } else if (!regexec(&End, lin, 4, matches, 0)) {
       X509_STORE *store;
 
-      if (!has_addr || !has_port || res->ctx == NULL)
-        conf_err("ListenHTTPS missing Address, Port or Certificate - aborted");
+      if (openssl_file_exists) {
+      if ((res->ctx = malloc(sizeof(POUND_CTX))) == NULL)
+        conf_err("ListenHTTPS new POUND_CTX: out of memory - aborted");
+      if ((res->ctx->ctx = SSL_CTX_new(SSLv23_server_method())) == NULL)
+        conf_err("SSL_CTX_new failed - aborted");
+      }
+      if ((!has_addr || !has_port || res->ctx == NULL) && !openssl_file_exists)
+        conf_err("ListenHTTPS missing Address, Port, SSL Config file or Certificate - aborted");
+      if (!openssl_file_exists) {
 #ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
       if (res->ctx->next)
         if (!SSL_CTX_set_tlsext_servername_callback(res->ctx->ctx,
@@ -836,6 +848,7 @@ ListenerConfig *Config::parse_HTTPS() {
         EC_KEY_free(ecdh);
 #endif
 #endif
+      }
       }
       return res;
     } else {

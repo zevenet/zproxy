@@ -144,6 +144,7 @@ struct ListenerConfig {
   int nossl_redir; /* Code to use for redirect (301 302 307)*/
   long max_req;    /* max. request size */
   MATCHER *head_off;      /* headers to remove */
+  std::string ssl_config_file; /* OpenSSL config file path */
   int rewr_loc;           /* rewrite location response */
   int rewr_dest;          /* rewrite destination header */
   int disabled;           /* true if the listener is disabled */

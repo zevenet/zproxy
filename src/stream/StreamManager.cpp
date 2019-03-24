@@ -1005,7 +1005,7 @@ bool StreamManager::init(ListenerConfig &listener_config) {
   //                 LOG_NOTICE);
   //    }
   //  }
-  if (listener_config.ctx != nullptr) {
+  if (listener_config.ctx != nullptr || !listener_config.ssl_config_file.empty()) {
     this->is_https_listener = true;
     ssl_manager = new ssl::SSLConnectionManager();
     this->is_https_listener = ssl_manager->init(listener_config);

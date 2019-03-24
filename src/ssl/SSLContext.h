@@ -20,6 +20,6 @@ public:
   bool init();
   bool init(const std::string &cert_file, const std::string &key_file);
   bool init(const ListenerConfig &listener_config_);
-  bool loadOpensslConfig(const std::string path);
+  bool loadOpensslConfig(const std::string &config_file_path, SSL_CTX *ctx);
 };
 } // namespace ssl
