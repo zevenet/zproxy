@@ -113,11 +113,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	  if ( -f $config_filename );
 
 	return undef
-	  if (
-		   !-f $config_filename
-		   || (    !length $fileHandler->{ $if_name }->{ addr }
-				&& !length $fileHandler->{ $if_name }->{ mask } )
-	  );
+	  if ( !-f $config_filename );
 
 	require IO::Socket;
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
@@ -937,7 +933,6 @@ sub getInterfaceTypeList
 			if ( $list_type eq &getInterfaceType( $if_name ) )
 			{
 				my $output_if = &getInterfaceConfig( $if_name );
-
 				if ( !$output_if || !$output_if->{ mac } )
 				{
 					$output_if = &getSystemInterface( $if_name );
