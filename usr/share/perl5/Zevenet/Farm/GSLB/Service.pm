@@ -258,7 +258,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 	}
 
 	include 'Zevenet::Farm::GSLB::Service';
-	zenlog( "Services: " . &getGSLBFarmServices( $fname ) );
+	&zenlog( "Services: " . &getGSLBFarmServices( $fname ) );
 	if ( grep ( /^$svice$/, &getGSLBFarmServices( $fname ) ) )
 	{
 		$output = -1;
@@ -360,7 +360,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 			untie @fileconf;
 
 			require Zevenet::Farm::Config;
-			&setFarmVS( $fname, $svice, "dpc", "80" );
+			&addGSLBDefCheck( $fname, "80" );
 		}
 	}
 

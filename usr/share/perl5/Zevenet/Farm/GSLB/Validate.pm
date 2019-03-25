@@ -95,7 +95,7 @@ sub getGSLBCheckPort
 		if ( $plugin !~ /^\./ )
 		{
 			open my $fh, '<', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-			$servicePorts = grep ( /service_types = tcp_$checkPort([^\d]*)$/, <$fh> );
+			$servicePorts += grep ( /service_types = tcp_$checkPort([^\d]*)$/, <$fh> );
 			close $fh;
 		}
 	}
