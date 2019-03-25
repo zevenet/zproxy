@@ -535,6 +535,7 @@ Parameters:
 			"exceptions"	: [ "zapi", "webgui", "root" ],	# The parameter can't have got any of the listed values
 			"values" : ["priority", "weight"],		# list of possible values for a parameter
 			"regex"	: "/\w+,\d+/",		# regex format
+			"ref"	: "array|hash",		# the expected input must be an array or hash ref
 			"valid_format"	: "farmname",		# regex stored in Validate.pm file, it checks with the function getValidFormat
 			"function" : \&func,		# function of validating, the input parameter is the value of the argument. The function has to return 0 or 'false' when a error exists
 			"format_msg"	: "must have letters and digits",	# used message when a value is not correct
@@ -607,6 +608,17 @@ sub checkZAPIParams
 			return
 			  "The parameter '$param' expects once of the following values: '"
 			  . join ( "', '", @{ $param_obj->{ $param }->{ 'values' } } ) . "'";
+		}
+
+		# the input has to be a ref
+		if ( exists $param_obj->{ $param }->{ 'ref' } )
+		{
+			my $r = ref $json_obj->{ $param } // '';
+			if ( $r !~ /^$param_obj->{ $param }->{ 'ref' }$/i )
+			{
+				return
+				  "The parameter '$param' expects a '$param_obj->{ $param }->{ref}' reference as input";
+			}
 		}
 
 		# getValidFormat funcion:

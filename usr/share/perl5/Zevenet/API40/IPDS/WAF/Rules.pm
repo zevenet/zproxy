@@ -157,7 +157,9 @@ sub create_waf_rule
 	elsif ( exists $json_obj->{ raw } )
 	{
 		$type = 'custom';
-		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
+		$params =
+		  { "raw" => { 'required' => 'true', 'non_blank' => 'true', 'ref' => 'array' },
+		  };
 	}
 	elsif ( exists $json_obj->{ mark } )
 	{
@@ -262,7 +264,9 @@ sub modify_waf_rule
 	my $params;
 	if ( exists $json_obj->{ raw } )
 	{
-		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
+		$params =
+		  { "raw" => { 'required' => 'true', 'non_blank' => 'true', 'ref' => 'array' },
+		  };
 	}
 	elsif ( exists $json_obj->{ mark } )
 	{
