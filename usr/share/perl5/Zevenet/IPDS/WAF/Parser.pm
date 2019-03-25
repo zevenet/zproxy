@@ -194,7 +194,7 @@ sub parseWAFRule
 
 			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)?$/ )
 			{
-				$rule->{ operator } = $+{ operator } // "rx";
+				$rule->{ operator }  = $+{ operator } // "rx";
 				$rule->{ operating } = $+{ operating };
 			}
 
@@ -350,7 +350,7 @@ sub parseWAFRule
 			}
 		}
 	}
-	elsif ( $line =~ /^\s*SecMarker\s+(.+)/s )
+	elsif ( $line =~ /^\s*SecMarker\s+"?([^"]+)"?/s )
 	{
 		$rule->{ 'type' } = 'marker';
 		$rule->{ 'mark' } = $1;
