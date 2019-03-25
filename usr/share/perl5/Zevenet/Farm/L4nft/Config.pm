@@ -206,7 +206,7 @@ sub setL4FarmParam
 			$addition = $addition . qq( , "helper" : "none" );
 		}
 
-		$addition = $addition . qq( , "vport" : "" ) if ( $value eq "all" );
+		$addition = $addition . qq( , "virtual-ports" : "" ) if ( $value eq "all" );
 		$parameters = qq(, "protocol" : "$value" ) . $addition;
 	}
 	elsif ( $param eq "status" || $param eq "bootstatus" )
@@ -530,8 +530,8 @@ sub getL4FarmStruct
 	$farm{ vport }   = &_getL4ParseFarmConfig( 'vipp', undef, $config );
 	$farm{ vproto }  = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
-	$farm{ persist }    = &_getL4ParseFarmConfig( 'persist',    undef, $config );
-	$farm{ ttl }        = &_getL4ParseFarmConfig( 'persisttm',  undef, $config );
+	$farm{ persist } = &_getL4ParseFarmConfig( 'persist',   undef, $config );
+	$farm{ ttl }     = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ proto }      = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ bootstatus } = &_getL4ParseFarmConfig( 'bootstatus', undef, $config );
 	$farm{ status }     = &getL4FarmStatus( $farm{ name } );
