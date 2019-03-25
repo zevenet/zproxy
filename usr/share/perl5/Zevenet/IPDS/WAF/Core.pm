@@ -168,7 +168,7 @@ sub getWAFRulesStruct
 		'type'             => $type,
 		'id'               => '',        # position in set file
 		'rule_id'          => '',        # id of the rule
-		'description'      => '',
+		'description'      => undef,
 		'tag'              => [],
 		'version'          => '',
 		'maturity'         => '',

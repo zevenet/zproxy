@@ -246,13 +246,15 @@ sub getZapiWAFRule
 
 	include 'Zevenet::IPDS::WAF::Core';
 	my $out;
+	my $id = $rule->{ id } // 0;
 
 	if ( $rule->{ type } =~ /(?:match_action|action)/ )
 	{
 		$out = {
+				 'id'          => $id,
 				 'type'        => 'action',
 				 'rule_id'     => $rule->{ rule_id } // '',
-				 'description' => $rule->{ description } // '',
+				 'description' => $rule->{ description } // "The ID is $id",
 				 'tag'         => $rule->{ tag } // [],
 				 'phase'       => $rule->{ phase } // $DEFAULT_PHASE,
 				 'resolution'  => ( $rule->{ action } eq 'block' )
@@ -326,7 +328,6 @@ sub getZapiWAFRule
 	}
 
 	$out->{ raw } = $rule->{ raw } // [];
-	$out->{ id } = $rule->{ id } // 0;
 
 	return $out;
 }
