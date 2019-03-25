@@ -194,7 +194,7 @@ sub getWAFRulesStruct
 		'set_variable'     => [],
 		'expire_var'       => [],
 		'chain'            => [],
-		'skip'             => '',
+		'skip'             => 0,
 		'skip_after'       => '',
 		'redirect_url'     => '',
 		'modifed'          => 'no'

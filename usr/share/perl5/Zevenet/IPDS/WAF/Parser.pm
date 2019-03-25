@@ -493,7 +493,7 @@ sub buildWAFRule
 			$secrule .= "\tsetvar:$it,\\\n";
 		}
 		$secrule .= "\tskip:" . $st->{ skip } . ",\\\n"
-		  if ( $st->{ skip } =~ /\d/ );
+		  if ( $st->{ skip } =~ /\d/ and $st->{ skip } > 0 );
 		$secrule .= "\tskipAfter:" . $st->{ skip_after } . ",\\\n"
 		  if ( $st->{ skip_after } );
 		$secrule .= "\texec:" . $st->{ execute } . ",\\\n"
