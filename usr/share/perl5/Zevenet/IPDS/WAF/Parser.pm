@@ -143,7 +143,7 @@ sub parseWAFRule
 	my @nested_rules = @_;      # rest of nested rules
 	my $line;
 	my $rule;
-	my $directive;
+	my $directive = '';
 	my $act;
 	my $raw = "";
 

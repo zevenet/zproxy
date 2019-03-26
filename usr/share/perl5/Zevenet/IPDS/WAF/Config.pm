@@ -492,7 +492,7 @@ sub deleteWAFRule
 		my $rule_ref = $set_st->{ rules }->[$rule_index];
 		if ( $rule_ref->{ modified } eq 'no' )
 		{
-			&addWAFDelRegister( $set, $set_st->{ rules }->{ raw } );
+			&addWAFDelRegister( $set, $rule_ref->{ raw } );
 		}
 		$rule_ref->{ modified } = 'refresh';
 
@@ -709,6 +709,20 @@ sub moveWAFSet
 
 # diferenciar que esto es de *alto nivel*
 
+sub getWAFMatchExists
+{
+	my ( $rule, $match_index ) = @_;
+	my $exist = 0;
+
+	if (    ( $match_index == 0 and $rule->{ type } eq 'match_action' )
+		 or ( $match_index > 0 and defined $rule->{ chain }->[$match_index - 1] ) )
+	{
+		$exist = 1;
+	}
+
+	return $exist;
+}
+
 sub createWAFMatch
 {
 	my ( $set, $rule_index, $rule_st, $rule_updates ) = @_;
@@ -770,7 +784,7 @@ sub delWAFMatch
 	# Remove the chain
 	if ( $match_index > 0 )
 	{
-		$err = &deleteWAFRule( $set, $id, $match_index + 1 );
+		$err = &deleteWAFRule( $set, $id, $match_index - 1 );
 	}
 
 	# Clean match parameters of the rule. Match index = 1
@@ -780,6 +794,13 @@ sub delWAFMatch
 		$rule_st->{ operator }  = '';
 		$rule_st->{ operating } = '';
 		$rule_st->{ not_match } = 'false';
+
+		# it is necessary a rule id for the first chained rule else modsec fails
+		if ( defined $rule_st->{ chain }->[0] )
+		{
+			$rule_st->{ chain }->[0]->{ rule_id } = &genWAFRuleId();
+		}
+
 		$err = &setWAFRule( $set, $id, $rule_st );
 	}
 

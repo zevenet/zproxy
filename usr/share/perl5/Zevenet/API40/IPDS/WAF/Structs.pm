@@ -270,7 +270,6 @@ sub getZapiWAFRule
 				 'matches'      => [],
 		};
 
-		my $index = 0;
 		my $operator;
 		my $not_match;
 
@@ -279,7 +278,7 @@ sub getZapiWAFRule
 		{
 			push @{ $out->{ matches } },
 			  {
-				'match_index'     => $index,
+				'match_index'     => 0,
 				'transformations' => $rule->{ transformations } // [],
 				'not_match'       => $rule->{ not_match } // 'false',
 				'multi_match'     => $rule->{ multi_match } // '',
@@ -288,9 +287,9 @@ sub getZapiWAFRule
 				'operator'        => $trOperator->{ lib }->{ $rule->{ operator } } // '',
 				'operating'       => $rule->{ operating } // '',
 			  };
-			$index++;
 		}
 
+		my $index = 1;
 		foreach my $chained ( @{ $rule->{ chain } } )
 		{
 			# the parameters must match with the list of getWAFChainParameters

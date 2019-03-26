@@ -155,7 +155,7 @@ Returns:
 
 sub getWAFSetPreloadPkg
 {
-	opendir my $dir, $waf_pkg_dir;
+	opendir ( my $dir, $waf_pkg_dir );
 	my @files = readdir $dir;
 	closedir $dir;
 

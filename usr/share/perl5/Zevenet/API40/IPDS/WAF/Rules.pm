@@ -490,8 +490,7 @@ sub modify_waf_rule_match
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	unless ( ( $chain_index == 0 and $rule_st->{ type } eq 'match_action' )
-		or ( $chain_index > 0 and defined $rule_st->{ chain }->[$chain_index - 1] ) )
+	unless ( &getWAFMatchExists( $rule_st, $chain_index ) )
 	{
 		my $msg = "The match $chain_index has not been found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -552,8 +551,7 @@ sub delete_waf_rule_match
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	unless ( ( $chain_index == 0 and $rule->{ type } eq 'match_action' )
-		  or ( $chain_index > 0 and defined $rule->{ chain }->[$chain_index - 1] ) )
+	unless ( &getWAFMatchExists( $rule, $chain_index ) )
 	{
 		my $msg = "The match $chain_index has not been found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
