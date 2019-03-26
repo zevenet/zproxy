@@ -126,7 +126,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface->{ mask } = $fileHandler->{ $if_name }->{ mask }
 	  if ( length $fileHandler->{ $if_name }->{ mask } );
 	$iface->{ gateway } = $fileHandler->{ $if_name }->{ gateway }
-	  if ( length $fileHandler->{ $if_name }->{ gateway } );
+	  if ( length $fileHandler->{ $if_name }->{ gateway } );    # optional
 	$iface->{ status } = $fileHandler->{ $if_name }->{ status };
 	$iface->{ dev }    = $if_name;
 	$iface->{ vini }   = undef;
@@ -216,17 +216,19 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	return $iface;
 }
 
-= begin nd Function : setInterfaceConfig
+=begin nd
+Function: setInterfaceConfig
 
-  Store a network interface configuration .
+	Store a network interface configuration.
 
-  Parameters : if_ref - Reference to a network interface hash .
+Parameters:
+	if_ref - Reference to a network interface hash.
 
-  Returns : boolean - 1 on success, or 0 on failure .
+Returns:
+	boolean - 1 on success, or 0 on failure.
 
-  See Also : <getInterfaceConfig>, <setInterfaceUp>, zevenet, zenbui . pl,
-  zapi / v
-  ? /interface.cgi
+See Also:
+	<getInterfaceConfig>, <setInterfaceUp>, zevenet, zenbui.pl, zapi/v?/interface.cgi
 =cut
 
 # returns 1 if it was successful
@@ -249,7 +251,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac' );
 
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
-	my $config_filename = "$configdir/if_$$if_ref{ name } _conf ";
+	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
 	$fileHandle = Config::Tiny->read( $config_filename ) if ( -f $config_filename );
 
@@ -261,8 +263,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	if ( !-f $config_filename )
 	{
 
-		$fileHandle->{ $if_ref->{ name } }->{ status } = $if_ref->{ status } // " up
-  ";
+		$fileHandle->{ $if_ref->{ name } }->{ status } = $if_ref->{ status } // "up";
 	}
 
 	return 0
@@ -292,9 +293,8 @@ See Also:
 
 sub getDevVlanVini    # ($if_name)
 {
-	&zenlog( __FILE__ . "
-  : " . __LINE__ . " : " . ( caller ( 0 ) )[3] . " ( @_ ) ",
-			 " debug ", " PROFILING " );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my %if;
 	$if{ dev } = shift;
 
@@ -329,13 +329,12 @@ See Also:
 
 sub getConfigInterfaceList
 {
-	&zenlog( __FILE__ . "
-  : " . __LINE__ . " : " . ( caller ( 0 ) )[3] . " ( @_ ) ",
-			 " debug ", " PROFILING " );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @configured_interfaces;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 
-	if ( opendir my $dir, "$configdir " )
+	if ( opendir my $dir, "$configdir" )
 	{
 		for my $filename ( readdir $dir )
 		{
@@ -363,7 +362,7 @@ sub getConfigInterfaceList
 	}
 	else
 	{
-		&zenlog( " Error reading directory $configdir: $! ", " error ", " NETWORK " );
+		&zenlog( "Error reading directory $configdir: $!", "error", "NETWORK" );
 	}
 
 	return \@configured_interfaces;
@@ -386,9 +385,8 @@ See Also:
 
 sub getInterfaceSystemStatus    # ($if_ref)
 {
-	&zenlog( __FILE__ . "
-  : " . __LINE__ . " : " . ( caller ( 0 ) )[3] . " ( @_ ) ",
-			 " debug ", " PROFILING " );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
@@ -462,9 +460,8 @@ See Also:
 
 sub getParentInterfaceName    # ($if_name)
 {
-	&zenlog( __FILE__ . "
-  : " . __LINE__ . " : " . ( caller ( 0 ) )[3] . " ( @_ ) ",
-			 " debug ", " PROFILING " );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_name = shift;
 
 	my $if_ref = &getDevVlanVini( $if_name );
@@ -476,7 +473,7 @@ sub getParentInterfaceName    # ($if_name)
 	# child interface: eth0.100:virtual => eth0.100
 	if ( $is_virtual && $is_vlan )
 	{
-		$parent_if_name = "$$if_ref{ dev } . $$if_ref{ vlan } ";
+		$parent_if_name = "$$if_ref{dev}.$$if_ref{vlan}";
 	}
 
 	# child interface: eth0:virtual => eth0
@@ -517,9 +514,8 @@ See Also:
 
 sub getActiveInterfaceList
 {
-	&zenlog( __FILE__ . "
-  : " . __LINE__ . " : " . ( caller ( 0 ) )[3] . " ( @_ ) ",
-			 " debug ", " PROFILING " );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 	# sort list
@@ -551,16 +547,15 @@ sub getActiveInterfaceList
 	# make padding
 	for my $iface ( @configured_interfaces )
 	{
-		my $dev_ip_padded = sprintf ( " % -${ max_dev_length }
-  s -> %-${max_ip_length}s",
+		my $dev_ip_padded = sprintf ( "%-${max_dev_length}s -> %-${max_ip_length}s",
 									  $$iface{ name }, $$iface{ addr } );
 		$dev_ip_padded =~ s/ +$//;
 		$dev_ip_padded =~ s/ /&nbsp;/g;
 
-		$iface- > { dev_ip_padded } = $dev_ip_padded;
-}
+		$iface->{ dev_ip_padded } = $dev_ip_padded;
+	}
 
-return \@configured_interfaces;
+	return \@configured_interfaces;
 }
 
 =begin nd
