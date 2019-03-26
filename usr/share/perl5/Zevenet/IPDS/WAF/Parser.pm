@@ -192,9 +192,9 @@ sub parseWAFRule
 			my $val = $2;
 			$act = $3;
 
-			if ( $val =~ /^(?<operator>!?\@\w+)?\s+?(?<operating>[^"]+)?$/ )
+			if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>[^"]+)?$/ )
 			{
-				$rule->{ operator }  = $+{ operator } // "rx";
+				$rule->{ operator } = $+{ operator } // "rx";
 				$rule->{ operating } = $+{ operating };
 			}
 
