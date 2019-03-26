@@ -255,7 +255,6 @@ if ( $action eq "start" )
 	# first real interfaces
 	foreach my $iface ( @interfaces )
 	{
-		&zenlog( Dumper $iface );
 		# interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
 		{
