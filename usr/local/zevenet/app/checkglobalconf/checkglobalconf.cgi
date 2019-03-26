@@ -40,6 +40,7 @@ my $globaltpl  = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
 unless ( -f $global )
 {
 	system( "cp $globaltpl $global" );
+	system( "sed -E 's/;#update\$/;/g' -i $global" );
 	exit 0;
 }
 
