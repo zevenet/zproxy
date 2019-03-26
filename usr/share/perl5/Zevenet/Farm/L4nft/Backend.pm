@@ -219,7 +219,7 @@ sub setL4FarmBackendsSessionsRemove
 		&logAndRun( "/usr/local/sbin/nft delete element nftlb $map_name { $key }" )
 		  if ( $value =~ /^0x.0*$tag/ );
 
-		my ( $key, $time, $value ) =
+		( $key, $time, $value ) =
 		  ( $line =~ /, ([\w\.\s\:]+) expires (\w+) : (\w+)[\s,]/ );
 		&logAndRun( "/usr/local/sbin/nft delete element nftlb $map_name { $key }" )
 		  if ( $value ne "" && $value =~ /^0x.0*$tag/ );
