@@ -179,6 +179,9 @@ sub upload_activation_certificate    # ()
 		rename ( "$basedir/$tmpFilename", "$basedir/$filename" );
 		include "Zevenet::Apt";
 		&setAPTRepo();
+
+		&zenlog( "Restarting Zevenet service" );
+		system ( '/etc/init.d/zevenet restart >/dev/null' );
 	}
 
 	my $msg = "Activation certificate uploaded";
