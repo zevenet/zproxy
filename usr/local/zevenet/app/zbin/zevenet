@@ -277,6 +277,10 @@ if ( $action eq "start" )
 		}
 	}
 
+	# bugfix
+	system ('/etc/init.d/ssh start >/dev/null');
+	system ('/etc/init.d/cherokee start >/dev/null');
+
 	# enterprise hook
 	&eload( module => $mod, func => 'start_service' ) if $eload;
 
