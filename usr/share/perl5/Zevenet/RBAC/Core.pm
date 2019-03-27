@@ -375,10 +375,18 @@ sub getRBACForbidden
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
 	my $path   = shift;
 	my $method = shift;
+	my $deny = 0;
 
-	if ( $path eq "/system/users/zapi" ) { return 1; }
+	if ( $path eq "/system/users/zapi" ) { $deny = 1; }
+	if ( $path eq "/system/factory" ) { $deny = 1; }
+	if ( $path eq '/certificates/activation' ) { $deny = 1; }
 
-	return 0;
+	if ( $deny == 1 )
+	{
+		&zenlog( "The path '$method $path' is reserved for the user 'root'", "warning", "RBAC" )
+	}
+
+	return $deny;
 }
 
 =begin nd
