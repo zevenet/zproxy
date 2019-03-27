@@ -23,6 +23,14 @@
 
 use strict;
 
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/menus} )
+{
+	my $mod = 'Zevenet::API40::RBAC::Menus';
+
+	#  GET /rbac/users
+	GET qr{^/rbac/menus$}, 'get_rbac_menus', $mod;
+}
+
 if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users)} )
 {
 	my $mod = 'Zevenet::API40::RBAC::User';

@@ -84,8 +84,6 @@ Returns:
 
 =cut
 
-#~ return $paramStruct;
-#~ }
 sub getRBACRoleParamDefaultStruct
 {
 	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
@@ -111,6 +109,15 @@ sub getRBACRoleParamDefaultStruct
 				$struct->{ $section }->{ $action } = 'false';
 			}
 		}
+	}
+
+	# add menus sections actions
+	my @menu_list = qw( farm interface ipds farmguardian supportsave
+			system-service log notification cluster certificate backup alias
+			rbac-role rbac-group rbac-user );
+	foreach my $section ( @menu_list )
+	{
+		$struct->{ $section }->{ 'menu' } = 'false';
 	}
 
 	return $struct;

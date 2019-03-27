@@ -146,6 +146,7 @@ sub getZapiRBACRole
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $role = shift;
+	include 'Zevenet::RBAC::Role::Config';
 	require Config::Tiny;
 	my $roleFile   = &getRBACRoleFile( $role );
 	my $fileHandle = Config::Tiny->read( $roleFile );
@@ -158,7 +159,7 @@ sub getZapiRBACRole
 		foreach my $paramKey ( keys %{ $paramStruct->{ $structKey } } )
 		{
 			$out->{ $structKey }->{ $paramKey } =
-			  $fileHandle->{ $structKey }->{ $paramKey };
+			  $fileHandle->{ $structKey }->{ $paramKey } // 'false';
 		}
 	}
 
