@@ -181,7 +181,7 @@ sub upload_activation_certificate    # ()
 		&setAPTRepo();
 
 		&zenlog( "Restarting Zevenet service" );
-		system ( '/etc/init.d/zevenet restart >/dev/null' );
+		&logAndRun( '/etc/init.d/zevenet start' );
 	}
 
 	my $msg = "Activation certificate uploaded";
