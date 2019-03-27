@@ -277,8 +277,8 @@ while ( 1 )
 		my $command = $check_cmd_tpl;
 
 		# substitute HOST and PORT variables for this backend's values
-		$command =~ s/HOST/$backendserv[$j]/;
-		$command =~ s/PORT/$backendport[$j]/;
+		$command =~ s/HOST/$backendserv[$j]/g;
+		$command =~ s/PORT/$backendport[$j]/g;
 
 		#execute the binary to check
 		$command = "$libexec_dir/$command";
