@@ -33,36 +33,8 @@ sub get_rbac_menus
 
 	my $desc = "List available menus.";
 
-	my $role;
-	my $user = &getUser();
-
-	if ( $user eq 'root' )
-	{
-		# get struct default
-		include 'Zevenet::RBAC::Role::Config';
-		$role = &getRBACRoleParamDefaultStruct();
-	}
-	else
-	{
-		include 'Zevenet::RBAC::Group::Core';
-		include 'Zevenet::API40::RBAC::Struct';
-		my $group = &getRBACUserGroup( $user );
-		my $role_name = &getRBACGroupParam( $group, 'role' );
-		$role = &getZapiRBACRole( $role_name );
-	}
-
-	# build the strcuct
-	my $menus = {};
-	foreach my $sect ( keys %{ $role } )
-	{
-		next if ( !exists $role->{ $sect }->{ menu } );
-
-		# all menus are allowed for root
-		$menus->{ $sect } =
-		  ( $user eq 'root' )
-		  ? 'true'
-		  : $role->{ $sect }->{ menu };
-	}
+	include 'Zevenet::RBAC::Role::Config';
+	my $menus = &getRBACMenus();
 
 	return &httpResponse(
 				  { code => 200, body => { description => $desc, params => $menus } } );

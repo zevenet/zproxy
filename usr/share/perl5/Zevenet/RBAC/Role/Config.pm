@@ -40,7 +40,8 @@ Returns:
 
 sub getRBACRolesList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $dir = &getRBACRolePath();
 	opendir ( DIR, $dir );
 	my @roles = grep ( s/.conf$//, readdir ( DIR ) );
@@ -64,7 +65,8 @@ Returns:
 
 sub getRBACRoleExists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $role = shift;
 	my $out  = 0;
 	$out = 1 if ( grep /^$role$/, &getRBACRolesList() );
@@ -86,7 +88,8 @@ Returns:
 
 sub getRBACRoleParamDefaultStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $struct;
 
 	# list of functions with hashes permissions
@@ -113,8 +116,8 @@ sub getRBACRoleParamDefaultStruct
 
 	# add menus sections actions
 	my @menu_list = qw( farm interface ipds farmguardian supportsave
-			system-service log notification cluster certificate backup alias
-			rbac-role rbac-group rbac-user );
+	  system-service log notification cluster certificate backup alias
+	  rbac-role rbac-group rbac-user );
 	foreach my $section ( @menu_list )
 	{
 		$struct->{ $section }->{ 'menu' } = 'false';
@@ -138,7 +141,8 @@ Returns:
 
 sub createRBACRole
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $role = shift;
 
 	my $conf     = &getRBACRoleParamDefaultStruct();
@@ -175,7 +179,8 @@ Returns:
 
 sub delRBACRole
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $role = shift;
 	my $file = &getRBACRoleFile( $role );
 	unlink $file;
@@ -198,7 +203,8 @@ Returns:
 
 sub setRBACRoleConfigFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $role, $obj ) = @_;
 
 	require Zevenet::Lock;
@@ -222,6 +228,63 @@ sub setRBACRoleConfigFile
 	}
 	$fileHandle->write( $rbacRoleFileConfig );
 	close $lh;
+}
+
+sub getRBACRole
+{
+	my $role = shift;
+
+	require Config::Tiny;
+	my $roleFile   = &getRBACRoleFile( $role );
+	my $fileHandle = Config::Tiny->read( $roleFile );
+	my $out;
+
+	my $paramStruct = &getRBACRoleParamDefaultStruct();
+
+	foreach my $structKey ( keys %{ $paramStruct } )
+	{
+		foreach my $paramKey ( keys %{ $paramStruct->{ $structKey } } )
+		{
+			$out->{ $structKey }->{ $paramKey } =
+			  $fileHandle->{ $structKey }->{ $paramKey } // 'false';
+		}
+	}
+
+	return $out;
+}
+
+sub getRBACMenus
+{
+	my $role;
+	my $user = &getUser();
+
+	if ( $user eq 'root' )
+	{
+		# get struct default
+		$role = &getRBACRoleParamDefaultStruct();
+	}
+	else
+	{
+		include 'Zevenet::RBAC::Group::Core';
+		my $group = &getRBACUserGroup( $user );
+		my $role_name = &getRBACGroupParam( $group, 'role' );
+		$role = &getRBACRole( $role_name );
+	}
+
+	# build the strcuct
+	my $menus = {};
+	foreach my $sect ( keys %{ $role } )
+	{
+		next if ( !exists $role->{ $sect }->{ menu } );
+
+		# all menus are allowed for root
+		$menus->{ $sect } =
+		  ( $user eq 'root' )
+		  ? 'true'
+		  : $role->{ $sect }->{ menu };
+	}
+
+	return $menus;
 }
 
 1;
