@@ -763,7 +763,7 @@ sub checkParamsInvalid
 
 	if ( @non_valid )
 	{
-		&putArrayAsText( \@non_valid,
+		$err_msg = &putArrayAsText( \@non_valid,
 			"The parameter<sp>s</sp> <pl> <bs>is<|>are</bp> not correct for this call. Please, try with: '"
 			  . join ( "', '", @{ $expect_params } )
 			  . "'" );
