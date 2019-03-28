@@ -215,7 +215,7 @@ sub set_dos_rule
 	elsif ( $rule eq 'bogustcpflags' )
 	{
 		my $msg = "The rules $rule have not got any parametrization.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	elsif ( $rule eq 'sshbruteforce' )
 	{
@@ -225,7 +225,7 @@ sub set_dos_rule
 	else
 	{
 		my $msg = "The rule $name cannot be identifier";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# Check allowed parameters

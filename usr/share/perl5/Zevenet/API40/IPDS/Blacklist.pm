@@ -86,8 +86,8 @@ sub add_blacklists_list
 							   'required'     => 'true',
 				   },
 				   "policy" => {
-								 'valid_format' => 'blacklists_policy',
-								 'non_blank'    => 'true',
+								 'values'    => ['allow', 'deny'],
+								 'non_blank' => 'true',
 				   },
 	};
 
@@ -155,49 +155,134 @@ sub set_blacklists_list
 
 	my $desc = "Modify the blacklist $listName.";
 
-	# remove time hash and add its param to common configuration hash
-	foreach my $timeParameters ( ( 'period', 'unit', 'hour', 'minutes' ) )
-	{
-		if ( exists $json_obj->{ 'time' }->{ $timeParameters } )
-		{
-			$json_obj->{ $timeParameters } = $json_obj->{ 'time' }->{ $timeParameters };
-		}
-	}
-	delete $json_obj->{ 'time' };
-
-	my @allowParams = (
-						"policy",         "url",    "source", "name",
-						"minutes",        "hour",   "day",    "frequency",
-						"frequency_type", "period", "unit"
-	);
-
 	# check if BL exists
 	if ( !&getBLExists( $listName ) )
 	{
-		my $msg = "The list '$listName' doesn't exist.";
+		my $msg = "The list '$listName' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# check not allowed actions on preloaded BL
-	if (    &getBLParam( $listName, 'preload' ) eq 'true'
-		 && &getBLParam( $listName, 'type' ) eq 'local' )
-	{
-		my $param_msg = &getValidOptParams( $json_obj, ["policy"] );
+	my $type    = &getBLParam( $listName, 'type' );
+	my $preload = &getBLParam( $listName, 'preload' );
 
-		if ( $param_msg )
+	# In preload and local lists only is allowed to change the policy
+	my $params = {
+				   "policy" => {
+								 'values'    => ['allow', 'deny'],
+								 'non_blank' => 'true',
+				   },
+	};
+
+	if ( $preload ne 'true' )
+	{
+		$params->{ "name" } = {
+								'valid_format' => 'blacklists_name',
+								'non_blank'    => 'true',
+		};
+		if ( $type eq 'local' )
 		{
-			my $msg = "In preload lists only is allowed to change the policy";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+			$params->{ "source" } = {
+									  'ref'       => 'array',
+									  'non_blank' => 'true',
+			};
+		}
+		else
+		{
+			$params->{ "url" } = {
+								   'valid_format' => 'blacklists_url',
+								   'non_blank'    => 'true',
+			};
 		}
 	}
 
-	my $type = &getBLParam( $listName, 'type' );
-	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
-
-	if ( $param_msg )
+	if ( $type eq 'remote' )
 	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		$params->{ "frequency" } = {
+									 'values'    => ['daily', 'weekly', 'monthly'],
+									 'non_blank' => 'true',
+		};
+
+		if ( exists $json_obj->{ "frequency" } )
+		{
+			my $time_flag = 0;
+			$params->{ "time" } = { 'ref' => 'hash', };
+
+			if ( $json_obj->{ "frequency" } eq 'daily' )
+			{
+				$params->{ "frequency_type" } = {
+												  'values'    => ['exact', 'period'],
+												  'non_blank' => 'true',
+												  'required'  => 'true',
+				};
+				if ( $json_obj->{ 'frequency_type' } eq 'period' )
+				{
+					$time_flag = 1;
+					$params->{ "period" } = {
+											  'valid_format' => 'natural_num',
+											  'non_blank'    => 'true',
+											  'required'     => 'true',
+					};
+					$params->{ "unit" } = {
+											'values'    => ['minutes', 'hours'],
+											'non_blank' => 'true',
+											'required'  => 'true',
+					};
+				}
+			}
+			elsif ( $json_obj->{ "frequency" } eq 'weekly' )
+			{
+				$params->{ "day" } = {
+									   'values' => [
+													'monday', 'tuesday', 'wednesday',
+													'thursday', 'friday', 'saturday', 'sunday'
+									   ],
+									   'non_blank' => 'true',
+									   'required'  => 'true',
+				};
+			}
+			elsif ( $json_obj->{ "frequency" } eq 'monthly' )
+			{
+				$params->{ "day" } = {
+									   'interval'  => '1,31',
+									   'non_blank' => 'true',
+									   'required'  => 'true',
+				};
+			}
+
+			if ( !$time_flag )
+			{
+				$params->{ "hour" } = {
+										'interval'  => '0,23',
+										'non_blank' => 'true',
+										'required'  => 'true',
+				};
+				$params->{ "minutes" } = {
+										   'interval'  => '0,59',
+										   'non_blank' => 'true',
+										   'required'  => 'true',
+				};
+			}
+		}
 	}
+
+	if ( exists $json_obj->{ 'time' } )
+	{
+		# remove time hash and add its param to common configuration hash
+		foreach my $timeParameters ( ( 'period', 'unit', 'hour', 'minutes' ) )
+		{
+			if ( exists $json_obj->{ 'time' }->{ $timeParameters } )
+			{
+				$json_obj->{ $timeParameters } = $json_obj->{ 'time' }->{ $timeParameters };
+			}
+		}
+	}
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	delete $json_obj->{ 'time' };
 
 	# not allow rename preload lists
 	if ( exists $json_obj->{ 'name' } )
@@ -214,42 +299,9 @@ sub set_blacklists_list
 		}
 	}
 
-	# Check key format
-	foreach my $key ( keys %{ $json_obj } )
-	{
-		next if ( $key eq 'source' );
-		if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
-		{
-			my $msg = "$key hasn't a correct format.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# Cron params and url only is used in remote lists
-	if ( $type ne 'remote' )
-	{
-		if (
-			 grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/,
-					keys %{ $json_obj } )
-		  )
-		{
-			my $msg = "Error, trying to change a remote list parameter in a local list.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# Sources only is used in local lists
-	if ( exists $json_obj->{ 'sources' }
-		 && $type ne 'local' )
-	{
-		my $msg = "Source parameter only is available in local lists.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
+	# if there is a new update time configuration to remote lists,
+	# 	delete old configuration checking available configurations
 	my $cronFlag;
-
-# if there is a new update time configuration to remote lists, delete old configuration
-#checking available configurations
 	if (
 		 grep ( /^(minutes|hour|day|frequency|frequency_type|period|unit)$/,
 				keys %{ $json_obj } )
@@ -512,7 +564,7 @@ sub actions_blacklists
 
 	if ( !&getBLExists( $listName ) )
 	{
-		my $msg = "$listName doesn't exist.";
+		my $msg = "$listName does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
