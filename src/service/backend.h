@@ -15,6 +15,7 @@
 #include "../json/JsonDataValue.h"
 #include "../json/JsonDataValueTypes.h"
 #include "../json/jsonparser.h"
+#include "../ssl/SSLConnectionManager.h"
 
 enum class BACKEND_STATUS {
   NO_BACKEND = -1,  // this should be used for first assigned backends
@@ -31,6 +32,7 @@ enum class BACKEND_TYPE {
 };
 using namespace Statistics;
 using namespace json;
+using namespace ssl;
 
 class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo{
 public:
@@ -48,7 +50,9 @@ public:
   std::string bekey;
   int conn_timeout{};
   int response_timeout{};
+  SSL_CTX *ctx;
   bool cut;
+  SSLConnectionManager ssl_manager;
   //  bool disabled;
 
   void doMaintenance();

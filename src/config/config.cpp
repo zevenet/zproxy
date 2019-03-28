@@ -1323,6 +1323,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
   res->bekey = NULL;
   res->connections;
   res->next = NULL;
+  res->ctx = nullptr;
   res->nf_mark = 0;
   has_addr = has_port = 0;
   pthread_mutex_init(&res->mut, NULL);

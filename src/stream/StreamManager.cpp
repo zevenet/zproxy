@@ -326,7 +326,6 @@ void StreamManager::onRequestEvent(int fd) {
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-
     if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
       if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST)
           && (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
@@ -628,15 +627,15 @@ void StreamManager::onResponseEvent(int fd) {
     }
 #endif
   } else {
-    if (stream->backend_connection.getBackend()->backend_config.ctx != nullptr) {
-      result = this->ssl_manager->handleDataRead(stream->backend_connection);
+    if (stream->backend_connection.getBackend()->ctx != nullptr) {
+      result = stream->backend_connection.getBackend()->ssl_manager.handleDataRead(stream->backend_connection);
     } else {
       result = stream->backend_connection.read();
     }
     switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-      if (!this->ssl_manager->handleHandshake(stream->backend_connection)) {
+      if (!stream->backend_connection.getBackend()->ssl_manager.handleHandshake(stream->backend_connection)) {
         Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
                       stream->client_connection.getPeerAddress().c_str());
         clearStream(stream);
@@ -821,16 +820,15 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   }
 
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-
-  if (stream->backend_connection.getBackend()->backend_config.ctx != nullptr) {
-    size_t written = 0;
-    result = this->ssl_manager->handleWrite(
+  size_t written = 0;
+  if (stream->backend_connection.getBackend()->ctx != nullptr) {
+    result = stream->backend_connection.getBackend()->ssl_manager.handleWrite(
         stream->backend_connection, stream->client_connection.buffer,
         stream->client_connection.buffer_size, written);
     switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-      if (!this->ssl_manager->handleHandshake(stream->backend_connection)) {
+      if (!stream->backend_connection.getBackend()->ssl_manager.handleHandshake(stream->backend_connection, true)) {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
                       stream->backend_connection.getPeerAddress().c_str());
         clearStream(stream);
@@ -842,8 +840,18 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
       clearStream(stream);
       return;
-    case IO::IO_RESULT::SUCCESS:break;
-    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
+    case IO::IO_RESULT::SUCCESS:
+        stream->timer_fd.set(
+            stream->backend_connection.getBackend()->response_timeout * 1000);
+        timers_set[stream->timer_fd.getFileDescriptor()] = stream;
+        addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::READ,
+              EVENT_GROUP::RESPONSE_TIMEOUT);
+        stream->backend_connection.enableReadEvent();
+        stream->backend_connection.time_start = std::chrono::steady_clock::now();
+        break;
+    case IO::IO_RESULT::DONE_TRY_AGAIN:
+      stream->backend_connection.enableWriteEvent();
+      break;
     case IO::IO_RESULT::FULL_BUFFER:break;
     }
     stream->client_connection.buffer_size -= written;

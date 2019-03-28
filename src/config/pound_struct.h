@@ -51,7 +51,7 @@ class BackendConfig {
                     the request path, or 2 if it should use perl dynamic
                     replacement */
   char *bekey;   /* Backend Key for Cookie */
-  SSL_CTX *ctx;  /* CTX for SSL connections */
+  SSL_CTX *ctx = nullptr;  /* CTX for SSL connections */
   std::string ssl_config_file; /* ssl config file path */
   pthread_mutex_t mut; /* mutex for this back-end */
   int n_requests;      /* number of requests seen */

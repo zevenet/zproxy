@@ -193,9 +193,9 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
   return result;
 }
 
-bool SSLConnectionManager::handleHandshake(Connection &ssl_connection) {
+bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool client_mode) {
   if (ssl_connection.ssl == nullptr) {
-    if (!initSslConnection_BIO(ssl_connection)) {
+    if (!initSslConnection_BIO(ssl_connection, client_mode)) {
       return false;
     }
   }

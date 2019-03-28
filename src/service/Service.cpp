@@ -48,6 +48,7 @@ Backend *Service::getBackend(HttpStream &stream) {
 void Service::addBackend(BackendConfig *backend_config, std::string address,
                          int port, int backend_id, bool emergency) {
   auto *backend = new Backend();
+  backend->backend_config = *backend_config;
   backend->address_info = Network::getAddress(address, port);
   if (backend->address_info != nullptr) {
     backend->address = std::move(address);
@@ -61,6 +62,9 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
     backend->backend_type = BACKEND_TYPE::REMOTE;
     backend->bekey = backend_config->bekey;
     backend->nf_mark = backend_config->nf_mark;
+    backend->ctx = backend_config->ctx;
+    if (backend->ctx != nullptr)
+      backend->ssl_manager.init(*backend_config);
     if (emergency)
       emergency_backend_set.push_back(backend);
     else
@@ -91,6 +95,9 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
     config->response_timeout = backend_config->rw_timeout;
     config->backend_type = BACKEND_TYPE::REDIRECT;
     config->nf_mark = backend_config->nf_mark;
+    config->ctx = backend_config->ctx;
+    if (config->ctx != nullptr)
+      config->ssl_manager.init(*backend_config);
     if (emergency)
       emergency_backend_set.push_back(config);
     else
