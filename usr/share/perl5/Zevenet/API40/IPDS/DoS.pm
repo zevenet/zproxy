@@ -94,38 +94,30 @@ sub create_dos_rule
 
 	include 'Zevenet::IPDS::DoS::Config';
 
-	my $desc     = "Create the DoS rule '$json_obj->{ 'rule' }'";
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $desc = "Create the DoS rule '$json_obj->{ 'rule' }'";
 
-	my @requiredParams = ( "name", "rule" );
-	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams );
+	my $params = {
+				"name" => {
+							'valid_format' => 'dos_name',
+							'non_blank'    => 'true',
+							'required'     => 'true',
+							'exceptions'   => ['rules'],
+				},
+				"rule" => {
+						'non_blank' => 'true',
+						'required'  => 'true',
+						'values' => ['limitconns', 'limitsec', 'bogustcpflags', 'limitrst'],
+				},
+	};
 
-	if ( $param_msg )
-	{
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
-	}
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( &getDOSExists( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $json_obj->{ 'name' } eq 'rules' )
-	{
-		my $msg = 'The name is not valid, it is a reserved word.';
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( !&getValidFormat( 'dos_name', $json_obj->{ 'name' } ) )
-	{
-		my $msg = "rule name hasn't a correct format.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( !&getValidFormat( "dos_rule_farm", $json_obj->{ 'rule' } ) )
-	{
-		my $msg = "ID rule isn't correct.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -174,7 +166,6 @@ sub set_dos_rule
 	include 'Zevenet::IPDS::DoS::Actions';
 
 	my $desc = "Modify the DoS rule $name";
-	my @requiredParams;
 
 	if ( !&getDOSExists( $name ) )
 	{
@@ -184,33 +175,63 @@ sub set_dos_rule
 
 	# Get allowed params for a determinated rule
 	my $rule = &getDOSParam( $name, 'rule' );
-	my %hashRuleConf = %{ &getDOSInitialParams( $rule ) };
 
-	# delete 'type' key
-	delete $hashRuleConf{ 'type' };
-
-	# delete 'key' key
-	delete $hashRuleConf{ 'rule' };
-
-	# delete 'farms' key
-	if ( exists $hashRuleConf{ 'farms' } )
+	my $params;
+	if ( $rule eq 'limitconns' )
 	{
-		delete $hashRuleConf{ 'farms' };
+		$params = {
+					"limit_conns" => {
+									   'valid_format' => 'integer',
+									   'non_blank'    => 'true',
+					},
+		};
 	}
-
-	# not allow change ssh port. To change it call PUT /system/ssh
-	if ( $name eq 'ssh_brute_force' )
+	elsif ( $rule eq 'limitrst' )
 	{
-		delete $hashRuleConf{ 'port' };
+		$params = {
+					"limit" => {
+								 'valid_format' => 'natural_num',
+								 'non_blank'    => 'true',
+					},
+					"limit_burst" => {
+									   'valid_format' => 'integer',
+									   'non_blank'    => 'true',
+					},
+		};
 	}
-
-	@requiredParams = keys %hashRuleConf;
-	my $param_msg = &getValidOptParams( $json_obj, \@requiredParams );
-
-	if ( $param_msg )
+	elsif ( $rule eq 'limitsec' )
 	{
+		$params = {
+					"limit" => {
+								 'valid_format' => 'natural_num',
+								 'non_blank'    => 'true',
+					},
+					"limit_burst" => {
+									   'valid_format' => 'integer',
+									   'non_blank'    => 'true',
+					},
+		};
+	}
+	elsif ( $rule eq 'bogustcpflags' )
+	{
+		my $msg = "The rules $rule have not got any parametrization.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
 	}
+	elsif ( $rule eq 'sshbruteforce' )
+	{
+		my $msg = "'ssh_brute_force' rule is not supported anymore.";
+		&httpErrorResponse( code => 410, desc => $desc, msg => $msg );
+	}
+	else
+	{
+		my $msg = "The rule $name cannot be identifier";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
+	}
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	# check input format
 	foreach my $param ( keys %{ $json_obj } )
@@ -299,11 +320,26 @@ sub add_dos_to_farm
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
-	elsif ( !&getDOSExists( $name ) )
+
+	my $params = {
+				   "name" => {
+							   'non_blank' => 'true',
+							   'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	if ( !&getDOSExists( $name ) )
 	{
 		my $msg = "$name not found.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	# Deprecated: the SYSTEM rules are going to disappear
 	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		my $msg = "System rules not is possible apply to farm.";
@@ -435,9 +471,22 @@ sub actions_dos
 
 	if ( !&getDOSExists( $rule ) )
 	{
-		my $msg = "$rule doesn't exist.";
+		my $msg = "$rule does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	my $params = {
+				   "action" => {
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+								 'values'    => ['start', 'stop', 'restart'],
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	if ( $json_obj->{ action } eq 'start' )
 	{
@@ -466,11 +515,6 @@ sub actions_dos
 		my $error = &runDOSRestartByRule( $rule );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 		&setDOSParam( $rule, 'status', 'up' );
-	}
-	else
-	{
-		my $msg = "The action has not a valid value";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	include 'Zevenet::Cluster';

@@ -53,45 +53,31 @@ sub getDOSInitialParams
 	my $port    = $sshconf->{ 'port' };
 
 	my %initial = (
-		'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type' => 'farm' },
-		'limitconns' =>
-		  { 'farms' => '', 'status' => 'down', 'limit_conns' => 20, 'type' => 'farm' },
-		'limitrst' => {
-						'farms'       => '',
-						'limit'       => 10,
-						'status'      => 'down',
-						'limit_burst' => 5,
-						'type'        => 'farm'
-		},
-		'limitsec' => {
-						'farms'       => '',
-						'limit'       => 20,
-						'status'      => 'down',
-						'limit_burst' => 15,
-						'type'        => 'farm'
-		},
-		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
-		'sshbruteforce' => {
-							 'status' => 'down',
-							 'hits'   => 10,
-							 'port'   => $port,
-							 'time'   => 60,
-							 'type'   => 'system',
-							 'name'   => 'ssh_brute_force'
-		},
-
-		#					'NEWNOSYN' => { 'farms' => '' },
-		#					'DROPFRAGMENTS' => { 'farms'  => '' },
-		#					'INVALID'       => { 'farms'  => '' },
-		#					'SYNPROXY'     => { 'farms' => '', 'mss' => 1460, 'scale' => 7 },
-		#					'SYNWITHMSS'   => { 'farms' => '' },
-		#					'PORTSCANNING' => {
-		#										'farms'    => '',
-		#										'portScan' => 15,
-		#										'blTime'   => 500,
-		#										'time'     => 100,
-		#										'hits'     => 3,
-		#					},
+		 'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type' => 'farm' },
+		 'limitconns' =>
+		   { 'farms' => '', 'status' => 'down', 'limit_conns' => 20, 'type' => 'farm' },
+		 'limitrst' => {
+						 'farms'       => '',
+						 'limit'       => 10,
+						 'status'      => 'down',
+						 'limit_burst' => 5,
+						 'type'        => 'farm'
+		 },
+		 'limitsec' => {
+						 'farms'       => '',
+						 'limit'       => 20,
+						 'status'      => 'down',
+						 'limit_burst' => 15,
+						 'type'        => 'farm'
+		 },
+		 'sshbruteforce' => {
+							  'status' => 'down',
+							  'hits'   => 10,
+							  'port'   => $port,
+							  'time'   => 60,
+							  'type'   => 'system',
+							  'name'   => 'ssh_brute_force'
+		 },
 	);
 
 	return $initial{ $rule };
