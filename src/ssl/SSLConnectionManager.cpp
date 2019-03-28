@@ -274,8 +274,8 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
   Debug::logmsg(LOG_DEBUG, "> handleRead");
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   int rc = -1;
-  do {
-    rc = BIO_read(ssl_connection.io,
+//  do {
+    rc = SSL_read(ssl_connection.ssl,
                   ssl_connection.buffer + ssl_connection.buffer_size,
                   static_cast<int>(MAX_DATA_SIZE -
                       ssl_connection.buffer_size));
@@ -284,7 +284,7 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
       result = IO::IO_RESULT::SUCCESS;
     } else if (BIO_should_retry(ssl_connection.io))
       result = IO::IO_RESULT::DONE_TRY_AGAIN;
-  } while (rc > 0);
+//  } while (rc > 0);
 
   int ssle = SSL_get_error(ssl_connection.ssl, rc);
   if (rc < 0 && ssle != SSL_ERROR_WANT_READ) {
@@ -315,13 +315,13 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   int sent = 0;
   int rc = -1;
   //  // FIXME: Buggy, used just for test
- // Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   do {
     rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent)); //, &written);
     if (rc > 0)
       sent += rc;
-    //Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
+    Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
   } while (rc > 0 && rc < (data_size - sent));
 
   if (sent > 0) {

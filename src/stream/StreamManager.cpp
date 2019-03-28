@@ -628,7 +628,7 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
   } else {
     if (stream->backend_connection.getBackend()->ctx != nullptr) {
-      result = stream->backend_connection.getBackend()->ssl_manager.handleDataRead(stream->backend_connection);
+      result = stream->backend_connection.getBackend()->ssl_manager.sslRead(stream->backend_connection);
     } else {
       result = stream->backend_connection.read();
     }
@@ -640,6 +640,7 @@ void StreamManager::onResponseEvent(int fd) {
                       stream->client_connection.getPeerAddress().c_str());
         clearStream(stream);
       }
+      stream->backend_connection.enableWriteEvent();
       return;
     }
     case IO::IO_RESULT::SUCCESS:break;
@@ -822,7 +823,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   size_t written = 0;
   if (stream->backend_connection.getBackend()->ctx != nullptr) {
-    result = stream->backend_connection.getBackend()->ssl_manager.handleWrite(
+    result = stream->backend_connection.getBackend()->ssl_manager.sslWrite(
         stream->backend_connection, stream->client_connection.buffer,
         stream->client_connection.buffer_size, written);
     switch (result) {
@@ -833,6 +834,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
                       stream->backend_connection.getPeerAddress().c_str());
         clearStream(stream);
       }
+      stream->backend_connection.enableReadEvent();
       return;
     }
     case IO::IO_RESULT::FD_CLOSED:
