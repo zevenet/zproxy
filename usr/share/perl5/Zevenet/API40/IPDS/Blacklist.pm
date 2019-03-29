@@ -845,7 +845,7 @@ sub set_blacklists_source
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( !&setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) )
+	if ( &setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
 	{
 		my $msg = "Error, putting the source to the list.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
