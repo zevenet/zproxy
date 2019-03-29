@@ -86,6 +86,11 @@ sub setL4FarmServer
 		$priority = 1;
 	}
 
+	if ( $max_conns < 0 )
+	{
+		$max_conns = 0;
+	}
+
 	# load the configuration file first if the farm is down
 	my $f_ref = &getL4FarmStruct( $farm_name );
 	if ( $f_ref->{ status } ne "up" )
@@ -111,7 +116,7 @@ sub setL4FarmServer
 		   file   => "$configdir/$farm_filename",
 		   method => "PUT",
 		   body =>
-			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "ports" : "", "weight" : "$weight", "priority" : "$priority", "mark" : "$mark", "state" : "up" } ] } ] })
+			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$ids", "ip-addr" : "$rip", "port" : "$port", "weight" : "$weight", "priority" : "$priority", "mark" : "$mark", "est-connlimit" : "$max_conns", "state" : "up" } ] } ] })
 		}
 	);
 
