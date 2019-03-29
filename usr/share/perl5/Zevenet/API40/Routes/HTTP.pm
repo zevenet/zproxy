@@ -25,6 +25,7 @@ use strict;
 
 my $farm_re    = &getValidFormat( 'farm_name' );
 my $service_re = &getValidFormat( 'service' );
+my $cert_re    = &getValidFormat( 'certificate' );
 
 if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/services/$service_re/actions$} )
 {
@@ -37,12 +38,21 @@ if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/services/$service_re/actions$} )
 if (
 	 $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/(?:addheader|headremove)(:?/\d+)?$} )
 {
-	my $mod = 'Zevenet::API40::Farm::HTTP::Ext';
+	my $mod     = 'Zevenet::API40::Farm::HTTP::Ext';
+	my $cert_re = &getValidFormat( 'certificate' );
 
 	POST qr{^/farms/($farm_re)/addheader$},          'add_addheader',  $mod;
 	DELETE qr{^/farms/($farm_re)/addheader/(\d+)$},  'del_addheader',  $mod;
 	POST qr{^/farms/($farm_re)/headremove$},         'add_headremove', $mod;
 	DELETE qr{^/farms/($farm_re)/headremove/(\d+)$}, 'del_headremove', $mod;
+}
+
+if (
+	 $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/certificates/($cert_re)/actions$} )
+{
+	my $mod = 'Zevenet::API40::Farm::HTTP::Ext';
+	POST qr{^/farms/($farm_re)/certificates/($cert_re)/actions$},
+	  'farm_move_certs', $mod;
 }
 
 1;

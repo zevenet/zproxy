@@ -24,7 +24,7 @@
 use strict;
 use Zevenet::Farm::Core;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getFarmCertificatesSNI
@@ -37,9 +37,11 @@ Parameters:
 Returns:
 	array - list of certificates added to the farm
 =cut
+
 sub getFarmCertificatesSNI    #($fname)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $fname = shift;
 
 	my @output;
@@ -77,9 +79,11 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 =cut
+
 sub setFarmCertificateSNI    #($cfile,$fname)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $cfile, $fname ) = @_;
 
 	my $type   = &getFarmType( $fname );
@@ -90,7 +94,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 
 	if ( $cfile =~ /^$/ )
 	{
-		&zenlog ( "Certificate not found.", "warning", "LSLB" );
+		&zenlog( "Certificate not found.", "warning", "LSLB" );
 		return $output;
 	}
 
@@ -100,7 +104,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	{
 		require Tie::File;
 		require Zevenet::Lock;
-		&ztielock ( \my @array, "$configdir/$ffile" );
+		&ztielock( \my @array, "$configdir/$ffile" );
 
 		for ( @array )
 		{
@@ -118,7 +122,9 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	}
 	else
 	{
-		&zenlog ( "Error adding certificate to farm $fname. This farm is not https type.", "error", "LSLB" );
+		&zenlog(
+				 "Error adding certificate to farm $fname. This farm is not https type.",
+				 "error", "LSLB" );
 	}
 
 	return $output;
@@ -136,9 +142,11 @@ Parameters:
 Returns:
 	Integer - Error code: 1 on success, or -1 on failure.
 =cut
+
 sub setFarmDeleteCertNameSNI    #($certn,$fname)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $certname, $fname ) = @_;
 
 	my $type   = &getFarmType( $fname );
@@ -146,13 +154,14 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	my $output = -1;
 	my $j      = 0;
 
-	&zenlog( "Deleting 'Certificate $certname' for $fname farm $type", "info", "LSLB" );
+	&zenlog( "Deleting 'Certificate $certname' for $fname farm $type",
+			 "info", "LSLB" );
 
 	if ( $type eq "https" )
 	{
 		require Zevenet::Lock;
 		require Tie::File;
-		&ztielock ( \my @array, "$configdir/$ffile" );
+		&ztielock( \my @array, "$configdir/$ffile" );
 
 		for ( @array )
 		{
@@ -189,11 +198,13 @@ Returns:
 		support it
 
 =cut
+
 sub getFarmCipherSSLOffLoadingSupport
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $aes_found = 0;
-	my $proc_cpu = "/proc/cpuinfo";
+	my $proc_cpu  = "/proc/cpuinfo";
 
 	if ( -f $proc_cpu )
 	{
@@ -216,15 +227,65 @@ sub getFarmCipherSSLOffLoadingSupport
 
 sub getExtraCipherProfiles
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @cipher_profiles = ();
 
 	if ( &getFarmCipherSSLOffLoadingSupport() )
 	{
-		push @cipher_profiles, { 'ciphers' => "ssloffloading", "description" => "SSL offloading" };
+		push @cipher_profiles,
+		  { 'ciphers' => "ssloffloading", "description" => "SSL offloading" };
 	}
 
 	return @cipher_profiles;
+}
+
+sub setHTTPFarmMoveCertificates
+{
+	my ( $farmname, $cert_name, $pos, $cert_list ) = @_;
+	my $err = 0;
+
+	require Zevenet::Arrays;
+
+	# get current index
+	my $cur_index = &getARRIndex( $cert_list, $cert_name );
+	return 1 unless ( defined $cur_index );
+
+	# save changes
+	my $filename =
+	  &getGlobalConfiguration( 'configdir' ) . '/' . &getFarmFile( $farmname );
+	&ztielock( \my @file, $filename );
+	return 3 unless ( @file );
+
+	my $cert_index;
+	my $size       = 0;
+	my $index      = 0;
+	my @cert_block = ();
+	foreach my $line ( @file )
+	{
+		if ( $line =~ /^\s*Cert/ )
+		{
+			push @cert_block, $line;
+			$cert_index = $index if ( !defined $cert_index );
+			$size++;
+		}
+		$index++;
+	}
+
+	# add certs
+	if ( defined $cert_index )
+	{
+		&moveByIndex( \@cert_block, $cur_index, $pos );
+		splice ( @file, $cert_index, $size, @cert_block );
+	}
+	else
+	{
+		$err = 2;
+		&zenlog( "Not found the certificate $cert_name", 'error', 'HTTP' );
+	}
+	untie @file;
+
+	return $err;
 }
 
 1;

@@ -248,4 +248,89 @@ sub del_headremove
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 }
 
+#  move certs
+sub farm_move_certs
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $json_obj, $farmname, $cert ) = @_;
+
+	require Zevenet::Farm::Base;
+	include 'Zevenet::Farm::HTTP::HTTPS::Ext';
+
+	my $desc = "Move service";
+	my $moveservice;
+
+	# validate FARM NAME
+	if ( !&getFarmExists( $farmname ) )
+	{
+		my $msg = "The farmname $farmname does not exists.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my @cert_list = &getFarmCertificatesSNI( $farmname );
+
+	unless ( grep ( /^$cert$/, @cert_list ) )
+	{
+		my $msg = "The certificate $cert is not been used by the farm $farmname.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $certs_num = scalar @cert_list;
+	my $params = {
+				   "position" => {
+								   'interval'  => "0,$certs_num",
+								   'non_blank' => 'true',
+								   'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	if ( $cert_list[$json_obj->{ 'position' }] eq $cert )
+	{
+		my $msg = "The certificate already is in required position.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $err =
+	  &setHTTPFarmMoveCertificates( $farmname, $cert, $json_obj->{ 'position' },
+									\@cert_list );
+	if ( $err )
+	{
+		my $msg = "Error moving certificate. $err";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# checking the current position to prove the cert was moved properly
+	my @cert_list_new = &getFarmCertificatesSNI( $farmname );
+	unless ( $cert_list_new[$json_obj->{ 'position' }] eq $cert )
+	{
+		#~ my $msg = "There was an error moving the certificate.";
+		my $msg = "There was an error moving the certificate.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $msg = "$cert was moved successfully.";
+	my $body = { description => $desc, params => $json_obj, message => $msg };
+
+	# start farm if his status was up
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+		&setFarmRestart( $farmname );
+		$body->{ status } = 'needed restart';
+		$body->{ info } =
+		  "There're changes that need to be applied, stop and start farm to apply them!";
+
+		include 'Zevenet::Cluster';
+		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+	}
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
 1;
