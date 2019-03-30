@@ -22,7 +22,7 @@ bool SSLConnectionManager::init(const ListenerConfig &listener_config) {
     ssl_context = new SSLContext();
     if (!listener_config.ssl_config_file.empty()) {
       if (!ssl_context->loadOpensslConfig(listener_config.ssl_config_file, listener_config.ctx->ctx))
-        return false;
+        exit(EXIT_FAILURE);
     }
     return ssl_context->init(listener_config);
   }
