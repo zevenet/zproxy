@@ -438,6 +438,8 @@ ListenerConfig *Config::parse_HTTP() {
       res->rewr_dest = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&LogLevel, lin, 4, matches, 0)) {
       res->log_level = atoi(lin + matches[1].rm_so);
+    } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
+      conf_err("SSLConfigFile directive not allowed in HTTP listeners.");
     } else if (!regexec(&ForceHTTP10, lin, 4, matches, 0)) {
       if ((m = (MATCHER *) malloc(sizeof(MATCHER))) == NULL)
         conf_err("out of memory");
