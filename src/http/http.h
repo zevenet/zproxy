@@ -14,6 +14,12 @@ namespace http {
 
 enum class HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 
+enum class UPGRADE_PROTOCOLS {
+  WEBSOCKET,
+  H2C,
+  TLS,
+};
+
 enum class TRANSFER_ENCODING_TYPE : uint8_t {
   NONE = 0,
   CHUNKED = 0x1,
@@ -174,6 +180,9 @@ struct http_info {
   static const std::unordered_map<std::string, REQUEST_METHOD> http_verbs;
   static const std::unordered_map<REQUEST_METHOD, const std::string>
       http_verb_strings;
+  static const std::unordered_map<std::string, UPGRADE_PROTOCOLS> upgrade_protocols;
+  static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings;
+
 };
 
 struct validation {

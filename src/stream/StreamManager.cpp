@@ -748,6 +748,14 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   Service *service =
       service_manager->getService(stream->request); // FIXME:: Do not loop!!
 
+  if (stream->request.upgrade_header && stream->request.connection_header && stream->response.http_status_code == 101) {
+      stream->upgrade.pinned_connection = true;
+      std::string upgrade_header_value;
+      stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE, upgrade_header_value);
+      if (http_info::upgrade_protocols.count(upgrade_header_value) > 0)
+        stream->upgrade.protocol = http_info::upgrade_protocols.at(upgrade_header_value);
+  }
+
   if (!service->becookie.empty()) {
     std::string set_cookie_header =
         service->becookie + "=" +
@@ -892,6 +900,12 @@ StreamManager::validateRequest(HttpRequest &request) {
           request.headers[i].header_off = true;
           request.add_destination_header = true;
         }
+        break;
+      case http::HTTP_HEADER_NAME::UPGRADE:
+        request.upgrade_header = true;
+        break;
+      case http::HTTP_HEADER_NAME::CONNECTION:
+        request.connection_header = true;
         break;
       }
     }

@@ -313,3 +313,17 @@ const std::unordered_map<validation::REQUEST_RESULT, const std::string>
         {REQUEST_RESULT::BACKEND_NOT_FOUND, "no backend"},
         {REQUEST_RESULT::BACKEND_TIMEOUT, "Backend response timeout"},
 };
+
+const std::unordered_map<UPGRADE_PROTOCOLS, const std::string>
+      http_info::upgrade_protocols_strings = {
+        {UPGRADE_PROTOCOLS::WEBSOCKET, "websocket"},
+        {UPGRADE_PROTOCOLS::H2C, "h2c"},
+        {UPGRADE_PROTOCOLS::TLS, "tls"},
+};
+
+const std::unordered_map<std::string, UPGRADE_PROTOCOLS>
+      http_info::upgrade_protocols = {
+        {"websocket", UPGRADE_PROTOCOLS::WEBSOCKET},
+        {"h2c", UPGRADE_PROTOCOLS::H2C},
+        {"tls", UPGRADE_PROTOCOLS::TLS},
+};

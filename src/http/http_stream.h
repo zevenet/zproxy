@@ -16,6 +16,11 @@
 
 class HttpStream: public Counter<HttpStream> {
 
+  struct upgrade_status {
+    http::UPGRADE_PROTOCOLS protocol;
+    bool pinned_connection;
+  };
+
 public:
   HttpStream();
   ~HttpStream();
@@ -27,6 +32,8 @@ public:
   TimerFd timer_fd;
   HttpRequest request;
   HttpResponse response;
+  upgrade_status upgrade;
+
   void replyError(HttpStatus::Code code, const char *code_string,
                   const char *string);
   void replyRedirect(BackendConfig &backend_config);

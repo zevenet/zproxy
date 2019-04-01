@@ -12,6 +12,8 @@ class HttpRequest : public http_parser::HttpData {
 public:
 
   bool add_destination_header;
+  bool upgrade_header;
+  bool connection_header;
 
   void setRequestMethod() {
     request_method = http::http_info::http_verbs.at(getMethod());
