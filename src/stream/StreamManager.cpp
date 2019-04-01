@@ -341,6 +341,12 @@ void StreamManager::onRequestEvent(int fd) {
     return;
   }
   }
+
+  if (stream->upgrade.pinned_connection) {
+    stream->backend_connection.enableWriteEvent();
+    return;
+  }
+
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   // do {
@@ -593,6 +599,12 @@ void StreamManager::onResponseEvent(int fd) {
                 stream->backend_connection.time_start)
             .count());
     //  stream->backend_stadistics.update();
+
+    if (stream->upgrade.pinned_connection) {
+      stream->client_connection.enableWriteEvent();
+      return;
+    }
+
     size_t parsed = 0;
     if (stream->response.message_bytes_left < 1) {
       auto ret = stream->response.parseResponse(
@@ -748,7 +760,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   Service *service =
       service_manager->getService(stream->request); // FIXME:: Do not loop!!
 
-  if (stream->request.upgrade_header && stream->request.connection_header && stream->response.http_status_code == 101) {
+  if (stream->request.upgrade_header && stream->request.connection_header_upgrade && stream->response.http_status_code == 101) {
       stream->upgrade.pinned_connection = true;
       std::string upgrade_header_value;
       stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE, upgrade_header_value);
@@ -905,7 +917,9 @@ StreamManager::validateRequest(HttpRequest &request) {
         request.upgrade_header = true;
         break;
       case http::HTTP_HEADER_NAME::CONNECTION:
-        request.connection_header = true;
+        if (http_info::connection_values.count(std::string(header_value)) > 0
+            && http_info::connection_values.at(std::string(header_value)) == CONNECTION_VALUES::UPGRADE)
+          request.connection_header_upgrade = true;
         break;
       }
     }

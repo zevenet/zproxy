@@ -14,6 +14,12 @@ namespace http {
 
 enum class HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 
+enum class CONNECTION_VALUES {
+  CLOSE,
+  UPGRADE,
+  KEEP_ALIVE,
+};
+
 enum class UPGRADE_PROTOCOLS {
   WEBSOCKET,
   H2C,
@@ -182,7 +188,7 @@ struct http_info {
       http_verb_strings;
   static const std::unordered_map<std::string, UPGRADE_PROTOCOLS> upgrade_protocols;
   static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings;
-
+  static const std::unordered_map<std::string, CONNECTION_VALUES> connection_values;
 };
 
 struct validation {

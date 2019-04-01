@@ -327,3 +327,10 @@ const std::unordered_map<std::string, UPGRADE_PROTOCOLS>
         {"h2c", UPGRADE_PROTOCOLS::H2C},
         {"tls", UPGRADE_PROTOCOLS::TLS},
 };
+
+const std::unordered_map<std::string, CONNECTION_VALUES>
+      http_info::connection_values = {
+        {"upgrade", CONNECTION_VALUES::UPGRADE},
+        {"close", CONNECTION_VALUES::CLOSE},
+        {"Keep-Alive", CONNECTION_VALUES::KEEP_ALIVE},
+};

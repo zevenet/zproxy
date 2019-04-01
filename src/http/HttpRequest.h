@@ -13,7 +13,7 @@ public:
 
   bool add_destination_header;
   bool upgrade_header;
-  bool connection_header;
+  bool connection_header_upgrade;
 
   void setRequestMethod() {
     request_method = http::http_info::http_verbs.at(getMethod());
