@@ -12,14 +12,14 @@
 #include "../service/backend.h"
 #include "HttpRequest.h"
 #include "HttpStatus.h"
-#include "../connection/client_connection.h"
+#include "../connection/client_connection.h" 
+
+struct UpgradeStatus {
+  http::UPGRADE_PROTOCOLS protocol;
+  bool pinned_connection;
+};
 
 class HttpStream: public Counter<HttpStream> {
-
-  struct upgrade_status {
-    http::UPGRADE_PROTOCOLS protocol;
-    bool pinned_connection;
-  };
 
 public:
   HttpStream();
@@ -32,7 +32,7 @@ public:
   TimerFd timer_fd;
   HttpRequest request;
   HttpResponse response;
-  upgrade_status upgrade;
+  UpgradeStatus upgrade;
 
   void replyError(HttpStatus::Code code, const char *code_string,
                   const char *string);

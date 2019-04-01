@@ -728,6 +728,15 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
 
+  /* If the connection is pinned, then we need to write the buffer
+   * content without applying any kind of modification. */
+  if (stream->upgrade.pinned_connection) {
+    stream->client_connection.writeTo(stream->backend_connection.getFileDescriptor());
+    stream->client_connection.enableReadEvent();
+    stream->backend_connection.enableReadEvent();
+    return;
+  }
+
   auto result = stream->client_connection.writeTo(stream->backend_connection,
                                                   stream->request);
 
@@ -754,19 +763,21 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
+
+  /* If the connection is pinned, then we need to write the buffer
+   * content without applying any kind of modification. */
+  if (stream->upgrade.pinned_connection) {
+    stream->backend_connection.writeTo(stream->client_connection.getFileDescriptor());
+    stream->backend_connection.enableReadEvent();
+    stream->client_connection.enableReadEvent();
+    return;
+  }
+
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
   // TODO: Añadir setCookie al extra headers de response
   Service *service =
       service_manager->getService(stream->request); // FIXME:: Do not loop!!
-
-  if (stream->request.upgrade_header && stream->request.connection_header_upgrade && stream->response.http_status_code == 101) {
-      stream->upgrade.pinned_connection = true;
-      std::string upgrade_header_value;
-      stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE, upgrade_header_value);
-      if (http_info::upgrade_protocols.count(upgrade_header_value) > 0)
-        stream->upgrade.protocol = http_info::upgrade_protocols.at(upgrade_header_value);
-  }
 
   if (!service->becookie.empty()) {
     std::string set_cookie_header =
@@ -791,6 +802,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
                                set_cookie_header);
   }
+
   if (this->is_https_listener) {
     size_t written = 0;
     result = this->ssl_manager->handleWrite(
@@ -843,6 +855,14 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     Debug::LogInfo("Error sending data to client", LOG_DEBUG);
     clearStream(stream);
     return;
+  }
+
+  if (stream->request.upgrade_header && stream->request.connection_header_upgrade && stream->response.http_status_code == 101) {
+    stream->upgrade.pinned_connection = true;
+    std::string upgrade_header_value;
+    stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE, upgrade_header_value);
+    if (http_info::upgrade_protocols.count(upgrade_header_value) > 0)
+      stream->upgrade.protocol = http_info::upgrade_protocols.at(upgrade_header_value);
   }
 }
 

@@ -330,7 +330,7 @@ const std::unordered_map<std::string, UPGRADE_PROTOCOLS>
 
 const std::unordered_map<std::string, CONNECTION_VALUES>
       http_info::connection_values = {
-        {"upgrade", CONNECTION_VALUES::UPGRADE},
+        {"Upgrade", CONNECTION_VALUES::UPGRADE},
         {"close", CONNECTION_VALUES::CLOSE},
         {"Keep-Alive", CONNECTION_VALUES::KEEP_ALIVE},
 };
