@@ -69,7 +69,7 @@ sub add_rbac_group
 
 	include 'Zevenet::RBAC::Group::Config';
 
-	my $desc = "Create the RBAC group, $json_obj->{ 'name' }";
+	my $desc = "Create a RBAC group";
 	my $params = {
 				   "name" => {
 							   'valid_format' => 'group_name',
@@ -78,17 +78,17 @@ sub add_rbac_group
 				   },
 	};
 
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	# Check if it exists
 	if ( &getRBACGroupExists( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
 
 	# executing the action
 	&createRBACGroup( $json_obj->{ 'name' }, $json_obj->{ 'password' } );
@@ -204,7 +204,7 @@ sub del_rbac_group
 	}
 }
 
-#  POST /rbac/groups/<group>/users/(intefarces|farms|users)
+#  POST /rbac/groups/<group>/(intefarces|farms|users)
 sub add_rbac_group_resource
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -219,7 +219,7 @@ sub add_rbac_group_resource
 
 	include 'Zevenet::RBAC::Group::Config';
 
-	my $desc = "Add the $type_msg $json_obj->{ 'name' } to the group $group";
+	my $desc = "Add a $type to the group $group";
 	my $params = {
 				   "name" => {
 							   'non_blank' => 'true',
@@ -230,7 +230,7 @@ sub add_rbac_group_resource
 	# Check if it exists
 	if ( !&getRBACGroupExists( $group ) )
 	{
-		my $msg = "The RBAC group $group does not exist";
+		my $msg = "The RBAC group '$group' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -240,53 +240,56 @@ sub add_rbac_group_resource
 	  if ( $error_msg );
 
 	# check if the object resource exists in the group
-	if ( grep ( /^$resource$/, @{ &getRBACGroupParam( $group, $type ) } ) )
+	my @resource_list = @{ &getRBACGroupParam( $group, $type ) };
+	if ( $resource eq '*' )
 	{
-		my $msg = "The $type_msg $resource is already in the group $group";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# check if the resource exists
-	if ( $type eq "interfaces" )
-	{
-		require Zevenet::Net::Interface;
-		if ( !grep ( /^$json_obj->{ 'name' }$/, &getInterfaceList() ) )
+		if ( $resource_list[0] eq '*' )
 		{
-			my $msg = "The interface $resource does not exist.";
-			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-		}
-
-		elsif ( !&getValidFormat( 'virt_interface', $resource ) )
-		{
-			my $msg = "The interface has to be a virtual interface.";
+			my $msg = "The $type_msg '$resource' is already in the group '$group'";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	elsif ( $type eq "farms" )
+	else
 	{
-		require Zevenet::Farm::Core;
-		if ( !&getFarmExists( $resource ) )
+		if ( $resource_list[0] eq '*' or grep ( /^$resource$/, @resource_list ) )
 		{
-			my $msg = "The farm $resource does not exist.";
-			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+			my $msg = "The $type_msg '$resource' is already in the group '$group'";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		# check if the resource exists
+		if ( $type eq "interfaces" )
+		{
+			require Zevenet::Net::Interface;
+			if ( !grep ( /^$json_obj->{ 'name' }$/, &getInterfaceList() ) )
+			{
+				my $msg = "The interface '$resource' does not exist.";
+				return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+			}
+		}
+		elsif ( $type eq "farms" )
+		{
+			require Zevenet::Farm::Core;
+			if ( !&getFarmExists( $resource ) )
+			{
+				my $msg = "The farm '$resource' does not exist.";
+				return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+			}
 		}
 	}
-	elsif ( $type eq "users" )
+
+	if ( $type eq "users" )
 	{
 		include 'Zevenet::RBAC::User::Core';
 		if ( !&getRBACUserExists( $resource ) )
 		{
-			my $msg = "The user $resource does not exist.";
+			my $msg = "The user '$resource' does not exist.";
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
-	}
 
-	# check only one group for user
-	if ( $type eq "users" )
-	{
 		if ( &getRBACUserGroup( $resource ) )
 		{
-			my $msg = "The user $resource is already in a group.";
+			my $msg = "The user '$resource' is already in a group.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -306,7 +309,7 @@ sub add_rbac_group_resource
 									   $json_obj->{ 'name' } );
 		}
 
-		my $msg = "Added the $type_msg $json_obj->{ 'name' } to the group $group";
+		my $msg = "Added the $type_msg '$json_obj->{ name }' to the group '$group'";
 		my $body = {
 					 description => $desc,
 					 params      => { 'group' => $output },
@@ -316,12 +319,12 @@ sub add_rbac_group_resource
 	}
 	else
 	{
-		my $msg = "Adding the $type_msg $json_obj->{ 'name' } to the group $group";
+		my $msg = "Adding the $type_msg '$json_obj->{ name }' to the group '$group'";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }
 
-#  DELETE /rbac/groups/<group>/users/<users>/(interfaces|farms|users)/<resource_name>
+#  DELETE /rbac/groups/<group>/(interfaces|farms|users)/<resource_name>
 sub del_rbac_group_resource
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -335,18 +338,18 @@ sub del_rbac_group_resource
 
 	include 'Zevenet::RBAC::Group::Config';
 
-	my $desc = "Removing the $type_msg $resource from the group $group";
+	my $desc = "Removing the $type_msg '$resource' from the group '$group'";
 
 	unless ( &getRBACGroupExists( $group ) )
 	{
-		my $msg = "The RBAC group $group doesn't exist";
+		my $msg = "The RBAC group '$group' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check if the object resource exists in the group
 	unless ( grep ( /^$resource$/, @{ &getRBACGroupParam( $group, $type ) } ) )
 	{
-		my $msg = "Not found the $type_msg $resource in the group $group";
+		my $msg = "The $type_msg '$resource' is not been used by the group '$group'";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -362,7 +365,7 @@ sub del_rbac_group_resource
 		}
 
 		my $msg =
-		  "The $type_msg $resource has been unlinked successful from the group $group.";
+		  "The $type_msg '$resource' has been unlinked successful from the group '$group'.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -372,7 +375,7 @@ sub del_rbac_group_resource
 	}
 	else
 	{
-		my $msg = "Removing the $type_msg $resource from the group $group.";
+		my $msg = "Removing the $type_msg '$resource' from the group '$group'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

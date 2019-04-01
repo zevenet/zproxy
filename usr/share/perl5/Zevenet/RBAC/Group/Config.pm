@@ -46,7 +46,8 @@ Returns:
 
 sub setRBACGroupLockConfigFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbac_groups.lock";
@@ -75,7 +76,8 @@ Returns:
 
 sub setRBACGroupConfigFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $group, $key, $value, $action ) = @_;
 
 	# the group root mustn't exist
@@ -129,7 +131,8 @@ Returns:
 
 sub createRBACGroup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group = shift;
 	my $group_obj;
 
@@ -166,7 +169,8 @@ Returns:
 
 sub delRBACGroup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group = shift;
 
 	# remove from system
@@ -192,8 +196,8 @@ Function: addRBACGroupResource
 
 Parameters:
 	Group - Group name
-	Name - Resource name. It can be a farm name, virtual interface name...
-	Resource - Resource type. It indicates the type of resource: "user", "farm" or "interface"
+	Resource value - It can be a farm name, virtual interface name...
+	Resource type - Resource type. It indicates the type of resource: "user", "farm" or "interface"
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
@@ -202,7 +206,8 @@ Returns:
 
 sub addRBACGroupResource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group    = shift;
 	my $resource = shift;
 	my $type     = shift;
@@ -218,7 +223,15 @@ sub addRBACGroupResource
 	# Edit it in the config file
 	if ( !$error )
 	{
-		&setRBACGroupConfigFile( $group, $type, $resource, 'add' );
+		# remove the all resources and add the global parameter '*'
+		if ( $type =~ /^(?:farm|interfaces?)$/ and $resource eq '*' )
+		{
+			&setRBACGroupConfigFile( $group, $type, $resource );
+		}
+		else
+		{
+			&setRBACGroupConfigFile( $group, $type, $resource, 'add' );
+		}
 	}
 
 	return $error;
@@ -241,7 +254,8 @@ Returns:
 
 sub delRBACGroupResource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group    = shift;
 	my $resource = shift;
 	my $type     = shift;
@@ -257,7 +271,15 @@ sub delRBACGroupResource
 	# Edit it in the config file
 	if ( !$error )
 	{
-		&setRBACGroupConfigFile( $group, $type, $resource, 'del' );
+		# remove the all resources and add the global parameter '*'
+		if ( $type =~ /^(?:farm|interfaces?)$/ and $resource eq '*' )
+		{
+			&setRBACGroupConfigFile( $group, $type, '' );
+		}
+		else
+		{
+			&setRBACGroupConfigFile( $group, $type, $resource, 'del' );
+		}
 	}
 
 	return $error;
@@ -279,7 +301,8 @@ Returns:
 
 sub addRBACUserResource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $resource = shift;
 	my $type     = shift;
 
@@ -314,7 +337,8 @@ Returns:
 
 sub delRBACResource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $resource = shift;
 	my $type     = shift;
 
@@ -343,7 +367,8 @@ Returns:
 
 sub setRBACRenameByFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $old_farmname = shift;
 	my $new_farmname = shift;
 

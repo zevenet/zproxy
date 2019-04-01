@@ -77,13 +77,13 @@ if ( $ENV{ PATH_INFO } =~ qr{^/rbac/groups} )
 	#  DELETE /rbac/groups/<group>
 	DELETE qr{^/rbac/groups/($group_name)$}, 'del_rbac_group', $mod;
 
-	#  POST /rbac/groups/<group>/users/(intefarces|farms|users)
+	#  POST /rbac/groups/<group>/(intefarces|farms|users)
 	POST qr{^/rbac/groups/($group_name)/(interfaces|farms|users)$},
 	  'add_rbac_group_resource', $mod;
 
-#  DELETE /rbac/groups/<group>/users/<users>/(interfaces|farms|users)/<resource_name>
+	#  DELETE /rbac/groups/<group>/(interfaces|farms|users)/<resource_name>
 	DELETE
-	  qr{^/rbac/groups/($group_name)/(interfaces|farms|users)/($user_name|$iface_re|$farmname_re)$},
+	  qr{^/rbac/groups/($group_name)/(interfaces|farms|users)/($user_name|$iface_re|$farmname_re|\*)$},
 	  'del_rbac_group_resource', $mod;
 }
 

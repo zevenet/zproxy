@@ -43,7 +43,8 @@ Returns:
 
 sub getRBACConfPath
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return &getGlobalConfiguration( 'configdir' ) . "/rbac";
 }
 
@@ -62,7 +63,8 @@ Returns:
 
 sub getRBACGroupMembers
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group = shift;
 
 	my ( undef, undef, undef, $members ) = getgrnam ( $group );
@@ -89,7 +91,8 @@ Returns:
 
 sub getRBACUserIsMember
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $user  = shift;
 	my $group = shift;
 
@@ -114,7 +117,8 @@ Returns:
 
 sub getRBACUserGroup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $user = shift;
 	my @groups_list;
 	my $groups_bin = &getGlobalConfiguration( "groups_bin" );
@@ -149,11 +153,12 @@ Returns:
 
 sub getRBACResourcePermissions
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path = shift;
 
 	require Zevenet::User;
-	my $user       = &getUser();
+	my $user     = &getUser();
 	my $rbac_msg = "";
 
 	include 'Zevenet::RBAC::Group::Core';
@@ -170,7 +175,7 @@ sub getRBACResourcePermissions
 		{
 			if ( !grep ( /^$farm$/, @{ &getRBACUsersResources( $user, 'farms' ) } ) )
 			{
-				$rbac_msg = "The farm $farm is accessible by the user $user";
+				$rbac_msg = "The farm $farm is not accessible by the user $user";
 			}
 		}
 	}
@@ -206,7 +211,8 @@ Returns:
 
 sub getRBACRolePath
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return &getRBACConfPath() . "/roles";
 }
 
@@ -225,7 +231,8 @@ Returns:
 
 sub getRBACRoleFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $role = shift;
 	return &getRBACRolePath() . "/$role.conf";
 }
@@ -247,7 +254,8 @@ Returns:
 
 sub getRBACRolePermission
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $section = shift;
 	my $action  = shift;
 
@@ -256,7 +264,7 @@ sub getRBACRolePermission
 	my $roleFile;
 	my $fileHandle;
 	require Zevenet::User;
-	my $user  = &getUser();
+	my $user = &getUser();
 	if ( $user eq 'root' ) { return 1 }
 
 	my $group = &getRBACUserGroup( $user );
@@ -275,9 +283,10 @@ sub getRBACRolePermission
 		require Config::Tiny;
 		$fileHandle = Config::Tiny->read( $roleFile );
 
-		$out = 0 if (	! exists( $fileHandle->{ $section }->{ $action } ) ||
-				! defined( $fileHandle->{ $section }->{ $action } ) ||
-				$fileHandle->{ $section }->{ $action } ne 'true' );
+		$out = 0
+		  if (    !exists ( $fileHandle->{ $section }->{ $action } )
+			   || !defined ( $fileHandle->{ $section }->{ $action } )
+			   || $fileHandle->{ $section }->{ $action } ne 'true' );
 	}
 
 	&zenlog( "$ENV{ REQUEST_METHOD } $ENV{ PATH_INFO }", "debug", "RBAC" );
@@ -307,13 +316,14 @@ Returns:
 
 sub getRBACPermissionsMsg
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path   = shift;
 	my $method = shift;
 
-	my $msg = "";
+	my $msg     = "";
 	my $section = "";
-	my $action = "";
+	my $action  = "";
 
 	require Zevenet::User;
 	my $username = &getUser();
@@ -322,10 +332,12 @@ sub getRBACPermissionsMsg
 	if ( $username eq 'root' )
 	{
 	}
+
 	# all user have permissions
-	elsif( &getRBACExceptions( $path, $method ) )
+	elsif ( &getRBACExceptions( $path, $method ) )
 	{
 	}
+
 	# zapi calls reserved for root user
 	elsif ( not &getRBACForbidden( $path, $method ) )
 	{
@@ -342,17 +354,26 @@ sub getRBACPermissionsMsg
 			{
 				# get permission role
 				my $permission = &getRBACRolePermission( $section, $action );
-				$msg = "The user '$username' has not permissions for the object '$section' and the action '$action'" if ( ! $permission );
+				$msg =
+				  "The user '$username' has not permissions for the object '$section' and the action '$action'"
+				  if ( !$permission );
 			}
 		}
 	}
 
 	if ( $msg )
-	{ &zenlog( "Request from $username to $method $path. Action BLOCKED", "Error", "RBAC" ); }
-	# elsif ( &getRBACExceptions( $path, $method ) ) {}  # it is not needed now. All exceptions are GET methods
-	elsif ( $method eq 'GET' ) {} # to not log GET requests
+	{
+		&zenlog( "Request from $username to $method $path. Action BLOCKED",
+				 "Error", "RBAC" );
+	}
+
+# elsif ( &getRBACExceptions( $path, $method ) ) {}  # it is not needed now. All exceptions are GET methods
+	elsif ( $method eq 'GET' ) { }    # to not log GET requests
 	else
-	{ &zenlog( "Request from $username to $method $path. Action allowed", "Info", "RBAC" ); }
+	{
+		&zenlog( "Request from $username to $method $path. Action allowed",
+				 "Info", "RBAC" );
+	}
 
 	return $msg;
 }
@@ -372,18 +393,20 @@ Returns:
 
 sub getRBACForbidden
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path   = shift;
 	my $method = shift;
-	my $deny = 0;
+	my $deny   = 0;
 
-	if ( $path eq "/system/users/zapi" ) { $deny = 1; }
-	if ( $path eq "/system/factory" ) { $deny = 1; }
+	if ( $path eq "/system/users/zapi" )       { $deny = 1; }
+	if ( $path eq "/system/factory" )          { $deny = 1; }
 	if ( $path eq '/certificates/activation' ) { $deny = 1; }
 
 	if ( $deny == 1 )
 	{
-		&zenlog( "The path '$method $path' is reserved for the user 'root'", "warning", "RBAC" )
+		&zenlog( "The path '$method $path' is reserved for the user 'root'",
+				 "warning", "RBAC" );
 	}
 
 	return $deny;
@@ -404,16 +427,24 @@ Returns:
 
 sub getRBACExceptions
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path   = shift;
 	my $method = shift;
 
-	if ( $path eq "/certificates/activation/info" and $method eq 'GET' ) { return 1; }
-	#~ if ( $path eq "/stats/system/connections" and $method eq 'GET' ) { return 1; }
-	if ( $path eq "/system/cluster/nodes/localhost" and $method eq 'GET' ) { return 1; }
+	if ( $path eq "/certificates/activation/info" and $method eq 'GET' )
+	{
+		return 1;
+	}
+
+   #~ if ( $path eq "/stats/system/connections" and $method eq 'GET' ) { return 1; }
+	if ( $path eq "/system/cluster/nodes/localhost" and $method eq 'GET' )
+	{
+		return 1;
+	}
 	if ( $path eq "/system/version" and $method eq 'GET' ) { return 1; }
-	if ( $path =~ "/stats" and $method eq 'GET' ) { return 1; }
-	if ( $path =~ "/graphs" and $method eq 'GET' ) { return 1; }
+	if ( $path =~ "/stats"          and $method eq 'GET' ) { return 1; }
+	if ( $path =~ "/graphs"         and $method eq 'GET' ) { return 1; }
 
 	return 0;
 }
@@ -436,7 +467,8 @@ Returns:
 
 sub getRBACPermissionHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path   = shift;
 	my $method = shift;
 	my $section;
@@ -501,7 +533,8 @@ Returns:
 
 sub getRBACRoleMenu
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $path = shift;
 	my $hash;
 
@@ -558,7 +591,8 @@ sub getRBACRoleMenu
 
 sub getRBACPermissionFarmHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zone_re         = &getValidFormat( 'zone' );
 	my $resource_id_re  = &getValidFormat( 'resource_id' );
 	my $farm_re         = &getValidFormat( 'farm_name' );
@@ -631,6 +665,11 @@ sub getRBACPermissionFarmHash
 				   },
 				   {
 					  'regex'   => qr{^/farms/($farm_re)/certificates$},
+					  'section' => 'farm',
+					  'action'  => 'modify',
+				   },
+				   {
+					  'regex'   => qr{^/farms/($farm_re)/certificates/($cert_pem_re)/actions$},
 					  'section' => 'farm',
 					  'action'  => 'modify',
 				   },
@@ -730,7 +769,8 @@ sub getRBACPermissionFarmHash
 
 sub getRBACPermissionActivationCertificateHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
 				 'GET' => [
 						   {
@@ -768,7 +808,8 @@ sub getRBACPermissionActivationCertificateHash
 
 sub getRBACPermissionCertificateHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cert_re     = &getValidFormat( 'certificate' );
 	my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
@@ -818,7 +859,8 @@ sub getRBACPermissionCertificateHash
 
 sub getRBACPermissionIntefaceVirtualHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $virtual_re = &getValidFormat( 'virt_interface' );
 
 	my $hash = {
@@ -859,7 +901,8 @@ sub getRBACPermissionIntefaceVirtualHash
 
 sub getRBACPermissionIntefaceHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
 		 'PUT' => [
 				   {
@@ -893,34 +936,35 @@ sub getRBACPermissionIntefaceHash
 
 sub getRBACPermissionIpdsHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
-				 'PUT' => [
-						   {
-							 'regex'   => qr{^/ipds},
-							 'section' => 'ipds',
-							 'action'  => 'modify',
-						   },
-				 ],
-				 'DELETE' => [
-							  {
-								'regex'   => qr{^/ipds},
-								'section' => 'ipds',
-								'action'  => 'modify',
-							  },
-				 ],
-				 'POST' => [
-							{
-							  'regex'   => qr{^/ipds/(?:rbl|blacklist|dos)/($object_re)/actions$},
-							  'section' => 'ipds',
-							  'action'  => 'action',
-							},
-							{
-							  'regex'   => qr{^/ipds},
-							  'section' => 'ipds',
-							  'action'  => 'modify',
-							},
-				 ],
+		'PUT' => [
+				  {
+					 'regex'   => qr{^/ipds},
+					 'section' => 'ipds',
+					 'action'  => 'modify',
+				  },
+		],
+		'DELETE' => [
+					 {
+						'regex'   => qr{^/ipds},
+						'section' => 'ipds',
+						'action'  => 'modify',
+					 },
+		],
+		'POST' => [
+				   {
+					  'regex'   => qr{^/ipds/(?:rbl|blacklist|dos)/($object_re)/actions$},
+					  'section' => 'ipds',
+					  'action'  => 'action',
+				   },
+				   {
+					  'regex'   => qr{^/ipds},
+					  'section' => 'ipds',
+					  'action'  => 'modify',
+				   },
+		],
 	};
 
 	return $hash;
@@ -932,7 +976,8 @@ sub getRBACPermissionIpdsHash
 
 sub getRBACPermissionAliasHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
 				 'PUT' => [
 						   {
@@ -997,7 +1042,8 @@ sub getRBACPermissionAliasHash
 
 sub getRBACPermissionSystemHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
 		'PUT' => [
 				  {
@@ -1125,7 +1171,8 @@ sub getRBACPermissionSystemHash
 
 sub getRBACPermissionRbacHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
 		'PUT' => [
 				  {
@@ -1224,7 +1271,8 @@ sub getRBACPermissionRbacHash
 
 sub getRBACPermissionFgHash
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $hash = {
 				 'PUT' => [
 						   {
