@@ -344,6 +344,7 @@ ListenerConfig *Config::parse_HTTP() {
   res->nossl_redir = 0;
   res->log_level = log_level;
   res->alive_to = alive_to;
+  res->ignore100continue = ignore_100;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = 0;

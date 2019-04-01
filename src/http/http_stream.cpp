@@ -8,7 +8,7 @@
 
 HttpStream::HttpStream()
     : request(), response(), client_connection(), backend_connection(),
-      timer_fd() {}
+      timer_fd(), chunked_status(http::CHUNKED_STATUS::CHUNKED_DISABLED) {}
 void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
                             const char *string) {
   char caddr[50];

@@ -153,6 +153,7 @@ struct ListenerConfig {
   int allow_client_reneg; /* Allow Client SSL Renegotiation */
   int disable_ssl_v2;     /* Disable SSL version 2 */
   int alive_to;
+  int ignore100continue;  /* Ignore Expect: 100-continue headers in requests. */
   ServiceConfig *services;
   ListenerConfig *next;
 };

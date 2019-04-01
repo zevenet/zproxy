@@ -14,6 +14,12 @@ namespace http {
 
 enum class HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 
+enum class CHUNKED_STATUS: uint8_t {
+  CHUNKED_DISABLED = 0,
+  CHUNKED_ENABLED,
+  CHUNKED_LAST_CHUNK,
+};
+
 enum class CONNECTION_VALUES {
   CLOSE,
   UPGRADE,

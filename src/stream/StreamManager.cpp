@@ -347,6 +347,17 @@ void StreamManager::onRequestEvent(int fd) {
     return;
   }
 
+  /* Check if chunked transfer encoding is enabled. */
+  if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+    size_t pos = std::string(stream->client_connection.buffer).find("\r\n");
+    auto hex = std::string(stream->client_connection.buffer).substr(0, pos);
+    int chunk_length = std::stoul(hex, nullptr, 16);
+    stream->chunked_status = chunk_length != 0 ? http::CHUNKED_STATUS::CHUNKED_ENABLED : http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+
+    stream->backend_connection.enableWriteEvent();
+    return;
+}
+
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   // do {
@@ -626,21 +637,6 @@ void StreamManager::onResponseEvent(int fd) {
       //        stream->response.message_bytes_left,
       //        stream->response.message_length);
       // get content-lengt
-      if (validateResponse(*stream) != validation::REQUEST_RESULT::OK) {
-        Debug::logmsg(LOG_NOTICE,
-                      "(%lx) backend %s response validation error\n %.*s",
-                      std::this_thread::get_id(),
-                      stream->backend_connection.getBackend()->address.c_str(),
-                      stream->backend_connection.buffer_size,
-                      stream->backend_connection.buffer);
-        stream->replyError(
-            HttpStatus::Code::ServiceUnavailable,
-            HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
-                .c_str(),
-            listener_config_.err503);
-        this->clearStream(stream);
-        return;
-      }
     }
 
     stream->backend_connection.getBackend()->setAvgTransferTime(
@@ -648,6 +644,22 @@ void StreamManager::onResponseEvent(int fd) {
             std::chrono::steady_clock::now() -
                 stream->backend_connection.time_start)
             .count());
+
+    if (validateResponse(*stream) != validation::REQUEST_RESULT::OK) {
+      Debug::logmsg(LOG_NOTICE,
+                    "(%lx) backend %s response validation error\n %.*s",
+                    std::this_thread::get_id(),
+                    stream->backend_connection.getBackend()->address.c_str(),
+                    stream->backend_connection.buffer_size,
+                    stream->backend_connection.buffer);
+      stream->replyError(
+          HttpStatus::Code::ServiceUnavailable,
+          HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
+              .c_str(),
+          listener_config_.err503);
+      this->clearStream(stream);
+      return;
+    }
   }
   stream->client_connection.enableWriteEvent();
 }
@@ -745,8 +757,19 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     return;
   }
 
-  auto result = stream->client_connection.writeTo(stream->backend_connection,
-                                                  stream->request);
+  IO::IO_RESULT result;
+  /* Check if chunked transfer encoding is enabled. */
+  if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+    stream->chunked_status = stream->chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK ?
+                                                         http::CHUNKED_STATUS::CHUNKED_DISABLED :
+                                                         http::CHUNKED_STATUS::CHUNKED_ENABLED;
+
+    result = stream->backend_connection.write(stream->client_connection.buffer, stream->client_connection.buffer_size);
+    /* We need to indicate that all the buffer content has been written. */
+      stream->client_connection.buffer_size = 0;
+    } else {
+      result = stream->client_connection.writeTo(stream->backend_connection, stream->request);
+    }
 
   if (result == IO::IO_RESULT::SUCCESS) {
     stream->timer_fd.set(
@@ -949,6 +972,14 @@ StreamManager::validateRequest(HttpRequest &request) {
             && http_info::connection_values.at(std::string(header_value)) == CONNECTION_VALUES::UPGRADE)
           request.connection_header_upgrade = true;
         break;
+      case http::HTTP_HEADER_NAME::EXPECT:
+        if(listener_config_.ignore100continue)
+          request.headers[i].header_off = true;
+          break;
+      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+        if(listener_config_.ignore100continue)
+          request.headers[i].header_off = true;
+          break;
       }
     }
 
@@ -967,6 +998,12 @@ StreamManager::validateRequest(HttpRequest &request) {
 
 validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
   auto response = stream.response;
+  /* If the response is 100 continue we need to enable chunked transfer. */
+  if (response.http_status_code == 100) {
+    stream.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+    return validation::REQUEST_RESULT::OK;
+  }
+
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
 
@@ -1043,7 +1080,6 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
     //          0))
     //    break;
     // }
-
   }
   return validation::REQUEST_RESULT::OK;
 }

@@ -33,6 +33,7 @@ public:
   HttpRequest request;
   HttpResponse response;
   UpgradeStatus upgrade;
+  http::CHUNKED_STATUS chunked_status;
 
   void replyError(HttpStatus::Code code, const char *code_string,
                   const char *string);
