@@ -63,6 +63,8 @@ public:
   validation::REQUEST_RESULT validateRequest(HttpRequest &request);
   validation::REQUEST_RESULT validateResponse(HttpStream &stream);
 
+  static void setBackendCookie(Service *service, HttpStream *stream);
+  static void applyCompression(Service *service, HttpStream *stream);
   void clearStream(HttpStream *stream);
   bool is_https_listener;
 };

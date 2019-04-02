@@ -661,43 +661,11 @@ void StreamManager::onResponseEvent(int fd) {
       this->clearStream(stream);
       return;
     }
-    http::TRANSFER_ENCODING_TYPE compression_type;
-    /* Check if we have found the accept encoding header in the request but not the transfer encoding in the response. */
-    if ((!stream->response.transfer_encoding_header) && stream->request.accept_encoding_header) {
-      std::string compression_value;
-      stream->request.getHeaderValue(http::HTTP_HEADER_NAME::ACCEPT_ENCODING, compression_value);
 
-      /* Check if we accept any of the compression algorithms. */
-      size_t initial_pos;
-      initial_pos = compression_value.find(service_manager->getService(stream->request)->service_config.compression_algorithm);
-      if (initial_pos != std::string::npos) {
-        compression_value = service_manager->getService(stream->request)->service_config.compression_algorithm;
-        stream->response.addHeader(http::HTTP_HEADER_NAME::TRANSFER_ENCODING, compression_value);
-        stream->response.transfer_encoding_header = true;
-        compression_type = http_info::compression_types.at(compression_value);
+    Service *service = service_manager->getService(stream->request); // FIXME:: Do not loop!!
+    setBackendCookie(service, stream);
 
-        /* Get the message_uncompressed. */
-        std::string message_no_compressed = std::string(stream->response.message, stream->response.message_length);
-        /* We are going to do the compression depending on the compression algorithm. */
-        switch(compression_type) {
-          case http::TRANSFER_ENCODING_TYPE::GZIP: {
-            std::string message_compressed_gzip;
-            if(!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
-              Debug::logmsg(LOG_ERR, "Error while compressing.");
-            strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
-            break;
-          }
-          case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
-            std::string message_compressed_deflate;
-            if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
-              Debug::logmsg(LOG_ERR, "Error while compressing.");
-            strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
-          break;
-          }
-          default: break;
-        }
-      }
-    }
+    applyCompression(service, stream);
   }
   stream->client_connection.enableWriteEvent();
 }
@@ -843,33 +811,6 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   }
 
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-
-  Service *service =
-      service_manager->getService(stream->request); // FIXME:: Do not loop!!
-
-  if (!service->becookie.empty()) {
-    std::string set_cookie_header =
-        service->becookie + "=" +
-            stream->backend_connection.getBackend()->bekey;
-    if (!service->becdomain.empty())
-      set_cookie_header += "; Domain=" + service->becdomain;
-    if (!service->becpath.empty())
-      set_cookie_header += "; Path=" + service->becpath;
-    time_t time = std::time(nullptr);
-    if (service->becage > 0) {
-      time += service->becage;
-    } else {
-      time += service->ttl;
-    }
-    // TODO: ¿Parsear la fecha, que estructura deberíamos usar?
-    char time_string[MAXBUF];
-    strftime(time_string, MAXBUF - 1, "%a, %e-%b-%Y %H:%M:%S GMT",
-             gmtime(&time));
-    set_cookie_header += "; expires=";
-    set_cookie_header += time_string;
-    stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
-                               set_cookie_header);
-  }
 
   if (this->is_https_listener) {
     size_t written = 0;
@@ -1139,6 +1080,71 @@ bool StreamManager::init(ListenerConfig &listener_config) {
     this->is_https_listener = ssl_manager->init(listener_config);
   }
   return true;
+}
+
+void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
+  if (!service->becookie.empty()) {
+    std::string set_cookie_header =
+        service->becookie + "=" +
+            stream->backend_connection.getBackend()->bekey;
+    if (!service->becdomain.empty())
+      set_cookie_header += "; Domain=" + service->becdomain;
+    if (!service->becpath.empty())
+      set_cookie_header += "; Path=" + service->becpath;
+    time_t time = std::time(nullptr);
+    if (service->becage > 0) {
+      time += service->becage;
+    } else {
+      time += service->ttl;
+    }
+    char time_string[MAXBUF];
+    strftime(time_string, MAXBUF - 1, "%a, %e-%b-%Y %H:%M:%S GMT",
+             gmtime(&time));
+    set_cookie_header += "; expires=";
+    set_cookie_header += time_string;
+    stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
+                               set_cookie_header);
+  }
+}
+
+void StreamManager::applyCompression(Service *service, HttpStream *stream){
+  http::TRANSFER_ENCODING_TYPE compression_type;
+  /* Check if we have found the accept encoding header in the request but not the transfer encoding in the response. */
+  if ((!stream->response.transfer_encoding_header) && stream->request.accept_encoding_header) {
+    std::string compression_value;
+    stream->request.getHeaderValue(http::HTTP_HEADER_NAME::ACCEPT_ENCODING, compression_value);
+
+    /* Check if we accept any of the compression algorithms. */
+    size_t initial_pos;
+    initial_pos = compression_value.find(service->service_config.compression_algorithm);
+    if (initial_pos != std::string::npos) {
+      compression_value = service->service_config.compression_algorithm;
+      stream->response.addHeader(http::HTTP_HEADER_NAME::TRANSFER_ENCODING, compression_value);
+      stream->response.transfer_encoding_header = true;
+      compression_type = http_info::compression_types.at(compression_value);
+
+      /* Get the message_uncompressed. */
+      std::string message_no_compressed = std::string(stream->response.message, stream->response.message_length);
+      /* We are going to do the compression depending on the compression algorithm. */
+      switch(compression_type) {
+        case http::TRANSFER_ENCODING_TYPE::GZIP: {
+          std::string message_compressed_gzip;
+          if(!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
+            Debug::logmsg(LOG_ERR, "Error while compressing.");
+          strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
+          break;
+        }
+        case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
+          std::string message_compressed_deflate;
+          if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
+            Debug::logmsg(LOG_ERR, "Error while compressing.");
+          strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
+        break;
+        }
+        default: break;
+      }
+    }
+  }
 }
 
 void StreamManager::clearStream(HttpStream *stream) {
