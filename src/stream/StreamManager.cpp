@@ -662,7 +662,7 @@ void StreamManager::onResponseEvent(int fd) {
 
     Service *service = service_manager->getService(stream->request); // FIXME:: Do not loop!!
     setBackendCookie(service, stream);
-
+    setStrictTransportSecurity(service, stream);
     applyCompression(service, stream);
   }
   stream->client_connection.enableWriteEvent();
@@ -1105,6 +1105,15 @@ bool StreamManager::transferChunked(HttpStream *stream) {
   }
 
   return false;
+}
+
+void StreamManager::setStrictTransportSecurity(Service *service, HttpStream *stream) {
+  if (service->service_config.sts > 0) {
+    std::string sts_header_value = "max-age=";
+    sts_header_value += std::to_string(service->service_config.sts);
+    stream->response.addHeader(http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY,
+                               sts_header_value);
+  }
 }
 
 void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
