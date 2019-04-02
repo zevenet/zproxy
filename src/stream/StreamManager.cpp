@@ -1057,6 +1057,10 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
         }
         break;
       }
+      case http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY:
+          if (service_manager->getService(stream.request)->service_config.sts > 0)
+            response.headers[i].header_off;
+      break;
       default:continue;
       }
 
