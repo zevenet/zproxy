@@ -677,9 +677,7 @@ void StreamManager::onResponseEvent(int fd) {
         compression_type = http_info::compression_types.at(compression_value);
 
         /* Get the message_uncompressed. */
-        Debug::logmsg(LOG_REMOVE, "Buffer size: %.*s", stream->backend_connection.buffer_size, stream->backend_connection.buffer);
         std::string message_no_compressed = std::string(stream->response.message, stream->response.message_length);
-        Debug::logmsg(LOG_REMOVE, "Message no compressed: %s", stream->response.message);
         /* We are going to do the compression depending on the compression algorithm. */
         switch(compression_type) {
           case http::TRANSFER_ENCODING_TYPE::GZIP: {
@@ -687,7 +685,6 @@ void StreamManager::onResponseEvent(int fd) {
             if(!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
               Debug::logmsg(LOG_ERR, "Error while compressing.");
             strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
-            Debug::logmsg(LOG_REMOVE, "Message sent: %s", stream->response.message);
             break;
           }
           case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
@@ -695,7 +692,6 @@ void StreamManager::onResponseEvent(int fd) {
             if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
               Debug::logmsg(LOG_ERR, "Error while compressing.");
             strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
-            Debug::logmsg(LOG_REMOVE, "Message sent: %s", stream->response.message);
           break;
           }
           default: break;
