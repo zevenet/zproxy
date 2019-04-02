@@ -42,6 +42,7 @@ add_library(libzhttp
     debug/Debug.h
     util/Network.h
     util/crypto.h
+    util/zlib_util.h
     stream/listener.cpp
     stream/listener.h
     util/utils.h

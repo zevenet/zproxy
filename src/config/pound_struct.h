@@ -109,6 +109,7 @@ class ServiceConfig {
   int max_headers_allowed;
   int routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
   int pinned_connection; /* Pin the connection by default */
+  std::string compression_algorithm; /* Compression algorithm */
   ServiceConfig *next;
 };
 

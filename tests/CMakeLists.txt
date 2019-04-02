@@ -38,6 +38,7 @@ add_executable(${PROJECT_NAME}
         src/t_epoll_manager.h
         src/testserver.h
 #    t_backend_connection.h
+        src/t_compression.h
         src/t_http_parser.h
         src/t_config.h
         src/t_observer.h

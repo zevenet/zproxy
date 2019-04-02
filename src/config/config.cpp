@@ -1228,6 +1228,15 @@ ServiceConfig *Config::parseService(const char *svc_name) {
           res->routing_policy = 3;
         else
           conf_err("Unknown routing policy");
+    } else if (!regexec(&CompressionAlgorithm, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      std::string cp = lin + matches[1].rm_so;
+      if (cp == "gzip")
+        res->compression_algorithm = cp;
+      else if (cp == "deflate")
+        res->compression_algorithm = cp;
+      else
+        conf_err("Unknown compression algorithm");
     } else if (!regexec(&IgnoreCase, lin, 4, matches, 0)) {
       ign_case = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&Disabled, lin, 4, matches, 0)) {
@@ -1794,6 +1803,8 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&DynScale, "^[ \t]*DynScale[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&CompressionAlgorithm, "^[ \t]*CompressionAlgorithm[ \t]+([^ \t]+)[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&PinnedConnection, "^[ \t]*PinnedConnection[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&RoutingPolicy, "^[ \t]*RoutingPolicy[ \t]+([^ \t]+)[ \t]*$",
@@ -1936,6 +1947,7 @@ void Config::clean_regex() {
   regfree(&DynScale);
   regfree(&PinnedConnection);
   regfree(&RoutingPolicy);
+  regfree(&CompressionAlgorithm);
   regfree(&ClientCert);
   regfree(&AddHeader);
   regfree(&SSLAllowClientRenegotiation);

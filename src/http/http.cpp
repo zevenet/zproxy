@@ -334,3 +334,21 @@ const std::unordered_map<std::string, CONNECTION_VALUES>
         {"close", CONNECTION_VALUES::CLOSE},
         {"Keep-Alive", CONNECTION_VALUES::KEEP_ALIVE},
 };
+
+const std::unordered_map<http::TRANSFER_ENCODING_TYPE, const std::string>
+    http_info::compression_types_strings = {
+  {http::TRANSFER_ENCODING_TYPE::GZIP, "gzip"},
+  {http::TRANSFER_ENCODING_TYPE::COMPRESS, "compress"},
+  {http::TRANSFER_ENCODING_TYPE::DEFLATE, "deflate"},
+  {http::TRANSFER_ENCODING_TYPE::BR, "br"},
+  {http::TRANSFER_ENCODING_TYPE::IDENTITY, "identity"},
+};
+
+const std::unordered_map<std::string, http::TRANSFER_ENCODING_TYPE>
+    http_info::compression_types = {
+  {"gzip", http::TRANSFER_ENCODING_TYPE::GZIP},
+  {"compress", http::TRANSFER_ENCODING_TYPE::COMPRESS},
+  {"deflate", http::TRANSFER_ENCODING_TYPE::DEFLATE},
+  {"br", http::TRANSFER_ENCODING_TYPE::BR},
+  {"identity", http::TRANSFER_ENCODING_TYPE::IDENTITY},
+};

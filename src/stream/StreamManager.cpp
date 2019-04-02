@@ -7,6 +7,7 @@
 #include "../util/common.h"
 #include "../util/string_view.h"
 #include "../util/utils.h"
+#include "../util/zlib_util.h"
 #include <cstdio>
 #include <functional>
 #if HELLO_WORLD_SERVER
@@ -557,7 +558,7 @@ void StreamManager::onResponseEvent(int fd) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   IO::IO_RESULT result;
-  if (stream->response.message_bytes_left > 0 && !this->is_https_listener) {
+  if (stream->response.message_bytes_left > 0 && !this->is_https_listener && stream->response.transfer_encoding_header) {
     result = stream->backend_connection.zeroRead();
     if (result == IO::IO_RESULT::ERROR) {
       Debug::LogInfo("Error reading response ", LOG_DEBUG);
@@ -659,6 +660,47 @@ void StreamManager::onResponseEvent(int fd) {
           listener_config_.err503);
       this->clearStream(stream);
       return;
+    }
+    http::TRANSFER_ENCODING_TYPE compression_type;
+    /* Check if we have found the accept encoding header in the request but not the transfer encoding in the response. */
+    if ((!stream->response.transfer_encoding_header) && stream->request.accept_encoding_header) {
+      std::string compression_value;
+      stream->request.getHeaderValue(http::HTTP_HEADER_NAME::ACCEPT_ENCODING, compression_value);
+
+      /* Check if we accept any of the compression algorithms. */
+      size_t initial_pos;
+      initial_pos = compression_value.find(service_manager->getService(stream->request)->service_config.compression_algorithm);
+      if (initial_pos != std::string::npos) {
+        compression_value = service_manager->getService(stream->request)->service_config.compression_algorithm;
+        stream->response.addHeader(http::HTTP_HEADER_NAME::TRANSFER_ENCODING, compression_value);
+        stream->response.transfer_encoding_header = true;
+        compression_type = http_info::compression_types.at(compression_value);
+
+        /* Get the message_uncompressed. */
+        Debug::logmsg(LOG_REMOVE, "Buffer size: %.*s", stream->backend_connection.buffer_size, stream->backend_connection.buffer);
+        std::string message_no_compressed = std::string(stream->response.message, stream->response.message_length);
+        Debug::logmsg(LOG_REMOVE, "Message no compressed: %s", stream->response.message);
+        /* We are going to do the compression depending on the compression algorithm. */
+        switch(compression_type) {
+          case http::TRANSFER_ENCODING_TYPE::GZIP: {
+            std::string message_compressed_gzip;
+            if(!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
+              Debug::logmsg(LOG_ERR, "Error while compressing.");
+            strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
+            Debug::logmsg(LOG_REMOVE, "Message sent: %s", stream->response.message);
+            break;
+          }
+          case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
+            std::string message_compressed_deflate;
+            if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
+              Debug::logmsg(LOG_ERR, "Error while compressing.");
+            strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
+            Debug::logmsg(LOG_REMOVE, "Message sent: %s", stream->response.message);
+          break;
+          }
+          default: break;
+        }
+      }
     }
   }
   stream->client_connection.enableWriteEvent();
@@ -806,7 +848,6 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
 
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
-  // TODO: Añadir setCookie al extra headers de response
   Service *service =
       service_manager->getService(stream->request); // FIXME:: Do not loop!!
 
@@ -972,10 +1013,9 @@ StreamManager::validateRequest(HttpRequest &request) {
             && http_info::connection_values.at(std::string(header_value)) == CONNECTION_VALUES::UPGRADE)
           request.connection_header_upgrade = true;
         break;
-      case http::HTTP_HEADER_NAME::EXPECT:
-        if(listener_config_.ignore100continue)
-          request.headers[i].header_off = true;
-          break;
+      case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:
+        request.accept_encoding_header = true;
+        break;
       case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
         if(listener_config_.ignore100continue)
           request.headers[i].header_off = true;

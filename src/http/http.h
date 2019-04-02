@@ -38,7 +38,8 @@ enum class TRANSFER_ENCODING_TYPE : uint8_t {
   COMPRESS = 0x1 << 1,
   DEFLATE = 0x1 << 2,
   GZIP = 0x01 << 3,
-  IDENTITY = 0x1 << 4
+  IDENTITY = 0x1 << 4,
+  BR = 0x1 << 5,
 };
 
 enum class HTTP_HEADER_NAME : uint16_t {
@@ -195,6 +196,8 @@ struct http_info {
   static const std::unordered_map<std::string, UPGRADE_PROTOCOLS> upgrade_protocols;
   static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings;
   static const std::unordered_map<std::string, CONNECTION_VALUES> connection_values;
+  static const std::unordered_map<TRANSFER_ENCODING_TYPE, const std::string> compression_types_strings;
+  static const std::unordered_map<std::string, TRANSFER_ENCODING_TYPE> compression_types;
 };
 
 struct validation {
