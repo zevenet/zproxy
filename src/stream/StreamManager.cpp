@@ -349,12 +349,7 @@ void StreamManager::onRequestEvent(int fd) {
   }
 
   /* Check if chunked transfer encoding is enabled. */
-  if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-    size_t pos = std::string(stream->client_connection.buffer).find("\r\n");
-    auto hex = std::string(stream->client_connection.buffer).substr(0, pos);
-    int chunk_length = std::stoul(hex, nullptr, 16);
-    stream->chunked_status = chunk_length != 0 ? http::CHUNKED_STATUS::CHUNKED_ENABLED : http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
-
+  if (transferChunked(stream)) {
     stream->backend_connection.enableWriteEvent();
     return;
 }
@@ -1080,6 +1075,18 @@ bool StreamManager::init(ListenerConfig &listener_config) {
     this->is_https_listener = ssl_manager->init(listener_config);
   }
   return true;
+}
+
+bool StreamManager::transferChunked(HttpStream *stream) {
+  if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+    size_t pos = std::string(stream->client_connection.buffer).find("\r\n");
+    auto hex = std::string(stream->client_connection.buffer).substr(0, pos);
+    int chunk_length = std::stoul(hex, nullptr, 16);
+    stream->chunked_status = chunk_length != 0 ? http::CHUNKED_STATUS::CHUNKED_ENABLED : http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+    return  true;
+  }
+
+  return false;
 }
 
 void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {

@@ -65,6 +65,7 @@ public:
 
   static void setBackendCookie(Service *service, HttpStream *stream);
   static void applyCompression(Service *service, HttpStream *stream);
+  static bool transferChunked(HttpStream *stream);
   void clearStream(HttpStream *stream);
   bool is_https_listener;
 };
