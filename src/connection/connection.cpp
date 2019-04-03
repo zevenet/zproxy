@@ -208,7 +208,8 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
       sent += static_cast<size_t>(count);
       total_to_send -= count;
       buffer_size -= count;
-      http_data.message_bytes_left -= count;
+      if(http_data.message_bytes_left >= count)
+        http_data.message_bytes_left -= count;
     }
   }
   PRINT_BUFFER_SIZE
@@ -234,12 +235,12 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   for (size_t i = 0; i != http_data.num_headers; i++) {
     if (http_data.headers[i].header_off)
       continue; // skip unwanted headers
-    if (helper::headerEqual(http_data.headers[i],
-                            http::http_info::headers_names_strings.at(
-                                http::HTTP_HEADER_NAME::CONTENT_LENGTH))) {
-      http_data.message_bytes_left =
-          static_cast<size_t>(std::atoi(http_data.headers[i].value));
-    }
+//    if (helper::headerEqual(http_data.headers[i],
+//                            http::http_info::headers_names_strings.at(
+//                                http::HTTP_HEADER_NAME::CONTENT_LENGTH))) {
+//      http_data.message_bytes_left =
+//          static_cast<size_t>(std::atoi(http_data.headers[i].value));
+//    }
     iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;

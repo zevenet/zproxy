@@ -834,7 +834,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     stream->backend_connection.buffer_size -= written;
 
   } else {
-    if (stream->response.message_bytes_left > 0) {
+    //if (stream->response.message_bytes_left > 0) {
       if (UNLIKELY(stream->backend_connection.buffer_size > 0))
         result = stream->backend_connection.writeTo(stream->client_connection,
                                                     stream->response);
@@ -844,10 +844,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
       if (LIKELY(stream->backend_connection.splice_pipe.bytes > 0))
         result = stream->backend_connection.zeroWrite(
             stream->client_connection.getFileDescriptor(), stream->response);
-    } else {
-      result = stream->backend_connection.writeTo(stream->client_connection,
-                                                  stream->response);
-    }
+    //} else {
+     // result = stream->backend_connection.writeTo(stream->client_connection,
+      //                                            stream->response);
+    //}
   }
   if (result == IO::IO_RESULT::SUCCESS) {
     stream->backend_connection.enableReadEvent();
@@ -952,7 +952,13 @@ StreamManager::validateRequest(HttpRequest &request) {
         if(listener_config_.ignore100continue)
           request.headers[i].header_off = true;
           break;
+      case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
+        request.message_bytes_left =
+            static_cast<size_t>(std::atoi(request.headers[i].value));
+        continue;
       }
+      }
+
     }
 
     /* maybe header to be removed */
@@ -969,7 +975,7 @@ StreamManager::validateRequest(HttpRequest &request) {
 }
 
 validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
-  auto response = stream.response;
+  HttpResponse & response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
   if (response.http_status_code == 100) {
     stream.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
@@ -993,7 +999,7 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
         stream.response.message_bytes_left =
             static_cast<size_t>(std::atoi(response.headers[i].value));
-        break;
+        continue;
       }
       case http::HTTP_HEADER_NAME::LOCATION: {
         // Rewrite location
@@ -1039,10 +1045,6 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
       default:continue;
       }
 
-    } else {
-      Debug::logmsg(LOG_DEBUG, "\tUnknown header: %s, header value: %s",
-                    header.to_string().c_str(),
-                    header_value.to_string().c_str());
     }
     /* maybe header to be removed from responses */
     //  MATCHER *m;
