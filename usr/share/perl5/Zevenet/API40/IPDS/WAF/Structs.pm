@@ -251,7 +251,6 @@ sub getZapiWAFRule
 	if ( $rule->{ type } =~ /(?:match_action|action)/ )
 	{
 		$out = {
-				 'id'          => $id,
 				 'type'        => 'action',
 				 'rule_id'     => $rule->{ rule_id } // '',
 				 'description' => $rule->{ description } // "The ID is $id",
@@ -327,6 +326,7 @@ sub getZapiWAFRule
 	}
 
 	$out->{ raw } = $rule->{ raw } // [];
+	$out->{ id } = $id;
 
 	return $out;
 }
