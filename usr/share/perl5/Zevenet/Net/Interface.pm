@@ -61,6 +61,7 @@ Variable: $if_ref
 	$if_ref->{ parent }   - Interface which this interface is based/depends on.
 	$if_ref->{ float }    - Floating interface selected for this interface. For routing interfaces only.
 	$if_ref->{ is_slave } - Whether the NIC interface is a member of a Bonding interface. For NIC interfaces only.
+	$if_ref->{ dhcp }     - The DHCP service is enabled or not for the current interface.
 
 See also:
 	<getInterfaceConfig>, <setInterfaceConfig>, <getSystemInterface>
@@ -138,6 +139,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	  ( $iface->{ addr } =~ /:/ ) ? '6' : ( $iface->{ addr } =~ /\./ ) ? '4' : 0;
 	$iface->{ net } =
 	  &getAddressNetwork( $iface->{ addr }, $iface->{ mask }, $iface->{ ip_v } );
+	$iface->{ dhcp } = $fileHandler->{ $if_name }->{ dhcp } // 'false'
+	  if ( $eload );
 
 	if ( $iface->{ dev } =~ /:/ )
 	{
@@ -248,7 +251,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	}
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
-	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac' );
+	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac', 'dhcp' );
 
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
@@ -262,7 +265,6 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 	if ( !-f $config_filename )
 	{
-
 		$fileHandle->{ $if_ref->{ name } }->{ status } = $if_ref->{ status } // "up";
 	}
 
@@ -1328,6 +1330,8 @@ sub get_interface_list_struct
 		};
 
 		$if_conf->{ alias } = $alias->{ $if_ref->{ name } } if $eload;
+		$if_conf->{ dhcp } = $if_ref->{ dhcp }
+		  if ( $eload and $if_ref->{ type } ne 'virtual' );
 
 		if ( $if_ref->{ type } eq 'nic' )
 		{
@@ -1404,6 +1408,7 @@ sub get_nic_struct
 
 		$interface->{ alias }    = $alias->{ $if_ref->{ name } } if $eload;
 		$interface->{ is_slave } = $if_ref->{ is_slave }         if $eload;
+		$interface->{ dhcp }     = $if_ref->{ dhcp }             if $eload;
 	}
 
 	return $interface;
@@ -1454,8 +1459,9 @@ sub get_nic_list_struct
 						mac     => $if_ref->{ mac },
 		};
 
-		$if_conf->{ alias } = $alias->{ $if_ref->{ name } } if $eload;
-		$if_conf->{ is_slave } = $if_ref->{ is_slave } if $eload;
+		$if_conf->{ alias }    = $alias->{ $if_ref->{ name } } if $eload;
+		$if_conf->{ is_slave } = $if_ref->{ is_slave }         if $eload;
+		$if_conf->{ dhcp }     = $if_ref->{ dhcp } // 'false'  if $eload;
 		$if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
 
 		# include 'has_vlan'
@@ -1519,6 +1525,7 @@ sub get_vlan_struct
 	};
 
 	$output->{ alias } = $alias->{ $interface->{ name } } if $eload;
+	$output->{ dhcp }  = $interface->{ dhcp } // 'false'  if $eload;
 
 	return $output;
 }
@@ -1569,6 +1576,7 @@ sub get_vlan_list_struct
 		};
 
 		$if_conf->{ alias } = $alias->{ $if_ref->{ name } } if $eload;
+		$if_conf->{ dhcp }  = $if_ref->{ dhcp } // 'false'  if $eload;
 		$if_conf->{ is_cluster } = 'true'
 		  if $cluster_if && $cluster_if eq $if_ref->{ name };
 
@@ -1687,6 +1695,7 @@ sub setVlan    # if_ref
 			 "debug", "PROFILING" );
 	my $if_ref = shift;
 	my $params = shift;
+	my $err    = 0;
 
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
@@ -1696,92 +1705,61 @@ sub setVlan    # if_ref
 	# Creating a new interface
 	if ( !defined $oldIf_ref )
 	{
-		&zenlog( "Creating new vlan: $if_ref->{name}", "info", "NETWORK" );
-
-		my $status = 0;
-
-		$status = 1 if &createIf( $if_ref );    # Create interface
-		$status = 1 if &addIp( $if_ref );       # Set IP address
-
-		if ( $eload && exists $params->{ mac } )
-		{
-			$status = &eload(
-							  module => 'Zevenet::Net::Mac',
-							  func   => 'addMAC',
-							  args   => [$if_ref->{ name }, $if_ref->{ mac }]
-			);
-		}
-
-		if ( $status != 0 )
-		{
-			&delIf( $if_ref );
-			return 1;
-		}
-
-		&writeRoutes( $if_ref->{ name } );
-
-		$status = &upIf( $if_ref, 'writeconf' );
-
-		if ( $status == 0 )
-		{
-			$if_ref->{ status } = "up";
-			&applyRoutes( "local", $if_ref );
-		}
-
-		return 1 if ( !&setInterfaceConfig( $if_ref ) );
+		$err = &createVlan( $if_ref );
+		return 1 if ( $err );
 	}
 
 	# Modifying
-	else
+	my $oldAddr;
+
+	# Add new IP, netmask and gateway
+	if ( exists $if_ref->{ addr } )
 	{
-		my $oldAddr;
+		return 1 if &addIp( $if_ref );
+		return 1 if &writeRoutes( $if_ref->{ name } );
 
-		# Add new IP, netmask and gateway
-		if ( exists $if_ref->{ addr } )
+		$oldAddr = $oldIf_ref->{ addr };
+	}
+
+	my $state = &upIf( $if_ref, 'writeconf' );
+
+	if ( $state == 0 )
+	{
+		$if_ref->{ status } = "up";
+		return 1 if &applyRoutes( "local", $if_ref );
+	}
+
+	if ( $eload && exists $params->{ mac } )
+	{
+		return 1
+		  if (
+			   &eload(
+					   module => 'Zevenet::Net::Mac',
+					   func   => 'addMAC',
+					   args   => [$if_ref->{ name }, $if_ref->{ mac }]
+			   )
+		  );
+	}
+
+	return 1 if ( !&setInterfaceConfig( $if_ref ) );
+
+	# if the GW is changed, change it in all appending virtual interfaces
+	if ( exists $params->{ gateway } )
+	{
+		foreach my $appending ( &getInterfaceChild( $if_ref->{ vlan } ) )
 		{
-			return 1 if &addIp( $if_ref );
-			return 1 if &writeRoutes( $if_ref->{ name } );
-
-			$oldAddr = $oldIf_ref->{ addr };
+			my $app_config = &getInterfaceConfig( $appending );
+			$app_config->{ gateway } = $params->{ gateway };
+			&setInterfaceConfig( $app_config );
 		}
+	}
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+	# put all dependant interfaces up
+	require Zevenet::Net::Util;
+	&setIfacesUp( $if_ref->{ name }, "vini" );
 
-		if ( $state == 0 )
-		{
-			$if_ref->{ status } = "up";
-			return 1 if &applyRoutes( "local", $if_ref );
-		}
-
-		if ( $eload && exists $params->{ mac } )
-		{
-			return 1
-			  if (
-				   &eload(
-						   module => 'Zevenet::Net::Mac',
-						   func   => 'addMAC',
-						   args   => [$if_ref->{ name }, $if_ref->{ mac }]
-				   )
-			  );
-		}
-
-		return 1 if ( !&setInterfaceConfig( $if_ref ) );
-
-		# if the GW is changed, change it in all appending virtual interfaces
-		if ( exists $params->{ gateway } )
-		{
-			foreach my $appending ( &getInterfaceChild( $if_ref->{ vlan } ) )
-			{
-				my $app_config = &getInterfaceConfig( $appending );
-				$app_config->{ gateway } = $params->{ gateway };
-				&setInterfaceConfig( $app_config );
-			}
-		}
-
-		# put all dependant interfaces up
-		require Zevenet::Net::Util;
-		&setIfacesUp( $if_ref->{ name }, "vini" );
-
+	if ( $oldAddr )
+	{
 		require Zevenet::Farm::Base;
 		my @farms = &getFarmListByVip( $oldAddr );
 
@@ -1791,10 +1769,36 @@ sub setVlan    # if_ref
 			require Zevenet::Farm::Config;
 			&setAllFarmByVip( $params->{ ip }, \@farms );
 		}
-
 	}
 
 	return 0;
+}
+
+sub createVlan
+{
+	my $if_ref = shift;
+
+	require Zevenet::Net::Core;
+
+	my $err = 0;
+
+	$err = &createIf( $if_ref );    # Create interface
+
+	if ( !$err )
+	{
+		$err = 2 if ( !&setInterfaceConfig( $if_ref ) );
+	}
+
+	if ( $err )
+	{
+		&zenlog( "The vlan $if_ref->{name} could not be created", "error", "NETWORK" );
+	}
+	else
+	{
+		&zenlog( "The vlan $if_ref->{name} was created properly", "info", "NETWORK" );
+	}
+
+	return $err;
 }
 
 1;

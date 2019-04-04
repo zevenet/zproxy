@@ -37,10 +37,8 @@ my @bond_modes = (
 );
 
 my @bond_modes_short = (
-						 'balance-rr',  'active-backup',
-						 'balance-xor', 'broadcast',
-						 '802.3ad',     'balance-tlb',
-						 'balance-alb',
+						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+						 '802.3ad',    'balance-tlb',   'balance-alb',
 );
 
 =begin nd
@@ -822,6 +820,7 @@ sub get_bond_struct
 			   status  => $bond_ref->{ status },
 			   mac     => $bond_ref->{ mac },
 			   slaves  => \@output_slaves,
+			   dhcp    => $bond_ref->{ dhcp } // 'false',
 			   mode => $bond_modes_short[$bond_conf->{ $bond_ref->{ name } }->{ mode }],
 	};
 
@@ -875,9 +874,9 @@ sub get_bond_list_struct
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			mac     => $if_ref->{ mac },
-
-			slaves => \@output_slaves,
-			mode   => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
+			dhcp    => $if_ref->{ dhcp } // 'false',
+			slaves  => \@output_slaves,
+			mode    => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
 
 			#~ ipv     => $if_ref->{ ip_v },
 		};

@@ -26,10 +26,8 @@ use strict;
 use Zevenet::API40::HTTP;
 
 my @bond_modes_short = (
-						 'balance-rr',  'active-backup',
-						 'balance-xor', 'broadcast',
-						 '802.3ad',     'balance-tlb',
-						 'balance-alb',
+						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+						 '802.3ad',    'balance-tlb',   'balance-alb',
 );
 
 sub new_bond    # ( $json_obj )
@@ -620,6 +618,10 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 				   "mac" => {
 							  'valid_format' => 'mac_addr',
 				   },
+				   "dhcp" => {
+							   'non_blank' => 'true',
+							   'values'    => ['true', 'false'],
+				   },
 	};
 
 	# Check allowed parameters
@@ -627,101 +629,16 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	# Check address errors
-	if ( exists $json_obj->{ ip } )
-	{
-		if ( $json_obj->{ ip } eq '' )
-		{
-			$json_obj->{ netmask } = '';
-			$json_obj->{ gateway } = '';
-		}
-	}
-
-	# Delete old interface configuration
 	my $if_ref = &getInterfaceConfig( $bond );
 
-	# check if network is correct
-	my $new_if = {
-				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
-				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
-				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
-	};
-
-	# Make sure the address, mask and gateway belong to the same stack
-	if ( $new_if->{ addr } )
-	{
-		my $ip_v = &ipversion( $new_if->{ addr } );
-		my $gw_v = &ipversion( $new_if->{ gateway } );
-
-		my $mask_v =
-		    ( $ip_v == 4 && &getValidFormat( 'IPv4_mask', $new_if->{ mask } ) ) ? 4
-		  : ( $ip_v == 6 && &getValidFormat( 'IPv6_mask', $new_if->{ mask } ) ) ? 6
-		  :                                                                       '';
-
-		if ( $ip_v ne $mask_v
-			 || ( $new_if->{ gateway } && $ip_v ne $gw_v ) )
-		{
-			my $msg = "Invalid IP stack version match.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-# Do not modify gateway or netmask if exists a virtual interface using this interface
-	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
-	{
-		my @child = &getInterfaceChild( $bond );
-		my @wrong_conf;
-
-		foreach my $child_name ( @child )
-		{
-			my $child_if = &getInterfaceConfig( $child_name );
-
-			unless (
-				  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
-			{
-				push @wrong_conf, $child_name;
-			}
-		}
-
-		if ( @wrong_conf )
-		{
-			my $child_string = join ( ', ', @wrong_conf );
-			my $msg =
-			  "The virtual interface(s): '$child_string' will not be compatible with the new configuration.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# check the gateway is in network
-	if ( $new_if->{ gateway } )
-	{
-		unless (
-			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
-		{
-			my $msg = "The gateway is not valid for the network.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	# check if network exists in other interface
-	if ( $json_obj->{ ip } or $json_obj->{ netmask } )
-	{
-		my $if_used =
-		  &checkNetworkExists( $new_if->{ addr }, $new_if->{ mask }, $bond );
-
-		if ( $if_used )
-		{
-			my $msg = "The network already exists in the interface $if_used.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
 	# check if some farm is using this ip
-	if ( $json_obj->{ ip } )
+	my @farms;
+	if ( exists $json_obj->{ ip }
+		 or ( exists $json_obj->{ dhcp } and $json_obj->{ dhcp } eq 'true' ) )
 	{
 		require Zevenet::Farm::Base;
-		@farms = &getFarmListByVip( $if_ref->{ addr } );
 
+		@farms = &getFarmListByVip( $if_ref->{ addr } );
 		if ( @farms and $json_obj->{ force } ne 'true' )
 		{
 			my $str = join ( ', ', @farms );
@@ -731,20 +648,147 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 	}
 
-	# Setup new interface configuration structure
-	$if_ref = &getInterfaceConfig( $bond ) // &getSystemInterface( $bond );
-	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
-	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
-	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ mac }     = lc $json_obj->{ mac }  if exists $json_obj->{ mac };
-	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
-	$if_ref->{ name } = $bond;
+	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 
-	unless (    exists $if_ref->{ addr } && exists $if_ref->{ mask }
-			 || exists $if_ref->{ mac } )
+	# only allow dhcp when no other parameter was sent
+	if ( $dhcp_status eq 'true' )
 	{
-		my $msg = "Cannot configure the interface without address or without netmask.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if (    exists $json_obj->{ ip }
+			 or exists $json_obj->{ netmask }
+			 or exists $json_obj->{ gateway } )
+		{
+			my $msg =
+			  "It is not possible set 'ip', 'netmask' or 'gateway' while 'dhcp' is enabled.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	if ( exists $json_obj->{ dhcp } )
+	{
+		include 'Zevenet::Net::DHCP';
+		my $err =
+		  ( $json_obj->{ dhcp } eq 'true' )
+		  ? &enableDHCP( $if_ref )
+		  : &disableDHCP( $if_ref );
+		if ( $err )
+		{
+			my $msg = "Errors found trying to enabling dhcp for the interface $bond";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+	else
+	{
+		# Check address errors
+		if ( exists $json_obj->{ ip } )
+		{
+			if ( $json_obj->{ ip } eq '' )
+			{
+				$json_obj->{ netmask } = '';
+				$json_obj->{ gateway } = '';
+			}
+		}
+
+		# check if network is correct
+		my $new_if = {
+					   addr    => $json_obj->{ ip } // $if_ref->{ addr },
+					   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
+					   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
+		};
+
+		# Make sure the address, mask and gateway belong to the same stack
+		if ( $new_if->{ addr } )
+		{
+			my $ip_v = &ipversion( $new_if->{ addr } );
+			my $gw_v = &ipversion( $new_if->{ gateway } );
+
+			my $mask_v =
+			    ( $ip_v == 4 && &getValidFormat( 'IPv4_mask', $new_if->{ mask } ) ) ? 4
+			  : ( $ip_v == 6 && &getValidFormat( 'IPv6_mask', $new_if->{ mask } ) ) ? 6
+			  :                                                                       '';
+
+			if ( $ip_v ne $mask_v
+				 || ( $new_if->{ gateway } && $ip_v ne $gw_v ) )
+			{
+				my $msg = "Invalid IP stack version match.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
+   # Do not modify gateway or netmask if exists a virtual interface using this interface
+		if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
+		{
+			my @child = &getInterfaceChild( $bond );
+			my @wrong_conf;
+
+			foreach my $child_name ( @child )
+			{
+				my $child_if = &getInterfaceConfig( $child_name );
+
+				unless (
+					  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
+				{
+					push @wrong_conf, $child_name;
+				}
+			}
+
+			if ( @wrong_conf )
+			{
+				my $child_string = join ( ', ', @wrong_conf );
+				my $msg =
+				  "The virtual interface(s): '$child_string' will not be compatible with the new configuration.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
+		# check the gateway is in network
+		if ( $new_if->{ gateway } )
+		{
+			unless (
+				 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
+			{
+				my $msg = "The gateway is not valid for the network.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
+		# check if network exists in other interface
+		if ( $json_obj->{ ip } or $json_obj->{ netmask } )
+		{
+			my $if_used =
+			  &checkNetworkExists( $new_if->{ addr }, $new_if->{ mask }, $bond );
+
+			if ( $if_used )
+			{
+				my $msg = "The network already exists in the interface $if_used.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
+		# Setup new interface configuration structure
+		$if_ref = &getInterfaceConfig( $bond ) // &getSystemInterface( $bond );
+		$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
+		$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
+		$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
+		$if_ref->{ mac }     = lc $json_obj->{ mac }  if exists $json_obj->{ mac };
+		$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+		$if_ref->{ name }    = $bond;
+
+		unless (    exists $if_ref->{ addr } && exists $if_ref->{ mask }
+				 || exists $if_ref->{ mac } )
+		{
+			my $msg = "Cannot configure the interface without address or without netmask.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		#Change Bonding IP Address
+		if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } )
+		{
+			if ( &setBondIP( $if_ref ) )
+			{
+				my $msg = "Errors found trying to modify IP address on interface $bond";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 	}
 
 	#Change MAC Address
@@ -754,16 +798,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	if ( $error )
 	{
 		my $msg = "Errors found trying to modify MAC address on interface $bond";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	#Change Bonding IP Address
-	$error = &setBondIP( $if_ref )
-	  if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } );
-
-	if ( $error )
-	{
-		my $msg = "Errors found trying to modify IP address on interface $bond";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

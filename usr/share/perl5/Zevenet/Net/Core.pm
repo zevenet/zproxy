@@ -52,7 +52,7 @@ sub createIf    # ($if_ref)
 			 "debug", "PROFILING" );
 	my $if_ref = shift;
 
-	my $status = 0;
+	my $status = 1;
 
 	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
 	{
