@@ -343,7 +343,7 @@ sub getZapiWAFSet
 	$conf->{ default_action } //= 'pass';
 	$conf->{ default_log } =
 	  ( $conf->{ default_log } ne 'false' ) ? 'true' : 'false';
-	$conf->{ default_phase }         //= '2';
+	$conf->{ default_phase }         //= 2;
 	$conf->{ audit }                 //= 'true';
 	$conf->{ process_request_body }  //= 'false';
 	$conf->{ process_response_body } //= 'false';

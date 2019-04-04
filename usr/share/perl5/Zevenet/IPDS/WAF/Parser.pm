@@ -194,7 +194,7 @@ sub parseWAFRule
 
 			if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>[^"]+)?$/ )
 			{
-				$rule->{ operator } = $+{ operator } // "rx";
+				$rule->{ operator }  = $+{ operator } // "rx";
 				$rule->{ operating } = $+{ operating };
 			}
 
@@ -270,7 +270,13 @@ sub parseWAFRule
 			{
 				$rule->{ http_code } = $1;
 			}
-			elsif ( $param =~ /phase:'?([^']+)'?/ ) { $rule->{ phase } = $1; }
+			elsif ( $param =~ /phase:'?([^']+)'?/ )
+			{
+				$rule->{ phase } = $1;
+				$rule->{ phase } = 2 if ( $rule->{ phase } eq 'request' );
+				$rule->{ phase } = 4 if ( $rule->{ phase } eq 'response' );
+				$rule->{ phase } = 5 if ( $rule->{ phase } eq 'logging' );
+			}
 
 			# put same format phase
 			elsif ( $param =~ /t:'?([^']+)'?/ )
