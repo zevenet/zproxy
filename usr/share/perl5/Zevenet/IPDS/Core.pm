@@ -152,9 +152,10 @@ sub getIPDSRules
 		{
 			push @rules,
 			  {
-				'name' => $key,
-				'rule' => 'dos',
-				'type' => $fileHandle->{ $key }->{ type }
+				'name'   => $key,
+				'rule'   => 'dos',
+				'type'   => $fileHandle->{ $key }->{ type },
+				'status' => $fileHandle->{ $key }->{ status },
 			  };
 		}
 	}
@@ -164,7 +165,12 @@ sub getIPDSRules
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			push @rules, { 'name' => $key, 'rule' => 'blacklist' };
+			push @rules,
+			  {
+				'name'   => $key,
+				'status' => $fileHandle->{ $key }->{ status },
+				'rule'   => 'blacklist'
+			  };
 		}
 	}
 
@@ -173,13 +179,23 @@ sub getIPDSRules
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			push @rules, { 'name' => $key, 'rule' => 'rbl' };
+			push @rules,
+			  {
+				'name'   => $key,
+				'rule'   => 'rbl',
+				'status' => $fileHandle->{ $key }->{ status },
+			  };
 		}
 	}
 
 	foreach my $ru ( &listWAFSet() )
 	{
-		push @rules, { 'name' => $ru, 'rule' => 'waf' };
+		push @rules,
+		  {
+			'name'   => $ru,
+			'rule'   => 'waf',
+			'status' => &getWAFSetStatus( $ru ),
+		  };
 	}
 
 	return \@rules;
