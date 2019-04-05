@@ -67,19 +67,19 @@ int EpollManager::loopOnce(int time_out) {
     return ev_count;
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
-    if (fd == accept_fd) {
-      onConnectEvent(events[i]);
+    if ((events[i].events & (EPOLLHUP | EPOLLERR)) != 0u) {
+      HandleEvent(fd, DISCONNECT,
+                  static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
       continue;
     } else {
-      if ((events[i].events & (EPOLLHUP | EPOLLERR)) != 0u) {
-        HandleEvent(fd, DISCONNECT,
-                    static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
-        continue;
-      }
       if ((events[i].events & EPOLLIN) != 0u) {
-        onReadEvent(events[i]);
+        if (fd == accept_fd) {
+          onConnectEvent(events[i]);
+        } else {
+          onReadEvent(events[i]);
+        }
       }
-      if ((events[i].events & (EPOLLRDHUP)) != 0u) {
+      if(events[i].events &  EPOLLRDHUP){
         HandleEvent(fd, DISCONNECT,
                     static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
         continue;
@@ -89,7 +89,8 @@ int EpollManager::loopOnce(int time_out) {
       }
     }
   }
-  return ev_count;
+
+return ev_count;
 }
 
 EpollManager::~EpollManager() { ::close(epoll_fd); }

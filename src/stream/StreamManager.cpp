@@ -254,7 +254,7 @@ void StreamManager::addStream(int fd) {
   stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
-  stream->timer_fd.set(listener_config_.to);
+  stream->timer_fd.set(listener_config_.to * 1000);
   addFd(stream->timer_fd.getFileDescriptor(), TIMEOUT,
         EVENT_GROUP::REQUEST_TIMEOUT);
   timers_set[stream->timer_fd.getFileDescriptor()] = stream;
@@ -686,14 +686,13 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 }
 
 void StreamManager::onRequestTimeoutEvent(int fd) {
-  // TODO::IMPLENET
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
     ::close(fd);
   } else if (stream->timer_fd.isTriggered()) {
-    clearStream(stream);
+    clearStream(stream); //FIXME::
   }
 }
 
@@ -791,7 +790,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
 }
 
 void StreamManager::onClientWriteEvent(HttpStream *stream) {
-  if (UNLIKELY(stream->backend_connection.isCancelled())) {
+  if (UNLIKELY(stream->client_connection.isCancelled())) {
     clearStream(stream);
     return;
   }
@@ -1160,6 +1159,12 @@ void StreamManager::clearStream(HttpStream *stream) {
   if (stream == nullptr) {
     return;
   }
+  if (stream->backend_connection.buffer_size > 0 || stream->backend_connection.splice_pipe.bytes > 0) {
+    //TODO:: remove and create enum with READY_TO_SEND_RESPONSE
+    stream->backend_connection.disableEvents();
+    return;
+  }
+
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());
     stream->timer_fd.unset();
