@@ -103,7 +103,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
                                     size_t *used_bytes, bool reset) {
   if (LIKELY(reset))
     reset_parser();
-
+  count++;
   buffer = const_cast<char *>(data);
   buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);
@@ -147,6 +147,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
                                      size_t *used_bytes, bool reset) {
   if (LIKELY(reset))
     reset_parser();
+  count++;
   buffer = const_cast<char *>(data);
   buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);

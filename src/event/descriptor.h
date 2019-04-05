@@ -6,8 +6,11 @@
 
 #include "epoll_manager.h"
 #include "../debug/Debug.h"
+#include <atomic>
 
 class Descriptor {
+
+
   events::EpollManager *event_manager_;
   events::EVENT_TYPE current_event;
   events::EVENT_GROUP event_group_;
@@ -17,6 +20,11 @@ protected:
   int fd_;
 
 public:
+ std::atomic<unsigned long> read_count{0};
+  std::atomic<unsigned long> write_count{0};
+  std::atomic<unsigned long> error_count{0};
+  std::atomic<unsigned long> disconnect_count{0};
+
   Descriptor() : event_manager_(nullptr), cancelled(true), fd_(-1) {}
   ~Descriptor() {
     if (event_manager_ != nullptr && fd_ > 0)
@@ -49,6 +57,8 @@ public:
   }
 
   bool enableReadEvent(bool one_shot = false) {
+    if(cancelled)
+      return false;
     if (event_manager_ != nullptr /*&& current_event != events::READ */ &&
         fd_ > 0) {
       current_event = events::READ;
@@ -63,7 +73,8 @@ public:
   }
 
   bool enableWriteEvent() {
-
+    if(cancelled)
+      return false;
     if (event_manager_ != nullptr /*&& current_event != events::WRITE */ &&
         fd_ > 0) {
       current_event = events::WRITE;
