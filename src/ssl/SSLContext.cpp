@@ -37,6 +37,14 @@ bool SSLContext::init(const std::string &cert_file,
   /* Recommended to avoid SSLv2 & SSLv3 */
   SSL_CTX_set_options(ssl_ctx, SSL_OP_ALL | SSL_OP_NO_SSLv2 |
                                    SSL_OP_NO_SSLv3); // set ssl option
+#if SSL_DISABLE_SESSION_CACHE
+  // Attempt to disable session and ticket caching..
+  //  SSL_CTX_set_options(ssl_ctx,
+  //  SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
+  //  SSL_CTX_set_num_tickets(ssl_ctx, 0);
+  SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TICKET);
+  SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_OFF);
+#endif
   Debug::LogInfo("SSL initialized", LOG_DEBUG);
   return true;
 }
@@ -46,6 +54,14 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
   listener_config = listener_config_;
   if (listener_config.ctx != nullptr) {
     ssl_ctx = listener_config.ctx->ctx;
+#if SSL_DISABLE_SESSION_CACHE
+    // Attempt to disable session and ticket caching..
+    //  SSL_CTX_set_options(ssl_ctx,
+    //  SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
+    //  SSL_CTX_set_num_tickets(ssl_ctx, 0);
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TICKET);
+    SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_OFF);
+#endif
     return true;
   }
   Debug::LogInfo("SSL initialized", LOG_DEBUG);

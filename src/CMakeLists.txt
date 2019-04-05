@@ -10,6 +10,7 @@ add_definitions(-DMAX_HEADER_VALUE_SIZE=4000)
 add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 #SSL stuff
+add_definitions(-DSSL_DISABLE_SESSION_CACHE=1)
 add_definitions(-DDEBUG_SSL=0)
 
 add_library(libzhttp

@@ -23,7 +23,7 @@
 
 struct SplicePipe {
   int pipe[2];
-  int bytes;
+  int bytes{0};
   SplicePipe() {
     if (pipe2(pipe, O_NONBLOCK) < 0) {
       perror("pipe");
@@ -53,7 +53,7 @@ public:
   addrinfo *address;
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
-  size_t buffer_size;
+  size_t buffer_size{0};
   std::string getPeerAddress();
 
 #if ENABLE_ZERO_COPY

@@ -27,6 +27,7 @@ enum class CONNECTION_VALUES {
 };
 
 enum class UPGRADE_PROTOCOLS {
+  NONE,
   WEBSOCKET,
   H2C,
   TLS,

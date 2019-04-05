@@ -15,8 +15,8 @@
 #include "../connection/client_connection.h" 
 
 struct UpgradeStatus {
-  http::UPGRADE_PROTOCOLS protocol;
-  bool pinned_connection;
+  http::UPGRADE_PROTOCOLS protocol {http::UPGRADE_PROTOCOLS::NONE};
+  bool pinned_connection{0};
 };
 
 class HttpStream: public Counter<HttpStream> {

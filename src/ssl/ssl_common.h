@@ -7,6 +7,18 @@
 namespace ssl {
 typedef void (*SslInfoCallback)();
 
+static std::unique_ptr<char> ossGetErrorStackString(void) {
+  BIO *bio = BIO_new(BIO_s_mem());
+  ERR_print_errors(bio);
+  char *buf = NULL;
+  size_t len = BIO_get_mem_data(bio, &buf);
+  char *ret = (char *)calloc(1, 1 + len);
+  if (ret)
+    memcpy(ret, buf, len);
+  BIO_free(bio);
+  return std::unique_ptr<char>(ret);
+}
+
 inline static void logSslErrorStack(void) {
   unsigned long err;
   while ((err = ERR_get_error()) != 0) {
@@ -15,6 +27,7 @@ inline static void logSslErrorStack(void) {
     Debug::logmsg(LOG_ERR, "%s", details);
   }
 }
+
 static const char *getErrorString(int error) {
   switch (error) {
   case SSL_ERROR_NONE:

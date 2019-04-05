@@ -24,6 +24,10 @@ Connection::~Connection() {
   if (ssl != nullptr) {
     SSL_shutdown(ssl);
     SSL_free(ssl);
+    if (io != NULL)
+      BIO_free(io);
+    else if (ssl_bio != NULL)
+      BIO_free(ssl_bio);
   }
   if (fd_ > 0)
     this->closeConnection();

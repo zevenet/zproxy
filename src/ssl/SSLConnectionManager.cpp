@@ -80,14 +80,14 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
           // been writen to the underlying socket,
           // need to check for sizes after writes
 //          SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-  ssl_connection.sbio =
-      BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_CLOSE);
-  BIO_set_nbio(ssl_connection.sbio, 1);
+  ssl_connection.sbio = BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_CLOSE);
+//  BIO_set_nbio(ssl_connection.sbio, 1);
   SSL_set_bio(ssl_connection.ssl, ssl_connection.sbio, ssl_connection.sbio);
   ssl_connection.io = BIO_new(BIO_f_buffer());
   ssl_connection.ssl_bio = BIO_new(BIO_f_ssl());
-  BIO_set_nbio( ssl_connection.io, 1);
-  BIO_set_nbio(ssl_connection.ssl_bio, 1); //set BIO non blocking
+//  BIO_set_nbio( ssl_connection.io, 1);
+//  BIO_set_nbio(ssl_connection.ssl_bio, 1); //set BIO non blocking
+
   BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_CLOSE);
   BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
   Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: SSL_set_accept_state for fd %d",
