@@ -224,7 +224,7 @@ sub addRBACGroupResource
 	if ( !$error )
 	{
 		# remove the all resources and add the global parameter '*'
-		if ( $type =~ /^(?:farm|interfaces?)$/ and $resource eq '*' )
+		if ( $type =~ /^(?:farm|interface)s?$/ and $resource eq '*' )
 		{
 			&setRBACGroupConfigFile( $group, $type, $resource );
 		}
@@ -272,7 +272,7 @@ sub delRBACGroupResource
 	if ( !$error )
 	{
 		# remove the all resources and add the global parameter '*'
-		if ( $type =~ /^(?:farm|interfaces?)$/ and $resource eq '*' )
+		if ( $type =~ /^(?:farm|interface)s?$/ and $resource eq '*' )
 		{
 			&setRBACGroupConfigFile( $group, $type, '' );
 		}
