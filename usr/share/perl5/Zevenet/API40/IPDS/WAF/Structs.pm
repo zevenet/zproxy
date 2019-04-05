@@ -222,6 +222,9 @@ sub translateWafMatch
 	  &translateWafVariables( $json_obj->{ variables }, 'toLib' )
 	  if ( exists $json_obj->{ variables } );
 
+# add a description, this is needed, because if any action is defined, the rule fails in the creation
+	$json_obj->{ description } = 'Custom Match';
+
 	return undef;
 }
 
@@ -393,9 +396,9 @@ sub getWafMatchParameters
 	my @operators = &getWafOperators();
 
 	return {
-			 'not_match'       => { 'valid_format' => 'boolean' },
-			 'variables'       => {},
-			 'operator'        => { 'non_blank' => 'true', 'values' => \@operators },
+			 'not_match' => { 'valid_format' => 'boolean' },
+			 'variables' => { 'ref'          => 'array' },
+			 'operator'  => { 'non_blank'    => 'true', 'values' => \@operators },
 			 'operating'       => {},
 			 'transformations' => {
 									'non_blank'  => 'true',

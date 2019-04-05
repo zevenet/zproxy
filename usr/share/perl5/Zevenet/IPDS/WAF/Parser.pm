@@ -276,6 +276,7 @@ sub parseWAFRule
 				$rule->{ phase } = 2 if ( $rule->{ phase } eq 'request' );
 				$rule->{ phase } = 4 if ( $rule->{ phase } eq 'response' );
 				$rule->{ phase } = 5 if ( $rule->{ phase } eq 'logging' );
+				$rule->{ phase } += 0;
 			}
 
 			# put same format phase
@@ -428,6 +429,7 @@ sub buildWAFRule
 		{
 			my $vars = join ( '|', @{ $st->{ variables } } );
 			my $not = ( $st->{ not_match } eq 'true' ) ? '!' : '';
+			$st->{ operator } = 'rx' if ( !$st->{ operator } );
 			$secrule =
 			    'SecRule '
 			  . $vars . ' "'
