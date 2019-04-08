@@ -179,8 +179,12 @@ fi
 # Set up the management iface
 if [ $HW -eq 1 ]; then
 	echo "Rewriting interface config file $IF_CONF"
-	echo "status=up" > $IF_CONF
-	echo "${if_mgmt};$IP_MANAGEMENT;$NETMASK_MANAGEMENT;$GW_MANAGEMENT" >> $IF_CONF
+	echo "[${if_mgmt}]" > $IF_CONF
+	echo "name=${if_mgmt}" >> $IF_CONF
+	echo "addr=$IP_MANAGEMENT" >> $IF_CONF
+	echo "mask=$NETMASK_MANAGEMENT" >> $IF_CONF
+	echo "gateway=$GW_MANAGEMENT" >> $IF_CONF
+	echo "status=up" >> $IF_CONF
 fi
 sed -i -E 's/status=.*$/status=up/' $IF_CONF
 
