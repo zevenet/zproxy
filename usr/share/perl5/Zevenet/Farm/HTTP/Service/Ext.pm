@@ -48,9 +48,11 @@ Returns:
 	   ttl     => 60,			# Time to live in seconds
 	}
 =cut
+
 sub getHTTPServiceCookieIns    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -59,20 +61,21 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 
 	# input control
 	$service = "" unless $service;
-	#~ $tag     = "" unless $tag;
-	#~ $tag = ( "cookieins" || "cookieins-name" || "cookieins-domain" || "cookieins-path" || "cookieins-ttlc" );
+
+#~ $tag     = "" unless $tag;
+#~ $tag = ( "cookieins" || "cookieins-name" || "cookieins-domain" || "cookieins-path" || "cookieins-ttlc" );
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $in_block = 0;
+	my $in_block      = 0;
 	my $ci_line;
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService \"$service\"/ )    { $in_block = 1; }
-		if ( $line =~ /^\tEnd$/ && $in_block == 1 )  { last; }
+		if ( $line =~ /^\tService \"$service\"/ ) { $in_block = 1; }
+		if ( $line =~ /^\tEnd$/ && $in_block == 1 ) { last; }
 
 		if ( $in_block && $line =~ "BackendCookie \"" )
 		{
@@ -88,13 +91,13 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 
 	if ( $ci_line )
 	{
-		my ( $prefix, $params ) = split( "BackendCookie ", $ci_line );
+		my ( $prefix, $params ) = split ( "BackendCookie ", $ci_line );
 
 		$ci->{ enabled } = ( $prefix !~ /#/ ) ? 'true' : 'false';
 
-		my @params = split( ' ', $params );
+		my @params = split ( ' ', $params );
 
-		for my $p ( @params ) # remove quotes
+		for my $p ( @params )    # remove quotes
 		{
 			$p =~ s/^"(.*)"$/$1/;
 		}
@@ -102,18 +105,26 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 		$ci->{ name }   = shift @params;
 		$ci->{ domain } = shift @params;
 		$ci->{ path }   = shift @params;
-		$ci->{ ttl }    = shift( @params ) + 0;
+		$ci->{ ttl }    = shift ( @params ) + 0;
 	}
 
 	# check errors
 	unless ( defined $ci )
 	{
-		&zenlog("Cookie insertion policy not found in Farm: $farm_name, Service: $service.", "warning", "LSLB");
+		&zenlog(
+				"Cookie insertion policy not found in Farm: $farm_name, Service: $service.",
+				"warning", "LSLB" );
 	}
 
-	if ( ! defined $ci->{ name } || ! defined $ci->{ domain } || ! defined $ci->{ path } || ! defined $ci->{ ttl } )
+	if (    !defined $ci->{ name }
+		 || !defined $ci->{ domain }
+		 || !defined $ci->{ path }
+		 || !defined $ci->{ ttl } )
 	{
-		&zenlog("Error found in cookie insertion policy: Incorrect parameter in Farm: $farm_name, Service: $service.", "error", "LSLB");
+		&zenlog(
+			"Error found in cookie insertion policy: Incorrect parameter in Farm: $farm_name, Service: $service.",
+			"error", "LSLB"
+		);
 	}
 
 	return $ci;
@@ -138,14 +149,18 @@ Returns:
 	Integer - Error code: 0 on success or -1 on failure
 
 =cut
+
 sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service, $ci ) = @_;
 
 	# cookieins, cookieins-name, cookieins-domain, cookieins-path, cookieins-ttlc
 
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $lock_file     = &getLockFile( $farm_name );
+	my $lock_fh       = &openlock( $lock_file, 'w' );
 	my $updated_flag  = 0;
 	my $errno         = 1;
 
@@ -153,7 +168,8 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 
 	# form new policy
 	my $ci_enabled = ( $ci->{ enabled } == 1 ) ? '' : '#';
-	my $new_ci_policy = qq(\t\t${ci_enabled}BackendCookie "$ci->{ name }" "$ci->{ domain }" "$ci->{ path }" $ci->{ ttl });
+	my $new_ci_policy =
+	  qq(\t\t${ci_enabled}BackendCookie "$ci->{ name }" "$ci->{ domain }" "$ci->{ path }" $ci->{ ttl });
 
 	# apply new policy
 	require Tie::File;
@@ -163,7 +179,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 
 	foreach my $line ( @fileconf )
 	{
-		if ( $line =~ /\tService \"$service\"/ )    { $in_block = 1; }
+		if ( $line =~ /\tService \"$service\"/ ) { $in_block = 1; }
 		if ( $line =~ /^\tEnd$/ && $in_block == 1 ) { last; }
 
 		next if $in_block == 0;
@@ -176,18 +192,20 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 		}
 	}
 	untie @fileconf;
+	close $lock_fh;
 
 	# error control
 	$errno = 0 if $updated_flag;
 
-	&zenlog("Could not apply cookie insertion change", "error", "LSLB") if $errno;
+	&zenlog( "Could not apply cookie insertion change", "error", "LSLB" ) if $errno;
 
 	return $errno;
 }
 
 sub add_service_cookie_insertion
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
@@ -217,9 +235,11 @@ Returns:
 	undef    - If redirect is not configured
 
 =cut
+
 sub getHTTPServiceRedirectCode    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -229,17 +249,18 @@ sub getHTTPServiceRedirectCode    # ($farm_name,$service)
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $in_block = 0;
-	my $code = "";
+	my $in_block      = 0;
+	my $code          = "";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService \"$service\"/ )    { $in_block = 1; }
+		if ( $line =~ /^\tService \"$service\"/ ) { $in_block = 1; }
 		next if not $in_block;
-		if ( $line =~ /^\tEnd$/ && $in_block == 1 )  { last; }
+		if ( $line =~ /^\tEnd$/ && $in_block == 1 ) { last; }
 		if ( $line =~ /^\s*#/ ) { next; }
+
 		# example
 		# 	Redirect 301 "http://google.com"
 		if ( $line =~ /^\s*(?:Redirect|RedirectAppend)\s+(\d+)?/ )
@@ -268,35 +289,40 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub setHTTPServiceRedirectCode    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service, $code ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
+	my $ffile     = &getFarmFile( $farm_name );
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh   = &openlock( $lock_file, 'w' );
 	my $srv_flag  = 0;
 	my $errno     = 1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
 	foreach my $line ( @fileconf )
 	{
-		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
+		if ( $line =~ /\tService \"$service\"/ ) { $srv_flag = 1; }
 		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
 		next if $srv_flag == 0;
 
 		if ( $line =~ /^\s*(#)?\s*(Redirect|RedirectAppend)\s+(?:\d+)?\s*(\".+\")?/ )
 		{
-			$line = "\t\t${1}$2 $code $3";
+			$line  = "\t\t${1}$2 $code $3";
 			$errno = 0;
 			last;
 		}
 	}
 	untie @fileconf;
+	close $lock_fh;
 
-	&zenlog("Could not apply redirect HTTP code") if $errno;
+	&zenlog( "Could not apply redirect HTTP code" ) if $errno;
 
 	return $errno;
 }
@@ -316,9 +342,11 @@ Returns:
 	Scalar  - "true" if it is enabled or "false" if it is disabled
 
 =cut
+
 sub getHTTPServiceSTSStatus    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -328,16 +356,16 @@ sub getHTTPServiceSTSStatus    # ($farm_name,$service)
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw = 0;
-	my $out = "false";
+	my $sw            = 0;
+	my $out           = "false";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService \"$service\"/ )    { $sw = 1; }
+		if ( $line =~ /^\tService \"$service\"/ ) { $sw = 1; }
 		next if not $sw;
-		if ( $line =~ /^\tEnd$/ && $sw == 1 )  { last; }
+		if ( $line =~ /^\tEnd$/ && $sw == 1 ) { last; }
 
 		# example
 		#	StrictTransportSecurity 21600000
@@ -367,30 +395,34 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service, $status ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
+	my $ffile     = &getFarmFile( $farm_name );
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh   = &openlock( $lock_file, 'w' );
 	my $srv_flag  = 0;
 	my $errno     = 1;
-	my $index  = -1;
+	my $index     = -1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
 	foreach my $line ( @fileconf )
 	{
 		$index++;
-		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
+		if ( $line =~ /\tService \"$service\"/ ) { $srv_flag = 1; }
 		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
 		next if $srv_flag == 0;
 
 		if ( $line =~ /StrictTransportSecurity(\s+\d+)?/ )
 		{
-			if ($status eq 'true')
+			if ( $status eq 'true' )
 			{
 				my $time = $1 // 21600000;
 				$time =~ s/^\s+//g;
@@ -408,14 +440,15 @@ sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 		# add the line if it does not exist and status is up
 		elsif ( $line =~ /BackEnd/ and $status eq 'true' )
 		{
-			$line = "\t\tStrictTransportSecurity 21600000\n$line";
+			$line  = "\t\tStrictTransportSecurity 21600000\n$line";
 			$errno = 0;
 			last;
 		}
 	}
 	untie @fileconf;
+	close $lock_fh;
 
-	&zenlog("Could not apply STS status") if $errno;
+	&zenlog( "Could not apply STS status" ) if $errno;
 
 	return $errno;
 }
@@ -433,9 +466,11 @@ Returns:
 	Scalar  - "true" if it is enabled or "false" if it is disabled
 
 =cut
+
 sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -445,16 +480,16 @@ sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw = 0;
-	my $out = "";
+	my $sw            = 0;
+	my $out           = "";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService \"$service\"/ )    { $sw = 1; }
+		if ( $line =~ /^\tService \"$service\"/ ) { $sw = 1; }
 		next if not $sw;
-		if ( $line =~ /^\tEnd$/ && $sw == 1 )  { last; }
+		if ( $line =~ /^\tEnd$/ && $sw == 1 ) { last; }
 
 		# example
 		#	StrictTransportSecurity 21600000
@@ -462,7 +497,9 @@ sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 		{
 			$out = $1;
 			last;
-		} else {
+		}
+		else
+		{
 			$out = 21600000;
 		}
 	}
@@ -486,22 +523,26 @@ Returns:
 	Integer - Error code: 0 on success or 1 on failure
 
 =cut
+
 sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $service, $time ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile = &getFarmFile( $farm_name );
+	my $ffile     = &getFarmFile( $farm_name );
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh   = &openlock( $lock_file, 'w' );
 	my $srv_flag  = 0;
 	my $errno     = 1;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
 
 	foreach my $line ( @fileconf )
 	{
-		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
+		if ( $line =~ /\tService \"$service\"/ ) { $srv_flag = 1; }
 		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
 		next if $srv_flag == 0;
 
@@ -515,14 +556,15 @@ sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 		# add the line if the StrictTransportSecurity does not exist. Put it as disabled
 		elsif ( $line =~ /BackEnd/ )
 		{
-			$line = "\t\t#StrictTransportSecurity $time\n$line";
+			$line  = "\t\t#StrictTransportSecurity $time\n$line";
 			$errno = 0;
 			last;
 		}
 	}
 	untie @fileconf;
+	close $lock_fh;
 
-	&zenlog("Could not apply STS timeout") if $errno;
+	&zenlog( "Could not apply STS timeout" ) if $errno;
 
 	return $errno;
 }
@@ -545,9 +587,11 @@ FIXME:
 	Always return 0, create error control
 
 =cut
+
 sub setHTTPFarmMoveService
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm      = shift;
 	my $srv       = shift;
 	my $req_index = shift;
@@ -557,8 +601,8 @@ sub setHTTPFarmMoveService
 
 	# lock file
 	my $farm_filename = &getFarmFile( $farm );
-	my $lock_file = &getLockFile( $farm );
-	my $lock_fh   = &openlock( $lock_file, 'w' );
+	my $lock_file     = &getLockFile( $farm );
+	my $lock_fh       = &openlock( $lock_file, 'w' );
 
 	# reduce a index if service was in a previuos position.
 	my $srv_index = &getFarmVSI( $farm, $srv );
@@ -568,11 +612,11 @@ sub setHTTPFarmMoveService
 
 	my @sort_list = @{ $srv_block->{ farm } };
 
-	my $size = scalar keys %{ $srv_block->{ services } };
+	my $size     = scalar keys %{ $srv_block->{ services } };
 	my $srv_flag = 0;
-	my $id = 0;
+	my $id       = 0;
 
-	for ( my $i=0; $i < $size+1; $i++ )
+	for ( my $i = 0 ; $i < $size + 1 ; $i++ )
 	{
 		if ( $i == $req_index )
 		{
@@ -623,9 +667,11 @@ FIXME:
 	Always return 0, create error control
 
 =cut
+
 sub setHTTPFarmMoveServiceStatusFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service, $req_index ) = @_;
 
 	use Tie::File;
@@ -636,23 +682,30 @@ sub setHTTPFarmMoveServiceStatusFile
 	return if ( $srv_id == -1 );
 	return if ( $srv_id == $req_index );
 	#
-	my $dir = ( $srv_id < $req_index )? "up" : "down";
+	my $dir = ( $srv_id < $req_index ) ? "up" : "down";
 
 	foreach my $line ( @file )
 	{
 		if ( $line =~ /(^-[bB] 0) (\d+) (.+)$/ )
 		{
-			my $cad1 = $1;
+			my $cad1  = $1;
 			my $index = $2;
-			my $cad2 = $3;
+			my $cad2  = $3;
 
 			# replace with the new service position
-			if ( $index == $srv_id ) 				{ $index = $req_index; }
+			if ( $index == $srv_id ) { $index = $req_index; }
 
 			# replace with the new service position
-			elsif ( $dir eq "down" and $index < $srv_id and $index >= $req_index )	{ $index++ ; }
+			elsif ( $dir eq "down" and $index < $srv_id and $index >= $req_index )
+			{
+				$index++;
+			}
+
 			# replace with the new service position
-			elsif ( $dir eq "up" and $index > $srv_id and $index <= $req_index )	{ $index-- ; }
+			elsif ( $dir eq "up" and $index > $srv_id and $index <= $req_index )
+			{
+				$index--;
+			}
 
 			$line = "$cad1 $index $cad2";
 		}
@@ -661,7 +714,8 @@ sub setHTTPFarmMoveServiceStatusFile
 	untie @file;
 
 	&zenlog(
-		"The service \"$service\" from farm \"$farmname\" has been moved to $req_index the position", "debug2"
+		"The service \"$service\" from farm \"$farmname\" has been moved to $req_index the position",
+		"debug2"
 	);
 
 	return 0;
