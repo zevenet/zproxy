@@ -97,6 +97,15 @@ interval=15
 cut_conns=true
 template=true
 
+[check_tcp_multiport]
+description=Send TCP connection to backend and check if port is opened. This check can be used with multiport farms.
+command=nmap -p PORT HOST | grep open
+farms=
+log=false
+interval=15
+cut_conns=true
+template=true
+
 [check_ping]
 description=Send 2 ICMP packets and check that the 100% reaches the host.
 command=check_ping -H HOST -w 2,100% -c 2,100% -p 2
