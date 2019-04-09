@@ -16,10 +16,11 @@ class SSLConnectionManager {
 public:
   SSLContext *ssl_context;
   IO::IO_RESULT handleDataRead(Connection &ssl_connection);
+  IO::IO_RESULT handleDataWrite(Connection &target_ssl_connection, Connection &ssl_connection, http_parser::HttpData &http_data);
   bool handleHandshake(Connection &ssl_connection);
   bool handleBioHandshake(Connection & ssl_connection);
   IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data,
-                            size_t data_size, size_t &written);
+                            size_t data_size, size_t &written, bool flush_data = true);
   IO::IO_RESULT sslRead(Connection & ssl_connection);
   IO::IO_RESULT sslWrite(Connection &ssl_connection,
                          const char *data,

@@ -222,7 +222,7 @@ void StreamManager::start(int thread_id_) {
 #endif
 }
 
-StreamManager::StreamManager(): is_https_listener(false) {
+StreamManager::StreamManager() : is_https_listener(false) {
   // TODO:: do attach for config changes
 };
 
@@ -308,7 +308,9 @@ void StreamManager::onRequestEvent(int fd) {
       if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST)
           && (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
         /* the client speaks plain HTTP on our HTTPS port */
-        Debug::logmsg(LOG_NOTICE, "Client %s sent a plain HTTP message to an SSL port", stream->client_connection.getPeerAddress().c_str());
+        Debug::logmsg(LOG_NOTICE,
+                      "Client %s sent a plain HTTP message to an SSL port",
+                      stream->client_connection.getPeerAddress().c_str());
         if (listener_config_.nossl_redir > 0) {
           Debug::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s redirecting to \"%s\"", pthread_self(),
                         stream->client_connection.getPeerAddress().c_str(), listener_config_.nossl_url);
@@ -352,7 +354,7 @@ void StreamManager::onRequestEvent(int fd) {
   if (transferChunked(stream)) {
     stream->backend_connection.enableWriteEvent();
     return;
-}
+  }
 
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
@@ -553,7 +555,8 @@ void StreamManager::onResponseEvent(int fd) {
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
   IO::IO_RESULT result;
-  if (stream->response.message_bytes_left > 0 && !this->is_https_listener && stream->response.transfer_encoding_header) {
+  if (stream->response.message_bytes_left > 0 && !this->is_https_listener
+      && stream->response.transfer_encoding_header) {
     result = stream->backend_connection.zeroRead();
     if (result == IO::IO_RESULT::ERROR) {
       Debug::LogInfo("Error reading response ", LOG_DEBUG);
@@ -761,15 +764,15 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   /* Check if chunked transfer encoding is enabled. */
   if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
     stream->chunked_status = stream->chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK ?
-                                                         http::CHUNKED_STATUS::CHUNKED_DISABLED :
-                                                         http::CHUNKED_STATUS::CHUNKED_ENABLED;
+                             http::CHUNKED_STATUS::CHUNKED_DISABLED :
+                             http::CHUNKED_STATUS::CHUNKED_ENABLED;
 
     result = stream->backend_connection.write(stream->client_connection.buffer, stream->client_connection.buffer_size);
     /* We need to indicate that all the buffer content has been written. */
-      stream->client_connection.buffer_size = 0;
-    } else {
-      result = stream->client_connection.writeTo(stream->backend_connection, stream->request);
-    }
+    stream->client_connection.buffer_size = 0;
+  } else {
+    result = stream->client_connection.writeTo(stream->backend_connection, stream->request);
+  }
 
   if (result == IO::IO_RESULT::SUCCESS) {
     stream->timer_fd.set(
@@ -795,22 +798,19 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     return;
   }
 
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
    * content without applying any kind of modification. */
   if (stream->upgrade.pinned_connection) {
-    stream->backend_connection.writeTo(stream->client_connection.getFileDescriptor());
-    stream->backend_connection.enableReadEvent();
-    stream->client_connection.enableReadEvent();
-    return;
-  }
-
-  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-
-  if (this->is_https_listener) {
     size_t written = 0;
-    result = this->ssl_manager->handleWrite(
-        stream->client_connection, stream->backend_connection.buffer,
-        stream->backend_connection.buffer_size, written);
+    if (this->is_https_listener) {
+      result = this->ssl_manager->handleWrite(
+          stream->client_connection, stream->backend_connection.buffer,
+          stream->backend_connection.buffer_size, written);
+
+    } else {
+      result = stream->backend_connection.writeTo(stream->client_connection.getFileDescriptor());
+    }
     switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -826,41 +826,59 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
       clearStream(stream);
       return;
-    case IO::IO_RESULT::SUCCESS:break;
-    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
+    case IO::IO_RESULT::SUCCESS:
+    case IO::IO_RESULT::DONE_TRY_AGAIN:
+      if (this->is_https_listener)
+        stream->backend_connection.buffer_size -= written;
     case IO::IO_RESULT::FULL_BUFFER:break;
     }
-    stream->backend_connection.buffer_size -= written;
 
-  } else {
-    //if (stream->response.message_bytes_left > 0) {
-      if (UNLIKELY(stream->backend_connection.buffer_size > 0))
-        result = stream->backend_connection.writeTo(stream->client_connection,
-                                                    stream->response);
-      // result =
-      // stream->backend_connection.writeContentTo(stream->client_connection,
-      // stream->response);
-      if (LIKELY(stream->backend_connection.splice_pipe.bytes > 0))
-        result = stream->backend_connection.zeroWrite(
-            stream->client_connection.getFileDescriptor(), stream->response);
-    //} else {
-     // result = stream->backend_connection.writeTo(stream->client_connection,
-      //                                            stream->response);
-    //}
-  }
-  if (result == IO::IO_RESULT::SUCCESS) {
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
-  } else if (result == IO::IO_RESULT::DONE_TRY_AGAIN) {
-    stream->backend_connection.enableReadEvent();
+
+    return;
+  }
+
+  if (stream->backend_connection.buffer_size > 0)
+    if (this->is_https_listener) {
+      result = ssl_manager->handleDataWrite(stream->client_connection, stream->backend_connection, stream->response);
+    } else {
+      result = stream->backend_connection.writeTo(stream->client_connection,
+                                                  stream->response);
+    }
+  if (stream->backend_connection.splice_pipe.bytes > 0 )
+    result = stream->backend_connection.zeroWrite(
+        stream->client_connection.getFileDescriptor(), stream->response);
+
+  switch (result) {
+  case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
+  case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+    if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
+      Debug::logmsg(LOG_INFO, "Handshake error with %s ",
+                    stream->client_connection.getPeerAddress().c_str());
+      clearStream(stream);
+    }
+    return;
+  }
+  case IO::IO_RESULT::FD_CLOSED:
+  case IO::IO_RESULT::CANCELLED:
+  case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
+    clearStream(stream);
+    return;
+  case IO::IO_RESULT::SUCCESS:stream->backend_connection.enableReadEvent();
+    stream->client_connection.enableReadEvent();
+    break;
+  case IO::IO_RESULT::DONE_TRY_AGAIN:stream->backend_connection.enableReadEvent();
     stream->client_connection.enableWriteEvent();
-  } else {
-    Debug::LogInfo("Error sending data to client", LOG_DEBUG);
+    break;
+  case IO::IO_RESULT::FULL_BUFFER:break;
+  default:Debug::LogInfo("Error sending data to client", LOG_DEBUG);
     clearStream(stream);
     return;
   }
 
-  if (stream->request.upgrade_header && stream->request.connection_header_upgrade && stream->response.http_status_code == 101) {
+  if (stream->request.upgrade_header && stream->request.connection_header_upgrade
+      && stream->response.http_status_code == 101) {
     stream->upgrade.pinned_connection = true;
     std::string upgrade_header_value;
     stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE, upgrade_header_value);
@@ -936,21 +954,19 @@ StreamManager::validateRequest(HttpRequest &request) {
           request.add_destination_header = true;
         }
         break;
-      case http::HTTP_HEADER_NAME::UPGRADE:
-        request.upgrade_header = true;
+      case http::HTTP_HEADER_NAME::UPGRADE:request.upgrade_header = true;
         break;
       case http::HTTP_HEADER_NAME::CONNECTION:
         if (http_info::connection_values.count(std::string(header_value)) > 0
             && http_info::connection_values.at(std::string(header_value)) == CONNECTION_VALUES::UPGRADE)
           request.connection_header_upgrade = true;
         break;
-      case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:
-        request.accept_encoding_header = true;
+      case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:request.accept_encoding_header = true;
         break;
       case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
-        if(listener_config_.ignore100continue)
+        if (listener_config_.ignore100continue)
           request.headers[i].header_off = true;
-          break;
+        break;
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
         request.message_bytes_left =
             static_cast<size_t>(std::atoi(request.headers[i].value));
@@ -974,7 +990,7 @@ StreamManager::validateRequest(HttpRequest &request) {
 }
 
 validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
-  HttpResponse & response = stream.response;
+  HttpResponse &response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
   if (response.http_status_code == 100) {
     stream.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
@@ -1083,8 +1099,9 @@ bool StreamManager::transferChunked(HttpStream *stream) {
     size_t pos = std::string(stream->client_connection.buffer).find("\r\n");
     auto hex = std::string(stream->client_connection.buffer).substr(0, pos);
     int chunk_length = std::stoul(hex, nullptr, 16);
-    stream->chunked_status = chunk_length != 0 ? http::CHUNKED_STATUS::CHUNKED_ENABLED : http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
-    return  true;
+    stream->chunked_status =
+        chunk_length != 0 ? http::CHUNKED_STATUS::CHUNKED_ENABLED : http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+    return true;
   }
 
   return false;
@@ -1115,7 +1132,7 @@ void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
   }
 }
 
-void StreamManager::applyCompression(Service *service, HttpStream *stream){
+void StreamManager::applyCompression(Service *service, HttpStream *stream) {
   http::TRANSFER_ENCODING_TYPE compression_type;
   /* Check if we have found the accept encoding header in the request but not the transfer encoding in the response. */
   if ((!stream->response.transfer_encoding_header) && stream->request.accept_encoding_header) {
@@ -1134,28 +1151,29 @@ void StreamManager::applyCompression(Service *service, HttpStream *stream){
       /* Get the message_uncompressed. */
       std::string message_no_compressed = std::string(stream->response.message, stream->response.message_length);
       /* We are going to do the compression depending on the compression algorithm. */
-      switch(compression_type) {
-        case http::TRANSFER_ENCODING_TYPE::GZIP: {
-          std::string message_compressed_gzip;
-          if(!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
-            Debug::logmsg(LOG_ERR, "Error while compressing.");
-          strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
-          break;
-        }
-        case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
-          std::string message_compressed_deflate;
-          if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
-            Debug::logmsg(LOG_ERR, "Error while compressing.");
-          strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
+      switch (compression_type) {
+      case http::TRANSFER_ENCODING_TYPE::GZIP: {
+        std::string message_compressed_gzip;
+        if (!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
+          Debug::logmsg(LOG_ERR, "Error while compressing.");
+        strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
         break;
-        }
-        default: break;
+      }
+      case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
+        std::string message_compressed_deflate;
+        if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
+          Debug::logmsg(LOG_ERR, "Error while compressing.");
+        strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
+        break;
+      }
+      default: break;
       }
     }
   }
 }
 
 void StreamManager::clearStream(HttpStream *stream) {
+  //TODO:: add connection closing reason for logging purpose
   if (stream == nullptr) {
     return;
   }
