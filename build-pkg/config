@@ -27,6 +27,7 @@ enterprise_files=(
 	usr/local/zevenet/bin/zcluster-send-action
 	usr/local/zevenet/bin/zenbui
 	usr/local/zevenet/bin/zeninotify
+	usr/local/zevenet/bin/dhcp
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
@@ -267,6 +268,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Net/Floating.pm
 	usr/share/perl5/Zevenet/Net/Throughput.pm
 	usr/share/perl5/Zevenet/Net/Mac.pm
+	usr/share/perl5/Zevenet/Net/DHCP.pm
 	usr/share/perl5/Zevenet/Notify.pm
 	usr/share/perl5/Zevenet/RBAC/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Core.pm

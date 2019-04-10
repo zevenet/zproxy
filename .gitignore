@@ -26,6 +26,10 @@ usr/local/zevenet/app/nftlb/
 /usr/local/zevenet/app/libexec/*
 !/usr/local/zevenet/app/libexec/check_uplink
 
+# tmp files
+/usr/local/zevenet/app/checkupgrades/share/package_upgradables.txt
+/usr/local/zevenet/app/checkupgrades/share/message.txt
+
 # rrd
 /usr/local/zevenet/app/zenrrd/rrd/*
 !/usr/local/zevenet/app/zenrrd/rrd/.keep

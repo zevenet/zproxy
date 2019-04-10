@@ -26,7 +26,7 @@ export NCURSES_NO_UTF8_ACS=1
 ebin="/usr/local/zevenet/bin/enterprise.bin"
 
 if [ -f $ebin ]; then
-	$ebin zenbui 2>/dev/null
+	$ebin zenbui 2>>/var/log/syslog
 	clear
 	exit $?
 fi

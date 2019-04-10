@@ -295,7 +295,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 
 	# only allow dhcp when no other parameter was sent
-	if ( $dhcp_status eq 'true' )
+	if ( $dhcp_status eq 'true' or exists $json_obj->{ dhcp } )
 	{
 		if (    exists $json_obj->{ ip }
 			 or exists $json_obj->{ netmask }

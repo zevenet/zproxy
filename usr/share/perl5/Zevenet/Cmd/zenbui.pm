@@ -26,6 +26,7 @@ use warnings;
 use Curses::UI;
 use Zevenet::Config;
 use Zevenet::Debug;
+include 'Zevenet::Net::DHCP';
 
 # This two sentences should make zenbui behave like zenbui.sh
 $ENV{ NCURSES_NO_UTF8_ACS } = 1;
@@ -35,9 +36,9 @@ my $zlbmenu;
 my $win3;
 my $winhelp;
 my $zlbhostinput;
-my ( $mgmtif, $mgmtip, $mgmtmask, $mgmtgw, $mgmthttp, $mgmthttps );
+my ( $mgmtif, $mgmtip, $mgmtmask, $mgmtgw, $mgmtdhcp, $mgmthttp, $mgmthttps );
 my (
-	 $mgmtifinput, $mgmtipinput,   $mgmtmaskinput,
+	 $mgmtifinput, $mgmtipinput,   $mgmtmaskinput, $mgmtdhcpinput,
 	 $mgmtgwinput, $mgmthttpinput, $mgmthttpsinput
 );
 
@@ -271,7 +272,7 @@ sub manage_sel()
 	}
 }
 
-sub manage_factory_reset
+sub manage_factory_reset()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -613,9 +614,10 @@ sub manage_mgmt()
 
 	# discard bonding slave nics
 	@all_interfaces = grep { $_->{ is_slave } eq 'false' } @all_interfaces;
-	my $i          = 0;
-	my $mgmtindex  = 0;
-	my @interfaces = ();
+	my $i            = 0;
+	my $mgmtindex    = 0;
+	my @interfaces   = ();
+	my $dhcp_enabled = 0;
 
 	foreach my $if_ref ( @all_interfaces )
 	{
@@ -630,79 +632,74 @@ sub manage_mgmt()
 	}
 
 	$mgmtifinput = $win3->add(
-		'win3id1',
-		'Listbox',
+							   'win3id1',
+							   'Listbox',
+							   -bg         => 'black',
+							   -tfg        => 'black',
+							   -tbg        => 'white',
+							   -border     => 1,
+							   -vscrollbar => 1,
+							   -y          => 0,
+							   -height     => 6,
+							   -values     => \@interfaces,
+							   -title      => 'Available Interfaces List',
+							   -vscrollbar => 1,
+							   -onchange   => sub { &update_mgmt_view(); },
+	);
+
+	$mgmtdhcpinput = $win3->add(
+		'win3id6',
+		'Checkbox',
+		-label    => "Check to enable the DHCP service",
+		-checked  => $dhcp_enabled,
+		-bg       => 'black',
+		-fg       => 'white',
+		-tfg      => 'black',
+		-tbg      => 'white',
+		-border   => 1,
+		-y        => 6,
+		-title    => 'MGMT DHCP Configuration',
+		-onchange => sub {
+			&set_dhcp();
+			&update_mgmt_view();
+		},
+	);
+
+	$mgmtipinput = $win3->add(
+		'win3id2', 'TextEditor',
 		-bg         => 'black',
 		-tfg        => 'black',
 		-tbg        => 'white',
 		-border     => 1,
-		-vscrollbar => 1,
-		-y          => 0,
-		-height     => 4,
-		-values     => \@interfaces,
-		-title      => 'Available Interfaces List',
-		-vscrollbar => 1,
-		-onchange   => sub {
-			$mgmtif = $mgmtifinput->get();
-			my $if_ref = &getInterfaceConfig( $mgmtif );
-			$mgmtip = $if_ref->{ addr } // '';
-			if ( $mgmtipinput )
-			{
-				$mgmtipinput->text( $mgmtip );
-			}
-			$mgmtmask = $if_ref->{ mask } // '';
-			if ( $mgmtmaskinput )
-			{
-				$mgmtmaskinput->text( $mgmtmask );
-			}
-			$mgmtgw = $if_ref->{ gateway } // '';
-			if ( $mgmtgwinput )
-			{
-				$mgmtgwinput->text( $mgmtgw );
-			}
-		},
-	);
-	$mgmtifinput->focus();
-	$mgmtifinput->set_selection( $mgmtindex );
-	$mgmtif = $mgmtifinput->get();
-	my $if_ref = &getInterfaceConfig( $mgmtif );
-	$mgmtip    = $if_ref->{ addr };
-	$mgmtmask  = $if_ref->{ mask };
-	$mgmtgw    = $if_ref->{ gateway };
-	$mgmthttp  = &getGlobalConfiguration( 'http_proxy' );
-	$mgmthttps = &getGlobalConfiguration( 'https_proxy' );
-
-	$mgmtipinput = $win3->add(
-							   'win3id2', 'TextEntry',
-							   -bg     => 'black',
-							   -tfg    => 'black',
-							   -tbg    => 'white',
-							   -border => 1,
-							   -y      => 4,
-							   -title  => 'MGMT IP Configuration',
-							   -text   => $mgmtip,
+		-y          => 9,
+		-title      => 'MGMT IP Configuration',
+		-text       => '',                        # ip
+		-readonly   => $dhcp_enabled,
+		-singleline => 1,
 	);
 
 	$mgmtmaskinput = $win3->add(
-								 'win3id3', 'TextEntry',
-								 -bg     => 'black',
-								 -tfg    => 'black',
-								 -tbg    => 'white',
-								 -border => 1,
-								 -y      => 7,
-								 -title  => 'MGMT NetMask Configuration',
-								 -text   => $mgmtmask,
+		'win3id3', 'TextEditor',
+		-bg         => 'black',
+		-tfg        => 'black',
+		-tbg        => 'white',
+		-border     => 1,
+		-y          => 12,
+		-title      => 'MGMT NetMask Configuration',
+		-text       => '',                             # mask
+		-singleline => 1,
 	);
 
 	$mgmtgwinput = $win3->add(
-							   'win3id4', 'TextEntry',
-							   -bg     => 'black',
-							   -tfg    => 'black',
-							   -tbg    => 'white',
-							   -border => 1,
-							   -y      => 10,
-							   -title  => 'MGMT Gateway Configuration',
-							   -text   => $mgmtgw,
+		'win3id4', 'TextEditor',
+		-bg         => 'black',
+		-tfg        => 'black',
+		-tbg        => 'white',
+		-border     => 1,
+		-y          => 15,
+		-title      => 'MGMT Gateway Configuration',
+		-text       => '',                             # gw
+		-singleline => 1,
 	);
 
 	my $confirm = $win3->add(
@@ -711,7 +708,7 @@ sub manage_mgmt()
 							  -bg       => 'black',
 							  -tfg      => 'black',
 							  -tbg      => 'white',
-							  -y        => 14,
+							  -y        => 19,
 							  -selected => 1,
 							  -buttons  => [
 										   {
@@ -728,7 +725,53 @@ sub manage_mgmt()
 										   },
 							  ],
 	);
+
+	# finish boxes definitions and begin user logic
+	$mgmtifinput->focus();
+	$mgmtifinput->set_selection( $mgmtindex );
+
 	$confirm->focus();
+}
+
+sub update_mgmt_view()
+{
+	# not continue if the boxes are not defined
+	return unless ( $mgmtipinput, $mgmtmaskinput, $mgmtgwinput, $mgmtdhcpinput );
+
+	$mgmtif = $mgmtifinput->get();
+	my $if_ref = &getInterfaceConfig( $mgmtif );
+
+	my $dhcp_enabled = ( $if_ref->{ dhcp } eq 'true' ) ? 1 : 0;
+
+	$mgmtip = $if_ref->{ addr } // '';
+	$mgmtipinput->text( $mgmtip );
+
+	$mgmtmask = $if_ref->{ mask } // '';
+	$mgmtmaskinput->text( $mgmtmask );
+
+	$mgmtgw = $if_ref->{ gateway } // '';
+	$mgmtgwinput->text( $mgmtgw );
+
+	# set only read the configuration box, y dhcp is enabled
+	if ( $dhcp_enabled )
+	{
+		$mgmtdhcpinput->check();
+		$mgmtipinput->set_color_bfg( 'red' );
+		$mgmtmaskinput->set_color_bfg( 'red' );
+		$mgmtgwinput->set_color_bfg( 'red' );
+	}
+	else
+	{
+		$mgmtdhcpinput->uncheck();
+		$mgmtipinput->set_color_bfg( 'yellow' );
+		$mgmtmaskinput->set_color_bfg( 'yellow' );
+		$mgmtgwinput->set_color_bfg( 'yellow' );
+	}
+	$mgmtdhcpinput->intellidraw();    # update checkbox view
+
+	$mgmtipinput->readonly( $dhcp_enabled );
+	$mgmtmaskinput->readonly( $dhcp_enabled );
+	$mgmtgwinput->readonly( $dhcp_enabled );
 }
 
 sub set_proxy()
@@ -854,7 +897,80 @@ sub set_net()
 			}
 		}
 
-		&refresh_win3();
+		&update_mgmt_view();
+	}
+
+}
+
+sub set_dhcp()
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	require Zevenet::Net::Validate;
+
+	if ( $mgmtifinput && $mgmtdhcpinput )
+	{
+		my $newif = $mgmtifinput->get();
+
+		# get 1 when has been ckecked or 0 if it has been unchecked
+		my $newdhcp = $mgmtdhcpinput->get();
+		my $err     = 0;
+
+		# Get interface configuration structure
+		my $if_ref = &getInterfaceConfig( $newif ) // &getSystemInterface( $newif );
+		my $dhcp_status = ( $if_ref->{ dhcp } eq 'true' ) ? 1 : 0;
+
+		# do not to save, if the value is the same
+		return if ( $dhcp_status == $newdhcp );
+
+		require Zevenet::Net::Core;
+		require Zevenet::Net::Route;
+		if ( $if_ref->{ addr } )
+		{
+			# Delete old IP and Netmask from system to replace it
+			&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
+
+			# Remove routes if the interface has its own route table: nic and vlan
+			&delRoutes( "local", $if_ref );
+		}
+
+		if ( $newdhcp )
+		{
+			&zenlog( "Enabling DHCP for the interface $newif", 'debug', 'zenbui' );
+			$err = &enableDHCP( $if_ref );
+		}
+		else
+		{
+			&zenlog( "Disabling DHCP for the interface $newif", 'debug', 'zenbui' );
+			$err = &disableDHCP( $if_ref );
+		}
+
+		# update the network configuration
+		$if_ref = &getInterfaceConfig( $if_ref->{ name } );
+		$newif  = $if_ref->{ name };
+		my $newip = $if_ref->{ addr };
+
+		if ( !$err )
+		{
+			&inform_dialog( "The $newif interface config has been saved" );
+			if ( !$newip and $newdhcp )
+			{
+				&error_dialog(
+							 "No IP has been found, wait a while or try to configure it manually" );
+			}
+			else
+			{
+				&inform_dialog(
+					"If this is your first boot you can access to ZEVENET Web GUI through\nhttps://$newip:444\nwith user root and password admin,\nremember to change the password for security reasons in web GUI."
+				);
+			}
+		}
+		else
+		{
+			&error_dialog(
+				"A problem is detected configuring $newif interface, you have to configure your $newif \nthrough command line and after save the configuration in the web GUI"
+			);
+		}
 	}
 }
 

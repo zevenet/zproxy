@@ -31,6 +31,7 @@ $Data::Dumper::Sortkeys = 1;
 
 require Zevenet::Net::Interface;
 require Zevenet::Net::Route;
+require Zevenet::Net::Validate;
 require Zevenet::Farm::Core;
 require Zevenet::Farm::Base;
 require Zevenet::Farm::Config;
@@ -40,7 +41,8 @@ sub getSystemData    #($if_name)
 	my ( $if_name ) = @_;
 
 	my $if_ref = &getSystemInterface( $if_name );
-	my $line   = `ip addr list dev $if_name | grep -E '$if_ref->{ name }\$'`;
+
+	my $line = `ip addr list dev $if_name | grep -E '$if_ref->{ name }\$'`;
 
 	# Searching IPv4 String for IP#IPv6? #FIXME
 	if ( $line =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/([0-9]+)/ )
@@ -62,14 +64,6 @@ sub getSystemData    #($if_name)
 		$if_ref->{ mask } = $netmask;
 		$if_ref->{ ip_v } = "4";
 
-# include GW in $if_Ref if working with same parent interface
-#		my $default_gw_line = `ip route list | grep 'default via.*dev'`;
-#		my @gw_words = split( / /, $default_gw_line);
-#		chomp(@gw_words);
-#print "DEBUG: Default GateWay Line: "."$default_gw_line";
-#		print "DEBUG: Default GateWay Found:" . $gw_words[2] . "\n" if (defined $gw_words[2]);
-#		print "DEBUG: Parent:" . $if_ref->{ parent } . " \n" if (defined $if_ref->{ parent});
-#		print "Is the parent? " . $gw_words[4]. "\n" if (defined $gw_words[4]);
 		my $gw       = &getDefaultGW( $if_ref->{ name } );
 		my $gwGlobal = &getDefaultGW();
 		my $if_gw    = &getIfDefaultGW();
@@ -87,8 +81,7 @@ sub getSystemData    #($if_name)
 		#
 	}
 
-	return ( $if_ref );
-
+	return $if_ref;
 }
 ######
 
@@ -99,12 +92,19 @@ my @iflist;
 if ( defined $ENV{ 'IFACE' } )
 {
 	print "Defined " . "$ENV{'IFACE'}" . "\n";
-	@iflist = ($ENV{'IFACE'});
+	if ( $ENV{ 'IFACE' } eq '--all' )
+	{
+		@iflist = &getInterfaceList();
+	}
+	else
+	{
+		@iflist = ( $ENV{ 'IFACE' } );
+	}
 }
 elsif ( defined $ARGV[0] )
 {
 	print "NIC defined $ARGV[0] \n";
-	@iflist = ($ARGV[0]);
+	@iflist = ( $ARGV[0] );
 }
 else
 {
@@ -112,74 +112,67 @@ else
 	@iflist = &getInterfaceList();
 }
 
-use Data::Dumper;
-
-print "DEBUG: Current Interface List: @iflist\n";
+&zenlog( "Launching dhcp for the interfaces:", 'debug2', 'dhcp' );
+&zenlog( Dumper @iflist,                       'debug2', 'dhcp' );
 
 foreach $if_name ( @iflist )
 {
 	next if $if_name eq 'lo';
 	next if $if_name eq 'cl_maintenance';
 
-	print "DEBUG: Working with if_name: $if_name\n";
+	my $if_conf_ref = &getInterfaceConfig( $if_name );
 
-	my $if_ref     = &getSystemData( $if_name );
-	my $if_old_ref = &getInterfaceConfig( $if_name );
+	next if ( !defined $if_conf_ref );
+	next if ( $if_conf_ref->{ dhcp } ne 'true' );
+	next if ( $if_conf_ref->{ type } eq 'virtual' );
 
-	print "DEBUG: Interface from System\n";
-	say Dumper $if_ref;
-	print "DEBUG: Interface from File\n";
-	say Dumper $if_old_ref;
+	my $dhcp_ref = &getSystemData( $if_name );
 
-	if ( !$if_old_ref )
+	if (     ( $dhcp_ref->{ addr } eq $if_conf_ref->{ addr } )
+		 and ( $dhcp_ref->{ gateway } eq $if_conf_ref->{ gateway } ) )
 	{
-		print
-		  "DEBUG: $if_name is not defined in configuration files because it is a new NIC\n";
-		if ( &setInterfaceConfig( $if_ref ) == 0 )
+		&zenlog( "Interface $if_name does not need to be modified", "debug", "dhcp" );
+		next;
+	}
+
+	&zenlog( "DHCP got a new IP ($dhcp_ref->{ addr }) for the interface $if_name",
+			 'info', 'dhcp' );
+
+	# validate the netmask
+	if ( $if_conf_ref->{ addr } )
+	{
+		my $valid = &getNetValidate(
+									 $if_conf_ref->{ addr },
+									 $if_conf_ref->{ mask },
+									 $dhcp_ref->{ addr }
+		);
+		unless ( $valid and ( $if_conf_ref->{ mask } eq $if_conf_ref->{ mask } ) )
 		{
-			print "configuring if: " . $if_ref->{ name } . "\n";
-			print "ERROR Setting Interface\n";
-		}
-		else
-		{
-			print "DEBUG: Writing Routes for $if_name\n";
-			&writeRoutes( $if_ref->{ name } );
+			&zenlog( "The IP changed of netmask, virtual interfaces are useless, aborting",
+					 "error", "dhcp" );
+			next;
 		}
 	}
-	elsif (    ( $if_ref->{ addr } // '' ) ne ( $if_old_ref->{ addr } // '' )
-			|| ( $if_ref->{ gateway } // '' ) ne ( $if_old_ref->{ gateway } // '' )
-			|| ( $if_ref->{ mask } // '' ) ne ( $if_old_ref->{ mask } // '' ) )
-	{
-		print "DEBUG: $if_name configured, maybe by DHCP service?\n";
-		print "$if_ref->{ addr }\n";
-		print "$if_old_ref->{ addr } \n" if defined $if_old_ref->{ addr };
-		my @farms = &getFarmNameList();
-		foreach my $farm_name ( @farms )
-		{
-			print "Checking VIP changes for farm: $farm_name \n";
-			my $vip      = &getFarmVip( "vip",  "$farm_name" );
-			my $vip_port = &getFarmVip( "vipp", "$farm_name" );
-			my $new_ip   = $if_ref->{ addr };
-			if (    ( $vip eq $if_old_ref->{ addr } )
-				 && ( ( $if_ref->{ addr } // '' ) ne ( $if_old_ref->{ addr } // '' ) ) )
-			{
-				&setFarmVirtualConf( $new_ip, $vip_port, $farm_name );  # ($vip,$vipp,$farm_name)
-				print "Modified Farm $farm_name\n";
-			}
 
-			if ( &setInterfaceConfig( $if_ref ) == 0 )
-			{
-				print "configuring if: " . $if_ref->{ name } . "\n";
-				print "ERROR Setting Interface\n";
-			}
-			else
-			{
-				&writeRoutes( $if_ref->{ name } );
-			}
-		}
-	}
-	else
+	$if_conf_ref->{ addr }    = $dhcp_ref->{ addr };
+	$if_conf_ref->{ mask }    = $dhcp_ref->{ mask };
+	$if_conf_ref->{ gateway } = $dhcp_ref->{ gateway };
+
+	# Add new IP, netmask and gateway
+	unless ( &setInterfaceConfig( $if_conf_ref ) )
 	{
-		print "DEBUG: Interface $if_name does not need to be modified\n\n";
+		&zenlog( "Error saving the new dhcp configuration", "error", "dhcp" );
+		next;
+	}
+
+	&writeRoutes( $if_conf_ref->{ name } );
+
+	# change farm vip,
+	my @farms = &getFarmListByVip( $if_conf_ref->{ addr } );
+	if ( @farms )
+	{
+		&zenlog( "Overwritting farms vip with $if_conf_ref->{ addr }", "debug",
+				 'dhcp' );
+		&setAllFarmByVip( $if_conf_ref->{ addr }, \@farms );
 	}
 }
