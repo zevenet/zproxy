@@ -300,7 +300,7 @@ sub manage_factory_reset()
 								-border     => 1,
 								-vscrollbar => 1,
 								-y          => 0,
-								-height     => 4,
+								-height     => 6,
 								-selected   => 0,
 								-values     => \@nic_list,
 								-labels     => $label,
@@ -318,7 +318,7 @@ sub manage_factory_reset()
 		-tbg      => 'white',
 		-title    => 'Factory Reset',
 		-border   => 1,
-		-y        => 5,
+		-y        => 7,
 		-selected => 2,
 		-buttons  => [
 			{
@@ -703,27 +703,41 @@ sub manage_mgmt()
 	);
 
 	my $confirm = $win3->add(
-							  'win3id5',
-							  'Buttonbox',
-							  -bg       => 'black',
-							  -tfg      => 'black',
-							  -tbg      => 'white',
-							  -y        => 19,
-							  -selected => 1,
-							  -buttons  => [
-										   {
-											 -label    => '< Save >',
-											 -value    => 1,
-											 -shortcut => 1,
-											 -onpress  => sub { &set_net(); },
-										   },
-										   {
-											 -label    => '< Return >',
-											 -value    => 2,
-											 -shortcut => 2,
-											 -onpress  => sub { $zlbmenu->focus(); },
-										   },
-							  ],
+		'win3id5',
+		'Buttonbox',
+		-bg       => 'black',
+		-tfg      => 'black',
+		-tbg      => 'white',
+		-y        => 19,
+		-selected => 1,
+		-buttons  => [
+			{
+			   -label    => '< Save >',
+			   -value    => 1,
+			   -shortcut => 1,
+			   -onpress  => sub { &set_net(); },
+			},
+			{
+			   -label    => '< flush >',
+			   -value    => 1,
+			   -shortcut => 1,
+			   -onpress  => sub {
+				   my $if     = $mgmtifinput->get();
+				   my $if_ref = &getInterfaceConfig( $if );
+				   my $ret = &confirm_dialog( "Are you sure you want to unset the interface $if?" );
+				   if ( $ret )
+				   {
+					   &unset_iface( $if_ref );
+				   }
+			   },
+			},
+			{
+			   -label    => '< Return >',
+			   -value    => 2,
+			   -shortcut => 2,
+			   -onpress  => sub { $zlbmenu->focus(); },
+			},
+		],
 	);
 
 	# finish boxes definitions and begin user logic
@@ -791,6 +805,15 @@ sub set_proxy()
 		&refresh_win3();
 	}
 
+}
+
+sub unset_iface
+{
+	my $if_ref = shift;
+
+	&delRoutes( "local", $if_ref );
+	&delIf( $if_ref );
+	&update_mgmt_view();
 }
 
 sub set_net()
