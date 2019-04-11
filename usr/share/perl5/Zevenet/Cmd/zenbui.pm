@@ -77,6 +77,7 @@ my $win2 = $win1->add(
 $zlbmenu = $win2->add(
 					   'win2id1',
 					   'Listbox',
+					   -radio      => 1,
 					   -selectmode => 'single',
 					   -fg         => 'white',
 					   -bg         => 'black',
@@ -294,6 +295,7 @@ sub manage_factory_reset()
 	my $nicselect = $win3->add(
 								'win3id1',
 								'Listbox',
+								-radio      => 1,
 								-bg         => 'black',
 								-tfg        => 'black',
 								-tbg        => 'white',
@@ -634,6 +636,7 @@ sub manage_mgmt()
 	$mgmtifinput = $win3->add(
 							   'win3id1',
 							   'Listbox',
+							   -radio      => 1,
 							   -bg         => 'black',
 							   -tfg        => 'black',
 							   -tbg        => 'white',
@@ -718,7 +721,7 @@ sub manage_mgmt()
 			   -onpress  => sub { &set_net(); },
 			},
 			{
-			   -label    => '< flush >',
+			   -label    => '< unset >',
 			   -value    => 1,
 			   -shortcut => 1,
 			   -onpress  => sub {
