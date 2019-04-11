@@ -95,6 +95,7 @@ $zlbmenu = $win2->add(
 									8  => 'Exit to shell',
 					   },
 					   -onchange => \&manage_sel,
+					   -onfocus  => sub { $zlbmenu->clear_selection(); },
 );
 $zlbmenu->focus();
 $zlbmenu->set_selection( 0 );
