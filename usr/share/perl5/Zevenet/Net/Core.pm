@@ -325,6 +325,16 @@ sub delIf    # ($if_ref)
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $file      = "$configdir/if_$$if_ref{name}\_conf";
 
+	# remove dhcp configuration
+	if ( exists $if_ref->{ dhcp } and $if_ref->{ dhcp } eq 'true' )
+	{
+		&eload(
+				module => 'Zevenet::Net::DHCP',
+				func   => 'disableDHCP',
+				args   => [$if_ref],
+		);
+	}
+
 	require Config::Tiny;
 	my $fileHandler = Config::Tiny->new();
 	if ( -f $file )
