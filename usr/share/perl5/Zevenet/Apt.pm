@@ -14,17 +14,15 @@ sub setAPTRepo
 	my $port      = "443";
 	my $subserial = "openssl x509 -in $cert_path -serial -noout";
 	my $subkeyid  = "openssl x509 -in $cert_path -noout -text | grep \"$keyid\"";
-	my $file      = &getGlobalConfiguration( 'apt_source_zevenet' );
+	my $subkeyidentifier =
+	  "openssl x509 -in $cert_path -noout -text | grep -A1 \"Subject Key Identifier\"";
+	my $file          = &getGlobalConfiguration( 'apt_source_zevenet' );
 	my $apt_conf_file = &getGlobalConfiguration( 'apt_conf_file' );
 	my $gpgkey        = &getGlobalConfiguration( 'gpg_key_zevenet' );
 	my $aptget_bin    = &getGlobalConfiguration( 'aptget_bin' );
 	my $aptkey_bin    = &getGlobalConfiguration( 'aptkey_bin' );
-	my $distribution1 = "stretch";
-	my $distribution2 = "jessie";
-	my $kernel1       = "4.9.13zva5000";
-	my $kernel2       = "3.16.7-ckt20";
-	my $kernel3       = "4.9.0-4-amd64";
-	my $kernel4       = "3.16.0-4-amd64";
+	my $distribution  = "buster";
+	my $kernel        = "4.19-amd64";
 
 	#get binaries
 	my $dpkg = &getGlobalConfiguration( 'dpkg_bin' );
@@ -81,6 +79,15 @@ sub setAPTRepo
 	# delete line break of the variable
 	$serial =~ s/[\r\n]//g;
 
+	# command to get the Subject Key Identifier
+	my $subjectkeyidentifier = `$subkeyidentifier`;
+	if ( $? != 0 )
+	{
+		return 1;
+	}
+	$subjectkeyidentifier =~ s/[\r\n]//g;
+	$subjectkeyidentifier =~ s/.*:\s+//g;
+
 	# adding key
 	my $error = &logAndRun(
 		"$wget --no-check-certificate -T5 -t1 --header=\"User-Agent: $serial\" -O - https://$host/ee/$gpgkey | $aptkey_bin add -"
@@ -93,7 +100,7 @@ sub setAPTRepo
 	# configuring user-agent
 	open ( my $fh, '>', $apt_conf_file )
 	  or die "Could not open file '$apt_conf_file' $!";
-	print $fh "Acquire { http::User-Agent \"$serial\"; };\n";
+	print $fh "Acquire { http::User-Agent \"$serial:$subjectkeyidentifier\"; };\n";
 	close $fh;
 
 	# get the kernel version
@@ -102,28 +109,9 @@ sub setAPTRepo
 	# configuring repository
 	open ( my $FH, '>', $file ) or die "Could not open file '$file' $!";
 
-	if ( $kernelversion eq $kernel1 )
+	if ( $kernelversion =~ /^4.19/ )
 	{
-
-		print $FH "deb https://$host/ee/v5/$kernel1 $distribution1 main\n";
-
-	}
-	elsif ( $kernelversion eq $kernel2 )
-	{
-
-		print $FH "deb https://$host/ee/v5/$kernel2 $distribution2 main\n";
-
-	}
-	elsif ( $kernelversion eq $kernel3 )
-	{
-
-		print $FH "deb https://$host/ee/v5/$kernel3 $distribution1 main\n";
-
-	}
-	elsif ( $kernelversion eq $kernel4 )
-	{
-
-		print $FH "deb https://$host/ee/v5/$kernel4 $distribution2 main\n";
+		print $FH "deb https://$host/ee/v6/$kernel $distribution main\n";
 
 	}
 	else
@@ -143,3 +131,4 @@ sub setAPTRepo
 	return 0;
 }
 1;
+
