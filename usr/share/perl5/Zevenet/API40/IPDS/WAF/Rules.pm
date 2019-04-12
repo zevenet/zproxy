@@ -157,9 +157,7 @@ sub create_waf_rule
 	elsif ( exists $json_obj->{ raw } )
 	{
 		$type = 'custom';
-		$params =
-		  { "raw" => { 'required' => 'true', 'non_blank' => 'true', 'ref' => 'array' },
-		  };
+		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
 	}
 	elsif ( exists $json_obj->{ mark } )
 	{
@@ -193,6 +191,8 @@ sub create_waf_rule
 	}
 	elsif ( $type eq 'custom' )
 	{
+		my @arr = split ( "\n", $json_obj->{ raw } );
+		$json_obj->{ raw } = \@arr;
 		$err = &setWAFSetRaw( $set, $json_obj->{ raw } );
 	}
 	elsif ( $type eq 'mark' )
@@ -264,9 +264,7 @@ sub modify_waf_rule
 	my $params;
 	if ( exists $json_obj->{ raw } )
 	{
-		$params =
-		  { "raw" => { 'required' => 'true', 'non_blank' => 'true', 'ref' => 'array' },
-		  };
+		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
 	}
 	elsif ( exists $json_obj->{ mark } )
 	{
@@ -287,6 +285,9 @@ sub modify_waf_rule
 
 	if ( exists $json_obj->{ raw } )
 	{
+		# change format to array
+		my @arr = split ( "\n", $json_obj->{ raw } );
+		$json_obj->{ raw } = \@arr;
 		$err = &setWAFSetRaw( $set, $json_obj->{ raw }, $id );
 	}
 	elsif ( exists $json_obj->{ mark } )

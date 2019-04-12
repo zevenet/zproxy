@@ -328,7 +328,10 @@ sub getZapiWAFRule
 		$out->{ type } = 'custom';
 	}
 
-	$out->{ raw } = $rule->{ raw } // [];
+	# return 'raw' as string
+	$out->{ raw } =
+	  ( @{ $rule->{ raw } } ) ? join ( "\n", @{ $rule->{ raw } } ) : "";
+
 	$out->{ id } = $id;
 
 	return $out;
