@@ -339,7 +339,11 @@ sub getRBACPermissionsMsg
 	}
 
 	# zapi calls reserved for root user
-	elsif ( not &getRBACForbidden( $path, $method ) )
+	elsif ( &getRBACForbidden( $path, $method ) )
+	{
+		$msg = "This call is exclusive for the 'root' user";
+	}
+	else
 	{
 		# it is resource?
 		$msg = &getRBACResourcePermissions( $path );
@@ -541,10 +545,6 @@ sub getRBACRoleMenu
 	if ( $path =~ /^\/farms/ )
 	{
 		$hash = &getRBACPermissionFarmHash( $path );
-	}
-	elsif ( $path =~ /^\/certificates\/activation/ )
-	{
-		$hash = &getRBACPermissionActivationCertificateHash( $path );
 	}
 	elsif ( $path =~ /^\/certificates/ )
 	{
@@ -757,43 +757,6 @@ sub getRBACPermissionFarmHash
 			},
 		],
 		'GET' => [],
-	};
-
-	return $hash;
-}
-
-# [activation-certificate]
-#	show=true
-#	upload=false
-#	delete=false
-
-sub getRBACPermissionActivationCertificateHash
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $hash = {
-				 'GET' => [
-						   {
-							 'regex'   => qr{^/certificates/activation},
-							 'section' => 'activation-certificate',
-							 'action'  => 'show',
-						   },
-				 ],
-				 'POST' => [
-							{
-							  'regex'   => qr{^/certificates/activation},
-							  'section' => 'activation-certificate',
-							  'action'  => 'upload',
-							},
-				 ],
-				 'DELETE' => [
-							  {
-								'regex'   => qr{^/certificates/activation$},
-								'section' => 'activation-certificate',
-								'action'  => 'delete',
-							  },
-				 ],
-				 'PUT' => [],
 	};
 
 	return $hash;

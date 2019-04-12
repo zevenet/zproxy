@@ -94,7 +94,9 @@ sub getRBACRoleParamDefaultStruct
 
 	# list of functions with hashes permissions
 	my @functions =
-	  qw(getRBACPermissionFgHash getRBACPermissionRbacHash getRBACPermissionSystemHash getRBACPermissionAliasHash getRBACPermissionIpdsHash getRBACPermissionIntefaceHash getRBACPermissionIntefaceVirtualHash getRBACPermissionCertificateHash getRBACPermissionActivationCertificateHash getRBACPermissionFarmHash);
+	  qw(getRBACPermissionFgHash getRBACPermissionRbacHash getRBACPermissionSystemHash
+	  getRBACPermissionAliasHash getRBACPermissionIpdsHash getRBACPermissionIntefaceHash
+	  getRBACPermissionIntefaceVirtualHash getRBACPermissionCertificateHash getRBACPermissionFarmHash);
 
 	foreach my $funct ( @functions )
 	{
@@ -283,6 +285,11 @@ sub getRBACMenus
 		  ? 'true'
 		  : $role->{ $sect }->{ menu };
 	}
+
+	# add the static menus. Those are not editable
+	my $perm = ( $user eq 'root' ) ? 'true' : 'false';
+	$menus->{ 'factory' }                = $perm;
+	$menus->{ 'activation-certificate' } = $perm;
 
 	return $menus;
 }

@@ -179,7 +179,7 @@ sub set_rbac_role
 	# check if the role exists
 	unless ( &getRBACRoleExists( $role ) )
 	{
-		my $msg = "The RBAC role $role doesn't exist";
+		my $msg = "The RBAC role $role does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -191,12 +191,12 @@ sub set_rbac_role
 		{
 			if ( !exists $confStruct->{ $key }->{ $param } )
 			{
-				my $msg = "The parameter $param is not correct.";
+				my $msg = "The parameter '$param' is not correct.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 			elsif ( $json_obj->{ $key }->{ $param } !~ /^(?:true|false)$/ )
 			{
-				my $msg = "The possible values are true or false";
+				my $msg = "The possible values for a permission are 'true' or 'false'";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
