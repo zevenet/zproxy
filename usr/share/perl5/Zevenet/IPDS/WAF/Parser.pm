@@ -729,7 +729,8 @@ sub buildWAFSet
 	my $set      = shift;
 	my $struct   = shift;
 	my $set_file = &getWAFSetFile( $set );
-	my $tmp      = '/tmp/waf_rules.build';
+	my $dir      = &getWAFSetDir();
+	my $tmp      = "$dir/waf_rules.build";
 	my $err;
 
 	# create tmp file
