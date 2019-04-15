@@ -68,6 +68,15 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
                       new JsonDataValue(Counter<HttpStream>::count)));
     // root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new
     // JsonDataValue(Counter<HttpStream>)));
+    double vm, rss;
+    Debug::process_mem_usage(vm, rss);
+    root->emplace("VM",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(vm)));
+    root->emplace("RSS",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(rss)));
+
     return root->stringify();
   }
   default: { return JSON_OP_RESULT::ERROR; }

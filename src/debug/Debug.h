@@ -80,13 +80,33 @@ static CODE facilitynames[] =
   Debug::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 
 #define COUT_GREEN_COLOR(x) "\033[1;32m" + x + "\033[0m"
-
+#include "fstream"
+#include <unistd.h>
 class Debug {
 public:
   static int log_level;
   static int log_facility;
   static std::mutex log_lock;
+  static void process_mem_usage(double& vm_usage, double& resident_set)
+  {
+      vm_usage     = 0.0;
+      resident_set = 0.0;
 
+      // the two fields we want
+      unsigned long vsize;
+      long rss;
+      {
+          std::string ignore;
+          std::ifstream ifs("/proc/self/stat", std::ios_base::in);
+          ifs >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+              >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+              >> ignore >> ignore >> vsize >> rss;
+      }
+
+      long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+      vm_usage = vsize / 1024.0;
+      resident_set = rss * page_size_kb;
+  }
   inline static void Log2(const std::string &file, const std::string &function,
                           int line, const std::string &str,
                           int level = LOG_NOTICE) {
