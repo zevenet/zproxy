@@ -155,5 +155,6 @@ sub saveFileHandler
 
 		return $err;
 	}
+}
 
-	1;
+1;
