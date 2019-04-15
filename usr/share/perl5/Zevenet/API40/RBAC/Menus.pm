@@ -22,6 +22,7 @@
 
 use strict;
 
+require Zevenet::User;
 include 'Zevenet::RBAC::User::Core';
 include 'Zevenet::API40::RBAC::Structs';
 
@@ -35,9 +36,15 @@ sub get_rbac_menus
 
 	include 'Zevenet::RBAC::Role::Config';
 	my $menus = &getRBACMenus();
+	my $user  = &getUser();
 
-	return &httpResponse(
-				  { code => 200, body => { description => $desc, params => $menus } } );
+	return
+	  &httpResponse(
+					{
+					  code => 200,
+					  body => { user => $user, description => $desc, params => $menus }
+					}
+	  );
 }
 
 1;
