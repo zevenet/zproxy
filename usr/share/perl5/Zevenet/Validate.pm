@@ -611,14 +611,18 @@ sub checkZAPIParams
 		}
 
 		# the input has to be a ref
+		my $r = ref $json_obj->{ $param } // '';
 		if ( exists $param_obj->{ $param }->{ 'ref' } )
 		{
-			my $r = ref $json_obj->{ $param } // '';
 			if ( $r !~ /^$param_obj->{ $param }->{ 'ref' }$/i )
 			{
 				return
 				  "The parameter '$param' expects a '$param_obj->{ $param }->{ref}' reference as input";
 			}
+		}
+		elsif ( $r eq 'ARRAY' or $r eq 'HASH' )
+		{
+			return "The parameter '$param' does not expect a $r as input";
 		}
 
 		# getValidFormat funcion:
