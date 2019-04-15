@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.6)
 
+if(EXISTS CMakeLists.txt)
+    message(FATAL_ERROR"Please create a cmake build directory, running cmake form source tree root is not allowed\n")
+endif()
+
 project(zhttp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 11)
 
@@ -14,6 +18,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
+option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" ON)
 
 SET(PROJECT_DESCRIPTION "L7 proxy core for zevenet load balancer")
 SET(PROJECT_CODENAME "${PROJECT_NAME}")
@@ -33,9 +38,9 @@ string(TIMESTAMP DATE_YEAR "%Y")
 SET(PROJECT_COPYRIGHT "Copyright (C) ${DATE_YEAR} ${PROJECT_VENDOR_NAME}")
 SET(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-${PROJECT_VERSION_TWEAK}")
 
-SET (PROJECT_COMPILER_INFO "${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
-SET (PROJECT_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
-SET (PROJECT_HOST_INFO "${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+SET(PROJECT_COMPILER_INFO "${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
+SET(PROJECT_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+SET(PROJECT_HOST_INFO "${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 
 
 # get current git info
@@ -75,7 +80,7 @@ add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe  ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -fpermissive  -Wshadow -pipe  ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
 
 if (UNIQUE_BUILD_DIRECTORY)
@@ -85,6 +90,7 @@ endif ()
 
 find_package(PkgConfig)
 pkg_check_modules(PC_PCRE QUIET libpcre)
+
 set(PCRE_DEFINITIONS ${PC_PCRE_CFLAGS_OTHER})
 find_path(PCRE_INCLUDE_DIR pcre.h
     HINTS ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS}
@@ -101,21 +107,47 @@ set(PCRE_LIBRARIES ${PCRE_PCREPOSIX_LIBRARY} ${PCRE_PCRE_LIBRARY})
 mark_as_advanced(PCRE_INCLUDE_DIR PCRE_LIBRARIES PCRE_PCRE_LIBRARY)
 
 find_package(Threads)
-
 # Search OpenSSL
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(OPENSSL REQUIRED openssl)
-if (OPENSSL_FOUND)
-    message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
-    message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
-    include_directories(${OPENSSL_INCLUDE_DIRS})
-    message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+#pkg_search_module(OPENSSL openssl)
+
+if (BUNDLED_OPENSSL)
+    #
+    # OpenSSL
+    #
+    message(STATUS "Building openssl")
+    include(ExternalProject)
+    include(GNUInstallDirs)
+    set(OPENSSL_BUNDLE_DIR "${MAINFOLDER}/build/openssl/src/openssl")
+    set(OPENSSL_INSTALL_DIR "${MAINFOLDER}/build/openssl/target")
+    set(OPENSSL_INCLUDE_DIR "${MAINFOLDER}/build/openssl/target/include")
+    set(OPENSSL_LIBRARY_SSL_SO "${OPENSSL_INSTALL_DIR}/lib/libssl.so")
+    set(OPENSSL_LIBRARY_CRYPTO_SO "${OPENSSL_INSTALL_DIR}/lib/libcrypto.so")
+    set(OPENSSL_LIBRARY_SSL "${OPENSSL_INSTALL_DIR}/lib/libssl.a")
+    set(OPENSSL_LIBRARY_CRYPTO "${OPENSSL_INSTALL_DIR}/lib/libcrypto.a")
+    set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
+    message(STATUS "Using bundled openssl in '${OPENSSL_BUNDLE_DIR}'")
+    #Debug build
+    # ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+    ExternalProject_Add(openssl
+        URL "https://www.openssl.org/source/openssl-1.1.1b.tar.gz"
+        CONFIGURE_COMMAND ./config shared --prefix=${OPENSSL_INSTALL_DIR}  -lz -ldl -d no-asm -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+        BUILD_COMMAND make -j8
+        BUILD_IN_SOURCE 1
+        BUILD_BYPRODUCTS ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO}
+        INSTALL_COMMAND make install -j8)
+    set(ENV{PKG_CONFIG_PATH} "${OPENSSL_INSTALL_DIR}/lib/pkgconfig")
+    #add_dependencies(openssl)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    link_directories(${OPENSSL_INSTALL_DIR}/lib)
 else ()
-    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
-    #set(ENV{PKG_CONFIG_PATH} "/usr/lib/openssl-1.0/pkgconfig")
-    #include_directories(/usr/include/openssl-1.0)
-    #link_directories(/usr/lib/openssl-1.0)
+    if (OPENSSL_FOUND)
+        message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
+        message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
+        include_directories(${OPENSSL_INCLUDE_DIRS})
+        message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+    endif()
 endif ()
 
 find_package(ZLIB)
@@ -129,10 +161,16 @@ endif ()
 if (BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
+
+if (BUILD_OPENSSL)
+    add_subdirectory(openssl)
+endif ()
+
 add_subdirectory(src)
 add_subdirectory(src/ctl)
 # Doxygen Build
 add_executable(zhttp src/main.cpp)
+add_dependencies(zhttp libzhttp)
 target_link_libraries(zhttp libzhttp)
 
 

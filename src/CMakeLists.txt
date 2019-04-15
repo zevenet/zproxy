@@ -13,6 +13,7 @@ add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 add_definitions(-DSSL_DISABLE_SESSION_CACHE=1)
 add_definitions(-DDEBUG_SSL=0)
 
+
 add_library(libzhttp
     ssl/SSLContext.cpp
     ssl/SSLContext.h
@@ -64,6 +65,10 @@ add_library(libzhttp
     event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
     service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
     stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
-        )
+    )
 
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES})
+add_dependencies(libzhttp openssl)
+#include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
+#link_directories(libzhttp ${OPENSSL_INSTALL_DIR}/lib)
+
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES}  ${ZLIB_LIBRARIES} ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl) #${OPENSSL_LIBRARIES}
