@@ -611,7 +611,6 @@ Returns:
 sub getCertKey
 {
 	my $zen_cert = $_[0];
-
 	my @key_cert = grep /Subject: ?.+/, @{ $zen_cert };
 	my $cert_type;    # old or new
 	my $key;
@@ -911,12 +910,12 @@ sub uploadCertActivation
 	require Zevenet::File;
 
 	# do not allow to upload certificates with old key
-	my @cert_array = split ( "\n", $upload_data );
-	my ( undef, $cert_type ) = &getCertKey( \@cert_array );
-	if ( $cert_type eq 'old' )
-	{
-		return &getCertErrorMessage( 7 );
-	}
+	#~ my @cert_array = split ( "\n", $upload_data );
+	#~ my ( undef, $cert_type ) = &getCertKey( \@cert_array );
+	#~ if ( $cert_type eq 'old' )
+	#~ {
+	#~ return &getCertErrorMessage( 7 );
+	#~ }
 
 	unless ( &setFile( $tmpFilename, $upload_data ) )
 	{
@@ -936,19 +935,22 @@ sub uploadCertActivation
 	rename ( $tmpFilename, $zlbcertfile_path );
 
  # This is a BUGFIX for the zevenet preinst! In that script is not defined "include"
-	eval { &include(); };
-	if ( $@ )
-	{
-		# If the cert is correct, set the APT repository
-		&include( 'Zevenet::Apt' );
-		if ( &setAPTRepo() )
-		{
-			return "An error occurred configuring the Zevenet repository";
-		}
-		&zenlog( "Restarting Zevenet service", 'info', 'service' );
-		my $zevenet_srv = &getGlobalConfiguration( "zevenet_service" );
-		&logAndRun( "$zevenet_srv start" );
-	}
+ #~ eval { &include(); };
+ #~ if ( $@ )
+ #~ {
+ #~ # If the cert is correct, set the APT repository
+ #~ &include( 'Zevenet::Apt' );
+ #~ if ( &setAPTRepo() )
+ #~ {
+ #~ return "An error occurred configuring the Zevenet repository";
+ #~ }
+ #~ &zenlog( "Restarting Zevenet service", 'info', 'service' );
+ #~ my $zevenet_srv = &getGlobalConfiguration( "zevenet_service" );
+ #~ &logAndRun( "$zevenet_srv start" );
+ #~ }
+
+	&eload( module => 'Zevenet::Apt',
+			func   => 'setAPTRepo', );
 
 	return undef;
 }
