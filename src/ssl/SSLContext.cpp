@@ -53,6 +53,15 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
   init();
   listener_config = listener_config_;
   if (listener_config.ctx != nullptr) {
+
+#ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
+  if (listener_config_.ctx->next)
+    if (!SSL_CTX_set_tlsext_servername_callback(listener_config_.ctx->ctx,
+                                                SNIServerName) ||
+            !SSL_CTX_set_tlsext_servername_arg(listener_config_.ctx->ctx,listener_config_.ctx))
+      Debug::logmsg(LOG_ERR, "ListenHTTPS: can't set SNI callback");
+#endif
+
     ssl_ctx = listener_config.ctx->ctx;
 #if SSL_DISABLE_SESSION_CACHE
     // Attempt to disable session and ticket caching..
@@ -126,3 +135,38 @@ bool SSLContext::loadOpensslConfig(const std::string &config_file_path, SSL_CTX 
       NCONF_free(cnf);
   }
 }
+
+int SSLContext::SNIServerName(SSL *ssl, int dummy, SSLData *ctx) {
+  const char *server_name;
+  SSLData *pc;
+
+  if ((server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) ==
+      NULL)
+    return SSL_TLSEXT_ERR_NOACK;
+
+  /* logmsg(LOG_DEBUG, "Received SSL SNI Header for servername %s",
+   * servername); */
+
+  SSL_set_SSL_CTX(ssl, NULL);
+  for (pc = ctx; pc; pc = pc->next) {
+    if (fnmatch(pc->server_name, server_name, 0) == 0) {
+      /* logmsg(LOG_DEBUG, "Found cert for %s", servername); */
+      SSL_set_SSL_CTX(ssl, pc->ctx);
+      return SSL_TLSEXT_ERR_OK;
+    } else if (pc->subjectAltNameCount > 0 && pc->subjectAltNames != NULL) {
+      int i;
+
+      for (i = 0; i < pc->subjectAltNameCount; i++) {
+        if (fnmatch((char*)pc->subjectAltNames[i], server_name, 0) == 0) {
+          SSL_set_SSL_CTX(ssl, pc->ctx);
+          return SSL_TLSEXT_ERR_OK;
+        }
+      }
+    }
+  }
+
+  /* logmsg(LOG_DEBUG, "No match for %s, default used", server_name); */
+  SSL_set_SSL_CTX(ssl, ctx->ctx);
+  return SSL_TLSEXT_ERR_OK;
+}
+

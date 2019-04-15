@@ -1147,6 +1147,8 @@ void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
 
 void StreamManager::applyCompression(Service *service, HttpStream *stream) {
   http::TRANSFER_ENCODING_TYPE compression_type;
+  if (service->service_config.compression_algorithm.empty())
+    return;
   /* Check if we have found the accept encoding header in the request but not the transfer encoding in the response. */
   if ((!stream->response.transfer_encoding_header) && stream->request.accept_encoding_header) {
     std::string compression_value;

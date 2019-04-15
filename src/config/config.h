@@ -37,7 +37,7 @@
 # define general_name_string(n) \
 	(unsigned char*) \
 	strndup((char*)ASN1_STRING_get0_data(n->d.dNSName),	\
-	        ASN1_STRING_length(n->d.dNSName) + 1)
+		ASN1_STRING_length(n->d.dNSName) + 1)
 #else
 # define general_name_string(n) \
 	(unsigned char*) \
@@ -180,10 +180,6 @@ class Config {
    * Dummy certificate verification - always OK
    */
   static int verify_OK(int pre_ok, X509_STORE_CTX *ctx);
-
-#ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
-  static int SNI_server_name(SSL *ssl, int *dummy, POUND_CTX *ctx);
-#endif
 
   /*
    * parse an OrURLs block

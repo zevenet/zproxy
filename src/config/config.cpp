@@ -817,13 +817,7 @@ ListenerConfig *Config::parse_HTTPS() {
       if ((!has_addr || !has_port || res->ctx == NULL) && !openssl_file_exists)
         conf_err("ListenHTTPS missing Address, Port, SSL Config file or Certificate - aborted");
       if (!openssl_file_exists) {
-#ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
-      if (res->ctx->next)
-        if (!SSL_CTX_set_tlsext_servername_callback(res->ctx->ctx,
-                                                    SNI_server_name) ||
-            !SSL_CTX_set_tlsext_servername_arg(res->ctx->ctx, res->ctx))
-          conf_err("ListenHTTPS: can't set SNI callback");
-#endif
+
       for (pc = res->ctx; pc; pc = pc->next) {
         SSL_CTX_set_app_data(pc->ctx, res);
         SSL_CTX_set_mode(pc->ctx, SSL_MODE_AUTO_RETRY);
@@ -1257,40 +1251,6 @@ ServiceConfig *Config::parseService(const char *svc_name) {
 }
 
 int Config::verify_OK(int pre_ok, X509_STORE_CTX *ctx) { return 1; }
-
-int Config::SNI_server_name(SSL *ssl, int *dummy, POUND_CTX *ctx) {
-  const char *server_name;
-  POUND_CTX *pc;
-
-  if ((server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) ==
-      NULL)
-    return SSL_TLSEXT_ERR_NOACK;
-
-  /* logmsg(LOG_DEBUG, "Received SSL SNI Header for servername %s",
-   * servername); */
-
-  SSL_set_SSL_CTX(ssl, NULL);
-  for (pc = ctx; pc; pc = pc->next) {
-    if (fnmatch(pc->server_name, server_name, 0) == 0) {
-      /* logmsg(LOG_DEBUG, "Found cert for %s", servername); */
-      SSL_set_SSL_CTX(ssl, pc->ctx);
-      return SSL_TLSEXT_ERR_OK;
-    } else if (pc->subjectAltNameCount > 0 && pc->subjectAltNames != NULL) {
-      int i;
-
-      for (i = 0; i < pc->subjectAltNameCount; i++) {
-        if (fnmatch((char*)pc->subjectAltNames[i], server_name, 0) == 0) {
-          SSL_set_SSL_CTX(ssl, pc->ctx);
-          return SSL_TLSEXT_ERR_OK;
-        }
-      }
-    }
-  }
-
-  /* logmsg(LOG_DEBUG, "No match for %s, default used", server_name); */
-  SSL_set_SSL_CTX(ssl, ctx->ctx);
-  return SSL_TLSEXT_ERR_OK;
-}
 
 char *Config::parse_orurls() {
   char lin[MAXBUF];
