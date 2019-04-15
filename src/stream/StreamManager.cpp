@@ -534,6 +534,7 @@ void StreamManager::onRequestEvent(int fd) {
   //} while (stream->client_connection.buffer_size > parsed &&
   //  parse_result ==
   //     http_parser::PARSE_RESULT::SUCCESS);
+  httpsHeaders(stream);
 
   stream->client_connection.enableReadEvent();
 }
@@ -1184,6 +1185,109 @@ void StreamManager::applyCompression(Service *service, HttpStream *stream) {
       default: break;
       }
     }
+  }
+}
+
+/*
+ * Get a "line" from a BIO, strip the trailing newline, skip the input stream if buffer too small
+ * The result buffer is NULL terminated
+ * Return 0 on success
+ */
+static int get_line(BIO *const in, char *const buf, const int bufsize, int * out_line_size) {
+    char    tmp;
+    int     i, n_read;
+
+//    memset(buf, 0, bufsize);
+    *out_line_size = 0;
+    for(n_read = 0;;)
+        switch(BIO_gets(in, buf + n_read, bufsize - n_read - 1)) {
+        case -2:
+            /* BIO_gets not implemented */
+            return -1;
+        case 0:
+        case -1:
+            return 1;
+        default:
+            for(i = n_read; i < bufsize && buf[i]; i++)
+                if(buf[i] == '\n' || buf[i] == '\r') {
+                    buf[i] = '\0';
+                    *out_line_size = i;
+                    return 0;
+                }
+            if(i < bufsize) {
+                n_read = i;
+                continue;
+            }
+            logmsg(LOG_NOTICE, "(%lx) line too long: %s", pthread_self(), buf);
+            /* skip rest of "line" */
+            tmp = '\0';
+            while(tmp != '\n')
+                if(BIO_read(in, &tmp, 1) != 1)
+                    return 1;
+            break;
+        }
+    return 0;
+}
+
+void StreamManager::httpsHeaders(HttpStream *stream) {
+  if (listener_config_.ctx == nullptr)
+    return;
+
+  std::string header_value;
+  const SSL_CIPHER  *cipher;
+  char buf[MAXBUF];
+  X509 *x509;
+
+  x509 = nullptr;
+  if((x509 = SSL_get_peer_certificate(stream->client_connection.ssl)) != nullptr
+     && listener_config_.clnt_check < 3 &&
+     SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK) {
+    Debug::logmsg(LOG_ERR, "Bad certificate from %s", stream->client_connection.address_str.c_str());
+    X509_free(x509);
+  }
+
+  if ((cipher = SSL_get_current_cipher(stream->client_connection.ssl)) != NULL) {
+    char cipher_buf[4096];
+    SSL_CIPHER_description(cipher, cipher_buf, 4096);
+    header_value = SSL_get_version(stream->client_connection.ssl);
+    header_value += '/';
+    header_value += cipher_buf;
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER, header_value);
+  }
+
+  if (listener_config_.clnt_check > 0 && x509 != nullptr) {
+    int line_len = 0;
+    BIO *bb = BIO_new(BIO_s_mem());
+    X509_NAME_print_ex(bb, X509_get_subject_name(x509), 8, XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
+    get_line(bb, buf, MAXBUF, &line_len);
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SUBJECT, buf);
+
+    X509_NAME_print_ex(bb, X509_get_issuer_name(x509), 8, XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
+    get_line(bb, buf, MAXBUF, &line_len);
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_ISSUER, buf);
+
+    ASN1_TIME_print(bb, X509_get_notBefore(x509));
+    get_line(bb, buf, MAXBUF, &line_len);
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTBEFORE, buf);
+
+    ASN1_TIME_print(bb, X509_get0_notAfter(x509));
+    get_line(bb, buf, MAXBUF, &line_len);
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTAFTER, buf);
+
+    long serial = ASN1_INTEGER_get(X509_get_serialNumber(x509));
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SERIAL, std::to_string(serial));
+
+    PEM_write_bio_X509(bb, x509);
+    get_line(bb, buf, MAXBUF, &line_len);
+    header_value = buf;
+    while(get_line(bb, buf, MAXBUF, &line_len) == 0) {
+      header_value += buf;
+    }
+
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CERTIFICATE, header_value);
+
+    X509_free(x509);
+    BIO_free(bb);
   }
 }
 

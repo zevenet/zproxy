@@ -192,7 +192,14 @@ const std::unordered_map<HTTP_HEADER_NAME, const std::string>
         {HTTP_HEADER_NAME::X_FORWARDED_HOST, "X-Forwarded-Host"},
         {HTTP_HEADER_NAME::X_FORWARDED_PROTO, "X-Forwarded-Proto"},
         {HTTP_HEADER_NAME::X_FRAME_OPTIONS, "X-Frame-Options"},
-        {HTTP_HEADER_NAME::X_XSS_PROTECTION, "X-XSS-Protection"}};
+        {HTTP_HEADER_NAME::X_XSS_PROTECTION, "X-XSS-Protection"},
+        {HTTP_HEADER_NAME::X_SSL_SUBJECT, "X-SSL-Subject"},
+        {HTTP_HEADER_NAME::X_SSL_CIPHER, "X-SSL-Cipher"},
+        {HTTP_HEADER_NAME::X_SSL_ISSUER, "X-SSL-Issuer"},
+        {HTTP_HEADER_NAME::X_SSL_SERIAL, "X-SSL-Serial"},
+        {HTTP_HEADER_NAME::X_SSL_NOTBEFORE, "X-SSL-notBefore"},
+        {HTTP_HEADER_NAME::X_SSL_NOTAFTER, "X-SSL-notAfter"},
+        {HTTP_HEADER_NAME::X_SSL_CERTIFICATE, "X-SSL-Certificate"}};
 
 const std::unordered_map<REQUEST_METHOD, const std::string>
     http_info::http_verb_strings{
