@@ -945,6 +945,9 @@ sub uploadCertActivation
 		{
 			return "An error occurred configuring the Zevenet repository";
 		}
+		&zenlog( "Restarting Zevenet service", 'info', 'service' );
+		my $zevenet_srv = &getGlobalConfiguration( "zevenet_service" );
+		&logAndRun( "$zevenet_srv start" );
 	}
 
 	return undef;
