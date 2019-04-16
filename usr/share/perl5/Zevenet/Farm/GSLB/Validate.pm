@@ -82,7 +82,7 @@ sub getGSLBCheckPort
 	my ( $fname, $checkPort ) = @_;
 
 	my $servicePorts = 0;
-
+	my $ftype        = getFarmType( $fname );
 	require Tie::File;
 
 	# select all ports used in plugins
