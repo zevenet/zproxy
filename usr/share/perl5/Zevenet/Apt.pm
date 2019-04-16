@@ -130,5 +130,55 @@ sub setAPTRepo
 
 	return 0;
 }
+
+sub getAPTUpdatesList
+{
+	my $package_list = &getGlobalConfiguration( 'apt_outdated_list' );
+	my $message_file = &getGlobalConfiguration( 'apt_msg' );
+
+	my @pkg_list = ();
+	my $msg;
+	my $date   = "";
+	my $status = "unknown";
+	my $install_msg =
+	  "To upgrade the system, please, execute in a shell the following command:
+	'apt-get --with-new-pkgs upgrade'";
+
+	my $fh = &openlock( $package_list, '<' );
+	if ( $fh )
+	{
+		@pkg_list = split ( ' ', <$fh> );
+		close $fh;
+
+		# remove the fisrt item
+		shift @pkg_list if ( $pkg_list[0] eq 'Listing...' );
+	}
+
+	$fh = &openlock( $message_file, '<' );
+	if ( $fh )
+	{
+		$msg = <$fh>;
+		close $fh;
+
+		if ( $msg =~ /last check at (.+) -/ )
+		{
+			$date   = $1;
+			$status = "Updates available";
+		}
+		elsif ( $msg =~ /Zevenet Packages are up-to-date/ )
+		{
+			$status = "Updated";
+		}
+	}
+
+	return {
+			 'message'    => $install_msg,
+			 'last_check' => $date,
+			 'status'     => $status,
+			 'number'     => scalar @pkg_list,
+			 'packages'   => \@pkg_list
+	};
+}
+
 1;
 

@@ -41,10 +41,12 @@ Returns:
 See Also:
 	<getZClusterNodeStatusInfo>
 =cut
+
 sub getZClusterLocalIp
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	return if ! &getZClusterStatus();
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	return if !&getZClusterStatus();
 
 	my $zcl_conf = getZClusterConfig();
 
@@ -70,11 +72,14 @@ See Also:
 	NOT USED: <getClusterInfo>,
 
 =cut
+
 sub getZClusterStatus
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# case filecuster does not exist
-	return if ! -f &getGlobalConfiguration('filecluster');
+	return if !-f &getGlobalConfiguration( 'filecluster' );
 
 	my $zcl_conf = &getZClusterConfig();
 
@@ -104,21 +109,23 @@ See Also:
 
 	zapi/v3/interface.cgi, zapi/v3/cluster.cgi, zeninotify, cluster_status.pl, zevenet
 =cut
+
 sub getZClusterConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Config::Tiny;
 	require Zevenet::Config;
 
-	my $filecluster = &getGlobalConfiguration('filecluster');
+	my $filecluster = &getGlobalConfiguration( 'filecluster' );
 
-	if ( ! -f $filecluster )
+	if ( !-f $filecluster )
 	{
 		open my $zcl_file, '>', $filecluster;
 
-		if ( ! $zcl_file )
+		if ( !$zcl_file )
 		{
-			&zenlog("Could not create file $filecluster: $!", "error", "CLUSTER");
+			&zenlog( "Could not create file $filecluster: $!", "error", "CLUSTER" );
 			return;
 		}
 
@@ -145,13 +152,15 @@ Returns:
 See Also:
 	zapi/v3/cluster.cgi
 =cut
+
 sub setZClusterConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $config = shift;
 
 	# returns true on success or undef on error,
-	return $config->write( &getGlobalConfiguration('filecluster') );
+	return $config->write( &getGlobalConfiguration( 'filecluster' ) );
 }
 
 =begin nd
@@ -170,10 +179,12 @@ See Also:
 
 	zcluster-manager, zevenet
 =cut
+
 sub getZClusterRunning
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	return ( system( "pgrep keepalived >/dev/null" ) == 0 );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	return ( system ( "pgrep keepalived >/dev/null" ) == 0 );
 }
 
 =begin nd
@@ -192,9 +203,11 @@ Returns:
 See Also:
 	zapi/v3/cluster.cgi, zcluster-manager, zevenet
 =cut
+
 sub enableZCluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $prio = shift;
 
 	#~ my $zcl_conf = &getZClusterConfig();
@@ -203,7 +216,7 @@ sub enableZCluster
 
 	if ( $error_code )
 	{
-		&zenlog("An error happened setting vrrp configuration", "error", "CLUSTER");
+		&zenlog( "An error happened setting vrrp configuration", "error", "CLUSTER" );
 		return 1;
 	}
 
@@ -212,9 +225,9 @@ sub enableZCluster
 	# create dummy interface
 	unless ( &getSystemInterface( $maint_if ) )
 	{
-		my $ip_bin = &getGlobalConfiguration('ip_bin');
+		my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
-		&zenlog("Starting cluster maintenance interface", "info", "CLUSTER");
+		&zenlog( "Starting cluster maintenance interface", "info", "CLUSTER" );
 
 		# create the interface and put it up
 		my $ip_cmd = "$ip_bin link add name $maint_if type dummy";
@@ -234,30 +247,33 @@ sub enableZCluster
 	# start or reload keepalived
 	if ( &getZClusterRunning() )
 	{
-		&zenlog("Reloading keepalived service", "info", "CLUSTER");
+		&zenlog( "Reloading keepalived service", "info", "CLUSTER" );
 
 		#~ my $ka_cmd = "/etc/init.d/keepalived reload >/dev/null 2>&1";
 		my $ka_cmd = "/etc/init.d/keepalived reload";
 		$error_code = &logAndRun( $ka_cmd );
 
-		&zenlog("Reloading keepalived service output: $error_code", "info", "CLUSTER");
+		&zenlog( "Reloading keepalived service output: $error_code", "info",
+				 "CLUSTER" );
 	}
 	else
 	{
-		&zenlog("Starting keepalived service", "info", "CLUSTER");
+		&zenlog( "Starting keepalived service", "info", "CLUSTER" );
 
 		# WARNING: Sometimes keepalived needs to be stopped before it can be started
 		my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
+
 		#~ my $ka_cmd = "/etc/init.d/keepalived stop";
 		$error_code = &logAndRun( $ka_cmd );
 
 		$ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
+
 		#~ $ka_cmd = "/etc/init.d/keepalived start";
 		$error_code = &logAndRun( $ka_cmd );
 
 		if ( &pgrep( "keepalived" ) )
 		{
-			&zenlog("Error starting Keepalived service", "error", "CLUSTER");
+			&zenlog( "Error starting Keepalived service", "error", "CLUSTER" );
 			return 1;
 		}
 	}
@@ -265,7 +281,7 @@ sub enableZCluster
 	# conntrackd
 	include 'Zevenet::Conntrackd';
 
-	unless ( -f &getGlobalConfiguration('conntrackd_conf') )
+	unless ( -f &getGlobalConfiguration( 'conntrackd_conf' ) )
 	{
 		&setConntrackdConfig();
 	}
@@ -296,10 +312,13 @@ Returns:
 See Also:
 	zapi/v3/cluster.cgi, zcluster-manager, zevenet
 =cut
+
 sub disableZCluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $error_code = &logAndRun("/etc/init.d/keepalived stop");
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $error_code = &logAndRun( "/etc/init.d/keepalived stop" );
+
 	# confirm keepalived stop
 	my @keepalived_process = `pgrep keepalived 2>/dev/null`;
 	kill 'KILL', @keepalived_process if ( @keepalived_process );
@@ -320,9 +339,9 @@ sub disableZCluster
 	# remove dummy interface
 	if ( &getSystemInterface( $maint_if ) )
 	{
-		&zenlog("Removing cluster maintenance interface", "error", "CLUSTER");
+		&zenlog( "Removing cluster maintenance interface", "error", "CLUSTER" );
 
-		my $ip_bin = &getGlobalConfiguration('ip_bin');
+		my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 		# create the interface and put it up
 		my $ip_cmd = "$ip_bin link delete $maint_if type dummy";
@@ -349,27 +368,29 @@ Returns:
 See Also:
 	<enableZCluster>, zcluster-manager
 =cut
+
 sub setKeepalivedConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $prio = shift;
 
 	require Zevenet::SystemInfo;
 
-	&zenlog("Setting keepalived configuration file", "info", "CLUSTER");
+	&zenlog( "Setting keepalived configuration file", "info", "CLUSTER" );
 
-	my $zcl_conf = &getZClusterConfig();
-	my $keepalived_conf = &getGlobalConfiguration('keepalived_conf');
+	my $zcl_conf        = &getZClusterConfig();
+	my $keepalived_conf = &getGlobalConfiguration( 'keepalived_conf' );
 
 	open my $ka_file, '>', $keepalived_conf;
 
-	if ( ! $ka_file )
+	if ( !$ka_file )
 	{
-		&zenlog("Could not open file $keepalived_conf: $!", "error", "CLUSTER");
+		&zenlog( "Could not open file $keepalived_conf: $!", "error", "CLUSTER" );
 		return 1;
 	}
 
-	my $localhost = &getHostname();
+	my $localhost  = &getHostname();
 	my $remotehost = &getZClusterRemoteHost();
 	my $priority;
 
@@ -379,7 +400,7 @@ sub setKeepalivedConfig
 	}
 	else
 	{
-		$priority = ( $zcl_conf->{_}->{ primary } eq $localhost )? 120: 50;
+		$priority = ( $zcl_conf->{ _ }->{ primary } eq $localhost ) ? 120 : 50;
 	}
 
 	my $ka_conf = "! Zevenet configuration file for keepalived
@@ -411,30 +432,30 @@ vrrp_instance ZCluster {
 
 	print { $ka_file } "$ka_conf";
 
-    # notify scripts and alerts are optional
-    #
-    # filenames of scripts to run on transitions
-    # can be unquoted (if just filename)
-    # or quoted (if it has parameters)
-    # to MASTER transition
-    #~ notify_master /path/to_master.sh
-    #
-    # to BACKUP transition
-    #~ notify_backup /path/to_backup.sh
-    #
-    # FAULT transition
-    #~ notify_fault "/path/fault.sh VG_1"
+	# notify scripts and alerts are optional
 	#
-    # for ANY state transition.
-    # "notify" script is called AFTER the
-    # notify_* script(s) and is executed
-    # with 3 arguments provided by Keepalived
-    # (so don't include parameters in the notify line).
-    # arguments
-    # $1 = "GROUP"|"INSTANCE"
-    # $2 = name of the group or instance
-    # $3 = target state of transition
-    #     ("MASTER"|"BACKUP"|"FAULT")
+	# filenames of scripts to run on transitions
+	# can be unquoted (if just filename)
+	# or quoted (if it has parameters)
+	# to MASTER transition
+	#~ notify_master /path/to_master.sh
+	#
+	# to BACKUP transition
+	#~ notify_backup /path/to_backup.sh
+	#
+	# FAULT transition
+	#~ notify_fault "/path/fault.sh VG_1"
+	#
+	# for ANY state transition.
+	# "notify" script is called AFTER the
+	# notify_* script(s) and is executed
+	# with 3 arguments provided by Keepalived
+	# (so don't include parameters in the notify line).
+	# arguments
+	# $1 = "GROUP"|"INSTANCE"
+	# $2 = name of the group or instance
+	# $3 = target state of transition
+	#     ("MASTER"|"BACKUP"|"FAULT")
 
 	close $ka_file;
 
@@ -457,14 +478,16 @@ See Also:
 
 	zapi/v3/cluster.cgi, cluster_status.pl, zevenet
 =cut
+
 sub getZClusterRemoteHost
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $zcl_conf = &getZClusterConfig();
 	my $hostname = &getHostname();
-	my @hosts = keys %{ $zcl_conf };
+	my @hosts    = keys %{ $zcl_conf };
 	my $remotehost;
 
 	for my $zcl_key ( keys %{ $zcl_conf } )
@@ -495,6 +518,7 @@ Returns:
 Bugs:
 	NOT USED (yet?).
 =cut
+
 #sub parallel_run # `output` ( $cmd )
 #{
 #	my $cmd = shift;
@@ -539,13 +563,15 @@ Returns:
 See Also:
 	<exchangeIdKeys>
 =cut
-sub generateIdKey # $rc ()
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $key_path = &getGlobalConfiguration('key_path');
-	my $keygen_cmd = &getGlobalConfiguration('keygen_cmd');
 
-	if ( ! -e $key_path )
+sub generateIdKey    # $rc ()
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $key_path   = &getGlobalConfiguration( 'key_path' );
+	my $keygen_cmd = &getGlobalConfiguration( 'keygen_cmd' );
+
+	if ( !-e $key_path )
 	{
 		mkdir $key_path;
 	}
@@ -555,7 +581,8 @@ sub generateIdKey # $rc ()
 
 	if ( $error_code != 0 )
 	{
-		&zenlog("An error happened generating the RSA id key: $gen_output", "error", "CLUSTER");
+		&zenlog( "An error happened generating the RSA id key: $gen_output",
+				 "error", "CLUSTER" );
 	}
 
 	return $error_code;
@@ -576,22 +603,27 @@ Returns:
 See Also:
 	<exchangeIdKeys>
 =cut
-sub copyIdKey # $rc ( $ip_addr, $pass )
+
+sub copyIdKey    # $rc ( $ip_addr, $pass )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ip_address = shift;
 	my $password   = shift;
 
-	my $safe_password = quotemeta( $password );
+	my $safe_password = quotemeta ( $password );
 
-	my $copyId_cmd = "HOME=\"/root\" /usr/local/zevenet/bin/ssh-copy-id.sh $safe_password root\@$ip_address";
+	my $copyId_cmd =
+	  "HOME=\"/root\" /usr/local/zevenet/bin/ssh-copy-id.sh $safe_password root\@$ip_address";
 
-	my $copy_output = `$copyId_cmd`; # WARNING: Do not redirect stderr to stdout
-	my $error_code = $?;
+	my $copy_output = `$copyId_cmd`;    # WARNING: Do not redirect stderr to stdout
+	my $error_code  = $?;
 
 	if ( $error_code != 0 )
 	{
-		&zenlog("An error happened copying the Id key to the host $ip_address: $copy_output", "error", "CLUSTER");
+		&zenlog(
+			   "An error happened copying the Id key to the host $ip_address: $copy_output",
+			   "error", "CLUSTER" );
 	}
 
 	return $error_code;
@@ -613,9 +645,11 @@ Returns:
 See Also:
 	zapi/v3/cluster.cgi
 =cut
-sub exchangeIdKeys # $bool ( $ip_addr, $pass )
+
+sub exchangeIdKeys    # $bool ( $ip_addr, $pass )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ip_address = shift;
 	my $password   = shift;
 
@@ -625,13 +659,14 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 	#### Check for local key ID ####
 
 	# 1) generate id key if it doesn't exist
-	if ( ! -e "$key_path/$key_id" )
+	if ( !-e "$key_path/$key_id" )
 	{
 		my $return_code = &generateIdKey();
 
-		if ( $return_code || ! -f "$key_path/$key_id" )
+		if ( $return_code || !-f "$key_path/$key_id" )
 		{
-			&zenlog("Key ID $key_path/$key_id does not exist, aborting.", "error", "CLUSTER");
+			&zenlog( "Key ID $key_path/$key_id does not exist, aborting.",
+					 "error", "CLUSTER" );
 			return 1;
 		}
 	}
@@ -644,31 +679,33 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 	#### Check for remote key ID ####
 
 	# 1) generate id key in remote node if it doesn't exist
-	&runRemotely("ls $key_path/$key_id 2>/dev/null", $ip_address );
+	&runRemotely( "ls $key_path/$key_id 2>/dev/null", $ip_address );
 	$error_code = $?;
 
 	if ( $error_code != 0 )
 	{
-		my $keygen_cmd = &getGlobalConfiguration('keygen_cmd');
-		$keygen_cmd =~ s/'/"/g; # change included quotes for remote execution
+		my $keygen_cmd = &getGlobalConfiguration( 'keygen_cmd' );
+		$keygen_cmd =~ s/'/"/g;    # change included quotes for remote execution
 
-		my $gen_output = &runRemotely("$keygen_cmd 2>&1", $ip_address);
+		my $gen_output = &runRemotely( "$keygen_cmd 2>&1", $ip_address );
 		my $error_code = $?;
 
 		if ( $error_code != 0 )
 		{
-			&zenlog("An error happened generating the RSA id key remotely: $gen_output", "error", "CLUSTER");
+			&zenlog( "An error happened generating the RSA id key remotely: $gen_output",
+					 "error", "CLUSTER" );
 			return 1;
 		}
 	}
 
 	# 2) install remote key in the localhost
-	my $key_id_pub = &runRemotely("cat $key_path/$key_id.pub 2>&1", $ip_address );
+	my $key_id_pub = &runRemotely( "cat $key_path/$key_id.pub 2>&1", $ip_address );
 	$error_code = $?;
 
 	if ( $error_code != 0 )
 	{
-		&zenlog("An error happened getting the remote public key: $key_id_pub", "error", "CLUSTER");
+		&zenlog( "An error happened getting the remote public key: $key_id_pub",
+				 "error", "CLUSTER" );
 		return 1;
 	}
 
@@ -678,11 +715,11 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 	my $found_key = grep /$key_id_pub/, $auth_keys;
 	close $auth_keys;
 
-	if ( ! $found_key )
+	if ( !$found_key )
 	{
 		open my $auth_keys, '>>', $auth_keys_path;
 
-		return 1 if ( ! $auth_keys );
+		return 1 if ( !$auth_keys );
 
 		print $auth_keys $key_id_pub;
 		close $auth_keys;
@@ -710,23 +747,26 @@ See Also:
 
 	zapi/v3/cluster.cgi
 =cut
-sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
+
+sub runRemotely    # `output` ( $cmd, $ip_addr [, $port ] )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cmd        = shift;
 	my $ip_address = shift;
 	my $port       = shift // '22';
 
 	my $ssh_options = '';
-	$ssh_options .= '-o "ConnectTimeout=2" '; # ssh-connect timeout
+	$ssh_options .= '-o "ConnectTimeout=2" ';           # ssh-connect timeout
 	$ssh_options .= '-o "StrictHostKeyChecking=no" ';
 
 	# log the command to be run
 	my $ssh     = &getGlobalConfiguration( 'ssh' );
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
 
-	&zenlog("Running remotely: \@$ip_address: $cmd", "debug", "CLUSTER") if &debug();
-	&zenlog("Running: $ssh_cmd", "debug", "CLUSTER") if &debug() > 2;
+	&zenlog( "Running remotely: \@$ip_address: $cmd", "debug", "CLUSTER" )
+	  if &debug();
+	&zenlog( "Running: $ssh_cmd", "debug", "CLUSTER" ) if &debug() > 2;
 
 	# capture output and return it
 	return `$ssh_cmd 2>/dev/null`;
@@ -764,28 +804,30 @@ Returns:
 See Also:
 	<runSync>
 =cut
+
 sub zsync
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $args = shift;
 
 	if ( ref $args ne 'HASH' )
 	{
-		&zenlog( ( caller )[3] . ": Invalid hash reference.", "error", "CLUSTER");
+		&zenlog( ( caller )[3] . ": Invalid hash reference.", "error", "CLUSTER" );
 		die;
 	}
 
-	#~ &zenlog( "running zsync with $args->{ip_addr} for $args->{path}", "info", "CLUSTER" );
+#~ &zenlog( "running zsync with $args->{ip_addr} for $args->{path}", "info", "CLUSTER" );
 
 	my $exclude = '';
-	for my $pattern ( @{ $args->{exclude} } )
+	for my $pattern ( @{ $args->{ exclude } } )
 	{
 		#~ &zenlog( "exclude:$pattern", "info", "CLUSTER" );
 		$exclude .= "--exclude=\"$pattern\" ";
 	}
 
 	my $include = '';
-	for my $pattern ( @{ $args->{include} } )
+	for my $pattern ( @{ $args->{ include } } )
 	{
 		#~ &zenlog( "include:$pattern", "info", "CLUSTER" );
 		$include .= "--include=\"$pattern\" ";
@@ -794,20 +836,20 @@ sub zsync
 	#~ my $zenrsync = "$zenrsync --dry-run";
 
 	my $user = 'root';
-	my $host = $args->{ip_addr};
-	my $path = $args->{path};
+	my $host = $args->{ ip_addr };
+	my $path = $args->{ path };
 
 	my $src = "$path";
 	$src .= '/' if -d $path;
 	my $dest = "$user\@$host:$path";
 
-	my $rsync = &getGlobalConfiguration('rsync');
-	my $zenrsync = &getGlobalConfiguration('zenrsync');
+	my $rsync     = &getGlobalConfiguration( 'rsync' );
+	my $zenrsync  = &getGlobalConfiguration( 'zenrsync' );
 	my $rsync_cmd = "$rsync $zenrsync $include $exclude $src $dest";
 
 	&zenlog( "Running: $rsync_cmd", "info", "CLUSTER" );
 	my $rsync_output = `$rsync_cmd`;
-	my $error_code = $?;
+	my $error_code   = $?;
 
 	#~ &zenlog_thread("$rsync_output", "info", "CLUSTER");
 
@@ -817,6 +859,30 @@ sub zsync
 	}
 
 	return $error_code;
+}
+
+=begin nd
+Function: getClusterExcludedFiles
+
+	This functions returns a list of files regexp. The files of this list
+	will not sync in cluster processes
+
+Parameters:
+	None - .
+
+Returns:
+	Array - List of regex of excluded files.
+
+=cut
+
+sub getClusterExcludedFiles
+{
+	my $localconfig = &getGlobalConfiguration( 'localconfig' );
+
+	return (
+			 "lost+found",  "global.conf", "if_*_conf", "zencert-c.key",
+			 "zencert.pem", "zlb-start",   "zlb-stop",  $localconfig,
+	);
 }
 
 =begin nd
@@ -833,9 +899,11 @@ Returns:
 See Also:
 	zapi/v3/cluster.cgi, zeninotify, zcluster-manager
 =cut
+
 sub runSync
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $src_path = shift;
 
 	#~ &zenlog("starting runSync", "info", "CLUSTER");
@@ -843,23 +911,16 @@ sub runSync
 	require Zevenet::SystemInfo;
 
 	#~ my @excluded_paths = @_;
-	my @excluded_files = (
-		"lost+found",
-		"global.conf",
-		"if_*_conf",
-		"zencert-c.key",
-		"zencert.pem",
-		"zlb-start",
-		"zlb-stop",
-	);
+	my @excluded_files = &getClusterExcludedFiles();
 
-	my $cl_conf = &getZClusterConfig(); # cluster configuration hash
-	#~ my $local_ip = &iponif( $cl_conf->{_}->{interface} );
+	my $cl_conf = &getZClusterConfig();    # cluster configuration hash
+	     #~ my $local_ip = &iponif( $cl_conf->{_}->{interface} );
 
 	# Warning: The Config::Tiny object can be defined without holding any key
-	if ( ! $cl_conf || ( keys %$cl_conf ) == 0 )
+	if ( !$cl_conf || ( keys %$cl_conf ) == 0 )
 	{
-		&zenlog( "Cluster configuration not found. Aborting sync.", "error", "CLUSTER" );
+		&zenlog( "Cluster configuration not found. Aborting sync.", "error",
+				 "CLUSTER" );
 		return 1;
 	}
 
@@ -868,6 +929,7 @@ sub runSync
 	{
 		next if $key eq '_';
 		next if $key eq &getHostname();
+
 		#~ next if $cl_conf->{$key}->{ip} eq $local_ip;
 
 		#~ &zenlog("runSync key:$key", "info", "CLUSTER");
@@ -877,16 +939,18 @@ sub runSync
 
 		my %arg = (
 			exclude => \@excluded_files,
-			include => [ "if_*:*_conf" ],
+			include => ["if_*:*_conf"],
+
 			#~ exclude => [ '*' ],
 			#~ include => [ "$target" ],
-			ip_addr => $cl_conf->{$key}->{ip},
-			path => $src_path,
+			ip_addr => $cl_conf->{ $key }->{ ip },
+			path    => $src_path,
 		);
 
 		#~ &zenlog("Element:$element ($cl_conf->{$element}->{ip})", "info", "CLUSTER");
 		#~ &zenlog("Adding $cl_conf->{$element}->{ip}", "info", "CLUSTER");
-		push( @args, \%arg );
+		push ( @args, \%arg );
+
 		#~ &zenlog( Dumper \%arg , "debug", "CLUSTER");
 	}
 
@@ -899,13 +963,13 @@ sub runSync
 
 	#~ for my $rc ( @{ $r_list } )
 	#~ {
-		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}", "info", "CLUSTER);
+	#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}", "info", "CLUSTER);
 
-		#~ if ( $rc->{ret_val} )
-		#~ {
-			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}", "info", "CLUSTER");
-		#~ }
-	#~ }
+#~ if ( $rc->{ret_val} )
+#~ {
+#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}", "info", "CLUSTER");
+#~ }
+#~ }
 }
 
 =begin nd
@@ -925,12 +989,14 @@ See Also:
 
 	zapi/v3/cluster.cgi, zcluster-manager, zevenet
 =cut
+
 sub getZClusterNodeStatus
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Config;
 
-	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
+	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
 
 	# Empty return if the file does not exists or is empty
 	unless ( -e $znode_status_file && -s $znode_status_file )
@@ -941,7 +1007,7 @@ sub getZClusterNodeStatus
 	open my $znode_status, '<', $znode_status_file;
 
 	# Empty return if the file could not be opened
-	if ( ! $znode_status )
+	if ( !$znode_status )
 	{
 		#~ &zenlog( "Could not open file $znode_status_file: $!", "error", "CLUSTER" );
 		return;
@@ -969,23 +1035,27 @@ Returns:
 See Also:
 	zapi/v3/cluster.cgi, zcluster-manager
 =cut
+
 sub setZClusterNodeStatus
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $node_status = shift;
 
-	&zenlog(">>>>>>> Requested node status: $node_status <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+	&zenlog(
+		 ">>>>>>> Requested node status: $node_status <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" );
 
 	if ( $node_status !~ /^(master|backup|maintenance)$/ )
 	{
-		&zenlog("\"$node_status\" is not an accepted node status", "error", "CLUSTER");
+		&zenlog( "\"$node_status\" is not an accepted node status", "error",
+				 "CLUSTER" );
 		return 1;
 	}
 
-	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
+	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
 	open my $znode_status, '>', $znode_status_file;
 
-	if ( ! $znode_status )
+	if ( !$znode_status )
 	{
 		&zenlog( "Could not open file $znode_status_file: $!", "error", "CLUSTER" );
 		return 1;
@@ -1013,24 +1083,27 @@ Returns:
 See Also:
 	zcluster-manager, zevenet
 =cut
+
 sub disableInterfaceDiscovery
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iface = shift;
 
 	if ( $iface->{ ip_v } == 4 )
 	{
-		my $arptables = &getGlobalConfiguration('arptables');
+		my $arptables = &getGlobalConfiguration( 'arptables' );
 		return &logAndRun( "$arptables -A INPUT -d $iface->{ addr } -j DROP" );
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
-		my $ip6tables = &getGlobalConfiguration('ip6tables');
-		return &logAndRun( "$ip6tables -t raw -A PREROUTING -d $iface->{ addr } -j DROP" );
+		my $ip6tables = &getGlobalConfiguration( 'ip6tables' );
+		return &logAndRun(
+						   "$ip6tables -t raw -A PREROUTING -d $iface->{ addr } -j DROP" );
 	}
 	else
 	{
-		&zenlog("IP version not supported", "error", "CLUSTER");
+		&zenlog( "IP version not supported", "error", "CLUSTER" );
 		return 1;
 	}
 }
@@ -1050,24 +1123,26 @@ Returns:
 See Also:
 	zcluster-manager
 =cut
+
 sub enableInterfaceDiscovery
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iface = shift;
 
 	if ( $iface->{ ip_v } == 4 )
 	{
-		my $arptables = &getGlobalConfiguration('arptables');
+		my $arptables = &getGlobalConfiguration( 'arptables' );
 		return &logAndRun( "$arptables -D INPUT -d $iface->{ addr } -j DROP" );
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
-		my $ip6tables = &getGlobalConfiguration('ip6tables');
+		my $ip6tables = &getGlobalConfiguration( 'ip6tables' );
 		return &logAndRun( "$ip6tables -t raw -F PREROUTING -d $iface->{ addr }" );
 	}
 	else
 	{
-		&zenlog("IP version not supported", "error", "CLUSTER");
+		&zenlog( "IP version not supported", "error", "CLUSTER" );
 		return 1;
 	}
 }
@@ -1086,15 +1161,18 @@ Returns:
 See Also:
 	zcluster-manager, zevenet
 =cut
+
 sub enableAllInterfacesDiscovery
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# IPv4
-	my $arptables = &getGlobalConfiguration('arptables');
-	my $rc = &logAndRun( "$arptables -F" );
+	my $arptables = &getGlobalConfiguration( 'arptables' );
+	my $rc        = &logAndRun( "$arptables -F" );
 
 	# IPv6
-	my $ip6tables = &getGlobalConfiguration('ip6tables');
+	my $ip6tables = &getGlobalConfiguration( 'ip6tables' );
 	$rc |= &logAndRun( "$ip6tables -t raw -F PREROUTING" );
 
 	return $rc;
@@ -1115,12 +1193,15 @@ Returns:
 See Also:
 	zcluster-manager
 =cut
+
 sub broadcastInterfaceDiscovery
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iface = shift;
 
-	&zenlog("Sending GArping for $iface->{ name }: $iface->{ addr }", "info", "CLUSTER");
+	&zenlog( "Sending GArping for $iface->{ name }: $iface->{ addr }",
+			 "info", "CLUSTER" );
 
 	require Zevenet::Net::Util;
 
@@ -1170,29 +1251,31 @@ See Also:
 	zapi/v3/put_datalink.cgi,
 	zapi/v3/delete.cgi
 =cut
+
 sub runZClusterRemoteManager
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $object = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $object  = shift;
 	my $command = shift;
 
-	my @arguments = @_;
+	my @arguments   = @_;
 	my $node_status = &getZClusterNodeStatus();
 
 	# zcluster: start farm in remote node
-	if ( &getZClusterRunning() && defined( $node_status ) && $node_status eq 'master' )
+	if (    &getZClusterRunning()
+		 && defined ( $node_status )
+		 && $node_status eq 'master' )
 	{
-		my $zcl_conf = &getZClusterConfig();
-		my $remote_hostname = &getZClusterRemoteHost();
-		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+		my $zcl_conf         = &getZClusterConfig();
+		my $remote_hostname  = &getZClusterRemoteHost();
+		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 
 		# start remote interfaces, farms and cluster
-		my $cl_output = &runRemotely(
-			"$zcluster_manager $object $command @arguments",
-			$zcl_conf->{$remote_hostname}->{ip}
-		);
+		my $cl_output = &runRemotely( "$zcluster_manager $object $command @arguments",
+									  $zcl_conf->{ $remote_hostname }->{ ip } );
 
-		my $rc = $?;
+		my $rc  = $?;
 		my $msg = "rc:$rc";
 		$msg .= " $cl_output" if $rc;
 
@@ -1218,13 +1301,15 @@ Returns:
 See Also:
 	<getZClusterNodeStatusInfo>, <enableZCluster>
 =cut
+
 sub pgrep
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cmd = shift;
 
 	# return_code
-	my $rc = system("/usr/bin/pgrep $cmd >/dev/null");
+	my $rc = system ( "/usr/bin/pgrep $cmd >/dev/null" );
 
 	#~ &zenlog("$cmd not found running", "debug", "CLUSTER") if $rc && &debug();
 
@@ -1233,7 +1318,8 @@ sub pgrep
 
 sub get_zeninotify_process
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return "ps aux | grep -v grep | grep zeninotify >/dev/null 2>&1";
 }
 
@@ -1260,47 +1346,53 @@ Returns:
 See Also:
 	<getZClusterLocalhostStatusDigest>, <getZClusterNodeStatusDigest>, cluster_status.pl
 =cut
+
 sub getZClusterNodeStatusInfo
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $ip = shift; # IP for remote host, or undef for local host
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $ip = shift;    # IP for remote host, or undef for local host
 
-	my $node; # output
-	my $ssyncd_enabled = &getGlobalConfiguration('ssyncd_enabled');
-	my $ssyncdctl_bin = &getGlobalConfiguration('ssyncdctl_bin');
+	my $node;          # output
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
+	my $ssyncdctl_bin  = &getGlobalConfiguration( 'ssyncdctl_bin' );
 
 	my $zeninotify_cmd = &get_zeninotify_process();
 
-	if ( ! defined( $ip ) || $ip eq &getZClusterLocalIp() )
+	if ( !defined ( $ip ) || $ip eq &getZClusterLocalIp() )
 	{
-		$node->{ ka } = pgrep('keepalived');
-		$node->{ zi } = system( $zeninotify_cmd );
-		$node->{ ct } = pgrep('conntrackd');
+		$node->{ ka } = pgrep( 'keepalived' );
+		$node->{ zi } = system ( $zeninotify_cmd );
+		$node->{ ct } = pgrep( 'conntrackd' );
 
-		chomp( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` ) if $ssyncd_enabled eq 'true';
+		chomp ( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` )
+		  if $ssyncd_enabled eq 'true';
 
 		$node->{ role } = &getZClusterNodeStatus();
 	}
 	else
 	{
-		&runRemotely("pgrep keepalived", $ip );
+		&runRemotely( "pgrep keepalived", $ip );
 		$node->{ ka } = $?;
 
-		&runRemotely($zeninotify_cmd, $ip );
+		&runRemotely( $zeninotify_cmd, $ip );
 		$node->{ zi } = $?;
 
-		&runRemotely("pgrep conntrackd", $ip );
+		&runRemotely( "pgrep conntrackd", $ip );
 		$node->{ ct } = $?;
 
-		chomp( ( $node->{ sy } ) = &runRemotely("$ssyncdctl_bin show mode", $ip ) ) if $ssyncd_enabled eq 'true';
+		chomp ( ( $node->{ sy } ) = &runRemotely( "$ssyncdctl_bin show mode", $ip ) )
+		  if $ssyncd_enabled eq 'true';
 
-		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 
-		$node->{ role } = &runRemotely("$zcluster_manager getZClusterNodeStatus", $ip );
+		$node->{ role } =
+		  &runRemotely( "$zcluster_manager getZClusterNodeStatus", $ip );
 		chomp $node->{ role };
 	}
 
 	$ip = '' unless defined $ip;
+
 	#~ &zenlog("getZClusterNodeStatusInfo($ip): " . Dumper $node);
 
 	return $node;
@@ -1344,16 +1436,18 @@ Returns:
 See Also:
 	<getZClusterLocalhostStatusDigest>, zapi/v3/cluster.cgi
 =cut
+
 sub getZClusterNodeStatusDigest
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $ip = shift; # IP for remote host, or undef for local host
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $ip = shift;    # IP for remote host, or undef for local host
 
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 	my $n              = &getZClusterNodeStatusInfo( $ip );
 	my $node->{ role } = $n->{ role };
 
-	if ( ! &getZClusterStatus() )
+	if ( !&getZClusterStatus() )
 	{
 		$node->{ role }    = 'not configured';
 		$node->{ status }  = 'not configured';
@@ -1373,10 +1467,10 @@ sub getZClusterNodeStatusDigest
 			$node->{ status }  = 'failure';
 			$node->{ message } = 'Failed services: ';
 			my @services;
-			push ( @services, 'keepalived' )    if $n->{ ka };
+			push ( @services, 'keepalived' ) if $n->{ ka };
 			push ( @services, 'zeninotify' ) if $n->{ zi };
-			push ( @services, 'conntrackd' )    if $n->{ ct };
-			push ( @services, 'ssyncd' )        unless $ssync_ok;
+			push ( @services, 'conntrackd' ) if $n->{ ct };
+			push ( @services, 'ssyncd' ) unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
 		}
 	}
@@ -1386,7 +1480,7 @@ sub getZClusterNodeStatusDigest
 
 		if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } && $ssync_ok )
 		{
-			$node->{ status } = 'ok';
+			$node->{ status }  = 'ok';
 			$node->{ message } = 'Node online and passive';
 		}
 		else
@@ -1394,10 +1488,10 @@ sub getZClusterNodeStatusDigest
 			$node->{ status }  = 'failure';
 			$node->{ message } = 'Failed services: ';
 			my @services;
-			push ( @services, 'keepalived' )    if $n->{ ka };
+			push ( @services, 'keepalived' ) if $n->{ ka };
 			push ( @services, 'zeninotify' ) if !$n->{ zi };
-			push ( @services, 'conntrackd' )    if $n->{ ct };
-			push ( @services, 'ssyncd' )        unless $ssync_ok;
+			push ( @services, 'conntrackd' ) if $n->{ ct };
+			push ( @services, 'ssyncd' ) unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
 		}
 	}
@@ -1415,14 +1509,14 @@ sub getZClusterNodeStatusDigest
 			$node->{ status }  = 'failure';
 			$node->{ message } = 'Services not running: ';
 			my @services;
-			push ( @services, 'keepalived' )    if $n->{ ka };
+			push ( @services, 'keepalived' ) if $n->{ ka };
 			push ( @services, 'zeninotify' ) if !$n->{ zi };
-			push ( @services, 'conntrackd' )    if $n->{ ct };
-			push ( @services, 'ssyncd' )        unless $ssync_ok;
+			push ( @services, 'conntrackd' ) if $n->{ ct };
+			push ( @services, 'ssyncd' ) unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( exists $node->{ role } && ! $node->{ role } )
+	elsif ( exists $node->{ role } && !$node->{ role } )
 	{
 		$node->{ role }    = 'unreachable';
 		$node->{ status }  = 'unreachable';
@@ -1456,7 +1550,8 @@ See Also:
 
 sub setZClusterIptablesException
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $option = shift;
 
 	# return if the node is not in a cluster
@@ -1475,19 +1570,19 @@ sub setZClusterIptablesException
 	}
 	elsif ( $option eq "delete" )
 	{
-		$action = "-D" ;
+		$action = "-D";
 	}
 	else
 	{
 		return -1;
-	 }
+	}
 
 	my $config    = &getZClusterConfig();
 	my $remote_hn = &getZClusterRemoteHost();
 	my $ipremote  = $config->{ $remote_hn }->{ ip };
 	my $iptables  = &getGlobalConfiguration( 'iptables' );
 	my $ipt_args  = '-j ACCEPT -m comment --comment "cluster_exception"';
-	my $chain = &getIPDSChain( 'whitelist' );
+	my $chain     = &getIPDSChain( 'whitelist' );
 
 	# Avoid blacklist rules and rbl rules
 	my $cmd = "$iptables $action $chain -t raw -s $ipremote $ipt_args";
@@ -1496,7 +1591,7 @@ sub setZClusterIptablesException
 	return -1 if $error;
 
 	# Avoid the dos rules
-	$cmd = "$iptables $action $chain -t mangle -s $ipremote $ipt_args";
+	$cmd   = "$iptables $action $chain -t mangle -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
 
 	return $error;
@@ -1504,7 +1599,8 @@ sub setZClusterIptablesException
 
 sub zClusterFarmUp
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
@@ -1520,7 +1616,8 @@ sub zClusterFarmUp
 
 sub zClusterFarmDown
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
@@ -1536,8 +1633,9 @@ sub zClusterFarmDown
 
 sub getKeepalivedVersion
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $line ) = `keepalived -v 2>&1`;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $line )    = `keepalived -v 2>&1`;
 	my ( $version ) = $line =~ / v([1-9]+\.[1-9]+\.[1-9]+)/;
 
 	return $version;

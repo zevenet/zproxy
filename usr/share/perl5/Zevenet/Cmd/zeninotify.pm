@@ -26,23 +26,24 @@ use strict;
 use warnings;
 use Linux::Inotify2;
 use Zevenet::Config;
+use Zevenet::Log;
 include 'Zevenet::Cluster';
-
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 my $rttables  = &getGlobalConfiguration( 'rttables' );
 my $zeninopid = &getGlobalConfiguration( 'zeninopid' );
 
 my $pid;
+
 # Get zeninotify status
 if ( -e $zeninopid )
 {
 	open my $pidfile, "<", "$zeninopid";
 	$pid = <$pidfile>;
 	close $pidfile;
-	my $kill = &getGlobalConfiguration( 'kill_bin' );
-	my $error = system ("$kill -0 $pid >/dev/null 2>&1");
-	if ($error)
+	my $kill  = &getGlobalConfiguration( 'kill_bin' );
+	my $error = &logAndRun( "$kill -0 $pid" );
+	if ( $error )
 	{
 		unlink $zeninopid;
 	}
@@ -59,18 +60,20 @@ if ( @ARGV && $ARGV[0] eq 'stop' )
 
 sub abort
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $msg = shift;
 
-	&zenlog( $msg ) if $msg ;
-	&zenlog("Aborting zeninotify");
+	&zenlog( $msg ) if $msg;
+	&zenlog( "Aborting zeninotify" );
 
 	exit 1;
 }
 
 sub leave_zeninotify
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	unlink $zeninopid;
 	&zenlog( "Ending zeninotify" );
 	exit 0;
@@ -78,10 +81,10 @@ sub leave_zeninotify
 
 # read cluster configuration
 my $cl_conf = &getZClusterConfig();
-&abort("Could not load cluster configuration") if not $cl_conf;
+&abort( "Could not load cluster configuration" ) if not $cl_conf;
 
 # handle pidfile
-&abort("zeninotify is already running") if ( -e $zeninopid );
+&abort( "zeninotify is already running" ) if ( -e $zeninopid );
 
 {
 	open my $pidfile, ">", "$zeninopid";
@@ -89,10 +92,9 @@ my $cl_conf = &getZClusterConfig();
 	close $pidfile;
 }
 
-
-$SIG{ HUP } = \&leave_zeninotify;	# terminate, Hangup
-$SIG{ INT } = \&leave_zeninotify;	# "interrupt", interactive attention request
-$SIG{ TERM } = \&leave_zeninotify; # termination request
+$SIG{ HUP }  = \&leave_zeninotify;  # terminate, Hangup
+$SIG{ INT }  = \&leave_zeninotify;  # "interrupt", interactive attention request
+$SIG{ TERM } = \&leave_zeninotify;  # termination request
 
 #### target files/directories to watch for changes ####3
 my @ino_targets = ( $configdir, $rttables );
@@ -101,8 +103,8 @@ my @ino_targets = ( $configdir, $rttables );
 
 for my $subdir ( &getSubdirectories( $configdir ) )
 {
-	&zenlog("Watching directory $subdir");
-	push( @ino_targets, $subdir );
+	&zenlog( "Watching directory $subdir" );
+	push ( @ino_targets, $subdir );
 }
 
 #### First zeninotify replication ####
@@ -116,8 +118,8 @@ my $inotify = new Linux::Inotify2();
 
 foreach my $path ( @ino_targets )
 {
-	&zenlog("Watching $path");
-	$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE);
+	&zenlog( "Watching $path" );
+	$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
 }
 
 # $event->w			The watcher object for this event.
@@ -183,12 +185,12 @@ while ( 1 )
 
 	for my $event ( @events )
 	{
-		next if ( $event->name =~ /^\..*/ );	# skip hidden files
-		next if ( $event->name =~ /.*\~$/ );	# skip files ending with ~
+		next if ( $event->name =~ /^\..*/ );    # skip hidden files
+		next if ( $event->name =~ /.*\~$/ );    # skip files ending with ~
 
 		my $event_fullname = $event->fullname;
 		my $event_name     = $event->name;
-		my $event_mask     = sprintf ( "%#.8x", $event->mask ); # hexadecimal string
+		my $event_mask     = sprintf ( "%#.8x", $event->mask );    # hexadecimal string
 
 		&zenlog( "Event: $event_mask File: '$event_fullname'" );
 
@@ -197,10 +199,10 @@ while ( 1 )
 		{
 			if ( -d $event->fullname )
 			{
-				foreach my $path ( &getSubdirectories($event_fullname) )
+				foreach my $path ( &getSubdirectories( $event_fullname ) )
 				{
-					&zenlog("Watching $path");
-					push( @ino_targets, $path );
+					&zenlog( "Watching $path" );
+					push ( @ino_targets, $path );
 					$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
 				}
 				&runSync( $configdir );
@@ -208,19 +210,11 @@ while ( 1 )
 			next;
 		}
 
-		my ( undef, $local_name ) = split( "$configdir/", $event->fullname );
+		my ( undef, $local_name ) = split ( "$configdir/", $event->fullname );
 
 		if ( $event->fullname =~ /^$configdir/ )
 		{
-			my @excluded_patterns = (
-				"^$configdir\/lost\+found",
-				"^$configdir\/global\.conf",
-				"^$configdir\/if_.+_conf",
-				"^$configdir\/zencert-c\.key",
-				"^$configdir\/zencert\.pem",
-				"^$configdir\/zlb-start",
-				"^$configdir\/zlb-stop",
-			);
+			my @excluded_patterns = &getClusterExcludedFiles();
 
 			# run sync if it's not an excluded file
 			my $matched;
@@ -230,13 +224,13 @@ while ( 1 )
 				{
 					if ( $event->fullname !~ /$configdir\/if.+:.+_conf/ )
 					{
-						&zenlog("matched pattern $pattern with $event_fullname");
+						&zenlog( "matched pattern $pattern with $event_fullname" );
 						$matched = 1;
 						last;
 					}
 				}
 			}
-			&runSync( $configdir ) if ! $matched;
+			&runSync( $configdir ) if !$matched;
 		}
 
 		if ( $event->fullname =~ /^$rttables/ )
@@ -250,14 +244,15 @@ while ( 1 )
 
 sub getSubdirectories
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $dir_path = shift;
 
-	opendir( my $dir_h, $dir_path );
+	opendir ( my $dir_h, $dir_path );
 
-	if ( ! $dir_h )
+	if ( !$dir_h )
 	{
-		&zenlog("Could not open directory $dir_path: $!");
+		&zenlog( "Could not open directory $dir_path: $!" );
 		return 1;
 	}
 
@@ -272,11 +267,11 @@ sub getSubdirectories
 
 		if ( -d $subdir )
 		{
-			push( @dir_list, $subdir );
+			push ( @dir_list, $subdir );
 
 			my @subdirectories = &getSubdirectories( $subdir );
 
-			push( @dir_list, @subdirectories );
+			push ( @dir_list, @subdirectories );
 		}
 	}
 

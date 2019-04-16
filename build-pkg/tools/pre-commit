@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# This pre-commit is meant to exit if there is an error when one or more files
+# are not using perltidy format with the defined options. To enable the
+# automatic use of perltidy when doing a commit, set perltidy_flag to 1.
+#
+
+changed=$(git diff --cached --name-only)
+perltidy_flag=1
+
+
+if [[ -z "$changed" ]]; then
+    exit 0
+fi
+
+REJECT=0
+
+for FILE in $changed; do
+    case $FILE in
+    *.pl | *.pm)
+        perltidy_opts="-t -et=4 -bt=0 -bl -sbl -bbvt=0 -pt=0 -sbt=2 -skp -nolq -lp -vt=0 -vtc=0 -vmll"
+
+        org_hash="$(sha256sum "$FILE" | cut -d " " -f 1)"
+        tidy_hash="$(perltidy "$FILE" $perltidy_opts -st | sha256sum | cut -d " " -f 1)"
+
+        if [[ "$org_hash" != "$tidy_hash" ]]; then
+            echo "# Error: perltidy failed for $FILE"
+            echo "-------------------------------------------------"
+            if [ $perltidy_flag -eq 0 ]; then
+                REJECT=1
+            elif [ $perltidy_flag -eq 1 ]; then
+              echo "# Applying perltidy for $FILE"
+	      echo "-------------------------------------------------"
+              perltidy "./$FILE" $perltidy_opts
+              mv "./$FILE.tdy" "./$FILE"
+	      git add "./$FILE"
+            fi
+        fi
+        ;;
+    esac
+done
+
+exit $REJECT
+#exit 0
