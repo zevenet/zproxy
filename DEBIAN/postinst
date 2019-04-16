@@ -159,3 +159,6 @@ perl -E '
 	);'
 
 fi
+
+## Run checkupgrades to update message
+/usr/local/zevenet/bin/checkupgrades > /dev/null
