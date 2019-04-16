@@ -383,7 +383,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			&zenlog( "$self->{ body }->{ message }", "error", $LOG_TAG )
+			&zenlog( "$self->{ body }->{ message }", "info", $LOG_TAG )
 			  if ( exists $self->{ body }->{ message } );
 		}
 	}
