@@ -25,9 +25,9 @@ case "$1" in
 	packages=`$apt_bin list --upgradable 2>/dev/null | awk 'FNR > 1' | wc -l`
 	if [ $packages \> 0 ]
 	then
-		echo "$packages packages require upgrade"
+		echo "$packages package(s) require upgrade"
 		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade"
-		echo "last check at `date` - $packages packages require upgrade, update this information with: checkupgrades" > $apt_msg
+		echo "last check at `date` - $packages package(s) require upgrade, update this information with: checkupgrades" > $apt_msg
 		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade" >> $apt_msg
 		$apt_bin list --upgradable 2>/dev/null | cut -d"/" -f 1  | tr  '\n' ' ' > $apt_outdated_list
 	else
