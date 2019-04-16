@@ -199,6 +199,8 @@ $modprobe="/usr/sbin/modprobe";
 $lsmod="/usr/sbin/lsmod";
 #Where is gdnsd?
 $gdnsd="/usr/sbin/gdnsd";#update
+#Where is gdnsd plugins?
+$gdnsd_plugin="/usr/lib/x86_64-linux-gnu/gdnsd/";
 #Where is l4sd?
 $l4sd="$zbindir/l4sd";#update
 #Where is factory_reset?

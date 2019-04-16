@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: runGSLBFarmCreate
@@ -38,14 +38,18 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 =cut
+
 sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fvip, $fvipp, $fname ) = @_;
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Net::Util;
 	include 'Zevenet::Farm::GSLB::Config';
+
+	my $gdnsd_plugin = &getGlobalConfiguration( 'gdnsd_plugin' );
 
 	# get a control port not used
 	my $httpport;
@@ -55,11 +59,11 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	do
 	{
 		$httpport = &getRandomPort();
-	} while ( grep( /^$httpport$/, @gslb_ports ) );
+	} while ( grep ( /^$httpport$/, @gslb_ports ) );
 
-	my $type     = "gslb";
-	my $ffile    = &getFarmFile( $fname );
-	my $output   = -1;
+	my $type   = "gslb";
+	my $ffile  = &getFarmFile( $fname );
+	my $output = -1;
 	if ( $ffile != -1 )
 	{
 		# the farm name already exists
@@ -68,7 +72,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	}
 
 	my $farm_path = "$configdir/${fname}_${type}\.cfg";
-	&zenlog( "running 'Create' for $fname farm $type in path $farm_path ", "info", "GSLB" );
+	&zenlog( "running 'Create' for $fname farm $type in path $farm_path ",
+			 "info", "GSLB" );
 
 	mkdir "$farm_path";
 	mkdir "$farm_path\/etc";
@@ -78,7 +83,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	mkdir "$farm_path\/var/lib";
 
 	# create admin_state file so there is no warning about the missing file
-	open ( my $state_file, ">", "$configdir\/$fname\_$type.cfg\/var\/lib\/admin_state" );
+	open ( my $state_file,
+		   ">", "$configdir\/$fname\_$type.cfg\/var\/lib\/admin_state" );
 	close $state_file;
 
 	open ( my $file, ">", "$configdir\/$fname\_$type.cfg\/etc\/config" );
@@ -90,11 +96,10 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  . "   http_listen = 127.0.0.1\n"
 	  . "   zones_rfc1035_auto = true\n"
 	  . "   run_dir = $configdir\/$fname\_$type.cfg\/var\/run\n"
-	  . "   state_dir = $configdir\/$fname\_$type.cfg\/var\/lib\n"
-	  . "}\n\n";
+	  . "   state_dir = $configdir\/$fname\_$type.cfg\/var\/lib\n" . "}\n\n";
 	print $file "service_types => { \n\n}\n\n";
 	print $file
-	  "plugins => { \n\textmon => { helper_path => \"/usr/local/zevenet/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
+	  "plugins => { \n\textmon => { helper_path => \"$gdnsd_plugin/gdnsd_extmon_helper\" },\n}\n\n";
 	close $file;
 
 	include 'Zevenet::Farm::GSLB::Action';
