@@ -30,7 +30,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/ipds} )
 	GET qr{^/ipds$},         'get_ipds_rules_list', $mod;
 	GET qr{^/ipds/package$}, 'get_ipds_package',    $mod;
 
-	PUT qr{^/ipds/package/actions$}, 'set_ipds_package', $mod;
+	POST qr{^/ipds/package/actions$}, 'set_ipds_package', $mod;
 }
 
 1;

@@ -128,7 +128,7 @@ sub get_ipds_package
 				 { code => 200, body => { description => $desc, params => $params } } );
 }
 
-# PUT /ipds/package/actions$
+# POST /ipds/package/actions$
 sub set_ipds_package
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
