@@ -29,6 +29,8 @@ $zbindir="$zdir/bin";#update
 $basedir="$zdir/www";#update
 #configuration directory.In this section all config files are saved.
 $configdir="$zdir/config";#update
+# directory for local configurations, it is not sync by the cluster
+$localconfig="$configdir/local";#update
 #Directory where is check script. In this directory you can save your own check scripts.
 $libexec_dir="$zdir/app/libexec";#update
 #Zevenet bin directory
@@ -292,6 +294,9 @@ $iptlock="/tmp/iptables.lock";
 #FarmGuardian binary, create advanced check for backend servers
 $farmguardian="$zbindir/farmguardian";#update
 
+# files to save the status of the system packages
+$apt_msg="$localconfig/apt_message.txt";
+$apt_outdated_list="$localconfig/apt_outdated_list.txt";
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="$zdir/app/zenrrd";#update
