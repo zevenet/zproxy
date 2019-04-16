@@ -59,41 +59,45 @@ else
 	echo "Zevenet Load Balancer update completed..."
 fi
 
-## Disable services
+## Disable services in installation process.
 
 # Set crontab
-cp $cron_tpl $cron_conf
-$cron_service restart
+if [ $BM_tag -eq 1 ]; then
+	cp $cron_tpl $cron_conf
+	$cron_service restart
 
-#set netplug conf
-cp $netplug_init_tpl $netplug_init
-cp $netplugd_conf_tpl $netplugd_conf
+	#set netplug conf
+	cp $netplug_init_tpl $netplug_init
+	cp $netplugd_conf_tpl $netplugd_conf
+
+	# Disable systemd-sysctl
+	systemctl disable systemd-sysctl
+	systemctl mask systemd-sysctl.service
+
+	# Disable apt-daily.timer
+	systemctl stop apt-daily.timer
+	systemctl disable apt-daily.timer
+	systemctl mask apt-daily.service
+
+	# sec service for zevenet notifications
+	systemctl stop sec 2>/dev/null
+	systemctl disable sec 2>/dev/null
+	systemctl stop systemd-timesyncd 2>/dev/null
+	systemctl disable systemd-timesyncd 2>/dev/null
+
+	# keepalived service for zevenet cluster
+	systemctl disable keepalived 2>/dev/null
+
+	#
+
+
+fi
 
 # SNMP services
 if [[ `grep -c '#zenlb' $snmpdconfig_file` == '0' || ! -f $snmpdconfig_file ]]; then
 	cp $snmpdconfig_tpl $snmpdconfig_file
 fi
 
-# Disable systemd-sysctl
-systemctl disable systemd-sysctl
-systemctl mask systemd-sysctl.service
-
-# Disable apt-daily.timer
-systemctl stop apt-daily.timer
-systemctl disable apt-daily.timer
-systemctl mask apt-daily.service
-
-# sec service for zevenet notifications
-systemctl stop sec 2>/dev/null
-systemctl disable sec 2>/dev/null
-systemctl stop systemd-timesyncd 2>/dev/null
-systemctl disable systemd-timesyncd 2>/dev/null
-
-# keepalived service for zevenet cluster
-systemctl disable keepalived 2>/dev/null
-
-#
-systemctl daemon-reload
 # Do not load init-functions on keepalived service
 # This allows keepalived to stop correctly
 sed -i -e 's!^. /lib/lsb/init-functions!#. /lib/lsb/init-functions!' /etc/init.d/keepalived
@@ -106,6 +110,7 @@ sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g'
 # netplug
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$local_fs zevenet/g' /etc/init.d/netplug
 
+systemctl daemon-reload
 # Add Zevenet services to boot process including dependencies
 update-rc.d zevenet defaults
 
