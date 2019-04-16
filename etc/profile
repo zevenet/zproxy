@@ -1,12 +1,14 @@
 # /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
 # and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
 
+source /usr/local/zevenet/bin/load_global_conf
+load_global_conf
 if [ "`id -u`" -eq 0 ]; then
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 else
   PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 fi
-export PATH
+export PATH="$PATH:$zbindir"
 
 if [ "$PS1" ]; then
   if [ "$BASH" ]; then
