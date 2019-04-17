@@ -57,8 +57,6 @@ usr/local/zevenet/app/nftlb/
 !/usr/share/perl5/Zevenet/API3
 !/usr/share/perl5/Zevenet.pm
 
-/usr/share/perl5/Zevenet/Farm/L4xNAT
-
 # other
 .rnd
 .htpasswd

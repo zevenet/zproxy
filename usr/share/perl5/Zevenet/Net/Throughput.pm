@@ -28,7 +28,8 @@ use Zevenet::Netfilter;
 use Zevenet::Config;
 
 my $throughput_bin = &getGlobalConfiguration( 'zbindir' ) . "/if_throughput.pl";
-my $iptables       = &getGlobalConfiguration( 'iptables' );
+
+#~ my $iptables       = &getGlobalConfiguration( 'iptables' );
 
 my $tmpfile        = "/tmp/if_throughput";
 my $in_chain       = "INTHROUGHPUT";
@@ -44,28 +45,28 @@ sub createTHROUChain
 			 "debug", "PROFILING" );
 	my $error;
 
-	# create chain
-	if ( &iptSystem( "$iptables -N $in_chain -t $table" ) )
-	{
-		# if it returned error, clean the chain
-		&iptSystem( "$iptables -F $in_chain -t $table" );
-	}
-	if ( &iptSystem( "$iptables -N $out_chain -t $table" ) )
-	{
-		# if it returned error, clean the chain
-		&iptSystem( "$iptables -F $out_chain -t $table" );
-	}
+	#~ # create chain
+	#~ if ( &iptSystem( "$iptables -N $in_chain -t $table" ) )
+	#~ {
+	#~ # if it returned error, clean the chain
+	#~ &iptSystem( "$iptables -F $in_chain -t $table" );
+	#~ }
+	#~ if ( &iptSystem( "$iptables -N $out_chain -t $table" ) )
+	#~ {
+	#~ # if it returned error, clean the chain
+	#~ &iptSystem( "$iptables -F $out_chain -t $table" );
+	#~ }
 
-	# link chain
-	if ( &iptSystem( "$iptables -C $in_hook_chain -t $table -j $in_chain" ) )
-	{
-		&iptSystem( "$iptables -A $in_hook_chain -t $table -j $in_chain" );
-	}
+	#~ # link chain
+	#~ if ( &iptSystem( "$iptables -C $in_hook_chain -t $table -j $in_chain" ) )
+	#~ {
+	#~ &iptSystem( "$iptables -A $in_hook_chain -t $table -j $in_chain" );
+	#~ }
 
-	if ( &iptSystem( "$iptables -C $out_hook_chain -t $table -j $out_chain" ) )
-	{
-		&iptSystem( "$iptables -A $out_hook_chain -t $table -j $out_chain" );
-	}
+	#~ if ( &iptSystem( "$iptables -C $out_hook_chain -t $table -j $out_chain" ) )
+	#~ {
+	#~ &iptSystem( "$iptables -A $out_hook_chain -t $table -j $out_chain" );
+	#~ }
 
 	return $error;
 }
@@ -76,17 +77,17 @@ sub deleteTHROUChain
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	# un link chain
-	&iptSystem( "$iptables -D $in_hook_chain -t $table -j $in_chain" );
-	&iptSystem( "$iptables -D $out_hook_chain -t $table -j $out_chain" );
+	#~ # un link chain
+	#~ &iptSystem( "$iptables -D $in_hook_chain -t $table -j $in_chain" );
+	#~ &iptSystem( "$iptables -D $out_hook_chain -t $table -j $out_chain" );
 
-	# flush chain
-	&iptSystem( "$iptables -F $in_chain -t $table" );
-	&iptSystem( "$iptables -F $out_chain -t $table" );
+	#~ # flush chain
+	#~ &iptSystem( "$iptables -F $in_chain -t $table" );
+	#~ &iptSystem( "$iptables -F $out_chain -t $table" );
 
-	# remove chain
-	&iptSystem( "$iptables -X $in_chain -t $table" );
-	&iptSystem( "$iptables -X $out_chain -t $table" );
+	#~ # remove chain
+	#~ &iptSystem( "$iptables -X $in_chain -t $table" );
+	#~ &iptSystem( "$iptables -X $out_chain -t $table" );
 }
 
 # apply input and output rules
@@ -94,21 +95,23 @@ sub startTHROUIface
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $iface = shift;
-	if ( &iptSystem( "$iptables -C $in_chain -t $table -i $iface" ) )
-	{
-		&iptSystem( "$iptables -A $in_chain -t $table -i $iface" );
-		&iptSystem( "$iptables -A $out_chain -t $table -o $iface" );
-	}
+
+	#~ my $iface = shift;
+	#~ if ( &iptSystem( "$iptables -C $in_chain -t $table -i $iface" ) )
+	#~ {
+	#~ &iptSystem( "$iptables -A $in_chain -t $table -i $iface" );
+	#~ &iptSystem( "$iptables -A $out_chain -t $table -o $iface" );
+	#~ }
 }
 
 sub stopTHROUIface
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $iface = shift;
-	&iptSystem( "$iptables -D $in_chain -t $table -i $iface" );
-	&iptSystem( "$iptables -D $out_chain -t $table -o $iface" );
+
+	#~ my $iface = shift;
+	#~ &iptSystem( "$iptables -D $in_chain -t $table -i $iface" );
+	#~ &iptSystem( "$iptables -D $out_chain -t $table -o $iface" );
 }
 
 sub createTHROUFile
@@ -202,8 +205,9 @@ sub resetTHROUCounter
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	&iptSystem( "$iptables -Z $in_chain -t $table" );
-	&iptSystem( "$iptables -Z $out_chain -t $table" );
+
+	#~ &iptSystem( "$iptables -Z $in_chain -t $table" );
+	#~ &iptSystem( "$iptables -Z $out_chain -t $table" );
 }
 
 sub saveTHROUCounters
@@ -217,10 +221,11 @@ sub saveTHROUCounters
 	my $fh = Config::Tiny->read( $tmpfile );
 
 	my @counters;
-	my @ipt_out = `$iptables -vL $in_chain -t $table 2>/dev/null`;
-	push @counters, @ipt_out;
-	@ipt_out = `$iptables -vL $out_chain -t $table 2>/dev/null`;
-	push @counters, @ipt_out;
+
+	#~ my @ipt_out = `$iptables -vL $in_chain -t $table 2>/dev/null`;
+	#~ push @counters, @ipt_out;
+	#~ @ipt_out = `$iptables -vL $out_chain -t $table 2>/dev/null`;
+	#~ push @counters, @ipt_out;
 
 	my $if;
 	my $io;
