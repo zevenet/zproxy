@@ -151,7 +151,7 @@ sub stopDHCP
 {
 	my $if_name = shift;
 
-	require Proc::Find;
+	use Proc::Find qw(find_proc);
 
 	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
 
