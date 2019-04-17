@@ -177,8 +177,6 @@ $awk="/usr/bin/awk";
 $logger="/usr/bin/logger";
 #Where is sec?
 $sec="/usr/bin/sec";
-#Where is ipset?
-$ipset="/sbin/ipset";
 #Where is touch?
 $touch="/usr/bin/touch";
 #Where is ls?
@@ -189,10 +187,6 @@ $stat="/usr/bin/stat";
 $cp="/bin/cp";
 #Where is rm?
 $rm="/bin/rm";
-#Where is iptables?
-$iptables="/sbin/iptables";
-#Where is ip6tables?
-$ip6tables="/sbin/ip6tables";
 #Where is modprobe?
 $modprobe="/usr/sbin/modprobe";
 #Where is lsmod?
@@ -235,6 +229,8 @@ $echo_bin="/bin/echo";
 $dpkg_bin="/usr/bin/dpkg";
 #Where is grep?
 $grep_bin="/bin/grep";
+#Where is nft?
+$nft_bin="/usr/sbin/nft";
 #Where is nftlb?
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
 #Where is poweroff
@@ -316,8 +312,6 @@ $zenino="$zbindir/enterprise.bin zeninotify";#update
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
 $zenrsync="-azvr --delete";#update
-#Arptables
-$arptables="/sbin/arptables";
 #ARP unsolicited
 $arp_unsolicited="";
 

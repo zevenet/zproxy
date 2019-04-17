@@ -53,8 +53,6 @@ sub runIPDSStartModule
 	# create the configuration files
 	&initIPDSModule();
 
-	# Add cluster exception not to block traffic from the other node of cluster
-	&setZClusterIptablesException( "insert" );
 	&runBLStartModule();
 	&runRBLStartModule();
 	&runDOSStartModule();
@@ -84,9 +82,6 @@ sub runIPDSStopModule
 	&runRBLStopModule();
 	&runBLStopModule();
 	&runDOStopModule();
-
-	# Remove cluster exception not to block traffic from the other node of cluster
-	&setZClusterIptablesException( "delete" );
 }
 
 actions_by_farm:

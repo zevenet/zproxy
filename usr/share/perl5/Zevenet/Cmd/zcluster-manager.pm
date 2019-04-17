@@ -122,6 +122,7 @@ elsif ( $object eq 'getConntrackdRunning' )
 elsif ( $object eq 'getZClusterArpStatus' )
 {
 	require Zevenet::Net::Interface;
+	require Zevenet::Nft;
 
 	my $status = 'ok';
 
@@ -131,13 +132,16 @@ elsif ( $object eq 'getZClusterArpStatus' )
 		exit 0;
 	}
 
-	my $node_role       = &getZClusterNodeStatus();
-	my @arptables_lines = `arptables -L INPUT`;
+	my $node_role = &getZClusterNodeStatus();
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		my $if_dropped =
-		  grep { $_ =~ /^-j DROP -d $if_ref->{ addr } $/ } @arptables_lines;
+		my $if_dropped = &execNft(
+								   "check",
+								   "netdev cluster",
+								   "cl-" . $if_ref->{ parent },
+								   "$if_ref->{ addr }"
+		);
 
 		if ( $node_role ne 'master' && !$if_dropped )
 		{

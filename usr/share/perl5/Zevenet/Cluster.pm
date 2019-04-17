@@ -348,9 +348,6 @@ sub disableZCluster
 		&logAndRun( $ip_cmd );
 	}
 
-	# Remove cluster exception not to block traffic from the other node of cluster
-	&setZClusterIptablesException( "delete" );
-
 	return $error_code;
 }
 
@@ -1074,7 +1071,7 @@ Function: disableInterfaceDiscovery
 	Disable interface broadcast discovery, ARP or NDP (Neighbour Discovery Protocol).
 
 Parameters:
-	iface - Virtual interface name.
+	iface - Virtual interface structure reference.
 
 Returns:
 	0 - On success.
@@ -1090,16 +1087,30 @@ sub disableInterfaceDiscovery
 			 "debug", "PROFILING" );
 	my $iface = shift;
 
-	if ( $iface->{ ip_v } == 4 )
+	require Zevenet::Nft;
+
+	my $rule_ip = "ip";
+
+	if ( $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6 )
 	{
-		my $arptables = &getGlobalConfiguration( 'arptables' );
-		return &logAndRun( "$arptables -A INPUT -d $iface->{ addr } -j DROP" );
-	}
-	elsif ( $iface->{ ip_v } == 6 )
-	{
-		my $ip6tables = &getGlobalConfiguration( 'ip6tables' );
-		return &logAndRun(
-						   "$ip6tables -t raw -A PREROUTING -d $iface->{ addr } -j DROP" );
+		$rule_ip = "ip6" if ( $iface->{ ip_v } == 6 );
+
+		&execNft(
+				  "add",
+				  "netdev cluster",
+				  "cl-"
+					. $iface->{ parent }
+					. " { type filter hook ingress device "
+					. $iface->{ parent }
+					. " priority 0 \\;}",
+				  "$rule_ip daddr " . $iface->{ addr } . " drop"
+		  )
+		  if (
+			   &execNft( "check",
+						 "netdev cluster",
+						 "cl-" . $iface->{ parent } . " ",
+						 $iface->{ addr } ) != 1
+		  );
 	}
 	else
 	{
@@ -1130,15 +1141,20 @@ sub enableInterfaceDiscovery
 			 "debug", "PROFILING" );
 	my $iface = shift;
 
-	if ( $iface->{ ip_v } == 4 )
+	require Zevenet::Nft;
+
+	if ( $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6 )
 	{
-		my $arptables = &getGlobalConfiguration( 'arptables' );
-		return &logAndRun( "$arptables -D INPUT -d $iface->{ addr } -j DROP" );
-	}
-	elsif ( $iface->{ ip_v } == 6 )
-	{
-		my $ip6tables = &getGlobalConfiguration( 'ip6tables' );
-		return &logAndRun( "$ip6tables -t raw -F PREROUTING -d $iface->{ addr }" );
+		&execNft( "delete",
+				  "netdev cluster",
+				  "cl-" . $iface->{ parent },
+				  $iface->{ addr } )
+		  if (
+			   &execNft( "check",
+						 "netdev cluster",
+						 "cl-" . $iface->{ parent } . " ",
+						 $iface->{ addr } ) != 1
+		  );
 	}
 	else
 	{
@@ -1167,15 +1183,11 @@ sub enableAllInterfacesDiscovery
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	# IPv4
-	my $arptables = &getGlobalConfiguration( 'arptables' );
-	my $rc        = &logAndRun( "$arptables -F" );
+	require Zevenet::Nft;
 
-	# IPv6
-	my $ip6tables = &getGlobalConfiguration( 'ip6tables' );
-	$rc |= &logAndRun( "$ip6tables -t raw -F PREROUTING" );
+	my $output = &execNft( "delete", "netdev cluster", "", "" );
 
-	return $rc;
+	return $output;
 }
 
 =begin nd
@@ -1530,71 +1542,6 @@ sub getZClusterNodeStatusDigest
 	}
 
 	return $node;
-}
-
-=begin nd
-Function: setZClusterIptablesException
-
-	Add a list of iptable rules  to never block traffic from/to the other node of cluster
-
-Parameters:
-	Action - The available actions are "insert", insert rules in the first position of the iptables chains;
-	or "delete", delete the iptables rules.
-
-Returns:
-	Integer - It is the error code, 0 on success or other value on failure.
-
-See Also:
-	zapi/v3/cluster.cgi, zenloadbalancer
-=cut
-
-sub setZClusterIptablesException
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $option = shift;
-
-	# return if the node is not in a cluster
-	return 0 unless &getZClusterStatus();
-
-	require Zevenet::Netfilter;
-	include 'Zevenet::Conntrackd';
-	include 'Zevenet::IPDS::Core';
-
-	my $error;
-	my $action = "";
-
-	if ( $option eq "insert" )
-	{
-		$action = "-I";
-	}
-	elsif ( $option eq "delete" )
-	{
-		$action = "-D";
-	}
-	else
-	{
-		return -1;
-	}
-
-	my $config    = &getZClusterConfig();
-	my $remote_hn = &getZClusterRemoteHost();
-	my $ipremote  = $config->{ $remote_hn }->{ ip };
-	my $iptables  = &getGlobalConfiguration( 'iptables' );
-	my $ipt_args  = '-j ACCEPT -m comment --comment "cluster_exception"';
-	my $chain     = &getIPDSChain( 'whitelist' );
-
-	# Avoid blacklist rules and rbl rules
-	my $cmd = "$iptables $action $chain -t raw -s $ipremote $ipt_args";
-	$error = &iptSystem( $cmd );
-
-	return -1 if $error;
-
-	# Avoid the dos rules
-	$cmd   = "$iptables $action $chain -t mangle -s $ipremote $ipt_args";
-	$error = &iptSystem( $cmd );
-
-	return $error;
 }
 
 sub zClusterFarmUp

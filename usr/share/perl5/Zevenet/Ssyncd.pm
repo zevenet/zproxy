@@ -30,12 +30,13 @@ require Zevenet::Farm::Core;
 # my $ssyncdctl_bin  = '/usr/local/zevenet/app/ssyncd/bin/ssyncdctl';
 # my $ssyncd_port    = 9999;
 
-my $ssyncd_enabled = &getGlobalConfiguration('ssyncd_enabled');
+my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 
 # farm up
 sub setSsyncdFarmUp
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return 0 if $ssyncd_enabled eq 'false';
@@ -50,22 +51,22 @@ sub setSsyncdFarmUp
 
 		if ( $farms_started )
 		{
-			return system( "$ssyncdctl_bin start recent >/dev/null" );
+			return system ( "$ssyncdctl_bin start nft $farm_name >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		return system( "$ssyncdctl_bin start http $farm_name >/dev/null" );
+		return system ( "$ssyncdctl_bin start http $farm_name >/dev/null" );
 	}
 
 	return;
 }
 
-
 # farm down
 sub setSsyncdFarmDown
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
 	return 0 if $ssyncd_enabled eq 'false';
@@ -80,12 +81,12 @@ sub setSsyncdFarmDown
 
 		if ( $farms_started <= 1 )
 		{
-			return system( "$ssyncdctl_bin stop recent >/dev/null" );
+			return system ( "$ssyncdctl_bin stop nft $farm_name >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		return system( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
+		return system ( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
 	}
 
 	return;
@@ -94,19 +95,20 @@ sub setSsyncdFarmDown
 #~ sub disable_ssyncd
 sub setSsyncdDisabled
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 
 	# /ssyncdctl quit --> Exit ssyncd process
 	my $ssync_cmd = "$ssyncdctl_bin quit";
 	my $error;
 
-	system( "$ssync_cmd >/dev/null" ) if `pgrep ssyncd`;
+	system ( "$ssync_cmd >/dev/null" ) if `pgrep ssyncd`;
 
 	if ( `pgrep ssyncd` )
 	{
-		system("pkill ssyncd");
-		&zenlog("ssyncd found still running and was killed", "info", "CLUSTER");
+		system ( "pkill ssyncd" );
+		&zenlog( "ssyncd found still running and was killed", "info", "CLUSTER" );
 	}
 
 	return $error;
@@ -114,8 +116,9 @@ sub setSsyncdDisabled
 
 sub setSsyncdBackup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	&zenlog("/// Starting setSsyncdBackup", "info", "CLUSTER");
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	&zenlog( "/// Starting setSsyncdBackup", "info", "CLUSTER" );
 
 	return 0 if $ssyncd_enabled eq 'false';
 
@@ -128,18 +131,18 @@ sub setSsyncdBackup
 		# check mode
 		# ./ssyncdctl show mode --> master|backup
 		my $ssync_cmd = "$ssyncdctl_bin show mode";
-		chomp( my ( $mode ) = `$ssync_cmd` );
+		chomp ( my ( $mode ) = `$ssync_cmd` );
 
 		if ( $mode eq 'backup' )
 		{
-			&zenlog("Ssyncd already in backup mode", "info", "CLUSTER");
+			&zenlog( "Ssyncd already in backup mode", "info", "CLUSTER" );
 
 			# end function if already in backup mode
 			return 0;
 		}
 		else
 		{
-			&zenlog("Ssyncd current mode: $mode", "info", "CLUSTER");
+			&zenlog( "Ssyncd current mode: $mode", "info", "CLUSTER" );
 		}
 
 		&setSsyncdDisabled();
@@ -149,17 +152,18 @@ sub setSsyncdBackup
 	my $remote_node_name = &getZClusterRemoteHost();
 	my $remote_node_ip   = $cl_conf->{ $remote_node_name }{ ip };
 
-	# Start Backup mode:
-	# ./ssyncd -d -B -p 9999 -a 172.16.1.1 --> start backup node and connect to master 172.16.1.1:9999
+# Start Backup mode:
+# ./ssyncd -d -B -p 9999 -a 172.16.1.1 --> start backup node and connect to master 172.16.1.1:9999
 
-	my $error = system( "$ssyncd_bin -d -B -p $ssyncd_port -a $remote_node_ip" );
+	my $error = system ( "$ssyncd_bin -d -B -p $ssyncd_port -a $remote_node_ip" );
 
 	return $error;
 }
 
 sub setSsyncdMaster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );
@@ -172,32 +176,36 @@ sub setSsyncdMaster
 		# check mode
 		# ./ssyncdctl show mode --> master|slave
 		$ssync_cmd = "$ssyncdctl_bin show mode";
-		chomp( my ( $mode ) = `$ssync_cmd` );
+		chomp ( my ( $mode ) = `$ssync_cmd` );
 
 		if ( $mode eq 'master' )
 		{
-			&zenlog("Ssyncd already in master mode", "info", "CLUSTER");
+			&zenlog( "Ssyncd already in master mode", "info", "CLUSTER" );
 
 			# end function if already in master mode
 			return 0;
 		}
 		else
 		{
-			&zenlog("Ssyncd current mode: $mode", "info", "CLUSTER");
+			&zenlog( "Ssyncd current mode: $mode", "info", "CLUSTER" );
 		}
 
 		# Before changing to master mode:
 		# ./ssyncdctl write http   --> Write http sessions data to pound
-		# ./ssyncdctl write recent --> Write recent data to recent module
+		# ./ssyncdctl write nft --> Write nft data to nftables
 		my $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write http";
-		$error = system( "$ssync_cmd" );
-		&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd", "error", "CLUSTER") if $error;
+		$error     = system ( "$ssync_cmd" );
+		&zenlog( "setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd",
+				 "error", "CLUSTER" )
+		  if $error;
 
-		$ssync_cmd = "$ssyncdctl_bin write recent";
-		$error = system( "$ssync_cmd" );
-		&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd", "error", "CLUSTER") if $error;
+		$ssync_cmd = "$ssyncdctl_bin write nft";
+		$error     = system ( "$ssync_cmd" );
+		&zenlog( "setSsyncdMaster ssyncd write nft: $error > cmd: $ssync_cmd",
+				 "error", "CLUSTER" )
+		  if $error;
 
 		&setSsyncdDisabled();
 	}
@@ -206,11 +214,11 @@ sub setSsyncdMaster
 	# ./ssyncd -d -M -p 9999 --> start master node
 
 	$ssync_cmd = "$ssyncd_bin -d -M -p $ssyncd_port";
-	my $error = system( "$ssync_cmd" );
-	&zenlog("/// ssyncd as master: $error > cmd: $ssync_cmd", "info", "CLUSTER");
+	my $error = system ( "$ssync_cmd" );
+	&zenlog( "/// ssyncd as master: $error > cmd: $ssync_cmd", "info", "CLUSTER" );
 
 	# ./ssyncdctl start http <farm>
-	# ./ssyncdctl start recent
+	# ./ssyncdctl start nft <farm>
 
 	sleep 1;
 
@@ -222,14 +230,7 @@ sub setSsyncdMaster
 		my $status = &getFarmStatus( $farm );
 		next if $status ne 'up';
 
-		if ( $type eq 'l4xnat' )
-		{
-			my $error = &setSsyncdFarmUp( $farm );
-		}
-		else # http
-		{
-			my $error = &setSsyncdFarmUp( $farm );
-		}
+		my $error = &setSsyncdFarmUp( $farm );
 	}
 }
 

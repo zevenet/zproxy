@@ -24,7 +24,6 @@ use strict;
 
 use Zevenet::API32::HTTP;
 
-
 include 'Zevenet::Cluster';
 
 # disable smartmatch experimental warnings for perl >= 5.18
@@ -41,16 +40,17 @@ no if $] >= 5.018, warnings => "experimental::smartmatch";
 #       &set_cluster( @_ );
 #};
 
-my $DEFAULT_DEADRATIO = 5; # FIXME: MAKE GLOBAL VARIABLE
-my $DEFAULT_FAILBACK = 'disabled'; # FIXME: MAKE GLOBAL VARIABLE
-my $maint_if = 'cl_maintenance';
+my $DEFAULT_DEADRATIO = 5;                  # FIXME: MAKE GLOBAL VARIABLE
+my $DEFAULT_FAILBACK  = 'disabled';         # FIXME: MAKE GLOBAL VARIABLE
+my $maint_if          = 'cl_maintenance';
 
 sub get_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
-	my $desc = "Show the cluster configuration";
+	my $desc      = "Show the cluster configuration";
 	my $cl_status = &getZClusterStatus();
 	my $body;
 
@@ -62,7 +62,7 @@ sub get_cluster
 
 		my $cluster = {
 					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
+					failback       => $zcl_conf->{ _ }->{ primary } // $local_hn,
 					interface      => $zcl_conf->{ _ }->{ interface },
 					nodes          => [
 							  {
@@ -81,8 +81,8 @@ sub get_cluster
 		$cluster->{ check_interval } += 0;
 
 		$body = {
-					 description => $desc,
-					 params      => $cluster,
+				  description => $desc,
+				  params      => $cluster,
 		};
 	}
 	else
@@ -94,16 +94,17 @@ sub get_cluster
 		};
 	}
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub modify_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
-	my $desc = "Modifying the cluster configuration";
-	my $filecluster = &getGlobalConfiguration('filecluster');
+	my $desc        = "Modifying the cluster configuration";
+	my $filecluster = &getGlobalConfiguration( 'filecluster' );
 
 	# check if there is a cluster configured
 	unless ( &getZClusterStatus() )
@@ -112,10 +113,10 @@ sub modify_cluster
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my @cl_opts = ('check_interval','failback');
+	my @cl_opts = ( 'check_interval', 'failback' );
 
 	# validate CLUSTER parameters
-	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
+	if ( grep { !( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
 		my $msg = "Cluster parameter not recognized";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -144,9 +145,9 @@ sub modify_cluster
 		}
 
 		# change deadratio
-		if ( $zcl_conf->{_}->{ deadratio } != $json_obj->{ check_interval } )
+		if ( $zcl_conf->{ _ }->{ deadratio } != $json_obj->{ check_interval } )
 		{
-			$zcl_conf->{_}->{ deadratio } = $json_obj->{ check_interval };
+			$zcl_conf->{ _ }->{ deadratio } = $json_obj->{ check_interval };
 			$changed_config = 1;
 		}
 	}
@@ -162,15 +163,15 @@ sub modify_cluster
 
 		my @failback_opts = ( 'disabled', $local_hostname, $remote_hostname );
 
-		unless( @failback_opts ~~ /^$json_obj->{ failback }$/ )
+		unless ( @failback_opts ~~ /^$json_obj->{ failback }$/ )
 		{
 			my $msg = "Primary node value not recognized";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( $zcl_conf->{_}->{ primary } ne $json_obj->{ failback } )
+		if ( $zcl_conf->{ _ }->{ primary } ne $json_obj->{ failback } )
 		{
-			$zcl_conf->{_}->{ primary } = $json_obj->{ failback };
+			$zcl_conf->{ _ }->{ primary } = $json_obj->{ failback };
 			$changed_config = 1;
 		}
 	}
@@ -187,8 +188,8 @@ sub modify_cluster
 		if ( &getZClusterStatus() )
 		{
 			### cluster Re-configuration ###
-			my $rhost = &getZClusterRemoteHost();
-			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+			my $rhost            = &getZClusterRemoteHost();
+			my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 
 			&logAndRun( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
@@ -198,35 +199,37 @@ sub modify_cluster
 
 			# reconfigure remote conntrackd
 			&zenlog(
-				&runRemotely(
-					"$zcluster_manager setKeepalivedConfig",
-					$zcl_conf->{$rhost}->{ip}
-				)
-				, "info", "CLUSTER"
+					 &runRemotely(
+								   "$zcluster_manager setKeepalivedConfig",
+								   $zcl_conf->{ $rhost }->{ ip }
+					 ),
+					 "info",
+					 "CLUSTER"
 			);
 
 			# reload keepalived configuration local and remotely
 			my $error_code = &enableZCluster();
 
 			&zenlog(
-				&runRemotely(
-					"$zcluster_manager enableZCluster",
-					$zcl_conf->{$rhost}->{ip}
-				)
-				. "" , "info", "CLUSTER"
+					 &runRemotely( "$zcluster_manager enableZCluster",
+								   $zcl_conf->{ $rhost }->{ ip } )
+					   . "",
+					 "info",
+					 "CLUSTER"
 			);
 		}
 	};
 	if ( $@ )
 	{
 		my $msg = "Error configuring the cluster";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg, log_msg => $@ );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg,
+								   log_msg => $@ );
 	}
 
-	my $local_hn  = &getHostname();
+	my $local_hn = &getHostname();
 	my $cluster = {
-					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
+				check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
+				failback       => $zcl_conf->{ _ }->{ primary } // $local_hn,
 	};
 
 	$cluster->{ check_interval } += 0;
@@ -236,12 +239,13 @@ sub modify_cluster
 				 params      => $cluster,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub set_cluster_actions
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Setting cluster action";
@@ -273,7 +277,7 @@ sub set_cluster_actions
 		}
 
 		# validate parameters
-		my @cl_opts = ('action','status');
+		my @cl_opts = ( 'action', 'status' );
 		unless ( grep { @cl_opts ~~ /^(?:$_)$/ } keys %$json_obj )
 		{
 			my $msg = "Unrecognized parameter received";
@@ -287,7 +291,7 @@ sub set_cluster_actions
 			if ( &getKeepalivedVersion() eq '1.2.13' )
 			{
 				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-				&logAndRun("$zcluster_manager notify_fault");
+				&logAndRun( "$zcluster_manager notify_fault" );
 
 				my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
 				&logAndRun( $ka_cmd );
@@ -306,25 +310,26 @@ sub set_cluster_actions
 				}
 
 				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-				&logAndRun("$ip_bin link set $maint_if down");
+				&logAndRun( "$ip_bin link set $maint_if down" );
 
 				# required for no failback configuration
 				if ( &getZClusterNodeStatus() eq 'backup' )
 				{
-					&setZClusterNodeStatus('maintenance');
+					&setZClusterNodeStatus( 'maintenance' );
 				}
 			}
 		}
+
 		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )
 		{
 			# workaround for keepalived 1.2.13
 			if ( &getKeepalivedVersion() eq '1.2.13' )
 			{
-				&setZClusterNodeStatus('backup');
+				&setZClusterNodeStatus( 'backup' );
 
 				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-				&logAndRun("$zcluster_manager notify_backup");
+				&logAndRun( "$zcluster_manager notify_backup" );
 
 				my $ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
 				&logAndRun( $ka_cmd );
@@ -343,10 +348,10 @@ sub set_cluster_actions
 				}
 
 				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-				&logAndRun("$ip_bin link set $maint_if up");
+				&logAndRun( "$ip_bin link set $maint_if up" );
 
 				# required for no failback configuration
-				&setZClusterNodeStatus('backup');
+				&setZClusterNodeStatus( 'backup' );
 			}
 		}
 		else
@@ -358,11 +363,11 @@ sub set_cluster_actions
 		my $message = "Cluster status changed to $json_obj->{status} successfully";
 		my $body = {
 					 description => $desc,
-					 success => 'true',
-					 message      => $message,
+					 success     => 'true',
+					 message     => $message,
 		};
 
-		return &httpResponse({ code => 200, body => $body });
+		return &httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -373,7 +378,8 @@ sub set_cluster_actions
 
 sub disable_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $desc = "Disabling cluster";
 
 	# make sure the cluster is enabled
@@ -396,10 +402,12 @@ sub disable_cluster
 
 		# 2 stop backup node zevenet
 		&zenlog(
-			&runRemotely(
-				"/etc/init.d/zevenet stop >/dev/null 2>&1",
-				$zcl_conf->{$rhost}->{ip}
-			) , "info", "CLUSTER"
+				 &runRemotely(
+							   "/etc/init.d/zevenet stop >/dev/null 2>&1",
+							   $zcl_conf->{ $rhost }->{ ip }
+				 ),
+				 "info",
+				 "CLUSTER"
 		);
 
 		# 3 stop master cluster service
@@ -408,29 +416,24 @@ sub disable_cluster
 	else
 	{
 		# 1 stop zeninotify
-		&zenlog(
-			&runRemotely(
-				"$zenino stop",
-				$zcl_conf->{$rhost}->{ip}
-			), "info", "CLUSTER"
-		);
+		&zenlog( &runRemotely( "$zenino stop", $zcl_conf->{ $rhost }->{ ip } ),
+				 "info", "CLUSTER" );
 
 		# 2 stop slave zevenet
 		&logAndRun( "/etc/init.d/zevenet stop >/dev/null 2>&1" );
 
-		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 
 		# 3 stop master cluster service
 		&zenlog(
-			&runRemotely(
-				"$zcluster_manager disableZCluster",
-				$zcl_conf->{$rhost}->{ip}
-			), "info", "CLUSTER"
+				 &runRemotely(
+							   "$zcluster_manager disableZCluster",
+							   $zcl_conf->{ $rhost }->{ ip }
+				 ),
+				 "info",
+				 "CLUSTER"
 		);
 	}
-
-	# Remove cluster exception not to block traffic from the other node of cluster
-	&setZClusterIptablesException( "delete" );
 
 	### Remove configuration files ###
 	# remove cluster configuration file
@@ -441,30 +444,29 @@ sub disable_cluster
 	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
 	my $conntrackd_conf   = &getGlobalConfiguration( 'conntrackd_conf' );
 
-	for my $cl_file ( $filecluster, $keepalived_conf, $znode_status_file, $conntrackd_conf ) # FIXME: Global variables
+	for my $cl_file ( $filecluster, $keepalived_conf, $znode_status_file,
+					  $conntrackd_conf )    # FIXME: Global variables
 	{
 		&zenlog(
-			&runRemotely(
-				"rm $cl_file >/dev/null 2>&1",
-				$zcl_conf->{$rhost}->{ip}
-			), "info", "CLUSTER"
-		);
+			   &runRemotely( "rm $cl_file >/dev/null 2>&1", $zcl_conf->{ $rhost }->{ ip } ),
+			   "info", "CLUSTER" );
 		unlink $cl_file;
 	}
 
 	my $message = "Cluster disabled successfully";
 	my $body = {
 				 description => $desc,
-				 success => 'true',
-				 message      => $message,
+				 success     => 'true',
+				 message     => $message,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub enable_cluster
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Enabling cluster";
@@ -477,8 +479,8 @@ sub enable_cluster
 	}
 
 	# validate parameters
-	my @cl_opts = ('local_ip','remote_ip','remote_password');
-	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
+	my @cl_opts = ( 'local_ip', 'remote_ip', 'remote_password' );
+	if ( grep { !( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
 		my $msg = "Unrecognized parameter received";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -495,40 +497,46 @@ sub enable_cluster
 	require Zevenet::Net::Interface;
 
 	my @cl_if_candidates = @{ &getSystemInterfaceList() };
-	@cl_if_candidates = grep { $_->{ addr } && $_->{ type } ne 'virtual' } @cl_if_candidates;
+	@cl_if_candidates =
+	  grep { $_->{ addr } && $_->{ type } ne 'virtual' } @cl_if_candidates;
 
-	unless ( scalar grep { $json_obj->{ local_ip } eq $_->{ addr } } @cl_if_candidates )
+	unless ( scalar grep { $json_obj->{ local_ip } eq $_->{ addr } }
+			 @cl_if_candidates )
 	{
 		my $msg = "Local IP address value is not valid";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate REMOTE IP format
-	unless ( $json_obj->{ remote_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ remote_ip } ) )
+	unless (    $json_obj->{ remote_ip }
+			 && &getValidFormat( 'IPv4_addr', $json_obj->{ remote_ip } ) )
 	{
 		my $msg = "Remote IP address has invalid format";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate REMOTE PASSWORD
-	unless ( exists $json_obj->{ remote_password } && defined $json_obj->{ remote_password } )
+	unless ( exists $json_obj->{ remote_password }
+			 && defined $json_obj->{ remote_password } )
 	{
 		my $msg = "A remote node password must be defined";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
-		my $error = &exchangeIdKeys( $json_obj->{ remote_ip }, $json_obj->{ remote_password } );
+		my $error =
+		  &exchangeIdKeys( $json_obj->{ remote_ip }, $json_obj->{ remote_password } );
 
 		if ( $error )
 		{
-			&zenlog("Error enabling the cluster: Keys Ids exchange failed", "error", "CLUSTER");
+			&zenlog( "Error enabling the cluster: Keys Ids exchange failed",
+					 "error", "CLUSTER" );
 			die;
 		}
 
-		my $zcl_conf = &getZClusterConfig();
+		my $zcl_conf        = &getZClusterConfig();
 		my $remote_hostname = &runRemotely( 'hostname', $json_obj->{ remote_ip } );
-		my $local_hostname = &getHostname();
+		my $local_hostname  = &getHostname();
 
 		chomp $remote_hostname;
 		chomp $local_hostname;
@@ -541,17 +549,18 @@ sub enable_cluster
 
 		if ( $local_hostname && $remote_hostname )
 		{
-			$zcl_conf->{ $local_hostname }->{ ip } = $json_obj->{ local_ip };
+			$zcl_conf->{ $local_hostname }->{ ip }  = $json_obj->{ local_ip };
 			$zcl_conf->{ $remote_hostname }->{ ip } = $json_obj->{ remote_ip };
 		}
 
 		# verify the cluster interface is the same in both nodes
-		my $ip_bin = &getGlobalConfiguration('ip_bin');
-		my $cl_if = $zcl_conf->{ _ }->{ interface };
-		my $rm_ip = $json_obj->{ remote_ip };
-		my @remote_ips = &runRemotely( "$ip_bin -o addr show $cl_if", $json_obj->{ remote_ip } );
+		my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+		my $cl_if  = $zcl_conf->{ _ }->{ interface };
+		my $rm_ip  = $json_obj->{ remote_ip };
+		my @remote_ips =
+		  &runRemotely( "$ip_bin -o addr show $cl_if", $json_obj->{ remote_ip } );
 
-		unless ( scalar grep( { /^\d+: $cl_if\s+inet? $rm_ip\// } @remote_ips ) )
+		unless ( scalar grep ( { /^\d+: $cl_if\s+inet? $rm_ip\// } @remote_ips ) )
 		{
 			my $msg = "Remote address does not match with the cluster interface";
 			&zenlog( $msg, "error", "CLUSTER" );
@@ -560,70 +569,63 @@ sub enable_cluster
 
 		&setZClusterConfig( $zcl_conf ) or die;
 
-		# Add cluster exception not to block traffic from the other node of cluster
-		&setZClusterIptablesException( "insert" );
-
-
 		## Starting cluster services ##
 
 		# first synchronization
-		my $configdir = &getGlobalConfiguration('configdir');
+		my $configdir = &getGlobalConfiguration( 'configdir' );
 		&runSync( $configdir );
 
 		# generate cluster config and start cluster service
 		die if &enableZCluster();
 
 		# force cluster file sync
-		my $filecluster = &getGlobalConfiguration('filecluster');
-		&logAndRun( "scp $filecluster root\@$zcl_conf->{$remote_hostname}->{ip}:$filecluster" );
+		my $filecluster = &getGlobalConfiguration( 'filecluster' );
+		&logAndRun(
+				"scp $filecluster root\@$zcl_conf->{$remote_hostname}->{ip}:$filecluster" );
 
 		# local conntrackd configuration
 		&setConntrackdConfig();
 
-		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 		my $cl_output;
 
 		# remote conntrackd configuration
-		$cl_output = &runRemotely(
-			"$zcluster_manager setConntrackdConfig",
-			$zcl_conf->{$remote_hostname}->{ip}
-		);
+		$cl_output = &runRemotely( "$zcluster_manager setConntrackdConfig",
+								   $zcl_conf->{ $remote_hostname }->{ ip } );
 		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 
 		# remote keepalived configuration
-		$cl_output = &runRemotely(
-			"$zcluster_manager setKeepalivedConfig",
-			$zcl_conf->{$remote_hostname}->{ip}
-		);
+		$cl_output = &runRemotely( "$zcluster_manager setKeepalivedConfig",
+								   $zcl_conf->{ $remote_hostname }->{ ip } );
 		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 
 		# start remote interfaces, farms and cluster
-		$cl_output = &runRemotely(
-			'/etc/init.d/zevenet start',
-			$zcl_conf->{$remote_hostname}->{ip}
-		);
+		$cl_output = &runRemotely( '/etc/init.d/zevenet start',
+								   $zcl_conf->{ $remote_hostname }->{ ip } );
 		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 
 	};
 	if ( $@ )
 	{
 		my $msg = "An error happened configuring the cluster.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg, log_msg => $@ );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg,
+								   log_msg => $@ );
 	}
 
 	my $message = "Cluster enabled successfully";
 	my $body = {
 				 description => $desc,
-				 success => 'true',
-				 message      => $message,
+				 success     => 'true',
+				 message     => $message,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub get_cluster_localhost_status
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc = "Cluster status for localhost";
@@ -636,19 +638,20 @@ sub get_cluster_localhost_status
 				 params      => $node,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub get_cluster_nodes_status
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::SystemInfo;
 
 	my $desc      = "Cluster nodes status";
 	my $localhost = &getHostname();
 	my @cluster;
 
-	if ( ! &getZClusterStatus() )
+	if ( !&getZClusterStatus() )
 	{
 		my $node = {
 					 role    => 'not configured',
@@ -666,11 +669,11 @@ sub get_cluster_nodes_status
 		{
 			next if $node_name eq '_';
 
-			my $ip = $cl_conf->{ $node_name }->{ ip };
+			my $ip   = $cl_conf->{ $node_name }->{ ip };
 			my $node = &getZClusterNodeStatusDigest( $ip );
 
 			$node->{ name } = $node_name;
-			$node->{ ip } = $ip;
+			$node->{ ip }   = $ip;
 			$node->{ node } = ( $node_name eq $localhost ) ? 'local' : 'remote';
 
 			push @cluster, $node;
@@ -682,7 +685,7 @@ sub get_cluster_nodes_status
 				 params      => \@cluster,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

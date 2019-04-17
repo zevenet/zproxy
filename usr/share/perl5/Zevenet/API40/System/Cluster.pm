@@ -414,9 +414,6 @@ sub disable_cluster
 		);
 	}
 
-	# Remove cluster exception not to block traffic from the other node of cluster
-	&setZClusterIptablesException( "delete" );
-
 	### Remove configuration files ###
 	# remove cluster configuration file
 	# remove keepalived configuration file
@@ -430,8 +427,13 @@ sub disable_cluster
 					  $conntrackd_conf )    # FIXME: Global variables
 	{
 		&zenlog(
-			   &runRemotely( "rm $cl_file >/dev/null 2>&1", $zcl_conf->{ $rhost }->{ ip } ),
-			   "info", "CLUSTER" );
+				 &runRemotely(
+							   "rm $cl_file >/dev/null 2>&1",
+							   $zcl_conf->{ $rhost }->{ ip }
+				 ),
+				 "info",
+				 "CLUSTER"
+		);
 		unlink $cl_file;
 	}
 
@@ -541,9 +543,6 @@ sub enable_cluster
 		}
 
 		&setZClusterConfig( $zcl_conf ) or die;
-
-		# Add cluster exception not to block traffic from the other node of cluster
-		&setZClusterIptablesException( "insert" );
 
 		## Starting cluster services ##
 
