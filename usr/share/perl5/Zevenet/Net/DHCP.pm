@@ -151,12 +151,12 @@ sub stopDHCP
 {
 	my $if_name = shift;
 
-	use Proc::Find qw(find_proc);
+	require Proc::Find;
 
 	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
 
 	my $cmd  = &getDHCPCmd( $if_name );
-	my $pids = find_proc( cmndline => $cmd );
+	my $pids = &find_proc( cmndline => $cmd );
 	my $cnt  = kill 'KILL', @{ $pids } if $pids;
 
 	# success if all process were killed
