@@ -166,13 +166,13 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	my $if_ref = &getInterfaceConfig( $nic, $ip_v );
+
 	# validate action parameter
 	if ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Core;
 		require Zevenet::Net::Route;
-
-		my $if_ref = &getInterfaceConfig( $nic, $ip_v );
 
 		# Delete routes in case that it is not a vini
 		if ( $if_ref->{ addr } )
@@ -182,7 +182,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 
 		&addIp( $if_ref ) if $if_ref;
 
-		my $state = &upIf( { name => $nic }, 'writeconf' );
+		my $state = &upIf( $if_ref, 'writeconf' );
 
 		if ( !$state )
 		{
@@ -203,7 +203,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $nic }, 'writeconf' );
+		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
 		{

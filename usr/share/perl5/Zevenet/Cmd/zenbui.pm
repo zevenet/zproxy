@@ -985,7 +985,7 @@ sub set_dhcp()
 				&error_dialog(
 							 "No IP has been found, wait a while or try to configure it manually" );
 			}
-			else
+			elsif ( $newip ne '' )
 			{
 				&inform_dialog(
 					"If this is your first boot you can access to ZEVENET Web GUI through\nhttps://$newip:444\nwith user root and password admin,\nremember to change the password for security reasons in web GUI."

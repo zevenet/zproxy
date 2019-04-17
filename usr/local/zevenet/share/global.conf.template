@@ -243,6 +243,8 @@ $poweroff_bin="/usr/sbin/poweroff";
 $reboot_bin="/usr/sbin/reboot";
 #Where is arpsend
 $arpsend_bin="/usr/sbin/arpsend";
+#Where is dhclient
+$dhcp_bin="/usr/sbin/dhclient";
 
 
 # Pound

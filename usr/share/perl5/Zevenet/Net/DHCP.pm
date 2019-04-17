@@ -29,66 +29,142 @@ require Zevenet::Net::Core;
 require Zevenet::Net::Route;
 require Zevenet::Net::Interface;
 
-sub getDHCPServiceFile
-{
-	my $name = shift;
-	return "/etc/network/interfaces.d/if_${name}_conf";
-}
+=begin nd
+Function: enableDHCP
+
+	This function enables the dhcp for a networking interface.
+	Set the configuration file and execute the dhcpclient
+
+Parameters:
+	if_ref - Reference to a network interface hash.
+
+Returns:
+	Integer - Error code, 0 on success or another value on failure.
+
+=cut
 
 sub enableDHCP
 {
 	my $if_ref = shift;
 	my $err    = 1;
 
-	# logic for enable the service
-	my $if_file = &getDHCPServiceFile( $if_ref->{ name } );
-	open ( my $fh, '>', $if_file );
-	if ( !$fh )
-	{
-		&zenlog( "The file $if_file could not be openned", "error", "net" );
-		return 1;
-	}
-	print $fh "
-auto $if_ref->{name}
-allow-hotplug $if_ref->{name}
-iface $if_ref->{name} inet dhcp";
-	close $fh;
-
 	# save
 	$if_ref->{ 'dhcp' } = 'true';
 	$err = 0 if ( &setInterfaceConfig( $if_ref ) );
 
 	# load the interface to reload the ip, gw and netmask
-	$err = &restartDHCPService();
+	if ( $if_ref->{ status } eq 'up' and !$err )
+	{
+		$err = &startDHCP( $if_ref->{ name } );
+	}
 
 	return $err;
 }
+
+=begin nd
+Function: disableDHCP
+
+	This function disables the dhcp for a networking interface.
+	Set the configuration file and stop the dhcpclient process
+
+Parameters:
+	if_ref - Reference to a network interface hash.
+
+Returns:
+	Integer - Error code, 0 on success or another value on failure.
+
+=cut
 
 sub disableDHCP
 {
 	my $if_ref = shift;
 	my $err    = 0;
 
-	# logic for enable the service
-	my $if_file = &getDHCPServiceFile( $if_ref->{ name } );
-	if ( -f $if_file )
-	{
-		unlink $if_file;
-	}
+	$err = &stopDHCP( $if_ref->{ name } );
+	$err if $err;
 
 	$if_ref->{ 'dhcp' } = 'false';
 	$err = 0 if ( &setInterfaceConfig( $if_ref ) );
 
-	# try to preserve the ip, gw and netmask
-	$err = &restartDHCPService();
-
 	return $err;
 }
 
-sub restartDHCPService
+=begin nd
+Function: getDHCPCmd
+
+	Build the command line for executing a dhcpclient. This command is used to
+	stop the dhclient process too.
+
+Parameters:
+	if_name - String with the interface name
+
+Returns:
+	String - Command line
+
+=cut
+
+sub getDHCPCmd
 {
-	my $srv = &getGlobalConfiguration( 'networking_service' );
-	return &logAndRun( "$srv restart" );
+	my $if_name  = shift;
+	my $dhcp_cli = &getGlobalConfiguration( 'dhcp_bin' );
+	return "$dhcp_cli $if_name";
+}
+
+=begin nd
+Function: startDHCP
+
+	Run a dhclient process for a interface
+
+Parameters:
+	if_name - String with the interface name
+
+Returns:
+	Integer - Error code, 0 on success or another value on failure
+
+=cut
+
+sub startDHCP
+{
+	my $if_name = shift;
+
+	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
+
+	my $cmd = &getDHCPCmd( $if_name );
+	my $err = &logAndRun( $cmd );
+	return $err;
+}
+
+=begin nd
+Function: stopDHCP
+
+	Stop a dhclient process looking for the command line in the process table
+
+Parameters:
+	if_name - String with the interface name
+
+Returns:
+	Integer - Error code, 0 on success or another value on failure
+
+=cut
+
+sub stopDHCP
+{
+	my $if_name = shift;
+
+	use Proc::Find qw(find_proc);
+
+	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
+
+	my $cmd  = &getDHCPCmd( $if_name );
+	my $pids = find_proc( cmndline => $cmd );
+	my $cnt  = kill 'KILL', @{ $pids } if $pids;
+
+	# success if all process were killed
+	my $err = ( $cnt == scalar @{ $pids } ) ? 0 : 1;
+	&zenlog( "DHCP could not be stopped for $if_name", "error", "dhcp" )
+	  if ( $err );
+
+	return $err;
 }
 
 1;
