@@ -77,6 +77,8 @@ sub get_waf_set
 	}
 
 	my $set_st = &getZapiWAFSet( $set );
+	my @farms  = &listWAFBySet( $set );
+	$set_st->{ farms } = \@farms;
 	my $body = { description => $desc, params => $set_st };
 
 	return &httpResponse( { code => 200, body => $body } );

@@ -407,7 +407,7 @@ Parameters:
 	Set - It is the set name.
 
 Returns:
-	String - It is a list with farm names.
+	Array - It is a list with farm names.
 
 =cut
 
