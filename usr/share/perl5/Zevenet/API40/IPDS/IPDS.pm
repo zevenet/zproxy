@@ -265,6 +265,9 @@ sub set_ipds_package
 	}
 
 	my $error = &runIpdsUpgrade( $json_obj );
+
+	$msg = "IPDS Package already have the latest version" unless ( defined $error );
+
 	if ( $error && $json_obj->{ mode } eq "disabled" )
 	{
 		$msg =
@@ -292,6 +295,7 @@ sub set_ipds_package
 	$outParam->{ status } = "Installed and updated" if ( $status == 0 );
 	$outParam->{ status } = "Updates available"     if ( $status == 1 );
 	$outParam->{ status } = "Not installed"         if ( $status == 2 );
+	$outParam->{ msg }    = $msg                    if ( length $msg );
 
 	return &httpResponse(
 					  { code => 200, body => { params => $outParam, desc => $desc } } );

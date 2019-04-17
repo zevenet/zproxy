@@ -309,7 +309,7 @@ Parameters:
 	none - .
 
 Returns:
-	Integer - Error code: 0 on success or other value on failure
+	Integer - Error code: 0 on success, undef if already latest version or other value on failure
 
 =cut
 
@@ -318,22 +318,26 @@ sub runIpdsUpgrade
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $params = shift;
-
+	my $error  = 0;
 	require Zevenet::Config;
 	my $aptget_bin = &getGlobalConfiguration( "aptget_bin" );
 
 	if ( $params->{ action } eq "upgrade" )
 	{
 		my $cmd = "$aptget_bin update; $aptget_bin install zevenet-ipds";
-
+		unless ( &getIpdsPackageStatus() )
+		{
+			&zenlog( "IPDS package: You already have the latest version", "info", "IPDS" );
+			return undef;
+		}
 		require Zevenet::Log;
-		my $error = &logAndRun( "$cmd" );
+		$error = &logAndRun( "$cmd" );
 		return $error if ( $error );
 		&zenlog( "IPDS package: Successfully upgraded", "info", "IPDS" );
 	}
 	elsif ( $params->{ action } eq "schedule" )
 	{
-		my $error = &setCronConfig( $params );
+		$error = &setCronConfig( $params );
 		return $error if ( $error );
 	}
 	return 0;
