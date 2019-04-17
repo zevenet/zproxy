@@ -24,8 +24,9 @@ class HttpStream: public Counter<HttpStream> {
 public:
   HttpStream();
   ~HttpStream();
-  //  ConnectionStadistic_t client_stadistics;
-  //  ConnectionStadistic_t backend_stadistics;
+  // no copy allowed
+  HttpStream(const HttpStream&) = delete;
+  HttpStream& operator=(const HttpStream&) = delete;
 
   ClientConnection client_connection;
   BackendConnection backend_connection;
