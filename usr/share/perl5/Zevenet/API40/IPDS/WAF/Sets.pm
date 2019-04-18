@@ -163,37 +163,37 @@ sub modify_waf_set
 
 	my $desc = "Modify the WAF set $set";
 	my $params = {
-		"audit" => {
-					 'valid_format' => 'boolean',
-					 'non_blank'    => 'true',
-		},
-		"process_request_body" => {
-									'valid_format' => 'boolean',
-									'non_blank'    => 'true',
-		},
-		"process_response_body" => {
-									 'valid_format' => 'boolean',
-									 'non_blank'    => 'true',
-		},
-		"request_body_limit" => {
-								  'valid_format' => 'natural_num',
-		},
-		"only_logging" => {
-							'valid_format' => 'boolean',
-							'non_blank'    => 'true',
-		},
-		"default_action" => {
-							  'values'    => ["allow", "redirect", "pass", "deny"],
-							  'non_blank' => 'true',
-		},
-		"default_log" => {
-						   'valid_format' => 'waf_log',
-		},
-		"default_phase" => {
-							 'valid_format' => 'waf_phase',
-							 'non_blank'    => 'true',
-		},
-		"disable_rules" => {},    # bugfix: set a stronger check
+				   "audit" => {
+								'valid_format' => 'boolean',
+								'non_blank'    => 'true',
+				   },
+				   "process_request_body" => {
+											   'valid_format' => 'boolean',
+											   'non_blank'    => 'true',
+				   },
+				   "process_response_body" => {
+												'valid_format' => 'boolean',
+												'non_blank'    => 'true',
+				   },
+				   "request_body_limit" => {
+											 'valid_format' => 'natural_num',
+				   },
+				   "only_logging" => {
+									   'valid_format' => 'boolean',
+									   'non_blank'    => 'true',
+				   },
+				   "default_action" => {
+										 'values' => ["allow", "redirect", "pass", "deny"],
+										 'non_blank' => 'true',
+				   },
+				   "default_log" => {
+									  'valid_format' => 'waf_log',
+				   },
+				   "default_phase" => {
+										'valid_format' => 'waf_phase',
+										'non_blank'    => 'true',
+				   },
+				   "disable_rules" => { 'ref' => 'array' },
 	};
 
 	unless ( &existWAFSet( $set ) )

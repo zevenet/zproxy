@@ -376,7 +376,7 @@ sub getWafRuleParameters
 	$out = {
 			 'rule_id'     => { 'valid_format' => 'waf_rule_id' },
 			 'description' => {},
-			 'tag'         => {},
+			 'tag'         => { 'ref' => 'array' },
 			 'severity'    => { 'valid_format' => 'waf_severity' },
 			 'phase'       => { 'valid_format' => 'waf_phase' },
 			 'resolution' =>
