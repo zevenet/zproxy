@@ -950,6 +950,16 @@ sub set_dhcp()
 		# do not to save, if the value is the same
 		return if ( $dhcp_status == $newdhcp );
 
+		# set the interface up
+		if ( $if_ref->{ status } ne 'up' )
+		{
+			if ( &upIf( $if_ref, 'writeconf' ) )
+			{
+				&error_dialog( "A problem is detected setting up the $newif interface." );
+				return undef;
+			}
+		}
+
 		require Zevenet::Net::Core;
 		require Zevenet::Net::Route;
 		if ( $if_ref->{ addr } )
