@@ -334,6 +334,7 @@ sub getWAFSetByRuleId
 	foreach my $file ( readdir ( $fd ) )
 	{
 		next if ( $file =~ /^\./ );
+		next if ( $file !~ /\.conf$/ );
 
 		my $fh = &openlock( "$dir/$file", 'r' );
 		my $find = grep ( /id:$id\b/, <$fh> );

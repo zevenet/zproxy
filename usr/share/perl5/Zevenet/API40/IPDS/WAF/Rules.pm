@@ -204,6 +204,17 @@ sub create_waf_rule
 	# rule and action
 	else
 	{
+		if ( exists $json_obj->{ rule_id } )
+		{
+			my $set_id = &getWAFSetByRuleId( $json_obj->{ rule_id } );
+			if ( $set_id )
+			{
+				my $msg =
+				  "The rule $json_obj->{ rule_id } already exists in the set '$set_id'.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
 		my $rule = &getWAFRulesStruct( $type );
 		$err = &translateWafRule( $json_obj, $rule );
 
@@ -301,6 +312,19 @@ sub modify_waf_rule
 		{
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
 		}
+
+		if ( exists $json_obj->{ rule_id }
+			 and $json_obj->{ rule_id } != $rule->{ rule_id } )
+		{
+			my $set_id = &getWAFSetByRuleId( $json_obj->{ rule_id } );
+			if ( $set_id )
+			{
+				my $msg =
+				  "The rule $json_obj->{ rule_id } already exists in the set '$set_id'.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
 		&updateWAFRule( $rule, $json_obj );
 		$err = &setWAFRule( $set, $id, $rule );
 	}
