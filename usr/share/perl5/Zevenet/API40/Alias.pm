@@ -88,7 +88,7 @@ sub set_alias
 	if ( $type eq 'interface' )
 	{
 		require Zevenet::Net::Interface;
-		if ( !&getInterfaceConfig( $id ) )
+		unless ( grep ( /^$id$/, &getInterfaceList() ) )
 		{
 			my $msg = "The interfacace $id has not been found";
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
