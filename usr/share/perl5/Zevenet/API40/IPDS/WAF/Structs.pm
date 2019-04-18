@@ -404,6 +404,7 @@ sub getWafMatchParameters
 			 'operator'  => { 'non_blank'    => 'true', 'values' => \@operators },
 			 'operating'       => {},
 			 'transformations' => {
+									'ref'        => 'array',
 									'non_blank'  => 'true',
 									'function'   => \&validateTransformations,
 									'format_msg' => "accepts the following values: \""
