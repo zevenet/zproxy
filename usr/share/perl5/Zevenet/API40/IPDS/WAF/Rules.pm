@@ -458,8 +458,10 @@ sub create_waf_rule_match
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg    = "The new match was created successfully.";
+	my $msg = "The new match was created successfully.";
+	$rule_st = &getWAFRule( $set, $rule_index );
 	my $output = &getZapiWAFRule( $rule_st );
+
 	my $body = {
 				 description => $desc,
 				 params      => $output->{ matches }->[-1],

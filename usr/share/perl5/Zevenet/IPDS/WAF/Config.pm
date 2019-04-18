@@ -728,14 +728,13 @@ sub createWAFMatch
 	my ( $set, $rule_index, $rule_st, $rule_updates ) = @_;
 	my $err_msg;
 
-	# check if the rule set already has a chain
-	# modify the rule and chain the type of rule
-	if ( @{ $rule_st->{ chain } } == 0 )
+	# modify the directive and change from 'secAction' to 'secRule'
+	if ( $rule_st->{ type } eq 'action' )
 	{
 		&updateWAFRule( $rule_st, $rule_updates );
 	}
 
-	# add a new chain
+	# the rule already is 'secRule', add it a new chain
 	else
 	{
 		my $chain_st = &getWAFRulesStruct( 'match_action' );
