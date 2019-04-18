@@ -23,7 +23,7 @@
 
 use strict;
 
-use Unix::Syslog qw(:macros :subs);  # Syslog macros
+use Unix::Syslog qw(:macros :subs);    # Syslog macros
 
 # Get the program name for zenlog
 my $TAG = "[Log.pm]";
@@ -48,6 +48,17 @@ Function: zenlog
 		&zenlog("This is a message.", "info", "LSLB");
 		&zenlog("Some errors happened.", "err", "FG");
 		&zenlog("testing debug mode", "debug", "SYSTEM");
+
+
+	The different debug levels are:
+	1 - Command executions.
+		API inputs.
+	2 - The command standart output, when there isn't any error.
+		API outputs.
+		Parameters modified in configuration files.
+	3 - (reserved)
+	4 - (reserved)
+	5 - Profiling.
 
 Parametes:
 	string - String to be written in log.
@@ -191,12 +202,12 @@ sub logAndRunBG    # ($command)
 
 	my $program = $basename;
 
-	my $return_code = system("$command >/dev/null 2>&1 &");
+	my $return_code = system ( "$command >/dev/null 2>&1 &" );
 
 	if ( $return_code )
 	{
 		&zenlog( $program . " running: $command", "error", "SYSTEM" );
-		&zenlog( "last command failed!", "error", "SYSTEM" );
+		&zenlog( "last command failed!",          "error", "SYSTEM" );
 	}
 	else
 	{
@@ -205,7 +216,7 @@ sub logAndRunBG    # ($command)
 
 	# return_code is -1 on error.
 
-	# returns true on error launching the program, false on error launching the program
+ # returns true on error launching the program, false on error launching the program
 	return $return_code == -1;
 }
 
