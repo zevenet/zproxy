@@ -186,7 +186,7 @@ sub _runGSLBFarmStop    # ($fname, $writeconf)
 	my $pidfile = &getGSLBFarmPidFile( $fname );
 
 	require Zevenet::System;
-	zsystem( "$exec > /dev/null 2>&1" );
+	&logAndRun( $exec );
 
 	# $exec returns 0 even when gslb stop fails, checked, so force TERM
 	my $pid_gslb = &getGSLBFarmPid( $fname );
