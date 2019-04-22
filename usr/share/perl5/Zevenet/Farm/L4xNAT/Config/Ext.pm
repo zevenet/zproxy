@@ -37,8 +37,6 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $srvparam      = "";
-	my $addition      = "";
-	my $farm_req      = $farm_name;
 
 	if ( $param eq "logs" )
 	{
@@ -64,14 +62,13 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 	}
 
 	require Zevenet::Nft;
-	$output = &httpNlbRequest(
+	$output = &sendL4NlbCmd(
 		{
-		   farm       => $farm_req,
-		   configfile => ( $param ne 'status' ) ? "$configdir/$farm_filename" : undef,
-		   method     => "PUT",
-		   uri        => "/farms",
-		   body =>
-			 qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value"$addition } ] })
+		   farm   => $farm_name,
+		   file   => ( $param ne 'status' ) ? "$configdir/$farm_filename" : undef,
+		   method => "PUT",
+		   uri    => "/farms",
+		   body   => qq({"farms" : [ { "name" : "$farm_name", "$srvparam" : "$value" } ] })
 		}
 	);
 
