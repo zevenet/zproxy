@@ -29,10 +29,12 @@ do_start()
 }
 
 do_stop() {
-	`$NFTBIN flush ruleset`
 	start-stop-daemon --stop --signal 1 --quiet --remove-pidfile --pidfile $PIDFILE --name $NAME
 	[ -f $PIDFILE ] && rm -i $PIDFILE
 	[ "$?" -ne 0 ] && return 2
+	PID=`pidof nftlb`
+	[ -n "$PID" ] && kill -9 $PID
+	`$NFTBIN flush ruleset`
 }
 
 case "$1" in
