@@ -104,6 +104,8 @@ example:
 
 sub get_waf_rule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	my $id  = shift;
 	my $err;
@@ -132,6 +134,8 @@ sub get_waf_rule
 #  POST /ipds/waf/<set>/rules
 sub create_waf_rule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $set      = shift;
 	my $err;
@@ -250,6 +254,8 @@ sub create_waf_rule
 #  PUT /ipds/waf/<set>/rules/<id>
 sub modify_waf_rule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $set      = shift;
 	my $id       = shift;
@@ -349,6 +355,8 @@ sub modify_waf_rule
 #  DELETE /ipds/waf/<set>/rules/<id>
 sub delete_waf_rule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	my $id  = shift;
 	my $err;
@@ -388,6 +396,8 @@ sub delete_waf_rule
 #  POST /ipds/waf/<set>/rules/<id>/actions
 sub move_waf_rule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $set      = shift;
 	my $id       = shift;
@@ -414,7 +424,7 @@ sub move_waf_rule
 
 	my $params =
 	  { "position" =>
-		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters
@@ -443,6 +453,8 @@ sub move_waf_rule
 #  POST /ipds/waf/<set>/rules/<id>/matches
 sub create_waf_rule_match
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj   = shift;
 	my $set        = shift;
 	my $rule_index = shift;
@@ -498,6 +510,8 @@ sub create_waf_rule_match
 #  PUT /ipds/waf/<set>/rules/<id>/matches/index
 sub modify_waf_rule_match
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj    = shift;
 	my $set         = shift;
 	my $rule_index  = shift;
@@ -560,6 +574,8 @@ sub modify_waf_rule_match
 #  DELETE /ipds/waf/<set>/rules/<id>/matches/<index>
 sub delete_waf_rule_match
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set         = shift;
 	my $id          = shift;
 	my $chain_index = shift;

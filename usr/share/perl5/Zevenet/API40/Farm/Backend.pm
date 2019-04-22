@@ -800,6 +800,8 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 
 sub validateDatalinkBackendIface
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $backend = shift;
 	my $msg;
 

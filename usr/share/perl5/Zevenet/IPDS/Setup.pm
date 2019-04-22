@@ -29,6 +29,8 @@ include 'Zevenet::IPDS::Blacklist::Config';
 
 sub initIPDSModule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::IPDS::Blacklist::Actions';
 	include 'Zevenet::IPDS::DoS::Config';
 	include 'Zevenet::IPDS::RBL::Config';

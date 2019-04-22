@@ -71,6 +71,8 @@ Returns:
 
 sub zenlog    # ($string, $type)
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $string = shift;              # string = message
 	my $type   = shift // 'info';    # type   = log level (Default: info))
 	my $tag    = shift // "";
@@ -121,6 +123,8 @@ Returns:
 
 sub zlog    # (@message)
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @message = shift;
 
 	#my ($package,   # 0
@@ -163,6 +167,8 @@ See Also:
 
 sub logAndRun    # ($command)
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $command = shift;    # command string to log and run
 
 	my $program     = $basename;
@@ -198,6 +204,8 @@ Returns:
 
 sub logAndRunBG    # ($command)
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $command = shift;    # command string to log and run
 
 	my $program = $basename;
@@ -222,6 +230,8 @@ sub logAndRunBG    # ($command)
 
 sub zdie
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Carp;
 	Carp->import();
 

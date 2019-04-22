@@ -1495,7 +1495,7 @@ sub getHTTPFarmStruct
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
-	my $type     = shift // &getFarmType( $farmname );
+	my $type = shift // &getFarmType( $farmname );
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;

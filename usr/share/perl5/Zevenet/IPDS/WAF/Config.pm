@@ -49,6 +49,8 @@ Returns:
 
 sub addWAFDelRegister
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set   = shift;
 	my $raw   = shift;
 	my $err   = 0;
@@ -93,6 +95,8 @@ Returns:
 
 sub checkWAFDelRegister
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set   = shift;
 	my $raw   = shift;
 	my $flag  = 0;
@@ -131,6 +135,8 @@ Returns:
 
 sub genWAFRuleId
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $interval_limit_up   = 99999;
 	my $interval_limit_down = 1;
 	my $id                  = $interval_limit_down;
@@ -174,6 +180,8 @@ Returns:
 
 sub setWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set      = shift;
 	my $id       = shift;
 	my $rule_ref = shift;
@@ -215,6 +223,8 @@ Returns:
 
 sub createWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set      = shift;
 	my $rule_ref = shift;
 	my $err_msg  = 0;
@@ -254,6 +264,8 @@ Returns:
 
 sub setWAFSetRaw
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set      = shift;
 	my $set_raw  = shift;
 	my $position = shift
@@ -308,6 +320,8 @@ Returns:
 
 sub createWAFMark
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set  = shift;
 	my $mark = shift;
 
@@ -333,6 +347,8 @@ Returns:
 
 sub setWAFMark
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set  = shift;
 	my $id   = shift;
 	my $mark = shift;
@@ -358,6 +374,8 @@ Returns:
 
 sub copyWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	my $id  = shift;
 
@@ -374,6 +392,8 @@ sub copyWAFRule
 # add a new rule in the end of the set file
 sub createWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $setName = shift;
 	my $err     = 0;
 
@@ -399,6 +419,8 @@ Returns:
 
 sub copyWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $dstSet    = shift;
 	my $originSet = shift;
 
@@ -430,6 +452,8 @@ Returns:
 
 sub getWAFRuleById
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $id = shift;
 	my $rule;
 
@@ -469,6 +493,8 @@ Returns:
 
 sub deleteWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set         = shift;
 	my $rule_index  = shift;
 	my $chain_index = shift;    # if exists, the chain index will be deleted
@@ -522,6 +548,8 @@ Returns:
 
 sub deleteWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	my $err = 0;
 
@@ -553,6 +581,8 @@ Returns:
 
 sub getWAFRuleLast
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set    = shift;
 	my $set_st = &getWAFSet( $set );
 	return ( scalar @{ $set_st->{ rules } } ) ? $set_st->{ rules }->[-1] : undef;
@@ -576,6 +606,8 @@ Returns:
 
 sub moveWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	my $id  = shift;
 	my $pos = shift;
@@ -624,6 +656,8 @@ Returns:
 
 sub setWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $setname = shift;
 	my $params  = shift;
 
@@ -654,6 +688,8 @@ Returns:
 
 sub moveWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm     = shift;
 	my $set      = shift;
 	my $position = shift;
@@ -711,6 +747,8 @@ sub moveWAFSet
 
 sub getWAFMatchExists
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule, $match_index ) = @_;
 	my $exist = 0;
 
@@ -725,6 +763,8 @@ sub getWAFMatchExists
 
 sub createWAFMatch
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $set, $rule_index, $rule_st, $rule_updates ) = @_;
 	my $err_msg;
 
@@ -755,6 +795,8 @@ sub createWAFMatch
 # el primer elemento de la tabla match corresponde a la regla, no al chain
 sub setWAFMatch
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $set, $rule_index, $chain_index, $rule_st, $rule_updates ) = @_;
 	my $err;
 
@@ -777,6 +819,8 @@ sub setWAFMatch
 # delWAFMatch ( $set, $id, $chain_index )
 sub delWAFMatch
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $set, $id, $match_index, $rule_st ) = @_;
 	my $err;
 
@@ -808,6 +852,8 @@ sub delWAFMatch
 
 sub updateWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule_st, $updates ) = @_;
 
 	foreach my $key ( keys %{ $updates } )

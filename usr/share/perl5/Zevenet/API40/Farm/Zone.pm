@@ -199,12 +199,15 @@ sub new_farm_zone_resource    # ( $json_obj, $farmname, $zone )
 		  );
 	}
 
-	my $status = &setGSLBFarmZoneResource( "",
+	my $status = &setGSLBFarmZoneResource(
+										   "",
 										   $json_obj->{ rname },
 										   $json_obj->{ ttl },
 										   $json_obj->{ type },
 										   $json_obj->{ rdata },
-										   $farmname, $zone, );
+										   $farmname,
+										   $zone,
+	);
 
 	if ( $status == -1 )
 	{
@@ -389,8 +392,8 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 	my $resource = $res_aref->[$id_resource];
 	my $rsc;
 	$rsc->{ rname } = $json_obj->{ rname } // $resource->{ rname };
-	$rsc->{ ttl }   = $json_obj->{ ttl } // $resource->{ ttl };
-	$rsc->{ type }  = $json_obj->{ type } // $resource->{ type };
+	$rsc->{ ttl }   = $json_obj->{ ttl }   // $resource->{ ttl };
+	$rsc->{ type }  = $json_obj->{ type }  // $resource->{ type };
 	$rsc->{ rdata } = $json_obj->{ rdata } // $resource->{ rdata };
 
 	# validate RESOURCE
@@ -429,12 +432,15 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 		}
 	}
 
-	my $status = &setGSLBFarmZoneResource( $id_resource,
+	my $status = &setGSLBFarmZoneResource(
+										   $id_resource,
 										   $rsc->{ rname },
 										   $rsc->{ ttl },
 										   $rsc->{ type },
 										   $rsc->{ rdata },
-										   $farmname, $zone, );
+										   $farmname,
+										   $zone,
+	);
 
 	if ( $status == -1 )
 	{

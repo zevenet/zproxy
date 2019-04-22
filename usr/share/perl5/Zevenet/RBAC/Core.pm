@@ -43,6 +43,8 @@ Returns:
 
 sub getRBACConfPath
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -68,6 +70,8 @@ Returns:
 
 sub getRBACGroupMembers
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -101,6 +105,8 @@ Returns:
 
 sub getRBACUserIsMember
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -132,6 +138,8 @@ Returns:
 
 sub getRBACUserGroup
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -173,6 +181,8 @@ Returns:
 
 sub getRBACResourcePermissions
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -236,6 +246,8 @@ Returns:
 
 sub getRBACRolePath
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -261,6 +273,8 @@ Returns:
 
 sub getRBACRoleFile
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -289,6 +303,8 @@ Returns:
 
 sub getRBACRolePermission
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -356,6 +372,8 @@ Returns:
 
 sub getRBACPermissionsMsg
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -442,6 +460,8 @@ Returns:
 
 sub getRBACForbidden
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -481,6 +501,8 @@ Returns:
 
 sub getRBACExceptions
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -526,6 +548,8 @@ Returns:
 
 sub getRBACPermissionHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -597,6 +621,8 @@ Returns:
 
 sub getRBACRoleMenu
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -656,6 +682,8 @@ sub getRBACRoleMenu
 
 sub getRBACPermissionFarmHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -841,6 +869,8 @@ sub getRBACPermissionFarmHash
 
 sub getRBACPermissionCertificateHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -897,6 +927,8 @@ sub getRBACPermissionCertificateHash
 
 sub getRBACPermissionIntefaceVirtualHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -944,6 +976,8 @@ sub getRBACPermissionIntefaceVirtualHash
 
 sub getRBACPermissionIntefaceHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -984,6 +1018,8 @@ sub getRBACPermissionIntefaceHash
 
 sub getRBACPermissionIpdsHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -1029,6 +1065,8 @@ sub getRBACPermissionIpdsHash
 
 sub getRBACPermissionAliasHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -1100,6 +1138,8 @@ sub getRBACPermissionAliasHash
 
 sub getRBACPermissionSystemHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -1234,6 +1274,8 @@ sub getRBACPermissionSystemHash
 
 sub getRBACPermissionRbacHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_
@@ -1339,6 +1381,8 @@ sub getRBACPermissionRbacHash
 
 sub getRBACPermissionFgHash
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	&zenlog(
 			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
 			 ? @_

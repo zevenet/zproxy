@@ -45,6 +45,8 @@ Returns:
 
 sub enableDHCP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_ref = shift;
 	my $err    = 1;
 
@@ -77,6 +79,8 @@ Returns:
 
 sub disableDHCP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_ref = shift;
 	my $err    = 0;
 
@@ -105,6 +109,8 @@ Returns:
 
 sub getDHCPCmd
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_name  = shift;
 	my $dhcp_cli = &getGlobalConfiguration( 'dhcp_bin' );
 	return "$dhcp_cli $if_name";
@@ -125,6 +131,8 @@ Returns:
 
 sub startDHCP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_name = shift;
 
 	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
@@ -149,6 +157,8 @@ Returns:
 
 sub stopDHCP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_name = shift;
 
 	use Proc::Find qw(find_proc);

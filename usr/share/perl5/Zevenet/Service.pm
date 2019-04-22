@@ -518,11 +518,15 @@ sub disable_cluster
 
 sub service_start_farms
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return ( $swcert > 0 );    # return 1 if the certificate is not valid
 }
 
 sub service_cert_message
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $output = "";
 	my $tag    = "";
 	my $msg    = "";

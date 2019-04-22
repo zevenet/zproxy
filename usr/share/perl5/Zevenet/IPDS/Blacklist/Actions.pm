@@ -355,6 +355,8 @@ Returns:
 
 sub initBLModule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );

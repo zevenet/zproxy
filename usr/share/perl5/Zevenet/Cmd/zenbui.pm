@@ -753,6 +753,9 @@ sub manage_mgmt()
 
 sub update_mgmt_view()
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# not continue if the boxes are not defined
 	return unless ( $mgmtipinput, $mgmtmaskinput, $mgmtgwinput, $mgmtdhcpinput );
 
@@ -813,6 +816,8 @@ sub set_proxy()
 
 sub unset_iface
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	&delRoutes( "local", $if_ref );

@@ -75,6 +75,8 @@ my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
 sub getKeySigned
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return $keyid;
 }
 
@@ -93,6 +95,8 @@ Returns:
 
 sub buildcbc
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $cipher = Crypt::CBC->new(
 					 -literal_key => 1,
 					 -key => 'wg2kx8VY2NVYDdQSAdqffmHYMd2d97ypYdJ4hwczAm8YBPtHv28EJJ66',
@@ -120,6 +124,8 @@ Returns:
 
 sub encrypt    # string for encrypt
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $data = shift;
 
 	my $cipher = &buildcbc();
@@ -143,6 +149,8 @@ Returns:
 
 sub decrypt    # string for decrypt
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $data = shift;
 
 	my $cipher = &buildcbc();
@@ -166,6 +174,8 @@ Returns:
 
 sub getCertActivationData
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zlbcertfile = shift;
 	my @data        = `$openssl x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 	return \@data;
@@ -186,6 +196,8 @@ Returns:
 
 sub keycert
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $dmi      = &get_sys_uuid();
 	my $hostname = &getHostname();
 	my $mod_appl = &get_mod_appl();
@@ -212,6 +224,8 @@ Returns:
 
 sub keycert_old
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $dmi      = get_sys_uuid();
 	my $hostname = &getHostname();
 
@@ -244,6 +258,8 @@ Returns:
 
 sub crlcontrol
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $err = 1;
 
 # lock the downloading crl resource.
@@ -301,6 +317,8 @@ Returns:
 
 sub certcontrol
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zlbcertfile = shift // $zlbcertfile_path;
 
 	my $swcert = 0;
@@ -365,6 +383,8 @@ Returns:
 
 sub getCertDefinitive
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zen_cert   = $_[0];
 	my $cert_type  = $_[1];
 	my $end        = $_[2];
@@ -409,6 +429,8 @@ Returns:
 
 sub getCertErrorMessage
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $swcert = shift;
 	return $certErrors[$swcert];
 }
@@ -429,6 +451,8 @@ Returns:
 
 sub checkActivationCertificate
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $swcert = &certcontrol();
 
 	# if $swcert is greater than 0 zapi should not work
@@ -459,6 +483,8 @@ Returns:
 
 sub get_sys_uuid
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
 	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
@@ -482,6 +508,8 @@ Returns:
 
 sub get_mod_appl
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @mod = grep ( /\w{3} ?\d{4}/, `cat /etc/zevenet_version` );
 	$mod[0] =~ /(\w{3} ?\d{4})/;
 
@@ -506,6 +534,8 @@ Returns:
 
 sub updateCRL
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $date_today = $_[0];
 	my $tmp_file   = '/tmp/cacrl.crl';
 	my $curl       = &getGlobalConfiguration( 'curl_bin' );
@@ -549,6 +579,8 @@ Returns:
 
 sub certRevoked
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $zlbcertfile ) = @_;
 
 	# check crl y descargar
@@ -586,6 +618,8 @@ Returns:
 
 sub getCertSerial
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zlbcertfile = shift;
 	my $serial      = `$openssl x509 -in $zlbcertfile -serial -noout`;
 	$serial =~ /serial\=(\w+)/;
@@ -610,6 +644,8 @@ Returns:
 
 sub getCertKey
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zen_cert = $_[0];
 	my @key_cert = grep /Subject: ?.+/, @{ $zen_cert };
 	my $cert_type;    # old or new
@@ -661,6 +697,8 @@ Returns:
 
 sub setCRLDate
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $date_today = shift;
 
 	my $date_encode = &encrypt( $date_today );
@@ -693,6 +731,9 @@ Returns:
 
 sub checkCRLUpdated
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# it is necessary a CRL if the file does not exist, download it
 	return 0 if ( !-f $crl_path );
 
@@ -728,6 +769,8 @@ Returns:
 
 sub getCertExpiring
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zen_cert = $_[0];
 
 	my ( $na ) = grep /Not After/i, @{ $zen_cert };
@@ -759,6 +802,8 @@ Returns:
 
 sub validateCertificate
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zen_cert  = $_[0];
 	my $key       = $_[1];
 	my $hostname  = $_[2];
@@ -855,6 +900,8 @@ Returns:
 
 sub getCertActivationInfo
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zlbcertfile = shift;
 	my $cert_data   = &getCertActivationData( $zlbcertfile );
 
@@ -903,6 +950,8 @@ Returns:
 
 sub uploadCertActivation
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $upload_data = shift;
 	my $errmsg;
 	my $tmpFilename = '/tmp/zlbcertfile.tmp.pem';

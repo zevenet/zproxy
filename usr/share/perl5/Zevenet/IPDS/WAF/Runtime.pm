@@ -44,6 +44,8 @@ Returns:
 
 sub reloadWAFByFarm
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = shift;
 	my $err  = 0;
 	require Zevenet::Farm::HTTP::Config;
@@ -81,6 +83,8 @@ Returns:
 
 sub addWAFsetToFarm
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = shift;
 	my $set  = shift;
 	my $err  = 1;
@@ -156,6 +160,8 @@ Returns:
 
 sub removeWAFSetFromFarm
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = shift;
 	my $set  = shift;
 	my $err  = 0;
@@ -208,6 +214,8 @@ Returns:
 
 sub reloadWAFByRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	my $err;
 

@@ -45,7 +45,9 @@ See Also:
 
 sub getGlobalConfiguration
 {
-	my $parameter    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $parameter = shift;
 	my $force_reload = shift // 0;
 
 	state $global_conf = &parseGlobalConfiguration();
@@ -117,7 +119,7 @@ sub parseGlobalConfiguration
 		# replace every variable used in the $var_value by its content
 		while ( $global_conf->{ $param } =~ /\$(\w+)/ )
 		{
-			$var   = $1;
+			$var = $1;
 			$value = $global_conf->{ $var } // '';
 			$global_conf->{ $param } =~ s/\$$var/$value/;
 		}

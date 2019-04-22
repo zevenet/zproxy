@@ -37,8 +37,10 @@ my @bond_modes = (
 );
 
 my @bond_modes_short = (
-						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
-						 '802.3ad',    'balance-tlb',   'balance-alb',
+						 'balance-rr',  'active-backup',
+						 'balance-xor', 'broadcast',
+						 '802.3ad',     'balance-tlb',
+						 'balance-alb',
 );
 
 =begin nd

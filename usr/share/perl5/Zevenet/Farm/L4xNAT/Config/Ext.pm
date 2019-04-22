@@ -77,6 +77,8 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 
 sub modifyLogsParam
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname  = shift;
 	my $logsValue = shift;
 

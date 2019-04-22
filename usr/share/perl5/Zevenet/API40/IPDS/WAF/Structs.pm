@@ -66,11 +66,15 @@ my $trOperator = &createTRANSLATE(
 
 sub getWafOperators
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return @{ &getTRANSLATEInputs( $trOperator ) };
 }
 
 sub getWafTransformations
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return (
 			 "base64Decode",     "sqlHexDecode",     "base64DecodeExt",
 			 "base64Encode",     "cmdLine",          "compressWhitespace",
@@ -90,6 +94,8 @@ sub getWafTransformations
 
 sub getWafVariables
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return (
 			 "ARGS_COMBINED_SIZE",           "ARGS",
 			 "ARGS_JSON",                    "ARGS_GET",
@@ -137,6 +143,8 @@ sub getWafVariables
 
 sub translateWafVariables
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $var    = shift;
 	my $output = shift;
 	my @list;
@@ -165,6 +173,8 @@ sub translateWafVariables
 
 sub translateWafRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $rule     = shift;
 
@@ -204,6 +214,8 @@ sub translateWafRule
 
 sub translateWafMatch
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	if ( exists $json_obj->{ operator } )
@@ -245,6 +257,8 @@ Returns:
 
 sub getZapiWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule = shift;
 
 	include 'Zevenet::IPDS::WAF::Core';
@@ -262,12 +276,12 @@ sub getZapiWAFRule
 				 'resolution'  => ( $rule->{ action } eq 'block' )
 				 ? 'default_action'
 				 : $rule->{ action } // $DEFAULT_RESOLUTION,
-				 'log'          => $rule->{ log } // '',
-				 'audit'        => $rule->{ audit_log } // '',
-				 'skip'         => $rule->{ skip } // $DEFAULT_SKIP,
-				 'skip_after'   => $rule->{ skip_after } // '',
-				 'execute'      => $rule->{ execute } // '',
-				 'modified'     => $rule->{ modified } // '',
+				 'log'          => $rule->{ log }          // '',
+				 'audit'        => $rule->{ audit_log }    // '',
+				 'skip'         => $rule->{ skip }         // $DEFAULT_SKIP,
+				 'skip_after'   => $rule->{ skip_after }   // '',
+				 'execute'      => $rule->{ execute }      // '',
+				 'modified'     => $rule->{ modified }     // '',
 				 'redirect_url' => $rule->{ redirect_url } // '',
 				 'matches'      => [],
 		};
@@ -339,6 +353,8 @@ sub getZapiWAFRule
 
 sub getZapiWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	include 'Zevenet::IPDS::WAF::Parser';
@@ -371,12 +387,14 @@ sub getZapiWAFSet
 
 sub getWafRuleParameters
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $out;
 
 	$out = {
 			 'rule_id'     => { 'valid_format' => 'waf_rule_id' },
 			 'description' => {},
-			 'tag'         => { 'ref' => 'array' },
+			 'tag'         => { 'ref'          => 'array' },
 			 'severity'    => { 'valid_format' => 'waf_severity' },
 			 'phase'       => { 'valid_format' => 'waf_phase' },
 			 'resolution' =>
@@ -396,6 +414,8 @@ my @transformations = &getWafTransformations();
 
 sub getWafMatchParameters
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @operators = &getWafOperators();
 
 	return {
@@ -417,6 +437,8 @@ sub getWafMatchParameters
 
 sub validateTransformations
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $transf = shift;
 
 	foreach my $t ( @{ $transf } )

@@ -33,6 +33,8 @@ my $deleted_reg = $configdir . "/ipds/waf/delreg";
 
 sub getWAFDir
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return $wafDir;
 }
 
@@ -51,6 +53,8 @@ Returns:
 
 sub getWAFDelRegisterDir
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return $deleted_reg;
 }
 
@@ -69,6 +73,8 @@ Returns:
 
 sub getWAFDelRegisterFile
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	return "$deleted_reg/${set}.conf";
 }
@@ -88,6 +94,8 @@ Returns:
 
 sub getWAFSetDir
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return $wafSetDir;
 }
 
@@ -106,6 +114,8 @@ Returns:
 
 sub getWAFSetFile
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	return "$wafSetDir/${set}.conf";
 }
@@ -163,6 +173,8 @@ Returns:
 
 sub getWAFRulesStruct
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $type = shift;
 	my $out = {
 		'type'             => $type,
@@ -238,6 +250,8 @@ Returns:
 
 sub getWAFSetStructConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	return {
 			 audit                 => 'false',    #SecAuditEngine: on|off|RelevantOnly
 			 process_request_body  => 'false',    # SecRequestBodyAccess on|off
@@ -266,6 +280,8 @@ Returns:
 
 sub listWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @listSet = ();
 
 	opendir ( my $fd, $wafSetDir ) or return @listSet;
@@ -292,12 +308,16 @@ Returns:
 
 sub existWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 	return ( grep ( /^$set$/, &listWAFSet() ) ) ? 1 : 0;
 }
 
 sub getWAFSetStatus
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	my $file = &getWAFSetFile( $set );
@@ -325,6 +345,8 @@ Returns:
 
 sub getWAFSetByRuleId
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $id  = shift;
 	my $set = "";
 	my $dir = &getWAFSetDir();
@@ -363,6 +385,8 @@ Returns:
 
 sub existWAFRuleId
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $id = shift;
 	return &getWAFSetByRuleId( $id ) ? 1 : 0;
 }
@@ -382,6 +406,8 @@ Returns:
 
 sub listWAFByFarm
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm  = shift;
 	my @rules = ();
 
@@ -414,6 +440,8 @@ Returns:
 
 sub listWAFBySet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set   = shift;
 	my @farms = ();
 	my $farm_file;

@@ -234,6 +234,8 @@ sub setRBACRoleConfigFile
 
 sub getRBACRole
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $role = shift;
 
 	require Config::Tiny;
@@ -257,6 +259,8 @@ sub getRBACRole
 
 sub getRBACMenus
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $role;
 	my $user = &getUser();
 

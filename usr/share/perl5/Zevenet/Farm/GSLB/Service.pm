@@ -728,6 +728,8 @@ sub getGSLBFarmServicesStruct31
 
 sub setGSLBFarmPort
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service, $defport ) = @_;
 	my $error = 0;
 
@@ -757,6 +759,8 @@ sub setGSLBFarmPort
 
 sub existGSLBDefCheck
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm      = shift;
 	my $port      = shift;
 	my $ffile     = &getFarmFile( $farm );
@@ -772,6 +776,8 @@ sub existGSLBDefCheck
 
 sub addGSLBDefCheck
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm, $port ) = @_;
 
 	# do not add if it already exists

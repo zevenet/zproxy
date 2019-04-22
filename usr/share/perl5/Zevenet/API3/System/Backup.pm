@@ -28,7 +28,8 @@ use Zevenet::Backup;
 #	GET	/system/backup
 sub get_backup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $description = "Get backups";
 
 	my $backups = &getBackup;
@@ -40,8 +41,9 @@ sub get_backup
 #	POST  /system/backup
 sub create_backup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj       = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
 
 	my $description    = "Create a backups";
 	my @requiredParams = ( "name" );
@@ -85,8 +87,9 @@ sub create_backup
 #	GET	/system/backup/BACKUP
 sub download_backup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $backup      = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $backup = shift;
 
 	my $description = "Download a backup";
 	my $errormsg    = "$backup was download successful.";
@@ -121,7 +124,8 @@ sub download_backup
 #	PUT	/system/backup/BACKUP
 sub upload_backup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $upload_filehandle = shift;
 	my $name              = shift;
 
@@ -168,7 +172,8 @@ sub upload_backup
 #	DELETE /system/backup/BACKUP
 sub del_backup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $backup = shift;
 
 	my $errormsg;
@@ -220,13 +225,14 @@ sub del_backup
 #	POST /system/backup/BACKUP/actions
 sub apply_backup
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj    = shift;
-	my $backup      = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $backup   = shift;
 
 	my $description = "Apply a backup to the system";
 	my @allowParams = ( "action" );
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	my $errormsg    = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( !$errormsg )
 	{

@@ -44,6 +44,8 @@ Returns:
 
 sub initWAFModule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	use File::Path qw(make_path);
 
 	my $deleted_rules = &getWAFDelRegisterDir();
@@ -71,6 +73,8 @@ Returns:
 
 sub listWAFSetPreload
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @list_sets = ();
 	tie my @array, 'Tie::File', $preload_sets
 	  or &zenlog( "the file $preload_sets could not be opened", "warning", "waf" );
@@ -98,6 +102,8 @@ Returns:
 
 sub addWAFSetPreload
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	tie my @array, 'Tie::File', $preload_sets or return 1;
@@ -123,6 +129,8 @@ Returns:
 
 sub delWAFSetPreload
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	tie my @array, 'Tie::File', $preload_sets or return 1;
@@ -155,6 +163,8 @@ Returns:
 
 sub getWAFSetPreloadPkg
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	opendir ( my $dir, $waf_pkg_dir );
 	my @files = readdir $dir;
 	closedir $dir;
@@ -181,6 +191,8 @@ Returns:
 
 sub updateWAFSetPreload
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $err        = 0;
 	my $err_global = 0;
 

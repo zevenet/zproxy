@@ -335,7 +335,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	if ( $if_ref )
 	{
 		$new_if = {
-					addr    => $json_obj->{ ip } // $if_ref->{ addr },
+					addr    => $json_obj->{ ip }      // $if_ref->{ addr },
 					mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 					gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 		};
@@ -431,7 +431,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 

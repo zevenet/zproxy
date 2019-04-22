@@ -874,6 +874,8 @@ Returns:
 
 sub getClusterExcludedFiles
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $localconfig = &getGlobalConfiguration( 'localconfig' );
 
 	return (

@@ -706,6 +706,8 @@ Returns:
 
 sub checkParamsInterval
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $interval, $param, $value ) = @_;
 	my $err_msg;
 
@@ -756,6 +758,8 @@ Returns:
 
 sub checkParamsInvalid
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rec_keys, $expect_params ) = @_;
 	my $err_msg;
 	my @non_valid;
@@ -793,6 +797,8 @@ Returns:
 
 sub checkParamsRequired
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rec_keys, $expect_params, $param_obj ) = @_;
 	my @miss_params;
 	my $err_msg;
@@ -833,6 +839,8 @@ Returns:
 
 sub httpResponseHelp
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $param_obj  = shift;
 	my $resp_param = [];
 

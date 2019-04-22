@@ -242,6 +242,8 @@ sub getExtraCipherProfiles
 
 sub setHTTPFarmMoveCertificates
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $cert_name, $pos, $cert_list ) = @_;
 	my $err = 0;
 

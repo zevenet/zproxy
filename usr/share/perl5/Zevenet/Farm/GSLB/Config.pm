@@ -578,6 +578,8 @@ hash ref
 
 sub getGSLBFarmStruct
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = {};
 	$farm->{ name }     = shift;
 	$farm->{ filename } = &getFarmFile( $farm->{ name } );
@@ -705,6 +707,8 @@ sub getGSLBParseFarmConfig    # ($param, $value, $config)
 
 sub getGSLBParseBe
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $plainText    = shift;
 	my $hashRef      = shift;
 	my $serviceFlag  = 0;

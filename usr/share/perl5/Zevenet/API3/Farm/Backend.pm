@@ -152,7 +152,9 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setL4FarmServer( $farmname, $id,
+		my $status = &setL4FarmServer(
+									   $farmname,
+									   $id,
 									   $json_obj->{ ip },
 									   $json_obj->{ port },
 									   $json_obj->{ weight },
@@ -1051,7 +1053,8 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		if ( !$error )
 		{
-			my $status = &setL4FarmServer( $farmname,
+			my $status = &setL4FarmServer(
+										   $farmname,
 										   $backend->{ id },
 										   $backend->{ vip },
 										   $backend->{ vport },

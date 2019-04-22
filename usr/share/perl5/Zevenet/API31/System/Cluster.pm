@@ -62,7 +62,7 @@ sub get_cluster
 
 		my $cluster = {
 					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-					failback       => $zcl_conf->{ _ }->{ primary } // $local_hn,
+					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
 					interface      => $zcl_conf->{ _ }->{ interface },
 					nodes          => [
 							  {
@@ -211,8 +211,10 @@ sub modify_cluster
 			my $error_code = &enableZCluster();
 
 			&zenlog(
-					 &runRemotely( "$zcluster_manager enableZCluster",
-								   $zcl_conf->{ $rhost }->{ ip } )
+					 &runRemotely(
+								   "$zcluster_manager enableZCluster",
+								   $zcl_conf->{ $rhost }->{ ip }
+					   )
 					   . "",
 					 "info",
 					 "CLUSTER"
@@ -222,14 +224,19 @@ sub modify_cluster
 	if ( $@ )
 	{
 		my $msg = "Error configuring the cluster";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg,
-								   log_msg => $@ );
+		return
+		  &httpErrorResponse(
+							  code    => 400,
+							  desc    => $desc,
+							  msg     => $msg,
+							  log_msg => $@
+		  );
 	}
 
 	my $local_hn = &getHostname();
 	my $cluster = {
 				check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-				failback       => $zcl_conf->{ _ }->{ primary } // $local_hn,
+				failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
 	};
 
 	$cluster->{ check_interval } += 0;
@@ -448,8 +455,13 @@ sub disable_cluster
 					  $conntrackd_conf )    # FIXME: Global variables
 	{
 		&zenlog(
-			   &runRemotely( "rm $cl_file >/dev/null 2>&1", $zcl_conf->{ $rhost }->{ ip } ),
-			   "info", "CLUSTER" );
+				 &runRemotely(
+							   "rm $cl_file >/dev/null 2>&1",
+							   $zcl_conf->{ $rhost }->{ ip }
+				 ),
+				 "info",
+				 "CLUSTER"
+		);
 		unlink $cl_file;
 	}
 
@@ -608,8 +620,13 @@ sub enable_cluster
 	if ( $@ )
 	{
 		my $msg = "An error happened configuring the cluster.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg,
-								   log_msg => $@ );
+		return
+		  &httpErrorResponse(
+							  code    => 400,
+							  desc    => $desc,
+							  msg     => $msg,
+							  log_msg => $@
+		  );
 	}
 
 	my $message = "Cluster enabled successfully";

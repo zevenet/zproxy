@@ -72,6 +72,8 @@ sub set_proxy
 
 sub OutProxy
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $proxy = &getProxy();
 
 	return {

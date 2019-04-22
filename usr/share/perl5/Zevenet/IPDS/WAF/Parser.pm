@@ -51,6 +51,8 @@ Output example:
 
 sub convertWAFLine
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ref_arr = shift;
 
 	my @txt = @{ $ref_arr };
@@ -139,6 +141,8 @@ Output example:
 
 sub parseWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $txt          = shift;
 	my @nested_rules = @_;      # rest of nested rules
 	my $line;
@@ -194,7 +198,7 @@ sub parseWAFRule
 
 			if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>[^"]+)?$/ )
 			{
-				$rule->{ operator }  = $+{ operator } // "rx";
+				$rule->{ operator } = $+{ operator } // "rx";
 				$rule->{ operating } = $+{ operating };
 			}
 
@@ -395,6 +399,8 @@ Returns:
 
 sub buildWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $st         = shift;
 	my $chain_flag = shift;
 	my $secrule    = "";
@@ -577,6 +583,8 @@ $VAR1 = {
 
 sub parseWAFSetConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $txt  = shift;
 	my $conf = &getWAFSetStructConf();
 
@@ -659,6 +667,8 @@ $VAR1 = [
 
 sub buildWAFSetConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $conf = shift;
 	my @txt  = ();
 
@@ -726,6 +736,8 @@ Returns:
 
 sub buildWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set      = shift;
 	my $struct   = shift;
 	my $set_file = &getWAFSetFile( $set );
@@ -803,6 +815,8 @@ Returns:
 
 sub checkWAFFileSyntax
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $file = shift;
 
 	my $pound = &getGlobalConfiguration( 'pound' );
@@ -842,6 +856,8 @@ Returns:
 
 sub checkWAFRuleSyntax
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rule  = shift;
 	my $pound = &getGlobalConfiguration( 'pound' );
 
@@ -886,6 +902,8 @@ Returns:
 
 sub getWAFRule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set   = shift;
 	my $index = shift;
 
@@ -910,6 +928,8 @@ Returns:
 
 sub parseWAFBatch
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $batch = shift;
 	my @rules = ();
 
@@ -965,6 +985,8 @@ Returns:
 
 sub getWAFSet
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	my $fh = &openlock( &getWAFSetFile( $set ), 'r' ) or return undef;

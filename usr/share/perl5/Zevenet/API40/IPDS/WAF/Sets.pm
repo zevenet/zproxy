@@ -28,6 +28,8 @@ include 'Zevenet::API40::IPDS::WAF::Structs';
 
 sub get_waf_options
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $desc = "List the available options to create a rule match";
 
 	my @operators       = &getWafOperators();
@@ -48,6 +50,8 @@ sub get_waf_options
 #GET /ipds/waf
 sub list_waf_sets
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @sets = &listWAFSet();
 	my $desc = "List the WAF sets";
 
@@ -66,6 +70,8 @@ sub list_waf_sets
 #  GET /ipds/waf/<set>
 sub get_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	my $desc = "Get the WAF set $set";
@@ -87,6 +93,8 @@ sub get_waf_set
 #  POST ipds/waf
 sub create_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::IPDS::WAF::Config';
@@ -156,6 +164,8 @@ sub create_waf_set
 #  PUT ipds/waf/<set>
 sub modify_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $set      = shift;
 
@@ -183,8 +193,8 @@ sub modify_waf_set
 									   'non_blank'    => 'true',
 				   },
 				   "default_action" => {
-										 'values' => ["allow", "redirect", "pass", "deny"],
-										 'non_blank' => 'true',
+									   'values'    => ["allow", "redirect", "pass", "deny"],
+									   'non_blank' => 'true',
 				   },
 				   "default_log" => {
 									  'valid_format' => 'waf_log',
@@ -224,6 +234,8 @@ sub modify_waf_set
 #  DELETE /ipds/waf/<set>
 sub delete_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $set = shift;
 
 	include 'Zevenet::IPDS::WAF::Config';
@@ -267,6 +279,8 @@ sub delete_waf_set
 #  POST /farms/<farm>/ipds/waf
 sub add_farm_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farm     = shift;
 
@@ -334,6 +348,8 @@ sub add_farm_waf_set
 #  DELETE /farms/<farm>/ipds/waf
 sub remove_farm_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = shift;
 	my $set  = shift;
 
@@ -383,6 +399,8 @@ sub remove_farm_waf_set
 #  POST /farms/<farm>/ipds/waf/<set>/actions
 sub move_farm_waf_set
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farm     = shift;
 	my $set      = shift;
@@ -408,7 +426,7 @@ sub move_farm_waf_set
 
 	my $params =
 	  { "position" =>
-		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters

@@ -824,6 +824,8 @@ Returns:
 
 sub doL4FarmRules
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $action        = shift;
 	my $farm_name     = shift;
 	my $prev_farm_ref = shift;

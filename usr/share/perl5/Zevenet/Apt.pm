@@ -8,6 +8,9 @@ my $cert_path = &getGlobalConfiguration( 'zlbcertfile_path' );
 
 sub setAPTRepo
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# Variables
 	my $keyid     = &getKeySigned();
 	my $host      = &getGlobalConfiguration( 'repo_url_zevenet' );
@@ -133,6 +136,8 @@ sub setAPTRepo
 
 sub getAPTUpdatesList
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $package_list = &getGlobalConfiguration( 'apt_outdated_list' );
 	my $message_file = &getGlobalConfiguration( 'apt_msg' );
 

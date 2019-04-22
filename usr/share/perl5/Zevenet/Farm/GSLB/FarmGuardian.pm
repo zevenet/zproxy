@@ -411,6 +411,8 @@ sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 
 sub createGSLBFg
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fg_name, $farm, $srv ) = @_;
 
 	my $fg_st = &getFGObject( $fg_name );
@@ -455,6 +457,8 @@ sub createGSLBFg
 
 sub linkGSLBFg    # ( $fg_name, $farm, $srv );
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fg_name, $farm, $srv ) = @_;
 	my $err = 0;
 
@@ -478,6 +482,8 @@ sub linkGSLBFg    # ( $fg_name, $farm, $srv );
 
 sub unlinkGSLBFg
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $service ) = @_;
 
 	my $out = &setGSLBDeleteFarmGuardian( $fname, $service );
@@ -497,6 +503,8 @@ sub unlinkGSLBFg
 
 sub updateGSLBFg
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $fg_name = shift;
 
 	my $fg_st = &getFGObject( $fg_name );
