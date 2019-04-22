@@ -254,7 +254,7 @@ sub runGSLBFarmReload    # ($farm_name)
 
 	&zenlog( "running $gdnsd_command", "info", "GSLB" );
 
-	zsystem( "$gdnsd_command >/dev/null 2>&1" );
+	&logAndRun( "$gdnsd_command" );
 	$output = $?;
 	if ( $output != 0 )
 	{
