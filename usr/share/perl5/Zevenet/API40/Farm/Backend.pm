@@ -82,10 +82,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 								'valid_format' => 'port',
 								'format_msg'   => 'expects a port or port range'
 		};
-		$params->{ "max_conns" } = {
-									 'valid_format' => 'natural_num',
-									 'format_msg'   => 'expects a natural number'
-		};
+		$params->{ "max_conns" } = { 'interval' => '0,' };
 	}
 	else
 	{
@@ -438,10 +435,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 								'function'   => \&isValidPortNumber,
 								'format_msg' => 'expects an port or port range'
 		};
-		$params->{ "max_conns" } = {
-									 'valid_format' => 'natural_num',
-									 'format_msg'   => 'expects a natural number'
-		};
+		$params->{ "max_conns" } = { 'interval' => '0,' };
 	}
 	else
 	{
