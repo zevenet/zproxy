@@ -162,7 +162,7 @@ $aptkey_bin="/usr/bin/apt-key";
 #Where is apt-cache?
 $aptcache_bin="/usr/bin/apt-cache";
 #Where is checkupgrades?
-$checkupgrades_bin="/usr/sbin/checkupgrades";
+$checkupgrades_bin="/usr/local/zevenet/bin/checkupgrades";
 #Where is openssl?
 $openssl="/usr/bin/openssl";
 #Where is unzip?
