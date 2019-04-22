@@ -266,7 +266,8 @@ sub set_ipds_package
 
 	my $error = &runIpdsUpgrade( $json_obj );
 
-	$msg = "IPDS Package already have the latest version" unless ( defined $error );
+	$msg = "IPDS Package is already in the latest version"
+	  unless ( defined $error );
 
 	if ( $error && $json_obj->{ mode } eq "disabled" )
 	{
