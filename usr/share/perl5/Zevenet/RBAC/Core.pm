@@ -43,8 +43,13 @@ Returns:
 
 sub getRBACConfPath
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	return &getGlobalConfiguration( 'configdir' ) . "/rbac";
 }
 
@@ -63,8 +68,13 @@ Returns:
 
 sub getRBACGroupMembers
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $group = shift;
 
 	my ( undef, undef, undef, $members ) = getgrnam ( $group );
@@ -91,8 +101,13 @@ Returns:
 
 sub getRBACUserIsMember
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $user  = shift;
 	my $group = shift;
 
@@ -117,8 +132,13 @@ Returns:
 
 sub getRBACUserGroup
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $user = shift;
 	my @groups_list;
 	my $groups_bin = &getGlobalConfiguration( "groups_bin" );
@@ -153,8 +173,13 @@ Returns:
 
 sub getRBACResourcePermissions
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $path = shift;
 
 	require Zevenet::User;
@@ -211,8 +236,13 @@ Returns:
 
 sub getRBACRolePath
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	return &getRBACConfPath() . "/roles";
 }
 
@@ -231,8 +261,13 @@ Returns:
 
 sub getRBACRoleFile
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $role = shift;
 	return &getRBACRolePath() . "/$role.conf";
 }
@@ -254,8 +289,13 @@ Returns:
 
 sub getRBACRolePermission
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $section = shift;
 	my $action  = shift;
 
@@ -316,8 +356,13 @@ Returns:
 
 sub getRBACPermissionsMsg
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $path   = shift;
 	my $method = shift;
 
@@ -397,8 +442,13 @@ Returns:
 
 sub getRBACForbidden
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $path   = shift;
 	my $method = shift;
 	my $deny   = 0;
@@ -431,8 +481,13 @@ Returns:
 
 sub getRBACExceptions
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $path   = shift;
 	my $method = shift;
 
@@ -471,8 +526,13 @@ Returns:
 
 sub getRBACPermissionHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $path   = shift;
 	my $method = shift;
 	my $section;
@@ -537,8 +597,13 @@ Returns:
 
 sub getRBACRoleMenu
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $path = shift;
 	my $hash;
 
@@ -591,8 +656,13 @@ sub getRBACRoleMenu
 
 sub getRBACPermissionFarmHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $zone_re         = &getValidFormat( 'zone' );
 	my $resource_id_re  = &getValidFormat( 'resource_id' );
 	my $farm_re         = &getValidFormat( 'farm_name' );
@@ -771,8 +841,13 @@ sub getRBACPermissionFarmHash
 
 sub getRBACPermissionCertificateHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $cert_re     = &getValidFormat( 'certificate' );
 	my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
@@ -822,8 +897,13 @@ sub getRBACPermissionCertificateHash
 
 sub getRBACPermissionIntefaceVirtualHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $virtual_re = &getValidFormat( 'virt_interface' );
 
 	my $hash = {
@@ -864,8 +944,13 @@ sub getRBACPermissionIntefaceVirtualHash
 
 sub getRBACPermissionIntefaceHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $hash = {
 		 'PUT' => [
 				   {
@@ -899,8 +984,13 @@ sub getRBACPermissionIntefaceHash
 
 sub getRBACPermissionIpdsHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $hash = {
 		'PUT' => [
 				  {
@@ -939,8 +1029,13 @@ sub getRBACPermissionIpdsHash
 
 sub getRBACPermissionAliasHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $hash = {
 				 'PUT' => [
 						   {
@@ -1005,8 +1100,13 @@ sub getRBACPermissionAliasHash
 
 sub getRBACPermissionSystemHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $hash = {
 		'PUT' => [
 				  {
@@ -1134,8 +1234,13 @@ sub getRBACPermissionSystemHash
 
 sub getRBACPermissionRbacHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $hash = {
 		'PUT' => [
 				  {
@@ -1234,8 +1339,13 @@ sub getRBACPermissionRbacHash
 
 sub getRBACPermissionFgHash
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	&zenlog(
+			 __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "(" . ( @_ )
+			 ? @_
+			 : "" . ")",
+			 "debug",
+			 "PROFILING"
+	);
 	my $hash = {
 				 'PUT' => [
 						   {
