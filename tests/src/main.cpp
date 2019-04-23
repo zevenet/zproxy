@@ -9,6 +9,7 @@
 #include "t_timerfd.h"
 #include "t_compression.h"
 #include "tst_basictest.h"
+#include "t_sslcontext.h"
 
 std::mutex Debug::log_lock;
 int Debug::log_level = 8;
