@@ -45,8 +45,6 @@ See Also:
 
 sub getGlobalConfiguration
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my $parameter = shift;
 	my $force_reload = shift // 0;
 

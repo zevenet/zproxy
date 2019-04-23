@@ -71,8 +71,6 @@ Returns:
 
 sub zenlog    # ($string, $type)
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
 	my $string = shift;              # string = message
 	my $type   = shift // 'info';    # type   = log level (Default: info))
 	my $tag    = shift // "";
