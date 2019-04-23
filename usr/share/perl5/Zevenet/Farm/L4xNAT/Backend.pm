@@ -421,7 +421,8 @@ sub _getL4FarmParseServers
 
 		if ( $stage == 3 && $line =~ /\"port\"/ )
 		{
-			$server->{ port } = "";    # TODO Not supported yet
+			my @l = split /"/, $line;
+			$server->{ port } = $l[3];
 
 			require Zevenet::Net::Validate;
 			if ( $server->{ port } ne '' && $fproto ne 'all' )

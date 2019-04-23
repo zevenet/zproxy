@@ -263,7 +263,7 @@ sub getAPIFarmBackends
 	# filters:
 	if ( $type eq 'l4xnat' )
 	{
-		push @api_keys, qw(id weight ip priority status);
+		push @api_keys, qw(id weight ip priority status port);
 	}
 	elsif ( $type eq 'datalink' )
 	{
