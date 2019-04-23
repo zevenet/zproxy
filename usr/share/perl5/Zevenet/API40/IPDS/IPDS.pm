@@ -172,6 +172,7 @@ sub set_ipds_package
 			$params->{ time } = {
 								  required  => "true",
 								  non_blank => "true",
+								  ref       => "hash",
 			};
 		}
 		elsif ( $json_obj->{ mode } eq "weekly" )
@@ -185,6 +186,7 @@ sub set_ipds_package
 			$params->{ time } = {
 								  required  => "true",
 								  non_blank => "true",
+								  ref       => "hash",
 			};
 		}
 		elsif ( $json_obj->{ mode } eq "monthly" )
@@ -198,6 +200,7 @@ sub set_ipds_package
 			$params->{ time } = {
 								  required  => "true",
 								  non_blank => "true",
+								  ref       => "hash",
 			};
 		}
 	}
