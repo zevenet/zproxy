@@ -234,7 +234,7 @@ sub setL4FarmBackendsSessionsRemove
 	return 0 if ( $farm->{ persist } eq "none" );
 
 	my $be = $farm->{ servers }[$backend];
-	my $tag =~ s/0x//g;
+	( my $tag = $be->{ tag } ) =~ s/0x//g;
 	my $map_name   = "persist-$farmname";
 	my @persistmap = `/usr/local/sbin/nft list map nftlb $map_name`;
 	my $data       = 0;
