@@ -224,7 +224,7 @@ sub setL4FarmParam
 			$addition = $addition . qq( , "helper" : "none" );
 		}
 
-		$addition = $addition . qq( , "virtual-ports" : "" ) if ( $value eq "all" );
+		$addition = $addition . qq( , "virtual-ports" : "*" ) if ( $value eq "all" );
 		$parameters = qq(, "protocol" : "$value" ) . $addition;
 	}
 	elsif ( $param eq "status" || $param eq "bootstatus" )
