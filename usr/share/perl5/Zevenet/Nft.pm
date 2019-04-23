@@ -198,11 +198,11 @@ sub httpNlbRequest
 	  if ( defined $self->{ body } && $self->{ body } ne "" );
 
 	my $execmd =
-	  qq($curl_cmd -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
+	  qq($curl_cmd --noproxy "*" -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
 	if ( defined $self->{ file } && $self->{ file } ne "" )
 	{
-		$execmd = $execmd . " > " . $self->{ file };
+		$execmd = $execmd . " -f -o " . $self->{ file };
 	}
 
 	$output = &logAndRun( $execmd );
