@@ -34,7 +34,8 @@ do_stop() {
 	[ "$?" -ne 0 ] && return 2
 	PID=`pidof nftlb`
 	[ -n "$PID" ] && kill -9 $PID
-	`$NFTBIN flush ruleset`
+	`$NFTBIN delete table ip nftlb`
+	`$NFTBIN delete table netdev nftlb`
 }
 
 case "$1" in
