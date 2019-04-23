@@ -38,16 +38,6 @@ load_global_conf
 GLOBALCF=$globalcfg
 GLOBALCFT=$globalcfg_tpl
 
-
-# link l4xnat with iptables or nftables
-if [ -d "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
-	rm -rf "/usr/share/perl5/Zevenet/Farm/L4xNAT"
-fi
-if [ ! -e "/usr/share/perl5/Zevenet/Farm/L4xNAT" ]; then
-	ln -sf /usr/share/perl5/Zevenet/Farm/L4nft /usr/share/perl5/Zevenet/Farm/L4xNAT
-fi
-
-
 ## Apply system configurations
 
 if [ $BM_tag -eq 1 ]; then
