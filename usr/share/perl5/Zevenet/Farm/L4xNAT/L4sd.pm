@@ -25,6 +25,34 @@ use strict;
 use warnings;
 
 =begin nd
+Function: runL4sdDaemon
+
+	Launch the l4sd daemon if it's not already launched
+
+Parameters:
+	none
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+=cut
+
+sub runL4sdDaemon
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $l4sdbin = &getGlobalConfiguration( 'l4sd' );
+	my $pidfile = &getGlobalConfiguration( 'l4sdpid' );
+
+	if ( !-f "$pidfile" )
+	{
+		return &logAndRunBG( $l4sdbin );
+	}
+
+	return -1;
+}
+
+=begin nd
 Function: sendL4sdSignal
 
 	Send a USR1 signal to L4sd
@@ -42,16 +70,12 @@ sub sendL4sdSignal
 			 "debug", "PROFILING" );
 
 	my $output  = -1;
-	my $l4sdbin = &getGlobalConfiguration( 'l4sd' );
 	my $pidfile = &getGlobalConfiguration( 'l4sdpid' );
 
-	if ( !-f "$pidfile" )
-	{
-		return &logAndRun( $l4sdbin );
-	}
+	&runL4sdDaemon();
 
 	# read pid number
-	open my $file, "<", "$pidfile";
+	open my $file, "<", "$pidfile" or return -1;
 	my $pid = <$file>;
 	close $file;
 
@@ -118,6 +142,8 @@ sub setL4sdType
 	my $farm_name = shift;
 	my $type      = shift;
 	my $l4sdfile  = &getGlobalConfiguration( 'l4sdcfg' );
+	my $l4sdbin   = &getGlobalConfiguration( 'l4sd' );
+	my $pidfile   = &getGlobalConfiguration( 'l4sdpid' );
 
 	if ( !-f "$l4sdfile" )
 	{
@@ -137,11 +163,13 @@ sub setL4sdType
 	{
 		delete $config->{ $farm_name };
 	}
-	else
+	elsif ( $type eq "leastconn" )
 	{
 		$config->{ $farm_name }->{ type } = $type;
 	}
 	$config->write( $l4sdfile );
+
+	&sendL4sdSignal();
 
 	return 0;
 }
