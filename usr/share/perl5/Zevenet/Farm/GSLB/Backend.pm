@@ -327,17 +327,6 @@ sub getGSLBFarmBackends    # ($farm_name)
 	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
 
-	# get backend Alias
-	include 'Zevenet::RBAC::Core';
-	my $permission = &getRBACRolePermission( 'alias', 'list' );
-
-	my $alias;
-	if ( $permission )
-	{
-		include 'Zevenet::Alias';
-		$alias = &getAlias( 'backend' );
-	}
-
 	#
 	# Backends
 	#
@@ -375,10 +364,9 @@ sub getGSLBFarmBackends    # ($farm_name)
 
 		push @backendStats,
 		  {
-			alias => $permission ? $alias->{ $addr } // "" : undef,
-			id    => $id + 0,
-			ip    => $addr,
-			port  => $port + 0,
+			id     => $id + 0,
+			ip     => $addr,
+			port   => $port + 0,
 			status => $status
 		  };
 	}

@@ -667,6 +667,7 @@ sub getGSLBFarmServicesStruct
 
 	require Zevenet::FarmGuardian;
 	include 'Zevenet::Farm::GSLB::Backend';
+	include 'Zevenet::Alias';
 
 	my @out_s = ();
 
@@ -684,6 +685,7 @@ sub getGSLBFarmServicesStruct
 
 		# Backends
 		my $out_b = &getGSLBFarmBackends( $farmname, $srv );
+		&addAliasBackendsStruct( $out_b );
 
 		push @out_s,
 		  {

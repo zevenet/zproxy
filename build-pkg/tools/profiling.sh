@@ -2,6 +2,9 @@
 
 # This script adds a PROFILLING line inside of each Zevenet function
 
+# WARNING: it is important remove this line from the functions:
+#	&debug(), &getGlobalConfiguration() and &zenlog()
+
 LIB_DIR="usr/share/perl5/Zevenet"
 
 cd ../../

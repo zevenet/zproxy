@@ -385,6 +385,7 @@ sub list_gslb_service_backends
 
 	require Zevenet::Farm::Config;
 	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc          = "List service backends";
 	my $type          = &getFarmType( $farmname );
@@ -398,11 +399,9 @@ sub list_gslb_service_backends
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $backends = &eload(
-						   module => 'Zevenet::Farm::GSLB::Backend',
-						   func   => 'getGSLBFarmBackends',
-						   args   => [$farmname, $service],
-	);
+	my $backends = &getGSLBFarmBackends( $farmname, $service );
+	$backends = &addAliasBackendsStruct( $backends );
+
 	my $body = {
 				 description => $desc,
 				 params      => $backends,

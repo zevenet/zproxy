@@ -32,7 +32,8 @@ my $lockfile   = "/tmp/alias_file.lock";
 
 sub createAliasFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $fh;
 
 	open ( $fh, '>', $alias_file );
@@ -43,7 +44,8 @@ sub createAliasFile
 # Get a backend alias or interface alias
 sub getAlias
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $type, $name ) = @_;
 
 	my $out;
@@ -75,7 +77,9 @@ sub getAlias
 # remove a nick
 sub delAlias
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip ) = @_;
 
@@ -86,7 +90,7 @@ sub delAlias
 		&createAliasFile();
 	}
 
-	my $lock       = &openlock( $lockfile, 'w' );
+	my $lock = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
 	if ( exists $fileHandle->{ $type }->{ $ip } )
@@ -101,7 +105,9 @@ sub delAlias
 # modify or create a nick
 sub setAlias
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip, $alias ) = @_;
 
@@ -112,7 +118,7 @@ sub setAlias
 		&createAliasFile();
 	}
 
-	my $lock       = &openlock( $lockfile, 'w' );
+	my $lock = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
 	# save all struct
@@ -120,6 +126,32 @@ sub setAlias
 
 	$fileHandle->write( $alias_file );
 	close $lock;
+}
+
+# Add to the backend array the alias field
+sub addAliasBackendsStruct
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $servers = shift;
+
+	my $permission = &getRBACRolePermission( 'alias', 'list' );
+	my $alias = &getAlias( 'backend' );
+
+	if ( ref $servers eq 'ARRAY' )
+	{
+		foreach my $bk ( @{ $servers } )
+		{
+			$bk->{ alias } = $permission ? $alias->{ $bk->{ ip } } : undef;
+		}
+	}
+	elsif ( ref $servers eq 'HASH' )
+	{
+		$servers->{ alias } = $permission ? $alias->{ $servers->{ ip } } : undef;
+	}
+
+	return $servers;
 }
 
 1;
