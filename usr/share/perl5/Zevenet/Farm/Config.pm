@@ -280,7 +280,6 @@ Returns:
 
 See Also:
 	<_runDatalinkFarmStart>
-	l4sd
 
 	zapi/v3/get_l4.cgi
 	zapi/v3/get_datalink.cgi
@@ -671,7 +670,7 @@ sub getFarmPlainInfo    # ($farm_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
-	my $file = shift // undef;
+	my $file      = shift // undef;
 	my @content;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );

@@ -25,10 +25,10 @@ use strict;
 
 use Zevenet::API32::HTTP;
 
-
 sub delete_interface_floating    # ( $floating )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';
@@ -49,9 +49,6 @@ sub delete_interface_floating    # ( $floating )
 		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 	};
 
 	if ( $@ )
@@ -86,7 +83,8 @@ sub delete_interface_floating    # ( $floating )
 # address or interface
 sub modify_interface_floating    # ( $json_obj, $floating )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $interface = shift;
 
@@ -150,9 +148,6 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 	};
 
 	if ( $@ )
@@ -185,7 +180,8 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 sub get_interfaces_floating
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Net::Floating';
 
 	my $desc   = "List floating interfaces";
@@ -201,7 +197,8 @@ sub get_interfaces_floating
 
 sub get_floating
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';

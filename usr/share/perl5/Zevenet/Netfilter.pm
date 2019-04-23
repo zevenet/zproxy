@@ -78,7 +78,7 @@ sub getNewMark    # ($farm_name)
 
 	require Tie::File;
 
-	my $found;
+	my $found       = 'false';
 	my $marknum     = 0x200;
 	my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
 

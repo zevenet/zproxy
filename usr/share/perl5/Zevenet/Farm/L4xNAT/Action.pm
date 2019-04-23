@@ -74,6 +74,12 @@ sub startL4Farm    # ($farm_name)
 	require Zevenet::Net::Util;
 	&setIpForward( 'true' );
 
+	if ( $farm->{ lbalg } eq 'leastconn' )
+	{
+		require Zevenet::Farm::L4xNAT::L4sd;
+		&sendL4sdSignal();
+	}
+
 	return $status;
 }
 

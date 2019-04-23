@@ -49,9 +49,6 @@ sub delete_interface_floating    # ( $floating )
 		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 	};
 
 	if ( $@ )
@@ -146,9 +143,6 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 	};
 
 	if ( $@ )

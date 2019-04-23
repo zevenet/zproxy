@@ -287,8 +287,6 @@ $ipv6_enabled="false";
 $recent_ip_list_tot="6000";#update
 # Recent ip hash
 $recent_ip_list_hash_size="6000";#update
-# Iptables lock filename
-$iptlock="/tmp/iptables.lock";
 
 
 #FarmGuardian binary, create advanced check for backend servers
@@ -395,6 +393,10 @@ $ssyncd_enabled="true";
 $ssyncd_bin="$zdir/app/ssyncd/bin/ssyncd";#update
 $ssyncdctl_bin="$zdir/app/ssyncd/bin/ssyncdctl";#update
 $ssyncd_port="9999";
+
+#L4sd configuration
+$l4sdpid="/var/run/l4sd.pid";#update
+$l4sdcfg="$configdir/l4sd.cfg";#update
 
 # time period to get the interface throughput stats
 $throughput_period="5";

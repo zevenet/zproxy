@@ -25,10 +25,10 @@ use strict;
 
 use Zevenet::API31::HTTP;
 
-
 sub delete_interface_floating    # ( $floating )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';
@@ -49,9 +49,6 @@ sub delete_interface_floating    # ( $floating )
 		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 	};
 
 	if ( $@ )
@@ -65,8 +62,8 @@ sub delete_interface_floating    # ( $floating )
 	# force sync to make sure the configuration is updated
 	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
 	{
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir", "info", "CLUSTER");
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		&zenlog( "Syncing $configdir", "info", "CLUSTER" );
 		&runSync( $configdir );
 
 		&runZClusterRemoteManager( 'interface', 'float-update' );
@@ -85,7 +82,8 @@ sub delete_interface_floating    # ( $floating )
 # address or interface
 sub modify_interface_floating    # ( $json_obj, $floating )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj  = shift;
 	my $interface = shift;
 
@@ -131,9 +129,9 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
-		( $if_ref ) = grep
-		{
-			$json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface
+		( $if_ref ) = grep {
+			     $json_obj->{ floating_ip } eq $_->{ addr }
+			  && $_->{ parent } eq $interface
 		} @interfaces;
 
 		# validate ADDRESS in system
@@ -151,9 +149,6 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 	};
 
 	if ( $@ )
@@ -167,8 +162,8 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
 	{
 		# force sync to make sure the configuration is updated
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir", "info", "CLUSTER");
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		&zenlog( "Syncing $configdir", "info", "CLUSTER" );
 		&runSync( $configdir );
 
 		&runZClusterRemoteManager( 'interface', 'float-update' );
@@ -186,7 +181,8 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 sub get_interfaces_floating
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Net::Floating';
 
@@ -232,7 +228,8 @@ sub get_interfaces_floating
 
 sub get_floating
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $floating = shift;
 
 	require Zevenet::Net::Interface;

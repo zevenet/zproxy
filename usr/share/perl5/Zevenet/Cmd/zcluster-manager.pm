@@ -136,12 +136,10 @@ elsif ( $object eq 'getZClusterArpStatus' )
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		my $if_dropped = &execNft(
-								   "check",
+		my $if_dropped = &execNft( "check",
 								   "netdev cluster",
 								   "cl-" . $if_ref->{ parent },
-								   "$if_ref->{ addr }"
-		);
+								   "$if_ref->{ addr }" );
 
 		if ( $node_role ne 'master' && !$if_dropped )
 		{
@@ -507,7 +505,6 @@ if ( $object eq 'interface' )
 		require Zevenet::Farm::L4xNAT::Config;
 		include 'Zevenet::Cluster';
 
-		&reloadL4FarmsSNAT();
 		exit 0;
 	}
 
@@ -537,7 +534,6 @@ if ( $object eq 'interface' )
 		&disableInterfaceDiscovery( $if_ref );    # backup node only
 		$status = &addIp( $if_ref );
 		$status = &applyRoutes( "local", $if_ref ) if $status == 0;
-		&reloadL4FarmsSNAT();
 		exit $status;
 	}
 	elsif ( $command eq 'stop' )                  # flush ip
@@ -545,7 +541,6 @@ if ( $object eq 'interface' )
 		include 'Zevenet::Cluster';
 		require Zevenet::Farm::L4xNAT::Config;
 		$status = &delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
-		&reloadL4FarmsSNAT();
 		&enableInterfaceDiscovery( $if_ref );
 		exit $status;
 	}
@@ -574,7 +569,6 @@ if ( $object eq 'gateway' )
 		exit 1 if !$if_ref;
 
 		$status = &applyRoutes( "global", $if_ref, $if_ref->{ gateway } );
-		&reloadL4FarmsSNAT();
 
 		exit $status;
 	}

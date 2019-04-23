@@ -23,19 +23,20 @@
 
 use strict;
 
-sub delete_interface_floating # ( $floating )
+sub delete_interface_floating    # ( $floating )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';
 
-	my $description = "Remove floating interface";
-	my $floatfile = &getGlobalConfiguration('floatfile');
+	my $description       = "Remove floating interface";
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	# validate BOND
-	unless ( $float_ifaces_conf->{_}->{ $floating } )
+	unless ( $float_ifaces_conf->{ _ }->{ $floating } )
 	{
 		# Error
 		my $errormsg = "Floating interface not found";
@@ -45,21 +46,19 @@ sub delete_interface_floating # ( $floating )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	require Zevenet::Farm::L4xNAT::Config;
 
 	eval {
-		delete $float_ifaces_conf->{_}->{ $floating };
+		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
 
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
 	};
-	if ( ! $@ )
+	if ( !$@ )
 	{
 		# Success
 		my $message = "The floating interface has been removed.";
@@ -69,7 +68,7 @@ sub delete_interface_floating # ( $floating )
 					 message     => $message,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -81,22 +80,23 @@ sub delete_interface_floating # ( $floating )
 					 message     => $errormsg,
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # address or interface
-sub modify_interface_floating # ( $json_obj, $floating )
+sub modify_interface_floating    # ( $json_obj, $floating )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj  = shift;
 	my $interface = shift;
 
 	my $description = "Modify floating interface";
 
-	#~ &zenlog("modify_interface_floating interface:$interface json_obj:".Dumper $json_obj, "info", "NETWORK" );
+#~ &zenlog("modify_interface_floating interface:$interface json_obj:".Dumper $json_obj, "info", "NETWORK" );
 
-	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
+	if ( grep { $_ ne 'floating_ip' } keys %{ $json_obj } )
 	{
 		# Error
 		my $errormsg = "Parameter not recognized";
@@ -106,7 +106,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	unless ( keys %{ $json_obj } )
@@ -119,7 +119,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	require Zevenet::Net::Interface;
@@ -137,7 +137,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	$if_ref = undef;
@@ -145,7 +145,8 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	if ( exists $json_obj->{ floating_ip } )
 	{
 		# validate ADDRESS format
-		unless ( $json_obj->{ floating_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
+		unless (    $json_obj->{ floating_ip }
+				 && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
 			# Error
 			my $errormsg = "Invalid floating address format";
@@ -155,11 +156,14 @@ sub modify_interface_floating # ( $json_obj, $floating )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
-		( $if_ref ) = grep { $json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface } @interfaces;
+		( $if_ref ) = grep
+		{
+			$json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface
+		} @interfaces;
 
 		# validate ADDRESS in system
 		unless ( $if_ref )
@@ -172,7 +176,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 404, body => $body });
+			&httpResponse( { code => 404, body => $body } );
 		}
 	}
 
@@ -180,15 +184,13 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	require Zevenet::Farm::L4xNAT::Config;
 
 	eval {
-		my $floatfile = &getGlobalConfiguration('floatfile');
+		my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 		my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
 
-		# refresh l4xnat rules
-		&reloadL4FarmsSNAT();
 		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
 	};
 
@@ -198,11 +200,11 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		my $message = "Floating interface modification done";
 		my $body = {
 					 description => $description,
-					 success       => "true",
+					 success     => "true",
 					 message     => $message
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -214,13 +216,14 @@ sub modify_interface_floating # ( $json_obj, $floating )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 sub get_interfaces_floating
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Net::Floating';
 
@@ -228,8 +231,8 @@ sub get_interfaces_floating
 
 	# Interfaces
 	my @output;
-	my @ifaces = @{ &getSystemInterfaceList() };
-	my $floatfile = &getGlobalConfiguration('floatfile');
+	my @ifaces            = @{ &getSystemInterfaceList() };
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	for my $iface ( @ifaces )
@@ -241,10 +244,10 @@ sub get_interfaces_floating
 
 		my $floating_ip = undef;
 
-		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
 		{
-			my $floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
-			my $if_ref = &getInterfaceConfig( $floating_interface );
+			my $floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
+			my $if_ref             = &getInterfaceConfig( $floating_interface );
 			$floating_ip = $if_ref->{ addr };
 		}
 
@@ -262,12 +265,13 @@ sub get_interfaces_floating
 				 params      => \@output,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 sub get_floating
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $floating = shift;
 
 	require Zevenet::Net::Interface;
@@ -277,8 +281,8 @@ sub get_floating
 
 	# Interfaces
 	my $output;
-	my @ifaces = @{ &getSystemInterfaceList() };
-	my $floatfile = &getGlobalConfiguration('floatfile');
+	my @ifaces            = @{ &getSystemInterfaceList() };
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	for my $iface ( @ifaces )
@@ -300,15 +304,15 @@ sub get_floating
 						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		$floating_ip = undef;
 
-		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
 		{
-			my $floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
-			my $if_ref = &getInterfaceConfig( $floating_interface );
+			my $floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
+			my $if_ref             = &getInterfaceConfig( $floating_interface );
 			$floating_ip = $if_ref->{ addr };
 		}
 
@@ -325,7 +329,7 @@ sub get_floating
 				 params      => $output,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
