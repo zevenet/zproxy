@@ -60,7 +60,8 @@ sub list_waf_sets
 	foreach my $set ( @sets )
 	{
 		my $status = &getWAFSetStatus( $set );
-		push @out, { status => $status, name => $set };
+		my @farms  = &listWAFBySet( $set );
+		push @out, { status => $status, name => $set, farms => \@farms };
 	}
 
 	return &httpResponse(
