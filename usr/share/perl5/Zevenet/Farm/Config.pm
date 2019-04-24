@@ -428,13 +428,14 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
+		$stat = 0;
 		require Zevenet::Farm::L4xNAT::Config;
-		if ( $vip )
+		if ( $vip ne "" )
 		{
 			$stat = &setL4FarmParam( 'vip', $vip, $farm_name );
 		}
 		return $stat if ( $stat != 0 );
-		if ( $vip_port )
+		if ( $vip_port ne "" )
 		{
 			$stat = &setL4FarmParam( 'vipp', $vip_port, $farm_name );
 		}
@@ -670,7 +671,7 @@ sub getFarmPlainInfo    # ($farm_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
-	my $file      = shift // undef;
+	my $file = shift // undef;
 	my @content;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );

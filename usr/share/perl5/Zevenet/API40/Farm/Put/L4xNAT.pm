@@ -276,8 +276,8 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
 	{
 		# Get current vip & vport
-		my $vip   = $json_obj->{ vip }   // &getFarmVip( "vip",  $farmname );
-		my $vport = $json_obj->{ vport } // &getFarmVip( "vipp", $farmname );
+		my $vip   = $json_obj->{ vip }   // "";
+		my $vport = $json_obj->{ vport } // "";
 
 		if ( &setFarmVirtualConf( $vip, $vport, $farmname ) )
 		{
