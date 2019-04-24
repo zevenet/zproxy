@@ -189,29 +189,27 @@ sub parseWAFRule
 		{
 			if ( $line !~ /^\s*SecRule\s+"?([^"]+)"?\s+"?([^"]+)"?\s+"?([^"]+)?"?/s )
 			{
-				return undef;
-			}
+				my $var = $1;
+				my $val = $2;
+				$act = $3;
 
-			my $var = $1;
-			my $val = $2;
-			$act = $3;
+				if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>[^"]+)?$/ )
+				{
+					$rule->{ operator } = $+{ operator } // "rx";
+					$rule->{ operating } = $+{ operating };
+				}
 
-			if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>[^"]+)?$/ )
-			{
-				$rule->{ operator } = $+{ operator } // "rx";
-				$rule->{ operating } = $+{ operating };
-			}
+				my @var_sp = split ( '\|', $var );
+				$rule->{ variables } = \@var_sp;
 
-			my @var_sp = split ( '\|', $var );
-			$rule->{ variables } = \@var_sp;
-
-			# set not_operator
-			if ( $rule->{ operator } )
-			{
-				$rule->{ operator } =~ s/^(!)?\@//;
-				$rule->{ not_match } = ( $1 ) ? 'true' : 'false';
-				&zenlog( "Not variable found parsing rule: $line ", "debug1", "waf" )
-				  if ( !$rule->{ operator } );
+				# set not_operator
+				if ( $rule->{ operator } )
+				{
+					$rule->{ operator } =~ s/^(!)?\@//;
+					$rule->{ not_match } = ( $1 ) ? 'true' : 'false';
+					&zenlog( "Not variable found parsing rule: $line ", "debug1", "waf" )
+					  if ( !$rule->{ operator } );
+				}
 			}
 		}
 
