@@ -187,16 +187,18 @@ sub new_farm_zone_resource    # ( $json_obj, $farmname, $zone )
 	# validate RESOURCE DATA
 	include 'Zevenet::Farm::GSLB::Service';
 
-	unless ( grep ( /^$json_obj->{ rdata }$/, &getGSLBFarmServices( $farmname ) )
-			 && $json_obj->{ type } eq 'DYNA' )
+	if ( exists $json_obj->{ type } && $json_obj->{ type } eq 'DYNA' )
 	{
-		my $msg = "The service $json_obj->{ rdata } has not been found";
-		return
-		  &httpErrorResponse(
-							  code => 404,
-							  desc => $desc,
-							  msg  => $msg,
-		  );
+		unless ( grep ( /^$json_obj->{ rdata }$/, &getGSLBFarmServices( $farmname ) ) )
+		{
+			my $msg = "The service $json_obj->{ rdata } has not been found";
+			return
+			  &httpErrorResponse(
+								  code => 404,
+								  desc => $desc,
+								  msg  => $msg,
+			  );
+		}
 	}
 
 	my $status = &setGSLBFarmZoneResource(
