@@ -57,6 +57,12 @@ sub getGlobalConfiguration
 		{
 			return $global_conf->{ $parameter };
 		}
+
+# bugfix: it is not returned any message when the 'debug' parameter is not defined in global.conf.
+		elsif ( $parameter eq 'debug' )
+		{
+			return undef;
+		}
 		else
 		{
 			&zenlog( "The global configuration parameter '$parameter' has not been found",
