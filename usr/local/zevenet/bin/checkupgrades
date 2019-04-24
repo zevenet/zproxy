@@ -29,7 +29,7 @@ case "$1" in
 		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade"
 		echo "last check at `date` - $packages package(s) require upgrade, update this information with: checkupgrades" > $apt_msg
 		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade" >> $apt_msg
-		$apt_bin list --upgradable 2>/dev/null | cut -d"/" -f 1  | tr  '\n' ' ' > $apt_outdated_list
+		$apt_bin list --upgradable 2>/dev/null | cut -d"/" -f 1  | sed '1d' | tr  '\n' ' ' > $apt_outdated_list
 	else
 		echo "Zevenet Packages are up-to-date."
 		echo "Zevenet Packages are up-to-date." > $apt_msg

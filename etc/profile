@@ -1,8 +1,15 @@
 # /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
 # and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
 
-source /usr/local/zevenet/bin/load_global_conf
-load_global_conf
+
+if [ -n "$BASH_VERSION" ]; then 
+  source /usr/local/zevenet/bin/load_global_conf
+  load_global_conf
+else
+  . /usr/local/zevenet/bin/load_global_conf
+  load_global_conf
+fi
+
 if [ "`id -u`" -eq 0 ]; then
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 else
