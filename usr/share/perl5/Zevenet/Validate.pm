@@ -532,6 +532,7 @@ Parameters:
 			"interval" 	: "1,65535",	# it is possible define strings matchs ( non implement). For example: "ports" = "1-65535", "log_level":"1-3", ...
 										# ",10" indicates that the value has to be less than 10 but without low limit
 										# "10," indicates that the value has to be more than 10 but without high limit
+										# The values of the interval has to be integer numbers
 			"exceptions"	: [ "zapi", "webgui", "root" ],	# The parameter can't have got any of the listed values
 			"values" : ["priority", "weight"],		# list of possible values for a parameter
 			"regex"	: "/\w+,\d+/",		# regex format
@@ -692,7 +693,7 @@ sub checkZAPIParams
 =begin nd
 Function: checkParamsInterval
 
-	Check parameters when there are required params
+	Check parameters when there are required params. The value has to be a integer number
 
 Parameters:
 	Interval - String with the expected interval. The low and high limits must be splitted with a comma character ','
@@ -714,21 +715,24 @@ sub checkParamsInterval
 	if ( $interval =~ /,/ )
 	{
 		my ( $low_limit, $high_limit ) = split ( ',', $interval );
-		my $low_str =
-		  ( $low_limit )
-		  ? "'$param' has to be greater than or equal to '$low_limit'"
-		  : "";
-		my $high_str =
-		  ( $high_limit )
-		  ? "'$param' has to be lower than or equal to '$high_limit'"
-		  : "";
-		my $msg = $low_str if $low_str;
 
-		if ( $high_str )
+		my $msg = "";
+		if ( defined $low_limit and defined $high_limit )
 		{
-			$msg .= ". " if $msg;
-			$msg .= $high_str;
+			$msg =
+			  "'$param' has to be an integer number between '$low_limit' and '$high_limit'";
 		}
+		elsif ( defined $low_limit )
+		{
+			$msg =
+			  "'$param' has to be an integer number greater than or equal to '$low_limit'";
+		}
+		elsif ( defined $high_limit )
+		{
+			$msg =
+			  "'$param' has to be an integer number lower than or equal to '$high_limit'";
+		}
+
 		$err_msg = $msg
 		  if (    ( $value !~ /^\d*$/ )
 			   || ( $value > $high_limit )
