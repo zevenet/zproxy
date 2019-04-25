@@ -46,6 +46,7 @@ my %http_status_codes = (
 	402 => 'Certificate not valid',
 	403 => 'Forbidden',
 	404 => 'Not Found',
+	410 => 'Gone',
 	406 => 'Not Acceptable',
 	415 => 'Unsupported Media Type',
 	422 => 'Unprocessable Entity',
