@@ -139,7 +139,7 @@ sub set_notif_alert
 				   },
 	};
 
-	if ( $alert eq 'cluster' )
+	if ( $alert eq 'backends' )
 	{
 		$params->{ "avoidflappingtime" } = {
 											 'valid_format' => 'notif_time',
