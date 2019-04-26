@@ -38,11 +38,6 @@ sub farms_name_l4    # ( $farmname )
 
 	my $farm_st = &getL4FarmStruct( $farmname );
 
-	if ( $farm_st->{ vport } =~ /^\d+$/ )
-	{
-		$farm_st->{ vport } = $farm_st->{ vport } + 0;
-	}
-
 	############ FG
 	my @fgconfig    = &getFarmGuardianConf( $farmname, "" );
 	my $fguse       = $fgconfig[3];

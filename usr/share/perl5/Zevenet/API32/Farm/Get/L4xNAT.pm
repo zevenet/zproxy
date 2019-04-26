@@ -27,12 +27,16 @@ use Zevenet::Farm::L4xNAT::Backend;
 use Zevenet::Farm::L4xNAT::Config;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # GET /farms/<farmname> Request info of a l4xnat Farm
-sub farms_name_l4 # ( $farmname )
+sub farms_name_l4    # ( $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my $out_p;
@@ -40,11 +44,6 @@ sub farms_name_l4 # ( $farmname )
 
 	my $vip   = &getL4FarmParam( "vip",  $farmname );
 	my $vport = &getL4FarmParam( "vipp", $farmname );
-
-	if ( $vport =~ /^\d+$/ )
-	{
-		$vport = $vport + 0;
-	}
 
 	my @ttl = &getFarmMaxClientTime( $farmname, "" );
 	my $timetolimit = $ttl[0] + 0;
@@ -55,17 +54,17 @@ sub farms_name_l4 # ( $farmname )
 	$persistence = "" if $persistence eq 'none';
 
 	$out_p = {
-			   status      => $status,
-			   vip         => $vip,
-			   vport       => $vport,
-			   algorithm   => &getL4FarmParam( 'alg', $farmname ),
-			   nattype     => &getL4FarmParam( 'mode', $farmname ),
-			   persistence => $persistence,
-			   protocol    => &getL4FarmParam( 'proto', $farmname ),
-			   ttl         => $timetolimit,
+			   status       => $status,
+			   vip          => $vip,
+			   vport        => $vport,
+			   algorithm    => &getL4FarmParam( 'alg', $farmname ),
+			   nattype      => &getL4FarmParam( 'mode', $farmname ),
+			   persistence  => $persistence,
+			   protocol     => &getL4FarmParam( 'proto', $farmname ),
+			   ttl          => $timetolimit,
 			   farmguardian => &getFGFarm( $farmname ),
-			   logs 		=> &getL4FarmParam( 'logs', $farmname ),
-			   listener    => 'l4xnat',
+			   logs         => &getL4FarmParam( 'logs', $farmname ),
+			   listener     => 'l4xnat',
 	};
 
 	# Backends
@@ -78,12 +77,12 @@ sub farms_name_l4 # ( $farmname )
 	};
 
 	$body->{ ipds } = &eload(
-			module => 'Zevenet::IPDS::Core',
-			func   => 'getIPDSfarmsRules',
-			args   => [$farmname],
+							  module => 'Zevenet::IPDS::Core',
+							  func   => 'getIPDSfarmsRules',
+							  args   => [$farmname],
 	) if ( $eload );
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

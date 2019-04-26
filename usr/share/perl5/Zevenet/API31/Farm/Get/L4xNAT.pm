@@ -48,11 +48,6 @@ sub farms_name_l4    # ( $farmname )
 	my $vip   = &getL4FarmParam( "vip",  $farmname );
 	my $vport = &getL4FarmParam( "vipp", $farmname );
 
-	if ( $vport =~ /^\d+$/ )
-	{
-		$vport = $vport + 0;
-	}
-
 	my @ttl = &getFarmMaxClientTime( $farmname, "" );
 	my $timetolimit = $ttl[0] + 0;
 
