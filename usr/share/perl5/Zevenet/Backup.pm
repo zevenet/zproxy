@@ -246,7 +246,7 @@ sub uploadBackup
 
 	if ( $error )
 	{
-		&zenlog( "$filename looks being a not valid backup" );
+		&zenlog( "$filename looks being a not valid backup", 'error', 'backup' );
 		unlink $filepath;
 		return 2;
 	}
@@ -303,7 +303,7 @@ Parameters:
 	backup - Backup name.
 
 Returns:
-	integer - ERRNO or return code of restarting load balancing service.
+	integer - 0 on success or another value on failure.
 
 See Also:
 	zapi/v3/system.cgi
@@ -318,12 +318,20 @@ sub applyBackup
 	my $tar  = &getGlobalConfiguration( 'tar' );
 	my $file = &getGlobalConfiguration( 'backupdir' ) . "/backup-$backup.tar.gz";
 
+	&zenlog( "Restoring backup $file", "info", "SYSTEM" );
 	my @eject = `$tar -xvzf $file -C /`;
+	my $error = $?;
+
+	if ( $error )
+	{
+		&zenlog( "The backup $file could not be extracted", "error", "SYSTEM" );
+		return $error;
+	}
+
 	unlink '/zevenet_version';
 
-	&zenlog( "Restoring backup $file",  "info", "SYSTEM" );
 	&zenlog( "unpacking files: @eject", "info", "SYSTEM" );
-	$error = system ( "/etc/init.d/zevenet restart 2> /dev/null" );
+	$error = &logAndRun( "/etc/init.d/zevenet restart" );
 
 	if ( !$error )
 	{
