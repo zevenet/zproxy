@@ -880,7 +880,7 @@ sub set_rbl_actions
 
 	my $body = {
 				 description => $desc,
-				 params      => { 'action' => $action }
+				 params      => $json_obj
 	};
 
 	return &httpResponse( { code => 200, body => $body } );

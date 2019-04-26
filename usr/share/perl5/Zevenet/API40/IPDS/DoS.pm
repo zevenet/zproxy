@@ -523,7 +523,7 @@ sub actions_dos
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 params      => $json_obj->{ action }
+				 params      => $json_obj
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
