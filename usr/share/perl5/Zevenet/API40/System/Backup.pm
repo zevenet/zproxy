@@ -132,9 +132,14 @@ sub upload_backup
 	}
 
 	my $error = &uploadBackup( $name, $upload_filehandle );
-	if ( $error )
+	if ( $error == 1 )
 	{
 		my $msg = "Error creating backup.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( $error == 2 )
+	{
+		my $msg = "$name is not a valid backup.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
