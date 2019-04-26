@@ -613,9 +613,8 @@ sub parseWAFSetConf
 		if ( $line =~ /^\s*SecRuleEngine\s+(on|off|DetectionOnly)/ )
 		{
 			my $value = $1;
-			$conf->{ status } = 'true'      if ( $value eq 'on' );
-			$conf->{ status } = 'false'     if ( $value eq 'off' );
-			$conf->{ status } = 'detection' if ( $value eq 'DetectionOnly' );
+			$conf->{ status }       = ( $value eq 'off' )           ? 'false' : 'true';
+			$conf->{ only_logging } = ( $value eq 'DetectionOnly' ) ? 'true'  : 'false';
 		}
 		if ( $line =~ /^\s*SecDefaultAction\s/ )
 		{
@@ -690,10 +689,16 @@ sub buildWAFSetConf
 		push @txt, "SecRequestBodyNoFilesLimit $conf->{ request_body_limit }";
 	}
 
-	if ( $conf->{ status } eq 'true' ) { push @txt, "SecRuleEngine on"; }
-	if ( $conf->{ status } eq 'detection' )
+	if ( $conf->{ status } eq 'true' )
 	{
-		push @txt, "SecRuleEngine DetectionOnly";
+		if ( $conf->{ only_logging } eq 'true' )
+		{
+			push @txt, "SecRuleEngine DetectionOnly";
+		}
+		else
+		{
+			push @txt, "SecRuleEngine on";
+		}
 	}
 
 	if ( exists $conf->{ disable_rules } )
@@ -816,6 +821,7 @@ sub checkWAFFileSyntax
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $file = shift;
+	my $rule_st = shift // {};
 
 	my $pound = &getGlobalConfiguration( 'pound' );
 	my $out   = `$pound -W $file 2>&1`;
@@ -827,60 +833,19 @@ sub checkWAFFileSyntax
 		&zenlog( $out, "Error", "waf" ) if $out;
 		chomp $out;
 
-		#parse response and return field that failed
+		# remove line:	"starting..."
 		my @aux = split ( '\n', $out );
 		$out = $aux[1];
+
+		# clean line and column info
 		$out =~ s/^.+Column: \d+. //;
+
+		$out = &parseWAFError( $out );
 	}
 	else
 	{
 		$out = "";
 	}
-	return $out;
-}
-
-=begin nd
-Function: checkWAFRuleSyntax
-
-	It checks if a WAF directive is well-formed.
-
-Parameters:
-	Rule string - It is a string with a SecLang directive.
-
-Returns:
-	String - Returns a message with a description about the rule is bad-formed. It will return a blank string if the rule is well-formed.
-
-=cut
-
-sub checkWAFRuleSyntax
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $rule  = shift;
-	my $pound = &getGlobalConfiguration( 'pound' );
-
-	# is it necessary change rule format
-	$rule =~ s/"/\\"/g;
-
-	my $out = `$pound -w "$rule" 2>&1`;
-	my $err = $?;
-	&zenlog( "cmd: $pound -w \"$rule\"", "debug1", "waf" );
-
-	if ( $err )
-	{
-		&zenlog( $out, "Error", "waf" ) if $out;
-		chomp $out;
-
-		#parse response and return fields that failed
-		my @aux = split ( '\n', $out );
-		$out = $aux[1];
-		$out =~ s/^.+Column: \d+. //;
-	}
-	else
-	{
-		$out = "";
-	}
-
 	return $out;
 }
 
@@ -1024,6 +989,43 @@ sub getWAFSet
 	my $rules = &parseWAFBatch( \@batch );
 
 	return { rules => $rules, configuration => $conf };
+}
+
+sub parseWAFError
+{
+	my $err_msg = shift;
+
+# A parameter is a file and it has not been found
+# Error loading waf rules, Rules error. File: /usr/local/zevenet/config/ipds/waf/sets/waf_rules.build. Line: 8. Column: 30. Failed to open file: php-error.data. Looking at: 'php-error.data', 'php-error.data', '/usr/local/zevenet/config/ipds/waf/sets/php-error.data', '/usr/local/zevenet/config/ipds/waf/sets/php-error.data'.
+	if ( $err_msg =~ /Failed to open file / )
+	{
+		my $wafconfdir = &getWAFSetDir();
+		if ( $err_msg =~ /'(${wafconfdir}[^']+)'/ )
+		{
+			$err_msg = "The file '$1' has not been found";
+		}
+		else
+		{
+			&zenlog( "Error parsing output: Failed to open file", "error", "waf" );
+		}
+	}
+
+# Action parameter is not recognized
+# Error loading waf rules, Rules error. File: /usr/local/zevenet/config/ipds/waf/sets/waf_rules.build. Line: 11. Column: 7. Expecting an action, got:  bloc,\
+	elsif ( $err_msg =~ /Expecting an action, got:\s+(.+),\\/ )
+	{
+		$err_msg = "The parameter '$1' is not recognized";
+	}
+
+# Variable is not recognized
+#Error loading waf rules, Rules error. File: /usr/local/zevenet/config/ipds/waf/sets/waf_rules.build. Line: 8. Column: 56. Expecting a variable, got:  :  _eNAMES|ARGS|XML:/* "@rexphp-errors.data" \
+	elsif ( $err_msg =~ /Expecting a variable, got:\s+:\s+(.+) / )
+	{
+		#~ $err_msg = "The variable '$1' is not recognized";
+		$err_msg = "Error in variables";
+	}
+
+	return $err_msg;
 }
 
 1;

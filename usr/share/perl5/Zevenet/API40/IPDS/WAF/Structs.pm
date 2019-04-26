@@ -371,8 +371,7 @@ sub getZapiWAFSet
 	$conf->{ process_response_body } //= 'false';
 	$conf->{ request_body_limit }    //= 0;
 	$conf->{ status } = ( $conf->{ status } eq 'false' ) ? 'down' : 'up';
-	$conf->{ only_logging } =
-	  ( $conf->{ status } eq 'detection' ) ? 'true' : 'false';
+	$conf->{ only_logging } = $conf->{ only_logging };
 	$conf->{ disable_rules } //= [];
 
 	foreach my $ru ( @{ $set_st->{ rules } } )
