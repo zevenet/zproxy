@@ -86,6 +86,7 @@ sub zenlog    # ($string, $type)
 		return 0 if ( &debug() lt $debug_lvl );
 	}
 
+	$tag = lc $tag    if $tag;
 	$tag = "$tag :: " if $tag;
 
 	# Get the program name
