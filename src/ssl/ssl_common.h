@@ -12,6 +12,47 @@ enum class SSL_STATUS{
 
 typedef void (*SslInfoCallback)();
 
+
+/*
+ * Get a "line" from a BIO, strip the trailing newline, skip the input stream if buffer too small
+ * The result buffer is NULL terminated
+ * Return 0 on success
+ */
+static int get_line(BIO *const in, char *const buf, const int bufsize, int * out_line_size) {
+    char    tmp;
+    int     i, n_read;
+
+//    memset(buf, 0, bufsize);
+    *out_line_size = 0;
+    for(n_read = 0;;)
+        switch(BIO_gets(in, buf + n_read, bufsize - n_read - 1)) {
+        case -2:
+            /* BIO_gets not implemented */
+            return -1;
+        case 0:
+        case -1:
+            return 1;
+        default:
+            for(i = n_read; i < bufsize && buf[i]; i++)
+                if(buf[i] == '\n' || buf[i] == '\r') {
+                    buf[i] = '\0';
+                    *out_line_size = i;
+                    return 0;
+                }
+            if(i < bufsize) {
+                n_read = i;
+                continue;
+            }
+            logmsg(LOG_NOTICE, "(%lx) line too long: %s", pthread_self(), buf);
+            /* skip rest of "line" */
+            tmp = '\0';
+            while(tmp != '\n')
+                if(BIO_read(in, &tmp, 1) != 1)
+                    return 1;
+            break;
+      }
+}
+
 static std::unique_ptr<char> ossGetErrorStackString(void) {
   BIO *bio = BIO_new(BIO_s_mem());
   ERR_print_errors(bio);

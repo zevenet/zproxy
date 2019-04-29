@@ -550,7 +550,7 @@ void StreamManager::onRequestEvent(int fd) {
 */
   //} while (stream->client_connection.buffer_size > parsed &&
   //  parse_result ==
-  //     http_parser::PARSE_RESULT::SUCCESS);  
+  //     http_parser::PARSE_RESULT::SUCCESS);
 
   stream->client_connection.enableReadEvent();
 }
@@ -1210,51 +1210,9 @@ void StreamManager::applyCompression(Service *service, HttpStream *stream) {
   }
 }
 
-/*
- * Get a "line" from a BIO, strip the trailing newline, skip the input stream if buffer too small
- * The result buffer is NULL terminated
- * Return 0 on success
- */
-static int get_line(BIO *const in, char *const buf, const int bufsize, int * out_line_size) {
-    char    tmp;
-    int     i, n_read;
-
-//    memset(buf, 0, bufsize);
-    *out_line_size = 0;
-    for(n_read = 0;;)
-        switch(BIO_gets(in, buf + n_read, bufsize - n_read - 1)) {
-        case -2:
-            /* BIO_gets not implemented */
-            return -1;
-        case 0:
-        case -1:
-            return 1;
-        default:
-            for(i = n_read; i < bufsize && buf[i]; i++)
-                if(buf[i] == '\n' || buf[i] == '\r') {
-                    buf[i] = '\0';
-                    *out_line_size = i;
-                    return 0;
-                }
-            if(i < bufsize) {
-                n_read = i;
-                continue;
-            }
-            logmsg(LOG_NOTICE, "(%lx) line too long: %s", pthread_self(), buf);
-            /* skip rest of "line" */
-            tmp = '\0';
-            while(tmp != '\n')
-                if(BIO_read(in, &tmp, 1) != 1)
-                    return 1;
-            break;
-        }
-    return 0;
-}
-
 void StreamManager::httpsHeaders(HttpStream *stream) {
     if (ssl_manager == nullptr)
         return;
-
     std::string header_value;
     header_value.reserve(MAXBUF);
     const SSL_CIPHER *cipher;
@@ -1294,23 +1252,23 @@ void StreamManager::httpsHeaders(HttpStream *stream) {
                                                            ::BIO_free);
             X509_NAME_print_ex(bb.get(), ::X509_get_subject_name(x509.get()), 8,
                                XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-            get_line(bb.get(), buf, MAXBUF, &line_len);
+            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
             stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SUBJECT,
                                       buf, true);
 
             X509_NAME_print_ex(bb.get(), X509_get_issuer_name(x509.get()), 8,
                                XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-            get_line(bb.get(), buf, MAXBUF, &line_len);
+            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
             stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_ISSUER, buf,
                                       true);
 
             ASN1_TIME_print(bb.get(), X509_get_notBefore(x509.get()));
-            get_line(bb.get(), buf, MAXBUF, &line_len);
+            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
             stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTBEFORE,
                                       buf, true);
 
             ASN1_TIME_print(bb.get(), X509_get0_notAfter(x509.get()));
-            get_line(bb.get(), buf, MAXBUF, &line_len);
+            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
             stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTAFTER,
                                       buf, true);
 
@@ -1319,9 +1277,9 @@ void StreamManager::httpsHeaders(HttpStream *stream) {
                                       std::to_string(serial), true);
 
             PEM_write_bio_X509(bb.get(), x509.get());
-            get_line(bb.get(), buf, MAXBUF, &line_len);
+            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
             header_value = buf;
-            while (get_line(bb.get(), buf, MAXBUF, &line_len) == 0)
+            while (ssl::get_line(bb.get(), buf, MAXBUF, &line_len) == 0)
                 {
                     header_value += buf;
                 }
