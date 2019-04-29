@@ -65,7 +65,7 @@ case "$1" in
 
 *)
 	#Check the status of a package
-	$dpkg_bin -l | grep $1 > /dev/null
+	$dpkg_bin -l | grep $1 | awk {'print $2'} | grep $1$ > /dev/null
 	if [ $? = 0 ];
 	then
 		installed=`$aptcache_bin policy $1 | head -2 | tail -1 | cut -d ":" -f2 | sed 's/ //g'`
