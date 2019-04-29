@@ -6,13 +6,14 @@
 #define NEW_ZHTTP_HTTP_STREAM_H
 
 #include "../connection/backend_connection.h"
+#include "../ssl/SSLConnectionManager.h"
 
 #include "../event/TimerFd.h"
 #include "../event/epoll_manager.h"
 #include "../service/backend.h"
 #include "HttpRequest.h"
 #include "HttpStatus.h"
-#include "../connection/client_connection.h" 
+#include "../connection/client_connection.h"
 
 struct UpgradeStatus {
   http::UPGRADE_PROTOCOLS protocol {http::UPGRADE_PROTOCOLS::NONE};
@@ -37,7 +38,8 @@ public:
   http::CHUNKED_STATUS chunked_status;
 
   void replyError(HttpStatus::Code code, const char *code_string,
-                  const char *string);
+                  const char *string, const ListenerConfig &listener_config,
+                  ssl::SSLConnectionManager &ssl_manager);
   void replyRedirect(BackendConfig &backend_config);
   void replyRedirect(int code, const char * url);
 };

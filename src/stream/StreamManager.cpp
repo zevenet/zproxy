@@ -331,7 +331,8 @@ void StreamManager::onRequestEvent(int fd) {
                         pthread_self(), stream->client_connection.getPeerAddress().c_str());
           stream->replyError(HttpStatus::Code::BadRequest,
                              HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-                             listener_config_.errnossl);
+                             listener_config_.errnossl, this->listener_config_,
+                             *this->ssl_manager);
         }
       } else {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
@@ -385,7 +386,8 @@ void StreamManager::onRequestEvent(int fd) {
     if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
       stream->replyError(HttpStatus::Code::NotImplemented,
                          validation::request_result_reason.at(valid).c_str(),
-                         listener_config_.err501);
+                         listener_config_.err501, this->listener_config_,
+                         *this->ssl_manager);
       this->clearStream(stream);
       return;
     }
@@ -398,7 +400,8 @@ void StreamManager::onRequestEvent(int fd) {
                          validation::request_result_reason
                              .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
                              .c_str(),
-                         listener_config_.err503);
+                         listener_config_.err503, this->listener_config_,
+                         *this->ssl_manager);
       this->clearStream(stream);
       return;
     }
@@ -409,7 +412,8 @@ void StreamManager::onRequestEvent(int fd) {
                          validation::request_result_reason
                              .at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND)
                              .c_str(),
-                         listener_config_.err503);
+                         listener_config_.err503, this->listener_config_,
+                         *this->ssl_manager);
       this->clearStream(stream);
       return;
     } else {
@@ -529,7 +533,8 @@ void StreamManager::onRequestEvent(int fd) {
     stream->replyError(
         HttpStatus::Code::BadRequest,
         HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-        listener_config_.err501);
+        listener_config_.err501, this->listener_config_,
+        *this->ssl_manager);
     this->clearStream(stream);
     return;
   case http_parser::PARSE_RESULT::INCOMPLETE:Debug::LogInfo("Parser INCOMPLETE", LOG_DEBUG);
@@ -673,7 +678,7 @@ void StreamManager::onResponseEvent(int fd) {
           HttpStatus::Code::ServiceUnavailable,
           HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
               .c_str(),
-          listener_config_.err503);
+          listener_config_.err503, this->listener_config_, *this->ssl_manager);
       this->clearStream(stream);
       return;
     }
@@ -702,7 +707,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
     stream->replyError(
         HttpStatus::Code::ServiceUnavailable,
         HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable).c_str(),
-        listener_config_.err503);
+        listener_config_.err503,this->listener_config_, *this->ssl_manager);
     this->clearStream(stream);
   }
 }
@@ -744,7 +749,8 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
     stream->replyError(
         HttpStatus::Code::GatewayTimeout,
         HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
-        HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str());
+        HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
+        this->listener_config_, *this->ssl_manager);
     this->clearStream(stream);
   }
 }

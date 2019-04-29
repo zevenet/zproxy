@@ -6,12 +6,19 @@
 #include "../util/Network.h"
 #include "../util/common.h"
 
+using namespace ssl;
+
 HttpStream::HttpStream()
     : request(), response(), client_connection(), backend_connection(),
       timer_fd(), chunked_status(http::CHUNKED_STATUS::CHUNKED_DISABLED) {}
+
 void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
-                            const char *string) {
+                            const char *string,
+                            const ListenerConfig &listener_config,
+                            SSLConnectionManager &ssl_manager){
+  size_t result;
   char caddr[50];
+
   if (UNLIKELY(Network::getPeerAddress(client_connection.getFileDescriptor(), caddr, 50) == nullptr)) {
     Debug::LogInfo("Error getting peer address", LOG_DEBUG);
   } else {
@@ -22,7 +29,12 @@ void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
                   client_connection.buffer, caddr);
   }
   auto response_ = HttpStatus::getHttpResponse(code, code_string, string);
-  client_connection.write(response_.c_str(), response_.length());
+
+  if (listener_config.ctx != nullptr) {
+    client_connection.write(response_.c_str(), response_.length());
+  } else {
+    ssl_manager.handleWrite(client_connection, response_.c_str(), response_.length(), result);
+  }
 }
 
 HttpStream::~HttpStream() {}
