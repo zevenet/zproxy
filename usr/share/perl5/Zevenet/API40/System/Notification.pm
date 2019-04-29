@@ -204,8 +204,19 @@ sub set_notif_alert_actions
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $status = "";
+	$status = &getNotifData( 'alerts', 'Backend', 'Status' )
+	  if ( $alert eq "backends" );
+	$status = &getNotifData( 'alerts', 'Cluster', 'Status' )
+	  if ( $alert eq "cluster" );
+	$status = 'disabled' if ( $status eq 'off' );
+	$status = 'enabled'  if ( $status eq 'on' );
+
+	my $response_obj = $json_obj;
+	$response_obj->{ status } = $status;
+
 	return &httpResponse(
-			   { code => 200, body => { description => $desc, params => $json_obj } } );
+		   { code => 200, body => { description => $desc, params => $response_obj } } );
 }
 
 sub send_test_mail
