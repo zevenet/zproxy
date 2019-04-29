@@ -717,7 +717,7 @@ sub checkParamsInterval
 		my ( $low_limit, $high_limit ) = split ( ',', $interval );
 
 		my $msg = "";
-		if ( defined $low_limit and defined $high_limit )
+		if ( defined $low_limit and defined $high_limit and length $high_limit )
 		{
 			$msg =
 			  "'$param' has to be an integer number between '$low_limit' and '$high_limit'";
@@ -735,8 +735,8 @@ sub checkParamsInterval
 
 		$err_msg = $msg
 		  if (    ( $value !~ /^\d*$/ )
-			   || ( $value > $high_limit )
-			   || ( $value < $low_limit ) );
+			   || ( $value > $high_limit and length $high_limit )
+			   || ( $value < $low_limit  and length $low_limit ) );
 	}
 	else
 	{
