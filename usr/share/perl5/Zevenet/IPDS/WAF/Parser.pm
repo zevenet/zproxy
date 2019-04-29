@@ -187,7 +187,7 @@ sub parseWAFRule
 
 		if ( $directive eq 'SecRule' )
 		{
-			if ( $line !~ /^\s*SecRule\s+"?([^"]+)"?\s+"?([^"]+)"?\s+"?([^"]+)?"?/s )
+			if ( $line =~ /^\s*SecRule\s+"?([^"]+)"?\s+"?([^"]+)"?\s+"?([^"]+)?"?/s )
 			{
 				my $var = $1;
 				my $val = $2;
@@ -210,6 +210,10 @@ sub parseWAFRule
 					&zenlog( "Not variable found parsing rule: $line ", "debug1", "waf" )
 					  if ( !$rule->{ operator } );
 				}
+			}
+			else
+			{
+				&zenlog( "Syntax seems incorrect: $line", 'warning', 'waf' );
 			}
 		}
 
