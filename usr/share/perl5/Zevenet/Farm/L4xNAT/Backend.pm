@@ -69,7 +69,6 @@ sub setL4FarmServer
 	require Zevenet::Netfilter;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $mark          = &getNewMark( $farm_name );
 	my $output        = 0;
 	my $json          = qq();
 	my $msg           = "setL4FarmServer << farm_name:$farm_name ids:$ids ";
@@ -84,50 +83,72 @@ sub setL4FarmServer
 
 	my $exists = &getFarmServer( $f_ref->{ servers }, $ids );
 
-	if ( defined $rip && $rip ne "" )
+	if (   defined $rip
+		&& $rip ne ""
+		&& ( !defined $exists || ( defined $exists && $exists->{ rip } != $rip ) ) )
 	{
-		$exists = &getFarmServer( $f_ref->{ servers }, $rip, "rip" );
-		return -2 if ( $exists && ( $exists->{ id } ne $ids ) );
+		my $existrip = &getFarmServer( $f_ref->{ servers }, $rip, "rip" );
+		return -2 if ( defined $existrip && ( $existrip->{ id } ne $ids ) );
 		$json .= qq(, "ip-addr" : "$rip");
 		$msg  .= "rip:$rip ";
+
+		my $mark;
+		if ( !defined $existrip )
+		{
+			$mark = &getNewMark( $farm_name );
+			return -1 if ( !defined $mark || $mark eq "" );
+		}
+		else
+		{
+			$mark = $existrip->{ tag };
+		}
+		$json .= qq(, "mark" : "$mark");
+		$msg  .= "mark:$mark ";
+		&setL4BackendRule( "add", $f_ref, $mark );
 	}
 
-	if ( defined $port )
+	if ( defined $port
+		&& ( !defined $exists || ( defined $exists && $exists->{ port } != $port ) ) )
 	{
 		$json .= qq(, "port" : "$port");
 		$msg  .= "port:$port ";
 	}
 
-	if ( defined $weight && $weight ne "" )
+	if (   defined $weight
+		&& $weight ne ""
+		&& ( !defined $exists || ( defined $exists && $exists->{ weight } != $weight ) )
+	  )
 	{
 		$weight = 1 if ( $weight == 0 );
 		$json .= qq(, "weight" : "$weight");
 		$msg  .= "weight:$weight ";
 	}
 
-	if ( defined $priority && $priority ne "" )
+	if (
+		    defined $priority
+		 && $priority ne ""
+		 && ( !defined $exists
+			  || ( defined $exists && $exists->{ priority } != $priority ) )
+	  )
 	{
 		$priority = 1 if ( $priority == 0 );
 		$json .= qq(, "priority" : "$priority");
 		$msg  .= "priority:$priority ";
 	}
 
-	if ( defined $mark && $mark ne "" )
-	{
-		# It's a backend modification
-		$mark = $exists->{ tag } if ( $exists );
-		$json .= qq(, "mark" : "$mark");
-		$msg  .= "mark:$mark ";
-	}
-
-	if ( defined $max_conns && $max_conns ne "" )
+	if (
+		    defined $max_conns
+		 && $max_conns ne ""
+		 && ( !defined $exists
+			  || ( defined $exists && $exists->{ max_conns } != $max_conns ) )
+	  )
 	{
 		$max_conns = 0 if ( $max_conns < 0 );
 		$json .= qq(, "est-connlimit" : "$max_conns");
 		$msg  .= "maxconns:$max_conns ";
 	}
 
-	if ( !$exists )
+	if ( !defined $exists )
 	{
 		$json .= qq(, "state" : "up");
 		$msg  .= "state:up ";
@@ -144,8 +165,6 @@ sub setL4FarmServer
 			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$ids"$json } ] } ] })
 		}
 	);
-
-	&setL4BackendRule( "add", $f_ref, $mark );
 
 	return $output;
 }
