@@ -24,6 +24,12 @@
 use strict;
 use warnings;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -45,10 +51,28 @@ sub loadL4FarmModules
 			 "debug", "PROFILING" );
 
 	my $modprobe_bin = &getGlobalConfiguration( "modprobe" );
-	my $cmd          = "$modprobe_bin nf_conntrack enable_hooks=1";
 	my $error        = 0;
+	if ( $eload )
+	{
+		my $cmd = "$modprobe_bin nf_conntrack enable_hooks=1";
+		$error += system ( "$cmd >/dev/null 2>&1" );
+	}
+	else
+	{
+		$error += system ( "$modprobe_bin nf_conntrack >/dev/null 2>&1" );
 
-	$error += system ( "$cmd >/dev/null 2>&1" );
+		# Initialize conntrack
+		my $nftbin = &getGlobalConfiguration( "nft_bin" );
+
+		# Flush nft tables
+		system ( "$nftbin flush ruleset" );
+
+		my $nftCmd =
+		  "$nftbin add table ip dummyTable; $nftbin add chain ip dummyTable dummyChain { type nat hook input priority 0 \\; }; $nftbin add rule ip dummyTable dummyChain ct state established accept";
+
+		$error += system ( "$nftCmd" )
+		  if ( system ( "$nftbin list table dummyTable >/dev/null 2>&1" ) );
+	}
 
 	return $error;
 }
