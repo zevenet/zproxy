@@ -64,6 +64,7 @@ sub getBackup
 
 		my $datetime_string = ctime( stat ( $filepath )->mtime );
 		$datetime_string = `date -d "${datetime_string}" +%F"  "%T" "%Z -u`;
+		chomp ( $datetime_string );
 		push @backups, { 'name' => $line, 'date' => $datetime_string };
 
 	}
