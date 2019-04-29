@@ -895,7 +895,7 @@ sub del_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( !&setBLDeleteSource( $listName, $id ) )
+	if ( &setBLDeleteSource( $listName, $id ) )
 	{
 		my $msg = "Error deleting source $id";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
