@@ -53,7 +53,7 @@ sub farms_name_l4    # ( $farmname )
 		algorithm   => $farm->{ lbalg },
 		nattype     => $farm->{ nattype },
 		persistence => $farm->{ persist },
-		ttl         => $farm->{ ttl },
+		ttl         => $farm->{ ttl } + 0,
 		protocol    => $farm->{ vproto },
 
 		farmguardian => &getFGFarm( $farmname ),
