@@ -170,16 +170,17 @@ sub getFloatInterfaceForAddress
 	return $output_interface;
 }
 
-sub getFloatingMasqParams
+sub setFloatingSourceAddr
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $farm   = shift;
-	my $server = shift;
+	my $farm      = shift;
+	my $server    = shift;
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $out_if;
 
-	if ( $server->{ vip } )
+	if ( defined $server && $server->{ vip } )
 	{
 		$out_if = &getFloatInterfaceForAddress( $server->{ vip } );
 	}
@@ -191,21 +192,19 @@ sub getFloatingMasqParams
 
 	if ( !$out_if )
 	{
-		return "";
+		return -1;
 	}
 
-	return "--jump SNAT --to-source $out_if->{ addr } ";
-}
-
-sub getFloatingSnatParams
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $server ) = @_;
-
-	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
-
-	return "--jump SNAT --to-source $float_if->{ addr }";
+	require Zevenet::Nft;
+	return
+	  &httpNlbRequest(
+		{
+		   method => "POST",
+		   uri    => "/farms",
+		   body =>
+			 qq({"farms" : [ { "name" : "$farm->{ name }", "source-addr" : "$out_if->{ addr }" } ] })
+		}
+	  );
 }
 
 sub get_floating_struct

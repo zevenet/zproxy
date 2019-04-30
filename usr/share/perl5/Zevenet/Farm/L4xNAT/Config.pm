@@ -166,6 +166,17 @@ sub setL4FarmParam
 			&setL4sdType( $farm_name, "none" );
 			&setL4FarmParam( 'persist', "none", $farm_name );
 		}
+
+		# take care of floating interfaces without masquerading
+		if ( $value eq "snat" && $eload )
+		{
+			my $farm_ref = &getL4FarmStruct( $farm_name );
+			&eload(
+					module => 'Zevenet::Net::Floating',
+					func   => 'setFloatingSourceAddr',
+					args   => [$farm_ref, undef],
+			);
+		}
 	}
 	elsif ( $param eq "vip" )
 	{

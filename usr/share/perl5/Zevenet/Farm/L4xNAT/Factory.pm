@@ -28,6 +28,12 @@ use Zevenet::Farm::L4xNAT::Action;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 =begin nd
 Function: runL4FarmCreate
 
@@ -67,6 +73,16 @@ sub runL4FarmCreate
 			 qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "tcp", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })
 		}
 	);
+
+	if ( $eload )
+	{
+		my $farm_ref = &getL4FarmStruct( $farm_name );
+		&eload(
+				module => 'Zevenet::Net::Floating',
+				func   => 'setFloatingSourceAddr',
+				args   => [$farm_ref, undef],
+		);
+	}
 
 	&startL4Farm( $farm_name );
 

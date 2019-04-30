@@ -424,7 +424,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 				untie @contents;
 
-				require Zevenet::Farm::L4xNAT::Config;
+				require Zevenet::Farm::Config;
+				&reloadFarmsSourceAddress() if $status == 0;
 			}
 		}
 	}
@@ -508,7 +509,8 @@ sub delRoutes    # ($table,$if_ref)
 			}
 			untie @contents;
 
-			require Zevenet::Farm::L4xNAT::Config;
+			require Zevenet::Farm::Config;
+			&reloadFarmsSourceAddress() if $status == 0;
 
 			return $status;
 		}

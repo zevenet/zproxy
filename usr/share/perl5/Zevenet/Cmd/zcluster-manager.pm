@@ -136,10 +136,12 @@ elsif ( $object eq 'getZClusterArpStatus' )
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		my $if_dropped = &execNft( "check",
+		my $if_dropped = &execNft(
+								   "check",
 								   "netdev cluster",
 								   "cl-" . $if_ref->{ parent },
-								   "$if_ref->{ addr }" );
+								   "$if_ref->{ addr }"
+		);
 
 		if ( $node_role ne 'master' && !$if_dropped )
 		{
@@ -502,20 +504,19 @@ if ( $object eq 'interface' )
 
 	if ( $command eq 'float-update' )
 	{
-		require Zevenet::Farm::L4xNAT::Config;
-		include 'Zevenet::Cluster';
-
+		require Zevenet::Farm::Config;
+		&reloadFarmsSourceAddress();
 		exit 0;
 	}
 
 	# common interface initial tasks
-	my $if_name = shift @ARGV;      # virtual interface name
-	my $ip_v = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
+	my $if_name = shift @ARGV;         # virtual interface name
+	my $ip_v    = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
 
 	# must have an interface argument
 	&quit( "Interface action not defined." ) if !$if_name;
 	&quit( "Only virtual interfaces are supported." )
-	  if $if_name !~ /.+:.+/;       # only accept virtual interfaces
+	  if $if_name !~ /.+:.+/;          # only accept virtual interfaces
 
 	my $if_ref = &getInterfaceConfig( $if_name, $ip_v );
 
@@ -529,18 +530,20 @@ if ( $object eq 'interface' )
 	if ( $command eq 'start' )
 	{
 		include 'Zevenet::Cluster';
-		require Zevenet::Farm::L4xNAT::Config;
+		require Zevenet::Farm::Config;
 
 		&disableInterfaceDiscovery( $if_ref );    # backup node only
 		$status = &addIp( $if_ref );
 		$status = &applyRoutes( "local", $if_ref ) if $status == 0;
+		&reloadFarmsSourceAddress();
 		exit $status;
 	}
 	elsif ( $command eq 'stop' )                  # flush ip
 	{
 		include 'Zevenet::Cluster';
-		require Zevenet::Farm::L4xNAT::Config;
+		require Zevenet::Farm::Config;
 		$status = &delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
+		&reloadFarmsSourceAddress();
 		&enableInterfaceDiscovery( $if_ref );
 		exit $status;
 	}
@@ -569,6 +572,8 @@ if ( $object eq 'gateway' )
 		exit 1 if !$if_ref;
 
 		$status = &applyRoutes( "global", $if_ref, $if_ref->{ gateway } );
+		require Zevenet::Farm::Config;
+		&reloadFarmsSourceAddress();
 
 		exit $status;
 	}

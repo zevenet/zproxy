@@ -32,7 +32,7 @@ sub delete_interface_floating    # ( $floating )
 	my $floating = shift;
 
 	include 'Zevenet::Net::Floating';
-	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::Config;
 
 	my $desc              = "Remove floating interface";
 	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
@@ -49,6 +49,7 @@ sub delete_interface_floating    # ( $floating )
 		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
+		&reloadFarmsSourceAddress();
 	};
 
 	if ( $@ )
@@ -89,7 +90,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	my $interface = shift;
 
 	require Zevenet::Net::Interface;
-	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::Config;
 	include 'Zevenet::Net::Floating';
 
 	my $desc = "Modify floating interface";
@@ -143,6 +144,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
+		&reloadFarmsSourceAddress();
 	};
 
 	if ( $@ )

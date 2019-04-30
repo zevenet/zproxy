@@ -49,14 +49,13 @@ sub delete_interface_floating    # ( $floating )
 		&httpResponse( { code => 404, body => $body } );
 	}
 
-	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::Config;
 
 	eval {
 		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
+		&reloadFarmsSourceAddress();
 	};
 	if ( !$@ )
 	{
@@ -160,9 +159,9 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
-		( $if_ref ) = grep
-		{
-			$json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface
+		( $if_ref ) = grep {
+			     $json_obj->{ floating_ip } eq $_->{ addr }
+			  && $_->{ parent } eq $interface
 		} @interfaces;
 
 		# validate ADDRESS in system
@@ -181,7 +180,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	}
 
 	include 'Zevenet::Net::Floating';
-	require Zevenet::Farm::L4xNAT::Config;
+	require Zevenet::Farm::Config;
 
 	eval {
 		my $floatfile         = &getGlobalConfiguration( 'floatfile' );
@@ -190,8 +189,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
-
-		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
+		&reloadFarmsSourceAddress();
 	};
 
 	unless ( $@ )
