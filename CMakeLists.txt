@@ -18,7 +18,12 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
-option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" ON)
+option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
+option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" ON)
+
+#file(REMOVE_RECURSE "${MAINFOLDER}/build")
+#file(MAKE_DIRECTORY "${MAINFOLDER}/build")
+#file(MAKE_DIRECTORY "${MAINFOLDER}/build/docs")
 
 SET(PROJECT_DESCRIPTION "L7 proxy core for zevenet load balancer")
 SET(PROJECT_CODENAME "${PROJECT_NAME}")
@@ -110,7 +115,43 @@ find_package(Threads)
 # Search OpenSSL
 
 find_package(PkgConfig REQUIRED)
-#pkg_search_module(OPENSSL openssl)
+
+if (BUNDLED_ZLIB)
+    #
+    # zlib
+    #
+    message(STATUS "Building zlib")
+    include(ExternalProject)
+    include(GNUInstallDirs)
+    set(ZLIB_BUNDLE_DIR "${MAINFOLDER}/build/zlib/src/zlib")
+    set(ZLIB_INSTALL_DIR "${MAINFOLDER}/build/zlib/target")
+    set(ZLIB_INCLUDE_DIR "${MAINFOLDER}/build/zlib/target/include")
+    set(ZLIB_LIBRARY_SO "${ZLIB_INSTALL_DIR}/lib/libz.so")
+    set(ZLIB_LIBRARIES "${ZLIB_INSTALL_DIR}/lib/libz.a")
+    set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
+    message(STATUS "Using bundled zlib in '${ZLIB_BUNDLE_DIR}'")
+    #Debug build
+    # ./config --prefix=/usr/local/ssl --zlibdir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+    ExternalProject_Add( zlib
+        URL "http://zlib.net/zlib-1.2.11.tar.gz"
+        CONFIGURE_COMMAND ./configure --static --prefix=${ZLIB_INSTALL_DIR}
+        BUILD_COMMAND make -j8
+        BUILD_IN_SOURCE 1
+        INSTALL_COMMAND make install -j8 )
+
+    #    set(ENV{PKG_CONFIG_PATH} "${ZLIB_INSTALL_DIR}/lib/pkgconfig")
+    #add_dependencies(zlib)
+    include_directories(${ZLIB_INCLUDE_DIR})
+    link_directories(${ZLIB_INSTALL_DIR}/lib)
+else ()
+    find_package(ZLIB)
+    if (ZLIB_FOUND)
+        message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
+        message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
+        include_directories(${ZLIB_INCLUDE_DIRS})
+        message(STATUS "Using Zlib ${ZLIB_VERSION}")
+    endif ()
+endif()
 
 if (BUNDLED_OPENSSL)
     #
@@ -142,6 +183,7 @@ if (BUNDLED_OPENSSL)
     include_directories(${OPENSSL_INCLUDE_DIR})
     link_directories(${OPENSSL_INSTALL_DIR}/lib)
 else ()
+    pkg_search_module(OPENSSL openssl)
     if (OPENSSL_FOUND)
         message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
         message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
@@ -150,30 +192,18 @@ else ()
     endif()
 endif ()
 
-find_package(ZLIB)
-if (ZLIB_FOUND)
-    message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
-    message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
-    include_directories(${ZLIB_INCLUDE_DIRS})
-    message(STATUS "Using Zlib ${ZLIB_VERSION}")
-endif ()
-
 if (BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 
-if (BUILD_OPENSSL)
-    add_subdirectory(openssl)
-endif ()
-
 add_subdirectory(src)
 add_subdirectory(src/ctl)
-# Doxygen Build
+
 add_executable(zhttp src/main.cpp)
 add_dependencies(zhttp libzhttp)
 target_link_libraries(zhttp libzhttp)
 
-
+# Doxygen Build
 if (BUILD_DOC)
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
@@ -195,23 +225,22 @@ if (BUILD_DOC)
     else (DOXYGEN_FOUND)
         message("Doxygen needs to be installed to generate the documentation.")
     endif (DOXYGEN_FOUND)
-
     file(WRITE "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "/root\n")
-
-    macro(add_deployment_file SRC DEST)
-        file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-        file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
-    endmacro()
-
-    macro(add_deployment_directory SRC DEST)
-        file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
-        foreach (filename ${files})
-            get_filename_component(path ${filename} PATH)
-            add_deployment_file("${filename}" "${DEST}/${path}")
-        endforeach (filename)
-    endmacro()
 endif ()
 
+#project deployment
+macro(add_deployment_file SRC DEST)
+    file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+    file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
+endmacro()
+
+macro(add_deployment_directory SRC DEST)
+    file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
+    foreach (filename ${files})
+        get_filename_component(path ${filename} PATH)
+        add_deployment_file("${filename}" "${DEST}/${path}")
+    endforeach (filename)
+endmacro()
 
 #install
 install(TARGETS "zhttp" DESTINATION bin)

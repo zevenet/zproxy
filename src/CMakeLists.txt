@@ -67,8 +67,12 @@ add_library(libzhttp
     stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
     )
 
-add_dependencies(libzhttp openssl)
-#include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
-#link_directories(libzhttp ${OPENSSL_INSTALL_DIR}/lib)
-
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES}  ${ZLIB_LIBRARIES} ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl) #${OPENSSL_LIBRARIES}
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
+if (BUNDLED_OPENSSL)
+    #include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
+    add_dependencies(libzhttp openssl)
+    link_directories(libzhttp ${OPENSSL_INSTALL_DIR}/lib)
+    target_link_libraries(libzhttp PRIVATE ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl)
+else ()
+    target_link_libraries(libzhttp PRIVATE ${OPENSSL_LIBRARIES})
+endif ()
