@@ -30,7 +30,7 @@ void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
   }
   auto response_ = HttpStatus::getHttpResponse(code, code_string, string);
 
-  if (listener_config.ctx != nullptr) {
+  if (listener_config.ctx == nullptr) {
     client_connection.write(response_.c_str(), response_.length());
   } else {
     ssl_manager.handleWrite(client_connection, response_.c_str(), response_.length(), result);
