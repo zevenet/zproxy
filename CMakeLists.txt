@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
-option(BUILD_DOC "Build Documentation" OFF)
+option(BUILD_DOC "Build Documentation" ON	)
 option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
@@ -53,10 +53,10 @@ if (EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD")
 	  file(READ "${PROJECT_SOURCE_DIR}/.git/HEAD"
 			  PROJECT_SOURCE_VERSION)
 			if ("${PROJECT_SOURCE_VERSION}" MATCHES "^ref:")
-			  string(REGEX REPLACE "^ref: *([^ \n\r]*).*" "\\1"
+				string(REGEX REPLACE "^ref: *([^ \n\r]*).*" "\\1"
 					  PROJECT_GIT_REF "${PROJECT_SOURCE_VERSION}")
 					file(READ "${PROJECT_SOURCE_DIR}/.git/${PROJECT_GIT_REF}"
-					  PROJECT_SOURCE_VERSION)
+						PROJECT_SOURCE_VERSION)
 				endif ()
 		string(STRIP "${PROJECT_SOURCE_VERSION}"
 			  PROJECT_SOURCE_VERSION)
@@ -192,8 +192,20 @@ else ()
 			endif()
 endif ()
 
+find_package(ZLIB)
+if (ZLIB_FOUND)
+	  message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
+		message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
+		include_directories(${ZLIB_INCLUDE_DIRS})
+		message(STATUS "Using Zlib ${ZLIB_VERSION}")
+endif ()
+
 if (BUILD_TESTS)
 	  add_subdirectory(tests)
+endif ()
+
+if (BUILD_OPENSSL)
+	  add_subdirectory(openssl)
 endif ()
 
 add_subdirectory(src)
@@ -207,25 +219,41 @@ target_link_libraries(zhttp libzhttp)
 if (BUILD_DOC)
 	  find_package(Doxygen)
 		if (DOXYGEN_FOUND)
-			  set(BUILD_DOC_DIR ${CMAKE_SOURCE_DIR}/build/docs)
+			  set(BUILD_DOC_DIR ${MAINFOLDER}/build/docs)
 				if (NOT EXISTS ${BUILD_DOC_DIR})
-					  file(MAKE_DIRECTORY ${BUILD_DOC_DIR})
-					endif ()
+					message("The directory ${BUILD_DOC_DIR} does not exists")
+					file(MAKE_DIRECTORY ${BUILD_DOC_DIR})
+				endif ()
+				message("The directory ${BUILD_DOC_DIR} exists")
 
 				set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
 				set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 				configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
 
-				message("Doxygen buld started")
+				message("Doxygen build started")
 				add_custom_target(Doxygen ALL
 					  COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
 						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 						COMMENT "Generating API documentation with Doxygen"
 						VERBATIM)
 				else (DOXYGEN_FOUND)
-			  message("Doxygen needs to be installed to generate the documentation.")
+					message("Doxygen needs to be installed to generate the documentation.")
 			endif (DOXYGEN_FOUND)
+
 		file(WRITE "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "/root\n")
+
+		macro(add_deployment_file SRC DEST)
+			  file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+				file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
+			endmacro()
+
+		macro(add_deployment_directory SRC DEST)
+			  file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
+				foreach (filename ${files})
+					  get_filename_component(path ${filename} PATH)
+						add_deployment_file("${filename}" "${DEST}/${path}")
+					endforeach (filename)
+			endmacro()
 endif ()
 
 #project deployment
