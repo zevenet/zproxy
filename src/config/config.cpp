@@ -820,7 +820,7 @@ ListenerConfig *Config::parse_HTTPS() {
 
       for (pc = res->ctx; pc; pc = pc->next) {
         SSL_CTX_set_app_data(pc->ctx, res);
-        SSL_CTX_set_mode(pc->ctx, SSL_MODE_AUTO_RETRY);
+        SSL_CTX_set_mode(pc->ctx, SSL_MODE_RELEASE_BUFFERS);
         SSL_CTX_set_options(pc->ctx, ssl_op_enable);
         SSL_CTX_clear_options(pc->ctx, ssl_op_disable);
         sprintf(lin, "%d-Pound-%ld", getpid(), random());
@@ -1429,7 +1429,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
         conf_err("SSL_CTX_new failed - aborted");
       SSL_CTX_set_app_data(res->ctx, res);
       SSL_CTX_set_verify(res->ctx, SSL_VERIFY_NONE, NULL);
-      SSL_CTX_set_mode(res->ctx, SSL_MODE_AUTO_RETRY);
+      SSL_CTX_set_mode(res->ctx, SSL_MODE_RELEASE_BUFFERS);
 #ifdef SSL_MODE_SEND_FALLBACK_SCSV
       SSL_CTX_set_mode(res->ctx, SSL_MODE_SEND_FALLBACK_SCSV);
 #endif
