@@ -80,6 +80,9 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
           // been writen to the underlying socket,
           // need to check for sizes after writes
 //          SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION );
+  SSL_set_mode(ssl_connection.ssl,SSL_MODE_RELEASE_BUFFERS );
+
   ssl_connection.sbio = BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_CLOSE);
 //  BIO_set_nbio(ssl_connection.sbio, 1);
   SSL_set_bio(ssl_connection.ssl, ssl_connection.sbio, ssl_connection.sbio);
@@ -95,6 +98,7 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
   // let the SSL object know it should act as server
   !client_mode ? SSL_set_accept_state(ssl_connection.ssl)
                : SSL_set_connect_state(ssl_connection.ssl);
+  ssl_connection.ssl_conn_status = SSL_STATUS::NEED_HANDSHAKE;
   return true;
 }
 
@@ -190,9 +194,11 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection) {
       return false;
     }
   }
+  ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_START;
   int r = SSL_do_handshake(ssl_connection.ssl); //TODO:: Memory leak!! check heaptrack
   if (r == 1) {
     ssl_connection.ssl_connected = true;
+      ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
     Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
                   ssl_connection.getFileDescriptor());
     ssl_connection.enableReadEvent();
@@ -214,6 +220,7 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection) {
                   "SSL_do_handshake return %d error %d errno %d msg %s", r, err,
                   errno, strerror(errno));
     //ERR_print_errors(ssl_context->error_bio);
+    ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
     return false;
   }
   return true;

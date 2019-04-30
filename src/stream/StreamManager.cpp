@@ -265,6 +265,9 @@ void StreamManager::addStream(int fd) {
   if (listener_config_.add_head != NULL) {
     stream->request.addHeader(listener_config_.add_head, true);
   }
+  if (this->is_https_listener) {
+    stream->client_connection.ssl_conn_status = ssl::SSL_STATUS::NEED_HANDSHAKE;
+  }
   // configurar
 #else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
@@ -286,12 +289,17 @@ void StreamManager::onRequestEvent(int fd) {
       Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_REMOVE);
     }
   } else {
+#if !SM_HANDLE_ACCEPT
     stream = new HttpStream();
     stream->client_connection.setFileDescriptor(fd);
     streams_set[fd] = stream;
     if (fd != stream->client_connection.getFileDescriptor()) {
       Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
     }
+#endif
+    deleteFd(fd);
+    ::close(fd);
+    return;
   }
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (this->is_https_listener) {
@@ -328,7 +336,9 @@ void StreamManager::onRequestEvent(int fd) {
       }
       clearStream(stream);
     }
-
+    if (stream->client_connection.ssl_conn_status ==
+        ssl::SSL_STATUS::HANDSHAKE_DONE)
+      httpsHeaders(stream);
     return;
   }
   case IO::IO_RESULT::SUCCESS:break;
@@ -533,8 +543,7 @@ void StreamManager::onRequestEvent(int fd) {
 */
   //} while (stream->client_connection.buffer_size > parsed &&
   //  parse_result ==
-  //     http_parser::PARSE_RESULT::SUCCESS);
-  httpsHeaders(stream);
+  //     http_parser::PARSE_RESULT::SUCCESS);  
 
   stream->client_connection.enableReadEvent();
 }
