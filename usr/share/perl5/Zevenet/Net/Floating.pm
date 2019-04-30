@@ -167,6 +167,11 @@ sub getFloatInterfaceForAddress
 		$output_interface = $subnet_interface;
 	}
 
+	if ( !$output_interface->{ status } ne "up" )
+	{
+		return;
+	}
+
 	return $output_interface;
 }
 
@@ -179,6 +184,7 @@ sub setFloatingSourceAddr
 	my $server    = shift;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $out_if;
+	my $srcaddr = qq();
 
 	if ( defined $server && $server->{ vip } )
 	{
@@ -190,9 +196,9 @@ sub setFloatingSourceAddr
 		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
 	}
 
-	if ( !$out_if )
+	if ( $out_if )
 	{
-		return -1;
+		$srcaddr = $out_if->{ addr };
 	}
 
 	require Zevenet::Nft;
@@ -202,7 +208,7 @@ sub setFloatingSourceAddr
 		   method => "POST",
 		   uri    => "/farms",
 		   body =>
-			 qq({"farms" : [ { "name" : "$farm->{ name }", "source-addr" : "$out_if->{ addr }" } ] })
+			 qq({"farms" : [ { "name" : "$farm->{ name }", "source-addr" : "$srcaddr" } ] })
 		}
 	  );
 }
