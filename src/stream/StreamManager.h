@@ -43,6 +43,10 @@ DEFINE_OBJECT_COUNTER(on_client_disconnect);
 using namespace events;
 using namespace http;
 
+/** The StreamManager class is going to manage the streams and the
+ * operations related with them. It is event-driven and in order to
+ * accomplish that it inherits from EpollManager.
+ */
 class StreamManager : public EpollManager {
 #if HELLO_WORLD_SERVER
   std::string e200 =
@@ -93,6 +97,8 @@ public:
   static bool transferChunked(HttpStream *stream);
   void httpsHeaders(HttpStream *stream);
   void clearStream(HttpStream *stream);
+
+  /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
 };
 
