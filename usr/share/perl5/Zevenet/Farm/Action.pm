@@ -147,6 +147,9 @@ sub runFarmStart    # ($farm_name, $writeconf)
 				args   => [$farm_name],
 		);
 
+		require Zevenet::Farm::Config;
+		&reloadFarmsSourceAddressByFarm( $farm_name );
+
 		&eload(
 				module => 'Zevenet::Cluster',
 				func   => 'zClusterFarmUp',

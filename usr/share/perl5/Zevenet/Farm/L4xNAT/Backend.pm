@@ -83,32 +83,32 @@ sub setL4FarmServer
 
 	my $exists = &getFarmServer( $f_ref->{ servers }, $ids );
 
-	if (   defined $rip
-		&& $rip ne ""
-		&& ( !defined $exists || ( defined $exists && $exists->{ rip } != $rip ) ) )
+	if (    defined $rip
+		 && $rip ne ""
+		 && ( !defined $exists || ( defined $exists && $exists->{ ip } ne $rip ) ) )
 	{
-		my $existrip = &getFarmServer( $f_ref->{ servers }, $rip, "rip" );
+		my $existrip = &getFarmServer( $f_ref->{ servers }, $rip, "ip" );
 		return -2 if ( defined $existrip && ( $existrip->{ id } ne $ids ) );
 		$json .= qq(, "ip-addr" : "$rip");
 		$msg  .= "rip:$rip ";
 
 		my $mark;
-		if ( !defined $existrip )
+		if ( !defined $exists )
 		{
 			$mark = &getNewMark( $farm_name );
 			return -1 if ( !defined $mark || $mark eq "" );
+			$json .= qq(, "mark" : "$mark");
+			$msg  .= "mark:$mark ";
 		}
 		else
 		{
 			$mark = $existrip->{ tag };
 		}
-		$json .= qq(, "mark" : "$mark");
-		$msg  .= "mark:$mark ";
 		&setL4BackendRule( "add", $f_ref, $mark );
 	}
 
 	if ( defined $port
-		&& ( !defined $exists || ( defined $exists && $exists->{ port } != $port ) ) )
+		&& ( !defined $exists || ( defined $exists && $exists->{ port } ne $port ) ) )
 	{
 		$json .= qq(, "port" : "$port");
 		$msg  .= "port:$port ";
@@ -116,7 +116,7 @@ sub setL4FarmServer
 
 	if (   defined $weight
 		&& $weight ne ""
-		&& ( !defined $exists || ( defined $exists && $exists->{ weight } != $weight ) )
+		&& ( !defined $exists || ( defined $exists && $exists->{ weight } ne $weight ) )
 	  )
 	{
 		$weight = 1 if ( $weight == 0 );
@@ -128,7 +128,7 @@ sub setL4FarmServer
 		    defined $priority
 		 && $priority ne ""
 		 && ( !defined $exists
-			  || ( defined $exists && $exists->{ priority } != $priority ) )
+			  || ( defined $exists && $exists->{ priority } ne $priority ) )
 	  )
 	{
 		$priority = 1 if ( $priority == 0 );
@@ -140,7 +140,7 @@ sub setL4FarmServer
 		    defined $max_conns
 		 && $max_conns ne ""
 		 && ( !defined $exists
-			  || ( defined $exists && $exists->{ max_conns } != $max_conns ) )
+			  || ( defined $exists && $exists->{ max_conns } ne $max_conns ) )
 	  )
 	{
 		$max_conns = 0 if ( $max_conns < 0 );
@@ -174,7 +174,7 @@ sub setL4FarmServer
 		&eload(
 				module => 'Zevenet::Net::Floating',
 				func   => 'setFloatingSourceAddr',
-				args   => [$farm_ref, undef],
+				args   => [$farm_ref, $server_ref],
 		);
 	}
 

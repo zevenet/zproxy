@@ -167,7 +167,7 @@ sub getFloatInterfaceForAddress
 		$output_interface = $subnet_interface;
 	}
 
-	if ( !$output_interface->{ status } ne "up" )
+	if ( $output_interface->{ status } ne "up" )
 	{
 		return;
 	}
