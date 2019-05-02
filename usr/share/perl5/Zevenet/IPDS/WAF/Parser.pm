@@ -804,10 +804,12 @@ sub buildWAFSet
 	if ( not $err )
 	{
 		$err = &copyLock( $tmp, $set_file );
-		include 'Zevenet::IPDS::WAF::Runtime';
+		return "Error saving changes in $set" if $err;
 
 		# restart rule
+		include 'Zevenet::IPDS::WAF::Runtime';
 		$err = &reloadWAFByRule( $set );
+		return "Error reloading the set $set" if $err;
 	}
 	else
 	{
