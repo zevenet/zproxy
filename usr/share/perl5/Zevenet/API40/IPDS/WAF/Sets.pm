@@ -219,13 +219,14 @@ sub modify_waf_set
 	  if ( $error_msg );
 
 	#
-	if ( exists $json_obj->{ only_logging } )
+	if ( exists $json_obj->{ only_logging }
+		 and $json_obj->{ only_logging } eq 'true' )
 	{
 		if ( &getWAFSetStatus( $set ) eq 'down' )
 		{
 			my $msg =
 			  "It is necessary to start the set before configuring the 'only logging' work mode.";
-			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
