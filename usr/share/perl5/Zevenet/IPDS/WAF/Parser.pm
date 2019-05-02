@@ -62,6 +62,15 @@ sub convertWAFLine
 	grep ( s/^\s*//g, @txt );
 	chomp $_ for ( @txt );
 	$line = join ( '', @txt );
+
+	# Bugfix. When operator and actions in a SecRules are not splitted by a gap.
+	# 	a part of the rule is lost
+	if ( $line =~ /([^ \\]{1})""/ )
+	{
+		my $l = $1;
+		$line =~ s/$l""/" "/;
+	}
+
 	return $line;
 }
 
@@ -187,13 +196,17 @@ sub parseWAFRule
 
 		if ( $directive eq 'SecRule' )
 		{
-			if ( $line =~ /^\s*SecRule\s+"?([^"]+)"?\s+"?([^"]+)"?\s+"?([^"]+)?"?/s )
+			if ( $line =~ /^\s*SecRule\s+"?([^"]+)"?\s+"?((?:[^"]|\\")+)"?\s+"(.*)"$/s )
 			{
 				my $var = $1;
+				$var =~ s/^"//;
+				$var =~ s/"$//;
 				my $val = $2;
+				$val =~ s/^"//;
+				$val =~ s/"$//;
 				$act = $3;
 
-				if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>[^"]+)?$/ )
+				if ( $val =~ /^(?<operator>!?\@\w+)?\s*(?<operating>.+)?$/ )
 				{
 					$rule->{ operator } = $+{ operator } // "rx";
 					$rule->{ operating } = $+{ operating };
