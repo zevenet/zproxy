@@ -79,7 +79,8 @@ sub new_vlan    # ( $json_obj )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $dhcp_flag = ( exists $json_obj->{ dhcp } );
+	my $dhcp_flag =
+	  ( exists $json_obj->{ dhcp } and $json_obj->{ dhcp } ne "false" );
 	my $ip_mand = ( exists $json_obj->{ ip } and exists $json_obj->{ netmask } );
 	my $ip_opt = (
 				        exists $json_obj->{ ip }
@@ -89,7 +90,7 @@ sub new_vlan    # ( $json_obj )
 	unless ( ( $dhcp_flag and !$ip_opt ) or ( !$dhcp_flag and $ip_mand ) )
 	{
 		my $msg =
-		  "It is mandatory set an 'ip' and its 'netmask' or enabling the 'dhcp'. It is not allow to send 'ip', 'netmask' or 'gateway' with the 'dhcp' option.";
+		  "It is mandatory set an 'ip' and its 'netmask' or enabling the 'dhcp'. It is not allow to send 'ip', 'netmask' or 'gateway' when 'dhcp' is true.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
