@@ -5,6 +5,11 @@
 #include <openssl/ssl.h>
 
 namespace ssl {
+
+enum class SSL_STATUS{
+    NONE, WANT_READ, WANT_WRITE,NEED_HANDSHAKE, HANDSHAKE_START, HANDSHAKE_DONE, HANDSHAKE_ERROR, SSL_ERROR
+};
+
 typedef void (*SslInfoCallback)();
 
 static std::unique_ptr<char> ossGetErrorStackString(void) {
