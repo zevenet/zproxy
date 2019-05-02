@@ -229,7 +229,6 @@ sub setIPDSFarmParam
 	my $output = 0;
 	my $type   = &getFarmType( $farm );
 	my $attrib = "";
-	my $delete = 0;
 
 	if ( $type eq "l4xnat" )
 	{
@@ -249,7 +248,6 @@ sub setIPDSFarmParam
 		elsif ( $param eq 'limitconns' )
 		{
 			$attrib = qq(, "est-connlimit" : "$value" );
-			$delete = 1 if ( $value eq "0" );
 		}
 		elsif ( $param eq 'limitsec' )
 		{
@@ -258,7 +256,6 @@ sub setIPDSFarmParam
 		elsif ( $param eq 'limitsecbrst' )
 		{
 			$attrib = qq(, "new-rtlimit-burst" : "$value" );
-			$delete = 1 if ( $value eq "0" );
 		}
 		elsif ( $param eq 'limitrst' )
 		{
@@ -267,17 +264,14 @@ sub setIPDSFarmParam
 		elsif ( $param eq 'limitrstbrst' )
 		{
 			$attrib = qq(, "rst-rtlimit-burst" : "$value" );
-			$delete = 1 if ( $value eq "0" );
 		}
 		elsif ( $param eq 'bogustcpflags' )
 		{
 			$attrib = qq(, "tcp-strict" : "$value" );
-			$delete = 1 if ( $value eq "off" );
 		}
 		elsif ( $param eq 'nfqueue' )
 		{
 			$attrib = qq(, "queue" : "$value" );
-			$delete = 1 if ( $value eq "-1" );
 		}
 		elsif ( $param eq 'policy' )
 		{
@@ -305,24 +299,6 @@ sub setIPDSFarmParam
 			}
 		);
 
-		if ( $delete == 1 )
-		{
-			# if there is no rule remaining, delete the service
-			my $rules = &getIPDSfarmsRules( $farm );
-			if (    !@{ $rules->{ 'dos' } }
-				 && !@{ $rules->{ 'blacklists' } }
-				 && !@{ $rules->{ 'rbl' } }
-				 && !@{ $rules->{ 'waf' } } )
-			{
-				$output = httpNlbRequest(
-										  {
-											farm   => $farm,
-											method => "DELETE",
-											uri    => "/farms/" . $farm,
-										  }
-				);
-			}
-		}
 	}
 
 	return $output;
@@ -387,24 +363,6 @@ sub delIPDSFarmParam
 									file   => "$configdir/$farm_filename",
 								  }
 		);
-	}
-	else
-	{
-		# if there is no rule remaining, delete the service
-		my $rules = &getIPDSfarmsRules( $farm );
-		if (    !@{ $rules->{ 'dos' } }
-			 && !@{ $rules->{ 'blacklists' } }
-			 && !@{ $rules->{ 'rbl' } }
-			 && !@{ $rules->{ 'waf' } } )
-		{
-			$output = httpNlbRequest(
-									  {
-										farm   => $farm,
-										method => "DELETE",
-										uri    => "/farms/" . $farm,
-									  }
-			);
-		}
 	}
 
 	return $output;
@@ -643,6 +601,56 @@ sub delIPDSPolicy
 								uri    => "/policies$attrib",
 							  }
 	);
+
+	return $output;
+}
+
+=begin nd
+Function: delIPDSFarmService
+
+	Delete Farm Service for non-L4xNAT farms
+
+Parameters:
+	farm - name of the farm to delete
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
+
+=cut
+
+sub delIPDSFarmService
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farm = shift;
+
+	require Zevenet::Farm::Core;
+
+	my $output = 0;
+	my $type   = &getFarmType( $farm );
+
+	if ( $type eq "l4xnat" )
+	{
+		return 0;
+	}
+
+	require Zevenet::Nft;
+
+	# if there is no rule remaining, delete the service
+	my $rules = &getIPDSfarmsRules( $farm );
+	if (    !@{ $rules->{ 'dos' } }
+		 && !@{ $rules->{ 'blacklists' } }
+		 && !@{ $rules->{ 'rbl' } }
+		 && !@{ $rules->{ 'waf' } } )
+	{
+		$output = httpNlbRequest(
+								  {
+									farm   => $farm,
+									method => "DELETE",
+									uri    => "/farms/" . $farm,
+								  }
+		);
+	}
 
 	return $output;
 }

@@ -154,8 +154,11 @@ sub setDOSStopRule
 	else
 	{
 		&zenlog( "Unknown type rule: $rule", "warning", "IPDS" );
-		return -1;
+		$output = -1;
 	}
+
+	# Call to remove service if possible
+	&delIPDSFarmService( $farmName );
 
 	return $output;
 }

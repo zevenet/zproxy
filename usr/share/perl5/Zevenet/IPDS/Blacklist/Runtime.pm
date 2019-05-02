@@ -230,6 +230,9 @@ sub setBLCreateRule
 				 "info", "IPDS" );
 	}
 
+	# Call to remove service if possible
+	&delIPDSFarmService( $farmName );
+
 	return $output;
 }
 

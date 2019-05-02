@@ -75,11 +75,14 @@ sub runRBLFarmRule
 
 	$error = &setIPDSFarmParam( 'nfqueue', $nfqueue, $farmname );
 
+	# Call to remove service if possible
+	&delIPDSFarmService( $farmname ) if ( $action eq "delete" );
+
 	return $error;
 }
 
 =begin nd
-Function: runRBLStart
+Function: runRBLStartPacketbl
 
 	Run packetbl binary
 
