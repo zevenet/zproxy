@@ -16,6 +16,30 @@
 #include <unordered_map>
 #include <vector>
 
+#if DEBUG_STREAM_EVENTS_COUNT
+
+#include "../stats/counter.h"
+
+namespace debug__ {
+#define DEBUG_COUNTER_HIT(x) std::unique_ptr<x> debug_stream_status(new x);
+
+DEFINE_OBJECT_COUNTER(on_client_connect);
+DEFINE_OBJECT_COUNTER(on_backend_connect);
+DEFINE_OBJECT_COUNTER(on_backend_connect_timeout)
+DEFINE_OBJECT_COUNTER(on_backend_disconnect);
+DEFINE_OBJECT_COUNTER(on_handshake);
+DEFINE_OBJECT_COUNTER(on_request);
+DEFINE_OBJECT_COUNTER(on_response);
+DEFINE_OBJECT_COUNTER(on_request_timeout);
+DEFINE_OBJECT_COUNTER(on_response_timeout);
+DEFINE_OBJECT_COUNTER(on_send_request);
+DEFINE_OBJECT_COUNTER(on_send_response);
+DEFINE_OBJECT_COUNTER(on_client_disconnect);
+}
+#else
+#define DEBUG_COUNTER_HIT(x)
+#endif
+
 using namespace events;
 using namespace http;
 

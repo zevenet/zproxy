@@ -246,6 +246,7 @@ void StreamManager::doWork() {
 }
 
 void StreamManager::addStream(int fd) {
+    DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
   HttpStream *stream = streams_set[fd];
   if (UNLIKELY(stream != nullptr)) {
@@ -279,6 +280,7 @@ void StreamManager::addStream(int fd) {
 int StreamManager::getWorkerId() { return worker_id; }
 
 void StreamManager::onRequestEvent(int fd) {
+  DEBUG_COUNTER_HIT(debug__::on_request);
   HttpStream *stream = streams_set[fd];
   if (stream != nullptr) {
     if (stream->client_connection.isCancelled()) {
@@ -301,6 +303,7 @@ void StreamManager::onRequestEvent(int fd) {
     ::close(fd);
     return;
   }
+
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (this->is_https_listener) {
     result = this->ssl_manager->handleDataRead(stream->client_connection);
@@ -335,10 +338,12 @@ void StreamManager::onRequestEvent(int fd) {
                       stream->client_connection.getPeerAddress().c_str());
       }
       clearStream(stream);
+      return;
     }
     if (stream->client_connection.ssl_conn_status ==
         ssl::SSL_STATUS::HANDSHAKE_DONE)
-      httpsHeaders(stream);
+//      httpsHeaders(stream);
+        DEBUG_COUNTER_HIT(debug__::on_handshake);
     return;
   }
   case IO::IO_RESULT::SUCCESS:break;
@@ -462,6 +467,7 @@ void StreamManager::onRequestEvent(int fd) {
                                        stream->backend_connection.getBackend()->nf_mark);
           }
           case IO::IO_OP::OP_SUCCESS: {
+              DEBUG_COUNTER_HIT(debug__::on_backend_connect);
             stream->backend_connection.getBackend()->increaseConnection();
             streams_set[stream->backend_connection.getFileDescriptor()] =
                 stream;
@@ -549,6 +555,7 @@ void StreamManager::onRequestEvent(int fd) {
 }
 
 void StreamManager::onResponseEvent(int fd) {
+  DEBUG_COUNTER_HIT(debug__::on_response);
   HttpStream *stream = streams_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Backend Connection, Stream closed", LOG_DEBUG);
@@ -672,12 +679,13 @@ void StreamManager::onResponseEvent(int fd) {
 
     Service *service = service_manager->getService(stream->request); // FIXME:: Do not loop!!
     setBackendCookie(service, stream);
-    setStrictTransportSecurity(service, stream);
+//    setStrictTransportSecurity(service, stream);
     applyCompression(service, stream);
   }
   stream->client_connection.enableWriteEvent();
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
+  DEBUG_COUNTER_HIT(debug__::on_backend_connect_timeout);
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -699,6 +707,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 }
 
 void StreamManager::onRequestTimeoutEvent(int fd) {
+  DEBUG_COUNTER_HIT(debug__::on_request_timeout);
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -710,6 +719,7 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 }
 
 void StreamManager::onResponseTimeoutEvent(int fd) {
+  DEBUG_COUNTER_HIT(debug__::on_response_timeout);
   HttpStream *stream = timers_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -742,6 +752,7 @@ void StreamManager::onSignalEvent(int fd) {
 }
 
 void StreamManager::onServerWriteEvent(HttpStream *stream) {
+  DEBUG_COUNTER_HIT(debug__::on_send_request);
   if (UNLIKELY(stream->backend_connection.isCancelled())) {
     clearStream(stream);
     return;
@@ -803,6 +814,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
 }
 
 void StreamManager::onClientWriteEvent(HttpStream *stream) {
+  DEBUG_COUNTER_HIT(debug__::on_send_response);
   if (UNLIKELY(stream->client_connection.isCancelled())) {
     clearStream(stream);
     return;
@@ -1301,6 +1313,7 @@ void StreamManager::httpsHeaders(HttpStream *stream) {
 }
 
 void StreamManager::clearStream(HttpStream *stream) {
+
   //TODO:: add connection closing reason for logging purpose
   if (stream == nullptr) {
     return;
@@ -1321,6 +1334,7 @@ void StreamManager::clearStream(HttpStream *stream) {
     deleteFd(stream->client_connection.getFileDescriptor());
     streams_set[stream->client_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->client_connection.getFileDescriptor());
+      DEBUG_COUNTER_HIT(debug__::on_client_disconnect);
   }
   if (stream->backend_connection.getFileDescriptor() > 0) {
     if (stream->backend_connection.isConnected())
@@ -1328,6 +1342,7 @@ void StreamManager::clearStream(HttpStream *stream) {
     deleteFd(stream->backend_connection.getFileDescriptor());
     streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->backend_connection.getFileDescriptor());
+      DEBUG_COUNTER_HIT(debug__::on_backend_disconnect);
   }
   delete stream;
 }

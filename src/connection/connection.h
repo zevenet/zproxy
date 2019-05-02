@@ -10,9 +10,10 @@
 #include <atomic>
 #include <fcntl.h>
 #include <netdb.h>
-#include <openssl/ssl.h>
+#include "../ssl/ssl_common.h"
 #include <sys/uio.h>
 #include <unistd.h>
+
 #define MAX_DATA_SIZE 65000
 
 #define ENABLE_ZERO_COPY 1
@@ -84,6 +85,7 @@ public:
   bool isConnected();
   // SSL stuff
 public:
+  ssl::SSL_STATUS ssl_conn_status{ssl::SSL_STATUS::NONE};
   SSL *ssl{nullptr};
   // socket bio
   BIO *sbio{nullptr};

@@ -76,6 +76,63 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     root->emplace("RSS",
                   std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(rss)));
+#if DEBUG_STREAM_EVENTS_COUNT
+    root->emplace("on_client_connect",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_client_connect>::count)));
+    root->emplace("on_backend_connect",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_backend_connect>::count)));
+    root->emplace("on_backend_connect_timeout",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_backend_connect_timeout>::count)));
+    root->emplace("on_handshake",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_handshake>::count)));
+    root->emplace("on_request",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_request>::count)));
+    root->emplace("on_response",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_response>::count)));
+    root->emplace("on_request_timeout",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_request_timeout>::count)));
+    root->emplace("on_response_timeout",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_response_timeout>::count)));
+    root->emplace("on_send_request",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_send_request>::count)));
+    root->emplace("on_send_response",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_send_response>::count)));
+    root->emplace("on_client_disconnect",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_client_disconnect>::count)));
+    root->emplace("on_backend_disconnect",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(Counter<debug__::on_backend_disconnect>::count)));
+
+#endif
+
+
+    /*
+struct debug_status{};
+struct on_none:debug_status, Counter<on_none>{};
+struct on_connect:debug_status, Counter<on_connect>{};
+struct on_backend_connect:debug_status, Counter<on_backend_connect>{};
+struct on_backend_disconnect:debug_status, Counter<on_backend_disconnect>{};
+struct on_connect_timeout:debug_status, Counter<on_connect_timeout>{};
+struct on_handshake: debug_status, Counter<on_handshake>{};
+struct on_request:debug_status, Counter<on_request>{};
+struct on_response:debug_status, Counter<on_response>{};
+struct on_request_timeout:debug_status, Counter<on_request_timeout>{};
+struct on_response_timeout:debug_status, Counter<on_response_timeout>{};
+struct on_send_request:debug_status, Counter<on_send_request>{};
+struct on_send_response:debug_status, Counter<on_send_response>{};
+struct on_client_disconnect:debug_status, Counter<on_client_disconnect>{};*/
+
 
     return root->stringify();
   }
