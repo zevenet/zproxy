@@ -520,10 +520,17 @@ sub actions_dos
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_dos', $json_obj->{ action }, $rule );
 
+	my $status = &getDOSStatusRule( $rule );
+	if (    ( $json_obj->{ action } eq 'start' and $status ne 'up' )
+		 or ( $json_obj->{ action } eq 'stop' and $status ne 'down' ) )
+	{
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 params      => $json_obj
+				 params      => { status => $status }
 	};
 
 	return &httpResponse( { code => 200, body => $body } );

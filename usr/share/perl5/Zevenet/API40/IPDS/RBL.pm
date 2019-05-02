@@ -878,9 +878,17 @@ sub set_rbl_actions
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_rbl', $action, $name );
 
+	my $status = &getRBLObjectRuleParam( $name, 'status' );
+	if (    ( $action eq 'start' and $status ne 'up' )
+		 or ( $action eq 'stop' and $status ne 'down' ) )
+	{
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my $body = {
 				 description => $desc,
-				 params      => $json_obj
+				 success     => "true",
+				 params      => { status => $status }
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
