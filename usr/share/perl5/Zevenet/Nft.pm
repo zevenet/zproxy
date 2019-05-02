@@ -237,9 +237,10 @@ sub execNft
 	my $chain_def = shift;
 	my $rule      = shift;
 
-	my $nft       = &getGlobalConfiguration( 'nft_bin' );
-	my ( $chain ) = $chain_def =~ /^((\w-\.\d)+)\s+.*/;
-	my $output    = 0;
+	my $nft   = &getGlobalConfiguration( 'nft_bin' );
+	my $chain = "";
+	( $chain ) = $chain_def =~ /^((\w-\.\d)+)\s+.*/;
+	my $output = 0;
 
 	if ( $action eq "add" )
 	{
