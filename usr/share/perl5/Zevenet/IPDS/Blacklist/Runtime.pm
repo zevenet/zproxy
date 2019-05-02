@@ -387,7 +387,7 @@ sub setBLCronTask
 	untie @list;
 
 	my $cron_service = &getGlobalConfiguration( 'cron_service' );
-	&logAndRun( "$cron_service restart" );
+	&logAndRun( "$cron_service reload" );
 	&zenlog( "Created a cron task for the list $listName", "info", "IPDS" );
 }
 
