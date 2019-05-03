@@ -293,10 +293,16 @@ sub setIPDSFarmParam
 			return -1;
 		}
 
-		my $vip  = &getFarmVip( 'vip',  $farm );
-		my $port = &getFarmVip( 'vipp', $farm );
-		my $proto = "tcp";
-		$proto = "udp" if ( &getFarmProto( $farm ) eq "UDP" );
+		my $vip   = &getFarmVip( 'vip', $farm );
+		my $port  = "";
+		my $proto = "all";
+
+		if ( $type ne "datalink" )
+		{
+			$port = &getFarmVip( 'vipp', $farm );
+			my $proto = "tcp";
+			$proto = "udp" if ( &getFarmProto( $farm ) eq "UDP" );
+		}
 
 		require Zevenet::Nft;
 
