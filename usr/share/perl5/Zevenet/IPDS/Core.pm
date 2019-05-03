@@ -31,6 +31,7 @@ Function: getIPDSfarmsRules
 
 Parameters:
 	farmName - farm name to get its IPDS rules
+	status   - returned rules with a certain status
 
 Returns:
 	scalar - array reference of array references ('dos', 'blacklists', 'rbl', 'waf') hashes in the form of ('name', 'rule', 'type')
@@ -42,6 +43,7 @@ sub getIPDSfarmsRules
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmName = shift;
+	my $state    = shift;
 
 	require Config::Tiny;
 	include 'Zevenet::IPDS::WAF::Core';
@@ -66,7 +68,10 @@ sub getIPDSfarmsRules
 				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
-				push @dosRules, { 'name' => $key, 'status' => $status };
+				if ( !defined $state || $state eq "" || $state eq $status )
+				{
+					push @dosRules, { 'name' => $key, 'status' => $status };
+				}
 			}
 		}
 	}
@@ -79,7 +84,10 @@ sub getIPDSfarmsRules
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
-				push @blacklistsRules, { 'name' => $key, 'status' => $status };
+				if ( !defined $state || $state eq "" || $state eq $status )
+				{
+					push @blacklistsRules, { 'name' => $key, 'status' => $status };
+				}
 			}
 		}
 	}
@@ -92,7 +100,10 @@ sub getIPDSfarmsRules
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
-				push @rblRules, { 'name' => $key, 'status' => $status };
+				if ( !defined $state || $state eq "" || $state eq $status )
+				{
+					push @rblRules, { 'name' => $key, 'status' => $status };
+				}
 			}
 		}
 	}
@@ -363,6 +374,11 @@ sub delIPDSFarmParam
 									file   => "$configdir/$farm_filename",
 								  }
 		);
+	}
+	else
+	{
+		# Call to remove service if possible
+		&delIPDSFarmService( $farm );
 	}
 
 	return $output;
@@ -637,11 +653,11 @@ sub delIPDSFarmService
 	require Zevenet::Nft;
 
 	# if there is no rule remaining, delete the service
-	my $rules = &getIPDSfarmsRules( $farm );
+	my $rules = &getIPDSfarmsRules( $farm, "up" );
+
 	if (    !@{ $rules->{ 'dos' } }
 		 && !@{ $rules->{ 'blacklists' } }
-		 && !@{ $rules->{ 'rbl' } }
-		 && !@{ $rules->{ 'waf' } } )
+		 && !@{ $rules->{ 'rbl' } } )
 	{
 		$output = httpNlbRequest(
 								  {

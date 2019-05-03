@@ -150,7 +150,6 @@ sub setBLDeleteList
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
-	my @farms          = @{ &getBLParam( $listName, 'farms' ) };
 
 	# Check if the rule is down
 	if ( &getBLIpsetStatus( $listName ) eq "up" )

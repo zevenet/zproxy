@@ -184,7 +184,7 @@ sub setBLDownloadRemoteList
 		untie @list;
 
 		&setBLParam( $listName, 'update_status', 'up' );
-		&zenlog( "$listName was downloaded successful.", "info", "IPDS" );
+		&zenlog( "$listName was downloaded successfully.", "info", "IPDS" );
 	}
 
 	return $error;
@@ -226,12 +226,9 @@ sub setBLCreateRule
 	$output = &setIPDSFarmParam( 'policy', $listName, $farmName );
 	if ( !$output )
 	{
-		&zenlog( "List '$listName' was applied successful to the farm '$farmName'.",
+		&zenlog( "List '$listName' was applied successfully to the farm '$farmName'.",
 				 "info", "IPDS" );
 	}
-
-	# Call to remove service if possible
-	&delIPDSFarmService( $farmName );
 
 	return $output;
 }

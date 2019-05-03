@@ -245,7 +245,7 @@ sub createDOSRule
 	$fileHandle->write( $confFile );
 	close $lock;
 
-	&zenlog( "$ruleName rule created successful.", "info", "IPDS" );
+	&zenlog( "$ruleName rule created successfully.", "info", "IPDS" );
 	return 0;
 }
 
