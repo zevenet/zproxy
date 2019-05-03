@@ -29,21 +29,21 @@ include 'Zevenet::IPDS::Blacklist::Core';
 include 'Zevenet::IPDS::Blacklist::Runtime';
 
 my ( $listName ) = @ARGV;
-my $logger = &getGlobalConfiguration ( 'logger' );
+my $logger = &getGlobalConfiguration( 'logger' );
 my $output;
 
-&setBLDownloadRemoteList ( $listName );
-if ( &getBLStatus ( $listName ) eq 'up' )
+&setBLDownloadRemoteList( $listName );
+if ( &getBLStatus( $listName ) eq 'up' )
 {
-	$output = &setBLRefreshList ( $listName );
+	$output = &setBLRefreshList( $listName );
 
-	if ( ! $output )
+	if ( !$output )
 	{
-		system ("$logger \"$listName was updated successful\" -i -t updatelist");
+		system ( "$logger \"$listName was updated successfully\" -i -t updatelist" );
 	}
 	else
 	{
-		system ("$logger \"Error, updating $listName.\" -i -t updatelist");
+		system ( "$logger \"Error, updating $listName.\" -i -t updatelist" );
 	}
 }
 

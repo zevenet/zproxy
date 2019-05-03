@@ -25,10 +25,10 @@ use strict;
 
 use Zevenet::API31::HTTP;
 
-
 sub move_services
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -47,7 +47,7 @@ sub move_services
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( ! grep ( /^$service$/, @services ) )
+	if ( !grep ( /^$service$/, @services ) )
 	{
 		my $msg = "$service not found.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -90,7 +90,7 @@ sub move_services
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		&zenlog( "Farm stopped successful.", "info", "LSLB"  );
+		&zenlog( "Farm stopped successfully.", "info", "LSLB" );
 	}
 
 	&setHTTPFarmMoveService( $farmname, $service, $json_obj->{ 'position' } );

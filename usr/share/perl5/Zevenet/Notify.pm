@@ -31,13 +31,15 @@ my $secConf = &getNotifConfFile();
 
 sub getNotifConfFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	return &getGlobalConfiguration( "notifConfDir") . "/sec.rules";
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	return &getGlobalConfiguration( "notifConfDir" ) . "/sec.rules";
 }
 
 sub setNotifCreateConfFile
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	use Zevenet::SystemInfo;
 
 	my $confdir    = &getGlobalConfiguration( 'notifConfDir' );
@@ -49,7 +51,7 @@ sub setNotifCreateConfFile
 	my $output;
 
 	# create config directory
-	if ( ! -d $confdir )
+	if ( !-d $confdir )
 	{
 		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $confdir" );
 		&zenlog( "Created $confdir directory.", "info", "NOTIFICATIONS" );
@@ -73,19 +75,18 @@ sub setNotifCreateConfFile
 	}
 
 	# Create sender configuration file
-	if ( ! -e $senderFile )
+	if ( !-e $senderFile )
 	{
 		my $senderConf =
-			"version=$version\n\n"
-		 . "[Smtp]\n"
-		 . "auth=LOGIN\n"
-		 . "auth-password=\n"
-		 . "auth-user=\n"
-		 . "bin=/usr/local/zevenet/app/swaks/swaks\n"
-		 . "from=\n"
-		 . "server=\n"
-		 . "tls=false\n"
-		 . "to=\n";
+		    "version=$version\n\n"
+		  . "[Smtp]\n"
+		  . "auth=LOGIN\n"
+		  . "auth-password=\n"
+		  . "auth-user=\n"
+		  . "bin=/usr/local/zevenet/app/swaks/swaks\n"
+		  . "from=\n"
+		  . "server=\n"
+		  . "tls=false\n" . "to=\n";
 		open my $fileHandle, '>', $senderFile;
 		print $fileHandle $senderConf;
 		close $fileHandle;
@@ -93,18 +94,18 @@ sub setNotifCreateConfFile
 	}
 
 	# Create alert configuration file. It's different in each host
-	if ( ! -e $alertsFile )
+	if ( !-e $alertsFile )
 	{
 		my $alertConf =
-			"[Backend]\n"
-		 . "PrefixSubject=\n"
-		 . "SwitchTime=5\n"
-		 . "Status=off\n\n"
-		 . "[Cluster]\n"
-		 . "PrefixSubject=\n"
-		 . "Status=off\n\n"
-		 . "[Notifications]\n"
-		 . "Status=off\n\n";
+		    "[Backend]\n"
+		  . "PrefixSubject=\n"
+		  . "SwitchTime=5\n"
+		  . "Status=off\n\n"
+		  . "[Cluster]\n"
+		  . "PrefixSubject=\n"
+		  . "Status=off\n\n"
+		  . "[Notifications]\n"
+		  . "Status=off\n\n";
 		open my $fileHandle, '>', $alertsFile;
 		print $fileHandle $alertConf;
 		close $fileHandle;
@@ -114,12 +115,12 @@ sub setNotifCreateConfFile
 	return $output;
 }
 
-
 # Check form data and configure mail server.
 # &setNotifSenders ( $sender, $params );
 sub setNotifSenders
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $sender = shift;
 	my $params = shift;
 
@@ -134,12 +135,11 @@ sub setNotifSenders
 
 			$errMsg =
 			  &setNotifData( 'senders', $sender, 'auth-password',
-				&getCodeEncode($params->{ $key } ) );
+							 &getCodeEncode( $params->{ $key } ) );
 		}
 		elsif ( $key eq 'user' )
 		{
-			$errMsg = &setNotifData( 'senders', $sender, 'auth-user',
-				$params->{ $key } );
+			$errMsg = &setNotifData( 'senders', $sender, 'auth-user', $params->{ $key } );
 		}
 		else
 		{
@@ -154,15 +154,16 @@ sub setNotifSenders
 # &setNotifAlerts ( $alert, $params )
 sub setNotifAlerts
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $notif     = shift;
-	my $params    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $notif  = shift;
+	my $params = shift;
 
 	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
 
 	$notif = "Backend" if ( $notif =~ /backends/i );
-	$notif = "Cluster"  if ( $notif =~ /cluster/i );
+	$notif = "Cluster" if ( $notif =~ /cluster/i );
 
 	# add subject prefix
 	if ( exists $params->{ 'PrefixSubject' } )
@@ -180,7 +181,7 @@ sub setNotifAlerts
 	}
 
 	# successful message and reset
-	&reloadNotifications() if ( ! $errMsg );
+	&reloadNotifications() if ( !$errMsg );
 
 	return $errMsg;
 }
@@ -188,7 +189,8 @@ sub setNotifAlerts
 # &setNotifAlertsAction ( $alert, $action )
 sub setNotifAlertsAction
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $notif  = shift;
 	my $action = shift // "";
 
@@ -219,7 +221,7 @@ sub setNotifAlertsAction
 		$errMsg = -2;
 	}
 
-	if ( ! $errMsg )
+	if ( !$errMsg )
 	{
 		# enable sec process
 		if (    &getNotifData( 'alerts', 'Notifications', 'Status' ) eq 'off'
@@ -249,7 +251,8 @@ sub setNotifAlertsAction
 # Discomment rule in sec rule file
 sub enableRule    # &enableRule ( $rule )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule ) = @_;
 
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
@@ -258,7 +261,7 @@ sub enableRule    # &enableRule ( $rule )
 	if ( !-f $secConf )
 	{
 		$output = 1;
-		&zenlog ("don't find $secConf file", "error", "NOTIFICATIONS");
+		&zenlog( "don't find $secConf file", "error", "NOTIFICATIONS" );
 	}
 	else
 	{
@@ -292,12 +295,13 @@ sub enableRule    # &enableRule ( $rule )
 # Change the switch time. This is the time server wait a state change to avoid do spam
 sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $rule, $time ) = @_;
 
 	my $fileConf = $secConf;
-	my $flag   = 0;     # $flag = 0 rule don't find, $flag = 1 changing rule
-	my $errMsg = -1;
+	my $flag     = 0;          # $flag = 0 rule don't find, $flag = 1 changing rule
+	my $errMsg   = -1;
 
 	if ( -f $fileConf )
 	{
@@ -333,8 +337,9 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 # Check sec status and boot it if was on
 sub zlbstartNotifications
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' ) ;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' );
 	my $output;
 
 	# create conf file if don't exists
@@ -354,7 +359,8 @@ sub zlbstartNotifications
 
 sub zlbstopNotifications
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $sec = &getGlobalConfiguration( 'sec' );
 	return 0 if ( !$sec );
 
@@ -370,26 +376,29 @@ sub zlbstopNotifications
 
 sub createSecConfig
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $template    = &getGlobalConfiguration( 'secTemplate' );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $template = &getGlobalConfiguration( 'secTemplate' );
 
 	# Copy the template
 	my $cp = &getGlobalConfiguration( "cp" );
 	system ( "$cp $template $secConf" );
 
 	# Fix inconguity between sec.rules and alert conf file
-	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on')
+	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on' )
 	{
 		my $time = &getNotifData( 'alerts', 'Backend', 'SwitchTime' );
 		&enableRule( 'Backend' );
-		&changeTimeSwitch( 'Backend', $time )
+		&changeTimeSwitch( 'Backend', $time );
 	}
-	&enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
+	&enableRule( 'Cluster' )
+	  if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on' );
 }
 
 sub runNotifications
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $pidof      = &getGlobalConfiguration( 'pidof' );
 	my $sec        = &getGlobalConfiguration( 'sec' );
 	my $syslogFile = &getGlobalConfiguration( 'syslogFile' );
@@ -414,13 +423,17 @@ sub runNotifications
 	}
 	else
 	{
-		&zenlog( "SEC couldn't run because a process for this program already exists, pid:$pid.", "info", "NOTIFICATIONS" );
+		&zenlog(
+			"SEC couldn't run because a process for this program already exists, pid:$pid.",
+			"info", "NOTIFICATIONS"
+		);
 	}
 }
 
 sub reloadNotifications
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $pidof = &getGlobalConfiguration( 'pidof' );
 	my $pid   = `$pidof -x sec`;
 
@@ -428,14 +441,15 @@ sub reloadNotifications
 	{
 		&createSecConfig();
 		kill 'HUP', $pid;
-		&zenlog( "SEC reloaded successful", "info", "NOTIFICATIONS" );
+		&zenlog( "SEC reloaded successfully", "info", "NOTIFICATIONS" );
 	}
 }
 
 #  &getNotifData ( $file, $section, $key, $data )
 sub setNotifData
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $name, $section, $key, $data ) = @_;
 
 	my $errMsg;
@@ -463,7 +477,8 @@ sub setNotifData
 		$fileHandle = Config::Tiny->read( $fileName );
 		$fileHandle->{ $section }->{ $key } = $data;
 		$fileHandle->write( $fileName );
-		#~ &zenlog( "'$key' was modificated in '$section' notifications to '$data'", "info", "SYSTEM" );
+
+#~ &zenlog( "'$key' was modificated in '$section' notifications to '$data'", "info", "SYSTEM" );
 	}
 
 	return $errMsg;
@@ -472,7 +487,8 @@ sub setNotifData
 #  &getNotifData ( $file, $section, $key )
 sub getNotifData
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $name, $section, $key ) = @_;
 
 	my $arguments = scalar @_;
@@ -508,25 +524,28 @@ sub getNotifData
 
 sub getNotifSendersSmtp
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $method;
-	$method->{ 'method' }   = 'email';
-	$method->{ 'server' }   = &getNotifData( 'senders', 'Smtp', 'server' );
-	$method->{ 'user' }     = &getNotifData( 'senders', 'Smtp', 'auth-user' );
-	$method->{ 'from' }     = &getNotifData( 'senders', 'Smtp', 'from' );
-	$method->{ 'to' }       = &getNotifData( 'senders', 'Smtp', 'to' );
-	$method->{ 'tls' }      = &getNotifData( 'senders', 'Smtp', 'tls' );
+	$method->{ 'method' } = 'email';
+	$method->{ 'server' } = &getNotifData( 'senders', 'Smtp', 'server' );
+	$method->{ 'user' }   = &getNotifData( 'senders', 'Smtp', 'auth-user' );
+	$method->{ 'from' }   = &getNotifData( 'senders', 'Smtp', 'from' );
+	$method->{ 'to' }     = &getNotifData( 'senders', 'Smtp', 'to' );
+	$method->{ 'tls' }    = &getNotifData( 'senders', 'Smtp', 'tls' );
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
-		{ $method->{ 'password' } = '******'; }
-	else
-		{ $method->{ 'password' } = ''; }
+	{
+		$method->{ 'password' } = '******';
+	}
+	else { $method->{ 'password' } = ''; }
 
 	return $method;
 }
 
 sub getNotifAlert
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $alert = shift;
 
 	my $method;
@@ -564,23 +583,23 @@ sub getNotifAlert
 	return $method;
 }
 
-
 # &sendByMail ( $subject, $bodycomp );
 sub sendByMail
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $subject, $bodycomp, $section ) = @_;
 
 	my $body;
 	my $command;
-	my $logger = &getGlobalConfiguration ( 'logger' );
+	my $logger = &getGlobalConfiguration( 'logger' );
 	my $error;
 
 	my $pass = &getNotifData( 'senders', 'Smtp', 'auth-password' );
 	if ( $pass )
 	{
 		include 'Zevenet::Code';
-		$pass = &getCodeDecode($pass);
+		$pass = &getCodeDecode( $pass );
 	}
 
 	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
@@ -592,20 +611,25 @@ sub sendByMail
 	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
 
-	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	if (    &getNotifData( 'senders', 'Smtp', 'auth-user' )
+		 || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
 		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		  if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$command .= " --auth-password " . $pass if ( $pass );
 	}
 
-	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
+	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) )
+	{
+		$command .= " -tls";
+	}
 
 	#~ $command .= " --header 'From: $from '";
-	$command .=	" --header 'Subject: "
-	. &getNotifData( 'alerts', $section, 'PrefixSubject' )
-	. " $subject'";
+	$command .=
+	    " --header 'Subject: "
+	  . &getNotifData( 'alerts', $section, 'PrefixSubject' )
+	  . " $subject'";
 
 	$command .= " --body '$body'";
 
@@ -621,45 +645,47 @@ sub sendByMail
 	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
 
-	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	if (    &getNotifData( 'senders', 'Smtp', 'auth-user' )
+		 || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
 		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		  if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$logMsg .= " --auth-password ********"
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+		  if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
 	}
-	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
+	$logMsg .= " -tls" if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
 
 	#~ $logMsg .= " --header 'From: $from'";
-	$logMsg .= " --header 'Subject: "
-			.  &getNotifData( 'alerts', $section, 'PrefixSubject' )
-			.  " $subject'";
+	$logMsg .=
+	    " --header 'Subject: "
+	  . &getNotifData( 'alerts', $section, 'PrefixSubject' )
+	  . " $subject'";
 	$logMsg .= " --body 'BODY'";
 
-	system ("$logger \"$logMsg\" -i -t sec");
+	system ( "$logger \"$logMsg\" -i -t sec" );
 
 	return $error;
 }
 
-
 # &sendTestMail ( $subject, $bodycomp );
 sub sendTestMail
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $bodycomp = "Zevenet notification service.\n\nThis mail confirms that the configuration is correct.";
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bodycomp =
+	  "Zevenet notification service.\n\nThis mail confirms that the configuration is correct.";
 	my $subject = "Test mail";
 	my $command;
-	my $logger = &getGlobalConfiguration ( 'logger' );
+	my $logger = &getGlobalConfiguration( 'logger' );
 	my $error;
 
 	my $pass = &getNotifData( 'senders', 'Smtp', 'auth-password' );
 	if ( $pass )
 	{
 		include 'Zevenet::Code';
-		$pass = &getCodeDecode($pass);
+		$pass = &getCodeDecode( $pass );
 	}
-
 
 	my $body = "\n***** Notifications *****\n\n";
 	$body .= $bodycomp;
@@ -670,14 +696,18 @@ sub sendTestMail
 	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
 
-	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	if (    &getNotifData( 'senders', 'Smtp', 'auth-user' )
+		 || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
 		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		  if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$command .= " --auth-password " . $pass if ( $pass );
 	}
-	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
+	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) )
+	{
+		$command .= " -tls";
+	}
 
 	#~ $command .= " --header 'From: $from, ' --header 'Subject: $subject'";
 	$command .= " --header 'Subject: $subject'";
@@ -696,29 +726,31 @@ sub sendTestMail
 	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
 
-	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	if (    &getNotifData( 'senders', 'Smtp', 'auth-user' )
+		 || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
 		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		  if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$logMsg .= " --auth-password ********"
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+		  if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
 	}
 
-	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
+	$logMsg .= " -tls" if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
 
 	#~ $logMsg .= " --header 'From: $from' --header 'Subject: $subject'";
 	$logMsg .= " --header 'Subject: $subject'";
 	$logMsg .= " --body 'BODY'";
 
-	system ("$logger \"$logMsg\" -i -t sec");
+	system ( "$logger \"$logMsg\" -i -t sec" );
 
 	return $error;
 }
 
 sub encryptNotifPass
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	include 'Zevenet::Code';
 	if ( !&getNotifData( "senders", "_", "version" ) )
 	{

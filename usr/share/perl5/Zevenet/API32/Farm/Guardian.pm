@@ -26,12 +26,16 @@ use Zevenet::FarmGuardian;
 use Zevenet::Farm::Core;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 sub getZapiFG
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $fg_name  = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $fg_name = shift;
 
 	my $fg = &getFGObject( $fg_name );
 	my $out = {
@@ -50,13 +54,14 @@ sub getZapiFG
 
 sub getZapiFGList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @out;
 	my @list = &getFGList();
 
 	foreach my $fg_name ( @list )
 	{
-		my $fg = &getZapiFG( $fg_name);
+		my $fg = &getZapiFG( $fg_name );
 		push @out, $fg;
 	}
 
@@ -67,7 +72,8 @@ sub getZapiFGList
 #  GET /monitoring/fg/<fg_name>
 sub get_farmguardian
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $fg_name = shift;
 
 	my $desc = "Retrive the farm guardian $fg_name";
@@ -87,8 +93,9 @@ sub get_farmguardian
 #  GET /monitoring/fg
 sub list_farmguardian
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $fg = &getZapiFGList();
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $fg   = &getZapiFGList();
 	my $desc = "List farm guardian checks and templates";
 
 	return &httpResponse(
@@ -98,7 +105,8 @@ sub list_farmguardian
 #  POST /monitoring/fg
 sub create_farmguardian
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $fg_name  = $json_obj->{ name };
 	my $desc     = "Create a farm guardian $fg_name";
@@ -149,7 +157,7 @@ sub create_farmguardian
 	my $out = &getZapiFG( $fg_name );
 	if ( $out )
 	{
-		my $msg = "The farm guardian $fg_name has been created successfully";
+		my $msg = "The farm guardian $fg_name has been created successfully.";
 		my $body = {
 					 description => $desc,
 					 params      => $out,
@@ -159,7 +167,7 @@ sub create_farmguardian
 	}
 	else
 	{
-		my $msg = "The farm guardian $fg_name could not be created";
+		my $msg = "The farm guardian $fg_name could not be created.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }
@@ -167,7 +175,8 @@ sub create_farmguardian
 #  PUT /monitoring/fg/<fg_name>
 sub modify_farmguardian
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $fgname   = shift;
 
@@ -214,7 +223,8 @@ sub modify_farmguardian
 	{
 		if ( exists $json_obj->{ 'description' } or exists $json_obj->{ 'command' } )
 		{
-			my $msg = "It is not allow to modify the parameters 'description' or 'command' in a template.";
+			my $msg =
+			  "It is not allow to modify the parameters 'description' or 'command' in a template.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -227,7 +237,7 @@ sub modify_farmguardian
 		if ( exists $json_obj->{ command } )
 		{
 			my $error_msg =
-			  "Farm guardian $fgname is running in: $run_farms. To apply, send parameter 'force'";
+			  "Farm guardian $fgname is running in: $run_farms. To apply, send the parameter 'force'.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 		}
 	}
@@ -267,7 +277,8 @@ sub modify_farmguardian
 #  DELETE /monitoring/fg/<fg_name>
 sub delete_farmguardian
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $fg_name = shift;
 
 	my $desc = "Delete the farm guardian $fg_name";
@@ -301,7 +312,7 @@ sub delete_farmguardian
 			);
 		}
 
-		my $msg = "$fg_name has been deleted successful.";
+		my $msg = "$fg_name has been deleted successfully.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -319,7 +330,8 @@ sub delete_farmguardian
 #  POST /farms/<farm>(/services/<service>)?/fg
 sub add_farmguardian_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farm     = shift;
 	my $srv      = shift;
@@ -393,7 +405,7 @@ sub add_farmguardian_farm
 	my $output = &linkFGFarm( $json_obj->{ name }, $farm, $srv );
 
 	# check result and return success or failure
-	if ( ! $output )
+	if ( !$output )
 	{
 		# sync with cluster
 		if ( $eload )
@@ -410,7 +422,7 @@ sub add_farmguardian_farm
 		my $body = {
 					 description => $desc,
 					 message     => $msg,
-					 status => &getFarmVipStatus( $farm ),
+					 status      => &getFarmVipStatus( $farm ),
 		};
 		return &httpResponse( { code => 200, body => $body } );
 	}
@@ -426,7 +438,8 @@ sub add_farmguardian_farm
 #  DELETE /farms/<farm>(/services/<service>)?/fg/<fg_name>
 sub rem_farmguardian_farm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farm = shift;
 	my $srv;
 	my $fgname;
@@ -491,6 +504,7 @@ sub rem_farmguardian_farm
 	else
 	{
 		require Zevenet::Farm::Base;
+
 		# sync with cluster
 		if ( $eload )
 		{
@@ -505,7 +519,7 @@ sub rem_farmguardian_farm
 		my $body = {
 					 description => $desc,
 					 message     => $msg,
-					 status => &getFarmVipStatus( $farm ),
+					 status      => &getFarmVipStatus( $farm ),
 		};
 		return &httpResponse( { code => 200, body => $body } );
 	}

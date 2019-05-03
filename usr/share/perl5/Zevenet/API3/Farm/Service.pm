@@ -31,7 +31,8 @@ sub include;
 
 sub new_farm_service    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -250,7 +251,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 #GET /farms/<name>/services/<service>
 sub farm_services
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $servicename ) = @_;
 
 	include 'Zevenet::API3::Farm::Get::HTTP';
@@ -320,7 +322,8 @@ sub farm_services
 
 sub modify_services    # ( $json_obj, $farmname, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	my $output_params;
@@ -667,7 +670,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 sub move_services
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
@@ -749,7 +753,7 @@ sub move_services
 						}
 						else
 						{
-							&zenlog( "Farm stopped successful.", "info", "LSLB" );
+							&zenlog( "Farm stopped successfully.", "info", "LSLB" );
 						}
 					}
 					if ( !$errormsg )
@@ -770,7 +774,7 @@ sub move_services
 							if ( &runFarmStart( $farmname, "true" ) == 0 )
 							{
 								&setHTTPFarmBackendStatus( $farmname );
-								&zenlog( "$service was moved successful.", "info", "LSLB" );
+								&zenlog( "$service was moved successfully.", "info", "LSLB" );
 							}
 							else
 							{
@@ -780,7 +784,7 @@ sub move_services
 
 						if ( !$errormsg )
 						{
-							$errormsg = "$service was moved successful.";
+							$errormsg = "$service was moved successfully.";
 
 							if ( &getFarmStatus( $farmname ) eq 'up' )
 							{
@@ -809,7 +813,8 @@ sub move_services
 # DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
 sub delete_service    # ( $farmname, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	# Check that the farm exists

@@ -344,7 +344,7 @@ sub modify_waf_rule
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg          = "Settings were changed successful.";
+	my $msg          = "Settings were changed successfully.";
 	my $rule_updated = &getWAFRule( $set, $id );
 	my $outRule      = &getZapiWAFRule( $rule_updated );
 	my $body         = { description => $desc, params => $outRule };
@@ -424,7 +424,7 @@ sub move_waf_rule
 
 	my $params =
 	  { "position" =>
-		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters
@@ -563,7 +563,7 @@ sub modify_waf_rule_match
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg = "Settings were changed successful.";
+	my $msg = "Settings were changed successfully.";
 	my $rule_updated = &getWAFRule( $set, $rule_index );
 	my $outRule = &getZapiWAFRule( $rule_updated )->{ matches }->[$chain_index];
 	my $body = { description => $desc, params => $outRule };

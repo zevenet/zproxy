@@ -150,7 +150,7 @@ sub del_rbac_role
 
 	if ( !&getRBACRoleExists( $role ) )
 	{
-		my $msg = "The RBAC role $role has been deleted successful.";
+		my $msg = "The RBAC role $role has been deleted successfully.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -204,7 +204,7 @@ sub set_rbac_role
 
 	&setRBACRoleConfigFile( $role, $json_obj );
 
-	my $msg    = "Settings were changed successful.";
+	my $msg    = "Settings were changed successfully.";
 	my $output = &getZapiRBACRole( $role );
 	my $body   = { description => $desc, params => $output, message => $msg };
 

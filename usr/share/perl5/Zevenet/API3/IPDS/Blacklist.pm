@@ -510,7 +510,7 @@ sub del_blacklists_list
 
 		if ( !$errormsg )
 		{
-			$errormsg = "The list $listName has been deleted successful.";
+			$errormsg = "The list $listName has been deleted successfully.";
 			my $body = {
 						 description => $description,
 						 success     => "true",
@@ -717,7 +717,7 @@ sub add_blacklists_source
 						push @ipList, { id => $index++, source => $source };
 					}
 
-					$errormsg = "Added $json_obj->{'source'} successful.";
+					$errormsg = "Added $json_obj->{'source'} successfully.";
 
 					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
@@ -800,7 +800,7 @@ sub set_blacklists_source
 			else
 			{
 				my $source = &getBLParam( $listName, 'source' );
-				$errormsg = "Source $id has been modified successful.";
+				$errormsg = "Source $id has been modified successfully.";
 				my $body = {
 							 description => $description,
 							 message     => $errormsg,
@@ -861,7 +861,7 @@ sub del_blacklists_source
 		}
 		else
 		{
-			my $errormsg = "Source $id has been deleted successful.";
+			my $errormsg = "Source $id has been deleted successfully.";
 			my $body = {
 						 description => $description,
 						 success     => "true",
@@ -932,7 +932,7 @@ sub add_blacklists_to_farm
 				if ( !$errormsg )
 				{
 					my $errormsg =
-					  "Blacklist rule $listName was applied successful to the farm $farmName.";
+					  "Blacklist rule $listName was applied successfully to the farm $farmName.";
 					my $body = {
 								 description => $description,
 								 success     => "true",
@@ -1013,7 +1013,7 @@ sub del_blacklists_from_farm
 		if ( !$errormsg )
 		{
 			$errormsg =
-			  "Blacklist rule $listName was removed successful from the farm $farmName.";
+			  "Blacklist rule $listName was removed successfully from the farm $farmName.";
 			my $body = {
 						 description => $description,
 						 success     => "true",

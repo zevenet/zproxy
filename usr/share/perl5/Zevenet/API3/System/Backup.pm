@@ -64,7 +64,7 @@ sub create_backup
 		$errormsg = &createBackup( $json_obj->{ 'name' } );
 		if ( !$errormsg )
 		{
-			$errormsg = "Backup $json_obj->{ 'name' } was created successful.";
+			$errormsg = "Backup $json_obj->{ 'name' } was created successfully.";
 			my $body = {
 						 description => $description,
 						 params      => $json_obj->{ 'name' },
@@ -92,7 +92,7 @@ sub download_backup
 	my $backup = shift;
 
 	my $description = "Download a backup";
-	my $errormsg    = "$backup was download successful.";
+	my $errormsg    = "$backup was downloaded successfully.";
 
 	if ( !&getExistsBackup( $backup ) )
 	{
@@ -197,7 +197,7 @@ sub del_backup
 
 		if ( !$errormsg )
 		{
-			$errormsg = "The list $backup has been deleted successful.";
+			$errormsg = "The list $backup has been deleted successfully.";
 
 			my $body = {
 						 description => $description,

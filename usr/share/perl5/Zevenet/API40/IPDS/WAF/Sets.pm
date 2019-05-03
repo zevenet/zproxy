@@ -194,8 +194,8 @@ sub modify_waf_set
 									   'non_blank'    => 'true',
 				   },
 				   "default_action" => {
-									   'values'    => ["allow", "redirect", "pass", "deny"],
-									   'non_blank' => 'true',
+										 'values' => ["allow", "redirect", "pass", "deny"],
+										 'non_blank' => 'true',
 				   },
 				   "default_log" => {
 									  'valid_format' => 'waf_log',
@@ -274,7 +274,7 @@ sub delete_waf_set
 
 	if ( !&existWAFSet( $set ) )
 	{
-		my $msg = "The WAF set $set has been deleted successful.";
+		my $msg = "The WAF set $set has been deleted successfully.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -396,7 +396,7 @@ sub remove_farm_waf_set
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "The WAF set $set was removed successful from the farm $farm.";
+	my $msg = "The WAF set $set was removed successfully from the farm $farm.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -439,7 +439,7 @@ sub move_farm_waf_set
 
 	my $params =
 	  { "position" =>
-		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters

@@ -158,7 +158,7 @@ sub set_rbac_group
 
 	&setRBACGroupConfigFile( $group, 'role', $json_obj->{ 'role' } );
 
-	my $msg    = "Settings were changed successful.";
+	my $msg    = "Settings were changed successfully.";
 	my $output = &getZapiRBACGroups( $group );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
@@ -189,7 +189,7 @@ sub del_rbac_group
 		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_group', 'delete', $group );
 
-		my $msg = "The RBAC group $group has been deleted successful.";
+		my $msg = "The RBAC group $group has been deleted successfully.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -365,7 +365,7 @@ sub del_rbac_group_resource
 		}
 
 		my $msg =
-		  "The $type_msg '$resource' has been unlinked successful from the group '$group'.";
+		  "The $type_msg '$resource' has been unlinked successfully from the group '$group'.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",

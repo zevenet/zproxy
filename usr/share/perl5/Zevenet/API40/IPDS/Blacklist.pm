@@ -539,7 +539,7 @@ sub del_blacklists_list
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "The list $listName has been deleted successful.";
+	my $msg = "The list $listName has been deleted successfully.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -794,7 +794,7 @@ sub add_blacklists_source
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	# no error found, send successful response
-	my $msg = "Added $json_obj->{'source'} successful.";
+	my $msg = "Added $json_obj->{'source'} successfully.";
 	my $body = {
 				 description => $desc,
 				 params      => \@ipList,
@@ -858,7 +858,7 @@ sub set_blacklists_source
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "Source $id has been modified successful.";
+	my $msg = "Source $id has been modified successfully.";
 	my $body = {
 				 description => $desc,
 				 message     => $msg,
@@ -908,7 +908,7 @@ sub del_blacklists_source
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "Source $id has been deleted successful.";
+	my $msg = "Source $id has been deleted successfully.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -973,7 +973,7 @@ sub add_blacklists_to_farm
 	}
 
 	my $msg =
-	  "Blacklist rule $listName was applied successful to the farm $farmName.";
+	  "Blacklist rule $listName was applied successfully to the farm $farmName.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -1032,7 +1032,7 @@ sub del_blacklists_from_farm
 	}
 
 	my $msg =
-	  "Blacklist rule $listName was removed successful from the farm $farmName.";
+	  "Blacklist rule $listName was removed successfully from the farm $farmName.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",

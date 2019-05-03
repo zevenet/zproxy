@@ -44,7 +44,7 @@ sub download_logs
 			 "debug", "PROFILING" );
 	my $logFile     = shift;
 	my $description = "Download a log file";
-	my $errormsg    = "$logFile was download successful.";
+	my $errormsg    = "$logFile was downloaded successfully.";
 	my $logDir      = &getGlobalConfiguration( 'logdir' );
 	my $logPath     = &getGlobalConfiguration( 'logdir' ) . "/$logFile";
 

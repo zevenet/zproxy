@@ -25,13 +25,13 @@ use strict;
 
 use Zevenet::API31::HTTP;
 
-
 include 'Zevenet::Notify';
 
 # GET /system/notifications/methods/METHOD
 sub get_notif_methods
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $key = shift;
 
 	my $desc = "Get notifications email methods";
@@ -40,13 +40,14 @@ sub get_notif_methods
 	my $methods = &getNotifSendersSmtp();
 
 	return &httpResponse(
-		 { code => 200, body => { description => $desc, params => $methods } } );
+				{ code => 200, body => { description => $desc, params => $methods } } );
 }
 
 #  POST /system/notifications/methods/METHOD
 sub set_notif_methods
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $key      = shift;
 
@@ -85,7 +86,8 @@ sub set_notif_methods
 # GET /system/notifications/alerts
 sub get_notif_alert_status
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $desc = "Get notifications alert status";
 	my @output;
 
@@ -100,26 +102,28 @@ sub get_notif_alert_status
 	push @output, { 'alert' => 'cluster', 'status' => $status };
 
 	return &httpResponse(
-		 { code => 200, body => { description => $desc, params => \@output } } );
+				{ code => 200, body => { description => $desc, params => \@output } } );
 }
 
 # GET /system/notifications/alerts/ALERT
 sub get_notif_alert
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $alert = shift;
 
-	my $desc = "Get notifications alert $alert settings";
-	my $param       = &getNotifAlert( $alert );
+	my $desc  = "Get notifications alert $alert settings";
+	my $param = &getNotifAlert( $alert );
 
 	return &httpResponse(
-		   { code => 200, body => { description => $desc, params => $param } } );
+				  { code => 200, body => { description => $desc, params => $param } } );
 }
 
 #  POST /system/notifications/alerts/ALERT
 sub set_notif_alert
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $alert    = shift;
 
@@ -145,8 +149,10 @@ sub set_notif_alert
 	}
 
 	my $params;
-	$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }            if ( exists $json_obj->{ 'prefix' } );
-	$params->{ 'SwitchTime' }    = $json_obj->{ 'avoidflappingtime' } if ( $json_obj->{ 'avoidflappingtime' } );
+	$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
+	  if ( exists $json_obj->{ 'prefix' } );
+	$params->{ 'SwitchTime' } = $json_obj->{ 'avoidflappingtime' }
+	  if ( $json_obj->{ 'avoidflappingtime' } );
 
 	my $error = &setNotifAlerts( $alert, $params );
 	if ( $error )
@@ -162,7 +168,8 @@ sub set_notif_alert
 #  POST /system/notifications/alerts/ALERT/actions
 sub set_notif_alert_actions
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $alert    = shift;
 
@@ -199,10 +206,11 @@ sub set_notif_alert_actions
 
 sub send_test_mail
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
-	my $desc        = "Send test mail";
+	my $desc = "Send test mail";
 
 	my @allowParams = ( "action" );
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
@@ -224,7 +232,7 @@ sub send_test_mail
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "Test mail sent successful.";
+	my $msg = "Test mail sent successfully.";
 	my $body = { description => $desc, success => "true", message => $msg };
 
 	return &httpResponse( { code => 200, body => $body } );

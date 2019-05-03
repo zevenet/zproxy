@@ -26,12 +26,16 @@ use strict;
 #	GET	/system/users
 sub get_all_users
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Zapi;
 
 	my $description = "Get users";
-	my $zapiStatus = &getZAPI( "status" );
-	my @users = ( { "user"=>"root", "status"=>"true" }, { "user"=>"zapi","status"=>"$zapiStatus" } );
+	my $zapiStatus  = &getZAPI( "status" );
+	my @users = (
+				  { "user" => "root", "status" => "true" },
+				  { "user" => "zapi", "status" => "$zapiStatus" }
+	);
 
 	&httpResponse(
 		  { code => 200, body => { description => $description, params => \@users } } );
@@ -40,8 +44,9 @@ sub get_all_users
 #	GET	/system/users/zapi
 sub get_user
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $user        = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $user = shift;
 
 	my $description = "Zapi user configuration.";
 	my $errormsg;
@@ -70,8 +75,9 @@ sub get_user
 # POST /system/users/zapi
 sub set_user_zapi
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
 
 	require Zevenet::Login;
 
@@ -100,7 +106,7 @@ sub set_user_zapi
 			require Zevenet::Zapi;
 
 			if (    $json_obj->{ 'status' } eq 'enable'
-				 && &getZAPI( "status") eq 'false' )
+				 && &getZAPI( "status" ) eq 'false' )
 			{
 				&setZAPI( "enable" );
 			}
@@ -120,7 +126,7 @@ sub set_user_zapi
 							 $json_obj->{ 'newpassword' } )
 			  if ( exists $json_obj->{ 'newpassword' } );
 
-			$errormsg = "Settings was changed successful.";
+			$errormsg = "Settings was changed successfully.";
 			&httpResponse(
 				 {
 				   code => 200,
@@ -140,13 +146,15 @@ sub set_user_zapi
 # POST /system/users/root
 sub set_user
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj       = shift;
-	my $user           = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $user     = shift;
 
-	my $description    = "User settings.";
+	my $description = "User settings.";
 	my @requiredParams = ( "password", "newpassword" );
-	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
+	my $errormsg =
+	  &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
 
 	if ( !$errormsg )
 	{
@@ -178,7 +186,7 @@ sub set_user
 				}
 				else
 				{
-					$errormsg = "Settings was changed successful.";
+					$errormsg = "Settings was changed successfully.";
 					&httpResponse(
 						 {
 						   code => 200,

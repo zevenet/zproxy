@@ -330,7 +330,7 @@ sub del_rbl_rule
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "The rule $name has been deleted successful.";
+	my $msg = "The rule $name has been deleted successfully.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -488,7 +488,7 @@ sub set_rbl_domain
 		$id++;
 	}
 
-	my $msg = "RBL domain $new_domain has been modified successful.";
+	my $msg = "RBL domain $new_domain has been modified successfully.";
 	my $body = {
 				 description => $desc,
 				 message     => $msg,
@@ -529,7 +529,7 @@ sub del_rbl_domain
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "RBL domain $domain_id has been deleted successful.";
+	my $msg = "RBL domain $domain_id has been deleted successfully.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -658,7 +658,7 @@ sub del_domain_from_rbl
 	&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 	my $msg =
-	  "The domain $domain has been deleted successful from the RBL rule $name.";
+	  "The domain $domain has been deleted successfully from the RBL rule $name.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -728,7 +728,7 @@ sub add_rbl_to_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "RBL rule $name was applied successful to the farm $farmName.";
+	my $msg = "RBL rule $name was applied successfully to the farm $farmName.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -784,7 +784,7 @@ sub del_rbl_from_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "RBL rule $name was removed successful from the farm $farmName.";
+	my $msg = "RBL rule $name was removed successfully from the farm $farmName.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",

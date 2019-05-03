@@ -30,7 +30,8 @@ include 'Zevenet::API32::RBAC::Structs';
 #GET /rbac/groups
 sub get_rbac_all_groups
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $groups = &getZapiRBACAllGroups();
 	my $desc   = "List the RBAC groups";
 
@@ -41,7 +42,8 @@ sub get_rbac_all_groups
 #  GET /rbac/groups/<group>
 sub get_rbac_group
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group = shift;
 
 	my $desc = "Get the group $group";
@@ -61,7 +63,8 @@ sub get_rbac_group
 #  POST /rbac/groups
 sub add_rbac_group
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	include 'Zevenet::RBAC::Group::Config';
@@ -116,7 +119,8 @@ sub add_rbac_group
 #  PUT /rbac/groups/<group>
 sub set_rbac_group
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $group    = shift;
 
@@ -146,7 +150,7 @@ sub set_rbac_group
 	# Check if role exists
 	include 'Zevenet::RBAC::Role::Config';
 
-	if ( ! grep( /^$json_obj->{ role }$/, &getRBACRolesList() ) )
+	if ( !grep ( /^$json_obj->{ role }$/, &getRBACRolesList() ) )
 	{
 		my $msg = "The role $json_obj->{ 'role' } doesn't exist.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -154,7 +158,7 @@ sub set_rbac_group
 
 	&setRBACGroupConfigFile( $group, 'role', $json_obj->{ 'role' } );
 
-	my $msg    = "Settings were changed successful.";
+	my $msg    = "Settings were changed successfully.";
 	my $output = &getZapiRBACGroups( $group );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
@@ -164,7 +168,8 @@ sub set_rbac_group
 #  DELETE /rbac/groups/<group>
 sub del_rbac_group
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group = shift;
 
 	include 'Zevenet::RBAC::Group::Config';
@@ -184,7 +189,7 @@ sub del_rbac_group
 		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_group', 'delete', $group );
 
-		my $msg = "The RBAC group $group has been deleted successful.";
+		my $msg = "The RBAC group $group has been deleted successfully.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -202,7 +207,8 @@ sub del_rbac_group
 #  POST /rbac/groups/<group>/users/(intefarces|farms|users)
 sub add_rbac_group_resource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $group    = shift;
 	my $type     = shift;
@@ -250,7 +256,7 @@ sub add_rbac_group_resource
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 
-		elsif ( ! &getValidFormat( 'virt_interface', $resource ) )
+		elsif ( !&getValidFormat( 'virt_interface', $resource ) )
 		{
 			my $msg = "The interface has to be a virtual interface.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -318,7 +324,8 @@ sub add_rbac_group_resource
 #  DELETE /rbac/groups/<group>/users/<users>/(interfaces|farms|users)/<resource_name>
 sub del_rbac_group_resource
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group    = shift;
 	my $type     = shift;
 	my $resource = shift;
@@ -355,7 +362,7 @@ sub del_rbac_group_resource
 		}
 
 		my $msg =
-		  "The $type_msg $resource has been unlinked successful from the group $group.";
+		  "The $type_msg $resource has been unlinked successfully from the group $group.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",

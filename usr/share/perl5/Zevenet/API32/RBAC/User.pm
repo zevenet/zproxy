@@ -220,7 +220,7 @@ sub set_rbac_user
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'rbac_user', 'update', $user );
 
-	my $msg    = "Settings were changed successful.";
+	my $msg    = "Settings were changed successfully.";
 	my $output = &getZapiRBACUsers( $user );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
@@ -252,7 +252,7 @@ sub del_rbac_user
 		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_user', 'delete', $user );
 
-		my $msg = "The RBAC user $user has been deleted successful.";
+		my $msg = "The RBAC user $user has been deleted successfully.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
@@ -354,7 +354,7 @@ sub set_system_user_rbac
 		}
 	}
 
-	my $msg = "Settings was changed successful.";
+	my $msg = "Settings was changed successfully.";
 	my $body = { description => $desc, message => $msg };
 	return &httpResponse( { code => 200, body => $body } );
 }

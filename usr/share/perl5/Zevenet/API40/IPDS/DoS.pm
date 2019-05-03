@@ -291,7 +291,7 @@ sub del_dos_rule
 
 	&deleteDOSRule( $name );
 
-	my $msg = "Deleted $name successful.";
+	my $msg = "Deleted $name successfully.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -389,7 +389,7 @@ sub add_dos_to_farm
 		&runZClusterRemoteManager( 'ipds_dos', 'start', $name, $farmName );
 	}
 
-	my $msg = "DoS rule $name was applied successful to the farm $farmName.";
+	my $msg = "DoS rule $name was applied successfully to the farm $farmName.";
 	my $body = { description => $desc, success => 'true', message => $msg };
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -449,7 +449,7 @@ sub del_dos_from_farm
 		&runZClusterRemoteManager( 'ipds_dos', 'stop', $name, $farmName );
 	}
 
-	my $msg = "DoS rule $name was removed successful from the farm $farmName.";
+	my $msg = "DoS rule $name was removed successfully from the farm $farmName.";
 	my $body = { description => $desc, success => "true", message => $msg };
 
 	return &httpResponse( { code => 200, body => $body } );

@@ -247,7 +247,7 @@ sub send_test_mail
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "Test mail sent successful.";
+	my $msg = "Test mail sent successfully.";
 	my $body = { description => $desc, success => "true", message => $msg };
 
 	return &httpResponse( { code => 200, body => $body } );
