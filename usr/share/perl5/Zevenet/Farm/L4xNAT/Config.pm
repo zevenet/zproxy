@@ -186,6 +186,7 @@ sub setL4FarmParam
 	elsif ( $param eq "vipp" or $param eq "vport" )
 	{
 		$value =~ s/\:/\-/g;
+		$value = "" if ( $value eq "*" );
 		$parameters = qq(, "virtual-ports" : "$value" );
 	}
 	elsif ( $param eq "alg" )
@@ -243,7 +244,7 @@ sub setL4FarmParam
 			$addition = $addition . qq( , "helper" : "none" );
 		}
 
-		$addition = $addition . qq( , "virtual-ports" : "*" ) if ( $value eq "all" );
+		$addition = $addition . qq( , "virtual-ports" : "" ) if ( $value eq "all" );
 		$parameters = qq(, "protocol" : "$value" ) . $addition;
 	}
 	elsif ( $param eq "status" || $param eq "bootstatus" )
