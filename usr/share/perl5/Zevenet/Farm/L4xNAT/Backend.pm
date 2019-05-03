@@ -92,7 +92,7 @@ sub setL4FarmServer
 		$json .= qq(, "ip-addr" : "$rip");
 		$msg  .= "rip:$rip ";
 
-		my $mark;
+		my $mark = "0x0";
 		if ( !defined $exists )
 		{
 			$mark = &getNewMark( $farm_name );
@@ -102,7 +102,7 @@ sub setL4FarmServer
 		}
 		else
 		{
-			$mark = $existrip->{ tag };
+			$mark = $exists->{ tag };
 		}
 		&setL4BackendRule( "add", $f_ref, $mark );
 	}
