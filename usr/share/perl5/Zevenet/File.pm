@@ -157,4 +157,21 @@ sub saveFileHandler
 	}
 }
 
+sub createFile
+{
+	my $file = shift;
+	my $fh;
+
+	return 0 if ( -f $file );
+
+	if ( !open ( $fh, '>', $file ) )
+	{
+		&zenlog( "The file $file could not be created", "error", "System" );
+		return 1;
+	}
+	close $fh;
+
+	return 0;
+}
+
 1;

@@ -273,7 +273,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	  if ( $error_msg );
 
 	# Delete old interface configuration
-	my $if_ref = &getInterfaceConfig( $nic );
+	my $if_ref = &getInterfaceConfig( $nic ) // &getSystemInterface( $nic );
 
 	# check if some farm is using this ip
 	my @farms;

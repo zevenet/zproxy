@@ -256,7 +256,14 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
-	$fileHandle = Config::Tiny->read( $config_filename ) if ( -f $config_filename );
+	# create file if it is not exist
+	if ( !-f $config_filename )
+	{
+		require Zevenet::File;
+		return 0 if ( &createFile( $config_filename ) );
+	}
+
+	$fileHandle = Config::Tiny->read( $config_filename );
 
 	foreach my $field ( @if_params )
 	{
