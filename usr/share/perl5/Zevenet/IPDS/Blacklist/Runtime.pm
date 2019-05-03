@@ -301,7 +301,7 @@ sub delBLCronTask
 	untie @list;
 
 	my $cron_service = &getGlobalConfiguration( 'cron_service' );
-	&logAndRun( "$cron_service restart" );
+	&logAndRun( "$cron_service reload" );
 
 	&zenlog( "Deleted the task associated to the list $listName", "info", "IPDS" );
 }
