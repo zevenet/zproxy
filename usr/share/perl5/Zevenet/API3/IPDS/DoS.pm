@@ -433,7 +433,12 @@ sub del_dos_from_farm
 		else
 		{
 			include 'Zevenet::IPDS::DoS::Runtime';
+			include 'Zevenet::IPDS::Core';
+
 			&setDOSUnsetRule( $name, $farmName );
+
+			# Call to remove service if possible
+			&delIPDSFarmService( $farmName );
 
 			# check output
 			my $output = &getDOSZapiRule( $name );

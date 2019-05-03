@@ -995,6 +995,7 @@ sub del_blacklists_from_farm
 	my $listName = shift;
 
 	include 'Zevenet::IPDS::Blacklist::Runtime';
+	include 'Zevenet::IPDS::Core';
 	require Zevenet::Farm::Core;
 
 	my $desc = "Unset the blacklist $listName from the farm $farmName";
@@ -1024,6 +1025,9 @@ sub del_blacklists_from_farm
 		&setBLParam( $listName, 'status', "down" )
 		  if ( !@{ &getBLParam( $listName, 'farms' ) } );
 	}
+
+	# Call to remove service if possible
+	&delIPDSFarmService( $farmName );
 
 	if ( $error )
 	{

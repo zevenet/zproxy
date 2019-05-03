@@ -754,6 +754,7 @@ sub del_rbl_from_farm
 	my $name     = shift;
 
 	include 'Zevenet::IPDS::RBL::Config';
+	include 'Zevenet::IPDS::Core';
 	require Zevenet::Farm::Core;
 
 	my $desc = "Delete the RBL rule $name from the farm $farmName";
@@ -777,6 +778,9 @@ sub del_rbl_from_farm
 	}
 
 	&delRBLFarm( $farmName, $name );
+
+	# Call to remove service if possible
+	&delIPDSFarmService( $farmName );
 
 	if ( grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{

@@ -307,6 +307,9 @@ sub runIPDSDeleteByFarm
 		$name = $rule->{ name };
 		&delRBLFarm( $farmname, $name );
 	}
+
+	# Call to remove service if possible
+	&delIPDSFarmService( $farmname );
 }
 
 =begin nd

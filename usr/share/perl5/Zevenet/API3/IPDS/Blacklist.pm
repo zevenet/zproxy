@@ -1008,7 +1008,11 @@ sub del_blacklists_from_farm
 	else
 	{
 		include 'Zevenet::IPDS::Blacklist::Runtime';
+		include 'Zevenet::IPDS::Core';
 		$errormsg = &setBLRemFromFarm( $farmName, $listName );
+
+		# Call to remove service if possible
+		&delIPDSFarmService( $farmName );
 
 		if ( !$errormsg )
 		{
