@@ -687,9 +687,10 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $if_out = &get_vlan_struct( $vlan );
 	my $body = {
 				 description => $desc,
-				 params      => $json_obj,
+				 params      => $if_out,
 	};
 
 	&httpResponse( { code => 200, body => $body } );

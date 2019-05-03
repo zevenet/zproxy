@@ -805,9 +805,10 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $if_out = &get_bond_struct( $bond );
 	my $body = {
 				 description => $desc,
-				 params      => $json_obj,
+				 params      => $if_out,
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
