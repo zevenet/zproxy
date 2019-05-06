@@ -119,6 +119,12 @@ NFTBIN=`which nft`
 echo "List nftables ruleset "			>> $backup_dir/nftables.txt
 $NFTBIN list ruleset					>> $backup_dir/nftables.txt
 
+CURL=`which curl`
+echo "nftlb daemon farms data"			>> $backup_dir/nftlb.txt
+$CURL --noproxy "*" --connect-timeout 10 -s -H "Key: HoLa" http://127.0.0.1:27/farms >> $backup_dir/nftlb.txt
+echo "nftlb daemon policies data"		>> $backup_dir/nftlb.txt
+$CURL --noproxy "*" --connect-timeout 10 -s -H "Key: HoLa" http://127.0.0.1:27/policies >> $backup_dir/nftlb.txt
+
 echo "- ARP table"
 /usr/sbin/arp -n                        >> $backup_dir/arp_table.txt
 

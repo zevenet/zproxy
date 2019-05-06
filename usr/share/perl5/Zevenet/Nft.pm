@@ -200,12 +200,33 @@ sub httpNlbRequest
 	my $execmd =
 	  qq($curl_cmd --noproxy "*" -s -H "Key: HoLa" -H \"Expect:\" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
+	my $file = "/tmp/nft_$$";
 	if ( defined $self->{ file } && $self->{ file } ne "" )
 	{
-		$execmd = $execmd . " -f -o " . $self->{ file };
+		$execmd = $execmd . " -f -o $file";
 	}
 
 	$output = &logAndRun( $execmd );
+
+	# filter ipds params
+	if ( defined $self->{ file } && $self->{ file } ne "" && -f "$file" )
+	{
+		my $fo = &openlock( $self->{ file }, 'w' );
+		open my $fi, '<', "$file";
+		my $policies = 0;
+		while ( my $line = <$fi> )
+		{
+			$policies = 1 if ( $line =~ /policies/ );
+			print $fo $line
+			  if (
+				   $line !~ /new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
+				   && $policies == 0 );
+			$policies = 0 if ( $policies == 1 && $line =~ /\]/ );
+		}
+		close $fo;
+		close $fi;
+		unlink $file;
+	}
 
 	return -1 if ( $output != 0 );
 
