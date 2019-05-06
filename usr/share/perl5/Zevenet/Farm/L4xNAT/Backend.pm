@@ -400,7 +400,7 @@ Parameters:
 
 Returns:
 	backends array - array of backends structure
-		\%backend = { $id, $alias, $family, $ip, $port, $tag, $weight, $priority, $status, $rip = $ip }
+		\%backend = { $id, $alias, $family, $ip, $port, $tag, $weight, $priority, $status, $rip = $ip, $max_conns }
 
 =cut
 
@@ -494,6 +494,12 @@ sub _getL4FarmParseServers
 		{
 			my @l = split /"/, $line;
 			$server->{ tag } = $l[3];
+		}
+
+		if ( $stage == 3 && $line =~ /\"est-connlimit\"/ )
+		{
+			my @l = split /"/, $line;
+			$server->{ max_conns } = $l[3];
 		}
 
 		if ( $stage == 3 && $line =~ /\"state\"/ )
