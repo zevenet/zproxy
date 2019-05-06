@@ -62,7 +62,8 @@ sub runL4FarmCreate
 	require Zevenet::Farm::L4xNAT::Action;
 	require Zevenet::Farm::L4xNAT::Config;
 
-	$vip_port = 80 if not defined $vip_port;
+	$vip_port = "80" if not defined $vip_port;
+	$vip_port = ""   if ( $vip_port eq "*" );
 
 	$output = &sendL4NlbCmd(
 		{

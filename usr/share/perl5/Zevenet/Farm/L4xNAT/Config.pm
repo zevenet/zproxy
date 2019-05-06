@@ -359,6 +359,8 @@ sub _getL4ParseFarmConfig
 			my @l = split /"/, $line;
 			$output = $l[3];
 			$output =~ s/-/:/g;
+			$output = "*"             if ( $output eq '' );
+			$output = int ( $output ) if ( $output !~ /\*|\:|,/ );
 		}
 
 		if ( $line =~ /\"mode\"/ && $param eq 'mode' )
@@ -387,7 +389,7 @@ sub _getL4ParseFarmConfig
 		if ( $line =~ /\"persist-ttl\"/ && $param eq 'persisttm' )
 		{
 			my @l = split /"/, $line;
-			$output = $l[3];
+			$output = int ( $l[3] );
 			$exit   = 0;
 		}
 
@@ -589,12 +591,6 @@ sub getL4FarmStruct
 	$farm{ status }     = &getL4FarmStatus( $farm{ name } );
 	$farm{ logs } = &_getL4ParseFarmConfig( 'logs', undef, $config ) if ( $eload );
 	$farm{ servers } = &_getL4FarmParseServers( $config );
-
-	# replace port * for all the range
-	if ( $farm{ vport } eq '*' )
-	{
-		$farm{ vport } = '0:65535';
-	}
 
 	if ( $farm{ lbalg } eq 'weight' )
 	{
