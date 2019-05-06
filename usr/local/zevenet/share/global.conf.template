@@ -230,7 +230,7 @@ $dpkg_bin="/usr/bin/dpkg";
 #Where is grep?
 $grep_bin="/bin/grep";
 #Where is nft?
-$nft_bin="/usr/sbin/nft";
+$nft_bin="/usr/local/sbin/nft";
 #Where is nftlb?
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
 #Where is poweroff
