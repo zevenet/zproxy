@@ -5,6 +5,7 @@ use HTTP::Request ();
 use LWP::UserAgent;
 use JSON::MaybeXS qw(encode_json);
 use Digest::MD5 qw(md5_hex);
+use Term::ANSIColor;
 
 # Current status: It works fine if we download the files directly from the
 # Apache server but it doesn't work if we download it through zhttp. Test it
@@ -39,9 +40,9 @@ sub test_check_md5_10mb {
     my $crc = md5_hex($response_10mb->content());
 
     if ($crc == $file_10mb) {
-        print "Test 10Mb checksum: PASS\n";
+        print "Test 10Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
     } else {
-        print "Test 10Mb checksum: FAIL\n";
+        print "Test 10Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
     }
 }
 
@@ -52,9 +53,9 @@ sub test_check_md5_100mb {
     my $crc = md5_hex($response_100mb->content());
 
     if ($crc == $file_100mb) {
-        print "Test 100Mb checksum: PASS\n";
+        print "Test 100Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
     } else {
-        print "Test 100Mb checksum: FAIL\n";
+        print "Test 100Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
     }
 }
 
@@ -65,9 +66,9 @@ sub test_check_md5_200mb {
     my $crc = md5_hex($response_200mb->content());
 
     if ($crc == $file_200mb) {
-        print "Test 200Mb checksum: PASS\n";
+        print "Test 200Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
     } else {
-        print "Test 200Mb checksum: FAIL\n";
+        print "Test 200Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
     }
 }
 
@@ -76,8 +77,8 @@ sub test_get_200_ok {
     my $response_get = $ua->request($request_get);
 
     if ($response_get->status_line == "200 OK") {
-        print "Test GET method: PASS\n";
+        print "Test GET method [",  color("bold green"), "PASS", color("reset"), "]\n";
     } else {
-        print "Test GET method: FAIL\n";
+        print "Test GET method [", color("bold red"), "FAIL", color("reset"), "]\n";
     }
 }
