@@ -15,6 +15,9 @@
 
 using namespace json;
 
+/** The Service class contains the configuration parameters set in the service
+ * section. This class contains the backends set in the configuration file.
+ */
 class Service : public sessions::HttpSessionManager,
                 public CtlObserver<ctl::CtlTask, std::string> {
   std::vector<Backend *> backend_set;
@@ -24,26 +27,41 @@ class Service : public sessions::HttpSessionManager,
   std::mutex mtx_lock;
 
  public:
+  /** True if the Service is disabled, false if it is enabled. */
   std::atomic<bool> disabled;
+  /** Service id. */
   int id;
   bool ignore_case;
   std::string name;
-  std::string becookie,      /* Backend Cookie Name */
-      becdomain,      /* Backend Cookie domain */
-      becpath;        /* Backend cookie path */
-  int becage;         /* Backend cookie age */
+  /** Backend Cookie Name */
+  std::string becookie,
+      /** Backend Cookie domain */
+      becdomain,
+      /** Backend cookie path */
+      becpath;
+  /** Backend cookie age */
+  int becage;
+  /** True if the connection if pinned, false if not. */
   bool pinned_connection;
 
+  /** The enum Service::LOAD_POLICY defines the different types of load balancing
+   * available. All the methods are weighted except the Round Robin one.
+   */
   enum LOAD_POLICY {
+    /** Selects the next backend following the Round Robin algorithm. */
     LP_ROUND_ROBIN,
+    /** Selects the backend with less stablished connections. */
     LP_W_LEAST_CONNECTIONS, //we are using weighted
+    /** Selects the backend with less response time. */
     LP_RESPONSE_TIME,
+    /** Selects the backend with less pending connections. */
     LP_PENDING_CONNECTIONS,
   };
 private:
   void addBackend(BackendConfig *backend_config, std::string address, int port,
                   int backend_id, bool emergency = false);
  public:
+  /** ServiceConfig from the Service. */
   ServiceConfig &service_config;
   Backend *getBackend(HttpStream &stream);
   explicit Service(ServiceConfig &service_config_);

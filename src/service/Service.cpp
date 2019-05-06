@@ -6,6 +6,10 @@
 #include "../util/Network.h"
 #include <numeric>
 
+/** Checks if we need a new backend or not. If we already have a session it
+ * returns the backend associated to the session. If not, it returns a new
+ * Backend.
+ */
 Backend *Service::getBackend(HttpStream &stream) {
   if (backend_set.empty())
     return getEmergencyBackend();
@@ -38,6 +42,9 @@ Backend *Service::getBackend(HttpStream &stream) {
   }
 }
 
+/** It creates a new Backend from a BackendConfig and adds it to the service's
+ * backend vector.
+ */
 void Service::addBackend(BackendConfig *backend_config, std::string address,
                          int port, int backend_id, bool emergency) {
   auto *backend = new Backend();
@@ -64,6 +71,9 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
   }
 }
 
+/** It creates a new Backend from a BackendConfig and adds it to the service's
+ * backend vector.
+ */
 void Service::addBackend(BackendConfig *backend_config, int backend_id,
                          bool emergency) {
   if (backend_config->be_type == 0) {
@@ -122,6 +132,10 @@ Service::Service(ServiceConfig &service_config_)
   }
 }
 
+/** Check if the Service should handle the HttpRequest. It checks the request
+ * line, required headers and the forbidden headeras. If the Service should
+ * handle it, returns true if not false.
+ */
 bool Service::doMatch(HttpRequest &request) {
   MATCHER *m;
   int i, found;
