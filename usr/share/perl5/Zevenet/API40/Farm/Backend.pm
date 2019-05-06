@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API40::HTTP;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 use Zevenet::Net::Validate;
@@ -243,15 +245,12 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
-	my $status = &setHTTPFarmServer(
-									 "",
+	my $status = &setHTTPFarmServer( "",
 									 $json_obj->{ ip },
 									 $json_obj->{ port },
 									 $json_obj->{ weight },
 									 $json_obj->{ timeout },
-									 $farmname,
-									 $service,
-	);
+									 $farmname, $service, );
 
 	# check if there was an error adding a new backend
 	if ( $status == -1 )
@@ -589,9 +588,9 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	# apply BACKEND change
 
-	$be->{ ip }      = $json_obj->{ ip }      // $be->{ ip };
-	$be->{ port }    = $json_obj->{ port }    // $be->{ port };
-	$be->{ weight }  = $json_obj->{ weight }  // $be->{ weight };
+	$be->{ ip }      = $json_obj->{ ip } // $be->{ ip };
+	$be->{ port }    = $json_obj->{ port } // $be->{ port };
+	$be->{ weight }  = $json_obj->{ weight } // $be->{ weight };
 	$be->{ timeout } = $json_obj->{ timeout } // $be->{ timeout };
 
 	my $status = &setHTTPFarmServer( $id_server,
@@ -817,8 +816,8 @@ sub validateDatalinkBackendIface
 		$msg = "It is not possible to configure vlan interface for datalink backends";
 	}
 	elsif (
-		  !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
-		  )
+			!&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
+			)
 	  )
 	{
 		$msg =

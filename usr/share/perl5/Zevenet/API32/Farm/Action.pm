@@ -21,6 +21,8 @@
 ###############################################################################
 
 use strict;
+
+use Zevenet::API32::HTTP;
 use Zevenet::Farm::Core;
 
 my $eload;
