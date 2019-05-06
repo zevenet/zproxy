@@ -63,7 +63,7 @@ public:
        newh += ": ";
        newh += header_value;
        newh += "\r\n";
-       permanent ? extra_headers.push_back(std::move(newh)): permanent_extra_headers.push_back(std::move(newh));
+       !permanent ? extra_headers.push_back(std::move(newh)): permanent_extra_headers.push_back(std::move(newh));
   }
 
   inline void addHeader(const std::string &header_value, bool permanent = false) {
@@ -71,7 +71,7 @@ public:
     newh.reserve(header_value.size() + 2);
     newh += header_value;
     newh += "\r\n";
-    permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
+    !permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
   }
   unsigned long count{0};
   phr_header headers[MAX_HEADERS_SIZE];

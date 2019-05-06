@@ -340,10 +340,11 @@ void StreamManager::onRequestEvent(int fd) {
       clearStream(stream);
       return;
     }
-    if (stream->client_connection.ssl_conn_status ==
-        ssl::SSL_STATUS::HANDSHAKE_DONE)
-//      httpsHeaders(stream);
-        DEBUG_COUNTER_HIT(debug__::on_handshake);
+    if (stream->client_connection.ssl_connected)
+        {
+            httpsHeaders(stream);
+            DEBUG_COUNTER_HIT(debug__::on_handshake);
+        }
     return;
   }
   case IO::IO_RESULT::SUCCESS:break;
@@ -679,7 +680,7 @@ void StreamManager::onResponseEvent(int fd) {
 
     Service *service = service_manager->getService(stream->request); // FIXME:: Do not loop!!
     setBackendCookie(service, stream);
-//    setStrictTransportSecurity(service, stream);
+    setStrictTransportSecurity(service, stream);
     applyCompression(service, stream);
   }
   stream->client_connection.enableWriteEvent();
@@ -1251,65 +1252,82 @@ static int get_line(BIO *const in, char *const buf, const int bufsize, int * out
 }
 
 void StreamManager::httpsHeaders(HttpStream *stream) {
-  if (listener_config_.ctx == nullptr)
-    return;
+    if (ssl_manager == nullptr)
+        return;
 
-  std::string header_value;
-  const SSL_CIPHER  *cipher;
-  char buf[MAXBUF];
-  X509 *x509;
+    std::string header_value;
+    header_value.reserve(MAXBUF);
+    const SSL_CIPHER *cipher;
+    std::unique_ptr<X509, decltype(&::X509_free)> x509(
+        SSL_get_peer_certificate(stream->client_connection.ssl), ::X509_free);
 
-  x509 = nullptr;
-  if((x509 = SSL_get_peer_certificate(stream->client_connection.ssl)) != nullptr
-     && listener_config_.clnt_check < 3 &&
-     SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK) {
-    Debug::logmsg(LOG_ERR, "Bad certificate from %s", stream->client_connection.address_str.c_str());
-    X509_free(x509);
-  }
+    if (x509 != nullptr && listener_config_.clnt_check < 3 &&
+        SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK)
+        {
+            Debug::logmsg(LOG_ERR, "Bad certificate from %s",
+                          stream->client_connection.address_str.c_str());
+        }
 
-  if ((cipher = SSL_get_current_cipher(stream->client_connection.ssl)) != NULL) {
-    char cipher_buf[4096];
-    SSL_CIPHER_description(cipher, cipher_buf, 4096);
-    header_value = SSL_get_version(stream->client_connection.ssl);
-    header_value += '/';
-    header_value += cipher_buf;
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER, header_value);
-  }
+    if ((cipher = SSL_get_current_cipher(stream->client_connection.ssl)) !=
+        nullptr)
+        {
+            char cipher_buf[MAXBUF];
+            SSL_CIPHER_description(cipher, cipher_buf, 200);
+            header_value = SSL_get_version(stream->client_connection.ssl);
+            header_value += '/';
+            header_value += cipher_buf;
+            header_value.erase(
+                std::remove(header_value.begin(), header_value.end(), '\n'),
+                header_value.end());
+            header_value.erase(
+                std::remove(header_value.begin(), header_value.end(), '\r'),
+                header_value.end());
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER,
+                                      header_value, true);
+        }
 
-  if (listener_config_.clnt_check > 0 && x509 != nullptr) {
-    int line_len = 0;
-    BIO *bb = BIO_new(BIO_s_mem());
-    X509_NAME_print_ex(bb, X509_get_subject_name(x509), 8, XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-    get_line(bb, buf, MAXBUF, &line_len);
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SUBJECT, buf);
+    if (listener_config_.clnt_check > 0 && x509 != nullptr)
+        {
+            int line_len = 0;
+            char buf[MAXBUF]{'\0'};
+            std::unique_ptr<BIO, decltype(&::BIO_free)> bb(BIO_new(BIO_s_mem()),
+                                                           ::BIO_free);
+            X509_NAME_print_ex(bb.get(), ::X509_get_subject_name(x509.get()), 8,
+                               XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
+            get_line(bb.get(), buf, MAXBUF, &line_len);
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SUBJECT,
+                                      buf, true);
 
-    X509_NAME_print_ex(bb, X509_get_issuer_name(x509), 8, XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-    get_line(bb, buf, MAXBUF, &line_len);
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_ISSUER, buf);
+            X509_NAME_print_ex(bb.get(), X509_get_issuer_name(x509.get()), 8,
+                               XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
+            get_line(bb.get(), buf, MAXBUF, &line_len);
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_ISSUER, buf,
+                                      true);
 
-    ASN1_TIME_print(bb, X509_get_notBefore(x509));
-    get_line(bb, buf, MAXBUF, &line_len);
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTBEFORE, buf);
+            ASN1_TIME_print(bb.get(), X509_get_notBefore(x509.get()));
+            get_line(bb.get(), buf, MAXBUF, &line_len);
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTBEFORE,
+                                      buf, true);
 
-    ASN1_TIME_print(bb, X509_get0_notAfter(x509));
-    get_line(bb, buf, MAXBUF, &line_len);
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTAFTER, buf);
+            ASN1_TIME_print(bb.get(), X509_get0_notAfter(x509.get()));
+            get_line(bb.get(), buf, MAXBUF, &line_len);
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTAFTER,
+                                      buf, true);
 
-    long serial = ASN1_INTEGER_get(X509_get_serialNumber(x509));
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SERIAL, std::to_string(serial));
+            long serial = ASN1_INTEGER_get(X509_get_serialNumber(x509.get()));
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SERIAL,
+                                      std::to_string(serial), true);
 
-    PEM_write_bio_X509(bb, x509);
-    get_line(bb, buf, MAXBUF, &line_len);
-    header_value = buf;
-    while(get_line(bb, buf, MAXBUF, &line_len) == 0) {
-      header_value += buf;
-    }
-
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CERTIFICATE, header_value);
-
-    X509_free(x509);
-    BIO_free(bb);
-  }
+            PEM_write_bio_X509(bb.get(), x509.get());
+            get_line(bb.get(), buf, MAXBUF, &line_len);
+            header_value = buf;
+            while (get_line(bb.get(), buf, MAXBUF, &line_len) == 0)
+                {
+                    header_value += buf;
+                }
+            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CERTIFICATE,
+                                      header_value, true);
+        }
 }
 
 void StreamManager::clearStream(HttpStream *stream) {
