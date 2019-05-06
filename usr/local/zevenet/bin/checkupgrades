@@ -10,6 +10,11 @@ else
 	exit 1
 fi
 
+# check if the certificate file exists
+if [ ! -f /usr/local/zevenet/www/zlbcertfile.pem ]; then
+        echo "There isn't a valid activation certificate" > $apt_msg
+        exit 1
+fi
 
 case "$1" in
 '')
