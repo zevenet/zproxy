@@ -596,7 +596,7 @@ void StreamManager::onResponseEvent(int fd) {
   }
   IO::IO_RESULT result;
   if (stream->response.message_bytes_left > 0 && !this->is_https_listener
-      && stream->response.transfer_encoding_header) {
+      /*&& stream->response.transfer_encoding_header*/) {
     result = stream->backend_connection.zeroRead();
     if (result == IO::IO_RESULT::ERROR) {
       Debug::LogInfo("Error reading response ", LOG_DEBUG);
