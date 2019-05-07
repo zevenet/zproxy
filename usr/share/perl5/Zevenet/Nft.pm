@@ -213,10 +213,17 @@ sub httpNlbRequest
 	{
 		my $fo = &openlock( $self->{ file }, 'w' );
 		open my $fi, '<', "$file";
+		my $backends = 0;
 		my $policies = 0;
 		while ( my $line = <$fi> )
 		{
-			$policies = 1 if ( $line =~ /policies/ );
+			$backends = 1 if ( $line =~ /\"backends\"\:/ );
+			$policies = 1 if ( $line =~ /\"policies\"\:/ );
+			if ( $backends == 1 && $line =~ /\]/ )
+			{
+				$backends = 0;
+				$line =~ s/,$//g;
+			}
 			print $fo $line
 			  if (
 				   $line !~ /new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
