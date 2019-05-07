@@ -224,8 +224,6 @@ sub runBLStopByRule
 		&delBLCronTask( $ruleName );
 	}
 
-	return if ( &getBLIpsetStatus( $ruleName ) eq 'down' );
-
 	foreach my $farmName ( @{ &getBLParam( $ruleName, 'farms' ) } )
 	{
 		if ( &runBLStop( $ruleName, $farmName ) != 0 )
