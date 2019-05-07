@@ -359,8 +359,8 @@ sub _getL4ParseFarmConfig
 			my @l = split /"/, $line;
 			$output = $l[3];
 			$output =~ s/-/:/g;
-			$output = "*"             if ( $output eq '' );
-			$output = int ( $output ) if ( $output !~ /\*|\:|,/ );
+			$output = "*"         if ( $output eq '' );
+			$output = $output + 0 if ( $output =~ /[0-9]+/ );
 		}
 
 		if ( $line =~ /\"mode\"/ && $param eq 'mode' )
@@ -389,7 +389,7 @@ sub _getL4ParseFarmConfig
 		if ( $line =~ /\"persist-ttl\"/ && $param eq 'persisttm' )
 		{
 			my @l = split /"/, $line;
-			$output = int ( $l[3] );
+			$output = $l[3] + 0;
 			$exit   = 0;
 		}
 

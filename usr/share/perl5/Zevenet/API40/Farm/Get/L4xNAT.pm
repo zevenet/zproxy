@@ -46,13 +46,15 @@ sub farms_name_l4    # ( $farmname )
 	my $status = &getFarmVipStatus( $farmname );
 
 	$out_p = {
-		status      => $status,
-		vip         => $farm->{ vip },
-		vport       => $farm->{ vport },
+		status => $status,
+		vip    => $farm->{ vip },
+		vport  => ( $farm->{ vport } =~ /[0-9]+/ )
+		? $farm->{ vport } + 0
+		: $farm->{ vport },
 		algorithm   => $farm->{ lbalg },
 		nattype     => $farm->{ nattype },
 		persistence => $farm->{ persist },
-		ttl         => $farm->{ ttl },
+		ttl         => $farm->{ ttl } + 0,
 		protocol    => $farm->{ vproto },
 
 		farmguardian => &getFGFarm( $farmname ),
