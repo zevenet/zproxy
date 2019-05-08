@@ -1,7 +1,8 @@
 #!/bin/sh
 
 DEBUG=""
-NFTBIN=`which nft`
+NFTBIN=/usr/local/sbin/nft
+#NFTBIN=`which nft`
 GLOBALCONF="/usr/local/zevenet/config/global.conf"
 if [ -f "$GLOBALCONF" ]; then
 	# debug
