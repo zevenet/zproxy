@@ -359,8 +359,7 @@ sub _getL4ParseFarmConfig
 			my @l = split /"/, $line;
 			$output = $l[3];
 			$output =~ s/-/:/g;
-			$output = "*"         if ( $output eq '' );
-			$output = $output + 0 if ( $output =~ /[0-9]+/ );
+			$output = "*" if ( $output eq '' );
 		}
 
 		if ( $line =~ /\"mode\"/ && $param eq 'mode' )
