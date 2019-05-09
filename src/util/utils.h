@@ -67,6 +67,11 @@ enum class IO_OP {
 } // namespace IO
 
 namespace helper {
+/*
+ * return true if c is CR (carriage return) or LF (line feed)
+*/
+inline bool isCRorLF(char c){ return c == '\n' || c == '\r'; }
+
 inline bool stringEqual(const std::string &str1, const std::string &str2) {
   if (str1.size() == str2.size() /*&& str1[0] == str2[0]*/ &&
       std::strncmp(str1.c_str(), str2.c_str(), str1.length()) == 0) {

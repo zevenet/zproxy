@@ -1308,10 +1308,7 @@ void StreamManager::httpsHeaders(HttpStream *stream) {
             header_value += '/';
             header_value += cipher_buf;
             header_value.erase(
-                std::remove(header_value.begin(), header_value.end(), '\n'),
-                header_value.end());
-            header_value.erase(
-                std::remove(header_value.begin(), header_value.end(), '\r'),
+                std::remove_if(header_value.begin(), header_value.end(),helper::isCRorLF),
                 header_value.end());
             stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER,
                                       header_value, true);
