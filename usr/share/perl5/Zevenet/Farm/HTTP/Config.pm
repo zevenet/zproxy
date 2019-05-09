@@ -1358,12 +1358,14 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			$array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/;
 			$stat = $? || $stat;
 			$enter--;
+			last;
 		}
 		if ( $array[$i] =~ /Port/ and $vip_port )
 		{
 			$array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/;
 			$stat = $? || $stat;
 			$enter--;
+			last;
 		}
 	}
 	untie @array;
