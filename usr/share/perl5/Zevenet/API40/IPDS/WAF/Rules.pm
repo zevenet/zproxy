@@ -424,7 +424,7 @@ sub move_waf_rule
 
 	my $params =
 	  { "position" =>
-		  { 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
+		{ 'required' => 'true', 'non_blank' => 'true', 'valid_format' => 'integer' },
 	  };
 
 	# Check allowed parameters
@@ -496,11 +496,13 @@ sub create_waf_rule_match
 
 	my $msg = "The new match was created successfully.";
 	$rule_st = &getWAFRule( $set, $rule_index );
-	my $output = &getZapiWAFRule( $rule_st );
+	my $rule = &getZapiWAFRule( $rule_st );
+	my $out  = $rule->{ matches }->[-1];
+	$out->{ raw } = $rule->{ raw };
 
 	my $body = {
 				 description => $desc,
-				 params      => $output->{ matches }->[-1],
+				 params      => $out,
 				 message     => $msg
 	};
 
@@ -563,10 +565,14 @@ sub modify_waf_rule_match
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg = "Settings were changed successfully.";
+	my $msg          = "Settings were changed successfully.";
 	my $rule_updated = &getWAFRule( $set, $rule_index );
-	my $outRule = &getZapiWAFRule( $rule_updated )->{ matches }->[$chain_index];
-	my $body = { description => $desc, params => $outRule };
+	my $outRule      = &getZapiWAFRule( $rule_updated );
+
+	my $out = $outRule->{ matches }->[$chain_index];
+	$out->{ raw } = $outRule->{ raw };
+
+	my $body = { description => $desc, params => $out };
 
 	return &httpResponse( { code => 200, body => $body } );
 }
@@ -613,8 +619,12 @@ sub delete_waf_rule_match
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
+	my $rule_updated = &getWAFRule( $set, $id );
+	my $out = &getZapiWAFRule( $rule_updated );
+
 	my $msg = "The match $chain_index has been deleted properly";
-	my $body = { description => $desc, message => $msg };
+	my $body =
+	  { description => $desc, message => $msg, params => { raw => $out->{ raw } } };
 
 	return &httpResponse( { code => 200, body => $body } );
 }
