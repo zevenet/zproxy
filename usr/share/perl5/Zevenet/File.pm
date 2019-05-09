@@ -162,12 +162,16 @@ sub createFile
 	my $file = shift;
 	my $fh;
 
-	return 0 if ( -f $file );
+	if ( -f $file )
+	{
+		&zenlog( "The file $file already exists", "error", "System" );
+		return 1;
+	}
 
 	if ( !open ( $fh, '>', $file ) )
 	{
 		&zenlog( "The file $file could not be created", "error", "System" );
-		return 1;
+		return 2;
 	}
 	close $fh;
 

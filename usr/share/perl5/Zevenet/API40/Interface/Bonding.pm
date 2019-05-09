@@ -635,20 +635,33 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	my $if_ref = &getInterfaceConfig( $bond );
 
+	my @child = &getInterfaceChild( $bond );
+
 	# check if some farm is using this ip
 	my @farms;
 	if ( exists $json_obj->{ ip }
-		 or ( exists $json_obj->{ dhcp } and $json_obj->{ dhcp } eq 'true' ) )
+		 or ( exists $json_obj->{ dhcp } ) )
 	{
 		require Zevenet::Farm::Base;
 
 		@farms = &getFarmListByVip( $if_ref->{ addr } );
-		if ( @farms and $json_obj->{ force } ne 'true' )
+		if ( @farms )
 		{
-			my $str = join ( ', ', @farms );
-			my $msg =
-			  "The IP is being used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			if (    !exists $json_obj->{ ip }
+				 and exists $json_obj->{ dhcp }
+				 and $json_obj->{ dhcp } eq 'false' )
+			{
+				my $msg =
+				  "This interface is been used by some farms, please, set up a new 'ip' in order to be used as farm vip.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+			if ( $json_obj->{ force } ne 'true' )
+			{
+				my $str = join ( ', ', @farms );
+				my $msg =
+				  "The IP is being used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 	}
 
@@ -666,6 +679,12 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
+	if ( !exists $json_obj->{ ip } and exists $json_obj->{ dhcp } and @child )
+	{
+		my $msg =
+		  "This interface has appending some virtual interfaces, please, set up a new 'ip' in the current networking range.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	if ( exists $json_obj->{ dhcp } )
 	{
@@ -680,7 +699,10 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	else
+
+	if (    exists $json_obj->{ ip }
+		 or exists $json_obj->{ netmask }
+		 or exists $json_obj->{ gateway } )
 	{
 		# Check address errors
 		if ( exists $json_obj->{ ip } )
@@ -721,7 +743,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
    # Do not modify gateway or netmask if exists a virtual interface using this interface
 		if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 		{
-			my @child = &getInterfaceChild( $bond );
 			my @wrong_conf;
 
 			foreach my $child_name ( @child )
@@ -769,7 +790,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 
 		# Setup new interface configuration structure
-		$if_ref = &getInterfaceConfig( $bond ) // &getSystemInterface( $bond );
 		$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 		$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 		$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };

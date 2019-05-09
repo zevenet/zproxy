@@ -531,18 +531,31 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( $json_obj->{ ip }
-		 or ( exists $json_obj->{ dhcp } and $json_obj->{ dhcp } eq 'true' ) )
+	my @child = &getInterfaceChild( $vlan );
+
+	if ( exists $json_obj->{ ip }
+		 or ( exists $json_obj->{ dhcp } ) )
 	{
 		# check if some farm is using this ip
 		require Zevenet::Farm::Base;
 		@farms = &getFarmListByVip( $if_ref->{ addr } );
-		if ( @farms and $json_obj->{ force } ne 'true' )
+		if ( @farms )
 		{
-			my $str = join ( ', ', @farms );
-			my $msg =
-			  "The IP is being used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			if (    !exists $json_obj->{ ip }
+				 and exists $json_obj->{ dhcp }
+				 and $json_obj->{ dhcp } eq 'false' )
+			{
+				my $msg =
+				  "This interface is been used by some farms, please, set up a new 'ip' in order to be used as farm vip.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+			if ( $json_obj->{ force } ne 'true' )
+			{
+				my $str = join ( ', ', @farms );
+				my $msg =
+				  "The IP is being used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 	}
 
@@ -559,6 +572,12 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 			  "It is not possible set 'ip', 'netmask' or 'gateway' while 'dhcp' is enabled.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+	}
+	if ( !exists $json_obj->{ ip } and exists $json_obj->{ dhcp } and @child )
+	{
+		my $msg =
+		  "This interface has appending some virtual interfaces, please, set up a new 'ip' in the current networking range.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( exists $json_obj->{ dhcp } )
@@ -606,7 +625,6 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
    # Do not modify gateway or netmask if exists a virtual interface using this interface
 		if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 		{
-			my @child = &getInterfaceChild( $vlan );
 			my @wrong_conf;
 
 			foreach my $child_name ( @child )

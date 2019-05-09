@@ -340,8 +340,6 @@ sub delIf    # ($if_ref)
 
 	my $status;
 	my $has_more_ips;
-	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $file      = "$configdir/if_$$if_ref{name}\_conf";
 
 	# remove dhcp configuration
 	if ( exists $if_ref->{ dhcp } and $if_ref->{ dhcp } eq 'true' )
@@ -353,31 +351,8 @@ sub delIf    # ($if_ref)
 		);
 	}
 
-	require Config::Tiny;
-	my $fileHandler = Config::Tiny->new();
-	if ( -f $file )
-	{
-		$fileHandler = Config::Tiny->read( $file );
-		$fileHandler->{ $if_ref->{ name } } = {
-								  mask   => "",
-								  status => $fileHandler->{ $if_ref->{ name } }->{ status },
-								  addr   => "",
-								  mac    => $if_ref->{ mac },
-								  gateway => ""
-		};
-
-		$fileHandler->write( "$file" );
-		if ( $$if_ref{ name } ne $$if_ref{ dev } )
-		{
-			unlink ( $file ) or return 1;
-		}
-	}
-	else
-	{
-		&zenlog( "Error opening $file: $!", "info", "NETWORK" );
-		$status = 1;
-	}
-
+	require Zevenet::Net::Interface;
+	$status = &cleanInterfaceConfig( $if_ref );
 	if ( $status )
 	{
 		return $status;

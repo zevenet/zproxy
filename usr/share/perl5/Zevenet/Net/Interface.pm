@@ -283,6 +283,53 @@ sub setInterfaceConfig    # $bool ($if_ref)
 }
 
 =begin nd
+Function: cleanInterfaceConfig
+
+	remove the configuration information of a interface from its config file
+
+Parameters:
+	if_ref - Reference to a network interface hash.
+
+Returns:
+	Integer - 0 on success, or another value on failure.
+
+=cut
+
+sub cleanInterfaceConfig
+{
+	my $if_ref    = shift;
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $file      = "$configdir/if_$$if_ref{name}\_conf";
+	my $err       = 0;
+
+	if ( !-f $file )
+	{
+		&zenlog( "The file $file has not been found", "info", "NETWORK" );
+		return 1;
+	}
+
+	require Config::Tiny;
+	my $fileHandler = Config::Tiny->new();
+	$fileHandler = Config::Tiny->read( $file );
+	$fileHandler->{ $if_ref->{ name } } = {
+							  mask   => "",
+							  status => $fileHandler->{ $if_ref->{ name } }->{ status },
+							  addr   => "",
+							  mac    => $if_ref->{ mac },
+							  gateway => "",
+							  dhcp    => "false"
+	};
+
+	$fileHandler->write( "$file" );
+	if ( $$if_ref{ name } ne $$if_ref{ dev } )
+	{
+		unlink ( $file ) or return 1;
+	}
+
+	return $err;
+}
+
+=begin nd
 Function: getDevVlanVini
 
 	Get a hash reference with the interface name divided into: dev, vlan, vini.

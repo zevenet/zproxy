@@ -87,8 +87,16 @@ sub disableDHCP
 	$err = &stopDHCP( $if_ref->{ name } );
 	$err if $err;
 
-	$if_ref->{ 'dhcp' } = 'false';
-	$err = 0 if ( &setInterfaceConfig( $if_ref ) );
+	if ( $if_ref->{ addr } )
+	{
+		# Delete old IP and Netmask from system to replace it
+		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
+
+		# Remove routes if the interface has its own route table: nic and vlan
+		&delRoutes( "local", $if_ref );
+	}
+
+	$err = &cleanInterfaceConfig( $if_ref );
 
 	return $err;
 }
