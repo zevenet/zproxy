@@ -23,8 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
-
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: lockHTTPFile
@@ -38,6 +37,7 @@ Returns:
 	Integer - lock description
 
 =cut
+
 sub lockHTTPFile
 {
 	my $farm = shift;
@@ -59,6 +59,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmClientTimeout    # ($client,$farm_name)
 {
 	my ( $client, $farm_name ) = @_;
@@ -85,7 +86,8 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 			if ( $filefarmhttp[$i_f] =~ /^Client/ )
 			{
-				&zenlog( "setting 'ClientTimeout $client' for $farm_name farm $farm_type", "info", "LSLB" );
+				&zenlog( "setting 'ClientTimeout $client' for $farm_name farm $farm_type",
+						 "info", "LSLB" );
 				$filefarmhttp[$i_f] = "Client\t\t $client";
 				$output             = $?;
 				$found              = "true";
@@ -110,6 +112,7 @@ Returns:
 	Integer - Return the seconds for client request timeout or -1 on failure.
 
 =cut
+
 sub getFarmClientTimeout    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -150,6 +153,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
@@ -161,7 +165,8 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	# lock file
 	my $lock_fh = &lockHTTPFile( $farm_name );
 
-	&zenlog( "Setting 'Session type $session' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "Setting 'Session type $session' for $farm_name farm $farm_type",
+			 "info", "LSLB" );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 	my $i     = -1;
 	my $found = "false";
@@ -245,6 +250,7 @@ Returns:
 	scalar - type of persistence or -1 on failure.
 
 =cut
+
 sub getHTTPFarmSessionType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -278,6 +284,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
@@ -301,7 +308,8 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 		if ( $filefarmhttp[$i_f] =~ /^Alive/ )
 		{
 			&zenlog(
-					"Setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type", "info", "LSLB" );
+					 "Setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type",
+					 "info", "LSLB" );
 			$filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
 			$output             = $?;
 			$found              = "true";
@@ -325,6 +333,7 @@ Returns:
 	integer - seconds for check or -1 on failure.
 
 =cut
+
 sub getHTTPFarmBlacklistTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -333,7 +342,7 @@ sub getHTTPFarmBlacklistTime    # ($farm_name)
 	my $conf_file      = &getFarmFile( $farm_name );
 	my $conf_path      = "$configdir/$conf_file";
 
-	open( my $fh, '<', $conf_path ) or die "Could not open $conf_path: $!";
+	open ( my $fh, '<', $conf_path ) or die "Could not open $conf_path: $!";
 	while ( my $line = <$fh> )
 	{
 		next unless $line =~ /^Alive/i;
@@ -366,6 +375,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmHttpVerb    # ($verb,$farm_name)
 {
 	my ( $verb, $farm_name ) = @_;
@@ -389,7 +399,8 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 			$i_f++;
 			if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
 			{
-				&zenlog( "Setting 'Http verb $verb' for $farm_name farm $farm_type", "info", "LSLB" );
+				&zenlog( "Setting 'Http verb $verb' for $farm_name farm $farm_type",
+						 "info", "LSLB" );
 				$filefarmhttp[$i_f] = "\txHTTP $verb";
 				$output             = $?;
 				$found              = "true";
@@ -420,6 +431,7 @@ Returns:
 	integer - return the verb set identier or -1 on failure.
 
 =cut
+
 sub getFarmHttpVerb    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -462,6 +474,7 @@ FIXME
 	not return nothing, use $found variable to return success or error
 
 =cut
+
 sub setFarmListen    # ( $farm_name, $farmlisten )
 {
 	my ( $farm_name, $flisten ) = @_;
@@ -581,11 +594,13 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "http" )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/\#DHParams/;
+
 			#&setHTTPFarmDHStatus( $farm_name, "off" );
 		}
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "https" )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/DHParams/;
+
 			#$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
 			#&setHTTPFarmDHStatus( $farm_name, "on" );
 			#&genDHFile ( $farm_name );
@@ -614,6 +629,7 @@ Returns:
 	none - .
 
 =cut
+
 sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 {
 	my ( $farm_name, $rewritelocation ) = @_;
@@ -621,7 +637,8 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
-	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation", "info", "LSLB" );
+	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation",
+			 "info", "LSLB" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -661,6 +678,7 @@ Returns:
 	scalar - The possible values are: disabled, enabled, enabled-backends or -1 on failure
 
 =cut
+
 sub getFarmRewriteL    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -700,6 +718,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmConnTO    # ($tout,$farm_name)
 {
 	my ( $tout, $farm_name ) = @_;
@@ -708,7 +727,8 @@ sub setFarmConnTO    # ($tout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm $farm_type",
+			 "info", "LSLB" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -748,6 +768,7 @@ Returns:
 	integer - return the connection time out or -1 on failure
 
 =cut
+
 sub getFarmConnTO    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -787,6 +808,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 {
 	my ( $timeout, $farm_name ) = @_;
@@ -831,6 +853,7 @@ Returns:
 	Integer - Return time out, or -1 on failure.
 
 =cut
+
 sub getHTTPFarmTimeout    # ($farm_filename)
 {
 	my ( $farm_name ) = @_;
@@ -867,6 +890,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 {
 	my ( $track, $farm_name ) = @_;
@@ -910,6 +934,7 @@ Returns:
 	Integer - Return maximum time, or -1 on failure.
 
 =cut
+
 sub getHTTPFarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -951,6 +976,7 @@ FIXME:
 	This function is in blank
 
 =cut
+
 sub setHTTPFarmMaxConn    # ($max_connections,$farm_name)
 {
 	return 0;
@@ -968,11 +994,12 @@ Returns:
 	array - Return poundctl output
 
 =cut
+
 sub getHTTPFarmGlobalStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
+	my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
 	return `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 }
@@ -991,6 +1018,7 @@ Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 
 =cut
+
 sub setFarmErr    # ($farm_name,$content,$nerr)
 {
 	my ( $farm_name, $content, $nerr ) = @_;
@@ -1036,6 +1064,7 @@ Returns:
 	Array - Message body for the error
 
 =cut
+
 # Only http function
 sub getFarmErr    # ($farm_name,$nerr)
 {
@@ -1064,7 +1093,7 @@ sub getFarmErr    # ($farm_name,$nerr)
 						$output .= $_;
 					}
 					close FI;
-					chomp ($output);
+					chomp ( $output );
 				}
 			}
 		}
@@ -1086,6 +1115,7 @@ Returns:
 	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
 
 =cut
+
 sub getHTTPFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1125,6 +1155,7 @@ FIXME:
 	This function do nothing
 
 =cut
+
 sub getHTTPFarmMaxConn    # ($farm_name)
 {
 	return 0;
@@ -1143,7 +1174,8 @@ Parameters:
 Returns:
 	String - return socket file
 =cut
-sub getHTTPFarmSocket       # ($farm_name)
+
+sub getHTTPFarmSocket    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1162,12 +1194,13 @@ Returns:
 	Integer - return pid of farm, '-' if pid not exist or -1 on failure
 
 =cut
-sub getHTTPFarmPid        # ($farm_name)
+
+sub getHTTPFarmPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
 	my $output = -1;
-	my $piddir = &getGlobalConfiguration('piddir');
+	my $piddir = &getGlobalConfiguration( 'piddir' );
 
 	my $pidfile = "$piddir\/$farm_name\_pound.pid";
 	if ( -e $pidfile )
@@ -1208,6 +1241,7 @@ Returns:
 	Integer - return child pid of farm or -1 on failure
 
 =cut
+
 sub getFarmChildPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1251,6 +1285,7 @@ FIXME
 	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
 
 =cut
+
 sub getHTTPFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -1300,6 +1335,7 @@ Returns:
 	Integer - return 0 on success or different on failure
 
 =cut
+
 sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -1319,13 +1355,13 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	{
 		if ( $array[$i] =~ /Address/ )
 		{
-			$array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/g;
+			$array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/;
 			$stat = $? || $stat;
 			$enter--;
 		}
 		if ( $array[$i] =~ /Port/ and $vip_port )
 		{
-			$array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/g;
+			$array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/;
 			$stat = $? || $stat;
 			$enter--;
 		}
@@ -1348,6 +1384,7 @@ Returns:
 	scalar - return 0 on success or different on failure
 
 =cut
+
 sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1363,7 +1400,7 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	{
 		my $message = $rc ? 'failed' : 'running';
 		&zenlog( "$message: $pound_command", "error", "LSLB" );
-		&zenlog( "output: $run ", "error", "LSLB" );
+		&zenlog( "output: $run ",            "error", "LSLB" );
 	}
 
 	return $rc;
@@ -1408,8 +1445,8 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 	my $srv;
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService \"(.+)\"/ )    { $srv = $1; }
-		if ( $file_id == $line_num-1 )
+		if ( $line =~ /^\tService \"(.+)\"/ ) { $srv = $1; }
+		if ( $file_id == $line_num - 1 )
 		{
 			$file_line = $line;
 			last;
@@ -1418,14 +1455,14 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 	}
 	close $fileconf;
 
-	# examples of error msg
-	#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 36: unknown directive
-	#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 40: SSL_CTX_use_PrivateKey_file failed - aborted
+# examples of error msg
+#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 36: unknown directive
+#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 40: SSL_CTX_use_PrivateKey_file failed - aborted
 	$file_line =~ /\s*([\w-]+)/;
 	my $param = $1;
 
 	# parse line
-	if( $param eq "Cert" )
+	if ( $param eq "Cert" )
 	{
 		# return pem name if the pem file is not correct
 		$file_line =~ /([^\/]+)\"$/;
@@ -1439,15 +1476,14 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	if ( not $msg )
 	{
-		if ( &debug() ) 	{ $msg = $run[-1]; }
-		else 	{ $msg = "Error in the configuration file"; }
+		if   ( &debug() ) { $msg = $run[-1]; }
+		else              { $msg = "Error in the configuration file"; }
 	}
 
-	&zenlog("Error checking config file: $msg",'debug');
+	&zenlog( "Error checking config file: $msg", 'debug' );
 
 	return $msg;
 }
-
 
 =begin nd
 Function: setFarmNameParam
@@ -1465,6 +1501,7 @@ BUG:
 	this function is duplicated
 
 =cut
+
 sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 {
 	my ( $farmName, $newName ) = @_;
@@ -1473,7 +1510,8 @@ sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 	my $farmFilename = &getFarmFile( $farmName );
 	my $output       = -1;
 
-	&zenlog( "Setting 'farm name $newName' for $farmName farm $farmType", "info", "LSLB" );
+	&zenlog( "Setting 'farm name $newName' for $farmName farm $farmType",
+			 "info", "LSLB" );
 
 	if ( $farmType eq "http" || $farmType eq "https" )
 	{
