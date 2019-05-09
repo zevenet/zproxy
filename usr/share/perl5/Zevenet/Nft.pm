@@ -211,6 +211,7 @@ sub httpNlbRequest
 	# filter ipds params
 	if ( defined $self->{ file } && $self->{ file } ne "" && -f "$file" )
 	{
+		require Zevenet::Lock;
 		my $fo = &openlock( $self->{ file }, 'w' );
 		open my $fi, '<', "$file";
 		my $backends = 0;
