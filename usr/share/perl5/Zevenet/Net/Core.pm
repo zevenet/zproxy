@@ -361,12 +361,14 @@ sub delIf    # ($if_ref)
 	# If $if is Vini do nothing
 	if ( $$if_ref{ vini } eq '' )
 	{
-		# If $if is a Interface, delete that IP
-		my $ip_cmd =
-		  "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
-
-		$status = &logAndRun( $ip_cmd )
-		  if ( length $if_ref->{ addr } && length $if_ref->{ mask } );
+		my $ip_cmd;
+		if ( $if_ref->{ dhcp } ne 'true' )
+		{
+			# If $if is a Interface, delete that IP
+			$ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
+			$status = &logAndRun( $ip_cmd )
+			  if ( length $if_ref->{ addr } && length $if_ref->{ mask } );
+		}
 
 		# If $if is a Vlan, delete Vlan
 		if ( $$if_ref{ vlan } ne '' )
