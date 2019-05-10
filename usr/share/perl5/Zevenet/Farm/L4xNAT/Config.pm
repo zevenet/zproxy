@@ -71,6 +71,8 @@ sub getL4FarmParam
 			 "debug", "PROFILING" );
 	my ( $param, $farm_name ) = @_;
 
+	require Zevenet::Farm::Core;
+
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
