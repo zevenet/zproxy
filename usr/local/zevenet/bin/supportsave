@@ -96,6 +96,13 @@ echo "- Interfaces"
 /sbin/ip link show                      >> $backup_dir/ip_link.txt
 /sbin/ip addr show                      >> $backup_dir/ip_addr.txt
 
+echo "- Bondings"
+for i in  `ls /proc/net/bonding/`
+do 
+	echo ">>>>Interface $i"		>> $backup_dir/bonding_system.txt 
+	cat /proc/net/bonding/$i	>> $backup_dir/bonding_system.txt 
+done
+
 echo "- Routes"
 for i in `cat /etc/iproute2/rt_tables  | grep "table_" | awk {'print $2'}`
 do
