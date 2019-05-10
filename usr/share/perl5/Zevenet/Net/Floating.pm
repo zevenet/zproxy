@@ -202,6 +202,12 @@ sub setFloatingSourceAddr
 	}
 
 	require Zevenet::Nft;
+	require Zevenet::Farm::L4xNAT::Config;    # Currently, only for L4
+
+	my $current = &getL4FarmParam( 'sourceaddr', $farm->{ name } );
+
+	return 0 if ( $current eq $srcaddr );
+
 	return
 	  &httpNlbRequest(
 		{

@@ -57,6 +57,7 @@ Parameters:
 		"limitconns": total connections limit per source IP
 		"bogustcpflags": check bogus TCP flags
 		"nfqueue": queue to verdict the packets
+		"sourceaddr": get the source address
 	farmname - Farm name
 
 Returns:
@@ -186,7 +187,7 @@ sub setL4FarmParam
 	elsif ( $param eq "vipp" or $param eq "vport" )
 	{
 		$value =~ s/\:/\-/g;
-		$value = "" if ( $value eq "*" );
+		$value = "1-65535" if ( $value eq "*" );
 		$parameters = qq(, "virtual-ports" : "$value" );
 	}
 	elsif ( $param eq "alg" )
@@ -323,7 +324,7 @@ Function: _getL4ParseFarmConfig
 	Parse the farm file configuration and read/write a certain parameter
 
 Parameters:
-	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm", "limitsec", "limitsecbrst", "limitconns", "limitrst", "limitrstbrst", "bogustcpflags", "nfqueue"
+	param - requested parameter. The options are "family", "vip", "vipp", "status", "mode", "alg", "proto", "persist", "presisttm", "limitsec", "limitsecbrst", "limitconns", "limitrst", "limitrstbrst", "bogustcpflags", "nfqueue", "sourceaddr"
 	value - value to be changed in case of write operation, undef for read only cases
 	config - reference of an array with the full configuration file
 
@@ -358,8 +359,14 @@ sub _getL4ParseFarmConfig
 		{
 			my @l = split /"/, $line;
 			$output = $l[3];
+			$output = "*" if ( $output eq '1-65535' || $output eq '' );
 			$output =~ s/-/:/g;
-			$output = "*" if ( $output eq '' );
+		}
+
+		if ( $line =~ /\"source-addr\"/ && $param eq 'sourceaddr' )
+		{
+			my @l = split /"/, $line;
+			$output = $l[3];
 		}
 
 		if ( $line =~ /\"mode\"/ && $param eq 'mode' )
