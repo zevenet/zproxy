@@ -32,11 +32,6 @@ sub set_factory_reset
 	my $desc     = "Apply a factory reset";
 
 	my $params = {
-				   "action" => {
-								 'values'    => ["apply"],
-								 'non_blank' => 'true',
-								 'required'  => 'true',
-				   },
 				   "interface" => {
 									'non_blank' => 'true',
 									'required'  => 'true',
