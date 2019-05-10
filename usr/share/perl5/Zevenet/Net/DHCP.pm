@@ -143,9 +143,19 @@ sub startDHCP
 			 "debug", "PROFILING" );
 	my $if_name = shift;
 
-	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
-
 	my $cmd = &getDHCPCmd( $if_name );
+	my $pids = &find_proc( cmndline => $cmd );
+
+	if ( $pids )
+	{
+		&zenlog(
+				 "The dhcp service is already running for $if_name, it will be restarted",
+				 "debug2", "dhcp" );
+		&stopDHCP( $if_name );
+	}
+
+	&zenlog( "starting dhcp service for $if_name", "debug", "dhcp" );
+
 	my $err = &logAndRun( $cmd );
 	return $err;
 }
@@ -171,7 +181,7 @@ sub stopDHCP
 
 	use Proc::Find qw(find_proc);
 
-	&zenlog( "Stopping dhcp for $if_name", "debug", "dhcp" );
+	&zenlog( "Stopping dhcp service for $if_name", "debug", "dhcp" );
 
 	my $cmd  = &getDHCPCmd( $if_name );
 	my $pids = &find_proc( cmndline => $cmd );
