@@ -450,6 +450,13 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ( @certSNI == 1 or ( $number == @certSNI ) )
+	{
+		my $msg =
+		  "The certificate '$certfilename' could not be deleted, the farm needs one certificate at least.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my $status;
 
  # This is a BUGFIX: delete the certificate all times that it appears in config file
