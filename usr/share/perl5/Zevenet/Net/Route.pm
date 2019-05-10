@@ -396,33 +396,23 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				&zenlog(
 						 "Applying $table routes in stack IPv$$if_ref{ip_v} with gateway \""
 						   . &getGlobalConfiguration( 'defaultgw' ) . "\"",
-						 "info", "NETWORK"
+						 "info",
+						 "NETWORK"
 				);
 				my $ip_cmd =
 				  "$ip_bin -$$if_ref{ip_v} route $action default via $gateway dev $$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
 
-				require Tie::File;
-				tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
-
-				for my $line ( @contents )
+				if ( $$if_ref{ ip_v } == 6 )
 				{
-					if ( grep /^\$defaultgw/, $line )
-					{
-						if ( $$if_ref{ ip_v } == 6 )
-						{
-							$line =~ s/^\$defaultgw6=.*/\$defaultgw6=\"$gateway\"\;/g;
-							$line =~ s/^\$defaultgwif6=.*/\$defaultgwif6=\"$$if_ref{name}\"\;/g;
-						}
-						else
-						{
-							$line =~ s/^\$defaultgw=.*/\$defaultgw=\"$gateway\"\;/g;
-							$line =~ s/^\$defaultgwif=.*/\$defaultgwif=\"$$if_ref{name}\"\;/g;
-						}
-					}
+					&setGlobalConfiguration( 'defaultgw6',   $gateway );
+					&setGlobalConfiguration( 'defaultgwif6', $$if_ref{ name } );
 				}
-
-				untie @contents;
+				else
+				{
+					&setGlobalConfiguration( 'defaultgw',   $gateway );
+					&setGlobalConfiguration( 'defaultgwif', $$if_ref{ name } );
+				}
 
 				require Zevenet::Farm::Config;
 				&reloadFarmsSourceAddress() if $status == 0;
