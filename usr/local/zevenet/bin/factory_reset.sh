@@ -145,6 +145,7 @@ done
 # cleaning up config
 rm -fr ${CONF_DIR}/*
 mv $TMP_CONF_DIR/* ${CONF_DIR}
+rm /etc/cron.d/*
 
 # create local conf dir
 mkdir "$localconfig"
