@@ -702,7 +702,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	if (    exists $json_obj->{ ip }
 		 or exists $json_obj->{ netmask }
-		 or exists $json_obj->{ gateway } )
+		 or exists $json_obj->{ gateway }
+		 or exists $json_obj->{ mac } )
 	{
 		# Check address errors
 		if ( exists $json_obj->{ ip } )
