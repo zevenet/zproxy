@@ -349,6 +349,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 	my $status = 0;
 
+	return 0 if ( $$if_ref{ ip_v } != 4 and $$if_ref{ ip_v } != 6 );
+
 	unless ( $$if_ref{ net } )
 	{
 		require Zevenet::Net::Interface;
