@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+
+use Encode qw(encode_utf8);
+use HTTP::Request ();
+use LWP::UserAgent;
+use JSON::MaybeXS qw(encode_json);
+use IO::Socket::SSL qw();
+use Digest::MD5 qw(md5_hex);
+use Term::ANSIColor;
+
+$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+
+# Current status: It works fine if we download the files directly from the
+# Apache server but it doesn't work if we download it through zhttp. Test it
+# modifying the url variables.
+
+my $url_10mb = 'https://localhost:8000/10MB.zip';
+my $url_100mb = 'https://localhost:8000/100MB.zip';
+my $url_200mb = 'https://localhost:8000/200MB.zip';
+my $url_get = 'https://localhost:8000';
+
+my $file_10mb = '3aa55f03c298b83cd7708e90d289afbd';
+my $file_100mb = '5b563100babfef2f2ec9ab2d55e97fd1';
+my $file_200mb = '3389a0b30e05ef6613ccbdae5d9ec0bd';
+
+my $header = ['Content-Type' => 'application/json; charset=UTF-8'];
+my $data = {foo => 'bar', test=>'tesst'};
+my $encoded_data = encode_utf8(encode_json($data));
+my $request_post = HTTP::Request->new('POST', $url, $header, $encoded_data);
+my $request_get = HTTP::Request->new(GET => $url);
+
+$ua = LWP::UserAgent->new;
+
+test_get_200_ok();
+#test_check_md5_10mb();
+#test_check_md5_100mb();
+#test_check_md5_200mb();
+
+sub test_check_md5_10mb {
+    my $request_10mb = HTTP::Request->new(GET => $url_10mb);
+    my $response_10mb = $ua->request($request_10mb);
+
+    my $crc = md5_hex($response_10mb->content());
+
+    if ($crc == $file_10mb) {
+        print "Test 10Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
+    } else {
+        print "Test 10Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
+    }
+}
+
+sub test_check_md5_100mb {
+    my $request_100mb = HTTP::Request->new(GET => $url_100mb);
+    my $response_100mb = $ua->request($request_100mb);
+
+    my $crc = md5_hex($response_100mb->content());
+
+    if ($crc == $file_100mb) {
+        print "Test 100Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
+    } else {
+        print "Test 100Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
+    }
+}
+
+sub test_check_md5_200mb {
+    my $request_200mb = HTTP::Request->new(GET => $url_200mb);
+    my $response_200mb = $ua->request($request_200mb);
+
+    my $crc = md5_hex($response_200mb->content());
+
+    if ($crc == $file_200mb) {
+        print "Test 200Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
+    } else {
+        print "Test 200Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
+    }
+}
+
+sub test_get_200_ok {
+    my $request_get = HTTP::Request->new(GET => $url_get);
+    my $response_get = $ua->request($request_get);
+
+    if ($response_get->status_line == "200 OK") {
+        print "Test HTTPS GET method [",  color("bold green"), "PASS", color("reset"), "]\n";
+    } else {
+        print "Test HTTPS GET method [", color("bold red"), "FAIL", color("reset"), "]\n";
+    }
+}
