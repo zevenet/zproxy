@@ -55,7 +55,9 @@ sub enableDHCP
 	$err = 0 if ( &setInterfaceConfig( $if_ref ) );
 
 	# load the interface to reload the ip, gw and netmask
-	if ( $if_ref->{ status } eq 'up' and !$err )
+	my $status = &getInterfaceSystemStatus( $if_ref );
+
+	if ( $status eq 'up' and !$err )
 	{
 		$err = &startDHCP( $if_ref->{ name } );
 	}
@@ -96,7 +98,12 @@ sub disableDHCP
 		&delRoutes( "local", $if_ref );
 	}
 
-	$err = &cleanInterfaceConfig( $if_ref );
+	# update config file
+	$if_ref->{ dhcp }    = 'false';
+	$if_ref->{ mask }    = '';
+	$if_ref->{ addr }    = '';
+	$if_ref->{ gateway } = '';
+	$err = 1 if ( !&setInterfaceConfig( $if_ref ) );
 
 	return $err;
 }
@@ -156,7 +163,9 @@ sub startDHCP
 
 	&zenlog( "starting dhcp service for $if_name", "debug", "dhcp" );
 
-	my $err = &logAndRun( $cmd );
+	my $err = &logAndRunBG( $cmd );
+	sleep ( 2 );    # wait a while to get an IP
+
 	return $err;
 }
 
