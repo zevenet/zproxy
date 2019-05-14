@@ -399,18 +399,11 @@ sub getConfigInterfaceList
 				my $if_name = $1;
 				my $if_ref;
 
-				#~ $if_ref = &getInterfaceConfig( $if_name, 4 );
 				$if_ref = &getInterfaceConfig( $if_name );
-				if ( $$if_ref{ addr } )
+				if ( defined $if_ref )
 				{
 					push @configured_interfaces, $if_ref;
 				}
-
-				#~ $if_ref = &getInterfaceConfig( $if_name, 6 );
-				#~ if ( $$if_ref{ addr } )
-				#~ {
-				#~ push @configured_interfaces, $if_ref;
-				#~ }
 			}
 		}
 
