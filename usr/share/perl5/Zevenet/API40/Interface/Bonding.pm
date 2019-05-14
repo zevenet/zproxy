@@ -529,6 +529,8 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+
 	# validate action parameter
 	if ( $json_obj->{ action } eq 'destroy' )
 	{
@@ -537,8 +539,6 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	elsif ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Route;
-
-		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
 		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
@@ -569,7 +569,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( { name => $bond }, 'writeconf' );
+		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
 		{

@@ -399,14 +399,14 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
+
 	# validate action parameter
 	if ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Validate;
 		require Zevenet::Net::Route;
 		require Zevenet::Net::Core;
-
-		my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
 		# Create vlan if required if it doesn't exist
 		my $exists = &ifexist( $if_ref->{ name } );
@@ -459,7 +459,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 	{
 		require Zevenet::Net::Core;
 
-		my $state = &downIf( { name => $vlan }, 'writeconf' );
+		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
 		{
@@ -692,7 +692,8 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
-	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
+	my $dhcp_flag = $json_obj->{ dhcp } // $if_ref->{ dhcp };
+	if ( ( $dhcp_flag ne 'true' ) and ( $if_ref->{ addr } && $if_ref->{ mask } ) )
 	{
 		my $msg = "Cannot configure the interface without address or without netmask.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
