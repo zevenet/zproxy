@@ -8,6 +8,7 @@
 #include "../util/string_view.h"
 #include "../util/utils.h"
 #include "../util/zlib_util.h"
+#include "../ssl/HttpsManager.h"
 #include <cstdio>
 #include <functional>
 #if HELLO_WORLD_SERVER
@@ -354,7 +355,7 @@ void StreamManager::onRequestEvent(int fd) {
     }
     if (stream->client_connection.ssl_connected)
         {
-            httpsHeaders(stream);
+            httpsHeaders(stream, ssl_manager, listener_config_);
             DEBUG_COUNTER_HIT(debug__::on_handshake);
         }
     return;
@@ -1232,17 +1233,6 @@ bool StreamManager::transferChunked(HttpStream *stream) {
   return false;
 }
 
-/** If the StrictTransportSecurity is set then adds the header. */
-void StreamManager::setStrictTransportSecurity(Service *service,
-                                               HttpStream *stream) {
-  if (service->service_config.sts > 0) {
-    std::string sts_header_value = "max-age=";
-    sts_header_value += std::to_string(service->service_config.sts);
-    stream->response.addHeader(http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY,
-                               sts_header_value);
-  }
-}
-
 /** If the backend cookie is enabled adds the header with the parameters set. */
 void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
   if (!service->becookie.empty()) {
@@ -1313,93 +1303,6 @@ void StreamManager::applyCompression(Service *service, HttpStream *stream) {
       }
     }
   }
-}
-
-/** If a client browser connects via HTTPS and if it presents a certificate and
- * if HTTPSHeaders is set, Pound will obtain the certificate data and add the
- * following HTTP headers to the request it makes to the server:
- *
- *  - X-SSL-Subject: information about the certificate owner
- *  - X-SSL-Issuer: information about the certificate issuer (CA)
- *  - X-SSL-notBefore: begin validity date for the certificate
- *  - X-SSL-notAfter: end validity date for the certificate
- *  - X-SSL-serial: certificate serial number (in decimal)
- *  - X-SSL-cipher: the cipher currently in use
- *  - X-SSL-certificate: the full client certificate (multi-line)
- */
-void StreamManager::httpsHeaders(HttpStream *stream) {
-    if (ssl_manager == nullptr)
-        return;
-    std::string header_value;
-    header_value.reserve(MAXBUF);
-    const SSL_CIPHER *cipher;
-    std::unique_ptr<X509, decltype(&::X509_free)> x509(
-        SSL_get_peer_certificate(stream->client_connection.ssl), ::X509_free);
-
-    if (x509 != nullptr && listener_config_.clnt_check < 3 &&
-        SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK)
-        {
-            Debug::logmsg(LOG_ERR, "Bad certificate from %s",
-                          stream->client_connection.address_str.c_str());
-        }
-
-    if ((cipher = SSL_get_current_cipher(stream->client_connection.ssl)) !=
-        nullptr)
-        {
-            char cipher_buf[MAXBUF];
-            SSL_CIPHER_description(cipher, cipher_buf, 200);
-            header_value = SSL_get_version(stream->client_connection.ssl);
-            header_value += '/';
-            header_value += cipher_buf;
-            header_value.erase(
-                std::remove_if(header_value.begin(), header_value.end(),helper::isCRorLF),
-                header_value.end());
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER,
-                                      header_value, true);
-        }
-
-    if (listener_config_.clnt_check > 0 && x509 != nullptr)
-        {
-            int line_len = 0;
-            char buf[MAXBUF]{'\0'};
-            std::unique_ptr<BIO, decltype(&::BIO_free)> bb(BIO_new(BIO_s_mem()),
-                                                           ::BIO_free);
-            X509_NAME_print_ex(bb.get(), ::X509_get_subject_name(x509.get()), 8,
-                               XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SUBJECT,
-                                      buf, true);
-
-            X509_NAME_print_ex(bb.get(), X509_get_issuer_name(x509.get()), 8,
-                               XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_ISSUER, buf,
-                                      true);
-
-            ASN1_TIME_print(bb.get(), X509_get_notBefore(x509.get()));
-            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTBEFORE,
-                                      buf, true);
-
-            ASN1_TIME_print(bb.get(), X509_get0_notAfter(x509.get()));
-            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTAFTER,
-                                      buf, true);
-
-            long serial = ASN1_INTEGER_get(X509_get_serialNumber(x509.get()));
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SERIAL,
-                                      std::to_string(serial), true);
-
-            PEM_write_bio_X509(bb.get(), x509.get());
-            ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
-            header_value = buf;
-            while (ssl::get_line(bb.get(), buf, MAXBUF, &line_len) == 0)
-                {
-                    header_value += buf;
-                }
-            stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CERTIFICATE,
-                                      header_value, true);
-        }
 }
 
 /** Clears the HttpStream. It deletes all the timers and events. Finally,

@@ -93,9 +93,7 @@ public:
 
   static void setBackendCookie(Service *service, HttpStream *stream);
   static void applyCompression(Service *service, HttpStream *stream);
-  static void setStrictTransportSecurity(Service *service, HttpStream *stream);
   static bool transferChunked(HttpStream *stream);
-  void httpsHeaders(HttpStream *stream);
   void clearStream(HttpStream *stream);
 
   /** True if the listener is HTTPS, false if not. */
