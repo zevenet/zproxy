@@ -446,6 +446,8 @@ sub delIp    # 	($if, $ip ,$netmask)
 			 "debug", "PROFILING" );
 	my ( $if, $ip, $netmask ) = @_;
 
+	return 0 if ( !defined $ip or $ip eq '' );
+
 	&zenlog( "Deleting ip $ip/$netmask from interface $if", "info", "NETWORK" );
 
 	# Vini
