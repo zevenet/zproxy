@@ -811,7 +811,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			my $msg = "Cannot configure the interface without address or without netmask.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
+		require Zevenet::Net::Bonding;
 		#Change Bonding IP Address
 		if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } )
 		{
