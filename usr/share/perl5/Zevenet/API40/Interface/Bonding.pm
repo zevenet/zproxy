@@ -529,8 +529,6 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
-
 	# validate action parameter
 	if ( $json_obj->{ action } eq 'destroy' )
 	{
@@ -539,6 +537,8 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	elsif ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Route;
+
+		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
 		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
@@ -569,7 +569,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		my $state = &downIf( $if_ref, 'writeconf' );
+		my $state = &downIf( { name => $bond }, 'writeconf' );
 
 		if ( $state )
 		{
@@ -805,13 +805,17 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 		$if_ref->{ name } = $bond;
 
-		unless (    exists $if_ref->{ addr } && exists $if_ref->{ mask }
-				 || exists $if_ref->{ mac } )
+		unless (
+				 ( exists $if_ref->{ addr } && exists $if_ref->{ mask } )
+				 || ( !( exists $if_ref->{ addr } || exists $if_ref->{ mask } )
+					  && exists $if_ref->{ mac } )
+		  )
 		{
-			my $msg = "Cannot configure the interface without address or without netmask.";
+			my $msg = "Interface address and netmask must be together set.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		require Zevenet::Net::Bonding;
+
 		#Change Bonding IP Address
 		if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } )
 		{
