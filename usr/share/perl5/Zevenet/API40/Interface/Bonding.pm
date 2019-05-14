@@ -408,13 +408,18 @@ sub delete_bond_slave    # ( $bond, $slave )
 
 	include 'Zevenet::Net::Bonding';
 
-	my $desc  = "Remove bonding slave interface";
+	my $desc = "Remove bonding slave interface";
+
+	# Locking bond resources
+	&lockBondResource( "lock" );
+
 	my $bonds = &getBondConfig();
 
 	# validate BOND
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bonding interface not found";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -422,6 +427,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	unless ( grep ( { $slave eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
 	{
 		my $msg = "Bonding slave interface not found";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -434,6 +440,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	if ( $@ )
 	{
 		my $msg = "The bonding slave interface $slave could not be removed";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -443,7 +450,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 				 success     => "true",
 				 message     => $message,
 	};
-
+	&lockBondResource( "release" );
 	return &httpResponse( { code => 200, body => $body } );
 }
 

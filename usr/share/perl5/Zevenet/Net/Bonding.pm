@@ -43,6 +43,9 @@ my @bond_modes_short = (
 						 'balance-alb',
 );
 
+my $lock_file = undef;
+my $lock_fh   = undef;
+
 =begin nd
 Function: getBondList
 
@@ -1029,4 +1032,27 @@ sub setBondMac
 
 	return $status;
 }
+
+sub lockBondResource
+{
+	my $state = shift;    #b or ub
+
+	if ( $state =~ /lock/ )
+	{
+		require Zevenet::Lock;
+
+		my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
+
+		$lock_file = &getLockFile( $bond_config_file );
+		$lock_fh = &openlock( $lock_file, 'w' );
+	}
+	elsif ( $state =~ /release/ )
+	{
+		close $lock_fh;
+		untie $lock_file;
+	}
+
+	return;
+}
+
 1;
