@@ -189,8 +189,14 @@ sub setL4FarmParam
 	elsif ( $param eq "vipp" or $param eq "vport" )
 	{
 		$value =~ s/\:/\-/g;
-		$value = "1-65535" if ( $value eq "*" );
-		$parameters = qq(, "virtual-ports" : "$value" );
+		if ( $value eq "*" )
+		{
+			$parameters = qq(, "virtual-ports" : "" );
+		}
+		else
+		{
+			$parameters = qq(, "virtual-ports" : "$value" );
+		}
 	}
 	elsif ( $param eq "alg" )
 	{
