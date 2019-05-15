@@ -24,6 +24,11 @@
 use strict;
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 =begin nd
 Function: writeRoutes
@@ -38,6 +43,7 @@ Parameters:
 Returns:
 	undef - .
 =cut
+
 # create table route identification, complemented in delIf()
 sub writeRoutes    # ($if_name)
 {
@@ -91,12 +97,16 @@ Returns:
 See Also:
 	Only used here: <applyRoutes>
 =cut
+
 # add local network into routing table
 sub addlocalnet    # ($if_ref)
 {
 	my $if_ref = shift;
 
-	&zenlog("addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )", "debug", "NETWORK") if &debug();
+	&zenlog(
+		"addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )",
+		"debug", "NETWORK"
+	) if &debug();
 
 	# Get network
 	use NetAddr::IP;
@@ -104,10 +114,10 @@ sub addlocalnet    # ($if_ref)
 	my $net = $ip->network();
 
 	# Get params
-	my $routeparams = &getGlobalConfiguration('routeparams');
+	my $routeparams = &getGlobalConfiguration( 'routeparams' );
 
 	# Add or replace local net to all tables
-	my @links = ('main', &getLinkNameList() );
+	my @links = ( 'main', &getLinkNameList() );
 
 	foreach my $link ( @links )
 	{
@@ -123,10 +133,11 @@ sub addlocalnet    # ($if_ref)
 
 			# ignores interfaces down or not configured
 			next if $if_ref->{ status } ne 'up';
-			next if ! defined $if_ref->{ addr };
+			next if !defined $if_ref->{ addr };
 		}
 
-		&zenlog("addlocalnet: setting route in table $table", "debug", "NETWORK") if &debug();
+		&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
+		  if &debug();
 
 		my $ip_cmd =
 		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
@@ -141,10 +152,13 @@ sub addlocalnet    # ($if_ref)
 	{
 		next if $iface->{ type } eq 'virtual';
 		next if $iface->{ name } eq $if_ref->{ name };
-		&zenlog("addlocalnet: into current interface: name $$iface{name} type $$iface{type}", "debug", "NETWORK") if &debug();
+		&zenlog(
+			   "addlocalnet: into current interface: name $$iface{name} type $$iface{type}",
+			   "debug", "NETWORK" )
+		  if &debug();
 
-		my $ip = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
-		my $net = $ip->network();
+		my $ip    = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
+		my $net   = $ip->network();
 		my $table = "table_$$if_ref{ name }";
 
 		my $ip_cmd =
@@ -174,6 +188,7 @@ Bugs:
 See Also:
 	Only used here: <applyRoutes>
 =cut
+
 # ask for rules
 sub isRule    # ($if_ref, $toif)
 {
@@ -182,13 +197,13 @@ sub isRule    # ($if_ref, $toif)
 	$toif = $$if_ref{ name } if !$toif;
 
 	require NetAddr::IP;
-	my $ipblock = NetAddr::IP->new( $$if_ref{net}, $$if_ref{mask} );
+	my $ipblock = NetAddr::IP->new( $$if_ref{ net }, $$if_ref{ mask } );
 
 	my @eject       = `$ip_bin -$$if_ref{ip_v} rule list`;
 	my $expression1 = "from $$if_ref{net}/$$if_ref{mask} lookup table_$toif";
-	my $existRule1   = grep /$expression1/, @eject;
+	my $existRule1  = grep /$expression1/, @eject;
 	my $expression2 = "from $ipblock lookup table_$toif";
-	my $existRule2   = grep /$expression2/, @eject;
+	my $existRule2  = grep /$expression2/, @eject;
 
 	return $existRule1 || $existRule2;
 }
@@ -213,21 +228,23 @@ Returns:
 See Also:
 	<delRoutes>
 =cut
+
 # apply routes
 sub applyRoutes    # ($table,$if_ref,$gateway)
 {
 	my ( $table, $if_ref, $gateway ) = @_;
+	my $if_announce = "";
 
 	# $gateway: The 3rd argument, '$gateway', is only used for 'global' table,
 	#           to assign a default gateway.
 
 	my $status = 0;
 
-	unless ( $$if_ref{net} )
+	unless ( $$if_ref{ net } )
 	{
 		require Zevenet::Net::Interface;
 		$$if_ref{ net } =
-			&getAddressNetwork( $$if_ref{ addr }, $$if_ref{ mask }, $$if_ref{ ip_v } );
+		  &getAddressNetwork( $$if_ref{ addr }, $$if_ref{ mask }, $$if_ref{ ip_v } );
 	}
 
 	# not virtual interface
@@ -236,7 +253,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		if ( $table eq "local" )
 		{
 			&zenlog(
-				"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\"", "info", "NETWORK"
+				"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\"",
+				"info", "NETWORK"
 			);
 
 			# &delRoutes( "local", $if );
@@ -244,7 +262,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 			if ( $$if_ref{ gateway } )
 			{
-				my $routeparams = &getGlobalConfiguration('routeparams');
+				my $routeparams = &getGlobalConfiguration( 'routeparams' );
 				my $ip_cmd =
 				  "$ip_bin -$$if_ref{ip_v} route replace default via $$if_ref{gateway} dev $$if_ref{name} table table_$$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
@@ -263,15 +281,19 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			# &delRoutes( "global", $if );
 			if ( $gateway )
 			{
-				my $routeparams = &getGlobalConfiguration('routeparams');
+				my $routeparams = &getGlobalConfiguration( 'routeparams' );
 
-				my $action = "replace";
+				my $action            = "replace";
 				my $system_default_gw = &getDefaultGW();
-				if ( $system_default_gw eq "" ){
+				if ( $system_default_gw eq "" )
+				{
 					$action = "add";
 				}
 				&zenlog(
-					"Applying $table routes in stack IPv$$if_ref{ip_v} with gateway \"".&getGlobalConfiguration( 'defaultgw' )."\"", "info", "NETWORK"
+						 "Applying $table routes in stack IPv$$if_ref{ip_v} with gateway \""
+						   . &getGlobalConfiguration( 'defaultgw' ) . "\"",
+						 "info",
+						 "NETWORK"
 				);
 				my $ip_cmd =
 				  "$ip_bin -$$if_ref{ip_v} route $action default via $gateway dev $$if_ref{name} $routeparams";
@@ -303,6 +325,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				&reloadL4FarmsSNAT() if $status == 0;
 			}
 		}
+		$if_announce = $$if_ref{ name };
 	}
 
 	# virtual interface
@@ -323,7 +346,33 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{net}/$$if_ref{mask} table table_$toif";
 			$status = &logAndRun( "$ip_cmd" );
 		}
+
+		$if_announce = $toif;
 	}
+
+	#if arp_announce is enabled then send garps to network
+	eval {
+		if ( $eload )
+		{
+			my $cl_status = &eload(
+									module => 'Zevenet::Cluster',
+									func   => 'getZClusterNodeStatus',
+									args   => [],
+			);
+
+			if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
+				 && $cl_status ne "backup" )
+			{
+				require Zevenet::Net::Util;
+
+				#&sendGArp($$if_ref{parent},$$if_ref{addr})
+				&zenlog( "Announcing garp $if_announce and $$if_ref{addr} " );
+				&sendGArp( $if_announce, $$if_ref{ addr } );
+			}
+
+		}
+
+	};
 
 	return $status;
 }
@@ -347,6 +396,7 @@ Returns:
 See Also:
 	<applyRoutes>
 =cut
+
 # delete routes
 sub delRoutes    # ($table,$if_ref)
 {
@@ -355,7 +405,8 @@ sub delRoutes    # ($table,$if_ref)
 	my $status = 0;
 
 	&zenlog(
-		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}", "info", "NETWORK" );
+			 "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}",
+			 "info", "NETWORK" );
 
 	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
@@ -371,13 +422,14 @@ sub delRoutes    # ($table,$if_ref)
 			$status = &logAndRun( "$ip_cmd" );
 
 			use Net::IPv4Addr qw(ipv4_network);
+
 			#~ Net::IPv4Addr->import;
 
 			if ( &isRule( $if_ref ) )
 			{
 				my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 				$ip_cmd =
-					"$ip_bin -$$if_ref{ip_v} rule del from $net/$mask table table_$$if_ref{name}";
+				  "$ip_bin -$$if_ref{ip_v} rule del from $net/$mask table table_$$if_ref{name}";
 				$status = &logAndRun( "$ip_cmd" );
 			}
 
@@ -433,6 +485,7 @@ Returns:
 See Also:
 	<getIfDefaultGW>
 =cut
+
 # get default gw for interface
 sub getDefaultGW    # ($if)
 {
@@ -489,6 +542,7 @@ Returns:
 See Also:
 	<getDefaultGW>, <getIPv6IfDefaultGW>
 =cut
+
 sub getIPv6DefaultGW    # ()
 {
 	my @routes = `$ip_bin -6 route list`;
@@ -517,6 +571,7 @@ Returns:
 See Also:
 	<getIPv6DefaultGW>, <getIfDefaultGW>
 =cut
+
 sub getIPv6IfDefaultGW    # ()
 {
 	my @routes = `$ip_bin -6 route list`;
@@ -545,6 +600,7 @@ Returns:
 See Also:
 	<getDefaultGW>, <getIPv6IfDefaultGW>
 =cut
+
 # get interface for default gw
 sub getIfDefaultGW    # ()
 {
@@ -569,13 +625,14 @@ Returns:
 See Also:
 	zevenet
 =cut
+
 # from bin/zevenet, almost exactly
 sub configureDefaultGW    #()
 {
-	my $defaultgw = &getGlobalConfiguration('defaultgw');
-	my $defaultgwif = &getGlobalConfiguration('defaultgwif');
-	my $defaultgw6 = &getGlobalConfiguration('defaultgw6');
-	my $defaultgwif6 = &getGlobalConfiguration('defaultgwif6');
+	my $defaultgw    = &getGlobalConfiguration( 'defaultgw' );
+	my $defaultgwif  = &getGlobalConfiguration( 'defaultgwif' );
+	my $defaultgw6   = &getGlobalConfiguration( 'defaultgw6' );
+	my $defaultgwif6 = &getGlobalConfiguration( 'defaultgwif6' );
 
 	# input: global variables $defaultgw and $defaultgwif
 	if ( $defaultgw && $defaultgwif )
@@ -614,6 +671,7 @@ Returns:
 Bugs:
 	NOT USED
 =cut
+
 # Flush cache routes
 sub flushCacheRoutes    # ()
 {

@@ -25,7 +25,10 @@ use strict;
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 =begin nd
 Function: createIf
@@ -102,10 +105,10 @@ sub upIf    # ($if_ref, $writeconf)
 	# not check virtual interfaces
 	if ( $if_ref->{ type } ne "virtual" )
 	{
-		#check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
+   #check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
 		my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
 		&zenlog( "Link status for $$if_ref{name} is $status_if", "info", "NETWORK" );
-		&zenlog( "Waiting link up for $$if_ref{name}", "info", "NETWORK" );
+		&zenlog( "Waiting link up for $$if_ref{name}",           "info", "NETWORK" );
 		my $iter = 6;
 
 		while ( $status_if =~ /down/ && $iter > 0 )
@@ -124,14 +127,14 @@ sub upIf    # ($if_ref, $writeconf)
 		{
 			$status = 1;
 			&zenlog( "No link up for $$if_ref{name}", "warning", "NETWORK" );
-			&downIf( { name => $if_ref->{name} }, '' );
+			&downIf( { name => $if_ref->{ name } }, '' );
 		}
 
 		# Start monitoring throughput
 		#~ &eload(
-				#~ module => 'Zevenet::Net::Throughput',
-				#~ func   => 'startTHROUIface',
-				#~ args   => [$$if_ref{ name }],
+		#~ module => 'Zevenet::Net::Throughput',
+		#~ func   => 'startTHROUIface',
+		#~ args   => [$$if_ref{ name }],
 		#~ ) if $eload;
 	}
 	if ( !$status and $writeconf )
@@ -204,9 +207,9 @@ sub downIf    # ($if_ref, $writeconf)
 
 		# Stop monitoring throughput
 		#~ &eload(
-				#~ module => 'Zevenet::Net::Throughput',
-				#~ func   => 'stopTHROUIface',
-				#~ args   => [$$if_ref{ name }],
+		#~ module => 'Zevenet::Net::Throughput',
+		#~ func   => 'stopTHROUIface',
+		#~ args   => [$$if_ref{ name }],
 		#~ ) if $eload;
 	}
 
@@ -509,9 +512,10 @@ See Also:
 sub addIp    # ($if_ref)
 {
 	my ( $if_ref ) = @_;
+	my $if_announce = "";
 
-	&zenlog(
-			 "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}", "info", "NETWORK" );
+	&zenlog( "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}",
+			 "info", "NETWORK" );
 
 	# finish if the address is already assigned
 	my $routed_iface = $$if_ref{ dev };
@@ -523,7 +527,7 @@ sub addIp    # ($if_ref)
 
 	my @ip_output = `$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface`;
 
-	if ( $$if_ref{addr} eq "" || $$if_ref{addr} eq "" )
+	if ( $$if_ref{ addr } eq "" || $$if_ref{ addr } eq "" )
 	{
 		return 0;
 	}
@@ -544,6 +548,7 @@ sub addIp    # ($if_ref)
 
 		$ip_cmd =
 		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $toif label $$if_ref{name} $extra_params";
+		$if_announce = $toif;
 	}
 
 	# $if is a Vlan
@@ -551,6 +556,7 @@ sub addIp    # ($if_ref)
 	{
 		$ip_cmd =
 		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
+		$if_announce = "$$if_ref{name}";
 	}
 
 	# $if is a Network Interface
@@ -558,9 +564,34 @@ sub addIp    # ($if_ref)
 	{
 		$ip_cmd =
 		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
+		$if_announce = $$if_ref{ name };
 	}
 
 	my $status = &logAndRun( $ip_cmd );
+
+	#if arp_announce is enabled then send garps to network
+	eval {
+		if ( $eload )
+		{
+			my $cl_status = &eload(
+									module => 'Zevenet::Cluster',
+									func   => 'getZClusterNodeStatus',
+									args   => [],
+			);
+
+			if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
+				 && $cl_status ne "backup" )
+			{
+
+				require Zevenet::Net::Util;
+
+				#&sendGArp($$if_ref{parent},$$if_ref{addr})
+				&zenlog( "Announcing garp $if_announce and $$if_ref{addr} " );
+				&sendGArp( $if_announce, $$if_ref{ addr } );
+			}
+		}
+
+	};
 
 	return $status;
 }

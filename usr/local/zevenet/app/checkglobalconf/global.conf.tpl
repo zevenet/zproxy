@@ -220,6 +220,8 @@ $zenrsync="-azvr --delete";#update
 $arptables="/sbin/arptables";
 #ARP unsolicited
 $arp_unsolicited="";
+#ARP announcement, true / false (default)
+$arp_announce="";
 
 # cron service
 $cron_service = "/etc/init.d/cron";
