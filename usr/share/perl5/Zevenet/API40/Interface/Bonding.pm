@@ -160,6 +160,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	require Zevenet::Net::Interface;
 
 	my $desc = "Add a slave to a bond interface";
+	&lockBondResource( "lock" );
 
 	# validate BOND NAME
 	my $bonds = &getBondConfig();
@@ -167,6 +168,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bond interface name not found";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -180,13 +182,17 @@ sub new_bond_slave    # ( $json_obj, $bond )
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
+	if ( $error_msg )
+	{
+		&lockBondResource( "release" );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
+	}
 
 	if ( &getInterfaceConfig( $json_obj->{ name } )
 		 && ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
 	{
 		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -201,6 +207,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "Could not add the slave interface to this bonding";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -210,6 +217,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
+		&lockBondResource( "release" );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -229,7 +237,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 							 mac    => $if_ref->{ mac },
 				 },
 	};
-
+	&lockBondResource( "release" );
 	return &httpResponse( { code => 201, body => $body } );
 }
 
