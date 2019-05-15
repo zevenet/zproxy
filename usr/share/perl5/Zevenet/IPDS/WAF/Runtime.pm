@@ -51,16 +51,7 @@ sub reloadWAFByFarm
 	require Zevenet::Farm::HTTP::Config;
 
 	my $pound_ctl = &getGlobalConfiguration( 'poundctl' );
-	my $socket    = getHTTPFarmSocket( $farm );
-	my $set_file;
-
-	# check set
-	foreach my $set ( &listWAFByFarm( $farm ) )
-	{
-		include 'Zevenet::IPDS::WAF::Parser';
-		$set_file = &getWAFSetFile( $set );
-		return 1 if ( &checkWAFFileSyntax( $set_file ) );
-	}
+	my $socket    = &getHTTPFarmSocket( $farm );
 
 	$err = &logAndRun( "$pound_ctl -c $socket -R" );
 
@@ -89,20 +80,25 @@ sub addWAFsetToFarm
 	my $set  = shift;
 	my $err  = 1;
 
+	use File::Copy;
 	require Zevenet::Farm::Core;
 
 	my $set_file  = &getWAFSetFile( $set );
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $farm_path = "$configdir/$farm_file";
+	my $tmp_conf  = "$configdir/farm_http.tmp";
+	my $pound     = &getGlobalConfiguration( 'pound' );
+
+	my $lock_file = &getLockFile( $farm );
+	my $lock_fh = &openlock( $lock_file, 'w' );
+
+	copy( $farm_path, $tmp_conf );
+
+	&ztielock( \my @filefarmhttp, $tmp_conf );
 
 	# write conf
-	my $lock_file = &getLockFile( $farm );
-	my $lock_fh   = &openlock( $lock_file, 'w' );
 	my $flag_sets = 0;
-
-	require Tie::File;
-	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_file";
-
 	foreach my $line ( @filefarmhttp )
 	{
 		if ( $line =~ /^WafRules/ )
@@ -132,7 +128,18 @@ sub addWAFsetToFarm
 	}
 
 	untie @filefarmhttp;
-	close $lock_fh;
+
+	# check config file
+	my $cmd = "$pound -f $tmp_conf -c";
+	$err = &logAndRun( $cmd );
+	if ( $err )
+	{
+		unlink $tmp_conf;
+		return $err;
+	}
+
+	# if there is not error, overwrite configfile
+	move( $tmp_conf, $farm_path );
 
 	# reload farm
 	require Zevenet::Farm::Base;
@@ -140,6 +147,8 @@ sub addWAFsetToFarm
 	{
 		$err = &reloadWAFByFarm( $farm );
 	}
+
+	close $lock_fh;
 
 	return $err;
 }
@@ -168,13 +177,21 @@ sub removeWAFSetFromFarm
 
 	require Zevenet::Farm::Core;
 
+	my $pound     = &getGlobalConfiguration( 'pound' );
 	my $set_file  = &getWAFSetFile( $set );
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $farm_path = "$configdir/$farm_file";
+	my $tmp_conf  = "$configdir/farm_http.tmp";
+
+	my $lock_file = &getLockFile( $farm );
+	my $lock_fh = &openlock( $lock_file, 'w' );
+
+	copy( $farm_path, $tmp_conf );
 
 	# write conf
 	$err = 1;
-	&ztielock( \my @fileconf, "$configdir/$farm_file" );
+	&ztielock( \my @fileconf, $tmp_conf );
 
 	my $index = 0;
 	foreach my $line ( @fileconf )
@@ -189,12 +206,27 @@ sub removeWAFSetFromFarm
 	}
 	untie @fileconf;
 
-	# reload farm
-	require Zevenet::Farm::Base;
-	if ( &getFarmStatus( $farm ) eq 'up' and !$err )
+	# check config file
+	my $cmd = "$pound -f $tmp_conf -c";
+	$err = &logAndRun( $cmd );
+	if ( $err )
 	{
-		$err = &reloadWAFByFarm( $farm );
+		unlink $tmp_conf;
 	}
+	else
+	{
+		# if there is not error, overwrite configfile
+		move( $tmp_conf, $farm_path );
+
+		# reload farm
+		require Zevenet::Farm::Base;
+		if ( &getFarmStatus( $farm ) eq 'up' and !$err )
+		{
+			$err = &reloadWAFByFarm( $farm );
+		}
+	}
+
+	close $lock_fh;
 
 	return $err;
 }
