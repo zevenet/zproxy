@@ -127,7 +127,7 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $if_ref      = getSystemInterface( $json_obj->{ name } );
+	my $if_ref      = &getSystemInterface( $json_obj->{ name } );
 	my @bond_slaves = @{ $json_obj->{ slaves } };
 	my @output_slaves;
 
@@ -282,7 +282,10 @@ sub delete_interface_bond    # ( $bond )
 			die if &delRoutes( "local", $if_ref );
 			die if &delIf( $if_ref );
 		}
-		unlink &getInterfaceConfigFile( $if_ref->{ name } );
+
+		# remove configuration
+		my $if_ref = { name => $bond };
+		die if ( !&setInterfaceConfig( $if_ref ) );
 	};
 
 	if ( $@ )

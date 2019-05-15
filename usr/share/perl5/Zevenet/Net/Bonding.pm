@@ -342,6 +342,10 @@ sub applyBondChange
 		my $bond_conf = &getBondConfig();
 		$bond_conf->{ $bond->{ name } } = $bond;
 		&setBondConfig( $bond_conf );
+
+		# creating configuration file
+		my $if_ref = { name => $bond->{ name } };
+		return 1 if ( !&setInterfaceConfig( $if_ref ) );
 	}
 
 	$return_code = 0;
