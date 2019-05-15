@@ -268,7 +268,7 @@ sub execNft
 
 	my $nft   = &getGlobalConfiguration( 'nft_bin' );
 	my $chain = "";
-	( $chain ) = $chain_def =~ /^([\w-\d]+)\s+.*/;
+	( $chain ) = $chain_def =~ /^([\w-\d]+)\s*.*$/;
 	my $output = 0;
 
 	if ( $action eq "add" )
@@ -289,11 +289,11 @@ sub execNft
 		}
 		else
 		{
-			my @rules  = `$nft list chain $table $chain`;
+			my @rules  = `$nft -a list chain $table $chain`;
 			my $handle = "";
 			foreach my $r ( @rules )
 			{
-				my ( $handle ) = $r =~ / $rule \# handle (\d)$/;
+				my ( $handle ) = $r =~ / $rule.* \# handle (\d)$/;
 				if ( $handle ne "" )
 				{
 					$output = &logAndRun( "$nft delete rule $table $chain handle $handle" );

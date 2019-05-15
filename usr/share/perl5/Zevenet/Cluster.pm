@@ -1149,13 +1149,15 @@ sub enableInterfaceDiscovery
 	{
 		&execNft( "delete",
 				  "netdev cluster",
-				  "cl-" . $iface->{ parent },
+				  "cl-" . $iface->{ parent } . " ",
 				  $iface->{ addr } )
 		  if (
-			   &execNft( "check",
+			   &execNft(
+						 "check",
 						 "netdev cluster",
 						 "cl-" . $iface->{ parent } . " ",
-						 $iface->{ addr } ) != 1
+						 $iface->{ addr }
+			   )
 		  );
 	}
 	else
