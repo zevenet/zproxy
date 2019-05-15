@@ -244,8 +244,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		"vhost"    => {},
 		"urlp"     => {},
 		"redirect" => {
-						'non_blank' => 'false',              # it is allowed the string ''
-						'regex'     => '/^https?\:\/\//i',
+						'non_blank' => 'false',    # it is allowed the string ''
 		},
 		"redirecttype" => {
 							'values' => ['default', 'append'],
