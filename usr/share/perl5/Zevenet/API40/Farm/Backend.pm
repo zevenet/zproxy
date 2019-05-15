@@ -245,12 +245,15 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
-	my $status = &setHTTPFarmServer( "",
+	my $status = &setHTTPFarmServer(
+									 "",
 									 $json_obj->{ ip },
 									 $json_obj->{ port },
 									 $json_obj->{ weight },
 									 $json_obj->{ timeout },
-									 $farmname, $service, );
+									 $farmname,
+									 $service,
+	);
 
 	# check if there was an error adding a new backend
 	if ( $status == -1 )
@@ -687,8 +690,14 @@ sub delete_backend    # ( $farmname, $id_server )
 	&eload(
 			module => 'Zevenet::Cluster',
 			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'delete', $farmname, 'backend', $id_server],
+	) if ( $eload && $type eq 'l4xnat' );
+
+	&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
 			args   => ['farm', 'restart', $farmname],
-	) if ( $eload );
+	) if ( $eload && $type eq 'datalink' );
 
 	my $message = "Backend removed";
 	my $body = {

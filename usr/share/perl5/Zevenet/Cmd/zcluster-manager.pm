@@ -43,10 +43,10 @@
 #
 # zcluster-manager gateway [update|delete] <interface> [4|6]
 #
-# zcluster-manager farm [start|stop|restart|delete] <farm>
+# zcluster-manager farm [start|stop|restart|delete] <farm> [backend <backendid>]
 #
 # zcluster-manager fg 		[stop|start|stop] <fg>
-# zcluster-manager fg_farm 	[stop|start|stop] <farm> [service]
+# zcluster-manager fg_farm 	[stop|start|stop] <farm> [<service>]
 #
 # zcluster-manager ipds [start|stop|restart] <farm>
 # zcluster-manager ipds_bl [start|stop|restart] <rule> [farm]
@@ -136,12 +136,10 @@ elsif ( $object eq 'getZClusterArpStatus' )
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		my $if_dropped = &execNft(
-								   "check",
+		my $if_dropped = &execNft( "check",
 								   "netdev cluster",
 								   "cl-" . $if_ref->{ parent },
-								   "$if_ref->{ addr }"
-		);
+								   "$if_ref->{ addr }" );
 
 		if ( $node_role ne 'master' && !$if_dropped )
 		{
@@ -187,13 +185,19 @@ elsif ( $object eq 'notify_fault' )
 # farm commands
 if ( $object eq 'farm' )
 {
+	my $farm_name = shift @ARGV;
+	&quit( "Missing farm name argument" ) if !$farm_name;
+
+	my $backend = shift @ARGV // '';
+	if ( $backend eq "backend" )
+	{
+		$backend = shift @ARGV // '';
+	}
+
 	require Zevenet::Farm::Action;
 
 	if ( $command eq 'start' )
 	{
-		my $farm_name = shift @ARGV;
-		&quit( "Missing farm name argument" ) if !$farm_name;
-
 		my $status = &_runFarmStart( $farm_name );
 
 		# Start ipds rules
@@ -204,9 +208,6 @@ if ( $object eq 'farm' )
 	}
 	elsif ( $command eq 'stop' )
 	{
-		my $farm_name = shift @ARGV;
-		&quit( "Missing farm name argument" ) if !$farm_name;
-
 		# Stop ipds rules
 		include 'Zevenet::IPDS::Base';
 		&runIPDSStopByFarm( $farm_name );
@@ -215,19 +216,19 @@ if ( $object eq 'farm' )
 	}
 	elsif ( $command eq 'restart' )
 	{
-		my $farm_name = shift @ARGV;
-		&quit( "Missing farm name argument" ) if !$farm_name;
-
 		&_runFarmStop( $farm_name );
 		my $status = &_runFarmStart( $farm_name );
 
 		exit $status;
 	}
+	elsif ( $command eq 'delete' && $backend ne "" )
+	{
+		include 'Zevenet::Farm::Core';
+		include 'Zevenet::Farm::Backend';
+		exit &runFarmServerDelete( $backend, $farm_name );
+	}
 	elsif ( $command eq 'delete' )
 	{
-		my $farm_name = shift @ARGV;
-		&quit( "Missing farm name argument" ) if !$farm_name;
-
 		exit &runFarmDelete( $farm_name );
 	}
 	else
