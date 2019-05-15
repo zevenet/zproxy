@@ -10,9 +10,10 @@ else
 	exit 1
 fi
 
-# check if the certificate file exists
+# check if the activation certificate file exists
 if [ ! -f /usr/local/zevenet/www/zlbcertfile.pem ]; then
-        echo "There isn't a valid activation certificate" > $apt_msg
+        echo "There isn't a valid activation certificate, once the activation certificate is applied execute checkupgrades" > $apt_msg
+	echo "There isn't a valid activation certificate, once the activation certificate is applied execute checkupgrades"
         exit 1
 fi
 
