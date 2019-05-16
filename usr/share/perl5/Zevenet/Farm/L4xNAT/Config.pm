@@ -596,7 +596,7 @@ sub getL4FarmStruct
 	$farm{ vproto } = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
 	my $persist = &_getL4ParseFarmConfig( 'persist', undef, $config );
-	$farm{ persist } = ( $persist eq 'ip' ) ? 'ip' : '';
+	$farm{ persist } = ( $persist == -1 ) ? '' : $persist;
 	my $ttl = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ ttl } = ( $ttl == -1 ) ? 0 : $ttl;
 
