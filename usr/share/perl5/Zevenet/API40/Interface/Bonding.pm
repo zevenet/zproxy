@@ -825,7 +825,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			my $msg = "Interface address and netmask must be together set.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		require Zevenet::Net::Bonding;
+		include Zevenet::Net::Bonding;
 
 		#Change Bonding IP Address
 		if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } )
