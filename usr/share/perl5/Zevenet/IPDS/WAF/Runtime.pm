@@ -182,16 +182,13 @@ sub removeWAFSetFromFarm
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $farm_path = "$configdir/$farm_file";
-	my $tmp_conf  = "$configdir/farm_http.tmp";
 
 	my $lock_file = &getLockFile( $farm );
 	my $lock_fh = &openlock( $lock_file, 'w' );
 
-	copy( $farm_path, $tmp_conf );
-
 	# write conf
 	$err = 1;
-	&ztielock( \my @fileconf, $tmp_conf );
+	&ztielock( \my @fileconf, $farm_path );
 
 	my $index = 0;
 	foreach my $line ( @fileconf )
@@ -206,24 +203,13 @@ sub removeWAFSetFromFarm
 	}
 	untie @fileconf;
 
-	# check config file
-	my $cmd = "$pound -f $tmp_conf -c";
-	$err = &logAndRun( $cmd );
-	if ( $err )
-	{
-		unlink $tmp_conf;
-	}
-	else
-	{
-		# if there is not error, overwrite configfile
-		move( $tmp_conf, $farm_path );
+	# This is a bugfix. Not to check WAF when it is deleting rules.
 
-		# reload farm
-		require Zevenet::Farm::Base;
-		if ( &getFarmStatus( $farm ) eq 'up' and !$err )
-		{
-			$err = &reloadWAFByFarm( $farm );
-		}
+	# reload farm
+	require Zevenet::Farm::Base;
+	if ( &getFarmStatus( $farm ) eq 'up' and !$err )
+	{
+		$err = &reloadWAFByFarm( $farm );
 	}
 
 	close $lock_fh;
