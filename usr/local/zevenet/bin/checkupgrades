@@ -20,7 +20,7 @@ fi
 case "$1" in
 '')
 	# test connection with zevenet update system
-	$aptget_bin update &>/dev/null
+	$netcat_bin -z www.zevenet.com 443 2>/dev/null
 	if [ $? != 0 ]
 	then
 		echo "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"

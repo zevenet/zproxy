@@ -241,7 +241,8 @@ $reboot_bin="/usr/sbin/reboot";
 $arpsend_bin="/usr/sbin/arpsend";
 #Where is dhclient
 $dhcp_bin="/usr/sbin/dhclient";
-
+#Where is netcat
+$netcat_bin="/usr/bin/nc";
 
 # Pound
 #where is pound binary?
