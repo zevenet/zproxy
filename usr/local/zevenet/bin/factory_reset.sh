@@ -114,6 +114,9 @@ $cron_service stop
 echo "Stopping zevenet process"
 $zevenet_service stop
 
+# disalbe the zapi
+$deluser_bin zapi
+
 if [ $HARD -eq 1 ]
 then
 	# WARNING: not to stop cherokee process from the API, that kills this script
