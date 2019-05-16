@@ -61,7 +61,7 @@ sub setL4FarmServer
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $ids, $rip, $port, $weight, $priority, $max_conns ) = @_;
+	my ( $farm_name, $ids, $ip, $port, $weight, $priority, $max_conns ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
 	require Zevenet::Farm::L4xNAT::Action;
@@ -83,14 +83,34 @@ sub setL4FarmServer
 
 	my $exists = &getFarmServer( $f_ref->{ servers }, $ids );
 
-	if (    defined $rip
-		 && $rip ne ""
-		 && ( !defined $exists || ( defined $exists && $exists->{ ip } ne $rip ) ) )
+	my $rip = $ip;
+
+	if ( defined $port )
 	{
-		my $existrip = &getFarmServer( $f_ref->{ servers }, $rip, "ip" );
+		if ( &ipversion( $ip ) == 4 )
+		{
+			$rip = "$ip\:$port";
+		}
+		elsif ( &ipversion( $ip ) == 6 )
+		{
+			$rip = "[$ip]\:$port";
+		}
+
+		if ( !defined $exists || ( defined $exists && $exists->{ port } ne $port ) )
+		{
+			$json .= qq(, "port" : "$port");
+			$msg  .= "port:$port ";
+		}
+	}
+
+	if (   defined $ip
+		&& $ip ne ""
+		&& ( !defined $exists || ( defined $exists && $exists->{ rip } ne $rip ) ) )
+	{
+		my $existrip = &getFarmServer( $f_ref->{ servers }, $rip, "rip" );
 		return -2 if ( defined $existrip && ( $existrip->{ id } ne $ids ) );
-		$json .= qq(, "ip-addr" : "$rip");
-		$msg  .= "rip:$rip ";
+		$json = qq(, "ip-addr" : "$ip") . $json;
+		$msg .= "ip:$ip ";
 
 		my $mark = "0x0";
 		if ( !defined $exists )
@@ -105,13 +125,6 @@ sub setL4FarmServer
 			$mark = $exists->{ tag };
 		}
 		&setL4BackendRule( "add", $f_ref, $mark );
-	}
-
-	if ( defined $port
-		&& ( !defined $exists || ( defined $exists && $exists->{ port } ne $port ) ) )
-	{
-		$json .= qq(, "port" : "$port");
-		$msg  .= "port:$port ";
 	}
 
 	if (   defined $weight
@@ -170,7 +183,7 @@ sub setL4FarmServer
 	if ( $json =~ /ip-addr/ && $eload )
 	{
 		my $farm_ref   = &getL4FarmStruct( $farm_name );
-		my $server_ref = &getL4FarmStruct( $farm_name );
+		my $server_ref = $farm_ref->{ servers }[0];
 		&eload(
 				module => 'Zevenet::Net::Floating',
 				func   => 'setFloatingSourceAddr',
@@ -262,7 +275,7 @@ sub setL4FarmBackendsSessionsRemove
 
 	my $farm = &getL4FarmStruct( $farmname );
 
-	return 0 if ( $farm->{ persist } eq "none" );
+	return 0 if ( $farm->{ persist } eq "" );
 
 	my $be = $farm->{ servers }[$backend];
 	( my $tag = $be->{ tag } ) =~ s/0x//g;
