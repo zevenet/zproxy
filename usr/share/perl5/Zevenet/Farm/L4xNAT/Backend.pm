@@ -334,7 +334,7 @@ sub setL4FarmBackendStatus
 		}
 	  );
 
-	if ( $status ne "up" && $cutmode eq "cut" )
+	if ( $status ne "up" && $cutmode eq "cut" && $farm->{ persist } ne '' )
 	{
 		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
 
