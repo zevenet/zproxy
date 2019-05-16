@@ -159,7 +159,7 @@ sub getIPDSRules
 	if ( -e $dosConf )
 	{
 		$fileHandle = Config::Tiny->read( $dosConf );
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $key ( sort keys %{ $fileHandle } )
 		{
 			push @rules,
 			  {
@@ -174,7 +174,7 @@ sub getIPDSRules
 	if ( -e $blacklistsConf )
 	{
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $key ( sort keys %{ $fileHandle } )
 		{
 			push @rules,
 			  {
@@ -188,7 +188,7 @@ sub getIPDSRules
 	if ( -e $rblConf )
 	{
 		$fileHandle = Config::Tiny->read( $rblConf );
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $key ( sort keys %{ $fileHandle } )
 		{
 			push @rules,
 			  {
@@ -199,7 +199,7 @@ sub getIPDSRules
 		}
 	}
 
-	foreach my $ru ( &listWAFSet() )
+	foreach my $ru ( sort &listWAFSet() )
 	{
 		push @rules,
 		  {
