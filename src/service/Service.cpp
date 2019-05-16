@@ -174,6 +174,7 @@ void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER) {
   // TODO: DYNSCALE DEPENDING ON BACKENDSTAT PARAMETER
 }
 
+/** This function handles the tasks received with the API format. */
 std::string Service::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task))
     return JSON_OP_RESULT::ERROR;
@@ -272,11 +273,13 @@ std::string Service::handleTask(ctl::CtlTask &task) {
   return "";
 }
 
+/** Checks if the service should handle this task. */
 bool Service::isHandler(ctl::CtlTask &task) {
   return /*task.target == ctl::CTL_HANDLER_TYPE::SERVICE &&*/
       (task.service_id == this->id || task.service_id == -1);
 }
 
+/** Generates a JSON formatted file with all the Service information. */
 JsonObject *Service::getServiceJson() {
   auto root = new JsonObject();
   root->emplace(JSON_KEYS::NAME, new JsonDataValue(this->name));
@@ -294,6 +297,8 @@ JsonObject *Service::getServiceJson() {
   return root;
 }
 
+/** Selects the corresponding Backend to which the connection will be routed
+ * according to the established balancing algorithm. */
 Backend *Service::getNextBackend() {
   // if no backend available, return next emergency backend from
   // emergency_backend_set ...
@@ -374,6 +379,7 @@ Backend *Service::getNextBackend() {
   return getEmergencyBackend();
 }
 
+/** Checks if the backends still alive and deletes the expired sessions. */
 void Service::doMaintenance() {
   for (Backend* bck : this->backend_set) {
     bck->doMaintenance();
@@ -393,6 +399,8 @@ void Service::doMaintenance() {
   }
 }
 
+/** There is not backend available, trying to pick an emergency backend. If
+ * there is not an emergency backend available it returns nullptr. */
 Backend * Service::getEmergencyBackend() {
   // There is no backend available, looking for an emergency backend.
   if (emergency_backend_set.empty())
