@@ -763,10 +763,13 @@ sub buildWAFSet
 	my $set_file = &getWAFSetFile( $set );
 	my $dir      = &getWAFSetDir();
 	my $tmp      = "$dir/waf_rules.build";
-	my $err;
+	my $err_msg;
 
-	# create tmp file
-	my $fh = &openlock( $tmp, 'w' ) or return 1;
+	# create tmp file and lock resource
+	my $lock_file = &getLockFile( $tmp );
+	my $flock     = &openlock( $lock_file, 'w' ) or return "Error reading data";
+	my $fh        = &openlock( $tmp, 'w' )
+	  or do { close $flock; return "Error reading data" };
 
 	#write set conf
 	if ( exists $struct->{ configuration } )
@@ -789,37 +792,48 @@ sub buildWAFSet
 		}
 		else
 		{
-			$err = "Error in rule $index";
+			$err_msg = "Error in rule $index";
 			last;
 		}
 	}
 	close $fh;
 
-	return $err if $err;
+	if ( $err_msg )
+	{
+		close $flock;
+		&zenlog( "Error building the set '$set'", "error", "waf" );
+		return $err_msg;
+	}
 
 	# check syntax
-	$err = &checkWAFFileSyntax( $tmp );
+	$err_msg = &checkWAFFileSyntax( $tmp );
 
 	# copy to definitive
-	if ( not $err )
+	if ( $err_msg )
 	{
-		$err = &copyLock( $tmp, $set_file );
-		return "Error saving changes in $set" if $err;
-
-		# restart rule
-		include 'Zevenet::IPDS::WAF::Runtime';
-		$err = &reloadWAFByRule( $set );
-		return "Error reloading the set $set" if $err;
+		&zenlog( "Error checking set syntax '$set': $err_msg", "error", "waf" );
 	}
 	else
 	{
-		&zenlog( "Error checking set syntax $set: $err", "error", "waf" );
+		if ( &copyLock( $tmp, $set_file ) )
+		{
+			$err_msg = "Error saving changes in '$set'";
+		}
+		else
+		{
+			# restart rule
+			include 'Zevenet::IPDS::WAF::Runtime';
+			if ( &reloadWAFByRule( $set ) )
+			{
+				$err_msg = "Error reloading the set '$set'";
+			}
+		}
 	}
 
-	# remove tmp file
-	#~ unlink $tmp;
+	# free resource
+	close $flock;
 
-	return $err;
+	return $err_msg;
 }
 
 =begin nd
