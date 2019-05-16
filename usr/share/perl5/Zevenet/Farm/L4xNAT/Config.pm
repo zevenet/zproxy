@@ -396,10 +396,26 @@ sub _getL4ParseFarmConfig
 		if ( $line =~ /\"persistence\"/ && $param eq 'persist' )
 		{
 			my @l = split /"/, $line;
-			$output = $l[3];
-			$output = "ip" if ( $output eq "srcip " );
-			$output = "" if ( $output eq "none " );
-			$exit   = 0;
+			my $out = $l[3];
+			if ( $out =~ /none/ )
+			{
+				$output = "";
+			}
+			elsif ( $out =~ /srcip/ )
+			{
+				$output = "ip";
+				$output = "srcip_srcport" if ( $out =~ /srcport/ );
+				$output = "srcip_dstport" if ( $out =~ /dstport/ );
+			}
+			elsif ( $out =~ /srcport/ )
+			{
+				$output = "srcport";
+			}
+			elsif ( $out =~ /srcmac/ )
+			{
+				$output = "srcmac";
+			}
+			$exit = 0;
 		}
 
 		if ( $line =~ /\"persist-ttl\"/ && $param eq 'persisttm' )
