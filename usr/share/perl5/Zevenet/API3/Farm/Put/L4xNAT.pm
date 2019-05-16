@@ -197,7 +197,6 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		if ( $json_obj->{ persistence } =~ /^(?:ip|)$/ )
 		{
 			my $persistence = $json_obj->{ persistence };
-			$persistence = 'none' if $persistence eq '';
 
 			if ( &getL4FarmParam( 'persist', $farmname ) ne $persistence )
 			{

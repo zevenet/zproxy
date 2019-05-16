@@ -167,7 +167,7 @@ sub setL4FarmParam
 		{
 			require Zevenet::Farm::L4xNAT::L4sd;
 			&setL4sdType( $farm_name, "none" );
-			&setL4FarmParam( 'persist', "none", $farm_name );
+			&setL4FarmParam( 'persist', "", $farm_name );
 		}
 
 		# take care of floating interfaces without masquerading
@@ -263,6 +263,7 @@ sub setL4FarmParam
 	elsif ( $param eq "persist" )
 	{
 		$value = "srcip" if ( $value eq "ip" );
+		$value = "none"  if ( $value eq "" );
 		$parameters = qq(, "persistence" : "$value" );
 	}
 	elsif ( $param eq "persisttm" )
@@ -397,6 +398,7 @@ sub _getL4ParseFarmConfig
 			my @l = split /"/, $line;
 			$output = $l[3];
 			$output = "ip" if ( $output eq "srcip " );
+			$output = "" if ( $output eq "none " );
 			$exit   = 0;
 		}
 
@@ -596,7 +598,7 @@ sub getL4FarmStruct
 	$farm{ vproto } = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
 	my $persist = &_getL4ParseFarmConfig( 'persist', undef, $config );
-	$farm{ persist } = ( $persist == -1 ) ? '' : $persist;
+	$farm{ persist } = ( $persist eq "-1" ) ? '' : $persist;
 	my $ttl = &_getL4ParseFarmConfig( 'persisttm', undef, $config );
 	$farm{ ttl } = ( $ttl == -1 ) ? 0 : $ttl;
 

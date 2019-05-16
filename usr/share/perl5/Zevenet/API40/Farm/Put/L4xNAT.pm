@@ -222,7 +222,6 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	if ( exists ( $json_obj->{ persistence } ) )
 	{
 		my $persistence = $json_obj->{ persistence };
-		$persistence = 'none' if $persistence eq '';
 
 		if ( &getL4FarmParam( 'persist', $farmname ) ne $persistence )
 		{
@@ -276,7 +275,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
 	{
 		# Get current vip & vport
-		my $vip   = $json_obj->{ vip }   // "";
+		my $vip   = $json_obj->{ vip } // "";
 		my $vport = $json_obj->{ vport } // "";
 
 		if ( &setFarmVirtualConf( $vip, $vport, $farmname ) )
