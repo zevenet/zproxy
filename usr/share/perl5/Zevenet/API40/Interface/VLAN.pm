@@ -693,7 +693,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
 	my $dhcp_flag = $json_obj->{ dhcp } // $if_ref->{ dhcp };
-	if ( ( $dhcp_flag ne 'true' ) and ( $if_ref->{ addr } && $if_ref->{ mask } ) )
+	if ( ( $dhcp_flag ne 'true' ) and !( $if_ref->{ addr } && $if_ref->{ mask } ) )
 	{
 		my $msg = "Cannot configure the interface without address or without netmask.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
