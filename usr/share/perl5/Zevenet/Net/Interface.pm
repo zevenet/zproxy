@@ -113,6 +113,9 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$fileHandler = Config::Tiny->read( $config_filename )
 	  if ( -f $config_filename );
 
+	#Return undef if the file doesn't exists and the iface is not a NIC
+	return undef if ( !-f $config_filename and $if_name =~ /.|:/ );
+
 	require IO::Socket;
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
