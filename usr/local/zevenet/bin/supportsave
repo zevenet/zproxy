@@ -87,6 +87,12 @@ then
 	cp /etc/passwd                         $backup_dir/
 fi
 
+echo "- Subscription"
+cat /etc/apt/apt.conf			>> $backup_dir/apt.conf.txt
+cat /etc/apt/sources.list		>> $backup_dir/sources.list.txt
+for i in `ls /etc/apt/sources.list.d/`; do
+	cat /etc/apt/sources.list.d/$i 				>> $backup_dir/sources.list.d.$i.txt
+done
 
 echo "Saving network information:"
 ##################################
