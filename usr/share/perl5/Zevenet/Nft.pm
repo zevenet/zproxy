@@ -226,9 +226,9 @@ sub httpNlbRequest
 				$line =~ s/,$//g;
 			}
 			print $fo $line
-			  if (
-				   $line !~ /new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
-				   && $policies == 0 );
+			  if ( $line !~
+				/source-addr|new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
+				&& $policies == 0 );
 			$policies = 0 if ( $policies == 1 && $line =~ /\]/ );
 		}
 		close $fo;
