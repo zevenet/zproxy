@@ -986,7 +986,7 @@ sub getInterfaceTypeList
 			if ( $list_type eq &getInterfaceType( $if_name ) )
 			{
 				my $output_if = &getInterfaceConfig( $if_name );
-				if ( !$output_if || !$output_if->{ mac } )
+				if ( !$output_if || !$output_if->{ mac } || $output_if->{ is_slave } eq 'true' )
 				{
 					$output_if = &getSystemInterface( $if_name );
 				}
