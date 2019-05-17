@@ -136,10 +136,12 @@ elsif ( $object eq 'getZClusterArpStatus' )
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		my $if_dropped = &execNft( "check",
+		my $if_dropped = &execNft(
+								   "check",
 								   "netdev cluster",
 								   "cl-" . $if_ref->{ parent },
-								   "$if_ref->{ addr }" );
+								   "$if_ref->{ addr }"
+		);
 
 		if ( $node_role ne 'master' && !$if_dropped )
 		{
@@ -229,6 +231,7 @@ if ( $object eq 'farm' )
 	}
 	elsif ( $command eq 'delete' )
 	{
+		&_runFarmStop( $farm_name );
 		exit &runFarmDelete( $farm_name );
 	}
 	else
