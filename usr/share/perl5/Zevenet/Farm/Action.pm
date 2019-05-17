@@ -366,9 +366,6 @@ sub runFarmDelete    # ($farm_name)
 		elsif ( $farm_type eq "l4xnat" )
 		{
 			require Zevenet::Farm::L4xNAT::Factory;
-
-			# delete nf marks
-			&delMarks( $farm_name, "" );
 			&runL4FarmDelete( $farm_name );
 		}
 	}
