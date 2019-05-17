@@ -150,6 +150,9 @@ sub addWAFsetToFarm
 
 	close $lock_fh;
 
+	# Not to need farm restart
+	unlink $lock_file;
+
 	return $err;
 }
 
@@ -213,6 +216,9 @@ sub removeWAFSetFromFarm
 	}
 
 	close $lock_fh;
+
+	# Not to need farm restart
+	unlink $lock_file;
 
 	return $err;
 }
