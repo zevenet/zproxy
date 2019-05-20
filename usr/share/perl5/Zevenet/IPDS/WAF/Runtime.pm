@@ -90,7 +90,7 @@ sub addWAFsetToFarm
 	my $tmp_conf  = "$configdir/farm_http.tmp";
 	my $pound     = &getGlobalConfiguration( 'pound' );
 
-	my $lock_file = &getLockFile( $farm );
+	my $lock_file = &getLockFile( $tmp_conf );
 	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	copy( $farm_path, $tmp_conf );
