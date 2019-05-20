@@ -8,8 +8,9 @@ These instructions will get you a copy of the project up and running on your loc
 
  * A modern C/C++ compiler
  * CMake 3.6+ installed
- * libssl  (1.0 for now)
- * doxygen for source code  documentation generation
+ * libssl  (1.1 for now)
+ * zlib
+ * doxygen for source code documentation generation
 
 ### Building The Project
 
@@ -59,7 +60,7 @@ Tests:
 
 ### License
 
-&copy; 2018 Zevenet.
+&copy; 2019 Zevenet.
 
 
 ### Authors
