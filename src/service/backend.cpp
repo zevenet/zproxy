@@ -8,6 +8,7 @@ Backend::~Backend() {
   //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
 
+/** This function handles the tasks received with the API format. */
 std::string Backend::handleTask(ctl::CtlTask& task) {
   if (!isHandler(task)) return "";
   //  Debug::logmsg(LOG_REMOVE, "Backend %d handling task", backend_id);
@@ -90,11 +91,13 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
   return "";
 }
 
+/** Checks if the Backend should handle this task. */
 bool Backend::isHandler(ctl::CtlTask& task) {
   return /*task.target == ctl::CTL_HANDLER_TYPE::BACKEND &&*/
       (task.backend_id == this->backend_id || task.backend_id == -1);
 }
 
+/** Generates a JSON formatted file with all the Backend information. */
 std::unique_ptr<JsonObject> Backend::getBackendJson() {
   std::unique_ptr<JsonObject> root{new JsonObject()};
 
@@ -130,6 +133,7 @@ std::unique_ptr<JsonObject> Backend::getBackendJson() {
   return root;
 }
 
+/** Checks if the Backend still alive. */
 void Backend::doMaintenance() {
   if (this->status != BACKEND_STATUS::BACKEND_DOWN)
     return;
