@@ -246,7 +246,11 @@ sub parseWAFRule
 			delete $rule->{ variables };
 		}
 
-		my @options = split ( ',', $act );
+		my @options = ();
+		if ( defined $act )
+		{
+			@options = split ( ',', $act );
+		}
 
 		foreach my $param ( @options )
 		{
