@@ -10,14 +10,18 @@
 #include "../http/HttpRequest.h"
 #include "Service.h"
 
+/** The ServiceManager class contains all the operations related with the
+ * management of the services. */
 class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
   std::vector<Service *> services;
 
  public:
+  /** ListenerConfig from the listener related with all the services managed by
+   * the class. */
   ListenerConfig listener_config_;
-
- public:
+  /** ServiceManager instance. */
   static ServiceManager *instance;
+
   static ServiceManager *getInstance(ListenerConfig &listener_config);
   ServiceManager(ListenerConfig &listener_config);
   ~ServiceManager();
