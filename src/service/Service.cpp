@@ -6,10 +6,6 @@
 #include "../util/Network.h"
 #include <numeric>
 
-/** Checks if we need a new backend or not. If we already have a session it
- * returns the backend associated to the session. If not, it returns a new
- * Backend.
- */
 Backend *Service::getBackend(HttpStream &stream) {
   if (backend_set.empty())
     return getEmergencyBackend();
@@ -42,9 +38,6 @@ Backend *Service::getBackend(HttpStream &stream) {
   }
 }
 
-/** It creates a new Backend from a BackendConfig and adds it to the service's
- * backend vector.
- */
 void Service::addBackend(BackendConfig *backend_config, std::string address,
                          int port, int backend_id, bool emergency) {
   auto *backend = new Backend();
@@ -139,10 +132,6 @@ Service::Service(ServiceConfig &service_config_)
   }
 }
 
-/** Check if the Service should handle the HttpRequest. It checks the request
- * line, required headers and the forbidden headeras. If the Service should
- * handle it, returns true if not false.
- */
 bool Service::doMatch(HttpRequest &request) {
   MATCHER *m;
   int i, found;
@@ -174,7 +163,6 @@ void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER) {
   // TODO: DYNSCALE DEPENDING ON BACKENDSTAT PARAMETER
 }
 
-/** This function handles the tasks received with the API format. */
 std::string Service::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task))
     return JSON_OP_RESULT::ERROR;
@@ -273,13 +261,11 @@ std::string Service::handleTask(ctl::CtlTask &task) {
   return "";
 }
 
-/** Checks if the service should handle this task. */
 bool Service::isHandler(ctl::CtlTask &task) {
   return /*task.target == ctl::CTL_HANDLER_TYPE::SERVICE &&*/
       (task.service_id == this->id || task.service_id == -1);
 }
 
-/** Generates a JSON formatted file with all the Service information. */
 JsonObject *Service::getServiceJson() {
   auto root = new JsonObject();
   root->emplace(JSON_KEYS::NAME, new JsonDataValue(this->name));
@@ -379,7 +365,6 @@ Backend *Service::getNextBackend() {
   return getEmergencyBackend();
 }
 
-/** Checks if the backends still alive and deletes the expired sessions. */
 void Service::doMaintenance() {
   for (Backend* bck : this->backend_set) {
     bck->doMaintenance();

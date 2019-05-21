@@ -44,8 +44,12 @@ using namespace Statistics;
 using namespace json;
 using namespace ssl;
 
-/** The Backend class contains the configuration parameters set in the backend
- * section. */
+/**
+ * @class Backend backend.h "src/service/backend.h"
+ *
+ * @brief The Backend class contains the configuration parameters set in the
+ * backend section of the configuration file.
+ */
 class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo{
 public:
   Backend();
@@ -82,10 +86,34 @@ public:
   SSLConnectionManager ssl_manager;
   //  bool disabled;
 
+  /**
+   * @brief Checks if the Backend still alive.
+   */
   void doMaintenance();
+
+  /**
+   * @brief This function handles the @p tasks received with the API format.
+   *
+   * It calls the needed functions depending on the @p task received. The task
+   * must be a API formatted request.
+   *
+   * @param task to check.
+   * @return json formatted string with the result of the operation.
+   */
   std::string handleTask(ctl::CtlTask &task) override;
+
+  /**
+   * @brief Checks if the Backend should handle the @p task.
+   *
+   * @param task to check.
+   * @return true if should handle the task, false if not.
+   */
   bool isHandler(ctl::CtlTask &task) override;
 
+  /**
+   * @brief Generates a JsonObject with all the Backend information.
+   * @return JsonObject with the Backend information.
+   */
   std::unique_ptr<JsonObject> getBackendJson();
   int nf_mark;
 };

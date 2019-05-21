@@ -47,7 +47,6 @@ void EpollManager::onReadEvent(epoll_event &event) {
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
 
-/** Deletes a file descriptor. */
 bool EpollManager::deleteFd(int fd) {
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
     if (errno == ENOENT || errno == EBADF || errno == EPERM) {
@@ -64,8 +63,6 @@ bool EpollManager::deleteFd(int fd) {
   return true;
 }
 
-/** This function is the core function of the system. It waits for new events
- * and handles them. */
 int EpollManager::loopOnce(int time_out) {
   int fd, i, ev_count = 0;
   ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
@@ -101,14 +98,12 @@ return ev_count;
 
 EpollManager::~EpollManager() { ::close(epoll_fd); }
 
-/** This function accepts new connections. */
 bool EpollManager::handleAccept(int listener_fd) {
   accept_fd = listener_fd;
   Network::setSocketNonBlocking(listener_fd);
   return addFd(listener_fd, ACCEPT, EVENT_GROUP::ACCEPTOR);
 }
 
-/** Add a new file descriptor with the event. */
 bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
                          EVENT_GROUP event_group) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
@@ -135,7 +130,6 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
   return true;
 }
 
-/** Update a file descriptor and the event attached to it. */
 bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
                             EVENT_GROUP event_group) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);

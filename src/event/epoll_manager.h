@@ -27,7 +27,7 @@ enum class EVENT_GROUP: char {
   REQUEST_TIMEOUT,
   /** This group handles the response timeout events. */
   RESPONSE_TIMEOUT,
-  //TODO: Documentar Abdess
+  /** This group hanfles the signals events from the Operative System. */
   SIGNAL,
   /** This groups handles the maintenance events. */
   MAINTENANCE,
@@ -53,16 +53,21 @@ enum EVENT_TYPE {
   /** Write to the connection. */
   WRITE = (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP |
            EPOLLHUP), // is always one shot
-  //TODO: Documentar abdess
+  /** Read or write event */
   ANY = (EPOLLONESHOT | EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLOUT),
+  /** Connect event */
   CONNECT,
+  /** Disconnect event */
   DISCONNECT,
   NONE
 };
 
 // TODO:: Make it static polimorphosm, template<typename Handler>
-/** The EpollManager is a wrapper class over the EPOLL system. It handles all
- * the operations needed. */
+/**
+ * @class EpollManager epoll_manager.h "src/event/epoll_manager.h"
+ * @brief The EpollManager is a wrapper class over the EPOLL system. It handles all
+ * the operations needed.
+ */
 class EpollManager {
   //  std::mutex epoll_mutex;
   /** Epoll file descriptor. */
@@ -81,11 +86,58 @@ protected:
 
 public:
   EpollManager();
+
+  /**
+   * @brief This function is the core function of the system. It waits for new events
+   * and handles them.
+   * @param time_out used to wait for events.
+   * @return the current number of events.
+   */
   int loopOnce(int time_out = -1);
   ~EpollManager();
+
+  /**
+   * @brief Sets the Listener as a non blocking socket and starts to accept
+   * connections.
+   * @param listener_fd is the Listener file descriptor
+   * @return @c true if everything is ok, @c false if not.
+   */
   bool handleAccept(int listener_fd);
+
+  /**
+   * @brief Adds a new event to the event manager with an unused @p fd.
+   *
+   * If the @p fd already exists in the event manager, it updates the event with
+   * the new @p event_type and @event_group specified.
+   *
+   * @param fd to add.
+   * @param event_type of the new event.
+   * @param event_group of the new event.
+   * @return @c true if everything is ok, @c false if not.
+   */
   bool addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
+
+  /**
+   * @brief Deletes an event to the event manager with the @p fd.
+   *
+   * If the @p fd already exists in the event manager, it deletes the event. If
+   * the @p is not in the event manager, do nothing.
+   *
+   * @param fd to delete.
+   * @return @c true if everything is ok, @c false if not.
+   */
   bool deleteFd(int fd);
+
+  /**
+   * @brief Deletes an event to the event manager with the @p fd.
+   *
+   * If the @p fd doesn't exist in the event manager, it adds the event.
+   *
+   * @param fd to update.
+   * @param event_type to update the event.
+   * @param event_group to update the event.
+   * @return @c true if everything is ok, @c false if not.
+   */
   bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
 };
 }; // namespace events

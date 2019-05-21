@@ -206,10 +206,8 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 }
 #endif
 
-/** Stops the StreamManager event manager. */
 void StreamManager::stop() { is_running = false; }
 
-/** Starts the StreamManager event manager. */
 void StreamManager::start(int thread_id_) {
   is_running = true;
   worker_id = thread_id_;
@@ -248,10 +246,6 @@ void StreamManager::doWork() {
   }
 }
 
-/** Adds a HttpStream to the stream set of the StreamManager. If the stream file
- * descriptor is already stored in the set it clears the older one
- * and adds the new one. In addition sets the connect timeout TimerFd.
- */
 void StreamManager::addStream(int fd) {
     DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
@@ -284,14 +278,8 @@ void StreamManager::addStream(int fd) {
 #endif
 }
 
-/** Returns the worker id associated to the StreamManager. */
 int StreamManager::getWorkerId() { return worker_id; }
 
-/** Handles the read from the client buffer, parses the request and validates
- * it. It handles HTTP and HTTPS request. If there is not any error it is going
- * to send a write event to the backend or read again if needed. It modifies
- * the request headers or content when needed.
- */
 void StreamManager::onRequestEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_request);
   HttpStream *stream = streams_set[fd];
@@ -576,11 +564,6 @@ void StreamManager::onRequestEvent(int fd) {
   stream->client_connection.enableReadEvent();
 }
 
-/** Handles the read from the backend buffer, parses the response and validates
- * it. It handles HTTP and HTTPS responses. If there is not any error it is
- * going to send a read event to the client or read again from the backend
- * if needed. It modifies the response headers or content when needed.
- */
 void StreamManager::onResponseEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_response);
   HttpStream *stream = streams_set[fd];
@@ -717,10 +700,6 @@ void StreamManager::onResponseEvent(int fd) {
   stream->client_connection.enableWriteEvent();
 }
 
-/** Handles the connect timeout event. This means the backend connect operation
- * has take too long. It replies a 503 service unavailable error to the client
- * and clears the HttpStream.
- */
 void StreamManager::onConnectTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_backend_connect_timeout);
   HttpStream *stream = timers_set[fd];
@@ -743,10 +722,6 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
   }
 }
 
-/** Handles the request timeout event. This means the client take too long
- * sending the request. It clears the HttpStream and do not send any error to the
- * client.
- */
 void StreamManager::onRequestTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_request_timeout);
   HttpStream *stream = timers_set[fd];
@@ -759,10 +734,6 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
   }
 }
 
-/** Handles the response timeout event. This means the backend take too long
- * sending the response. It clears the HttpStream and replies a 504 Gateway
- * Timeout error to the client.
- */
 void StreamManager::onResponseTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_response_timeout);
   HttpStream *stream = timers_set[fd];
@@ -797,9 +768,6 @@ void StreamManager::onSignalEvent(int fd) {
   // TODO::IMPLEMENET
 }
 
-/** Writes all the client buffer data to the backend. If there is any error it
- * clears the HttpStream. If not, it enables the backend read event.
- */
 void StreamManager::onServerWriteEvent(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
   if (UNLIKELY(stream->backend_connection.isCancelled())) {
@@ -898,9 +866,6 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   }
 }
 
-/** Writes all the backend buffer data to the client. If there is any error it
- * clears the HttpStream. If not, it enables the client read event.
- */
 void StreamManager::onClientWriteEvent(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_response);
   if (UNLIKELY(stream->client_connection.isCancelled())) {
@@ -997,9 +962,6 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   }
 }
 
-/** Validates the request. It checks that all the headers are well formed and
- * mark the headers off if needed.
- */
 validation::REQUEST_RESULT
 StreamManager::validateRequest(HttpRequest &request) {
   regmatch_t matches[4];
@@ -1102,9 +1064,6 @@ StreamManager::validateRequest(HttpRequest &request) {
   return validation::REQUEST_RESULT::OK;
 }
 
-/** Validates the response. It checks that all the headers are well formed and
- * mark the headers off if needed.
- */
 validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
   HttpResponse &response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
@@ -1193,9 +1152,6 @@ validation::REQUEST_RESULT StreamManager::validateResponse(HttpStream &stream) {
   return validation::REQUEST_RESULT::OK;
 }
 
-/** Initializes the StreamManager, if the listener is HTTPS then initializes the
- * ssl::SSLConnectionManager.
- */
 bool StreamManager::init(ListenerConfig &listener_config) {
   listener_config_ = listener_config;
   service_manager = ServiceManager::getInstance(listener_config);
@@ -1217,9 +1173,6 @@ bool StreamManager::init(ListenerConfig &listener_config) {
   return true;
 }
 
-/** If the http::CHUNKED_STATUS is enabled then match the chunk length,
- * updates the status and returns true. If is is disabled then returns false.
- */
 bool StreamManager::transferChunked(HttpStream *stream) {
   if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
     size_t pos = std::string(stream->client_connection.buffer).find("\r\n");
@@ -1233,7 +1186,6 @@ bool StreamManager::transferChunked(HttpStream *stream) {
   return false;
 }
 
-/** If the backend cookie is enabled adds the header with the parameters set. */
 void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
   if (!service->becookie.empty()) {
     std::string set_cookie_header =
@@ -1259,10 +1211,6 @@ void StreamManager::setBackendCookie(Service *service, HttpStream *stream) {
   }
 }
 
-/** Applies compression to the response message. If one of the encoding accepted
- * in the Accept Encoding Header matchs with the set in the CompressionAlgorithm
- * parameter, compress the response message.
- */
 void StreamManager::applyCompression(Service *service, HttpStream *stream) {
   http::TRANSFER_ENCODING_TYPE compression_type;
   if (service->service_config.compression_algorithm.empty())
@@ -1305,9 +1253,6 @@ void StreamManager::applyCompression(Service *service, HttpStream *stream) {
   }
 }
 
-/** Clears the HttpStream. It deletes all the timers and events. Finally,
- * deletes the HttpStream.
- */
 void StreamManager::clearStream(HttpStream *stream) {
 
   //TODO:: add connection closing reason for logging purpose
@@ -1343,7 +1288,6 @@ void StreamManager::clearStream(HttpStream *stream) {
   delete stream;
 }
 
-/** Set the StreamManager as a listener. */
 void StreamManager::setListenSocket(int fd) {
   listener_connection.setFileDescriptor(fd);
 }

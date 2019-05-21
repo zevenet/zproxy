@@ -23,7 +23,6 @@ ServiceManager::~ServiceManager() {
   ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
 
-/** This function gets the Service that handles the HttpRequest. */
 Service *ServiceManager::getService(HttpRequest &request) {
   for (auto srv : services) {
     if (!srv->service_config.disabled) {
@@ -36,12 +35,10 @@ Service *ServiceManager::getService(HttpRequest &request) {
   return nullptr;
 }
 
-/** Returns all the Service objects that handles the ServiceManager. */
 std::vector<Service *> ServiceManager::getServices(){
   return services;
 }
 
-/** This function adds a new Service object to the ServiceManager. */
 bool ServiceManager::addService(ServiceConfig &service_config, int id) {
   Service *service = new Service(service_config);
   service->id = id;
@@ -65,7 +62,6 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
   return true;
 }
 
-/** This function handles the tasks received with the API format. */
 std::string ServiceManager::handleTask(ctl::CtlTask &task) {
   if (!this->isHandler(task))
     return "";
@@ -93,7 +89,6 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
   return data;
 }
 
-/** Checks if the ServiceManager should handle this task. */
 bool ServiceManager::isHandler(ctl::CtlTask &task) {
   return task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER;
 }
