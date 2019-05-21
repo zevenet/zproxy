@@ -325,6 +325,35 @@ sub sendL4NlbCmd
 		return $out if ( $out != 0 );
 	}
 
+  # avoid farm configuration file destruction by asking nftlb only for modifications
+	if ( $self->{ method } =~ /PUT/ )
+	{
+		my $file = "/tmp/ipds_$$";
+
+		$output = httpNlbRequest(
+								  {
+									method => "GET",
+									uri    => "/farms/" . $self->{ farm },
+									file   => "$file"
+								  }
+		);
+
+		open my $fh, "<", $file;
+		my $match = 0;
+		while ( my $line = <$fh> )
+		{
+			if ( $line =~ /\"name\" : \"$self->{ farm }\"/ )
+			{
+				$match = 1;
+				last;
+			}
+		}
+		close $fh;
+		unlink ( $file );
+
+		&loadL4FarmNlb( $self->{ farm } ) if ( $output || !$match );
+	}
+
 	if ( $self->{ method } =~ /PUT|DELETE/ )
 	{
 		$cfgfile = $self->{ file };
