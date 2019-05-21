@@ -610,6 +610,7 @@ sub getGSLBFarmStruct
 	};
 	&getGSLBParseBe( $configSimplefo, $farm ) if ( defined $configSimplefo );
 	&getGSLBParseBe( $configMultifo,  $farm ) if ( defined $configMultifo );
+	$farm->{ status } = &getFarmVipStatus( $farm->{ name } );
 
 	return $farm;
 }
