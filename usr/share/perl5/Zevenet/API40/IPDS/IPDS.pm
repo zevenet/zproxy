@@ -102,7 +102,7 @@ sub get_ipds_package
 		$params->{ scheduled } =
 		    "$output->{mode} from $output->{time}->{hour}:"
 		  . sprintf ( "%02d", $output->{ time }->{ minute } )
-		  . " each $output->{frequency} hours"
+		  . " to 23:00 each $output->{frequency} hours"
 		  if ( $output->{ mode } eq "daily" and $output->{ frequency } != 0 );
 		$params->{ scheduled } = "none" if ( $output->{ mode } eq "" );
 		$params->{ mode }      = $output->{ mode };
@@ -252,7 +252,7 @@ sub set_ipds_package
 		$outParam->{ scheduled } =
 		    "$json_obj->{mode} from $json_obj->{time}->{hour}:"
 		  . sprintf ( "%02d", $json_obj->{ time }->{ minute } )
-		  . " each $json_obj->{frequency} hours"
+		  . " to 23:00 each $json_obj->{frequency} hours"
 		  if ( $json_obj->{ mode } eq "daily" and $json_obj->{ frequency } != 0 );
 		$outParam->{ scheduled } = "none" if ( $json_obj->{ mode } eq "" );
 	}
