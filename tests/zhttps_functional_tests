@@ -10,10 +10,6 @@ use Term::ANSIColor;
 
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
-# Current status: It works fine if we download the files directly from the
-# Apache server but it doesn't work if we download it through zhttp. Test it
-# modifying the url variables.
-
 my $url_10mb = 'https://localhost:8000/10MB.zip';
 my $url_100mb = 'https://localhost:8000/100MB.zip';
 my $url_200mb = 'https://localhost:8000/200MB.zip';
@@ -32,15 +28,13 @@ my $request_get = HTTP::Request->new(GET => $url);
 $ua = LWP::UserAgent->new;
 
 test_get_200_ok();
-#test_check_md5_10mb();
-#test_check_md5_100mb();
-#test_check_md5_200mb();
+test_check_md5_10mb();
+test_check_md5_100mb();
+test_check_md5_200mb();
 
 sub test_check_md5_10mb {
-    my $request_10mb = HTTP::Request->new(GET => $url_10mb);
-    my $response_10mb = $ua->request($request_10mb);
-
-    my $crc = md5_hex($response_10mb->content());
+    my $response = `curl -k $url_10mb --output -`;
+    my $crc = md5_hex($response);
 
     if ($crc == $file_10mb) {
         print "Test 10Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
@@ -50,10 +44,8 @@ sub test_check_md5_10mb {
 }
 
 sub test_check_md5_100mb {
-    my $request_100mb = HTTP::Request->new(GET => $url_100mb);
-    my $response_100mb = $ua->request($request_100mb);
-
-    my $crc = md5_hex($response_100mb->content());
+    my $response = `curl -k $url_100mb --output -`;
+    my $crc = md5_hex($response);
 
     if ($crc == $file_100mb) {
         print "Test 100Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
@@ -63,10 +55,9 @@ sub test_check_md5_100mb {
 }
 
 sub test_check_md5_200mb {
-    my $request_200mb = HTTP::Request->new(GET => $url_200mb);
-    my $response_200mb = $ua->request($request_200mb);
+    my $response = `curl -k $url_200mb --output -`;
 
-    my $crc = md5_hex($response_200mb->content());
+    my $crc = md5_hex($response);
 
     if ($crc == $file_200mb) {
         print "Test 200Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
