@@ -70,7 +70,7 @@ sub get_ipds_package
 	{
 		my $error  = 0;
 		my $output = &getIpdsRulesetDate();
-		if ( defined $output && $output =~ s/(\d\d)(\d\d)(\d\d)/$3\-$2\-20$1/ )
+		if ( defined $output && $output =~ s/^(\d\d)(\d\d)(\d\d).*/$3\-$2\-20$1/ )
 		{
 			$params->{ ruleset_date } = $output;
 		}
@@ -288,7 +288,7 @@ sub set_ipds_package
 	if ( $json_obj->{ action } eq "upgrade" )
 	{
 		my $date = &getIpdsRulesetDate();
-		$date =~ s/(\d\d)(\d\d)(\d\d)/$3\-$2\-20$1/;
+		$date =~ s/^(\d\d)(\d\d)(\d\d).*/$3\-$2\-20$1/;
 		$outParam = { 'ruleset_date' => $date };
 	}
 
