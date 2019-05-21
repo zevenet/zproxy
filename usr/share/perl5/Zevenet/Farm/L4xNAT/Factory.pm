@@ -75,16 +75,6 @@ sub runL4FarmCreate
 		}
 	);
 
-	if ( $eload )
-	{
-		my $farm_ref = &getL4FarmStruct( $farm_name );
-		&eload(
-				module => 'Zevenet::Net::Floating',
-				func   => 'setFloatingSourceAddr',
-				args   => [$farm_ref, undef],
-		);
-	}
-
 	&startL4Farm( $farm_name );
 
 	return $output;

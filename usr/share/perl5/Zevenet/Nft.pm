@@ -226,9 +226,9 @@ sub httpNlbRequest
 				$line =~ s/,$//g;
 			}
 			print $fo $line
-			  if ( $line !~
-				/source-addr|new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
-				&& $policies == 0 );
+			  if (
+				   $line !~ /new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
+				   && $policies == 0 );
 			$policies = 0 if ( $policies == 1 && $line =~ /\]/ );
 		}
 		close $fo;
@@ -289,7 +289,7 @@ sub execNft
 		}
 		else
 		{
-			my @rules  = `$nft -a list chain $table $chain`;
+			my @rules  = `$nft -a list chain $table $chain 2> /dev/null`;
 			my $handle = "";
 			foreach my $r ( @rules )
 			{
@@ -304,7 +304,7 @@ sub execNft
 	}
 	elsif ( $action eq "check" )
 	{
-		my @rules = `$nft list chain $table $chain`;
+		my @rules = `$nft list chain $table $chain 2> /dev/null`;
 		foreach my $r ( @rules )
 		{
 			if ( $r =~ / $rule / )

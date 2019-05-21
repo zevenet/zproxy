@@ -191,9 +191,9 @@ sub setFloatingSourceAddr
 		$out_if = &getFloatInterfaceForAddress( $server->{ vip } );
 	}
 
-	if ( !$out_if && $farm->{ vip } )
+	if ( !$out_if && scalar ( $farm->{ servers } ) > 0 )
 	{
-		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
+		$out_if = &getFloatInterfaceForAddress( $farm->{ servers }[0]->{ vip } );
 	}
 
 	if ( $out_if )
