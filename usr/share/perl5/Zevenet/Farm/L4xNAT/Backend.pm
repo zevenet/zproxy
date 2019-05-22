@@ -182,12 +182,11 @@ sub setL4FarmServer
 	# take care of floating interfaces without masquerading
 	if ( $json =~ /ip-addr/ && $eload )
 	{
-		my $farm_ref   = &getL4FarmStruct( $farm_name );
-		my $server_ref = $farm_ref->{ servers }[0];
+		my $farm_ref = &getL4FarmStruct( $farm_name );
 		&eload(
 				module => 'Zevenet::Net::Floating',
 				func   => 'setFloatingSourceAddr',
-				args   => [$farm_ref, $server_ref],
+				args   => [$farm_ref, undef],
 		);
 	}
 

@@ -122,6 +122,7 @@ Parameters:
 		"bogustcpflags": check bogus TCP flags
 		"nfqueue": queue to verdict the packets
 		"policy": policy list to be applied
+		"sourceaddr": set the source address
 	value - the new value of the given parameter of a certain farm
 	farmname - Farm name
 
@@ -297,6 +298,10 @@ sub setL4FarmParam
 	elsif ( $param eq "nfqueue" )
 	{
 		$parameters = qq(, "queue" : "$value" );
+	}
+	elsif ( $param eq "sourceaddr" )
+	{
+		$parameters = qq(, "source-addr" : "$value" );
 	}
 	elsif ( $param eq 'policy' )
 	{
