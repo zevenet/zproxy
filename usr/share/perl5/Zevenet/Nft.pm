@@ -281,11 +281,11 @@ sub execNft
 	{
 		if ( $chain eq "" )
 		{
-			$output = &logAndRun( "$nft delete table $table" );
+			$output = &logAndRun( "$nft delete table $table 2> /dev/null" );
 		}
 		elsif ( $rule eq "" )
 		{
-			$output = &logAndRun( "$nft delete chain $table $chain" );
+			$output = &logAndRun( "$nft delete chain $table $chain 2> /dev/null" );
 		}
 		else
 		{
