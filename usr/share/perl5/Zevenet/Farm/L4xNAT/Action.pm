@@ -68,7 +68,7 @@ sub startL4Farm    # ($farm_name)
 		return $status;
 	}
 
-	doL4FarmRules( "start", $farm_name );
+	&doL4FarmRules( "start", $farm_name );
 
 	# Enable IP forwarding
 	require Zevenet::Net::Util;
@@ -113,7 +113,7 @@ sub stopL4Farm    # ($farm_name)
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
-	doL4FarmRules( "stop", $farm_name );
+	&doL4FarmRules( "stop", $farm_name );
 
 	my $pid = &getNlbPid();
 	if ( $pid <= 0 )
@@ -328,7 +328,7 @@ sub sendL4NlbCmd
   # avoid farm configuration file destruction by asking nftlb only for modifications
 	if ( $self->{ method } =~ /PUT/ )
 	{
-		my $file = "/tmp/ipds_$$";
+		my $file = "/tmp/nft_$$";
 
 		$output = httpNlbRequest(
 								  {
@@ -342,7 +342,7 @@ sub sendL4NlbCmd
 		my $match = 0;
 		while ( my $line = <$fh> )
 		{
-			if ( $line =~ /\"name\" : \"$self->{ farm }\"/ )
+			if ( $line =~ /\"name\"\: \"$$self{ farm }\"/ )
 			{
 				$match = 1;
 				last;
@@ -351,7 +351,7 @@ sub sendL4NlbCmd
 		close $fh;
 		unlink ( $file );
 
-		&loadL4FarmNlb( $self->{ farm } ) if ( $output || !$match );
+		&loadL4FarmNlb( $self->{ farm } ) if ( !$match );
 	}
 
 	if ( $self->{ method } =~ /PUT|DELETE/ )
