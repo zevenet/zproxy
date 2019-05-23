@@ -1093,9 +1093,20 @@ sub disableInterfaceDiscovery
 
 	my $rule_ip = "ip";
 
-	if ( $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6 )
+	if ( $iface->{ ip_v } == 4 )
 	{
-		$rule_ip = "ip6" if ( $iface->{ ip_v } == 6 );
+		&execNft( "add", "arp cluster",
+				  "cl-in { type filter hook input priority filter \\;}",
+				  "arp daddr $rule_ip " . $iface->{ addr } . " drop" )
+		  if ( &execNft( "check", "arp cluster", "cl-in ", $iface->{ addr } ) != 1 );
+		&execNft( "add", "arp cluster",
+				  "cl-out { type filter hook output priority filter \\;}",
+				  "arp saddr $rule_ip " . $iface->{ addr } . " drop" )
+		  if ( &execNft( "check", "arp cluster", "cl-out ", $iface->{ addr } ) != 1 );
+	}
+	elsif ( $iface->{ ip_v } == 6 )
+	{
+		$rule_ip = "ip6";
 
 		&execNft(
 				  "add",
@@ -1145,7 +1156,14 @@ sub enableInterfaceDiscovery
 
 	require Zevenet::Nft;
 
-	if ( $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6 )
+	if ( $iface->{ ip_v } == 4 )
+	{
+		&execNft( "delete", "arp cluster", "cl-in ", $iface->{ addr } )
+		  if ( &execNft( "check", "arp cluster", "cl-in ", $iface->{ addr } ) );
+		&execNft( "delete", "arp cluster", "cl-out ", $iface->{ addr } )
+		  if ( &execNft( "check", "arp cluster", "cl-out ", $iface->{ addr } ) );
+	}
+	elsif ( $iface->{ ip_v } == 6 )
 	{
 		&execNft( "delete",
 				  "netdev cluster",
@@ -1190,6 +1208,7 @@ sub enableAllInterfacesDiscovery
 	require Zevenet::Nft;
 
 	my $output = &execNft( "delete", "netdev cluster", "", "" );
+	my $output = &execNft( "delete", "arp cluster",    "", "" );
 
 	return $output;
 }
