@@ -196,6 +196,11 @@ sub setFloatingSourceAddr
 		$out_if = &getFloatInterfaceForAddress( $farm->{ servers }[0]->{ ip } );
 	}
 
+	if ( !$out_if && $farm->{ vip } )
+	{
+		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
+	}
+
 	if ( $out_if )
 	{
 		$srcaddr = $out_if->{ addr };
