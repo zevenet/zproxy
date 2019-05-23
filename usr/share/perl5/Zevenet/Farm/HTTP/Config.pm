@@ -1348,7 +1348,7 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	{
 		if ( $array[$i] =~ /Address/ )
 		{
-			if ( $array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/g )
+			if ( $array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/ )
 			{
 				$stat = 0;
 			}
@@ -1356,7 +1356,7 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		}
 		if ( $array[$i] =~ /Port/ and $vip_port )
 		{
-			if ( $array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/g )
+			if ( $array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/ )
 			{
 				$stat = 0;
 			}
