@@ -483,6 +483,7 @@ sub addIp    # ($if_ref)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $if_ref ) = @_;
+	my $if_announce = "";
 
 	&zenlog( "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}",
 			 "info", "NETWORK" );
@@ -518,13 +519,7 @@ sub addIp    # ($if_ref)
 
 		$ip_cmd =
 		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $toif label $$if_ref{name} $extra_params";
-	}
-
-	# $if is a Vlan
-	elsif ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
-	{
-		$ip_cmd =
-		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
+		$if_announce = $toif;
 	}
 
 	# $if is a Network Interface
@@ -532,9 +527,33 @@ sub addIp    # ($if_ref)
 	{
 		$ip_cmd =
 		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
+		$if_announce = "$$if_ref{name}";
 	}
 
 	my $status = &logAndRun( $ip_cmd );
+
+	#if arp_announce is enabled then send garps to network
+	eval {
+		if ( $eload )
+		{
+			my $cl_status = &eload(
+									module => 'Zevenet::Cluster',
+									func   => 'getZClusterNodeStatus',
+									args   => [],
+			);
+
+			if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
+				 && $cl_status ne "backup" )
+			{
+
+				require Zevenet::Net::Util;
+
+				#&sendGArp($$if_ref{parent},$$if_ref{addr})
+				&zenlog( "Announcing garp $if_announce and $$if_ref{addr} " );
+				&sendGArp( $if_announce, $$if_ref{ addr } );
+			}
+		}
+	};
 
 	return $status;
 }

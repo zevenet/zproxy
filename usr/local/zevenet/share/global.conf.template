@@ -313,6 +313,8 @@ $zeninopid="/var/run/zeninotify.pid";
 $zenrsync="-azvr --delete";#update
 #ARP unsolicited
 $arp_unsolicited="";
+#ARP announcement, true / false (default)
+$arp_announce="";
 
 
 # Cron service

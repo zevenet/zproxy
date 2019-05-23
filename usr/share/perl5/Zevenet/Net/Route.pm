@@ -23,6 +23,12 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 =begin nd
@@ -343,6 +349,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $table, $if_ref, $gateway ) = @_;
+	my $if_announce = "";
 
 	# $gateway: The 3rd argument, '$gateway', is only used for 'global' table,
 	#           to assign a default gateway.
@@ -420,6 +427,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				&reloadFarmsSourceAddress() if $status == 0;
 			}
 		}
+		$if_announce = $$if_ref{ name };
 	}
 
 	# virtual interface
@@ -427,7 +435,32 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	{
 		my ( $toif ) = split ( /:/, $$if_ref{ name } );
 		$status = &setRule( "add", $if_ref, $toif, undef, undef );
+		$if_announce = $toif;
 	}
+
+	#if arp_announce is enabled then send garps to network
+	eval {
+		if ( $eload )
+		{
+			my $cl_status = &eload(
+									module => 'Zevenet::Cluster',
+									func   => 'getZClusterNodeStatus',
+									args   => [],
+			);
+
+			if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
+				 && $cl_status ne "backup" )
+			{
+				require Zevenet::Net::Util;
+
+				#&sendGArp($$if_ref{parent},$$if_ref{addr})
+				&zenlog( "Announcing garp $if_announce and $$if_ref{addr} " );
+				&sendGArp( $if_announce, $$if_ref{ addr } );
+			}
+
+		}
+
+	};
 
 	return $status;
 }
