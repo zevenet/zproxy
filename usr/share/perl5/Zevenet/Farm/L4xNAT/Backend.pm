@@ -85,7 +85,7 @@ sub setL4FarmServer
 
 	my $rip = $ip;
 
-	if ( defined $port )
+	if ( defined $port && $port ne "" )
 	{
 		if ( &ipversion( $ip ) == 4 )
 		{
