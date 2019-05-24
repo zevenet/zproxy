@@ -328,7 +328,8 @@ sub sendL4NlbCmd
   # avoid farm configuration file destruction by asking nftlb only for modifications
 	if ( $self->{ method } =~ /PUT/ )
 	{
-		my $file = "/tmp/nft_$$";
+		my $file  = "/tmp/nft_$$";
+		my $match = 0;
 
 		$output = httpNlbRequest(
 								  {
@@ -338,18 +339,20 @@ sub sendL4NlbCmd
 								  }
 		);
 
-		open my $fh, "<", $file;
-		my $match = 0;
-		while ( my $line = <$fh> )
+		if ( -e "$file" )
 		{
-			if ( $line =~ /\"name\"\: \"$$self{ farm }\"/ )
+			open my $fh, "<", $file;
+			while ( my $line = <$fh> )
 			{
-				$match = 1;
-				last;
+				if ( $line =~ /\"name\"\: \"$$self{ farm }\"/ )
+				{
+					$match = 1;
+					last;
+				}
 			}
+			close $fh;
+			unlink $file;
 		}
-		close $fh;
-		unlink ( $file );
 
 		&loadL4FarmNlb( $self->{ farm } ) if ( !$match );
 	}
