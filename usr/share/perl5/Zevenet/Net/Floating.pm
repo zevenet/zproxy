@@ -216,7 +216,7 @@ sub setFloatingSourceAddr
 	return
 	  &httpNlbRequest(
 		{
-		   method => "POST",
+		   method => "PUT",
 		   uri    => "/farms",
 		   body =>
 			 qq({"farms" : [ { "name" : "$farm->{ name }", "source-addr" : "$srcaddr" } ] })

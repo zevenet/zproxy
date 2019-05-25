@@ -69,7 +69,7 @@ sub runL4FarmCreate
 		{
 		   farm   => $farm_name,
 		   file   => "$farm_filename",
-		   method => "PUT",
+		   method => "POST",
 		   body =>
 			 qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "tcp", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })
 		}

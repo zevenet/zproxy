@@ -949,7 +949,7 @@ sub writeL4NlbConfigFile
 
 	require Zevenet::Lock;
 
-	if ( !-e "$nftfile" || !-e "$cfgfile" )
+	if ( !-e "$nftfile" )
 	{
 		return 1;
 	}
