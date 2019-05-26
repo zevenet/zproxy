@@ -299,8 +299,8 @@ sub setIPDSFarmParam
 
 		if ( $type ne "datalink" )
 		{
-			$port = &getFarmVip( 'vipp', $farm );
-			my $proto = "tcp";
+			$port  = &getFarmVip( 'vipp', $farm );
+			$proto = "tcp";
 			$proto = "udp" if ( &getFarmProto( $farm ) eq "UDP" );
 		}
 
