@@ -44,7 +44,9 @@ sub certificates    # ()
 
 	foreach my $cert ( @certificates )
 	{
-		push @out, &getCertInfo( "$configdir/$cert" );
+		my $cert = &getCertInfo( "$configdir/$cert" );
+		delete $cert->{ key };
+		push @out, $cert;
 	}
 
 	my $body = {
