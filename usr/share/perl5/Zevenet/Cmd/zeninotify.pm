@@ -98,11 +98,13 @@ $SIG{ TERM } = \&leave_zeninotify;  # termination request
 
 #### target files/directories to watch for changes ####3
 my @ino_targets = ( $configdir, $rttables );
+my $localconfig = &getGlobalConfiguration( 'localconfig' );
 
 &zenlog( "ino_target:$_" ) for @ino_targets;
 
 for my $subdir ( &getSubdirectories( $configdir ) )
 {
+	next if ( $localconfig eq $subdir );
 	&zenlog( "Watching directory $subdir" );
 	push ( @ino_targets, $subdir );
 }

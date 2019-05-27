@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Log;
 
 sub include;
 
@@ -879,8 +880,9 @@ sub getClusterExcludedFiles
 	my $localconfig = &getGlobalConfiguration( 'localconfig' );
 
 	return (
-			 "lost+found",  "global.conf", "if_*_conf", "zencert-c.key",
-			 "zencert.pem", "zlb-start",   "zlb-stop",  $localconfig,
+			 "lost+found",    "global.conf", "if_*_conf",
+			 "zencert-c.key", "zencert.pem", "zlb-start",
+			 "zlb-stop",      $localconfig,  "local"
 	);
 }
 
