@@ -4,6 +4,9 @@
 #include "util/system.h"
 #include <csignal>
 #include <sys/resource.h>
+#include <csetjmp>
+
+static jmp_buf jmpbuf;
 
 // Log initilization
 std::mutex Debug::log_lock;
@@ -14,7 +17,9 @@ void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
   // stop listener
-  exit(EXIT_FAILURE);
+  printf("handler %d \n", sig);
+  ::longjmp(jmpbuf, 1);
+//  exit(EXIT_FAILURE);
 }
 
 void redirectLogOutput(std::string name, std::string chroot_path,
@@ -82,6 +87,15 @@ bool daemonize() {
 }
 
 int main(int argc, char *argv[]) {
+  static Listener listener;
+  auto control_manager = ctl::ControlManager::getInstance();
+
+  if (setjmp(jmpbuf)) {
+    // we are in signal context here
+    listener.stop();
+    std::this_thread::sleep_for(std::chrono::seconds(5)); //grace time to stop threads
+    exit(EXIT_SUCCESS);
+  }
   Config config;
   // inicializar la interfaz de control (poundctl)
   // ControlInterface control_interface;
@@ -137,19 +151,19 @@ int main(int argc, char *argv[]) {
   Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
 
   /*Set process user and group*/
-  if (config.user != nullptr)
+  if (config.user != nullptr) {
     Environment::setUid(std::string(config.user));
-  if (config.group != nullptr)
+  }
+  if (config.group != nullptr) {
     Environment::setGid(std::string(config.group));
+  }
 
 
-  auto control_manager = ctl::ControlManager::getInstance();
   if (config.ctrl_name != nullptr) {
     control_manager->init(config);
     control_manager->start();
   }
 
-  Listener listener;
   if(!listener.init(config.listeners[0])){
     Debug::LogInfo("Error initializing listener socket", LOG_ERR);
     exit(EXIT_FAILURE);
