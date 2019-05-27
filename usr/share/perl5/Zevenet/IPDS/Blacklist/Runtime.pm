@@ -76,8 +76,11 @@ sub setBLDestroyList
 		&delBLCronTask( $listName );
 	}
 
-	&zenlog( "Destroying blacklist $listName", "info", "IPDS" );
-	$output = &delIPDSPolicy( 'policy', undef, $listName );
+	if ( &getBLIpsetStatus( $listName ) eq 'up' )
+	{
+		&zenlog( "Destroying blacklist $listName", "info", "IPDS" );
+		$output = &delIPDSPolicy( 'policy', undef, $listName );
+	}
 
 	return $output;
 }

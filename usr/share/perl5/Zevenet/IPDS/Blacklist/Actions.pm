@@ -331,10 +331,7 @@ sub runBLStop
 
 	if ( !&getBLListNoUsed( $rule ) )
 	{
-		if ( &getBLIpsetStatus( $rule ) eq 'up' )
-		{
-			&setBLDestroyList( $rule );
-		}
+		&setBLDestroyList( $rule );
 	}
 }
 
