@@ -285,10 +285,9 @@ sub getGSLBControlPort    # ( $farm_name )
 	my $ffile    = &getFarmFile( $farmName );
 	$ffile = "$configdir/$ffile/etc/config";
 
-	require Tie::File;
-	tie my @file, 'Tie::File', $ffile;
+	open my $fh, '<', $ffile;
 
-	foreach my $line ( @file )
+	foreach my $line ( <$fh> )
 	{
 		if ( $line =~ /http_port =\s*(\d+)/ )
 		{
@@ -296,7 +295,7 @@ sub getGSLBControlPort    # ( $farm_name )
 			last;
 		}
 	}
-	untie @file;
+	close $fh;
 
 	return $port;
 }

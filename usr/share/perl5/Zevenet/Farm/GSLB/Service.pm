@@ -44,8 +44,6 @@ sub getGSLBFarmServices    # ($farm_name)
 			 "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
-	require Tie::File;
-
 	my $output = -1;
 	my @srvarr = ();
 
@@ -57,10 +55,9 @@ sub getGSLBFarmServices    # ($farm_name)
 	{
 		next if $plugin =~ /^\./;
 
-		tie my @fileconf, 'Tie::File',
-		  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
+		open my $fh, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 
-		my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, @fileconf );
+		my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, <$fh> );
 
 		foreach my $srvstring ( @srv )
 		{
@@ -76,7 +73,7 @@ sub getGSLBFarmServices    # ($farm_name)
 			push ( @srvarr, @srv );
 		}
 
-		untie @fileconf;
+		close $fh;
 	}
 
 	return @srvarr;
