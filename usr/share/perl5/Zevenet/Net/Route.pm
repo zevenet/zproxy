@@ -158,8 +158,8 @@ sub addlocalnet    # ($if_ref)
 		next if $iface->{ type } eq 'virtual';
 		next if $iface->{ is_slave } eq 'true';    # Is in bonding iface
 		next
-		  if !defined $iface->{ addr }
-		  or length $iface->{ addr } == 0;         #IP addr doesn't exist
+		  if (   !defined $iface->{ addr }
+			   or length $iface->{ addr } == 0 );    #IP addr doesn't exist
 		next if $iface->{ name } eq $if_ref->{ name };
 		&zenlog(
 			   "addlocalnet: into current interface: name $$iface{name} type $$iface{type}",
