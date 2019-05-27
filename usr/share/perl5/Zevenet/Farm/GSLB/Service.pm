@@ -281,6 +281,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		else
 		{
 			# Include the service in the plugin file
+			use Tie::File;
 			tie my @fileconf, 'Tie::File',
 			  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$gsalg.cfg";
 			if ( grep ( /^\t$svice =>.*/, @fileconf ) )
@@ -331,6 +332,8 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		}
 		if ( $output == 0 )
 		{
+			use Tie::File;
+
 			# Include the plugin file in the main configuration
 			tie my @fileconf, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 			if ( ( grep ( /include\{plugins\/$gsalg\.cfg\}/, @fileconf ) ) == 0 )
