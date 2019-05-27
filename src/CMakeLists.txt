@@ -11,8 +11,9 @@ add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 add_definitions(-DDEBUG_STREAM_EVENTS_COUNT=1)
 #SSL stuff
-add_definitions(-DSSL_DISABLE_SESSION_CACHE=1)
+add_definitions(-DSSL_DISABLE_SESSION_CACHE=1) #internal ssl session caching
 add_definitions(-DDEBUG_SSL=0)
+add_definitions(-DENABLE_SSL_SESSION_CACHING=1)
 
 
 add_library(libzhttp

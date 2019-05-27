@@ -3,6 +3,9 @@
 //
 
 #include "ssl_session.h"
+#include "../debug/Debug.h"
+
+using namespace ssl;
 
 SslSessionManager *SslSessionManager::ssl_session_manager = nullptr;
 
@@ -14,7 +17,7 @@ SslSessionManager *SslSessionManager::getInstance() {
 }
 
 void SslSessionManager::removeSessionId(const unsigned char *id, int idLength) {
-
+  Debug::logmsg(LOG_ERR,"SESSION DELETE id: %s", id);
   std::lock_guard<std::mutex> lock(data_mtx);
   auto i = sessions.begin();
   while (i != sessions.end())
@@ -22,7 +25,7 @@ void SslSessionManager::removeSessionId(const unsigned char *id, int idLength) {
     if (std::memcmp((*i)->sess_id, id, idLength) == 0) {
       delete (*i);
       sessions.erase(i++);
-    }else ++i;
+    } else ++i;
   }
 }
 
@@ -33,7 +36,7 @@ int SslSessionManager::addSession(SSL *ssl, SSL_SESSION *session) {
   unsigned char *buff;
   unsigned int id_length ;
   const unsigned char *id =  SSL_SESSION_get_id(session, &id_length);
-
+  Debug::logmsg(LOG_ERR,"SESSION ADD id: %s", id);
   removeSessionId(id, id_length);
   std::lock_guard<std::mutex> lock(data_mtx);
 
@@ -51,10 +54,10 @@ int SslSessionManager::addSession(SSL *ssl, SSL_SESSION *session) {
   return 1;
 }
 
-SSL_SESSION *SslSessionManager::getSession(SSL *ssl, unsigned char *id, int id_length, int *do_copy) {
+SSL_SESSION *SslSessionManager::getSession(SSL *ssl,const unsigned char *id, int id_length, int *do_copy) {
   unsigned char *buff;
   std::lock_guard<std::mutex> lock(data_mtx);
-
+  Debug::logmsg(LOG_ERR,"SESSION GET id: %s", id);
   *do_copy = 0;
 
   for (auto data: sessions) {
@@ -85,8 +88,23 @@ void SslSessionManager::attachCallbacks(SSL_CTX *sctx) {
   SSL_CTX_set_session_cache_mode(sctx,
                                  SSL_SESS_CACHE_NO_INTERNAL |
                                      SSL_SESS_CACHE_SERVER);
-//  SSL_CTX_sess_set_new_cb(sctx, addSession);
-//  SSL_CTX_sess_set_get_cb(sctx, getSession);
-//  SSL_CTX_sess_set_remove_cb(sctx, deleteSession);
+  SSL_CTX_sess_set_new_cb(sctx,  addSessionCb);
+  SSL_CTX_sess_set_get_cb(sctx, getSessionCb);
+  SSL_CTX_sess_set_remove_cb(sctx, deleteSessionCb);
+}
+
+int SslSessionManager::addSessionCb(SSL *ssl, SSL_SESSION *session)
+{
+    return getInstance()->addSession(ssl, session);
+}
+
+SSL_SESSION *SslSessionManager::getSessionCb(SSL *ssl, const unsigned char *id, int id_length, int *do_copy)
+{
+    return getInstance()->getSession(ssl, id, id_length, do_copy);
+}
+
+void SslSessionManager::deleteSessionCb(SSL_CTX *sctx, SSL_SESSION *session)
+{
+    return getInstance()->deleteSession(sctx, session);
 }
 
