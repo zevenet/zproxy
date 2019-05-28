@@ -222,7 +222,7 @@ while ( 1 )
 			my $matched;
 			for my $pattern ( @excluded_patterns )
 			{
-				if ( $event->fullname =~ /$pattern/ )
+				if ( $event->fullname =~ /$pattern/ or $event->fullname eq $pattern )
 				{
 					if ( $event->fullname !~ /$configdir\/if.+:.+_conf/ )
 					{

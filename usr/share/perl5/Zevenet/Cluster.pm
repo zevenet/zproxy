@@ -880,9 +880,8 @@ sub getClusterExcludedFiles
 	my $localconfig = &getGlobalConfiguration( 'localconfig' );
 
 	return (
-			 "lost+found",    "global.conf", "if_*_conf",
-			 "zencert-c.key", "zencert.pem", "zlb-start",
-			 "zlb-stop",      $localconfig,  "local"
+			 "lost+found",  "global.conf", "if_*_conf", "zencert-c.key",
+			 "zencert.pem", "zlb-start",   "zlb-stop",  $localconfig,
 	);
 }
 
@@ -907,15 +906,11 @@ sub runSync
 			 "debug", "PROFILING" );
 	my $src_path = shift;
 
-	#~ &zenlog("starting runSync", "info", "CLUSTER");
-
 	require Zevenet::SystemInfo;
 
-	#~ my @excluded_paths = @_;
 	my @excluded_files = &getClusterExcludedFiles();
-
+	push @excluded_files, '/local';    # exclude local config dir
 	my $cl_conf = &getZClusterConfig();    # cluster configuration hash
-	     #~ my $local_ip = &iponif( $cl_conf->{_}->{interface} );
 
 	# Warning: The Config::Tiny object can be defined without holding any key
 	if ( !$cl_conf || ( keys %$cl_conf ) == 0 )
@@ -931,25 +926,14 @@ sub runSync
 		next if $key eq '_';
 		next if $key eq &getHostname();
 
-		#~ next if $cl_conf->{$key}->{ip} eq $local_ip;
-
-		#~ &zenlog("runSync key:$key", "info", "CLUSTER");
-
-		#~ &zenlog("Element:$element", "info", "CLUSTER");
-		#~ &zenlog("Adding $cl_conf->{$element}->{ip}", "info", "CLUSTER");
-
 		my %arg = (
 			exclude => \@excluded_files,
 			include => ["if_*:*_conf"],
 
-			#~ exclude => [ '*' ],
-			#~ include => [ "$target" ],
 			ip_addr => $cl_conf->{ $key }->{ ip },
 			path    => $src_path,
 		);
 
-		#~ &zenlog("Element:$element ($cl_conf->{$element}->{ip})", "info", "CLUSTER");
-		#~ &zenlog("Adding $cl_conf->{$element}->{ip}", "info", "CLUSTER");
 		push ( @args, \%arg );
 
 		#~ &zenlog( Dumper \%arg , "debug", "CLUSTER");
@@ -958,19 +942,6 @@ sub runSync
 	# WARNING: as a temporal workaround run zsync once
 	#          since there is only one more node.
 	&zsync( $args[0] );
-
-	#~ # run in parallel
-	#~ my $r_list = &runParallel( \&zsync, \@args );
-
-	#~ for my $rc ( @{ $r_list } )
-	#~ {
-	#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}", "info", "CLUSTER);
-
-#~ if ( $rc->{ret_val} )
-#~ {
-#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}", "info", "CLUSTER");
-#~ }
-#~ }
 }
 
 =begin nd
