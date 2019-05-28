@@ -285,6 +285,17 @@ If 0 zhttp manages Expect: 100-continue headers.
 \fBRoutingPolicy\fR ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
 Specify the routing policy. All the algorithms are weighted with all the
 weights set in each backend.
+
+    \fBROUND_ROBIN\fR use the round robin algorithm as a routing policy.
+
+    \fBLEAST_CONNECTIONS\fR select the backend with least connections established
+    using as a proportion the weights set.
+
+    \fBRESPONSE_TIME\fR select the backend with the lowest response time using
+    as a proportion the weights set.
+
+    \fBPENDING_CONNECTIONS\fR select the backend with least pending connections
+    using as a proportion the weights set.
 .TP
 \fBCompressionAlgorithm\fR gzip|deflate
 Specify the compression algorithm to use. If the client supports it and the
@@ -553,7 +564,18 @@ following additional directives are also available:
 .TP
 \fBSSLConfigFile\fR "ssl config file"
 Specify the SSL configuration file. This file must follow the ssl .conf file
-format.
+format. Here is an example of an openSSL configuration file.
+
+    zhttp = test_sect
+
+    [ test_sect ]
+    ssl_conf = start_point
+
+    [ start_point ]
+    lis = listener
+
+    [ listener ]
+    RSA.Certificate = /path/to/your/cert.pem
 .TP
 \fBCert\fR "certificate file"
 Specify the server certificate. The
@@ -1137,6 +1159,37 @@ server is re-opened as necessary.
 attempts to resolve the names of the hosts that appear in various requests and/or responses.
 That means it need a functioning resolver of some kind (be it /etc/hosts, DNS or something
 else).
+.SH API
+It is possible to do hot backend, service, listener and session changes using
+the API. Here is the operations allowed by the API. All the request must be
+directed to the zhttp unix socket or to the control IP address and port. The
+response is going to be a JSON formatted response with all the information
+requested or the operation result.
+
+    \fBGet the services status of the listener with the id "listener_id"\fR
+
+    GET http://address:port/listener/listener_id/services
+
+    \fBGet the service with the id "service_id" general status\fR
+
+    GET http://address:port/listener/listener_id/service/service_id
+
+    \fBGet the backend with the id "backend_id" general status\fR
+
+    GET http://address:port/listener/listener_id/service/service_id/backend/backend_id
+
+    \fBGet any field of a service or backend\fR
+
+    GET http://address:port/listener/listener_id/service/service_id/field_name
+
+    GET http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
+
+    \fBModify any field of a service or backend\fR
+
+    POST {field_name: value} http://address:port/listener/listener_id/service/service_id/field_name
+
+    POST {field_name: value} http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
+
 .SH EXAMPLES
 To translate HTTPS requests to a local HTTP server (assuming your network address
 is 123.123.123.123):
