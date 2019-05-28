@@ -50,7 +50,6 @@ sub getDOSInitialParams
 	include 'Zevenet::System::SSH';
 
 	my $sshconf = &getSsh();
-	my $port    = $sshconf->{ 'port' };
 
 	my %initial = (
 		 'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type' => 'farm' },
@@ -69,14 +68,6 @@ sub getDOSInitialParams
 						 'status'      => 'down',
 						 'limit_burst' => 15,
 						 'type'        => 'farm'
-		 },
-		 'sshbruteforce' => {
-							  'status' => 'down',
-							  'hits'   => 10,
-							  'port'   => $port,
-							  'time'   => 60,
-							  'type'   => 'system',
-							  'name'   => 'ssh_brute_force'
 		 },
 	);
 
@@ -129,9 +120,6 @@ sub initDOSModule
 			}
 		}
 	}
-
-	$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
-	  if ( !&getDOSExists( 'ssh_brute_force' ) );
 
 	return $output;
 }

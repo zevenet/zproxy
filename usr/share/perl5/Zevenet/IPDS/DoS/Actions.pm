@@ -82,16 +82,6 @@ sub runDOSStartModule
 		}
 	}
 
-	# This block is a bugfix. When ssh_brute_force rule doesn't show the port
-	if ( !&setDOSParam( 'ssh_brute_force', 'port' ) )
-	{
-		include 'Zevenet::System::SSH';
-
-		my $sshconf = &getSsh();
-		my $port    = $sshconf->{ 'port' };
-		&setDOSParam( 'ssh_brute_force', 'port', $port );
-	}
-
 	return $output;
 }
 
