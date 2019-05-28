@@ -29,17 +29,17 @@ use Regexp::IPv6 qw($IPv6_re);
 # \w matches the 63 characters [a-zA-Z0-9_] (most of the time)
 #
 
-my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;           # (0-255)
-my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;    # (0-128)
+my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|(?!0)[1]?\d\d?|0)/;       # (0-255)
+my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;      # (0-128)
 my $HEXCHAR       = qr/(?:[A-Fa-f0-9])/;
 my $ipv6_word     = qr/(?:$HEXCHAR+){1,4}/;
-my $ipv4_addr = qr/(?:(?!0)$UNSIGNED8BITS\.){3}(?!0)$UNSIGNED8BITS/;
-my $ipv6_addr = $IPv6_re;
-my $mac_addr  = qr/(?:$HEXCHAR$HEXCHAR\:){5}$HEXCHAR$HEXCHAR/;
-my $ipv4v6    = qr/(?:$ipv4_addr|$ipv6_addr)/;
-my $boolean   = qr/(?:true|false)/;
-my $enable    = qr/(?:enable|disable)/;
-my $integer   = qr/\d+/;
+my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
+my $ipv6_addr     = $IPv6_re;
+my $mac_addr      = qr/(?:$HEXCHAR$HEXCHAR\:){5}$HEXCHAR$HEXCHAR/;
+my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
+my $boolean       = qr/(?:true|false)/;
+my $enable        = qr/(?:enable|disable)/;
+my $integer       = qr/\d+/;
 my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
 my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)/;
 my $minutes  = qr/(?:\d|[0-5]\d)/;
