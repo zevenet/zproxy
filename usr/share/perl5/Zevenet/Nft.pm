@@ -201,6 +201,9 @@ sub httpNlbRequest
 	  qq($curl_cmd --noproxy "*" -s -H "Key: HoLa" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
 	my $file = "/tmp/nft_$$";
+	$file = $self->{ file }
+	  if ( defined $self->{ file } && $self->{ file } =~ /ipds/ );
+
 	if ( defined $self->{ file } && $self->{ file } ne "" )
 	{
 		$execmd = $execmd . " -f -o $file";
@@ -212,7 +215,8 @@ sub httpNlbRequest
 	if (    defined $self->{ file }
 		 && $self->{ file } ne ""
 		 && -f "$file"
-		 && $self->{ file } !~ /\/tmp\// )
+		 && $self->{ file } !~ /\/tmp\//
+		 && $file !~ /ipds/ )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		&writeL4NlbConfigFile( $file, $self->{ file } );
