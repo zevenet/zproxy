@@ -20,6 +20,8 @@ option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" ON)
+option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabled" ON)
+option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " ON)
 
 #file(REMOVE_RECURSE "${MAINFOLDER}/build")
 #file(MAKE_DIRECTORY "${MAINFOLDER}/build")
@@ -85,8 +87,17 @@ add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -fpermissive  -Wshadow -pipe  ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -fpermissive  -Wshadow -pipe -pthread")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
+
+if (ENABLE_HEAP_PROFILER)
+	add_definitions(-DENABLE_HEAP_PROFILE)
+#	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer -fsanitize-address-use-after-scope -O2 -g")
+#	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+#	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
+														   -fno-builtin-realloc -fno-builtin-free")
+endif ()
 
 if (UNIQUE_BUILD_DIRECTORY)
 	  SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
@@ -239,21 +250,6 @@ if (BUILD_DOC)
 				else (DOXYGEN_FOUND)
 					message("Doxygen needs to be installed to generate the documentation.")
 			endif (DOXYGEN_FOUND)
-
-		file(WRITE "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "/root\n")
-
-		macro(add_deployment_file SRC DEST)
-			  file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-				file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
-			endmacro()
-
-		macro(add_deployment_directory SRC DEST)
-			  file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
-				foreach (filename ${files})
-					  get_filename_component(path ${filename} PATH)
-						add_deployment_file("${filename}" "${DEST}/${path}")
-					endforeach (filename)
-			endmacro()
 endif ()
 
 #project deployment

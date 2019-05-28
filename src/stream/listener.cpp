@@ -3,6 +3,10 @@
 //
 
 #include "listener.h"
+#include "../ssl/ssl_session.h"
+#ifdef ENABLE_HEAP_PROFILE
+#include  <gperftools/heap-profiler.h>
+#endif
 
 #define DEFAULT_MAINTENANCE_INTERVAL 2000
 
@@ -113,7 +117,11 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     root->emplace("on_backend_disconnect",
                   std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_backend_disconnect>::count)));
-
+#if ENABLE_SSL_SESSION_CACHING
+    root->emplace("SESSION list size",
+                  std::unique_ptr<JsonDataValue>(
+                      new JsonDataValue(static_cast<int>(ssl::SslSessionManager::getInstance()->sessions.size()))));
+#endif
 #endif
 
 
@@ -164,6 +172,10 @@ Listener::~Listener() {
     sm.second->stop();
     delete sm.second;
   }
+#ifdef ENABLE_HEAP_PROFILE
+  HeapProfilerDump("Heap profile data");
+  HeapProfilerStop();
+#endif
   worker_thread.join();
 }
 
@@ -192,6 +204,10 @@ void Listener::start() {
                      LOG_NOTICE);
     }
   }
+#ifdef ENABLE_HEAP_PROFILE
+  HeapProfilerStart("/tmp/zhttp");
+#endif
+
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr && sm->init(listener_config)) {
