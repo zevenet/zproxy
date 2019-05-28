@@ -163,12 +163,17 @@ sub setL4FarmParam
 		$value = "stlsdnat" if ( $value eq "stateless_dnat" );
 		$parameters = qq(, "mode" : "$value" );
 
-		# deactivate leastconn and persistence for DSR #NOTYET
-		if ( $value eq "dsr" )
+		# deactivate leastconn and persistence for ingress modes
+		if ( $value eq "dsr" || $value eq "stateless_dnat" )
 		{
 			require Zevenet::Farm::L4xNAT::L4sd;
 			&setL4sdType( $farm_name, "none" );
 			&setL4FarmParam( 'persist', "", $farm_name );
+
+			# unassign DoS & RBL
+			require Zevenet::IPDS::Base;
+			&runIPDSStopByFarm( $farm_name, "dos" );
+			&runIPDSStopByFarm( $farm_name, "rbl" );
 		}
 
 		# take care of floating interfaces without masquerading

@@ -152,7 +152,8 @@ Function: runIPDSStopByFarm
 	It is useful when a farm is stopped or remove from rule
 
 Parameters:
-	Farmname - Farm name
+	farmname - Farm name
+	type - module of ipds to stop (bl, dos, rbl)
 
 Returns:
 	none - .
@@ -164,6 +165,7 @@ sub runIPDSStopByFarm
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
+	my $type     = shift;
 
 	include 'Zevenet::Farm::Base';
 	return if ( &getFarmStatus( $farmname ) eq "down" );
@@ -184,6 +186,7 @@ sub runIPDSStopByFarm
 		$name = $rule->{ name };
 		&runBLStop( $name, $farmname );
 	}
+	if ( !defined $type || $type eq "" || $type eq "bl" );
 
 	# start dos rules
 	foreach my $rule ( @{ $rules->{ dos } } )
@@ -192,6 +195,7 @@ sub runIPDSStopByFarm
 		$name = $rule->{ name };
 		&runDOSStop( $name, $farmname );
 	}
+	if ( !defined $type || $type eq "" || $type eq "dos" );
 
 	# start rbl rules
 	foreach my $rule ( @{ $rules->{ rbl } } )
@@ -200,6 +204,7 @@ sub runIPDSStopByFarm
 		$name = $rule->{ name };
 		&runRBLStop( $name, $farmname );
 	}
+	if ( !defined $type || $type eq "" || $type eq "rbl" );
 }
 
 =begin nd
