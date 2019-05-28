@@ -1353,7 +1353,6 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 				$stat = 0;
 			}
 			$enter--;
-			last;
 		}
 		if ( $array[$i] =~ /Port/ and $vip_port )
 		{
@@ -1362,8 +1361,8 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 				$stat = 0;
 			}
 			$enter--;
-			last;
 		}
+		last if ( !$enter );
 	}
 
 	untie @array;
