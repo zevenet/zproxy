@@ -327,6 +327,7 @@ $netplug_init_tpl="$templatedir/netplug.template";
 $netplugd_conf_tpl="$templatedir/netplugd.conf.template";
 $netplug_init="/etc/netplug/netplug";
 $netplugd_conf="/etc/netplug/netplugd.conf";
+$netplugd_srv="/etc/init.d/netplug";
 
 
 #syslog service

@@ -417,6 +417,11 @@ sub delIf    # ($if_ref)
 				func   => 'delRBACResource',
 				args   => [$$if_ref{ name }, 'interfaces'],
 		);
+
+		#reload netplug
+		&eload( module => 'Zevenet::Net::Ext',
+				func   => 'reloadNetplug', );
+
 	}
 
 	return $status;

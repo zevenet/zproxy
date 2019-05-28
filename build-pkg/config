@@ -264,6 +264,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/IPDS/WAF/Runtime.pm
 	usr/share/perl5/Zevenet/IPDS/WAF/Parser.pm
 	usr/share/perl5/Zevenet/IPDS/Setup.pm
+	usr/share/perl5/Zevenet/Net/Ext.pm
 	usr/share/perl5/Zevenet/Net/Bonding.pm
 	usr/share/perl5/Zevenet/Net/Floating.pm
 	usr/share/perl5/Zevenet/Net/Throughput.pm
