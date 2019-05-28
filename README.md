@@ -1,16 +1,20 @@
 # WIP Zevenet Http proxy
-L7 proxy core for NG zevenet load balancer
+
+Zhttp is an event-driven and multi-threading L7 reverse proxy. Zhttp supports HTTP and HTTPS by using OpenSSL 1.1.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
- * A modern C/C++ compiler
- * CMake 3.6+ installed
- * libssl  (1.1 for now)
- * zlib
- * doxygen for source code documentation generation
+* A modern C/C++ compiler
+* CMake 3.6+ installed
+* libssl  (1.1 for now)
+* zlib
+* doxygen for source code documentation generation
+
+*Note: You can download and build zlib and libssl during the zhttp compilation by enabling BUNDLED_ZLIB and BUNDLED_OPENSSL.*
 
 ### Building The Project
 
@@ -35,37 +39,176 @@ $ bin/zhttptests
 
 #### Project Structure
 
- * `src/*` — C++ code that compiles into a library (libzhttp.a) and the main zhttp binary.
- * `src/ctl` — Generate a command line interface binary.
- * `test/lib` — C++ libraries used for tests ( Google Test).
- * `test/src` — C++ test suite.
- * `cmake/*` — Cmake input files.
- * `docs/` _ Doxygen configuration file (Doxyfile).
- * `build-pkg/` _ docker based automated Debian installation package generation.
- * `docker/` _ Files for creation and running a complete GUI IDE (QTCreator) in a docker container based on debian stretch.
+* `src/*` — C++ code that compiles into a library (libzhttp.a) and the main zhttp binary.
+* `src/ctl` — Generate a command line interface binary.
+* `test/lib` — C++ libraries used for tests ( Google Test).
+* `test/src` — C++ test suite.
+* `cmake/*` — Cmake input files.
+* `docs/` _ Doxygen configuration file (Doxyfile).
+* `build-pkg/` _ docker based automated Debian installation package generation.
+* `docker/` _ Files for creation and running a complete GUI IDE (QTCreator) in a docker container based on debian stretch.
+
+#### Quick start guide
+
+By following this guide you will end up having a zhttp deployed and running.
+
+1. Download and compile the zhttp proxy. You can follow the instructions above
+
+2. Take one of the example configuration files at `tests/data`. It is recommended to use `simple_http.cfg` or `simple_https.cfg` and modify it to use your infrastructure.
+
+3. Run `$ bin/zhttp -f /path/to/config_file`
+
+4. Now it is ready! You can check the global proxy status by using the control API.
+
 ## Feature Description
 
+API:
+
+- It is possible to do hot backend, service, listener and session changes using the API. Here is the operations allowed by the API.
+
+*All the request must be directed to the zhttp unix socket or to the control IP address and port. The response is going to be a JSON formatted response with all the information requested or the operation result.*
+
+**Get the services status of the listener with the id "listener_id"**
+
+GET http://address:port/listener/listener_id/services
+
+**Get the service with the id "service_id" general status**
+
+GET http://address:port/listener/listener_id/service/service_id
+
+**Get the backend with the id "backend_id" general status**
+
+GET http://address:port/listener/listener_id/service/service_id/backend/backend_id
+
+**Get any field of a service or backend**
+
+GET http://address:port/listener/listener_id/service/service_id/field_name
+
+GET http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
+
+**Modify any field of a service or backend**
+
+POST {field_name: value} http://address:port/listener/listener_id/service/service_id/field_name
+
+POST {field_name: value} http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
+
+- Examples of the API usage
+
+**Get all the services status.**
+
+GET http://localhost/listener/0/services
+
+```json
+"address": "0.0.0.0",
+"port": 9999,
+"services": [
+    {
+        "backends": [
+            {
+                "address": "192.168.0.253",
+                "connect-time": 0.0,
+                "connections": 0,
+                "id": 1,
+                "name": "bck_1",
+                "pending-connections": 0,
+                "port": 80,
+                "response-time": -1.0,
+                "status": "active",
+                "weight": 5
+            },
+            {
+                "address": "192.168.0.254",
+                "connect-time": 0.0,
+                "connections": 0,
+                "id": 2,
+                "name": "bck_2",
+                "pending-connections": 0,
+                "port": 80,
+                "response-time": 0.007924,
+                "status": "active",
+                "weight": 6
+            }
+        ],
+        "id": 1,
+        "name": "srv1",
+        "sessions": [
+            {
+                "backend-id": 2,
+                "id": "127.0.0.1",
+                "last-seen": 1540807787
+            }
+        ],
+        "status": "active"
+    },
+    {
+        "backends": [
+            {
+                "address": "192.168.0.253",
+                "connect-time": 0.0,
+                "connections": 0,
+                "id": 1,
+                "name": "bck_1",
+                "pending-connections": 0,
+                "port": 80,
+                "response-time": -1.0,
+                "status": "active",
+                "weight": 5
+            },
+            {
+                "address": "192.168.0.254",
+                "connect-time": 0.0,
+                "connections": 0,
+                "id": 2,
+                "name": "bck_2",
+                "pending-connections": 0,
+                "port": 80,
+                "response-time": -1.0,
+                "status": "active",
+                "weight": 6
+            }
+        ],
+        "id": 2,
+        "name": "srv2",
+        "sessions": [],
+        "status": "active"
+    }
+]
+```
+
+**Get the service status**
+
+GET http://localhost/listener/0/service/1/status
+
+```json
+ "status": "active"
+```
+
+**Disable a backend**
+
+POST {status: disabled} http://localhost/listener/0/service/1/status
+
+Ctl:
+
+- The ctl compile into a single binary zhttpctl, please checkout the zhttpctl manpage to use it.
 
 Tests:
 
- * Tests compile into a single binary `zhttptest` that is run on a command line to run the tests.
+* Tests compile into a single binary `zhttptest` that is run on a command line to run the tests.
 
 #### Contributing
 
 **Pull Requests are WELCOME!** Please submit any fixes or improvements:
 
- * [Project Github Home](https://github.com/abdessamad-zevenet/zhttp)
- * [Submit Issues](https://github.com/abdessamad-zevenet/zhttp/issues)
- * [Pull Requests](https://github.com/abdessamad-zevenet/zhttp/pulls)
+* [Project Github Home](https://github.com/abdessamad-zevenet/zhttp)
+* [Submit Issues](https://github.com/abdessamad-zevenet/zhttp/issues)
+* [Pull Requests](https://github.com/abdessamad-zevenet/zhttp/pulls)
 
 ### License
 
 &copy; 2019 Zevenet.
-
 
 ### Authors
 
 ## Acknowledgments
 
 * Hat tip to anyone whose code was used
-
