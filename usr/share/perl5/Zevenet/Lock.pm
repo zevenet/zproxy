@@ -95,6 +95,9 @@ Function: openlock
 
 	If neither 't' or 'b' are used on the mode parameter, the default Perl mode is used.
 
+	Take in mind, if you are executing process in parallel, if any of them remove the tmp locking file,
+	the resource will be unlocked.
+
 Parameters:
 	path - Absolute or relative path to the file to be opened.
 	mode - Mode used to open the file.

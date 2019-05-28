@@ -87,15 +87,25 @@ sub addWAFsetToFarm
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $farm_path = "$configdir/$farm_file";
-	my $tmp_conf  = "$configdir/farm_http.tmp";
+	my $tmp_conf  = "/tmp/waf_$farm.tmp";
 	my $pound     = &getGlobalConfiguration( 'pound' );
+	my $cp        = &getGlobalConfiguration( 'cp' );
+	my $mv        = &getGlobalConfiguration( 'mv' );
 
 	my $lock_file = &getLockFile( $tmp_conf );
 	my $lock_fh = &openlock( $lock_file, 'w' );
 
-	copy( $farm_path, $tmp_conf );
+	$err = &logAndRun( "$cp $farm_path $tmp_conf" );
+	if ( $err )
+	{
+		&zenlog( "The file $farm_path could not be copied", "error", "waf" );
+		unlink $tmp_conf;
+		close $lock_fh;
+		return $err;
+	}
 
-	&ztielock( \my @filefarmhttp, $tmp_conf );
+	use Tie::File;
+	tie my @filefarmhttp, 'Tie::File', $tmp_conf;
 
 	# write conf
 	my $flag_sets = 0;
@@ -126,7 +136,6 @@ sub addWAFsetToFarm
 			last;
 		}
 	}
-
 	untie @filefarmhttp;
 
 	# check config file
@@ -135,23 +144,26 @@ sub addWAFsetToFarm
 	if ( $err )
 	{
 		unlink $tmp_conf;
+		close $lock_fh;
 		return $err;
 	}
 
-	# if there is not error, overwrite configfile
-	move( $tmp_conf, $farm_path );
-
-	# reload farm
 	require Zevenet::Farm::Base;
-	if ( &getFarmStatus( $farm ) eq 'up' and !$err )
+
+	# if there is not error, overwrite configfile
+	$err = &logAndRun( "$mv $tmp_conf $farm_path" );
+	if ( $err )
 	{
+		&zenlog( 'Error saving changes', 'error', "waf" );
+	}
+	elsif ( &getFarmStatus( $farm ) eq 'up' )
+	{
+		# reload farm
 		$err = &reloadWAFByFarm( $farm );
 	}
 
-	close $lock_fh;
-
 	# Not to need farm restart
-	unlink $lock_file;
+	close $lock_fh;
 
 	return $err;
 }
