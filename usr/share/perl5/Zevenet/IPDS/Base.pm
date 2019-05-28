@@ -179,32 +179,38 @@ sub runIPDSStopByFarm
 
 	my $name;
 
-	# start BL rules
-	foreach my $rule ( @{ $rules->{ blacklists } } )
+	if ( !defined $type || $type eq "" || $type eq "bl" )
 	{
-		next if ( $rule->{ status } eq "down" );
-		$name = $rule->{ name };
-		&runBLStop( $name, $farmname );
+		# start BL rules
+		foreach my $rule ( @{ $rules->{ blacklists } } )
+		{
+			next if ( $rule->{ status } eq "down" );
+			$name = $rule->{ name };
+			&runBLStop( $name, $farmname );
+		}
 	}
-	if ( !defined $type || $type eq "" || $type eq "bl" );
 
-	# start dos rules
-	foreach my $rule ( @{ $rules->{ dos } } )
+	if ( !defined $type || $type eq "" || $type eq "dos" )
 	{
-		next if ( $rule->{ status } eq "down" );
-		$name = $rule->{ name };
-		&runDOSStop( $name, $farmname );
+		# start dos rules
+		foreach my $rule ( @{ $rules->{ dos } } )
+		{
+			next if ( $rule->{ status } eq "down" );
+			$name = $rule->{ name };
+			&runDOSStop( $name, $farmname );
+		}
 	}
-	if ( !defined $type || $type eq "" || $type eq "dos" );
 
-	# start rbl rules
-	foreach my $rule ( @{ $rules->{ rbl } } )
+	if ( !defined $type || $type eq "" || $type eq "rbl" )
 	{
-		next if ( $rule->{ status } eq "down" );
-		$name = $rule->{ name };
-		&runRBLStop( $name, $farmname );
+		# start rbl rules
+		foreach my $rule ( @{ $rules->{ rbl } } )
+		{
+			next if ( $rule->{ status } eq "down" );
+			$name = $rule->{ name };
+			&runRBLStop( $name, $farmname );
+		}
 	}
-	if ( !defined $type || $type eq "" || $type eq "rbl" );
 }
 
 =begin nd

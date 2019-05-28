@@ -326,13 +326,16 @@ sub runBLStop
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $rule, $farm ) = @_;
+	my $output = 0;
 
-	&setBLDeleteRule( $farm, $rule );
+	$output = &setBLDeleteRule( $farm, $rule );
 
 	if ( !&getBLListNoUsed( $rule ) )
 	{
 		&setBLDestroyList( $rule );
 	}
+
+	return $output;
 }
 
 =begin nd
