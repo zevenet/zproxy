@@ -847,7 +847,7 @@ nssv_DISABLE_MSVC_WARNINGS(4455 26481 26472)
     struct not_in_view {
       const basic_string_view v;
 
-      nssv_constexpr not_in_view(basic_string_view v) : v(v) {}
+      nssv_constexpr not_in_view(basic_string_view v_) : v(v_) {}
 
       nssv_constexpr bool operator()(CharT c) const {
         return npos == v.find_first_of(c);

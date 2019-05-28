@@ -17,12 +17,15 @@ add_definitions(-DENABLE_SSL_SESSION_CACHING=1)
 
 
 add_library(libzhttp
-        ssl/SSLContext.cpp
+		ssl/ssl_common.h
+		ssl/SSLContext.cpp
 		ssl/SSLContext.h
 		ssl/SSLConnectionManager.cpp
 		ssl/SSLConnectionManager.h
 		ssl/HttpsManager.cpp
 		ssl/HttpsManager.h
+		ssl/ssl_session.h
+		ssl/ssl_session.cpp
 		json/json.h
 		json/json.cpp
 		json/JsonDataValue.h
@@ -60,7 +63,6 @@ add_library(libzhttp
 		stats/backend_stats.h
 		stats/backend_stats.cpp
 		config/svc.h
-		ssl/ssl_common.h
 		config/svc.cpp
 		http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
 		http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
@@ -69,6 +71,7 @@ add_library(libzhttp
 		event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
 		service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
 		stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
+
 		)
 
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})

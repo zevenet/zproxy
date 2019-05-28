@@ -92,6 +92,7 @@ int main(int argc, char *argv[]) {
 
   if (setjmp(jmpbuf)) {
     // we are in signal context here
+    control_manager->stop();
     listener.stop();
     std::this_thread::sleep_for(std::chrono::seconds(5)); //grace time to stop threads
     exit(EXIT_SUCCESS);

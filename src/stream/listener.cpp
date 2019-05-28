@@ -176,7 +176,7 @@ Listener::~Listener() {
   HeapProfilerDump("Heap profile data");
   HeapProfilerStop();
 #endif
-  worker_thread.join();
+
 }
 
 void Listener::doWork() {
@@ -188,7 +188,7 @@ void Listener::doWork() {
   }
 }
 
-void Listener::stop() { is_running = false; }
+void Listener::stop() { is_running = false;  worker_thread.join();}
 
 void Listener::start() {
   ctl::ControlManager::getInstance()->deAttach(std::ref(*this));

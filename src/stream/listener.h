@@ -36,7 +36,7 @@ class Listener : public EpollManager,
 
 public:
   Listener();
-  ~Listener();
+  virtual ~Listener();
 
   /**
    * @brief Sets the listener connetion address and port.

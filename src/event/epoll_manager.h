@@ -87,6 +87,8 @@ protected:
 public:
   EpollManager();
 
+  virtual ~EpollManager();
+
   /**
    * @brief This function is the core function of the system. It waits for new events
    * and handles them.
@@ -94,7 +96,6 @@ public:
    * @return the current number of events.
    */
   int loopOnce(int time_out = -1);
-  ~EpollManager();
 
   /**
    * @brief Sets the Listener as a non blocking socket and starts to accept
@@ -102,6 +103,7 @@ public:
    * @param listener_fd is the Listener file descriptor
    * @return @c true if everything is ok, @c false if not.
    */
+
   bool handleAccept(int listener_fd);
 
   /**
@@ -140,4 +142,4 @@ public:
    */
   bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
 };
-}; // namespace events
+} // namespace events

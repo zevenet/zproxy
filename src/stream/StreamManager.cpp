@@ -1253,6 +1253,9 @@ void StreamManager::applyCompression(Service *service, HttpStream *stream) {
   }
 }
 
+/** Clears the HttpStream. It deletes all the timers and events. Finally,
+ * deletes the HttpStream.
+ */
 void StreamManager::clearStream(HttpStream *stream) {
 
   //TODO:: add connection closing reason for logging purpose
