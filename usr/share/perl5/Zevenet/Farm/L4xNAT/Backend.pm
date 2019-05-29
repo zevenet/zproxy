@@ -270,6 +270,8 @@ sub setL4FarmBackendsSessionsRemove
 	my ( $farmname, $backend ) = @_;
 	my $output = 0;
 
+	my $nft_bin = &getGlobalConfiguration( 'nft_bin' );
+
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my $farm = &getL4FarmStruct( $farmname );
@@ -279,7 +281,7 @@ sub setL4FarmBackendsSessionsRemove
 	my $be = $farm->{ servers }[$backend];
 	( my $tag = $be->{ tag } ) =~ s/0x//g;
 	my $map_name   = "persist-$farmname";
-	my @persistmap = `/usr/local/sbin/nft list map nftlb $map_name`;
+	my @persistmap = `$nft_bin list map nftlb $map_name`;
 	my $data       = 0;
 
 	foreach my $line ( @persistmap )
@@ -714,6 +716,40 @@ sub setL4BackendRule
 	  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 	return &setRule( $action, $vip_if, $table_if, "", "$mark/0x7fffffff" );
+}
+
+=begin nd
+Function: getL4ServerByMark
+
+	Obtain the backend id from the mark
+
+Parameters:
+	servers_ref - reference to the servers array
+	mark - backend mark to discover the id
+
+Returns:
+	integer - > 0 if successful, -1 if error.
+
+=cut
+
+sub getL4ServerByMark
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $servers_ref = shift;
+	my $mark        = shift;
+
+	( my $tag = $mark ) =~ s/0x.0*/0x/g;
+
+	foreach my $server ( @{ $servers_ref } )
+	{
+		if ( $server->{ tag } eq $tag )
+		{
+			return $server->{ id };
+		}
+	}
+
+	return -1;
 }
 
 1;
