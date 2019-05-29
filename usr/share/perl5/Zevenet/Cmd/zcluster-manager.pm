@@ -480,6 +480,8 @@ if ( $object =~ /^ipds_(rbl|bl|dos|waf)/ )
 	}
 	elsif ( $module eq 'waf' )
 	{
+		include 'Zevenet::IPDS::WAF::Runtime';
+
 		# zcluster-manager ipds_waf [reload_farm|reload_rule] <rule|farm>
 		if ( $command eq 'reload_rule' )
 		{
@@ -514,13 +516,13 @@ if ( $object eq 'interface' )
 	}
 
 	# common interface initial tasks
-	my $if_name = shift @ARGV;         # virtual interface name
-	my $ip_v    = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
+	my $if_name = shift @ARGV;      # virtual interface name
+	my $ip_v = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
 
 	# must have an interface argument
 	&quit( "Interface action not defined." ) if !$if_name;
 	&quit( "Only virtual interfaces are supported." )
-	  if $if_name !~ /.+:.+/;          # only accept virtual interfaces
+	  if $if_name !~ /.+:.+/;       # only accept virtual interfaces
 
 	my $if_ref = &getInterfaceConfig( $if_name, $ip_v );
 
