@@ -541,7 +541,7 @@ sub setBLModifSource
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$err = &delIPDSPolicy( 'elements', $oldSource, $listName );
+		$err = &delIPDSPolicy( 'element', $oldSource, $listName );
 		$err = &setIPDSPolicyParam( 'element', $source, $listName ) if ( !$err );
 	}
 
@@ -582,7 +582,7 @@ sub setBLDeleteSource
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$err = &delIPDSPolicy( 'elements', $source, $listName );
+		$err = &delIPDSPolicy( 'element', $source, $listName );
 	}
 
 	&zenlog( "$source was deleted from $listName", "info", "IPDS" ) if ( !$err );

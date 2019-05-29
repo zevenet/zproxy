@@ -608,7 +608,7 @@ sub delIPDSPolicy
 	}
 	elsif ( $param eq "element" && defined $value && $value ne "" )
 	{
-		$attrib = "/$list/element/$value";
+		$attrib = "/$list/elements/$value";
 	}
 	else
 	{
