@@ -326,7 +326,9 @@ sub sendL4NlbCmd
 	}
 
   # avoid farm configuration file destruction by asking nftlb only for modifications
-	if ( $self->{ method } =~ /PUT/ )
+  # or deletion of attributes of the farm
+	if ( $self->{ method } =~ /PUT/
+		 || ( $self->{ method } =~ /DELETE/ && $self->{ uri } =~ /farms\/.*\/.*/ ) )
 	{
 		my $file  = "/tmp/nft_$$";
 		my $match = 0;
