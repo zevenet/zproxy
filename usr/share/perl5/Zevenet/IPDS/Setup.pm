@@ -247,7 +247,7 @@ sub getIpdsSchedule
 				mode      => "",
 				frequency => "",
 				time      => {
-						  hour   => "",
+						  hour   => "0",
 						  minute => "",
 				},
 	};
@@ -277,7 +277,6 @@ sub getIpdsSchedule
 			{
 				my $hour = $+{ hour };
 				$out->{ time }->{ minute } = $+{ min };
-
 				if ( $hour =~ /(^\d+)(\-23\/)?(\d*)?/ )
 				{
 					$out->{ time }->{ hour } = $1 if ( $1 );
