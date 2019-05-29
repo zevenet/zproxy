@@ -139,20 +139,10 @@ sub get_dos_rule
 			 "debug", "PROFILING" );
 	my $name        = shift;
 	my $description = "Get DoS $name settings";
-	my $refRule     = &getDOSZapiRule( $name );
-	my $output;
 
-	if ( ref ( $refRule ) eq 'HASH' )
+	if ( !&getDOSExists( $name ) )
 	{
-		$output = &getDOSZapiRule( $name );
-
-		# successful
-		my $body = { description => $description, params => $refRule, };
-		&httpResponse( { code => 200, body => $body } );
-	}
-	else
-	{
-		$output = "$name doesn't exist.";
+		my $output = "$name does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -160,6 +150,12 @@ sub get_dos_rule
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
+
+	my $refRule = &getDOSZapiRule( $name );
+
+	# successful
+	my $body = { description => $description, params => $refRule, };
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #PUT /ipds/dos/<rule>

@@ -49,8 +49,6 @@ sub getDOSInitialParams
 	# get ssh port
 	include 'Zevenet::System::SSH';
 
-	my $sshconf = &getSsh();
-
 	my %initial = (
 		 'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type' => 'farm' },
 		 'limitconns' =>
