@@ -121,7 +121,7 @@ my $inotify = new Linux::Inotify2();
 foreach my $path ( @ino_targets )
 {
 	&zenlog( "Watching $path" );
-	$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+	$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE | IN_MOVED_TO );
 }
 
 # $event->w			The watcher object for this event.
@@ -205,7 +205,7 @@ while ( 1 )
 				{
 					&zenlog( "Watching $path" );
 					push ( @ino_targets, $path );
-					$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+					$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE | IN_MOVED_TO );
 				}
 				&runSync( $configdir );
 			}
