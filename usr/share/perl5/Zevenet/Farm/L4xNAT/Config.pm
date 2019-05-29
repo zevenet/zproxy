@@ -170,10 +170,20 @@ sub setL4FarmParam
 			&setL4sdType( $farm_name, "none" );
 			&setL4FarmParam( 'persist', "", $farm_name );
 
-			# unassign DoS & RBL
-			require Zevenet::IPDS::Base;
-			&runIPDSStopByFarm( $farm_name, "dos" );
-			&runIPDSStopByFarm( $farm_name, "rbl" );
+			if ( $eload )
+			{
+				# unassign DoS & RBL
+				&eload(
+						module => 'Zevenet::IPDS::Base',
+						func   => 'runIPDSStopByFarm',
+						args   => [$farm_name, "dos"],
+				);
+				&eload(
+						module => 'Zevenet::IPDS::Base',
+						func   => 'runIPDSStopByFarm',
+						args   => [$farm_name, "rbl"],
+				);
+			}
 		}
 
 		# take care of floating interfaces without masquerading
