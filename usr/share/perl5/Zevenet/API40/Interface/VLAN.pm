@@ -281,6 +281,20 @@ sub delete_interface_vlan    # ( $vlan )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ( $eload )
+	{
+		my $msg = &eload(
+						  module => 'Zevenet::Net::Ext',
+						  func   => 'isManagementIP',
+						  args   => [$if_ref->{ addr }],
+		);
+		if ( $msg ne "" )
+		{
+			$msg = "The interface cannot be modified. $msg";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# check if some farm is using this ip
 	require Zevenet::Farm::Base;
 	my @farms = &getFarmListByVip( $if_ref->{ addr } );
@@ -457,8 +471,21 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		require Zevenet::Net::Core;
+		if ( $eload )
+		{
+			my $msg = &eload(
+							  module => 'Zevenet::Net::Ext',
+							  func   => 'isManagementIP',
+							  args   => [$if_ref->{ addr }],
+			);
+			if ( $msg ne "" )
+			{
+				$msg = "The interface cannot be stopped. $msg";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 
+		require Zevenet::Net::Core;
 		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
@@ -536,6 +563,20 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	if ( exists $json_obj->{ ip }
 		 or ( exists $json_obj->{ dhcp } ) )
 	{
+		if ( $eload )
+		{
+			my $msg = &eload(
+							  module => 'Zevenet::Net::Ext',
+							  func   => 'isManagementIP',
+							  args   => [$if_ref->{ addr }],
+			);
+			if ( $msg ne "" )
+			{
+				$msg = "The interface cannot be modified. $msg";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
 		# check if some farm is using this ip
 		require Zevenet::Farm::Base;
 		@farms = &getFarmListByVip( $if_ref->{ addr } );
@@ -598,7 +639,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	else
 	{
 		my $new_if = {
-					   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+					   addr    => $json_obj->{ ip } // $if_ref->{ addr },
 					   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 					   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 		};
@@ -688,7 +729,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	  if ( $eload && exists $json_obj->{ mac } );
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 

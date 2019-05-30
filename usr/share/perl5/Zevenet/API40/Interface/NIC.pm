@@ -49,6 +49,20 @@ sub delete_interface_nic    # ( $nic )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ( $eload )
+	{
+		my $msg = &eload(
+						  module => 'Zevenet::Net::Ext',
+						  func   => 'isManagementIP',
+						  args   => [$if_ref->{ addr }],
+		);
+		if ( $msg ne "" )
+		{
+			$msg = "The interface cannot be modified. $msg";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# not delete the interface if it has some vlan configured
 	my @child = &getInterfaceChild( $nic );
 	if ( @child )
@@ -201,8 +215,21 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		require Zevenet::Net::Core;
+		if ( $eload )
+		{
+			my $msg = &eload(
+							  module => 'Zevenet::Net::Ext',
+							  func   => 'isManagementIP',
+							  args   => [$if_ref->{ addr }],
+			);
+			if ( $msg ne "" )
+			{
+				$msg = "The interface cannot be stopped. $msg";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 
+		require Zevenet::Net::Core;
 		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
@@ -281,8 +308,21 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	if ( exists $json_obj->{ ip }
 		 or ( exists $json_obj->{ dhcp } ) )
 	{
-		require Zevenet::Farm::Base;
+		if ( $eload )
+		{
+			my $msg = &eload(
+							  module => 'Zevenet::Net::Ext',
+							  func   => 'isManagementIP',
+							  args   => [$if_ref->{ addr }],
+			);
+			if ( $msg ne "" )
+			{
+				$msg = "The interface cannot be modified. $msg";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 
+		require Zevenet::Farm::Base;
 		@farms = &getFarmListByVip( $if_ref->{ addr } );
 
 		if ( @farms )
@@ -337,7 +377,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	if ( $if_ref )
 	{
 		$new_if = {
-					addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+					addr    => $json_obj->{ ip } // $if_ref->{ addr },
 					mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 					gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 		};
@@ -434,7 +474,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 	$if_ref->{ dhcp } = $json_obj->{ dhcp } if exists $json_obj->{ dhcp };

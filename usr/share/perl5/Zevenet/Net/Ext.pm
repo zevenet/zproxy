@@ -36,4 +36,32 @@ sub reloadNetplug    # ( $json_obj )
 	return $err;
 }
 
+sub isManagementIP
+{
+	my $ip  = shift;
+	my $out = "";
+
+	include 'Zevenet::System::HTTP';
+	include 'Zevenet::System::SSH';
+
+	my $ssh  = ( &getSsh()->{ listen } eq $ip ) ? 1 : 0;
+	my $http = ( &getHttpServerIp() eq $ip )    ? 1 : 0;
+
+	if ( $ssh && $http )
+	{
+		$out =
+		  "The IP '$ip' is been used as management interface for SSH and HTTP services.";
+	}
+	elsif ( $ssh )
+	{
+		$out = "The IP '$ip' is been used as management interface for SSH service.";
+	}
+	elsif ( $http )
+	{
+		$out = "The IP '$ip' is been used as management interface for HTTP service.";
+	}
+
+	return $out;
+}
+
 1;
