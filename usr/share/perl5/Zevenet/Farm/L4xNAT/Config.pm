@@ -339,7 +339,7 @@ sub setL4FarmParam
 	);
 
 	# Finally, reload rules
-	if ( $param eq "vip" && $srvparam eq "virtual-addr" )
+	if ( $param eq "vip" )
 	{
 		&doL4FarmRules( "reload", $farm_name, $prev_config );
 	}
