@@ -267,11 +267,12 @@ sub execNft
 	{
 		if ( $chain eq "" )
 		{
-			$output = &logAndRun( "$nft delete table $table 2> /dev/null" );
+			&zenlog( "Deleting cluster table $table" );
+			$output = `$nft delete table $table`;
 		}
 		elsif ( $rule eq "" )
 		{
-			$output = &logAndRun( "$nft delete chain $table $chain 2> /dev/null" );
+			$output = `$nft delete chain $table $chain`;
 		}
 		else
 		{
@@ -290,13 +291,21 @@ sub execNft
 	}
 	elsif ( $action eq "check" )
 	{
-		my @rules = `$nft list chain $table $chain 2> /dev/null`;
-		foreach my $r ( @rules )
+		if ( $chain eq "" )
 		{
-			if ( $r =~ / $rule / )
+			my @rules = `$nft list table $table`;
+			return 0 if ( scalar @rules == 0 );
+		}
+		else
+		{
+			my @rules = `$nft list chain $table $chain`;
+			foreach my $r ( @rules )
 			{
-				$output = 1;
-				last;
+				if ( $r =~ / $rule / )
+				{
+					$output = 1;
+					last;
+				}
 			}
 		}
 	}
