@@ -30,7 +30,7 @@ for FILE in $changed; do
                 REJECT=1
             elif [ $perltidy_flag -eq 1 ]; then
               echo "# Applying perltidy for $FILE"
-	      echo "-------------------------------------------------"
+              echo "-------------------------------------------------"
               perltidy "./$FILE" $perltidy_opts
               mv "./$FILE.tdy" "./$FILE"
 	      git add "./$FILE"

@@ -26,8 +26,10 @@ use strict;
 use Zevenet::API40::HTTP;
 
 my @bond_modes_short = (
-						 'balance-rr', 'active-backup', 'balance-xor', 'broadcast',
-						 '802.3ad',    'balance-tlb',   'balance-alb',
+						 'balance-rr',  'active-backup',
+						 'balance-xor', 'broadcast',
+						 '802.3ad',     'balance-tlb',
+						 'balance-alb',
 );
 
 sub new_bond    # ( $json_obj )
@@ -260,7 +262,7 @@ sub delete_interface_bond    # ( $bond )
 	}
 
 	include 'Zevenet::Net::Ext';
-	my $msg = &isManagementIP($if_ref->{ addr })
+	my $msg = &isManagementIP( $if_ref->{ addr } );
 	if ( $msg ne "" )
 	{
 		$msg = "The interface cannot be modified. $msg";
@@ -546,6 +548,8 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+
 	# validate action parameter
 	if ( $json_obj->{ action } eq 'destroy' )
 	{
@@ -554,8 +558,6 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	elsif ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Route;
-
-		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
 		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
@@ -587,7 +589,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	elsif ( $json_obj->{ action } eq "down" )
 	{
 		include 'Zevenet::Net::Ext';
-		my $msg = &isManagementIP($if_ref->{ addr });
+		my $msg = &isManagementIP( $if_ref->{ addr } );
 		if ( $msg ne "" )
 		{
 			$msg = "The interface cannot be stopped. $msg";
@@ -755,7 +757,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 		# check if network is correct
 		my $new_if = {
-					   addr    => $json_obj->{ ip } // $if_ref->{ addr },
+					   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
 					   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 					   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 		};
@@ -833,8 +835,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 		$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 		$if_ref->{ mac }     = lc $json_obj->{ mac }  if exists $json_obj->{ mac };
-		$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
-		$if_ref->{ name }    = $bond;
+		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+		$if_ref->{ name } = $bond;
 
 		unless (
 				 ( exists $if_ref->{ addr } && exists $if_ref->{ mask } )
