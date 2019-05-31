@@ -49,18 +49,6 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 		return -1;
 	}
 
-	# load the configuration file first if the farm is down
-	my $f_ref = &getL4FarmStruct( $farm_name );
-	if ( $f_ref->{ status } ne "up" )
-	{
-		require Zevenet::Farm::L4xNAT::Action;
-		my $out = &loadNLBFarm( $farm_name );
-		if ( $out != 0 )
-		{
-			return $out;
-		}
-	}
-
 	require Zevenet::Nft;
 	$output = &sendL4NlbCmd(
 		{
