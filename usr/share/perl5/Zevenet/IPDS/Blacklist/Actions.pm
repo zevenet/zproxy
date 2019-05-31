@@ -285,7 +285,7 @@ sub runBLStart
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $list, $farm ) = @_;
-	my $error;
+	my $error = 0;
 
 	# if the rule is disabled, not run it
 	return 0 if ( &getBLParam( $list, 'status' ) eq "down" );

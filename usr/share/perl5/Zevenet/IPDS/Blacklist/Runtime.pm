@@ -115,7 +115,10 @@ sub setBLRefreshList
 
 	$output = &delIPDSPolicy( 'elements', undef, $listName );
 
-	$output = &setIPDSPolicyParam( 'elements', $ipList, $listName );
+	if ( scalar @{ $ipList } )
+	{
+		$output = &setIPDSPolicyParam( 'elements', $ipList, $listName );
+	}
 
 	if ( $output )
 	{
