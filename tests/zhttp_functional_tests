@@ -1,77 +1,142 @@
 #!/usr/bin/perl
 
-use Encode qw(encode_utf8);
-use HTTP::Request ();
-use LWP::UserAgent;
-use JSON::MaybeXS qw(encode_json);
+# USAGE DOCUMENTATION:
+#
+# Options:
+# -zhttp_cfg : Path to the config file used by zhttp in the HTTP tests. Default: test_http.cfg
+# -zhttps_cfg : Path to the config file used by zhttp in the HTTPS tests. Default: test_https.cfg
+# -ip : Destination IP/URL used to do the requests. Default: localhost
+# -port : Port used to do the requests in the HTTP tests. Default: 8000
+# -port_https : Port used to do the requests in the HTTPS tests. Default: 8443
+# -file_path : Path to the custom file to be send in the POST request tests. Default: data/test_text.txt
+# -binary : Path to the zhttp binary. Default: ../build/bin/zhttp
+# -https : If this flag is set the HTTPS tests are going to be executed.
+# -no_zhttp : If this flag is set, zhttp is not going to be launched.
+
+# REQUIREMENTS:
+#
+# In order to run the functional tests you will need to install the following perl packages:
+#
+# Term::ANSIColor
+# JSON
+# Getopt::Long (It should be installed by default.)
+# Digest::MD5
+# Digest::MD5::File
+#
+# In addition, you will need "curl" and "Perl5" installed in your system.
+
+use Getopt::Long 'GetOptions';
+use JSON qw(decode_json);
 use Digest::MD5 qw(md5_hex);
+use Digest::MD5::File qw(file_md5_hex);
 use Term::ANSIColor;
 
-my $url_10mb = 'http://localhost:8000/10MB.zip';
-my $url_100mb = 'http://localhost:8000/100MB.zip';
-my $url_200mb = 'http://localhost:8000/200MB.zip';
-my $url_get = 'http://localhost:8000';
+my $zhttp_cfg = 'test_http.cfg';
+my $zhttps_cfg = 'test_https.cfg';
+my $ip = 'localhost';
+my $port = '8000';
+my $port_https = '8443';
+my $file_path = 'data/test_text.txt';
+my $binary = '../build/bin/zhttp';
+GetOptions(
+    'file=s' => \$file_path,
+    'zhttp_cfg=s' => \$zhttp_cfg,
+    'zhttps_cfg=s' => \$zhttps_cfg,
+    'https' => \my $https,
+    'no_zhttp' => \my $no_zhttp,
+    'ip=s' => \$ip,
+    'port=s' => \$port,
+    'port_https=s' => \$port_https,
+    'binary=s' => \$binary,
+);
 
-my $file_10mb = '3aa55f03c298b83cd7708e90d289afbd';
-my $file_100mb = '5b563100babfef2f2ec9ab2d55e97fd1';
-my $file_200mb = '3389a0b30e05ef6613ccbdae5d9ec0bd';
-
-my $header = ['Content-Type' => 'application/json; charset=UTF-8'];
-my $data = {foo => 'bar', test=>'tesst'};
-my $encoded_data = encode_utf8(encode_json($data));
-my $request_post = HTTP::Request->new('POST', $url, $header, $encoded_data);
-my $request_get = HTTP::Request->new(GET => $url);
-
-$ua = LWP::UserAgent->new;
-
+run_docker();
+if (!$no_zhttp) {
+    run_zhttp($zhttp_cfg);
+}
 test_get_200_ok();
-test_check_md5_10mb();
-test_check_md5_100mb();
-test_check_md5_200mb();
+test_check_POST_file();
+if (!$no_zhttp) {
+    stop_zhttp();
+}
 
-sub test_check_md5_10mb {
+if ($https) {
+    if (!$no_zhttp) {
+        run_zhttp($zhttps_cfg);
+    }
+    test_get_200_ok_https();
+    test_check_POST_file_https();
+    if (!$no_zhttp) {
+        stop_zhttp();
+    }
+}
+stop_docker();
 
-    my $response = `curl $url_10mb --output -`;
-    my $crc = md5_hex($response);
+sub run_zhttp {
+    my ($cfg) = @_;
+    system("$binary -f $cfg");
+    sleep(4);
+}
 
-    if ($crc == $file_10mb) {
-        print "Test 10Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
-    } else {
-        print "Test 10Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
+sub stop_zhttp {
+    my $cmd = `pkill -9 $binary -f`;
+}
+
+sub run_docker {
+
+    print "Starting docker container..\n";
+    $docker_id = `sudo docker run -d -p 8080:80 -p 8443:443 --rm -t mendhak/http-https-echo`;
+    sleep(2);
+}
+
+sub stop_docker {
+
+    my $stop_log = `sudo docker stop $docker_id`;
+    if ($stop_log == $docker_id) {
+        print "Docker is now stopped.\n";
     }
 }
 
-sub test_check_md5_100mb {
+sub assert_equal {
 
-    my $response = `curl $url_100mb --output -`;
-    my $crc = md5_hex($response);
+    my ($p1, $p2, $test_description) = @_;
 
-    if ($crc == $file_100mb) {
-        print "Test 100Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
+    if ($p1 == $p2) {
+        print "Test $test_description [",  color("bold green"), "PASS", color("reset"), "]\n";
     } else {
-        print "Test 100Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
+        print "Test $test_description [", color("bold red"), "FAIL", color("reset"), "]\n";
     }
 }
 
-sub test_check_md5_200mb {
+sub test_check_POST_file {
 
-    my $response = `curl $url_200mb --output -`;
-    my $crc = md5_hex($response);
+    my $response = `curl -s --data-binary "\@${file_path}" http://${ip}:${port}`;
+    my $decoded = decode_json($response);
+    my $file_crc = file_md5_hex($file_path);
+    my $crc = $decoded->{'body'};
 
-    if ($crc == $file_200mb) {
-        print "Test 200Mb checksum [",  color("bold green"), "PASS", color("reset"), "]\n";
-    } else {
-        print "Test 200Mb checksum [", color("bold red"), "FAIL", color("reset"), "]\n";
-    }
+    assert_equal($crc, $file_crc, "POST file checksum");
 }
 
 sub test_get_200_ok {
-    my $request_get = HTTP::Request->new(GET => $url_get);
-    my $response_get = $ua->request($request_get);
+    my $response = `curl -s http://${ip}:${port}`;
+    my $decoded = decode_json($response);
 
-    if ($response_get->status_line == "200 OK") {
-        print "Test GET method [",  color("bold green"), "PASS", color("reset"), "]\n";
-    } else {
-        print "Test GET method [", color("bold red"), "FAIL", color("reset"), "]\n";
-    }
+    assert_equal($decoded->{'method'}, "GET", "GET method");
+}
+
+sub test_check_POST_file_https {
+    my $response = `curl -s -k --data-binary "\@${file_path}" https://${ip}:${port_https}`;
+    my $decoded = decode_json($response);
+    my $file_crc = file_md5_hex($file_path);
+    my $crc = $decoded->{'body'};
+
+    assert_equal($crc, $file_crc, "POST file https");
+}
+
+sub test_get_200_ok_https {
+    my $response = `curl -s -k https://${ip}:${port_https}`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'method'}, "GET", "GET method HTTPS");
 }
