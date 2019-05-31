@@ -259,18 +259,12 @@ sub delete_interface_bond    # ( $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $eload )
+	include 'Zevenet::Net::Ext';
+	my $msg = &isManagementIP($if_ref->{ addr })
+	if ( $msg ne "" )
 	{
-		my $msg = &eload(
-						  module => 'Zevenet::Net::Ext',
-						  func   => 'isManagementIP',
-						  args   => [$if_ref->{ addr }],
-		);
-		if ( $msg ne "" )
-		{
-			$msg = "The interface cannot be modified. $msg";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+		$msg = "The interface cannot be modified. $msg";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Do not delete the interface if it has some vlan configured
@@ -592,18 +586,12 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
-		if ( $eload )
+		include 'Zevenet::Net::Ext';
+		my $msg = &isManagementIP($if_ref->{ addr });
+		if ( $msg ne "" )
 		{
-			my $msg = &eload(
-							  module => 'Zevenet::Net::Ext',
-							  func   => 'isManagementIP',
-							  args   => [$if_ref->{ addr }],
-			);
-			if ( $msg ne "" )
-			{
-				$msg = "The interface cannot be stopped. $msg";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
+			$msg = "The interface cannot be stopped. $msg";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my $state = &downIf( { name => $bond }, 'writeconf' );
@@ -685,18 +673,12 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	if ( exists $json_obj->{ ip }
 		 or ( exists $json_obj->{ dhcp } ) )
 	{
-		if ( $eload )
+		include 'Zevenet::Net::Ext';
+		my $msg = &isManagementIP( [$if_ref->{ addr }] );
+		if ( $msg ne "" )
 		{
-			my $msg = &eload(
-							  module => 'Zevenet::Net::Ext',
-							  func   => 'isManagementIP',
-							  args   => [$if_ref->{ addr }],
-			);
-			if ( $msg ne "" )
-			{
-				$msg = "The interface cannot be modified. $msg";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
+			$msg = "The interface cannot be modified. $msg";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		require Zevenet::Farm::Base;
