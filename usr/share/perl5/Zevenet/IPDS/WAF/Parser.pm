@@ -663,6 +663,7 @@ Function: buildWAFSetConf
 
 Parameters:
 	Conf block - It is an array reference with the configuration directives.
+	skip def action - This is a flag to not create de SecDefaultAction directive if this directive already exists for the requested phase. This directive only can exist one time for a phase.
 
 Returns:
 	hash ref - text with the SecLang directive.
@@ -687,8 +688,9 @@ sub buildWAFSetConf
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $conf = shift;
-	my @txt  = ();
+	my $conf            = shift;
+	my $skip_def_action = shift;
+	my @txt             = ();
 
 	push @txt, $mark_conf_begin;
 
@@ -731,13 +733,16 @@ sub buildWAFSetConf
 		}
 	}
 
-	$conf->{ default_action } //= 'pass';
-	$conf->{ default_phase }  //= '1';
-	my $defaults =
-	  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
-	$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
-	$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
-	push @txt, $defaults . '"';
+	if ( !$skip_def_action )
+	{
+		$conf->{ default_action } //= 'pass';
+		$conf->{ default_phase }  //= '1';
+		my $defaults =
+		  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
+		$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
+		$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
+		push @txt, $defaults . '"';
+	}
 
 	push @txt, $mark_conf_end . "\n";
 
@@ -778,7 +783,20 @@ sub buildWAFSet
 	#write set conf
 	if ( exists $struct->{ configuration } )
 	{
-		my @conf = &buildWAFSetConf( $struct->{ configuration } );
+		# check if it does not exist another SecDefaultAction in the same phase
+		my $flag = 0;
+		foreach my $r ( @{ $struct->{ rules } } )
+		{
+			if (    grep ( /SecDefaultAction/, @{ $r->{ raw } } )
+				and
+				grep ( /phase:$struct->{configuration}->{default_phase}/, @{ $r->{ raw } } ) )
+			{
+				$flag = 1;
+				last;
+			}
+		}
+
+		my @conf = &buildWAFSetConf( $struct->{ configuration }, $flag );
 		foreach my $line ( @conf )
 		{
 			print $fh $line . "\n";
