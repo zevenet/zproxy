@@ -121,7 +121,8 @@ sub getIPDSfarmsRules
 	{
 		foreach my $ru ( &listWAFByFarm( $farmName ) )
 		{
-			push @{ $rules->{ waf } }, { 'name' => $ru };
+			push @{ $rules->{ waf } },
+			  { 'name' => $ru, 'status' => &getWAFSetStatus( $ru ) };
 		}
 	}
 
