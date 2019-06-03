@@ -27,10 +27,6 @@ void Config::parse_file() {
   int i;
   regmatch_t matches[5];
 
-#if HAVE_OPENSSL_ENGINE_H
-  ENGINE *e;
-#endif
-
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
@@ -103,18 +99,12 @@ void Config::parse_file() {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
       ENGINE_load_builtin_engines();
 #endif
-      if (!(e = ENGINE_by_id(lin + matches[1].rm_so)))
-        conf_err("could not find engine");
-      if (!ENGINE_init(e)) {
-        ENGINE_free(e);
-        conf_err("could not init engine");
-      }
-      if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
-        ENGINE_free(e);
-        conf_err("could not set all defaults");
-      }
-      ENGINE_finish(e);
-      ENGINE_free(e);
+    if ((engine_id = strdup(lin + matches[1].rm_so)) == NULL) {
+      Debug::logmsg(LOG_ERR,
+                    "line %d: ControlUser config: out of memory - aborted",
+                    n_lin);
+      exit(1);
+    }
 #endif
     } else if (!regexec(&Control, lin, 4, matches, 0)) {
       if (ctrl_name != NULL) conf_err("Control multiply defined - aborted");
@@ -500,6 +490,7 @@ ListenerConfig *Config::parse_HTTPS() {
   POUND_CTX *pc;
   regmatch_t matches[5];
   bool openssl_file_exists = false;
+
   ssl_op_enable = SSL_OP_ALL;
 #ifdef SSL_OP_NO_COMPRESSION
   ssl_op_enable |= SSL_OP_NO_COMPRESSION;
@@ -525,6 +516,8 @@ ListenerConfig *Config::parse_HTTPS() {
   res->nossl_redir = 0;
   res->log_level = log_level;
   res->alive_to = alive_to;
+  res->engine_id = engine_id;
+
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = has_other = 0;

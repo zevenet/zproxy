@@ -192,3 +192,21 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SSLData *ctx) {
   return SSL_TLSEXT_ERR_OK;
 }
 
+void SSLContext::initEngine(char *engine_id) {
+
+#if HAVE_OPENSSL_ENGINE_H
+  ENGINE *e;
+#endif
+
+  if (!(e = ENGINE_by_id(engine_id)))
+    Debug::logmsg(LOG_ERR, "could not find engine");
+
+  else if (!ENGINE_init(e))
+    Debug::logmsg(LOG_ERR, "could not init engine");
+
+  else if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+    Debug::logmsg(LOG_ERR, "could not set all defaults");
+
+  ENGINE_finish(e);
+  ENGINE_free(e);
+}

@@ -97,7 +97,8 @@ class Config {
       *ctrl_name,   /* control socket name */
       *ctrl_user,   /* control socket username */
       *ctrl_group,  /* control socket group name */
-      *sync_socket; /*session sync socket path*/
+      *sync_socket, /*session sync socket path*/
+      *engine_id; /* openssl engine id*/
 
   long ctrl_mode; /* octal mode of the control socket */
 

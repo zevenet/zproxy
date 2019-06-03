@@ -42,6 +42,7 @@ public:
   ListenerConfig listener_config;
   /** This struct is used to support SNI. */
   SSLData ctx;
+
   SSLContext();
   virtual ~SSLContext();
 
@@ -96,5 +97,13 @@ public:
    * error code.
    */
   static int  SNIServerName(SSL *ssl, int dummy, SSLData *ctx);
+
+  /**
+   * @brief Check if the @p engine_id set in the configuration file is valid and
+   * load the engine specified.
+   *
+   * @param engine_id is the engine name set in the configuration file.
+   */
+  static void initEngine(char *engine_id);
 };
 } // namespace ssl
