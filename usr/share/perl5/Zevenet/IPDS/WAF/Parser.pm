@@ -303,7 +303,7 @@ sub parseWAFRule
 			}
 
 			# put same format phase
-			elsif ( $param =~ /t:'?([^']+)'?/ )
+			elsif ( $param =~ /^t:'?([^']+)'?/ )
 			{
 				push @{ $rule->{ transformations } }, $1;
 			}
@@ -315,11 +315,15 @@ sub parseWAFRule
 			{
 				$rule->{ capture } = "true";
 			}
-			elsif ( $param =~ /^(redirect(:.*)|allow|pass|block|deny)$/ )
+			elsif ( $param =~ /^(redirect(:.+)|allow|pass|block|deny)$/ )
 			{
 				$rule->{ action }       = $1;
 				$rule->{ redirect_url } = $2;
-				$rule->{ redirect_url } =~ s/^:// if ( $rule->{ redirect_url } );
+				if ( $rule->{ redirect_url } )
+				{
+					$rule->{ redirect_url } =~ s/^://;
+					$rule->{ action } = 'redirect';
+				}
 			}
 			elsif ( $param =~ /^nolog$/ )
 			{
@@ -377,6 +381,10 @@ sub parseWAFRule
 			elsif ( $param =~ /ctl:'?([^']+)'?/ )
 			{
 				push @{ $rule->{ modify_directive } }, $1;
+			}
+			else
+			{
+				&zenlog( "Parameter does not recognized: '$param'", 'warninig', 'waf' );
 			}
 		}
 	}
@@ -645,6 +653,7 @@ sub parseWAFSetConf
 			$conf->{ default_action } = $def->{ action };
 			$conf->{ default_log }    = $def->{ log };
 			$conf->{ default_phase }  = $def->{ phase };
+			$conf->{ redirect_url }   = $def->{ redirect_url };
 		}
 		if ( $line =~ /^\s*SecRuleRemoveById\s+(.*)/ )
 		{
@@ -738,7 +747,7 @@ sub buildWAFSetConf
 		$conf->{ default_action } //= 'pass';
 		$conf->{ default_phase }  //= '1';
 		my $def_action =
-		  ( exists $conf->{ redirect_url } )
+		  ( exists $conf->{ redirect_url } and $conf->{ redirect_url } ne '' )
 		  ? "redirect:$conf->{redirect_url}"
 		  : $conf->{ default_action };
 		my $defaults = "SecDefaultAction \"$def_action,phase:$conf->{ default_phase }";

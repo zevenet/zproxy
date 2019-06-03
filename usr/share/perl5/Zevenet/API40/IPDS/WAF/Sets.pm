@@ -219,6 +219,12 @@ sub modify_waf_set
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	if ( exists $json_obj->{ default_action }
+		 and $json_obj->{ default_action } ne 'redirect' )
+	{
+		$json_obj->{ redirect_url } = "";
+	}
+
 	#
 	if ( exists $json_obj->{ only_logging }
 		 and $json_obj->{ only_logging } eq 'true' )
