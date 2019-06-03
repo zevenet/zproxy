@@ -158,19 +158,30 @@ sub farm_stats    # ( $farmname )
 
 	if ( $type eq "gslb" && $eload )
 	{
-		my $gslb_stats = &eload(
-								 module => 'Zevenet::Farm::GSLB::Stats',
-								 func   => 'getGSLBFarmBackendsStats',
-								 args   => [$farmname],
-								 decode => 'true'
-		);
+		my $gslb_stats;
+
+		my $gslbStatus =
+		  &eload(
+				  module => 'Zevenet::Farm::GSLB::Config',
+				  func   => 'getGSLBFarmStatus',
+				  args   => [$farmname],
+		  );
+		if ( $gslbStatus ne "down" )
+		{
+			my $gslb_stats = &eload(
+									 module => 'Zevenet::Farm::GSLB::Stats',
+									 func   => 'getGSLBFarmBackendsStats',
+									 args   => [$farmname],
+									 decode => 'true'
+			);
+		}
 
 		my $body = {
 					 description => $desc,
-					 backends    => $gslb_stats->{ 'backends' },
-					 client      => $gslb_stats->{ 'udp' },
-					 server      => $gslb_stats->{ 'tcp' },
-					 extended    => $gslb_stats->{ 'stats' },
+					 backends    => $gslb_stats->{ 'backends' } // [],
+					 client      => $gslb_stats->{ 'udp' } // [],
+					 server      => $gslb_stats->{ 'tcp' } // [],
+					 extended    => $gslb_stats->{ 'stats' } // [],
 		};
 
 		&httpResponse( { code => 200, body => $body } );
