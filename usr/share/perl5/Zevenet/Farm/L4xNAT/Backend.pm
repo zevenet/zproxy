@@ -520,7 +520,7 @@ sub _getL4FarmParseServers
 		{
 			my @l = split /"/, $line;
 			$server->{ status } = $l[3];
-			$server->{ status } = "maintenance"
+			$server->{ status } = "down"
 			  if ( $server->{ status } eq "off" || $server->{ status } eq "config_error" );
 			$server->{ status } = "fgDOWN" if ( $server->{ status } eq "down" );
 		}
