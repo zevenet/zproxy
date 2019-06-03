@@ -133,13 +133,20 @@ sub farm_stats    # ( $farmname )
 
 	if ( $type eq "l4xnat" )
 	{
-		require Zevenet::Farm::L4xNAT::Stats;
-		my $stats = &getL4FarmBackendsStats( $farmname );
+		my $stats    = [];
+		my $sessions = [];
 
-		require Zevenet::API40::Farm::Get;
-		&getAPIFarmBackends( $stats, $type, ['established', 'pending'] );
+		require Zevenet::Farm::L4xNAT::Config;
+		if ( &getL4FarmStatus( $farmname ) ne "down" )
+		{
+			require Zevenet::Farm::L4xNAT::Stats;
+			$stats = &getL4FarmBackendsStats( $farmname );
 
-		my $sessions = &getL4FarmSessions( $farmname );
+			require Zevenet::API40::Farm::Get;
+			&getAPIFarmBackends( $stats, $type, ['established', 'pending'] );
+
+			$sessions = &getL4FarmSessions( $farmname );
+		}
 		my $body = {
 					 description => $desc,
 					 backends    => $stats,
