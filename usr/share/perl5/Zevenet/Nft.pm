@@ -294,13 +294,13 @@ sub execNft
 		if ( $chain eq "" )
 		{
 			$output = 1;
-			my @rules = `$nft list table $table`;
+			my @rules = `$nft list table $table 2> /dev/null`;
 			$output = 0 if ( scalar @rules == 0 );
 			return $output;
 		}
 		else
 		{
-			my @rules = `$nft list chain $table $chain`;
+			my @rules = `$nft list chain $table $chain 2> /dev/null`;
 			foreach my $r ( @rules )
 			{
 				if ( $r =~ / $rule / )
