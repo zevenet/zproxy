@@ -204,7 +204,8 @@ sub modify_waf_set
 										'valid_format' => 'waf_phase',
 										'non_blank'    => 'true',
 				   },
-				   "disable_rules" => { 'ref' => 'array' },
+				   "disable_rules" => { 'ref'       => 'array' },
+				   "redirect_url"  => { 'non_blank' => 'true', },
 	};
 
 	unless ( &existWAFSet( $set ) )

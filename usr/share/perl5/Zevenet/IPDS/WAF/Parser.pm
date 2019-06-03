@@ -737,8 +737,11 @@ sub buildWAFSetConf
 	{
 		$conf->{ default_action } //= 'pass';
 		$conf->{ default_phase }  //= '1';
-		my $defaults =
-		  "SecDefaultAction \"$conf->{ default_action },phase:$conf->{ default_phase }";
+		my $def_action =
+		  ( exists $conf->{ redirect_url } )
+		  ? "redirect:$conf->{redirect_url}"
+		  : $conf->{ default_action };
+		my $defaults = "SecDefaultAction \"$def_action,phase:$conf->{ default_phase }";
 		$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
 		$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
 		push @txt, $defaults . '"';
