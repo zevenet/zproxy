@@ -194,6 +194,60 @@ Ctl:
 Tests:
 
 * Tests compile into a single binary `zhttptest` that is run on a command line to run the tests.
+* In addition, we support multiple functional tests.
+
+**Functional tests requirements**
+
+- Perl 5.
+
+- Term::ANSIColor perl module
+
+- JSON perl module
+
+- Getopt::Long perl module (It should be installed by default)
+
+- Digest::MD5 perl module
+
+- Digest::MD5::File perl module
+
+- curl
+
+- docker
+
+**Functional tests arguments**
+
+- -http_cfg_file : Path to the config file used by zhttp in the HTTP tests. Default: test_http.cfg
+
+- -https_cfg_file : Path to the config file used by zhttp in the HTTPS tests. Default: test_https.cfg
+
+- -ip : Destination IP/URL used to do the requests. Default: localhost
+
+- -port : Port used to do the requests in the HTTP tests. Default: 8000
+
+- -port_https : Port used to do the requests in the HTTPS tests. Default: 8443
+
+- -post_file : Path to the custom file to be send in the POST request tests. Default: data/test_text.txt
+
+- -binary : Path to the zhttp binary. Default: ../build/bin/zhttp
+
+- -https : If this flag is set the HTTPS tests are going to be executed.
+
+- -no_zhttp : If this flag is set, zhttp is not going to be launched.
+
+- -control : Path to the control socket used to test de API. Default: /tmp/zhttp.socket
+
+**Usage examples**
+
+```bash
+# Runs the functional tests over the backend without starting zhttp.
+zhttp_functional_tests -no_zhttp
+
+# Runs the functional tests enabling HTTPS tests
+zhttp_functional_tests -https
+
+# Runs the functional tests over the backend without starting zhttp, setting a different ip and port.
+zhttp_functional_tests -https -no_zhttp -ip 192.168.100.20 -port 8080 -port_https 8443
+```
 
 #### Contributing
 

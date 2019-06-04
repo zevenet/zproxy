@@ -3,15 +3,16 @@
 # USAGE DOCUMENTATION:
 #
 # Options:
-# -zhttp_cfg : Path to the config file used by zhttp in the HTTP tests. Default: test_http.cfg
-# -zhttps_cfg : Path to the config file used by zhttp in the HTTPS tests. Default: test_https.cfg
+# -http_cfg_file : Path to the config file used by zhttp in the HTTP tests. Default: test_http.cfg
+# -https_cfg_file : Path to the config file used by zhttp in the HTTPS tests. Default: test_https.cfg
 # -ip : Destination IP/URL used to do the requests. Default: localhost
 # -port : Port used to do the requests in the HTTP tests. Default: 8000
 # -port_https : Port used to do the requests in the HTTPS tests. Default: 8443
-# -file_path : Path to the custom file to be send in the POST request tests. Default: data/test_text.txt
+# -post_file : Path to the custom file to be send in the POST request tests. Default: data/test_text.txt
 # -binary : Path to the zhttp binary. Default: ../build/bin/zhttp
 # -https : If this flag is set the HTTPS tests are going to be executed.
 # -no_zhttp : If this flag is set, zhttp is not going to be launched.
+# -control : Path to the control socket used to test de API. Default: /tmp/zhttp.socket
 
 # REQUIREMENTS:
 #
@@ -38,16 +39,18 @@ my $port = '8000';
 my $port_https = '8443';
 my $file_path = 'data/test_text.txt';
 my $binary = '../build/bin/zhttp';
+my $control_socket = '/tmp/zhttp.socket';
 GetOptions(
-    'file=s' => \$file_path,
-    'zhttp_cfg=s' => \$zhttp_cfg,
-    'zhttps_cfg=s' => \$zhttps_cfg,
+    'post_file=s' => \$file_path,
+    'http_cfg_file=s' => \$zhttp_cfg,
+    'https_cfg_file=s' => \$zhttps_cfg,
     'https' => \my $https,
     'no_zhttp' => \my $no_zhttp,
     'ip=s' => \$ip,
     'port=s' => \$port,
     'port_https=s' => \$port_https,
     'binary=s' => \$binary,
+    'control=s' => \$control_socket,
 );
 
 run_docker();
@@ -57,10 +60,17 @@ if (!$no_zhttp) {
 test_get_200_ok();
 test_check_POST_file();
 if (!$no_zhttp) {
+    test_disable_service();
+    test_disable_backend();
+    test_disable_service_fail();
+    test_disable_backend_fail();
+    test_enable_backend();
+    test_enable_service();
     stop_zhttp();
 }
 
 if ($https) {
+    print "Starting HTTPS tests \n";
     if (!$no_zhttp) {
         run_zhttp($zhttps_cfg);
     }
@@ -85,6 +95,7 @@ sub stop_zhttp {
 sub run_docker {
 
     print "Starting docker container..\n";
+    # The docker container comes from https://github.com/mendhak/docker-http-https-echo
     $docker_id = `sudo docker run -d -p 8080:80 -p 8443:443 --rm -t mendhak/http-https-echo`;
     sleep(2);
 }
@@ -110,7 +121,7 @@ sub assert_equal {
 
 sub test_check_POST_file {
 
-    my $response = `curl -s --data-binary "\@${file_path}" http://${ip}:${port}`;
+    my $response = `curl -s --data-binary "\@${file_path}" -H "Expect: " http://${ip}:${port}`;
     my $decoded = decode_json($response);
     my $file_crc = file_md5_hex($file_path);
     my $crc = $decoded->{'body'};
@@ -126,7 +137,7 @@ sub test_get_200_ok {
 }
 
 sub test_check_POST_file_https {
-    my $response = `curl -s -k --data-binary "\@${file_path}" https://${ip}:${port_https}`;
+    my $response = `curl -s -k --data-binary "\@${file_path}" -H "Expect: " https://${ip}:${port_https}`;
     my $decoded = decode_json($response);
     my $file_crc = file_md5_hex($file_path);
     my $crc = $decoded->{'body'};
@@ -139,4 +150,46 @@ sub test_get_200_ok_https {
     my $decoded = decode_json($response);
 
     assert_equal($decoded->{'method'}, "GET", "GET method HTTPS");
+}
+
+sub test_disable_backend {
+    my $response = `curl -s -X PATCH --data-ascii '{status: "down"}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/0/status`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "ok", "API disable backend");
+}
+
+sub test_disable_service {
+    my $response = `curl -s -X PATCH --data-ascii '{status: "down"}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/status`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "ok", "API disable service");
+}
+
+sub test_disable_service_fail {
+    my $response = `curl -s -X PATCH --data-ascii '{status: "down"}' --unix-socket ${control_socket} http://${ip}/listener/0/service/200/status`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "error", "API disable wrong service");
+}
+
+sub test_disable_backend_fail {
+    my $response = `curl -s -X PATCH --data-ascii '{status: "down"}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/1000/status`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "fail", "API disable wrong backend");
+}
+
+sub test_enable_backend {
+    my $response = `curl -s -X PATCH --data-ascii '{status: "up"}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/0/status`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "ok", "API enable backend");
+}
+
+sub test_enable_service {
+    my $response = `curl -s -X PATCH --data-ascii '{status: "up"}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/status`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "ok", "API enable service");
 }
