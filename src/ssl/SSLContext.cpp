@@ -95,6 +95,14 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
     SSL_CTX_set_mode(ssl_ctx,SSL_MODE_RELEASE_BUFFERS );
     return true;
   }
+#if HAVE_OPENSSL_ENGINE_H
+  if(listener_config.engine_id != nullptr)
+    initEngine(listener_config.engine_id);
+#endif
+  if (!listener_config.ssl_config_file.empty()) {
+          if (!loadOpensslConfig(listener_config.ssl_config_file, listener_config.ctx->ctx))
+              return false;
+      }
   Debug::LogInfo("SSL initialized", LOG_DEBUG);
   return true;
 }

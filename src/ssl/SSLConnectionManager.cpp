@@ -25,13 +25,6 @@ bool SSLConnectionManager::init(const ListenerConfig &listener_config) {
     if (ssl_context != nullptr)
       delete ssl_context;
     ssl_context = new SSLContext();
-#if HAVE_OPENSSL_ENGINE_H
-    ssl_context->initEngine(listener_config.engine_id);
-#endif
-    if (!listener_config.ssl_config_file.empty()) {
-      if (!ssl_context->loadOpensslConfig(listener_config.ssl_config_file, listener_config.ctx->ctx))
-        exit(EXIT_FAILURE);
-    }
     return ssl_context->init(listener_config);
   }
   return false;

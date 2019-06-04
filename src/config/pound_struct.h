@@ -155,7 +155,7 @@ struct ListenerConfig {
   int disable_ssl_v2;     /* Disable SSL version 2 */
   int alive_to;
   int ignore100continue;  /* Ignore Expect: 100-continue headers in requests. */
-  char *engine_id;   /* Engine id loaded by openssl*/
+  char *engine_id{nullptr};   /* Engine id loaded by openssl*/
   ServiceConfig *services;
   ListenerConfig *next;
 };
