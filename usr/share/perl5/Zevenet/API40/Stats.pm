@@ -168,11 +168,11 @@ sub farm_stats    # ( $farmname )
 		  );
 		if ( $gslbStatus ne "down" )
 		{
-			my $gslb_stats = &eload(
-									 module => 'Zevenet::Farm::GSLB::Stats',
-									 func   => 'getGSLBFarmBackendsStats',
-									 args   => [$farmname],
-									 decode => 'true'
+			$gslb_stats = &eload(
+								  module => 'Zevenet::Farm::GSLB::Stats',
+								  func   => 'getGSLBFarmBackendsStats',
+								  args   => [$farmname],
+								  decode => 'true'
 			);
 		}
 
