@@ -85,9 +85,9 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
 
 #if SSL_DISABLE_SESSION_CACHE
     // Attempt to disable session and ticket caching..
-      SSL_CTX_set_options(ssl_ctx,
-                        SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
-    SSL_CTX_set_num_tickets(ssl_ctx, 0);
+//      SSL_CTX_set_options(ssl_ctx,
+//                        SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+//    SSL_CTX_set_num_tickets(ssl_ctx, 0);
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TICKET);
     SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_OFF);
 #endif
