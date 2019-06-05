@@ -19,7 +19,7 @@ using std::stringstream;
 
 namespace  zlib {
 
-  bool compress_message_deflate(const std::string& str, std::string& outstring,
+  static bool compress_message_deflate(const std::string& str, std::string& outstring,
                               int compressionlevel = Z_BEST_COMPRESSION)
   {
       z_stream zs;                        // z_stream is zlib's control structure
@@ -60,7 +60,7 @@ namespace  zlib {
   }
 
 
-  bool compress_message_gzip(const std::string& str, std::string& outstring,
+  static bool compress_message_gzip(const std::string& str, std::string& outstring,
                                int compressionlevel = Z_BEST_COMPRESSION)
   {
       z_stream zs;                        // z_stream is zlib's control structure
@@ -108,7 +108,7 @@ namespace  zlib {
   }
 
   /** Decompress an STL string using zlib and return the original data. */
-  bool decompress_message_deflate(const std::string& str, std::string& outstring)
+  static bool decompress_message_deflate(const std::string& str, std::string& outstring)
   {
       z_stream zs;                        // z_stream is zlib's control structure
       memset(&zs, 0, sizeof(zs));
@@ -148,7 +148,7 @@ namespace  zlib {
       return true;
   }
 
-  bool decompress_message_gzip(const std::string& str, std::string& outstring)
+  static bool decompress_message_gzip(const std::string& str, std::string& outstring)
   {
       z_stream zs;                        // z_stream is zlib's control structure
       memset(&zs, 0, sizeof(zs));

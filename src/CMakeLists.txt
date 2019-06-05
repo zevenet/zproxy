@@ -22,8 +22,8 @@ add_library(libzhttp
 		ssl/SSLContext.h
 		ssl/SSLConnectionManager.cpp
 		ssl/SSLConnectionManager.h
-		ssl/HttpsManager.cpp
-		ssl/HttpsManager.h
+		handlers/HttpsManager.cpp
+		handlers/HttpsManager.h
 		ssl/ssl_session.h
 		ssl/ssl_session.cpp
 		json/json.h
@@ -46,12 +46,12 @@ add_library(libzhttp
 		stream/StreamManager.h
 		http/http_stream.cpp
 		http/http_stream.h
-		util/string_buffer.cpp
-		util/string_buffer.h
+		experimental/string_buffer.cpp
+		experimental/string_buffer.h
 		debug/Debug.h
 		util/Network.h
 		util/crypto.h
-		util/zlib_util.h
+		handlers/zlib_util.h
 		stream/listener.cpp
 		stream/listener.h
 		util/utils.h
@@ -71,8 +71,9 @@ add_library(libzhttp
 		event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
 		service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
 		stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
-
-		)
+        handlers/http_manager.cpp
+		handlers/http_manager.h
+        http/HttpRequest.cpp)
 
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
 if (BUNDLED_OPENSSL)

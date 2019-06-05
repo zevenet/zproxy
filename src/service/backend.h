@@ -116,4 +116,5 @@ public:
    */
   std::unique_ptr<JsonObject> getBackendJson();
   int nf_mark;
+  bool isHttps();
 };

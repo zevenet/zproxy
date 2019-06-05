@@ -2,9 +2,7 @@
 // Created by abdess on 4/5/18.
 //
 
-#ifndef NEW_ZHTTP_WORKER_H
-#define NEW_ZHTTP_WORKER_H
-
+#pragma once
 #include "../config/pound_struct.h"
 #include "../event/TimerFd.h"
 #include "../event/epoll_manager.h"
@@ -14,11 +12,12 @@
 #include "../ssl/SSLConnectionManager.h"
 #include <thread>
 #include <unordered_map>
+#include "../stats/counter.h"
+#include "../handlers/http_manager.h"
+
 #include <vector>
 
 #if DEBUG_STREAM_EVENTS_COUNT
-
-#include "../stats/counter.h"
 
 namespace debug__ {
 #define DEBUG_COUNTER_HIT(x) std::unique_ptr<x> debug_stream_status(new x);
@@ -60,12 +59,12 @@ class StreamManager : public EpollManager {
       "text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
 #endif
 
-  int worker_id;
+  int worker_id{};
   std::thread worker;
-  ServiceManager *service_manager;
-  ssl::SSLConnectionManager * ssl_manager;
+  ServiceManager *service_manager{};
+  ssl::SSLConnectionManager * ssl_manager{};
   Connection listener_connection;
-  bool is_running;
+  bool is_running{};
   ListenerConfig listener_config_;
   std::unordered_map<int, HttpStream *> streams_set;
   std::unordered_map<int, HttpStream *> timers_set;
@@ -212,65 +211,6 @@ public:
    */
   inline void onClientWriteEvent(HttpStream *stream);
 
-  /**
-   * @brief Validates the request.
-   *
-   * It checks that all the headers are well formed and mark the headers off if
-   * needed.
-   *
-   * @param request is the HttpRequest to modify.
-   * @return if there is not any error it returns validation::REQUEST_RESULT::OK.
-   * If errors happen, it returns the corresponding element of
-   * validation::REQUEST_RESULT.
-   */
-  validation::REQUEST_RESULT validateRequest(HttpRequest &request);
-
-  /**
-   * @brief Validates the response.
-   *
-   * It checks that all the headers are well formed and mark the headers off if
-   * needed.
-   *
-   * @param stream is the HttpStream to get the HttpResponse from.
-   * @return if there is not any error it returns validation::REQUEST_RESULT::OK.
-   * If errors happen, it returns the corresponding element of
-   * validation::REQUEST_RESULT.
-   */
-  validation::REQUEST_RESULT validateResponse(HttpStream &stream);
-
-  /**
-   * @brief If the backend cookie is enabled adds the headers with the parameters
-   * set.
-   *
-   * @param service is the Service to get the backend cookie parameters set.
-   * @param stream is the HttpStream to get the request to add the headers.
-   */
-  static void setBackendCookie(Service *service, HttpStream *stream);
-
-  /**
-   * @brief Applies compression to the response message.
-   *
-   * If one of the encoding accepted in the Accept Encoding Header matchs with
-   * the set in the CompressionAlgorithm parameter and the response is not
-   * already compressed, compress the response message.
-   *
-   * @param service is the Service to get the compression algorithm parameter
-   * set.
-   * @param stream is the HttpStream to get the response to compress.
-   */
-  static void applyCompression(Service *service, HttpStream *stream);
-
-  /**
-   * @brief Handles all the chunked operations.
-   *
-   * If the http::CHUNKED_STATUS is enabled then matchs the chunk length and
-   * updates the status.
-   *
-   * @param stream is the HttpStream to get the response to take the chunked
-   * data.
-   * @return if chunked is enabled returns true, if not returns false.
-   */
-  static bool transferChunked(HttpStream *stream);
 
   /**
    * @brief Clears the HttpStream.
@@ -283,6 +223,6 @@ public:
 
   /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
+
 };
 
-#endif // NEW_ZHTTP_WORKER_H

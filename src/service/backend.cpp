@@ -145,3 +145,6 @@ void Backend::doMaintenance() {
     default:this->status = BACKEND_STATUS::BACKEND_DOWN;
     }
 }
+bool Backend::isHttps() {
+  return ctx != nullptr;
+}

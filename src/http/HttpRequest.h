@@ -9,8 +9,9 @@
 
 class HttpRequest : public http_parser::HttpData {
 
+  /** Service that request was generated for*/
+  void *request_service; //fixme; hack to avoid cyclic dependency, //TODO:: remove
 public:
-
   bool add_destination_header;
   bool upgrade_header;
   bool connection_header_upgrade;
@@ -35,6 +36,7 @@ public:
   inline std::string getMethod() {
     return method != nullptr ? std::string(method, method_len) : std::string();
   }
+
   inline std::string getRequestLine() {
     std::string res(http_message, http_message_length);
     //    for (auto index = method_len + path_length; method[index] != '\r';
@@ -47,7 +49,10 @@ public:
   std::string getUrl() {
     return path != nullptr ? std::string(path, path_length) : std::string();
   }
+  void setService(/*Service */ void *service);
+  void * getService() const ;
 };
+
 
 class HttpResponse : public http_parser::HttpData {
   public:
