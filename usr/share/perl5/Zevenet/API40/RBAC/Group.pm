@@ -217,6 +217,8 @@ sub add_rbac_group_resource
 	my $type_msg = $type;
 	$type_msg =~ s/s$//;
 
+	&lockRBACGroupResource();
+
 	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Add a $type to the group $group";
@@ -231,13 +233,18 @@ sub add_rbac_group_resource
 	if ( !&getRBACGroupExists( $group ) )
 	{
 		my $msg = "The RBAC group '$group' does not exist";
+		&unlockRBACGroupResource();
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
+
+	if ( $error_msg )
+	{
+		&unlockRBACGroupResource();
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
+	}
 
 	# check if the object resource exists in the group
 	my @resource_list = @{ &getRBACGroupParam( $group, $type ) };
@@ -246,6 +253,7 @@ sub add_rbac_group_resource
 		if ( $resource_list[0] eq '*' )
 		{
 			my $msg = "The $type_msg '$resource' is already in the group '$group'";
+			&unlockRBACGroupResource();
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -254,6 +262,7 @@ sub add_rbac_group_resource
 		if ( $resource_list[0] eq '*' or grep ( /^$resource$/, @resource_list ) )
 		{
 			my $msg = "The $type_msg '$resource' is already in the group '$group'";
+			&unlockRBACGroupResource();
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -264,6 +273,7 @@ sub add_rbac_group_resource
 			if ( !grep ( /^$json_obj->{ 'name' }$/, &getInterfaceList() ) )
 			{
 				my $msg = "The interface '$resource' does not exist.";
+				&unlockRBACGroupResource();
 				return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 			}
 		}
@@ -273,6 +283,7 @@ sub add_rbac_group_resource
 			if ( !&getFarmExists( $resource ) )
 			{
 				my $msg = "The farm '$resource' does not exist.";
+				&unlockRBACGroupResource();
 				return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 			}
 		}
@@ -284,12 +295,14 @@ sub add_rbac_group_resource
 		if ( !&getRBACUserExists( $resource ) )
 		{
 			my $msg = "The user '$resource' does not exist.";
+			&unlockRBACGroupResource();
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 
 		if ( &getRBACUserGroup( $resource ) )
 		{
 			my $msg = "The user '$resource' is already in a group.";
+			&unlockRBACGroupResource();
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -300,6 +313,7 @@ sub add_rbac_group_resource
 	my $output = &getZapiRBACGroups( $group );
 
 	# check result and return success or failure
+
 	if ( $output )
 	{
 		if ( $type eq 'users' )
@@ -315,11 +329,13 @@ sub add_rbac_group_resource
 					 params      => { 'group' => $output },
 					 message     => $msg,
 		};
+		&unlockRBACGroupResource();
 		return &httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		my $msg = "Adding the $type_msg '$json_obj->{ name }' to the group '$group'";
+		&unlockRBACGroupResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }

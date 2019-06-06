@@ -329,4 +329,18 @@ sub getRBACResourcesFromList
 
 }
 
+sub lockRBACGroupResource
+{
+	# Lock resource
+	require Zevenet::Lock;
+	&lockResource( &getGlobalConfiguration( "groups_bin" ), "l" );
+}
+
+sub unlockRBACGroupResource
+{
+	# unlock resource
+	require Zevenet::Lock;
+	&lockResource( &getGlobalConfiguration( "groups_bin" ), "ud" );
+}
+
 1;

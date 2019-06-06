@@ -161,8 +161,17 @@ sub set_rbac_user
 	if (    exists $json_obj->{ 'webgui_permissions' }
 		 or exists $json_obj->{ 'zapi_permissions' } )
 	{
-		unless ( &getRBACUserGroup( $user ) )
+		#Lock resource
+		include 'Zevenet::RBAC::Group::Core';
+		&lockRBACGroupResource();
+
+		my $userGroup = &getRBACUserGroup( $user );
+
+		&unlockRBACGroupResource();
+
+		unless ( $userGroup )
 		{
+
 			my $msg = "The user needs a group to enable permissions.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
