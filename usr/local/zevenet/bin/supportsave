@@ -104,13 +104,13 @@ echo "- Interfaces"
 
 echo "- Bondings"
 for i in  `ls /proc/net/bonding/`
-do 
-	echo ">>>>Interface $i"		>> $backup_dir/bonding_system.txt 
-	cat /proc/net/bonding/$i	>> $backup_dir/bonding_system.txt 
+do
+	echo ">>>>Interface $i"		>> $backup_dir/bonding_system.txt
+	cat /proc/net/bonding/$i	>> $backup_dir/bonding_system.txt
 done
 
 echo "- Routes"
-for i in `cat /etc/iproute2/rt_tables  | grep "table_" | awk {'print $2'}`
+for i in `cat /etc/iproute2/rt_tables  | grep "table_" | grep -v '^#' | awk {'print $2'}`
 do
     echo "ip route list table $i"       >> $backup_dir/route.txt
     /sbin/ip route list table $i        >> $backup_dir/route.txt
