@@ -374,6 +374,18 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 	};
 
+   #workaround: Needed to run route commands at the end of the routing configuration
+   #execute file $configdir/hookup_<interface>
+	my $routing_hook =
+	    &getGlobalConfiguration( 'configdir' ) . "/"
+	  . &getGlobalConfiguration( 'hookup' ) . "_"
+	  . $$if_ref{ name };
+	if ( -e $routing_hook )
+	{
+		&zenlog( "Runnig routing UP hook for $routing_hook" );
+		my @run = `$routing_hook $$if_ref{name}`;
+	}
+
 	return $status;
 }
 
@@ -469,6 +481,7 @@ sub delRoutes    # ($table,$if_ref)
 	}
 
 	return $status;
+
 }
 
 =begin nd

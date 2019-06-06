@@ -223,6 +223,9 @@ $arp_unsolicited="";
 #ARP announcement, true / false (default)
 $arp_announce="";
 
+#Script for Hook routing
+$hookup="hookup";
+
 # cron service
 $cron_service = "/etc/init.d/cron";
 
