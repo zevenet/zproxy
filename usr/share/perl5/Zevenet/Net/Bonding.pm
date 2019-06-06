@@ -1039,23 +1039,15 @@ sub setBondMac
 
 sub lockBondResource
 {
-	my $state = shift;    #b or ub
+	my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
+	&lockResource( $bond_config_file, "l" );
+	return;
+}
 
-	if ( $state =~ /lock/ )
-	{
-		require Zevenet::Lock;
-
-		my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
-
-		$lock_file = &getLockFile( $bond_config_file );
-		$lock_fh = &openlock( $lock_file, 'w' );
-	}
-	elsif ( $state =~ /release/ )
-	{
-		close $lock_fh;
-		untie $lock_file;
-	}
-
+sub unlockBondResource
+{
+	my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
+	&lockResource( $bond_config_file, "ud" );
 	return;
 }
 

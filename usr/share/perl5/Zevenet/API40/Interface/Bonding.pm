@@ -160,7 +160,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	require Zevenet::Net::Interface;
 
 	my $desc = "Add a slave to a bond interface";
-	&lockBondResource( "lock" );
+	&lockBondResource();
 
 	# validate BOND NAME
 	my $bonds = &getBondConfig();
@@ -168,7 +168,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bond interface name not found";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -184,7 +184,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	if ( $error_msg )
 	{
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 	}
 
@@ -192,7 +192,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 		 && ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
 	{
 		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -207,7 +207,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "Could not add the slave interface to this bonding";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -217,7 +217,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -237,7 +237,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 							 mac    => $if_ref->{ mac },
 				 },
 	};
-	&lockBondResource( "release" );
+	&unlockBondResource();
 	return &httpResponse( { code => 201, body => $body } );
 }
 
@@ -430,7 +430,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	my $desc = "Remove bonding slave interface";
 
 	# Locking bond resources
-	&lockBondResource( "lock" );
+	&lockBondResource();
 
 	my $bonds = &getBondConfig();
 
@@ -438,7 +438,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bonding interface not found";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -446,7 +446,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	unless ( grep ( { $slave eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
 	{
 		my $msg = "Bonding slave interface not found";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -459,7 +459,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	if ( $@ )
 	{
 		my $msg = "The bonding slave interface $slave could not be removed";
-		&lockBondResource( "release" );
+		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -469,7 +469,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 				 success     => "true",
 				 message     => $message,
 	};
-	&lockBondResource( "release" );
+	&unlockBondResource();
 	return &httpResponse( { code => 200, body => $body } );
 }
 
