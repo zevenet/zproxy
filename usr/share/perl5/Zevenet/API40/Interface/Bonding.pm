@@ -300,7 +300,7 @@ sub delete_interface_bond    # ( $bond )
 		}
 
 		# remove configuration
-		my $if_ref = { name => $bond };
+		my $if_ref = { name => $bond, status => $if_ref->{ status } };
 		die if ( !&setInterfaceConfig( $if_ref ) );
 	};
 
