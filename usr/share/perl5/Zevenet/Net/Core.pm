@@ -381,7 +381,8 @@ sub delIf    # ($if_ref)
 		my $ip_v_to_check = ( $$if_ref{ ip_v } == 4 ) ? 6 : 4;
 		my $interface = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
 
-		if ( !$interface )
+		if ( !$interface
+			 or ( $interface->{ type } eq "bond" and !exists $interface->{ addr } ) )
 		{
 			my $rttables = &getGlobalConfiguration( 'rttables' );
 
