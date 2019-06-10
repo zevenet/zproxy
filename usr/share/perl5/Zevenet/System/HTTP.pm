@@ -37,9 +37,11 @@ Returns:
 See Also:
 	zapi/v3/system.cgi
 =cut
+
 sub getHttpServerPort
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $gui_port;    # output
 
 	my $confhttp = &getGlobalConfiguration( 'confhttp' );
@@ -81,9 +83,11 @@ Returns:
 See Also:
 	zapi/v3/system.cgi
 =cut
+
 sub setHttpServerPort
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $httpport ) = @_;
 
 	require Tie::File;
@@ -110,10 +114,12 @@ Returns:
 See Also:
 	zapi/v3/system.cgi, zevenet
 =cut
+
 sub getHttpServerIp
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $gui_ip;        # output
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $gui_ip;    # output
 
 	my $confhttp = &getGlobalConfiguration( 'confhttp' );
 	open my $fh, "<", "$confhttp";
@@ -159,9 +165,11 @@ Returns:
 See Also:
 	zapi/v3/system.cgi
 =cut
+
 sub setHttpServerIp
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $ip = shift;
 
 	require Tie::File;
@@ -174,7 +182,8 @@ sub setHttpServerIp
 	if ( $ip =~ /^\*$/ )
 	{
 		@array[1] = "#server!bind!1!interface = \n";
-		&zenlog( "The interface where is running is --All interfaces--", "info", "SYSTEM" );
+		&zenlog( "The interface where is running is --All interfaces--",
+				 "info", "SYSTEM" );
 	}
 	else
 	{
@@ -194,6 +203,38 @@ sub setHttpServerIp
 		#~ }
 	}
 	untie @array;
+}
+
+=begin nd
+Function: restartHttpServer
+
+	Restart the HTTP web server.
+
+Returns:
+	none 0 on success other value if there is an error .
+
+=cut
+
+sub restartHttpServer
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $ip = shift;
+
+	require Zevenet::Config;
+
+	my $httpServerService = &getGlobalConfiguration( 'http_server_service' );
+
+	# Stop web server
+	my $cmd = "$httpServerService stop";
+	require Zevenet::Log;
+	my $output = logAndRunBG( $cmd );
+
+	# Start web server
+	$cmd = "$httpServerService start";
+	$output += logAndRunBG( $cmd );
+
+	return $output;
 }
 
 1;

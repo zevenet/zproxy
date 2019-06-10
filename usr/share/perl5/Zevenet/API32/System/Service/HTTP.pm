@@ -31,7 +31,8 @@ include 'Zevenet::System::HTTP';
 # GET /system/http
 sub get_http
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $desc              = "Get http";
 	my $httpIp            = &getHttpServerIp();
 	my $allInterfaces_aux = &getActiveInterfaceList();
@@ -51,10 +52,11 @@ sub get_http
 	}
 
 	my $http;
+
 	# http is enabled in all interfaces
 	if ( !$interface )
 	{
-		$http->{ 'ip' } = '*' ;
+		$http->{ 'ip' } = '*';
 	}
 	else
 	{
@@ -63,20 +65,21 @@ sub get_http
 	$http->{ 'port' } = &getHttpServerPort;
 
 	&httpResponse(
-			{ code => 200, body => { description => $desc, params => $http } } );
+				   { code => 200, body => { description => $desc, params => $http } } );
 }
 
 # POST /system/http
 sub set_http
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
 	my $desc = "Post http";
 	my $httpIp;
 	$httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
 
-	my @allowParams = ( "ip", "port" );
+	my @allowParams = ( "ip", "port", "force" );
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( $param_msg )
@@ -115,9 +118,25 @@ sub set_http
 		}
 	}
 
+	unless ( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' )
+	{
+		my $msg =
+		  "The web server will be restarted and won't be accessible from its current IP anymore. "
+		  . "The load balancer GUI will be accesible from $json_obj->{ip} when the restart is over. "
+		  . "If you agree, execute again sending the parameter 'force'";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 	&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
-	&logAndRunBG( "/etc/init.d/cherokee restart" );
+
+	include 'Zevenet::System::HTTP';
+	return
+	  &httpErrorResponse(
+				  code => 400,
+				  desc => $desc,
+				  msg => "An error has occurred while trying to restart the HTTP Server"
+	  ) if ( &restartHttpServer() );
 
 	my $body = { description => $desc, params => $json_obj };
 

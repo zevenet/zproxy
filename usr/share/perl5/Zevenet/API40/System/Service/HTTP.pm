@@ -89,6 +89,10 @@ sub set_http
 					'valid_format' => 'port',
 					'non_blank'    => 'true',
 		},
+		"force" => {
+					 'values'    => ["true", "false"],
+					 'non_blank' => 'true',
+		},
 	};
 
 	# Check allowed parameters
@@ -121,9 +125,25 @@ sub set_http
 		}
 	}
 
+	unless ( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' )
+	{
+		my $msg =
+		  "The web server will be restarted and won't be accessible from its current IP anymore. "
+		  . "The load balancer GUI will be accesible from $json_obj->{ip} when the restart is over. "
+		  . "If you agree, execute again sending the parameter 'force'";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 	&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
-	&logAndRunBG( "/etc/init.d/cherokee restart" );
+
+	include 'Zevenet::System::HTTP';
+	return
+	  &httpErrorResponse(
+				  code => 400,
+				  desc => $desc,
+				  msg => "An error has occurred while trying to restart the HTTP Server"
+	  ) if ( &restartHttpServer() );
 
 	my $body = { description => $desc, params => $json_obj };
 
