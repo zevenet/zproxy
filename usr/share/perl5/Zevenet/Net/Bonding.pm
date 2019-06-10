@@ -942,6 +942,7 @@ sub setBondIP
 
 	# Writing new parameters in configuration file
 	return 1 if ( &writeRoutes( $if_ref->{ name } ) );
+	return 1 if ( !&setInterfaceConfig( $if_ref ) );
 
 	# Put the interface up
 	my $previous_status = $old_ref->{ status };
@@ -960,7 +961,6 @@ sub setBondIP
 			$if_ref->{ status } = $previous_status;
 		}
 	}
-	return 1 if ( !&setInterfaceConfig( $if_ref ) );
 
 	# if the GW is changed, change it in all appending virtual interfaces
 	if ( exists $if_ref->{ gateway } )
