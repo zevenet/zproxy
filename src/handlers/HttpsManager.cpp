@@ -13,7 +13,7 @@
  *  - X-SSL-certificate: the full client certificate (multi-line)
  */
 void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager,
-                  ListenerConfig listener_config_) {
+                  int clnt_check) {
   if (ssl_manager == nullptr)
       return;
   std::string header_value;
@@ -21,8 +21,8 @@ void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager,
   const SSL_CIPHER *cipher;
   std::unique_ptr<X509, decltype(&::X509_free)> x509(
       SSL_get_peer_certificate(stream->client_connection.ssl), ::X509_free);
-
-  if (x509 != nullptr && listener_config_.clnt_check < 3 &&
+  /** client check less than maximum */
+  if (x509 != nullptr && clnt_check < 3 &&
       SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK)
       {
           Debug::logmsg(LOG_ERR, "Bad certificate from %s",
@@ -46,8 +46,8 @@ void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager,
           stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER,
                                     header_value, true);
       }
-
-  if (listener_config_.clnt_check > 0 && x509 != nullptr)
+  /** client check enable */
+  if (clnt_check > 0 && x509 != nullptr)
       {
           int line_len = 0;
           char buf[MAXBUF]{'\0'};

@@ -6,6 +6,6 @@
 #include "../service/Service.h"
 
 void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager,
-                  ListenerConfig listener_config_);
+                  int clnt_check);
 
 void setStrictTransportSecurity(Service *service, HttpStream *stream);

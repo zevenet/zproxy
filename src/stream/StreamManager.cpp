@@ -344,7 +344,7 @@ void StreamManager::onRequestEvent(int fd) {
     }
     if (stream->client_connection.ssl_connected)
         {
-            httpsHeaders(stream, ssl_manager, listener_config_);
+            httpsHeaders(stream, ssl_manager, listener_config_.clnt_check);
             DEBUG_COUNTER_HIT(debug__::on_handshake);
         }
     return;
