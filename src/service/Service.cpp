@@ -68,9 +68,6 @@ void Service::addBackend(BackendConfig *backend_config, std::string address,
   }
 }
 
-/** It creates a new Backend from a BackendConfig and adds it to the service's
- * backend vector.
- */
 void Service::addBackend(BackendConfig *backend_config, int backend_id,
                          bool emergency) {
   if (backend_config->be_type == 0) {
@@ -96,6 +93,49 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id,
     else
       backend_set.push_back(config);
   }
+}
+
+bool Service::addBackend(JsonObject *json_object) {
+  if (json_object == nullptr) {
+    return false;
+  } else {    // Redirect
+    auto *config = new Backend();
+    if (json_object->at(JSON_KEYS::ID)->isValue()) {
+      config->backend_id = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID).get())->number_value;
+    } else {
+        return false;
+    }
+
+    if (json_object->at(JSON_KEYS::WEIGHT)->isValue()) {
+      config->weight = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::WEIGHT).get())->number_value;
+    } else {
+        return false;
+    }
+
+    if (json_object->at(JSON_KEYS::NAME)->isValue()) {
+      config->name = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::NAME).get())->string_value;
+    } else {
+        config->name = "bck_" + std::to_string(config->backend_id);
+    }
+
+    if (json_object->at(JSON_KEYS::ADDRESS)->isValue()) {
+      config->address = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ADDRESS).get())->string_value;
+    } else {
+        return false;
+    }
+
+    if (json_object->at(JSON_KEYS::PORT)->isValue()) {
+      config->port = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::PORT).get())->number_value;
+    } else {
+        return false;
+    }
+
+    config->status = BACKEND_STATUS::BACKEND_DISABLED;
+    config->backend_type = BACKEND_TYPE::REMOTE;
+    backend_set.push_back(config);
+  }
+
+  return true;
 }
 
 Service::Service(ServiceConfig &service_config_)
@@ -194,6 +234,12 @@ std::string Service::handleTask(ctl::CtlTask &task) {
     case ctl::CTL_SUBJECT::SESSION: {
       auto json_data = JsonParser::parse(task.data);
       if (!addSession(json_data.get(), backend_set))
+        return JSON_OP_RESULT::ERROR;
+      return JSON_OP_RESULT::OK;
+    }
+    case ctl::CTL_SUBJECT::S_BACKEND: {
+      auto json_data = JsonParser::parse(task.data);
+      if (!addBackend(json_data.get()))
         return JSON_OP_RESULT::ERROR;
       return JSON_OP_RESULT::OK;
     }

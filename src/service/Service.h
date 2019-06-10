@@ -65,6 +65,7 @@ class Service : public sessions::HttpSessionManager,
 private:
   void addBackend(BackendConfig *backend_config, std::string address, int port,
                   int backend_id, bool emergency = false);
+  bool addBackend(JsonObject *json_object);
  public:
   /** ServiceConfig from the Service. */
   ServiceConfig &service_config;
