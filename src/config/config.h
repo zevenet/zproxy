@@ -98,7 +98,7 @@ class Config {
       *ctrl_user,   /* control socket username */
       *ctrl_group,  /* control socket group name */
       *sync_socket, /*session sync socket path*/
-      *engine_id; /* openssl engine id*/
+      *engine_id = nullptr; /* openssl engine id*/
 
   long ctrl_mode; /* octal mode of the control socket */
 
@@ -122,7 +122,7 @@ class Config {
       LogLevel, Alive, SSLEngine, Control;
   regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP,
       Client, CheckURL;
-  regex_t Err414, Err500, Err501, Err503, SSLConfigFile, ErrNoSsl, NoSslRedirect, MaxRequest,
+  regex_t Err414, Err500, Err501, Err503, SSLConfigFile, SSLConfigSection, ErrNoSsl, NoSslRedirect, MaxRequest,
       HeadRemove, RewriteLocation, RewriteDestination, RewriteHost;
   regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd,
       Emergency, Priority, HAport, HAportAddr, StrictTransportSecurity;

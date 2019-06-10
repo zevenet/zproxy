@@ -53,6 +53,7 @@ class BackendConfig {
   char *bekey;   /* Backend Key for Cookie */
   SSL_CTX *ctx = nullptr;  /* CTX for SSL connections */
   std::string ssl_config_file; /* ssl config file path */
+  std::string ssl_config_section; /* ssl config file path */
   pthread_mutex_t mut; /* mutex for this back-end */
   int n_requests;      /* number of requests seen */
   double t_requests;   /* time to answer these requests */
@@ -150,6 +151,7 @@ struct ListenerConfig {
   int rewr_loc{0};           /* rewrite location response */
   int rewr_dest{0};          /* rewrite destination header */
   int rewr_host{0};          /* rewrite host header */
+  std::string ssl_config_section; /* OpenSSL config section */
   int disabled;           /* true if the listener is disabled */
   int log_level;          /* log level for this listener */
   int allow_client_reneg; /* Allow Client SSL Renegotiation */

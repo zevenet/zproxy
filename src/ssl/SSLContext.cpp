@@ -132,7 +132,9 @@ bool SSLContext::init() {
 /* This function loads the OpenSSL configuration file.
  * Documentation related with the config file syntax:
  * https://www.openssl.org/docs/manmaster/man5/config.html*/
-bool SSLContext::loadOpensslConfig(const std::string &config_file_path, SSL_CTX *ctx) {
+bool SSLContext::loadOpensslConfig(const std::string &config_file_path,
+                                   const std::string &config_file_section,
+                                   SSL_CTX *ctx) {
   /* We use FILE instead of c++ ifstream because it is not
    * compatible with the NCONF functions. */
   FILE *fp;
@@ -156,7 +158,7 @@ bool SSLContext::loadOpensslConfig(const std::string &config_file_path, SSL_CTX 
 
       }
 
-      if (SSL_CTX_config(ctx, "lis") == 0) {
+      if (SSL_CTX_config(ctx, config_file_section.c_str()) == 0) {
           Debug::logmsg(LOG_ERR, "Error configuring SSL_CTX");
           ERR_print_errors_fp(stderr);
           return false;
@@ -200,21 +202,27 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SSLData *ctx) {
   return SSL_TLSEXT_ERR_OK;
 }
 
-void SSLContext::initEngine(char *engine_id) {
+bool SSLContext::initEngine(char *engine_id) {
+
+  if (engine_id == nullptr)
+    return false;
 
 #if HAVE_OPENSSL_ENGINE_H
   ENGINE *e;
 #endif
 
-  if (!(e = ENGINE_by_id(engine_id)))
+  if (!(e = ENGINE_by_id(engine_id))) {
     Debug::logmsg(LOG_ERR, "could not find engine");
-
-  else if (!ENGINE_init(e))
+    return false;
+  } else if (!ENGINE_init(e)) {
     Debug::logmsg(LOG_ERR, "could not init engine");
-
-  else if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+    return false;
+  } else if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
     Debug::logmsg(LOG_ERR, "could not set all defaults");
+    return false;
+  }
 
   ENGINE_finish(e);
   ENGINE_free(e);
+  return true;
 }

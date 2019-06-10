@@ -80,11 +80,14 @@ public:
    * @brief Read the configuration from a OpenSSL configuration file and loads
    * it in the @p ctx specified.
    *
-   * @param config_file_path is the route of the OpenSSL configuration file.
+   * @param config_file_path is the path of the OpenSSL configuration file.
+   * @param config_file_section is the
    * @param ctx is the SSL_CTX to load the configuration.
    * @return @c true if everything is ok, @c false if not.
    */
-  bool loadOpensslConfig(const std::string &config_file_path, SSL_CTX *ctx);
+  bool loadOpensslConfig(const std::string &config_file_path,
+                         const std::string &config_file_section,
+                         SSL_CTX *ctx);
 
   /**
    * @brief Callback used by OpenSSL SNI support.
@@ -103,7 +106,9 @@ public:
    * load the engine specified.
    *
    * @param engine_id is the engine name set in the configuration file.
+   *
+   * @return @c true if everything is ok, @c false if not.
    */
-  static void initEngine(char *engine_id);
+  static bool initEngine(char *engine_id);
 };
 } // namespace ssl

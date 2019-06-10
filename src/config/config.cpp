@@ -433,6 +433,8 @@ ListenerConfig *Config::parse_HTTP() {
       res->log_level = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
       conf_err("SSLConfigFile directive not allowed in HTTP listeners.");
+    } else if (!regexec(&SSLConfigSection, lin, 4, matches, 0)) {
+      conf_err("SSLConfigSection directive not allowed in HTTP listeners.");
     } else if (!regexec(&ForceHTTP10, lin, 4, matches, 0)) {
       if ((m = (MATCHER *) malloc(sizeof(MATCHER))) == NULL)
         conf_err("out of memory");
@@ -742,6 +744,10 @@ ListenerConfig *Config::parse_HTTPS() {
       lin[matches[1].rm_eo] = '\0';
       res->ssl_config_file = std::string(lin + matches[1].rm_so);
       openssl_file_exists = true;
+    } else if (!regexec(&SSLConfigSection, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      std::string section = lin + matches[1].rm_so;
+      res->ssl_config_section = section.c_str();
     } else if (!regexec(&CRLlist, lin, 4, matches, 0)) {
       //#if HAVE_X509_STORE_SET_FLAGS
       X509_STORE *store;
@@ -1368,6 +1374,11 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
     } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->ssl_config_file = std::string(lin + matches[1].rm_so);
+    } else if (!regexec(&SSLConfigSection, lin, 4, matches, 0)) {
+        if (res->ssl_config_file.empty())
+          conf_err("SSLConfigSection needed if SSLConfigFile directive is set - aborted");
+        lin[matches[1].rm_eo] = '\0';
+        res->ssl_config_section = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&Priority, lin, 4, matches, 0)) {
       if (is_emergency)
         conf_err("Priority is not supported for Emergency back-ends");
@@ -1568,7 +1579,7 @@ void Config::parseSession(ServiceConfig *const svc) {
       svc->sess_ttl = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&ID, lin, 4, matches, 0)) {
       svc->sess_id = lin + matches[1].rm_so;
-      svc->sess_id = svc->sess_id.substr(0, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+      svc->sess_id = svc->sess_id.substr(0 , static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
       if (svc->sess_type != SESS_COOKIE && svc->sess_type != SESS_URL &&
           svc->sess_type != SESS_HEADER)
         conf_err("no ID permitted unless COOKIE/URL/HEADER Session - aborted");
@@ -1700,6 +1711,8 @@ bool Config::compile_regex() {
       regcomp(&Err503, "^[ \t]*Err503[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&SSLConfigFile, "^[ \t]*SSLConfigFile[ \t]+\"(.+)\"[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&SSLConfigSection, "^[ \t]*SSLConfigSection[ \t]+([^ \t]+)[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&ErrNoSsl, "^[ \t]*ErrNoSsl[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
@@ -1880,6 +1893,7 @@ void Config::clean_regex() {
   regfree(&Err501);
   regfree(&Err503);
   regfree(&SSLConfigFile);
+  regfree(&SSLConfigSection);
   regfree(&ErrNoSsl);
   regfree(&NoSslRedirect);
   regfree(&MaxRequest);
