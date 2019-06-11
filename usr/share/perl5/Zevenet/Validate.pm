@@ -867,8 +867,8 @@ sub httpResponseHelp
 			$hl = '-' if ( !defined $hl );
 			$param->{ interval } = "Expects a value between '$ll' and '$hl'.";
 		}
-		unless ( exists $param_obj->{ $p }->{ non_blank }
-				 and $param_obj->{ $p }->{ non_blank } eq 'true' )
+		if ( exists $param_obj->{ $p }->{ non_blank }
+			 and $param_obj->{ $p }->{ non_blank } eq 'true' )
 		{
 			push @{ $param->{ options } }, "non_blank";
 		}
