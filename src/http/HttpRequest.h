@@ -16,6 +16,7 @@ public:
   bool upgrade_header;
   bool connection_header_upgrade;
   bool accept_encoding_header;
+  bool host_header_found{false};
 
   void setRequestMethod() {
     request_method = http::http_info::http_verbs.at(getMethod());

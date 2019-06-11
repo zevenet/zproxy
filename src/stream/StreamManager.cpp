@@ -421,11 +421,11 @@ void StreamManager::onRequestEvent(int fd) {
       return;
     } else {
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
-      Debug::logmsg(LOG_DEBUG, "[%s] %s (%.*s) -> %s", service->name.c_str(),
-                    stream->client_connection.getPeerAddress().c_str(),
+                Debug::logmsg(LOG_DEBUG, "[%s] %s[%d] (%.*s) -> %s[%d]", service->name.c_str(),
+                        stream->client_connection.getPeerAddress().c_str(), stream->client_connection.getFileDescriptor(),
                     stream->request.getRequestLine().length() - 2,
                     stream->request.getRequestLine().c_str(),
-                    bck->address.c_str());
+                        bck->address.c_str(), stream->backend_connection.getFileDescriptor());
       switch (bck->backend_type) {
       case BACKEND_TYPE::REMOTE: {
         if (stream->backend_connection.getBackend() == nullptr ||
@@ -492,7 +492,6 @@ void StreamManager::onRequestEvent(int fd) {
 
         // Rewrite destination
         if (stream->request.add_destination_header) {
-          std::string destination_value;
           std::string header_value = "http://";
           header_value += stream->backend_connection.getPeerAddress();
           header_value += ':';
@@ -500,7 +499,14 @@ void StreamManager::onRequestEvent(int fd) {
           stream->request.addHeader(http::HTTP_HEADER_NAME::DESTINATION,
                                     header_value);
         }
-
+         if (!stream->request.host_header_found) {
+           std::string header_value = "";
+           header_value += stream->backend_connection.getPeerAddress();
+           header_value += ':';
+           header_value += std::to_string(stream->backend_connection.getBackend()->port);
+           stream->request.addHeader(http::HTTP_HEADER_NAME::HOST,
+           header_value);
+         }
         /* After setting the backend and the service in the first request,
          * pin the connection if the PinnedConnection service config parameter
          * is true. Note: The first request must be HTTP. */
@@ -673,7 +679,19 @@ void StreamManager::onResponseEvent(int fd) {
       //        stream->response.message_bytes_left,
       //        stream->response.message_length);
       // get content-lengt
+
+    if (ret==http_parser::PARSE_RESULT::FAILED) {
+       clearStream(stream);
+       return;
     }
+    Debug::logmsg(
+       LOG_DEBUG, "[%s] %s[%d] <- (%.*s) %s[%d]",
+       static_cast<Service*>(stream->request.getService())->name.c_str(),
+       stream->client_connection.getPeerAddress().c_str(), stream->client_connection.getFileDescriptor(),
+       stream->response.http_message_length-2, stream->response.http_message,
+       stream->backend_connection.getBackend()->address.c_str(),
+       stream->backend_connection.getFileDescriptor()
+    );
 
     stream->backend_connection.getBackend()->setAvgTransferTime(
         std::chrono::duration_cast<std::chrono::duration<double>>(
@@ -696,7 +714,7 @@ void StreamManager::onResponseEvent(int fd) {
       this->clearStream(stream);
       return;
     }
-
+  }
     auto service = static_cast<Service*>(stream->request.getService());
     http_manager::setBackendCookie(service, stream);
     setStrictTransportSecurity(service, stream);

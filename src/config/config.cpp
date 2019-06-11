@@ -427,7 +427,9 @@ ListenerConfig *Config::parse_HTTP() {
       res->rewr_loc = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&RewriteDestination, lin, 4, matches, 0)) {
       res->rewr_dest = atoi(lin + matches[1].rm_so);
-    } else if (!regexec(&LogLevel, lin, 4, matches, 0)) {
+    } else if (!regexec(&RewriteHost, lin, 4, matches, 0)) {
+      res->rewr_host = atoi(lin + matches[1].rm_so);
+    }else if (!regexec(&LogLevel, lin, 4, matches, 0)) {
       res->log_level = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&SSLConfigFile, lin, 4, matches, 0)) {
       conf_err("SSLConfigFile directive not allowed in HTTP listeners.");
@@ -607,6 +609,8 @@ ListenerConfig *Config::parse_HTTPS() {
       res->rewr_loc = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&RewriteDestination, lin, 4, matches, 0)) {
       res->rewr_dest = atoi(lin + matches[1].rm_so);
+    }else if (!regexec(&RewriteHost, lin, 4, matches, 0)) {
+      res->rewr_host = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&LogLevel, lin, 4, matches, 0)) {
       res->log_level = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&Cert, lin, 4, matches, 0)) {
@@ -1711,6 +1715,9 @@ bool Config::compile_regex() {
       regcomp(&RewriteDestination,
               "^[ \t]*RewriteDestination[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&RewriteHost,
+              "^[ \t]*RewriteHost[ \t]+([01])[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&Service, "^[ \t]*Service[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&ServiceName, "^[ \t]*Service[ \t]+\"(.+)\"[ \t]*$",
@@ -1879,6 +1886,7 @@ void Config::clean_regex() {
   regfree(&HeadRemove);
   regfree(&RewriteLocation);
   regfree(&RewriteDestination);
+  regfree(&RewriteHost);
   regfree(&Service);
   regfree(&ServiceName);
   regfree(&URL);

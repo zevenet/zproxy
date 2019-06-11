@@ -147,8 +147,9 @@ struct ListenerConfig {
   long max_req;    /* max. request size */
   MATCHER *head_off;      /* headers to remove */
   std::string ssl_config_file; /* OpenSSL config file path */
-  int rewr_loc;           /* rewrite location response */
-  int rewr_dest;          /* rewrite destination header */
+  int rewr_loc{0};           /* rewrite location response */
+  int rewr_dest{0};          /* rewrite destination header */
+  int rewr_host{0};           /* rewrite host header */
   int disabled;           /* true if the listener is disabled */
   int log_level;          /* log level for this listener */
   int allow_client_reneg; /* Allow Client SSL Renegotiation */

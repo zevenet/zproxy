@@ -132,6 +132,18 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
 
   // Check for correct headers
   for (auto i = 0; i != request.num_headers; i++) {
+    /* maybe header to be removed */
+    MATCHER *m;
+    for (m = listener_config_.head_off; m; m = m->next) {
+      if(::regexec(&m->pat, request.headers[i].name, 0, NULL, 0) == 0){
+        request.headers[i].header_off = true;
+        Debug::logmsg(LOG_REMOVE, "#####Removing header %.*s",request.headers[i].name_len + request.headers[i].value_len+2, request.headers[i].name);
+        break;
+        ;
+      }
+    }
+    if(request.headers[i].header_off)
+      continue;
     // check header values length
     if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
       return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
@@ -170,16 +182,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
             static_cast<size_t>(std::atoi(request.headers[i].value));
         continue;
       }
+      case http::HTTP_HEADER_NAME::HOST: {
+          request.host_header_found = listener_config_.rewr_host == 0;
+        continue;
+      }
       }
 
-    }
-
-    /* maybe header to be removed */
-    MATCHER *m;
-    for (m = listener_config_.head_off; m; m = m->next) {
-      if ((request.headers[i].header_off =
-               ::regexec(&m->pat, request.headers[i].name, 0, nullptr, 0) != 0))
-        break;
     }
   }
   // waf
