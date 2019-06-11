@@ -98,12 +98,20 @@ sub disableDHCP
 		&delRoutes( "local", $if_ref );
 	}
 
-	# update config file
-	$if_ref->{ dhcp }    = 'false';
-	$if_ref->{ mask }    = '';
-	$if_ref->{ addr }    = '';
-	$if_ref->{ gateway } = '';
-	$err = 1 if ( !&setInterfaceConfig( $if_ref ) );
+	# update config file and DHCP field of if_ref
+	$if_ref->{ dhcp } = 'false';
+
+	# Use a new hash ref to clean the dhcp configuration
+	my $new_if_ref = {
+					   name    => $if_ref->{ name },
+					   dhcp    => "false",
+					   mask    => "",
+					   addr    => "",
+					   gateway => ""
+	};
+
+	$err = 1
+	  if ( !&setInterfaceConfig( $new_if_ref ) );
 
 	return $err;
 }
