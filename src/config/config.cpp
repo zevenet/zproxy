@@ -110,6 +110,12 @@ void Config::parse_file() {
       if (ctrl_name != NULL) conf_err("Control multiply defined - aborted");
       lin[matches[1].rm_eo] = '\0';
       ctrl_name = strdup(lin + matches[1].rm_so);
+    } else if (!regexec(&ControlIP, lin, 4, matches, 0)) {
+        lin[matches[1].rm_eo] = '\0';
+        ctrl_ip = strdup(lin + matches[1].rm_so);
+    } else if (!regexec(&ControlPort, lin, 4, matches, 0)) {
+        lin[matches[1].rm_eo] = '\0';
+        ctrl_port = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&ControlUser, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       if ((ctrl_user = strdup(lin + matches[1].rm_so)) == NULL) {
@@ -1674,6 +1680,10 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&Control, "^[ \t]*Control[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&ControlIP, "^[ \t]*ControlIP[ \t]+([^ \t]+)[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&ControlPort, "^[ \t]*ControlPort[ \t]+([1-9][0-9]*)[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&ControlUser, "^[ \t]*ControlUser[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&ControlGroup, "^[ \t]*ControlGroup[ \t]+\"(.+)\"[ \t]*$",
@@ -1874,6 +1884,8 @@ void Config::clean_regex() {
   regfree(&Alive);
   regfree(&SSLEngine);
   regfree(&Control);
+  regfree(&ControlIP);
+  regfree(&ControlPort);
   regfree(&ControlUser);
   regfree(&ControlGroup);
   regfree(&ControlMode);

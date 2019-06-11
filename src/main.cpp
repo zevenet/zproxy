@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
   }
 
 
-  if (config.ctrl_name != nullptr) {
+  if (config.ctrl_name != nullptr || config.ctrl_ip != nullptr) {
     control_manager->init(config);
     control_manager->start();
   }

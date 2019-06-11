@@ -95,6 +95,7 @@ class Config {
       *root_jail,   /* directory to chroot to */
       *pid_name,    /* file to record pid in */
       *ctrl_name,   /* control socket name */
+      *ctrl_ip = nullptr,     /* control socket ip */
       *ctrl_user,   /* control socket username */
       *ctrl_group,  /* control socket group name */
       *sync_socket, /*session sync socket path*/
@@ -114,12 +115,13 @@ class Config {
       ignore_100,      /* ignore header "Expect: 100-continue"*/
   /* 1 Ignore header (Default)*/
   /* 0 Manages header */
+      ctrl_port = 0,
       sync_is_enabled; /*session sync enabled*/
   int conf_init(const char *name);
 
  private:
   regex_t Empty, Comment, User, Group, Name, RootJail, Daemon, LogFacility,
-      LogLevel, Alive, SSLEngine, Control;
+      LogLevel, Alive, SSLEngine, Control, ControlIP, ControlPort;
   regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP,
       Client, CheckURL;
   regex_t Err414, Err500, Err501, Err503, SSLConfigFile, SSLConfigSection, ErrNoSsl, NoSslRedirect, MaxRequest,

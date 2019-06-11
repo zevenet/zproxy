@@ -4,6 +4,7 @@
 
 #include "ControlManager.h"
 
+/* Not used right now */
 #define CTL_DEFAULT_IP "127.0.0.1"
 #define CTL_DEFAULT_PORT 6001
 #define CTL_EVENTS_TIMEOUT 2000
@@ -19,9 +20,13 @@ ctl::ControlManager::~ControlManager() { stop(); }
 
 bool ctl::ControlManager::init(Config &configuration,
                                ctl::CTL_INTERFACE_MODE listener_mode) {
-  ctl_listener_mode = ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode
-                          ? listener_mode
-                          : ctl_listener_mode;
+  if (configuration.ctrl_ip != nullptr && configuration.ctrl_port != 0) {
+    listener_mode = ctl::CTL_INTERFACE_MODE::CTL_AF_INET;
+  } else {
+    ctl_listener_mode = ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode
+                            ? listener_mode
+                            : ctl_listener_mode;
+  }
   if (listener_mode == CTL_INTERFACE_MODE::CTL_UNIX) {
     std::string control_path_name(configuration.ctrl_name);
     control_listener.listen(control_path_name);
@@ -34,7 +39,7 @@ bool ctl::ControlManager::init(Config &configuration,
     if (configuration.ctrl_mode > 0)
       Environment::setFileUserMode(configuration.ctrl_mode, control_path_name);
   } else {
-    control_listener.listen(CTL_DEFAULT_IP, CTL_DEFAULT_PORT);
+    control_listener.listen(configuration.ctrl_ip, configuration.ctrl_port);
   }
   handleAccept(control_listener.getFileDescriptor());
   return true;
