@@ -225,19 +225,6 @@ puts itself in the background). By specifying this option you can force
 to work like a regular process. Useful for debugging or if you want to
 use something like \fIdaemontools\fR.
 .TP
-\fBThreadModel\fR [pool|dynamic]
-If set to pool, 
-.B Zhttp
-will spawn 
-\fBThreads\fR
-number of threads when it starts and reuse those threads throughout its
-lifetime.  This sets a hard limit on the number of concurrent requests
-that can be processed.
-If set to dynamic, a new thread is spawned for each and every request.
-This means you have a penalty for thread creation on every request, and
-possibility of DoS if too many requests come in, but it also means your
-thread count will scale up and down as necessary.
-.TP
 \fBThreads\fR nnn
 How many worker threads
 .B Zhttp
@@ -263,11 +250,8 @@ negotiations.  Generate such a file with \fBopenssl dhparam\fR.
 This can be used to do 2048bit DHE.
 .TP
 \fBLogLevel\fR value
-Specify the logging level: 0 for no logging, 1 (default) for regular
-logging, 2 for extended logging (show chosen backend server as well),
-3 for Apache-like format (Combined Log Format with Virtual Host), 4
-(same as 3 but without the virtual host information) and 5 (same as 4
-but with information about the
+Specify the logging level following the syslog scheme, 0 for no logging,
+1 (default) for regular information about the
 .I Service
 and
 .I BackEnd
@@ -297,17 +281,21 @@ weights set in each backend.
     \fBPENDING_CONNECTIONS\fR select the backend with least pending connections
     using as a proportion the weights set.
 .TP
+\fBPinnedConnection\fR  0|1
+Specify if we want to pin all the connections. If PinnedConnection is not set,
+0 is the default value. If PinnedConnection is set,
+.B Zhttp
+directly forwards all data without parsing or editing.
+.TP
+\fBNfmark\fB    0|1
+Allow to mark all the
+.B Zhttp
+output connections in order to track them.
+.TP
 \fBCompressionAlgorithm\fR gzip|deflate
 Specify the compression algorithm to use. If the client supports it and the
 response from the backend is not already compressed, Zhttp applies the
 compression.
-.TP
-\fBDynScale\fR 0|1
-Enable or disable the dynamic rescaling code (default: 0). If enabled
-.B Zhttp
-will periodically try to modify the back-end priorities in order to
-equalise the response times from the various back-ends.
-This value can be overridden for specific services.
 .TP
 \fBAlive\fR value
 Specify how often
@@ -373,6 +361,21 @@ the
 .I zhttpctl(8)
 program.
 .TP
+\fB ControlIP \fR   IP
+Set the control IP. If not defined
+.B Zhttp
+does not listen for any commands. The commands may be issued by using
+the
+.I zhttpctl(8)
+program.
+.TP
+\fB ControlPort \fR port
+Set the control port. If not defines
+.B Zhttp
+does not listen for any commands. The commands may be issued by using
+.I zhttpctl(8)
+program.
+.TP
 \fBControlUser\fR "user"
 The username to chown the Control socket to.
 .TP
@@ -385,7 +388,7 @@ The mode the Control socket should use, in octal.
 \fBInclude\fR "/path/to/file"
 Include the file as though it were part of the configuration file.
 .TP
-\fBAnonymise\fR
+\fBAnonymise (not implemented)\fR
 Replace the last byte of the client address with 0 for logging purposes.
 Default: log the client address in full.
 \fBIncludeDir\fR "/path/"
@@ -537,7 +540,7 @@ Override the global
 .I LogLevel
 value.
 .TP
-\fBForceHTTP10\fR "user agent pattern"
+\fBForceHTTP10 (not implemented) \fR "user agent pattern"
 Force connections for browser user agents matching this pattern to use
 HTTP/1.0 even if the browser has requested HTTP/1.1.  Some MSIE browsers have
 problems with HTTP/1.1 over SSL connections.  Other browsers, like Java/1.0 or
@@ -563,7 +566,7 @@ defined for HTTP listeners are applicable to HTTPS listeners as well. The
 following additional directives are also available:
 .TP
 \fBSSLConfigFile\fR "ssl config file"
-Specify the SSL configuration file. This file must follow the ssl .conf file
+Specify the OpenSSL configuration file. This file must follow the OpenSSL .cnf file
 format. Here is an example of an openSSL configuration file.
 
     zhttp = test_sect
@@ -576,6 +579,10 @@ format. Here is an example of an openSSL configuration file.
 
     [ listener ]
     RSA.Certificate = /path/to/your/cert.pem
+.TP
+\fBSSLConfigSection\fB  section
+Specify the OpenSSL configuration section. This section must be in the OpenSSL
+configuration file specified before.
 .TP
 \fBCert\fR "certificate file"
 Specify the server certificate. The
