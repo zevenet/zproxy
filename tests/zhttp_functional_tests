@@ -69,6 +69,7 @@ if (!$no_zhttp) {
     test_disable_backend_fail();
     test_enable_backend();
     test_enable_service();
+    test_add_backend();
     test_response_time();
     test_connections();
     stop_zhttp();
@@ -246,3 +247,12 @@ sub test_connect_timeout {
         assert_equal(1,1, "Connect timeout check");
     }
 }
+
+sub test_add_backend {
+    my $response = `curl -X PUT --data-ascii '{id: 3, weight: 1, name:"agapito", address:"127.0.0.1", port:1000}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backends`;
+    my $response = `curl -s --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/3`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'id'}, "3", "API add backend");
+}
+
