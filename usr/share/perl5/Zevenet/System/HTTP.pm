@@ -226,13 +226,9 @@ sub restartHttpServer
 	my $httpServerService = &getGlobalConfiguration( 'http_server_service' );
 
 	# Stop web server
-	my $cmd = "$httpServerService stop";
+	my $cmd = "$httpServerService stop; $httpServerService start";
 	require Zevenet::Log;
 	my $output = logAndRunBG( $cmd );
-
-	# Start web server
-	$cmd = "$httpServerService start";
-	$output += logAndRunBG( $cmd );
 
 	return $output;
 }
