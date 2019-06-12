@@ -14,9 +14,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#define MAX_DATA_SIZE 65000
-
-#define ENABLE_ZERO_COPY 1
+#define MAX_DATA_SIZE (67000)
+#define FAKE_ZERO_COPY 0
 
 #if ENABLE_ZERO_COPY
 
@@ -49,12 +48,17 @@ protected:
 public:
 #if ENABLE_ZERO_COPY
   SplicePipe splice_pipe;
+#if FAKE_ZERO_COPY
+  char buffer_aux[MAX_DATA_SIZE];
 #endif
-  std::string address_str;
-  addrinfo *address;
+#endif
+    std::string address_str;
+    addrinfo *address;
+
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
   size_t buffer_size{0};
+  size_t buffer_offset{0};
   std::string getPeerAddress();
 
 #if ENABLE_ZERO_COPY
@@ -63,7 +67,7 @@ public:
 #endif
 
   IO::IO_RESULT write(const char *data, size_t size);
-  IO::IO_RESULT writeTo(int fd);
+  IO::IO_RESULT writeTo(int fd, size_t & sent);
   IO::IO_RESULT writeContentTo(const Connection &target_connection,
                                http_parser::HttpData &http_data);
   IO::IO_RESULT writeTo(const Connection &target_connection,

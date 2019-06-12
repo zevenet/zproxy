@@ -153,11 +153,11 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
   IO::IO_RESULT result;
   int rc = -1;
   //  // FIXME: Buggy, used just for test
-  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+//  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   written = 0;
   for (;;) {
     rc = BIO_write(ssl_connection.io, data + written, static_cast<int>(data_size - written));
-    Debug::logmsg(LOG_DEBUG, "BIO_write return code %d writen %d", rc, written);
+//    Debug::logmsg(LOG_DEBUG, "BIO_write return code %d writen %d", rc, written);
     if (rc == 0) {
       result = IO::IO_RESULT::DONE_TRY_AGAIN;
       break;
@@ -184,8 +184,8 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
   if(flush_data)
     BIO_flush(ssl_connection.io);
 
-  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data write: %d ssl error: %s",
-                data_size, IO::getResultString(result).c_str());
+//  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data write: %d ssl error: %s",
+//                data_size, IO::getResultString(result).c_str());
   return result;
 }
 

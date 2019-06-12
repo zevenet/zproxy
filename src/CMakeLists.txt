@@ -14,7 +14,7 @@ add_definitions(-DDEBUG_STREAM_EVENTS_COUNT=1)
 add_definitions(-DSSL_DISABLE_SESSION_CACHE=1) #internal ssl session caching
 add_definitions(-DDEBUG_SSL=0)
 add_definitions(-DENABLE_SSL_SESSION_CACHING=0)
-add_definitions(-DENABLE_ZERO_COPY=1)
+add_definitions(-DENABLE_ZERO_COPY=0)
 
 add_library(libzhttp
 		ssl/ssl_common.h

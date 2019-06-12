@@ -19,6 +19,47 @@
 
 #if DEBUG_STREAM_EVENTS_COUNT
 
+struct StreamWatcher{
+  HttpStream * stream{nullptr};
+  StreamWatcher(HttpStream &http_stream): stream(&http_stream){
+    if(stream == nullptr){
+      Debug::logmsg(LOG_DEBUG,"\nIN Null HttpStream");
+    }else {
+      Debug::logmsg(LOG_DEBUG, "\nIN Stream data");
+      showData();
+    }
+  }
+  void showData(){
+    Debug::logmsg(LOG_DEBUG, "\n\tRequest"
+                             "\n\t\tBuffer size: %d"
+                             "\n\t\tContent-length: %d"
+                             "\n\t\tMessage bytes: %d"
+                             "\n\t\tBytes left: %d"
+                             "\n\tResponse"
+                             "\n\t\tBuffer size: %d"
+                             "\n\t\tContent-length: %d"
+                             "\n\t\tMessage bytes: %d"
+                             "\n\t\tBytes left: %d",
+                              stream->client_connection.buffer_size,
+                              stream->request.content_length,
+                              stream->request.message_length,
+                              stream->request.message_bytes_left,
+                              stream->backend_connection.buffer_size,
+                              stream->response.content_length,
+                              stream->response.message_length,
+                              stream->response.message_bytes_left
+    );
+  }
+  virtual  ~StreamWatcher(){
+    if(stream == nullptr){
+      Debug::logmsg(LOG_DEBUG," OUT Null HttpStream");
+    }else {
+      Debug::logmsg(LOG_DEBUG, "\nOUT Stream data");
+      showData();
+    }
+  }
+};
+
 namespace debug__ {
 #define DEBUG_COUNTER_HIT(x) std::unique_ptr<x> debug_stream_status(new x);
 

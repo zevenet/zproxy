@@ -23,6 +23,7 @@ void http_parser::HttpData::reset_parser() {
   status_message = nullptr;
   message_length = 0;
   message_bytes_left = 0;
+  content_length = 0;
   extra_headers.clear();
 }
 

@@ -96,6 +96,7 @@ public:
   char *message;             // body data start
   size_t message_length;     // body data lenght in current received message
   size_t message_bytes_left; // content-lenght
+  size_t content_length;
 
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;

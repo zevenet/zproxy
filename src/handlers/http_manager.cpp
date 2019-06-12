@@ -137,13 +137,14 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
     for (m = listener_config_.head_off; m; m = m->next) {
       if(::regexec(&m->pat, request.headers[i].name, 0, NULL, 0) == 0){
         request.headers[i].header_off = true;
-        Debug::logmsg(LOG_REMOVE, "#####Removing header %.*s",request.headers[i].name_len + request.headers[i].value_len+2, request.headers[i].name);
         break;
-        ;
       }
     }
     if(request.headers[i].header_off)
       continue;
+
+//      Debug::logmsg(LOG_REMOVE, "\t%.*s",request.headers[i].name_len + request.headers[i].value_len + 2, request.headers[i].name);
+
     // check header values length
     if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
       return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
@@ -178,7 +179,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
           request.headers[i].header_off = true;
         break;
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
-        request.message_bytes_left =
+        request.content_length =
             static_cast<size_t>(std::atoi(request.headers[i].value));
         continue;
       }
@@ -210,6 +211,8 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
                                              response.headers[i].name_len);
     const auto &header_value = nonstd::string_view(
         response.headers[i].value, response.headers[i].value_len);
+
+//    Debug::logmsg(LOG_REMOVE, "\t%.*s",response.headers[i].name_len + response.headers[i].value_len + 2, response.headers[i].name);
     if (http::http_info::headers_names.count(header.to_string()) > 0) {
       const auto &header_name =
           http::http_info::headers_names.at(header.to_string());
@@ -218,7 +221,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
 
       switch (header_name) {
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
-        stream.response.message_bytes_left =
+        stream.response.content_length =
             static_cast<size_t>(std::atoi(response.headers[i].value));
         continue;
       }

@@ -261,6 +261,7 @@ void StreamManager::addStream(int fd) {
         EVENT_GROUP::REQUEST_TIMEOUT);
   timers_set[stream->timer_fd.getFileDescriptor()] = stream;
   stream->client_connection.enableEvents(this, READ, EVENT_GROUP::CLIENT);
+
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
                             stream->client_connection.getPeerAddress(), true);
@@ -304,14 +305,14 @@ void StreamManager::onRequestEvent(int fd) {
     ::close(fd);
     return;
   }
-
+//    StreamWatcher watcher(*stream);
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (this->is_https_listener) {
     result = this->ssl_manager->handleDataRead(stream->client_connection);
-
   } else {
     result = stream->client_connection.read();
   }
+
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -421,10 +422,10 @@ void StreamManager::onRequestEvent(int fd) {
       return;
     } else {
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
-                Debug::logmsg(LOG_DEBUG, "[%s] %s[%d] (%.*s) -> %s[%d]", service->name.c_str(),
+                Debug::logmsg(LOG_DEBUG, "[%s] %.*s [%s (%d) -> %s (%d)]", service->name.c_str(),
+                        stream->request.getRequestLine().length() - 2,
+                        stream->request.getRequestLine().c_str(),
                         stream->client_connection.getPeerAddress().c_str(), stream->client_connection.getFileDescriptor(),
-                    stream->request.getRequestLine().length() - 2,
-                    stream->request.getRequestLine().c_str(),
                         bck->address.c_str(), stream->backend_connection.getFileDescriptor());
       switch (bck->backend_type) {
       case BACKEND_TYPE::REMOTE: {
@@ -582,27 +583,34 @@ void StreamManager::onResponseEvent(int fd) {
     ::close(fd);
     return;
   }
-  if (UNLIKELY(stream->backend_connection.isCancelled())) {
+  if (UNLIKELY(stream->client_connection.isCancelled())) { //check if client is still active
     clearStream(stream);
     return;
   }
+//    StreamWatcher watcher(*stream);
+  //disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
+
   IO::IO_RESULT result;
+
+    if (stream->backend_connection.getBackend()->isHttps()) {
+      result = stream->backend_connection.getBackend()->ssl_manager.handleDataRead(stream->backend_connection);
+    } else {
 #if ENABLE_ZERO_COPY
-  if (stream->response.message_bytes_left > 0 && !stream->backend_connection.getBackend()->isHttps() && !this->is_https_listener
-      /*&& stream->response.transfer_encoding_header*/) {
-    result = stream->backend_connection.zeroRead();
-    if (result == IO::IO_RESULT::ERROR) {
-      Debug::LogInfo("Error reading response ", LOG_DEBUG);
-      clearStream(stream);
-      return;
-    }
-    // TODO::Evaluar
-  #ifdef ENABLE_QUICK_RESPONSE
-      result = stream->backend_connection.zeroWrite(
+        if (stream->response.message_bytes_left > 0 && !stream->backend_connection.getBackend()->isHttps() && !this->is_https_listener
+            /*&& stream->response.transfer_encoding_header*/) {
+            result = stream->backend_connection.zeroRead();
+            if (result == IO::IO_RESULT::ERROR) {
+                Debug::LogInfo("Error reading response ", LOG_DEBUG);
+                clearStream(stream);
+                return;
+            }
+            // TODO::Evaluar
+#ifdef ENABLE_QUICK_RESPONSE
+            result = stream->backend_connection.zeroWrite(
           stream->client_connection.getFileDescriptor(), stream->response);
       switch (result) {
       case IO::IO_RESULT::FD_CLOSED:
@@ -619,38 +627,35 @@ void StreamManager::onResponseEvent(int fd) {
       case IO::IO_RESULT::FULL_BUFFER:
         break;
       }
-  #endif
-  } else {
 #endif
-    if (stream->backend_connection.getBackend()->isHttps()) {
-      result = stream->backend_connection.getBackend()->ssl_manager.sslRead(stream->backend_connection);
-    } else {
+        } else
+#endif
       result = stream->backend_connection.read();
     }
     switch (result) {
-    case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
-    case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-      if (!stream->backend_connection.getBackend()->ssl_manager.handleHandshake(stream->backend_connection)) {
-        Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
-                      stream->client_connection.getPeerAddress().c_str());
-        clearStream(stream);
-      }
-      stream->backend_connection.enableWriteEvent();
-      return;
-    }
-    case IO::IO_RESULT::SUCCESS:break;
-    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
-    case IO::IO_RESULT::FULL_BUFFER:Debug::logmsg(LOG_DEBUG, "Backend buffer full");
-      break;
-    case IO::IO_RESULT::ZERO_DATA: return;
-    case IO::IO_RESULT::FD_CLOSED: return; //wait for EPOLLRDHUP
-    case IO::IO_RESULT::ERROR:
-    case IO::IO_RESULT::CANCELLED:
-    default: {
-      Debug::LogInfo("Error reading response ", LOG_DEBUG);
-      clearStream(stream);
-      return;
-    }
+        case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
+        case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+          if (!stream->backend_connection.getBackend()->ssl_manager.handleHandshake(stream->backend_connection)) {
+            Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
+                          stream->client_connection.getPeerAddress().c_str());
+            clearStream(stream);
+          }
+          stream->backend_connection.enableWriteEvent();
+          return;
+        }
+        case IO::IO_RESULT::SUCCESS:break;
+        case IO::IO_RESULT::DONE_TRY_AGAIN:
+        case IO::IO_RESULT::FULL_BUFFER:
+        case IO::IO_RESULT::ZERO_DATA:
+        case IO::IO_RESULT::FD_CLOSED:
+            break;
+        case IO::IO_RESULT::ERROR:
+        case IO::IO_RESULT::CANCELLED:
+        default: {
+          Debug::LogInfo("Error reading response ", LOG_DEBUG);
+          clearStream(stream);
+          return;
+        }
     }
     // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de
     // tomar muestra si se la lectura ha sido success.
@@ -661,34 +666,31 @@ void StreamManager::onResponseEvent(int fd) {
             .count());
     //  stream->backend_stadistics.update();
 
-    if (stream->upgrade.pinned_connection) {
-      stream->client_connection.enableWriteEvent();
-      return;
+    if (stream->upgrade.pinned_connection || stream->response.message_bytes_left > 0 ) {
+                  stream->client_connection.enableWriteEvent();
+          //TODO:: maybe quick response
+//          Debug::logmsg(LOG_REMOVE, "\nDATA IN\n\t\t buffer size: %d \n\t\t Content length: %d \n\t\t message bytes left: %d",
+//                  stream->backend_connection.buffer_size, stream->response.content_length, stream->response.message_bytes_left);
+          return;
     }
 
     size_t parsed = 0;
-    if (stream->response.message_bytes_left < 1) {
-      auto ret = stream->response.parseResponse(
+    auto ret = stream->response.parseResponse(
           stream->backend_connection.buffer,
           stream->backend_connection.buffer_size,
-          &parsed); // parsing http data as response structured
-      //    Debug::logmsg(
-      //        LOG_REMOVE,
-      //        "PARSE buffer_size: %d bytes left: %d current_message_size=%d",
-      //        stream->backend_connection.buffer_size,
-      //        stream->response.message_bytes_left,
-      //        stream->response.message_length);
-      // get content-lengt
+          &parsed);
 
     if (ret==http_parser::PARSE_RESULT::FAILED) {
        clearStream(stream);
        return;
     }
+    static int retries;
+    retries++;
     Debug::logmsg(
-       LOG_DEBUG, "[%s] %s[%d] <- (%.*s) %s[%d]",
+       LOG_DEBUG, " %d [%s] %.*s [%s (%d) <- %s (%d)]", retries,
        static_cast<Service*>(stream->request.getService())->name.c_str(),
+            stream->response.http_message_length-2, stream->response.http_message,
        stream->client_connection.getPeerAddress().c_str(), stream->client_connection.getFileDescriptor(),
-       stream->response.http_message_length-2, stream->response.http_message,
        stream->backend_connection.getBackend()->address.c_str(),
        stream->backend_connection.getFileDescriptor()
     );
@@ -714,13 +716,14 @@ void StreamManager::onResponseEvent(int fd) {
       this->clearStream(stream);
       return;
     }
-  }
+
     auto service = static_cast<Service*>(stream->request.getService());
     http_manager::setBackendCookie(service, stream);
     setStrictTransportSecurity(service, stream);
-    http_manager::applyCompression(service, stream);
-  }
-  stream->client_connection.enableWriteEvent();
+    if(!this->is_https_listener) {
+        http_manager::applyCompression(service, stream);
+    }
+    stream->client_connection.enableWriteEvent();
 }
 
 void StreamManager::onConnectTimeoutEvent(int fd) {
@@ -797,6 +800,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
+//    StreamWatcher watcher(*stream);
   int fd = stream->backend_connection.getFileDescriptor();
   // Send client request to backend server
   if (stream->backend_connection.getBackend()->conn_timeout > 0 &&
@@ -895,11 +899,11 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
-
+//  StreamWatcher watcher(*stream);
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
    * content without applying any kind of modification. */
-  if (stream->upgrade.pinned_connection) {
+  if (stream->upgrade.pinned_connection || stream->response.message_bytes_left > 0) {
     size_t written = 0;
     if (this->is_https_listener) {
       result = this->ssl_manager->handleWrite(
@@ -907,7 +911,13 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
           stream->backend_connection.buffer_size, written);
 
     } else {
-      result = stream->backend_connection.writeTo(stream->client_connection.getFileDescriptor());
+     if(stream->backend_connection.buffer_size > 0)
+        result = stream->backend_connection.writeTo(stream->client_connection.getFileDescriptor(), written);
+#if ENABLE_ZERO_COPY
+      else  if (stream->backend_connection.splice_pipe.bytes > 0 )
+    result = stream->backend_connection.zeroWrite(
+        stream->client_connection.getFileDescriptor(), stream->response);
+#endif
     }
     switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
@@ -921,33 +931,34 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     }
     case IO::IO_RESULT::FD_CLOSED:
     case IO::IO_RESULT::CANCELLED:
-    case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
-      clearStream(stream);
-      return;
+    case IO::IO_RESULT::FULL_BUFFER:
+    case IO::IO_RESULT::ERROR:
+        Debug::LogInfo("Error sending response ", LOG_DEBUG);
+        clearStream(stream);
+        return;
     case IO::IO_RESULT::SUCCESS:
-    case IO::IO_RESULT::DONE_TRY_AGAIN:
-      if (this->is_https_listener)
-        stream->backend_connection.buffer_size -= written;
-    case IO::IO_RESULT::FULL_BUFFER:break;
+    case IO::IO_RESULT::DONE_TRY_AGAIN:break;
     }
-
+    if(this->is_https_listener)
+      stream->backend_connection.buffer_size -= written;
+    if(stream->response.content_length > 0 ) {
+      stream->response.message_bytes_left -= written;
+    }
+//      Debug::logmsg(LOG_DEBUG, "\nDATA out\n\t\t buffer size: %d \n\t\t Content length: %d \n\t\t message bytes left: %d \n\t\t written: %d",
+//              stream->backend_connection.buffer_size, stream->response.content_length, stream->response.message_bytes_left, written);
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
-
     return;
   }
 
-  if (stream->backend_connection.buffer_size > 0) {
-    if (this->is_https_listener) {
+  if (stream->backend_connection.buffer_size == 0) return;
+
+  if (this->is_https_listener) {
       result = ssl_manager->handleDataWrite(stream->client_connection, stream->backend_connection, stream->response);
-    } else {
-      result = stream->backend_connection.writeTo(stream->client_connection,
+  } else {
+     result = stream->backend_connection.writeTo(stream->client_connection,
                                                   stream->response);
-    }
   }
-  if (stream->backend_connection.splice_pipe.bytes > 0 )
-    result = stream->backend_connection.zeroWrite(
-        stream->client_connection.getFileDescriptor(), stream->response);
 
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
@@ -957,20 +968,19 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
                     stream->client_connection.getPeerAddress().c_str());
       clearStream(stream);
     }
+    stream->client_connection.enableReadEvent();
     return;
   }
   case IO::IO_RESULT::FD_CLOSED:
   case IO::IO_RESULT::CANCELLED:
+  case IO::IO_RESULT::FULL_BUFFER:
   case IO::IO_RESULT::ERROR:Debug::LogInfo("Error reading request ", LOG_DEBUG);
     clearStream(stream);
     return;
-  case IO::IO_RESULT::SUCCESS:stream->backend_connection.enableReadEvent();
-    stream->client_connection.enableReadEvent();
+  case IO::IO_RESULT::SUCCESS:
+  case IO::IO_RESULT::DONE_TRY_AGAIN:
     break;
-  case IO::IO_RESULT::DONE_TRY_AGAIN:stream->backend_connection.enableReadEvent();
-    stream->client_connection.enableWriteEvent();
-    break;
-  case IO::IO_RESULT::FULL_BUFFER:break;
+
   default:Debug::LogInfo("Error sending data to client", LOG_DEBUG);
     clearStream(stream);
     return;
@@ -983,6 +993,13 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE, upgrade_header_value);
     if (http_info::upgrade_protocols.count(upgrade_header_value) > 0)
       stream->upgrade.protocol = http_info::upgrade_protocols.at(upgrade_header_value);
+  }
+
+  if(stream->backend_connection.buffer_size > 0)
+     stream->client_connection.enableWriteEvent();
+  else {
+     stream->backend_connection.enableReadEvent();
+     stream->client_connection.enableReadEvent();
   }
 }
 
@@ -1018,11 +1035,11 @@ void StreamManager::clearStream(HttpStream *stream) {
   if (stream == nullptr) {
     return;
   }
-  if (stream->backend_connection.buffer_size > 0 || stream->backend_connection.splice_pipe.bytes > 0) {
-    //TODO:: remove and create enum with READY_TO_SEND_RESPONSE
-    stream->backend_connection.disableEvents();
-    return;
-  }
+//  if (stream->backend_connection.buffer_size > 0 || stream->backend_connection.splice_pipe.bytes > 0) {
+//    //TODO:: remove and create enum with READY_TO_SEND_RESPONSE
+//    stream->backend_connection.disableEvents();
+//    return;
+//  }
 
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());

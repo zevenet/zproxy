@@ -39,6 +39,8 @@ Connection::~Connection() {
 }
 
 IO::IO_RESULT Connection::read() {
+
+//  Debug::logmsg(LOG_REMOVE, "READ IN write %d  buffer %d", splice_pipe.bytes, buffer_size);
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
@@ -74,6 +76,7 @@ IO::IO_RESULT Connection::read() {
     }
   }
   // PRINT_BUFFER_SIZE
+//  Debug::logmsg(LOG_REMOVE, "READ IN write %d  buffer %d", splice_pipe.bytes, buffer_size);
   return result;
 }
 
@@ -87,12 +90,13 @@ std::string Connection::getPeerAddress() {
 }
 
 #if ENABLE_ZERO_COPY
-
+#if !FAKE_ZERO_COPY
 IO::IO_RESULT Connection::zeroRead() {
-
+  IO::IO_RESULT result = IO::IO_RESULT::ZERO_DATA;
   for (;;) {
     if (splice_pipe.bytes >= BUFSZ) {
-      return IO::IO_RESULT::FULL_BUFFER;
+      result = IO::IO_RESULT::FULL_BUFFER;
+      break;
     }
     auto n = splice(fd_, nullptr, splice_pipe.pipe[1], nullptr, BUFSZ,
                     SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
@@ -102,17 +106,24 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     if (n < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
-        return IO::IO_RESULT::DONE_TRY_AGAIN;
-      return IO::IO_RESULT::ERROR;
+      {
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;
+        break;
+      }
+      result = IO::IO_RESULT::ERROR;
+      break;
     }
   }
-  return IO::IO_RESULT::SUCCESS;
+  Debug::logmsg(LOG_REMOVE, "ZERO READ write %d  buffer %d", splice_pipe.bytes, buffer_size);
+  return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
   //  Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes),
   //  LOG_DEBUG);
+
+  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d", splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
     if (bytes > BUFSZ)
@@ -136,17 +147,70 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
   return IO::IO_RESULT::SUCCESS;
 }
 
+#else
+IO::IO_RESULT Connection::zeroRead() {
+  IO::IO_RESULT result = IO::IO_RESULT::ZERO_DATA;
+//  Debug::logmsg(LOG_REMOVE, "ZERO READ IN %d  buffer %d", splice_pipe.bytes, buffer_size);
+  for (;;) {
+    if (splice_pipe.bytes >= BUFSZ) {
+      result = IO::IO_RESULT::FULL_BUFFER;
+      break;
+    }
+    auto n = ::read(fd_,buffer_aux + splice_pipe.bytes, BUFSZ - splice_pipe.bytes);
+    if (n > 0)
+      splice_pipe.bytes += n;
+    if (n == 0)
+      break;
+    if (n < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+      {
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;
+        break;
+      }
+      result = IO::IO_RESULT::ERROR;
+      break;
+    }
+  }
+//  Debug::logmsg(LOG_REMOVE, "ZERO READ OUT %d  buffer %d", splice_pipe.bytes, buffer_size);
+  return result;
+}
+
+IO::IO_RESULT Connection::zeroWrite(int dst_fd,
+        http_parser::HttpData &http_data) {
+//  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d", splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
+  int sent = 0;
+  while (splice_pipe.bytes > 0) {
+    int bytes = splice_pipe.bytes;
+    if (bytes > BUFSZ)
+      bytes = BUFSZ;
+    auto n = ::write(dst_fd,buffer_aux + sent,bytes - sent);
+    if (n == 0)
+      break;
+    if (n < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return IO::IO_RESULT::DONE_TRY_AGAIN;
+      return IO::IO_RESULT::ERROR;
+    }
+    splice_pipe.bytes -= n;
+    http_data.message_bytes_left -= n;
+    sent += n;
+  }
+  /* bytes > 0, add dst to epoll set */
+  /* else remove if it was added */
+  return IO::IO_RESULT::SUCCESS;
+}
 #endif
-IO::IO_RESULT Connection::writeTo(int fd) {
+#endif
+IO::IO_RESULT Connection::writeTo(int fd, size_t & sent) {
 
   bool done = false;
-  size_t sent = 0;
+  sent = 0;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
   //  Debug::LogInfo("#IN#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
-  PRINT_BUFFER_SIZE
+//  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::send(fd, buffer + sent, buffer_size - sent, MSG_NOSIGNAL);
     if (count < 0) {
@@ -175,7 +239,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   }
   //  Debug::LogInfo("#OUT#bufer_size" +
   //  std::to_string(string_buffer.string().length()));
-  PRINT_BUFFER_SIZE
+//  PRINT_BUFFER_SIZE
   return result;
 }
 
@@ -183,9 +247,8 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
                                          http_parser::HttpData &http_data) {
   bool done = false;
   size_t sent = 0;
-  auto total_to_send = http_data.message_bytes_left > buffer_size
-                           ? buffer_size
-                           : http_data.message_bytes_left;
+  auto total_to_send =  buffer_size ;
+  http_data.message_bytes_left = http_data.message_bytes_left > 0 ? http_data.message_bytes_left: http_data.content_length;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   PRINT_BUFFER_SIZE
@@ -212,7 +275,7 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
       sent += static_cast<size_t>(count);
       total_to_send -= count;
       buffer_size -= count;
-      if(http_data.message_bytes_left >= count)
+      if(http_data.content_length > 0)
         http_data.message_bytes_left -= count;
     }
   }
@@ -223,6 +286,7 @@ IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
+  http_data.message_bytes_left = 0;
   const char *return_value = "\r\n";
   auto vector_size =
       http_data.num_headers + (http_data.message_length > 0 ? 3 : 2) +
@@ -239,12 +303,6 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   for (size_t i = 0; i != http_data.num_headers; i++) {
     if (http_data.headers[i].header_off)
       continue; // skip unwanted headers
-//    if (helper::headerEqual(http_data.headers[i],
-//                            http::http_info::headers_names_strings.at(
-//                                http::HTTP_HEADER_NAME::CONTENT_LENGTH))) {
-//      http_data.message_bytes_left =
-//          static_cast<size_t>(std::atoi(http_data.headers[i].value));
-//    }
     iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
@@ -275,17 +333,14 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
           http_data.headers[http_data.num_headers - 1].name +
           http_data.headers[http_data.num_headers - 1].line_size) +
       2;
-  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
-  //  ,last_buffer_pos_written);
   if (http_data.message_length > 0) {
     iov[x].iov_base = http_data.message;
     iov[x++].iov_len = http_data.message_length;
     last_buffer_pos_written += http_data.message_length;
     total_to_send += http_data.message_length;
-    http_data.message_bytes_left -= http_data.message_length;
+    http_data.message_bytes_left = http_data.content_length - http_data.message_length;
   }
-  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
-  //  ,last_buffer_pos_written);
+
   ssize_t nwritten = ::writev(target_fd, iov, x);
 
   if (nwritten < 0) {
@@ -296,16 +351,23 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
       Debug::LogInfo(error, LOG_NOTICE);
       return IO::IO_RESULT::ERROR;
     } else {
-      return IO::IO_RESULT::DONE_TRY_AGAIN;
+      return IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes
     }
   } else if (nwritten != total_to_send) {
     return IO::IO_RESULT::ERROR;
   }
-  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
-  //  ,last_buffer_pos_written); Debug::logmsg(LOG_REMOVE,"http_data.buffer = %p
-  //  " ,http_data.buffer);
-  buffer_size -=
-      static_cast<size_t>(last_buffer_pos_written - http_data.buffer);
+//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
+//  Debug::logmsg(LOG_REMOVE,"\tIn buffer size: %d", buffer_size);
+  buffer_offset = static_cast<size_t>(last_buffer_pos_written - http_data.buffer);
+  buffer_size -= buffer_offset;
+  http_data.message_length = 0;
+//  Debug::logmsg(LOG_REMOVE,"\tbuffer offset: %d", buffer_offset);
+//  Debug::logmsg(LOG_REMOVE,"\tOut buffer size: %d", buffer_size);
+//  Debug::logmsg(LOG_REMOVE,"\tbuffer offset: %d", buffer_offset);
+//  Debug::logmsg(LOG_REMOVE,"\tcontent length: %d", http_data.content_length);
+//  Debug::logmsg(LOG_REMOVE,"\tmessage length: %d", http_data.message_length);
+//  Debug::logmsg(LOG_REMOVE,"\tmessage bytes left: %d", http_data.message_bytes_left);
+
   //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
@@ -503,3 +565,5 @@ bool Connection::listen(std::string af_unix_name) {
 
   return false;
 }
+
+

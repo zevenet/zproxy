@@ -47,7 +47,7 @@ enum EVENT_TYPE {
   ACCEPT = (EPOLLIN | EPOLLET),
 #endif
   /** Read from the connection. */
-  READ = (EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP),
+  READ = (EPOLLIN | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
   /** Read from the connection. */
   READ_ONESHOT = (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
   /** Write to the connection. */
