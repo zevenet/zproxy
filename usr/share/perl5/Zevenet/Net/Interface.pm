@@ -1750,6 +1750,14 @@ sub setVlan    # if_ref
 
 	my $oldIf_ref = &getInterfaceConfig( $if_ref->{ name } );
 
+	if ( $if_ref->{ dhcp } eq "true" )
+	{
+		$if_ref->{ addr }    = "";
+		$if_ref->{ net }     = "";
+		$if_ref->{ mask }    = "";
+		$if_ref->{ gateway } = "";
+	}
+
 	# Creating a new interface
 	if ( !defined $oldIf_ref )
 	{
@@ -1761,7 +1769,7 @@ sub setVlan    # if_ref
 	my $oldAddr;
 
 	# Add new IP, netmask and gateway
-	if ( exists $if_ref->{ addr } )
+	if ( exists $if_ref->{ addr } and length $if_ref->{ addr } > 0 )
 	{
 		return 1 if &addIp( $if_ref );
 		return 1 if &writeRoutes( $if_ref->{ name } );
@@ -1770,11 +1778,16 @@ sub setVlan    # if_ref
 	}
 
 	my $state = &upIf( $if_ref, 'writeconf' );
+	return 1 if ( !&setInterfaceConfig( $if_ref ) );
 
 	if ( $state == 0 )
 	{
 		$if_ref->{ status } = "up";
-		return 1 if &applyRoutes( "local", $if_ref );
+
+		if ( $if_ref->{ addr } > 0 )
+		{
+			return 1 if &applyRoutes( "local", $if_ref );
+		}
 	}
 
 	if ( $eload && exists $params->{ mac } )
@@ -1789,10 +1802,8 @@ sub setVlan    # if_ref
 		  );
 	}
 
-	return 1 if ( !&setInterfaceConfig( $if_ref ) );
-
 	# if the GW is changed, change it in all appending virtual interfaces
-	if ( exists $params->{ gateway } )
+	if ( exists $if_ref->{ gateway } and length $if_ref->{ gateway } > 0 )
 	{
 		foreach my $appending ( &getInterfaceChild( $if_ref->{ vlan } ) )
 		{

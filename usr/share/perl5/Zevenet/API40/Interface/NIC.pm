@@ -480,9 +480,18 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	$if_ref->{ dhcp } = $json_obj->{ dhcp } if exists $json_obj->{ dhcp };
 
 	# set DHCP
-	my $set_flag = 1;
+	my $set_flag        = 1;
+	my $nic_config_file = "";
 	if ( exists $json_obj->{ dhcp } )
 	{
+		if ( $json_obj->{ dhcp } eq "true" )
+		{
+			require Zevenet::Lock;
+			$nic_config_file =
+			  &getGlobalConfiguration( 'configdir' ) . "/if_$if_ref->{ name }_conf";
+			&lockResource( $nic_config_file, "l" );
+		}
+
 		my $func = ( $json_obj->{ dhcp } eq 'true' ) ? "enableDHCP" : "disableDHCP";
 		my $err = &eload(
 						  module => 'Zevenet::Net::DHCP',
@@ -496,10 +505,25 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 			$set_flag = 0;
 		}
 	}
-	&setInterfaceConfig( $if_ref ) or die;
+	if ( !&setInterfaceConfig( $if_ref ) )
+	{
+		if ( $json_obj->{ dhcp } eq "true" )
+		{
+			require Zevenet::Lock;
+			&lockResource( $nic_config_file, "ud" );
+		}
+		my $msg = "Errors found trying to modify interface $nic";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# Free the resource
+	if ( $json_obj->{ dhcp } eq "true" )
+	{
+		require Zevenet::Lock;
+		&lockResource( $nic_config_file, "ud" );
+	}
 
 	# set up
-
 	if (     $if_ref->{ addr } && $if_ref->{ mask }
 		 and $set_flag )
 	{

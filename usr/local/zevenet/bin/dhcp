@@ -53,10 +53,12 @@ exit 0 if ( $if_conf_ref->{ type } eq 'virtual' );
 
 &zenlog( "Applying a new networking configuration for the interface $if_name",
 		 'info', 'dhcp' );
+use Data::Dumper;
 
-if (!$ENV{ new_ip_address } or !$ENV{ new_subnet_mask })
+if ( !$ENV{ new_ip_address } or !$ENV{ new_subnet_mask } )
 {
-	&zenlog ( "DHCP does not find any IP/Netmask for interface '$if_name'", 'warning', 'dhcp');
+	&zenlog( "DHCP does not find any IP/Netmask for interface '$if_name'",
+			 'warning', 'dhcp' );
 	exit 0;
 }
 
@@ -64,14 +66,25 @@ $if_conf_ref->{ addr }    = $ENV{ new_ip_address };
 $if_conf_ref->{ mask }    = $ENV{ new_subnet_mask };
 $if_conf_ref->{ gateway } = $ENV{ new_routers };
 $if_conf_ref->{ ip_v } =
-	  ( $ENV{ new_ip_address } =~ /:/ ) ? '6' : ( $ENV{ new_ip_address } =~ /\./ ) ? '4' : 0;
+    ( $ENV{ new_ip_address } =~ /:/ )  ? '6'
+  : ( $ENV{ new_ip_address } =~ /\./ ) ? '4'
+  :                                      0;
 
 # Add new IP, netmask and gateway
+require Zevenet::Lock;
+my $iface_config_file =
+  &getGlobalConfiguration( 'configdir' ) . "/if_$if_name" . "_conf";
+
+&lockResource( $iface_config_file, "l" );
+
 unless ( &setInterfaceConfig( $if_conf_ref ) )
 {
 	&zenlog( "Error saving the new dhcp configuration", "error", "dhcp" );
+	&lockResource( $iface_config_file, "ud" );
 	next;
 }
+
+&lockResource( $iface_config_file, "ud" );
 
 &saveDefaultGateway( $if_conf_ref );
 
@@ -96,14 +109,14 @@ sub saveDefaultGateway
 {
 	my $if_ref = shift;
 
-	my $defGw       = &getGlobalConfiguration( 'defaultgwif' );
-	my $defGw6       = &getGlobalConfiguration( 'defaultgwif6' );
+	my $defGw  = &getGlobalConfiguration( 'defaultgwif' );
+	my $defGw6 = &getGlobalConfiguration( 'defaultgwif6' );
 
 	#Save Default GW configuration from global.
 	if ( "$defGw" eq "$if_ref->{ dev }" or "$defGw6" eq "$if_ref->{ dev }" )
 	{
 		&zenlog( "Changing Default GW for table Global", "info", 'dhcp' );
-		&applyRoutes( "global", $if_ref, $$if_ref{gateway} );
+		&applyRoutes( "global", $if_ref, $$if_ref{ gateway } );
 	}
 }
 

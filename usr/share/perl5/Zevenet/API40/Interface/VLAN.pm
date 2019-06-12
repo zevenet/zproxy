@@ -639,7 +639,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	else
 	{
 		my $new_if = {
-					   addr    => $json_obj->{ ip } // $if_ref->{ addr },
+					   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
 					   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 					   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 		};
@@ -724,28 +724,42 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		&delRoutes( "local", $if_ref );
 	}
 
-	$if_ref->{ addr } = $json_obj->{ ip } if exists $json_obj->{ ip };
+	$if_ref->{ addr } = $json_obj->{ ip } if ( exists $json_obj->{ ip } );
 	$if_ref->{ mac } = lc $json_obj->{ mac }
 	  if ( $eload && exists $json_obj->{ mac } );
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
+	require Zevenet::Lock;
+	my $vlan_config_file =
+	  &getGlobalConfiguration( 'configdir' ) . "/if_$if_ref->{ name }_conf";
 	my $dhcp_flag = $json_obj->{ dhcp } // $if_ref->{ dhcp };
+
 	if ( ( $dhcp_flag ne 'true' ) and !( $if_ref->{ addr } && $if_ref->{ mask } ) )
 	{
 		my $msg = "Cannot configure the interface without address or without netmask.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+	elsif ( $dhcp_flag eq "true" )
+	{
+		&lockResource( $vlan_config_file, "l" );
+	}
 
 	require Zevenet::Net::Interface;
 	if ( &setVlan( $if_ref, $json_obj ) )
 	{
+		#Release lock file
+		&lockResource( $vlan_config_file, "ud" ) if ( $dhcp_flag eq "true" );
+
 		my $msg = "Errors found trying to modify interface $vlan";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	#Release lock file
+	&lockResource( $vlan_config_file, "ud" ) if ( $dhcp_flag eq "true" );
 
 	my $if_out = &get_vlan_struct( $vlan );
 	my $body = {
