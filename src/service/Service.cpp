@@ -100,31 +100,31 @@ bool Service::addBackend(JsonObject *json_object) {
     return false;
   } else {    // Redirect
     auto *config = new Backend();
-    if (json_object->at(JSON_KEYS::ID)->isValue()) {
+    if (json_object->count(JSON_KEYS::ID) > 0 && json_object->at(JSON_KEYS::ID)->isValue()) {
       config->backend_id = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID).get())->number_value;
     } else {
         return false;
     }
 
-    if (json_object->at(JSON_KEYS::WEIGHT)->isValue()) {
+    if (json_object->count(JSON_KEYS::WEIGHT) > 0 && json_object->at(JSON_KEYS::WEIGHT)->isValue()) {
       config->weight = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::WEIGHT).get())->number_value;
     } else {
         return false;
     }
 
-    if (json_object->at(JSON_KEYS::NAME)->isValue()) {
+    if (json_object->count(JSON_KEYS::NAME) > 0 && json_object->at(JSON_KEYS::NAME)->isValue()) {
       config->name = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::NAME).get())->string_value;
     } else {
         config->name = "bck_" + std::to_string(config->backend_id);
     }
 
-    if (json_object->at(JSON_KEYS::ADDRESS)->isValue()) {
+    if (json_object->count(JSON_KEYS::ADDRESS) > 0 && json_object->at(JSON_KEYS::ADDRESS)->isValue()) {
       config->address = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ADDRESS).get())->string_value;
     } else {
         return false;
     }
 
-    if (json_object->at(JSON_KEYS::PORT)->isValue()) {
+    if (json_object->count(JSON_KEYS::PORT) > 0 && json_object->at(JSON_KEYS::PORT)->isValue()) {
       config->port = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::PORT).get())->number_value;
     } else {
         return false;

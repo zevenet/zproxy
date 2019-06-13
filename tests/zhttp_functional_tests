@@ -70,7 +70,9 @@ if (!$no_zhttp) {
     test_enable_backend();
     test_enable_service();
     test_add_backend();
+    test_add_backend_fail();
     test_response_time();
+    test_connection_time();
     test_connections();
     stop_zhttp();
 }
@@ -86,6 +88,7 @@ if ($https) {
         stop_zhttp();
     }
 }
+print "All tests done. Shutting down! \n";
 stop_docker();
 
 sub run_zhttp {
@@ -219,7 +222,14 @@ sub test_response_time {
     my $response = `curl -s --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/0`;
     my $decoded = decode_json($response);
     
-    assert_non_equal($decoded->{'response-time'}, "-1.0", "API check -1.0 response time");
+    assert_non_equal($decoded->{'response-time'}, "-1.0", "API check response time");
+}
+
+sub test_connection_time {
+    my $response = `curl -s --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/0`;
+    my $decoded = decode_json($response);
+    
+    assert_non_equal($decoded->{'connection-time'}, "-1.0", "API check connecton time");
 }
 
 sub test_connections {
@@ -249,10 +259,17 @@ sub test_connect_timeout {
 }
 
 sub test_add_backend {
-    my $response = `curl -X PUT --data-ascii '{id: 3, weight: 1, name:"agapito", address:"127.0.0.1", port:1000}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backends`;
+    my $response = `curl -s -X PUT --data-ascii '{id: 3, weight: 1, name:"agapito", address:"127.0.0.1", port:1000}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backends`;
     my $response = `curl -s --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/3`;
     my $decoded = decode_json($response);
 
     assert_equal($decoded->{'id'}, "3", "API add backend");
 }
 
+sub test_add_backend_fail {
+    my $response = `curl -s -X PUT --data-ascii '{id: 3, weight: 1, name:"agapito", port:1000}' --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backends`;
+    my $response = `curl -s --unix-socket ${control_socket} http://${ip}/listener/0/service/0/backend/3`;
+    my $decoded = decode_json($response);
+
+    assert_equal($decoded->{'result'}, "error", "API add backend fail");
+}
