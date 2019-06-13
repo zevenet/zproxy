@@ -158,7 +158,7 @@ Returns:
 				'set_uid'          => '',		# set a uid
 				'set_sid'          => '',		# set a sid
 				'set_variable'     => [],		# set or initializate variables
-				'expire_var'       => [],		# expire set valiables
+				'expire_variable'       => [],		# expire set valiables
 				'chain'            => [],		# list of additional rules to match
 				'skip'             => '',		# skip a number of rules if the current rule match
 				'skip_after'       => '',		# skip until find a rule id or mark if the current rule match
@@ -204,7 +204,7 @@ sub getWAFRulesStruct
 		'set_uid'          => '',
 		'set_sid'          => '',
 		'set_variable'     => [],
-		'expire_var'       => [],
+		'expire_variable'  => [],
 		'chain'            => [],
 		'skip'             => 0,
 		'skip_after'       => '',

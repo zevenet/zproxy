@@ -104,7 +104,7 @@ Output example:
 					'testing',
 					'Api tests'
 				],
-		'raw' => 'SecRule REQUEST_URI|REQUEST_BODY "@contains index" "id:100,msg:\'Testing rule\',tag:testing,tag:Api tests,severity:2,phase:2,t:base64Decode,t:escapeSeqDecode,t:urlDecode,multimatch,pass,status:200,log,noauditlog,logdata:match in rule 41,setvar:tx.php_injection_score=+%{tx.critical_anomaly_score},setvar:tx.anomaly_score=+%{tx.critical_anomaly_score},setvar:tx.%{rule.id}-OWASP_CRS/WEB_ATTACK/PHP_INJECTION-%{matched_var_name}=%{tx.0},skip:2,skipAfter:100,exec:/opt/example_script.lua"',
+		'raw' => 'SecRule REQUEST_URI|REQUEST_BODY "@contains index" "id:100,msg:\'Testing rule\',tag:testing,tag:Api tests,severity:2,phase:2,t:base64Decode,t:escapeSeqDecode,t:urlDecode,multiMatch,pass,status:200,log,noauditlog,logdata:match in rule 41,setvar:tx.php_injection_score=+%{tx.critical_anomaly_score},setvar:tx.anomaly_score=+%{tx.critical_anomaly_score},setvar:tx.%{rule.id}-OWASP_CRS/WEB_ATTACK/PHP_INJECTION-%{matched_var_name}=%{tx.0},skip:2,skipAfter:100,exec:/opt/example_script.lua"',
 		'no_audit_log' => 'true',
 		'skip' => '2',
 		'type' => 'match_action',
@@ -120,7 +120,7 @@ Output example:
 						'REQUEST_BODY'
 						],
 		'chain' => [],
-		'expire_var' => [],
+		'expire_variable' => [],
 		'multi_match' => 'true',
 		'operating' => 'index',
 		'audit_log' => 'false',
@@ -196,7 +196,8 @@ sub parseWAFRule
 
 		if ( $directive eq 'SecRule' )
 		{
-			if ( $line =~ /^\s*SecRule\s+"?([^"]+)"?\s+"?((?:[^"]|\\")+)"?\s+"(.*)"$/s )
+			if (
+				 $line =~ /^\s*SecRule\s+"?([^"]+)"?\s+"?((?:[^"]|\\")+)"?(?:\s+"(.*)")?$/s )
 			{
 				my $var = $1;
 				$var =~ s/^"//;
@@ -249,7 +250,14 @@ sub parseWAFRule
 		my @options = ();
 		if ( defined $act )
 		{
-			@options = split ( ',', $act );
+			# Does not split ',' when it is between quotes. Getting the quoted items:
+			while ( $act =~ s/(\w+:'[^\']*'\s*)(?:,|$)// )
+			{
+				push @options, $1;
+			}
+
+			my @options2 = split ( ',', $act );
+			push @options, @options2;
 		}
 
 		foreach my $param ( @options )
@@ -307,7 +315,7 @@ sub parseWAFRule
 			{
 				push @{ $rule->{ transformations } }, $1;
 			}
-			elsif ( $param =~ /^multimatch$/ )
+			elsif ( $param =~ /^multiMatch$/i )
 			{
 				$rule->{ multi_match } = "true";
 			}
@@ -315,7 +323,7 @@ sub parseWAFRule
 			{
 				$rule->{ capture } = "true";
 			}
-			elsif ( $param =~ /^(redirect(:.+)|allow|pass|block|deny)$/ )
+			elsif ( $param =~ /^(redirect(:.+)|allow|pass|drop|block|deny)$/ )
 			{
 				$rule->{ action }       = $1;
 				$rule->{ redirect_url } = $2;
@@ -360,6 +368,10 @@ sub parseWAFRule
 			elsif ( $param =~ /setvar:'?([^']+)'?/ )
 			{
 				push @{ $rule->{ set_variable } }, $1;
+			}
+			elsif ( $param =~ /expirevar:'?([^']+)'?/ )
+			{
+				push @{ $rule->{ expire_variable } }, $1;
 			}
 			elsif ( $param =~ /^chain$/ )
 			{
@@ -501,7 +513,7 @@ sub buildWAFRule
 		{
 			$secrule .= "\tt:$t,\\\n";
 		}
-		$secrule .= "\tmultimatch,\\\n" if ( $st->{ multi_match } eq 'true' );
+		$secrule .= "\tmultiMatch,\\\n" if ( $st->{ multi_match } eq 'true' );
 		$secrule .= "\tcapture,\\\n"    if ( $st->{ capture } eq 'true' );
 		if ( $st->{ action } )
 		{
@@ -532,6 +544,10 @@ sub buildWAFRule
 		foreach my $it ( @{ $st->{ set_variable } } )
 		{
 			$secrule .= "\tsetvar:$it,\\\n";
+		}
+		foreach my $it ( @{ $st->{ expire_var } } )
+		{
+			$secrule .= "\texpirevar:$it,\\\n";
 		}
 		$secrule .= "\tskip:" . $st->{ skip } . ",\\\n"
 		  if ( $st->{ skip } =~ /\d/ and $st->{ skip } > 0 );
