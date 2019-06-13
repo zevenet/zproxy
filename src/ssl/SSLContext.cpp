@@ -100,7 +100,9 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
     initEngine(listener_config.engine_id);
 #endif
   if (!listener_config.ssl_config_file.empty()) {
-          if (!loadOpensslConfig(listener_config.ssl_config_file, listener_config.ctx->ctx))
+          if (!loadOpensslConfig(listener_config.ssl_config_file,
+                                 listener_config.ssl_config_section,
+                                 listener_config.ctx->ctx))
               return false;
       }
   Debug::LogInfo("SSL initialized", LOG_DEBUG);
