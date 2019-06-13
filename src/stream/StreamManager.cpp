@@ -669,8 +669,10 @@ void StreamManager::onResponseEvent(int fd) {
     if (stream->upgrade.pinned_connection || stream->response.message_bytes_left > 0 ) {
                   stream->client_connection.enableWriteEvent();
           //TODO:: maybe quick response
-//          Debug::logmsg(LOG_REMOVE, "\nDATA IN\n\t\t buffer size: %d \n\t\t Content length: %d \n\t\t message bytes left: %d",
-//                  stream->backend_connection.buffer_size, stream->response.content_length, stream->response.message_bytes_left);
+      Debug::logmsg(LOG_REMOVE,
+              "\nDATA IN\n\t\t buffer size: %lu \n\t\t Content length: %lu \n\t\t message bytes left: %lu",
+              stream->backend_connection.buffer_size, stream->response.content_length,
+              stream->response.message_bytes_left);
           return;
     }
 

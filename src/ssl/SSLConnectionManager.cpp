@@ -344,10 +344,11 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection ,Connection &ssl_connection,
     http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
+  http_data.message_bytes_left = 0;
   const char *return_value = "\r\n";
   auto vector_size =
-      http_data.num_headers + (http_data.message_length > 0 ? 3 : 2) +
-          http_data.extra_headers.size() + http_data.permanent_extra_headers.size();
+          http_data.num_headers+(http_data.message_length>0 ? 3 : 2)+
+                  http_data.extra_headers.size()+http_data.permanent_extra_headers.size();
 
   iovec iov[vector_size];
   char *last_buffer_pos_written;
@@ -360,18 +361,12 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   for (size_t i = 0; i != http_data.num_headers; i++) {
     if (http_data.headers[i].header_off)
       continue; // skip unwanted headers
-//    if (helper::headerEqual(http_data.headers[i],
-//                            http::http_info::headers_names_strings.at(
-//                                http::HTTP_HEADER_NAME::CONTENT_LENGTH))) {
-//      http_data.message_bytes_left =
-//          static_cast<size_t>(std::atoi(http_data.headers[i].value));
-//    }
     iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
   }
   for (const auto &header :
-      http_data.extra_headers) { // header must be always  used as reference,
+          http_data.extra_headers) { // header must be always  used as reference,
     // it's copied it invalidate c_str() reference.
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
@@ -379,7 +374,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   }
 
   for (const auto &header :
-      http_data.permanent_extra_headers) { // header must be always  used as
+          http_data.permanent_extra_headers) { // header must be always  used as
     // reference,
     // it's copied it invalidate c_str() reference.
     iov[x].iov_base = const_cast<char *>(header.c_str());
@@ -392,22 +387,17 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   total_to_send += 2;
 
   last_buffer_pos_written =
-      const_cast<char *>(
-          http_data.headers[http_data.num_headers - 1].name +
-              http_data.headers[http_data.num_headers - 1].line_size) +
-          2;
-  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
-  //  ,last_buffer_pos_written);
+          const_cast<char*>(
+                  http_data.headers[http_data.num_headers-1].name+
+                          http_data.headers[http_data.num_headers-1].line_size)+
+                  2;
   if (http_data.message_length > 0) {
     iov[x].iov_base = http_data.message;
     iov[x++].iov_len = http_data.message_length;
     last_buffer_pos_written += http_data.message_length;
     total_to_send += http_data.message_length;
-    http_data.message_bytes_left -= http_data.message_length;
+    http_data.message_bytes_left = http_data.content_length-http_data.message_length;
   }
-  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
-  //  ,last_buffer_pos_written);
-
   //write multibuffer to ssl connection
   size_t written;
   for(int i = 0;i < x;i ++){
@@ -428,13 +418,18 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     case IO::IO_RESULT::SUCCESS:break;
     }
   }
+//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
+//  Debug::logmsg(LOG_REMOVE,"\tIn buffer size: %d", buffer_size);
+  ssl_connection.buffer_offset = static_cast<size_t>(last_buffer_pos_written-http_data.buffer);
+  ssl_connection.buffer_size -= ssl_connection.buffer_offset;
+  http_data.message_length = 0;
+//  Debug::logmsg(LOG_REMOVE,"\tbuffer offset: %d", buffer_offset);
+//  Debug::logmsg(LOG_REMOVE,"\tOut buffer size: %d", buffer_size);
+//  Debug::logmsg(LOG_REMOVE,"\tbuffer offset: %d", buffer_offset);
+//  Debug::logmsg(LOG_REMOVE,"\tcontent length: %d", http_data.content_length);
+//  Debug::logmsg(LOG_REMOVE,"\tmessage length: %d", http_data.message_length);
+//  Debug::logmsg(LOG_REMOVE,"\tmessage bytes left: %d", http_data.message_bytes_left);
 
-  //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p "
-  //  ,last_buffer_pos_written); Debug::logmsg(LOG_REMOVE,"http_data.buffer = %p
-  //  " ,http_data.buffer);
-  ssl_connection.buffer_size -=
-      static_cast<size_t>(last_buffer_pos_written - http_data.buffer);
-  //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
 
