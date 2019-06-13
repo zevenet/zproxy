@@ -187,7 +187,10 @@ sub runBLStartByRule
 	}
 
 	# check error
-	$error = 1 if ( &getBLIpsetStatus( $ruleName ) eq "down" );
+	if ( @farms or scalar @farms > 0 )
+	{
+		$error = 1 if ( &getBLIpsetStatus( $ruleName ) eq "down" );
+	}
 
 	# run cron process
 	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
