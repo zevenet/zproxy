@@ -59,20 +59,34 @@ run_docker();
 if (!$no_zhttp) {
     run_zhttp($zhttp_cfg);
 }
+# Test a GET request.
 test_get_200_ok();
+# Test POST request with a file
 test_check_POST_file();
+# Test the connect timeout
 test_connect_timeout();
 if (!$no_zhttp) {
+    # Test API disable a service
     test_disable_service();
+    # Test API disable backend
     test_disable_backend();
+    # Test disable service that doesn't exist
     test_disable_service_fail();
+    # Test disable backend that doesn't exist
     test_disable_backend_fail();
+    # Test enable backend
     test_enable_backend();
+    # Tests enable service
     test_enable_service();
+    # Test add a new backend
     test_add_backend();
+    # Test add a new backend with wrong parameters
     test_add_backend_fail();
+    # Test response time is updated right
     test_response_time();
+    # Test connection time is updated right
     test_connection_time();
+    # Test connections is updated right
     test_connections();
     stop_zhttp();
 }
@@ -82,7 +96,9 @@ if ($https) {
     if (!$no_zhttp) {
         run_zhttp($zhttps_cfg);
     }
+    # Test GET request in HTTPS
     test_get_200_ok_https();
+    # Test POST file in HTTPS
     test_check_POST_file_https();
     if (!$no_zhttp) {
         stop_zhttp();
