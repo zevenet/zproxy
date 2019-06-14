@@ -80,6 +80,7 @@ sub setIPDSPackagePostinst
 	}
 
 	# restart ipds rules in remote node
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds', 'restart' );
 }
 
