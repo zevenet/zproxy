@@ -105,7 +105,7 @@ if ($https) {
     }
 }
 print "All tests done. Shutting down! \n";
-stop_docker();
+clean_docker();
 
 sub run_zhttp {
     my ($cfg) = @_;
@@ -118,19 +118,17 @@ sub stop_zhttp {
 }
 
 sub run_docker {
-
     print "Starting docker container..\n";
     # The docker container comes from https://github.com/mendhak/docker-http-https-echo
+    # This container runs a HTTP backend in the port 8080 and a HTTPS backend in the port 8443
+    # All its responses are a json object with all the request information.
     $docker_id = `sudo docker run -d -p 8080:80 -p 8443:443 --rm -t mendhak/http-https-echo`;
     sleep(2);
 }
 
-sub stop_docker {
-
-    my $stop_log = `sudo docker stop $docker_id`;
-    if ($stop_log == $docker_id) {
-        print "Docker is now stopped.\n";
-    }
+sub clean_docker {
+    my $result = `sudo docker ps | grep mendhak | grep -vi grep | cut -d' ' -f1`;
+    my $cmd = `sudo docker stop ${result}`;
 }
 
 sub assert_equal {
