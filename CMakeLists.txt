@@ -22,6 +22,8 @@ option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
 option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabled" OFF)
 option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
+option(GENERATE_DH_2048 "Generate the DH EC 2048 parameters file" ON)
+option(GENERATE_DH_512 "Generate the DH EC 512 parameters file" ON)
 
 #file(REMOVE_RECURSE "${MAINFOLDER}/build")
 #file(MAKE_DIRECTORY "${MAINFOLDER}/build")
@@ -29,7 +31,6 @@ option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
 
 SET(PROJECT_DESCRIPTION "L7 proxy core for zevenet load balancer")
 SET(PROJECT_CODENAME "${PROJECT_NAME}")
-
 
 SET(PROJECT_VERSION_MAJOR 0)
 SET(PROJECT_VERSION_MINOR 1)
@@ -95,8 +96,8 @@ if (ENABLE_HEAP_PROFILER)
 #	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer -fsanitize-address-use-after-scope -O2 -g")
 #	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 #	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
-														   -fno-builtin-realloc -fno-builtin-free")
+  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
+		                           -fno-builtin-realloc -fno-builtin-free")
 endif ()
 
 if (UNIQUE_BUILD_DIRECTORY)
@@ -202,6 +203,19 @@ else ()
 				message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 			endif()
 endif ()
+
+# TODO: In the future it would be needed to set the directory, probably with
+# the current src directory or the data directory.
+if (GENERATE_DH_512)
+	  message(STATUS "Generating DH EC 512 parameters file")
+		execute_process(COMMAND "openssl dhparam -5 -C -noout 512 > dh512.h")
+endif()
+
+if (GENERATE_DH_2048)
+	  message(STATUS "Generating DH EC 2048 parameters file")
+		execute_process(COMMAND "openssl" "dhparam -5 -C -noout 2048 > dh2048.h")
+		execute_process(COMMAND "openssl dhparam -5 -out dh2048.pem 2048")
+endif()
 
 if (BUILD_TESTS)
 	  add_subdirectory(tests)
