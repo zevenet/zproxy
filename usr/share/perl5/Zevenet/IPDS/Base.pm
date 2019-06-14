@@ -242,6 +242,7 @@ sub runIPDSRestartByFarm
 	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
 	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
 	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+	include 'Zevenet::IPDS::WAF::Runtime'       if ( @{ $rules->{ waf } } );
 
 	my $name;
 
@@ -267,6 +268,12 @@ sub runIPDSRestartByFarm
 		$name = $rule->{ name };
 		&runRBLStop( $name, $farmname );
 		&runRBLStart( $name, $farmname );
+	}
+
+	# start rbl rules
+	if ( @{ $rules->{ waf } } )
+	{
+		&reloadWAFByFarm( $farmname );
 	}
 }
 

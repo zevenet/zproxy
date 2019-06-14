@@ -492,7 +492,7 @@ sub stop_service
 		unless ( system ( $zenino_proc ) )
 		{
 			my $zenino = &getGlobalConfiguration( 'zenino' );
-			system ( "$zenino stop" );
+			&logAndRun( "$zenino stop" );
 		}
 
 		if ( &getZClusterRunning() )

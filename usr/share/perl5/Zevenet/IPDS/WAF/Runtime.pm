@@ -48,8 +48,11 @@ sub reloadWAFByFarm
 			 "debug", "PROFILING" );
 	my $farm = shift;
 	my $err  = 0;
-	require Zevenet::Farm::HTTP::Config;
 
+	require Zevenet::Farm::Base;
+	return 0 if ( &getFarmStatus( $farm ) ne 'up' );
+
+	require Zevenet::Farm::HTTP::Config;
 	my $pound_ctl = &getGlobalConfiguration( 'poundctl' );
 	my $socket    = &getHTTPFarmSocket( $farm );
 

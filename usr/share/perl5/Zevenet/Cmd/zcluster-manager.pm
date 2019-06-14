@@ -48,6 +48,7 @@
 # zcluster-manager fg 		[stop|start|stop] <fg>
 # zcluster-manager fg_farm 	[stop|start|stop] <farm> [<service>]
 #
+# zcluster-manager ipds [restart]
 # zcluster-manager ipds [start|stop|restart] <farm>
 # zcluster-manager ipds_bl [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_dos [start|stop|restart] <rule> [farm]
@@ -82,8 +83,6 @@ if ( !grep { $object eq $_ } ( qw(interface gateway farm ipds) ) )
 	}
 }
 
-#~ if ( $object eq 'node' )
-#~ {
 if ( $object eq 'enableZCluster' )
 {
 	exit &enableZCluster();
@@ -181,8 +180,6 @@ elsif ( $object eq 'notify_fault' )
 {
 	exit &setNodeStatusMaintenance();
 }
-
-#~ }
 
 # farm commands
 if ( $object eq 'farm' )
@@ -311,22 +308,33 @@ if ( $object eq "ipds" )
 	include 'Zevenet::IPDS::Base';
 	my $farm_name = shift @ARGV;
 
-	# stop DOS rules
-	if ( $command eq "stop" )
+	if ( !defined $farm_name )
 	{
-		&runIPDSStopByFarm( $farm_name );
+		include 'Zevenet::Farm::Base';
+		foreach $farm_name ( &getFarmRunning() )
+		{
+			&runIPDSRestartByFarm( $farm_name );
+		}
 	}
-
-	# start DOS rules
-	elsif ( $command eq "start" )
-	{
-		&runIPDSStartByFarm( $farm_name );
-	}
-
-	# reload DOS rules
 	else
 	{
-		&runIPDSRestartByFarm( $farm_name );
+		# stop DOS rules
+		if ( $command eq "stop" )
+		{
+			&runIPDSStopByFarm( $farm_name );
+		}
+
+		# start DOS rules
+		elsif ( $command eq "start" )
+		{
+			&runIPDSStartByFarm( $farm_name );
+		}
+
+		# reload DOS rules
+		else
+		{
+			&runIPDSRestartByFarm( $farm_name );
+		}
 	}
 }
 

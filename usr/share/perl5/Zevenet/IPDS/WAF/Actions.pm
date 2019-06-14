@@ -327,7 +327,7 @@ sub updateWAFSetPreload
 		}
 		else
 		{
-			&zenlog( "There was an error loading $setname", "error", "waf" );
+			&zenlog( "There was a error loading $setname", "error", "waf" );
 		}
 	}
 

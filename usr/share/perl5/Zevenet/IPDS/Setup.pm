@@ -27,6 +27,107 @@ use warnings;
 include 'Zevenet::IPDS::Blacklist::Core';
 include 'Zevenet::IPDS::Blacklist::Config';
 
+=begin nd
+Function: setIPDSPackagePostinst
+
+	This functions is called from the IPDS package postinst to upload the data
+	for the IPDS rules and reload the rules that are running.
+
+Parameters:
+	data - They are the data to upload. It is a hash with the keys:
+		"local_lists" are the local list names that are incluided in the package;
+		"remote_lists" are URL and information about remote lists;
+		"domains" are the RBL domains to feed the RBL DNS domains.
+
+Returns:
+	none - .
+
+See Also:
+	<zevenet-ipds>
+=cut
+
+sub setIPDSPackagePostinst
+{
+	my $data = shift;
+
+	my $ipds_dir = &getGlobalConfiguration( "configdir" ) . "/ipds";
+
+	# install  blacklist
+	include 'Zevenet::IPDS::Blacklist::Actions';
+	&setBLAddPreloadLists( $data->{ local_lists }, $data->{ remote_lists } );
+	&runBLRestartModule();
+
+	# install RBL
+	my $preloadedDomainsFile = "$ipds_dir/rbl/preloaded_domains.conf";
+	tie my @file, "Tie::File", $preloadedDomainsFile;
+
+	foreach my $domain ( @{ $data->{ new_domains } } )
+	{
+		push @file, $domain if ( !grep ( /^$domain$/, @file ) );
+	}
+
+	# install WAF
+	include 'Zevenet::IPDS::WAF::Actions';
+	&updateWAFSetPreload();
+
+	use Proc::Find qw(find_proc);
+	my $pids = &find_proc( cmndline => qr/\bzeninotify\b/ );
+	if ( @{ $pids } )
+	{
+		&zenlog( "Continuing zeninotify service after upgrading IPDS package",
+				 "debug", "dhcp" );
+		my $cnt = kill 'CONT', @{ $pids };
+	}
+
+	# restart ipds rules in remote node
+	&runZClusterRemoteManager( 'ipds', 'restart' );
+}
+
+=begin nd
+Function: setIPDSPackagePreinst
+
+	This functions is called from the IPDS package preinst to upload the data
+	for the IPDS rules and reload the rules that are running.
+
+Parameters:
+	Migration - It is an struct for migration process with data of the list before and after of the upgrading
+
+Returns:
+	none - .
+
+See Also:
+	<zevenet-ipds>
+=cut
+
+sub setIPDSPackagePreinst
+{
+	my $migration = shift;
+
+	use Proc::Find qw(find_proc);
+	my $pids = &find_proc( cmndline => qr/\bzeninotify\b/ );
+	if ( @{ $pids } )
+	{
+		&zenlog( "Stopping zeninotify service for upgrading IPDS package",
+				 "debug", "dhcp" );
+		my $cnt = kill 'STOP', @{ $pids };
+	}
+
+	&migrate_blacklist_names( $migration );
+
+	# function delete lists
+	my @list_to_delete = ( "nonspecasiapaslocation", "test", "prueba" );
+
+	&remove_blacklists( @list_to_delete );
+
+	# farms to renamed
+	my @list_to_rename =
+	  ( { "name" => "reserved", "new_name" => "Private_networks" }, );
+
+	&rename_blacklists( @list_to_rename );
+	&set_blacklists_status();
+	&set_dos_status();
+}
+
 sub initIPDSModule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
