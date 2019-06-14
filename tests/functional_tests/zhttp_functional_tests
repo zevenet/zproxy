@@ -38,8 +38,8 @@ my $zhttps_cfg = 'test_https.cfg';
 my $ip = 'localhost';
 my $port = '8000';
 my $port_https = '8443';
-my $file_path = 'data/test_text.txt';
-my $binary = '../build/bin/zhttp';
+my $file_path = 'test_text.txt';
+my $binary = '../../build/bin/zhttp';
 my $control_socket = '/tmp/zhttp.socket';
 GetOptions(
     'post_file=s' => \$file_path,
