@@ -388,6 +388,7 @@ $blacklistsConf="$configdir/ipds/blacklists/lists.conf";#update
 $blacklistsCronFile="/etc/cron.d/blacklists";
 $dosConf="$configdir/ipds/dos/dos.conf";#update
 $dosConfDir="$configdir/ipds/dos";#update
+$lockIpdsPackage="/tmp/ipds_package.lock";
 
 # Rabc Module
 $rbacRolesTpl_dir="$templatedir/rbac_roles";

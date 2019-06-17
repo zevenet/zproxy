@@ -74,9 +74,11 @@ sub setIPDSPackagePostinst
 	my $pids = &find_proc( cmndline => qr/\bzeninotify\b/ );
 	if ( @{ $pids } )
 	{
-		&zenlog( "Continuing zeninotify service after upgrading IPDS package",
-				 "debug", "dhcp" );
-		my $cnt = kill 'CONT', @{ $pids };
+		&zenlog( "Continuing zeninotify service after upgrading the IPDS package",
+				 "debug", "ipds" );
+
+		my $lock_ipds = &getGlobalConfiguration( 'lockIpdsPackage' );
+		unlink $lock_ipds;
 	}
 
 	# restart ipds rules in remote node
@@ -108,9 +110,11 @@ sub setIPDSPackagePreinst
 	my $pids = &find_proc( cmndline => qr/\bzeninotify\b/ );
 	if ( @{ $pids } )
 	{
-		&zenlog( "Stopping zeninotify service for upgrading IPDS package",
-				 "debug", "dhcp" );
-		my $cnt = kill 'STOP', @{ $pids };
+		&zenlog( "Stopping zeninotify service for upgrading the IPDS package",
+				 "debug", "ipds" );
+
+		my $lock_ipds = &getGlobalConfiguration( 'lockIpdsPackage' );
+		&logAndRun( "touch $lock_ipds" );
 	}
 
 	&migrate_blacklist_names( $migration );

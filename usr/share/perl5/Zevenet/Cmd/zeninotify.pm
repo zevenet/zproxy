@@ -54,6 +54,7 @@ if ( @ARGV && $ARGV[0] eq 'stop' )
 	if ( -e $zeninopid )
 	{
 		kill ( 'TERM', $pid );
+		unlink $zeninopid;
 	}
 	exit 0;
 }
@@ -124,6 +125,10 @@ foreach my $path ( @ino_targets )
 	$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE | IN_MOVED_TO );
 }
 
+#### lock
+my $lock_ipds = &getGlobalConfiguration( 'lockIpdsPackage' );
+my $ipds_dir  = "$configdir/ipds";
+
 # $event->w			The watcher object for this event.
 # $event->{w}
 # $event->name		The path of the file system object, relative to the watched name.
@@ -189,6 +194,9 @@ while ( 1 )
 	{
 		next if ( $event->name =~ /^\..*/ );    # skip hidden files
 		next if ( $event->name =~ /.*\~$/ );    # skip files ending with ~
+		next
+		  if ( -f $lock_ipds and $event->fullname =~ "$ipds_dir" )
+		  ;                                     # ipds package is been updating
 
 		my $event_fullname = $event->fullname;
 		my $event_name     = $event->name;
@@ -220,6 +228,9 @@ while ( 1 )
 
 			# run sync if it's not an excluded file
 			my $matched;
+
+			# does not sync ipds dir while it is been updating
+			push @excluded_patterns, "$ipds_dir" if ( -f $lock_ipds );
 			for my $pattern ( @excluded_patterns )
 			{
 				if ( $event->fullname =~ /$pattern/ or $event->fullname eq $pattern )
