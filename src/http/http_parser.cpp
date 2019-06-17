@@ -161,7 +161,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
     *used_bytes = static_cast<size_t>(pret);
     headers_length = pret;
     http_message = const_cast<char *>(buffer);
-    http_message_length = static_cast<size_t>(headers[0].name - buffer);
+    http_message_length = num_headers>0 ? static_cast<size_t>(headers[0].name-buffer) : buffer_size-2;
     //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
     //      if (std::string(headers[i].name, headers[i].name_len) !=
     //          http::http_info::headers_names_strings.at(

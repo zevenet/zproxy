@@ -187,6 +187,14 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
           request.host_header_found = listener_config_.rewr_host == 0;
         continue;
       }
+      case http::HTTP_HEADER_NAME::EXPECT : {
+        if (header_value=="100-continue") {
+          Debug::logmsg(LOG_REMOVE, "Client Expects 100 continue");
+        }
+        if (listener_config_.ignore100continue)
+          request.headers[i].header_off = true;
+        break;
+      }
       }
 
     }
@@ -199,10 +207,11 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,const ListenerConfig & listener_config_) {
   HttpResponse &response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
-  if (response.http_status_code == 100) {
-    stream.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
-    return validation::REQUEST_RESULT::OK;
-  }
+//  if (response.http_status_code == 100) {
+//    stream.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+//    Debug::logmsg(LOG_DEBUG, "Chunked transfer enabled");
+//    return validation::REQUEST_RESULT::OK;
+//  }
 
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
@@ -239,24 +248,24 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
             if (listener_config_.rewr_loc == 1) {
               if (result == listener_config_.address ||
                   result == stream.backend_connection.getBackend()->address) {
-                std::string header_value = "http://";
-                header_value += listener_config_.address;
-                header_value += response.path;
+                std::string header_value_ = "http://";
+                header_value_ += listener_config_.address;
+                header_value_ += response.path;
                 response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
-                                   header_value);
+                        header_value_);
                 response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-                                   header_value);
+                        header_value_);
                 response.headers[i].header_off = true;
               }
             } else {
               if (result == stream.backend_connection.getBackend()->address) {
-                std::string header_value = "http://";
-                header_value += listener_config_.address;
-                header_value += response.path;
+                std::string header_value_ = "http://";
+                header_value_ += listener_config_.address;
+                header_value_ += response.path;
                 response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
-                                   header_value);
+                        header_value_);
                 response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-                                   header_value);
+                        header_value_);
                 response.headers[i].header_off = true;
               }
             }

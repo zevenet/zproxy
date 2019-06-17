@@ -116,7 +116,7 @@ class StreamManager : public EpollManager {
 public:
   StreamManager();
   StreamManager(const StreamManager &) = delete;
-  ~StreamManager();
+    virtual ~StreamManager();
 
   /**
    * @brief Adds a HttpStream to the stream set of the StreamManager.
