@@ -96,7 +96,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  . "   http_listen = 127.0.0.1\n"
 	  . "   zones_rfc1035_auto = true\n"
 	  . "   run_dir = $configdir\/$fname\_$type.cfg\/var\/run\n"
-	  . "   state_dir = $configdir\/$fname\_$type.cfg\/var\/lib\n" . "}\n\n";
+	  . "   state_dir = $configdir\/$fname\_$type.cfg\/var\/lib\n"
+	  . "   weaker_security = true\n" . "}\n\n";
 	print $file "service_types => { \n\n}\n\n";
 	print $file
 	  "plugins => { \n\textmon => { helper_path => \"$gdnsd_plugin/gdnsd_extmon_helper\" },\n}\n\n";
