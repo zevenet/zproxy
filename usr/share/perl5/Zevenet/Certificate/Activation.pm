@@ -271,6 +271,9 @@ sub crlcontrol
 	my $date_today = strftime( "%F", localtime );
 	if ( !&checkCRLUpdated( $date_today ) )
 	{
+# Bugfix: Updating config_check without taking into account the CACRL download avoids problems to load balancers without internet
+		&setCRLDate( $date_today );
+
 		# update crl if the server has connectivity
 		$err = &updateCRL( $date_today );
 	}
@@ -550,9 +553,6 @@ sub updateCRL
 		move( $tmp_file, $crl_path );
 		&zenlog( "CRL downloaded on $date_today", 'info', 'certifcate' );
 		$err = 0;
-
-		# update date of the check if the CRL was downloaded
-		&setCRLDate( $date_today );
 	}
 	else
 	{
