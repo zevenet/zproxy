@@ -1011,7 +1011,15 @@ sub setBondMac
 	my $bondSlaves = getBondSlaves( $if_ref->{ name } );
 
 	#Error if not mac in the hash reference
-	return 1 unless ( $if_ref->{ mac } );
+	return 1 unless ( exists $if_ref->{ mac } );
+
+	# If the mac is clear, let's restore the mac address
+	if ( length $if_ref->{ mac } == 0 )
+	{
+		my $default_conf = &getBondDefaultConfig( $if_ref->{ name } );
+		return 1 if ( ref ( $default_conf ) ne "HASH" );
+		$if_ref->{ mac } = $default_conf->{ mac };
+	}
 
 	&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
@@ -1079,6 +1087,26 @@ sub saveBondDefaultConfig
 	$file_h->write( $local_bond_file );
 
 	return 0;
+}
+
+sub getBondDefaultConfig
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_name = shift;
+
+	require Zevenet::Config;
+	my $local_dir       = &getGlobalConfiguration( "localconfig" );
+	my $local_bond_file = $local_dir . "/bonding.conf";
+
+	return 1 if ( !-f $local_bond_file );
+
+	use Config::Tiny;
+	my $file_h = Config::Tiny->read( $local_bond_file );
+
+	return 1 if ( !exists $file_h->{ $bond_name } );
+
+	return $file_h->{ $bond_name };
 }
 
 =begin nd
