@@ -1037,12 +1037,111 @@ sub setBondMac
 	return $status;
 }
 
+=begin nd
+Function: saveBondDefaultConfig
+
+	Store the current configuration in the non replicable directory
+	/usr/local/zevenet/local to restore the mac address.
+
+	Parameters:
+		bondName - The bond name which will be retrieved and stored as the default config
+
+	Returns:
+		status - 0 on success, other than 0 in other case.
+
+See Also:
+
+=cut
+
+sub saveBondDefaultConfig
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_name = shift;
+
+	my $bond_conf = &getBondConfig( $bond_name );
+
+	return 1 unless $bond_conf;
+
+	#Get the slave conf to store the mac
+	my $slave_conf =
+	  &getInterfaceConfig( @{ $bond_conf->{ $bond_name }->{ slaves } }[0] );
+
+	require Zevenet::Config;
+	my $local_dir       = &getGlobalConfiguration( "localconfig" );
+	my $local_bond_file = $local_dir . "/bonding.conf";
+
+	use Config::Tiny;
+	my $file_h = Config::Tiny->read( $local_bond_file )
+	  // Config::Tiny->new( $local_bond_file );
+	$file_h->{ $bond_name }->{ mac } = $slave_conf->{ mac };
+
+	$file_h->write( $local_bond_file );
+
+	return 0;
+}
+
+=begin nd
+Function: delBondDefaultConfig
+
+	Deletes the stored default configuration for a bonding interface
+
+	Parameters:
+		bondName - The bond name of the bonding
+
+	Returns:
+		status - 0 on success, other than 0 in other case.
+
+See Also:
+
+=cut
+
+sub delBondDefaultConfig
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_name = shift;
+
+	require Zevenet::Config;
+	my $local_dir       = &getGlobalConfiguration( "localconfig" );
+	my $local_bond_file = $local_dir . "/bonding.conf";
+
+	#return 1 if the config file doesn't exists
+	return 1 if ( !-f $local_bond_file );
+
+	use Config::Tiny;
+	my $file_h = Config::Tiny->read( $local_bond_file );
+	delete $file_h->{ $bond_name };
+	$file_h->write( $local_bond_file );
+
+	return 0;
+
+}
+
+=begin nd
+Function: lockBondResource
+
+	Lock the bonding resource to avoid overlaping problems.
+
+See Also:
+
+=cut
+
 sub lockBondResource
 {
 	my $bond_config_file = &getGlobalConfiguration( 'bond_config_file' );
 	&lockResource( $bond_config_file, "l" );
 	return;
 }
+
+=begin nd
+Function: unlockBondResource
+
+	unlock the bonding resource to allow other process to use the resource.
+
+See Also:
+
+=cut
 
 sub unlockBondResource
 {
