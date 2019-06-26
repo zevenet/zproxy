@@ -534,6 +534,7 @@ Parameters:
 										# The values of the interval has to be integer numbers
 			"exceptions"	: [ "zapi", "webgui", "root" ],	# The parameter can't have got any of the listed values
 			"values" : ["priority", "weight"],		# list of possible values for a parameter
+			"length" : 32,				# it is the maximum string size for the value
 			"regex"	: "/\w+,\d+/",		# regex format
 			"ref"	: "array|hash",		# the expected input must be an array or hash ref
 			"valid_format"	: "farmname",		# regex stored in Validate.pm file, it checks with the function getValidFormat
@@ -647,6 +648,17 @@ sub checkZAPIParams
 		{
 			return "The parameter '$param' expects one of the following values: "
 			  . join ( "', '", @{ $param_obj->{ $param }->{ 'values' } } );
+		}
+
+		# length
+		if ( exists $param_obj->{ $param }->{ 'length' } )
+		{
+			my $data_length = length ( $json_obj->{ $param } );
+			if ( $data_length > $param_obj->{ $param }->{ 'length' } )
+			{
+				return
+				  "The maximum length for '$param' is '$param_obj->{ $param }->{ 'length' }'";
+			}
 		}
 
 		# intervals

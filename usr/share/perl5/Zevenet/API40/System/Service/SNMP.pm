@@ -61,6 +61,7 @@ sub set_snmp
 							 'non_blank'    => 'true',
 				   },
 				   "community" => {
+									'length'    => 32,
 									'non_blank' => 'true',
 				   },
 				   "scope" => {
