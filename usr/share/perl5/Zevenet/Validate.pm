@@ -102,7 +102,6 @@ my %format_re = (
 	'snmp_status'    => $boolean,
 	'snmp_ip'        => qr/(?:$ipv4v6|\*)/,
 	'snmp_port'      => $port_range,
-	'snmp_community' => qr{[\w]+},
 	'snmp_scope'     => qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},    # ip/mask
 	'ntp'            => qr{[\w\.\-]+},
 	'http_proxy' => qr{\S*},    # use any character except the spaces

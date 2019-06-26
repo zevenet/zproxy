@@ -61,8 +61,7 @@ sub set_snmp
 							 'non_blank'    => 'true',
 				   },
 				   "community" => {
-									'valid_format' => 'snmp_community',
-									'non_blank'    => 'true',
+									'non_blank' => 'true',
 				   },
 				   "scope" => {
 								'valid_format' => 'snmp_scope',
