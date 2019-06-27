@@ -46,6 +46,7 @@ sub setBLRunList
 	$type = "whitelist" if ( $action eq "allow" );
 
 	$output = &setIPDSPolicyParam( 'type', $type, $listName );
+	&setIPDSPolicyParam( 'logprefix', "[BL,$listName,FNAME]", $listName );
 
 	if ( $output == 0 )
 	{

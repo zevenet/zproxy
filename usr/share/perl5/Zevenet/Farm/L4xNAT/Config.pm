@@ -294,6 +294,10 @@ sub setL4FarmParam
 	{
 		$parameters = qq(, "rst-rtlimit-burst" : "$value" );
 	}
+	elsif ( $param eq "limitrst-logprefix" )
+	{
+		$parameters = qq(, "rst-rtlimit-log-prefix" : "$value" );
+	}
 	elsif ( $param eq "limitsec" )
 	{
 		$parameters = qq(, "new-rtlimit" : "$value" );
@@ -302,13 +306,25 @@ sub setL4FarmParam
 	{
 		$parameters = qq(, "new-rtlimit-burst" : "$value" );
 	}
+	elsif ( $param eq "limitsec-logprefix" )
+	{
+		$parameters = qq(, "new-rtlimit-log-prefix" : "$value" );
+	}
 	elsif ( $param eq "limitconns" )
 	{
 		$parameters = qq(, "est-connlimit" : "$value" );
 	}
+	elsif ( $param eq "limitconns-logprefix" )
+	{
+		$parameters = qq(, "est-connlimit-log-prefix" : "$value" );
+	}
 	elsif ( $param eq "bogustcpflags" )
 	{
 		$parameters = qq(, "tcp-strict" : "$value" );
+	}
+	elsif ( $param eq "bogustcpflags-logprefix" )
+	{
+		$parameters = qq(, "tcp-strict-log-prefix" : "$value" );
 	}
 	elsif ( $param eq "nfqueue" )
 	{
