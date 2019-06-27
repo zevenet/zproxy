@@ -101,6 +101,7 @@ my %format_re = (
 	'ssh_listen'     => qr/(?:$ipv4v6|\*)/,
 	'snmp_status'    => $boolean,
 	'snmp_ip'        => qr/(?:$ipv4v6|\*)/,
+	'snmp_community' => qr{.+},
 	'snmp_port'      => $port_range,
 	'snmp_scope'     => qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},    # ip/mask
 	'ntp'            => qr{[\w\.\-]+},
