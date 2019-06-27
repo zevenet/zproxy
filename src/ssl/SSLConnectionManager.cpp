@@ -13,7 +13,11 @@ bool SSLConnectionManager::init(const BackendConfig &backend_config) {
     if (ssl_context != nullptr)
       delete ssl_context;
     ssl_context = new SSLContext();
-    return ssl_context->init(backend_config);
+      if (!ssl_context->init(backend_config)) {
+          Debug::LogInfo("SSLContext initialization error", LOG_DEBUG);
+          return false;
+      }
+      return true;
   }
   return false;
 }
@@ -67,17 +71,19 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection,
 
 bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
                                                  bool client_mode) {
+    Debug::logmsg(LOG_DEBUG, "INIT SSL CONNECTION: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl != nullptr) {
     SSL_shutdown(ssl_connection.ssl);
     SSL_free(ssl_connection.ssl);
   }
+
   ssl_connection.ssl = SSL_new(ssl_context->ssl_ctx);
   if (ssl_connection.ssl == nullptr) {
     Debug::logmsg(LOG_ERR, "SSL_new failed");
     return false;
   }
 //  SSL_set_mode( ssl_connection.ssl,
- //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enablle return if not all buffer has
+    //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enable return if not all buffer has
           // been writen to the underlying socket,
           // need to check for sizes after writes
 //          SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
@@ -94,7 +100,9 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
 
   BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_CLOSE);
   BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
-  Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: SSL_set_accept_state for fd %d",
+
+    Debug::logmsg(LOG_DEBUG, !client_mode ? "SSL_HANDSHAKE: SSL_set_accept_state for fd %d"
+                                          : "SSL_HANDSHAKE: SSL_set_connect_state for fd %d",
                 ssl_connection.getFileDescriptor());
   // let the SSL object know it should act as server
   !client_mode ? SSL_set_accept_state(ssl_connection.ssl)
@@ -190,6 +198,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 }
 
 bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool client_mode) {
+    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl == nullptr) {
     if (!initSslConnection_BIO(ssl_connection, client_mode)) {
       return false;
@@ -202,25 +211,26 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
       ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
     Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
                   ssl_connection.getFileDescriptor());
-    ssl_connection.enableReadEvent();
+
+      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();
     return true;
   }
   int err = SSL_get_error(ssl_connection.ssl, r);
   if (err == SSL_ERROR_WANT_WRITE) {
     Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: return want write set events %d",
                   ssl_connection.getFileDescriptor());
-    ssl_connection.enableWriteEvent();
+//      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();
 
   } else if (err == SSL_ERROR_WANT_READ) {
     Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: Want read, fd %d",
                   ssl_connection.getFileDescriptor());
-    ssl_connection.enableReadEvent();
+//      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();;
 
   } else {
     Debug::logmsg(LOG_ERR,
-                  "SSL_do_handshake return %d error %d errno %d msg %s", r, err,
-                  errno, strerror(errno));
-    //ERR_print_errors(ssl_context->error_bio);
+            "SSL_do_handshake return %d error %d  error str: %s errno %d msg %s \n Ossl errors: %s", r, err,
+            getErrorString(err),
+            errno, strerror(errno), ossGetErrorStackString().get());
     ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
     return false;
   }
@@ -343,6 +353,9 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 }
 IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection ,Connection &ssl_connection,
     http_parser::HttpData &http_data) {
+    if (!target_ssl_connection.ssl_connected) {
+        return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
+    }
 //  PRINT_BUFFER_SIZE
   http_data.message_bytes_left = 0;
   const char *return_value = "\r\n";

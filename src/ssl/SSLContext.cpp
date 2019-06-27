@@ -56,11 +56,20 @@ bool SSLContext::init(const std::string &cert_file,
 bool SSLContext::init(const BackendConfig &backend_config_) {
   init();
   if (backend_config_.ctx != nullptr) {
-    ssl_ctx = backend_config_.ctx;
-    return true;
+      ssl_ctx = backend_config_.ctx;
   }
-  Debug::LogInfo("SSL initialized", LOG_DEBUG);
-  return true;
+  else {
+      const SSL_METHOD* method = TLS_client_method();
+      if (method==nullptr)
+          return false;
+      this->ssl_ctx = SSL_CTX_new(method);
+      if (ssl_ctx==nullptr)
+          return false;
+  }
+    Debug::logmsg(LOG_DEBUG, "Backend %s:%d SSLContext initialized",
+            backend_config_.address.data(),
+            backend_config_.port);
+    return true;
 }
 
 
@@ -119,15 +128,15 @@ SSLContext::~SSLContext() {
 
 bool SSLContext::init() {
   error_bio = BIO_new_fd(2, BIO_NOCLOSE);
-  ERR_load_crypto_strings();
-  ERR_load_SSL_strings();
-  SSL_load_error_strings();
-  OpenSSL_add_all_algorithms();
-  int r = SSL_library_init();
-  if (!r) {
-    Debug::LogInfo("SSL_library_init failed", LOG_ERR);
-    return false;
-  }
+    int r = SSL_library_init();
+    if (!r) {
+        Debug::LogInfo("SSL_library_init failed", LOG_ERR);
+        return false;
+    }
+    ERR_load_crypto_strings();
+    ERR_load_SSL_strings();
+    SSL_load_error_strings();
+    OpenSSL_add_all_algorithms();
   return true;
 }
 
