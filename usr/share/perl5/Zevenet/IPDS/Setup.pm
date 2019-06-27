@@ -290,7 +290,6 @@ sub getIpdsPackageStatus
 	my $checkupgrades_bin = &getGlobalConfiguration( "checkupgrades_bin" );
 
 	my $output = `$checkupgrades_bin "zevenet-ipds"`;
-	&zenlog( "DEBUG ECM: output is $checkupgrades_bin $output" );
 	return 0 if ( $output =~ /already\sthe\snewest\sversion/ );
 	return 1 if ( $output =~ /new\sversion/ );
 	return 2 if ( $output =~ /not\sinstalled/ );
