@@ -17,6 +17,9 @@ if [ ! -f /usr/local/zevenet/www/zlbcertfile.pem ]; then
         exit 1
 fi
 
+#check if APT config is done properly, if not, it tries to configure it
+echo "" | /usr/local/zevenet/bin/enterprise.bin Zevenet::Apt setCheckUpgradeAPT >/dev/null
+
 case "$1" in
 '')
 	# test connection with zevenet update system
