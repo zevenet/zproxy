@@ -124,7 +124,7 @@ $tar="/bin/tar";
 #where is ifconfig binary?
 $ifconfig_bin="/usr/sbin/ifconfig";
 #Where is ip bynary?
-$ip_bin="/usr/sbin/ip";
+$ip_bin="/bin/ip";#update
 #Where is wc binary?
 $wc_bin="/usr/bin/wc";
 #Where is fdisk binary?
