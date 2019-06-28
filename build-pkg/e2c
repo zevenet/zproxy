@@ -148,11 +148,6 @@ delete_globalconf_param "zcluster_manager"
 delete_globalconf_param "ssh_copy_id"
 
 
-# link to nft
-rm -f ${tmp_dir}/usr/share/perl5/Zevenet/Farm/L4xNAT
-ln -sf L4nft ${tmp_dir}/usr/share/perl5/Zevenet/Farm/L4xNAT
-
-
 # clone CE repository
 msg "Cloning the community repository..."
 rm -rf $com_dir

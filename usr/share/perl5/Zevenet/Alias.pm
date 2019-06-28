@@ -136,6 +136,7 @@ sub addAliasBackendsStruct
 
 	my $servers = shift;
 
+	include 'Zevenet::RBAC::Core';
 	my $permission = &getRBACRolePermission( 'alias', 'list' );
 	my $alias = &getAlias( 'backend' );
 

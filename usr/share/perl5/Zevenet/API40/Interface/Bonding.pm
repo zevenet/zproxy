@@ -127,6 +127,12 @@ sub new_bond    # ( $json_obj )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ( &saveBondDefaultConfig( $json_obj->{ name } ) )
+	{
+		my $msg = "There is a problem storing the default configuration";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my $if_ref      = &getSystemInterface( $json_obj->{ name } );
 	my @bond_slaves = @{ $json_obj->{ slaves } };
 	my @output_slaves;
@@ -400,11 +406,19 @@ sub delete_bond    # ( $bond )
 		}
 
 		die if &setBondMaster( $bond, 'del', 'writeconf' );
+
 	};
 
 	if ( $@ )
 	{
 		my $msg = "The bonding interface $bond could not be deleted";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( &delBondDefaultConfig( $bond ) )
+	{
+		my $msg =
+		  "The bonding interface $bond default configuration could not be deleted";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

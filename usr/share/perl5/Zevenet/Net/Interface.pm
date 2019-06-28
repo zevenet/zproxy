@@ -1758,6 +1758,14 @@ sub setVlan    # if_ref
 		$if_ref->{ gateway } = "";
 	}
 
+	if ( length $if_ref->{ mac } == 0 )
+	{
+		my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
+		my $parent_config  = &getInterfaceConfig( $parent_if_name );
+
+		$if_ref->{ mac } = $parent_config->{ mac };
+	}
+
 	# Creating a new interface
 	if ( !defined $oldIf_ref )
 	{

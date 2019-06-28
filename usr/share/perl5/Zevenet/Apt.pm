@@ -49,7 +49,11 @@ sub setAPTRepo
 		 )
 	  )
 	{
-		return 1;
+		&zenlog(
+			"No connection to internet, please check connection and configure proxy if needed",
+			"error", "apt"
+		);
+		return 0;
 	}
 	$socket->close();
 
@@ -66,6 +70,7 @@ sub setAPTRepo
 	my $keyid = `$subkeyid`;
 	if ( $? != 0 )
 	{
+		&zenlog( "Keyid is not correct", "error", "apt" );
 		return 1;
 	}
 
@@ -73,6 +78,7 @@ sub setAPTRepo
 	my $serial = `$subserial`;
 	if ( $? != 0 )
 	{
+		&zenlog( "Serial is not correct", "error", "apt" );
 		return 1;
 	}
 
@@ -86,6 +92,7 @@ sub setAPTRepo
 	my $subjectkeyidentifier = `$subkeyidentifier`;
 	if ( $? != 0 )
 	{
+		&zenlog( "Subject ID is not correct", "error", "apt" );
 		return 1;
 	}
 	$subjectkeyidentifier =~ s/[\r\n]//g;
@@ -97,7 +104,9 @@ sub setAPTRepo
 	);
 	if ( $error )
 	{
-		return 1;
+		&zenlog( "Error connecting to $host, $gpgkey couldn't be downloaded",
+				 "error", "apt" );
+		return 0;
 	}
 
 	# configuring user-agent
@@ -185,5 +194,41 @@ sub getAPTUpdatesList
 	};
 }
 
-1;
+#check if local APT config is done
+#return 0 if OK
+#return 1 if APT is not configured
+sub getAPTConfig()
+{
 
+	my $file          = &getGlobalConfiguration( 'apt_source_zevenet' );
+	my $apt_conf_file = &getGlobalConfiguration( 'apt_conf_file' );
+	use File::Grep;
+
+	if ( ( !-e $file ) or ( !-e $apt_conf_file ) )
+	{
+		&zenlog( "APT config files don't exist", "error", "apt" );
+		return 1;
+
+	}
+	if (    ( !fgrep { /zevenet/ } $file )
+		 or ( !fgrep { /http::User-Agent/ } $apt_conf_file ) )
+	{
+		&zenlog( "APT config is not done properly", "error", "apt" );
+		return 1;
+
+	}
+	&zenlog( "return 0" );
+	return 0;
+}
+
+#function used by checkupgrade in order to re-configre APT after any certificate key upload process
+sub setCheckUpgradeAPT()
+{
+	if ( &getAPTConfig ne 0 )
+	{
+		&setAPTRepo();
+	}
+
+}
+
+1;
