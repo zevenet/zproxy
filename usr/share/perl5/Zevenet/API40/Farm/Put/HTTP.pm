@@ -434,7 +434,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		{
 			$ciphers_lib = $c{ $farm_st->{ ciphers } };
 
-			if ( $farm_st->{ cipher } eq "ciphercustom" )
+			if ( $farm_st->{ ciphers } eq "customsecurity" )
 			{
 				$json_obj->{ cipherc } =~ s/\ //g;
 				if (
