@@ -96,6 +96,14 @@ $licenseFileHtml="$zdir/license.html";#update
 #File configuration Zen Cluster
 $filecluster="$configdir/cluster.conf";#update
 
+#let's encrypt configuration
+$temp_farm="letsencryptZevenet";
+$le_binary="certbot-auto";
+$le_fullchain_path="/usr/local/zevenet/config/letsencrypt/";
+$le_webroot_path="/opt/certs";
+$le_config_path="$le_fullchain_path";
+$le_email="";
+
 #File configuration GUI
 $http_server_dir="$zdir/app/cherokee";
 $http_server_service="/etc/init.d/cherokee";
