@@ -548,7 +548,11 @@ sub updateCRL
 	my $cmd = "$curl -s -f -k $crl_url -o $tmp_file --connect-timeout 2";
 	&logAndRun( $cmd );
 
-	if ( -s $tmp_file > 0 )
+	my $check_crl = system (
+		"$openssl crl -inform DER -text -noout -in $tmp_file | head | grep support\@sofintel.net"
+	);
+
+	if ( -s $tmp_file > 0 and $check_crl == 0 )
 	{
 		move( $tmp_file, $crl_path );
 		&zenlog( "CRL downloaded on $date_today", 'info', 'certifcate' );
