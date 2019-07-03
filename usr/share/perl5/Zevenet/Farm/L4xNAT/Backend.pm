@@ -513,7 +513,7 @@ sub _getL4FarmParseServers
 		if ( $stage == 3 && $line =~ /\"est-connlimit\"/ )
 		{
 			my @l = split /"/, $line;
-			$server->{ max_conns } = $l[3];
+			$server->{ max_conns } = $l[3] + 0;
 		}
 
 		if ( $stage == 3 && $line =~ /\"state\"/ )
