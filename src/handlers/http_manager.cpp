@@ -232,6 +232,8 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
         stream.response.content_length =
             static_cast<size_t>(std::atoi(response.headers[i].value));
+        stream.response.message_bytes_left =
+            stream.response.content_length - stream.response.message_length;
         continue;
       }
       case http::HTTP_HEADER_NAME::LOCATION: {
