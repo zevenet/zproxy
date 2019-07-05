@@ -46,7 +46,8 @@ my $action="";
 my $cert_name="";
 my $test="";
 my $restart="";
-	
+
+
 GetOptions(
     'obtain'            => sub {$action="obtain"},
     'vip=s'             => \$vip,
@@ -80,7 +81,11 @@ switch ($action){
 			print "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
 			$farm_name = $temp_farm;
 		}
+		print "farm start\n";
+		&webServer("start");
 		&obtain_cert($vip, $farm_name, $domains);
+		print "farm stop\n";
+		&webServer("stop");
 		print "Restarting farms using renewed certificates: @farms_to_reboot\n";
 		exit;
         }
@@ -192,7 +197,7 @@ sub create_webroot(){
 	#creates a temporal service called "letsencryptz" 
 	&setHTTPFarmServer("","127.0.0.1", 80, "", "", $farm_name, "letsencryptz");
 	#start the temporal webserver (minihttpd)
-	my @run = `/etc/init.d/mini-httpd start`;
+	#my @run = `/etc/init.d/mini-httpd start`;
 	&setHTTPFarmVS($farm_name,"letsencryptz","urlp","^/.well-known/acme-challenge/");
 	my $eload=1;
 	require Zevenet::ELoad; 
@@ -226,7 +231,7 @@ sub destroy_webroot(){
 
 
 	}	
-	my @run = `/etc/init.d/mini-httpd stop`;
+	#my @run = `/etc/init.d/mini-httpd stop`;
 
 
 }
@@ -274,7 +279,9 @@ sub obtain_cert(){
 	print "Obtaining Certificate for domains @$domains...\n";
 	#run request
 	$test = "--test-cert" if ($test);
-	my @run = `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email $test`;
+	&zenlog("Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test");
+	my @run = `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
+
 	if ($? ne 0){
 		print "Error executing the request for domain(s) @$domains message: @run\n";
 	}else{
@@ -439,4 +446,40 @@ sub getLocalNodeClusterStatus(){
 		print "Error: This node is not the Master in the cluster\n";
 		exit;
 	}
+}
+
+#starts / stops the webserver if neeeded
+sub webServer(){
+	my $action = shift;
+	my $pid_file = "/usr/local/zevenet/app/cherokee/var/run/cherokee_localhost.pid";
+	my $pid = "0";
+
+	my $le_webserver_config_file = &getGlobalConfiguration('le_webserver_config_file');
+	my $http_bin = &getGlobalConfiguration('http_bin');
+	my $kill_bin = &getGlobalConfiguration('kill_bin');
+	my $cat_bin = &getGlobalConfiguration('cat_bin');
+
+	 if (-e $pid_file){
+                $pid = `$cat_bin $pid_file`;
+        }
+
+
+
+	if ($action eq "start" and (! -e $pid_file)){
+		my @run = `$http_bin -d -C $le_webserver_config_file >/dev/null 2>&1 &`;
+		&zenlog("$http_bin -d -C $le_webserver_config_file 2>/dev/null");
+		&zenlog("Running temporal webserver for Let's Encrypt");
+		
+	}
+
+	if ($action eq "stop"){
+		if ($pid > 0){
+			my @run = `$kill_bin -15 $pid`;
+			&zenlog("Stopping temporal webserver for Let's Encrypt PID:$pid");
+		}else{
+			&zenlog("Temporal webserver can't be stopped, it is not running");
+		}
+	}
+
+
 }
