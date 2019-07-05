@@ -221,6 +221,7 @@ sub destroy_webroot(){
 	print "Deleting already configuration for $farm_name, service $service\n";
 	if ($farm_name eq $temp_farm){
 		require Zevenet::Farm::Action;
+		&runFarmStop($farm_name);
 		&runFarmDelete($farm_name);
 	}else{
 		require Zevenet::Farm::HTTP::Service;
