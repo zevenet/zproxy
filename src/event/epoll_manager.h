@@ -14,7 +14,7 @@ namespace events {
 #define MAX_EPOLL_EVENT 100000
 
 /** The enum EVENT_GROUP defines the different group types. */
-enum class EVENT_GROUP: char {
+enum class EVENT_GROUP : char {
   /** This group accept connections. */
   ACCEPTOR = 0x1,
   /** This group handles the events of the server. */
@@ -47,7 +47,7 @@ enum EVENT_TYPE {
   ACCEPT = (EPOLLIN | EPOLLET),
 #endif
   /** Read from the connection. */
-          READ = (EPOLLIN | EPOLLRDHUP | EPOLLHUP),
+  READ = (EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLONESHOT),
   /** Read from the connection. */
   READ_ONESHOT = (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
   /** Write to the connection. */
@@ -65,14 +65,15 @@ enum EVENT_TYPE {
 // TODO:: Make it static polimorphosm, template<typename Handler>
 /**
  * @class EpollManager epoll_manager.h "src/event/epoll_manager.h"
- * @brief The EpollManager is a wrapper class over the EPOLL system. It handles all
+ * @brief The EpollManager is a wrapper class over the EPOLL system. It handles
+ * all
  * the operations needed.
  */
 class EpollManager {
   //  std::mutex epoll_mutex;
   /** Epoll file descriptor. */
   int epoll_fd;
-  //TODO: Documentar abdess
+  // TODO: Documentar abdess
   int accept_fd;
   /** Array of epoll_event. This array contains all the events. */
   epoll_event events[MAX_EPOLL_EVENT];
@@ -90,7 +91,8 @@ public:
   virtual ~EpollManager();
 
   /**
-   * @brief This function is the core function of the system. It waits for new events
+   * @brief This function is the core function of the system. It waits for new
+   * events
    * and handles them.
    * @param time_out used to wait for events.
    * @return the current number of events.
