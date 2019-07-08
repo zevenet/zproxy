@@ -1,20 +1,5 @@
 #!/usr/bin/perl
 #Zevnet Wrapper for Letsencrypt system.
-######ask for a new cert:
-#./certbot-auto --fullchain-path /usr/local/zevenet/config/letsencrypt/ certonly --webroot --webroot-path /opt/certs/ -d test.zevenet.es --config-dir /usr/local/zevenet/config/letsencrypt/ -m emilio.campos.martin@gmail.com --agree-tos --no-eff-email
-#example params:
-#letsencrypt config
-#$temp_farm="letsencryptZevenet";
-#$le_binary="/opt/certbot/certbot-auto";
-#$le_fullchain_path="/usr/local/zevenet/config/letsencrypt/";
-#$le_webroot_path="/opt/certs";
-#$le_config_path="$le_fullchain_path";
-#$le_email="";
-######ask for certificate renew: 
-
-######ask for certificate revokation: 
-
-#####ask for certificate list: 
 #
 
 use strict;
@@ -73,7 +58,7 @@ switch ($action){
 		
 		}
 		if (! $vip && ! $farm_name){
-			print "ERROR: the action obtain requires to know where to configure the temporal web service for letsencrypt validation\n";
+			print "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
 			&help;
 
 		}
@@ -196,8 +181,6 @@ sub create_webroot(){
 	&setFarmHTTPNewService($farm_name,"letsencryptz");
 	#creates a temporal service called "letsencryptz" 
 	&setHTTPFarmServer("","127.0.0.1", 80, "", "", $farm_name, "letsencryptz");
-	#start the temporal webserver (minihttpd)
-	#my @run = `/etc/init.d/mini-httpd start`;
 	&setHTTPFarmVS($farm_name,"letsencryptz","urlp","^/.well-known/acme-challenge/");
 	my $eload=1;
 	require Zevenet::ELoad; 
@@ -207,7 +190,6 @@ sub create_webroot(){
 		func   => 'setHTTPFarmMoveService',
 		args   => [$farm_name, "letsencryptz", 0],
 	);
-	#&setHTTPFarmMoveService("farm_name", "letsencryptz", 0);
 	&runFarmStop($farm_name,"");
 	&runFarmStart($farm_name,"");
 	#
@@ -337,7 +319,7 @@ sub list_cert(){
 
 
 sub list_conf(){
-	print "Current configuration for Zevenet letsencrypt module: 
+	print "Current configuration for Zevenet Let's Encrypt module: 
 	\$temp_farm = " . &getGlobalConfiguration('temp_farm') . " 
 	\$le_binary = " . &getGlobalConfiguration('le_binary') . " 
 	\$le_fullchain_path = ". &getGlobalConfiguration('le_fullchain_path') . "
@@ -373,7 +355,7 @@ sub revoke_cert(){
 }
 
 sub renew_certs(){
-	print "Renewing all the required certificates";
+	print "Renewing all the required certificates\n";
 	$test = "--dry-run" if ($test);
 	my @run = `$le_binary renew --config-dir $le_config_path $test`;
 	my $sw = 0;
