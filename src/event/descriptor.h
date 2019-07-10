@@ -26,7 +26,8 @@ public:
   std::atomic<unsigned long> disconnect_count{0};
 
   Descriptor() : event_manager_(nullptr), cancelled(true), fd_(-1) {}
-  ~Descriptor() {
+    virtual ~Descriptor()
+    {
     if (event_manager_ != nullptr && fd_ > 0)
       event_manager_->deleteFd(fd_);
   }

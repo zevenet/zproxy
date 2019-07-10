@@ -79,7 +79,8 @@ static CODE facilitynames[] =
 #define logmsg(...) \
   Debug::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 
-#define COUT_GREEN_COLOR(x) "\033[1;32m" + x + "\033[0m"
+#define COUT_GREEN_COLOR(x) "\e[1;32m" + x + "\e[0m"
+#define COUT_BLUE_COLOR(x) "\e[1;34m" + x + "\e[0m"
 #include "fstream"
 #include <unistd.h>
 class Debug {
@@ -117,7 +118,7 @@ public:
     if (log_level >= LOG_DEBUG) {
       std::stringstream buffer;
       buffer << "[" << helper::ThreadHelper::getThreadName(pthread_self())
-             << "][" << file << ":" /*<< function << ":" */ << line << "] ";
+             << "][" << file << line << " (" << COUT_BLUE_COLOR(function) << ") " "] ";
       std::cout << std::left << std::setfill('.') << std::setw(60)
                 << buffer.str() << "\033[1;32m";
     }

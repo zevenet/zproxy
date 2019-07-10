@@ -57,7 +57,7 @@ int SslSessionManager::addSession(SSL *ssl, SSL_SESSION *session) {
 SSL_SESSION *SslSessionManager::getSession(SSL *ssl,const unsigned char *id, int id_length, int *do_copy) {
   unsigned char *buff;
   std::lock_guard<std::mutex> lock(data_mtx);
-  Debug::logmsg(LOG_ERR,"SESSION GET id: %s", id);
+  Debug::logmsg(LOG_REMOVE, "SESSION GET id: %x", id);
   *do_copy = 0;
 
   for (auto data: sessions) {

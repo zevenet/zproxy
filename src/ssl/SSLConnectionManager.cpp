@@ -71,7 +71,7 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection,
 
 bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
                                                  bool client_mode) {
-    Debug::logmsg(LOG_DEBUG, "INIT SSL CONNECTION: %d", ssl_connection.getFileDescriptor());
+//    Debug::logmsg(LOG_DEBUG, "INIT SSL CONNECTION: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl != nullptr) {
     SSL_shutdown(ssl_connection.ssl);
     SSL_free(ssl_connection.ssl);
@@ -82,6 +82,17 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
     Debug::logmsg(LOG_ERR, "SSL_new failed");
     return false;
   }
+  if (client_mode) {
+    const char* server_name = "central.zevenet.com";
+    if (!SSL_set_tlsext_host_name(ssl_connection.ssl, server_name)) {
+      Debug::logmsg(LOG_DEBUG, "(%lx) could not set SNI host name  to %s", pthread_self(), server_name);
+      return false;
+    }
+    else {
+      Debug::logmsg(LOG_DEBUG, "(%lx) Set SNI host name \"%s\"", pthread_self(), server_name);
+    }
+  }
+
 //  SSL_set_mode( ssl_connection.ssl,
     //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enable return if not all buffer has
           // been writen to the underlying socket,
@@ -101,9 +112,9 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
   BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_CLOSE);
   BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
 
-    Debug::logmsg(LOG_DEBUG, !client_mode ? "SSL_HANDSHAKE: SSL_set_accept_state for fd %d"
-                                          : "SSL_HANDSHAKE: SSL_set_connect_state for fd %d",
-                ssl_connection.getFileDescriptor());
+//    Debug::logmsg(LOG_DEBUG, !client_mode ? "SSL_HANDSHAKE: SSL_set_accept_state for fd %d"
+//                                          : "SSL_HANDSHAKE: SSL_set_connect_state for fd %d",
+//                ssl_connection.getFileDescriptor());
   // let the SSL object know it should act as server
   !client_mode ? SSL_set_accept_state(ssl_connection.ssl)
                : SSL_set_connect_state(ssl_connection.ssl);
@@ -138,8 +149,13 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
       }
     }else
     if (rc < 0) {
-      if (BIO_should_retry(ssl_connection.io)) {
-        return IO::IO_RESULT::DONE_TRY_AGAIN;
+      if (BIO_should_read(ssl_connection.io)) {
+        Debug::logmsg(LOG_DEBUG, " DONE_TRY_AGAIN");
+        if (bytes_read>0)
+          return IO::IO_RESULT::SUCCESS;
+        else {
+          return IO::IO_RESULT::DONE_TRY_AGAIN;
+        }
       }
       return IO::IO_RESULT::ERROR;
     }
@@ -170,9 +186,12 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
       result = IO::IO_RESULT::DONE_TRY_AGAIN;
       break;
     } else if (rc < 0) {
-      if (BIO_should_retry(ssl_connection.io)) {
+      if (BIO_should_write(ssl_connection.io)) {
         {
-          result = IO::IO_RESULT::DONE_TRY_AGAIN;
+          if ((data_size-written)==0)
+            result = IO::IO_RESULT::SUCCESS;
+          else
+            result = IO::IO_RESULT::DONE_TRY_AGAIN;
           break;
         }
       } else {
@@ -186,7 +205,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
       if ((data_size - written) == 0) {
         result = IO::IO_RESULT::SUCCESS;
         break;
-      };
+      }
     }
   }
   if(flush_data)
@@ -198,7 +217,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 }
 
 bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool client_mode) {
-    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
+//    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl == nullptr) {
     if (!initSslConnection_BIO(ssl_connection, client_mode)) {
       return false;
@@ -209,25 +228,25 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
   if (r == 1) {
     ssl_connection.ssl_connected = true;
       ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
-    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
-                  ssl_connection.getFileDescriptor());
+//    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
+//                  ssl_connection.getFileDescriptor());
 
       !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();
     return true;
   }
   int err = SSL_get_error(ssl_connection.ssl, r);
   if (err == SSL_ERROR_WANT_WRITE) {
-    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: return want write set events %d",
-                  ssl_connection.getFileDescriptor());
+//    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: return want write set events %d",
+//                  ssl_connection.getFileDescriptor());
 //      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();
 
   } else if (err == SSL_ERROR_WANT_READ) {
-    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: Want read, fd %d",
-                  ssl_connection.getFileDescriptor());
+//    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: Want read, fd %d",
+//                  ssl_connection.getFileDescriptor());
 //      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();;
 
   } else {
-    Debug::logmsg(LOG_ERR,
+    Debug::logmsg(LOG_NOTICE,
             "SSL_do_handshake return %d error %d  error str: %s errno %d msg %s \n Ossl errors: %s", r, err,
             getErrorString(err),
             errno, strerror(errno), ossGetErrorStackString().get());
@@ -377,7 +396,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
     ssl_connection.buffer_offset += http_data.headers[i].line_size;
-    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size-2, http_data.headers[i].name);
+//    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size-2, http_data.headers[i].name);
   }
 
   for (const auto& header :
@@ -386,7 +405,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
   }
 
   for (const auto &header :
@@ -396,7 +415,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
   }
 
   iov[x].iov_base = const_cast<char *>(return_value);
@@ -413,13 +432,13 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   //write multibuffer to ssl connection
   size_t written;
   for(int i = 0;i < x;i ++){
-    auto result = handleWrite(target_ssl_connection, static_cast<char *>(iov[i].iov_base),iov[i].iov_len, written, x == (i+1));
+    auto result = handleWrite(target_ssl_connection, static_cast<char*>(iov[i].iov_base),
+            iov[i].iov_len, written, x==(i+1));
     switch (result){
-
     case IO::IO_RESULT::FD_CLOSED:
     case IO::IO_RESULT::FULL_BUFFER:
     case IO::IO_RESULT::CANCELLED:
-    case IO::IO_RESULT::ERROR:break;
+    case IO::IO_RESULT::ERROR: break;
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE:
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::ZERO_DATA:break;
@@ -431,16 +450,17 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     }
   }
 //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
-  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
-  http_data.message_bytes_left = http_data.content_length-http_data.message_length;
+//  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
+  http_data.message_bytes_left = http_data.content_length>0 ?
+                                 http_data.content_length-http_data.message_length : 0;
   ssl_connection.buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
-  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
-  Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", ssl_connection.buffer_size);
-  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
-  Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
-  Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
-  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
+//  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
+//  Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", ssl_connection.buffer_size);
+//  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
+//  Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
+//  Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
+//  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
   //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 

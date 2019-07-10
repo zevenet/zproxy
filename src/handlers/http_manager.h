@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <glob.h>
 #include "../http/http_stream.h"
 #include "../service/Service.h"
 #include "../http/http.h"
@@ -73,6 +74,9 @@ public:
    * @return if chunked is enabled returns true, if not returns false.
    */
   static bool transferChunked(HttpStream *stream);
+    /**/
+    static bool isLastChunk(const std::string& data);
+    static size_t getChunkSize(const std::string& data);
 
 };
 

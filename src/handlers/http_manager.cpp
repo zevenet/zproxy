@@ -7,15 +7,27 @@
 
 bool http_manager::transferChunked(HttpStream *stream) {
   if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-    size_t pos = std::string(stream->client_connection.buffer).find("\r\n");
-    auto hex = std::string(stream->client_connection.buffer).substr(0, pos);
-    int chunk_length = std::stoul(hex, nullptr, 16);
+      auto pos = std::string(stream->client_connection.buffer);
     stream->chunked_status =
-        chunk_length != 0 ? http::CHUNKED_STATUS::CHUNKED_ENABLED : http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+            isLastChunk(pos) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK : http::CHUNKED_STATUS::CHUNKED_ENABLED;
     return true;
   }
 
   return false;
+}
+
+bool http_manager::isLastChunk(const std::string& data)
+{
+    return getChunkSize(data)==0;
+}
+
+size_t http_manager::getChunkSize(const std::string& data)
+{
+    size_t pos = data.find("\r\n");
+    auto hex = data.substr(0, pos);
+    Debug::logmsg(LOG_DEBUG, "RESPONSE:\n %x", data.c_str());
+    int chunk_length = std::stoul(hex.data(), nullptr, 16);
+    return chunk_length;
 }
 
 void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
@@ -281,10 +293,13 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
         if (static_cast<Service*>(stream.request.getService())->service_config.sts > 0)
           response.headers[i].header_off;
         break;
+
+      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.transfer_encoding_header = true;
       default:continue;
       }
 
     }
+
     /* maybe header to be removed from responses */
     //  MATCHER *m;
     // for (m = listener_config_.head_off; m; m = m->next) {
@@ -296,3 +311,5 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
   }
   return validation::REQUEST_RESULT::OK;
 }
+
+

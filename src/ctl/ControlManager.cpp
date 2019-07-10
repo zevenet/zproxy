@@ -68,10 +68,13 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
   switch (event_type) {
   case CONNECT: {
     int new_fd;
-    new_fd = control_listener.doAccept();
-    if (new_fd > 0) {
-      addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::CTL_INTERFACE);
+    do {
+      new_fd = control_listener.doAccept();
+      if (new_fd>0) {
+        addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::CTL_INTERFACE);
+      }
     }
+    while (new_fd>0);
     break;
   }
   case READ: {
