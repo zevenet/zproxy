@@ -55,7 +55,7 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 			 "debug", "PROFILING" );
 	my ( $farm_name, $service ) = @_;
 
-	require Zevenet::Farm::Core;
+	use Zevenet::Farm::Core;
 
 	# cookieins, cookieins-name, cookieins-domain, cookieins-path, cookieins-ttlc
 
@@ -598,6 +598,7 @@ sub setHTTPFarmMoveService
 	my $out;
 
 	require Zevenet::Lock;
+	require Zevenet::Farm::HTTP::Service;
 
 	# lock file
 	my $farm_filename = &getFarmFile( $farm );
