@@ -59,6 +59,10 @@ sub checkport    # ($host, $port)
 	# check remote ports
 	else
 	{
+		# check if it used by a l4 farm
+		require Zevenet::Farm::L4xNAT::Validate;
+		return "true" if ( &checkL4Port( $host, $port ) );
+
 		require IO::Socket;
 		my $sock = IO::Socket::INET->new(
 										  PeerAddr => $host,
