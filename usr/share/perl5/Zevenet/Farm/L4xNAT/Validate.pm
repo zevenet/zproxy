@@ -63,14 +63,30 @@ sub ismport
 	}
 }
 
+=begin nd
+Function: checkL4Port
+
+	Check if the port is used by some l4 farm, expanding the port lists
+
+Parameters:
+	ip - IP used for the vip of the farm
+	port - Port or port expression to look for in other farms
+	farmname - name of the farm. This farm will be deleted of the farm list
+
+Returns:
+	Integer - 1 if the port is been used or 0 if it is available
+
+=cut
+
 sub checkL4Port
 {
-	my ( $ip, $port ) = @_;
+	my ( $ip, $port, $farmname ) = @_;
 	my $used = 0;
 
 	# get l4 farms
 	require Zevenet::Farm::Base;
 	my @farm_list = &getFarmListByVip( $ip );
+	@farm_list = grep ( !/^$farmname$/, @farm_list ) if defined $farmname;
 
 	# cannot set all ports because almost a port is set
 	if ( $port eq '*' and @farm_list )

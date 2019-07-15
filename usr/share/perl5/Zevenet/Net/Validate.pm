@@ -44,7 +44,7 @@ sub checkport    # ($host, $port)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $host, $port ) = @_;
+	my ( $host, $port, $farmname ) = @_;
 
 	# check local ports;
 	if ( $host eq '127.0.0.1' || $host =~ /local/ )
@@ -61,7 +61,7 @@ sub checkport    # ($host, $port)
 	{
 		# check if it used by a l4 farm
 		require Zevenet::Farm::L4xNAT::Validate;
-		return "true" if ( &checkL4Port( $host, $port ) );
+		return "true" if ( &checkL4Port( $host, $port, $farmname ) );
 
 		require IO::Socket;
 		my $sock = IO::Socket::INET->new(
