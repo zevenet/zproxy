@@ -82,16 +82,16 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
     Debug::logmsg(LOG_ERR, "SSL_new failed");
     return false;
   }
-  if (client_mode) {
-    const char* server_name = "central.zevenet.com";
-    if (!SSL_set_tlsext_host_name(ssl_connection.ssl, server_name)) {
-      Debug::logmsg(LOG_DEBUG, "(%lx) could not set SNI host name  to %s", pthread_self(), server_name);
-      return false;
-    }
-    else {
-      Debug::logmsg(LOG_DEBUG, "(%lx) Set SNI host name \"%s\"", pthread_self(), server_name);
-    }
-  }
+//  if (client_mode) {
+//    const char* server_name = "central.zevenet.com";
+//    if (!SSL_set_tlsext_host_name(ssl_connection.ssl, server_name)) {
+//      Debug::logmsg(LOG_DEBUG, "(%lx) could not set SNI host name  to %s", pthread_self(), server_name);
+//      return false;
+//    }
+//    else {
+//      Debug::logmsg(LOG_DEBUG, "(%lx) Set SNI host name \"%s\"", pthread_self(), server_name);
+//    }
+//  }
 
 //  SSL_set_mode( ssl_connection.ssl,
     //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enable return if not all buffer has

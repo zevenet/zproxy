@@ -8,9 +8,10 @@
 using namespace ssl;
 
 SslSessionManager *SslSessionManager::ssl_session_manager = nullptr;
+std::mutex SslSessionManager::singleton_mtx{};
 
 SslSessionManager *SslSessionManager::getInstance() {
-  //FIXME :: possible race condition on steam manager worker creaton
+    std::lock_guard<std::mutex> instance_lock(singleton_mtx);
   if (ssl_session_manager == nullptr)
     ssl_session_manager = new SslSessionManager();
   return ssl_session_manager;

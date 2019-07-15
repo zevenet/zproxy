@@ -12,7 +12,7 @@ namespace ssl {
 typedef struct {
     unsigned int sess_id_size;
     unsigned char sess_id[MAX_ID_SIZE];
-    int encoding_length;
+    size_t encoding_length;
     unsigned char encoding_data[MAX_ENCODING_SIZE];
 } SslSessionData;
 
@@ -20,6 +20,7 @@ typedef struct {
 class SslSessionManager {
 public:
     std::list<SslSessionData *> sessions;
+    static std::mutex singleton_mtx;
     static SslSessionManager *getInstance();
     int addSession(SSL *ssl, SSL_SESSION *session);
     SSL_SESSION *getSession(SSL *ssl,const unsigned char *id, int id_length,

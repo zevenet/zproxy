@@ -1153,11 +1153,15 @@ void StreamManager::clearStream(HttpStream *stream) {
   }
     Debug::logmsg(LOG_DEBUG, "Clearing stream ");
 
-//  if (stream->backend_connection.buffer_size > 0 || stream->backend_connection.splice_pipe.bytes > 0) {
-//    //TODO:: remove and create enum with READY_TO_SEND_RESPONSE
-//    stream->backend_connection.disableEvents();
-//    return;
-//  }
+  if (stream->backend_connection.buffer_size > 0
+#if ENABLE_ZERO_COPY
+        || stream->backend_connection.splice_pipe.bytes > 0
+#endif
+        ) {
+    //TODO:: remove and create enum with READY_TO_SEND_RESPONSE
+    stream->backend_connection.disableEvents();
+    return;
+  }
   logSslErrorStack();
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());
