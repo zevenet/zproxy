@@ -316,7 +316,7 @@ sub getIpdsRulesetDate
 	require Zevenet::Config;
 	my $dpkg_bin   = &getGlobalConfiguration( "dpkg_bin" );
 	my $tail_bin   = &getGlobalConfiguration( "tail" );
-	my $date_regex = qw/^\w+\s+zevenet-ipds\s+\d+\.\d+\.(\d+)/;
+	my $date_regex = qw/^\w+\s+zevenet-ipds\s+\d+\.\d+\.\d+\.(\d+)/;
 	my $date       = undef;
 
 	my $output = `$dpkg_bin -l "zevenet-ipds" | $tail_bin -n 1`;
