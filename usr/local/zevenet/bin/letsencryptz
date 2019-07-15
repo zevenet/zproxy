@@ -77,10 +77,23 @@ switch ($action){
 
 	case "renew"{
 		&getLocalNodeClusterStatus();
+               	if (! $vip && ! $farm_name){
+                        print "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
+                        &help;
+
+                }
+		if (! $farm_name){
+                        print "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
+                        $farm_name = $temp_farm;
+                }
+                &webServer("start");
+		&create_webroot($farm_name, $vip);
 		&renew_certs();
 		if ($restart){
 			&restart_farms();
 		}
+		&destroy_webroot($farm_name);
+		&webServer("stop");
 		exit;
 	}
 
@@ -130,7 +143,7 @@ action: --obtain | --destroy | --renew | --list | --listconf | --help
 
 		commands: --vip <Virtual IP> --farm <Farm Name> --domain <domain1> --domain <domain2> --domain <domainN> --test
 
-        		--vip: The Virtual IP already configured where to publish a temporal web server, this will be connected by let's encrypt public servers to verify the certificate request. The Virtual IP has to be free on the 80 port in order to be bound by a local process.
+        		--vip: The Virtual IP already configured where to publish a temporal web server, this will be connected by let's encrypt public servers to verify the certificate request. The Virtual IP has to be free on the 80 port in order to be bound by a local process, if it isn't free then use --farm instead.
         		--farm: The farm name which configures a temporal Service called \"letsencryptz\", if no farm is used a temporal farm called \"letsencryptZevenet\" will be configured in the selected Virtual IP.
         		--domain: The domain which requests the Certificate for, i.e. www.mycompany.com.
 			--test: Optional parameter, if used the certificate is requested for test purpose.
@@ -143,9 +156,11 @@ action: --obtain | --destroy | --renew | --list | --listconf | --help
 
 	--renew: Renew the certificates near to expiry, no commands needed
 		
-		commands: --test --forcerestart
+		commands: --test --forcerestart --vip <Virtual IP> --farm <Farm Name>
 	       		--test:	Optional parameter, if used a dry-run is executed, the renew of the certificates is simulated. 
 			--forcerestart: Optional parameter, if used the farms that are using the renewed certificates will be restarted in order to apply the changes.
+			--vip: The Virtual IP already configured where to publish a temporal web server, this will be connected by let's encrypt public servers to verify the certificate renew. The Virtual IP has to be free on the 80 port in order to be bound by a local process if it isn't free then use --farm instead.
+                        --farm: The farm name which configures a temporal Service called \"letsencryptz\", if no farm is used a temporal farm called \"letsencryptZevenet\" will be configured in the selected Virtual IP.
 
 	--list: List all the local certificates managed by let's encrypt and the status, no commands needed.
 
@@ -357,6 +372,7 @@ sub revoke_cert(){
 sub renew_certs(){
 	print "Renewing all the required certificates\n";
 	$test = "--dry-run" if ($test);
+	##a local service needs to be running in order to connect from letsencrypt
 	my @run = `$le_binary renew --config-dir $le_config_path $test`;
 	my $sw = 0;
 	foreach my $line (@run){
@@ -372,6 +388,8 @@ sub renew_certs(){
 		}
 
 	}
+
+	#finally the local service needs to be stopped.
 
 }
 
