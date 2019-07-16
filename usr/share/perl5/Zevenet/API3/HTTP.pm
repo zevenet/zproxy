@@ -27,7 +27,8 @@ use strict;
 
 sub GET
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -42,7 +43,8 @@ sub GET
 
 sub POST
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -90,7 +92,8 @@ sub POST
 
 sub PUT
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -139,7 +142,8 @@ sub PUT
 
 sub DELETE
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -154,7 +158,8 @@ sub DELETE
 
 sub OPTIONS
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
@@ -184,12 +189,14 @@ sub OPTIONS
 
 		This function exits the execution uf the current process.
 =cut
+
 sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $self = shift;
 
-	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG
+  #~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG
 
 	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
@@ -201,7 +208,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 	my @headers = (
-					'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
+					  'Access-Control-Allow-Origin' => ( exists $ENV{ HTTP_ZAPI_KEY } )
+					? '*'
+					: "https://$ENV{ HTTP_HOST }/",
 					'Access-Control-Allow-Credentials' => 'true',
 	);
 
@@ -214,7 +223,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		  ;
 	}
 
-	if ( exists $ENV{HTTP_COOKIE} && $ENV{HTTP_COOKIE} =~ /CGISESSID/ )
+	if ( exists $ENV{ HTTP_COOKIE } && $ENV{ HTTP_COOKIE } =~ /CGISESSID/ )
 	{
 		if ( &validCGISession() )
 		{
@@ -282,10 +291,12 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	if ( &debug )
 	{
 		# log request if debug is enabled
-		my $req_msg = "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+		my $req_msg =
+		  "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+
 		# include memory usage if debug is 2 or higher
 		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
-		&zenlog( $req_msg , "debug", "ZAPI");
+		&zenlog( $req_msg, "debug", "ZAPI" );
 
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
