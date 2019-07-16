@@ -42,7 +42,9 @@ $logdir="/var/log";#update
 #piddir
 $piddir="/var/run";
 #zevenet activation certificate path
-$zlbcertfile_path="/usr/local/zevenet/www/zlbcertfile.pem";
+$zlbcertfile_path="$basedir/zlbcertfile.pem";#update
+# directory of the zapi binaries
+$zapi_directory="$basedir/zapi";
 #first boot flag
 $first_boot_flag="/etc/firstzlbboot";
 #zevenet service
