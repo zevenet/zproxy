@@ -287,5 +287,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/System/HTTP.pm
 	usr/share/perl5/Zevenet/System/SSH.pm
 	usr/share/perl5/Zevenet/System/Proxy.pm
+	usr/share/perl5/Zevenet/System/Ext.pm
 	usr/share/perl5/Zevenet/Alias.pm
 )
