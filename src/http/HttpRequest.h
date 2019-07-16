@@ -10,7 +10,8 @@
 class HttpRequest : public http_parser::HttpData {
 
   /** Service that request was generated for*/
-  void *request_service; //fixme; hack to avoid cyclic dependency, //TODO:: remove
+  void *request_service; // fixme; hack to avoid cyclic dependency, //TODO::
+                         // remove
 public:
   bool add_destination_header;
   bool upgrade_header;
@@ -51,11 +52,11 @@ public:
     return path != nullptr ? std::string(path, path_length) : std::string();
   }
   void setService(/*Service */ void *service);
-  void * getService() const ;
+  void *getService() const;
 };
 
-
 class HttpResponse : public http_parser::HttpData {
-  public:
+public:
+  bool headers_sent{false}; // FIXME: Chapuza
   bool transfer_encoding_header;
 };
