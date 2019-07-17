@@ -342,12 +342,16 @@ Backend *Service::getNextBackend() {
   case LP_ROUND_ROBIN: {
     static unsigned long long seed;
     Backend *bck_res = nullptr;
-    do {
+    for (auto bck : backend_set) {
       seed++;
       bck_res = backend_set[seed % backend_set.size()];
-    } while (bck_res != nullptr && bck_res->status != BACKEND_STATUS::BACKEND_UP);
+      if (bck_res!=nullptr && bck_res->status!=BACKEND_STATUS::BACKEND_UP) {
+        bck_res = nullptr;
+        continue;
+      }
+    }
     return bck_res;
-  };
+  }
 
   case LP_W_LEAST_CONNECTIONS: {
     Backend *selected_backend = nullptr;
@@ -432,17 +436,21 @@ void Service::doMaintenance() {
 
 /** There is not backend available, trying to pick an emergency backend. If
  * there is not an emergency backend available it returns nullptr. */
-Backend * Service::getEmergencyBackend() {
+Backend* Service::getEmergencyBackend()
+{
   // There is no backend available, looking for an emergency backend.
   if (emergency_backend_set.empty())
     return nullptr;
-  Backend *bck;
-  do {
-    bck = nullptr;
+  Backend* bck{nullptr};
+  for (auto tmp : emergency_backend_set) {
     static uint64_t emergency_seed;
     emergency_seed++;
-    bck = emergency_backend_set[emergency_seed % backend_set.size()];
-  } while (bck != nullptr && bck->status != BACKEND_STATUS::BACKEND_UP);
+    bck = emergency_backend_set[emergency_seed%backend_set.size()];
+    if (bck!=nullptr && bck->status!=BACKEND_STATUS::BACKEND_UP) {
+      bck = nullptr;
+      continue;
+    }
+  }
   return nullptr;
 }
 Service::~Service() {
