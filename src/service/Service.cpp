@@ -451,7 +451,7 @@ Backend* Service::getEmergencyBackend()
       continue;
     }
   }
-  return nullptr;
+  return bck;
 }
 Service::~Service() {
   //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
