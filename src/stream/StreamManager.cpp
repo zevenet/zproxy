@@ -193,13 +193,15 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     }
     switch (event_group) {
     case EVENT_GROUP::SERVER: {
-      if (!stream->backend_connection.isConnected()) {
-        auto response =
-            HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
-        stream->client_connection.write(response.c_str(), response.length());
-        Debug::LogInfo("Backend closed connection", LOG_DEBUG);
-      }
-      break;
+        // FIXME: Why is it entering here when there is a conn refused
+        //      if (!stream->backend_connection.isConnected()) {
+        //        auto response =
+        //            HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
+        //        stream->client_connection.write(response.c_str(), response.length());
+        //        Debug::LogInfo("Backend closed connection", LOG_DEBUG);
+        //      }
+        //      break;
+        return;
     }
     case EVENT_GROUP::CLIENT: {
       Debug::LogInfo("Client closed connection", LOG_DEBUG);
