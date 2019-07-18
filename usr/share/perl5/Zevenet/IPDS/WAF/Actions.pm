@@ -223,6 +223,10 @@ sub updateWAFSetPreload
 	}
 	return $err if $err;
 
+	# copying the data files
+	$err = system ( "cp $waf_pkg_dir/*.data $wafSetDir" );
+	&zenlog( "Error updating WAF data files", 'error', 'waf' ) if $err;
+
 	# add and modify the sets
 	foreach my $pre_set ( @prel_path )
 	{
@@ -248,13 +252,6 @@ sub updateWAFSetPreload
 
 			# load the current set
 			$cur_set = &getWAFSet( $setname ) if ( -f $set_file );
-		}
-
-		# the file is a file with data
-		elsif ( $pre_set =~ /([\w-]+\.\w+)$/ )
-		{
-			$setname  = $1;
-			$set_file = "$wafSetDir/$setname";
 		}
 
 		# the file is not recognoized
