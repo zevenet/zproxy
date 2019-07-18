@@ -744,4 +744,38 @@ sub configureDefaultGW    #()
 	}
 }
 
+
+sub listRoutingTables
+{
+	my $rttables = &getGlobalConfiguration( 'rttables' );
+
+	my @list = ();
+	my @exceptions = ( 'local', 'default' );
+
+	my $fh = &openlock( $rttables, '<' );
+
+&zenlog ($rttables, '??? file');
+
+	foreach my $line (<$fh>)
+	{
+		&zenlog ($line,'???');
+		next if ( $line =~ /^\s*#/ );
+
+&zenlog ('??? conft');
+
+		if ( $line =~ /\d+\s+[\w\.]+/ )
+		{
+
+			my $name = $1;
+			&zenlog ($name,'??? found');
+			next if grep ( /^$name$/, @exceptions );
+			&zenlog ('??? add');
+			push @list, $name;
+		}
+	}
+	close $fh;
+
+	return @list;
+}
+
 1;

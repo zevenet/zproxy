@@ -138,7 +138,7 @@ $tar="/bin/tar";
 #where is ifconfig binary?
 $ifconfig_bin="/usr/sbin/ifconfig";
 #Where is ip bynary?
-$ip_bin="/usr/sbin/ip";
+$ip_bin="/bin/ip";#update
 #Where is wc binary?
 $wc_bin="/usr/bin/wc";
 #Where is fdisk binary?
@@ -416,6 +416,17 @@ $ssyncd_port="9999";
 #L4sd configuration
 $l4sdpid="/var/run/l4sd.pid";#update
 $l4sdcfg="$configdir/l4sd.cfg";#update
+
+# routing
+# initial farm prio
+$routingRulePrioFarm="25000";
+# Min prio for rules created by the user. It must be greater than all farms rules
+$routingRulePrioUserMin="29000";
+# Maximum prio for rules created by the user. It must be lower than ifaces priority
+$routingRulePrioUserMax="30999";
+# initial interface tables prio
+$routingRulePrioIfaces="31000";
+
 
 # time period to get the interface throughput stats
 $throughput_period="5";

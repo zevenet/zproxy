@@ -74,6 +74,7 @@ my %format_re = (
 	'integer'     => $integer,
 	'natural_num' => $natural,
 	'boolean'     => $boolean,
+	'ipv4v6'      => $ipv4v6,
 
 	# hostname
 	'hostname' => $hostname,
@@ -268,6 +269,9 @@ my %format_re = (
 	'alias_interface' => qr/$interface/,
 	'alias_name'      => qr/[\w-]+/,
 	'alias_type'      => qr/(?:backend|interface)/,
+
+	# routing
+	'id_rule' => qr/$natural/,
 
 );
 

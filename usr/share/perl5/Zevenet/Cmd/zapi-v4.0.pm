@@ -145,6 +145,7 @@ require Zevenet::API40::Routes::Activation
 
 ##### Load API routes ################################################
 require Zevenet::API40::Routes;
+require Zevenet::API41::Routes;
 
 my $desc = 'Request not found';
 my $req  = $ENV{ PATH_INFO };
