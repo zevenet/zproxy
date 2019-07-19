@@ -108,7 +108,12 @@ sub create_routing_rule
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	# ????  check table exists
+	require Zevenet::Net::Route;
+	if ( !grep( /^$json_obj->{table}$/, &listRoutingTables() ) )
+	{
+		my $msg = "The table '$json_obj->{table} does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
 	# translate params
 	if ( exists $json_obj->{ src_cdir } )
@@ -116,6 +121,10 @@ sub create_routing_rule
 		$json_obj->{ srclen } = $json_obj->{ src_cdir };
 		delete $json_obj->{ src_cdir };
 	}
+
+	# check if already exists an equal rule
+	# ????
+
 
 	my $err = &createRoutingRules( $json_obj );
 	if ( $err )

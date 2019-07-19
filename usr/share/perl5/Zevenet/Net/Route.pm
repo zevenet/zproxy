@@ -244,19 +244,82 @@ sub applyRule
 	my $table  = shift;
 	my $from   = shift;
 	my $fwmark = shift;
-
+	my $type = shift;
+	my $cmd = "";
 	my $output = 0;
-
+	my $prio = "";
 	return -1 if ( $table eq "" );
 
 	$from   = "from $from"     if ( defined $from   && $from ne "" );
 	$fwmark = "fwmark $fwmark" if ( defined $fwmark && $fwmark ne "" );
 
+	if ($action eq 'add' and $prio eq '')
+	{
+		$prio = &genRoutingRulesPrio( $type );
+		$prio = "prio $prio ";
+	}
+
 	$output =
-	  &logAndRun( "$ip_bin -$ipv rule $action $from $fwmark lookup $table" );
+	  &logAndRun( "$ip_bin -$ipv rule $action $prio $from $fwmark lookup $table" );
+
+	  &zenlog( "$ip_bin -$ipv rule $action $prio $from $fwmark lookup $table","????cmd" );
 
 	return $output;
 }
+
+
+sub genRoutingRulesPrio
+{
+	my $type = shift; # user, farm, ifaces
+
+	my $farmInit = &getGlobalConfiguration( 'routingRulePrioFarm' );
+	my $userInit = &getGlobalConfiguration( 'routingRulePrioUserMin' );
+	my $ifacesInit = &getGlobalConfiguration( 'routingRulePrioIfaces' );
+	my $systemLimit = '32766'; # maximun priority value
+
+	my $min;
+	my $max;
+	if ($type eq 'farm')
+	{
+		$min = $farmInit;
+		$max = $userInit;
+	}
+	elsif ($type eq 'user')
+	{
+		$min = $userInit;
+		$max = $ifacesInit;
+	}
+	else
+	{
+		$min = $ifacesInit;
+		$max = $systemLimit;
+	}
+
+	my $prio;
+	my $prioList = &listRoutingRulesPrio();
+	for ( $prio = $max-1; $prio >= $min; $prio-- )
+	{
+		last if ( !grep( /^$prio$/, @{$prioList}) );
+	}
+
+	return $prio;
+}
+
+
+sub listRoutingRulesPrio
+{
+	my $rules = &listRoutingRules();
+	my @list;
+
+	foreach my $r (@{$rules})
+	{
+		push @list, $r->{priority};
+	}
+
+	@list = sort @list;
+	return \@list;
+}
+
 
 =begin nd
 Function: setRule
@@ -317,10 +380,11 @@ sub setRule
 	if (    ( $action eq "add" && $isrule == 0 )
 		 || ( $action eq "del" && $isrule != 0 ) )
 	{
+		my $type = (defined $fwmark) ? "farm": "ifaces";
 		$output =
 		  &applyRule( $ipv, $action, $table,
 					  ( defined $from ) ? $from : "$if_ref->{ net }/$if_ref->{ mask }",
-					  $fwmark );
+					  $fwmark, $type );
 	}
 
 	return $output;
@@ -750,26 +814,18 @@ sub listRoutingTables
 	my $rttables = &getGlobalConfiguration( 'rttables' );
 
 	my @list = ();
-	my @exceptions = ( 'local', 'default' );
+	my @exceptions = ( 'local', 'default', 'unspec' );
 
 	my $fh = &openlock( $rttables, '<' );
 
-&zenlog ($rttables, '??? file');
-
 	foreach my $line (<$fh>)
 	{
-		&zenlog ($line,'???');
 		next if ( $line =~ /^\s*#/ );
 
-&zenlog ('??? conft');
-
-		if ( $line =~ /\d+\s+[\w\.]+/ )
+		if ( $line =~ /\d+\s+([\w\.]+)/ )
 		{
-
 			my $name = $1;
-			&zenlog ($name,'??? found');
 			next if grep ( /^$name$/, @exceptions );
-			&zenlog ('??? add');
 			push @list, $name;
 		}
 	}
@@ -777,5 +833,92 @@ sub listRoutingTables
 
 	return @list;
 }
+
+
+
+=begin nd
+Function: listRoutingRulesSys
+
+	It returns a list of the routing rules from the system.
+
+Parameters:
+	none - .
+
+Returns:
+	Array ref - list of routing rules
+
+=cut
+
+sub listRoutingRulesSys
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	# get data
+	my $cmd  = "$ip_bin -j -p rule list";
+	my $data = &logAndGet( $cmd );
+
+	# decoding
+	require JSON::XS;
+	JSON::XS->import;
+	my $dec_data = eval { decode_json( $data ); };
+	if ( $@ )
+	{
+		&zenlog( "Error decoding json info" );
+		$dec_data = [];
+	}
+
+	# filter data
+	my @rules = ();
+	foreach my $r ( @{ $dec_data } )
+	{
+		#~ if (!exists $r->{fwmask})   # ???? decidir
+		{
+			$r->{ type } = "system";
+			push @rules, $r;
+		}
+	}
+
+	return \@rules;
+}
+
+
+=begin nd
+Function: listRoutingRules
+
+	It returns a list of the routing rules. These rules are the resulting list of
+	join the system administred and the created by the user.
+
+Parameters:
+	none - .
+
+Returns:
+	Array ref - list of routing rules
+
+=cut
+
+sub listRoutingRules
+{
+	my $sys  = &listRoutingRulesSys();
+	my @rules_conf = @{ $sys };
+
+	if ($eload)
+	{
+		my $conf = &eload(
+							module => 'Zevenet::Net::Routing',
+							func   => 'listRoutingRulesConf',
+							args   => [],
+		);
+		push @rules_conf, @{$conf};
+	}
+
+	# ????? remove duplicated rules
+
+	# ????? sort by prio
+
+	return \@rules_conf;
+}
+
+
 
 1;

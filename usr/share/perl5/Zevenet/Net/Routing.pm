@@ -23,6 +23,8 @@
 
 use strict;
 use Config::Tiny;
+require Zevenet::File;
+require Zevenet::Net::Route;
 
 my $routes_dir = &getGlobalConfiguration( 'configdir' ) . "/routes";
 my $rules_conf = "$routes_dir/rules.conf";
@@ -50,52 +52,6 @@ sub getRoutingRulesConf
 	my $fh = Config::Tiny->read( $rules_conf );
 
 	return $fh->{ $id };
-}
-
-=begin nd
-Function: listRoutingRulesSys
-
-	It returns a list of the routing rules from the system.
-
-Parameters:
-	none - .
-
-Returns:
-	Array ref - list of routing rules
-
-=cut
-
-sub listRoutingRulesSys
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
-	# get data
-	my $cmd  = "$ip_bin -j -p rule list";
-	my $data = &logAndGet( $cmd );
-
-	# decoding
-	require JSON::XS;
-	JSON::XS->import;
-	my $dec_data = eval { decode_json( $data ); };
-	if ( $@ )
-	{
-		&zenlog( "Error decoding json info" );
-		$dec_data = [];
-	}
-
-	# filter data
-	my @rules = ();
-	foreach my $r ( @{ $dec_data } )
-	{
-		#~ if (!exists $r->{fwmask})   # ???? decidir
-		{
-			$r->{ type } = "system";
-			push @rules, $r;
-		}
-	}
-
-	return \@rules;
 }
 
 =begin nd
@@ -127,35 +83,6 @@ sub listRoutingRulesConf
 	return \@rules;
 }
 
-=begin nd
-Function: listRoutingRules
-
-	It returns a list of the routing rules. These rules are the resulting list of
-	join the system administred and the created by the user.
-
-Parameters:
-	none - .
-
-Returns:
-	Array ref - list of routing rules
-
-=cut
-
-sub listRoutingRules
-{
-	my $conf = &listRoutingRulesConf();
-	my $sys  = &listRoutingRulesSys();
-
-	my @rules_conf = ( @{ $conf } );
-
-	#~ my @rules_conf = ( @{$sys}, @{$conf} );
-
-	# ????? remove duplicated rules
-
-	# ????? sort by prio
-
-	return \@rules_conf;
-}
 
 =begin nd
 Function: genRoutingRulesId
@@ -209,6 +136,8 @@ sub createRoutingRulesConf
 {
 	my $conf = shift;
 
+	require Zevenet::Net::Route;
+
 	&createFile( $rules_conf ) if ( !-f $rules_conf );
 
 	&lockResource( $lock_rules, 'l' );
@@ -216,6 +145,7 @@ sub createRoutingRulesConf
 
 	$conf->{ type } = "user";
 	$conf->{ id }   = &genRoutingRulesId();
+
 	if ( !$conf->{ id } )
 	{
 		&lockResource( $lock_rules, 'ud' );
@@ -304,6 +234,7 @@ sub createRoutingRules
 {
 	my $conf = shift;
 
+	$conf->{ priority } = &genRoutingRulesPrio('user') if ( !exists $conf->{ priority } );
 	my $err = &applyRoutingRules( $conf );
 	$err = &createRoutingRulesConf( $conf ) if ( !$err );
 
@@ -317,6 +248,7 @@ sub buildRoutingRuleCmd
 
 	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
 	$cmd .= " $conf->{action}";
+	$cmd .= " priority $conf->{priority}" if ( exists $conf->{priority} and $conf->{priority} =~ /\d/ );
 	$cmd .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
 	$cmd .= " from $conf->{src}";
 	$cmd .= "/$conf->{srclen}"
@@ -371,7 +303,6 @@ sub initRoutingModule
 	&createFile( $rules_conf ) if ( !-f $rules_conf );
 
 	&applyRoutingAllRules();
-
 }
 
 1;

@@ -26,9 +26,8 @@ use strict;
 my $q = getCGI();
 
 
-
 ##### Load modules dynamically #######################################
-my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API40/Routes';
+my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API41/Routes';
 opendir ( my $dir, $routes_path );
 foreach my $file ( readdir $dir )
 {
