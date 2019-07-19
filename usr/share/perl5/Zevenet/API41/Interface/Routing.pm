@@ -32,9 +32,8 @@ sub listOutRules
 		push @{ $list },
 		  {
 			priority => $r->{ priority } + 0,
-			src      => $r->{ src },
+			src      => $r->{ from },
 			table    => $r->{ table },
-			src_cdir => $r->{ srclen } + 0,
 			id       => $r->{ id } + 0,
 			type     => $r->{ type },
 		  };
@@ -78,17 +77,12 @@ sub create_routing_rule
 			'format_msg' =>
 			  "It is the priority which the rule will be executed. Minor value of priority is going to be executed before",
 		},
-		"src" => {
-			'valid_format' => 'ipv4v6',
+		"from" => {
+			'valid_format' => 'ipv4v6',  ## ??? añadir segmento red
 			'non_blank'    => 'true',
 			'required'     => 'true',
 			'format_msg' =>
-			  "It is the source address IP (v4 or v6). If it matches, the packet will be routed using the table 'table'",
-		},
-		"src_cdir" => {
-				 'interval' => "1,128",
-				 'format_msg' =>
-				   "It is the length of the bit mask used in the src 'param' for matching.",
+			  "It is the source address IP or the source networking net that will be routed to the table 'table'",
 		},
 		"table" => {
 			'non_blank' => 'true',
@@ -123,8 +117,11 @@ sub create_routing_rule
 	}
 
 	# check if already exists an equal rule
-	# ????
-
+	if( &isRule( $json_obj ) )
+	{
+		my $msg = "A rule with this configuration already exists";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	my $err = &createRoutingRules( $json_obj );
 	if ( $err )

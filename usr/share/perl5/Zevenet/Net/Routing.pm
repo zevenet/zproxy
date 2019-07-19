@@ -123,8 +123,7 @@ Function: createRoutingRulesConf
 Parameters:
 	none - .
 		"priority": 32759,
-		"src": "2.2.4.0",
-		"srclen": 24,
+		"from": "2.2.4.0/24",
 		"table": "table_eth2.4"
 
 Returns:
@@ -134,7 +133,7 @@ Returns:
 
 sub createRoutingRulesConf
 {
-	my $conf = shift;
+	my $in = shift;
 
 	require Zevenet::Net::Route;
 
@@ -143,8 +142,13 @@ sub createRoutingRulesConf
 	&lockResource( $lock_rules, 'l' );
 	my $fh = Config::Tiny->read( $rules_conf );
 
-	$conf->{ type } = "user";
-	$conf->{ id }   = &genRoutingRulesId();
+	my @params = ('priority', 'id', 'from', 'type', 'not', 'table');
+	my $conf;
+	foreach my $p (@params)
+	{
+		&zenlog ("Missing parameter $p",'error ????', 'net') if (!exists $in->{$p});
+		$conf->{$p} = $in->{$p};
+	}
 
 	if ( !$conf->{ id } )
 	{
@@ -189,97 +193,30 @@ sub delRoutingRulesConf
 	return 0;
 }
 
-sub delRoutingRulesSys
-{
-	my $conf = shift;
-
-	# check if it is running
-	return 0 if !&checkRoutingRulesRunning( $conf );
-
-	$conf->{ action } = 'del';
-	my $err = &applyRoutingRules( $conf );
-
-	return $err;
-}
 
 sub delRoutingRules
 {
 	my $id = shift;
 
 	my $conf  = &getRoutingRulesConf( $id );
-	my $error = &delRoutingRulesSys( $conf );
+	$conf->{ action } = 'del';
+	my $error = &setRule( $conf );
 	$error = &delRoutingRulesConf( $id ) if ( !$error );
 
 	return $error;
 }
 
-sub checkRoutingRulesRunning
-{
-	my $conf = shift;
-
-	$conf->{ action } = 'list';
-	my $cmd = &buildRoutingRuleCmd( $conf );
-	my $out = `$cmd`;
-	my $err = ( $out eq '' ) ? 0 : 1;
-
-	&zenlog( "Checking if the rule '$conf->{id}' is applied in the system ($err)",
-			 "debug", "net" );
-	&zenlog( "checking ip rule cmd: $cmd", "debug2", "net" );
-	&zenlog( "out: >$out<",                "debug2", "net" );
-
-	return $err;
-}
 
 sub createRoutingRules
 {
 	my $conf = shift;
 
+	$conf->{ type } = 'user';
+	$conf->{ id }   = &genRoutingRulesId();
 	$conf->{ priority } = &genRoutingRulesPrio('user') if ( !exists $conf->{ priority } );
-	my $err = &applyRoutingRules( $conf );
+	$conf->{ action } = 'add';
+	my $err = &setRule( $conf );
 	$err = &createRoutingRulesConf( $conf ) if ( !$err );
-
-	return $err;
-}
-
-sub buildRoutingRuleCmd
-{
-	my $conf = shift;
-	my $cmd  = "$ip_bin rule";
-
-	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
-	$cmd .= " $conf->{action}";
-	$cmd .= " priority $conf->{priority}" if ( exists $conf->{priority} and $conf->{priority} =~ /\d/ );
-	$cmd .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
-	$cmd .= " from $conf->{src}";
-	$cmd .= "/$conf->{srclen}"
-	  if ( exists $conf->{ srclen } and $conf->{ srclen } );
-	$cmd .= " lookup $conf->{table}";
-
-	return $cmd;
-}
-
-sub applyRoutingRules
-{
-	my $conf = shift;
-	my $err  = 0;
-
-	$conf->{ action } = 'add' if ( !exists $conf->{ action } );
-
-	my $cmd = &buildRoutingRuleCmd( $conf );
-	$err = &logAndRun( $cmd );
-
-	if ( $err )
-	{
-		if ( exists $conf->{ id } )
-		{
-			&zenlog( "The routing rule '$conf->{id}' could not be applied", "error",
-					 "net" );
-		}
-		else
-		{
-			&zenlog( "The rule could not be applied", "error", "net" );
-		}
-	}
 
 	return $err;
 }
@@ -291,7 +228,8 @@ sub applyRoutingAllRules
 	my $rules = &listRoutingConfRules();
 	foreach my $r ( @{ $rules } )
 	{
-		$err = &applyRoutingRules( $r );
+		$r->{action} = "add";
+		$err = &setRule( $r );
 	}
 
 	return $err;

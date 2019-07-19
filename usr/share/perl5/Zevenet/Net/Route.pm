@@ -179,6 +179,25 @@ sub addlocalnet    # ($if_ref)
 	return;
 }
 
+
+sub buildRuleCmd
+{
+	my $action = shift;
+	my $conf = shift;
+	my $cmd  = "";
+
+	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
+	$cmd .= "$ip_bin rule $action" if (defined $action);
+	$cmd .= " priority $conf->{priority}" if ( exists $conf->{priority} and $conf->{priority} =~ /\d/ );
+	$cmd .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
+	$cmd .= " from $conf->{from}";
+	$cmd .= " fwmark $conf->{fwmark}" if ( exists $conf->{ fwmark } && $conf->{ fwmark } ne "" );
+	$cmd .= " lookup $conf->{table}";
+
+	return $cmd;
+}
+
+
 =begin nd
 Function: isRule
 
@@ -202,16 +221,16 @@ sub isRule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $table  = shift;
-	my $from   = shift;
-	my $fwmark = shift;
-	my $iplist = shift;
+	my $params = shift;
 
-	$table  = "lookup $table"   if ( defined $table  && $table ne "" );
-	$from   = "from $from "     if ( defined $from   && $from ne "" );
-	$fwmark = "fwmark $fwmark " if ( defined $fwmark && $fwmark ne "" );
+	# ????? my $ipv = $params->{ipv} // 4;
+	#~ my @iplist = `$ip_bin -$ipv rule list`;
 
-	my $exist = grep /$from$fwmark$table/, @{ $iplist };
+	#~ my @iplist = `$ip_bin rule list`;
+	my $cmd = &buildRuleCmd(undef, $params);
+	my $exist = grep /$cmd/, @{ $iplist };
+
+	&zenlog("(exist-$exist) $cmd","????");
 
 	return $exist;
 }
@@ -239,30 +258,21 @@ sub applyRule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $ipv    = shift;
+
 	my $action = shift;
-	my $table  = shift;
-	my $from   = shift;
-	my $fwmark = shift;
-	my $type = shift;
-	my $cmd = "";
-	my $output = 0;
-	my $prio = "";
-	return -1 if ( $table eq "" );
+	my $rule = shift;
 
-	$from   = "from $from"     if ( defined $from   && $from ne "" );
-	$fwmark = "fwmark $fwmark" if ( defined $fwmark && $fwmark ne "" );
+	return -1 if ( $rule->{table} eq "" );
 
-	if ($action eq 'add' and $prio eq '')
+	if ( $rule->{priority} eq '')
 	{
-		$prio = &genRoutingRulesPrio( $type );
-		$prio = "prio $prio ";
+		$rule->{priority} = &genRoutingRulesPrio( $type );
 	}
 
-	$output =
-	  &logAndRun( "$ip_bin -$ipv rule $action $prio $from $fwmark lookup $table" );
+	my $cmd = &buildRuleCmd($rule);
+	my $output = &logAndRun( "$cmd" );
 
-	  &zenlog( "$ip_bin -$ipv rule $action $prio $from $fwmark lookup $table","????cmd" );
+	&zenlog( "$cmd","????cmd" );
 
 	return $output;
 }
@@ -321,6 +331,23 @@ sub listRoutingRulesPrio
 }
 
 
+sub getRuleFromIface
+{
+	my $if_ref = shift;
+
+	my $from = ($if_ref->{ mask } =~ /^\d$/ ) ?
+			"$if_ref->{ net }/$if_ref->{ mask }" :
+			NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask };
+
+	my $rule = {
+		table => "table_$if_ref->{name}",
+		type => 'iface',
+		from => $from,
+	};
+
+	return $rule;
+}
+
 =begin nd
 Function: setRule
 
@@ -328,10 +355,15 @@ Function: setRule
 
 Parameters:
 	action - "add" to create a new rule or "del" to remove it.
-	if_ref - interface reference or empty. This will be used if $ifname or $from are undefined.
-	ifname - rule lookup table interface name, undef to refer to the if_ref name or empty to avoid matching.
+
+	#~ if_ref - interface reference or empty. This will be used if $ifname or $from are undefined.
+	#~ ifname - rule lookup table interface name, undef to refer to the if_ref name or empty to avoid matching.
 	from - rule from attribute, undef to refer to the if_ref network data or empty to avoid matching.
 	fwmark - rule fwmark attribute, undef or empty to avoid matching.
+
+	ip_v - ip version of the 'from' IP
+	priority - priority for the rule
+	type - type of rule: 'farm', related to backends l4; 'user', routing module; 'ifaces', default interfaces routing.
 
 Returns:
 	integer - ip command return code.
@@ -344,47 +376,21 @@ sub setRule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
+
 	my $action = shift;
-	my $if_ref = shift;
-	my $ifname = shift;
-	my $from   = shift;
-	my $fwmark = shift;
+	my $rule = shift;
 
 	my $output = 0;
-	my $isrule = 0;
-	my $table  = "";
-	my $ipv    = "4";
-
-	$ipv = $if_ref->{ ip_v } if ( defined $if_ref );
 
 	return -1 if ( $action != /add|del/ );
-	return -1 if ( defined $fwmark && $fwmark =~ /^0x0$/ );
+	return -1 if ( defined $rule->{ fwmark } && $rule->{ fwmark } =~ /^0x0$/ );
 
-	$ifname = $if_ref->{ name } if ( !defined $ifname );
-	$table  = "table_$ifname"   if ( $ifname ne "" );
-
-	my @iplist = `$ip_bin -$ipv rule list`;
-
-	if ( defined $from )
-	{
-		$isrule = &isRule( $table, $from, $fwmark, \@iplist );
-	}
-	else
-	{
-		$isrule =
-		  &isRule( $table, "$if_ref->{ net }/$if_ref->{ mask }", $fwmark, \@iplist )
-		  || &isRule( $table, NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } ),
-					  $fwmark, \@iplist );
-	}
+	my $isrule = &isRule( $rule );
 
 	if (    ( $action eq "add" && $isrule == 0 )
 		 || ( $action eq "del" && $isrule != 0 ) )
 	{
-		my $type = (defined $fwmark) ? "farm": "ifaces";
-		$output =
-		  &applyRule( $ipv, $action, $table,
-					  ( defined $from ) ? $from : "$if_ref->{ net }/$if_ref->{ mask }",
-					  $fwmark, $type );
+		$output = &applyRule($action, $rule);
 	}
 
 	return $output;
@@ -454,7 +460,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				$status = &logAndRun( "$ip_cmd" );
 			}
 
-			$status = &setRule( "add", $if_ref, undef, undef, undef );
+			my $rule = &getRuleFromIface($if_ref);
+			$status = &setRule( "add", $rule );
 		}
 		else
 		{
@@ -502,7 +509,10 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	else
 	{
 		my ( $toif ) = split ( /:/, $$if_ref{ name } );
-		$status = &setRule( "add", $if_ref, $toif, undef, undef );
+
+		my $rule = &getRuleFromIface($if_ref);
+		$rule->{table} = "table_$toif";
+		$status = &setRule( "add", $rule );
 		$if_announce = $toif;
 	}
 
@@ -573,7 +583,8 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
 
-			$status = &setRule( "del", $if_ref, undef, undef, undef );
+			my $rule = &getRuleFromIface($if_ref);
+			$status = &setRule( "del", $rule );
 			return $status;
 		}
 		else
@@ -874,7 +885,12 @@ sub listRoutingRulesSys
 	{
 		#~ if (!exists $r->{fwmask})   # ???? decidir
 		{
+			$r->{ from } = $r->{ src };
+			$r->{ from } .= "/$r->{ src_len }" if exists ($r->{ src_len });
+			delete $r->{ src };
+			delete $r->{ src_len };
 			$r->{ type } = "system";
+			$r->{ not } = 'true' if ( exists $r->{ not } );
 			push @rules, $r;
 		}
 	}

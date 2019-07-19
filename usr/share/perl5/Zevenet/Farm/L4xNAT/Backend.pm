@@ -715,7 +715,18 @@ sub setL4BackendRule
 	my $table_if =
 	  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
-	return &setRule( $action, $vip_if, $table_if, "", "$mark/0x7fffffff" );
+	use NetAddr::IP;
+	my $from = ($if_ref->{ mask } =~ /^\d$/ ) ?
+			"$if_ref->{ net }/$if_ref->{ mask }" :
+			NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask };
+
+	my $rule = {
+		table => "table_$table_if",
+		type => 'farm',
+		from => $from,
+		fwmark => "$mark/0x7fffffff",
+	};
+	return &setRule( $action, $rule );
 }
 
 =begin nd
