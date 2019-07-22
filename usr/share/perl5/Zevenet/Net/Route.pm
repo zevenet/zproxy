@@ -124,6 +124,7 @@ sub addlocalnet    # ($if_ref)
 	# Add or replace local net to all tables
 	my @links = ( 'main', &getLinkNameList() );
 
+	# filling the other tables
 	foreach my $link ( @links )
 	{
 		next if $link eq 'lo';
@@ -134,11 +135,13 @@ sub addlocalnet    # ($if_ref)
 		if ( $link ne 'main' )
 		{
 			$table = "table_$link";
-			my $if_ref = getInterfaceConfig( $link );
+			my $iface = &getInterfaceConfig( $link );
 
 			# ignores interfaces down or not configured
-			next if $if_ref->{ status } ne 'up';
-			next if !defined $if_ref->{ addr };
+			next if $iface->{ status } ne 'up';
+			next if !defined $iface->{ addr };
+
+			next if (exists $if_ref->{isolate} and $if_ref->{isolate} eq 'true' );
 		}
 
 		&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
@@ -146,11 +149,10 @@ sub addlocalnet    # ($if_ref)
 
 		my $ip_cmd =
 		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
-
 		&logAndRun( $ip_cmd );
 	}
 
-	# Include all routing into the current interface, in case it is new and empty
+	# filling the own table
 	my @ifaces = @{ &getConfigInterfaceList() };
 
 	foreach my $iface ( @ifaces )
@@ -161,6 +163,10 @@ sub addlocalnet    # ($if_ref)
 		  if (   !defined $iface->{ addr }
 			   or length $iface->{ addr } == 0 );    #IP addr doesn't exist
 		next if $iface->{ name } eq $if_ref->{ name };
+
+		# do not import the iface route if it is isolate
+		next if (exists $iface->{isolate} and $iface->{isolate} eq 'true' );
+
 		&zenlog(
 			   "addlocalnet: into current interface: name $$iface{name} type $$iface{type}",
 			   "debug", "NETWORK" )
@@ -937,6 +943,26 @@ sub listRoutingRules
 	return \@rules_conf;
 }
 
+
+sub getRoutingTableExists
+{
+	my $table = shift;
+
+	my $err = system ("$ip_bin route list table $table");
+
+	return ($err) ? 0: 1;
+}
+
+
+sub getRoutingTable
+{
+	my $table = shift;
+
+	my $list = &logAndGet ("$ip_bin route list table $table","array");
+	# ???? parsing
+
+	return $list;
+}
 
 
 1;

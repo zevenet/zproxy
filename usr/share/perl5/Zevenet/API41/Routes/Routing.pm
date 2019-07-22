@@ -27,14 +27,15 @@ if ( $ENV{ PATH_INFO } =~ qr{^/interfaces/routing} )
 {
 	my $mod = 'Zevenet::API41::Interface::Routing';
 
-	my $id_rule = &getValidFormat( 'id_rule' );
+	my $id_rule = &getValidFormat( 'route_rule_id' );
+	my $id_table = &getValidFormat( 'route_table_id' );
 
 	GET qr{^/interfaces/routing/rules$},               'list_routing_rules',  $mod;
 	POST qr{^/interfaces/routing/rules$},              'create_routing_rule', $mod;
 	DELETE qr{^/interfaces/routing/rules/($id_rule)$}, 'delete_routing_rule', $mod;
 
-	GET qr{^/interfaces/routing/tables$},		'list_routing_tables',  $mod;
-
+	GET qr{^/interfaces/routing/tables$},			   'list_routing_tables',  $mod;
+	GET qr{^/interfaces/routing/tables/($id_table)$},  'get_routing_table',  $mod;
 }
 
 1;

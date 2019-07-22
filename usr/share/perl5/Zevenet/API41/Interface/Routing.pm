@@ -103,7 +103,7 @@ sub create_routing_rule
 	  if ( $error_msg );
 
 	require Zevenet::Net::Route;
-	if ( !grep( /^$json_obj->{table}$/, &listRoutingTables() ) )
+	if ( !&getRoutingTableExists($json_obj->{table}) )
 	{
 		my $msg = "The table '$json_obj->{table} does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -180,6 +180,32 @@ sub list_routing_tables
 	my $body = {
 				 description => $desc,
 				 params      => \@list,
+	};
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+# GET /interfaces/routing/tables/<id_table>
+sub get_routing_table
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $table = shift;
+	require Zevenet::Net::Route;
+
+	my $desc = "Get the routing table $table";
+
+	if ( !&getRoutingTableExists($table) )
+	{
+		my $msg = "The table '$table does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $list = &getRoutingTable($table);
+	my $body = {
+				 description => $desc,
+				 params      => $list,
 	};
 
 	return &httpResponse( { code => 200, body => $body } );

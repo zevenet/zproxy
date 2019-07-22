@@ -142,6 +142,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	  &getAddressNetwork( $iface->{ addr }, $iface->{ mask }, $iface->{ ip_v } );
 	$iface->{ dhcp } = $fileHandler->{ $if_name }->{ dhcp } // 'false'
 	  if ( $eload );
+	$iface->{ isolate } = $fileHandler->{ $if_name }->{ isolate } // 'false'
+	  if ( $eload );
 
 	if ( $iface->{ dev } =~ /:/ )
 	{
@@ -1153,7 +1155,7 @@ sub getLinkNameList
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
 
 	# Get link interfaces (nic, bond and vlan)
 	opendir ( my $if_dir, $sys_net_dir );

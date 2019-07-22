@@ -277,7 +277,7 @@ sub logAndGet
 	if ( $type eq 'array' )
 	{
 		my @out = split( "\n", $out );
-		return @out;
+		return \@out;
 	}
 
 	return $out;

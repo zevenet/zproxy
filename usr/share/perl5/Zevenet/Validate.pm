@@ -271,7 +271,8 @@ my %format_re = (
 	'alias_type'      => qr/(?:backend|interface)/,
 
 	# routing
-	'id_rule' => qr/$natural/,
+	'route_rule_id' => qr/$natural/,
+	'route_table_id' => qr/\w+/,
 
 );
 
