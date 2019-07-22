@@ -716,9 +716,9 @@ sub setL4BackendRule
 	  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 	use NetAddr::IP;
-	my $from = ($if_ref->{ mask } =~ /^\d$/ ) ?
-			"$if_ref->{ net }/$if_ref->{ mask }" :
-			NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask };
+	my $from = ($vip_if->{ mask } =~ /^\d$/ ) ?
+			"$vip_if->{ net }/$vip_if->{ mask }" :
+			NetAddr::IP->new( $vip_if->{ net }, $vip_if->{ mask });
 
 	my $rule = {
 		table => "table_$table_if",

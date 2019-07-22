@@ -32,7 +32,7 @@ sub listOutRules
 		push @{ $list },
 		  {
 			priority => $r->{ priority } + 0,
-			src      => $r->{ from },
+			from      => $r->{ from },
 			table    => $r->{ table },
 			id       => $r->{ id } + 0,
 			type     => $r->{ type },
@@ -107,13 +107,6 @@ sub create_routing_rule
 	{
 		my $msg = "The table '$json_obj->{table} does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	# translate params
-	if ( exists $json_obj->{ src_cdir } )
-	{
-		$json_obj->{ srclen } = $json_obj->{ src_cdir };
-		delete $json_obj->{ src_cdir };
 	}
 
 	# check if already exists an equal rule

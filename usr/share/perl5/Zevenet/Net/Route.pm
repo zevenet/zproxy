@@ -186,8 +186,10 @@ sub buildRuleCmd
 	my $conf = shift;
 	my $cmd  = "";
 
+	my $ipv = (exists $conf->{ip_v}) ? "-$conf->{ip_v}": "";
+
 	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
-	$cmd .= "$ip_bin rule $action" if (defined $action);
+	$cmd .= "$ip_bin $ipv rule $action" if (defined $action);
 	$cmd .= " priority $conf->{priority}" if ( exists $conf->{priority} and $conf->{priority} =~ /\d/ );
 	$cmd .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
 	$cmd .= " from $conf->{from}";
@@ -223,14 +225,16 @@ sub isRule
 			 "debug", "PROFILING" );
 	my $params = shift;
 
-	# ????? my $ipv = $params->{ipv} // 4;
-	#~ my @iplist = `$ip_bin -$ipv rule list`;
+	my $cmd = &buildRuleCmd('list', $params);
+	my $out = `$cmd`;
+	my $exist = ($out ne '')? 1:0;
 
-	#~ my @iplist = `$ip_bin rule list`;
-	my $cmd = &buildRuleCmd(undef, $params);
-	my $exist = grep /$cmd/, @{ $iplist };
-
-	&zenlog("(exist-$exist) $cmd","????");
+	if (&debug() > 1)
+	{
+		my $msg = ($exist)?"(Already exist)":"(Not found)";
+		$msg .= " $cmd";
+		&zenlog( $msg, "debug", "net");
+	}
 
 	return $exist;
 }
@@ -266,13 +270,11 @@ sub applyRule
 
 	if ( $rule->{priority} eq '')
 	{
-		$rule->{priority} = &genRoutingRulesPrio( $type );
+		$rule->{priority} = &genRoutingRulesPrio( $rule->{type} );
 	}
 
-	my $cmd = &buildRuleCmd($rule);
+	my $cmd = &buildRuleCmd($action, $rule);
 	my $output = &logAndRun( "$cmd" );
-
-	&zenlog( "$cmd","????cmd" );
 
 	return $output;
 }
@@ -337,7 +339,7 @@ sub getRuleFromIface
 
 	my $from = ($if_ref->{ mask } =~ /^\d$/ ) ?
 			"$if_ref->{ net }/$if_ref->{ mask }" :
-			NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask };
+			NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask });
 
 	my $rule = {
 		table => "table_$if_ref->{name}",

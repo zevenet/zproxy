@@ -146,7 +146,6 @@ sub createRoutingRulesConf
 	my $conf;
 	foreach my $p (@params)
 	{
-		&zenlog ("Missing parameter $p",'error ????', 'net') if (!exists $in->{$p});
 		$conf->{$p} = $in->{$p};
 	}
 
@@ -199,8 +198,7 @@ sub delRoutingRules
 	my $id = shift;
 
 	my $conf  = &getRoutingRulesConf( $id );
-	$conf->{ action } = 'del';
-	my $error = &setRule( $conf );
+	my $error = &setRule( 'del', $conf );
 	$error = &delRoutingRulesConf( $id ) if ( !$error );
 
 	return $error;
@@ -214,8 +212,7 @@ sub createRoutingRules
 	$conf->{ type } = 'user';
 	$conf->{ id }   = &genRoutingRulesId();
 	$conf->{ priority } = &genRoutingRulesPrio('user') if ( !exists $conf->{ priority } );
-	$conf->{ action } = 'add';
-	my $err = &setRule( $conf );
+	my $err = &setRule( 'add', $conf );
 	$err = &createRoutingRulesConf( $conf ) if ( !$err );
 
 	return $err;
@@ -228,8 +225,7 @@ sub applyRoutingAllRules
 	my $rules = &listRoutingConfRules();
 	foreach my $r ( @{ $rules } )
 	{
-		$r->{action} = "add";
-		$err = &setRule( $r );
+		$err = &setRule( "add", $r );
 	}
 
 	return $err;
