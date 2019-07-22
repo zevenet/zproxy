@@ -37,7 +37,7 @@ my @backend_farm = "
                                         \"priority\": \"PRIO\",
                                         \"mark\": \"MARK\",
                                         \"est-connlimit\": \"0\",
-                                        \"state\": \"STATUS\",
+                                        \"state\": \"STATUS\"
                                 },";
 
 my @backend_farm_cp;
@@ -182,18 +182,19 @@ foreach my $file ( @l4_files )
 		$n = 0;
 		print "OUTPUT CONFIG FILE FOR nftlb:\n";
 		push ( @main_farm_cp, @end );
+		print @main_farm_cp;
 		print "file generation: /tmp/${farmname}_l4xnat.cfg\n";
 
 		#create file and add content
 		open ( my $fd, '>', '/tmp/' . ${ farmname } . '_l4xnat.cfg' );
 		print $fd "@main_farm_cp";
 		close $fd;
-
-		#old file $file
 		print "cp $l4_files_dir/$file /tmp/bck_${farmname}_l4xnat.cfg\n";
 		my @run = `cp $l4_files_dir/$file /tmp/bck_${farmname}_l4xnat.cfg`;
+		sleep 1;
 		print "cp /tmp/${farmname}_l4xnat.cfg $l4_files_dir\n";
-		my @run = `cp /tmp/${farmname}_l4xnat.cfg $l4_files_dir`;
+		my @run = `cp /tmp/${farmname}_l4xnat.cfg $l4_files_dir/`;
+		sleep 1;
 
 	}
 
