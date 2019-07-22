@@ -250,6 +250,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
 		return;
 	}
+	use Data::Dumper;
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
 	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac', 'dhcp' );
