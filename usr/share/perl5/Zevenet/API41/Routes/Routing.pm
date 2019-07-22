@@ -36,6 +36,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/interfaces/routing} )
 
 	GET qr{^/interfaces/routing/tables$},			   'list_routing_tables',  $mod;
 	GET qr{^/interfaces/routing/tables/($id_table)$},  'get_routing_table',  $mod;
+	POST qr{^/interfaces/routing/isolate$},  'set_routing_isolate',  $mod;
 }
 
 1;

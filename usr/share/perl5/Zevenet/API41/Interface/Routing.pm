@@ -211,4 +211,68 @@ sub get_routing_table
 	return &httpResponse( { code => 200, body => $body } );
 }
 
+# POST /interfaces/routing/isolate
+sub set_routing_isolate
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $json_obj = shift;
+	require Zevenet::Net::Route;
+
+	my $desc = "Modify the interfaces visibility";
+
+	my $params = {
+		"interface" => {
+			'required' => 'true',
+			'non_blank' => 'true',
+			'format_msg' =>
+			  "It is the interface that will not be included in other route tables",
+		},
+		"action" => {
+			'required' => 'true',
+			'non_blank' => 'true',
+			'values' => ['set','unset'],
+			'format_msg' =>
+			  "Action to apply: 'set' to not incluid the interface in the route tables of the other interfaces; 'unset' to incluid this interface in the route table of the other interfaces.",
+		},
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# if
+	require Zevenet::Net::Validate;
+	if ( !&ifexist ($json_obj->{interface}) )
+	{
+		my $msg = "The interface '$json_obj->{interface}' does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# if
+	my $if_ref = &getInterfaceConfig( $json_obj->{ interface } );
+	unless ( $if_ref )
+	{
+		my $msg = "The interface has to be configured";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# configured
+	my $err = &setRoutingIsolate( $if_ref,$json_obj->{action} );
+	if ( $err )
+	{
+		my $msg = "There was an error setting the isolate feature";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $body = {
+				 description => $desc,
+				 message      => "The action was applied successfully",
+	};
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
 1;

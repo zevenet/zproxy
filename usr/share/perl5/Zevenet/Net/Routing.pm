@@ -237,6 +237,38 @@ sub initRoutingModule
 	&createFile( $rules_conf ) if ( !-f $rules_conf );
 
 	&applyRoutingAllRules();
+
+	# ???? apply routes
+}
+
+sub setRoutingIsolate
+{
+	my $if_ref = shift;
+	my $action = shift; # true|false
+	my $lock_if = "/tmp/if_isolate.lock";
+
+	# set conf
+	&lockResource( $lock_if, "l" );
+
+	require Zevenet::Net::Interface;
+	$if_ref->{isolation} = $action;
+	my $err = &setInterfaceConfig( $if_ref );
+
+	if (!$err)
+	{
+		my $if_ref = &getInterfaceConfig( $if_ref->{ name } );
+
+		# del route
+		$err = &delRoutes( "local", $if_ref, $if_ref->{ gateway } );
+
+		# apply new conf
+		$err += &applyRoutes( "local", $if_ref, $if_ref->{ gateway } );
+	}
+
+	#Release lock file
+	&lockResource( $lock_if, "ud" );
+
+	return $err;
 }
 
 1;

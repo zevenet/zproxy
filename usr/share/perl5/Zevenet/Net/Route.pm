@@ -274,7 +274,7 @@ sub applyRule
 
 	return -1 if ( $rule->{table} eq "" );
 
-	if ( $rule->{priority} eq '')
+	if ( $rule->{priority} eq '' )
 	{
 		$rule->{priority} = &genRoutingRulesPrio( $rule->{type} );
 	}
