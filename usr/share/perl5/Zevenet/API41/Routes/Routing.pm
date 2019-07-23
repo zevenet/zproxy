@@ -23,20 +23,24 @@
 
 use strict;
 
-if ( $ENV{ PATH_INFO } =~ qr{^/interfaces/routing} )
+if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 {
 	my $mod = 'Zevenet::API41::Interface::Routing';
 
 	my $id_rule = &getValidFormat( 'route_rule_id' );
 	my $id_table = &getValidFormat( 'route_table_id' );
+	my $id_route = &getValidFormat( 'route_entry_id' );
 
-	GET qr{^/interfaces/routing/rules$},               'list_routing_rules',  $mod;
-	POST qr{^/interfaces/routing/rules$},              'create_routing_rule', $mod;
-	DELETE qr{^/interfaces/routing/rules/($id_rule)$}, 'delete_routing_rule', $mod;
+	GET qr{^/routing/rules$},               'list_routing_rules',  $mod;
+	POST qr{^/routing/rules$},              'create_routing_rule', $mod;
+	DELETE qr{^/routing/rules/($id_rule)$}, 'delete_routing_rule', $mod;
 
-	GET qr{^/interfaces/routing/tables$},			   'list_routing_tables',  $mod;
-	GET qr{^/interfaces/routing/tables/($id_table)$},  'get_routing_table',  $mod;
-	POST qr{^/interfaces/routing/isolate$},  'set_routing_isolate',  $mod;
+	GET qr{^/routing/tables$},			   'list_routing_tables',  $mod;
+	GET qr{^/routing/tables/($id_table)$},  'get_routing_table',  $mod;
+	POST qr{^/routing/tables/($id_table)/routes$},  'create_routing_entry',  $mod;
+	DELETE qr{^/routing/tables/($id_table)/routes/($id_route)$},  'delete_routing_entry',  $mod;
+
+	POST qr{^/routing/isolate$},  'set_routing_isolate',  $mod;
 }
 
 1;

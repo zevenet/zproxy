@@ -42,6 +42,25 @@ sub listOutRules
 	return $list // [];
 }
 
+sub listOutRoutes
+{
+	my $table = shift;
+	my $list;
+
+	foreach my $r ( @{ &listRoutingTable($table) } )
+	{
+		my $type = $r->{ type } // 'system';
+		push @{ $list },
+		  {
+			id       => $r->{ id } + 0,
+			raw     => $r->{ raw },
+			type	=> $type,
+		  };
+	}
+	return $list // [];
+}
+
+#  GET /routing/rules
 sub list_routing_rules    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -58,7 +77,7 @@ sub list_routing_rules    # ()
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-#  POST /interfaces/routing/rules
+#  POST /routing/rules
 sub create_routing_rule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -133,7 +152,7 @@ sub create_routing_rule
 	  );
 }
 
-#  DELETE /interfaces/routing/rules/<id>
+#  DELETE /routing/rules/<id>
 sub delete_routing_rule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -166,7 +185,7 @@ sub delete_routing_rule
 
 ###### routing tables
 
-# GET /interfaces/routing/rules/tables
+# GET /routing/rules/tables
 sub list_routing_tables
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -185,7 +204,7 @@ sub list_routing_tables
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# GET /interfaces/routing/tables/<id_table>
+# GET /routing/tables/<id_table>
 sub get_routing_table
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -202,7 +221,7 @@ sub get_routing_table
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $list = &getRoutingTable($table);
+	my $list = &listOutRoutes($table);
 	my $body = {
 				 description => $desc,
 				 params      => $list,
@@ -211,7 +230,118 @@ sub get_routing_table
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# POST /interfaces/routing/isolate
+
+
+
+
+#  POST /routing/tables/<id_table>/routes
+sub create_routing_entry
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $table = shift;
+
+	my $desc = "Create a routing entry in the table '$table'";
+
+	my $params = {
+		"raw" => {
+			'required' => 'true',
+			'non_blank' => 'true',
+			'format_msg' =>
+			  "It is the command line parameters to create an 'ip route' entry",
+		},
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	require Zevenet::Net::Route;
+	if ( !&getRoutingTableExists($table) )
+	{
+		my $msg = "The table '$table' does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# check if already exists an equal route
+	if( &isRoute( $json_obj->{raw} ) )
+	{
+		my $msg = "A route with this configuration already exists";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( $json_obj->{raw} =~ /table\s+(\w+)/ )
+	{
+		my $t = $1;
+		if ($t ne $table )
+		{
+			my $msg = "The input command is not in the requested table '$table'";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	$json_obj->{raw} = &sanitazeRouteCmd($json_obj->{raw}, $table);
+
+	my $err = &createRoutingCustom( $table, $json_obj );
+	if ( $err )
+	{
+		my $msg = "Error, creating a new routing rule.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $list = &listOutRoutes($table);
+	return
+	  &httpResponse(
+					 {
+					   code => 200,
+					   body => { description => $desc, params => $list }
+					 }
+	  );
+}
+
+#  DELETE /routing/tables/<id_table>/routes/<id_route>
+sub delete_routing_entry
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $table = shift;
+	my $route_id = shift;
+
+	my $desc = "Delete the routing entry '$route_id' from the table '$table'";
+
+	if ( !&getRoutingTableExists($table) )
+	{
+		my $msg = "The table '$table' does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( !&getRoutingCustomExists( $table, $route_id ) )
+	{
+		my $msg = "The route entry '$route_id' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $error = &delRoutingCustom( $table, $route_id );
+	if ( $error )
+	{
+		my $msg = "Error, deleting the rule '$route_id'.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $msg = "The routing rule '$route_id' has been deleted successfully.";
+	my $body = {
+				 description => $desc,
+				 message     => $msg,
+	};
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+
+
+# POST /routing/isolate
 sub set_routing_isolate
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",

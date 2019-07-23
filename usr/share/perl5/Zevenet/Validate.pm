@@ -273,6 +273,7 @@ my %format_re = (
 	# routing
 	'route_rule_id' => qr/$natural/,
 	'route_table_id' => qr/\w+/,
+	'route_entry_id' => qr/$natural/,
 
 );
 

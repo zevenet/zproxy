@@ -182,6 +182,15 @@ sub addlocalnet    # ($if_ref)
 		&logAndRun( $ip_cmd );
 	}
 
+	if ( $eload )
+	{
+		my $err = &eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'applyRoutingCustom',
+				args   => ['add', "table_$$if_ref{name}"],
+		);
+	}
+
 	return;
 }
 
@@ -224,21 +233,48 @@ sub dellocalnet    # ($if_ref)
 
 		my $table = "table_$link";
 
-		my $ip_cmd =
-		  "$ip_bin -$$if_ref{ip_v} route list $net dev $$if_ref{name} src $$if_ref{addr} table $table";
-		my $out = `$ip_cmd 2>/dev/null`;
+		my $cmd_param = "$net dev $$if_ref{name} src $$if_ref{addr} table $table";
 
-		next if $out eq '';
+		next if (!&isRoute($cmd_param, $$if_ref{ip_v}));
 
 		&zenlog( "dellocal: del $net route from table $table", "debug", "NETWORK" )
 		  if &debug();
 
 		my $ip_cmd =
-		  "$ip_bin -$$if_ref{ip_v} route del $net dev $$if_ref{name} src $$if_ref{addr} table $table";
+		  "$ip_bin -$$if_ref{ip_v} route del $cmd_param";
 		&logAndRun( $ip_cmd );
+	}
+
+	if ( $eload )
+	{
+		my $err = &eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'applyRoutingCustom',
+				args   => ['del', "table_$$if_ref{name}"],
+		);
 	}
 }
 
+
+sub isRoute
+{
+	my $route = shift;
+	my $ipv = shift //'';
+	$ipv = "-$ipv" if ($ipv ne '');
+
+	my $ip_cmd = "$ip_bin $ipv route list $route";
+	my $out = `$ip_cmd 2>/dev/null`;
+	my $exist = ($out eq '')? 0:1;
+
+	if (&debug() > 1)
+	{
+		my $msg = ($exist)?"(Already exist)":"(Not found)";
+		$msg .= " $ip_cmd";
+		&zenlog( $msg, "debug", "net");
+	}
+
+	return $exist;
+}
 
 sub buildRuleCmd
 {
@@ -1007,17 +1043,6 @@ sub getRoutingTableExists
 	my $err = system ("$ip_bin route list table $table");
 
 	return ($err) ? 0: 1;
-}
-
-
-sub getRoutingTable
-{
-	my $table = shift;
-
-	my $list = &logAndGet ("$ip_bin route list table $table","array");
-	# ???? parsing
-
-	return $list;
 }
 
 
