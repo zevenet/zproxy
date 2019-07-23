@@ -302,6 +302,8 @@ sub start_ipds_without_cert
 	$msg = "Starting IPDS system...";
 	$out_msg .= "* $msg\n";
 	&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
+	include 'Zevenet::IPDS::Base';
+	&runIPDSStartModule();
 	return $out_msg;
 }
 
@@ -331,12 +333,6 @@ sub start_modules_without_cert
 	&initRBACModule();
 
 	## ipds
-	#$msg = "Starting IPDS system...";
-	#$out_msg .= "* $msg\n";
-	#&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
-
-	include 'Zevenet::IPDS::Base';
-	&runIPDSStartModule();
 
 	# enable monitoring interface throughput
 	#~ include 'Zevenet::Net::Throughput';
