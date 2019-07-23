@@ -260,7 +260,8 @@ sub set_routing_isolate
 	}
 
 	# configured
-	my $err = &setRoutingIsolate( $if_ref,$json_obj->{action} );
+	my $status = ($json_obj->{action} eq 'set') ? "true" : "false";
+	my $err = &setRoutingIsolate( $if_ref,$status );
 	if ( $err )
 	{
 		my $msg = "There was an error setting the isolate feature";

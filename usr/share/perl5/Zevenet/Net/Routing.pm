@@ -244,25 +244,30 @@ sub initRoutingModule
 sub setRoutingIsolate
 {
 	my $if_ref = shift;
-	my $action = shift; # true|false
+	my $status = shift; # true|false
 	my $lock_if = "/tmp/if_isolate.lock";
 
 	# set conf
 	&lockResource( $lock_if, "l" );
 
 	require Zevenet::Net::Interface;
-	$if_ref->{isolation} = $action;
-	my $err = &setInterfaceConfig( $if_ref );
+	$if_ref->{isolate} = $status;
+	my $err = &setInterfaceConfig( $if_ref ); # returns 1 on success
 
-	if (!$err)
+	if ($err)
 	{
+		$err = 0;
 		my $if_ref = &getInterfaceConfig( $if_ref->{ name } );
 
 		# del route
-		$err = &delRoutes( "local", $if_ref, $if_ref->{ gateway } );
+		$err = &dellocalnet( $if_ref );
+		&zenlog ("Error deleting routes") if ($err);
 
 		# apply new conf
-		$err += &applyRoutes( "local", $if_ref, $if_ref->{ gateway } );
+		my $err2 = &applyRoutes( "local", $if_ref, $if_ref->{ gateway } );
+		&zenlog ("Error applying routes") if ($err2);
+
+		$err += $err2;
 	}
 
 	#Release lock file

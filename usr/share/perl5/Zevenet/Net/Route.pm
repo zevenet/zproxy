@@ -186,6 +186,60 @@ sub addlocalnet    # ($if_ref)
 }
 
 
+=begin nd
+Function: dellocalnet
+
+	Remove the input interface of the other routing tables. It does not do any
+	action about the main table
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	none - .
+
+=cut
+
+# add local network into routing table
+sub dellocalnet    # ($if_ref)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $if_ref = shift;
+
+	# Get network
+	use NetAddr::IP;
+	my $ip = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+	my $net = $ip->network();
+
+	# Add or replace local net to all tables
+	my @links = ( 'main', &getLinkNameList() );
+
+	# filling the other tables
+	foreach my $link ( @links )
+	{
+		next if $link eq 'lo';
+		next if $link eq 'cl_maintenance';
+		next if $link eq 'maim';
+
+		my $table = "table_$link";
+
+		my $ip_cmd =
+		  "$ip_bin -$$if_ref{ip_v} route list $net dev $$if_ref{name} src $$if_ref{addr} table $table";
+		my $out = `$ip_cmd 2>/dev/null`;
+
+		next if $out eq '';
+
+		&zenlog( "dellocal: del $net route from table $table", "debug", "NETWORK" )
+		  if &debug();
+
+		my $ip_cmd =
+		  "$ip_bin -$$if_ref{ip_v} route del $net dev $$if_ref{name} src $$if_ref{addr} table $table";
+		&logAndRun( $ip_cmd );
+	}
+}
+
+
 sub buildRuleCmd
 {
 	my $action = shift;
@@ -274,7 +328,7 @@ sub applyRule
 
 	return -1 if ( $rule->{table} eq "" );
 
-	if ( $rule->{priority} eq '' )
+	if ( $rule->{priority} eq '' and $action eq 'add' )
 	{
 		$rule->{priority} = &genRoutingRulesPrio( $rule->{type} );
 	}
@@ -394,6 +448,8 @@ sub setRule
 	return -1 if ( defined $rule->{ fwmark } && $rule->{ fwmark } =~ /^0x0$/ );
 
 	my $isrule = &isRule( $rule );
+
+	&zenlog("action $action and the rule exist=$isrule","debug","net");
 
 	if (    ( $action eq "add" && $isrule == 0 )
 		 || ( $action eq "del" && $isrule != 0 ) )
