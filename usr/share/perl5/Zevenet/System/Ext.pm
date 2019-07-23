@@ -47,7 +47,6 @@ sub setSystemExtendZapi
 
 	my $obj = shift;
 
-	require Zevenet::Certificate::Activation;
 	$obj->{ certificate_key } = &keycert();
 
 	return $obj;
