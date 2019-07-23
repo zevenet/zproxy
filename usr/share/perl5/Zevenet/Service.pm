@@ -291,6 +291,20 @@ sub start_service
 	return $out_msg;
 }
 
+sub start_ipds_without_cert
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $out_msg = "";
+	my $msg     = "";
+
+	# ipds
+	$msg = "Starting IPDS system...";
+	$out_msg .= "* $msg\n";
+	&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
+	return $out_msg;
+}
+
 # Warning! this function is used only from the postinst.
 # to use it from another side, use: "start_modules"
 sub start_modules_without_cert
@@ -316,10 +330,10 @@ sub start_modules_without_cert
 	include 'Zevenet::RBAC::Action';
 	&initRBACModule();
 
-	# ipds
-	$msg = "Starting IPDS system...";
-	$out_msg .= "* $msg\n";
-	&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
+	## ipds
+	#$msg = "Starting IPDS system...";
+	#$out_msg .= "* $msg\n";
+	#&zenlog( "Zevenet Service: $msg", "info", "IPDS" );
 
 	include 'Zevenet::IPDS::Base';
 	&runIPDSStartModule();
