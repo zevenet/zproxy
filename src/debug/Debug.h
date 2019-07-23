@@ -118,8 +118,8 @@ public:
     if (log_level >= LOG_DEBUG) {
       std::stringstream buffer;
       buffer << "[" << helper::ThreadHelper::getThreadName(pthread_self())
-             << "][" << file << line << " (" << COUT_BLUE_COLOR(function) << ") " "] ";
-      std::cout << std::left << std::setfill('.') << std::setw(60)
+             << "][" << file << ":" << line << " (" << COUT_BLUE_COLOR(function) << ") " "] ";
+      std::cout << std::left << std::setfill('.') << std::setw(80)
                 << buffer.str() << "\033[1;32m";
     }
 

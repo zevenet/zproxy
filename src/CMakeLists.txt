@@ -36,7 +36,6 @@ add_library(libzhttp
 		json/JsonData.cpp
 		json/jsonparser.h
 		json/jsonparser.cpp
-		util/string_view.h
 		config/config_node.h
 		event/epoll_manager.cpp
 		event/epoll_manager.h

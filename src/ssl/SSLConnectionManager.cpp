@@ -132,15 +132,15 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
-  Debug::logmsg(LOG_DEBUG, "> handleRead");
+//  Debug::logmsg(LOG_DEBUG, "> handleRead");
   int rc = -1;
   int bytes_read = 0;
   for (;;) {
     rc = BIO_read(ssl_connection.io,
                   ssl_connection.buffer + ssl_connection.buffer_size,
                   static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
-    Debug::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d", rc,
-                  ssl_connection.buffer_size);
+//    Debug::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d", rc,
+//                  ssl_connection.buffer_size);
     if (rc == 0) {
       if (bytes_read > 0)
         return IO::IO_RESULT::SUCCESS;
@@ -450,20 +450,17 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     }
   }
 //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
-//  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
-  http_data.message_bytes_left = http_data.content_length>0 ?
-                                 http_data.content_length-http_data.message_length : 0;
+  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
+  http_data.message_bytes_left = http_data.content_length - http_data.message_length;
   ssl_connection.buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
-//  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
-//  Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", ssl_connection.buffer_size);
-//  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
-//  Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
-//  Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
-//  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
+  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
+  Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", ssl_connection.buffer_size);
+  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
+  Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
+  Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
+  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
   //  PRINT_BUFFER_SIZE
-  return IO::IO_RESULT::SUCCESS;
-
   return IO::IO_RESULT::SUCCESS;
 }
 

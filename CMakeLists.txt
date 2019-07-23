@@ -5,7 +5,7 @@ if(EXISTS CMakeLists.txt)
 endif()
 
 project(zhttp LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 if (NOT CMAKE_BUILD_TYPE)
 	  set(CMAKE_BUILD_TYPE Release)
@@ -88,7 +88,7 @@ add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -fpermissive  -Wshadow -pipe -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z -fpermissive  -Wshadow -pipe -pthread")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
 
 if (ENABLE_HEAP_PROFILER)
@@ -184,8 +184,8 @@ if (BUNDLED_OPENSSL)
 		#Debug build
 		# ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
 		ExternalProject_Add(openssl
-			  URL "https://www.openssl.org/source/openssl-1.1.1b.tar.gz"
-				CONFIGURE_COMMAND ./config shared --prefix=${OPENSSL_INSTALL_DIR}  -lz -ldl -d no-asm -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+				URL "https://www.openssl.org/source/openssl-1.1.1c.tar.gz"
+				CONFIGURE_COMMAND ./config shared --prefix=${OPENSSL_INSTALL_DIR} -lz -ldl -O2
 				BUILD_COMMAND make -j8
 				BUILD_IN_SOURCE 1
 				BUILD_BYPRODUCTS ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO}

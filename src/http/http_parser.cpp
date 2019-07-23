@@ -24,6 +24,7 @@ void http_parser::HttpData::reset_parser() {
   message_length = 0;
   message_bytes_left = 0;
   content_length = 0;
+  headers_sent = false;
   extra_headers.clear();
 }
 

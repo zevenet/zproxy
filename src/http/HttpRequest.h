@@ -20,7 +20,11 @@ public:
   bool host_header_found{false};
 
   void setRequestMethod() {
-    request_method = http::http_info::http_verbs.at(getMethod());
+    auto sv = std::string_view(method, method_len);
+//    auto sv = std::string(method, method_len);
+    auto it = http::http_info::http_verbs.find(sv);
+    if (it != http::http_info::http_verbs.end())
+      request_method = it->second;
   }
 
   http::REQUEST_METHOD getRequestMethod() {
@@ -39,13 +43,9 @@ public:
     return method != nullptr ? std::string(method, method_len) : std::string();
   }
 
-  inline std::string getRequestLine() {
-    std::string res(http_message, http_message_length);
-    //    for (auto index = method_len + path_length; method[index] != '\r';
-    //         index++) {
-    //      res += method[index];
-    //    }
-    return std::move(res);
+  inline std::string_view getRequestLine() {
+    return std::string_view(http_message,
+                            http_message_length);
   }
 
   std::string getUrl() {
@@ -57,6 +57,6 @@ public:
 
 class HttpResponse : public http_parser::HttpData {
 public:
-  bool headers_sent{false}; // FIXME: Chapuza
+
   bool transfer_encoding_header;
 };

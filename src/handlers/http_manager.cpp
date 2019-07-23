@@ -100,13 +100,10 @@ void http_manager::applyCompression(Service *service, HttpStream *stream) {
 
 validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, const ListenerConfig & listener_config_) {  //FIXME
   regmatch_t matches[4];
-  const auto &request_line =
-      nonstd::string_view(request.http_message,
-                          request.http_message_length - 2)
-          .to_string(); // request.getRequestLine();
 
-  if (UNLIKELY(::regexec(&listener_config_.verb, request_line.c_str(), 3, //include validation data package
-                         matches, 0) != 0)) {
+  auto res = ::regexec(&listener_config_.verb, request.getRequestLine().data(), 3, //include validation data package
+                       matches, REG_EXTENDED);
+  if (UNLIKELY(res == REG_NOMATCH)) {
     // TODO:: check RPC
 
     /*
@@ -123,8 +120,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
   } else {
     request.setRequestMethod();
   }
-  const auto &request_url =
-      nonstd::string_view(request.path, request.path_length);
+  const auto request_url =
+      std::string_view(request.path, request.path_length);
   if (request_url.find("%00") != std::string::npos) {
     return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
   }
@@ -160,53 +157,54 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
     // check header values length
     if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
       return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
-    const auto &header = nonstd::string_view(request.headers[i].name,
-                                             request.headers[i].name_len);
-    const auto &header_value = nonstd::string_view(
-        request.headers[i].value, request.headers[i].value_len);
-    if (http::http_info::headers_names.count(header.to_string()) > 0) {
-      const auto &header_name =
-          http::http_info::headers_names.at(header.to_string());
-      const auto &header_name_string =
-          http::http_info::headers_names_strings.at(header_name);
 
+    auto header = std::string_view(request.headers[i].name,
+                                   request.headers[i].name_len);
+    auto header_value = std::string_view(
+        request.headers[i].value, request.headers[i].value_len);
+
+    auto it = http::http_info::headers_names.find(header);
+    if (it != http::http_info::headers_names.end()) {
+      auto header_name = it->second;
       switch (header_name) {
-      case http::HTTP_HEADER_NAME::DESTINATION:
-        if (listener_config_.rewr_dest != 0) {
-          request.headers[i].header_off = true;
-          request.add_destination_header = true;
+        case http::HTTP_HEADER_NAME::DESTINATION:
+          if (listener_config_.rewr_dest != 0) {
+            request.headers[i].header_off = true;
+            request.add_destination_header = true;
+          }
+          break;
+        case http::HTTP_HEADER_NAME::UPGRADE:request.upgrade_header = true;
+
+          break;
+        case http::HTTP_HEADER_NAME::CONNECTION:
+          if (http_info::connection_values.count(std::string(header_value)) > 0
+              && http_info::connection_values.at(std::string(header_value)) == CONNECTION_VALUES::UPGRADE)
+            request.connection_header_upgrade = true;
+          break;
+        case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:request.accept_encoding_header = true;
+          break;
+        case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+          if (listener_config_.ignore100continue)
+            request.headers[i].header_off = true;
+          break;
+        case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
+          request.content_length =
+              static_cast<size_t>(std::atoi(request.headers[i].value));
+          continue;
         }
-        break;
-      case http::HTTP_HEADER_NAME::UPGRADE:request.upgrade_header = true;
-        break;
-      case http::HTTP_HEADER_NAME::CONNECTION:
-        if (http_info::connection_values.count(std::string(header_value)) > 0
-            && http_info::connection_values.at(std::string(header_value)) == CONNECTION_VALUES::UPGRADE)
-          request.connection_header_upgrade = true;
-        break;
-      case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:request.accept_encoding_header = true;
-        break;
-      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
-        if (listener_config_.ignore100continue)
-          request.headers[i].header_off = true;
-        break;
-      case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
-        request.content_length =
-            static_cast<size_t>(std::atoi(request.headers[i].value));
-        continue;
-      }
-      case http::HTTP_HEADER_NAME::HOST: {
+        case http::HTTP_HEADER_NAME::HOST: {
           request.host_header_found = listener_config_.rewr_host == 0;
-        continue;
-      }
-      case http::HTTP_HEADER_NAME::EXPECT : {
-        if (header_value=="100-continue") {
-          Debug::logmsg(LOG_REMOVE, "Client Expects 100 continue");
+          continue;
         }
-        if (listener_config_.ignore100continue)
-          request.headers[i].header_off = true;
-        break;
-      }
+        case http::HTTP_HEADER_NAME::EXPECT : {
+          if (header_value == "100-continue") {
+            Debug::logmsg(LOG_REMOVE, "Client Expects 100 continue");
+          }
+          if (listener_config_.ignore100continue)
+            request.headers[i].header_off = true;
+          break;
+        }
+        default: continue;
       }
 
     }
@@ -228,22 +226,19 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
 
-    const auto &header = nonstd::string_view(response.headers[i].name,
-                                             response.headers[i].name_len);
-    const auto &header_value = nonstd::string_view(
+    auto header = std::string_view(response.headers[i].name,
+                                   response.headers[i].name_len);
+    auto header_value = std::string_view(
         response.headers[i].value, response.headers[i].value_len);
 
 //    Debug::logmsg(LOG_REMOVE, "\t%.*s",response.headers[i].name_len + response.headers[i].value_len + 2, response.headers[i].name);
-    if (http::http_info::headers_names.count(header.to_string()) > 0) {
-      const auto &header_name =
-          http::http_info::headers_names.at(header.to_string());
-      const auto &header_name_string =
-          http::http_info::headers_names_strings.at(header_name);
-
+    auto it = http::http_info::headers_names.find(header);
+    if (it != http::http_info::headers_names.end()) {
+      const auto header_name = it->second;
       switch (header_name) {
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
         stream.response.content_length =
-            static_cast<size_t>(std::atoi(response.headers[i].value));
+            static_cast<size_t>(std::atoi(header_value.data()));
         stream.response.message_bytes_left =
             stream.response.content_length - stream.response.message_length;
         continue;
@@ -291,7 +286,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
       }
       case http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY:
         if (static_cast<Service*>(stream.request.getService())->service_config.sts > 0)
-          response.headers[i].header_off;
+          response.headers[i].header_off = true;
         break;
 
       case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.transfer_encoding_header = true;

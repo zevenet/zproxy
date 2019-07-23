@@ -1,7 +1,7 @@
 #include "http.h"
 using namespace http;
 
-const std::unordered_map<std::string, HTTP_HEADER_NAME>
+const std::map<std::string, HTTP_HEADER_NAME, std::less<>>
     http_info::headers_names = {
         {"", HTTP_HEADER_NAME::NONE},
         {"Accept", HTTP_HEADER_NAME::ACCEPT},
@@ -255,7 +255,7 @@ const std::unordered_map<REQUEST_METHOD, const std::string>
         {REQUEST_METHOD::VERSION_CONTROL, "VERSION-CONTROL"},
         {REQUEST_METHOD::X_MS_ENUMATTS, "X_MS_ENUMATTS"}};
 
-const std::unordered_map<std::string, REQUEST_METHOD> http_info::http_verbs = {
+const std::map<std::string, REQUEST_METHOD, std::less<>> http_info::http_verbs = {
     {"ACL", REQUEST_METHOD::ACL},
     {"BASELINE-CONTROL", REQUEST_METHOD::BASELINE_CONTROL},
     {"BCOPY", REQUEST_METHOD::BCOPY},
@@ -328,14 +328,14 @@ const std::unordered_map<UPGRADE_PROTOCOLS, const std::string>
         {UPGRADE_PROTOCOLS::TLS, "tls"},
 };
 
-const std::unordered_map<std::string, UPGRADE_PROTOCOLS>
+const std::map<std::string, UPGRADE_PROTOCOLS, std::less<>>
       http_info::upgrade_protocols = {
         {"websocket", UPGRADE_PROTOCOLS::WEBSOCKET},
         {"h2c", UPGRADE_PROTOCOLS::H2C},
         {"tls", UPGRADE_PROTOCOLS::TLS},
 };
 
-const std::unordered_map<std::string, CONNECTION_VALUES>
+const std::map<std::string, CONNECTION_VALUES, std::less<>>
       http_info::connection_values = {
         {"Upgrade", CONNECTION_VALUES::UPGRADE},
         {"close", CONNECTION_VALUES::CLOSE},
@@ -351,7 +351,7 @@ const std::unordered_map<http::TRANSFER_ENCODING_TYPE, const std::string>
   {http::TRANSFER_ENCODING_TYPE::IDENTITY, "identity"},
 };
 
-const std::unordered_map<std::string, http::TRANSFER_ENCODING_TYPE>
+const std::map<std::string, http::TRANSFER_ENCODING_TYPE, std::less<>>
     http_info::compression_types = {
   {"gzip", http::TRANSFER_ENCODING_TYPE::GZIP},
   {"compress", http::TRANSFER_ENCODING_TYPE::COMPRESS},

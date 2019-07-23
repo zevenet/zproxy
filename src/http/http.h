@@ -5,6 +5,8 @@
 
 #include <string>
 #include <unordered_map>
+#include <map>
+
 #ifndef MAX_HEADER_LEN
 #define MAX_HEADER_LEN 4096
 #define MAX_HEADERS_SIZE 50
@@ -195,17 +197,17 @@ enum class REQUEST_METHOD : uint16_t {
   RPC_OUT_DATA,
 };
 struct http_info {
-  static const std::unordered_map<std::string, HTTP_HEADER_NAME> headers_names;
+  static const std::map<std::string, HTTP_HEADER_NAME, std::less<>> headers_names;
   static const std::unordered_map<HTTP_HEADER_NAME, const std::string>
       headers_names_strings;
-  static const std::unordered_map<std::string, REQUEST_METHOD> http_verbs;
+  static const std::map<std::string, REQUEST_METHOD, std::less<>> http_verbs;
   static const std::unordered_map<REQUEST_METHOD, const std::string>
       http_verb_strings;
-  static const std::unordered_map<std::string, UPGRADE_PROTOCOLS> upgrade_protocols;
+  static const std::map<std::string, UPGRADE_PROTOCOLS, std::less<>> upgrade_protocols;
   static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings;
-  static const std::unordered_map<std::string, CONNECTION_VALUES> connection_values;
+  static const std::map<std::string, CONNECTION_VALUES, std::less<>> connection_values;
   static const std::unordered_map<TRANSFER_ENCODING_TYPE, const std::string> compression_types_strings;
-  static const std::unordered_map<std::string, TRANSFER_ENCODING_TYPE> compression_types;
+  static const std::map<std::string, TRANSFER_ENCODING_TYPE, std::less<>> compression_types;
 };
 
 struct validation {

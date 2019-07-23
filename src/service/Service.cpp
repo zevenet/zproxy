@@ -178,7 +178,7 @@ bool Service::doMatch(HttpRequest &request) {
 
   /* check for request */
   for (m = service_config.url; m; m = m->next)
-    if (regexec(&m->pat, request.getRequestLine().c_str(), 0, nullptr, 0))
+    if (regexec(&m->pat, request.getRequestLine().data(), 0, nullptr, 0))
       return false;
 
   /* check for required headers */

@@ -40,8 +40,8 @@ public:
   void printResponse();
   void reset_parser();
 
-  bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);
-  bool getHeaderValue(std::string header_name, std::string &out_key);
+  bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);//FIXME
+  bool getHeaderValue(std::string header_name, std::string &out_key); //FIXME
   std::string getUrlParameter(std::string url);
   std::string getQueryParameter(std::string url, std::string sess_id);
   void setBuffer(char *ext_buffer, size_t ext_buffer_size);
@@ -101,6 +101,7 @@ public:
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
   http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
+  bool headers_sent{false}; // FIXME: Chapuza
   char *getBuffer() const;
 };
 } // namespace http_parser

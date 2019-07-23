@@ -88,7 +88,7 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
 
     ssl_ctx = listener_config.ctx->ctx;
 
-#ifdef ENABLE_SSL_SESSION_CACHING
+#if ENABLE_SSL_SESSION_CACHING
     SslSessionManager::attachCallbacks(ssl_ctx);
 #endif
 
