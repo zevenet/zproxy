@@ -46,6 +46,7 @@ sub setBLRunList
 	$type = "whitelist" if ( $action eq "allow" );
 
 	$output = &setIPDSPolicyParam( 'type', $type, $listName );
+	&setIPDSPolicyParam( 'logprefix', "[BL,$listName,FNAME]", $listName );
 
 	if ( $output == 0 )
 	{
@@ -269,7 +270,7 @@ sub setBLDeleteRule
 	$output = &delIPDSFarmParam( 'policy', $listName, $farmName );
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( !&getBLListNoUsed( $listName ) )
+	if ( &getBLListNoUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}
@@ -456,7 +457,7 @@ sub setBLRemFromFarm
 	}
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( !$output && !&getBLListNoUsed( $listName ) )
+	if ( !$output && &getBLListNoUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}
