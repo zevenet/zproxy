@@ -161,9 +161,16 @@ sub setBLDeleteList
 		return -1;
 	}
 
-	# delete from config file
 	my $lock = &setBLLockConfigFile();
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
+
+	# delete from config file if remote
+	my $type = $fileHandle->{ $listName }->{ 'type' };
+	if ( $type eq 'remote' )
+	{
+		require Zevenet::IPDS::Blacklist::Runtime;
+		&delBLCronTask( $listName );
+	}
 	delete $fileHandle->{ $listName };
 	$fileHandle->write( $blacklistsConf );
 	close $lock;
