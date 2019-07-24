@@ -82,16 +82,16 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
     Debug::logmsg(LOG_ERR, "SSL_new failed");
     return false;
   }
-//  if (client_mode) {
-//    const char* server_name = "central.zevenet.com";
-//    if (!SSL_set_tlsext_host_name(ssl_connection.ssl, server_name)) {
-//      Debug::logmsg(LOG_DEBUG, "(%lx) could not set SNI host name  to %s", pthread_self(), server_name);
-//      return false;
-//    }
-//    else {
-//      Debug::logmsg(LOG_DEBUG, "(%lx) Set SNI host name \"%s\"", pthread_self(), server_name);
-//    }
-//  }
+
+  if (client_mode) {
+    const char *server_name = "central.zevenet.com";
+    if (!SSL_set_tlsext_host_name(ssl_connection.ssl, server_name)) {
+      Debug::logmsg(LOG_DEBUG, "(%lx) could not set SNI host name  to %s", pthread_self(), server_name);
+      return false;
+    } else {
+      Debug::logmsg(LOG_DEBUG, "(%lx) Set SNI host name \"%s\"", pthread_self(), server_name);
+    }
+  }
 
 //  SSL_set_mode( ssl_connection.ssl,
     //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enable return if not all buffer has
@@ -150,7 +150,6 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
     }else
     if (rc < 0) {
       if (BIO_should_read(ssl_connection.io)) {
-        Debug::logmsg(LOG_DEBUG, " DONE_TRY_AGAIN");
         if (bytes_read>0)
           return IO::IO_RESULT::SUCCESS;
         else {
@@ -375,8 +374,6 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     if (!target_ssl_connection.ssl_connected) {
         return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
     }
-//  PRINT_BUFFER_SIZE
-  http_data.message_bytes_left = 0;
   const char *return_value = "\r\n";
   auto vector_size =
           http_data.num_headers+(http_data.message_length>0 ? 3 : 2)+
@@ -449,17 +446,19 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     case IO::IO_RESULT::SUCCESS:break;
     }
   }
-//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
-  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
-  http_data.message_bytes_left = http_data.content_length - http_data.message_length;
   ssl_connection.buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
+  http_data.headers_sent = true;
+
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", ssl_connection.buffer_size);
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
+#endif
   //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }

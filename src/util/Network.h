@@ -141,7 +141,28 @@ public:
       ::snprintf(res, res_len, "%s:%d", buf, port);
     return;
   }
+  static bool HostnameToIp(const char * hostname , char* ip)
+  {
+    struct hostent *he;
+    struct in_addr **addr_list;
+    int i;
 
+    if ( (he = gethostbyname( hostname ) ) == NULL)
+    {
+      // get the host info
+
+      return false;
+    }
+    addr_list = (struct in_addr **) he->h_addr_list;
+    for(i = 0; addr_list[i] != NULL; i++)
+    {
+      //Return the first one;
+      strcpy(ip , inet_ntoa(*addr_list[i]) );
+      return true;
+    }
+
+    return false;
+  }
   static bool setSocketNonBlocking(int fd, bool blocking = false) {
     // set socket non blocking
     int flags;

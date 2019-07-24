@@ -73,10 +73,11 @@ public:
    * data.
    * @return if chunked is enabled returns true, if not returns false.
    */
-  static bool transferChunked(HttpStream *stream);
-    /**/
+
+  /**/
     static bool isLastChunk(const std::string& data);
     static size_t getChunkSize(const std::string& data);
 
+  static bool transferChunked(const Connection &connection, http_parser::HttpData &stream);
 };
 

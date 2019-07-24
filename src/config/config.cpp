@@ -19,7 +19,12 @@ Config::Config() {
 }
 
 Config::~Config() {}
-
+regex_t Config::HEADER,    /* Allowed header */
+    Config::CHUNK_HEAD,    /* chunk header line */
+    Config::RESP_SKIP,     /* responses for which we skip response */
+    Config::RESP_IGN,      /* responses for which we ignore content */
+    Config::LOCATION,      /* the host we are redirected to */
+    Config::AUTHORIZATION; /* the Authorisation header */
 void Config::parse_file() {
   char lin[MAXBUF];
   ServiceConfig *svc;
@@ -541,6 +546,7 @@ ListenerConfig *Config::parse_HTTPS() {
       if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
       has_addr = 1;
+      res->address = lin + matches[1].rm_so;
     } else if (!regexec(&Port, lin, 4, matches, 0)) {
       if (res->addr.ai_family == AF_INET) {
         memcpy(&in, res->addr.ai_addr, sizeof(in));
@@ -552,6 +558,7 @@ ListenerConfig *Config::parse_HTTPS() {
         memcpy(res->addr.ai_addr, &in6, sizeof(in6));
       }
       has_port = 1;
+      res->port = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&xHTTP, lin, 4, matches, 0)) {
       int n;
 

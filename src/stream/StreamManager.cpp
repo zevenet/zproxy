@@ -321,11 +321,12 @@ void StreamManager::onRequestEvent(int fd) {
     ::close(fd);
     return;
   }
-  //    StreamWatcher watcher(*stream);
+#if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(
       LOG_REMOVE, "IN buffer size: %8lu\tContent-length: %lu\tleft: %lu",
       stream->client_connection.buffer_size, stream->request.content_length,
       stream->request.message_bytes_left);
+#endif
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (this->is_https_listener) {
     result = this->ssl_manager->handleDataRead(stream->client_connection);
@@ -404,7 +405,7 @@ void StreamManager::onRequestEvent(int fd) {
   }
 
   /* Check if chunked transfer encoding is enabled. */
-  if (http_manager::transferChunked(stream)) {
+  if (http_manager::transferChunked(stream->client_connection, stream->request)) {
     stream->backend_connection.enableWriteEvent();
     return;
   }
@@ -428,6 +429,8 @@ void StreamManager::onRequestEvent(int fd) {
       this->clearStream(stream);
       return;
     }
+    stream->response.reset_parser();//TODO: small hack to force reset
+    stream->backend_connection.buffer_size = 0;
     stream->timer_fd.unset();
     deleteFd(stream->timer_fd.getFileDescriptor());
     timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
@@ -458,8 +461,10 @@ void StreamManager::onRequestEvent(int fd) {
       return;
     } else {
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
+      static size_t total_request;
+      total_request++;
       Debug::logmsg(
-          LOG_DEBUG, "[%s] %.*s [%s (%d) -> %s (%d)]", service->name.c_str(),
+          LOG_DEBUG, "%lu [%s] %.*s [%s (%d) -> %s (%d)]", total_request, service->name.c_str(),
           stream->request.getRequestLine().length() - 2,
           stream->request.getRequestLine().data(),
           stream->client_connection.getPeerAddress().c_str(),
@@ -627,23 +632,27 @@ void StreamManager::onResponseEvent(int fd) {
     return;
   }
   if (UNLIKELY(stream->client_connection
-                   .isCancelled())) { // check if client is still active
+                   .isCancelled() || stream->backend_connection.isCancelled())) { // check if client is still active
     clearStream(stream);
     return;
   }
-  if (stream->backend_connection.buffer_size > 0)
-    return;
-//  Debug::logmsg(
-//      LOG_REMOVE, "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
-//      stream->backend_connection.buffer_size, stream->response.content_length,
-//      stream->response.message_bytes_left);
-  //    StreamWatcher watcher(*stream);
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Debug::
+      logmsg(
+          LOG_REMOVE, "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
+          stream->backend_connection.getFileDescriptor(),
+          stream->backend_connection.buffer_size, stream->response.content_length,
+          stream->response.message_bytes_left);
+#endif
   // disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
-
+//  if (stream->backend_connection.buffer_size > 0) {
+//    stream->client_connection.enableWriteEvent();
+//    return;
+//  }
   IO::IO_RESULT result;
 
   if (stream->backend_connection.getBackend()->isHttps()) {
@@ -719,18 +728,18 @@ void StreamManager::onResponseEvent(int fd) {
     break;
   }
   case IO::IO_RESULT::FULL_BUFFER:
+  case IO::IO_RESULT::FD_CLOSED:break;
   case IO::IO_RESULT::ZERO_DATA:
-  case IO::IO_RESULT::FD_CLOSED:
-    break;
+    if (stream->backend_connection.buffer_size > 0)
+      stream->client_connection.enableWriteEvent();
   case IO::IO_RESULT::ERROR:
   case IO::IO_RESULT::CANCELLED:
   default: {
-    Debug::LogInfo("Error reading response ", LOG_DEBUG);
+//    Debug::LogInfo("Closing backend connection ", LOG_DEBUG);
     clearStream(stream);
     return;
   }
   }
-
   // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de
   // tomar muestra si se la lectura ha sido success.
   stream->backend_connection.getBackend()->calculateLatency(
@@ -738,31 +747,22 @@ void StreamManager::onResponseEvent(int fd) {
           std::chrono::steady_clock::now() -
           stream->backend_connection.time_start)
           .count());
-  //  stream->backend_stadistics.update();
+  //TODO:  stream->backend_stadistics.update();
 
-  if (stream->upgrade.pinned_connection ||
-      stream->response.message_bytes_left > 0 ||
-      stream->response.transfer_encoding_header) {
-    // if chunked get chunk size
-    if (stream->response.transfer_encoding_header) {
-      stream->response.message_bytes_left =
-          stream->backend_connection.buffer_size;
-      stream->response.transfer_encoding_header =
-          stream->backend_connection.buffer_size == 0;
-      //            http_manager::getChunkSize(
-      //                    std::string(stream->backend_connection.buffer,
-      //                    stream->backend_connection.buffer_size));
-    }
+  if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
 
     stream->client_connection.enableWriteEvent();
     // TODO:: maybe quick response
+#if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(
         LOG_REMOVE, "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
         stream->backend_connection.buffer_size, stream->response.content_length,
         stream->response.message_bytes_left, IO::getResultString(result).data());
+#endif
     return;
   }
-
+  if (stream->backend_connection.buffer_size == 0)
+    return;
   size_t parsed = 0;
   auto ret = stream->response.parseResponse(
       stream->backend_connection.buffer, stream->backend_connection.buffer_size,
@@ -781,11 +781,14 @@ void StreamManager::onResponseEvent(int fd) {
     clearStream(stream);
     return;
   }
+  //FIXME:
+  stream->request.reset_parser();
+  stream->client_connection.buffer_size = 0;
 
-  static int retries;
-  retries++;
+  static size_t total_responses;
+  total_responses++;
   Debug::logmsg(
-      LOG_DEBUG, " %d [%s] %.*s [%s (%d) <- %s (%d)]", retries,
+      LOG_DEBUG, " %lu [%s] %.*s [%s (%d) <- %s (%d)]", total_responses,
       static_cast<Service *>(stream->request.getService())->name.c_str(),
       stream->response.http_message_length - 2, stream->response.http_message,
       stream->client_connection.getPeerAddress().c_str(),
@@ -929,8 +932,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
    * applying any kind of modification. */
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (stream->upgrade.pinned_connection ||
-      stream->request.message_bytes_left > 0 ||
-      stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+      stream->request.hasPendingData()) {
     size_t written = 0;
 
     if (stream->backend_connection.getBackend()->isHttps()) {
@@ -984,17 +986,24 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     if (stream->request.message_bytes_left > 0) {
       stream->request.message_bytes_left -= written;
     }
+    stream->request.headers_sent = stream->request.headers_sent ? stream->request.message_bytes_left > 0 : false;
+    if (stream->request.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
+      stream->request.chunked_status = http::CHUNKED_STATUS::CHUNKED_DISABLED;
+      stream->request.headers_sent = stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
+    } else if (stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+      Debug::logmsg(LOG_ERR, "Chunk %x", stream->client_connection.buffer);
+      stream->request.chunked_status =
+          http_manager::isLastChunk(stream->client_connection.buffer) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK
+                                                                      : http::CHUNKED_STATUS::CHUNKED_ENABLED;
+      stream->request.headers_sent = stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
+    }
+#if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(
         LOG_REMOVE, "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\twritten: %d\tIO: %s",
         stream->client_connection.buffer_size, stream->request.content_length,
         stream->request.message_bytes_left, written, IO::getResultString(result).data());
+#endif
     /* Check if chunked transfer encoding is enabled. update status*/
-    if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-      stream->chunked_status =
-          stream->chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK
-              ? http::CHUNKED_STATUS::CHUNKED_DISABLED
-              : http::CHUNKED_STATUS::CHUNKED_ENABLED;
-    }
     stream->client_connection.enableReadEvent();
     stream->backend_connection.enableReadEvent();
     stream->backend_connection.enableWriteEvent();
@@ -1065,19 +1074,19 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
-//  Debug::logmsg(
-//      LOG_REMOVE, "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
-//      stream->backend_connection.buffer_size, stream->response.content_length,
-//      stream->response.message_bytes_left);
-  //  StreamWatcher watcher(*stream);
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Debug::logmsg(
+      LOG_REMOVE, "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
+      stream->backend_connection.buffer_size, stream->response.content_length,
+      stream->response.message_bytes_left);
+#endif
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
    * content without applying any kind of modification. */
-  if (stream->response.headers_sent &&
-      (stream->upgrade.pinned_connection ||
-       stream->response.message_bytes_left > 0 ||
-       stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED)) {
+  if (stream->upgrade.pinned_connection ||
+      stream->response.hasPendingData()) {
     size_t written = 0;
+
     if (this->is_https_listener) {
       result = this->ssl_manager->handleWrite(
           stream->client_connection, stream->backend_connection.buffer,
@@ -1118,11 +1127,23 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
       stream->backend_connection.buffer_size -= written;
     if (stream->response.message_bytes_left > 0) {
       stream->response.message_bytes_left -= written;
+    }    /* Check if chunked transfer encoding is enabled. update status*/
+    stream->response.headers_sent = stream->response.headers_sent ? stream->response.message_bytes_left > 0 : false;
+    if (stream->response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
+      stream->response.chunked_status = http::CHUNKED_STATUS::CHUNKED_DISABLED;
+      stream->response.headers_sent = stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
+    } else if (stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+      stream->response.chunked_status =
+          http_manager::isLastChunk(stream->backend_connection.buffer) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK
+                                                                       : http::CHUNKED_STATUS::CHUNKED_ENABLED;
+      stream->response.headers_sent = stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
     }
+#if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(
         LOG_REMOVE, "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\twritten: %d\tIO: %s",
         stream->backend_connection.buffer_size, stream->response.content_length,
         stream->response.message_bytes_left, written, IO::getResultString(result).data());
+#endif
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
     return;
@@ -1167,11 +1188,12 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
-  Debug::logmsg(LOG_DEBUG, "\nClient write out\n\t\t buffer size: %d \n\t\t "
-                           "Content length: %d \n\t\t left: %d ",
-                stream->backend_connection.buffer_size,
-                stream->response.content_length,
-                stream->response.message_bytes_left);
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Debug::logmsg(
+      LOG_REMOVE, "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
+      stream->backend_connection.buffer_size, stream->response.content_length,
+      stream->response.message_bytes_left, IO::getResultString(result).data());
+#endif
   if (stream->request.upgrade_header &&
       stream->request.connection_header_upgrade &&
       stream->response.http_status_code == 101) {
@@ -1226,16 +1248,19 @@ void StreamManager::clearStream(HttpStream *stream) {
   }
   Debug::logmsg(LOG_DEBUG, "Clearing stream ");
 
-  if (stream->backend_connection.buffer_size > 0
-#if ENABLE_ZERO_COPY
-      || stream->backend_connection.splice_pipe.bytes > 0
-#endif
-      ) {
-    // TODO:: remove and create enum with READY_TO_SEND_RESPONSE
-    stream->backend_connection.disableEvents();
-    return;
-  }
-  logSslErrorStack();
+//  if (stream->backend_connection.buffer_size > 0
+//#if ENABLE_ZERO_COPY
+//      || stream->backend_connection.splice_pipe.bytes > 0
+//#endif
+//      ) {
+//    // TODO:: remove and create enum with READY_TO_SEND_RESPONSE
+////    stream->backend_connection.disableEvents();
+//    stream->client_connection.enableWriteEvent();
+//    stream->backend_connection.closeConnection();
+//
+//    return;
+//  }
+//  logSslErrorStack();
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());
     stream->timer_fd.unset();

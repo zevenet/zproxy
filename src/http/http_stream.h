@@ -49,8 +49,6 @@ public:
   HttpResponse response;
   /** This struct indicates the upgrade mechanism status. */
   UpgradeStatus upgrade;
-  /** This enumerate indicates the chunked mechanism status. */
-  http::CHUNKED_STATUS chunked_status;
 
   /**
    * @brief Replies an specified error to the client.

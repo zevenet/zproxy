@@ -3,16 +3,15 @@
 //
 
 #include "http_manager.h"
+#include "../util/Network.h"
 
-
-bool http_manager::transferChunked(HttpStream *stream) {
-  if (stream->chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-      auto pos = std::string(stream->client_connection.buffer);
-    stream->chunked_status =
+bool http_manager::transferChunked(const Connection &connection, http_parser::HttpData &stream) {
+  if (stream.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+    auto pos = std::string(connection.buffer);
+    stream.chunked_status =
             isLastChunk(pos) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK : http::CHUNKED_STATUS::CHUNKED_ENABLED;
     return true;
   }
-
   return false;
 }
 
@@ -23,11 +22,17 @@ bool http_manager::isLastChunk(const std::string& data)
 
 size_t http_manager::getChunkSize(const std::string& data)
 {
-    size_t pos = data.find("\r\n");
-    auto hex = data.substr(0, pos);
-    Debug::logmsg(LOG_DEBUG, "RESPONSE:\n %x", data.c_str());
-    int chunk_length = std::stoul(hex.data(), nullptr, 16);
-    return chunk_length;
+  auto pos = data.find('\r');
+  for (auto c = pos; c > -1; c--) {
+    Debug::logmsg(LOG_REMOVE, " 0x%x %c", data[c], data[c]);
+  }
+//  if (pos < data.size()) {
+//    auto hex = data.substr(0, pos);
+//    Debug::logmsg(LOG_DEBUG, "RESPONSE:\n %x", data.c_str());
+//    int chunk_length = std::stoul(hex.data(), nullptr, 16);
+//    return chunk_length;
+//  }
+  return data[0] == 0x00 ? 0 : data.size();
 }
 
 void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
@@ -60,7 +65,7 @@ void http_manager::applyCompression(Service *service, HttpStream *stream) {
   if (service->service_config.compression_algorithm.empty())
     return;
   /* Check if we have found the accept encoding header in the request but not the transfer encoding in the response. */
-  if ((!stream->response.transfer_encoding_header) && stream->request.accept_encoding_header) {
+  if ((stream->response.chunked_status == CHUNKED_STATUS::CHUNKED_DISABLED) && stream->request.accept_encoding_header) {
     std::string compression_value;
     stream->request.getHeaderValue(http::HTTP_HEADER_NAME::ACCEPT_ENCODING, compression_value);
 
@@ -70,7 +75,7 @@ void http_manager::applyCompression(Service *service, HttpStream *stream) {
     if (initial_pos != std::string::npos) {
       compression_value = service->service_config.compression_algorithm;
       stream->response.addHeader(http::HTTP_HEADER_NAME::TRANSFER_ENCODING, compression_value);
-      stream->response.transfer_encoding_header = true;
+      stream->response.chunked_status = CHUNKED_STATUS::CHUNKED_ENABLED;
       compression_type = http::http_info::compression_types.at(compression_value);
 
       /* Get the message_uncompressed. */
@@ -182,6 +187,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
             request.connection_header_upgrade = true;
           break;
         case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:request.accept_encoding_header = true;
+//          request.headers[i].header_off = true;
           break;
         case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
           if (listener_config_.ignore100continue)
@@ -217,11 +223,11 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,const ListenerConfig & listener_config_) {
   HttpResponse &response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
-//  if (response.http_status_code == 100) {
-//    stream.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+  if (response.http_status_code < 200) {
+//    stream.response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
 //    Debug::logmsg(LOG_DEBUG, "Chunked transfer enabled");
-//    return validation::REQUEST_RESULT::OK;
-//  }
+    return validation::REQUEST_RESULT::OK;
+  }
 
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
@@ -245,42 +251,41 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
       }
       case http::HTTP_HEADER_NAME::LOCATION: {
         // Rewrite location
-        std::string location_header_value;
-        std::string protocol;
+        std::string location_header_value(
+            response.headers[i].value, response.headers[i].value_len);
+        if (listener_config_.rewr_loc == 0) continue;
+        regmatch_t matches[4];
 
-        if (listener_config_.rewr_loc > 0) {
-          std::string expr_ = "[A-Za-z.0-9-]+";
-          std::smatch match;
-          std::regex rgx(expr_);
-          if (std::regex_search(location_header_value, match, rgx)) {
-            std::string result = match[1];
-            if (listener_config_.rewr_loc == 1) {
-              if (result == listener_config_.address ||
-                  result == stream.backend_connection.getBackend()->address) {
-                std::string header_value_ = "http://";
-                header_value_ += listener_config_.address;
-                header_value_ += response.path;
-                response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
-                        header_value_);
-                response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-                        header_value_);
-                response.headers[i].header_off = true;
-              }
-            } else {
-              if (result == stream.backend_connection.getBackend()->address) {
-                std::string header_value_ = "http://";
-                header_value_ += listener_config_.address;
-                header_value_ += response.path;
-                response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
-                        header_value_);
-                response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-                        header_value_);
-                response.headers[i].header_off = true;
-              }
-            }
-          } else {
-            Debug::LogInfo("Invalid location header", LOG_REMOVE);
-          }
+        if (regexec(&Config::LOCATION, location_header_value.data(), 4, matches, 0)) {
+          continue;
+        }
+
+        std::string proto(location_header_value.data() + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+        std::string host(location_header_value.data() + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+
+//        if (location_header_value[matches[3].rm_so] == '/') {
+//          matches[3].rm_so++;
+//        }
+        std::string path(location_header_value.data() + matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
+
+        char ip[100]{'\0'};
+        if (!Network::HostnameToIp(host.data(), ip)) {
+          Debug::logmsg(LOG_NOTICE, "Couldn't get host ip");
+          continue;
+        }
+        std::string_view host_ip(ip);
+        if (host_ip == listener_config_.address ||
+            host_ip == stream.backend_connection.getBackend()->address) {
+          std::string header_value_ = listener_config_.ctx != nullptr ? "https://" : "http://";
+          header_value_ += host;
+          header_value_ += ":";
+          header_value_ += std::to_string(listener_config_.port);
+//          header_value_ += path;
+          response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
+                             header_value_);
+          response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
+                             path);
+          response.headers[i].header_off = true;
         }
         break;
       }
@@ -289,7 +294,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           response.headers[i].header_off = true;
         break;
 
-      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.transfer_encoding_header = true;
+        case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
       default:continue;
       }
 

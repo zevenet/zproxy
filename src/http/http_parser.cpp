@@ -9,7 +9,7 @@ http_parser::HttpData::HttpData()
     : buffer(nullptr), buffer_size(0), last_length(0), num_headers(0),
       method(nullptr), method_len(0), minor_version(-1), path(nullptr),
       path_length(0), http_status_code(0), status_message(nullptr),
-      message_length(0) {}
+      message_length(0) { reset_parser(); }
 
 void http_parser::HttpData::reset_parser() {
   method = nullptr;
@@ -25,6 +25,7 @@ void http_parser::HttpData::reset_parser() {
   message_bytes_left = 0;
   content_length = 0;
   headers_sent = false;
+  chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
   extra_headers.clear();
 }
 
@@ -103,7 +104,7 @@ http_parser::HttpData::parseRequest(const std::string &data, size_t *used_bytes,
 http_parser::PARSE_RESULT
 http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
                                     size_t *used_bytes, bool reset) {
-  if (LIKELY(reset))
+//  if (LIKELY(reset))
     reset_parser();
   count++;
   buffer = const_cast<char *>(data);
@@ -147,7 +148,7 @@ http_parser::HttpData::parseResponse(const std::string &data,
 http_parser::PARSE_RESULT
 http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
                                      size_t *used_bytes, bool reset) {
-  if (LIKELY(reset))
+//  if (LIKELY(reset))
     reset_parser();
   count++;
   buffer = const_cast<char *>(data);
@@ -200,4 +201,7 @@ void http_parser::HttpData::printRequest() {
     Debug::logmsg(LOG_DEBUG, "\t%.*s: %.*s", (int)headers[i].name_len,
                   headers[i].name, (int)headers[i].value_len, headers[i].value);
   }
+}
+bool http_parser::HttpData::hasPendingData() {
+  return headers_sent && (message_bytes_left > 0 || chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED);
 }

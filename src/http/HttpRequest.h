@@ -58,5 +58,4 @@ public:
 class HttpResponse : public http_parser::HttpData {
 public:
 
-  bool transfer_encoding_header;
 };

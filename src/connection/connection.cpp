@@ -356,17 +356,18 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     return IO::IO_RESULT::ERROR;
   }
 //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
-  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", buffer_size);
+//  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", buffer_size);
   http_data.message_bytes_left = http_data.content_length-http_data.message_length;
   buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
+  http_data.headers_sent = true;
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", buffer_size);
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
-  //  PRINT_BUFFER_SIZE
+//    PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
 
@@ -419,7 +420,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
 void Connection::closeConnection() {
   is_connected = false;
   if (fd_ > 0) {
-    ::shutdown(fd_, 2);
+//    ::shutdown(fd_, 2);
     ::close(fd_);
   }
 }

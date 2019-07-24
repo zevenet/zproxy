@@ -139,8 +139,9 @@ class Config {
   regex_t IncludeDir;
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
+ public:
 
-  regex_t HEADER,    /* Allowed header */
+  static regex_t HEADER,    /* Allowed header */
       CHUNK_HEAD,    /* chunk header line */
       RESP_SKIP,     /* responses for which we skip response */
       RESP_IGN,      /* responses for which we ignore content */

@@ -7,3 +7,5 @@ CMakeLists.txt.user.*
 build/
 src/version.h
 cmake-build-*/
+wrkdir/
+build-pkg/

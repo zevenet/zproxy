@@ -10,7 +10,7 @@ using namespace ssl;
 
 HttpStream::HttpStream()
     : request(), response(), client_connection(), backend_connection(),
-      timer_fd(), chunked_status(http::CHUNKED_STATUS::CHUNKED_DISABLED) {}
+      timer_fd() {}
 
 void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
                             const char *string,

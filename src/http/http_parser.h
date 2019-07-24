@@ -97,11 +97,14 @@ public:
   size_t message_length;     // body data lenght in current received message
   size_t message_bytes_left; // content-lenght
   size_t content_length;
-
+  /** This enumerate indicates the chunked mechanism status. */
+  http::CHUNKED_STATUS chunked_status{CHUNKED_STATUS::CHUNKED_DISABLED};
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
   http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
   bool headers_sent{false}; // FIXME: Chapuza
+  bool hasPendingData();
+
   char *getBuffer() const;
 };
 } // namespace http_parser

@@ -2,9 +2,9 @@
 #include "ctl/ControlManager.h"
 #include "stream/listener.h"
 #include "util/system.h"
+#include <csetjmp>
 #include <csignal>
 #include <sys/resource.h>
-#include <csetjmp>
 
 static jmp_buf jmpbuf;
 
@@ -128,19 +128,28 @@ int main(int argc, char *argv[]) {
 
   // Increase num file descriptor ulimit
   // TODO:: take outside main initialization
-  Debug::LogInfo("System info:");
+  Debug::LogInfo("System info:", LOG_DEBUG);
   Debug::LogInfo("\tL1 Data cache size: " +
-      std::to_string(SystemInfo::data()->getL1DataCacheSize()), LOG_DEBUG);
-  Debug::LogInfo("\t\tCache line size: " +
-      std::to_string(SystemInfo::data()->getL1DataCacheLineSize()), LOG_DEBUG);
+                     std::to_string(SystemInfo::data()->getL1DataCacheSize()),
+                 LOG_DEBUG);
+  Debug::LogInfo(
+      "\t\tCache line size: " +
+          std::to_string(SystemInfo::data()->getL1DataCacheLineSize()),
+      LOG_DEBUG);
   Debug::LogInfo("\tL2 Cache size: " +
-      std::to_string(SystemInfo::data()->getL2DataCacheSize()), LOG_DEBUG);
-  Debug::LogInfo("\t\tCache line size: " +
-      std::to_string(SystemInfo::data()->getL2DataCacheLineSize()), LOG_DEBUG);
+                     std::to_string(SystemInfo::data()->getL2DataCacheSize()),
+                 LOG_DEBUG);
+  Debug::LogInfo(
+      "\t\tCache line size: " +
+          std::to_string(SystemInfo::data()->getL2DataCacheLineSize()),
+      LOG_DEBUG);
   rlimit r{};
   ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tMaximum " + std::to_string(::sysconf(_SC_OPEN_MAX)), LOG_DEBUG);
+  Debug::LogInfo("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur),
+                 LOG_DEBUG);
+  Debug::LogInfo("\tRLIMIT_NOFILE\tMaximum " +
+                     std::to_string(::sysconf(_SC_OPEN_MAX)),
+                 LOG_DEBUG);
   if (r.rlim_cur != r.rlim_max) {
     r.rlim_cur = r.rlim_max;
     if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
