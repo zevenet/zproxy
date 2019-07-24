@@ -77,8 +77,8 @@ if ( $action eq "-D52to60" )
 	print "Press a key to start...\n";
 	<STDIN>;
 
-	my @eject = `$tar $exclude_52_60 -xzf $backupdir\/backup-$name.tar.gz -C /`;
-	print "OUTPUT: @eject";
+	my @eject = `$tar $exclude_52_60 -xvzf $backupdir\/backup-$name.tar.gz -C /`;
+	print "@eject\n";
 	print "Config files have been moved to local system...\n";
 	print "Running migration of config files to new Zevenet 6...\n";
 
