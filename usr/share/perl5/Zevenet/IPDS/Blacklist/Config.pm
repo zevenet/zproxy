@@ -174,7 +174,7 @@ sub setBLDeleteList
 		$output = ( $output ) ? 0 : 1;
 	}
 
-	if ( !$output )
+	if ( $output != 0 )
 	{
 		&zenlog( "Error deleting the list '$listName'.", "error", "IPDS" );
 	}
