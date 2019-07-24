@@ -305,7 +305,7 @@ sub listRoutingTableCustom
 
 	foreach my $r ( keys %{ $fh } )
 	{
-		push @list, $fh->{key};
+		push @list, $fh->{$r};
 	}
 
 	return \@list;
@@ -461,7 +461,7 @@ sub applyRoutingCustom
 
 	foreach my $it (@{$list})
 	{
-		$err += &setRoute($action, $it->{cmd});
+		$err += &setRoute($action, $it->{raw});
 	}
 
 	return $err;

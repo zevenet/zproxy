@@ -157,8 +157,10 @@ sub addlocalnet    # ($if_ref)
 
 	foreach my $iface ( @ifaces )
 	{
+		next if $iface->{ status } ne 'up';
 		next if $iface->{ type } eq 'virtual';
 		next if $iface->{ is_slave } eq 'true';    # Is in bonding iface
+
 		next
 		  if (   !defined $iface->{ addr }
 			   or length $iface->{ addr } == 0 );    #IP addr doesn't exist
@@ -229,11 +231,12 @@ sub dellocalnet    # ($if_ref)
 	{
 		next if $link eq 'lo';
 		next if $link eq 'cl_maintenance';
-		next if $link eq 'maim';
+		next if $link eq 'main';
 
 		my $table = "table_$link";
 
 		my $cmd_param = "$net dev $$if_ref{name} src $$if_ref{addr} table $table";
+		next if (!$cmd_param);
 
 		next if (!&isRoute($cmd_param, $$if_ref{ip_v}));
 
@@ -549,7 +552,6 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				"info", "NETWORK"
 			);
 
-			# &delRoutes( "local", $if );
 			&addlocalnet( $if_ref );
 
 			if ( $$if_ref{ gateway } )
