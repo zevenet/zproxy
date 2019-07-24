@@ -320,7 +320,7 @@ if ( $action eq "start" )
 	# vlans interfaces (ie. eth0.20)
 	foreach my $iface ( @interfaces )
 	{
-		if ( $$iface{ vlan } && ! $$iface{ vini } )
+		if ( $$iface{ vlan } && ! defined $$iface{ vini } )
 		{
 			unless ( scalar grep { $$iface{ name } eq $_ } &getLinkNameList() )
 			{
@@ -386,9 +386,10 @@ if ( $action eq "start" )
 	&zenlog("zevenet: Setting up virtual interfaces...");
 
 	# virtual interfaces (ie. eth0:20, eth0.20:2)
+	use Data::Dumper;
 	foreach my $iface ( @interfaces )
 	{
-		if ( $$iface{ vini } )
+		if ( defined $$iface{ vini } )
 		{
 			if ( $$iface{ status } eq "up" )
 			{
