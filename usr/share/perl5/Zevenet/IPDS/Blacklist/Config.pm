@@ -168,7 +168,7 @@ sub setBLDeleteList
 	my $type = $fileHandle->{ $listName }->{ 'type' };
 	if ( $type eq 'remote' )
 	{
-		require Zevenet::IPDS::Blacklist::Runtime;
+		include 'Zevenet::IPDS::Blacklist::Runtime';
 		&delBLCronTask( $listName );
 	}
 	delete $fileHandle->{ $listName };
