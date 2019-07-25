@@ -69,11 +69,11 @@ if ( $action eq "-D52to60" )
 		print "The given file doesn't exist...\n";
 		exit;
 	}
-	print "Current hostname will be keeped\n";
+	print "Current hostname will be kept\n";
 	print "Cluster config file will not be imported\n";
 	print
-	  "Current Global.conf file :/usr/local/zevenet/config/globa.conf will be keeped\n";
-	print "Curent Activation certificate will be keeped\n";
+	  "Current Global.conf file :/usr/local/zevenet/config/globa.conf will be kept\n";
+	print "Curent Activation certificate will be kept\n";
 	print "Press a key to start...\n";
 	<STDIN>;
 
