@@ -316,23 +316,61 @@ sub listRoutingTableSys
 {
 	my $table = shift;
 
-	my $list = &logAndGet ("$ip_bin -j -p route list table $table");
+	#~ my $data = &logAndGet ("$ip_bin -j route list table $table"); # there is a bug with ip route json
 
-	# ???? parsing json
+	my $data = &logAndGet ("$ip_bin route list table $table", 'array');
 
-	return $list;
+	# filter data
+	my @routes = ();
+	foreach my $cmd ( @{ $data } )
+	{
+		# it is not a system rule
+		next if ($cmd !~ /initcwnd 10 initrwnd 10/);
+
+		my $r = {};
+		$r->{ type } = 'system';
+		$r->{ raw } = "$cmd table $table";
+
+		if ($cmd =~ /^(\S+)/)
+		{
+			$r->{ to } = $1;
+		}
+
+		if ($cmd =~ /via\s(\S+)/)
+		{
+			$r->{ via } = $1;
+		}
+
+		if ($cmd =~ /src\s(\S+)/)
+		{
+			$r->{ source } = $1;
+		}
+
+		if ($cmd =~ /dev\s(\S+)/)
+		{
+			$r->{ interface } = $1;
+		}
+
+		push @routes, $r;
+	}
+
+	return \@routes;
 }
 
 
 
 sub listRoutingTable
 {
+	my $table = shift;
 	my $list = [];
-	my $list = &listRoutingTableCustom();
 
-	# push @{$list}, &listRoutingTableSys(); # add ?????
+	my $list = &listRoutingTableCustom($table);
+	my @routes = @{$list};
 
-	return $list;
+	my $sys = &listRoutingTableSys($table);
+	push @routes, @{$sys};
+
+	return \@routes;
 }
 
 sub getRoutingCustomExists
@@ -353,7 +391,19 @@ sub getRoutingCustomExists
 
 sub buildRouteCmd
 {
-	#~ ?????
+	my $table = shift;
+	my $param = shift;
+	my $cmd = "";
+
+	$cmd .= "$param->{to} " if (exists $param->{to});
+	$cmd .= "dev $param->{interface} " if (exists $param->{interface});
+	$cmd .= "src $param->{source} " if (exists $param->{source});
+	$cmd .= "via $param->{via} " if (exists $param->{via});
+	$cmd .= "mtu $param->{mtu} " if (exists $param->{mtu});
+	$cmd .= "table $table" if ($cmd ne "");
+	$cmd .= "metric $param->{priority} " if (exists $param->{priority});
+
+	return $cmd;
 }
 
 sub createRoutingCustom
@@ -361,12 +411,10 @@ sub createRoutingCustom
 	my $table = shift;
 	my $input = shift;
 
-	my @params = ('id', 'raw', 'type');
+	my @params = ('id', 'raw', 'type', 'to', 'interface', 'via', 'source', 'preference');
 
 	my $lock_rules = &getRoutingTableLock($table);
 	&lockResource( $lock_rules, 'l' );
-
-	$input->{raw} = &buildRouteCmd() if (!exists $input->{raw});
 
 	my $err = &setRoute( 'add', $input->{raw} );
 

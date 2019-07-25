@@ -49,16 +49,142 @@ sub listOutRoutes
 
 	foreach my $r ( @{ &listRoutingTable($table) } )
 	{
-		my $type = $r->{ type } // 'system';
-		push @{ $list },
-		  {
-			id       => $r->{ id } + 0,
+		my $n = {
 			raw     => $r->{ raw },
-			type	=> $type,
-		  };
+			type	=> $r->{ type }
+		};
+
+		$n->{id} = $r->{id}+0 if exists $r->{id};
+		$n->{priority} = (defined $r->{priority})?$r->{priority}+0: 10;
+		$n->{to} = $r->{to} // '';
+		$n->{interface} = $r->{interface} // '';
+		$n->{source} = $r->{source} // '';
+		$n->{via} = $r->{via} // '';
+
+		if (!$n->{priority} and $r->{raw} =~ /metric (\d+)/)
+		{
+			$n->{priority} = $1+0;
+		}
+
+		if (!$n->{interface} and $r->{raw} =~ /dev ([\w\:]+)/)
+		{
+			$n->{interface} = $1;
+		}
+
+		if (!$n->{to} and $r->{raw} =~ /to (\S+)/)
+		{
+			$n->{to} = $1;
+		}
+		elsif (!$n->{to} and $r->{raw} =~ /^\s*(\S+)/)
+		{
+			$n->{to} = $1;
+		}
+
+		if (!$n->{via} and $r->{raw} =~ /via (\S+)/)
+		{
+			$n->{via} = $1;
+		}
+
+		if (!$n->{source} and $r->{raw} =~ /src (\S+)/)
+		{
+			$n->{source} = $1;
+		}
+
+		push @{ $list }, $n;
 	}
 	return $list // [];
 }
+
+
+sub validateRoutingInput
+{
+	my $in = shift;
+	my $if =  '';
+	use NetAddr::IP;
+	require Zevenet::Net::Validate;
+	require Zevenet::Net::Interface;
+
+	# to, segmento red(x.x.x.0/x) o ip
+	{
+		if ($in->{to} =~ '/')
+		{
+			use Net::Netmask;
+			my $net = Net::Netmask->new($in->{to});
+
+			my $base = $net->base();
+			my $mask = $net->bits();
+			$in->{to} = "$base/$mask";
+		}
+
+		if (!$in->{to})
+		{
+			return "The 'to' parameter is invalid";
+		}
+	}
+
+	#
+	unless ((exists $in->{interface} and $in->{interface} ) or (exists $in->{via} and $in->{via} ))
+	{
+		return "An 'interface' or 'via' is expected";
+	}
+
+	# interface, que exista. Si existe, source y via dependen de el
+	if (exists $in->{interface} and $in->{interface} )
+	{
+		return "The interface '$in->{interface}' does not exist" if (&ifexist($in->{interface}) eq 'false');
+		$if = &getInterfaceConfig($in->{interface});
+		return "The interface '$in->{interface}' is unset" if (!$if->{addr});
+	}
+
+	# via, segmento red de alguna interfaz
+	if (exists $in->{via} and $in->{via})
+	{
+		if ($if)
+		{
+			if ( !&getNetValidate($if->{addr},$if->{mask},$in->{via}) )
+			{
+				return "The 'via' parameter has to be in the same network segment that the 'interface'";
+			}
+		}
+		else
+		{
+			# get if
+			$in->{interface} = &checkNetworkExists($in->{via},'32');
+			$if = &getInterfaceConfig($in->{interface});
+			if (!$if or $in->{interface} eq '')
+			{
+				return "The 'via' parameter has to be in the same network segment that an interface";
+			}
+		}
+	}
+
+	# source, ip o virtual de la interfaz de alguna interfaz
+	if (exists $in->{source} and $in->{source})
+	{
+		# get childs
+		my @child = &getInterfaceChild( $if->{name} );
+		my @if_ips = ();
+
+		push @if_ips, $if->{addr};
+		foreach my $child_name (@child)
+		{
+			my $child_if = &getInterfaceConfig( $child_name );
+			push @if_ips, $child_if->{addr};
+		}
+
+		if ( ! grep (/^$in->{source}$/, @if_ips ) )
+		{
+			return "The 'source' parameter has to be defined in the 'interface'";
+		}
+	}
+
+	# preference
+
+	# mtu
+
+	return "";
+}
+
 
 #  GET /routing/rules
 sub list_routing_rules    # ()
@@ -97,7 +223,7 @@ sub create_routing_rule
 			  "It is the priority which the rule will be executed. Minor value of priority is going to be executed before",
 		},
 		"from" => {
-			'valid_format' => 'ipv4v6',  ## ??? añadir segmento red
+			'function' => \&ipisok,
 			'non_blank'    => 'true',
 			'required'     => 'true',
 			'format_msg' =>
@@ -246,10 +372,36 @@ sub create_routing_entry
 
 	my $params = {
 		"raw" => {
-			'required' => 'true',
+			#~ 'required' => 'true',  ????
 			'non_blank' => 'true',
 			'format_msg' =>
-			  "It is the command line parameters to create an 'ip route' entry",
+			  "is the command line parameters to create an 'ip route' entry",
+		},
+		"to" => {
+			# format is checked after
+			#~ 'require' => 'true',    ???? raw o to
+			'format_msg' =>
+			  "is the destination address IP or the source networking net",
+		},
+		"interface" => {
+			'valid_format' => 'routed_interface',
+			'format_msg' =>
+			  "is the interface used to take out the packet",
+		},
+		"source" => {
+			'valid_format' => 'ipv4v6',
+			'format_msg' =>
+			  "is the source address to prefer when sending to the destinations",
+		},
+		"via" => {
+			'valid_format' => 'ipv4v6',
+			'format_msg' =>
+			  "is the next hop for the packet",
+		},
+		"priority" => {
+			'interval' => '1,9',
+			'format_msg' =>
+			  "the routes with lower value will be more priority",
 		},
 	};
 
@@ -265,24 +417,44 @@ sub create_routing_entry
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	if (exists $json_obj->{raw})
+	{
+		if ( $json_obj->{raw} =~ /table\s+(\w+)/ )
+		{
+			my $t = $1;
+			if ($t ne $table )
+			{
+				my $msg = "The input command is not in the requested table '$table'";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
+		$json_obj->{raw} = &sanitazeRouteCmd($json_obj->{raw}, $table);
+	}
+	else
+	{
+		my $msg = &validateRoutingInput($json_obj);
+		if ($msg)
+		{
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		$json_obj->{priority} = 5  if ( !defined $json_obj->{priority});
+
+		$json_obj->{raw} = &buildRouteCmd($table,$json_obj);
+		if ($json_obj->{raw} eq '')
+		{
+			my $msg = "The command could not be created properly";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# check if already exists an equal route
 	if( &isRoute( $json_obj->{raw} ) )
 	{
 		my $msg = "A route with this configuration already exists";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	if ( $json_obj->{raw} =~ /table\s+(\w+)/ )
-	{
-		my $t = $1;
-		if ($t ne $table )
-		{
-			my $msg = "The input command is not in the requested table '$table'";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	$json_obj->{raw} = &sanitazeRouteCmd($json_obj->{raw}, $table);
 
 	my $err = &createRoutingCustom( $table, $json_obj );
 	if ( $err )

@@ -323,6 +323,7 @@ sub checkNetworkExists
 	push @interfaces, &getInterfaceTypeList( 'bond' );
 	push @interfaces, &getInterfaceTypeList( 'vlan' );
 
+	my $found = 0;
 	foreach my $if_ref ( @interfaces )
 	{
 		# if it is the same net pass
@@ -335,9 +336,10 @@ sub checkNetworkExists
 		eval {
 			if ( $net1->contains( $net2 ) or $net2->contains( $net1 ) )
 			{
-				return $if_ref->{ name };
+				$found = 1;
 			}
 		};
+		return $if_ref->{ name } if ($found);
 	}
 
 	return "";
