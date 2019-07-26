@@ -700,6 +700,7 @@ void StreamManager::onResponseEvent(int fd) {
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+    stream->backend_connection.server_name = stream->client_connection.server_name;
     if (!stream->backend_connection.getBackend()->ssl_manager.handleHandshake(
             stream->backend_connection, true)) {
       Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
@@ -1027,6 +1028,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
+    stream->backend_connection.server_name = stream->client_connection.server_name;
     if (!stream->backend_connection.getBackend()->ssl_manager.handleHandshake(
             stream->backend_connection, true)) {
       Debug::logmsg(LOG_INFO, "Handshake error with %s ",

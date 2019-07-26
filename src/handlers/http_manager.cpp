@@ -196,6 +196,9 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
           request.content_length =
               static_cast<size_t>(std::atoi(request.headers[i].value));
+          if ((request.content_length - request.message_length) > 0)
+            request.message_bytes_left =
+                request.content_length - request.message_length;
           continue;
         }
         case http::HTTP_HEADER_NAME::HOST: {
@@ -245,8 +248,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
       case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
         stream.response.content_length =
             static_cast<size_t>(std::atoi(header_value.data()));
-        stream.response.message_bytes_left =
-            stream.response.content_length - stream.response.message_length;
+        if ((stream.response.content_length - stream.response.message_length) > 0)
+          stream.response.message_bytes_left =
+              stream.response.content_length - stream.response.message_length;
         continue;
       }
       case http::HTTP_HEADER_NAME::LOCATION: {

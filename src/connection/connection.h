@@ -97,6 +97,6 @@ public:
   BIO *io{nullptr};
   // ssl bio
   BIO *ssl_bio{nullptr};
-
+  char *server_name{nullptr};
   std::atomic<bool> ssl_connected;
 };
