@@ -150,6 +150,15 @@ sub addlocalnet    # ($if_ref)
 		my $ip_cmd =
 		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
 		&logAndRun( $ip_cmd );
+
+		if ( $eload )
+		{
+			my $err = &eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'applyRoutingTableByIface',
+					args   => [$table,$$if_ref{name}],
+			);
+		}
 	}
 
 	# filling the own table
@@ -922,7 +931,7 @@ sub configureDefaultGW    #()
 }
 
 
-sub listRoutingTables
+sub listRoutingTablesNames
 {
 	my $rttables = &getGlobalConfiguration( 'rttables' );
 

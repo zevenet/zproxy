@@ -358,6 +358,67 @@ sub listRoutingTableSys
 }
 
 
+sub delRoutingDependIface
+{
+	my $iface = shift;
+
+	&zenlog ("Deleting the routes that are depending on '$iface'", 'net');
+	foreach my $rule (&listRoutingDependIface($iface))
+	{
+		my $err = &setRoute('del',$rule->{raw});
+		return 1 if $err;
+
+		my $file = &getRoutingTableFile($rule->{table});
+		my $lock_f = &getRoutingTableLock($rule->{table});
+		$err = &delRoutingConfById($rule->{id}, $file, $lock_f);
+		return 1 if $err;
+	}
+
+	return 0;
+}
+
+
+
+sub applyRoutingTableByIface
+{
+	my $table = shift;
+	my $iface = shift;
+
+	my $err = 0;
+	foreach my $rule (@{&listRoutingTableCustom($table)})
+	{
+		if ($rule->{interface} eq $iface)
+		{
+			$err = &setRoute($rule->{raw});
+			return $err if $err;
+		}
+	}
+
+	return $err;
+}
+
+
+sub listRoutingDependIface
+{
+	my $iface = shift;
+	my @list = ();
+
+	# ???? valorar meter todas rutas de la tabla de la interfaz
+
+	foreach my $table (&listRoutingTablesNames())
+	{
+		foreach my $rule (&listRoutingTableCustom())
+		{
+			if ($rule->{interface} eq $iface)
+			{
+				$rule->{table}=$table;
+				push @list, $rule;
+			}
+		}
+	}
+
+	return \@list;
+}
 
 sub listRoutingTable
 {
@@ -529,6 +590,12 @@ sub sanitazeRouteCmd
 	if ($cmd =~ s/\s*ip\s+(-4|-6)?\s*route\s+\w+\s+//)
 	{
 		&zenlog ("Removing bin: $cmd","debug2","net");
+	}
+	if ($cmd !~ /(?:preference|metric)/)
+	{
+		my $preference = &getGlobalConfiguration("routingRoutePrio");
+		$cmd .= "preference $preference";
+		&zenlog ("Adding a priority: $cmd","debug2","net");
 	}
 
 	return $cmd;

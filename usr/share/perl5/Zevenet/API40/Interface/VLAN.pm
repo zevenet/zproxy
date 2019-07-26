@@ -314,6 +314,15 @@ sub delete_interface_vlan    # ( $vlan )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ($eload)
+	{
+		&eload(
+							  module => 'Zevenet::Net::Zapi',
+							  func   => 'checkZapiIfDepsRouting',
+							  args   => [$vlan,'del'],
+		);
+	}
+
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 
@@ -598,6 +607,15 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+	}
+
+	if ($eload)
+	{
+		&eload(
+							  module => 'Zevenet::Net::Zapi',
+							  func   => 'checkZapiIfDepsRouting',
+							  args   => [$vlan,'put',$json_obj],
+		);
 	}
 
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };

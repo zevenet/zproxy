@@ -298,6 +298,9 @@ sub delete_interface_bond    # ( $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	include 'Zevenet::Net::Zapi';
+	&checkZapiIfDepsRouting($bond, 'del');
+
 	eval {
 		if ( defined $if_ref->{ addr } and defined $if_ref->{ mask } )
 		{
@@ -718,6 +721,9 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			}
 		}
 	}
+
+	include 'Zevenet::Net::Zapi';
+	&checkZapiIfDepsRouting($bond, 'put', $json_obj);
 
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 

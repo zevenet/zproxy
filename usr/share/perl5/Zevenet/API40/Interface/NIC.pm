@@ -83,6 +83,15 @@ sub delete_interface_nic    # ( $nic )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ($eload)
+	{
+		&eload(
+							  module => 'Zevenet::Net::Zapi',
+							  func   => 'checkZapiIfDepsRouting',
+							  args   => [$nic,'del'],
+		);
+	}
+
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &delIf( $if_ref );
@@ -343,6 +352,15 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+	}
+
+	if ($eload)
+	{
+		&eload(
+							  module => 'Zevenet::Net::Zapi',
+							  func   => 'checkZapiIfDepsRouting',
+							  args   => [$nic,'put',$json_obj],
+		);
 	}
 
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };

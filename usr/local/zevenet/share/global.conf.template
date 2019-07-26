@@ -426,7 +426,8 @@ $routingRulePrioUserMin="29000";
 $routingRulePrioUserMax="30999";
 # initial interface tables prio
 $routingRulePrioIfaces="31000";
-
+# deafult priority for routing entries
+$routingRoutePrio="5";
 
 # time period to get the interface throughput stats
 $throughput_period="5";

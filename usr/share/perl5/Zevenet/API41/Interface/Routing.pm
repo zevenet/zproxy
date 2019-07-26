@@ -158,6 +158,11 @@ sub validateRoutingInput
 		}
 	}
 
+	if ( $if->{name} ne 'up' )
+	{
+		return "The interface '$if->{name}', used for routing, must be up";
+	}
+
 	# source, ip o virtual de la interfaz de alguna interfaz
 	if (exists $in->{source} and $in->{source})
 	{
@@ -210,6 +215,8 @@ sub create_routing_rule
 			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
+	require Zevenet::Net::Validate;
+
 	my $desc = "Create a routing rule";
 
 	my $min_prio = &getGlobalConfiguration( 'routingRulePrioUserMin' );
@@ -223,7 +230,7 @@ sub create_routing_rule
 			  "It is the priority which the rule will be executed. Minor value of priority is going to be executed before",
 		},
 		"from" => {
-			'function' => \&ipisok,
+			'function' => \&validIpAndNet,
 			'non_blank'    => 'true',
 			'required'     => 'true',
 			'format_msg' =>
@@ -320,7 +327,7 @@ sub list_routing_tables
 	require Zevenet::Net::Route;
 
 	my $desc = "List routing tables";
-	my @list = &listRoutingTables();
+	my @list = &listRoutingTablesNames();
 
 	my $body = {
 				 description => $desc,
@@ -378,7 +385,7 @@ sub create_routing_entry
 			  "is the command line parameters to create an 'ip route' entry",
 		},
 		"to" => {
-			# format is checked after
+			'function' => \&validIpAndNet,
 			#~ 'require' => 'true',    ???? raw o to
 			'format_msg' =>
 			  "is the destination address IP or the source networking net",
@@ -406,6 +413,21 @@ sub create_routing_entry
 	};
 
 	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# select only one option
+	if (exists $json_obj->{raw})
+	{
+		$params = $params->{raw};
+		$params->{raw}->{required}='true';
+	}
+	else
+	{
+		delete $params->{raw};
+		$params->{to}->{required}='true';
+	}
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
@@ -439,7 +461,8 @@ sub create_routing_entry
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		$json_obj->{priority} = 5  if ( !defined $json_obj->{priority});
+		my $def_pref = &getGlobalConfiguration("routingRoutePrio");
+		$json_obj->{priority} = $def_pref if ( !defined $json_obj->{priority});
 
 		$json_obj->{raw} = &buildRouteCmd($table,$json_obj);
 		if ($json_obj->{raw} eq '')

@@ -273,6 +273,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Net/Mac.pm
 	usr/share/perl5/Zevenet/Net/DHCP.pm
 	usr/share/perl5/Zevenet/Net/Routing.pm
+	usr/share/perl5/Zevenet/Net/Zapi.pm
 	usr/share/perl5/Zevenet/Notify.pm
 	usr/share/perl5/Zevenet/RBAC/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Core.pm

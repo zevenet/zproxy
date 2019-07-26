@@ -23,6 +23,8 @@
 
 use strict;
 
+use Zevenet::Log;
+
 =begin nd
 Function: checkport
 
@@ -125,6 +127,30 @@ sub ipisok    # ($checkip, $version)
 	}
 
 	return $return;
+}
+
+
+=begin nd
+Function: validIpAndNet
+
+	Validate if the input is a valid IP or networking segement
+
+Parameters:
+	ip - IP address or IP network segment. ipv4 or ipv6
+
+Returns:
+	integer - 1 if the input is a valid IP or 0 if it is not valid
+
+=cut
+
+sub validIpAndNet
+{
+	my $ip = shift;
+
+	use NetAddr::IP;
+	my $out = new NetAddr::IP ($ip);
+
+	return (defined $out) ? 1: 0;
 }
 
 =begin nd
@@ -344,6 +370,22 @@ sub checkNetworkExists
 
 	return "";
 }
+
+
+=begin nd
+Function: validBackendStack
+
+	Check if an IP is in the same networking segment that a list of backend
+
+Parameters:
+	backend_array - It is an array with the backend configuration
+	ip - A ip is going to be compared with the backends IPs
+
+Returns:
+	Integer - Returns 1 if the ip is valid or 0 if it is not in the same networking segment
+
+=cut
+
 
 sub validBackendStack
 {
