@@ -139,6 +139,7 @@ sub getFloatInterfaceForAddress
 		if ( $remote_ip->within( $network ) )
 		{
 			$subnet_interface = $iface;
+			last;
 		}
 	}
 
@@ -155,10 +156,10 @@ sub getFloatInterfaceForAddress
 		for my $iface ( @interface_list )
 		{
 			next if $iface->{ vini } eq '';
-
 			if ( $iface->{ name } eq $subnet_interface->{ float } )
 			{
 				$output_interface = $iface;
+				last;
 			}
 		}
 	}
@@ -183,15 +184,34 @@ sub setFloatingSourceAddr
 	my $farm      = shift;
 	my $server    = shift;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $out_if;
-	my $srcaddr = qq();
+	my $out_if    = 0;
+	my $srcaddr   = qq();
 
-	if ( defined $server && $server->{ vip } )
+	require Zevenet::Nft;
+	require Zevenet::Farm::L4xNAT::Config;    # Currently, only for L4
+
+	# Backend source address
+	if ( defined $server && $server->{ ip } )
 	{
 		$out_if = &getFloatInterfaceForAddress( $server->{ ip } );
 	}
 
-	if ( !$out_if && scalar ( $farm->{ servers } ) > 0 )
+	if ( $out_if )
+	{
+		$srcaddr = $out_if->{ addr };
+		return
+		  &httpNlbRequest(
+			{
+			   method => "PUT",
+			   uri    => "/farms",
+			   body =>
+				 qq({"farms" : [ { "name" : "$farm->{ name }", "backends" : [ { "name" : "bck$server->{ id }", "source-addr" : "$srcaddr" } ] } ] })
+			}
+		  );
+	}
+
+	# Farm source address
+	if ( scalar ( $farm->{ servers } ) > 0 )
 	{
 		$out_if = &getFloatInterfaceForAddress( $farm->{ servers }[0]->{ ip } );
 	}
@@ -201,14 +221,12 @@ sub setFloatingSourceAddr
 		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
 	}
 
-	if ( $out_if )
+	if ( !$out_if )
 	{
-		$srcaddr = $out_if->{ addr };
+		return 0;
 	}
 
-	require Zevenet::Nft;
-	require Zevenet::Farm::L4xNAT::Config;    # Currently, only for L4
-
+	$srcaddr = $out_if->{ addr };
 	my $current = &getL4FarmParam( 'sourceaddr', $farm->{ name } );
 
 	return 0 if ( $current eq $srcaddr );

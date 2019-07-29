@@ -186,7 +186,7 @@ sub setL4FarmServer
 		&eload(
 				module => 'Zevenet::Net::Floating',
 				func   => 'setFloatingSourceAddr',
-				args   => [$farm_ref, undef],
+				args   => [$farm_ref, $exists],
 		);
 	}
 

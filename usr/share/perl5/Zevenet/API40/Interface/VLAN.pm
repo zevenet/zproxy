@@ -61,9 +61,6 @@ sub new_vlan    # ( $json_obj )
 				   "gateway" => {
 								  'valid_format' => 'ip_addr',
 				   },
-				   "mac" => {
-							  'valid_format' => 'mac_addr',
-				   },
 	};
 
 	if ( $eload )
@@ -71,6 +68,9 @@ sub new_vlan    # ( $json_obj )
 		$params->{ "dhcp" } = {
 								'non_blank' => 'true',
 								'values'    => ['true', 'false'],
+		};
+		$params->{ "mac" } = {
+								'valid_format' => 'mac_addr',
 		};
 	}
 
@@ -540,9 +540,6 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 								'non_blank' => 'true',
 								'values'    => ['true'],
 				   },
-				   "mac" => {
-							  'valid_format' => 'mac_addr',
-				   },
 	};
 
 	if ( $eload )
@@ -550,6 +547,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		$params->{ "dhcp" } = {
 								'non_blank' => 'true',
 								'values'    => ['true', 'false'],
+		};
+		$params->{ "mac" } = {
+								'valid_format' => 'mac_addr',
 		};
 	}
 
