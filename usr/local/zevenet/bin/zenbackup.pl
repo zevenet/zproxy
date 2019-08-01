@@ -61,7 +61,7 @@ if ( $action eq "-d" )
 if ( $action eq "-D52to60" )
 {
 	print
-	  "Running Backup import from Zevenet 5.2 to Zevenet 6.0, file $backupdir\/backup-$name.tar.gz\n";
+	  "Importing from Zevenet 5.2 to Zevenet 6.0, using $backupdir\/backup-$name.tar.gz\n";
 	print
 	  "A snapshot before to continue is recommended for Virtual Load Balancers...\n";
 	if ( !-e "$backupdir\/backup-$name.tar.gz" )
@@ -69,18 +69,15 @@ if ( $action eq "-D52to60" )
 		print "The given file doesn't exist...\n";
 		exit;
 	}
-	print "Current hostname will be kept\n";
-	print "Cluster config file will not be imported\n";
 	print
-	  "Current Global.conf file :/usr/local/zevenet/config/globa.conf will be kept\n";
-	print "Curent Activation certificate will be kept\n";
+	  "Will be kept: current hostname, global.conf and activation certificate file.\n";
+	print "Cluster config file will not be imported\n";
 	print "Press a key to start...\n";
 	<STDIN>;
 
 	my @eject = `$tar $exclude_52_60 -xvzf $backupdir\/backup-$name.tar.gz -C /`;
 	print "@eject\n";
-	print "Config files have been moved to local system...\n";
-	print "Running migration of config files to new Zevenet 6...\n";
+	print "Configuration files have been moved to local system.\n";
 
 	#migrating config files
 	my $MIG_DIR = "/usr/local/zevenet/migrating/";
