@@ -114,20 +114,15 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     switch (event_group) {
     case EVENT_GROUP::ACCEPTOR:
       break;
-    case EVENT_GROUP::SERVER:
-      onResponseEvent(fd);
+    case EVENT_GROUP::SERVER:onResponseEvent(fd);
       break;
-    case EVENT_GROUP::CLIENT:
-      onRequestEvent(fd);
+    case EVENT_GROUP::CLIENT:onRequestEvent(fd);
       break;
-    case EVENT_GROUP::CONNECT_TIMEOUT:
-      onConnectTimeoutEvent(fd);
+    case EVENT_GROUP::CONNECT_TIMEOUT:onConnectTimeoutEvent(fd);
       break;
-    case EVENT_GROUP::REQUEST_TIMEOUT:
-      onRequestTimeoutEvent(fd);
+    case EVENT_GROUP::REQUEST_TIMEOUT:onRequestTimeoutEvent(fd);
       break;
-    case EVENT_GROUP::RESPONSE_TIMEOUT:
-      onResponseTimeoutEvent(fd);
+    case EVENT_GROUP::RESPONSE_TIMEOUT:onResponseTimeoutEvent(fd);
       break;
     case EVENT_GROUP::SIGNAL:
       onSignalEvent(fd);
@@ -298,7 +293,6 @@ void StreamManager::addStream(int fd) {
 int StreamManager::getWorkerId() { return worker_id; }
 
 void StreamManager::onRequestEvent(int fd) {
-  DEBUG_COUNTER_HIT(debug__::on_request);
   HttpStream *stream = streams_set[fd];
   if (stream != nullptr) {
     if (stream->client_connection.isCancelled()) {
@@ -367,13 +361,16 @@ void StreamManager::onRequestEvent(int fd) {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
                       stream->client_connection.getPeerAddress().c_str());
       }
-      clearStream(stream);
+      // TODO::     clearStream(stream);
       return;
     }
-    if (stream->client_connection.ssl_connected) {
-      httpsHeaders(stream, ssl_manager, listener_config_.clnt_check);
-      DEBUG_COUNTER_HIT(debug__::on_handshake);
-    }
+    if (stream->client_connection.ssl_connected)
+        {
+            DEBUG_COUNTER_HIT(debug__::on_handshake);
+            httpsHeaders(stream, ssl_manager, listener_config_.clnt_check);
+            stream->backend_connection.server_name =
+                stream->client_connection.server_name;
+        }
     return;
   }
   case IO::IO_RESULT::SUCCESS:
@@ -393,23 +390,28 @@ void StreamManager::onRequestEvent(int fd) {
   }
   }
 
-  if (stream->upgrade.pinned_connection ||
-      stream->request.message_bytes_left > 0) {
+  DEBUG_COUNTER_HIT(debug__::on_request);
+  if (stream->upgrade.pinned_connection || stream->request.hasPendingData()) {
     // TODO:: maybe quick response
+#if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(
-        LOG_REMOVE, "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
+        LOG_REMOVE,
+        "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
         stream->client_connection.buffer_size, stream->request.content_length,
         stream->request.message_bytes_left, IO::getResultString(result).data());
+#endif
     stream->backend_connection.enableWriteEvent();
     return;
   }
-
-  /* Check if chunked transfer encoding is enabled. */
-  if (http_manager::transferChunked(stream->client_connection, stream->request)) {
-    stream->backend_connection.enableWriteEvent();
-    return;
-  }
-
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Debug::logmsg(
+      LOG_DEBUG,
+      "IN buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: "
+      "%s Header sent: %s",
+      stream->client_connection.buffer_size, stream->request.content_length,
+      stream->request.message_bytes_left, IO::getResultString(result).data(),
+      stream->request.headers_sent ? "true" : "false");
+#endif
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
   // do {
@@ -429,8 +431,7 @@ void StreamManager::onRequestEvent(int fd) {
       this->clearStream(stream);
       return;
     }
-    stream->response.reset_parser();//TODO: small hack to force reset
-    stream->backend_connection.buffer_size = 0;
+
     stream->timer_fd.unset();
     deleteFd(stream->timer_fd.getFileDescriptor());
     timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
@@ -463,6 +464,10 @@ void StreamManager::onRequestEvent(int fd) {
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
       static size_t total_request;
       total_request++;
+      if (stream->backend_connection.buffer_size == 0) {
+        stream->response.reset_parser();
+        stream->backend_connection.buffer_size = 0;
+      }
       Debug::logmsg(
           LOG_DEBUG, "%lu [%s] %.*s [%s (%d) -> %s (%d)]", total_request, service->name.c_str(),
           stream->request.getRequestLine().length() - 2,
@@ -623,7 +628,6 @@ void StreamManager::onRequestEvent(int fd) {
 }
 
 void StreamManager::onResponseEvent(int fd) {
-  DEBUG_COUNTER_HIT(debug__::on_response);
   HttpStream *stream = streams_set[fd];
   if (stream == nullptr) {
     Debug::LogInfo("Backend Connection, Stream closed", LOG_DEBUG);
@@ -637,12 +641,14 @@ void StreamManager::onResponseEvent(int fd) {
     return;
   }
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Debug::
-      logmsg(
-          LOG_REMOVE, "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
-          stream->backend_connection.getFileDescriptor(),
-          stream->backend_connection.buffer_size, stream->response.content_length,
-          stream->response.message_bytes_left);
+  Debug::logmsg(LOG_REMOVE,
+                "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
+                "header_sent: %s",
+                stream->backend_connection.getFileDescriptor(),
+                stream->backend_connection.buffer_size,
+                stream->response.content_length,
+                stream->response.message_bytes_left,
+                stream->response.headers_sent ? "true" : "false");
 #endif
   // disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
@@ -653,6 +659,7 @@ void StreamManager::onResponseEvent(int fd) {
 //    stream->client_connection.enableWriteEvent();
 //    return;
 //  }
+  DEBUG_COUNTER_HIT(debug__::on_response);
   IO::IO_RESULT result;
 
   if (stream->backend_connection.getBackend()->isHttps()) {
@@ -768,25 +775,29 @@ void StreamManager::onResponseEvent(int fd) {
   auto ret = stream->response.parseResponse(
       stream->backend_connection.buffer, stream->backend_connection.buffer_size,
       &parsed);
-
+  static size_t total_responses;
   if (ret != http_parser::PARSE_RESULT::SUCCESS) {
-    Debug::logmsg(LOG_REMOVE, "PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer "
-                              "size: %lu \n\t\t Content length: %lu \n\t\t "
-                              "left: %lu\n%.*s",
-                  stream->backend_connection.buffer_size,
-                  stream->response.content_length,
-                  stream->response.message_bytes_left,
-                  stream->backend_connection.buffer_size,
-                  stream->backend_connection.buffer);
-    return;
+    if (stream->backend_connection.buffer_size > 0) {
+      stream->client_connection.enableWriteEvent();
+      return;
+    }
+    Debug::logmsg(
+        LOG_REMOVE,
+        "%d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer "
+        "size: %lu \n\t\t Content length: %lu \n\t\t "
+        "left: %lu\n%.*s header sent: %s \n",
+        total_responses, stream->client_connection.getFileDescriptor(),
+        stream->backend_connection.getFileDescriptor(),
+        stream->backend_connection.buffer_size, stream->response.content_length,
+        stream->response.message_bytes_left,
+        stream->backend_connection.buffer_size,
+        stream->backend_connection.buffer,
+        stream->response.headers_sent ? "true" : "false");
     clearStream(stream);
     return;
   }
-  //FIXME:
-  stream->request.reset_parser();
-  stream->client_connection.buffer_size = 0;
+  // FIXME:
 
-  static size_t total_responses;
   total_responses++;
   Debug::logmsg(
       LOG_DEBUG, " %lu [%s] %.*s [%s (%d) <- %s (%d)]", total_responses,
@@ -1111,6 +1122,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
                       stream->client_connection.getPeerAddress().c_str());
         clearStream(stream);
+      }
+      if (stream->client_connection.ssl_connected) {
+        stream->backend_connection.server_name =
+            stream->client_connection.server_name;
       }
       return;
     }

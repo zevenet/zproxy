@@ -84,12 +84,14 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
   }
 
   if (client_mode && ssl_connection.server_name != nullptr) {
-//    const char *server_name = "central.zevenet.com";
-    if (!SSL_set_tlsext_host_name(ssl_connection.ssl, ssl_connection.server_name)) {
-      Debug::logmsg(LOG_DEBUG, "(%lx) could not set SNI host name  to %s", pthread_self(), ssl_connection.server_name);
+    if (!SSL_set_tlsext_host_name(ssl_connection.ssl,
+                                  ssl_connection.server_name)) {
+      Debug::logmsg(LOG_DEBUG, "could not set SNI host name  to %s",
+                    ssl_connection.server_name);
       return false;
     } else {
-      Debug::logmsg(LOG_DEBUG, "(%lx) Set SNI host name \"%s\"", pthread_self(), ssl_connection.server_name);
+      Debug::logmsg(LOG_DEBUG, "Set SNI host name \"%s\"",
+                    ssl_connection.server_name);
     }
   }
 
