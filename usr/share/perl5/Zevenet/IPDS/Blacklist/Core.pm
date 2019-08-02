@@ -78,7 +78,7 @@ sub getBLIpsetStatus
 
 	include 'Zevenet::IPDS::Core';
 
-	$output = "up" if ( &getIPDSPolicyParam( 'status', $listName ) > 0 );
+	$output = "up" if ( &getIPDSPolicyParam( 'name', $listName ) > 0 );
 	return $output;
 }
 
