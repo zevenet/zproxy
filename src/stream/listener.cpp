@@ -160,7 +160,9 @@ bool Listener::init(std::string address, int port) {
 Listener::Listener()
     : is_running(false), listener_connection(), stream_manager_set() {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
-  auto concurrency_lever = std::thread::hardware_concurrency() - 1;
+  auto concurrency_lever = std::thread::hardware_concurrency() < 2
+      ? 2
+      : std::thread::hardware_concurrency() - 1;
   for (int sm = 0; sm < concurrency_lever; sm++) {
     stream_manager_set[sm] = new StreamManager();
   }
