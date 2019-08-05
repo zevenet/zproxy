@@ -270,7 +270,7 @@ sub setBLDeleteRule
 	$output = &delIPDSFarmParam( 'policy', $listName, $farmName );
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( &getBLListNoUsed( $listName ) )
+	if ( !&getBLListUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}
@@ -457,7 +457,7 @@ sub setBLRemFromFarm
 	}
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( !$output && &getBLListNoUsed( $listName ) )
+	if ( !$output && !&getBLListUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}
