@@ -416,8 +416,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 			unless ( $ssloff )
 			{
-				my $msg = "The CPU does not support SSL offloading.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				&zenlog( "The CPU does not support SSL offloading.", "warning", "system" );
 			}
 
 			if ( &setFarmCipherList( $farmname, $ciphers_lib ) == -1 )
