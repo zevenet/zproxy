@@ -65,6 +65,8 @@ $fileapt="/etc/apt/sources.list";
 $apt_source_zevenet="/etc/apt/sources.list.d/zevenet.list";
 # apt user conf
 $apt_conf_file="/etc/apt/apt.conf";
+# apt updates dir
+$update_dir="/usr/local/zevenet/updates"
 # Zevenet URL repo
 $repo_url_zevenet="repo.zevenet.com";
 # Zevenet GPG key

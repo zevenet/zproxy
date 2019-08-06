@@ -512,7 +512,7 @@ Returns:
 
 sub getIPDSPolicyParam
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 1 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $param = shift;
 	my $list  = shift;
@@ -582,7 +582,7 @@ sub getIPDSPolicyParam
 		{
 			my @l = split /"/, $line;
 			my $val = $l[3];
-			return $val;
+			return $val + 0;
 		}
 	}
 

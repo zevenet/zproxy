@@ -78,7 +78,7 @@ sub getBLIpsetStatus
 
 	include 'Zevenet::IPDS::Core';
 
-	$output = "up" if ( &getIPDSPolicyParam( 'status', $listName ) > 0 );
+	$output = "up" if ( &getIPDSPolicyParam( 'name', $listName ) > 0 );
 	return $output;
 }
 
@@ -98,7 +98,21 @@ sub getBLStatus
 # return 0 if the list has no rules applied
 #  else return the number of farms that are using the list
 # $lists = &getListNoUsed ();
-sub getBLListNoUsed
+
+=begin nd
+Function: getBLListUsed
+
+	Returns the number of farms that are using the list
+
+Parameters:
+	listName - name of the list
+
+Returns:
+	Scalar - number of farms used or 0 if not used
+
+=cut
+
+sub getBLListUsed
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -108,7 +122,8 @@ sub getBLListNoUsed
 	include 'Zevenet::IPDS::Core';
 
 	$matches = &getIPDSPolicyParam( 'farms', $listName );
-	$matches = 0 if ( $matches < 0 );
+	&zenlog( "ECM DEBUG: matches is $matches" );
+	$matches = 0 if ( $matches <= 0 );
 
 	return $matches;
 }

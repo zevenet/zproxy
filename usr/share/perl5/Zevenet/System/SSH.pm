@@ -44,14 +44,16 @@ Returns:
 See Also:
 	zapi/v3/system.cgi, dos.cgi
 =cut
+
 sub getSsh
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Validate;
 
-	my $sshFile = &getGlobalConfiguration( 'sshConf' );
+	my $sshFile       = &getGlobalConfiguration( 'sshConf' );
 	my $listen_format = &getValidFormat( 'ssh_listen' );
-	my $ssh     = {                                       # conf
+	my $ssh           = {                                       # conf
 				'port'   => 22,
 				'listen' => "*",
 	};
@@ -106,15 +108,17 @@ Returns:
 See Also:
 	zapi/v3/system.cgi
 =cut
+
 sub setSsh
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $sshConf ) = @_;
 
-	my $sshFile     = &getGlobalConfiguration( 'sshConf' );
-	my $output      = 1;
-	my $index       = 5; # default, it is the line where will add port
-						 # and listen if one of this doesn't exist
+	my $sshFile = &getGlobalConfiguration( 'sshConf' );
+	my $output  = 1;
+	my $index = 5;    # default, it is the line where will add port
+	                  # and listen if one of this doesn't exist
 
 	# create flag to check all params are changed
 	my $portFlag;
@@ -172,16 +176,7 @@ sub setSsh
 	include 'Zevenet::IPDS::DoS::Config';
 
 	my $cmd = &getGlobalConfiguration( 'sshService' ) . " restart";
-	$output = &logAndRun ( $cmd );
-
-	&setDOSParam( 'ssh_brute_force', 'port', $sshConf->{ 'port' } );
-
-	# restart sshbruteforce ipds rule if this is actived
-	if ( &getDOSParam( 'ssh_brute_force', 'status' ) eq 'up' )
-	{
-		&setDOSParam( 'ssh_brute_force', 'status', 'down' );
-		&setDOSParam( 'ssh_brute_force', 'status', 'up' );
-	}
+	$output = &logAndRun( $cmd );
 
 	return $output;
 }

@@ -479,12 +479,12 @@ if ( $action eq "start" )
 	}
 
 	#start IPDS
-	if ($eload)
-	{
-		$print_msg = &eload( module => $mod, func => 'start_ipds_without_cert' );
-                print $print_msg . "\n";
-
-	}
+	#if ($eload)
+	#{
+	#	$print_msg = &eload( module => $mod, func => 'start_ipds_without_cert' );
+	#        print $print_msg . "\n";
+	#
+	#}
 
 
 	# At this point every zevenet interface and farm is running
