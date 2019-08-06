@@ -35,7 +35,7 @@ function setAptOffline {
 	# Input parameters
 		# $1 = apt Zevenet source
 
-	echo "checking local update system"
+	echo "Checking local update system"
 
 	# create the directory if it does not exist
 	if [ ! -d ${update_dir} ]; then
@@ -45,7 +45,7 @@ function setAptOffline {
 	# check if the directory is empty
 	cmd=`ls ${update_dir} | wc -l`
 	if [ $cmd -eq 0 ]; then
-		echo "update packages not found on ${update_dir}"
+		echo "No packages to update on ${update_dir}"
 	        exit
 	fi
 
