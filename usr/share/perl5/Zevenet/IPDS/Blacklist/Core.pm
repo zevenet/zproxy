@@ -122,7 +122,6 @@ sub getBLListUsed
 	include 'Zevenet::IPDS::Core';
 
 	$matches = &getIPDSPolicyParam( 'farms', $listName );
-	&zenlog( "ECM DEBUG: matches is $matches" );
 	$matches = 0 if ( $matches <= 0 );
 
 	return $matches;
