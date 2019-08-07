@@ -359,3 +359,58 @@ const std::map<std::string, http::TRANSFER_ENCODING_TYPE, std::less<>>
   {"br", http::TRANSFER_ENCODING_TYPE::BR},
   {"identity", http::TRANSFER_ENCODING_TYPE::IDENTITY},
 };
+#if CACHE_ENABLED
+const std::unordered_map<CACHE_CONTROL, const std::string>
+    http_info::cache_control_values_strings = {
+        {CACHE_CONTROL::MAX_AGE, "max-age"},
+        {CACHE_CONTROL::MAX_STALE, "max-stale"},
+        {CACHE_CONTROL::MIN_FRESH, "min-fresh"},
+        {CACHE_CONTROL::NO_CACHE, "no-cache"},
+        {CACHE_CONTROL::NO_STORE, "no-store"},
+        {CACHE_CONTROL::NO_TRANSFORM, "no-transform"},
+        {CACHE_CONTROL::ONLY_IF_CACHED, "only-if-cached"},
+        {CACHE_CONTROL::MUST_REVALIDATE, "must-revalidate"},
+        {CACHE_CONTROL::PUBLIC, "public"},
+        {CACHE_CONTROL::PRIVATE, "private"},
+        {CACHE_CONTROL::PROXY_REVALIDATE, "proxy-revalidate"},
+        {CACHE_CONTROL::S_MAXAGE, "s-maxage"},
+};
+
+const std::unordered_map<std::string, CACHE_CONTROL>
+    http_info::cache_control_values = {
+        {"max-age", CACHE_CONTROL::MAX_AGE},
+        {"max-stale", CACHE_CONTROL::MAX_STALE},
+        {"min-fresh", CACHE_CONTROL::MIN_FRESH},
+        {"no-cache", CACHE_CONTROL::NO_CACHE},
+        {"no-store", CACHE_CONTROL::NO_STORE},
+        {"no-transform", CACHE_CONTROL::NO_TRANSFORM},
+        {"only-if-cached", CACHE_CONTROL::ONLY_IF_CACHED},
+        {"must-revalidate", CACHE_CONTROL::MUST_REVALIDATE},
+        {"public", CACHE_CONTROL::PUBLIC},
+        {"private", CACHE_CONTROL::PRIVATE},
+        {"proxy-revalidate", CACHE_CONTROL::PROXY_REVALIDATE},
+        {"s-maxage", CACHE_CONTROL::S_MAXAGE},
+};
+
+const std::unordered_map<WARNING_CODE, const std::string>
+    http_info::warning_code_values_strings = {
+        {WARNING_CODE::RESPONSE_STALE, "Response is Stale"},
+        {WARNING_CODE::REVALIDATION_FAILED, "Revalidation Failed"},
+        {WARNING_CODE::DISCONNECTED, "Disconnected Operation"},
+        {WARNING_CODE::HEURISTIC_EXPIRATION, "Heuristic Expiration"},
+        {WARNING_CODE::MISCELLANEOUS, "Miscellaneous Warning"},
+        {WARNING_CODE::TRANSFORMATION_APPLIED, "Transformation Applied"},
+        {WARNING_CODE::PERSISTENT_WARNING, "Miscellaneous Persistent Warning"},
+};
+
+const std::unordered_map<std::string, WARNING_CODE>
+    http_info::warning_code_values = {
+        {"Response is Stale", WARNING_CODE::RESPONSE_STALE},
+        {"Revalidation Failed", WARNING_CODE::REVALIDATION_FAILED},
+        {"Disconnected Operation", WARNING_CODE::DISCONNECTED},
+        {"Heuristic Expiration", WARNING_CODE::HEURISTIC_EXPIRATION},
+        {"Miscellaneous Warning", WARNING_CODE::MISCELLANEOUS},
+        {"Transformation Applied", WARNING_CODE::TRANSFORMATION_APPLIED},
+        {"Miscellaneous Persistent Warning", WARNING_CODE::PERSISTENT_WARNING},
+};
+#endif

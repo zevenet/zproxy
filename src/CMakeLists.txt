@@ -16,6 +16,7 @@ add_definitions(-DDEBUG_SSL=0)
 add_definitions(-DENABLE_SSL_SESSION_CACHING=0)
 add_definitions(-DENABLE_ZERO_COPY=0)
 add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
+add_definitions(-DCACHE_ENABLED=0)
 
 add_library(libzhttp
 		ssl/ssl_common.h
@@ -73,7 +74,10 @@ add_library(libzhttp
 		stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
         handlers/http_manager.cpp
 		handlers/http_manager.h
-        http/HttpRequest.cpp)
+        http/HttpRequest.cpp
+                cache/HttpCacheManager.cpp
+                cache/HttpCacheManager.h
+                )
 
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
 if (BUNDLED_OPENSSL)

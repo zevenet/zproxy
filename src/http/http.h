@@ -137,7 +137,35 @@ enum class HTTP_HEADER_NAME : uint16_t {
   X_SSL_SERIAL,
   X_SSL_CERTIFICATE,
 };
+#if CACHE_ENABLED
+enum WARNING_CODE {
+  RESPONSE_STALE = 110,         // "Response is Stale"
+  REVALIDATION_FAILED = 111,    // "Revalidation Failed"
+  DISCONNECTED = 112,           // "Disconnected Operation"
+  HEURISTIC_EXPIRATION = 113,   // "Heuristic Expiration"
+  MISCELLANEOUS = 199,          // "Miscellaneous Warning"
+  TRANSFORMATION_APPLIED = 214, // "Transformation Applied"
+  PERSISTENT_WARNING = 299,     // "Miscellaneous Persistent Warning"
+};
 
+enum class CACHE_CONTROL : uint16_t {
+  // HTTP Request directives
+  MAX_AGE,
+  MAX_STALE,
+  MIN_FRESH,
+  NO_CACHE,
+  NO_STORE,
+  NO_TRANSFORM,
+  ONLY_IF_CACHED,
+  // HTTP Response directives
+  MUST_REVALIDATE,
+  PUBLIC,
+  PRIVATE,
+  PROXY_REVALIDATE,
+  S_MAXAGE,
+  // Extension directives if any
+};
+#endif
 enum class REQUEST_METHOD : uint16_t {
   // https://www.iana.org/assignments/http-methods/http-methods.xhtml
   NONE,
@@ -208,6 +236,12 @@ struct http_info {
   static const std::map<std::string, CONNECTION_VALUES, std::less<>> connection_values;
   static const std::unordered_map<TRANSFER_ENCODING_TYPE, const std::string> compression_types_strings;
   static const std::map<std::string, TRANSFER_ENCODING_TYPE, std::less<>> compression_types;
+#if CACHE_ENABLED
+  static const std::unordered_map<CACHE_CONTROL, const std::string> cache_control_values_strings;
+  static const std::unordered_map<std::string, CACHE_CONTROL> cache_control_values;
+  static const std::unordered_map<WARNING_CODE, const std::string> warning_code_values_strings;
+  static const std::unordered_map<std::string, WARNING_CODE> warning_code_values;
+#endif
 };
 
 struct validation {

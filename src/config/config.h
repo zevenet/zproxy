@@ -139,6 +139,7 @@ class Config {
   regex_t IncludeDir;
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
+  regex_t Cache, CacheContent, CacheTO; /* Cache configuration regex */
  public:
 
   static regex_t HEADER,    /* Allowed header */
@@ -197,7 +198,10 @@ class Config {
    * parse a back-end
    */
   BackendConfig *parseBackend(const int is_emergency);
-
+  /*
+   * Parse the cache configuration
+   */
+  void parseCache(ServiceConfig *const svc);
   /*
    * parse a session
    */

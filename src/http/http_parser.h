@@ -74,6 +74,10 @@ public:
     !permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
   }
   unsigned long count{0};
+#if CACHE_ENABLED
+  bool pragma = false;
+  bool cache_control = false;
+#endif
   phr_header headers[MAX_HEADERS_SIZE];
   char *buffer;
   size_t buffer_size;

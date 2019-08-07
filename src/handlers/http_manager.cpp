@@ -213,6 +213,81 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
             request.headers[i].header_off = true;
           break;
         }
+#if CACHE_ENABLED
+      case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
+        std::vector<string> cache_directives;
+        helper::splitString(std::string(header_value), cache_directives, ' ');
+        request.cache_control = true;
+
+        // Lets iterate over the directives array
+        for (unsigned long l = 0; l < cache_directives.size(); l++) {
+          // split using = to obtain the directive value, if supported
+          if (cache_directives[l].back() == ',')
+            cache_directives[l] =
+                cache_directives[l].substr(0, cache_directives[l].length() - 1);
+          string directive;
+          string directive_value = "";
+
+          std::vector<string> parsed_directive;
+          helper::splitString(cache_directives[l], parsed_directive, '=');
+
+          directive = parsed_directive[0];
+
+          // If the size == 2 the directive is like directive=value
+          if (parsed_directive.size() == 2)
+            directive_value = parsed_directive[1];
+          // To separe directive from the token
+          if (http::http_info::cache_control_values.count(directive) > 0) {
+            switch (http::http_info::cache_control_values.at(directive)) {
+            case CACHE_CONTROL::MAX_AGE:
+              if (directive_value.size() != 0)
+                request.c_opt.max_age = stoi(directive_value);
+              break;
+            case CACHE_CONTROL::MAX_STALE:
+              if (directive_value.size() != 0)
+                request.c_opt.max_stale = stoi(directive_value);
+              break;
+            case CACHE_CONTROL::MIN_FRESH:
+              if (directive_value.size() != 0)
+                request.c_opt.min_fresh = stoi(directive_value);
+              break;
+            case CACHE_CONTROL::NO_CACHE:
+              request.c_opt.no_cache = true;
+              break;
+            case CACHE_CONTROL::NO_STORE:
+              request.c_opt.no_store = true;
+              break;
+            case CACHE_CONTROL::NO_TRANSFORM:
+              request.c_opt.transform = false;
+              break;
+            case CACHE_CONTROL::ONLY_IF_CACHED:
+              request.c_opt.only_if_cached = true;
+              break;
+            default:
+              Debug::logmsg(
+                  LOG_ERR,
+                  ("Malformed cache-control, found response directive " +
+                   directive + " in the request")
+                      .c_str());
+              break;
+            }
+          } else {
+            Debug::logmsg(LOG_ERR, ("Unrecognized directive " + directive +
+                                    " in the request")
+                                       .c_str());
+          }
+        }
+        break;
+      }
+      case http::HTTP_HEADER_NAME::AGE:
+        break;
+      case http::HTTP_HEADER_NAME::PRAGMA: {
+        if (header_value.compare("no-cache") == 0) {
+          request.pragma = true;
+        }
+        break;
+      }
+#endif
         default: continue;
       }
 
@@ -231,7 +306,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
 //    Debug::logmsg(LOG_DEBUG, "Chunked transfer enabled");
     return validation::REQUEST_RESULT::OK;
   }
-
+#if CACHE_ENABLED
+  stream.request.c_opt.no_store ? response.c_opt.cacheable = false : response.c_opt.cacheable = true;
+#endif
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
 
@@ -297,8 +374,88 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
         if (static_cast<Service*>(stream.request.getService())->service_config.sts > 0)
           response.headers[i].header_off = true;
         break;
+      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+#if CACHE_ENABLED
+      case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
+        std::vector<string> cache_directives;
+        helper::splitString(std::string(header_value), cache_directives, ' ');
+        response.cache_control = true;
+        // Lets iterate over the directives array
+        for (unsigned long l = 0; l < cache_directives.size(); l++) {
+          // split using = to obtain the directive value, if supported
+          string directive;
+          string directive_value = "";
 
-        case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+          std::vector<string> parsed_directive;
+          helper::splitString(cache_directives[l], parsed_directive, '=');
+
+          directive = parsed_directive[0];
+
+          // If the size == 2 the directive is like directive=value
+          if (parsed_directive.size() == 2)
+            directive_value = parsed_directive[1];
+          // To separe directive from the token
+          if (http::http_info::cache_control_values.count(directive) > 0) {
+            switch (http::http_info::cache_control_values.at(directive)) {
+            case CACHE_CONTROL::MAX_AGE:
+              if (directive_value.size() != 0 && response.c_opt.max_age == -1)
+                response.c_opt.max_age = stoi(directive_value);
+              break;
+            case CACHE_CONTROL::PUBLIC:
+              response.c_opt.scope = CACHE_SCOPE::PUBLIC;
+              break;
+            case CACHE_CONTROL::PRIVATE:
+              response.c_opt.scope = CACHE_SCOPE::PRIVATE;
+              break;
+            case CACHE_CONTROL::PROXY_REVALIDATE:
+              response.c_opt.revalidate = true;
+              break;
+            case CACHE_CONTROL::S_MAXAGE:
+              if (directive_value.size() != 0)
+                response.c_opt.max_age = stoi(directive_value);
+              break;
+            case CACHE_CONTROL::NO_CACHE:
+              response.c_opt.no_cache = true;
+              response.c_opt.cacheable = false;
+              break;
+            case CACHE_CONTROL::NO_STORE:
+              response.c_opt.cacheable = false;
+              break;
+            default:
+              Debug::logmsg(
+                  LOG_ERR,
+                  ("Malformed cache-control, found request directive " +
+                   directive + " in the response")
+                      .c_str());
+              break;
+            }
+          } else {
+            Debug::logmsg(LOG_ERR, ("Unrecognized directive " + directive +
+                                    " in the response")
+                                       .c_str());
+          }
+        }
+        break;
+      }
+      case http::HTTP_HEADER_NAME::PRAGMA: {
+        if (header_value.compare("no-cache") == 0) {
+          response.pragma = true;
+        }
+        break;
+      }
+      case http::HTTP_HEADER_NAME::ETAG:
+        response.etag = std::string(header_value);
+        break;
+      case http::HTTP_HEADER_NAME::EXPIRES:
+        response.expires = timeHelper::strToTime(std::string(header_value));
+        break;
+      case http::HTTP_HEADER_NAME::DATE:
+        response.date = timeHelper::strToTime(std::string(header_value));
+        break;
+      case http::HTTP_HEADER_NAME::LAST_MODIFIED:
+        response.last_mod = timeHelper::strToTime(std::string(header_value));
+        break;
+#endif
       default:continue;
       }
 

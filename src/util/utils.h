@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <iomanip>
 
 namespace IO {
 
@@ -78,6 +79,15 @@ inline bool stringEqual(const std::string &str1, const std::string &str2) {
     return true;
   }
   return false;
+}
+
+template <class Container>
+void splitString(const std::string &str, Container &cont, char delim) {
+  std::stringstream ss(str);
+  std::string token;
+  while (std::getline(ss, token, delim)) {
+    cont.push_back(token);
+  }
 }
 
 inline bool headerEqual(const phr_header &header,
@@ -154,3 +164,31 @@ std::string to_string_with_precision(const T a_value, const int n = 4) {
   return out.str();
 }
 } // namespace conversionHelper
+
+namespace timeHelper {
+inline struct std::tm strToStruct(const std::string &str_date) {
+  std::stringstream ss(str_date);
+  std::tm tm = {};
+  ss >> std::get_time(&tm, "%a, %d %b %Y %H:%M:%S GMT");
+  return tm;
+}
+
+inline time_t strToTime(const std::string &str_date) {
+  std::tm tm = strToStruct(str_date);
+  return std::mktime(&tm);
+};
+
+inline time_t gmtTimeNow() {
+  time_t now = std::time(&now);
+  now = std::mktime(gmtime(&now));
+  return now;
+};
+inline std::string *strTimeNow() {
+  time_t now = gmtTimeNow();
+  char buff[30];
+  strftime(buff, 30, "%a, %d %b %Y %H:%M:%S GMT", localtime(&now));
+  std::string *str_time_now = new std::string(buff, 30);
+  return str_time_now;
+}
+inline std::time_t getAge(time_t creation) { return gmtTimeNow() - creation; }
+}

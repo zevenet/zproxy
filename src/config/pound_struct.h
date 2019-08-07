@@ -87,12 +87,18 @@ class ServiceConfig {
   BackendConfig *emergency;
   int abs_pri;         /* abs total priority for all back-ends */
   int tot_pri;         /* total priority for current back-ends */
+#if CACHE_ENABLED
+  int cache_timeout = -1; /* cached content timeout in seconds */
+#endif
   pthread_mutex_t mut; /* mutex for this service */
   SESS_TYPE sess_type;
   int sess_ttl;       /* session time-to-live */
   std::string sess_id;    /* id used to track the session */
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
+#if CACHE_ENABLED
+  regex_t cache_content; /* pattern to decide if must be cached or not */
+#endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
   LHASH_OF(TABNODE) * sessions; /* currently active sessions */

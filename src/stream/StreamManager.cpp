@@ -448,7 +448,57 @@ void StreamManager::onRequestEvent(int fd) {
     }
 
     stream->request.setService(service);
+#if CACHE_ENABLED
+    // If the cache is enabled and the request is cached and it is also fresh
+    if (service->cache_enabled) {
+      if (stream->request.c_opt.only_if_cached &&
+          !service->isCached(stream->request)) {
+        // If the directive only-if-cached is in the request and the content
+        // is not cached, reply an error 504 as stated in the rfc7234
+        stream->replyError(
+            HttpStatus::Code::GatewayTimeout,
+            HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
+            "", this->listener_config_, *this->ssl_manager);
+        this->clearStream(stream);
+        return;
+      } else if (service->isCached(stream->request) &&
+                 (service->canBeServed(stream->request) ||
+                  stream->request.c_opt.only_if_cached)) {
+        stream->response.reset_parser();
+        if (service->createCacheResponse(stream->request, stream->response) !=
+            0) {
+          stream->replyError(
+              HttpStatus::Code::GatewayTimeout,
+              HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout)
+                  .c_str(),
+              "", this->listener_config_, *this->ssl_manager);
+          this->clearStream(stream);
+          return;
+        }
+        http_manager::validateResponse(*stream, listener_config_);
+        if (http::http_info::http_verbs.at(std::string(
+                stream->request.method, stream->request.method_len)) ==
+            http::REQUEST_METHOD::HEAD) {
+          // If HTTP verb is HEAD, just send headers
+          stream->response.buffer_size =
+              stream->response.buffer_size - stream->response.message_length;
+          stream->response.message = nullptr;
+          stream->response.message_length = 0;
+          stream->response.message_bytes_left = 0;
+        }
+        stream->client_connection.buffer_size = 0;
+        stream->request.headers_sent = false;
+        stream->backend_connection.buffer_size = stream->response.buffer_size;
+        stream->client_connection.enableWriteEvent();
+        return;
+      }
+      else;
+        stream->response.reset_parser();
+        stream->response.cached = false;
+        stream->response.headers_sent = false;
+    }
 
+#endif
     auto bck = service->getBackend(*stream);
     if (bck == nullptr) {
       // No backend available
@@ -758,7 +808,15 @@ void StreamManager::onResponseEvent(int fd) {
   //TODO:  stream->backend_stadistics.update();
 
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
-
+#if CACHE_ENABLED
+    auto service = static_cast<Service *>(stream->request.getService());
+    if (service->cache_enabled && service->isCached(stream->request) &&
+        stream->request.c_opt.no_store == false) {
+      service->appendData(stream->backend_connection.buffer,
+                          stream->backend_connection.buffer_size,
+                          stream->request.getUrl());
+    }
+#endif
     stream->client_connection.enableWriteEvent();
     // TODO:: maybe quick response
 #if PRINT_DEBUG_FLOW_BUFFERS
@@ -831,6 +889,18 @@ void StreamManager::onResponseEvent(int fd) {
   }
 
   auto service = static_cast<Service *>(stream->request.getService());
+#if CACHE_ENABLED
+  if (service->cache_enabled) {
+    regex_t *pattern = service->getCachePattern();
+    regmatch_t matches[2];
+    if (pattern != nullptr) {
+      if (regexec(pattern, stream->request.getUrl().data(), 1, matches, 0) == 0)
+        if (stream->request.c_opt.no_store == false)
+          service->handleResponse(stream->response, stream->request);
+      //        }
+    }
+  }
+#endif
   http_manager::setBackendCookie(service, stream);
   setStrictTransportSecurity(service, stream);
   if (!this->is_https_listener) {
@@ -1161,12 +1231,19 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
         stream->backend_connection.buffer_size, stream->response.content_length,
         stream->response.message_bytes_left, written, IO::getResultString(result).data());
 #endif
+#if CACHE_ENABLED
+    if ( !stream->response.isCached())
+#endif
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
     return;
   }
 
-  if (stream->backend_connection.buffer_size == 0)
+  if (stream->backend_connection.buffer_size == 0
+#if CACHE_ENABLED
+        && !stream->response.isCached()
+#endif
+          )
     return;
 
   if (this->is_https_listener) {
@@ -1226,6 +1303,9 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   if (stream->backend_connection.buffer_size > 0)
     stream->client_connection.enableWriteEvent();
   else {
+#if CACHE_ENABLED
+    if (!stream->response.isCached())
+#endif
     stream->backend_connection.enableReadEvent();
     stream->client_connection.enableReadEvent();
   }

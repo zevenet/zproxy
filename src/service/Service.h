@@ -12,7 +12,9 @@
 #include "../json/JsonDataValueTypes.h"
 #include "backend.h"
 #include "httpsessionmanager.h"
-
+#if CACHE_ENABLED
+#include "../cache/HttpCacheManager.h"
+#endif
 using namespace json;
 
 /**
@@ -24,7 +26,11 @@ using namespace json;
  * this Service.
  */
 class Service : public sessions::HttpSessionManager,
-                public CtlObserver<ctl::CtlTask, std::string> {
+#if CACHE_ENABLED
+                public HttpCacheManager,
+#endif
+        public CtlObserver<ctl::CtlTask, std::string>
+{
   std::vector<Backend *> backend_set;
   std::vector<Backend *> emergency_backend_set;
   // if no backend available, return an emergency backend if possible.

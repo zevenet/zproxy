@@ -148,6 +148,10 @@ Service::Service(ServiceConfig &service_config_)
   this->sess_id = service_config_.sess_id;
   this->sess_pat = service_config_.sess_pat;
   this->sess_start = service_config_.sess_start;
+#if CACHE_ENABLED
+  // Initialize cache manager
+  this->cacheInit(&service_config.cache_content, service_config.cache_timeout);
+#endif
   // backend initialization
   int backend_id = 0;
   for (auto bck = service_config_.backends; bck != nullptr; bck = bck->next) {

@@ -6,7 +6,31 @@
 #include "../debug/Debug.h"
 #include "http_parser.h"
 #include <map>
+#if CACHE_ENABLED
+enum class CACHE_SCOPE {
+  PUBLIC,
+  PRIVATE,
+};
 
+struct CacheRequestOptions {
+  bool no_store = false;
+  bool no_cache = false;
+  bool only_if_cached = false;
+  bool transform = true;
+  int max_age = -1;
+  int max_stale = -1;
+  int min_fresh = -1;
+};
+
+struct CacheResponseOptions {
+  bool no_cache = false;
+  bool transform = true;
+  bool cacheable = true; // Set by the request with no-store
+  bool revalidate = false;
+  int max_age = -1;
+  CACHE_SCOPE scope;
+};
+#endif
 class HttpRequest : public http_parser::HttpData {
 
   /** Service that request was generated for*/
@@ -18,7 +42,9 @@ public:
   bool connection_header_upgrade;
   bool accept_encoding_header;
   bool host_header_found{false};
-
+#if CACHE_ENABLED
+  struct CacheRequestOptions c_opt;
+#endif
   void setRequestMethod() {
     auto sv = std::string_view(method, method_len);
 //    auto sv = std::string(method, method_len);
@@ -57,5 +83,15 @@ public:
 
 class HttpResponse : public http_parser::HttpData {
 public:
-
+#if CACHE_ENABLED
+    bool transfer_encoding_header;
+    bool cached = false;
+    struct CacheResponseOptions c_opt;
+    std::string etag;
+    // Time specific headers
+    long int date = -1;
+    long int last_mod = -1;
+    long int expires = -1;
+    bool isCached();
+#endif
 };

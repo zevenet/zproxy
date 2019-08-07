@@ -1219,6 +1219,10 @@ ServiceConfig *Config::parseService(const char *svc_name) {
         res->becage = -1;
       else
         res->becage = atoi(lin + matches[4].rm_so);
+#if CACHE_ENABLED
+    } else if (!regexec(&Cache, lin, 4, matches, 0)) {
+      parseCache(res);
+#endif
     } else if (!regexec(&Session, lin, 4, matches, 0)) {
       parseSession(res);
     } else if (!regexec(&DynScale, lin, 4, matches, 0)) {
@@ -1562,6 +1566,32 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
   return NULL;
 }
 
+#if CACHE_ENABLED
+void Config::parseCache(ServiceConfig *const svc) {
+  char lin[MAXBUF], *cp, *parm;
+  regmatch_t matches[5];
+
+  while (conf_fgets(lin, MAXBUF)) {
+    if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
+      lin[strlen(lin) - 1] = '\0';
+    if (!regexec(&CacheContent, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      cp = lin + matches[1].rm_so;
+      if (regcomp(&svc->cache_content, cp,
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("Cache content pattern failed, aborting");
+      // Set the service CacheContent option
+    } else if (!regexec(&CacheTO, lin, 4, matches, 0)) {
+      // Set the service CacheTO option
+      lin[matches[1].rm_eo] = '\0';
+      cp = lin + matches[1].rm_so;
+      svc->cache_timeout = std::atoi(cp);
+    } else if (!regexec(&End, lin, 4, matches, 0)) {
+      return;
+    }
+  }
+}
+#endif
 void Config::parseSession(ServiceConfig *const svc) {
   char lin[MAXBUF], *cp, *parm;
   regmatch_t matches[5];
@@ -1848,6 +1878,14 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&Anonymise, "^[ \t]*Anonymise[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+#if CACHE_ENABLED
+          ||    regcomp(&Cache, "^[ \t]*Cache[ \t]*$",
+                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+                regcomp(&CacheContent, "^[ \t]*Content[ \t]+\"(.+)\"[ \t]*$",
+                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+                regcomp(&CacheTO, "^[ \t]*CacheTO[ \t]+([1-9][0-9]*)[ \t]*$",
+                        REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+#endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
       || regcomp(&ECDHCurve, "^[ \t]*ECDHCurve[ \t]+\"(.+)\"[ \t]*$",
@@ -1964,6 +2002,11 @@ void Config::clean_regex() {
   regfree(&Disabled);
   regfree(&CNName);
   regfree(&Anonymise);
+#if CACHE_ENABLED
+  regfree(&Cache);
+  regfree(&CacheContent);
+  regfree(&CacheTO);
+#endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
   regfree(&ECDHCurve);
