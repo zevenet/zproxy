@@ -61,62 +61,73 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
   switch (task.subject) {
   case ctl::CTL_SUBJECT::DEBUG: {
     std::unique_ptr<JsonObject> root{new JsonObject()};
-    root->emplace("ClientConnection",
+    std::unique_ptr<JsonObject> status{new JsonObject()};
+    std::unique_ptr<JsonObject> backends_stats{new JsonObject()};
+    std::unique_ptr<JsonObject> clients_stats{new JsonObject()};
+    std::unique_ptr<JsonObject> ssl_stats{new JsonObject()};
+    status->emplace("ClientConnection",
                   std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<ClientConnection>::count)));
-    root->emplace("BackendConnection",
-                  std::unique_ptr<JsonDataValue>(
+    status->emplace("BackendConnection",
+                    std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<BackendConnection>::count)));
-    root->emplace("HttpStream",
-                  std::unique_ptr<JsonDataValue>(
+    status->emplace("HttpStream",
+                    std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<HttpStream>::count)));
     // root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new
     // JsonDataValue(Counter<HttpStream>)));
     double vm, rss;
     Debug::process_mem_usage(vm, rss);
-    root->emplace("VM",
-                  std::unique_ptr<JsonDataValue>(
+    status->emplace("VM",
+                    std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(vm)));
-    root->emplace("RSS",
-                  std::unique_ptr<JsonDataValue>(
+    status->emplace("RSS",
+                    std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(rss)));
+    root->emplace("status", std::move(status));
 #if DEBUG_STREAM_EVENTS_COUNT
-    root->emplace("on_client_connect",
+
+    clients_stats->emplace("on_client_connect",
                   std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_client_connect>::count)));
-    root->emplace("on_backend_connect",
-                  std::unique_ptr<JsonDataValue>(
+    backends_stats->emplace("on_backend_connect",
+                            std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_backend_connect>::count)));
-    root->emplace("on_backend_connect_timeout",
-                  std::unique_ptr<JsonDataValue>(
+    backends_stats->emplace("on_backend_connect_timeout",
+                            std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_backend_connect_timeout>::count)));
-    root->emplace("on_handshake",
-                  std::unique_ptr<JsonDataValue>(
+    ssl_stats->emplace("on_handshake",
+                       std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_handshake>::count)));
-    root->emplace("on_request",
-                  std::unique_ptr<JsonDataValue>(
+    clients_stats->emplace("on_request",
+                           std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_request>::count)));
-    root->emplace("on_response",
-                  std::unique_ptr<JsonDataValue>(
+    backends_stats->emplace("on_response",
+                            std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_response>::count)));
-    root->emplace("on_request_timeout",
-                  std::unique_ptr<JsonDataValue>(
+    clients_stats->emplace("on_request_timeout",
+                           std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_request_timeout>::count)));
-    root->emplace("on_response_timeout",
-                  std::unique_ptr<JsonDataValue>(
+    backends_stats->emplace("on_response_timeout",
+                            std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_response_timeout>::count)));
-    root->emplace("on_send_request",
-                  std::unique_ptr<JsonDataValue>(
+    backends_stats->emplace("on_send_request",
+                            std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_send_request>::count)));
-    root->emplace("on_send_response",
-                  std::unique_ptr<JsonDataValue>(
+    clients_stats->emplace("on_send_response",
+                           std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_send_response>::count)));
-    root->emplace("on_client_disconnect",
-                  std::unique_ptr<JsonDataValue>(
+    clients_stats->emplace("on_client_disconnect",
+                           std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_client_disconnect>::count)));
-    root->emplace("on_backend_disconnect",
-                  std::unique_ptr<JsonDataValue>(
+    backends_stats->emplace("on_backend_disconnect",
+                            std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_backend_disconnect>::count)));
+
+    root->emplace("backends", std::move(backends_stats));
+    root->emplace("clients", std::move(clients_stats));
+    root->emplace("ssl", std::move(ssl_stats));
+
 #if ENABLE_SSL_SESSION_CACHING
     root->emplace("SESSION list size",
                   std::unique_ptr<JsonDataValue>(
