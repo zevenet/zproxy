@@ -306,7 +306,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
     buffer_offset += http_data.headers[i].line_size;
-    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size-2, http_data.headers[i].name);
+//    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size-2, http_data.headers[i].name);
   }
 
   for (const auto& header :
@@ -315,7 +315,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
   }
 
   for (const auto &header :
@@ -325,7 +325,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
   }
 
   iov[x].iov_base = const_cast<char *>(return_value);
@@ -357,16 +357,19 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   }
 //  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
 //  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", buffer_size);
-  http_data.message_bytes_left = http_data.content_length-http_data.message_length;
+  if (http_data.content_length > 0)
+    http_data.message_bytes_left = http_data.content_length - http_data.message_length;
   buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
   http_data.headers_sent = true;
+#if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", buffer_size);
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
+#endif
 //    PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }

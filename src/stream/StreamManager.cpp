@@ -379,8 +379,7 @@ void StreamManager::onRequestEvent(int fd) {
     break;
   case IO::IO_RESULT::ZERO_DATA:
     return;
-  case IO::IO_RESULT::FD_CLOSED:
-    break;
+  case IO::IO_RESULT::FD_CLOSED:return;
   case IO::IO_RESULT::ERROR:
   case IO::IO_RESULT::CANCELLED:
   default: {
