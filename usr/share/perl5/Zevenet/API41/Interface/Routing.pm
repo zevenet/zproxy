@@ -95,7 +95,6 @@ sub listOutRoutes
 	return $list // [];
 }
 
-
 sub validateRoutingInput
 {
 	my $in = shift;
@@ -158,7 +157,7 @@ sub validateRoutingInput
 		}
 	}
 
-	if ( $if->{name} ne 'up' )
+	if ( $if->{status} ne 'up' )
 	{
 		return "The interface '$if->{name}', used for routing, must be up";
 	}
@@ -189,7 +188,6 @@ sub validateRoutingInput
 
 	return "";
 }
-
 
 #  GET /routing/rules
 sub list_routing_rules    # ()
@@ -363,10 +361,6 @@ sub get_routing_table
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-
-
-
-
 #  POST /routing/tables/<id_table>/routes
 sub create_routing_entry
 {
@@ -379,14 +373,12 @@ sub create_routing_entry
 
 	my $params = {
 		"raw" => {
-			#~ 'required' => 'true',  ????
 			'non_blank' => 'true',
 			'format_msg' =>
 			  "is the command line parameters to create an 'ip route' entry",
 		},
 		"to" => {
 			'function' => \&validIpAndNet,
-			#~ 'require' => 'true',    ???? raw o to
 			'format_msg' =>
 			  "is the destination address IP or the source networking net",
 		},
@@ -420,7 +412,7 @@ sub create_routing_entry
 	# select only one option
 	if (exists $json_obj->{raw})
 	{
-		$params = $params->{raw};
+		$params->{raw} = $params->{raw};
 		$params->{raw}->{required}='true';
 	}
 	else
@@ -533,8 +525,6 @@ sub delete_routing_entry
 
 	return &httpResponse( { code => 200, body => $body } );
 }
-
-
 
 # POST /routing/isolate
 sub set_routing_isolate

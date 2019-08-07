@@ -240,7 +240,7 @@ sub delete_interface_virtual    # ( $virtual )
 		&eload(
 							  module => 'Zevenet::Net::Zapi',
 							  func   => 'checkZapiVirtDepsRouting',
-							  args   => [$virtual,'del',$json_obj],
+							  args   => [$virtual,'del'],
 		);
 	}
 

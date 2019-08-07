@@ -407,7 +407,8 @@ sub listRoutingDependIface
 
 	foreach my $table (&listRoutingTablesNames())
 	{
-		foreach my $rule (&listRoutingTableCustom())
+		my $ruleList = &listRoutingTableCustom();
+		foreach my $rule (@{$ruleList})
 		{
 			if ($rule->{interface} eq $iface)
 			{
@@ -461,8 +462,8 @@ sub buildRouteCmd
 	$cmd .= "src $param->{source} " if (exists $param->{source});
 	$cmd .= "via $param->{via} " if (exists $param->{via});
 	$cmd .= "mtu $param->{mtu} " if (exists $param->{mtu});
-	$cmd .= "table $table" if ($cmd ne "");
 	$cmd .= "metric $param->{priority} " if (exists $param->{priority});
+	$cmd .= "table $table " if ($cmd ne "");
 
 	return $cmd;
 }
@@ -512,7 +513,6 @@ sub createRoutingCustom
 	&lockResource( $lock_rules, 'ud' );
 	return $err;
 }
-
 
 sub getRoutingTableConf
 {
@@ -594,7 +594,7 @@ sub sanitazeRouteCmd
 	if ($cmd !~ /(?:preference|metric)/)
 	{
 		my $preference = &getGlobalConfiguration("routingRoutePrio");
-		$cmd .= "preference $preference";
+		$cmd .= " preference $preference";
 		&zenlog ("Adding a priority: $cmd","debug2","net");
 	}
 

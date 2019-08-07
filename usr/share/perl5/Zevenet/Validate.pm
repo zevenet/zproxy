@@ -23,6 +23,7 @@
 
 use strict;
 use Regexp::IPv6 qw($IPv6_re);
+require Zevenet::Net::Validate;
 
 # Notes about regular expressions:
 #

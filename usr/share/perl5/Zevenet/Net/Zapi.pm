@@ -30,8 +30,11 @@ sub checkZapiIfDepsRouting
 	my $method = shift;
 	my $in = shift;
 
+	my $desc = ($method eq 'del') ? "Deleting interface" : "Modifying interface";
+
+	include 'Zevenet::Net::Routing';
 	my $list = &listRoutingDependIface($if);
-	if (@{list})
+	if (@{$list})
 	{
 		unless (exists $in->{force} and $in->{force} eq 'true')
 		{
