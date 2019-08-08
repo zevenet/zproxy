@@ -99,6 +99,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   switch (event_type) {
 #if SM_HANDLE_ACCEPT
   case CONNECT: {
+    DEBUG_COUNTER_HIT(debug__::event_connect);
     int new_fd;
     //      do {
     new_fd = listener_connection.doAccept();

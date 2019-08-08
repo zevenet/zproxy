@@ -143,6 +143,9 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     events_count->emplace("backend_disconnect",
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(Counter<debug__::event_backend_disconnect>::count)));
+    events_count->emplace("event_connect",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_connect>::count)));
 
     root->emplace("events", std::move(events_count));
     root->emplace("backends", std::move(backends_stats));

@@ -40,8 +40,13 @@ enum class EVENT_GROUP : char {
 enum EVENT_TYPE {
   /** Timeout reached. */
   TIMEOUT = EPOLLIN,
-#if SM_HANDLE_ACCEPT && EPOLLEXCLUSIVE
+#if SM_HANDLE_ACCEPT
+#ifdef EPOLLEXCLUSIVE
   ACCEPT = (EPOLLIN | EPOLLEXCLUSIVE),
+#else
+  /** Accept the connection. */
+  ACCEPT = (EPOLLIN | EPOLLET),
+#endif
 #else
   /** Accept the connection. */
   ACCEPT = (EPOLLIN | EPOLLET),

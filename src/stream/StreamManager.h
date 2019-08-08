@@ -84,6 +84,7 @@ DEFINE_OBJECT_COUNTER(event_client_write)
 DEFINE_OBJECT_COUNTER(event_backend_read)
 DEFINE_OBJECT_COUNTER(event_backend_write)
 DEFINE_OBJECT_COUNTER(event_backend_disconnect)
+DEFINE_OBJECT_COUNTER(event_connect)
 
 }
 #else
