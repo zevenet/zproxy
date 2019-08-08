@@ -146,6 +146,11 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     events_count->emplace("event_connect",
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(Counter<debug__::event_connect>::count)));
+#if CACHE_ENABLED
+    events_count->emplace("cache_response",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::cache_response>::count)));
+#endif
 
     root->emplace("events", std::move(events_count));
     root->emplace("backends", std::move(backends_stats));

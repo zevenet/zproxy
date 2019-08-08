@@ -85,6 +85,9 @@ DEFINE_OBJECT_COUNTER(event_backend_read)
 DEFINE_OBJECT_COUNTER(event_backend_write)
 DEFINE_OBJECT_COUNTER(event_backend_disconnect)
 DEFINE_OBJECT_COUNTER(event_connect)
+#if CACHE_ENABLED
+DEFINE_OBJECT_COUNTER(cache_response)
+#endif
 
 }
 #else
