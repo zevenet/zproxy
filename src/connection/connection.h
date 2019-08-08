@@ -14,7 +14,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#define MAX_DATA_SIZE (67000*2)
+#define MAX_DATA_SIZE 65000
 #define FAKE_ZERO_COPY 0
 
 #if ENABLE_ZERO_COPY
@@ -36,7 +36,7 @@ struct SplicePipe {
 };
 
 #endif
-
+using namespace events;
 class Connection : public Descriptor {
   long last_read_;
   long last_write_;

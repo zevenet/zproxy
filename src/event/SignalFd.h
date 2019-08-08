@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
-
+using namespace events;
 class SignalFd : public Descriptor {
 
 public:

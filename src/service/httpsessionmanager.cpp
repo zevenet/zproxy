@@ -104,12 +104,12 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     break;
   }
   case sessions::SESS_COOKIE: {
-    std::string session_key;
-    if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, session_key)){
-      session_key = "";
+    std::string sess_key;
+    if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, sess_key)) {
+      sess_key = "";
     } else {
-      if (sessions_set.count(session_key) > 0) {
-        session = this->sessions_set[session_key];
+      if (sessions_set.count(sess_key) > 0) {
+        session = this->sessions_set[sess_key];
       }
     }
     break;
@@ -131,12 +131,12 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
     break;
   }
   case sessions::SESS_HEADER: {
-    std::string session_key;
-    if (!stream.request.getHeaderValue(sess_id, session_key)) {
-      session_key = "";
+    std::string sess_key;
+    if (!stream.request.getHeaderValue(sess_id, sess_key)) {
+      sess_key = "";
     } else {
-      if (sessions_set.count(session_key) > 0)
-        session = this->sessions_set[session_key];
+      if (sessions_set.count(sess_key) > 0)
+        session = this->sessions_set[sess_key];
     }
     break;
   }

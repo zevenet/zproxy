@@ -65,6 +65,7 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     std::unique_ptr<JsonObject> backends_stats{new JsonObject()};
     std::unique_ptr<JsonObject> clients_stats{new JsonObject()};
     std::unique_ptr<JsonObject> ssl_stats{new JsonObject()};
+    std::unique_ptr<JsonObject> events_count{new JsonObject()};
     status->emplace("ClientConnection",
                   std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<ClientConnection>::count)));
@@ -124,6 +125,26 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
                             std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<debug__::on_backend_disconnect>::count)));
 
+    events_count->emplace("client_read",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_client_read>::count)));
+    events_count->emplace("client_write",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_client_write>::count)));
+    events_count->emplace("client_disconnect",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_client_disconnect>::count)));
+    events_count->emplace("backend_read",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_backend_read>::count)));
+    events_count->emplace("backend_write",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_backend_write>::count)));
+    events_count->emplace("backend_disconnect",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_backend_disconnect>::count)));
+
+    root->emplace("events", std::move(events_count));
     root->emplace("backends", std::move(backends_stats));
     root->emplace("clients", std::move(clients_stats));
     root->emplace("ssl", std::move(ssl_stats));

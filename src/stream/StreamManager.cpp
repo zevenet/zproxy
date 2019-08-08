@@ -114,10 +114,16 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     switch (event_group) {
     case EVENT_GROUP::ACCEPTOR:
       break;
-    case EVENT_GROUP::SERVER:onResponseEvent(fd);
+    case EVENT_GROUP::SERVER: {
+      DEBUG_COUNTER_HIT(debug__::event_backend_read);
+      onResponseEvent(fd);
       break;
-    case EVENT_GROUP::CLIENT:onRequestEvent(fd);
+    }
+    case EVENT_GROUP::CLIENT: {
+      DEBUG_COUNTER_HIT(debug__::event_client_read);
+      onRequestEvent(fd);
       break;
+    }
     case EVENT_GROUP::CONNECT_TIMEOUT:onConnectTimeoutEvent(fd);
       break;
     case EVENT_GROUP::REQUEST_TIMEOUT:onRequestTimeoutEvent(fd);
@@ -162,10 +168,12 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_GROUP::ACCEPTOR:
       break;
     case EVENT_GROUP::SERVER: {
+      DEBUG_COUNTER_HIT(debug__::event_backend_write);
       onServerWriteEvent(stream);
       break;
     }
     case EVENT_GROUP::CLIENT: {
+      DEBUG_COUNTER_HIT(debug__::event_client_write);
       onClientWriteEvent(stream);
       break;
     }
@@ -187,19 +195,12 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     }
     switch (event_group) {
     case EVENT_GROUP::SERVER: {
-        // FIXME: Why is it entering here when there is a conn refused
-        //      if (!stream->backend_connection.isConnected()) {
-        //        auto response =
-        //            HttpStatus::getHttpResponse(HttpStatus::Code::RequestTimeout);
-        //        stream->client_connection.write(response.c_str(), response.length());
-        //        Debug::LogInfo("Backend closed connection", LOG_DEBUG);
-        //      }
-        //      break;
-        return;
+      onServerDisconnect(stream);
+      return;
     }
     case EVENT_GROUP::CLIENT: {
-      Debug::LogInfo("Client closed connection", LOG_DEBUG);
-      break;
+      onClientDisconnect(stream);
+      return;
     }
     default:
       Debug::LogInfo("Why this happends!!", LOG_DEBUG);
@@ -1342,20 +1343,6 @@ void StreamManager::clearStream(HttpStream *stream) {
   if (stream == nullptr) {
     return;
   }
-  Debug::logmsg(LOG_DEBUG, "Clearing stream ");
-
-//  if (stream->backend_connection.buffer_size > 0
-//#if ENABLE_ZERO_COPY
-//      || stream->backend_connection.splice_pipe.bytes > 0
-//#endif
-//      ) {
-//    // TODO:: remove and create enum with READY_TO_SEND_RESPONSE
-////    stream->backend_connection.disableEvents();
-//    stream->client_connection.enableWriteEvent();
-//    stream->backend_connection.closeConnection();
-//
-//    return;
-//  }
 //  logSslErrorStack();
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());
@@ -1382,4 +1369,28 @@ void StreamManager::clearStream(HttpStream *stream) {
 
 void StreamManager::setListenSocket(int fd) {
   listener_connection.setFileDescriptor(fd);
+}
+void StreamManager::onClientDisconnect(HttpStream *stream) {
+  DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
+  Debug::LogInfo("Client closed connection", LOG_DEBUG);
+  clearStream(stream);
+}
+void StreamManager::onServerDisconnect(HttpStream *stream) {
+  DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
+  Debug::LogInfo("Backend closed connection", LOG_DEBUG);
+  if (stream == nullptr) {
+    return;
+  }
+  if (stream->backend_connection.buffer_size > 0
+#if ENABLE_ZERO_COPY
+    || stream->backend_connection.splice_pipe.bytes > 0
+#endif
+      ) {
+    // TODO:: remove and create enum with READY_TO_SEND_RESPONSE
+    stream->backend_connection.disableEvents();
+    stream->client_connection.enableWriteEvent();
+    return;
+  }
+
+  clearStream(stream);
 }

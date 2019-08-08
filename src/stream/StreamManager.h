@@ -77,6 +77,14 @@ DEFINE_OBJECT_COUNTER(on_response_timeout)
 DEFINE_OBJECT_COUNTER(on_send_request)
 DEFINE_OBJECT_COUNTER(on_send_response)
 DEFINE_OBJECT_COUNTER(on_client_disconnect)
+
+DEFINE_OBJECT_COUNTER(event_client_read)
+DEFINE_OBJECT_COUNTER(event_client_disconnect)
+DEFINE_OBJECT_COUNTER(event_client_write)
+DEFINE_OBJECT_COUNTER(event_backend_read)
+DEFINE_OBJECT_COUNTER(event_backend_write)
+DEFINE_OBJECT_COUNTER(event_backend_disconnect)
+
 }
 #else
 #define DEBUG_COUNTER_HIT(x)
@@ -263,6 +271,10 @@ public:
    * @param stream is the HttpStream to clear.
    */
   void clearStream(HttpStream *stream);
+
+  inline void onServerDisconnect(HttpStream *stream);
+
+  inline void onClientDisconnect(HttpStream *stream);
 
   /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
