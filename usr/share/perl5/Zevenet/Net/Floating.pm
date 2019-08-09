@@ -129,17 +129,31 @@ sub getFloatInterfaceForAddress
 	my @interface_list = @{ &getConfigInterfaceList() };
 	my $remote_ip      = NetAddr::IP->new( $remote_ip_address );
 
+	my $virt;
+	my $parent;
+	foreach my $ifa ( @interface_list )
+	{
+		next if $ifa->{ vini } eq '';
+		if ( $ifa->{ addr } eq $remote_ip_address )
+		{
+			$virt = $ifa->{ name };
+			last;
+		}
+	}
+	$parent = &getParentInterfaceName( $virt ) if ( $virt );
+
 	# find interface in range
 	for my $iface ( @interface_list )
 	{
 		next if $iface->{ vini } ne '';
+		next if $iface->{ status } ne 'up';
 
 		my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
 
 		if ( $remote_ip->within( $network ) )
 		{
 			$subnet_interface = $iface;
-			last;
+			last if ( $virt and $iface->{ name } eq $parent );    # parent
 		}
 	}
 
@@ -176,46 +190,77 @@ sub getFloatInterfaceForAddress
 	return $output_interface;
 }
 
+=begin nd
+Function: setFloatingSourceAddr
+
+	It sets the masquerade IP of an l4xnat farm. If it receives a backend struct, it
+	applies the IP to masquerade the connection when it is going to this backend,
+	else it configures a default IP to masquerade the connections that are going to
+	backends that haven't got theirs masquerade IP.
+
+Parameters:
+	farm - Struct with the farm configuration
+	server - Struct with the backend configuration. This value is optional.
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+See Also:
+
+=cut
+
 sub setFloatingSourceAddr
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
 	my $farm      = shift;
-	my $server    = shift;
+	my $server    = shift;                                    # optional
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $out_if    = 0;
 	my $srcaddr   = qq();
 
 	require Zevenet::Nft;
+	require Zevenet::Net::Validate;
+	require Zevenet::Net::Interface;
+	require Zevenet::Farm::Core;
 	require Zevenet::Farm::L4xNAT::Config;    # Currently, only for L4
+	require Zevenet::Farm::L4xNAT::Action;
+
+	my $farm_if_name = &getInterfaceByIp( $farm->{ vip } );
+	my $farm_if      = &getInterfaceConfig( $farm_if_name );
+
+	my $configdir     = &getGlobalConfiguration( 'configdir' );
+	my $farm_filename = &getFarmFile( $farm->{ name } );
+	my $farm_file     = "$configdir/$farm_filename";
 
 	# Backend source address
 	if ( defined $server && $server->{ ip } )
 	{
-		$out_if = &getFloatInterfaceForAddress( $server->{ ip } );
-	}
+		my $net =
+		  &getNetValidate( $farm->{ vip }, $farm_if->{ mask }, $server->{ ip } );
 
-	if ( $out_if )
-	{
-		$srcaddr = $out_if->{ addr };
-		return
-		  &httpNlbRequest(
+		# delete if the backend is not accesible now for the floating ip
+		my $srcaddr = "";
+		if ( !$net )
+		{
+			$out_if = &getFloatInterfaceForAddress( $server->{ ip } );
+			$srcaddr = ( $out_if ) ? $out_if->{ addr } : "";
+		}
+
+		my $err = &sendL4NlbCmd(
 			{
 			   method => "PUT",
-			   uri    => "/farms",
+			   farm   => $farm->{ name },
+			   file   => "$farm_file",
 			   body =>
 				 qq({"farms" : [ { "name" : "$farm->{ name }", "backends" : [ { "name" : "bck$server->{ id }", "source-addr" : "$srcaddr" } ] } ] })
 			}
-		  );
+		);
+		return $err;
 	}
 
 	# Farm source address
-	if ( scalar ( $farm->{ servers } ) > 0 )
-	{
-		$out_if = &getFloatInterfaceForAddress( $farm->{ servers }[0]->{ ip } );
-	}
-
 	if ( !$out_if && $farm->{ vip } )
 	{
 		$out_if = &getFloatInterfaceForAddress( $farm->{ vip } );
@@ -232,10 +277,11 @@ sub setFloatingSourceAddr
 	return 0 if ( $current eq $srcaddr );
 
 	return
-	  &httpNlbRequest(
+	  &sendL4NlbCmd(
 		{
+		   farm   => $farm->{ name },
 		   method => "PUT",
-		   uri    => "/farms",
+		   file   => "$farm_file",
 		   body =>
 			 qq({"farms" : [ { "name" : "$farm->{ name }", "source-addr" : "$srcaddr" } ] })
 		}
