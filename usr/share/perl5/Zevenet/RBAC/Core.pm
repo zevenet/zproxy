@@ -873,6 +873,11 @@ sub getRBACPermissionIntefaceHash
 					 'section' => 'interface',
 					 'action'  => 'modify',
 				   },
+				   {
+					 'regex'   => qr{^/routing/},
+					 'section' => 'interface',
+					 'action'  => 'modify',
+				   },
 		 ],
 		 'DELETE' => [
 					  {
@@ -880,10 +885,20 @@ sub getRBACPermissionIntefaceHash
 						'section' => 'interface',
 						'action'  => 'modify',
 					  },
+					  {
+						'regex'   => qr{^/routing/},
+						'section' => 'interface',
+						'action'  => 'modify',
+					  },
 		 ],
 		 'POST' => [
 					{
 					  'regex'   => qr{^/interfaces/(?:nic|vlan|gateway|floating|bonding)},
+					  'section' => 'interface',
+					  'action'  => 'modify',
+					},
+					{
+					  'regex'   => qr{^/routing/},
 					  'section' => 'interface',
 					  'action'  => 'modify',
 					},
