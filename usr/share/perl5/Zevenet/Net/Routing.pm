@@ -32,14 +32,46 @@ my $lock_rules = "route_rules";
 
 my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
 
+=begin nd
+Function: getRoutingTableFile
+
+	It returns the routing table config file path
+
+Parameters:
+	table - table name
+
+Returns:
+	String - path to the table config file
+
+=cut
+
 sub getRoutingTableFile
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	return "$routes_dir/$table.conf";
 }
 
+=begin nd
+Function: getRoutingTableLock
+
+	It returns the file used to lock a routing table
+
+Parameters:
+	table - table name
+
+Returns:
+	String - file name used to lock the table
+
+=cut
+
 sub getRoutingTableLock
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	return "routing_$table";
 }
@@ -47,8 +79,24 @@ sub getRoutingTableLock
 ################## rules #######################
 ################################################
 
+=begin nd
+Function: getRoutingRulesExists
+
+	check a route rule exists by its 'id'
+
+Parameters:
+	rule id - rule unique identifier
+
+Returns:
+	Integer - it returns 1 if the rule already exists or 0 if it does not exist
+
+=cut
+
 sub getRoutingRulesExists
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $id = shift;
 	return 0 if !-f $rules_conf;
 
@@ -57,8 +105,24 @@ sub getRoutingRulesExists
 	return ( exists $fh->{ $id } ) ? 1 : 0;
 }
 
+=begin nd
+Function: getRoutingRulesConf
+
+	Get the routing rule by its 'id'. it returns all the configuration parameters from the config file
+
+Parameters:
+	rule id - rule unique identifier
+
+Returns:
+	Hash ref - object with the parameters got from the rule config file
+
+=cut
+
 sub getRoutingRulesConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $id = shift;
 
 	my $fh = Config::Tiny->read( $rules_conf );
@@ -82,6 +146,9 @@ Returns:
 
 sub listRoutingRulesConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	return [] if !-f $rules_conf;
 
 	my @rules = ();
@@ -94,7 +161,6 @@ sub listRoutingRulesConf
 
 	return \@rules;
 }
-
 
 =begin nd
 Function: genRoutingId
@@ -111,6 +177,9 @@ Returns:
 
 sub genRoutingId
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $file = shift;
 	my $max_index = 1024;
 	my $id        = 0;
@@ -146,6 +215,9 @@ Returns:
 
 sub createRoutingRulesConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $in = shift;
 
 	require Zevenet::Net::Route;
@@ -180,8 +252,26 @@ sub createRoutingRulesConf
 	return 0;
 }
 
+=begin nd
+Function: delRoutingConfById
+
+	delete an element of a tiny file using its 'key'
+
+Parameters:
+	key - id in the tiny file
+	file - file from delete the item
+	lock file - file used to lock the file resource
+
+Returns:
+	Integer - 0 on success or 1 on failure
+
+=cut
+
 sub delRoutingConfById
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $id = shift;
 	my $file = shift;
 	my $lf = shift; # lock file
@@ -207,9 +297,24 @@ sub delRoutingConfById
 	return 0;
 }
 
+=begin nd
+Function: delRoutingRules
+
+	Delete a routing rule. From the system and the config file
+
+Parameters:
+	id rule - unique indentifier of the routing rule
+
+Returns:
+	Integer - 0 on success or 1 on failure
+
+=cut
 
 sub delRoutingRules
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $id = shift;
 
 	my $conf  = &getRoutingRulesConf( $id );
@@ -219,9 +324,24 @@ sub delRoutingRules
 	return $error;
 }
 
+=begin nd
+Function: createRoutingRules
+
+	Create a routing rule. It is created in the config file and apply it to the system
+
+Parameters:
+	config - Object with the configuration of the rule. The possible keys are: 'priority', 'from', 'not', 'table'
+
+Returns:
+	Integer - 0 on success or 1 on failure
+
+=cut
 
 sub createRoutingRules
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $conf = shift;
 
 	$conf->{ type } = 'user';
@@ -233,8 +353,24 @@ sub createRoutingRules
 	return $err;
 }
 
+=begin nd
+Function: applyRoutingAllRules
+
+	Apply to the system all rules from the config file. Useful to run rules when zevenet is started
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - 0 on success or 1 on failure
+
+=cut
+
 sub applyRoutingAllRules
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $err = 0;
 
 	my $rules = &listRoutingConfRules();
@@ -246,8 +382,25 @@ sub applyRoutingAllRules
 	return $err;
 }
 
+=begin nd
+Function: initRoutingModule
+
+	Manage the run of the routing module. First, it creates the requested config
+	directories, next, it applies the rules to the system
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+=cut
+
 sub initRoutingModule
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	mkdir $routes_dir if ( !-d $routes_dir );
 	&createFile( $rules_conf ) if ( !-f $rules_conf );
 
@@ -256,8 +409,25 @@ sub initRoutingModule
 	# The routes are been applied when the iface is link up
 }
 
+=begin nd
+Function: setRoutingIsolate
+
+	Enable or disable the interface will be accesible from the others interfaces routing tables.
+
+Parameters:
+	if_ref - hash with the interface configuration
+	status - this accept 'true' to avoid the other routing table can alreach the interface, or 'false' (default) to allow other interfaces can alreach this interface.
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub setRoutingIsolate
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $if_ref = shift;
 	my $status = shift; # true|false
 	my $lock_if = "/tmp/if_isolate.lock";
@@ -291,10 +461,24 @@ sub setRoutingIsolate
 	return $err;
 }
 
+=begin nd
+Function: listRoutingTableCustom
 
+	List all routing entries of a table that were created by the user
+
+Parameters:
+	table - table name
+
+Returns:
+	Array ref - list of the routing entries
+
+=cut
 
 sub listRoutingTableCustom
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $file = &getRoutingTableFile($table);
 
@@ -311,9 +495,24 @@ sub listRoutingTableCustom
 	return \@list;
 }
 
+=begin nd
+Function: listRoutingTableSys
+
+	List all the system routing entries of a table. The entries were created by the user are not returned.
+
+Parameters:
+	table - table name
+
+Returns:
+	Array ref - list of the routing entries
+
+=cut
 
 sub listRoutingTableSys
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 
 	#~ my $data = &logAndGet ("$ip_bin -j route list table $table"); # there is a bug with ip route json
@@ -357,9 +556,24 @@ sub listRoutingTableSys
 	return \@routes;
 }
 
+=begin nd
+Function: delRoutingDependIface
+
+	Delete all routes that have dependence of a interface
+
+Parameters:
+	interface - name of the interface
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
 
 sub delRoutingDependIface
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $iface = shift;
 
 	&zenlog ("Deleting the routes that are depending on '$iface'", 'net');
@@ -377,10 +591,25 @@ sub delRoutingDependIface
 	return 0;
 }
 
+=begin nd
+Function: applyRoutingTableByIface
 
+	It applies to an interface table all the routes created by the user for that table
+
+Parameters:
+	table - name of the table
+	interface - name of the interface
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
 
 sub applyRoutingTableByIface
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $iface = shift;
 
@@ -397,9 +626,24 @@ sub applyRoutingTableByIface
 	return $err;
 }
 
+=begin nd
+Function: listRoutingDependIface
+
+	It returns a list of custom rules that are dependent of an interface
+
+Parameters:
+	interface - name of the interface
+
+Returns:
+	Array ref - List of rules, each item is a hash with the routes parameters
+
+=cut
 
 sub listRoutingDependIface
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $iface = shift;
 	my @list = ();
 
@@ -421,8 +665,25 @@ sub listRoutingDependIface
 	return \@list;
 }
 
+=begin nd
+Function: listRoutingTable
+
+	It returns a list of rules (rules objects) of a routing table.
+	This list contains all the custom and system routes
+
+Parameters:
+	table - name of the table
+
+Returns:
+	Array ref - List of rules, each item is a hash with the routes parameters
+
+=cut
+
 sub listRoutingTable
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $list = [];
 
@@ -435,8 +696,25 @@ sub listRoutingTable
 	return \@routes;
 }
 
+=begin nd
+Function: getRoutingCustomExists
+
+	It checks if a route id already exists.
+
+Parameters:
+	table - name of the table
+	route id - id of the route
+
+Returns:
+	Integer - 1 if the ID exists or 0 if it does not
+
+=cut
+
 sub getRoutingCustomExists
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $route_id = shift;
 
@@ -448,11 +726,31 @@ sub getRoutingCustomExists
 	return (exists $fh->{$route_id})? 1:0;
 }
 
+=begin nd
+Function: buildRouteCmd
 
+	It builds a command using the conf parameters of a route entry.
 
+Parameters:
+	table - name of the table where set the route
+	route conf - hash reference with the routing parameters. The possible parameters are:
+		"to" is the destination IP or networking segment
+		"interface" is the interface used to take out the packet
+		"source" is the IP used as source when the packet is going out
+		"via" is the IP of the next routing item
+		"mtu" is the maximum trasmition unit
+		"priority" is the priority for the routing entry in the table
+
+Returns:
+	String - String with the command
+
+=cut
 
 sub buildRouteCmd
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $param = shift;
 	my $cmd = "";
@@ -468,8 +766,32 @@ sub buildRouteCmd
 	return $cmd;
 }
 
+=begin nd
+Function: createRoutingCustom
+
+	It creates a new element in the configuration table routing file with the parameters
+	of a new route entry
+
+Parameters:
+	table - name of the table where set the route
+	route conf - hash reference with the routing parameters. The possible parameters are:
+		"to" is the destination IP or networking segment
+		"interface" is the interface used to take out the packet
+		"source" is the IP used as source when the packet is going out
+		"via" is the IP of the next routing item
+		"mtu" is the maximum trasmition unit
+		"priority" is the priority for the routing entry in the table
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub createRoutingCustom
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $input = shift;
 
@@ -514,8 +836,25 @@ sub createRoutingCustom
 	return $err;
 }
 
+=begin nd
+Function: getRoutingTableConf
+
+	It returns a struct with all the route configuration stored in the config file
+
+Parameters:
+	table - name of the table where getting the route
+	route id - id of the route
+
+Returns:
+	Hash ref - It is an object with the route config
+
+=cut
+
 sub getRoutingTableConf
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $id = shift;
 
@@ -525,8 +864,25 @@ sub getRoutingTableConf
 	return $fh->{ $id };
 }
 
+=begin nd
+Function: delRoutingCustom
+
+	It deletes a route. It deletes it from the config file and from the system.
+
+Parameters:
+	table - name of the table where getting the route
+	route id - id of the route
+
+Returns:
+	Hash ref -
+
+=cut
+
 sub delRoutingCustom
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 	my $route_id = shift;
 
@@ -538,9 +894,25 @@ sub delRoutingCustom
 	return &delRoutingConfById($route_id, $file, $lock_f);
 }
 
+=begin nd
+Function: setRoute
+
+	It deletes a route. It deletes it from the config file and from the system.
+
+Parameters:
+	action - it is the action to apply to the route, 'add' to add it to the system or 'del' to remove it from the system
+	route cmd - it is a string with the parameters of the route
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
 
 sub setRoute
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $action = shift;
 	my $cmd_params = shift;
 	my $ipv = shift //'';
@@ -559,9 +931,26 @@ sub setRoute
 	return &logAndRun($cmd);
 }
 
-# take data from config file and apply it to the system
+=begin nd
+Function: applyRoutingCustom
+
+	It applies an action to all the routes of an interface table.
+	First it gets the data from the conf files, after, it applies one by one in the system
+
+Parameters:
+	action - it is the action to apply to the route, 'add' to add it to the system or 'del' to remove it from the system
+	table - name of the table
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
 sub applyRoutingCustom
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $action = shift;
 	my $table = shift;
 	my $err = 0;
@@ -576,8 +965,26 @@ sub applyRoutingCustom
 	return $err;
 }
 
+=begin nd
+Function: sanitazeRouteCmd
+
+	It takes an input command line and cleanning y adding options to adapt it to the
+	Zevenet routing module
+
+Parameters:
+	command - raw command line to apply in the system
+	table - name of the table where the command is going to be set
+
+Returns:
+	String - Command line adapted to routing module
+
+=cut
+
 sub sanitazeRouteCmd
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $cmd = shift;
 	my $table = shift;
 

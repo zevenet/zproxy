@@ -23,6 +23,22 @@
 
 use strict;
 
+=begin nd
+Function: checkZapiIfDepsRouting
+
+	This function is for using in the API logic.
+	It checks if the interface is beeing deleted or modified has any dependency with some customized route,
+	if the force action is applied, those dependence routes will be deleted.
+
+Parameters:
+	if - interface name
+	method - http method is applying. 'del' or 'put'
+	json_obj - sent parameters in the json
+
+Returns:
+	none - .
+
+=cut
 
 sub checkZapiIfDepsRouting
 {

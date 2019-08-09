@@ -205,7 +205,6 @@ sub addlocalnet    # ($if_ref)
 	return;
 }
 
-
 =begin nd
 Function: dellocalnet
 
@@ -267,9 +266,26 @@ sub dellocalnet    # ($if_ref)
 	}
 }
 
+=begin nd
+Function: isRoute
+
+	Check if a route is already applied in the system. It receives the ip route command line options
+	and it checks the system. Example. "src 1.1.12.5 dev eth3 table table_eth3"
+
+Parameters:
+	route - command line optiones for the "ip route list" command.
+	ip_version - version used for the ip command. If this parameter is not used, the command will be executed without this flag
+
+Returns:
+	Integer - It returns 1 if the rule is already applied in the system, or 0 if it is not applied
+
+=cut
 
 sub isRoute
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $route = shift;
 	my $ipv = shift //'';
 	$ipv = "-$ipv" if ($ipv ne '');
@@ -288,8 +304,31 @@ sub isRoute
 	return $exist;
 }
 
+=begin nd
+Function: buildRuleCmd
+
+	It creates the command line for a routing directive.
+
+Parameters:
+	action - it is the action to apply, 'add' to create a new routing entry, 'del' to delete the requested routing entry or 'undef' to create the parameters wihout adding the 'ip route <action>'
+	config - It is a hash referece with the parameters expected to build the command. The options are:
+		ip_v : is the ip version for the route
+		priority : is the priority which the route will be execute. Lower priority will be executed before
+		not : is the NOT logical operator
+		from : is the source address or networking segment from is comming the request
+		fwmark : is the traffic mark of the packet
+		lookup : is the routing table where is going to be added the route
+
+Returns:
+	String - It is the command line string to execute in the system
+
+=cut
+
 sub buildRuleCmd
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $action = shift;
 	my $conf = shift;
 	my $cmd  = "";
@@ -306,7 +345,6 @@ sub buildRuleCmd
 
 	return $cmd;
 }
-
 
 =begin nd
 Function: isRule
@@ -387,9 +425,23 @@ sub applyRule
 	return $output;
 }
 
+=begin nd
+Function: genRoutingRulesPrio
+
+	Create a priority according to the type of route is going to be created
+
+Parameters:
+	Type - type of route. 'iface' for the default interface routes, 'farm' for the l4xnat backend routes or 'user' for the customized routes created for the user
+
+Returns:
+	Integer - Priority for the route
+=cut
 
 sub genRoutingRulesPrio
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $type = shift; # user, farm, ifaces
 
 	my $farmInit = &getGlobalConfiguration( 'routingRulePrioFarm' );
@@ -425,9 +477,23 @@ sub genRoutingRulesPrio
 	return $prio;
 }
 
+=begin nd
+Function: listRoutingRulesPrio
+
+	List the priority of the rules that are currently applied in the system
+
+Parameters:
+	None - .
+
+Returns:
+	Array ref - list of priorities
+=cut
 
 sub listRoutingRulesPrio
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $rules = &listRoutingRules();
 	my @list;
 
@@ -440,9 +506,28 @@ sub listRoutingRulesPrio
 	return \@list;
 }
 
+=begin nd
+Function: getRuleFromIface
+
+	It returns a object with the routing parameters that are needed for creating the default route of an interface.
+
+Parameters:
+	Interface - name of the interace
+
+Returns:
+	Hash ref -
+		{
+			table => "table_eth3",	# table where creating the entry
+			type => 'iface',					# type of route rule
+			from => 15.255.25.2/24,						# networking segement of the interface
+		}
+=cut
 
 sub getRuleFromIface
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $if_ref = shift;
 
 	my $from = ($if_ref->{ mask } =~ /^\d$/ ) ?
@@ -930,9 +1015,24 @@ sub configureDefaultGW    #()
 	}
 }
 
+=begin nd
+Function: listRoutingTablesNames
+
+	It lists the system routing tables by its nickname
+
+Parameters:
+	none - .
+
+Returns:
+	Array - List of routing tables in the system
+
+=cut
 
 sub listRoutingTablesNames
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $rttables = &getGlobalConfiguration( 'rttables' );
 
 	my @list = ();
@@ -955,8 +1055,6 @@ sub listRoutingTablesNames
 
 	return @list;
 }
-
-
 
 =begin nd
 Function: listRoutingRulesSys
@@ -1009,7 +1107,6 @@ sub listRoutingRulesSys
 	return \@rules;
 }
 
-
 =begin nd
 Function: listRoutingRules
 
@@ -1026,6 +1123,9 @@ Returns:
 
 sub listRoutingRules
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $sys  = &listRoutingRulesSys();
 	my @rules_conf = @{ $sys };
 
@@ -1046,15 +1146,29 @@ sub listRoutingRules
 	return \@rules_conf;
 }
 
+=begin nd
+Function: getRoutingTableExists
+
+	It checks if a routing table exists in the system
+
+Parameters:
+	table - It is the table to check
+
+Returns:
+	Integer - It returns 1 if the table exists or 0 if it does not exist
+
+=cut
 
 sub getRoutingTableExists
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $table = shift;
 
 	my $err = system ("$ip_bin route list table $table");
 
 	return ($err) ? 0: 1;
 }
-
 
 1;
