@@ -373,7 +373,7 @@ sub applyRoutingAllRules
 
 	my $err = 0;
 
-	my $rules = &listRoutingConfRules();
+	my $rules = &listRoutingRulesConf();
 	foreach my $r ( @{ $rules } )
 	{
 		$err = &setRule( "add", $r );
