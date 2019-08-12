@@ -98,23 +98,24 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
   switch (event_type) {
 #if SM_HANDLE_ACCEPT
-  case CONNECT: {
+  case EVENT_TYPE::CONNECT: {
     DEBUG_COUNTER_HIT(debug__::event_connect);
     int new_fd;
     //      do {
     new_fd = listener_connection.doAccept();
     if (new_fd > 0) {
       addStream(new_fd);
+    } else {
+      DEBUG_COUNTER_HIT(debug__::event_connect_fail);
     }
     //      } while (new_fd > 0);
     return;
   }
 #endif
-  case READ:
-  case READ_ONESHOT: {
+  case EVENT_TYPE::READ:
+  case EVENT_TYPE::READ_ONESHOT: {
     switch (event_group) {
-    case EVENT_GROUP::ACCEPTOR:
-      break;
+    case EVENT_GROUP::ACCEPTOR:break;
     case EVENT_GROUP::SERVER: {
       DEBUG_COUNTER_HIT(debug__::event_backend_read);
       onResponseEvent(fd);
@@ -134,8 +135,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_GROUP::SIGNAL:
       onSignalEvent(fd);
       break;
-    case EVENT_GROUP::MAINTENANCE:
-      break;
+    case EVENT_GROUP::MAINTENANCE:break;
     default:
       deleteFd(fd);
       close(fd);
@@ -143,22 +143,20 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     }
     return;
   }
-  case WRITE: {
+  case EVENT_TYPE::WRITE: {
     auto stream = streams_set[fd];
     if (stream == nullptr) {
       switch (event_group) {
-      case EVENT_GROUP::ACCEPTOR:
-        break;
+      case EVENT_GROUP::ACCEPTOR:break;
       case EVENT_GROUP::SERVER:
         Debug::LogInfo("SERVER_WRITE : Stream doesn't exist for " +
-                       std::to_string(fd));
+            std::to_string(fd));
         break;
       case EVENT_GROUP::CLIENT:
         Debug::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
-                       std::to_string(fd));
+            std::to_string(fd));
         break;
-      default:
-        break;
+      default:break;
       }
       deleteFd(fd);
       ::close(fd);
@@ -186,7 +184,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 
     return;
   }
-  case DISCONNECT: {
+  case EVENT_TYPE::DISCONNECT: {
     auto stream = streams_set[fd];
     if (stream == nullptr) {
       Debug::LogInfo("Remote host closed connection prematurely ", LOG_INFO);
@@ -270,10 +268,11 @@ void StreamManager::addStream(int fd) {
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
   stream->timer_fd.set(listener_config_.to * 1000);
-  addFd(stream->timer_fd.getFileDescriptor(), TIMEOUT,
+  addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::TIMEOUT,
         EVENT_GROUP::REQUEST_TIMEOUT);
   timers_set[stream->timer_fd.getFileDescriptor()] = stream;
-  stream->client_connection.enableEvents(this, READ, EVENT_GROUP::CLIENT);
+  stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
+                                         EVENT_GROUP::CLIENT);
 
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
@@ -333,7 +332,6 @@ void StreamManager::onRequestEvent(int fd) {
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
-
     if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
       if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST) &&
           (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
@@ -373,6 +371,7 @@ void StreamManager::onRequestEvent(int fd) {
             stream->backend_connection.server_name =
                 stream->client_connection.server_name;
         }
+    stream->client_connection.enableReadEvent();
     return;
   }
   case IO::IO_RESULT::SUCCESS:

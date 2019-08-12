@@ -32,7 +32,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
     return;
   }
   switch (event_type) {
-  case CONNECT: {
+  case EVENT_TYPE::CONNECT: {
     int new_fd;
     do {
       new_fd = listener_connection.doAccept();
@@ -143,9 +143,13 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     events_count->emplace("backend_disconnect",
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(Counter<debug__::event_backend_disconnect>::count)));
+
     events_count->emplace("event_connect",
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(Counter<debug__::event_connect>::count)));
+    events_count->emplace("event_connect_failed",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<debug__::event_connect_fail>::count)));
 #if CACHE_ENABLED
     events_count->emplace("cache_response",
                           std::unique_ptr<JsonDataValue>(

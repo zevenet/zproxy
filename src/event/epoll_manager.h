@@ -37,7 +37,7 @@ enum class EVENT_GROUP : char {
 };
 
 /** The enum EVENT_TYPE defines the different event types. */
-enum EVENT_TYPE {
+enum class EVENT_TYPE : uint32_t {
   /** Timeout reached. */
   TIMEOUT = EPOLLIN,
 #if SM_HANDLE_ACCEPT

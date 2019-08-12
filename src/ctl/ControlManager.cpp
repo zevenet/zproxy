@@ -66,7 +66,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
   }
 
   switch (event_type) {
-  case CONNECT: {
+  case EVENT_TYPE::CONNECT: {
     int new_fd;
     do {
       new_fd = control_listener.doAccept();
@@ -77,7 +77,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
     while (new_fd>0);
     break;
   }
-  case READ: {
+  case EVENT_TYPE::READ: {
     Connection connection;
     HttpRequest request;
     connection.setFileDescriptor(fd);

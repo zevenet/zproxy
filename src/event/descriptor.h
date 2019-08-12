@@ -30,7 +30,7 @@ public:
   }
   inline bool isCancelled() const { return cancelled; }
   inline bool disableEvents() {
-    current_event = events::NONE;
+    current_event = events::EVENT_TYPE::NONE;
     cancelled = true;
     if (fd_ > 0)
       return event_manager_->deleteFd(fd_);
@@ -50,13 +50,35 @@ public:
     return false;
   }
 
+  inline bool setEvents(
+      events::EVENT_TYPE event_type,
+      events::EVENT_GROUP event_group) {
+    if (event_manager_ != nullptr && fd_ > 0) {
+      cancelled = false;
+      current_event = event_type;
+      event_group_ = event_group;
+      return event_manager_->updateFd(fd_, event_type, event_group_);
+    }
+    return false;
+  }
+
+  inline bool setEvent(events::EVENT_TYPE event_type) {
+    if (event_manager_ != nullptr && fd_ > 0) {
+      cancelled = false;
+      current_event = event_type;
+      return event_manager_->updateFd(fd_, event_type, event_group_);
+    }
+    return false;
+  }
+
   inline bool enableReadEvent(bool one_shot = false) {
     if (cancelled)
       return false;
-    if (event_manager_ != nullptr && current_event != (!one_shot
-                                                       ? events::EVENT_TYPE::READ
-                                                       : events::EVENT_TYPE::READ_ONESHOT) &&
-        fd_ > 0) {
+    if (event_manager_ !=
+            nullptr /* && current_event != (!one_shot
+                                          ? events::EVENT_TYPE::READ
+                                          : events::EVENT_TYPE::READ_ONESHOT)*/
+        && fd_ > 0) {
       current_event = !one_shot
                       ? events::EVENT_TYPE::READ
                       : events::EVENT_TYPE::READ_ONESHOT;
@@ -76,7 +98,7 @@ public:
       return false;
     if (event_manager_ != nullptr /*&& current_event != events::WRITE */ &&
         fd_ > 0) {
-      current_event = events::WRITE;
+      current_event = events::EVENT_TYPE::WRITE;
       return event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE,
                                       event_group_);
     }

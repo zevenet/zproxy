@@ -80,7 +80,7 @@ static CODE facilitynames[] =
   Debug::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 
 #define COUT_GREEN_COLOR(x) "\e[1;32m" + x + "\e[0m"
-#define COUT_BLUE_COLOR(x) "\e[1;34m" + x + "\e[0m"
+#define COUT_BLUE_COLOR(x) "\e[1;32m" + x + "\e[0m"
 #include "fstream"
 #include <unistd.h>
 class Debug {

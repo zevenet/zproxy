@@ -23,7 +23,7 @@ void EpollManager::onConnectEvent(epoll_event &event) {
   Debug::logmsg(LOG_DEBUG, "~~ONConnectEvent fd: %d",
                 static_cast<int>(event.data.u64 >> CHAR_BIT));
 #endif
-  HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), CONNECT,
+  HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), EVENT_TYPE::CONNECT,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
 
@@ -33,7 +33,7 @@ void EpollManager::onWriteEvent(epoll_event &event) {
   Debug::logmsg(LOG_DEBUG, "~~ONWriteEvent fd: %d",
                 static_cast<int>(event.data.u64 >> CHAR_BIT));
 #endif
-  HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), WRITE,
+  HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), EVENT_TYPE::WRITE,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
 
@@ -43,7 +43,7 @@ void EpollManager::onReadEvent(epoll_event &event) {
   Debug::logmsg(LOG_DEBUG, "~~ONReadEvent fd: %d",
                 static_cast<int>(event.data.u64 >> CHAR_BIT));
 #endif
-  HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), READ,
+  HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), EVENT_TYPE::READ,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
 }
 
@@ -71,7 +71,7 @@ int EpollManager::loopOnce(int time_out) {
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
     if ((events[i].events & (EPOLLHUP | EPOLLERR)) != 0u) {
-      HandleEvent(fd, DISCONNECT,
+      HandleEvent(fd, EVENT_TYPE::DISCONNECT,
                   static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
       continue;
     } else {
@@ -83,7 +83,7 @@ int EpollManager::loopOnce(int time_out) {
         }
       }
       if(events[i].events &  EPOLLRDHUP){
-        HandleEvent(fd, DISCONNECT,
+        HandleEvent(fd, EVENT_TYPE::DISCONNECT,
                     static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
         continue;
       }
@@ -101,14 +101,14 @@ EpollManager::~EpollManager() { ::close(epoll_fd); }
 bool EpollManager::handleAccept(int listener_fd) {
   accept_fd = listener_fd;
   Network::setSocketNonBlocking(listener_fd);
-  return addFd(listener_fd, ACCEPT, EVENT_GROUP::ACCEPTOR);
+  return addFd(listener_fd, EVENT_TYPE::ACCEPT, EVENT_GROUP::ACCEPTOR);
 }
 
 bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
                          EVENT_GROUP event_group) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
   struct epoll_event epevent = {};
-  epevent.events = event_type;
+  epevent.events = static_cast<uint32_t>(event_type);
   epevent.data.u64 = static_cast<uint64_t>(fd);
   epevent.data.u64 <<= CHAR_BIT;
   epevent.data.u64 |= static_cast<char>(event_group) & 0xff;
@@ -137,7 +137,7 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
   Debug::LogInfo("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
 #endif
   struct epoll_event epevent = {};
-  epevent.events = event_type;
+  epevent.events = static_cast<uint32_t>(event_type);
   epevent.data.u64 = static_cast<uint64_t>(fd);
   epevent.data.u64 <<= CHAR_BIT;
   epevent.data.u64 |= static_cast<char>(event_group) & 0xff;
