@@ -333,7 +333,7 @@ Parameters:
 	config - Object with the configuration of the rule. The possible keys are: 'priority', 'from', 'not', 'table'
 
 Returns:
-	Integer - 0 on success or 1 on failure
+	Integer - It returns the rule id of the rule has been created, or 0 on failure
 
 =cut
 
@@ -350,7 +350,7 @@ sub createRoutingRules
 	my $err = &setRule( 'add', $conf );
 	$err = &createRoutingRulesConf( $conf ) if ( !$err );
 
-	return $err;
+	return ($err) ? 0 : $conf->{ id };
 }
 
 =begin nd
@@ -441,18 +441,7 @@ sub setRoutingIsolate
 
 	if ($err)
 	{
-		$err = 0;
-		my $if_ref = &getInterfaceConfig( $if_ref->{ name } );
-
-		# del route
-		$err = &dellocalnet( $if_ref );
-		&zenlog ("Error deleting routes") if ($err);
-
-		# apply new conf
-		my $err2 = &applyRoutes( "local", $if_ref, $if_ref->{ gateway } );
-		&zenlog ("Error applying routes") if ($err2);
-
-		$err += $err2;
+		&reloadRoutingTable($if_ref->{name});
 	}
 
 	#Release lock file
@@ -460,6 +449,42 @@ sub setRoutingIsolate
 
 	return $err;
 }
+
+=begin nd
+Function: reloadRoutingTable
+
+	It reloads the routing entries (in the system) of a routing table of a interface
+
+Parameters:
+	interface - interface name
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
+sub reloadRoutingTable
+{
+	my $if_name = shift;
+
+	my $err = 0;
+
+	require Zevenet::Net::Interface;
+	my $if_ref = &getInterfaceConfig( $if_name );
+
+	# del route
+	$err = &dellocalnet( $if_ref );
+	&zenlog ("Error deleting routes") if ($err);
+
+	# apply new conf
+	my $err2 = &applyRoutes( "local", $if_ref, $if_ref->{ gateway } );
+	&zenlog ("Error applying routes") if ($err2);
+
+	$err += $err2;
+
+	return $err;
+}
+
 
 =begin nd
 Function: listRoutingTableCustom

@@ -266,12 +266,15 @@ sub create_routing_rule
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $err = &createRoutingRules( $json_obj );
-	if ( $err )
+	my $id = &createRoutingRules( $json_obj );
+	if ( !$id )
 	{
 		my $msg = "Error, creating a new routing rule.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_rule', 'start', $id );
 
 	my $list = &listOutRules();
 	return
@@ -297,6 +300,10 @@ sub delete_routing_rule
 		my $msg = "The rule id '$id' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	# remove the route in backup before than master node. The function gets data from config file
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_rule', 'stop', $id );
 
 	my $error = &delRoutingRules( $id );
 	if ( $error )
@@ -478,6 +485,9 @@ sub create_routing_entry
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
+
 	my $list = &listOutRoutes($table);
 	return
 	  &httpResponse(
@@ -509,6 +519,10 @@ sub delete_routing_entry
 		my $msg = "The route entry '$route_id' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	# it has to be deleted in the remote node before than the master.
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_table', 'stop', "$table", $route_id );
 
 	my $error = &delRoutingCustom( $table, $route_id );
 	if ( $error )
@@ -582,6 +596,9 @@ sub set_routing_isolate
 		my $msg = "There was an error setting the isolate feature";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$json_obj->{interface}" );
 
 	my $body = {
 				 description => $desc,
