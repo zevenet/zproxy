@@ -32,7 +32,7 @@ sub listOutRules
 		push @{ $list },
 		  {
 			priority => $r->{ priority } + 0,
-			from      => $r->{ from },
+			from     => $r->{ from },
 			table    => $r->{ table },
 			id       => $r->{ id } + 0,
 			type     => $r->{ type },
@@ -47,47 +47,47 @@ sub listOutRoutes
 	my $table = shift;
 	my $list;
 
-	foreach my $r ( @{ &listRoutingTable($table) } )
+	foreach my $r ( @{ &listRoutingTable( $table ) } )
 	{
 		my $n = {
-			raw     => $r->{ raw },
-			type	=> $r->{ type }
+				  raw  => $r->{ raw },
+				  type => $r->{ type }
 		};
 
-		$n->{id} = $r->{id}+0 if exists $r->{id};
-		$n->{priority} = (defined $r->{priority})?$r->{priority}+0: 10;
-		$n->{to} = $r->{to} // '';
-		$n->{interface} = $r->{interface} // '';
-		$n->{source} = $r->{source} // '';
-		$n->{via} = $r->{via} // '';
+		$n->{ id } = $r->{ id } + 0 if exists $r->{ id };
+		$n->{ priority } = ( defined $r->{ priority } ) ? $r->{ priority } + 0 : 10;
+		$n->{ to }        = $r->{ to }        // '';
+		$n->{ interface } = $r->{ interface } // '';
+		$n->{ source }    = $r->{ source }    // '';
+		$n->{ via }       = $r->{ via }       // '';
 
-		if (!$n->{priority} and $r->{raw} =~ /metric (\d+)/)
+		if ( !$n->{ priority } and $r->{ raw } =~ /metric (\d+)/ )
 		{
-			$n->{priority} = $1+0;
+			$n->{ priority } = $1 + 0;
 		}
 
-		if (!$n->{interface} and $r->{raw} =~ /dev ([\w\:]+)/)
+		if ( !$n->{ interface } and $r->{ raw } =~ /dev ([\w\:]+)/ )
 		{
-			$n->{interface} = $1;
+			$n->{ interface } = $1;
 		}
 
-		if (!$n->{to} and $r->{raw} =~ /to (\S+)/)
+		if ( !$n->{ to } and $r->{ raw } =~ /to (\S+)/ )
 		{
-			$n->{to} = $1;
+			$n->{ to } = $1;
 		}
-		elsif (!$n->{to} and $r->{raw} =~ /^\s*(\S+)/)
+		elsif ( !$n->{ to } and $r->{ raw } =~ /^\s*(\S+)/ )
 		{
-			$n->{to} = $1;
-		}
-
-		if (!$n->{via} and $r->{raw} =~ /via (\S+)/)
-		{
-			$n->{via} = $1;
+			$n->{ to } = $1;
 		}
 
-		if (!$n->{source} and $r->{raw} =~ /src (\S+)/)
+		if ( !$n->{ via } and $r->{ raw } =~ /via (\S+)/ )
 		{
-			$n->{source} = $1;
+			$n->{ via } = $1;
+		}
+
+		if ( !$n->{ source } and $r->{ raw } =~ /src (\S+)/ )
+		{
+			$n->{ source } = $1;
 		}
 
 		push @{ $list }, $n;
@@ -98,85 +98,89 @@ sub listOutRoutes
 sub validateRoutingInput
 {
 	my $in = shift;
-	my $if =  '';
+	my $if = '';
 	use NetAddr::IP;
 	require Zevenet::Net::Validate;
 	require Zevenet::Net::Interface;
 
 	# to, segmento red(x.x.x.0/x) o ip
 	{
-		if ($in->{to} =~ '/')
+		if ( $in->{ to } =~ '/' )
 		{
 			use Net::Netmask;
-			my $net = Net::Netmask->new($in->{to});
+			my $net = Net::Netmask->new( $in->{ to } );
 
 			my $base = $net->base();
 			my $mask = $net->bits();
-			$in->{to} = "$base/$mask";
+			$in->{ to } = "$base/$mask";
 		}
 
-		if (!$in->{to})
+		if ( !$in->{ to } )
 		{
 			return "The 'to' parameter is invalid";
 		}
 	}
 
 	#
-	unless ((exists $in->{interface} and $in->{interface} ) or (exists $in->{via} and $in->{via} ))
+	unless (    ( exists $in->{ interface } and $in->{ interface } )
+			 or ( exists $in->{ via } and $in->{ via } ) )
 	{
 		return "An 'interface' or 'via' is expected";
 	}
 
 	# interface, que exista. Si existe, source y via dependen de el
-	if (exists $in->{interface} and $in->{interface} )
+	if ( exists $in->{ interface } and $in->{ interface } )
 	{
-		return "The interface '$in->{interface}' does not exist" if (&ifexist($in->{interface}) eq 'false');
-		$if = &getInterfaceConfig($in->{interface});
-		return "The interface '$in->{interface}' is unset" if (!$if->{addr});
+		return "The interface '$in->{interface}' does not exist"
+		  if ( &ifexist( $in->{ interface } ) eq 'false' );
+		$if = &getInterfaceConfig( $in->{ interface } );
+		return "The interface '$in->{interface}' is unset" if ( !$if->{ addr } );
 	}
 
 	# via, segmento red de alguna interfaz
-	if (exists $in->{via} and $in->{via})
+	if ( exists $in->{ via } and $in->{ via } )
 	{
-		if ($if)
+		if ( $if )
 		{
-			if ( !&getNetValidate($if->{addr},$if->{mask},$in->{via}) )
+			if ( !&getNetValidate( $if->{ addr }, $if->{ mask }, $in->{ via } ) )
 			{
-				return "The 'via' parameter has to be in the same network segment that the 'interface'";
+				return
+				  "The 'via' parameter has to be in the same network segment that the 'interface'";
 			}
 		}
 		else
 		{
 			# get if
-			$in->{interface} = &checkNetworkExists($in->{via},'32');
-			$if = &getInterfaceConfig($in->{interface});
-			if (!$if or $in->{interface} eq '')
+			$in->{ interface } = &checkNetworkExists( $in->{ via }, '32' );
+			$if = &getInterfaceConfig( $in->{ interface } );
+			if ( !$if or $in->{ interface } eq '' )
 			{
-				return "The 'via' parameter has to be in the same network segment that an interface";
+				return
+				  "The 'via' parameter has to be in the same network segment that an interface";
 			}
 		}
 	}
 
-	if ( $if->{status} ne 'up' )
+	if ( $if->{ status } ne 'up' )
 	{
 		return "The interface '$if->{name}', used for routing, must be up";
 	}
 
 	# source, ip o virtual de la interfaz de alguna interfaz
-	if (exists $in->{source} and $in->{source})
+	if ( exists $in->{ source } and $in->{ source } )
 	{
 		# get childs
-		my @child = &getInterfaceChild( $if->{name} );
+		my @child  = &getInterfaceChild( $if->{ name } );
 		my @if_ips = ();
 
-		push @if_ips, $if->{addr};
-		foreach my $child_name (@child)
+		push @if_ips, $if->{ addr };
+		foreach my $child_name ( @child )
 		{
 			my $child_if = &getInterfaceConfig( $child_name );
-			push @if_ips, $child_if->{addr};
+			push @if_ips, $child_if->{ addr };
 		}
 
-		if ( ! grep (/^$in->{source}$/, @if_ips ) )
+		if ( !grep ( /^$in->{source}$/, @if_ips ) )
 		{
 			return "The 'source' parameter has to be defined in the 'interface'";
 		}
@@ -228,9 +232,9 @@ sub create_routing_rule
 			  "It is the priority which the rule will be executed. Minor value of priority is going to be executed before",
 		},
 		"from" => {
-			'function' => \&validIpAndNet,
-			'non_blank'    => 'true',
-			'required'     => 'true',
+			'function'  => \&validIpAndNet,
+			'non_blank' => 'true',
+			'required'  => 'true',
 			'format_msg' =>
 			  "It is the source address IP or the source networking net that will be routed to the table 'table'",
 		},
@@ -253,14 +257,14 @@ sub create_routing_rule
 	  if ( $error_msg );
 
 	require Zevenet::Net::Route;
-	if ( !&getRoutingTableExists($json_obj->{table}) )
+	if ( !&getRoutingTableExists( $json_obj->{ table } ) )
 	{
 		my $msg = "The table '$json_obj->{table} does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check if already exists an equal rule
-	if( &isRule( $json_obj ) )
+	if ( &isRule( $json_obj ) )
 	{
 		my $msg = "A rule with this configuration already exists";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -301,7 +305,7 @@ sub delete_routing_rule
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# remove the route in backup before than master node. The function gets data from config file
+# remove the route in backup before than master node. The function gets data from config file
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'routing_rule', 'stop', $id );
 
@@ -353,13 +357,13 @@ sub get_routing_table
 
 	my $desc = "Get the routing table $table";
 
-	if ( !&getRoutingTableExists($table) )
+	if ( !&getRoutingTableExists( $table ) )
 	{
 		my $msg = "The table '$table does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $list = &listOutRoutes($table);
+	my $list = &listOutRoutes( $table );
 	my $body = {
 				 description => $desc,
 				 params      => $list,
@@ -374,40 +378,35 @@ sub create_routing_entry
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $json_obj = shift;
-	my $table = shift;
+	my $table    = shift;
 
 	my $desc = "Create a routing entry in the table '$table'";
 
 	my $params = {
 		"raw" => {
-			'non_blank' => 'true',
-			'format_msg' =>
-			  "is the command line parameters to create an 'ip route' entry",
+			 'non_blank'  => 'true',
+			 'format_msg' => "is the command line parameters to create an 'ip route' entry",
 		},
 		"to" => {
-			'function' => \&validIpAndNet,
-			'format_msg' =>
-			  "is the destination address IP or the source networking net",
+			   'function'   => \&validIpAndNet,
+			   'format_msg' => "is the destination address IP or the source networking net",
 		},
 		"interface" => {
-			'valid_format' => 'routed_interface',
-			'format_msg' =>
-			  "is the interface used to take out the packet",
+						 'valid_format' => 'routed_interface',
+						 'format_msg'   => "is the interface used to take out the packet",
 		},
 		"source" => {
-			'valid_format' => 'ipv4v6',
-			'format_msg' =>
-			  "is the source address to prefer when sending to the destinations",
+					  'valid_format' => 'ipv4v6',
+					  'format_msg' =>
+						"is the source address to prefer when sending to the destinations",
 		},
 		"via" => {
-			'valid_format' => 'ipv4v6',
-			'format_msg' =>
-			  "is the next hop for the packet",
+				   'valid_format' => 'ipv4v6',
+				   'format_msg'   => "is the next hop for the packet",
 		},
 		"priority" => {
-			'interval' => '1,9',
-			'format_msg' =>
-			  "the routes with lower value will be more priority",
+						'interval'   => '1,9',
+						'format_msg' => "the routes with lower value will be more priority",
 		},
 	};
 
@@ -417,54 +416,54 @@ sub create_routing_entry
 	  if ( $error_msg );
 
 	# select only one option
-	if (exists $json_obj->{raw})
+	if ( exists $json_obj->{ raw } )
 	{
-		$params->{raw} = $params->{raw};
-		$params->{raw}->{required}='true';
+		$params->{ raw } = $params->{ raw };
+		$params->{ raw }->{ required } = 'true';
 	}
 	else
 	{
-		delete $params->{raw};
-		$params->{to}->{required}='true';
+		delete $params->{ raw };
+		$params->{ to }->{ required } = 'true';
 	}
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
 	require Zevenet::Net::Route;
-	if ( !&getRoutingTableExists($table) )
+	if ( !&getRoutingTableExists( $table ) )
 	{
 		my $msg = "The table '$table' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if (exists $json_obj->{raw})
+	if ( exists $json_obj->{ raw } )
 	{
-		if ( $json_obj->{raw} =~ /table\s+(\w+)/ )
+		if ( $json_obj->{ raw } =~ /table\s+(\w+)/ )
 		{
 			my $t = $1;
-			if ($t ne $table )
+			if ( $t ne $table )
 			{
 				my $msg = "The input command is not in the requested table '$table'";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 
-		$json_obj->{raw} = &sanitazeRouteCmd($json_obj->{raw}, $table);
+		$json_obj->{ raw } = &sanitazeRouteCmd( $json_obj->{ raw }, $table );
 	}
 	else
 	{
-		my $msg = &validateRoutingInput($json_obj);
-		if ($msg)
+		my $msg = &validateRoutingInput( $json_obj );
+		if ( $msg )
 		{
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $def_pref = &getGlobalConfiguration("routingRoutePrio");
-		$json_obj->{priority} = $def_pref if ( !defined $json_obj->{priority});
+		my $def_pref = &getGlobalConfiguration( "routingRoutePrio" );
+		$json_obj->{ priority } = $def_pref if ( !defined $json_obj->{ priority } );
 
-		$json_obj->{raw} = &buildRouteCmd($table,$json_obj);
-		if ($json_obj->{raw} eq '')
+		$json_obj->{ raw } = &buildRouteCmd( $table, $json_obj );
+		if ( $json_obj->{ raw } eq '' )
 		{
 			my $msg = "The command could not be created properly";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -472,7 +471,7 @@ sub create_routing_entry
 	}
 
 	# check if already exists an equal route
-	if( &isRoute( $json_obj->{raw} ) )
+	if ( &isRoute( $json_obj->{ raw } ) )
 	{
 		my $msg = "A route with this configuration already exists";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -488,7 +487,7 @@ sub create_routing_entry
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
 
-	my $list = &listOutRoutes($table);
+	my $list = &listOutRoutes( $table );
 	return
 	  &httpResponse(
 					 {
@@ -503,12 +502,12 @@ sub delete_routing_entry
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $table = shift;
+	my $table    = shift;
 	my $route_id = shift;
 
 	my $desc = "Delete the routing entry '$route_id' from the table '$table'";
 
-	if ( !&getRoutingTableExists($table) )
+	if ( !&getRoutingTableExists( $table ) )
 	{
 		my $msg = "The table '$table' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -553,15 +552,15 @@ sub set_routing_isolate
 
 	my $params = {
 		"interface" => {
-			'required' => 'true',
-			'non_blank' => 'true',
-			'format_msg' =>
-			  "It is the interface that will not be included in other route tables",
+					'required'  => 'true',
+					'non_blank' => 'true',
+					'format_msg' =>
+					  "It is the interface that will not be included in other route tables",
 		},
 		"action" => {
-			'required' => 'true',
+			'required'  => 'true',
 			'non_blank' => 'true',
-			'values' => ['set','unset'],
+			'values'    => ['set', 'unset'],
 			'format_msg' =>
 			  "Action to apply: 'set' to not incluid the interface in the route tables of the other interfaces; 'unset' to incluid this interface in the route table of the other interfaces.",
 		},
@@ -574,7 +573,7 @@ sub set_routing_isolate
 
 	# if
 	require Zevenet::Net::Validate;
-	if ( !&ifexist ($json_obj->{interface}) )
+	if ( !&ifexist( $json_obj->{ interface } ) )
 	{
 		my $msg = "The interface '$json_obj->{interface}' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -589,8 +588,8 @@ sub set_routing_isolate
 	}
 
 	# configured
-	my $status = ($json_obj->{action} eq 'set') ? "true" : "false";
-	my $err = &setRoutingIsolate( $if_ref,$status );
+	my $status = ( $json_obj->{ action } eq 'set' ) ? "true" : "false";
+	my $err = &setRoutingIsolate( $if_ref, $status );
 	if ( $err )
 	{
 		my $msg = "There was an error setting the isolate feature";
@@ -598,11 +597,12 @@ sub set_routing_isolate
 	}
 
 	include 'Zevenet::Cluster';
-	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$json_obj->{interface}" );
+	&runZClusterRemoteManager( 'routing_table', 'reload',
+							   "table_$json_obj->{interface}" );
 
 	my $body = {
 				 description => $desc,
-				 message      => "The action was applied successfully",
+				 message     => "The action was applied successfully",
 	};
 
 	return &httpResponse( { code => 200, body => $body } );

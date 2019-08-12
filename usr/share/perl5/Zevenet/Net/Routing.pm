@@ -30,7 +30,7 @@ my $routes_dir = &getGlobalConfiguration( 'configdir' ) . "/routes";
 my $rules_conf = "$routes_dir/rules.conf";
 my $lock_rules = "route_rules";
 
-my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
+my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 =begin nd
 Function: getRoutingTableFile
@@ -180,7 +180,7 @@ sub genRoutingId
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $file = shift;
+	my $file      = shift;
 	my $max_index = 1024;
 	my $id        = 0;
 	my $fh        = Config::Tiny->read( $file );
@@ -227,11 +227,11 @@ sub createRoutingRulesConf
 	&lockResource( $lock_rules, 'l' );
 	my $fh = Config::Tiny->read( $rules_conf );
 
-	my @params = ('priority', 'id', 'from', 'type', 'not', 'table');
+	my @params = ( 'priority', 'id', 'from', 'type', 'not', 'table' );
 	my $conf;
-	foreach my $p (@params)
+	foreach my $p ( @params )
 	{
-		$conf->{$p} = $in->{$p};
+		$conf->{ $p } = $in->{ $p };
 	}
 
 	if ( !$conf->{ id } )
@@ -272,9 +272,9 @@ sub delRoutingConfById
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $id = shift;
+	my $id   = shift;
 	my $file = shift;
-	my $lf = shift; # lock file
+	my $lf   = shift;    # lock file
 
 	&createFile( $file ) if ( !-f $file );
 
@@ -317,7 +317,7 @@ sub delRoutingRules
 
 	my $id = shift;
 
-	my $conf  = &getRoutingRulesConf( $id );
+	my $conf = &getRoutingRulesConf( $id );
 	my $error = &setRule( 'del', $conf );
 	$error = &delRoutingConfById( $id, $rules_conf, $lock_rules ) if ( !$error );
 
@@ -344,13 +344,14 @@ sub createRoutingRules
 
 	my $conf = shift;
 
-	$conf->{ type } = 'user';
-	$conf->{ id }   = &genRoutingId($rules_conf);
-	$conf->{ priority } = &genRoutingRulesPrio('user') if ( !exists $conf->{ priority } );
+	$conf->{ type }     = 'user';
+	$conf->{ id }       = &genRoutingId( $rules_conf );
+	$conf->{ priority } = &genRoutingRulesPrio( 'user' )
+	  if ( !exists $conf->{ priority } );
 	my $err = &setRule( 'add', $conf );
 	$err = &createRoutingRulesConf( $conf ) if ( !$err );
 
-	return ($err) ? 0 : $conf->{ id };
+	return ( $err ) ? 0 : $conf->{ id };
 }
 
 =begin nd
@@ -428,20 +429,20 @@ sub setRoutingIsolate
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $if_ref = shift;
-	my $status = shift; # true|false
+	my $if_ref  = shift;
+	my $status  = shift;                    # true|false
 	my $lock_if = "/tmp/if_isolate.lock";
 
 	# set conf
 	&lockResource( $lock_if, "l" );
 
 	require Zevenet::Net::Interface;
-	$if_ref->{isolate} = $status;
-	my $err = &setInterfaceConfig( $if_ref ); # returns 1 on success
+	$if_ref->{ isolate } = $status;
+	my $err = &setInterfaceConfig( $if_ref );    # returns 1 on success
 
-	if ($err)
+	if ( $err )
 	{
-		&reloadRoutingTable($if_ref->{name});
+		&reloadRoutingTable( $if_ref->{ name } );
 	}
 
 	#Release lock file
@@ -474,17 +475,16 @@ sub reloadRoutingTable
 
 	# del route
 	$err = &dellocalnet( $if_ref );
-	&zenlog ("Error deleting routes") if ($err);
+	&zenlog( "Error deleting routes" ) if ( $err );
 
 	# apply new conf
 	my $err2 = &applyRoutes( "local", $if_ref, $if_ref->{ gateway } );
-	&zenlog ("Error applying routes") if ($err2);
+	&zenlog( "Error applying routes" ) if ( $err2 );
 
 	$err += $err2;
 
 	return $err;
 }
-
 
 =begin nd
 Function: listRoutingTableCustom
@@ -505,16 +505,16 @@ sub listRoutingTableCustom
 			 "debug", "PROFILING" );
 
 	my $table = shift;
-	my $file = &getRoutingTableFile($table);
+	my $file  = &getRoutingTableFile( $table );
 
 	return [] if !-f $file;
 
 	my @list = ();
-	my $fh    = Config::Tiny->read( $file );
+	my $fh   = Config::Tiny->read( $file );
 
 	foreach my $r ( keys %{ $fh } )
 	{
-		push @list, $fh->{$r};
+		push @list, $fh->{ $r };
 	}
 
 	return \@list;
@@ -540,37 +540,37 @@ sub listRoutingTableSys
 
 	my $table = shift;
 
-	#~ my $data = &logAndGet ("$ip_bin -j route list table $table"); # there is a bug with ip route json
+#~ my $data = &logAndGet ("$ip_bin -j route list table $table"); # there is a bug with ip route json
 
-	my $data = &logAndGet ("$ip_bin route list table $table", 'array');
+	my $data = &logAndGet( "$ip_bin route list table $table", 'array' );
 
 	# filter data
 	my @routes = ();
 	foreach my $cmd ( @{ $data } )
 	{
 		# it is not a system rule
-		next if ($cmd !~ /initcwnd 10 initrwnd 10/);
+		next if ( $cmd !~ /initcwnd 10 initrwnd 10/ );
 
 		my $r = {};
 		$r->{ type } = 'system';
-		$r->{ raw } = "$cmd table $table";
+		$r->{ raw }  = "$cmd table $table";
 
-		if ($cmd =~ /^(\S+)/)
+		if ( $cmd =~ /^(\S+)/ )
 		{
 			$r->{ to } = $1;
 		}
 
-		if ($cmd =~ /via\s(\S+)/)
+		if ( $cmd =~ /via\s(\S+)/ )
 		{
 			$r->{ via } = $1;
 		}
 
-		if ($cmd =~ /src\s(\S+)/)
+		if ( $cmd =~ /src\s(\S+)/ )
 		{
 			$r->{ source } = $1;
 		}
 
-		if ($cmd =~ /dev\s(\S+)/)
+		if ( $cmd =~ /dev\s(\S+)/ )
 		{
 			$r->{ interface } = $1;
 		}
@@ -601,15 +601,15 @@ sub delRoutingDependIface
 
 	my $iface = shift;
 
-	&zenlog ("Deleting the routes that are depending on '$iface'", 'net');
-	foreach my $rule (&listRoutingDependIface($iface))
+	&zenlog( "Deleting the routes that are depending on '$iface'", 'net' );
+	foreach my $rule ( &listRoutingDependIface( $iface ) )
 	{
-		my $err = &setRoute('del',$rule->{raw});
+		my $err = &setRoute( 'del', $rule->{ raw } );
 		return 1 if $err;
 
-		my $file = &getRoutingTableFile($rule->{table});
-		my $lock_f = &getRoutingTableLock($rule->{table});
-		$err = &delRoutingConfById($rule->{id}, $file, $lock_f);
+		my $file   = &getRoutingTableFile( $rule->{ table } );
+		my $lock_f = &getRoutingTableLock( $rule->{ table } );
+		$err = &delRoutingConfById( $rule->{ id }, $file, $lock_f );
 		return 1 if $err;
 	}
 
@@ -639,11 +639,11 @@ sub applyRoutingTableByIface
 	my $iface = shift;
 
 	my $err = 0;
-	foreach my $rule (@{&listRoutingTableCustom($table)})
+	foreach my $rule ( @{ &listRoutingTableCustom( $table ) } )
 	{
-		if ($rule->{interface} eq $iface)
+		if ( $rule->{ interface } eq $iface )
 		{
-			$err = &setRoute($rule->{raw});
+			$err = &setRoute( $rule->{ raw } );
 			return $err if $err;
 		}
 	}
@@ -670,18 +670,18 @@ sub listRoutingDependIface
 			 "debug", "PROFILING" );
 
 	my $iface = shift;
-	my @list = ();
+	my @list  = ();
 
 	# ???? valorar meter todas rutas de la tabla de la interfaz
 
-	foreach my $table (&listRoutingTablesNames())
+	foreach my $table ( &listRoutingTablesNames() )
 	{
 		my $ruleList = &listRoutingTableCustom();
-		foreach my $rule (@{$ruleList})
+		foreach my $rule ( @{ $ruleList } )
 		{
-			if ($rule->{interface} eq $iface)
+			if ( $rule->{ interface } eq $iface )
 			{
-				$rule->{table}=$table;
+				$rule->{ table } = $table;
 				push @list, $rule;
 			}
 		}
@@ -710,13 +710,13 @@ sub listRoutingTable
 			 "debug", "PROFILING" );
 
 	my $table = shift;
-	my $list = [];
+	my $list  = [];
 
-	my $list = &listRoutingTableCustom($table);
-	my @routes = @{$list};
+	my $list   = &listRoutingTableCustom( $table );
+	my @routes = @{ $list };
 
-	my $sys = &listRoutingTableSys($table);
-	push @routes, @{$sys};
+	my $sys = &listRoutingTableSys( $table );
+	push @routes, @{ $sys };
 
 	return \@routes;
 }
@@ -740,15 +740,15 @@ sub getRoutingCustomExists
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $table = shift;
+	my $table    = shift;
 	my $route_id = shift;
 
-	my $file = &getRoutingTableFile($table);
+	my $file = &getRoutingTableFile( $table );
 	return 0 if !-f $file;
 
-	my $fh    = Config::Tiny->read( $file );
+	my $fh = Config::Tiny->read( $file );
 
-	return (exists $fh->{$route_id})? 1:0;
+	return ( exists $fh->{ $route_id } ) ? 1 : 0;
 }
 
 =begin nd
@@ -778,15 +778,15 @@ sub buildRouteCmd
 
 	my $table = shift;
 	my $param = shift;
-	my $cmd = "";
+	my $cmd   = "";
 
-	$cmd .= "$param->{to} " if (exists $param->{to});
-	$cmd .= "dev $param->{interface} " if (exists $param->{interface});
-	$cmd .= "src $param->{source} " if (exists $param->{source});
-	$cmd .= "via $param->{via} " if (exists $param->{via});
-	$cmd .= "mtu $param->{mtu} " if (exists $param->{mtu});
-	$cmd .= "metric $param->{priority} " if (exists $param->{priority});
-	$cmd .= "table $table " if ($cmd ne "");
+	$cmd .= "$param->{to} "              if ( exists $param->{ to } );
+	$cmd .= "dev $param->{interface} "   if ( exists $param->{ interface } );
+	$cmd .= "src $param->{source} "      if ( exists $param->{ source } );
+	$cmd .= "via $param->{via} "         if ( exists $param->{ via } );
+	$cmd .= "mtu $param->{mtu} "         if ( exists $param->{ mtu } );
+	$cmd .= "metric $param->{priority} " if ( exists $param->{ priority } );
+	$cmd .= "table $table "              if ( $cmd ne "" );
 
 	return $cmd;
 }
@@ -820,27 +820,28 @@ sub createRoutingCustom
 	my $table = shift;
 	my $input = shift;
 
-	my @params = ('id', 'raw', 'type', 'to', 'interface', 'via', 'source', 'preference');
+	my @params =
+	  ( 'id', 'raw', 'type', 'to', 'interface', 'via', 'source', 'preference' );
 
-	my $lock_rules = &getRoutingTableLock($table);
+	my $lock_rules = &getRoutingTableLock( $table );
 	&lockResource( $lock_rules, 'l' );
 
-	my $err = &setRoute( 'add', $input->{raw} );
+	my $err = &setRoute( 'add', $input->{ raw } );
 
-	if (!$err)
+	if ( !$err )
 	{
-		my $file = &getRoutingTableFile($table);
-		&createFile($file) if (!-f $file);
+		my $file = &getRoutingTableFile( $table );
+		&createFile( $file ) if ( !-f $file );
 
-		$input->{id} = &genRoutingId($file);
-		$input->{type} = 'user';
+		$input->{ id }   = &genRoutingId( $file );
+		$input->{ type } = 'user';
 
 		my $fh = Config::Tiny->read( $file );
 
 		my $conf;
-		foreach my $p (@params)
+		foreach my $p ( @params )
 		{
-			$conf->{$p} = $input->{$p};
+			$conf->{ $p } = $input->{ $p };
 		}
 
 		if ( !$conf->{ id } )
@@ -853,7 +854,8 @@ sub createRoutingCustom
 		$fh->{ $conf->{ id } } = $conf;
 		$fh->write( $file );
 
-		&zenlog( "The routing entry '$conf->{id}' was created properly", "info", "net" );
+		&zenlog( "The routing entry '$conf->{id}' was created properly", "info",
+				 "net" );
 		&zenlog( "Params: " . Dumper( $conf ), "debug2", "net" );
 	}
 
@@ -881,10 +883,10 @@ sub getRoutingTableConf
 			 "debug", "PROFILING" );
 
 	my $table = shift;
-	my $id = shift;
+	my $id    = shift;
 
-	my $file = &getRoutingTableFile($table);
-	my $fh = Config::Tiny->read( $file );
+	my $file = &getRoutingTableFile( $table );
+	my $fh   = Config::Tiny->read( $file );
 
 	return $fh->{ $id };
 }
@@ -908,15 +910,15 @@ sub delRoutingCustom
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $table = shift;
+	my $table    = shift;
 	my $route_id = shift;
 
-	my $conf = &getRoutingTableConf($table, $route_id);
-	return 1 if( &setRoute('del', $conf->{raw}));
+	my $conf = &getRoutingTableConf( $table, $route_id );
+	return 1 if ( &setRoute( 'del', $conf->{ raw } ) );
 
-	my $file = &getRoutingTableFile($table);
-	my $lock_f = &getRoutingTableLock($table);
-	return &delRoutingConfById($route_id, $file, $lock_f);
+	my $file   = &getRoutingTableFile( $table );
+	my $lock_f = &getRoutingTableLock( $table );
+	return &delRoutingConfById( $route_id, $file, $lock_f );
 }
 
 =begin nd
@@ -938,22 +940,22 @@ sub setRoute
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $action = shift;
+	my $action     = shift;
 	my $cmd_params = shift;
-	my $ipv = shift //'';
+	my $ipv        = shift // '';
 
 	my $exist = &isRoute( $cmd_params, $ipv );
 
-	if ( ($exist and $action eq 'add') or
-		( !$exist and $action eq 'del' ) )
+	if (    ( $exist and $action eq 'add' )
+		 or ( !$exist and $action eq 'del' ) )
 	{
 		return 0;
 	}
 
-	$ipv = "-$ipv" if ($ipv ne '');
+	$ipv = "-$ipv" if ( $ipv ne '' );
 	my $cmd = "$ip_bin $ipv route $action $cmd_params";
 
-	return &logAndRun($cmd);
+	return &logAndRun( $cmd );
 }
 
 =begin nd
@@ -977,14 +979,14 @@ sub applyRoutingCustom
 			 "debug", "PROFILING" );
 
 	my $action = shift;
-	my $table = shift;
-	my $err = 0;
+	my $table  = shift;
+	my $err    = 0;
 
-	my $list = &listRoutingTableCustom($table);
+	my $list = &listRoutingTableCustom( $table );
 
-	foreach my $it (@{$list})
+	foreach my $it ( @{ $list } )
 	{
-		$err += &setRoute($action, $it->{raw});
+		$err += &setRoute( $action, $it->{ raw } );
 	}
 
 	return $err;
@@ -1010,28 +1012,27 @@ sub sanitazeRouteCmd
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $cmd = shift;
+	my $cmd   = shift;
 	my $table = shift;
 
-	&zenlog ("Sanitazing route cmd: $cmd","debug2","net");
-	if ($cmd !~ /table/)
+	&zenlog( "Sanitazing route cmd: $cmd", "debug2", "net" );
+	if ( $cmd !~ /table/ )
 	{
 		$cmd .= " table $table";
-		&zenlog ("Adding table: $cmd","debug2","net");
+		&zenlog( "Adding table: $cmd", "debug2", "net" );
 	}
-	if ($cmd =~ s/\s*ip\s+(-4|-6)?\s*route\s+\w+\s+//)
+	if ( $cmd =~ s/\s*ip\s+(-4|-6)?\s*route\s+\w+\s+// )
 	{
-		&zenlog ("Removing bin: $cmd","debug2","net");
+		&zenlog( "Removing bin: $cmd", "debug2", "net" );
 	}
-	if ($cmd !~ /(?:preference|metric)/)
+	if ( $cmd !~ /(?:preference|metric)/ )
 	{
-		my $preference = &getGlobalConfiguration("routingRoutePrio");
+		my $preference = &getGlobalConfiguration( "routingRoutePrio" );
 		$cmd .= " preference $preference";
-		&zenlog ("Adding a priority: $cmd","debug2","net");
+		&zenlog( "Adding a priority: $cmd", "debug2", "net" );
 	}
 
 	return $cmd;
 }
-
 
 1;

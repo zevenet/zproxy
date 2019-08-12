@@ -141,7 +141,7 @@ sub addlocalnet    # ($if_ref)
 			next if $iface->{ status } ne 'up';
 			next if !defined $iface->{ addr };
 
-			next if (exists $if_ref->{isolate} and $if_ref->{isolate} eq 'true' );
+			next if ( exists $if_ref->{ isolate } and $if_ref->{ isolate } eq 'true' );
 		}
 
 		&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
@@ -154,9 +154,9 @@ sub addlocalnet    # ($if_ref)
 		if ( $eload )
 		{
 			my $err = &eload(
-					module => 'Zevenet::Net::Routing',
-					func   => 'applyRoutingTableByIface',
-					args   => [$table,$$if_ref{name}],
+							  module => 'Zevenet::Net::Routing',
+							  func   => 'applyRoutingTableByIface',
+							  args   => [$table, $$if_ref{ name }],
 			);
 		}
 	}
@@ -176,7 +176,7 @@ sub addlocalnet    # ($if_ref)
 		next if $iface->{ name } eq $if_ref->{ name };
 
 		# do not import the iface route if it is isolate
-		next if (exists $iface->{isolate} and $iface->{isolate} eq 'true' );
+		next if ( exists $iface->{ isolate } and $iface->{ isolate } eq 'true' );
 
 		&zenlog(
 			   "addlocalnet: into current interface: name $$iface{name} type $$iface{type}",
@@ -196,9 +196,9 @@ sub addlocalnet    # ($if_ref)
 	if ( $eload )
 	{
 		my $err = &eload(
-				module => 'Zevenet::Net::Routing',
-				func   => 'applyRoutingCustom',
-				args   => ['add', "table_$$if_ref{name}"],
+						  module => 'Zevenet::Net::Routing',
+						  func   => 'applyRoutingCustom',
+						  args   => ['add', "table_$$if_ref{name}"],
 		);
 	}
 
@@ -244,24 +244,23 @@ sub dellocalnet    # ($if_ref)
 		my $table = "table_$link";
 
 		my $cmd_param = "$net dev $$if_ref{name} src $$if_ref{addr} table $table";
-		next if (!$cmd_param);
+		next if ( !$cmd_param );
 
-		next if (!&isRoute($cmd_param, $$if_ref{ip_v}));
+		next if ( !&isRoute( $cmd_param, $$if_ref{ ip_v } ) );
 
 		&zenlog( "dellocal: del $net route from table $table", "debug", "NETWORK" )
 		  if &debug();
 
-		my $ip_cmd =
-		  "$ip_bin -$$if_ref{ip_v} route del $cmd_param";
+		my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route del $cmd_param";
 		&logAndRun( $ip_cmd );
 	}
 
 	if ( $eload )
 	{
 		my $err = &eload(
-				module => 'Zevenet::Net::Routing',
-				func   => 'applyRoutingCustom',
-				args   => ['del', "table_$$if_ref{name}"],
+						  module => 'Zevenet::Net::Routing',
+						  func   => 'applyRoutingCustom',
+						  args   => ['del', "table_$$if_ref{name}"],
 		);
 	}
 }
@@ -287,18 +286,18 @@ sub isRoute
 			 "debug", "PROFILING" );
 
 	my $route = shift;
-	my $ipv = shift //'';
-	$ipv = "-$ipv" if ($ipv ne '');
+	my $ipv = shift // '';
+	$ipv = "-$ipv" if ( $ipv ne '' );
 
 	my $ip_cmd = "$ip_bin $ipv route list $route";
-	my $out = `$ip_cmd 2>/dev/null`;
-	my $exist = ($out eq '')? 0:1;
+	my $out    = `$ip_cmd 2>/dev/null`;
+	my $exist  = ( $out eq '' ) ? 0 : 1;
 
-	if (&debug() > 1)
+	if ( &debug() > 1 )
 	{
-		my $msg = ($exist)?"(Already exist)":"(Not found)";
+		my $msg = ( $exist ) ? "(Already exist)" : "(Not found)";
 		$msg .= " $ip_cmd";
-		&zenlog( $msg, "debug", "net");
+		&zenlog( $msg, "debug", "net" );
 	}
 
 	return $exist;
@@ -330,17 +329,19 @@ sub buildRuleCmd
 			 "debug", "PROFILING" );
 
 	my $action = shift;
-	my $conf = shift;
-	my $cmd  = "";
+	my $conf   = shift;
+	my $cmd    = "";
 
-	my $ipv = (exists $conf->{ip_v}) ? "-$conf->{ip_v}": "";
+	my $ipv = ( exists $conf->{ ip_v } ) ? "-$conf->{ip_v}" : "";
 
 	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
-	$cmd .= "$ip_bin $ipv rule $action" if (defined $action);
-	$cmd .= " priority $conf->{priority}" if ( exists $conf->{priority} and $conf->{priority} =~ /\d/ );
+	$cmd .= "$ip_bin $ipv rule $action" if ( defined $action );
+	$cmd .= " priority $conf->{priority}"
+	  if ( exists $conf->{ priority } and $conf->{ priority } =~ /\d/ );
 	$cmd .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
 	$cmd .= " from $conf->{from}";
-	$cmd .= " fwmark $conf->{fwmark}" if ( exists $conf->{ fwmark } && $conf->{ fwmark } ne "" );
+	$cmd .= " fwmark $conf->{fwmark}"
+	  if ( exists $conf->{ fwmark } && $conf->{ fwmark } ne "" );
 	$cmd .= " lookup $conf->{table}";
 
 	return $cmd;
@@ -371,15 +372,15 @@ sub isRule
 			 "debug", "PROFILING" );
 	my $params = shift;
 
-	my $cmd = &buildRuleCmd('list', $params);
-	my $out = `$cmd`;
-	my $exist = ($out ne '')? 1:0;
+	my $cmd   = &buildRuleCmd( 'list', $params );
+	my $out   = `$cmd`;
+	my $exist = ( $out ne '' ) ? 1 : 0;
 
-	if (&debug() > 1)
+	if ( &debug() > 1 )
 	{
-		my $msg = ($exist)?"(Already exist)":"(Not found)";
+		my $msg = ( $exist ) ? "(Already exist)" : "(Not found)";
 		$msg .= " $cmd";
-		&zenlog( $msg, "debug", "net");
+		&zenlog( $msg, "debug", "net" );
 	}
 
 	return $exist;
@@ -410,16 +411,16 @@ sub applyRule
 			 "debug", "PROFILING" );
 
 	my $action = shift;
-	my $rule = shift;
+	my $rule   = shift;
 
-	return -1 if ( $rule->{table} eq "" );
+	return -1 if ( $rule->{ table } eq "" );
 
-	if ( $rule->{priority} eq '' and $action eq 'add' )
+	if ( $rule->{ priority } eq '' and $action eq 'add' )
 	{
-		$rule->{priority} = &genRoutingRulesPrio( $rule->{type} );
+		$rule->{ priority } = &genRoutingRulesPrio( $rule->{ type } );
 	}
 
-	my $cmd = &buildRuleCmd($action, $rule);
+	my $cmd = &buildRuleCmd( $action, $rule );
 	my $output = &logAndRun( "$cmd" );
 
 	return $output;
@@ -442,21 +443,21 @@ sub genRoutingRulesPrio
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $type = shift; # user, farm, ifaces
+	my $type = shift;    # user, farm, ifaces
 
-	my $farmInit = &getGlobalConfiguration( 'routingRulePrioFarm' );
-	my $userInit = &getGlobalConfiguration( 'routingRulePrioUserMin' );
+	my $farmInit   = &getGlobalConfiguration( 'routingRulePrioFarm' );
+	my $userInit   = &getGlobalConfiguration( 'routingRulePrioUserMin' );
 	my $ifacesInit = &getGlobalConfiguration( 'routingRulePrioIfaces' );
-	my $systemLimit = '32766'; # maximun priority value
+	my $systemLimit = '32766';    # maximun priority value
 
 	my $min;
 	my $max;
-	if ($type eq 'farm')
+	if ( $type eq 'farm' )
 	{
 		$min = $farmInit;
 		$max = $userInit;
 	}
-	elsif ($type eq 'user')
+	elsif ( $type eq 'user' )
 	{
 		$min = $userInit;
 		$max = $ifacesInit;
@@ -469,9 +470,9 @@ sub genRoutingRulesPrio
 
 	my $prio;
 	my $prioList = &listRoutingRulesPrio();
-	for ( $prio = $max-1; $prio >= $min; $prio-- )
+	for ( $prio = $max - 1 ; $prio >= $min ; $prio-- )
 	{
-		last if ( !grep( /^$prio$/, @{$prioList}) );
+		last if ( !grep ( /^$prio$/, @{ $prioList } ) );
 	}
 
 	return $prio;
@@ -497,9 +498,9 @@ sub listRoutingRulesPrio
 	my $rules = &listRoutingRules();
 	my @list;
 
-	foreach my $r (@{$rules})
+	foreach my $r ( @{ $rules } )
 	{
-		push @list, $r->{priority};
+		push @list, $r->{ priority };
 	}
 
 	@list = sort @list;
@@ -530,14 +531,15 @@ sub getRuleFromIface
 
 	my $if_ref = shift;
 
-	my $from = ($if_ref->{ mask } =~ /^\d$/ ) ?
-			"$if_ref->{ net }/$if_ref->{ mask }" :
-			NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask });
+	my $from =
+	  ( $if_ref->{ mask } =~ /^\d$/ )
+	  ? "$if_ref->{ net }/$if_ref->{ mask }"
+	  : NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } );
 
 	my $rule = {
-		table => "table_$if_ref->{name}",
-		type => 'iface',
-		from => $from,
+				 table => "table_$if_ref->{name}",
+				 type  => 'iface',
+				 from  => $from,
 	};
 
 	return $rule;
@@ -573,7 +575,7 @@ sub setRule
 			 "debug", "PROFILING" );
 
 	my $action = shift;
-	my $rule = shift;
+	my $rule   = shift;
 
 	my $output = 0;
 
@@ -582,12 +584,12 @@ sub setRule
 
 	my $isrule = &isRule( $rule );
 
-	&zenlog("action $action and the rule exist=$isrule","debug","net");
+	&zenlog( "action $action and the rule exist=$isrule", "debug", "net" );
 
 	if (    ( $action eq "add" && $isrule == 0 )
 		 || ( $action eq "del" && $isrule != 0 ) )
 	{
-		$output = &applyRule($action, $rule);
+		$output = &applyRule( $action, $rule );
 	}
 
 	return $output;
@@ -656,7 +658,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				$status = &logAndRun( "$ip_cmd" );
 			}
 
-			my $rule = &getRuleFromIface($if_ref);
+			my $rule = &getRuleFromIface( $if_ref );
 			$status = &setRule( "add", $rule );
 		}
 		else
@@ -706,8 +708,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	{
 		my ( $toif ) = split ( /:/, $$if_ref{ name } );
 
-		my $rule = &getRuleFromIface($if_ref);
-		$rule->{table} = "table_$toif";
+		my $rule = &getRuleFromIface( $if_ref );
+		$rule->{ table } = "table_$toif";
 		$status = &setRule( "add", $rule );
 		$if_announce = $toif;
 	}
@@ -779,7 +781,7 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
 
-			my $rule = &getRuleFromIface($if_ref);
+			my $rule = &getRuleFromIface( $if_ref );
 			$status = &setRule( "del", $rule );
 			return $status;
 		}
@@ -1040,7 +1042,7 @@ sub listRoutingTablesNames
 
 	my $fh = &openlock( $rttables, '<' );
 
-	foreach my $line (<$fh>)
+	foreach my $line ( <$fh> )
 	{
 		next if ( $line =~ /^\s*#/ );
 
@@ -1095,7 +1097,7 @@ sub listRoutingRulesSys
 		#~ if (!exists $r->{fwmask})   # ???? decidir
 		{
 			$r->{ from } = $r->{ src };
-			$r->{ from } .= "/$r->{ src_len }" if exists ($r->{ src_len });
+			$r->{ from } .= "/$r->{ src_len }" if exists ( $r->{ src_len } );
 			delete $r->{ src };
 			delete $r->{ src_len };
 			$r->{ type } = "system";
@@ -1126,17 +1128,17 @@ sub listRoutingRules
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $sys  = &listRoutingRulesSys();
+	my $sys        = &listRoutingRulesSys();
 	my @rules_conf = @{ $sys };
 
-	if ($eload)
+	if ( $eload )
 	{
 		my $conf = &eload(
-							module => 'Zevenet::Net::Routing',
-							func   => 'listRoutingRulesConf',
-							args   => [],
+						   module => 'Zevenet::Net::Routing',
+						   func   => 'listRoutingRulesConf',
+						   args   => [],
 		);
-		push @rules_conf, @{$conf};
+		push @rules_conf, @{ $conf };
 	}
 
 	# ????? remove duplicated rules
@@ -1166,9 +1168,9 @@ sub getRoutingTableExists
 
 	my $table = shift;
 
-	my $err = system ("$ip_bin route list table $table");
+	my $err = system ( "$ip_bin route list table $table" );
 
-	return ($err) ? 0: 1;
+	return ( $err ) ? 0 : 1;
 }
 
 1;
