@@ -324,7 +324,11 @@ void StreamManager::onRequestEvent(int fd) {
 #endif
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (this->is_https_listener) {
+#if USE_SSL_BIO_BUFFER
     result = this->ssl_manager->handleDataRead(stream->client_connection);
+#else
+    result = this->ssl_manager->sslRead(stream->client_connection);
+#endif
   } else {
     result = stream->client_connection.read();
   }
@@ -715,9 +719,15 @@ void StreamManager::onResponseEvent(int fd) {
   IO::IO_RESULT result;
 
   if (stream->backend_connection.getBackend()->isHttps()) {
+#if USE_SSL_BIO_BUFFER
     result =
         stream->backend_connection.getBackend()->ssl_manager.handleDataRead(
             stream->backend_connection);
+#else
+    result =
+        stream->backend_connection.getBackend()->ssl_manager.sslRead(
+            stream->backend_connection);
+#endif
   } else {
 #if ENABLE_ZERO_COPY
     if (stream->response.message_bytes_left > 0 &&
@@ -754,8 +764,17 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
       result = stream->backend_connection.read();
   }
-//  Debug::logmsg(LOG_REMOVE, "IO RESULT: %s",
-//                IO::getResultString(result).data());
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Debug::logmsg(LOG_REMOVE,
+                "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
+                "header_sent: %s IO RESULT: %s",
+                stream->backend_connection.getFileDescriptor(),
+                stream->backend_connection.buffer_size,
+                stream->response.content_length,
+                stream->response.message_bytes_left,
+                stream->response.headers_sent ? "true" : "false",
+                IO::getResultString(result).data());
+#endif
   switch (result) {
   case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
   case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -776,8 +795,8 @@ void StreamManager::onResponseEvent(int fd) {
     }
     return;
   }
+  case IO::IO_RESULT::ZERO_DATA:
   case IO::IO_RESULT::SUCCESS:
-    break;
   case IO::IO_RESULT::DONE_TRY_AGAIN: {
     if (stream->backend_connection.buffer_size == 0) {
       if (stream->response.message_bytes_left > 0 ||
@@ -789,9 +808,6 @@ void StreamManager::onResponseEvent(int fd) {
   }
   case IO::IO_RESULT::FULL_BUFFER:
   case IO::IO_RESULT::FD_CLOSED:break;
-  case IO::IO_RESULT::ZERO_DATA:
-    if (stream->backend_connection.buffer_size > 0)
-      stream->client_connection.enableWriteEvent();
   case IO::IO_RESULT::ERROR:
   case IO::IO_RESULT::CANCELLED:
   default: {
@@ -819,7 +835,13 @@ void StreamManager::onResponseEvent(int fd) {
                           stream->request.getUrl());
     }
 #endif
+
+#ifdef ENABLE_QUICK_RESPONSE
+    onClientWriteEvent(stream);
+#else
     stream->client_connection.enableWriteEvent();
+#endif
+
     // TODO:: maybe quick response
 #if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(
@@ -838,7 +860,11 @@ void StreamManager::onResponseEvent(int fd) {
   static size_t total_responses;
   if (ret != http_parser::PARSE_RESULT::SUCCESS) {
     if (stream->backend_connection.buffer_size > 0) {
+#ifdef ENABLE_QUICK_RESPONSE
+      onClientWriteEvent(stream);
+#else
       stream->client_connection.enableWriteEvent();
+#endif
       return;
     }
     Debug::logmsg(
@@ -908,8 +934,11 @@ void StreamManager::onResponseEvent(int fd) {
   if (!this->is_https_listener) {
     http_manager::applyCompression(service, stream);
   }
-
+#ifdef ENABLE_QUICK_RESPONSE
+  onClientWriteEvent(stream);
+#else
   stream->client_connection.enableWriteEvent();
+#endif
 }
 
 void StreamManager::onConnectTimeoutEvent(int fd) {
@@ -1020,9 +1049,15 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     size_t written = 0;
 
     if (stream->backend_connection.getBackend()->isHttps()) {
+#if USE_SSL_BIO_BUFFER
       result = stream->backend_connection.getBackend()->ssl_manager.handleWrite(
           stream->backend_connection, stream->client_connection.buffer,
           stream->client_connection.buffer_size, written);
+#else
+      result = stream->backend_connection.getBackend()->ssl_manager.sslWrite(
+          stream->backend_connection, stream->client_connection.buffer,
+          stream->client_connection.buffer_size, written);
+#endif
     } else {
       if (stream->client_connection.buffer_size > 0)
         result = stream->client_connection.writeTo(
@@ -1173,9 +1208,15 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     size_t written = 0;
 
     if (this->is_https_listener) {
+#if USE_SSL_BIO_BUFFER
       result = this->ssl_manager->handleWrite(
           stream->client_connection, stream->backend_connection.buffer,
           stream->backend_connection.buffer_size, written);
+#else
+      result = this->ssl_manager->sslWrite(
+          stream->client_connection, stream->backend_connection.buffer,
+          stream->backend_connection.buffer_size, written);
+#endif
 
     } else {
       if (stream->backend_connection.buffer_size > 0)
@@ -1316,17 +1357,6 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
 bool StreamManager::init(ListenerConfig &listener_config) {
   listener_config_ = listener_config;
   service_manager = ServiceManager::getInstance(listener_config);
-  //  for (auto service_config = listener_config.services;
-  //  for (auto service_config = listener_config.services;
-  //       service_config != nullptr; service_config = service_config->next) {
-  //    if (!service_config->disabled) {
-  //      service_manager->addService(*service_config);
-  //    } else {
-  //      Debug::LogInfo("Backend " + std::string(service_config->name) +
-  //                     " disabled in config file",
-  //                 LOG_NOTICE);
-  //    }
-  //  }
   if (listener_config.ctx != nullptr ||
       !listener_config.ssl_config_file.empty()) {
     this->is_https_listener = true;

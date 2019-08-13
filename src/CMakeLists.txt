@@ -17,7 +17,8 @@ add_definitions(-DENABLE_SSL_SESSION_CACHING=0)
 add_definitions(-DENABLE_ZERO_COPY=0)
 add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
 add_definitions(-DCACHE_ENABLED=0)
-
+add_definitions(-DENABLE_QUICK_RESPONSE=1)
+add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_library(libzhttp
 		ssl/ssl_common.h
 		ssl/SSLContext.cpp

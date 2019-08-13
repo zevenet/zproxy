@@ -52,12 +52,12 @@ enum class EVENT_TYPE : uint32_t {
   ACCEPT = (EPOLLIN | EPOLLET),
 #endif
   /** Read from the connection. */
-      READ = (EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLET),
+  READ = ((EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLET) & ~EPOLLOUT),
   /** Read from the connection. */
-  READ_ONESHOT = (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
+  READ_ONESHOT = ((EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP) & ~EPOLLOUT),
   /** Write to the connection. */
-  WRITE = (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP |
-           EPOLLHUP), // is always one shot
+  WRITE = ((EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP |
+            EPOLLHUP) & ~EPOLLIN), // is always one shot
   /** Read or write event */
   ANY = (EPOLLONESHOT | EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLOUT),
   /** Connect event */

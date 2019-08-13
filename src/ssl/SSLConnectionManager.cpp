@@ -50,22 +50,32 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection,
     Debug::logmsg(LOG_ERR, "SSL_set_fd failed");
     return false;
   }
-  /*
-   * SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER :
-   *   This flags allows us to retry the write
-   *   operation with different parameters, i.e., a different buffer and size,
-   *so long as the original data is still contained in the new buffer.
-   *SSL_MODE_ENABLE_PARTIAL_WRITE:
-   *   Allow partially complete writes to count as successes.
-   */
-  //  SSL_set_mode(ssl_connection.ssl, SSL_MODE_ENABLE_PARTIAL_WRITE |
-  //                                       SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+  if (client_mode && ssl_connection.server_name != nullptr) {
+    if (!SSL_set_tlsext_host_name(ssl_connection.ssl,
+                                  ssl_connection.server_name)) {
+      Debug::logmsg(LOG_DEBUG, "could not set SNI host name  to %s",
+                    ssl_connection.server_name);
+      return false;
+    } else {
+      Debug::logmsg(LOG_DEBUG, "Set SNI host name \"%s\"",
+                    ssl_connection.server_name);
+    }
+  }
+
+  SSL_set_mode(ssl_connection.ssl,
+               SSL_MODE_ENABLE_PARTIAL_WRITE
+                   | // enable return if not all buffer has      been writen to the underlying socket,
+                       //           need to check for sizes after writes
+                       SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION);
+  SSL_set_mode(ssl_connection.ssl, SSL_MODE_RELEASE_BUFFERS);
 
   Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: SSL_set_accept_state for fd %d",
                 ssl_connection.getFileDescriptor());
   // let the SSL object know it should act as server
   !client_mode ? SSL_set_accept_state(ssl_connection.ssl)
                : SSL_set_connect_state(ssl_connection.ssl);
+  ssl_connection.ssl_conn_status = SSL_STATUS::NEED_HANDSHAKE;
   return true;
 }
 
@@ -95,11 +105,11 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
     }
   }
 
-//  SSL_set_mode( ssl_connection.ssl,
-    //     SSL_MODE_ENABLE_PARTIAL_WRITE | // enable return if not all buffer has
-          // been writen to the underlying socket,
-          // need to check for sizes after writes
-//          SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+  SSL_set_mode(ssl_connection.ssl,
+               SSL_MODE_ENABLE_PARTIAL_WRITE
+                   | // enable return if not all buffer has      been writen to the underlying socket,
+//           need to check for sizes after writes
+                   SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
   SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION );
   SSL_set_mode(ssl_connection.ssl,SSL_MODE_RELEASE_BUFFERS );
 
@@ -141,8 +151,8 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
     rc = BIO_read(ssl_connection.io,
                   ssl_connection.buffer + ssl_connection.buffer_size,
                   static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
-//    Debug::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d", rc,
-//                  ssl_connection.buffer_size);
+//    Debug::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d ERRNO %s", rc,
+//                  ssl_connection.buffer_size, std::strerror(errno));
     if (rc == 0) {
       if (bytes_read > 0)
         return IO::IO_RESULT::SUCCESS;
@@ -220,7 +230,11 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool client_mode) {
 //    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl == nullptr) {
+#if USE_SSL_BIO_BUFFER
     if (!initSslConnection_BIO(ssl_connection, client_mode)) {
+#else
+    if (!initSslConnection(ssl_connection, client_mode)) {
+#endif
       return false;
     }
   }
@@ -310,35 +324,32 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
-  Debug::logmsg(LOG_DEBUG, "> handleRead");
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   int rc = -1;
-//  do {
+  do {
     rc = SSL_read(ssl_connection.ssl,
                   ssl_connection.buffer + ssl_connection.buffer_size,
-                  static_cast<int>(MAX_DATA_SIZE -
-                      ssl_connection.buffer_size));
-    if (rc > 0) {
-      ssl_connection.buffer_size += static_cast<size_t>(rc);
+                  static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
+    auto ssle = SSL_get_error(ssl_connection.ssl, rc);
+    switch (ssle) {
+    case SSL_ERROR_NONE:ssl_connection.buffer_size += static_cast<size_t>(rc);
       result = IO::IO_RESULT::SUCCESS;
-    } else if (BIO_should_retry(ssl_connection.io))
-      result = IO::IO_RESULT::DONE_TRY_AGAIN;
-//  } while (rc > 0);
-
-  int ssle = SSL_get_error(ssl_connection.ssl, rc);
-  if (rc < 0 && ssle != SSL_ERROR_WANT_READ) {
-    Debug::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s",
-                  rc,
-                  ssle, errno, strerror(errno));
-    result = IO::IO_RESULT::DONE_TRY_AGAIN; // TODO::  check want read
-  }
-  if (rc == 0) {
-    if (ssle == SSL_ERROR_ZERO_RETURN)
-      Debug::logmsg(LOG_NOTICE, "SSL has been shutdown.");
-    else
+      break;
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE: {
+      Debug::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s",
+                    rc, ssle, errno, strerror(errno));
+      return IO::IO_RESULT::DONE_TRY_AGAIN;  // TODO::  check want read
+    }
+    case SSL_ERROR_ZERO_RETURN:Debug::logmsg(LOG_NOTICE, "SSL has been shutdown.");
+      return IO::IO_RESULT::FD_CLOSED;
+    default:ERR_print_errors_fp(stderr);
       Debug::logmsg(LOG_NOTICE, "Connection has been aborted.");
-    result = IO::IO_RESULT::FD_CLOSED;
-  }
+      return IO::IO_RESULT::FD_CLOSED;
+    }
+  } while (rc > 0);  // SSL_pending(ssl) seems unreliable
+
+
   return result;
 }
 IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
@@ -444,8 +455,13 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   //write multibuffer to ssl connection
   size_t written;
   for(int i = 0;i < x;i ++){
+#if USE_SSL_BIO_BUFFER
     auto result = handleWrite(target_ssl_connection, static_cast<char*>(iov[i].iov_base),
             iov[i].iov_len, written, x==(i+1));
+#else
+    auto result = sslWrite(target_ssl_connection, static_cast<char *>(iov[i].iov_base),
+                           iov[i].iov_len, written);
+#endif
     switch (result){
     case IO::IO_RESULT::FD_CLOSED:
     case IO::IO_RESULT::FULL_BUFFER:

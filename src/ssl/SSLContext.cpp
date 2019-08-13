@@ -54,7 +54,6 @@ bool SSLContext::init(const std::string &cert_file,
 }
 
 bool SSLContext::init(const BackendConfig &backend_config_) {
-  init();
   if (backend_config_.ctx != nullptr) {
       ssl_ctx = backend_config_.ctx;
   }
@@ -65,6 +64,12 @@ bool SSLContext::init(const BackendConfig &backend_config_) {
       this->ssl_ctx = SSL_CTX_new(method);
       if (ssl_ctx==nullptr)
           return false;
+      SSL_CTX_set_verify(this->ssl_ctx, SSL_VERIFY_NONE, NULL);
+      SSL_CTX_set_mode(this->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+      SSL_CTX_set_options(this->ssl_ctx, SSL_OP_ALL);
+#ifdef SSL_OP_NO_COMPRESSION
+      SSL_CTX_set_options(this->ssl_ctx, SSL_OP_NO_COMPRESSION);
+#endif
   }
     Debug::logmsg(LOG_DEBUG, "Backend %s:%d SSLContext initialized",
             backend_config_.address.data(),
