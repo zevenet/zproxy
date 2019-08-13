@@ -78,6 +78,8 @@ add_library(libzhttp
         http/HttpRequest.cpp
                 cache/HttpCacheManager.cpp
                 cache/HttpCacheManager.h
+                cache/ICacheStorage.cpp
+                cache/ICacheStorage.h
                 )
 
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
