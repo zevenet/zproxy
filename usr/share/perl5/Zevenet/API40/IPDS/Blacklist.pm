@@ -164,6 +164,10 @@ sub set_blacklists_list
 
 	my $type    = &getBLParam( $listName, 'type' );
 	my $preload = &getBLParam( $listName, 'preload' );
+	my $frequency = $json_obj->{ 'frequency' }
+	  // &getBLParam( $listName, 'frequency' );
+	my $frequency_type = $json_obj->{ 'frequency_type' }
+	  // &getBLParam( $listName, 'frequency_type' );
 
 	# In preload and local lists only is allowed to change the policy
 	my $params = {
@@ -202,78 +206,65 @@ sub set_blacklists_list
 									 'non_blank' => 'true',
 		};
 
-		if ( exists $json_obj->{ "frequency" } )
+		my $time_flag = 1;
+		$params->{ "time" } = { 'ref' => 'hash', };
+
+		if ( $frequency eq 'daily' )
 		{
-			my $time_flag = 0;
-			$params->{ "time" } = { 'ref' => 'hash', };
+			$params->{ "frequency_type" } = {
+											  'values'    => ['exact', 'period'],
+											  'non_blank' => 'true',
+			};
+			$time_flag = 0 if ( $frequency_type eq 'period' );
+		}
+		elsif ( $frequency eq 'weekly' )
+		{
+			$params->{ "day" } = {
+								   'values' => [
+												'monday', 'tuesday', 'wednesday',
+												'thursday', 'friday', 'saturday', 'sunday'
+								   ],
+								   'non_blank' => 'true',
+			};
+		}
+		elsif ( $frequency eq 'monthly' )
+		{
+			$params->{ "day" } = {
+								   'interval'  => '1,31',
+								   'non_blank' => 'true',
+			};
+		}
 
-			if ( $json_obj->{ "frequency" } eq 'daily' )
-			{
-				$params->{ "frequency_type" } = {
-												  'values'    => ['exact', 'period'],
-												  'non_blank' => 'true',
-												  'required'  => 'true',
-				};
-				if ( $json_obj->{ 'frequency_type' } eq 'period' )
-				{
-					$time_flag = 1;
-					$params->{ "period" } = {
-											  'valid_format' => 'natural_num',
-											  'non_blank'    => 'true',
-											  'required'     => 'true',
-					};
-					$params->{ "unit" } = {
-											'values'    => ['minutes', 'hours'],
-											'non_blank' => 'true',
-											'required'  => 'true',
-					};
-				}
-			}
-			elsif ( $json_obj->{ "frequency" } eq 'weekly' )
-			{
-				$params->{ "day" } = {
-									   'values' => [
-													'monday', 'tuesday', 'wednesday',
-													'thursday', 'friday', 'saturday', 'sunday'
-									   ],
+		if ( $time_flag )
+		{
+			$params->{ "hour" } = {
+									'interval'  => '0,23',
+									'non_blank' => 'true',
+			};
+			$params->{ "minutes" } = {
+									   'interval'  => '0,59',
 									   'non_blank' => 'true',
-									   'required'  => 'true',
-				};
-			}
-			elsif ( $json_obj->{ "frequency" } eq 'monthly' )
-			{
-				$params->{ "day" } = {
-									   'interval'  => '1,31',
-									   'non_blank' => 'true',
-									   'required'  => 'true',
-				};
-			}
-
-			if ( !$time_flag )
-			{
-				$params->{ "hour" } = {
-										'interval'  => '0,23',
-										'non_blank' => 'true',
-										'required'  => 'true',
-				};
-				$params->{ "minutes" } = {
-										   'interval'  => '0,59',
-										   'non_blank' => 'true',
-										   'required'  => 'true',
-				};
-			}
+			};
+		}
+		else    #  ( $frequency_type eq 'period' )
+		{
+			$params->{ "period" } = {
+									  'valid_format' => 'natural_num',
+									  'non_blank'    => 'true',
+			};
+			$params->{ "unit" } = {
+									'values'    => ['minutes', 'hours'],
+									'non_blank' => 'true',
+			};
 		}
 	}
 
 	if ( exists $json_obj->{ 'time' } )
 	{
 		# remove time hash and add its param to common configuration hash
-		foreach my $timeParameters ( ( 'period', 'unit', 'hour', 'minutes' ) )
+		foreach my $timeParameters ( keys %{ $json_obj->{ 'time' } } )
 		{
-			if ( exists $json_obj->{ 'time' }->{ $timeParameters } )
-			{
-				$json_obj->{ $timeParameters } = $json_obj->{ 'time' }->{ $timeParameters };
-			}
+			$json_obj->{ $timeParameters } = $json_obj->{ 'time' }->{ $timeParameters };
 		}
 	}
 
@@ -326,8 +317,7 @@ sub set_blacklists_list
 					if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
 						 || $json_obj->{ $timeParam } eq '' )
 					{
-						my $msg =
-						  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+						my $msg = "The '$timeParam' parameter is not set.";
 						return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 					}
 				}
@@ -339,9 +329,9 @@ sub set_blacklists_list
 			}
 			elsif ( $json_obj->{ 'frequency_type' } eq 'exact' )
 			{
-				$json_obj->{ 'minutes' } = &getBLParam( $listName, "minutes" )
+				$json_obj->{ 'minutes' } = &getBLParam( $listName, "minutes" ) // 0
 				  if ( !exists $json_obj->{ 'minutes' } );
-				$json_obj->{ 'hour' } = &getBLParam( $listName, "hour" )
+				$json_obj->{ 'hour' } = &getBLParam( $listName, "hour" ) // 0
 				  if ( !exists $json_obj->{ 'hour' } );
 
 				foreach my $timeParam ( "minutes", "hour" )
@@ -349,8 +339,7 @@ sub set_blacklists_list
 					if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
 						 || $json_obj->{ $timeParam } eq '' )
 					{
-						my $msg =
-						  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+						my $msg = "The '$timeParam' parameter is not set.";
 						return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 					}
 				}
@@ -380,8 +369,7 @@ sub set_blacklists_list
 				if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
 					 || $json_obj->{ $timeParam } eq '' )
 				{
-					my $msg =
-					  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+					my $msg = "Teh '$timeParam' parameter is not set.";
 					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
@@ -389,7 +377,7 @@ sub set_blacklists_list
 			if ( !&getValidFormat( 'weekdays', $json_obj->{ 'day' } ) )
 			{
 				my $msg =
-				  "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
+				  "Error value of day parameter in '$json_obj->{ 'frequency' }' frequency.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -413,8 +401,7 @@ sub set_blacklists_list
 				if (   !&getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } )
 					 || $json_obj->{ $timeParam } eq '' )
 				{
-					my $msg =
-					  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+					my $msg = "The '$timeParam' parameter is not set.";
 					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
@@ -422,7 +409,7 @@ sub set_blacklists_list
 			if ( !&getValidFormat( 'day_of_month', $json_obj->{ 'day' } ) )
 			{
 				my $msg =
-				  "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
+				  "Error value of day parameter in '$json_obj->{ 'frequency' }' frequency.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
