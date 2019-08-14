@@ -365,7 +365,7 @@ void StreamManager::onRequestEvent(int fd) {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
                       stream->client_connection.getPeerAddress().c_str());
       }
-      // TODO::     clearStream(stream);
+      clearStream(stream);
       return;
     }
     if (stream->client_connection.ssl_connected)
@@ -609,7 +609,7 @@ void StreamManager::onRequestEvent(int fd) {
         }
         if (!stream->request.host_header_found) {
           std::string header_value = "";
-          header_value += stream->backend_connection.getPeerAddress();
+          header_value += stream->backend_connection.getBackend()->address;
           header_value += ':';
           header_value +=
               std::to_string(stream->backend_connection.getBackend()->port);

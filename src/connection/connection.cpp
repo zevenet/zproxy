@@ -306,26 +306,32 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
     buffer_offset += http_data.headers[i].line_size;
-//    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size-2, http_data.headers[i].name);
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size - 2, http_data.headers[i].name);
+#endif
   }
 
   for (const auto& header :
-          http_data.extra_headers) { // header must be always  used as reference,
+      http_data.extra_headers) { // header must be always  used as reference,
     // it's copied it invalidate c_str() reference.
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+#endif
   }
 
   for (const auto &header :
-          http_data.permanent_extra_headers) { // header must be always  used as
+      http_data.permanent_extra_headers) { // header must be always  used as
     // reference,
     // it's copied it invalidate c_str() reference.
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+#endif
   }
 
   iov[x].iov_base = const_cast<char *>(return_value);
@@ -338,6 +344,9 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     iov[x++].iov_len = http_data.message_length;
     buffer_offset += http_data.message_length;
     total_to_send += http_data.message_length;
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
+#endif
   }
 
   ssize_t nwritten = ::writev(target_fd, iov, x);
@@ -456,6 +465,10 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
+  Network::setTcpNoDelayOption(fd_);
+  Network::setSoKeepAliveOption(fd_);
+  Network::setSoLingerOption(fd_, true);
+
   if (timeout > 0)
     Network::setSocketNonBlocking(fd_);
 
@@ -502,6 +515,9 @@ int Connection::doAccept() {
   }
   if (clnt_addr.sin_family == AF_INET || clnt_addr.sin_family == AF_INET6 ||
       clnt_addr.sin_family == AF_UNIX) {
+    Network::setTcpNoDelayOption(new_fd);
+    Network::setSoKeepAliveOption(new_fd);
+    Network::setSoLingerOption(new_fd, true);
     return new_fd;
   } else {
     ::close(new_fd);

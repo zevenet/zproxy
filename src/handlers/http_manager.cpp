@@ -146,6 +146,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
 
   // Check for correct headers
   for (auto i = 0; i != request.num_headers; i++) {
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG,
+                  "\t%.*s",
+                  request.headers[i].name_len + request.headers[i].value_len + 2,
+                  request.headers[i].name);
+#endif
     /* maybe header to be removed */
     MATCHER *m;
     for (m = listener_config_.head_off; m; m = m->next) {
@@ -203,6 +209,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request, c
         }
         case http::HTTP_HEADER_NAME::HOST: {
           request.host_header_found = listener_config_.rewr_host == 0;
+          request.headers[i].header_off = listener_config_.rewr_host == 1;
           continue;
         }
         case http::HTTP_HEADER_NAME::EXPECT : {
@@ -316,8 +323,12 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
                                    response.headers[i].name_len);
     auto header_value = std::string_view(
         response.headers[i].value, response.headers[i].value_len);
-
-//    Debug::logmsg(LOG_REMOVE, "\t%.*s",response.headers[i].name_len + response.headers[i].value_len + 2, response.headers[i].name);
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG,
+                  "\t%.*s",
+                  response.headers[i].name_len + response.headers[i].value_len + 2,
+                  response.headers[i].name);
+#endif
     auto it = http::http_info::headers_names.find(header);
     if (it != http::http_info::headers_names.end()) {
       const auto header_name = it->second;
@@ -329,6 +340,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           stream.response.message_bytes_left =
               stream.response.content_length - stream.response.message_length;
         continue;
+      }
+      case http::HTTP_HEADER_NAME::CONTENT_LOCATION: {
+        if (listener_config_.rewr_loc == 0)
+          continue;
+        break;
       }
       case http::HTTP_HEADER_NAME::LOCATION: {
         // Rewrite location
@@ -361,11 +377,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           header_value_ += host;
           header_value_ += ":";
           header_value_ += std::to_string(listener_config_.port);
-//          header_value_ += path;
+          header_value_ += path;
           response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
                              header_value_);
-          response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-                             path);
+//          response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
+//                             path);
           response.headers[i].header_off = true;
         }
         break;

@@ -120,7 +120,7 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
   ssl_connection.ssl_bio = BIO_new(BIO_f_ssl());
 //  BIO_set_nbio( ssl_connection.io, 1);
 //  BIO_set_nbio(ssl_connection.ssl_bio, 1); //set BIO non blocking
-
+  BIO_set_close(ssl_connection.io, BIO_CLOSE);
   BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_CLOSE);
   BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
 
@@ -419,7 +419,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x++].iov_len = http_data.headers[i].line_size;
     total_to_send += http_data.headers[i].line_size;
     ssl_connection.buffer_offset += http_data.headers[i].line_size;
-//    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size-2, http_data.headers[i].name);
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size - 2, http_data.headers[i].name);
+#endif
   }
 
   for (const auto& header :
@@ -428,7 +430,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+#endif
   }
 
   for (const auto &header :
@@ -438,7 +442,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x].iov_base = const_cast<char *>(header.c_str());
     iov[x++].iov_len = header.length();
     total_to_send += header.length();
-//    Debug::logmsg(LOG_DEBUG, "%.*s", header.length()-2, header.c_str());
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+#endif
   }
 
   iov[x].iov_base = const_cast<char *>(return_value);
@@ -451,6 +457,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     iov[x++].iov_len = http_data.message_length;
     ssl_connection.buffer_offset += http_data.message_length;
     total_to_send += http_data.message_length;
+#if DEBUG_HTTP_HEADERS
+    Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
+#endif
   }
   //write multibuffer to ssl connection
   size_t written;
@@ -466,17 +475,17 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     case IO::IO_RESULT::FD_CLOSED:
     case IO::IO_RESULT::FULL_BUFFER:
     case IO::IO_RESULT::CANCELLED:
-    case IO::IO_RESULT::ERROR: break;
-    case IO::IO_RESULT::SSL_NEED_HANDSHAKE:
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
+    case IO::IO_RESULT::SSL_WANT_RENEGOTIATION:;
+    case IO::IO_RESULT::ERROR: return result;
     case IO::IO_RESULT::ZERO_DATA:break;
-    case IO::IO_RESULT::SSL_WANT_RENEGOTIATION:return result;
+    case IO::IO_RESULT::SSL_NEED_HANDSHAKE:
     case IO::IO_RESULT::DONE_TRY_AGAIN:
-      //check and register pending data;
-      break;
     case IO::IO_RESULT::SUCCESS:break;
     }
   }
+  if (http_data.content_length > 0)
+    http_data.message_bytes_left = http_data.content_length - http_data.message_length;
   ssl_connection.buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
   http_data.headers_sent = true;
