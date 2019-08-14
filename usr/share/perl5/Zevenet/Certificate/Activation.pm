@@ -337,6 +337,9 @@ sub certcontrol
 
 	my $cert_info = &getCertActivationInfo( $zlbcertfile );
 
+	#swcert = 8 ==> cacrl is not signed
+	return 8 if ( $cert_info->{ crl_signed } ne 'true' );
+
 	#swcert = 2 ==> Cert isn't signed OK
 	return 2 if ( $cert_info->{ signed } ne 'true' );
 
@@ -930,7 +933,7 @@ sub getCertActivationInfo
 	my $crl_err = &certRevoked( $zlbcertfile );
 
 	$info->{ revoked }    = ( !$crl_err )     ? 'false' : 'true';
-	$info->{ crl_signed } = ( $crl_err != 8 ) ? 'false' : 'true';
+	$info->{ crl_signed } = ( $crl_err == 8 ) ? 'false' : 'true';
 
 	# Certificate expiring date
 	$info->{ days_to_expire } = &getCertDaysToExpire( $info->{ expiration } );
