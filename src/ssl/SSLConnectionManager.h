@@ -165,5 +165,12 @@ public:
    * @return @c true if everything is ok, if not @c false.
    */
   bool initSslConnection_BIO(Connection &ssl_connection, bool client_mode = false);
+
+  /**
+  * @brief Async Shutdown
+  * @param ssl_connection used to read from.
+  * @return the result of the read operation with a IO:IO_RESULT format.
+  */
+  IO::IO_RESULT sslShutdown(Connection &ssl_connection);
 };
 } // namespace ssl

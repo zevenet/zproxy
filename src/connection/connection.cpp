@@ -23,11 +23,18 @@ Connection::~Connection() {
   is_connected = false;
   if (ssl != nullptr) {
     SSL_shutdown(ssl);
+    SSL_clear(ssl);
     SSL_free(ssl);
-    if (io != NULL)
+#if USE_SSL_BIO_BUFFER
+    if (io != NULL) {
       BIO_free(io);
-    else if (ssl_bio != NULL)
+      io = NULL;
+    }
+    if (ssl_bio != NULL) {
       BIO_free(ssl_bio);
+      ssl_bio = NULL;
+    }
+#endif
   }
   if (fd_ > 0)
     this->closeConnection();

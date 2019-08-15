@@ -555,13 +555,12 @@ void StreamManager::onRequestEvent(int fd) {
                                                           bck->conn_timeout);
           switch (op_state) {
           case IO::IO_OP::OP_ERROR: {
-            auto response = HttpStatus::getHttpResponse(
-                HttpStatus::Code::ServiceUnavailable);
-            stream->client_connection.write(response.c_str(),
-                                            response.length());
-            Debug::LogInfo("Error connecting to backend " + bck->address,
-                           LOG_NOTICE);
-
+            Debug::logmsg(LOG_NOTICE, "Error connecting to backend %s", bck->address.data());
+            stream->replyError(
+                HttpStatus::Code::ServiceUnavailable,
+                HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
+                    .c_str(),
+                listener_config_.err503, this->listener_config_, *this->ssl_manager);
             stream->backend_connection.getBackend()->status =
                 BACKEND_STATUS::BACKEND_DOWN;
             stream->backend_connection.closeConnection();
@@ -1409,6 +1408,26 @@ void StreamManager::onClientDisconnect(HttpStream *stream) {
 }
 void StreamManager::onServerDisconnect(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
+
+  if (!stream->backend_connection.isConnected() && !stream->request.headers_sent) {
+    Debug::logmsg(LOG_NOTICE,
+                  "Error connecting to backend %s",
+                  stream->backend_connection.getBackend()->address.data());
+    stream->replyError(
+        HttpStatus::Code::ServiceUnavailable,
+        HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
+            .c_str(),
+        listener_config_.err503, this->listener_config_, *this->ssl_manager);
+    stream->backend_connection.getBackend()->status =
+        BACKEND_STATUS::BACKEND_DOWN;
+    if (this->is_https_listener) {
+      ssl_manager->sslShutdown(stream->client_connection
+      );
+    }
+    clearStream(stream);
+    return;
+  }
+
   Debug::LogInfo("Backend closed connection", LOG_DEBUG);
   if (stream == nullptr) {
     return;

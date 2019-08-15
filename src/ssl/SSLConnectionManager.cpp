@@ -113,15 +113,17 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
   SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION );
   SSL_set_mode(ssl_connection.ssl,SSL_MODE_RELEASE_BUFFERS );
 
-  ssl_connection.sbio = BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_CLOSE);
-//  BIO_set_nbio(ssl_connection.sbio, 1);
-  SSL_set_bio(ssl_connection.ssl, ssl_connection.sbio, ssl_connection.sbio);
+  ssl_connection.sbio = BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_NOCLOSE);
+  BIO_set_nbio(ssl_connection.sbio, 1);
+
+  SSL_set0_rbio(ssl_connection.ssl, ssl_connection.sbio);
+//  BIO_up_ref(ssl_connection.sbio);
+  SSL_set0_wbio(ssl_connection.ssl, ssl_connection.sbio);
   ssl_connection.io = BIO_new(BIO_f_buffer());
   ssl_connection.ssl_bio = BIO_new(BIO_f_ssl());
-//  BIO_set_nbio( ssl_connection.io, 1);
+//  BIO_set_nbio(ssl_connection.io, 1);
 //  BIO_set_nbio(ssl_connection.ssl_bio, 1); //set BIO non blocking
-  BIO_set_close(ssl_connection.io, BIO_CLOSE);
-  BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_CLOSE);
+  BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_NOCLOSE);
   BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
 
 //    Debug::logmsg(LOG_DEBUG, !client_mode ? "SSL_HANDSHAKE: SSL_set_accept_state for fd %d"
@@ -161,7 +163,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
       }
     }else
     if (rc < 0) {
-      if (BIO_should_read(ssl_connection.io)) {
+      if (BIO_should_retry(ssl_connection.io)) {
         if (bytes_read>0)
           return IO::IO_RESULT::SUCCESS;
         else {
@@ -197,7 +199,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
       result = IO::IO_RESULT::DONE_TRY_AGAIN;
       break;
     } else if (rc < 0) {
-      if (BIO_should_write(ssl_connection.io)) {
+      if (BIO_should_retry(ssl_connection.io)) {
         {
           if ((data_size-written)==0)
             result = IO::IO_RESULT::SUCCESS;
@@ -365,13 +367,13 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   int sent = 0;
   int rc = -1;
   //  // FIXME: Buggy, used just for test
-  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+ // Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   do {
     rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent)); //, &written);
     if (rc > 0)
       sent += rc;
-    Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
+    //Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
   } while (rc > 0 && rc < (data_size - sent));
 
   if (sent > 0) {
@@ -502,7 +504,26 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
+IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
+  int ret = SSL_shutdown(ssl_connection.ssl);
+  do {
+    /* We only do unidirectional shutdown */
+    ret = SSL_shutdown(ssl_connection.ssl);
+    if (ret < 0) {
+      switch (SSL_get_error(ssl_connection.ssl, ret)) {
+      case SSL_ERROR_WANT_READ:Debug::LogInfo("SSL_ERROR_WANT_READ", LOG_REMOVE);
+        continue;
+      case SSL_ERROR_WANT_WRITE:Debug::LogInfo("SSL_ERROR_WANT_WRITE", LOG_REMOVE);
+        continue;
+      case SSL_ERROR_WANT_ASYNC:Debug::LogInfo("SSL_ERROR_WANT_ASYNC", LOG_REMOVE);
+        continue;
+      }
+      ret = 0;
+    }
+  } while (ret < 0);
 
+  return IO::IO_RESULT::SUCCESS;
+}
 /*
 bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
   if (ssl_connection.ssl == nullptr) {
