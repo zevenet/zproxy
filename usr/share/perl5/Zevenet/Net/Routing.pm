@@ -780,22 +780,73 @@ sub buildRouteCmd
 	my $param = shift;
 	my $cmd   = "";
 
-	$cmd .= "$param->{to} "              if ( exists $param->{ to } );
-	$cmd .= "dev $param->{interface} "   if ( exists $param->{ interface } );
-	$cmd .= "src $param->{source} "      if ( exists $param->{ source } );
-	$cmd .= "via $param->{via} "         if ( exists $param->{ via } );
-	$cmd .= "mtu $param->{mtu} "         if ( exists $param->{ mtu } );
-	$cmd .= "metric $param->{priority} " if ( exists $param->{ priority } );
-	$cmd .= "table $table "              if ( $cmd ne "" );
+	$cmd .= "$param->{to} " if ( exists $param->{ to } and $param->{ to } ne '' );
+	$cmd .= "dev $param->{interface} "
+	  if ( exists $param->{ interface } and $param->{ interface } ne '' );
+	$cmd .= "src $param->{source} "
+	  if ( exists $param->{ source } and $param->{ source } ne '' );
+	$cmd .= "via $param->{via} "
+	  if ( exists $param->{ via } and $param->{ via } ne '' );
+	$cmd .= "mtu $param->{mtu} "
+	  if ( exists $param->{ mtu } and $param->{ mtu } ne '' );
+	$cmd .= "metric $param->{priority} "
+	  if ( exists $param->{ priority } and $param->{ priority } ne '' );
+	$cmd .= "table $table " if ( $cmd ne "" );
 
 	return $cmd;
 }
 
 =begin nd
+Function: writeRoutingConf
+
+	It save the route conf in the config file
+
+Parameters:
+	table - name of the table where set the route
+	route conf - hash reference with the routing parameters. The possible parameters are:
+		"to" is the destination IP or networking segment
+		"interface" is the interface used to take out the packet
+		"source" is the IP used as source when the packet is going out
+		"via" is the IP of the next routing item
+		"mtu" is the maximum trasmition unit
+		"priority" is the priority for the routing entry in the table
+
+Returns:
+	none - .
+
+=cut
+
+sub writeRoutingConf
+{
+	my ( $table, $input ) = @_;
+
+	my @params =
+	  ( 'id', 'raw', 'type', 'to', 'interface', 'via', 'source', 'priority' );
+
+	my $file = &getRoutingTableFile( $table );
+	&createFile( $file ) if ( !-f $file );
+
+	my $fh = Config::Tiny->read( $file );
+
+	my $conf;
+	foreach my $p ( @params )
+	{
+		$conf->{ $p } = $input->{ $p };
+	}
+
+	$fh->{ $conf->{ id } } = $conf;
+	$fh->write( $file );
+
+	&zenlog( "The routing entry '$conf->{id}' was created properly", "info",
+			 "net" );
+	&zenlog( "Params: " . Dumper( $conf ), "debug2", "net" );
+}
+
+=begin nd
 Function: createRoutingCustom
 
-	It creates a new element in the configuration table routing file with the parameters
-	of a new route entry
+	It creates a new route for a table. It applies in the system and before write
+	the conf in the config file (using the function "writeRoutingConf")
 
 Parameters:
 	table - name of the table where set the route
@@ -820,9 +871,6 @@ sub createRoutingCustom
 	my $table = shift;
 	my $input = shift;
 
-	my @params =
-	  ( 'id', 'raw', 'type', 'to', 'interface', 'via', 'source', 'preference' );
-
 	my $lock_rules = &getRoutingTableLock( $table );
 	&lockResource( $lock_rules, 'l' );
 
@@ -831,36 +879,109 @@ sub createRoutingCustom
 	if ( !$err )
 	{
 		my $file = &getRoutingTableFile( $table );
-		&createFile( $file ) if ( !-f $file );
-
 		$input->{ id }   = &genRoutingId( $file );
 		$input->{ type } = 'user';
 
-		my $fh = Config::Tiny->read( $file );
-
-		my $conf;
-		foreach my $p ( @params )
-		{
-			$conf->{ $p } = $input->{ $p };
-		}
-
-		if ( !$conf->{ id } )
+		if ( !$input->{ id } )
 		{
 			&lockResource( $lock_rules, 'ud' );
 			&zenlog( "Error getting an ID for the route", "error", "net" );
 			return 1;
 		}
 
-		$fh->{ $conf->{ id } } = $conf;
-		$fh->write( $file );
+		&writeRoutingConf( $table, $input );
 
-		&zenlog( "The routing entry '$conf->{id}' was created properly", "info",
-				 "net" );
-		&zenlog( "Params: " . Dumper( $conf ), "debug2", "net" );
 	}
 
 	&lockResource( $lock_rules, 'ud' );
 	return $err;
+}
+
+=begin nd
+Function: createRoutingCustom
+
+	It modifies a route. It removes the old rule and applies the new one in the system.
+	After update de config file (using the function "writeRoutingConf")
+
+Parameters:
+	table - name of the table where set the route
+	route conf - hash reference with the routing parameters. The possible parameters are:
+		"to" is the destination IP or networking segment
+		"interface" is the interface used to take out the packet
+		"source" is the IP used as source when the packet is going out
+		"via" is the IP of the next routing item
+		"mtu" is the maximum trasmition unit
+		"priority" is the priority for the routing entry in the table
+
+Returns:
+	Integer - 0 on success or another value on failure
+
+=cut
+
+sub modifyRoutingCustom
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $table    = shift;
+	my $route_id = shift;
+	my $new_conf = shift;
+
+	my $lock_rules = &getRoutingTableLock( $table );
+	&lockResource( $lock_rules, 'l' );
+
+	my $err = &setRoute( 'add', $new_conf->{ raw } );
+	if ( !$err )
+	{
+		#delete
+		my $old_conf = &getRoutingTableConf( $table, $route_id );
+		&setRoute( 'del', $old_conf->{ raw } );
+
+		# save conf
+		&writeRoutingConf( $table, $new_conf );
+	}
+
+	&lockResource( $lock_rules, 'ud' );
+	return $err;
+}
+
+=begin nd
+Function: updateRoutingParams
+
+	It returns a route updated with new parameters that are been modified.
+	It gets the route conf from the table configuration file and it returns the struct overwriting
+	the parameters that have been modified, it does not do any conf write.
+
+Parameters:
+	table - name of the table where set the route
+	route conf - hash reference with the routing parameters. The possible parameters are:
+		"to" is the destination IP or networking segment
+		"interface" is the interface used to take out the packet
+		"source" is the IP used as source when the packet is going out
+		"via" is the IP of the next routing item
+		"mtu" is the maximum trasmition unit
+		"priority" is the priority for the routing entry in the table
+
+Returns:
+	Hash ref - Route struct with the configuration updated
+
+=cut
+
+sub updateRoutingParams
+{
+	my $table      = shift;
+	my $route_id   = shift;
+	my $new_values = shift;
+
+	my $old_conf = &getRoutingTableConf( $table, $route_id );
+
+	my $new_conf;
+	foreach my $p ( keys %{ $old_conf } )
+	{
+		$new_conf->{ $p } = $new_values->{ $p } // $old_conf->{ $p };
+	}
+
+	return $new_conf;
 }
 
 =begin nd
@@ -1016,6 +1137,11 @@ sub sanitazeRouteCmd
 	my $table = shift;
 
 	&zenlog( "Sanitazing route cmd: $cmd", "debug2", "net" );
+	if ( $cmd =~ s/initcwnd 10 initrwnd 10// )
+	{
+		# this is used to identify the rules are from system
+		&zenlog( "Removing: window sizes", "debug2", "net" );
+	}
 	if ( $cmd !~ /table/ )
 	{
 		$cmd .= " table $table";

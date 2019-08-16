@@ -95,7 +95,7 @@ sub listOutRoutes
 	return $list // [];
 }
 
-sub validateRoutingInput
+sub validateRouteHelper
 {
 	my $in = shift;
 	my $if = '';
@@ -191,6 +191,51 @@ sub validateRoutingInput
 	# mtu
 
 	return "";
+}
+
+sub validateRouteInput
+{
+	my ( $table, $json_obj, $id_route ) =
+	  @_;    # id_route is optional (is for modifying)
+
+	if ( exists $json_obj->{ raw } )
+	{
+		if ( $json_obj->{ raw } =~ /table\s+(\w+)/ )
+		{
+			my $t = $1;
+			if ( $t ne $table )
+			{
+				return "The input command is not in the requested table '$table'";
+			}
+		}
+
+		$json_obj->{ raw } = &sanitazeRouteCmd( $json_obj->{ raw }, $table );
+
+		# update the data
+		$json_obj = &updateRoutingParams( $table, $id_route, $json_obj ) if $id_route;
+	}
+	else
+	{
+		# update the data
+		$json_obj = &updateRoutingParams( $table, $id_route, $json_obj ) if $id_route;
+
+		my $msg = &validateRouteHelper( $json_obj );
+		return $msg if ( $msg );
+
+		my $def_pref = &getGlobalConfiguration( "routingRoutePrio" );
+		$json_obj->{ priority } = $def_pref if ( !defined $json_obj->{ priority } );
+
+		$json_obj->{ raw } = &buildRouteCmd( $table, $json_obj );
+		if ( $json_obj->{ raw } eq '' )
+		{
+			return "The command could not be created properly";
+		}
+	}
+
+	# update the json_obj object
+	$_[1] = $json_obj;
+
+	return '';
 }
 
 #  GET /routing/rules
@@ -437,37 +482,11 @@ sub create_routing_entry
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( exists $json_obj->{ raw } )
+	my $err_msg = &validateRouteInput( $table, $json_obj );
+	if ( $err_msg ne '' )
 	{
-		if ( $json_obj->{ raw } =~ /table\s+(\w+)/ )
-		{
-			my $t = $1;
-			if ( $t ne $table )
-			{
-				my $msg = "The input command is not in the requested table '$table'";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
-		$json_obj->{ raw } = &sanitazeRouteCmd( $json_obj->{ raw }, $table );
-	}
-	else
-	{
-		my $msg = &validateRoutingInput( $json_obj );
-		if ( $msg )
-		{
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		my $def_pref = &getGlobalConfiguration( "routingRoutePrio" );
-		$json_obj->{ priority } = $def_pref if ( !defined $json_obj->{ priority } );
-
-		$json_obj->{ raw } = &buildRouteCmd( $table, $json_obj );
-		if ( $json_obj->{ raw } eq '' )
-		{
-			my $msg = "The command could not be created properly";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+		my $msg = $err_msg;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if already exists an equal route
@@ -486,6 +505,102 @@ sub create_routing_entry
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
+
+	my $list = &listOutRoutes( $table );
+	return
+	  &httpResponse(
+					 {
+					   code => 200,
+					   body => { description => $desc, params => $list }
+					 }
+	  );
+}
+
+# PUT /routing/tables/<id_table>/routes/<id_route>
+sub modify_routing_entry
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $table    = shift;
+	my $id_route = shift;
+
+	my $desc = "Create a routing entry in the table '$table'";
+
+	my $params = {
+		"raw" => {
+			 'non_blank'  => 'true',
+			 'format_msg' => "is the command line parameters to create an 'ip route' entry",
+		},
+		"to" => {
+			   'function'   => \&validIpAndNet,
+			   'format_msg' => "is the destination address IP or the source networking net",
+		},
+		"interface" => {
+						 'valid_format' => 'routed_interface',
+						 'format_msg'   => "is the interface used to take out the packet",
+		},
+		"source" => {
+					  'valid_format' => 'ipv4v6',
+					  'format_msg' =>
+						"is the source address to prefer when sending to the destinations",
+		},
+		"via" => {
+				   'valid_format' => 'ipv4v6',
+				   'format_msg'   => "is the next hop for the packet",
+		},
+		"priority" => {
+						'interval'   => '1,9',
+						'format_msg' => "the routes with lower value will be more priority",
+		},
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	require Zevenet::Net::Route;
+	if ( !&getRoutingTableExists( $table ) )
+	{
+		my $msg = "The table '$table' does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( !&getRoutingCustomExists( $table, $id_route ) )
+	{
+		my $msg = "The route entry '$id_route' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $err_msg = &validateRouteInput( $table, $json_obj, $id_route );
+
+	if ( $err_msg ne '' )
+	{
+		my $msg = $err_msg;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# check if already exists an equal route
+	if ( &isRoute( $json_obj->{ raw } ) )
+	{
+		my $msg = "A route with this configuration already exists";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_table', 'stop', $table, $id_route );
+
+	my $err = &modifyRoutingCustom( $table, $id_route, $json_obj );
+
+	# reload the modified entry if it was success or if it was error
+	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
+
+	if ( $err )
+	{
+		my $msg = "Error, creating a new routing rule.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	my $list = &listOutRoutes( $table );
 	return

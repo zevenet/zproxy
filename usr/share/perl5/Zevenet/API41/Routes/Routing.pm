@@ -27,7 +27,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 {
 	my $mod = 'Zevenet::API41::Interface::Routing';
 
-	my $id_rule = &getValidFormat( 'route_rule_id' );
+	my $id_rule  = &getValidFormat( 'route_rule_id' );
 	my $id_table = &getValidFormat( 'route_table_id' );
 	my $id_route = &getValidFormat( 'route_entry_id' );
 
@@ -35,12 +35,15 @@ if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 	POST qr{^/routing/rules$},              'create_routing_rule', $mod;
 	DELETE qr{^/routing/rules/($id_rule)$}, 'delete_routing_rule', $mod;
 
-	GET qr{^/routing/tables$},			   'list_routing_tables',  $mod;
-	GET qr{^/routing/tables/($id_table)$},  'get_routing_table',  $mod;
-	POST qr{^/routing/tables/($id_table)/routes$},  'create_routing_entry',  $mod;
-	DELETE qr{^/routing/tables/($id_table)/routes/($id_route)$},  'delete_routing_entry',  $mod;
+	GET qr{^/routing/tables$},                     'list_routing_tables',  $mod;
+	GET qr{^/routing/tables/($id_table)$},         'get_routing_table',    $mod;
+	POST qr{^/routing/tables/($id_table)/routes$}, 'create_routing_entry', $mod;
+	PUT qr{^/routing/tables/($id_table)/routes/($id_route)$},
+	  'modify_routing_entry', $mod;
+	DELETE qr{^/routing/tables/($id_table)/routes/($id_route)$},
+	  'delete_routing_entry', $mod;
 
-	POST qr{^/routing/isolate$},  'set_routing_isolate',  $mod;
+	POST qr{^/routing/isolate$}, 'set_routing_isolate', $mod;
 }
 
 1;
