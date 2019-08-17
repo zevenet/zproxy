@@ -154,20 +154,7 @@ public:
   bool initSslConnection(Connection &ssl_connection, bool client_mode = false);
 
   /**
-   * @brief Initialize the @p ssl_connection with the configuration established
-   * in the SSLConnectionManager.
-   *
-   * This function uses BIO, if you want to use SSL please refer to
-   * initSslConnection().
-   *
-   * @param ssl_connection to initialize.
-   * @param client_mode specify if the @p ssl_connection is a client or a server.
-   * @return @c true if everything is ok, if not @c false.
-   */
-  bool initSslConnection_BIO(Connection &ssl_connection, bool client_mode = false);
-
-  /**
-  * @brief Async Shutdown
+  * @brief Async Ssl connection Shutdown
   * @param ssl_connection used to read from.
   * @return the result of the read operation with a IO:IO_RESULT format.
   */
