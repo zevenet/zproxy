@@ -56,7 +56,7 @@ enum class EVENT_TYPE : uint32_t {
   /** Read from the connection. */
   READ_ONESHOT = ((EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP) & ~EPOLLOUT),
   /** Write to the connection. */
-  WRITE = ((EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP |
+  WRITE = ((EPOLLOUT | EPOLLONESHOT | EPOLLRDHUP |
             EPOLLHUP) & ~EPOLLIN), // is always one shot
   /** Read or write event */
   ANY = (EPOLLONESHOT | EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLOUT),
