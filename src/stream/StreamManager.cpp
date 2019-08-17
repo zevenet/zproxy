@@ -101,14 +101,14 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   case EVENT_TYPE::CONNECT: {
     DEBUG_COUNTER_HIT(debug__::event_connect);
     int new_fd;
-    //      do {
-    new_fd = listener_connection.doAccept();
-    if (new_fd > 0) {
-      addStream(new_fd);
-    } else {
-      DEBUG_COUNTER_HIT(debug__::event_connect_fail);
-    }
-    //      } while (new_fd > 0);
+    do {
+        new_fd = listener_connection.doAccept();
+        if (new_fd > 0) {
+            addStream(new_fd);
+        } else {
+            DEBUG_COUNTER_HIT(debug__::event_connect_fail);
+        }
+    } while (new_fd > 0);
     return;
   }
 #endif
@@ -695,6 +695,11 @@ void StreamManager::onResponseEvent(int fd) {
     clearStream(stream);
     return;
   }
+  if(stream->backend_connection.buffer_size == MAX_DATA_SIZE)
+  {
+      stream->client_connection.enableWriteEvent();
+      return;
+  }
 #if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE,
                 "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
@@ -740,7 +745,7 @@ void StreamManager::onResponseEvent(int fd) {
         return;
       }
 // TODO::Evaluar
-#ifdef ENABLE_QUICK_RESPONSE
+#if ENABLE_QUICK_RESPONSE
       result = stream->backend_connection.zeroWrite(
           stream->client_connection.getFileDescriptor(), stream->response);
       switch (result) {
@@ -835,11 +840,6 @@ void StreamManager::onResponseEvent(int fd) {
     }
 #endif
 
-#ifdef ENABLE_QUICK_RESPONSE
-    onClientWriteEvent(stream);
-#else
-    stream->client_connection.enableWriteEvent();
-#endif
 
     // TODO:: maybe quick response
 #if PRINT_DEBUG_FLOW_BUFFERS
@@ -847,6 +847,11 @@ void StreamManager::onResponseEvent(int fd) {
         LOG_REMOVE, "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
         stream->backend_connection.buffer_size, stream->response.content_length,
         stream->response.message_bytes_left, IO::getResultString(result).data());
+#endif
+#if ENABLE_QUICK_RESPONSE
+    onClientWriteEvent(stream);
+#else
+    stream->client_connection.enableWriteEvent();
 #endif
     return;
   }
@@ -859,7 +864,7 @@ void StreamManager::onResponseEvent(int fd) {
   static size_t total_responses;
   if (ret != http_parser::PARSE_RESULT::SUCCESS) {
     if (stream->backend_connection.buffer_size > 0) {
-#ifdef ENABLE_QUICK_RESPONSE
+#if ENABLE_QUICK_RESPONSE
       onClientWriteEvent(stream);
 #else
       stream->client_connection.enableWriteEvent();
@@ -933,7 +938,7 @@ void StreamManager::onResponseEvent(int fd) {
   if (!this->is_https_listener) {
     http_manager::applyCompression(service, stream);
   }
-#ifdef ENABLE_QUICK_RESPONSE
+#if ENABLE_QUICK_RESPONSE
   onClientWriteEvent(stream);
 #else
   stream->client_connection.enableWriteEvent();
@@ -1277,7 +1282,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     if ( !stream->response.isCached())
 #endif
     stream->backend_connection.enableReadEvent();
-    stream->client_connection.enableReadEvent();
+    if(stream->backend_connection.buffer_size > 0)
+        stream->client_connection.enableWriteEvent();
+    else
+        stream->client_connection.enableReadEvent();
     return;
   }
 
@@ -1375,21 +1383,31 @@ void StreamManager::clearStream(HttpStream *stream) {
     return;
   }
 //  logSslErrorStack();
+
   if (stream->timer_fd.getFileDescriptor() > 0) {
     deleteFd(stream->timer_fd.getFileDescriptor());
     stream->timer_fd.unset();
     timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
     timers_set.erase(stream->timer_fd.getFileDescriptor());
+
   }
   if (stream->client_connection.getFileDescriptor() > 0) {
+//      if (this->is_https_listener && stream->client_connection.isConnected()) { //FIXME
+//          ssl_manager->sslShutdown(stream->client_connection);
+//      }
     deleteFd(stream->client_connection.getFileDescriptor());
     streams_set[stream->client_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->client_connection.getFileDescriptor());
+
     DEBUG_COUNTER_HIT(debug__::on_client_disconnect);
   }
   if (stream->backend_connection.getFileDescriptor() > 0) {
-    if (stream->backend_connection.isConnected())
-      stream->backend_connection.getBackend()->decreaseConnection();
+      if (stream->backend_connection.isConnected()){
+//          if (stream->backend_connection.getBackend()->isHttps()) { //FIXME
+//              ssl_manager->sslShutdown(stream->client_connection);
+//          }
+          stream->backend_connection.getBackend()->decreaseConnection();
+      }
     deleteFd(stream->backend_connection.getFileDescriptor());
     streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->backend_connection.getFileDescriptor());
@@ -1408,26 +1426,6 @@ void StreamManager::onClientDisconnect(HttpStream *stream) {
 }
 void StreamManager::onServerDisconnect(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
-
-  if (!stream->backend_connection.isConnected() && !stream->request.headers_sent) {
-    Debug::logmsg(LOG_NOTICE,
-                  "Error connecting to backend %s",
-                  stream->backend_connection.getBackend()->address.data());
-    stream->replyError(
-        HttpStatus::Code::ServiceUnavailable,
-        HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
-            .c_str(),
-        listener_config_.err503, this->listener_config_, *this->ssl_manager);
-    stream->backend_connection.getBackend()->status =
-        BACKEND_STATUS::BACKEND_DOWN;
-    if (this->is_https_listener) {
-      ssl_manager->sslShutdown(stream->client_connection
-      );
-    }
-    clearStream(stream);
-    return;
-  }
-
   Debug::LogInfo("Backend closed connection", LOG_DEBUG);
   if (stream == nullptr) {
     return;
@@ -1442,6 +1440,18 @@ void StreamManager::onServerDisconnect(HttpStream *stream) {
     stream->client_connection.enableWriteEvent();
     return;
   }
+  if (!stream->backend_connection.isConnected() && !stream->request.headers_sent) {
+      Debug::logmsg(LOG_NOTICE,
+                    "Error connecting to backend %s",
+                    stream->backend_connection.getBackend()->address.data());
+      stream->replyError(
+          HttpStatus::Code::ServiceUnavailable,
+          HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
+              .c_str(),
+          listener_config_.err503, this->listener_config_, *this->ssl_manager);
+      stream->backend_connection.getBackend()->status =
+          BACKEND_STATUS::BACKEND_DOWN;
 
+  }
   clearStream(stream);
 }
