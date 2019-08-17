@@ -343,16 +343,20 @@ Backend *Service::getNextBackend() {
   if (backend_set.size() == 0)
     return nullptr;
   switch (service_config.routing_policy) {
+  default:
   case LP_ROUND_ROBIN: {
     static unsigned long long seed;
     Backend *bck_res = nullptr;
     for (auto bck : backend_set) {
-      seed++;
-      bck_res = backend_set[seed % backend_set.size()];
-      if (bck_res!=nullptr && bck_res->status!=BACKEND_STATUS::BACKEND_UP) {
-        bck_res = nullptr;
-        continue;
-      }
+        seed++;
+        bck_res = backend_set[seed % backend_set.size()];
+        if (bck_res!=nullptr){
+            if( bck_res->status!=BACKEND_STATUS::BACKEND_UP) {
+                bck_res = nullptr;
+                continue;
+            }
+            break;
+        }
     }
     return bck_res;
   }
