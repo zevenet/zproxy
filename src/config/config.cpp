@@ -2,6 +2,7 @@
 #include "../debug/Debug.h"
 #include "../version.h"
 
+int Config::numthreads = 0;
 Config::Config() {
   log_level = 1;
   def_facility = LOG_DAEMON;
@@ -271,7 +272,7 @@ void Config::parseConfig(const int argc, char **const argv) {
   ctrl_name = NULL;
   DHCustom_params = NULL;
 
-  numthreads = 128;
+  numthreads = 0;
   threadpool = 1;
   alive_to = 30;
   daemonize = 1;

@@ -204,12 +204,6 @@ bool Listener::init(std::string address, int port) {
 Listener::Listener()
     : is_running(false), listener_connection(), stream_manager_set() {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
-  auto concurrency_lever = std::thread::hardware_concurrency() < 2
-      ? 2
-      : std::thread::hardware_concurrency() - 1;
-  for (int sm = 0; sm < concurrency_lever; sm++) {
-    stream_manager_set[sm] = new StreamManager();
-  }
 }
 
 Listener::~Listener() {
@@ -238,7 +232,16 @@ void Listener::stop() { is_running = false;  worker_thread.join();}
 
 void Listener::start() {
   ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+
+  auto concurrency_level = std::thread::hardware_concurrency() < 2
+                               ? 2
+                               : std::thread::hardware_concurrency();
+  auto numthreads = Config::numthreads != 0 ?  Config::numthreads : concurrency_level;
+  for (int sm = 0; sm < numthreads ; sm++) {
+      stream_manager_set[sm] = new StreamManager();
+  }
   int service_id = 0;
+
   for (auto service_config = listener_config.services;
        service_config != nullptr; service_config = service_config->next) {
     if (!service_config->disabled) {

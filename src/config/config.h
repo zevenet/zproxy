@@ -103,8 +103,8 @@ class Config {
 
   long ctrl_mode; /* octal mode of the control socket */
 
-  int numthreads,      /* number of worker threads */
-      anonymise,       /* anonymise client address */
+  static int numthreads;      /* number of worker threads */
+   int   anonymise,       /* anonymise client address */
       threadpool,      /* 1 to use a threadpool (i.e. 2.6 behavior)
                           0 to use new thread per request (2.5 behavior) */
       alive_to,        /* check interval for resurrection */
