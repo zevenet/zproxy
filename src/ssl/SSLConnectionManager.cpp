@@ -38,6 +38,7 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection,
                                              bool client_mode) {
   if (ssl_connection.ssl != nullptr) {
     SSL_shutdown(ssl_connection.ssl);
+    SSL_clear(ssl_connection.ssl);
     SSL_free(ssl_connection.ssl);
   }
   ssl_connection.ssl = SSL_new(ssl_context->ssl_ctx);
@@ -45,53 +46,26 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection,
     Debug::logmsg(LOG_ERR, "SSL_new failed");
     return false;
   }
-  int r = SSL_set_fd(ssl_connection.ssl, ssl_connection.getFileDescriptor());
-  if (!r) {
-    Debug::logmsg(LOG_ERR, "SSL_set_fd failed");
-    return false;
-  }
-  if (client_mode && ssl_connection.server_name != nullptr) {
-    if (!SSL_set_tlsext_host_name(ssl_connection.ssl,
-                                  ssl_connection.server_name)) {
-      Debug::logmsg(LOG_DEBUG, "could not set SNI host name  to %s",
-                    ssl_connection.server_name);
-      return false;
-    } else {
-      Debug::logmsg(LOG_DEBUG, "Set SNI host name \"%s\"",
-                    ssl_connection.server_name);
+
+#if USE_SSL_BIO_BUFFER
+    ssl_connection.sbio = BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_NOCLOSE);
+    BIO_set_nbio(ssl_connection.sbio, 1);
+    SSL_set0_rbio(ssl_connection.ssl, ssl_connection.sbio);
+    BIO_up_ref(ssl_connection.sbio);
+    SSL_set0_wbio(ssl_connection.ssl, ssl_connection.sbio);
+    ssl_connection.io = BIO_new(BIO_f_buffer());
+    ssl_connection.ssl_bio = BIO_new(BIO_f_ssl());
+    BIO_set_nbio(ssl_connection.io, 1);
+    BIO_set_nbio(ssl_connection.ssl_bio, 1);
+    BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_NOCLOSE);
+    BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
+#else
+    int r = SSL_set_fd(ssl_connection.ssl, ssl_connection.getFileDescriptor());
+    if (!r) {
+        Debug::logmsg(LOG_ERR, "SSL_set_fd failed");
+        return false;
     }
-  }
-
-  SSL_set_mode(ssl_connection.ssl,
-               SSL_MODE_ENABLE_PARTIAL_WRITE
-                   | // enable return if not all buffer has      been writen to the underlying socket,
-                       //           need to check for sizes after writes
-                       SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION);
-  SSL_set_mode(ssl_connection.ssl, SSL_MODE_RELEASE_BUFFERS);
-
-  Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: SSL_set_accept_state for fd %d",
-                ssl_connection.getFileDescriptor());
-  // let the SSL object know it should act as server
-  !client_mode ? SSL_set_accept_state(ssl_connection.ssl)
-               : SSL_set_connect_state(ssl_connection.ssl);
-  ssl_connection.ssl_conn_status = SSL_STATUS::NEED_HANDSHAKE;
-  return true;
-}
-
-bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
-                                                 bool client_mode) {
-//    Debug::logmsg(LOG_DEBUG, "INIT SSL CONNECTION: %d", ssl_connection.getFileDescriptor());
-  if (ssl_connection.ssl != nullptr) {
-    SSL_shutdown(ssl_connection.ssl);
-    SSL_free(ssl_connection.ssl);
-  }
-
-  ssl_connection.ssl = SSL_new(ssl_context->ssl_ctx);
-  if (ssl_connection.ssl == nullptr) {
-    Debug::logmsg(LOG_ERR, "SSL_new failed");
-    return false;
-  }
+#endif
 
   if (client_mode && ssl_connection.server_name != nullptr) {
     if (!SSL_set_tlsext_host_name(ssl_connection.ssl,
@@ -105,31 +79,11 @@ bool SSLConnectionManager::initSslConnection_BIO(Connection &ssl_connection,
     }
   }
 
-  SSL_set_mode(ssl_connection.ssl,
-               SSL_MODE_ENABLE_PARTIAL_WRITE
-                   | // enable return if not all buffer has      been writen to the underlying socket,
-//           need to check for sizes after writes
-                   SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION );
-  SSL_set_mode(ssl_connection.ssl,SSL_MODE_RELEASE_BUFFERS );
+//  SSL_set_mode(ssl_connection.ssl, SSL_MODE_ENABLE_PARTIAL_WRITE
+//                   | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+//  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION);
+//  SSL_set_mode(ssl_connection.ssl, SSL_MODE_RELEASE_BUFFERS);
 
-  ssl_connection.sbio = BIO_new_socket(ssl_connection.getFileDescriptor(), BIO_NOCLOSE);
-  BIO_set_nbio(ssl_connection.sbio, 1);
-
-  SSL_set0_rbio(ssl_connection.ssl, ssl_connection.sbio);
-//  BIO_up_ref(ssl_connection.sbio);
-  SSL_set0_wbio(ssl_connection.ssl, ssl_connection.sbio);
-  ssl_connection.io = BIO_new(BIO_f_buffer());
-  ssl_connection.ssl_bio = BIO_new(BIO_f_ssl());
-//  BIO_set_nbio(ssl_connection.io, 1);
-//  BIO_set_nbio(ssl_connection.ssl_bio, 1); //set BIO non blocking
-  BIO_set_ssl(ssl_connection.ssl_bio, ssl_connection.ssl, BIO_NOCLOSE);
-  BIO_push(ssl_connection.io, ssl_connection.ssl_bio);
-
-//    Debug::logmsg(LOG_DEBUG, !client_mode ? "SSL_HANDSHAKE: SSL_set_accept_state for fd %d"
-//                                          : "SSL_HANDSHAKE: SSL_set_connect_state for fd %d",
-//                ssl_connection.getFileDescriptor());
-  // let the SSL object know it should act as server
   !client_mode ? SSL_set_accept_state(ssl_connection.ssl)
                : SSL_set_connect_state(ssl_connection.ssl);
   ssl_connection.ssl_conn_status = SSL_STATUS::NEED_HANDSHAKE;
@@ -232,11 +186,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool client_mode) {
 //    Debug::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl == nullptr) {
-#if USE_SSL_BIO_BUFFER
-    if (!initSslConnection_BIO(ssl_connection, client_mode)) {
-#else
     if (!initSslConnection(ssl_connection, client_mode)) {
-#endif
       return false;
     }
   }
