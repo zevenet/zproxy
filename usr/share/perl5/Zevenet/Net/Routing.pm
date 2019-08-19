@@ -448,7 +448,7 @@ sub setRoutingIsolate
 	#Release lock file
 	&lockResource( $lock_if, "ud" );
 
-	return $err;
+	return ( $err ) ? 0 : 1;
 }
 
 =begin nd
