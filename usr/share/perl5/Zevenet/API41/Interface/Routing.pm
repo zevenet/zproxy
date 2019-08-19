@@ -337,6 +337,94 @@ sub create_routing_rule
 	  );
 }
 
+#  PUT /routing/rules/<id_rule>
+sub modify_routing_rule
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $id       = shift;
+
+	require Zevenet::Net::Validate;
+
+	my $desc = "Modify a routing rule";
+
+	my $min_prio = &getGlobalConfiguration( 'routingRulePrioUserMin' );
+	my $max_prio = &getGlobalConfiguration( 'routingRulePrioUserMax' );
+
+	my $params = {
+		"priority" => {
+			'non_blank' => 'true',
+			'interval'  => "$min_prio,$max_prio",
+			'format_msg' =>
+			  "It is the priority which the rule will be executed. Minor value of priority is going to be executed before",
+		},
+		"from" => {
+			'function'  => \&validIpAndNet,
+			'non_blank' => 'true',
+			'format_msg' =>
+			  "It is the source address IP or the source networking net that will be routed to the table 'table'",
+		},
+		"table" => {
+			'non_blank' => 'true',
+			'format_msg' =>
+			  "It is the tabled used to route the packet if it matches with the parameter 'from'",
+		},
+		"not" => {
+			'values' => ['true', 'false'],
+			'format_msg' =>
+			  "It is the 'not' logical operator. It is used with the 'from' to negate its result",
+		},
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	if ( !&getRoutingRulesExists( $id ) )
+	{
+		my $msg = "The rule id '$id' does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	require Zevenet::Net::Route;
+	if ( exists $json_obj->{ table }
+		 and !&getRoutingTableExists( $json_obj->{ table } ) )
+	{
+		my $msg = "The table '$json_obj->{table} does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	$json_obj = &updateRoutingRules( $id, $json_obj );
+
+	# check if already exists an equal rule
+	if ( &isRule( $json_obj ) )
+	{
+		my $msg = "A rule with this configuration already exists";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $id = &modifyRoutingRules( $id, $json_obj );
+	if ( !$id )
+	{
+		my $msg = "Error, creating a new routing rule.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	include 'Zevenet::Cluster';
+	&runZClusterRemoteManager( 'routing_rule', 'start', $id );
+
+	my $list = &listOutRules();
+	return
+	  &httpResponse(
+					 {
+					   code => 200,
+					   body => { description => $desc, params => $list }
+					 }
+	  );
+}
+
 #  DELETE /routing/rules/<id>
 sub delete_routing_rule
 {
@@ -527,7 +615,7 @@ sub modify_routing_entry
 	my $table    = shift;
 	my $id_route = shift;
 
-	my $desc = "Create a routing entry in the table '$table'";
+	my $desc = "Modify a routing entry in the table '$table'";
 
 	my $params = {
 		"raw" => {

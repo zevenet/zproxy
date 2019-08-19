@@ -354,6 +354,44 @@ sub createRoutingRules
 	return ( $err ) ? 0 : $conf->{ id };
 }
 
+sub modifyRoutingRules
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $id     = shift;
+	my $params = shift;
+	my $err    = 0;
+
+	my $err = &setRule( 'add', $params );
+	if ( !$err )
+	{
+		# delete
+		my $old_conf = &getRoutingRulesConf( $id );
+		$err = &setRule( 'del', $old_conf );
+
+		# overwrite conf
+		$err = 1 if ( !&createRoutingRulesConf( $params ) );
+	}
+
+	return $err;
+}
+
+sub updateRoutingRules
+{
+	my $id         = shift;
+	my $new_values = shift;
+
+	my $old_conf = &getRoutingRulesConf( $id );
+
+	my $new_conf;
+	foreach my $p ( keys %{ $old_conf } )
+	{
+		$new_conf->{ $p } = $new_values->{ $p } // $old_conf->{ $p };
+	}
+
+	return $new_conf;
+}
+
 =begin nd
 Function: applyRoutingAllRules
 

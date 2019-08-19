@@ -33,6 +33,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 
 	GET qr{^/routing/rules$},               'list_routing_rules',  $mod;
 	POST qr{^/routing/rules$},              'create_routing_rule', $mod;
+	PUT qr{^/routing/rules/($id_rule)$},    'modify_routing_rule', $mod;
 	DELETE qr{^/routing/rules/($id_rule)$}, 'delete_routing_rule', $mod;
 
 	GET qr{^/routing/tables$},                     'list_routing_tables',  $mod;
