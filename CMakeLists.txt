@@ -16,6 +16,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
 option(BUILD_DOC "Build Documentation" OFF)
+option (MEMCACHED_ENABLED "memcached" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
@@ -165,6 +166,33 @@ else ()
 				message(STATUS "Using Zlib ${ZLIB_VERSION}")
 			endif ()
 endif()
+
+set(ENV{PKG_CONFIG_PATH} "/usr/lib/x86_64-linux-gnu/pkgconfig")
+if(MEMCACHED_ENABLED)
+# Search memcached
+    pkg_search_module(MEMCACHED libmemcached REQUIRED)
+    #<XPREFIX>_FOUND          ... set to 1 if module(s) exist
+    #<XPREFIX>_LIBRARIES      ... only the libraries (w/o the '-l')
+    #<XPREFIX>_LIBRARY_DIRS   ... the paths of the libraries (w/o the '-L')
+    #<XPREFIX>_LDFLAGS        ... all required linker flags
+    #<XPREFIX>_LDFLAGS_OTHER  ... all other linker flags
+    #<XPREFIX>_INCLUDE_DIRS   ... the '-I' preprocessor flags (w/o the '-I')
+    #<XPREFIX>_CFLAGS         ... all required cflags
+    #<XPREFIX>_CFLAGS_OTHER   ... the other compiler flags
+
+
+    if (MEMCACHED_FOUND)
+    message(STATUS "Memcached includes ${MEMCACHED_INCLUDE_DIRS}")
+    message(STATUS "Memcached link ${MEMCACHED_LIBRARIES}")
+    include_directories(${MEMCACHED_INCLUDE_DIRS})
+    message(STATUS "Using memcached ${MEMCACHED_VERSION}")
+    else ()
+    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
+    endif ()
+endif()
+#
+include_directories(/usr/include/openssl-1.0)
+link_directories(/usr/lib/openssl-1.0)
 
 if (BUNDLED_OPENSSL)
 	  #

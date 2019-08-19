@@ -4,6 +4,7 @@
 #include "../http/HttpRequest.h"
 #include "../http/http.h"
 #include "../service/backend.h"
+#include "ICacheStorage.h"
 
 #ifndef _STRING_H
 #include <string>
@@ -42,6 +43,8 @@ struct CacheObject {
 class HttpCacheManager {
 private:
   int cache_timeout = -1;
+  std::string service_name;
+  ICacheStorage * cache_storage;
   unordered_map<size_t, CacheObject *> cache; // Caching map
   regex_t *cache_pattern = nullptr;
 
@@ -56,6 +59,7 @@ public:
     // Free cache pattern
     if (cache_pattern != nullptr)
       regfree(cache_pattern);
+    cache_storage->stopCacheStorage();
   }
   /**
   * @brief Initialize the cache manager, configuring its pattern and the
@@ -65,13 +69,18 @@ public:
   * checks its re_pcre field to decide on enabling the cache or not
   * @param timeout is the timeout value read from the configuration file
   */
-  void cacheInit(regex_t *pattern, const int timeout) {
+  void cacheInit(regex_t *pattern, const int timeout, const std::string svc) {
     if (pattern != nullptr) {
       if (pattern->re_pcre != nullptr) {
         this->cache_pattern = pattern;
         this->cache_timeout = timeout;
         this->cache_enabled = true;
+        this->service_name = svc;
       }
+    //Cache initialization
+    cache_storage = RamfsCacheStorage::getInstance();
+    cache_storage->initCacheStorage(0, "/mnt/cache");
+    cache_storage->initServiceStorage(svc);
     }
   }
   /**
@@ -142,7 +151,7 @@ public:
   * @return returns a pointer to the HttpResponse created from cached data or
   * nullptr if not able
   */
-  int createCacheResponse(const HttpRequest &request,
+  int createCacheResponse(HttpRequest request,
                           HttpResponse &cached_response);
   /**
   * @brief handle the response of an http request, checks if cache_control

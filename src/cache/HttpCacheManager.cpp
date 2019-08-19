@@ -125,18 +125,23 @@ void HttpCacheManager::storeResponse(HttpResponse response,
   if (!response.etag.empty())
     c_object->etag = response.etag;
   c_object->revalidate = response.c_opt.revalidate;
-  c_object->buffer = std::string(response.buffer, response.buffer_size);
+//  c_object->buffer = std::string(response.buffer, response.buffer_size);
   // Reset the stale flag, the cache has been created or updated
   c_object->staled = false;
   c_object->content_length = response.content_length;
   c_object->no_cache_response = response.c_opt.no_cache;
   cache[hashStr(request.getUrl())] = c_object;
+//Use storage
+//TODO: ERROR HANDLING
+  STORAGE_STATUS err = cache_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size));
+  if ( err != STORAGE_STATUS::SUCCESS)
+    Debug::logmsg(LOG_ERR, "Error trying to store response");
   return;
 }
 
 // Append pending data to its cached content
 void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
-  cache.find(hashStr(url))->second->buffer.append(std::string(msg, msg_size));
+    cache_storage->appendData(service_name,url,std::string(msg,msg_size));
 }
 
 // Check the freshness of the cached content
@@ -204,12 +209,16 @@ void HttpCacheManager::updateContentStale(CacheObject *c_object) {
   }
 }
 
-int HttpCacheManager::createCacheResponse(const HttpRequest &request,
+int HttpCacheManager::createCacheResponse(HttpRequest request,
                                           HttpResponse &cached_response) {
   auto c_object = getCachedObject(request);
   updateContentStale(c_object);
+
   size_t parsed = 0;
-  auto ret = cached_response.parseResponse(c_object->buffer, &parsed);
+  std::string out_buff;
+//TODO, request??
+  cache_storage->getFromStorage(this->service_name, request.getUrl(), out_buff );
+  auto ret = cached_response.parseResponse(out_buff, &parsed);
   cached_response.cached = true;
 
   for (size_t j = 0; j < cached_response.num_headers; j++) {

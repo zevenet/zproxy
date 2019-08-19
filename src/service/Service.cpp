@@ -150,7 +150,7 @@ Service::Service(ServiceConfig &service_config_)
   this->sess_start = service_config_.sess_start;
 #if CACHE_ENABLED
   // Initialize cache manager
-  this->cacheInit(&service_config.cache_content, service_config.cache_timeout);
+  this->cacheInit(&service_config.cache_content, service_config.cache_timeout, service_config.name);
 #endif
   // backend initialization
   int backend_id = 0;

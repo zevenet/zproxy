@@ -20,6 +20,7 @@ add_definitions(-DCACHE_ENABLED=0)
 add_definitions(-DENABLE_QUICK_RESPONSE=1)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_definitions(-DDEBUG_HTTP_HEADERS=0)
+add_definitions(-DMEMCACHED_ENABLED=0)
 
 add_library(libzhttp
 		ssl/ssl_common.h
@@ -84,7 +85,7 @@ add_library(libzhttp
                 cache/ICacheStorage.h
                 )
 
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES})
 if (BUNDLED_OPENSSL)
 	  #include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
 		add_dependencies(libzhttp openssl)
