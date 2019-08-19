@@ -289,12 +289,12 @@ sub create_routing_rule
 			'non_blank' => 'true',
 			'required'  => 'true',
 			'format_msg' =>
-			  "It is the tabled used to route the packet if it matches with the src[/src_cdir]",
+			  "It is the tabled used to route the packet if it matches with the parameter 'from'",
 		},
 		"not" => {
 			'values' => ['true', 'false'],
 			'format_msg' =>
-			  "It is the 'not' logical operator. It is used with the src[/src_cdir] to negate its result",
+			  "It is the 'not' logical operator. It is used with the 'from' to negate its result",
 		},
 	};
 
