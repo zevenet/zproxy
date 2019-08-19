@@ -272,7 +272,7 @@ my %format_re = (
 	'alias_type'      => qr/(?:backend|interface)/,
 
 	# routing
-	'route_rule_id' => qr/$natural/,
+	'route_rule_id'  => qr/$natural/,
 	'route_table_id' => qr/\w+/,
 	'route_entry_id' => qr/$natural/,
 
@@ -883,7 +883,7 @@ sub httpResponseHelp
 		}
 		if ( exists $param_obj->{ $p }->{ interval } )
 		{
-			my ( $ll, $hl ) = split ( ',', $param_obj->{ $p }->{ values } );
+			my ( $ll, $hl ) = split ( ',', $param_obj->{ $p }->{ interval } );
 			$ll = '-' if ( !defined $ll );
 			$hl = '-' if ( !defined $hl );
 			$param->{ interval } = "Expects a value between '$ll' and '$hl'.";
