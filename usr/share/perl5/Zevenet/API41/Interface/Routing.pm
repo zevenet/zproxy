@@ -211,6 +211,8 @@ sub validateRouteInput
 
 		$json_obj->{ raw } = &sanitazeRouteCmd( $json_obj->{ raw }, $table );
 
+		&splitRoutingCmd( $json_obj );
+
 		# update the data
 		$json_obj = &updateRoutingParams( $table, $id_route, $json_obj ) if $id_route;
 	}
@@ -559,6 +561,13 @@ sub modify_routing_entry
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
+
+	# avoid the 'raw' parameter with another parameter
+	if ( exists $json_obj->{ raw } and keys %{ $json_obj } > 1 )
+	{
+		my $msg = "The parameter 'raw' cannot be combined with other parameters";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
 	require Zevenet::Net::Route;
 	if ( !&getRoutingTableExists( $table ) )

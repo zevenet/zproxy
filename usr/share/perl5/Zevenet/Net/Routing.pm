@@ -555,25 +555,7 @@ sub listRoutingTableSys
 		$r->{ type } = 'system';
 		$r->{ raw }  = "$cmd table $table";
 
-		if ( $cmd =~ /^(\S+)/ )
-		{
-			$r->{ to } = $1;
-		}
-
-		if ( $cmd =~ /via\s(\S+)/ )
-		{
-			$r->{ via } = $1;
-		}
-
-		if ( $cmd =~ /src\s(\S+)/ )
-		{
-			$r->{ source } = $1;
-		}
-
-		if ( $cmd =~ /dev\s(\S+)/ )
-		{
-			$r->{ interface } = $1;
-		}
+		&splitRoutingCmd( $r );
 
 		push @routes, $r;
 	}
@@ -943,6 +925,70 @@ sub modifyRoutingCustom
 
 	&lockResource( $lock_rules, 'ud' );
 	return $err;
+}
+
+=begin nd
+Function: splitRoutingCmd
+
+	It parser a routing command line and it creates an struct with the data parsed from command
+
+	The command is passed in a hash reference, with the key 'raw'. This hash will be update with the parsed values.
+	The hash after this function will look like:
+
+	{
+		"raw"  is the routing command line
+		"to" is the destination IP or networking segment
+		"interface" is the interface used to take out the packet
+		"source" is the IP used as source when the packet is going out
+		"via" is the IP of the next routing item
+		"priority" is the priority for the routing entry in the table
+	}
+
+Parameters:
+	routing conf - It is a hash that has to contains the key 'raw'. This hash will be update with the get values
+
+Returns:
+	none - .
+
+=cut
+
+sub splitRoutingCmd
+{
+	my $r   = $_[0];
+	my $cmd = $r->{ raw };
+
+	# reset values
+	$r->{ to }        = '';
+	$r->{ via }       = '';
+	$r->{ source }    = '';
+	$r->{ interface } = '';
+
+	if ( $cmd =~ /^(\S+)/ )
+	{
+		$r->{ to } = $1;
+	}
+
+	if ( $cmd =~ /via\s(\S+)/ )
+	{
+		$r->{ via } = $1;
+	}
+
+	if ( $cmd =~ /src\s(\S+)/ )
+	{
+		$r->{ source } = $1;
+	}
+
+	if ( $cmd =~ /dev\s(\S+)/ )
+	{
+		$r->{ interface } = $1;
+	}
+
+	if ( $cmd =~ /(?:metric|preference)\s(\S+)/ )
+	{
+		$r->{ priority } = $1;
+	}
+
+	$_[0] = $r;
 }
 
 =begin nd
