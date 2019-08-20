@@ -7,7 +7,7 @@ bool HttpCacheManager::isCached(HttpRequest &request) {
   if (cache.find(hashed_url) == cache.end()) {
     return false;
   } else {
-    return true;
+    return ram_storage->isStored(this->service_name,request.getUrl());
   }
 }
 
@@ -133,7 +133,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
   cache[hashStr(request.getUrl())] = c_object;
 //Use storage
 //TODO: ERROR HANDLING
-  STORAGE_STATUS err = cache_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size));
+  STORAGE_STATUS err = ram_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size));
   if ( err != STORAGE_STATUS::SUCCESS)
     Debug::logmsg(LOG_ERR, "Error trying to store response");
   return;
@@ -141,7 +141,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 
 // Append pending data to its cached content
 void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
-    cache_storage->appendData(service_name,url,std::string(msg,msg_size));
+    ram_storage->appendData(service_name,url,std::string(msg,msg_size));
 }
 
 // Check the freshness of the cached content
@@ -157,9 +157,7 @@ bool HttpCacheManager::isFresh(HttpRequest &request) {
 // Check if the cached content can be served, depending on request
 // cache-control values
 bool HttpCacheManager::canBeServed(HttpRequest &request) {
-  if (request.c_opt.no_cache)
-    return false;
-  if (!request.cache_control && request.pragma)
+  if (request.c_opt.no_cache || (!request.cache_control && request.pragma) || !isCached(request))
     return false;
 
   bool serveable = isFresh(request);
@@ -208,17 +206,16 @@ void HttpCacheManager::updateContentStale(CacheObject *c_object) {
     }
   }
 }
-
 int HttpCacheManager::createCacheResponse(HttpRequest request,
                                           HttpResponse &cached_response) {
   auto c_object = getCachedObject(request);
   updateContentStale(c_object);
 
   size_t parsed = 0;
-  std::string out_buff;
+  std::string buff;
 //TODO, request??
-  cache_storage->getFromStorage(this->service_name, request.getUrl(), out_buff );
-  auto ret = cached_response.parseResponse(out_buff, &parsed);
+  ram_storage->getFromStorage(this->service_name, request.getUrl(), buff );
+  auto ret = cached_response.parseResponse(buff, &parsed);
   cached_response.cached = true;
 
   for (size_t j = 0; j < cached_response.num_headers; j++) {

@@ -130,6 +130,12 @@ STORAGE_STATUS RamfsCacheStorage::appendData(const std::string svc, const std::s
 
     return STORAGE_STATUS::SUCCESS;
 }
+bool RamfsCacheStorage::isStored(const std::string svc, const std::string url)
+{
+    struct stat buffer;
+    size_t hashed_url = std::hash<std::string>()(url);
+    return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
+}
 /*
  * STDMAP STORAGE
  */
@@ -337,4 +343,11 @@ STORAGE_STATUS DiskCacheStorage::appendData(const std::string svc, const std::st
 
     return STORAGE_STATUS::SUCCESS;
 }
+bool DiskCacheStorage::isStored(const std::string svc, const std::string url)
+{
+    struct stat buffer;
+    size_t hashed_url = std::hash<std::string>()(url);
+    return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
+}
+
 #endif

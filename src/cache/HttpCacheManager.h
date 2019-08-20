@@ -44,7 +44,8 @@ class HttpCacheManager {
 private:
   int cache_timeout = -1;
   std::string service_name;
-  ICacheStorage * cache_storage;
+  RamICacheStorage * ram_storage;
+  DiskICacheStorage * disk_storage;
   unordered_map<size_t, CacheObject *> cache; // Caching map
   regex_t *cache_pattern = nullptr;
 
@@ -59,7 +60,7 @@ public:
     // Free cache pattern
     if (cache_pattern != nullptr)
       regfree(cache_pattern);
-    cache_storage->stopCacheStorage();
+    ram_storage->stopCacheStorage();
   }
   /**
   * @brief Initialize the cache manager, configuring its pattern and the
@@ -78,9 +79,12 @@ public:
         this->service_name = svc;
       }
     //Cache initialization
-    cache_storage = RamfsCacheStorage::getInstance();
-    cache_storage->initCacheStorage(0, "/mnt/cache");
-    cache_storage->initServiceStorage(svc);
+    ram_storage = RamfsCacheStorage::getInstance();
+    ram_storage->initCacheStorage(0, "/mnt/cache_ramfs");
+    ram_storage->initServiceStorage(svc);
+    disk_storage = DiskCacheStorage::getInstance();
+    ram_storage->initCacheStorage(0, "/mnt/cache_disk");
+    ram_storage->initServiceStorage(svc);
     }
   }
   /**

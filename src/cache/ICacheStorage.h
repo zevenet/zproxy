@@ -50,6 +50,7 @@ public:
     virtual STORAGE_TYPE getStorageType() = 0;
     virtual STORAGE_STATUS stopCacheStorage() = 0;
     virtual STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) = 0;
+    virtual bool isStored(const std::string svc, const std::string url) = 0;
     };
 
 class DiskICacheStorage: public ICacheStorage{
@@ -96,6 +97,7 @@ public:
     STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
+    bool isStored(const std::string svc, const std::string url) override;
 };
 
 
@@ -123,6 +125,7 @@ public:
     STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override{};
+    bool isStored(const std::string svc, const std::string url) override{};
 };
 
 /**
@@ -165,7 +168,7 @@ private:
     unordered_map<size_t,string> cache_storage;
     DiskCacheStorage(){}
 public:
-    static ICacheStorage * getInstance() {
+    static DiskICacheStorage * getInstance() {
         if (instance == nullptr)
         {
             instance = new DiskCacheStorage();
@@ -179,6 +182,7 @@ public:
     STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
+    bool isStored(const std::string svc, const std::string url) override;
 };
 
 #endif
