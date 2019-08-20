@@ -1,4 +1,4 @@
-#if CACHE_ENABLED
+﻿#if CACHE_ENABLED
 #include "HttpCacheManager.h"
 
 bool HttpCacheManager::isCached(HttpRequest &request) {
@@ -7,20 +7,31 @@ bool HttpCacheManager::isCached(HttpRequest &request) {
   if (cache.find(hashed_url) == cache.end()) {
     return false;
   } else {
-    return ram_storage->isStored(this->service_name,request.getUrl());
+    auto c_object = getCachedObject(request);
+    //Check what storage to use
+    switch (c_object->storage){
+    case STORAGE_TYPE::RAMFS:
+        return ram_storage->isStored(this->service_name,request.getUrl());
+    case STORAGE_TYPE::DISK:
+        return disk_storage->isStored(this->service_name,request.getUrl());
+    default:
+        return false;
+    }
   }
 }
 
 // Returns the cache content with all the information stored
 CacheObject *HttpCacheManager::getCachedObject(HttpRequest request) {
-  std::string url = request.getUrl();
+  return getCachedObject(request.getUrl());
+}
+// Returns the cache content with all the information stored
+CacheObject *HttpCacheManager::getCachedObject(std::string url) {
   CacheObject *c_object = nullptr;
   auto iter = cache.find(hashStr(url));
   if (iter != cache.end())
     c_object = iter->second;
   return c_object;
 }
-
 size_t HttpCacheManager::hashStr(std::string str) {
   size_t str_hash = std::hash<std::string>{}(str);
   return str_hash;
@@ -85,6 +96,18 @@ void HttpCacheManager::updateResponse(HttpResponse response,
 
   return;
 }
+// Decide on whether to use RAMFS or disk
+STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
+{
+    size_t ram_size_left = ram_storage->max_size - ram_storage->current_size;
+    //How are we deciding if
+    size_t response_size = response.http_message_length + response.content_length;
+
+    if ( response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left )
+        return STORAGE_TYPE::DISK;
+    else
+        return STORAGE_TYPE::RAMFS;
+}
 
 void HttpCacheManager::storeResponse(HttpResponse response,
                                      HttpRequest request) {
@@ -125,23 +148,52 @@ void HttpCacheManager::storeResponse(HttpResponse response,
   if (!response.etag.empty())
     c_object->etag = response.etag;
   c_object->revalidate = response.c_opt.revalidate;
-//  c_object->buffer = std::string(response.buffer, response.buffer_size);
+
   // Reset the stale flag, the cache has been created or updated
   c_object->staled = false;
   c_object->content_length = response.content_length;
   c_object->no_cache_response = response.c_opt.no_cache;
-  cache[hashStr(request.getUrl())] = c_object;
-//Use storage
-//TODO: ERROR HANDLING
-  STORAGE_STATUS err = ram_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size));
+
+  //Check what storage to use
+  STORAGE_STATUS err;
+  Debug::logmsg(LOG_NOTICE, "We are comparing values: message_length %d + headers_length %d = %d , against buffer_size: %d total: %d", response.message_length, response.headers_length, (response.message_length + response.headers_length), response.buffer_size, (response.content_length + response.headers_length - response.buffer_size) );
+  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
+  switch (getStorageType(response)){
+  case STORAGE_TYPE::RAMFS:
+      c_object->storage = STORAGE_TYPE::RAMFS;
+      err = ram_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
+      break;
+  case STORAGE_TYPE::DISK:
+      c_object->storage = STORAGE_TYPE::DISK;
+      err = disk_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
+      break;
+  default:
+      return;
+  }
+  // If success, store in the unordered map
   if ( err != STORAGE_STATUS::SUCCESS)
-    Debug::logmsg(LOG_ERR, "Error trying to store response");
+    Debug::logmsg(LOG_ERR, "Error trying to store the response in storage");
+  else
+      cache[hashStr(request.getUrl())] = c_object;
   return;
 }
 
 // Append pending data to its cached content
 void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
-    ram_storage->appendData(service_name,url,std::string(msg,msg_size));
+    Debug::logmsg(LOG_NOTICE, "We are appending %d data", msg_size);
+    auto c_object = getCachedObject(url);
+    //Check what storage to use
+    switch (c_object->storage){
+    case STORAGE_TYPE::RAMFS:
+        ram_storage->appendData(service_name, url, std::string(msg, msg_size));
+        break;
+    case STORAGE_TYPE::DISK:
+        disk_storage->appendData(service_name, url, std::string(msg, msg_size));
+        break;
+    default:
+        return;
+    }
+    return;
 }
 
 // Check the freshness of the cached content
@@ -213,8 +265,18 @@ int HttpCacheManager::createCacheResponse(HttpRequest request,
 
   size_t parsed = 0;
   std::string buff;
-//TODO, request??
-  ram_storage->getFromStorage(this->service_name, request.getUrl(), buff );
+  //Get the response from the right storage
+  switch(c_object->storage){
+  case STORAGE_TYPE::RAMFS:
+      ram_storage->getFromStorage(this->service_name, request.getUrl(), buff );
+      break;
+  case STORAGE_TYPE::DISK:
+      disk_storage->getFromStorage(this->service_name, request.getUrl(), buff );
+      break;
+  default:
+      return -1;
+  }
+
   auto ret = cached_response.parseResponse(buff, &parsed);
   cached_response.cached = true;
 

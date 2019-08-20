@@ -46,7 +46,7 @@ public:
     virtual STORAGE_STATUS initCacheStorage(const size_t max_size, const std::string mount_point) = 0;
     virtual STORAGE_STATUS initServiceStorage( std::string svc ) = 0;
     virtual STORAGE_STATUS getFromStorage( const std::string svc, const std::string url, std::string & out_buffer ) = 0;
-    virtual STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) = 0;
+    virtual STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size) = 0;
     virtual STORAGE_TYPE getStorageType() = 0;
     virtual STORAGE_STATUS stopCacheStorage() = 0;
     virtual STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) = 0;
@@ -94,7 +94,7 @@ public:
     STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
     STORAGE_STATUS getFromStorage( const std::string svc, const std::string url, std::string & out_buffer) override;
-    STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
+    STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
     bool isStored(const std::string svc, const std::string url) override;
@@ -122,7 +122,7 @@ public:
     STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
     STORAGE_STATUS getFromStorage( const std::string svc, const std::string url, std::string & out_buffer) override;
-    STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
+    STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override{};
     bool isStored(const std::string svc, const std::string url) override{};
@@ -179,7 +179,7 @@ public:
     STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
     STORAGE_STATUS getFromStorage( const std::string svc, const std::string url, std::string & out_buffer) override;
-    STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
+    STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
     bool isStored(const std::string svc, const std::string url) override;

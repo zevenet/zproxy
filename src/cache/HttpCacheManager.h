@@ -32,7 +32,8 @@ struct CacheObject {
   long int last_mod = -1;
   long int expires = -1;
   long int max_age = -1;
-  CACHE_SCOPE scope; // TODO
+  CACHE_SCOPE scope;
+  STORAGE_TYPE storage;
 };
 /**
  * @class HttpCacheManager HttpCacheManager.h "src/handlers/HttpCacheManager.h"
@@ -53,7 +54,7 @@ private:
   size_t hashStr(std::string str);
   void storeResponse(HttpResponse response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
-
+  STORAGE_TYPE getStorageType( HttpResponse response );
 public:
   bool cache_enabled = false;
   ~HttpCacheManager() {
@@ -83,8 +84,8 @@ public:
     ram_storage->initCacheStorage(0, "/mnt/cache_ramfs");
     ram_storage->initServiceStorage(svc);
     disk_storage = DiskCacheStorage::getInstance();
-    ram_storage->initCacheStorage(0, "/mnt/cache_disk");
-    ram_storage->initServiceStorage(svc);
+    disk_storage->initCacheStorage(0, "/mnt/cache_disk");
+    disk_storage->initServiceStorage(svc);
     }
   }
   /**
@@ -129,6 +130,7 @@ public:
   * @return returns the CacheObject or nullptr if not found
   */
   CacheObject *getCachedObject(HttpRequest request);
+  CacheObject * getCachedObject(std::string url);
   /**
   * @brief returns the pattern used by the cache manager
   *
@@ -167,6 +169,7 @@ public:
   * @param request is the HttpRequest used for caching purpose
   */
   void handleResponse(HttpResponse response, HttpRequest request);
+
 };
 
 

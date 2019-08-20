@@ -83,7 +83,7 @@ STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string svc, const s
     out_buffer = buffer.str();
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer){
+STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size){
     if( !initialized )
         return STORAGE_STATUS::NOT_INIT;
     if ( max_size <= current_size + buffer.size() )
@@ -98,10 +98,10 @@ STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string svc, const std
     //increment the current storage size
     current_size += buffer.size();
 
-    std::ofstream out_stream(file_path.data());
+    std::ofstream out_stream(file_path.data(), std::ofstream::trunc);
     if( !out_stream.is_open() )
         return STORAGE_STATUS::OPEN_ERROR;
-    out_stream << buffer;
+    out_stream.write(buffer.data(), buffer.size());
     out_stream.close();
 
     if ( ! out_stream )
@@ -121,9 +121,9 @@ STORAGE_STATUS RamfsCacheStorage::appendData(const std::string svc, const std::s
     ofstream fout;  // Create Object of Ofstream
     size_t hashed_url = std::hash<std::string>()(url);
 
-    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ios::app); // Append mode
+    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ofstream::app); // Append mode
     if(fout.is_open())
-        fout<< buffer.data();
+        fout.write( buffer.data(),buffer.size());
     else
         return STORAGE_STATUS::APPEND_ERROR;
     fout.close(); // Closing the file
@@ -170,7 +170,7 @@ STORAGE_STATUS StdmapCacheStorage::getFromStorage( const std::string svc, const 
     out_buffer = buffer;
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer){
+STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size){
 
     if( !initialized )
         return STORAGE_STATUS::NOT_INIT;
@@ -232,6 +232,7 @@ STORAGE_STATUS MemcachedStorage::stopCacheStorage(){
 }
 STORAGE_STATUS MemcachedStorage::appendData(const std::string svc, const std::string url, const std::string buffer)
 {
+    //FIXME, append data to already created file
     ofstream fout;  // Create Object of Ofstream
     size_t hashed_url = std::hash<std::string>()(url);
 
@@ -298,12 +299,13 @@ STORAGE_STATUS DiskCacheStorage::getFromStorage( const std::string svc, const st
     out_buffer = buffer.str();
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer){
+STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size){
     if( !initialized )
         return STORAGE_STATUS::NOT_INIT;
-    if ( max_size <= current_size + buffer.size() )
-        //Storage full, set flag??
-        return STORAGE_STATUS::STORAGE_FULL;
+// FIXME: Is it needed to check size? probably yes -> ZBA
+//    if ( max_size <= current_size + buffer.size() )
+//        //Storage full, set flag??
+//        return STORAGE_STATUS::STORAGE_FULL;
 
     //Store in the path/svc/url
     size_t hashed_url = std::hash<std::string>()(url);
@@ -313,10 +315,10 @@ STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std:
     //increment the current storage size
     current_size += buffer.size();
 
-    std::ofstream out_stream(file_path.data());
+    std::ofstream out_stream(file_path.data(), std::ofstream::trunc );
     if( !out_stream.is_open() )
         return STORAGE_STATUS::OPEN_ERROR;
-    out_stream << buffer;
+    out_stream.write(buffer.data(), buffer.size());
     out_stream.close();
 
     if ( ! out_stream )
@@ -334,9 +336,9 @@ STORAGE_STATUS DiskCacheStorage::appendData(const std::string svc, const std::st
     ofstream fout;  // Create Object of Ofstream
     size_t hashed_url = std::hash<std::string>()(url);
 
-    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ios::app); // Append mode
+    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ofstream::app); // Append mode
     if(fout.is_open())
-        fout<< buffer.data();
+        fout.write(buffer.data(), buffer.size());
     else
         return STORAGE_STATUS::APPEND_ERROR;
     fout.close(); // Closing the file
