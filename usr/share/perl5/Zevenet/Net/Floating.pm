@@ -127,41 +127,51 @@ sub getFloatInterfaceForAddress
 
 	my $subnet_interface;
 	my @interface_list = @{ &getConfigInterfaceList() };
-	my $remote_ip      = NetAddr::IP->new( $remote_ip_address );
 
-	my $virt;
-	my $parent;
+	# getting the input ip range
 	foreach my $ifa ( @interface_list )
 	{
-		next if $ifa->{ vini } eq '';
 		if ( $ifa->{ addr } eq $remote_ip_address )
 		{
-			$virt = $ifa->{ name };
+			# the ip is a local interface with routing
+			if ( $ifa->{ vini } eq '' )
+			{
+				$subnet_interface = $ifa;
+			}
+
+			# the ip is a local virtual interface
+			else
+			{
+				my $parent = &getParentInterfaceName( $ifa->{ name } );
+				$subnet_interface = &getInterfaceConfig( $parent );
+			}
+
 			last;
-		}
-	}
-	$parent = &getParentInterfaceName( $virt ) if ( $virt );
 
-	# find interface in range
-	for my $iface ( @interface_list )
-	{
-		next if $iface->{ vini } ne '';
-		next if $iface->{ status } ne 'up';
-
-		my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
-
-		if ( $remote_ip->within( $network ) )
-		{
-			$subnet_interface = $iface;
-			last if ( $virt and $iface->{ name } eq $parent );    # parent
 		}
 	}
 
+# The interface has not been found in any local interface. Looking for if it is reacheable for some interface
 	if ( !$subnet_interface )
 	{
-		return;
+		my $remote_ip = NetAddr::IP->new( $remote_ip_address );
+		for my $iface ( @interface_list )
+		{
+			next if $iface->{ vini } ne '';
+			next if $iface->{ status } ne 'up';
+
+			my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
+
+			if ( $remote_ip->within( $network ) )
+			{
+				$subnet_interface = $iface;
+			}
+		}
+
+		return if ( !$subnet_interface );
 	}
 
+	# getting the output source address
 	my $output_interface;
 
 	if ( $subnet_interface->{ float } )
