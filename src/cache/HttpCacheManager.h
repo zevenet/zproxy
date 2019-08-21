@@ -49,6 +49,9 @@ private:
   DiskICacheStorage * disk_storage;
   unordered_map<size_t, CacheObject *> cache; // Caching map
   regex_t *cache_pattern = nullptr;
+  std::string ramfs_mount_point = "/mnt/cache_ramfs";
+  std::string disk_mount_point = "/mnt/cache_disk";
+
 
   void updateContentStale(CacheObject *c_object);
   size_t hashStr(std::string str);
@@ -71,7 +74,7 @@ public:
   * checks its re_pcre field to decide on enabling the cache or not
   * @param timeout is the timeout value read from the configuration file
   */
-  void cacheInit(regex_t *pattern, const int timeout, const std::string svc) {
+  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold) {
     if (pattern != nullptr) {
       if (pattern->re_pcre != nullptr) {
         this->cache_pattern = pattern;
@@ -81,10 +84,12 @@ public:
       }
     //Cache initialization
     ram_storage = RamfsCacheStorage::getInstance();
-    ram_storage->initCacheStorage(0, "/mnt/cache_ramfs");
+    ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
     ram_storage->initServiceStorage(svc);
+    ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
     disk_storage = DiskCacheStorage::getInstance();
-    disk_storage->initCacheStorage(0, "/mnt/cache_disk");
+    //Max size not useful yet
+    disk_storage->initCacheStorage(0, disk_mount_point);
     disk_storage->initServiceStorage(svc);
     }
   }

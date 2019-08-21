@@ -6,18 +6,19 @@
 #include <sys/types.h>
 #include <filesystem>
 
-//Static variables
+// Ram Static variables definitions
 RamICacheStorage * RamICacheStorage::instance = nullptr;
-DiskICacheStorage * DiskICacheStorage::instance = nullptr;
 bool RamICacheStorage::initialized = false;
-bool DiskICacheStorage::initialized = false;
-std::string RamICacheStorage::mount_path;
+double RamICacheStorage::cache_thr;
 size_t RamICacheStorage::current_size;
 size_t RamICacheStorage::max_size;
+std::string RamICacheStorage::mount_path;
+// Disk Static variables definition
+DiskICacheStorage * DiskICacheStorage::instance = nullptr;
+bool DiskICacheStorage::initialized = false;
 std::string DiskICacheStorage::mount_path;
 size_t DiskICacheStorage::current_size;
-size_t DiskICacheStorage::max_size;
-
+size_t DiskICacheStorage::max_size = 0;
 
 /*
  * RAMFS STORAGE

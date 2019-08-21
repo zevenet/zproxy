@@ -177,6 +177,27 @@ void Config::parse_file() {
       }
     } else if (!regexec(&Anonymise, lin, 4, matches, 0)) {
       anonymise = 1;
+#if CACHE_ENABLED
+    } else if (!regexec(&CacheThr, lin, 2, matches, 0)){
+        int threshold = atoi(lin + matches[1].rm_so);
+        if ( threshold <= 0 || threshold > 99 )
+           conf_err("Invalid value for cache threshold (CacheThr), must be between 1 and 99 (%)");
+        this->cache_thr = threshold;
+    } else if (!regexec(&CacheSize, lin, 3, matches, 0)){
+        long size = atol(lin + matches[1].rm_so);
+        if (matches[2].rm_so != matches[0].rm_eo - 1){
+            char * size_modifier = nullptr;
+            size_modifier = strdup(lin + matches[2].rm_so);
+            //Apply modifier
+            if(*size_modifier == 'K' || *size_modifier == 'k' )
+                size = size*1024;
+            else if(*size_modifier == 'M' || *size_modifier == 'm' )
+                size = size*1024*1024;
+            else if(*size_modifier == 'G' || *size_modifier == 'g' )
+                size = size*1024*1024*1024;
+        }
+        cache_s = size;
+#endif
     } else {
       conf_err("unknown directive - aborted");
     }
@@ -278,10 +299,12 @@ void Config::parseConfig(const int argc, char **const argv) {
   daemonize = 1;
   grace = 30;
   ignore_100 = 1;
-
   services = NULL;
   listeners = NULL;
-
+#if CACHE_ENABLED
+  cache_s = 0;
+  cache_thr = 0;
+#endif
   parse_file();
 
   if (check_only) {
@@ -1569,8 +1592,12 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
 
 #if CACHE_ENABLED
 void Config::parseCache(ServiceConfig *const svc) {
-  char lin[MAXBUF], *cp, *parm;
+  char lin[MAXBUF], *cp;
+  if( cache_s == 0 || cache_thr == 0)
+    conf_err("There is no CacheSize nor CacheThr configured, exiting");
   regmatch_t matches[5];
+  svc->cache_size = cache_s;
+  svc->cache_threshold = cache_thr;
 
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
@@ -1885,7 +1912,11 @@ bool Config::compile_regex() {
                 regcomp(&CacheContent, "^[ \t]*Content[ \t]+\"(.+)\"[ \t]*$",
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
                 regcomp(&CacheTO, "^[ \t]*CacheTO[ \t]+([1-9][0-9]*)[ \t]*$",
-                        REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CacheSize, "^[ \t]*CacheSize[ \t]+([1-9][0-9]*)([gmkbGMKB]*)[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CacheThr, "^[ \t]*CacheThr[ \t]+([1-9][0-9]*)[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED)
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
@@ -2007,6 +2038,8 @@ void Config::clean_regex() {
   regfree(&Cache);
   regfree(&CacheContent);
   regfree(&CacheTO);
+  regfree(&CacheSize);
+  regfree(&CacheThr);
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH

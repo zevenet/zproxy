@@ -76,7 +76,6 @@ class Config {
   int be_connto;
   bool dynscale;
   int ignore_case;
-
   char *f_name[MAX_FIN];
   FILE *f_in[MAX_FIN];
   int n_lin[MAX_FIN];
@@ -117,6 +116,8 @@ class Config {
   /* 0 Manages header */
       ctrl_port = 0,
       sync_is_enabled; /*session sync enabled*/
+   long cache_s;
+   int cache_thr;
   int conf_init(const char *name);
 
  private:
@@ -139,7 +140,7 @@ class Config {
   regex_t IncludeDir;
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
-  regex_t Cache, CacheContent, CacheTO; /* Cache configuration regex */
+  regex_t Cache, CacheContent, CacheTO, CacheThr, CacheSize; /* Cache configuration regex */
  public:
 
   static regex_t HEADER,    /* Allowed header */

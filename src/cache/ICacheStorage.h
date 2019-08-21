@@ -71,6 +71,7 @@ public:
     static size_t max_size;
     static size_t current_size;
     static std::string mount_path;
+    static double cache_thr;
 };
 
 

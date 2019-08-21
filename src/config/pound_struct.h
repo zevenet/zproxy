@@ -98,6 +98,8 @@ class ServiceConfig {
   regex_t sess_pat;   /* pattern to match the session data */
 #if CACHE_ENABLED
   regex_t cache_content; /* pattern to decide if must be cached or not */
+  long cache_size;
+  int cache_threshold;
 #endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
