@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <filesystem>
+#include "../debug/Debug.h"
 
 // Ram Static variables definitions
 RamICacheStorage * RamICacheStorage::instance = nullptr;
@@ -90,12 +91,18 @@ STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string svc, const std
     if ( max_size <= current_size + buffer.size() )
         //Storage full, set flag??
         return STORAGE_STATUS::STORAGE_FULL;
-
     //Store in the path/svc/url
     size_t hashed_url = std::hash<std::string>()(url);
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
 
     string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
+    //If the content already exists, update the size.
+    if(isStored(svc,url))
+    {
+        std::ifstream in(file_path.data(), std::ifstream::ate | std::ifstream::binary);
+        Debug::logmsg(LOG_NOTICE,"THE CURRENT FILESIZE IS: %d", in.tellg());
+        current_size -= in.tellg();
+    }
     //increment the current storage size
     current_size += buffer.size();
 
@@ -128,7 +135,7 @@ STORAGE_STATUS RamfsCacheStorage::appendData(const std::string svc, const std::s
     else
         return STORAGE_STATUS::APPEND_ERROR;
     fout.close(); // Closing the file
-
+    current_size += buffer.size();
     return STORAGE_STATUS::SUCCESS;
 }
 bool RamfsCacheStorage::isStored(const std::string svc, const std::string url)
@@ -136,63 +143,6 @@ bool RamfsCacheStorage::isStored(const std::string svc, const std::string url)
     struct stat buffer;
     size_t hashed_url = std::hash<std::string>()(url);
     return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
-}
-/*
- * STDMAP STORAGE
- */
-STORAGE_STATUS StdmapCacheStorage::initCacheStorage( size_t m_size, std::string m_point ) {
-    STORAGE_STATUS ret = STORAGE_STATUS::SUCCESS;
-    //Ensure that the size is always set
-    if ( initialized )
-        return STORAGE_STATUS::ALREADY_INIT;
-    if (m_size <= 0)
-        m_size = MAX_STORAGE_SIZE;
-
-    mount_path = m_point;
-    current_size = 0;
-    max_size = m_size;
-
-    initialized = true;
-
-    return ret;
-}
-//Create the service folder
-STORAGE_STATUS StdmapCacheStorage::initServiceStorage( std::string svc ) { return STORAGE_STATUS::SUCCESS; }
-STORAGE_TYPE StdmapCacheStorage::getStorageType(){ return STORAGE_TYPE::STDMAP; };
-STORAGE_STATUS StdmapCacheStorage::getFromStorage( const std::string svc, const std::string url, std::string &out_buffer ){
-    //get from path/svc/url
-
-    // We have the file_path created as follows: /mount_point/svc1/hashed_url
-    std::string file_path (svc + string("/") + url);
-    std::size_t hashed_index = std::hash<std::string>()(file_path);
-    std::string buffer = cache_storage.at(hashed_index);
-    if ( !buffer.length() )
-        return STORAGE_STATUS::GENERIC_ERROR;
-    out_buffer = buffer;
-    return STORAGE_STATUS::SUCCESS;
-}
-STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size){
-
-    if( !initialized )
-        return STORAGE_STATUS::NOT_INIT;
-    if ( max_size <= current_size + buffer.size() )
-        //Storage full, set flag??
-        return STORAGE_STATUS::STORAGE_FULL;
-
-    //Store in the path/svc/url
-    // We have the file_path created as follows: /mount_point/svc1/hashed_url
-    string file_path (svc + string("/") + url);
-    size_t hashed_index = std::hash<std::string>()(file_path);
-    cache_storage[hashed_index] = buffer;
-
-    //increment the current storage size
-    current_size += buffer.size();
-
-    return STORAGE_STATUS::SUCCESS;
-}
-STORAGE_STATUS StdmapCacheStorage::stopCacheStorage(){
-    cache_storage.clear();
-    return STORAGE_STATUS::SUCCESS;
 }
 #if MEMCACHED_ENABLED
 /*
@@ -233,17 +183,7 @@ STORAGE_STATUS MemcachedStorage::stopCacheStorage(){
 }
 STORAGE_STATUS MemcachedStorage::appendData(const std::string svc, const std::string url, const std::string buffer)
 {
-    //FIXME, append data to already created file
-    ofstream fout;  // Create Object of Ofstream
-    size_t hashed_url = std::hash<std::string>()(url);
-
-    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ios::app); // Append mode
-    if(fout.is_open())
-        fout<< buffer.data();
-    else
-        return STORAGE_STATUS::APPEND_ERROR;
-    fout.close(); // Closing the file
-
+    //TODO: Fill the appendData
     return STORAGE_STATUS::SUCCESS;
 }
 #endif
@@ -313,6 +253,14 @@ STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std:
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
 
     string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
+    //If the content already exists, update the size.
+    if(isStored(svc,url))
+    {
+        std::ifstream in(file_path.data(), std::ifstream::ate | std::ifstream::binary);
+        Debug::logmsg(LOG_NOTICE,"THE CURRENT FILESIZE IS: %d", in.tellg());
+        current_size -= in.tellg();
+    }
+
     //increment the current storage size
     current_size += buffer.size();
 
@@ -343,7 +291,7 @@ STORAGE_STATUS DiskCacheStorage::appendData(const std::string svc, const std::st
     else
         return STORAGE_STATUS::APPEND_ERROR;
     fout.close(); // Closing the file
-
+    current_size += buffer.size();
     return STORAGE_STATUS::SUCCESS;
 }
 bool DiskCacheStorage::isStored(const std::string svc, const std::string url)

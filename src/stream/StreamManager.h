@@ -87,9 +87,6 @@ DEFINE_OBJECT_COUNTER(event_backend_disconnect)
 DEFINE_OBJECT_COUNTER(event_connect)
 DEFINE_OBJECT_COUNTER(event_connect_fail)
 
-#if CACHE_ENABLED
-DEFINE_OBJECT_COUNTER(cache_response)
-#endif
 }  // namespace debug__
 #else
 #define DEBUG_COUNTER_HIT(x)

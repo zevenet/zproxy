@@ -5,6 +5,9 @@
 #include "../http/http.h"
 #include "../service/backend.h"
 #include "ICacheStorage.h"
+#include "../util/common.h"
+#include "../stats/counter.h"
+
 
 #ifndef _STRING_H
 #include <string>
@@ -177,5 +180,17 @@ public:
 
 };
 
+namespace cache_stats__ {
+#define DEBUG_COUNTER_HIT(x) std::unique_ptr<x> UNIQUE_NAME(counter_hit) (new x)
+DEFINE_OBJECT_COUNTER(cache_RAM_entries)
+DEFINE_OBJECT_COUNTER(cache_DISK_entries)
+DEFINE_OBJECT_COUNTER(cache_RAM_mountpoint)
+DEFINE_OBJECT_COUNTER(cache_DISK_mountpoint)
+DEFINE_OBJECT_COUNTER(cache_match)
+DEFINE_OBJECT_COUNTER(cache_staled_entries)
+DEFINE_OBJECT_COUNTER(cache_miss)
+DEFINE_OBJECT_COUNTER(cache_ram_used)
+DEFINE_OBJECT_COUNTER(cache_disk_used)
+}
 
 #endif

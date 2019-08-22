@@ -156,16 +156,21 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 
   //Check what storage to use
   STORAGE_STATUS err;
-  Debug::logmsg(LOG_NOTICE, "We are comparing values: message_length %d + headers_length %d = %d , against buffer_size: %d total: %d", response.message_length, response.headers_length, (response.message_length + response.headers_length), response.buffer_size, (response.content_length + response.headers_length - response.buffer_size) );
-  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
+//  Debug::logmsg(LOG_NOTICE, "We are comparing values: message_length %d + headers_length %d = %d , against buffer_size: %d total: %d", response.message_length, response.headers_length, (response.message_length + response.headers_length), response.buffer_size, (response.content_length + response.headers_length - response.buffer_size) );
+//  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
   switch (getStorageType(response)){
   case STORAGE_TYPE::RAMFS:
       c_object->storage = STORAGE_TYPE::RAMFS;
       err = ram_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
+      if (err == STORAGE_STATUS::SUCCESS){
+          DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
+      }
       break;
   case STORAGE_TYPE::DISK:
       c_object->storage = STORAGE_TYPE::DISK;
       err = disk_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
+      if (err == STORAGE_STATUS::SUCCESS)
+          DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
       break;
   default:
       return;
@@ -255,6 +260,7 @@ void HttpCacheManager::updateContentStale(CacheObject *c_object) {
       age_limit = c_object->max_age;
     if ((now - c_object->date) > age_limit) {
       c_object->staled = true;
+      DEBUG_COUNTER_HIT(cache_stats__::cache_staled_entries);
     }
   }
 }

@@ -17,9 +17,13 @@
 #pragma once
 #include <sys/mount.h>
 #include <sys/stat.h>
+#ifndef _STRING_H
 #include <string>
-#include <cstring>
+#endif
+#ifndef _REGEX_H
 #include <pcreposix.h>
+#endif
+#include <cstring>
 #include <unordered_map>
 #include <iostream>
 #include <fstream>

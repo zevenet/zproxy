@@ -468,7 +468,7 @@ void StreamManager::onRequestEvent(int fd) {
       } else if (service->isCached(stream->request) &&
                  (service->canBeServed(stream->request) ||
                   stream->request.c_opt.only_if_cached)) {
-        DEBUG_COUNTER_HIT(debug__::cache_response);
+        DEBUG_COUNTER_HIT(cache_stats__::cache_match);
         stream->response.reset_parser();
         if (service->createCacheResponse(stream->request, stream->response) !=
             0) {
@@ -497,11 +497,13 @@ void StreamManager::onRequestEvent(int fd) {
         stream->client_connection.enableWriteEvent();
         return;
       }
-      else;
-        stream->response.reset_parser();
-        stream->response.cached = false;
-        stream->response.headers_sent = false;
-        stream->backend_connection.buffer_size = 0;
+      else{
+          DEBUG_COUNTER_HIT(cache_stats__::cache_miss);
+          stream->response.reset_parser();
+          stream->response.cached = false;
+          stream->response.headers_sent = false;
+          stream->backend_connection.buffer_size = 0;
+      }
     }
 
 #endif

@@ -4,6 +4,7 @@
 
 #include "listener.h"
 #include "../ssl/ssl_session.h"
+#include "../cache/HttpCacheManager.h"
 #ifdef ENABLE_HEAP_PROFILE
 #include  <gperftools/heap-profiler.h>
 #endif
@@ -66,6 +67,9 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     std::unique_ptr<JsonObject> clients_stats{new JsonObject()};
     std::unique_ptr<JsonObject> ssl_stats{new JsonObject()};
     std::unique_ptr<JsonObject> events_count{new JsonObject()};
+#if CACHE_ENABLED
+    std::unique_ptr<JsonObject> cache_count{new JsonObject()};
+#endif
     status->emplace("ClientConnection",
                   std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(Counter<ClientConnection>::count)));
@@ -151,11 +155,50 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(Counter<debug__::event_connect_fail>::count)));
 #if CACHE_ENABLED
-    events_count->emplace("cache_response",
-                          std::unique_ptr<JsonDataValue>(
-                              new JsonDataValue(Counter<debug__::cache_response>::count)));
+#if MEMCACHED_ENABLED == 1
+    RamICacheStorage * ram_storage = MemcachedCacheStorage::getInstance();
+#else
+    RamICacheStorage * ram_storage = RamfsCacheStorage::getInstance();
 #endif
+    DiskICacheStorage * disk_storage = DiskCacheStorage::getInstance();
 
+    int ram_free = (ram_storage->max_size - ram_storage->current_size);
+    int ram_used = (ram_storage->current_size);
+    int disk_used = (disk_storage->current_size);
+
+    cache_count->emplace("cache_hit",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<cache_stats__::cache_match>::count)));
+    cache_count->emplace("cache_ram_entries",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<cache_stats__::cache_RAM_entries>::count)));
+    cache_count->emplace("cache_disk_entries",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<cache_stats__::cache_DISK_entries>::count)));
+    cache_count->emplace("cache_staled",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<cache_stats__::cache_staled_entries>::count)));
+    cache_count->emplace("cache_miss",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<cache_stats__::cache_miss>::count)));
+    cache_count->emplace("cache_ram_free",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(ram_free)));
+    cache_count->emplace("cache_ram_usage",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(ram_used)));
+    cache_count->emplace("cache_disk_usage",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(disk_used)));
+    cache_count->emplace("cache_ram_mountpoint",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(ram_storage->mount_path)));
+    cache_count->emplace("cache_disk_mountpoint",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(disk_storage->mount_path)));
+
+    root->emplace("cache",std::move(cache_count));
+#endif
     root->emplace("events", std::move(events_count));
     root->emplace("backends", std::move(backends_stats));
     root->emplace("clients", std::move(clients_stats));
