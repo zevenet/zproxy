@@ -25,7 +25,7 @@ use strict;
 
 if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 {
-	my $mod = 'Zevenet::API41::Interface::Routing';
+	my $mod = 'Zevenet::API40::Interface::Routing';
 
 	my $id_rule  = &getValidFormat( 'route_rule_id' );
 	my $id_table = &getValidFormat( 'route_table_id' );
