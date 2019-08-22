@@ -140,7 +140,7 @@ class Config {
   regex_t IncludeDir;
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
-  regex_t Cache, CacheContent, CacheTO, CacheThr, CacheSize; /* Cache configuration regex */
+  regex_t Cache, CacheContent, CacheTO, CacheThr, CacheRamSize, MaxSize; /* Cache configuration regex */
  public:
 
   static regex_t HEADER,    /* Allowed header */

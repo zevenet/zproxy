@@ -62,6 +62,7 @@ private:
   void updateResponse(HttpResponse response, HttpRequest request);
   STORAGE_TYPE getStorageType( HttpResponse response );
 public:
+  size_t cache_max_size = 0;
   bool cache_enabled = false;
   ~HttpCacheManager() {
     // Free cache pattern
@@ -86,10 +87,16 @@ public:
         this->service_name = svc;
       }
     //Cache initialization
-    ram_storage = RamfsCacheStorage::getInstance();
-    ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
-    ram_storage->initServiceStorage(svc);
-    ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
+#if MEMCACHED_ENABLED
+      ram_storage = MemcachedCacheStorage::getInstance();
+      ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
+      ram_storage->initServiceStorage(svc);
+#else
+      ram_storage = RamfsCacheStorage::getInstance();
+      ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
+      ram_storage->initServiceStorage(svc);
+      ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
+#endif
     disk_storage = DiskCacheStorage::getInstance();
     //Max size not useful yet
     disk_storage->initCacheStorage(0, disk_mount_point);
@@ -182,15 +189,16 @@ public:
 
 namespace cache_stats__ {
 #define DEBUG_COUNTER_HIT(x) std::unique_ptr<x> UNIQUE_NAME(counter_hit) (new x)
-DEFINE_OBJECT_COUNTER(cache_RAM_entries)
-DEFINE_OBJECT_COUNTER(cache_DISK_entries)
-DEFINE_OBJECT_COUNTER(cache_RAM_mountpoint)
-DEFINE_OBJECT_COUNTER(cache_DISK_mountpoint)
-DEFINE_OBJECT_COUNTER(cache_match)
-DEFINE_OBJECT_COUNTER(cache_staled_entries)
-DEFINE_OBJECT_COUNTER(cache_miss)
-DEFINE_OBJECT_COUNTER(cache_ram_used)
-DEFINE_OBJECT_COUNTER(cache_disk_used)
+    DEFINE_OBJECT_COUNTER(cache_RAM_entries)
+    DEFINE_OBJECT_COUNTER(cache_DISK_entries)
+    DEFINE_OBJECT_COUNTER(cache_RAM_mountpoint)
+    DEFINE_OBJECT_COUNTER(cache_DISK_mountpoint)
+    DEFINE_OBJECT_COUNTER(cache_match)
+    DEFINE_OBJECT_COUNTER(cache_staled_entries)
+    DEFINE_OBJECT_COUNTER(cache_miss)
+    DEFINE_OBJECT_COUNTER(cache_ram_used)
+    DEFINE_OBJECT_COUNTER(cache_disk_used)
+    DEFINE_OBJECT_COUNTER(cache_not_stored)
 }
 
 #endif

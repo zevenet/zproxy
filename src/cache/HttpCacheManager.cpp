@@ -56,6 +56,11 @@ void HttpCacheManager::handleResponse(HttpResponse response,
   if (response.http_status_code != 200 && response.http_status_code != 301 &&
       response.http_status_code != 308)
     return;
+  if ( ((response.content_length + response.headers_length ) >= cache_max_size) && cache_max_size != 0 ){
+    DEBUG_COUNTER_HIT(cache_stats__::cache_not_stored);
+    Debug::logmsg(LOG_WARNING, "Not caching response with %d bytes size", response.content_length + response.headers_length);
+    return;
+  }
   // Check HTTP verb
   switch (http::http_info::http_verbs.at(
       std::string(request.method, request.method_len))) {

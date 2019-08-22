@@ -196,7 +196,9 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     cache_count->emplace("cache_disk_mountpoint",
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(disk_storage->mount_path)));
-
+    cache_count->emplace("cache_responses_not_stored",
+                          std::unique_ptr<JsonDataValue>(
+                              new JsonDataValue(Counter<cache_stats__::cache_not_stored>::count)));
     root->emplace("cache",std::move(cache_count));
 #endif
     root->emplace("events", std::move(events_count));

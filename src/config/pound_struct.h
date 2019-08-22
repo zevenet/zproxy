@@ -99,6 +99,7 @@ class ServiceConfig {
 #if CACHE_ENABLED
   regex_t cache_content; /* pattern to decide if must be cached or not */
   long cache_size;
+  size_t cache_max_size;
   int cache_threshold;
 #endif
 
