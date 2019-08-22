@@ -723,8 +723,6 @@ sub listRoutingDependIface
 	my $iface = shift;
 	my @list  = ();
 
-	# ???? valorar meter todas rutas de la tabla de la interfaz
-
 	foreach my $table ( &listRoutingTablesNames() )
 	{
 		my $ruleList = &listRoutingTableCustom();

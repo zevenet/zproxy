@@ -29,6 +29,7 @@ sub listOutRules
 	my $list;
 	foreach my $r ( @{ &listRoutingRules() } )
 	{
+		next if $r->{ type } eq 'farm';
 		push @{ $list },
 		  {
 			priority => $r->{ priority } + 0,

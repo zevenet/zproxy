@@ -1094,16 +1094,16 @@ sub listRoutingRulesSys
 	my @rules = ();
 	foreach my $r ( @{ $dec_data } )
 	{
-		#~ if (!exists $r->{fwmask})   # ???? decidir
-		{
-			$r->{ from } = $r->{ src };
-			$r->{ from } .= "/$r->{ src_len }" if exists ( $r->{ src_len } );
-			delete $r->{ src };
-			delete $r->{ src_len };
-			$r->{ type } = "system";
-			$r->{ not } = 'true' if ( exists $r->{ not } );
-			push @rules, $r;
-		}
+		my $type = ( exists $r->{ fwmask } ) ? 'farm' : 'system';
+
+		$r->{ from } = $r->{ src };
+		$r->{ from } .= "/$r->{ srclen }" if exists ( $r->{ srclen } );
+
+		delete $r->{ src };
+		delete $r->{ srclen };
+		$r->{ type } = $type;
+		$r->{ not } = 'true' if ( exists $r->{ not } );
+		push @rules, $r;
 	}
 
 	return \@rules;
@@ -1128,9 +1128,7 @@ sub listRoutingRules
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $sys        = &listRoutingRulesSys();
-	my @rules_conf = @{ $sys };
-
+	my @rules_conf = ();
 	if ( $eload )
 	{
 		my $conf = &eload(
@@ -1138,12 +1136,19 @@ sub listRoutingRules
 						   func   => 'listRoutingRulesConf',
 						   args   => [],
 		);
-		push @rules_conf, @{ $conf };
+		@rules_conf = @{ $conf };
 	}
 
-	# ????? remove duplicated rules
+	my @priorities = ();
+	foreach my $r ( @rules_conf )
+	{
+		push @priorities, $r->{ priority };
+	}
 
-	# ????? sort by prio
+	foreach my $sys ( @{ &listRoutingRulesSys() } )
+	{
+		push @rules_conf, $sys if ( !grep ( /^$sys->{priority}$/, @priorities ) );
+	}
 
 	return \@rules_conf;
 }
