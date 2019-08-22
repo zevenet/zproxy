@@ -354,6 +354,21 @@ sub createRoutingRules
 	return ( $err ) ? 0 : $conf->{ id };
 }
 
+=begin nd
+Function: modifyRoutingRules
+
+	Modify a routing rule. It is modified in the config file (using the function createRoutingRulesConf)
+	and apply the route in the system (using the function createRoutingRulesConf)
+
+Parameters:
+	id - It is the routing rule ID that is going to be modified
+	config - Object with the configuration of the rule. The possible keys are: 'priority', 'from', 'not', 'table'
+
+Returns:
+	Integer - It returns the rule id of the rule has been created, or 0 on failure
+
+=cut
+
 sub modifyRoutingRules
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -375,6 +390,22 @@ sub modifyRoutingRules
 
 	return $err;
 }
+
+=begin nd
+Function: updateRoutingRules
+
+	It gets the configuration of a routing rule and update the struct with new
+	values. It does not write any information in the config file.
+
+
+Parameters:
+	id - It is the routing rule ID that is going to be modified
+	config - Object with the new values to overwrite in the config struct. The possible keys are: 'priority', 'from', 'not', 'table'
+
+Returns:
+	hash ref - It is the rule struct upated with the new values
+
+=cut
 
 sub updateRoutingRules
 {
