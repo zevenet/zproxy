@@ -496,6 +496,10 @@ sub get_sys_uuid
 
 	chomp $dmi;
 
+# dmidcode for zevenet 6 shows UUID data in lowercase, in previous versions shown in uppercase.
+	$zen_version_type = &get_mod_appl();
+	$dmi = uc ( $dmi ) if ( $zen_version_type =~ /ZNA.*/ );
+
 	return $dmi;
 }
 
