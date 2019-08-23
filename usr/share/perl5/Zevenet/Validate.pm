@@ -157,6 +157,7 @@ my %format_re = (
 
 	# interfaces ( WARNING: length in characters < 16  )
 	'mac_addr'         => $mac_addr,
+	'interface'        => $interface,
 	'nic_interface'    => $nic_if,
 	'bond_interface'   => $bond_if,
 	'vlan_interface'   => $vlan_if,

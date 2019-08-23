@@ -124,9 +124,20 @@ sub addlocalnet    # ($if_ref)
 	# Add or replace local net to all tables
 	my @links = ( 'main', &getLinkNameList() );
 
+	my @isolates = ();
+	if ( $eload )
+	{
+		@isolates = &eload(
+							module => 'Zevenet::Net::Routing',
+							func   => 'getRoutingIsolate',
+							args   => [$$if_ref{ name }],
+		);
+	}
+
 	# filling the other tables
 	foreach my $link ( @links )
 	{
+		my $skip_route = 0;
 		next if $link eq 'lo';
 		next if $link eq 'cl_maintenance';
 
@@ -141,15 +152,18 @@ sub addlocalnet    # ($if_ref)
 			next if $iface->{ status } ne 'up';
 			next if !defined $iface->{ addr };
 
-			next if ( exists $if_ref->{ isolate } and $if_ref->{ isolate } eq 'true' );
+			$skip_route = 1 if ( grep ( /^(?:\*|$table)$/, @isolates ) );
 		}
 
-		&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
-		  if &debug();
+		if ( !$skip_route )
+		{
+			&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
+			  if &debug();
 
-		my $ip_cmd =
-		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
-		&logAndRun( $ip_cmd );
+			my $ip_cmd =
+			  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
+			&logAndRun( $ip_cmd );
+		}
 
 		if ( $eload )
 		{
@@ -176,7 +190,16 @@ sub addlocalnet    # ($if_ref)
 		next if $iface->{ name } eq $if_ref->{ name };
 
 		# do not import the iface route if it is isolate
-		next if ( exists $iface->{ isolate } and $iface->{ isolate } eq 'true' );
+		my @isolates = ();
+		if ( $eload )
+		{
+			@isolates = &eload(
+								module => 'Zevenet::Net::Routing',
+								func   => 'getRoutingIsolate',
+								args   => [$$iface{ name }],
+			);
+		}
+		next if ( grep ( /^(?:\*|table_$$if_ref{name})$/, @isolates ) );
 
 		&zenlog(
 			   "addlocalnet: into current interface: name $$iface{name} type $$iface{type}",

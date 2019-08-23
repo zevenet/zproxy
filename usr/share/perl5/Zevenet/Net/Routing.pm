@@ -26,9 +26,11 @@ use Config::Tiny;
 require Zevenet::File;
 require Zevenet::Net::Route;
 
-my $routes_dir = &getGlobalConfiguration( 'configdir' ) . "/routes";
-my $rules_conf = "$routes_dir/rules.conf";
-my $lock_rules = "route_rules";
+my $routes_dir   = &getGlobalConfiguration( 'configdir' ) . "/routes";
+my $rules_conf   = "$routes_dir/rules.conf";
+my $isolate_conf = "$routes_dir/isolate.conf";
+my $lock_rules   = "route_rules";
+my $lock_isolate = "route_isolate";
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
@@ -480,16 +482,50 @@ sub initRoutingModule
 }
 
 =begin nd
+Function: getRoutingIsolate
+
+	It returns a list of the tables names where the interface is deleted. These
+	tables have not a route to reach the interface
+
+Parameters:
+	interface - interface
+
+Returns:
+	array ref - it is the list of tables where the interface is deleted
+
+=cut
+
+sub getRoutingIsolate
+{
+	my $iface  = shift;
+	my @tables = ();
+
+	return () if ( !-f $isolate_conf );
+
+	my $fh = Config::Tiny->read( $isolate_conf );
+	if ( exists $fh->{ $iface }->{ table } and $fh->{ $iface }->{ table } =~ /\S/ )
+	{
+		@tables = split ( ' ', $fh->{ $iface }->{ table } );
+	}
+
+	return @tables;
+}
+
+=begin nd
 Function: setRoutingIsolate
 
 	Enable or disable the interface will be accesible from the others interfaces routing tables.
+	This function writes in the config file and reload the routes in the system
 
 Parameters:
-	if_ref - hash with the interface configuration
-	status - this accept 'true' to avoid the other routing table can alreach the interface, or 'false' (default) to allow other interfaces can alreach this interface.
+	interface - interface name is going to be deleted from the table
+	table - the table where the interface route is going to be deleted
+	action - This parameter can have the value 'add' the entry in the configuration file
+		and delete the interface from the table; 'del' to delete the entry from the
+		configuration file and set the interface rotue in the table
 
 Returns:
-	Integer - 0 on success or another value on failure
+	none - .
 
 =cut
 
@@ -498,26 +534,72 @@ sub setRoutingIsolate
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $if_ref  = shift;
-	my $status  = shift;                    # true|false
-	my $lock_if = "/tmp/if_isolate.lock";
+	my $interface = shift;
+	my $table     = shift;
+	my $action    = shift;
 
 	# set conf
-	&lockResource( $lock_if, "l" );
+	&lockResource( $lock_isolate, "l" );
 
-	require Zevenet::Net::Interface;
-	$if_ref->{ isolate } = $status;
-	my $err = &setInterfaceConfig( $if_ref );    # returns 1 on success
+	&writeRoutingIsolateConf( $interface, $table, $action );
 
-	if ( $err )
-	{
-		&reloadRoutingTable( $if_ref->{ name } );
-	}
+	&reloadRoutingTable( $interface );
 
 	#Release lock file
-	&lockResource( $lock_if, "ud" );
+	&lockResource( $lock_isolate, "ud" );
+}
 
-	return ( $err ) ? 0 : 1;
+=begin nd
+Function: writeRoutingIsolateConf
+
+	It writes in the configuration file option set from the API. Delete to remove
+	the entry from the configuration file and allow the vibility of the interface;
+	or 'add' to add the entry to de config file and does not allow the visibility
+	of the interface from the table
+
+Parameters:
+	interface - interface name is going to be deleted from the table
+	table - the table where the interface route is going to be deleted
+	action - This parameter can have the value 'add' the entry in the configuration file
+		and delete the interface from the table; 'del' to delete the entry from the
+		configuration file and set the interface rotue in the table
+
+Returns:
+	none - .
+
+=cut
+
+sub writeRoutingIsolateConf
+{
+	my $interface = shift;
+	my $table     = shift;
+	my $action    = shift;
+
+	&createFile( $isolate_conf ) if ( !-f $isolate_conf );
+
+	my $fh = Config::Tiny->read( $isolate_conf );
+
+	if ( $table eq '*' and $action eq 'add' )
+	{
+		$fh->{ $interface }->{ table } = '*';
+	}
+	elsif (     $action eq 'add'
+			and $fh->{ $interface }->{ table } !~ /(^| )$table( |$)/ )
+	{
+		$fh->{ $interface }->{ table } .= " $table";
+	}
+	elsif ( $table eq '*' and $action eq 'del' )
+	{
+		$fh->{ $interface }->{ table } = '';
+	}
+	elsif ( $action eq 'del' )
+	{
+		$fh->{ $interface }->{ table } =~ s/(^| )$table( |$)/ /;
+	}
+
+	$fh->write( $isolate_conf );
+
+	&zenlog( "The table '$table' was modified properly", "info", "net" );
 }
 
 =begin nd
