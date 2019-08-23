@@ -21,7 +21,6 @@ using namespace std;
 #define DEFAULT_TIMEOUT 3600;
 
 struct CacheObject {
-  std::string buffer;
   std::string etag;
   size_t content_length;
   bool no_cache_response =
@@ -35,6 +34,7 @@ struct CacheObject {
   long int last_mod = -1;
   long int expires = -1;
   long int max_age = -1;
+  size_t headers_size = 0;
   CACHE_SCOPE scope;
   STORAGE_TYPE storage;
 };
@@ -78,7 +78,7 @@ public:
   * checks its re_pcre field to decide on enabling the cache or not
   * @param timeout is the timeout value read from the configuration file
   */
-  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold) {
+  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name) {
     if (pattern != nullptr) {
       if (pattern->re_pcre != nullptr) {
         this->cache_pattern = pattern;
@@ -86,6 +86,15 @@ public:
         this->cache_enabled = true;
         this->service_name = svc;
       }
+      //Create directory, if fails, and it's not because the folder is already created, just return an error
+      if (mkdir(ramfs_mount_point.data(),0777) == -1) {
+          if (errno != EEXIST){
+              Debug::logmsg(LOG_ERR, "Error creating the directory %s", ramfs_mount_point.data());
+              exit( 1 );
+          }
+      }
+    ramfs_mount_point += "/"+ f_name;
+    disk_mount_point += "/" + f_name;
     //Cache initialization
 #if MEMCACHED_ENABLED
       ram_storage = MemcachedCacheStorage::getInstance();

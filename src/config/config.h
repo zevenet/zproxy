@@ -87,10 +87,10 @@ class Config {
   /*
    * Global variables needed by everybody
    */
-
+ std::string name;
   char *user,       /* user to run as */
       *group,       /* group to run as */
-      *name,        /* farm name to run as */
+      //*name,        /* farm name to run as */
       *root_jail,   /* directory to chroot to */
       *pid_name,    /* file to record pid in */
       *ctrl_name,   /* control socket name */

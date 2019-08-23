@@ -61,6 +61,7 @@ void HttpCacheManager::handleResponse(HttpResponse response,
     Debug::logmsg(LOG_WARNING, "Not caching response with %d bytes size", response.content_length + response.headers_length);
     return;
   }
+
   // Check HTTP verb
   switch (http::http_info::http_verbs.at(
       std::string(request.method, request.method_len))) {
@@ -165,6 +166,11 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 //  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
   switch (getStorageType(response)){
   case STORAGE_TYPE::RAMFS:
+      if( isCached(request) )
+      {
+        auto old_object = getCachedObject(request);
+        ram_storage->current_size -= (old_object->content_length + old_object->headers_size);
+      }
       c_object->storage = STORAGE_TYPE::RAMFS;
       err = ram_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if (err == STORAGE_STATUS::SUCCESS){
@@ -172,6 +178,11 @@ void HttpCacheManager::storeResponse(HttpResponse response,
       }
       break;
   case STORAGE_TYPE::DISK:
+      if( isCached(request) )
+      {
+        auto old_object = getCachedObject(request);
+        disk_storage->current_size -= (old_object->content_length + old_object->headers_size);
+      }
       c_object->storage = STORAGE_TYPE::DISK;
       err = disk_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if (err == STORAGE_STATUS::SUCCESS)
@@ -184,6 +195,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
   if ( err != STORAGE_STATUS::SUCCESS)
     Debug::logmsg(LOG_ERR, "Error trying to store the response in storage");
   else
+      c_object->headers_size = response.headers_length;
       cache[hashStr(request.getUrl())] = c_object;
   return;
 }

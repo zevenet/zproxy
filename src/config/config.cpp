@@ -46,8 +46,9 @@ void Config::parse_file() {
         conf_err("Group config: out of memory - aborted");
     } else if (!regexec(&Name, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if ((name = strdup(lin + matches[1].rm_so)) == NULL)
-        conf_err("Farm name config: out of memory - aborted");
+//      if ((name = strdup(lin + matches[1].rm_so)) == NULL)
+//        conf_err("Farm name config: out of memory - aborted");
+      name = std::string(lin + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
     } else if (!regexec(&RootJail, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       if ((root_jail = strdup(lin + matches[1].rm_so)) == NULL)
@@ -288,7 +289,7 @@ void Config::parseConfig(const int argc, char **const argv) {
 
   user = NULL;
   group = NULL;
-  name = NULL;
+//  name = NULL;
   root_jail = NULL;
   ctrl_name = NULL;
   DHCustom_params = NULL;
@@ -1598,7 +1599,7 @@ void Config::parseCache(ServiceConfig *const svc) {
   regmatch_t matches[5];
   svc->cache_size = cache_s;
   svc->cache_threshold = cache_thr;
-
+  svc->f_name = name;
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';

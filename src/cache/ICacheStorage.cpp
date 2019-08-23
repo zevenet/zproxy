@@ -96,13 +96,6 @@ STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string svc, const std
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
 
     string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
-    //If the content already exists, update the size.
-    if(isStored(svc,url))
-    {
-        std::ifstream in(file_path.data(), std::ifstream::ate | std::ifstream::binary);
-        Debug::logmsg(LOG_NOTICE,"THE CURRENT FILESIZE IS: %d", in.tellg());
-        current_size -= in.tellg();
-    }
     //increment the current storage size
     current_size += buffer.size();
 
@@ -253,14 +246,6 @@ STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std:
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
 
     string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
-    //If the content already exists, update the size.
-    if(isStored(svc,url))
-    {
-        std::ifstream in(file_path.data(), std::ifstream::ate | std::ifstream::binary);
-        Debug::logmsg(LOG_NOTICE,"THE CURRENT FILESIZE IS: %d", in.tellg());
-        current_size -= in.tellg();
-    }
-
     //increment the current storage size
     current_size += buffer.size();
 

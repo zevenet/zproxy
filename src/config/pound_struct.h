@@ -97,6 +97,7 @@ class ServiceConfig {
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
 #if CACHE_ENABLED
+  std::string f_name;
   regex_t cache_content; /* pattern to decide if must be cached or not */
   long cache_size;
   size_t cache_max_size;
