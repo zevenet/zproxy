@@ -53,6 +53,10 @@ const std::string JSON_KEYS::DEBUG3 = "debug3";
 const std::string JSON_KEYS::DEBUG4 = "debug4";
 const std::string JSON_KEYS::DEBUG5 = "debug5";
 
+#if CACHE_ENABLED
+const std::string JSON_KEYS::CACHE = "cache";
+const std::string JSON_KEYS::CACHE_CONTENT = "cache-content";
+#endif
 }  // namespace json
 
 json::Json::~Json() { }

@@ -133,9 +133,26 @@ STORAGE_STATUS RamfsCacheStorage::appendData(const std::string svc, const std::s
 }
 bool RamfsCacheStorage::isStored(const std::string svc, const std::string url)
 {
-    struct stat buffer;
     size_t hashed_url = std::hash<std::string>()(url);
-    return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
+    return isStored(std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data());
+}
+bool RamfsCacheStorage::isStored( std::string path )
+{
+    struct stat buffer;
+    return (stat(path.data(),&buffer) == 0);
+}
+
+STORAGE_STATUS RamfsCacheStorage::deleteInStorage(std::string path)
+{
+    auto full_path = mount_path + "/" + path;
+    if( isStored(full_path) ){
+        Debug::logmsg(LOG_NOTICE, "DELETING STORED CONTENT");
+        if ( std::remove( full_path.data()) )
+            return STORAGE_STATUS::GENERIC_ERROR;
+    }
+    else
+        return STORAGE_STATUS::NOT_FOUND;
+    return STORAGE_STATUS::SUCCESS;
 }
 #if MEMCACHED_ENABLED
 /*
@@ -284,6 +301,24 @@ bool DiskCacheStorage::isStored(const std::string svc, const std::string url)
     struct stat buffer;
     size_t hashed_url = std::hash<std::string>()(url);
     return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
+}
+bool DiskCacheStorage::isStored(const std::string path)
+{
+    struct stat buffer;
+    return (stat( path.data(), &buffer) == 0);
+}
+
+STORAGE_STATUS DiskCacheStorage::deleteInStorage(string path)
+{
+    auto full_path = mount_path + "/" + path;
+    if( isStored(full_path) ){
+        Debug::logmsg(LOG_NOTICE, "DELETING STORED CONTENT");
+        if ( std::remove( full_path.data()) )
+            return STORAGE_STATUS::GENERIC_ERROR;
+    }
+    else
+        return STORAGE_STATUS::NOT_FOUND;
+    return STORAGE_STATUS::SUCCESS;
 }
 
 #endif

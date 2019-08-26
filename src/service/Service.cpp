@@ -219,95 +219,99 @@ std::string Service::handleTask(ctl::CtlTask &task) {
     }
     return JSON_OP_RESULT::ERROR;
   }
-  switch (task.command) {
-  case ctl::CTL_COMMAND::DELETE: {
-    auto json_data = JsonParser::parse(task.data);
-    if (task.subject == ctl::CTL_SUBJECT::SESSION) {
-      if (!deleteSession(*json_data, backend_set))
-        return JSON_OP_RESULT::ERROR;
-      return JSON_OP_RESULT::OK;
-    } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
-      //TODO::Implement
-    } else if (task.subject == ctl::CTL_SUBJECT::CONFIG) {
-      //TODO::Implements
-    } else
-      return "";
-    break;
+  if ( task.subject == ctl::CTL_SUBJECT::CACHE ){
+      return handleCacheTask(task);
   }
-  case ctl::CTL_COMMAND::ADD: {
-    switch (task.subject) {
-    case ctl::CTL_SUBJECT::SESSION: {
-      auto json_data = JsonParser::parse(task.data);
-      if (!addSession(json_data.get(), backend_set))
-        return JSON_OP_RESULT::ERROR;
-      return JSON_OP_RESULT::OK;
-    }
-    case ctl::CTL_SUBJECT::S_BACKEND: {
-      auto json_data = JsonParser::parse(task.data);
-      if (!addBackend(json_data.get()))
-        return JSON_OP_RESULT::ERROR;
-      return JSON_OP_RESULT::OK;
-    }
-    default:
-      break;
-    }
-    break;
-  }
-  case ctl::CTL_COMMAND::GET:
-    switch (task.subject) {
-    case ctl::CTL_SUBJECT::SESSION: {
-      JsonObject response;
-      response.emplace(JSON_KEYS::SESSIONS, getSessionsJson());
-      return response.stringify();
-    }
-    case ctl::CTL_SUBJECT::STATUS: {
-      JsonObject status;
-      status.emplace(JSON_KEYS::STATUS,
-                     new JsonDataValue(this->disabled
-                                       ? JSON_KEYS::STATUS_DOWN
-                                       : JSON_KEYS::STATUS_ACTIVE));
-      return status.stringify();
-    }
-    case ctl::CTL_SUBJECT::BACKEND:
-    default:
-      auto response = std::unique_ptr<JsonObject>(
-          getServiceJson());
-      return response != nullptr ? response->stringify() : "";
-    }
-  case ctl::CTL_COMMAND::UPDATE:
-    switch (task.subject) {
-    case ctl::CTL_SUBJECT::CONFIG:
-      // TODO:: update service config (timeouts, headers, routing policy)
-      break;
-    case ctl::CTL_SUBJECT::SESSION: {
-      return getSessionsJson()->stringify();
-    }
-    case ctl::CTL_SUBJECT::STATUS: {
-      std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
-      if (status.get() == nullptr)
-        return "";
-      if (status->at(JSON_KEYS::STATUS)->isValue()) {
-        auto value = dynamic_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS).get())
-            ->string_value;
-        if (value == JSON_KEYS::STATUS_ACTIVE ||
-            value == JSON_KEYS::STATUS_UP) {
-          this->disabled = false;
-        } else if (value == JSON_KEYS::STATUS_DOWN) {
-          this->disabled = true;
-        } else if (value == JSON_KEYS::STATUS_DISABLED) {
-          this->disabled = true;
-        }
-        Debug::logmsg(LOG_NOTICE, "Set Service %d %s", id, value.c_str());
-        return JSON_OP_RESULT::OK;
+  else {
+      switch (task.command) {
+      case ctl::CTL_COMMAND::DELETE: {
+          auto json_data = JsonParser::parse(task.data);
+          if (task.subject == ctl::CTL_SUBJECT::SESSION) {
+              if (!deleteSession(*json_data, backend_set))
+                  return JSON_OP_RESULT::ERROR;
+              return JSON_OP_RESULT::OK;
+          } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
+              //TODO::Implement
+          } else if (task.subject == ctl::CTL_SUBJECT::CONFIG) {
+              //TODO::Implements
+          } return "";
+          break;
       }
-      break;
-    }
-    default:
-      break;
-    }
-    break;
-  default:
-    return "{\"result\",\"ok\"}";
+      case ctl::CTL_COMMAND::ADD: {
+          switch (task.subject) {
+          case ctl::CTL_SUBJECT::SESSION: {
+              auto json_data = JsonParser::parse(task.data);
+              if (!addSession(json_data.get(), backend_set))
+                  return JSON_OP_RESULT::ERROR;
+              return JSON_OP_RESULT::OK;
+          }
+          case ctl::CTL_SUBJECT::S_BACKEND: {
+              auto json_data = JsonParser::parse(task.data);
+              if (!addBackend(json_data.get()))
+                  return JSON_OP_RESULT::ERROR;
+              return JSON_OP_RESULT::OK;
+          }
+          default:
+              break;
+          }
+          break;
+      }
+      case ctl::CTL_COMMAND::GET:
+          switch (task.subject) {
+          case ctl::CTL_SUBJECT::SESSION: {
+              JsonObject response;
+              response.emplace(JSON_KEYS::SESSIONS, getSessionsJson());
+              return response.stringify();
+          }
+          case ctl::CTL_SUBJECT::STATUS: {
+              JsonObject status;
+              status.emplace(JSON_KEYS::STATUS,
+                             new JsonDataValue(this->disabled
+                                               ? JSON_KEYS::STATUS_DOWN
+                                               : JSON_KEYS::STATUS_ACTIVE));
+              return status.stringify();
+          }
+          case ctl::CTL_SUBJECT::BACKEND:
+          default:
+              auto response = std::unique_ptr<JsonObject>(
+                          getServiceJson());
+              return response != nullptr ? response->stringify() : "";
+          }
+      case ctl::CTL_COMMAND::UPDATE:
+          switch (task.subject) {
+          case ctl::CTL_SUBJECT::CONFIG:
+              // TODO:: update service config (timeouts, headers, routing policy)
+              break;
+          case ctl::CTL_SUBJECT::SESSION: {
+              return getSessionsJson()->stringify();
+          }
+          case ctl::CTL_SUBJECT::STATUS: {
+              std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
+              if (status.get() == nullptr)
+                  return "";
+              if (status->at(JSON_KEYS::STATUS)->isValue()) {
+                  auto value = dynamic_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS).get())
+                          ->string_value;
+                  if (value == JSON_KEYS::STATUS_ACTIVE ||
+                          value == JSON_KEYS::STATUS_UP) {
+                      this->disabled = false;
+                  } else if (value == JSON_KEYS::STATUS_DOWN) {
+                      this->disabled = true;
+                  } else if (value == JSON_KEYS::STATUS_DISABLED) {
+                      this->disabled = true;
+                  }
+                  Debug::logmsg(LOG_NOTICE, "Set Service %d %s", id, value.c_str());
+                  return JSON_OP_RESULT::OK;
+              }
+              break;
+          }
+          default:
+              break;
+          }
+          break;
+      default:
+          return "{\"result\",\"ok\"}";
+      }
   }
   return "";
 }

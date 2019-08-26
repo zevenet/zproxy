@@ -1,19 +1,19 @@
 ﻿#if CACHE_ENABLED
 #include "HttpCacheManager.h"
+bool HttpCacheManager::isCached(HttpRequest &request) { return isCached(request.getUrl()); }
 
-bool HttpCacheManager::isCached(HttpRequest &request) {
-  std::string url = request.getUrl();
+bool HttpCacheManager::isCached(const std::string &url) {
   size_t hashed_url = hashStr(url);
   if (cache.find(hashed_url) == cache.end()) {
     return false;
   } else {
-    auto c_object = getCachedObject(request);
+    auto c_object = getCachedObject(url);
     //Check what storage to use
     switch (c_object->storage){
     case STORAGE_TYPE::RAMFS:
-        return ram_storage->isStored(this->service_name,request.getUrl());
+        return ram_storage->isStored(this->service_name,url);
     case STORAGE_TYPE::DISK:
-        return disk_storage->isStored(this->service_name,request.getUrl());
+        return disk_storage->isStored(this->service_name,url);
     default:
         return false;
     }
@@ -202,7 +202,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 
 // Append pending data to its cached content
 void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
-    Debug::logmsg(LOG_NOTICE, "We are appending %d data", msg_size);
+    Debug::logmsg(LOG_NOTICE, "Appending %d data to %s stored response", msg_size, url.data());
     auto c_object = getCachedObject(url);
     //Check what storage to use
     switch (c_object->storage){
@@ -344,5 +344,59 @@ int HttpCacheManager::createCacheResponse(HttpRequest request,
   }
 
   return 0;
+}
+
+std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
+{
+    if (task.subject != ctl::CTL_SUBJECT::CACHE)
+        return "";
+    switch (task.command)
+    {
+    case ctl::CTL_COMMAND::DELETE:{
+        auto json_data = JsonParser::parse(task.data);
+        if ( json_data == nullptr )
+            return "";
+        //Error handling when trying to use the key
+        try {
+          json_data->at(JSON_KEYS::CACHE_CONTENT);
+        }
+        catch (const std::out_of_range& oor) {
+          std::cerr << "Wrong key found, must be \"" << JSON_KEYS::CACHE_CONTENT << "\", caused by " << oor.what() << '\n';
+          return "";
+        }
+        auto url = dynamic_cast<JsonDataValue *>(json_data->at(JSON_KEYS::CACHE_CONTENT).get())->string_value;
+
+        CacheObject * c_object = nullptr;
+        c_object = getCachedObject( url );
+        if ( c_object == nullptr )
+            Debug::logmsg(LOG_WARNING, "Request %s not cached", url.data());
+        else{
+            size_t hash_url = std::hash<std::string>()(url);
+            std::string path(service_name+"/"+to_string(hash_url));
+            STORAGE_STATUS err;
+            switch(c_object->storage)
+            {
+                case STORAGE_TYPE::RAMFS:
+                    err = ram_storage->deleteInStorage(path);
+                    break;
+                case STORAGE_TYPE::DISK:
+                    err = disk_storage->deleteInStorage(path);
+                    break;
+                case STORAGE_TYPE::MEMCACHED:
+                case STORAGE_TYPE::TMPFS:
+                case STORAGE_TYPE::STDMAP:
+                default:
+                    break;
+            }
+            if ( err == STORAGE_STATUS::SUCCESS )
+                this->cache.erase(hash_url);
+        }
+        break;
+    }
+    default:
+            Debug::logmsg(LOG_ERR, "Not a valid cache command");
+            return "";
+    }
+    return "";
 }
 #endif

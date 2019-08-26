@@ -7,7 +7,7 @@
 #include "ICacheStorage.h"
 #include "../util/common.h"
 #include "../stats/counter.h"
-
+#include "../ctl/ctl.h"
 
 #ifndef _STRING_H
 #include <string>
@@ -126,6 +126,7 @@ public:
   * @return if the content is cached it returns true or false in other case
   */
   bool isCached(HttpRequest &request);
+  bool isCached(const std::string &url);
   /**
   * @brief Checks whether the cached content is fresh or not, staling it if not
   * fresh.
@@ -193,7 +194,7 @@ public:
   * @param request is the HttpRequest used for caching purpose
   */
   void handleResponse(HttpResponse response, HttpRequest request);
-
+  std::string handleCacheTask(ctl::CtlTask &task);
 };
 
 namespace cache_stats__ {

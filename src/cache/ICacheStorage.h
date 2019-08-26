@@ -35,7 +35,7 @@ using namespace std;
 
 #define MAX_STORAGE_SIZE 268435456; //256MB
 
-enum STORAGE_STATUS { SUCCESS, MKDIR_ERROR, MOUNT_ERROR, MEMORY_ERROR, ALREADY_INIT, NOT_INIT, FD_CLOSE_ERROR, GENERIC_ERROR, OPEN_ERROR, STORAGE_FULL, APPEND_ERROR };
+enum STORAGE_STATUS { SUCCESS, MKDIR_ERROR, MOUNT_ERROR, MEMORY_ERROR, ALREADY_INIT, NOT_INIT, FD_CLOSE_ERROR, GENERIC_ERROR, OPEN_ERROR, NOT_FOUND, STORAGE_FULL, APPEND_ERROR };
 enum STORAGE_TYPE { RAMFS, STDMAP, TMPFS, DISK, MEMCACHED };
 
 /**
@@ -54,6 +54,7 @@ public:
     virtual STORAGE_TYPE getStorageType() = 0;
     virtual STORAGE_STATUS stopCacheStorage() = 0;
     virtual STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) = 0;
+    virtual STORAGE_STATUS deleteInStorage(std::string url) = 0;
     virtual bool isStored(const std::string svc, const std::string url) = 0;
     };
 
@@ -103,6 +104,8 @@ public:
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
     bool isStored(const std::string svc, const std::string url) override;
+    STORAGE_STATUS deleteInStorage(std::string path) override;
+    bool isStored( std::string path );
 };
 
 
@@ -130,6 +133,7 @@ public:
     STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size) override;
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override{};
+    STORAGE_STATUS deleteInStorage(std::string path) override;
     bool isStored(const std::string svc, const std::string url) override{};
 };
 
@@ -188,6 +192,8 @@ public:
     STORAGE_STATUS stopCacheStorage() override;
     STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
     bool isStored(const std::string svc, const std::string url) override;
+    STORAGE_STATUS deleteInStorage(std::string path) override;
+    bool isStored(const std::string path);
 };
 
 #endif

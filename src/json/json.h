@@ -49,7 +49,10 @@ struct JSON_KEYS {
   static const std::string TYPE;
 
   static const std::string RESULT;
-
+#if CACHE_ENABLED
+  static const std::string CACHE;
+  static const std::string CACHE_CONTENT;
+#endif
   static const std::string DEBUG;
   static const std::string DEBUG1;
   static const std::string DEBUG2;
