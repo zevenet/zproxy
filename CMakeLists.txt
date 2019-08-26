@@ -88,6 +88,7 @@ configure_file(
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
+add_definitions(-DCACHE_ENABLED=0)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z -fpermissive  -Wshadow -pipe -pthread")

@@ -116,8 +116,10 @@ class Config {
   /* 0 Manages header */
       ctrl_port = 0,
       sync_is_enabled; /*session sync enabled*/
+#if CACHE_ENABLED
    long cache_s;
    int cache_thr;
+#endif
   int conf_init(const char *name);
 
  private:
@@ -140,7 +142,9 @@ class Config {
   regex_t IncludeDir;
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
+#if CACHE_ENABLED
   regex_t Cache, CacheContent, CacheTO, CacheThr, CacheRamSize, MaxSize; /* Cache configuration regex */
+#endif
  public:
 
   static regex_t HEADER,    /* Allowed header */
@@ -202,7 +206,9 @@ class Config {
   /*
    * Parse the cache configuration
    */
+#if CACHE_ENABLED
   void parseCache(ServiceConfig *const svc);
+#endif
   /*
    * parse a session
    */

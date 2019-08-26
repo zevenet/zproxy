@@ -17,7 +17,7 @@ enum class CTL_COMMAND {
 	UPDATE,
 	GET,
 	SUSCRIBE,
-        UNSUSCRIBE,
+    UNSUSCRIBE,
 };
 
 enum class CTL_HANDLER_TYPE {
@@ -28,8 +28,10 @@ enum class CTL_HANDLER_TYPE {
 	SERVICE_MANAGER,
 	GLOBAL_CONF,
 	STREAM_MANAGER,
-        ENVIRONMENT,
-        CACHE
+    ENVIRONMENT,
+#if CACHE_ENABLED
+    CACHE
+#endif
 };
 
 enum class CTL_SUBJECT {
@@ -43,7 +45,9 @@ enum class CTL_SUBJECT {
 	WEIGHT,
 	DEBUG,
 	S_BACKEND,
-        CACHE,
+#if CACHE_ENABLED
+    CACHE,
+#endif
 };
 
 struct CtlTask {
