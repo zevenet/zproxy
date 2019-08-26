@@ -219,10 +219,12 @@ std::string Service::handleTask(ctl::CtlTask &task) {
     }
     return JSON_OP_RESULT::ERROR;
   }
+#if CACHE_ENABLED
   if ( task.subject == ctl::CTL_SUBJECT::CACHE ){
       return handleCacheTask(task);
-  }
+  }  
   else {
+#endif
       switch (task.command) {
       case ctl::CTL_COMMAND::DELETE: {
           auto json_data = JsonParser::parse(task.data);
@@ -312,7 +314,9 @@ std::string Service::handleTask(ctl::CtlTask &task) {
       default:
           return "{\"result\",\"ok\"}";
       }
+#if CACHE_ENABLED
   }
+#endif
   return "";
 }
 
