@@ -454,9 +454,12 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
+
 IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
+    int retries = 0;
   int ret = SSL_shutdown(ssl_connection.ssl);
   do {
+      retries++;
     /* We only do unidirectional shutdown */
     ret = SSL_shutdown(ssl_connection.ssl);
     if (ret < 0) {
@@ -470,10 +473,11 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
       }
       ret = 0;
     }
-  } while (ret < 0);
+  } while (ret < 0 && retries < 10);
 
   return IO::IO_RESULT::SUCCESS;
 }
+
 /*
 bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
   if (ssl_connection.ssl == nullptr) {
