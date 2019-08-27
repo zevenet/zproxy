@@ -307,6 +307,11 @@ int HttpCacheManager::createCacheResponse(HttpRequest request,
   cached_response.cached = true;
 
   for (size_t j = 0; j < cached_response.num_headers; j++) {
+    if ( std::string(cached_response.headers[j].name).compare("date") == 0 )
+    {
+        cached_response.headers[j].header_off = true;
+        cached_response.addHeader(http::HTTP_HEADER_NAME::DATE, timeHelper::strTime(c_object->date)->data() );
+    }
     cached_response.headers[j].header_off = false;
   }
 
