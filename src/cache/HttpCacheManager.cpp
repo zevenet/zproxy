@@ -162,6 +162,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 
   //Check what storage to use
   STORAGE_STATUS err;
+  std::string rel_path = service_name + "/" + to_string(std::hash<std::string>()(request.getUrl()));
 //  Debug::logmsg(LOG_NOTICE, "We are comparing values: message_length %d + headers_length %d = %d , against buffer_size: %d total: %d", response.message_length, response.headers_length, (response.message_length + response.headers_length), response.buffer_size, (response.content_length + response.headers_length - response.buffer_size) );
 //  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
   switch (getStorageType(response)){
@@ -172,7 +173,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
         ram_storage->current_size -= (old_object->content_length + old_object->headers_size);
       }
       c_object->storage = STORAGE_TYPE::RAMFS;
-      err = ram_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
+      err = ram_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if (err == STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
       }
@@ -184,7 +185,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
         disk_storage->current_size -= (old_object->content_length + old_object->headers_size);
       }
       c_object->storage = STORAGE_TYPE::DISK;
-      err = disk_storage->putInStorage(service_name,request.getUrl(),std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
+      err = disk_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if (err == STORAGE_STATUS::SUCCESS)
           DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
       break;
@@ -204,13 +205,14 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
     Debug::logmsg(LOG_NOTICE, "Appending %d data to %s stored response", msg_size, url.data());
     auto c_object = getCachedObject(url);
+    std::string rel_path = service_name + "/" + to_string(std::hash <std::string> () (url));
     //Check what storage to use
     switch (c_object->storage){
     case STORAGE_TYPE::RAMFS:
-        ram_storage->appendData(service_name, url, std::string(msg, msg_size));
+        ram_storage->appendData(rel_path, std::string(msg, msg_size));
         break;
     case STORAGE_TYPE::DISK:
-        disk_storage->appendData(service_name, url, std::string(msg, msg_size));
+        disk_storage->appendData(rel_path, std::string(msg, msg_size));
         break;
     default:
         return;
@@ -288,13 +290,14 @@ int HttpCacheManager::createCacheResponse(HttpRequest request,
 
   size_t parsed = 0;
   std::string buff;
+  std::string rel_path = service_name + "/" + to_string(std::hash<std::string>()(request.getUrl()));
   //Get the response from the right storage
   switch(c_object->storage){
   case STORAGE_TYPE::RAMFS:
-      ram_storage->getFromStorage(this->service_name, request.getUrl(), buff );
+      ram_storage->getFromStorage(rel_path, buff );
       break;
   case STORAGE_TYPE::DISK:
-      disk_storage->getFromStorage(this->service_name, request.getUrl(), buff );
+      disk_storage->getFromStorage(rel_path, buff );
       break;
   default:
       return -1;

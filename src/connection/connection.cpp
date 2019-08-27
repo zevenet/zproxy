@@ -355,9 +355,9 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
 #endif
   }
-Network::setSocketNonBlocking(target_fd,true);
+//Network::setSocketNonBlocking(target_fd,true);
   ssize_t nwritten = ::writev(target_fd, iov, x);
-Network::setSocketNonBlocking(target_fd,false);
+//Network::setSocketNonBlocking(target_fd,false);
   if (nwritten < 0) {
     if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
           errno != ECONNRESET*/) {

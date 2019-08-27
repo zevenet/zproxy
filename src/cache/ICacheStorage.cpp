@@ -67,12 +67,10 @@ STORAGE_STATUS RamfsCacheStorage::initServiceStorage( std::string svc ) {
     return STORAGE_STATUS::SUCCESS;
 }
 STORAGE_TYPE RamfsCacheStorage::getStorageType(){ return STORAGE_TYPE::RAMFS; };
-STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string svc, const std::string url, std::string &out_buffer ){
-    //get from path/svc/url
-    size_t hashed_url = std::hash<std::string>()(url);
+STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string rel_path, std::string &out_buffer ){
 
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
-    string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
+    string file_path (mount_path + string("/") + rel_path);
 
 
     std::ifstream in_stream( file_path.data());
@@ -85,17 +83,15 @@ STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string svc, const s
     out_buffer = buffer.str();
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size){
+STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string rel_path, const std::string buffer, size_t response_size){
     if( !initialized )
         return STORAGE_STATUS::NOT_INIT;
-    if ( max_size <= current_size + buffer.size() )
+    if ( max_size <= current_size + response_size )
         //Storage full, set flag??
         return STORAGE_STATUS::STORAGE_FULL;
-    //Store in the path/svc/url
-    size_t hashed_url = std::hash<std::string>()(url);
-    // We have the file_path created as follows: /mount_point/svc1/hashed_url
 
-    string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
+    // We have the file_path created as follows: /mount_point/svc1/hashed_url
+    string file_path (mount_path + string("/") + rel_path);
     //increment the current storage size
     current_size += buffer.size();
 
@@ -117,12 +113,11 @@ STORAGE_STATUS RamfsCacheStorage::stopCacheStorage(){
 
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS RamfsCacheStorage::appendData(const std::string svc, const std::string url, const std::string buffer)
+STORAGE_STATUS RamfsCacheStorage::appendData(const std::string rel_path, const std::string buffer)
 {
     ofstream fout;  // Create Object of Ofstream
-    size_t hashed_url = std::hash<std::string>()(url);
 
-    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ofstream::app); // Append mode
+    fout.open (std::string(mount_path + string("/") + rel_path), std::ofstream::app); // Append mode
     if(fout.is_open())
         fout.write( buffer.data(),buffer.size());
     else
@@ -232,12 +227,9 @@ STORAGE_STATUS DiskCacheStorage::initServiceStorage( std::string svc ) {
     return STORAGE_STATUS::SUCCESS;
 }
 STORAGE_TYPE DiskCacheStorage::getStorageType(){ return STORAGE_TYPE::DISK; };
-STORAGE_STATUS DiskCacheStorage::getFromStorage( const std::string svc, const std::string url, std::string &out_buffer ){
-    //get from path/svc/url
-    size_t hashed_url = std::hash<std::string>()(url);
-
+STORAGE_STATUS DiskCacheStorage::getFromStorage( const std::string rel_path, std::string &out_buffer ){
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
-    string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
+    string file_path (mount_path + string("/") + rel_path);
 
 
     std::ifstream in_stream( file_path.data());
@@ -250,7 +242,7 @@ STORAGE_STATUS DiskCacheStorage::getFromStorage( const std::string svc, const st
     out_buffer = buffer.str();
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std::string url, const std::string buffer, size_t response_size){
+STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string rel_path, const std::string buffer, size_t response_size){
     if( !initialized )
         return STORAGE_STATUS::NOT_INIT;
 // FIXME: Is it needed to check size? probably yes -> ZBA
@@ -258,11 +250,9 @@ STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string svc, const std:
 //        //Storage full, set flag??
 //        return STORAGE_STATUS::STORAGE_FULL;
 
-    //Store in the path/svc/url
-    size_t hashed_url = std::hash<std::string>()(url);
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
 
-    string file_path (mount_path + string("/") + svc + string("/") + to_string(hashed_url));
+    string file_path (mount_path + string("/") + rel_path );
     //increment the current storage size
     current_size += buffer.size();
 
@@ -282,12 +272,10 @@ STORAGE_STATUS DiskCacheStorage::stopCacheStorage(){
         return STORAGE_STATUS::GENERIC_ERROR;
     return STORAGE_STATUS::SUCCESS;
 }
-STORAGE_STATUS DiskCacheStorage::appendData(const std::string svc, const std::string url, const std::string buffer)
+STORAGE_STATUS DiskCacheStorage::appendData(const std::string rel_path, const std::string buffer)
 {
     ofstream fout;  // Create Object of Ofstream
-    size_t hashed_url = std::hash<std::string>()(url);
-
-    fout.open (std::string(mount_path + string("/") + svc + string("/") + to_string(hashed_url)).data(), std::ofstream::app); // Append mode
+    fout.open (std::string(mount_path + string("/") + rel_path).data(), std::ofstream::app); // Append mode
     if(fout.is_open())
         fout.write(buffer.data(), buffer.size());
     else
