@@ -352,20 +352,20 @@ int HttpCacheManager::createCacheResponse(HttpRequest request,
 std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
 {
     if (task.subject != ctl::CTL_SUBJECT::CACHE)
-        return "";
+        return JSON_OP_RESULT::ERROR;
     switch (task.command)
     {
     case ctl::CTL_COMMAND::DELETE:{
         auto json_data = JsonParser::parse(task.data);
         if ( json_data == nullptr )
-            return "";
+            return JSON_OP_RESULT::ERROR;
         //Error handling when trying to use the key
         try {
           json_data->at(JSON_KEYS::CACHE_CONTENT);
         }
         catch (const std::out_of_range& oor) {
           std::cerr << "Wrong key found, must be \"" << JSON_KEYS::CACHE_CONTENT << "\", caused by " << oor.what() << '\n';
-          return "";
+          return JSON_OP_RESULT::ERROR;
         }
         auto url = dynamic_cast<JsonDataValue *>(json_data->at(JSON_KEYS::CACHE_CONTENT).get())->string_value;
 
@@ -375,7 +375,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
             Debug::logmsg(LOG_WARNING, "Request %s not cached", url.data());
         else{
             size_t hash_url = std::hash<std::string>()(url);
-            std::string path(service_name+"/"+to_string(hash_url));
+            std::string path(service_name + "/" + to_string(hash_url));
             STORAGE_STATUS err;
             switch(c_object->storage)
             {
@@ -392,14 +392,17 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
                     break;
             }
             if ( err == STORAGE_STATUS::SUCCESS )
+            {
                 this->cache.erase(hash_url);
+                return JSON_OP_RESULT::OK;
+            }
         }
         break;
     }
     default:
             Debug::logmsg(LOG_ERR, "Not a valid cache command");
-            return "";
+            return JSON_OP_RESULT::ERROR;
     }
-    return "";
+    return JSON_OP_RESULT::ERROR;
 }
 #endif
