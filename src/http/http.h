@@ -262,17 +262,4 @@ struct validation {
 
 }; // namespace validation
 
-class http_request_data {
-public:
-  HTTP_VERSION http_version;
-  REQUEST_METHOD request_method;
-  http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
-  std::pair<std::string, std::string>
-      autorization_data; // Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l
-                         // //base64 encoded
-  bool keep_alive;
-  bool CORS_request;
-  bool upgrade_protocol; // TODO::transparent mode, pine connection???
-};
-
 } // namespace http

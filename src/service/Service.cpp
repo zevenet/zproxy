@@ -349,14 +349,14 @@ Backend *Service::getNextBackend() {
   // emergency_backend_set ...
   std::lock_guard<std::mutex> locker(mtx_lock);
   Backend *bck;
-  if (backend_set.size() == 0)
+  if (backend_set.empty())
     return nullptr;
   switch (service_config.routing_policy) {
   default:
   case LP_ROUND_ROBIN: {
     static unsigned long long seed;
     Backend *bck_res = nullptr;
-    for (auto bck : backend_set) {
+    for (auto item : backend_set) {
         seed++;
         bck_res = backend_set[seed % backend_set.size()];
         if (bck_res!=nullptr){
@@ -392,13 +392,13 @@ Backend *Service::getNextBackend() {
 
   case LP_RESPONSE_TIME: {
     Backend *selected_backend = nullptr;
-    for (auto it = backend_set.begin(); it != backend_set.end(); ++it) {
-      if ((*it)->weight <= 0 || (*it)->status != BACKEND_STATUS::BACKEND_UP)
+    for (auto &it : backend_set) {
+      if (it->weight <= 0 || it->status != BACKEND_STATUS::BACKEND_UP)
         continue;
       if (selected_backend == nullptr) {
-        selected_backend = *it;
+        selected_backend = it;
       } else {
-        Backend *current_backend = *it;
+        Backend *current_backend = it;
         if (selected_backend->getAvgLatency() < 0)
           return selected_backend;
         if (current_backend->getAvgLatency() * selected_backend->weight >

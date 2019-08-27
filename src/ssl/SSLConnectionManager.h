@@ -71,17 +71,6 @@ public:
   IO::IO_RESULT handleDataWrite(Connection &target_ssl_connection, Connection &ssl_connection, http_parser::HttpData &http_data);
 
   /**
-   * @brief Handles the SSL handshake with the @p ssl_connection using BIO.
-   *
-   * It handles the SSL handshake with the @p ssl_connection using BIO, if you
-   * want to use SSL please refer to handleHandshake().
-   *
-   * @param ssl_connection to handshake.
-   * @return @c true if everything is ok, if not @c false.
-   */
-  bool handleBioHandshake(Connection & ssl_connection);
-
-  /**
    * @brief Writes to the @p target_ssl_connection.
    *
    * Writes the @p data to the @p ssl_connection and set the written bytes in
@@ -123,7 +112,6 @@ public:
                          size_t &written);
   SSLConnectionManager();
   virtual ~SSLConnectionManager();
-  bool init(SSLContext &context);
 
   /**
    * @brief Initialize the SSLConnectionManager with the configuration specified

@@ -32,7 +32,7 @@ class HttpStream: public Counter<HttpStream> {
 
 public:
   HttpStream();
-  ~HttpStream();
+  ~HttpStream() final;
   // no copy allowed
   HttpStream(const HttpStream&) = delete;
   HttpStream& operator=(const HttpStream&) = delete;

@@ -477,23 +477,3 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
 
   return IO::IO_RESULT::SUCCESS;
 }
-
-/*
-bool SSLConnectionManager::handleBioHandshake(Connection &ssl_connection) {
-  if (ssl_connection.ssl == nullptr) {
-    if (!initSslConnection_BIO(ssl_connection)) {
-      return false;
-    }
-  }
-  int res =BIO_do_handshake(ssl_connection.io);
-  if(res <= 0) {
-   return BIO_should_retry(ssl_connection.io) ? true : false;
-  } else {
-    if((ssl_connection.x509 = SSL_get_peer_certificate(ssl_connection.ssl)) != NULL && ssl_context->listener_config.clnt_check < 3
-        && SSL_get_verify_result(ssl_connection.ssl) != X509_V_OK) {
-      logmsg(LOG_NOTICE, "Bad certificate from %s", ssl_connection.getPeerAddress().c_str());
-      return false;
-    }
-  }
-}
-*/

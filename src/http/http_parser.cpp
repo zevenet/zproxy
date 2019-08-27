@@ -52,12 +52,10 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
   return false;
 }
 
-
-
-bool http_parser::HttpData::getHeaderValue(std::string header_name,
+bool http_parser::HttpData::getHeaderValue(const std::string &header_name,
                                            std::string &out_key) {
   for (auto i = 0; i != num_headers; ++i) {
-    std::string header(headers[i].name, headers[i].name_len);
+    std::string_view header(headers[i].name, headers[i].name_len);
 
     if (header_name == header) {
       out_key = std::string(headers[i].value, headers[i].value_len);
@@ -68,7 +66,7 @@ bool http_parser::HttpData::getHeaderValue(std::string header_name,
   return false;
 }
 
-std::string http_parser::HttpData::getUrlParameter(std::string url) {
+std::string http_parser::HttpData::getUrlParameter(const std::string &url) {
   std::string expr_ = "[;][^?]*";
   std::smatch match;
   std::regex rgx(expr_);
@@ -80,8 +78,8 @@ std::string http_parser::HttpData::getUrlParameter(std::string url) {
   }
 }
 
-std::string http_parser::HttpData::getQueryParameter(std::string url,
-                                                     std::string sess_id) {
+std::string http_parser::HttpData::getQueryParameter(const std::string &url,
+                                                     const std::string &sess_id) {
   std::string expr_ = "[?&]" + sess_id + "=[^&;#]*";
   std::smatch match;
   // TODO: Sacarlo y hacerlo por test para comprobarlo por PCREPOSIX en bench
@@ -105,8 +103,7 @@ http_parser::PARSE_RESULT
 http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
                                     size_t *used_bytes, bool reset) {
 //  if (LIKELY(reset))
-    reset_parser();
-  count++;
+  reset_parser();
   buffer = const_cast<char *>(data);
   buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);
@@ -150,7 +147,6 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
                                      size_t *used_bytes, bool reset) {
 //  if (LIKELY(reset))
     reset_parser();
-  count++;
   buffer = const_cast<char *>(data);
   buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);
@@ -207,3 +203,4 @@ bool http_parser::HttpData::hasPendingData() {
         (message_bytes_left > 0 ||
          chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED);
 }
+
