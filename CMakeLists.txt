@@ -17,7 +17,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 #options
 option(BUILD_DOC "Build Documentation" OFF)
 option (MEMCACHED_ENABLED "memcached" OFF)
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests" ON)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
@@ -250,11 +250,6 @@ endif()
 if (BUILD_TESTS)
 	  add_subdirectory(tests)
 endif ()
-
-if (BUILD_OPENSSL)
-	  add_subdirectory(openssl)
-endif ()
-
 add_subdirectory(src)
 add_subdirectory(src/ctl)
 
