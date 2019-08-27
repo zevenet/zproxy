@@ -83,8 +83,7 @@ add_library(libzhttp
                 cache/ICacheStorage.cpp
                 cache/ICacheStorage.h
                 )
-
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES})
+target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
 if (BUNDLED_OPENSSL)
 	  #include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
 		add_dependencies(libzhttp openssl)

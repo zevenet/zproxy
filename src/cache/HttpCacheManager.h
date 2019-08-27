@@ -64,12 +64,7 @@ private:
 public:
   size_t cache_max_size = 0;
   bool cache_enabled = false;
-  ~HttpCacheManager() {
-    // Free cache pattern
-    if (cache_pattern != nullptr)
-      regfree(cache_pattern);
-    ram_storage->stopCacheStorage();
-  }
+  virtual ~HttpCacheManager();
   /**
   * @brief Initialize the cache manager, configuring its pattern and the
   * timeout
@@ -78,40 +73,7 @@ public:
   * checks its re_pcre field to decide on enabling the cache or not
   * @param timeout is the timeout value read from the configuration file
   */
-  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name) {
-    if (pattern != nullptr) {
-      if (pattern->re_pcre != nullptr) {
-        this->cache_pattern = pattern;
-        this->cache_timeout = timeout;
-        this->cache_enabled = true;
-        this->service_name = svc;
-      }
-      //Create directory, if fails, and it's not because the folder is already created, just return an error
-      if (mkdir(ramfs_mount_point.data(),0777) == -1) {
-          if (errno != EEXIST){
-              Debug::logmsg(LOG_ERR, "Error creating the directory %s", ramfs_mount_point.data());
-              exit( 1 );
-          }
-      }
-    ramfs_mount_point += "/"+ f_name;
-    disk_mount_point += "/" + f_name;
-    //Cache initialization
-#if MEMCACHED_ENABLED
-      ram_storage = MemcachedCacheStorage::getInstance();
-      ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
-      ram_storage->initServiceStorage(svc);
-#else
-      ram_storage = RamfsCacheStorage::getInstance();
-      ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
-      ram_storage->initServiceStorage(svc);
-      ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
-#endif
-    disk_storage = DiskCacheStorage::getInstance();
-    //Max size not useful yet
-    disk_storage->initCacheStorage(0, disk_mount_point);
-    disk_storage->initServiceStorage(svc);
-    }
-  }
+  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name);
   /**
   * @brief Provide access to the cache_timeout variable
   *

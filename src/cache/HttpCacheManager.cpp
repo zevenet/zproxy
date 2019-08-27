@@ -115,48 +115,94 @@ STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
         return STORAGE_TYPE::RAMFS;
 }
 
+HttpCacheManager::~HttpCacheManager() {
+    // Free cache pattern
+    if (cache_pattern != nullptr)
+    {
+        regfree(cache_pattern);
+        cache_pattern = nullptr;
+    }
+    ram_storage->stopCacheStorage();
+    disk_storage->stopCacheStorage();
+}
+
+void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const string svc, long storage_size, int storage_threshold, string f_name) {
+    if (pattern != nullptr) {
+        if (pattern->re_pcre != nullptr) {
+            this->cache_pattern = pattern;
+            this->cache_timeout = timeout;
+            this->cache_enabled = true;
+            this->service_name = svc;
+        }
+        //Create directory, if fails, and it's not because the folder is already created, just return an error
+        if (mkdir(ramfs_mount_point.data(),0777) == -1) {
+            if (errno != EEXIST){
+                Debug::logmsg(LOG_ERR, "Error creating the directory %s", ramfs_mount_point.data());
+                exit( 1 );
+            }
+        }
+        ramfs_mount_point += "/"+ f_name;
+        disk_mount_point += "/" + f_name;
+        //Cache initialization
+#if MEMCACHED_ENABLED
+        ram_storage = MemcachedCacheStorage::getInstance();
+        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
+        ram_storage->initServiceStorage(svc);
+#else
+        ram_storage = RamfsCacheStorage::getInstance();
+        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
+        ram_storage->initServiceStorage(svc);
+        ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
+#endif
+        disk_storage = DiskCacheStorage::getInstance();
+        //Max size not useful yet
+        disk_storage->initCacheStorage(0, disk_mount_point);
+        disk_storage->initServiceStorage(svc);
+    }
+}
+
 void HttpCacheManager::storeResponse(HttpResponse response,
                                      HttpRequest request) {
-  CacheObject *c_object = new CacheObject;
+    CacheObject *c_object = new CacheObject;
 
-  // Store the response date in the cache
-  c_object->date = response.date;
-  /*
+    // Store the response date in the cache
+    c_object->date = response.date;
+    /*
    *max-age, s-maxage, etc.
    */
-  // If the max_age is not set nor the timeout exist, we have to calculate
-  // heuristically
-  if (response.c_opt.max_age >= 0 && this->cache_timeout != 0)
-    // Set the most restrictive value
-    response.c_opt.max_age > this->cache_timeout
-        ? c_object->max_age = this->cache_timeout
-        : c_object->max_age = response.c_opt.max_age;
-  else if (this->cache_timeout >= 0)
-    // Store the config file timeout
-    c_object->max_age = this->cache_timeout;
-  else if (response.c_opt.max_age >= 0)
-    // Store the response cache max-age
-    c_object->max_age = response.c_opt.max_age;
-  else if (response.last_mod >= 0) {
-    // heuristic algorithm -> 10% of last-modified
-    time_t now = timeHelper::gmtTimeNow();
-    c_object->max_age = (now - response.last_mod) * 0.1;
-  } else {
-    // If not available value, use the defined default timeout
-    c_object->max_age = DEFAULT_TIMEOUT;
-  }
-  /*
+    // If the max_age is not set nor the timeout exist, we have to calculate
+    // heuristically
+    if (response.c_opt.max_age >= 0 && this->cache_timeout != 0)
+        // Set the most restrictive value
+        response.c_opt.max_age > this->cache_timeout
+                ? c_object->max_age = this->cache_timeout
+                : c_object->max_age = response.c_opt.max_age;
+    else if (this->cache_timeout >= 0)
+        // Store the config file timeout
+        c_object->max_age = this->cache_timeout;
+    else if (response.c_opt.max_age >= 0)
+        // Store the response cache max-age
+        c_object->max_age = response.c_opt.max_age;
+    else if (response.last_mod >= 0) {
+        // heuristic algorithm -> 10% of last-modified
+        time_t now = timeHelper::gmtTimeNow();
+        c_object->max_age = (now - response.last_mod) * 0.1;
+    } else {
+        // If not available value, use the defined default timeout
+        c_object->max_age = DEFAULT_TIMEOUT;
+    }
+    /*
 *must-revalidate, proxy-revalidate
 */
-  if (response.expires >= 0)
-    c_object->expires = response.expires;
-  // If there is etag, then store it
-  if (!response.etag.empty())
-    c_object->etag = response.etag;
-  c_object->revalidate = response.c_opt.revalidate;
+    if (response.expires >= 0)
+        c_object->expires = response.expires;
+    // If there is etag, then store it
+    if (!response.etag.empty())
+        c_object->etag = response.etag;
+    c_object->revalidate = response.c_opt.revalidate;
 
-  // Reset the stale flag, the cache has been created or updated
-  c_object->staled = false;
+    // Reset the stale flag, the cache has been created or updated
+    c_object->staled = false;
   c_object->content_length = response.content_length;
   c_object->no_cache_response = response.c_opt.no_cache;
 

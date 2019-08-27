@@ -25,8 +25,11 @@
 #endif
 #include <cstring>
 #include <unordered_map>
-#include <iostream>
 #include <fstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <filesystem>
+#include "../debug/Debug.h"
 #if MEMCACHED_ENABLED
 #include <libmemcached/memcached.h>
 #endif
@@ -56,27 +59,29 @@ public:
     virtual STORAGE_STATUS appendData(const std::string rel_path, const std::string buffer) = 0;
     virtual STORAGE_STATUS deleteInStorage(std::string url) = 0;
     virtual bool isStored(const std::string svc, const std::string url) = 0;
+    virtual ~ICacheStorage() {}
     };
 
 class DiskICacheStorage: public ICacheStorage{
 protected:
     static DiskICacheStorage * instance;
-    static bool initialized;
+    bool initialized = false;
 public:
-    static size_t max_size;
-    static size_t current_size;
-    static std::string mount_path;
+    size_t max_size = 0;
+    size_t current_size = 0;
+    std::string mount_path;
 };
 
 class RamICacheStorage: public ICacheStorage{
 protected:
     static RamICacheStorage * instance;
-    static bool initialized;
+    bool initialized = false;
 public:
-    static size_t max_size;
-    static size_t current_size;
-    static std::string mount_path;
-    static double cache_thr;
+    size_t max_size = 0;
+    size_t current_size = 0;
+    std::string mount_path;
+    double cache_thr = 0;
+    virtual ~RamICacheStorage(){};
 };
 
 

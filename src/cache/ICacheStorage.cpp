@@ -1,25 +1,10 @@
 #if CACHE_ENABLED
 #include "ICacheStorage.h"
 
-#include <iostream>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <filesystem>
-#include "../debug/Debug.h"
-
 // Ram Static variables definitions
 RamICacheStorage * RamICacheStorage::instance = nullptr;
-bool RamICacheStorage::initialized = false;
-double RamICacheStorage::cache_thr;
-size_t RamICacheStorage::current_size;
-size_t RamICacheStorage::max_size;
-std::string RamICacheStorage::mount_path;
 // Disk Static variables definition
 DiskICacheStorage * DiskICacheStorage::instance = nullptr;
-bool DiskICacheStorage::initialized = false;
-std::string DiskICacheStorage::mount_path;
-size_t DiskICacheStorage::current_size;
-size_t DiskICacheStorage::max_size = 0;
 
 /*
  * RAMFS STORAGE
@@ -38,7 +23,7 @@ STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, std::string m
         if (errno != EEXIST)
             return STORAGE_STATUS::MKDIR_ERROR;
     }
-    mount_path = m_point;
+    mount_path = m_point.data();
 
     //try to mount the RAMFS filesystem, return MOUNT_ERROR if failed
     if( mount(nullptr, mount_path.data(), "ramfs",0,"mode=rw,uid=0") )
@@ -109,7 +94,10 @@ STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string rel_path, cons
 STORAGE_STATUS RamfsCacheStorage::stopCacheStorage(){
     int err = umount(mount_path.data());
     if ( err )
+    {
+        Debug::logmsg(LOG_REMOVE,"ERROR UMOUNTING %s ", mount_path.data() );
         return STORAGE_STATUS::GENERIC_ERROR;
+    }
 
     return STORAGE_STATUS::SUCCESS;
 }
@@ -268,7 +256,8 @@ STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string rel_path, const
     return STORAGE_STATUS::SUCCESS;
 }
 STORAGE_STATUS DiskCacheStorage::stopCacheStorage(){
-    if ( remove( mount_path.data()))
+    const std::filesystem::path path_m_point = std::filesystem::u8path (mount_path);
+    if(!std::filesystem::remove_all(path_m_point))
         return STORAGE_STATUS::GENERIC_ERROR;
     return STORAGE_STATUS::SUCCESS;
 }
