@@ -159,7 +159,25 @@ int main(int argc, char *argv[]) {
   }
   ::getrlimit(RLIMIT_NOFILE, &r);
   Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+  /* record pid in file */
+   FILE                *fpid;
+  if((fpid = fopen(config.pid_name, "wt")) != NULL) {
+    fprintf(fpid, "%d\n", getpid());
+    fclose(fpid);
+  } else
+    Debug::logmsg(LOG_NOTICE, "Create \"%s\": %s", config.pid_name, strerror(errno));
 
+  /* chroot if necessary */
+  if(config.root_jail) {
+    if(chroot(config.root_jail)) {
+      Debug::logmsg(LOG_ERR, "chroot: %s - aborted", strerror(errno));
+      exit(1);
+    }
+    if(chdir("/")) {
+      Debug::logmsg(LOG_ERR, "chroot/chdir: %s - aborted", strerror(errno));
+      exit(1);
+    }
+  }
   /*Set process user and group*/
   if (config.user != nullptr) {
     Environment::setUid(std::string(config.user));
