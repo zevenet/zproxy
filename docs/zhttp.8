@@ -12,13 +12,14 @@ zhttp \- HTTP/HTTPS reverse-proxy and load-balancer
 .SH DESCRIPTION
 .PP
 .B Zhttp
-is a reverse-proxy load balancing server. It accepts requests from HTTP/HTTPS
+is a reverse-proxy load balancing server inspired in the directives of Pound Load Balancer 
+but totally re-implemented in C++ with the high performance idea as a goal. It accepts requests from HTTP/HTTPS
 clients and distributes them to one or more Web servers. The HTTPS requests are
 decrypted and passed to the back-ends as plain HTTP.
 .PP
 If more than one back-end server is defined,
 .B Zhttp
-chooses one of them randomly, based on defined priorities. By default,
+chooses one of them randomly, based on defined algorithms. By default,
 .B Zhttp
 keeps track of associations between clients and back-end servers (sessions).
 .SH GENERAL PRINCIPLES
@@ -128,7 +129,7 @@ The connection between
 .B Zhttp
 and the
 .I back-ends
-is always via HTTP, regardless of the actual protocol used between
+is always via HTTP(S), regardless of the actual protocol used between
 .B Zhttp
 and the client.
 .SH OPTIONS
@@ -167,13 +168,6 @@ Default:
 .PP
 In general, any number of back-end servers may be specified. Use the priority to
 affect the load distribution among unequal-performance servers.
-.PP
-One (or more) copies of
-.B Zhttp
-should be started at boot time. Use "big iron" if you expect heavy loads: while
-.B Zhttp
-is as light-weight as I know how to make it, with a lot of simultaneous requests it
-will use quite a bit of CPU and memory. Multiple CPUs are your friend.
 .SH "CONFIGURATION FILE"
 Each line in the file is considered a complete configuration directive. The directives
 are case-insensitive. Empty lines or lines starting in '#' are ignored. There are three
@@ -226,14 +220,9 @@ to work like a regular process. Useful for debugging or if you want to
 use something like \fIdaemontools\fR.
 .TP
 \fBThreads\fR nnn
-How many worker threads
+How many Thread workers
 .B Zhttp
-should use. Default: 128. Tune this parameter to improve performance.
-If you set it too high,
-.B Zhttp
-will use a lot memory, and some CPU will be wasted on context switches.
-If you set it too low requests may be served with some delay. Experiment
-to find the optimal value for your installation.
+should use, (default: automatic). Default to system concurrency level see nproc command.
 .TP
 \fBLogFacility\fR value
 Specify the log facility to use.
@@ -270,7 +259,7 @@ If 0 zhttp manages Expect: 100-continue headers.
 Specify the routing policy. All the algorithms are weighted with all the
 weights set in each backend.
 
-    \fBROUND_ROBIN\fR use the round robin algorithm as a routing policy.
+    \fBROUND_ROBIN\fR use the round robin algorithm as a routing policy (used by default).
 
     \fBLEAST_CONNECTIONS\fR select the backend with least connections established
     using as a proportion the weights set.
@@ -282,15 +271,9 @@ weights set in each backend.
     using as a proportion the weights set.
 .TP
 \fBPinnedConnection\fR  0|1
-Specify if we want to pin all the connections. If PinnedConnection is not set,
-0 is the default value. If PinnedConnection is set,
+Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1,
 .B Zhttp
 directly forwards all data without parsing or editing.
-.TP
-\fBNfmark\fB    0|1
-Allow to mark all the
-.B Zhttp
-output connections in order to track them.
 .TP
 \fBCompressionAlgorithm\fR gzip|deflate
 Specify the compression algorithm to use. If the client supports it and the
@@ -539,12 +522,6 @@ to the back-end itself with the correct protocol. Default: 0.
 Override the global
 .I LogLevel
 value.
-.TP
-\fBForceHTTP10 (not implemented) \fR "user agent pattern"
-Force connections for browser user agents matching this pattern to use
-HTTP/1.0 even if the browser has requested HTTP/1.1.  Some MSIE browsers have
-problems with HTTP/1.1 over SSL connections.  Other browsers, like Java/1.0 or
-JDK connections might require this feature as well.
 .TP
 \fBService\fR [ "name" ]
 This defines a private service (see below for service definition syntax). This
@@ -995,6 +972,13 @@ with this back-end disabled (1) or enabled (0). If started as disabled, the
 back-end can be later enabled with
 .I zhttpctl
 (8).
+.TP
+\fBNfmark\fR val
+Allow to mark all the
+.B Zhttp
+back-end connections in order to track them and allow to the Kernel 
+network stack to manage them. (Decimal format)
+.TP
 .SH "Emergency"
 The emergency server will be used once all existing back-ends are "dead".
 All configuration directives enclosed between
@@ -1069,7 +1053,7 @@ In general it is a good idea to set this time interval as low as is consistent w
 your resources in order to benefit from resurected servers at the earliest possible
 time. The default value of 30 seconds is probably a good choice.
 .PP
-The clients that happen upon a dead backend server will just receive a
+The clients that happen upon a dead back-end server will just receive a
 .I "503 Service Unavailable"
 message.
 .PP
@@ -1097,6 +1081,7 @@ By default the address of the
 health monitor is the same as that of the
 back-end server. You may specify a different address though, for example if you have
 a monitoring program running on another host.
+
 .SH HTTPS HEADERS
 If a client browser connects to
 .B Zhttp
@@ -1152,11 +1137,6 @@ other web servers, so that if you want to use a log tool:
 .TP
     fgrep zhttp /var/log/messages | your_log_tool
 .PP
-Translating HTTPS to HTTP is an iffy proposition: no client information is passed to
-the server itself (certificates, etc) and the backend server may be misled if it
-uses absolute URLs. A patch for \fIZope\fR is included in the distribution to address
-this issue - for other Web servers you are on your own. May the source be with you.
-.PP
 .B Zhttp
 deals with (and sanitizes) HTTP/1.1 requests. Thus even if you have an HTTP/1.0 server,
 a single connection to an HTTP/1.1 client is kept, while the connection to the back-end
@@ -1167,36 +1147,23 @@ attempts to resolve the names of the hosts that appear in various requests and/o
 That means it need a functioning resolver of some kind (be it /etc/hosts, DNS or something
 else).
 .SH API
-It is possible to do hot backend, service, listener and session changes using
-the API. Here is the operations allowed by the API. All the request must be
-directed to the zhttp unix socket or to the control IP address and port. The
-response is going to be a JSON formatted response with all the information
+It is possible to do back-end, listener and session changes on the fly using
+the API. All the request must be sent to the zhttp unix socket (see Control directive) or to the control IP address and port
+directive (ControlIP and ControlPort). The Zhttp API response is going to be a JSON format with all the information
 requested or the operation result.
 
-    \fBGet the services status of the listener with the id "listener_id"\fR
+    \fBGet the services status of the listener with the id "0"\fR
 
-    GET http://address:port/listener/listener_id/services
+    curl http://address:port/listener/0/services
 
-    \fBGet the service with the id "service_id" general status\fR
+    \fBGet the service information with the id "0"\fR
 
-    GET http://address:port/listener/listener_id/service/service_id
+    curl http://address:port/listener/0/service/0
 
-    \fBGet the backend with the id "backend_id" general status\fR
+    \fBGet the back-end with the id "1" general status\fR
 
-    GET http://address:port/listener/listener_id/service/service_id/backend/backend_id
-
-    \fBGet any field of a service or backend\fR
-
-    GET http://address:port/listener/listener_id/service/service_id/field_name
-
-    GET http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
-
-    \fBModify any field of a service or backend\fR
-
-    POST {field_name: value} http://address:port/listener/listener_id/service/service_id/field_name
-
-    POST {field_name: value} http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
-
+    curl http://address:port/listener/0/service/0/backend/1
+    
 .SH EXAMPLES
 To translate HTTPS requests to a local HTTP server (assuming your network address
 is 123.123.123.123):
@@ -1481,7 +1448,7 @@ End
 .br
 .SH FILES
 .TP
-\fI/var/run/zhttp.nnn\fR
+\fI/var/run/zhttp.pid\fR
 this is where
 .B Zhttp
 will attempt to record its process id.
@@ -1499,11 +1466,13 @@ and a PEM-encoded private key (not password protected). See
 for details. This file should be well protected, lest someone gets your server
 private key.
 .SH AUTHOR
-Written by Robert Segall, Apsis GmbH.
+Zevenet SL (info@zevenet.com).
 .SH "REPORTING BUGS"
-Report bugs to <roseg@apsis.ch>.
+Report bugs to <zevenet-ce-users@zevenet.com>.
 .SH COPYRIGHT
-Copyright \(co 2002-2010 Apsis GmbH.
+Copyright \(co 2019-Today Zevenet SL.
+.SH LICENSE
+zhttp is licensed under GNU/Affero terns (AGPL-3.0).
 .br
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
