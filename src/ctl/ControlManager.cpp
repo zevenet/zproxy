@@ -7,16 +7,20 @@
 /* Not used right now */
 #define CTL_DEFAULT_IP "127.0.0.1"
 #define CTL_DEFAULT_PORT 6001
-#define CTL_EVENTS_TIMEOUT 2000
+
 using namespace ctl;
 
-std::unique_ptr<ControlManager> ControlManager::instance =
-    std::unique_ptr<ControlManager>(new ControlManager);
+std::shared_ptr<ControlManager> ControlManager::instance = nullptr;
 
 ctl::ControlManager::ControlManager(ctl::CTL_INTERFACE_MODE listener_mode)
     : is_running(false), ctl_listener_mode(listener_mode) {}
 
-ctl::ControlManager::~ControlManager() { stop(); }
+ctl::ControlManager::~ControlManager() {
+  stop();
+  // Stop current worker thread
+  if(control_thread.joinable())
+      control_thread.join();
+}
 
 bool ctl::ControlManager::init(Config &configuration,
                                ctl::CTL_INTERFACE_MODE listener_mode) {
@@ -53,9 +57,14 @@ void ctl::ControlManager::start() {
 }
 
 void ctl::ControlManager::stop() {
+  // Notify stop to suscribers
+  if (!is_running) return;
   is_running = false;
-  if(control_thread.joinable())
-    control_thread.join();
+  Debug::logmsg(LOG_REMOVE, "Stop");
+  CtlTask task;
+  task.command = CTL_COMMAND::EXIT;
+  task.target = CTL_HANDLER_TYPE::ALL;
+  auto result = notify(task, false);
 }
 
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
@@ -117,16 +126,17 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 
 void ctl::ControlManager::doWork() {
   while (is_running) {
-    if (loopOnce(CTL_EVENTS_TIMEOUT) < 1) {
+    if (loopOnce(EPOLL_WAIT_TIMEOUT) < 1) {
       // this should not happends
     }
   }
+  Debug::logmsg(LOG_REMOVE, "Exiting loop");
 }
 
-ctl::ControlManager *ctl::ControlManager::getInstance() {
+std::shared_ptr<ControlManager> ctl::ControlManager::getInstance() {
   if (instance == nullptr)
-    instance = std::unique_ptr<ControlManager>(new ControlManager());
-  return instance.get();
+    instance = std::shared_ptr<ControlManager>(new ControlManager());
+  return instance;
 }
 std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   /* https://www.restapitutorial.com/lessons/httpmethods.html */

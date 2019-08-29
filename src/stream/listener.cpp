@@ -59,6 +59,12 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task))
     return JSON_OP_RESULT::ERROR;
 
+  if(task.command ==ctl::CTL_COMMAND::EXIT) {
+    Debug::logmsg(LOG_REMOVE, "Exit command received");
+    is_running = false;
+    return JSON_OP_RESULT::OK;
+  }
+
   switch (task.subject) {
   case ctl::CTL_SUBJECT::DEBUG: {
     std::unique_ptr<JsonObject> root{new JsonObject()};
@@ -238,7 +244,7 @@ struct on_client_disconnect:debug_status, Counter<on_client_disconnect>{};*/
 }
 
 bool Listener::isHandler(ctl::CtlTask &task) {
-  return !(task.target != ctl::CTL_HANDLER_TYPE::LISTENER);
+  return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER || task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }
 
 bool Listener::init(std::string address, int port) {
@@ -248,10 +254,10 @@ bool Listener::init(std::string address, int port) {
 
 Listener::Listener()
     : is_running(false), listener_connection(), stream_manager_set() {
-  ctl::ControlManager::getInstance()->attach(std::ref(*this));
 }
 
 Listener::~Listener() {
+  Debug::logmsg(LOG_REMOVE, "Destructor");
   is_running = false;
   for (auto &sm : stream_manager_set) {
     sm.second->stop();
@@ -266,18 +272,23 @@ Listener::~Listener() {
 
 void Listener::doWork() {
   while (is_running) {
-    if (loopOnce() <= 0) {
+    if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
       // something bad happend
       //      Debug::LogInfo("No event received");
     }
   }
+    Debug::logmsg(LOG_REMOVE, "Exiting loop");
 }
 
-void Listener::stop() { is_running = false;  worker_thread.join();}
+void Listener::stop() {
+  is_running = false;
+  if(worker_thread.joinable()) worker_thread.join();
+  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+}
 
 void Listener::start() {
-  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
-
+  auto cm = ctl::ControlManager::getInstance();
+  cm->attach(std::ref(*this));
   auto concurrency_level = std::thread::hardware_concurrency() < 2
                                ? 2
                                : std::thread::hardware_concurrency();
@@ -344,7 +355,7 @@ bool Listener::init(ListenerConfig &config) {
   listener_config = config;
   service_manager = ServiceManager::getInstance(listener_config);
 
-  if (!listener_connection.listen(listener_config.addr))
+  if (!listener_connection.listen(listener_config.address, listener_config.port))
     return false;
 #if SM_HANDLE_ACCEPT
   return true;

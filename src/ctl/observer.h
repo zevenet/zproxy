@@ -45,5 +45,5 @@ class CtlNotify {
 
  public:
   CtlNotify() = default;
-  ~CtlNotify() = default;
+  virtual ~CtlNotify() = default;
 };

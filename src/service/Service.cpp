@@ -388,7 +388,7 @@ Backend *Service::getNextBackend() {
       }
     }
     return selected_backend;
-  };
+  }
 
   case LP_RESPONSE_TIME: {
     Backend *selected_backend = nullptr;
@@ -407,7 +407,7 @@ Backend *Service::getNextBackend() {
       }
     }
     return selected_backend;
-  };
+  }
 
   case LP_PENDING_CONNECTIONS: {
     Backend *selected_backend = nullptr;
@@ -427,7 +427,7 @@ Backend *Service::getNextBackend() {
       }
     }
     return selected_backend;
-  };
+  }
   }
   return getEmergencyBackend();
 }
@@ -463,13 +463,18 @@ Backend* Service::getEmergencyBackend()
     static uint64_t emergency_seed;
     emergency_seed++;
     bck = emergency_backend_set[emergency_seed%backend_set.size()];
-    if (bck!=nullptr && bck->status!=BACKEND_STATUS::BACKEND_UP) {
-      bck = nullptr;
-      continue;
+    if (bck!=nullptr){
+      if( bck->status!=BACKEND_STATUS::BACKEND_UP) {
+        bck = nullptr;
+        continue;
+      }
+      break;
     }
   }
   return bck;
 }
 Service::~Service() {
+  Debug::logmsg(LOG_REMOVE, "Destructor");
+  for (auto &bck : backend_set) delete bck;
   //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }

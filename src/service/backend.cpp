@@ -5,6 +5,7 @@ Backend::Backend() : status(BACKEND_STATUS::NO_BACKEND) {
 }
 
 Backend::~Backend() {
+  Debug::logmsg(LOG_REMOVE, "Destructor");
   //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
 

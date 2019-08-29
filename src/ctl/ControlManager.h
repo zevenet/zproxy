@@ -20,7 +20,7 @@ using namespace events;
 using namespace json;
 class ControlManager : public EpollManager,
                        public CtlNotify<CtlTask, std::string> {
-  static std::unique_ptr<ControlManager> instance;
+  static std::shared_ptr<ControlManager> instance;
   std::thread control_thread;
   Connection control_listener;
   std::atomic<bool> is_running;
@@ -31,11 +31,11 @@ class ControlManager : public EpollManager,
   void doWork();
 
  public:
-  static ControlManager *getInstance();
+  static std::shared_ptr<ControlManager> getInstance();
   explicit ControlManager(
       CTL_INTERFACE_MODE listener_mode = CTL_INTERFACE_MODE::CTL_UNIX);
   ControlManager(ControlManager &) = delete;
-  ~ControlManager();
+  ~ControlManager() final;
   bool init(Config &configuration,
             CTL_INTERFACE_MODE listener_mode = CTL_INTERFACE_MODE::CTL_UNIX);
   void start();

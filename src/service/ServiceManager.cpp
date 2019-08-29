@@ -3,11 +3,11 @@
 //
 
 #include "ServiceManager.h"
-ServiceManager *ServiceManager::instance /*= new ServiceManager()*/;
+std::shared_ptr<ServiceManager> ServiceManager::instance;
 
-ServiceManager *ServiceManager::getInstance(ListenerConfig &listener_config) {
+std::shared_ptr<ServiceManager> ServiceManager::getInstance(ListenerConfig &listener_config) {
   if (instance == nullptr)
-    instance = new ServiceManager(listener_config);
+    instance =std::shared_ptr<ServiceManager>(new ServiceManager(listener_config));
   return instance;
 }
 
@@ -17,10 +17,11 @@ ServiceManager::ServiceManager(ListenerConfig &listener_config)
 }
 
 ServiceManager::~ServiceManager() {
+  Debug::logmsg(LOG_REMOVE, "Destructor");
   for (auto srv : services) {
     delete srv;
   }
-  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+//  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
 
 Service *ServiceManager::getService(HttpRequest &request) {

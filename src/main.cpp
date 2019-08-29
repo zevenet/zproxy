@@ -4,7 +4,6 @@
 #include "util/system.h"
 #include <csetjmp>
 #include <csignal>
-#include <sys/resource.h>
 
 static jmp_buf jmpbuf;
 
@@ -13,103 +12,42 @@ std::mutex Debug::log_lock;
 int Debug::log_level = 6;
 int Debug::log_facility = -1;
 
+std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
+
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
-  // stop listener
-  printf("handler %d \n", sig);
-  ::longjmp(jmpbuf, 1);
-//  exit(EXIT_FAILURE);
+  Debug::logmsg(LOG_INFO, "Signal %s received, Exiting..\n",
+                ::strsignal(sig));
+  auto cm = ctl::ControlManager::getInstance();
+  cm->stop();
+//  ::longjmp(jmpbuf, 1);
 }
 
-void redirectLogOutput(std::string name, std::string chroot_path,
-                       std::string outfile, std::string errfile,
-                       std::string infile) {
-  if (chroot_path.empty()) {
-    chroot_path = "/";
-  }
-  if (name.empty()) {
-    name = "zhttp";
-  }
-  if (infile.empty()) {
-    infile = "/dev/null";
-  }
-  if (outfile.empty()) {
-    outfile = "/dev/null";
-  }
-  if (errfile.empty()) {
-    errfile = "/dev/null";
-  }
-  // new file permissions
-  umask(0);
-  // change to path directory
-  chdir(chroot_path.c_str());
-  // Carefull Close all open file descriptors
-  //  int fd;
-  //  for (fd = ::sysconf(_SC_OPEN_MAX); fd > 0; --fd) {
-  //    close(fd);
-  //  }
-  // reopen stdin, stdout, stderr
-  stdin = fopen(infile.c_str(), "r");
-  stdout = fopen(outfile.c_str(), "w+");
-  stderr = fopen(errfile.c_str(), "w+");
-}
-
-bool daemonize() {
-  pid_t child;
-  if ((child = fork()) < 0) {
-    std::cerr << "error: failed fork\n";
-    exit(EXIT_FAILURE);
-  }
-  if (child > 0) { // parent
-    //    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); wait for
-    //    childs to starts
-    exit(EXIT_SUCCESS);
-  }
-  if (setsid() < 0) { // failed to become session leader
-    std::cerr << "error: failed setsid\n";
-    exit(EXIT_FAILURE);
-  }
-
-  // catch/ignore signals
-  signal(SIGCHLD, SIG_IGN);
-  signal(SIGHUP, SIG_IGN);
-
-  // fork second time
-  if ((child = fork()) < 0) { // failed fork
-    std::cerr << "error: failed fork\n";
-    exit(EXIT_FAILURE);
-  }
-  if (child > 0) {
-    exit(EXIT_SUCCESS);
-  }
-  return true;
-}
 
 int main(int argc, char *argv[]) {
-  static Listener listener;
+  Listener listener;
   auto control_manager = ctl::ControlManager::getInstance();
 
   if (setjmp(jmpbuf)) {
     // we are in signal context here
     control_manager->stop();
-    listener.stop();
-    std::this_thread::sleep_for(std::chrono::seconds(5)); //grace time to stop threads
+    listener.stop();  
     exit(EXIT_SUCCESS);
   }
+
   Config config;
-  // inicializar la interfaz de control (poundctl)
-  // ControlInterface control_interface;
   Debug::logmsg(LOG_NOTICE, "zhttp starting...");
-  config.parseConfig(argc, argv);
+  config.parseConfig(argc, argv);  
   Debug::log_level = config.listeners->log_level;
   Debug::log_facility = config.log_facility;
-  openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
+  ::openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   // Syslog initialization
   if (config.daemonize) {
-    if (!daemonize()) {
-      std::cerr << "error: daemonize failed\n";
-      exit(EXIT_FAILURE);
+    if (!Environment::daemonize()) {
+      Debug::logmsg(LOG_ERR,"error: daemonize failed\n");
+      return EXIT_FAILURE;
     }
   }
 
@@ -122,70 +60,30 @@ int main(int argc, char *argv[]) {
   ::signal(SIGINT, handleInterrupt);
   ::signal(SIGTERM, handleInterrupt);
   ::signal(SIGABRT, handleInterrupt);
+  ::signal(SIGHUP, handleInterrupt);
 
   ::umask(077);
   ::srandom(static_cast<unsigned int>(::getpid()));
 
-  // Increase num file descriptor ulimit
-  // TODO:: take outside main initialization
-  Debug::LogInfo("System info:", LOG_DEBUG);
-  Debug::LogInfo("\tL1 Data cache size: " +
-                     std::to_string(SystemInfo::data()->getL1DataCacheSize()),
-                 LOG_DEBUG);
-  Debug::LogInfo(
-      "\t\tCache line size: " +
-          std::to_string(SystemInfo::data()->getL1DataCacheLineSize()),
-      LOG_DEBUG);
-  Debug::LogInfo("\tL2 Cache size: " +
-                     std::to_string(SystemInfo::data()->getL2DataCacheSize()),
-                 LOG_DEBUG);
-  Debug::LogInfo(
-      "\t\tCache line size: " +
-          std::to_string(SystemInfo::data()->getL2DataCacheLineSize()),
-      LOG_DEBUG);
-  rlimit r{};
-  ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur),
-                 LOG_DEBUG);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tMaximum " +
-                     std::to_string(::sysconf(_SC_OPEN_MAX)),
-                 LOG_DEBUG);
-  if (r.rlim_cur != r.rlim_max) {
-    r.rlim_cur = r.rlim_max;
-    if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-      Debug::logmsg(LOG_ERR, "\tsetrlimit failed ");
-      return EXIT_FAILURE;
-    }
-  }
-  ::getrlimit(RLIMIT_NOFILE, &r);
-  Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
-  /* record pid in file */
-   FILE                *fpid;
-  if((fpid = fopen(config.pid_name, "wt")) != NULL) {
-    fprintf(fpid, "%d\n", getpid());
-    fclose(fpid);
-  } else
-    Debug::logmsg(LOG_NOTICE, "Create \"%s\": %s", config.pid_name, strerror(errno));
+  Environment::setUlimitData();
 
-  /* chroot if necessary */
-  if(config.root_jail) {
-    if(chroot(config.root_jail)) {
-      Debug::logmsg(LOG_ERR, "chroot: %s - aborted", strerror(errno));
-      exit(1);
-    }
-    if(chdir("/")) {
-      Debug::logmsg(LOG_ERR, "chroot/chdir: %s - aborted", strerror(errno));
-      exit(1);
-    }
+  /* record pid in file */
+  if (config.pid_name != nullptr) {
+    Environment::createPidFile(config.pid_name, ::getpid());
   }
+  /* chroot if necessary */
+  if (config.root_jail != nullptr) {
+    Environment::setChrootRoot(config.root_jail);
+  }
+
   /*Set process user and group*/
   if (config.user != nullptr) {
     Environment::setUid(std::string(config.user));
   }
+
   if (config.group != nullptr) {
     Environment::setGid(std::string(config.group));
   }
-
 
   if (config.ctrl_name != nullptr || config.ctrl_ip != nullptr) {
     control_manager->init(config);
@@ -194,9 +92,11 @@ int main(int argc, char *argv[]) {
 
   if(!listener.init(config.listeners[0])){
     Debug::LogInfo("Error initializing listener socket", LOG_ERR);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
-  //  listener.init("127.0.0.1", 9999);
+
   listener.start();
-  exit(EXIT_SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  cleanExit();
+  return EXIT_SUCCESS;
 }

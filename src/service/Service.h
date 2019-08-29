@@ -88,7 +88,7 @@ private:
    */
   Backend *getBackend(HttpStream &stream);
   explicit Service(ServiceConfig &service_config_);
-  ~Service();
+  ~Service() final;
 
   /**
    * @brief Creates a new Backend from a BackendConfig.

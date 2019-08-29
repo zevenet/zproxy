@@ -9,6 +9,9 @@
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "system.h"
+#include <sys/resource.h>
+#include <csignal>
 
 class Environment {
 
@@ -19,7 +22,7 @@ public:
     if (!user_name.empty()) {
       struct passwd *pw;
 
-      if ((pw = ::getpwnam(user_name.c_str())) == NULL) {
+      if ((pw = ::getpwnam(user_name.c_str())) == nullptr) {
         Debug::logmsg(LOG_ERR, "no such user %s - aborted", user_name.c_str());
         return false;
       }
@@ -37,7 +40,7 @@ public:
                                const std::string &file_name) {
     if (!group_name.empty()) {
       struct group *gr;
-      if ((gr = ::getgrnam(group_name.c_str())) == NULL) {
+      if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
         Debug::logmsg(LOG_ERR, "no such group %s - aborted",
                       group_name.c_str());
         return false;
@@ -64,7 +67,7 @@ public:
   static bool setUid(const std::string &user) {
     if (!user.empty()) {
       struct passwd *pw;
-      if ((pw = ::getpwnam(user.c_str())) == NULL) {
+      if ((pw = ::getpwnam(user.c_str())) == nullptr) {
         Debug::logmsg(LOG_ERR, "no such user %s - aborted", user.c_str());
         return false;
       }
@@ -81,7 +84,7 @@ public:
   static bool setGid(const std::string &group_name) {
     if (!group_name.empty()) {
       struct group *gr;
-      if ((gr = ::getgrnam(group_name.c_str())) == NULL) {
+      if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
         Debug::logmsg(LOG_ERR, "no such group %s - aborted",
                       group_name.c_str());
         return false;
@@ -98,7 +101,7 @@ public:
 
   static bool createPidFile(const std::string &pid_file_name, int pid = -1) {
     auto pid_file_hl = ::fopen(pid_file_name.c_str(), "wt");
-    if (pid_file_hl != NULL) {
+    if (pid_file_hl != nullptr) {
       fprintf(pid_file_hl, "%d\n", pid != -1 ? pid : getpid());
       fclose(pid_file_hl);
       return true;
@@ -122,4 +125,93 @@ public:
     }
     return false;
   }
+
+  static bool setUlimitData() {
+    // Increase num file descriptor ulimit
+    // TODO:: take outside main initialization
+    Debug::logmsg(LOG_DEBUG,"System info:");
+    Debug::logmsg(LOG_DEBUG,"\tL1 Data cache size: %lu", SystemInfo::data()->getL1DataCacheSize());
+    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu",SystemInfo::data()->getL1DataCacheLineSize());
+    Debug::logmsg(LOG_DEBUG,"\tL2 Cache size: %lu",SystemInfo::data()->getL2DataCacheSize());
+    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu" ,SystemInfo::data()->getL2DataCacheLineSize());
+    rlimit r{};
+    ::getrlimit(RLIMIT_NOFILE, &r);
+    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tCurrent %lu" , r.rlim_cur);
+    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tMaximum %lu" , ::sysconf(_SC_OPEN_MAX));
+    if (r.rlim_cur != r.rlim_max) {
+      r.rlim_cur = r.rlim_max;
+      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
+        Debug::logmsg(LOG_ERR, "\tsetrlimit failed ");
+        return false;
+      }
+    }
+    ::getrlimit(RLIMIT_NOFILE, &r);
+    Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+    return true;
+  }
+
+ static void redirectLogOutput(std::string name, std::string chroot_path,
+                         std::string outfile, std::string errfile,
+                         std::string infile) {
+    if (chroot_path.empty()) {
+      chroot_path = "/";
+    }
+    if (name.empty()) {
+      name = "zhttp";
+    }
+    if (infile.empty()) {
+      infile = "/dev/null";
+    }
+    if (outfile.empty()) {
+      outfile = "/dev/null";
+    }
+    if (errfile.empty()) {
+      errfile = "/dev/null";
+    }
+    // new file permissions
+    umask(0);
+    // change to path directory
+    chdir(chroot_path.c_str());
+    // Carefull Close all open file descriptors
+    //  int fd;
+    //  for (fd = ::sysconf(_SC_OPEN_MAX); fd > 0; --fd) {
+    //    close(fd);
+    //  }
+    // reopen stdin, stdout, stderr
+    stdin = fopen(infile.c_str(), "r");
+    stdout = fopen(outfile.c_str(), "w+");
+    stderr = fopen(errfile.c_str(), "w+");
+  }
+
+  static bool daemonize() {
+    pid_t child;
+    if ((child = fork()) < 0) {
+      std::cerr << "error: failed fork\n";
+      exit(EXIT_FAILURE);
+    }
+    if (child > 0) { // parent
+      //    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); wait for
+      //    childs to starts
+      exit(EXIT_SUCCESS);
+    }
+    if (setsid() < 0) { // failed to become session leader
+      std::cerr << "error: failed setsid\n";
+      exit(EXIT_FAILURE);
+    }
+
+    // catch/ignore signals
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+
+    // fork second time
+    if ((child = fork()) < 0) { // failed fork
+      std::cerr << "error: failed fork\n";
+      exit(EXIT_FAILURE);
+    }
+    if (child > 0) {
+      exit(EXIT_SUCCESS);
+    }
+    return true;
+  }
+
 };

@@ -23,8 +23,8 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
    * the class. */
   ListenerConfig listener_config_;
   /** ServiceManager instance. */
-  static ServiceManager *instance;
-  static ServiceManager *getInstance(ListenerConfig &listener_config);
+  static std::shared_ptr<ServiceManager> instance;
+  static std::shared_ptr<ServiceManager> getInstance(ListenerConfig &listener_config);
   ServiceManager(ListenerConfig &listener_config);
   ~ServiceManager();
 

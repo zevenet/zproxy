@@ -104,7 +104,7 @@ using namespace http;
  * operations with the clients and the backends. It is used to manage both HTTP
  * and HTTPS connections.
  */
-class StreamManager : public EpollManager {
+class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
 #if HELLO_WORLD_SERVER
   std::string e200 =
       "HTTP/1.1 200 OK\r\nServer: zhttp 1.0\r\nExpires: now\r\nPragma: "
@@ -114,10 +114,10 @@ class StreamManager : public EpollManager {
 
   int worker_id{};
   std::thread worker;
-  ServiceManager *service_manager{};
+  std::shared_ptr<ServiceManager> service_manager{};
   ssl::SSLConnectionManager * ssl_manager{};
   Connection listener_connection;
-  bool is_running{};
+  std::atomic<bool> is_running{};
   ListenerConfig listener_config_;
   std::unordered_map<int, HttpStream *> streams_set;
   std::unordered_map<int, HttpStream *> timers_set;
@@ -128,7 +128,7 @@ class StreamManager : public EpollManager {
 public:
   StreamManager();
   StreamManager(const StreamManager &) = delete;
-    virtual ~StreamManager();
+  ~StreamManager() final;
 
   /**
    * @brief Adds a HttpStream to the stream set of the StreamManager.
@@ -278,8 +278,29 @@ public:
 
   inline void onClientDisconnect(HttpStream *stream);
 
+  /**
+   * @brief This function handles the tasks received with the API format.
+   *
+   * It calls the needed functions depending on the @p task received. The task
+   * must be a API formatted request.
+   *
+   * @param task to handle by the Listener.
+   * @return json formatted string with the result of the operation.
+   */
+  std::string handleTask(ctl::CtlTask &task) override;
+
+  /**
+   * @brief Checks if the Listener should handle the @p task.
+   *
+   * @param task to check.
+   * @return true if should handle the task, false if not.
+   */
+  bool isHandler(ctl::CtlTask &task) override;
+
   /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
+
+
 
 };
 

@@ -24,11 +24,11 @@
 class Listener : public EpollManager,
                  public CtlObserver<ctl::CtlTask, std::string> {
   std::thread worker_thread;
-  bool is_running;
+  std::atomic<bool> is_running;
   Connection listener_connection;
   std::map<int, StreamManager *> stream_manager_set;
   ListenerConfig listener_config;
-  ServiceManager *service_manager;
+  std::shared_ptr<ServiceManager> service_manager;
   TimerFd timer_maintenance;
   SignalFd signal_fd;
   void doWork();
@@ -36,7 +36,7 @@ class Listener : public EpollManager,
 
 public:
   Listener();
-  virtual ~Listener();
+  ~Listener() final;
 
   /**
    * @brief Sets the listener connetion address and port.

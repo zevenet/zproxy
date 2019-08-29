@@ -219,6 +219,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 void StreamManager::stop() { is_running = false; }
 
 void StreamManager::start(int thread_id_) {
+  ctl::ControlManager::getInstance()->attach(std::ref(*this));
   is_running = true;
   worker_id = thread_id_;
   this->worker = std::thread([this] { doWork(); });
@@ -239,6 +240,7 @@ StreamManager::StreamManager()
       };
 
 StreamManager::~StreamManager() {
+  Debug::logmsg(LOG_REMOVE, "Destructor");
   stop();
   if (worker.joinable())
     worker.join();
@@ -248,13 +250,14 @@ StreamManager::~StreamManager() {
 }
 void StreamManager::doWork() {
   while (is_running) {
-    if (loopOnce() <= 0) {
+    if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
       // something bad happend
       //      Debug::LogInfo("No events !!");
     }
     // if(needMainatance)
     //    doMaintenance();
   }
+  Debug::logmsg(LOG_REMOVE, "Exiting loop");
 }
 
 void StreamManager::addStream(int fd) {
@@ -1425,6 +1428,22 @@ void StreamManager::onClientDisconnect(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
   Debug::LogInfo("Client closed connection", LOG_DEBUG);
   clearStream(stream);
+}
+
+std::string StreamManager::handleTask(ctl::CtlTask &task) {
+  if (!isHandler(task))
+    return JSON_OP_RESULT::ERROR;
+
+  if(task.command ==ctl::CTL_COMMAND::EXIT) {
+    Debug::logmsg(LOG_REMOVE, "Exit command received");
+    is_running = false;
+    return JSON_OP_RESULT::OK;
+  }
+}
+
+bool StreamManager::isHandler(ctl::CtlTask &task)
+{
+  return task.target == ctl::CTL_HANDLER_TYPE::ALL || task.target == ctl::CTL_HANDLER_TYPE::STREAM_MANAGER;
 }
 void StreamManager::onServerDisconnect(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
