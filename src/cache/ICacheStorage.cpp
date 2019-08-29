@@ -107,6 +107,7 @@ STORAGE_STATUS RamfsCacheStorage::stopCacheStorage(){
         Debug::logmsg(LOG_REMOVE,"Error umounting the cache path %s ", mount_path.data() );
         return STORAGE_STATUS::GENERIC_ERROR;
     }
+    std::filesystem::remove(mount_path.data());
 
     return STORAGE_STATUS::SUCCESS;
 }
