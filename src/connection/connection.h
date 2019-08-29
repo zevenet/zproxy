@@ -40,12 +40,12 @@ using namespace events;
 class Connection : public Descriptor {
   long last_read_;
   long last_write_;
-
 protected:
   bool is_connected;
   IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
 
 public:
+  std::string str_buffer;
 #if ENABLE_ZERO_COPY
   SplicePipe splice_pipe;
 #if FAKE_ZERO_COPY

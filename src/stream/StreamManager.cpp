@@ -469,11 +469,11 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       } else if (service->isCached(stream->request) &&
-                 (service->canBeServed(stream->request) ||
+                 (service->canBeServedFromCache(stream->request) ||
                   stream->request.c_opt.only_if_cached)) {
         DEBUG_COUNTER_HIT(cache_stats__::cache_match);
         stream->response.reset_parser();
-        if (service->createCacheResponse(stream->request, stream->response) !=
+        if (service->getResponseFromCache(stream->request, stream->response, stream->backend_connection.str_buffer) !=
             0) {
           stream->replyError(
               HttpStatus::Code::GatewayTimeout,
@@ -483,7 +483,9 @@ void StreamManager::onRequestEvent(int fd) {
           this->clearStream(stream);
           return;
         }
+
         http_manager::validateResponse(*stream, listener_config_);
+
         if (http::http_info::http_verbs.at(std::string(
                 stream->request.method, stream->request.method_len)) ==
             http::REQUEST_METHOD::HEAD) {
@@ -1203,6 +1205,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     clearStream(stream);
     return;
   }
+
 #if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(
       LOG_REMOVE, "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",

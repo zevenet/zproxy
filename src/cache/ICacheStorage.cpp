@@ -20,7 +20,14 @@ STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, std::string m
 
     //Create directory, if fails, and it's not because the folder is already created, just return an error
     if (mkdir(m_point.data(),0777) == -1) {
-        if (errno != EEXIST)
+        if (errno == EEXIST)
+        {
+            initialized = 1;
+            max_size = m_size;
+            mount_path = m_point.data();
+            return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
+        }
+        else
             return STORAGE_STATUS::MKDIR_ERROR;
     }
     mount_path = m_point.data();
@@ -43,11 +50,13 @@ STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, std::string m
 STORAGE_STATUS RamfsCacheStorage::initServiceStorage( std::string svc ) {
     if ( !initialized )
         return STORAGE_STATUS::NOT_INIT;
-    //The mount point is mount_path/service
     if (mkdir((mount_path+string("/")+svc).data(),0777) == -1) {
-        cerr << "Error :  " << std::strerror(errno) << endl;
-        if (errno != EEXIST)
+        if (errno == EEXIST)
+            return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
+        else{
+            Debug::logmsg(LOG_ERR, "Error :  %s", std::strerror(errno));
             return STORAGE_STATUS::MKDIR_ERROR;
+        }
     }
     return STORAGE_STATUS::SUCCESS;
 }
@@ -114,12 +123,12 @@ STORAGE_STATUS RamfsCacheStorage::appendData(const std::string rel_path, const s
     current_size += buffer.size();
     return STORAGE_STATUS::SUCCESS;
 }
-bool RamfsCacheStorage::isStored(const std::string svc, const std::string url)
+bool RamfsCacheStorage::isInStorage(const std::string svc, const std::string url)
 {
     size_t hashed_url = std::hash<std::string>()(url);
-    return isStored(std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data());
+    return isInStorage(std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data());
 }
-bool RamfsCacheStorage::isStored( std::string path )
+bool RamfsCacheStorage::isInStorage( std::string path )
 {
     struct stat buffer;
     return (stat(path.data(),&buffer) == 0);
@@ -128,7 +137,7 @@ bool RamfsCacheStorage::isStored( std::string path )
 STORAGE_STATUS RamfsCacheStorage::deleteInStorage(std::string path)
 {
     auto full_path = mount_path + "/" + path;
-    if( isStored(full_path) ){
+    if( isInStorage(full_path) ){
         Debug::logmsg(LOG_NOTICE, "DELETING STORED CONTENT");
         if ( std::remove( full_path.data()) )
             return STORAGE_STATUS::GENERIC_ERROR;
@@ -189,16 +198,19 @@ STORAGE_STATUS  DiskCacheStorage::initCacheStorage( size_t m_size, std::string m
         return STORAGE_STATUS::ALREADY_INIT;
     //Create directory, if fails, and it's not because the folder is already created, just return an error
     if (mkdir(m_point.data(),0777) == -1) {
+        if (errno == EEXIST)
+        {
+            initialized = true;
+            current_size = 0;
+            return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
+        }
         if (errno != EEXIST)
             return STORAGE_STATUS::MKDIR_ERROR;
     }
-    //Ensure that the size is always set
-    if (m_size <= 0)
-        m_size = MAX_STORAGE_SIZE;
+    //TODO: Set the maxsize
     mount_path = m_point;
     current_size = 0;
-    max_size = m_size;
-
+    m_size > 0 ? max_size = m_size : max_size = MAX_STORAGE_SIZE;
     initialized = true;
 
     return ret;
@@ -209,6 +221,8 @@ STORAGE_STATUS DiskCacheStorage::initServiceStorage( std::string svc ) {
         return STORAGE_STATUS::NOT_INIT;
     //The mount point is mount_path/service
     if (mkdir((mount_path+string("/")+svc).data(),0777) == -1) {
+        if (errno == EEXIST)
+            return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
         if (errno != EEXIST)
             return STORAGE_STATUS::MKDIR_ERROR;
     }
@@ -273,13 +287,13 @@ STORAGE_STATUS DiskCacheStorage::appendData(const std::string rel_path, const st
     current_size += buffer.size();
     return STORAGE_STATUS::SUCCESS;
 }
-bool DiskCacheStorage::isStored(const std::string svc, const std::string url)
+bool DiskCacheStorage::isInStorage(const std::string svc, const std::string url)
 {
     struct stat buffer;
     size_t hashed_url = std::hash<std::string>()(url);
     return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
 }
-bool DiskCacheStorage::isStored(const std::string path)
+bool DiskCacheStorage::isInStorage(const std::string path)
 {
     struct stat buffer;
     return (stat( path.data(), &buffer) == 0);
@@ -288,7 +302,7 @@ bool DiskCacheStorage::isStored(const std::string path)
 STORAGE_STATUS DiskCacheStorage::deleteInStorage(string path)
 {
     auto full_path = mount_path + "/" + path;
-    if( isStored(full_path) ){
+    if( isInStorage(full_path) ){
         Debug::logmsg(LOG_NOTICE, "DELETING STORED CONTENT");
         if ( std::remove( full_path.data()) )
             return STORAGE_STATUS::GENERIC_ERROR;
