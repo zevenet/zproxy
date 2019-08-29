@@ -104,7 +104,7 @@ STORAGE_STATUS RamfsCacheStorage::stopCacheStorage(){
     int err = umount(mount_path.data());
     if ( err )
     {
-        Debug::logmsg(LOG_REMOVE,"ERROR UMOUNTING %s ", mount_path.data() );
+        Debug::logmsg(LOG_REMOVE,"Error umounting the cache path %s ", mount_path.data() );
         return STORAGE_STATUS::GENERIC_ERROR;
     }
 
@@ -201,6 +201,7 @@ STORAGE_STATUS  DiskCacheStorage::initCacheStorage( size_t m_size, std::string m
         if (errno == EEXIST)
         {
             initialized = true;
+            mount_path = m_point;
             current_size = 0;
             return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
         }

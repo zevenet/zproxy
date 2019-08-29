@@ -32,9 +32,6 @@ enum class CTL_HANDLER_TYPE {
   GLOBAL_CONF,
   STREAM_MANAGER,
   ENVIORONMENT,
-#if CACHE_ENABLED
-  CACHE,
-#endif
 };
 
 enum class CTL_SUBJECT {
@@ -48,6 +45,9 @@ enum class CTL_SUBJECT {
   WEIGHT,
   DEBUG,
   S_BACKEND,
+#if CACHE_ENABLED
+  CACHE,
+#endif
 };
 
 struct CtlTask {

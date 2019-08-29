@@ -134,6 +134,9 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
             this->cache_enabled = true;
             this->service_name = svc;
         }
+        else {
+            return;
+        }
         //Create directory, if fails, and it's not because the folder is already created, just return an error
         if (mkdir(ramfs_mount_point.data(),0777) == -1) {
             if (errno != EEXIST){
