@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../src/cache/HttpCacheManager.h"
 #include "../lib/gtest/googletest/include/gtest/gtest.h"
 #include "gtest/gtest.h"
 #include "../../src/service/Service.h"
@@ -56,6 +57,12 @@ void createResponse ( std::string * resp_buffer, HttpStream * stream){
     stream->response.buffer = resp_buffer->data();
     stream->response.buffer_size = resp_buffer->size();
     //RESET c_opt
+    bool no_cache = false;
+    bool transform = true;
+    bool cacheable = true; // Set by the request with no-store
+    bool revalidate = false;
+    int max_age = -1;
+
     stream->response.c_opt.max_age = -1;
     stream->response.c_opt.cacheable = true;
     stream->response.c_opt.revalidate = false;
@@ -139,14 +146,14 @@ TEST(CacheTest, CacheInitializationTest ) {
  regex_t cache_pattern;
  HttpCacheManager c_manager;
  cache_pattern.re_pcre = nullptr;
- c_manager.cacheInit(&cache_pattern, cache_timeout);
+ c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest");
  ASSERT_FALSE( c_manager.cache_enabled );
- c_manager.cacheInit(&cache_pattern, cache_timeout);
+ c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest");
  ASSERT_FALSE( c_manager.cache_enabled );
- c_manager.cacheInit(&cache_pattern, 0);
+ c_manager.cacheInit(&cache_pattern, 0, "myService", 204800, 5, "zhttpTest");
  ASSERT_FALSE( c_manager.cache_enabled );
  regcomp(&cache_pattern,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
- c_manager.cacheInit(&cache_pattern, cache_timeout);
+ c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest");
  ASSERT_TRUE( c_manager.cache_enabled );
  ASSERT_TRUE( c_manager.getCacheTimeout() == cache_timeout );
 }
@@ -164,7 +171,7 @@ TEST(CacheTest, StoreResponseTest ) {
     createResponse(&response_buffer, &stream);
     //Init the cache
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt, cache_timeout);
+    c_manager.cacheInit(&cache_patt, cache_timeout, "myService", 204800, 5, "zhttpTest");
 
     //Parse the request
     auto req_ret = stream.request.parseRequest(request_buffer, &parsed);
@@ -174,14 +181,15 @@ TEST(CacheTest, StoreResponseTest ) {
     ASSERT_TRUE( resp_ret == http_parser::PARSE_RESULT::SUCCESS );
     //Check that isCached returns false while it hasn't been cached yet
     ASSERT_FALSE ( c_manager.isCached(stream.request) );
-
+    std::string buffer;
+    HttpResponse cached_response;
     //Store and check that is stored
     c_manager.handleResponse(stream.response,stream.request);
     ASSERT_TRUE ( c_manager.isCached(stream.request) );
     //Check that the buffer stored is the same as the original
-    EXPECT_EQ ( c_manager.getCachedObject(stream.request)->buffer, response_buffer );
+    EXPECT_EQ ( c_manager.getResponseFromCache(stream.request,cached_response,buffer), response_buffer );
     //Check that the timeout is
-    ASSERT_TRUE ( c_manager.getCachedObject(stream.request)->max_age == cache_timeout );
+    ASSERT_TRUE ( c_manager.getCacheObject(stream.request)->max_age == cache_timeout );
 }
 //Check that when no timeout set, uses the heuristic timeout
 TEST(CacheTest, HeuristicTest){
@@ -190,7 +198,7 @@ TEST(CacheTest, HeuristicTest){
     regex_t cache_patt;
 
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,-1);
+    c_manager.cacheInit(&cache_patt,-1, "myService", 204800, 5, "zhttpTest");
     string req_buffer = createRequestBuffer(nullptr);
     string resp_buffer = createResponseBuffer(nullptr);
     createRequest(&req_buffer, &stream);
@@ -200,7 +208,7 @@ TEST(CacheTest, HeuristicTest){
 
     c_manager.handleResponse(stream.response, stream.request);
 
-    ASSERT_TRUE ( heuristic_value == c_manager.getCachedObject(stream.request)->max_age );
+    ASSERT_TRUE ( heuristic_value == c_manager.getCacheObject(stream.request)->max_age );
 }
 //Check if a response is correctly staled by isFresh() when reached its timeout
 TEST(CacheTest, StalingTest){
@@ -209,7 +217,7 @@ TEST(CacheTest, StalingTest){
     regex_t cache_patt;
     int cache_timeout = 2;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
 
     string req_buffer = createRequestBuffer(nullptr);
     string resp_buffer = createResponseBuffer(nullptr);
@@ -218,10 +226,10 @@ TEST(CacheTest, StalingTest){
 
     c_manager.handleResponse(stream.response,stream.request);
     ASSERT_TRUE( c_manager.isFresh(stream.request) );
-    ASSERT_FALSE( c_manager.getCachedObject(stream.request)->staled );
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request)->staled );
     sleep(cache_timeout+1);
     ASSERT_FALSE( c_manager.isFresh(stream.request) );
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->staled );
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled );
 
     //Refresh the response
     resp_buffer = createResponseBuffer(nullptr);
@@ -230,10 +238,10 @@ TEST(CacheTest, StalingTest){
     c_manager.handleResponse(stream.response,stream.request);
     //Check if refreshed
     ASSERT_TRUE( c_manager.isFresh(stream.request) );
-    ASSERT_FALSE( c_manager.getCachedObject(stream.request)->staled );
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request)->staled );
     sleep(cache_timeout+1);
     ASSERT_FALSE( c_manager.isFresh(stream.request) );
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->staled );
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled );
 }
 
 TEST(CacheTest, CanBeServedTest){
@@ -242,7 +250,7 @@ TEST(CacheTest, CanBeServedTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
 
     string req_buffer = createRequestBuffer(nullptr);
     string resp_buffer = createResponseBuffer(nullptr);
@@ -255,7 +263,7 @@ TEST(CacheTest, CanBeServedTest){
     req_buffer = createRequestBuffer(&c_control);
     createRequest(&req_buffer, &stream);
     ASSERT_TRUE(c_manager.isFresh(stream.request));
-    ASSERT_FALSE(c_manager.canBeServed(stream.request));
+    ASSERT_FALSE(c_manager.canBeServedFromCache(stream.request));
 }
 
 TEST(CacheTest, CcontrolNoCacheTest){
@@ -264,7 +272,7 @@ TEST(CacheTest, CcontrolNoCacheTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
     //In response:
     string c_control_values = "no-cache";
     string req_buffer = createRequestBuffer(nullptr);
@@ -287,19 +295,19 @@ TEST(CacheTest, CcontrolNoCacheTest){
     createRequest(&req_buffer, &stream);
     createResponse(&resp_buffer, &stream);
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_FALSE( c_manager.canBeServed(stream.request));
+    ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
     ASSERT_TRUE( c_manager.isCached(stream.request));
     ASSERT_TRUE( c_manager.isFresh(stream.request));
-    time_t previous_time = c_manager.getCachedObject(stream.request)->date;
+    time_t previous_time = c_manager.getCacheObject(stream.request)->date;
     //Update response timers
     //Adding a delay between responses, to ensure that is refreshed
     sleep(1);
-    ASSERT_FALSE( c_manager.canBeServed(stream.request));
+    ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
     resp_buffer = createResponseBuffer(nullptr);
     createResponse(&resp_buffer, &stream);
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_FALSE( c_manager.canBeServed(stream.request));
-    ASSERT_TRUE( previous_time < c_manager.getCachedObject(stream.request)->date );
+    ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
+    ASSERT_TRUE( previous_time < c_manager.getCacheObject(stream.request)->date );
     //The content is refreshed and it is not served the stored content
 }
 
@@ -309,7 +317,7 @@ TEST(CacheTest, CcontrolNoStoreTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
     //In response:
     string c_control_values = "no-store";
     string req_buffer = createRequestBuffer(nullptr);
@@ -338,7 +346,7 @@ TEST(CacheTest, CcontrolMaxAgeTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
     //In response:
     string c_control_values = "max-age=4";
     string req_buffer = createRequestBuffer(nullptr);
@@ -347,14 +355,14 @@ TEST(CacheTest, CcontrolMaxAgeTest){
     createResponse(&resp_buffer, &stream);
     //Check what is the max-age value
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->max_age == 4 );
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->max_age == 4 );
     //Check value higher that the value set on the config file, must use the most restrictive
     c_control_values = "max-age=10";
     resp_buffer = createResponseBuffer(&c_control_values);
     createResponse(&resp_buffer, &stream);
     //Check what is the max-age value
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_FALSE( c_manager.getCachedObject(stream.request)->max_age == 10 );
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request)->max_age == 10 );
 
     //In request
     c_control_values = "max-age=2";
@@ -364,10 +372,10 @@ TEST(CacheTest, CcontrolMaxAgeTest){
     createRequest(&req_buffer, &stream);
     //Check what is the max-age value
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->max_age == 5 );
-    ASSERT_TRUE(c_manager.canBeServed(stream.request));
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->max_age == 5 );
+    ASSERT_TRUE(c_manager.canBeServedFromCache(stream.request));
     sleep(3);
-    ASSERT_FALSE(c_manager.canBeServed(stream.request));
+    ASSERT_FALSE(c_manager.canBeServedFromCache(stream.request));
 
 }
 
@@ -377,7 +385,7 @@ TEST(CacheTest, CcontrolSMaxAgeTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
     //In response:
     string c_control_values = "max-age=3, s-maxage=4";
     string req_buffer = createRequestBuffer(nullptr);
@@ -386,7 +394,7 @@ TEST(CacheTest, CcontrolSMaxAgeTest){
     createResponse(&resp_buffer, &stream);
     //Check what is the max-age value
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->max_age == 4 );
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->max_age == 4 );
 }
 
 TEST(CacheTest, CcontrolSMinFreshTest){
@@ -395,7 +403,7 @@ TEST(CacheTest, CcontrolSMinFreshTest){
     regex_t cache_patt;
     int cache_timeout = 10;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout,"myService", 204800, 5, "zhttpTest" );
     //In response:
     string c_control_values = "min-fresh=5";
     string req_buffer = createRequestBuffer(&c_control_values);
@@ -404,9 +412,9 @@ TEST(CacheTest, CcontrolSMinFreshTest){
     createResponse(&resp_buffer, &stream);
     c_manager.handleResponse(stream.response, stream.request);
     ASSERT_TRUE( stream.request.c_opt.min_fresh == 5 );
-    ASSERT_TRUE( c_manager.canBeServed(stream.request));
+    ASSERT_TRUE( c_manager.canBeServedFromCache(stream.request));
     sleep( 6);
-    ASSERT_FALSE( c_manager.canBeServed(stream.request));
+    ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
 }
 TEST(CacheTest, CcontrolSMaxStaleTest){
     HttpCacheManager c_manager;
@@ -414,7 +422,7 @@ TEST(CacheTest, CcontrolSMaxStaleTest){
     regex_t cache_patt;
     int cache_timeout = 10;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout);
+    c_manager.cacheInit(&cache_patt,cache_timeout,"myService", 204800, 5, "zhttpTest" );
     //In response:
     string c_control_values = "max-stale=5";
     string req_buffer = createRequestBuffer(&c_control_values);
@@ -423,15 +431,15 @@ TEST(CacheTest, CcontrolSMaxStaleTest){
     createResponse(&resp_buffer, &stream);
     c_manager.handleResponse(stream.response, stream.request);
     ASSERT_TRUE( stream.request.c_opt.max_stale == 5 );
-    ASSERT_TRUE( c_manager.canBeServed(stream.request));
-    ASSERT_FALSE( c_manager.getCachedObject(stream.request)->staled);
+    ASSERT_TRUE( c_manager.canBeServedFromCache(stream.request));
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request)->staled);
     sleep( 11);
-    ASSERT_TRUE( c_manager.canBeServed(stream.request));
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->staled);
+    ASSERT_TRUE( c_manager.canBeServedFromCache(stream.request));
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled);
     sleep( 3);
-    ASSERT_TRUE( c_manager.canBeServed(stream.request));
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->staled);
+    ASSERT_TRUE( c_manager.canBeServedFromCache(stream.request));
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled);
     sleep( 5);
-    ASSERT_FALSE( c_manager.canBeServed(stream.request));
-    ASSERT_TRUE( c_manager.getCachedObject(stream.request)->staled);
+    ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled);
 }

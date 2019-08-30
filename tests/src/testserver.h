@@ -25,39 +25,39 @@ public:
     int new_fd;
     char *buf = "Hello! I am the server";
     switch (event_type) {
-      case DISCONNECT: {
+      case EVENT_TYPE::DISCONNECT: {
           deleteFd(fd);
           ::close(fd);
           break;
       }
-      case CONNECT: {
+      case EVENT_TYPE::CONNECT: {
           switch (event_group) {
           case EVENT_GROUP::ACCEPTOR: {
                 do {
                     new_fd = lst.doAccept();
                     if (new_fd > 0)
-                      addFd(new_fd, READ, EVENT_GROUP::SERVER);
+                      addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::SERVER);
                   }while(new_fd > 0);
               }
             }
           break;
         }
-      case READ: {
+      case EVENT_TYPE::READ: {
           switch(event_group) {
           case EVENT_GROUP::SERVER: {
                 auto data = Network::read(fd);
                 if (data.length() > 0)
                    EXPECT_EQ(data.length(),22);
-                updateFd(fd, WRITE, EVENT_GROUP::SERVER);
+                updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
               }
             }
           break;
         }
-      case WRITE: {
+      case EVENT_TYPE::WRITE: {
           switch(event_group) {
           case EVENT_GROUP::SERVER: {
                 write(fd, buf, strlen(buf));
-                updateFd(fd, READ, EVENT_GROUP::SERVER);
+                updateFd(fd, EVENT_TYPE::READ, EVENT_GROUP::SERVER);
               }
             }
         }
@@ -89,16 +89,16 @@ public:
     char *buf = "Hello! I am the client";
     char *check_buf = "Hello! I am the server";
     switch(event_type){
-      case WRITE: {
+      case EVENT_TYPE::WRITE: {
         switch(event_group) {
         case EVENT_GROUP::CLIENT: {
             connections_set.at(fd)->write(buf, strlen(buf));
-            updateFd(fd, READ, EVENT_GROUP::CLIENT);
+            updateFd(fd, EVENT_TYPE::READ, EVENT_GROUP::CLIENT);
           }
         }
         break;
       }
-      case READ: {
+      case EVENT_TYPE::READ: {
         switch(event_group) {
         case EVENT_GROUP::CLIENT: {
             auto connect = connections_set.at(fd);
