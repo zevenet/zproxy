@@ -93,5 +93,6 @@ public:
     long int last_mod = -1;
     long int expires = -1;
     bool isCached();
+    std::string str_buffer;
 #endif
 };

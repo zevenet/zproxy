@@ -473,34 +473,25 @@ void StreamManager::onRequestEvent(int fd) {
                   stream->request.c_opt.only_if_cached)) {
         DEBUG_COUNTER_HIT(cache_stats__::cache_match);
         stream->response.reset_parser();
-        if (service->getResponseFromCache(stream->request, stream->response, stream->backend_connection.str_buffer) !=
-            0) {
-          stream->replyError(
-              HttpStatus::Code::GatewayTimeout,
-              HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout)
-                  .c_str(),
-              "", this->listener_config_, *this->ssl_manager);
-          this->clearStream(stream);
-          return;
-        }
+        if ( service->getResponseFromCache(stream->request, stream->response, stream->backend_connection.str_buffer) == 0){
+            http_manager::validateResponse(*stream, listener_config_);
 
-        http_manager::validateResponse(*stream, listener_config_);
-
-        if (http::http_info::http_verbs.at(std::string(
-                stream->request.method, stream->request.method_len)) ==
-            http::REQUEST_METHOD::HEAD) {
-          // If HTTP verb is HEAD, just send headers
-          stream->response.buffer_size =
-              stream->response.buffer_size - stream->response.message_length;
-          stream->response.message = nullptr;
-          stream->response.message_length = 0;
-          stream->response.message_bytes_left = 0;
+            if (http::http_info::http_verbs.at(std::string(
+                    stream->request.method, stream->request.method_len)) ==
+                http::REQUEST_METHOD::HEAD) {
+              // If HTTP verb is HEAD, just send headers
+              stream->response.buffer_size =
+                  stream->response.buffer_size - stream->response.message_length;
+              stream->response.message = nullptr;
+              stream->response.message_length = 0;
+              stream->response.message_bytes_left = 0;
+            }
+            stream->client_connection.buffer_size = 0;
+            stream->request.headers_sent = false;
+            stream->backend_connection.buffer_size = stream->response.buffer_size;
+            stream->client_connection.enableWriteEvent();
+            return;
         }
-        stream->client_connection.buffer_size = 0;
-        stream->request.headers_sent = false;
-        stream->backend_connection.buffer_size = stream->response.buffer_size;
-        stream->client_connection.enableWriteEvent();
-        return;
       }
       else{
           DEBUG_COUNTER_HIT(cache_stats__::cache_miss);
@@ -509,6 +500,11 @@ void StreamManager::onRequestEvent(int fd) {
           stream->response.headers_sent = false;
           stream->backend_connection.buffer_size = 0;
       }
+      DEBUG_COUNTER_HIT(cache_stats__::cache_miss);
+      stream->response.reset_parser();
+      stream->response.cached = false;
+      stream->response.headers_sent = false;
+      stream->backend_connection.buffer_size = 0;
     }
 
 #endif
