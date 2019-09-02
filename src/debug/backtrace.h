@@ -9,6 +9,8 @@
 #include <execinfo.h>
 #include "Debug.h"
 #include "../util/utils.h"
+#include <sys/resource.h>
+#include <cassert>
 
 namespace debug {
 static void printBackTrace(int max_stack_size = 100) {
@@ -22,6 +24,12 @@ static void printBackTrace(int max_stack_size = 100) {
       Debug::logmsg(LOG_ERR, "** %d/%lu ** %s ", frame_idx, frame_count - 1, frames[frame_idx]);
     }
   }
+}
+
+// enable core dumps for debug builds on crash
+static void enableCoreDump(){
+  struct rlimit core_limit = {RLIM_INFINITY, RLIM_INFINITY};
+  assert(setrlimit(RLIMIT_CORE, &core_limit) == 0);
 }
 
 static void EnableBacktraceOnTerminate() {
