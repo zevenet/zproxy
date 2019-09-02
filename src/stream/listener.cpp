@@ -88,7 +88,7 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     // root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new
     // JsonDataValue(Counter<HttpStream>)));
     double vm, rss;
-    Debug::process_mem_usage(vm, rss);
+    SystemInfo::getMemoryUsed(vm, rss);
     status->emplace("VM",
                     std::unique_ptr<JsonDataValue>(
                       new JsonDataValue(vm)));

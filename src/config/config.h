@@ -21,11 +21,11 @@
 #include <openssl/lhash.h>
 
 #ifndef F_CONF
-#define F_CONF "/usr/local/etc/pound.cfg"
+#define F_CONF "/usr/local/etc/zhttp.cfg"
 #endif
 
 #ifndef F_PID
-#define F_PID "/var/run/pound.pid"
+#define F_PID "/var/run/zhttp.pid"
 #endif
 
 /* Timeout for RSA ephemeral keys generation */

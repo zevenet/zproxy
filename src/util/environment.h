@@ -111,6 +111,16 @@ public:
     return false;
   }
 
+  static bool removePidFile(const std::string &pid_file_name) {
+    struct stat info;
+    if (lstat(pid_file_name.data(), &info) != 0) return false;
+    if (!S_ISREG(info.st_mode)) return false;
+    if (info.st_uid != getuid()) return false;
+    if (info.st_size > static_cast<int>(sizeof("65535\r\n"))) return false;
+    unlink(pid_file_name.data());
+    return true;
+  }
+
   static bool setChrootRoot(const std::string &chroot_path) {
     if (!chroot_path.empty()) {
       if (::chroot(chroot_path.c_str())) {
@@ -126,18 +136,18 @@ public:
     return false;
   }
 
+  // Increase num file descriptor ulimit
   static bool setUlimitData() {
-    // Increase num file descriptor ulimit
-    // TODO:: take outside main initialization
-    Debug::logmsg(LOG_DEBUG,"System info:");
-    Debug::logmsg(LOG_DEBUG,"\tL1 Data cache size: %lu", SystemInfo::data()->getL1DataCacheSize());
-    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu",SystemInfo::data()->getL1DataCacheLineSize());
-    Debug::logmsg(LOG_DEBUG,"\tL2 Cache size: %lu",SystemInfo::data()->getL2DataCacheSize());
-    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu" ,SystemInfo::data()->getL2DataCacheLineSize());
+
+//    Debug::logmsg(LOG_DEBUG,"System info:");
+//    Debug::logmsg(LOG_DEBUG,"\tL1 Data cache size: %lu", SystemInfo::data()->getL1DataCacheSize());
+//    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu",SystemInfo::data()->getL1DataCacheLineSize());
+//    Debug::logmsg(LOG_DEBUG,"\tL2 Cache size: %lu",SystemInfo::data()->getL2DataCacheSize());
+//    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu" ,SystemInfo::data()->getL2DataCacheLineSize());
     rlimit r{};
     ::getrlimit(RLIMIT_NOFILE, &r);
-    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tCurrent %lu" , r.rlim_cur);
-    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tMaximum %lu" , ::sysconf(_SC_OPEN_MAX));
+//    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tCurrent %lu" , r.rlim_cur);
+//    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tMaximum %lu" , ::sysconf(_SC_OPEN_MAX));
     if (r.rlim_cur != r.rlim_max) {
       r.rlim_cur = r.rlim_max;
       if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
@@ -146,7 +156,7 @@ public:
       }
     }
     ::getrlimit(RLIMIT_NOFILE, &r);
-    Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+//    Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
     return true;
   }
 

@@ -1,5 +1,7 @@
 #include "config.h"
+#define SYSLOG_NAMES
 #include "../debug/Debug.h"
+#undef SYSLOG_NAMES
 #include "../version.h"
 
 int Config::numthreads = 0;
@@ -864,7 +866,7 @@ ListenerConfig *Config::parse_HTTPS() {
         SSL_CTX_set_mode(pc->ctx, SSL_MODE_RELEASE_BUFFERS);
         SSL_CTX_set_options(pc->ctx, ssl_op_enable);
         SSL_CTX_clear_options(pc->ctx, ssl_op_disable);
-        sprintf(lin, "%d-Pound-%ld", getpid(), random());
+        sprintf(lin, "%d-Zhttp-%ld", getpid(), random());
         SSL_CTX_set_session_id_context(pc->ctx, (unsigned char *) lin,
                                        strlen(lin));
         SSL_CTX_set_tmp_rsa_callback(pc->ctx, RSA_tmp_callback);
@@ -1490,7 +1492,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
 #endif
       SSL_CTX_clear_options(res->ctx, SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION);
       SSL_CTX_clear_options(res->ctx, SSL_OP_LEGACY_SERVER_CONNECT);
-      sprintf(lin, "%d-Pound-%ld", getpid(), random());
+      sprintf(lin, "%d-Zhttp-%ld", getpid(), random());
       SSL_CTX_set_session_id_context(res->ctx, (unsigned char *) lin,
                                      strlen(lin));
       SSL_CTX_set_tmp_rsa_callback(res->ctx, RSA_tmp_callback);

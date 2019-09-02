@@ -2,6 +2,7 @@
 #include "ctl/ControlManager.h"
 #include "stream/listener.h"
 #include "util/system.h"
+#include "debug/backtrace.h"
 #include <csetjmp>
 #include <csignal>
 
@@ -17,15 +18,33 @@ std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
-  Debug::logmsg(LOG_INFO, "Signal %s received, Exiting..\n",
-                ::strsignal(sig));
-  auto cm = ctl::ControlManager::getInstance();
-  cm->stop();
-//  ::longjmp(jmpbuf, 1);
+
+  Debug::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
+  switch (sig) {
+  case SIGINT:
+  case SIGHUP:
+  case SIGTERM: {
+    auto cm = ctl::ControlManager::getInstance();
+    cm->stop();
+    break;
+  }
+  case SIGABRT:
+  case SIGSEGV: {
+    debug::printBackTrace();
+    std::exit(EXIT_FAILURE);
+  }
+  default: {
+    //  ::longjmp(jmpbuf, 1);
+  }
+  }
+
 }
 
 
 int main(int argc, char *argv[]) {
+
+  debug::EnableBacktraceOnTerminate();
+
   Listener listener;
   auto control_manager = ctl::ControlManager::getInstance();
 
@@ -61,6 +80,7 @@ int main(int argc, char *argv[]) {
   ::signal(SIGTERM, handleInterrupt);
   ::signal(SIGABRT, handleInterrupt);
   ::signal(SIGHUP, handleInterrupt);
+  ::signal(SIGSEGV, handleInterrupt);
 
   ::umask(077);
   ::srandom(static_cast<unsigned int>(::getpid()));
