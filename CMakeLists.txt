@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.6)
 
 if(EXISTS CMakeLists.txt)
-	  message(FATAL_ERROR"Please create a cmake build directory, running cmake form source tree root is not allowed\n")
+    message(FATAL_ERROR"Please create a cmake build directory, running cmake form source tree root is not allowed\n")
 endif()
 
 project(zhttp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 if (NOT CMAKE_BUILD_TYPE)
-	  set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Release)
 endif ()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -55,56 +55,56 @@ EXECUTE_PROCESS( COMMAND uname -srm COMMAND tr -d '\n' OUTPUT_VARIABLE PROJECT_H
 
 # get current git info
 if (EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD")
-	  file(READ "${PROJECT_SOURCE_DIR}/.git/HEAD"
-			  PROJECT_SOURCE_VERSION)
-			if ("${PROJECT_SOURCE_VERSION}" MATCHES "^ref:")
-				string(REGEX REPLACE "^ref: *([^ \n\r]*).*" "\\1"
-					  PROJECT_GIT_REF "${PROJECT_SOURCE_VERSION}")
-					file(READ "${PROJECT_SOURCE_DIR}/.git/${PROJECT_GIT_REF}"
-						PROJECT_SOURCE_VERSION)
-				endif ()
-		string(STRIP "${PROJECT_SOURCE_VERSION}"
-			  PROJECT_SOURCE_VERSION)
+    file(READ "${PROJECT_SOURCE_DIR}/.git/HEAD"
+        PROJECT_SOURCE_VERSION)
+    if ("${PROJECT_SOURCE_VERSION}" MATCHES "^ref:")
+        string(REGEX REPLACE "^ref: *([^ \n\r]*).*" "\\1"
+            PROJECT_GIT_REF "${PROJECT_SOURCE_VERSION}")
+        file(READ "${PROJECT_SOURCE_DIR}/.git/${PROJECT_GIT_REF}"
+            PROJECT_SOURCE_VERSION)
+    endif ()
+    string(STRIP "${PROJECT_SOURCE_VERSION}"
+        PROJECT_SOURCE_VERSION)
 endif ()
 
 # get build date and time
 
 execute_process(COMMAND "date" "+%d %b %Y/%H:%M:%S"
-	  OUTPUT_VARIABLE DATE_TIME)
+    OUTPUT_VARIABLE DATE_TIME)
 string(REGEX REPLACE "([^/]*)/.*" "\\1"
-	  PROJECT_BUILD_DATE "${DATE_TIME}")
+    PROJECT_BUILD_DATE "${DATE_TIME}")
 string(REGEX REPLACE "[^/]*/([0-9:]*).*" "\\1"
-	  PROJECT_BUILD_TIME "${DATE_TIME}")
+    PROJECT_BUILD_TIME "${DATE_TIME}")
 
 configure_file(
-	  "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
-		"${PROJECT_SOURCE_DIR}/src/version.h"
-		)
+    "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
+    "${PROJECT_SOURCE_DIR}/src/version.h"
+    )
 
 configure_file(
-	  "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
-		"${PROJECT_SOURCE_DIR}/build-pkg/project-info"
-		)
+    "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
+    "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
+    )
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
-add_definitions(-DCACHE_ENABLED=0)
+add_definitions(-DCACHE_ENABLED=1)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z -fpermissive  -Wshadow -pipe -pthread")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
 
 if (ENABLE_HEAP_PROFILER)
-	add_definitions(-DENABLE_HEAP_PROFILE)
-#	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer -fsanitize-address-use-after-scope -O2 -g")
-#	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-#	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
-		                           -fno-builtin-realloc -fno-builtin-free")
+    add_definitions(-DENABLE_HEAP_PROFILE)
+    #	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer -fsanitize-address-use-after-scope -O2 -g")
+    #	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+    #	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
+        -fno-builtin-realloc -fno-builtin-free")
 endif ()
 
 if (UNIQUE_BUILD_DIRECTORY)
-	  SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
+    SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
 endif ()
 
 
@@ -113,8 +113,8 @@ pkg_check_modules(PC_PCRE QUIET libpcre)
 
 set(PCRE_DEFINITIONS ${PC_PCRE_CFLAGS_OTHER})
 find_path(PCRE_INCLUDE_DIR pcre.h
-	  HINTS ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS}
-		PATH_SUFFIXES pcre)
+    HINTS ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS}
+    PATH_SUFFIXES pcre)
 
 find_library(PCRE_PCRE_LIBRARY NAMES pcre HINTS ${PC_PCRE_LIBDIR} ${PC_PCRE_LIBRARY_DIRS})
 
@@ -132,45 +132,46 @@ find_package(Threads)
 find_package(PkgConfig REQUIRED)
 
 if (BUNDLED_ZLIB)
-	  #
-		# zlib
-		#
-		message(STATUS "Building zlib")
-		include(ExternalProject)
-		include(GNUInstallDirs)
-		set(ZLIB_BUNDLE_DIR "${MAINFOLDER}/build/zlib/src/zlib")
-		set(ZLIB_INSTALL_DIR "${MAINFOLDER}/build/zlib/target")
-		set(ZLIB_INCLUDE_DIR "${MAINFOLDER}/build/zlib/target/include")
-		set(ZLIB_LIBRARY_SO "${ZLIB_INSTALL_DIR}/lib/libz.so")
-		set(ZLIB_LIBRARIES "${ZLIB_INSTALL_DIR}/lib/libz.a")
-		set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
-		message(STATUS "Using bundled zlib in '${ZLIB_BUNDLE_DIR}'")
-		#Debug build
-		# ./config --prefix=/usr/local/ssl --zlibdir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
-		ExternalProject_Add( zlib
-			  URL "http://zlib.net/zlib-1.2.11.tar.gz"
-				CONFIGURE_COMMAND ./configure --static --prefix=${ZLIB_INSTALL_DIR}
-				BUILD_COMMAND make -j8
-				BUILD_IN_SOURCE 1
-				INSTALL_COMMAND make install -j8 )
+    #
+    # zlib
+    #
+    message(STATUS "Building zlib")
+    include(ExternalProject)
+    include(GNUInstallDirs)
+    set(ZLIB_BUNDLE_DIR "${MAINFOLDER}/build/zlib/src/zlib")
+    set(ZLIB_INSTALL_DIR "${MAINFOLDER}/build/zlib/target")
+    set(ZLIB_INCLUDE_DIR "${MAINFOLDER}/build/zlib/target/include")
+    set(ZLIB_LIBRARY_SO "${ZLIB_INSTALL_DIR}/lib/libz.so")
+    set(ZLIB_LIBRARIES "${ZLIB_INSTALL_DIR}/lib/libz.a")
+    set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
+    message(STATUS "Using bundled zlib in '${ZLIB_BUNDLE_DIR}'")
+    #Debug build
+    # ./config --prefix=/usr/local/ssl --zlibdir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+    ExternalProject_Add( zlib
+        URL "http://zlib.net/zlib-1.2.11.tar.gz"
+        CONFIGURE_COMMAND ./configure --static --prefix=${ZLIB_INSTALL_DIR}
+        BUILD_COMMAND make -j8
+        BUILD_IN_SOURCE 1
+        INSTALL_COMMAND make install -j8 )
 
-			#    set(ENV{PKG_CONFIG_PATH} "${ZLIB_INSTALL_DIR}/lib/pkgconfig")
-		#add_dependencies(zlib)
-		include_directories(${ZLIB_INCLUDE_DIR})
-		link_directories(${ZLIB_INSTALL_DIR}/lib)
+    #    set(ENV{PKG_CONFIG_PATH} "${ZLIB_INSTALL_DIR}/lib/pkgconfig")
+    #add_dependencies(zlib)
+    include_directories(${ZLIB_INCLUDE_DIR})
+    link_directories(${ZLIB_INSTALL_DIR}/lib)
 else ()
-	  find_package(ZLIB)
-		if (ZLIB_FOUND)
-			  message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
-				message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
-				include_directories(${ZLIB_INCLUDE_DIRS})
-				message(STATUS "Using Zlib ${ZLIB_VERSION}")
-			endif ()
+    find_package(ZLIB REQUIRED)
+    if (ZLIB_FOUND)
+        message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
+        message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
+        include_directories(${ZLIB_INCLUDE_DIRS})
+        message(STATUS "Using Zlib ${ZLIB_VERSION}")
+    endif ()
 endif()
 
 set(ENV{PKG_CONFIG_PATH} "/usr/lib/x86_64-linux-gnu/pkgconfig")
 if(MEMCACHED_ENABLED)
-# Search memcached
+    # Search memcached
+    add_definitions(-DMEMCACHED_ENABLED=1)
     pkg_search_module(MEMCACHED libmemcached REQUIRED)
     #<XPREFIX>_FOUND          ... set to 1 if module(s) exist
     #<XPREFIX>_LIBRARIES      ... only the libraries (w/o the '-l')
@@ -183,72 +184,71 @@ if(MEMCACHED_ENABLED)
 
 
     if (MEMCACHED_FOUND)
-    message(STATUS "Memcached includes ${MEMCACHED_INCLUDE_DIRS}")
-    message(STATUS "Memcached link ${MEMCACHED_LIBRARIES}")
-    include_directories(${MEMCACHED_INCLUDE_DIRS})
-    message(STATUS "Using memcached ${MEMCACHED_VERSION}")
+        message(STATUS "Memcached includes ${MEMCACHED_INCLUDE_DIRS}")
+        message(STATUS "Memcached link ${MEMCACHED_LIBRARIES}")
+        include_directories(${MEMCACHED_INCLUDE_DIRS})
+        message(STATUS "Using memcached ${MEMCACHED_VERSION}")
     else ()
-    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
+        # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
     endif ()
+else()
+            add_definitions(-DMEMCACHED_ENABLED=0)
 endif()
-#
-include_directories(/usr/include/openssl-1.0)
-link_directories(/usr/lib/openssl-1.0)
 
 if (BUNDLED_OPENSSL)
-	  #
-		# OpenSSL
-		#
-		message(STATUS "Building openssl")
-		include(ExternalProject)
-		include(GNUInstallDirs)
-		set(OPENSSL_BUNDLE_DIR "${MAINFOLDER}/build/openssl/src/openssl")
-		set(OPENSSL_INSTALL_DIR "${MAINFOLDER}/build/openssl/target")
-		set(OPENSSL_INCLUDE_DIR "${MAINFOLDER}/build/openssl/target/include")
-		set(OPENSSL_LIBRARY_SSL_SO "${OPENSSL_INSTALL_DIR}/lib/libssl.so")
-		set(OPENSSL_LIBRARY_CRYPTO_SO "${OPENSSL_INSTALL_DIR}/lib/libcrypto.so")
-		set(OPENSSL_LIBRARY_SSL "${OPENSSL_INSTALL_DIR}/lib/libssl.a")
-		set(OPENSSL_LIBRARY_CRYPTO "${OPENSSL_INSTALL_DIR}/lib/libcrypto.a")
-		set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
-		message(STATUS "Using bundled openssl in '${OPENSSL_BUNDLE_DIR}'")
-		#Debug build
-		# ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
-		ExternalProject_Add(openssl
-				URL "https://www.openssl.org/source/openssl-1.1.1c.tar.gz"
-				CONFIGURE_COMMAND ./config shared --prefix=${OPENSSL_INSTALL_DIR} -lz -ldl -O2
-				BUILD_COMMAND make -j8
-				BUILD_IN_SOURCE 1
-				BUILD_BYPRODUCTS ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO}
-				INSTALL_COMMAND make install -j8)
-			set(ENV{PKG_CONFIG_PATH} "${OPENSSL_INSTALL_DIR}/lib/pkgconfig")
-		#add_dependencies(openssl)
-		include_directories(${OPENSSL_INCLUDE_DIR})
-		link_directories(${OPENSSL_INSTALL_DIR}/lib)
+    #
+    # OpenSSL
+    #
+    message(STATUS "Building openssl")
+    include(ExternalProject)
+    include(GNUInstallDirs)
+    set(OPENSSL_BUNDLE_DIR "${MAINFOLDER}/build/openssl/src/openssl")
+    set(OPENSSL_INSTALL_DIR "${MAINFOLDER}/build/openssl/target")
+    set(OPENSSL_INCLUDE_DIR "${MAINFOLDER}/build/openssl/target/include")
+    set(OPENSSL_LIBRARY_SSL_SO "${OPENSSL_INSTALL_DIR}/lib/libssl.so")
+    set(OPENSSL_LIBRARY_CRYPTO_SO "${OPENSSL_INSTALL_DIR}/lib/libcrypto.so")
+    set(OPENSSL_LIBRARY_SSL "${OPENSSL_INSTALL_DIR}/lib/libssl.a")
+    set(OPENSSL_LIBRARY_CRYPTO "${OPENSSL_INSTALL_DIR}/lib/libcrypto.a")
+    set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
+    message(STATUS "Using bundled openssl in '${OPENSSL_BUNDLE_DIR}'")
+    #Debug build
+    # ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+    ExternalProject_Add(openssl
+        URL "https://www.openssl.org/source/openssl-1.1.1c.tar.gz"
+        CONFIGURE_COMMAND ./config shared --prefix=${OPENSSL_INSTALL_DIR} -lz -ldl -O2
+        BUILD_COMMAND make -j8
+        BUILD_IN_SOURCE 1
+        BUILD_BYPRODUCTS ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO}
+        INSTALL_COMMAND make install -j8)
+    set(ENV{PKG_CONFIG_PATH} "${OPENSSL_INSTALL_DIR}/lib/pkgconfig")
+    #add_dependencies(openssl)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    link_directories(${OPENSSL_INSTALL_DIR}/lib)
 else ()
-	  pkg_search_module(OPENSSL openssl)
-		if (OPENSSL_FOUND)
-			  message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
-				message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
-				include_directories(${OPENSSL_INCLUDE_DIRS})
-				message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
-			endif()
+    pkg_search_module(OPENSSL openssl)
+    if (OPENSSL_FOUND)
+        message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
+        message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
+        include_directories(${OPENSSL_INCLUDE_DIRS})
+        message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+    endif()
 endif ()
 
 # TODO: In the future it would be needed to set the directory, probably with
 # the current src directory or the data directory.
 if (GENERATE_DH_512)
-	  message(STATUS "Generating DH EC 512 parameters file")
-		execute_process(COMMAND "openssl dhparam -5 -C -noout 512 > dh512.h")
+    message(STATUS "Generating DH EC 512 parameters file")
+    execute_process(COMMAND "openssl dhparam -5 -C -noout 512 > dh512.h")
 endif()
 
 if (GENERATE_DH_2048)
-	  message(STATUS "Generating DH EC 2048 parameters file")
-		execute_process(COMMAND "openssl" "dhparam -5 -C -noout 2048 > dh2048.h")
-		execute_process(COMMAND "openssl dhparam -5 -out dh2048.pem 2048")
+    message(STATUS "Generating DH EC 2048 parameters file")
+    execute_process(COMMAND "openssl" "dhparam -5 -C -noout 2048 > dh2048.h")
+    execute_process(COMMAND "openssl dhparam -5 -out dh2048.pem 2048")
 endif()
 
 if (BUILD_TESTS)
-	  add_subdirectory(tests)
+    add_subdirectory(tests)
 endif ()
 add_subdirectory(src)
 add_subdirectory(src/ctl)
@@ -259,42 +259,42 @@ target_link_libraries(zhttp libzhttp)
 
 # Doxygen Build
 if (BUILD_DOC)
-	  find_package(Doxygen)
-		if (DOXYGEN_FOUND)
-			  set(BUILD_DOC_DIR ${MAINFOLDER}/build/docs)
-				if (NOT EXISTS ${BUILD_DOC_DIR})
-					message("The directory ${BUILD_DOC_DIR} does not exists")
-					file(MAKE_DIRECTORY ${BUILD_DOC_DIR})
-				endif ()
-				message("The directory ${BUILD_DOC_DIR} exists")
+    find_package(Doxygen)
+    if (DOXYGEN_FOUND)
+        set(BUILD_DOC_DIR ${MAINFOLDER}/build/docs)
+        if (NOT EXISTS ${BUILD_DOC_DIR})
+            message("The directory ${BUILD_DOC_DIR} does not exists")
+            file(MAKE_DIRECTORY ${BUILD_DOC_DIR})
+        endif ()
+        message("The directory ${BUILD_DOC_DIR} exists")
 
-				set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
-				set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-				configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
+        set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+        configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
 
-				message("Doxygen build started")
-				add_custom_target(Doxygen ALL
-					  COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-						COMMENT "Generating API documentation with Doxygen"
-						VERBATIM)
-				else (DOXYGEN_FOUND)
-					message("Doxygen needs to be installed to generate the documentation.")
-			endif (DOXYGEN_FOUND)
+        message("Doxygen build started")
+        add_custom_target(Doxygen ALL
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            VERBATIM)
+    else (DOXYGEN_FOUND)
+        message("Doxygen needs to be installed to generate the documentation.")
+    endif (DOXYGEN_FOUND)
 endif ()
 
 #project deployment
 macro(add_deployment_file SRC DEST)
-	  file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-		file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
+    file(RELATIVE_PATH path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+    file(APPEND "${CMAKE_SOURCE_DIR}/QtCreatorDeployment.txt" "${path}/${SRC}:${DEST}\n")
 endmacro()
 
 macro(add_deployment_directory SRC DEST)
-	  file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
-		foreach (filename ${files})
-			  get_filename_component(path ${filename} PATH)
-				add_deployment_file("${filename}" "${DEST}/${path}")
-			endforeach (filename)
+    file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SRC}/*")
+    foreach (filename ${files})
+        get_filename_component(path ${filename} PATH)
+        add_deployment_file("${filename}" "${DEST}/${path}")
+    endforeach (filename)
 endmacro()
 
 #install
