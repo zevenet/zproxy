@@ -391,6 +391,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           response.headers[i].header_off = true;
         break;
       case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+          break;
 #if CACHE_ENABLED
       case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
         std::vector<string> cache_directives;
