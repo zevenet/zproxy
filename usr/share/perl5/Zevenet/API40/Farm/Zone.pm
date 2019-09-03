@@ -391,15 +391,27 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# read resource
-	my $resource = $res_aref->[$id_resource];
+	my $resource;
 	my $rsc;
+	my $resource_orig;
+	my $i;
+
+	for ( $i = 0 ; $i <= $#$res_aref ; $i++ )
+	{
+		if ( $res_aref->[$i]->{ id } eq $id_resource )
+		{
+			$resource      = $res_aref->[$i];
+			$resource_orig = $resource;
+		}
+	}
+
 	$rsc->{ rname } = $json_obj->{ rname } // $resource->{ rname };
-	$rsc->{ ttl }   = $json_obj->{ ttl }   // $resource->{ ttl };
-	$rsc->{ type }  = $json_obj->{ type }  // $resource->{ type };
+	$rsc->{ ttl }   = $json_obj->{ ttl } // $resource->{ ttl };
+	$rsc->{ type }  = $json_obj->{ type } // $resource->{ type };
 	$rsc->{ rdata } = $json_obj->{ rdata } // $resource->{ rdata };
 
 	# validate RESOURCE
-	unless ( defined $res_aref->[$id_resource] )
+	unless ( defined $resource )
 	{
 		my $msg = "Could not find the requested resource.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -421,10 +433,10 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $rdata_msg );
 		}
 
-		unless ( grep ( /^$rsc->{ rdata }$/, &getGSLBFarmServices( $farmname ) )
-				 && $rsc->{ type } eq 'DYNA' )
+		if ( !grep ( /^$resource_orig->{ rdata }$/, &getGSLBFarmServices( $farmname ) )
+			 && $resource_orig->{ type } eq "DYNA" )
 		{
-			my $msg = "The service $rsc->{ rdata } has not been found";
+			my $msg = "The service $resource_orig->{ rdata } has not been found";
 			return
 			  &httpErrorResponse(
 								  code => 404,
@@ -625,7 +637,7 @@ sub delete_zone_resource    # ( $farmname, $zone, $resource )
 	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	unless ( defined $res_aref->[$resource] )
+	unless ( defined $resource )
 	{
 		my $msg = "Could not find the requested resource.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
