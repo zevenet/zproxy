@@ -10,7 +10,10 @@
 #include "t_compression.h"
 #include "tst_basictest.h"
 #include "t_sslcontext.h"
+#if CACHE_ENABLED
+#include "t_cache.h"
 #include "t_cache_storage.h"
+#endif
 std::mutex Debug::log_lock;
 int Debug::log_level = 8;
 int Debug::log_facility = -1;
