@@ -314,4 +314,65 @@ STORAGE_STATUS DiskCacheStorage::deleteInStorage(string path)
     return STORAGE_STATUS::SUCCESS;
 }
 
+#if CACHE_STORAGE_STDMAP
+STORAGE_TYPE StdmapCacheStorage::getStorageType(){
+    return STORAGE_TYPE::STDMAP;
+}
+STORAGE_STATUS StdmapCacheStorage::initCacheStorage( const size_t max_size,const std::string m_point ){
+    this->mount_path = m_point;
+    this->max_size = max_size;
+    return STORAGE_STATUS::SUCCESS;
+}
+STORAGE_STATUS StdmapCacheStorage::initServiceStorage (std::string svc){
+    this->svc = svc;
+    return STORAGE_STATUS::SUCCESS;
+}
+STORAGE_STATUS StdmapCacheStorage::getFromStorage( const std::string rel_path, std::string &out_buffer ){
+    std::string path = mount_path;
+    path += "/";
+    path += rel_path;
+    out_buffer = storage.at(path);
+    return STORAGE_STATUS::SUCCESS;
+}
+STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string rel_path, const std::string buffer, size_t response_size){
+    current_size += buffer.size();
+    std::string path = mount_path;
+    path.append("/");
+    path.append(rel_path);
+    storage[path] = std::string(buffer);
+    return STORAGE_STATUS::SUCCESS;
+}
+STORAGE_STATUS StdmapCacheStorage::stopCacheStorage(){
+
+    return STORAGE_STATUS::SUCCESS;
+}
+STORAGE_STATUS StdmapCacheStorage::appendData(const std::string rel_path, const std::string buffer){
+    std::string path = mount_path;
+    path.append("/");
+    path.append(rel_path);
+    std::string out_buffer = storage.at(path);
+    out_buffer.append(buffer);
+    storage[path] = out_buffer;
+    return STORAGE_STATUS::SUCCESS;
+}
+bool StdmapCacheStorage::isInStorage(const std::string svc, const std::string url){
+    std::string path = mount_path;
+    path.append( "/");
+    path.append(svc);
+    path.append("/");
+
+    size_t hashed_url = hash<std::string>()(url);
+    path += to_string(hashed_url);
+    return  isInStorage(path);
+}
+STORAGE_STATUS StdmapCacheStorage::deleteInStorage(std::string path){
+    return STORAGE_STATUS::SUCCESS;
+}
+bool StdmapCacheStorage::isInStorage( std::string path ){
+    if (storage.find(path) == storage.end())
+      return false;
+    else
+      return true;
+}
+#endif
 #endif

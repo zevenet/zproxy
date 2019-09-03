@@ -10,6 +10,7 @@ bool HttpCacheManager::isCached(const std::string &url) {
     auto c_object = getCacheObject(url);
     //Check what storage to use
     switch (c_object->storage){
+    case STORAGE_TYPE::STDMAP:
     case STORAGE_TYPE::RAMFS:
         return ram_storage->isInStorage(this->service_name,url);
     case STORAGE_TYPE::DISK:
@@ -111,8 +112,13 @@ STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
 
     if ( response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left )
         return STORAGE_TYPE::DISK;
+#if CACHE_STORAGE_STDMAP
+    else
+        return STORAGE_TYPE::STDMAP;
+#else
     else
         return STORAGE_TYPE::RAMFS;
+#endif
 }
 
 HttpCacheManager::~HttpCacheManager() {
@@ -152,6 +158,11 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
         ram_storage = MemcachedCacheStorage::getInstance();
         ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
         ram_storage->initServiceStorage(svc);
+#elif CACHE_STORAGE_STDMAP
+        ram_storage = StdmapCacheStorage::getInstance();
+        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
+        ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
+        svc_status = ram_storage->initServiceStorage(svc);
 #else
         ram_storage = RamfsCacheStorage::getInstance();
         ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
@@ -183,6 +194,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
 //  Debug::logmsg(LOG_NOTICE, "We are comparing values: message_length %d + headers_length %d = %d , against buffer_size: %d total: %d", response.message_length, response.headers_length, (response.message_length + response.headers_length), response.buffer_size, (response.content_length + response.headers_length - response.buffer_size) );
 //  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
   switch (c_object->storage){
+  case STORAGE_TYPE::STDMAP:
   case STORAGE_TYPE::RAMFS:
       if( isCached(request) )
       {
@@ -270,6 +282,9 @@ CacheObject * HttpCacheManager::createCacheObjectEntry( HttpResponse response ){
         case STORAGE_TYPE::DISK:
             c_object->storage = STORAGE_TYPE::DISK;
             break;
+        case STORAGE_TYPE::STDMAP:
+            c_object->storage = STORAGE_TYPE::STDMAP;
+            break;
         default:
             Debug::logmsg(LOG_ERR, "Not able to decide storage, exiting");
             exit(-1);
@@ -285,6 +300,7 @@ void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
     std::string rel_path = service_name + "/" + to_string(std::hash <std::string> () (url));
     //Check what storage to use
     switch (c_object->storage){
+    case STORAGE_TYPE::STDMAP:
     case STORAGE_TYPE::RAMFS:
         ram_storage->appendData(rel_path, std::string(msg, msg_size));
         break;
@@ -373,6 +389,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
   buffer = "";
   //Get the response from the right storage
   switch(c_object->storage){
+  case STORAGE_TYPE::STDMAP:
   case STORAGE_TYPE::RAMFS:
       ram_storage->getFromStorage(rel_path, buffer);
       break;
@@ -467,6 +484,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
             STORAGE_STATUS err;
             switch(c_object->storage)
             {
+                case STORAGE_TYPE::STDMAP:
                 case STORAGE_TYPE::RAMFS:
                     err = ram_storage->deleteInStorage(path);
                     break;
@@ -475,7 +493,6 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
                     break;
                 case STORAGE_TYPE::MEMCACHED:
                 case STORAGE_TYPE::TMPFS:
-                case STORAGE_TYPE::STDMAP:
                 default:
                     break;
             }

@@ -214,4 +214,29 @@ public:
     bool isInStorage(const std::string path);
 };
 
+class StdmapCacheStorage: public RamICacheStorage{
+private:
+    StdmapCacheStorage(){}
+    std::string svc;
+public:
+    static RamICacheStorage * getInstance() {
+        if (instance == nullptr)
+        {
+            instance = new StdmapCacheStorage();
+        }
+        return instance;
+    }
+    unordered_map <std::string, std::string> storage;
+    STORAGE_TYPE getStorageType() override;
+    STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
+    STORAGE_STATUS initServiceStorage (std::string svc) override;
+    STORAGE_STATUS getFromStorage( const std::string rel_path, std::string &out_buffer ) override;
+    STORAGE_STATUS putInStorage( const std::string rel_path, const std::string buffer, size_t response_size) override;
+    STORAGE_STATUS stopCacheStorage() override;
+    STORAGE_STATUS appendData(const std::string rel_path, const std::string buffer) override;
+    bool isInStorage(const std::string svc, const std::string url) override;
+    STORAGE_STATUS deleteInStorage(std::string path) override;
+    bool isInStorage( std::string path );
+};
+
 #endif
