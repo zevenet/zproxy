@@ -45,8 +45,3 @@ TEST(CacheTestStorage, InitializationTests ) {
     path += svc;
     ASSERT_FALSE(fs::exists(path));
 }
-
-TEST(CacheTestStorage, ConcurrencyTest){
-    pid_t pid; //determine child or parent
-
-}
