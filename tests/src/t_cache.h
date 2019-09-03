@@ -17,6 +17,7 @@
 /*
  * Tests start
  */
+using namespace cache_helper;
 
 TEST(CacheTest, ReadCacheConfigFileTest ) {
     char *argv[] = {"../bin/zhttp", "-f",
@@ -81,7 +82,8 @@ TEST(CacheTest, StoreResponseTest ) {
     c_manager.handleResponse(stream.response,stream.request);
     ASSERT_TRUE ( c_manager.isCached(stream.request) );
     //Check that the buffer stored is the same as the original
-    EXPECT_EQ ( c_manager.getResponseFromCache(stream.request,cached_response,buffer), response_buffer );
+    ASSERT_TRUE( c_manager.getResponseFromCache(stream.request,cached_response,buffer) == 0 );
+    EXPECT_EQ ( buffer , response_buffer ); //TODO:: check if cmp is correct
     //Check that the timeout is
     ASSERT_TRUE ( c_manager.getCacheObject(stream.request)->max_age == cache_timeout );
 }

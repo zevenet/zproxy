@@ -4,7 +4,7 @@
 #include "../../src/handlers/http_manager.h"
 #include <string>
 
-namespace CacheHelpers {
+namespace cache_helper {
 /*
  *
  * Functions created in order to use some other functions out of the scope of these tests
