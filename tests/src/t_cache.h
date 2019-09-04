@@ -75,12 +75,12 @@ TEST(CacheTest, StoreResponseTest ) {
     auto resp_ret = stream.response.parseResponse(response_buffer, &parsed);
     ASSERT_TRUE( resp_ret == http_parser::PARSE_RESULT::SUCCESS );
     //Check that isCached returns false while it hasn't been cached yet
-    ASSERT_FALSE ( c_manager.isCached(stream.request) );
+    ASSERT_FALSE ( c_manager.getCacheObject(stream.request) != nullptr );
     std::string buffer;
     HttpResponse cached_response;
     //Store and check that is stored
     c_manager.handleResponse(stream.response,stream.request);
-    ASSERT_TRUE ( c_manager.isCached(stream.request) );
+    ASSERT_TRUE (c_manager.getCacheObject(stream.request) != nullptr );
     //Check that the buffer stored is the same as the original
     ASSERT_TRUE( c_manager.getResponseFromCache(stream.request,cached_response,buffer) == 0 );
     EXPECT_EQ ( buffer , response_buffer ); //TODO:: check if cmp is correct
@@ -178,7 +178,7 @@ TEST(CacheTest, CcontrolNoCacheTest){
 
     c_manager.handleResponse(stream.response, stream.request);
 
-    ASSERT_FALSE( c_manager.isCached(stream.request));
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request) != nullptr );
     //Not cached, return false
     ASSERT_FALSE( c_manager.isFresh(stream.request));
 
@@ -192,7 +192,7 @@ TEST(CacheTest, CcontrolNoCacheTest){
     createResponse(&resp_buffer, &stream);
     c_manager.handleResponse(stream.response, stream.request);
     ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
-    ASSERT_TRUE( c_manager.isCached(stream.request));
+    ASSERT_TRUE( c_manager.getCacheObject(stream.request) != nullptr);
     ASSERT_TRUE( c_manager.isFresh(stream.request));
     time_t previous_time = c_manager.getCacheObject(stream.request)->date;
     //Update response timers
@@ -222,7 +222,7 @@ TEST(CacheTest, CcontrolNoStoreTest){
     createResponse(&resp_buffer, &stream);
     //Check if we can store
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_FALSE( c_manager.isCached(stream.request));
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request) != nullptr);
 
     //In request:
     c_control_values = "no-store";
@@ -232,7 +232,7 @@ TEST(CacheTest, CcontrolNoStoreTest){
     createResponse(&resp_buffer, &stream);
     //Check if we can store
     c_manager.handleResponse(stream.response, stream.request);
-    ASSERT_FALSE( c_manager.isCached(stream.request));
+    ASSERT_FALSE( c_manager.getCacheObject(stream.request) != nullptr);
 
 }
 

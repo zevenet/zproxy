@@ -1,26 +1,5 @@
 ﻿#if CACHE_ENABLED
 #include "HttpCacheManager.h"
-bool HttpCacheManager::isCached(HttpRequest &request) { return isCached(request.getUrl()); }
-
-bool HttpCacheManager::isCached(const std::string &url) {
-  size_t hashed_url = hashStr(url);
-  if (cache.find(hashed_url) == cache.end()) {
-    return false;
-  } else {
-    auto c_object = getCacheObject(url);
-    //Check what storage to use
-    switch (c_object->storage){
-    case STORAGE_TYPE::STDMAP:
-    case STORAGE_TYPE::RAMFS:
-        return ram_storage->isInStorage(this->service_name,url);
-    case STORAGE_TYPE::DISK:
-        return disk_storage->isInStorage(this->service_name,url);
-    default:
-        return false;
-    }
-  }
-}
-
 // Returns the cache content with all the information stored
 CacheObject *HttpCacheManager::getCacheObject(HttpRequest request) {
   return getCacheObject(request.getUrl());
@@ -70,7 +49,7 @@ void HttpCacheManager::handleResponse(HttpResponse response,
     storeResponse(response, request);
     break;
   case http::REQUEST_METHOD::HEAD:
-    if (isCached(request))
+    if (getCacheObject(request) != nullptr)
       updateResponse(response, request);
     break;
   default:
@@ -187,7 +166,7 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
 void HttpCacheManager::storeResponse(HttpResponse response,
                                      HttpRequest request) {
     CacheObject *c_object = createCacheObjectEntry(response);
-
+    auto old_object = getCacheObject(request);
   //Check what storage to use
   STORAGE_STATUS err;
   std::string rel_path = service_name + "/" + to_string(std::hash<std::string>()(request.getUrl()));
@@ -196,24 +175,17 @@ void HttpCacheManager::storeResponse(HttpResponse response,
   switch (c_object->storage){
   case STORAGE_TYPE::STDMAP:
   case STORAGE_TYPE::RAMFS:
-      if( isCached(request) )
-      {
-        //Decrement the old object size, to update the current size
-        auto old_object = getCacheObject(request);
+      if( old_object != nullptr )
         ram_storage->current_size -= (old_object->content_length + old_object->headers_size);
-      }
+
       err = ram_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
-      if (err == STORAGE_STATUS::SUCCESS){
+      if (err == STORAGE_STATUS::SUCCESS)
           DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
-      }
+
       break;
   case STORAGE_TYPE::DISK:
-      if( isCached(request) )
-      {
-        //Decrement the old object size, to update the current size
-        auto old_object = getCacheObject(request);
+      if( old_object != nullptr)
         disk_storage->current_size -= (old_object->content_length + old_object->headers_size);
-      }
       err = disk_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if (err == STORAGE_STATUS::SUCCESS)
           DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
@@ -325,39 +297,46 @@ bool HttpCacheManager::isFresh(HttpRequest &request) {
 
 // Check if the cached content can be served, depending on request
 // cache-control values
-bool HttpCacheManager::canBeServedFromCache(HttpRequest &request) {
-  if (request.c_opt.no_cache || (!request.cache_control && request.pragma) || !isCached(request))
-    return false;
+CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest &request) {
+    CacheObject *c_object = getCacheObject(request);
+    if( c_object == nullptr )
+        return nullptr;
+    //TODO: Dirty if cached
+    if (request.c_opt.no_cache || (!request.cache_control && request.pragma))
+        return nullptr;
 
-  bool serveable = isFresh(request);
-  std::time_t now = timeHelper::gmtTimeNow();
-  CacheObject *c_object = getCacheObject(request);
+    if (request.c_opt.only_if_cached)
+        return c_object;
+    //TODO: isfresh applies to   Cobject, must be of Cobject
+    bool serveable = isFresh(request);
 
-  // if staled and must revalidate is included, we MUST revalidate the
-  // response
-  if (!serveable && c_object->revalidate)
-    return false;
-  // If max-age request directive is set, we must check if the response
-  // complies
-  if (request.c_opt.max_age >= 0) {
-    if (!c_object->staled)
-      if ((now - c_object->date) > request.c_opt.max_age)
-        serveable = false;
-  }
-  // Check if complies with the request directive min-fresh
-  if (request.c_opt.min_fresh >= 0) {
-    if (!c_object->staled)
-      if ((now - c_object->date) > request.c_opt.min_fresh)
-        return false;
-  }
-  // Check if complies with the request directive max-stale
-  if (request.c_opt.max_stale >= 0) {
-    if (c_object->staled && !c_object->revalidate)
-      if ((now - c_object->date - c_object->max_age) < request.c_opt.max_stale)
-        serveable = true;
-  }
+    std::time_t now = timeHelper::gmtTimeNow();
 
-  return serveable;
+    // if staled and must revalidate is included, we MUST revalidate the
+    // response
+    if (!serveable && c_object->revalidate)
+        return nullptr;
+    // If max-age request directive is set, we must check if the response
+    // complies
+    if (request.c_opt.max_age >= 0) {
+        if (!c_object->staled)
+            if ((now - c_object->date) > request.c_opt.max_age)
+                serveable = false;
+    }
+    // Check if complies with the request directive min-fresh
+    if (request.c_opt.min_fresh >= 0) {
+        if (!c_object->staled)
+            if ((now - c_object->date) > request.c_opt.min_fresh)
+                return nullptr;
+    }
+    // Check if complies with the request directive max-stale
+    if (request.c_opt.max_stale >= 0) {
+        if (c_object->staled && !c_object->revalidate)
+            if ((now - c_object->date - c_object->max_age) < request.c_opt.max_stale)
+                serveable = true;
+    }
+
+    return serveable ? c_object : nullptr;
 }
 
 void HttpCacheManager::updateFreshness(CacheObject *c_object) {

@@ -90,20 +90,6 @@ public:
    */
   int getCacheTimeout() {  return this->cache_timeout; }
   /**
-   * @brief Checks whether the request is cached or not.
-   *
-   * @param http_request is the HttpRequest to check if the resource is cached or
-   * not.
-   * @return if the content is cached it returns true or false in other case
-   */
-  bool isCached(HttpRequest &request);
-  /**
-   * @brief isCached Checks whether the url has a cache response associated or not
-   * @param url the url to determine if the cache has its response stored
-   * @return returns true if cached or false if not
-   */
-  bool isCached(const std::string &url);
-  /**
    * @brief Checks whether the cached content is fresh or not, staling it if not
    * fresh.
    *
@@ -120,7 +106,7 @@ public:
    * not
    * @return if the content can be served it returns true or false in other case
    */
-  bool canBeServedFromCache(HttpRequest &request);
+  CacheObject * canBeServedFromCache(HttpRequest &request);
   /**
    * @brief get the cached object from the cache, which contains the cached
    * response
