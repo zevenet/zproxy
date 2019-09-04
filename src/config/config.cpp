@@ -181,10 +181,10 @@ void Config::parse_file() {
     } else if (!regexec(&Anonymise, lin, 4, matches, 0)) {
       anonymise = 1;
 #if CACHE_ENABLED
-    } else if (!regexec(&CacheThr, lin, 2, matches, 0)){
+    } else if (!regexec(&CacheThreshold, lin, 2, matches, 0)){
         int threshold = atoi(lin + matches[1].rm_so);
         if ( threshold <= 0 || threshold > 99 )
-           conf_err("Invalid value for cache threshold (CacheThr), must be between 1 and 99 (%)");
+           conf_err("Invalid value for cache threshold (CacheThreshold), must be between 1 and 99 (%)");
         this->cache_thr = threshold;
     } else if (!regexec(&CacheRamSize, lin, 3, matches, 0)){
         long size = atol(lin + matches[1].rm_so);
@@ -1597,7 +1597,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
 void Config::parseCache(ServiceConfig *const svc) {
   char lin[MAXBUF], *cp;
   if( cache_s == 0 || cache_thr == 0)
-    conf_err("There is no CacheRamSize nor CacheThr configured, exiting");
+    conf_err("There is no CacheRamSize nor CacheThreshold configured, exiting");
   regmatch_t matches[5];
   svc->cache_size = cache_s;
   svc->cache_threshold = cache_thr;
@@ -1919,7 +1919,7 @@ bool Config::compile_regex() {
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
                 regcomp(&CacheRamSize, "^[ \t]*CacheRamSize[ \t]+([1-9][0-9]*)([gmkbGMKB]*)[ \t]*$",
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-                regcomp(&CacheThr, "^[ \t]*CacheThr[ \t]+([1-9][0-9]*)[ \t]*$",
+                regcomp(&CacheThreshold, "^[ \t]*CacheThreshold[ \t]+([1-9][0-9]*)[ \t]*$",
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
                 regcomp(&MaxSize, "^[ \t]*MaxSize[ \t]+([1-9][0-9]*)[ \t]*$",
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED)
@@ -2045,7 +2045,7 @@ void Config::clean_regex() {
   regfree(&CacheContent);
   regfree(&CacheTO);
   regfree(&CacheRamSize);
-  regfree(&CacheThr);
+  regfree(&CacheThreshold);
   regfree(&MaxSize);
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
