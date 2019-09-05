@@ -132,6 +132,7 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
         ramfs_mount_point += "/"+ f_name;
         disk_mount_point += "/" + f_name;
         //Cache initialization
+        disk_storage = DiskCacheStorage::getInstance();
         STORAGE_STATUS svc_status;
 #if MEMCACHED_ENABLED
         ram_storage = MemcachedCacheStorage::getInstance();
@@ -152,7 +153,6 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
         if ( svc_status == STORAGE_STATUS::MPOINT_ALREADY_EXISTS )
             recoverCache(svc,STORAGE_TYPE::RAMFS);
 #endif
-        disk_storage = DiskCacheStorage::getInstance();
         disk_storage->initCacheStorage(0, disk_mount_point);
         //MPOINT EXISTS BUT IT IS NOT STILL INITIALIZED!!
         svc_status = disk_storage->initServiceStorage(svc);
