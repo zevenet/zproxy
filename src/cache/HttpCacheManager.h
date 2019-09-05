@@ -50,8 +50,8 @@ private:
   DiskICacheStorage * disk_storage;
   unordered_map<size_t, CacheObject *> cache; // Caching map
   regex_t *cache_pattern = nullptr;
-  std::string ramfs_mount_point = "/mnt/cache_ramfs";
-  std::string disk_mount_point = "/mnt/cache_disk";
+  std::string ramfs_mount_point = "/tmp/cache_ramfs";
+  std::string disk_mount_point = "/tmp/cache_disk";
 
   /**
    * @brief updateFreshness update the freshness for a single stored response

@@ -9,7 +9,7 @@ DiskICacheStorage * DiskICacheStorage::instance = nullptr;
 /*
  * RAMFS STORAGE
  */
-STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, std::string m_point ) {
+STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, double st_threshold, std::string svc, std::string m_point ) {
     STORAGE_STATUS ret = STORAGE_STATUS::SUCCESS;
     if ( initialized )
         return STORAGE_STATUS::ALREADY_INIT;
@@ -22,9 +22,11 @@ STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, std::string m
     if (mkdir(m_point.data(),0777) == -1) {
         if (errno == EEXIST)
         {
-            initialized = 1;
+            initialized = true;
             max_size = m_size;
             mount_path = m_point.data();
+            cache_thr = st_threshold;
+            //TODO: Recover from here
             return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
         }
         else
@@ -193,7 +195,7 @@ STORAGE_STATUS MemcachedStorage::appendData(const std::string svc, const std::st
 /*
  * DISK STORAGE
  */
-STORAGE_STATUS  DiskCacheStorage::initCacheStorage( size_t m_size, std::string m_point ) {
+STORAGE_STATUS  DiskCacheStorage::initCacheStorage( size_t m_size, double st_threshold, std::string svc, std::string m_point ) {
     STORAGE_STATUS ret = STORAGE_STATUS::SUCCESS;
     if ( initialized )
         return STORAGE_STATUS::ALREADY_INIT;
@@ -204,6 +206,7 @@ STORAGE_STATUS  DiskCacheStorage::initCacheStorage( size_t m_size, std::string m
             initialized = true;
             mount_path = m_point;
             current_size = 0;
+            //TODO: Recover
             return STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
         }
         if (errno != EEXIST)
@@ -313,15 +316,30 @@ STORAGE_STATUS DiskCacheStorage::deleteInStorage(string path)
         return STORAGE_STATUS::NOT_FOUND;
     return STORAGE_STATUS::SUCCESS;
 }
-
+RamICacheStorage *RamICacheStorage::getInstance()
+{
+    if(instance == nullptr )
+    {
 #if CACHE_STORAGE_STDMAP
+        instance = new StdmapCacheStorage();
+#elif MEMCACHED_ENABLED
+        instance = new MemcachedStorage();
+#else
+        instance = new RamfsCacheStorage();
+#endif
+    }
+    return instance;
+}
+
 STORAGE_TYPE StdmapCacheStorage::getStorageType(){
     return STORAGE_TYPE::STDMAP;
 }
-STORAGE_STATUS StdmapCacheStorage::initCacheStorage( const size_t max_size,const std::string m_point ){
+STORAGE_STATUS StdmapCacheStorage::initCacheStorage( const size_t max_size,double st_threshold, std::string svc, const std::string m_point ){
     this->mount_path = m_point;
     this->max_size = max_size;
-    return STORAGE_STATUS::SUCCESS;
+    this->cache_thr =  st_threshold;
+
+    return initServiceStorage(svc);
 }
 STORAGE_STATUS StdmapCacheStorage::initServiceStorage (std::string svc){
     this->svc = svc;
@@ -374,5 +392,5 @@ bool StdmapCacheStorage::isInStorage( std::string path ){
     else
       return true;
 }
-#endif
+
 #endif

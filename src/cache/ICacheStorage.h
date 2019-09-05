@@ -42,7 +42,7 @@ public:
      * @param mount_point the mount point where to put the cached content
      * @return STORAGE_STATUS return the status of the storage
      */
-    virtual STORAGE_STATUS initCacheStorage(const size_t max_size, const std::string mount_point) = 0;
+    virtual STORAGE_STATUS initCacheStorage(const size_t max_size, double st_threshold, std::string svc, const std::string mount_point) = 0;
     /**
      * @brief initServiceStorage Initialize the service directory once the system is mounted/ initialized
      * @param svc service name
@@ -120,6 +120,7 @@ protected:
     static RamICacheStorage * instance;
     bool initialized = false;
 public:
+    static RamICacheStorage * getInstance();
     size_t max_size = 0;
     size_t current_size = 0;
     std::string mount_path;
@@ -134,18 +135,9 @@ public:
  * @brief The RamfsCacheStorage implements the interface ICacheStorage in order to allow RAMFS cache storage
  */
 class RamfsCacheStorage: public RamICacheStorage{
-private:
-    RamfsCacheStorage(){}
 public:
-    static RamICacheStorage * getInstance() {
-        if (instance == nullptr)
-        {
-            instance = new RamfsCacheStorage();
-        }
-        return instance;
-    }
     STORAGE_TYPE getStorageType() override;
-    STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
+    STORAGE_STATUS initCacheStorage( const size_t max_size, double st_threshold, std::string svc, const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
     STORAGE_STATUS getFromStorage( const std::string rel_path, std::string &out_buffer ) override;
     STORAGE_STATUS putInStorage( const std::string rel_path, const std::string buffer, size_t response_size) override;
@@ -166,15 +158,8 @@ class MemcachedStorage : public RamICacheStorage {
 private:
     memcached_return rc;
     memcached_st * memc = nullptr;
-    MemcachedStorage(){}
 public:
-    static RamICacheStorage * getInstance() {
-        if (instance == nullptr)
-        {
-            instance = new MemcachedStorage();
-        }
-        return instance;
-    }
+    MemcachedStorage(){}
     STORAGE_TYPE getStorageType() override;
     STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
@@ -203,7 +188,7 @@ public:
         return instance;
     }
     STORAGE_TYPE getStorageType() override;
-    STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
+    STORAGE_STATUS initCacheStorage( const size_t max_size,double st_threshold, std::string svc,const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
     STORAGE_STATUS getFromStorage( const std::string rel_path, std::string &out_buffer ) override;
     STORAGE_STATUS putInStorage( const std::string rel_path, const std::string buffer, size_t response_size) override;
@@ -216,19 +201,12 @@ public:
 
 class StdmapCacheStorage: public RamICacheStorage{
 private:
-    StdmapCacheStorage(){}
     std::string svc;
 public:
-    static RamICacheStorage * getInstance() {
-        if (instance == nullptr)
-        {
-            instance = new StdmapCacheStorage();
-        }
-        return instance;
-    }
+    StdmapCacheStorage(){}
     unordered_map <std::string, std::string> storage;
     STORAGE_TYPE getStorageType() override;
-    STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
+    STORAGE_STATUS initCacheStorage( const size_t max_size,double st_threshold, std::string svc,const std::string m_point ) override;
     STORAGE_STATUS initServiceStorage (std::string svc) override;
     STORAGE_STATUS getFromStorage( const std::string rel_path, std::string &out_buffer ) override;
     STORAGE_STATUS putInStorage( const std::string rel_path, const std::string buffer, size_t response_size) override;

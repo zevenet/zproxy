@@ -131,35 +131,24 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
         }
         ramfs_mount_point += "/"+ f_name;
         disk_mount_point += "/" + f_name;
-        //Cache initialization
-        disk_storage = DiskCacheStorage::getInstance();
+
+//Cache storage initialization
         STORAGE_STATUS svc_status;
-#if MEMCACHED_ENABLED
-        ram_storage = MemcachedCacheStorage::getInstance();
-        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
-        ram_storage->initServiceStorage(svc);
-#elif CACHE_STORAGE_STDMAP
-        ram_storage = StdmapCacheStorage::getInstance();
-        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
-        ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
-        svc_status = ram_storage->initServiceStorage(svc);
-#else
-        ram_storage = RamfsCacheStorage::getInstance();
-        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), ramfs_mount_point);
-        //MPOINT EXISTS BUT IT IS NOT STILL INITIALIZED!!
-        ram_storage->cache_thr = static_cast<double>(storage_threshold) / 100;
+//RAM
+        ram_storage = RamICacheStorage::getInstance();
+        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, ramfs_mount_point);
         svc_status = ram_storage->initServiceStorage(svc);
         //recover cache status
         if ( svc_status == STORAGE_STATUS::MPOINT_ALREADY_EXISTS )
             recoverCache(svc,STORAGE_TYPE::RAMFS);
-#endif
-        disk_storage->initCacheStorage(0, disk_mount_point);
-        //MPOINT EXISTS BUT IT IS NOT STILL INITIALIZED!!
+
+//DISK
+        disk_storage = DiskCacheStorage::getInstance();
+        disk_storage->initCacheStorage(0, 0, svc, disk_mount_point);
         svc_status = disk_storage->initServiceStorage(svc);
         //recover cache status
         if ( svc_status == STORAGE_STATUS::MPOINT_ALREADY_EXISTS )
             recoverCache(svc,STORAGE_TYPE::DISK);
-        //Max size not useful yet
     }
 }
 
