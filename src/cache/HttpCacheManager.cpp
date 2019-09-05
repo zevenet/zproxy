@@ -511,8 +511,9 @@ void HttpCacheManager::recoverCache(string svc,STORAGE_TYPE st_type)
                 //finished reading, need to store the response obtained
                 HttpResponse stored_response = parseCacheBuffer(buffer);
                 c_object = createCacheObjectEntry(stored_response);
+                c_object->storage = st_type;
                 //Increment the current size of the storage
-                switch(c_object->storage){
+                switch(st_type){
                     case STORAGE_TYPE::RAMFS:
                         ram_storage->current_size += c_object->content_length + stored_response.headers_length;
                         break;
