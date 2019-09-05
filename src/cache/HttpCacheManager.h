@@ -8,36 +8,14 @@
 #include "../util/common.h"
 #include "../stats/counter.h"
 #include "../ctl/ctl.h"
-
-#ifndef _STRING_H
 #include <string>
-#endif
-#ifndef _REGEX_H
 #include <pcreposix.h>
-#endif
 #include <unordered_map>
+#include "CacheCommons.h"
 using namespace std;
-
+namespace st = storage_commons;
 #define DEFAULT_TIMEOUT 3600;
 
-struct CacheObject {
-  std::string etag;
-  size_t content_length;
-  bool no_cache_response =
-      false;
-  bool cacheable = true;
-  bool transform = true;
-  bool staled = false;
-  bool revalidate = false;
-  bool heuristic = false;
-  long int date = -1;
-  long int last_mod = -1;
-  long int expires = -1;
-  long int max_age = -1;
-  size_t headers_size = 0;
-  CACHE_SCOPE scope;
-  STORAGE_TYPE storage;
-};
 /**
  * @class HttpCacheManager HttpCacheManager.h "src/handlers/HttpCacheManager.h"
  * @brief The HttpCacheManager class controls all the cache operations and logic
@@ -48,16 +26,16 @@ private:
   std::string service_name;
   RamICacheStorage * ram_storage;
   DiskICacheStorage * disk_storage;
-  unordered_map<size_t, CacheObject *> cache; // Caching map
+  unordered_map<size_t, cache_commons::CacheObject *> cache; // Caching map
   regex_t *cache_pattern = nullptr;
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
 
   /**
    * @brief updateFreshness update the freshness for a single stored response
-   * @param c_object, the CacheObject which we want to update
+   * @param c_object, the cache_commons::CacheObject which we want to update
    */
-  void updateFreshness(CacheObject *c_object);
+  void updateFreshness(cache_commons::CacheObject *c_object);
   /**
    * @brief hashStr
    * @param str
@@ -66,7 +44,7 @@ private:
   size_t hashStr(std::string str);
   void storeResponse(HttpResponse response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
-  STORAGE_TYPE getStorageType( HttpResponse response );
+  st::STORAGE_TYPE getStorageType( HttpResponse response );
 public:
   size_t cache_max_size = 0;
   bool cache_enabled = false;
@@ -106,7 +84,7 @@ public:
    * not
    * @return if the content can be served it returns true or false in other case
    */
-  CacheObject * canBeServedFromCache(HttpRequest &request);
+  cache_commons::CacheObject * canBeServedFromCache(HttpRequest &request);
   /**
    * @brief get the cached object from the cache, which contains the cached
    * response
@@ -114,15 +92,15 @@ public:
    * @param request is the HttpRequest used to determine which stored content to
    * use
    *
-   * @return returns the CacheObject or nullptr if not found
+   * @return returns the cache_commons::CacheObject or nullptr if not found
    */
-  CacheObject *getCacheObject(HttpRequest request);
+  cache_commons::CacheObject *getCacheObject(HttpRequest request);
   /**
-   * @brief getCacheObject
+   * @brief getcache_commons::CacheObject
    * @param url an string object containing an URL in order to retrieve its object
-   * @return  the CacheObject which is associated to the url or nullptr if not found
+   * @return  the cache_commons::CacheObject which is associated to the url or nullptr if not found
    */
-  CacheObject *getCacheObject(std::string url);
+  cache_commons::CacheObject *getCacheObject(std::string url);
   /**
    * @brief returns the pattern used by the cache manager
    *
@@ -169,7 +147,7 @@ public:
    * @param svc
    * @param st_type
    */
-  void recoverCache( std::string svc, STORAGE_TYPE st_type );
+  void recoverCache( std::string svc, st::STORAGE_TYPE st_type );
   /**
    * @brief parseCacheBuffer It takes a buffer of an stored HTTP response and create an HttpResponse object
    * @param buffer it is the buffer containing an HTTP response with HTTP header first.
@@ -177,11 +155,11 @@ public:
    */
   HttpResponse parseCacheBuffer(std::string buffer);
   /**
-   * @brief createCacheObjectEntry Creates a CacheObject entry with cache information of a HttpResponse
-   * @param response the response which will be used to create the CacheObject entry
-   * @return CacheObject is the cache information representation of the response
+   * @brief createcache_commons::CacheObjectEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
+   * @param response the response which will be used to create the cache_commons::CacheObject entry
+   * @return cache_commons::CacheObject is the cache information representation of the response
    */
-  CacheObject * createCacheObjectEntry( HttpResponse response );
+  cache_commons::CacheObject * createCacheObjectEntry( HttpResponse response );
 };
 
 namespace cache_stats__ {
