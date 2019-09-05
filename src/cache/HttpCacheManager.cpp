@@ -165,8 +165,8 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
 
 void HttpCacheManager::storeResponse(HttpResponse response,
                                      HttpRequest request) {
-    CacheObject *c_object = createCacheObjectEntry(response);
-    auto old_object = getCacheObject(request);
+  std::unique_ptr<CacheObject> c_object(createCacheObjectEntry(response));
+  auto old_object = getCacheObject(request);
   //Check what storage to use
   STORAGE_STATUS err;
   std::string rel_path = service_name + "/" + to_string(std::hash<std::string>()(request.getUrl()));
@@ -198,7 +198,7 @@ void HttpCacheManager::storeResponse(HttpResponse response,
     Debug::logmsg(LOG_ERR, "Error trying to store the response in storage");
   else
       c_object->headers_size = response.headers_length;
-      cache[hashStr(request.getUrl())] = c_object;
+      cache[hashStr(request.getUrl())] = c_object.release();
   return;
 }
 
