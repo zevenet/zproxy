@@ -254,8 +254,8 @@ add_subdirectory(src)
 add_subdirectory(src/ctl)
 
 add_executable(zhttp src/main.cpp)
-add_dependencies(zhttp libzhttp)
-target_link_libraries(zhttp libzhttp)
+add_dependencies(zhttp l7pcore)
+target_link_libraries(zhttp l7pcore)
 
 # Doxygen Build
 if (BUILD_DOC)

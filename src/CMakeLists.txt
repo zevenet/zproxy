@@ -19,8 +19,8 @@ add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
 add_definitions(-DENABLE_QUICK_RESPONSE=1)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_definitions(-DDEBUG_HTTP_HEADERS=0)
-
-add_library(libzhttp
+add_definitions(-DCACHE_STORAGE_STDMAP=0)
+add_library(l7pcore
         ssl/ssl_common.h
         ssl/SSLContext.cpp
         ssl/SSLContext.h
@@ -86,13 +86,13 @@ add_library(libzhttp
         cache/DiskCacheStorage.h
         cache/DiskCacheStorage.cpp
         debug/backtrace.cpp debug/backtrace.h)
-target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
+target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
 
 if (BUNDLED_OPENSSL)
     #include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
-    add_dependencies(libzhttp openssl)
-    link_directories(libzhttp ${OPENSSL_INSTALL_DIR}/lib)
-    target_link_libraries(libzhttp PRIVATE ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl)
+    add_dependencies(l7pcore openssl)
+    link_directories(l7pcore ${OPENSSL_INSTALL_DIR}/lib)
+    target_link_libraries(l7pcore PRIVATE ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl)
 else ()
-    target_link_libraries(libzhttp PRIVATE ${OPENSSL_LIBRARIES})
+    target_link_libraries(l7pcore PRIVATE ${OPENSSL_LIBRARIES})
 endif ()
