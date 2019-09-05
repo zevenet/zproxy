@@ -1245,7 +1245,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     case IO::IO_RESULT::CANCELLED:
     case IO::IO_RESULT::FULL_BUFFER:
     case IO::IO_RESULT::ERROR:
-      Debug::LogInfo("Error sending response ", LOG_DEBUG);
+      Debug::logmsg(LOG_DEBUG, "Error sending response: %s", IO::getResultString(result).data());
       clearStream(stream);
       return;
     case IO::IO_RESULT::SUCCESS: // TODO:: set request
@@ -1314,7 +1314,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   case IO::IO_RESULT::CANCELLED:
   case IO::IO_RESULT::FULL_BUFFER:
   case IO::IO_RESULT::ERROR:
-    Debug::LogInfo("Error sending response ", LOG_DEBUG);
+    Debug::logmsg(LOG_DEBUG, "Error sending response: %s", IO::getResultString(result).data());
     clearStream(stream);
     return;
   case IO::IO_RESULT::SUCCESS:
@@ -1323,7 +1323,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     break;
 
   default:
-    Debug::LogInfo("Error sending data to client", LOG_DEBUG);
+    Debug::logmsg(LOG_DEBUG, "Error sending response: %s", IO::getResultString(result).data());
     clearStream(stream);
     return;
   }
