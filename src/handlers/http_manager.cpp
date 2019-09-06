@@ -390,7 +390,27 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
         if (static_cast<Service*>(stream.request.getService())->service_config.sts > 0)
           response.headers[i].header_off = true;
         break;
-      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+        switch (header_value[0]) {
+        case 'c': {
+          if (header_value[1] == 'h') { //no content-length
+            response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
+            response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+          } else if (header_value[2] == 'o') {
+            response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::COMPRESS;
+          }
+        }
+          break;
+        case 'd': //deflate
+          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::DEFLATE;
+          break;
+        case 'g'://gzip
+          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::GZIP;
+          break;
+        case 'i': //identity
+          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::IDENTITY;
+          break;
+        }
           break;
 #if CACHE_ENABLED
       case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
