@@ -827,8 +827,8 @@ void StreamManager::onResponseEvent(int fd) {
 #if CACHE_ENABLED
     auto service = static_cast<Service *>(stream->request.getService());
     if (service->cache_enabled && service->getCacheObject(stream->request) != nullptr &&
-        stream->request.c_opt.no_store == false) {
-      service->appendData(stream->backend_connection.buffer,
+        !stream->request.c_opt.no_store && stream->response.c_opt.cacheable ) {
+      service->appendData(stream->response, stream->backend_connection.buffer,
                           stream->backend_connection.buffer_size,
                           stream->request.getUrl());
     }
@@ -1373,6 +1373,12 @@ bool StreamManager::init(ListenerConfig &listener_config) {
  */
 void StreamManager::clearStream(HttpStream *stream) {
 
+#if CACHE_ENABLED
+    if ( stream->response.c_object != nullptr && stream->response.c_object->dirty ){
+        auto service = service_manager->getService(stream->request);
+        service->discardCacheEntry(stream->request);
+    }
+#endif
   // TODO:: add connection closing reason for logging purpose
   if (stream == nullptr) {
     return;

@@ -67,8 +67,6 @@ st::STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string rel_path
 
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
     string file_path (mount_path + string("/") + rel_path);
-
-
     std::ifstream in_stream( file_path.data());
 
     if ( !in_stream.is_open() )
@@ -384,6 +382,8 @@ bool StdmapCacheStorage::isInStorage(const std::string svc, const std::string ur
     return  isInStorage(path);
 }
 st::STORAGE_STATUS StdmapCacheStorage::deleteInStorage(std::string path){
+    if (storage.erase(path) != 1)
+        return st::STORAGE_STATUS::GENERIC_ERROR;
     return st::STORAGE_STATUS::SUCCESS;
 }
 bool StdmapCacheStorage::isInStorage( std::string path ){

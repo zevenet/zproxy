@@ -8,8 +8,9 @@ cache_commons::CacheObject *HttpCacheManager::getCacheObject(HttpRequest request
 cache_commons::CacheObject *HttpCacheManager::getCacheObject(std::string url) {
   cache_commons::CacheObject *c_object = nullptr;
   auto iter = cache.find(hashStr(url));
-  if (iter != cache.end())
+  if (iter != cache.end()){
     c_object = iter->second;
+  }
   return c_object;
 }
 size_t HttpCacheManager::hashStr(std::string str) {
@@ -17,15 +18,18 @@ size_t HttpCacheManager::hashStr(std::string str) {
   return str_hash;
 }
 // Store in cache the response if it doesn't exists
-void HttpCacheManager::handleResponse(HttpResponse response,
+void HttpCacheManager::handleResponse(HttpResponse &response,
                                       HttpRequest request) {
-
-  if ( getCacheObject(request)->dirty )
-      return;
+  auto c_opt = getCacheObject(request);
+  if ( c_opt != nullptr && c_opt->dirty == true ){
+        return;
+  }
+  if( c_opt != nullptr && isFresh(request)){
+      //If the stored response is fresh, we must not to store this response
+      response.c_opt.cacheable = false;
+  }
   // If the response/request is set as not cacheable, we can't cache it
   if (!response.c_opt.cacheable) {
-    Debug::logmsg(LOG_DEBUG,
-                  "The response or request disabled the caching system");
     return;
   } else if (response.cache_control == false && response.pragma == true) {
     // Check the pragma only if no cache-control header in request nor in
@@ -34,8 +38,9 @@ void HttpCacheManager::handleResponse(HttpResponse response,
   }
   //  Check status code
   if (response.http_status_code != 200 && response.http_status_code != 301 &&
-      response.http_status_code != 308)
-    return;
+          response.http_status_code != 308){
+      return;
+  }
   if ( ((response.content_length + response.headers_length ) >= cache_max_size) && cache_max_size != 0 ){
     DEBUG_COUNTER_HIT(cache_stats__::cache_not_stored);
     Debug::logmsg(LOG_WARNING, "Not caching response with %d bytes size", response.content_length + response.headers_length);
@@ -61,9 +66,10 @@ void HttpCacheManager::handleResponse(HttpResponse response,
 void HttpCacheManager::updateResponse(HttpResponse response,
                                       HttpRequest request) {
   auto c_object = getCacheObject(request);
-  if (response.content_length == 0)
+  if (response.content_length == 0){
     Debug::logmsg(LOG_WARNING, "Content-Length header with 0 value when trying "
                                "to update content in the cache");
+  }
   if (response.content_length != c_object->content_length) {
     Debug::logmsg(
         LOG_WARNING,
@@ -89,21 +95,23 @@ st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
     //How are we deciding if
     size_t response_size = response.http_message_length + response.content_length;
 
-    if ( response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left )
+    if ( response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left ){
         return st::STORAGE_TYPE::DISK;
+    }
 #if CACHE_STORAGE_STDMAP
-    else
+    else{
         return STORAGE_TYPE::STDMAP;
+    }
 #else
-    else
+    else{
         return st::STORAGE_TYPE::RAMFS;
+    }
 #endif
 }
 
 HttpCacheManager::~HttpCacheManager() {
     // Free cache pattern
-    if (cache_pattern != nullptr)
-    {
+    if (cache_pattern != nullptr){
         regfree(cache_pattern);
         cache_pattern = nullptr;
     }
@@ -139,61 +147,75 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
         ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, ramfs_mount_point);
         svc_status = ram_storage->initServiceStorage(svc);
         //recover cache status
-        if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS )
+        if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS ){
             recoverCache(svc,st::STORAGE_TYPE::RAMFS);
+        }
 
 //DISK
         disk_storage = DiskCacheStorage::getInstance();
         disk_storage->initCacheStorage(0, 0, svc, disk_mount_point);
         svc_status = disk_storage->initServiceStorage(svc);
         //recover cache status
-        if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS )
+        if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS ){
             recoverCache(svc, st::STORAGE_TYPE::DISK);
+        }
     }
 }
 
-void HttpCacheManager::storeResponse(HttpResponse response,
+void HttpCacheManager::storeResponse(HttpResponse &response,
                                      HttpRequest request) {
-  std::unique_ptr<cache_commons::CacheObject> c_object(createCacheObjectEntry(response));
+  auto cache_entry = new cache_commons::CacheObject();
+  std::unique_ptr<cache_commons::CacheObject> c_object ( cache_entry);
+
+  cache[hashStr(request.getUrl())] = c_object.get();
+
+  createCacheObjectEntry(response, c_object.get());
+  // link response with c_object
+  response.c_object = c_object.get();
   auto old_object = getCacheObject(request);
   //Check what storage to use
   st::STORAGE_STATUS err;
   std::string rel_path = service_name + "/" + to_string(std::hash<std::string>()(request.getUrl()));
-//  Debug::logmsg(LOG_NOTICE, "We are comparing values: message_length %d + headers_length %d = %d , against buffer_size: %d total: %d", response.message_length, response.headers_length, (response.message_length + response.headers_length), response.buffer_size, (response.content_length + response.headers_length - response.buffer_size) );
-//  Debug::logmsg(LOG_NOTICE, "We are CREATING a file entry with %d data and waiting for %d", response.buffer_size, (response.content_length + response.headers_length - response.buffer_size));
+
   switch (c_object->storage){
   case st::STORAGE_TYPE::STDMAP:
   case st::STORAGE_TYPE::RAMFS:
-      if( old_object != nullptr )
+      if( old_object != nullptr ){
         ram_storage->current_size -= (old_object->content_length + old_object->headers_size);
-
+      }
       err = ram_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
-      if (err == st::STORAGE_STATUS::SUCCESS)
+      if(err == st::STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
-
+      }
       break;
   case st::STORAGE_TYPE::DISK:
-      if( old_object != nullptr)
+      if( old_object != nullptr){
         disk_storage->current_size -= (old_object->content_length + old_object->headers_size);
+      }
       err = disk_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
-      if (err == st::STORAGE_STATUS::SUCCESS)
+      if(err == st::STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
+      }
       break;
   default:
       return;
   }
   // If success, store in the unordered map
-  if ( err != st::STORAGE_STATUS::SUCCESS)
+  if ( err != st::STORAGE_STATUS::SUCCESS){
     Debug::logmsg(LOG_ERR, "Error trying to store the response in storage");
-  else
-      c_object->headers_size = response.headers_length;
-      cache[hashStr(request.getUrl())] = c_object.release();
+  }
+  c_object->headers_size = response.headers_length;
+  if ( response.content_length == response.message_length){
+      c_object->dirty = false;
+  }
+  c_object.release();
   return;
 }
 
-cache_commons::CacheObject * HttpCacheManager::createCacheObjectEntry( HttpResponse response ){
-    cache_commons::CacheObject * c_object = new cache_commons::CacheObject;
-
+void HttpCacheManager::createCacheObjectEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
+    if ( c_object == nullptr) {
+        c_object = new cache_commons::CacheObject();
+    }
     // Store the response date in the cache
     c_object->date = response.date;
     /*
@@ -201,17 +223,20 @@ cache_commons::CacheObject * HttpCacheManager::createCacheObjectEntry( HttpRespo
    */
     // If the max_age is not set nor the timeout exist, we have to calculate
     // heuristically
-    if (response.c_opt.max_age >= 0 && this->cache_timeout != 0)
+    if (response.c_opt.max_age >= 0 && this->cache_timeout != 0){
         // Set the most restrictive value
         response.c_opt.max_age > this->cache_timeout
                 ? c_object->max_age = this->cache_timeout
                 : c_object->max_age = response.c_opt.max_age;
-    else if (this->cache_timeout >= 0)
+    }
+    else if (this->cache_timeout >= 0){
         // Store the config file timeout
         c_object->max_age = this->cache_timeout;
-    else if (response.c_opt.max_age >= 0)
+    }
+    else if (response.c_opt.max_age >= 0){
         // Store the response cache max-age
         c_object->max_age = response.c_opt.max_age;
+    }
     else if (response.last_mod >= 0) {
         // heuristic algorithm -> 10% of last-modified
         time_t now = timeHelper::gmtTimeNow();
@@ -223,19 +248,22 @@ cache_commons::CacheObject * HttpCacheManager::createCacheObjectEntry( HttpRespo
     /*
      *must-revalidate, proxy-revalidate
      */
-    if (response.expires >= 0)
+    if (response.expires >= 0){
         c_object->expires = response.expires;
+    }
     // If there is etag, then store it
-    if (!response.etag.empty())
+    if (!response.etag.empty()){
         c_object->etag = response.etag;
+    }
 
     c_object->revalidate = response.c_opt.revalidate;
     // Reset the stale flag, the cache has been created or updated
     c_object->staled = false;
     c_object->content_length = response.content_length;
     c_object->no_cache_response = response.c_opt.no_cache;
-    if(response.last_mod >= 0)
+    if(response.last_mod >= 0){
         c_object->last_mod = response.last_mod;
+    }
     switch ( getStorageType(response)){
         case st::STORAGE_TYPE::RAMFS:
             c_object->storage = st::STORAGE_TYPE::RAMFS;
@@ -251,26 +279,40 @@ cache_commons::CacheObject * HttpCacheManager::createCacheObjectEntry( HttpRespo
             exit(-1);
     }
 
-    return c_object;
+    return;
 }
 
 // Append pending data to its cached content
-void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
-    //TODO: Dirty, if c_object = dirty and we are not who is modifying ( the response doesn't have the c_object), return
-    Debug::logmsg(LOG_NOTICE, "Appending %d data to %s stored response", msg_size, url.data());
+void HttpCacheManager::appendData( HttpResponse &response ,char *msg, size_t msg_size, std::string url) {
     auto c_object = getCacheObject(url);
+    if( c_object == nullptr ){
+        Debug::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
+        return;
+    }
+    if( response.c_object == nullptr )
+        return;
+
+    Debug::logmsg(LOG_NOTICE, "Appending %d data to %s stored response", msg_size, url.data());
     std::string rel_path = service_name + "/" + to_string(std::hash <std::string> () (url));
+    storage_commons::STORAGE_STATUS err;
     //Check what storage to use
     switch (c_object->storage){
     case st::STORAGE_TYPE::STDMAP:
     case st::STORAGE_TYPE::RAMFS:
-        ram_storage->appendData(rel_path, std::string(msg, msg_size));
+        err = ram_storage->appendData(rel_path, std::string(msg, msg_size));
         break;
     case st::STORAGE_TYPE::DISK:
-        disk_storage->appendData(rel_path, std::string(msg, msg_size));
+        err = disk_storage->appendData(rel_path, std::string(msg, msg_size));
         break;
     default:
         return;
+    }
+    if ( err != storage_commons::STORAGE_STATUS::SUCCESS ){
+        Debug::logmsg(LOG_WARNING, "There was an unexpected error result while appending data to the cache content %s", url.data());
+    }
+    //disable flag
+    if ( response.message_bytes_left == msg_size ){
+        response.c_object->dirty = false;
     }
     return;
 }
@@ -278,8 +320,9 @@ void HttpCacheManager::appendData(char *msg, size_t msg_size, std::string url) {
 // Check the freshness of the cached content
 bool HttpCacheManager::isFresh(HttpRequest &request) {
   auto c_object = getCacheObject(request);
-  if (c_object == nullptr)
+  if (c_object == nullptr){
     return false;
+  }
   updateFreshness(c_object);
 
   return (c_object->staled ? false : true);
@@ -289,16 +332,19 @@ bool HttpCacheManager::isFresh(HttpRequest &request) {
 // cache-control values
 cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest &request) {
     cache_commons::CacheObject *c_object = getCacheObject(request);
-    if( c_object == nullptr )
-        return nullptr;
-    //TODO: Dirty if cached
-    if ( !c_object->dirty )
-        return nullptr;
-    if (request.c_opt.no_cache || (!request.cache_control && request.pragma))
-        return nullptr;
 
-    if (request.c_opt.only_if_cached)
+    if( c_object == nullptr ){
+        return nullptr;
+    }
+    if (c_object->dirty ){
+        return nullptr;
+    }
+    if (request.c_opt.no_cache || (!request.cache_control && request.pragma)){
+        return nullptr;
+    }
+    if (request.c_opt.only_if_cached){
         return c_object;
+    }
     //TODO: isfresh applies to   Cobject, must be of Cobject
     bool serveable = isFresh(request);
 
@@ -306,26 +352,33 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
 
     // if staled and must revalidate is included, we MUST revalidate the
     // response
-    if (!serveable && c_object->revalidate)
+    if (!serveable && c_object->revalidate){
         return nullptr;
+    }
     // If max-age request directive is set, we must check if the response
     // complies
     if (request.c_opt.max_age >= 0) {
-        if (!c_object->staled)
-            if ((now - c_object->date) > request.c_opt.max_age)
+        if (!c_object->staled){
+            if ((now - c_object->date) > request.c_opt.max_age){
                 serveable = false;
+            }
+        }
     }
     // Check if complies with the request directive min-fresh
     if (request.c_opt.min_fresh >= 0) {
-        if (!c_object->staled)
-            if ((now - c_object->date) > request.c_opt.min_fresh)
+        if (!c_object->staled){
+            if ((now - c_object->date) > request.c_opt.min_fresh){
                 return nullptr;
+            }
+        }
     }
     // Check if complies with the request directive max-stale
     if (request.c_opt.max_stale >= 0) {
-        if (c_object->staled && !c_object->revalidate)
-            if ((now - c_object->date - c_object->max_age) < request.c_opt.max_stale)
+        if (c_object->staled && !c_object->revalidate){
+            if ((now - c_object->date - c_object->max_age) < request.c_opt.max_stale){
                 serveable = true;
+            }
+        }
     }
 
     return serveable ? c_object : nullptr;
@@ -354,8 +407,8 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
 
   size_t parsed = 0;
   std::string rel_path = service_name ;
-  rel_path += "/";
-  rel_path += to_string( std::hash<std::string>()(request.getUrl()));
+  rel_path.append("/");
+  rel_path.append(to_string( std::hash<std::string>()(request.getUrl())));
 
   buffer = "";
   //Get the response from the right storage
@@ -451,7 +504,9 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
             Debug::logmsg(LOG_WARNING, "Request %s not cached", url.data());
         else{
             size_t hash_url = std::hash<std::string>()(url);
-            std::string path(service_name + "/" + to_string(hash_url));
+            std::string path(service_name);
+            path.append ("/");
+            path.append (to_string(hash_url));
             st::STORAGE_STATUS err;
             switch(c_object->storage)
             {
@@ -499,7 +554,7 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
     std::ifstream in_file;
     std::string in_line, file_name;
     std::string buffer;
-    cache_commons::CacheObject * c_object = nullptr;
+    std::unique_ptr <cache_commons::CacheObject> c_object (new cache_commons::CacheObject);
     for(const auto & entry : std::filesystem::directory_iterator(path))
     {
         //Iterate through all the files
@@ -513,7 +568,8 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
             {
                 //finished reading, need to store the response obtained
                 HttpResponse stored_response = parseCacheBuffer(buffer);
-                c_object = createCacheObjectEntry(stored_response);
+                createCacheObjectEntry(stored_response, c_object.get());
+                c_object->dirty = false;
                 c_object->storage = st_type;
                 //Increment the current size of the storage
                 switch(st_type){
@@ -530,8 +586,9 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
                 break;
             }
         }
-        if (c_object != nullptr)
-            cache[strtoul(file_name.data(),0,0)] = c_object;
+        if (c_object != nullptr){
+            cache[strtoul(file_name.data(),0,0)] = c_object.get();
+        }
         in_file.close();
     }
 }
@@ -571,8 +628,9 @@ HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
           helper::splitString(cache_directives[l], parsed_directive, '=');
           directive = parsed_directive[0];
 
-          if (parsed_directive.size() == 2)
+          if (parsed_directive.size() == 2){
             directive_value = parsed_directive[1];
+          }
 
           if (http::http_info::cache_control_values.count(directive) > 0) {
             switch (http::http_info::cache_control_values.at(directive)) {
@@ -581,10 +639,10 @@ HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
                 response.c_opt.max_age = stoi(directive_value);
               break;
             case http::CACHE_CONTROL::PUBLIC:
-              response.c_opt.scope = CACHE_SCOPE::PUBLIC;
+              response.c_opt.scope = cache_commons::CACHE_SCOPE::PUBLIC;
               break;
             case http::CACHE_CONTROL::PRIVATE:
-              response.c_opt.scope = CACHE_SCOPE::PRIVATE;
+              response.c_opt.scope = cache_commons::CACHE_SCOPE::PRIVATE;
               break;
             case http::CACHE_CONTROL::PROXY_REVALIDATE:
               response.c_opt.revalidate = true;
@@ -631,4 +689,36 @@ HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
   return response;
 }
 
+void HttpCacheManager::discardCacheEntry(HttpRequest request){
+    auto c_object = getCacheObject(request);
+    if(c_object == nullptr){
+        Debug::logmsg(LOG_WARNING, "Trying to discard a non existing entry from the cache");
+        return;
+    }
+    // Create the key and the file path
+    auto hashed_url = hash <std::string> ()(request.getUrl());
+    std::string path (service_name);
+    path.append ("/");
+    path.append (to_string(hashed_url));
+
+    storage_commons::STORAGE_STATUS err;
+
+    switch(c_object->storage){
+    case storage_commons::STORAGE_TYPE::STDMAP:
+    case storage_commons::STORAGE_TYPE::RAMFS:
+        err = disk_storage->deleteInStorage(path);
+        break;
+    case storage_commons::STORAGE_TYPE::DISK:
+        err = disk_storage->deleteInStorage(path);
+        break;
+    default: return;
+    }
+    if ( err != storage_commons::STORAGE_STATUS::SUCCESS){
+        Debug::logmsg(LOG_ERR, "Error trying to delete cache content from the storage");
+        return;
+    }
+    if ( cache.erase(hashed_url) != 1 )
+       Debug::logmsg(LOG_WARNING, "Error deleting cache entry");
+
+}
 #endif

@@ -5,12 +5,9 @@
 
 #include "../debug/Debug.h"
 #include "http_parser.h"
+#include "../cache/CacheCommons.h"
 #include <map>
 #if CACHE_ENABLED
-enum class CACHE_SCOPE {
-  PUBLIC,
-  PRIVATE,
-};
 
 struct CacheRequestOptions {
   bool no_store = false;
@@ -28,7 +25,7 @@ struct CacheResponseOptions {
   bool cacheable = true; // Set by the request with no-store
   bool revalidate = false;
   int max_age = -1;
-  CACHE_SCOPE scope;
+  cache_commons::CACHE_SCOPE scope;
 };
 #endif
 class HttpRequest : public http_parser::HttpData {
@@ -87,6 +84,7 @@ public:
     bool transfer_encoding_header;
     bool cached = false;
     struct CacheResponseOptions c_opt;
+    cache_commons::CacheObject * c_object = nullptr;
     std::string etag;
     // Time specific headers
     long int date = -1;
@@ -94,5 +92,6 @@ public:
     long int expires = -1;
     bool isCached();
     std::string str_buffer;
+
 #endif
 };

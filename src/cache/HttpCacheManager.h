@@ -27,6 +27,7 @@ private:
   RamICacheStorage * ram_storage;
   DiskICacheStorage * disk_storage;
   unordered_map<size_t, cache_commons::CacheObject *> cache; // Caching map
+  unordered_map<size_t, std::atomic <bool>> dirty;
   regex_t *cache_pattern = nullptr;
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
@@ -42,7 +43,7 @@ private:
    * @return
    */
   size_t hashStr(std::string str);
-  void storeResponse(HttpResponse response, HttpRequest request);
+  void storeResponse(HttpResponse &response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
   st::STORAGE_TYPE getStorageType( HttpResponse response );
 public:
@@ -116,7 +117,7 @@ public:
    * @param url indicates the resource
    *
    */
-  void appendData(char *msg, size_t msg_size, std::string url);
+  void appendData(HttpResponse &response, char *msg, size_t msg_size, std::string url);
   /**
    * @brief getResponseFromCache
    * @param request is the HttpRequest used to determine the cached response to
@@ -135,7 +136,7 @@ public:
    * @param response is the HttpResponse generated for the HttpRequest
    * @param request is the HttpRequest used for caching purpose
    */
-  void handleResponse(HttpResponse response, HttpRequest request);
+  void handleResponse(HttpResponse &response, HttpRequest request);
   /**
    * @brief handle the task from the API for example to delete some content
    *
@@ -159,7 +160,8 @@ public:
    * @param response the response which will be used to create the cache_commons::CacheObject entry
    * @return cache_commons::CacheObject is the cache information representation of the response
    */
-  cache_commons::CacheObject * createCacheObjectEntry( HttpResponse response );
+  void createCacheObjectEntry( HttpResponse response, cache_commons::CacheObject * c_object );
+  void discardCacheEntry(HttpRequest request);
 };
 
 namespace cache_stats__ {

@@ -419,10 +419,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
                 response.c_opt.max_age = stoi(directive_value);
               break;
             case CACHE_CONTROL::PUBLIC:
-              response.c_opt.scope = CACHE_SCOPE::PUBLIC;
+              response.c_opt.scope = cache_commons::CACHE_SCOPE::PUBLIC;
               break;
             case CACHE_CONTROL::PRIVATE:
-              response.c_opt.scope = CACHE_SCOPE::PRIVATE;
+              response.c_opt.scope = cache_commons::CACHE_SCOPE::PRIVATE;
               break;
             case CACHE_CONTROL::PROXY_REVALIDATE:
               response.c_opt.revalidate = true;
