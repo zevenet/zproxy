@@ -36,7 +36,6 @@ function setAptOffline {
 		# $1 = apt Zevenet source
 
 	echo "Checking local update system"
-
 	# create the directory if it does not exist
 	if [ ! -d ${update_dir} ]; then
 		mkdir ${update_dir}
@@ -46,15 +45,25 @@ function setAptOffline {
 	cmd=`ls ${update_dir} | wc -l`
 	if [ $cmd -eq 0 ]; then
 		echo "No packages to update on ${update_dir}"
-	        exit
+		exit
 	fi
 
+	# get latest ISO update
 	last_update=`ls ${update_dir} | sort -V | tail -1 | sed  's/.iso//g'`
 
 	UmountMountPoint
 	mkdir /media/${last_update}
 	mount -o loop ${update_dir}/${last_update}.iso /media/${last_update} 2>/dev/null
 	error "Error trying to mount ISO ${update_dir}/${last_update}.iso in /media/${last_update}"
+
+	# add apt key
+	if [ ! -f /media/${last_update}/${gpg_key_zevenet} ]; then
+		echo "Not public key found in the ${last_update}"
+		exit
+	fi
+	cat /media/${last_update}/${gpg_key_zevenet} | apt-key add -
+
+	# add source list
 	echo "deb file:///media/${last_update} buster main" > ${1}
 
 	return 0
@@ -67,8 +76,14 @@ function UmountMountPoint {
 
 	# check mount point
 	check_mountpoint=`mount | grep ${mountpoint}.* | awk '{print $3}' | wc -l`
+	# check deleted ISO
+	mount | grep ${mountpoint}.* | grep "(deleted)" >/dev/null
 	# get the name of the mount point
-	mountpoint_name=`mount | grep ${mountpoint}.* | awk '{print $3}'`
+	if [ $? -eq 0 ]; then
+		mountpoint_name=`mount | grep ${mountpoint}.* | awk '{print $4}'`
+	else
+		mountpoint_name=`mount | grep ${mountpoint}.* | awk '{print $3}'`
+	fi
 
 	if [ ${check_mountpoint} -ne 0 ]; then
 		umount ${mountpoint_name}

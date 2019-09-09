@@ -1598,7 +1598,7 @@ sub getHTTPFarmStruct
 		}
 		elsif ( $ciphers eq "cipherssloffloading" )
 		{
-			$ciphers = "cipherssloffloading";
+			$ciphers = "ssloffloading";
 		}
 		elsif ( $ciphers eq "cipherpci" )
 		{

@@ -107,9 +107,8 @@ sub _runGSLBFarmStart    # ($fname, $writeconf)
 	&zenlog( "running $exec", "info", "GSLB" );
 
 	require Zevenet::System;
-	zsystem( "$exec > /dev/null 2>&1" );
+	$output = zsystem( "$exec > /dev/null 2>&1" );
 
-	$output = $?;
 	if ( $output != 0 )
 	{
 		$output = -1;

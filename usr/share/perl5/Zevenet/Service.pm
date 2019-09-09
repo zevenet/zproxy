@@ -333,6 +333,8 @@ sub start_modules_without_cert
 	&initRBACModule();
 
 	## ipds
+	include 'Zevenet::IPDS::Setup';
+	&initIPDSModule();
 
 	# enable monitoring interface throughput
 	#~ include 'Zevenet::Net::Throughput';

@@ -337,6 +337,9 @@ sub certcontrol
 
 	my $cert_info = &getCertActivationInfo( $zlbcertfile );
 
+	#swcert = 8 ==> cacrl is not signed
+	return 8 if ( $cert_info->{ crl_signed } ne 'true' );
+
 	#swcert = 2 ==> Cert isn't signed OK
 	return 2 if ( $cert_info->{ signed } ne 'true' );
 
@@ -492,6 +495,10 @@ sub get_sys_uuid
 	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
 	chomp $dmi;
+
+# dmidcode for zevenet 6 shows UUID data in lowercase, in previous versions shown in uppercase.
+	my $zen_version_type = &get_mod_appl();
+	$dmi = uc ( $dmi ) if ( $zen_version_type =~ /ZNA.*/ );
 
 	return $dmi;
 }
@@ -930,7 +937,7 @@ sub getCertActivationInfo
 	my $crl_err = &certRevoked( $zlbcertfile );
 
 	$info->{ revoked }    = ( !$crl_err )     ? 'false' : 'true';
-	$info->{ crl_signed } = ( $crl_err != 8 ) ? 'false' : 'true';
+	$info->{ crl_signed } = ( $crl_err == 8 ) ? 'false' : 'true';
 
 	# Certificate expiring date
 	$info->{ days_to_expire } = &getCertDaysToExpire( $info->{ expiration } );

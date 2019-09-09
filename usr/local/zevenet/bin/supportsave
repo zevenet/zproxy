@@ -142,9 +142,8 @@ echo "netstat -nr"                      >> $backup_dir/netstat.txt
 /bin/netstat -nr                        >> $backup_dir/netstat.txt
 
 echo "- Netfilter"
-
 echo "List nftables ruleset "			>> $backup_dir/nftables.txt
-$NFTBIN list ruleset					>> $backup_dir/nftables.txt
+$NFTBIN list ruleset		>> $backup_dir/nftables.txt
 
 CURL=`which curl`
 echo "nftlb daemon farms data"			>> $backup_dir/nftlb.txt
