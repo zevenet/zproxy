@@ -272,7 +272,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		$fileHandle->{ $if_ref->{ name } }->{ $field } = $if_ref->{ $field };
 	}
 
-	if ( !-f $config_filename )
+	if ( ! exists $fileHandle->{status} )
 	{
 		$fileHandle->{ $if_ref->{ name } }->{ status } = $if_ref->{ status } // "up";
 	}
