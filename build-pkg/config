@@ -12,6 +12,7 @@ enterprise_files=(
 	usr/local/zevenet/migrating/
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
+	usr/local/zevenet/app/letsencryptz/
 	usr/local/zevenet/bin/enterprise.bin
 	usr/local/zevenet/bin/cluster_status
 	usr/local/zevenet/bin/cluster_status.pl
@@ -28,6 +29,8 @@ enterprise_files=(
 	usr/local/zevenet/bin/zenbui
 	usr/local/zevenet/bin/zeninotify
 	usr/local/zevenet/bin/dhcp
+	usr/local/zevenet/bin/certbot-auto
+	usr/local/zevenet/bin/letsencryptz
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
