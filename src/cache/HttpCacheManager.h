@@ -143,7 +143,8 @@ public:
    * @param buffer it is the buffer containing an HTTP response with HTTP header first.
    * @return HttpResponse as the filled clase after parsing the buffer
    */
-  HttpResponse parseCacheBuffer(std::string buffer);
+void validateCacheResponse(HttpResponse &response);
+void validateCacheRequest(HttpRequest &request);
   /**
    * @brief createCacheObjectEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
    * @param response the response which will be used to create the cache_commons::CacheObject entry

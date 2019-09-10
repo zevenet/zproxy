@@ -115,9 +115,9 @@ HttpCacheManager::~HttpCacheManager() {
     if (cache_pattern != nullptr){
         regfree(cache_pattern);
         cache_pattern = nullptr;
+        ram_storage->stopCacheStorage();
+        disk_storage->stopCacheStorage();
     }
-    ram_storage->stopCacheStorage();
-    disk_storage->stopCacheStorage();
 }
 
 void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name, std::string cache_ram_mpoint,std::string cache_disk_mpoint) {
@@ -160,7 +160,7 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
         ramfs_mount_point.append ("/");
         ramfs_mount_point.append(f_name);
         //Set DISK mount point
-        disk_mount_point.append ("/");
+            disk_mount_point.append ("/");
         disk_mount_point.append(f_name);
 
 //Cache storage initialization
@@ -349,19 +349,6 @@ void HttpCacheManager::appendData( HttpResponse &response ,char *msg, size_t msg
     return;
 }
 
-// Check the freshness of the cached content
-//bool HttpCacheManager::isFresh(HttpRequest &request) {
-//  auto c_object = getCacheObject(request);
-//  if (c_object == nullptr){
-//    return false;
-//  }
-//  updateFreshness(c_object);
-
-//  return (c_object->staled ? false : true);
-//}
-
-// Check if the cached content can be served, depending on request
-// cache-control values
 cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest &request) {
     cache_commons::CacheObject *c_object = getCacheObject(request);
 
@@ -415,23 +402,6 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
 
     return serveable ? c_object : nullptr;
 }
-
-//void HttpCacheManager::updateFreshness(cache_commons::CacheObject *c_object) {
-//  if (c_object->staled != true) {
-//    time_t now = timeHelper::gmtTimeNow();
-//    long int age_limit = 0;
-//    if (c_object->max_age >= 0 && !c_object->heuristic)
-//      age_limit = c_object->max_age;
-//    else if (c_object->expires >= 0)
-//      age_limit = c_object->expires;
-//    else if (c_object->max_age >= 0 && c_object->heuristic)
-//      age_limit = c_object->max_age;
-//    if ((now - c_object->date) > age_limit) {
-//      c_object->staled = true;
-//      DEBUG_COUNTER_HIT(cache_stats__::cache_staled_entries);
-//    }
-//  }
-//}
 int HttpCacheManager::getResponseFromCache(HttpRequest request,
                                           HttpResponse &cached_response, std::string &buffer ) {
   auto c_object = getCacheObject(request);
@@ -567,6 +537,7 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
     std::unique_ptr <cache_commons::CacheObject> c_object (new cache_commons::CacheObject);
     for(const auto & entry : std::filesystem::directory_iterator(path))
     {
+        HttpResponse stored_response;
         //Iterate through all the files
         in_file.open(entry.path());
         file_name = std::filesystem::path(entry.path()).filename();
@@ -577,7 +548,10 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
             if ( in_line.compare("\r") == 0)
             {
                 //finished reading, need to store the response obtained
-                HttpResponse stored_response = parseCacheBuffer(buffer);
+                size_t bytes =0;
+
+                stored_response.parseResponse(buffer,&bytes);
+                validateCacheResponse(stored_response);
                 createCacheObjectEntry(stored_response, c_object.get());
                 c_object->dirty = false;
                 c_object->storage = st_type;
@@ -597,16 +571,14 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
             }
         }
         if (c_object != nullptr){
-            cache[strtoul(file_name.data(),0,0)] = c_object.get();
+            c_object->dirty = false;
+            cache[strtoul(file_name.data(),0,0)] = c_object.release();
         }
         in_file.close();
     }
 }
 
-HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
-  HttpResponse response;
-  size_t bytes =0;
-  response.parseResponse(buffer,&bytes);
+void HttpCacheManager::validateCacheResponse(HttpResponse &response){
 
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
@@ -696,9 +668,105 @@ HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
 
     }
   }
-  return response;
+  return;
 }
+void HttpCacheManager::validateCacheRequest(HttpRequest &request){
+    // Check for correct headers
+    for (auto i = 0; i != request.num_headers; i++) {
+        // check header values length
+        auto header = std::string_view(request.headers[i].name,
+                                       request.headers[i].name_len);
+        auto header_value = std::string_view(
+                    request.headers[i].value, request.headers[i].value_len);
 
+        auto it = http::http_info::headers_names.find(header);
+        if (it != http::http_info::headers_names.end()) {
+            auto header_name = it->second;
+            switch (header_name) {
+            case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+                //TODO
+                break;
+            case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
+                std::vector<string> cache_directives;
+                helper::splitString(std::string(header_value), cache_directives, ' ');
+                request.cache_control = true;
+
+                // Lets iterate over the directives array
+                for (unsigned long l = 0; l < cache_directives.size(); l++) {
+                    // split using = to obtain the directive value, if supported
+                    if (cache_directives[l].back() == ',')
+                        cache_directives[l] =
+                                cache_directives[l].substr(0, cache_directives[l].length() - 1);
+                    string directive;
+                    string directive_value = "";
+
+                    std::vector<string> parsed_directive;
+                    helper::splitString(cache_directives[l], parsed_directive, '=');
+
+                    directive = parsed_directive[0];
+
+                    // If the size == 2 the directive is like directive=value
+                    if (parsed_directive.size() == 2)
+                        directive_value = parsed_directive[1];
+                    // To separe directive from the token
+                    if (http::http_info::cache_control_values.count(directive) > 0) {
+                        switch (http::http_info::cache_control_values.at(directive)) {
+                        case http::CACHE_CONTROL::MAX_AGE:
+                            if (directive_value.size() != 0)
+                                request.c_opt.max_age = stoi(directive_value);
+                            break;
+                        case http::CACHE_CONTROL::MAX_STALE:
+                            if (directive_value.size() != 0)
+                                request.c_opt.max_stale = stoi(directive_value);
+                            break;
+                        case http::CACHE_CONTROL::MIN_FRESH:
+                            if (directive_value.size() != 0)
+                                request.c_opt.min_fresh = stoi(directive_value);
+                            break;
+                        case http::CACHE_CONTROL::NO_CACHE:
+                            request.c_opt.no_cache = true;
+                            break;
+                        case http::CACHE_CONTROL::NO_STORE:
+                            request.c_opt.no_store = true;
+                            break;
+                        case http::CACHE_CONTROL::NO_TRANSFORM:
+                            request.c_opt.transform = false;
+                            break;
+                        case http::CACHE_CONTROL::ONLY_IF_CACHED:
+                            request.c_opt.only_if_cached = true;
+                            break;
+                        default:
+                            Debug::logmsg(
+                                        LOG_ERR,
+                                        ("Malformed cache-control, found response directive " +
+                                         directive + " in the request")
+                                        .c_str());
+                            break;
+                        }
+                    } else {
+                        Debug::logmsg(LOG_ERR, ("Unrecognized directive " + directive +
+                                                " in the request")
+                                      .c_str());
+                    }
+                }
+                break;
+            }
+            case http::HTTP_HEADER_NAME::AGE:
+                break;
+            case http::HTTP_HEADER_NAME::PRAGMA: {
+                if (header_value.compare("no-cache") == 0) {
+                    request.pragma = true;
+                }
+                break;
+            }
+            default: continue;
+            }
+
+        }
+    }
+
+    return;
+}
 int HttpCacheManager::discardCacheEntry(HttpRequest request){
     return discardCacheEntry(request.getUrl());
 }

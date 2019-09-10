@@ -458,6 +458,7 @@ void StreamManager::onRequestEvent(int fd) {
 #if CACHE_ENABLED
     // If the cache is enabled and the request is cached and it is also fresh
     if (service->cache_enabled) {
+        service->validateCacheRequest(stream->request);
         if (service->canBeServedFromCache(stream->request) != nullptr) {
             DEBUG_COUNTER_HIT(cache_stats__::cache_match);
             stream->response.reset_parser();
@@ -923,6 +924,7 @@ void StreamManager::onResponseEvent(int fd) {
   auto service = static_cast<Service *>(stream->request.getService());
 #if CACHE_ENABLED
   if (service->cache_enabled) {
+    service->validateCacheResponse(stream->response);
     regex_t *pattern = service->getCachePattern();
     regmatch_t matches[2];
     if (pattern != nullptr) {
