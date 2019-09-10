@@ -59,7 +59,7 @@ public:
    * @param storage_threshold is the threshold to determine if must be cached by ram or by disk
    * @param f_name is the farm name, used to determine the mount point
    */
-  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name);
+  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name, std::string cache_ram_mpoint,std::string cache_disk_mpoint);
   /**
    * @brief Provide access to the cache_timeout variable
    *

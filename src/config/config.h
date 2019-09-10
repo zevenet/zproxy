@@ -119,6 +119,8 @@ class Config {
 #if CACHE_ENABLED
    long cache_s;
    int cache_thr;
+   std::string cache_ram_path;
+   std::string cache_disk_path;
 #endif
   int conf_init(const char *name);
 
@@ -143,7 +145,7 @@ class Config {
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
 #if CACHE_ENABLED
-  regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize; /* Cache configuration regex */
+  regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize, CacheDiskPath, CacheRamPath; /* Cache configuration regex */
 #endif
  public:
 

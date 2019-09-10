@@ -120,7 +120,7 @@ HttpCacheManager::~HttpCacheManager() {
     disk_storage->stopCacheStorage();
 }
 
-void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const string svc, long storage_size, int storage_threshold, string f_name) {
+void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name, std::string cache_ram_mpoint,std::string cache_disk_mpoint) {
     if (pattern != nullptr) {
         if (pattern->re_pcre != nullptr) {
             this->cache_pattern = pattern;
@@ -131,6 +131,18 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
         else {
             return;
         }
+        if ( cache_ram_mpoint.size() > 0 ){
+            ramfs_mount_point = cache_ram_mpoint;
+            if ( ramfs_mount_point.back() == '/'){
+                ramfs_mount_point.erase(ramfs_mount_point.size());
+            }
+        }
+        if ( cache_disk_mpoint.size() > 0 ){
+            disk_mount_point = cache_disk_mpoint;
+            if ( disk_mount_point.back() == '/'){
+                disk_mount_point.erase(disk_mount_point.size());
+            }
+        }
         //Create directory, if fails, and it's not because the folder is already created, just return an error
         if (mkdir(ramfs_mount_point.data(),0777) == -1) {
             if (errno != EEXIST){
@@ -138,10 +150,17 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
                 exit( 1 );
             }
         }
+        if (mkdir(disk_mount_point.data(),0777) == -1) {
+            if (errno != EEXIST){
+                Debug::logmsg(LOG_ERR, "Error creating the directory %s", disk_mount_point.data());
+                exit( 1 );
+            }
+        }
+
         ramfs_mount_point.append ("/");
         ramfs_mount_point.append(f_name);
-
-        disk_mount_point.append("/");
+        //Set DISK mount point
+        disk_mount_point.append ("/");
         disk_mount_point.append(f_name);
 
 //Cache storage initialization

@@ -200,6 +200,10 @@ void Config::parse_file() {
                 size = size*1024*1024*1024;
         }
         cache_s = size;
+    } else if(!regexec(&CacheRamPath, lin, 2, matches, 0)){
+        cache_ram_path = std::string(lin + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+    } else if(!regexec(&CacheDiskPath, lin, 2, matches, 0)){
+        cache_disk_path = std::string(lin + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
 #endif
     } else {
       conf_err("unknown directive - aborted");
@@ -1602,6 +1606,8 @@ void Config::parseCache(ServiceConfig *const svc) {
   svc->cache_size = cache_s;
   svc->cache_threshold = cache_thr;
   svc->f_name = name;
+  svc->cache_ram_path = cache_ram_path;
+  svc->cache_disk_path = cache_disk_path;
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
@@ -1900,30 +1906,35 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&Ignore100continue, "^[ \t]*Ignore100continue[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&HTTPS, "^[ \t]*HTTPS[ \t]*$",
-              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&Disabled, "^[ \t]*Disabled[ \t]+([01])[ \t]*$",
-              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&DHParams, "^[ \t]*DHParams[ \t]+\"(.+)\"[ \t]*$",
-              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&CNName, ".*[Cc][Nn]=([-*.A-Za-z0-9]+).*$",
-              REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&Anonymise, "^[ \t]*Anonymise[ \t]*$",
-              REG_ICASE | REG_NEWLINE | REG_EXTENDED)
-#if CACHE_ENABLED
+          regcomp(&HTTPS, "^[ \t]*HTTPS[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&Disabled, "^[ \t]*Disabled[ \t]+([01])[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&DHParams, "^[ \t]*DHParams[ \t]+\"(.+)\"[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CNName, ".*[Cc][Nn]=([-*.A-Za-z0-9]+).*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&Anonymise, "^[ \t]*Anonymise[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+        #if CACHE_ENABLED
           ||    regcomp(&Cache, "^[ \t]*Cache[ \t]*$",
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-                regcomp(&CacheContent, "^[ \t]*Content[ \t]+\"(.+)\"[ \t]*$",
-                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-                regcomp(&CacheTO, "^[ \t]*CacheTO[ \t]+([1-9][0-9]*)[ \t]*$",
-                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-                regcomp(&CacheRamSize, "^[ \t]*CacheRamSize[ \t]+([1-9][0-9]*)([gmkbGMKB]*)[ \t]*$",
-                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-                regcomp(&CacheThreshold, "^[ \t]*CacheThreshold[ \t]+([1-9][0-9]*)[ \t]*$",
-                        REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-                regcomp(&MaxSize, "^[ \t]*MaxSize[ \t]+([1-9][0-9]*)[ \t]*$",
-                        REG_ICASE | REG_NEWLINE | REG_EXTENDED)
-#endif
+          regcomp(&CacheContent, "^[ \t]*Content[ \t]+\"(.+)\"[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CacheTO, "^[ \t]*CacheTO[ \t]+([1-9][0-9]*)[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CacheRamSize, "^[ \t]*CacheRamSize[ \t]+([1-9][0-9]*)([gmkbGMKB]*)[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CacheThreshold, "^[ \t]*CacheThreshold[ \t]+([1-9][0-9]*)[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&MaxSize, "^[ \t]*MaxSize[ \t]+([1-9][0-9]*)[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+          regcomp(&CacheRamPath, "^[ \t]*CacheRamPath[ \t]+\"([a-zA-Z\\/\\._]*)\"[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED)   ||
+          regcomp(&CacheDiskPath, "^[ \t]*CacheDiskPath[ \t]+\"([a-zA-Z\\/\\._]*)\"[ \t]*$",
+                  REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+
+        #endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
       || regcomp(&ECDHCurve, "^[ \t]*ECDHCurve[ \t]+\"(.+)\"[ \t]*$",
@@ -2047,6 +2058,8 @@ void Config::clean_regex() {
   regfree(&CacheRamSize);
   regfree(&CacheThreshold);
   regfree(&MaxSize);
+  regfree(&CacheDiskPath);
+  regfree(&CacheRamPath);
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
