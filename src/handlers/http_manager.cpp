@@ -9,7 +9,7 @@ bool http_manager::isLastChunk(HttpStream &stream) {
   static int iteration;
   iteration++;
   auto last_chunk_size = stream.response.chunk_size_left;
-  if (last_chunk_size > stream.backend_connection.buffer_size) {
+  if (last_chunk_size >= stream.backend_connection.buffer_size) {
     stream.response.chunk_size_left -= stream.backend_connection.buffer_size;
   } else {
     size_t data_offset = last_chunk_size;
@@ -17,7 +17,12 @@ bool http_manager::isLastChunk(HttpStream &stream) {
         http_manager::getLastChunkSize(stream.backend_connection.buffer + last_chunk_size,
                                        stream.backend_connection.buffer_size - stream.response.chunk_size_left,
                                        data_offset);
-    if (new_chunk_left == 0) {
+//    Debug::logmsg(LOG_REMOVE,
+//                  ">>>> Chunk size %d Data size %d Data offset %d",
+//                  new_chunk_left,
+//                  stream.backend_connection.buffer_size,
+//                  data_offset);
+    if (new_chunk_left == 0 && data_offset == -1) {
       stream.response.chunk_size_left = 0;
       stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
       return true;
@@ -68,7 +73,7 @@ size_t http_manager::getLastChunkSize(const char *data, size_t data_size, size_t
     return 0;
   }
   if (chunk_size == 0) {
-    data_offset += data_size;
+    data_offset = -1;// data_size;
     return 0;
   } else {
     auto offset = chunk_size + chunk_size_len + 4;
