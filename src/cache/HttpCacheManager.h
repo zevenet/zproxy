@@ -4,7 +4,10 @@
 #include "../http/HttpRequest.h"
 #include "../http/http.h"
 #include "../service/backend.h"
+//Storage headers
 #include "ICacheStorage.h"
+#include "RamCacheStorage.h"
+#include "DiskCacheStorage.h"
 #include "../util/common.h"
 #include "../stats/counter.h"
 #include "../ctl/ctl.h"
@@ -32,11 +35,6 @@ private:
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
 
-  /**
-   * @brief updateFreshness update the freshness for a single stored response
-   * @param c_object, the cache_commons::CacheObject which we want to update
-   */
-  void updateFreshness(cache_commons::CacheObject *c_object);
   /**
    * @brief hashStr
    * @param str
@@ -68,15 +66,6 @@ public:
    * @return timeout is the timeout value set to the cache manager
    */
   int getCacheTimeout() {  return this->cache_timeout; }
-  /**
-   * @brief Checks whether the cached content is fresh or not, staling it if not
-   * fresh.
-   *
-   * @param request is the HttpRequest to check if the resource is fresh or
-   * not.
-   * @return if the content is fresh it returns true or false in other case
-   */
-  bool isFresh(HttpRequest &request);
   /**
    * @brief canBeServedFromCache Checks if the request allows to serve cached content and if the
    * cached content is fresh
@@ -156,12 +145,18 @@ public:
    */
   HttpResponse parseCacheBuffer(std::string buffer);
   /**
-   * @brief createcache_commons::CacheObjectEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
+   * @brief createCacheObjectEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
    * @param response the response which will be used to create the cache_commons::CacheObject entry
+   * @param pointer for cache_commons::CacheObject, it will be stored in it, if nullptr, the function will create
    * @return cache_commons::CacheObject is the cache information representation of the response
    */
   void createCacheObjectEntry( HttpResponse response, cache_commons::CacheObject * c_object );
+  /**
+   * @brief discardCacheEntry removes the cache entry of the param request
+   * @param rquest the HttpRequest used to determine which entry to delete
+   */
   void discardCacheEntry(HttpRequest request);
+  void discardCacheEntry(const std::string url);
 };
 
 namespace cache_stats__ {

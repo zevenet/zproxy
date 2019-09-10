@@ -121,11 +121,13 @@ TEST(CacheTest, StalingTest){
     createResponse(&resp_buffer, &stream);
 
     c_manager.handleResponse(stream.response,stream.request);
-    ASSERT_TRUE( c_manager.isFresh(stream.request) );
-    ASSERT_FALSE( c_manager.getCacheObject(stream.request)->staled );
+    auto c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_TRUE( c_object->isFresh() );
+    ASSERT_FALSE( c_object->staled );
     sleep(cache_timeout+1);
-    ASSERT_FALSE( c_manager.isFresh(stream.request) );
-    ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled );
+    c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_FALSE( c_object->isFresh() );
+    ASSERT_TRUE( c_object->staled );
 
     //Refresh the response
     resp_buffer = createResponseBuffer(nullptr);
@@ -133,10 +135,12 @@ TEST(CacheTest, StalingTest){
 
     c_manager.handleResponse(stream.response,stream.request);
     //Check if refreshed
-    ASSERT_TRUE( c_manager.isFresh(stream.request) );
-    ASSERT_FALSE( c_manager.getCacheObject(stream.request)->staled );
+    c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_TRUE( c_object->isFresh() );
+    ASSERT_FALSE( c_object->staled );
     sleep(cache_timeout+1);
-    ASSERT_FALSE( c_manager.isFresh(stream.request) );
+    c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_FALSE( c_object->isFresh() );
     ASSERT_TRUE( c_manager.getCacheObject(stream.request)->staled );
 }
 
@@ -158,7 +162,8 @@ TEST(CacheTest, CanBeServedTest){
     string c_control("no-cache");
     req_buffer = createRequestBuffer(&c_control);
     createRequest(&req_buffer, &stream);
-    ASSERT_TRUE(c_manager.isFresh(stream.request));
+    auto c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_TRUE(c_object->isFresh());
     ASSERT_FALSE(c_manager.canBeServedFromCache(stream.request));
 }
 
@@ -177,10 +182,10 @@ TEST(CacheTest, CcontrolNoCacheTest){
     createResponse(&resp_buffer, &stream);
 
     c_manager.handleResponse(stream.response, stream.request);
-
-    ASSERT_FALSE( c_manager.getCacheObject(stream.request) != nullptr );
+    auto c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_FALSE( c_object != nullptr );
     //Not cached, return false
-    ASSERT_FALSE( c_manager.isFresh(stream.request));
+    ASSERT_FALSE( c_object->isFresh());
 
     //In request:
     //  -Not cached: We must cache the response
@@ -192,8 +197,9 @@ TEST(CacheTest, CcontrolNoCacheTest){
     createResponse(&resp_buffer, &stream);
     c_manager.handleResponse(stream.response, stream.request);
     ASSERT_FALSE( c_manager.canBeServedFromCache(stream.request));
-    ASSERT_TRUE( c_manager.getCacheObject(stream.request) != nullptr);
-    ASSERT_TRUE( c_manager.isFresh(stream.request));
+    c_object = c_manager.getCacheObject(stream.request);
+    ASSERT_TRUE( c_object  != nullptr);
+    ASSERT_TRUE( c_object->isFresh());
     time_t previous_time = c_manager.getCacheObject(stream.request)->date;
     //Update response timers
     //Adding a delay between responses, to ensure that is refreshed

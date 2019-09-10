@@ -79,9 +79,12 @@ add_library(libzhttp
         http/HttpRequest.cpp
         cache/HttpCacheManager.cpp
         cache/HttpCacheManager.h
-        cache/ICacheStorage.cpp
         cache/ICacheStorage.h
         cache/CacheCommons.h
+        cache/RamCacheStorage.h
+        cache/RamCacheStorage.cpp
+        cache/DiskCacheStorage.h
+        cache/DiskCacheStorage.cpp
         debug/backtrace.cpp debug/backtrace.h)
 target_link_libraries(libzhttp PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
 

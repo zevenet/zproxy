@@ -24,7 +24,8 @@ void HttpCacheManager::handleResponse(HttpResponse &response,
   if ( c_opt != nullptr && c_opt->dirty == true ){
         return;
   }
-  if( c_opt != nullptr && isFresh(request)){
+
+  if( c_opt != nullptr && c_opt->isFresh()){
       //If the stored response is fresh, we must not to store this response
       response.c_opt.cacheable = false;
   }
@@ -137,8 +138,11 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const stri
                 exit( 1 );
             }
         }
-        ramfs_mount_point += "/"+ f_name;
-        disk_mount_point += "/" + f_name;
+        ramfs_mount_point.append ("/");
+        ramfs_mount_point.append(f_name);
+
+        disk_mount_point.append("/");
+        disk_mount_point.append(f_name);
 
 //Cache storage initialization
         st::STORAGE_STATUS svc_status;
@@ -175,7 +179,12 @@ void HttpCacheManager::storeResponse(HttpResponse &response,
   auto old_object = getCacheObject(request);
   //Check what storage to use
   st::STORAGE_STATUS err;
-  std::string rel_path = service_name + "/" + to_string(std::hash<std::string>()(request.getUrl()));
+
+  //Create the path string
+  size_t hashed_url = std::hash<std::string>()(request.getUrl());
+  std::string rel_path = service_name;
+  rel_path.append("/");
+  rel_path.append(to_string(hashed_url));
 
   switch (c_object->storage){
   case st::STORAGE_TYPE::STDMAP:
@@ -292,8 +301,12 @@ void HttpCacheManager::appendData( HttpResponse &response ,char *msg, size_t msg
     if( response.c_object == nullptr )
         return;
 
-    Debug::logmsg(LOG_NOTICE, "Appending %d data to %s stored response", msg_size, url.data());
-    std::string rel_path = service_name + "/" + to_string(std::hash <std::string> () (url));
+    //create the path string
+    size_t hashed_url = std::hash <std::string> () (url);
+    std::string rel_path = service_name;
+    rel_path.append("/");
+    rel_path.append(to_string(hashed_url));
+
     storage_commons::STORAGE_STATUS err;
     //Check what storage to use
     switch (c_object->storage){
@@ -318,15 +331,15 @@ void HttpCacheManager::appendData( HttpResponse &response ,char *msg, size_t msg
 }
 
 // Check the freshness of the cached content
-bool HttpCacheManager::isFresh(HttpRequest &request) {
-  auto c_object = getCacheObject(request);
-  if (c_object == nullptr){
-    return false;
-  }
-  updateFreshness(c_object);
+//bool HttpCacheManager::isFresh(HttpRequest &request) {
+//  auto c_object = getCacheObject(request);
+//  if (c_object == nullptr){
+//    return false;
+//  }
+//  updateFreshness(c_object);
 
-  return (c_object->staled ? false : true);
-}
+//  return (c_object->staled ? false : true);
+//}
 
 // Check if the cached content can be served, depending on request
 // cache-control values
@@ -346,7 +359,7 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
         return c_object;
     }
     //TODO: isfresh applies to   Cobject, must be of Cobject
-    bool serveable = isFresh(request);
+    bool serveable = c_object->isFresh();
 
     std::time_t now = timeHelper::gmtTimeNow();
 
@@ -384,26 +397,26 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
     return serveable ? c_object : nullptr;
 }
 
-void HttpCacheManager::updateFreshness(cache_commons::CacheObject *c_object) {
-  if (c_object->staled != true) {
-    time_t now = timeHelper::gmtTimeNow();
-    long int age_limit = 0;
-    if (c_object->max_age >= 0 && !c_object->heuristic)
-      age_limit = c_object->max_age;
-    else if (c_object->expires >= 0)
-      age_limit = c_object->expires;
-    else if (c_object->max_age >= 0 && c_object->heuristic)
-      age_limit = c_object->max_age;
-    if ((now - c_object->date) > age_limit) {
-      c_object->staled = true;
-      DEBUG_COUNTER_HIT(cache_stats__::cache_staled_entries);
-    }
-  }
-}
+//void HttpCacheManager::updateFreshness(cache_commons::CacheObject *c_object) {
+//  if (c_object->staled != true) {
+//    time_t now = timeHelper::gmtTimeNow();
+//    long int age_limit = 0;
+//    if (c_object->max_age >= 0 && !c_object->heuristic)
+//      age_limit = c_object->max_age;
+//    else if (c_object->expires >= 0)
+//      age_limit = c_object->expires;
+//    else if (c_object->max_age >= 0 && c_object->heuristic)
+//      age_limit = c_object->max_age;
+//    if ((now - c_object->date) > age_limit) {
+//      c_object->staled = true;
+//      DEBUG_COUNTER_HIT(cache_stats__::cache_staled_entries);
+//    }
+//  }
+//}
 int HttpCacheManager::getResponseFromCache(HttpRequest request,
                                           HttpResponse &cached_response, std::string &buffer ) {
   auto c_object = getCacheObject(request);
-  updateFreshness(c_object);
+  c_object->updateFreshness();
 
   size_t parsed = 0;
   std::string rel_path = service_name ;
@@ -497,37 +510,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
           return JSON_OP_RESULT::ERROR;
         }
         auto url = dynamic_cast<JsonDataValue *>(json_data->at(JSON_KEYS::CACHE_CONTENT).get())->string_value;
-
-        cache_commons::CacheObject * c_object = nullptr;
-        c_object = getCacheObject( url );
-        if ( c_object == nullptr )
-            Debug::logmsg(LOG_WARNING, "Request %s not cached", url.data());
-        else{
-            size_t hash_url = std::hash<std::string>()(url);
-            std::string path(service_name);
-            path.append ("/");
-            path.append (to_string(hash_url));
-            st::STORAGE_STATUS err;
-            switch(c_object->storage)
-            {
-                case st::STORAGE_TYPE::STDMAP:
-                case st::STORAGE_TYPE::RAMFS:
-                    err = ram_storage->deleteInStorage(path);
-                    break;
-                case st::STORAGE_TYPE::DISK:
-                    err = disk_storage->deleteInStorage(path);
-                    break;
-                case st::STORAGE_TYPE::MEMCACHED:
-                case st::STORAGE_TYPE::TMPFS:
-                default:
-                    break;
-            }
-            if ( err == st::STORAGE_STATUS::SUCCESS )
-            {
-                this->cache.erase(hash_url);
-                return JSON_OP_RESULT::OK;
-            }
-        }
+        discardCacheEntry(url);
         break;
     }
     default:
@@ -543,10 +526,14 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
     std::string path;
     switch(st_type){
     case st::STORAGE_TYPE::RAMFS:
-         path = ram_storage->mount_path + "/" + svc;
+         path = ram_storage->mount_path;
+         path.append("/");
+         path.append(svc);
         break;
     case st::STORAGE_TYPE::DISK:
-        path = disk_storage->mount_path + "/" + svc;
+        path = disk_storage->mount_path;
+        path.append("/");
+        path.append(svc);
         break;
     default:
         break;
@@ -690,13 +677,16 @@ HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
 }
 
 void HttpCacheManager::discardCacheEntry(HttpRequest request){
-    auto c_object = getCacheObject(request);
+    discardCacheEntry(request.getUrl());
+}
+void HttpCacheManager::discardCacheEntry(const std::string url){
+    auto c_object = getCacheObject(url);
     if(c_object == nullptr){
         Debug::logmsg(LOG_WARNING, "Trying to discard a non existing entry from the cache");
         return;
     }
     // Create the key and the file path
-    auto hashed_url = hash <std::string> ()(request.getUrl());
+    auto hashed_url = hash <std::string> ()(url);
     std::string path (service_name);
     path.append ("/");
     path.append (to_string(hashed_url));
