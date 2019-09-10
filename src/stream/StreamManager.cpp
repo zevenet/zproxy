@@ -805,7 +805,11 @@ void StreamManager::onResponseEvent(int fd) {
     break;
   }
   case IO::IO_RESULT::FULL_BUFFER:
-  case IO::IO_RESULT::FD_CLOSED:break;
+  case IO::IO_RESULT::FD_CLOSED:
+    if (stream->client_connection.buffer_size > 0)
+      break;
+    else
+      return;
   case IO::IO_RESULT::ERROR:
   case IO::IO_RESULT::CANCELLED:
   default: {
@@ -824,6 +828,9 @@ void StreamManager::onResponseEvent(int fd) {
   //TODO:  stream->backend_stadistics.update();
 
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
+    if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
+      auto is_last_chunk = http_manager::isLastChunk(*stream);
+    }
 #if CACHE_ENABLED
     auto service = static_cast<Service *>(stream->request.getService());
     if (service->cache_enabled && service->getCacheObject(stream->request) != nullptr &&
@@ -847,6 +854,7 @@ void StreamManager::onResponseEvent(int fd) {
 #else
     stream->client_connection.enableWriteEvent();
 #endif
+    stream->backend_connection.enableReadEvent();
     return;
   }
   if (stream->backend_connection.buffer_size == 0)
@@ -856,15 +864,11 @@ void StreamManager::onResponseEvent(int fd) {
       stream->backend_connection.buffer, stream->backend_connection.buffer_size,
       &parsed);
   static size_t total_responses;
-  if (ret != http_parser::PARSE_RESULT::SUCCESS) {
-    if (stream->backend_connection.buffer_size > 0) {
-#if ENABLE_QUICK_RESPONSE
-      onClientWriteEvent(stream);
-#else
-      stream->client_connection.enableWriteEvent();
-#endif
-      return;
-    }
+  switch (ret) {
+
+  case http_parser::PARSE_RESULT::SUCCESS:break;
+  case http_parser::PARSE_RESULT::TOOLONG:
+  case http_parser::PARSE_RESULT::FAILED: {
     Debug::logmsg(
         LOG_REMOVE,
         "%d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer "
@@ -880,7 +884,9 @@ void StreamManager::onResponseEvent(int fd) {
     clearStream(stream);
     return;
   }
-  // FIXME:
+  case http_parser::PARSE_RESULT::INCOMPLETE: stream->backend_connection.enableReadEvent();
+    return;
+  }
 
   total_responses++;
   Debug::logmsg(
@@ -1102,17 +1108,12 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
     }
     if (stream->request.message_bytes_left > 0) {
       stream->request.message_bytes_left -= written;
-    }
-    stream->request.headers_sent = stream->request.headers_sent ? stream->request.message_bytes_left > 0 : false;
+      if (stream->request.message_bytes_left == 0) {
+        stream->request.reset_parser();
+      }
+    } else
     if (stream->request.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
-      stream->request.chunked_status = http::CHUNKED_STATUS::CHUNKED_DISABLED;
-      stream->request.headers_sent = stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
-    } else if (stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-      Debug::logmsg(LOG_ERR, "Chunk %x", stream->client_connection.buffer);
-      stream->request.chunked_status =
-          http_manager::isLastChunk(stream->client_connection.buffer) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK
-                                                                      : http::CHUNKED_STATUS::CHUNKED_ENABLED;
-      stream->request.headers_sent = stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
+      stream->response.reset_parser();
     }
 #if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(
@@ -1256,16 +1257,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
       stream->backend_connection.buffer_size -= written;
     if (stream->response.message_bytes_left > 0) {
       stream->response.message_bytes_left -= written;
-    }    /* Check if chunked transfer encoding is enabled. update status*/
-    stream->response.headers_sent = stream->response.headers_sent ? stream->response.message_bytes_left > 0 : false;
-    if (stream->response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
-      stream->response.chunked_status = http::CHUNKED_STATUS::CHUNKED_DISABLED;
-      stream->response.headers_sent = stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
-    } else if (stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-      stream->response.chunked_status =
-          http_manager::isLastChunk(stream->backend_connection.buffer) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK
-                                                                       : http::CHUNKED_STATUS::CHUNKED_ENABLED;
-      stream->response.headers_sent = stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED;
+      if (stream->response.message_bytes_left == 0)
+        stream->response.reset_parser();
+    } else if (stream->response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
+      stream->response.reset_parser();
     }
 #if PRINT_DEBUG_FLOW_BUFFERS
     Debug::logmsg(

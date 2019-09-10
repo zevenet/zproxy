@@ -75,9 +75,8 @@ public:
    */
 
   /**/
-    static bool isLastChunk(const std::string& data);
-    static size_t getChunkSize(const std::string& data);
-
-  static bool transferChunked(const Connection &connection, http_parser::HttpData &stream);
+  static bool isLastChunk(HttpStream &stream);
+  static size_t getChunkSize(const std::string &data, size_t data_size, size_t &chunk_size_len);
+  static size_t getLastChunkSize(const char *data, size_t data_size, size_t &data_offset);
 };
 

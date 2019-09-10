@@ -5,34 +5,82 @@
 #include "http_manager.h"
 #include "../util/Network.h"
 
-bool http_manager::transferChunked(const Connection &connection, http_parser::HttpData &stream) {
-  if (stream.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) {
-    auto pos = std::string(connection.buffer);
-    stream.chunked_status =
-            isLastChunk(pos) ? http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK : http::CHUNKED_STATUS::CHUNKED_ENABLED;
-    return true;
+bool http_manager::isLastChunk(HttpStream &stream) {
+  static int iteration;
+  iteration++;
+  auto last_chunk_size = stream.response.chunk_size_left;
+  if (last_chunk_size > stream.backend_connection.buffer_size) {
+    stream.response.chunk_size_left -= stream.backend_connection.buffer_size;
+  } else {
+    size_t data_offset = last_chunk_size;
+    auto new_chunk_left =
+        http_manager::getLastChunkSize(stream.backend_connection.buffer + last_chunk_size,
+                                       stream.backend_connection.buffer_size - stream.response.chunk_size_left,
+                                       data_offset);
+    if (new_chunk_left == 0) {
+      stream.response.chunk_size_left = 0;
+      stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+      return true;
+    } else {
+      stream.response.chunk_size_left = new_chunk_left;
+    }
   }
   return false;
 }
 
-bool http_manager::isLastChunk(const std::string& data)
-{
-    return getChunkSize(data)==0;
+size_t http_manager::getChunkSize(const std::string &data, size_t data_size, size_t &chunk_size_len) {
+  static int count;
+  count++;
+  chunk_size_len = 0;
+  static size_t total_chunked;
+  auto pos = data.find("\r\n");
+  if (pos != std::string::npos) {
+    auto hex = data.substr(0, pos);
+    char *error;
+    auto chunk_length = ::strtol(hex.data(), &error, 16);
+    if (*error != 0) {
+      chunk_size_len = -1;
+      Debug::logmsg(LOG_NOTICE, "CHUNK %d IN Chunk size error", count);
+      return 0;
+    } else {
+      chunk_size_len = hex.length();
+      total_chunked += chunk_length == 0 ? (data_size - chunk_size_len - 2) : chunk_length;
+      Debug::logmsg(LOG_DEBUG,
+                    "CHUNK %d Chunk size %s => %d : TOTAL: %d",
+                    count,
+                    hex.data(),
+                    chunk_length,
+                    total_chunked);
+      return chunk_length;
+    }
+  }
+  chunk_size_len = 0;
+  return 0;
 }
 
-size_t http_manager::getChunkSize(const std::string& data)
-{
-  auto pos = data.find('\r');
-  for (auto c = pos; c > -1; c--) {
-    Debug::logmsg(LOG_REMOVE, " 0x%x %c", data[c], data[c]);
+size_t http_manager::getLastChunkSize(const char *data, size_t data_size, size_t &data_offset) {
+  size_t chunk_size = 0;
+  size_t chunk_size_len = 0;
+  chunk_size = getChunkSize(data, data_size, chunk_size_len);
+  if (chunk_size_len == 0) {
+    //an error has ocurred;
+    data_offset = -1; //the way we indicate an error happends
+    return 0;
   }
-//  if (pos < data.size()) {
-//    auto hex = data.substr(0, pos);
-//    Debug::logmsg(LOG_DEBUG, "RESPONSE:\n %x", data.c_str());
-//    int chunk_length = std::stoul(hex.data(), nullptr, 16);
-//    return chunk_length;
-//  }
-  return data[0] == 0x00 ? 0 : data.size();
+  if (chunk_size == 0) {
+    data_offset += data_size;
+    return 0;
+  } else {
+    auto offset = chunk_size + chunk_size_len + 4;
+    if (data_size > offset + 2) {
+      data_offset += offset;
+      auto data_ptr = data + offset;
+      return getLastChunkSize(data_ptr, data_size - offset, data_offset);
+    } else {
+      data_offset += data_size;
+      return offset - data_size;
+    }
+  }
 }
 
 void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
@@ -381,7 +429,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           response.addHeader(http::HTTP_HEADER_NAME::LOCATION,
                              header_value_);
 //          response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-//                             path);
+//                  getLastChunkSize           path);
           response.headers[i].header_off = true;
         }
         break;
@@ -396,6 +444,16 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           if (header_value[1] == 'h') { //no content-length
             response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
             response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+            if (response.message_length > 0) {
+              size_t data_offset = 0;
+              response.chunk_size_left =
+                  getLastChunkSize(response.message, response.message_length, data_offset);
+              Debug::logmsg(LOG_REMOVE,
+                            "Chunk size left: %d , data offset %d",
+                            response.chunk_size_left,
+                            data_offset);
+            }
+
           } else if (header_value[2] == 'o') {
             response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::COMPRESS;
           }
@@ -509,5 +567,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
   }
   return validation::REQUEST_RESULT::OK;
 }
+
 
 
