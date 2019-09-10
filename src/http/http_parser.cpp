@@ -174,7 +174,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
     printResponse();
 #endif
     return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
-  } else if (pret == -1) { /* response is incomplete, continue the loop */
+  } else if (pret == -2) { /* response is incomplete, continue the loop */
     return PARSE_RESULT::INCOMPLETE;
   }
   return PARSE_RESULT::FAILED;
