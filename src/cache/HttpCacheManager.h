@@ -155,8 +155,8 @@ public:
    * @brief discardCacheEntry removes the cache entry of the param request
    * @param rquest the HttpRequest used to determine which entry to delete
    */
-  void discardCacheEntry(HttpRequest request);
-  void discardCacheEntry(const std::string url);
+  int discardCacheEntry(HttpRequest request);
+  int discardCacheEntry(const std::string url);
 };
 
 namespace cache_stats__ {

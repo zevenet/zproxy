@@ -493,6 +493,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
 
 std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
 {
+    int err = 0;
     if (task.subject != ctl::CTL_SUBJECT::CACHE)
         return JSON_OP_RESULT::ERROR;
     switch (task.command)
@@ -510,14 +511,17 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
           return JSON_OP_RESULT::ERROR;
         }
         auto url = dynamic_cast<JsonDataValue *>(json_data->at(JSON_KEYS::CACHE_CONTENT).get())->string_value;
-        discardCacheEntry(url);
+        err = discardCacheEntry(url);
         break;
     }
     default:
             Debug::logmsg(LOG_ERR, "Not a valid cache command");
             return JSON_OP_RESULT::ERROR;
     }
-    return JSON_OP_RESULT::ERROR;
+    if ( err != 0 ){
+        return JSON_OP_RESULT::ERROR;
+    }
+    return JSON_OP_RESULT::OK;
 }
 
 void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
@@ -676,14 +680,14 @@ HttpResponse HttpCacheManager::parseCacheBuffer(std::string buffer){
   return response;
 }
 
-void HttpCacheManager::discardCacheEntry(HttpRequest request){
-    discardCacheEntry(request.getUrl());
+int HttpCacheManager::discardCacheEntry(HttpRequest request){
+    return discardCacheEntry(request.getUrl());
 }
-void HttpCacheManager::discardCacheEntry(const std::string url){
+int HttpCacheManager::discardCacheEntry(const std::string url){
     auto c_object = getCacheObject(url);
     if(c_object == nullptr){
         Debug::logmsg(LOG_WARNING, "Trying to discard a non existing entry from the cache");
-        return;
+        return -1;
     }
     // Create the key and the file path
     auto hashed_url = hash <std::string> ()(url);
@@ -696,19 +700,21 @@ void HttpCacheManager::discardCacheEntry(const std::string url){
     switch(c_object->storage){
     case storage_commons::STORAGE_TYPE::STDMAP:
     case storage_commons::STORAGE_TYPE::RAMFS:
-        err = disk_storage->deleteInStorage(path);
+        err = ram_storage->deleteInStorage(path);
         break;
     case storage_commons::STORAGE_TYPE::DISK:
         err = disk_storage->deleteInStorage(path);
         break;
-    default: return;
+    default: return -1;
     }
     if ( err != storage_commons::STORAGE_STATUS::SUCCESS){
         Debug::logmsg(LOG_ERR, "Error trying to delete cache content from the storage");
-        return;
+        return -1;
     }
-    if ( cache.erase(hashed_url) != 1 )
+    if ( cache.erase(hashed_url) != 1 ){
        Debug::logmsg(LOG_WARNING, "Error deleting cache entry");
-
+       return -1;
+    }
+    return 0;
 }
 #endif
