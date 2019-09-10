@@ -1,3 +1,4 @@
+#if CACHE_ENABLED
 #include "DiskCacheStorage.h"
 
 // Disk Static variables definition
@@ -138,3 +139,4 @@ st::STORAGE_STATUS DiskCacheStorage::deleteInStorage(string path)
         return st::STORAGE_STATUS::NOT_FOUND;
     return st::STORAGE_STATUS::SUCCESS;
 }
+#endif
