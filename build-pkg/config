@@ -7,6 +7,7 @@ debian_versions="buster"
 
 # excepciones que no deben ser copiadas y no se encriptan. No deben estar en la CE
 enterprise_files=(
+	etc/dhcp
 	etc/profile
 	etc/profile_packetbl
 	usr/local/zevenet/migrating/
@@ -31,9 +32,14 @@ enterprise_files=(
 	usr/local/zevenet/bin/dhcp
 	usr/local/zevenet/bin/certbot-auto
 	usr/local/zevenet/bin/letsencryptz
+	usr/local/zevenet/bin/checkupgrades
+	usr/local/zevenet/bin/netplug
+	usr/local/zevenet/bin/supportsave_ext
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
+	usr/local/zevenet/share/netplug.template
+	usr/local/zevenet/share/netplugd.conf.template
 	usr/share/perl5/Zevenet/API3.pm
 	usr/share/perl5/Zevenet/API3/
 	usr/share/perl5/Zevenet/API31/Certificate/Certificate.pm

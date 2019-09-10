@@ -5,7 +5,7 @@
 # The script uses the current content of the EE repository, it does not use the last commit.
 
 # variables
-CE_REPO="git@gitlab.zevenet.com:cristina.guerra/zevenet-ce.git"
+CE_REPO="git@gitlab.zevenet.com:zevenet_team/zevenet-ce.git"
 CE_BRANCH="merge-ee"
 
 zevenet_home='usr/local/zevenet'
@@ -30,7 +30,8 @@ function print_usage_and_exit() {
 	echo "Usage: $(basename "$0") [options]
 
 	Options:
-	--auto-merge		Apply automatly a commit in the CE branch 'merge-ee'"
+	--auto-merge		Apply automatly a commit in the CE branch 'merge-ee'
+	-b, --branch		choose which branch from the CE repository will be pulled"
 	exit 1
 }
 
@@ -64,7 +65,11 @@ function delete_globalconf_param() {
 
 while [ $# -gt 0 ]; do
 	case $1 in
-	--auto-merge)
+	"-b"|"--branch")
+		  CE_BRANCH="$2"
+		  shift
+		;;
+	"--auto-merge")
 		AUTO_MERGE=1
 		;;
 	*)
