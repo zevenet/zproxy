@@ -169,6 +169,7 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
       return session;
     } else {
       if (!update_if_exist) {
+        std::lock_guard<std::mutex> locker(lock_mtx);
         sessions_set.erase(session_key);
         delete session;
       }
@@ -197,20 +198,22 @@ std::unique_ptr<json::JsonArray> HttpSessionManager::getSessionsJson() {
 void HttpSessionManager::deleteBackendSessions(int backend_id)
 {
     std::lock_guard<std::mutex> locker(lock_mtx);
-    for (auto &session : sessions_set) {
-      if (session.second != nullptr &&
-              session.second->assigned_backend->backend_id == backend_id) {
-        sessions_set.erase(session.first);
-      }
+    for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
+      if ( it->second != nullptr && it->second->assigned_backend->backend_id == backend_id) {
+        sessions_set.erase(it++);
+      }else
+          it++;
     }
 }
 
 void HttpSessionManager::doMaintenance()
 {
-    for (auto &session : sessions_set) {
-      if (session.second == nullptr || session.second->hasExpired(ttl)) {
-        sessions_set.erase(session.first);
-      }
+    std::lock_guard<std::mutex> locker(lock_mtx);
+    for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
+      if ( it->second != nullptr && it->second->hasExpired(ttl)) {
+        sessions_set.erase(it++);
+      }else
+          it++;
     }
 }
 
@@ -239,7 +242,8 @@ bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend
 }
 
 bool HttpSessionManager::deleteSession(const JsonObject &json_object, std::vector<Backend *> backend_set) {
-  if (json_object.count(JSON_KEYS::BACKEND_ID) > 0 && json_object.at(JSON_KEYS::BACKEND_ID)->isValue()) {
+    std::lock_guard<std::mutex> locker(lock_mtx);
+    if (json_object.count(JSON_KEYS::BACKEND_ID) > 0 && json_object.at(JSON_KEYS::BACKEND_ID)->isValue()) {
     Backend *bck = nullptr;
     auto session_json_backend_id = dynamic_cast<JsonDataValue*>(json_object.at(JSON_KEYS::BACKEND_ID).get())->number_value;
     for (auto backend : backend_set) {
