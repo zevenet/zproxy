@@ -185,13 +185,13 @@ std::unique_ptr<json::JsonArray> HttpSessionManager::getSessionsJson() {
   std::unique_ptr<json::JsonArray> data { new json::JsonArray()};
   for (auto &session : sessions_set) {
     std::unique_ptr<JsonObject> json_data {new json::JsonObject()};
-    json_data->emplace(JSON_KEYS::ID, new json::JsonDataValue(session.first));
+    json_data->emplace(JSON_KEYS::ID, std::make_unique<JsonDataValue>(session.first));
     json_data->emplace(
         JSON_KEYS::BACKEND_ID,
-        new json::JsonDataValue(session.second->assigned_backend->backend_id));
+        std::make_unique<JsonDataValue>(session.second->assigned_backend->backend_id));
 
     json_data->emplace(JSON_KEYS::LAST_SEEN_TS,
-                       new json::JsonDataValue(session.second->getTimeStamp()));
+                       std::make_unique<JsonDataValue> (session.second->getTimeStamp()));
     data->emplace_back(std::move(json_data));
   }
   return data;

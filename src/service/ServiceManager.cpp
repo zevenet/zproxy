@@ -45,12 +45,8 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
   service->id = id;
   service->name = std::string(service_config.name);
   service->disabled = service_config.disabled;
+  service->pinned_connection = service_config.pinned_connection == 1;
 
-  if (service_config.pinned_connection == 1) {
-    service->pinned_connection = true;
-  } else {
-    service->pinned_connection = false;
-  }
   // Information related with the setCookie
   if(service_config.becookie != nullptr)
     service->becookie = std::string(service_config.becookie);
@@ -75,21 +71,21 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
     return JSON_OP_RESULT::ERROR;
   }
 
-  std::unique_ptr<json::JsonObject> root(new json::JsonObject());
-  root->emplace(JSON_KEYS::ADDRESS,
-                new json::JsonDataValue(listener_config_.address));
-  root->emplace(JSON_KEYS::PORT,
-                new json::JsonDataValue(listener_config_.port));
-  root->emplace(JSON_KEYS::HTTPS,
-                new json::JsonDataValue(listener_config_.ctx != nullptr));
-  auto services_array = new json::JsonArray();
+  std::unique_ptr<json::JsonObject> root = std::make_unique<JsonObject>();
+  root->emplace(JSON_KEYS::ADDRESS,std::make_unique<JsonDataValue>(
+                 json::JsonDataValue(listener_config_.address)));
+  root->emplace(JSON_KEYS::PORT,std::make_unique<JsonDataValue>(
+                 json::JsonDataValue(listener_config_.port)));
+  root->emplace(JSON_KEYS::HTTPS,std::make_unique<JsonDataValue>(
+                 json::JsonDataValue(listener_config_.ctx != nullptr)));
+  auto services_array = std::make_unique<JsonArray>();
   for (auto service : services)
     services_array->emplace_back(service->getServiceJson());
-  root->emplace(JSON_KEYS::SERVICES, services_array);
+  root->emplace(JSON_KEYS::SERVICES,std::move(services_array));
   auto data = root->stringify();
   return data;
 }
 
 bool ServiceManager::isHandler(ctl::CtlTask &task) {
-  return task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER;
+  return task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER || task.target == ctl::CTL_HANDLER_TYPE::ALL;
 }
