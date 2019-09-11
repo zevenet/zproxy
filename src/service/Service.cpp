@@ -433,20 +433,11 @@ Backend *Service::getNextBackend() {
 }
 
 void Service::doMaintenance() {
+  HttpSessionManager::doMaintenance();
   for (Backend* bck : this->backend_set) {
     bck->doMaintenance();
     if (bck->status == BACKEND_STATUS::BACKEND_DOWN) {
-      for (auto session : sessions_set) {
-        if (session.second->assigned_backend->backend_id == bck->backend_id) {
-          sessions_set.erase(session.first);
-        }
-      }
-    }
-  }
-
-  for (auto session : sessions_set) {
-    if (session.second->hasExpired(ttl)) {
-      sessions_set.erase(session.first);
+        deleteBackendSessions(bck->backend_id);
     }
   }
 #if CACHE_ENABLED

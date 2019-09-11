@@ -45,6 +45,9 @@ struct SessionInfo {
 
 class HttpSessionManager {
   // used
+    std::mutex lock_mtx;
+    std::unordered_map<std::string, SessionInfo *>
+        sessions_set;  // key can be anything, deppending on the type of session
 protected:
   HttpSessionType session_type;
   std::string sess_id; /* id to construct the pattern */
@@ -53,11 +56,8 @@ protected:
 
 public:
   unsigned int ttl;
-  static std::mutex lock_mtx;
-  std::unordered_map<std::string, SessionInfo *>
-      sessions_set;  // key can be anything, deppending on the type of session
   HttpSessionManager();
-  ~HttpSessionManager();
+  virtual ~HttpSessionManager();
   // may exist, so which one is going to release
   // the map resources!!
   // return the created SessionInfo
@@ -71,5 +71,7 @@ public:
   // has expired
   SessionInfo *getSession(HttpStream &stream, bool update_if_exist = false);
   std::unique_ptr<json::JsonArray> getSessionsJson();
+  void deleteBackendSessions(int backend_id);
+  void doMaintenance();
 };
 }  // namespace sessions

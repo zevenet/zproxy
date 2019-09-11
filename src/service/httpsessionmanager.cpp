@@ -2,8 +2,6 @@
 
 using namespace sessions;
 
-std::mutex HttpSessionManager::lock_mtx;
-
 HttpSessionManager::HttpSessionManager() : session_type(SESS_NONE) {}
 
 HttpSessionManager::~HttpSessionManager() {
@@ -46,7 +44,6 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
     break;
   }
   case SESS_BASIC:
-    //TODO: IMPLEMENTAR IGUAL QUE POUND (NO HACER FALTA AUTHENTICATION)
     if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION, key)) {
       key = "";
     } else {
@@ -195,6 +192,26 @@ std::unique_ptr<json::JsonArray> HttpSessionManager::getSessionsJson() {
     data->emplace_back(std::move(json_data));
   }
   return data;
+}
+
+void HttpSessionManager::deleteBackendSessions(int backend_id)
+{
+    std::lock_guard<std::mutex> locker(lock_mtx);
+    for (auto &session : sessions_set) {
+      if (session.second != nullptr &&
+              session.second->assigned_backend->backend_id == backend_id) {
+        sessions_set.erase(session.first);
+      }
+    }
+}
+
+void HttpSessionManager::doMaintenance()
+{
+    for (auto &session : sessions_set) {
+      if (session.second == nullptr || session.second->hasExpired(ttl)) {
+        sessions_set.erase(session.first);
+      }
+    }
 }
 
 bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend *> backend_set) {
