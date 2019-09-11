@@ -13,6 +13,9 @@
 #include <syslog.h>
 #include "../util/utils.h"
 
+#ifndef __FILENAME__
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif
 #define LOG_REMOVE LOG_DEBUG
 
 #define MAXBUF 4096
