@@ -1,15 +1,7 @@
 #pragma once
 
-#include "../../src/cache/HttpCacheManager.h"
 #include "../lib/gtest/googletest/include/gtest/gtest.h"
 #include "gtest/gtest.h"
-#include "../../src/service/Service.h"
-#include "../../src/http/http_parser.h"
-#include <string>
-#include "../../src/config/config.h"
-#include "../../src/debug/Debug.h"
-#include "../../src/util/utils.h"
-#include "../../src/handlers/http_manager.h"
 #include "../../src/stream/StreamManager.h"
 #include "cachehelpers.h"
 
@@ -41,14 +33,14 @@ TEST(CacheTest, CacheInitializationTest ) {
  regex_t cache_pattern;
  HttpCacheManager c_manager;
  cache_pattern.re_pcre = nullptr;
- c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest");
+ c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
  ASSERT_FALSE( c_manager.cache_enabled );
- c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest");
+ c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
  ASSERT_FALSE( c_manager.cache_enabled );
- c_manager.cacheInit(&cache_pattern, 0, "myService", 204800, 5, "zhttpTest");
+ c_manager.cacheInit(&cache_pattern, 0, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
  ASSERT_FALSE( c_manager.cache_enabled );
  regcomp(&cache_pattern,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
- c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest");
+ c_manager.cacheInit(&cache_pattern, cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
  ASSERT_TRUE( c_manager.cache_enabled );
  ASSERT_TRUE( c_manager.getCacheTimeout() == cache_timeout );
 }
@@ -64,9 +56,10 @@ TEST(CacheTest, StoreResponseTest ) {
     std::string request_buffer = createRequestBuffer(nullptr);
     createRequest(&request_buffer, &stream);
     createResponse(&response_buffer, &stream);
+
     //Init the cache
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt, cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt, cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
 
     //Parse the request
     auto req_ret = stream.request.parseRequest(request_buffer, &parsed);
@@ -75,6 +68,8 @@ TEST(CacheTest, StoreResponseTest ) {
     auto resp_ret = stream.response.parseResponse(response_buffer, &parsed);
     ASSERT_TRUE( resp_ret == http_parser::PARSE_RESULT::SUCCESS );
     //Check that isCached returns false while it hasn't been cached yet
+    c_manager.validateCacheRequest(stream.request);
+    c_manager.validateCacheResponse(stream.response);
     ASSERT_FALSE ( c_manager.getCacheObject(stream.request) != nullptr );
     std::string buffer;
     HttpResponse cached_response;
@@ -94,7 +89,7 @@ TEST(CacheTest, HeuristicTest){
     regex_t cache_patt;
 
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,-1, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,-1, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     string req_buffer = createRequestBuffer(nullptr);
     string resp_buffer = createResponseBuffer(nullptr);
     createRequest(&req_buffer, &stream);
@@ -113,7 +108,7 @@ TEST(CacheTest, StalingTest){
     regex_t cache_patt;
     int cache_timeout = 2;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
 
     string req_buffer = createRequestBuffer(nullptr);
     string resp_buffer = createResponseBuffer(nullptr);
@@ -150,7 +145,7 @@ TEST(CacheTest, CanBeServedTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
 
     string req_buffer = createRequestBuffer(nullptr);
     string resp_buffer = createResponseBuffer(nullptr);
@@ -173,7 +168,7 @@ TEST(CacheTest, CcontrolNoCacheTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     //In response:
     string c_control_values = "no-cache";
     string req_buffer = createRequestBuffer(nullptr);
@@ -219,7 +214,7 @@ TEST(CacheTest, CcontrolNoStoreTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     //In response:
     string c_control_values = "no-store";
     string req_buffer = createRequestBuffer(nullptr);
@@ -248,7 +243,7 @@ TEST(CacheTest, CcontrolMaxAgeTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     //In response:
     string c_control_values = "max-age=4";
     string req_buffer = createRequestBuffer(nullptr);
@@ -287,7 +282,7 @@ TEST(CacheTest, CcontrolSMaxAgeTest){
     regex_t cache_patt;
     int cache_timeout = 5;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest");
+    c_manager.cacheInit(&cache_patt,cache_timeout, "myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     //In response:
     string c_control_values = "max-age=3, s-maxage=4";
     string req_buffer = createRequestBuffer(nullptr);
@@ -305,7 +300,7 @@ TEST(CacheTest, CcontrolSMinFreshTest){
     regex_t cache_patt;
     int cache_timeout = 10;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout,"myService", 204800, 5, "zhttpTest" );
+    c_manager.cacheInit(&cache_patt,cache_timeout,"myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     //In response:
     string c_control_values = "min-fresh=5";
     string req_buffer = createRequestBuffer(&c_control_values);
@@ -324,7 +319,7 @@ TEST(CacheTest, CcontrolSMaxStaleTest){
     regex_t cache_patt;
     int cache_timeout = 10;
     regcomp(&cache_patt,".*html|.*png",REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager.cacheInit(&cache_patt,cache_timeout,"myService", 204800, 5, "zhttpTest" );
+    c_manager.cacheInit(&cache_patt,cache_timeout,"myService", 204800, 5, "zhttpTest", "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk" );
     //In response:
     string c_control_values = "max-stale=5";
     string req_buffer = createRequestBuffer(&c_control_values);

@@ -1,17 +1,9 @@
 #pragma once
 
-#include "../../src/cache/HttpCacheManager.h"
 #include "../lib/gtest/googletest/include/gtest/gtest.h"
 #include "gtest/gtest.h"
-#include "../../src/service/Service.h"
-#include "../../src/http/http_parser.h"
 #include <string>
-#include "../../src/config/config.h"
-#include "../../src/debug/Debug.h"
-#include "../../src/util/utils.h"
-#include "../../src/handlers/http_manager.h"
 #include "../../src/stream/StreamManager.h"
-#include "../../src/cache/ICacheStorage.h"
 #include <filesystem>
 #include <regex>
 
@@ -21,7 +13,7 @@ TEST(CacheTestStorage, InitializationTests ) {
     HttpCacheManager * c_manager = new HttpCacheManager;
     regex_t cache_re;
     regcomp(&cache_re,".*html|.*css", REG_ICASE | REG_NEWLINE | REG_EXTENDED);
-    c_manager-> cacheInit(&cache_re, 30, svc, 2048000, 5, f_name);
+    c_manager-> cacheInit(&cache_re, 30, svc, 2048000, 5, f_name, "/tmp/prueba/cache_ramfs","/tmp/prueba/cache_disk");
     RamICacheStorage * ram_storage = RamfsCacheStorage::getInstance();
     DiskICacheStorage * disk_storage = DiskCacheStorage::getInstance();
     namespace fs = std::filesystem;

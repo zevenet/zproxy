@@ -1606,8 +1606,12 @@ void Config::parseCache(ServiceConfig *const svc) {
   svc->cache_size = cache_s;
   svc->cache_threshold = cache_thr;
   svc->f_name = name;
-  svc->cache_ram_path = cache_ram_path;
-  svc->cache_disk_path = cache_disk_path;
+  if ( cache_ram_path.size() != 0 ){
+    svc->cache_ram_path = cache_ram_path;
+  }
+  if ( cache_disk_path.size() != 0 ){
+    svc->cache_disk_path = cache_disk_path;
+  }
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
