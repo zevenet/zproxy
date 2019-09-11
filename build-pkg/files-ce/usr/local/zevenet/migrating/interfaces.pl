@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use Zevenet::Config;
 use Zevenet::Net::Interface;
 use Zevenet::Validate;
 use Zevenet::Log;
