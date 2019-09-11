@@ -1,22 +1,19 @@
 ﻿#if CACHE_ENABLED
 #include "HttpCacheManager.h"
+
 // Returns the cache content with all the information stored
 cache_commons::CacheObject *HttpCacheManager::getCacheObject(HttpRequest request) {
-  return getCacheObject(request.getUrl());
+  return getCacheObject(std::hash<std::string>()(request.getUrl()));
 }
-// Returns the cache content with all the information stored
-cache_commons::CacheObject *HttpCacheManager::getCacheObject(std::string url) {
+cache_commons::CacheObject *HttpCacheManager::getCacheObject(size_t hashed_url) {
   cache_commons::CacheObject *c_object = nullptr;
-  auto iter = cache.find(hashStr(url));
+  auto iter = cache.find(hashed_url);
   if (iter != cache.end()){
     c_object = iter->second;
   }
   return c_object;
 }
-size_t HttpCacheManager::hashStr(std::string str) {
-  size_t str_hash = std::hash<std::string>{}(str);
-  return str_hash;
-}
+
 // Store in cache the response if it doesn't exists
 void HttpCacheManager::handleResponse(HttpResponse &response,
                                       HttpRequest request) {
@@ -110,6 +107,12 @@ st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
 #endif
 }
 
+bool HttpCacheManager::needCacheMaintenance()
+{
+    auto current_time = timeHelper::gmtTimeNow();
+    return ( current_time - last_maintenance > 0 ) ? true : false;
+}
+
 HttpCacheManager::~HttpCacheManager() {
     // Free cache pattern
     if (cache_pattern != nullptr){
@@ -117,6 +120,7 @@ HttpCacheManager::~HttpCacheManager() {
         cache_pattern = nullptr;
         ram_storage->stopCacheStorage();
         disk_storage->stopCacheStorage();
+        cache.clear();
     }
 }
 
@@ -157,13 +161,13 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
             }
         }
 
+        //Set mount point farm name dependant
         ramfs_mount_point.append ("/");
         ramfs_mount_point.append(f_name);
-        //Set DISK mount point
-            disk_mount_point.append ("/");
+        disk_mount_point.append ("/");
         disk_mount_point.append(f_name);
 
-//Cache storage initialization
+
         st::STORAGE_STATUS svc_status;
 //RAM
         ram_storage = RamICacheStorage::getInstance();
@@ -182,6 +186,8 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
         if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS ){
             recoverCache(svc, st::STORAGE_TYPE::DISK);
         }
+
+        last_maintenance = timeHelper::gmtTimeNow();
     }
 }
 
@@ -189,8 +195,8 @@ void HttpCacheManager::storeResponse(HttpResponse &response,
                                      HttpRequest request) {
   auto cache_entry = new cache_commons::CacheObject();
   std::unique_ptr<cache_commons::CacheObject> c_object ( cache_entry);
-
-  cache[hashStr(request.getUrl())] = c_object.get();
+  auto hashed_url = hash<std::string> ()(request.getUrl());
+  cache[hashed_url] = c_object.get();
 
   createCacheObjectEntry(response, c_object.get());
   // link response with c_object
@@ -200,7 +206,6 @@ void HttpCacheManager::storeResponse(HttpResponse &response,
   st::STORAGE_STATUS err;
 
   //Create the path string
-  size_t hashed_url = std::hash<std::string>()(request.getUrl());
   std::string rel_path = service_name;
   rel_path.append("/");
   rel_path.append(to_string(hashed_url));
@@ -312,7 +317,7 @@ void HttpCacheManager::createCacheObjectEntry( HttpResponse response,cache_commo
 
 // Append pending data to its cached content
 void HttpCacheManager::appendData( HttpResponse &response ,char *msg, size_t msg_size, std::string url) {
-    auto c_object = getCacheObject(url);
+    auto c_object = getCacheObject(std::hash<std::string>()(url));
     if( c_object == nullptr ){
         Debug::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
         return;
@@ -500,7 +505,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
           return JSON_OP_RESULT::ERROR;
         }
         auto url = dynamic_cast<JsonDataValue *>(json_data->at(JSON_KEYS::CACHE_CONTENT).get())->string_value;
-        err = discardCacheEntry(url);
+        err = discardCacheEntry(std::hash<std::string>()(url));
         break;
     }
     default:
@@ -768,19 +773,19 @@ void HttpCacheManager::validateCacheRequest(HttpRequest &request){
     return;
 }
 int HttpCacheManager::discardCacheEntry(HttpRequest request){
-    return discardCacheEntry(request.getUrl());
+    return discardCacheEntry(std::hash<std::string>()(request.getUrl()));
 }
-int HttpCacheManager::discardCacheEntry(const std::string url){
-    auto c_object = getCacheObject(url);
+
+int HttpCacheManager::discardCacheEntry(size_t hashed_url){
+    std::string path (service_name);
+    path.append("/");
+    path.append(to_string(hashed_url));
+    auto c_object = getCacheObject(hashed_url);
     if(c_object == nullptr){
         Debug::logmsg(LOG_WARNING, "Trying to discard a non existing entry from the cache");
         return -1;
     }
     // Create the key and the file path
-    auto hashed_url = hash <std::string> ()(url);
-    std::string path (service_name);
-    path.append ("/");
-    path.append (to_string(hashed_url));
 
     storage_commons::STORAGE_STATUS err;
 
@@ -803,5 +808,33 @@ int HttpCacheManager::discardCacheEntry(const std::string url){
        return -1;
     }
     return 0;
+}
+
+void HttpCacheManager::doCacheMaintenance(){
+
+//Iterate over all the content, check staled, check how long, discard if have to
+    if ( !needCacheMaintenance() ){
+        return;
+    }
+    Debug::logmsg(LOG_REMOVE, "Starting cache maintenance process at time: %u", timeHelper::gmtTimeNow());
+    last_maintenance = timeHelper::gmtTimeNow();
+    for (auto iter = cache.begin(); iter != cache.end();iter++){
+        iter->second->updateFreshness();
+        //If not staled continue with the loop
+        if(!iter->second->staled){
+            continue;
+        }
+        else
+        {
+            int expiration_to = CACHE_EXPIRATION;
+            auto entry_age = timeHelper::gmtTimeNow() - iter->second->date;
+            //Greater than 10 times the max age
+            if ( entry_age > iter->second->max_age * expiration_to ){
+                Debug::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
+                discardCacheEntry(iter->first);
+                break;
+            }
+        }
+    }
 }
 #endif

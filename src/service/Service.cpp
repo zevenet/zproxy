@@ -449,6 +449,11 @@ void Service::doMaintenance() {
       sessions_set.erase(session.first);
     }
   }
+#if CACHE_ENABLED
+  if( cache_enabled ){
+      doCacheMaintenance();
+  }
+#endif
 }
 
 /** There is not backend available, trying to pick an emergency backend. If

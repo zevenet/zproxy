@@ -131,7 +131,6 @@ st::STORAGE_STATUS DiskCacheStorage::deleteInStorage(string path)
     full_path.append("/");
     full_path.append(path);
     if( isInStorage(full_path) ){
-        Debug::logmsg(LOG_NOTICE, "DELETING STORED CONTENT");
         if ( std::remove( full_path.data()) )
             return st::STORAGE_STATUS::GENERIC_ERROR;
     }

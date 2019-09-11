@@ -18,7 +18,7 @@
 using namespace std;
 namespace st = storage_commons;
 #define DEFAULT_TIMEOUT 3600;
-
+#define CACHE_EXPIRATION 10;
 /**
  * @class HttpCacheManager HttpCacheManager.h "src/handlers/HttpCacheManager.h"
  * @brief The HttpCacheManager class controls all the cache operations and logic
@@ -34,13 +34,8 @@ private:
   regex_t *cache_pattern = nullptr;
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
+  std::time_t last_maintenance;
 
-  /**
-   * @brief hashStr
-   * @param str
-   * @return
-   */
-  size_t hashStr(std::string str);
   void storeResponse(HttpResponse &response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
   st::STORAGE_TYPE getStorageType( HttpResponse response );
@@ -48,6 +43,7 @@ public:
   size_t cache_max_size = 0;
   bool cache_enabled = false;
   virtual ~HttpCacheManager();
+  bool needCacheMaintenance();
   /**
    * @brief cacheInit Initialize the cache manager configuring its pattern and the
    * timeout it also get the ram storage manager and disk storage manager,
@@ -87,10 +83,10 @@ public:
   cache_commons::CacheObject *getCacheObject(HttpRequest request);
   /**
    * @brief getcache_commons::CacheObject
-   * @param url an string object containing an URL in order to retrieve its object
+   * @param hashed_url a hashed string of an URL in order to retrieve its object
    * @return  the cache_commons::CacheObject which is associated to the url or nullptr if not found
    */
-  cache_commons::CacheObject *getCacheObject(std::string url);
+  cache_commons::CacheObject *getCacheObject(size_t hashed_url);
   /**
    * @brief returns the pattern used by the cache manager
    *
@@ -154,10 +150,18 @@ void validateCacheRequest(HttpRequest &request);
   void createCacheObjectEntry( HttpResponse response, cache_commons::CacheObject * c_object );
   /**
    * @brief discardCacheEntry removes the cache entry of the param request
-   * @param rquest the HttpRequest used to determine which entry to delete
+   * @param request the HttpRequest used to determine which entry to delete
    */
   int discardCacheEntry(HttpRequest request);
-  int discardCacheEntry(const std::string url);
+  /**
+   * @brief discardCacheEntry removes the cache entry of the param request
+   * @param hashed_url the size_t variable used to determine which entry will be deleted
+   */
+  int discardCacheEntry(size_t hashed_url);
+  /**
+   * @brief doCacheMaintenance if the cache needs maintenance ( 1 per second or more), check entries which must be deleted
+   */
+  void doCacheMaintenance();
 };
 
 namespace cache_stats__ {
