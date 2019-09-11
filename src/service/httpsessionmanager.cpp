@@ -158,6 +158,7 @@ SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
         }
       }
     }
+    break;
   }
   default: {
     break;
