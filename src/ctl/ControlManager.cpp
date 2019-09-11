@@ -192,7 +192,8 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
     res += future_result.get();
   }
   res += "";
-
+  if(res.empty())
+      res = JSON_OP_RESULT::ERROR;
   auto response = HttpStatus::getHttpResponse(HttpStatus::Code::OK, "", res);
   return response;
 }
