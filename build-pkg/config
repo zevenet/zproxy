@@ -35,6 +35,7 @@ enterprise_files=(
 	usr/local/zevenet/bin/checkupgrades
 	usr/local/zevenet/bin/netplug
 	usr/local/zevenet/bin/supportsave_ext
+	usr/local/zevenet/bin/factory_reset.sh
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules

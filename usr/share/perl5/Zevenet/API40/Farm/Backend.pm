@@ -84,7 +84,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 								'valid_format' => 'port',
 								'format_msg'   => 'expects a port or port range'
 		};
-		$params->{ "max_conns" } = { 'interval' => '0,' };
+
+		$params->{ "max_conns" } = { 'interval' => '0,' } if ( $eload );
 	}
 	else
 	{
@@ -437,7 +438,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 								'function'   => \&isValidPortNumber,
 								'format_msg' => 'expects an port or port range'
 		};
-		$params->{ "max_conns" } = { 'interval' => '0,' };
+		$params->{ "max_conns" } = { 'interval' => '0,' } if ( $eload );
 	}
 	else
 	{
@@ -591,9 +592,9 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	# apply BACKEND change
 
-	$be->{ ip }      = $json_obj->{ ip } // $be->{ ip };
-	$be->{ port }    = $json_obj->{ port } // $be->{ port };
-	$be->{ weight }  = $json_obj->{ weight } // $be->{ weight };
+	$be->{ ip }      = $json_obj->{ ip }      // $be->{ ip };
+	$be->{ port }    = $json_obj->{ port }    // $be->{ port };
+	$be->{ weight }  = $json_obj->{ weight }  // $be->{ weight };
 	$be->{ timeout } = $json_obj->{ timeout } // $be->{ timeout };
 
 	my $status = &setHTTPFarmServer( $id_server,
@@ -825,8 +826,8 @@ sub validateDatalinkBackendIface
 		$msg = "It is not possible to configure vlan interface for datalink backends";
 	}
 	elsif (
-			!&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
-			)
+		  !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
+		  )
 	  )
 	{
 		$msg =
