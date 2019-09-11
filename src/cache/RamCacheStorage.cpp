@@ -124,7 +124,7 @@ st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage(){
         return st::STORAGE_STATUS::GENERIC_ERROR;
     }
     std::filesystem::remove(mount_path.data());
-
+    this->initialized = false;
     return st::STORAGE_STATUS::SUCCESS;
 }
 st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string rel_path, const std::string buffer)
@@ -200,6 +200,7 @@ st::STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string rel_path,
     return st::STORAGE_STATUS::SUCCESS;
 }
 st::STORAGE_STATUS StdmapCacheStorage::stopCacheStorage(){
+    this->initialized = false;
 
     return st::STORAGE_STATUS::SUCCESS;
 }

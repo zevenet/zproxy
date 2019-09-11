@@ -94,6 +94,7 @@ st::STORAGE_STATUS DiskCacheStorage::stopCacheStorage(){
     const std::filesystem::path path_m_point = std::filesystem::u8path (mount_path);
     if(!std::filesystem::remove_all(path_m_point))
         return st::STORAGE_STATUS::GENERIC_ERROR;
+    this->initialized = false;
     return st::STORAGE_STATUS::SUCCESS;
 }
 st::STORAGE_STATUS DiskCacheStorage::appendData(const std::string rel_path, const std::string buffer)
