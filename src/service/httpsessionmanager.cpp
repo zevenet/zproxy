@@ -199,7 +199,7 @@ std::unique_ptr<json::JsonArray> HttpSessionManager::getSessionsJson() {
 bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend *> backend_set) {
   if (json_object == nullptr)
     return false;
-  auto new_session = new SessionInfo();
+  std::unique_ptr<SessionInfo> new_session(new SessionInfo());
   if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() && json_object->at(JSON_KEYS::ID)->isValue()) {
     auto session_json_backend_id = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::BACKEND_ID).get())->number_value;
     for (auto backend : backend_set) {
@@ -213,7 +213,7 @@ bool HttpSessionManager::addSession(JsonObject *json_object, std::vector<Backend
     std::string key = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID).get())->string_value;
     if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 && json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
       new_session->setTimeStamp(dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::LAST_SEEN_TS).get())->number_value);
-    sessions_set.emplace(std::make_pair(key, new_session));
+    sessions_set.emplace(std::make_pair(key, new_session.release()));
     return true;
   } else {
     return false;
