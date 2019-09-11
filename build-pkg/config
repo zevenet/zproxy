@@ -28,6 +28,7 @@ enterprise_files=(
 	usr/local/zevenet/bin/zenbui
 	usr/local/zevenet/bin/zeninotify
 	usr/local/zevenet/bin/dhcp
+	usr/local/zevenet/bin/factory_reset.sh
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/sec.rules
