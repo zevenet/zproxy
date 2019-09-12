@@ -111,7 +111,7 @@ template <typename T> T try_lexical_cast(const std::string &s, T &out) {
 
 struct DateTime {
   inline static std::string getDayTime() {
-    auto now = std::time(0);
+    auto now = std::time(nullptr);
     return std::ctime(&now);
   }
 };
@@ -157,7 +157,7 @@ struct ThreadHelper {
 
 namespace conversionHelper {
 template <typename T>
-std::string to_string_with_precision(const T a_value, const int n = 4) {
+std::string toStringWithPrecision(const T a_value, const int n = 4) {
   std::ostringstream out;
   out.precision(n);
   out << std::fixed << a_value;
@@ -165,7 +165,7 @@ std::string to_string_with_precision(const T a_value, const int n = 4) {
 }
 } // namespace conversionHelper
 
-namespace timeHelper {
+namespace time_helper {
     inline struct std::tm strToStruct(const std::string &str_date) {
       std::stringstream ss(str_date);
       std::tm tm = {};
@@ -183,18 +183,21 @@ namespace timeHelper {
       now = std::mktime(gmtime(&now));
       return now;
     };
-    inline std::string *strTimeNow() {
+
+    inline std::string strTimeNow() {
       time_t now = gmtTimeNow();
       char buff[30];
       strftime(buff, 30, "%a, %d %b %Y %H:%M:%S GMT", localtime(&now));
-      std::string *str_time_now = new std::string(buff, 30);
+      std::string str_time_now(buff, 30);
       return str_time_now;
     }
-    inline std::string *strTime( time_t time) {
+
+    inline std::string strTime( time_t time) {
       char buff[30];
       strftime(buff, 30, "%a, %d %b %Y %H:%M:%S GMT", localtime(&time));
-      std::string *str_time = new std::string(buff, 30);
+      std::string str_time(buff, 30);
       return str_time;
     }
+
     inline std::time_t getAge(time_t creation) { return gmtTimeNow() - creation; }
 }

@@ -441,7 +441,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         buffer += " (";
         buffer += std::to_string(weight);
         buffer += " ";
-        buffer += conversionHelper::to_string_with_precision(response_time);
+        buffer += conversionHelper::toStringWithPrecision(response_time);
         buffer += ") alive (";
         buffer += std::to_string(connections);
         buffer += ")\n";

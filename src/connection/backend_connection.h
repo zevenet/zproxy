@@ -20,4 +20,5 @@ public:
 
 public:
   BackendConnection();
+  virtual ~BackendConnection() = default;
 };

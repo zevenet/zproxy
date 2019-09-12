@@ -24,7 +24,7 @@ void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
   } else {
     Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
                   std::this_thread::get_id(),
-                  static_cast<int>(HttpStatus::Code::NotImplemented),
+                  static_cast<int>(code),
                   code_string,
                   client_connection.buffer, caddr);
   }
@@ -43,11 +43,11 @@ void HttpStream::replyRedirect(BackendConfig &backend_config) {
   std::string new_url = backend_config.url;
   new_url += this->request.getUrl();
   auto response_ = HttpStatus::getRedirectResponse(
-      (HttpStatus::Code)backend_config.be_type, new_url);
+              static_cast<HttpStatus::Code>(backend_config.be_type), new_url);
   client_connection.write(response_.c_str(), response_.length());
 }
 void HttpStream::replyRedirect(int code, const char *url) {
   auto response_ = HttpStatus::getRedirectResponse(
-      (HttpStatus::Code)code, url);
+      static_cast<HttpStatus::Code>(code), url);
   client_connection.write(response_.c_str(), response_.length());
 }

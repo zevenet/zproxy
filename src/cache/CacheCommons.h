@@ -52,7 +52,7 @@ struct CacheObject {
      */
     void updateFreshness() {
         if (this->staled != true) {
-            time_t now = timeHelper::gmtTimeNow();
+            time_t now = time_helper::gmtTimeNow();
             long int age_limit = 0;
             if (this->max_age >= 0 && !this->heuristic)
                 age_limit = this->max_age;
