@@ -816,9 +816,8 @@ void HttpCacheManager::doCacheMaintenance(){
     if ( !needCacheMaintenance() ){
         return;
     }
-    Debug::logmsg(LOG_REMOVE, "Starting cache maintenance process at time: %u", timeHelper::gmtTimeNow());
     last_maintenance = timeHelper::gmtTimeNow();
-    for (auto iter = cache.begin(); iter != cache.end();iter++){
+    for (auto iter = cache.begin(); iter != cache.end();){
         iter->second->updateFreshness();
         //If not staled continue with the loop
         if(!iter->second->staled){
@@ -831,8 +830,11 @@ void HttpCacheManager::doCacheMaintenance(){
             //Greater than 10 times the max age
             if ( entry_age > iter->second->max_age * expiration_to ){
                 Debug::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
-                discardCacheEntry(iter->first);
+                discardCacheEntry((iter++)->first);
                 break;
+            }
+            else{
+                iter++;
             }
         }
     }
