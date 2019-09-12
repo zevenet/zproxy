@@ -127,6 +127,22 @@ if ( $action eq "restart" )
 
 if ( $action eq "start" )
 {
+	# ZNA firmware upgrade
+	my $migration_flag = "/etc/zlbmigration";
+	if ( -f $migration_flag )
+	{
+		# Migrating config files
+		my $MIG_DIR = "/usr/local/zevenet/migrating/";
+		opendir ( DIR, $MIG_DIR ) or die "can't opendir $MIG_DIR: $!";
+		while ( my $SCRIPT = readdir ( DIR ) )
+		{
+			next if ( $SCRIPT =~ m/^\./ );
+			system ( $MIG_DIR . $SCRIPT );
+		}
+		system ( "rm $migration_flag" );
+		closedir ( DIR );
+	}
+
 	my $version = &getGlobalConfiguration( 'version' );
 
 	&printAndLog( "Starting Zevenet Load Balancer v$version" );
