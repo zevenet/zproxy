@@ -36,7 +36,7 @@ private:
   std::string disk_mount_point = "/tmp/cache_disk";
   std::time_t last_maintenance;
 
-  void storeResponse(HttpResponse &response, HttpRequest request);
+  void addResponse(HttpResponse &response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
   st::STORAGE_TYPE getStorageType( HttpResponse response );
 public:
@@ -102,7 +102,7 @@ public:
    * @param url indicates the resource
    *
    */
-  void appendData(HttpResponse &response, char *msg, size_t msg_size, std::string url);
+  void addData(HttpResponse &response, char *msg, size_t msg_size, std::string url);
   /**
    * @brief getResponseFromCache
    * @param request is the HttpRequest used to determine the cached response to
@@ -142,22 +142,22 @@ public:
 void validateCacheResponse(HttpResponse &response);
 void validateCacheRequest(HttpRequest &request);
   /**
-   * @brief createCacheObjectEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
+   * @brief addResponseEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
    * @param response the response which will be used to create the cache_commons::CacheObject entry
    * @param pointer for cache_commons::CacheObject, it will be stored in it, if nullptr, the function will create
    * @return cache_commons::CacheObject is the cache information representation of the response
    */
-  void createCacheObjectEntry( HttpResponse response, cache_commons::CacheObject * c_object );
+  void addResponseEntry( HttpResponse response, cache_commons::CacheObject * c_object );
   /**
-   * @brief discardCacheEntry removes the cache entry of the param request
+   * @brief deleteEntry removes the cache entry of the param request
    * @param request the HttpRequest used to determine which entry to delete
    */
-  int discardCacheEntry(HttpRequest request);
+  int deleteEntry(HttpRequest request);
   /**
-   * @brief discardCacheEntry removes the cache entry of the param request
+   * @brief deleteEntry removes the cache entry of the param request
    * @param hashed_url the size_t variable used to determine which entry will be deleted
    */
-  int discardCacheEntry(size_t hashed_url);
+  int deleteEntry(size_t hashed_url);
   /**
    * @brief doCacheMaintenance if the cache needs maintenance ( 1 per second or more), check entries which must be deleted
    */

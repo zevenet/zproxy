@@ -49,7 +49,7 @@ void HttpCacheManager::handleResponse(HttpResponse &response,
   switch (http::http_info::http_verbs.at(
       std::string(request.method, request.method_len))) {
   case http::REQUEST_METHOD::GET:
-    storeResponse(response, request);
+    addResponse(response, request);
     break;
   case http::REQUEST_METHOD::HEAD:
     if (getCacheObject(request) != nullptr)
@@ -191,14 +191,14 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
     }
 }
 
-void HttpCacheManager::storeResponse(HttpResponse &response,
+void HttpCacheManager::addResponse(HttpResponse &response,
                                      HttpRequest request) {
   auto cache_entry = new cache_commons::CacheObject();
   std::unique_ptr<cache_commons::CacheObject> c_object ( cache_entry);
   auto hashed_url = hash<std::string> ()(request.getUrl());
   cache[hashed_url] = c_object.get();
 
-  createCacheObjectEntry(response, c_object.get());
+  addResponseEntry(response, c_object.get());
   // link response with c_object
   response.c_object = c_object.get();
   auto old_object = getCacheObject(request);
@@ -245,7 +245,7 @@ void HttpCacheManager::storeResponse(HttpResponse &response,
   return;
 }
 
-void HttpCacheManager::createCacheObjectEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
+void HttpCacheManager::addResponseEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
     if ( c_object == nullptr) {
         c_object = new cache_commons::CacheObject();
     }
@@ -316,7 +316,7 @@ void HttpCacheManager::createCacheObjectEntry( HttpResponse response,cache_commo
 }
 
 // Append pending data to its cached content
-void HttpCacheManager::appendData( HttpResponse &response ,char *msg, size_t msg_size, std::string url) {
+void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_size, std::string url) {
     auto c_object = getCacheObject(std::hash<std::string>()(url));
     if( c_object == nullptr ){
         Debug::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
@@ -505,7 +505,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
           return JSON_OP_RESULT::ERROR;
         }
         auto url = dynamic_cast<JsonDataValue *>(json_data->at(JSON_KEYS::CACHE_CONTENT).get())->string_value;
-        err = discardCacheEntry(std::hash<std::string>()(url));
+        err = deleteEntry(std::hash<std::string>()(url));
         break;
     }
     default:
@@ -557,7 +557,7 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
 
                 stored_response.parseResponse(buffer,&bytes);
                 validateCacheResponse(stored_response);
-                createCacheObjectEntry(stored_response, c_object.get());
+                addResponseEntry(stored_response, c_object.get());
                 c_object->dirty = false;
                 c_object->storage = st_type;
                 //Increment the current size of the storage
@@ -772,11 +772,11 @@ void HttpCacheManager::validateCacheRequest(HttpRequest &request){
 
     return;
 }
-int HttpCacheManager::discardCacheEntry(HttpRequest request){
-    return discardCacheEntry(std::hash<std::string>()(request.getUrl()));
+int HttpCacheManager::deleteEntry(HttpRequest request){
+    return deleteEntry(std::hash<std::string>()(request.getUrl()));
 }
 
-int HttpCacheManager::discardCacheEntry(size_t hashed_url){
+int HttpCacheManager::deleteEntry(size_t hashed_url){
     std::string path (service_name);
     path.append("/");
     path.append(to_string(hashed_url));
@@ -830,7 +830,7 @@ void HttpCacheManager::doCacheMaintenance(){
             //Greater than 10 times the max age
             if ( entry_age > iter->second->max_age * expiration_to ){
                 Debug::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
-                discardCacheEntry((iter++)->first);
+                deleteEntry((iter++)->first);
                 break;
             }
             else{
