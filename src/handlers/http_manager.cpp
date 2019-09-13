@@ -13,16 +13,18 @@ bool http_manager::isLastChunk(HttpStream &stream) {
     stream.response.chunk_size_left -= stream.backend_connection.buffer_size;
   } else {
     size_t data_offset = last_chunk_size;
-    auto new_chunk_left =
+    size_t new_chunk_left = 0;
+    auto chunk_size =
         http_manager::getLastChunkSize(stream.backend_connection.buffer + last_chunk_size,
                                        stream.backend_connection.buffer_size - stream.response.chunk_size_left,
-                                       data_offset);
+                                       data_offset, new_chunk_left, stream.response.content_length);
 //    Debug::logmsg(LOG_REMOVE,
 //                  ">>>> Chunk size %d Data size %d Data offset %d",
 //                  new_chunk_left,
 //                  stream.backend_connection.buffer_size,
 //                  data_offset);
-    if (new_chunk_left == 0 && data_offset == -1) {
+    if (chunk_size == 0) {
+      Debug::logmsg(LOG_REMOVE, "Set LAST CHUNK");
       stream.response.chunk_size_left = 0;
       stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
       return true;
@@ -33,60 +35,54 @@ bool http_manager::isLastChunk(HttpStream &stream) {
   return false;
 }
 
-size_t http_manager::getChunkSize(const std::string &data, size_t data_size, size_t &chunk_size_len) {
-  static int count;
-  count++;
-  chunk_size_len = 0;
-  static size_t total_chunked;
-  auto pos = data.find("\r\n");
-  if (pos != std::string::npos) {
+ssize_t http_manager::getChunkSize(const std::string &data, size_t data_size, int &chunk_size_line_len) {
+  auto pos = data.find(http::CRLF);
+  if (pos != std::string::npos && pos < data_size) {
+    chunk_size_line_len = static_cast<int>(pos) + http::CRLF_LEN;
     auto hex = data.substr(0, pos);
     char *error;
     auto chunk_length = ::strtol(hex.data(), &error, 16);
     if (*error != 0) {
-      chunk_size_len = -1;
-      Debug::logmsg(LOG_NOTICE, "CHUNK %d IN Chunk size error", count);
-      return 0;
+      Debug::logmsg(LOG_NOTICE, "strtol() failed");
+      return -1;
     } else {
-      chunk_size_len = hex.length();
-      total_chunked += chunk_length == 0 ? (data_size - chunk_size_len - 2) : chunk_length;
       Debug::logmsg(LOG_DEBUG,
-                    "CHUNK %d Chunk size %s => %d : TOTAL: %d",
-                    count,
+                    "CHUNK found size %s => %d ",
                     hex.data(),
-                    chunk_length,
-                    total_chunked);
-      return chunk_length;
+                    chunk_length);
+      return static_cast<size_t>(chunk_length);
     }
   }
-  chunk_size_len = 0;
-  return 0;
+  return -1;
 }
 
-size_t http_manager::getLastChunkSize(const char *data, size_t data_size, size_t &data_offset) {
-  size_t chunk_size = 0;
-  size_t chunk_size_len = 0;
-  chunk_size = getChunkSize(data, data_size, chunk_size_len);
-  if (chunk_size_len == 0) {
+size_t http_manager::getLastChunkSize(const char *data,
+                                      size_t data_size,
+                                      size_t &data_offset,
+                                      size_t &chunk_size_bytes_left, size_t &content_length) {
+  int chunk_size_len = 0;
+  auto chunk_size = getChunkSize(data, data_size, chunk_size_len);
+  if (chunk_size > 0) {
+    content_length += chunk_size;
+    auto offset = chunk_size + chunk_size_len + http::CRLF_LEN;
+    if (data_size > (offset + http::CRLF_LEN)) {
+      data_offset += offset;
+      auto data_ptr = data + offset;
+      return getLastChunkSize(data_ptr, data_size - offset, data_offset, chunk_size_bytes_left, content_length);
+    } else {
+      data_offset += data_size;
+      chunk_size_bytes_left = offset - data_size;
+      return chunk_size;
+    }
+  } else if (chunk_size == 0) {
+    return 0;
+  } else {
     //an error has ocurred;
     data_offset = -1; //the way we indicate an error happends
     return 0;
-  }
-  if (chunk_size == 0) {
-    data_offset = -1;// data_size;
-    return 0;
-  } else {
-    auto offset = chunk_size + chunk_size_len + 4;
-    if (data_size > offset + 2) {
-      data_offset += offset;
-      auto data_ptr = data + offset;
-      return getLastChunkSize(data_ptr, data_size - offset, data_offset);
-    } else {
-      data_offset += data_size;
-      return offset - data_size;
     }
   }
-}
+
 
 void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
   if (!service->becookie.empty()) {
@@ -374,21 +370,32 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
           if (header_value[1] == 'h') { //no content-length
             response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
             response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
-            if (response.message_length > 0) {
+            if (stream.response.message_length > 0) {
               size_t data_offset = 0;
-              response.chunk_size_left =
-                  getLastChunkSize(response.message, response.message_length, data_offset);
+              size_t new_chunk_left = 0;
+              auto chunk_size =
+                  http_manager::getLastChunkSize(stream.response.message,
+                                                 stream.response.message_length,
+                                                 data_offset, new_chunk_left, response.content_length);
               Debug::logmsg(LOG_REMOVE,
-                            "Chunk size left: %d , data offset %d",
-                            response.chunk_size_left,
-                            data_offset);
+                            ">>>> Chunk size %d left %d ",
+                            chunk_size,
+                            new_chunk_left
+              );
+              stream.response.content_length += chunk_size;
+              if (chunk_size == 0) {
+                Debug::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+                stream.response.chunk_size_left = 0;
+                stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+              } else {
+                stream.response.chunk_size_left = new_chunk_left;
+              }
             }
-
           } else if (header_value[2] == 'o') {
             response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::COMPRESS;
           }
-        }
           break;
+        }
         case 'd': //deflate
           response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::DEFLATE;
           break;

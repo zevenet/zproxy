@@ -64,19 +64,44 @@ public:
   static void applyCompression(Service *service, HttpStream *stream);
 
   /**
-   * @brief Handles all the chunked operations.
-   *
-   * If the http::CHUNKED_STATUS is enabled then matchs the chunk length and
-   * updates the status.
+   * @brief Check if last chunk found in stream response and set stream chunk status
    *
    * @param stream is the HttpStream to get the response to take the chunked
    * data.
-   * @return if chunked is enabled returns true, if not returns false.
+   * @return true if is last chunk.
    */
 
   /**/
   static bool isLastChunk(HttpStream &stream);
-  static size_t getChunkSize(const std::string &data, size_t data_size, size_t &chunk_size_len);
-  static size_t getLastChunkSize(const char *data, size_t data_size, size_t &data_offset);
+  /**
+ * @brief Get chunk size from buffer
+ * if
+ * @param data buffer to search chunks
+ * @param data_size buffer size
+ * @param chunk_size_len bytes of data consumed in search
+ * @param chunk_size_line_len store chunk size line length
+ * @return Chunk size or -1 en case of error.
+ */
+
+  /**/
+  static ssize_t getChunkSize(const std::string &data, size_t data_size, int &chunk_size_line_len);
+  /**
+ * @brief Search for last chunk size in buffer data
+ *
+ *
+ * @param data buffer to search chunks
+ * @param data_size buffer size
+ * @param data_offset bytes of data consumed in search
+ * @param chunk_size_bytes_left reference to variable to store bytes left to read for last chunk found
+ * @param total_chunks_size reference to variable to add chunks size found
+ * @return last chunk size found.
+ */
+
+  /**/
+  static size_t getLastChunkSize(const char *data,
+                                 size_t data_size,
+                                 size_t &data_offset,
+                                 size_t &chunk_size_bytes_left,
+                                 size_t &total_chunks_size);
 };
 

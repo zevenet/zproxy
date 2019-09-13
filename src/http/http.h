@@ -14,6 +14,9 @@
 
 namespace http {
 
+ static const char * CRLF = "\r\n";
+ static const int CRLF_LEN = 2;
+
 enum class HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 
 enum class CHUNKED_STATUS: uint8_t {

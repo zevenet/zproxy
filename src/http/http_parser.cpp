@@ -24,7 +24,7 @@ void http_parser::HttpData::reset_parser() {
   message_length = 0;
   message_bytes_left = 0;
   content_length = 0;
-  headers_sent = false;
+  setHeaderSent(false);
   chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
   extra_headers.clear();
 }
@@ -36,6 +36,14 @@ void http_parser::HttpData::setBuffer(char *ext_buffer,
 }
 
 char *http_parser::HttpData::getBuffer() const { return buffer; }
+
+bool http_parser::HttpData::getHeaderSent() const {
+  return headers_sent;
+}
+
+void http_parser::HttpData::setHeaderSent(bool value) {
+  headers_sent = value;
+}
 
 bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
                                            std::string &out_key) {
@@ -146,7 +154,7 @@ http_parser::PARSE_RESULT
 http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
                                      size_t *used_bytes, bool reset) {
 //  if (LIKELY(reset))
-    reset_parser();
+  reset_parser();
   buffer = const_cast<char *>(data);
   buffer_size = data_size;
   num_headers = sizeof(headers) / sizeof(headers[0]);

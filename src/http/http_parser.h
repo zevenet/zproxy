@@ -1,5 +1,5 @@
-#ifndef HTTPPARSER_H
-#define HTTPPARSER_H
+#pragma once
+
 #include "http.h"
 #include "picohttpparser.h"
 #include "regex"
@@ -100,10 +100,14 @@ public:
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
   http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
-  bool headers_sent{false}; // FIXME: Chapuza
+
   bool hasPendingData();
 
   char *getBuffer() const;
+  bool getHeaderSent() const;
+  void setHeaderSent(bool value);
+private:
+  bool headers_sent{false};
 };
 } // namespace http_parser
-#endif // HTTPPARSER_H
+
