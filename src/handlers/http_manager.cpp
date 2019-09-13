@@ -5,6 +5,8 @@
 #include "http_manager.h"
 #include "../util/Network.h"
 
+#define PRINT_DEBUG_CHUNKED 0
+
 bool http_manager::isLastChunk(HttpStream &stream) {
   static int iteration;
   iteration++;
