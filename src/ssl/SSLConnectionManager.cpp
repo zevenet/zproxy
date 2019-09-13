@@ -440,7 +440,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
     http_data.message_bytes_left = http_data.content_length - http_data.message_length;
   ssl_connection.buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
-  http_data.headers_sent = true;
+  http_data.setHeaderSent(true);
 
 #if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);

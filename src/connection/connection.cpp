@@ -250,51 +250,11 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t & sent) {
   return result;
 }
 
-IO::IO_RESULT Connection::writeContentTo(const Connection &target_connection,
-                                         http_parser::HttpData &http_data) {
-  bool done = false;
-  size_t sent = 0;
-  auto total_to_send =  buffer_size ;
-  http_data.message_bytes_left = http_data.message_bytes_left > 0 ? http_data.message_bytes_left: http_data.content_length;
-  ssize_t count;
-  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  PRINT_BUFFER_SIZE
-  while (!done) {
-    count = ::send(target_connection.getFileDescriptor(), buffer + sent,
-                   total_to_send, MSG_NOSIGNAL);
-    if (count < 0) {
-      if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {
-        std::string error = "write() failed  ";
-        error += std::strerror(errno);
-        Debug::LogInfo(error, LOG_NOTICE);
-        result = IO::IO_RESULT::ERROR;
-      } else {
-        result = IO::IO_RESULT::DONE_TRY_AGAIN;
-      }
-      done = true;
-      break;
-    } else if (count == 0) {
-      done = true;
-      break;
-    } else {
-      result = IO::IO_RESULT::SUCCESS;
-      sent += static_cast<size_t>(count);
-      total_to_send -= count;
-      buffer_size -= count;
-      if(http_data.content_length > 0)
-        http_data.message_bytes_left -= count;
-    }
-  }
-  PRINT_BUFFER_SIZE
-  return result;
-}
 
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
-  http_data.message_bytes_left = 0;
-  const char *return_value = "\r\n";
+
   auto vector_size =
           http_data.num_headers+(http_data.message_length>0 ? 3 : 2)+
                   http_data.extra_headers.size()+http_data.permanent_extra_headers.size();
@@ -341,10 +301,10 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 #endif
   }
 
-  iov[x].iov_base = const_cast<char *>(return_value);
-  iov[x++].iov_len = 2;
-  total_to_send += 2;
-  buffer_offset += 2;
+  iov[x].iov_base = const_cast<char *>(http::CRLF);
+  iov[x++].iov_len = http::CRLF_LEN;
+  total_to_send += http::CRLF_LEN;
+  buffer_offset += http::CRLF_LEN;
 
   if (http_data.message_length>0) {
     iov[x].iov_base = http_data.message;
@@ -355,29 +315,15 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
     Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
 #endif
   }
-//Network::setSocketNonBlocking(target_fd,true);
-  ssize_t nwritten = ::writev(target_fd, iov, x);
-//Network::setSocketNonBlocking(target_fd,false);
-  if (nwritten < 0) {
-    if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {
-      std::string error = "write() failed  ";
-      error += std::strerror(errno);
-      Debug::LogInfo(error, LOG_NOTICE);
-      return IO::IO_RESULT::ERROR;
-    } else {
-      return IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes
-    }
-  } else if (nwritten != total_to_send) {
-    return IO::IO_RESULT::ERROR;
-  }
-//  Debug::logmsg(LOG_REMOVE,"last_buffer_pos_written = %p " ,last_buffer_pos_written);
-//  Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", buffer_size);
-  if (http_data.content_length > 0)
-    http_data.message_bytes_left = http_data.content_length - http_data.message_length;
+
+  size_t nwritten, iovec_written;
+  auto result = writeIOvec(target_fd, iov, x, iovec_written, nwritten);
+  if (result != IO::IO_RESULT::SUCCESS)
+    return result;
+
   buffer_size = 0;// buffer_offset;
   http_data.message_length = 0;
-  http_data.headers_sent = true;
+  http_data.setHeaderSent(true);
 #if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", buffer_size);
@@ -388,6 +334,52 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 #endif
 //    PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
+}
+
+IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov, int nvec, size_t &iovec_written, size_t &nwritten) {
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+  ssize_t count = 0;
+  nwritten = 0;
+  iovec_written = 0;
+  do {
+    count = ::writev(target_fd, &(iov[iovec_written]), nvec - static_cast<int>(iovec_written));
+    if (count < 0) {
+      if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        result = IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes
+      } else {
+        std::string error = "writev() failed  ";
+        error += std::strerror(errno);
+        Debug::LogInfo(error, LOG_NOTICE);
+        result = IO::IO_RESULT::ERROR;
+      }
+      break;
+    } else {
+      size_t remaining = static_cast<size_t>(count);
+      for (int i = 0; i < nvec; i++) {
+        auto data = iov[i];
+        if (remaining >= data.iov_len) {
+          remaining -= data.iov_len;
+          iovec_written++;
+        } else {
+          data.iov_len -= static_cast<size_t>(count);
+          data.iov_base = static_cast<char *>(iov[iovec_written].iov_base) + static_cast<size_t>(count);
+        }
+      }
+      nwritten += static_cast<size_t>(count);
+      result = IO::IO_RESULT::SUCCESS;
+#if PRINT_DEBUG_FLOW_BUFFERS
+      Debug::logmsg(LOG_REMOVE,
+                    "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
+                    nvec,
+                    iovec_written,
+                    nwritten,
+                    IO::getResultString(result).data());
+#endif
+      //if partial writes recalculate
+    }
+  } while (iovec_written < nvec);
+
+  return result;
 }
 
 IO::IO_RESULT Connection::writeTo(const Connection &target_connection,

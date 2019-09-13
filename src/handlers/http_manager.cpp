@@ -18,13 +18,18 @@ bool http_manager::isLastChunk(HttpStream &stream) {
         http_manager::getLastChunkSize(stream.backend_connection.buffer + last_chunk_size,
                                        stream.backend_connection.buffer_size - stream.response.chunk_size_left,
                                        data_offset, new_chunk_left, stream.response.content_length);
+#if PRINT_DEBUG_CHUNKED
 //    Debug::logmsg(LOG_REMOVE,
 //                  ">>>> Chunk size %d Data size %d Data offset %d",
 //                  new_chunk_left,
 //                  stream.backend_connection.buffer_size,
 //                  data_offset);
+#endif
+
     if (chunk_size == 0) {
+#if PRINT_DEBUG_CHUNKED
       Debug::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+#endif
       stream.response.chunk_size_left = 0;
       stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
       return true;
@@ -46,10 +51,12 @@ ssize_t http_manager::getChunkSize(const std::string &data, size_t data_size, in
       Debug::logmsg(LOG_NOTICE, "strtol() failed");
       return -1;
     } else {
+#if PRINT_DEBUG_CHUNKED
       Debug::logmsg(LOG_DEBUG,
                     "CHUNK found size %s => %d ",
                     hex.data(),
                     chunk_length);
+#endif
       return static_cast<size_t>(chunk_length);
     }
   }
@@ -377,14 +384,18 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
                   http_manager::getLastChunkSize(stream.response.message,
                                                  stream.response.message_length,
                                                  data_offset, new_chunk_left, response.content_length);
+#if PRINT_DEBUG_CHUNKED
               Debug::logmsg(LOG_REMOVE,
                             ">>>> Chunk size %d left %d ",
                             chunk_size,
                             new_chunk_left
               );
+#endif
               stream.response.content_length += chunk_size;
               if (chunk_size == 0) {
+#if PRINT_DEBUG_CHUNKED
                 Debug::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+#endif
                 stream.response.chunk_size_left = 0;
                 stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
               } else {

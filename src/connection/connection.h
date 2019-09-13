@@ -61,18 +61,16 @@ public:
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
   size_t buffer_size{0};
-  size_t buffer_offset{0};
+  size_t buffer_offset{0}; //TODO::REMOVE
   std::string getPeerAddress();
 
 #if ENABLE_ZERO_COPY
   IO::IO_RESULT zeroRead();
   IO::IO_RESULT zeroWrite(int dst_fd, http_parser::HttpData &http_data);
 #endif
-
+  IO::IO_RESULT writeIOvec(int target_fd, iovec *iov, int nvec, size_t &iovec_written, size_t &nwritten);
   IO::IO_RESULT write(const char *data, size_t size);
   IO::IO_RESULT writeTo(int fd, size_t & sent);
-  IO::IO_RESULT writeContentTo(const Connection &target_connection,
-                               http_parser::HttpData &http_data);
   IO::IO_RESULT writeTo(const Connection &target_connection,
                         http_parser::HttpData &http_data);
 
