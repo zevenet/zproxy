@@ -100,7 +100,7 @@ sub eload
 		die $msg;
 	}
 
-	$input =~ s/\\/\\\\/g;
+	$input =~ s/\\/\\\\/g if ( $input !~ /-----/ );
 
 	my $cmd = "$bin $req{ module } $req{ func }";
 
