@@ -252,37 +252,8 @@ public:
                         &error_code_size) != -1 &&
            error_code == 0;
   }
-
-  static std::string read(int fd) {
-    int size = 65536;
-    char buffer[size];
-    bool should_close = false, done = false;
-    ssize_t count = -1;
-    size_t buffer_size = 0;
-
-    while (!done) {
-      count = ::recv(fd, buffer + buffer_size, size, MSG_NOSIGNAL);
-      if (count == -1) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-          std::string error = "read() failed  ";
-          error += std::strerror(errno);
-          Debug::LogInfo(error, LOG_NOTICE);
-          should_close = true;
-        }
-        done = true;
-      } else if (count == 0) {
-        //  The  remote has closed the connection, wait for EPOLLRDHUP
-        should_close = true;
-        done = true;
-      } else {
-        buffer_size += static_cast<size_t>(count);
-      }
-    }
-    return std::string(buffer);
-  }
-
   /*return -1 in case of erro and set errno*/
-  static int getSocketSendBufferSize_(int socket_fd) {
+  inline static int getSocketSendBufferSize(int socket_fd) {
     int res, size;
     unsigned int m = sizeof(size);
     res = getsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (void *)&size, &m);
@@ -290,11 +261,21 @@ public:
   }
 
   /*return -1 in case of erro and set errno*/
-  static int getSocketReceiveBufferSize_(int socket_fd) {
+  inline static int getSocketReceiveBufferSize(int socket_fd) {
     int res, size;
     unsigned int m = sizeof(size);
     res = getsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, (void *)&size, &m);
     return res != 0 ? -1 : size;
+  }
+
+  inline static int setSocketSendBufferSize(int socket_fd, unsigned int new_size) {
+    int m = sizeof(new_size);
+    return  ::setsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (char *)&new_size, &m) != -1 ;
+  }
+
+  inline static int setSocketReceiveBufferSize(int socket_fd, unsigned int new_size) {
+    int m = sizeof(new_size);
+    return  ::setsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, (char *)&new_size, &m) != -1 ;
   }
 };
 #endif // NETWORK_H
