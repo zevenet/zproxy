@@ -17,7 +17,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
                            EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE &&
       fd == timer_maintenance.getFileDescriptor()) {
-    timer_maintenance.set(listener_config.alive_to);
+    timer_maintenance.set(listener_config.alive_to * 1000);
     updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
              EVENT_GROUP::MAINTENANCE);
 
