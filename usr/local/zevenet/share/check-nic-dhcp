@@ -1,0 +1,141 @@
+#!/usr/bin/perl
+#
+# Place this file in /etc/network/if-up.d/
+
+use strict;    #a good habit to start your program with line
+use warnings;  #another good habit too...
+use feature 'say';
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+ 
+# require "/usr/local/zenloadbalancer/www/functions.cgi";
+require Zevenet;
+ 
+sub getSystemData	#($if_name)
+{
+
+my ($if_name) = @_;
+
+
+my $if_ref = getSystemInterface($if_name);
+my $line = `ip addr list dev $if_name | grep -E '$if_ref->{ name }\$'`;
+# print "DEBUG: found line: $line\n";
+
+	# Searching IPv4 String for IP#IPv6? #FIXME
+	if( $line =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/([0-9]+)/ ){
+ 
+		#split strings 
+		my @words = split( / /, $line);
+		chomp(@words);
+		my ($hostaddr,$bits) = ( $1, $2 );
+		#bit mask
+		use Net::Netmask;
+		my $in="$hostaddr/$bits";
+		my $cidr = $in;
+		my $block = Net::Netmask->new2( $cidr ) or die $Net::Netmask::error;
+		my $netmask = $block->mask;
+		#charge in $if_ref the pending values of system
+		$if_ref->{ addr } = $hostaddr;
+		$if_ref->{ mask } = $netmask;
+		$if_ref->{ ip_v } = "4";
+		# include GW in $if_Ref if working with same parent interface
+#		my $default_gw_line = `ip route list | grep 'default via.*dev'`;
+#		my @gw_words = split( / /, $default_gw_line);
+#		chomp(@gw_words);
+		#print "DEBUG: Default GateWay Line: "."$default_gw_line";
+#		print "DEBUG: Default GateWay Found:" . $gw_words[2] . "\n" if (defined $gw_words[2]);
+#		print "DEBUG: Parent:" . $if_ref->{ parent } . " \n" if (defined $if_ref->{ parent});
+#		print "Is the parent? " . $gw_words[4]. "\n" if (defined $gw_words[4]);
+		my $gw = getDefaultGW( $if_ref->{ name } );
+		my $gwGlobal = getDefaultGW();
+		my $if_gw = getIfDefaultGW();
+		print "DEBUG: GW:  $gw  \n" if ( $gw );
+		print "DEBUG: IF default GW:" . $if_gw . "\n" if ( $if_gw );
+		$if_ref->{ gateway } = $gw;
+
+		#Save Default GW configuration from global.
+		if ( "$if_gw" eq "$if_ref->{ dev }"){
+			print "DEBUG: Changing Default GW for table Global\n";
+			##salvar rutas en global.conf? 
+			applyRoutes("global",$if_ref,$gwGlobal)
+		}
+		#
+		
+	}
+
+return($if_ref);
+
+}
+######
+
+my $if_name;
+my @iflist;
+#Get a Interface List 
+if( defined $ENV{'IFACE'} ){
+        print "Defined " . "$ENV{'IFACE'}" . "\n";
+	@iflist = "$ENV{'IFACE'}";
+}elsif( defined $ARGV[0] ){
+	print "NIC defined $ARGV[0] \n";
+	@iflist = $ARGV[0];
+}else{
+	print "NIC not defined; check all NICs\n";
+	@iflist = getInterfaceList();
+}
+
+use Data::Dumper;
+
+print "DEBUG: Current Interface List: @iflist\n";
+
+foreach $if_name (@iflist){
+	next if $if_name eq 'lo';
+	next if $if_name eq 'cl_maintenance';
+	print "DEBUG: Working with if_name: $if_name\n";
+	
+	my $if_ref = getSystemData($if_name);
+	my $if_old_ref = getInterfaceConfig($if_name);
+	
+	print "DEBUG: Interface from System\n";
+	say Dumper $if_ref;
+	print "DEBUG: Interface from File\n";
+	say Dumper $if_old_ref;
+
+
+	if (!$if_old_ref) {
+		print "DEBUG: $if_name is not defined in configuration files because it is a new NIC\n";
+                        if ( setInterfaceConfig( $if_ref ) == 0 ){
+                                print "configuring if: " . $if_ref->{ name } . "\n";
+                                print "ERROR Setting Interface\n";
+			}else{
+				print "DEBUG: Writing Routes for $if_name\n";
+                                writeRoutes( $if_ref->{ name } );
+                }	
+	}
+	elsif ( ($if_ref->{ addr } //'') ne ($if_old_ref->{ addr } //'') 
+		||  ($if_ref->{ gateway } //'') ne ($if_old_ref->{ gateway } //'') 
+		|| ($if_ref->{ mask } //'') ne ($if_old_ref->{ mask } //'') )
+	{
+		print "DEBUG: $if_name configured, maybe by DHCP service?\n";
+		print "$if_ref->{ addr }\n";
+        	print "$if_old_ref->{ addr } \n"if defined $if_old_ref->{ addr };
+        	my @farms = getFarmNameList();
+       		foreach my $farm_name ( @farms ) {
+			print "Checking VIP changes for farm: $farm_name \n";
+			my $vip = getFarmVip ( "vip", "$farm_name" );
+			my $vip_port = getFarmVip ( "vipp", "$farm_name" );
+			my $new_ip = $if_ref->{ addr };
+			if (($vip eq $if_old_ref->{ addr }) && ( ($if_ref->{ addr } //'') ne ($if_old_ref->{ addr } //'') ) ){
+				setFarmVirtualConf ($new_ip,$vip_port,$farm_name);  # ($vip,$vipp,$farm_name)
+				print "Modified Farm $farm_name\n";
+			}
+		
+			if ( setInterfaceConfig( $if_ref ) == 0 ){
+				print "configuring if: " . $if_ref->{ name } . "\n";
+				print "ERROR Setting Interface\n";
+			}else{
+				writeRoutes( $if_ref->{ name } );
+			}	
+		}
+	}else{
+		print "DEBUG: Interface $if_name does not need to be modified\n\n";
+	}
+}
