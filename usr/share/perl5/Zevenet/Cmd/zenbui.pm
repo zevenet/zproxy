@@ -616,7 +616,7 @@ sub manage_mgmt()
 
 	# widget sizes
 	my $pos_y           = 0;
-	my $size_iface_list = 4;
+	my $size_iface_list = 3;
 	my $size_dhcp       = 3;
 	my $size_ip         = 3;
 	my $size_gw         = 3;
