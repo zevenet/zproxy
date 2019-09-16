@@ -476,7 +476,7 @@ void StreamManager::onRequestEvent(int fd) {
                     stream->response.message_bytes_left = 0;
                 }
                 stream->client_connection.buffer_size = 0;
-                stream->request.headers_sent = false;
+                stream->request.setHeaderSent(false);
                 stream->backend_connection.buffer_size = stream->response.buffer_size;
                 stream->client_connection.enableWriteEvent();
                 return;
@@ -495,7 +495,7 @@ void StreamManager::onRequestEvent(int fd) {
         DEBUG_COUNTER_HIT(cache_stats__::cache_miss);
         stream->response.reset_parser();
         stream->response.cached = false;
-        stream->response.headers_sent = false;
+        stream->response.setHeaderSent(false);
         stream->backend_connection.buffer_size = 0;
     }
 

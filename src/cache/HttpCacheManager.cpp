@@ -81,7 +81,7 @@ void HttpCacheManager::updateResponse(HttpResponse response,
     return;
   }
   c_object->staled = false;
-  c_object->date = timeHelper::gmtTimeNow();
+  c_object->date = time_helper::gmtTimeNow();
 
   return;
 }
@@ -110,7 +110,7 @@ st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
 
 bool HttpCacheManager::needCacheMaintenance()
 {
-    auto current_time = timeHelper::gmtTimeNow();
+    auto current_time = time_helper::gmtTimeNow();
     return ( current_time - last_maintenance > 0 ) ? true : false;
 }
 
@@ -188,7 +188,7 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
             recoverCache(svc, st::STORAGE_TYPE::DISK);
         }
 
-        last_maintenance = timeHelper::gmtTimeNow();
+        last_maintenance = time_helper::gmtTimeNow();
     }
 }
 
@@ -263,10 +263,10 @@ void HttpCacheManager::addResponseEntry( HttpResponse response,cache_commons::Ca
     }
     // Store the response date in the cache
     if ( response.date <= 0 ){
-        response.date = timeHelper::gmtTimeNow();
+        response.date = time_helper::gmtTimeNow();
     }
     if ( response.last_mod <= 0) {
-        response.last_mod = timeHelper::gmtTimeNow();
+        response.last_mod = time_helper::gmtTimeNow();
     }
 
     c_object->date = response.date;
@@ -291,7 +291,7 @@ void HttpCacheManager::addResponseEntry( HttpResponse response,cache_commons::Ca
     }
     else if (response.last_mod >= 0) {
         // heuristic algorithm -> 10% of last-modified
-        time_t now = timeHelper::gmtTimeNow();
+        time_t now = time_helper::gmtTimeNow();
         c_object->max_age = (now - response.last_mod) * 0.1;
     } else {
         // If not available value, use the defined default timeout
@@ -395,7 +395,7 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
     //TODO: isfresh applies to   Cobject, must be of Cobject
     bool serveable = c_object->isFresh();
 
-    std::time_t now = timeHelper::gmtTimeNow();
+    std::time_t now = time_helper::gmtTimeNow();
 
     // if staled and must revalidate is included, we MUST revalidate the
     // response
@@ -464,7 +464,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
     if ( std::string(cached_response.headers[j].name).compare("date") == 0 )
     {
         cached_response.headers[j].header_off = true;
-        cached_response.addHeader(http::HTTP_HEADER_NAME::DATE, timeHelper::strTime(c_object->date)->data() );
+        cached_response.addHeader(http::HTTP_HEADER_NAME::DATE, time_helper::strTime(c_object->date));
     }
     cached_response.headers[j].header_off = false;
   }
@@ -477,7 +477,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
     std::vector<std::string> w_codes;
     std::vector<std::string> w_text;
     // Take the date for the warning
-    std::string *w_date = timeHelper::strTimeNow();
+    auto w_date = time_helper::strTimeNow();
     // Create warnings if needed
     if (c_object->staled) {
       w_codes.push_back(std::to_string(http::WARNING_CODE::RESPONSE_STALE));
@@ -495,10 +495,10 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
     for (unsigned long i = 0; i < w_codes.size() && i < w_text.size(); i++) {
       cached_response.addHeader(http::HTTP_HEADER_NAME::WARNING,
                                 w_codes.at(i) + " - " + "\"" + w_text.at(i) +
-                                    "\" \"" + w_date->data() + "\"");
+                                    "\" \"" + w_date + "\""); //FIXME
     }
     // Add Age header
-    time_t now = timeHelper::getAge(c_object->date);
+    time_t now = time_helper::getAge(c_object->date);
     cached_response.addHeader(
         http::HTTP_HEADER_NAME::AGE,
         std::to_string(
@@ -683,13 +683,13 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
         response.etag = std::string(header_value);
         break;
       case http::HTTP_HEADER_NAME::EXPIRES:
-        response.expires = timeHelper::strToTime(std::string(header_value));
+        response.expires = time_helper::strToTime(std::string(header_value));
         break;
       case http::HTTP_HEADER_NAME::DATE:
-        response.date = timeHelper::strToTime(std::string(header_value));
+        response.date = time_helper::strToTime(std::string(header_value));
         break;
       case http::HTTP_HEADER_NAME::LAST_MODIFIED:
-        response.last_mod = timeHelper::strToTime(std::string(header_value));
+        response.last_mod = time_helper::strToTime(std::string(header_value));
         break;
       default:continue;
       }
@@ -839,7 +839,7 @@ void HttpCacheManager::doCacheMaintenance(){
     if ( !needCacheMaintenance() ){
         return;
     }
-    last_maintenance = timeHelper::gmtTimeNow();
+    last_maintenance = time_helper::gmtTimeNow();
     for (auto iter = cache.begin(); iter != cache.end();){
         iter->second->updateFreshness();
         //If not staled continue with the loop
@@ -849,7 +849,7 @@ void HttpCacheManager::doCacheMaintenance(){
         else
         {
             int expiration_to = CACHE_EXPIRATION;
-            auto entry_age = timeHelper::gmtTimeNow() - iter->second->date;
+            auto entry_age = time_helper::gmtTimeNow() - iter->second->date;
             //Greater than 10 times the max age
             if ( entry_age > iter->second->max_age * expiration_to ){
                 Debug::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
