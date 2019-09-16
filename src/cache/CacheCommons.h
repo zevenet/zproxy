@@ -2,6 +2,7 @@
 #include <string>
 #include <atomic>
 #include "../util/utils.h"
+#include "../http/http.h"
 namespace storage_commons {
 enum STORAGE_STATUS { SUCCESS, MKDIR_ERROR, MOUNT_ERROR, MEMORY_ERROR, ALREADY_INIT, NOT_INIT, FD_CLOSE_ERROR, GENERIC_ERROR, OPEN_ERROR, NOT_FOUND, STORAGE_FULL, APPEND_ERROR, MPOINT_ALREADY_EXISTS};
 enum STORAGE_TYPE { RAMFS, STDMAP, TMPFS, DISK, MEMCACHED };
@@ -15,6 +16,8 @@ enum class CACHE_SCOPE {
 struct CacheObject {
     CacheObject(){
         dirty = true;
+        chunked = http::CHUNKED_STATUS::CHUNKED_DISABLED;
+        encoding = http::TRANSFER_ENCODING_TYPE::NONE;
     }
     std::string etag;
     size_t content_length;
@@ -31,8 +34,10 @@ struct CacheObject {
     long int expires = -1;
     long int max_age = -1;
     size_t headers_size = 0;
-    CACHE_SCOPE scope;
+    cache_commons::CACHE_SCOPE scope;
     storage_commons::STORAGE_TYPE storage;
+    http::TRANSFER_ENCODING_TYPE encoding;
+    http::CHUNKED_STATUS chunked;
     /**
      * @brief Checks whether the cached content is fresh or not, staling it if not
      * fresh.

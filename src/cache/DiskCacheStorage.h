@@ -11,6 +11,7 @@ protected:
     static DiskICacheStorage * instance;
     bool initialized = false;
 public:
+    static DiskICacheStorage * getInstance();
     size_t max_size = 0;
     size_t current_size = 0;
     std::string mount_path;

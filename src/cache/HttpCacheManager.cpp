@@ -1,6 +1,5 @@
 ﻿#if CACHE_ENABLED
 #include "HttpCacheManager.h"
-
 // Returns the cache content with all the information stored
 cache_commons::CacheObject *HttpCacheManager::getCacheObject(HttpRequest request) {
   return getCacheObject(std::hash<std::string>()(request.getUrl()));
@@ -90,10 +89,12 @@ void HttpCacheManager::updateResponse(HttpResponse response,
 st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
 {
     size_t ram_size_left = ram_storage->max_size - ram_storage->current_size;
-    //How are we deciding if
-    size_t response_size = response.http_message_length + response.content_length;
 
-    if ( response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left ){
+    size_t response_size = response.http_message_length + response.content_length;
+    //If chunked -> store in disk
+    if ( (response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED &&
+          response.transfer_encoding_type == http::TRANSFER_ENCODING_TYPE::CHUNKED ) ||
+         response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left ){
         return st::STORAGE_TYPE::DISK;
     }
 #if CACHE_STORAGE_STDMAP
@@ -138,13 +139,13 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
         if ( cache_ram_mpoint.size() > 0 ){
             ramfs_mount_point = cache_ram_mpoint;
             if ( ramfs_mount_point.back() == '/'){
-                ramfs_mount_point.erase(ramfs_mount_point.size());
+                ramfs_mount_point.erase(ramfs_mount_point.size()-1);
             }
         }
         if ( cache_disk_mpoint.size() > 0 ){
             disk_mount_point = cache_disk_mpoint;
             if ( disk_mount_point.back() == '/'){
-                disk_mount_point.erase(disk_mount_point.size());
+                disk_mount_point.erase(disk_mount_point.size()-1);
             }
         }
         //Create directory, if fails, and it's not because the folder is already created, just return an error
@@ -196,12 +197,13 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   auto cache_entry = new cache_commons::CacheObject();
   std::unique_ptr<cache_commons::CacheObject> c_object ( cache_entry);
   auto hashed_url = hash<std::string> ()(request.getUrl());
+  auto old_object = getCacheObject(request);
   cache[hashed_url] = c_object.get();
 
   addResponseEntry(response, c_object.get());
   // link response with c_object
   response.c_object = c_object.get();
-  auto old_object = getCacheObject(request);
+
   //Check what storage to use
   st::STORAGE_STATUS err;
 
@@ -236,11 +238,21 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   // If success, store in the unordered map
   if ( err != st::STORAGE_STATUS::SUCCESS){
     Debug::logmsg(LOG_ERR, "Error trying to store the response in storage");
+    deleteEntry(request);
+    return;
   }
   c_object->headers_size = response.headers_length;
-  if ( response.content_length == response.message_length){
-      c_object->dirty = false;
+  if ( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED ){
+      if ( response.content_length == response.message_length ){
+          c_object->dirty = false;
+      }
   }
+//TRY
+  if( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK ){
+      c_object->dirty = false;
+      c_object->content_length = response.content_length;
+  }
+
   c_object.release();
   return;
 }
@@ -250,6 +262,13 @@ void HttpCacheManager::addResponseEntry( HttpResponse response,cache_commons::Ca
         c_object = new cache_commons::CacheObject();
     }
     // Store the response date in the cache
+    if ( response.date <= 0 ){
+        response.date = timeHelper::gmtTimeNow();
+    }
+    if ( response.last_mod <= 0) {
+        response.last_mod = timeHelper::gmtTimeNow();
+    }
+
     c_object->date = response.date;
     /*
    *max-age, s-maxage, etc.
@@ -294,22 +313,22 @@ void HttpCacheManager::addResponseEntry( HttpResponse response,cache_commons::Ca
     c_object->staled = false;
     c_object->content_length = response.content_length;
     c_object->no_cache_response = response.c_opt.no_cache;
-    if(response.last_mod >= 0){
-        c_object->last_mod = response.last_mod;
-    }
+
+    c_object->encoding = response.transfer_encoding_type;
+
     switch ( getStorageType(response)){
-        case st::STORAGE_TYPE::RAMFS:
-            c_object->storage = st::STORAGE_TYPE::RAMFS;
-            break;
-        case st::STORAGE_TYPE::DISK:
-            c_object->storage = st::STORAGE_TYPE::DISK;
-            break;
-        case st::STORAGE_TYPE::STDMAP:
-            c_object->storage = st::STORAGE_TYPE::STDMAP;
-            break;
-        default:
-            Debug::logmsg(LOG_ERR, "Not able to decide storage, exiting");
-            exit(-1);
+    case st::STORAGE_TYPE::RAMFS:
+        c_object->storage = st::STORAGE_TYPE::RAMFS;
+        break;
+    case st::STORAGE_TYPE::DISK:
+        c_object->storage = st::STORAGE_TYPE::DISK;
+        break;
+    case st::STORAGE_TYPE::STDMAP:
+        c_object->storage = st::STORAGE_TYPE::STDMAP;
+        break;
+    default:
+        Debug::logmsg(LOG_ERR, "Not able to decide storage, exiting");
+        exit(-1);
     }
 
     return;
@@ -348,8 +367,12 @@ void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_si
         Debug::logmsg(LOG_WARNING, "There was an unexpected error result while appending data to the cache content %s", url.data());
     }
     //disable flag
-    if ( response.message_bytes_left == msg_size ){
+    if ( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED && response.message_bytes_left == msg_size ){
         response.c_object->dirty = false;
+    }
+    else if ( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK ) {
+        response.c_object->dirty = false;
+        c_object->content_length = response.content_length;
     }
     return;
 }
@@ -799,7 +822,7 @@ int HttpCacheManager::deleteEntry(size_t hashed_url){
         break;
     default: return -1;
     }
-    if ( err != storage_commons::STORAGE_STATUS::SUCCESS){
+    if ( err != storage_commons::STORAGE_STATUS::SUCCESS && err != storage_commons::STORAGE_STATUS::NOT_FOUND){
         Debug::logmsg(LOG_ERR, "Error trying to delete cache content from the storage");
         return -1;
     }
