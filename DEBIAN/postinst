@@ -152,5 +152,5 @@ fi
 
 ## Run checkupgrades to update message
 if [ $BM_tag -eq 0 ]; then
-	/usr/local/zevenet/bin/checkupgrades > /dev/null
+	$checkupgrades_bin > /dev/null
 fi
