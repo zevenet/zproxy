@@ -695,7 +695,7 @@ void StreamManager::onResponseEvent(int fd) {
       stream->client_connection.enableWriteEvent();
       return;
   }
-#if PRINT_DEBUG_FLOW_BUFFERS
+//#if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE,
                 "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
                 "header_sent: %s chunk left: %d",
@@ -704,7 +704,7 @@ void StreamManager::onResponseEvent(int fd) {
                 stream->response.content_length,
                 stream->response.message_bytes_left,
                 stream->response.getHeaderSent() ? "true" : "false", stream->response.chunk_size_left);
-#endif
+//#endif
   // disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
@@ -1172,8 +1172,11 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
   case IO::IO_RESULT::SUCCESS:
     break;
   case IO::IO_RESULT::DONE_TRY_AGAIN:
-    stream->backend_connection.enableWriteEvent();
-    break;
+      if (!stream->request.getHeaderSent()) {
+          stream->backend_connection.enableWriteEvent();
+          return;
+      }
+      break;
   default:
     Debug::LogInfo("Error sending data to backend server", LOG_DEBUG);
     clearStream(stream);
@@ -1321,6 +1324,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   case IO::IO_RESULT::DONE_TRY_AGAIN:
     if (!stream->response.getHeaderSent()) {
       //TODO:: retry with left headers data in response.
+        stream->client_connection.enableWriteEvent();
+        return;
     }
     break;
   default:

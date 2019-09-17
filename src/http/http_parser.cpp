@@ -27,12 +27,59 @@ void http_parser::HttpData::reset_parser() {
   setHeaderSent(false);
   chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
   extra_headers.clear();
+  iov.clear();
 }
 
 void http_parser::HttpData::setBuffer(char *ext_buffer,
                                       size_t ext_buffer_size) {
   buffer = ext_buffer;
   buffer_size = ext_buffer_size;
+}
+
+void http_parser::HttpData::prepareToSend()
+{
+    Debug::logmsg(LOG_REMOVE,"Prepare to send");
+    auto vector_size =
+            num_headers+(message_length>0 ? 3 : 2)+
+                    extra_headers.size()+permanent_extra_headers.size();
+    iov.clear();
+    iov.reserve(vector_size);
+    iov.push_back({ http_message, http_message_length});
+
+    for (size_t i = 0; i!=num_headers; i++) {
+      if (headers[i].header_off)
+        continue; // skip unwanted headers
+      iov.push_back({ const_cast<char *>(headers[i].name), headers[i].line_size});
+  #if DEBUG_HTTP_HEADERS
+      Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size - 2, http_data.headers[i].name);
+  #endif
+    }
+
+    for (const auto& header :
+        extra_headers) { // header must be always  used as reference,
+      // it's copied it invalidate c_str() reference.
+      iov.push_back({ const_cast<char *>(header.c_str()), header.length()});
+  #if DEBUG_HTTP_HEADERS
+      Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+  #endif
+    }
+
+    for (const auto &header :
+        permanent_extra_headers) { // header must be always  used as
+      // reference,
+      // it's copied it invalidate c_str() reference.
+      iov.push_back({ const_cast<char *>(header.c_str()), header.length()});
+  #if DEBUG_HTTP_HEADERS
+      Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+  #endif
+    }
+    iov.push_back({ const_cast<char *>(http::CRLF), http::CRLF_LEN});
+    if (message_length>0) {
+      iov.push_back({ message, message_length});
+  #if DEBUG_HTTP_HEADERS
+      Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
+  #endif
+    }
 }
 
 char *http_parser::HttpData::getBuffer() const { return buffer; }
@@ -56,7 +103,6 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
       return true;
     }
   }
-
   return false;
 }
 

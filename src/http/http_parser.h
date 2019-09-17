@@ -5,6 +5,7 @@
 #include "regex"
 #include <map>
 #include <string>
+#include <sys/uio.h>
 
 #define cmp_header_name(header, val)                                           \
   header->name_len == strlen(val) &&                                           \
@@ -49,6 +50,8 @@ public:
 public:
   std::vector< std::string> extra_headers;
   std::vector< std::string> permanent_extra_headers;
+  std::vector<iovec> iov;
+  void prepareToSend();
   inline void addHeader(http::HTTP_HEADER_NAME header_name,
                         const std::string &header_value,
                         bool permanent = false) {

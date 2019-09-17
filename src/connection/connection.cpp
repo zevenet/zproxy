@@ -254,70 +254,15 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t & sent) {
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
+  if (http_data.iov.empty())
+    http_data.prepareToSend();
 
-  auto vector_size =
-          http_data.num_headers+(http_data.message_length>0 ? 3 : 2)+
-                  http_data.extra_headers.size()+http_data.permanent_extra_headers.size();
-
-  iovec iov[vector_size];
-  int total_to_send = 0;
-  iov[0].iov_base = http_data.http_message;
-  iov[0].iov_len = http_data.http_message_length;
-  total_to_send += http_data.http_message_length;
-  buffer_offset += http_data.http_message_length;
-  int x = 1;
-  for (size_t i = 0; i!=http_data.num_headers; i++) {
-    if (http_data.headers[i].header_off)
-      continue; // skip unwanted headers
-    iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
-    iov[x++].iov_len = http_data.headers[i].line_size;
-    total_to_send += http_data.headers[i].line_size;
-    buffer_offset += http_data.headers[i].line_size;
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size - 2, http_data.headers[i].name);
-#endif
-  }
-
-  for (const auto& header :
-      http_data.extra_headers) { // header must be always  used as reference,
-    // it's copied it invalidate c_str() reference.
-    iov[x].iov_base = const_cast<char *>(header.c_str());
-    iov[x++].iov_len = header.length();
-    total_to_send += header.length();
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
-#endif
-  }
-
-  for (const auto &header :
-      http_data.permanent_extra_headers) { // header must be always  used as
-    // reference,
-    // it's copied it invalidate c_str() reference.
-    iov[x].iov_base = const_cast<char *>(header.c_str());
-    iov[x++].iov_len = header.length();
-    total_to_send += header.length();
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
-#endif
-  }
-
-  iov[x].iov_base = const_cast<char *>(http::CRLF);
-  iov[x++].iov_len = http::CRLF_LEN;
-  total_to_send += http::CRLF_LEN;
-  buffer_offset += http::CRLF_LEN;
-
-  if (http_data.message_length>0) {
-    iov[x].iov_base = http_data.message;
-    iov[x++].iov_len = http_data.message_length;
-    buffer_offset += http_data.message_length;
-    total_to_send += http_data.message_length;
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
-#endif
-  }
-
-  size_t nwritten, iovec_written;
-  auto result = writeIOvec(target_fd, iov, x, iovec_written, nwritten);
+  size_t nwritten = 0;
+  size_t iovec_written = 0;
+  Debug::logmsg(LOG_REMOVE, "\nIOV size: %d", http_data.iov.size());
+  auto result = writeIOvec(target_fd, http_data.iov, iovec_written, nwritten);
+  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n", http_data.iov.size(),
+                iovec_written, nwritten, IO::getResultString(result).data());
   if (result != IO::IO_RESULT::SUCCESS)
     return result;
 
@@ -336,16 +281,23 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   return IO::IO_RESULT::SUCCESS;
 }
 
-IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov, int nvec, size_t &iovec_written, size_t &nwritten) {
+IO::IO_RESULT Connection::writeIOvec(int target_fd, std::vector<iovec> &iov, size_t &iovec_written, size_t &nwritten) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   ssize_t count = 0;
+  auto nvec = iov.size();
   nwritten = 0;
   iovec_written = 0;
   do {
-    count = ::writev(target_fd, &(iov[iovec_written]), nvec - static_cast<int>(iovec_written));
+    count = ::writev(target_fd, &(iov[iovec_written]), static_cast<int>(nvec - iovec_written));
+    Debug::logmsg(LOG_REMOVE,
+                  "writev() count %d errno: %d = %s iovecwritten %d",
+                  count,
+                  errno,
+                  std::strerror(errno),
+                  iovec_written);
     if (count < 0) {
       if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-        result = IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes
+        result = IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes        
       } else {
         std::string error = "writev() failed  ";
         error += std::strerror(errno);
@@ -355,18 +307,29 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov, int nvec, size_t
       break;
     } else {
       size_t remaining = static_cast<size_t>(count);
-      for (int i = 0; i < nvec; i++) {
-        auto data = iov[i];
-        if (remaining >= data.iov_len) {
-          remaining -= data.iov_len;
+      for (auto it = iov.begin() + static_cast<ssize_t>(iovec_written); it != iov.end(); it++) {
+        if (remaining >= it->iov_len) {
+          remaining -= it->iov_len;
+//          iov.erase(it++);
+          it->iov_len = 0;
           iovec_written++;
         } else {
-          data.iov_len -= static_cast<size_t>(count);
-          data.iov_base = static_cast<char *>(iov[iovec_written].iov_base) + static_cast<size_t>(count);
+          Debug::logmsg(LOG_REMOVE,
+                        "Recalculating data ... remaining %d niovec_written: %d iov size %d",
+                        remaining,
+                        iovec_written,
+                        iov.size());
+          it->iov_len -= remaining;
+          it->iov_base = static_cast<char *>(iov[iovec_written].iov_base) + remaining;
+          break;
         }
       }
+
       nwritten += static_cast<size_t>(count);
-      result = IO::IO_RESULT::SUCCESS;
+      if (errno == EINPROGRESS && remaining != 0)
+        return IO::IO_RESULT::DONE_TRY_AGAIN;
+      else
+        result = IO::IO_RESULT::SUCCESS;
 #if PRINT_DEBUG_FLOW_BUFFERS
       Debug::logmsg(LOG_REMOVE,
                     "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
@@ -375,7 +338,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov, int nvec, size_t
                     nwritten,
                     IO::getResultString(result).data());
 #endif
-      //if partial writes recalculate
+
     }
   } while (iovec_written < nvec);
 
