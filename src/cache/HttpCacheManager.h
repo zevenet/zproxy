@@ -142,12 +142,12 @@ public:
 void validateCacheResponse(HttpResponse &response);
 void validateCacheRequest(HttpRequest &request);
   /**
-   * @brief addResponseEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
+   * @brief createResponseEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
    * @param response the response which will be used to create the cache_commons::CacheObject entry
    * @param pointer for cache_commons::CacheObject, it will be stored in it, if nullptr, the function will create
    * @return cache_commons::CacheObject is the cache information representation of the response
    */
-  void addResponseEntry( HttpResponse response, cache_commons::CacheObject * c_object );
+  void createResponseEntry( HttpResponse response, cache_commons::CacheObject * c_object );
   /**
    * @brief deleteEntry removes the cache entry of the param request
    * @param request the HttpRequest used to determine which entry to delete
@@ -162,6 +162,12 @@ void validateCacheRequest(HttpRequest &request);
    * @brief doCacheMaintenance if the cache needs maintenance ( 1 per second or more), check entries which must be deleted
    */
   void doCacheMaintenance();
+  /**
+   * @brief validateResponseEncoding checks if the stored response encoding match with any of the accept encoding provided
+   * @param request is the HttpRequest object containing the incoming HttpRequest information
+   * @param c_object is the CacheObject object containing the entry stored
+   */
+  bool validateResponseEncoding(HttpRequest request, cache_commons::CacheObject *c_object);
 };
 
 namespace cache_stats__ {

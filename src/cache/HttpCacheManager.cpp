@@ -200,7 +200,7 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   auto old_object = getCacheObject(request);
   cache[hashed_url] = c_object.get();
 
-  addResponseEntry(response, c_object.get());
+  createResponseEntry(response, c_object.get());
   // link response with c_object
   response.c_object = c_object.get();
 
@@ -257,7 +257,7 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   return;
 }
 
-void HttpCacheManager::addResponseEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
+void HttpCacheManager::createResponseEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
     if ( c_object == nullptr) {
         c_object = new cache_commons::CacheObject();
     }
@@ -380,7 +380,7 @@ void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_si
 cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest &request) {
     cache_commons::CacheObject *c_object = getCacheObject(request);
 
-    if( c_object == nullptr ){
+    if (c_object == nullptr){
         return nullptr;
     }
     if (c_object->dirty ){
@@ -391,6 +391,9 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
     }
     if (request.c_opt.only_if_cached){
         return c_object;
+    }
+    if (!validateResponseEncoding(request, c_object)){
+        return nullptr;
     }
     //TODO: isfresh applies to   Cobject, must be of Cobject
     bool serveable = c_object->isFresh();
@@ -580,7 +583,7 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
 
                 stored_response.parseResponse(buffer,&bytes);
                 validateCacheResponse(stored_response);
-                addResponseEntry(stored_response, c_object.get());
+                createResponseEntry(stored_response, c_object.get());
                 c_object->dirty = false;
                 c_object->storage = st_type;
                 //Increment the current size of the storage
@@ -700,21 +703,21 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
         switch (header_value[0]) {
         case 'c': {
           if (header_value[1] == 'h') { //no content-length
-            response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
+            response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::CHUNKED;
             response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
           } else if (header_value[2] == 'o') {
-            response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::COMPRESS;
+            response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::COMPRESS;
           }
           break;
         }
         case 'd': //deflate
-          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::DEFLATE;
+          response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::DEFLATE;
           break;
         case 'g'://gzip
-          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::GZIP;
+          response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::GZIP;
           break;
         case 'i': //identity
-          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::IDENTITY;
+          response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::IDENTITY;
           break;
         }
       break;
@@ -888,5 +891,43 @@ void HttpCacheManager::doCacheMaintenance(){
             }
         }
     }
+}
+
+bool HttpCacheManager::validateResponseEncoding(HttpRequest request, cache_commons::CacheObject *c_object)
+{
+    if( c_object == nullptr ){
+        return false;
+    }
+    std::string compression_value;
+    request.getHeaderValue(http::HTTP_HEADER_NAME::ACCEPT_ENCODING, compression_value);
+    if ( compression_value.size() == 0 ){
+        return true;
+    }
+    //we have all the accepted compressions in compression_value string
+    size_t found;
+    switch ( c_object->encoding){
+    case http::TRANSFER_ENCODING_TYPE::BR:
+        found = compression_value.find("br");
+        break;
+    case http::TRANSFER_ENCODING_TYPE::NONE:
+        return true;
+    case http::TRANSFER_ENCODING_TYPE::DEFLATE:
+        found = compression_value.find("deflate");
+        break;
+    case http::TRANSFER_ENCODING_TYPE::GZIP:
+        found = compression_value.find("gzip");
+        break;
+    case http::TRANSFER_ENCODING_TYPE::CHUNKED:
+        found = compression_value.find("chunked");
+        break;
+    case http::TRANSFER_ENCODING_TYPE::COMPRESS:
+        found = compression_value.find("compress");
+        break;
+    case http::TRANSFER_ENCODING_TYPE::IDENTITY:
+        found = compression_value.find("identity");
+        break;
+    }
+
+    return found != std::string::npos ? true : false;
 }
 #endif
