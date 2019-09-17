@@ -495,10 +495,16 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
           http::WARNING_CODE::HEURISTIC_EXPIRATION));
     }
     // Add warning headers if needed
+    std::string warn;
     for (unsigned long i = 0; i < w_codes.size() && i < w_text.size(); i++) {
-      cached_response.addHeader(http::HTTP_HEADER_NAME::WARNING,
-                                w_codes.at(i) + " - " + "\"" + w_text.at(i) +
-                                    "\" \"" + w_date + "\""); //FIXME
+      warn = w_codes.at(i);
+      warn.append(" - ");
+      warn.append("\"");
+      warn.append(w_text.at(i));
+      warn.append("\" \"");
+      warn.append(w_date);
+      warn.append("\"");
+      cached_response.addHeader(http::HTTP_HEADER_NAME::WARNING, warn);
     }
     // Add Age header
     time_t now = time_helper::getAge(c_object->date);

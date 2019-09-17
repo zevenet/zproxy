@@ -62,7 +62,10 @@ st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, double st
 st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage( std::string svc ) {
     if ( !initialized )
         return st::STORAGE_STATUS::NOT_INIT;
-    if (mkdir((mount_path+string("/")+svc).data(),0777) == -1) {
+    auto path = mount_path;
+    path.append("/");
+    path.append(svc);
+    if (mkdir(path.data(),0777) == -1) {
         if (errno == EEXIST)
             return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
         else{
@@ -146,7 +149,12 @@ st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string rel_path, con
 bool RamfsCacheStorage::isInStorage(const std::string svc, const std::string url)
 {
     size_t hashed_url = std::hash<std::string>()(url);
-    return isInStorage(std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data());
+    auto path = mount_path;
+    path.append("/");
+    path.append(svc);
+    path.append("/");
+    path.append(to_string(hashed_url));
+    return isInStorage(path);
 }
 bool RamfsCacheStorage::isInStorage( std::string path )
 {

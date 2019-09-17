@@ -37,7 +37,10 @@ st::STORAGE_STATUS DiskCacheStorage::initServiceStorage( std::string svc ) {
     if ( !initialized )
         return st::STORAGE_STATUS::NOT_INIT;
     //The mount point is mount_path/service
-    if (mkdir((mount_path+string("/")+svc).data(),0777) == -1) {
+    auto path = mount_path;
+    path.append("/");
+    path.append(svc);
+    if (mkdir((path).data(),0777) == -1) {
         if (errno == EEXIST)
             return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
         if (errno != EEXIST)
@@ -118,7 +121,12 @@ bool DiskCacheStorage::isInStorage(const std::string svc, const std::string url)
 {
     struct stat buffer;
     size_t hashed_url = std::hash<std::string>()(url);
-    return (stat( std::string(mount_path+"/"+svc+"/"+to_string(hashed_url)).data(), &buffer) == 0);
+    auto path = mount_path;
+    path.append("/");
+    path.append(svc);
+    path.append("/");
+    path.append(to_string(hashed_url));
+    return (stat( path.data(), &buffer) == 0);
 }
 bool DiskCacheStorage::isInStorage(const std::string path)
 {

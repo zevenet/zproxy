@@ -9,7 +9,7 @@ enum STORAGE_TYPE { RAMFS, STDMAP, TMPFS, DISK, MEMCACHED };
 }
 namespace cache_commons {
 
-enum class CACHE_SCOPE {
+enum CACHE_SCOPE {
     PUBLIC,
     PRIVATE,
 };
