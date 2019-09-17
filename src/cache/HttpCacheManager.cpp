@@ -600,7 +600,11 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
         }
         if (c_object != nullptr){
             c_object->dirty = false;
+            if ( c_object->content_length == 0 ){
+                c_object->encoding = http::TRANSFER_ENCODING_TYPE::CHUNKED;
+            }
             cache[strtoul(file_name.data(),0,0)] = c_object.release();
+
         }
         in_file.close();
     }
@@ -691,6 +695,29 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
       case http::HTTP_HEADER_NAME::LAST_MODIFIED:
         response.last_mod = time_helper::strToTime(std::string(header_value));
         break;
+      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+        response.transfer_encoding_header = true;
+        switch (header_value[0]) {
+        case 'c': {
+          if (header_value[1] == 'h') { //no content-length
+            response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
+            response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+          } else if (header_value[2] == 'o') {
+            response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::COMPRESS;
+          }
+          break;
+        }
+        case 'd': //deflate
+          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::DEFLATE;
+          break;
+        case 'g'://gzip
+          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::GZIP;
+          break;
+        case 'i': //identity
+          response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::IDENTITY;
+          break;
+        }
+      break;
       default:continue;
       }
 
