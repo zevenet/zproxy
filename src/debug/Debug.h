@@ -55,7 +55,7 @@ public:
       std::cout << COUT_GREEN_COLOR(str);
     } else {
       if (log_facility == -1) {
-        fprintf(stdout, "%s\n", str.c_str());
+        fprintf(stdout, "%s", str.c_str());
       } else {
         syslog(level, "%s", str.c_str());
       }
