@@ -17,7 +17,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 #options
 option(BUILD_DOC "Build Documentation" OFF)
 option (MEMCACHED_ENABLED "memcached" OFF)
-option(BUILD_TESTS "Build tests" ON)
+option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
