@@ -430,6 +430,10 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         double response_time = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::RESPONSE_TIME).get())->double_value;
         auto connections = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::CONNECTIONS).get())->number_value;
 
+        //PoundCtl transform backend disabled status to uppercase
+        if(backend_status == "disabled")
+          std::transform(backend_status.begin(), backend_status.end(),backend_status.begin(), ::toupper);
+
         buffer += "      ";
         buffer += std::to_string(backend_counter);
         buffer += ". Backend ";
