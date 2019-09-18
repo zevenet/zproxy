@@ -55,17 +55,18 @@ int main(int argc, char *argv[]) {
     exit(EXIT_SUCCESS);
   }
 
+  ::openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   Config config;
   Debug::logmsg(LOG_NOTICE, "zhttp starting...");
   config.parseConfig(argc, argv);  
   Debug::log_level = config.listeners->log_level;
   Debug::log_facility = config.log_facility;
 
-  ::openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   // Syslog initialization
   if (config.daemonize) {
     if (!Environment::daemonize()) {
       Debug::logmsg(LOG_ERR,"error: daemonize failed\n");
+      closelog();
       return EXIT_FAILURE;
     }
   }

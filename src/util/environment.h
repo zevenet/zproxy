@@ -12,6 +12,7 @@
 #include "system.h"
 #include <sys/resource.h>
 #include <csignal>
+#include <fcntl.h>
 
 class Environment {
 
@@ -193,35 +194,51 @@ public:
     stderr = fopen(errfile.c_str(), "w+");
   }
 
-  static bool daemonize() {
-    pid_t child;
-    if ((child = fork()) < 0) {
-      std::cerr << "error: failed fork\n";
-      exit(EXIT_FAILURE);
-    }
-    if (child > 0) { // parent
-      //    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); wait for
-      //    childs to starts
-      exit(EXIT_SUCCESS);
-    }
-    if (setsid() < 0) { // failed to become session leader
-      std::cerr << "error: failed setsid\n";
-      exit(EXIT_FAILURE);
-    }
+ static bool daemonize() {
+     pid_t child;
+     if ((child = fork()) < 0) {
+         Debug::logmsg(LOG_ERR, "error: failed fork");
+         return false;
+     }
+     if (child != 0) { // parent
+         _exit(EXIT_SUCCESS); //avoid triggering atexit() processing using _exit()
+     }
 
-    // catch/ignore signals
-    signal(SIGCHLD, SIG_IGN);
-    signal(SIGHUP, SIG_IGN);
+     /* Don't hold files open. */
+     ::close(STDIN_FILENO);
+     ::close(STDOUT_FILENO);
+     ::close(STDERR_FILENO);
 
-    // fork second time
-    if ((child = fork()) < 0) { // failed fork
-      std::cerr << "error: failed fork\n";
-      exit(EXIT_FAILURE);
-    }
-    if (child > 0) {
-      exit(EXIT_SUCCESS);
-    }
-    return true;
-  }
+     /* Many routines write to stderr; that can cause chaos if used
+     * for something else, so set it here. */
+     if (::open("/dev/null", O_WRONLY) != 0)
+         return false;
+     if (::dup2(0, STDERR_FILENO) != STDERR_FILENO)
+         return false;
+     ::close(0);
 
-};
+     //  become session leader so SIGTERM do not affect child
+     if (setsid() ==  static_cast<pid_t>(-1)) {
+         std::cerr << "error: failed setsid\n";
+         return false;
+     }
+
+     /* Move off any mount points we might be in. */
+     if (chdir("/") != 0)
+         return false;
+
+     // catch/ignore signals
+     signal(SIGCHLD, SIG_IGN);
+     signal(SIGHUP, SIG_IGN);
+//     // fork second time since parent exits
+//     if ((child = fork()) < 0) { // failed fork
+//         std::cerr << "error: failed fork\n";
+//         exit(EXIT_FAILURE);
+//     }
+//     if (child > 0) {
+//         exit(EXIT_SUCCESS);
+//     }
+     /* Discard our parent's umask. */
+     umask(0);
+     return true;
+ }};
