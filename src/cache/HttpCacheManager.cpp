@@ -18,28 +18,35 @@ void HttpCacheManager::handleResponse(HttpResponse &response,
                                       HttpRequest request) {
   auto c_opt = getCacheObject(request);
   if ( c_opt != nullptr && c_opt->dirty == true ){
+      this->stats.cache_not_stored++;
         return;
   }
 
   if( c_opt != nullptr && c_opt->isFresh()){
+      this->stats.cache_not_stored++;
       //If the stored response is fresh, we must not to store this response
       response.c_opt.cacheable = false;
   }
   // If the response/request is set as not cacheable, we can't cache it
   if (!response.c_opt.cacheable) {
+      this->stats.cache_not_stored++;
     return;
   } else if (response.cache_control == false && response.pragma == true) {
     // Check the pragma only if no cache-control header in request nor in
     // response, if the pragma was present, disable cache
+      this->stats.cache_not_stored++;
     return;
   }
   //  Check status code
   if (response.http_status_code != 200 && response.http_status_code != 301 &&
           response.http_status_code != 308){
+      this->stats.cache_not_stored++;
       return;
   }
   if ( ((response.content_length + response.headers_length ) >= cache_max_size) && cache_max_size != 0 ){
+//    cache_stats::cache_RAM_inserted_entries++;
     DEBUG_COUNTER_HIT(cache_stats__::cache_not_stored);
+    this->stats.cache_not_stored++;
     Debug::logmsg(LOG_WARNING, "Not caching response with %d bytes size", response.content_length + response.headers_length);
     return;
   }
@@ -189,6 +196,8 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
         }
 
         last_maintenance = time_helper::gmtTimeNow();
+        this->stats.cache_RAM_mountpoint = ramfs_mount_point;
+        this->stats.cache_DISK_mountpoint = disk_mount_point;
     }
 }
 
@@ -221,6 +230,8 @@ void HttpCacheManager::addResponse(HttpResponse &response,
       err = ram_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if(err == st::STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
+          this->stats.cache_RAM_inserted_entries++;
+          this->stats.cache_RAM_used = ram_storage->current_size;
       }
       break;
   case st::STORAGE_TYPE::DISK:
@@ -230,6 +241,8 @@ void HttpCacheManager::addResponse(HttpResponse &response,
       err = disk_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if(err == st::STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
+          this->stats.cache_DISK_inserted_entries++;
+          this->stats.cache_DISK_used = disk_storage->current_size;
       }
       break;
   default:
@@ -356,9 +369,11 @@ void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_si
     case st::STORAGE_TYPE::STDMAP:
     case st::STORAGE_TYPE::RAMFS:
         err = ram_storage->appendData(rel_path, std::string(msg, msg_size));
+        this->stats.cache_RAM_used = ram_storage->current_size;
         break;
     case st::STORAGE_TYPE::DISK:
         err = disk_storage->appendData(rel_path, std::string(msg, msg_size));
+        this->stats.cache_DISK_used = disk_storage->current_size;
         break;
     default:
         return;
@@ -396,7 +411,14 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
         return nullptr;
     }
     //TODO: isfresh applies to   Cobject, must be of Cobject
-    bool serveable = c_object->isFresh();
+    bool serveable = true;
+    bool prev_staled = c_object->staled;
+    if( !c_object->isFresh() ){
+        if( !prev_staled ){
+            this->stats.cache_staled_entries++;
+        }
+        serveable = false;
+    }
 
     std::time_t now = time_helper::gmtTimeNow();
 
@@ -513,7 +535,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
         std::to_string(
             now >= 0 ? now : 0)); // ensure that it is greater or equal than 0
   }
-
+  this->stats.cache_match++;
   return 0;
 }
 
@@ -524,6 +546,26 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
         return JSON_OP_RESULT::ERROR;
     switch (task.command)
     {
+//    DEFINE_OBJECT_COUNTER(cache_ram_used)
+//    DEFINE_OBJECT_COUNTER(cache_disk_used)
+    case ctl::CTL_COMMAND::GET:{
+        JsonObject response;
+        json::JsonArray * data {new json::JsonArray()};
+        JsonObject * json_data {new json::JsonObject()};
+        json_data->emplace(JSON_KEYS::CACHE_HIT, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_match)));
+        json_data->emplace(JSON_KEYS::CACHE_MISS, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_miss)));
+        json_data->emplace(JSON_KEYS::CACHE_STALE, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_staled_entries)));
+        json_data->emplace(JSON_KEYS::CACHE_AVOIDED, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_not_stored)));
+        json_data->emplace(JSON_KEYS::CACHE_RAM, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_RAM_inserted_entries)));
+        json_data->emplace(JSON_KEYS::CACHE_RAM_USAGE, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_RAM_used)));
+        json_data->emplace(JSON_KEYS::CACHE_RAM_PATH, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_RAM_mountpoint)));
+        json_data->emplace(JSON_KEYS::CACHE_DISK, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_DISK_inserted_entries)));
+        json_data->emplace(JSON_KEYS::CACHE_DISK_USAGE, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_DISK_used)));
+        json_data->emplace(JSON_KEYS::CACHE_DISK_PATH, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_DISK_mountpoint)));
+        data->emplace_back(std::move(json_data));
+        response.emplace(JSON_KEYS::CACHE.data(),data);
+        return response.stringify();
+    }
     case ctl::CTL_COMMAND::DELETE:{
         auto json_data = JsonParser::parse(task.data);
         if ( json_data == nullptr )
@@ -852,9 +894,11 @@ int HttpCacheManager::deleteEntry(size_t hashed_url){
     case storage_commons::STORAGE_TYPE::STDMAP:
     case storage_commons::STORAGE_TYPE::RAMFS:
         err = ram_storage->deleteInStorage(path);
+        this->stats.cache_RAM_used = ram_storage->current_size;
         break;
     case storage_commons::STORAGE_TYPE::DISK:
         err = disk_storage->deleteInStorage(path);
+        this->stats.cache_DISK_used = disk_storage->current_size;
         break;
     default: return -1;
     }
@@ -877,6 +921,7 @@ void HttpCacheManager::doCacheMaintenance(){
     }
     last_maintenance = time_helper::gmtTimeNow();
     for (auto iter = cache.begin(); iter != cache.end();){
+        bool prev_staled = iter->second->staled;
         iter->second->updateFreshness();
         //If not staled continue with the loop
         if(!iter->second->staled){
@@ -884,6 +929,9 @@ void HttpCacheManager::doCacheMaintenance(){
         }
         else
         {
+            if( !prev_staled ){
+                this->stats.cache_staled_entries++;
+            }
             int expiration_to = CACHE_EXPIRATION;
             auto entry_age = time_helper::gmtTimeNow() - iter->second->date;
             //Greater than 10 times the max age

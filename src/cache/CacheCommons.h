@@ -71,5 +71,18 @@ struct CacheObject {
         }
     }
 };
-}
 
+struct cache_stats {
+    long cache_RAM_inserted_entries = 0; /* Number of times  */
+    std::string cache_RAM_mountpoint;
+    long cache_RAM_used = 0;
+    long cache_DISK_inserted_entries = 0;
+    std::string cache_DISK_mountpoint;
+    long cache_DISK_used = 0;
+    double cache_match = 0;
+    long cache_staled_entries = 0;
+    double cache_miss = 0;
+    double cache_not_stored = 0;
+};
+
+}

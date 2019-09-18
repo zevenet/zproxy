@@ -493,6 +493,7 @@ void StreamManager::onRequestEvent(int fd) {
             return;
         }
         DEBUG_COUNTER_HIT(cache_stats__::cache_miss);
+        service_manager->getService(stream->request)->stats.cache_miss++;
         stream->response.reset_parser();
         stream->response.cached = false;
         stream->response.setHeaderSent(false);
@@ -928,9 +929,13 @@ void StreamManager::onResponseEvent(int fd) {
         regmatch_t matches[2];
         if (pattern != nullptr) {
             if (regexec(pattern, stream->request.getUrl().data(), 1, matches, 0) == 0)
-                if (stream->request.c_opt.no_store == false)
+                if (stream->request.c_opt.no_store == false){
                     service->handleResponse(stream->response, stream->request);
-            //        }
+                }
+                else{
+                    service_manager->getService(stream->request)->stats.cache_not_stored++;
+                }
+
         }
     }
 #endif

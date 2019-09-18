@@ -168,10 +168,12 @@ st::STORAGE_STATUS RamfsCacheStorage::deleteInStorage(std::string path)
     auto full_path = mount_path;
     full_path.append("/");
     full_path.append(path);
-
+    size_t file_size = std::filesystem::file_size(full_path);
     if( isInStorage(full_path) ){
-        if ( std::remove( full_path.data()) )
+        if ( std::remove( full_path.data()) ){
             return st::STORAGE_STATUS::GENERIC_ERROR;
+        }
+        this->current_size -= file_size;
     }
     else
         return st::STORAGE_STATUS::NOT_FOUND;

@@ -35,11 +35,11 @@ private:
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
   std::time_t last_maintenance;
-
   void addResponse(HttpResponse &response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
   st::STORAGE_TYPE getStorageType( HttpResponse response );
 public:
+  cache_commons::cache_stats stats;
   size_t cache_max_size = 0;
   bool cache_enabled = false;
   virtual ~HttpCacheManager();

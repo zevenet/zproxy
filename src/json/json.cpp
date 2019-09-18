@@ -55,6 +55,16 @@ const std::string JSON_KEYS::DEBUG5 = "debug5";
 
 #if CACHE_ENABLED
 const std::string JSON_KEYS::CACHE = "cache";
+const std::string JSON_KEYS::CACHE_MISS = "misses";
+const std::string JSON_KEYS::CACHE_HIT = "matches";
+const std::string JSON_KEYS::CACHE_STALE = "staled-entries";
+const std::string JSON_KEYS::CACHE_RAM = "ram-cached-response";
+const std::string JSON_KEYS::CACHE_RAM_USAGE = "ram-usage";
+const std::string JSON_KEYS::CACHE_RAM_PATH = "ram-path";
+const std::string JSON_KEYS::CACHE_DISK = "disk-cached-response";
+const std::string JSON_KEYS::CACHE_DISK_USAGE = "disk-usage";
+const std::string JSON_KEYS::CACHE_DISK_PATH = "disk-path";
+const std::string JSON_KEYS::CACHE_AVOIDED = "not-stored";
 const std::string JSON_KEYS::CACHE_CONTENT = "cache-content";
 #endif
 }  // namespace json

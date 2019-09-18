@@ -51,6 +51,16 @@ struct JSON_KEYS {
   static const std::string RESULT;
 #if CACHE_ENABLED
   static const std::string CACHE;
+  static const std::string CACHE_MISS;
+  static const std::string CACHE_HIT;
+  static const std::string CACHE_STALE;
+  static const std::string CACHE_RAM;
+  static const std::string CACHE_RAM_USAGE;
+  static const std::string CACHE_RAM_PATH;
+  static const std::string CACHE_DISK;
+  static const std::string CACHE_DISK_PATH;
+  static const std::string CACHE_DISK_USAGE;
+  static const std::string CACHE_AVOIDED;
   static const std::string CACHE_CONTENT;
 #endif
   static const std::string DEBUG;
