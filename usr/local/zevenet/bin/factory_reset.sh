@@ -194,6 +194,10 @@ if [ $HW -eq 1 ]; then
 	echo "mask=$NETMASK_MANAGEMENT" >> $IF_CONF
 	echo "gateway=$GW_MANAGEMENT" >> $IF_CONF
 	echo "status=up" >> $IF_CONF
+	
+	if [ ! -f $migration_flag ]; then
+			touch $migration_flag
+	fi
 else
 	sed -i -E 's/status=.*$/status=up/' $IF_CONF
 fi

@@ -154,7 +154,7 @@ if ( $action eq "restart" )
 if ( $action eq "start" )
 {
 	# ZNA firmware upgrade
-	my $migration_flag = "/etc/zlbmigration";
+	my $migration_flag = &getGlobalConfiguration( 'migration_flag' );
 	if ( -f $migration_flag )
 	{
 		&zna_version;

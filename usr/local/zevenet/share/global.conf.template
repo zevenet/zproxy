@@ -47,6 +47,8 @@ $zlbcertfile_path="$basedir/zlbcertfile.pem";#update
 $zapi_directory="$basedir/zapi";
 #first boot flag
 $first_boot_flag="/etc/firstzlbboot";
+#zna migration flag
+$migration_flag="/etc/zlbmigration";
 #zevenet service
 $zevenet_service="/etc/init.d/zevenet";
 
