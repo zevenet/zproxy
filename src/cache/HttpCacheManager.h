@@ -30,7 +30,6 @@ private:
   RamICacheStorage * ram_storage;
   DiskICacheStorage * disk_storage;
   unordered_map<size_t, cache_commons::CacheObject *> cache; // Caching map
-  unordered_map<size_t, std::atomic <bool>> dirty;
   regex_t *cache_pattern = nullptr;
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
