@@ -259,6 +259,8 @@ $arpsend_bin="/usr/sbin/arpsend";
 $dhcp_bin="/usr/sbin/dhclient";
 #Where is netcat
 $netcat_bin="/usr/bin/nc";
+#Where is dmidecode
+$dmidecode_bin="/usr/sbin/dmidecode";
 
 # Pound
 #where is pound binary?
