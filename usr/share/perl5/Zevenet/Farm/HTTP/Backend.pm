@@ -407,6 +407,7 @@ Returns:
 
 =cut
 
+#ecm possible bug here returns 2 values instead of 1 (1 backend only)
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -424,52 +425,33 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 		my $stats = &getHTTPFarmBackendsStats( $farm_name );
 
-		foreach my $be ( @{ $stats->{ backends } } )
-		{
-			#	$be =
-			#	{
-			#		"id" = $backend_id		# it is the index in the backend array too
-			#		"ip" = $backend_ip
-			#		"port" = $backend_port
-			#		"status" = $backend_status
-			#		"established" = $established_connections
-			#	}
-
-			next if $be->{ service } ne $service;
-
-			push ( @status, $be->{ status } );
-		}
 	}
 
-	# farm status is down
-	else
+	require Zevenet::Farm::HTTP::Service;
+
+	my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
+	my @be = split ( "\n", $backendsvs );
+	my $id = 0;
+
+	# @be is used to get size of backend array
+	for ( @be )
 	{
-		require Zevenet::Farm::HTTP::Service;
 
-		my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
-		my @be = split ( "\n", $backendsvs );
-		my $id = 0;
+		my $backendstatus = &getHTTPBackendStatusFromFile( $farm_name, $id, $service );
 
-		# @be is used to get size of backend array
-		for ( @be )
+		if ( $backendstatus eq "maintenance" )
 		{
-			my $backendstatus = &getHTTPBackendStatusFromFile( $farm_name, $id, $service );
-
-			if ( $backendstatus eq "maintenance" )
-			{
-				$backendstatus = "maintenance";
-			}
-			else
-			{
-				$backendstatus = "undefined";
-			}
-
-			push @status, $backendstatus;
-			$id = $id + 1;
+			$backendstatus = "maintenance";
 		}
+		else
+		{
+			$backendstatus = "undefined";
+		}
+		push @status, $backendstatus;
+		$id = $id + 1;
 	}
 
-	return \@status;
+return \@status;
 }
 
 =begin nd
@@ -499,9 +481,9 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
 
+
 	# if the status file does not exist the backend is ok
 	my $output = "active";
-
 	if ( !-e $stfile )
 	{
 		return $output;
@@ -530,7 +512,6 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 		}
 	}
 	close $fd;
-
 	return $output;
 }
 
@@ -549,7 +530,7 @@ Returns:
 	none - .
 
 FIXME:
-	Not return nothing, do error control
+	Not return anything, do error control
 
 =cut
 
@@ -785,7 +766,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 }
 
 =begin nd
-Function: setHTTPFarmBackendMaintenance
+Function: setHTTPFarmBackendNoMaintenance
 
 	Function that disable the maintenance mode for backend
 
@@ -805,7 +786,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 			 "debug", "PROFILING" );
 	my ( $farm_name, $backend, $service ) = @_;
 
-	my $output = -1;
+	my $output = 0;
 
 	#find the service number
 	my $idsv = &getFarmVSI( $farm_name, $service );
