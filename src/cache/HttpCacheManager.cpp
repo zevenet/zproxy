@@ -206,7 +206,6 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   auto cache_entry = new cache_commons::CacheObject();
   std::unique_ptr<cache_commons::CacheObject> c_object ( cache_entry);
   auto hashed_url = hash<std::string> ()(request.getUrl());
-  auto old_object = getCacheObject(request);
   cache[hashed_url] = c_object.get();
 
   createResponseEntry(response, c_object.get());
@@ -224,9 +223,6 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   switch (c_object->storage){
   case st::STORAGE_TYPE::STDMAP:
   case st::STORAGE_TYPE::RAMFS:
-      if( old_object != nullptr ){
-        ram_storage->current_size -= (old_object->content_length + old_object->headers_size);
-      }
       err = ram_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if(err == st::STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
@@ -235,9 +231,6 @@ void HttpCacheManager::addResponse(HttpResponse &response,
       }
       break;
   case st::STORAGE_TYPE::DISK:
-      if( old_object != nullptr){
-        disk_storage->current_size -= (old_object->content_length + old_object->headers_size);
-      }
       err = disk_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if(err == st::STORAGE_STATUS::SUCCESS){
           DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);

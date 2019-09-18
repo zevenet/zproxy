@@ -75,11 +75,13 @@ st::STORAGE_STATUS DiskCacheStorage::putInStorage( const std::string rel_path, c
 //        return st::STORAGE_STATUS::STORAGE_FULL;
 
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
-
     string file_path (mount_path);
     file_path.append("/");
     file_path.append(rel_path);
     //increment the current storage size
+    if ( std::filesystem::exists(file_path) ){
+        current_size -= std::filesystem::file_size(file_path);
+    }
     current_size += buffer.size();
 
     std::ofstream out_stream(file_path.data(), std::ofstream::trunc );

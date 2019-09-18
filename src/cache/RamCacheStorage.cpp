@@ -105,6 +105,10 @@ st::STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string rel_path, 
     file_path.append("/");
     file_path.append(rel_path);
 
+    if ( std::filesystem::exists(file_path)){
+        current_size -= std::filesystem::file_size(file_path);
+    }
+
     //increment the current storage size
     current_size += buffer.size();
 

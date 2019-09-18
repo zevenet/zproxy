@@ -696,7 +696,7 @@ void StreamManager::onResponseEvent(int fd) {
       stream->client_connection.enableWriteEvent();
       return;
   }
-//#if PRINT_DEBUG_FLOW_BUFFERS
+#if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE,
                 "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
                 "header_sent: %s chunk left: %d",
@@ -705,7 +705,7 @@ void StreamManager::onResponseEvent(int fd) {
                 stream->response.content_length,
                 stream->response.message_bytes_left,
                 stream->response.getHeaderSent() ? "true" : "false", stream->response.chunk_size_left);
-//#endif
+#endif
   // disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
