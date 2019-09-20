@@ -191,7 +191,7 @@ sub setSsyncdMaster
 		}
 
 		# Before changing to master mode:
-		# ./ssyncdctl write http   --> Write http sessions data to pound
+		# ./ssyncdctl write http   --> Write http sessions data to l7 proxy
 		# ./ssyncdctl write nft --> Write nft data to nftables
 		my $error;
 

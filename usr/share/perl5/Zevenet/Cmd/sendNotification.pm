@@ -107,10 +107,10 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 	}
 
-# pound msg
+# l7 proxy msg
 # example:
 # (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed) in farm: 'test', service: 'srv1'
-	elsif ( ( $program =~ /pound/ || $program =~ /farmguardian/ )
+	elsif ( ( $program =~ /zhttp/ || $program =~ /farmguardian/ )
 		&& $msg =~
 		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+)? (\w+)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '([\w-]+)')?/
 	  )
@@ -123,7 +123,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 		if    ( $service =~ /'(.+)'/ )        { $service = "$1"; }
 
-		if    ( $program =~ /pound/ )        { $program = "It has been"; }
+		if    ( $program =~ /zhttp/ )        { $program = "It has been"; }
 		elsif ( $program =~ /farmguardian/ ) { $program = "Farmguardian"; }
 
 		if ( $status =~ /dead/ || $status =~ /down/ ) { $status = "DOWN"; }

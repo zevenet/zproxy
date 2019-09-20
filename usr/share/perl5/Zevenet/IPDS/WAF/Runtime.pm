@@ -53,10 +53,10 @@ sub reloadWAFByFarm
 	return 0 if ( &getFarmStatus( $farm ) ne 'up' );
 
 	require Zevenet::Farm::HTTP::Config;
-	my $pound_ctl = &getGlobalConfiguration( 'poundctl' );
+	my $proxy_ctl = &getGlobalConfiguration( 'proxyctl' );
 	my $socket    = &getHTTPFarmSocket( $farm );
 
-	$err = &logAndRun( "$pound_ctl -c $socket -R" );
+	$err = &logAndRun( "$proxy_ctl -c $socket -R" );
 
 	return $err;
 }
@@ -91,7 +91,7 @@ sub addWAFsetToFarm
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $farm_path = "$configdir/$farm_file";
 	my $tmp_conf  = "/tmp/waf_$farm.tmp";
-	my $pound     = &getGlobalConfiguration( 'pound' );
+	my $proxy     = &getGlobalConfiguration( 'proxy' );
 	my $cp        = &getGlobalConfiguration( 'cp' );
 	my $mv        = &getGlobalConfiguration( 'mv' );
 
@@ -142,7 +142,7 @@ sub addWAFsetToFarm
 	untie @filefarmhttp;
 
 	# check config file
-	my $cmd = "$pound -f $tmp_conf -c";
+	my $cmd = "$proxy -f $tmp_conf -c";
 	$err = &logAndRun( $cmd );
 	if ( $err )
 	{
@@ -195,7 +195,7 @@ sub removeWAFSetFromFarm
 
 	require Zevenet::Farm::Core;
 
-	my $pound     = &getGlobalConfiguration( 'pound' );
+	my $proxy     = &getGlobalConfiguration( 'proxy' );
 	my $set_file  = &getWAFSetFile( $set );
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
