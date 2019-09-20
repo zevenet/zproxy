@@ -446,7 +446,10 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         buffer += std::to_string(weight);
         buffer += " ";
         buffer += conversionHelper::toStringWithPrecision(response_time);
-        buffer += ") alive (";
+	if(backend_status == "down")
+		buffer += ") DEAD (";
+	else
+	     	buffer += ") alive (";
         buffer += std::to_string(connections);
         buffer += ")\n";
         backend_counter++;
