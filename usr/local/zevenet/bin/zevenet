@@ -153,6 +153,8 @@ if ( $action eq "restart" )
 
 if ( $action eq "start" )
 {
+	system ( '/usr/local/zevenet/bin/checkglobalconf' );
+
 	# ZNA firmware upgrade
 	my $migration_flag = &getGlobalConfiguration( 'migration_flag' );
 	if ( -f $migration_flag )
