@@ -90,12 +90,6 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection,
   return true;
 }
 
-void SSLConnectionManager::setSslInfoCallback(Connection &ssl_connection,
-                                              SslInfoCallback callback) {
-  // TODO::SSL implement
-  // SSL_set_info_callback(ssl_connection.ssl_context, callback);
-}
-
 IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
@@ -140,7 +134,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
   if (data_size == 0)
-    return IO::IO_RESULT::ZERO_DATA;
+    return IO::IO_RESULT::SUCCESS;
   IO::IO_RESULT result;
   int rc = -1;
   //  // FIXME: Buggy, used just for test
@@ -168,16 +162,17 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
         }
       }
     } else {
-      written += rc;
+      written += static_cast<size_t>(rc);
       if ((data_size - written) == 0) {
         result = IO::IO_RESULT::SUCCESS;
         break;
       }
     }
   }
-  if(flush_data)
+  if (flush_data && result == IO::IO_RESULT::SUCCESS) {
+    //    Debug::logmsg(LOG_REMOVE," FLUSHING");
     BIO_flush(ssl_connection.io);
-
+  }
 //  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data write: %d ssl error: %s",
 //                data_size, IO::getResultString(result).c_str());
   return result;
@@ -197,14 +192,14 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
     if (!client_mode) {
 
       if ((ssl_connection.server_name = SSL_get_servername(ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) ==
-          NULL) {
-        Debug::logmsg(LOG_DEBUG,
-                      "(%lx) could not get SNI host name  to %s",
-                      pthread_self(),
-                      ssl_connection.server_name);
+          nullptr) {
+//        Debug::logmsg(LOG_DEBUG,
+//                      "(%lx) could not get SNI host name  to %s",
+//                      pthread_self(),
+//                      ssl_connection.server_name);
 
       } else {
-        Debug::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(), ssl_connection.server_name);
+//        Debug::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(), ssl_connection.server_name);
       }
     }
       ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
@@ -262,7 +257,7 @@ SSLConnectionManager::getSslErrorResult(SSL *ssl_connection_context, int &rc) {
   }
   case SSL_ERROR_SSL:Debug::logmsg(LOG_ERR, "corrupted data detected while reading");
     logSslErrorStack();
-  case SSL_ERROR_ZERO_RETURN: /* Received a SSL close_notify alert.The operation
+  [[fallthrough]]; case SSL_ERROR_ZERO_RETURN: /* Received a SSL close_notify alert.The operation
 failed due to the SSL session being closed. The
 underlying connection medium may still be open.  */
   default:
@@ -313,24 +308,23 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   }
   if (data_size == 0)
     return IO::IO_RESULT::ZERO_DATA;
-  IO::IO_RESULT result;
-  int sent = 0;
-  int rc = -1;
+  size_t sent = 0;
+  ssize_t rc = -1;
   //  // FIXME: Buggy, used just for test
  // Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   do {
     rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent)); //, &written);
     if (rc > 0)
-      sent += rc;
+        sent += static_cast<size_t>(rc);
     //Debug::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
-  } while (rc > 0 && rc < (data_size - sent));
+  } while (rc > 0 && static_cast<size_t>(rc) < (data_size - sent));
 
   if (sent > 0) {
     written = static_cast<size_t>(sent);
     return IO::IO_RESULT::SUCCESS;
   }
-  int ssle = SSL_get_error(ssl_connection.ssl, rc);
+  int ssle = SSL_get_error(ssl_connection.ssl, static_cast<int>(rc));
   if (rc < 0 && ssle != SSL_ERROR_WANT_WRITE) {
     // Renegotiation is not possible in a TLSv1.3 connection
     Debug::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s",
@@ -347,100 +341,116 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   }
   return IO::IO_RESULT::ERROR;
 }
-IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection ,Connection &ssl_connection,
-    http_parser::HttpData &http_data) {
-    if (!target_ssl_connection.ssl_connected) {
-        return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
-    }
-  const char *return_value = "\r\n";
-  auto vector_size =
-          http_data.num_headers+(http_data.message_length>0 ? 3 : 2)+
-                  http_data.extra_headers.size()+http_data.permanent_extra_headers.size();
 
-  iovec iov[vector_size];
-  int total_to_send = 0;
-  iov[0].iov_base = http_data.http_message;
-  iov[0].iov_len = http_data.http_message_length;
-  total_to_send += http_data.http_message_length;
-  ssl_connection.buffer_offset += http_data.http_message_length;
-  int x = 1;
-  for (size_t i = 0; i!=http_data.num_headers; i++) {
-    if (http_data.headers[i].header_off)
-      continue; // skip unwanted headers
-    iov[x].iov_base = const_cast<char *>(http_data.headers[i].name);
-    iov[x++].iov_len = http_data.headers[i].line_size;
-    total_to_send += http_data.headers[i].line_size;
-    ssl_connection.buffer_offset += http_data.headers[i].line_size;
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size - 2, http_data.headers[i].name);
-#endif
-  }
-
-  for (const auto& header :
-          http_data.extra_headers) { // header must be always  used as reference,
-    // it's copied it invalidate c_str() reference.
-    iov[x].iov_base = const_cast<char *>(header.c_str());
-    iov[x++].iov_len = header.length();
-    total_to_send += header.length();
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
-#endif
-  }
-
-  for (const auto &header :
-          http_data.permanent_extra_headers) { // header must be always  used as
-    // reference,
-    // it's copied it invalidate c_str() reference.
-    iov[x].iov_base = const_cast<char *>(header.c_str());
-    iov[x++].iov_len = header.length();
-    total_to_send += header.length();
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
-#endif
-  }
-
-  iov[x].iov_base = const_cast<char *>(return_value);
-  iov[x++].iov_len = 2;
-  total_to_send += 2;
-  ssl_connection.buffer_offset += 2;
-
-  if (http_data.message_length>0) {
-    iov[x].iov_base = http_data.message;
-    iov[x++].iov_len = http_data.message_length;
-    ssl_connection.buffer_offset += http_data.message_length;
-    total_to_send += http_data.message_length;
-#if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
-#endif
-  }
-  //write multibuffer to ssl connection
-  size_t written;
-  for(int i = 0;i < x;i ++){
+  IO::IO_RESULT
+  SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
+                                      const iovec *__iovec, int count,
+                                      size_t &nwritten) {
+    size_t written = 0;
+    IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+    //  Debug::logmsg(LOG_REMOVE, ">>>-------- Count: %d written: %d
+    //  totol_written: %d ",count, written, nwritten);
+    for (auto it = 0; it < count; it++) {
+      if (__iovec[it].iov_len == 0)
+        continue;
+      //    Debug::logmsg(LOG_REMOVE, "-------- it = %d iov base len: %d",it,
+      //    __iovec[it].iov_len);
 #if USE_SSL_BIO_BUFFER
-    auto result = handleWrite(target_ssl_connection, static_cast<char*>(iov[i].iov_base),
-            iov[i].iov_len, written, x==(i+1));
+      result = handleWrite(target_ssl_connection,
+                           static_cast<char *>(__iovec[it].iov_base),
+                           __iovec[it].iov_len, written, (it == count - 1));
 #else
-    auto result = sslWrite(target_ssl_connection, static_cast<char *>(iov[i].iov_base),
-                           iov[i].iov_len, written);
+      result = sslWrite(target_ssl_connection, static_cast<char *>(it->iov_base),
+                        it->iov_len, written);
 #endif
-    switch (result){
-    case IO::IO_RESULT::FD_CLOSED:
-    case IO::IO_RESULT::FULL_BUFFER:
-    case IO::IO_RESULT::CANCELLED:
-    case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
-    case IO::IO_RESULT::SSL_WANT_RENEGOTIATION:;
-    case IO::IO_RESULT::ERROR: return result;
-    case IO::IO_RESULT::ZERO_DATA:break;
-    case IO::IO_RESULT::SSL_NEED_HANDSHAKE:
-    case IO::IO_RESULT::DONE_TRY_AGAIN:
-    case IO::IO_RESULT::SUCCESS:break;
+      nwritten += written;
+      //    Debug::logmsg(LOG_REMOVE, "-------- it = %d  written: %d
+      //    totol_written: %d",it, written, nwritten);
+      if (result != IO::IO_RESULT::SUCCESS)
+        break;
     }
+    //  Debug::logmsg(LOG_REMOVE, "<<<-------- result: %s errno: %d = %s
+    //  ",IO::getResultString(result).data(), errno,std::strerror(errno));
+    return result;
   }
-  if (http_data.content_length > 0)
-    http_data.message_bytes_left = http_data.content_length - http_data.message_length;
-  ssl_connection.buffer_size = 0;// buffer_offset;
+
+  IO::IO_RESULT SSLConnectionManager::handleWriteIOvec(
+      Connection &target_ssl_connection, std::vector<iovec> &iov,
+      size_t &iovec_written, size_t &nwritten) {
+    IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+    size_t count = 0;
+    auto nvec = iov.size();
+    nwritten = 0;
+    iovec_written = 0;
+    do {
+      result = sslWriteIOvec(target_ssl_connection, &(iov[iovec_written]),
+                             static_cast<int>(nvec - iovec_written), count);
+      //    Debug::logmsg(LOG_REMOVE," result: %s written %d  iovecwritten
+      //    %d",IO::getResultString(result).data(),count,iovec_written);
+      if (count > 0) {
+        size_t remaining = static_cast<size_t>(count);
+        for (auto it = iov.begin() + static_cast<ssize_t>(iovec_written);
+             it != iov.end(); it++) {
+          if (remaining >= it->iov_len) {
+            remaining -= it->iov_len;
+
+            it->iov_len = 0;
+            iovec_written++;
+          } else {
+            it->iov_base =
+                static_cast<char *>(iov[iovec_written].iov_base) + remaining;
+            Debug::logmsg(LOG_REMOVE,
+                          "Recalculating data ... remaining %d niovec_written: "
+                          "%d iov size %d",
+                          it->iov_len - remaining, iovec_written, iov.size());
+            it->iov_len -= remaining;
+            break;
+          }
+        }
+        nwritten += static_cast<size_t>(count);
+      }
+      if (result != IO::IO_RESULT::SUCCESS)
+        return IO::IO_RESULT::DONE_TRY_AGAIN;
+      else
+        result = IO::IO_RESULT::SUCCESS;
+#if PRINT_DEBUG_FLOW_BUFFERS
+      Debug::logmsg(
+            LOG_REMOVE,
+            "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
+            nvec, iovec_written, nwritten, IO::getResultString(result).data());
+#endif
+
+    } while (iovec_written < nvec && result == IO::IO_RESULT::SUCCESS);
+
+    return result;
+  }
+
+  IO::IO_RESULT
+  SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
+                                        Connection &ssl_connection,
+                                        http_parser::HttpData &http_data) {
+    if (!target_ssl_connection.ssl_connected) {
+      return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
+    }
+    if (http_data.iov.empty())
+      http_data.prepareToSend();
+
+    size_t nwritten = 0;
+    size_t iovec_written = 0;
+
+    auto result = handleWriteIOvec(target_ssl_connection, http_data.iov,
+                                   iovec_written, nwritten);
+
+    //    Debug::logmsg(LOG_REMOVE, "iov_written %d bytes_written: %d IO RESULT:
+    //    %s\n", iovec_written, nwritten, IO::getResultString(result).data());
+
+    if (result != IO::IO_RESULT::SUCCESS)
+      return result;
+
+    ssl_connection.buffer_size = 0; // buffer_offset;
   http_data.message_length = 0;
-  http_data.setHeaderSent(true);
+	http_data.setHeaderSent(true);
+    http_data.iov.clear();
 
 #if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
@@ -476,4 +486,17 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
   } while (ret < 0 && retries < 10);
 
   return IO::IO_RESULT::SUCCESS;
+}
+IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &target_ssl_connection,
+                                                Connection &source_ssl_connection,
+                                                size_t &written,
+                                                bool flush_data) {
+  auto result = handleWrite(target_ssl_connection,
+                            source_ssl_connection.buffer,
+                            source_ssl_connection.buffer_size,
+                            written,
+                            flush_data);
+  if (written > 0)
+    source_ssl_connection.buffer_size -= written;
+  return result;
 }

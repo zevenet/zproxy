@@ -38,7 +38,6 @@ void http_parser::HttpData::setBuffer(char *ext_buffer,
 
 void http_parser::HttpData::prepareToSend()
 {
-    Debug::logmsg(LOG_REMOVE,"Prepare to send");
     auto vector_size =
             num_headers+(message_length>0 ? 3 : 2)+
                     extra_headers.size()+permanent_extra_headers.size();

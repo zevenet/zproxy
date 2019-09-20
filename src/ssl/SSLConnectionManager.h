@@ -19,8 +19,6 @@ namespace ssl {
    * This includes handshake, write and read operations.
    */
 class SSLConnectionManager {
-  void setSslInfoCallback(Connection &ssl_connection, SslInfoCallback callback);
-
   /**
    * @brief Gets the error result in the IO::IO_RESULT format.
    *
@@ -36,7 +34,8 @@ public:
 
   /** SSLContext used by the manager. */
   SSLContext *ssl_context;
-
+  SSLConnectionManager();
+  virtual ~SSLConnectionManager();
   /**
    * @brief Reads from the @p ssl_connection.
    * @param ssl_connection used to read from.
@@ -84,6 +83,22 @@ public:
    * @param flush_data true if the data is deleted after the write operation.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
+  IO::IO_RESULT handleWrite(Connection &target_ssl_connection, Connection &source_ssl_connection,
+                            size_t &written, bool flush_data = true);
+  /**
+ * @brief Writes to the @p target_ssl_connection.
+ *
+ * Writes the @p data to the @p ssl_connection and set the written bytes in
+ * @p written. If the @p flush_data is @c true, the data is deleted from the
+ * buffer.
+ *
+ * @param ssl_connection is the Connection to write to.
+ * @param data is the data to write.
+ * @param data_size bytes to write.
+ * @param written is the amount of data written.
+ * @param flush_data true if the data is deleted after the write operation.
+ * @return the result of the write operation with a IO:IO_RESULT format.
+ */
   IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data,
                             size_t data_size, size_t &written, bool flush_data = true);
 
@@ -110,8 +125,9 @@ public:
                          const char *data,
                          size_t data_size,
                          size_t &written);
-  SSLConnectionManager();
-  virtual ~SSLConnectionManager();
+
+  IO::IO_RESULT sslWriteIOvec (Connection &target_ssl_connection, const iovec* __iovec, int count, size_t &nwritten);
+  IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection, std::vector<iovec> &iov, size_t &iovec_written, size_t &nwritten);
 
   /**
    * @brief Initialize the SSLConnectionManager with the configuration specified

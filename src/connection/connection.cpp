@@ -259,10 +259,10 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 
   size_t nwritten = 0;
   size_t iovec_written = 0;
-  Debug::logmsg(LOG_REMOVE, "\nIOV size: %d", http_data.iov.size());
+
   auto result = writeIOvec(target_fd, http_data.iov, iovec_written, nwritten);
-  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n", http_data.iov.size(),
-                iovec_written, nwritten, IO::getResultString(result).data());
+//  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n", http_data.iov.size(),
+//                iovec_written, nwritten, IO::getResultString(result).data());
   if (result != IO::IO_RESULT::SUCCESS)
     return result;
 
@@ -289,12 +289,12 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, std::vector<iovec> &iov, siz
   iovec_written = 0;
   do {
     count = ::writev(target_fd, &(iov[iovec_written]), static_cast<int>(nvec - iovec_written));
-    Debug::logmsg(LOG_REMOVE,
-                  "writev() count %d errno: %d = %s iovecwritten %d",
-                  count,
-                  errno,
-                  std::strerror(errno),
-                  iovec_written);
+//    Debug::logmsg(LOG_REMOVE,
+//                  "writev() count %d errno: %d = %s iovecwritten %d",
+//                  count,
+//                  errno,
+//                  std::strerror(errno),
+//                  iovec_written);
     if (count < 0) {
       if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         result = IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes        
