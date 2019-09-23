@@ -458,6 +458,11 @@ void StreamManager::onRequestEvent(int fd) {
 #if CACHE_ENABLED
     // If the cache is enabled and the request is cached and it is also fresh
     if (service->cache_enabled) {
+        std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
+        duration<long> time_span = duration_cast<duration<long>>(current_time - stream->prev_time);
+        stream->prev_time = current_time;
+        stream->current_time += time_span.count();
+        service->t_stamp = stream->current_time;
         service->validateCacheRequest(stream->request);
         if (service->canBeServedFromCache(stream->request) != nullptr) {
             DEBUG_COUNTER_HIT(cache_stats__::cache_match);

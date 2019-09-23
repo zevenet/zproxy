@@ -14,9 +14,6 @@
 #include <unordered_map>
 #include "../stats/counter.h"
 #include "../handlers/http_manager.h"
-#if CACHE_ENABLED
-#include "../cache/HttpCacheManager.h"
-#endif
 #include <vector>
 
 #if DEBUG_STREAM_EVENTS_COUNT
