@@ -834,7 +834,11 @@ void StreamManager::onResponseEvent(int fd) {
 
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
     if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
-      auto is_last_chunk = http_manager::isLastChunk(*stream);
+      auto pending_chunk_bytes = http_manager::handleChunkedData(*stream);
+      if (pending_chunk_bytes < 0) { //we don't have enough data to get next chunk size, so we wait for more data
+        stream->backend_connection.enableReadEvent();
+        return;
+      }
     }
 #if CACHE_ENABLED
     auto service = static_cast<Service *>(stream->request.getService());
@@ -1225,8 +1229,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     if (this->is_https_listener) {
 #if USE_SSL_BIO_BUFFER
       result = this->ssl_manager->handleWrite(
-          stream->client_connection, stream->backend_connection.buffer,
-          stream->backend_connection.buffer_size, written);
+          stream->client_connection, stream->backend_connection,
+          written);
 #else
       result = this->ssl_manager->sslWrite(
           stream->client_connection, stream->backend_connection.buffer,
@@ -1268,9 +1272,6 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
     case IO::IO_RESULT::DONE_TRY_AGAIN:
       break;
     }
-    if (this->is_https_listener)
-      stream->backend_connection.buffer_size -= written;
-
     if (!stream->upgrade.pinned_connection) {
       if (stream->response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
         stream->response.reset_parser();
@@ -1289,11 +1290,13 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
 #if CACHE_ENABLED
     if ( !stream->response.isCached())
 #endif
-    stream->backend_connection.enableReadEvent();
+
     if(stream->backend_connection.buffer_size > 0)
         stream->client_connection.enableWriteEvent();
-    else
-        stream->client_connection.enableReadEvent();
+    else {
+      stream->backend_connection.enableReadEvent();
+      stream->client_connection.enableReadEvent();
+    }
     return;
   }
 

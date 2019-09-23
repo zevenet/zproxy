@@ -68,11 +68,11 @@ public:
    *
    * @param stream is the HttpStream to get the response to take the chunked
    * data.
-   * @return true if is last chunk.
+   * @return current chunk pending bytes or -1 if need more data to get chunk size.
    */
 
   /**/
-  static bool isLastChunk(HttpStream &stream);
+  static ssize_t handleChunkedData(HttpStream &stream);
   /**
  * @brief Get chunk size from buffer
  * if
@@ -98,7 +98,7 @@ public:
  */
 
   /**/
-  static size_t getLastChunkSize(const char *data,
+  static ssize_t getLastChunkSize(const char *data,
                                  size_t data_size,
                                  size_t &data_offset,
                                  size_t &chunk_size_bytes_left,
