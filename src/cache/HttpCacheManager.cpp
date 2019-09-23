@@ -603,7 +603,6 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
     default:
         break;
     }
-//    this->t_stamp = time_helper::gmtTimeNow();
     std::ifstream in_file;
     std::string in_line, file_name;
     std::string buffer;
@@ -683,22 +682,18 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
         // Lets iterate over the directives array
         for (unsigned long l = 0; l < cache_directives.size(); l++) {
           // split using = to obtain the directive value, if supported
-          string directive;
-          string directive_value = "";
 
-          std::vector<string> parsed_directive;
-          helper::splitString(cache_directives[l], parsed_directive, '=');
-          directive = parsed_directive[0];
+            if (cache_directives[l].back() == ',')
+                cache_directives[l] =
+                        cache_directives[l].substr(0, cache_directives[l].length() - 1);
+            string_view directive (cache_directives[l].substr(0,cache_directives[l].find('=')));
+            string_view directive_value (cache_directives[l].substr(cache_directives[l].find('=')+1,cache_directives[l].size()-1));
 
-          if (parsed_directive.size() == 2){
-            directive_value = parsed_directive[1];
-          }
-
-          if (http::http_info::cache_control_values.count(directive) > 0) {
-            switch (http::http_info::cache_control_values.at(directive)) {
+          if (http::http_info::cache_control_values.count(directive.data()) > 0) {
+            switch (http::http_info::cache_control_values.at(directive.data())) {
             case http::CACHE_CONTROL::MAX_AGE:
               if (directive_value.size() != 0 && response.c_opt.max_age == -1)
-                response.c_opt.max_age = stoi(directive_value);
+                response.c_opt.max_age = stoi(directive_value.data());
               break;
             case http::CACHE_CONTROL::PUBLIC:
               response.c_opt.scope = cache_commons::CACHE_SCOPE::PUBLIC;
@@ -711,7 +706,7 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
               break;
             case http::CACHE_CONTROL::S_MAXAGE:
               if (directive_value.size() != 0)
-                response.c_opt.max_age = stoi(directive_value);
+                response.c_opt.max_age = stoi(directive_value.data());
               break;
             case http::CACHE_CONTROL::NO_CACHE:
               response.c_opt.no_cache = true;
@@ -732,7 +727,7 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
         break;
       }
       case http::HTTP_HEADER_NAME::ETAG:
-        response.etag = std::string(header_value);
+        response.etag = header_value;
         break;
       case http::HTTP_HEADER_NAME::EXPIRES:
         response.expires = time_helper::strToTime(std::string(header_value));
@@ -800,31 +795,23 @@ void HttpCacheManager::validateCacheRequest(HttpRequest &request){
                     if (cache_directives[l].back() == ',')
                         cache_directives[l] =
                                 cache_directives[l].substr(0, cache_directives[l].length() - 1);
-                    string directive;
-                    string directive_value = "";
+                    string_view directive (cache_directives[l].substr(0,cache_directives[l].find('=')));
+                    string_view directive_value (cache_directives[l].substr(cache_directives[l].find('=')+1,cache_directives[l].size()-1));
 
-                    std::vector<string> parsed_directive;
-                    helper::splitString(cache_directives[l], parsed_directive, '=');
-
-                    directive = parsed_directive[0];
-
-                    // If the size == 2 the directive is like directive=value
-                    if (parsed_directive.size() == 2)
-                        directive_value = parsed_directive[1];
                     // To separe directive from the token
-                    if (http::http_info::cache_control_values.count(directive) > 0) {
-                        switch (http::http_info::cache_control_values.at(directive)) {
+                    if (http::http_info::cache_control_values.count(directive.data()) > 0) {
+                        switch (http::http_info::cache_control_values.at(directive.data())) {
                         case http::CACHE_CONTROL::MAX_AGE:
                             if (directive_value.size() != 0)
-                                request.c_opt.max_age = stoi(directive_value);
+                                request.c_opt.max_age = stoi(directive_value.data());
                             break;
                         case http::CACHE_CONTROL::MAX_STALE:
                             if (directive_value.size() != 0)
-                                request.c_opt.max_stale = stoi(directive_value);
+                                request.c_opt.max_stale = stoi(directive_value.data());
                             break;
                         case http::CACHE_CONTROL::MIN_FRESH:
                             if (directive_value.size() != 0)
-                                request.c_opt.min_fresh = stoi(directive_value);
+                                request.c_opt.min_fresh = stoi(directive_value.data());
                             break;
                         case http::CACHE_CONTROL::NO_CACHE:
                             request.c_opt.no_cache = true;
@@ -841,15 +828,11 @@ void HttpCacheManager::validateCacheRequest(HttpRequest &request){
                         default:
                             Debug::logmsg(
                                         LOG_ERR,
-                                        ("Malformed cache-control, found response directive " +
-                                         directive + " in the request")
-                                        .c_str());
+                                        "Malformed cache-control, found response directive %s in the request", directive.data());
                             break;
                         }
                     } else {
-                        Debug::logmsg(LOG_ERR, ("Unrecognized directive " + directive +
-                                                " in the request")
-                                      .c_str());
+                        Debug::logmsg(LOG_ERR,"Unrecognized directive %s in the request", directive.data());
                     }
                 }
                 break;
