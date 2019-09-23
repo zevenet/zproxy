@@ -46,8 +46,8 @@ struct CacheObject {
      * not.
      * @return if the content is fresh it returns true or false in other case
      */
-    bool isFresh() {
-        updateFreshness();
+    bool isFresh( time_t current_time) {
+        updateFreshness(current_time);
 
         return (this->staled ? false : true);
     }
@@ -55,9 +55,9 @@ struct CacheObject {
      * @brief updateFreshness update the freshness for a single stored response
      * @param c_object, the cache_commons::CacheObject which we want to update
      */
-    void updateFreshness() {
+    void updateFreshness(time_t current_time) {
         if (this->staled != true) {
-            time_t now = time_helper::gmtTimeNow();
+            time_t now = current_time;
             long int age_limit = 0;
             if (this->max_age >= 0 && !this->heuristic)
                 age_limit = this->max_age;

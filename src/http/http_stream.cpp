@@ -10,7 +10,12 @@ using namespace ssl;
 
 HttpStream::HttpStream()
     : request(), response(), client_connection(), backend_connection(),
-      timer_fd() {}
+      timer_fd() {
+#if CACHE_ENABLED
+    this->current_time = time_helper::gmtTimeNow();
+    this->prev_time = std::chrono::steady_clock::now();
+#endif
+}
 
 void HttpStream::replyError(HttpStatus::Code code, const char *code_string,
                             const char *string,

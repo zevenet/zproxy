@@ -31,6 +31,10 @@ struct UpgradeStatus {
 class HttpStream: public Counter<HttpStream> {
 
 public:
+#if CACHE_ENABLED
+    time_t current_time;
+    std::chrono::steady_clock::time_point prev_time;
+#endif
   HttpStream();
   ~HttpStream() final;
   // no copy allowed

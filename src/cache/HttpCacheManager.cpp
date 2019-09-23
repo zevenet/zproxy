@@ -22,7 +22,7 @@ void HttpCacheManager::handleResponse(HttpResponse &response,
         return;
   }
 
-  if( c_opt != nullptr && c_opt->isFresh()){
+  if( c_opt != nullptr && c_opt->isFresh(this->t_stamp)){
       this->stats.cache_not_stored++;
       //If the stored response is fresh, we must not to store this response
       response.c_opt.cacheable = false;
@@ -88,7 +88,7 @@ void HttpCacheManager::updateResponse(HttpResponse response,
     return;
   }
   c_object->staled = false;
-  c_object->date = time_helper::gmtTimeNow();
+  c_object->date = this->t_stamp;
 
   return;
 }
@@ -106,7 +106,7 @@ st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
     }
 #if CACHE_STORAGE_STDMAP
     else{
-        return STORAGE_TYPE::STDMAP;
+        return st::STORAGE_TYPE::STDMAP;
     }
 #else
     else{
@@ -178,7 +178,7 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
 
         st::STORAGE_STATUS svc_status;
 //RAM
-        ram_storage = RamICacheStorage::getInstance();
+        ram_storage = RamfsCacheStorage::getInstance();
         ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, ramfs_mount_point);
         svc_status = ram_storage->initServiceStorage(svc);
         //recover cache status
@@ -269,10 +269,10 @@ void HttpCacheManager::createResponseEntry( HttpResponse response,cache_commons:
     }
     // Store the response date in the cache
     if ( response.date <= 0 ){
-        response.date = time_helper::gmtTimeNow();
+        response.date = this->t_stamp;
     }
     if ( response.last_mod <= 0) {
-        response.last_mod = time_helper::gmtTimeNow();
+        response.last_mod = this->t_stamp;
     }
 
     c_object->date = response.date;
@@ -297,7 +297,7 @@ void HttpCacheManager::createResponseEntry( HttpResponse response,cache_commons:
     }
     else if (response.last_mod >= 0) {
         // heuristic algorithm -> 10% of last-modified
-        time_t now = time_helper::gmtTimeNow();
+        time_t now = this->t_stamp;
         c_object->max_age = (now - response.last_mod) * 0.1;
     } else {
         // If not available value, use the defined default timeout
@@ -406,14 +406,14 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
     //TODO: isfresh applies to   Cobject, must be of Cobject
     bool serveable = true;
     bool prev_staled = c_object->staled;
-    if( !c_object->isFresh() ){
+    if( !c_object->isFresh(this->t_stamp) ){
         if( !prev_staled ){
             this->stats.cache_staled_entries++;
         }
         serveable = false;
     }
 
-    std::time_t now = time_helper::gmtTimeNow();
+    std::time_t now = this->t_stamp;
 
     // if staled and must revalidate is included, we MUST revalidate the
     // response
@@ -451,7 +451,7 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
 int HttpCacheManager::getResponseFromCache(HttpRequest request,
                                           HttpResponse &cached_response, std::string &buffer ) {
   auto c_object = getCacheObject(request);
-  c_object->updateFreshness();
+  c_object->updateFreshness(this->t_stamp);
 
   size_t parsed = 0;
   std::string rel_path = service_name ;
@@ -495,7 +495,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
     std::vector<std::string> w_codes;
     std::vector<std::string> w_text;
     // Take the date for the warning
-    auto w_date = time_helper::strTimeNow();
+    auto w_date = this->t_stamp;
     // Create warnings if needed
     if (c_object->staled) {
       w_codes.push_back(std::to_string(http::WARNING_CODE::RESPONSE_STALE));
@@ -517,12 +517,12 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
       warn.append("\"");
       warn.append(w_text.at(i));
       warn.append("\" \"");
-      warn.append(w_date);
+//      warn.append(w_date);
       warn.append("\"");
       cached_response.addHeader(http::HTTP_HEADER_NAME::WARNING, warn);
     }
     // Add Age header
-    time_t now = time_helper::getAge(c_object->date);
+    time_t now = this->t_stamp - c_object->date;
     cached_response.addHeader(
         http::HTTP_HEADER_NAME::AGE,
         std::to_string(
@@ -545,17 +545,17 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
         JsonObject response;
         json::JsonArray * data {new json::JsonArray()};
         JsonObject * json_data {new json::JsonObject()};
-        json_data->emplace(JSON_KEYS::CACHE_HIT, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_match)));
-        json_data->emplace(JSON_KEYS::CACHE_MISS, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_miss)));
-        json_data->emplace(JSON_KEYS::CACHE_STALE, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_staled_entries)));
-        json_data->emplace(JSON_KEYS::CACHE_AVOIDED, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_not_stored)));
-        json_data->emplace(JSON_KEYS::CACHE_RAM, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_RAM_inserted_entries)));
-        json_data->emplace(JSON_KEYS::CACHE_RAM_USAGE, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_RAM_used)));
-        json_data->emplace(JSON_KEYS::CACHE_RAM_PATH, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_RAM_mountpoint)));
-        json_data->emplace(JSON_KEYS::CACHE_DISK, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_DISK_inserted_entries)));
-        json_data->emplace(JSON_KEYS::CACHE_DISK_USAGE, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_DISK_used)));
-        json_data->emplace(JSON_KEYS::CACHE_DISK_PATH, std::unique_ptr<JsonDataValue>(new json::JsonDataValue(this->stats.cache_DISK_mountpoint)));
-        data->emplace_back(std::move(json_data));
+        json_data->emplace(JSON_KEYS::CACHE_HIT, std::make_unique<JsonDataValue>(this->stats.cache_match));
+        json_data->emplace(JSON_KEYS::CACHE_MISS, std::make_unique<JsonDataValue>(this->stats.cache_miss));
+        json_data->emplace(JSON_KEYS::CACHE_STALE, std::make_unique<JsonDataValue>(this->stats.cache_staled_entries));
+        json_data->emplace(JSON_KEYS::CACHE_AVOIDED, std::make_unique<JsonDataValue>(this->stats.cache_not_stored));
+        json_data->emplace(JSON_KEYS::CACHE_RAM, std::make_unique<JsonDataValue>(this->stats.cache_RAM_inserted_entries));
+        json_data->emplace(JSON_KEYS::CACHE_RAM_USAGE, std::make_unique<JsonDataValue>(this->stats.cache_RAM_used));
+        json_data->emplace(JSON_KEYS::CACHE_RAM_PATH, std::make_unique<JsonDataValue>(this->stats.cache_RAM_mountpoint));
+        json_data->emplace(JSON_KEYS::CACHE_DISK, std::make_unique<JsonDataValue>(this->stats.cache_DISK_inserted_entries));
+        json_data->emplace(JSON_KEYS::CACHE_DISK_USAGE, std::make_unique<JsonDataValue>(this->stats.cache_DISK_used));
+        json_data->emplace(JSON_KEYS::CACHE_DISK_PATH, std::make_unique<JsonDataValue>(this->stats.cache_DISK_mountpoint));
+        data->emplace_back(json_data);
         response.emplace(JSON_KEYS::CACHE.data(),data);
         return response.stringify();
     }
@@ -603,6 +603,7 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
     default:
         break;
     }
+//    this->t_stamp = time_helper::gmtTimeNow();
     std::ifstream in_file;
     std::string in_line, file_name;
     std::string buffer;
@@ -624,6 +625,9 @@ void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
 
                 stored_response.parseResponse(buffer,&bytes);
                 validateCacheResponse(stored_response);
+                if (c_object.get() == nullptr){
+                    c_object = make_unique<cache_commons::CacheObject>();
+                }
                 createResponseEntry(stored_response, c_object.get());
                 c_object->dirty = false;
                 c_object->storage = st_type;
@@ -915,7 +919,7 @@ void HttpCacheManager::doCacheMaintenance(){
     last_maintenance = time_helper::gmtTimeNow();
     for (auto iter = cache.begin(); iter != cache.end();){
         bool prev_staled = iter->second->staled;
-        iter->second->updateFreshness();
+        iter->second->updateFreshness(last_maintenance);
         //If not staled continue with the loop
         if(!iter->second->staled){
             continue;
