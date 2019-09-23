@@ -441,4 +441,7 @@ $throughput_enabled="false";
 
 $doc_v4_0="https://www.zevenet.com/zapidocv4.0";
 
+# language used for the webgui
+$lang="";
+
 #::END Global Section
