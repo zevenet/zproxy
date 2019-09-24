@@ -1,5 +1,4 @@
-﻿#if CACHE_ENABLED
-#include "HttpCache.h"
+﻿#include "HttpCache.h"
 // Returns the cache content with all the information stored
 cache_commons::CacheObject *HttpCache::getCacheObject(HttpRequest request) {
   return getCacheObject(std::hash<std::string>()(request.getUrl()));
@@ -955,4 +954,3 @@ bool HttpCache::validateResponseEncoding(HttpRequest request, cache_commons::Cac
 
     return found != std::string::npos ? true : false;
 }
-#endif

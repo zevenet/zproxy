@@ -1,5 +1,4 @@
 #pragma once
-#if CACHE_ENABLED
 #include "../debug/Debug.h"
 #include "../http/HttpRequest.h"
 #include "../http/http.h"
@@ -181,5 +180,3 @@ namespace cache_stats__ {
     DEFINE_OBJECT_COUNTER(cache_disk_used)
     DEFINE_OBJECT_COUNTER(cache_not_stored)
 }
-
-#endif

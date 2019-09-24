@@ -1,4 +1,3 @@
-#if CACHE_ENABLED
 #include "RamCacheStorage.h"
 
 // Ram Static variables definitions
@@ -290,5 +289,4 @@ st::STORAGE_STATUS MemcachedStorage::appendData(const std::string svc, const std
     //TODO: Fill the appendData
     return st::STORAGE_STATUS::SUCCESS;
 }
-#endif
 #endif

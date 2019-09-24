@@ -1,5 +1,3 @@
-#if CACHE_ENABLED
-
 #pragma once
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -95,5 +93,3 @@ public:
      */
     virtual ~ICacheStorage() {}
     };
-
-#endif

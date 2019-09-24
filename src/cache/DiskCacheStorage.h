@@ -1,4 +1,3 @@
-#if CACHE_ENABLED
 #pragma once
 #include "CacheCommons.h"
 #include "ICacheStorage.h"
@@ -46,4 +45,3 @@ public:
     st::STORAGE_STATUS deleteInStorage(const std::string &path) override;
     bool isInStorage(const std::string &path);
 };
-#endif

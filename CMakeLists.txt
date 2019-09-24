@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
+option(CACHE "Build cache" OFF)
 option(BUILD_DOC "Build Documentation" OFF)
 option (MEMCACHED_ENABLED "memcached" OFF)
 option(BUILD_TESTS "Build tests" OFF)
@@ -88,7 +89,9 @@ configure_file(
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
-add_definitions(-DCACHE_ENABLED=0)
+if (CACHE)
+    add_definitions(-DCACHE_ENABLED=1)
+endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z -fpermissive  -Wshadow -pipe -pthread")

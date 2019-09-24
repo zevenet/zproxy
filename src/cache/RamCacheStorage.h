@@ -1,4 +1,3 @@
-#if CACHE_ENABLED
 #pragma once
 #include "CacheCommons.h"
 #include "ICacheStorage.h"
@@ -79,5 +78,4 @@ public:
     st::STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
 
 };
-#endif
 #endif

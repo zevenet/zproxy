@@ -20,63 +20,68 @@ add_definitions(-DENABLE_QUICK_RESPONSE=1)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_definitions(-DDEBUG_HTTP_HEADERS=0)
 add_definitions(-DCACHE_STORAGE_STDMAP=0)
-add_library(l7pcore
-        ssl/ssl_common.h
-        ssl/SSLContext.cpp
-        ssl/SSLContext.h
-        ssl/SSLConnectionManager.cpp
-        ssl/SSLConnectionManager.h
-        handlers/HttpsManager.cpp
-        handlers/HttpsManager.h
-        ssl/ssl_session.h
-        ssl/ssl_session.cpp
-        json/json.h
-        json/json.cpp
-        json/JsonDataValue.h
-        json/JsonDataValue.cpp
-        json/JsonDataValueTypes.h
-        json/JsonDataValueTypes.cpp
-        json/JsonData.h
-        json/JsonData.cpp
-        json/jsonparser.h
-        json/jsonparser.cpp
-        config/config_node.h
-        event/epoll_manager.cpp
-        event/epoll_manager.h
-        connection/connection.cpp
-        connection/connection.h
-        stream/StreamManager.cpp
-        stream/StreamManager.h
-        http/http_stream.cpp
-        http/http_stream.h
-        experimental/string_buffer.cpp
-        experimental/string_buffer.h
-        debug/Debug.h
-        util/Network.h
-        util/crypto.h
-        handlers/zlib_util.h
-        stream/listener.cpp
-        stream/listener.h
-        util/utils.h
-        service/backend.h
-        service/backend.cpp
-        config/config.cpp
-        config/config.h
-        config/pound_struct.h
-        stats/backend_stats.h
-        stats/backend_stats.cpp
-        config/svc.h
-        config/svc.cpp
-        http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
-        http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
-        http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
-        connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-        event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
-        service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
-        stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
-        handlers/http_manager.cpp
-        handlers/http_manager.h
-        http/HttpRequest.cpp
+set(l7core_sources
+    ssl/ssl_common.h
+    ssl/SSLContext.cpp
+    ssl/SSLContext.h
+    ssl/SSLConnectionManager.cpp
+    ssl/SSLConnectionManager.h
+    handlers/HttpsManager.cpp
+    handlers/HttpsManager.h
+    ssl/ssl_session.h
+    ssl/ssl_session.cpp
+    json/json.h
+    json/json.cpp
+    json/JsonDataValue.h
+    json/JsonDataValue.cpp
+    json/JsonDataValueTypes.h
+    json/JsonDataValueTypes.cpp
+    json/JsonData.h
+    json/JsonData.cpp
+    json/jsonparser.h
+    json/jsonparser.cpp
+    config/config_node.h
+    event/epoll_manager.cpp
+    event/epoll_manager.h
+    connection/connection.cpp
+    connection/connection.h
+    stream/StreamManager.cpp
+    stream/StreamManager.h
+    http/http_stream.cpp
+    http/http_stream.h
+    experimental/string_buffer.cpp
+    experimental/string_buffer.h
+    debug/Debug.h
+    util/Network.h
+    util/crypto.h
+    handlers/zlib_util.h
+    stream/listener.cpp
+    stream/listener.h
+    util/utils.h
+    service/backend.h
+    service/backend.cpp
+    config/config.cpp
+    config/config.h
+    config/pound_struct.h
+    stats/backend_stats.h
+    stats/backend_stats.cpp
+    config/svc.h
+    config/svc.cpp
+    http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
+    http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
+    http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
+    connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
+    event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
+    service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
+    stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
+    handlers/http_manager.cpp
+    handlers/http_manager.h
+    http/HttpRequest.cpp
+    debug/backtrace.cpp
+    debug/backtrace.h)
+if( CACHE )
+    message(STATUS "Using cache")
+    set(l7core_sources ${l7core_sources}
         cache/HttpCache.cpp
         cache/HttpCache.h
         cache/ICacheStorage.h
@@ -85,7 +90,11 @@ add_library(l7pcore
         cache/RamCacheStorage.cpp
         cache/DiskCacheStorage.h
         cache/DiskCacheStorage.cpp
-        debug/backtrace.cpp debug/backtrace.h handlers/CacheManager.cpp handlers/CacheManager.h)
+        handlers/CacheManager.cpp
+        handlers/CacheManager.h
+        )
+endif()
+add_library(l7pcore ${l7core_sources})
 target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
 
 if (BUNDLED_OPENSSL)
