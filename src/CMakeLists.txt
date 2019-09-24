@@ -79,8 +79,8 @@ set(l7core_sources
     http/HttpRequest.cpp
     debug/backtrace.cpp
     debug/backtrace.h)
-if( CACHE )
-    message(STATUS "Using cache")
+if(CACHE_SUPPORT)
+    message(STATUS "Cache support enabled")
     set(l7core_sources ${l7core_sources}
         cache/HttpCache.cpp
         cache/HttpCache.h

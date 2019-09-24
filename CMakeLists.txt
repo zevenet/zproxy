@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
-option(CACHE "Build cache" OFF)
+option(CACHE_SUPPORT "Build with cache support" OFF)
 option(BUILD_DOC "Build Documentation" OFF)
 option (MEMCACHED_ENABLED "memcached" OFF)
 option(BUILD_TESTS "Build tests" OFF)
@@ -89,7 +89,7 @@ configure_file(
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
-if (CACHE)
+if (CACHE_SUPPORT)
     add_definitions(-DCACHE_ENABLED=1)
 endif()
 
