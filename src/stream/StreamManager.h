@@ -15,7 +15,7 @@
 #include "../stats/counter.h"
 #include "../handlers/http_manager.h"
 #include <vector>
-
+#include "../handlers/CacheManager.h"
 #if DEBUG_STREAM_EVENTS_COUNT
 
 struct StreamWatcher{

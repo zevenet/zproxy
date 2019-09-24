@@ -1,10 +1,10 @@
 ﻿#if CACHE_ENABLED
-#include "HttpCacheManager.h"
+#include "HttpCache.h"
 // Returns the cache content with all the information stored
-cache_commons::CacheObject *HttpCacheManager::getCacheObject(HttpRequest request) {
+cache_commons::CacheObject *HttpCache::getCacheObject(HttpRequest request) {
   return getCacheObject(std::hash<std::string>()(request.getUrl()));
 }
-cache_commons::CacheObject *HttpCacheManager::getCacheObject(size_t hashed_url) {
+cache_commons::CacheObject *HttpCache::getCacheObject(size_t hashed_url) {
   cache_commons::CacheObject *c_object = nullptr;
   auto iter = cache.find(hashed_url);
   if (iter != cache.end()){
@@ -14,7 +14,7 @@ cache_commons::CacheObject *HttpCacheManager::getCacheObject(size_t hashed_url) 
 }
 
 // Store in cache the response if it doesn't exists
-void HttpCacheManager::handleResponse(HttpResponse &response,
+void HttpCache::handleResponse(HttpResponse &response,
                                       HttpRequest request) {
   auto c_opt = getCacheObject(request);
   if ( c_opt != nullptr && c_opt->dirty == true ){
@@ -67,7 +67,7 @@ void HttpCacheManager::handleResponse(HttpResponse &response,
   return;
 }
 
-void HttpCacheManager::updateResponse(HttpResponse response,
+void HttpCache::updateResponse(HttpResponse response,
                                       HttpRequest request) {
   auto c_object = getCacheObject(request);
   if (response.content_length == 0){
@@ -93,7 +93,7 @@ void HttpCacheManager::updateResponse(HttpResponse response,
   return;
 }
 // Decide on whether to use RAMFS or disk
-st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
+st::STORAGE_TYPE HttpCache::getStorageType( HttpResponse response )
 {
     size_t ram_size_left = ram_storage->max_size - ram_storage->current_size;
 
@@ -115,7 +115,7 @@ st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
 #endif
 }
 
-HttpCacheManager::~HttpCacheManager() {
+HttpCache::~HttpCache() {
     // Free cache pattern
     if (cache_pattern != nullptr){
         regfree(cache_pattern);
@@ -126,7 +126,7 @@ HttpCacheManager::~HttpCacheManager() {
     }
 }
 
-void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std::string &svc, long storage_size, int storage_threshold, const std::string &f_name, const std::string &cache_ram_mpoint, const std::string &cache_disk_mpoint) {
+void HttpCache::cacheInit(regex_t *pattern, const int timeout, const std::string &svc, long storage_size, int storage_threshold, const std::string &f_name, const std::string &cache_ram_mpoint, const std::string &cache_disk_mpoint) {
     if (pattern != nullptr) {
         if (pattern->re_pcre != nullptr) {
             this->cache_pattern = pattern;
@@ -194,7 +194,7 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
     }
 }
 
-void HttpCacheManager::addResponse(HttpResponse &response,
+void HttpCache::addResponse(HttpResponse &response,
                                      HttpRequest request) {
   auto cache_entry = new cache_commons::CacheObject();
   std::unique_ptr<cache_commons::CacheObject> c_object ( cache_entry);
@@ -256,7 +256,7 @@ void HttpCacheManager::addResponse(HttpResponse &response,
   return;
 }
 
-void HttpCacheManager::createResponseEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
+void HttpCache::createResponseEntry( HttpResponse response,cache_commons::CacheObject * c_object ){
     if ( c_object == nullptr) {
         c_object = new cache_commons::CacheObject();
     }
@@ -334,7 +334,7 @@ void HttpCacheManager::createResponseEntry( HttpResponse response,cache_commons:
 }
 
 // Append pending data to its cached content
-void HttpCacheManager::addData( HttpResponse &response , std::string_view data, const std::string &url) {
+void HttpCache::addData( HttpResponse &response , std::string_view data, const std::string &url) {
     auto c_object = getCacheObject(std::hash<std::string>()(url));
     if( c_object == nullptr ){
         Debug::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
@@ -378,7 +378,7 @@ void HttpCacheManager::addData( HttpResponse &response , std::string_view data, 
     return;
 }
 
-cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest &request) {
+cache_commons::CacheObject * HttpCache::canBeServedFromCache(HttpRequest &request) {
     cache_commons::CacheObject *c_object = getCacheObject(request);
 
     if (c_object == nullptr){
@@ -441,7 +441,7 @@ cache_commons::CacheObject * HttpCacheManager::canBeServedFromCache(HttpRequest 
 
     return serveable ? c_object : nullptr;
 }
-int HttpCacheManager::getResponseFromCache(HttpRequest request,
+int HttpCache::getResponseFromCache(HttpRequest request,
                                           HttpResponse &cached_response, std::string &buffer ) {
   auto c_object = getCacheObject(request);
   c_object->updateFreshness(this->t_stamp);
@@ -525,7 +525,7 @@ int HttpCacheManager::getResponseFromCache(HttpRequest request,
   return 0;
 }
 
-std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
+std::string HttpCache::handleCacheTask(ctl::CtlTask &task)
 {
     int err = 0;
     if (task.subject != ctl::CTL_SUBJECT::CACHE)
@@ -578,7 +578,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
     return JSON_OP_RESULT::OK;
 }
 
-void HttpCacheManager::recoverCache(const string &svc,st::STORAGE_TYPE st_type)
+void HttpCache::recoverCache(const string &svc,st::STORAGE_TYPE st_type)
 {
     //We have to read all headers and load it in memory
     std::string path;
@@ -650,7 +650,7 @@ void HttpCacheManager::recoverCache(const string &svc,st::STORAGE_TYPE st_type)
     }
 }
 
-void HttpCacheManager::validateCacheResponse(HttpResponse &response){
+void HttpCache::validateCacheResponse(HttpResponse &response){
 
   for (auto i = 0; i != response.num_headers; i++) {
     // check header values length
@@ -761,7 +761,7 @@ void HttpCacheManager::validateCacheResponse(HttpResponse &response){
   }
   return;
 }
-void HttpCacheManager::validateCacheRequest(HttpRequest &request){
+void HttpCache::validateCacheRequest(HttpRequest &request){
     // Check for correct headers
     for (auto i = 0; i != request.num_headers; i++) {
         // check header values length
@@ -846,11 +846,11 @@ void HttpCacheManager::validateCacheRequest(HttpRequest &request){
 
     return;
 }
-int HttpCacheManager::deleteEntry(HttpRequest request){
+int HttpCache::deleteEntry(HttpRequest request){
     return deleteEntry(std::hash<std::string>()(request.getUrl()));
 }
 
-int HttpCacheManager::deleteEntry(size_t hashed_url){
+int HttpCache::deleteEntry(size_t hashed_url){
     std::string path (service_name);
     path.append("/");
     path.append(to_string(hashed_url));
@@ -886,7 +886,7 @@ int HttpCacheManager::deleteEntry(size_t hashed_url){
     return 0;
 }
 
-void HttpCacheManager::doCacheMaintenance(){
+void HttpCache::doCacheMaintenance(){
 
 //Iterate over all the content, check staled, check how long, discard if have to
 //    last_maintenance = time_helper::gmtTimeNow();
@@ -918,7 +918,7 @@ void HttpCacheManager::doCacheMaintenance(){
     }
 }
 
-bool HttpCacheManager::validateResponseEncoding(HttpRequest request, cache_commons::CacheObject *c_object)
+bool HttpCache::validateResponseEncoding(HttpRequest request, cache_commons::CacheObject *c_object)
 {
     if( c_object == nullptr ){
         return false;

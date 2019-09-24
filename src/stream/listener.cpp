@@ -4,9 +4,6 @@
 
 #include "listener.h"
 #include "../ssl/ssl_session.h"
-#include "../cache/HttpCacheManager.h"
-#include "../cache/RamCacheStorage.h"
-#include "../cache/DiskCacheStorage.h"
 #ifdef ENABLE_HEAP_PROFILE
 #include  <gperftools/heap-profiler.h>
 #endif

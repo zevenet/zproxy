@@ -23,7 +23,7 @@ namespace st = storage_commons;
  * @class HttpCacheManager HttpCacheManager.h "src/handlers/HttpCacheManager.h"
  * @brief The HttpCacheManager class controls all the cache operations and logic
  */
-class HttpCacheManager {
+class HttpCache {
 private:
   int cache_timeout = -1;
   std::string service_name;
@@ -41,7 +41,7 @@ public:
   cache_commons::cache_stats stats;
   size_t cache_max_size = 0;
   bool cache_enabled = false;
-  virtual ~HttpCacheManager();
+  virtual ~HttpCache();
   /**
    * @brief cacheInit Initialize the cache manager configuring its pattern and the
    * timeout it also get the ram storage manager and disk storage manager,
@@ -80,7 +80,7 @@ public:
    */
   cache_commons::CacheObject *getCacheObject(HttpRequest request);
   /**
-   * @brief getcache_commons::CacheObject
+   * @brief cache_commons::CacheObject
    * @param hashed_url a hashed string of an URL in order to retrieve its object
    * @return  the cache_commons::CacheObject which is associated to the url or nullptr if not found
    */

@@ -13,7 +13,7 @@
 #include "backend.h"
 #include "httpsessionmanager.h"
 #if CACHE_ENABLED
-#include "../cache/HttpCacheManager.h"
+#include "../cache/HttpCache.h"
 #endif
 using namespace json;
 
@@ -27,7 +27,7 @@ using namespace json;
  */
 class Service : public sessions::HttpSessionManager,
 #if CACHE_ENABLED
-                public HttpCacheManager,
+                public HttpCache,
 #endif
         public CtlObserver<ctl::CtlTask, std::string>
 {

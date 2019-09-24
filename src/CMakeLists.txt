@@ -77,15 +77,15 @@ add_library(l7pcore
         handlers/http_manager.cpp
         handlers/http_manager.h
         http/HttpRequest.cpp
-        cache/HttpCacheManager.cpp
-        cache/HttpCacheManager.h
+        cache/HttpCache.cpp
+        cache/HttpCache.h
         cache/ICacheStorage.h
         cache/CacheCommons.h
         cache/RamCacheStorage.h
         cache/RamCacheStorage.cpp
         cache/DiskCacheStorage.h
         cache/DiskCacheStorage.cpp
-        debug/backtrace.cpp debug/backtrace.h)
+        debug/backtrace.cpp debug/backtrace.h handlers/CacheManager.cpp handlers/CacheManager.h)
 target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
 
 if (BUNDLED_OPENSSL)
