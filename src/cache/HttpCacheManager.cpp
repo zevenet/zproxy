@@ -115,12 +115,6 @@ st::STORAGE_TYPE HttpCacheManager::getStorageType( HttpResponse response )
 #endif
 }
 
-bool HttpCacheManager::needCacheMaintenance()
-{
-    auto current_time = time_helper::gmtTimeNow();
-    return ( current_time - last_maintenance > 0 ) ? true : false;
-}
-
 HttpCacheManager::~HttpCacheManager() {
     // Free cache pattern
     if (cache_pattern != nullptr){
@@ -195,7 +189,6 @@ void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std:
             recoverCache(svc, st::STORAGE_TYPE::DISK);
         }
 
-        last_maintenance = time_helper::gmtTimeNow();
         this->stats.cache_RAM_mountpoint = ramfs_mount_point;
         this->stats.cache_DISK_mountpoint = disk_mount_point;
     }
@@ -896,14 +889,12 @@ int HttpCacheManager::deleteEntry(size_t hashed_url){
 void HttpCacheManager::doCacheMaintenance(){
 
 //Iterate over all the content, check staled, check how long, discard if have to
-    if ( !needCacheMaintenance() ){
-        return;
-    }
-    last_maintenance = time_helper::gmtTimeNow();
+//    last_maintenance = time_helper::gmtTimeNow();
     for (auto iter = cache.begin(); iter != cache.end();){
         bool prev_staled = iter->second->staled;
-        iter->second->updateFreshness(last_maintenance);
-        //If not staled continue with the loop
+        auto current_time = time_helper::gmtTimeNow();
+        iter->second->updateFreshness(current_time);
+//        If not staled continue with the loop
         if(!iter->second->staled){
             continue;
         }
@@ -912,9 +903,9 @@ void HttpCacheManager::doCacheMaintenance(){
             if( !prev_staled ){
                 this->stats.cache_staled_entries++;
             }
-            int expiration_to = CACHE_EXPIRATION;
-            auto entry_age = time_helper::gmtTimeNow() - iter->second->date;
-            //Greater than 10 times the max age
+            int expiration_to = CACHE_EXPIRATION
+            auto entry_age = current_time - iter->second->date;
+//            Greater than 10 times the max age
             if ( entry_age > iter->second->max_age * expiration_to ){
                 Debug::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
                 deleteEntry((iter++)->first);
