@@ -144,6 +144,23 @@ sub addlocalnet    # ($if_ref)
 		&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
 		  if &debug();
 
+		#if duplicated network, next
+		my $ip_local     = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+		my $net_local    = $ip_local->network();
+		my $if_ref_table = getInterfaceConfig( $link );
+		my $ip_table =
+		  new NetAddr::IP( $$if_ref_table{ addr }, $$if_ref_table{ mask } );
+		my $net_local_table = $ip_table->network();
+
+		if ( $net_local_table eq $net_local && $$if_ref{ name } ne $link )
+		{
+			&zenlog(
+				"The network $net and $net_local of dev $$if_ref{name} is the same than the network for $link, route is not going to be applied in table $table",
+				"error", "network"
+			);
+			next;
+		}
+
 		my $ip_cmd =
 		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
 
@@ -166,9 +183,21 @@ sub addlocalnet    # ($if_ref)
 			   "debug", "NETWORK" )
 		  if &debug();
 
-		my $ip    = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
-		my $net   = $ip->network();
-		my $table = "table_$$if_ref{ name }";
+		#if duplicated network, next
+		my $ip        = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
+		my $net       = $ip->network();
+		my $table     = "table_$$if_ref{ name }";
+		my $ip_ref    = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+		my $net_local = $ip_ref->network();
+
+		if ( $net eq $net_local && $$iface{ name } ne $$if_ref{ name } )
+		{
+			&zenlog(
+				"The network $net of dev $$iface{name} is the same than the network for $$if_ref{name}, the route is not going to be applied in table $table",
+				"error", "network"
+			);
+			next;
+		}
 
 		my $ip_cmd =
 		  "$ip_bin -$$iface{ip_v} route replace $net dev $$iface{name} src $$iface{addr} table $table $routeparams";
