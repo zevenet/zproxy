@@ -19,7 +19,7 @@ RamICacheStorage *RamICacheStorage::getInstance()
     return instance;
 }
 
-st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, double st_threshold, std::string svc, std::string m_point ) {
+st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, double st_threshold, const std::string &svc, const std::string &m_point ) {
     st::STORAGE_STATUS ret = st::STORAGE_STATUS::SUCCESS;
     if ( initialized )
         return st::STORAGE_STATUS::ALREADY_INIT;
@@ -59,7 +59,7 @@ st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage( size_t m_size, double st
     return ret;
 }
 //Create the service folder
-st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage( std::string svc ) {
+st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage(const std::string &svc ) {
     if ( !initialized )
         return st::STORAGE_STATUS::NOT_INIT;
     auto path = mount_path;
@@ -76,7 +76,7 @@ st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage( std::string svc ) {
     return st::STORAGE_STATUS::SUCCESS;
 }
 st::STORAGE_TYPE RamfsCacheStorage::getStorageType(){ return st::STORAGE_TYPE::RAMFS; };
-st::STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string rel_path, std::string &out_buffer ){
+st::STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string &rel_path, std::string &out_buffer ){
 
     // We have the file_path created as follows: /mount_point/svc1/hashed_url
     string file_path (mount_path);
@@ -93,7 +93,7 @@ st::STORAGE_STATUS RamfsCacheStorage::getFromStorage( const std::string rel_path
     out_buffer = buffer.str();
     return st::STORAGE_STATUS::SUCCESS;
 }
-st::STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string rel_path, const std::string buffer, size_t response_size){
+st::STORAGE_STATUS RamfsCacheStorage::putInStorage( const std::string &rel_path, std::string_view buffer, size_t response_size){
     if( !initialized )
         return st::STORAGE_STATUS::NOT_INIT;
     if ( max_size <= current_size + response_size )
@@ -134,7 +134,7 @@ st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage(){
     this->initialized = false;
     return st::STORAGE_STATUS::SUCCESS;
 }
-st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string rel_path, const std::string buffer)
+st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string &rel_path, std::string_view buffer)
 {
     ofstream fout;  // Create Object of Ofstream
     auto path (mount_path);
@@ -150,7 +150,7 @@ st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string rel_path, con
     current_size += buffer.size();
     return st::STORAGE_STATUS::SUCCESS;
 }
-bool RamfsCacheStorage::isInStorage(const std::string svc, const std::string url)
+bool RamfsCacheStorage::isInStorage(const std::string &svc, const std::string &url)
 {
     size_t hashed_url = std::hash<std::string>()(url);
     auto path = mount_path;
@@ -160,13 +160,13 @@ bool RamfsCacheStorage::isInStorage(const std::string svc, const std::string url
     path.append(to_string(hashed_url));
     return isInStorage(path);
 }
-bool RamfsCacheStorage::isInStorage( std::string path )
+bool RamfsCacheStorage::isInStorage(const std::string &path )
 {
     struct stat buffer;
     return (stat(path.data(),&buffer) == 0);
 }
 
-st::STORAGE_STATUS RamfsCacheStorage::deleteInStorage(std::string path)
+st::STORAGE_STATUS RamfsCacheStorage::deleteInStorage(const std::string &path)
 {
     //Create the path string
     auto full_path = mount_path;
@@ -187,25 +187,25 @@ st::STORAGE_STATUS RamfsCacheStorage::deleteInStorage(std::string path)
 st::STORAGE_TYPE StdmapCacheStorage::getStorageType(){
     return st::STORAGE_TYPE::STDMAP;
 }
-st::STORAGE_STATUS StdmapCacheStorage::initCacheStorage( const size_t max_size,double st_threshold, std::string svc, const std::string m_point ){
+st::STORAGE_STATUS StdmapCacheStorage::initCacheStorage( const size_t max_size,double st_threshold, const std::string &svc, const std::string &m_point ){
     this->mount_path = m_point;
     this->max_size = max_size;
     this->cache_thr =  st_threshold;
 
     return initServiceStorage(svc);
 }
-st::STORAGE_STATUS StdmapCacheStorage::initServiceStorage (std::string svc){
+st::STORAGE_STATUS StdmapCacheStorage::initServiceStorage (const std::string &svc){
     this->svc = svc;
     return st::STORAGE_STATUS::SUCCESS;
 }
-st::STORAGE_STATUS StdmapCacheStorage::getFromStorage( const std::string rel_path, std::string &out_buffer ){
+st::STORAGE_STATUS StdmapCacheStorage::getFromStorage( const std::string &rel_path, std::string &out_buffer ){
     std::string path = mount_path;
     path += "/";
     path += rel_path;
     out_buffer = storage.at(path);
     return st::STORAGE_STATUS::SUCCESS;
 }
-st::STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string rel_path, const std::string buffer, size_t response_size){
+st::STORAGE_STATUS StdmapCacheStorage::putInStorage( const std::string &rel_path, std::string_view buffer, size_t response_size){
     current_size += buffer.size();
     std::string path = mount_path;
     path.append("/");
@@ -218,7 +218,7 @@ st::STORAGE_STATUS StdmapCacheStorage::stopCacheStorage(){
 
     return st::STORAGE_STATUS::SUCCESS;
 }
-st::STORAGE_STATUS StdmapCacheStorage::appendData(const std::string rel_path, const std::string buffer){
+st::STORAGE_STATUS StdmapCacheStorage::appendData(const std::string &rel_path, std::string_view buffer){
     std::string path = mount_path;
     path.append("/");
     path.append(rel_path);
@@ -227,7 +227,7 @@ st::STORAGE_STATUS StdmapCacheStorage::appendData(const std::string rel_path, co
     storage[path] = out_buffer;
     return st::STORAGE_STATUS::SUCCESS;
 }
-bool StdmapCacheStorage::isInStorage(const std::string svc, const std::string url){
+bool StdmapCacheStorage::isInStorage(const std::string &svc, const std::string &url){
     std::string path = mount_path;
     path.append( "/");
     path.append(svc);
@@ -237,12 +237,12 @@ bool StdmapCacheStorage::isInStorage(const std::string svc, const std::string ur
     path += to_string(hashed_url);
     return  isInStorage(path);
 }
-st::STORAGE_STATUS StdmapCacheStorage::deleteInStorage(std::string path){
+st::STORAGE_STATUS StdmapCacheStorage::deleteInStorage(const std::string &path){
     if (storage.erase(path) != 1)
         return st::STORAGE_STATUS::GENERIC_ERROR;
     return st::STORAGE_STATUS::SUCCESS;
 }
-bool StdmapCacheStorage::isInStorage( std::string path ){
+bool StdmapCacheStorage::isInStorage( const std::string &path ){
     if (storage.find(path) == storage.end())
       return false;
     else

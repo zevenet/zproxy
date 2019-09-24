@@ -53,7 +53,7 @@ public:
    * @param storage_threshold is the threshold to determine if must be cached by ram or by disk
    * @param f_name is the farm name, used to determine the mount point
    */
-  void cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name, std::string cache_ram_mpoint,std::string cache_disk_mpoint);
+  void cacheInit(regex_t *pattern, const int timeout, const std::string &svc, long storage_size, int storage_threshold, const std::string &f_name, const std::string & cache_ram_mpoint,const std::string &cache_disk_mpoint);
   /**
    * @brief Provide access to the cache_timeout variable
    *
@@ -100,7 +100,7 @@ public:
    * @param url indicates the resource
    *
    */
-  void addData(HttpResponse &response, char *msg, size_t msg_size, std::string url);
+  void addData(HttpResponse &response, std::string_view data,const std::string &url);
   /**
    * @brief getResponseFromCache
    * @param request is the HttpRequest used to determine the cached response to
@@ -131,7 +131,7 @@ public:
    * @param svc
    * @param st_type
    */
-  void recoverCache( std::string svc, st::STORAGE_TYPE st_type );
+  void recoverCache(const std::string &svc, st::STORAGE_TYPE st_type );
   /**
    * @brief parseCacheBuffer It takes a buffer of an stored HTTP response and create an HttpResponse object
    * @param buffer it is the buffer containing an HTTP response with HTTP header first.

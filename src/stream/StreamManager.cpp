@@ -844,9 +844,8 @@ void StreamManager::onResponseEvent(int fd) {
     auto service = static_cast<Service *>(stream->request.getService());
     if (service->cache_enabled && service->getCacheObject(stream->request) != nullptr &&
         !stream->request.c_opt.no_store && stream->response.c_opt.cacheable ) {
-      service->addData(stream->response, stream->backend_connection.buffer,
-                          stream->backend_connection.buffer_size,
-                          stream->request.getUrl());
+      service->addData(stream->response, std::string_view (stream->backend_connection.buffer,
+              stream->backend_connection.buffer_size), stream->request.getUrl());
     }
 #endif
 

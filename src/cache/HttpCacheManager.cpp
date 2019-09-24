@@ -126,7 +126,7 @@ HttpCacheManager::~HttpCacheManager() {
     }
 }
 
-void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std::string svc, long storage_size, int storage_threshold, std::string f_name, std::string cache_ram_mpoint,std::string cache_disk_mpoint) {
+void HttpCacheManager::cacheInit(regex_t *pattern, const int timeout, const std::string &svc, long storage_size, int storage_threshold, const std::string &f_name, const std::string &cache_ram_mpoint, const std::string &cache_disk_mpoint) {
     if (pattern != nullptr) {
         if (pattern->re_pcre != nullptr) {
             this->cache_pattern = pattern;
@@ -334,7 +334,7 @@ void HttpCacheManager::createResponseEntry( HttpResponse response,cache_commons:
 }
 
 // Append pending data to its cached content
-void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_size, std::string url) {
+void HttpCacheManager::addData( HttpResponse &response , std::string_view data, const std::string &url) {
     auto c_object = getCacheObject(std::hash<std::string>()(url));
     if( c_object == nullptr ){
         Debug::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
@@ -354,11 +354,11 @@ void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_si
     switch (c_object->storage){
     case st::STORAGE_TYPE::STDMAP:
     case st::STORAGE_TYPE::RAMFS:
-        err = ram_storage->appendData(rel_path, std::string(msg, msg_size));
+        err = ram_storage->appendData(rel_path, data);
         this->stats.cache_RAM_used = ram_storage->current_size;
         break;
     case st::STORAGE_TYPE::DISK:
-        err = disk_storage->appendData(rel_path, std::string(msg, msg_size));
+        err = disk_storage->appendData(rel_path, data);
         this->stats.cache_DISK_used = disk_storage->current_size;
         break;
     default:
@@ -368,7 +368,7 @@ void HttpCacheManager::addData( HttpResponse &response ,char *msg, size_t msg_si
         Debug::logmsg(LOG_WARNING, "There was an unexpected error result while appending data to the cache content %s", url.data());
     }
     //disable flag
-    if ( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED && response.message_bytes_left == msg_size ){
+    if ( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED && response.message_bytes_left == data.size() ){
         response.c_object->dirty = false;
     }
     else if ( response.chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK ) {
@@ -578,7 +578,7 @@ std::string HttpCacheManager::handleCacheTask(ctl::CtlTask &task)
     return JSON_OP_RESULT::OK;
 }
 
-void HttpCacheManager::recoverCache(string svc,st::STORAGE_TYPE st_type)
+void HttpCacheManager::recoverCache(const string &svc,st::STORAGE_TYPE st_type)
 {
     //We have to read all headers and load it in memory
     std::string path;
