@@ -26,9 +26,6 @@ using namespace json;
  * this Service.
  */
 class Service : public sessions::HttpSessionManager,
-#if CACHE_ENABLED
-                public HttpCache,
-#endif
         public CtlObserver<ctl::CtlTask, std::string>
 {
   std::vector<Backend *> backend_set;
@@ -39,6 +36,10 @@ class Service : public sessions::HttpSessionManager,
 
  public:
   /** True if the Service is disabled, false if it is enabled. */
+#if CACHE_ENABLED
+  bool cache_enabled = false;
+  std::shared_ptr<HttpCache> http_cache;
+#endif
   std::atomic<bool> disabled;
   /** Service id. */
   int id;

@@ -40,7 +40,6 @@ public:
   std::time_t t_stamp;
   cache_commons::cache_stats stats;
   size_t cache_max_size = 0;
-  bool cache_enabled = false;
   virtual ~HttpCache();
   /**
    * @brief cacheInit Initialize the cache manager configuring its pattern and the

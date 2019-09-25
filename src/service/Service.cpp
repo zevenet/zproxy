@@ -149,9 +149,13 @@ Service::Service(ServiceConfig &service_config_)
   this->sess_pat = service_config_.sess_pat;
   this->sess_start = service_config_.sess_start;
 #if CACHE_ENABLED
-  // Initialize cache manager
-  this->cacheInit(&service_config.cache_content, service_config.cache_timeout, service_config.name, service_config.cache_size, service_config.cache_threshold, service_config.f_name, service_config.cache_ram_path, service_config.cache_disk_path);
-  this->cache_max_size = service_config.cache_max_size;
+    // Initialize cache manager
+    if (service_config_.cache_content.re_pcre != nullptr){
+        this->cache_enabled = true;
+        http_cache = make_shared<HttpCache>( );
+        http_cache->cacheInit(&service_config.cache_content, service_config.cache_timeout, service_config.name, service_config.cache_size, service_config.cache_threshold, service_config.f_name, service_config.cache_ram_path, service_config.cache_disk_path);
+        http_cache->cache_max_size = service_config.cache_max_size;
+    }
 #endif
   // backend initialization
   int backend_id = 0;
@@ -220,8 +224,8 @@ std::string Service::handleTask(ctl::CtlTask &task) {
     return JSON_OP_RESULT::ERROR;
   }
 #if CACHE_ENABLED
-  if ( task.subject == ctl::CTL_SUBJECT::CACHE ){
-      return handleCacheTask(task);
+  if ( this->cache_enabled && task.subject == ctl::CTL_SUBJECT::CACHE ){
+      return http_cache->handleCacheTask(task);
   }  
   else {
 #endif
@@ -441,8 +445,8 @@ void Service::doMaintenance() {
     }
   }
 #if CACHE_ENABLED
-  if( cache_enabled ){
-      doCacheMaintenance();
+  if( this->cache_enabled ){
+      http_cache->doCacheMaintenance();
   }
 #endif
 }

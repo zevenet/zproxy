@@ -1349,10 +1349,7 @@ bool StreamManager::init(ListenerConfig &listener_config) {
 void StreamManager::clearStream(HttpStream *stream) {
 
 #if CACHE_ENABLED
-    if ( stream->response.c_object != nullptr && stream->response.c_object->dirty ){
-        auto service = service_manager->getService(stream->request);
-        service->deleteEntry(stream->request);
-    }
+    CacheManager::handleStreamClose(stream);
 #endif
   // TODO:: add connection closing reason for logging purpose
   if (stream == nullptr) {

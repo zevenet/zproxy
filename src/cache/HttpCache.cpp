@@ -132,7 +132,6 @@ void HttpCache::cacheInit(regex_t *pattern, const int timeout, const std::string
         if (pattern->re_pcre != nullptr) {
             this->cache_pattern = pattern;
             this->cache_timeout = timeout;
-            this->cache_enabled = true;
             this->service_name = svc;
         }
         else {

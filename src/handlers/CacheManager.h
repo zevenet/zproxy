@@ -2,6 +2,7 @@
 #include "../http/http_stream.h"
 #include "../handlers/http_manager.h"
 #include "../stream/StreamManager.h"
+
 class CacheManager {
 public:
     /**
@@ -28,4 +29,9 @@ public:
    * @param request it is the HttpRequest object reference with the parsed request to handle.
    */
     static void validateCacheRequest(HttpRequest &request);
+    /**
+    * @brief validateCacheRequest It takes a HTTP request and validate Cache related headers to store their values
+    * @param request it is the HttpRequest object reference with the parsed request to handle.
+    */
+    static void handleStreamClose(HttpStream * stream);
 };
