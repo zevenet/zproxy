@@ -14,6 +14,7 @@
 #include <pcreposix.h>
 #include <unordered_map>
 #include "CacheCommons.h"
+
 using namespace std;
 namespace st = storage_commons;
 #define DEFAULT_TIMEOUT 3600;
@@ -131,13 +132,6 @@ public:
    * @param st_type
    */
   void recoverCache(const std::string &svc, st::STORAGE_TYPE st_type );
-  /**
-   * @brief parseCacheBuffer It takes a buffer of an stored HTTP response and create an HttpResponse object
-   * @param buffer it is the buffer containing an HTTP response with HTTP header first.
-   * @return HttpResponse as the filled clase after parsing the buffer
-   */
-void validateCacheResponse(HttpResponse &response);
-void validateCacheRequest(HttpRequest &request);
   /**
    * @brief createResponseEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
    * @param response the response which will be used to create the cache_commons::CacheObject entry

@@ -7,7 +7,7 @@
 void CacheManager::handleResponse(HttpStream *stream, Service *service, ListenerConfig &listener_config_)
 {
     if ( !stream->response.hasPendingData()){
-        service->validateCacheResponse(stream->response);
+        CacheManager::validateCacheResponse(stream->response);
         regex_t *pattern = service->getCachePattern();
         regmatch_t matches[2];
         if (pattern != nullptr) {
@@ -36,7 +36,7 @@ int CacheManager::handleRequest(HttpStream * stream, Service *service, ListenerC
     stream->prev_time = current_time;
     stream->current_time += time_span.count();
     service->t_stamp = stream->current_time;
-    service->validateCacheRequest(stream->request);
+    CacheManager::validateCacheRequest(stream->request);
     if (service->canBeServedFromCache(stream->request) != nullptr) {
         DEBUG_COUNTER_HIT(cache_stats__::cache_match);
         stream->response.reset_parser();
@@ -74,5 +74,203 @@ int CacheManager::handleRequest(HttpStream * stream, Service *service, ListenerC
     stream->backend_connection.buffer_size = 0;
     //Return 1, we can't serve from cache
     return 1;
+}
+
+
+void CacheManager::validateCacheResponse(HttpResponse &response){
+
+  for (auto i = 0; i != response.num_headers; i++) {
+    // check header values length
+
+    auto header = std::string_view(response.headers[i].name,
+                                   response.headers[i].name_len);
+    auto header_value = std::string_view(
+        response.headers[i].value, response.headers[i].value_len);
+    auto it = http::http_info::headers_names.find(header);
+    if (it != http::http_info::headers_names.end()) {
+      const auto header_name = it->second;
+      switch (header_name) {
+      case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
+          response.content_length =
+              static_cast<size_t>(std::atoi(response.headers[i].value));
+          continue;
+      }
+      case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
+        std::vector<string> cache_directives;
+        helper::splitString(std::string(header_value), cache_directives, ' ');
+        response.cache_control = true;
+        // Lets iterate over the directives array
+        for (unsigned long l = 0; l < cache_directives.size(); l++) {
+          // split using = to obtain the directive value, if supported
+
+            if (cache_directives[l].back() == ',')
+                cache_directives[l] =
+                        cache_directives[l].substr(0, cache_directives[l].length() - 1);
+            string_view directive (cache_directives[l].substr(0,cache_directives[l].find('=')));
+            string_view directive_value (cache_directives[l].substr(cache_directives[l].find('=')+1,cache_directives[l].size()-1));
+
+          if (http::http_info::cache_control_values.count(directive.data()) > 0) {
+            switch (http::http_info::cache_control_values.at(directive.data())) {
+            case http::CACHE_CONTROL::MAX_AGE:
+              if (directive_value.size() != 0 && response.c_opt.max_age == -1)
+                response.c_opt.max_age = stoi(directive_value.data());
+              break;
+            case http::CACHE_CONTROL::PUBLIC:
+              response.c_opt.scope = cache_commons::CACHE_SCOPE::PUBLIC;
+              break;
+            case http::CACHE_CONTROL::PRIVATE:
+              response.c_opt.scope = cache_commons::CACHE_SCOPE::PRIVATE;
+              break;
+            case http::CACHE_CONTROL::PROXY_REVALIDATE:
+              response.c_opt.revalidate = true;
+              break;
+            case http::CACHE_CONTROL::S_MAXAGE:
+              if (directive_value.size() != 0)
+                response.c_opt.max_age = stoi(directive_value.data());
+              break;
+            case http::CACHE_CONTROL::NO_CACHE:
+              response.c_opt.no_cache = true;
+              response.c_opt.cacheable = false;
+              break;
+            case http::CACHE_CONTROL::NO_STORE:
+              response.c_opt.cacheable = false;
+              break;
+            }
+          }
+        }
+        break;
+      }
+      case http::HTTP_HEADER_NAME::PRAGMA: {
+        if (header_value.compare("no-cache") == 0) {
+          response.pragma = true;
+        }
+        break;
+      }
+      case http::HTTP_HEADER_NAME::ETAG:
+        response.etag = header_value;
+        break;
+      case http::HTTP_HEADER_NAME::EXPIRES:
+        response.expires = time_helper::strToTime(std::string(header_value));
+        break;
+      case http::HTTP_HEADER_NAME::DATE:
+        response.date = time_helper::strToTime(std::string(header_value));
+        break;
+      case http::HTTP_HEADER_NAME::LAST_MODIFIED:
+        response.last_mod = time_helper::strToTime(std::string(header_value));
+        break;
+      case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+        response.transfer_encoding_header = true;
+        switch (header_value[0]) {
+        case 'c': {
+          if (header_value[1] == 'h') { //no content-length
+            response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::CHUNKED;
+            response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+          } else if (header_value[2] == 'o') {
+            response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::COMPRESS;
+          }
+          break;
+        }
+        case 'd': //deflate
+          response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::DEFLATE;
+          break;
+        case 'g'://gzip
+          response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::GZIP;
+          break;
+        case 'i': //identity
+          response.transfer_encoding_type = http::TRANSFER_ENCODING_TYPE::IDENTITY;
+          break;
+        }
+      break;
+      default:continue;
+      }
+
+    }
+  }
+  return;
+}
+void CacheManager::validateCacheRequest(HttpRequest &request){
+    // Check for correct headers
+    for (auto i = 0; i != request.num_headers; i++) {
+        // check header values length
+        auto header = std::string_view(request.headers[i].name,
+                                       request.headers[i].name_len);
+        auto header_value = std::string_view(
+                    request.headers[i].value, request.headers[i].value_len);
+
+        auto it = http::http_info::headers_names.find(header);
+        if (it != http::http_info::headers_names.end()) {
+            auto header_name = it->second;
+            switch (header_name) {
+            case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
+                //TODO
+                break;
+            case http::HTTP_HEADER_NAME::CACHE_CONTROL: {
+                std::vector<string> cache_directives;
+                helper::splitString(std::string(header_value), cache_directives, ' ');
+                request.cache_control = true;
+
+                // Lets iterate over the directives array
+                for (unsigned long l = 0; l < cache_directives.size(); l++) {
+                    // split using = to obtain the directive value, if supported
+                    if (cache_directives[l].back() == ',')
+                        cache_directives[l] =
+                                cache_directives[l].substr(0, cache_directives[l].length() - 1);
+                    string_view directive (cache_directives[l].substr(0,cache_directives[l].find('=')));
+                    string_view directive_value (cache_directives[l].substr(cache_directives[l].find('=')+1,cache_directives[l].size()-1));
+
+                    // To separe directive from the token
+                    if (http::http_info::cache_control_values.count(directive.data()) > 0) {
+                        switch (http::http_info::cache_control_values.at(directive.data())) {
+                        case http::CACHE_CONTROL::MAX_AGE:
+                            if (directive_value.size() != 0)
+                                request.c_opt.max_age = stoi(directive_value.data());
+                            break;
+                        case http::CACHE_CONTROL::MAX_STALE:
+                            if (directive_value.size() != 0)
+                                request.c_opt.max_stale = stoi(directive_value.data());
+                            break;
+                        case http::CACHE_CONTROL::MIN_FRESH:
+                            if (directive_value.size() != 0)
+                                request.c_opt.min_fresh = stoi(directive_value.data());
+                            break;
+                        case http::CACHE_CONTROL::NO_CACHE:
+                            request.c_opt.no_cache = true;
+                            break;
+                        case http::CACHE_CONTROL::NO_STORE:
+                            request.c_opt.no_store = true;
+                            break;
+                        case http::CACHE_CONTROL::NO_TRANSFORM:
+                            request.c_opt.transform = false;
+                            break;
+                        case http::CACHE_CONTROL::ONLY_IF_CACHED:
+                            request.c_opt.only_if_cached = true;
+                            break;
+                        default:
+                            Debug::logmsg(
+                                        LOG_ERR,
+                                        "Malformed cache-control, found response directive %s in the request", directive.data());
+                            break;
+                        }
+                    } else {
+                        Debug::logmsg(LOG_ERR,"Unrecognized directive %s in the request", directive.data());
+                    }
+                }
+                break;
+            }
+            case http::HTTP_HEADER_NAME::AGE:
+                break;
+            case http::HTTP_HEADER_NAME::PRAGMA: {
+                if (header_value.compare("no-cache") == 0) {
+                    request.pragma = true;
+                }
+                break;
+            }
+            default: continue;
+            }
+
+        }
+    }
+
+    return;
 }
 #endif
