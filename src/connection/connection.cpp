@@ -26,6 +26,10 @@ Connection::~Connection() {
     SSL_clear(ssl);
     SSL_free(ssl);
 #if USE_SSL_BIO_BUFFER
+    if (sbio != NULL) {
+        BIO_vfree(sbio);
+        sbio = NULL;
+    }
     if (io != NULL) {
       BIO_free(io);
       io = NULL;
