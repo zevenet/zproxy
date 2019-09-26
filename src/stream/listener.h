@@ -30,6 +30,9 @@ class Listener : public EpollManager,
   ListenerConfig listener_config;
   std::shared_ptr<ServiceManager> service_manager;
   TimerFd timer_maintenance;
+#if MALLOC_TRIM_TIMER
+  TimerFd timer_internal_maintenance;
+#endif
   SignalFd signal_fd;
   void doWork();
   StreamManager *getManager(int fd);

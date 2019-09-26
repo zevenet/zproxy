@@ -7,20 +7,34 @@
 #ifdef ENABLE_HEAP_PROFILE
 #include  <gperftools/heap-profiler.h>
 #endif
-
-#define DEFAULT_MAINTENANCE_INTERVAL 2000
+#ifndef DEFAULT_MAINTENANCE_INTERVAL
+#define DEFAULT_MAINTENANCE_INTERVAL 2
+#endif
+#ifndef MALLOC_TRIM_TIMER_INTERVAL
+#define MALLOC_TRIM_TIMER_INTERVAL 300
+#endif
 
 void Listener::HandleEvent(int fd, EVENT_TYPE event_type,
                            EVENT_GROUP event_group) {
-  if (event_group == EVENT_GROUP::MAINTENANCE &&
-      fd == timer_maintenance.getFileDescriptor()) {
-    timer_maintenance.set(listener_config.alive_to * 1000);
-    updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
-             EVENT_GROUP::MAINTENANCE);
+  if (event_group == EVENT_GROUP::MAINTENANCE ){
+    if(fd == timer_maintenance.getFileDescriptor()) {
+      timer_maintenance.set(listener_config.alive_to * 1000);
+      updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+               EVENT_GROUP::MAINTENANCE);
 
-    for (auto serv : service_manager->getServices()) {
-      serv->doMaintenance();
+      for (auto serv : service_manager->getServices()) {
+        serv->doMaintenance();
+      }
     }
+#if MALLOC_TRIM_TIMER
+    if(fd == timer_internal_maintenance.getFileDescriptor()){
+       //release memory back to the system
+      ::malloc_trim(0);
+      timer_internal_maintenance.set(MALLOC_TRIM_TIMER_INTERVAL*1000);
+      updateFd(timer_internal_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+               EVENT_GROUP::MAINTENANCE);
+    }
+#endif
     return;
   } else if (event_group == EVENT_GROUP::SIGNAL &&
              fd == signal_fd.getFileDescriptor()) {
@@ -332,11 +346,16 @@ void Listener::start() {
   //  }
   //#else
   signal_fd.init();
-  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL);
+  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL*1000);
   //  addFd(signal_fd.getFileDescriptor(), EVENT_TYPE::READ,
   //  EVENT_GROUP::SIGNAL);
-  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ,
+  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
         EVENT_GROUP::MAINTENANCE);
+#if MALLOC_TRIM_TIMER
+  timer_internal_maintenance.set(MALLOC_TRIM_TIMER_INTERVAL*1000);
+  addFd(timer_internal_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+        EVENT_GROUP::MAINTENANCE);
+#endif
 
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();
