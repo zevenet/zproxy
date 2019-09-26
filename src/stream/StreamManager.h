@@ -16,6 +16,7 @@
 #include "../handlers/http_manager.h"
 #include <vector>
 #include "../handlers/CacheManager.h"
+
 #if DEBUG_STREAM_EVENTS_COUNT
 
 struct StreamWatcher{
@@ -60,8 +61,6 @@ struct StreamWatcher{
 };
 
 namespace debug__ {
-#define DEBUG_COUNTER_HIT(x) std::unique_ptr<x> UNIQUE_NAME(counter_hit) (new x)
-
 DEFINE_OBJECT_COUNTER(on_client_connect)
 DEFINE_OBJECT_COUNTER(on_backend_connect)
 DEFINE_OBJECT_COUNTER(on_backend_connect_timeout)

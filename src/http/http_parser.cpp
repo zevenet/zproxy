@@ -81,21 +81,39 @@ void http_parser::HttpData::prepareToSend()
     }
 }
 
+void http_parser::HttpData::addHeader(http::HTTP_HEADER_NAME header_name, const std::string&header_value, bool permanent) {
+    std::string newh;
+    newh.reserve(http::http_info::headers_names_strings.at(header_name).size() + http::CRLF_LEN + header_value.size() + http::CRLF_LEN);
+    newh += http::http_info::headers_names_strings.at(header_name);
+    newh += ": ";
+    newh += header_value;
+    newh += http::CRLF;
+    !permanent ? extra_headers.push_back(std::move(newh)) : permanent_extra_headers.push_back(std::move(newh));
+}
+
+void http_parser::HttpData::addHeader(const std::string&header_value, bool permanent) {
+    std::string newh;
+    newh.reserve(header_value.size() + http::CRLF_LEN);
+    newh += header_value;
+    newh += http::CRLF;
+    !permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
+}
+
 char *http_parser::HttpData::getBuffer() const { return buffer; }
 
 bool http_parser::HttpData::getHeaderSent() const {
-  return headers_sent;
+    return headers_sent;
 }
 
 void http_parser::HttpData::setHeaderSent(bool value) {
-  headers_sent = value;
+    headers_sent = value;
 }
 
 bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
                                            std::string &out_key) {
-  for (auto i = 0; i != num_headers; ++i) {
-    std::string header(headers[i].name, headers[i].name_len);
-    std::string header_value(headers[i].value, headers[i].value_len);
+    for (auto i = 0; i != num_headers; ++i) {
+        std::string header(headers[i].name, headers[i].name_len);
+        std::string header_value(headers[i].value, headers[i].value_len);
     auto header_name_ = http_info::headers_names[header];
     if (header_name_ == header_name) {
       out_key = header_value;

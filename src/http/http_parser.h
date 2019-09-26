@@ -16,7 +16,7 @@
 
 namespace http_parser {
 
-enum class PARSE_RESULT { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
+enum class PARSE_RESULT: uint8_t { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
 
 using namespace http;
 
@@ -52,24 +52,10 @@ public:
   std::vector< std::string> permanent_extra_headers;
   std::vector<iovec> iov;
   void prepareToSend();
-  inline void addHeader(http::HTTP_HEADER_NAME header_name,
+  void addHeader(http::HTTP_HEADER_NAME header_name,
                         const std::string &header_value,
-                        bool permanent = false) {
-    std::string newh;
-    newh.reserve(http::http_info::headers_names_strings.at(header_name).size() + 2 + header_value.size() + 2);
-    newh += http::http_info::headers_names_strings.at(header_name);
-    newh += ": ";
-    newh += header_value;
-    newh += "\r\n";
-    !permanent ? extra_headers.push_back(std::move(newh)) : permanent_extra_headers.push_back(std::move(newh));
-  }
-  inline void addHeader(const std::string &header_value, bool permanent = false) {
-    std::string newh;
-    newh.reserve(header_value.size() + 2);
-    newh += header_value;
-    newh += "\r\n";
-    !permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
-  }
+                        bool permanent = false);
+  void addHeader(const std::string &header_value, bool permanent = false);
 #if CACHE_ENABLED
   bool pragma = false;
   bool cache_control = false;
@@ -83,16 +69,16 @@ public:
   size_t http_message_length;
   size_t headers_length;
   // request
-  const char *method;
+  char *method;
   size_t method_len;
   int minor_version;
 
-  const char *path;
+  char *path;
   size_t path_length;
   // response
   int http_status_code;
 
-  const char *status_message;
+  char *status_message;
   char *message;             // body data start
   size_t message_length;     // body data lenght in current received message
   size_t message_bytes_left; // content-lenght
@@ -105,7 +91,6 @@ public:
   http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
 
   bool hasPendingData();
-
   char *getBuffer() const;
   bool getHeaderSent() const;
   void setHeaderSent(bool value);

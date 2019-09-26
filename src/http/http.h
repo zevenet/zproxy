@@ -17,7 +17,7 @@ namespace http {
  static const char * CRLF = "\r\n";
  static const int CRLF_LEN = 2;
 
-enum class HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
+enum class HTTP_VERSION:uint8_t { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 
 enum class CHUNKED_STATUS: uint8_t {
   CHUNKED_DISABLED = 0,
@@ -25,13 +25,13 @@ enum class CHUNKED_STATUS: uint8_t {
   CHUNKED_LAST_CHUNK,
 };
 
-enum class CONNECTION_VALUES {
+enum class CONNECTION_VALUES: uint8_t {
   CLOSE,
   UPGRADE,
   KEEP_ALIVE,
 };
 
-enum class UPGRADE_PROTOCOLS {
+enum class UPGRADE_PROTOCOLS: uint8_t {
   NONE,
   WEBSOCKET,
   H2C,
