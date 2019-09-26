@@ -98,6 +98,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   int rc = -1;
   int bytes_read = 0;
   for (;;) {
+    BIO_clear_retry_flags(ssl_connection.io);
     rc = BIO_read(ssl_connection.io,
                   ssl_connection.buffer + ssl_connection.buffer_size,
                   static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
@@ -141,6 +142,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 //  Debug::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   written = 0;
   for (;;) {
+    BIO_clear_retry_flags(ssl_connection.io);
     rc = BIO_write(ssl_connection.io, data + written, static_cast<int>(data_size - written));
 //    Debug::logmsg(LOG_DEBUG, "BIO_write return code %d writen %d", rc, written);
     if (rc == 0) {
@@ -186,11 +188,11 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
     }
   }
   ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_START;
-  int r = SSL_do_handshake(ssl_connection.ssl); //TODO:: Memory leak!! check heaptrack
+  ERR_clear_error();
+  int r = SSL_do_handshake(ssl_connection.ssl);
   if (r == 1) {
     ssl_connection.ssl_connected = true;
     if (!client_mode) {
-
       if ((ssl_connection.server_name = SSL_get_servername(ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) ==
           nullptr) {
 //        Debug::logmsg(LOG_DEBUG,
@@ -274,6 +276,7 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   int rc = -1;
   do {
+    ERR_clear_error();
     rc = SSL_read(ssl_connection.ssl,
                   ssl_connection.buffer + ssl_connection.buffer_size,
                   static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
@@ -467,9 +470,11 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 
 IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
     int retries = 0;
+    ERR_clear_error();
   int ret = SSL_shutdown(ssl_connection.ssl);
   do {
       retries++;
+    ERR_clear_error();
     /* We only do unidirectional shutdown */
     ret = SSL_shutdown(ssl_connection.ssl);
     if (ret < 0) {
