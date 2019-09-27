@@ -2,8 +2,7 @@
 // Created by abdess on 4/5/18.
 //
 
-#ifndef NEW_ZHTTP_HTTP_STREAM_H
-#define NEW_ZHTTP_HTTP_STREAM_H
+#pragma once
 
 #include "../connection/backend_connection.h"
 #include "../ssl/SSLConnectionManager.h"
@@ -52,42 +51,7 @@ public:
   /** HttpResponse containing the response sent by the backend. */
   HttpResponse response;
   /** This struct indicates the upgrade mechanism status. */
-  UpgradeStatus upgrade;
-
-  /**
-   * @brief Replies an specified error to the client.
-   *
-   * It replies the specified error @p code with the @p code_string and the
-   * error page @p string. It also replies HTTPS errors.
-   *
-   * @param code of the error.
-   * @param code_string is the error as string format.
-   * @param string is the error page to show.
-   * @param listener_config is the ListenerConfig used to get the HTTPS
-   * information.
-   * @param ssl_manager is the SSLConnectionManager that handles the HTTPS
-   * client connection.
-   */
-  void replyError(HttpStatus::Code code, const char *code_string,
-                  const char *string, const ListenerConfig &listener_config,
-                  ssl::SSLConnectionManager &ssl_manager);
-
-  /**
-   * @brief Reply a redirect message with the configuration specified in the
-   * BackendConfig.
-   *
-   * @param backend_config is the BackendConfig to get the redirect information.
-   */
-  void replyRedirect(BackendConfig &backend_config);
-
-  /**
-   * @brief Reply a redirect message with the @p code and pointing to the
-   * @p url.
-   *
-   * @param code is the redirect code.
-   * @param url is the url itself.
-   */
-  void replyRedirect(int code, const char * url);
+  UpgradeStatus upgrade;  
 };
 
-#endif // NEW_ZHTTP_HTTP_STREAM_H
+

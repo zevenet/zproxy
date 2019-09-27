@@ -352,17 +352,17 @@ void StreamManager::onRequestEvent(int fd) {
                         pthread_self(),
                         stream->client_connection.getPeerAddress().c_str(),
                         listener_config_.nossl_url);
-          stream->replyRedirect(listener_config_.nossl_redir,
-                                listener_config_.nossl_url);
+          http_manager::replyRedirect(listener_config_.nossl_redir,
+                                listener_config_.nossl_url,stream->client_connection,ssl_manager);
         } else {
           Debug::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s sending error",
                         pthread_self(),
                         stream->client_connection.getPeerAddress().c_str());
-          stream->replyError(
+          http_manager::replyError(
               HttpStatus::Code::BadRequest,
               HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-              listener_config_.errnossl, this->listener_config_,
-              *this->ssl_manager);
+              listener_config_.errnossl, stream->client_connection,
+              this->ssl_manager);
         }
       } else {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
@@ -431,10 +431,10 @@ void StreamManager::onRequestEvent(int fd) {
     auto valid =
         http_manager::validateRequest(stream->request, listener_config_);
     if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
-      stream->replyError(HttpStatus::Code::NotImplemented,
+      http_manager::replyError(HttpStatus::Code::NotImplemented,
                          validation::request_result_reason.at(valid).c_str(),
-                         listener_config_.err501, this->listener_config_,
-                         *this->ssl_manager);
+                         listener_config_.err501, stream->client_connection,
+                         this->ssl_manager);
       this->clearStream(stream);
       return;
     }
@@ -444,12 +444,12 @@ void StreamManager::onRequestEvent(int fd) {
     timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
     auto service = service_manager->getService(stream->request);
     if (service == nullptr) {
-      stream->replyError(HttpStatus::Code::ServiceUnavailable,
+      http_manager::replyError(HttpStatus::Code::ServiceUnavailable,
                          validation::request_result_reason
                              .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
                              .c_str(),
-                         listener_config_.err503, this->listener_config_,
-                         *this->ssl_manager);
+                         listener_config_.err503, stream->client_connection,
+                         this->ssl_manager);
       this->clearStream(stream);
       return;
     }
@@ -462,10 +462,10 @@ void StreamManager::onRequestEvent(int fd) {
     if ( ret == -1 ){
         // If the directive only-if-cached is in the request and the content
         // is not cached, reply an error 504 as stated in the rfc7234
-        stream->replyError(
+        http_manager::replyError(
                     HttpStatus::Code::GatewayTimeout,
                     HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
-                    "", this->listener_config_, *this->ssl_manager);
+            "", stream->client_connection, this->ssl_manager);
         this->clearStream(stream);
         return;
     }
@@ -478,12 +478,12 @@ void StreamManager::onRequestEvent(int fd) {
     auto bck = service->getBackend(*stream);
     if (bck == nullptr) {
       // No backend available
-      stream->replyError(HttpStatus::Code::ServiceUnavailable,
+      http_manager::replyError(HttpStatus::Code::ServiceUnavailable,
                          validation::request_result_reason
                              .at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND)
                              .c_str(),
-                         listener_config_.err503, this->listener_config_,
-                         *this->ssl_manager);
+                         listener_config_.err503, stream->client_connection,
+                         this->ssl_manager);
       this->clearStream(stream);
       return;
     } else {
@@ -526,11 +526,10 @@ void StreamManager::onRequestEvent(int fd) {
           switch (op_state) {
           case IO::IO_OP::OP_ERROR: {
             Debug::logmsg(LOG_NOTICE, "Error connecting to backend %s", bck->address.data());
-            stream->replyError(
+            http_manager::replyError(
                 HttpStatus::Code::ServiceUnavailable,
                 HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
-                    .c_str(),
-                listener_config_.err503, this->listener_config_, *this->ssl_manager);
+                .c_str(),listener_config_.err503, stream->client_connection, this->ssl_manager);
             stream->backend_connection.getBackend()->status =
                 BACKEND_STATUS::BACKEND_DOWN;
             stream->backend_connection.closeConnection();
@@ -609,7 +608,7 @@ void StreamManager::onRequestEvent(int fd) {
         //                case 0:
         //                default: break;
         //              }
-        stream->replyRedirect(bck->backend_config);
+        http_manager::replyRedirect(*stream,this->ssl_manager);
         clearStream(stream);
         return;
       }
@@ -622,10 +621,10 @@ void StreamManager::onRequestEvent(int fd) {
   case http_parser::PARSE_RESULT::TOOLONG:
     Debug::LogInfo("Parser TOOLONG", LOG_DEBUG);
   case http_parser::PARSE_RESULT::FAILED:
-    stream->replyError(
+    http_manager::replyError(
         HttpStatus::Code::BadRequest,
         HttpStatus::reasonPhrase(HttpStatus::Code::BadRequest).c_str(),
-        listener_config_.err501, this->listener_config_, *this->ssl_manager);
+        listener_config_.err501, stream->client_connection, this->ssl_manager);
     this->clearStream(stream);
     return;
   case http_parser::PARSE_RESULT::INCOMPLETE:
@@ -757,11 +756,11 @@ void StreamManager::onResponseEvent(int fd) {
             stream->backend_connection, true)) {
       Debug::logmsg(LOG_INFO, "Backend handshake error with %s ",
                     stream->backend_connection.address_str.c_str());
-      stream->replyError(
+      http_manager::replyError(
           HttpStatus::Code::ServiceUnavailable,
           HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
               .c_str(),
-          listener_config_.err503, this->listener_config_, *this->ssl_manager);
+          listener_config_.err503, stream->client_connection, this->ssl_manager);
       clearStream(stream);
     }
     if (stream->backend_connection.ssl_connected) {
@@ -888,10 +887,10 @@ void StreamManager::onResponseEvent(int fd) {
                     stream->backend_connection.getBackend()->address.c_str(),
                     stream->backend_connection.buffer_size,
                     stream->backend_connection.buffer);
-      stream->replyError(
+      http_manager::replyError(
           HttpStatus::Code::ServiceUnavailable,
           HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable).c_str(),
-          listener_config_.err503, this->listener_config_, *this->ssl_manager);
+          listener_config_.err503, stream->client_connection, this->ssl_manager);
       this->clearStream(stream);
       return;
     }
@@ -928,10 +927,10 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
                   std::this_thread::get_id(),
                   stream->backend_connection.getBackend()->address.c_str(),
                   stream->backend_connection.getBackend()->conn_timeout);
-    stream->replyError(
+    http_manager::replyError(
         HttpStatus::Code::ServiceUnavailable,
         HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable).c_str(),
-        listener_config_.err503, this->listener_config_, *this->ssl_manager);
+        listener_config_.err503,stream->client_connection, this->ssl_manager);
     this->clearStream(stream);
   }
 }
@@ -970,11 +969,11 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
                         .c_str(),
                     stream->client_connection.buffer, caddr);
     }
-    stream->replyError(
+    http_manager::replyError(
         HttpStatus::Code::GatewayTimeout,
         HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
         HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
-        this->listener_config_, *this->ssl_manager);
+        stream->client_connection, this->ssl_manager);
     this->clearStream(stream);
   }
 }
@@ -1048,12 +1047,12 @@ void StreamManager::onServerWriteEvent(HttpStream *stream) {
               stream->backend_connection, true)) {
         Debug::logmsg(LOG_INFO, "Handshake error with %s ",
                       stream->backend_connection.getBackend()->address.data());
-        stream->replyError(
+        http_manager::replyError(
             HttpStatus::Code::ServiceUnavailable,
             HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
                 .c_str(),
-            listener_config_.err503, this->listener_config_,
-            *this->ssl_manager);
+            listener_config_.err503, stream->client_connection,
+            this->ssl_manager);
         clearStream(stream);
       }
       if (!stream->backend_connection.ssl_connected) {
@@ -1431,11 +1430,11 @@ void StreamManager::onServerDisconnect(HttpStream *stream) {
       Debug::logmsg(LOG_NOTICE,
                     "Error connecting to backend %s",
                     stream->backend_connection.getBackend()->address.data());
-      stream->replyError(
+      http_manager::replyError(
           HttpStatus::Code::ServiceUnavailable,
           HttpStatus::reasonPhrase(HttpStatus::Code::ServiceUnavailable)
               .c_str(),
-          listener_config_.err503, this->listener_config_, *this->ssl_manager);
+          listener_config_.err503, stream->client_connection, this->ssl_manager);
       stream->backend_connection.getBackend()->status =
           BACKEND_STATUS::BACKEND_DOWN;
 

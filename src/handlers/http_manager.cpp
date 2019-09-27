@@ -443,5 +443,53 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
   return validation::REQUEST_RESULT::OK;
 }
 
+void http_manager::replyError(HttpStatus::Code code, const char *code_string,
+                            const char *string, Connection&target,
+                            SSLConnectionManager*ssl_manager){
+  size_t result;
+  char caddr[200];
+
+  if (UNLIKELY(Network::getPeerAddress(target.getFileDescriptor(), caddr, 200) == nullptr)) {
+    Debug::LogInfo("Error getting peer address", LOG_DEBUG);
+  } else {
+    Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
+                  std::this_thread::get_id(),
+                  static_cast<int>(code),
+                  code_string,
+                  target.buffer, caddr);
+  }
+  auto response_ = HttpStatus::getHttpResponse(code, code_string, string);
+
+  if (!target.ssl_connected) {
+    target.write(response_.c_str(), response_.length());
+  } else if(ssl_manager != nullptr){
+    ssl_manager->handleWrite(target, response_.c_str(), response_.length(), result);
+  }
+}
+
+void http_manager::replyRedirect(HttpStream& stream,SSLConnectionManager *ssl_manager) {
+  std::string new_url = stream.backend_connection.getBackend()->backend_config.url;
+  new_url += stream.request.getUrl();
+  auto response_ = HttpStatus::getRedirectResponse(
+      static_cast<HttpStatus::Code>(stream.backend_connection.getBackend()->backend_config.be_type), new_url);
+  stream.client_connection.write(response_.c_str(), response_.length());
+  if (!stream.client_connection.ssl_connected) {
+    stream.client_connection.write(response_.c_str(), response_.length());
+  } else if(ssl_manager != nullptr){
+    size_t written = 0;
+    ssl_manager->handleWrite(stream.client_connection, response_.c_str(), response_.length(), written);
+  }
+}
+void http_manager::replyRedirect(int code, const char *url, Connection&target,SSLConnectionManager *ssl_manager) {
+  auto response_ = HttpStatus::getRedirectResponse(
+      static_cast<HttpStatus::Code>(code), url);
+  if (!target.ssl_connected) {
+    target.write(response_.c_str(), response_.length());
+  } else if(ssl_manager != nullptr){
+    size_t written = 0;
+    ssl_manager->handleWrite(target, response_.c_str(), response_.length(), written);
+  }
+}
+
 
 
