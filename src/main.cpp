@@ -21,21 +21,24 @@ void handleInterrupt(int sig) {
 
   Debug::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
   switch (sig) {
-  case SIGINT:
-  case SIGHUP:
-  case SIGTERM: {
-    auto cm = ctl::ControlManager::getInstance();
-    cm->stop();
-    break;
-  }
-  case SIGABRT:
-  case SIGSEGV: {
-    debug::printBackTrace();
-    std::exit(EXIT_FAILURE);
-  }
-  default: {
-    //  ::longjmp(jmpbuf, 1);
-  }
+    case SIGINT:
+    case SIGHUP:
+    case SIGTERM: {
+      auto cm = ctl::ControlManager::getInstance();
+      cm->stop();
+      break;
+    }
+    case SIGABRT:
+    case SIGSEGV: {
+      debug::printBackTrace();
+      std::exit(EXIT_FAILURE);
+    }
+    case SIGUSR1: //Release free heap memory
+      ::malloc_trim(0);
+      break;
+    default: {
+      //  ::longjmp(jmpbuf, 1);
+    }
   }
 
 }
@@ -82,10 +85,9 @@ int main(int argc, char *argv[]) {
   ::signal(SIGABRT, handleInterrupt);
   ::signal(SIGHUP, handleInterrupt);
   ::signal(SIGSEGV, handleInterrupt);
-
+  ::signal(SIGUSR1, handleInterrupt);
   ::umask(077);
   ::srandom(static_cast<unsigned int>(::getpid()));
-
   Environment::setUlimitData();
 
   /* record pid in file */
