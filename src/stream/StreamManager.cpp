@@ -455,7 +455,7 @@ void StreamManager::onRequestEvent(int fd) {
     }
 
     stream->request.setService(service);
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     // If the cache is enabled and the request is cached and it is also fresh
     auto ret = CacheManager::handleRequest(stream, service,this->listener_config_ );
     // Must return error
@@ -809,7 +809,7 @@ void StreamManager::onResponseEvent(int fd) {
         return;
       }
     }
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     auto service = static_cast<Service *>(stream->request.getService());
     if (service->cache_enabled) {
         CacheManager::handleResponse(stream,service);
@@ -897,7 +897,7 @@ void StreamManager::onResponseEvent(int fd) {
     }
 
     auto service = static_cast<Service *>(stream->request.getService());
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     if (service->cache_enabled) {
         CacheManager::handleResponse(stream,service);
     }
@@ -1241,7 +1241,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
         stream->backend_connection.buffer_size, stream->response.content_length,
         stream->response.message_bytes_left, written, IO::getResultString(result).data());
 #endif
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     if ( !stream->response.isCached())
 #endif
 
@@ -1255,7 +1255,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   }
 
   if (stream->backend_connection.buffer_size == 0
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
         && !stream->response.isCached()
 #endif
           )
@@ -1321,7 +1321,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream) {
   if (stream->backend_connection.buffer_size > 0)
     stream->client_connection.enableWriteEvent();
   else {
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     if (!stream->response.isCached())
 #endif
     stream->backend_connection.enableReadEvent();
@@ -1346,7 +1346,7 @@ bool StreamManager::init(ListenerConfig &listener_config) {
  */
 void StreamManager::clearStream(HttpStream *stream) {
 
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     CacheManager::handleStreamClose(stream);
 #endif
   // TODO:: add connection closing reason for logging purpose

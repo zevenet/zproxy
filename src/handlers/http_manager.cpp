@@ -301,7 +301,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream,con
 	//    Debug::logmsg(LOG_DEBUG, "Chunked transfer enabled");
 	return validation::REQUEST_RESULT::OK;
   }
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   stream.request.c_opt.no_store ? response.c_opt.cacheable = false : response.c_opt.cacheable = true;
 #endif
   for (size_t i = 0; i != response.num_headers; i++) {

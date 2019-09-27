@@ -42,6 +42,6 @@ void HttpRequest::setService(void *service) {
 void *HttpRequest::getService() const {
     return request_service;
 }
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
 bool HttpResponse::isCached() { return this->cached; }
 #endif

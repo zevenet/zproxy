@@ -273,7 +273,7 @@ bool ControlManager::setServiceTarget(CtlTask &task, std::istringstream &ss) {
         task.subject = CTL_SUBJECT::STATUS;
       } else if (str == JSON_KEYS::SESSION || str == JSON_KEYS::SESSIONS) {
         task.subject = CTL_SUBJECT::SESSION;
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
       } else if (str == JSON_KEYS::CACHE) {
           task.subject = CTL_SUBJECT::CACHE;
 #endif

@@ -180,7 +180,7 @@ void Config::parse_file() {
       }
     } else if (!regexec(&Anonymise, lin, 4, matches, 0)) {
       anonymise = 1;
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     } else if (!regexec(&CacheThreshold, lin, 2, matches, 0)){
         int threshold = atoi(lin + matches[1].rm_so);
         if ( threshold <= 0 || threshold > 99 )
@@ -308,7 +308,7 @@ void Config::parseConfig(const int argc, char **const argv) {
   ignore_100 = 1;
   services = NULL;
   listeners = NULL;
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   cache_s = 0;
   cache_thr = 0;
 #endif
@@ -1250,7 +1250,7 @@ ServiceConfig *Config::parseService(const char *svc_name) {
         res->becage = -1;
       else
         res->becage = atoi(lin + matches[4].rm_so);
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     } else if (!regexec(&Cache, lin, 4, matches, 0)) {
       parseCache(res);
 #endif
@@ -1597,7 +1597,7 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
   return NULL;
 }
 
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
 void Config::parseCache(ServiceConfig *const svc) {
   char lin[MAXBUF], *cp;
   if( cache_s == 0 || cache_thr == 0)
@@ -1920,7 +1920,7 @@ bool Config::compile_regex() {
                   REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
           regcomp(&Anonymise, "^[ \t]*Anonymise[ \t]*$",
                   REG_ICASE | REG_NEWLINE | REG_EXTENDED)
-        #if CACHE_ENABLED
+        #ifdef CACHE_ENABLED
           ||    regcomp(&Cache, "^[ \t]*Cache[ \t]*$",
                         REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
           regcomp(&CacheContent, "^[ \t]*Content[ \t]+\"(.+)\"[ \t]*$",
@@ -2055,7 +2055,7 @@ void Config::clean_regex() {
   regfree(&Disabled);
   regfree(&CNName);
   regfree(&Anonymise);
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   regfree(&Cache);
   regfree(&CacheContent);
   regfree(&CacheTO);

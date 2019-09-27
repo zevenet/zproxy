@@ -148,7 +148,7 @@ Service::Service(ServiceConfig &service_config_)
   this->sess_id = service_config_.sess_id;
   this->sess_pat = service_config_.sess_pat;
   this->sess_start = service_config_.sess_start;
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     // Initialize cache manager
     if (service_config_.cache_content.re_pcre != nullptr){
         this->cache_enabled = true;
@@ -223,7 +223,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
     }
     return JSON_OP_RESULT::ERROR;
   }
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   if ( this->cache_enabled && task.subject == ctl::CTL_SUBJECT::CACHE ){
       return http_cache->handleCacheTask(task);
   }  
@@ -318,7 +318,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
       default:
           return "{\"result\",\"ok\"}";
       }
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   }
 #endif
   return "";
@@ -444,7 +444,7 @@ void Service::doMaintenance() {
         deleteBackendSessions(bck->backend_id);
     }
   }
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   if( this->cache_enabled ){
       http_cache->doCacheMaintenance();
   }

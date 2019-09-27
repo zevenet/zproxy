@@ -86,7 +86,7 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     std::unique_ptr<JsonObject> clients_stats{new JsonObject()};
     std::unique_ptr<JsonObject> ssl_stats{new JsonObject()};
     std::unique_ptr<JsonObject> events_count{new JsonObject()};
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
     std::unique_ptr<JsonObject> cache_count{new JsonObject()};
 #endif
     status->emplace("ClientConnection",
@@ -173,7 +173,7 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
     events_count->emplace("event_connect_failed",
                           std::unique_ptr<JsonDataValue>(
                               new JsonDataValue(Counter<debug__::event_connect_fail>::count)));
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
 #if MEMCACHED_ENABLED == 1
     RamICacheStorage * ram_storage = MemcachedCacheStorage::getInstance();
 #else

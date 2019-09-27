@@ -359,7 +359,7 @@ const std::map<std::string, http::TRANSFER_ENCODING_TYPE, std::less<>>
   {"br", http::TRANSFER_ENCODING_TYPE::BR},
   {"identity", http::TRANSFER_ENCODING_TYPE::IDENTITY},
 };
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
 const std::unordered_map<CACHE_CONTROL, const std::string>
     http_info::cache_control_values_strings = {
         {CACHE_CONTROL::MAX_AGE, "max-age"},
