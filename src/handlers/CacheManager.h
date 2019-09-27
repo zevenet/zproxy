@@ -11,7 +11,7 @@ public:
      * @param service the service for the request
      * @param listener_config_
      */
-    static void handleResponse(HttpStream * stream, Service *service, ListenerConfig &listener_config_);
+    static void handleResponse(HttpStream * stream, Service *service);
     /**
      * @brief handleRequest handle all cache logic checks when a response is received before calling the HttpCache
      * @param stream representation pointer of the HttpStream

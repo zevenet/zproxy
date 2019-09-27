@@ -457,23 +457,21 @@ void StreamManager::onRequestEvent(int fd) {
     stream->request.setService(service);
 #if CACHE_ENABLED
     // If the cache is enabled and the request is cached and it is also fresh
-    if (service->cache_enabled) {
-        auto ret = CacheManager::handleRequest(stream, service,this->listener_config_ );
-        // Must return error
-        if ( ret == -1 ){
-            // If the directive only-if-cached is in the request and the content
-            // is not cached, reply an error 504 as stated in the rfc7234
-            stream->replyError(
-                        HttpStatus::Code::GatewayTimeout,
-                        HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
-                        "", this->listener_config_, *this->ssl_manager);
-            this->clearStream(stream);
-            return;
-        }
-        // Return, using the cache from response
-        if ( ret == 0 ){
-            return;
-        }
+    auto ret = CacheManager::handleRequest(stream, service,this->listener_config_ );
+    // Must return error
+    if ( ret == -1 ){
+        // If the directive only-if-cached is in the request and the content
+        // is not cached, reply an error 504 as stated in the rfc7234
+        stream->replyError(
+                    HttpStatus::Code::GatewayTimeout,
+                    HttpStatus::reasonPhrase(HttpStatus::Code::GatewayTimeout).c_str(),
+                    "", this->listener_config_, *this->ssl_manager);
+        this->clearStream(stream);
+        return;
+    }
+    // Return, using the cache from response
+    if ( ret == 0 ){
+        return;
     }
 
 #endif
@@ -814,7 +812,7 @@ void StreamManager::onResponseEvent(int fd) {
 #if CACHE_ENABLED
     auto service = static_cast<Service *>(stream->request.getService());
     if (service->cache_enabled) {
-        CacheManager::handleResponse(stream,service,listener_config_);
+        CacheManager::handleResponse(stream,service);
     }
 #endif
 
@@ -901,7 +899,7 @@ void StreamManager::onResponseEvent(int fd) {
     auto service = static_cast<Service *>(stream->request.getService());
 #if CACHE_ENABLED
     if (service->cache_enabled) {
-        CacheManager::handleResponse(stream,service,listener_config_);
+        CacheManager::handleResponse(stream,service);
     }
 #endif
     http_manager::setBackendCookie(service, stream);

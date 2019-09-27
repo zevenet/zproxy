@@ -2,7 +2,7 @@
 // Created by developer on 24/9/19.
 //
 #include "CacheManager.h"
-void CacheManager::handleResponse(HttpStream *stream, Service *service, ListenerConfig &listener_config_)
+void CacheManager::handleResponse(HttpStream *stream, Service *service )
 {
     if ( !service->cache_enabled ){
         return;
@@ -68,9 +68,9 @@ int CacheManager::handleRequest(HttpStream * stream, Service *service, ListenerC
             // is not cached, reply an error 504 as stated in the rfc7234
             return -1;
         }
+        service->http_cache->stats.cache_miss++;
     }
     DEBUG_COUNTER_HIT(cache_stats__::cache_miss);
-    service->http_cache->stats.cache_miss++;
     stream->response.reset_parser();
     stream->response.cached = false;
     stream->response.setHeaderSent(false);
