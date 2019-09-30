@@ -47,6 +47,8 @@ $zlbcertfile_path="$basedir/zlbcertfile.pem";#update
 $zapi_directory="$basedir/zapi";
 #first boot flag
 $first_boot_flag="/etc/firstzlbboot";
+#zna migration flag
+$migration_flag="/etc/zlbmigration";
 #zevenet service
 $zevenet_service="/etc/init.d/zevenet";
 
@@ -178,7 +180,7 @@ $aptkey_bin="/usr/bin/apt-key";
 #Where is apt-cache?
 $aptcache_bin="/usr/bin/apt-cache";
 #Where is checkupgrades?
-$checkupgrades_bin="/usr/local/zevenet/bin/checkupgrades";
+$checkupgrades_bin="/usr/local/zevenet/bin/checkupgrades";#update
 #Where is openssl?
 $openssl="/usr/bin/openssl";
 #Where is unzip?
@@ -259,6 +261,8 @@ $arpsend_bin="/usr/sbin/arpsend";
 $dhcp_bin="/usr/sbin/dhclient";
 #Where is netcat
 $netcat_bin="/usr/bin/nc";
+#Where is dmidecode
+$dmidecode_bin="/usr/sbin/dmidecode";
 
 # Pound
 #where is pound binary?
@@ -331,6 +335,12 @@ $zenrsync="-azvr --delete";#update
 $arp_unsolicited="";
 #ARP announcement, true / false (default)
 $arp_announce="";
+
+#Network duplicated net 
+$duplicated_net="false";
+
+
+
 
 
 # Cron service

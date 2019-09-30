@@ -301,7 +301,6 @@ sub manage_factory_reset()
 								-tfg        => 'black',
 								-tbg        => 'white',
 								-border     => 1,
-								-vscrollbar => 1,
 								-y          => 0,
 								-height     => 6,
 								-selected   => 0,
@@ -615,6 +614,14 @@ sub manage_mgmt()
 	my $mgmtif         = "";
 	my @all_interfaces = &getInterfaceTypeList( 'nic' );
 
+	# widget sizes
+	my $pos_y           = 0;
+	my $size_iface_list = 3;
+	my $size_dhcp       = 3;
+	my $size_ip         = 3;
+	my $size_gw         = 3;
+	my $size_net        = 3;
+
 	# discard bonding slave nics
 	@all_interfaces = grep { $_->{ is_slave } eq 'false' } @all_interfaces;
 	my $i            = 0;
@@ -643,13 +650,13 @@ sub manage_mgmt()
 							   -tbg        => 'white',
 							   -border     => 1,
 							   -vscrollbar => 1,
-							   -y          => 0,
-							   -height     => 6,
+							   -y          => $pos_y,
+							   -height     => $size_iface_list,
 							   -values     => \@interfaces,
 							   -title      => 'Available Interfaces List',
-							   -vscrollbar => 1,
 							   -onchange   => sub { &update_mgmt_view(); },
 	);
+	$pos_y += $size_iface_list;
 
 	$mgmtdhcpinput = $win3->add(
 		'win3id6',
@@ -661,13 +668,14 @@ sub manage_mgmt()
 		-tfg      => 'black',
 		-tbg      => 'white',
 		-border   => 1,
-		-y        => 6,
+		-y        => $pos_y,
 		-title    => 'MGMT DHCP Configuration',
 		-onchange => sub {
 			&set_dhcp();
 			&update_mgmt_view();
 		},
 	);
+	$pos_y += $size_dhcp;
 
 	$mgmtipinput = $win3->add(
 		'win3id2', 'TextEditor',
@@ -675,12 +683,13 @@ sub manage_mgmt()
 		-tfg        => 'black',
 		-tbg        => 'white',
 		-border     => 1,
-		-y          => 9,
+		-y          => $pos_y,
 		-title      => 'MGMT IP Configuration',
 		-text       => '',                        # ip
 		-readonly   => $dhcp_enabled,
 		-singleline => 1,
 	);
+	$pos_y += $size_ip;
 
 	$mgmtmaskinput = $win3->add(
 		'win3id3', 'TextEditor',
@@ -688,11 +697,12 @@ sub manage_mgmt()
 		-tfg        => 'black',
 		-tbg        => 'white',
 		-border     => 1,
-		-y          => 12,
+		-y          => $pos_y,
 		-title      => 'MGMT NetMask Configuration',
 		-text       => '',                             # mask
 		-singleline => 1,
 	);
+	$pos_y += $size_gw;
 
 	$mgmtgwinput = $win3->add(
 		'win3id4', 'TextEditor',
@@ -700,11 +710,12 @@ sub manage_mgmt()
 		-tfg        => 'black',
 		-tbg        => 'white',
 		-border     => 1,
-		-y          => 15,
+		-y          => $pos_y,
 		-title      => 'MGMT Gateway Configuration',
 		-text       => '',                             # gw
 		-singleline => 1,
 	);
+	$pos_y += $size_net;
 
 	my $confirm = $win3->add(
 		'win3id5',
@@ -712,7 +723,7 @@ sub manage_mgmt()
 		-bg       => 'black',
 		-tfg      => 'black',
 		-tbg      => 'white',
-		-y        => 19,
+		-y        => $pos_y,
 		-selected => 1,
 		-buttons  => [
 			{
@@ -757,7 +768,11 @@ sub update_mgmt_view()
 			 "debug", "PROFILING" );
 
 	# not continue if the boxes are not defined
-	return unless ( $mgmtipinput, $mgmtmaskinput, $mgmtgwinput, $mgmtdhcpinput );
+	return
+	  unless (     $mgmtipinput
+			   and $mgmtmaskinput
+			   and $mgmtgwinput
+			   and $mgmtdhcpinput );
 
 	$mgmtif = $mgmtifinput->get();
 	my $if_ref = &getInterfaceConfig( $mgmtif );
