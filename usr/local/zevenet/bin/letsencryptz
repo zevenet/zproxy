@@ -401,7 +401,7 @@ sub cert_used_farm(){
 	
 	my $cert_file = shift;
 	my $configdir = &getGlobalConfiguration('configdir');
-	my @run = `grep -H $cert_file ${configdir}\/*pound.cfg 2>/dev/null | cut -d: -f1 `;
+	my @run = `grep -H $cert_file ${configdir}\/*proxy.cfg 2>/dev/null | cut -d: -f1 `;
 	my @farms = "";
 	if ((scalar @run) > 0){
 		require Zevenet::Farm::Core;

@@ -32,15 +32,15 @@ include 'Zevenet::Notify';
 
 my $command;
 my ( $subject, $bodycomp ) = &getSubjectBody( $pattern );
-my $logger = &getGlobalConfiguration ( 'logger' );
+my $logger = &getGlobalConfiguration( 'logger' );
 
 if ( $subject eq "error" || !$bodycomp )
 {
-	system ("$logger \"Error creating body to alert: '$pattern'\" -i -t sec");
+	system ( "$logger \"Error creating body to alert: '$pattern'\" -i -t sec" );
 	exit 1;
 }
 
-my $error = &sendByMail ( $subject, $bodycomp, $section );
+my $error = &sendByMail( $subject, $bodycomp, $section );
 
 exit $error;
 
@@ -48,7 +48,8 @@ exit $error;
 # my ( $subject, $body ) = getSubjectBody( $msg )
 sub getSubjectBody    # &getSubjectBody ( $msg )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $msg ) = @_;
 
 	my @output;
@@ -107,10 +108,10 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 	}
 
-# pound msg
+# l7 proxy msg
 # example:
 # (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed) in farm: 'test', service: 'srv1'
-	elsif ( ( $program =~ /pound/ || $program =~ /farmguardian/ )
+	elsif ( ( $program =~ /zhttp/ || $program =~ /farmguardian/ )
 		&& $msg =~
 		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+)? (\w+)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '([\w-]+)')?/
 	  )
@@ -121,9 +122,9 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 		$farm    = $4;
 		$service = $5;
 
-		if    ( $service =~ /'(.+)'/ )        { $service = "$1"; }
+		if ( $service =~ /'(.+)'/ ) { $service = "$1"; }
 
-		if    ( $program =~ /pound/ )        { $program = "It has been"; }
+		if    ( $program =~ /zhttp/ )        { $program = "It has been"; }
 		elsif ( $program =~ /farmguardian/ ) { $program = "Farmguardian"; }
 
 		if ( $status =~ /dead/ || $status =~ /down/ ) { $status = "DOWN"; }
@@ -145,9 +146,12 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 	# Cluster msg
 	# example:
 	# [WARNING] Switching to state: MASTER
-	elsif (    $program =~ /Keepalived_vrrp/
-			#~ && $msg =~ /\[WARNING\] Switching to state: (\w+)/ )
-			&& $msg =~ /\(ZCluster\) Entering (\w+) STATE/ )
+	elsif (
+		$program =~ /Keepalived_vrrp/
+
+		#~ && $msg =~ /\[WARNING\] Switching to state: (\w+)/ )
+		&& $msg =~ /\(ZCluster\) Entering (\w+) STATE/
+	  )
 	{
 		$status = $1;
 
@@ -173,7 +177,8 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 #   &getGSLBFarm ( $pid )
 sub getGSLBFarm
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $pid ) = @_;
 
 	my $farm;

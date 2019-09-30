@@ -906,10 +906,10 @@ sub checkWAFFileSyntax
 	my $file = shift;
 	my $rule_st = shift // {};
 
-	my $pound = &getGlobalConfiguration( 'pound' );
-	my $out   = `$pound -W $file 2>&1`;
+	my $proxy = &getGlobalConfiguration( 'proxy' );
+	my $out   = `$proxy -W $file 2>&1`;
 	my $err   = $?;
-	&zenlog( "cmd: $pound -W $file", "debug1", "waf" );
+	&zenlog( "cmd: $proxy -W $file", "debug1", "waf" );
 
 	if ( $err )
 	{
