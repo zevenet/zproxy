@@ -19,7 +19,6 @@ add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
 add_definitions(-DENABLE_QUICK_RESPONSE=1)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_definitions(-DDEBUG_HTTP_HEADERS=0)
-add_definitions(-DCACHE_STORAGE_STDMAP=0)
 add_definitions(-DMALLOC_TRIM_TIMER=0 -DMALLOC_TRIM_TIMER_INTERVAL=300) # force release of memory back to the system
 add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=2)
 

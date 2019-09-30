@@ -1,7 +1,9 @@
 #pragma once
 #include "CacheCommons.h"
 #include "ICacheStorage.h"
-
+#if MEMCACHED_ENABLED == 1
+#include <libmemcached/memcached.h>
+#endif
 /**
  * @brief The RamICacheStorage interface is the specification of a ICacheStorage for RAM
  */
@@ -62,20 +64,26 @@ public:
  *
  * @brief The MemcachedStorage implements the interface RamICacheStorage in order to allow memcached storage
  */
-#if MEMCACHED_ENABLED
+#if MEMCACHED_ENABLED == 1
 class MemcachedStorage : public RamICacheStorage {
 private:
+    std::string svc;
+    std::string socket;
+    double threshold;
     memcached_return rc;
     memcached_st * memc = nullptr;
+
 public:
     MemcachedStorage(){}
     st::STORAGE_TYPE getStorageType() override;
-    st::STORAGE_STATUS initCacheStorage( const size_t max_size,const std::string m_point ) override;
-    st::STORAGE_STATUS initServiceStorage (std::string svc) override;
-    st::STORAGE_STATUS getFromStorage( const std::string svc, const std::string url, std::string & out_buffer) override;
-    st::STORAGE_STATUS putInStorage( const std::string svc, const std::string url, const std::string buffer) override;
+    st::STORAGE_STATUS initCacheStorage( const size_t max_size,double st_threshold, const std::string &svc, const std::string &m_point ) override;
+    st::STORAGE_STATUS initServiceStorage (const std::string &svc) override;
+    st::STORAGE_STATUS getFromStorage( const std::string &rel_path, std::string &out_buffer ) override;
+    st::STORAGE_STATUS putInStorage( const std::string &rel_path, std::string_view buffer, size_t response_size) override;
     st::STORAGE_STATUS stopCacheStorage() override;
-    st::STORAGE_STATUS appendData(const std::string svc, const std::string url, const std::string buffer) override;
-
+    st::STORAGE_STATUS appendData(const std::string &rel_path, std::string_view buffer) override;
+    bool isInStorage(const std::string &svc, const std::string &url) override;
+    st::STORAGE_STATUS deleteInStorage(const std::string &path) override;
+    bool isInStorage( const std::string &path );
 };
 #endif

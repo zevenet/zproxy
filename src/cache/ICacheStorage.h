@@ -11,9 +11,7 @@
 #include <filesystem>
 #include "../debug/Debug.h"
 #include "CacheCommons.h"
-#if MEMCACHED_ENABLED
-#include <libmemcached/memcached.h>
-#endif
+
 
 using namespace std;
 namespace st = storage_commons;

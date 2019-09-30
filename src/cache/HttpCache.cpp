@@ -94,6 +94,15 @@ void HttpCache::updateResponse(HttpResponse response,
   return;
 }
 // Decide on whether to use RAMFS or disk
+st::STORAGE_TYPE HttpCache::getStorageType(){
+#if CACHE_STORAGE_STDMAP
+    return st::STORAGE_TYPE::STDMAP;
+#elif MEMCACHED_ENABLED
+    return st::STORAGE_TYPE::MEMCACHED;
+#else
+    return st::STORAGE_TYPE::RAMFS;
+#endif
+}
 st::STORAGE_TYPE HttpCache::getStorageType( HttpResponse response )
 {
     size_t ram_size_left = ram_storage->max_size - ram_storage->current_size;
@@ -105,17 +114,10 @@ st::STORAGE_TYPE HttpCache::getStorageType( HttpResponse response )
          response_size > ram_storage->max_size * 0.05 || response_size >= ram_size_left ){
         return st::STORAGE_TYPE::DISK;
     }
-#if CACHE_STORAGE_STDMAP
     else{
-        return st::STORAGE_TYPE::STDMAP;
+        return getStorageType();
     }
-#else
-    else{
-        return st::STORAGE_TYPE::RAMFS;
-    }
-#endif
 }
-
 HttpCache::~HttpCache() {
     // Free cache pattern
     if (cache_pattern != nullptr){
@@ -172,13 +174,38 @@ void HttpCache::cacheInit(regex_t *pattern, const int timeout, const std::string
 
         st::STORAGE_STATUS svc_status;
 //RAM
-        ram_storage = RamfsCacheStorage::getInstance();
-        ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, ramfs_mount_point);
-        svc_status = ram_storage->initServiceStorage(svc);
-        //recover cache status
-        if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS ){
-            recoverCache(svc,st::STORAGE_TYPE::RAMFS);
+        switch(getStorageType()){
+        case st::STORAGE_TYPE::RAMFS:
+            ram_storage = RamfsCacheStorage::getInstance();
+            ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, ramfs_mount_point);
+            svc_status = ram_storage->initServiceStorage(svc);
+            //recover cache status
+            if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS ){
+                recoverCache(svc,st::STORAGE_TYPE::RAMFS);
+            }
+            break;
+        case st::STORAGE_TYPE::STDMAP:
+            ram_storage = StdmapCacheStorage::getInstance();
+            ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, ramfs_mount_point);
+            svc_status = ram_storage->initServiceStorage(svc);
+            //recover cache status
+            if ( svc_status == st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS ){
+                recoverCache(svc,st::STORAGE_TYPE::STDMAP);
+            }
+            break;
+#if MEMCACHED_ENABLED == 1
+        case st::STORAGE_TYPE::MEMCACHED:
+            ram_storage = MemcachedStorage::getInstance();
+            ram_storage->initCacheStorage(static_cast<unsigned long>(storage_size), static_cast<double>(storage_threshold) / 100, svc, cache_ram_mpoint);
+            svc_status = ram_storage->initServiceStorage(svc);
+            //recover cache status
+            break;
+#endif
+        default:
+            Debug::logmsg(LOG_ERR, "ERROR Fatal, not able to determine the storage");
         }
+
+
 
 //DISK
         disk_storage = DiskCacheStorage::getInstance();
@@ -215,6 +242,7 @@ void HttpCache::addResponse(HttpResponse &response,
 
   switch (c_object->storage){
   case st::STORAGE_TYPE::STDMAP:
+  case st::STORAGE_TYPE::MEMCACHED:
   case st::STORAGE_TYPE::RAMFS:
       err = ram_storage->putInStorage(rel_path, std::string(response.buffer,response.buffer_size), (response.content_length + response.headers_length));
       if(err == st::STORAGE_STATUS::SUCCESS){
@@ -325,6 +353,9 @@ void HttpCache::createResponseEntry( HttpResponse response,cache_commons::CacheO
     case st::STORAGE_TYPE::STDMAP:
         c_object->storage = st::STORAGE_TYPE::STDMAP;
         break;
+    case st::STORAGE_TYPE::MEMCACHED:
+        c_object->storage = st::STORAGE_TYPE::MEMCACHED;
+        break;
     default:
         Debug::logmsg(LOG_ERR, "Not able to decide storage, exiting");
         exit(-1);
@@ -353,6 +384,7 @@ void HttpCache::addData( HttpResponse &response , std::string_view data, const s
     //Check what storage to use
     switch (c_object->storage){
     case st::STORAGE_TYPE::STDMAP:
+    case st::STORAGE_TYPE::MEMCACHED:
     case st::STORAGE_TYPE::RAMFS:
         err = ram_storage->appendData(rel_path, data);
         this->stats.cache_RAM_used = ram_storage->current_size;
@@ -455,6 +487,7 @@ int HttpCache::getResponseFromCache(HttpRequest request,
   //Get the response from the right storage
   switch(c_object->storage){
   case st::STORAGE_TYPE::STDMAP:
+  case st::STORAGE_TYPE::MEMCACHED:
   case st::STORAGE_TYPE::RAMFS:
       ram_storage->getFromStorage(rel_path, buffer);
       break;
@@ -594,7 +627,7 @@ void HttpCache::recoverCache(const string &svc,st::STORAGE_TYPE st_type)
         path.append(svc);
         break;
     default:
-        break;
+        return;
     }
     std::ifstream in_file;
     std::string in_line, file_name;

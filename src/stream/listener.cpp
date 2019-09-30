@@ -175,7 +175,7 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
                               new JsonDataValue(Counter<debug__::event_connect_fail>::count)));
 #ifdef CACHE_ENABLED
 #if MEMCACHED_ENABLED == 1
-    RamICacheStorage * ram_storage = MemcachedCacheStorage::getInstance();
+    RamICacheStorage * ram_storage = MemcachedStorage::getInstance();
 #else
     RamICacheStorage * ram_storage = RamfsCacheStorage::getInstance();
 #endif

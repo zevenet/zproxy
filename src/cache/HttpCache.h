@@ -36,6 +36,7 @@ private:
   void addResponse(HttpResponse &response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
   st::STORAGE_TYPE getStorageType( HttpResponse response );
+  st::STORAGE_TYPE getStorageType();
 public:
   std::time_t t_stamp;
   cache_commons::cache_stats stats;
