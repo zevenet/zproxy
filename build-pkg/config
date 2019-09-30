@@ -10,7 +10,11 @@ enterprise_files=(
 	etc/dhcp
 	etc/profile
 	etc/profile_packetbl
-	usr/local/zevenet/migrating/
+	usr/local/zevenet/migrating/blacklists.pl
+	usr/local/zevenet/migrating/rbac_roles.pl
+	usr/local/zevenet/migrating/l42nftlb.pl
+	usr/local/zevenet/migrating/http_dynamic_threads.sh
+	usr/local/zevenet/migrating/reset_mac.pl
 	usr/local/zevenet/app/libexec/
 	usr/local/zevenet/app/swaks/
 	usr/local/zevenet/app/letsencryptz/
