@@ -205,6 +205,9 @@ sub addlocalnet    # ($if_ref)
 		&logAndRun( $ip_cmd );
 	}
 
+	use Zevenet::Net::Core;
+	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "add" );
+
 	return;
 }
 
@@ -544,6 +547,10 @@ sub delRoutes    # ($table,$if_ref)
 
 	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
+		#an interface is going to be deleted, delete the rule of the IP first
+		use Zevenet::Net::Core;
+		&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "del" );
+
 		if ( $table eq "local" )
 		{
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";

@@ -336,6 +336,12 @@ $arp_unsolicited="";
 #ARP announcement, true / false (default)
 $arp_announce="";
 
+#Network duplicated net 
+$duplicated_net="false";
+
+
+
+
 
 # Cron service
 $cron_service="/etc/init.d/cron";
