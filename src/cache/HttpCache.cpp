@@ -701,6 +701,7 @@ int HttpCache::deleteEntry(size_t hashed_url){
     storage_commons::STORAGE_STATUS err;
 
     switch(c_object->storage){
+    case storage_commons::STORAGE_TYPE::MEMCACHED:
     case storage_commons::STORAGE_TYPE::STDMAP:
     case storage_commons::STORAGE_TYPE::RAMFS:
         err = ram_storage->deleteInStorage(path);

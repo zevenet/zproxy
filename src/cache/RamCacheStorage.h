@@ -70,7 +70,6 @@ private:
     std::string svc;
     std::string socket;
     double threshold;
-    memcached_return rc;
     memcached_st * memc = nullptr;
 
 public:

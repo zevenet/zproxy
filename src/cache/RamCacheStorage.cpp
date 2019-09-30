@@ -274,31 +274,60 @@ storage_commons::STORAGE_STATUS MemcachedStorage::initServiceStorage(const strin
 
 storage_commons::STORAGE_STATUS MemcachedStorage::getFromStorage(const string &rel_path, string &out_buffer)
 {
+        memcached_st * tmp_memc = nullptr;
+        tmp_memc = memcached_clone(tmp_memc, memc);
+        if ( tmp_memc == nullptr){
+            return st::STORAGE_STATUS::GENERIC_ERROR;
+        }
+
         auto aux_path = svc;
         aux_path.append("/");
         size_t hashed_key = std::hash<std::string>()(rel_path);
         aux_path.append(to_string(hashed_key));
 
         size_t buff_length= 0;
-        char * buff = memcached_get(memc, aux_path.data(),aux_path.size(), &buff_length, nullptr, &rc);
+        char * buff = nullptr;
+
+        memcached_return rc;
+
+        buff = memcached_get(tmp_memc,aux_path.data(), aux_path.size(), &buff_length, nullptr, &rc );
         if( rc != MEMCACHED_SUCCESS ){
+            if( buff != nullptr){
+                free(buff);
+            }
+            const char * err = ::memcached_strerror(tmp_memc, rc);
+            Debug::logmsg(LOG_ERR, "The error is: %s", err);
+            memcached_free(tmp_memc);
             return st::STORAGE_STATUS::GENERIC_ERROR;
         }
-        out_buffer = string(buff,buff_length);
+        if(buff != nullptr && buff_length != 0){
+            out_buffer = string(buff,buff_length);
+        }
+        if( buff != nullptr){
+            free(buff);
+        }
+        memcached_free(tmp_memc);
         return st::STORAGE_STATUS::SUCCESS;
 }
 
 storage_commons::STORAGE_STATUS MemcachedStorage::putInStorage(const string &rel_path, string_view buffer, size_t response_size)
 {
-        auto aux_path = this->svc;
-        aux_path.append("/");
-        size_t hashed_key = std::hash<std::string>()(rel_path);
-        aux_path.append(to_string(hashed_key));
-        auto err = memcached_set(memc, aux_path.data(), aux_path.size(),  buffer.data(), buffer.size(), 0, 0);
-        if (  err  != MEMCACHED_SUCCESS ){
-            return st::STORAGE_STATUS::GENERIC_ERROR;
-        }
-        return st::STORAGE_STATUS::SUCCESS;
+    memcached_st * tmp_memc = nullptr;
+    tmp_memc = memcached_clone(tmp_memc, memc);
+    if ( tmp_memc == nullptr){
+        return st::STORAGE_STATUS::GENERIC_ERROR;
+    }
+    auto aux_path = this->svc;
+    aux_path.append("/");
+    size_t hashed_key = std::hash<std::string>()(rel_path);
+    aux_path.append(to_string(hashed_key));
+    auto err = memcached_set(tmp_memc, aux_path.data(), aux_path.size(),  buffer.data(), buffer.size(), 0, 0);
+    if (  err  != MEMCACHED_SUCCESS ){
+        memcached_free(tmp_memc);
+        return st::STORAGE_STATUS::GENERIC_ERROR;
+    }
+    memcached_free(tmp_memc);
+    return st::STORAGE_STATUS::SUCCESS;
 }
 
 storage_commons::STORAGE_STATUS MemcachedStorage::stopCacheStorage()
@@ -309,14 +338,20 @@ storage_commons::STORAGE_STATUS MemcachedStorage::stopCacheStorage()
 
 storage_commons::STORAGE_STATUS MemcachedStorage::appendData(const string &rel_path, string_view buffer)
 {
+    memcached_st * tmp_memc = nullptr;
+    tmp_memc = memcached_clone(tmp_memc, memc);
+    if ( tmp_memc == nullptr){
+        return st::STORAGE_STATUS::GENERIC_ERROR;
+    }
     auto aux_path = this->svc;
     aux_path.append("/");
     size_t hashed_key = std::hash<std::string>()(rel_path);
     aux_path.append(to_string(hashed_key));
-
-    if(memcached_append(memc, aux_path.data(), aux_path.size(), buffer.data(), buffer.size(), 0, 0)!= MEMCACHED_SUCCESS){
-            return st::STORAGE_STATUS::GENERIC_ERROR;
+    if(memcached_append(tmp_memc, aux_path.data(), aux_path.size(), buffer.data(), buffer.size(), 0, 0)!= MEMCACHED_SUCCESS){
+        memcached_free(tmp_memc);
+        return st::STORAGE_STATUS::GENERIC_ERROR;
     }
+    memcached_free(tmp_memc);
     return st::STORAGE_STATUS::SUCCESS;
 }
 bool MemcachedStorage::isInStorage(const std::string &svc, const std::string &url){
@@ -327,14 +362,34 @@ bool MemcachedStorage::isInStorage(const std::string &svc, const std::string &ur
     return isInStorage(aux_path);
 }
 st::STORAGE_STATUS MemcachedStorage::deleteInStorage(const std::string &path){
+    memcached_st * tmp_memc = nullptr;
+    tmp_memc = memcached_clone(tmp_memc,memc);
+    auto aux_path = this->svc;
+    aux_path.append("/");
+    size_t hashed_key = std::hash<std::string>()(path);
+    aux_path.append(to_string(hashed_key));
+
+
+    time_t expire = 0;
+    memcached_delete(tmp_memc,aux_path.data(), aux_path.size(),expire );
+    memcached_free(tmp_memc);
+    return st::STORAGE_STATUS::SUCCESS;
 }
 bool MemcachedStorage::isInStorage( const std::string &path ){
+    memcached_st * tmp_memc = nullptr;
+    memcached_return rc;
+    tmp_memc = memcached_clone(tmp_memc, memc);
+    if ( tmp_memc == nullptr){
+        return st::STORAGE_STATUS::GENERIC_ERROR;
+    }
     std::string buffer;
     std::size_t buff_length = 0;
-    char * buff = memcached_get(memc, path.data(),path.size(), &buff_length, nullptr, &rc);
+    char * buff = memcached_get(tmp_memc, path.data(),path.size(), &buff_length, nullptr, &rc);
     if ( buff == nullptr){
+        memcached_free(tmp_memc);
         return false;
     }
+    memcached_free(tmp_memc);
     return true;
 }
 
