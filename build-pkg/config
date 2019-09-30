@@ -38,6 +38,7 @@ enterprise_files=(
 	usr/local/zevenet/bin/factory_reset.sh
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
+	usr/local/zevenet/share/check-nic-dhcp
 	usr/local/zevenet/share/sec.rules
 	usr/local/zevenet/share/netplug.template
 	usr/local/zevenet/share/netplugd.conf.template
