@@ -95,6 +95,63 @@ public:
     return addr;
   }
 
+  inline static int getPeerPort(int socket_fd) {
+      int port = -1;
+
+      sockaddr_in adr_inet{};
+      int len_inet = sizeof adr_inet;
+
+      if (getpeername(socket_fd, (struct sockaddr *) &adr_inet, &len_inet) != -1) {
+          port = ntohs(adr_inet.sin_port);
+          return port;
+      }
+      return -1;
+  }
+
+  inline static int getPeerPort(struct addrinfo *addr) {
+      int port;
+      port = ntohs(((struct sockaddr_in *) addr->ai_addr)->sin_port);
+      return port;
+  }
+
+  inline static int getlocalPort(int socket_fd) {
+      int port = -1;
+
+      sockaddr_in adr_inet{};
+      int len_inet = sizeof adr_inet;
+
+      if (getsockname(socket_fd, (struct sockaddr *) &adr_inet, &len_inet) != -1) {
+          port = ntohs(adr_inet.sin_port);
+          return port;
+      }
+      return -1;
+  }
+  inline static char *getlocalAddress(int socket_fd, char *buf, size_t bufsiz,
+                                      bool include_port = false) {
+     int result;
+     sockaddr_in adr_inet{};
+     socklen_t len_inet = sizeof adr_inet;
+     result = ::getsockname(socket_fd, (struct sockaddr *)&adr_inet, &len_inet);
+     if (result == -1) {
+       return nullptr;
+     }
+
+     if (snprintf(buf, bufsiz, "%s", inet_ntoa(adr_inet.sin_addr)) == -1) {
+       return nullptr; /* Buffer too small */
+     }
+     if (include_port) {
+       //      result = snprintf(buf, bufsiz, "%s:%u",
+       //                        inet_ntoa(adr_inet.sin_addr),
+       //                        (unsigned) ntohs(adr_inet.sin_port));
+       //      if (result == -1) {
+       //        return nullptr; /* Buffer too small */
+       //      }
+     }
+     return buf;
+   }
+
+
+
   /*
    * Translate inet/inet6 address/port into a string
    */
@@ -277,5 +334,36 @@ public:
 	unsigned int m = sizeof(new_size);
 	return  ::setsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, &new_size, m) != -1 ;
   }
+
+static std::string read(int fd) {
+    int size = 65536;
+    char buffer[size];
+    bool should_close = false, done = false;
+    ssize_t count = -1;
+    size_t buffer_size = 0;
+
+    while (!done) {
+      count = ::recv(fd, buffer + buffer_size, size, MSG_NOSIGNAL);
+      if (count == -1) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+          std::string error = "read() failed  ";
+          error += std::strerror(errno);
+          Debug::LogInfo(error, LOG_NOTICE);
+          should_close = true;
+        }
+        done = true;
+      } else if (count == 0) {
+        //  The  remote has closed the connection, wait for EPOLLRDHUP
+        should_close = true;
+        done = true;
+      } else {
+        buffer_size += static_cast<size_t>(count);
+      }
+    }
+    return std::string(buffer);
+  }
+
 };
+
+
 #endif // NETWORK_H

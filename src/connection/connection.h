@@ -48,6 +48,8 @@ protected:
   IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
 
 public:
+  std::chrono::steady_clock::time_point time_start;
+  std::time_t date;
   std::string str_buffer;
 #if ENABLE_ZERO_COPY
   SplicePipe splice_pipe;
@@ -55,7 +57,10 @@ public:
   char buffer_aux[MAX_DATA_SIZE];
 #endif
 #endif
-    std::string address_str;
+  std::string address_str{""};        // the remote socket ip
+  std::string local_address_str{""};  // the local socket ip
+    int port{-1};                       // the remote socket port
+    int local_port{-1};                 // the local socket port
     addrinfo *address;
 
   // StringBuffer string_buffer;
@@ -63,6 +68,9 @@ public:
   size_t buffer_size{0};
   size_t buffer_offset{0}; //TODO::REMOVE
   std::string getPeerAddress();
+  std::string getLocalAddress();
+  int getPeerPort();
+  int getLocalPort();
 
 #if ENABLE_ZERO_COPY
   IO::IO_RESULT zeroRead();

@@ -269,13 +269,19 @@ void StreamManager::doWork() {
 void StreamManager::addStream(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
-  HttpStream* stream = streams_set[fd];
+  auto time = std::chrono::system_clock::now();
+  HttpStream *stream = streams_set[fd];
   if (UNLIKELY(stream != nullptr)) {
     clearStream(stream);
   }
   stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
+
+  // add date and time of request
+  stream->client_connection.time_start = std::chrono::steady_clock::now();
+  stream->client_connection.date = std::chrono::system_clock::to_time_t(time);
+
   stream->timer_fd.set(listener_config_.to * 1000);
   addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::TIMEOUT,
         EVENT_GROUP::REQUEST_TIMEOUT);
@@ -286,7 +292,7 @@ void StreamManager::addStream(int fd) {
   // set extra header to forward to the backends
   stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
                             stream->client_connection.getPeerAddress(), true);
-  if (!listener_config_.add_head.empty()) {
+  if (listener_config_.add_head != NULL) {
     stream->request.addHeader(listener_config_.add_head, true);
   }
   if (this->is_https_listener) {
@@ -936,6 +942,7 @@ void StreamManager::onResponseEvent(int fd) {
 #else
     stream->client_connection.enableWriteEvent();
 #endif
+    stream->logTransaction();
   }
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
@@ -1477,3 +1484,4 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
   }
   clearStream(stream);
 }
+

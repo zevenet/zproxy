@@ -100,6 +100,28 @@ std::string Connection::getPeerAddress() {
   return address_str;
 }
 
+std::string Connection::getLocalAddress() {
+  if (this->fd_ > 0 && local_address_str.empty()) {
+    char addr[50];
+    Network::getlocalAddress(this->fd_, addr, 50);
+    local_address_str = std::string(addr);
+  }
+  return local_address_str;
+}
+
+int Connection::getPeerPort() {
+  if (this->fd_ > 0 && port == -1) {
+    port = Network::getPeerPort(this->fd_);
+  }
+  return port;
+}
+int Connection::getLocalPort() {
+  if (this->fd_ > 0 && local_port == -1) {
+    local_port = Network::getlocalPort(this->fd_);
+  }
+  return local_port;
+}
+
 #if ENABLE_ZERO_COPY
 #if !FAKE_ZERO_COPY
 IO::IO_RESULT Connection::zeroRead() {
@@ -479,6 +501,7 @@ int Connection::doAccept() {
     // break;
     return -1;
   }
+
   if (clnt_addr.sin_family == AF_INET || clnt_addr.sin_family == AF_INET6 ||
       clnt_addr.sin_family == AF_UNIX) {
     Network::setTcpNoDelayOption(new_fd);

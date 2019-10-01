@@ -48,6 +48,7 @@ public:
   void printRequestMethod();
 public:
   std::string getMethod();
+  std::string getVersion();
   std::string_view getRequestLine();
   std::string getUrl();
   void setService(/*Service */ void *service);

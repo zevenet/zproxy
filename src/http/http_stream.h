@@ -52,6 +52,10 @@ public:
   HttpResponse response;
   /** This struct indicates the upgrade mechanism status. */
   UpgradeStatus upgrade;  
+
+public:
+  void logTransaction();
+
 };
 
 

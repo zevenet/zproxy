@@ -35,6 +35,21 @@ std::string HttpRequest::getUrl() {
     return path != nullptr ? std::string(path, path_length) : std::string();
 }
 
+std::string HttpRequest::getVersion() {
+    switch (http_version) {
+    case http::HTTP_VERSION::HTTP_1_0:
+        return std::string("1.0");
+
+    case http::HTTP_VERSION::HTTP_1_1:
+        return std::string("1.1");
+
+    case http::HTTP_VERSION::HTTP_2_0:
+        return std::string("2.0");
+
+    }
+    return std::string("");
+}
+
 void HttpRequest::setService(void *service) {
     this->request_service = service;
 }

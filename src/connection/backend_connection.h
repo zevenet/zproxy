@@ -14,7 +14,7 @@ class BackendConnection : public Connection, public Counter<BackendConnection> {
   Backend *backend;
 
 public:
-  std::chrono::steady_clock::time_point time_start;
+
   Backend *getBackend() const;
   void setBackend(Backend *backend);
 
