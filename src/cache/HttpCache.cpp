@@ -728,12 +728,13 @@ void HttpCache::doCacheMaintenance(){
 
 //Iterate over all the content, check staled, check how long, discard if have to
 //    last_maintenance = time_helper::gmtTimeNow();
+    auto current_time = time_helper::gmtTimeNow();
     for (auto iter = cache.begin(); iter != cache.end();){
         bool prev_staled = iter->second->staled;
-        auto current_time = time_helper::gmtTimeNow();
         iter->second->updateFreshness(current_time);
 //        If not staled continue with the loop
         if(!iter->second->staled){
+            iter++;
             continue;
         }
         else
@@ -749,10 +750,8 @@ void HttpCache::doCacheMaintenance(){
                 deleteEntry((iter++)->first);
                 break;
             }
-            else{
-                iter++;
-            }
         }
+        iter++;
     }
 }
 
