@@ -53,6 +53,13 @@ sub getL4BackendEstConns
 	my @fportlist   = &getFarmPortList( $farm->{ vport } );
 	my $regexp      = "";
 	my $connections = 0;
+	my $add_search  = "";
+
+	#if there is a backend port then must be included in the filter
+	if ( $be_port > 0 )
+	{
+		$add_search = "sport=$be_port";
+	}
 
 	if ( $fportlist[0] !~ /\*/ )
 	{
@@ -76,7 +83,7 @@ sub getL4BackendEstConns
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp \.*src=$be_ip \.*",
+					"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp \.*src=$be_ip \.*$add_search",
 					"",
 					$netstat
 				)
@@ -87,9 +94,13 @@ sub getL4BackendEstConns
 			 || $farm->{ proto } eq "udp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter( "udp", "",
-							 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*",
-							 "", $netstat )
+				&getNetstatFilter(
+					 "udp",
+					 "",
+					 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*$add_search",
+					 "",
+					 $netstat
+				)
 			};
 		}
 	}
@@ -103,7 +114,7 @@ sub getL4BackendEstConns
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.*ESTABLISHED src=\.* dst=$farm->{ vip } sport=\.* dport=$regexp \.*src=$be_ip \.*",
+					"\.*ESTABLISHED src=\.* dst=$farm->{ vip } sport=\.* dport=$regexp \.*src=$be_ip \.*$add_search",
 					"",
 					$netstat
 				)
@@ -114,9 +125,13 @@ sub getL4BackendEstConns
 			 || $farm->{ proto } eq "udp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter( "udp", "",
-							 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*",
-							 "", $netstat )
+				&getNetstatFilter(
+					 "udp",
+					 "",
+					 "\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$be_ip \.*$add_search",
+					 "",
+					 $netstat
+				)
 			};
 		}
 	}
@@ -259,6 +274,13 @@ sub getL4BackendSYNConns
 	my @fportlist   = &getFarmPortList( $farm->{ vport } );
 	my $regexp      = "";
 	my $connections = 0;
+	my $add_search  = "";
+
+	#if there is a backend port then must be included in the filter
+	if ( $be_port > 0 )
+	{
+		$add_search = "sport=$be_port";
+	}
 
 	if ( $fportlist[0] !~ /\*/ )
 	{
@@ -276,9 +298,13 @@ sub getL4BackendSYNConns
 			 || $farm->{ proto } eq "tcp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter( "tcp", "",
-					"\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
-					"", $netstat )
+				&getNetstatFilter(
+					"tcp",
+					"",
+					"\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*$add_search",
+					"",
+					$netstat
+				)
 			};
 		}
 
@@ -291,9 +317,13 @@ sub getL4BackendSYNConns
 			 || $farm->{ proto } eq "tcp" )
 		{
 			$connections += scalar @{
-				&getNetstatFilter( "tcp", "",
-					"\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
-					"", $netstat )
+				&getNetstatFilter(
+					"tcp",
+					"",
+					"\.* SYN\.* src=\.* dst=$farm->{ vip } \.* dport=$regexp \.* src=$be_ip \.*$add_search",
+					"",
+					$netstat
+				)
 			};
 		}
 
