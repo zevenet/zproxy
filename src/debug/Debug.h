@@ -25,8 +25,8 @@
 #define logmsg(...) \
   Debug::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 
-#define COUT_GREEN_COLOR(x) "\e[1;32m" + x + "\e[0m"
-#define COUT_BLUE_COLOR(x) "\e[1;32m" + x + "\e[0m"
+#define COUT_GREEN_COLOR(x) ("\e[1;32m" + (x) + "\e[0m")
+#define COUT_BLUE_COLOR(x) ("\e[1;32m" + (x) + "\e[0m")
 #include "fstream"
 #include <unistd.h>
 class Debug {
@@ -81,7 +81,7 @@ public:
       // Static buffer too small
       std::string s(n + 1, 0);
       va_start(args, fmt);
-      std::vsnprintf(const_cast<char *>(s.data()), s.size(), fmt, args);
+      std::vsnprintf(s.data(), s.size(), fmt, args);
       va_end(args);
       Log2(file, function, line, s, priority);
     }

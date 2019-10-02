@@ -1,18 +1,12 @@
 #include "svc.h"
 #include "../debug/Debug.h"
+
 RSA *RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_export,
                                      int keylength) {
   RSA *res;
-  int ret_val;
-
-  if (ret_val = pthread_mutex_lock(&RSA_mut))
-    Debug::logmsg(LOG_WARNING, "RSA_tmp_callback() lock: %s",
-                  strerror(ret_val));
+  std::lock_guard<std::mutex> lock__(RSA_mut);
   res = (keylength <= 512) ? RSA512_keys[rand() % N_RSA_KEYS]
                            : RSA1024_keys[rand() % N_RSA_KEYS];
-  if (ret_val = pthread_mutex_unlock(&RSA_mut))
-    Debug::logmsg(LOG_WARNING, "RSA_tmp_callback() unlock: %s",
-                  strerror(ret_val));
   return res;
 }
 
@@ -52,27 +46,28 @@ void SSLINFO_callback(const SSL *ssl, int where, int rc) {
   RENEG_STATE *reneg_state;
 
   /* Get our thr_arg where we're tracking this connection info */
-  if ((reneg_state = (RENEG_STATE *) SSL_get_app_data(ssl)) == NULL) return;
+  if ((reneg_state = static_cast<RENEG_STATE *> (SSL_get_app_data(ssl))) == nullptr)
+    return;
 
   /* If we're rejecting renegotiations, move to ABORT if Client Hello is being
    * read. */
-  if ((where & SSL_CB_ACCEPT_LOOP) && *reneg_state == RENEG_REJECT) {
+  if ((where & SSL_CB_ACCEPT_LOOP) && *reneg_state == RENEG_STATE::RENEG_REJECT) {
     int state;
 
     state = SSL_get_state(ssl);
     if (state == SSL3_ST_SR_CLNT_HELLO_A || state == SSL23_ST_SR_CLNT_HELLO_A) {
-      *reneg_state = RENEG_ABORT;
+      *reneg_state = RENEG_STATE::RENEG_ABORT;
       Debug::logmsg(LOG_WARNING, "rejecting client initiated renegotiation");
     }
-  } else if (where & SSL_CB_HANDSHAKE_DONE && *reneg_state == RENEG_INIT) {
+  } else if (where & SSL_CB_HANDSHAKE_DONE && *reneg_state == RENEG_STATE::RENEG_INIT) {
     // Reject any followup renegotiations
-    *reneg_state = RENEG_REJECT;
+    *reneg_state = RENEG_STATE::RENEG_REJECT;
   }
 }
 
 int get_host(char *const name, addrinfo *res, int ai_family) {
-  struct addrinfo *chain, *ap;
-  struct addrinfo hints;
+  addrinfo *chain, *ap;
+  addrinfo hints{};
   int ret_val;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = ai_family;
@@ -87,7 +82,7 @@ int get_host(char *const name, addrinfo *res, int ai_family) {
       return EAI_NONAME;
     }
     *res = *ap;
-    if ((res->ai_addr = (struct sockaddr *) malloc(ap->ai_addrlen)) == NULL) {
+    if ((res->ai_addr = static_cast<sockaddr *>(malloc(ap->ai_addrlen))) == nullptr) {
       freeaddrinfo(chain);
       return EAI_MEMORY;
     }
@@ -98,15 +93,15 @@ int get_host(char *const name, addrinfo *res, int ai_family) {
 }
 
 DH *load_dh_params(char *file) {
-  DH *dh = NULL;
+  DH *dh = nullptr;
   BIO *bio;
 
-  if ((bio = BIO_new_file(file, "r")) == NULL) {
+  if ((bio = BIO_new_file(file, "r")) == nullptr) {
     Debug::logmsg(LOG_WARNING, "Unable to open DH file - %s", file);
-    return NULL;
+    return nullptr;
   }
 
-  dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+  dh = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
   BIO_free(bio);
   return dh;
 }

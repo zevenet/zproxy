@@ -4,8 +4,8 @@
 #include "../lib/gtest/googletest/include/gtest/gtest.h"
 
 TEST(ConfigTest, ConfigTest1) {
-  char *argv[] = {"../bin/zhttp", "-f",
-                  "/home/ffmancera/pifostio/zevenet/zhttp/tests/l7core_pound.cfg"};
+  std::string args[] = {"../bin/zhttp", "-f", "l7core_pound.cfg"};
+  char *argv[] = {args[0].data(), args[1].data(), args[2].data()};
   int argc = 3;
   Config config;
 

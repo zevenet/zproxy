@@ -16,7 +16,7 @@ public:
     int result;
     sockaddr_in adr_inet{};
     socklen_t len_inet = sizeof adr_inet;
-    result = ::getpeername(socket_fd, (struct sockaddr *)&adr_inet, &len_inet);
+	result = ::getpeername(socket_fd, reinterpret_cast<sockaddr *>(&adr_inet), &len_inet);
     if (result == -1) {
       return nullptr;
     }
@@ -43,17 +43,17 @@ public:
     hints.ai_family = ai_family;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
-    if ((ret_val = getaddrinfo(name, NULL, &hints, &chain)) == 0) {
-      for (ap = chain; ap != NULL; ap = ap->ai_next)
+	if ((ret_val = getaddrinfo(name, nullptr, &hints, &chain)) == 0) {
+	  for (ap = chain; ap != nullptr; ap = ap->ai_next)
         if (ap->ai_socktype == SOCK_STREAM)
           break;
 
-      if (ap == NULL) {
+	  if (ap == nullptr) {
         freeaddrinfo(chain);
         return EAI_NONAME;
       }
       *res = *ap;
-      if ((res->ai_addr = (struct sockaddr *)malloc(ap->ai_addrlen)) == NULL) {
+	  if ((res->ai_addr =  static_cast<sockaddr *>(malloc(ap->ai_addrlen))) == nullptr) {
         freeaddrinfo(chain);
         return EAI_MEMORY;
       }
@@ -63,12 +63,12 @@ public:
     return ret_val;
   }
 
-  inline static addrinfo *getAddress(std::string &address, int port) {
+  inline static addrinfo *getAddress(const std::string &address, int port) {
     struct sockaddr_in in {};
     struct sockaddr_in6 in6 {};
     auto *addr = new addrinfo(); /* IPv4/6 address */
 
-    if (getHost(address.c_str(), addr, PF_UNSPEC)) {
+	if (getHost(address.data(), addr, PF_UNSPEC)) {
       Debug::LogInfo("Unknown Listener address");
       delete addr;
       return nullptr;
@@ -81,12 +81,12 @@ public:
     switch (addr->ai_family) {
     case AF_INET:
       memcpy(&in, addr->ai_addr, sizeof(in));
-      in.sin_port = (in_port_t)htons(port);
+      in.sin_port = static_cast<in_port_t>(htons(static_cast<uint16_t>(port)));
       memcpy(addr->ai_addr, &in, sizeof(in));
       break;
     case AF_INET6:
       memcpy(&in6, addr->ai_addr, sizeof(in6));
-      in6.sin6_port = htons(port);
+      in6.sin6_port = htons(static_cast<uint16_t>(port));
       memcpy(addr->ai_addr, &in6, sizeof(in6));
       break;
     default:
@@ -98,7 +98,7 @@ public:
   /*
    * Translate inet/inet6 address/port into a string
    */
-  static void addr2str(char *const res, const int res_len,
+  static void addr2str(char *const res, size_t res_len,
                        const struct addrinfo *addr, const int no_port) {
     char buf[MAXBUF];
     int port;
@@ -107,27 +107,27 @@ public:
     ::memset(res, 0, res_len);
     switch (addr->ai_family) {
     case AF_INET:
-      src = (void *)&((struct sockaddr_in *)addr->ai_addr)->sin_addr.s_addr;
-      port = ntohs(((struct sockaddr_in *)addr->ai_addr)->sin_port);
-      if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == NULL)
+	  src = static_cast<void *>(&(reinterpret_cast<sockaddr_in *>(addr->ai_addr))->sin_addr.s_addr);
+	  port = ntohs(( reinterpret_cast<sockaddr_in *>(addr->ai_addr))->sin_port);
+	  if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == nullptr)
         strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
       break;
     case AF_INET6:
-      src = (void *)&((struct sockaddr_in6 *)addr->ai_addr)->sin6_addr.s6_addr;
-      port = ntohs(((struct sockaddr_in6 *)addr->ai_addr)->sin6_port);
+	  src =  static_cast<void *>(&( reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_addr.s6_addr);
+	  port = ntohs(( reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_port);
       if (IN6_IS_ADDR_V4MAPPED(
-              &(((struct sockaddr_in6 *)addr->ai_addr)->sin6_addr))) {
-        src = (void *)&((struct sockaddr_in6 *)addr->ai_addr)
-                  ->sin6_addr.s6_addr[12];
-        if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == NULL)
+			  &(( reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_addr))) {
+		src = static_cast<void *>(&( reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))
+				  ->sin6_addr.s6_addr[12]);
+		if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == nullptr)
           strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
       } else {
-        if (inet_ntop(AF_INET6, src, buf, MAXBUF - 1) == NULL)
+		if (inet_ntop(AF_INET6, src, buf, MAXBUF - 1) == nullptr)
           strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
       }
       break;
     case AF_UNIX:
-      strncpy(buf, (char *)addr->ai_addr, MAXBUF - 1);
+	  strncpy(buf, reinterpret_cast<char *>(addr->ai_addr), MAXBUF - 1);
       port = 0;
       break;
     default:
@@ -147,14 +147,14 @@ public:
     struct in_addr **addr_list;
     int i;
 
-    if ( (he = gethostbyname( hostname ) ) == NULL)
+	if ( (he = gethostbyname( hostname ) ) == nullptr)
     {
       // get the host info
 
       return false;
     }
-    addr_list = (struct in_addr **) he->h_addr_list;
-    for(i = 0; addr_list[i] != NULL; i++)
+	addr_list = reinterpret_cast<in_addr **>(he->h_addr_list);
+	for(i = 0; addr_list[i] != nullptr; i++)
     {
       //Return the first one;
       strcpy(ip , inet_ntoa(*addr_list[i]) );
@@ -184,8 +184,8 @@ public:
   inline static bool setSocketTimeOut(int sock_fd, unsigned int seconds) {
     struct timeval tv;
     tv.tv_sec = seconds; /* 30 Secs Timeout */
-    return setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv,
-                      sizeof(struct timeval)) != -1;
+	return setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv,
+                      sizeof(timeval)) != -1;
   }
 
   inline static bool setSoReuseAddrOption(int sock_fd) {
@@ -256,7 +256,7 @@ public:
   inline static int getSocketSendBufferSize(int socket_fd) {
     int res, size;
     unsigned int m = sizeof(size);
-    res = getsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (void *)&size, &m);
+	res = getsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, &size, &m);
     return res != 0 ? -1 : size;
   }
 
@@ -264,18 +264,18 @@ public:
   inline static int getSocketReceiveBufferSize(int socket_fd) {
     int res, size;
     unsigned int m = sizeof(size);
-    res = getsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, (void *)&size, &m);
+	res = getsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, &size, &m);
     return res != 0 ? -1 : size;
   }
 
   inline static int setSocketSendBufferSize(int socket_fd, unsigned int new_size) {
-    int m = sizeof(new_size);
-    return  ::setsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (char *)&new_size, &m) != -1 ;
+	unsigned int m = sizeof(new_size);
+	return  ::setsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, &new_size, m) != -1 ;
   }
 
   inline static int setSocketReceiveBufferSize(int socket_fd, unsigned int new_size) {
-    int m = sizeof(new_size);
-    return  ::setsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, (char *)&new_size, &m) != -1 ;
+	unsigned int m = sizeof(new_size);
+	return  ::setsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, &new_size, m) != -1 ;
   }
 };
 #endif // NETWORK_H

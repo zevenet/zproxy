@@ -110,7 +110,7 @@ public:
 
   inline void setFileDescriptor(int fd) {
     if (fd < 0) {
-      Debug::LogInfo("Esto que es!!", LOG_REMOVE);
+      Debug::LogInfo("File descriptor not valid", LOG_REMOVE);
       return;
     }
 

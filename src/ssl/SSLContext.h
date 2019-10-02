@@ -20,8 +20,8 @@ namespace ssl {
     SSL_CTX *ctx;
     char *server_name;
     unsigned char **subjectAltNames;
-    unsigned int subjectAltNameCount;
-    struct SSLData *next;
+	size_t subjectAltNameCount;
+	SSLData *next;
   };
 
   /**
@@ -86,8 +86,8 @@ public:
    * @return @c true if everything is ok, @c false if not.
    */
   bool loadOpensslConfig(const std::string &config_file_path,
-                         const std::string &config_file_section,
-                         SSL_CTX *ctx);
+						 const std::string &config_file_section,
+						 SSL_CTX *__ctx);
 
   /**
    * @brief Callback used by OpenSSL SNI support.
@@ -109,6 +109,6 @@ public:
    *
    * @return @c true if everything is ok, @c false if not.
    */
-  static bool initEngine(char *engine_id);
+  static bool initEngine(const std::string &engine_id);
 };
 } // namespace ssl

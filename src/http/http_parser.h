@@ -56,7 +56,7 @@ public:
                         const std::string &header_value,
                         bool permanent = false);
   void addHeader(const std::string &header_value, bool permanent = false);
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   bool pragma = false;
   bool cache_control = false;
 #endif

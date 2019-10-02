@@ -1,10 +1,10 @@
-#include "config/config.h"
-#include "ctl/ControlManager.h"
-#include "stream/listener.h"
-#include "util/system.h"
-#include "debug/backtrace.h"
 #include <csetjmp>
 #include <csignal>
+#include "config/config.h"
+#include "ctl/ControlManager.h"
+#include "debug/backtrace.h"
+#include "stream/listener.h"
+#include "util/system.h"
 
 static jmp_buf jmpbuf;
 
@@ -40,17 +40,12 @@ void handleInterrupt(int sig) {
       //  ::longjmp(jmpbuf, 1);
     }
   }
-
 }
 
-
 int main(int argc, char *argv[]) {
-
   debug::EnableBacktraceOnTerminate();
-
   Listener listener;
   auto control_manager = ctl::ControlManager::getInstance();
-
   if (setjmp(jmpbuf)) {
     // we are in signal context here
     control_manager->stop();
@@ -91,24 +86,24 @@ int main(int argc, char *argv[]) {
   Environment::setUlimitData();
 
   /* record pid in file */
-  if (config.pid_name != nullptr) {
+  if (!config.pid_name.empty()) {
     Environment::createPidFile(config.pid_name, ::getpid());
   }
   /* chroot if necessary */
-  if (config.root_jail != nullptr) {
+  if (!config.root_jail.empty()) {
     Environment::setChrootRoot(config.root_jail);
   }
 
   /*Set process user and group*/
-  if (config.user != nullptr) {
+  if (!config.user.empty()) {
     Environment::setUid(std::string(config.user));
   }
 
-  if (config.group != nullptr) {
+  if (!config.group.empty()) {
     Environment::setGid(std::string(config.group));
   }
 
-  if (config.ctrl_name != nullptr || config.ctrl_ip != nullptr) {
+  if (!config.ctrl_name.empty() || !config.ctrl_ip.empty()) {
     control_manager->init(config);
     control_manager->start();
   }

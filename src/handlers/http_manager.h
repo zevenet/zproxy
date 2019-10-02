@@ -117,9 +117,9 @@ public:
    * @param ssl_manager is the SSLConnectionManager that handles the HTTPS
    * client connection.
    */
-  static void replyError(HttpStatus::Code code, const char *code_string,
-                  const char *string, Connection & target,
-                  ssl::SSLConnectionManager *ssl_manager);
+  static void replyError(HttpStatus::Code code, const std::string&code_string,
+                                  const std::string &str, Connection & target,
+				  ssl::SSLConnectionManager *ssl_manager);
 
   /**
    * @brief Reply a redirect message with the configuration specified in the
@@ -136,6 +136,8 @@ public:
    * @param code is the redirect code.
    * @param url is the url itself.
    */
-  static void replyRedirect(int code, const char * url, Connection & target, SSLConnectionManager*ssl_manager);
+  static void replyRedirect(int code, const std::string &url,
+                            Connection &target,
+                            SSLConnectionManager *ssl_manager);
 };
 

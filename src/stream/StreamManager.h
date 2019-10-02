@@ -84,8 +84,6 @@ DEFINE_OBJECT_COUNTER(event_connect)
 DEFINE_OBJECT_COUNTER(event_connect_fail)
 
 }  // namespace debug__
-#else
-#define DEBUG_COUNTER_HIT(x)
 #endif
 
 using namespace events;

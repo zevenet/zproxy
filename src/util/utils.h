@@ -96,17 +96,12 @@ inline bool headerEqual(const phr_header &header,
     return false;
   if (header.name_len != header_name.size() || header.name[0] != header_name[0])
     return false;
-  if (std::strncmp(header.name, header_name.c_str(), header.name_len) != 0)
-    return false;
-  return true;
+  return std::strncmp(header.name, header_name.c_str(), header.name_len) == 0;
 }
 
 template <typename T> T try_lexical_cast(const std::string &s, T &out) {
   std::stringstream ss(s);
-  if ((ss >> out).fail() || !(ss >> std::ws).eof()) {
-    return false;
-  }
-  return true;
+  return !((ss >> out).fail() || !(ss >> std::ws).eof());
 }
 
 struct DateTime {

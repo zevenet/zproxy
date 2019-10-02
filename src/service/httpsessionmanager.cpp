@@ -52,10 +52,10 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
       std::istream_iterator<std::string> end;
       std::vector<std::string> header_value_parts(begin, end);
       //TODO: Decode base64
-      if (header_value_parts[0] != "Basic") {
+	  if (header_value_parts[0] != "Basic") {
         key = "";
       } else {
-        key = header_value_parts[1]; //Currently it stores username:password
+		key = header_value_parts[1]; //Currently it stores b64 encoded username:password
       }
     }
     break;

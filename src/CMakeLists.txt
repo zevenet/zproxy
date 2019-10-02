@@ -9,7 +9,7 @@ add_definitions(-DMAX_URI_SIZE=8000)
 add_definitions(-DMAX_HEADER_VALUE_SIZE=4000)
 add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
-add_definitions(-DDEBUG_STREAM_EVENTS_COUNT=1)
+add_definitions(-DDEBUG_STREAM_EVENTS_COUNT=0)
 #SSL stuff
 add_definitions(-DSSL_DISABLE_SESSION_CACHE=0) #internal ssl session caching
 add_definitions(-DDEBUG_SSL=0)
@@ -70,7 +70,7 @@ set(l7core_sources
     config/svc.h
     config/svc.cpp
     http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
-    http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
+        http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
     event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
@@ -81,6 +81,7 @@ set(l7core_sources
     http/HttpRequest.cpp
     debug/backtrace.cpp
     debug/backtrace.h)
+
 if(CACHE_SUPPORT)
     message(STATUS "Cache support enabled")
     set(l7core_sources ${l7core_sources}
@@ -96,8 +97,10 @@ if(CACHE_SUPPORT)
         handlers/CacheManager.h
         )
 endif()
+set_source_files_properties(http/http_parser.cpp
+        http/http_parser.h http/picohttpparser.c http/picohttpparser.h PROPERTIES COMPILE_FLAGS -fpermissive)
 add_library(l7pcore ${l7core_sources})
-target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES} ${MEMCACHED_LIBRARIES} stdc++fs)
+target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
 
 if (BUNDLED_OPENSSL)
     #include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
@@ -106,4 +109,11 @@ if (BUNDLED_OPENSSL)
     target_link_libraries(l7pcore PRIVATE ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl)
 else ()
     target_link_libraries(l7pcore PRIVATE ${OPENSSL_LIBRARIES})
+endif ()
+
+if (CACHE_SUPPORT)
+    if (MEMCACHED_ENABLED)
+        target_link_libraries(l7pcore PRIVATE ${MEMCACHED_LIBRARIES})
+    endif ()
+    target_link_libraries(l7pcore PRIVATE stdc++fs)
 endif ()

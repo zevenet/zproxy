@@ -24,7 +24,7 @@ ctl::ControlManager::~ControlManager() {
 
 bool ctl::ControlManager::init(Config &configuration,
                                ctl::CTL_INTERFACE_MODE listener_mode) {
-  if (configuration.ctrl_ip != nullptr && configuration.ctrl_port != 0) {
+  if (!configuration.ctrl_ip.empty() && configuration.ctrl_port != 0) {
     listener_mode = ctl::CTL_INTERFACE_MODE::CTL_AF_INET;
   } else {
     ctl_listener_mode = ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode
@@ -34,10 +34,10 @@ bool ctl::ControlManager::init(Config &configuration,
   if (listener_mode == CTL_INTERFACE_MODE::CTL_UNIX) {
     std::string control_path_name(configuration.ctrl_name);
     control_listener.listen(control_path_name);
-    if (configuration.ctrl_user)
+    if (!configuration.ctrl_user.empty())
       Environment::setFileUserName(std::string(configuration.ctrl_user),
                                    control_path_name);
-    if (configuration.ctrl_group)
+    if (!configuration.ctrl_group.empty())
       Environment::setFileGroupName(std::string(configuration.ctrl_group),
                                     control_path_name);
     if (configuration.ctrl_mode > 0)
@@ -187,7 +187,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   }
 
   auto result = notify(task, false);
-  std::string res = "";
+  std::string res;
   for (auto &future_result : result) {
     res += future_result.get();
   }

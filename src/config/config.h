@@ -1,6 +1,5 @@
 
-#ifndef ZHTTP_CONFIG_H
-#define ZHTTP_CONFIG_H
+#pragma once
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -10,34 +9,29 @@
 #include <openssl/engine.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <unistd.h>
 #include <string>
-#include "config_defines.h"
 #include "pound_struct.h"
 #include "svc.h"
 #include <openssl/lhash.h>
 
 #ifndef F_CONF
-#define F_CONF "/usr/local/etc/zhttp.cfg"
+constexpr auto F_CONF = "/usr/local/etc/zhttp.cfg";
 #endif
-
 #ifndef F_PID
-#define F_PID "/var/run/zhttp.pid"
+constexpr auto F_PID = "/var/run/zhttp.pid";
 #endif
-
-/* Timeout for RSA ephemeral keys generation */
-#define T_RSA_KEYS 7200
-
-#define MAX_FIN 100
+constexpr int MAX_FIN = 100;
+constexpr int UNIX_PATH_MAX = 108;
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-# define general_name_string(n) \
-	(unsigned char*) \
-	strndup((char*)ASN1_STRING_get0_data(n->d.dNSName),	\
-		ASN1_STRING_length(n->d.dNSName) + 1)
+#define general_name_string(n)                                             \
+  reinterpret_cast<unsigned char *>(strndup(                               \
+      reinterpret_cast<const char *>(ASN1_STRING_get0_data(n->d.dNSName)), \
+      ASN1_STRING_length(n->d.dNSName) + 1))
 #else
 # define general_name_string(n) \
 	(unsigned char*) \
@@ -45,11 +39,6 @@
 	       ASN1_STRING_length(n->d.dNSName) + 1)
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-  DEFINE_LHASH_OF(TABNODE);
-#elif OPENSSL_VERSION_NUMBER >= 0x10000000L
-DECLARE_LHASH_OF(TABNODE);
-#endif
 
 
 class Config {
@@ -76,10 +65,10 @@ class Config {
   int be_connto;
   bool dynscale;
   int ignore_case;
-  char *f_name[MAX_FIN];
+  std::array<std::string, MAX_FIN> f_name;
   FILE *f_in[MAX_FIN];
   int n_lin[MAX_FIN];
-  int cur_fin;
+  size_t cur_fin;
   DH *DHCustom_params;
   int EC_nid;
 
@@ -87,42 +76,38 @@ class Config {
   /*
    * Global variables needed by everybody
    */
- std::string name;
-  char *user,       /* user to run as */
-      *group,       /* group to run as */
-      //*name,        /* farm name to run as */
-      *root_jail,   /* directory to chroot to */
-      *pid_name,    /* file to record pid in */
-      *ctrl_name,   /* control socket name */
-      *ctrl_ip = nullptr,     /* control socket ip */
-      *ctrl_user,   /* control socket username */
-      *ctrl_group,  /* control socket group name */
-      *sync_socket, /*session sync socket path*/
-      *engine_id = nullptr; /* openssl engine id*/
+
+  std::string user,        /* user to run as */
+      group,               /* group to run as */
+      name,                /* farm name to run as */
+      root_jail,           /* directory to chroot to */
+      pid_name,            /* file to record pid in */
+      ctrl_name,           /* control socket name */
+      ctrl_ip,   /* control socket ip */
+      ctrl_user,           /* control socket username */
+      ctrl_group,          /* control socket group name */
+      engine_id; /* openssl engine id*/
 
   long ctrl_mode; /* octal mode of the control socket */
 
   static int numthreads;      /* number of worker threads */
-   int   anonymise,       /* anonymise client address */
-      threadpool,      /* 1 to use a threadpool (i.e. 2.6 behavior)
-                          0 to use new thread per request (2.5 behavior) */
-      alive_to,        /* check interval for resurrection */
-      daemonize,       /* run as daemon */
-      log_facility,    /* log facility to use */
-      print_log,       /* print log messages to stdout/stderr */
-      grace,           /* grace period before shutdown */
-      ignore_100,      /* ignore header "Expect: 100-continue"*/
+  int anonymise,              /* anonymise client address */
+      alive_to,               /* check interval for resurrection */
+      daemonize,              /* run as daemon */
+      log_facility,           /* log facility to use */
+      print_log,              /* print log messages to stdout/stderr */
+      grace,                  /* grace period before shutdown */
+      ignore_100,             /* ignore header "Expect: 100-continue"*/
   /* 1 Ignore header (Default)*/
   /* 0 Manages header */
-      ctrl_port = 0,
-      sync_is_enabled; /*session sync enabled*/
-#if CACHE_ENABLED
-   long cache_s;
-   int cache_thr;
-   std::string cache_ram_path;
-   std::string cache_disk_path;
+      ctrl_port = 0, sync_is_enabled; /*session sync enabled*/
+#ifdef CACHE_ENABLED
+  long cache_s;
+  int cache_thr;
+  std::string cache_ram_path;
+  std::string cache_disk_path;
 #endif
-  int conf_init(const char *name);
+  int conf_init(const std::string &name);
 
  private:
   regex_t Empty, Comment, User, Group, Name, RootJail, Daemon, LogFacility,
@@ -144,7 +129,7 @@ class Config {
   regex_t IncludeDir;
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize, CacheDiskPath, CacheRamPath; /* Cache configuration regex */
 #endif
  public:
@@ -166,7 +151,7 @@ class Config {
   /*
    * return the file contents as a string
    */
-  char *file2str(const char *fname);
+  std::string file2str(const char *fname);
 
   /*
    * parse an HTTP listener
@@ -182,7 +167,8 @@ class Config {
 
   void load_cert(int has_other, ListenerConfig *res, char *filename);
 
-  void load_certdir(int has_other, ListenerConfig *res, const char *dir_path);
+  void load_certdir(int has_other, ListenerConfig *res,
+                    const std::string &dir_path);
 
   /*
    * parse a service
@@ -208,7 +194,7 @@ class Config {
   /*
    * Parse the cache configuration
    */
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
   void parseCache(ServiceConfig *const svc);
 #endif
   /*
@@ -221,46 +207,6 @@ class Config {
   void parse_file(void);
 
 
- private:
-  // LHASH
-
-/*
- * basic hashing function, based on fmv
- */
-  static unsigned long
-  t_hash(const TABNODE *e)
-  {
-    unsigned long   res;
-    char            *k;
-
-    k = e->key;
-    res = 2166136261;
-    while(*k)
-      res = ((res ^ *k++) * 16777619) & 0xFFFFFFFF;
-    return res;
-  }
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-# if OPENSSL_VERSION_NUMBER >= 0x10000000L
-  static IMPLEMENT_LHASH_HASH_FN(t, TABNODE)
-# else
-  static IMPLEMENT_LHASH_HASH_FN(t_hash, const TABNODE *)
-# endif
-#endif
-
-  static int
-  t_cmp(const TABNODE *d1, const TABNODE *d2)
-  {
-    return strcmp(d1->key, d2->key);
-  }
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-# if OPENSSL_VERSION_NUMBER >= 0x10000000L
-  static IMPLEMENT_LHASH_COMP_FN(t, TABNODE)
-# else
-  static IMPLEMENT_LHASH_COMP_FN(t_cmp, const TABNODE *)
-# endif
-#endif
   public:
    ServiceConfig *services;   /* global services (if any) */
    ListenerConfig *listeners; /* all available listeners */
@@ -276,4 +222,3 @@ class Config {
    bool exportConfigToJsonFile(std::string save_path);
 };
 
-#endif  // ZHTTP_CONFIG_H

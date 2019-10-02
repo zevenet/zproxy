@@ -5,17 +5,16 @@
 #include <openssl/ssl.h>
 #include "../debug/debug.h"
 #include "pound_struct.h"
-#include "string.h"
-
+#include <cstring>
+#include <mutex>
 /*
  * RSA ephemeral keys: how many and how often
  */
-#define N_RSA_KEYS 11
-#ifndef T_RSA_KEYS
-#define T_RSA_KEYS 7200
+constexpr int N_RSA_KEYS= 11;
+#ifndef T_RSA_KEYS/* Timeout for RSA ephemeral keys generation */
+constexpr int T_RSA_KEYS= 7200;
 #endif
-
-static pthread_mutex_t RSA_mut;       /* mutex for RSA keygen */
+static std::mutex RSA_mut; /*Mutex for RSA keygen*/
 static RSA *RSA512_keys[N_RSA_KEYS];  /* ephemeral RSA keys */
 static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 
@@ -29,7 +28,7 @@ RSA *RSA_tmp_callback(/* not used */ SSL *ssl,
 static inline int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 #endif
 
-//#include "dh512.h"
+//#include "dh512.h"//TODO::
 
 #if DH_LEN == 1024
 #include "dh1024.h"
@@ -40,7 +39,7 @@ DH *DH_tmp_callback(/* not used */ SSL *s, /* not used */ int is_export,
   return keylength == 512 ? DH512_params : DH1024_params;
 }
 #else
-//#include "dh2048.h"
+//#include "dh2048.h" //TODO
 static DH *DH512_params, *DH2048_params;
 
 DH *DH_tmp_callback(/* not used */ SSL *s,

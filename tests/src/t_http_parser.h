@@ -21,31 +21,21 @@ TEST(HttpParserTest, HttpParserTest1) {
   struct phr_header headers[4];
   size_t num_headers;
   size_t last_len = 0;
-  size_t http_message_length = 0;
   std::string s = "GET /hoge HTTP/1.1\r\nHost: example.com\r\nUser-Agent: \343\201\262\343/1.0\r\n\r\n";
   num_headers = sizeof(headers) / sizeof(headers[0]);
 
-  auto ret =
-      phr_parse_request(s.c_str(),
-                        s.length(),
-                        &method,
-                        &method_len,
-                        &path,
-                        &path_len,
-                        &minor_version,
-                        headers,
-                        &num_headers,
-                        last_len,
-                        &http_message_length);
+  auto ret = phr_parse_request(s.c_str(), s.length(), &method, &method_len,
+                               &path, &path_len, &minor_version, headers,
+                               &num_headers, last_len);
   ASSERT_TRUE(s.length() == s.size());
-  ASSERT_TRUE(ret == s.length());
-  Debug::logmsg(LOG_DEBUG, "method is %.*s\n", (int) method_len, method);
-  Debug::logmsg(LOG_DEBUG, "path is %.*s\n", (int) path_len, path);
+  ASSERT_TRUE(ret == static_cast<int>(s.length()));
+  Debug::logmsg(LOG_DEBUG, "method is %.*s\n", method_len, method);
+  Debug::logmsg(LOG_DEBUG, "path is %.*s\n", path_len, path);
   Debug::logmsg(LOG_DEBUG, "HTTP version is 1.%d\n", minor_version);
   Debug::logmsg(LOG_DEBUG, "headers:\n");
-  for (auto i = 0; i != num_headers; ++i) {
-    Debug::logmsg(LOG_DEBUG, "%.*s: %.*s\n", (int) headers[i].name_len,
-                  headers[i].name, (int) headers[i].value_len, headers[i].value);
+  for (size_t i = 0; i != num_headers; ++i) {
+    Debug::logmsg(LOG_DEBUG, "%.*s: %.*s\n", headers[i].name_len,
+                  headers[i].name, headers[i].value_len, headers[i].value);
   }
   ASSERT_TRUE(num_headers == 2);
   ASSERT_TRUE(bufis(method, method_len, "GET"));

@@ -15,11 +15,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
+
 set(STORAGE_TYPE 1) # 1 ramfs,2 stdmap,3 memcached, default(1)
-option(CACHE_SUPPORT "Build with cache support" OFF)
+option(CACHE_SUPPORT "Build with cache support" ON)
 option(BUILD_DOC "Build Documentation" OFF)
-option (MEMCACHED_ENABLED "memcached" OFF)
-option(BUILD_TESTS "Build tests" OFF)
+option(MEMCACHED_ENABLED "memcached" OFF)
+option(BUILD_TESTS "Build tests" ON)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
@@ -90,21 +91,15 @@ configure_file(
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
-if (CACHE_SUPPORT)
-    add_definitions(-DCACHE_ENABLED=1)
-    if (STORAGE_TYPE EQUAL 2)
-        message(STATUS "Using stdmap")
-        add_definitions(-DCACHE_STORAGE_STDMAP=1)
-    elseif(STORAGE_TYPE EQUAL 3)
-        message(STATUS "Using memcached")
-        set(MEMCACHED_ENABLED 1)
-    else()
-        message(STATUS "Using ramfs")
-    endif()
-endif()
+
+
+if (UNIQUE_BUILD_DIRECTORY)
+    SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
+endif ()
+
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z -fpermissive  -Wshadow -pipe -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z  -Wshadow -pipe -pthread")
 #uncomment to show relative source file path
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath \$<))\"'")
 
@@ -117,10 +112,6 @@ if (ENABLE_HEAP_PROFILER)
         -fno-builtin-realloc -fno-builtin-free")
 endif ()
 
-if (UNIQUE_BUILD_DIRECTORY)
-    SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
-endif ()
-
 
 find_package(PkgConfig)
 pkg_check_modules(PC_PCRE QUIET libpcre)
@@ -129,13 +120,9 @@ set(PCRE_DEFINITIONS ${PC_PCRE_CFLAGS_OTHER})
 find_path(PCRE_INCLUDE_DIR pcre.h
     HINTS ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS}
     PATH_SUFFIXES pcre)
-
 find_library(PCRE_PCRE_LIBRARY NAMES pcre HINTS ${PC_PCRE_LIBDIR} ${PC_PCRE_LIBRARY_DIRS})
-
 find_library(PCRE_PCREPOSIX_LIBRARY NAMES pcreposix HINTS ${PC_PCRE_LIBDIR} ${PC_PCRE_LIBRARY_DIRS})
-
 include(FindPackageHandleStandardArgs)
-
 find_package_handle_standard_args(PCRE DEFAULT_MSG PCRE_INCLUDE_DIR PCRE_PCRE_LIBRARY PCRE_PCREPOSIX_LIBRARY)
 set(PCRE_LIBRARIES ${PCRE_PCREPOSIX_LIBRARY} ${PCRE_PCRE_LIBRARY})
 mark_as_advanced(PCRE_INCLUDE_DIR PCRE_LIBRARIES PCRE_PCRE_LIBRARY)
@@ -182,32 +169,6 @@ else ()
     endif ()
 endif()
 
-set(ENV{PKG_CONFIG_PATH} "/usr/lib/x86_64-linux-gnu/pkgconfig")
-if(MEMCACHED_ENABLED)
-    # Search memcached
-    add_definitions(-DMEMCACHED_ENABLED=1)
-    pkg_search_module(MEMCACHED libmemcached REQUIRED)
-    #<XPREFIX>_FOUND          ... set to 1 if module(s) exist
-    #<XPREFIX>_LIBRARIES      ... only the libraries (w/o the '-l')
-    #<XPREFIX>_LIBRARY_DIRS   ... the paths of the libraries (w/o the '-L')
-    #<XPREFIX>_LDFLAGS        ... all required linker flags
-    #<XPREFIX>_LDFLAGS_OTHER  ... all other linker flags
-    #<XPREFIX>_INCLUDE_DIRS   ... the '-I' preprocessor flags (w/o the '-I')
-    #<XPREFIX>_CFLAGS         ... all required cflags
-    #<XPREFIX>_CFLAGS_OTHER   ... the other compiler flags
-
-
-    if (MEMCACHED_FOUND)
-        message(STATUS "Memcached includes ${MEMCACHED_INCLUDE_DIRS}")
-        message(STATUS "Memcached link ${MEMCACHED_LIBRARIES}")
-        include_directories(${MEMCACHED_INCLUDE_DIRS})
-        message(STATUS "Using memcached ${MEMCACHED_VERSION}")
-    else ()
-        # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
-    endif ()
-else()
-            add_definitions(-DMEMCACHED_ENABLED=0)
-endif()
 
 if (BUNDLED_OPENSSL)
     #
@@ -246,6 +207,33 @@ else ()
         include_directories(${OPENSSL_INCLUDE_DIRS})
         message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
     endif()
+endif ()
+
+if (CACHE_SUPPORT)
+    add_definitions(-DCACHE_ENABLED=1)
+    if (STORAGE_TYPE EQUAL 2)
+        message(STATUS "Using stdmap")
+        add_definitions(-DCACHE_STORAGE_STDMAP=1)
+    elseif(STORAGE_TYPE EQUAL 3)
+        message(STATUS "Using memcached")
+        set(MEMCACHED_ENABLED 1)
+    else()
+        message(STATUS "Using ramfs")
+    endif()
+    set(ENV{PKG_CONFIG_PATH} "/usr/lib/x86_64-linux-gnu/pkgconfig")
+    if (MEMCACHED_ENABLED)
+        # Search memcached
+        add_definitions(-DMEMCACHED_ENABLED=1)
+        pkg_search_module(MEMCACHED libmemcached REQUIRED)
+        if (MEMCACHED_FOUND)
+            message(STATUS "Memcached includes ${MEMCACHED_INCLUDE_DIRS}")
+            message(STATUS "Memcached link ${MEMCACHED_LIBRARIES}")
+            include_directories(${MEMCACHED_INCLUDE_DIRS})
+            message(STATUS "Using memcached ${MEMCACHED_VERSION}")
+        endif ()
+    else ()
+        add_definitions(-DMEMCACHED_ENABLED=0)
+    endif ()
 endif ()
 
 # TODO: In the future it would be needed to set the directory, probably with

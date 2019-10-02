@@ -2,30 +2,25 @@
 
 #include <netdb.h>
 #include <openssl/ssl.h>
-
-//#ifndef _REGEX_H
 #include <pcreposix.h>
-//#endif
 #include <sys/socket.h>
 #include <string>
-typedef enum {
+
+enum class RENEG_STATE {
   RENEG_INIT = 0,
   RENEG_REJECT,
   RENEG_ALLOW,
   RENEG_ABORT
-} RENEG_STATE;
-
-/* maximal session key size */
-#define KEY_SIZE 127
+};
 
 /* matcher chain */
-typedef struct _matcher {
+struct MATCHER {
   regex_t pat; /* pattern to match the request/header against */
-  struct _matcher *next;
-} MATCHER;
+  MATCHER *next;
+};
 
 /* back-end types */
-typedef enum {
+enum class SESS_TYPE {
   SESS_NONE,
   SESS_IP,
   SESS_COOKIE,
@@ -33,7 +28,7 @@ typedef enum {
   SESS_PARM,
   SESS_HEADER,
   SESS_BASIC
-} SESS_TYPE;
+};
 
 /* back-end definition */
 class BackendConfig {
@@ -67,19 +62,11 @@ class BackendConfig {
   int nf_mark;
 };
 
-typedef struct _tn {
-  int listener;
-  int service;
-  char *key;
-  void *content;
-  time_t last_acc;
-} TABNODE;
-
 class ServiceConfig {
  public:
   int key_id;
   int listener_key_id;
-  char name[KEY_SIZE + 1]; /* symbolic name */
+  std::string name; /* symbolic name */
   MATCHER *url,            /* request matcher */
       *req_head,           /* required headers */
       *deny_head;          /* forbidden headers */
@@ -87,27 +74,19 @@ class ServiceConfig {
   BackendConfig *emergency;
   int abs_pri;         /* abs total priority for all back-ends */
   int tot_pri;         /* total priority for current back-ends */
-#if CACHE_ENABLED
-  int cache_timeout = -1; /* cached content timeout in seconds */
-#endif
   pthread_mutex_t mut; /* mutex for this service */
   SESS_TYPE sess_type;
   int sess_ttl;       /* session time-to-live */
   std::string sess_id;    /* id used to track the session */
   regex_t sess_start; /* pattern to identify the session data */
   regex_t sess_pat;   /* pattern to match the session data */
-#if CACHE_ENABLED
+#ifdef CACHE_ENABLED
+  int cache_timeout = -1; /* cached content timeout in seconds */
   std::string f_name, cache_disk_path, cache_ram_path;
   regex_t cache_content; /* pattern to decide if must be cached or not */
   long cache_size;
   size_t cache_max_size;
   int cache_threshold;
-#endif
-
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L
-  LHASH_OF(TABNODE) * sessions; /* currently active sessions */
-#else
-  LHASH *sessions; /* currently active sessions */
 #endif
   regex_t becookie_re; /* Regexs to find backend cookies */
   char *becookie,      /* Backend Cookie Name */
@@ -124,39 +103,39 @@ class ServiceConfig {
   ServiceConfig *next;
 };
 
-typedef struct _pound_ctx {
+struct POUND_CTX {
   SSL_CTX *ctx;
   char *server_name;
   unsigned char **subjectAltNames;
   unsigned int subjectAltNameCount;
-  struct _pound_ctx *next;
-} POUND_CTX;
+  POUND_CTX *next;
+};
 
 /* Listener definition */
 struct ListenerConfig {
-  int key_id;
   std::string address;
   int port;
-  struct addrinfo addr; /* IPv4/6 address */
+  addrinfo addr{};      /* IPv4/6 address */
   int sock;             /* listening socket */
-  POUND_CTX *ctx;       /* CTX for SSL connections */
+  POUND_CTX *ctx{nullptr}; /* CTX for SSL connections */
   int clnt_check;       /* client verification mode */
   int noHTTPS11;        /* HTTP 1.1 mode for SSL */
-  MATCHER *forcehttp10; /* User Agent Patterns to force HTTP 1.0 mode */
+  MATCHER *forcehttp10{
+      nullptr}; /* User Agent Patterns to force HTTP 1.0 mode */
   MATCHER *
       ssl_uncln_shutdn; /* User Agent Patterns to enable ssl unclean shutdown */
-  char *add_head;       /* extra SSL header */
+  std::string add_head; /* extra SSL header */
   regex_t verb;         /* pattern to match the request verb against */
   int to;               /* client time-out */
   int has_pat;          /* was a URL pattern defined? */
   regex_t url_pat;      /* pattern to match the request URL against */
-  char *err414,         /* error messages */
-      *err500, *err501, *err503, *errnossl;
-  char *nossl_url; /* If a user goes to a https port with a http: url, redirect
-                      them to this url */
+  std::string err414,         /* error messages */
+      err500, err501, err503, errnossl;
+  std::string nossl_url; /* If a user goes to a https port with a http: url,
+                      redirect them to this url */
   int nossl_redir; /* Code to use for redirect (301 302 307)*/
   long max_req;    /* max. request size */
-  MATCHER *head_off;      /* headers to remove */
+  MATCHER *head_off{nullptr};  /* headers to remove */
   std::string ssl_config_file; /* OpenSSL config file path */
   int rewr_loc{0};           /* rewrite location response */
   int rewr_dest{0};          /* rewrite destination header */
@@ -168,7 +147,7 @@ struct ListenerConfig {
   int disable_ssl_v2;     /* Disable SSL version 2 */
   int alive_to;
   int ignore100continue;  /* Ignore Expect: 100-continue headers in requests. */
-  char *engine_id{nullptr};   /* Engine id loaded by openssl*/
-  ServiceConfig *services;
-  ListenerConfig *next;
+  std::string engine_id; /* Engine id loaded by openssl*/
+  ServiceConfig *services{nullptr};
+  ListenerConfig *next{nullptr};
 };

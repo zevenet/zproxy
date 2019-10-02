@@ -43,14 +43,14 @@ void http_parser::HttpData::prepareToSend()
                     extra_headers.size()+permanent_extra_headers.size();
     iov.clear();
     iov.reserve(vector_size);
-    iov.push_back({ http_message, http_message_length});
+  iov.push_back({http_message, http_message_length + CRLF_LEN});
 
     for (size_t i = 0; i!=num_headers; i++) {
       if (headers[i].header_off)
         continue; // skip unwanted headers
       iov.push_back({ const_cast<char *>(headers[i].name), headers[i].line_size});
   #if DEBUG_HTTP_HEADERS
-      Debug::logmsg(LOG_DEBUG, "%.*s", http_data.headers[i].line_size - 2, http_data.headers[i].name);
+      Debug::logmsg(LOG_DEBUG, "%.*s", headers[i].line_size - 2, headers[i].name);
   #endif
     }
 
@@ -76,7 +76,7 @@ void http_parser::HttpData::prepareToSend()
     if (message_length>0) {
       iov.push_back({ message, message_length});
   #if DEBUG_HTTP_HEADERS
-      Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", http_data.message_length);
+      Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", message_length);
   #endif
     }
 }
@@ -111,13 +111,16 @@ void http_parser::HttpData::setHeaderSent(bool value) {
 
 bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
                                            std::string &out_key) {
-    for (auto i = 0; i != num_headers; ++i) {
-        std::string header(headers[i].name, headers[i].name_len);
-        std::string header_value(headers[i].value, headers[i].value_len);
-    auto header_name_ = http_info::headers_names[header];
-    if (header_name_ == header_name) {
-      out_key = header_value;
-      return true;
+  for (size_t i = 0; i != num_headers; ++i) {
+    std::string header(headers[i].name, headers[i].name_len);
+    std::string header_value(headers[i].value, headers[i].value_len);
+    if (http_info::headers_names.find(header) !=
+        http_info::headers_names.end()) {
+      auto header_name_ = http_info::headers_names.at(header);
+      if (header_name_ == header_name) {
+        out_key = header_value;
+        return true;
+      }
     }
   }
   return false;
@@ -125,7 +128,7 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
 
 bool http_parser::HttpData::getHeaderValue(const std::string &header_name,
                                            std::string &out_key) {
-  for (auto i = 0; i != num_headers; ++i) {
+  for (size_t i = 0; i != num_headers; ++i) {
     std::string_view header(headers[i].name, headers[i].name_len);
 
     if (header_name == header) {
@@ -180,7 +183,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
   num_headers = sizeof(headers) / sizeof(headers[0]);
   auto pret = phr_parse_request(data, data_size, &method, &method_len, &path,
                                 &path_length, &minor_version, headers,
-                                &num_headers, last_length, &http_message_length);
+                                &num_headers, last_length);
   last_length = data_size;
   //  Debug::logmsg(LOG_DEBUG, "request is %d bytes long\n", pret);
   if (pret > 0) {
@@ -193,7 +196,8 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
         minor_version == 1 ? HTTP_VERSION::HTTP_1_1 : HTTP_VERSION::HTTP_1_0;
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
-    http_message = const_cast<char *>(method);
+    http_message = method;
+    http_message_length = std::string_view(method).find('\r');
     //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
     //      if (std::string(headers[i].name, headers[i].name_len) !=
     //          http::http_info::headers_names_strings.at(
@@ -229,16 +233,9 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
     headers_length = pret;
-    http_message = const_cast<char *>(buffer);
-    http_message_length = num_headers>0 ? static_cast<size_t>(headers[0].name-buffer) : buffer_size-2;
-    //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
-    //      if (std::string(headers[i].name, headers[i].name_len) !=
-    //          http::http_info::headers_names_strings.at(
-    //              http::HTTP_HEADER_NAME::H_CONTENT_LENGTH))
-    //        continue;
-    //      message_bytes_left =
-    //      static_cast<size_t>(std::atoi(headers[i].value)); break;
-    //    }
+    http_message = buffer;
+    // http_message_length = num_headers > 0 ? static_cast<size_t>(headers[0].name - buffer) : buffer_size - 2;
+    http_message_length = std::string_view(buffer).find('\r');
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
 #if DEBUG_HTTP_PARSER
@@ -254,19 +251,19 @@ void http_parser::HttpData::printResponse() {
   Debug::logmsg(LOG_DEBUG, "HTTP 1.%d %d %s", minor_version, http_status_code,
                 HttpStatus::reasonPhrase(http_status_code).c_str());
   Debug::logmsg(LOG_DEBUG, "headers:");
-  for (auto i = 0; i != num_headers; ++i) {
-    Debug::logmsg(LOG_DEBUG, "\t%.*s: %.*s", (int)headers[i].name_len,
-                  headers[i].name, (int)headers[i].value_len, headers[i].value);
+  for (size_t i = 0; i != num_headers; ++i) {
+    Debug::logmsg(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
+                  headers[i].name, headers[i].value_len, headers[i].value);
   }
 }
 void http_parser::HttpData::printRequest() {
-  Debug::logmsg(LOG_DEBUG, "method is %.*s", (int)method_len, method);
-  Debug::logmsg(LOG_DEBUG, "path is %.*s", (int)path_length, path);
+  Debug::logmsg(LOG_DEBUG, "method is %.*s", method_len, method);
+  Debug::logmsg(LOG_DEBUG, "path is %.*s", path_length, path);
   Debug::logmsg(LOG_DEBUG, "HTTP version is 1.%d", minor_version);
   Debug::logmsg(LOG_DEBUG, "headers:");
-  for (auto i = 0; i != num_headers; ++i) {
-    Debug::logmsg(LOG_DEBUG, "\t%.*s: %.*s", (int)headers[i].name_len,
-                  headers[i].name, (int)headers[i].value_len, headers[i].value);
+  for (size_t i = 0; i != num_headers; ++i) {
+    Debug::logmsg(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
+                  headers[i].name, headers[i].value_len, headers[i].value);
   }
 }
 bool http_parser::HttpData::hasPendingData() {
