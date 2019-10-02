@@ -127,7 +127,7 @@ public:
                          size_t &written);
 
   IO::IO_RESULT sslWriteIOvec (Connection &target_ssl_connection, const iovec* __iovec, int count, size_t &nwritten);
-  IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection, std::vector<iovec> &iov, size_t &iovec_written, size_t &nwritten);
+  IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection, iovec*iov, size_t&iovec_size, size_t &iovec_written, size_t &nwritten);
 
   /**
    * @brief Initialize the SSLConnectionManager with the configuration specified

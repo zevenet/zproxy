@@ -68,7 +68,7 @@ public:
   IO::IO_RESULT zeroRead();
   IO::IO_RESULT zeroWrite(int dst_fd, http_parser::HttpData &http_data);
 #endif
-  IO::IO_RESULT writeIOvec(int target_fd, std::vector<iovec> &iov, size_t &iovec_written, size_t &nwritten);
+  IO::IO_RESULT writeIOvec(int target_fd, iovec * iov, size_t iovec_size, size_t &iovec_written, size_t &nwritten);
   IO::IO_RESULT write(const char *data, size_t size);
   IO::IO_RESULT writeTo(int fd, size_t & sent);
   IO::IO_RESULT writeTo(const Connection &target_connection,

@@ -378,11 +378,11 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   }
 
   IO::IO_RESULT SSLConnectionManager::handleWriteIOvec(
-      Connection &target_ssl_connection, std::vector<iovec> &iov,
+      Connection &target_ssl_connection, iovec *iov,size_t &iovec_size,
       size_t &iovec_written, size_t &nwritten) {
     IO::IO_RESULT result = IO::IO_RESULT::ERROR;
     size_t count = 0;
-    auto nvec = iov.size();
+    auto nvec = iovec_size;
     nwritten = 0;
     iovec_written = 0;
     do {
@@ -392,21 +392,19 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
       //    %d",IO::getResultString(result).data(),count,iovec_written);
       if (count > 0) {
         size_t remaining = static_cast<size_t>(count);
-        for (auto it = iov.begin() + static_cast<ssize_t>(iovec_written);
-             it != iov.end(); it++) {
-          if (remaining >= it->iov_len) {
-            remaining -= it->iov_len;
-
-            it->iov_len = 0;
+        for (auto it =  iovec_written; it != iovec_size; it++) {
+          if (remaining >= iov[it].iov_len) {
+            remaining -= iov[it].iov_len;
+            iov[it].iov_len = 0;
             iovec_written++;
           } else {
-            it->iov_base =
+            iov[it].iov_base =
                 static_cast<char *>(iov[iovec_written].iov_base) + remaining;
             Debug::logmsg(LOG_REMOVE,
                           "Recalculating data ... remaining %d niovec_written: "
                           "%d iov size %d",
-                          it->iov_len - remaining, iovec_written, iov.size());
-            it->iov_len -= remaining;
+                          iov[it].iov_len - remaining, iovec_written, iovec_size);
+            iov[it].iov_len -= remaining;
             break;
           }
         }
@@ -435,13 +433,13 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
     if (!target_ssl_connection.ssl_connected) {
       return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
     }
-    if (http_data.iov.empty())
+    if (http_data.iov_size == 0)
       http_data.prepareToSend();
 
     size_t nwritten = 0;
     size_t iovec_written = 0;
 
-    auto result = handleWriteIOvec(target_ssl_connection, http_data.iov,
+    auto result = handleWriteIOvec(target_ssl_connection, &http_data.iov[0], http_data.iov_size,
                                    iovec_written, nwritten);
 
     //    Debug::logmsg(LOG_REMOVE, "iov_written %d bytes_written: %d IO RESULT:
@@ -451,9 +449,9 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
       return result;
 
     ssl_connection.buffer_size = 0; // buffer_offset;
-  http_data.message_length = 0;
-	http_data.setHeaderSent(true);
-    http_data.iov.clear();
+    http_data.message_length = 0;
+    http_data.setHeaderSent(true);
+    http_data.iov_size = 0;
 
 #if PRINT_DEBUG_FLOW_BUFFERS
   Debug::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);

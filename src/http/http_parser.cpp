@@ -27,7 +27,7 @@ void http_parser::HttpData::reset_parser() {
   setHeaderSent(false);
   chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
   extra_headers.clear();
-  iov.clear();
+  iov_size = 0;
 }
 
 void http_parser::HttpData::setBuffer(char *ext_buffer,
@@ -41,14 +41,13 @@ void http_parser::HttpData::prepareToSend()
     auto vector_size =
             num_headers+(message_length>0 ? 3 : 2)+
                     extra_headers.size()+permanent_extra_headers.size();
-    iov.clear();
-    iov.reserve(vector_size);
-  iov.push_back({http_message, http_message_length + CRLF_LEN});
+    iov_size=0;
+    iov[iov_size++] = {http_message, http_message_length + CRLF_LEN};
 
     for (size_t i = 0; i!=num_headers; i++) {
       if (headers[i].header_off)
         continue; // skip unwanted headers
-      iov.push_back({ const_cast<char *>(headers[i].name), headers[i].line_size});
+      iov[iov_size++] = { const_cast<char *>(headers[i].name), headers[i].line_size};
   #if DEBUG_HTTP_HEADERS
       Debug::logmsg(LOG_DEBUG, "%.*s", headers[i].line_size - 2, headers[i].name);
   #endif
@@ -57,7 +56,7 @@ void http_parser::HttpData::prepareToSend()
     for (const auto& header :
         extra_headers) { // header must be always  used as reference,
       // it's copied it invalidate c_str() reference.
-      iov.push_back({ const_cast<char *>(header.c_str()), header.length()});
+      iov[iov_size++] ={ const_cast<char *>(header.c_str()), header.length()};
   #if DEBUG_HTTP_HEADERS
       Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
   #endif
@@ -67,14 +66,14 @@ void http_parser::HttpData::prepareToSend()
         permanent_extra_headers) { // header must be always  used as
       // reference,
       // it's copied it invalidate c_str() reference.
-      iov.push_back({ const_cast<char *>(header.c_str()), header.length()});
+      iov[iov_size++] ={ const_cast<char *>(header.c_str()), header.length()};
   #if DEBUG_HTTP_HEADERS
       Debug::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
   #endif
     }
-    iov.push_back({ const_cast<char *>(http::CRLF), http::CRLF_LEN});
+    iov[iov_size++] = { const_cast<char *>(http::CRLF), http::CRLF_LEN};
     if (message_length>0) {
-      iov.push_back({ message, message_length});
+      iov[iov_size++] ={ message, message_length};
   #if DEBUG_HTTP_HEADERS
       Debug::logmsg(LOG_DEBUG, "[%d bytes Content]", message_length);
   #endif

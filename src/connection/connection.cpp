@@ -258,13 +258,13 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t & sent) {
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
-  if (http_data.iov.empty())
+  if (http_data.iov_size == 0)
     http_data.prepareToSend();
 
   size_t nwritten = 0;
   size_t iovec_written = 0;
 
-  auto result = writeIOvec(target_fd, http_data.iov, iovec_written, nwritten);
+  auto result = writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size, iovec_written, nwritten);
 //  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n", http_data.iov.size(),
 //                iovec_written, nwritten, IO::getResultString(result).data());
   if (result != IO::IO_RESULT::SUCCESS)
@@ -285,10 +285,10 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   return IO::IO_RESULT::SUCCESS;
 }
 
-IO::IO_RESULT Connection::writeIOvec(int target_fd, std::vector<iovec> &iov, size_t &iovec_written, size_t &nwritten) {
+IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov, size_t iovec_size, size_t &iovec_written, size_t &nwritten) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   ssize_t count = 0;
-  auto nvec = iov.size();
+  auto nvec = iovec_size;
   nwritten = 0;
   iovec_written = 0;
   do {
@@ -311,20 +311,20 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, std::vector<iovec> &iov, siz
       break;
     } else {
       size_t remaining = static_cast<size_t>(count);
-      for (auto it = iov.begin() + static_cast<ssize_t>(iovec_written); it != iov.end(); it++) {
-        if (remaining >= it->iov_len) {
-          remaining -= it->iov_len;
+      for (auto it = iovec_written; it != iovec_size; it++) {
+        if (remaining >= iov[it].iov_len) {
+          remaining -= iov[it].iov_len;
 //          iov.erase(it++);
-          it->iov_len = 0;
+          iov[it].iov_len = 0;
           iovec_written++;
         } else {
           Debug::logmsg(LOG_REMOVE,
                         "Recalculating data ... remaining %d niovec_written: %d iov size %d",
                         remaining,
                         iovec_written,
-                        iov.size());
-          it->iov_len -= remaining;
-          it->iov_base = static_cast<char *>(iov[iovec_written].iov_base) + remaining;
+                        iovec_size);
+          iov[it].iov_len -= remaining;
+          iov[it].iov_base = static_cast<char *>(iov[iovec_written].iov_base) + remaining;
           break;
         }
       }

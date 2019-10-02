@@ -4,25 +4,23 @@
 
 #pragma once
 
-#include "epoll_manager.h"
-#include "../debug/Debug.h"
 #include <atomic>
+#include "../debug/Debug.h"
+#include "epoll_manager.h"
 namespace events {
 class Descriptor {
-
   events::EpollManager *event_manager_{nullptr};
-  events::EVENT_TYPE current_event{events::EVENT_TYPE::NONE};
-  events::EVENT_GROUP event_group_{events::EVENT_GROUP::NONE};
+  std::atomic<events::EVENT_TYPE> current_event{events::EVENT_TYPE::NONE};
+  std::atomic<events::EVENT_GROUP> event_group_{events::EVENT_GROUP::NONE};
   bool cancelled{false};
 
-protected:
+ protected:
   int fd_;
 
-public:
+ public:
   Descriptor() : event_manager_(nullptr), cancelled(true), fd_(-1) {}
   virtual ~Descriptor() {
-    if (event_manager_ != nullptr && fd_ > 0)
-      event_manager_->deleteFd(fd_);
+    if (event_manager_ != nullptr && fd_ > 0) event_manager_->deleteFd(fd_);
   }
 
   inline void setEventManager(events::EpollManager &event_manager) {
@@ -32,8 +30,7 @@ public:
   inline bool disableEvents() {
     current_event = events::EVENT_TYPE::NONE;
     cancelled = true;
-    if (fd_ > 0)
-      return event_manager_->deleteFd(fd_);
+    if (fd_ > 0) return event_manager_->deleteFd(fd_);
     return false;
   }
 
@@ -50,9 +47,8 @@ public:
     return false;
   }
 
-  inline bool setEvents(
-      events::EVENT_TYPE event_type,
-      events::EVENT_GROUP event_group) {
+  inline bool setEvents(events::EVENT_TYPE event_type,
+                        events::EVENT_GROUP event_group) {
     if (event_manager_ != nullptr && fd_ > 0) {
       cancelled = false;
       current_event = event_type;
@@ -72,37 +68,33 @@ public:
   }
 
   inline bool enableReadEvent(bool one_shot = false) {
-    if (cancelled)
-      return false;
-    if (event_manager_ !=
-            nullptr /* && current_event != (!one_shot
-                                          ? events::EVENT_TYPE::READ
-                                          : events::EVENT_TYPE::READ_ONESHOT)*/
-        && fd_ > 0) {
-      current_event = !one_shot
-                      ? events::EVENT_TYPE::READ
-                      : events::EVENT_TYPE::READ_ONESHOT;
+    if (cancelled) return false;
+    if (event_manager_ != nullptr &&
+        current_event != (!one_shot ? events::EVENT_TYPE::READ
+                                    : events::EVENT_TYPE::READ_ONESHOT) &&
+        fd_ > 0) {
+      current_event = !one_shot ? events::EVENT_TYPE::READ
+                                : events::EVENT_TYPE::READ_ONESHOT;
 
       return event_manager_->updateFd(fd_,
                                       !one_shot
-                                      ? events::EVENT_TYPE::READ
-                                      : events::EVENT_TYPE::READ_ONESHOT,
+                                          ? events::EVENT_TYPE::READ
+                                          : events::EVENT_TYPE::READ_ONESHOT,
                                       event_group_);
     }
-//    Debug::LogInfo("InReadModeAlready", LOG_REMOVE);
+    //    Debug::LogInfo("InReadModeAlready", LOG_REMOVE);
     return false;
   }
 
   inline bool enableWriteEvent() {
-    if (cancelled)
-      return false;
-    if (event_manager_ != nullptr /*&& current_event != events::WRITE */ &&
+    if (cancelled) return false;
+    if (event_manager_ != nullptr && current_event != EVENT_TYPE::WRITE &&
         fd_ > 0) {
       current_event = events::EVENT_TYPE::WRITE;
       return event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE,
                                       event_group_);
     }
-//    Debug::LogInfo("InWriteModeAlready", LOG_REMOVE);
+    //    Debug::LogInfo("InWriteModeAlready", LOG_REMOVE);
     return false;
   }
 
@@ -117,4 +109,4 @@ public:
     fd_ = fd;
   }
 };
-}
+}  // namespace events

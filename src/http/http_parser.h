@@ -50,7 +50,8 @@ public:
 public:
   std::vector< std::string> extra_headers;
   std::vector< std::string> permanent_extra_headers;
-  std::vector<iovec> iov;
+  std::array<iovec,MAX_HEADERS_SIZE + 2> iov;
+  size_t iov_size;
   void prepareToSend();
   void addHeader(http::HTTP_HEADER_NAME header_name,
                         const std::string &header_value,
