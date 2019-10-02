@@ -135,11 +135,18 @@ void Backend::doMaintenance() {
   if (this->status != BACKEND_STATUS::BACKEND_DOWN)
     return;
 
-    Connection checkOut;
-    auto res = checkOut.doConnect(*address_info, 0, false);
+  Connection checkOut;
+  auto res = checkOut.doConnect(*address_info, 0, false);
 
   switch(res) {
     case IO::IO_OP::OP_SUCCESS: {
+      // poundlogs, BackEnd 192.168.100.253:80 resurrect in farm: 'poundlogs', service: 'assur'
+      Debug::logmsg(LOG_NOTICE,
+                    "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
+                    this->address.data(),
+                    this->port,
+                    this->backend_config.f_name.data(),
+                    this->backend_config.srv_name.data());
         this->status = BACKEND_STATUS::BACKEND_UP;
         break;
       }

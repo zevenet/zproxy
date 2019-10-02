@@ -33,6 +33,8 @@ enum class SESS_TYPE {
 /* back-end definition */
 class BackendConfig {
  public:
+  std::string f_name;
+  std::string srv_name;
   std::string address;
   int port;
   int be_type; /* 0 if real back-end, otherwise code (301, 302/default, 307) */
@@ -67,6 +69,7 @@ class ServiceConfig {
   int key_id;
   int listener_key_id;
   std::string name; /* symbolic name */
+  std::string f_name;       /* farm name */
   MATCHER *url,            /* request matcher */
       *req_head,           /* required headers */
       *deny_head;          /* forbidden headers */
@@ -82,7 +85,7 @@ class ServiceConfig {
   regex_t sess_pat;   /* pattern to match the session data */
 #ifdef CACHE_ENABLED
   int cache_timeout = -1; /* cached content timeout in seconds */
-  std::string f_name, cache_disk_path, cache_ram_path;
+  std::string cache_disk_path, cache_ram_path;
   regex_t cache_content; /* pattern to decide if must be cached or not */
   long cache_size;
   size_t cache_max_size;
@@ -113,6 +116,9 @@ struct POUND_CTX {
 
 /* Listener definition */
 struct ListenerConfig {
+
+  std::string name;
+  int key_id;
   std::string address;
   int port;
   addrinfo addr{};      /* IPv4/6 address */

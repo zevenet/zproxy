@@ -190,7 +190,7 @@ class Config {
   /*
    * parse a back-end
    */
-  BackendConfig *parseBackend(const int is_emergency);
+  BackendConfig *parseBackend(const char * svc_name, const int is_emergency);
   /*
    * Parse the cache configuration
    */

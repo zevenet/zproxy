@@ -1168,11 +1168,11 @@ ServiceConfig *Config::parseService(const char *svc_name) {
     } else if (!regexec(&BackEnd, lin, 4, matches, 0)) {
       if (res->backends) {
         for (be = res->backends; be->next; be = be->next);
-        be->next = parseBackend(0);
+        be->next = parseBackend(svc_name, 0);
       } else
-        res->backends = parseBackend(0);
+        res->backends = parseBackend(svc_name, 0);
     } else if (!regexec(&Emergency, lin, 4, matches, 0)) {
-      res->emergency = parseBackend(1);
+      res->emergency = parseBackend(svc_name, 1);
     } else if (!regexec(&BackendCookie, lin, 5, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       lin[matches[2].rm_eo] = '\0';
@@ -1297,7 +1297,7 @@ char *Config::parse_orurls() {
   return nullptr;
 }
 
-BackendConfig *Config::parseBackend(const int is_emergency) {
+BackendConfig *Config::parseBackend(const char * svc_name, const int is_emergency) {
   char lin[MAXBUF];
   regmatch_t matches[5];
   char *cp;
@@ -1307,7 +1307,10 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
   sockaddr_in in{};
   sockaddr_in6 in6{};
 
+
   res = new BackendConfig();
+  res->f_name = name;
+  res->srv_name = svc_name;
   res->be_type = 0;
   res->addr.ai_socktype = SOCK_STREAM;
   res->rw_timeout = is_emergency ? 120 : be_to;
@@ -1560,7 +1563,6 @@ void Config::parseCache(ServiceConfig *const svc) {
   regmatch_t matches[5];
   svc->cache_size = cache_s;
   svc->cache_threshold = cache_thr;
-  svc->f_name = name;
   if ( cache_ram_path.size() != 0 ){
     svc->cache_ram_path = cache_ram_path;
   }
@@ -1592,7 +1594,8 @@ void Config::parseCache(ServiceConfig *const svc) {
 void Config::parseSession(ServiceConfig *const svc) {
   char lin[MAXBUF], *cp, *parm;
   regmatch_t matches[5];
-  parm = nullptr;
+  parm = NULL;
+  svc->f_name = name;
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
