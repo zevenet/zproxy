@@ -1,3 +1,24 @@
+/*
+ *    Zevenet zProxy Load Balancer Software License
+ *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include <csetjmp>
 #include <csignal>
 #include "config/config.h"
@@ -20,7 +41,6 @@ std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
-
   Debug::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
   switch (sig) {
     case SIGINT:
@@ -35,7 +55,7 @@ void handleInterrupt(int sig) {
       debug::printBackTrace();
       std::exit(EXIT_FAILURE);
     }
-    case SIGUSR1: //Release free heap memory
+    case SIGUSR1:  // Release free heap memory
       ::malloc_trim(0);
       break;
     default: {
@@ -52,21 +72,21 @@ int main(int argc, char *argv[]) {
   if (setjmp(jmpbuf)) {
     // we are in signal context here
     control_manager->stop();
-    listener.stop();  
+    listener.stop();
     exit(EXIT_SUCCESS);
   }
 
   ::openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   Config config;
   Debug::logmsg(LOG_NOTICE, "zhttp starting...");
-  config.parseConfig(argc, argv);  
+  config.parseConfig(argc, argv);
   Debug::log_level = config.listeners->log_level;
   Debug::log_facility = config.log_facility;
 
   // Syslog initialization
   if (config.daemonize) {
     if (!Environment::daemonize()) {
-      Debug::logmsg(LOG_ERR,"error: daemonize failed\n");
+      Debug::logmsg(LOG_ERR, "error: daemonize failed\n");
       closelog();
       return EXIT_FAILURE;
     }
@@ -111,7 +131,7 @@ int main(int argc, char *argv[]) {
     control_manager->start();
   }
 
-  if(!listener.init(config.listeners[0])){
+  if (!listener.init(config.listeners[0])) {
     Debug::LogInfo("Error initializing listener socket", LOG_ERR);
     return EXIT_FAILURE;
   }

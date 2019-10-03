@@ -96,46 +96,43 @@ public:
   }
 
   inline static int getPeerPort(int socket_fd) {
-      int port = -1;
+    int port = -1;
 
-      sockaddr_in adr_inet{};
-      int len_inet = sizeof adr_inet;
+    sockaddr_in adr_inet{};
+    socklen_t len_inet = sizeof(adr_inet);
 
-      if (getpeername(socket_fd, (struct sockaddr *) &adr_inet, &len_inet) != -1) {
-          port = ntohs(adr_inet.sin_port);
-          return port;
-      }
-      return -1;
+    if (::getpeername(socket_fd, reinterpret_cast<sockaddr *>(&adr_inet), &len_inet) != -1) {
+      port = ntohs(adr_inet.sin_port);
+      return port;
+    }
+    return -1;
   }
 
   inline static int getPeerPort(struct addrinfo *addr) {
-      int port;
-      port = ntohs(((struct sockaddr_in *) addr->ai_addr)->sin_port);
-      return port;
+    int port;
+    port = ntohs((reinterpret_cast<sockaddr_in *>(addr->ai_addr))->sin_port);
+    return port;
   }
 
   inline static int getlocalPort(int socket_fd) {
-      int port = -1;
-
-      sockaddr_in adr_inet{};
-      int len_inet = sizeof adr_inet;
-
-      if (getsockname(socket_fd, (struct sockaddr *) &adr_inet, &len_inet) != -1) {
-          port = ntohs(adr_inet.sin_port);
-          return port;
-      }
-      return -1;
+    int port = -1;
+    sockaddr_in adr_inet{};
+    socklen_t len_inet = sizeof(adr_inet);
+    if (::getsockname(socket_fd, reinterpret_cast<sockaddr *>(&adr_inet), &len_inet) != -1) {
+      port = ntohs(adr_inet.sin_port);
+      return port;
+    }
+    return -1;
   }
   inline static char *getlocalAddress(int socket_fd, char *buf, size_t bufsiz,
                                       bool include_port = false) {
      int result;
      sockaddr_in adr_inet{};
      socklen_t len_inet = sizeof adr_inet;
-     result = ::getsockname(socket_fd, (struct sockaddr *)&adr_inet, &len_inet);
+     result = ::getsockname(socket_fd, reinterpret_cast<sockaddr *>(&adr_inet), &len_inet);
      if (result == -1) {
        return nullptr;
      }
-
      if (snprintf(buf, bufsiz, "%s", inet_ntoa(adr_inet.sin_addr)) == -1) {
        return nullptr; /* Buffer too small */
      }

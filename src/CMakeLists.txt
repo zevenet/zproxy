@@ -1,3 +1,25 @@
+
+###############################################################################
+#
+#    Zevenet zProxy Load Balancer Software License
+#    This file is part of the Zevenet zProxy Load Balancer software package.
+#
+#    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
 #add_definitions(-DSYSLOG_NAMES)
@@ -69,7 +91,7 @@ set(l7core_sources
     stats/backend_stats.cpp
     config/svc.h
     config/svc.cpp
-    http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
+        http/http_parser.cpp
         http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h

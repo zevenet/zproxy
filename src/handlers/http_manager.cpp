@@ -1,11 +1,26 @@
-//
-// Created by abdess on 4/6/19.
-//
+/*
+ *    Zevenet zProxy Load Balancer Software License
+ *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "http_manager.h"
 #include "../util/Network.h"
-
-#define PRINT_DEBUG_CHUNKED 0
 
 ssize_t http_manager::handleChunkedData(HttpStream &stream) {
   auto last_chunk_size = stream.response.chunk_size_left;
@@ -146,8 +161,7 @@ void http_manager::applyCompression(Service *service, HttpStream *stream) {
       stream->response.addHeader(http::HTTP_HEADER_NAME::TRANSFER_ENCODING,
                                  compression_value);
       stream->response.chunked_status = CHUNKED_STATUS::CHUNKED_ENABLED;
-      compression_type =
-          http::http_info::compression_types.at(compression_value);
+      compression_type = http::compression_types.at(compression_value);
 
       /* Get the message_uncompressed. */
       std::string message_no_compressed = std::string(
@@ -253,8 +267,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(
     auto header_value = std::string_view(request.headers[i].value,
                                          request.headers[i].value_len);
 
-    auto it = http::http_info::headers_names.find(header);
-    if (it != http::http_info::headers_names.end()) {
+    auto it = http::headers_names.find(header);
+    if (it != http::headers_names.end()) {
       auto header_name = it->second;
       switch (header_name) {
         case http::HTTP_HEADER_NAME::DESTINATION:
@@ -268,9 +282,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(
 
           break;
         case http::HTTP_HEADER_NAME::CONNECTION:
-          if (http_info::connection_values.count(std::string(header_value)) >
-                  0 &&
-              http_info::connection_values.at(std::string(header_value)) ==
+          if (connection_values.count(std::string(header_value)) > 0 &&
+              connection_values.at(std::string(header_value)) ==
                   CONNECTION_VALUES::UPGRADE)
             request.connection_header_upgrade = true;
           break;
@@ -340,8 +353,8 @@ validation::REQUEST_RESULT http_manager::validateResponse(
         response.headers[i].name_len + response.headers[i].value_len + 2,
         response.headers[i].name);
 #endif
-    auto it = http::http_info::headers_names.find(header);
-    if (it != http::http_info::headers_names.end()) {
+    auto it = http::headers_names.find(header);
+    if (it != http::headers_names.end()) {
       const auto header_name = it->second;
       switch (header_name) {
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
@@ -474,8 +487,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(
   return validation::REQUEST_RESULT::OK;
 }
 
-void http_manager::replyError(HttpStatus::Code code,
-                              const std::string &code_string,
+void http_manager::replyError(http::Code code, const std::string &code_string,
                               const std::string &str, Connection &target,
                               SSLConnectionManager *ssl_manager) {
   size_t result;
@@ -489,7 +501,7 @@ void http_manager::replyError(HttpStatus::Code code,
                   std::this_thread::get_id(), static_cast<int>(code),
                   code_string.data(), target.buffer, caddr);
   }
-  auto response_ = HttpStatus::getHttpResponse(code, code_string, str);
+  auto response_ = http::getHttpResponse(code, code_string, str);
 
   if (!target.ssl_connected) {
     target.write(response_.c_str(), response_.length());
@@ -504,8 +516,8 @@ void http_manager::replyRedirect(HttpStream &stream,
   std::string new_url =
       stream.backend_connection.getBackend()->backend_config.url;
   new_url += stream.request.getUrl();
-  auto response_ = HttpStatus::getRedirectResponse(
-      static_cast<HttpStatus::Code>(
+  auto response_ = http::getRedirectResponse(
+      static_cast<http::Code>(
           stream.backend_connection.getBackend()->backend_config.be_type),
       new_url);
   stream.client_connection.write(response_.c_str(), response_.length());
@@ -521,7 +533,7 @@ void http_manager::replyRedirect(int code, const std::string &url,
                                  Connection &target,
                                  SSLConnectionManager *ssl_manager) {
   auto response_ =
-      HttpStatus::getRedirectResponse(static_cast<HttpStatus::Code>(code), url);
+      http::getRedirectResponse(static_cast<http::Code>(code), url);
   if (!target.ssl_connected) {
     target.write(response_.c_str(), response_.length());
   } else if (ssl_manager != nullptr) {

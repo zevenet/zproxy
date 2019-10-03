@@ -1,7 +1,28 @@
+/*
+ *    Zevenet zProxy Load Balancer Software License
+ *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "http_parser.h"
 #include "../debug/Debug.h"
 #include "../util/common.h"
-#include "HttpStatus.h"
+#include "http.h"
 
 #define DEBUG_HTTP_PARSER 0
 
@@ -82,11 +103,12 @@ void http_parser::HttpData::prepareToSend()
 
 void http_parser::HttpData::addHeader(http::HTTP_HEADER_NAME header_name, const std::string&header_value, bool permanent) {
     std::string newh;
-    newh.reserve(http::http_info::headers_names_strings.at(header_name).size() + http::CRLF_LEN + header_value.size() + http::CRLF_LEN);
-    newh += http::http_info::headers_names_strings.at(header_name);
-    newh += ": ";
-    newh += header_value;
-    newh += http::CRLF;
+  newh.reserve(http::headers_names_strings.at(header_name).size() +
+               http::CRLF_LEN + header_value.size() + http::CRLF_LEN);
+  newh += http::headers_names_strings.at(header_name);
+  newh += ": ";
+  newh += header_value;
+  newh += http::CRLF;
     !permanent ? extra_headers.push_back(std::move(newh)) : permanent_extra_headers.push_back(std::move(newh));
 }
 
@@ -113,9 +135,8 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
   for (size_t i = 0; i != num_headers; ++i) {
     std::string header(headers[i].name, headers[i].name_len);
     std::string header_value(headers[i].value, headers[i].value_len);
-    if (http_info::headers_names.find(header) !=
-        http_info::headers_names.end()) {
-      auto header_name_ = http_info::headers_names.at(header);
+    if (headers_names.find(header) != headers_names.end()) {
+      auto header_name_ = headers_names.at(header);
       if (header_name_ == header_name) {
         out_key = header_value;
         return true;
@@ -199,7 +220,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
     http_message_length = std::string_view(method).find('\r');
     //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
     //      if (std::string(headers[i].name, headers[i].name_len) !=
-    //          http::http_info::headers_names_strings.at(
+    //          http::headers_names_strings.at(
     //              http::HTTP_HEADER_NAME::H_CONTENT_LENGTH))
     //        continue;
     //      message_bytes_left =
@@ -248,7 +269,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 }
 void http_parser::HttpData::printResponse() {
   Debug::logmsg(LOG_DEBUG, "HTTP 1.%d %d %s", minor_version, http_status_code,
-                HttpStatus::reasonPhrase(http_status_code).c_str());
+                http::reasonPhrase(http_status_code));
   Debug::logmsg(LOG_DEBUG, "headers:");
   for (size_t i = 0; i != num_headers; ++i) {
     Debug::logmsg(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
