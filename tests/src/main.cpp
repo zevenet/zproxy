@@ -17,6 +17,7 @@
 std::mutex Debug::log_lock;
 int Debug::log_level = 8;
 int Debug::log_facility = -1;
+std::map<std::thread::id,thread_info> Debug::log_info;
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

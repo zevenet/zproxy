@@ -10,6 +10,7 @@
 #include "../json/json.h"
 #include "../json/JsonDataValue.h"
 #include "../json/jsonparser.h"
+#include "../debug/Debug.h"
 #include "ctl.h"
 
 #define NO_VALUE -1

@@ -13,6 +13,8 @@ std::mutex Debug::log_lock;
 int Debug::log_level = 6;
 int Debug::log_facility = -1;
 
+std::map<std::thread::id,thread_info> Debug::log_info;
+
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 
 void cleanExit() { closelog(); }
@@ -43,6 +45,7 @@ void handleInterrupt(int sig) {
 }
 
 int main(int argc, char *argv[]) {
+  Debug::init_log_info();
   debug::EnableBacktraceOnTerminate();
   Listener listener;
   auto control_manager = ctl::ControlManager::getInstance();

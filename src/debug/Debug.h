@@ -11,6 +11,8 @@
 #include <thread>
 #include <type_traits>
 #include <syslog.h>
+#include <thread>
+#include <map>
 #include "../util/utils.h"
 
 #ifndef __FILENAME__
@@ -29,38 +31,66 @@
 #define COUT_BLUE_COLOR(x) ("\e[1;32m" + (x) + "\e[0m")
 #include "fstream"
 #include <unistd.h>
+
+struct thread_info{
+std::string farm_name, service_name;
+int backend_id;
+};
+
 class Debug {
 public:
   static int log_level;
   static int log_facility;
   static std::mutex log_lock;
+  static std::map<std::thread::id,thread_info> log_info;
+
+  inline static void init_log_info(){
+      log_info.insert({std::this_thread::get_id(),thread_info({"","",0})});
+  }
 
   inline static void Log2(const std::string &file, const std::string &function,
                           int line, const std::string &str,
                           int level = LOG_NOTICE) {
-    if (level > log_level) {
-      return;
-    }
-    std::lock_guard<std::mutex> locker(log_lock);
-    if (log_level >= LOG_DEBUG) {
-      std::stringstream buffer;
-      buffer << "[" << helper::ThreadHelper::getThreadName(pthread_self())
-             << "][" << file << ":" << line << " (" << COUT_BLUE_COLOR(function) << ") " "] ";
-      std::cout << std::left << std::setfill('.') << std::setw(80)
-                << buffer.str() << "\033[1;32m";
-    }
 
-    if (log_level >= LOG_DEBUG) {
-      // std::cout << "\033[0m";
-      std::cout << COUT_GREEN_COLOR(str);
-    } else {
-      if (log_facility == -1) {
-        fprintf(stdout, "%s", str.c_str());
-      } else {
-        syslog(level, "%s", str.c_str());
+      std::string log_tag = ("");
+      std::stringstream buffer;
+      if (level > log_level) {
+        return;
       }
-    }
-    std::cout << std::endl;
+
+      if(!log_info[std::this_thread::get_id()].farm_name.empty()){
+          log_tag = "(";
+          log_tag += log_info[std::this_thread::get_id()].farm_name;
+          if(!log_info[std::this_thread::get_id()].service_name.empty()){
+              log_tag += ",";
+              log_tag += log_info[std::this_thread::get_id()].service_name;
+              if(log_info[std::this_thread::get_id()].backend_id != -1){
+                  log_tag += ",";
+                  log_tag += std::to_string(log_info[std::this_thread::get_id()].backend_id);
+              }
+          }
+          log_tag += ") ";
+      }
+
+      std::lock_guard<std::mutex> locker(log_lock);
+      if (log_level >= LOG_DEBUG) {
+          buffer
+              << "[" << helper::ThreadHelper::getThreadName(pthread_self())
+              << "][" << file << ":" << line << " (" << COUT_BLUE_COLOR(function) << ") " "] "
+//              << "\033[1;32m"  << std::left << std::setfill('.') << std::setw(80)
+              << COUT_GREEN_COLOR(log_tag)
+              << COUT_GREEN_COLOR(str);
+      }
+      else
+          buffer << log_tag << str;
+
+      if (log_facility == -1) {
+          fprintf(stdout, "%s\n",  buffer.str().data());
+      } else {
+          syslog(level, "%s\n", buffer.str().data());
+      }
+
+    fflush(stdout);
   }
 
   static void logmsg2(const std::string &file, const std::string &function,

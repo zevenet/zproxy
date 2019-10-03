@@ -32,7 +32,7 @@ struct CacheResponseOptions {
 class HttpRequest : public http_parser::HttpData {
 
   /** Service that request was generated for*/
-  void *request_service; // fixme; hack to avoid cyclic dependency, //TODO::
+    void *request_service{nullptr}; // fixme; hack to avoid cyclic dependency, //TODO::
                          // remove
 public:
   bool add_destination_header{false};

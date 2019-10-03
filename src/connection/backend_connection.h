@@ -11,7 +11,7 @@
 
 class BackendConnection : public Connection, public Counter<BackendConnection> {
   int backend_id;
-  Backend *backend;
+  Backend *backend{nullptr};
 
 public:
 

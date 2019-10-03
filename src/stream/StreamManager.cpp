@@ -96,129 +96,142 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 #else
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
+  Debug::init_log_info();
+
   switch (event_type) {
 #if SM_HANDLE_ACCEPT
-    case EVENT_TYPE::CONNECT: {
-      DEBUG_COUNTER_HIT(debug__::event_connect);
-      int new_fd;
-      do {
+  case EVENT_TYPE::CONNECT: {
+    DEBUG_COUNTER_HIT(debug__::event_connect);
+    int new_fd;
+    do {
         new_fd = listener_connection.doAccept();
         if (new_fd > 0) {
-          addStream(new_fd);
+            addStream(new_fd);
         } else {
-          DEBUG_COUNTER_HIT(debug__::event_connect_fail);
+            DEBUG_COUNTER_HIT(debug__::event_connect_fail);
         }
-      } while (new_fd > 0);
-      return;
-    }
+    } while (new_fd > 0);
+    return;
+  }
 #endif
-    case EVENT_TYPE::READ:
-    case EVENT_TYPE::READ_ONESHOT: {
-      switch (event_group) {
-        case EVENT_GROUP::ACCEPTOR:
-          break;
-        case EVENT_GROUP::SERVER: {
-          DEBUG_COUNTER_HIT(debug__::event_backend_read);
-          onResponseEvent(fd);
-          break;
-        }
-        case EVENT_GROUP::CLIENT: {
-          DEBUG_COUNTER_HIT(debug__::event_client_read);
-          onRequestEvent(fd);
-          break;
-        }
-        case EVENT_GROUP::CONNECT_TIMEOUT:
-          onConnectTimeoutEvent(fd);
-          break;
-        case EVENT_GROUP::REQUEST_TIMEOUT:
-          onRequestTimeoutEvent(fd);
-          break;
-        case EVENT_GROUP::RESPONSE_TIMEOUT:
-          onResponseTimeoutEvent(fd);
-          break;
-        case EVENT_GROUP::SIGNAL:
-          onSignalEvent(fd);
-          break;
-        case EVENT_GROUP::MAINTENANCE:
-          break;
-        default:
-          deleteFd(fd);
-          close(fd);
-          break;
-      }
-      return;
-    }
-    case EVENT_TYPE::WRITE: {
-      auto stream = streams_set[fd];
-      if (stream == nullptr) {
-        switch (event_group) {
-          case EVENT_GROUP::ACCEPTOR:
-            break;
-          case EVENT_GROUP::SERVER:
-            Debug::LogInfo("SERVER_WRITE : Stream doesn't exist for " +
-                           std::to_string(fd));
-            break;
-          case EVENT_GROUP::CLIENT:
-            Debug::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
-                           std::to_string(fd));
-            break;
-          default:
-            break;
-        }
-        deleteFd(fd);
-        ::close(fd);
-        return;
-      }
-
-      switch (event_group) {
-        case EVENT_GROUP::ACCEPTOR:
-          break;
-        case EVENT_GROUP::SERVER: {
-          DEBUG_COUNTER_HIT(debug__::event_backend_write);
-          onServerWriteEvent(stream);
-          break;
-        }
-        case EVENT_GROUP::CLIENT: {
-          DEBUG_COUNTER_HIT(debug__::event_client_write);
-          onClientWriteEvent(stream);
-          break;
-        }
-        default: {
-          deleteFd(fd);
-          ::close(fd);
-        }
-      }
-
-      return;
-    }
-    case EVENT_TYPE::DISCONNECT: {
-      auto stream = streams_set[fd];
-      if (stream == nullptr) {
-        Debug::LogInfo("Remote host closed connection prematurely ", LOG_INFO);
-        deleteFd(fd);
-        ::close(fd);
-        return;
-      }
-      switch (event_group) {
-        case EVENT_GROUP::SERVER: {
-          onServerDisconnect(stream);
-          return;
-        }
-        case EVENT_GROUP::CLIENT: {
-          onClientDisconnect(stream);
-          return;
-        }
-        default:
-          Debug::LogInfo("Why this happends!!", LOG_DEBUG);
-          break;
-      }
-      clearStream(stream);
+  case EVENT_TYPE::READ:
+  case EVENT_TYPE::READ_ONESHOT: {
+    switch (event_group) {
+    case EVENT_GROUP::ACCEPTOR:break;
+    case EVENT_GROUP::SERVER: {
+      DEBUG_COUNTER_HIT(debug__::event_backend_read);
+      onResponseEvent(fd);
       break;
     }
+    case EVENT_GROUP::CLIENT: {
+      DEBUG_COUNTER_HIT(debug__::event_client_read);
+      onRequestEvent(fd);
+      break;
+    }
+    case EVENT_GROUP::CONNECT_TIMEOUT:onConnectTimeoutEvent(fd);
+      break;
+    case EVENT_GROUP::REQUEST_TIMEOUT:onRequestTimeoutEvent(fd);
+      break;
+    case EVENT_GROUP::RESPONSE_TIMEOUT:onResponseTimeoutEvent(fd);
+      break;
+    case EVENT_GROUP::SIGNAL:
+      onSignalEvent(fd);
+      break;
+    case EVENT_GROUP::MAINTENANCE:break;
     default:
-      Debug::LogInfo("Unexpected  event type", LOG_DEBUG);
+      deleteFd(fd);
+      close(fd);
+      break;
+    }
+    return;
+  }
+  case EVENT_TYPE::WRITE: {
+    auto stream = streams_set[fd];
+    if (stream != nullptr){
+        Debug::log_info[std::this_thread::get_id()].farm_name = listener_config_.name;
+        if (stream->request.getService() != nullptr){
+            Debug::log_info[std::this_thread::get_id()].service_name = static_cast<Service *>(stream->request.getService())->name.c_str();
+            if (stream->backend_connection.getBackend() != nullptr)
+                Debug::log_info[std::this_thread::get_id()].backend_id = stream->backend_connection.getBackend()->backend_id;
+        }
+    }
+
+    if (stream == nullptr) {
+      switch (event_group) {
+      case EVENT_GROUP::ACCEPTOR:break;
+      case EVENT_GROUP::SERVER:
+        Debug::LogInfo("SERVER_WRITE : Stream doesn't exist for " +
+            std::to_string(fd));
+        break;
+      case EVENT_GROUP::CLIENT:
+        Debug::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
+            std::to_string(fd));
+        break;
+      default:break;
+      }
       deleteFd(fd);
       ::close(fd);
+      return;
+    }
+
+    switch (event_group) {
+    case EVENT_GROUP::ACCEPTOR:
+      break;
+    case EVENT_GROUP::SERVER: {
+      DEBUG_COUNTER_HIT(debug__::event_backend_write);
+      onServerWriteEvent(stream);
+      break;
+    }
+    case EVENT_GROUP::CLIENT: {
+      DEBUG_COUNTER_HIT(debug__::event_client_write);
+      onClientWriteEvent(stream);
+      break;
+    }
+    default: {
+      deleteFd(fd);
+      ::close(fd);
+    }
+    }
+
+    return;
+  }
+  case EVENT_TYPE::DISCONNECT: {
+    auto stream = streams_set[fd];
+    if (stream != nullptr){
+        Debug::log_info[std::this_thread::get_id()].farm_name = listener_config_.name;
+        if (stream->request.getService() != nullptr){
+            Debug::log_info[std::this_thread::get_id()].service_name = static_cast<Service *>(stream->request.getService())->name.c_str();
+            if (stream->backend_connection.getBackend() != nullptr)
+                Debug::log_info[std::this_thread::get_id()].backend_id = stream->backend_connection.getBackend()->backend_id;
+        }
+    }
+
+    if (stream == nullptr) {
+      Debug::LogInfo("Remote host closed connection prematurely ", LOG_INFO);
+      deleteFd(fd);
+      ::close(fd);
+      return;
+    }
+    switch (event_group) {
+    case EVENT_GROUP::SERVER: {
+      onServerDisconnect(stream);
+      return;
+    }
+    case EVENT_GROUP::CLIENT: {
+      onClientDisconnect(stream);
+      return;
+    }
+    default:
+      Debug::LogInfo("Why this happends!!", LOG_DEBUG);
+      break;
+    }
+    clearStream(stream);
+    break;
+  }
+  default:
+    Debug::LogInfo("Unexpected  event type", LOG_DEBUG);
+    deleteFd(fd);
+    ::close(fd);
   }
 }
 #endif
@@ -227,6 +240,9 @@ void StreamManager::stop() { is_running = false; }
 
 void StreamManager::start(int thread_id_) {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
+
+  Debug::init_log_info();
+
   is_running = true;
   worker_id = thread_id_;
   this->worker = std::thread([this] { doWork(); });
@@ -277,6 +293,9 @@ void StreamManager::addStream(int fd) {
   stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
+
+  // update log info
+  Debug::log_info[std::this_thread::get_id()].farm_name = listener_config_.name;
 
   // add date and time of request
   stream->client_connection.time_start = std::chrono::steady_clock::now();
@@ -440,34 +459,34 @@ void StreamManager::onRequestEvent(int fd) {
       &parsed);  // parsing http data as response structured
 
   switch (parse_result) {
-    case http_parser::PARSE_RESULT::SUCCESS: {
-      auto valid =
-          http_manager::validateRequest(stream->request, listener_config_);
-      if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
-        http_manager::replyError(
-            HttpStatus::Code::NotImplemented,
-            validation::request_result_reason.at(valid).c_str(),
-            listener_config_.err501, stream->client_connection,
-            this->ssl_manager);
-        this->clearStream(stream);
-        return;
-      }
+  case http_parser::PARSE_RESULT::SUCCESS: {
+    auto valid =
+        http_manager::validateRequest(stream->request, listener_config_);
+    if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
+      http_manager::replyError(HttpStatus::Code::NotImplemented,
+                         validation::request_result_reason.at(valid).c_str(),
+                         listener_config_.err501, stream->client_connection,
+                         this->ssl_manager);
+      this->clearStream(stream);
+      return;
+    }
 
-      stream->timer_fd.unset();
-      deleteFd(stream->timer_fd.getFileDescriptor());
-      timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
-      auto service = service_manager->getService(stream->request);
-      if (service == nullptr) {
-        http_manager::replyError(
-            HttpStatus::Code::ServiceUnavailable,
-            validation::request_result_reason
-                .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
-                .c_str(),
-            listener_config_.err503, stream->client_connection,
-            this->ssl_manager);
-        this->clearStream(stream);
-        return;
-      }
+    stream->timer_fd.unset();
+    deleteFd(stream->timer_fd.getFileDescriptor());
+    timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
+    auto service = service_manager->getService(stream->request);
+    if (service == nullptr) {
+      http_manager::replyError(HttpStatus::Code::ServiceUnavailable,
+                         validation::request_result_reason
+                             .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
+                             .c_str(),
+                         listener_config_.err503, stream->client_connection,
+                         this->ssl_manager);
+      this->clearStream(stream);
+      return;
+    }
+    // update log info
+    Debug::log_info[std::this_thread::get_id()].service_name = service->name;
 
       stream->request.setService(service);
 #ifdef CACHE_ENABLED
@@ -503,6 +522,9 @@ void StreamManager::onRequestEvent(int fd) {
       this->clearStream(stream);
       return;
     } else {
+      // update log info
+      Debug::log_info[std::this_thread::get_id()].backend_id= bck->backend_id;
+
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
       static size_t total_request;
       total_request++;

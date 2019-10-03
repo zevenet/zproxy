@@ -329,6 +329,7 @@ ListenerConfig *Config::parse_HTTP() {
   regmatch_t matches[5];
 
   res = new ListenerConfig();
+  res->name=name;
   res->to = clnt_to;
   res->rewr_loc = 1;
   res->err414 = "Request URI is too long";
@@ -1051,6 +1052,7 @@ ServiceConfig *Config::parseService(const char *svc_name) {
   regmatch_t matches[5];
 
   res = new ServiceConfig();
+  res->f_name=name;
   res->max_headers_allowed = 128;
   res->sess_type = SESS_TYPE::SESS_NONE;
   res->dynscale = dynscale;
