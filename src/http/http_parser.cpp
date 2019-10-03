@@ -103,9 +103,9 @@ void http_parser::HttpData::prepareToSend()
 
 void http_parser::HttpData::addHeader(http::HTTP_HEADER_NAME header_name, const std::string&header_value, bool permanent) {
     std::string newh;
-  newh.reserve(http::headers_names_strings.at(header_name).size() +
+  newh.reserve(http::http_info::headers_names_strings.at(header_name).size() +
                http::CRLF_LEN + header_value.size() + http::CRLF_LEN);
-  newh += http::headers_names_strings.at(header_name);
+  newh += http::http_info::headers_names_strings.at(header_name);
   newh += ": ";
   newh += header_value;
   newh += http::CRLF;
@@ -135,8 +135,8 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
   for (size_t i = 0; i != num_headers; ++i) {
     std::string header(headers[i].name, headers[i].name_len);
     std::string header_value(headers[i].value, headers[i].value_len);
-    if (headers_names.find(header) != headers_names.end()) {
-      auto header_name_ = headers_names.at(header);
+	if (http_info::headers_names.find(header) != http_info::headers_names.end()) {
+	  auto header_name_ = http_info::headers_names.at(header);
       if (header_name_ == header_name) {
         out_key = header_value;
         return true;

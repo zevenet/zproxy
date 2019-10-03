@@ -23,8 +23,8 @@
 void HttpRequest::setRequestMethod() {
   auto sv = std::string_view(method, method_len);
   //    auto sv = std::string(method, method_len);
-  auto it = http::http_verbs.find(sv);
-  if (it != http::http_verbs.end()) request_method = it->second;
+  auto it = http::http_info::http_verbs.find(sv);
+  if (it != http::http_info::http_verbs.end()) request_method = it->second;
 }
 
 http::REQUEST_METHOD HttpRequest::getRequestMethod() {
@@ -33,7 +33,7 @@ http::REQUEST_METHOD HttpRequest::getRequestMethod() {
 }
 
 void HttpRequest::printRequestMethod() {
-  Debug::logmsg(LOG_DEBUG, "Request method: %s", http::http_verb_strings.at(request_method).c_str());
+  Debug::logmsg(LOG_DEBUG, "Request method: %s", http::http_info::http_verb_strings.at(request_method).c_str());
 }
 
 std::string HttpRequest::getMethod() { return method != nullptr ? std::string(method, method_len) : std::string(); }

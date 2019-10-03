@@ -63,7 +63,7 @@ int CacheManager::handleRequest(HttpStream *stream, Service *service, ListenerCo
                                                     stream->backend_connection.str_buffer) == 0) {
         http_manager::validateResponse(*stream, listener_config_);
 
-        if (http::http_verbs.at(std::string(stream->request.method, stream->request.method_len)) ==
+        if (http::http_info::http_verbs.at(std::string(stream->request.method, stream->request.method_len)) ==
             http::REQUEST_METHOD::HEAD) {
           // If HTTP verb is HEAD, just send headers
           stream->response.buffer_size = stream->response.buffer_size - stream->response.message_length;
@@ -101,8 +101,8 @@ void CacheManager::validateCacheResponse(HttpResponse &response) {
 
     auto header = std::string_view(response.headers[i].name, response.headers[i].name_len);
     auto header_value = std::string_view(response.headers[i].value, response.headers[i].value_len);
-    auto it = http::headers_names.find(header);
-    if (it != http::headers_names.end()) {
+    auto it = http::http_info::headers_names.find(header);
+    if (it != http::http_info::headers_names.end()) {
       const auto header_name = it->second;
       switch (header_name) {
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
@@ -123,8 +123,8 @@ void CacheManager::validateCacheResponse(HttpResponse &response) {
             string_view directive_value(
                 cache_directives[l].substr(cache_directives[l].find('=') + 1, cache_directives[l].size() - 1));
 
-            if (http::cache_control_values.count(directive.data()) > 0) {
-              switch (http::cache_control_values.at(directive.data())) {
+            if (http::http_info::cache_control_values.count(directive.data()) > 0) {
+              switch (http::http_info::cache_control_values.at(directive.data())) {
                 case http::CACHE_CONTROL::MAX_AGE:
                   if (directive_value.size() != 0 && response.c_opt.max_age == -1)
                     response.c_opt.max_age = stoi(directive_value.data());
@@ -208,8 +208,8 @@ void CacheManager::validateCacheRequest(HttpRequest &request) {
     auto header = std::string_view(request.headers[i].name, request.headers[i].name_len);
     auto header_value = std::string_view(request.headers[i].value, request.headers[i].value_len);
 
-    auto it = http::headers_names.find(header);
-    if (it != http::headers_names.end()) {
+    auto it = http::http_info::headers_names.find(header);
+    if (it != http::http_info::headers_names.end()) {
       auto header_name = it->second;
       switch (header_name) {
         case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
@@ -230,8 +230,8 @@ void CacheManager::validateCacheRequest(HttpRequest &request) {
                 cache_directives[l].substr(cache_directives[l].find('=') + 1, cache_directives[l].size() - 1));
 
             // To separe directive from the token
-            if (http::cache_control_values.count(directive.data()) > 0) {
-              switch (http::cache_control_values.at(directive.data())) {
+            if (http::http_info::cache_control_values.count(directive.data()) > 0) {
+              switch (http::http_info::cache_control_values.at(directive.data())) {
                 case http::CACHE_CONTROL::MAX_AGE:
                   if (directive_value.size() != 0) request.c_opt.max_age = stoi(directive_value.data());
                   break;

@@ -278,12 +278,11 @@ void StreamManager::doWork() {
   while (is_running) {
     if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
       //       something bad happend
-      Debug::LogInfo("No events !!");
     }
     // if(needMainatance)
     //    doMaintenance();
   }
-  Debug::logmsg(LOG_REMOVE, "Exiting loop");
+
 }
 
 void StreamManager::addStream(int fd) {
@@ -1410,8 +1409,8 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
     std::string upgrade_header_value;
     stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE,
                                    upgrade_header_value);
-    auto it = http::upgrade_protocols.find(upgrade_header_value);
-    if (it != http::upgrade_protocols.end())
+	auto it = http::http_info::upgrade_protocols.find(upgrade_header_value);
+	if (it != http::http_info::upgrade_protocols.end())
       stream->upgrade.protocol = it->second;
   }
 

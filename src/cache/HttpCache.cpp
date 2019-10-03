@@ -73,7 +73,7 @@ void HttpCache::handleResponse(HttpResponse &response, HttpRequest request) {
   }
 
   // Check HTTP verb
-  switch (http::http_verbs.at(std::string(request.method, request.method_len))) {
+  switch (http::http_info::http_verbs.at(std::string(request.method, request.method_len))) {
     case http::REQUEST_METHOD::GET:
       addResponse(response, request);
       break;
@@ -535,12 +535,12 @@ int HttpCache::getResponseFromCache(HttpRequest request, HttpResponse &cached_re
     // Create warnings if needed
     if (c_object->staled) {
       w_codes.push_back(std::to_string(http::WARNING_CODE::RESPONSE_STALE));
-      w_text.push_back(http::warning_code_values_strings.at(http::WARNING_CODE::RESPONSE_STALE));
+      w_text.push_back(http::http_info::warning_code_values_strings.at(http::WARNING_CODE::RESPONSE_STALE));
     }
     // Defined by RFC7234
     if (c_object->heuristic && c_object->max_age >= 86400 && c_object->staled) {
       w_codes.push_back(std::to_string(http::WARNING_CODE::HEURISTIC_EXPIRATION));
-      w_text.push_back(http::warning_code_values_strings.at(http::WARNING_CODE::HEURISTIC_EXPIRATION));
+      w_text.push_back(http::http_info::warning_code_values_strings.at(http::WARNING_CODE::HEURISTIC_EXPIRATION));
     }
     // Add warning headers if needed
     std::string warn;

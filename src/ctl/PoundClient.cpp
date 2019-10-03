@@ -342,8 +342,8 @@ bool PoundClient::init(int argc, char *argv[]) {
 
 bool PoundClient::doRequest(http::REQUEST_METHOD request_method, http::HTTP_VERSION http_version,
                             std::string json_object, std::string path, std::string &buffer) {
-  if (http::http_verb_strings.count(request_method) > 0) {
-    buffer = http::http_verb_strings.at(request_method);
+  if (http::http_info::http_verb_strings.count(request_method) > 0) {
+    buffer = http::http_info::http_verb_strings.at(request_method);
     buffer = buffer + " ";
   } else {
     return false;

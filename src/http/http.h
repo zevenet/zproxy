@@ -339,27 +339,27 @@ enum class Code {
   NetworkAuthenticationRequired = 511 /*[RFC6585]*/,
   // 512-599	Unassigned
 };
-
-static const std::map<std::string, HTTP_HEADER_NAME, std::less<>> headers_names;
-static const std::unordered_map<HTTP_HEADER_NAME, const std::string> headers_names_strings;
-static const std::map<std::string, REQUEST_METHOD, std::less<>> http_verbs;
-static const std::unordered_map<REQUEST_METHOD, const std::string> http_verb_strings;
-static const std::map<std::string, UPGRADE_PROTOCOLS, std::less<>> upgrade_protocols;
-static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings;
-static const std::map<std::string, CONNECTION_VALUES, std::less<>> connection_values;
-static const std::unordered_map<TRANSFER_ENCODING_TYPE, const std::string> compression_types_strings;
-static const std::map<std::string, TRANSFER_ENCODING_TYPE, std::less<>> compression_types;
+struct http_info {
+  static const std::map<std::string, HTTP_HEADER_NAME, std::less<>> headers_names;
+  static const std::unordered_map<HTTP_HEADER_NAME, const std::string> headers_names_strings;
+  static const std::map<std::string, REQUEST_METHOD, std::less<>> http_verbs;
+  static const std::unordered_map<REQUEST_METHOD, const std::string> http_verb_strings;
+  static const std::map<std::string, UPGRADE_PROTOCOLS, std::less<>> upgrade_protocols;
+  static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings;
+  static const std::map<std::string, CONNECTION_VALUES, std::less<>> connection_values;
+  static const std::unordered_map<TRANSFER_ENCODING_TYPE, const std::string> compression_types_strings;
+  static const std::map<std::string, TRANSFER_ENCODING_TYPE, std::less<>> compression_types;
 #if CACHE_ENABLED
-static const std::unordered_map<CACHE_CONTROL, const std::string> cache_control_values_strings;
-static const std::unordered_map<std::string, CACHE_CONTROL> cache_control_values;
-static const std::unordered_map<WARNING_CODE, const std::string> warning_code_values_strings;
-static const std::unordered_map<std::string, WARNING_CODE> warning_code_values;
+  static const std::unordered_map<CACHE_CONTROL, const std::string> cache_control_values_strings;
+  static const std::unordered_map<std::string, CACHE_CONTROL> cache_control_values;
+  static const std::unordered_map<WARNING_CODE, const std::string> warning_code_values_strings;
+  static const std::unordered_map<std::string, WARNING_CODE> warning_code_values;
 #endif
-static const std::map<Code, std::string> http_status_code_strings;
-
+  static const std::map<Code, std::string> http_status_code_strings;
+};
 static const char *reasonPhrase(Code code) {
-  auto it = http_status_code_strings.find(code);
-  if (it != http_status_code_strings.end())
+  auto it = http_info::http_status_code_strings.find(code);
+  if (it != http_info::http_status_code_strings.end())
     return it->second.data();
   else
     return "(UNKNOWN)";

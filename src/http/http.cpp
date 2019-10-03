@@ -23,7 +23,7 @@
 
 using namespace http;
 
-const std::map<std::string, HTTP_HEADER_NAME, std::less<>> headers_names = {
+const std::map<std::string, HTTP_HEADER_NAME, std::less<>> http_info::headers_names = {
     {"", HTTP_HEADER_NAME::NONE},
     {"Accept", HTTP_HEADER_NAME::ACCEPT},
     {"Accept-Charset", HTTP_HEADER_NAME::ACCEPT_CHARSET},
@@ -107,7 +107,7 @@ const std::map<std::string, HTTP_HEADER_NAME, std::less<>> headers_names = {
     {"X-Forwarded-Proto", HTTP_HEADER_NAME::X_FORWARDED_PROTO},
     {"X-Frame-Options", HTTP_HEADER_NAME::X_FRAME_OPTIONS},
     {"X-XSS-Protection", HTTP_HEADER_NAME::X_XSS_PROTECTION}};
-const std::unordered_map<HTTP_HEADER_NAME, const std::string> headers_names_strings = {
+const std::unordered_map<HTTP_HEADER_NAME, const std::string> http_info::headers_names_strings = {
     {HTTP_HEADER_NAME::NONE, ""},
     {HTTP_HEADER_NAME::ACCEPT, "Accept"},
     {HTTP_HEADER_NAME::ACCEPT_CHARSET, "Accept-Charset"},
@@ -199,7 +199,7 @@ const std::unordered_map<HTTP_HEADER_NAME, const std::string> headers_names_stri
     {HTTP_HEADER_NAME::X_SSL_NOTAFTER, "X-SSL-notAfter"},
     {HTTP_HEADER_NAME::X_SSL_CERTIFICATE, "X-SSL-Certificate"}};
 
-const std::unordered_map<REQUEST_METHOD, const std::string> http_verb_strings{
+const std::unordered_map<REQUEST_METHOD, const std::string> http_info::http_verb_strings{
     {REQUEST_METHOD::ACL, "ACL"},
     {REQUEST_METHOD::BASELINE_CONTROL, "BASELINE-CONTROL"},
     {REQUEST_METHOD::BCOPY, "BCOPY"},
@@ -252,7 +252,7 @@ const std::unordered_map<REQUEST_METHOD, const std::string> http_verb_strings{
     {REQUEST_METHOD::VERSION_CONTROL, "VERSION-CONTROL"},
     {REQUEST_METHOD::X_MS_ENUMATTS, "X_MS_ENUMATTS"}};
 
-const std::map<std::string, REQUEST_METHOD, std::less<>> http_verbs = {
+const std::map<std::string, REQUEST_METHOD, std::less<>> http_info::http_verbs = {
     {"ACL", REQUEST_METHOD::ACL},
     {"BASELINE-CONTROL", REQUEST_METHOD::BASELINE_CONTROL},
     {"BCOPY", REQUEST_METHOD::BCOPY},
@@ -317,37 +317,37 @@ const std::unordered_map<validation::REQUEST_RESULT, const std::string> validati
     {REQUEST_RESULT::BACKEND_TIMEOUT, "Backend response timeout"},
 };
 
-const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> upgrade_protocols_strings = {
+const std::unordered_map<UPGRADE_PROTOCOLS, const std::string> http_info::upgrade_protocols_strings = {
     {UPGRADE_PROTOCOLS::WEBSOCKET, "websocket"},
     {UPGRADE_PROTOCOLS::H2C, "h2c"},
     {UPGRADE_PROTOCOLS::TLS, "tls"},
 };
 
-const std::map<std::string, UPGRADE_PROTOCOLS, std::less<>> upgrade_protocols = {
+const std::map<std::string, UPGRADE_PROTOCOLS, std::less<>> http_info::upgrade_protocols = {
     {"websocket", UPGRADE_PROTOCOLS::WEBSOCKET},
     {"h2c", UPGRADE_PROTOCOLS::H2C},
     {"tls", UPGRADE_PROTOCOLS::TLS},
 };
 
-const std::map<std::string, CONNECTION_VALUES, std::less<>> connection_values = {
+const std::map<std::string, CONNECTION_VALUES, std::less<>> http_info::connection_values = {
     {"Upgrade", CONNECTION_VALUES::UPGRADE},
     {"close", CONNECTION_VALUES::CLOSE},
     {"Keep-Alive", CONNECTION_VALUES::KEEP_ALIVE},
 };
 
-const std::unordered_map<http::TRANSFER_ENCODING_TYPE, const std::string> compression_types_strings = {
+const std::unordered_map<http::TRANSFER_ENCODING_TYPE, const std::string> http_info::compression_types_strings = {
     {http::TRANSFER_ENCODING_TYPE::GZIP, "gzip"},         {http::TRANSFER_ENCODING_TYPE::COMPRESS, "compress"},
     {http::TRANSFER_ENCODING_TYPE::DEFLATE, "deflate"},   {http::TRANSFER_ENCODING_TYPE::BR, "br"},
     {http::TRANSFER_ENCODING_TYPE::IDENTITY, "identity"},
 };
 
-const std::map<std::string, http::TRANSFER_ENCODING_TYPE, std::less<>> compression_types = {
+const std::map<std::string, http::TRANSFER_ENCODING_TYPE, std::less<>> http_info::compression_types = {
     {"gzip", http::TRANSFER_ENCODING_TYPE::GZIP},         {"compress", http::TRANSFER_ENCODING_TYPE::COMPRESS},
     {"deflate", http::TRANSFER_ENCODING_TYPE::DEFLATE},   {"br", http::TRANSFER_ENCODING_TYPE::BR},
     {"identity", http::TRANSFER_ENCODING_TYPE::IDENTITY},
 };
 #ifdef CACHE_ENABLED
-const std::unordered_map<CACHE_CONTROL, const std::string> cache_control_values_strings = {
+const std::unordered_map<CACHE_CONTROL, const std::string> http_info::cache_control_values_strings = {
     {CACHE_CONTROL::MAX_AGE, "max-age"},
     {CACHE_CONTROL::MAX_STALE, "max-stale"},
     {CACHE_CONTROL::MIN_FRESH, "min-fresh"},
@@ -362,7 +362,7 @@ const std::unordered_map<CACHE_CONTROL, const std::string> cache_control_values_
     {CACHE_CONTROL::S_MAXAGE, "s-maxage"},
 };
 
-const std::unordered_map<std::string, CACHE_CONTROL> cache_control_values = {
+const std::unordered_map<std::string, CACHE_CONTROL> http_info::cache_control_values = {
     {"max-age", CACHE_CONTROL::MAX_AGE},
     {"max-stale", CACHE_CONTROL::MAX_STALE},
     {"min-fresh", CACHE_CONTROL::MIN_FRESH},
@@ -377,7 +377,7 @@ const std::unordered_map<std::string, CACHE_CONTROL> cache_control_values = {
     {"s-maxage", CACHE_CONTROL::S_MAXAGE},
 };
 
-const std::unordered_map<WARNING_CODE, const std::string> warning_code_values_strings = {
+const std::unordered_map<WARNING_CODE, const std::string> http_info::warning_code_values_strings = {
     {WARNING_CODE::RESPONSE_STALE, "Response is Stale"},
     {WARNING_CODE::REVALIDATION_FAILED, "Revalidation Failed"},
     {WARNING_CODE::DISCONNECTED, "Disconnected Operation"},
@@ -387,7 +387,7 @@ const std::unordered_map<WARNING_CODE, const std::string> warning_code_values_st
     {WARNING_CODE::PERSISTENT_WARNING, "Miscellaneous Persistent Warning"},
 };
 
-const std::unordered_map<std::string, WARNING_CODE> warning_code_values = {
+const std::unordered_map<std::string, WARNING_CODE> http_info::warning_code_values = {
     {"Response is Stale", WARNING_CODE::RESPONSE_STALE},
     {"Revalidation Failed", WARNING_CODE::REVALIDATION_FAILED},
     {"Disconnected Operation", WARNING_CODE::DISCONNECTED},
@@ -398,7 +398,7 @@ const std::unordered_map<std::string, WARNING_CODE> warning_code_values = {
 };
 
 #endif
-const std::map<Code, std::string> http_status_code_strings = {
+const std::map<Code, std::string> http_info::http_status_code_strings = {
     {Code::Continue, "Continue"},
     {Code::SwitchingProtocols, "Switching Protocols"},
     {Code::Processing, "Processing"},
