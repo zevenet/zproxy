@@ -96,8 +96,6 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 #else
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
-  Debug::init_log_info();
-
   switch (event_type) {
 #if SM_HANDLE_ACCEPT
   case EVENT_TYPE::CONNECT: {
@@ -147,15 +145,6 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   }
   case EVENT_TYPE::WRITE: {
     auto stream = streams_set[fd];
-    if (stream != nullptr){
-        Debug::log_info[std::this_thread::get_id()].farm_name = listener_config_.name;
-        if (stream->request.getService() != nullptr){
-            Debug::log_info[std::this_thread::get_id()].service_name = static_cast<Service *>(stream->request.getService())->name.c_str();
-            if (stream->backend_connection.getBackend() != nullptr)
-                Debug::log_info[std::this_thread::get_id()].backend_id = stream->backend_connection.getBackend()->backend_id;
-        }
-    }
-
     if (stream == nullptr) {
       switch (event_group) {
       case EVENT_GROUP::ACCEPTOR:break;
@@ -197,15 +186,6 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
   }
   case EVENT_TYPE::DISCONNECT: {
     auto stream = streams_set[fd];
-    if (stream != nullptr){
-        Debug::log_info[std::this_thread::get_id()].farm_name = listener_config_.name;
-        if (stream->request.getService() != nullptr){
-            Debug::log_info[std::this_thread::get_id()].service_name = static_cast<Service *>(stream->request.getService())->name.c_str();
-            if (stream->backend_connection.getBackend() != nullptr)
-                Debug::log_info[std::this_thread::get_id()].backend_id = stream->backend_connection.getBackend()->backend_id;
-        }
-    }
-
     if (stream == nullptr) {
       Debug::LogInfo("Remote host closed connection prematurely ", LOG_INFO);
       deleteFd(fd);
@@ -240,8 +220,6 @@ void StreamManager::stop() { is_running = false; }
 
 void StreamManager::start(int thread_id_) {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
-
-  Debug::init_log_info();
 
   is_running = true;
   worker_id = thread_id_;
@@ -290,12 +268,12 @@ void StreamManager::addStream(int fd) {
   if (UNLIKELY(stream != nullptr)) {
     clearStream(stream);
   }
-  stream = new HttpStream();
+  stream = new HttpStream(listener_config_.name);
   stream->client_connection.setFileDescriptor(fd);
   streams_set[fd] = stream;
 
   // update log info
-  Debug::log_info[std::this_thread::get_id()].farm_name = listener_config_.name;
+  LoggerData logger(stream);
 
   // add date and time of request
   stream->client_connection.time_start = std::chrono::steady_clock::now();
@@ -328,7 +306,9 @@ void StreamManager::addStream(int fd) {
 int StreamManager::getWorkerId() { return worker_id; }
 
 void StreamManager::onRequestEvent(int fd) {
-  HttpStream* stream = streams_set[fd];
+  HttpStream *stream = streams_set[fd];
+  // update log info
+  LoggerData logger(stream);
   if (stream != nullptr) {
     if (stream->client_connection.isCancelled()) {
       clearStream(stream);
@@ -485,8 +465,9 @@ void StreamManager::onRequestEvent(int fd) {
       this->clearStream(stream);
       return;
     }
+
     // update log info
-    Debug::log_info[std::this_thread::get_id()].service_name = service->name;
+    logger.setLogData(stream);
 
       stream->request.setService(service);
 #ifdef CACHE_ENABLED
@@ -523,7 +504,7 @@ void StreamManager::onRequestEvent(int fd) {
       return;
     } else {
       // update log info
-      Debug::log_info[std::this_thread::get_id()].backend_id= bck->backend_id;
+      logger.setLogData(stream);
 
       IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
       static size_t total_request;
@@ -697,7 +678,9 @@ void StreamManager::onRequestEvent(int fd) {
 }
 
 void StreamManager::onResponseEvent(int fd) {
-  HttpStream* stream = streams_set[fd];
+  HttpStream *stream = streams_set[fd];
+  // update log info
+  LoggerData logger(stream);
   if (stream == nullptr) {
     Debug::LogInfo("Backend Connection, Stream closed", LOG_DEBUG);
     deleteFd(fd);
@@ -965,7 +948,9 @@ void StreamManager::onResponseEvent(int fd) {
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_backend_connect_timeout);
-  HttpStream* stream = timers_set[fd];
+  HttpStream *stream = timers_set[fd];
+  // update log info
+  LoggerData logger(stream);
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
@@ -987,7 +972,9 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 
 void StreamManager::onRequestTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_request_timeout);
-  HttpStream* stream = timers_set[fd];
+  HttpStream *stream = timers_set[fd];
+  // update log info
+  LoggerData logger(stream);
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
@@ -999,7 +986,9 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 
 void StreamManager::onResponseTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_response_timeout);
-  HttpStream* stream = timers_set[fd];
+  HttpStream *stream = timers_set[fd];
+  // update log info
+  LoggerData logger(stream);
   if (stream == nullptr) {
     Debug::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
@@ -1033,6 +1022,8 @@ void StreamManager::onSignalEvent(int fd) {
 
 void StreamManager::onServerWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
+  // update log info
+  LoggerData logger(stream);
   if (UNLIKELY(stream->backend_connection.isCancelled())) {
     clearStream(stream);
     return;
@@ -1216,6 +1207,9 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
 
 void StreamManager::onClientWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_response);
+  // update log info
+  LoggerData logger(stream);
+
   if (UNLIKELY(stream->client_connection.isCancelled())) {
     clearStream(stream);
     return;
@@ -1454,6 +1448,8 @@ void StreamManager::setListenSocket(int fd) {
 }
 void StreamManager::onClientDisconnect(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
+  // update log info
+  LoggerData logger(stream);
   Debug::LogInfo("Client closed connection", LOG_DEBUG);
   clearStream(stream);
 }
@@ -1475,6 +1471,8 @@ bool StreamManager::isHandler(ctl::CtlTask& task) {
 }
 void StreamManager::onServerDisconnect(HttpStream *stream) {
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
+  // update log info
+  LoggerData logger(stream);
 
   Debug::LogInfo("Backend closed connection", LOG_DEBUG);
   if (stream == nullptr) {

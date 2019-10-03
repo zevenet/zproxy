@@ -294,7 +294,27 @@ public:
   /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
 
-
-
 };
 
+
+class LoggerData{
+public:
+    inline static void setLogData(HttpStream *stream){
+        if (stream != nullptr){
+            Debug::log_info[std::this_thread::get_id()].farm_name = stream->l_name;
+            if (stream->request.getService() != nullptr){
+                Debug::log_info[std::this_thread::get_id()].service_name = static_cast<Service *>(stream->request.getService())->name.c_str();
+                if (stream->backend_connection.getBackend() != nullptr)
+                    Debug::log_info[std::this_thread::get_id()].backend_id = stream->backend_connection.getBackend()->backend_id;
+            }
+        }
+    }
+
+    LoggerData(HttpStream * stream){
+        setLogData(stream);
+    }
+
+    ~LoggerData(){
+        Debug::init_log_info();
+    }
+};

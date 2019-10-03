@@ -9,13 +9,14 @@
 
 using namespace ssl;
 
-HttpStream::HttpStream()
+HttpStream::HttpStream(std::string f_name)
     : request(), response(), client_connection(), backend_connection(),
       timer_fd() {
 #ifdef CACHE_ENABLED
     this->current_time = time_helper::gmtTimeNow();
     this->prev_time = std::chrono::steady_clock::now();
 #endif
+    this->l_name=f_name;
 }
 
 HttpStream::~HttpStream() {}

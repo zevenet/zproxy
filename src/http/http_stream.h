@@ -34,11 +34,14 @@ public:
     time_t current_time;
     std::chrono::steady_clock::time_point prev_time;
 #endif
-  HttpStream();
+  HttpStream(std::string f_name);
   ~HttpStream() final;
   // no copy allowed
   HttpStream(const HttpStream&) = delete;
   HttpStream& operator=(const HttpStream&) = delete;
+
+  /** Listener name, it is the farmname */
+  std::string l_name;
 
   /** Connection between zhttp and the client. */
   ClientConnection client_connection;
@@ -51,11 +54,10 @@ public:
   /** HttpResponse containing the response sent by the backend. */
   HttpResponse response;
   /** This struct indicates the upgrade mechanism status. */
-  UpgradeStatus upgrade;  
+  UpgradeStatus upgrade;
 
 public:
   void logTransaction();
 
 };
-
 
