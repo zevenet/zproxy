@@ -25,16 +25,16 @@
 #include "../http/http.h"
 #include "../service/backend.h"
 // Storage headers
+#include <pcreposix.h>
+#include <string>
+#include <unordered_map>
+#include "../ctl/ctl.h"
+#include "../stats/counter.h"
+#include "../util/common.h"
+#include "CacheCommons.h"
+#include "DiskCacheStorage.h"
 #include "ICacheStorage.h"
 #include "RamCacheStorage.h"
-#include "DiskCacheStorage.h"
-#include "../util/common.h"
-#include "../stats/counter.h"
-#include "../ctl/ctl.h"
-#include <string>
-#include <pcreposix.h>
-#include <unordered_map>
-#include "CacheCommons.h"
 
 using namespace std;
 namespace st = storage_commons;
@@ -45,51 +45,56 @@ namespace st = storage_commons;
  * @brief The HttpCacheManager class controls all the cache operations and logic
  */
 class HttpCache {
-private:
+ private:
   int cache_timeout = -1;
   std::string service_name;
-  RamICacheStorage * ram_storage;
-  DiskICacheStorage * disk_storage;
-  unordered_map<size_t, cache_commons::CacheObject *> cache; // Caching map
+  RamICacheStorage *ram_storage;
+  DiskICacheStorage *disk_storage;
+  unordered_map<size_t, cache_commons::CacheObject *> cache;  // Caching map
   regex_t *cache_pattern = nullptr;
   std::string ramfs_mount_point = "/tmp/cache_ramfs";
   std::string disk_mount_point = "/tmp/cache_disk";
   void addResponse(HttpResponse &response, HttpRequest request);
   void updateResponse(HttpResponse response, HttpRequest request);
-  st::STORAGE_TYPE getStorageType( HttpResponse response );
+  st::STORAGE_TYPE getStorageType(HttpResponse response);
   st::STORAGE_TYPE getStorageType();
-public:
+
+ public:
   std::time_t t_stamp;
   cache_commons::cache_stats stats;
   size_t cache_max_size = 0;
   virtual ~HttpCache();
   /**
-   * @brief cacheInit Initialize the cache manager configuring its pattern and the
-   * timeout it also get the ram storage manager and disk storage manager,
+   * @brief cacheInit Initialize the cache manager configuring its pattern and
+   * the timeout it also get the ram storage manager and disk storage manager,
    * @param pattern is the pointer to the regex_t configured in the service,
    * checks its re_pcre field to decide on enabling the cache or not
    * @param timeout is the timeout value read from the configuration file
    * @param svc is the service name
    * @param storage_size is the ram storage max size
-   * @param storage_threshold is the threshold to determine if must be cached by ram or by disk
+   * @param storage_threshold is the threshold to determine if must be cached by
+   * ram or by disk
    * @param f_name is the farm name, used to determine the mount point
    */
-  void cacheInit(regex_t *pattern, const int timeout, const std::string &svc, long storage_size, int storage_threshold, const std::string &f_name, const std::string & cache_ram_mpoint,const std::string &cache_disk_mpoint);
+  void cacheInit(regex_t *pattern, const int timeout, const std::string &svc,
+                 long storage_size, int storage_threshold,
+                 const std::string &f_name, const std::string &cache_ram_mpoint,
+                 const std::string &cache_disk_mpoint);
   /**
    * @brief Provide access to the cache_timeout variable
    *
    * @return timeout is the timeout value set to the cache manager
    */
-  int getCacheTimeout() {  return this->cache_timeout; }
+  int getCacheTimeout() { return this->cache_timeout; }
   /**
-   * @brief canBeServedFromCache Checks if the request allows to serve cached content and if the
-   * cached content is fresh
+   * @brief canBeServedFromCache Checks if the request allows to serve cached
+   * content and if the cached content is fresh
    *
    * @param request is the HttpRequest that will be checked if serveable or
    * not
    * @return if the content can be served it returns true or false in other case
    */
-  cache_commons::CacheObject * canBeServedFromCache(HttpRequest &request);
+  cache_commons::CacheObject *canBeServedFromCache(HttpRequest &request);
   /**
    * @brief get the cached object from the cache, which contains the cached
    * response
@@ -103,7 +108,8 @@ public:
   /**
    * @brief cache_commons::CacheObject
    * @param hashed_url a hashed string of an URL in order to retrieve its object
-   * @return  the cache_commons::CacheObject which is associated to the url or nullptr if not found
+   * @return  the cache_commons::CacheObject which is associated to the url or
+   * nullptr if not found
    */
   cache_commons::CacheObject *getCacheObject(size_t hashed_url);
   /**
@@ -121,16 +127,18 @@ public:
    * @param url indicates the resource
    *
    */
-  void addData(HttpResponse &response, std::string_view data,const std::string &url);
+  void addData(HttpResponse &response, std::string_view data,
+               const std::string &url);
   /**
    * @brief getResponseFromCache
    * @param request is the HttpRequest used to determine the cached response to
    * use
-   * @param cached_response is the reference to a response, which will used to store the created response
+   * @param cached_response is the reference to a response, which will used to
+   * store the created response
    * @return 0 if successful, != 0 in any other case.
    */
-  int getResponseFromCache(HttpRequest request,
-                          HttpResponse &cached_response, std::string &buffer );
+  int getResponseFromCache(HttpRequest request, HttpResponse &cached_response,
+                           std::string &buffer);
   /**
    * @brief handle the response of an http request, checks if cache_control
    * directives allows the response to be cached, if the response HTTP code is
@@ -152,14 +160,19 @@ public:
    * @param svc
    * @param st_type
    */
-  void recoverCache(const std::string &svc, st::STORAGE_TYPE st_type );
+  void recoverCache(const std::string &svc, st::STORAGE_TYPE st_type);
   /**
-   * @brief createResponseEntry Creates a cache_commons::CacheObject entry with cache information of a HttpResponse
-   * @param response the response which will be used to create the cache_commons::CacheObject entry
-   * @param pointer for cache_commons::CacheObject, it will be stored in it, if nullptr, the function will create
-   * @return cache_commons::CacheObject is the cache information representation of the response
+   * @brief createResponseEntry Creates a cache_commons::CacheObject entry with
+   * cache information of a HttpResponse
+   * @param response the response which will be used to create the
+   * cache_commons::CacheObject entry
+   * @param pointer for cache_commons::CacheObject, it will be stored in it, if
+   * nullptr, the function will create
+   * @return cache_commons::CacheObject is the cache information representation
+   * of the response
    */
-  void createResponseEntry( HttpResponse response, cache_commons::CacheObject * c_object );
+  void createResponseEntry(HttpResponse response,
+                           cache_commons::CacheObject *c_object);
   /**
    * @brief deleteEntry removes the cache entry of the param request
    * @param request the HttpRequest used to determine which entry to delete
@@ -167,19 +180,26 @@ public:
   int deleteEntry(HttpRequest request);
   /**
    * @brief deleteEntry removes the cache entry of the param request
-   * @param hashed_url the size_t variable used to determine which entry will be deleted
+   * @param hashed_url the size_t variable used to determine which entry will be
+   * deleted
    */
   int deleteEntry(size_t hashed_url);
   /**
-   * @brief doCacheMaintenance if the cache needs maintenance ( 1 per second or more), check entries which must be deleted
+   * @brief doCacheMaintenance if the cache needs maintenance ( 1 per second or
+   * more), check entries which must be deleted
    */
   void doCacheMaintenance();
   /**
-   * @brief validateResponseEncoding checks if the stored response encoding match with any of the accept encoding provided
-   * @param request is the HttpRequest object containing the incoming HttpRequest information
+   * @brief validateResponseEncoding checks if the stored response encoding
+   * match with any of the accept encoding provided
+   * @param request is the HttpRequest object containing the incoming
+   * HttpRequest information
    * @param c_object is the CacheObject object containing the entry stored
    */
-  bool validateResponseEncoding(HttpRequest request, cache_commons::CacheObject *c_object);
+  bool validateResponseEncoding(HttpRequest request,
+                                cache_commons::CacheObject *c_object);
+
+  void flushCache();
 };
 
 namespace cache_stats__ {
@@ -195,4 +215,4 @@ DEFINE_OBJECT_COUNTER(cache_ram_used)
 DEFINE_OBJECT_COUNTER(cache_disk_used)
 DEFINE_OBJECT_COUNTER(cache_not_stored)
 #endif
-}
+}  // namespace cache_stats__
