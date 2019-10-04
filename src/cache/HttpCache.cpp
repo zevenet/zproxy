@@ -132,7 +132,7 @@ st::STORAGE_TYPE HttpCache::getStorageType(HttpResponse response) {
   if ((response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED &&
        response.transfer_encoding_type ==
            http::TRANSFER_ENCODING_TYPE::CHUNKED) ||
-      response_size > ram_storage->max_size * 0.05 ||
+      response_size > ram_storage->max_size * ram_storage->cache_thr ||
       response_size >= ram_size_left) {
     return st::STORAGE_TYPE::DISK;
   } else {
