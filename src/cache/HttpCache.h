@@ -198,7 +198,9 @@ class HttpCache {
    */
   bool validateResponseEncoding(HttpRequest request,
                                 cache_commons::CacheObject *c_object);
-
+  /**
+   * @brief flushCache Flush the full cache content, emptying both storages too.
+   */
   void flushCache();
 };
 

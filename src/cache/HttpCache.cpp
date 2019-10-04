@@ -35,7 +35,7 @@ cache_commons::CacheObject *HttpCache::getCacheObject(size_t hashed_url) {
   return c_object;
 }
 
-// Store in cache the response if it doesn't exists
+// Store in cache the response checking CacheObject parameters
 void HttpCache::handleResponse(HttpResponse &response, HttpRequest request) {
   auto c_opt = getCacheObject(request);
   if (c_opt != nullptr && c_opt->dirty == true) {
@@ -88,7 +88,7 @@ void HttpCache::handleResponse(HttpResponse &response, HttpRequest request) {
   }
   return;
 }
-
+// On Head request
 void HttpCache::updateResponse(HttpResponse response, HttpRequest request) {
   auto c_object = getCacheObject(request);
   if (response.content_length == 0) {
@@ -114,9 +114,9 @@ void HttpCache::updateResponse(HttpResponse response, HttpRequest request) {
 
   return;
 }
-// Decide on whether to use RAMFS or disk
+// Decide on which RAM storage to use
 st::STORAGE_TYPE HttpCache::getStorageType() {
-#if CACHE_STORAGE_STDMAP
+#ifdef CACHE_STORAGE_STDMAP
   return st::STORAGE_TYPE::STDMAP;
 #elif MEMCACHED_ENABLED
   return st::STORAGE_TYPE::MEMCACHED;
@@ -124,6 +124,7 @@ st::STORAGE_TYPE HttpCache::getStorageType() {
   return st::STORAGE_TYPE::RAMFS;
 #endif
 }
+// Decide if should be used Disk or RAM
 st::STORAGE_TYPE HttpCache::getStorageType(HttpResponse response) {
   size_t ram_size_left = ram_storage->max_size - ram_storage->current_size;
 
@@ -139,6 +140,7 @@ st::STORAGE_TYPE HttpCache::getStorageType(HttpResponse response) {
     return getStorageType();
   }
 }
+// Destructor free pattern and stop storage
 HttpCache::~HttpCache() {
   // Free cache pattern
   if (cache_pattern != nullptr) {
@@ -150,6 +152,7 @@ HttpCache::~HttpCache() {
   }
 }
 
+// Init cache storage and set needed parameters
 void HttpCache::cacheInit(regex_t *pattern, const int timeout,
                           const std::string &svc, long storage_size,
                           int storage_threshold, const std::string &f_name,
@@ -254,7 +257,7 @@ void HttpCache::cacheInit(regex_t *pattern, const int timeout,
     this->stats.cache_DISK_mountpoint = disk_mount_point;
   }
 }
-
+// Add response to CacheObject representation and to storage
 void HttpCache::addResponse(HttpResponse &response, HttpRequest request) {
   auto cache_entry = new cache_commons::CacheObject();
   std::unique_ptr<cache_commons::CacheObject> c_object(cache_entry);
@@ -283,7 +286,8 @@ void HttpCache::addResponse(HttpResponse &response, HttpRequest request) {
       if (err == st::STORAGE_STATUS::SUCCESS) {
         DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
         this->stats.cache_RAM_inserted_entries++;
-        this->stats.cache_RAM_used = ram_storage->current_size;
+        this->stats.cache_RAM_used =
+            static_cast<long>(ram_storage->current_size);
       }
       break;
     case st::STORAGE_TYPE::DISK:
@@ -293,7 +297,8 @@ void HttpCache::addResponse(HttpResponse &response, HttpRequest request) {
       if (err == st::STORAGE_STATUS::SUCCESS) {
         DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
         this->stats.cache_DISK_inserted_entries++;
-        this->stats.cache_DISK_used = disk_storage->current_size;
+        this->stats.cache_DISK_used =
+            static_cast<long>(disk_storage->current_size);
       }
       break;
     default:
@@ -320,7 +325,7 @@ void HttpCache::addResponse(HttpResponse &response, HttpRequest request) {
   c_object.release();
   return;
 }
-
+// Create the CacheObject with important information about the req/resp cached
 void HttpCache::createResponseEntry(HttpResponse response,
                                     cache_commons::CacheObject *c_object) {
   if (c_object == nullptr) {
@@ -335,9 +340,7 @@ void HttpCache::createResponseEntry(HttpResponse response,
   }
 
   c_object->date = response.date;
-  /*
-   *max-age, s-maxage, etc.
-   */
+
   // If the max_age is not set nor the timeout exist, we have to calculate
   // heuristically
   if (response.c_opt.max_age >= 0 && this->cache_timeout != 0) {
@@ -354,10 +357,10 @@ void HttpCache::createResponseEntry(HttpResponse response,
   } else if (response.last_mod >= 0) {
     // heuristic algorithm -> 10% of last-modified
     time_t now = this->t_stamp;
-    c_object->max_age = (now - response.last_mod) * 0.1;
+    c_object->max_age = static_cast<long>((now - response.last_mod) * 0.1);
   } else {
     // If not available value, use the defined default timeout
-    c_object->max_age = DEFAULT_TIMEOUT;
+    c_object->max_age = DEFAULT_TIMEOUT
   }
   /*
    *must-revalidate, proxy-revalidate
@@ -396,6 +399,8 @@ void HttpCache::createResponseEntry(HttpResponse response,
       exit(-1);
   }
 
+  // TODO: Add information (backend ID and URI) to the cache object
+
   return;
 }
 
@@ -422,11 +427,12 @@ void HttpCache::addData(HttpResponse &response, std::string_view data,
     case st::STORAGE_TYPE::MEMCACHED:
     case st::STORAGE_TYPE::RAMFS:
       err = ram_storage->appendData(rel_path, data);
-      this->stats.cache_RAM_used = ram_storage->current_size;
+      this->stats.cache_RAM_used = static_cast<long>(ram_storage->current_size);
       break;
     case st::STORAGE_TYPE::DISK:
       err = disk_storage->appendData(rel_path, data);
-      this->stats.cache_DISK_used = disk_storage->current_size;
+      this->stats.cache_DISK_used =
+          static_cast<long>(disk_storage->current_size);
       break;
     default:
       return;
@@ -448,7 +454,7 @@ void HttpCache::addData(HttpResponse &response, std::string_view data,
   }
   return;
 }
-
+// Check if the request can be satisfied with the stored content.
 cache_commons::CacheObject *HttpCache::canBeServedFromCache(
     HttpRequest &request) {
   cache_commons::CacheObject *c_object = getCacheObject(request);
@@ -468,7 +474,6 @@ cache_commons::CacheObject *HttpCache::canBeServedFromCache(
   if (!validateResponseEncoding(request, c_object)) {
     return nullptr;
   }
-  // TODO: isfresh applies to   Cobject, must be of Cobject
   bool serveable = true;
   bool prev_staled = c_object->staled;
   if (!c_object->isFresh(this->t_stamp)) {
@@ -540,9 +545,6 @@ int HttpCache::getResponseFromCache(HttpRequest request,
       return -1;
   }
 
-  //  cached_response.buffer = static_cast<char
-  //  *>(calloc(buff.size(),sizeof(char))); memcpy(cached_response.buffer,
-  //  buff.data(),buff.size());
   auto ret = cached_response.parseResponse(buffer, &parsed);
   cached_response.cached = true;
 
@@ -585,7 +587,7 @@ int HttpCache::getResponseFromCache(HttpRequest request,
       warn.append("\"");
       warn.append(w_text.at(i));
       warn.append("\" \"");
-      //      warn.append(w_date);
+      warn.append(time_helper::strTime(w_date));
       warn.append("\"");
       cached_response.addHeader(http::HTTP_HEADER_NAME::WARNING, warn);
     }
@@ -599,13 +601,11 @@ int HttpCache::getResponseFromCache(HttpRequest request,
   this->stats.cache_match++;
   return 0;
 }
-
+// Handle API commands
 std::string HttpCache::handleCacheTask(ctl::CtlTask &task) {
   int err = 0;
   if (task.subject != ctl::CTL_SUBJECT::CACHE) return JSON_OP_RESULT::ERROR;
   switch (task.command) {
-      //    DEFINE_OBJECT_COUNTER(cache_ram_used)
-      //    DEFINE_OBJECT_COUNTER(cache_disk_used)
     case ctl::CTL_COMMAND::GET: {
       JsonObject response;
       json::JsonArray *data{new json::JsonArray()};
@@ -736,7 +736,7 @@ void HttpCache::recoverCache(const string &svc, st::STORAGE_TYPE st_type) {
       if (c_object->content_length == 0) {
         c_object->encoding = http::TRANSFER_ENCODING_TYPE::CHUNKED;
       }
-      cache[strtoul(file_name.data(), 0, 0)] = c_object.release();
+      cache[strtoul(file_name.data(), nullptr, 0)] = c_object.release();
     }
     in_file.close();
   }
@@ -765,11 +765,12 @@ int HttpCache::deleteEntry(size_t hashed_url) {
     case storage_commons::STORAGE_TYPE::STDMAP:
     case storage_commons::STORAGE_TYPE::RAMFS:
       err = ram_storage->deleteInStorage(path);
-      this->stats.cache_RAM_used = ram_storage->current_size;
+      this->stats.cache_RAM_used = static_cast<long>(ram_storage->current_size);
       break;
     case storage_commons::STORAGE_TYPE::DISK:
       err = disk_storage->deleteInStorage(path);
-      this->stats.cache_DISK_used = disk_storage->current_size;
+      this->stats.cache_DISK_used =
+          static_cast<long>(disk_storage->current_size);
       break;
     default:
       return -1;
@@ -789,9 +790,8 @@ int HttpCache::deleteEntry(size_t hashed_url) {
 }
 
 void HttpCache::doCacheMaintenance() {
-  // Iterate over all the content, check staled, check how long, discard if have
-  // to
-  //    last_maintenance = time_helper::gmtTimeNow();
+  // Iterate over all the content, check staled, check how long, discard if
+  // entry old enough
   auto current_time = time_helper::gmtTimeNow();
   for (auto iter = cache.begin(); iter != cache.end();) {
     bool prev_staled = iter->second->staled;
@@ -855,7 +855,7 @@ bool HttpCache::validateResponseEncoding(HttpRequest request,
 
   return found != std::string::npos;
 }
-
+// Flush the full cache
 void HttpCache::flushCache() {
   for (auto iter = cache.begin(); iter != cache.end();) {
     if (iter->second == nullptr) {

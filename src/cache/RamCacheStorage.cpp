@@ -25,7 +25,7 @@ RamICacheStorage *RamICacheStorage::instance = nullptr;
 
 RamICacheStorage *RamICacheStorage::getInstance() {
   if (instance == nullptr) {
-#if CACHE_STORAGE_STDMAP
+#ifdef CACHE_STORAGE_STDMAP
     instance = new StdmapCacheStorage();
 #elif MEMCACHED_ENABLED
     instance = new MemcachedStorage();
@@ -35,7 +35,7 @@ RamICacheStorage *RamICacheStorage::getInstance() {
   }
   return instance;
 }
-
+// FIXME: svc is not used in initcachestorage
 st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage(
     size_t m_size, double st_threshold, const std::string &svc,
     const std::string &m_point) {
@@ -43,21 +43,22 @@ st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage(
   if (initialized) return st::STORAGE_STATUS::ALREADY_INIT;
 
   // Ensure that the size is always set
-  if (m_size <= 0) m_size = MAX_STORAGE_SIZE;
+  if (m_size <= 0)
+    m_size = MAX_STORAGE_SIZE
 
-  // Create directory, if fails, and it's not because the folder is already
-  // created, just return an error
-  if (mkdir(m_point.data(), 0777) == -1) {
-    if (errno == EEXIST) {
-      initialized = true;
-      max_size = m_size;
-      mount_path = m_point.data();
-      cache_thr = st_threshold;
-      // TODO: Recover from here
-      return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
-    } else
-      return st::STORAGE_STATUS::MKDIR_ERROR;
-  }
+        // Create directory, if fails, and it's not because the folder is
+        // already created, just return an error
+        if (mkdir(m_point.data(), 0777) == -1) {
+      if (errno == EEXIST) {
+        initialized = true;
+        max_size = m_size;
+        mount_path = m_point.data();
+        cache_thr = st_threshold;
+        // TODO: Recover from here
+        return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
+      } else
+        return st::STORAGE_STATUS::MKDIR_ERROR;
+    }
   mount_path = m_point.data();
 
   // try to mount the RAMFS filesystem, return MOUNT_ERROR if failed
@@ -132,7 +133,7 @@ st::STORAGE_STATUS RamfsCacheStorage::putInStorage(const std::string &rel_path,
 
   std::ofstream out_stream(file_path.data(), std::ofstream::trunc);
   if (!out_stream.is_open()) return st::STORAGE_STATUS::OPEN_ERROR;
-  out_stream.write(buffer.data(), buffer.size());
+  out_stream.write(buffer.data(), static_cast<long>(buffer.size()));
   out_stream.close();
 
   if (!out_stream) return st::STORAGE_STATUS::FD_CLOSE_ERROR;
@@ -159,7 +160,7 @@ st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string &rel_path,
 
   fout.open(path, std::ofstream::app);  // Append mode
   if (fout.is_open())
-    fout.write(buffer.data(), buffer.size());
+    fout.write(buffer.data(), static_cast<long>(buffer.size()));
   else
     return st::STORAGE_STATUS::APPEND_ERROR;
   fout.close();  // Closing the file
@@ -221,6 +222,7 @@ st::STORAGE_STATUS StdmapCacheStorage::getFromStorage(
   out_buffer = storage.at(path);
   return st::STORAGE_STATUS::SUCCESS;
 }
+// FIXME: response_size Not used
 st::STORAGE_STATUS StdmapCacheStorage::putInStorage(const std::string &rel_path,
                                                     std::string_view buffer,
                                                     size_t response_size) {
