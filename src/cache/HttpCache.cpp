@@ -265,6 +265,8 @@ void HttpCache::addResponse(HttpResponse &response, HttpRequest request) {
   cache[hashed_url] = c_object.get();
 
   createResponseEntry(response, c_object.get());
+  // FIXME: Review if to set the URI here is the best option
+  c_object.get()->uri = request.getUrl();
   // link response with c_object
   response.c_object = c_object.get();
 

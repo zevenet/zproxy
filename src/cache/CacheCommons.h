@@ -58,6 +58,8 @@ struct CacheObject {
   }
   // TODO: Add Backend ID and URI to get all elements
   std::string etag;
+  std::string uri;
+  std::string bck;  // TODO: Set
   size_t content_length;
   bool no_cache_response = false;
   bool cacheable = true;
