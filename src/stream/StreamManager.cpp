@@ -288,7 +288,6 @@ void StreamManager::doWork() {
 void StreamManager::addStream(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
-  auto time = std::chrono::system_clock::now();
   HttpStream *stream = streams_set[fd];
 
   if (UNLIKELY(stream != nullptr)) {
@@ -300,10 +299,6 @@ void StreamManager::addStream(int fd) {
 
   // update log info
   LoggerData logger(stream);
-
-  // add date and time of request
-  stream->client_connection.time_start = std::chrono::steady_clock::now();
-  stream->client_connection.date = std::chrono::system_clock::to_time_t(time);
 
   stream->timer_fd.set(listener_config_.to * 1000);
   addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::TIMEOUT,
