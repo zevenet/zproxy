@@ -127,6 +127,10 @@ std::unique_ptr<json::Json> json::JsonParser::parseValue(char current_char,
       return std::unique_ptr<JsonDataValue>(new JsonDataValue(std::stol(number)));
     }
   }
+  case 't':
+    return std::unique_ptr<JsonDataValue>(new JsonDataValue(true));
+  case 'f':
+    return std::unique_ptr<JsonDataValue>(new JsonDataValue(false));
   default:break;
   }
   return nullptr;

@@ -68,7 +68,7 @@ class PoundClient /*: public EpollManager*/ {
   OptionArgs global_args;
   bool trySetTargetId(int &target_id, char *possible_value);
   void trySetAllTargetId(char *argv[], int &option_index);
-  void show_usage(const std::string error = "");
+  void showHelp(const std::string error = "", bool exit_on_error = true);
   bool doRequest(http::REQUEST_METHOD request_method,http::HTTP_VERSION http_version, std::string json_object, std::string path, std::string &buffer);
   void verboseLog(const std::string& str);
   void outputStatus(json::JsonObject *json_response_listener);

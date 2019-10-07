@@ -41,33 +41,37 @@ void PoundClient::trySetAllTargetId(char *argv[], int &option_index) {
       }
     case CTL_SUBJECT::BACKEND: {
       next_index++;
-      if (ctl_command != CTL_ACTION::DELETE_SESSION && !trySetTargetId(this->backend_id, argv[next_index--]))
-        show_usage("no valid backend id found");
+      if (ctl_command != CTL_ACTION::DELETE_SESSION &&
+          !trySetTargetId(this->backend_id, argv[next_index--]))
+        showHelp("no valid backend id found");
 
-      if (ctl_command == CTL_ACTION::ADD_SESSION || ctl_command == CTL_ACTION::DELETE_SESSION) {
-        if (!argv[option_index]) show_usage("no valid session key found");
+      if (ctl_command == CTL_ACTION::ADD_SESSION ||
+          ctl_command == CTL_ACTION::DELETE_SESSION) {
+        if (!argv[option_index]) showHelp("no valid session key found");
         session_key = std::string(argv[next_index--]);
-        if (session_key.empty()) show_usage("no valid session key found");
+        if (session_key.empty()) showHelp("no valid session key found");
       }
     }
     case CTL_SUBJECT::SERVICE:
-      if (!trySetTargetId(this->service_id, argv[next_index--])) show_usage("no valid service id found");
+      if (!trySetTargetId(this->service_id, argv[next_index--]))
+        showHelp("no valid service id found");
     case CTL_SUBJECT::LISTENER:
       if (trySetTargetId(this->listener_id, argv[next_index--])) {
         option_index += to_consume;
         break;
       }
     default:
-      show_usage("target id list error");
+      showHelp("target id list error");
   }
 }
 
-void PoundClient::show_usage(const std::string error) {
+void PoundClient::showHelp(const std::string error, bool exit_on_error) {
   if (!error.empty()) std::cout << "ERROR: " << error << std::endl;
   std::cout << "Usage: " << std::endl;
-  std::cout << "\tProxy control interface in:\n\t\tLocal mode:\t" << binary_name << " -c /control/socket [ -X ] cmd"
+  std::cout << "\tProxy control interface in:\n\t\tLocal mode:\t" << binary_name
+            << " -c /control/socket [ -X ] cmd" << std::endl;
+  std::cout << "\t\tTCP mode:\t" << binary_name << " -a IP:PORT [ -X ] cmd\n"
             << std::endl;
-  std::cout << "\t\tTCP mode:\t" << binary_name << " -a IP:PORT [ -X ] cmd\n" << std::endl;
   std::cout << "\twhere cmd is one of:" << std::endl;
   std::cout << "\t-L n - enable listener n" << std::endl;
   std::cout << "\t-l n - disable listener n" << std::endl;
@@ -77,8 +81,10 @@ void PoundClient::show_usage(const std::string error) {
   std::cout << "\t-s n m - disable service m in listener n (use -1 for "
                "global services)"
             << std::endl;
-  std::cout << "\t-B n m r - enable back-end r in service m in listener n" << std::endl;
-  std::cout << "\t-b n m r - disable back-end r in service m in listener n" << std::endl;
+  std::cout << "\t-B n m r - enable back-end r in service m in listener n"
+            << std::endl;
+  std::cout << "\t-b n m r - disable back-end r in service m in listener n"
+            << std::endl;
   std::cout << "\t-f n m r - flush all sessions for back-end r in service m "
                "in listener n"
             << std::endl;
@@ -93,9 +99,10 @@ void PoundClient::show_usage(const std::string error) {
                "configuration."
             << std::endl;
   std::cout << "\tthe -X flag results in XML output." << std::endl;
-  std::cout << "\tthe -H flag shows symbolic host names instead of addresses." << std::endl;
+  std::cout << "\tthe -H flag shows symbolic host names instead of addresses."
+            << std::endl;
   std::cout << "\tthe -v flag enable verbose mode to STDOUT" << std::endl;
-  exit(EXIT_FAILURE);
+  if (exit_on_error) exit(EXIT_FAILURE);
 }
 
 bool PoundClient::executeCommand() {
@@ -103,17 +110,19 @@ bool PoundClient::executeCommand() {
   switch (interface_mode) {
     case CTL_INTERFACE_MODE::CTL_NONE: {
       // Lanzar error: "No se ha especificado metodo de conexion"
-      show_usage("Unspecified connection method.");
+      showHelp("Unspecified connection method.");
     }
     case CTL_INTERFACE_MODE::CTL_AF_INET: {
       int port;
       size_t pos = this->address.rfind(':');
       if (pos == std::string::npos) return false;
-      port = std::stoi(this->address.substr(pos + 1, this->address.size() - pos));
+      port =
+          std::stoi(this->address.substr(pos + 1, this->address.size() - pos));
       this->address = this->address.substr(0, pos);
       client.address = Network::getAddress(this->address, port);
       IO::IO_OP res_connect = client.doConnect(*client.address, 0);
-      if (res_connect != IO::IO_OP::OP_SUCCESS) showError("Error: TCP mode connection failed.");
+      if (res_connect != IO::IO_OP::OP_SUCCESS)
+        showError("Error: TCP mode connection failed.");
       break;
     }
     default: {
@@ -131,8 +140,10 @@ bool PoundClient::executeCommand() {
   if (ctl_command == CTL_ACTION::ENABLE || ctl_command == CTL_ACTION::DISABLE) {
     json_object.emplace(
         json::JSON_KEYS::STATUS,
-        std::unique_ptr<json::JsonDataValue>(new json::JsonDataValue(
-            ctl_command == CTL_ACTION::ENABLE ? json::JSON_KEYS::STATUS_ACTIVE : json::JSON_KEYS::STATUS_DISABLED)));
+        std::unique_ptr<json::JsonDataValue>(
+            new json::JsonDataValue(ctl_command == CTL_ACTION::ENABLE
+                                        ? json::JSON_KEYS::STATUS_ACTIVE
+                                        : json::JSON_KEYS::STATUS_DISABLED)));
     method = http::REQUEST_METHOD::PATCH;
     switch (ctl_command_subject) {
       case CTL_SUBJECT::LISTENER: {
@@ -144,7 +155,8 @@ bool PoundClient::executeCommand() {
         break;
       }
       case CTL_SUBJECT::BACKEND: {
-        path += "/service/" + std::to_string(service_id) + "/backend/" + std::to_string(backend_id) + "/status";
+        path += "/service/" + std::to_string(service_id) + "/backend/" +
+                std::to_string(backend_id) + "/status";
         break;
       }
       default:
@@ -155,18 +167,22 @@ bool PoundClient::executeCommand() {
     path += "/service/" + std::to_string(service_id) + "/session/";
     switch (ctl_command) {
       case CTL_ACTION::ADD_SESSION: {
-        json_object.emplace(json::JSON_KEYS::BACKEND_ID, new json::JsonDataValue(this->backend_id));
-        json_object.emplace(json::JSON_KEYS::ID, new json::JsonDataValue(this->session_key));
+        json_object.emplace(json::JSON_KEYS::BACKEND_ID,
+                            new json::JsonDataValue(this->backend_id));
+        json_object.emplace(json::JSON_KEYS::ID,
+                            new json::JsonDataValue(this->session_key));
         method = http::REQUEST_METHOD::PUT;
         break;
       }
       case CTL_ACTION::DELETE_SESSION: {
-        json_object.emplace(json::JSON_KEYS::ID, new json::JsonDataValue(this->session_key));
+        json_object.emplace(json::JSON_KEYS::ID,
+                            new json::JsonDataValue(this->session_key));
         method = http::REQUEST_METHOD::DELETE;
         break;
       }
       case CTL_ACTION::FLUSH_SESSIONS: {
-        json_object.emplace(json::JSON_KEYS::BACKEND_ID, new json::JsonDataValue(this->backend_id));
+        json_object.emplace(json::JSON_KEYS::BACKEND_ID,
+                            new json::JsonDataValue(this->backend_id));
         method = http::REQUEST_METHOD::DELETE;
         break;
       }
@@ -179,18 +195,22 @@ bool PoundClient::executeCommand() {
     path += "/services";
     method = http::REQUEST_METHOD::GET;
   }
-  if (doRequest(method, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(), path, buffer)) {
+  if (doRequest(method, http::HTTP_VERSION::HTTP_1_0, json_object.stringify(),
+                path, buffer)) {
     verboseLog(buffer);
   }
   IO::IO_RESULT read_result = client.write(buffer.c_str(), buffer.size());
-  if (read_result != IO::IO_RESULT::SUCCESS) showError("Error: Request sending failed.");  // TODO::print error
+  if (read_result != IO::IO_RESULT::SUCCESS)
+    showError("Error: Request sending failed.");  // TODO::print error
   read_result = client.read();
-  if (read_result != IO::IO_RESULT::SUCCESS) showError("Error: Response reading failed.");
+  if (read_result != IO::IO_RESULT::SUCCESS)
+    showError("Error: Response reading failed.");
   HttpResponse response;
   size_t used_bytes;
   auto str = std::string(client.buffer, client.buffer_size);
   auto parse_result = response.parseResponse(str, &used_bytes);
-  if (parse_result != http_parser::PARSE_RESULT::SUCCESS) showError("Error parsing response");
+  if (parse_result != http_parser::PARSE_RESULT::SUCCESS)
+    showError("Error parsing response");
   str = std::string(response.message, response.message_length);
   auto json_object_ptr = json::JsonParser::parse(str);
   if (json_object_ptr == nullptr) showError("Error parsing response json");
@@ -204,20 +224,23 @@ bool PoundClient::init(int argc, char *argv[]) {
   int option_index = 0;
 
   binary_name = std::string(argv[0]);
-  while ((opt = getopt_long(argc, argv, options_string, long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, options_string, long_options,
+                            &option_index)) != -1) {
     switch (opt) {
       case 'c': {
-        if (interface_mode != CTL_INTERFACE_MODE::CTL_NONE) show_usage("Only one interface control mode allowed");
+        if (interface_mode != CTL_INTERFACE_MODE::CTL_NONE)
+          showHelp("Only one interface control mode allowed");
         interface_mode = CTL_INTERFACE_MODE::CTL_UNIX;
         control_socket = optarg;
-        if (control_socket.empty()) show_usage("No valid socket path found");
+        if (control_socket.empty()) showHelp("No valid socket path found");
         break;
       }
       case 'a': {
-        if (interface_mode != CTL_INTERFACE_MODE::CTL_NONE) show_usage("Only one interface control mode allowed");
+        if (interface_mode != CTL_INTERFACE_MODE::CTL_NONE)
+          showHelp("Only one interface control mode allowed");
         interface_mode = CTL_INTERFACE_MODE::CTL_AF_INET;
         address = optarg;
-        if (address.empty()) show_usage("No valid address found");
+        if (address.empty()) showHelp("No valid address found");
         break;
       }
       case 'X':
@@ -285,10 +308,10 @@ bool PoundClient::init(int argc, char *argv[]) {
       }
       case 'h':
       case '?':
-        show_usage("HELP");
+        showHelp("HELP");
         break;
       default:
-        show_usage("Unknown uption");
+        showHelp("Unknown uption");
         break;
     }
   }
@@ -332,7 +355,8 @@ bool PoundClient::init(int argc, char *argv[]) {
     }
     action_message += "\nOptions:";
     action_message += xml_output ? "\n\tXML output: ON" : "\n\tXML output: OFF";
-    action_message += resolve_hosts ? "\n\tResolve host : ON" : "\n\tResolve host : OFF";
+    action_message +=
+        resolve_hosts ? "\n\tResolve host : ON" : "\n\tResolve host : OFF";
     //    for (int i = 0; i < argc; i++) std::cout << argv[i] << " ";
     std::cout << "\n" << action_message << std::endl;
   }
@@ -340,10 +364,13 @@ bool PoundClient::init(int argc, char *argv[]) {
   return true;
 }
 
-bool PoundClient::doRequest(http::REQUEST_METHOD request_method, http::HTTP_VERSION http_version,
-                            std::string json_object, std::string path, std::string &buffer) {
-  if (http::http_info::http_verb_strings.count(request_method) > 0) {
-    buffer = http::http_info::http_verb_strings.at(request_method);
+bool PoundClient::doRequest(http::REQUEST_METHOD request_method,
+                            http::HTTP_VERSION http_version,
+                            std::string json_object, std::string path,
+                            std::string &buffer) {
+  auto it = http::http_info::http_verb_strings.find(request_method);
+  if (it != http::http_info::http_verb_strings.end()) {
+    buffer = it->second;
     buffer = buffer + " ";
   } else {
     return false;
@@ -352,30 +379,19 @@ bool PoundClient::doRequest(http::REQUEST_METHOD request_method, http::HTTP_VERS
   buffer += path;
   buffer += " ";
 
-  switch (http_version) {
-    case http::HTTP_VERSION::HTTP_1_0: {
-      buffer += "HTTP/1.0\r\n";
-      break;
-    }
-    case http::HTTP_VERSION::HTTP_1_1: {
-      buffer += "HTTP/1.1\r\n";
-      break;
-    }
-    case http::HTTP_VERSION::HTTP_2_0: {
-      // buffer = buffer + "HTTP/2.O\r\";
-      // break;
-      return false;  // TODO: COMPROBAR SI ES ASÍ LA LINE REQUEST.
-    }
+  if (http_version == http::HTTP_VERSION::HTTP_1_0) {
+    buffer += "HTTP/1.0\r\n";
+  } else {
+    buffer += "HTTP/1.1\r\n";
   }
-
   buffer += "Connection: close\r\n";
+  buffer += "Content-Length: ";
+  buffer += std::to_string(json_object.size() + http::CRLF_LEN);
+  buffer += http::CRLF;
   buffer += "Accept: application/json\r\n";
-
-  buffer += "\r\n";
-
+  buffer += http::CRLF;
   buffer += json_object;
-  buffer += "\r\n";
-
+  buffer += http::CRLF;
   return true;
 }
 
@@ -390,37 +406,52 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
   std::string listener_status = "a";
 
   //  Use this if we have multiple listeners
-  //  if(dynamic_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::STATUS))->string_value ==
-  //  "disabled")
+  //  if(dynamic_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::STATUS))->string_value
+  //  == "disabled")
   //    listener_status = "*D";
+  auto is_ssl = json_response_listener->at(json::JSON_KEYS::HTTPS).get();
+  if (is_ssl) protocol = "HTTPS";
+  buffer += "  0. ";
+  buffer += protocol;
+  buffer += " Listener ";
+  buffer += dynamic_cast<json::JsonDataValue *>(
+                json_response_listener->at(json::JSON_KEYS::ADDRESS).get())
+                ->string_value;
+  buffer += " ";
+  buffer += listener_status;
+  buffer += "\n";
 
-  if (dynamic_cast<json::JsonDataValue *>(json_response_listener->at(json::JSON_KEYS::HTTPS).get()))
-    protocol += "HTTPS";
-  buffer +=
-      "  0. " + protocol + " Listener " +
-      dynamic_cast<json::JsonDataValue *>(json_response_listener->at(json::JSON_KEYS::ADDRESS).get())->string_value +
-      " " + listener_status + "\n";
-
-  auto services = dynamic_cast<json::JsonArray *>(json_response_listener->at(json::JSON_KEYS::SERVICES).get());
+  auto services = dynamic_cast<json::JsonArray *>(
+      json_response_listener->at(json::JSON_KEYS::SERVICES).get());
   // TODO recorrer servicios
   for (const auto &service : *services) {
     // TODO: AQUI DESAPARECE EL RESPONSE-TIME (ES POSIBLE QUE POR EL -1)
     auto service_json = dynamic_cast<json::JsonObject *>(service.get());
-    auto backends = dynamic_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::BACKENDS).get());
+    auto backends = dynamic_cast<json::JsonArray *>(
+        service_json->at(json::JSON_KEYS::BACKENDS).get());
     int total_weight = 0;
-    auto service_counter = dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::ID).get())->number_value;
+    auto service_counter = dynamic_cast<json::JsonDataValue *>(
+                               service_json->at(json::JSON_KEYS::ID).get())
+                               ->number_value;
     for (const auto &backend : *backends) {
       auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
-      auto backend_type =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::TYPE).get())->number_value;
-      if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT) continue;
-      total_weight +=
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT).get())->number_value;
+      auto backend_type = dynamic_cast<json::JsonDataValue *>(
+                              backend_json->at(json::JSON_KEYS::TYPE).get())
+                              ->number_value;
+      if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT)
+        continue;
+      total_weight += dynamic_cast<json::JsonDataValue *>(
+                          backend_json->at(json::JSON_KEYS::WEIGHT).get())
+                          ->number_value;
     }
     std::string service_name =
-        dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::NAME).get())->string_value;
+        dynamic_cast<json::JsonDataValue *>(
+            service_json->at(json::JSON_KEYS::NAME).get())
+            ->string_value;
     std::string service_status =
-        dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::STATUS).get())->string_value;
+        dynamic_cast<json::JsonDataValue *>(
+            service_json->at(json::JSON_KEYS::STATUS).get())
+            ->string_value;
     buffer += "    ";
     buffer += std::to_string(static_cast<int>(service_counter));
     buffer += ". Service \"";
@@ -433,25 +464,41 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
 
     for (const auto &backend : *backends) {
       auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
-      auto backend_counter = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ID).get())->number_value;
-      auto backend_type =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::TYPE).get())->number_value;
-      if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT) continue;
-      auto weight = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::WEIGHT).get())->number_value;
+      auto backend_counter = dynamic_cast<json::JsonDataValue *>(
+                                 backend_json->at(json::JSON_KEYS::ID).get())
+                                 ->number_value;
+      auto backend_type = dynamic_cast<json::JsonDataValue *>(
+                              backend_json->at(json::JSON_KEYS::TYPE).get())
+                              ->number_value;
+      if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT)
+        continue;
+      auto weight = dynamic_cast<json::JsonDataValue *>(
+                        backend_json->at(json::JSON_KEYS::WEIGHT).get())
+                        ->number_value;
       std::string backend_address =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ADDRESS).get())->string_value;
+          dynamic_cast<json::JsonDataValue *>(
+              backend_json->at(json::JSON_KEYS::ADDRESS).get())
+              ->string_value;
       std::string backend_status =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::STATUS).get())->string_value;
-      auto backend_port =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::PORT).get())->number_value;
+          dynamic_cast<json::JsonDataValue *>(
+              backend_json->at(json::JSON_KEYS::STATUS).get())
+              ->string_value;
+      auto backend_port = dynamic_cast<json::JsonDataValue *>(
+                              backend_json->at(json::JSON_KEYS::PORT).get())
+                              ->number_value;
       double response_time =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::RESPONSE_TIME).get())->double_value;
+          dynamic_cast<json::JsonDataValue *>(
+              backend_json->at(json::JSON_KEYS::RESPONSE_TIME).get())
+              ->double_value;
       auto connections =
-          dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::CONNECTIONS).get())->number_value;
+          dynamic_cast<json::JsonDataValue *>(
+              backend_json->at(json::JSON_KEYS::CONNECTIONS).get())
+              ->number_value;
 
       // PoundCtl transform backend disabled status to uppercase
       if (backend_status == "disabled")
-        std::transform(backend_status.begin(), backend_status.end(), backend_status.begin(), ::toupper);
+        std::transform(backend_status.begin(), backend_status.end(),
+                       backend_status.begin(), ::toupper);
 
       buffer += "      ";
       buffer += std::to_string(static_cast<int>(backend_counter));
@@ -464,7 +511,8 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
       buffer += " (";
       buffer += std::to_string(weight);
       buffer += " ";
-      buffer += conversionHelper::toStringWithPrecision(response_time);
+      buffer += conversionHelper::toStringWithPrecision(
+          response_time < 0 ? 0.0 : response_time);
       if (backend_status == "down")
         buffer += ") DEAD (";
       else
@@ -473,14 +521,18 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
       buffer += ")\n";
     }
 
-    auto sessions = dynamic_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::SESSIONS).get());
+    auto sessions = dynamic_cast<json::JsonArray *>(
+        service_json->at(json::JSON_KEYS::SESSIONS).get());
     int session_counter = 0;
     for (const auto &session : *sessions) {
       auto session_json = dynamic_cast<json::JsonObject *>(session.get());
-      std::string session_id =
-          dynamic_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::ID).get())->string_value;
+      std::string session_id = dynamic_cast<json::JsonDataValue *>(
+                                   session_json->at(json::JSON_KEYS::ID).get())
+                                   ->string_value;
       auto session_backend =
-          dynamic_cast<json::JsonDataValue *>(session_json->at(json::JSON_KEYS::BACKEND_ID).get())->number_value;
+          dynamic_cast<json::JsonDataValue *>(
+              session_json->at(json::JSON_KEYS::BACKEND_ID).get())
+              ->number_value;
       buffer += "      ";
       buffer += std::to_string(session_counter);
       buffer += ". Session ";
