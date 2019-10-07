@@ -408,7 +408,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
     auto service_json = dynamic_cast<json::JsonObject *>(service.get());
     auto backends = dynamic_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::BACKENDS).get());
     int total_weight = 0;
-    int service_counter = 0;
+    auto service_counter = dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::ID).get())->number_value;
     for (const auto &backend : *backends) {
       auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
       auto backend_type =
@@ -422,7 +422,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
     std::string service_status =
         dynamic_cast<json::JsonDataValue *>(service_json->at(json::JSON_KEYS::STATUS).get())->string_value;
     buffer += "    ";
-    buffer += std::to_string(service_counter);
+    buffer += std::to_string(static_cast<int>(service_counter));
     buffer += ". Service \"";
     buffer += service_name;
     buffer += "\" ";
@@ -430,11 +430,10 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
     buffer += " (";
     buffer += std::to_string(total_weight);
     buffer += ")\n";
-    service_counter++;
 
-    int backend_counter = 0;
     for (const auto &backend : *backends) {
       auto backend_json = dynamic_cast<json::JsonObject *>(backend.get());
+      auto backend_counter = dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::ID).get())->number_value;
       auto backend_type =
           dynamic_cast<json::JsonDataValue *>(backend_json->at(json::JSON_KEYS::TYPE).get())->number_value;
       if (static_cast<BACKEND_TYPE>(backend_type) == BACKEND_TYPE::REDIRECT) continue;
@@ -455,7 +454,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         std::transform(backend_status.begin(), backend_status.end(), backend_status.begin(), ::toupper);
 
       buffer += "      ";
-      buffer += std::to_string(backend_counter);
+      buffer += std::to_string(static_cast<int>(backend_counter));
       buffer += ". Backend ";
       buffer += backend_address;
       buffer += ":";
@@ -472,7 +471,6 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
         buffer += ") alive (";
       buffer += std::to_string(connections);
       buffer += ")\n";
-      backend_counter++;
     }
 
     auto sessions = dynamic_cast<json::JsonArray *>(service_json->at(json::JSON_KEYS::SESSIONS).get());
