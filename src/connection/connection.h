@@ -1,18 +1,36 @@
-//
-// Created by abdess on 4/5/18.
-//
+/*
+ *    Zevenet zProxy Load Balancer Software License
+ *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #pragma once
 
-#include "../event/descriptor.h"
-#include "../http/HttpRequest.h"
-#include "../experimental/string_buffer.h"
-#include "../util/utils.h"
-#include <atomic>
 #include <fcntl.h>
 #include <netdb.h>
-#include "../ssl/ssl_common.h"
 #include <sys/uio.h>
 #include <unistd.h>
+#include <atomic>
+#include "../event/descriptor.h"
+#include "../experimental/string_buffer.h"
+#include "../http/HttpRequest.h"
+#include "../ssl/ssl_common.h"
+#include "../util/utils.h"
 
 #ifndef MAX_DATA_SIZE
 #define MAX_DATA_SIZE 65000
@@ -43,11 +61,12 @@ using namespace events;
 class Connection : public Descriptor {
   long last_read_;
   long last_write_;
-protected:
+
+ protected:
   bool is_connected;
   IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
 
-public:
+ public:
   std::chrono::steady_clock::time_point time_start;
   std::time_t date;
   std::string str_buffer;
@@ -59,14 +78,14 @@ public:
 #endif
   std::string address_str{""};        // the remote socket ip
   std::string local_address_str{""};  // the local socket ip
-    int port{-1};                       // the remote socket port
-    int local_port{-1};                 // the local socket port
-    addrinfo *address;
+  int port{-1};                       // the remote socket port
+  int local_port{-1};                 // the local socket port
+  addrinfo *address;
 
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
   size_t buffer_size{0};
-  size_t buffer_offset{0}; //TODO::REMOVE
+  size_t buffer_offset{0};  // TODO::REMOVE
   std::string getPeerAddress();
   std::string getLocalAddress();
   int getPeerPort();
@@ -76,9 +95,10 @@ public:
   IO::IO_RESULT zeroRead();
   IO::IO_RESULT zeroWrite(int dst_fd, http_parser::HttpData &http_data);
 #endif
-  IO::IO_RESULT writeIOvec(int target_fd, iovec * iov, size_t iovec_size, size_t &iovec_written, size_t &nwritten);
+  static IO::IO_RESULT writeIOvec(int target_fd, iovec *iov, size_t iovec_size,
+								  size_t &iovec_written, size_t &nwritten);
   IO::IO_RESULT write(const char *data, size_t size);
-  IO::IO_RESULT writeTo(int fd, size_t & sent);
+  IO::IO_RESULT writeTo(int fd, size_t &sent);
   IO::IO_RESULT writeTo(const Connection &target_connection,
                         http_parser::HttpData &http_data);
 
@@ -88,16 +108,16 @@ public:
   Connection();
   virtual ~Connection();
 
-  bool listen(std::string address_str_, int port);
+  bool listen(const std::string &address_str_, int port_);
   bool listen(addrinfo &address);
-  bool listen(std::string af_unix_name);
+  bool listen(const std::string &af_unix_name);
 
   int doAccept();
   IO::IO_OP doConnect(addrinfo &address, int timeout, bool async = true);
   IO::IO_OP doConnect(const std::string &af_unix_socket_path, int timeout);
   bool isConnected();
   // SSL stuff
-public:
+ public:
   ssl::SSL_STATUS ssl_conn_status{ssl::SSL_STATUS::NONE};
   SSL *ssl{nullptr};
   // socket bio

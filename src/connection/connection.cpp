@@ -1,21 +1,43 @@
-//
-// Created by abdess on 4/5/18.
-//
+/*
+ *    Zevenet zProxy Load Balancer Software License
+ *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "connection.h"
+#include <sys/un.h>
 #include "../util/Network.h"
 #include "../util/common.h"
-#include <sys/un.h>
 
-#define PRINT_BUFFER_SIZE                                                      \
+#define PRINT_BUFFER_SIZE \
   Debug::LogInfo("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
 //  Debug::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)),
 //  LOG_DEBUG);
 
 Connection::Connection()
-    : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
+    : buffer_size(0),
+      address(nullptr),
+      last_read_(0),
+      last_write_(0),
       // string_buffer(),
-      address_str(""), is_connected(false), ssl(nullptr),
+      address_str(""),
+      is_connected(false),
+      ssl(nullptr),
       ssl_connected(false) {
   // address.ai_addr = new sockaddr();
 }
@@ -26,32 +48,28 @@ Connection::~Connection() {
     SSL_clear(ssl);
     SSL_free(ssl);
 #if USE_SSL_BIO_BUFFER
-    if (sbio != NULL) {
-        BIO_vfree(sbio);
-        sbio = NULL;
+    if (sbio != nullptr) {
+      BIO_vfree(sbio);
+      sbio = nullptr;
     }
-    if (io != NULL) {
+    if (io != nullptr) {
       BIO_free(io);
-      io = NULL;
+      io = nullptr;
     }
-    if (ssl_bio != NULL) {
+    if (ssl_bio != nullptr) {
       BIO_free(ssl_bio);
-      ssl_bio = NULL;
+      ssl_bio = nullptr;
     }
 #endif
   }
-  if (fd_ > 0)
-    this->closeConnection();
+  if (fd_ > 0) this->closeConnection();
   if (address != nullptr) {
-    if (address->ai_addr != nullptr)
-      delete address->ai_addr;
+    if (address->ai_addr != nullptr) delete address->ai_addr;
   }
   delete address;
 }
 
 IO::IO_RESULT Connection::read() {
-
-//  Debug::logmsg(LOG_REMOVE, "READ IN write %d  buffer %d", splice_pipe.bytes, buffer_size);
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
@@ -78,8 +96,8 @@ IO::IO_RESULT Connection::read() {
       buffer_size += static_cast<size_t>(count);
       // PRINT_BUFFER_SIZE
       if ((MAX_DATA_SIZE - buffer_size) == 0) {
-//        PRINT_BUFFER_SIZE
-//        Debug::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
+        //        PRINT_BUFFER_SIZE
+        //        Debug::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
         return IO::IO_RESULT::FULL_BUFFER;
       } else
         result = IO::IO_RESULT::SUCCESS;
@@ -87,14 +105,13 @@ IO::IO_RESULT Connection::read() {
     }
   }
   // PRINT_BUFFER_SIZE
-//  Debug::logmsg(LOG_REMOVE, "READ IN write %d  buffer %d", splice_pipe.bytes, buffer_size);
   return result;
 }
 
 std::string Connection::getPeerAddress() {
   if (this->fd_ > 0 && address_str.empty()) {
-    char addr[50];
-    Network::getPeerAddress(this->fd_, addr, 50);
+	char addr[150];
+	Network::getPeerAddress(this->fd_, addr, 150);
     address_str = std::string(addr);
   }
   return address_str;
@@ -102,8 +119,8 @@ std::string Connection::getPeerAddress() {
 
 std::string Connection::getLocalAddress() {
   if (this->fd_ > 0 && local_address_str.empty()) {
-    char addr[50];
-    Network::getlocalAddress(this->fd_, addr, 50);
+	char addr[150];
+	Network::getlocalAddress(this->fd_, addr, 150);
     local_address_str = std::string(addr);
   }
   return local_address_str;
@@ -133,13 +150,10 @@ IO::IO_RESULT Connection::zeroRead() {
     }
     auto n = splice(fd_, nullptr, splice_pipe.pipe[1], nullptr, BUFSZ,
                     SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-    if (n > 0)
-      splice_pipe.bytes += n;
-    if (n == 0)
-      break;
+    if (n > 0) splice_pipe.bytes += n;
+    if (n == 0) break;
     if (n < 0) {
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
-      {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
         break;
       }
@@ -147,7 +161,8 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     }
   }
-  Debug::logmsg(LOG_REMOVE, "ZERO READ write %d  buffer %d", splice_pipe.bytes, buffer_size);
+  Debug::logmsg(LOG_REMOVE, "ZERO READ write %d  buffer %d", splice_pipe.bytes,
+                buffer_size);
   return result;
 }
 
@@ -156,17 +171,16 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
   //  Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes),
   //  LOG_DEBUG);
 
-  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d", splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
+  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
+                splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
-    if (bytes > BUFSZ)
-      bytes = BUFSZ;
+    if (bytes > BUFSZ) bytes = BUFSZ;
     auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr, bytes,
                       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
     //    Debug::LogInfo("ZERO_BUFFER::SIZE = " +
     //    std::to_string(splice_pipe.bytes), LOG_DEBUG);
-    if (n == 0)
-      break;
+    if (n == 0) break;
     if (n < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
         return IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -183,20 +197,19 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 #else
 IO::IO_RESULT Connection::zeroRead() {
   IO::IO_RESULT result = IO::IO_RESULT::ZERO_DATA;
-//  Debug::logmsg(LOG_REMOVE, "ZERO READ IN %d  buffer %d", splice_pipe.bytes, buffer_size);
+  //  Debug::logmsg(LOG_REMOVE, "ZERO READ IN %d  buffer %d", splice_pipe.bytes,
+  //  buffer_size);
   for (;;) {
     if (splice_pipe.bytes >= BUFSZ) {
       result = IO::IO_RESULT::FULL_BUFFER;
       break;
     }
-    auto n = ::read(fd_,buffer_aux + splice_pipe.bytes, BUFSZ - splice_pipe.bytes);
-    if (n > 0)
-      splice_pipe.bytes += n;
-    if (n == 0)
-      break;
+    auto n =
+        ::read(fd_, buffer_aux + splice_pipe.bytes, BUFSZ - splice_pipe.bytes);
+    if (n > 0) splice_pipe.bytes += n;
+    if (n == 0) break;
     if (n < 0) {
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
-      {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
         break;
       }
@@ -204,21 +217,21 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     }
   }
-//  Debug::logmsg(LOG_REMOVE, "ZERO READ OUT %d  buffer %d", splice_pipe.bytes, buffer_size);
+  //  Debug::logmsg(LOG_REMOVE, "ZERO READ OUT %d  buffer %d",
+  //  splice_pipe.bytes, buffer_size);
   return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
-        http_parser::HttpData &http_data) {
-//  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d", splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
+                                    http_parser::HttpData &http_data) {
+  //  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
+  //  splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   int sent = 0;
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
-    if (bytes > BUFSZ)
-      bytes = BUFSZ;
-    auto n = ::write(dst_fd,buffer_aux + sent,bytes - sent);
-    if (n == 0)
-      break;
+    if (bytes > BUFSZ) bytes = BUFSZ;
+    auto n = ::write(dst_fd, buffer_aux + sent, bytes - sent);
+    if (n == 0) break;
     if (n < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
         return IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -234,16 +247,12 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 }
 #endif
 #endif
-IO::IO_RESULT Connection::writeTo(int fd, size_t & sent) {
-
+IO::IO_RESULT Connection::writeTo(int fd, size_t &sent) {
   bool done = false;
   sent = 0;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-
-  //  Debug::LogInfo("#IN#bufer_size" +
-  //  std::to_string(string_buffer.string().length()));
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::send(fd, buffer + sent, buffer_size - sent, MSG_NOSIGNAL);
     if (count < 0) {
@@ -267,32 +276,29 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t & sent) {
     }
   }
   if (sent > 0 && result != IO::IO_RESULT::ERROR) {
-    buffer_size -= sent;
-    //    string_buffer.erase(static_cast<unsigned int>(sent));
+	buffer_size -= sent;
   }
-  //  Debug::LogInfo("#OUT#bufer_size" +
-  //  std::to_string(string_buffer.string().length()));
-//  PRINT_BUFFER_SIZE
+  //  PRINT_BUFFER_SIZE
   return result;
 }
-
 
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
-  if (http_data.iov_size == 0)
-    http_data.prepareToSend();
+  if (http_data.iov_size == 0) http_data.prepareToSend();
 
   size_t nwritten = 0;
   size_t iovec_written = 0;
 
-  auto result = writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size, iovec_written, nwritten);
-//  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n", http_data.iov.size(),
-//                iovec_written, nwritten, IO::getResultString(result).data());
-  if (result != IO::IO_RESULT::SUCCESS)
-    return result;
+  auto result = writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size,
+                           iovec_written, nwritten);
+  //  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d
+  //  IO RESULT: %s\n", http_data.iov.size(),
+  //                iovec_written, nwritten,
+  //                IO::getResultString(result).data());
+  if (result != IO::IO_RESULT::SUCCESS) return result;
 
-  buffer_size = 0;// buffer_offset;
+  buffer_size = 0;  // buffer_offset;
   http_data.message_length = 0;
   http_data.setHeaderSent(true);
 #if PRINT_DEBUG_FLOW_BUFFERS
@@ -301,29 +307,33 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
   Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
   Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
-  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
+  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d",
+                http_data.message_bytes_left);
 #endif
-//    PRINT_BUFFER_SIZE
+  //    PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
 
-IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov, size_t iovec_size, size_t &iovec_written, size_t &nwritten) {
+IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
+                                     size_t iovec_size, size_t &iovec_written,
+                                     size_t &nwritten) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   ssize_t count = 0;
   auto nvec = iovec_size;
   nwritten = 0;
   iovec_written = 0;
   do {
-    count = ::writev(target_fd, &(iov[iovec_written]), static_cast<int>(nvec - iovec_written));
-//    Debug::logmsg(LOG_REMOVE,
-//                  "writev() count %d errno: %d = %s iovecwritten %d",
-//                  count,
-//                  errno,
-//                  std::strerror(errno),
-//                  iovec_written);
+    count = ::writev(target_fd, &(iov[iovec_written]),
+                     static_cast<int>(nvec - iovec_written));
+    //    Debug::logmsg(LOG_REMOVE,
+    //                  "writev() count %d errno: %d = %s iovecwritten %d",
+    //                  count,
+    //                  errno,
+    //                  std::strerror(errno),
+    //                  iovec_written);
     if (count < 0) {
       if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-        result = IO::IO_RESULT::DONE_TRY_AGAIN; //do not persist changes        
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;  // do not persist changes
       } else {
         std::string error = "writev() failed  ";
         error += std::strerror(errno);
@@ -332,21 +342,21 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov, size_t iovec_si
       }
       break;
     } else {
-      size_t remaining = static_cast<size_t>(count);
+      auto remaining = static_cast<size_t>(count);
       for (auto it = iovec_written; it != iovec_size; it++) {
         if (remaining >= iov[it].iov_len) {
           remaining -= iov[it].iov_len;
-//          iov.erase(it++);
+          //          iov.erase(it++);
           iov[it].iov_len = 0;
           iovec_written++;
         } else {
           Debug::logmsg(LOG_REMOVE,
-                        "Recalculating data ... remaining %d niovec_written: %d iov size %d",
-                        remaining,
-                        iovec_written,
-                        iovec_size);
+                        "Recalculating data ... remaining %d niovec_written: "
+                        "%d iov size %d",
+                        remaining, iovec_written, iovec_size);
           iov[it].iov_len -= remaining;
-          iov[it].iov_base = static_cast<char *>(iov[iovec_written].iov_base) + remaining;
+          iov[it].iov_base =
+              static_cast<char *>(iov[iovec_written].iov_base) + remaining;
           break;
         }
       }
@@ -357,14 +367,11 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov, size_t iovec_si
       else
         result = IO::IO_RESULT::SUCCESS;
 #if PRINT_DEBUG_FLOW_BUFFERS
-      Debug::logmsg(LOG_REMOVE,
-                    "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
-                    nvec,
-                    iovec_written,
-                    nwritten,
-                    IO::getResultString(result).data());
+      Debug::logmsg(
+          LOG_REMOVE,
+          "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
+          nvec, iovec_written, nwritten, IO::getResultString(result).data());
 #endif
-
     }
   } while (iovec_written < nvec);
 
@@ -382,8 +389,6 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
-  //  Debug::LogInfo("#IN#bufer_size" +
-  //  std::to_string(string_buffer.string().length()));
   //  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
@@ -407,12 +412,6 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
       result = IO::IO_RESULT::SUCCESS;
     }
   }
-  if (sent > 0 && result != IO::IO_RESULT::ERROR) {
-    //    size -= sent;
-    //    string_buffer.erase(static_cast<unsigned int>(sent));
-  }
-  //  Debug::LogInfo("#OUT#bufer_size" +
-  //  std::to_string(string_buffer.string().length()));
   //  PRINT_BUFFER_SIZE
   return result;
 }
@@ -420,7 +419,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
 void Connection::closeConnection() {
   is_connected = false;
   if (fd_ > 0) {
-//    ::shutdown(fd_, 2);
+    //    ::shutdown(fd_, 2);
     ::close(fd_);
   }
 }
@@ -430,8 +429,7 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
     Debug::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
-  if (LIKELY(async))
-    Network::setSocketNonBlocking(fd_);
+  if (LIKELY(async)) Network::setSocketNonBlocking(fd_);
   if ((result = ::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
@@ -457,24 +455,21 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
   Network::setSoKeepAliveOption(fd_);
   Network::setSoLingerOption(fd_, true);
 
-  if (timeout > 0)
-    Network::setSocketNonBlocking(fd_);
+  if (timeout > 0) Network::setSocketNonBlocking(fd_);
 
-  struct sockaddr_un serveraddr;
-  strcpy(serveraddr.sun_path, af_unix_socket_path.c_str());
-  serveraddr.sun_family = AF_UNIX;
-  if ((result = ::connect(fd_, (struct sockaddr *)&serveraddr,
-                          SUN_LEN(&serveraddr))) < 0) {
+  sockaddr_un server_address{};
+  strcpy(server_address.sun_path, af_unix_socket_path.c_str());
+  server_address.sun_family = AF_UNIX;
+  if ((result = ::connect(fd_, (struct sockaddr *) &server_address,
+						  SUN_LEN(&server_address))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
-
     } else {
       Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
                     strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
   }
-  // Create stream object if connected
   return result != -1 ? IO::IO_OP::OP_SUCCESS : IO::IO_OP::OP_ERROR;
 }
 
@@ -487,23 +482,22 @@ bool Connection::isConnected() {
 
 int Connection::doAccept() {
   int new_fd = -1;
-  sockaddr_in clnt_addr{};
-  socklen_t clnt_length = sizeof(clnt_addr);
+  sockaddr_in peer_address{};
+  socklen_t peer_addr_length = sizeof(peer_address);
 
-  if ((new_fd = accept4(fd_, (sockaddr *)&clnt_addr, &clnt_length,
+  if ((new_fd = accept4(fd_, (sockaddr *)&peer_address, &peer_addr_length,
                         SOCK_NONBLOCK | SOCK_CLOEXEC)) < 0) {
     if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-      return 0; // We have processed all incoming connections.
+      return 0;  // We have processed all incoming connections.
     }
-    std::string error = "accept() failed  ";
-    error += std::strerror(errno);
-    Debug::LogInfo(error);
+    Debug::logmsg(LOG_NOTICE, "accept() failed  %s", std::strerror(errno));
     // break;
     return -1;
   }
 
-  if (clnt_addr.sin_family == AF_INET || clnt_addr.sin_family == AF_INET6 ||
-      clnt_addr.sin_family == AF_UNIX) {
+  if (peer_address.sin_family == AF_INET ||
+      peer_address.sin_family == AF_INET6 ||
+      peer_address.sin_family == AF_UNIX) {
     Network::setTcpNoDelayOption(new_fd);
     Network::setSoKeepAliveOption(new_fd);
     Network::setSoLingerOption(new_fd, true);
@@ -512,13 +506,11 @@ int Connection::doAccept() {
     ::close(new_fd);
     Debug::logmsg(LOG_WARNING, "HTTP connection prematurely closed by peer");
   }
-
   return -1;
 }
-bool Connection::listen(std::string address_str_, int port) {
-  this->address = Network::getAddress(address_str_, port);
-  if (this->address != nullptr)
-    return listen(*this->address);
+bool Connection::listen(const std::string &address_str_, int port_) {
+  this->address = Network::getAddress(address_str_, port_);
+  if (this->address != nullptr) return listen(*this->address);
   return false;
 }
 
@@ -542,15 +534,13 @@ bool Connection::listen(addrinfo &address_) {
     fd_ = -1;
     return false;
   }
-
   ::listen(fd_, SOMAXCONN);
   return true;
 }
-bool Connection::listen(std::string af_unix_name) {
-  if (af_unix_name.empty())
-    return false;
+bool Connection::listen(const std::string &af_unix_name) {
+  if (af_unix_name.empty()) return false;
   // unlink possible previously created path.
-  unlink(af_unix_name.c_str());
+  ::unlink(af_unix_name.c_str());
 
   // Initialize AF_UNIX socket
   sockaddr_un ctrl{};
@@ -572,5 +562,3 @@ bool Connection::listen(std::string af_unix_name) {
 
   return false;
 }
-
-

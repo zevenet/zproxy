@@ -1,6 +1,23 @@
-//
-// Created by abdess on 4/5/18.
-//
+/*
+ *    Zevenet zProxy Load Balancer Software License
+ *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #pragma once
 
@@ -84,8 +101,8 @@ class EpollManager {
   epoll_event events[MAX_EPOLL_EVENT];
 
 protected:
-  inline virtual void HandleEvent(int fd, EVENT_TYPE event_type,
-                                  EVENT_GROUP event_group) = 0;
+  virtual void HandleEvent(int fd, EVENT_TYPE event_type,
+						   EVENT_GROUP event_group) = 0;
   inline void onReadEvent(epoll_event &event);
   inline void onWriteEvent(epoll_event &event);
   inline void onConnectEvent(epoll_event &event);
