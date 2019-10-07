@@ -128,50 +128,6 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
   }
 }
 
-void http_manager::applyCompression(Service *service, HttpStream *stream) {
-  http::TRANSFER_ENCODING_TYPE compression_type;
-  if (service->service_config.compression_algorithm.empty()) return;
-  /* Check if we have found the accept encoding header in the request but not
-   * the transfer encoding in the response. */
-  if ((stream->response.chunked_status == CHUNKED_STATUS::CHUNKED_DISABLED) && stream->request.accept_encoding_header) {
-    std::string compression_value;
-    stream->request.getHeaderValue(http::HTTP_HEADER_NAME::ACCEPT_ENCODING, compression_value);
-
-    /* Check if we accept any of the compression algorithms. */
-    size_t initial_pos;
-    initial_pos = compression_value.find(service->service_config.compression_algorithm);
-    if (initial_pos != std::string::npos) {
-      compression_value = service->service_config.compression_algorithm;
-      stream->response.addHeader(http::HTTP_HEADER_NAME::TRANSFER_ENCODING, compression_value);
-      stream->response.chunked_status = CHUNKED_STATUS::CHUNKED_ENABLED;
-      compression_type = http::http_info::compression_types.at(compression_value);
-
-      /* Get the message_uncompressed. */
-      std::string message_no_compressed = std::string(stream->response.message, stream->response.message_length);
-      /* We are going to do the compression depending on the compression
-       * algorithm. */
-      switch (compression_type) {
-        case http::TRANSFER_ENCODING_TYPE::GZIP: {
-          std::string message_compressed_gzip;
-          if (!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
-            Debug::logmsg(LOG_ERR, "Error while compressing.");
-          strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
-          break;
-        }
-        case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
-          std::string message_compressed_deflate;
-          if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
-            Debug::logmsg(LOG_ERR, "Error while compressing.");
-          strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
-          break;
-        }
-        default:
-          break;
-      }
-    }
-  }
-}
-
 validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request,
                                                          const ListenerConfig &listener_config_) {  // FIXME
   regmatch_t matches[4];

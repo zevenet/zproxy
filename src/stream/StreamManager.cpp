@@ -21,13 +21,13 @@
 
 #include "StreamManager.h"
 #include <cstdio>
-#include <functional>
 #include <thread>
 #include "../handlers/HttpsManager.h"
-#include "../handlers/zlib_util.h"
 #include "../util/Network.h"
-#include "../util/common.h"
-#include "../util/utils.h"
+
+#ifdef ON_FLY_COMRESSION
+#include "../handlers/compression.h"
+#endif
 
 #if HELLO_WORLD_SERVER
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
@@ -338,7 +338,9 @@ void StreamManager::onRequestEvent(int fd) {
       return;
     }
     if (UNLIKELY(fd != stream->client_connection.getFileDescriptor())) {
-      Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_REMOVE);
+	  Debug::LogInfo("FOUND stream connectiondata inconsistency detected", LOG_DEBUG);
+	  clearStream(stream);
+	  return;
     }
   } else {
 #if !SM_HANDLE_ACCEPT
@@ -346,7 +348,9 @@ void StreamManager::onRequestEvent(int fd) {
     stream->client_connection.setFileDescriptor(fd);
     streams_set[fd] = stream;
     if (fd != stream->client_connection.getFileDescriptor()) {
-      Debug::LogInfo("FOUND:: Aqui ha pasado algo raro!!", LOG_DEBUG);
+      Debug::LogInfo("FOUND stream connectiondata inconsistency detected", LOG_DEBUG);
+	  clearStream(stream);
+	  return;
     }
 #endif
     deleteFd(fd);
@@ -619,7 +623,7 @@ void StreamManager::onRequestEvent(int fd) {
 
             // Rewrite destination
             if (stream->request.add_destination_header) {
-              std::string header_value = "http://";
+			  std::string header_value = stream->backend_connection.getBackend()->isHttps() ? "https://" : "http://";
               header_value += stream->backend_connection.getPeerAddress();
               header_value += ':';
               header_value += stream->request.path;
@@ -965,9 +969,11 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
     http_manager::setBackendCookie(service, stream);
     setStrictTransportSecurity(service, stream);
+#if ON_FLY_COMRESSION
     if (!this->is_https_listener) {
-      http_manager::applyCompression(service, stream);
+      Compression::applyCompression(service, stream);
     }
+#endif
 #if ENABLE_QUICK_RESPONSE
     onClientWriteEvent(stream);
 #else

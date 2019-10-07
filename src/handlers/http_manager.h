@@ -27,7 +27,7 @@
 #include "../http/http_stream.h"
 #include "../service/Service.h"
 #include "../util/common.h"
-#include "zlib_util.h"
+#include "../util/zlib_util.h"
 
 using namespace http;
 
@@ -67,19 +67,6 @@ class http_manager {
    * @param stream is the HttpStream to get the request to add the headers.
    */
   static void setBackendCookie(Service *service, HttpStream *stream);
-
-  /**
-   * @brief Applies compression to the response message.
-   *
-   * If one of the encoding accepted in the Accept Encoding Header matchs with
-   * the set in the CompressionAlgorithm parameter and the response is not
-   * already compressed, compress the response message.
-   *
-   * @param service is the Service to get the compression algorithm parameter
-   * set.
-   * @param stream is the HttpStream to get the response to compress.
-   */
-  static void applyCompression(Service *service, HttpStream *stream);
 
   /**
    * @brief Check if last chunk found in stream response and set stream chunk status

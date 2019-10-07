@@ -1,10 +1,31 @@
+###############################################################################
+#
+#    Zevenet zProxy Load Balancer Software License
+#    This file is part of the Zevenet zProxy Load Balancer software package.
+#
+#    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
 if(EXISTS CMakeLists.txt)
     message(FATAL_ERROR"Please create a cmake build directory, running cmake form source tree root is not allowed\n")
 endif()
 
-project(zhttp LANGUAGES CXX)
+project(ZProxy LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -16,24 +37,29 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
 
-set(STORAGE_TYPE 1) # 1 ramfs,2 stdmap,3 memcached, default(1)
-option(CACHE_SUPPORT "Build with cache support" ON)
 option(BUILD_DOC "Build Documentation" OFF)
-option(MEMCACHED_ENABLED "memcached" OFF)
-option(BUILD_TESTS "Build tests" ON)
+option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
-option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabled" OFF)
-option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
+#configuration
 option(GENERATE_DH_2048 "Generate the DH EC 2048 parameters file" OFF)
 option(GENERATE_DH_512 "Generate the DH EC 512 parameters file" OFF)
+#debugging
+option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabled" OFF)
+option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
+#experimental, do not enable WIP
+option(CACHE_SUPPORT "Build with cache support" OFF)
+set(CACHE_STORAGE_TYPE 1) # 1 ramfs,2 stdmap,3 memcached, default(1)
+#option(MEMCACHED_ENABLED "memcached" OFF) deprecated
+option(ENABLE_APACHE_LOG_FORMAT "Enable message log in apache format" OFF)
+option(ENABLE_ON_FLY_COMRESSION "Enable response compression" OFF)
 
 #file(REMOVE_RECURSE "${MAINFOLDER}/build")
 #file(MAKE_DIRECTORY "${MAINFOLDER}/build")
 #file(MAKE_DIRECTORY "${MAINFOLDER}/build/docs")
 
-SET(PROJECT_DESCRIPTION "L7 proxy core for zevenet load balancer")
+SET(PROJECT_DESCRIPTION "Zevenet L7 proxy core for zevenet load balancer")
 SET(PROJECT_CODENAME "${PROJECT_NAME}")
 
 SET(PROJECT_VERSION_MAJOR 0)
@@ -54,7 +80,6 @@ SET(PROJECT_COMPILER_INFO "${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION
 SET(PROJECT_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 EXECUTE_PROCESS( COMMAND uname -srm COMMAND tr -d '\n' OUTPUT_VARIABLE PROJECT_HOST_INFO )
 #SET(PROJECT_HOST_INFO "${CMAKE_SYSTEM_NAME} ")#"${CMAKE_SYSTEM_PROCESSOR}")
-
 
 # get current git info
 if (EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD")
@@ -82,21 +107,19 @@ string(REGEX REPLACE "[^/]*/([0-9:]*).*" "\\1"
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
     "${PROJECT_SOURCE_DIR}/src/version.h"
-    )
+)
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
     "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
-    )
+)
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
 
-
 if (UNIQUE_BUILD_DIRECTORY)
     SET(EXECUTABLE_OUTPUT_PATH "${MAINFOLDER}/build/bin")
 endif ()
-
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z  -Wshadow -pipe -pthread")
@@ -112,6 +135,9 @@ if (ENABLE_HEAP_PROFILER)
         -fno-builtin-realloc -fno-builtin-free")
 endif ()
 
+if (ENABLE_ON_FLY_COMRESSION)
+    add_definitions(-DON_FLY_COMRESSION=1)
+endif ()
 
 find_package(PkgConfig)
 pkg_check_modules(PC_PCRE QUIET libpcre)
@@ -153,7 +179,7 @@ if (BUNDLED_ZLIB)
         CONFIGURE_COMMAND ./configure --static --prefix=${ZLIB_INSTALL_DIR}
         BUILD_COMMAND make -j8
         BUILD_IN_SOURCE 1
-        INSTALL_COMMAND make install -j8 )
+        INSTALL_COMMAND make install -j8)
 
     #    set(ENV{PKG_CONFIG_PATH} "${ZLIB_INSTALL_DIR}/lib/pkgconfig")
     #add_dependencies(zlib)
@@ -168,7 +194,6 @@ else ()
         message(STATUS "Using Zlib ${ZLIB_VERSION}")
     endif ()
 endif()
-
 
 if (BUNDLED_OPENSSL)
     #
@@ -211,10 +236,10 @@ endif ()
 
 if (CACHE_SUPPORT)
     add_definitions(-DCACHE_ENABLED=1)
-    if (STORAGE_TYPE EQUAL 2)
+    if (CACHE_STORAGE_TYPE EQUAL 2)
         message(STATUS "Using stdmap")
         add_definitions(-DCACHE_STORAGE_STDMAP=1)
-    elseif(STORAGE_TYPE EQUAL 3)
+    elseif (CACHE_STORAGE_TYPE EQUAL 3)
         message(STATUS "Using memcached")
         set(MEMCACHED_ENABLED 1)
     else()
@@ -255,9 +280,9 @@ endif ()
 add_subdirectory(src)
 add_subdirectory(src/ctl)
 
-add_executable(zhttp src/main.cpp)
-add_dependencies(zhttp l7pcore)
-target_link_libraries(zhttp l7pcore)
+add_executable(zproxy src/main.cpp)
+add_dependencies(zproxy l7pcore)
+target_link_libraries(zproxy l7pcore)
 
 # Doxygen Build
 if (BUILD_DOC)
@@ -300,4 +325,4 @@ macro(add_deployment_directory SRC DEST)
 endmacro()
 
 #install
-install(TARGETS "zhttp" DESTINATION bin)
+install(TARGETS "zproxy" DESTINATION bin)

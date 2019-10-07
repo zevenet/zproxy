@@ -2,7 +2,7 @@
 
 #include "../../src/config/config.h"
 #include "../lib/gtest/googletest/include/gtest/gtest.h"
-#include "../../src/handlers/zlib_util.h"
+#include "../../src/util/zlib_util.h"
 
 TEST(CompressionTest, CompressionTestDeflate) {
 

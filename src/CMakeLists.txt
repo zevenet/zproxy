@@ -73,12 +73,9 @@ set(l7core_sources
     stream/StreamManager.h
     http/http_stream.cpp
     http/http_stream.h
-    experimental/string_buffer.cpp
-    experimental/string_buffer.h
     debug/Debug.h
     util/Network.h
     util/crypto.h
-    handlers/zlib_util.h
     stream/listener.cpp
     stream/listener.h
     util/utils.h
@@ -91,8 +88,8 @@ set(l7core_sources
     stats/backend_stats.cpp
     config/svc.h
     config/svc.cpp
-        http/http_parser.cpp
-        http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
+    http/http_parser.cpp
+    http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
     event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
@@ -104,7 +101,15 @@ set(l7core_sources
     debug/backtrace.cpp
     debug/backtrace.h)
 
-if(CACHE_SUPPORT)
+if (ENABLE_ON_FLY_COMRESSION)
+    set(l7core_sources ${l7core_sources}
+        util/zlib_util.h
+        handlers/compression.h
+        handlers/compression.cpp
+        )
+endif ()
+
+if (CACHE_SUPPORT)
     message(STATUS "Cache support enabled")
     set(l7core_sources ${l7core_sources}
         cache/HttpCache.cpp
@@ -118,14 +123,18 @@ if(CACHE_SUPPORT)
         handlers/CacheManager.cpp
         handlers/CacheManager.h
         )
-endif()
+endif ()
+
 set_source_files_properties(http/http_parser.cpp
-        http/http_parser.h http/picohttpparser.c http/picohttpparser.h PROPERTIES COMPILE_FLAGS -fpermissive)
+    http/http_parser.h http/picohttpparser.c http/picohttpparser.h PROPERTIES COMPILE_FLAGS -fpermissive)
 add_library(l7pcore ${l7core_sources})
 target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
 
+if (ENABLE_ON_FLY_COMRESSION)
+    target_link_libraries(l7pcore PRIVATE ${ZLIB_LIBRARIES})
+endif ()
+
 if (BUNDLED_OPENSSL)
-    #include_directories(libzhttp ${OPENSSL_INCLUDE_DIR})
     add_dependencies(l7pcore openssl)
     link_directories(l7pcore ${OPENSSL_INSTALL_DIR}/lib)
     target_link_libraries(l7pcore PRIVATE ${OPENSSL_LIBRARY_SSL} ${OPENSSL_LIBRARY_CRYPTO} -lz -ldl)
