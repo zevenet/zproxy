@@ -120,7 +120,7 @@ bool PoundClient::executeCommand() {
           std::stoi(this->address.substr(pos + 1, this->address.size() - pos));
       this->address = this->address.substr(0, pos);
       client.address = Network::getAddress(this->address, port);
-      IO::IO_OP res_connect = client.doConnect(*client.address, 0);
+      IO::IO_OP res_connect = client.doConnect(*client.address, 0,false);
       if (res_connect != IO::IO_OP::OP_SUCCESS)
         showError("Error: TCP mode connection failed.");
       break;
