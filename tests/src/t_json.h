@@ -132,32 +132,7 @@ TEST(JSON_TEST, PARSER_TEST) {
       "            \"status\": \"active\"\n"
       "        },\n"
       "        {\n"
-      "            \"backends\": [\n"
-      "                {\n"
-      "                    \"address\": \"192.168.101.253\",\n"
-      "                    \"connect-time\": 0,\n"
-      "                    \"connections\": 0,\n"
-      "                    \"id\": 1,\n"
-      "                    \"name\": \"bck_1\",\n"
-      "                    \"pending-connections\": 0,\n"
-      "                    \"port\": 80,\n"
-      "                    \"response-time\": 0,\n"
-      "                    \"status\": \"active\",\n"
-      "                    \"weight\": 5\n"
-      "                },\n"
-      "                {\n"
-      "                    \"address\": \"192.168.101.254\",\n"
-      "                    \"connect-time\": 0,\n"
-      "                    \"connections\": 0,\n"
-      "                    \"id\": 2,\n"
-      "                    \"name\": \"bck_2\",\n"
-      "                    \"pending-connections\": 0,\n"
-      "                    \"port\": 80,\n"
-      "                    \"response-time\": 0,\n"
-      "                    \"status\": \"active\",\n"
-      "                    \"weight\": 6\n"
-      "                }\n"
-      "            ],\n"
+      "            \"backends\": [],\n"
       "            \"id\": 2,\n"
       "            \"name\": \"srv2\",\n"
       "            \"sessions\": [],\n"
@@ -166,6 +141,20 @@ TEST(JSON_TEST, PARSER_TEST) {
       "    ]\n"
       "}";
   auto new_json = JsonParser::parse(json_string);
+  auto str = new_json->stringify();
+  json_string.erase(
+      std::remove_if(json_string.begin(), json_string.end(), isspace),
+      json_string.end());
+  str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+  ASSERT_TRUE(json_string.length() == str.length());
+}
+
+TEST(JSON_TEST, PARSER_TEST_2) {
+  std::string json_string =
+      "{\"address\" : \"192.168.105.189\",\"https\" : false,\"port\" : "
+      "80,\"services\" : []}";
+  auto new_json = JsonParser::parse(json_string);
+  ASSERT_TRUE(new_json != nullptr);
   auto str = new_json->stringify();
   json_string.erase(
       std::remove_if(json_string.begin(), json_string.end(), isspace),

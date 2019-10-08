@@ -61,7 +61,7 @@ std::unique_ptr<json::JsonArray> json::JsonParser::parseJsonArray(std::istringst
     ;
   char next_char = static_cast<char>(ss.peek());
   std::unique_ptr<JsonArray> json_array(new JsonArray());
-  if (ss.peek() == ']') return json_array;
+  if (ss.peek() == ']') {ss.get() ;return json_array;}
   do {
     if (next_char == ',') {
       next_char = static_cast<char>(ss.peek());
