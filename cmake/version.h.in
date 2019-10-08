@@ -1,6 +1,6 @@
 /*
-*    Zevenet zProxy Load Balancer Software License
-*    This file is part of the Zevenet zProxy Load Balancer software package.
+*    Zevenet zproxy Load Balancer Software License
+*    This file is part of the Zevenet zproxy Load Balancer software package.
 *
 *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
 *
@@ -22,20 +22,20 @@
 #pragma once
 #include <string>
 
-#define ZHTTP_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
-#define ZHTTP_VERSION_MINOR @PROJECT_VERSION_MINOR@
-#define ZHTTP_VERSION_PATCH @PROJECT_VERSION_PATCH@
-#define ZHTTP_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
-#define ZHTTP_VERSION "@PROJECT_VERSION@"
-#define ZHTTP_GIT_REF "@PROJECT_GIT_REF@"
-#define ZHTTP_SOURCE_VERSION "@PROJECT_SOURCE_VERSION@"
-#define ZHTTP_BUILD_DATE "@PROJECT_BUILD_DATE@"
-#define ZHTTP_BUILD_TIME "@PROJECT_BUILD_TIME@"
-#define ZHTTP_BUILD_INFO "@PROJECT_COMPILER_INFO@ @PROJECT_BUILD_TYPE@ @PROJECT_BUILD_INFO@ @PROJECT_BUILD_DATE@ @PROJECT_BUILD_TIME@"
-#define ZHTTP_HOST_INFO "@PROJECT_HOST_INFO@"
-#define ZHTTP_COPYRIGHT "@PROJECT_COPYRIGHT@"
+#define ZPROXY_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define ZPROXY_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define ZPROXY_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define ZPROXY_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
+#define ZPROXY_VERSION "@PROJECT_VERSION@"
+#define ZPROXY_GIT_REF "@PROJECT_GIT_REF@"
+#define ZPROXY_SOURCE_VERSION "@PROJECT_SOURCE_VERSION@"
+#define ZPROXY_BUILD_DATE "@PROJECT_BUILD_DATE@"
+#define ZPROXY_BUILD_TIME "@PROJECT_BUILD_TIME@"
+#define ZPROXY_BUILD_INFO "@PROJECT_COMPILER_INFO@ @PROJECT_BUILD_TYPE@ @PROJECT_BUILD_INFO@ @PROJECT_BUILD_DATE@ @PROJECT_BUILD_TIME@"
+#define ZPROXY_HOST_INFO "@PROJECT_HOST_INFO@"
+#define ZPROXY_COPYRIGHT "@PROJECT_COPYRIGHT@"
 
-struct ZhttpInfo{
+struct zproxyInfo{
     static std::string version_major ()  { return  "@PROJECT_VERSION_MAJOR@"; }
     static std::string version_minor ()  { return  "@PROJECT_VERSION_MINOR@"; }
     static std::string version_patch ()  { return  "@PROJECT_VERSION_PATCH@"; }

@@ -1,18 +1,35 @@
-//
-// Created by abdess on 9/28/18.
-//
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
-#include "../debug/Debug.h"
+#include "../debug/logger.h"
+#include "system.h"
+#include <csignal>
+#include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <string>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "system.h"
-#include <sys/resource.h>
-#include <csignal>
-#include <fcntl.h>
 
 class Environment {
 
@@ -24,11 +41,11 @@ public:
       struct passwd *pw;
 
       if ((pw = ::getpwnam(user_name.c_str())) == nullptr) {
-        Debug::logmsg(LOG_ERR, "no such user %s - aborted", user_name.c_str());
+        Logger::logmsg(LOG_ERR, "no such user %s - aborted", user_name.c_str());
         return false;
       }
       if (::chown(file_name.c_str(), pw->pw_uid, -1)) {
-        Debug::logmsg(LOG_ERR, "chown error on control socket - aborted (%s)",
+        Logger::logmsg(LOG_ERR, "chown error on control socket - aborted (%s)",
                       strerror(errno));
         return false;
       }
@@ -42,12 +59,12 @@ public:
     if (!group_name.empty()) {
       struct group *gr;
       if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
-        Debug::logmsg(LOG_ERR, "no such group %s - aborted",
+        Logger::logmsg(LOG_ERR, "no such group %s - aborted",
                       group_name.c_str());
         return false;
       }
       if (::chown(file_name.c_str(), -1, gr->gr_gid)) {
-        Debug::logmsg(LOG_ERR, "chown error on control socket - aborted (%s)",
+        Logger::logmsg(LOG_ERR, "chown error on control socket - aborted (%s)",
                       strerror(errno));
         return false;
       }
@@ -58,7 +75,7 @@ public:
 
   static bool setFileUserMode(long user_mode, const std::string &file_name) {
     if (::chmod(file_name.c_str(), user_mode)) {
-      Debug::logmsg(LOG_ERR, "chmod error on control socket - aborted (%s)",
+      Logger::logmsg(LOG_ERR, "chmod error on control socket - aborted (%s)",
                     strerror(errno));
       return false;
     }
@@ -69,12 +86,12 @@ public:
     if (!user.empty()) {
       struct passwd *pw;
       if ((pw = ::getpwnam(user.c_str())) == nullptr) {
-        Debug::logmsg(LOG_ERR, "no such user %s - aborted", user.c_str());
+        Logger::logmsg(LOG_ERR, "no such user %s - aborted", user.c_str());
         return false;
       }
       auto user_id = pw->pw_uid;
       if (::setuid(user_id) || seteuid(user_id)) {
-        Debug::logmsg(LOG_ERR, "setuid: %s - aborted", strerror(errno));
+        Logger::logmsg(LOG_ERR, "setuid: %s - aborted", strerror(errno));
         return false;
       }
       return true;
@@ -86,13 +103,13 @@ public:
     if (!group_name.empty()) {
       struct group *gr;
       if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
-        Debug::logmsg(LOG_ERR, "no such group %s - aborted",
+        Logger::logmsg(LOG_ERR, "no such group %s - aborted",
                       group_name.c_str());
         return false;
       }
       auto group_id = gr->gr_gid;
       if (::setgid(group_id) || setegid(group_id)) {
-        Debug::logmsg(LOG_ERR, "setgid: %s - aborted", strerror(errno));
+        Logger::logmsg(LOG_ERR, "setgid: %s - aborted", strerror(errno));
         return false;
       }
       return true;
@@ -125,11 +142,11 @@ public:
   static bool setChrootRoot(const std::string &chroot_path) {
     if (!chroot_path.empty()) {
       if (::chroot(chroot_path.c_str())) {
-        Debug::logmsg(LOG_ERR, "chroot: %s - aborted", strerror(errno));
+        Logger::logmsg(LOG_ERR, "chroot: %s - aborted", strerror(errno));
         return false;
       }
       if (chdir("/")) {
-        Debug::logmsg(LOG_ERR, "chroot/chdir: %s - aborted", strerror(errno));
+        Logger::logmsg(LOG_ERR, "chroot/chdir: %s - aborted", strerror(errno));
         return false;
       }
       return true;
@@ -140,24 +157,24 @@ public:
   // Increase num file descriptor ulimit
   static bool setUlimitData() {
 
-//    Debug::logmsg(LOG_DEBUG,"System info:");
-//    Debug::logmsg(LOG_DEBUG,"\tL1 Data cache size: %lu", SystemInfo::data()->getL1DataCacheSize());
-//    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu",SystemInfo::data()->getL1DataCacheLineSize());
-//    Debug::logmsg(LOG_DEBUG,"\tL2 Cache size: %lu",SystemInfo::data()->getL2DataCacheSize());
-//    Debug::logmsg(LOG_DEBUG,"\t\tCache line size: %lu" ,SystemInfo::data()->getL2DataCacheLineSize());
+//    Logger::logmsg(LOG_DEBUG,"System info:");
+//    Logger::logmsg(LOG_DEBUG,"\tL1 Data cache size: %lu", SystemInfo::data()->getL1DataCacheSize());
+//    Logger::logmsg(LOG_DEBUG,"\t\tCache line size: %lu",SystemInfo::data()->getL1DataCacheLineSize());
+//    Logger::logmsg(LOG_DEBUG,"\tL2 Cache size: %lu",SystemInfo::data()->getL2DataCacheSize());
+//    Logger::logmsg(LOG_DEBUG,"\t\tCache line size: %lu" ,SystemInfo::data()->getL2DataCacheLineSize());
     rlimit r{};
     ::getrlimit(RLIMIT_NOFILE, &r);
-//    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tCurrent %lu" , r.rlim_cur);
-//    Debug::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tMaximum %lu" , ::sysconf(_SC_OPEN_MAX));
+//    Logger::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tCurrent %lu" , r.rlim_cur);
+//    Logger::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tMaximum %lu" , ::sysconf(_SC_OPEN_MAX));
     if (r.rlim_cur != r.rlim_max) {
       r.rlim_cur = r.rlim_max;
       if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-        Debug::logmsg(LOG_ERR, "\tsetrlimit failed ");
+        Logger::logmsg(LOG_ERR, "\tsetrlimit failed ");
         return false;
       }
     }
     ::getrlimit(RLIMIT_NOFILE, &r);
-//    Debug::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+//    Logger::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
     return true;
   }
 
@@ -168,7 +185,7 @@ public:
       chroot_path = "/";
     }
     if (name.empty()) {
-      name = "zhttp";
+      name = "zproxy";
     }
     if (infile.empty()) {
       infile = "/dev/null";
@@ -197,7 +214,7 @@ public:
  static bool daemonize() {
      pid_t child;
      if ((child = fork()) < 0) {
-         Debug::logmsg(LOG_ERR, "error: failed fork");
+       Logger::logmsg(LOG_ERR, "error: failed fork");
          return false;
      }
      if (child != 0) { // parent

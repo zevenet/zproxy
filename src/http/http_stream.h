@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -23,11 +23,11 @@
 
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
-#include "../event/TimerFd.h"
 #include "../event/epoll_manager.h"
+#include "../event/timer_fd.h"
 #include "../service/backend.h"
-#include "../ssl/SSLConnectionManager.h"
-#include "HttpRequest.h"
+#include "../ssl/ssl_connection_manager.h"
+#include "http_request.h"
 
 struct UpgradeStatus {
   http::UPGRADE_PROTOCOLS protocol{http::UPGRADE_PROTOCOLS::NONE};
@@ -53,9 +53,9 @@ class HttpStream : public Counter<HttpStream> {
   // no copy allowed
   HttpStream(const HttpStream&) = delete;
   HttpStream& operator=(const HttpStream&) = delete;
-  /** Connection between zhttp and the client. */
+  /** Connection between zproxy and the client. */
   ClientConnection client_connection;
-  /** Connection between zhttp and the backend. */
+  /** Connection between zproxy and the backend. */
   BackendConnection backend_connection;
   /** Timer descriptor used for the stream timeouts. */
   TimerFd timer_fd;

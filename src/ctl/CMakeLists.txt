@@ -26,9 +26,9 @@ cmake_minimum_required(VERSION 3.6)
 project(zproxyctl LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 add_executable(zproxyctl main.cpp
-    PoundClient.h
-    PoundClient.cpp
-    CtlClient.cpp CtlClient.h)
+        pound_client.h
+        pound_client.cpp
+        ctl_client.cpp ctl_client.h)
 add_dependencies(zproxyctl l7pcore)
 target_link_libraries(zproxyctl l7pcore)
 install(TARGETS "zproxyctl" DESTINATION bin)

@@ -25,7 +25,7 @@ if(EXISTS CMakeLists.txt)
     message(FATAL_ERROR"Please create a cmake build directory, running cmake form source tree root is not allowed\n")
 endif()
 
-project(ZProxy LANGUAGES CXX)
+project(zproxy LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -38,7 +38,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 #options
 
 option(BUILD_DOC "Build Documentation" OFF)
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests" ON)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
@@ -107,12 +107,12 @@ string(REGEX REPLACE "[^/]*/([0-9:]*).*" "\\1"
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
     "${PROJECT_SOURCE_DIR}/src/version.h"
-)
+    )
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
     "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
-)
+    )
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")

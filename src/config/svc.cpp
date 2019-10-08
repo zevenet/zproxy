@@ -1,5 +1,25 @@
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include "svc.h"
-#include "../debug/Debug.h"
+#include "../debug/logger.h"
 
 RSA *RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_export,
                                      int keylength) {
@@ -57,7 +77,7 @@ void SSLINFO_callback(const SSL *ssl, int where, int rc) {
     state = SSL_get_state(ssl);
     if (state == SSL3_ST_SR_CLNT_HELLO_A || state == SSL23_ST_SR_CLNT_HELLO_A) {
       *reneg_state = RENEG_STATE::RENEG_ABORT;
-      Debug::logmsg(LOG_WARNING, "rejecting client initiated renegotiation");
+      Logger::logmsg(LOG_WARNING, "rejecting client initiated renegotiation");
     }
   } else if (where & SSL_CB_HANDSHAKE_DONE && *reneg_state == RENEG_STATE::RENEG_INIT) {
     // Reject any followup renegotiations
@@ -97,7 +117,7 @@ DH *load_dh_params(char *file) {
   BIO *bio;
 
   if ((bio = BIO_new_file(file, "r")) == nullptr) {
-    Debug::logmsg(LOG_WARNING, "Unable to open DH file - %s", file);
+    Logger::logmsg(LOG_WARNING, "Unable to open DH file - %s", file);
     return nullptr;
   }
 

@@ -1,17 +1,34 @@
-//
-// Created by abdess on 4/5/18.
-//
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
-#include "../http/picohttpparser.h"
-#include <string_view>
+#include "../http/pico_http_parser.h"
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <pthread.h>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
-#include <iomanip>
 
 namespace IO {
 
@@ -136,13 +153,13 @@ struct ThreadHelper {
     //    // Increase num file descriptor ulimit    //
     //    struct rlimit r;
     //    getrlimit(RLIMIT_NOFILE, &r);
-    //    Debug::LogInfo("current::RLIMIT_NOFILE\n\tCurrent " +
+    //    Logger::LogInfo("current::RLIMIT_NOFILE\n\tCurrent " +
     //        std::to_string(r.rlim_cur));
-    //    Debug::LogInfo("\tMaximum " + std::to_string(r.rlim_cur));
+    //    Logger::LogInfo("\tMaximum " + std::to_string(r.rlim_cur));
     //    if (r.rlim_cur != r.rlim_max) {
     //      r.rlim_cur = r.rlim_max;
     //      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-    //        Debug::logmsg(LOG_ERR, "setrlimit failed ");
+    //        Logger::logmsg(LOG_ERR, "setrlimit failed ");
     //        return EXIT_FAILURE;
     //      }
     //    }

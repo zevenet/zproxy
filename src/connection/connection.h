@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -21,16 +21,16 @@
 
 #pragma once
 
+#include "../event/descriptor.h"
+#include "../experimental/string_buffer.h"
+#include "../http/http_request.h"
+#include "../ssl/ssl_common.h"
+#include "../util/utils.h"
+#include <atomic>
 #include <fcntl.h>
 #include <netdb.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <atomic>
-#include "../event/descriptor.h"
-#include "../experimental/string_buffer.h"
-#include "../http/HttpRequest.h"
-#include "../ssl/ssl_common.h"
-#include "../util/utils.h"
 
 #ifndef MAX_DATA_SIZE
 #define MAX_DATA_SIZE 65000

@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -19,29 +19,29 @@
  *
  */
 
-#include <csetjmp>
-#include <csignal>
 #include "config/config.h"
-#include "ctl/ControlManager.h"
+#include "ctl/control_manager.h"
 #include "debug/backtrace.h"
 #include "stream/listener.h"
 #include "util/system.h"
+#include <csetjmp>
+#include <csignal>
 
 static jmp_buf jmpbuf;
 
 // Log initilization
-std::mutex Debug::log_lock;
-int Debug::log_level = 6;
-int Debug::log_facility = -1;
+std::mutex Logger::log_lock;
+int Logger::log_level = 6;
+int Logger::log_facility = -1;
 
-std::map<std::thread::id,thread_info> Debug::log_info;
+std::map<std::thread::id,thread_info> Logger::log_info;
 
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
-  Debug::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
+  Logger::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
   switch (sig) {
     case SIGINT:
     case SIGHUP:
@@ -76,17 +76,17 @@ int main(int argc, char *argv[]) {
     exit(EXIT_SUCCESS);
   }
 
-  ::openlog("ZHTTP", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
+  ::openlog("zproxy", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   Config config;
-  Debug::logmsg(LOG_NOTICE, "zhttp starting...");
+  Logger::logmsg(LOG_NOTICE, "zproxy starting...");
   config.parseConfig(argc, argv);
-  Debug::log_level = config.listeners->log_level;
-  Debug::log_facility = config.log_facility;
+  Logger::log_level = config.listeners->log_level;
+  Logger::log_facility = config.log_facility;
 
   // Syslog initialization
   if (config.daemonize) {
     if (!Environment::daemonize()) {
-      Debug::logmsg(LOG_ERR, "error: daemonize failed\n");
+      Logger::logmsg(LOG_ERR, "error: daemonize failed\n");
       closelog();
       return EXIT_FAILURE;
     }
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (!listener.init(config.listeners[0])) {
-    Debug::LogInfo("Error initializing listener socket", LOG_ERR);
+    Logger::LogInfo("Error initializing listener socket", LOG_ERR);
     return EXIT_FAILURE;
   }
 

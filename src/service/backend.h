@@ -1,21 +1,38 @@
-//
-// Created by abdess on 4/9/18.
-//
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
-#include <netdb.h>
-#include <atomic>
 #include "../config/pound_struct.h"
-#include "../ctl/ControlManager.h"
+#include "../ctl/control_manager.h"
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
-#include "../debug/Debug.h"
-#include "../util/utils.h"
+#include "../debug/logger.h"
+#include "../json/json_data_value.h"
+#include "../json/json_data_value_types.h"
+#include "../json/json_parser.h"
+#include "../ssl/ssl_connection_manager.h"
 #include "../stats/backend_stats.h"
-#include "../json/JsonDataValue.h"
-#include "../json/JsonDataValueTypes.h"
-#include "../json/jsonparser.h"
-#include "../ssl/SSLConnectionManager.h"
+#include "../util/utils.h"
+#include <atomic>
+#include <netdb.h>
 
 /** The enum Backend::BACKEND_STATUS defines the status of the Backend. */
 enum class BACKEND_STATUS {
@@ -50,8 +67,8 @@ using namespace ssl;
  * @brief The Backend class contains the configuration parameters set in the
  * backend section of the configuration file.
  */
-class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo{
-public:
+class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo {
+ public:
   Backend();
   ~Backend();
   /** Backend status using the Backend::BACKEND_STATUS enum. */

@@ -1,12 +1,30 @@
-//
-// Created by abdess on 2/22/18.
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
 //#include "gmock/gmock-matchers.h"
-#include "gtest/gtest.h"
+#include "../../src/debug/logger.h"
 #include "../../src/http/http_parser.h"
+#include "gtest/gtest.h"
 #include <string>
-#include "../../src/debug/Debug.h"
 
 static int bufis(const char *s, size_t l, const char *t) {
   return strlen(t) == l && memcmp(s, t, l) == 0;
@@ -29,12 +47,12 @@ TEST(HttpParserTest, HttpParserTest1) {
                                &num_headers, last_len);
   ASSERT_TRUE(s.length() == s.size());
   ASSERT_TRUE(ret == static_cast<int>(s.length()));
-  Debug::logmsg(LOG_DEBUG, "method is %.*s\n", method_len, method);
-  Debug::logmsg(LOG_DEBUG, "path is %.*s\n", path_len, path);
-  Debug::logmsg(LOG_DEBUG, "HTTP version is 1.%d\n", minor_version);
-  Debug::logmsg(LOG_DEBUG, "headers:\n");
+  Logger::logmsg(LOG_DEBUG, "method is %.*s\n", method_len, method);
+  Logger::logmsg(LOG_DEBUG, "path is %.*s\n", path_len, path);
+  Logger::logmsg(LOG_DEBUG, "HTTP version is 1.%d\n", minor_version);
+  Logger::logmsg(LOG_DEBUG, "headers:\n");
   for (size_t i = 0; i != num_headers; ++i) {
-    Debug::logmsg(LOG_DEBUG, "%.*s: %.*s\n", headers[i].name_len,
+    Logger::logmsg(LOG_DEBUG, "%.*s: %.*s\n", headers[i].name_len,
                   headers[i].name, headers[i].value_len, headers[i].value);
   }
   ASSERT_TRUE(num_headers == 2);

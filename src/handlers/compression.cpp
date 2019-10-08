@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *

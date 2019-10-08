@@ -71,7 +71,7 @@ add_executable(${PROJECT_NAME}
     src/t_sslcontext.h
     #src/t_cache.h
     #src/t_cache_storage.h
-    src/cachehelpers.h
+    src/cache_helpers.h
     )
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})

@@ -1,3 +1,23 @@
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
 #include <future>
@@ -9,9 +29,7 @@ class CtlObserver {
   CtlObserver() = default;
   virtual ~CtlObserver() = default;
   virtual IResponse handleTask(T &arg) = 0;
-  static IResponse handle(T arg, CtlObserver<T, IResponse> &obj) {
-    return obj.handleTask(arg);
-  }
+  static IResponse handle(T arg, CtlObserver<T, IResponse> &obj) { return obj.handleTask(arg); }
   virtual bool isHandler(T &arg) = 0;
 };
 template <typename T, typename IResponse>
@@ -32,9 +50,8 @@ class CtlNotify {
     std::vector<std::future<IResponse>> result_future;
     for (auto receiver : observers) {
       if (receiver->isHandler(arg)) {
-        result_future.push_back(
-            std::async(lazy_eval ? std::launch::deferred : std::launch::async,
-                       receiver->handle, arg, std::ref(*receiver)));
+        result_future.push_back(std::async(lazy_eval ? std::launch::deferred : std::launch::async, receiver->handle,
+                                           arg, std::ref(*receiver)));
       }
     }
     return result_future;

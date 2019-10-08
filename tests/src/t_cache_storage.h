@@ -1,15 +1,15 @@
 #pragma once
 
+#include "../../src/stream/stream_manager.h"
 #include "../lib/gtest/googletest/include/gtest/gtest.h"
 #include "gtest/gtest.h"
-#include <string>
-#include "../../src/stream/StreamManager.h"
 #include <filesystem>
 #include <regex>
+#include <string>
 
 TEST(CacheTestStorage, InitializationTests ) {
     std::string svc("myService");
-    std::string f_name ("zhttpTest");
+    std::string f_name ("zproxyTest");
     HttpCacheManager * c_manager = new HttpCacheManager;
     regex_t cache_re;
     regcomp(&cache_re,".*html|.*css", REG_ICASE | REG_NEWLINE | REG_EXTENDED);

@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -20,7 +20,7 @@
  */
 
 #include "http_manager.h"
-#include "../util/Network.h"
+#include "../util/network.h"
 
 ssize_t http_manager::handleChunkedData(HttpStream &stream) {
   auto last_chunk_size = stream.response.chunk_size_left;
@@ -35,7 +35,7 @@ ssize_t http_manager::handleChunkedData(HttpStream &stream) {
                                        data_offset, new_chunk_left, stream.response.content_length);
     //#if PRINT_DEBUG_CHUNKED
     const char *status = chunk_size < 0 ? "*" : chunk_size == 0 ? "/" : "";
-    Debug::logmsg(LOG_REMOVE,
+    Logger::logmsg(LOG_REMOVE,
                   "[%s] buffer size: %6lu chunk left: %8d => Chunk size: %8d "
                   "Data offset: %6lu Content_length: %8d  next chunk left %8d",
                   status, stream.backend_connection.buffer_size, last_chunk_size, chunk_size, data_offset,
@@ -70,16 +70,16 @@ ssize_t http_manager::getChunkSize(const std::string &data, size_t data_size, in
     char *error;
     auto chunk_length = ::strtol(hex.data(), &error, 16);
     if (*error != 0) {
-      Debug::logmsg(LOG_NOTICE, "strtol() failed: Data size: %d  Buffer: %.*s", data_size, 10, data.data());
+      Logger::logmsg(LOG_NOTICE, "strtol() failed: Data size: %d  Buffer: %.*s", data_size, 10, data.data());
       return -1;
     } else {
 #if PRINT_DEBUG_CHUNKED
-      Debug::logmsg(LOG_DEBUG, "CHUNK found size %s => %d ", hex.data(), chunk_length);
+      Logger::logmsg(LOG_DEBUG, "CHUNK found size %s => %d ", hex.data(), chunk_length);
 #endif
       return static_cast<ssize_t>(chunk_length);
     }
   }
-  //  Debug::logmsg(LOG_NOTICE, "Chunk not found, need more data: Buff size: %d
+  //  Logger::logmsg(LOG_NOTICE, "Chunk not found, need more data: Buff size: %d
   //  Buff %.*s ",data_size, 5, data.data());
   return -1;
 }
@@ -171,7 +171,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request,
   // Check for correct headers
   for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "\t%.*s", request.headers[i].name_len + request.headers[i].value_len + 2,
+    Logger::logmsg(LOG_DEBUG, "\t%.*s", request.headers[i].name_len + request.headers[i].value_len + 2,
                   request.headers[i].name);
 #endif
     /* maybe header to be removed */
@@ -184,7 +184,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request,
     }
     if (request.headers[i].header_off) continue;
 
-    //      Debug::logmsg(LOG_REMOVE, "\t%.*s",request.headers[i].name_len +
+    //      Logger::logmsg(LOG_REMOVE, "\t%.*s",request.headers[i].name_len +
     //      request.headers[i].value_len + 2, request.headers[i].name);
 
     // check header values length
@@ -233,7 +233,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpRequest &request,
         }
         case http::HTTP_HEADER_NAME::EXPECT: {
           if (header_value == "100-continue") {
-            Debug::logmsg(LOG_REMOVE, "Client Expects 100 continue");
+            Logger::logmsg(LOG_REMOVE, "Client Expects 100 continue");
           }
           if (listener_config_.ignore100continue) request.headers[i].header_off = true;
           break;
@@ -253,7 +253,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream, co
   /* If the response is 100 continue we need to enable chunked transfer. */
   if (response.http_status_code < 200) {
     //    stream.response.chunked_status =
-    //    http::CHUNKED_STATUS::CHUNKED_ENABLED; Debug::logmsg(LOG_DEBUG,
+    //    http::CHUNKED_STATUS::CHUNKED_ENABLED; Logger::logmsg(LOG_DEBUG,
     //    "Chunked transfer enabled");
     return validation::REQUEST_RESULT::OK;
   }
@@ -266,7 +266,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream, co
     auto header = std::string_view(response.headers[i].name, response.headers[i].name_len);
     auto header_value = std::string_view(response.headers[i].value, response.headers[i].value_len);
 #if DEBUG_HTTP_HEADERS
-    Debug::logmsg(LOG_DEBUG, "\t%.*s", response.headers[i].name_len + response.headers[i].value_len + 2,
+    Logger::logmsg(LOG_DEBUG, "\t%.*s", response.headers[i].name_len + response.headers[i].value_len + 2,
                   response.headers[i].name);
 #endif
     auto it = http::http_info::headers_names.find(header);
@@ -306,7 +306,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream, co
 
           char ip[100]{'\0'};
           if (!Network::HostnameToIp(host.data(), ip)) {
-            Debug::logmsg(LOG_NOTICE, "Couldn't get host ip");
+            Logger::logmsg(LOG_NOTICE, "Couldn't get host ip");
             continue;
           }
           std::string_view host_ip(ip);
@@ -340,12 +340,12 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream, co
                       http_manager::getLastChunkSize(stream.response.message, stream.response.message_length,
                                                      data_offset, new_chunk_left, response.content_length);
 #if PRINT_DEBUG_CHUNKED
-                  Debug::logmsg(LOG_REMOVE, ">>>> Chunk size %d left %d ", chunk_size, new_chunk_left);
+                  Logger::logmsg(LOG_REMOVE, ">>>> Chunk size %d left %d ", chunk_size, new_chunk_left);
 #endif
                   stream.response.content_length += static_cast<size_t>(chunk_size);
                   if (chunk_size == 0) {
 #if PRINT_DEBUG_CHUNKED
-                    Debug::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+                    Logger::logmsg(LOG_REMOVE, "Set LAST CHUNK");
 #endif
                     stream.response.chunk_size_left = 0;
                     stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
@@ -392,9 +392,9 @@ void http_manager::replyError(http::Code code, const std::string &code_string, c
   char caddr[200];
 
   if (UNLIKELY(Network::getPeerAddress(target.getFileDescriptor(), caddr, 200) == nullptr)) {
-    Debug::LogInfo("Error getting peer address", LOG_DEBUG);
+    Logger::LogInfo("Error getting peer address", LOG_DEBUG);
   } else {
-    Debug::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s", std::this_thread::get_id(), static_cast<int>(code),
+    Logger::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s", std::this_thread::get_id(), static_cast<int>(code),
                   code_string.data(), target.buffer, caddr);
   }
   auto response_ = http::getHttpResponse(code, code_string, str);

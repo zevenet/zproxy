@@ -1,6 +1,34 @@
+/*
+ * Pound - the reverse-proxy load-balancer
+ * Copyright (C) 2002-2010 Apsis GmbH
+ * Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ * This file is part of Pound.
+ *
+ * Pound is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Contact information:
+ * Apsis GmbH
+ * P.O.Box
+ * 8707 Uetikon am See
+ * Switzerland
+ * EMail: roseg@apsis.ch
+ */
+
 #include "config.h"
 #define SYSLOG_NAMES
-#include "../debug/Debug.h"
+#include "../debug/logger.h"
 #undef SYSLOG_NAMES
 #include "../version.h"
 
@@ -123,7 +151,7 @@ void Config::parse_file() {
       lin[matches[1].rm_eo] = '\0';
       ctrl_mode = std::strtol(lin + matches[1].rm_so, nullptr, 8);
       if (errno == ERANGE || errno == EINVAL) {
-        Debug::logmsg(LOG_ERR, "line %d: ControlMode config: %s - aborted",
+        Logger::logmsg(LOG_ERR, "line %d: ControlMode config: %s - aborted",
                       n_lin, strerror(errno));
         exit(1);
       }
@@ -195,7 +223,7 @@ void Config::parseConfig(const int argc, char **const argv) {
   int c_opt, check_only;
 
   if (!compile_regex()) {
-    Debug::logmsg(LOG_ERR, "bad config Regex - aborted");
+    Logger::logmsg(LOG_ERR, "bad config Regex - aborted");
     exit(1);
   }
 
@@ -218,51 +246,52 @@ void Config::parseConfig(const int argc, char **const argv) {
         break;
       case 'V':print_log = 1;
       {
-        Debug::logmsg(LOG_ALERT, "Zhttp version %s", ZHTTP_VERSION);
-        Debug::logmsg(LOG_ALERT, "Build: %s %s", ZHTTP_HOST_INFO,ZHTTP_BUILD_INFO);
-        Debug::logmsg(LOG_ALERT, "%s",ZHTTP_COPYRIGHT);
+        Logger::logmsg(LOG_ALERT, "zproxy version %s", ZPROXY_VERSION);
+        Logger::logmsg(LOG_ALERT, "Build: %s %s", ZPROXY_HOST_INFO,ZPROXY_BUILD_INFO);
+        Logger::logmsg(LOG_ALERT, "%s",ZPROXY_COPYRIGHT);
         exit(EXIT_SUCCESS);
       }
       // TODO::
       //#ifdef C_SUPER
       //      if (strcmp(C_SUPER, "0"))
-      //        Debug::logmsg(LOG_DEBUG, "    --disable-super");
+      //        Logger::logmsg(LOG_DEBUG, "    --disable-super");
       //#endif
       //#ifdef C_CERT1L
       //      if (strcmp(C_CERT1L, "1"))
-      //        Debug::logmsg(LOG_DEBUG, "    --enable-cert1l");
+      //        Logger::logmsg(LOG_DEBUG, "    --enable-cert1l");
       //#endif
       //#ifdef C_SSL
       //      if (strcmp(C_SSL, ""))
-      //        Debug::logmsg(LOG_DEBUG, "    --with-ssl=%s", C_SSL);
+      //        Logger::logmsg(LOG_DEBUG, "    --with-ssl=%s", C_SSL);
       //#endif
       //#ifdef C_T_RSA
       //      if (strcmp(C_T_RSA, "0"))
-      //        Debug::logmsg(LOG_DEBUG, "    --with-t_rsa=%s", C_T_RSA);
+      //        Logger::logmsg(LOG_DEBUG, "    --with-t_rsa=%s", C_T_RSA);
       //#endif
       //#ifdef C_MAXBUF
       //      if (strcmp(C_MAXBUF, "0"))
-      //        Debug::logmsg(LOG_DEBUG, "    --with-maxbuf=%s", C_MAXBUF);
+      //        Logger::logmsg(LOG_DEBUG, "    --with-maxbuf=%s", C_MAXBUF);
       //#endif
       //#ifdef C_OWNER
       //      if (strcmp(C_OWNER, ""))
-      //        Debug::logmsg(LOG_DEBUG, "    --with-owner=%s", C_OWNER);
+      //        Logger::logmsg(LOG_DEBUG, "    --with-owner=%s", C_OWNER);
       //#endif
       //#ifdef C_GROUP
       //      if (strcmp(C_GROUP, ""))
-      //        Debug::logmsg(LOG_DEBUG, "    --with-group=%s", C_GROUP);
+      //        Logger::logmsg(LOG_DEBUG, "    --with-group=%s", C_GROUP);
       //#endif
       //#ifdef C_DH_LEN
       //      if (strcmp(C_DH_LEN, "0"))
-      //        Debug::logmsg(LOG_DEBUG, "    --with-dh=%s", C_DH_LEN);
+      //        Logger::logmsg(LOG_DEBUG, "    --with-dh=%s", C_DH_LEN);
       //#endif
-      //        Debug::logmsg(LOG_DEBUG, "Exiting...");
+      //        Logger::logmsg(LOG_DEBUG, "Exiting...");
       //        exit(0);
-      default:Debug::logmsg(LOG_ERR, "bad flag -%c", optopt);
+      default:
+        Logger::logmsg(LOG_ERR, "bad flag -%c", optopt);
         exit(1);
     }
   if (optind < argc) {
-    Debug::logmsg(LOG_ERR, "unknown extra arguments (%s...)", argv[optind]);
+    Logger::logmsg(LOG_ERR, "unknown extra arguments (%s...)", argv[optind]);
     exit(1);
   }
 
@@ -283,12 +312,12 @@ void Config::parseConfig(const int argc, char **const argv) {
   parse_file();
 
   if (check_only) {
-    Debug::logmsg(LOG_INFO, "Config file %s is OK", conf_name.data());
+    Logger::logmsg(LOG_INFO, "Config file %s is OK", conf_name.data());
     exit(0);
   }
 
   if (listeners == nullptr) {
-    Debug::logmsg(LOG_ERR, "no listeners defined - aborted");
+    Logger::logmsg(LOG_ERR, "no listeners defined - aborted");
     exit(1);
   }
 
@@ -825,7 +854,7 @@ ListenerConfig *Config::parse_HTTPS() {
         SSL_CTX_set_mode(pc->ctx, SSL_MODE_RELEASE_BUFFERS);
         SSL_CTX_set_options(pc->ctx, ssl_op_enable);
         SSL_CTX_clear_options(pc->ctx, ssl_op_disable);
-        sprintf(lin, "%d-Zhttp-%ld", getpid(), random());
+        sprintf(lin, "%d-zproxy-%ld", getpid(), random());
         SSL_CTX_set_session_id_context(pc->ctx,
                                        reinterpret_cast<unsigned char *>(lin),
                                        static_cast<unsigned int>(strlen(lin)));
@@ -884,7 +913,7 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count) {
         local_count++;
         break;
       default:
-        Debug::logmsg(LOG_INFO,
+        Logger::logmsg(LOG_INFO,
                       "unsupported subjectAltName type encountered: %i",
                       name__->type);
     }
@@ -959,7 +988,7 @@ void Config::load_cert(int has_other, ListenerConfig *res, char *filename) {
     if ((pc->server_name = strdup(server_name + matches[1].rm_so)) == nullptr)
       conf_err("ListenHTTPS: could not set certificate subject");
   } else
-    Debug::logmsg(LOG_ERR, "ListenHTTPS: could not get certificate CN");
+    Logger::logmsg(LOG_ERR, "ListenHTTPS: could not get certificate CN");
 // ZLB Patch - Disable exit error when CN is not present
 // conf_err("ListenHTTPS: could not get certificate CN");
 #else
@@ -997,7 +1026,7 @@ void Config::load_certdir(int has_other, ListenerConfig *res,
   int filecnt = 0;
   int idx, use;
 
-  Debug::logmsg(LOG_DEBUG, "Including Certs from Dir %s", dir_path.data());
+  Logger::logmsg(LOG_DEBUG, "Including Certs from Dir %s", dir_path.data());
 
   pattern = const_cast<char *>(strrchr(dir_path.data(), '/'));
   if (pattern) {
@@ -1032,7 +1061,7 @@ void Config::load_certdir(int has_other, ListenerConfig *res,
     for (idx = 1; idx < filecnt; idx++)
       if (strcmp(files[use], files[idx]) > 0) use = idx;
 
-    Debug::logmsg(LOG_DEBUG, " I Cert ==> %s", files[use]);
+    Logger::logmsg(LOG_DEBUG, " I Cert ==> %s", files[use]);
 
     load_cert(has_other, res, files[use]);
     files[use] = files[--filecnt];
@@ -1455,7 +1484,7 @@ BackendConfig *Config::parseBackend(const char * svc_name, const int is_emergenc
 #endif
       SSL_CTX_clear_options(res->ctx, SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION);
       SSL_CTX_clear_options(res->ctx, SSL_OP_LEGACY_SERVER_CONNECT);
-      sprintf(lin, "%d-Zhttp-%ld", getpid(), random());
+      sprintf(lin, "%d-zproxy-%ld", getpid(), random());
       SSL_CTX_set_session_id_context(res->ctx,
                                      reinterpret_cast<unsigned char *>(lin),
                                      static_cast<uint32_t>(strlen(lin)));
@@ -2038,7 +2067,7 @@ void Config::clean_regex() {
 int Config::conf_init(const std::string &name__) {
   f_name[0] = std::string(name__);
   if ((f_in[0] = fopen(name__.data(), "rt")) == nullptr) {
-    Debug::logmsg(LOG_ERR, "can't open open %s", name__.data());
+    Logger::logmsg(LOG_ERR, "can't open open %s", name__.data());
     exit(1);
   }
   n_lin[0] = 0;
@@ -2047,7 +2076,7 @@ int Config::conf_init(const std::string &name__) {
 }
 
 void Config::conf_err(const char *msg) {
-  Debug::logmsg(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
+  Logger::logmsg(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
                 n_lin[cur_fin], msg);
   exit(1);
 }
@@ -2102,7 +2131,7 @@ void Config::include_dir(const char *conf_path) {
   int filecnt = 0;
   int idx, use;
 
-  Debug::logmsg(LOG_DEBUG, "Including Dir %s", conf_path);
+  Logger::logmsg(LOG_DEBUG, "Including Dir %s", conf_path);
 
   if ((dp = opendir(conf_path)) == nullptr) {
     conf_err("can't open IncludeDir directory");
@@ -2135,14 +2164,14 @@ void Config::include_dir(const char *conf_path) {
     for (idx = 1; idx < filecnt; idx++)
       if (strcmp(files[use], files[idx]) < 0) use = idx;
 
-    Debug::logmsg(LOG_DEBUG, " I==> %s", files[use]);
+    Logger::logmsg(LOG_DEBUG, " I==> %s", files[use]);
 
     // Copied from Include logic
     if (cur_fin == (MAX_FIN - 1)) conf_err("Include nesting too deep");
     cur_fin++;
     f_name[cur_fin] = files[use];
     if ((f_in[cur_fin] = fopen(files[use], "rt")) == nullptr) {
-      Debug::logmsg(LOG_ERR, "%s line %d: Can't open included file %s",
+      Logger::logmsg(LOG_ERR, "%s line %d: Can't open included file %s",
                     f_name[cur_fin].data(), n_lin[cur_fin], files[use]);
       exit(1);
     }

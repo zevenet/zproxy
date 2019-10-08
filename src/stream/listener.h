@@ -1,14 +1,31 @@
-//
-// Created by abdess on 4/5/18.
-//
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #pragma once
 
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
-#include "../event/SignalFd.h"
 #include "../event/epoll_manager.h"
-#include "StreamManager.h"
+#include "../event/signal_fd.h"
+#include "stream_manager.h"
 #include <thread>
 #include <vector>
 
@@ -21,8 +38,7 @@
  * attached to it.
  *
  */
-class Listener : public EpollManager,
-                 public CtlObserver<ctl::CtlTask, std::string> {
+class Listener : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
   std::thread worker_thread;
   std::atomic<bool> is_running;
   Connection listener_connection;
@@ -37,7 +53,7 @@ class Listener : public EpollManager,
   void doWork();
   StreamManager *getManager(int fd);
 
-public:
+ public:
   Listener();
   ~Listener() final;
 
@@ -85,8 +101,7 @@ public:
    * @param event_type is the type of the event.
    * @param event_group is the group of the event.
    */
-  void HandleEvent(int fd, EVENT_TYPE event_type,
-                   EVENT_GROUP event_group) override;
+  void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
 
   /**
    * @brief This function handles the tasks received with the API format.

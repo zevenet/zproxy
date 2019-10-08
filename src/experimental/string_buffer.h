@@ -2,8 +2,8 @@
 // Created by abdess on 4/5/18.
 //
 
-#ifndef NEW_ZHTTP_STREAM_BUFFER_H
-#define NEW_ZHTTP_STREAM_BUFFER_H
+#ifndef NEW_ZPROXY_STREAM_BUFFER_H
+#define NEW_ZPROXY_STREAM_BUFFER_H
 #include <string>
 
 class StringBuffer {
@@ -21,4 +21,4 @@ class StringBuffer {
   std::string buffer;
 };
 
-#endif //NEW_ZHTTP_STREAM_BUFFER_H
+#endif //NEW_ZPROXY_STREAM_BUFFER_H

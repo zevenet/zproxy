@@ -46,35 +46,35 @@ add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=2)
 
 set(l7core_sources
     ssl/ssl_common.h
-    ssl/SSLContext.cpp
-    ssl/SSLContext.h
-    ssl/SSLConnectionManager.cpp
-    ssl/SSLConnectionManager.h
-    handlers/HttpsManager.cpp
-    handlers/HttpsManager.h
+    ssl/ssl_context.cpp
+    ssl/ssl_context.h
+    ssl/ssl_connection_manager.cpp
+    ssl/ssl_connection_manager.h
+    handlers/https_manager.cpp
+    handlers/https_manager.h
     ssl/ssl_session.h
     ssl/ssl_session.cpp
     json/json.h
     json/json.cpp
-    json/JsonDataValue.h
-    json/JsonDataValue.cpp
-    json/JsonDataValueTypes.h
-    json/JsonDataValueTypes.cpp
-    json/JsonData.h
-    json/JsonData.cpp
-    json/jsonparser.h
-    json/jsonparser.cpp
+    json/json_data_value.h
+    json/json_data_value.cpp
+    json/json_data_value_types.h
+    json/json_data_value_types.cpp
+    json/json_data.h
+    json/json_data.cpp
+    json/json_parser.h
+    json/json_parser.cpp
     config/config_node.h
     event/epoll_manager.cpp
     event/epoll_manager.h
     connection/connection.cpp
     connection/connection.h
-    stream/StreamManager.cpp
-    stream/StreamManager.h
+    stream/stream_manager.cpp
+    stream/stream_manager.h
     http/http_stream.cpp
     http/http_stream.h
-    debug/Debug.h
-    util/Network.h
+    debug/logger.h
+    util/network.h
     util/crypto.h
     stream/listener.cpp
     stream/listener.h
@@ -89,15 +89,15 @@ set(l7core_sources
     config/svc.h
     config/svc.cpp
     http/http_parser.cpp
-    http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
-    http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
-    connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-    event/SignalFd.cpp event/SignalFd.h http/http.h http/http.cpp util/common.h util/system.h service/httpsessionmanager.h
-    service/httpsessionmanager.cpp ctl/ControlManager.cpp ctl/ControlManager.h util/environment.h ctl/observer.h ctl/ctl.h
+    http/http_parser.h http/pico_http_parser.cpp http/pico_http_parser.h
+    http/http_request.h service/service.cpp service/service.h service/service_manager.cpp service/service_manager.h
+    connection/backend_connection.cpp connection/backend_connection.h event/timer_fd.cpp event/timer_fd.h
+    event/signal_fd.cpp event/signal_fd.h http/http.h http/http.cpp util/common.h util/system.h service/http_session_manager.h
+    service/http_session_manager.cpp ctl/control_manager.cpp ctl/control_manager.h util/environment.h ctl/observer.h ctl/ctl.h
     stats/backend_stats.h stats/backend_stats.cpp event/descriptor.h version.h connection/client_connection.h stats/counter.h
     handlers/http_manager.cpp
     handlers/http_manager.h
-    http/HttpRequest.cpp
+    http/http_request.cpp
     debug/backtrace.cpp
     debug/backtrace.h)
 
@@ -112,21 +112,21 @@ endif ()
 if (CACHE_SUPPORT)
     message(STATUS "Cache support enabled")
     set(l7core_sources ${l7core_sources}
-        cache/HttpCache.cpp
-        cache/HttpCache.h
-        cache/ICacheStorage.h
-        cache/CacheCommons.h
-        cache/RamCacheStorage.h
-        cache/RamCacheStorage.cpp
-        cache/DiskCacheStorage.h
-        cache/DiskCacheStorage.cpp
+        cache/http_cache.cpp
+        cache/http_cache.h
+        cache/i_cache_storage.h
+        cache/cache_commons.h
+        cache/ram_cache_storage.h
+        cache/ram_cache_storage.cpp
+        cache/disk_cache_storage.h
+        cache/disk_cache_storage.cpp
         handlers/CacheManager.cpp
-        handlers/CacheManager.h
+        handlers/cache_manager.h
         )
 endif ()
 
 set_source_files_properties(http/http_parser.cpp
-    http/http_parser.h http/picohttpparser.c http/picohttpparser.h PROPERTIES COMPILE_FLAGS -fpermissive)
+    http/http_parser.h http/picohttpparser.c http/pico_http_parser.h PROPERTIES COMPILE_FLAGS -fpermissive)
 add_library(l7pcore ${l7core_sources})
 target_link_libraries(l7pcore PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${ZLIB_LIBRARIES})
 

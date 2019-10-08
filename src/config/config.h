@@ -1,3 +1,30 @@
+/*
+ * Pound - the reverse-proxy load-balancer
+ * Copyright (C) 2002-2010 Apsis GmbH
+ * Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ * This file is part of Pound.
+ *
+ * Pound is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Contact information:
+ * Apsis GmbH
+ * P.O.Box
+ * 8707 Uetikon am See
+ * Switzerland
+ * EMail: roseg@apsis.ch
+ */
 
 #pragma once
 
@@ -19,10 +46,10 @@
 #include <openssl/lhash.h>
 
 #ifndef F_CONF
-constexpr auto F_CONF = "/usr/local/etc/zhttp.cfg";
+constexpr auto F_CONF = "/usr/local/etc/zproxy.cfg";
 #endif
 #ifndef F_PID
-constexpr auto F_PID = "/var/run/zhttp.pid";
+constexpr auto F_PID = "/var/run/zproxy.pid";
 #endif
 constexpr int MAX_FIN = 100;
 constexpr int UNIX_PATH_MAX = 108;

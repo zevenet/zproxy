@@ -1,6 +1,6 @@
 # WIP Zevenet Http proxy
 
-Zhttp is an event-driven and multi-threading L7 reverse proxy. Zhttp supports HTTP and HTTPS by using OpenSSL 1.1.
+zproxy is an event-driven and multi-threading L7 reverse proxy. zproxy supports HTTP and HTTPS by using OpenSSL 1.1.
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ These instructions will get you a copy of the project up and running on your loc
 * zlib
 * doxygen for source code documentation generation
 
-*Note: You can download and build zlib and libssl during the zhttp compilation by enabling BUNDLED_ZLIB and BUNDLED_OPENSSL.*
+*Note: You can download and build zlib and libssl during the zproxy compilation by enabling BUNDLED_ZLIB and BUNDLED_OPENSSL.*
 
 ### Building The Project
 
@@ -23,23 +23,23 @@ These instructions will get you a copy of the project up and running on your loc
 First we need to check out the git repo:
 
 ```bash
-$ git clone https://github.com/abdessamad-zevenet/zhttp zhttp.git
-$ cd zhttp.git
+$ git clone https://github.com/abdessamad-zevenet/zproxy zproxy.git
+$ cd zproxy.git
 $ mkdir build
 $ cd build && cmake ..
 $ make [&& make install]
-$ Run bin/zhttp -f /path/to/pound/config/file.cfg
+$ Run bin/zproxy -f /path/to/pound/config/file.cfg
 
 # Check the command line interface controller help output:
-$ bin/zhttpctl
+$ bin/zproxyctl
 
 # Run the tests: WIP
-$ bin/zhttptests
+$ bin/zproxytests
 ```
 
 #### Project Structure
 
-* `src/*` — C++ code that compiles into a library (libzhttp.a) and the main zhttp binary.
+* `src/*` — C++ code that compiles into a library (libzproxy.a) and the main zproxy binary.
 * `src/ctl` — Generate a command line interface binary.
 * `test/lib` — C++ libraries used for tests ( Google Test).
 * `test/src` — C++ test suite.
@@ -50,13 +50,13 @@ $ bin/zhttptests
 
 #### Quick start guide
 
-By following this guide you will end up having a zhttp deployed and running.
+By following this guide you will end up having a zproxy deployed and running.
 
-1. Download and compile the zhttp proxy. You can follow the instructions above
+1. Download and compile the zproxy proxy. You can follow the instructions above
 
 2. Take one of the example configuration files at `tests/data`. It is recommended to use `simple_http.cfg` or `simple_https.cfg` and modify it to use your infrastructure.
 
-3. Run `$ bin/zhttp -f /path/to/config_file`
+3. Run `$ bin/zproxy -f /path/to/config_file`
 
 4. Now it is ready! You can check the global proxy status by using the control API.
 
@@ -66,7 +66,7 @@ API:
 
 - It is possible to do hot backend, service, listener and session changes using the API. Here is the operations allowed by the API.
 
-*All the request must be directed to the zhttp unix socket or to the control IP address and port. The response is going to be a JSON formatted response with all the information requested or the operation result.*
+*All the request must be directed to the zproxy unix socket or to the control IP address and port. The response is going to be a JSON formatted response with all the information requested or the operation result.*
 
 **Get the services status of the listener with the id "listener_id"**
 
@@ -189,11 +189,11 @@ POST {status: disabled} http://localhost/listener/0/service/1/status
 
 Ctl:
 
-- The ctl compile into a single binary zhttpctl, please checkout the zhttpctl manpage to use it.
+- The ctl compile into a single binary zproxyctl, please checkout the zproxyctl manpage to use it.
 
 Tests:
 
-* Tests compile into a single binary `zhttptest` that is run on a command line to run the tests.
+* Tests compile into a single binary `zproxytest` that is run on a command line to run the tests.
 * In addition, we support multiple functional tests.
 
 **Functional tests requirements**
@@ -216,9 +216,9 @@ Tests:
 
 **Functional tests arguments**
 
-- -http_cfg_file : Path to the config file used by zhttp in the HTTP tests. Default: test_http.cfg
+- -http_cfg_file : Path to the config file used by zproxy in the HTTP tests. Default: test_http.cfg
 
-- -https_cfg_file : Path to the config file used by zhttp in the HTTPS tests. Default: test_https.cfg
+- -https_cfg_file : Path to the config file used by zproxy in the HTTPS tests. Default: test_https.cfg
 
 - -ip : Destination IP/URL used to do the requests. Default: localhost
 
@@ -228,34 +228,34 @@ Tests:
 
 - -post_file : Path to the custom file to be send in the POST request tests. Default: data/test_text.txt
 
-- -binary : Path to the zhttp binary. Default: ../build/bin/zhttp
+- -binary : Path to the zproxy binary. Default: ../build/bin/zproxy
 
 - -https : If this flag is set the HTTPS tests are going to be executed.
 
-- -no_zhttp : If this flag is set, zhttp is not going to be launched.
+- -no_zproxy : If this flag is set, zproxy is not going to be launched.
 
-- -control : Path to the control socket used to test de API. Default: /tmp/zhttp.socket
+- -control : Path to the control socket used to test de API. Default: /tmp/zproxy.socket
 
 **Usage examples**
 
 ```bash
-# Runs the functional tests over the backend without starting zhttp.
-zhttp_functional_tests -no_zhttp
+# Runs the functional tests over the backend without starting zproxy.
+zproxy_functional_tests -no_zproxy
 
 # Runs the functional tests enabling HTTPS tests
-zhttp_functional_tests -https
+zproxy_functional_tests -https
 
-# Runs the functional tests over the backend without starting zhttp, setting a different ip and port.
-zhttp_functional_tests -https -no_zhttp -ip 192.168.100.20 -port 8080 -port_https 8443
+# Runs the functional tests over the backend without starting zproxy, setting a different ip and port.
+zproxy_functional_tests -https -no_zproxy -ip 192.168.100.20 -port 8080 -port_https 8443
 ```
 
 #### Contributing
 
 **Pull Requests are WELCOME!** Please submit any fixes or improvements:
 
-* [Project Github Home](https://github.com/abdessamad-zevenet/zhttp)
-* [Submit Issues](https://github.com/abdessamad-zevenet/zhttp/issues)
-* [Pull Requests](https://github.com/abdessamad-zevenet/zhttp/pulls)
+* [Project Github Home](https://github.com/abdessamad-zevenet/zproxy)
+* [Submit Issues](https://github.com/abdessamad-zevenet/zproxy/issues)
+* [Pull Requests](https://github.com/abdessamad-zevenet/zproxy/pulls)
 
 ### License
 

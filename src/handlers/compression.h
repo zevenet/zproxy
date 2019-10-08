@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -20,9 +20,9 @@
  */
 #pragma once
 
-#include "../http/http_stream.h"
-#include "../service/Service.h"
 #include "../http/http.h"
+#include "../http/http_stream.h"
+#include "../service/service.h"
 #include "../util/zlib_util.h"
 
 class Compression {

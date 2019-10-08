@@ -1,12 +1,29 @@
-//
-// Created by abdess on 12/26/18.
-//
+/*
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #pragma once
 
-#include <atomic>
-#include "../debug/Debug.h"
+#include "../debug/logger.h"
 #include "epoll_manager.h"
+#include <atomic>
 namespace events {
 class Descriptor {
   events::EpollManager *event_manager_{nullptr};
@@ -23,9 +40,7 @@ class Descriptor {
     if (event_manager_ != nullptr && fd_ > 0) event_manager_->deleteFd(fd_);
   }
 
-  inline void setEventManager(events::EpollManager &event_manager) {
-    event_manager_ = &event_manager;
-  }
+  inline void setEventManager(events::EpollManager &event_manager) { event_manager_ = &event_manager; }
   inline bool isCancelled() const { return cancelled; }
   inline bool disableEvents() {
     current_event = events::EVENT_TYPE::NONE;
@@ -34,8 +49,7 @@ class Descriptor {
     return false;
   }
 
-  inline bool enableEvents(events::EpollManager *epoll_manager,
-                           events::EVENT_TYPE event_type,
+  inline bool enableEvents(events::EpollManager *epoll_manager, events::EVENT_TYPE event_type,
                            events::EVENT_GROUP event_group) {
     if (epoll_manager != nullptr && fd_ > 0) {
       cancelled = false;
@@ -47,8 +61,7 @@ class Descriptor {
     return false;
   }
 
-  inline bool setEvents(events::EVENT_TYPE event_type,
-                        events::EVENT_GROUP event_group) {
+  inline bool setEvents(events::EVENT_TYPE event_type, events::EVENT_GROUP event_group) {
     if (event_manager_ != nullptr && fd_ > 0) {
       cancelled = false;
       current_event = event_type;
@@ -70,31 +83,23 @@ class Descriptor {
   inline bool enableReadEvent(bool one_shot = false) {
     if (cancelled) return false;
     if (event_manager_ != nullptr &&
-        current_event != (!one_shot ? events::EVENT_TYPE::READ
-                                    : events::EVENT_TYPE::READ_ONESHOT) &&
-        fd_ > 0) {
-      current_event = !one_shot ? events::EVENT_TYPE::READ
-                                : events::EVENT_TYPE::READ_ONESHOT;
+        current_event != (!one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT) && fd_ > 0) {
+      current_event = !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT;
 
-      return event_manager_->updateFd(fd_,
-                                      !one_shot
-                                          ? events::EVENT_TYPE::READ
-                                          : events::EVENT_TYPE::READ_ONESHOT,
+      return event_manager_->updateFd(fd_, !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT,
                                       event_group_);
     }
-    //    Debug::LogInfo("InReadModeAlready", LOG_REMOVE);
+    //    Logger::LogInfo("InReadModeAlready", LOG_REMOVE);
     return false;
   }
 
   inline bool enableWriteEvent() {
     if (cancelled) return false;
-    if (event_manager_ != nullptr && current_event != EVENT_TYPE::WRITE &&
-        fd_ > 0) {
+    if (event_manager_ != nullptr && current_event != EVENT_TYPE::WRITE && fd_ > 0) {
       current_event = events::EVENT_TYPE::WRITE;
-      return event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE,
-                                      event_group_);
+      return event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE, event_group_);
     }
-    //    Debug::LogInfo("InWriteModeAlready", LOG_REMOVE);
+    //    Logger::LogInfo("InWriteModeAlready", LOG_REMOVE);
     return false;
   }
 
@@ -102,7 +107,7 @@ class Descriptor {
 
   inline void setFileDescriptor(int fd) {
     if (fd < 0) {
-      Debug::LogInfo("File descriptor not valid", LOG_REMOVE);
+      Logger::LogInfo("File descriptor not valid", LOG_REMOVE);
       return;
     }
 

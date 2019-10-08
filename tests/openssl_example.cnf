@@ -1,4 +1,4 @@
-zhttp = test_sect
+zproxy = test_sect
 
 [ test_sect ]
 ssl_conf = start_point

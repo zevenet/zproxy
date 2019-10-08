@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -20,13 +20,13 @@
  */
 
 #include "connection.h"
-#include <sys/un.h>
-#include "../util/Network.h"
 #include "../util/common.h"
+#include "../util/network.h"
+#include <sys/un.h>
 
 #define PRINT_BUFFER_SIZE \
   Debug::LogInfo("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
-//  Debug::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)),
+//  Logger::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)),
 //  LOG_DEBUG);
 
 Connection::Connection()
@@ -81,7 +81,7 @@ IO::IO_RESULT Connection::read() {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
         std::string error = "read() failed  ";
         error += std::strerror(errno);
-        Debug::LogInfo(error, LOG_NOTICE);
+        Logger::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -97,7 +97,7 @@ IO::IO_RESULT Connection::read() {
       // PRINT_BUFFER_SIZE
       if ((MAX_DATA_SIZE - buffer_size) == 0) {
         //        PRINT_BUFFER_SIZE
-        //        Debug::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
+        //        Logger::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
         return IO::IO_RESULT::FULL_BUFFER;
       } else
         result = IO::IO_RESULT::SUCCESS;
@@ -161,24 +161,24 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     }
   }
-  Debug::logmsg(LOG_REMOVE, "ZERO READ write %d  buffer %d", splice_pipe.bytes,
+  Logger::logmsg(LOG_REMOVE, "ZERO READ write %d  buffer %d", splice_pipe.bytes,
                 buffer_size);
   return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
-  //  Debug::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes),
+  //  Logger::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes),
   //  LOG_DEBUG);
 
-  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
+  Logger::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
                 splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
     if (bytes > BUFSZ) bytes = BUFSZ;
     auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr, bytes,
                       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-    //    Debug::LogInfo("ZERO_BUFFER::SIZE = " +
+    //    Logger::LogInfo("ZERO_BUFFER::SIZE = " +
     //    std::to_string(splice_pipe.bytes), LOG_DEBUG);
     if (n == 0) break;
     if (n < 0) {
@@ -197,7 +197,7 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 #else
 IO::IO_RESULT Connection::zeroRead() {
   IO::IO_RESULT result = IO::IO_RESULT::ZERO_DATA;
-  //  Debug::logmsg(LOG_REMOVE, "ZERO READ IN %d  buffer %d", splice_pipe.bytes,
+  //  Logger::logmsg(LOG_REMOVE, "ZERO READ IN %d  buffer %d", splice_pipe.bytes,
   //  buffer_size);
   for (;;) {
     if (splice_pipe.bytes >= BUFSZ) {
@@ -217,14 +217,14 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     }
   }
-  //  Debug::logmsg(LOG_REMOVE, "ZERO READ OUT %d  buffer %d",
+  //  Logger::logmsg(LOG_REMOVE, "ZERO READ OUT %d  buffer %d",
   //  splice_pipe.bytes, buffer_size);
   return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
-  //  Debug::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
+  //  Logger::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
   //  splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   int sent = 0;
   while (splice_pipe.bytes > 0) {
@@ -260,7 +260,7 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent) {
           errno != ECONNRESET*/) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::LogInfo(error, LOG_NOTICE);
+        Logger::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -292,7 +292,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 
   auto result = writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size,
                            iovec_written, nwritten);
-  //  Debug::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d
+  //  Logger::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d
   //  IO RESULT: %s\n", http_data.iov.size(),
   //                iovec_written, nwritten,
   //                IO::getResultString(result).data());
@@ -302,12 +302,12 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   http_data.message_length = 0;
   http_data.setHeaderSent(true);
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
-  Debug::logmsg(LOG_REMOVE, "\tOut buffer size: %d", buffer_size);
-  Debug::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
-  Debug::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
-  Debug::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
-  Debug::logmsg(LOG_REMOVE, "\tmessage bytes left: %d",
+  Logger::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
+  Logger::logmsg(LOG_REMOVE, "\tOut buffer size: %d", buffer_size);
+  Logger::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
+  Logger::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
+  Logger::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
+  Logger::logmsg(LOG_REMOVE, "\tmessage bytes left: %d",
                 http_data.message_bytes_left);
 #endif
   //    PRINT_BUFFER_SIZE
@@ -325,7 +325,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
   do {
     count = ::writev(target_fd, &(iov[iovec_written]),
                      static_cast<int>(nvec - iovec_written));
-    //    Debug::logmsg(LOG_REMOVE,
+    //    Logger::logmsg(LOG_REMOVE,
     //                  "writev() count %d errno: %d = %s iovecwritten %d",
     //                  count,
     //                  errno,
@@ -337,7 +337,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
       } else {
         std::string error = "writev() failed  ";
         error += std::strerror(errno);
-        Debug::LogInfo(error, LOG_NOTICE);
+        Logger::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       }
       break;
@@ -350,7 +350,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
           iov[it].iov_len = 0;
           iovec_written++;
         } else {
-          Debug::logmsg(LOG_REMOVE,
+          Logger::logmsg(LOG_REMOVE,
                         "Recalculating data ... remaining %d niovec_written: "
                         "%d iov size %d",
                         remaining, iovec_written, iovec_size);
@@ -367,7 +367,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
       else
         result = IO::IO_RESULT::SUCCESS;
 #if PRINT_DEBUG_FLOW_BUFFERS
-      Debug::logmsg(
+      Logger::logmsg(
           LOG_REMOVE,
           "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
           nvec, iovec_written, nwritten, IO::getResultString(result).data());
@@ -397,7 +397,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {
           errno != ECONNRESET*/) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::LogInfo(error, LOG_NOTICE);
+        Logger::LogInfo(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -426,7 +426,7 @@ void Connection::closeConnection() {
 IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
   int result = -1;
   if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
-    Debug::logmsg(LOG_WARNING, "socket() failed ");
+    Logger::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
   if (LIKELY(async)) Network::setSocketNonBlocking(fd_);
@@ -435,7 +435,7 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
       return IO::IO_OP::OP_IN_PROGRESS;
 
     } else {
-      Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
+      Logger::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
                     strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
@@ -448,7 +448,7 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
                                 int timeout) {
   int result = -1;
   if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-    Debug::logmsg(LOG_WARNING, "socket() failed ");
+    Logger::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
   Network::setTcpNoDelayOption(fd_);
@@ -465,7 +465,7 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
     } else {
-      Debug::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
+      Logger::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
                     strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
@@ -490,7 +490,7 @@ int Connection::doAccept() {
     if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
       return 0;  // We have processed all incoming connections.
     }
-    Debug::logmsg(LOG_NOTICE, "accept() failed  %s", std::strerror(errno));
+    Logger::logmsg(LOG_NOTICE, "accept() failed  %s", std::strerror(errno));
     // break;
     return -1;
   }
@@ -504,7 +504,7 @@ int Connection::doAccept() {
     return new_fd;
   } else {
     ::close(new_fd);
-    Debug::logmsg(LOG_WARNING, "HTTP connection prematurely closed by peer");
+    Logger::logmsg(LOG_WARNING, "HTTP connection prematurely closed by peer");
   }
   return -1;
 }
@@ -519,7 +519,7 @@ bool Connection::listen(addrinfo &address_) {
   /* prepare the socket */
   if ((fd_ = socket(this->address->ai_family == AF_INET ? PF_INET : PF_INET6,
                     SOCK_STREAM, 0)) < 0) {
-    Debug::logmsg(LOG_ERR, "socket () failed %s s - aborted", strerror(errno));
+    Logger::logmsg(LOG_ERR, "socket () failed %s s - aborted", strerror(errno));
     return false;
   }
 
@@ -529,7 +529,7 @@ bool Connection::listen(addrinfo &address_) {
 
   if (::bind(fd_, address->ai_addr,
              static_cast<socklen_t>(address->ai_addrlen)) < 0) {
-    Debug::logmsg(LOG_ERR, "bind () failed %s s - aborted", strerror(errno));
+    Logger::logmsg(LOG_ERR, "bind () failed %s s - aborted", strerror(errno));
     ::close(fd_);
     fd_ = -1;
     return false;
@@ -549,12 +549,12 @@ bool Connection::listen(const std::string &af_unix_name) {
   ::strncpy(ctrl.sun_path, af_unix_name.c_str(), sizeof(ctrl.sun_path) - 1);
 
   if ((fd_ = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-    Debug::logmsg(LOG_ERR, "Control \"%s\" create: %s", ctrl.sun_path,
+    Logger::logmsg(LOG_ERR, "Control \"%s\" create: %s", ctrl.sun_path,
                   strerror(errno));
     return false;
   }
   if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) < 0) {
-    Debug::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
+    Logger::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
                   strerror(errno));
     return false;
   }

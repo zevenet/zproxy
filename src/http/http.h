@@ -1,6 +1,6 @@
 /*
- *    Zevenet zProxy Load Balancer Software License
- *    This file is part of the Zevenet zProxy Load Balancer software package.
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
  *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
  *
@@ -385,7 +385,7 @@ static inline std::string getHttpResponse(Code status_code, const std::string &s
     body += std::to_string(static_cast<int>(status_code));
     body += " " + code_error_string;
     body +=
-        "</h1></center>\n<hr><center>zhttp /0.1 </center>\n"
+        "</h1></center>\n<hr><center>zproxy /0.1 </center>\n"
         "</body>\n</html>";
   } else {
     body += content_message;
@@ -397,7 +397,7 @@ static inline std::string getHttpResponse(Code status_code, const std::string &s
   err_response += "\r\nContent-Type: text/html\r\nContent-Length: ";
   err_response += std::to_string(body.length() + 1);
   err_response += "\r\nExpires: now\r\nPragma: no-cache\r\nServer: ";
-  err_response += "zhttp/" ZHTTP_VERSION "\r\nCache-control: no-cache,no-store\r\n\r\n";
+  err_response += "zproxy/" ZPROXY_VERSION "\r\nCache-control: no-cache,no-store\r\n\r\n";
   err_response += body;
   err_response += "\n";
   return err_response;

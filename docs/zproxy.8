@@ -1,0 +1,1522 @@
+.TH zproxy "8" "Jan 2010" "zproxy" "System Manager's Manual"
+.SH NAME
+zproxy \- HTTP/HTTPS reverse-proxy and load-balancer
+.SH SYNOPSIS
+.TP
+.B zproxy
+[\fI-v\fR]
+[\fI-c\fR]
+[\fI-V\fR]
+[\fI-f config_file\fR]
+[\fI-p pid_file\fR]
+.SH DESCRIPTION
+.PP
+.B zproxy
+is a reverse-proxy load balancing server inspired in the directives of Pound Load Balancer 
+but totally re-implemented in C++ with the high performance idea as a goal. It accepts requests from HTTP/HTTPS
+clients and distributes them to one or more Web servers. The HTTPS requests are
+decrypted and passed to the back-ends as plain HTTP.
+.PP
+If more than one back-end server is defined,
+.B zproxy
+chooses one of them randomly, based on defined algorithms. By default,
+.B zproxy
+keeps track of associations between clients and back-end servers (sessions).
+.SH GENERAL PRINCIPLES
+.P
+In general
+.B zproxy
+needs three types of objects defined in order to function:
+.IR listeners ,
+.I services
+and
+.IR back-ends .
+.TP
+\fBListeners\fR
+A
+.I listener
+is a definition of how
+.B zproxy
+receives requests from the clients (browsers). Two types of
+.I listeners
+may be defined: regular HTTP
+.I listeners
+and HTTPS (HTTP over SSL/TLS)
+.IR listeners .
+At the very least a
+.I listener
+must define the address and port to listen on, with additional
+requirements for HTTPS
+.IR listeners .
+.TP
+\fBServices\fR
+A
+.I service
+is the definition of how the requests are answered. The
+.I services
+may be defined within a
+.I listener
+or at the top level (global). When a request is received
+.B zproxy
+attempts to match them to each
+.I service
+in turn, starting with the
+.I services
+defined in the
+.I listener
+itself and, if needed, continuing with the
+.I services
+defined at the global level. The
+.I services
+may define their own conditions as to which requests they can answer:
+typically this involves certain URLs (images only, or a certain path)
+or specific headers (such as the Host header). A
+.I service
+may also define a
+.I session
+mechanism: if defined future requests from a given client will always
+be answered by the same
+.IR back-end .
+.TP
+\fBBack-ends\fR
+The
+.I back-ends
+are the actual servers for the content requested. By itself,
+.B zproxy
+supplies no responses - all contents must be received from a "real"
+web server. The
+.I back-end
+defines how the server should be contacted.
+.IP
+Three types of
+.I back-ends
+may be defined: a "regular"
+.I back-end
+which receives requests and returns responses, a "redirect"
+.I back-end
+in which case
+.B zproxy
+will respond with a redirect response, without accessing any
+.I back-end
+at all, or an "emergency"
+.I back-end
+which will be used only if all other backends are "dead".
+.IP
+Multiple
+.I back-ends
+may be defined within a
+.IR service ,
+in which case
+.B zproxy
+will load-balance between the available
+.IR back-ends .
+.IP
+If a
+.I back-end
+fails to respond it will be considered "dead", in which case
+.B zproxy
+will stop sending requests to it. Dead
+.I back-ends
+are periodically checked for availability, and once they respond again they
+are "resurected" and requests are sent again their way. If no
+.I back-ends
+are available (none were defined, or all are "dead") then
+.B zproxy
+will reply with "503 Service Unavailable", without checking additional
+.IR services .
+.IP
+The connection between
+.B zproxy
+and the
+.I back-ends
+is always via HTTP(S), regardless of the actual protocol used between
+.B zproxy
+and the client.
+.SH OPTIONS
+Options available (see also below for configuration file options):
+.TP
+\fB\-v\fR
+Verbose mode: error messages will be sent to stdout even if
+.B zproxy
+was configured to log to syslog. This applies only to startup messages, before
+.B zproxy
+puts itself in the background. Normal operational messages will still go to syslog.
+.TP
+\fB\-V\fR
+Print version:
+.B zproxy
+will exit immediately after printing the current version and configuration flags.
+.TP
+\fB\-c\fR
+Check only:
+.B zproxy
+will exit immediately after parsing the configuration file. This may be used for
+running a quick syntax check before actually activating a server.
+.TP
+\fB\-f\fR config_file
+Location of the configuration file (see below for a full description of the format).
+Default:
+.I /usr/local/etc/zproxy.cfg
+.TP
+\fB\-p\fR pid_file
+Location of the pid file.
+.B zproxy
+will write its own pid into this file. Normally this is used for shell
+scripts that control starting and stopping of the daemon.
+Default:
+.I /var/run/zproxy.pid
+.PP
+In general, any number of back-end servers may be specified. Use the priority to
+affect the load distribution among unequal-performance servers.
+.SH "CONFIGURATION FILE"
+Each line in the file is considered a complete configuration directive. The directives
+are case-insensitive. Empty lines or lines starting in '#' are ignored. There are three
+types of directives:
+.B global
+directives (they affect the settings for the entire program instance),
+.B listener
+directives (they define which requests
+.B zproxy
+will listen for), and
+.B service
+directives (they affect only a specific group of requests).
+.SH "GLOBAL DIRECTIVES"
+Global directives may appear anywhere within the configuration file, though it is
+customary for them to be at the start. They may appear in any order.
+.TP
+\fBUser\fR "user_name"
+Specify the user
+.B zproxy
+will run as (must be defined in \fI/etc/passwd\fR).
+.TP
+\fBGroup\fR "group_name"
+Specify the group
+.B zproxy
+will run as (must be defined in \fI/etc/group\fR).
+.TP
+\fBName\fR SortName
+Specify a Sort name without blank spaces for the Process, this information will shown in logs
+.TP
+\fBRootJail\fR "directory_path_and_name"
+Specify the directory that
+.B zproxy
+will chroot to at runtime. Please note that OpenSSL requires access to /dev/urandom,
+so make sure you create a device by that name, accessible from the root jail
+directory.
+.B zproxy
+may also require access to
+.I /dev/syslog
+or similar.
+.TP
+\fBDaemon\fR 0|1
+Have
+.B zproxy
+run in the foreground (if 0) or as a daemon (if 1). By default
+.B zproxy
+runs as a daemon (detaches itself from the controlling terminal and
+puts itself in the background). By specifying this option you can force
+.B zproxy
+to work like a regular process. Useful for debugging or if you want to
+use something like \fIdaemontools\fR.
+.TP
+\fBThreads\fR nnn
+How many Thread workers
+.B zproxy
+should use, (default: automatic). Default to system concurrency level see nproc command.
+.TP
+\fBLogFacility\fR value
+Specify the log facility to use.
+.I value
+(default: daemon) must be one of the symbolic facility names defined in
+\fIsyslog.h\fR. This facility shall be used for logging. Using a - for
+the facility name causes
+.B zproxy
+to log to stdout/stderr.
+.TP
+\fBDHParams\fR "path/to/dhparams.pem"
+Use the supplied dhparams pem file for DH key exchange for non-export-controlled
+negotiations.  Generate such a file with \fBopenssl dhparam\fR.
+This can be used to do 2048bit DHE.
+.TP
+\fBLogLevel\fR value
+Specify the logging level following the syslog scheme, 0 for no logging,
+1 (default) for regular information about the
+.I Service
+and
+.I BackEnd
+used).
+This value can be overridden for specific listeners.
+.TP
+\fBIgnoreCase\fR 0|1
+Ignore case when matching URLs (default: 0). This value can be
+overridden for specific services.
+.TP
+\fBIgnore100continue\fR 0|1
+Ignore Header Expect: 100-continue (default: 1, Ignored). 
+If 0 zproxy manages Expect: 100-continue headers.
+.TP
+\fBRoutingPolicy\fR ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
+Specify the routing policy. All the algorithms are weighted with all the
+weights set in each backend.
+
+    \fBROUND_ROBIN\fR use the round robin algorithm as a routing policy (used by default).
+
+    \fBLEAST_CONNECTIONS\fR select the backend with least connections established
+    using as a proportion the weights set.
+
+    \fBRESPONSE_TIME\fR select the backend with the lowest response time using
+    as a proportion the weights set.
+
+    \fBPENDING_CONNECTIONS\fR select the backend with least pending connections
+    using as a proportion the weights set.
+.TP
+\fBPinnedConnection\fR  0|1
+Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1,
+.B zproxy
+directly forwards all data without parsing or editing.
+.TP
+\fBCompressionAlgorithm\fR gzip|deflate
+Specify the compression algorithm to use. If the client supports it and the
+response from the backend is not already compressed, zproxy applies the
+compression.
+.TP
+\fBAlive\fR value
+Specify how often
+.B zproxy
+will check for resurected back-end hosts (default: 30 seconds). In
+general, it is a good idea to set this as low as possible - it
+will find resurected hosts faster. However, if you set it too
+low it will consume resources - so beware.
+.TP
+\fBClient\fR value
+Specify for how long
+.B zproxy
+will wait for a client request (default: 10 seconds). After this
+long has passed without the client sending any data
+.B zproxy
+will close the connection. Set it higher if your clients
+time-out on a slow network or over-loaded server, lower if you
+start getting DOS attacks or run into problems with IE clients.
+This value can be overridden for specific listeners.
+.TP
+\fBTimeOut\fR value
+How long should
+.B zproxy
+wait for a response from the back-end (in seconds). Default: 15 seconds.
+This value can be overridden for specific back-ends.
+.TP
+\fBConnTO\fR value
+How long should
+.B zproxy
+wait for a connection to the back-end (in seconds). Default: the
+.B TimeOut
+value. This value can be overridden for specific back-ends.
+.TP
+\fBCacheRamSize\fR value
+The maximum size (in bytes by default) that the cache will use from RAM. It is allowed to
+us some byte modifiers as k, K, m, M, g and G, pay attention not to set higher values than
+the available RAM free. 
+.TP
+\fBCacheRamPath\fR "path"
+Indicate the path to an existing directory to use as the root point where 
+the RAM cache storage will be mounted using ramfs filesystem.
+.TP
+\fBCacheDiskPath\fR "path"
+Path to an existing directory which will be used as the root point for the 
+on disk cache storage.
+.TP
+\fBCacheThreshold\fR value
+Percentage of the total size that the cache will use to determine whether 
+an entry should go to ram or to disk.
+.TP
+\fBWSTimeOut\fR value
+How long should
+.B zproxy
+wait for data from either back-end or client in a connection upgraded to
+a WebSocket (in seconds). Default: 600 seconds.
+This value can be overridden for specific back-ends.
+.TP
+\fBGrace\fR value
+How long should
+.B zproxy
+continue to answer existing connections after a receiving and INT or HUP
+signal (default: 30 seconds). The configured listeners are closed
+immediately. You can bypass this behaviour by stopping
+.B zproxy
+with a TERM or QUIT signal, in which case the program exits without any
+delay.
+.TP
+\fBSSLEngine\fR "name"
+Use an OpenSSL hardware acceleration card called \fIname\fR. Available
+only if OpenSSL-engine is installed on your system.
+.TP
+\fBECDHcurve\fR "name"
+Use the named curve for elliptical curve encryption (default: prime256v1).
+.TP
+\fBControl\fR "/path/to/socket"
+Set the control socket path. If not defined
+.B zproxy
+does not listen for any commands. The commands may be issued by using
+the
+.I zproxyctl(8)
+program.
+.TP
+\fB ControlIP \fR   IP
+Set the control IP. If not defined
+.B zproxy
+does not listen for any commands. The commands may be issued by using
+the
+.I zproxyctl(8)
+program.
+.TP
+\fB ControlPort \fR port
+Set the control port. If not defines
+.B zproxy
+does not listen for any commands. The commands may be issued by using
+.I zproxyctl(8)
+program.
+.TP
+\fBControlUser\fR "user"
+The username to chown the Control socket to.
+.TP
+\fBControlGroup\fR "group"
+The groupname to chgrp the Control socket to.
+.TP
+\fBControlMode\fR 0660
+The mode the Control socket should use, in octal.
+.TP
+\fBInclude\fR "/path/to/file"
+Include the file as though it were part of the configuration file.
+.TP
+\fBAnonymise (not implemented)\fR
+Replace the last byte of the client address with 0 for logging purposes.
+Default: log the client address in full.
+\fBIncludeDir\fR "/path/"
+Looks for files with .conf or .cfg extensions in "path", and includes all files, in sorted
+order, inline in the configuration as if it were part of the configuration file.
+This directive can be used in any block... but the result must be syntactically correct.
+.TP
+.SH "HTTP Listener"
+An HTTP listener defines an address and port that
+.B zproxy
+will listen on for HTTP requests. All configuration directives enclosed
+between
+.I ListenHTTP
+and
+.I End
+are specific to a single HTTP listener. At the very least you must specify
+and address and a port for each listener. The following directives are
+available:
+.TP
+\fBAddress\fR address
+The address that
+.B zproxy
+will listen on. This can be a numeric IP address, or a symbolic host name
+that must be resolvable at run-time.  This is a
+.B mandatory
+parameter. The address 0.0.0.0 may be used as an alias for 'all available
+addresses on this machine', but this practice is strongly discouraged, as
+it will interfere with the rewriting mechanisms (see below).
+.TP
+\fBPort\fR port
+The port number that
+.B zproxy
+will listen on.  This is a
+.B mandatory
+parameter.
+.TP
+\fBKey\fR "key"
+The key associated to this backend, if using BackendCookie in the service.
+If left blank, it'll be autogenerated from the backend address.
+.TP
+\fBxHTTP\fR value
+Defines which HTTP verbs are accepted. The possible values are:
+.IP
+.I 0
+(default) accept only standard HTTP requests (GET, POST, HEAD).
+.IP
+.I 1
+additionally allow extended HTTP requests (PUT, PATCH, DELETE).
+.IP
+.I 2
+additionally allow standard WebDAV verbs (LOCK, UNLOCK, PROPFIND,
+PROPPATCH, SEARCH, MKCOL, MOVE, COPY, OPTIONS, TRACE, MKACTIVITY,
+CHECKOUT, MERGE, REPORT).
+.IP
+.I 3
+additionally allow MS extensions WebDAV verbs (SUBSCRIBE, UNSUBSCRIBE,
+NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT).
+.IP
+.I 4
+additionally allow MS RPC extensions verbs (RPC_IN_DATA, RPC_OUT_DATA).
+.TP
+\fBClient\fR value
+Override the global
+.I Client
+time-out value.
+.TP
+\fBCheckURL\fR "pattern to match"
+Define a pattern that must be matched by each request sent to this
+listener. A request that does not match is considered to be illegal.
+By default
+.B zproxy
+accepts all requests (i.e. the pattern is ".*"), but you are free to
+limit it to something more reasonable. Please note that this applies
+only to the request path -
+.B zproxy
+will still check that the request is syntactically correct.
+.TP
+\fBErr414\fR "filename"
+A file with the text to be displayed if an Error 414 occurs.
+Default: "Request URI is too long.".
+.TP
+\fBErr500\fR "filename"
+A file with the text to be displayed if an Error 500 occurs.
+Default: "An internal server error occurred. Please try again later.".
+.TP
+\fBErr501\fR "filename"
+A file with the text to be displayed if an Error 501 occurs.
+Default: "This method may not be used.".
+.TP
+\fBErr503\fR "filename"
+A file with the text to be displayed if an Error 503 occurs.
+Default: "The service is not available. Please try again later.".
+.TP
+\fBErrNoSsl\fR "filename"
+A file with the text to be displayed if a user connects to a HTTPS listener with HTTP.
+Default: "Please use HTTPS.".
+
+Only valid for HTTPS listeners.
+.TP
+\fBNoSslRedirect\fR [code] "url"
+A url that the user will be redirected to if the user connects to a HTTPS listener with HTTP.
+.br
+The code here is just like the code in Redirect blocks. It defaults to 302, but could be 301 or 307.
+.br
+Only valid for HTTPS listeners.
+.br
+Example:
+.IP
+.br
+NoSslRedirect "https://thishost:port"
+.TP
+\fBMaxRequest\fR nnn
+Request maximal size. All requests will be limited to these many bytes. If
+a request contains more data than allowed an error 414 is returned. Default:
+unlimited.
+.TP
+\fBHeadRemove\fR "header pattern"
+Remove certain headers from the incoming requests. All occurences of the
+matching specified header will be removed. Please note that this filtering
+is done prior to other checks (such as \fIHeadRequire\fR or \fIHeadDeny\fR),
+so you should not try to check for these headers in later matches. Multiple
+directives may be specified in order to remove more than one header, and
+the header itself may be a regular pattern (though this should be used with
+caution).
+.TP
+\fBAddHeader\fR "header: to add"
+Add the defined header to the request passed to the back-end server. The header
+is added verbatim. Use multiple \fIAddHeader\fR directives if you need to add more
+than one header.
+.TP
+\fBRewriteLocation\fR 0|1|2
+If 1 force
+.B zproxy
+to change the Location: and Content-location: headers in responses. If they
+point to the back-end itself or to the listener (but with the wrong protocol)
+the response will be changed to show the virtual host in the request. Default:
+1 (active).  If the value is set to 2 only the back-end address is compared;
+this is useful for redirecting a request to an HTTPS listener on
+the same server as the HTTP listener.
+.TP
+\fBRewriteDestination\fR 0|1
+If 1 force
+.B zproxy
+to change the Destination: header in requests. The header is changed to point
+to the back-end itself with the correct protocol. Default: 0.
+.TP
+\fBLogLevel\fR value
+Override the global
+.I LogLevel
+value.
+.TP
+\fBService\fR [ "name" ]
+This defines a private service (see below for service definition syntax). This
+service will be used only by this listener. The service may be optionally
+named, with the name showing in the
+.I zproxyctl
+listings.
+.SH "HTTPS Listener"
+An HTTPS listener defines an address and port that
+.B zproxy
+will listen on for HTTPS requests. All configuration directives enclosed
+between
+.I ListenHTTPS
+and
+.I End
+are specific to a single HTTPS listener. At the very least you must specify
+and address, a port and a server certificate for each listener. All directives
+defined for HTTP listeners are applicable to HTTPS listeners as well. The
+following additional directives are also available:
+.TP
+\fBSSLConfigFile\fR "ssl config file"
+Specify the OpenSSL configuration file. This file must follow the OpenSSL .cnf file
+format. Here is an example of an openSSL configuration file.
+
+    zproxy = test_sect
+
+    [ test_sect ]
+    ssl_conf = start_point
+
+    [ start_point ]
+    lis = listener
+
+    [ listener ]
+    RSA.Certificate = /path/to/your/cert.pem
+.TP
+\fBSSLConfigSection\fB  section
+Specify the OpenSSL configuration section. This section must be in the OpenSSL
+configuration file specified before.
+.TP
+\fBCert\fR "certificate file"
+Specify the server certificate. The
+.I certificate file
+is the file containing the certificate, possibly a certificate chain and the signature
+for this server. This directive or the
+.I CertDir
+directive is
+.B mandatory
+for HTTPS listeners.
+.IP
+Please note that multiple
+.I Cert
+or
+.I CertDir
+directives are allowed if your OpenSSL version supports SNI. In such cases,
+the first directive is the default certificate, with additional certificates
+used if the client requests them.
+.IP
+The ordering of the directives is important: the first certificate where the CN
+matches the client request will be used, so put your directives in the
+most-specific-to-least specific order (i.e. wildcard certificates
+.B after
+host-specific certificates).
+.IP
+.I Cert
+and
+.I CertDir
+directives
+.B must
+precede all other SSL-specific directives.
+.TP
+\fBCertDir\fR "certificate directory"
+Specify the server certificate or certificates. The
+.I certificate directory
+is a directory path containing one or more certificates, possibly a certificate chain and the signature
+for this server. This directive or 
+.I Cert
+is
+.B mandatory
+for HTTPS listeners.
+.IP
+If a wildcard is specified, it will be honored.  Otherwise all files will be loaded from that directory.
+For example, "/etc/certs/*.pem" will load all files from that directory that match the file extension given.
+.IP
+Please note that multiple
+.I Cert
+or
+.I CertDir
+directives are allowed if your OpenSSL version supports SNI. In such cases,
+the first directive is the default certificate, with additional certificates
+used if the client requests them.
+.IP
+The filenames in the directory will be sorted before being loaded. The order of files
+is important: the first certificate where the CN
+matches the client request will be used, so sort your files in the
+most-specific-to-least specific order (i.e. wildcard certificates
+.B after
+host-specific certificates).
+.IP
+.I Cert
+and
+.I CertDir
+directives
+.B must
+precede all other SSL-specific directives.
+.TP
+\fBClientCert\fR 0|1|2|3 depth
+Ask for the client's HTTPS certificate: 0 - don't ask (default), 1 - ask,
+2 - ask and fail if no certificate was presented, 3 - ask but do not verify.
+.I Depth
+is the depth of verification for a client certificate (up to 9). The default
+depth limit is 9, allowing for the peer certificate and additional 9 CA
+certificates that must be verified.
+.TP
+\fBDisable\fR SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2
+Disable the protocol \fBand all lower protocols as well\fR.
+This is due to a limitation in OpenSSL, which does not support disabling a single
+protocol. For example,
+.I Disable TLSv1
+would disable SSLv2, SSLv3 and TLSv1, thus allowing only TLSv1_1 and TLSv1_2.
+.TP
+\fBCiphers\fR "acceptable:cipher:list"
+This is the list of ciphers that will be accepted by the SSL connection; it is a
+string in the same format as in OpenSSL
+.I ciphers(1)
+and
+.I SSL_CTX_set_cipher_list(3).
+.TP
+\fBSSLHonorCipherOrder\fR 0|1
+If this value is 1, the server will broadcast a preference to use \fBCiphers\fR in
+the order supplied in the \fBCiphers\fR directive.  If the value is 0, the server
+will treat the Ciphers list as the list of Ciphers it will accept, but no preference
+will be indicated.  Default value is 0.
+.TP
+\fBSSLAllowClientRenegotiation\fR 0|1|2
+If this value is 0, client initiated renegotiation will be disabled.  This will
+mitigate DoS exploits based on client renegotiation, regardless of the patch status
+of clients and servers related to "Secure renegotiation".  If the value is 1, secure
+renegotiation is supported.  If the value is 2, insecure renegotiation is supported,
+with unpatched clients. \fBThis can lead to a DoS and a Man in the Middle attack!\fR
+The default value is 0.
+.TP
+\fBCAlist\fR "CAcert_file"
+Set the list of "trusted" CA's for this server. The CAcert_file is a file containing
+a sequence of CA certificates (PEM format). The names of the defined CA certificates
+will be sent to the client on connection.
+.TP
+\fBVerifyList\fR "Verify_file"
+Set the CA (Certificate Authority). The Verify_file is a file that contains the CA
+root certificates (in PEM format).
+.IP
+.IR "Please note":
+there is an important difference between the CAlist and the VerifyList. The
+CAlist tells the client (browser) which client certificates it should send. The
+VerifyList defines which CAs are actually used for the verification of the
+returned certificate.
+.TP
+\fBCRLlist\fR "CRL_file"
+Set the CRL (Certificate Revocation List) file. The CRL_file is a file that contains
+the CRLs (in PEM format).
+.TP
+\fBNoHTTPS11\fR 0|1|2
+Behave like an HTTP/1.0 server for HTTPS clients. If this value is
+0 disable the check. If the value is 1 do not allow multiple
+requests on SSL connections. If the value is 2 (default) disable multiple
+requests on SSL connections only for MSIE clients. Required
+work-around for a bug in certain versions of IE.
+.TP
+\fBSSLUncleanShutdown\fR "UserAgent Match Pattern"
+Implement a workaround for MSIE's ssl shutdown code... basically don't
+send a shutdown message because MSIE can't handle it.  zproxy, by default,
+would do this on all connections, and will do that if this directive is
+never specified.  If this directive is specified, one or many times, any
+matching useragent pattern will cause the ssl unclean shutdown behavior.
+Other user agents will follow the mod_ssl compliant and safe code.
+You likely want to set this for all MSIE browsers.
+.SH "Service"
+A service is a definition of which back-end servers
+.B zproxy
+will use to reply to incoming requests. A service may be defined as part
+of a listener (in which case it will be used only by that listener), or
+globally (which makes it available to all listeners).
+.B zproxy
+will always try the private services in the order defined, followed by
+the global ones.
+.P
+All configuration directives enclosed between
+.I Service
+and
+.I End
+are specific to a single service. The following directives are available:
+.TP
+\fBURL\fR "pattern"
+Match the incoming request. If a request fails to match than this service
+will be skipped and next one tried. If all services fail to match
+.B zproxy
+returns an error. You may define multiple
+.I URL
+conditions per service, in which case
+.B all
+patterns must match. If no
+.I URL
+was defined then all requests match. The matching is by default case-sensitive,
+but this can be overridden by specifying
+.B IgnoreCase 1
+.TP
+\fBOrURLs\fR 
+Defines a block of
+.I URL
+directives that should be merged into a single pattern, all OR'd together.
+This creates a pattern like 
+.B ((url1)|(url2)|(url3))
+ for as many 
+.I URL
+directives as are specified within the block.  End the block with an
+.I End
+directive. 
+.TP
+\fBBackendCookie\fR "cookiename" "domain" "path" age|Session
+If defined, zproxy will inject a cookie in each response with the appropriate backend's key, so that
+even if the session table is flushed or sessions are disabled, the proper backend can be chosen.
+This allows for session databases to be offloaded to the client side via browser cookies.
+See \fBKey\fR in the backend definition.  The given age will be how many seconds the cookie will
+persist for.  If set to 0, it will be a so-called "memory" cookie which will expire when the browser
+closes.  If set to "Session", it will mimick the session TTL behavior.
+.TP
+\fBIgnoreCase\fR 0|1
+Override the global
+.B IgnoreCase
+setting.
+.TP
+\fBHeadRequire\fR "pattern"
+The request must contain at least on header matching the given pattern.
+Multiple
+.I HeadRequire
+directives may be defined per service, in which case all of them must
+be satisfied.
+.TP
+\fBHeadDeny\fR "pattern"
+The request may
+.B not
+contain any header matching the given pattern.  Multiple
+.I HeadDeny
+directives may be defined per service, in which case all of them must be satisfied.
+.IP
+.IR "Please note":
+if the listener defined a
+.I HeadRemove
+directive, the matching headers are removed
+.B before
+the service matching is attempted.
+.TP
+\fBDynScale\fR 0|1
+Enable or disable dynamic rescaling for the current service. This value will
+override the value globally defined.
+.TP
+\fBDisabled\fR 0|1
+Start
+.B zproxy
+with this service disabled (1) or enabled (0). If started as disabled, the
+service can be later enabled with
+.I zproxyctl
+(8).
+.TP
+\fBCache\fR 
+Directives enclosed between a 
+.I Cache
+and the following
+.I End
+directives enable and define an HTTP1.1 Cache mechanism and its behaviour for the current Service. See below for details.
+.TP
+\fBBackEnd\fR
+Directives enclosed between a
+.I BackEnd
+and
+the following
+.I End
+directives define a single back-end server (see below for details). You may define
+multiple back-ends per service, in which case
+.B zproxy
+will attempt to load-balance between them.
+.TP
+\fB[Redirect | RedirectAppend | RedirectDynamic]\fR [code] "url"
+This is a special type of back-end. Instead of sending the request to a back-end
+.B zproxy
+replies immediately with a redirection to the given URL. You may define multiple
+redirectors in a service, as well as mixing them with regular back-ends.
+.IP
+The address the client is redirected to is determined by the command you specify.
+If you specify \fBRedirect\fR, the url is taken as an absolute host and path
+to redirect to.  If you use \fBRedirectAppend\fR, the original request path
+will be appended to the host and path you specified.  If you use \fBRedirectDynamic\fR,
+then
+.I url
+can contain RegEx replacements in the form 
+.I $1
+through
+.I $9
+which indicate expression captured from the original request path. You must have a
+\fBURL\fR directive, and the first \fBURL\fR directive for the service is the one
+used for capturing expressions.
+.IP
+Examples: if you specified
+.br
+
+.br
+    Redirect "http://abc.example"
+.br
+
+.br
+and the client requested
+.I http://xyz/a/b/c
+then it will be redirected to
+.IR "http://abc.example",
+but if you specified
+.br
+
+.br
+    RedirectAppend "http://abc.example"
+.br
+
+.br
+it will be sent to
+.IR "http://abc.example/a/b/c.
+.IP
+If you specified
+.br
+    URL "^/a(/([^/]*)(/[^/]*)"
+.br
+    RedirectDynamic "http://abc.example$2$1/index.html"
+.br
+
+.br
+it will be sent to
+.IR "http://abc.example/c/b/index.html.
+.IP
+.IR "Technical note":
+in an ideal world
+.B zproxy
+should reply with a "307 Temporary Redirect" status. Unfortunately, that is not
+yet supported by all clients (in particular HTTP 1.0 ones), so
+.B zproxy
+currently replies by default with a "302 Found" instead. You may override this
+behaviour by specifying the code to be used (301, 302 or 307).
+.TP
+\fBEmergency\fR
+Directives enclosed between an
+.I Emergency
+and
+the following
+.I End
+directives define an emergency back-end server (see below for details). You may define
+only one emergency server per service, which
+.B zproxy
+will attempt to use if all backends are down.
+.TP
+\fBSession\fR
+Directives enclosed between a
+.I Session
+and
+the following
+.I End
+directives define a session-tracking mechanism for the current service. See below
+for details.
+.SH "Cache"
+The
+.I zproxy
+HTTP1.1 Cache mechanism is based on 
+.I RFC 7234
+and uses regular expressions and HTTP headers in order to determine 
+if a HTTP response should be put in cache or not. The following directives determine how the 
+.I Cache
+ will behave:
+.TP
+\fBContent\fR "PCRE regular expression"
+Regular expression following PCRE format, determines which kind of resources will be put in 
+.I Cache
+depending on its URI.
+.TP
+\fBCacheTO\fR Seconds
+Time in seconds that the cache will use to determine whether a cache entry is staled or not. This value may change for specific entries depending on HTTP cache related headers. 
+.TP
+\fBMaxSize\fR Bytes
+The maximum number of bytes that a response can have in order to be put on the cache system. Any entry with higher Content-Length header won't be stored in the cache.
+.SH "BackEnd"
+A back-end is a definition of a single back-end server
+.B zproxy
+will use to reply to incoming requests.  All configuration directives enclosed between
+.I BackEnd
+and
+.I End
+are specific to a single service. The following directives are available:
+.TP
+\fBAddress\fR address
+The address that
+.B zproxy
+will connect to. This can be a numeric IP address, or a symbolic host name
+that must be resolvable at run-time. If the name cannot be resolved to a valid
+address,
+.B zproxy
+will assume that it represents the path for a Unix-domain socket. This is a
+.B mandatory
+parameter.
+.TP
+\fBPort\fR port
+The port number that
+.B zproxy
+will connect to. This is a
+.B mandatory
+parameter for non Unix-domain back-ends.
+.TP
+\fBHTTPS\fR
+The back-end is using HTTPS.
+.TP
+\fBCert\fR "certificate file"
+Specify the certificate that
+.B zproxy
+will use as a client. The
+.I certificate file
+is the file containing the certificate, possibly a certificate chain and the signature.
+This directive may appear only after the
+.I HTTPS
+directive.
+.TP
+\fBDisable\fR SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2
+Disable the protocol \fBand all lower protocols as well\fR.
+This is due to a limitation in OpenSSL, which does not support disabling a single
+protocol. For example,
+.I Disable TLSv1
+would disable SSLv2, SSLv3 and TLSv1, thus allowing only TLSv1_1 and TLSv1_2.
+This directive may appear only after the
+.I HTTPS
+directive.
+.TP
+\fBCiphers\fR "acceptable:cipher:list"
+This is the list of ciphers that will be accepted by the SSL connection; it is a
+string in the same format as in OpenSSL
+.I ciphers(1)
+and
+.I SSL_CTX_set_cipher_list(3).
+This directive may appear only after the
+.I HTTPS
+directive.
+.TP
+\fBPriority\fR val
+The priority of this back-end (between 1 and 9, 5 is default). Higher priority
+back-ends will be used more often than lower priority ones, so you should
+define higher priorities for more capable servers.
+.TP
+\fBTimeOut\fR val
+Override the global
+.I TimeOut
+value.
+.TP
+\fBConnTO\fR val
+Override the global
+.I ConnTO
+value.
+.TP
+\fBWSTimeOut\fR val
+Override the global
+.I WSTimeOut
+value.
+.TP
+\fBHAport\fR [ address ] port
+A port (and optional address) to be used for server function checks. See below
+the "High Availability" section for a more detailed discussion. By default
+.B zproxy
+uses the same address as the back-end server, but you may use a separate address
+if you wish. This directive applies only to non Unix-domain servers.
+.TP
+\fBDisabled\fR 0|1
+Start
+.B zproxy
+with this back-end disabled (1) or enabled (0). If started as disabled, the
+back-end can be later enabled with
+.I zproxyctl
+(8).
+.TP
+\fBNfmark\fR val
+Allow to mark all the
+.B zproxy
+back-end connections in order to track them and allow to the Kernel 
+network stack to manage them. (Decimal format)
+.TP
+.SH "Emergency"
+The emergency server will be used once all existing back-ends are "dead".
+All configuration directives enclosed between
+.I Emergency
+and
+.I End
+are specific to a single service. The following directives are available:
+.TP
+\fBAddress\fR address
+The address that
+.B zproxy
+will connect to. This can be a numeric IP address, or a symbolic host name
+that must be resolvable at run-time. If the name cannot be resolved to a valid
+address,
+.B zproxy
+will assume that it represents the path for a Unix-domain socket. This is a
+.B mandatory
+parameter.
+.TP
+\fBPort\fR port
+The port number that
+.B zproxy
+will connect to. This is a
+.B mandatory
+parameter for non Unix-domain back-ends.
+.SH "Session"
+Defines how a service deals with possible HTTP sessions.  All configuration
+directives enclosed between
+.I Session
+and
+.I End
+are specific to a single service. Once a sessions is identified,
+.B zproxy
+will attempt to send all requests within that session to the same back-end
+server.
+.PP
+The following directives are available:
+.TP
+\fBType\fR IP|BASIC|URL|PARM|COOKIE|HEADER
+What kind of sessions are we looking for: IP (the client address), BASIC (basic
+authentication), URL (a request parameter), PARM (a URI parameter), COOKIE (a
+certain cookie), or HEADER (a certain request header).
+This is a
+.B mandatory
+parameter.
+.TP
+\fBTTL\fR seconds
+How long can a session be idle (in seconds). A session that has been idle for
+longer than the specified number of seconds will be discarded.
+This is a
+.B mandatory
+parameter.
+.TP
+\fBID\fR "name"
+The session identifier. This directive is permitted only for sessions of type
+URL (the name of the request parameter we need to track), COOKIE (the name of
+the cookie) and HEADER (the header name).
+.PP
+See below for some examples.
+.SH HIGH-AVAILABILITY
+.B zproxy
+attempts to keep track of active back-end servers, and will temporarily disable
+servers that do not respond (though not necessarily dead: an overloaded server
+that
+.B zproxy
+cannot establish a connection to will be considered dead). However, every
+.I Alive
+seconds, an attempt is made to connect to the dead servers in case they have become
+active again. If this attempt succeeds, connections will be initiated to them again.
+.PP
+In general it is a good idea to set this time interval as low as is consistent with
+your resources in order to benefit from resurected servers at the earliest possible
+time. The default value of 30 seconds is probably a good choice.
+.PP
+The clients that happen upon a dead back-end server will just receive a
+.I "503 Service Unavailable"
+message.
+.PP
+The
+.I HAport
+parameter specifies an additional port (and optionally an address)
+that is used only for viability checks: if this port is specified in a
+.I BackEnd
+directive,
+.B zproxy
+will attempt periodically (every
+.I Alive
+seconds) to connect to this port. If the port does not respond the server is considered dead.
+.B "It never makes sense to have the"
+.I HAport
+.B "identical to the main back-end port:"
+this would only generate extra, unncecessary activity (CPU, network traffic) for no good
+reason whatsoever.  The
+.I HAport
+is meant for applications that offer an additional health monitoring port or for installations
+that wish to take servers off-line in a controlled manner.
+.PP
+By default the address of the
+.I HAport
+health monitor is the same as that of the
+back-end server. You may specify a different address though, for example if you have
+a monitoring program running on another host.
+
+.SH HTTPS HEADERS
+If a client browser connects to
+.B zproxy
+via HTTPS and if it presents a client certificate
+.B zproxy
+adds the following headers to the request it issues to the server:
+.TP
+\fBX-SSL-Subject\fR
+Details about the certificate owner.
+.TP
+\fBX-SSL-Issuer\fR
+Details about the certificate issuer (Certificate Authority).
+.TP
+\fBX-SSL-notBefore\fR
+Starting date of certificate validity.
+.TP
+\fBX-SSL-notAfter\fR
+Ending date of certificate validity.
+.TP
+\fBX-SSL-serial\fR
+Certificate serial number (decimal).
+.TP
+\fBX-SSL-cipher\fR
+The cipher currently in use.
+.TP
+\fBX-SSL-certificate\fR
+The full client certificate (PEM-format multi-line)
+.PP
+It is the application's responsibility to actually use these
+headers - zproxy just passes this information without checking
+it in any way (except for signature and encryption correctness).
+.SH SECURITY
+.PP
+In general,
+.B zproxy
+does not read or write to the hard-disk. The exceptions are reading the configuration file
+and (possibly) the server certificate file(s) and error message(s), which are opened read-only
+on startup, read,
+and closed, and the pid file which is opened on start-up, written to and immediately closed.
+Following this there is no disk access whatsoever, so using a RootJail directive is only
+for extra security bonus points.
+.PP
+.B zproxy
+tries to sanitise all HTTP/HTTPS requests: the request itself, the headers and the contents
+are checked for conformance to the RFC's and only valid requests are passed to the back-end
+servers. This is not absolutely fool-proof - as the recent Apache problem with chunked
+transfers demonstrated. However, given the current standards, this is the best that can
+be done - HTTP is an inherently weak protocol.
+.SH ADDITIONAL NOTES
+.B zproxy
+uses the system log for messages (default facility LOG_DAEMON). The format is very similar to
+other web servers, so that if you want to use a log tool:
+.TP
+    fgrep zproxy /var/log/messages | your_log_tool
+.PP
+.B zproxy
+deals with (and sanitizes) HTTP/1.1 requests. Thus even if you have an HTTP/1.0 server,
+a single connection to an HTTP/1.1 client is kept, while the connection to the back-end
+server is re-opened as necessary.
+.PP
+.B zproxy
+attempts to resolve the names of the hosts that appear in various requests and/or responses.
+That means it need a functioning resolver of some kind (be it /etc/hosts, DNS or something
+else).
+.SH API
+It is possible to do back-end, listener and session changes on the fly using
+the API. All the request must be sent to the zproxy unix socket (see Control directive) or to the control IP address and port
+directive (ControlIP and ControlPort). The zproxy API response is going to be a JSON format with all the information
+requested or the operation result.
+
+    \fBGet the services status of the listener with the id "0"\fR
+
+    curl http://address:port/listener/0/services
+
+    \fBGet the service information with the id "0"\fR
+
+    curl http://address:port/listener/0/service/0
+
+    \fBGet the back-end with the id "1" general status\fR
+
+    curl http://address:port/listener/0/service/0/backend/1
+    
+.SH EXAMPLES
+To translate HTTPS requests to a local HTTP server (assuming your network address
+is 123.123.123.123):
+.IP
+ListenHTTPS
+.br
+    Address 1.2.3.4
+.br
+    Port    443
+.br
+    Cert    "/etc/zproxy/server.pem"
+.br
+
+.br
+    Service
+.br
+        BackEnd
+.br
+            Address 127.0.0.1
+.br
+            Port    80
+.br
+        End
+.br
+    End
+.br
+End
+.PP
+To distribute the HTTP/HTTPS requests to three Web servers, where the third one
+is a newer and faster machine:
+.IP
+ListenHTTP
+.br
+    Address 123.123.123.123
+.br
+    Port    80
+.br
+End
+.br
+ListenHTTPS
+.br
+    Address 1.2.3.4
+.br
+    Port    443
+.br
+    Cert    "/etc/zproxy/server.pem"
+.br
+End
+.br
+
+.br
+Service
+.br
+    BackEnd
+.br
+        Address 192.168.0.10
+.br
+        Port    80
+.br
+    End
+.br
+    BackEnd
+.br
+        Address 192.168.0.11
+.br
+        Port    80
+.br
+    End
+.br
+    BackEnd
+.br
+        Address 192.168.0.12
+.br
+        Port    80
+.br
+        Priority 3
+.br
+    End
+.br
+End
+.PP
+To separate between image requests and other Web content and send all requests
+for a specific URL to a secure server:
+.IP
+ListenHTTP
+.br
+    Address 123.123.123.123
+.br
+    Port    80
+.br
+End
+.br
+
+.br
+# Images server(s)
+.br
+Service
+.br
+    URL ".*.(jpg|gif)"
+.br
+    BackEnd
+.br
+        Address 192.168.0.12
+.br
+        Port    80
+.br
+    End
+.br
+End
+.br
+
+.br
+# redirect all requests for /forbidden
+.br
+Service
+.br
+    Url         "/forbidden.*"
+.br
+    Redirect    "https://xyzzy.com"
+.br
+End
+.br
+
+.br
+# Catch-all server(s)
+.br
+Service
+.br
+    BackEnd
+.br
+        Address 192.168.0.10
+.br
+        Port    80
+.br
+    End
+.br
+    BackEnd
+.br
+        Address 192.168.0.11
+.br
+        Port    80
+.br
+    End
+.br
+    Session
+.br
+        Type    BASIC
+.br
+        TTL     300
+.br
+    End
+.br
+End
+.PP
+Here is a more complex example: assume your static images (GIF/JPEG) are to be served
+from a single back-end 192.168.0.10. In addition, 192.168.0.11 is to do the
+hosting for www.myserver.com with URL-based sessions, and 192.168.0.20 (a 1GHz PIII)
+and 192.168.0.21 (800Mhz Duron) are for all other requests (cookie-based sessions).
+The logging will be done by the back-end servers.  The configuration file may look like this:
+.IP
+User        "nobody"
+.br
+Group       "nogroup"
+.br
+RootJail    "/var/zproxy/jail"
+.br
+Alive       60
+.br
+LogLevel    0
+.br
+
+.br
+# Main listening ports
+.br
+ListenHTTP
+.br
+    Address 1.2.3.4
+.br
+    Port    80
+.br
+    Client  10
+.br
+End
+.br
+ListenHTTPS
+.br
+    Address 1.2.3.4
+.br
+    Port    443
+.br
+    Cert    "/etc/zproxy/zproxy.pem"
+.br
+    Client  20
+.br
+End
+.br
+
+.br
+# Image server
+.br
+Service
+.br
+    URL ".*.(jpg|gif)"
+.br
+    BackEnd
+.br
+        Address 192.168.0.10
+.br
+        Port    80
+.br
+    End
+.br
+End
+.br
+
+.br
+# Virtual host www.myserver.com
+.br
+Service
+.br
+    URL         ".*sessid=.*"
+.br
+    HeadRequire "Host:.*www.myserver.com.*"
+.br
+    BackEnd
+.br
+        Address 192.168.0.11
+.br
+        Port    80
+.br
+    End
+.br
+    Session
+.br
+        Type    URL
+.br
+        ID      "sessid"
+.br
+        TTL     120
+.br
+    End
+.br
+End
+.br
+
+.br
+# Everybody else
+.br
+Service
+.br
+    BackEnd
+.br
+        Address 192.168.0.20
+.br
+        Port    80
+.br
+        Priority 5
+.br
+    End
+.br
+    BackEnd
+.br
+        Address 192.168.0.21
+.br
+        Port    80
+.br
+        Priority 4
+.br
+    End
+.br
+    Session
+.br
+        Type    COOKIE
+.br
+        ID      "userid"
+.br
+        TTL     180
+.br
+    End
+.br
+End
+.br
+.SH FILES
+.TP
+\fI/var/run/zproxy.pid\fR
+this is where
+.B zproxy
+will attempt to record its process id.
+.TP
+\fI/usr/local/etc/zproxy.cfg\fR
+the default configuration file (the location may be changed when compiling - see the
+F_CONF flag in the Makefile).
+.TP
+\fI/usr/local/etc/zproxy/cert.pem\fR
+the certificate file(s) for HTTPS. The location must be defined in the configuration
+file - this is only a suggestion. The file must contain a PEM-encoded certificate,
+optionally a certificate chain from a known Certificate Authority to your server certificate
+and a PEM-encoded private key (not password protected). See
+.I OpenSSL(1)
+for details. This file should be well protected, lest someone gets your server
+private key.
+.SH AUTHOR
+Zevenet SL (info@zevenet.com).
+.SH "REPORTING BUGS"
+Report bugs to <zevenet-ce-users@zevenet.com>.
+.SH COPYRIGHT
+Copyright \(co 2019-Today Zevenet SL.
+.SH LICENSE
+zproxy is licensed under GNU/Affero terns (AGPL-3.0).
+.br
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
