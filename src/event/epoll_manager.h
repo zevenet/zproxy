@@ -69,7 +69,7 @@ enum class EVENT_TYPE : uint32_t {
   ACCEPT = (EPOLLIN | EPOLLET),
 #endif
   /** Read from the connection. */
-  READ = ((EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLET) & ~EPOLLOUT),
+  READ = ((EPOLLIN | EPOLLRDHUP | EPOLLHUP ) & ~EPOLLOUT),
   /** Read from the connection. */
   READ_ONESHOT = ((EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP) & ~EPOLLOUT),
   /** Write to the connection. */
