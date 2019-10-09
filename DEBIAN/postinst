@@ -130,6 +130,9 @@ if [ $BM_tag -eq 0 ]; then
 	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
 fi
 
+## kill previous l7 processes
+pkill -9 pound
+
 ## Restarting zevenet service
 if [ $BM_tag -eq 0 ]; then
 	echo "Zevenet will be unavailable while the service is restarting."
