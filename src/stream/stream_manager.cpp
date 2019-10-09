@@ -311,9 +311,7 @@ void StreamManager::addStream(int fd) {
   stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
                                          EVENT_GROUP::CLIENT);
 
-  // set extra header to forward to the backends
-  stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
-                            stream->client_connection.getPeerAddress(), true);
+
   if (!listener_config_.add_head.empty()) {
     stream->request.addHeader(listener_config_.add_head, true);
   }
@@ -483,7 +481,15 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
-
+      std::string x_forwarded_for_header;
+      if (!stream->request.x_forwarded_for_string.empty()) {
+        // set extra header to forward to the backends
+        x_forwarded_for_header += stream->request.x_forwarded_for_string;
+        x_forwarded_for_header += ", ";
+      }
+      x_forwarded_for_header += stream->client_connection.getPeerAddress();
+      stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,x_forwarded_for_header
+                                );
       stream->timer_fd.unset();
       deleteFd(stream->timer_fd.getFileDescriptor());
       timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;

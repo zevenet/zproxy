@@ -261,8 +261,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(
           if (header_value == "100-continue") {
             Logger::logmsg(LOG_REMOVE, "Client Expects 100 continue");
           }
-          if (listener_config_.ignore100continue)
-            request.headers[i].header_off = true;
+          request.headers[i].header_off = listener_config_.ignore100continue;
+          break;
+        }
+        case http::HTTP_HEADER_NAME::X_FORWARDED_FOR: {
+          request.x_forwarded_for_string = header_value;
+          request.headers[i].header_off = true;
           break;
         }
         default:
