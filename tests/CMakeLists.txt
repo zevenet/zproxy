@@ -31,18 +31,20 @@ add_definitions(-DGTEST_LANGUAGE_CXX11 -DGTEST_BUILD_SAMPLES=OFF -DGTEST_HAS_POS
 
 #find_package(Threads REQUIRED)
 
-SET(GOOGLETEST_DIR ${CMAKE_SOURCE_DIR}/tests/lib/gtest)
+SET(GOOGLETEST_DIR "${CMAKE_SOURCE_DIR}/tests/lib/gtest")
 
-if (EXISTS ${GOOGLETEST_DIR})
-    SET(GTestSrc ${GOOGLETEST_DIR}/googletest)
-    SET(GMockSrc ${GOOGLETEST_DIR}/googlemock)
-else ()
+if (NOT EXISTS ${GOOGLETEST_DIR})
+    #    message(FATAL_ERROR "No googletest src dir found - set GOOGLETEST_DIR to enable!")
     find_package(Git REQUIRED)
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} clone https://github.com/google/googletest ${GOOGLETEST_DIR}
-        )
-    message(FATAL_ERROR "No googletest src dir found - set GOOGLETEST_DIR to enable!")
+    message("Downloading google test library...")
+    execute_process(COMMAND ${GIT_EXECUTABLE} clone https://github.com/google/googletest ${GOOGLETEST_DIR} RESULT_VARIABLE ret)
+    if(NOT ret EQUAL "0")
+        message( FATAL_ERROR "google test repo clone failed")
+    endif()
 endif ()
+
+SET(GTestSrc ${GOOGLETEST_DIR}/googletest)
+SET(GMockSrc ${GOOGLETEST_DIR}/googlemock)
 
 include_directories(${GTestSrc} ${GTestSrc}/include ${GMockSrc} ${GMockSrc}/include)
 
