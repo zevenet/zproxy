@@ -25,7 +25,7 @@
 
 #ifdef CACHE_ENABLED
 #include <map>
-#include "../cache/CacheCommons.h"
+#include "../cache/cache_commons.h"
 
 struct CacheRequestOptions {
   bool no_store = false;

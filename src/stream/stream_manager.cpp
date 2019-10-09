@@ -24,6 +24,7 @@
 #include "../util/network.h"
 #include <cstdio>
 #include <thread>
+#include "stream_data_logger.h"
 
 #ifdef ON_FLY_COMRESSION
 #include "../handlers/compression.h"
@@ -250,7 +251,7 @@ void StreamManager::start(int thread_id_) {
   is_running = true;
   worker_id = thread_id_;
   this->worker = std::thread([this] {
-    LoggerData::resetLogData();
+    StreamDataLogger::resetLogData();
     doWork();
   });
   if (worker_id >= 0) {
@@ -301,7 +302,7 @@ void StreamManager::addStream(int fd) {
   streams_set[fd] = stream;
 
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
   stream->timer_fd.set(listener_config_.to * 1000);
   addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::TIMEOUT,
@@ -359,7 +360,7 @@ void StreamManager::onRequestEvent(int fd) {
     return;
   }
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
 #if PRINT_DEBUG_FLOW_BUFFERS
   Logger::logmsg(
@@ -722,7 +723,7 @@ void StreamManager::onResponseEvent(int fd) {
     return;
   }
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
   if (UNLIKELY(stream->client_connection.isCancelled() ||
                stream->backend_connection
                    .isCancelled())) {  // check if client is still active
@@ -976,7 +977,7 @@ void StreamManager::onResponseEvent(int fd) {
       Compression::applyCompression(service, stream);
     }
 #endif
-    LoggerData::logTransaction(*stream);
+    StreamDataLogger::logTransaction(*stream);
 #if ENABLE_QUICK_RESPONSE
     onClientWriteEvent(stream);
 #else
@@ -989,7 +990,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 
   HttpStream *stream = timers_set[fd];
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
   if (stream == nullptr) {
     Logger::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -1015,7 +1016,7 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 
   HttpStream *stream = timers_set[fd];
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
   if (stream == nullptr) {
     Logger::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -1031,7 +1032,7 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
 
   HttpStream *stream = timers_set[fd];
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
   if (stream == nullptr) {
     Logger::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -1066,7 +1067,7 @@ void StreamManager::onSignalEvent(int fd) {
 void StreamManager::onServerWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
   if (UNLIKELY(stream->backend_connection.isCancelled())) {
     clearStream(stream);
     return;
@@ -1251,7 +1252,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
 void StreamManager::onClientWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_response);
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
   if (UNLIKELY(stream->client_connection.isCancelled())) {
     clearStream(stream);
@@ -1492,7 +1493,7 @@ void StreamManager::setListenSocket(int fd) {
 void StreamManager::onClientDisconnect(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
   Logger::LogInfo("Client closed connection", LOG_DEBUG);
   clearStream(stream);
 }
@@ -1517,7 +1518,7 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
 
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
   // update log info
-  LoggerData logger(stream, listener_config_);
+  StreamDataLogger logger(stream, listener_config_);
 
   Logger::LogInfo("Backend closed connection", LOG_DEBUG);
   if (stream == nullptr) {

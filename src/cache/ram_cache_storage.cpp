@@ -86,7 +86,7 @@ st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage(
     if (errno == EEXIST)
       return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
     else {
-      Debug::logmsg(LOG_ERR, "Error :  %s", std::strerror(errno));
+      Logger::logmsg(LOG_ERR, "Error :  %s", std::strerror(errno));
       return st::STORAGE_STATUS::MKDIR_ERROR;
     }
   }
@@ -143,7 +143,7 @@ st::STORAGE_STATUS RamfsCacheStorage::putInStorage(const std::string &rel_path,
 st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage() {
   int err = umount(mount_path.data());
   if (err) {
-    Debug::logmsg(LOG_REMOVE, "Error umounting the cache path %s ",
+    Logger::logmsg(LOG_REMOVE, "Error umounting the cache path %s ",
                   mount_path.data());
     return st::STORAGE_STATUS::GENERIC_ERROR;
   }
@@ -323,7 +323,7 @@ storage_commons::STORAGE_STATUS MemcachedStorage::getFromStorage(
       free(buff);
     }
     const char *err = ::memcached_strerror(tmp_memc, rc);
-    Debug::logmsg(LOG_ERR, "The error is: %s", err);
+    Logger::logmsg(LOG_ERR, "The error is: %s", err);
     memcached_free(tmp_memc);
     return st::STORAGE_STATUS::GENERIC_ERROR;
   }

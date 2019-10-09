@@ -48,14 +48,14 @@ void Compression::applyCompression(Service *service, HttpStream *stream) {
 		case http::TRANSFER_ENCODING_TYPE::GZIP: {
 		  std::string message_compressed_gzip;
 		  if (!zlib::compress_message_gzip(message_no_compressed, message_compressed_gzip))
-			Debug::logmsg(LOG_ERR, "Error while compressing.");
+            Logger::logmsg(LOG_ERR, "Error while compressing.");
 		  strncpy(stream->response.message, message_compressed_gzip.c_str(), stream->response.message_length);
 		  break;
 		}
 		case http::TRANSFER_ENCODING_TYPE::DEFLATE: {
 		  std::string message_compressed_deflate;
 		  if (!zlib::compress_message_deflate(message_no_compressed, message_compressed_deflate))
-			Debug::logmsg(LOG_ERR, "Error while compressing.");
+            Logger::logmsg(LOG_ERR, "Error while compressing.");
 		  strncpy(stream->response.message, message_compressed_deflate.c_str(), stream->response.message_length);
 		  break;
 		}

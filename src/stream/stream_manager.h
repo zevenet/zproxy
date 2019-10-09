@@ -20,7 +20,7 @@
  */
 
 #pragma once
-#include "../config/pound_struct.h"
+#include "../config/config_data.h"
 #include "../event/epoll_manager.h"
 #include "../event/timer_fd.h"
 #include "../handlers/cache_manager.h"
@@ -312,59 +312,4 @@ public:
   bool is_https_listener;
 };
 
-struct LoggerData {
-  inline static void setLogData(HttpStream *stream,
-                                ListenerConfig &listener_config) {
-    Logger::log_info[std::this_thread::get_id()].farm_name =
-        std::string_view(listener_config.name);
-    if (stream != nullptr) {
-      auto service = stream->request.getService();
-      if (service != nullptr) {
-        Logger::log_info[std::this_thread::get_id()].service_name =
-            std::string_view(static_cast<Service *>(service)->name);
-        auto bck = stream->backend_connection.getBackend();
-        if (bck != nullptr)
-          Logger::log_info[std::this_thread::get_id()].backend_id =
-              stream->backend_connection.getBackend()->backend_id;
-      }
-    } else {
-      Logger::log_info[std::this_thread::get_id()].service_name =
-          std::string_view();
-      Logger::log_info[std::this_thread::get_id()].backend_id = -1;
-    }
-  }
 
-  LoggerData(HttpStream *stream, ListenerConfig &listener_config) {
-    setLogData(stream, listener_config);
-  }
-
-  inline static void logTransaction(HttpStream &stream) {
-    std::string agent;
-    std::string referer;
-    std::string host;
-    stream.request.getHeaderValue(http::HTTP_HEADER_NAME::REFERER, referer);
-    stream.request.getHeaderValue(http::HTTP_HEADER_NAME::USER_AGENT, agent);
-    stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host);
-    // 192.168.100.241:8080 192.168.0.186 - - "GET / HTTP/1.1" 200 11383 ""
-    // "curl/7.64.0"
-    static const std::string str_fmt =
-        "%s %s - \"%.*s \" \"%.*s\" "
-        "Content-Length: %d \"%s\" "
-        "\"%s\"";
-    Logger::logmsg(
-        LOG_INFO, str_fmt.c_str(), !host.empty() ? host.c_str() : "-",
-        stream.client_connection.getPeerAddress().c_str(),
-        stream.request.http_message_length, stream.request.http_message,
-        stream.response.http_message_length, stream.response.http_message,
-        stream.response.content_length, referer.c_str(), agent.c_str());
-  }
-
-  static void resetLogData() {
-    Logger::log_info[std::this_thread::get_id()].farm_name = std::string_view();
-    Logger::log_info[std::this_thread::get_id()].service_name =
-        std::string_view();
-    Logger::log_info[std::this_thread::get_id()].backend_id = -1;
-  }
-
-  ~LoggerData() { resetLogData(); }
-};

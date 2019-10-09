@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../config/pound_struct.h"
+#include "../config/config_data.h"
 #include "../connection/connection.h"
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
@@ -30,7 +30,7 @@
 #include "http_session_manager.h"
 #include <vector>
 #if CACHE_ENABLED
-#include "../cache/HttpCache.h"
+#include "../cache/http_cache.h"
 #endif
 using namespace json;
 

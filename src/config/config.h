@@ -33,17 +33,20 @@
 #include <fnmatch.h>
 #include <getopt.h>
 #include <malloc.h>
+#include <netdb.h>
 #include <openssl/engine.h>
+#include <openssl/lhash.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
-#include <cstdio>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <cstdio>
+#include <cstring>
+#include <mutex>
 #include <string>
-#include "pound_struct.h"
-#include "svc.h"
-#include <openssl/lhash.h>
+#include "../debug/debug.h"
+#include "config_data.h"
 
 #ifndef F_CONF
 constexpr auto F_CONF = "/usr/local/etc/zproxy.cfg";
@@ -53,20 +56,25 @@ constexpr auto F_PID = "/var/run/zproxy.pid";
 #endif
 constexpr int MAX_FIN = 100;
 constexpr int UNIX_PATH_MAX = 108;
+/*
+ * RSA ephemeral keys: how many and how often
+ */
+constexpr int N_RSA_KEYS = 11;
+#ifndef T_RSA_KEYS /* Timeout for RSA ephemeral keys generation */
+constexpr int T_RSA_KEYS = 7200;
+#endif
+static std::mutex RSA_mut;            /*Mutex for RSA keygen*/
+static RSA *RSA512_keys[N_RSA_KEYS];  /* ephemeral RSA keys */
+static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-#define general_name_string(n)                                             \
-  reinterpret_cast<unsigned char *>(strndup(                               \
-      reinterpret_cast<const char *>(ASN1_STRING_get0_data(n->d.dNSName)), \
-      ASN1_STRING_length(n->d.dNSName) + 1))
+#define general_name_string(n)                                                                                   \
+  reinterpret_cast<unsigned char *>(strndup(reinterpret_cast<const char *>(ASN1_STRING_get0_data(n->d.dNSName)), \
+                                            ASN1_STRING_length(n->d.dNSName) + 1))
 #else
-# define general_name_string(n) \
-	(unsigned char*) \
-	strndup((char*)ASN1_STRING_data(n->d.dNSName),	\
-	       ASN1_STRING_length(n->d.dNSName) + 1)
+#define general_name_string(n) \
+  (unsigned char *)strndup((char *)ASN1_STRING_data(n->d.dNSName), ASN1_STRING_length(n->d.dNSName) + 1)
 #endif
-
-
 
 class Config {
   const char *xhttp[5] = {
@@ -104,29 +112,29 @@ class Config {
    * Global variables needed by everybody
    */
 
-  std::string user,        /* user to run as */
-      group,               /* group to run as */
-      name,                /* farm name to run as */
-      root_jail,           /* directory to chroot to */
-      pid_name,            /* file to record pid in */
-      ctrl_name,           /* control socket name */
-      ctrl_ip,   /* control socket ip */
-      ctrl_user,           /* control socket username */
-      ctrl_group,          /* control socket group name */
-      engine_id; /* openssl engine id*/
+  std::string user, /* user to run as */
+      group,        /* group to run as */
+      name,         /* farm name to run as */
+      root_jail,    /* directory to chroot to */
+      pid_name,     /* file to record pid in */
+      ctrl_name,    /* control socket name */
+      ctrl_ip,      /* control socket ip */
+      ctrl_user,    /* control socket username */
+      ctrl_group,   /* control socket group name */
+      engine_id;    /* openssl engine id*/
 
   long ctrl_mode; /* octal mode of the control socket */
 
-  static int numthreads;      /* number of worker threads */
-  int anonymise,              /* anonymise client address */
-      alive_to,               /* check interval for resurrection */
-      daemonize,              /* run as daemon */
-      log_facility,           /* log facility to use */
-      print_log,              /* print log messages to stdout/stderr */
-      grace,                  /* grace period before shutdown */
-      ignore_100,             /* ignore header "Expect: 100-continue"*/
-  /* 1 Ignore header (Default)*/
-  /* 0 Manages header */
+  static int numthreads;              /* number of worker threads */
+  int anonymise,                      /* anonymise client address */
+      alive_to,                       /* check interval for resurrection */
+      daemonize,                      /* run as daemon */
+      log_facility,                   /* log facility to use */
+      print_log,                      /* print log messages to stdout/stderr */
+      grace,                          /* grace period before shutdown */
+      ignore_100,                     /* ignore header "Expect: 100-continue"*/
+                                      /* 1 Ignore header (Default)*/
+                                      /* 0 Manages header */
       ctrl_port = 0, sync_is_enabled; /*session sync enabled*/
 #ifdef CACHE_ENABLED
   long cache_s;
@@ -137,19 +145,17 @@ class Config {
   int conf_init(const std::string &name);
 
  private:
-  regex_t Empty, Comment, User, Group, Name, RootJail, Daemon, LogFacility,
-      LogLevel, Alive, SSLEngine, Control, ControlIP, ControlPort;
-  regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP,
-      Client, CheckURL;
+  regex_t Empty, Comment, User, Group, Name, RootJail, Daemon, LogFacility, LogLevel, Alive, SSLEngine, Control,
+      ControlIP, ControlPort;
+  regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP, Client, CheckURL;
   regex_t Err414, Err500, Err501, Err503, SSLConfigFile, SSLConfigSection, ErrNoSsl, NoSslRedirect, MaxRequest,
       HeadRemove, RewriteLocation, RewriteDestination, RewriteHost;
-  regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd,
-      Emergency, Priority, HAport, HAportAddr, StrictTransportSecurity;
-  regex_t Redirect, TimeOut, Session, Type, TTL, ID, DynScale,  PinnedConnection, RoutingPolicy, NfMark, CompressionAlgorithm;
-  regex_t ClientCert, AddHeader, DisableProto, SSLAllowClientRenegotiation,
-      SSLHonorCipherOrder, Ciphers;
-  regex_t CAlist, VerifyList, CRLlist, NoHTTPS11, Grace, Include, ConnTO,
-      IgnoreCase, Ignore100continue, HTTPS;
+  regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd, Emergency, Priority, HAport, HAportAddr,
+      StrictTransportSecurity;
+  regex_t Redirect, TimeOut, Session, Type, TTL, ID, DynScale, PinnedConnection, RoutingPolicy, NfMark,
+      CompressionAlgorithm;
+  regex_t ClientCert, AddHeader, DisableProto, SSLAllowClientRenegotiation, SSLHonorCipherOrder, Ciphers;
+  regex_t CAlist, VerifyList, CRLlist, NoHTTPS11, Grace, Include, ConnTO, IgnoreCase, Ignore100continue, HTTPS;
   regex_t Disabled, Threads, CNName, Anonymise, DHParams, ECDHCurve;
   regex_t ControlGroup, ControlUser, ControlMode;
   regex_t ThreadModel;
@@ -157,16 +163,16 @@ class Config {
   regex_t ForceHTTP10, SSLUncleanShutdown;
   regex_t BackendKey, BackendCookie;
 #ifdef CACHE_ENABLED
-  regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize, CacheDiskPath, CacheRamPath; /* Cache configuration regex */
+  regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize, CacheDiskPath,
+      CacheRamPath; /* Cache configuration regex */
 #endif
  public:
-
-  static regex_t HEADER,    /* Allowed header */
-      CHUNK_HEAD,    /* chunk header line */
-      RESP_SKIP,     /* responses for which we skip response */
-      RESP_IGN,      /* responses for which we ignore content */
-      LOCATION,      /* the host we are redirected to */
-      AUTHORIZATION; /* the Authorisation header */
+  static regex_t HEADER, /* Allowed header */
+      CHUNK_HEAD,        /* chunk header line */
+      RESP_SKIP,         /* responses for which we skip response */
+      RESP_IGN,          /* responses for which we ignore content */
+      LOCATION,          /* the host we are redirected to */
+      AUTHORIZATION;     /* the Authorisation header */
 
   bool compile_regex();
   void clean_regex();
@@ -194,8 +200,7 @@ class Config {
 
   void load_cert(int has_other, ListenerConfig *res, char *filename);
 
-  void load_certdir(int has_other, ListenerConfig *res,
-                    const std::string &dir_path);
+  void load_certdir(int has_other, ListenerConfig *res, const std::string &dir_path);
 
   /*
    * parse a service
@@ -217,7 +222,7 @@ class Config {
   /*
    * parse a back-end
    */
-  BackendConfig *parseBackend(const char * svc_name, const int is_emergency);
+  BackendConfig *parseBackend(const char *svc_name, const int is_emergency);
   /*
    * Parse the cache configuration
    */
@@ -233,19 +238,54 @@ class Config {
    */
   void parse_file(void);
 
+ public:
+  ServiceConfig *services;   /* global services (if any) */
+  ListenerConfig *listeners; /* all available listeners */
 
-  public:
-   ServiceConfig *services;   /* global services (if any) */
-   ListenerConfig *listeners; /* all available listeners */
+ public:
+  Config();
+  ~Config();
 
-  public:
-   Config();
-   ~Config();
+  /*
+   * prepare to parse the arguments/config file
+   */
+  void parseConfig(const int argc, char **const argv);
+  bool exportConfigToJsonFile(std::string save_path);
 
-   /*
-    * prepare to parse the arguments/config file
-    */
-   void parseConfig(const int argc, char **const argv);
-   bool exportConfigToJsonFile(std::string save_path);
+ private:
+  /*
+   * return a pre-generated RSA key
+   */
+  RSA *RSA_tmp_callback(/* not used */ SSL *ssl,
+                        /* not used */ int is_export, int keylength);
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+  static inline int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+#endif
+
+  //#include "dh512.h"//TODO::
+
+#if DH_LEN == 1024
+#include "dh1024.h"
+  static DH *DH512_params, *DH1024_params;
+
+  DH *DH_tmp_callback(/* not used */ SSL *s, /* not used */ int is_export, int keylength) {
+    return keylength == 512 ? DH512_params : DH1024_params;
+  }
+#else
+  //#include "dh2048.h" //TODO
+  static DH *DH512_params, *DH2048_params;
+
+  static DH *DH_tmp_callback(/* not used */ SSL *s,
+                      /* not used */ int is_export, int keylength);
+#endif
+
+  static DH *load_dh_params(char *file);
+
+  /*
+   * Search for a host name, return the addrinfo for it
+   */
+  int get_host(char *const name, struct addrinfo *res, int ai_family);
+
+  static void SSLINFO_callback(const SSL *ssl, int where, int rc);
 };
-

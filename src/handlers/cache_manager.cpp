@@ -96,7 +96,7 @@ int CacheManager::handleRequest(HttpStream *stream, Service *service, ListenerCo
 }
 
 void CacheManager::validateCacheResponse(HttpResponse &response) {
-  for (auto i = 0; i != response.num_headers; i++) {
+  for (auto i = 0; i != static_cast<int>(response.num_headers); i++) {
     // check header values length
 
     auto header = std::string_view(response.headers[i].name, response.headers[i].name_len);
@@ -203,7 +203,7 @@ void CacheManager::validateCacheResponse(HttpResponse &response) {
 }
 void CacheManager::validateCacheRequest(HttpRequest &request) {
   // Check for correct headers
-  for (auto i = 0; i != request.num_headers; i++) {
+  for (auto i = 0; i != static_cast<int>(request.num_headers); i++) {
     // check header values length
     auto header = std::string_view(request.headers[i].name, request.headers[i].name_len);
     auto header_value = std::string_view(request.headers[i].value, request.headers[i].value_len);
@@ -254,12 +254,12 @@ void CacheManager::validateCacheRequest(HttpRequest &request) {
                   request.c_opt.only_if_cached = true;
                   break;
                 default:
-                  Debug::logmsg(LOG_ERR, "Malformed cache-control, found response directive %s in the request",
+                  Logger::logmsg(LOG_ERR, "Malformed cache-control, found response directive %s in the request",
                                 directive.data());
                   break;
               }
             } else {
-              Debug::logmsg(LOG_ERR, "Unrecognized directive %s in the request", directive.data());
+              Logger::logmsg(LOG_ERR, "Unrecognized directive %s in the request", directive.data());
             }
           }
           break;

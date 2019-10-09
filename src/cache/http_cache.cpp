@@ -69,7 +69,7 @@ void HttpCache::handleResponse(HttpResponse &response, HttpRequest request) {
     //    cache_stats::cache_RAM_inserted_entries++;
     DEBUG_COUNTER_HIT(cache_stats__::cache_not_stored);
     this->stats.cache_not_stored++;
-    Debug::logmsg(LOG_WARNING, "Not caching response with %d bytes size",
+    Logger::logmsg(LOG_WARNING, "Not caching response with %d bytes size",
                   response.content_length + response.headers_length);
     return;
   }
@@ -92,19 +92,19 @@ void HttpCache::handleResponse(HttpResponse &response, HttpRequest request) {
 void HttpCache::updateResponse(HttpResponse response, HttpRequest request) {
   auto c_object = getCacheObject(request);
   if (response.content_length == 0) {
-    Debug::logmsg(LOG_WARNING,
+    Logger::logmsg(LOG_WARNING,
                   "Content-Length header with 0 value when trying "
                   "to update content in the cache");
   }
   if (response.content_length != c_object->content_length) {
-    Debug::logmsg(
+    Logger::logmsg(
         LOG_WARNING,
         "Content-Length in response and Content-Length cached missmatch for %s",
         request.getUrl().data());
     return;
   }
   if (response.etag.compare(c_object->etag) != 0) {
-    Debug::logmsg(LOG_WARNING,
+    Logger::logmsg(LOG_WARNING,
                   "ETag in response and ETag cached missmatch for %s",
                   request.getUrl().data());
     return;
@@ -182,14 +182,14 @@ void HttpCache::cacheInit(regex_t *pattern, const int timeout,
     // created, just return an error
     if (mkdir(ramfs_mount_point.data(), 0777) == -1) {
       if (errno != EEXIST) {
-        Debug::logmsg(LOG_ERR, "Error creating the directory %s",
+        Logger::logmsg(LOG_ERR, "Error creating the directory %s",
                       ramfs_mount_point.data());
         exit(1);
       }
     }
     if (mkdir(disk_mount_point.data(), 0777) == -1) {
       if (errno != EEXIST) {
-        Debug::logmsg(LOG_ERR, "Error creating the directory %s",
+        Logger::logmsg(LOG_ERR, "Error creating the directory %s",
                       disk_mount_point.data());
         exit(1);
       }
@@ -240,7 +240,7 @@ void HttpCache::cacheInit(regex_t *pattern, const int timeout,
         break;
 #endif
       default:
-        Debug::logmsg(LOG_ERR,
+        Logger::logmsg(LOG_ERR,
                       "ERROR Fatal, not able to determine the storage");
     }
 
@@ -308,7 +308,7 @@ void HttpCache::addResponse(HttpResponse &response, HttpRequest request) {
   }
   // If success, store in the unordered map
   if (err != st::STORAGE_STATUS::SUCCESS) {
-    Debug::logmsg(LOG_ERR, "Error trying to store the response in storage");
+    Logger::logmsg(LOG_ERR, "Error trying to store the response in storage");
     deleteEntry(request);
     return;
   }
@@ -397,7 +397,7 @@ void HttpCache::createResponseEntry(HttpResponse response,
       c_object->storage = st::STORAGE_TYPE::MEMCACHED;
       break;
     default:
-      Debug::logmsg(LOG_ERR, "Not able to decide storage, exiting");
+      Logger::logmsg(LOG_ERR, "Not able to decide storage, exiting");
       exit(-1);
   }
 
@@ -411,7 +411,7 @@ void HttpCache::addData(HttpResponse &response, std::string_view data,
                         const std::string &url) {
   auto c_object = getCacheObject(std::hash<std::string>()(url));
   if (c_object == nullptr) {
-    Debug::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
+    Logger::logmsg(LOG_ERR, "Incoming data for a cache entry not stored yet");
     return;
   }
   if (response.c_object == nullptr) return;
@@ -440,7 +440,7 @@ void HttpCache::addData(HttpResponse &response, std::string_view data,
       return;
   }
   if (err != storage_commons::STORAGE_STATUS::SUCCESS) {
-    Debug::logmsg(LOG_WARNING,
+    Logger::logmsg(LOG_WARNING,
                   "There was an unexpected error result while appending data "
                   "to the cache content %s",
                   url.data());
@@ -560,7 +560,7 @@ int HttpCache::getResponseFromCache(HttpRequest request,
   }
 
   if (ret == http_parser::PARSE_RESULT::FAILED) {
-    Debug::logmsg(LOG_ERR, "The cached response failed to be parsed");
+    Logger::logmsg(LOG_ERR, "The cached response failed to be parsed");
     return -1;
   } else if (ret == http_parser::PARSE_RESULT::SUCCESS) {
     // Add warning header
@@ -665,7 +665,7 @@ std::string HttpCache::handleCacheTask(ctl::CtlTask &task) {
       break;
     }
     default:
-      Debug::logmsg(LOG_ERR, "Not a valid cache command");
+      Logger::logmsg(LOG_ERR, "Not a valid cache command");
       return JSON_OP_RESULT::ERROR;
   }
   if (err != 0) {
@@ -727,7 +727,7 @@ void HttpCache::recoverCache(const string &svc, st::STORAGE_TYPE st_type) {
                 c_object->content_length + stored_response.headers_length;
             break;
           default:
-            Debug::logmsg(LOG_WARNING, "Wrong storage type");
+            Logger::logmsg(LOG_WARNING, "Wrong storage type");
             break;
         }
         break;
@@ -754,7 +754,7 @@ int HttpCache::deleteEntry(size_t hashed_url) {
   path.append(to_string(hashed_url));
   auto c_object = getCacheObject(hashed_url);
   if (c_object == nullptr) {
-    Debug::logmsg(LOG_WARNING,
+    Logger::logmsg(LOG_WARNING,
                   "Trying to discard a non existing entry from the cache");
     return -1;
   }
@@ -779,13 +779,13 @@ int HttpCache::deleteEntry(size_t hashed_url) {
   }
   if (err != storage_commons::STORAGE_STATUS::SUCCESS &&
       err != storage_commons::STORAGE_STATUS::NOT_FOUND) {
-    Debug::logmsg(LOG_ERR,
+    Logger::logmsg(LOG_ERR,
                   "Error trying to delete cache content from the storage");
     return -1;
   }
   free(c_object);
   if (cache.erase(hashed_url) != 1) {
-    Debug::logmsg(LOG_WARNING, "Error deleting cache entry");
+    Logger::logmsg(LOG_WARNING, "Error deleting cache entry");
     return -1;
   }
   return 0;
@@ -810,7 +810,7 @@ void HttpCache::doCacheMaintenance() {
           current_time - iter->second->date;
       //            Greater than 10 times the max age
       if (entry_age > iter->second->max_age * expiration_to) {
-        Debug::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
+        Logger::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
         deleteEntry((iter++)->first);
         break;
       }

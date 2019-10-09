@@ -22,6 +22,7 @@
 #pragma once
 
 #include <syslog.h>
+#include <unistd.h>
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
@@ -34,25 +35,22 @@
 #include <thread>
 #include <type_traits>
 #include "../util/utils.h"
-
-#ifndef __FILENAME__
-#define __FILENAME__ \
-  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#endif
-#define LOG_REMOVE LOG_DEBUG
+#include "fstream"
 
 #define MAXBUF 4096
-
-#define LogInfo(...) \
-  Logger::Log2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
-
-#define logmsg(...) \
-  Logger::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
-
+#define LOG_REMOVE LOG_DEBUG
+#if LOGGER_DEBUG
+#ifndef __FILENAME__
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif
+#define LogInfo(...) Logger::Log2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define logmsg(...) Logger::logmsg2(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 #define COUT_GREEN_COLOR(x) ("\e[1;32m" + (x) + "\e[0m")
 #define COUT_BLUE_COLOR(x) ("\e[1;32m" + (x) + "\e[0m")
-#include <unistd.h>
-#include "fstream"
+#else
+#define LogInfo(...) Logger::Log2(__VA_ARGS__)
+#define logmsg(...) Logger::logmsg2(__VA_ARGS__)
+#endif
 
 struct thread_info {
   std::string_view farm_name, service_name;
@@ -67,35 +65,18 @@ class Logger {
   static std::map<std::thread::id, thread_info> log_info;
 
   inline static void init_log_info() {
-    log_info.insert(
-        {std::this_thread::get_id(),
-         thread_info({std::string_view(), std::string_view(), -1})});
+    log_info.insert({std::this_thread::get_id(), thread_info({std::string_view(), std::string_view(), -1})});
   }
-
-  inline static void Log2(const std::string &file, const std::string &function,
-                          int line, const std::string &str,
-                          int level = LOG_NOTICE) {
-    std::string log_tag = ("");
-    std::string buffer;
+  inline static void Log2(
+#if LOGGER_DEBUG
+      const std::string &file, const std::string &function, int line,
+#endif
+      const std::string &str, int level = LOG_NOTICE) {
     if (level > log_level) {
       return;
     }
-
-    if (!log_info[std::this_thread::get_id()].farm_name.empty()) {
-      log_tag = "(";
-      log_tag += log_info[std::this_thread::get_id()].farm_name;
-      if (!log_info[std::this_thread::get_id()].service_name.empty()) {
-        log_tag += ",";
-        log_tag += log_info[std::this_thread::get_id()].service_name;
-        if (log_info[std::this_thread::get_id()].backend_id != -1) {
-          log_tag += ",";
-          log_tag +=
-              std::to_string(log_info[std::this_thread::get_id()].backend_id);
-        }
-      }
-      log_tag += ") ";
-    }
-    std::lock_guard<std::mutex> locker(log_lock);
+    std::string buffer;
+#if LOGGER_DEBUG
     if (log_level >= LOG_DEBUG) {
       buffer += "[";
       buffer += helper::ThreadHelper::getThreadName(pthread_self());
@@ -112,17 +93,36 @@ class Logger {
       //        buffer += COUT_GREEN_COLOR(log_tag);
       //        buffer += COUT_GREEN_COLOR(str);
     }
+#endif
+    if (!log_info[std::this_thread::get_id()].farm_name.empty()) {
+      buffer += "(";
+      buffer += log_info[std::this_thread::get_id()].farm_name;
+      if (!log_info[std::this_thread::get_id()].service_name.empty()) {
+        buffer += ",";
+        buffer += log_info[std::this_thread::get_id()].service_name;
+        if (log_info[std::this_thread::get_id()].backend_id != -1) {
+          buffer += ",";
+          buffer += std::to_string(log_info[std::this_thread::get_id()].backend_id);
+        }
+      }
+      buffer += ") ";
+    }
+    std::lock_guard<std::mutex> locker(log_lock);
     if (log_facility == -1) {
-      fprintf(stdout, "%s %s %s\n", buffer.data(), log_tag.data(), str.data());
+      fprintf(stdout, "%s %s\n", buffer.data(), str.data());
+      fflush(stdout);
     } else {
-      syslog(level, "%s %s %s\n", buffer.data(), log_tag.data(), str.data());
+      syslog(level, "%s %s", buffer.data(), str.data());
     }
 
     //    fflush(stdout);
   }
 
-  static void logmsg2(const std::string &file, const std::string &function,
-                      int line, const int priority, const char *fmt, ...) {
+  static void logmsg2(
+#if LOGGER_DEBUG
+      const std::string &file, const std::string &function, int line,
+#endif
+      const int priority, const char *fmt, ...) {
     if (priority > log_level) {
       return;
     }
@@ -134,14 +134,22 @@ class Logger {
 
     // Static buffer large enough?
     if (n < sizeof(buf)) {
-      Log2(file, function, line, std::string(buf, n), priority);
+      Log2(
+#if LOGGER_DEBUG
+          file, function, line,
+#endif
+          std::string(buf, n), priority);
     } else {
       // Static buffer too small
       std::string s(n + 1, 0);
       va_start(args, fmt);
       std::vsnprintf(s.data(), s.size(), fmt, args);
       va_end(args);
-      Log2(file, function, line, s, priority);
+      Log2(
+#if LOGGER_DEBUG
+          file, function, line,
+#endif
+          s, priority);
     }
   }
 };
