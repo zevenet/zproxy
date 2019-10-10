@@ -1,2 +1,16 @@
 #!/usr/bin/bash
+
+lockdir=/tmp/myscript.lock
+
+while true; do
+    if mkdir "$lockdir" &>/dev/null
+    then    # if directory doesn't exist then it is created.
+        trap 'rm -rf "$lockdir"' 0  #delete when script finishes 
+        break    # continue with script
+    else
+	logger "Cluster: System locked with another Role execution"
+    fi
+done
+
+
 /usr/local/zevenet/bin/enterprise.bin zcluster-manager "$@"
