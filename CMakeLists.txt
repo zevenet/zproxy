@@ -44,6 +44,7 @@ option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
 #configuration
 option(GENERATE_DH_2048 "Generate the DH EC 2048 parameters file" OFF)
+option(GENERATE_DH_1024 "Generate the DH EC 1024 parameters file" OFF)
 option(GENERATE_DH_512 "Generate the DH EC 512 parameters file" OFF)
 #debugging
 option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabled" OFF)
@@ -261,18 +262,37 @@ if (CACHE_SUPPORT)
     endif ()
 endif ()
 
-# TODO: In the future it would be needed to set the directory, probably with
-# the current src directory or the data directory.
 if (GENERATE_DH_512)
     message(STATUS "Generating DH EC 512 parameters file")
-    execute_process(COMMAND "openssl dhparam -5 -C -noout 512 > dh512.h")
+    execute_process(COMMAND "openssl dhparam -5 -C -noout 512 > ${MAINFOLDER}/src/config/dh512.h" RESULT_VARIABLE ret)
+    if(NOT ret EQUAL "0")
+        message( FATAL_ERROR "/usr/bin/openssl dhparam failed")
+    endif()
+
+endif()
+
+if (GENERATE_DH_1024)
+    message(STATUS "Generating DH EC 1024 parameters file")
+    execute_process(COMMAND "/usr/bin/openssl dhparam -5 -C -noout 1024 > ${MAINFOLDER}/src/config/dh1024.h" RESULT_VARIABLE ret)
+    if(NOT ret EQUAL "0")
+        message( FATAL_ERROR "/usr/bin/openssl dhparam failed")
+    endif()
 endif()
 
 if (GENERATE_DH_2048)
     message(STATUS "Generating DH EC 2048 parameters file")
-    execute_process(COMMAND "openssl" "dhparam -5 -C -noout 2048 > dh2048.h")
-    execute_process(COMMAND "openssl dhparam -5 -out dh2048.pem 2048")
+    execute_process(COMMAND "/usr/bin/openssl" "dhparam -5 -C -noout 2048 > ${MAINFOLDER}/src/config/dh2048.h" RESULT_VARIABLE ret)
+    if(NOT ret EQUAL "0")
+        message( FATAL_ERROR "/usr/bin/openssl dhparam failed")
+    endif()
+
+    execute_process(COMMAND "/usr/bin/openssl dhparam -5 -out ${MAINFOLDER}/src/config/dh2048.pem 2048" RESULT_VARIABLE ret)
+    if(NOT ret EQUAL "0")
+        message( FATAL_ERROR "/usr/bin/openssl dhparam failed")
+    endif()
+
 endif()
+add_definitions(-DDH_LEN=2048 -DC_DH_LEN="1024" -DC_T_RSA="0" -DC_CERT1L=\"\")
 
 if (BUILD_TESTS)
     add_subdirectory(tests)

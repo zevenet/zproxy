@@ -48,6 +48,13 @@
 #include "../debug/debug.h"
 #include "config_data.h"
 
+#include "dh512.h"
+#if DH_LEN == 1024
+#include "dh1024.h"
+#else
+#include "dh2048.h"
+#endif
+
 #ifndef F_CONF
 constexpr auto F_CONF = "/usr/local/etc/zproxy.cfg";
 #endif
@@ -258,28 +265,6 @@ class Config {
    */
   RSA *RSA_tmp_callback(/* not used */ SSL *ssl,
                         /* not used */ int is_export, int keylength);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000
-  static inline int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-#endif
-
-  //#include "dh512.h"//TODO::
-
-#if DH_LEN == 1024
-#include "dh1024.h"
-  static DH *DH512_params, *DH1024_params;
-
-  DH *DH_tmp_callback(/* not used */ SSL *s, /* not used */ int is_export, int keylength) {
-    return keylength == 512 ? DH512_params : DH1024_params;
-  }
-#else
-  //#include "dh2048.h" //TODO
-  static DH *DH512_params, *DH2048_params;
-
-  static DH *DH_tmp_callback(/* not used */ SSL *s,
-                      /* not used */ int is_export, int keylength);
-#endif
-
   static DH *load_dh_params(char *file);
 
   /*
@@ -288,4 +273,32 @@ class Config {
   int get_host(char *const name, struct addrinfo *res, int ai_family);
 
   static void SSLINFO_callback(const SSL *ssl, int where, int rc);
+
+  static int generate_key(RSA **ret_rsa, unsigned long bits);
+
+#if DH_LEN == 1024
+  static DH *DH512_params, *DH1024_params;
+  static DH *DH_tmp_callback(/* not used */ SSL *s,
+                             /* not used */ int is_export, int keylength) {
+    return keylength == 512 ? DH512_params : DH1024_params;
+  }
+#else
+  static DH *DH512_params, *DH2048_params;
+  static DH *DH_tmp_callback(/* not used */ SSL *s,
+                             /* not used */ int is_export, int keylength) {
+    return keylength == 512 ? DH512_params : DH2048_params;
+  }
+#endif
+
+  /*
+   * initialise DH and RSA keys
+   */
+  void initDhParams();
+
+ public:
+  /*
+   * Periodically regenerate ephemeral RSA keys
+   * runs every T_RSA_KEYS seconds
+   */
+  static void do_RSAgen(void);
 };

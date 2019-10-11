@@ -32,6 +32,13 @@
 #undef SYSLOG_NAMES
 #include "../version.h"
 
+#ifndef SSL3_ST_SR_CLNT_HELLO_A
+#define SSL3_ST_SR_CLNT_HELLO_A (0x110 | SSL_ST_ACCEPT)
+#endif
+#ifndef SSL23_ST_SR_CLNT_HELLO_A
+#define SSL23_ST_SR_CLNT_HELLO_A (0x210 | SSL_ST_ACCEPT)
+#endif
+
 int Config::numthreads = 0;
 Config::Config() {
   log_level = 1;
@@ -45,6 +52,7 @@ Config::Config() {
   print_log = 0;
   ctrl_mode = -1;
   log_facility = -1;
+  initDhParams();
 }
 
 Config::~Config() {}
@@ -1957,38 +1965,6 @@ RSA *Config::RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_exp
   return res;
 }
 
-// int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g) {
-//  /* If the fields p and g in d are NULL, the corresponding input
-//   * parameters MUST be non-NULL.  q may remain NULL.
-//   */
-//  if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL)) return 0;
-
-//  if (p != NULL) {
-//    BN_free(dh->p);
-//    dh->p = p;
-//  }
-//  if (q != NULL) {
-//    BN_free(dh->q);
-//    dh->q = q;
-//  }
-//  if (g != NULL) {
-//    BN_free(dh->g);
-//    dh->g = g;
-//  }
-
-//  if (q != NULL) {
-//    dh->length = BN_num_bits(q);
-//  }
-
-//  return 1;
-//}
-#ifndef SSL3_ST_SR_CLNT_HELLO_A
-#define SSL3_ST_SR_CLNT_HELLO_A (0x110 | SSL_ST_ACCEPT)
-#endif
-#ifndef SSL23_ST_SR_CLNT_HELLO_A
-#define SSL23_ST_SR_CLNT_HELLO_A (0x210 | SSL_ST_ACCEPT)
-#endif
-
 void Config::SSLINFO_callback(const SSL *ssl, int where, int rc) {
   RENEG_STATE *reneg_state;
 
@@ -2052,9 +2028,73 @@ DH *Config::load_dh_params(char *file) {
   return dh;
 }
 
-DH *Config::DH_tmp_callback(SSL *s, int is_export, int keylength) {
-  return keylength == 512 ? DH512_params : DH2048_params;
+DH *Config::DH512_params{nullptr};
+#if DH_LEN == 1024
+DH *Config::DH1024_params{nullptr};
+#else
+DH *Config::DH2048_params{nullptr};
+#endif
+
+int Config::generate_key(RSA **ret_rsa, unsigned long bits) {
+  int rc = 0;
+  RSA *rsa;
+
+  rsa = RSA_new();
+  if (rsa) {
+    BIGNUM *bne = BN_new();
+    if (BN_set_word(bne, RSA_F4))
+      rc = RSA_generate_key_ex(rsa, bits, bne, nullptr);
+    BN_free(bne);
+    if (rc)
+      *ret_rsa = rsa;
+    else
+      RSA_free(rsa);
+  }
+  return rc;
 }
 
-DH *Config::DH512_params{nullptr};
-DH *Config::DH2048_params{nullptr};
+void Config::do_RSAgen() {  // TODO::implement
+  int n;
+  RSA *t_RSA512_keys[N_RSA_KEYS];
+  RSA *t_RSA1024_keys[N_RSA_KEYS];
+
+  for (n = 0; n < N_RSA_KEYS; n++) {
+    /* FIXME: Error handling */
+    generate_key(&t_RSA512_keys[n], 512);
+    generate_key(&t_RSA1024_keys[n], 1024);
+  }
+  std::lock_guard<std::mutex> lock__(RSA_mut);
+  for (n = 0; n < N_RSA_KEYS; n++) {
+    RSA_free(RSA512_keys[n]);
+    RSA512_keys[n] = t_RSA512_keys[n];
+    RSA_free(RSA1024_keys[n]);
+    RSA1024_keys[n] = t_RSA1024_keys[n];
+  }
+  return;
+}
+
+void Config::initDhParams() {
+  int n;
+  /*
+   * Pre-generate ephemeral RSA keys
+   */
+  for (n = 0; n < N_RSA_KEYS; n++) {
+    if (!generate_key(&RSA512_keys[n], 512)) {
+      Logger::logmsg(LOG_WARNING, "RSA_generate(%d, 512) failed", n);
+      return;
+    }
+    if (!generate_key(&RSA1024_keys[n], 1024)) {
+      Logger::logmsg(LOG_WARNING, "RSA_generate(%d, 1024) failed", n);
+      return;
+    }
+  }
+  std::lock_guard<std::mutex> lock__(RSA_mut);
+  DH512_params = get_dh512();
+#if DH_LEN == 1024
+  DH1024_params = get_dh1024();
+#else
+  DH2048_params = get_dh2048();
+#endif
+
+  return;
+}
