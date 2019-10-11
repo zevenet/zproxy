@@ -382,6 +382,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(
                 response.transfer_encoding_type =
                     TRANSFER_ENCODING_TYPE::CHUNKED;
                 response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+#ifdef CACHE_ENABLED
                 if (stream.response.message_length > 0) {
                   size_t data_offset = 0;
                   size_t new_chunk_left = 0;
@@ -405,6 +406,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(
                     stream.response.chunk_size_left = new_chunk_left;
                   }
                 }
+#endif
               } else if (header_value[2] == 'o') {
                 response.transfer_encoding_type =
                     TRANSFER_ENCODING_TYPE::COMPRESS;

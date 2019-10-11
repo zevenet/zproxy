@@ -49,6 +49,7 @@ void http_parser::HttpData::reset_parser() {
   chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
   extra_headers.clear();
   iov_size = 0;
+  chunk_size_left = 0;
 }
 
 void http_parser::HttpData::setBuffer(char *ext_buffer,

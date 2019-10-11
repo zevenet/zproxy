@@ -549,11 +549,8 @@ void StreamManager::onRequestEvent(int fd) {
         IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
         static size_t total_request;
         total_request++;
-        if (stream->backend_connection.buffer_size ==
-            0) {  // FIXME:: should not be necessary
-          stream->response.reset_parser();
-          stream->backend_connection.buffer_size = 0;
-        }
+        stream->response.reset_parser();
+        stream->backend_connection.buffer_size = 0;
         Logger::logmsg(
             LOG_DEBUG, "%lu [%s] %.*s [%s (%d) -> %s (%d)]", total_request,
             service->name.c_str(), stream->request.http_message_length,
@@ -873,6 +870,7 @@ void StreamManager::onResponseEvent(int fd) {
   // TODO:  stream->backend_stadistics.update();
 
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
+#ifdef CACHE_ENABLED
     if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
       auto pending_chunk_bytes = http_manager::handleChunkedData(*stream);
       if (pending_chunk_bytes < 0) {  // we don't have enough data to get next
@@ -881,7 +879,6 @@ void StreamManager::onResponseEvent(int fd) {
         return;
       }
     }
-#ifdef CACHE_ENABLED
     auto service = static_cast<Service*>(stream->request.getService());
     if (service->cache_enabled) {
       CacheManager::handleResponse(stream, service);
