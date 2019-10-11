@@ -121,14 +121,18 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_TYPE::CONNECT: {
       DEBUG_COUNTER_HIT(debug__::event_connect);
       int new_fd;
+#ifndef EPOLLEXCLUSIVE
       do {
+#endif
         new_fd = listener_connection.doAccept();
         if (new_fd > 0) {
           addStream(new_fd);
         } else {
           DEBUG_COUNTER_HIT(debug__::event_connect_fail);
         }
+#ifndef EPOLLEXCLUSIVE
       } while (new_fd > 0);
+#endif
       return;
     }
 #endif
