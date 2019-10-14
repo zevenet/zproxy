@@ -749,8 +749,8 @@ sub get_http_farm_ee_struct
 		{
 			push @{ $farm_st->{ headremove } },
 			  {
-				"id"     => $rem_req_head_index++,
-				"header" => $1
+				"id"      => $rem_req_head_index++,
+				"pattern" => $1
 			  };
 		}
 		elsif ( $line =~ /^[#\s]*AddResponseHeader\s+"(.+)"/ )
@@ -765,8 +765,8 @@ sub get_http_farm_ee_struct
 		{
 			push @{ $farm_st->{ removeresponseheader } },
 			  {
-				"id"     => $rem_resp_head_index++,
-				"header" => $1
+				"id"      => $rem_resp_head_index++,
+				"pattern" => $1
 			  };
 		}
 		elsif ( $line =~ /Ignore100Continue (\d).*/ )
