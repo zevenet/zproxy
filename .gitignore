@@ -19,6 +19,7 @@
 usr/local/zevenet/node_status
 
 usr/local/zevenet/app/nftlb/
+/usr/local/zevenet/app/zhttp/
 /usr/local/zevenet/app/cherokee/
 /usr/local/zevenet/app/gdnsd/
 /usr/local/zevenet/app/pound/

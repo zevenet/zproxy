@@ -44,25 +44,7 @@ sub getHTTPFarm100Continue    # ($farm_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
-	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
-	$output = 1;    # if the directive is not in config file, it is enabled
-	my @file = <$fd>;
-	close $fd;
-
-	foreach my $line ( @file )
-	{
-		if ( $line =~ /Ignore100Continue (\d).*/ )
-		{
-			$output = $1;
-			last;
-		}
-	}
-
-	return $output;
+	return &get_http_farm_ee_struct( $farm_name )->{ ignore_100_continue };
 }
 
 =begin nd
@@ -128,25 +110,7 @@ sub getHTTPFarmLogs    # ($farm_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
-	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
-	$output = 0;       # if the directive is not in config file, it is disabled
-	my @file = <$fd>;
-	close $fd;
-
-	foreach my $line ( @file )
-	{
-		if ( $line =~ /LogLevel\s+(\d).*/ )
-		{
-			$output = $1;
-			last;
-		}
-	}
-
-	return $output;
+	return &get_http_farm_ee_struct( $farm_name )->{ logs };
 }
 
 =begin nd
@@ -191,10 +155,10 @@ sub setHTTPFarmLogs    # ($farm_name, $action)
 	return $output;
 }
 
-# Add headers
+# Add request headers
 
 =begin nd
-Function: getHTTPAddheader
+Function: getHTTPAddReqHeader
 
 	Get a list with all the http headers are added by the farm
 
@@ -206,40 +170,12 @@ Returns:
 
 =cut
 
-sub getHTTPAddheader    # ($farm_name,$service)
+sub getHTTPAddReqHeader    # ($farm_name,$service)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-	my @out = ();
-
-	require Zevenet::Farm::Core;
-
-	# look for cookie insertion policy
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw            = 0;
-	my $out           = "false";
-
-	open my $fileconf, '<', "$configdir/$farm_filename";
-
-	my $index = 0;
-	foreach my $line ( <$fileconf> )
-	{
-		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
-		elsif ( $line =~ /^[#\s]*AddHeader\s+"(.+)"/ )
-		{
-			my %hash = (
-						 "id"     => $index,
-						 "header" => $1
-			);
-			push @out, \%hash;
-			$index++;
-		}
-	}
-
-	close $fileconf;
-
-	return \@out;
+	return &get_http_farm_ee_struct( $farm_name )->{ addheader };
 }
 
 =begin nd
@@ -281,7 +217,10 @@ sub addHTTPAddheader    # ($farm_name,$service,$code)
 		elsif ( $rewrite_flag )
 		{
 			# put new headremove before than last one
-			if ( $line !~ /^[#\s]*AddHeader\s+"/ and $rewrite_flag )
+			if ( $line !~
+				 /^[#\s]*(?:AddHeader|HeadRemove|AddResponseHeader|RemoveResponseHead)\s+"/
+				 and $rewrite_flag )
+
 			{
 				# example: AddHeader "header: to add"
 				splice @fileconf, $index, 0, "\tAddHeader \"$header\"";
@@ -352,10 +291,10 @@ sub delHTTPAddheader    # ($farm_name,$service,$code)
 	return $errno;
 }
 
-# remove header
+# remove request header
 
 =begin nd
-Function: getHTTPHeadremove
+Function: getHTTPRemReqHeader
 
 	Get a list with all the http headers are added by the farm
 
@@ -367,40 +306,12 @@ Returns:
 
 =cut
 
-sub getHTTPHeadremove    # ($farm_name,$service)
+sub getHTTPRemReqHeader    # ($farm_name,$service)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
-	my @out = ();
-
-	require Zevenet::Farm::Core;
-
-	# look for cookie insertion policy
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw            = 0;
-	my $out           = "false";
-
-	open my $fileconf, '<', "$configdir/$farm_filename";
-
-	my $index = 0;
-	foreach my $line ( <$fileconf> )
-	{
-		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
-		elsif ( $line =~ /^[#\s]*HeadRemove\s+"(.+)"/ )
-		{
-			my %hash = (
-						 "id"      => $index,
-						 "pattern" => $1
-			);
-			push @out, \%hash;
-			$index++;
-		}
-	}
-
-	close $fileconf;
-
-	return \@out;
+	return &get_http_farm_ee_struct( $farm_name )->{ headremove };
 }
 
 =begin nd
@@ -441,8 +352,10 @@ sub addHTTPHeadremove    # ($farm_name,$service,$code)
 		}
 		elsif ( $rewrite_flag )
 		{
-			# put new headremove before than last one
-			if ( $line !~ /^[#\s]*(?:AddHeader|HeadRemove)\s+"/ and $rewrite_flag )
+			# put new headremove after than last one
+			if ( $line !~
+				 /^[#\s]*(?:AddHeader|HeadRemove|AddResponseHeader|RemoveResponseHead)\s+"/
+				 and $rewrite_flag )
 			{
 				# example: AddHeader "header: to add"
 				splice @fileconf, $index, 0, "\tHeadRemove \"$header\"";
@@ -513,10 +426,284 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 	return $errno;
 }
 
+# Add response headers
+
+=begin nd
+Function: getHTTPAddRespHeader
+
+	Get a list with all the http headers that load balancer will add to the backend repsonse
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array ref - headers list
+
+=cut
+
+sub getHTTPAddRespHeader    # ($farm_name,$service)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
+	return &get_http_farm_ee_struct( $farm_name )->{ addresponseheader };
+}
+
+=begin nd
+Function: addHTTPAddRespheader
+
+	The HTTP farm will add the header to the http response from the backend to the client
+
+Parameters:
+	farmname - Farm name
+	header - Header to add
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+
+sub addHTTPAddRespheader    # ($farm_name,$service,$code)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name, $header ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
+
+	require Zevenet::Lock;
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
+
+	my $index        = 0;
+	my $rewrite_flag = 0;    # it is used to add HeadRemove before than AddHeader
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /[#\s]*RewriteLocation/ )
+		{
+			$rewrite_flag = 1;
+		}
+		elsif ( $rewrite_flag )
+		{
+			# put new headremove before than last one
+			if ( $line !~
+				 /^[#\s]*(?:AddHeader|HeadRemove|AddResponseHeader|RemoveResponseHead)\s+"/
+				 and $rewrite_flag )
+			{
+				# example: AddHeader "header: to add"
+				splice @fileconf, $index, 0, "\tAddResponseHeader \"$header\"";
+				$errno = 0;
+				last;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog( "Could not add AddResponseHeader" ) if $errno;
+
+	return $errno;
+}
+
+=begin nd
+Function: delHTTPAddRespheader
+
+	Delete a directive "AddResponseHeader from the farm config file".
+
+Parameters:
+	farmname - Farm name
+	index - Header index
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+
+sub delHTTPAddRespheader    # ($farm_name,$service,$code)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name, $header_ind ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
+
+	require Zevenet::Lock;
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
+
+	my $index = 0;
+	my $ind   = 0;
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /^\s*AddResponseHeader\s+"/ )
+		{
+			if ( $header_ind == $ind )
+			{
+				$errno = 0;
+				splice @fileconf, $index, 1;
+				last;
+			}
+			else
+			{
+				$ind++;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog( "Could not remove AddResponseHeader" ) if $errno;
+
+	return $errno;
+}
+
+# remove response header
+
+=begin nd
+Function: getHTTPRemRespHeader
+
+	Get a list with all the http headers that the load balancer will add to the
+	response to the client
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array ref - headers list
+
+=cut
+
+sub getHTTPRemRespHeader    # ($farm_name,$service)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
+	return &get_http_farm_ee_struct( $farm_name )->{ removeresponseheader };
+}
+
+=begin nd
+Function: addHTTPRemRespHeader
+
+	Add a directive "HeadResponseRemove". The HTTP farm will remove a reponse
+	header from the backend that matches with this expression
+
+Parameters:
+	farmname - Farm name
+	header - Header to add
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+
+sub addHTTPRemRespHeader
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name, $header ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
+
+	require Zevenet::Lock;
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
+
+	my $index        = 0;
+	my $rewrite_flag = 0;    # it is used to add HeadRemove before than AddHeader
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /[#\s]*RewriteLocation/ )
+		{
+			$rewrite_flag = 1;
+		}
+		elsif ( $rewrite_flag )
+		{
+			# put new headremove after than last one
+			if ( $line !~
+				 /^[#\s]*(?:AddHeader|HeadRemove|AddResponseHeader|RemoveResponseHead)\s+"/
+				 and $rewrite_flag )
+			{
+				# example: AddHeader "header: to add"
+				splice @fileconf, $index, 0, "\tRemoveResponseHead \"$header\"";
+				$errno = 0;
+				last;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog( "Could not add RemoveResponseHead" ) if $errno;
+
+	return $errno;
+}
+
+=begin nd
+Function: delHTTPRemRespHeader
+
+	Delete a directive "HeadResponseRemove".
+
+Parameters:
+	farmname - Farm name
+	index - Header index
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+
+sub delHTTPRemRespHeader    # ($farm_name,$service,$code)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name, $header_ind ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile    = &getFarmFile( $farm_name );
+	my $srv_flag = 0;
+	my $errno    = 1;
+
+	require Zevenet::Lock;
+	&ztielock( \my @fileconf, "$configdir/$ffile" );
+
+	my $index = 0;
+	my $ind   = 0;
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /^\s*RemoveResponseHead\s+"/ )
+		{
+			if ( $header_ind == $ind )
+			{
+				$errno = 0;
+				splice @fileconf, $index, 1;
+				last;
+			}
+			else
+			{
+				$ind++;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog( "Could not remove RemoveResponseHead" ) if $errno;
+
+	return $errno;
+}
+
 =begin nd
 Function: get_http_farm_ee_struct
 
-	It extends farm struct with the parameters exclusives of the EE
+	It extends farm struct with the parameters exclusives of the EE.
+	It no farm struct was passed to the function. The function will returns a new
+	farm struct with the enterprise fields
 
 Parameters:
 	farmname - Farm name
@@ -524,7 +711,6 @@ Parameters:
 
 Returns:
 	Hash ref - Farm struct updated with EE parameters
-
 =cut
 
 sub get_http_farm_ee_struct
@@ -532,18 +718,68 @@ sub get_http_farm_ee_struct
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
-	my $farm_st  = shift;
+	my $farm_st = shift // {};
 
-	# 100 Continue
-	$farm_st->{ ignore_100_continue } =
-	  ( &getHTTPFarm100Continue( $farmname ) ) ? "true" : "false";
+	$farm_st->{ ignore_100_continue }  = "false";
+	$farm_st->{ logs }                 = "false";
+	$farm_st->{ addheader }            = [];
+	$farm_st->{ headremove }           = [];
+	$farm_st->{ addresponseheader }    = [];
+	$farm_st->{ removeresponseheader } = [];
 
-	# Logs
-	$farm_st->{ logs } = ( &getHTTPFarmLogs( $farmname ) ) ? "true" : "false";
+	my $farm_filename = &getFarmFile( $farmname );
+	open my $fileconf, '<', "$configdir/$farm_filename";
 
-	# Add/remove header
-	$farm_st->{ addheader }  = &getHTTPAddheader( $farmname );
-	$farm_st->{ headremove } = &getHTTPHeadremove( $farmname );
+	my $add_req_head_index  = 0;
+	my $rem_req_head_index  = 0;
+	my $add_resp_head_index = 0;
+	my $rem_resp_head_index = 0;
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
+		elsif ( $line =~ /^[#\s]*AddHeader\s+"(.+)"/ )
+		{
+			push @{ $farm_st->{ addheader } },
+			  {
+				"id"     => $add_req_head_index++,
+				"header" => $1
+			  };
+		}
+		elsif ( $line =~ /^[#\s]*HeadRemove\s+"(.+)"/ )
+		{
+			push @{ $farm_st->{ headremove } },
+			  {
+				"id"     => $rem_req_head_index++,
+				"header" => $1
+			  };
+		}
+		elsif ( $line =~ /^[#\s]*AddResponseHeader\s+"(.+)"/ )
+		{
+			push @{ $farm_st->{ addresponseheader } },
+			  {
+				"id"     => $add_resp_head_index++,
+				"header" => $1
+			  };
+		}
+		elsif ( $line =~ /^[#\s]*RemoveResponseHead\s+"(.+)"/ )
+		{
+			push @{ $farm_st->{ removeresponseheader } },
+			  {
+				"id"     => $rem_resp_head_index++,
+				"header" => $1
+			  };
+		}
+		elsif ( $line =~ /Ignore100Continue (\d).*/ )
+		{
+			$farm_st->{ ignore_100_continue } = ( $1 eq '0' ) ? 'false' : 'true';
+		}
+		elsif ( $line =~ /LogLevel\s+(\d).*/ )
+		{
+			$farm_st->{ logs } = ( $1 eq '0' ) ? 'false' : 'true';
+		}
+
+	}
+	close $fileconf;
 
 	return $farm_st;
 }
