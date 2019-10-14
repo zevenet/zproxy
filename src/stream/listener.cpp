@@ -34,12 +34,20 @@
 void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE) {
     if (fd == timer_maintenance.getFileDescriptor()) {
-      timer_maintenance.set(listener_config.alive_to * 1000);
-      updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
-
+      // general maintenance timer
       for (auto serv : service_manager->getServices()) {
         serv->doMaintenance();
       }
+      timer_maintenance.set(listener_config.alive_to * 1000);
+      updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+               EVENT_GROUP::MAINTENANCE);
+    }
+    if (fd == ssl_maintenance_timer.getFileDescriptor()) {
+      // timer for ssl rsa keys regeneration
+      Config::do_RSAgen();
+      ssl_maintenance_timer.set(T_RSA_KEYS * 1000);
+      updateFd(ssl_maintenance_timer.getFileDescriptor(),
+               EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
     }
 #if MALLOC_TRIM_TIMER
     if (fd == timer_internal_maintenance.getFileDescriptor()) {
@@ -321,6 +329,9 @@ void Listener::start() {
   //  addFd(signal_fd.getFileDescriptor(), EVENT_TYPE::READ,
   //  EVENT_GROUP::SIGNAL);
   addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
+  ssl_maintenance_timer.set(T_RSA_KEYS * 1000);
+  addFd(ssl_maintenance_timer.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+        EVENT_GROUP::MAINTENANCE);
 #if MALLOC_TRIM_TIMER
   timer_internal_maintenance.set(MALLOC_TRIM_TIMER_INTERVAL * 1000);
   addFd(timer_internal_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);

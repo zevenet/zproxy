@@ -46,6 +46,7 @@ class Listener : public EpollManager, public CtlObserver<ctl::CtlTask, std::stri
   ListenerConfig listener_config;
   std::shared_ptr<ServiceManager> service_manager;
   TimerFd timer_maintenance;
+  TimerFd ssl_maintenance_timer;
 #if MALLOC_TRIM_TIMER
   TimerFd timer_internal_maintenance;
 #endif
