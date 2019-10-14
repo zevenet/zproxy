@@ -1,1 +1,31 @@
+#!/usr/bin/bash
+
+lockdir=/tmp/$(basename $0).lock
+timeout=60 # secs, integer
+count=0 #counter
+leave=1 #integer
+mintime=30
+app="Update Remote List"
+
+#if file is older than 30 minutes something wrong happens
+find $lockdir -mmin +$mintime -exec logger "[$$] Creation time for file $lockdir is older than $mintime minutes, it needs to be deleted" {} \; -exec rm -rf {} \;
+
+while true; do
+    if mkdir "$lockdir" &>/dev/null
+    then    # if directory doesn't exist then it is created.
+        trap 'rm -rf "$lockdir"' 0  #delete when script finishes 
+        break    # continue with script
+    else
+	logger "[$$] $app: System locked with another execution, waiting $count secs, timeout: $timeout"
+	sleep $leave
+	count=$(($count + $leave))
+	if (( $count > $timeout ))
+	then
+		logger "[$$] $app: Timeout reached, I will try next scheduled time"
+		exit 1;
+	fi
+    fi
+done
+
+
 /usr/local/zevenet/bin/enterprise.bin updateRemoteList "$@"
