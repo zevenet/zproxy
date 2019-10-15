@@ -23,6 +23,7 @@
 
 use strict;
 
+use Zevenet::Log;
 include 'Zevenet::Farm::GSLB::Config';
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -106,8 +107,7 @@ sub _runGSLBFarmStart    # ($fname, $writeconf)
 
 	&zenlog( "running $exec", "info", "GSLB" );
 
-	require Zevenet::System;
-	$output = zsystem( "$exec > /dev/null 2>&1" );
+	$output = &zsystem( "$exec > /dev/null 2>&1" );
 
 	if ( $output != 0 )
 	{

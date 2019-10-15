@@ -23,6 +23,7 @@
 
 use strict;
 
+use Zevenet::Log;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -101,12 +102,9 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 		"info", "LSLB"
 	);
 
-	require Zevenet::System;
-
-	&zsystem(
+	$output = &zsystem(
 		"$proxy -f $configdir\/$farm_name\_proxy.cfg -p $piddir\/$farm_name\_proxy.pid 2>/dev/null"
 	);
-	$output = $?;
 
 	return $output;
 }

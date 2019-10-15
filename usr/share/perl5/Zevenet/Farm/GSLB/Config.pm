@@ -24,6 +24,7 @@
 use strict;
 
 use Zevenet::Farm::Core;
+use Zevenet::Log;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -428,9 +429,8 @@ sub setGSLBFarmStatus    # ($farm_name, $status)
 		$command = &getGSLBStopCommand( $farm_name );
 	}
 
-	require Zevenet::System;
 	&zenlog( "setGSLBFarmStatus(): Executing $command", "info", "GSLB" );
-	zsystem( "$command > /dev/null 2>&1" );
+	&zsystem( "$command > /dev/null 2>&1" );
 
 	#TODO
 	my $output = 0;

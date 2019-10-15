@@ -24,40 +24,6 @@
 use strict;
 
 =begin nd
-Function: zsystem
-
-	Run a command with tuned system parameters.
-
-Parameters:
-	exec - Command to run.
-
-Returns:
-	integer - ERRNO or return code.
-
-See Also:
-	<runFarmGuardianStart>, <_runHTTPFarmStart>, <runHTTPFarmCreate>, <_runGSLBFarmStart>, <_runGSLBFarmStop>, <runGSLBFarmReload>, <runGSLBFarmCreate>, <setGSLBFarmStatus>
-=cut
-
-sub zsystem
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( @exec ) = @_;
-
-	my $out   = `. /etc/profile -notzenbui >/dev/null 2>&1 && @exec 2>&1`;
-	my $error = $?;
-
-	if ( $error or &debug() )
-	{
-		my $message = $error ? 'failed' : 'running';
-		&zenlog( "$message: @exec", "info", "SYSTEM" );
-		&zenlog( "output: $out", "info", "SYSTEM" ) if $out;
-	}
-
-	return $error;
-}
-
-=begin nd
 Function: getTotalConnections
 
 	Get the number of current connections on this appliance.
