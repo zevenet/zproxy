@@ -169,7 +169,7 @@ sub start_service
 
 	if ( $swcert > 0 )
 	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
+		&zenlog( "No valid ZLB certificate was found, no farm started\n" );
 		return 1;
 	}
 
@@ -305,11 +305,11 @@ sub enable_cluster
 	# check activation certificate
 	if ( $swcert > 0 )
 	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
+		&zenlog( "No valid ZLB certificate was found, no farm started\n" );
 
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other way of running a program
-		exec ( '/usr/local/zevenet/bin/zevenet stop' );
+		exec ( '/usr/local/zevenet/bin/zevenet stop >/dev/null' );
 	}
 
 	include 'Zevenet::Cluster';
@@ -383,11 +383,11 @@ sub start_cluster
 	# check activation certificate
 	if ( $swcert > 0 )
 	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
+		&zenlog( "No valid ZLB certificate was found, no farm started\n" );
 
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other execution
-		exec ( '/usr/local/zevenet/bin/zevenet stop' );
+		exec ( '/usr/local/zevenet/bin/zevenet stop >/dev/null' );
 	}
 
 	my $zcl_configured = &getZClusterStatus();

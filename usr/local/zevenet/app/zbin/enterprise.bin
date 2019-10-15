@@ -54,10 +54,17 @@ else
 {
 	$symbolic_link = ( exists $ENV{ _ } and -l $ENV{ _ } ) ? readlink( $ENV{ _ } ) : "";
 	$program_name =
-		( $0 ne '-e' ) ? $0
-	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
-	: ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
-	:															$^X;
+	    ( $0 ne '-e' and $0 !~ /enterprise.bin$/ ) ? $0
+	  : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/zapi.cgi$/ )
+	  ? $ENV{ SCRIPT_NAME }
+	  : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /^postinst$/ )
+	  ? $ENV{ SCRIPT_NAME }
+	  : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /^preinst$/ )
+	  ? $ENV{ SCRIPT_NAME }
+	  : ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
+	  : ( exists $ENV{ SCRIPT_NAME } ) ? $ENV{ SCRIPT_NAME }
+	  : ( $0 =~ /enterprise.bin$/ )    ? $0
+	  :                                  $^X;
 
 	# Exception for keepalived running zcluster-manager
 	# %ENV  = {
@@ -91,6 +98,9 @@ if ( $DEBUG > 5 )
 	#~ &zenlog('[ENTERPRISE.BIN] %ENV                     = ' . Dumper \%ENV );
 }
 
+# Rewrite script variable. It is necessary to avoid looping calls from the API
+$ENV{ SCRIPT_NAME } = 'enterprise.bin';
+
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
 {
@@ -103,6 +113,7 @@ if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
 	}
 
 	$mod->{ name } = "Zevenet::Cmd::$basename";
+
 
 #	if ( $DEBUG )
 #	{
@@ -190,7 +201,7 @@ my $stop_zevenet = (
 my $exception = ( $mod->{ name } eq 'Zevenet::RBAC::User::Core' and $func eq 'validateRBACUserZapi' );
 my $exception_rbac = ( $mod->{ name } eq 'Zevenet::RBAC::Core' and $func eq 'getRBACPermissionsMsg' );
 
-my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception || $exception_rbac);
+my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception || $exception_rbac || $basename eq 'zevenet');
 
 unless ( $skip_cert_check )
 {

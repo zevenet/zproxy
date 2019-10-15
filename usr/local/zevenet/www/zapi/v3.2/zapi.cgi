@@ -32,6 +32,9 @@ use Crypt::CBC;
 use POSIX 'strftime';
 use Zevenet::SystemInfo;
 
+$ENV{ SCRIPT_NAME } = 'enterprise.bin';
+
+
 &setEnv();
 
 my $q = &getCGI();

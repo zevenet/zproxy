@@ -28,6 +28,9 @@ use strict;
 use Zevenet;
 use Zevenet::Log;
 
+$ENV{ SCRIPT_NAME } = 'zevenet';
+
+
 my $eload;
 if ( eval { require Zevenet::ELoad; } )
 {

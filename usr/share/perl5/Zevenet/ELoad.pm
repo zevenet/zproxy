@@ -150,8 +150,6 @@ sub eload
 
 	#~ &zenlog( $ret_output ) if $debug;
 
-	my $output =
-	  ( not $ret_f && $api_f ) ? decode_json( $ret_output ) : $ret_output;
 	my @output = eval { @{ decode_json( $ret_output ) } };
 
 	if ( $@ )
