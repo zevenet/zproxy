@@ -50,9 +50,11 @@ void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager, in
     header_value = SSL_get_version(stream->client_connection.ssl);
     header_value += '/';
     header_value += cipher_buf;
-    header_value.erase(std::remove(header_value.begin(), header_value.end(), '\n'), header_value.end());
-    header_value.erase(std::remove(header_value.begin(), header_value.end(), '\r'), header_value.end());
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER, header_value, true);
+    header_value.erase(std::remove_if(header_value.begin(), header_value.end(),
+                                      helper::isCRorLF),
+                       header_value.end());
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CIPHER,
+                              header_value, true);
   }
   /** client check enable */
   if (clnt_check > 0 && x509 != nullptr) {
@@ -84,7 +86,11 @@ void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager, in
     while (ssl::get_line(bb.get(), buf, MAXBUF, &line_len) == 0) {
       header_value += buf;
     }
-    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CERTIFICATE, header_value, true);
+    header_value.erase(std::remove_if(header_value.begin(), header_value.end(),
+                                      helper::isCRorLF),
+                       header_value.end());
+    stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_CERTIFICATE,
+                              header_value, true);
   }
 }
 
