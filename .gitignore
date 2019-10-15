@@ -9,3 +9,5 @@ src/version.h
 cmake-build-*/
 wrkdir/
 build-pkg/
+src/config/dh*
+tests/data
