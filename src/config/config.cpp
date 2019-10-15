@@ -382,6 +382,7 @@ ListenerConfig *Config::parse_HTTP() {
   res->log_level = log_level;
   res->alive_to = alive_to;
   res->ignore100continue = ignore_100;
+  res->ssl_forward_sni_server_name = false;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = 0;
@@ -553,7 +554,7 @@ ListenerConfig *Config::parse_HTTPS() {
   res->log_level = log_level;
   res->alive_to = alive_to;
   res->engine_id = engine_id;
-
+  res->ssl_forward_sni_server_name = true;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = has_other = 0;
@@ -632,6 +633,8 @@ ListenerConfig *Config::parse_HTTPS() {
       lin[matches[1].rm_eo] = '\0';
       if (regcomp(&m->pat, lin + matches[1].rm_so, REG_ICASE | REG_NEWLINE | REG_EXTENDED))
         conf_err("HeadRemove bad pattern - aborted");
+    } else if (!regexec(&ForwardSNI, lin, 4, matches, 0)) {
+      res->ssl_forward_sni_server_name = std::atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&RewriteLocation, lin, 4, matches, 0)) {
       res->rewr_loc = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&RewriteDestination, lin, 4, matches, 0)) {
@@ -1712,12 +1715,11 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED)
 
 #endif
-#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
+
 #ifndef OPENSSL_NO_ECDH
       || regcomp(&ECDHCurve, "^[ \t]*ECDHCurve[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
 #endif
-#endif
-
+      || regcomp(&ForwardSNI, "^[ \t]*ForwardSNI[ \t]+([01])[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
   ) {
     return false;
   }
@@ -1837,14 +1839,13 @@ void Config::clean_regex() {
   regfree(&CacheDiskPath);
   regfree(&CacheRamPath);
 #endif
-#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
   regfree(&ECDHCurve);
 #endif
-#endif
   regfree(&DHParams);
-  regfree(&NfMark);
   if (DHCustom_params) DH_free(DHCustom_params);
+  regfree(&NfMark);
+  regfree(&ForwardSNI);
 }
 
 int Config::conf_init(const std::string &name__) {

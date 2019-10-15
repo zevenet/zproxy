@@ -173,7 +173,9 @@ struct ListenerConfig {
   int disable_ssl_v2;     /* Disable SSL version 2 */
   int alive_to;
   int ignore100continue;  /* Ignore Expect: 100-continue headers in requests. */
-  std::string engine_id; /* Engine id loaded by openssl*/
+  std::string engine_id;  /* Engine id loaded by openssl*/
+  bool ssl_forward_sni_server_name{false}; /* enable SNI hostname forwarding to
+                                         https backends, param ForwardSNI*/
   ServiceConfig *services{nullptr};
   ListenerConfig *next{nullptr};
 };

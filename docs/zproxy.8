@@ -699,21 +699,8 @@ returned certificate.
 Set the CRL (Certificate Revocation List) file. The CRL_file is a file that contains
 the CRLs (in PEM format).
 .TP
-\fBNoHTTPS11\fR 0|1|2
-Behave like an HTTP/1.0 server for HTTPS clients. If this value is
-0 disable the check. If the value is 1 do not allow multiple
-requests on SSL connections. If the value is 2 (default) disable multiple
-requests on SSL connections only for MSIE clients. Required
-work-around for a bug in certain versions of IE.
-.TP
-\fBSSLUncleanShutdown\fR "UserAgent Match Pattern"
-Implement a workaround for MSIE's ssl shutdown code... basically don't
-send a shutdown message because MSIE can't handle it.  zproxy, by default,
-would do this on all connections, and will do that if this directive is
-never specified.  If this directive is specified, one or many times, any
-matching useragent pattern will cause the ssl unclean shutdown behavior.
-Other user agents will follow the mod_ssl compliant and safe code.
-You likely want to set this for all MSIE browsers.
+\fBForwardSNI\fR "0|1 default=1"
+Enable SNI server host name forwarding to https backends if it presented by client.
 .SH "Service"
 A service is a definition of which back-end servers
 .B zproxy

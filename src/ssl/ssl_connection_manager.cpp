@@ -197,16 +197,18 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
   int r = SSL_do_handshake(ssl_connection.ssl);
   if (r == 1) {
     ssl_connection.ssl_connected = true;
-    if (!client_mode) {
+    if (!client_mode && ssl_context->listener_config.ssl_forward_sni_server_name) {
       if ((ssl_connection.server_name = SSL_get_servername(ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
-        //        Logger::logmsg(LOG_DEBUG,
-        //                      "(%lx) could not get SNI host name  to %s",
-        //                      pthread_self(),
-        //                      ssl_connection.server_name);
+        Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
+                       pthread_self(), ssl_connection.server_name);
 
       } else {
-        //        Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(), ssl_connection.server_name);
+        Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
+                       ssl_connection.server_name);
+        ssl_connection.server_name = nullptr;
       }
+    } else {
+      ssl_connection.server_name = nullptr;
     }
     ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
     //    Logger::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
