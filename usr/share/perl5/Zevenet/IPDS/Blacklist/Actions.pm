@@ -54,14 +54,15 @@ sub runBLStartModule
 
 	if ( !-d $blacklistsPath )
 	{
-		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		my $mkdir = &getGlobalConfiguration( 'mkdir' );
+		&logAndRun( "$mkdir -p $blacklistsPath" );
 		&zenlog( "Created $blacklistsPath directory.", "info", "IPDS" );
 	}
 
 	# create list config if doesn't exist
 	if ( !-e $blacklistsConf )
 	{
-		system ( "$touch $blacklistsConf" );
+		&logAndRun( "$touch $blacklistsConf" );
 		&zenlog( "Created $blacklistsConf file.", "info", "IPDS" );
 	}
 
@@ -365,14 +366,15 @@ sub initBLModule
 	# blacklists
 	if ( !-d $blacklistsPath )
 	{
-		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		my $mkdir = &getGlobalConfiguration( 'mkdir' );
+		&logAndRun( "$mkdir -p $blacklistsPath" );
 		&zenlog( "Created $blacklistsPath directory." );
 	}
 
 	# create list config if doesn't exist
 	if ( !-e $blacklistsConf )
 	{
-		system ( "$touch $blacklistsConf" );
+		&logAndRun( "$touch $blacklistsConf" );
 		&zenlog( "Created $blacklistsConf file." );
 	}
 }

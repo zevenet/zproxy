@@ -555,7 +555,7 @@ sub updateCRL
 	my $cmd = "$curl -s -f -k $crl_url -o $tmp_file --connect-timeout 2";
 	&logAndRun( $cmd );
 
-	my $check_crl = system (
+	my $check_crl = &logAndRunCheck(
 		"$openssl crl -inform DER -text -noout -in $tmp_file | head | grep support\@sofintel.net"
 	);
 

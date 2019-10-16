@@ -185,7 +185,7 @@ sub getZClusterRunning
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	return ( system ( "pgrep keepalived >/dev/null" ) == 0 );
+	return ( &logAndRunCheck( "pgrep keepalived" ) == 0 );
 }
 
 =begin nd
@@ -1317,7 +1317,7 @@ sub pgrep
 	my $cmd = shift;
 
 	# return_code
-	my $rc = system ( "/usr/bin/pgrep $cmd >/dev/null" );
+	my $rc = &logAndRunCheck( "/usr/bin/pgrep $cmd" );
 
 	#~ &zenlog("$cmd not found running", "debug", "CLUSTER") if $rc && &debug();
 
@@ -1328,7 +1328,7 @@ sub get_zeninotify_process
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	return "ps aux | grep -v grep | grep zeninotify >/dev/null 2>&1";
+	return "ps aux | grep -v grep | grep zeninotify";
 }
 
 =begin nd
@@ -1370,7 +1370,7 @@ sub getZClusterNodeStatusInfo
 	if ( !defined ( $ip ) || $ip eq &getZClusterLocalIp() )
 	{
 		$node->{ ka } = pgrep( 'keepalived' );
-		$node->{ zi } = system ( $zeninotify_cmd );
+		$node->{ zi } = &logAndRunCheck( $zeninotify_cmd );
 		$node->{ ct } = pgrep( 'conntrackd' );
 
 		chomp ( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` )

@@ -98,15 +98,17 @@ sub initDOSModule
 		# create dos directory if it doesn't exist
 		if ( !-d $dosConfDir )
 		{
-			$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $dosConfDir" );
+			my $mkdir = &getGlobalConfiguration( 'mkdir' );
+			$output = &logAndRun( "$mkdir -p $dosConfDir" );
 			&zenlog( "Created ipds configuration directory: $dosConfDir", "info", "IPDS" );
 		}
 
 		# create file conf if doesn't exist
 		if ( !$output )
 		{
-			&zenlog( "Created dos configuration directory: $dosConfDir", "info", "IPDS" );
-			$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
+			my $touch = &getGlobalConfiguration( 'touch' );
+			&zenlog( "Created DoS configuration directory: $dosConfDir", "info", "IPDS" );
+			$output = &logAndRun( "$touch $confFile" );
 			if ( $output )
 			{
 				&zenlog( "Error, creating DoS configuration directory: $dosConfDir",

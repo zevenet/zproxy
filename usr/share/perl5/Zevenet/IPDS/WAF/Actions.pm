@@ -224,7 +224,8 @@ sub updateWAFSetPreload
 	return $err if $err;
 
 	# copying the data files
-	$err = system ( "cp $waf_pkg_dir/*.data $wafSetDir" );
+	my $cp = &getGlobalConfiguration( 'cp' );
+	$err = &logAndRun( "$cp $waf_pkg_dir/*.data $wafSetDir" );
 	&zenlog( "Error updating WAF data files", 'error', 'waf' ) if $err;
 
 	# add and modify the sets

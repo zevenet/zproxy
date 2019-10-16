@@ -56,7 +56,7 @@ sub setSystemOptimizations
 	require Zevenet::Farm::L4xNAT::Service;
 	&loadL4FarmModules();
 
-	system ( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
+	&logAndRun( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
 
 	# Set system tuning with sysctl
 	my %sysctl = (
@@ -146,7 +146,7 @@ sub setSystemOptimizations
 	untie @sysctl_file;
 
 	# apply file configuration to system
-	my $sysctl_errno = system ( 'sysctl -p > /dev/null' );
+	my $sysctl_errno = &logAndRun( 'sysctl -p' );
 	my $sysclt_msg;
 
 	if ( $sysctl_errno )
@@ -190,13 +190,13 @@ sub start_service
 
 	# bonding
 	# required previous setup
-	my $missing_bonding = system ( 'lsmod | grep bonding >/dev/null' );
+	my $missing_bonding = &logAndRunCheck( 'lsmod | grep bonding' );
 	if ( $missing_bonding )
 	{
-		system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
+		&logAndRun( '/sbin/modprobe bonding' );
 		my $bonding_masters_filename =
 		  &getGlobalConfiguration( 'bonding_masters_filename' );
-		system ( "echo -bond0 > $bonding_masters_filename" );
+		&logAndRun( "echo -bond0 > $bonding_masters_filename" );
 	}
 
 	require Zevenet::Net::Core;
@@ -471,7 +471,7 @@ sub start_cluster
 			my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
 			my $if_ref   = &getSystemInterface( $maint_if );
 
-			system ( "$ip_bin link set $maint_if down" );
+			&logAndRun( "$ip_bin link set $maint_if down" );
 		}
 	}
 
@@ -501,7 +501,7 @@ sub stop_service
 		&zenlog( "$out_msg", "info", "CLUSTER" );
 		my $zenino_proc = &get_zeninotify_process();
 
-		unless ( system ( $zenino_proc ) )
+		unless ( &logAndRunCheck( $zenino_proc ) )
 		{
 			my $zenino = &getGlobalConfiguration( 'zenino' );
 			&logAndRun( "$zenino stop" );

@@ -628,7 +628,7 @@ sub resetL4FarmBackendConntrackMark
 
 	# return_code = 0 -> deleted
 	# return_code = 1 -> not found/deleted
-	my $return_code = system ( "$cmd >/dev/null 2>&1" );
+	my $return_code = &logAndRunCheck( "$cmd" );
 
 	if ( &debug() )
 	{

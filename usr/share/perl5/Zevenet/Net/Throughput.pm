@@ -177,7 +177,7 @@ sub startTHROUTask
 
 	# run the process
 	require Zevenet::Log;
-	my $err = system ( "$throughput_bin > /dev/null 2>&1 &" );
+	my $err = &logAndRunBG( "$throughput_bin" );
 	if ( $err )
 	{
 		&zenlog( "Fail executing $throughput_bin", "error", "monitor" );

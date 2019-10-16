@@ -51,12 +51,12 @@ sub setSsyncdFarmUp
 
 		if ( $farms_started )
 		{
-			return system ( "$ssyncdctl_bin start nft $farm_name >/dev/null" );
+			return &logAndRun( "$ssyncdctl_bin start nft $farm_name" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		return system ( "$ssyncdctl_bin start http $farm_name >/dev/null" );
+		return &logAndRun( "$ssyncdctl_bin start http $farm_name" );
 	}
 
 	return;
@@ -81,12 +81,12 @@ sub setSsyncdFarmDown
 
 		if ( $farms_started <= 1 )
 		{
-			return system ( "$ssyncdctl_bin stop nft $farm_name >/dev/null" );
+			return &logAndRun( "$ssyncdctl_bin stop nft $farm_name" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		return system ( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
+		return &logAndRun( "$ssyncdctl_bin stop http $farm_name" );
 	}
 
 	return;
@@ -103,11 +103,11 @@ sub setSsyncdDisabled
 	my $ssync_cmd = "$ssyncdctl_bin quit";
 	my $error;
 
-	system ( "$ssync_cmd >/dev/null" ) if `pgrep ssyncd`;
+	&logAndRun( "$ssync_cmd" ) if `pgrep ssyncd`;
 
 	if ( `pgrep ssyncd` )
 	{
-		system ( "pkill ssyncd" );
+		&logAndRun( "pkill ssyncd" );
 		&zenlog( "ssyncd found still running and was killed", "info", "CLUSTER" );
 	}
 
@@ -155,7 +155,8 @@ sub setSsyncdBackup
 # Start Backup mode:
 # ./ssyncd -d -B -p 9999 -a 172.16.1.1 --> start backup node and connect to master 172.16.1.1:9999
 
-	my $error = system ( "$ssyncd_bin -d -B -p $ssyncd_port -a $remote_node_ip" );
+	my $error =
+	  &logAndRun( "$ssyncd_bin -d -B -p $ssyncd_port -a $remote_node_ip" );
 
 	return $error;
 }
@@ -196,13 +197,13 @@ sub setSsyncdMaster
 		my $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write http";
-		$error     = system ( "$ssync_cmd" );
+		$error     = &logAndRun( "$ssync_cmd" );
 		&zenlog( "setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd",
 				 "error", "CLUSTER" )
 		  if $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write nft";
-		$error     = system ( "$ssync_cmd" );
+		$error     = &logAndRun( "$ssync_cmd" );
 		&zenlog( "setSsyncdMaster ssyncd write nft: $error > cmd: $ssync_cmd",
 				 "error", "CLUSTER" )
 		  if $error;
@@ -214,7 +215,7 @@ sub setSsyncdMaster
 	# ./ssyncd -d -M -p 9999 --> start master node
 
 	$ssync_cmd = "$ssyncd_bin -d -M -p $ssyncd_port";
-	my $error = system ( "$ssync_cmd" );
+	my $error = &logAndRun( "$ssync_cmd" );
 	&zenlog( "/// ssyncd as master: $error > cmd: $ssync_cmd", "info", "CLUSTER" );
 
 	# ./ssyncdctl start http <farm>

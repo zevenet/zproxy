@@ -56,7 +56,7 @@ sub setBLCreateList
 
 	if ( !-e $blacklistsConf )
 	{
-		$output = system ( "$touch $blacklistsConf" );
+		$output = &logAndRun( "$touch $blacklistsConf" );
 		&zenlog( "blacklists configuration file was created.", "info", "IPDS" );
 	}
 
@@ -260,7 +260,7 @@ sub setBLAddPreloadLists
 			# Create list file if it doesn't exist
 			if ( !-f "$blacklistsPath/$list.txt" )
 			{
-				system ( "$touch $blacklistsPath/$list.txt 2>/dev/null" );
+				&logAndRun( "$touch $blacklistsPath/$list.txt" );
 			}
 			&zenlog( "The preload list '$list' was updated.", "info", "IPDS" );
 		}
@@ -322,9 +322,11 @@ sub setBLParam
 		}
 		else
 		{
+			my $mv = &getGlobalConfiguration( 'mv' );
+
 			# delete list and all rules applied to the farms
-			$output = system (
-						"mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt 2>/dev/null" );
+			$output =
+			  &logAndRun( "$mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt" );
 
 			my $lock = &setBLLockConfigFile();
 			$fileHandle = Config::Tiny->read( $blacklistsConf );

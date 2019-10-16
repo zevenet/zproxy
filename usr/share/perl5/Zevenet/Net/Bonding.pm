@@ -568,7 +568,7 @@ sub setBondSlave
 		#return $return_code;
 	}
 
-	system ( "echo $operator$bond_slave > $bondslave" );
+	&logAndRun( "echo $operator$bond_slave > $bondslave" );
 
 	#close $bond_slaves_file;
 

@@ -26,11 +26,11 @@ use strict;
 use Zevenet::Net::Interface;
 include 'Zevenet::System::HTTP';
 
-
 # GET /system/http
 sub get_http
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $description       = "Get http";
 	my $httpIp            = &getHttpServerIp();
 	my $allInterfaces_aux = &getActiveInterfaceList();
@@ -50,10 +50,11 @@ sub get_http
 	}
 
 	my $http;
+
 	# http is enabled in all interfaces
 	if ( !$interface )
 	{
-		$http->{ 'ip' } = '*' ;
+		$http->{ 'ip' } = '*';
 	}
 	else
 	{
@@ -68,8 +69,9 @@ sub get_http
 # POST /system/http
 sub set_http
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my $json_obj    = shift;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
 
 	my $description = "Post http";
 	my @allowParams = ( "ip", "port" );
@@ -110,7 +112,7 @@ sub set_http
 			{
 				&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 				&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
-				system ( "/etc/init.d/cherokee restart > /dev/null &" );
+				&logAndRunBG( "/etc/init.d/cherokee restart" );
 
 				&httpResponse(
 					{ code => 200, body => { description => $description, params => $json_obj } } );

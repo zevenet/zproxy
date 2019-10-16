@@ -127,12 +127,7 @@ sub createBackup
 			 "debug", "PROFILING" );
 	my $name      = shift;
 	my $zenbackup = &getGlobalConfiguration( 'zenbackup' );
-	my $error     = system ( "$zenbackup $name -c 2> /dev/null" );
-
-	if ( $error )
-	{
-		&zenlog( "$zenbackup $name -c 2> /dev/null" );
-	}
+	my $error     = &logAndRun( "$zenbackup $name -c" );
 
 	return $error;
 }

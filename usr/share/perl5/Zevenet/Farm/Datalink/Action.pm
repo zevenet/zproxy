@@ -121,8 +121,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 		my $ip_command =
 		  "$ip_bin route add default scope global table table_$iface $routes";
 
-		&zenlog( "running $ip_command", "info", "DSLB" );
-		$status = system ( "$ip_command >/dev/null 2>&1" );
+		$status = &logAndRun( "$ip_command" );
 	}
 	else
 	{

@@ -628,7 +628,7 @@ sub setNodeStatusMaster
 
 	# conntrackd sync
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
-	system ( "$primary_backup primary" );
+	&logAndRun( "$primary_backup primary" );
 
 	# Ssyncd
 	&setSsyncdMaster();
@@ -647,19 +647,18 @@ sub setNodeStatusMaster
 
 	# start sync
 	my $zenino = &getGlobalConfiguration( 'zenino' );
-	&zenlog( "Running: $zenino >dev/null 2>&1 &" );
 	{
 		local %ENV = ( %ENV );
 		$ENV{ _ } = $zenino;
 
-		system ( "$zenino >dev/null 2>&1 &" );
+		&logAndRunBG( "$zenino" );
 	}
 
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
 	my $if_ref   = &getSystemInterface( $maint_if );
-	system ( "$ip_bin link set $maint_if up" );
+	&logAndRun( "$ip_bin link set $maint_if up" );
 
 	# start farmguardians
 	require Zevenet::FarmGuardian;
@@ -710,7 +709,7 @@ sub setNodeStatusBackup
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
-	system ( "$primary_backup backup >/dev/null" );
+	&logAndRun( "$primary_backup backup" );
 
 	# Ssyncd
 	&setSsyncdBackup();
@@ -719,9 +718,9 @@ sub setNodeStatusBackup
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
 	my $if_ref   = &getSystemInterface( $maint_if );
-	system ( "$ip_bin link set $maint_if up" );
+	&logAndRun( "$ip_bin link set $maint_if up" );
 
-	unless ( system ( $zenino_proc ) )
+	unless ( &logAndRunCheck( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -732,7 +731,10 @@ sub setNodeStatusBackup
 	}
 
 	# stop farmguardians
-	system ( "pkill farmguardian" );
+	if ( &logAndRunCheck( 'pgrep farmguardian' ) )
+	{
+		&logAndRun( "pkill farmguardian" );
+	}
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -769,17 +771,17 @@ sub setNodeStatusMaintenance
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
 	my $if_ref   = &getSystemInterface( $maint_if );
-	system ( "$ip_bin link set $maint_if down" );
+	&logAndRun( "$ip_bin link set $maint_if down" );
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
-	system ( "$primary_backup fault" );
+	&logAndRun( "$primary_backup fault" );
 
 	# Ssyncd
 	&setSsyncdDisabled();
 
 	# stop zeninotify
-	unless ( system ( $zenino_proc ) )
+	unless ( &logAndRunCheck( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -790,7 +792,10 @@ sub setNodeStatusMaintenance
 	}
 
 	# stop farmguardian
-	system ( "pkill farmguardian" );
+	if ( &logAndRunCheck( 'pgrep farmguardian' ) )
+	{
+		&logAndRun( "pkill farmguardian" );
+	}
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };

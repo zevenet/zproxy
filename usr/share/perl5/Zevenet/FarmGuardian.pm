@@ -1100,9 +1100,7 @@ sub runFGFarmStart
 		my $fg_cmd       = "$farmguardian $farm $sv $log";
 
 		require Zevenet::Log;
-		$status = system ( "$fg_cmd >/dev/null 2>&1 &" );
-		if   ( $status ) { &zenlog( "running $fg_cmd", "error", "FG" ); }
-		else             { &zenlog( "running $fg_cmd", 'debug', 'FG' ); }
+		$status = &logAndRunBG( "$fg_cmd" );
 
 		# necessary for waiting that fg process write its process
 		sleep ( 1 );

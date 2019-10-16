@@ -53,7 +53,8 @@ sub setNotifCreateConfFile
 	# create config directory
 	if ( !-d $confdir )
 	{
-		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $confdir" );
+		my $mkdir = &getGlobalConfiguration( 'mkdir' );
+		&logAndRun( "$mkdir -p $confdir" );
 		&zenlog( "Created $confdir directory.", "info", "NOTIFICATIONS" );
 	}
 
@@ -64,13 +65,13 @@ sub setNotifCreateConfFile
 
 	if ( -e $alertsOld )
 	{
-		system ( "$mv $alertsOld $alertsFile" );
+		&logAndRun( "$mv $alertsOld $alertsFile" );
 		&zenlog( "Alert config file was moved to $confdir.", "info", "NOTIFICATIONS" );
 	}
 
 	if ( -e $sendersOld )
 	{
-		system ( "$mv $sendersOld $senderFile" );
+		&logAndRun( "$mv $sendersOld $senderFile" );
 		&zenlog( "Sender config file was moved to $confdir.", "info", "NOTIFICATIONS" );
 	}
 
@@ -191,7 +192,7 @@ sub setNotifAlertsAction
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $notif  = shift;
+	my $notif = shift;
 	my $action = shift // "";
 
 	my $alertFile = &getGlobalConfiguration( 'alerts' );
@@ -382,7 +383,7 @@ sub createSecConfig
 
 	# Copy the template
 	my $cp = &getGlobalConfiguration( "cp" );
-	system ( "$cp $template $secConf" );
+	&logAndRun( "$cp $template $secConf" );
 
 	# Fix inconguity between sec.rules and alert conf file
 	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on' )
@@ -409,8 +410,7 @@ sub runNotifications
 		&createSecConfig();
 
 		# start sec process
-		&zenlog( "$sec --conf=$secConf --input=$syslogFile", "info", "NOTIFICATIONS" );
-		system ( "$sec --conf=$secConf --input=$syslogFile >/dev/null 2>&1 &" );
+		&logAndRunBG( "$sec --conf=$secConf --input=$syslogFile" );
 		$pid = `$pidof -x sec`;
 		if ( $pid )
 		{
@@ -633,10 +633,7 @@ sub sendByMail
 
 	$command .= " --body '$body'";
 
-	#not print
-	$command .= " 1>/dev/null";
-
-	$error = system ( $command );
+	$error = &logAndRun( $command );
 
 	# print log
 	my $logMsg;
@@ -713,11 +710,8 @@ sub sendTestMail
 	$command .= " --header 'Subject: $subject'";
 	$command .= " --body '$body'";
 
-	#not print
-	$command .= " 1>/dev/null";
-
 	#~ print "$command\n";
-	$error = system ( $command );
+	$error = &logAndRun( $command );
 
 	# print log
 	my $logMsg;

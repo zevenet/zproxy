@@ -164,7 +164,7 @@ sub sendGPing    # ($pif)
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
 		&zenlog( "Sending $pingc ping(s) to gateway $gw", "info", "NETWORK" );
-		system ( "$ping_cmd >/dev/null 2>&1 &" );
+		&logAndRunBG( "$ping_cmd" );
 	}
 }
 
@@ -251,7 +251,7 @@ sub sendGArp    # ($if,$ip)
 		my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
 
 		&zenlog( "$arping_cmd", "info", "NETWORK" );
-		system ( "$arping_cmd >/dev/null &" );
+		&logAndRunBG( "$arping_cmd" );
 	}
 	elsif ( $ip_v == 6 )
 	{
@@ -259,7 +259,7 @@ sub sendGArp    # ($if,$ip)
 		my $arping_cmd  = "$arpsend_bin -U -i $ip $iface[0]";
 
 		&zenlog( "$arping_cmd", "info", "NETWORK" );
-		system ( "$arping_cmd >/dev/null &" );
+		&logAndRunBG( "$arping_cmd" );
 	}
 
 	&sendGPing( $iface[0] );
@@ -385,7 +385,7 @@ Parameters:
 	arg - "true" to turn it on or ("false" to turn it off).
 
 Returns:
-	scalar - return code setting the value.
+	scalar - return
 
 See Also:
 	<_runDatalinkFarmStart>
@@ -398,7 +398,7 @@ sub setIpForward    # ($arg)
 			 "debug", "PROFILING" );
 	my $arg = shift;
 
-	my $status = -1;
+	my $status = 0;
 
 	my $switch = ( $arg eq 'true' )
 	  ? 1           # set switch on if arg == 'true'
@@ -407,10 +407,11 @@ sub setIpForward    # ($arg)
 	&zenlog( "setting $arg to IP forwarding ", "info", "NETWORK" );
 
 	# switch forwarding as requested
-	system ( "echo $switch > /proc/sys/net/ipv4/conf/all/forwarding" );
-	system ( "echo $switch > /proc/sys/net/ipv4/ip_forward" );
-	$status = $?;
-	system ( "echo $switch > /proc/sys/net/ipv6/conf/all/forwarding" );
+	$status +=
+	  &logAndRun( "echo $switch > /proc/sys/net/ipv4/conf/all/forwarding" );
+	$status += &logAndRun( "echo $switch > /proc/sys/net/ipv4/ip_forward" );
+	$status +=
+	  &logAndRun( "echo $switch > /proc/sys/net/ipv6/conf/all/forwarding" );
 
 	return $status;
 }

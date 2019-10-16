@@ -125,11 +125,12 @@ sub getGSLBCheckConf    #  ( $farmname )
 	my $farmname = shift;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
-	my $error = system (
-		   "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
+	my $error =
+	  &logAndRunCheck( "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf" );
 
 	if ( $error )
 	{
+		# does not use logAndGet because here it is necessary the error output
 		my @run = `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1`;
 		@run = grep ( /# error:/, @run );
 		$error = $run[0];

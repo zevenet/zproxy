@@ -430,7 +430,7 @@ sub setGSLBFarmStatus    # ($farm_name, $status)
 	}
 
 	&zenlog( "setGSLBFarmStatus(): Executing $command", "info", "GSLB" );
-	&zsystem( "$command > /dev/null 2>&1" );
+	&zsystem( "$command" );
 
 	#TODO
 	my $output = 0;

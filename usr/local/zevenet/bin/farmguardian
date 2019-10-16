@@ -189,8 +189,7 @@ while ( 1 )
 	# Collect HTTP/S farm variables values
 	if ( $type eq 'http' )
 	{
-		my $err = system ( "$proxyctl -c $portadmin 2>&1 >/dev/null" );
-
+		my $err = &logAndRunCheck ( "$proxyctl -c $portadmin" );
 		if ( $err != 0 )
 		{
 			my $msg = "Farm $farmname is down, abort.";
@@ -330,7 +329,7 @@ while ( 1 )
 			if ( $type eq 'http' )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
-				system ( "$proxyctl -c $portadmin -B 0 $idsv $j" );
+				&logAndRun ( "$proxyctl -c $portadmin -B 0 $idsv $j" );
 				&setHTTPFarmBackendStatusFile( $farmname, $j, 'active', $idsv );
 				$auxLog = " in farm: '$farmname', service: '$service'";
 			}
@@ -339,7 +338,7 @@ while ( 1 )
 				&setL4FarmBackendStatus( $farmname, $backendid[$j], 'up' );
 				$auxLog = " in farm: '$farmname'";
 
-				system ( "$zcluster_send_action farm restart $farmname &" )
+				&logAndRunBG ( "$zcluster_send_action farm restart $farmname" )
 				  if -f $zcluster_send_action;
 			}
 
@@ -362,7 +361,7 @@ while ( 1 )
 			if ( $type eq 'http' )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
-				system ( "$proxyctl -c $portadmin -b 0 $idsv $j" );
+				&logAndRun ( "$proxyctl -c $portadmin -b 0 $idsv $j" );
 				&setHTTPFarmBackendStatusFile( $farmname, $j, 'fgDOWN', $idsv );
 				&setHTTPFarmBackendsSessionsRemove( $farmname, $service, $j )
 				  if ( $cutConns eq 'true' );
@@ -376,7 +375,7 @@ while ( 1 )
 				&setL4FarmBackendsSessionsRemove( $farmname, $backendid[$j] )
 				  if ( $cutConns eq 'true' );
 
-				system ( "$zcluster_send_action farm restart $farmname &" )
+				&logAndRunBG ( "$zcluster_send_action farm restart $farmname" )
 				  if -f $zcluster_send_action;
 			}
 

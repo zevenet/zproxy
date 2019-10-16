@@ -455,7 +455,7 @@ sub manage_keyboard()
 			   -value    => 1,
 			   -shortcut => 1,
 			   -onpress  => sub {
-				   system ( 'dpkg-reconfigure keyboard-configuration' );
+				   &logAndRun( 'dpkg-reconfigure keyboard-configuration' );
 				   $zenui->reset_curses();
 				   &inform_dialog( "You have to reboot the host to apply the changes." );
 				   &refresh_win3();
@@ -516,9 +516,9 @@ sub manage_timezone()
 			   -value    => 1,
 			   -shortcut => 1,
 			   -onpress  => sub {           #$zenui->leave_curses();
-				   system ( 'dpkg-reconfigure tzdata' );
+				   &logAndRun( 'dpkg-reconfigure tzdata' );
 				   $zenui->reset_curses();
-				   system ( "ntpdate pool.ntp.org >/dev/null 2>&1" );
+				   &logAndRun( "ntpdate pool.ntp.org" );
 
 				   #$zenui->reset_curses();
 				   &inform_dialog( "Synchronizing time with pool.ntp.org..." );
@@ -1086,7 +1086,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to STOP Web Server?" );
 				   if ( $ret )
 				   {
-					   system ( "/etc/init.d/cherokee stop >/dev/null 2>&1" );
+					   &logAndRun( "/etc/init.d/cherokee stop" );
 					   &inform_dialog( 'Service already stopped' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -1102,7 +1102,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to START Web Server?" );
 				   if ( $ret )
 				   {
-					   system ( "/etc/init.d/cherokee start >/dev/null 2>&1" );
+					   &logAndRun( "/etc/init.d/cherokee start" );
 					   &inform_dialog( 'Service already started' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -1118,7 +1118,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to RESTART Web Server?" );
 				   if ( $ret )
 				   {
-					   system ( "/etc/init.d/cherokee restart >/dev/null 2>&1" );
+					   &logAndRun( "/etc/init.d/cherokee restart" );
 					   &inform_dialog( 'Service already restarted' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -1148,7 +1148,7 @@ sub manage_zlb_services()
 				   if ( $ret )
 				   {
 					   my $zenbin = "/usr/local/zevenet/bin/zevenet";
-					   system ( "$zenbin stop >/dev/null 2>&1" );
+					   &logAndRun( "$zenbin stop" );
 					   &inform_dialog( 'Service already stopped' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -1165,7 +1165,7 @@ sub manage_zlb_services()
 				   if ( $ret )
 				   {
 					   my $zenbin = "/usr/local/zevenet/bin/zevenet";
-					   system ( "$zenbin start >/dev/null 2>&1" );
+					   &logAndRun( "$zenbin start" );
 					   &inform_dialog( 'Service already started' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -1182,8 +1182,8 @@ sub manage_zlb_services()
 				   if ( $ret )
 				   {
 					   my $zenbin = "/usr/local/zevenet/bin/zevenet";
-					   system ( "$zenbin stop >/dev/null 2>&1" );
-					   system ( "$zenbin start >/dev/null 2>&1" );
+					   &logAndRun( "$zenbin stop" );
+					   &logAndRun( "$zenbin start" );
 					   &inform_dialog( 'Service already restarted' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
