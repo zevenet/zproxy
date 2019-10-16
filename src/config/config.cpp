@@ -48,7 +48,7 @@ Config::Config() {
   be_connto = 15;
   dynscale = 0;
   ignore_case = 0;
-  EC_nid = NID_X9_62_prime256v1;
+  EC_nid = 0;  // NID_X9_62_prime256v1;
   print_log = 0;
   ctrl_mode = -1;
   log_facility = -1;
@@ -710,6 +710,14 @@ ListenerConfig *Config::parse_HTTPS() {
         ssl_op_enable |= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2 |
                          SSL_OP_NO_TLSv1_3;
 #endif
+#ifndef OPENSSL_NO_ECDH
+    } else if (!regexec(&ECDHCurve, lin, 4, matches, 0)) {
+      if (res->ctx == nullptr)
+        conf_err("BackEnd ECDHCurve can only be used after HTTPS - aborted");
+      lin[matches[1].rm_eo] = '\0';
+      if ((res->ecdh_curve_nid = OBJ_sn2nid(lin + matches[1].rm_so)) == 0)
+        conf_err("ECDHCurve config: invalid curve name");
+#endif
     } else if (!regexec(&SSLAllowClientRenegotiation, lin, 4, matches, 0)) {
       res->allow_client_reneg = atoi(lin + matches[1].rm_so);
       if (res->allow_client_reneg == 2) {
@@ -829,15 +837,24 @@ ListenerConfig *Config::parse_HTTPS() {
           else
             SSL_CTX_set_tmp_dh(pc->ctx, DHCustom_params);
 
-#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
           /* This generates a EC_KEY structure with no key, but a group defined
            */
-          EC_KEY *ecdh;
-          if ((ecdh = EC_KEY_new_by_curve_name(EC_nid)) == nullptr) conf_err("Unable to generate temp ECDH key");
-          SSL_CTX_set_tmp_ecdh(pc->ctx, ecdh);
-          SSL_CTX_set_options(pc->ctx, SSL_OP_SINGLE_ECDH_USE);
-          EC_KEY_free(ecdh);
+
+          if (res->ecdh_curve_nid != 0 || EC_nid != 0) {
+            if (res->ecdh_curve_nid == 0) res->ecdh_curve_nid = EC_nid;
+            EC_KEY *ecdh;
+            if ((ecdh = EC_KEY_new_by_curve_name(res->ecdh_curve_nid)) ==
+                nullptr)
+              conf_err("Unable to generate Listener temp ECDH key");
+            SSL_CTX_set_tmp_ecdh(pc->ctx, ecdh);
+            SSL_CTX_set_options(pc->ctx, SSL_OP_SINGLE_ECDH_USE);
+            EC_KEY_free(ecdh);
+          }
+#if defined(SSL_CTX_set_ecdh_auto)
+          else {
+            SSL_CTX_set_ecdh_auto(res->ctx, 1);
+          }
 #endif
 #endif
         }
@@ -1403,17 +1420,6 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
         SSL_CTX_set_tmp_dh_callback(res->ctx, DH_tmp_callback);
       else
         SSL_CTX_set_tmp_dh(res->ctx, DHCustom_params);
-
-#if OPENSSL_VERSION_NUMBER >= 0x0090800fL
-#ifndef OPENSSL_NO_ECDH
-      /* This generates a EC_KEY structure with no key, but a group defined */
-      EC_KEY *ecdh;
-      if ((ecdh = EC_KEY_new_by_curve_name(EC_nid)) == nullptr) conf_err("Unable to generate temp ECDH key");
-      SSL_CTX_set_tmp_ecdh(res->ctx, ecdh);
-      SSL_CTX_set_options(res->ctx, SSL_OP_SINGLE_ECDH_USE);
-      EC_KEY_free(ecdh);
-#endif
-#endif
     } else if (!regexec(&Cert, lin, 4, matches, 0)) {
       if (res->ctx == nullptr) conf_err("BackEnd Cert can only be used after HTTPS - aborted");
       lin[matches[1].rm_eo] = '\0';
@@ -1445,6 +1451,30 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_2") == 0)
         SSL_CTX_set_options(
             res->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2);
+#endif
+#ifndef OPENSSL_NO_ECDH
+    } else if (!regexec(&ECDHCurve, lin, 4, matches, 0)) {
+      if (res->ctx == nullptr)
+        conf_err("BackEnd ECDHCurve can only be used after HTTPS - aborted");
+      lin[matches[1].rm_eo] = '\0';
+      if ((res->ecdh_curve_nid = OBJ_sn2nid(lin + matches[1].rm_so)) == 0)
+        conf_err("ECDHCurve config: invalid curve name");
+
+      if (res->ecdh_curve_nid != 0) {
+        /* This generates a EC_KEY structure with no key, but a group defined
+         */
+        EC_KEY *ecdh;
+        if ((ecdh = EC_KEY_new_by_curve_name(res->ecdh_curve_nid)) == nullptr)
+          conf_err("Unable to generate temp ECDH key");
+        SSL_CTX_set_tmp_ecdh(res->ctx, ecdh);
+        SSL_CTX_set_options(res->ctx, SSL_OP_SINGLE_ECDH_USE);
+        EC_KEY_free(ecdh);
+      }
+#if defined(SSL_CTX_set_ecdh_auto)
+      else {
+        SSL_CTX_set_ecdh_auto(res->ctx, 1);
+      }
+#endif
 #endif
     } else if (!regexec(&Disabled, lin, 4, matches, 0)) {
       res->disabled = std::atoi(lin + matches[1].rm_so);

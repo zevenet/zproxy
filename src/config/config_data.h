@@ -79,6 +79,7 @@ class BackendConfig {
   int resurrect;       /* this back-end is to be resurrected */
   int disabled;        /* true if the back-end is disabled */
   int connections;
+  int ecdh_curve_nid{0};
   BackendConfig *next = nullptr;
   int key_id;
   int nf_mark;
@@ -176,6 +177,7 @@ struct ListenerConfig {
   std::string engine_id;  /* Engine id loaded by openssl*/
   bool ssl_forward_sni_server_name{false}; /* enable SNI hostname forwarding to
                                          https backends, param ForwardSNI*/
+  int ecdh_curve_nid{0};
   ServiceConfig *services{nullptr};
   ListenerConfig *next{nullptr};
 };
