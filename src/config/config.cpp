@@ -264,41 +264,6 @@ void Config::parseConfig(const int argc, char **const argv) {
           Logger::logmsg(LOG_ALERT, "%s", ZPROXY_COPYRIGHT);
           exit(EXIT_SUCCESS);
         }
-      // TODO::
-      //#ifdef C_SUPER
-      //      if (strcmp(C_SUPER, "0"))
-      //        Logger::logmsg(LOG_DEBUG, "    --disable-super");
-      //#endif
-      //#ifdef C_CERT1L
-      //      if (strcmp(C_CERT1L, "1"))
-      //        Logger::logmsg(LOG_DEBUG, "    --enable-cert1l");
-      //#endif
-      //#ifdef C_SSL
-      //      if (strcmp(C_SSL, ""))
-      //        Logger::logmsg(LOG_DEBUG, "    --with-ssl=%s", C_SSL);
-      //#endif
-      //#ifdef C_T_RSA
-      //      if (strcmp(C_T_RSA, "0"))
-      //        Logger::logmsg(LOG_DEBUG, "    --with-t_rsa=%s", C_T_RSA);
-      //#endif
-      //#ifdef C_MAXBUF
-      //      if (strcmp(C_MAXBUF, "0"))
-      //        Logger::logmsg(LOG_DEBUG, "    --with-maxbuf=%s", C_MAXBUF);
-      //#endif
-      //#ifdef C_OWNER
-      //      if (strcmp(C_OWNER, ""))
-      //        Logger::logmsg(LOG_DEBUG, "    --with-owner=%s", C_OWNER);
-      //#endif
-      //#ifdef C_GROUP
-      //      if (strcmp(C_GROUP, ""))
-      //        Logger::logmsg(LOG_DEBUG, "    --with-group=%s", C_GROUP);
-      //#endif
-      //#ifdef C_DH_LEN
-      //      if (strcmp(C_DH_LEN, "0"))
-      //        Logger::logmsg(LOG_DEBUG, "    --with-dh=%s", C_DH_LEN);
-      //#endif
-      //        Logger::logmsg(LOG_DEBUG, "Exiting...");
-      //        exit(0);
       default:
         Logger::logmsg(LOG_ERR, "bad flag -%c", optopt);
         exit(1);
@@ -340,8 +305,6 @@ void Config::parseConfig(const int argc, char **const argv) {
   /* set the facility only here to ensure the syslog gets opened if necessary
    */
   log_facility = def_facility;
-
-  return;
 }
 
 std::string Config::file2str(const char *fname) {
@@ -707,8 +670,7 @@ ListenerConfig *Config::parse_HTTPS() {
 #endif
 #ifdef SSL_OP_NO_TLSv1_3
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0)
-        ssl_op_enable |= SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2 |
-                         SSL_OP_NO_TLSv1_3;
+        ssl_op_enable |= SSL_OP_NO_TLSv1_3;
 #endif
 #ifndef OPENSSL_NO_ECDH
     } else if (!regexec(&ECDHCurve, lin, 4, matches, 0)) {
@@ -1340,7 +1302,10 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
       lin[matches[1].rm_eo] = '\0';
       res->ssl_config_file = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&SSLConfigSection, lin, 4, matches, 0)) {
-      if (res->ssl_config_file.empty()) conf_err("SSLConfigSection needed if SSLConfigFile directive is set - aborted");
+      if (res->ssl_config_file.empty())
+        conf_err(
+            "SSLConfigSection needed if SSLConfigFile directive is set - "
+            "aborted");
       lin[matches[1].rm_eo] = '\0';
       res->ssl_config_section = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&Priority, lin, 4, matches, 0)) {
@@ -1451,6 +1416,10 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_2") == 0)
         SSL_CTX_set_options(
             res->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2);
+#endif
+#ifdef SSL_OP_NO_TLSv1_3
+      else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0)
+        SSL_CTX_set_options(res->ctx, SSL_OP_NO_TLSv1_3);
 #endif
 #ifndef OPENSSL_NO_ECDH
     } else if (!regexec(&ECDHCurve, lin, 4, matches, 0)) {
@@ -1707,7 +1676,9 @@ bool Config::compile_regex() {
       regcomp(&AddHeader, "^[ \t]*AddHeader[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&SSLAllowClientRenegotiation, "^[ \t]*SSLAllowClientRenegotiation[ \t]+([012])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&DisableProto, "^[ \t]*Disable[ \t]+(SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2)[ \t]*$",
+      regcomp(&DisableProto,
+              "^[ \t]*Disable[ "
+              "\t]+(SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2|TLSv1_3)[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&SSLHonorCipherOrder, "^[ \t]*SSLHonorCipherOrder[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||

@@ -80,7 +80,19 @@ static int get_line(BIO *const in, char *const buf, const int bufsize, int *out_
 static std::unique_ptr<char> ossGetErrorStackString(void) {
   BIO *bio = BIO_new(BIO_s_mem());
   ERR_print_errors(bio);
-  char *buf = NULL;
+  char *buf = nullptr;
+  size_t len = BIO_get_mem_data(bio, &buf);
+  char *ret = (char *)calloc(1, 1 + len);
+  if (ret) memcpy(ret, buf, len);
+  BIO_free(bio);
+  return std::unique_ptr<char>(ret);
+}
+
+static std::unique_ptr<char> ossGetSslSessionInfo(const SSL_SESSION *ses) {
+  if (ses == nullptr) return nullptr;
+  BIO *bio = BIO_new(BIO_s_mem());
+  char *buf = nullptr;
+  if (SSL_SESSION_print(bio, ses) == 0) return nullptr;
   size_t len = BIO_get_mem_data(bio, &buf);
   char *ret = (char *)calloc(1, 1 + len);
   if (ret) memcpy(ret, buf, len);
