@@ -351,7 +351,7 @@ Use an OpenSSL hardware acceleration card called \fIname\fR. Available
 only if OpenSSL-engine is installed on your system.
 .TP
 \fBECDHcurve\fR "name"
-Use the named curve for elliptical curve encryption (default: prime256v1).
+Use for listener the named curve for elliptical curve encryption (default: automatic).
 .TP
 \fBControl\fR "/path/to/socket"
 Set the control socket path. If not defined
@@ -652,12 +652,17 @@ is the depth of verification for a client certificate (up to 9). The default
 depth limit is 9, allowing for the peer certificate and additional 9 CA
 certificates that must be verified.
 .TP
-\fBDisable\fR SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2
+\fBDisable\fR SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2|TLSv1_3
 Disable the protocol \fBand all lower protocols as well\fR.
 This is due to a limitation in OpenSSL, which does not support disabling a single
 protocol. For example,
 .I Disable TLSv1
 would disable SSLv2, SSLv3 and TLSv1, thus allowing only TLSv1_1 and TLSv1_2.
+.I [NOTE]Disable TLSv1_3
+would disable only TLSv1_3.
+.TP
+\fBECDHcurve\fR "name"
+Use the named curve for elliptical curve encryption (default: automatic), overwrite global ECDHcurve.
 .TP
 \fBCiphers\fR "acceptable:cipher:list"
 This is the list of ciphers that will be accepted by the SSL connection; it is a
@@ -949,13 +954,14 @@ This directive may appear only after the
 .I HTTPS
 directive.
 .TP
-\fBDisable\fR SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2
+\fBDisable\fR SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2|TLSv1_3
 Disable the protocol \fBand all lower protocols as well\fR.
 This is due to a limitation in OpenSSL, which does not support disabling a single
 protocol. For example,
 .I Disable TLSv1
 would disable SSLv2, SSLv3 and TLSv1, thus allowing only TLSv1_1 and TLSv1_2.
-This directive may appear only after the
+.I [NOTE]Disable TLSv1_3
+would disable only TLSv1_3.
 .I HTTPS
 directive.
 .TP
