@@ -110,10 +110,10 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/src/version.h"
     )
 
-configure_file(
-    "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
-    "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
-    )
+#configure_file(
+#    "${PROJECT_SOURCE_DIR}/cmake/project-info.in"
+#    "${PROJECT_SOURCE_DIR}/build-pkg/project-info"
+#    )
 
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")

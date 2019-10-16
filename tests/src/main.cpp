@@ -34,10 +34,9 @@
 //#include "t_cache.h"
 //#include "t_cache_storage.h"
 #endif
-std::mutex Logger::log_lock;
+
 int Logger::log_level = 8;
 int Logger::log_facility = -1;
-std::map<std::thread::id,thread_info> Logger::log_info;
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

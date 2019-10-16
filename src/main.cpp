@@ -29,12 +29,9 @@
 
 static jmp_buf jmpbuf;
 
-// Log initilization
-std::mutex Logger::log_lock;
-int Logger::log_level = 6;
-int Logger::log_facility = -1;
-
-std::map<std::thread::id,thread_info> Logger::log_info;
+// Default Log initilization
+int Logger::log_level = 5;
+int Logger::log_facility = LOG_DAEMON;
 
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 

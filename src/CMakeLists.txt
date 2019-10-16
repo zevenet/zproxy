@@ -45,7 +45,7 @@ add_definitions(-DMALLOC_TRIM_TIMER=0 -DMALLOC_TRIM_TIMER_INTERVAL=300) # force 
 add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=2)
 
 set(l7core_sources
-    debug/logger.h
+    debug/logger.h debug/logger.cpp
     debug/backtrace.h debug/backtrace.cpp
     ssl/ssl_common.h
     ssl/ssl_context.h ssl/ssl_context.cpp
