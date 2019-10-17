@@ -308,16 +308,11 @@ void Config::parseConfig(const int argc, char **const argv) {
 }
 
 std::string Config::file2str(const char *fname) {
-  std::string res;
-  struct stat st;
-  int fin;
-
+  struct stat st {};
   if (stat(fname, &st)) conf_err("can't stat Err file - aborted");
-  if ((fin = open(fname, O_RDONLY)) < 0) conf_err("can't open Err file - aborted");
-  res.reserve(static_cast<size_t>(st.st_size + 1));
-  if (read(fin, res.data(), static_cast<size_t>(st.st_size)) != st.st_size) conf_err("can't read Err file - aborted");
-  res += '\0';
-  close(fin);
+  std::ifstream t(fname);
+  std::string res((std::istreambuf_iterator<char>(t)),
+                  std::istreambuf_iterator<char>());
   return res;
 }
 
