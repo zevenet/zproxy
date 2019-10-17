@@ -1,16 +1,28 @@
-# WIP Zevenet Http proxy
+# ZPROXY
 
-zproxy is an event-driven and multi-threading L7 reverse proxy. zproxy supports HTTP and HTTPS by using OpenSSL 1.1.
+Zevenet zproxy is a WIP multithreaded and event-driven L7 reverse proxy and load balancer inspired by Pound reverse proxy simplicity.
+
+zproxy main features:
+
+    * HTTP, HTTPS handling
+    * Pound load balancer configuration file compatibility.
+    * Managed by REST API requests in JSON format.
+    * Load balancing algorithms: Round Robin, Least Connections, Response Time, Pending Connections
+    * Connection pinning.
+    * Backend output traffic marking.
+    * Simple HTTP Caching - WIP
+    * Pound control interface like binary (zproxyctl)
+
 
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-### Prerequisites
+### Build prerequisites
 
-* A modern C/C++ compiler
-* CMake 3.6+ installed
-* libssl  (1.1 for now)
+* A modern C/C++ compiler (>= C++17)
+* CMake >= 3.6 
+* Openssl >= 1.1
 * zlib
 * doxygen for source code documentation generation
 
@@ -23,12 +35,11 @@ These instructions will get you a copy of the project up and running on your loc
 First we need to check out the git repo:
 
 ```bash
-$ git clone https://github.com/abdessamad-zevenet/zproxy zproxy.git
+$ git clone https://github.com/zevenet/zproxy zproxy.git
 $ cd zproxy.git
 $ mkdir build
 $ cd build && cmake ..
 $ make [&& make install]
-$ Run bin/zproxy -f /path/to/pound/config/file.cfg
 
 # Check the command line interface controller help output:
 $ bin/zproxyctl
@@ -39,153 +50,158 @@ $ bin/zproxytests
 
 #### Project Structure
 
-* `src/*` — C++ code that compiles into a library (libzproxy.a) and the main zproxy binary.
-* `src/ctl` — Generate a command line interface binary.
+* `src/*` — C++ code that compiles into a library (libl7proxy.a) and the main zproxy binary.
+* `src/ctl` — Generate a pound command line interface like binary - zproxyctl
 * `test/lib` — C++ libraries used for tests ( Google Test).
 * `test/src` — C++ test suite.
 * `cmake/*` — Cmake input files.
-* `docs/` _ Doxygen configuration file (Doxyfile).
-* `build-pkg/` _ docker based automated Debian installation package generation.
-* `docker/` _ Files for creation and running a complete GUI IDE (QTCreator) in a docker container based on debian stretch.
+* `docs/` _ Doxygen configuration file (Doxyfile) and man pages.
 
 #### Quick start guide
 
 By following this guide you will end up having a zproxy deployed and running.
 
-1. Download and compile the zproxy proxy. You can follow the instructions above
+1. Download and build zproxy.
 
 2. Take one of the example configuration files at `tests/data`. It is recommended to use `simple_http.cfg` or `simple_https.cfg` and modify it to use your infrastructure.
 
-3. Run `$ bin/zproxy -f /path/to/config_file`
+3. Run `$ bin/zproxy -f /path/to/config_file.cfg`
 
 4. Now it is ready! You can check the global proxy status by using the control API.
 
-## Feature Description
+## API Description
 
-API:
 
-- It is possible to do hot backend, service, listener and session changes using the API. Here is the operations allowed by the API.
-
-*All the request must be directed to the zproxy unix socket or to the control IP address and port. The response is going to be a JSON formatted response with all the information requested or the operation result.*
+*All request must be directed to the zproxy unix socket or to the control IP address and port. The response is going to be a JSON formatted response with all the information requested or the operation result.*
 
 **Get the services status of the listener with the id "listener_id"**
 
-GET http://address:port/listener/listener_id/services
+GET http://address:port/listener/<listener_id>/services
 
 **Get the service with the id "service_id" general status**
 
-GET http://address:port/listener/listener_id/service/service_id
+GET http://address:port/listener/<listener_id>/service/<service_id>
 
 **Get the backend with the id "backend_id" general status**
 
-GET http://address:port/listener/listener_id/service/service_id/backend/backend_id
+GET http://address:port/listener/<listener_id>/service/<service_id>/backend/<backend_id>
 
-**Get any field of a service or backend**
+**WIP - not all fields changes supported yet**
 
-GET http://address:port/listener/listener_id/service/service_id/field_name
+*Get any field of a service or backend* 
 
-GET http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
+GET http://address:port/listener/<listener_id>/service/<service_id>/<field_name>
 
-**Modify any field of a service or backend**
+GET http://address:port/listener/<listener_id>/service/<service_id>/backend/<backend_id>/<field_name>
 
-POST {field_name: value} http://address:port/listener/listener_id/service/service_id/field_name
+*Modify any field of a service or backend*
 
-POST {field_name: value} http://address:port/listener/listener_id/service/service_id/backend/backend_id/field_name
+POST {field_name: value} http://address:port/listener/<listener_id>/service/<service_id>/<field_name>
+
+POST {field_name: value} http://address:port/listener/<listener_id>/service/<service_id>/backend/<backend_id>/<field_name>
+
 
 - Examples of the API usage
 
 **Get all the services status.**
 
-GET http://localhost/listener/0/services
+GET <http://localhost/listener/0/services>
 
-```json
-"address": "0.0.0.0",
-"port": 9999,
-"services": [
-    {
-        "backends": [
-            {
-                "address": "192.168.0.253",
-                "connect-time": 0.0,
-                "connections": 0,
-                "id": 1,
-                "name": "bck_1",
-                "pending-connections": 0,
-                "port": 80,
-                "response-time": -1.0,
-                "status": "active",
-                "weight": 5
-            },
-            {
-                "address": "192.168.0.254",
-                "connect-time": 0.0,
-                "connections": 0,
-                "id": 2,
-                "name": "bck_2",
-                "pending-connections": 0,
-                "port": 80,
-                "response-time": 0.007924,
-                "status": "active",
-                "weight": 6
-            }
-        ],
-        "id": 1,
-        "name": "srv1",
-        "sessions": [
-            {
-                "backend-id": 2,
-                "id": "127.0.0.1",
-                "last-seen": 1540807787
-            }
-        ],
-        "status": "active"
-    },
-    {
-        "backends": [
-            {
-                "address": "192.168.0.253",
-                "connect-time": 0.0,
-                "connections": 0,
-                "id": 1,
-                "name": "bck_1",
-                "pending-connections": 0,
-                "port": 80,
-                "response-time": -1.0,
-                "status": "active",
-                "weight": 5
-            },
-            {
-                "address": "192.168.0.254",
-                "connect-time": 0.0,
-                "connections": 0,
-                "id": 2,
-                "name": "bck_2",
-                "pending-connections": 0,
-                "port": 80,
-                "response-time": -1.0,
-                "status": "active",
-                "weight": 6
-            }
-        ],
-        "id": 2,
-        "name": "srv2",
-        "sessions": [],
-        "status": "active"
-    }
-]
+```bash
+curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/services
+{
+    "address": "0.0.0.0",
+    "port": 9999,
+    "services": [
+        {
+            "backends": [
+                {
+                    "address": "192.168.0.253",
+                    "connect-time": 0.0,
+                    "connections": 0,
+                    "id": 1,
+                    "name": "bck_1",
+                    "pending-connections": 0,
+                    "port": 80,
+                    "response-time": -1.0,
+                    "status": "active",
+                    "weight": 5
+                },
+                {
+                    "address": "192.168.0.254",
+                    "connect-time": 0.0,
+                    "connections": 0,
+                    "id": 2,
+                    "name": "bck_2",
+                    "pending-connections": 0,
+                    "port": 80,
+                    "response-time": 0.007924,
+                    "status": "active",
+                    "weight": 6
+                }
+            ],
+            "id": 1,
+            "name": "srv1",
+            "sessions": [
+                {"backend-id": 2,"id": "127.0.0.1","last-seen": 1540807787}
+            ],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "address": "192.168.0.253",
+                    "connect-time": 0.0,
+                    "connections": 0,
+                    "id": 1,
+                    "name": "bck_1",
+                    "pending-connections": 0,
+                    "port": 80,
+                    "response-time": -1.0,
+                    "status": "active",
+                    "weight": 5
+                },
+                {
+                    "address": "192.168.0.254",
+                    "connect-time": 0.0,
+                    "connections": 0,
+                    "id": 2,
+                    "name": "bck_2",
+                    "pending-connections": 0,
+                    "port": 80,
+                    "response-time": -1.0,
+                    "status": "active",
+                    "weight": 6
+                }
+            ],
+            "id": 2,
+            "name": "srv2",
+            "sessions": [],
+            "status": "active"
+        }
+    ]
+}
 ```
 
 **Get the service status**
 
-GET http://localhost/listener/0/service/1/status
-
-```json
- "status": "active"
+```bash
+curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/status
+{"result":"ok"}
 ```
 
 **Disable a backend**
 
-POST {status: disabled} http://localhost/listener/0/service/1/status
+```bash
+curl -X PATCH --data-ascii '{"status": "disabled"}'  --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/backend/0/status
+{"result":"ok"}
+```
+**Insert new session to service **
+```bash
+curl -X PUT --data-ascii '{"backend-id": 1,"id": "127.0.0.1","last-seen": 1570807787}'  --unix-socket //tmp/zproxy.socket http://localhost/listener/0/service/0/sessions
+{"result":"ok"}
+```
+
 
 Ctl:
 
@@ -248,6 +264,22 @@ zproxy_functional_tests -https
 # Runs the functional tests over the backend without starting zproxy, setting a different ip and port.
 zproxy_functional_tests -https -no_zproxy -ip 192.168.100.20 -port 8080 -port_https 8443
 ```
+#### Benchmark
+
+The test bellow was done using two backends running nginx and a running zproxy in an Intel  i5-6500, 4G RAM, 16 GB MSata.
+
+```bash
+wrk -d30 -t10 -c400 http://172.16.1.1:85
+Running 30s test @ http://172.16.1.1:85
+  10 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.92ms  535.56us  38.70ms   95.88%
+    Req/Sec    21.07k     0.96k   39.88k    91.86%
+  6309651 requests in 30.10s, 1.72GB read
+Requests/sec: 209627.99
+Transfer/sec:     58.57MB    
+```                                       
+        
 
 #### Contributing
 
