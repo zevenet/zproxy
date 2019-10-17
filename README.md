@@ -292,6 +292,7 @@ Transfer/sec:     58.57MB
 ### License
 
 &copy; 2019 Zevenet.
+AGPL-3.0.
 
 ### Authors
 
