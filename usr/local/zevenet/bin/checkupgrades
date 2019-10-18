@@ -96,10 +96,16 @@ function UmountMountPoint {
 
 case "$1" in
 '')
+	# to activate flag netcat SSL if https proxy is configured
+	https_proxy=`sed 's|https://||g' <<< $https_proxy`
+	if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
+
 	# test connection with zevenet update system
-	$netcat_bin -z www.zevenet.com 443 2>/dev/null
+	$netcat_bin $flag_netcatSSL -z www.zevenet.com 443 2>/dev/null
 	if [ $? != 0 ]; then
 		echo "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
+		logger "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
+		logger "Flag netcat SSL = $flag_netcatSSL"
 		setAptOffline $apt_source_zevenet
 	else
 		UmountMountPoint

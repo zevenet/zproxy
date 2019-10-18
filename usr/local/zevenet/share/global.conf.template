@@ -260,7 +260,7 @@ $arpsend_bin="/usr/sbin/arpsend";
 #Where is dhclient
 $dhcp_bin="/usr/sbin/dhclient";
 #Where is netcat
-$netcat_bin="/usr/bin/nc";
+$netcat_bin="/usr/bin/nc.openbsd";#update
 #Where is dmidecode
 $dmidecode_bin="/usr/sbin/dmidecode";
 
