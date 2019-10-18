@@ -49,7 +49,7 @@ sub getCertFiles    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $configdir = &getGlobalConfiguration( 'certdir' );
 
 	opendir ( DIR, $configdir );
 	my @files = grep ( /.*\.pem$/, readdir ( DIR ) );
@@ -324,6 +324,7 @@ sub getFarmCertUsed    #($cfile)
 
 	require Zevenet::Farm::Core;
 
+	my $certdir   = &getGlobalConfiguration( 'certdir' );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my @farms     = &getFarmsByType( "https" );
 	my $output    = -1;
@@ -335,7 +336,7 @@ sub getFarmCertUsed    #($cfile)
 
 		use File::Grep qw( fgrep );
 
-		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$farm_filename" )
+		if ( fgrep { /Cert \"$certdir\/$cfile\"/ } "$configdir/$farm_filename" )
 		{
 			$output = 0;
 		}
@@ -416,7 +417,7 @@ sub delCert    # ($certname)
 	$certname = quotemeta $certname;
 	my $certdir;
 
-	$certdir = &getGlobalConfiguration( 'configdir' );
+	$certdir = &getGlobalConfiguration( 'certdir' );
 
 	# verify existance in config directory for security reasons
 	opendir ( DIR, $certdir );
@@ -470,7 +471,7 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 		 $certkey,      $certpassword
 	) = @_;
 
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $configdir = &getGlobalConfiguration( 'certdir' );
 	my $output;
 
 	##sustituir los espacios por guiones bajos en el nombre de archivo###

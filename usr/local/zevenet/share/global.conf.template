@@ -29,6 +29,8 @@ $zbindir="$zdir/bin";#update
 $basedir="$zdir/www";#update
 #configuration directory.In this section all config files are saved.
 $configdir="$zdir/config";#update
+#certificates directory
+$certdir="$zdir/config/certificates";#update
 # directory for local configurations, it is not sync by the cluster
 $localconfig="$configdir/local";#update
 #Directory where is check script. In this directory you can save your own check scripts.

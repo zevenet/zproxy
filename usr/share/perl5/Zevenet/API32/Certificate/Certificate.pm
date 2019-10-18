@@ -36,7 +36,7 @@ sub get_certificate_info    # ()
 	require Zevenet::Certificate;
 
 	my $desc     = "Show certificate details";
-	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir = &getGlobalConfiguration( 'certdir' );
 
 	if ( &getValidFormat( 'certificate', $cert_filename )
 		 && -f "$cert_dir\/$cert_filename" )

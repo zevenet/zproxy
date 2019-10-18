@@ -39,7 +39,7 @@ sub certificates    # ()
 
 	my $desc         = "List certificates";
 	my @certificates = &getCertFiles();
-	my $configdir    = &getGlobalConfiguration( 'configdir' );
+	my $configdir    = &getGlobalConfiguration( 'certdir' );
 	my @out;
 
 	foreach my $cert ( @certificates )
@@ -65,7 +65,7 @@ sub download_certificate    # ()
 	my $cert_filename = shift;
 
 	my $desc      = "Download certificate";
-	my $cert_dir  = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir  = &getGlobalConfiguration( 'certdir' );
 	my $cert_path = "$cert_dir/$cert_filename";
 
 	unless ( $cert_filename =~ /\.(pem|csr)$/ && -f $cert_path )
@@ -91,7 +91,7 @@ sub delete_certificate    # ( $cert_filename )
 	require Zevenet::Certificate;
 
 	my $desc     = "Delete certificate";
-	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir = &getGlobalConfiguration( 'certdir' );
 
 	# check is the certificate file exists
 	if ( !-f "$cert_dir\/$cert_filename" )
@@ -139,7 +139,7 @@ sub create_csr
 	require Zevenet::Certificate;
 
 	my $desc      = 'Create CSR';
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $configdir = &getGlobalConfiguration( 'certdir' );
 
 	if ( -f "$configdir/$json_obj->{name}.csr" )
 	{
@@ -231,7 +231,7 @@ sub upload_certificate    # ()
 	require Zevenet::File;
 
 	my $desc      = "Upload PEM certificate";
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $configdir = &getGlobalConfiguration( 'certdir' );
 
 	if ( not &getValidFormat( 'certificate', $filename ) )
 	{
@@ -336,7 +336,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $configdir = &getGlobalConfiguration( 'certdir' );
 
 	# validate certificate filename and format
 	unless ( -f $configdir . "/" . $json_obj->{ file } )

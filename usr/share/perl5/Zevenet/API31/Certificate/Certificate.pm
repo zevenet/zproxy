@@ -36,7 +36,7 @@ sub get_certificate_info    # ()
 	require Zevenet::Certificate;
 
 	my $desc     = "Show certificate details";
-	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir = &getGlobalConfiguration( 'certdir' );
 	$cert_dir = &getGlobalConfiguration( 'basedir' )
 	  if $cert_filename eq 'zlbcertfile.pem';
 

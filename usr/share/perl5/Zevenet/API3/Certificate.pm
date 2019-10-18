@@ -38,7 +38,7 @@ sub certificates    # ()
 
 	foreach my $certificate ( @certificates )
 	{
-		my $configdir       = &getGlobalConfiguration( 'configdir' );
+		my $configdir       = &getGlobalConfiguration( 'certdir' );
 		my $certificateFile = "$configdir\/$certificate";
 
 		my $type     = &getCertType( $certificateFile );
@@ -76,7 +76,7 @@ sub download_certificate    # ()
 			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
-	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir = &getGlobalConfiguration( 'certdir' );
 	$cert_dir = &getGlobalConfiguration( 'basedir' )
 	  if $cert_filename eq 'zlbcertfile.pem';
 
@@ -119,7 +119,7 @@ sub get_certificate_info    # ()
 			 "debug", "PROFILING" );
 	my $cert_filename = shift;
 
-	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir = &getGlobalConfiguration( 'certdir' );
 	$cert_dir = &getGlobalConfiguration( 'basedir' )
 	  if $cert_filename eq 'zlbcertfile.pem';
 
@@ -160,7 +160,7 @@ sub delete_certificate    # ( $cert_filename )
 	my $description   = "Delete certificate";
 	my $errormsg;
 
-	my $cert_dir = &getGlobalConfiguration( 'configdir' );
+	my $cert_dir = &getGlobalConfiguration( 'certdir' );
 	$cert_dir = &getGlobalConfiguration( 'basedir' )
 	  if $cert_filename eq 'zlbcertfile.pem';
 
@@ -226,7 +226,7 @@ sub create_csr
 	my $description = 'Create CSR';
 	my $errormsg;
 
-	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $configdir = &getGlobalConfiguration( 'certdir' );
 
 	if ( -f "$configdir/$json_obj->{name}.csr" )
 	{
@@ -367,7 +367,7 @@ sub upload_certificate    # ()
 	my $filename          = shift;
 
 	my $description = "Upload PEM certificate";
-	my $configdir   = &getGlobalConfiguration( 'configdir' );
+	my $configdir   = &getGlobalConfiguration( 'certdir' );
 
 	if ( $filename =~ /^\w.+\.pem$/ )
 	{
