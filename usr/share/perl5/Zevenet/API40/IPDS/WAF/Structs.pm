@@ -33,6 +33,7 @@ my $DEFAULT_SKIP       = 0;
 
 my $trOperator = &createTRANSLATE(
 								  {
+									strBegins            => "beginsWith",
 									strContains          => "contains",
 									strContainsWord      => "containsWord",
 									strEnds              => "endsWith",
