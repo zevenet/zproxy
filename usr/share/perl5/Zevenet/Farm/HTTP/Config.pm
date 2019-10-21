@@ -423,6 +423,7 @@ Function: getFarmHttpVerb
 		2. standardWebDAV, add the verbs LOCK, UNLOCK, PROPFIND, PROPPATCH, SEARCH, MKCOL, MOVE, COPY, OPTIONS, TRACE, MKACTIVITY, CHECKOUT, MERGE, REPORT.
 		3. MSextWebDAV, add the verbs SUBSCRIBE, UNSUBSCRIBE, NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT.
 		4. MSRPCext, add the verbs RPC_IN_DATA, RPC_OUT_DATA.
+		5. OptionsHTTP, add the verb OPTIONS to the set extendedHTTP.
 
 Parameters:
 	farmname - Farm name

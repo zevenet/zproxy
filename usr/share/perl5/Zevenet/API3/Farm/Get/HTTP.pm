@@ -25,7 +25,7 @@ use strict;
 include 'Zevenet::IPDS::Core';
 
 # GET /farms/<farmname> Request info of a http|https Farm
-sub farms_name_http # ( $farmname )
+sub farms_name_http    # ( $farmname )
 {
 	my $farmname = shift;
 
@@ -49,10 +49,11 @@ sub farms_name_http # ( $farmname )
 	elsif ( $httpverb == 2 ) { $httpverb = "standardWebDAV"; }
 	elsif ( $httpverb == 3 ) { $httpverb = "MSextWebDAV"; }
 	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
+	elsif ( $httpverb == 5 ) { $httpverb = "OptionsHTTP"; }
 
-	my $type     = &getFarmType( $farmname );
-	my $cipher   = '';
-	my $ciphers  = 'all';
+	my $type    = &getFarmType( $farmname );
+	my $cipher  = '';
+	my $ciphers = 'all';
 	my @cnames;
 
 	if ( $type eq "https" )
@@ -87,7 +88,7 @@ sub farms_name_http # ( $farmname )
 		}
 	}
 
-	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vip = &getFarmVip( "vip", $farmname );
 	my $vport = 0 + &getFarmVip( "vipp", $farmname );
 
 	my $err414 = &getFarmErr( $farmname, "414" );
@@ -109,21 +110,21 @@ sub farms_name_http # ( $farmname )
 	# }
 
 	$output_params = {
-		status          => $status,
-		restimeout      => $timeout,
-		contimeout      => $connto,
-		resurrectime    => $alive,
-		reqtimeout      => $client,
-		rewritelocation => $rewritelocation,
-		httpverb        => $httpverb,
-		listener        => $type,
-		vip             => $vip,
-		vport           => $vport,
-		error500        => $err500,
-		error414        => $err414,
-		error501        => $err501,
-		error503        => $err503
-	  };
+					   status          => $status,
+					   restimeout      => $timeout,
+					   contimeout      => $connto,
+					   resurrectime    => $alive,
+					   reqtimeout      => $client,
+					   rewritelocation => $rewritelocation,
+					   httpverb        => $httpverb,
+					   listener        => $type,
+					   vip             => $vip,
+					   vport           => $vport,
+					   error500        => $err500,
+					   error414        => $err414,
+					   error501        => $err501,
+					   error503        => $err503
+	};
 
 	if ( $type eq "https" )
 	{
@@ -138,12 +139,12 @@ sub farms_name_http # ( $farmname )
 
 	foreach my $s ( @serv )
 	{
-		my $serviceStruct = &getZapiHTTPServiceStruct ( $farmname, $s );
+		my $serviceStruct = &getZapiHTTPServiceStruct( $farmname, $s );
 
 		# Remove backend status 'undefined', it is for news api versions
-		foreach my $be (@{$serviceStruct->{ 'backends' }})
+		foreach my $be ( @{ $serviceStruct->{ 'backends' } } )
 		{
-			$be->{ 'status' } = 'up'  if ($be->{ 'status' } eq 'undefined');
+			$be->{ 'status' } = 'up' if ( $be->{ 'status' } eq 'undefined' );
 		}
 
 		push @out_s, $serviceStruct;
@@ -155,11 +156,11 @@ sub farms_name_http # ( $farmname )
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $output_params,
-				 services    	=> \@out_s,
-				 ipds			=> $ipds,
+				 services    => \@out_s,
+				 ipds        => $ipds,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # Get all IPDS rules applied to a farm
@@ -185,7 +186,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -197,7 +199,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -209,7 +212,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}
@@ -235,7 +239,7 @@ sub getZapiHTTPServiceStruct
 	my @serv = split ( ' ', $services );
 
 	# return error if service is not found
-	return $service_ref unless grep( { $service_name eq $_ } @serv );
+	return $service_ref unless grep ( { $service_name eq $_ } @serv );
 
 	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
 	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
@@ -257,7 +261,7 @@ sub getZapiHTTPServiceStruct
 	}
 
 	my @fgconfig  = &getFarmGuardianConf( $farmname, $service_name );
-	my $fgttcheck = $fgconfig[1]+0;
+	my $fgttcheck = $fgconfig[1] + 0;
 	my $fgscript  = $fgconfig[2];
 	my $fguse     = $fgconfig[3];
 	my $fglog     = $fgconfig[4];

@@ -26,7 +26,10 @@ use Zevenet::Farm::Config;
 use Zevenet::Farm::Action;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # PUT /farms/<farmname> Modify a http|https Farm
 sub modify_http_farm    # ( $json_obj, $farmname )
@@ -45,7 +48,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $farmname_old;
 
 	# Check that the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -67,15 +70,15 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			$reload_ipds = 1;
 
 			&eload(
-				module => 'Zevenet::IPDS::Base',
-				func   => 'runIPDSStopByFarm',
-				args   => [$farmname],
+					module => 'Zevenet::IPDS::Base',
+					func   => 'runIPDSStopByFarm',
+					args   => [$farmname],
 			);
 
 			&eload(
-				module => 'Zevenet::Cluster',
-				func   => 'runZClusterRemoteManager',
-				args   => ['ipds', 'stop', $farmname],
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['ipds', 'stop', $farmname],
 			);
 		}
 	}
@@ -253,9 +256,9 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			}
 
 			my $status = &eload(
-				module => 'Zevenet::Farm::HTTP::Ext',
-				func   => 'setHTTPFarmLogs',
-				args   => [$farmname, $json_obj->{ logs }],
+								 module => 'Zevenet::Farm::HTTP::Ext',
+								 func   => 'setHTTPFarmLogs',
+								 args   => [$farmname, $json_obj->{ logs }],
 			);
 
 			if ( $status )
@@ -263,7 +266,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 				my $msg = "Some errors happened trying to modify the log parameter.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
-				$restart_flag = "true";
+			$restart_flag = "true";
 		}
 
 		# Enable or disable ignore 100 continue header
@@ -279,22 +282,23 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			$action = 1 if ( $json_obj->{ ignore_100_continue } =~ /^true$/ );
 
 			my $newaction = &eload(
-				module => 'Zevenet::Farm::HTTP::Ext',
-				func   => 'getHTTPFarm100Continue',
-				args   => [$farmname],
+									module => 'Zevenet::Farm::HTTP::Ext',
+									func   => 'getHTTPFarm100Continue',
+									args   => [$farmname],
 			);
 
 			if ( $newaction != $action )
 			{
 				my $status = &eload(
-					module => 'Zevenet::Farm::HTTP::Ext',
-					func   => 'setHTTPFarm100Continue',
-					args   => [$farmname, $action],
+									 module => 'Zevenet::Farm::HTTP::Ext',
+									 func   => 'setHTTPFarm100Continue',
+									 args   => [$farmname, $action],
 				);
 
 				if ( $status == -1 )
 				{
-					my $msg = "Some errors happened trying to modify the ignore_100_continue parameter.";
+					my $msg =
+					  "Some errors happened trying to modify the ignore_100_continue parameter.";
 					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 
@@ -308,7 +312,8 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	if ( exists ( $json_obj->{ httpverb } ) )
 	{
 		if ( $json_obj->{ httpverb } !~
-			 /^(?:standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext)$/ )
+			/^(?:standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext|OptionsHTTP)$/
+		  )
 		{
 			my $msg = "Invalid httpverb value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -321,6 +326,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		elsif ( $json_obj->{ httpverb } eq "standardWebDAV" ) { $httpverb = 2; }
 		elsif ( $json_obj->{ httpverb } eq "MSextWebDAV" )    { $httpverb = 3; }
 		elsif ( $json_obj->{ httpverb } eq "MSRPCext" )       { $httpverb = 4; }
+		elsif ( $json_obj->{ httpverb } eq "OptionsHTTP" )    { $httpverb = 5; }
 
 		my $status = &setFarmHttpVerb( $httpverb, $farmname );
 		if ( $status == -1 )
@@ -436,10 +442,8 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			{
 				if ( $eload )
 				{
-					my $ssloff = &eload(
-						module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-						func   => 'getFarmCipherSSLOffLoadingSupport',
-					);
+					my $ssloff = &eload( module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+										 func   => 'getFarmCipherSSLOffLoadingSupport', );
 
 					unless ( $ssloff )
 					{
@@ -499,9 +503,9 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			if ( $eload )
 			{
 				$status = &eload(
-					module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-					func   => 'setFarmCertificateSNI',
-					args   => [$json_obj->{ certname }, $farmname],
+								  module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+								  func   => 'setFarmCertificateSNI',
+								  args   => [$json_obj->{ certname }, $farmname],
 				);
 			}
 			else
@@ -630,7 +634,8 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
-	&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "LSLB" );
+	&zenlog( "Success, some parameters have been changed in farm $farmname.",
+			 "info", "LSLB" );
 
 	# set numeric values to numeric type
 	for my $key ( keys %{ $json_obj } )
@@ -650,9 +655,9 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		if ( $eload )
 		{
 			@cnames = &eload(
-				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-				func   => 'getFarmCertificatesSNI',
-				args   => [$farmname],
+							  module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+							  func   => 'getFarmCertificatesSNI',
+							  args   => [$farmname],
 			);
 		}
 		else
@@ -705,15 +710,15 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		if ( $eload )
 		{
 			&eload(
-				module => 'Zevenet::IPDS::Base',
-				func   => 'runIPDSStartByFarm',
-				args   => [$farmname],
+					module => 'Zevenet::IPDS::Base',
+					func   => 'runIPDSStartByFarm',
+					args   => [$farmname],
 			);
 
 			&eload(
-				module => 'Zevenet::Cluster',
-				func   => 'runZClusterRemoteManager',
-				args   => ['ipds', 'start', $farmname],
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['ipds', 'start', $farmname],
 			);
 		}
 	}

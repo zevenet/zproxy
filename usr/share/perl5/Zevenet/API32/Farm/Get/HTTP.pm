@@ -24,7 +24,10 @@ use strict;
 use Zevenet::Farm::HTTP::Config;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 sub get_http_service_struct
 {
@@ -40,7 +43,7 @@ sub get_http_service_struct
 	my @serv = split ( ' ', $services );
 
 	# return error if service is not found
-	return $service_ref unless grep( { $service_name eq $_ } @serv );
+	return $service_ref unless grep ( { $service_name eq $_ } @serv );
 
 	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
 	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
@@ -63,7 +66,7 @@ sub get_http_service_struct
 
 	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
 
-	$ttl       = 0 unless $ttl;
+	$ttl = 0 unless $ttl;
 
 	$service_ref = {
 					 id           => $service_name,
@@ -81,32 +84,33 @@ sub get_http_service_struct
 	};
 
 	$service_ref = &eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'add_service_cookie_insertion',
-		args   => [$farmname, $service_ref],
+						   module => 'Zevenet::Farm::HTTP::Service::Ext',
+						   func   => 'add_service_cookie_insertion',
+						   args   => [$farmname, $service_ref],
 	) if $eload;
 
 	$service_ref->{ redirect_code } = &eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'getHTTPServiceRedirectCode',
-		args   => [$farmname, $service_name],
+										  module => 'Zevenet::Farm::HTTP::Service::Ext',
+										  func   => 'getHTTPServiceRedirectCode',
+										  args   => [$farmname, $service_name],
 	) if $eload;
 
 	$service_ref->{ sts_status } = &eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'getHTTPServiceSTSStatus',
-		args   => [$farmname, $service_name],
+										  module => 'Zevenet::Farm::HTTP::Service::Ext',
+										  func   => 'getHTTPServiceSTSStatus',
+										  args   => [$farmname, $service_name],
 	) if $eload;
 
-	$service_ref->{ sts_timeout } = int( &eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'getHTTPServiceSTSTimeout',
-		args   => [$farmname, $service_name],
-	) ) if $eload;
+	$service_ref->{ sts_timeout } = int (
+									  &eload(
+											  module => 'Zevenet::Farm::HTTP::Service::Ext',
+											  func   => 'getHTTPServiceSTSTimeout',
+											  args   => [$farmname, $service_name],
+									  )
+	) if $eload;
 
 	return $service_ref;
 }
-
 
 sub get_farm_struct
 {
@@ -131,8 +135,9 @@ sub get_farm_struct
 	elsif ( $httpverb == 2 ) { $httpverb = "standardWebDAV"; }
 	elsif ( $httpverb == 3 ) { $httpverb = "MSextWebDAV"; }
 	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
+	elsif ( $httpverb == 5 ) { $httpverb = "OptionsHTTP"; }
 
-	my $type    = &getFarmType( $farmname );
+	my $type = &getFarmType( $farmname );
 	my $certname;
 	my $cipher  = '';
 	my $ciphers = 'all';
@@ -145,9 +150,9 @@ sub get_farm_struct
 		if ( $eload )
 		{
 			@cnames = &eload(
-				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-				func   => 'getFarmCertificatesSNI',
-				args   => [$farmname],
+							  module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+							  func   => 'getFarmCertificatesSNI',
+							  args   => [$farmname],
 			);
 		}
 		else
@@ -179,7 +184,7 @@ sub get_farm_struct
 		}
 	}
 
-	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vip = &getFarmVip( "vip", $farmname );
 	my $vport = 0 + &getFarmVip( "vipp", $farmname );
 
 	my $err414 = &getFarmErr( $farmname, "414" );
@@ -190,48 +195,48 @@ sub get_farm_struct
 	my $status = &getFarmVipStatus( $farmname );
 
 	my $output_params = {
-						  status              => $status,
-						  restimeout          => $timeout,
-						  contimeout          => $connto,
-						  resurrectime        => $alive,
-						  reqtimeout          => $client,
-						  rewritelocation     => $rewritelocation,
-						  httpverb            => $httpverb,
-						  listener            => $type,
-						  vip                 => $vip,
-						  vport               => $vport,
-						  error500            => $err500,
-						  error414            => $err414,
-						  error501            => $err501,
-						  error503            => $err503
+						  status          => $status,
+						  restimeout      => $timeout,
+						  contimeout      => $connto,
+						  resurrectime    => $alive,
+						  reqtimeout      => $client,
+						  rewritelocation => $rewritelocation,
+						  httpverb        => $httpverb,
+						  listener        => $type,
+						  vip             => $vip,
+						  vport           => $vport,
+						  error500        => $err500,
+						  error414        => $err414,
+						  error501        => $err501,
+						  error503        => $err503
 	};
 
 	if ( $eload )
 	{
 		my $flag = &eload(
-			module => 'Zevenet::Farm::HTTP::Ext',
-			func   => 'getHTTPFarm100Continue',
-			args   => [$farmname],
+						   module => 'Zevenet::Farm::HTTP::Ext',
+						   func   => 'getHTTPFarm100Continue',
+						   args   => [$farmname],
 		);
 		$output_params->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
 
 		my $flag = &eload(
-			module => 'Zevenet::Farm::HTTP::Ext',
-			func   => 'getHTTPFarmLogs',
-			args   => [$farmname],
+						   module => 'Zevenet::Farm::HTTP::Ext',
+						   func   => 'getHTTPFarmLogs',
+						   args   => [$farmname],
 		);
 		$output_params->{ logs } = ( $flag ) ? "true" : "false";
 
 		$output_params->{ addheader } = &eload(
-			module => 'Zevenet::Farm::HTTP::Ext',
-			func   => 'getHTTPAddheader',
-			args   => [$farmname],
+												module => 'Zevenet::Farm::HTTP::Ext',
+												func   => 'getHTTPAddheader',
+												args   => [$farmname],
 		);
 
 		$output_params->{ headremove } = &eload(
-			module => 'Zevenet::Farm::HTTP::Ext',
-			func   => 'getHTTPHeadremove',
-			args   => [$farmname],
+												 module => 'Zevenet::Farm::HTTP::Ext',
+												 func   => 'getHTTPHeadremove',
+												 args   => [$farmname],
 		);
 	}
 
@@ -240,19 +245,23 @@ sub get_farm_struct
 		$output_params->{ certlist } = \@out_cn;
 		$output_params->{ ciphers }  = $ciphers;
 		$output_params->{ cipherc }  = $cipher;
-		$output_params->{ disable_sslv2 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )? "true": "false";
-		$output_params->{ disable_sslv3 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )? "true": "false";
-		$output_params->{ disable_tlsv1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )? "true": "false";
-		$output_params->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
-		$output_params->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
+		$output_params->{ disable_sslv2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv2" ) ) ? "true" : "false";
+		$output_params->{ disable_sslv3 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv3" ) ) ? "true" : "false";
+		$output_params->{ disable_tlsv1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1" ) ) ? "true" : "false";
+		$output_params->{ disable_tlsv1_1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_1" ) ) ? "true" : "false";
+		$output_params->{ disable_tlsv1_2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_2" ) ) ? "true" : "false";
 	}
 
 	return $output_params;
 }
 
-
 # GET /farms/<farmname> Request info of a http|https Farm
-sub farms_name_http # ( $farmname )
+sub farms_name_http    # ( $farmname )
 {
 	my $farmname = shift;
 
@@ -268,12 +277,12 @@ sub farms_name_http # ( $farmname )
 
 	foreach my $s ( @serv )
 	{
-		my $serviceStruct = &get_http_service_struct ( $farmname, $s );
+		my $serviceStruct = &get_http_service_struct( $farmname, $s );
 
 		# Remove backend status 'undefined', it is for news api versions
-		foreach my $be (@{$serviceStruct->{ 'backends' }})
+		foreach my $be ( @{ $serviceStruct->{ 'backends' } } )
 		{
-			$be->{ 'status' } = 'up'  if ($be->{ 'status' } eq 'undefined');
+			$be->{ 'status' } = 'up' if ( $be->{ 'status' } eq 'undefined' );
 		}
 		push @out_s, $serviceStruct;
 	}
@@ -285,12 +294,12 @@ sub farms_name_http # ( $farmname )
 	};
 
 	$body->{ ipds } = &eload(
-				module => 'Zevenet::IPDS::Core',
-				func   => 'getIPDSfarmsRules',
-				args   => [$farmname],
+							  module => 'Zevenet::IPDS::Core',
+							  func   => 'getIPDSfarmsRules',
+							  args   => [$farmname],
 	) if ( $eload );
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /farms/<farmname>/summary
@@ -319,13 +328,12 @@ sub farms_name_http_summary
 	};
 
 	$body->{ ipds } = &eload(
-				module => 'Zevenet::IPDS::Core',
-				func   => 'getIPDSfarmsRules',
-				args   => [$farmname],
+							  module => 'Zevenet::IPDS::Core',
+							  func   => 'getIPDSfarmsRules',
+							  args   => [$farmname],
 	) if ( $eload );
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
-
 
 1;
