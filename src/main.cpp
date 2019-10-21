@@ -35,6 +35,9 @@ int Logger::log_facility = LOG_DAEMON;
 
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 
+
+
+
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {

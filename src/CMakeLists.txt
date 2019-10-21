@@ -72,7 +72,7 @@ set(l7core_sources
     service/service_manager.h service/service_manager.cpp
     config/config_node.h
     config/config_data.h
-    config/config.h config/config.cpp  
+    config/config.h config/config.cpp
     http/http_stream.h http/http_stream.cpp
     http/http_parser.h http/http_parser.cpp
     http/pico_http_parser.h http/pico_http_parser.cpp
@@ -110,6 +110,12 @@ if (CACHE_SUPPORT)
         )
 endif ()
 
+if (ENABLE_WAF)
+    set(l7core_sources "${l7core_sources}"
+        handlers/waf.h
+        handlers/waf.cpp)
+endif()
+
 set_source_files_properties(http/http_parser.cpp
     http/http_parser.h http/picohttpparser.c http/pico_http_parser.h PROPERTIES COMPILE_FLAGS -fpermissive)
 add_library(l7pcore ${l7core_sources})
@@ -133,3 +139,7 @@ if (CACHE_SUPPORT)
     endif ()
     target_link_libraries(l7pcore PRIVATE stdc++fs)
 endif ()
+
+if (ENABLE_WAF)
+    target_link_libraries(l7pcore PRIVATE ${LIBMODSECURITY_LIBRARY})
+endif()

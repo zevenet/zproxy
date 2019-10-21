@@ -64,6 +64,9 @@ struct JSON_KEYS {
   static const std::string WEIGHT;
   static const std::string CONFIG;
   static const std::string TYPE;
+#if WAF_ENABLED
+  static const std::string WAF;
+#endif
 
   static const std::string RESULT;
 #if CACHE_ENABLED

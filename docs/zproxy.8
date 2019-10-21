@@ -12,7 +12,7 @@ zproxy \- HTTP/HTTPS reverse-proxy and load-balancer
 .SH DESCRIPTION
 .PP
 .B zproxy
-is a reverse-proxy load balancing server inspired in the directives of Pound Load Balancer 
+is a reverse-proxy load balancing server inspired in the directives of Pound Load Balancer
 but totally re-implemented in C++ with the high performance idea as a goal. It accepts requests from HTTP/HTTPS
 clients and distributes them to one or more Web servers. The HTTPS requests are
 decrypted and passed to the back-ends as plain HTTP.
@@ -252,7 +252,7 @@ Ignore case when matching URLs (default: 0). This value can be
 overridden for specific services.
 .TP
 \fBIgnore100continue\fR 0|1
-Ignore Header Expect: 100-continue (default: 1, Ignored). 
+Ignore Header Expect: 100-continue (default: 1, Ignored).
 If 0 zproxy manages Expect: 100-continue headers.
 .TP
 \fBRoutingPolicy\fR ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
@@ -315,18 +315,18 @@ value. This value can be overridden for specific back-ends.
 \fBCacheRamSize\fR value
 The maximum size (in bytes by default) that the cache will use from RAM. It is allowed to
 us some byte modifiers as k, K, m, M, g and G, pay attention not to set higher values than
-the available RAM free. 
+the available RAM free.
 .TP
 \fBCacheRamPath\fR "path"
-Indicate the path to an existing directory to use as the root point where 
+Indicate the path to an existing directory to use as the root point where
 the RAM cache storage will be mounted using ramfs filesystem.
 .TP
 \fBCacheDiskPath\fR "path"
-Path to an existing directory which will be used as the root point for the 
+Path to an existing directory which will be used as the root point for the
 on disk cache storage.
 .TP
 \fBCacheThreshold\fR value
-Percentage of the total size that the cache will use to determine whether 
+Percentage of the total size that the cache will use to determine whether
 an entry should go to ram or to disk.
 .TP
 \fBWSTimeOut\fR value
@@ -547,6 +547,12 @@ If 1 force
 to change the Destination: header in requests. The header is changed to point
 to the back-end itself with the correct protocol. Default: 0.
 .TP
+\fBWafRules\fR "file path"
+Apply a WAF ruleset file to the listener. It is possible to add several directives
+of this type. Those will be analyzed sequentially, in the same order that they appear
+in the configuration file. The rule file must be compatibility with the Modsecurity
+syntax (SecLang).
+.TP
 \fBLogLevel\fR value
 Override the global
 .I LogLevel
@@ -625,7 +631,7 @@ precede all other SSL-specific directives.
 Specify the server certificate or certificates. The
 .I certificate directory
 is a directory path containing one or more certificates, possibly a certificate chain and the signature
-for this server. This directive or 
+for this server. This directive or
 .I Cert
 is
 .B mandatory
@@ -748,17 +754,17 @@ was defined then all requests match. The matching is by default case-sensitive,
 but this can be overridden by specifying
 .B IgnoreCase 1
 .TP
-\fBOrURLs\fR 
+\fBOrURLs\fR
 Defines a block of
 .I URL
 directives that should be merged into a single pattern, all OR'd together.
-This creates a pattern like 
+This creates a pattern like
 .B ((url1)|(url2)|(url3))
- for as many 
+ for as many
 .I URL
 directives as are specified within the block.  End the block with an
 .I End
-directive. 
+directive.
 .TP
 \fBBackendCookie\fR "cookiename" "domain" "path" age|Session
 If defined, zproxy will inject a cookie in each response with the appropriate backend's key, so that
@@ -806,8 +812,8 @@ service can be later enabled with
 .I zproxyctl
 (8).
 .TP
-\fBCache\fR 
-Directives enclosed between a 
+\fBCache\fR
+Directives enclosed between a
 .I Cache
 and the following
 .I End
@@ -836,7 +842,7 @@ to redirect to.  If you use \fBRedirectAppend\fR, the original request path
 will be appended to the host and path you specified.  If you use \fBRedirectDynamic\fR,
 then
 .I url
-can contain RegEx replacements in the form 
+can contain RegEx replacements in the form
 .I $1
 through
 .I $9
@@ -909,20 +915,20 @@ for details.
 .SH "Cache"
 The
 .I zproxy
-HTTP1.1 Cache mechanism is based on 
+HTTP1.1 Cache mechanism is based on
 .I RFC 7234
-and uses regular expressions and HTTP headers in order to determine 
-if a HTTP response should be put in cache or not. The following directives determine how the 
+and uses regular expressions and HTTP headers in order to determine
+if a HTTP response should be put in cache or not. The following directives determine how the
 .I Cache
  will behave:
 .TP
 \fBContent\fR "PCRE regular expression"
-Regular expression following PCRE format, determines which kind of resources will be put in 
+Regular expression following PCRE format, determines which kind of resources will be put in
 .I Cache
 depending on its URI.
 .TP
 \fBCacheTO\fR Seconds
-Time in seconds that the cache will use to determine whether a cache entry is staled or not. This value may change for specific entries depending on HTTP cache related headers. 
+Time in seconds that the cache will use to determine whether a cache entry is staled or not. This value may change for specific entries depending on HTTP cache related headers.
 .TP
 \fBMaxSize\fR Bytes
 The maximum number of bytes that a response can have in order to be put on the cache system. Any entry with higher Content-Length header won't be stored in the cache.
@@ -1025,7 +1031,7 @@ back-end can be later enabled with
 \fBNfmark\fR val
 Allow to mark all the
 .B zproxy
-back-end connections in order to track them and allow to the Kernel 
+back-end connections in order to track them and allow to the Kernel
 network stack to manage them. (Decimal format)
 .TP
 .SH "Emergency"
@@ -1212,7 +1218,7 @@ requested or the operation result.
     \fBGet the back-end with the id "1" general status\fR
 
     curl http://address:port/listener/0/service/0/backend/1
-    
+
 .SH EXAMPLES
 To translate HTTPS requests to a local HTTP server (assuming your network address
 is 123.123.123.123):

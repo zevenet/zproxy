@@ -36,4 +36,8 @@ HttpStream::HttpStream()
 #endif
 }
 
-HttpStream::~HttpStream() {}
+HttpStream::~HttpStream() {
+#if WAF_ENABLED
+    Waf::delModsecTransaction(&this->modsec_transaction);
+#endif
+}

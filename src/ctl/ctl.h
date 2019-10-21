@@ -65,6 +65,9 @@ enum class CTL_SUBJECT {
 #if CACHE_ENABLED
   CACHE,
 #endif
+#if WAF_ENABLED
+  RELOAD_WAF,
+#endif
 };
 
 struct CtlTask {

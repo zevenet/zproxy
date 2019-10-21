@@ -61,6 +61,9 @@ const std::string JSON_KEYS::CONNECT_TIME = "connect-time";
 const std::string JSON_KEYS::WEIGHT = "weight";
 const std::string JSON_KEYS::CONFIG = "config";
 const std::string JSON_KEYS::TYPE = "type";
+#if WAF_ENABLED
+const std::string JSON_KEYS::WAF = "waf";
+#endif
 
 const std::string JSON_KEYS::RESULT = "result";
 const std::string JSON_KEYS::DEBUG = "debug";

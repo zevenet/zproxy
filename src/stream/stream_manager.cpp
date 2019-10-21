@@ -270,8 +270,8 @@ void StreamManager::start(int thread_id_) {
   }
 }
 
-StreamManager::StreamManager()
-    : is_https_listener(false){
+StreamManager::StreamManager(ListenerConfig &listener_config)
+    : is_https_listener(false),listener_config_(listener_config){
           // TODO:: do attach for config changes
       };
 
@@ -631,6 +631,33 @@ void StreamManager::onRequestEvent(int fd) {
               }
             }
 
+#if WAF_ENABLED
+            if ( listener_config_.rules != nullptr){    // rule struct is unitializate if no rulesets are configured
+                stream->waf_rules = listener_config_.rules;
+                Waf::newModsecTransaction(&stream->modsec_transaction, listener_config_.modsec, listener_config_.rules);
+                modsecurity::ModSecurityIntervention it = Waf::checkRequestWaf(stream->modsec_transaction, &stream->request,
+                                                                               &stream->client_connection);
+                if (it.disruptive) {
+                    if (it.url != nullptr) {
+                        // send redirect
+                        http_manager::replyRedirect(it.status, it.url,stream->client_connection,ssl_manager);
+                        Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
+                    } else {
+                        // reject the request
+                        http::Code code = (http::Code)it.status;
+                        http_manager::replyError(code,
+                                           reasonPhrase(code),
+                                           listener_config_.err403,
+                                           stream->client_connection,
+                                           ssl_manager);
+                        Logger::logmsg(LOG_WARNING, "(%lx) WAF rejected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
+                    }
+                    clearStream(stream);
+                    return;
+                }
+            }
+#endif
+
             // Rewrite destination
             if (stream->request.add_destination_header) {
               std::string header_value =
@@ -978,6 +1005,31 @@ void StreamManager::onResponseEvent(int fd) {
       this->clearStream(stream);
       return;
     }
+
+#if WAF_ENABLED
+  if ( stream->modsec_transaction != nullptr){ //transaction is not initializate if does not exist rules when the stream was created
+      modsecurity::ModSecurityIntervention it = Waf::checkResponseWaf(stream->modsec_transaction, &stream->response, stream->request.http_version );
+      if (it.disruptive) {
+          if (it.url != nullptr) {
+              // send redirect
+              http_manager::replyRedirect(it.status, it.url,stream->client_connection,ssl_manager);
+              Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
+          } else {
+              // reject the request
+              http::Code code = (http::Code)it.status;
+              http_manager::replyError(code,
+                                 reasonPhrase(code),
+                                 listener_config_.err403,
+                                 stream->client_connection,
+                                 ssl_manager);
+              Logger::logmsg(LOG_WARNING, "(%lx) WAF rejected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
+          }
+          clearStream(stream);
+          return;
+      }
+      Waf::delModsecTransaction(&stream->modsec_transaction);
+   }
+#endif
 
     auto service = static_cast<Service*>(stream->request.getService());
 #ifdef CACHE_ENABLED
@@ -1641,7 +1693,6 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 }
 
 bool StreamManager::init(ListenerConfig& listener_config) {
-  listener_config_ = listener_config;
   service_manager = ServiceManager::getInstance(listener_config);
   if (listener_config.ctx != nullptr ||
       !listener_config.ssl_config_file.empty()) {

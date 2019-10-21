@@ -36,6 +36,9 @@ Connection::Connection()
       last_read_(0),
       last_write_(0),
       address_str(""),
+      local_address_str(""),
+      port(-1),
+      local_port(-1),
       is_connected(false),
       ssl(nullptr),
       ssl_connected(false) {}

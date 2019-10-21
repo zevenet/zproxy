@@ -28,6 +28,9 @@
 #include "../service/backend.h"
 #include "../ssl/ssl_connection_manager.h"
 #include "http_request.h"
+#if WAF_ENABLED
+#include "../handlers/waf.h"
+#endif
 
 struct UpgradeStatus {
   http::UPGRADE_PROTOCOLS protocol{http::UPGRADE_PROTOCOLS::NONE};
@@ -53,6 +56,10 @@ class HttpStream : public Counter<HttpStream> {
   // no copy allowed
   HttpStream(const HttpStream&) = delete;
   HttpStream& operator=(const HttpStream&) = delete;
+#if WAF_ENABLED
+  modsecurity::Transaction *modsec_transaction{nullptr};
+  std::shared_ptr<modsecurity::Rules> waf_rules;
+#endif
   /** Connection between zproxy and the client. */
   ClientConnection client_connection;
   /** Connection between zproxy and the backend. */

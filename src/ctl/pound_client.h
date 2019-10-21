@@ -44,6 +44,10 @@ static const struct option long_options[] = {{"control-socket", required_argumen
                                              {"flush-sessions", required_argument, nullptr, 'f'},
                                              {"add-session", required_argument, nullptr, 'N'},
                                              {"delete-session", required_argument, nullptr, 'n'},
+#if WAF_ENABLED
+                                             {"reload-waf-conf", required_argument, nullptr, 'R'},
+#endif
+
 
                                              {"enable-XML-output", no_argument, nullptr, 'X'},
                                              {"resolve-host", no_argument, nullptr, 'H'},
@@ -51,12 +55,20 @@ static const struct option long_options[] = {{"control-socket", required_argumen
                                              {"help", no_argument, nullptr, 'h'},
                                              {nullptr, no_argument, nullptr, 0}};
 
-enum class CTL_ACTION { NONE, ENABLE, DISABLE, ADD_SESSION, DELETE_SESSION, FLUSH_SESSIONS };
+enum class CTL_ACTION {
+#if WAF_ENABLED
+  RELOAD_WAF,
+#endif
+  NONE, ENABLE, DISABLE, ADD_SESSION, DELETE_SESSION, FLUSH_SESSIONS };
 
 struct OptionArgs {};
 
 class PoundClient /*: public EpollManager*/ {
+#if WAF_ENABLED
+  const char *options_string = "a:vc:LlRSsBbNnfXH";
+#else
   const char *options_string = "a:vc:LlSsBbNnfXH";
+#endif
   std::string binary_name;    /*argv[0]*/
   std::string control_socket; /* -c option */
   std::string session_key;    /* -k option */

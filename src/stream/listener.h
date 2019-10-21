@@ -28,6 +28,11 @@
 #include "stream_manager.h"
 #include <thread>
 #include <vector>
+#if WAF_ENABLED
+#include <modsecurity/modsecurity.h>
+#include <modsecurity/rules.h>
+#include "../handlers/waf.h"
+#endif
 
 /**
  * @class Listener listener.h "src/stream/listener.h"

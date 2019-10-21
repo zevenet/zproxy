@@ -32,6 +32,10 @@ bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
 
 void PoundClient::trySetAllTargetId(char *argv[], int &option_index) {
   int to_consume = 1;
+  // workaround for listeners
+  if (CTL_SUBJECT::LISTENER == ctl_command_subject)
+      to_consume = 0;
+
   int next_index = option_index + to_consume;
   switch (ctl_command_subject) { /*Intentional fallthrough*/
     case CTL_SUBJECT::SESSION:
@@ -75,6 +79,11 @@ void PoundClient::showHelp(const std::string error, bool exit_on_error) {
   std::cout << "\twhere cmd is one of:" << std::endl;
   std::cout << "\t-L n - enable listener n" << std::endl;
   std::cout << "\t-l n - disable listener n" << std::endl;
+#if WAF_ENABLED
+  std::cout << "\t-R n - reload the waf rules in the listener n"
+            << std::endl;
+#endif
+
   std::cout << "\t-S n m - enable service m in listener n (use -1 for "
                "global services)"
             << std::endl;
@@ -163,6 +172,12 @@ bool PoundClient::executeCommand() {
         exit(EXIT_FAILURE);
     }
   }
+#if WAF_ENABLED
+  if (ctl_command == CTL_ACTION::RELOAD_WAF) {
+    path += "/waf";
+    method = http::REQUEST_METHOD::UPDATE;
+  }
+#endif
   if (ctl_command_subject == CTL_SUBJECT::SESSION) {
     path += "/service/" + std::to_string(service_id) + "/session/";
     switch (ctl_command) {
@@ -253,6 +268,14 @@ bool PoundClient::init(int argc, char *argv[]) {
       case 'v':
         verbose = true;
         break;
+#if WAF_ENABLED
+      case 'R': {
+        ctl_command = CTL_ACTION::RELOAD_WAF;
+        ctl_command_subject = CTL_SUBJECT::LISTENER;
+        trySetAllTargetId(argv, optind);
+        break;
+    }
+#endif
       case 'L': {
         ctl_command = CTL_ACTION::ENABLE;
         ctl_command_subject = CTL_SUBJECT::LISTENER;
@@ -338,6 +361,12 @@ bool PoundClient::init(int argc, char *argv[]) {
       case CTL_ACTION::FLUSH_SESSIONS:
         action_message = "Flush session";
         break;
+#if WAF_ENABLED
+      case CTL_ACTION::RELOAD_WAF:
+	    action_message = "Reload WAF rulesets";
+        break;
+#endif
+
     }
 
     if (!session_key.empty()) {

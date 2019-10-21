@@ -31,6 +31,11 @@
 #include "../debug/logger.h"
 #undef SYSLOG_NAMES
 #include "../version.h"
+#ifdef WAF_ENABLED
+#include <modsecurity/rules.h>
+#endif
+
+//std::string config_file;
 
 #ifndef SSL3_ST_SR_CLNT_HELLO_A
 #define SSL3_ST_SR_CLNT_HELLO_A (0x110 | SSL_ST_ACCEPT)
@@ -38,6 +43,8 @@
 #ifndef SSL23_ST_SR_CLNT_HELLO_A
 #define SSL23_ST_SR_CLNT_HELLO_A (0x210 | SSL_ST_ACCEPT)
 #endif
+// configuration file
+std::string Config::config_file;
 
 int Config::numthreads = 0;
 Config::Config() {
@@ -246,6 +253,7 @@ void Config::parseConfig(const int argc, char **const argv) {
         break;
       case 'f':
         conf_name = optarg;
+        Config::config_file=conf_name;
         break;
       case 'p':
         pid_name = optarg;
@@ -287,7 +295,21 @@ void Config::parseConfig(const int argc, char **const argv) {
   cache_s = 0;
   cache_thr = 0;
 #endif
+#if WAF_ENABLED
+  modsecurity::Rules *waf_rules=nullptr;
+#endif
+
   parse_file();
+
+#if WAF_ENABLED
+  if(listeners[0].waf_rules_file!=nullptr){
+    if (Config::loadWafConfig(&waf_rules, listeners[0].waf_rules_file)){
+        delete waf_rules;
+        exit(1);
+    }
+     delete waf_rules;
+  }
+#endif
 
   if (check_only) {
     Logger::logmsg(LOG_INFO, "Config file %s is OK", conf_name.data());
@@ -340,6 +362,12 @@ ListenerConfig *Config::parse_HTTP() {
   res->log_level = log_level;
   res->alive_to = alive_to;
   res->ignore100continue = ignore_100;
+#if WAF_ENABLED
+  res->err403 = "The request was rejected by the server.";
+  FILE_LIST *bef_file, *file = nullptr;
+  res->waf_rules_file = nullptr;
+#endif
+
   res->ssl_forward_sni_server_name = false;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
@@ -491,6 +519,22 @@ ListenerConfig *Config::parse_HTTP() {
     } else if (!regexec(&End, lin, 4, matches, 0)) {
       if (!has_addr || !has_port) conf_err("ListenHTTP missing Address or Port - aborted");
       return res;
+#if WAF_ENABLED
+    } else if(!regexec(&WafRules, lin, 4, matches, 0)) {
+        if ((file = (FILE_LIST *)malloc(sizeof (FILE_LIST)) ) == nullptr ) {
+            conf_err("WAF config: out of memory - aborted");
+        }
+        else {
+            lin[matches[1].rm_eo] = '\0';
+            file->file = strdup(lin + matches[1].rm_so);
+            file->next = nullptr;
+            if(res->waf_rules_file == nullptr)
+                res->waf_rules_file = file;
+            else
+                bef_file->next = file;
+            bef_file = file;
+        }
+#endif
     } else {
       conf_err("unknown directive - aborted");
     }
@@ -535,6 +579,11 @@ ListenerConfig *Config::parse_HTTPS() {
   res->log_level = log_level;
   res->alive_to = alive_to;
   res->engine_id = engine_id;
+#if WAF_ENABLED
+  res->err403 = "The request was rejected by the server.";
+  FILE_LIST *bef_file, *file = nullptr;
+  res->waf_rules_file = nullptr;
+#endif
   res->ssl_forward_sni_server_name = true;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
@@ -548,6 +597,22 @@ ListenerConfig *Config::parse_HTTPS() {
         conf_err("Unknown Listener address family");
       has_addr = 1;
       res->address = lin + matches[1].rm_so;
+#if WAF_ENABLED
+    } else if(!regexec(&WafRules, lin, 4, matches, 0)) {
+        if ((file = (FILE_LIST *)malloc(sizeof (FILE_LIST)) ) == nullptr ) {
+            conf_err("WAF config: out of memory - aborted");
+        }
+        else {
+            lin[matches[1].rm_eo] = '\0';
+            file->file = strdup(lin + matches[1].rm_so);
+            file->next = nullptr;
+            if(res->waf_rules_file != nullptr)
+                res->waf_rules_file = file;
+            else
+                bef_file->next = file;
+            bef_file = file;
+        }
+#endif
     } else if (!regexec(&Port, lin, 4, matches, 0)) {
       if (res->addr.ai_family == AF_INET) {
         memcpy(&in, res->addr.ai_addr, sizeof(in));
@@ -1762,8 +1827,12 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&CacheDiskPath, "^[ \t]*CacheDiskPath[ \t]+\"([a-zA-Z\\/\\._]*)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED)
-
 #endif
+#if WAF_ENABLED
+          || regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
+                     REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+#endif
+
 
 #ifndef OPENSSL_NO_ECDH
       || regcomp(&ECDHCurve, "^[ \t]*ECDHCurve[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
@@ -1890,11 +1959,14 @@ void Config::clean_regex() {
   regfree(&CacheDiskPath);
   regfree(&CacheRamPath);
 #endif
+#if WAF_ENABLED
+  regfree(&WafRules);
+#endif
 #ifndef OPENSSL_NO_ECDH
   regfree(&ECDHCurve);
 #endif
   regfree(&DHParams);
-  if (DHCustom_params) DH_free(DHCustom_params);
+ // if (nullptr == DHCustom_params) DH_free(DHCustom_params);
   regfree(&NfMark);
   regfree(&ForwardSNI);
 }
@@ -2009,6 +2081,49 @@ void Config::include_dir(const char *conf_path) {
   closedir(dp);
 }
 bool Config::exportConfigToJsonFile(std::string save_path) { return false; }
+
+#if WAF_ENABLED
+int Config::loadWafConfig( modsecurity::Rules **waf_rules, FILE_LIST *waf_rules_file) {
+
+    int err = 0;
+    int err_flag  = 0;
+    int rules_number = 0;
+    FILE_LIST *file = nullptr;
+    modsecurity::Rules *tmp_set = nullptr;
+
+    if (waf_rules_file) {
+        tmp_set = new modsecurity::Rules();
+
+        for ( file = waf_rules_file; file!= nullptr; file=file->next ) {
+            //msc_rules_add
+            err = tmp_set->loadFromUri( file->file);
+
+            if (err == -1) {
+                err_flag++;
+                logmsg(LOG_ERR,"Error loading waf ruleset %s", file->file);
+                logmsg(LOG_ERR,"%s", tmp_set->getParserError().c_str());
+                delete tmp_set;
+                tmp_set = nullptr;
+                break;
+            }
+            else
+                rules_number += err;
+        }
+    }
+
+    // re-asign the listener WAF rules
+    if ( !err_flag ) {
+        if ( *waf_rules != nullptr )
+            delete *waf_rules;
+        // Point to the new set
+        *waf_rules = tmp_set;
+        logmsg(LOG_INFO,"%d WAF rule(s) has been added", rules_number);
+    }
+
+    return err_flag;
+}
+#endif
+
 
 RSA *Config::RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_export, int keylength) {
   RSA *res;

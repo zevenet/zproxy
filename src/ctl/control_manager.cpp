@@ -257,6 +257,10 @@ bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss) {
         task.subject = CTL_SUBJECT::STATUS;
       } else if (str == JSON_KEYS::DEBUG) {
         task.subject = CTL_SUBJECT::DEBUG;
+#if WAF_ENABLED
+      } else if (str == JSON_KEYS::WAF) {
+        task.subject = CTL_SUBJECT::RELOAD_WAF;
+#endif
       } else {
         return false;
       }

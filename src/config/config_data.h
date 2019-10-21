@@ -25,6 +25,9 @@
 #include <pcreposix.h>
 #include <sys/socket.h>
 #include <string>
+#if WAF_ENABLED
+#include <modsecurity/modsecurity.h>
+#endif
 
 enum class RENEG_STATE {
   RENEG_INIT = 0,
@@ -32,6 +35,12 @@ enum class RENEG_STATE {
   RENEG_ALLOW,
   RENEG_ABORT
 };
+
+// struct to create a list of filenames
+typedef struct _file_list{
+      char *file;
+      struct _file_list *next;
+} FILE_LIST;
 
 /* matcher chain */
 struct MATCHER {
@@ -180,5 +189,11 @@ struct ListenerConfig {
                                          https backends, param ForwardSNI*/
   int ecdh_curve_nid{0};
   ServiceConfig *services{nullptr};
+#if WAF_ENABLED
+  char *err403;
+  FILE_LIST *waf_rules_file{nullptr};
+  modsecurity::ModSecurity *modsec;        /* API connector with Modsecurity */
+  std::shared_ptr<modsecurity::Rules> rules;    /* Rules of modsecurity */
+#endif
   ListenerConfig *next{nullptr};
 };

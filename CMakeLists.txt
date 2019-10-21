@@ -47,6 +47,7 @@ option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabl
 option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
 #experimental, do not enable WIP
 option(CACHE_SUPPORT "Build with cache support" OFF)
+option(ENABLE_WAF "Compile zproxy using WAF features" ON)
 set(CACHE_STORAGE_TYPE 1) # 1 ramfs,2 stdmap,3 memcached, default(1)
 #option(MEMCACHED_ENABLED "memcached" OFF) deprecated
 #option(ENABLE_APACHE_LOG_FORMAT "Enable message log in apache format" OFF) not implemented yet
@@ -159,6 +160,37 @@ find_package(Threads)
 
 find_package(PkgConfig REQUIRED)
 
+if (ENABLE_WAF)
+
+    find_path(LIBMODSECURITY_INCLUDE_DIR modsecurity/modsecurity.h
+        HINTS ${PC_MODSECURITY_INCLUDEDIR} ${PC_MODSECURITY_INCLUDE_DIRS}
+        PATH_SUFFIXES modsecurity )
+
+    find_library(LIBMODSECURITY_LIBRARY NAMES modsecurity libmodsecurity
+        HINTS ${PC_MODSECURITY_LIBDIR} ${PC_MODSECURITY_LIBRARY_DIRS} )
+
+    if (NOT LIBMODSECURITY_LIBRARY)
+        message(FATAL_ERROR "libmodsecurity lib was not found")
+    endif ()
+
+    file(STRINGS "${LIBMODSECURITY_INCLUDE_DIR}/modsecurity/modsecurity.h"  LIBMODSECURITY_VERSION_DEFINE REGEX "^#define MODSECURITY_.*$")
+    string(REGEX MATCH "^#define MODSECURITY_MAJOR[ ]\"([0-9]*)\".*$" _ ${LIBMODSECURITY_VERSION_DEFINE})
+    set(MODSECURITY_MAJOR ${CMAKE_MATCH_1})
+
+    file(STRINGS "${LIBMODSECURITY_INCLUDE_DIR}/modsecurity/modsecurity.h"  LIBMODSECURITY_VERSION_DEFINE REGEX "^#define MODSECURITY_MINOR.*$")
+    string(REGEX MATCH "^#define MODSECURITY_MINOR[ ]\"([0-9]*)\".*$" _ ${LIBMODSECURITY_VERSION_DEFINE})
+    set(MODSECURITY_MINOR ${CMAKE_MATCH_1})
+
+    file(STRINGS "${LIBMODSECURITY_INCLUDE_DIR}/modsecurity/modsecurity.h"  LIBMODSECURITY_VERSION_DEFINE REGEX "^#define MODSECURITY_PATCHLEVEL.*$")
+    string(REGEX MATCH "^#define MODSECURITY_PATCHLEVEL[ ]\"([0-9]*)\".*$" _ ${LIBMODSECURITY_VERSION_DEFINE})
+    set(MODSECURITY_PATCHLEVEL ${CMAKE_MATCH_1})
+
+    set(LIBMODSECURITY_VERSION "${MODSECURITY_MAJOR}.${MODSECURITY_MINOR}.${MODSECURITY_PATCHLEVEL}")
+    message(STATUS "Using libmodsecurity ${LIBMODSECURITY_VERSION}")
+    include_directories(${LIBMODSECURITY_INCLUDE_DIR})
+    add_definitions(-DWAF_ENABLED=1)
+endif()
+
 if (BUNDLED_ZLIB)
     #
     # zlib
@@ -264,6 +296,7 @@ if (CACHE_SUPPORT)
         add_definitions(-DMEMCACHED_ENABLED=0)
     endif ()
 endif ()
+
 
 if (NOT EXISTS "${MAINFOLDER}/src/config/dh512.h")
     message(STATUS "Generating DH EC 512 parameters")

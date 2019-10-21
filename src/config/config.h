@@ -83,6 +83,7 @@ static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
   (unsigned char *)strndup((char *)ASN1_STRING_data(n->d.dNSName), ASN1_STRING_length(n->d.dNSName) + 1)
 #endif
 
+
 class Config {
   const char *xhttp[6] = {
       "^(GET|POST|HEAD) ([^ ]+) HTTP/1.[01].*$",
@@ -120,6 +121,7 @@ class Config {
    * Global variables needed by everybody
    */
 
+  static std::string config_file;  /* config file path*/
   std::string user, /* user to run as */
       group,        /* group to run as */
       name,         /* farm name to run as */
@@ -175,6 +177,10 @@ class Config {
   regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize, CacheDiskPath,
       CacheRamPath; /* Cache configuration regex */
 #endif
+#if WAF_ENABLED
+  regex_t WafRules;
+#endif
+
  public:
   static regex_t HEADER, /* Allowed header */
       CHUNK_HEAD,        /* chunk header line */
@@ -260,6 +266,18 @@ class Config {
    */
   void parseConfig(const int argc, char **const argv);
   bool exportConfigToJsonFile(std::string save_path);
+
+#if WAF_ENABLED
+   /**
+    * @brief loads the rulesets from the WafRules struct to a rules object.
+    * If the rule object already contains rules, they are not overwrite if an error exists
+    * while the load. If there aren't WafRules directives, the rules is cleaned
+    * @param is the WAf rule object where is going to be loaded the rules
+    * @param is the FILE_LIST struct that contains the WafRules ruleset files
+    * @return returns an 1 on failure or 0 on success
+    */
+   static int loadWafConfig( modsecurity::Rules **waf_rules, FILE_LIST *waf_rules_file);
+#endif
 
  private:
   /*

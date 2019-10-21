@@ -24,6 +24,9 @@
 #ifdef ENABLE_HEAP_PROFILE
 #include <gperftools/heap-profiler.h>
 #endif
+#if WAF_ENABLED
+#include "../handlers/waf.h"
+#endif
 #ifndef DEFAULT_MAINTENANCE_INTERVAL
 #define DEFAULT_MAINTENANCE_INTERVAL 2
 #endif
@@ -78,6 +81,22 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
   }
 
   switch (task.subject) {
+#if WAF_ENABLED
+    case ctl::CTL_SUBJECT::RELOAD_WAF: {
+        switch (task.command) {
+        case ctl::CTL_COMMAND::UPDATE: {
+            //          auto json_data = JsonParser::parse(task.data);
+            modsecurity::Rules* new_rules=nullptr;
+            if (!Waf::reloadRules(&new_rules)){
+                delete  new_rules;
+                return JSON_OP_RESULT::ERROR;
+            }
+            this->listener_config.rules = std::shared_ptr<modsecurity::Rules>(new_rules);
+            return JSON_OP_RESULT::OK;
+        }
+        }
+    }
+#endif
     case ctl::CTL_SUBJECT::DEBUG: {
       std::unique_ptr<JsonObject> root{new JsonObject()};
       std::unique_ptr<JsonObject> status{new JsonObject()};
@@ -232,6 +251,9 @@ Listener::Listener() : is_running(false), stream_manager_set() {}
 Listener::~Listener() {
   Logger::logmsg(LOG_REMOVE, "Destructor");
   is_running = false;
+#if WAF_ENABLED
+    delete listener_config.modsec;
+#endif
   for (auto &sm : stream_manager_set) {
     sm.second->stop();
     delete sm.second;
@@ -264,7 +286,7 @@ void Listener::start() {
   auto concurrency_level = std::thread::hardware_concurrency() < 2 ? 2 : std::thread::hardware_concurrency();
   auto numthreads = Config::numthreads != 0 ? Config::numthreads : concurrency_level;
   for (int sm = 0; sm < numthreads; sm++) {
-    stream_manager_set[sm] = new StreamManager();
+    stream_manager_set[sm] = new StreamManager(listener_config);
   }
   int service_id = 0;
 
@@ -321,5 +343,16 @@ StreamManager *Listener::getManager(int fd) {
 bool Listener::init(ListenerConfig &config) {
   listener_config = config;
   service_manager = ServiceManager::getInstance(listener_config);
+#if WAF_ENABLED
+   listener_config.modsec = new modsecurity::ModSecurity();
+   listener_config.modsec->setConnectorInformation("WAF");  //add the farm name ???
+   listener_config.modsec->setServerLogCb(Waf::logModsec);
+   modsecurity::Rules *waf_rules=nullptr;
+   if (Config::loadWafConfig(&(waf_rules), listener_config.waf_rules_file)){
+         //free waf_rules
+       return false;
+   }
+   listener_config.rules = std::shared_ptr<modsecurity::Rules>(waf_rules);
+#endif
   return true;
 }
