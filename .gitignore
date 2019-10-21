@@ -43,6 +43,8 @@ usr/local/zevenet/app/nftlb/
 # config
 /usr/local/zevenet/config/*
 !/usr/local/zevenet/config/.keep
+!/usr/local/zevenet/config/certificates/.keep
+
 
 /usr/local/zevenet/logs
 
