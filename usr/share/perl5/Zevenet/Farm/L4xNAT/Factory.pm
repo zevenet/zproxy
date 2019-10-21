@@ -62,6 +62,7 @@ sub runL4FarmCreate
 	require Zevenet::Farm::L4xNAT::Action;
 	require Zevenet::Farm::L4xNAT::Config;
 
+	my $proto = ( $vip_port eq "*" ) ? 'all' : 'tcp';
 	$vip_port = "80" if not defined $vip_port;
 	$vip_port = ""   if ( $vip_port eq "*" );
 
@@ -71,7 +72,7 @@ sub runL4FarmCreate
 		   file   => "$farm_filename",
 		   method => "POST",
 		   body =>
-			 qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "tcp", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })
+			 qq({"farms" : [ { "name" : "$farm_name", "virtual-addr" : "$vip", "virtual-ports" : "$vip_port", "protocol" : "$proto", "mode" : "snat", "scheduler" : "weight", "state" : "up" } ] })
 		}
 	);
 
