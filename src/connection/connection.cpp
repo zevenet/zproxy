@@ -432,14 +432,23 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
   Network::setTcpNoDelayOption(fd_);
   Network::setSoKeepAliveOption(fd_);
   Network::setSoLingerOption(fd_, true);
-  if (LIKELY(async)) Network::setSocketNonBlocking(fd_);
+  if (LIKELY(async)) {
+    Network::setSocketNonBlocking(fd_);
+  } else {
+    struct timeval timeout_;
+    timeout_.tv_sec = timeout;  // after timeout seconds connect()
+    timeout_.tv_usec = 0;
+    setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout_, sizeof(timeout_));
+  }
   if ((result = ::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
-    if (errno == EINPROGRESS && timeout > 0) {
+    if (errno == EINPROGRESS && async) {
       return IO::IO_OP::OP_IN_PROGRESS;
-
     } else {
-      Logger::logmsg(LOG_NOTICE, " %s connect()  error: %s\n",
-                     this->getPeerAddress().data(), errno, strerror(errno));
+      char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+      if (getnameinfo(address_.ai_addr, address_.ai_addrlen, hbuf, sizeof(hbuf),
+                      sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+        Logger::logmsg(LOG_DEBUG, "connect(%s:%s) failed: %s", hbuf, sbuf,
+                       strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
   }
@@ -468,8 +477,8 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
     } else {
-      Logger::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
-                    strerror(errno));
+      Logger::logmsg(LOG_NOTICE, "%s connect() error %d - %s\n",
+                     af_unix_socket_path.data(), errno, strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
   }

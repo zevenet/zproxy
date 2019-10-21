@@ -145,7 +145,7 @@ void Backend::doMaintenance() {
   if (this->status != BACKEND_STATUS::BACKEND_DOWN) return;
 
   Connection checkOut;
-  auto res = checkOut.doConnect(*address_info, 0, false);
+  auto res = checkOut.doConnect(*address_info, 5, false);
 
   switch (res) {
     case IO::IO_OP::OP_SUCCESS: {
