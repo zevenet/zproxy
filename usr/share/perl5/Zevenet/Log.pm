@@ -183,12 +183,13 @@ sub logAndRun    # ($command)
 	if ( $return_code )
 	{
 		&zenlog( $program . " running: $command", "error", "SYSTEM" );
-		&zenlog( "@cmd_output", "error", "error", "SYSTEM" );
+		&zenlog( "out: @cmd_output", "error", "error", "SYSTEM" );
 		&zenlog( "last command failed!", "error", "SYSTEM" );
 	}
 	else
 	{
 		&zenlog( $program . " running: $command", "debug", "SYSTEM" );
+		&zenlog( "out: @cmd_output", "error", "debug2", "SYSTEM" );
 	}
 
 	# returning error code from execution
@@ -264,18 +265,24 @@ sub zsystem
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( @exec ) = @_;
+	my $program = $basename;
 
-	my $out   = `. /etc/profile -notzenbui >/dev/null 2>&1 && @exec 2>&1`;
-	my $error = $?;
+	my @cmd_output = `. /etc/profile -notzenbui >/dev/null 2>&1 && @exec 2>&1`;
+	my $out        = $?;
 
-	if ( $error or &debug() )
+	if ( $out )
 	{
-		my $message = $error ? 'failed' : 'running';
-		&zenlog( "$message: @exec", "info", "SYSTEM" );
-		&zenlog( "output: $out", "info", "SYSTEM" ) if $out;
+		&zenlog( $program . " running: @exec", "error", "SYSTEM" );
+		&zenlog( "@cmd_output", "error", "error", "SYSTEM" );
+		&zenlog( "last command failed!", "error", "SYSTEM" );
+	}
+	else
+	{
+		&zenlog( $program . " running: @exec", "debug", "SYSTEM" );
+		&zenlog( "out: @cmd_output", "error", "debug2", "SYSTEM" );
 	}
 
-	return $error;
+	return $out;
 }
 
 =begin nd
@@ -304,20 +311,30 @@ sub logAndGet
 	my $cmd = shift;
 	my $type = shift // 'string';
 
-	&zenlog( "Executed: $cmd", "debug", "system" );
+	my $program = $basename;
+	my @print_err;
 
 	my $resource = "logAndGet";
 
-	my $out = `$cmd 2>/dev/null`;
-	if ( $? )
+	my $out      = `$cmd 2>/dev/null`;
+	my $err_code = $?;
+	my $tag      = ( $err_code ) ? 'error' : 'debug2';
+	&zenlog( "Executed: $cmd", $tag, "system" );
+
+	if ( $err_code )
 	{
 		# execute again, removing stdout and getting stderr
-		my @print_err = `$cmd 2>&1 >/dev/null`;
+		@print_err = `$cmd 2>&1 >/dev/null`;
 		if ( @print_err )
 		{
-			&zenlog( "Command failed, <$cmd>", "error", "system" ) if ( !&debug() );
-			&zenlog( "Output: @print_err", "error", "system" );
+			&zenlog( "out: @print_err", "error", "SYSTEM" );
 		}
+	}
+
+	# loggear logging if there is not any error
+	if ( !@print_err )
+	{
+		&zenlog( "out: $out", "debug3", "SYSTEM" );
 	}
 
 	if ( $type eq 'array' )
