@@ -204,7 +204,7 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 			else
 			{
 				#if there is backend port then use in the search
-				my $beport_search = "";
+				my $beport_search = "[^\s]+";
 				if ( $ip_port =~ /^[+-]?\d+$/ )
 				{
 					$beport_search = "sport=$ip_port";
