@@ -824,9 +824,18 @@ sub getPersistence{
 	my $farm_name = shift; 
 	my $farm_type = &getFarmType( $farm_name );
 	my $farm_ref;
+	my $nodestatus  = "";
 	return 1 if $farm_type !~ /l4xnat|http/;
-	require Zevenet::Cluster;
-	return 1 if ( &getZClusterNodeStatus() ne "master");
+	if ( $eload )
+	{
+		$nodestatus = &eload(
+                module 	=> 'Zevenet::Cluster',
+                func   	=> 'getZClusterNodeStatus',
+		args	=> [],
+		);
+	}
+
+	return 1 if ( $nodestatus ne "master");
 	if ($farm_type eq 'l4xnat'){
 		require Zevenet::Farm::L4xNAT::Config;
 		#return 1 if (&getL4FarmStatus($farm_name)) ne "up";
