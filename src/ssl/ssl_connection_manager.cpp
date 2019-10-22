@@ -109,7 +109,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   int bytes_read = 0;
   for (;;) {
     BIO_clear_retry_flags(ssl_connection.io);
-    rc = BIO_read(ssl_connection.io, ssl_connection.buffer + ssl_connection.buffer_size,
+    ERR_clear_error();
+    rc = BIO_read(ssl_connection.io,
+                  ssl_connection.buffer + ssl_connection.buffer_size,
                   static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
     //    Logger::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d ERRNO %s", rc,
     //                  ssl_connection.buffer_size, std::strerror(errno));
@@ -148,6 +150,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
   written = 0;
   for (;;) {
     BIO_clear_retry_flags(ssl_connection.io);
+    ERR_clear_error();
     rc = BIO_write(ssl_connection.io, data + written, static_cast<int>(data_size - written));
     //    Logger::logmsg(LOG_DEBUG, "BIO_write return code %d writen %d", rc, written);
     if (rc == 0) {
@@ -234,8 +237,10 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
     //      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();;
 
   } else {
-    Logger::logmsg(LOG_NOTICE, "SSL_do_handshake return %d error %d  error str: %s errno %d msg %s \n Ossl errors: %s",
-                  r, err, getErrorString(err), errno, strerror(errno), ossGetErrorStackString().get());
+    Logger::logmsg(LOG_NOTICE,
+                   " SSL_do_handshake error: %s with %s \n Ossl errors: %s",
+                   getErrorString(err), ssl_connection.getPeerAddress().data(),
+                   ossGetErrorStackString().get());
     ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
     return false;
   }
@@ -319,6 +324,7 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection, const c
   ssize_t rc = -1;
   //  // FIXME: Buggy, used just for test
   // Logger::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+  ERR_clear_error();
   do {
     rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent));  //, &written);
