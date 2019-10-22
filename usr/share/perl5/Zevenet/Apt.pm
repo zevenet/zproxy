@@ -109,10 +109,15 @@ sub setAPTRepo
 		return 0;
 	}
 
+	my $http_proxy  = &getGlobalConfiguration( 'http_proxy' );
+	my $https_proxy = &getGlobalConfiguration( 'https_proxy' );
+
 	# configuring user-agent
 	open ( my $fh, '>', $apt_conf_file )
 	  or die "Could not open file '$apt_conf_file' $!";
 	print $fh "Acquire { http::User-Agent \"$serial:$subjectkeyidentifier\"; };\n";
+	print $fh "Acquire::http::proxy \"$http_proxy\/\";\n";
+	print $fh "Acquire::https::proxy \"$http_proxy\/\";\n";
 	close $fh;
 
 	# get the kernel version
