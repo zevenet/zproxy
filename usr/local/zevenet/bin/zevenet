@@ -161,7 +161,7 @@ if ( $action eq "start" )
 	my $migration_flag = &getGlobalConfiguration( 'migration_flag' );
 	if ( -f $migration_flag )
 	{
-		my $mv = &getGlobalConfiguration( 'mv' );
+		my $rm = &getGlobalConfiguration( 'rm' );
 		&zna_version;
 
 		# Migrating config files
