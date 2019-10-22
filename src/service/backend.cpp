@@ -107,7 +107,10 @@ bool Backend::isHandler(ctl::CtlTask& task) {
 std::unique_ptr<JsonObject> Backend::getBackendJson() {
   std::unique_ptr<JsonObject> root{new JsonObject()};
 
-  root->emplace(JSON_KEYS::NAME, std::unique_ptr<JsonDataValue>(new JsonDataValue(this->name)));
+  root->emplace(JSON_KEYS::NAME,
+                std::unique_ptr<JsonDataValue>(new JsonDataValue(this->name)));
+  root->emplace(JSON_KEYS::HTTPS, std::unique_ptr<JsonDataValue>(
+                                      new JsonDataValue(this->isHttps())));
   root->emplace(JSON_KEYS::ID, std::unique_ptr<JsonDataValue>(new JsonDataValue(this->backend_id)));
   root->emplace(JSON_KEYS::TYPE,
                 std::unique_ptr<JsonDataValue>(new JsonDataValue(static_cast<int>(this->backend_type))));
