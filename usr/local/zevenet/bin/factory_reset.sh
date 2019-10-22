@@ -152,6 +152,7 @@ rm /etc/cron.d/*
 
 # create local conf dir
 mkdir "$localconfig"
+mkdir "${CONF_DIR}/certiicates"
 
 # set template
 cp $http_server_key_tpl $http_server_key
