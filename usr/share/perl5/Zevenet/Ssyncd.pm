@@ -51,11 +51,13 @@ sub setSsyncdFarmUp
 
 		if ( $farms_started )
 		{
+			&zenlog("Registering l4xnat farm $farm_name in ssyncd", "info", "cluster");
 			return system ( "$ssyncdctl_bin start nft $farm_name >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
+		&zenlog("Registering http farm $farm_name in ssyncd", "info", "cluster");
 		return system ( "$ssyncdctl_bin start http $farm_name >/dev/null" );
 	}
 
@@ -81,11 +83,13 @@ sub setSsyncdFarmDown
 
 		if ( $farms_started <= 1 )
 		{
+			&zenlog("Unregistering l4xnat farm $farm_name in ssyncd", "info", "cluster");
 			return system ( "$ssyncdctl_bin stop nft $farm_name >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
+		&zenlog("Unregistering http farm $farm_name in ssyncd", "info", "cluster");
 		return system ( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
 	}
 

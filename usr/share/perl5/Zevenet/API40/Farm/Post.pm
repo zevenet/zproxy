@@ -156,12 +156,6 @@ sub new_farm    # ( $json_obj )
 	{
 		&eload(
 				module => 'Zevenet::Cluster',
-				func   => 'zClusterFarmUp',
-				args   => [$json_obj->{ farmname }],
-		) if $json_obj->{ profile } =~ /^l4xnat$/i;
-
-		&eload(
-				module => 'Zevenet::Cluster',
 				func   => 'runZClusterRemoteManager',
 				args   => ['farm', 'start', $json_obj->{ farmname }],
 		);

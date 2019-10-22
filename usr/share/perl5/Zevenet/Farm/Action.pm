@@ -56,6 +56,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	$writeconf = undef if ( $writeconf eq 'false' );
 
 	require Zevenet::Farm::Base;
+	require Zevenet::Farm::Config;
 
 	my $status = -1;
 
@@ -112,7 +113,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 =begin nd
 Function: runFarmStart
 
-	Run a farm completely a farm. Run farm, its farmguardian and ipds rules
+	Run a farm completely a farm. Run farm, its farmguardian, ipds rules and ssyncd
 
 Parameters:
 	farm_name - Farm name
@@ -149,13 +150,16 @@ sub runFarmStart    # ($farm_name, $writeconf)
 
 		require Zevenet::Farm::Config;
 		&reloadFarmsSourceAddressByFarm( $farm_name );
-
+		if (&getPersistence($farm_name) == 0){
 		&eload(
-				module => 'Zevenet::Cluster',
-				func   => 'zClusterFarmUp',
-				args   => [$farm_name],
-		);
-	}
+			module	=> 'Zevenet::Ssyncd',
+			func	=> 'setSsyncdFarmUp',
+			args	=> [$farm_name],
+			);
+		}
+        }
+
+
 
 	return $status;
 }
@@ -163,7 +167,7 @@ sub runFarmStart    # ($farm_name, $writeconf)
 =begin nd
 Function: runFarmStop
 
-	Stop a farm completely a farm. Stop the farm, its farmguardian and ipds rules
+	Stop a farm completely a farm. Stop the farm, its farmguardian, ipds rules and ssyncd
 
 Parameters:
 	farm_name - Farm name
@@ -185,18 +189,18 @@ sub runFarmStop    # ($farm_name, $writeconf)
 
 	if ( $eload )
 	{
-		&eload(
-				module => 'Zevenet::Cluster',
-				func   => 'zClusterFarmDown',
-				args   => [$farm_name],
-		);
-
 		# stop ipds rules
 		&eload(
 				module => 'Zevenet::IPDS::Base',
 				func   => 'runIPDSStopByFarm',
 				args   => [$farm_name],
 		);
+                &eload(
+                                module  => 'Zevenet::Ssyncd',
+                                func    => 'setSsyncdFarmDown',
+                                args    => [$farm_name],
+                );
+
 	}
 
 	require Zevenet::FarmGuardian;

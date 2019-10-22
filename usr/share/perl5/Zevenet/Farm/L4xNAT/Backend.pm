@@ -300,6 +300,7 @@ sub setL4FarmBackendsSessionsRemove
 		  if ( $value ne "" && $value =~ /^0x.0*$tag/ );
 
 		last if ( $data && $line =~ /\}/ );
+
 	}
 
 	return $output;
@@ -355,6 +356,8 @@ sub setL4FarmBackendStatus
 		# remove conntrack
 		my $server = $$farm{ servers }[$backend];
 		&resetL4FarmBackendConntrackMark( $server );
+
+
 	}
 
 	#~ TODO
