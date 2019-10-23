@@ -233,7 +233,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
           return;
         }
         default:
-          Logger::LogInfo("Why this happends!!", LOG_DEBUG);
+          Logger::LogInfo("Why this happens!!", LOG_DEBUG);
           break;
       }
       clearStream(stream);
@@ -254,6 +254,7 @@ void StreamManager::start(int thread_id_) {
 
   is_running = true;
   worker_id = thread_id_;
+  if(!handleAccept(listener_connection.getFileDescriptor())) return;
   this->worker = std::thread([this] {
     StreamDataLogger::resetLogData();
     doWork();
@@ -264,9 +265,6 @@ void StreamManager::start(int thread_id_) {
     helper::ThreadHelper::setThreadName("WORKER_" + std::to_string(worker_id),
                                         worker.native_handle());
   }
-#if SM_HANDLE_ACCEPT
-  handleAccept(listener_connection.getFileDescriptor());
-#endif
 }
 
 StreamManager::StreamManager()
@@ -314,7 +312,6 @@ void StreamManager::addStream(int fd) {
   timers_set[stream->timer_fd.getFileDescriptor()] = stream;
   stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
                                          EVENT_GROUP::CLIENT);
-
 
   if (!listener_config_.add_head.empty()) {
     stream->request.addHeader(listener_config_.add_head, true);
@@ -502,8 +499,7 @@ void StreamManager::onRequestEvent(int fd) {
         http_manager::replyError(
             http::Code::ServiceUnavailable,
             validation::request_result_reason
-                .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND)
-                .c_str(),
+                .at(validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
             listener_config_.err503, stream->client_connection,
             this->ssl_manager);
         this->clearStream(stream);
@@ -541,15 +537,14 @@ void StreamManager::onRequestEvent(int fd) {
         http_manager::replyError(
             http::Code::ServiceUnavailable,
             validation::request_result_reason
-                .at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND)
-                .c_str(),
+                .at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
             listener_config_.err503, stream->client_connection,
             this->ssl_manager);
         this->clearStream(stream);
         return;
       } else {
         // update log info
-        logger.setLogData(stream, listener_config_);
+        StreamDataLogger::setLogData(stream, listener_config_);
         IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
         static size_t total_request;
         total_request++;
@@ -741,26 +736,30 @@ void StreamManager::onResponseEvent(int fd) {
     stream->client_connection.enableWriteEvent();
     return;
   }
-#if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(LOG_REMOVE,
-                "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
-                "header_sent: %s chunk left: %d",
-                stream->backend_connection.getFileDescriptor(),
-                stream->backend_connection.buffer_size,
-                stream->response.content_length,
-                stream->response.message_bytes_left,
-                stream->response.getHeaderSent() ? "true" : "false",
-                stream->response.chunk_size_left);
-#endif
+  #if PRINT_DEBUG_FLOW_BUFFERS
+  if (stream->backend_connection.buffer_size != 0)
+    Logger::logmsg(
+        LOG_REMOVE,
+        "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
+        "header_sent: %s chunk left: %d chunked: %s",
+        stream->backend_connection.getFileDescriptor(),
+        stream->backend_connection.buffer_size, stream->response.content_length,
+        stream->response.message_bytes_left,
+        stream->response.getHeaderSent() ? "true" : "false",
+        stream->response.chunk_size_left,
+        stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
+            ? "TRUE"
+            : "false");
+  #endif
   // disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
-  //  if (stream->backend_connection.buffer_size > 0) {
-  //    stream->client_connection.enableWriteEvent();
-  //    return;
-  //  }
+  if (stream->backend_connection.buffer_size > 0) {
+    stream->client_connection.enableWriteEvent();
+    return;
+  }
   DEBUG_COUNTER_HIT(debug__::on_response);
   IO::IO_RESULT result;
 
@@ -864,8 +863,20 @@ void StreamManager::onResponseEvent(int fd) {
       return;
     }
   }
-  // TODO::FERNANDO::REPASAR, toma de muestras de tiempo, solo se debe de
-  // tomar muestra si se la lectura ha sido success.
+  #if PRINT_DEBUG_FLOW_BUFFERS
+  Logger::logmsg(
+      LOG_REMOVE,
+      "%.*s IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
+      "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
+      stream->request.http_message_length, stream->request.http_message,
+      stream->backend_connection.buffer_size, stream->response.content_length,
+      stream->response.message_bytes_left,
+      stream->response.getHeaderSent() ? "true" : "false",
+      stream->response.chunk_size_left, IO::getResultString(result).data(),
+      stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
+          ? "T"
+          : "F");
+  #endif
   stream->backend_connection.getBackend()->calculateLatency(
       std::chrono::duration_cast<std::chrono::duration<double>>(
           std::chrono::steady_clock::now() -
@@ -1030,7 +1041,7 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
     deleteFd(fd);
     ::close(fd);
   } else if (stream->timer_fd.isTriggered()) {
-    clearStream(stream);  // FIXME::
+    clearStream(stream);
   }
 }
 
@@ -1336,13 +1347,14 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       }
     }
 #if PRINT_DEBUG_FLOW_BUFFERS
-    Logger::logmsg(LOG_REMOVE,
-                  "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
-                  "%lu\twritten: %d\tIO: %s",
-                  stream->backend_connection.buffer_size,
-                  stream->response.content_length,
-                  stream->response.message_bytes_left, written,
-                  IO::getResultString(result).data());
+    if (stream->backend_connection.buffer_size != 0)
+      Logger::logmsg(LOG_REMOVE,
+                     "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
+                     "%lu\twritten: %d\tIO: %s",
+                     stream->backend_connection.buffer_size,
+                     stream->response.content_length,
+                     stream->response.message_bytes_left, written,
+                     IO::getResultString(result).data());
 #endif
 #ifdef CACHE_ENABLED
     if (!stream->response.isCached())
@@ -1445,7 +1457,8 @@ bool StreamManager::init(ListenerConfig& listener_config) {
     ssl_manager = new ssl::SSLConnectionManager();
     this->is_https_listener = ssl_manager->init(listener_config);
   }
-  return true;
+  return listener_connection.listen(listener_config_.address,
+                                    listener_config_.port);
 }
 
 /** Clears the HttpStream. It deletes all the timers and events. Finally,
@@ -1494,9 +1507,6 @@ void StreamManager::clearStream(HttpStream* stream) {
   delete stream;
 }
 
-void StreamManager::setListenSocket(int fd) {
-  listener_connection.setFileDescriptor(fd);
-}
 void StreamManager::onClientDisconnect(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
   // update log info

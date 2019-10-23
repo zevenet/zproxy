@@ -429,14 +429,17 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
     Logger::logmsg(LOG_WARNING, "socket() failed ");
     return IO::IO_OP::OP_ERROR;
   }
+  Network::setTcpNoDelayOption(fd_);
+  Network::setSoKeepAliveOption(fd_);
+  Network::setSoLingerOption(fd_, true);
   if (LIKELY(async)) Network::setSocketNonBlocking(fd_);
   if ((result = ::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
 
     } else {
-      Logger::logmsg(LOG_NOTICE, "connect() error %d - %s\n", errno,
-                    strerror(errno));
+      Logger::logmsg(LOG_NOTICE, " %s connect()  error: %s\n",
+                     this->getPeerAddress().data(), errno, strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
   }
@@ -526,6 +529,7 @@ bool Connection::listen(addrinfo &address_) {
   Network::setSoLingerOption(fd_);
   Network::setSoReuseAddrOption(fd_);
   Network::setTcpDeferAcceptOption(fd_);
+  Network::setTcpReusePortOption(fd_);
 
   if (::bind(fd_, address->ai_addr,
              static_cast<socklen_t>(address->ai_addrlen)) < 0) {

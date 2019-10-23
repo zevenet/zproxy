@@ -252,6 +252,12 @@ class Network {
     return setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)) != -1;
   }
 
+  inline static bool setTcpReusePortOption(int sock_fd) {
+    int flag = 1;
+    return setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(flag)) !=
+           -1;
+  }
+
   inline static bool setTcpNoDelayOption(int sock_fd) {
     int flag = 1;
     return setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) != -1;

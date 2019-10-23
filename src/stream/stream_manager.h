@@ -189,12 +189,6 @@ public:
   void stop();
 
   /**
-   * @brief Sets the StreamManager as a listener.
-   * @param fd is the file descriptor of the connection used as a listener.
-   */
-  void setListenSocket(int fd);
-
-  /**
    * @brief Handles the write event from the backend.
    *
    * It handles HTTP and HTTPS responses. If there is not any error it is

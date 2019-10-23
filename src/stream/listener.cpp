@@ -61,31 +61,10 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
   } else if (event_group == EVENT_GROUP::SIGNAL && fd == signal_fd.getFileDescriptor()) {
     Logger::logmsg(LOG_DEBUG, "Received singal %x", signal_fd.getSignal());
     if (signal_fd.getSignal() == SIGTERM) {
-      stop();
-      exit(EXIT_SUCCESS);
+//      stop();
+//      exit(EXIT_SUCCESS);
     }
     return;
-  }
-  switch (event_type) {
-    case EVENT_TYPE::CONNECT: {
-      int new_fd;
-      do {
-        new_fd = listener_connection.doAccept();
-        if (new_fd > 0) {
-          auto sm = getManager(new_fd);
-          if (sm != nullptr) {
-            // sm->stream_set.size() ????
-            sm->addStream(new_fd);
-          } else {
-            Logger::LogInfo("StreamManager not found");
-          }
-        }
-      } while (new_fd > 0);
-      break;
-    }
-    default:
-      ::close(fd);
-      break;
   }
 }
 
@@ -248,12 +227,7 @@ bool Listener::isHandler(ctl::CtlTask &task) {
   return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER || task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }
 
-bool Listener::init(std::string address, int port) {
-  return listener_connection.listen(address, port);
-  // handleAccept(listener_connection.getFileDescriptor());
-}
-
-Listener::Listener() : is_running(false), listener_connection(), stream_manager_set() {}
+Listener::Listener() : is_running(false), stream_manager_set() {}
 
 Listener::~Listener() {
   Logger::logmsg(LOG_REMOVE, "Destructor");
@@ -308,23 +282,18 @@ void Listener::start() {
 
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
-    if (sm != nullptr && sm->init(listener_config)) {
-      sm->setListenSocket(listener_connection.getFileDescriptor());
+    if (sm != nullptr) {
+      if (!sm->init(listener_config)) {
+        Logger::logmsg(LOG_ERR, "Error initializing StreamManager for %d", listener_config.name.data());
+        exit(EXIT_FAILURE);
+      }
       sm->start(i);
     } else {
       Logger::LogInfo("StreamManager id doesn't exist : " + std::to_string(i), LOG_ERR);
     }
   }
   is_running = true;
-  //  worker_thread = std::thread([this] { doWork(); });
-  //  helper::ThreadHelper::setThreadAffinity(
-  //      0, pthread_self());  // worker_thread.native_handle());
-  //#if SM_HANDLE_ACCEPT
-  //  while (is_running) {
-  //    std::this_thread::sleep_for(std::chrono::seconds(5));
-  //  }
-  //#else
-  signal_fd.init();
+//  signal_fd.init();
   timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL * 1000);
   //  addFd(signal_fd.getFileDescriptor(), EVENT_TYPE::READ,
   //  EVENT_GROUP::SIGNAL);
@@ -336,10 +305,10 @@ void Listener::start() {
   timer_internal_maintenance.set(MALLOC_TRIM_TIMER_INTERVAL * 1000);
   addFd(timer_internal_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
 #endif
-
+  //  helper::ThreadHelper::setThreadAffinity(
+  //      0, pthread_self());  // worker_thread.native_handle());
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();
-  //#endif
 }
 
 StreamManager *Listener::getManager(int fd) {
@@ -352,11 +321,5 @@ StreamManager *Listener::getManager(int fd) {
 bool Listener::init(ListenerConfig &config) {
   listener_config = config;
   service_manager = ServiceManager::getInstance(listener_config);
-
-  if (!listener_connection.listen(listener_config.address, listener_config.port)) return false;
-#if SM_HANDLE_ACCEPT
   return true;
-#else
-  return handleAccept(listener_connection.getFileDescriptor());
-#endif
 }

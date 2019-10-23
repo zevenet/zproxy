@@ -41,7 +41,6 @@
 class Listener : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
   std::thread worker_thread;
   std::atomic<bool> is_running;
-  Connection listener_connection;
   std::map<int, StreamManager *> stream_manager_set;
   ListenerConfig listener_config;
   std::shared_ptr<ServiceManager> service_manager;
@@ -59,19 +58,7 @@ class Listener : public EpollManager, public CtlObserver<ctl::CtlTask, std::stri
   ~Listener() final;
 
   /**
-   * @brief Sets the listener connetion address and port.
-   *
-   * The listener connection will listen in the @p address and @p port
-   * specified.
-   *
-   * @param address to listen in a string format
-   * @param port to listen
-   * @return @c true if everything is ok, @c false if not.
-   */
-  bool init(std::string address, int port);
-
-  /**
-   * @brief Sets the listener connetion address and port specified in the
+   * @brief Sets the listener connection address and port specified in the
    * ListenerConfig.
    *
    * The listener connection will listen in the address and port specified in
