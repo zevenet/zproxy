@@ -180,6 +180,7 @@ while ( 1 )
 	my @backendserv;
 	my @backendport;
 	my @backendstatus;
+	my @backendprio;
 	my $timeout = '';
 	my $i       = 0;
 	my $j       = 0;
@@ -225,13 +226,13 @@ while ( 1 )
 	elsif ( $type eq 'l4xnat' )    # Collect L4xNAT farm variables values
 	{
 		my $be = &getL4FarmServers( $farmname );
-
 		foreach my $l_serv ( @{ $be } )
 		{
 			$backendid[$i]   = $l_serv->{ id };
 			$backendserv[$i] = $l_serv->{ ip };
 			$backendport[$i] = $l_serv->{ port } // $farm_st->{ vport };    # use farm port if backend port is not defined
 			$backendport[$i] = $farm_st->{ vport } if ($backendport[$i] eq "");
+			$backendprio[$i] = $l_serv->{ priority };
 			$backendstatus[$i] = $l_serv->{ status };
 			$i++;
 		}
@@ -336,8 +337,26 @@ while ( 1 )
 			}
 			elsif ( $type eq 'l4xnat' )
 			{
-				&setL4FarmBackendStatus( $farmname, $backendid[$j], 'up' );
+				#if ( $cutConns eq 'true' and $backendprio[$j] > 1 ){
 				$auxLog = " in farm: '$farmname'";
+				&setL4FarmBackendStatus( $farmname, $backendid[$j], 'up' );
+				if ( $cutConns eq 'true'){
+
+					#loop the backend array and cut conns for the others
+					my $b=0;
+					#while ($b < $i){
+					for ($b = 0; $b < $i; $b++){
+						#do nothing for current backend (j)
+						next if $b == $j;
+						#do not cut conns if backend prio <= than current backend prio (j) 
+						next if $backendprio[$b] <= $backendprio[$j];
+						if ($backendprio[$b] > $backendprio[$j]){
+							&zenlog("Cutting priority conns for backend $backendid[$b]");
+							&setL4FarmBackendStatus( $farmname, $backendid[$b], '', 'cut', 'true' );
+        					}
+
+					}
+				}
 
 				system ( "$zcluster_send_action farm restart $farmname &" )
 				  if -f $zcluster_send_action;
