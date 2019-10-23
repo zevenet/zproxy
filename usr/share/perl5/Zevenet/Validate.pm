@@ -68,6 +68,8 @@ my $dos_tcp    = qr/(?:bogustcpflags|limitrst)/;
 
 my $run_actions = qr/^(?:stop|start|restart)$/;
 
+my $name = qr/^(?:[a-zA-Z0-9][\w]{5,31})$/;
+
 my %format_re = (
 
 	# generic types
@@ -231,6 +233,7 @@ my %format_re = (
 	'waf_skip'       => qr/[0-9]+/,
 	'waf_skip_after' => qr/\w+/,
 	'waf_set_status' => qr/(?:$boolean|detection)/,
+	'waf_file'       => qr/(?:[\w-]+)/,
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
