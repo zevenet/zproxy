@@ -42,103 +42,105 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $desc = "Modify HTTP farm $farmname";
 
 	my $params = {
-		"newfarmname" => {
-						   'valid_format' => 'farm_name',
+				"newfarmname" => {
+								   'valid_format' => 'farm_name',
+								   'non_blank'    => 'true',
+				},
+				"vport" => {
+							 'interval'  => "1,65535",
+							 'non_blank' => 'true',
+				},
+				"vip" => {
+						   'valid_format' => 'ip_addr',
 						   'non_blank'    => 'true',
-		},
-		"vport" => {
-					 'interval'  => "1,65535",
-					 'non_blank' => 'true',
-		},
-		"vip" => {
-				   'valid_format' => 'ip_addr',
-				   'non_blank'    => 'true',
-				   'format_msg'   => 'expects an IP'
-		},
-		"contimeout" => {
-						  'valid_format' => 'natural_num',
-						  'non_blank'    => 'true',
-						  'format_msg'   => 'expects a natural number'
-		},
-		"restimeout" => {
-						  'valid_format' => 'natural_num',
-						  'non_blank'    => 'true',
-						  'format_msg'   => 'expects a natural number'
-		},
-		"resurrectime" => {
-							'valid_format' => 'natural_num',
-							'non_blank'    => 'true',
-							'format_msg'   => 'expects a natural number'
-		},
-		"reqtimeout" => {
-						  'valid_format' => 'natural_num',
-						  'non_blank'    => 'true',
-						  'format_msg'   => 'expects a natural number'
-		},
-		"rewritelocation" => {
-							   'values'    => ["disabled", "enabled", "enabled-backends"],
-							   'non_blank' => 'true',
-		},
-		"httpverb" => {
-			'values' =>
-			  ["standardHTTP", "extendedHTTP", "standardWebDAV", "MSextWebDAV", "MSRPCext"],
-			'non_blank' => 'true',
-		},
-		"error414" => {
-						'regex' => ".*",
-		},
-		"error500" => {
-						'regex' => ".*",
-		},
-		"error501" => {
-						'regex' => ".*",
-		},
-		"error503" => {
-						'regex' => ".*",
-		},
-		"listener" => {
-						'values'    => ["http", "https"],
+						   'format_msg'   => 'expects an IP'
+				},
+				"contimeout" => {
+								  'valid_format' => 'natural_num',
+								  'non_blank'    => 'true',
+								  'format_msg'   => 'expects a natural number'
+				},
+				"restimeout" => {
+								  'valid_format' => 'natural_num',
+								  'non_blank'    => 'true',
+								  'format_msg'   => 'expects a natural number'
+				},
+				"resurrectime" => {
+									'valid_format' => 'natural_num',
+									'non_blank'    => 'true',
+									'format_msg'   => 'expects a natural number'
+				},
+				"reqtimeout" => {
+								  'valid_format' => 'natural_num',
+								  'non_blank'    => 'true',
+								  'format_msg'   => 'expects a natural number'
+				},
+				"rewritelocation" => {
+								 'values'    => ["disabled", "enabled", "enabled-backends"],
+								 'non_blank' => 'true',
+				},
+				"httpverb" => {
+						'values' => [
+								"standardHTTP", "extendedHTTP", "standardWebDAV", "MSextWebDAV",
+								"MSRPCext",     "optionsHTTP"
+						],
 						'non_blank' => 'true',
-		},
-		"ciphers" => {
-					   'values'    => ["all", "highsecurity", "customsecurity"],
-					   'non_blank' => 'true',
-					   'listener'  => 'https',
-		},
-		"cipherc" => {
-					   'non_blank' => 'true',
-					   'listener'  => 'https',
-		},
-		"certname" => {
-						'valid_format' => 'certificate',
-						'non_blank'    => 'true',
-						'listener'     => 'https',
-		},
-		"disable_sslv2" => {
-							 'values'    => ["true", "false"],
-							 'non_blank' => 'true',
-							 'listener'  => 'https',
-		},
-		"disable_sslv3" => {
-							 'values'    => ["true", "false"],
-							 'non_blank' => 'true',
-							 'listener'  => 'https',
-		},
-		"disable_tlsv1" => {
-							 'values'    => ["true", "false"],
-							 'non_blank' => 'true',
-							 'listener'  => 'https',
-		},
-		"disable_tlsv1_1" => {
-							   'values'    => ["true", "false"],
+				},
+				"error414" => {
+								'regex' => ".*",
+				},
+				"error500" => {
+								'regex' => ".*",
+				},
+				"error501" => {
+								'regex' => ".*",
+				},
+				"error503" => {
+								'regex' => ".*",
+				},
+				"listener" => {
+								'values'    => ["http", "https"],
+								'non_blank' => 'true',
+				},
+				"ciphers" => {
+							   'values'    => ["all", "highsecurity", "customsecurity"],
 							   'non_blank' => 'true',
 							   'listener'  => 'https',
-		},
-		"disable_tlsv1_2" => {
-							   'values'    => ["true", "false"],
+				},
+				"cipherc" => {
 							   'non_blank' => 'true',
 							   'listener'  => 'https',
-		},
+				},
+				"certname" => {
+								'valid_format' => 'certificate',
+								'non_blank'    => 'true',
+								'listener'     => 'https',
+				},
+				"disable_sslv2" => {
+									 'values'    => ["true", "false"],
+									 'non_blank' => 'true',
+									 'listener'  => 'https',
+				},
+				"disable_sslv3" => {
+									 'values'    => ["true", "false"],
+									 'non_blank' => 'true',
+									 'listener'  => 'https',
+				},
+				"disable_tlsv1" => {
+									 'values'    => ["true", "false"],
+									 'non_blank' => 'true',
+									 'listener'  => 'https',
+				},
+				"disable_tlsv1_1" => {
+									   'values'    => ["true", "false"],
+									   'non_blank' => 'true',
+									   'listener'  => 'https',
+				},
+				"disable_tlsv1_2" => {
+									   'values'    => ["true", "false"],
+									   'non_blank' => 'true',
+									   'listener'  => 'https',
+				},
 	};
 
 	if ( $eload )

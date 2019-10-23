@@ -355,7 +355,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			&zenlog( "$zapierror", "error", "LSLB" );
 		}
 		elsif ( $json_obj->{ httpverb } =~
-				/^standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext$/ )
+			/^standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext|optionsHTTP$/ )
 		{
 			my $httpverb = 0;
 			if ( $json_obj->{ httpverb } eq "standardHTTP" )
@@ -377,6 +377,10 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			elsif ( $json_obj->{ httpverb } eq "MSRPCext" )
 			{
 				$httpverb = 4;
+			}
+			elsif ( $json_obj->{ httpverb } eq "optionsHTTP" )
+			{
+				$httpverb = 5;
 			}
 			$status = &setFarmHttpVerb( $httpverb, $farmname );
 			if ( $status != -1 )
