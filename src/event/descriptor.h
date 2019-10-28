@@ -95,7 +95,7 @@ class Descriptor {
 
   inline bool enableWriteEvent() {
     if (cancelled) return false;
-    if (event_manager_ != nullptr && current_event != EVENT_TYPE::WRITE && fd_ > 0) {
+    if (event_manager_ != nullptr && fd_ > 0) {
       current_event = events::EVENT_TYPE::WRITE;
       return event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE, event_group_);
     }
