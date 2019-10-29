@@ -354,4 +354,22 @@ sub getBLAllLists
 	return \@lists;
 }
 
+sub listBLByFarm
+{
+	my $farm  = shift;
+	my @rules = ();
+	if ( -e $blacklistsConf )
+	{
+		my $fileHandle = Config::Tiny->read( $blacklistsConf );
+		foreach my $key ( sort keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farm( |$)/ )
+			{
+				push @rules, $key;
+			}
+		}
+	}
+	return @rules;
+}
+
 1;

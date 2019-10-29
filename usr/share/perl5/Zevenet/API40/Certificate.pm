@@ -324,6 +324,13 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	# Check if the farm exists
+	if ( &getFarmType( $farmname ) ne 'https' )
+	{
+		my $msg = "This feature is only available for 'https' farms";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )

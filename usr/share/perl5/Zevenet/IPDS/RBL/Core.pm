@@ -54,6 +54,25 @@ sub getRBLFarm
 	return &getRBLObjectRuleParam( $rule, 'farms' );
 }
 
+sub listRBLByFarm
+{
+	my $farm  = shift;
+	my @rules = ();
+
+	if ( -e $rblConfigFile )
+	{
+		my $fileHandle = Config::Tiny->read( $rblConfigFile );
+		foreach my $key ( sort keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farm( |$)/ )
+			{
+				push @rules, $key;
+			}
+		}
+	}
+	return @rules;
+}
+
 =begin nd
 Function: getRBLExists
 

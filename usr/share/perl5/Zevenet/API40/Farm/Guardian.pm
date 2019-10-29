@@ -355,6 +355,11 @@ sub add_farmguardian_farm
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
 	# Check if it exists
 	if ( !&getFGExists( $json_obj->{ name } ) )
 	{
@@ -380,11 +385,6 @@ sub add_farmguardian_farm
 	# link the check with the farm_service
 	my $farm_tag = $farm;
 	$farm_tag = "${farm}_$srv" if $srv;
-
-	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
 
 	# check if the farm guardian is already applied to the farm
 	my $fg_obj = &getFGObject( $json_obj->{ name } );
