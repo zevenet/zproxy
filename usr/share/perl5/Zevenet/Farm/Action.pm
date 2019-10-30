@@ -150,16 +150,15 @@ sub runFarmStart    # ($farm_name, $writeconf)
 
 		require Zevenet::Farm::Config;
 		&reloadFarmsSourceAddressByFarm( $farm_name );
-		if (&getPersistence($farm_name) == 0){
-		&eload(
-			module	=> 'Zevenet::Ssyncd',
-			func	=> 'setSsyncdFarmUp',
-			args	=> [$farm_name],
+		if ( &getPersistence( $farm_name ) == 0 )
+		{
+			&eload(
+					module => 'Zevenet::Ssyncd',
+					func   => 'setSsyncdFarmUp',
+					args   => [$farm_name],
 			);
 		}
-        }
-
-
+	}
 
 	return $status;
 }
@@ -195,11 +194,11 @@ sub runFarmStop    # ($farm_name, $writeconf)
 				func   => 'runIPDSStopByFarm',
 				args   => [$farm_name],
 		);
-                &eload(
-                                module  => 'Zevenet::Ssyncd',
-                                func    => 'setSsyncdFarmDown',
-                                args    => [$farm_name],
-                );
+		&eload(
+				module => 'Zevenet::Ssyncd',
+				func   => 'setSsyncdFarmDown',
+				args   => [$farm_name],
+		);
 
 	}
 
@@ -488,12 +487,12 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Action;
-		$output = &setHTTPNewFarmName( $farm_name, $new_farm_name );
+		$output = &copyHTTPFarm( $farm_name, $new_farm_name, 'del' );
 	}
 	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
-		$output = &setDatalinkNewFarmName( $farm_name, $new_farm_name );
+		$output = &copyDatalinkFarm( $farm_name, $new_farm_name, 'del' );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
@@ -504,8 +503,8 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	{
 		$output = &eload(
 						  module => 'Zevenet::Farm::GSLB::Action',
-						  func   => 'setGSLBNewFarmName',
-						  args   => [$farm_name, $new_farm_name],
+						  func   => 'copyGSLBFarm',
+						  args   => [$farm_name, $new_farm_name, 'del'],
 		);
 	}
 
@@ -542,6 +541,58 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	# FIXME: farmguardian files
 	# FIXME: logfiles
+	return $output;
+}
+
+=begin nd
+Function: copyFarm
+
+	Function that copies the configuration file of a farm to create a new one.
+
+Parameters:
+	farmname - Farm name
+	newfarmname - New farm name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+
+=cut
+
+sub copyFarm    # ($farm_name,$new_farm_name)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name, $new_farm_name ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	&zenlog( "copying the farm '$farm_name' to '$new_farm_name'", "info", "FARMS" );
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		require Zevenet::Farm::HTTP::Action;
+		$output = &copyHTTPFarm( $farm_name, $new_farm_name );
+	}
+	elsif ( $farm_type eq "datalink" )
+	{
+		require Zevenet::Farm::Datalink::Action;
+		$output = &copyDatalinkFarm( $farm_name, $new_farm_name );
+	}
+	elsif ( $farm_type eq "l4xnat" )
+	{
+		require Zevenet::Farm::L4xNAT::Action;
+		$output = &copyL4Farm( $farm_name, $new_farm_name );
+	}
+	elsif ( $farm_type eq "gslb" && $eload )
+	{
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Action',
+						  func   => 'copyGSLBFarm',
+						  args   => [$farm_name, $new_farm_name],
+		);
+	}
+
 	return $output;
 }
 

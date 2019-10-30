@@ -212,8 +212,6 @@ sub getIdsTree
 		$tree->{ 'logs' }->{ $l->{ file } } = $FIN;
 	}
 
-	&zenlog( Dumper( $tree ), "????? ids" );
-
 	return $tree;
 }
 
