@@ -218,7 +218,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_TYPE::DISCONNECT: {
       auto stream = streams_set[fd];
       if (stream == nullptr) {
-        Logger::LogInfo("Remote host closed connection prematurely ", LOG_INFO);
+        char addr[150];
+        Network::getPeerAddress(fd, addr, 150);
+        Logger::logmsg(LOG_DEBUG, "Remote host %s closed connection prematurely ",
+                       addr);
         deleteFd(fd);
         ::close(fd);
         return;
@@ -549,6 +552,8 @@ void StreamManager::onRequestEvent(int fd) {
         static size_t total_request;
         total_request++;
         stream->response.reset_parser();
+        stream->backend_connection.buffer_offset = 0;
+        stream->client_connection.buffer_offset = 0;
         stream->backend_connection.buffer_size = 0;
         Logger::logmsg(
             LOG_DEBUG, "%lu [%s] %.*s [%s (%d) -> %s (%d)]", total_request,
@@ -736,7 +741,8 @@ void StreamManager::onResponseEvent(int fd) {
     stream->client_connection.enableWriteEvent();
     return;
   }
-  #if PRINT_DEBUG_FLOW_BUFFERS
+ #if PRINT_DEBUG_FLOW_BUFFERS
+  auto buffer_size_in = stream->backend_connection.buffer_size;
   if (stream->backend_connection.buffer_size != 0)
     Logger::logmsg(
         LOG_REMOVE,
@@ -750,7 +756,7 @@ void StreamManager::onResponseEvent(int fd) {
         stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
             ? "TRUE"
             : "false");
-  #endif
+#endif
   // disable response timeout timerfd
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
@@ -864,18 +870,19 @@ void StreamManager::onResponseEvent(int fd) {
     }
   }
   #if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(
-      LOG_REMOVE,
-      "%.*s IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
-      "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
-      stream->request.http_message_length, stream->request.http_message,
-      stream->backend_connection.buffer_size, stream->response.content_length,
-      stream->response.message_bytes_left,
-      stream->response.getHeaderSent() ? "true" : "false",
-      stream->response.chunk_size_left, IO::getResultString(result).data(),
-      stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
-          ? "T"
-          : "F");
+  if (buffer_size_in > 0)
+    Logger::logmsg(
+        LOG_REMOVE,
+        "%.*s IN\tbuffer size: %lu:%8lu \tContent-length: %lu\tleft: %lu "
+        "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
+        stream->request.http_message_length, stream->request.http_message,
+        buffer_size_in, stream->backend_connection.buffer_size,
+        stream->response.content_length, stream->response.message_bytes_left,
+        stream->response.getHeaderSent() ? "true" : "false",
+        stream->response.chunk_size_left, IO::getResultString(result).data(),
+        stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
+            ? "T"
+            : "F");
   #endif
   stream->backend_connection.getBackend()->calculateLatency(
       std::chrono::duration_cast<std::chrono::duration<double>>(
@@ -1282,6 +1289,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       LOG_REMOVE, "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
       stream->backend_connection.buffer_size, stream->response.content_length,
       stream->response.message_bytes_left);
+  auto buffer_size_in = stream->backend_connection.buffer_size;
 #endif
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
@@ -1361,8 +1369,10 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 #endif
 
       if (stream->backend_connection.buffer_size > 0) {
+        stream->backend_connection.buffer_offset = written;
         stream->client_connection.enableWriteEvent();
       } else {
+        stream->backend_connection.buffer_offset = 0;
         stream->backend_connection.enableReadEvent();
         stream->client_connection.enableReadEvent();
       }
@@ -1534,13 +1544,13 @@ bool StreamManager::isHandler(ctl::CtlTask& task) {
 void StreamManager::onServerDisconnect(HttpStream* stream) {
 
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
+  if (stream == nullptr) {
+    return;
+  }
   // update log info
   StreamDataLogger logger(stream, listener_config_);
 
   Logger::LogInfo("Backend closed connection", LOG_DEBUG);
-  if (stream == nullptr) {
-    return;
-  }
   if (stream->backend_connection.buffer_size > 0
 #if ENABLE_ZERO_COPY
       || stream->backend_connection.splice_pipe.bytes > 0

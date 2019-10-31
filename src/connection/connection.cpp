@@ -31,16 +31,14 @@
 
 Connection::Connection()
     : buffer_size(0),
+      buffer_offset(0),
       address(nullptr),
       last_read_(0),
       last_write_(0),
-      // string_buffer(),
       address_str(""),
       is_connected(false),
       ssl(nullptr),
-      ssl_connected(false) {
-  // address.ai_addr = new sockaddr();
-}
+      ssl_connected(false) {}
 Connection::~Connection() {
   is_connected = false;
   if (ssl != nullptr) {
@@ -75,8 +73,8 @@ IO::IO_RESULT Connection::read() {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   //  PRINT_BUFFER_SIZE
   while (!done) {
-    count = ::recv(fd_, buffer + buffer_size, MAX_DATA_SIZE - buffer_size,
-                   MSG_NOSIGNAL);
+    count = ::recv(fd_, (buffer + buffer_offset + buffer_size),
+                   (MAX_DATA_SIZE - buffer_size - buffer_offset), MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
         std::string error = "read() failed  ";
@@ -95,7 +93,7 @@ IO::IO_RESULT Connection::read() {
       // PRINT_BUFFER_SIZE
       buffer_size += static_cast<size_t>(count);
       // PRINT_BUFFER_SIZE
-      if ((MAX_DATA_SIZE - buffer_size) == 0) {
+      if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0) {
         //        PRINT_BUFFER_SIZE
         //        Logger::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
         return IO::IO_RESULT::FULL_BUFFER;
@@ -254,7 +252,8 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   //  PRINT_BUFFER_SIZE
   while (!done) {
-    count = ::send(fd, buffer + sent, buffer_size - sent, MSG_NOSIGNAL);
+    count = ::send(fd, buffer + buffer_offset + sent, buffer_size - sent,
+                   MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
           errno != ECONNRESET*/) {

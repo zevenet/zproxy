@@ -111,8 +111,10 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
     BIO_clear_retry_flags(ssl_connection.io);
     ERR_clear_error();
     rc = BIO_read(ssl_connection.io,
-                  ssl_connection.buffer + ssl_connection.buffer_size,
-                  static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
+                  ssl_connection.buffer + ssl_connection.buffer_offset +
+                      ssl_connection.buffer_size,
+                  static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size -
+                                   ssl_connection.buffer_offset));
     //    Logger::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d ERRNO %s", rc,
     //                  ssl_connection.buffer_size, std::strerror(errno));
     if (rc == 0) {
@@ -289,8 +291,9 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
   int rc = -1;
   do {
     ERR_clear_error();
-    rc = SSL_read(ssl_connection.ssl, ssl_connection.buffer + ssl_connection.buffer_size,
-                  static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size));
+    rc = SSL_read(ssl_connection.ssl,
+                  ssl_connection.buffer + ssl_connection.buffer_offset + ssl_connection.buffer_size,
+                  static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size - ssl_connection.buffer_offset ));
     auto ssle = SSL_get_error(ssl_connection.ssl, rc);
     switch (ssle) {
       case SSL_ERROR_NONE:
@@ -299,7 +302,8 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
         break;
       case SSL_ERROR_WANT_READ:
       case SSL_ERROR_WANT_WRITE: {
-        Logger::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s", rc, ssle, errno, strerror(errno));
+        Logger::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s",
+                       rc, ssle, errno, strerror(errno));
         return IO::IO_RESULT::DONE_TRY_AGAIN;  // TODO::  check want read
       }
       case SSL_ERROR_ZERO_RETURN:
@@ -314,7 +318,8 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
 
   return result;
 }
-IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection, const char *data, size_t data_size,
+IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
+                                             const char *data, size_t data_size,
                                              size_t &written) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
@@ -329,7 +334,8 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection, const c
     rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent));  //, &written);
     if (rc > 0) sent += static_cast<size_t>(rc);
-    // Logger::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc, sent);
+    // Logger::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc,
+    // sent);
   } while (rc > 0 && static_cast<size_t>(rc) < (data_size - sent));
 
   if (sent > 0) {
@@ -339,7 +345,8 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection, const c
   int ssle = SSL_get_error(ssl_connection.ssl, static_cast<int>(rc));
   if (rc < 0 && ssle != SSL_ERROR_WANT_WRITE) {
     // Renegotiation is not possible in a TLSv1.3 connection
-    Logger::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s", rc, ssle, errno, strerror(errno));
+    Logger::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s", rc,
+                   ssle, errno, strerror(errno));
     return IO::IO_RESULT::DONE_TRY_AGAIN;
   }
   if (rc == 0) {
@@ -352,8 +359,9 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection, const c
   return IO::IO_RESULT::ERROR;
 }
 
-IO::IO_RESULT SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection, const iovec *__iovec, int count,
-                                                  size_t &nwritten) {
+IO::IO_RESULT SSLConnectionManager::sslWriteIOvec(
+    Connection &target_ssl_connection, const iovec *__iovec, int count,
+    size_t &nwritten) {
   size_t written = 0;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   //  Logger::logmsg(LOG_REMOVE, ">>>-------- Count: %d written: %d
@@ -486,8 +494,10 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
 }
 IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &target_ssl_connection, Connection &source_ssl_connection,
                                                 size_t &written, bool flush_data) {
-  auto result = handleWrite(target_ssl_connection, source_ssl_connection.buffer, source_ssl_connection.buffer_size,
-                            written, flush_data);
+  auto result = handleWrite(
+      target_ssl_connection,
+      source_ssl_connection.buffer + source_ssl_connection.buffer_offset,
+      source_ssl_connection.buffer_size, written, flush_data);
   if (written > 0) source_ssl_connection.buffer_size -= written;
   return result;
 }
