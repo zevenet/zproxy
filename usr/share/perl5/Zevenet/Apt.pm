@@ -35,28 +35,6 @@ sub setAPTRepo
 	# Function call to configure proxy (Zevenet::SystemInfo)
 	&setEnv();
 
-# telnet
-#require IO::Socket::INET;
-#my $socket;
-#if (
-#	 !(
-#		$socket = IO::Socket::INET->new(
-#										 PeerAddr => "$host",
-#										 PeerPort => $port,
-#										 Proto    => 'tcp',
-#										 Timeout  => 2
-#		)
-#	 )
-#  )
-#{
-#	&zenlog(
-#		"No connection to internet, please check connection and configure proxy if needed",
-#		"error", "apt"
-#	);
-#	return 0;
-#}
-#$socket->close();
-
 	# check zevenet version. Versions prior to 5.2.5 will not be able to subscribe.
 	my $cmd = "$dpkg -l | $grep \"^ii\\s\\szevenet\\s*[0-9]\"";
 
