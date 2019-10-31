@@ -202,14 +202,17 @@ sub getIdsTree
 
 	# add backups
 	my $backups = &getBackup();
-	$tree->{ 'backups' } = &addIdsArrays( $backups );
+	foreach my $b ( @{ $backups } )
+	{
+		$tree->{ 'system' }->{ 'backup' }->{ $b->{ 'name' } } = $FIN;
+	}
 
 	# add logs
 	my $logs = &getLogs();
 	$tree->{ 'logs' } = $FIN;
 	foreach my $l ( @{ $logs } )
 	{
-		$tree->{ 'logs' }->{ $l->{ file } } = $FIN;
+		$tree->{ 'system' }->{ 'logs' }->{ $l->{ file } } = $FIN;
 	}
 
 	return $tree;
