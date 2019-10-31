@@ -81,7 +81,7 @@ sub getIdsTree
 					  ->{ $b->{ 'id' } } = $FIN;
 				}
 
-				my $fg = &getFGFarm( $f, $s );
+				my $fg = &getFGFarm( $f, ( $type =~ /datalink|l4xnat/ ) ? undef : $s );
 				$tree->{ 'farms' }->{ $f }->{ 'services' }->{ $s }->{ 'fg' }->{ $fg } = $FIN
 				  if ( $fg ne '' );
 			}
@@ -204,7 +204,7 @@ sub getIdsTree
 	my $backups = &getBackup();
 	foreach my $b ( @{ $backups } )
 	{
-		$tree->{ 'system' }->{ 'backup' }->{ $b->{ 'name' } } = $FIN;
+		$tree->{ 'system' }->{ 'backup' }->{ $b->{ name } } = $FIN;
 	}
 
 	# add logs

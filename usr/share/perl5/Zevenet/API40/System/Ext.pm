@@ -93,7 +93,7 @@ sub set_factory_reset
 	&httpResponse( { code => 200, body => $body } );
 }
 
-# GET /system/packages$
+# GET /system/packages
 sub get_packages_info
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -107,6 +107,40 @@ sub get_packages_info
 
 	return &httpResponse(
 				 { code => 200, body => { description => $desc, params => $output } } );
+}
+
+# POST /system/packages/offline
+sub upload_iso_offline
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	include 'Zevenet::Apt';
+
+	my $upload_filehandle = shift;
+
+	my $desc = "Upload a offline iso";
+
+	if ( !$upload_filehandle )
+	{
+		my $msg = "It's necessary to add a data binary file.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	my $error = &uploadAPTIsoOffline( $upload_filehandle );
+	if ( $error == 1 )
+	{
+		my $msg = "Error uploading the file.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( $error == 2 )
+	{
+		my $msg = "The ISO is not valid.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $msg = "The ISO was uploaded properly.";
+	my $body = { description => $desc, message => $msg };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

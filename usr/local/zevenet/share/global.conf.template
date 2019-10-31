@@ -129,6 +129,8 @@ $sys_net_dir="/sys/class/net";
 
 
 ## binaries
+#Where is file binary?
+$file_bin="/usr/bin/file";
 #Where is cat binary?
 $cat_bin="/usr/bin/cat";
 #Where is hostname binary?
@@ -336,7 +338,7 @@ $arp_unsolicited="";
 #ARP announcement, true / false (default)
 $arp_announce="";
 
-#Network duplicated net 
+#Network duplicated net
 $duplicated_net="false";
 
 

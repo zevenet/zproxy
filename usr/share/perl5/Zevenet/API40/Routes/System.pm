@@ -53,6 +53,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/system/(?:factory|packages)} )
 
 	POST qr{^/system/factory$}, 'set_factory_reset', $mod;
 	GET qr{^/system/packages$}, 'get_packages_info', $mod;
+	POST qr{^/system/packages/offline$}, 'upload_iso_offline', $mod;
 }
 
 1;
