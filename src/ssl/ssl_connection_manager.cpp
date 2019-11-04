@@ -90,17 +90,18 @@ bool SSLConnectionManager::initSslConnection(Connection &ssl_connection, bool cl
     }
   }
 
-  //  SSL_set_mode(ssl_connection.ssl, SSL_MODE_ENABLE_PARTIAL_WRITE
-  //                   | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
   //  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION);
-  //  SSL_set_mode(ssl_connection.ssl, SSL_MODE_RELEASE_BUFFERS);
-
+  SSL_set_mode(ssl_connection.ssl, SSL_MODE_RELEASE_BUFFERS);
+  SSL_set_mode(ssl_connection.ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
   !client_mode ? SSL_set_accept_state(ssl_connection.ssl) : SSL_set_connect_state(ssl_connection.ssl);
   ssl_connection.ssl_conn_status = SSL_STATUS::NEED_HANDSHAKE;
   return true;
 }
 
 IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
+#if USE_SSL_BIO_BUFFER==0
+  return sslRead(ssl_connection);
+#endif
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
@@ -150,9 +151,9 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
   //  // FIXME: Buggy, used just for test
   //  Logger::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   written = 0;
+  ERR_clear_error();
   for (;;) {
     BIO_clear_retry_flags(ssl_connection.io);
-    ERR_clear_error();
     rc = BIO_write(ssl_connection.io, data + written, static_cast<int>(data_size - written));
     //    Logger::logmsg(LOG_DEBUG, "BIO_write return code %d writen %d", rc, written);
     if (rc == 0) {
@@ -199,54 +200,167 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
   }
   ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_START;
   ERR_clear_error();
-  int r = SSL_do_handshake(ssl_connection.ssl);
-  if (r == 1) {
-    ssl_connection.ssl_connected = true;
-#ifdef DEBUG_PRINT_SSL_SESSION_INFO
-    SSL_SESSION *session = SSL_get_session(ssl_connection.ssl);
-    auto session_info = ssl::ossGetSslSessionInfo(session);
-    Logger::logmsg(LOG_ERR, session_info.get());
-#endif
-    if (!client_mode &&
-        ssl_context->listener_config.ssl_forward_sni_server_name) {
-      if ((ssl_connection.server_name = SSL_get_servername(ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
-        Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
-                       pthread_self(), ssl_connection.server_name);
-      } else {
-        Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
-                       ssl_connection.server_name);
-        ssl_connection.server_name = nullptr;
+#if USE_SSL_BIO_BUFFER
+  BIO_clear_retry_flags(ssl_connection.io);
+  auto i = BIO_do_handshake(ssl_connection.io);
+  if (i <= 0) {
+    auto errno__ = errno;
+    if (!BIO_should_retry(ssl_connection.io)) {
+      if (SSL_in_init(ssl_connection.ssl)) {
+//        Logger::logmsg(LOG_DEBUG,
+//                       ">>PROGRESS>>fd:%d BIO_do_handshake "
+//                       "return:%d error: with %s errno: %d:%s \n "
+//                       "Ossl errors: %s",
+//                       ssl_connection.getFileDescriptor(), i,
+//                       ssl_connection.getPeerAddress().data(), errno__,
+//                       std::strerror(errno__), ossGetErrorStackString().get());
+        return true;
       }
-    } else {
-      ssl_connection.server_name = nullptr;
+      if (SSL_is_init_finished(ssl_connection.ssl)) {
+//        Logger::logmsg(LOG_DEBUG,
+//                       ">>FINISHED>>fd:%d BIO_do_handshake "
+//                       "return:%d error: with %s errno: %d:%s \n "
+//                       "Ossl errors: %s",
+//                       ssl_connection.getFileDescriptor(), i,
+//                       ssl_connection.getPeerAddress().data(), errno__,
+//                       std::strerror(errno__), ossGetErrorStackString().get());
+        return true;
+      }
+      Logger::logmsg(LOG_DEBUG,
+                     "fd:%d BIO_do_handshake "
+                     "return:%d error: with %s errno: %d:%s \n "
+                     "Ossl errors: %s",
+                     ssl_connection.getFileDescriptor(), i,
+                     ssl_connection.getPeerAddress().data(), errno__,
+                     std::strerror(errno__), ossGetErrorStackString().get());
+      ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
+      SSL_clear(ssl_connection.ssl);
+      return errno__ == 0;
     }
-    ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
-    //    Logger::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: ssl connected fd %d",
-    //                  ssl_connection.getFileDescriptor());
-
-    !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();
-    return true;
+    if (BIO_should_write(ssl_connection.io)) {
+      ssl_connection.enableWriteEvent();
+      ssl_connection.ssl_conn_status = SSL_STATUS::WANT_WRITE;
+      return true;
+    } else if (BIO_should_read(ssl_connection.io)) {
+      ssl_connection.enableReadEvent();
+      ssl_connection.ssl_conn_status = SSL_STATUS::WANT_READ;
+      return true;
+    } else {
+      Logger::logmsg(LOG_DEBUG, "fd:%d BIO_do_handshake - BIO_should_XXX failed",
+                     ssl_connection.getFileDescriptor());
+      return false;
+    }
   }
-  int err = SSL_get_error(ssl_connection.ssl, r);
-  if (err == SSL_ERROR_WANT_WRITE) {
-    //    Logger::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: return want write set events %d",
-    //                  ssl_connection.getFileDescriptor());
-    //      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();
-
-  } else if (err == SSL_ERROR_WANT_READ) {
-    //    Logger::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: Want read, fd %d",
-    //                  ssl_connection.getFileDescriptor());
-    //      !client_mode ? ssl_connection.enableReadEvent() : ssl_connection.enableWriteEvent();;
-
-  } else {
-    Logger::logmsg(LOG_NOTICE,
-                   " SSL_do_handshake error: %s with %s \n Ossl errors: %s",
-                   getErrorString(err), ssl_connection.getPeerAddress().data(),
+#else
+  int r = SSL_do_handshake(ssl_connection.ssl);
+  if (r == 0) {
+    Logger::logmsg(LOG_DEBUG,
+                   " fd:%d SSL_do_handshake return:%d error: with %s \n "
+                   "Ossl errors: %s",
+                   ssl_connection.getFileDescriptor(), r,
+                   ssl_connection.getPeerAddress().data(),
                    ossGetErrorStackString().get());
     ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
+    SSL_clear(ssl_connection.ssl);
     return false;
+  } else if (r == 1) {
+#endif
+  ssl_connection.ssl_connected = true;
+  const SSL_CIPHER *cipher = SSL_get_current_cipher(ssl_connection.ssl);
+  if (cipher) {
+    auto buf = std::make_unique<char[]>(MAXBUF);
+    auto buf_size = MAXBUF;
+    SSL_CIPHER_description(cipher, &buf[0], buf_size - 1);
+
+    Logger::logmsg(
+        LOG_DEBUG,
+        "SSL: %s, %s REUSED, Ciphers: %s\n",
+        SSL_get_version(ssl_connection.ssl),
+        SSL_session_reused(ssl_connection.ssl) ? "" : "Not ", &buf[0]);
   }
+#ifdef DEBUG_PRINT_SSL_SESSION_INFO
+  SSL_SESSION *session = SSL_get_session(ssl_connection.ssl);
+  auto session_info = ssl::ossGetSslSessionInfo(session);
+  Logger::logmsg(LOG_ERR, session_info.get());
+#endif
+  if (!client_mode &&
+      ssl_context->listener_config.ssl_forward_sni_server_name) {
+    if ((ssl_connection.server_name = SSL_get_servername(
+             ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
+      Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
+                     pthread_self(), ssl_connection.server_name);
+    } else {
+      Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
+                     ssl_connection.server_name);
+      ssl_connection.server_name = nullptr;
+    }
+  } else {
+    ssl_connection.server_name = nullptr;
+  }
+  ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
+  !client_mode ? ssl_connection.enableReadEvent()
+               : ssl_connection.enableWriteEvent();
   return true;
+#if USE_SSL_BIO_BUFFER == 0
+}
+else {
+  int errno__ = errno;
+  int err = SSL_get_error(ssl_connection.ssl, r);
+  switch (err) {
+    case SSL_ERROR_WANT_READ: {
+      ssl_connection.enableReadEvent();
+      ssl_connection.ssl_conn_status = SSL_STATUS::WANT_READ;
+      return true;
+    }
+    case SSL_ERROR_WANT_WRITE: {
+      ssl_connection.enableWriteEvent();
+      ssl_connection.ssl_conn_status = SSL_STATUS::WANT_WRITE;
+      return true;
+    }
+    case SSL_ERROR_SYSCALL: {
+      if (errno__ == EAGAIN) {
+        return true;
+      }
+      Logger::logmsg(
+          LOG_DEBUG,
+          "fd:%d SSL_do_handshake error: %s with <<%s>> \n Ossl errors:%s "
+              , ssl_connection.getFileDescriptor(), getErrorString(err),
+                ssl_connection.getPeerAddress()
+                    .data(),
+          ossGetErrorStackString().get());
+      ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
+      SSL_clear(ssl_connection.ssl);
+      return false;
+    }
+    case SSL_ERROR_SSL: {
+      Logger::logmsg(
+          LOG_DEBUG,
+          "fd:%d SSL_do_handshake error: %s with <<%s>> \n Ossl errors:%s"
+              , ssl_connection.getFileDescriptor(), getErrorString(err),
+                ssl_connection.getPeerAddress()
+                    .data(),
+          ossGetErrorStackString().get());
+      ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
+      SSL_clear(ssl_connection.ssl);
+      return false;
+    }
+    case SSL_ERROR_ZERO_RETURN:
+    default: {
+      Logger::logmsg(
+          LOG_DEBUG,
+          "fd:%d SSL_do_handshake return: %d error: %s  errno = %s with %s "
+              "Handshake status: %s Ossl errors: %s ",
+                ssl_connection.getFileDescriptor(),
+            r, getErrorString(err), std::strerror(errno__),
+            ssl_connection.getPeerAddress().data(),
+            ssl::getSslStatusString(ssl_connection.ssl_conn_status).data(),
+            ossGetErrorStackString().get());
+      ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
+      return false;
+    }
+  }
+}
+#endif
 }
 
 SSLConnectionManager::~SSLConnectionManager() {
@@ -268,18 +382,20 @@ IO::IO_RESULT SSLConnectionManager::getSslErrorResult(SSL *ssl_connection_contex
       // Warning - Renegotiation is not possible in a TLSv1.3 connection!!!!
       // handle renegotiation, after a want write ssl
       // error,
-      Logger::logmsg(LOG_NOTICE, "Renegotiation of SSL connection requested by peer");
+      Logger::logmsg(LOG_DEBUG,
+                     "Renegotiation of SSL connection requested by peer");
       return IO::IO_RESULT::SSL_WANT_RENEGOTIATION;
     }
     case SSL_ERROR_SSL:
-      Logger::logmsg(LOG_ERR, "corrupted data detected while reading");
+      Logger::logmsg(LOG_DEBUG, "corrupted data detected while reading");
       logSslErrorStack();
       [[fallthrough]];
     case SSL_ERROR_ZERO_RETURN: /* Received a SSL close_notify alert.The operation
 failed due to the SSL session being closed. The
 underlying connection medium may still be open.  */
     default:
-      Logger::logmsg(LOG_ERR, "SSL_read failed with error %s.", getErrorString(rc));
+      Logger::logmsg(LOG_DEBUG, "SSL_read failed with error %s.",
+                     getErrorString(rc));
       return IO::IO_RESULT::ERROR;
   }
 }
@@ -351,9 +467,9 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   }
   if (rc == 0) {
     if (ssle == SSL_ERROR_ZERO_RETURN)
-      Logger::logmsg(LOG_NOTICE, "SSL connection has been shutdown.");
+      Logger::logmsg(LOG_DEBUG, "SSL connection has been shutdown.");
     else
-      Logger::logmsg(LOG_NOTICE, "Connection has been aborted.");
+      Logger::logmsg(LOG_DEBUG, "Connection has been aborted.");
     return IO::IO_RESULT::FD_CLOSED;
   }
   return IO::IO_RESULT::ERROR;
@@ -374,7 +490,7 @@ IO::IO_RESULT SSLConnectionManager::sslWriteIOvec(
     result = handleWrite(target_ssl_connection, static_cast<char *>(__iovec[it].iov_base), __iovec[it].iov_len, written,
                          (it == count - 1));
 #else
-    result = sslWrite(target_ssl_connection, static_cast<char *>(it->iov_base), it->iov_len, written);
+    result = sslWrite(target_ssl_connection,  static_cast<char *>(__iovec[it].iov_base), __iovec[it].iov_len, written);
 #endif
     nwritten += written;
     //    Logger::logmsg(LOG_REMOVE, "-------- it = %d  written: %d
@@ -494,10 +610,16 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
 }
 IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &target_ssl_connection, Connection &source_ssl_connection,
                                                 size_t &written, bool flush_data) {
+#if USE_SSL_BIO_BUFFER
   auto result = handleWrite(
       target_ssl_connection,
       source_ssl_connection.buffer + source_ssl_connection.buffer_offset,
       source_ssl_connection.buffer_size, written, flush_data);
+#else
+  auto result = stream->backend_connection.getBackend()->ssl_manager.sslWrite(
+      stream->backend_connection, stream->client_connection.buffer + source_ssl_connection.buffer_offset,
+      stream->client_connection.buffer_size, written);
+#endif
   if (written > 0) source_ssl_connection.buffer_size -= written;
   return result;
 }
