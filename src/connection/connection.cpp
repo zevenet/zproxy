@@ -42,6 +42,7 @@ Connection::Connection()
 Connection::~Connection() {
   is_connected = false;
   if (ssl != nullptr) {
+    SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
     SSL_shutdown(ssl);
     SSL_clear(ssl);
     SSL_free(ssl);
