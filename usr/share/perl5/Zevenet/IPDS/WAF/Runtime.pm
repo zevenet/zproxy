@@ -114,28 +114,22 @@ sub addWAFsetToFarm
 	my $flag_sets = 0;
 	foreach my $line ( @filefarmhttp )
 	{
-		if ( $line =~ /^WafRules/ )
+		if ( $line =~ /[\s#]*WafRules/ )
 		{
 			$flag_sets = 1;
 		}
-		elsif ( $line !~ /^WafRules/ and $flag_sets )
+		elsif ( $line !~ /[\s#]*WafRules/ and $flag_sets )
 		{
 			$err  = 0;
-			$line = "WafRules	\"$set_file\"" . "\n" . $line;
+			$line = "\tWafRules	\"$set_file\"" . "\n" . $line;
 			last;
 		}
 
 		# not found any waf directive
-		elsif ( $line =~ /^\s*$/ )
+		elsif ( $line =~ /[\s#]*ZWACL-INI"/ or $line =~ /[\s#]*Service "/ )
 		{
 			$err  = 0;
-			$line = "WafRules	\"$set_file\"" . "\n" . "\n";
-			last;
-		}
-		elsif ( $line =~ /#HTTP\(S\) LISTENERS/ )
-		{
-			$err  = 0;
-			$line = "WafRules	\"$set_file\"" . "\n" . $line;
+			$line = "\tWafRules	\"$set_file\"" . "\n" . $line;
 			last;
 		}
 	}
@@ -211,7 +205,7 @@ sub removeWAFSetFromFarm
 	my $index = 0;
 	foreach my $line ( @fileconf )
 	{
-		if ( $line =~ /^WafRules\s+\"$set_file\"/ )
+		if ( $line =~ /^\s*WafRules\s+\"$set_file\"/ )
 		{
 			$err = 0;
 			splice @fileconf, $index, 1;

@@ -418,7 +418,7 @@ sub listWAFByFarm
 	my $farm_file = &getFarmFile( $farm );
 
 	my $fh = &openlock( "$configdir/$farm_file", 'r' );
-	@rules = grep ( s/^WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
+	@rules = grep ( s/^\s*WafRules\s+\".+\/([^\/]+).conf\".*$/$1/, <$fh> );
 	chomp @rules;
 	close $fh;
 
