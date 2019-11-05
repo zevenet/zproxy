@@ -1,6 +1,6 @@
 # ZPROXY
 
-Zevenet zproxy is a WIP multithreaded and event-driven L7 reverse proxy and load balancer inspired by Pound reverse proxy simplicity.
+Zevenet zproxy is a high-performance multithreaded and event-driven L7 reverse proxy and load balancer inspired by Pound reverse proxy simplicity.
 
 zproxy main features:
 
@@ -266,20 +266,47 @@ zproxy_functional_tests -https -no_zproxy -ip 192.168.100.20 -port 8080 -port_ht
 ```
 #### Benchmark
 
-The test bellow was done using two backends running nginx and a running zproxy in an Intel  i5-6500, 4G RAM, 16 GB MSata.
+The tests bellow was done using two backends running nginx and a running zproxy / pound / haproxy in an Intel  i5-6500, 4G RAM, 16 GB MSata.
 
+zproxy result:
 ```bash
-wrk -d30 -t10 -c400 http://172.16.1.1:85
-Running 30s test @ http://172.16.1.1:85
+Running 15s test @ http://172.16.1.1:80/hello.html
   10 threads and 400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     1.92ms  535.56us  38.70ms   95.88%
-    Req/Sec    21.07k     0.96k   39.88k    91.86%
-  6309651 requests in 30.10s, 1.72GB read
-Requests/sec: 209627.99
-Transfer/sec:     58.57MB    
+    Latency     8.13ms   63.38ms   1.01s    98.68%
+    Req/Sec    23.97k     3.25k   56.34k    94.30%
+  3599282 requests in 15.10s, 0.93GB read
+  Socket errors: connect 0, read 1, write 0, timeout 0
+Requests/sec: 238374.98
+Transfer/sec:     63.19MB   
 ```                                       
-        
+haproxy result:
+```bash
+Running 15s test @ http://172.16.1.1:83/hello.html
+  10 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    97.55ms  235.66ms   1.24s    87.56%
+    Req/Sec    14.93k     2.26k   30.92k    80.93%
+  2243804 requests in 15.10s, 543.52MB read
+  Socket errors: connect 0, read 0, write 0, timeout 7
+Requests/sec: 148604.42
+Transfer/sec:     36.00MB
+```
+
+pound reverse proxy result:
+```bash
+Running 15s test @ http://172.16.1.1:80/hello.html
+  10 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     5.97ms   21.62ms 275.10ms   95.73%
+    Req/Sec    11.28k     9.22k   65.39k    59.49%
+  834725 requests in 15.10s, 221.31MB read
+Requests/sec:  55281.33
+Transfer/sec:     14.66MB
+```
+
+Comparing Requests/sec and latency, results are very impressive, zproxy is almost 100k requests per second faster than haproxy and almost 4,3 times faster than pound.
+
 
 #### Contributing
 
@@ -295,6 +322,8 @@ Transfer/sec:     58.57MB
 AGPL-3.0.
 
 ### Authors
+
+Zevenet Team 
 
 ## Acknowledgments
 
