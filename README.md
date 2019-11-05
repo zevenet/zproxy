@@ -324,7 +324,3 @@ AGPL-3.0.
 ### Authors
 
 Zevenet Team 
-
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
