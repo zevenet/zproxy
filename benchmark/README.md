@@ -49,16 +49,16 @@ This directory contains:
 * `haproxy` —  Haproxy configuration file used in the load balancer for this test.
 
 
-To be neutral, the 3 tests have been executed with the same Client, same load balancer and receiving traffic with the same backends. 
-Used hardware in server:  Intel(R) Xeon(R) CPU E3-1245 v5 @ 3.50GHz (8 cores), in Debian Buster Kernel 4.19.37.
-Used hardware in client:  Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz (8 cores), in Debian Buster Kernel 4.19.37.
-Used hardware in backend: Intel(R) Xeon(R) CPU E3-1245 v5 @ 3.50GHz (8 cores), in Debian Buster Kernel 4.19.110.
+To be neutral, the 3 tests have been executed with the same Client, same load balancer and receiving traffic with the same backends.  
 
+Used hardware in server:  Intel(R) Xeon(R) CPU E3-1245 v5 @ 3.50GHz (8 cores), in Debian Buster Kernel 4.19.37.  
+Used hardware in client:  Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz (8 cores), in Debian Buster Kernel 4.19.37.  
+Used hardware in backend: Intel(R) Xeon(R) CPU E3-1245 v5 @ 3.50GHz (8 cores), in Debian Buster Kernel 4.19.110.  
 
-The used stress tool is wrk, source code here: https://github.com/wg/wrk
-Command executed from client for the 3 tests: ./wrk -d 15 -t 10 -c 400 http://172.16.1.1:83/hello.html 
- -c : Number of connections that the stress tool will keep opened (400)
- -d : Duration of the test (15 seconds)
- -t : Number of threads running in the client managing connections (10 threads)
-
-*HTML response of 42 bytes (Content-Length: 42)
+The used stress tool is wrk, source code here: https://github.com/wg/wrk.  
+Command executed from client for the 3 tests: ./wrk -d 15 -t 10 -c 400 http://172.16.1.1:83/hello.html.   
+`` ``  -c : Number of connections that the stress tool will keep opened (400)  
+`` ``  -d : Duration of the test (15 seconds)  
+`` ``  -t : Number of threads running in the client managing connections (10 threads)  
+  
+*HTML response of 42 bytes (Content-Length: 42).  
