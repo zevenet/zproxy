@@ -57,8 +57,8 @@ Used hardware in backend: Intel(R) Xeon(R) CPU E3-1245 v5 @ 3.50GHz (8 cores), i
 
 The used stress tool is wrk, source code here: https://github.com/wg/wrk.  
 Command executed from client for the 3 tests: ./wrk -d 15 -t 10 -c 400 http://172.16.1.1:83/hello.html.   
-`` ``  -c : Number of connections that the stress tool will keep opened (400)  
-`` ``  -d : Duration of the test (15 seconds)  
-`` ``  -t : Number of threads running in the client managing connections (10 threads)  
+&nbsp;  -c : Number of connections that the stress tool will keep opened (400)  
+&nbsp;  -d : Duration of the test (15 seconds)  
+&nbsp;  -t : Number of threads running in the client managing connections (10 threads)  
   
 *HTML response of 42 bytes (Content-Length: 42).  
