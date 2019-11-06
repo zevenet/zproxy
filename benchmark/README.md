@@ -3,7 +3,7 @@
 
 #### Benchmark
 
-The tests bellow were done using two backends running nginx v.1.10.3-1+deb9u3, and zproxy v0.1.2/ pound 2.8a / haproxy v1.8.19-1 (Debian Buster package) as load balancers.
+The tests below were done using two backends running nginx v.1.10.3-1+deb9u3, and zproxy v0.1.2/ pound 2.8a / haproxy v1.8.19-1 (Debian Buster package) as load balancers.
 
 zproxy result:
 ```bash
