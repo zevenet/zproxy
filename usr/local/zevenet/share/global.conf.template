@@ -276,7 +276,8 @@ $proxyctl="$base_proxy/bin/zproxyctl";#update
 $proxytpl="$templatedir/proxytpl.cfg";#update
 #maximum value of http body to pass to modsecurity
 $waf_body_size="";
-
+#Where is modsec rules check
+$waf_rule_check_bin="/usr/bin/modsec-rules-check";
 
 #Cipher PCI
 $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update

@@ -56,7 +56,7 @@ sub reloadWAFByFarm
 	my $proxy_ctl = &getGlobalConfiguration( 'proxyctl' );
 	my $socket    = &getHTTPFarmSocket( $farm );
 
-	$err = &logAndRun( "$proxy_ctl -c $socket -R" );
+	$err = &logAndRun( "$proxy_ctl -c $socket -R 0" );
 
 	return $err;
 }
