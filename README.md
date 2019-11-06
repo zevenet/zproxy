@@ -32,7 +32,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 #### Git Clone
 
-First we need to check out the git repo:
+First, we need to check out the git repo:
 
 ```bash
 $ git clone https://github.com/zevenet/zproxy zproxy.git
@@ -183,7 +183,7 @@ curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/services
 }
 ```
 
-**Get the service status**
+**Get the status of the services**
 
 ```bash
 curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/status
@@ -266,7 +266,7 @@ zproxy_functional_tests -https -no_zproxy -ip 192.168.100.20 -port 8080 -port_ht
 ```
 #### Benchmark
 
-The tests bellow was done using two backends running nginx and a running zproxy / pound / haproxy in an Intel  i5-6500, 4G RAM, 16 GB MSata.
+The tests below was done using two backends running nginx and a running zproxy / pound / haproxy in an Intel  i5-6500, 4G RAM, 16 GB MSata.
 
 zproxy result:
 ```bash
