@@ -403,6 +403,18 @@ sub setKeepalivedConfig
 
 	my $ka_conf = "! Zevenet configuration file for keepalived
 
+
+vrrp_script chk_cl_status {
+\t# Check the cluster role
+\tscript \"/usr/local/zevenet/bin/check_cluster.sh\"
+
+\t# Check every 2 seconds
+\tinterval 30
+
+\t# Add 2 points to priority if OK
+\tweight 2
+}
+
 vrrp_instance ZCluster {
 \tinterface $zcl_conf->{_}->{interface}
 \tvirtual_router_id 1
@@ -424,6 +436,11 @@ vrrp_instance ZCluster {
 \tnotify_backup \"/usr/local/zevenet/bin/zcluster-manager notify_backup\"
 \tnotify_fault  \"/usr/local/zevenet/bin/zcluster-manager notify_fault\"
 \tnotify        \"/usr/local/zevenet/bin/zcluster-manager\"
+
+\ttrack_script {
+\t\tchk_cl_status
+\t  }
+
 }
 
 ";
