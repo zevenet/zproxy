@@ -97,7 +97,7 @@ function UmountMountPoint {
 case "$1" in
 '')
 	# to activate flag netcat SSL if https proxy is configured
-	https_proxy=`sed 's|https://||g' <<< $https_proxy`
+	https_proxy=`sed -E 's|https?://||g' <<< $https_proxy`
 	if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
 
 	# test connection with zevenet update system
