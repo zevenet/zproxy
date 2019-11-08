@@ -452,9 +452,10 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
                                        200) == nullptr)) {
     Logger::LogInfo("Error getting peer address", LOG_DEBUG);
   } else {
-    Logger::logmsg(LOG_WARNING, "(%lx) e%d %s %s from %s",
+    auto request_data_len = std::string_view(target.buffer).find('\r');
+    Logger::logmsg(LOG_WARNING, "(%lx) e%d %s %.*s from %s",
                    std::this_thread::get_id(), static_cast<int>(code),
-                   code_string.data(), target.buffer, caddr);
+                   code_string.data(), request_data_len, target.buffer, caddr);
   }
   auto response_ = http::getHttpResponse(code, code_string, str);
 
