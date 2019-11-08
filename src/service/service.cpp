@@ -38,14 +38,10 @@ Backend *Service::getBackend(HttpStream &stream) {
       if ((new_backend = getNextBackend()) != nullptr) {
         session = addSession(stream, *new_backend);
         if (session == nullptr) {
-          Logger::logmsg(LOG_DEBUG, "This should't happens, check backends list !!!");
-          return nullptr;
+          Logger::logmsg(LOG_DEBUG, "Error adding new session, session info not found in request");
         }
-        return session->assigned_backend;
-      } else {
-        Logger::logmsg(LOG_DEBUG, "This should't happens, check backends list !!!");
-        return nullptr;
       }
+      return new_backend;
     }
   } else {
     return getNextBackend();
