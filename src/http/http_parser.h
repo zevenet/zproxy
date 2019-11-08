@@ -77,6 +77,7 @@ public:
                         const std::string &header_value,
                         bool permanent = false);
   void addHeader(const std::string &header_value, bool permanent = false);
+  void removeHeader(http::HTTP_HEADER_NAME header_name);
 #ifdef CACHE_ENABLED
   bool pragma = false;
   bool cache_control = false;

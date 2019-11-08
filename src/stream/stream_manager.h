@@ -246,7 +246,7 @@ public:
    */
   inline void onRequestTimeoutEvent(int fd);
   inline void onSignalEvent(int fd);
-
+  inline void setStreamBackend(HttpStream *stream);
   /**
    * @brief Writes all the client buffer data to the backend.
    *

@@ -118,7 +118,26 @@ void http_parser::HttpData::addHeader(const std::string&header_value, bool perma
     newh.reserve(header_value.size() + http::CRLF_LEN);
     newh += header_value;
     newh += http::CRLF;
-    !permanent ? extra_headers.push_back(newh) : permanent_extra_headers.push_back(std::move(newh));
+    !permanent ? extra_headers.push_back(newh)
+               : permanent_extra_headers.push_back(std::move(newh));
+}
+
+void http_parser::HttpData::removeHeader(http::HTTP_HEADER_NAME header_name) {
+  auto header_to_remove =
+      http::http_info::headers_names_strings.at(header_name);
+  extra_headers.erase(
+      std::remove_if(extra_headers.begin(), extra_headers.end(),
+                     [header_to_remove](const std::string &header) {
+                       return header.find(header_to_remove) !=
+                              std::string::npos;
+                     }),
+      extra_headers.end());
+  //  for (auto it = extra_headers.begin(); it != extra_headers.end();) {
+  //    if (it->find(header_to_remove) != std::string::npos) {
+  //      extra_headers.erase(it++);
+  //    } else
+  //      it++;
+  //  }
 }
 
 char *http_parser::HttpData::getBuffer() const { return buffer; }
