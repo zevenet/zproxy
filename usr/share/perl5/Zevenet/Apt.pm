@@ -107,7 +107,7 @@ sub setAPTRepo
 	if ( $kernelversion =~ /^4.19/ )
 	{
 		print $FH "deb https://$host/ee/v6/$kernel $distribution main\n";
-
+		print $FH "deb https://$host/ee/zcmc $distribution main\n";
 	}
 	else
 	{
