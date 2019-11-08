@@ -1274,15 +1274,8 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
     size_t written = 0;
 
     if (stream->backend_connection.getBackend()->isHttps()) {
-#if USE_SSL_BIO_BUFFER
       result = stream->backend_connection.getBackend()->ssl_manager.handleWrite(
-          stream->backend_connection, stream->client_connection.buffer,
-          stream->client_connection.buffer_size, written);
-#else
-      result = stream->backend_connection.getBackend()->ssl_manager.sslWrite(
-          stream->backend_connection, stream->client_connection.buffer,
-          stream->client_connection.buffer_size, written);
-#endif
+          stream->backend_connection, stream->client_connection, written);
     } else {
       if (stream->client_connection.buffer_size > 0)
         result = stream->client_connection.writeTo(
