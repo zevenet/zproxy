@@ -73,6 +73,19 @@ my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 
 my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
+=begin nd
+Function: getKeySigned
+
+	It returns the key id which is used to sign the certificates
+
+Parameters:
+	none - .
+
+Returns:
+	String - key ID
+
+=cut
+
 sub getKeySigned
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
