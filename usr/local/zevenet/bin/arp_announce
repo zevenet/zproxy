@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+sub arp_announce{
+	require Zevenet::Config;
+        require Zevenet::Net::Interface;
+	my $arp_announce = &getGlobalConfiguration('arp_announce');
+	return if ($arp_announce ne "true");
+        my @interfaces = @{ &getConfigInterfaceList() };
+        #if cluster is running master need to take this action, avoided to use getZClusterNodeStatus with eload
+        my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
+        return if ( ! -e $znode_status_file && ! -s $znode_status_file);
+        open my $znode_status, '<', $znode_status_file;
+        return if ( !$znode_status);
+        my $status = <$znode_status>;
+        return if ($status !~ /master/);
+        #
+
+        foreach my $iface ( @interfaces )
+        {
+                if ( defined $$iface{ vini } && $$iface{ status } eq "up" && $$iface{ ip_v } == 4  )
+                {
+                        my ( $toif ) = split ( ':', $$iface{ name } );
+                        &zenlog ("Sending GARP to $toif, IP $$iface{addr}")
+                           if ( &debug() );
+                        require Zevenet::Net::Util;
+                        &sendGArp($toif, $$iface{addr});
+                }
+
+        }
+
+
+}
+
+
+&arp_announce;
