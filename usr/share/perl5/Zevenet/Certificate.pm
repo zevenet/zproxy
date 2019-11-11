@@ -536,6 +536,26 @@ sub getCertData    # ($certfile)
 	return @eject;
 }
 
+=begin nd
+Function: getCertInfo
+
+	It returns an object with the certificate information parsed
+
+Parameters:
+	certificate path - path to the certificate
+
+Returns:
+	hash ref - The hash contains the following keys:
+		file, name of the certificate with extension and without path. "zert.pem"
+		type, type of file. CSR or Certificate
+		CN, common name
+		key, cerificate key
+		issuer, name of the certificate authority
+		creation, date of certificate creation. "019-08-13 09:31:33 UTC"
+		expiration, date of certificate expiration. "2020-07-11 09:31:33 UTC"
+
+=cut
+
 sub getCertInfo    # ($certfile)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -662,8 +682,18 @@ sub getCertInfo    # ($certfile)
 	return \%response;
 }
 
-# 2018-05-17 15:04:52 UTC
-# May 17 15:04:52 2018 GMT
+=begin nd
+Function: getDateEpoc
+
+	It converts a human date (2018-05-17 15:04:52 UTC) in a epoc date (1594459893)
+
+Parameters:
+	date - string with the date. The string has to be as "2018-05-17 15:04:52"
+
+Returns:
+	Integer - Time in epoc time. "1594459893"
+=cut
+
 sub getDateEpoc
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -677,6 +707,18 @@ sub getDateEpoc
 	$month--;
 	return timegm( $sec, $min, $hours, $day, $month, $year );
 }
+
+=begin nd
+Function: getCertDaysToExpire
+
+	It calculates the number of days to expire the certificate.
+
+Parameters:
+	ending date - String with the ending date with the following format "2018-05-17 15:04:52 UTC"
+
+Returns:
+	Integer - Number of days to expire the certificate
+=cut
 
 sub getCertDaysToExpire
 {
