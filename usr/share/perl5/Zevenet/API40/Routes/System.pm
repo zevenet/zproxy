@@ -47,13 +47,14 @@ if ( $ENV{ PATH_INFO } =~ qr{^/system/http} )
 	POST qr{^/system/http$}, 'set_http', $mod;
 }
 
-if ( $ENV{ PATH_INFO } =~ qr{^/system/(?:factory|packages)} )
+if ( $ENV{ PATH_INFO } =~ qr{^/system/(?:factory|packages|global)} )
 {
 	my $mod = 'Zevenet::API40::System::Ext';
 
 	POST qr{^/system/factory$}, 'set_factory_reset', $mod;
 	GET qr{^/system/packages$}, 'get_packages_info', $mod;
-	POST qr{^/system/packages/offline$}, 'upload_iso_offline', $mod;
+	POST qr{^/system/global$},  'set_system_global', $mod;
+	GET qr{^/system/global$},   'get_system_global', $mod;
 }
 
 1;

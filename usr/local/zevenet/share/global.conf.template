@@ -337,6 +337,10 @@ $zenrsync="-azvr --delete";#update
 $arp_unsolicited="";
 #ARP announcement, true / false (default)
 $arp_announce="";
+#Where is the script ARP announcement?
+$arp_announce_bin="/usr/local/zevenet/bin/arp_announce";
+#path for cron task of arp announcement
+$arp_announce_cron_path="/etc/cron.d/arp_announce";
 
 #Network duplicated net
 $duplicated_net="false";

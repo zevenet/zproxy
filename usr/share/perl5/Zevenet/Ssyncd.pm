@@ -51,13 +51,13 @@ sub setSsyncdFarmUp
 
 		if ( $farms_started )
 		{
-			&zenlog("Registering l4xnat farm $farm_name in ssyncd", "info", "cluster");
+			&zenlog( "Registering l4xnat farm $farm_name in ssyncd", "info", "cluster" );
 			return system ( "$ssyncdctl_bin start nft $farm_name >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		&zenlog("Registering http farm $farm_name in ssyncd", "info", "cluster");
+		&zenlog( "Registering http farm $farm_name in ssyncd", "info", "cluster" );
 		return system ( "$ssyncdctl_bin start http $farm_name >/dev/null" );
 	}
 
@@ -83,13 +83,13 @@ sub setSsyncdFarmDown
 
 		if ( $farms_started <= 1 )
 		{
-			&zenlog("Unregistering l4xnat farm $farm_name in ssyncd", "info", "cluster");
+			&zenlog( "Unregistering l4xnat farm $farm_name in ssyncd", "info", "cluster" );
 			return system ( "$ssyncdctl_bin stop nft $farm_name >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		&zenlog("Unregistering http farm $farm_name in ssyncd", "info", "cluster");
+		&zenlog( "Unregistering http farm $farm_name in ssyncd", "info", "cluster" );
 		return system ( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
 	}
 
@@ -107,15 +107,20 @@ sub setSsyncdDisabled
 	my $ssync_cmd = "$ssyncdctl_bin quit";
 	my $error;
 
-	system ( "$ssync_cmd >/dev/null" ) if `pgrep ssyncd`;
+	system ( "$ssync_cmd >/dev/null" ) if ( &getSsyncdRunning() );
 
-	if ( `pgrep ssyncd` )
+	if ( &getSsyncdRunning() )
 	{
 		system ( "pkill ssyncd" );
 		&zenlog( "ssyncd found still running and was killed", "info", "CLUSTER" );
 	}
 
 	return $error;
+}
+
+sub getSsyncdRunning
+{
+	return ( `pgrep ssyncd` ) ? 1 : 0;
 }
 
 sub setSsyncdBackup
@@ -238,4 +243,33 @@ sub setSsyncdMaster
 	}
 }
 
+sub setSsyncd
+{
+	my $enable = shift;
+	&setGlobalConfiguration( 'ssyncd_enabled', $enable );
+
+	if ( $enable eq 'false' )
+	{
+		&setSsyncdDisabled();
+	}
+	elsif ( $enable eq 'true' )
+	{
+		my $node_role = &getZClusterNodeStatus();
+		if ( $node_role eq 'master' )
+		{
+			&setSsyncdMaster();
+		}
+		elsif ( $node_role eq 'backup' )
+		{
+			&setSsyncdBackup();
+		}
+	}
+	else
+	{
+		&zenlog( "The value '$enable' for the parameter 'ssyncd' is not valid.",
+				 "error", "ssyncd" );
+		return 1;
+	}
+	return 0;
+}
 1;

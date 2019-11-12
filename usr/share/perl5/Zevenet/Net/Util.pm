@@ -265,6 +265,37 @@ sub sendGArp    # ($if,$ip)
 	&sendGPing( $iface[0] );
 }
 
+sub setArpAnnounce
+{
+	my $script = &getGlobalConfiguration( "arp_announce_bin" );
+	my $path   = &getGlobalConfiguration( "arp_announce_cron_path" );
+
+	my $fh = &openlock( 'w', $path );
+	print "* * * * *	root	$script &>/dev/null";
+	close $fh;
+
+	my $cron_service = &getGlobalConfiguration( 'cron_service' );
+	&logAndRun( "$cron_service reload" );
+
+	&setGlobalConfiguration( 'arp_announce', "true" );
+}
+
+sub unsetArpAnnounce
+{
+	my $script = &getGlobalConfiguration( "arp_announce_bin" );
+	my $path   = &getGlobalConfiguration( "arp_announce_cron_path" );
+
+	if ( -f $path )
+	{
+		mkdir $path;
+	}
+
+	my $cron_service = &getGlobalConfiguration( 'cron_service' );
+	&logAndRun( "$cron_service reload" );
+
+	&setGlobalConfiguration( 'arp_announce', "false" );
+}
+
 =begin nd
 Function: iponif
 

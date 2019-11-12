@@ -100,13 +100,85 @@ sub get_packages_info
 			 "debug", "PROFILING" );
 	include 'Zevenet::Apt';
 
-	my $desc   = "Zevenet packages list info";
-	my $params = {};
+	my $desc = "Zevenet packages list info";
 
 	my $output = &getAPTUpdatesList();
 
 	return &httpResponse(
 				 { code => 200, body => { description => $desc, params => $output } } );
+}
+
+# GET /system/global
+sub get_system_global
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	include 'Zevenet::System::Global';
+
+	my $desc = "Get the Zevenet global settings";
+
+	my $output = &getSystemGlobal();
+
+	return &httpResponse(
+				 { code => 200, body => { description => $desc, params => $output } } );
+}
+
+# POST /system/global
+sub set_system_global
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	include 'Zevenet::System::Global';
+
+	my $json_obj = shift;
+	my $desc     = "Set the Zevenet global settings";
+
+	my $params = {
+				   "ssyncd" => {
+								 'values'    => ["true", "false"],
+								 'non_blank' => 'true',
+				   },
+				   "duplicated_network" => {
+											 'values'    => ["true", "false"],
+											 'non_blank' => 'true',
+				   },
+				   "arp_announce" => {
+									   'values'    => ["true", "false"],
+									   'non_blank' => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	my $err = &setSystemGlobal( $json_obj );
+	if ( $err )
+	{
+		my $msg = "There was an error modifying the global settings";
+		return &httpResponse(
+					   { code => 400, body => { description => $desc, message => $msg } } );
+	}
+
+	if ( exists $json_obj->{ ssyncd } )
+	{
+		include 'Zevenet::Cluster';
+		&runZClusterRemoteManager( 'enable_ssyncd' )
+		  if ( $json_obj->{ ssyncd } eq 'true' );
+		&runZClusterRemoteManager( 'disable_ssyncd' )
+		  if ( $json_obj->{ ssyncd } eq 'false' );
+	}
+
+	my $body =
+	  { code => 200, body => { description => $desc, params => $json_obj } };
+	if ( exists $json_obj->{ duplicated_network } )
+	{
+		my $msg = "Some changes need a restart of the Zevenet service";
+		$body->{ message } = $msg;
+	}
+
+	return &httpResponse( $body );
 }
 
 1;
