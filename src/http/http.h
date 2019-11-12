@@ -25,6 +25,7 @@
 #include <string>
 #include <unordered_map>
 #include "../version.h"
+#include <memory>
 
 #ifndef MAX_HEADER_LEN
 #define MAX_HEADER_LEN 4096
@@ -403,13 +404,26 @@ static inline std::string getHttpResponse(Code status_code, const std::string &s
   return err_response;
 }
 static inline std::string getRedirectResponse(Code code, const std::string &redirect_url) {
+  // make sure it a safe url
+  auto safe_url = std::make_unique < char[]>(MAXBUF);
+  int j = 0;
+  for (auto c : redirect_url) {
+    if (isalnum(c) || c == '_' || c == '.' || c == ':' || c == '/' ||
+        c == '?' || c == '&' || c == ';' || c == '-' || c == '=')
+      safe_url[j++] = c;
+    else {
+      sprintf(safe_url.get() + j, "%%%02x", c);
+      j += 3;
+    }
+  }
+  safe_url[j] = '\0';
   std::string body =
       "<html><head><title>Redirect</title></"
       "head><body><h1>Redirect</h1><p>You "
       "should go to <a href=";
-  body += redirect_url;
+  body += safe_url.get();
   body += ">";
-  body += redirect_url;
+  body += safe_url.get();
   body += "</a></p></body></html>";
 
   std::string redirect_response = "HTTP/1.0 ";
@@ -419,7 +433,7 @@ static inline std::string getRedirectResponse(Code code, const std::string &redi
   redirect_response += "\r\nContent-Type: text/html\r\nContent-Length: ";
   redirect_response += std::to_string(body.length() + 1);
   redirect_response += "\r\nLocation: ";
-  redirect_response += redirect_url;
+  redirect_response += safe_url.get();
   redirect_response += "\r\n\r\n";
   redirect_response += body;
   redirect_response += "\n";

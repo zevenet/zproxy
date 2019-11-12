@@ -128,7 +128,9 @@ class http_manager {
    *
    * @param backend_config is the BackendConfig to get the redirect information.
    */
-  static void replyRedirect(HttpStream &stream, SSLConnectionManager *ssl_manager);
+  static void replyRedirect(HttpStream &stream,
+                            SSLConnectionManager *ssl_manager,
+                            const Backend & redirect_backend);
 
   /**
    * @brief Reply a redirect message with the @p code and pointing to the

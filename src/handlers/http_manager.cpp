@@ -468,22 +468,75 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
 }
 
 void http_manager::replyRedirect(HttpStream &stream,
-                                 SSLConnectionManager *ssl_manager) {
-  std::string new_url =
-      stream.backend_connection.getBackend()->backend_config.url;
-  new_url += stream.request.getUrl();
-  auto response_ = http::getRedirectResponse(
-      static_cast<http::Code>(
-          stream.backend_connection.getBackend()->backend_config.be_type),
-      new_url);
-  stream.client_connection.write(response_.c_str(), response_.length());
-  if (!stream.client_connection.ssl_connected) {
-    stream.client_connection.write(response_.c_str(), response_.length());
-  } else if (ssl_manager != nullptr) {
-    size_t written = 0;
-    ssl_manager->handleWrite(stream.client_connection, response_.c_str(),
-                             response_.length(), written);
+                                 SSLConnectionManager *ssl_manager,
+                                 const Backend & redirect_backend) {
+  regmatch_t matches[4];
+  /* 0 - redirect is absolute,
+   * 1 - the redirect should include the request path, or
+   * 2 if it should use perl dynamic replacement */
+  std::string new_url(redirect_backend.backend_config.url);
+  auto service =
+      static_cast<Service*>(stream.request.getService());
+  switch (redirect_backend.backend_config.redir_req) {
+    case 1:
+          new_url += std::string(stream.request.path, stream.request.path_length);
+      break;
+    case 2: { //Dynamic redirect
+      auto buf = std::make_unique<char[]>(MAXBUF);
+      std::string request_url(stream.request.path, stream.request.path_length);
+      memset(buf.get(), 0, MAXBUF);
+      regmatch_t umtch[10];
+      char *chptr, *enptr, *srcptr;
+      if (regexec(&service->service_config.url->pat, request_url.data(), 10,
+                  umtch, 0)) {
+        Logger::logmsg(
+            LOG_WARNING,
+            "URL pattern didn't match in redirdynamic... shouldn't happen %s",
+            request_url.data());
+      }else {
+        chptr = buf.get();
+        enptr = buf.get() + MAXBUF - 1;
+        *enptr = '\0';
+        srcptr = redirect_backend.backend_config.url;
+        for (; *srcptr && chptr < enptr - 1;) {
+          if (srcptr[0] == '$' && srcptr[1] == '$') {
+            *chptr++ = *srcptr++;
+            srcptr++;
+          }
+          if (srcptr[0] == '$' && isdigit(srcptr[1])) {
+            if (chptr + umtch[srcptr[1] - 0x30].rm_eo -
+                    umtch[srcptr[1] - 0x30].rm_so >
+                enptr - 1)
+              break;
+            memcpy(
+                chptr, request_url.data() + umtch[srcptr[1] - 0x30].rm_so,
+                umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so);
+            chptr +=
+                umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so;
+            srcptr += 2;
+            continue;
+          }
+          *chptr++ = *srcptr++;
+        }
+        *chptr++ = '\0';
+        new_url = buf.get();
+      }
+      break;
+    }
+    case 0:
+    default:
+      break;
   }
+  int redirect_code = redirect_backend.backend_config.be_type;
+  switch (redirect_backend.backend_config.be_type ) {
+    case 301:
+    case 307:
+      break;
+    default:
+      redirect_code = 302;  // FOUND
+      break;
+  }
+  replyRedirect(redirect_code, new_url, stream.client_connection, ssl_manager);
 }
 void http_manager::replyRedirect(int code, const std::string &url,
                                  Connection &target,

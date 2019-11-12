@@ -665,18 +665,8 @@ void StreamManager::onRequestEvent(int fd) {
 
             break;
           case BACKEND_TYPE::REDIRECT: {
-            /*Check redirect request type ::> 0 - redirect is absolute, 1 -
-             * the redirect should include the request path, or 2 if it should
-             * use perl dynamic replacement */
-            //              switch (bck->backend_config.redir_req) {
-            //                case 1:
-            //
-            //                  break;
-            //                case 2: break;
-            //                case 0:
-            //                default: break;
-            //              }
-            http_manager::replyRedirect(*stream, this->ssl_manager);
+            http_manager::replyRedirect(*stream, this->ssl_manager,
+                                        *bck);
             clearStream(stream);
             return;
           }
@@ -1216,18 +1206,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
         break;
       case BACKEND_TYPE::REDIRECT: {
-        /*Check redirect request type ::> 0 - redirect is absolute, 1 -
-         * the redirect should include the request path, or 2 if it should
-         * use perl dynamic replacement */
-        //              switch (bck->backend_config.redir_req) {
-        //                case 1:
-        //
-        //                  break;
-        //                case 2: break;
-        //                case 0:
-        //                default: break;
-        //              }
-        http_manager::replyRedirect(*stream, this->ssl_manager);
+        http_manager::replyRedirect(*stream, this->ssl_manager,
+                                    *bck);
         clearStream(stream);
         return;
       }
