@@ -74,7 +74,8 @@ void ClientHandler::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_TYPE::WRITE: {
       switch (event_group) {
         case EVENT_GROUP::CLIENT: {
-          connections_set.at(fd)->write(buf, strlen(buf));
+          size_t sent = 0;
+          connections_set.at(fd)->write(buf, strlen(buf), sent);
           updateFd(fd, EVENT_TYPE::READ, EVENT_GROUP::CLIENT);
           break;
         }

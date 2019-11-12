@@ -383,9 +383,9 @@ IO::IO_RESULT Connection::writeTo(const Connection &target_connection,
   return writeTo(target_connection.getFileDescriptor(), http_data);
 }
 
-IO::IO_RESULT Connection::write(const char *data, size_t size) {
+IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
   bool done = false;
-  size_t sent = 0;
+  sent = 0;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 

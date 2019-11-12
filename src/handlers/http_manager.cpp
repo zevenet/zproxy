@@ -445,7 +445,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(
 void http_manager::replyError(http::Code code, const std::string &code_string,
                               const std::string &str, Connection &target,
                               SSLConnectionManager *ssl_manager) {
-  size_t result;
   char caddr[200];
 
   if (UNLIKELY(Network::getPeerAddress(target.getFileDescriptor(), caddr,
@@ -458,13 +457,22 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
                    code_string.data(), request_data_len, target.buffer, caddr);
   }
   auto response_ = http::getHttpResponse(code, code_string, str);
+  size_t written = 0;
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
-  if (!target.ssl_connected) {
-    target.write(response_.c_str(), response_.length());
-  } else if (ssl_manager != nullptr) {
-    ssl_manager->handleWrite(target, response_.c_str(), response_.length(),
-                             result);
-  }
+  do {
+    size_t sent = 0;
+    if (!target.ssl_connected) {
+      result = target.write(response_.c_str() + written,
+                            response_.length() - written, sent);
+    } else if (ssl_manager != nullptr) {
+      result =
+          ssl_manager->handleWrite(target, response_.c_str() + written,
+                                   response_.length() - written, written, true);
+    }
+    if (sent > 0) written += sent;
+  } while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
+           written < response_.length());
 }
 
 void http_manager::replyRedirect(HttpStream &stream,
@@ -543,11 +551,19 @@ void http_manager::replyRedirect(int code, const std::string &url,
                                  SSLConnectionManager *ssl_manager) {
   auto response_ =
       http::getRedirectResponse(static_cast<http::Code>(code), url);
-  if (!target.ssl_connected) {
-    target.write(response_.c_str(), response_.length());
-  } else if (ssl_manager != nullptr) {
-    size_t written = 0;
-    ssl_manager->handleWrite(target, response_.c_str(), response_.length(),
-                             written);
-  }
+  size_t written = 0;
+  IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+  do {
+    size_t sent = 0;
+    if (!target.ssl_connected) {
+      result = target.write(response_.c_str() + written,
+                            response_.length() - written, sent);
+    } else if (ssl_manager != nullptr) {
+      result =
+          ssl_manager->handleWrite(target, response_.c_str() + written,
+                                   response_.length() - written, written, true);
+    }
+    if (sent > 0) written += sent;
+  } while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
+           written < response_.length());
 }

@@ -113,9 +113,16 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP
       }
       // Logger::logmsg(LOG_DEBUG, "CTL API Request: %s", connection.buffer);
       std::string response = handleCommand(request);
-
+      size_t written = 0;
       if (!response.empty()) {
-        connection.write(response.c_str(), response.length());
+        IO::IO_RESULT result;
+        do {
+          size_t sent;
+          result = connection.write(response.c_str() + written,
+                                    response.length() - written, sent);
+          if (sent > 0) written += sent;
+        } while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
+                 written < response.length());
       }
 
       deleteFd(fd);

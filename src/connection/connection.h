@@ -97,7 +97,7 @@ class Connection : public Descriptor {
 #endif
   static IO::IO_RESULT writeIOvec(int target_fd, iovec *iov, size_t iovec_size,
 								  size_t &iovec_written, size_t &nwritten);
-  IO::IO_RESULT write(const char *data, size_t size);
+  IO::IO_RESULT write(const char *data, size_t size, size_t &sent);
   IO::IO_RESULT writeTo(int fd, size_t &sent);
   IO::IO_RESULT writeTo(const Connection &target_connection,
                         http_parser::HttpData &http_data);

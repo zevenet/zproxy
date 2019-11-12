@@ -199,7 +199,8 @@ bool PoundClient::executeCommand() {
                 path, buffer)) {
     verboseLog(buffer);
   }
-  IO::IO_RESULT read_result = client.write(buffer.c_str(), buffer.size());
+  size_t sent = 0;
+  IO::IO_RESULT read_result = client.write(buffer.c_str(), buffer.size(), sent);
   if (read_result != IO::IO_RESULT::SUCCESS)
     showError("Error: Request sending failed.");  // TODO::print error
   read_result = client.read();
