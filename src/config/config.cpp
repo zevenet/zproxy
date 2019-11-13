@@ -571,7 +571,9 @@ ListenerConfig *Config::parse_HTTPS() {
       res->nossl_redir = 302;
       if (matches[1].rm_eo != matches[1].rm_so) res->nossl_redir = atoi(lin + matches[1].rm_so);
       lin[matches[2].rm_eo] = '\0';
-      res->nossl_url = std::string(lin + matches[2].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+      res->nossl_url =
+          std::string(lin + matches[2].rm_so,
+                      static_cast<size_t>(matches[2].rm_eo - matches[2].rm_so));
       if (regexec(&LOCATION, res->nossl_url.data(), 4, matches, 0)) conf_err("Redirect bad URL - aborted");
       if ((matches[3].rm_eo - matches[3].rm_so) == 1) /* the path is a single '/', so remove it */
         res->nossl_url.data()[matches[3].rm_so] = '\0';

@@ -382,37 +382,10 @@ void StreamManager::onRequestEvent(int fd) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
       if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
-        if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST) &&
-            (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
-          /* the client speaks plain HTTP on our HTTPS port */
-          Logger::logmsg(LOG_NOTICE,
-                        "Client %s sent a plain HTTP message to an SSL port",
-                        stream->client_connection.getPeerAddress().c_str());
-          if (listener_config_.nossl_redir > 0) {
-            Logger::logmsg(LOG_NOTICE,
-                          "(%lx) errNoSsl from %s redirecting to \"%s\"",
-                          pthread_self(),
-                          stream->client_connection.getPeerAddress().c_str(),
-                          listener_config_.nossl_url.data());
-            http_manager::replyRedirect(listener_config_.nossl_redir,
-                                        listener_config_.nossl_url,
-                                        stream->client_connection, ssl_manager);
-          } else {
-            Logger::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s sending error",
-                          pthread_self(),
-                          stream->client_connection.getPeerAddress().c_str());
-            http_manager::replyError(http::Code::BadRequest,
-                                     http::reasonPhrase(http::Code::BadRequest),
-                                     listener_config_.errnossl,
-                                     stream->client_connection,
-                                     this->ssl_manager);
-          }
-        } else {
           Logger::logmsg(LOG_DEBUG, "fd: %d:%d Handshake error with %s ",
                          stream->client_connection.getFileDescriptor(),
                          stream->backend_connection.getFileDescriptor(),
-                         stream->client_connection.getPeerAddress().c_str());
-        }
+                         stream->client_connection.getPeerAddress().c_str());        
         clearStream(stream);
         return;
       }
@@ -421,6 +394,31 @@ void StreamManager::onRequestEvent(int fd) {
         httpsHeaders(stream, ssl_manager, listener_config_.clnt_check);
         stream->backend_connection.server_name =
             stream->client_connection.server_name;
+      } else if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST) &&
+                 (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
+        /* the client speaks plain HTTP on our HTTPS port */
+        Logger::logmsg(LOG_NOTICE,
+                       "Client %s sent a plain HTTP message to an SSL port",
+                       stream->client_connection.getPeerAddress().c_str());
+        if (listener_config_.nossl_redir > 0) {
+          Logger::logmsg(LOG_NOTICE,
+                         "(%lx) errNoSsl from %s redirecting to \"%s\"",
+                         pthread_self(),
+                         stream->client_connection.getPeerAddress().c_str(),
+                         listener_config_.nossl_url.data());
+          http_manager::replyRedirect(listener_config_.nossl_redir,
+                                      listener_config_.nossl_url,
+                                      stream->client_connection, ssl_manager);
+        } else {
+          Logger::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s sending error",
+                         pthread_self(),
+                         stream->client_connection.getPeerAddress().c_str());
+          http_manager::replyError(http::Code::BadRequest,
+                                   http::reasonPhrase(http::Code::BadRequest),
+                                   listener_config_.errnossl,
+                                   stream->client_connection,
+                                   this->ssl_manager);
+        }
       }
       return;
     }
