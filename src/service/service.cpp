@@ -193,7 +193,7 @@ bool Service::doMatch(HttpRequest &request) {
 
   /* check for required headers */
   for (m = service_config.req_head; m; m = m->next) {
-    for (found = i = 0; i < static_cast<int>(request.num_headers - 1) && !found;
+    for (found = i = 0; i < static_cast<int>(request.num_headers) && !found;
          i++)
       if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0)) found = 1;
     if (!found) return false;
@@ -201,7 +201,7 @@ bool Service::doMatch(HttpRequest &request) {
 
   /* check for forbidden headers */
   for (m = service_config.deny_head; m; m = m->next) {
-    for (found = i = 0; i < static_cast<int>(request.num_headers - 1); i++)
+    for (found = i = 0; i < static_cast<int>(request.num_headers); i++)
       if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0))
         return false;
   }
