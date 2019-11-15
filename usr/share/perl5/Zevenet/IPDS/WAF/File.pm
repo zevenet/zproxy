@@ -208,7 +208,7 @@ sub createWAFFile
 
 	&zenlog( "$log_tag the WAF file '$path'", 'info', 'waf' );
 
-	chmod +x $path if ( $file->{ type } eq 'script' );
+	&logAndRun( "chmod +x $path " ) if ( $file->{ type } eq 'script' );
 
 	return $err;
 }
