@@ -59,7 +59,7 @@ sub listWAFFile
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my %files = {};
+	my %files = ();
 	my @f_dir;
 	my $reg_name = '[^\.\/]+';
 
