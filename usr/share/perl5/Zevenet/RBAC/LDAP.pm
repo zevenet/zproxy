@@ -151,6 +151,8 @@ sub authLDAP
 	my ( $user, $pass ) = @_;
 	my $suc       = 0;
 	my $ldap_conf = &getLDAP();
+	delete $ldap_conf->{ filter } if ( $ldap_conf->{ filter } eq '' );
+
 	if ( $ldap_conf->{ host } )
 	{
 		require Authen::Simple::LDAP;
