@@ -58,8 +58,14 @@ sub get_waf_file
 		my $msg = "Requested file $file does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
 	my $content = &getWAFFileContent( $files->{ $file }->{ path } );
-	my $body = { description => $desc, params => $content };
+	my $out = {
+				'content' => $content,
+				'type'    => $files->{ $file }->{ 'type' },
+	};
+
+	my $body = { description => $desc, params => $out };
 
 	return &httpResponse( { code => 200, body => $body } );
 }
