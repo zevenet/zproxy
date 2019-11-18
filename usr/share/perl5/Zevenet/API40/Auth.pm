@@ -103,20 +103,29 @@ sub authenticateCredentials    #($user,$curpasswd)
 
 	return if !defined $user or !defined $pass;
 
+	my $valid_credentials = 0;    # output
+
+	if ( $eload )
+	{
+		$valid_credentials = &eload(
+									 module => 'Zevenet::RBAC::LDAP',
+									 func   => 'authLDAP',
+									 args   => [$user, $pass]
+		);
+		return 1 if $valid_credentials;
+	}
+
+	# try standard login
 	require Authen::Simple::Passwd;
 	Authen::Simple::Passwd->import;
-
-	#~ use Authen::Simple::PAM;
-
-	my $valid_credentials = 0;    # output
 
 	my $passfile = "/etc/shadow";
 	my $simple = Authen::Simple::Passwd->new( path => "$passfile" );
 
-	#~ my $simple   = Authen::Simple::PAM->new();
 	if ( $simple->authenticate( $user, $pass ) )
 	{
-		$valid_credentials = 1;
+		&zenlog( "The user '$user' login locally", "debug", "auth" );
+		return 1;
 	}
 
 	return $valid_credentials;

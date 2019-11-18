@@ -77,10 +77,11 @@ sub add_rbac_user
 					'required'     => 'true',
 					'exceptcions'  => ["zapi"]
 		},
+
+	   # this parameter is not required. If it is not sent, the user will be a LDAP user
 		"password" => {
 			'valid_format' => 'rbac_password',
 			'non_blank'    => 'true',
-			'required'     => 'true',
 			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
 		},
 	};
@@ -135,14 +136,9 @@ sub set_rbac_user
 
 	my $desc = "Modify the RBAC user $user";
 	my $params = {
-		"zapikey"            => { 'valid_format' => 'zapi_key' },
-		"zapi_permissions"   => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
-		"webgui_permissions" => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
-		"newpassword" => {
-			'valid_format' => 'rbac_password',
-			'non_blank'    => 'true',
-			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
-		},
+		 "zapikey"            => { 'valid_format' => 'zapi_key' },
+		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
+		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
 	};
 
 	# check if the user exists
@@ -150,6 +146,15 @@ sub set_rbac_user
 	{
 		my $msg = "The RBAC user $user doesn't exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+	my $user_conf = &getRBACUserObject( $user );
+	if ( $user_conf->{ ldap } ne 'true' )
+	{
+		$params->{ "newpassword" } = {
+			'valid_format' => 'rbac_password',
+			'non_blank'    => 'true',
+			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+		};
 	}
 
 	# Check allowed parameters
