@@ -84,13 +84,6 @@ sub set_rbac_ldap
 		},
 	};
 
-	# Check if it exists
-	if ( &getRBACUserExists( $json_obj->{ 'name' } ) )
-	{
-		my $msg = "$json_obj->{ 'name' } already exists.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )

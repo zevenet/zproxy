@@ -118,15 +118,52 @@ Returns:
 
 sub testLDAP
 {
-	my $suc       = 1;
+	my $suc       = 0;
 	my $ldap_conf = &getLDAP();
 
-	require Authen::Simple::LDAP;
-	eval { $suc = Authen::Simple::LDAP->new( $ldap_conf ); };
-	if ( $@ )
+	if ( $ldap_conf->{ host } )
 	{
-		$suc = 0;
-		&zenlog( $@, 'debug', 'rbac' );
+		require Authen::Simple::LDAP;
+		my $ldap;
+		if (
+			 $ldap = Net::LDAP->new(
+									 $ldap_conf->{ host },
+									 port    => $ldap_conf->{ port },
+									 timeout => $ldap_conf->{ timeout },
+									 version => $ldap_conf->{ version },
+			 )
+		  )
+		{
+			if ( $ldap_conf->{ binddn } )
+			{
+				my @bind_cfg = ( $ldap_conf->{ binddn } );
+				push @bind_cfg, ( 'password' => $ldap_conf->{ bindpw } )
+				  if ( $ldap_conf->{ bindpw } );
+
+				my $msg = $ldap->bind( @bind_cfg );
+				unless ( $msg->code )
+				{
+					$suc = 1;
+					$ldap->unbind();
+				}
+			}
+
+			# anonymous bind
+			else
+			{
+				$suc = 1;
+			}
+		}
+	}
+
+	if ( $suc )
+	{
+		&zenlog( "The load balancer can access to the LDAP service", "debug", "rbac" );
+	}
+	else
+	{
+		&zenlog( "The load balancer cannot access to the LDAP service",
+				 "debug", "rbac" );
 	}
 
 	return $suc;
