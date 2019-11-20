@@ -254,6 +254,7 @@ sub setSsyncd
 	}
 	elsif ( $enable eq 'true' )
 	{
+		include 'Zevenet::Cluster';
 		my $node_role = &getZClusterNodeStatus();
 		if ( $node_role eq 'master' )
 		{

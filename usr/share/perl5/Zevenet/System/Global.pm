@@ -78,7 +78,7 @@ sub setSystemGlobal
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $global = shift;
-	my $err    = 0;
+	my $err    = 1;
 
 	if ( exists $global->{ ssyncd } )
 	{
@@ -89,8 +89,9 @@ sub setSystemGlobal
 
 	if ( exists $global->{ duplicated_network } )
 	{
-		&setGlobalConfiguration( 'duplicate_net', $global->{ duplicated_network } );
-		$err = 0;
+		$err =
+		  &setGlobalConfiguration( 'duplicated_net', $global->{ duplicated_network } );
+		return $err if $err;
 	}
 
 	if ( exists $global->{ arp_announce } )
