@@ -88,21 +88,12 @@ require Zevenet::Zapi;
 # Session request
 require Zevenet::API40::Routes::Session if ( $q->path_info eq '/session' );
 
-# allow requests from localhost
-if ( $ENV{ REMOTE_ADDR } eq '127.0.0.1' )
+# Verify authentication
+unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
+		 or ( exists $ENV{ HTTP_COOKIE } && &validCGISession() ) )
 {
-	require Zevenet::User;
-	&setUser( 'root' );
-}
-else
-{
-	# Verify authentication
-	unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
-			 or ( exists $ENV{ HTTP_COOKIE } && &validCGISession() ) )
-	{
-		&httpResponse(
-					   { code => 401, body => { message => 'Authorization required' } } );
-	}
+	&httpResponse(
+				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
 # log parameters passed
