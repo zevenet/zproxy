@@ -63,6 +63,8 @@ sub checkport    # ($host, $port)
 		require Zevenet::Farm::L4xNAT::Validate;
 		return "true" if ( &checkL4Port( $host, $port, $farmname ) );
 
+		# TODO: add check for avoiding collision with datalink VIPs
+
 		require IO::Socket;
 		my $sock = IO::Socket::INET->new(
 										  PeerAddr => $host,

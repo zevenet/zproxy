@@ -42,7 +42,7 @@ Parameters:
 	writeconf - write this change in configuration status "writeconf" for true or omit it for false
 
 Returns:
-	Integer - return 0 on success or different of 0 on failure
+	Integer - return 0 on success, 2 if the ip:port is busy for another farm or another value on another failure
 
 =cut
 
@@ -76,7 +76,18 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		return $status;
 	}
 
-	my $farm_type     = &getFarmType( $farm_name );
+	require Zevenet::Net::Interface;
+	my $farm_type = &getFarmType( $farm_name );
+	if ( $farm_type ne "datalink" )
+	{
+		my $port = &getFarmVip( "vipp", $farm_name );
+		if ( &checkport( $ip, $port, $farm_name ) eq 'true' )
+		{
+			&zenlog( "The networking '$ip:$port' is being used." );
+			return 2;
+		}
+	}
+
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	&zenlog( "Starting farm $farm_name with type $farm_type", "info", "FARMS" );
@@ -120,7 +131,7 @@ Parameters:
 	writeconf - write this change in configuration status "writeconf" for true or omit it for false
 
 Returns:
-	Integer - return 0 on success or different of 0 on failure
+	Integer - return 0 on success, 2 if the ip:port is busy for another farm or another value on another failure
 
 NOTE:
 	Generic function
@@ -135,7 +146,7 @@ sub runFarmStart    # ($farm_name, $writeconf)
 
 	my $status = &_runFarmStart( $farm_name, $writeconf );
 
-	return -1 if ( $status != 0 );
+	return $status if ( $status != 0 );
 
 	require Zevenet::FarmGuardian;
 	&runFarmGuardianStart( $farm_name, "" );

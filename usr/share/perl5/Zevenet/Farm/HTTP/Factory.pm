@@ -23,7 +23,8 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+require Zevenet::Core;
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: runHTTPFarmCreate
@@ -35,15 +36,19 @@ Parameters:
 	port - Virtual port where the virtual service is listening
 	farmname - Farm name
 	type - Specify if farm is HTTP or HTTPS
+	status - Set the initial status of the farm. The possible values are: 'down' for creating the farm and do not run it or 'up' (default) for running the farm when it has been created
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
 
 =cut
+
 sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	my ( $vip, $vip_port, $farm_name, $farm_type ) = @_;
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $vip, $vip_port, $farm_name, $farm_type, $status ) = @_;
+	$status = 'up' if not defined $status;
 
 	require Tie::File;
 	require File::Copy;
@@ -52,9 +57,10 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	my $output = -1;
 
 	#copy template modyfing values
-	my $poundtpl = &getGlobalConfiguration('poundtpl');
+	my $poundtpl        = &getGlobalConfiguration( 'poundtpl' );
 	my $pound_conf_file = "$configdir/${farm_name}_pound.cfg";
-	&zenlog( "Copying pound template ($poundtpl) to $pound_conf_file", "info", "LSLB" );
+	&zenlog( "Copying pound template ($poundtpl) to $pound_conf_file",
+			 "info", "LSLB" );
 	copy( $poundtpl, $pound_conf_file );
 
 	#modify strings with variables
@@ -89,20 +95,36 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	print $f_err "The service is not available. Please try again later.\n";
 	close $f_err;
 
-	my $pound = &getGlobalConfiguration('pound');
-	my $piddir = &getGlobalConfiguration('piddir');
+	my $pound  = &getGlobalConfiguration( 'pound' );
+	my $piddir = &getGlobalConfiguration( 'piddir' );
+
+	require Zevenet::Farm::HTTP::Config;
+	$output = &getHTTPFarmConfigIsOK( $farm_name );
+
+	if ( $output )
+	{
+		require Zevenet::Farm::Action;
+		&runFarmDelete( $farm_name );
+		return 1;
+	}
 
 	#run farm
-	&zenlog(
-		"Running $pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid", "info", "LSLB"
-	);
-
 	require Zevenet::System;
+	if ( $status eq 'up' )
+	{
+		&zenlog(
+			"Running $pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid",
+			"info", "LSLB"
+		);
 
-	&zsystem(
-		"$pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
-	);
-	$output = $?;
+		$output = &zsystem(
+			"$pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
+		);
+	}
+	else
+	{
+		$output = &setHTTPFarmBootStatus( $farm_name, 'down' );
+	}
 
 	return $output;
 }

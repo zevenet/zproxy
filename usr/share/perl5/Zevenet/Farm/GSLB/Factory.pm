@@ -34,6 +34,7 @@ Parameters:
 	vip - Virtual IP
 	port - Virtual port
 	farmname - Farm name
+	status - Set the initial status of the farm. The possible values are: 'down' for creating the farm and do not run it or 'up' (default) for running the farm when it has been created
 
 Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
@@ -43,7 +44,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $fvip, $fvipp, $fname ) = @_;
+	my ( $fvip, $fvipp, $fname, $status ) = @_;
+	$status = 'up' if not defined $status;
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Net::Util;
@@ -63,7 +65,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 
 	my $type   = "gslb";
 	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $output = 0;
 	if ( $ffile != -1 )
 	{
 		# the farm name already exists
@@ -103,23 +105,28 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  "plugins => { \n\textmon => { helper_path => \"$gdnsd_plugin/gdnsd_extmon_helper\" },\n}\n\n";
 	close $file;
 
-	include 'Zevenet::Farm::GSLB::Action';
-
-	#run farm
-	my $exec = &getGSLBStartCommand( $fname );
-
-	&zenlog( "running $exec", "info", "GSLB" );
-	require Zevenet::System;
-	zsystem( "$exec > /dev/null 2>&1" );
-
-	#TODO
-	#$output = $?;
-	$output = 0;
-
-	if ( $output != 0 )
+	include 'Zevenet::Farm::GSLB::Validate';
+	if ( &getGSLBCheckConf() )
 	{
 		&runFarmDelete( $fname );
+		return 1;
 	}
+
+	#run farm
+	include 'Zevenet::Farm::GSLB::Action';
+	if ( $status eq 'up' )
+	{
+		my $exec = &getGSLBStartCommand( $fname );
+
+		&zenlog( "running $exec", "info", "GSLB" );
+		require Zevenet::System;
+		zsystem( "$exec > /dev/null 2>&1" );
+	}
+	else
+	{
+		$output = &setGSLBFarmBootStatus( $fname, 'down' );
+	}
+
 	return $output;
 }
 

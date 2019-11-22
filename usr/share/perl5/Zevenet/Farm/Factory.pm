@@ -65,12 +65,20 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 		return $output;
 	}
 
+	my $status = 'up';
+	if ( $farm_type ne 'datalink' )
+	{
+		require Zevenet::Net::Interface;
+		$status = 'down' if ( &checkport( $vip, $vip_port, $farm_name ) eq 'true' );
+	}
+
 	&zenlog( "running 'Create' for $farm_name farm $farm_type", "info", "LSLB" );
 
 	if ( $farm_type =~ /^HTTPS?$/i )
 	{
 		require Zevenet::Farm::HTTP::Factory;
-		$output = &runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type );
+		$output =
+		  &runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type, $status );
 	}
 	elsif ( $farm_type =~ /^DATALINK$/i )
 	{
@@ -80,14 +88,14 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 	elsif ( $farm_type =~ /^L4xNAT$/i )
 	{
 		require Zevenet::Farm::L4xNAT::Factory;
-		$output = &runL4FarmCreate( $vip, $farm_name, $vip_port );
+		$output = &runL4FarmCreate( $vip, $farm_name, $vip_port, $status );
 	}
 	elsif ( $farm_type =~ /^GSLB$/i )
 	{
 		$output = &eload(
 						  module => 'Zevenet::Farm::GSLB::Factory',
 						  func   => 'runGSLBFarmCreate',
-						  args   => [$vip, $vip_port, $farm_name],
+						  args   => [$vip, $vip_port, $farm_name, $status],
 		) if $eload;
 	}
 

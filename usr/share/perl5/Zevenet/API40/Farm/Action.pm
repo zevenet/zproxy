@@ -96,6 +96,18 @@ sub farm_actions    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		require Zevenet::Farm::Core;
+		my $farm_type = &getFarmType( $farmname );
+		if ( $farm_type ne "datalink" )
+		{
+			my $port = &getFarmVip( "vipp", $farmname );
+			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
+			{
+				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+
 		my $status = &runFarmStart( $farmname, "true" );
 
 		if ( $status )
@@ -124,6 +136,18 @@ sub farm_actions    # ( $json_obj, $farmname )
 		{
 			my $msg = "The virtual ip $ip is not defined in any interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		require Zevenet::Farm::Core;
+		my $farm_type = &getFarmType( $farmname );
+		if ( $farm_type ne "datalink" )
+		{
+			my $port = &getFarmVip( "vipp", $farmname );
+			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
+			{
+				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 
 		$status = &runFarmStart( $farmname, "true" );

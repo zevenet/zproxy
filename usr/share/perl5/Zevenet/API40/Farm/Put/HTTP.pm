@@ -42,105 +42,105 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $desc = "Modify HTTP farm $farmname";
 
 	my $params = {
-				"newfarmname" => {
-								   'valid_format' => 'farm_name',
-								   'non_blank'    => 'true',
-				},
-				"vport" => {
-							 'interval'  => "1,65535",
-							 'non_blank' => 'true',
-				},
-				"vip" => {
-						   'valid_format' => 'ip_addr',
+		"newfarmname" => {
+						   'valid_format' => 'farm_name',
 						   'non_blank'    => 'true',
-						   'format_msg'   => 'expects an IP'
-				},
-				"contimeout" => {
-								  'valid_format' => 'natural_num',
-								  'non_blank'    => 'true',
-								  'format_msg'   => 'expects a natural number'
-				},
-				"restimeout" => {
-								  'valid_format' => 'natural_num',
-								  'non_blank'    => 'true',
-								  'format_msg'   => 'expects a natural number'
-				},
-				"resurrectime" => {
-									'valid_format' => 'natural_num',
-									'non_blank'    => 'true',
-									'format_msg'   => 'expects a natural number'
-				},
-				"reqtimeout" => {
-								  'valid_format' => 'natural_num',
-								  'non_blank'    => 'true',
-								  'format_msg'   => 'expects a natural number'
-				},
-				"rewritelocation" => {
-								 'values'    => ["disabled", "enabled", "enabled-backends"],
-								 'non_blank' => 'true',
-				},
-				"httpverb" => {
-						'values' => [
-								"standardHTTP", "extendedHTTP", "standardWebDAV", "MSextWebDAV",
-								"MSRPCext",     "optionsHTTP"
-						],
+		},
+		"vport" => {
+					 'interval'  => "1,65535",
+					 'non_blank' => 'true',
+		},
+		"vip" => {
+				   'valid_format' => 'ip_addr',
+				   'non_blank'    => 'true',
+				   'format_msg'   => 'expects an IP'
+		},
+		"contimeout" => {
+						  'valid_format' => 'natural_num',
+						  'non_blank'    => 'true',
+						  'format_msg'   => 'expects a natural number'
+		},
+		"restimeout" => {
+						  'valid_format' => 'natural_num',
+						  'non_blank'    => 'true',
+						  'format_msg'   => 'expects a natural number'
+		},
+		"resurrectime" => {
+							'valid_format' => 'natural_num',
+							'non_blank'    => 'true',
+							'format_msg'   => 'expects a natural number'
+		},
+		"reqtimeout" => {
+						  'valid_format' => 'natural_num',
+						  'non_blank'    => 'true',
+						  'format_msg'   => 'expects a natural number'
+		},
+		"rewritelocation" => {
+							   'values'    => ["disabled", "enabled", "enabled-backends"],
+							   'non_blank' => 'true',
+		},
+		"httpverb" => {
+			   'values' => [
+							"standardHTTP", "extendedHTTP", "standardWebDAV", "MSextWebDAV",
+							"MSRPCext",     "optionsHTTP"
+			   ],
+			   'non_blank' => 'true',
+		},
+		"error414" => {
+						'regex' => ".*",
+		},
+		"error500" => {
+						'regex' => ".*",
+		},
+		"error501" => {
+						'regex' => ".*",
+		},
+		"error503" => {
+						'regex' => ".*",
+		},
+		"listener" => {
+						'values'    => ["http", "https"],
 						'non_blank' => 'true',
-				},
-				"error414" => {
-								'regex' => ".*",
-				},
-				"error500" => {
-								'regex' => ".*",
-				},
-				"error501" => {
-								'regex' => ".*",
-				},
-				"error503" => {
-								'regex' => ".*",
-				},
-				"listener" => {
-								'values'    => ["http", "https"],
-								'non_blank' => 'true',
-				},
-				"ciphers" => {
-							   'values'    => ["all", "highsecurity", "customsecurity"],
+		},
+		"ciphers" => {
+					   'values'    => ["all", "highsecurity", "customsecurity"],
+					   'non_blank' => 'true',
+					   'listener'  => 'https',
+		},
+		"cipherc" => {
+					   'non_blank' => 'true',
+					   'listener'  => 'https',
+		},
+		"certname" => {
+						'valid_format' => 'certificate',
+						'non_blank'    => 'true',
+						'listener'     => 'https',
+		},
+		"disable_sslv2" => {
+							 'values'    => ["true", "false"],
+							 'non_blank' => 'true',
+							 'listener'  => 'https',
+		},
+		"disable_sslv3" => {
+							 'values'    => ["true", "false"],
+							 'non_blank' => 'true',
+							 'listener'  => 'https',
+		},
+		"disable_tlsv1" => {
+							 'values'    => ["true", "false"],
+							 'non_blank' => 'true',
+							 'listener'  => 'https',
+		},
+		"disable_tlsv1_1" => {
+							   'values'    => ["true", "false"],
 							   'non_blank' => 'true',
 							   'listener'  => 'https',
-				},
-				"cipherc" => {
+		},
+		"disable_tlsv1_2" => {
+							   'values'    => ["true", "false"],
 							   'non_blank' => 'true',
 							   'listener'  => 'https',
-				},
-				"certname" => {
-								'valid_format' => 'certificate',
-								'non_blank'    => 'true',
-								'listener'     => 'https',
-				},
-				"disable_sslv2" => {
-									 'values'    => ["true", "false"],
-									 'non_blank' => 'true',
-									 'listener'  => 'https',
-				},
-				"disable_sslv3" => {
-									 'values'    => ["true", "false"],
-									 'non_blank' => 'true',
-									 'listener'  => 'https',
-				},
-				"disable_tlsv1" => {
-									 'values'    => ["true", "false"],
-									 'non_blank' => 'true',
-									 'listener'  => 'https',
-				},
-				"disable_tlsv1_1" => {
-									   'values'    => ["true", "false"],
-									   'non_blank' => 'true',
-									   'listener'  => 'https',
-				},
-				"disable_tlsv1_2" => {
-									   'values'    => ["true", "false"],
-									   'non_blank' => 'true',
-									   'listener'  => 'https',
-				},
+		},
 	};
 
 	if ( $eload )
@@ -163,6 +163,21 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	# Get current conf
 	my $farm_st = &getFarmStruct( $farmname );
+
+	my $vip   = $json_obj->{ vip }   // $farm_st->{ vip };
+	my $vport = $json_obj->{ vport } // $farm_st->{ vport };
+
+	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
+	{
+		require Zevenet::Net::Validate;
+		if (     $farm_st->{ status } eq 'up'
+			 and &checkport( $vip, $vport, $farmname ) eq 'true' )
+		{
+			my $msg =
+			  "The '$vip' ip and '$vport' port are being used for another farm. This farm should be sopped before modifying it";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
 
 	# Flags
 	my $reload_ipds = 0;
@@ -535,9 +550,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	# Modify vip and vport
 	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
 	{
-		my $vip   = $json_obj->{ vip }   // $farm_st->{ vip };
-		my $vport = $json_obj->{ vport } // $farm_st->{ vport };
-
 		if ( &setFarmVirtualConf( $vip, $vport, $farmname ) )
 		{
 			my $msg = "Could not set the virtual configuration.";
