@@ -99,6 +99,13 @@ Returns:
 sub setLDAP
 {
 	my $conf = shift;
+
+	if ( exists $conf->{ bindpw } )
+	{
+		include 'Zevenet::Code';
+		$conf->{ bindpw } = &getCodeEncode( $conf->{ bindpw } );
+	}
+
 	my $err = &setTinyObj( $ldap_file, '_', $conf );
 	return $err;
 }
@@ -137,8 +144,12 @@ sub testLDAP
 			if ( $ldap_conf->{ binddn } )
 			{
 				my @bind_cfg = ( $ldap_conf->{ binddn } );
-				push @bind_cfg, ( 'password' => $ldap_conf->{ bindpw } )
-				  if ( $ldap_conf->{ bindpw } );
+				if ( $ldap_conf->{ bindpw } )
+				{
+					include 'Zevenet::Code';
+					my $pass = &getCodeDecode( $ldap_conf->{ bindpw } );
+					push @bind_cfg, ( 'password' => $pass );
+				}
 
 				my $msg = $ldap->bind( @bind_cfg );
 				unless ( $msg->code )
@@ -194,6 +205,9 @@ sub authLDAP
 	{
 		require Authen::Simple::LDAP;
 		eval {
+			include 'Zevenet::Code';
+			$pass = &getCodeDecode( $pass );
+
 			my $ldap = Authen::Simple::LDAP->new( $ldap_conf );
 			if ( $ldap->authenticate( $user, $pass ) )
 			{

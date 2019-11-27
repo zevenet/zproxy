@@ -152,7 +152,7 @@ sub getLDAPZapiOut
 	$out->{ bind_dn } = $ldap->{ binddn };
 	delete $ldap->{ binddn };
 
-	$out->{ bind_password } = $ldap->{ bindpw };
+	$out->{ bind_password } = ( $ldap->{ bindpw } ) ? '********' : '';
 	delete $ldap->{ bindpw };
 
 	$out->{ base_dn } = $ldap->{ basedn };
