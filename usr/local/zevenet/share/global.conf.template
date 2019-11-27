@@ -199,6 +199,10 @@ $logger="/usr/bin/logger";
 $sec="/usr/bin/sec";
 #Where is touch?
 $touch="/usr/bin/touch";
+#Where is sed?
+$sed_bin="/bin/sed";
+#Where is cut?
+$cut_bin="/bin/cut";
 #Where is ls?
 $ls="/bin/ls";
 #Where is stat?
