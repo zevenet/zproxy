@@ -35,28 +35,6 @@ sub setAPTRepo
 	# Function call to configure proxy (Zevenet::SystemInfo)
 	&setEnv();
 
-	# telnet
-	require IO::Socket::INET;
-	my $socket;
-	if (
-		 !(
-			$socket = IO::Socket::INET->new(
-											 PeerAddr => "$host",
-											 PeerPort => $port,
-											 Proto    => 'tcp',
-											 Timeout  => 2
-			)
-		 )
-	  )
-	{
-		&zenlog(
-			"No connection to internet, please check connection and configure proxy if needed",
-			"error", "apt"
-		);
-		return 0;
-	}
-	$socket->close();
-
 	# check zevenet version. Versions prior to 5.2.5 will not be able to subscribe.
 	my $cmd = "$dpkg -l | $grep \"^ii\\s\\szevenet\\s*[0-9]\"";
 
@@ -109,10 +87,15 @@ sub setAPTRepo
 		return 0;
 	}
 
+	my $http_proxy  = &getGlobalConfiguration( 'http_proxy' );
+	my $https_proxy = &getGlobalConfiguration( 'https_proxy' );
+
 	# configuring user-agent
 	open ( my $fh, '>', $apt_conf_file )
 	  or die "Could not open file '$apt_conf_file' $!";
 	print $fh "Acquire { http::User-Agent \"$serial:$subjectkeyidentifier\"; };\n";
+	print $fh "Acquire::http::proxy \"$http_proxy\/\";\n";
+	print $fh "Acquire::https::proxy \"$http_proxy\/\";\n";
 	close $fh;
 
 	# get the kernel version
@@ -125,6 +108,7 @@ sub setAPTRepo
 	{
 		print $FH "deb https://$host/ee/v6/$kernel $distribution main\n";
 
+		#print $FH "deb https://$host/ee/zcmc $distribution main\n";
 	}
 	else
 	{
@@ -231,4 +215,63 @@ sub setCheckUpgradeAPT()
 
 }
 
+=begin nd
+Function: uploadAPTIsoOffline
+
+	Store an uploaded ISO for offline updates.
+
+Parameters:
+	upload_filehandle - File handle or file content.
+
+Returns:
+	2     - The file is not a ISO
+	1     - on failure.
+	0 - on success.
+
+=cut
+
+sub uploadAPTIsoOffline
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $upload_filehandle = shift;
+
+	my $error;
+	my $dir = &getGlobalConfiguration( 'update_dir' );
+	my $file_bin = &getGlobalConfiguration( 'file_bin' );
+	my $checkupgrade_bin = &getGlobalConfiguration( 'checkupgrades_bin' );
+	my $filepath = "$dir/iso.tmp";
+
+	mkdir $dir if !-d $dir;
+
+	if (open ( my $disk_fh, '>', $filepath ))
+	{
+		binmode $disk_fh;
+
+		use MIME::Base64 qw( decode_base64 );
+		print $disk_fh decode_base64( $upload_filehandle );
+
+		close $disk_fh;
+	}
+	else
+	{
+		&zenlog ("The file $filepath could not be created", 'error', 'apt');
+		return 1;
+	}
+
+	if( &logAndRun("$file_bin $filepath | grep ISO") )
+	{
+		&zenlog ("The uploaded ISO doesn't look a valid ISO", 'error', 'apt');
+		unlink $filepath;
+		return 2;
+	}
+
+	rename $filepath, "$dir/update.iso";
+
+	# execute checkupgrades
+	$error = &logAndRun( "$checkupgrade_bin" );
+
+	return $error;
+}
 1;

@@ -630,6 +630,8 @@ sub parseWAFSetConf
 			 "debug", "PROFILING" );
 	my $txt  = shift;
 	my $conf = &getWAFSetStructConf();
+	my $def_action_flag =
+	  0;    # avoid parsing more than one SecDefaultAction directive
 
 	foreach my $line ( @{ $txt } )
 	{
@@ -661,15 +663,17 @@ sub parseWAFSetConf
 			$conf->{ status }       = ( $value eq 'off' )           ? 'false' : 'true';
 			$conf->{ only_logging } = ( $value eq 'DetectionOnly' ) ? 'true'  : 'false';
 		}
-		if ( $line =~ /^\s*SecDefaultAction\s/ )
+		if ( $line =~ /^\s*SecDefaultAction\s/ and !$def_action_flag )
 		{
 			my $value = $line;
+			$def_action_flag = 1;
 			$value =~ s/SecDefaultAction/SecAction/;
 			my $def = &parseWAFRule( $value );
-			$conf->{ default_action } = $def->{ action };
-			$conf->{ default_log }    = $def->{ log };
-			$conf->{ default_phase }  = $def->{ phase };
-			$conf->{ redirect_url }   = $def->{ redirect_url };
+			$conf->{ default_action } =
+			  ( $def->{ action } ne '' ) ? $def->{ action } : 'pass';
+			$conf->{ default_log }   = ( $def->{ log } ne '' ) ? $def->{ log } : 'true';
+			$conf->{ default_phase } = $def->{ phase };
+			$conf->{ redirect_url }  = $def->{ redirect_url };
 		}
 		if ( $line =~ /^\s*SecRuleRemoveById\s+(.*)/ )
 		{
@@ -713,9 +717,9 @@ sub buildWAFSetConf
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $conf            = shift;
-	my $skip_def_action = shift;
-	my @txt             = ();
+	my $conf       = shift;
+	my $def_phases = shift;
+	my @txt        = ();
 
 	push @txt, $mark_conf_begin;
 
@@ -758,23 +762,65 @@ sub buildWAFSetConf
 		}
 	}
 
-	if ( !$skip_def_action )
+	$conf->{ default_action } //= 'pass';
+	my $def_action =
+	  ( exists $conf->{ redirect_url } and $conf->{ redirect_url } ne '' )
+	  ? "redirect:$conf->{redirect_url}"
+	  : $conf->{ default_action };
+	my $defaults = "SecDefaultAction \"$def_action";
+	$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
+	$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
+
+	foreach my $phase ( @{ $def_phases } )
 	{
-		$conf->{ default_action } //= 'pass';
-		$conf->{ default_phase }  //= '1';
-		my $def_action =
-		  ( exists $conf->{ redirect_url } and $conf->{ redirect_url } ne '' )
-		  ? "redirect:$conf->{redirect_url}"
-		  : $conf->{ default_action };
-		my $defaults = "SecDefaultAction \"$def_action,phase:$conf->{ default_phase }";
-		$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
-		$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
-		push @txt, $defaults . '"';
+		push @txt, $defaults . ",phase:$phase\"";
 	}
 
 	push @txt, $mark_conf_end . "\n";
 
 	return @txt;
+}
+
+=begin nd
+Function: getWAFMissingDefPhases
+
+	It gets the phases that have not got configured any SecDefaultPhase directive
+
+Parameters:
+	rules - Array ref with the rules parsed
+
+Returns:
+	array ref - Returns a list with the phases unconfigured
+
+=cut
+
+sub getWAFMissingDefPhases
+{
+	my $raw_rules = shift;
+	my $phases    = [];
+
+	my $skip_1 = 0;
+	my $skip_2 = 0;
+	my $skip_3 = 0;
+	my $skip_4 = 0;
+
+	foreach my $r ( @{ $raw_rules } )
+	{
+		if ( grep ( /SecDefaultAction/, @{ $r->{ raw } } ) )
+		{
+			$skip_1 = 1 if ( grep ( /phase:1/, @{ $r->{ raw } } ) );
+			$skip_2 = 2 if ( grep ( /phase:2/, @{ $r->{ raw } } ) );
+			$skip_3 = 3 if ( grep ( /phase:3/, @{ $r->{ raw } } ) );
+			$skip_4 = 4 if ( grep ( /phase:4/, @{ $r->{ raw } } ) );
+		}
+	}
+
+	push @{ $phases }, 1 unless $skip_1;
+	push @{ $phases }, 2 unless $skip_2;
+	push @{ $phases }, 3 unless $skip_3;
+	push @{ $phases }, 4 unless $skip_4;
+
+	return $phases;
 }
 
 =begin nd
@@ -811,20 +857,9 @@ sub buildWAFSet
 	#write set conf
 	if ( exists $struct->{ configuration } )
 	{
-		# check if it does not exist another SecDefaultAction in the same phase
-		my $flag = 0;
-		foreach my $r ( @{ $struct->{ rules } } )
-		{
-			if (    grep ( /SecDefaultAction/, @{ $r->{ raw } } )
-				and
-				grep ( /phase:$struct->{configuration}->{default_phase}/, @{ $r->{ raw } } ) )
-			{
-				$flag = 1;
-				last;
-			}
-		}
-
-		my @conf = &buildWAFSetConf( $struct->{ configuration }, $flag );
+		# check that do not exist another SecDefaultAction in the same phase
+		my $def_phases = &getWAFMissingDefPhases( $struct->{ rules } );
+		my @conf = &buildWAFSetConf( $struct->{ configuration }, $def_phases );
 		foreach my $line ( @conf )
 		{
 			print $fh $line . "\n";

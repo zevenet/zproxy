@@ -23,6 +23,23 @@
 
 use strict;
 
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/ldap} )
+{
+	my $mod = 'Zevenet::API40::RBAC::LDAP';
+
+	#  GET /rbac/ldap
+	GET qr{^/rbac/ldap$}, 'get_rbac_ldap', $mod;
+
+	#  POST /rbac/ldap
+	POST qr{^/rbac/ldap$}, 'set_rbac_ldap', $mod;
+
+	#  POST /rbac/ldap/actions
+	POST qr{^/rbac/ldap/actions$}, 'set_rbac_ldap_actions', $mod;
+
+	#  DELETE /rbac/ldap/actions
+	DELETE qr{^/rbac/ldap$}, 'del_rbac_ldap', $mod;
+}
+
 if ( $ENV{ PATH_INFO } =~ qr{^/rbac/menus} )
 {
 	my $mod = 'Zevenet::API40::RBAC::Menus';

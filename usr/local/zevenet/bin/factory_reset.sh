@@ -7,7 +7,7 @@ load_global_conf
 
 # vars
 IP_MANAGEMENT="192.168.0.99"
-GW_MANAGEMENT="192.168.0.5"
+GW_MANAGEMENT=""
 NETMASK_MANAGEMENT="255.255.255.0"
 
 GLOBALCONF_TPL=$globalcfg_tpl
@@ -22,14 +22,14 @@ HW=0
 show_usage() {
   echo usage: `basename $0` -i interface_name
   echo "  Mandatory parameters:"
-  echo "      -i|--interface, this interface will not be deleted. It is recommendable to use this interface only for management purpose."
+  echo "      -i|--interface, this interface will not be deleted. It is recommended to use this interface only for management purpose."
   echo ""
   echo "  Optional parameters: "
   echo "      --remove-backups, removes the load balancer backups in the reset process"
-  echo "      --hard-reset, removes configuration related to users: Activation certificates and backups, RBAC "
-  echo "      -hw|--hardware, is a hard reset but set by default the ip $IP_MANAGEMENT in the management interface"
+  echo "      --hard-reset, additionally to the factory reset it removes configuration related to users, activation certificates and backups, RBAC "
+  echo "      -hw|--hardware, it's a hard reset but the IP $IP_MANAGEMENT is set by default in the management interface"
   echo ""
-  echo "  The factory reset, in its soft version, will delete:"
+  echo "  The factory reset will delete:"
   echo "      *) All the interfaces configuration, excepts the interface received as argument, see -i parameter "
   echo "      *) All farms configuration "
   echo "      *) All SSL certificates "
@@ -40,7 +40,7 @@ show_usage() {
   echo "      *) Command history"
   echo "      *) Users and API configuration"
   echo ""
-  echo "  After a hard reset, the system will keep:"
+  echo "  The factory reset will keep:"
   echo "      *) Zevenet updates"
   echo "      *) The host name"
   echo "      *) The password for the root user"
@@ -83,7 +83,7 @@ if [ -z "${if_mgmt}" ]; then
 fi
 
 if [ ! -d "/sys/class/net/${if_mgmt}" ]; then
-        echo "Specified interface does not exist"
+        echo "The specified interface has not been found"
         exit 1
 fi
 
@@ -91,14 +91,14 @@ fi
 IF_NAME="if_${if_mgmt}_conf"
 IF_CONF="${CONF_DIR}/$IF_NAME"
 if [ ! -f "$IF_CONF" ]; then
-        echo "Not found the iface ${if_mgmt}"
+        echo "The iface ${if_mgmt} has not been found"
         exit 1
 fi
 
 echo "Stopping processes"
 for AP in $(ps aux | grep zen | grep -v grep | awk '{print $2}')
 do
-        echo "Parando el proceso  $AP"
+        echo "Stopping processes $AP"
         ps -ef | grep $AP |grep -v grep
         pkill $AP
 done
@@ -121,7 +121,7 @@ if [ $HARD -eq 1 ]
 then
 	# WARNING: not to stop cherokee process from the API, that kills this script
 	echo "Deleting Zevenet certificate"
-	rm -fr $zlbcertfile
+	rm -fr $zlbcertfile_path
 fi
 
 if [ $REM_BACKUPS -eq 1 ]
@@ -132,7 +132,7 @@ fi
 
 
 #Delete all except: zlb-*, iface management, global.conf and cherokee conf and ssl cert
-echo "Cleaning up config"
+echo "Cleaning up configuration"
 
 # saving permanent config files
 PERMANENT_FILES=($IF_NAME cacrl.crl)
@@ -152,6 +152,7 @@ rm /etc/cron.d/*
 
 # create local conf dir
 mkdir "$localconfig"
+mkdir "${CONF_DIR}/certiicates"
 
 # set template
 cp $http_server_key_tpl $http_server_key
@@ -173,6 +174,8 @@ fi
 if [ $HARD -eq 1 ]; then
 	echo "Cleaning apt"
 	rm -fr $fileapt
+	rm -fr $apt_source_zevenet
+	rm -fr $apt_conf_file
 	apt-get update
 	apt-get clean
 
@@ -192,6 +195,10 @@ if [ $HW -eq 1 ]; then
 	echo "mask=$NETMASK_MANAGEMENT" >> $IF_CONF
 	echo "gateway=$GW_MANAGEMENT" >> $IF_CONF
 	echo "status=up" >> $IF_CONF
+	
+	if [ ! -f $migration_flag ]; then
+			touch $migration_flag
+	fi
 else
 	sed -i -E 's/status=.*$/status=up/' $IF_CONF
 fi
@@ -206,5 +213,5 @@ rm -rf /root/.bash_history
 rm -rf /root/* {.bashrc}
 
 # restarting the host
-echo "rebooting system"
+echo "Rebooting system"
 reboot

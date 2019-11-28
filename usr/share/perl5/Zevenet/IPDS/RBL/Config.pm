@@ -398,6 +398,7 @@ sub addRBLFarm
 	my ( $farmname, $rule ) = @_;
 	my $error = 0;
 
+	include 'Zevenet::IPDS::RBL::Core';
 	if ( &getRBLObjectRuleParam( $rule, 'status' ) eq 'up' )
 	{
 		require Zevenet::Farm::Base;

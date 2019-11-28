@@ -24,6 +24,7 @@
 use strict;
 
 include 'Zevenet::System::Proxy';
+include 'Zevenet::Apt';
 
 # GET /system/proxy
 sub get_proxy
@@ -65,6 +66,9 @@ sub set_proxy
 		my $msg = "There was a error modifying the proxy configuration.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	# Proxy needs to be updated in apt module
+	&setAPTRepo();
 
 	return &httpResponse(
 			 { code => 200, body => { description => $desc, params => &OutProxy() } } );

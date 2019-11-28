@@ -107,9 +107,8 @@ sub _runGSLBFarmStart    # ($fname, $writeconf)
 	&zenlog( "running $exec", "info", "GSLB" );
 
 	require Zevenet::System;
-	zsystem( "$exec > /dev/null 2>&1" );
+	$output = zsystem( "$exec > /dev/null 2>&1" );
 
-	$output = $?;
 	if ( $output != 0 )
 	{
 		$output = -1;
@@ -250,62 +249,51 @@ sub getGSLBStopCommand    # ($farm_name)
 }
 
 =begin nd
-Function: setGSLBNewFarmName
+Function: copyGSLBFarm
 
-	Function that renames a farm
+	Function that does a copy of a farm configuration.
+	If the flag has the value 'del', the old farm will be deleted.
 
 Parameters:
 	farmname - Farm name
 	newfarmname - New farm name
+	flag - It expets a 'del' string to delete the old farm. It is used to copy or rename the farm.
 
 Returns:
-	Integer - Error code: 0 on success or -2 when new farm name is blank
+	Integer - Error code: return 0 on success or -1 on failure
 
 =cut
 
-sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
+sub copyGSLBFarm    # ($farm_name,$new_farm_name)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $fname, $newfname ) = @_;
+	my ( $fname, $newfname, $del ) = @_;
 
-	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );
-	my $rrd_dir   = &getGlobalConfiguration( "rrd_dir" );
+	use Tie::File;
+
 	my $configdir = &getGlobalConfiguration( "configdir" );
+	my $cp        = &getGlobalConfiguration( "cp" );
 	my $ffile     = &getFarmFile( $fname );
-	my $output    = -1;
-	my $file;
+	my $newffile  = "$newfname\_gslb.cfg";
+	my $output    = 0;
 
-	unless ( length $newfname )
-	{
-		&zenlog( "error 'New Farm Name $newfname' is empty", "error", "GSLB" );
-		return -2;
-	}
+	&zenlog( "copying the farm '$fname' in '$newfname'", "info", "GSLB" );
 
-	&zenlog( "setting 'NewFarmName $newfname' for $fname farm gslb",
-			 "info", "GSLB" );
-
-	my $newffile = "$newfname\_gslb.cfg";
-	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );
-	$output = 0;
+	&logAndRun( "$cp -r $configdir\/$ffile $configdir\/$newffile" );
 
 	# substitute paths in config file
-	open ( $file, '<', "$configdir\/$newffile\/etc\/config" );
-	my @lines = <$file>;
-	close $file;
-
+	tie my @lines, 'Tie::File', "$configdir\/$newffile\/etc\/config";
 	s/$configdir\/$ffile/$configdir\/$newffile/ for @lines;
+	untie @lines;
 
-	open ( $file, '>', "$configdir\/$newffile\/etc\/config" );
-	print { $file } @lines;
-	close $file;
+	if ( $del eq 'del' )
+	{
+		require File::Path;
+		File::Path->import( 'rmtree' );
 
-	# rename rrd
-	rename ( "$rrdap_dir/$rrd_dir/$fname-farm.rrd",
-			 "$rrdap_dir/$rrd_dir/$newfname-farm.rrd" );
-
-	# delete old graphs
-	unlink ( "img/graphs/bar$fname.png" );
+		$output = 0 if rmtree( ["$configdir/$ffile"] );
+	}
 
 	return $output;
 }

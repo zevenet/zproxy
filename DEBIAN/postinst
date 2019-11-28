@@ -150,7 +150,32 @@ perl -E '
 
 fi
 
+## Check NIC DHCP
+NET_CONFIG_DIR="/etc/network/if-up.d/"
+ZEVENET_SHARE="/usr/local/zevenet/share/"
+CHECK_NIC_DHCP="check-nic-dhcp"
+
+if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
+	# Check if it is an Amazon VM
+	grep "amazon" /sys/devices/virtual/dmi/id/bios_version >/dev/null
+	if [ $? -eq 0 ]; then
+		cp ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ${NET_CONFIG_DIR}
+		${NET_CONFIG_DIR}${CHECK_NIC_DHCP}
+	fi
+	# Check if it is an Azure VM
+	dpkg -l | grep waagent >/dev/null
+	if [ $? -eq 0 ]; then
+		cp ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ${NET_CONFIG_DIR}
+		${NET_CONFIG_DIR}${CHECK_NIC_DHCP}
+	fi
+fi
+
+# Reconfigure APT repo for add zcmc source list
+if [ $BM_tag -eq 0 ]; then
+	echo "" | /usr/local/zevenet/bin/enterprise.bin Zevenet::Apt setAPTRepo >/dev/null
+fi
+
 ## Run checkupgrades to update message
 if [ $BM_tag -eq 0 ]; then
-	/usr/local/zevenet/bin/checkupgrades > /dev/null
+	$checkupgrades_bin > /dev/null
 fi

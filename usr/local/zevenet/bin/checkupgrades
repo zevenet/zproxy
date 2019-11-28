@@ -7,31 +7,112 @@ then
         load_global_conf
 else
 	echo "I can't find environment variable"
-	exit 1
+	exit
 fi
 
 # check if the activation certificate file exists
 if [ ! -f /usr/local/zevenet/www/zlbcertfile.pem ]; then
-        echo "There isn't a valid activation certificate, once the activation certificate is applied execute checkupgrades" > $apt_msg
+	echo "There isn't a valid activation certificate, once the activation certificate is applied execute checkupgrades" > $apt_msg
 	echo "There isn't a valid activation certificate, once the activation certificate is applied execute checkupgrades"
-        exit 1
+	exit
 fi
 
-#check if APT config is done properly, if not, it tries to configure it
+# check if APT config is done properly, if not, it tries to configure it
 echo "" | /usr/local/zevenet/bin/enterprise.bin Zevenet::Apt setCheckUpgradeAPT >/dev/null
+
+# control errors
+function error {
+        # Input parameters:
+			# $1 = error message
+        if [ $? -ne 0 ]; then
+		echo "$1"
+		exit
+        fi
+}
+
+# configure apt offline
+function setAptOffline {
+	# Input parameters
+		# $1 = apt Zevenet source
+
+	echo "Checking local update system"
+	# create the directory if it does not exist
+	if [ ! -d ${update_dir} ]; then
+		mkdir ${update_dir}
+	fi
+
+	# check if the directory is empty
+	cmd=`ls ${update_dir} | wc -l`
+	if [ $cmd -eq 0 ]; then
+		echo "No packages to update on ${update_dir}"
+		exit
+	fi
+
+	# get latest ISO update
+	last_update=`ls ${update_dir} | sort -V | tail -1 | sed  's/.iso//g'`
+
+	UmountMountPoint
+	mkdir /media/${last_update}
+	mount -o loop ${update_dir}/${last_update}.iso /media/${last_update} 2>/dev/null
+	error "Error trying to mount ISO ${update_dir}/${last_update}.iso in /media/${last_update}"
+
+	# add apt key
+	if [ ! -f /media/${last_update}/${gpg_key_zevenet} ]; then
+		echo "Not public key found in the ${last_update}"
+		exit
+	fi
+	cat /media/${last_update}/${gpg_key_zevenet} | apt-key add -
+
+	# add source list
+	echo "deb file:///media/${last_update} buster main" > ${1}
+
+	return 0
+}
+
+# Unmount apt
+function UmountMountPoint {
+
+	mountpoint="/media/update"
+
+	# check mount point
+	check_mountpoint=`mount | grep ${mountpoint}.* | awk '{print $3}' | wc -l`
+	# check deleted ISO
+	mount | grep ${mountpoint}.* | grep "(deleted)" >/dev/null
+	# get the name of the mount point
+	if [ $? -eq 0 ]; then
+		mountpoint_name=`mount | grep ${mountpoint}.* | awk '{print $4}'`
+	else
+		mountpoint_name=`mount | grep ${mountpoint}.* | awk '{print $3}'`
+	fi
+
+	if [ ${check_mountpoint} -ne 0 ]; then
+		umount ${mountpoint_name}
+		error "Error while trying to unmount drive the ${mountpoint_name}"
+		rm -rf ${mountpoint_name}
+	fi
+
+	return 0
+}
 
 case "$1" in
 '')
+	# to activate flag netcat SSL if https proxy is configured
+	https_proxy=`sed -E 's|https?://||g' <<< $https_proxy`
+	if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
+
 	# test connection with zevenet update system
-	$netcat_bin -z www.zevenet.com 443 2>/dev/null
-	if [ $? != 0 ]
-	then
+	$netcat_bin $flag_netcatSSL -z www.zevenet.com 443 2>/dev/null
+	if [ $? != 0 ]; then
 		echo "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
-		exit 1
+		logger "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
+		logger "Flag netcat SSL = $flag_netcatSSL"
+		setAptOffline $apt_source_zevenet
+	else
+		UmountMountPoint
 	fi
 
 	$aptget_bin update > /dev/null
-	
+
 	# check if there are upgradable packages
 	packages=`$apt_bin list --upgradable 2>/dev/null | awk 'FNR > 1' | wc -l`
 	if [ $packages \> 0 ]

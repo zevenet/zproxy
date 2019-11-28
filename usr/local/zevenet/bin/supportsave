@@ -131,10 +131,11 @@ echo "netstat -nr"                      >> $backup_dir/netstat.txt
 /bin/netstat -nr                        >> $backup_dir/netstat.txt
 
 echo "- Netfilter"
-
-NFTBIN=`which nft`
 echo "List nftables ruleset "			>> $backup_dir/nftables.txt
-$NFTBIN list ruleset					>> $backup_dir/nftables.txt
+/usr/local/sbin/nft list ruleset		>> $backup_dir/nftables.txt
+
+echo "- Sysctl params"
+/usr/sbin/sysctl -a						>> $backup_dir/sysctl.txt
 
 CURL=`which curl`
 echo "nftlb daemon farms data"			>> $backup_dir/nftlb.txt
@@ -145,7 +146,7 @@ $CURL --noproxy "*" --connect-timeout 10 -s -H "Key: HoLa" http://127.0.0.1:27/p
 echo "- Reverse Proxy"
 poundctl="/usr/local/zevenet/app/pound/sbin/poundctl"
 for i in `ls /tmp/*_pound.socket 2>/dev/null`
-do 
+do
 	echo "Farm $i"	>> $backup_dir/pound_status.txt
 	$poundctl -c $i >> $backup_dir/pound_status.txt
 done

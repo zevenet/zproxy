@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getGSLBFarmZones
@@ -36,12 +36,14 @@ Parameters:
 Returns:
 	Array - list of zone names or -1 on failure
 =cut
+
 sub getGSLBFarmZones    # ($farm_name)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $output    = -1;
+	my $output = -1;
 
 	opendir ( DIR, "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^[a-zA-Z]/ } readdir ( DIR );
@@ -63,12 +65,14 @@ Parameters:
 Returns:
 	none - No returned value
 =cut
+
 sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $id, $fname, $service ) = @_;
 
-	my $ffile  = &getFarmFile( $fname );
+	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;
 	my $index = 0;
@@ -105,9 +109,11 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 =cut
-sub setGSLBFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
+
+sub setGSLBFarmZoneResource # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $id, $resource, $ttl, $type, $rdata, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -176,12 +182,14 @@ Parameters:
 Returns:
 	none - No returned value.
 =cut
+
 sub setGSLBFarmZoneSerial    # ($farm_name,$zone)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $zone ) = @_;
 
-	my $ffile  = &getFarmFile( $fname );
+	my $ffile = &getFarmFile( $fname );
 	my $index = 0;
 
 	require Tie::File;
@@ -212,9 +220,11 @@ Parameters:
 Returns:
 	Scalar - 1 on success, 0 or false on failure.
 =cut
+
 sub setGSLBFarmDeleteZone    # ($farm_name,$zone)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farm_name, $zone ) = @_;
 
 	return unlink "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/$zone";
@@ -232,15 +242,17 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success, 1 if it already exists or -1 on failure
 =cut
+
 sub setGSLBFarmNewZone    # ($farm_name,$service)
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $fname, $zone ) = @_;
 
 	require Zevenet::Farm::Base;
 
 	my $output = -1;
-	my $fvip   = &getFarmVip( "vip", $fname );
+	my $fvip = &getFarmVip( "vip", $fname );
 
 	opendir ( my $dirh, "$configdir\/$fname\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^$zone/ } readdir ( $dirh );
@@ -285,9 +297,11 @@ Returns:
 	i.e.  \@resourcesArray = ( \%resource1,  \%resource2, ...)
 	\%resource1 = { rname = $name, id  =$id, ttl = $ttl, type = $type, rdata = $rdata }
 =cut
-sub getGSLBResources	# ( $farmname, $zone )
+
+sub getGSLBResources    # ( $farmname, $zone )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Config;
@@ -326,7 +340,8 @@ sub getGSLBResources	# ( $farmname, $zone )
 
 sub getGSLBFarmZonesStruct
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 
 	my @zones   = &getGSLBFarmZones( $farmname );
@@ -344,20 +359,20 @@ sub getGSLBFarmZonesStruct
 		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 		my @be = split ( "\n", $backendsvs );
 		my @out_re;
-		my $resources = &getGSLBResources  ( $farmname, $zone );
+		my $resources = &getGSLBResources( $farmname, $zone );
 
 		for my $resource ( @{ $resources } )
 		{
-			$resource->{ ttl } = undef if ! $resource->{ ttl };
+			$resource->{ ttl } = undef if !$resource->{ ttl };
 			$resource->{ ttl } += 0 if $resource->{ ttl };
 		}
 
 		push (
 			   @out_z,
 			   {
-				  id        => $zone,
-				  defnamesv => $ns,
-				  resources => $resources,
+				 id        => $zone,
+				 defnamesv => $ns,
+				 resources => $resources,
 			   }
 		);
 	}

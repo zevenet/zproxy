@@ -61,9 +61,6 @@ sub new_vlan    # ( $json_obj )
 				   "gateway" => {
 								  'valid_format' => 'ip_addr',
 				   },
-				   "mac" => {
-							  'valid_format' => 'mac_addr',
-				   },
 	};
 
 	if ( $eload )
@@ -72,6 +69,7 @@ sub new_vlan    # ( $json_obj )
 								'non_blank' => 'true',
 								'values'    => ['true', 'false'],
 		};
+		$params->{ "mac" } = { 'valid_format' => 'mac_addr', };
 	}
 
 	# Check allowed parameters
@@ -549,9 +547,6 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 								'non_blank' => 'true',
 								'values'    => ['true'],
 				   },
-				   "mac" => {
-							  'valid_format' => 'mac_addr',
-				   },
 	};
 
 	if ( $eload )
@@ -560,6 +555,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 								'non_blank' => 'true',
 								'values'    => ['true', 'false'],
 		};
+		$params->{ "mac" } = { 'valid_format' => 'mac_addr', };
 	}
 
 	# Check allowed parameters
@@ -681,11 +677,18 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 			}
 		}
 
-   # Do not modify gateway or netmask if exists a virtual interface using this interface
 		if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 		{
-			my @wrong_conf;
+			# check ip and netmas are configured
+			unless ( $new_if->{ addr } ne "" and $new_if->{ mask } ne "" )
+			{
+				my $msg =
+				  "The networking configuration is not valid. It needs an IP ('$new_if->{addr}') and a netmask ('$new_if->{mask}')";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 
+	   # Do not modify gateway or netmask if exists a virtual interface using this interface
+			my @wrong_conf;
 			foreach my $child_name ( @child )
 			{
 				my $child_if = &getInterfaceConfig( $child_name );

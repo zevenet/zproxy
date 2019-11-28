@@ -66,6 +66,22 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	# Extend parameter checks
+	# Get current vip & vport
+	my $vip   = $json_obj->{ vip }   // &getFarmVip( 'vip',  $farmname );
+	my $vport = $json_obj->{ vport } // &getFarmVip( 'vipp', $farmname );
+
+	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
+	{
+		require Zevenet::Net::Validate;
+		if ( $status eq 'up' and &checkport( $vip, $vport, $farmname ) eq 'true' )
+		{
+			my $msg =
+			  "The '$vip' ip and '$vport' port are being used for another farm. This farm should be sopped before modifying it";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	my $reload_ipds = 0;
 	if (    exists $json_obj->{ vport }
 		 || exists $json_obj->{ vip }

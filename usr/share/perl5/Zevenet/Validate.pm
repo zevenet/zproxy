@@ -69,6 +69,8 @@ my $dos_tcp    = qr/(?:bogustcpflags|limitrst)/;
 
 my $run_actions = qr/^(?:stop|start|restart)$/;
 
+my $name = qr/^(?:[a-zA-Z0-9][\w]{5,31})$/;
+
 my %format_re = (
 
 	# generic types
@@ -234,6 +236,7 @@ my %format_re = (
 	'waf_skip'       => qr/[0-9]+/,
 	'waf_skip_after' => qr/\w+/,
 	'waf_set_status' => qr/(?:$boolean|detection)/,
+	'waf_file'       => qr/(?:[\w-]+)/,
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
@@ -342,7 +345,7 @@ sub getValidFormat
 =begin nd
 Function: getValidPort
 
-	Validate port format and check if available when possible.
+	Validate if the port is valid for a type of farm.
 
 Parameters:
 	ip - IP address.
@@ -371,14 +374,12 @@ sub getValidPort    # ( $ip, $port, $profile )
 	require Zevenet::Net::Validate;
 	if ( $profile =~ /^(?:HTTP|GSLB)$/i )
 	{
-		return &isValidPortNumber( $port ) eq 'true'
-		  && &checkport( $ip, $port ) eq 'false';
+		return &isValidPortNumber( $port ) eq 'true';
 	}
 	elsif ( $profile =~ /^(?:L4XNAT)$/i )
 	{
 		require Zevenet::Farm::L4xNAT::Validate;
-		return &ismport( $port ) eq 'true'
-		  && &checkport( $ip, $port, $farmname ) eq 'false';
+		return &ismport( $port ) eq 'true';
 	}
 	elsif ( $profile =~ /^(?:DATALINK)$/i )
 	{
@@ -386,8 +387,7 @@ sub getValidPort    # ( $ip, $port, $profile )
 	}
 	elsif ( !defined $profile )
 	{
-		return &isValidPortNumber( $port ) eq 'true'
-		  && &checkport( $ip, $port ) eq 'false';
+		return &isValidPortNumber( $port ) eq 'true';
 	}
 	else    # profile not supported
 	{

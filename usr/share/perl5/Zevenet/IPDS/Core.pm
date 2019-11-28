@@ -261,6 +261,10 @@ sub setIPDSFarmParam
 		{
 			$attrib = qq(, "est-connlimit" : "$value" );
 		}
+		elsif ( $param eq 'limitconns-logprefix' )
+		{
+			$attrib = qq(, "est-connlimit-log-prefix" : "$value" );
+		}
 		elsif ( $param eq 'limitsec' )
 		{
 			$attrib = qq(, "new-rtlimit" : "$value" );
@@ -268,6 +272,10 @@ sub setIPDSFarmParam
 		elsif ( $param eq 'limitsecbrst' )
 		{
 			$attrib = qq(, "new-rtlimit-burst" : "$value" );
+		}
+		elsif ( $param eq 'limitsec-logprefix' )
+		{
+			$attrib = qq(, "new-rtlimit-log-prefix" : "$value" );
 		}
 		elsif ( $param eq 'limitrst' )
 		{
@@ -277,9 +285,17 @@ sub setIPDSFarmParam
 		{
 			$attrib = qq(, "rst-rtlimit-burst" : "$value" );
 		}
+		elsif ( $param eq 'limitrst-logprefix' )
+		{
+			$attrib = qq(, "rst-rtlimit-log-prefix" : "$value" );
+		}
 		elsif ( $param eq 'bogustcpflags' )
 		{
 			$attrib = qq(, "tcp-strict" : "$value" );
+		}
+		elsif ( $param eq 'bogustcpflags-logprefix' )
+		{
+			$attrib = qq(, "tcp-strict-log-prefix" : "$value" );
 		}
 		elsif ( $param eq 'nfqueue' )
 		{
@@ -449,6 +465,10 @@ sub setIPDSPolicyParam
 	{
 		$attrib = qq(, "type" : "$value" );
 	}
+	elsif ( $param eq "logprefix" )
+	{
+		$attrib = qq(, "log-prefix" : "$value" );
+	}
 	else
 	{
 		return -1;
@@ -492,7 +512,7 @@ Returns:
 
 sub getIPDSPolicyParam
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 1 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $param = shift;
 	my $list  = shift;
@@ -562,7 +582,7 @@ sub getIPDSPolicyParam
 		{
 			my @l = split /"/, $line;
 			my $val = $l[3];
-			return $val;
+			return $val + 0;
 		}
 	}
 

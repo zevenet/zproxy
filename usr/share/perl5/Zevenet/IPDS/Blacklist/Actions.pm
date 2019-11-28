@@ -333,7 +333,7 @@ sub runBLStop
 
 	$output = &setBLDeleteRule( $farm, $rule );
 
-	if ( !&getBLListNoUsed( $rule ) )
+	if ( !&getBLListUsed( $rule ) )
 	{
 		&setBLDestroyList( $rule );
 	}

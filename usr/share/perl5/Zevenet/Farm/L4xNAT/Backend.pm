@@ -186,7 +186,7 @@ sub setL4FarmServer
 		&eload(
 				module => 'Zevenet::Net::Floating',
 				func   => 'setFloatingSourceAddr',
-				args   => [$farm_ref, undef],
+				args   => [$farm_ref, { ip => $ip, id => $ids }],
 		);
 	}
 
@@ -276,7 +276,7 @@ sub setL4FarmBackendsSessionsRemove
 
 	my $farm = &getL4FarmStruct( $farmname );
 
-	return 0 if ( $farm->{ persist } eq "" );
+	#return 0 if ( $farm->{ persist } eq "" );
 
 	my $be = $farm->{ servers }[$backend];
 	( my $tag = $be->{ tag } ) =~ s/0x//g;
@@ -286,6 +286,7 @@ sub setL4FarmBackendsSessionsRemove
 
 	foreach my $line ( @persistmap )
 	{
+
 		$data = 1 if ( $line =~ /elements = / );
 		next if ( !$data );
 
@@ -300,6 +301,7 @@ sub setL4FarmBackendsSessionsRemove
 		  if ( $value ne "" && $value =~ /^0x.0*$tag/ );
 
 		last if ( $data && $line =~ /\}/ );
+
 	}
 
 	return $output;
@@ -315,6 +317,7 @@ Parameters:
 	backend - Backend id
 	status - Backend status. The possible values are: "up" or "down"
 	cutmode - cut to force the traffic stop for such backend
+	priority - true / false, if true then only sessions and conntrack inputs are deleted, current backend need to release connections because higher priority has been enabled. 
 
 Returns:
 	Integer - 0 on success or other value on failure
@@ -325,7 +328,7 @@ sub setL4FarmBackendStatus
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $backend, $status, $cutmode ) = @_;
+	my ( $farm_name, $backend, $status, $cutmode, $prio ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Config;
 	require Zevenet::Farm::L4xNAT::Action;
@@ -337,24 +340,36 @@ sub setL4FarmBackendStatus
 	$status = 'off'  if ( $status eq "maintenance" );
 	$status = 'down' if ( $status eq "fgDOWN" );
 
-	$output =
-	  &sendL4NlbCmd(
-		{
-		   farm   => $farm_name,
-		   file   => "$configdir/$farm_filename",
-		   method => "PUT",
-		   body =>
-			 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$backend", "state" : "$status" } ] } ] })
-		}
-	  );
-
-	if ( $status ne "up" && $cutmode eq "cut" && $farm->{ persist } ne '' )
+#prio flag is used to delete only information of other servers before to run the most priority already alive
+	if ( not defined $prio )
 	{
+		$output =
+		  &sendL4NlbCmd(
+			{
+			   farm   => $farm_name,
+			   file   => "$configdir/$farm_filename",
+			   method => "PUT",
+			   body =>
+				 qq({"farms" : [ { "name" : "$farm_name", "backends" : [ { "name" : "bck$backend", "state" : "$status" } ] } ] })
+			}
+		  );
+
+	}
+
+	#if ( $status ne "up" && $cutmode eq "cut" && $farm->{ persist } ne '' )
+	if (    ( $status ne "up" && $cutmode eq "cut" )
+		 || ( defined $prio && $prio eq 'true' ) )
+	{
+		#delete backend session
 		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
 
 		# remove conntrack
 		my $server = $$farm{ servers }[$backend];
 		&resetL4FarmBackendConntrackMark( $server );
+
+		# delete backend session again in case new connections are created
+		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
+
 	}
 
 	#~ TODO
@@ -463,7 +478,7 @@ sub _getL4FarmParseServers
 			$server->{ id }        = $index + 0;
 			$server->{ port }      = undef;
 			$server->{ tag }       = "0x0";
-			$server->{ max_conns } = 0;
+			$server->{ max_conns } = 0 if ( $eload );
 		}
 
 		if ( $stage == 3 && $line =~ /\"ip-addr\"/ )
@@ -513,15 +528,15 @@ sub _getL4FarmParseServers
 		if ( $stage == 3 && $line =~ /\"est-connlimit\"/ )
 		{
 			my @l = split /"/, $line;
-			$server->{ max_conns } = $l[3] + 0;
+			$server->{ max_conns } = $l[3] + 0 if ( $eload );
 		}
 
 		if ( $stage == 3 && $line =~ /\"state\"/ )
 		{
 			my @l = split /"/, $line;
 			$server->{ status } = $l[3];
-			$server->{ status } = "down"
-			  if ( $server->{ status } eq "off" || $server->{ status } eq "config_error" );
+			$server->{ status } = "undefined" if ( $server->{ status } eq "config_error" );
+			$server->{ status } = "maintenance" if ( $server->{ status } eq "off" );
 			$server->{ status } = "fgDOWN" if ( $server->{ status } eq "down" );
 		}
 	}

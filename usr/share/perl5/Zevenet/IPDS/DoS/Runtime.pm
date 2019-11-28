@@ -70,6 +70,8 @@ sub setDOSRunRule
 	{
 		$value = &getDOSParam( $ruleName, 'limit_conns' );
 		$output = &setIPDSFarmParam( 'limitconns', $value, $farmName );
+		&setIPDSFarmParam( 'limitconns-logprefix', "[DOS,$ruleName,$farmName]",
+						   $farmName );
 	}
 	elsif ( $rule eq 'limitsec' )
 	{
@@ -77,6 +79,8 @@ sub setDOSRunRule
 		$output = &setIPDSFarmParam( 'limitsec', $value, $farmName );
 		$value = &getDOSParam( $ruleName, 'limit_burst' );
 		$output = &setIPDSFarmParam( 'limitsecbrst', $value, $farmName ) || $output;
+		&setIPDSFarmParam( 'limitsec-logprefix', "[DOS,$ruleName,$farmName]",
+						   $farmName );
 	}
 	elsif ( $rule eq 'limitrst' )
 	{
@@ -84,10 +88,14 @@ sub setDOSRunRule
 		$output = &setIPDSFarmParam( 'limitrst', $value, $farmName );
 		$value = &getDOSParam( $ruleName, 'limit_burst' );
 		$output = &setIPDSFarmParam( 'limitrstbrst', $value, $farmName ) || $output;
+		&setIPDSFarmParam( 'limitrst-logprefix', "[DOS,$ruleName,$farmName]",
+						   $farmName );
 	}
 	elsif ( $rule eq 'bogustcpflags' )
 	{
 		$output = &setIPDSFarmParam( 'bogustcpflags', 'on', $farmName );
+		&setIPDSFarmParam( 'bogustcpflags-logprefix', "[DOS,$ruleName,$farmName]",
+						   $farmName );
 	}
 	else
 	{

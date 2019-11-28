@@ -58,7 +58,8 @@ sub add_addheader    # ( $json_obj, $farmname )
 	  if ( $error_msg );
 
 	# check if the header is already added
-	if ( grep ( /^$json_obj->{ header }$/, @{ &getHTTPAddheader( $farmname ) } ) )
+	if (
+		 grep ( /^$json_obj->{ header }$/, @{ &getHTTPAddReqHeader( $farmname ) } ) )
 	{
 		my $msg = "The header is already added.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -107,7 +108,7 @@ sub del_addheader
 	}
 
 	# check if the header is already added
-	if ( ( scalar @{ &getHTTPAddheader( $farmname ) } ) < $index + 1 )
+	if ( ( scalar @{ &getHTTPAddReqHeader( $farmname ) } ) < $index + 1 )
 	{
 		my $msg = "The index has not been found.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -168,7 +169,8 @@ sub add_headremove    # ( $json_obj, $farmname )
 	  if ( $error_msg );
 
 	# check if the pattern is already added
-	if ( grep ( /^$json_obj->{ pattern }$/, @{ &getHTTPHeadremove( $farmname ) } ) )
+	if (
+		 grep ( /^$json_obj->{ pattern }$/, @{ &getHTTPRemReqHeader( $farmname ) } ) )
 	{
 		my $msg = "The pattern is already added.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -217,7 +219,7 @@ sub del_headremove
 	}
 
 	# check if the headremove is already added
-	if ( ( scalar @{ &getHTTPHeadremove( $farmname ) } ) < $index + 1 )
+	if ( ( scalar @{ &getHTTPRemReqHeader( $farmname ) } ) < $index + 1 )
 	{
 		my $msg = "The index has not been found.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -245,6 +247,228 @@ sub del_headremove
 
 	# error
 	my $msg = "Error deleting the headremove $index";
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+}
+
+# POST	/farms/<>/addheader
+sub add_addResponseheader    # ( $json_obj, $farmname )
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $farmname = shift;
+
+	my $desc = "Add a header to the backend repsonse.";
+
+	# Check that the farm exists
+	if ( !&getFarmExists( $farmname ) )
+	{
+		my $msg = "The farm '$farmname' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $params = {
+				   "header" => {
+								 'non_blank' => 'true',
+								 'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# check if the header is already added
+	if (
+		 grep ( /^$json_obj->{ header }$/, @{ &getHTTPAddRespHeader( $farmname ) } ) )
+	{
+		my $msg = "The header is already added.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	unless ( &addHTTPAddRespheader( $farmname, $json_obj->{ header } ) )
+	{
+		# success
+		my $message = "Added a new header to the backend response";
+		my $body = {
+					 description => $desc,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		if ( &getFarmStatus( $farmname ) ne 'down' )
+		{
+			include 'Zevenet::Farm::Action';
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
+
+		return &httpResponse( { code => 200, body => $body } );
+	}
+
+	# error
+	my $msg = "Error adding a new response header";
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+}
+
+#  DELETE	/farms/<>/addheader/<>
+sub del_addResponseheader
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farmname = shift;
+	my $index    = shift;
+
+	my $desc = "Delete a header previously added to the backend response.";
+
+	# Check that the farm exists
+	if ( !&getFarmExists( $farmname ) )
+	{
+		my $msg = "The farm '$farmname' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# check if the header is already added
+	if ( ( scalar @{ &getHTTPAddRespHeader( $farmname ) } ) < $index + 1 )
+	{
+		my $msg = "The index has not been found.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	unless ( &delHTTPAddRespheader( $farmname, $index ) )
+	{
+		# success
+		my $message = "The header $index was deleted successfully";
+		my $body = {
+					 description => $desc,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		if ( &getFarmStatus( $farmname ) ne 'down' )
+		{
+			include 'Zevenet::Farm::Action';
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
+
+		return &httpResponse( { code => 200, body => $body } );
+	}
+
+	# error
+	my $msg = "Error deleting the response header $index";
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+}
+
+# POST	/farms/<>/headremove
+sub add_removeResponseheader    # ( $json_obj, $farmname )
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $farmname = shift;
+
+	my $desc = "Remove a header from the backend response.";
+
+	# Check that the farm exists
+	if ( !&getFarmExists( $farmname ) )
+	{
+		my $msg = "The farm '$farmname' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $params = {
+				   "pattern" => {
+								  'non_blank' => 'true',
+								  'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# check if the pattern is already added
+	if (
+		 grep ( /^$json_obj->{ pattern }$/, @{ &getHTTPRemRespHeader( $farmname ) } ) )
+	{
+		my $msg = "The pattern is already added.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	unless ( &addHTTPRemRespHeader( $farmname, $json_obj->{ pattern } ) )
+	{
+		# success
+		my $message = "Added a patter to remove reponse headers";
+		my $body = {
+					 description => $desc,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		if ( &getFarmStatus( $farmname ) ne 'down' )
+		{
+			include 'Zevenet::Farm::Action';
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
+
+		return &httpResponse( { code => 200, body => $body } );
+	}
+
+	# error
+	my $msg = "Error adding the remove pattern";
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+}
+
+#  DELETE	/farms/<>/addheader/<>
+sub del_removeResponseHeader
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farmname = shift;
+	my $index    = shift;
+
+	my $desc = "Delete a pattern to remove response headers.";
+
+	# Check that the farm exists
+	if ( !&getFarmExists( $farmname ) )
+	{
+		my $msg = "The farm '$farmname' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# check if the headremove is already added
+	if ( ( scalar @{ &getHTTPRemRespHeader( $farmname ) } ) < $index + 1 )
+	{
+		my $msg = "The index has not been found.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	unless ( &delHTTPRemRespHeader( $farmname, $index ) )
+	{
+		# success
+		my $message = "The pattern $index was deleted successfully";
+		my $body = {
+					 description => $desc,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		if ( &getFarmStatus( $farmname ) ne 'down' )
+		{
+			include 'Zevenet::Farm::Action';
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
+
+		return &httpResponse( { code => 200, body => $body } );
+	}
+
+	# error
+	my $msg = "Error deleting the pattern $index";
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 }
 

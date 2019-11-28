@@ -155,6 +155,23 @@ sub addlocalnet    # ($if_ref)
 			$skip_route = 1 if ( grep ( /^(?:\*|$table)$/, @isolates ) );
 		}
 
+		#if duplicated network, next
+		my $ip_local     = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+		my $net_local    = $ip_local->network();
+		my $if_ref_table = getInterfaceConfig( $link );
+		my $ip_table =
+		  new NetAddr::IP( $$if_ref_table{ addr }, $$if_ref_table{ mask } );
+		my $net_local_table = $ip_table->network();
+
+		if ( $net_local_table eq $net_local && $$if_ref{ name } ne $link )
+		{
+			&zenlog(
+				"The network $net and $net_local of dev $$if_ref{name} is the same than the network for $link, route is not going to be applied in table $table",
+				"error", "network"
+			);
+			$skip_route = 1;
+		}
+
 		if ( !$skip_route )
 		{
 			&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
@@ -206,9 +223,21 @@ sub addlocalnet    # ($if_ref)
 			   "debug", "NETWORK" )
 		  if &debug();
 
-		my $ip    = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
-		my $net   = $ip->network();
-		my $table = "table_$$if_ref{ name }";
+		#if duplicated network, next
+		my $ip        = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
+		my $net       = $ip->network();
+		my $table     = "table_$$if_ref{ name }";
+		my $ip_ref    = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+		my $net_local = $ip_ref->network();
+
+		if ( $net eq $net_local && $$iface{ name } ne $$if_ref{ name } )
+		{
+			&zenlog(
+				"The network $net of dev $$iface{name} is the same than the network for $$if_ref{name}, the route is not going to be applied in table $table",
+				"error", "network"
+			);
+			next;
+		}
 
 		my $ip_cmd =
 		  "$ip_bin -$$iface{ip_v} route replace $net dev $$iface{name} src $$iface{addr} table $table $routeparams";
@@ -224,6 +253,9 @@ sub addlocalnet    # ($if_ref)
 						  args   => ['add', "table_$$if_ref{name}"],
 		);
 	}
+
+	use Zevenet::Net::Core;
+	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "add" );
 
 	return;
 }
@@ -485,10 +517,10 @@ sub genRoutingRulesPrio
 		$min = $userInit;
 		$max = $ifacesInit;
 	}
+	# iface
 	else
 	{
-		$min = $ifacesInit;
-		$max = $systemLimit;
+		return $ifacesInit;
 	}
 
 	my $prio;
@@ -799,6 +831,10 @@ sub delRoutes    # ($table,$if_ref)
 
 	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
+		#an interface is going to be deleted, delete the rule of the IP first
+		use Zevenet::Net::Core;
+		&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "del" );
+
 		if ( $table eq "local" )
 		{
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";

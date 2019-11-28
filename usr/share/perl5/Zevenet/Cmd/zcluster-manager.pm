@@ -184,6 +184,16 @@ elsif ( $object eq 'notify_fault' )
 {
 	exit &setNodeStatusMaintenance();
 }
+elsif ( $object eq 'enable_ssyncd' )
+{
+	include 'Zevenet::Ssyncd';
+	&setSsyncd( 'true' );
+}
+elsif ( $object eq 'disable_ssyncd' )
+{
+	include 'Zevenet::Ssyncd';
+	&setSsyncd( 'false' );
+}
 
 # farm commands
 if ( $object eq 'farm' )

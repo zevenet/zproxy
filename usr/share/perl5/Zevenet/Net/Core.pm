@@ -148,6 +148,10 @@ sub upIf    # ($if_ref, $writeconf)
 		);
 	}
 
+	# calculate new backend masquerade IPs
+	require Zevenet::Farm::Config;
+	&reloadFarmsSourceAddress();
+
 	return $status;
 }
 
@@ -206,6 +210,7 @@ sub downIf    # ($if_ref, $writeconf)
 		$ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $routed_iface";
 	}
 
+	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "del" );
 	$status = &logAndRun( $ip_cmd );
 
 	# Set down status in configuration file
@@ -221,6 +226,10 @@ sub downIf    # ($if_ref, $writeconf)
 		$fileHandler->{ $if_ref->{ name } }->{ status } = "down";
 		$fileHandler->write( $file );
 	}
+
+	# calculate new backend masquerade IPs
+	require Zevenet::Farm::Config;
+	&reloadFarmsSourceAddress();
 
 	return $status;
 }
@@ -358,6 +367,8 @@ sub delIf    # ($if_ref)
 		return $status;
 	}
 
+	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "del" );
+
 	# If $if is Vini do nothing
 	if ( $$if_ref{ vini } eq '' )
 	{
@@ -462,6 +473,7 @@ sub delIp    # 	($if, $ip ,$netmask)
 		( $if ) = split ( /\:/, $if );
 	}
 
+	&setRuleIPtoTable( $if, $ip, "del" );
 	my $ip_cmd = "$ip_bin addr del $ip/$netmask dev $if";
 	my $status = &logAndRun( $ip_cmd );
 
@@ -561,6 +573,47 @@ sub addIp    # ($if_ref)
 		}
 	};
 
+	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "add" );
+
+	return $status;
+}
+
+=begin nd
+Function: setRuleIPtoTable
+
+        Add / delete a rule for the IP in order to force the traffic to the associated table_<nic>
+        it only applies if global param $duplicated_net is true
+
+Parameters:
+        iface:  Main interface, nic, bond o vlan
+        IP:     main IP or VIP
+        action: add / del
+
+Returns:
+        0 if ok, 1 if failed
+
+=cut
+
+sub setRuleIPtoTable
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my ( $iface, $ip, $action ) = @_;
+	my $prio = 30000;
+
+	if ( &getGlobalConfiguration( 'duplicated_net' ) ne "true" )
+	{
+		#this feature is not in use
+		return 0;
+	}
+
+	#In case <if>:<name> is sent
+	my @ifname = split ( /:/, $iface );
+	my $ip_cmd =
+	  "$ip_bin rule $action from $ip/32 lookup table_$ifname[0] prio $prio";
+	&zenlog( "ip rule command: $ip_cmd", "debug", "NETWORK" );
+	my $status = &logAndRun( $ip_cmd );
 	return $status;
 }
 

@@ -31,7 +31,8 @@ include 'Zevenet::Farm::HTTP::Ext';
 # POST	/farms/<>/addheader
 sub add_addheader    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -57,7 +58,8 @@ sub add_addheader    # ( $json_obj, $farmname )
 	  if ( $error_msg );
 
 	# check if the header is already added
-	if ( grep ( /^$json_obj->{ header }$/, @{ &getHTTPAddheader( $farmname ) } ) )
+	if (
+		 grep ( /^$json_obj->{ header }$/, @{ &getHTTPAddReqHeader( $farmname ) } ) )
 	{
 		my $msg = "The header is already added.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -91,7 +93,8 @@ sub add_addheader    # ( $json_obj, $farmname )
 #  DELETE	/farms/<>/addheader/<>
 sub del_addheader
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 	my $index    = shift;
 
@@ -105,7 +108,7 @@ sub del_addheader
 	}
 
 	# check if the header is already added
-	if ( ( scalar @{ &getHTTPAddheader( $farmname ) } ) < $index + 1 )
+	if ( ( scalar @{ &getHTTPAddReqHeader( $farmname ) } ) < $index + 1 )
 	{
 		my $msg = "The index has not been found.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -139,7 +142,8 @@ sub del_addheader
 # POST	/farms/<>/headremove
 sub add_headremove    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -154,8 +158,8 @@ sub add_headremove    # ( $json_obj, $farmname )
 
 	my $params = {
 				   "pattern" => {
-								 'non_blank' => 'true',
-								 'required'  => 'true',
+								  'non_blank' => 'true',
+								  'required'  => 'true',
 				   },
 	};
 
@@ -165,7 +169,8 @@ sub add_headremove    # ( $json_obj, $farmname )
 	  if ( $error_msg );
 
 	# check if the pattern is already added
-	if ( grep ( /^$json_obj->{ pattern }$/, @{ &getHTTPHeadremove( $farmname ) } ) )
+	if (
+		 grep ( /^$json_obj->{ pattern }$/, @{ &getHTTPRemReqHeader( $farmname ) } ) )
 	{
 		my $msg = "The pattern is already added.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -199,7 +204,8 @@ sub add_headremove    # ( $json_obj, $farmname )
 #  DELETE	/farms/<>/addheader/<>
 sub del_headremove
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
 	my $index    = shift;
 
@@ -213,7 +219,7 @@ sub del_headremove
 	}
 
 	# check if the headremove is already added
-	if ( ( scalar @{ &getHTTPHeadremove( $farmname ) } ) < $index + 1 )
+	if ( ( scalar @{ &getHTTPRemReqHeader( $farmname ) } ) < $index + 1 )
 	{
 		my $msg = "The index has not been found.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

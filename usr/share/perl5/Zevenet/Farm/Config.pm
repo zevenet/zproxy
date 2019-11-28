@@ -136,7 +136,31 @@ sub setFarmSessionType    # ($session,$farm_name)
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &setL4FarmParam( 'persist', $session, $farm_name );
 	}
+	
+	#if persistence is enabled
+	require Zevenet::Farm::Config;
+	if (&getPersistence($farm_name) == 0){
+		#register farm in ssyncd
+		if ( $eload )
+		{
+			&eload(
+			module => 'Zevenet::Ssyncd',
+			func   => 'setSsyncdFarmUp',
+			args   => [$farm_name],
+			);
+		}
 
+	}else{
+		#unregister farm in ssyncd
+		if ( $eload )
+                {
+			&eload(
+                        module => 'Zevenet::Ssyncd',
+			func   => 'setSsyncdFarmDown',
+			args   => [$farm_name],
+			);
+		}
+	}
 	return $output;
 }
 
@@ -671,7 +695,7 @@ sub getFarmPlainInfo    # ($farm_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
-	my $file      = shift // undef;
+	my $file = shift // undef;
 	my @content;
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -760,11 +784,92 @@ sub reloadFarmsSourceAddressByFarm
 	my $farm_ref = &getL4FarmStruct( $farm_name );
 	return if $farm_ref->{ nattype } ne 'nat';
 
-	&eload(
-			module => 'Zevenet::Net::Floating',
-			func   => 'setFloatingSourceAddr',
-			args   => [$farm_ref, undef],
-	) if ( $eload );
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Net::Floating',
+				func   => 'setFloatingSourceAddr',
+				args   => [$farm_ref, undef],
+		);
+
+		# reload the backend source address
+		foreach my $bk ( @{ $farm_ref->{ servers } } )
+		{
+			&eload(
+					module => 'Zevenet::Net::Floating',
+					func   => 'setFloatingSourceAddr',
+					args   => [$farm_ref, $bk],
+			);
+		}
+	}
+
+}
+
+
+=begin nd
+Function: getPersistence
+
+        Checks if persistence is enabled in the farm through config file
+
+Parameters:
+        farm_name - name of the farm where check persistence
+
+Returns:
+        int - 0 = "true" or 1 = "false"
+
+=cut
+
+sub getPersistence{
+
+	my $farm_name = shift; 
+	my $farm_type = &getFarmType( $farm_name );
+	my $farm_ref;
+	my $nodestatus  = "";
+	return 1 if $farm_type !~ /l4xnat|http/;
+	if ( $eload )
+	{
+		$nodestatus = &eload(
+                module 	=> 'Zevenet::Cluster',
+                func   	=> 'getZClusterNodeStatus',
+		args	=> [],
+		);
+	}
+
+	return 1 if ( $nodestatus ne "master");
+	if ($farm_type eq 'l4xnat'){
+		require Zevenet::Farm::L4xNAT::Config;
+		#return 1 if (&getL4FarmStatus($farm_name)) ne "up";
+		$farm_ref = &getL4FarmStruct($farm_name);
+		my $persist = &getL4FarmParam('persist', $farm_name);
+		if ($persist !~ /^$/){
+			&zenlog("Persistence enabled to $persist for farm $farm_name", "info", "farm");
+			return 0;
+		}
+	}
+
+
+	if ($farm_type =~ /http/){
+		require Zevenet::Farm::HTTP::Service;
+		require Zevenet::Config;
+		require Zevenet::Lock;
+		#return 1 if (&getHTTPFarmStatus($farm_name)) ne "up";
+		$farm_ref = &getHTTPServiceBlocks($farm_name);
+		##search in a hash string "Session" with no #. 
+		my $farm_file = &getFarmFile($farm_name);
+		my $pathconf = &getGlobalConfiguration('configdir');
+		my $lock_fh = &openlock( "$pathconf/$farm_file", 'r' );
+		while(<$lock_fh>){
+			if ($_ =~ /[^#]Session/)
+			{
+				&zenlog("Persistence enabled for farm $farm_name", "info", "farm");
+				return 0;
+			}
+		}
+		close $lock_fh;
+
+	}
+	
+	return 1;
 }
 
 1;

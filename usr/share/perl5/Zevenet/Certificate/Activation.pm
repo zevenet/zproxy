@@ -73,6 +73,19 @@ my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 
 my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
+=begin nd
+Function: getKeySigned
+
+	It returns the key id which is used to sign the certificates
+
+Parameters:
+	none - .
+
+Returns:
+	String - key ID
+
+=cut
+
 sub getKeySigned
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -337,6 +350,9 @@ sub certcontrol
 
 	my $cert_info = &getCertActivationInfo( $zlbcertfile );
 
+	#swcert = 8 ==> cacrl is not signed
+	return 8 if ( $cert_info->{ crl_signed } ne 'true' );
+
 	#swcert = 2 ==> Cert isn't signed OK
 	return 2 if ( $cert_info->{ signed } ne 'true' );
 
@@ -492,6 +508,10 @@ sub get_sys_uuid
 	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
 	chomp $dmi;
+
+# dmidcode for zevenet 6 shows UUID data in lowercase, in previous versions shown in uppercase.
+	my $zen_version_type = &get_mod_appl();
+	$dmi = uc ( $dmi ) if ( $zen_version_type =~ /ZNA.*/ );
 
 	return $dmi;
 }
@@ -930,7 +950,7 @@ sub getCertActivationInfo
 	my $crl_err = &certRevoked( $zlbcertfile );
 
 	$info->{ revoked }    = ( !$crl_err )     ? 'false' : 'true';
-	$info->{ crl_signed } = ( $crl_err != 8 ) ? 'false' : 'true';
+	$info->{ crl_signed } = ( $crl_err == 8 ) ? 'false' : 'true';
 
 	# Certificate expiring date
 	$info->{ days_to_expire } = &getCertDaysToExpire( $info->{ expiration } );

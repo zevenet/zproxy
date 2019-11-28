@@ -25,6 +25,7 @@ use strict;
 use Zevenet::Farm::Core;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
+my $certdir   = &getGlobalConfiguration( 'certdir' );
 
 =begin nd
 Function: getFarmCertificatesSNI
@@ -112,7 +113,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 
 			if ( $_ !~ /Cert "/ && $sw eq 1 )
 			{
-				splice @array, $i, 0, "\tCert\ \"$configdir\/$cfile\"";
+				splice @array, $i, 0, "\tCert\ \"$certdir\/$cfile\"";
 				$output = 0;
 				last;
 			}
@@ -165,14 +166,14 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 
 		for ( @array )
 		{
-			if ( $_ =~ /\tCert "$configdir\/$certname"/ )
+			if ( $_ =~ /^\s*Cert "$certdir\/$certname"/ )
 			{
 				splice @array, $j, 1,;
 				$output = 0;
 
 				if ( $array[$j] !~ /Cert/ && $array[$j - 1] !~ /Cert/ )
 				{
-					splice @array, $j, 0, "\tCert\ \"$configdir\/zencert.pem\"";
+					splice @array, $j, 0, "\tCert\ \"$certdir\/zencert.pem\"";
 					$output = 1;
 				}
 				last;

@@ -46,6 +46,7 @@ sub setBLRunList
 	$type = "whitelist" if ( $action eq "allow" );
 
 	$output = &setIPDSPolicyParam( 'type', $type, $listName );
+	&setIPDSPolicyParam( 'logprefix', "[BL,$listName,FNAME]", $listName );
 
 	if ( $output == 0 )
 	{
@@ -269,7 +270,7 @@ sub setBLDeleteRule
 	$output = &delIPDSFarmParam( 'policy', $listName, $farmName );
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( !&getBLListNoUsed( $listName ) )
+	if ( !&getBLListUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}
@@ -333,14 +334,23 @@ sub setBLCronTask
 	if (    $rblFormat->{ 'frequency' } eq 'daily'
 		 && $rblFormat->{ 'frequency_type' } eq 'period' )
 	{
+		# the task is going to be executed starting in the current minute.
+		my ( $cur_time ) = localtime ();
 		my $period = $rblFormat->{ 'period' };
+
 		if ( $rblFormat->{ 'unit' } eq 'minutes' )
 		{
-			$cronFormat->{ 'min' } = "*/$rblFormat->{ 'period' }";
+			# To run a task every 20 minutes starting at 5 past the hour:
+			#  5-59/20 * * * *
+
+			# The remainder operation is to try to avoid that two tasks will be executed at
+			# the same time when are configured with the same interval
+			my $t_init = $cur_time->[1] % $rblFormat->{ 'period' };
+			$cronFormat->{ 'min' } = "$t_init-59/$rblFormat->{ 'period' }";
 		}
 		elsif ( $rblFormat->{ 'unit' } eq 'hours' )
 		{
-			$cronFormat->{ 'min' }  = '00';
+			$cronFormat->{ 'min' }  = $cur_time->[1];
 			$cronFormat->{ 'hour' } = "*/$rblFormat->{ 'period' }";
 		}
 	}
@@ -456,7 +466,7 @@ sub setBLRemFromFarm
 	}
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( !$output && !&getBLListNoUsed( $listName ) )
+	if ( !$output && !&getBLListUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}

@@ -41,7 +41,7 @@ exit 0 if ($if_ref->{dhcp} eq 'true');
 
 &addIp($if_ref);
 #if nic is used for global gw the apply global routes
-if (&getGlobalConfiguration('defaultgwif') eq $if_ref->{ dev }){
+if (&getGlobalConfiguration('defaultgwif') eq $if_ref->{ name }){
 	&zenlog("Applying default GW for table main", "info", "NETWORK");
 	$gateway=&getGlobalConfiguration('defaultgw');
 	&applyRoutes('global',$if_ref,$gateway);

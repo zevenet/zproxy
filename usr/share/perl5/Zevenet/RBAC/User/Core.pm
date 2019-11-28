@@ -42,7 +42,8 @@ Returns:
 
 sub getRBACUserConf
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $rbacPath = &getRBACConfPath();
 	return "$rbacPath/users.conf";
 }
@@ -62,7 +63,8 @@ Returns:
 
 sub getRBACUserList
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rbacUserConfig );
 
@@ -84,7 +86,8 @@ Returns:
 
 sub getRBACUserExists
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $user = shift;
 
 	my $out = 0;
@@ -108,13 +111,17 @@ Returns:
 
 sub getRBACUserObject
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $user = shift;
 
 	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rbacUserConfig );
 
-	return $fileHandle->{ $user };
+	my $cfg = $fileHandle->{ $user };
+	$cfg->{ 'ldap' } //= 'false';
+
+	return $cfg;
 }
 
 =begin nd
@@ -133,7 +140,8 @@ Returns:
 
 sub getRBACUserParam
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $user   = shift;
 	my $param  = shift;
 	my $object = &getRBACUserObject( $user );
@@ -156,7 +164,8 @@ Returns:
 
 sub validateRBACUserZapi
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $zapikey ) = @_;
 
 	include 'Zevenet::Code';
@@ -188,10 +197,10 @@ sub validateRBACUserZapi
 	return $user;
 }
 
-
 sub getRBACUserbyZapikey
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $zapikey = shift;
 	my $user;
 	include 'Zevenet::Zapi';
@@ -216,7 +225,5 @@ sub getRBACUserbyZapikey
 
 	return $user;
 }
-
-
 
 1;

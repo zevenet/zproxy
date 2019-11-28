@@ -31,6 +31,8 @@ $zbindir="$zdir/bin";#update
 $basedir="$zdir/www";#update
 #configuration directory.In this section all config files are saved.
 $configdir="$zdir/config";#update
+#certificates directory
+$certdir="$zdir/config/certificates";#update
 # directory for local configurations, it is not sync by the cluster
 $localconfig="$configdir/local";#update
 #Directory where is check script. In this directory you can save your own check scripts.
@@ -49,6 +51,8 @@ $zlbcertfile_path="$basedir/zlbcertfile.pem";#update
 $zapi_directory="$basedir/zapi";
 #first boot flag
 $first_boot_flag="/etc/firstzlbboot";
+#zna migration flag
+$migration_flag="/etc/zlbmigration";
 #zevenet service
 $zevenet_service="/etc/init.d/zevenet";
 
@@ -67,6 +71,8 @@ $fileapt="/etc/apt/sources.list";
 $apt_source_zevenet="/etc/apt/sources.list.d/zevenet.list";
 # apt user conf
 $apt_conf_file="/etc/apt/apt.conf";
+# apt updates dir
+$update_dir="/usr/local/zevenet/updates";
 # Zevenet URL repo
 $repo_url_zevenet="repo.zevenet.com";
 # Zevenet GPG key
@@ -114,8 +120,8 @@ $http_server_dir="$zdir/app/cherokee";
 $http_server_service="/etc/init.d/cherokee";
 $confhttp="$http_server_dir/etc/cherokee/cherokee.conf";#update
 $confhttp_tpl="$http_server_dir/etc/cherokee/cherokee.conf.template";#update
-$http_server_cert="$configdir/zencert.pem";
-$http_server_key="$configdir/zencert-c.key";
+$http_server_cert="$certdir/zencert.pem";
+$http_server_key="$certdir/zencert-c.key";
 $http_server_cert_tpl="$templatedir/zencert.pem";
 $http_server_key_tpl="$templatedir/zencert-c.key";
 $http_bin="$http_server_dir/sbin/cherokee";
@@ -127,6 +133,8 @@ $sys_net_dir="/sys/class/net";
 
 
 ## binaries
+#Where is file binary?
+$file_bin="/usr/bin/file";
 #Where is cat binary?
 $cat_bin="/usr/bin/cat";
 #Where is hostname binary?
@@ -178,7 +186,7 @@ $aptkey_bin="/usr/bin/apt-key";
 #Where is apt-cache?
 $aptcache_bin="/usr/bin/apt-cache";
 #Where is checkupgrades?
-$checkupgrades_bin="/usr/local/zevenet/bin/checkupgrades";
+$checkupgrades_bin="/usr/local/zevenet/bin/checkupgrades";#update
 #Where is openssl?
 $openssl="/usr/bin/openssl";
 #Where is unzip?
@@ -195,6 +203,10 @@ $logger="/usr/bin/logger";
 $sec="/usr/bin/sec";
 #Where is touch?
 $touch="/usr/bin/touch";
+#Where is sed?
+$sed_bin="/bin/sed";
+#Where is cut?
+$cut_bin="/bin/cut";
 #Where is ls?
 $ls="/bin/ls";
 #Where is stat?
@@ -258,7 +270,9 @@ $arpsend_bin="/usr/sbin/arpsend";
 #Where is dhclient
 $dhcp_bin="/usr/sbin/dhclient";
 #Where is netcat
-$netcat_bin="/usr/bin/nc";
+$netcat_bin="/usr/bin/nc.openbsd";#update
+#Where is dmidecode
+$dmidecode_bin="/usr/sbin/dmidecode";
 
 # Pound
 #where is pound binary?
@@ -331,6 +345,16 @@ $zenrsync="-azvr --delete";#update
 $arp_unsolicited="";
 #ARP announcement, true / false (default)
 $arp_announce="";
+#Where is the script ARP announcement?
+$arp_announce_bin="/usr/local/zevenet/bin/arp_announce";
+#path for cron task of arp announcement
+$arp_announce_cron_path="/etc/cron.d/arp_announce";
+
+#Network duplicated net
+$duplicated_net="false";
+
+
+
 
 
 # Cron service
@@ -436,5 +460,8 @@ $throughput_period="5";
 $throughput_enabled="false";
 
 $doc_v4_0="https://www.zevenet.com/zapidocv4.0";
+
+# language used for the webgui
+$lang="";
 
 #::END Global Section

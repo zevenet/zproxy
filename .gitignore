@@ -19,6 +19,8 @@
 usr/local/zevenet/node_status
 
 usr/local/zevenet/app/nftlb/
+/usr/local/zevenet/app/zhttp/
+/usr/local/zevenet/app/zproxy/
 /usr/local/zevenet/app/cherokee/
 /usr/local/zevenet/app/gdnsd/
 /usr/local/zevenet/app/pound/
@@ -41,6 +43,8 @@ usr/local/zevenet/app/nftlb/
 # config
 /usr/local/zevenet/config/*
 !/usr/local/zevenet/config/.keep
+!/usr/local/zevenet/config/certificates/.keep
+
 
 /usr/local/zevenet/logs
 
