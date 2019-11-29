@@ -750,7 +750,8 @@ void StreamManager::onResponseEvent(int fd) {
     stream->timer_fd.unset();
     events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
   }
-  if (stream->backend_connection.buffer_size > 0) {
+  if (stream->backend_connection.buffer_size > 0 &&
+      stream->response.getHeaderSent()) {
     stream->client_connection.enableWriteEvent();
     return;
   }
