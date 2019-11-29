@@ -282,7 +282,7 @@ $pound="$base_pound/sbin/pound";#update
 #where is pound ctl?
 $poundctl="$base_pound/sbin/poundctl";#update
 #pound file configuration template?
-$poundtpl="$base_pound/etc/poundtpl.cfg";#update
+$poundtpl="$templatedir/poundtpl.cfg";#update
 #maximum value of http body to pass to modsecurity
 $waf_body_size="";
 
