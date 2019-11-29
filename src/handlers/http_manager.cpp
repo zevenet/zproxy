@@ -321,13 +321,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(
         }
         case http::HTTP_HEADER_NAME::CONTENT_LOCATION: {
           if (listener_config_.rewr_loc == 0) continue;
-          break;
-        }
-        case http::HTTP_HEADER_NAME::LOCATION: {
           // Rewrite location
           std::string location_header_value(response.headers[i].value,
                                             response.headers[i].value_len);
-          if (listener_config_.rewr_loc == 0) continue;
           regmatch_t matches[4];
 
           if (regexec(&Config::LOCATION, location_header_value.data(), 4,
@@ -354,18 +350,79 @@ validation::REQUEST_RESULT http_manager::validateResponse(
             Logger::logmsg(LOG_NOTICE, "Couldn't get host ip");
             continue;
           }
-          std::string_view host_ip(ip);
+          std::string host_ip(ip);
           if (host_ip == listener_config_.address ||
               host_ip == stream.backend_connection.getBackend()->address) {
-            std::string header_value_ =
-                listener_config_.ctx != nullptr ? "https://" : "http://";
-            header_value_ += host;
-            header_value_ += ":";
-            header_value_ += std::to_string(listener_config_.port);
+            if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host_ip)){
+              host_ip = listener_config_.address;
+              host_ip += ":";
+              host_ip += std::to_string(listener_config_.port);
+            }
+            std::string header_value_;
+            if(listener_config_.rewr_loc < 2) {
+              header_value_ =
+                  listener_config_.ctx != nullptr ? "https://" : "http://";
+            }else {
+              header_value_ = proto;
+              header_value_ += "://";
+            }
+            header_value_ += host_ip;
+            header_value_ += path;
+            response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value_);
+            response.headers[i].header_off = true;
+          }
+          break;
+        }
+        case http::HTTP_HEADER_NAME::LOCATION: {
+          if (listener_config_.rewr_loc == 0) continue;
+          // Rewrite location
+          std::string location_header_value(response.headers[i].value,
+                                            response.headers[i].value_len);
+          regmatch_t matches[4];
+
+          if (regexec(&Config::LOCATION, location_header_value.data(), 4,
+                      matches, 0)) {
+            continue;
+          }
+
+          std::string proto(
+              location_header_value.data() + matches[1].rm_so,
+              static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+          std::string host(
+              location_header_value.data() + matches[2].rm_so,
+              static_cast<size_t>(matches[2].rm_eo - matches[2].rm_so));
+
+          //        if (location_header_value[matches[3].rm_so] == '/') {
+          //          matches[3].rm_so++;
+          //        }
+          std::string path(
+              location_header_value.data() + matches[3].rm_so,
+              static_cast<size_t>(matches[3].rm_eo - matches[3].rm_so));
+
+          char ip[100]{'\0'};
+          if (!Network::HostnameToIp(host.data(), ip)) {
+            Logger::logmsg(LOG_NOTICE, "Couldn't get host ip");
+            continue;
+          }
+          std::string host_ip(ip);
+          if (host_ip == listener_config_.address ||
+              host_ip == stream.backend_connection.getBackend()->address) {
+            if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host_ip)){
+              host_ip = listener_config_.address;
+              host_ip += ":";
+              host_ip += std::to_string(listener_config_.port);
+            }
+            std::string header_value_;
+            if(listener_config_.rewr_loc < 2) {
+              header_value_ =
+                  listener_config_.ctx != nullptr ? "https://" : "http://";
+            }else {
+              header_value_ = proto;
+              header_value_ += "://";
+            }
+            header_value_ += host_ip;
             header_value_ += path;
             response.addHeader(http::HTTP_HEADER_NAME::LOCATION, header_value_);
-            //          response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
-            //                  getLastChunkSize           path);
             response.headers[i].header_off = true;
           }
           break;
