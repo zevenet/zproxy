@@ -51,7 +51,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	}
 
 	my $cert_pem_re = &getValidFormat( 'cert_pem' );
-	my $certdir     = &getValidFormat( 'certdir' );
+	my $certdir     = &getGlobalConfiguration( 'certdir' );
 
 	# validate certificate filename and format
 	unless ( -f $certdir . "/" . $json_obj->{ file }

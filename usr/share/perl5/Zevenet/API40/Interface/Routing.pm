@@ -37,6 +37,7 @@ sub listOutRules
 			table    => $r->{ table },
 			id       => $r->{ id } + 0,
 			type     => $r->{ type },
+			not      => 'false',
 		  };
 		$list->[-1]->{ not } = 'true' if ( exists $r->{ not } );
 	}
@@ -491,7 +492,7 @@ sub get_routing_table
 	my $table = shift;
 	require Zevenet::Net::Route;
 
-	my $desc = "Get the routing table $table";
+	my $desc = "Get the routing table '$table'";
 
 	if ( !&getRoutingTableExists( $table ) )
 	{
@@ -541,7 +542,7 @@ sub create_routing_entry
 				   'format_msg'   => "is the next hop for the packet",
 		},
 		"priority" => {
-						'interval'   => '1,9',
+						'interval'   => '1,10',
 						'format_msg' => "the routes with lower value will be more priority",
 		},
 	};
@@ -641,7 +642,7 @@ sub modify_routing_entry
 				   'format_msg'   => "is the next hop for the packet",
 		},
 		"priority" => {
-						'interval'   => '1,9',
+						'interval'   => '1,10',
 						'format_msg' => "the routes with lower value will be more priority",
 		},
 	};
