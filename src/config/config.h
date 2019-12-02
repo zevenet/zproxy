@@ -84,7 +84,7 @@ static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 #endif
 
 class Config {
-  const char *xhttp[5] = {
+  const char *xhttp[6] = {
       "^(GET|POST|HEAD) ([^ ]+) HTTP/1.[01].*$",
       "^(GET|POST|HEAD|PUT|PATCH|DELETE) ([^ ]+) HTTP/1.[01].*$",
       "^(GET|POST|HEAD|PUT|PATCH|DELETE|LOCK|UNLOCK|PROPFIND|PROPPATCH|SEARCH|"
@@ -97,8 +97,9 @@ class Config {
       "^(GET|POST|HEAD|PUT|PATCH|DELETE|LOCK|UNLOCK|PROPFIND|PROPPATCH|SEARCH|"
       "MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
       "REPORT|SUBSCRIBE|UNSUBSCRIBE|BPROPPATCH|POLL|BMOVE|BCOPY|BDELETE|"
-      "BPROPFIND|NOTIFY|CONNECT|RPC_IN_DATA|RPC_OUT_DATA) ([^ ]+) HTTP/1.[01].*$",
-  };
+      "BPROPFIND|NOTIFY|CONNECT|RPC_IN_DATA|RPC_OUT_DATA|VERSION-CONTROL) ([^ "
+      "]+) HTTP/1.[01].*$",
+      "^(GET|POST|HEAD|PUT|PATCH|DELETE|OPTIONS) ([^ ]+) HTTP/1.[01].*$"};
 
   int log_level;
   int def_facility;
