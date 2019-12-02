@@ -20,6 +20,7 @@
  */
 
 #include "http_manager.h"
+#include "../config/regex_manager.h"
 #include "../util/network.h"
 
 ssize_t http_manager::handleChunkedData(HttpStream &stream) {
@@ -326,7 +327,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(
                                             response.headers[i].value_len);
           regmatch_t matches[4];
 
-          if (regexec(&Config::LOCATION, location_header_value.data(), 4,
+          if (regexec(&regex_set::LOCATION, location_header_value.data(), 4,
                       matches, 0)) {
             continue;
           }
@@ -380,7 +381,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(
                                             response.headers[i].value_len);
           regmatch_t matches[4];
 
-          if (regexec(&Config::LOCATION, location_header_value.data(), 4,
+          if (regexec(&regex_set::LOCATION, location_header_value.data(), 4,
                       matches, 0)) {
             continue;
           }

@@ -83,7 +83,6 @@ static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
   (unsigned char *)strndup((char *)ASN1_STRING_data(n->d.dNSName), ASN1_STRING_length(n->d.dNSName) + 1)
 #endif
 
-
 class Config {
   const char *xhttp[6] = {
       "^(GET|POST|HEAD) ([^ ]+) HTTP/1.[01].*$",
@@ -154,43 +153,7 @@ class Config {
 #endif
   int conf_init(const std::string &name);
 
- private:
-  regex_t Empty, Comment, User, Group, Name, RootJail, Daemon, LogFacility, LogLevel, Alive, SSLEngine, Control,
-      ControlIP, ControlPort;
-  regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP, Client, CheckURL;
-  regex_t Err414, Err500, Err501, Err503, SSLConfigFile, SSLConfigSection,
-      ErrNoSsl, NoSslRedirect, MaxRequest, HeadRemove, RewriteLocation,
-      RewriteDestination, RewriteHost, ForwardSNI, RemoveResponseHeader , AddResponseHeader;
-  regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd, Emergency, Priority, HAport, HAportAddr,
-      StrictTransportSecurity;
-  regex_t Redirect, TimeOut, Session, Type, TTL, ID, DynScale, PinnedConnection, RoutingPolicy, NfMark,
-      CompressionAlgorithm;
-  regex_t ClientCert, AddHeader, DisableProto, SSLAllowClientRenegotiation, SSLHonorCipherOrder, Ciphers;
-  regex_t CAlist, VerifyList, CRLlist, NoHTTPS11, Grace, Include, ConnTO, IgnoreCase, Ignore100continue, HTTPS;
-  regex_t Disabled, Threads, CNName, Anonymise, DHParams, ECDHCurve;
-  regex_t ControlGroup, ControlUser, ControlMode;
-  regex_t ThreadModel;
-  regex_t IncludeDir;
-  regex_t ForceHTTP10, SSLUncleanShutdown;
-  regex_t BackendKey, BackendCookie;
-#ifdef CACHE_ENABLED
-  regex_t Cache, CacheContent, CacheTO, CacheThreshold, CacheRamSize, MaxSize, CacheDiskPath,
-      CacheRamPath; /* Cache configuration regex */
-#endif
-#if WAF_ENABLED
-  regex_t WafRules;
-#endif
-
- public:
-  static regex_t HEADER, /* Allowed header */
-      CHUNK_HEAD,        /* chunk header line */
-      RESP_SKIP,         /* responses for which we skip response */
-      RESP_IGN,          /* responses for which we ignore content */
-      LOCATION,          /* the host we are redirected to */
-      AUTHORIZATION;     /* the Authorisation header */
-
-  bool compile_regex();
-  void clean_regex();
+public:
 
   void conf_err(const char *msg);
   char *conf_fgets(char *buf, const int max);
@@ -277,7 +240,7 @@ class Config {
   static DH *load_dh_params(char *file);
 
   /*
-   * Search for a host name, return the addrinfo for it
+   * Search for a host name_, return the addrinfo for it
    */
   int get_host(char *const name_, struct addrinfo *res, int ai_family);
 

@@ -116,7 +116,6 @@ std::shared_ptr<Rules> Waf::reloadRules() {
   regmatch_t matches[5];
   Config config;
   config.conf_init(Config::config_file);
-  config.compile_regex();
   auto rules = std::make_shared<Rules>();
   Logger::logmsg(LOG_WARNING, "file to update %s", Config::config_file.c_str());
 
@@ -134,15 +133,12 @@ std::shared_ptr<Rules> Waf::reloadRules() {
       if (err == -1) {
         logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
                rules->getParserError().data());
-        config.clean_regex();
         return nullptr;
       }
     }
   }
-  //enable for debug purpose only
-  //dumpRules(*rules);
-  // remove regexp
-  config.clean_regex();
+  // enable for debug purpose only
+  // dumpRules(*rules);
   Logger::logmsg(LOG_INFO, "The WAF rulesets waf reloaded properly");
   return rules;
 }
