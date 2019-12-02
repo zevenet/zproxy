@@ -1,7 +1,7 @@
 ###############################################################################
 #
-#    Zevenet zProxy Load Balancer Software License
-#    This file is part of the Zevenet zProxy Load Balancer software package.
+#    Zevenet zproxy Load Balancer Software License
+#    This file is part of the Zevenet zproxy Load Balancer software package.
 #
 #    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
 #
@@ -45,6 +45,10 @@ option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
 #debugging
 option(ENABLE_HEAP_PROFILE "Enable heap profiler, also need tcmalloc to be enabled" OFF)
 option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
+option(ENABLE_ADDRESS_SANITIZER "Enable address sanitizer" OFF)
+option(ENABLE_LEAK_SANITIZER "Enable memory leak sanitizer" OFF)
+option(ENABLE_THREAD_SANITIZER "Enable thread sanitizer" OFF)
+option(ENABLE_COVERAGE "Enable coverage" ON)
 #experimental, do not enable WIP
 option(CACHE_SUPPORT "Build with cache support" OFF)
 option(ENABLE_WAF "Compile zproxy using WAF features" ON)
@@ -130,12 +134,28 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++1z  -Wshadow -pipe -pthread
 
 if (ENABLE_HEAP_PROFILER)
     add_definitions(-DENABLE_HEAP_PROFILE)
-    #	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer -fsanitize-address-use-after-scope -O2 -g")
-    #	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-    #	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
         -fno-builtin-realloc -fno-builtin-free")
 endif ()
+
+if (ENABLE_ADDRESS_SANITIZER)
+  message("Building with -fsanitize=address ")
+  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fsanitize=address -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+elseif(ENABLE_LEAK_SANITIZER)
+  message("Building with -fsanitize=leak ")
+  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fsanitize=leak -fno-omit-frame-pointer ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer ")
+elseif(ENABLE_THREAD_SANITIZER)
+  message("Building with -fsanitize=thread ")
+  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fsanitize=thread -fno-omit-frame-pointer ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -fno-omit-frame-pointer ")
+endif()
+if(ENABLE_COVERAGE)
+  message("Building with code coverage")
+  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   --coverage")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+endif()
 
 if (ENABLE_ON_FLY_COMRESSION)
     add_definitions(-DON_FLY_COMRESSION=1)
