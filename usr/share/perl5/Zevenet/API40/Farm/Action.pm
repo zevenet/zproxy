@@ -96,6 +96,13 @@ sub farm_actions    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		require Zevenet::Farm::Base;
+		if ( &getLockStatus( $farmname ) )
+		{
+			my $msg = "The farm has changes pending of applying, it has to be restarted.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		require Zevenet::Farm::Core;
 		my $farm_type = &getFarmType( $farmname );
 		if ( $farm_type ne "datalink" )

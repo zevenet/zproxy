@@ -61,6 +61,22 @@ sub checkport    # ($host, $port)
 	# check remote ports
 	else
 	{
+		require Zevenet::Farm::Base;
+		my $cur_vip  = &getFarmVip( 'vip',  $farmname );
+		my $cur_port = &getFarmVip( 'vipp', $farmname );
+
+		# discart the running farm is itself
+		my $type = &getFarmType( $farmname );
+		if ( $type =~ /http|gslb/ )
+		{
+			if (     &getFarmStatus( $farmname ) eq 'up'
+				 and $cur_vip eq $host
+				 and $cur_port eq $port )
+			{
+				return "false";
+			}
+		}
+
 		# check if it used by a l4 farm
 		require Zevenet::Farm::L4xNAT::Validate;
 		return "true" if ( &checkL4Port( $host, $port, $farmname ) );
@@ -131,7 +147,6 @@ sub ipisok    # ($checkip, $version)
 	return $return;
 }
 
-
 =begin nd
 Function: validIpAndNet
 
@@ -150,9 +165,9 @@ sub validIpAndNet
 	my $ip = shift;
 
 	use NetAddr::IP;
-	my $out = new NetAddr::IP ($ip);
+	my $out = new NetAddr::IP( $ip );
 
-	return (defined $out) ? 1: 0;
+	return ( defined $out ) ? 1 : 0;
 }
 
 =begin nd
@@ -367,12 +382,11 @@ sub checkNetworkExists
 				$found = 1;
 			}
 		};
-		return $if_ref->{ name } if ($found);
+		return $if_ref->{ name } if ( $found );
 	}
 
 	return "";
 }
-
 
 =begin nd
 Function: validBackendStack
@@ -387,7 +401,6 @@ Returns:
 	Integer - Returns 1 if the ip is valid or 0 if it is not in the same networking segment
 
 =cut
-
 
 sub validBackendStack
 {
