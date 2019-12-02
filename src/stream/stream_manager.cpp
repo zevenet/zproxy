@@ -316,8 +316,12 @@ void StreamManager::addStream(int fd) {
   stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
                                          EVENT_GROUP::CLIENT);
 
+  //Add requested header to the stream permanent header set, not cleared during the http stream lifetime
   if (!listener_config_.add_head.empty()) {
     stream->request.addHeader(listener_config_.add_head, true);
+  }
+  if (!listener_config_.response_add_head.empty()) {
+    stream->response.addHeader(listener_config_.response_add_head, true);
   }
   if (this->is_https_listener) {
     stream->client_connection.ssl_conn_status = ssl::SSL_STATUS::NEED_HANDSHAKE;

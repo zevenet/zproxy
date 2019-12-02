@@ -137,44 +137,45 @@ struct POUND_CTX {
 
 /* Listener definition */
 struct ListenerConfig {
-
   std::string name;
   int key_id;
   std::string address;
   int port;
-  addrinfo addr{};      /* IPv4/6 address */
-  int sock;             /* listening socket */
+  addrinfo addr{};         /* IPv4/6 address */
+  int sock;                /* listening socket */
   POUND_CTX *ctx{nullptr}; /* CTX for SSL connections */
-  int clnt_check;       /* client verification mode */
-  int noHTTPS11;        /* HTTP 1.1 mode for SSL */
+  int clnt_check;          /* client verification mode */
+  int noHTTPS11;           /* HTTP 1.1 mode for SSL */
   MATCHER *forcehttp10{
       nullptr}; /* User Agent Patterns to force HTTP 1.0 mode */
   MATCHER *
       ssl_uncln_shutdn; /* User Agent Patterns to enable ssl unclean shutdown */
   std::string add_head; /* extra SSL header */
-  regex_t verb;         /* pattern to match the request verb against */
-  int to;               /* client time-out */
-  int has_pat;          /* was a URL pattern defined? */
-  regex_t url_pat;      /* pattern to match the request URL against */
-  std::string err414,         /* error messages */
+  std::string response_add_head; /* extra response headers */
+  regex_t verb;                  /* pattern to match the request verb against */
+  int to;                        /* client time-out */
+  int has_pat;                   /* was a URL pattern defined? */
+  regex_t url_pat;               /* pattern to match the request URL against */
+  std::string err414,            /* error messages */
       err500, err501, err503, errnossl;
   std::string nossl_url; /* If a user goes to a https port with a http: url,
                       redirect them to this url */
-  int nossl_redir; /* Code to use for redirect (301 302 307)*/
-  long max_req;    /* max. request size */
-  MATCHER *head_off{nullptr};  /* headers to remove */
-  std::string ssl_config_file; /* OpenSSL config file path */
-  int rewr_loc{0};           /* rewrite location response */
-  int rewr_dest{0};          /* rewrite destination header */
-  int rewr_host{0};          /* rewrite host header */
-  std::string ssl_config_section; /* OpenSSL config section */
-  int disabled;           /* true if the listener is disabled */
-  int log_level;          /* log level for this listener */
-  int allow_client_reneg; /* Allow Client SSL Renegotiation */
-  int disable_ssl_v2;     /* Disable SSL version 2 */
+  int nossl_redir;       /* Code to use for redirect (301 302 307)*/
+  long max_req;          /* max. request size */
+  MATCHER *head_off{nullptr};          /* headers to remove */
+  MATCHER *response_head_off{nullptr}; /* headers to remove  from response */
+  std::string ssl_config_file;         /* OpenSSL config file path */
+  int rewr_loc{0};                     /* rewrite location response */
+  int rewr_dest{0};                    /* rewrite destination header */
+  int rewr_host{0};                    /* rewrite host header */
+  std::string ssl_config_section;      /* OpenSSL config section */
+  int disabled;                        /* true if the listener is disabled */
+  int log_level;                       /* log level for this listener */
+  int allow_client_reneg;              /* Allow Client SSL Renegotiation */
+  int disable_ssl_v2;                  /* Disable SSL version 2 */
   int alive_to;
-  int ignore100continue;  /* Ignore Expect: 100-continue headers in requests. */
-  std::string engine_id;  /* Engine id loaded by openssl*/
+  int ignore100continue; /* Ignore Expect: 100-continue headers in requests. */
+  std::string engine_id; /* Engine id loaded by openssl*/
   bool ssl_forward_sni_server_name{false}; /* enable SNI hostname forwarding to
                                          https backends, param ForwardSNI*/
   int ecdh_curve_nid{0};

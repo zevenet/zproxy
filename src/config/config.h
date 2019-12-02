@@ -158,7 +158,7 @@ class Config {
   regex_t ListenHTTP, ListenHTTPS, End, Address, Port, Cert, CertDir, xHTTP, Client, CheckURL;
   regex_t Err414, Err500, Err501, Err503, SSLConfigFile, SSLConfigSection,
       ErrNoSsl, NoSslRedirect, MaxRequest, HeadRemove, RewriteLocation,
-      RewriteDestination, RewriteHost, ForwardSNI;
+      RewriteDestination, RewriteHost, ForwardSNI, RemoveResponseHeader , AddResponseHeader;
   regex_t Service, ServiceName, URL, OrURLs, HeadRequire, HeadDeny, BackEnd, Emergency, Priority, HAport, HAportAddr,
       StrictTransportSecurity;
   regex_t Redirect, TimeOut, Session, Type, TTL, ID, DynScale, PinnedConnection, RoutingPolicy, NfMark,

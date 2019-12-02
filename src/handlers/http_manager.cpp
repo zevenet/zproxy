@@ -483,18 +483,17 @@ validation::REQUEST_RESULT http_manager::validateResponse(
           }
           break;
         default:
-          continue;
+          break;
       }
     }
-
-    /* maybe header to be removed from responses */
-    //  MATCHER *m;
-    // for (m = listener_config_.head_off; m; m = m->next) {
-    //  if ((response.headers[i].header_off =
-    //          ::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) !=
-    //          0))
-    //    break;
-    // }
+    /* maybe header to be removed from response */
+    MATCHER *m;
+    for (m = listener_config_.response_head_off; m; m = m->next) {
+      if (::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) == 0) {
+        response.headers[i].header_off = true;
+        break;
+      }
+    }
   }
   return validation::REQUEST_RESULT::OK;
 }

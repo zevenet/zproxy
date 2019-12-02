@@ -422,7 +422,30 @@ ListenerConfig *Config::parse_HTTP() {
         res->add_head += std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
       }
     } else if (!regexec(&RewriteLocation, lin, 4, matches, 0)) {
-      res->rewr_loc = atoi(lin + matches[1].rm_so);
+      res->rewr_loc = std::atoi(lin + matches[1].rm_so);
+    } else if(!regexec(&RemoveResponseHeader, lin, 4, matches, 0)) {
+      if(res->response_head_off) {
+        for(m = res->response_head_off; m->next; m = m->next)
+          ;
+        if((m->next = new MATCHER()) == nullptr)
+          conf_err("RemoveResponseHead config: out of memory - aborted");
+        m = m->next;
+      } else {
+        if((res->response_head_off =  new MATCHER()) == nullptr)
+          conf_err("RemoveResponseHead config: out of memory - aborted");
+        m = res->response_head_off;
+      }
+      memset(m, 0, sizeof(MATCHER));
+      lin[matches[1].rm_eo] = '\0';
+      if(regcomp(&m->pat, lin + matches[1].rm_so, REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("RemoveResponseHead bad pattern - aborted");
+    } else if(!regexec(&AddResponseHeader, lin, 4, matches, 0)) {
+      if (res->response_add_head.empty()) {
+        res->response_add_head = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+      } else {
+        res->response_add_head += "\r\n";
+        res->response_add_head += std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+      }
     } else if (!regexec(&RewriteDestination, lin, 4, matches, 0)) {
       res->rewr_dest = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&RewriteHost, lin, 4, matches, 0)) {
@@ -597,6 +620,32 @@ ListenerConfig *Config::parse_HTTPS() {
       res->ssl_forward_sni_server_name = std::atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&RewriteLocation, lin, 4, matches, 0)) {
       res->rewr_loc = atoi(lin + matches[1].rm_so);
+
+
+    } else if(!regexec(&RemoveResponseHeader, lin, 4, matches, 0)) {
+      if(res->response_head_off) {
+        for(m = res->response_head_off; m->next; m = m->next)
+          ;
+        if((m->next = new MATCHER() ) == nullptr)
+          conf_err("RemoveResponseHead config: out of memory - aborted");
+        m = m->next;
+      } else {
+        if((res->response_head_off = new MATCHER()) == nullptr)
+          conf_err("RemoveResponseHead config: out of memory - aborted");
+        m = res->response_head_off;
+      }
+      memset(m, 0, sizeof(MATCHER));
+      lin[matches[1].rm_eo] = '\0';
+      if(regcomp(&m->pat, lin + matches[1].rm_so, REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("RemoveResponseHead bad pattern - aborted");
+    } else if(!regexec(&AddResponseHeader, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      if (res->response_add_head.empty()) {
+        res->response_add_head = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+      } else {
+        res->response_add_head += "\r\n";
+        res->response_add_head += std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+      }
     } else if (!regexec(&RewriteDestination, lin, 4, matches, 0)) {
       res->rewr_dest = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&RewriteHost, lin, 4, matches, 0)) {
@@ -1631,6 +1680,8 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&MaxRequest, "^[ \t]*MaxRequest[ \t]+([1-9][0-9]*)[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&HeadRemove, "^[ \t]*HeadRemove[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&AddResponseHeader, "^[ \t]*AddResponseHeader[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
+      regcomp(&RemoveResponseHeader, "^[ \t]*RemoveResponseHeader[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&RewriteLocation, "^[ \t]*RewriteLocation[ \t]+([012])[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&RewriteDestination, "^[ \t]*RewriteDestination[ \t]+([01])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
@@ -1780,6 +1831,8 @@ void Config::clean_regex() {
   regfree(&NoSslRedirect);
   regfree(&MaxRequest);
   regfree(&HeadRemove);
+  regfree(&RemoveResponseHeader);
+  regfree(&AddResponseHeader);
   regfree(&RewriteLocation);
   regfree(&RewriteDestination);
   regfree(&RewriteHost);
