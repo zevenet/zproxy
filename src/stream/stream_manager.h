@@ -132,7 +132,7 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
   ssl::SSLConnectionManager * ssl_manager{};
   Connection listener_connection;
   std::atomic<bool> is_running{};
-  ListenerConfig &listener_config_;
+  ListenerConfig listener_config_;
   std::unordered_map<int, HttpStream *> streams_set;
   std::unordered_map<int, HttpStream *> timers_set;
   void HandleEvent(int fd, EVENT_TYPE event_type,
@@ -140,7 +140,7 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
   void doWork();
 
 public:
-  StreamManager(ListenerConfig &listener_config);
+  StreamManager();
   StreamManager(const StreamManager &) = delete;
   ~StreamManager() final;
 

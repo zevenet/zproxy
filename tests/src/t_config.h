@@ -30,7 +30,7 @@ TEST(ConfigTest, ConfigTest1) {
   int argc = 3;
   Config config;
 
-  config.parseConfig(argc, argv);
+  config.init(argc, argv);
   // auto fname = config.f_name;
   auto backend_config = config.listeners;
   auto nnn = backend_config->services;

@@ -25,28 +25,20 @@
  * Switzerland
  * EMail: roseg@apsis.ch
  */
-
-#include "config.h"
+#undef _SYS_SYSLOG_H  //TODO:: hack to avoid facilitynames redefinition, should be fixed
 #define SYSLOG_NAMES
-#include "../debug/logger.h"
+#include <cstddef>
+#include <syslog.h>
 #undef SYSLOG_NAMES
-#include "../version.h"
+#include "config.h"
+#include "../debug/logger.h"
+#include "../util/network.h"
 #include "regex_manager.h"
 
 #ifdef WAF_ENABLED
 #include <modsecurity/rules.h>
 #endif
-
-#ifndef SSL3_ST_SR_CLNT_HELLO_A
-#define SSL3_ST_SR_CLNT_HELLO_A (0x110 | SSL_ST_ACCEPT)
-#endif
-#ifndef SSL23_ST_SR_CLNT_HELLO_A
-#define SSL23_ST_SR_CLNT_HELLO_A (0x210 | SSL_ST_ACCEPT)
-#endif
-// configuration file
-std::string Config::config_file;
-
-int Config::numthreads = 0;
+int Config::listener_id_counter = 0;
 
 Config::Config() {
   log_level = 1;
@@ -60,7 +52,7 @@ Config::Config() {
   print_log = 0;
   ctrl_mode = -1;
   log_facility = -1;
-  initDhParams();
+
 }
 
 Config::~Config() {}
@@ -88,7 +80,7 @@ void Config::parse_file() {
       root_jail = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
     } else if (!regexec(&regex_set::DHParams, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      DH *dh = load_dh_params(lin + matches[1].rm_so);
+      DH *dh = global::SslHelper::load_dh_params(lin + matches[1].rm_so);
       if (!dh) conf_err("DHParams config: could not load file");
       DHCustom_params = dh;
     } else if (!regexec(&regex_set::Daemon, lin, 4, matches, 0)) {
@@ -227,53 +219,24 @@ void Config::parse_file() {
   return;
 }
 
-void Config::parseConfig(const int argc, char **const argv) {
-  std::string conf_name;
-  int c_opt, check_only;
 
 
-  opterr = 0;
+bool Config::init(const global::StartOptions& start_options) {
+  int check_only;
   check_only = 0;
-  conf_name = F_CONF;
-  pid_name = F_PID;
+  conf_file_name =start_options.conf_file_name.empty() ? F_CONF : start_options.conf_file_name;
+  pid_name = start_options.pid_file_name.empty() ? F_PID : start_options.pid_file_name;
 
-  while ((c_opt = getopt(argc, argv, "sf:cvVp:")) > 0) switch (c_opt) {
-      case 's':
-        sync_is_enabled = 1;
-        break;
-      case 'f':
-        conf_name = optarg;
-        Config::config_file=conf_name;
-        break;
-      case 'p':
-        pid_name = optarg;
-        break;
-      case 'c':
-        check_only = 1;
-        break;
-      case 'v':
-        print_log = 1;
-        break;
-      case 'V':
-        print_log = 1;
-        {
-          Logger::logmsg(LOG_ALERT, "zproxy version %s", ZPROXY_VERSION);
-          Logger::logmsg(LOG_ALERT, "Build: %s %s", ZPROXY_HOST_INFO, ZPROXY_BUILD_INFO);
-          Logger::logmsg(LOG_ALERT, "%s", ZPROXY_COPYRIGHT);
-          exit(EXIT_SUCCESS);
-        }
-      default:
-        Logger::logmsg(LOG_ERR, "bad flag -%c", optopt);
-        exit(1);
-    }
-  if (optind < argc) {
-    Logger::logmsg(LOG_ERR, "unknown extra arguments (%s...)", argv[optind]);
-    exit(1);
+  //init configuration file lists.
+  f_name[0] = std::string(conf_file_name);
+  if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
+    Logger::logmsg(LOG_ERR, "can't open open %s", conf_file_name.data());
+    return false;
   }
+  n_lin[0] = 0;
+  cur_fin = 0;
 
-  conf_init(conf_name);
   DHCustom_params = nullptr;
-
   numthreads = 0;
   alive_to = 30;
   daemonize = 1;
@@ -287,19 +250,20 @@ void Config::parseConfig(const int argc, char **const argv) {
 #endif
   parse_file();
 
-  if (check_only) {
-    Logger::logmsg(LOG_INFO, "Config file %s is OK", conf_name.data());
-    exit(0);
+  if (start_options.check_only) {
+    Logger::logmsg(LOG_INFO, "Config file %s is OK", conf_file_name.data());
+    return true;
   }
 
   if (listeners == nullptr) {
     Logger::logmsg(LOG_ERR, "no listeners defined - aborted");
-    exit(1);
+    return false;
   }
 
   /* set the facility only here to ensure the syslog gets opened if necessary
    */
   log_facility = def_facility;
+  return !found_parse_error;
 }
 
 std::string Config::file2str(const char *fname) {
@@ -323,6 +287,7 @@ ListenerConfig *Config::parse_HTTP() {
 
   res = new ListenerConfig();
   res->name = name;
+  res->id = listener_id_counter++;
   res->to = clnt_to;
   res->rewr_loc = 1;
   res->err414 = "Request URI is too long";
@@ -347,11 +312,14 @@ ListenerConfig *Config::parse_HTTP() {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (get_host(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) conf_err("Unknown Listener address");
+      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) conf_err("Unknown Listener address");
       if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
       has_addr = 1;
       res->address = lin + matches[1].rm_so;
+    } else if (!regexec(&regex_set::Name, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      res->name = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
     } else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
       switch (res->addr.ai_family) {
         case AF_INET:
@@ -552,6 +520,7 @@ ListenerConfig *Config::parse_HTTPS() {
   res->to = clnt_to;
   res->rewr_loc = 1;
   res->name = name;
+  res->id = listener_id_counter++;
   res->err414 = "Request URI is too long";
   res->err500 = "An internal server error occurred. Please try again later.";
   res->err501 = "This method may not be used.";
@@ -574,7 +543,7 @@ ListenerConfig *Config::parse_HTTPS() {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (get_host(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) conf_err("Unknown Listener address");
+      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) conf_err("Unknown Listener address");
       if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
       has_addr = 1;
@@ -605,6 +574,9 @@ ListenerConfig *Config::parse_HTTPS() {
         }
       }
 #endif
+    } else if (!regexec(&regex_set::Name, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      res->name = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
     } else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
       if (res->addr.ai_family == AF_INET) {
         memcpy(&in, res->addr.ai_addr, sizeof(in));
@@ -740,7 +712,9 @@ ListenerConfig *Config::parse_HTTPS() {
         case 3:
           /* ask but do not verify client certificate */
           for (pc = res->ctx; pc; pc = pc->next) {
-            SSL_CTX_set_verify(pc->ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_OK);
+            SSL_CTX_set_verify(pc->ctx,
+                               SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
+                               global::SslHelper::verifyCertificate_OK);
             SSL_CTX_set_verify_depth(pc->ctx, atoi(lin + matches[2].rm_so));
           }
           break;
@@ -895,10 +869,10 @@ ListenerConfig *Config::parse_HTTPS() {
           sprintf(lin, "%d-zproxy-%ld", getpid(), random());
           SSL_CTX_set_session_id_context(pc->ctx, reinterpret_cast<unsigned char *>(lin),
                                          static_cast<unsigned int>(strlen(lin)));
-          SSL_CTX_set_tmp_rsa_callback(pc->ctx, RSA_tmp_callback);
-          SSL_CTX_set_info_callback(pc->ctx, SSLINFO_callback);
+          SSL_CTX_set_tmp_rsa_callback(pc->ctx, global::SslHelper::RSA_tmp_callback);
+          SSL_CTX_set_info_callback(pc->ctx, global::SslHelper::SSLINFO_callback);
           if (nullptr == DHCustom_params)
-            SSL_CTX_set_tmp_dh_callback(pc->ctx, DH_tmp_callback);
+            SSL_CTX_set_tmp_dh_callback(pc->ctx, global::SslHelper::DH_tmp_callback);
           else
             SSL_CTX_set_tmp_dh(pc->ctx, DHCustom_params);
 
@@ -1262,9 +1236,7 @@ ServiceConfig *Config::parseService(const char *svc_name) {
     } else if (!regexec(&regex_set::CompressionAlgorithm, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       std::string cp = lin + matches[1].rm_so;
-      if (cp == "gzip")
-        res->compression_algorithm = cp;
-      else if (cp == "deflate")
+      if (cp == "gzip" || cp == "deflate")
         res->compression_algorithm = cp;
       else
         conf_err("Unknown compression algorithm");
@@ -1286,8 +1258,6 @@ ServiceConfig *Config::parseService(const char *svc_name) {
   conf_err("Service premature EOF");
   return nullptr;
 }
-
-int Config::verify_OK(int pre_ok, X509_STORE_CTX *ctx) { return 1; }
 
 char *Config::parse_orurls() {
   char lin[MAXBUF];
@@ -1365,7 +1335,7 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (get_host(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) {
+      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) {
         /* if we can't resolve it assume this is a UNIX domain socket */
         res->addr.ai_socktype = SOCK_STREAM;
         res->addr.ai_family = AF_UNIX;
@@ -1443,7 +1413,7 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
     } else if (!regexec(&regex_set::HAportAddr, lin, 4, matches, 0)) {
       if (is_emergency) conf_err("HAportAddr is not supported for Emergency back-ends");
       lin[matches[1].rm_eo] = '\0';
-      if (get_host(lin + matches[1].rm_so, &res->ha_addr, PF_UNSPEC)) {
+      if (Network::getHost(lin + matches[1].rm_so, &res->ha_addr, PF_UNSPEC)) {
         /* if we can't resolve it assume this is a UNIX domain socket */
         res->addr.ai_socktype = SOCK_STREAM;
         res->ha_addr.ai_family = AF_UNIX;
@@ -1483,9 +1453,9 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
       sprintf(lin, "%d-zproxy-%ld", getpid(), random());
       SSL_CTX_set_session_id_context(res->ctx, reinterpret_cast<unsigned char *>(lin),
                                      static_cast<uint32_t>(strlen(lin)));
-      SSL_CTX_set_tmp_rsa_callback(res->ctx, RSA_tmp_callback);
+      SSL_CTX_set_tmp_rsa_callback(res->ctx, global::SslHelper::RSA_tmp_callback);
       if (nullptr == DHCustom_params)
-        SSL_CTX_set_tmp_dh_callback(res->ctx, DH_tmp_callback);
+        SSL_CTX_set_tmp_dh_callback(res->ctx, global::SslHelper::DH_tmp_callback);
       else
         SSL_CTX_set_tmp_dh(res->ctx, DHCustom_params);
     } else if (!regexec(&regex_set::Cert, lin, 4, matches, 0)) {
@@ -1693,20 +1663,10 @@ void Config::parseSession(ServiceConfig *const svc) {
   conf_err("Session premature EOF");
 }
 
-int Config::conf_init(const std::string &name__) {
-  f_name[0] = std::string(name__);
-  if ((f_in[0] = fopen(name__.data(), "rt")) == nullptr) {
-    Logger::logmsg(LOG_ERR, "can't open open %s", name__.data());
-    exit(1);
-  }
-  n_lin[0] = 0;
-  cur_fin = 0;
-  return 0;
-}
-
 void Config::conf_err(const char *msg) {
   Logger::logmsg(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(), n_lin[cur_fin], msg);
-  exit(1);
+  //exit(EXIT_FAILURE);
+  this->found_parse_error = true;
 }
 
 char *Config::conf_fgets(char *buf, const int max) {
@@ -1802,145 +1762,21 @@ void Config::include_dir(const char *conf_path) {
 
   closedir(dp);
 }
-bool Config::exportConfigToJsonFile(std::string save_path) { return false; }
-
-RSA *Config::RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_export, int keylength) {
-  RSA *res;
-  std::lock_guard<std::mutex> lock__(RSA_mut);
-  res = (keylength <= 512) ? RSA512_keys[rand() % N_RSA_KEYS] : RSA1024_keys[rand() % N_RSA_KEYS];
-  return res;
-}
-
-void Config::SSLINFO_callback(const SSL *ssl, int where, int rc) {
-  RENEG_STATE *reneg_state;
-
-  /* Get our thr_arg where we're tracking this connection info */
-  if ((reneg_state = static_cast<RENEG_STATE *>(SSL_get_app_data(ssl))) == nullptr) return;
-
-  /* If we're rejecting renegotiations, move to ABORT if Client Hello is being
-   * read. */
-  if ((where & SSL_CB_ACCEPT_LOOP) && *reneg_state == RENEG_STATE::RENEG_REJECT) {
-    int state;
-
-    state = SSL_get_state(ssl);
-    if (state == SSL3_ST_SR_CLNT_HELLO_A || state == SSL23_ST_SR_CLNT_HELLO_A) {
-      *reneg_state = RENEG_STATE::RENEG_ABORT;
-      Logger::logmsg(LOG_WARNING, "rejecting client initiated renegotiation");
-    }
-  } else if (where & SSL_CB_HANDSHAKE_DONE && *reneg_state == RENEG_STATE::RENEG_INIT) {
-    // Reject any followup renegotiations
-    *reneg_state = RENEG_STATE::RENEG_REJECT;
-  }
-}
-
-int Config::get_host(char *const name_, addrinfo *res, int ai_family) {
-  addrinfo *chain, *ap;
-  addrinfo hints{};
-  int ret_val;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = ai_family;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_CANONNAME;
-  if ((ret_val = getaddrinfo(name_, nullptr, &hints, &chain)) == 0) {
-    for (ap = chain; ap != nullptr; ap = ap->ai_next)
-      if (ap->ai_socktype == SOCK_STREAM) break;
-
-    if (ap == nullptr) {
-      freeaddrinfo(chain);
-      return EAI_NONAME;
-    }
-    *res = *ap;
-    if ((res->ai_addr = static_cast<sockaddr *>(malloc(ap->ai_addrlen))) == nullptr) {
-      freeaddrinfo(chain);
-      return EAI_MEMORY;
-    }
-    memcpy(res->ai_addr, ap->ai_addr, ap->ai_addrlen);
-    freeaddrinfo(chain);
-  }
-  return ret_val;
-}
-
-DH *Config::load_dh_params(char *file) {
-  DH *dh = nullptr;
-  BIO *bio;
-
-  if ((bio = BIO_new_file(file, "r")) == nullptr) {
-    Logger::logmsg(LOG_WARNING, "Unable to open DH file - %s", file);
-    return nullptr;
-  }
-
-  dh = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
-  BIO_free(bio);
-  return dh;
-}
-
-DH *Config::DH512_params{nullptr};
-#if DH_LEN == 1024
-DH *Config::DH1024_params{nullptr};
-#else
-DH *Config::DH2048_params{nullptr};
-#endif
-
-int Config::generate_key(RSA **ret_rsa, unsigned long bits) {
-  int rc = 0;
-  RSA *rsa;
-
-  rsa = RSA_new();
-  if (rsa) {
-    BIGNUM *bne = BN_new();
-    if (BN_set_word(bne, RSA_F4))
-      rc = RSA_generate_key_ex(rsa, bits, bne, nullptr);
-    BN_free(bne);
-    if (rc)
-      *ret_rsa = rsa;
-    else
-      RSA_free(rsa);
-  }
-  return rc;
-}
-
-void Config::do_RSAgen() {  // TODO::implement
-  int n;
-  RSA *t_RSA512_keys[N_RSA_KEYS];
-  RSA *t_RSA1024_keys[N_RSA_KEYS];
-
-  for (n = 0; n < N_RSA_KEYS; n++) {
-    /* FIXME: Error handling */
-    generate_key(&t_RSA512_keys[n], 512);
-    generate_key(&t_RSA1024_keys[n], 1024);
-  }
-  std::lock_guard<std::mutex> lock__(RSA_mut);
-  for (n = 0; n < N_RSA_KEYS; n++) {
-    RSA_free(RSA512_keys[n]);
-    RSA512_keys[n] = t_RSA512_keys[n];
-    RSA_free(RSA1024_keys[n]);
-    RSA1024_keys[n] = t_RSA1024_keys[n];
-  }
-  return;
-}
-
-void Config::initDhParams() {
-  int n;
-  /*
-   * Pre-generate ephemeral RSA keys
-   */
-  for (n = 0; n < N_RSA_KEYS; n++) {
-    if (!generate_key(&RSA512_keys[n], 512)) {
-      Logger::logmsg(LOG_WARNING, "RSA_generate(%d, 512) failed", n);
-      return;
-    }
-    if (!generate_key(&RSA1024_keys[n], 1024)) {
-      Logger::logmsg(LOG_WARNING, "RSA_generate(%d, 1024) failed", n);
-      return;
-    }
-  }
-  std::lock_guard<std::mutex> lock__(RSA_mut);
-  DH512_params = get_dh512();
-#if DH_LEN == 1024
-  DH1024_params = get_dh1024();
-#else
-  DH2048_params = get_dh2048();
-#endif
-
-  return;
+void Config::setAsCurrent() {
+  if (found_parse_error) return;
+  global::run_options::getCurrent().num_threads = numthreads;
+  global::run_options::getCurrent().log_level = log_level;
+  global::run_options::getCurrent().log_facility = log_facility;
+  global::run_options::getCurrent().user = user;
+  global::run_options::getCurrent().group = group;
+  global::run_options::getCurrent().pid_name = pid_name;
+  global::run_options::getCurrent().ctrl_name = ctrl_name;
+  global::run_options::getCurrent().ctrl_ip = ctrl_ip;
+  global::run_options::getCurrent().ctrl_user = ctrl_user;
+  global::run_options::getCurrent().ctrl_group = ctrl_group;
+  global::run_options::getCurrent().ctrl_mode = ctrl_mode;
+  global::run_options::getCurrent().daemonize = daemonize;
+  global::run_options::getCurrent().backend_resurrect_timeout = alive_to;
+  global::run_options::getCurrent().grace_time = grace;
+  global::run_options::getCurrent().root_jail = root_jail;
 }

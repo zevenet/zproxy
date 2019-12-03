@@ -19,13 +19,14 @@
  *
  */
 
+#include <csetjmp>
+#include <csignal>
 #include "config/config.h"
+#include "config/global.h"
 #include "ctl/control_manager.h"
 #include "debug/backtrace.h"
 #include "stream/listener.h"
 #include "util/system.h"
-#include <csetjmp>
-#include <csignal>
 
 static jmp_buf jmpbuf;
 
@@ -79,9 +80,21 @@ int main(int argc, char *argv[]) {
   ::openlog("zproxy", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
   Config config;
   Logger::logmsg(LOG_NOTICE, "zproxy starting...");
-  config.parseConfig(argc, argv);
+  auto start_options = global::StartOptions::parsePoundOption(argc,argv, true);
+  auto parse_result = config.init(*start_options);
+  if(!parse_result){
+    Logger::logmsg(LOG_ERR,"Error parsing configuration file %s",
+        start_options->conf_file_name.data());
+    std::exit(EXIT_FAILURE);
+  }
+
+  if(start_options->check_only ){
+    std::exit(EXIT_SUCCESS);
+  }
+
   Logger::log_level = config.listeners->log_level;
   Logger::log_facility = config.log_facility;
+  global::run_options::getCurrent().num_threads = config.numthreads;
 
   // Syslog initialization
   if (config.daemonize) {

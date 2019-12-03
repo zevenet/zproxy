@@ -270,11 +270,9 @@ void StreamManager::start(int thread_id_) {
   }
 }
 
-StreamManager::StreamManager(ListenerConfig& listener_config)
-    : listener_config_(listener_config),
-      is_https_listener(false){
+StreamManager::StreamManager(){
           // TODO:: do attach for config changes
-      };
+};
 
 StreamManager::~StreamManager() {
   Logger::logmsg(LOG_REMOVE, "Destructor");

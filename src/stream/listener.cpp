@@ -20,6 +20,7 @@
  */
 
 #include "listener.h"
+#include "../config/global.h"
 #include "../ssl/ssl_session.h"
 #ifdef ENABLE_HEAP_PROFILE
 #include <gperftools/heap-profiler.h>
@@ -47,7 +48,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
     }
     if (fd == ssl_maintenance_timer.getFileDescriptor()) {
       // timer for ssl rsa keys regeneration
-      Config::do_RSAgen();
+      global::SslHelper::doRSAgen();
       ssl_maintenance_timer.set(T_RSA_KEYS * 1000);
       updateFd(ssl_maintenance_timer.getFileDescriptor(),
                EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
@@ -281,10 +282,14 @@ void Listener::stop() {
 void Listener::start() {
   auto cm = ctl::ControlManager::getInstance();
   cm->attach(std::ref(*this));
-  auto concurrency_level = std::thread::hardware_concurrency() < 2 ? 2 : std::thread::hardware_concurrency();
-  auto numthreads = Config::numthreads != 0 ? Config::numthreads : concurrency_level;
-  for (int sm = 0; sm < numthreads; sm++) {
-    stream_manager_set[sm] = new StreamManager(listener_config);
+  auto concurrency_level = std::thread::hardware_concurrency() < 2
+                               ? 2
+                               : std::thread::hardware_concurrency();
+  auto num_threads = global::run_options::getCurrent().num_threads != 0
+                         ? global::run_options::getCurrent().num_threads
+                         : concurrency_level;
+  for (int sm = 0; sm < num_threads; sm++) {
+    stream_manager_set[sm] = new StreamManager();
   }
   int service_id = 0;
 
@@ -304,7 +309,7 @@ void Listener::start() {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
       if (!sm->init(listener_config)) {
-        Logger::logmsg(LOG_ERR, "Error initializing StreamManager for %d", listener_config.name.data());
+        Logger::logmsg(LOG_ERR, "Error initializing StreamManager for farm %s", listener_config.name.data());
         exit(EXIT_FAILURE);
       }
       sm->start(i);

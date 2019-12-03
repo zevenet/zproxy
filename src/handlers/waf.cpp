@@ -115,9 +115,9 @@ std::shared_ptr<Rules> Waf::reloadRules() {
   char lin[MAXBUF];
   regmatch_t matches[5];
   Config config;
-  config.conf_init(Config::config_file);
+  config.init(global::StartOptions::getCurrent());
   auto rules = std::make_shared<Rules>();
-  Logger::logmsg(LOG_WARNING, "file to update %s", Config::config_file.c_str());
+  Logger::logmsg(LOG_WARNING, "file to update %s", global::StartOptions::getCurrent().conf_file_name.data());
 
   if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED))

@@ -141,7 +141,7 @@ struct POUND_CTX {
 /* Listener definition */
 struct ListenerConfig {
   std::string name;
-  int key_id;
+  int id;
   std::string address;
   int port;
   addrinfo addr{};         /* IPv4/6 address */

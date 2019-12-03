@@ -45,15 +45,11 @@
 #include <cstring>
 #include <mutex>
 #include <string>
-#include "../debug/debug.h"
 #include "config_data.h"
+#include "../version.h"
+#include "global.h"
 
-#include "dh512.h"
-#if DH_LEN == 1024
-#include "dh1024.h"
-#else
-#include "dh2048.h"
-#endif
+
 
 #ifndef F_CONF
 constexpr auto F_CONF = "/usr/local/etc/zproxy.cfg";
@@ -63,25 +59,7 @@ constexpr auto F_PID = "/var/run/zproxy.pid";
 #endif
 constexpr int MAX_FIN = 100;
 constexpr int UNIX_PATH_MAX = 108;
-/*
- * RSA ephemeral keys: how many and how often
- */
-constexpr int N_RSA_KEYS = 11;
-#ifndef T_RSA_KEYS /* Timeout for RSA ephemeral keys generation */
-constexpr int T_RSA_KEYS = 7200;
-#endif
-static std::mutex RSA_mut;            /*Mutex for RSA keygen*/
-static RSA *RSA512_keys[N_RSA_KEYS];  /* ephemeral RSA keys */
-static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-#define general_name_string(n)                                                                                   \
-  reinterpret_cast<unsigned char *>(strndup(reinterpret_cast<const char *>(ASN1_STRING_get0_data(n->d.dNSName)), \
-                                            ASN1_STRING_length(n->d.dNSName) + 1))
-#else
-#define general_name_string(n) \
-  (unsigned char *)strndup((char *)ASN1_STRING_data(n->d.dNSName), ASN1_STRING_length(n->d.dNSName) + 1)
-#endif
 
 class Config {
   const char *xhttp[6] = {
@@ -101,8 +79,7 @@ class Config {
       "]+) HTTP/1.[01].*$",
       "^(GET|POST|HEAD|PUT|PATCH|DELETE|OPTIONS) ([^ ]+) HTTP/1.[01].*$"};
 
-  int log_level;
-  int def_facility;
+
   int clnt_to;
   int be_to;
   int be_connto;
@@ -114,28 +91,30 @@ class Config {
   size_t cur_fin;
   DH *DHCustom_params;
   int EC_nid;
-
+  static int listener_id_counter;
  public:
+  int log_level;
+  int def_facility;
   /*
    * Global variables needed by everybody
    */
 
-  static std::string config_file;  /* config file path*/
-  std::string user, /* user to run as */
-      group,        /* group to run as */
-      name,         /* farm name to run as */
-      root_jail,    /* directory to chroot to */
-      pid_name,     /* file to record pid in */
-      ctrl_name,    /* control socket name */
-      ctrl_ip,      /* control socket ip */
-      ctrl_user,    /* control socket username */
-      ctrl_group,   /* control socket group name */
-      engine_id;    /* openssl engine id*/
+  std::string user,   /* user to run as */
+      group,          /* group to run as */
+      name,           /* farm name to run as */
+      root_jail,      /* directory to chroot to */
+      pid_name,       /* file to record pid in */
+      ctrl_name,      /* control socket name */
+      ctrl_ip,        /* control socket ip */
+      ctrl_user,      /* control socket username */
+      ctrl_group,     /* control socket group name */
+      engine_id,      /* openssl engine id*/
+      conf_file_name; /* Configuration file path name*/
 
   long ctrl_mode; /* octal mode of the control socket */
 
-  static int numthreads;              /* number of worker threads */
-  int anonymise,                      /* anonymise client address */
+  int numthreads,                     /* number of worker threads */
+      anonymise,                      /* anonymise client address */
       alive_to,                       /* check interval for resurrection */
       daemonize,                      /* run as daemon */
       log_facility,                   /* log facility to use */
@@ -146,15 +125,13 @@ class Config {
                                       /* 0 Manages header */
       ctrl_port = 0, sync_is_enabled; /*session sync enabled*/
 #ifdef CACHE_ENABLED
-  long cache_s;
-  int cache_thr;
-  std::string cache_ram_path;
-  std::string cache_disk_path;
+      long cache_s;
+      int cache_thr;
+      std::string cache_ram_path;
+      std::string cache_disk_path;
 #endif
-  int conf_init(const std::string &name);
 
 public:
-
   void conf_err(const char *msg);
   char *conf_fgets(char *buf, const int max);
   void include_dir(const char *conf_path);
@@ -167,12 +144,12 @@ public:
   /*
    * parse an HTTP listener
    */
-  ListenerConfig *parse_HTTP(void);
+  ListenerConfig *parse_HTTP();
 
   /*
    * parse an HTTPS listener
    */
-  ListenerConfig *parse_HTTPS(void);
+  ListenerConfig *parse_HTTPS();
 
   unsigned char **get_subjectaltnames(X509 *x509, unsigned int *count);
 
@@ -184,11 +161,7 @@ public:
    * parse a service
    */
   ServiceConfig *parseService(const char *svc_name);
-  /*
-   * Dummy certificate verification - always OK
-   */
-  static int verify_OK([[maybe_unused]] int pre_ok,
-                       [[maybe_unused]] X509_STORE_CTX *ctx);
+
 
   /*
    * parse an OrURLs block
@@ -215,7 +188,7 @@ public:
   /*
    * parse the config file
    */
-  void parse_file(void);
+  void parse_file();
 
  public:
   ServiceConfig *services;   /* global services (if any) */
@@ -226,51 +199,10 @@ public:
   ~Config();
 
   /*
-   * prepare to parse the arguments/config file
+   * prepare to parse the config file provided.
    */
-  void parseConfig(const int argc, char **const argv);
-  bool exportConfigToJsonFile(std::string save_path);
+  bool init(const global::StartOptions& start_options);
 
- private:
-  /*
-   * return a pre-generated RSA key
-   */
-  RSA *RSA_tmp_callback(/* not used */ SSL *ssl,
-                        /* not used */ int is_export, int keylength);
-  static DH *load_dh_params(char *file);
-
-  /*
-   * Search for a host name_, return the addrinfo for it
-   */
-  int get_host(char *const name_, struct addrinfo *res, int ai_family);
-
-  static void SSLINFO_callback(const SSL *ssl, int where, int rc);
-
-  static int generate_key(RSA **ret_rsa, unsigned long bits);
-
-#if DH_LEN == 1024
-  static DH *DH512_params, *DH1024_params;
-  static DH *DH_tmp_callback(/* not used */ SSL *s,
-                             /* not used */ int is_export, int keylength) {
-    return keylength == 512 ? DH512_params : DH1024_params;
-  }
-#else
-  static DH *DH512_params, *DH2048_params;
-  static DH *DH_tmp_callback(/* not used */ SSL *s,
-                             /* not used */ int is_export, int keylength) {
-    return keylength == 512 ? DH512_params : DH2048_params;
-  }
-#endif
-
-  /*
-   * initialise DH and RSA keys
-   */
-  void initDhParams();
-
- public:
-  /*
-   * Periodically regenerate ephemeral RSA keys
-   * runs every T_RSA_KEYS seconds
-   */
-  static void do_RSAgen(void);
+  bool found_parse_error{false};
+  void setAsCurrent();
 };
