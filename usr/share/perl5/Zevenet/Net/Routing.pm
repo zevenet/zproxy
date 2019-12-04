@@ -482,6 +482,39 @@ sub initRoutingModule
 }
 
 =begin nd
+Function: getRoutingIsolateTables
+
+	It returns a list of the interfaces and info about they are banned in a routing table
+
+Parameters:
+	table - table name to ckeck
+
+Returns:
+	array ref - it is the list of interface with information about if it is banned in the table
+
+=cut
+
+sub getRoutingIsolateTables
+{
+	my $table  = shift;
+	my @ifaces = ();
+
+	my @tables;
+	require Zevenet::Net::Interface;
+
+	foreach my $if ( &getLinkNameList() )
+	{
+		my $iface;
+		@tables = &getRoutingIsolate( $if );
+		$iface->{ interface } = $if;
+		$iface->{ banned } = ( grep ( /^$table$/, @tables ) ) ? 'true' : 'false';
+		push @ifaces, $iface;
+	}
+
+	return @ifaces;
+}
+
+=begin nd
 Function: getRoutingIsolate
 
 	It returns a list of the tables names where the interface is deleted. These
@@ -990,7 +1023,7 @@ Parameters:
 		"priority" is the priority for the routing entry in the table
 
 Returns:
-	Integer - 0 on success or another value on failure
+	Integer - returns the ID of the route on success or 0 on failure
 
 =cut
 
@@ -1006,6 +1039,7 @@ sub createRoutingCustom
 	&lockResource( $lock_rules, 'l' );
 
 	my $err = &setRoute( 'add', $input->{ raw } );
+	my $id = 0;
 
 	if ( !$err )
 	{
@@ -1015,21 +1049,21 @@ sub createRoutingCustom
 
 		if ( !$input->{ id } )
 		{
-			&lockResource( $lock_rules, 'ud' );
 			&zenlog( "Error getting an ID for the route", "error", "net" );
-			return 1;
 		}
-
-		&writeRoutingConf( $table, $input );
-
+		else
+		{
+			$id = $input->{ id };
+			&writeRoutingConf( $table, $input );
+		}
 	}
 
 	&lockResource( $lock_rules, 'ud' );
-	return $err;
+	return $id;
 }
 
 =begin nd
-Function: createRoutingCustom
+Function: modifyRoutingCustom
 
 	It modifies a route. It removes the old rule and applies the new one in the system.
 	After update de config file (using the function "writeRoutingConf")

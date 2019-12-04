@@ -45,9 +45,9 @@ if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 	DELETE qr{^/routing/tables/($id_table)/routes/($id_route)$},
 	  'delete_routing_entry', $mod;
 
-	GET qr{^/routing/isolate/($interface)$},         'get_routing_isolate', $mod;
-	POST qr{^/routing/isolate/($interface)/tables$}, 'add_routing_isolate', $mod;
-	DELETE qr{^/routing/isolate/($interface)/tables/($id_table|\*)$},
+	GET qr{^/routing/tables/($id_table)/banned$},     'get_routing_isolate', $mod;
+	POST qr{^/routing/tables/($id_table|\*)/banned$}, 'add_routing_isolate', $mod;
+	DELETE qr{^/routing/tables/($id_table|\*)/banned/($interface)$},
 	  'del_routing_isolate', $mod;
 }
 

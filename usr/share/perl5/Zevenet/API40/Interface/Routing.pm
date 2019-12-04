@@ -97,6 +97,20 @@ sub listOutRoutes
 	return $list // [];
 }
 
+sub getOutRoutes
+{
+	my $list     = shift;
+	my $id_route = shift;
+
+	foreach my $obj ( @{ $list } )
+	{
+		return $obj if ( $obj->{ id } == $id_route );
+	}
+
+	&zenlog( "The route '$id_route' has not been found", "warning", "network" );
+	return undef;
+}
+
 sub validateRouteHelper
 {
 	my $in = shift;
@@ -588,8 +602,8 @@ sub create_routing_entry
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $err = &createRoutingCustom( $table, $json_obj );
-	if ( $err )
+	my $id = &createRoutingCustom( $table, $json_obj );
+	if ( !$id )
 	{
 		my $msg = "Error, creating a new routing rule.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -599,11 +613,12 @@ sub create_routing_entry
 	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
 
 	my $list = &listOutRoutes( $table );
+	my $route = &getOutRoutes( $list, $id );
 	return
 	  &httpResponse(
 					 {
 					   code => 200,
-					   body => { description => $desc, params => $list }
+					   body => { description => $desc, params => $route }
 					 }
 	  );
 }
@@ -702,11 +717,13 @@ sub modify_routing_entry
 	}
 
 	my $list = &listOutRoutes( $table );
+	my $route = &getOutRoutes( $list, $id_route );
+
 	return
 	  &httpResponse(
 					 {
 					   code => 200,
-					   body => { description => $desc, params => $list }
+					   body => { description => $desc, params => $route }
 					 }
 	  );
 }
@@ -753,54 +770,50 @@ sub delete_routing_entry
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# GET /routing/isolate/<interface>
+# GET /routing/tables/<table>/banned
 sub get_routing_isolate
 {
-	my $iface = shift;
+	my $table = shift;
 	require Zevenet::Net::Route;
 
-	my $desc = "Get the tables isolate for an interface";
+	my $desc = "Get the interfaces banned in the table '$table'";
 
-	require Zevenet::Net::Validate;
-	if ( !&ifexist( $iface ) )
+	if ( !&getRoutingTableExists( $table ) )
 	{
-		my $msg = "The interface '$iface' does not exist";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-	if ( &getValidFormat( 'virt_interface', $iface ) )
-	{
-		my $msg = "The virtual interfaces are not valid";
+		my $msg = "The table '$table' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @tables = &getRoutingIsolate( $iface );
+	my @ifaces = &getRoutingIsolateTables( $table );
 	my $body = {
 				 description => $desc,
-				 params      => \@tables,
+				 params      => \@ifaces,
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# POST /routing/isolate/<interface>/tables
+# POST /routing/tables/<table>/banned
 sub add_routing_isolate
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
 	my $json_obj  = shift;
-	my $interface = shift;
+	my $table     = shift;
+	my $interface = $json_obj->{ interface };
+
 	require Zevenet::Net::Route;
 
 	my $desc = "Modify the interfaces visibility";
 
 	my $params = {
-			"table" => {
-					'required'  => 'true',
-					'non_blank' => 'true',
-					'format_msg' =>
-					  "It is the interface that will not be included in other route tables",
-			},
+		"interface" => {
+			'required'  => 'true',
+			'non_blank' => 'true',
+			'format_msg' =>
+			  "It is the interface which does not be used to outcomming packets from this table.",
+		},
 	};
 
 	# Check allowed parameters
@@ -830,37 +843,37 @@ sub add_routing_isolate
 	}
 
 	my @table_list = &listRoutingTablesNames();
-	unless ( $json_obj->{ table } eq '*'
-			 or grep ( /^$json_obj->{table}$/, @table_list ) )
+	unless ( $table eq '*'
+			 or grep ( /^$table$/, @table_list ) )
 	{
 		my $msg =
-		  "The table '$json_obj->{table}' does not exist. Try with a valid table or '*' to select all tables";
+		  "The table '$table' does not exist. Try with a valid table or '*' to select all tables";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# configured
-	my $err = &setRoutingIsolate( $interface, $json_obj->{ table }, 'add' );
+	my $err = &setRoutingIsolate( $interface, $table, 'add' );
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$interface" );
 
 	my $body = {
-		description => $desc,
-		message =>
-		  "The interface '$interface' is not accesible from the table '$json_obj->{table}'",
+				description => $desc,
+				message =>
+				  "The interface '$interface' is not accesible from the table '$table'",
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# DELETE /routing/isolate/<interface>/tables/<id_table>
+# DELETE /routing/tables/<table>/banned/<interface>
 sub del_routing_isolate
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $interface = shift;
 	my $table     = shift;
+	my $interface = shift;
 	require Zevenet::Net::Route;
 
 	my $desc = "Modify the interfaces visibility";
