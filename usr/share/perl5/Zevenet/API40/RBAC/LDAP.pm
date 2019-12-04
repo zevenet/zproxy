@@ -71,8 +71,8 @@ sub set_rbac_ldap
 					  'doc' => 'it is the base used to look for the user in the LDAP',
 		},
 		"version" => {
-					   'valid_format' => [1, 2, 3],
-					   'doc'          => 'it is the LDAP version used by the server',
+					   'values' => [1, 2, 3],
+					   'doc'    => 'it is the LDAP version used by the server',
 		},
 		"scope" => {
 			'values' => ["base", "sub", "one"],
