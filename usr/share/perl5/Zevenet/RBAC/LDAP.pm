@@ -206,8 +206,8 @@ sub authLDAP
 		require Authen::Simple::LDAP;
 		eval {
 			include 'Zevenet::Code';
-			$pass = &getCodeDecode( $pass );
-
+			$ldap_conf->{ bindpw } = &getCodeDecode( $ldap_conf->{ bindpw } )
+			  if ( defined $ldap_conf->{ bindpw } );
 			my $ldap = Authen::Simple::LDAP->new( $ldap_conf );
 			if ( $ldap->authenticate( $user, $pass ) )
 			{
