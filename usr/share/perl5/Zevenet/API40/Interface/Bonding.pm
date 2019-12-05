@@ -66,7 +66,7 @@ sub new_bond    # ( $json_obj )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	zenlog( "ERROR MSG: $error_msg" );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
@@ -187,7 +187,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	if ( $error_msg )
 	{
 		&unlockBondResource();
@@ -299,7 +299,7 @@ sub delete_interface_bond    # ( $bond )
 	}
 
 	include 'Zevenet::Net::Zapi';
-	&checkZapiIfDepsRouting($bond, 'del');
+	&checkZapiIfDepsRouting( $bond, 'del' );
 
 	eval {
 		if ( defined $if_ref->{ addr } and defined $if_ref->{ mask } )
@@ -555,7 +555,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -679,7 +679,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -723,7 +723,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	}
 
 	include 'Zevenet::Net::Zapi';
-	&checkZapiIfDepsRouting($bond, 'put', $json_obj);
+	&checkZapiIfDepsRouting( $bond, 'put', $json_obj );
 
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 

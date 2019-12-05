@@ -83,12 +83,12 @@ sub delete_interface_nic    # ( $nic )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ($eload)
+	if ( $eload )
 	{
 		&eload(
-							  module => 'Zevenet::Net::Zapi',
-							  func   => 'checkZapiIfDepsRouting',
-							  args   => [$nic,'del'],
+				module => 'Zevenet::Net::Zapi',
+				func   => 'checkZapiIfDepsRouting',
+				args   => [$nic, 'del'],
 		);
 	}
 
@@ -185,7 +185,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -304,7 +304,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -354,12 +354,12 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 	}
 
-	if ($eload)
+	if ( $eload )
 	{
 		&eload(
-							  module => 'Zevenet::Net::Zapi',
-							  func   => 'checkZapiIfDepsRouting',
-							  args   => [$nic,'put',$json_obj],
+				module => 'Zevenet::Net::Zapi',
+				func   => 'checkZapiIfDepsRouting',
+				args   => [$nic, 'put', $json_obj],
 		);
 	}
 

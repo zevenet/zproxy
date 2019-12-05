@@ -569,8 +569,9 @@ sub checkZAPIParams
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $json_obj  = shift;
-	my $param_obj = shift;
+	my $json_obj    = shift;
+	my $param_obj   = shift;
+	my $description = shift;
 	my $err_msg;
 
 	my @rec_keys = keys %{ $json_obj };
@@ -578,7 +579,7 @@ sub checkZAPIParams
 	# Returns a help with the expected input parameters
 	if ( !@rec_keys )
 	{
-		&httpResponseHelp( $param_obj );
+		&httpResponseHelp( $param_obj, $description );
 	}
 
 	# All required parameters must exist
@@ -857,6 +858,7 @@ Function: httpResponseHelp
 
 Parameters:
 	Model - It is the struct with all allowed parameters and its possible values and options
+	Description - Descriptive message about the zapi call
 
 Returns:
 	None - .
@@ -868,6 +870,7 @@ sub httpResponseHelp
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $param_obj  = shift;
+	my $desc       = shift;
 	my $resp_param = [];
 
 	# build the output
@@ -907,11 +910,13 @@ sub httpResponseHelp
 		push @{ $resp_param }, $param;
 	}
 
-	my $msg = "No parameter has been sent. Please, try with:";
+	my $msg  = "No parameter has been sent. Please, try with:";
 	my $body = {
-				 description => $msg,
-				 params      => $resp_param,
+
+		message => $msg,
+		params  => $resp_param,
 	};
+	$body->{ description } = $desc if ( defined $desc );
 
 	return &httpResponse( { code => 400, body => $body } );
 }

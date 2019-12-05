@@ -73,7 +73,7 @@ sub new_vlan    # ( $json_obj )
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -312,12 +312,12 @@ sub delete_interface_vlan    # ( $vlan )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ($eload)
+	if ( $eload )
 	{
 		&eload(
-							  module => 'Zevenet::Net::Zapi',
-							  func   => 'checkZapiIfDepsRouting',
-							  args   => [$vlan,'del'],
+				module => 'Zevenet::Net::Zapi',
+				func   => 'checkZapiIfDepsRouting',
+				args   => [$vlan, 'del'],
 		);
 	}
 
@@ -409,7 +409,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -559,7 +559,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -605,12 +605,12 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		}
 	}
 
-	if ($eload)
+	if ( $eload )
 	{
 		&eload(
-							  module => 'Zevenet::Net::Zapi',
-							  func   => 'checkZapiIfDepsRouting',
-							  args   => [$vlan,'put',$json_obj],
+				module => 'Zevenet::Net::Zapi',
+				func   => 'checkZapiIfDepsRouting',
+				args   => [$vlan, 'put', $json_obj],
 		);
 	}
 

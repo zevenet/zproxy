@@ -55,7 +55,7 @@ sub new_vini    # ( $json_obj )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -234,13 +234,12 @@ sub delete_interface_virtual    # ( $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-
-	if ($eload)
+	if ( $eload )
 	{
 		&eload(
-							  module => 'Zevenet::Net::Zapi',
-							  func   => 'checkZapiVirtDepsRouting',
-							  args   => [$virtual,'del'],
+				module => 'Zevenet::Net::Zapi',
+				func   => 'checkZapiVirtDepsRouting',
+				args   => [$virtual, 'del'],
 		);
 	}
 
@@ -360,7 +359,7 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -469,7 +468,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -489,12 +488,12 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ($eload)
+	if ( $eload )
 	{
 		&eload(
-							  module => 'Zevenet::Net::Zapi',
-							  func   => 'checkZapiVirtDepsRouting',
-							  args   => [$virtual,'put',$json_obj],
+				module => 'Zevenet::Net::Zapi',
+				func   => 'checkZapiVirtDepsRouting',
+				args   => [$virtual, 'put', $json_obj],
 		);
 	}
 
