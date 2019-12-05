@@ -776,7 +776,7 @@ sub get_routing_isolate
 	my $table = shift;
 	require Zevenet::Net::Route;
 
-	my $desc = "Get the interfaces banned in the table '$table'";
+	my $desc = "Get the interfaces banned for the table '$table'";
 
 	if ( !&getRoutingTableExists( $table ) )
 	{
@@ -805,7 +805,7 @@ sub add_routing_isolate
 
 	require Zevenet::Net::Route;
 
-	my $desc = "Modify the interfaces visibility";
+	my $desc = "Ban an interface for the table '$table'";
 
 	my $params = {
 		"interface" => {
@@ -876,7 +876,7 @@ sub del_routing_isolate
 	my $interface = shift;
 	require Zevenet::Net::Route;
 
-	my $desc = "Modify the interfaces visibility";
+	my $desc = "Un-ban an interface for the table '$table'";
 
 	# if
 	require Zevenet::Net::Validate;
