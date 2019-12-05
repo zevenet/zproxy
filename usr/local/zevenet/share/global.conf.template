@@ -264,7 +264,10 @@ $arpsend_bin="/usr/sbin/arpsend";
 #Where is dhclient
 $dhcp_bin="/usr/sbin/dhclient";
 #Where is netcat
-$netcat_bin="/usr/bin/nc.openbsd";#update
+$aws_netcat_bin="/bin/nc.openbsd";#update
+$default_netcat_bin="/usr/bin/nc.openbsd";#update
+#This variable is modified from postinst
+$netcat_bin="/usr/bin/nc.openbsd";
 #Where is dmidecode
 $dmidecode_bin="/usr/sbin/dmidecode";
 

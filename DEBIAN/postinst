@@ -161,6 +161,9 @@ if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
 	if [ $? -eq 0 ]; then
 		cp ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ${NET_CONFIG_DIR}
 		${NET_CONFIG_DIR}${CHECK_NIC_DHCP}
+
+		# Change netcat path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('netcat_bin', '$aws_netcat_bin');"
 	fi
 	# Check if it is an Azure VM
 	dpkg -l | grep waagent >/dev/null
