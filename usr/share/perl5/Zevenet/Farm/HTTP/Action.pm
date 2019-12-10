@@ -113,10 +113,12 @@ sub _runHTTPFarmStop    # ($farm_name, $writeconf)
 		}
 		else
 		{
+			my $time = &getGlobalConfiguration( "http_farm_stop_grace_time" );
 			&zenlog( "Stopping HTTP farm $farm_name with PID $pid", "info", "LSLB" );
 
 			# Returns the number of arguments that were successfully used to signal.
 			kill 15, $pid;
+			sleep ( $time );
 		}
 
 		unlink ( "$piddir\/$farm_name\_proxy.pid" )
@@ -161,13 +163,10 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 
 	my $output = 0;
 	my @farm_configfiles = (
-							 "$configdir\/$farm_name\_status.cfg",
-							 "$configdir\/$farm_name\_proxy.cfg",
-							 "$configdir\/$farm_name\_Err414.html",
-							 "$configdir\/$farm_name\_Err500.html",
-							 "$configdir\/$farm_name\_Err501.html",
-							 "$configdir\/$farm_name\_Err503.html",
-							 "$farm_name\_guardian.conf"
+		   "$configdir\/$farm_name\_status.cfg",  "$configdir\/$farm_name\_proxy.cfg",
+		   "$configdir\/$farm_name\_Err414.html", "$configdir\/$farm_name\_Err500.html",
+		   "$configdir\/$farm_name\_Err501.html", "$configdir\/$farm_name\_Err503.html",
+		   "$farm_name\_guardian.conf"
 	);
 	my @new_farm_configfiles = (
 								 "$configdir\/$new_farm_name\_status.cfg",
