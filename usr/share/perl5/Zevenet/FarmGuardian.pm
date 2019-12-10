@@ -79,6 +79,7 @@ Returns:
 		'interval'    => "10",     # Time between checks
 		'cut_conns' => "false",    # cut the connections with the backend is marked as down
 		'template'  => "false",    # it is a template. The fg cannot be deleted, only reset its configuration
+		'alias'     => "false",    # Use the backend alias to do the farmguardian check. The load balancer must resolve the alias
 	};
 
 =cut
@@ -95,6 +96,7 @@ sub getFGStruct
 		'interval'    => "10",     # Time between checks
 		'cut_conns' => "false", # cut the connections with the backend is marked as down
 		'template'  => "false",
+		'alias'     => "false",
 	};
 }
 
@@ -255,6 +257,7 @@ Returns:
 		'interval'    => "10",     # Time between checks
 		'cut_conns' => "false",    # cut the connections with the backend is marked as down
 		'template'  => "false",    # it is a template. The fg cannot be deleted, only reset its configuration
+		'alias'     => "false",    # Use the backend alias to do the farmguardian check. The load balancer must resolve the alias
 	};
 
 =cut
@@ -1030,6 +1033,7 @@ sub runFGFarmStart
 	my $status = 0;
 	my $log    = "";
 	my $sv     = "";
+	my $alias  = "";
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
@@ -1076,10 +1080,7 @@ sub runFGFarmStart
 	}
 	elsif ( $ftype eq 'l4xnat' || $ftype =~ /http/ )
 	{
-		my $fgname       = &getFGFarm( $farm, $svice );
-		my $farmguardian = &getGlobalConfiguration( 'farmguardian' );
-		my $fg_cmd       = "$farmguardian $farm $sv $log";
-		&zenlog( "running $fg_cmd", "info", "FG" );
+		my $fgname = &getFGFarm( $farm, $svice );
 
 		return 0 if not $fgname;
 
@@ -1091,13 +1092,18 @@ sub runFGFarmStart
 			$log = "-l";
 		}
 
+		if ( exists $fg->{ alias } and $fg->{ alias } eq 'true' )
+		{
+			$alias = "-a";
+		}
+
 		if ( $svice ne "" )
 		{
 			$sv = "-s $svice";
 		}
 
 		my $farmguardian = &getGlobalConfiguration( 'farmguardian' );
-		my $fg_cmd       = "$farmguardian $farm $sv $log";
+		my $fg_cmd       = "$farmguardian $farm $sv $log $alias";
 
 		require Zevenet::Log;
 		$status = system ( "$fg_cmd >/dev/null 2>&1 &" );
