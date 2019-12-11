@@ -41,10 +41,10 @@ void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP eve
   if (event_group == EVENT_GROUP::MAINTENANCE) {
     if (fd == timer_maintenance.getFileDescriptor()) {
       // general maintenance timer
-      for (const auto& lc : listener_config_set){
+      for (auto& lc : listener_config_set){
         if(lc->disabled)
           continue;
-        for(auto service : ServiceManager::getInstance(*lc)->getServices()) {
+        for(auto service : ServiceManager::getInstance(lc)->getServices()) {
             service->doMaintenance();
         }
       }
@@ -234,7 +234,7 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
 }
 
 bool ListenerManager::isHandler(ctl::CtlTask &task) {
-  return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER || task.target == ctl::CTL_HANDLER_TYPE::ALL);
+  return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER_MANAGER || task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }
 
 ListenerManager::ListenerManager() : is_running(false), stream_manager_set() {}
@@ -281,11 +281,12 @@ void ListenerManager::start() {
     stream_manager_set[sm] = new StreamManager();
   }
   int service_id = 0;
-  for(const auto& listener_config_item : listener_config_set) {
+  for(auto& listener_config_item : listener_config_set) {
+    if(listener_config_item->disabled) continue;
     for (auto service_config = listener_config_item->services;
          service_config != nullptr; service_config = service_config->next) {
       if (!service_config->disabled) {
-        ServiceManager::getInstance(*listener_config_item)
+        ServiceManager::getInstance(listener_config_item)
             ->addService(*service_config, service_id++);
       } else {
         Logger::logmsg(LOG_NOTICE,
@@ -303,6 +304,8 @@ void ListenerManager::start() {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
       for (auto &listener_config : listener_config_set) {
+        if(listener_config->disabled)
+          continue;
         if (!sm->registerListener(listener_config)) {
           Logger::logmsg(LOG_ERR,
                          "Error initializing StreamManager for farm %s",
@@ -342,7 +345,7 @@ StreamManager *ListenerManager::getManager(int fd) {
   return stream_manager_set[id];
 }
 
-bool Listener::init(std::shared_ptr<ListenerConfig> config) {
+bool ListenerManager::init(std::shared_ptr<ListenerConfig> config) {
 #if WAF_ENABLED
   config->modsec = std::make_shared<modsecurity::ModSecurity>();
   config->modsec->setConnectorInformation(

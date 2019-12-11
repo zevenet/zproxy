@@ -22,25 +22,32 @@
 #include "service_manager.h"
 #include <memory>
 #include "../handlers/waf.h"
+#include <utility>
 
 std::map<int,std::shared_ptr<ServiceManager>> ServiceManager::instance;
 
-std::shared_ptr<ServiceManager> ServiceManager::getInstance(ListenerConfig &listener_config) {
-  if (instance[listener_config.id] == nullptr)
-    instance[listener_config.id] = std::make_shared<ServiceManager>(listener_config);
-  return instance[listener_config.id];
+std::shared_ptr<ServiceManager> ServiceManager::getInstance(
+    std::shared_ptr<ListenerConfig> &listener_config) {
+  if (instance[listener_config->id] == nullptr)
+    instance[listener_config->id] =
+        std::make_shared<ServiceManager>(listener_config);
+  return instance[listener_config->id];
 }
+
 std::map<int, std::shared_ptr<ServiceManager>> &ServiceManager::getInstance()
 {
   return instance;
 }
 
-ServiceManager::ServiceManager(ListenerConfig &listener_config) : listener_config_(listener_config) {
+ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
+    : listener_config_(std::move(listener_config)),
+      id(listener_config_->id),
+      name(listener_config_->name),
+      disabled(listener_config_->disabled) {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
 }
 
 ServiceManager::~ServiceManager() {
-  Logger::logmsg(LOG_REMOVE, "Destructor");
   for (auto srv : services) {
     delete srv;
   }
@@ -86,49 +93,102 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
     return JSON_OP_RESULT::ERROR;
   }
   //  Logger::logmsg(LOG_DEBUG, "Service Manager handling task");
-  switch (task.subject) {
-    #if WAF_ENABLED
-    case ctl::CTL_SUBJECT::RELOAD_WAF: {
-      switch (task.command) {
-        case ctl::CTL_COMMAND::UPDATE: {
+  switch (task.command) {
+    case ctl::CTL_COMMAND::GET: {
+      switch (task.subject) {
+        case ctl::CTL_SUBJECT::DEBUG:
+          return JSON_OP_RESULT::EMPTY_OBJECT;
+        default: {
+          std::unique_ptr<json::JsonObject> root =
+              std::make_unique<JsonObject>();
+          root->emplace(JSON_KEYS::ADDRESS, std::make_unique<JsonDataValue>(
+                                                listener_config_->address));
+          root->emplace(JSON_KEYS::PORT,
+                        std::make_unique<JsonDataValue>(listener_config_->port));
+          root->emplace(JSON_KEYS::ID,
+                        std::make_unique<JsonDataValue>(listener_config_->id));
+          root->emplace(JSON_KEYS::HTTPS, std::make_unique<JsonDataValue>(
+                                              listener_config_->ctx != nullptr));
+          root->emplace(JSON_KEYS::STATUS,
+                        std::make_unique<JsonDataValue>(
+                            this->disabled ? JSON_KEYS::STATUS_DOWN
+                                           : JSON_KEYS::STATUS_ACTIVE));
+          auto services_array = std::make_unique<JsonArray>();
+          for (auto service : services)
+            services_array->emplace_back(service->getServiceJson());
+          root->emplace(JSON_KEYS::SERVICES, std::move(services_array));
+          auto data = root->stringify();
+          return data;
+        }
+      }
+      break;
+    }
+    case ctl::CTL_COMMAND::NONE:
+      break;
+    case ctl::CTL_COMMAND::ADD:
+      break;
+    case ctl::CTL_COMMAND::DELETE:
+      break;
+    case ctl::CTL_COMMAND::ENABLE:
+      break;
+    case ctl::CTL_COMMAND::DISABLE:
+      break;
+    case ctl::CTL_COMMAND::UPDATE:
+      switch (task.subject) {
+#if WAF_ENABLED
+        case ctl::CTL_SUBJECT::RELOAD_WAF: {
           //          auto json_data = JsonParser::parse(task.data);
-          auto new_rules = Waf::reloadRules();
+          auto new_rules = Waf::reloadRules();  // TODO:: update reload
           if (new_rules == nullptr) {
             return JSON_OP_RESULT::ERROR;
           }
-          this->listener_config_.rules = new_rules;
+          this->listener_config_->rules = new_rules;
           return JSON_OP_RESULT::OK;
         }
-        default:
-          return JSON_OP_RESULT::ERROR;
-      }
-    }
 #endif
-    case ctl::CTL_SUBJECT::DEBUG:
-      return JSON_OP_RESULT::EMPTY_OBJECT;
-    default: {
-      std::unique_ptr<json::JsonObject> root = std::make_unique<JsonObject>();
-      root->emplace(JSON_KEYS::ADDRESS,
-                    std::make_unique<JsonDataValue>(listener_config_.address));
-      root->emplace(JSON_KEYS::PORT,
-                    std::make_unique<JsonDataValue>(listener_config_.port));
-      root->emplace(JSON_KEYS::ID,
-                    std::make_unique<JsonDataValue>(listener_config_.id));
-      root->emplace(JSON_KEYS::HTTPS, std::make_unique<JsonDataValue>(
-                                          listener_config_.ctx != nullptr));
-      auto services_array = std::make_unique<JsonArray>();
-      for (auto service : services)
-        services_array->emplace_back(service->getServiceJson());
-      root->emplace(JSON_KEYS::SERVICES, std::move(services_array));
-      auto data = root->stringify();
-      return data;
-    } break;
+        case ctl::CTL_SUBJECT::CONFIG:
+          // TODO:: update service config (timeouts, headers, routing policy)
+          break;
+        case ctl::CTL_SUBJECT::STATUS: {
+          std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
+          if (status == nullptr) return JSON_OP_RESULT::ERROR;
+          if (status->at(JSON_KEYS::STATUS)->isValue()) {
+            auto value = dynamic_cast<JsonDataValue *>(
+                             status->at(JSON_KEYS::STATUS).get())
+                             ->string_value;
+            if (value == JSON_KEYS::STATUS_ACTIVE ||
+                value == JSON_KEYS::STATUS_UP) {
+              this->disabled = false;
+              this->listener_config_->disabled = false;  // TODO::remove
+            } else if (value == JSON_KEYS::STATUS_DOWN) {
+              this->disabled = true;
+              this->listener_config_->disabled = true;  // TODO::remove
+            } else if (value == JSON_KEYS::STATUS_DISABLED) {
+              this->disabled = true;
+              this->listener_config_->disabled = true;  // TODO::remove
+            }
+            Logger::logmsg(LOG_NOTICE, "Set Service %d %s", id, value.c_str());
+            return JSON_OP_RESULT::OK;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      break;
+    case ctl::CTL_COMMAND::SUSCRIBE:
+      break;
+    case ctl::CTL_COMMAND::UNSUSCRIBE:
+      break;
+    case ctl::CTL_COMMAND::EXIT:
+      break;
   }
   return JSON_OP_RESULT::ERROR;
 }
 
 bool ServiceManager::isHandler(ctl::CtlTask &task) {
-  return (task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER &&
-          task.listener_id == listener_config_.id) ||
-         task.target == ctl::CTL_HANDLER_TYPE::ALL;
+  return (
+      ((task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER) &&
+       (task.listener_id == listener_config_->id || task.listener_id == -1)) ||
+      task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }

@@ -38,14 +38,16 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
  public:
   /** ListenerConfig from the listener related with all the services managed by
    * the class. */
-  ListenerConfig listener_config_;
+  std::shared_ptr<ListenerConfig> listener_config_;
   /** ServiceManager instance. */
   static std::map<int,std::shared_ptr<ServiceManager>>  instance;
-  static std::shared_ptr<ServiceManager> getInstance(ListenerConfig &listener_config);
+  static std::shared_ptr<ServiceManager> getInstance(std::shared_ptr<ListenerConfig>& listener_config);
   static std::map<int,std::shared_ptr<ServiceManager>>& getInstance() ;
-    ServiceManager(ListenerConfig &listener_config);
-  ~ServiceManager();
-
+  explicit ServiceManager(std::shared_ptr<ListenerConfig> listener_config);
+  ~ServiceManager() final;
+  int id;
+  std::string name;
+  std::atomic<bool> disabled;
   /**
    * @brief Gets the Service that handles the HttpRequest.
    *

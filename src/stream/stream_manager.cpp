@@ -1723,7 +1723,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 
 bool StreamManager::registerListener(
     std::shared_ptr<ListenerConfig> listener_config) {
-  service_manager = ServiceManager::getInstance(*listener_config);
+  service_manager = ServiceManager::getInstance(listener_config);
   if (listener_config->ctx != nullptr ||
       !listener_config->ssl_config_file.empty()) {
     this->is_https_listener = true;

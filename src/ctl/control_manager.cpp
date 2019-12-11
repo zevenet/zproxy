@@ -215,6 +215,11 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
   std::string str;
   while (getline(f, str, '/')) {
     switch (str[0]) {
+      case 'c':
+        if (str == JSON_KEYS::CONFIG) {
+          task.target = CTL_HANDLER_TYPE::LISTENER_MANAGER;
+          task.subject = CTL_SUBJECT::CONFIG;
+        }
       case 'd':
         if (str == JSON_KEYS::DEBUG) {
           task.target = CTL_HANDLER_TYPE::ALL;
@@ -252,7 +257,8 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
 
 bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss) {
   std::string str;
-  task.target = CTL_HANDLER_TYPE::LISTENER;
+  task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
+  task.subject = CTL_SUBJECT::STATUS;
   if (getline(ss, str, '/')) {
     if (!helper::try_lexical_cast<int>(str, task.listener_id)) {
       return false;

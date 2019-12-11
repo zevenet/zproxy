@@ -48,7 +48,7 @@ option(ENABLE_TCMALLOC "Use tcmalloc instead of standard library malloc " OFF)
 option(ENABLE_ADDRESS_SANITIZER "Enable address sanitizer" OFF)
 option(ENABLE_LEAK_SANITIZER "Enable memory leak sanitizer" OFF)
 option(ENABLE_THREAD_SANITIZER "Enable thread sanitizer" OFF)
-option(ENABLE_COVERAGE "Enable coverage" ON)
+option(ENABLE_COVERAGE "Enable coverage" OFF)
 #experimental, do not enable WIP
 option(CACHE_SUPPORT "Build with cache support" OFF)
 option(ENABLE_WAF "Compile zproxy using WAF features" ON)

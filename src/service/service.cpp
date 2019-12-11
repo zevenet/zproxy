@@ -276,7 +276,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
           case ctl::CTL_SUBJECT::STATUS: {
             JsonObject status;
             status.emplace(JSON_KEYS::STATUS,
-                           new JsonDataValue(this->disabled ? JSON_KEYS::STATUS_DOWN : JSON_KEYS::STATUS_ACTIVE));
+                           std::make_unique<JsonDataValue>(this->disabled ? JSON_KEYS::STATUS_DOWN : JSON_KEYS::STATUS_ACTIVE));
             return status.stringify();
           }
           case ctl::CTL_SUBJECT::BACKEND:
@@ -294,7 +294,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
           }
           case ctl::CTL_SUBJECT::STATUS: {
             std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
-            if (status == nullptr) return "";
+            if (status == nullptr) return JSON_OP_RESULT::ERROR;
             if (status->at(JSON_KEYS::STATUS)->isValue()) {
               auto value = dynamic_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS).get())->string_value;
               if (value == JSON_KEYS::STATUS_ACTIVE || value == JSON_KEYS::STATUS_UP) {
@@ -327,12 +327,12 @@ bool Service::isHandler(ctl::CtlTask &task) {
       (task.service_id == this->id || task.service_id == -1);
 }
 
-JsonObject *Service::getServiceJson() {
-  auto root = new JsonObject();
-  root->emplace(JSON_KEYS::NAME, new JsonDataValue(this->name));
-  root->emplace(JSON_KEYS::ID, new JsonDataValue(this->id));
+std::unique_ptr<JsonObject> Service::getServiceJson() {
+  auto root = std::make_unique<JsonObject>();
+  root->emplace(JSON_KEYS::NAME, std::make_unique<JsonDataValue>(this->name));
+  root->emplace(JSON_KEYS::ID, std::make_unique<JsonDataValue>(this->id));
   root->emplace(JSON_KEYS::STATUS,
-                new JsonDataValue(this->disabled ? JSON_KEYS::STATUS_DISABLED : JSON_KEYS::STATUS_ACTIVE));
+                std::make_unique<JsonDataValue>(this->disabled ? JSON_KEYS::STATUS_DISABLED : JSON_KEYS::STATUS_ACTIVE));
   auto backends_array = new JsonArray();
   for (auto backend : backend_set) {
     auto bck = backend->getBackendJson();
@@ -340,7 +340,7 @@ JsonObject *Service::getServiceJson() {
   }
   root->emplace(JSON_KEYS::BACKENDS, backends_array);
   root->emplace(JSON_KEYS::SESSIONS, this->getSessionsJson());
-  return root;
+  return std::move(root);
 }
 
 /** Selects the corresponding Backend to which the connection will be routed

@@ -337,6 +337,8 @@ ListenerConfig *Config::parse_HTTP() {
       }
       has_port = 1;
       res->port = std::atoi(lin + matches[1].rm_so);
+    } else if (!regexec(&regex_set::Disabled, lin, 4, matches, 0)) {
+      res->disabled = atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&regex_set::xHTTP, lin, 4, matches, 0)) {
       int n;
 
@@ -598,6 +600,8 @@ ListenerConfig *Config::parse_HTTPS() {
         conf_err("xHTTP bad pattern - aborted");
     } else if (!regexec(&regex_set::Client, lin, 4, matches, 0)) {
       res->to = atoi(lin + matches[1].rm_so);
+    } else if (!regexec(&regex_set::Disabled, lin, 4, matches, 0)) {
+      res->disabled = atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&regex_set::CheckURL, lin, 4, matches, 0)) {
       if (res->has_pat) conf_err("CheckURL multiple pattern - aborted");
       lin[matches[1].rm_eo] = '\0';

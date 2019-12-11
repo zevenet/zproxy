@@ -161,5 +161,5 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
    * @brief Generates a JsonObject with all the Service information.
    * @return JsonObject with the Service information.
    */
-  JsonObject *getServiceJson();
+  std::unique_ptr<JsonObject> getServiceJson();
 };
