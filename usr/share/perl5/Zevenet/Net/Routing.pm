@@ -367,7 +367,7 @@ Parameters:
 	config - Object with the configuration of the rule. The possible keys are: 'priority', 'from', 'not', 'table'
 
 Returns:
-	Integer - It returns the rule id of the rule has been created, or 0 on failure
+	Integer - It returns 0 on success or another value on failure
 
 =cut
 
@@ -387,7 +387,7 @@ sub modifyRoutingRules
 		$err = &setRule( 'del', $old_conf );
 
 		# overwrite conf
-		$err = 1 if ( !&createRoutingRulesConf( $params ) );
+		$err = &createRoutingRulesConf( $params );
 	}
 
 	return $err;

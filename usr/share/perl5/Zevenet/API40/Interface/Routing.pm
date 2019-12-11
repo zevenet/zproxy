@@ -97,7 +97,7 @@ sub listOutRoutes
 	return $list // [];
 }
 
-sub getOutRoutes
+sub getOutId
 {
 	my $list     = shift;
 	my $id_route = shift;
@@ -344,11 +344,13 @@ sub create_routing_rule
 	&runZClusterRemoteManager( 'routing_rule', 'start', $id );
 
 	my $list = &listOutRules();
+	my $out = &getOutId( $list, $id );
+
 	return
 	  &httpResponse(
 					 {
 					   code => 200,
-					   body => { description => $desc, params => $list }
+					   body => { description => $desc, params => $out }
 					 }
 	  );
 }
@@ -421,10 +423,10 @@ sub modify_routing_rule
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $id = &modifyRoutingRules( $id, $json_obj );
-	if ( !$id )
+	my $err = &modifyRoutingRules( $id, $json_obj );
+	if ( $err )
 	{
-		my $msg = "Error, creating a new routing rule.";
+		my $msg = "Error modifying the routing rule '$id'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -432,11 +434,13 @@ sub modify_routing_rule
 	&runZClusterRemoteManager( 'routing_rule', 'start', $id );
 
 	my $list = &listOutRules();
+	my $out = &getOutId( $list, $id );
+
 	return
 	  &httpResponse(
 					 {
 					   code => 200,
-					   body => { description => $desc, params => $list }
+					   body => { description => $desc, params => $out }
 					 }
 	  );
 }
@@ -463,7 +467,7 @@ sub delete_routing_rule
 	my $error = &delRoutingRules( $id );
 	if ( $error )
 	{
-		my $msg = "Error, deleting the rule '$id'.";
+		my $msg = "Error deleting the rule '$id'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -613,7 +617,7 @@ sub create_routing_entry
 	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
 
 	my $list = &listOutRoutes( $table );
-	my $route = &getOutRoutes( $list, $id );
+	my $route = &getOutId( $list, $id );
 	return
 	  &httpResponse(
 					 {
@@ -717,7 +721,7 @@ sub modify_routing_entry
 	}
 
 	my $list = &listOutRoutes( $table );
-	my $route = &getOutRoutes( $list, $id_route );
+	my $route = &getOutId( $list, $id_route );
 
 	return
 	  &httpResponse(
