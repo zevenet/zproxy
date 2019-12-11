@@ -110,10 +110,10 @@ class Connection : public Descriptor {
   virtual ~Connection();
 
   bool listen(const std::string &address_str_, int port_);
-  bool listen(addrinfo &address);
+  static int listen(const addrinfo &address_);
   bool listen(const std::string &af_unix_name);
 
-  int doAccept();
+  static int doAccept(int listener_fd);
   IO::IO_OP doConnect(addrinfo &address, int timeout, bool async = true);
   IO::IO_OP doConnect(const std::string &af_unix_socket_path, int timeout);
   bool isConnected();

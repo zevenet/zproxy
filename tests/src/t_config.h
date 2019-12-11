@@ -30,13 +30,14 @@ TEST(ConfigTest, ConfigTest1) {
   int argc = 3;
   Config config;
 
-  config.init(argc, argv);
-  // auto fname = config.f_name;
-  auto backend_config = config.listeners;
-  auto nnn = backend_config->services;
-  auto nn = nnn->backends[0];
+  auto start_options = global::StartOptions::parsePoundOption(argc, argv, true);
+  auto parse_result = config.init(*start_options);
+  EXPECT_TRUE(parse_result);
 
-  EXPECT_TRUE(config.listeners != NULL);
-  EXPECT_TRUE(config.listeners->services != NULL);
-  EXPECT_TRUE(config.listeners->services->backends != NULL);
+  if (start_options->check_only) {
+    std::exit(EXIT_SUCCESS);
+  }
+  EXPECT_TRUE(config.listeners != nullptr);
+  EXPECT_TRUE(config.listeners->services != nullptr);
+  EXPECT_TRUE(config.listeners->services->backends != nullptr);
 }

@@ -20,10 +20,18 @@
  */
 
 #include "service_manager.h"
-std::shared_ptr<ServiceManager> ServiceManager::instance;
+#include <memory>
+#include "../handlers/waf.h"
+
+std::map<int,std::shared_ptr<ServiceManager>> ServiceManager::instance;
 
 std::shared_ptr<ServiceManager> ServiceManager::getInstance(ListenerConfig &listener_config) {
-  if (instance == nullptr) instance = std::shared_ptr<ServiceManager>(new ServiceManager(listener_config));
+  if (instance[listener_config.id] == nullptr)
+    instance[listener_config.id] = std::make_shared<ServiceManager>(listener_config);
+  return instance[listener_config.id];
+}
+std::map<int, std::shared_ptr<ServiceManager>> &ServiceManager::getInstance()
+{
   return instance;
 }
 
@@ -71,26 +79,56 @@ bool ServiceManager::addService(ServiceConfig &service_config, int id) {
 
 std::string ServiceManager::handleTask(ctl::CtlTask &task) {
   if (!this->isHandler(task)) return "";
-  //  Logger::logmsg(LOG_DEBUG, "Service Manager handling task");
   if (task.service_id > -1) {
     for (auto service : services) {
       if (service->isHandler(task)) return service->handleTask(task);
     }
     return JSON_OP_RESULT::ERROR;
   }
-
-  std::unique_ptr<json::JsonObject> root = std::make_unique<JsonObject>();
-  root->emplace(JSON_KEYS::ADDRESS, std::make_unique<JsonDataValue>(json::JsonDataValue(listener_config_.address)));
-  root->emplace(JSON_KEYS::PORT, std::make_unique<JsonDataValue>(json::JsonDataValue(listener_config_.port)));
-  root->emplace(JSON_KEYS::HTTPS,
-                std::make_unique<JsonDataValue>(json::JsonDataValue(listener_config_.ctx != nullptr)));
-  auto services_array = std::make_unique<JsonArray>();
-  for (auto service : services) services_array->emplace_back(service->getServiceJson());
-  root->emplace(JSON_KEYS::SERVICES, std::move(services_array));
-  auto data = root->stringify();
-  return data;
+  //  Logger::logmsg(LOG_DEBUG, "Service Manager handling task");
+  switch (task.subject) {
+    #if WAF_ENABLED
+    case ctl::CTL_SUBJECT::RELOAD_WAF: {
+      switch (task.command) {
+        case ctl::CTL_COMMAND::UPDATE: {
+          //          auto json_data = JsonParser::parse(task.data);
+          auto new_rules = Waf::reloadRules();
+          if (new_rules == nullptr) {
+            return JSON_OP_RESULT::ERROR;
+          }
+          this->listener_config_.rules = new_rules;
+          return JSON_OP_RESULT::OK;
+        }
+        default:
+          return JSON_OP_RESULT::ERROR;
+      }
+    }
+#endif
+    case ctl::CTL_SUBJECT::DEBUG:
+      return JSON_OP_RESULT::EMPTY_OBJECT;
+    default: {
+      std::unique_ptr<json::JsonObject> root = std::make_unique<JsonObject>();
+      root->emplace(JSON_KEYS::ADDRESS,
+                    std::make_unique<JsonDataValue>(listener_config_.address));
+      root->emplace(JSON_KEYS::PORT,
+                    std::make_unique<JsonDataValue>(listener_config_.port));
+      root->emplace(JSON_KEYS::ID,
+                    std::make_unique<JsonDataValue>(listener_config_.id));
+      root->emplace(JSON_KEYS::HTTPS, std::make_unique<JsonDataValue>(
+                                          listener_config_.ctx != nullptr));
+      auto services_array = std::make_unique<JsonArray>();
+      for (auto service : services)
+        services_array->emplace_back(service->getServiceJson());
+      root->emplace(JSON_KEYS::SERVICES, std::move(services_array));
+      auto data = root->stringify();
+      return data;
+    } break;
+  }
+  return JSON_OP_RESULT::ERROR;
 }
 
 bool ServiceManager::isHandler(ctl::CtlTask &task) {
-  return task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER || task.target == ctl::CTL_HANDLER_TYPE::ALL;
+  return (task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER &&
+          task.listener_id == listener_config_.id) ||
+         task.target == ctl::CTL_HANDLER_TYPE::ALL;
 }

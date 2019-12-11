@@ -73,4 +73,6 @@ class HttpStream : public Counter<HttpStream> {
   HttpResponse response;
   /** This struct indicates the upgrade mechanism status. */
   UpgradeStatus upgrade;
+
+  std::shared_ptr<ListenerConfig> listener_config;
 };

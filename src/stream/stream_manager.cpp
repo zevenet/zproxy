@@ -120,13 +120,18 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 #if SM_HANDLE_ACCEPT
     case EVENT_TYPE::CONNECT: {
       DEBUG_COUNTER_HIT(debug__::event_connect);
+      if (listener_config_set[fd]->disabled) {
+        deleteFd(fd);  // remove listener from epoll manager.
+        ::close(fd);   // we close the listening socket
+        return;
+      }
       int new_fd;
 #ifndef EPOLLEXCLUSIVE
       do {
 #endif
-        new_fd = listener_connection.doAccept();
+        new_fd = Connection::doAccept(fd);
         if (new_fd > 0) {
-          addStream(new_fd);
+          addStream(new_fd, listener_config_set[fd]);
         } else {
           DEBUG_COUNTER_HIT(debug__::event_connect_fail);
         }
@@ -257,7 +262,10 @@ void StreamManager::start(int thread_id_) {
 
   is_running = true;
   worker_id = thread_id_;
-  if(!handleAccept(listener_connection.getFileDescriptor())) return;
+  for (auto& listener : listener_config_set) {
+    if (!handleAccept(listener.first)) return;
+  }
+
   this->worker = std::thread([this] {
     StreamDataLogger::resetLogData();
     doWork();
@@ -291,10 +299,10 @@ void StreamManager::doWork() {
     // if(needMainatance)
     //    doMaintenance();
   }
-
 }
 
-void StreamManager::addStream(int fd) {
+void StreamManager::addStream(int fd,
+                              std::shared_ptr<ListenerConfig>& listener_config) {
   DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
   HttpStream *stream = streams_set[fd];
@@ -304,31 +312,33 @@ void StreamManager::addStream(int fd) {
   }
   stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
+  stream->listener_config = listener_config; //TODO::benchmark!!
   streams_set[fd] = stream;
 
   // update log info
-  StreamDataLogger logger(stream, listener_config_);
+  StreamDataLogger logger(stream, *stream->listener_config.get());
 
-  stream->timer_fd.set(listener_config_.to * 1000);
+  stream->timer_fd.set(listener_config->to * 1000);
   addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::TIMEOUT,
         EVENT_GROUP::REQUEST_TIMEOUT);
   timers_set[stream->timer_fd.getFileDescriptor()] = stream;
   stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
                                          EVENT_GROUP::CLIENT);
 
-  //Add requested header to the stream permanent header set, not cleared during the http stream lifetime
-  if (!listener_config_.add_head.empty()) {
-    stream->request.addHeader(listener_config_.add_head, true);
+  // Add requested header to the stream permanent header set, not cleared during
+  // the http stream lifetime
+  if (!listener_config->add_head.empty()) {
+    stream->request.addHeader(listener_config->add_head, true);
   }
-  if (!listener_config_.response_add_head.empty()) {
-    stream->response.addHeader(listener_config_.response_add_head, true);
+  if (!listener_config->response_add_head.empty()) {
+    stream->response.addHeader(listener_config->response_add_head, true);
   }
   if (this->is_https_listener) {
     stream->client_connection.ssl_conn_status = ssl::SSL_STATUS::NEED_HANDSHAKE;
   }
 #if WAF_ENABLED
-  if (listener_config_.rules) {
-    stream->waf_rules = listener_config_.rules;
+  if (listener_config->rules) {
+    stream->waf_rules = listener_config->rules;
   }
 #endif
 // configurar
@@ -371,6 +381,7 @@ void StreamManager::onRequestEvent(int fd) {
     ::close(fd);
     return;
   }
+  auto listener_config_ = *stream->listener_config;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
 
@@ -394,7 +405,7 @@ void StreamManager::onRequestEvent(int fd) {
           Logger::logmsg(LOG_DEBUG, "fd: %d:%d Handshake error with %s ",
                          stream->client_connection.getFileDescriptor(),
                          stream->backend_connection.getFileDescriptor(),
-                         stream->client_connection.getPeerAddress().c_str());        
+                         stream->client_connection.getPeerAddress().c_str());
         clearStream(stream);
         return;
       }
@@ -551,8 +562,8 @@ void StreamManager::onRequestEvent(int fd) {
 
 #ifdef CACHE_ENABLED
       // If the cache is enabled and the request is cached and it is also fresh
-      auto ret =
-          CacheManager::handleRequest(stream, service, this->listener_config_);
+      auto ret = CacheManager::handleRequest(stream, service,
+                                             listener_config_set);
       // Must return error
       if (ret == -1) {
         // If the directive only-if-cached is in the request and the content
@@ -667,6 +678,7 @@ void StreamManager::onRequestEvent(int fd) {
                 }
               }
             }
+
             // Rewrite destination
             if (stream->request.add_destination_header) {
               std::string header_value =
@@ -703,8 +715,7 @@ void StreamManager::onRequestEvent(int fd) {
 
             break;
           case BACKEND_TYPE::REDIRECT: {
-            http_manager::replyRedirect(*stream, this->ssl_manager,
-                                        *bck);
+            http_manager::replyRedirect(*stream, this->ssl_manager, *bck);
             clearStream(stream);
             return;
           }
@@ -757,6 +768,7 @@ void StreamManager::onResponseEvent(int fd) {
     ::close(fd);
     return;
   }
+  auto listener_config_ = *stream->listener_config;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
   if (UNLIKELY(stream->client_connection.isCancelled() ||
@@ -1065,16 +1077,17 @@ void StreamManager::onResponseEvent(int fd) {
 }
 void StreamManager::onConnectTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_backend_connect_timeout);
-
-  HttpStream *stream = timers_set[fd];
-  // update log info
-  StreamDataLogger logger(stream, listener_config_);
-
+  HttpStream* stream = timers_set[fd];
   if (stream == nullptr) {
     Logger::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
     ::close(fd);
-  } else if (stream->timer_fd.isTriggered()) {
+    return;
+  }
+  auto listener_config_ = *stream->listener_config;
+  // update log info
+  StreamDataLogger logger(stream, listener_config_);
+  if (stream->timer_fd.isTriggered()) {
     stream->backend_connection.getBackend()->status =
         BACKEND_STATUS::BACKEND_DOWN;
     Logger::logmsg(LOG_NOTICE, "(%lx) backend %s connection timeout after %d",
@@ -1088,16 +1101,17 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 
 void StreamManager::onRequestTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_request_timeout);
-
-  HttpStream *stream = timers_set[fd];
-  // update log info
-  StreamDataLogger logger(stream, listener_config_);
-
+  HttpStream* stream = timers_set[fd];
   if (stream == nullptr) {
     Logger::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
     ::close(fd);
-  } else if (stream->timer_fd.isTriggered()) {
+    return;
+  }
+  auto listener_config_ = *stream->listener_config;
+  // update log info
+  StreamDataLogger logger(stream, listener_config_);
+  if (stream->timer_fd.isTriggered()) {
     clearStream(stream);
   }
 }
@@ -1105,15 +1119,17 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 void StreamManager::onResponseTimeoutEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_response_timeout);
 
-  HttpStream *stream = timers_set[fd];
-  // update log info
-  StreamDataLogger logger(stream, listener_config_);
+  HttpStream* stream = timers_set[fd];
 
   if (stream == nullptr) {
     Logger::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
     ::close(fd);
-  } else if (stream->timer_fd.isTriggered()) {
+  }
+  auto listener_config_ = *stream->listener_config;
+  // update log info
+  StreamDataLogger logger(stream, listener_config_);
+  if (stream->timer_fd.isTriggered()) {
     char caddr[50];
     if (UNLIKELY(Network::getPeerAddress(
                      stream->client_connection.getFileDescriptor(), caddr,
@@ -1141,6 +1157,7 @@ void StreamManager::onSignalEvent(int fd) {
 
 void StreamManager::setStreamBackend(HttpStream* stream) {
   auto service = static_cast<Service*>(stream->request.getService());
+  auto listener_config_ = *stream->listener_config;
   if (service == nullptr) {
     service = service_manager->getService(stream->request);
     if (service == nullptr) {
@@ -1272,8 +1289,7 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
         break;
       case BACKEND_TYPE::REDIRECT: {
-        http_manager::replyRedirect(*stream, this->ssl_manager,
-                                    *bck);
+        http_manager::replyRedirect(*stream, this->ssl_manager, *bck);
         clearStream(stream);
         return;
       }
@@ -1285,6 +1301,7 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
 void StreamManager::onServerWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
+  auto listener_config_ = *stream->listener_config;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
   if (UNLIKELY(stream->backend_connection.isCancelled())) {
@@ -1459,6 +1476,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
 
 void StreamManager::onClientWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_response);
+  auto listener_config_ = *stream->listener_config;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
 
@@ -1498,7 +1516,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
         if (!this->ssl_manager->handleHandshake(stream->client_connection)) {
           Logger::logmsg(LOG_INFO, "Handshake error with %s ",
-                        stream->client_connection.getPeerAddress().c_str());
+                         stream->client_connection.getPeerAddress().c_str());
           clearStream(stream);
         }
         if (stream->client_connection.ssl_connected) {
@@ -1703,17 +1721,24 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   }
 }
 
-bool StreamManager::init(ListenerConfig& listener_config) {
-  service_manager = ServiceManager::getInstance(listener_config);
-  listener_config_ = listener_config;
-  if (listener_config.ctx != nullptr ||
-      !listener_config.ssl_config_file.empty()) {
+bool StreamManager::registerListener(
+    std::shared_ptr<ListenerConfig> listener_config) {
+  service_manager = ServiceManager::getInstance(*listener_config);
+  if (listener_config->ctx != nullptr ||
+      !listener_config->ssl_config_file.empty()) {
     this->is_https_listener = true;
     ssl_manager = new ssl::SSLConnectionManager();
-    this->is_https_listener = ssl_manager->init(listener_config);
+    this->is_https_listener = ssl_manager->init(*listener_config);
   }
-  return listener_connection.listen(listener_config_.address,
-                                    listener_config_.port);
+  auto address =
+      Network::getAddress(listener_config->address, listener_config->port);
+  int listen_fd = Connection::listen(*address);
+
+  if (listen_fd > 0) {
+    listener_config_set[listen_fd] = listener_config;
+    return true;
+  }
+  return false;
 }
 
 /** Clears the HttpStream. It deletes all the timers and events. Finally,
@@ -1764,6 +1789,7 @@ void StreamManager::clearStream(HttpStream* stream) {
 
 void StreamManager::onClientDisconnect(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
+  auto listener_config_ = *stream->listener_config;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
   Logger::logmsg(LOG_DEBUG, "fd: %d:%d Client closed connection",
@@ -1789,11 +1815,11 @@ bool StreamManager::isHandler(ctl::CtlTask& task) {
 }
 
 void StreamManager::onServerDisconnect(HttpStream* stream) {
-
   DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
   if (stream == nullptr) {
     return;
   }
+  auto listener_config_ = *stream->listener_config;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
 
@@ -1807,7 +1833,8 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
     stream->client_connection.enableWriteEvent();
     return;
   }
-  if (!stream->backend_connection.isConnected() && !stream->request.getHeaderSent()) {
+  if (!stream->backend_connection.isConnected() &&
+      !stream->request.getHeaderSent()) {
     Logger::logmsg(
         LOG_NOTICE,
         "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
@@ -1822,4 +1849,17 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
     return;
   }
   clearStream(stream);
+}
+
+void StreamManager::stopListener(
+    int listener_id, bool cut_connection) {  // TODO:: indicate which listener
+                                             // to stop by it's id's
+  // this->deleteFd(listener_connection.getFileDescriptor());
+  for (const auto& lc : listener_config_set) {
+    if (listener_id == lc.second->id) {
+      lc.second->disabled = true;
+      this->stopAccept(lc.first);
+      ::close(lc.first);
+    }
+  }
 }

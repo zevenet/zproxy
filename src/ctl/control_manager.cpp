@@ -21,6 +21,8 @@
 
 #include "control_manager.h"
 
+#include <memory>
+
 /* Not used right now */
 #define CTL_DEFAULT_IP "127.0.0.1"
 #define CTL_DEFAULT_PORT 6001
@@ -86,7 +88,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP
     case EVENT_TYPE::CONNECT: {
       int new_fd;
       do {
-        new_fd = control_listener.doAccept();
+        new_fd = Connection::doAccept(control_listener.getFileDescriptor());
         if (new_fd > 0) {
           addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::CTL_INTERFACE);
         }
@@ -147,11 +149,10 @@ void ctl::ControlManager::doWork() {
 }
 
 std::shared_ptr<ControlManager> ctl::ControlManager::getInstance() {
-  if (instance == nullptr) instance = std::shared_ptr<ControlManager>(new ControlManager());
+  if (instance == nullptr) instance = std::make_shared<ControlManager>();
   return instance;
 }
 std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
-  /* https://www.restapitutorial.com/lessons/httpmethods.html */
   /*
    *PUT: create or replace the object
     PATCH: set properties of the object
@@ -197,11 +198,13 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   }
 
   auto result = notify(task, false);
-  std::string res;
-  for (auto &future_result : result) {
-    res += future_result.get();
+  std::string res = "[";
+  for(auto it = result.begin();it < result.end(); it++){
+    res += it->get();
+    if(it + 1 < result.end())
+      res += ",";
   }
-  res += "";
+  res += "]";
   if (res.empty()) res = JSON_OP_RESULT::ERROR;
   auto response = http::getHttpResponse(http::Code::OK, "", res);
   return response;
@@ -212,6 +215,12 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
   std::string str;
   while (getline(f, str, '/')) {
     switch (str[0]) {
+      case 'd':
+        if (str == JSON_KEYS::DEBUG) {
+          task.target = CTL_HANDLER_TYPE::ALL;
+          task.subject = CTL_SUBJECT::DEBUG;
+        }
+        break;
       case 'l': {
         if (str == JSON_KEYS::LISTENER) {
           if (setListenerTarget(task, f)) {

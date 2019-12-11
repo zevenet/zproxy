@@ -53,7 +53,9 @@ class Network {
     }
     return buf;
   }
-
+  /*
+ * Search for a host name_, return the addrinfo for it
+ */
   inline static int getHost(const char *name, addrinfo *res, int ai_family) {
     struct addrinfo *chain, *ap;
     struct addrinfo hints;
@@ -81,36 +83,29 @@ class Network {
     return ret_val;
   }
 
-  inline static addrinfo *getAddress(const std::string &address, int port) {
-    struct sockaddr_in in {};
-    struct sockaddr_in6 in6 {};
-    auto *addr = new addrinfo(); /* IPv4/6 address */
+  inline static std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> getAddress(
+      const std::string &address, int port = 0) {
+    addrinfo hints{};
+    addrinfo *result{nullptr};
+    int sfd;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_protocol = 0; /* Any protocol */
+    hints.ai_canonname = nullptr;
+    hints.ai_addr = nullptr;
+    hints.ai_next = nullptr;
 
-    if (getHost(address.data(), addr, PF_UNSPEC)) {
-      Logger::LogInfo("Unknown Listener address");
-      delete addr;
-      return nullptr;
+    sfd = getaddrinfo(address.data(),
+                      port > 0 ? std::to_string(port).data() : nullptr, &hints,
+                      &result);
+    if (sfd != 0) {
+      logmsg(LOG_NOTICE, "getaddrinfo: %s\n", gai_strerror(sfd));
+      return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(nullptr,
+                                                                  freeaddrinfo);
     }
-    if (addr->ai_family != AF_INET && addr->ai_family != AF_INET6) {
-      Logger::LogInfo("Unknown Listener address family");
-      delete addr;
-      return nullptr;
-    }
-    switch (addr->ai_family) {
-      case AF_INET:
-        memcpy(&in, addr->ai_addr, sizeof(in));
-        in.sin_port = static_cast<in_port_t>(htons(static_cast<uint16_t>(port)));
-        memcpy(addr->ai_addr, &in, sizeof(in));
-        break;
-      case AF_INET6:
-        memcpy(&in6, addr->ai_addr, sizeof(in6));
-        in6.sin6_port = htons(static_cast<uint16_t>(port));
-        memcpy(addr->ai_addr, &in6, sizeof(in6));
-        break;
-      default:
-        Logger::LogInfo("Unknown Listener address family", LOG_ERR);
-    }
-    return addr;
+    return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(result,freeaddrinfo);
   }
 
   inline static int getPeerPort(int socket_fd) {

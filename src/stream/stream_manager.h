@@ -130,9 +130,8 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
   std::thread worker;
   std::shared_ptr<ServiceManager> service_manager{};
   ssl::SSLConnectionManager * ssl_manager{};
-  Connection listener_connection;
+  std::map<int, std::shared_ptr<ListenerConfig>> listener_config_set;
   std::atomic<bool> is_running{};
-  ListenerConfig listener_config_;
   std::unordered_map<int, HttpStream *> streams_set;
   std::unordered_map<int, HttpStream *> timers_set;
   void HandleEvent(int fd, EVENT_TYPE event_type,
@@ -145,15 +144,16 @@ public:
   ~StreamManager() final;
 
   /**
-   * @brief Adds a HttpStream to the stream set of the StreamManager.
+   * @brief Adds a HttpStream to the stream set of the StreamManager.registerListener
    *
    * If the @p fd is already stored in the set it clears the
    * older one and adds the new one. In addition sets the connect timeout
    * TimerFd.
    *
    * @param fd is the file descriptor to add.
+   * @param listener_config of the accepted connection to add.
    */
-  void addStream(int fd);
+  void addStream(int fd, std::shared_ptr<ListenerConfig>& listener_config);
 
   /**
    * @brief Returns the worker id associated to the StreamManager.
@@ -175,7 +175,7 @@ public:
    * @param listener_config from the configuration file.
    * @returns @c true if everything is fine.
    */
-  bool init(ListenerConfig &listener_config);
+  bool registerListener(std::shared_ptr<ListenerConfig> listener_config);
 
   /**
    * @brief Starts the StreamManager event manager.
@@ -304,7 +304,12 @@ public:
    * @return true if should handle the task, false if not.
    */
   bool isHandler(ctl::CtlTask &task) override;
-
+  /**
+   * @brief Stop gracefully the listener from accepting more connections.
+   * @param stop immediately established connections.
+   * @return true if should handle the task, false if not.
+   */
+  void stopListener(int listener_id, bool cut_connection = false);
   /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
 };

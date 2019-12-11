@@ -94,7 +94,8 @@ int main(int argc, char *argv[]) {
 
   Logger::log_level = config.listeners->log_level;
   Logger::log_facility = config.log_facility;
-  global::run_options::getCurrent().num_threads = config.numthreads;
+
+  config.setAsCurrent();
 
   // Syslog initialization
   if (config.daemonize) {
@@ -144,9 +145,12 @@ int main(int argc, char *argv[]) {
     control_manager->start();
   }
 
-  if (!listener.init(config.listeners[0])) {
-    Logger::LogInfo("Error initializing listener socket", LOG_ERR);
-    return EXIT_FAILURE;
+  for (auto listener_conf = config.listeners; listener_conf != nullptr;
+       listener_conf = listener_conf->next) {
+    if (!listener.init(std::shared_ptr<ListenerConfig>(listener_conf))) {
+      Logger::LogInfo("Error initializing listener socket", LOG_ERR);
+      return EXIT_FAILURE;
+    }
   }
 
   listener.start();

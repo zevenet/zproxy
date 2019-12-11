@@ -22,7 +22,7 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
-add_definitions(-DLOGGER_DEBUG=1)
+add_definitions(-DLOGGER_DEBUG=0)
 add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
 add_definitions(-DPRINT_READ_STADISTICS=0)
 add_definitions(-DDEBUG_CONNECTION_FLOW=0)
@@ -82,11 +82,11 @@ set(l7core_sources
     util/common.h util/system.h util/network.h util/crypto.h util/environment.h util/utils.h
     ctl/control_manager.h ctl/control_manager.cpp ctl/observer.h ctl/ctl.h
     stats/backend_stats.h stats/backend_stats.cpp
-	stats/counter.h
+    stats/counter.h
     handlers/http_manager.h handlers/http_manager.cpp
     handlers/https_manager.h handlers/https_manager.cpp
-	config/regex_manager.cpp config/regex_manager.h
-	config/ssl_helper.cpp config/ssl_helper.h config/global.cpp config/global.h)
+    config/regex_manager.cpp config/regex_manager.h
+    config/ssl_helper.cpp config/ssl_helper.h config/global.cpp config/global.h)
 
 if (ENABLE_ON_FLY_COMRESSION)
     set(l7core_sources ${l7core_sources}

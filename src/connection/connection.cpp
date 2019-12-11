@@ -125,6 +125,9 @@ void Connection::reset() {
   if (address != nullptr) {
     if (address->ai_addr != nullptr) delete address->ai_addr;
   }
+  local_address_str ="";
+  port = -1;
+  local_port = -1;
   delete address;
   address = nullptr;
 }
@@ -436,7 +439,6 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
 void Connection::closeConnection() {
   is_connected = false;
   if (fd_ > 0) {
-    //    ::shutdown(fd_, 2);
     ::close(fd_);
   }
 }
@@ -452,7 +454,7 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
   if (LIKELY(async)) {
     Network::setSocketNonBlocking(fd_);
   } else {
-    struct timeval timeout_;
+    struct timeval timeout_{};
     timeout_.tv_sec = timeout;  // after timeout seconds connect()
     timeout_.tv_usec = 0;
     setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout_, sizeof(timeout_));
@@ -509,12 +511,12 @@ bool Connection::isConnected() {
     return false;
 }
 
-int Connection::doAccept() {
+int Connection::doAccept(int listener_fd) {
   int new_fd = -1;
   sockaddr_in peer_address{};
   socklen_t peer_addr_length = sizeof(peer_address);
 
-  if ((new_fd = accept4(fd_, (sockaddr *)&peer_address, &peer_addr_length,
+  if ((new_fd = accept4(listener_fd, (sockaddr *)&peer_address, &peer_addr_length,
                         SOCK_NONBLOCK | SOCK_CLOEXEC)) < 0) {
     if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
       return 0;  // We have processed all incoming connections.
@@ -538,35 +540,44 @@ int Connection::doAccept() {
   return -1;
 }
 bool Connection::listen(const std::string &address_str_, int port_) {
-  this->address = Network::getAddress(address_str_, port_);
-  if (this->address != nullptr) return listen(*this->address);
+  this->address = Network::getAddress(address_str_, port_).release();
+  if (this->address != nullptr) {
+    fd_ = listen(*this->address);
+    return true;
+  }
   return false;
 }
 
-bool Connection::listen(addrinfo &address_) {
-  this->address = &address_;
+int Connection::listen(const addrinfo &address_) {
+  //  this->address = &address_;
   /* prepare the socket */
-  if ((fd_ = socket(this->address->ai_family == AF_INET ? PF_INET : PF_INET6,
-                    SOCK_STREAM, 0)) < 0) {
-    Logger::logmsg(LOG_ERR, "socket () failed %s s - aborted", strerror(errno));
-    return false;
-  }
+  int listen_fd = -1;
+  for (auto rp = &address_; rp != nullptr; rp = rp->ai_next) {
+    if ((listen_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) <
+        0) {
+      Logger::logmsg(LOG_ERR, "socket () failed %s s - aborted",
+                     strerror(errno));
+      continue;
+    }
 
-  Network::setSoLingerOption(fd_);
-  Network::setSoReuseAddrOption(fd_);
-  Network::setTcpDeferAcceptOption(fd_);
-  Network::setTcpReusePortOption(fd_);
+    Network::setSoLingerOption(listen_fd);
+    Network::setSoReuseAddrOption(listen_fd);
+    Network::setTcpDeferAcceptOption(listen_fd);
+    Network::setTcpReusePortOption(listen_fd);
 
-  if (::bind(fd_, address->ai_addr,
-             static_cast<socklen_t>(address->ai_addrlen)) < 0) {
-    Logger::logmsg(LOG_ERR, "bind () failed %s s - aborted", strerror(errno));
-    ::close(fd_);
-    fd_ = -1;
-    return false;
+    if (::bind(listen_fd, rp->ai_addr, static_cast<socklen_t>(rp->ai_addrlen)) <
+        0) {
+      Logger::logmsg(LOG_ERR, "bind () failed %s - aborted", strerror(errno));
+      ::close(listen_fd);
+      listen_fd = -1;
+      return listen_fd;
+    }
+    ::listen(listen_fd, SOMAXCONN);
+    break;
   }
-  ::listen(fd_, SOMAXCONN);
-  return true;
+  return listen_fd;
 }
+
 bool Connection::listen(const std::string &af_unix_name) {
   if (af_unix_name.empty()) return false;
   // unlink possible previously created path.

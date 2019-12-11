@@ -39,10 +39,14 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
   if (event_group == EVENT_GROUP::MAINTENANCE) {
     if (fd == timer_maintenance.getFileDescriptor()) {
       // general maintenance timer
-      for (auto serv : service_manager->getServices()) {
-        serv->doMaintenance();
+      for (const auto& lc : listener_config_set){
+        if(lc->disabled)
+          continue;
+        for(auto service : ServiceManager::getInstance(*lc)->getServices()) {
+            service->doMaintenance();
+        }
       }
-      timer_maintenance.set(listener_config.alive_to * 1000);
+      timer_maintenance.set(global::run_options::getCurrent().backend_resurrect_timeout * 1000);
       updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
                EVENT_GROUP::MAINTENANCE);
     }
@@ -82,23 +86,6 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
   }
 
   switch (task.subject) {
-#if WAF_ENABLED
-    case ctl::CTL_SUBJECT::RELOAD_WAF: {
-      switch (task.command) {
-        case ctl::CTL_COMMAND::UPDATE: {
-          //          auto json_data = JsonParser::parse(task.data);
-          auto new_rules = Waf::reloadRules();
-          if (new_rules == nullptr) {
-            return JSON_OP_RESULT::ERROR;
-          }
-          this->listener_config.rules = new_rules;
-          return JSON_OP_RESULT::OK;
-        }
-        default:
-          return JSON_OP_RESULT::ERROR;
-      }
-    }
-#endif
     case ctl::CTL_SUBJECT::DEBUG: {
       std::unique_ptr<JsonObject> root{new JsonObject()};
       std::unique_ptr<JsonObject> status{new JsonObject()};
@@ -292,34 +279,44 @@ void Listener::start() {
     stream_manager_set[sm] = new StreamManager();
   }
   int service_id = 0;
-
-  for (auto service_config = listener_config.services; service_config != nullptr;
-       service_config = service_config->next) {
-    if (!service_config->disabled) {
-      ServiceManager::getInstance(listener_config)->addService(*service_config, service_id++);
-    } else {
-      Logger::LogInfo("Backend " + std::string(service_config->name) + " disabled in config file", LOG_NOTICE);
+  for(const auto& listener_config_item : listener_config_set) {
+    for (auto service_config = listener_config_item->services;
+         service_config != nullptr; service_config = service_config->next) {
+      if (!service_config->disabled) {
+        ServiceManager::getInstance(*listener_config_item)
+            ->addService(*service_config, service_id++);
+      } else {
+        Logger::logmsg(LOG_NOTICE,
+                       " (%s) service %s disabled in config file ",
+                       listener_config_item->name.data(),
+                       service_config->name.data());
+      }
     }
   }
 #ifdef ENABLE_HEAP_PROFILE
   HeapProfilerStart("/tmp/zproxy");
 #endif
-
+  is_running = true;
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
-      if (!sm->init(listener_config)) {
-        Logger::logmsg(LOG_ERR, "Error initializing StreamManager for farm %s", listener_config.name.data());
-        exit(EXIT_FAILURE);
+      for (auto &listener_config : listener_config_set) {
+        if (!sm->registerListener(listener_config)) {
+          Logger::logmsg(LOG_ERR,
+                         "Error initializing StreamManager for farm %s",
+                         listener_config->name.data());
+          exit(EXIT_FAILURE);
+        }
       }
       sm->start(i);
     } else {
-      Logger::LogInfo("StreamManager id doesn't exist : " + std::to_string(i), LOG_ERR);
+      Logger::logmsg(LOG_ERR, "StreamManager id: %d doesn't exist  ", i);
     }
   }
-  is_running = true;
-//  signal_fd.init();
-  timer_maintenance.set(DEFAULT_MAINTENANCE_INTERVAL * 1000);
+  //  signal_fd.init();
+  auto alive_to = global::run_options::getCurrent().backend_resurrect_timeout;
+  timer_maintenance.set(
+      (alive_to > 0 ? alive_to : DEFAULT_MAINTENANCE_INTERVAL) * 1000);
   //  addFd(signal_fd.getFileDescriptor(), EVENT_TYPE::READ,
   //  EVENT_GROUP::SIGNAL);
   addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
@@ -343,14 +340,13 @@ StreamManager *Listener::getManager(int fd) {
   return stream_manager_set[id];
 }
 
-bool Listener::init(ListenerConfig &config) {
-  listener_config = config;
-  service_manager = ServiceManager::getInstance(listener_config);
+bool Listener::init(std::shared_ptr<ListenerConfig> config) {
 #if WAF_ENABLED
-  listener_config.modsec = std::make_shared<modsecurity::ModSecurity>();
-  listener_config.modsec->setConnectorInformation(
-      "zproxy_" + listener_config.name + "_connector");
-  listener_config.modsec->setServerLogCb(Waf::logModsec);
+  config->modsec = std::make_shared<modsecurity::ModSecurity>();
+  config->modsec->setConnectorInformation(
+      "zproxy_" + config->name + "_connector");
+  config->modsec->setServerLogCb(Waf::logModsec);
 #endif
+  listener_config_set.push_back(std::move(config));
   return true;
 }

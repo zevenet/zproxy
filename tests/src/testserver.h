@@ -57,7 +57,7 @@ class ClientHandler : public EpollManager {
 void ClientHandler::setUp(int n_clients, std::string addr, int port) {
   for (int i = 0; i < n_clients; i++) {
     Connection *connection = new Connection;
-    connection->address = Network::getAddress(addr, port);
+    connection->address = Network::getAddress(addr, port).release();
     connection->doConnect(*connection->address, 30);
     connections_set[connection->getFileDescriptor()] = connection;
     if (connection->getFileDescriptor() > 0)
@@ -109,7 +109,7 @@ void ClientHandler::HandleEvent(int fd, EVENT_TYPE event_type,
 }
 
 void ServerHandler::setUp(std::string addr, int port) {
-  lst.address = Network::getAddress(addr, port);
+  lst.address = Network::getAddress(addr, port).release();
   lst.listen(*lst.address);
   handleAccept(lst.getFileDescriptor());
 }
@@ -129,7 +129,7 @@ void ServerHandler::HandleEvent(int fd, EVENT_TYPE event_type,
       switch (event_group) {
         case EVENT_GROUP::ACCEPTOR: {
           do {
-            new_fd = lst.doAccept();
+            new_fd = Connection::doAccept(lst.getFileDescriptor());
             if (new_fd > 0)
               addFd(new_fd, EVENT_TYPE::READ, EVENT_GROUP::SERVER);
           } while (new_fd > 0);

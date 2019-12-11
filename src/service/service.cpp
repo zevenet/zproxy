@@ -57,7 +57,7 @@ Backend *Service::getBackend(HttpStream &stream) {
 void Service::addBackend(BackendConfig *backend_config, std::string address, int port, int backend_id, bool emergency) {
   auto *backend = new Backend();
   backend->backend_config = *backend_config;
-  backend->address_info = Network::getAddress(address, port);
+  backend->address_info = Network::getAddress(address, port).release();
   if (backend->address_info != nullptr) {
     backend->address = std::move(address);
     backend->port = port;
