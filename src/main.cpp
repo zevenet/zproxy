@@ -25,7 +25,7 @@
 #include "config/global.h"
 #include "ctl/control_manager.h"
 #include "debug/backtrace.h"
-#include "stream/listener.h"
+#include "stream/listener_manager.h"
 #include "util/system.h"
 
 static jmp_buf jmpbuf;
@@ -68,7 +68,7 @@ void handleInterrupt(int sig) {
 int main(int argc, char *argv[]) {
   debug::EnableBacktraceOnTerminate();
 
-  Listener listener;
+  ListenerManager listener;
   auto control_manager = ctl::ControlManager::getInstance();
   if (setjmp(jmpbuf)) {
     // we are in signal context here

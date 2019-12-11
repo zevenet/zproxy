@@ -19,7 +19,9 @@
  *
  */
 
-#include "listener.h"
+#include "listener_manager.h"
+
+#include <memory>
 #include "../config/global.h"
 #include "../ssl/ssl_session.h"
 #ifdef ENABLE_HEAP_PROFILE
@@ -35,7 +37,7 @@
 #define MALLOC_TRIM_TIMER_INTERVAL 300
 #endif
 
-void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
+void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE) {
     if (fd == timer_maintenance.getFileDescriptor()) {
       // general maintenance timer
@@ -76,7 +78,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
   }
 }
 
-std::string Listener::handleTask(ctl::CtlTask &task) {
+std::string ListenerManager::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
 
   if (task.command == ctl::CTL_COMMAND::EXIT) {
@@ -97,16 +99,16 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
       std::unique_ptr<JsonObject> cache_count{new JsonObject()};
 #endif
       status->emplace("ClientConnection",
-                      std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<ClientConnection>::count)));
+                      std::make_unique<JsonDataValue>(Counter<ClientConnection>::count));
       status->emplace("BackendConnection",
-                      std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<BackendConnection>::count)));
-      status->emplace("HttpStream", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<HttpStream>::count)));
+                      std::make_unique<JsonDataValue>(Counter<BackendConnection>::count));
+      status->emplace("HttpStream", std::make_unique<JsonDataValue>(Counter<HttpStream>::count));
       // root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new
       // JsonDataValue(Counter<HttpStream>)));
       double vm, rss;
       SystemInfo::getMemoryUsed(vm, rss);
-      status->emplace("VM", std::unique_ptr<JsonDataValue>(new JsonDataValue(vm)));
-      status->emplace("RSS", std::unique_ptr<JsonDataValue>(new JsonDataValue(rss)));
+      status->emplace("VM", std::make_unique<JsonDataValue>(vm));
+      status->emplace("RSS", std::make_unique<JsonDataValue>(rss));
       root->emplace("status", std::move(status));
 #if DEBUG_STREAM_EVENTS_COUNT
 
@@ -231,13 +233,13 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
   }
 }
 
-bool Listener::isHandler(ctl::CtlTask &task) {
+bool ListenerManager::isHandler(ctl::CtlTask &task) {
   return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER || task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }
 
-Listener::Listener() : is_running(false), stream_manager_set() {}
+ListenerManager::ListenerManager() : is_running(false), stream_manager_set() {}
 
-Listener::~Listener() {
+ListenerManager::~ListenerManager() {
   Logger::logmsg(LOG_REMOVE, "Destructor");
   is_running = false;
   for (auto &sm : stream_manager_set) {
@@ -250,7 +252,7 @@ Listener::~Listener() {
 #endif
 }
 
-void Listener::doWork() {
+void ListenerManager::doWork() {
   while (is_running) {
     if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
       // something bad happend
@@ -260,13 +262,13 @@ void Listener::doWork() {
   Logger::logmsg(LOG_REMOVE, "Exiting loop");
 }
 
-void Listener::stop() {
+void ListenerManager::stop() {
   is_running = false;
   if (worker_thread.joinable()) worker_thread.join();
   ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
 
-void Listener::start() {
+void ListenerManager::start() {
   auto cm = ctl::ControlManager::getInstance();
   cm->attach(std::ref(*this));
   auto concurrency_level = std::thread::hardware_concurrency() < 2
@@ -333,7 +335,7 @@ void Listener::start() {
   doWork();
 }
 
-StreamManager *Listener::getManager(int fd) {
+StreamManager *ListenerManager::getManager(int fd) {
   static unsigned long c;
   ++c;
   unsigned long id = c % stream_manager_set.size();

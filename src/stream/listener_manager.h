@@ -43,7 +43,7 @@
  * attached to it.
  *
  */
-class Listener : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
+class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
   std::thread worker_thread;
   std::atomic<bool> is_running;
   std::map<int, StreamManager *> stream_manager_set;
@@ -58,8 +58,8 @@ class Listener : public EpollManager, public CtlObserver<ctl::CtlTask, std::stri
   StreamManager *getManager(int fd);
 
  public:
-  Listener();
-  ~Listener() final;
+  ListenerManager();
+  ~ListenerManager() final;
 
   /**
    * @brief Sets the listener connection address and port specified in the
