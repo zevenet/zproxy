@@ -25,7 +25,7 @@
 #include <climits>
 namespace events {
 
-EpollManager::EpollManager() : accept_fd(-1) {
+EpollManager::EpollManager() : accept_fd_set() {
   if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
     std::string error = "epoll_create(2) failed: ";
     error += std::strerror(errno);
@@ -83,25 +83,27 @@ bool EpollManager::deleteFd(int fd) {
 int EpollManager::loopOnce(int time_out) {
   int fd, i, ev_count = 0;
   ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
-  if (ev_count <= 0)
-    return ev_count;
+  if (ev_count <= 0) return ev_count;
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
+    auto event_group = static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff);
     if ((events[i].events & (EPOLLHUP | EPOLLERR)) != 0u) {
-      HandleEvent(fd, EVENT_TYPE::DISCONNECT,
-                  static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
+      HandleEvent(fd, EVENT_TYPE::DISCONNECT, event_group);
       continue;
     } else {
       if ((events[i].events & EPOLLIN) != 0u) {
-        if (fd == accept_fd) {
-          onConnectEvent(events[i]);
+        if (event_group == EVENT_GROUP::ACCEPTOR) {
+          for (auto accept_fd : accept_fd_set) {
+            if (fd == accept_fd) {
+              onConnectEvent(events[i]);
+            }
+          }
         } else {
           onReadEvent(events[i]);
         }
       }
-      if(events[i].events &  EPOLLRDHUP){
-        HandleEvent(fd, EVENT_TYPE::DISCONNECT,
-                    static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff));
+      if (events[i].events & EPOLLRDHUP) {
+        HandleEvent(fd, EVENT_TYPE::DISCONNECT, event_group);
         continue;
       }
       if ((events[i].events & EPOLLOUT) != 0u) {
@@ -110,13 +112,14 @@ int EpollManager::loopOnce(int time_out) {
     }
   }
 
-return ev_count;
+  return ev_count;
 }
 
 EpollManager::~EpollManager() { ::close(epoll_fd); }
 
 bool EpollManager::handleAccept(int listener_fd) {
-  accept_fd = listener_fd;
+  Logger::logmsg(LOG_DEBUG, "Adding listener fd: %d", listener_fd);
+  accept_fd_set.emplace_back(listener_fd);
   Network::setSocketNonBlocking(listener_fd);
   return addFd(listener_fd, EVENT_TYPE::ACCEPT, EVENT_GROUP::ACCEPTOR);
 }
@@ -173,5 +176,15 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
   }
 
   return true;
+}
+bool EpollManager::stopAccept(int listener_fd) {
+  for (auto it = accept_fd_set.begin(); it != accept_fd_set.end(); ) {
+    if ((*it) == listener_fd) {
+      accept_fd_set.erase(it++);
+    }else {
+      it++;
+    }
+  }
+  return this->deleteFd(listener_fd);
 }
 }; // namespace events

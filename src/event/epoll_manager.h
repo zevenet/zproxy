@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include <map>
-#include <mutex>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <mutex>
+#include <vector>
 
 namespace events {
 
@@ -96,7 +96,7 @@ class EpollManager {
   /** Epoll file descriptor. */
   int epoll_fd;
   // TODO: Documentar abdess
-  int accept_fd;
+  std::vector<int> accept_fd_set;
   /** Array of epoll_event. This array contains all the events. */
   epoll_event events[MAX_EPOLL_EVENT];
 
@@ -129,7 +129,7 @@ public:
    */
 
   bool handleAccept(int listener_fd);
-
+  bool stopAccept(int listener_fd);
   /**
    * @brief Adds a new event to the event manager with an unused @p fd.
    *
