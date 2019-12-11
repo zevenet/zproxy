@@ -140,6 +140,7 @@ else
 	$timetocheck   = $fg_conf->{ interval };
 	$check_cmd_tpl = $fg_conf->{ command };
 	$cutConns      = $fg_conf->{ cut_conns };
+	$useAlias      = $fg_conf->{ backend_alias } if ($useAlias ne 'true'); #
 	$logging       = 'enabled' if ( $fg_conf->{ log } eq 'true' );
 }
 

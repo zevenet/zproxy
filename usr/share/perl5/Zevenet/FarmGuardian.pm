@@ -79,7 +79,7 @@ Returns:
 		'interval'    => "10",     # Time between checks
 		'cut_conns' => "false",    # cut the connections with the backend is marked as down
 		'template'  => "false",    # it is a template. The fg cannot be deleted, only reset its configuration
-		'alias'     => "false",    # Use the backend alias to do the farmguardian check. The load balancer must resolve the alias
+		'backend_alias'     => "false",    # Use the backend alias to do the farmguardian check. The load balancer must resolve the alias
 	};
 
 =cut
@@ -96,7 +96,7 @@ sub getFGStruct
 		'interval'    => "10",     # Time between checks
 		'cut_conns' => "false", # cut the connections with the backend is marked as down
 		'template'  => "false",
-		'alias'     => "false",
+		'backend_alias' => "false",
 	};
 }
 
@@ -257,7 +257,7 @@ Returns:
 		'interval'    => "10",     # Time between checks
 		'cut_conns' => "false",    # cut the connections with the backend is marked as down
 		'template'  => "false",    # it is a template. The fg cannot be deleted, only reset its configuration
-		'alias'     => "false",    # Use the backend alias to do the farmguardian check. The load balancer must resolve the alias
+		'backend_alias'     => "false",    # Use the backend alias to do the farmguardian check. The load balancer must resolve the alias
 	};
 
 =cut
@@ -1033,7 +1033,6 @@ sub runFGFarmStart
 	my $status = 0;
 	my $log    = "";
 	my $sv     = "";
-	my $alias  = "";
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
@@ -1092,18 +1091,13 @@ sub runFGFarmStart
 			$log = "-l";
 		}
 
-		if ( exists $fg->{ alias } and $fg->{ alias } eq 'true' )
-		{
-			$alias = "-a";
-		}
-
 		if ( $svice ne "" )
 		{
 			$sv = "-s $svice";
 		}
 
 		my $farmguardian = &getGlobalConfiguration( 'farmguardian' );
-		my $fg_cmd       = "$farmguardian $farm $sv $log $alias";
+		my $fg_cmd       = "$farmguardian $farm $sv $log";
 
 		require Zevenet::Log;
 		$status = system ( "$fg_cmd >/dev/null 2>&1 &" );

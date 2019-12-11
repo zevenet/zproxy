@@ -39,15 +39,15 @@ sub getZapiFG
 
 	my $fg = &getFGObject( $fg_name );
 	my $out = {
-				'name'        => $fg_name,
-				'alias'       => $fg->{ alias } // 'false',
-				'description' => $fg->{ description },
-				'command'     => $fg->{ command },
-				'farms'       => $fg->{ farms },
-				'log'         => $fg->{ log } // 'false',
-				'interval'    => $fg->{ interval } + 0,
-				'cut_conns'   => $fg->{ cut_conns },
-				'template'    => $fg->{ template },
+				'name'          => $fg_name,
+				'backend_alias' => $fg->{ backend_alias } // 'false',
+				'description'   => $fg->{ description },
+				'command'       => $fg->{ command },
+				'farms'         => $fg->{ farms },
+				'log'           => $fg->{ log } // 'false',
+				'interval'      => $fg->{ interval } + 0,
+				'cut_conns'     => $fg->{ cut_conns },
+				'template'      => $fg->{ template },
 	};
 
 	return $out;
@@ -205,8 +205,8 @@ sub modify_farmguardian
 				   "cut_conns" => {
 									'valid_format' => 'boolean',
 				   },
-				   "alias" => {
-								'valid_format' => 'boolean',
+				   "backend_alias" => {
+										'valid_format' => 'boolean',
 				   },
 				   "force" => {
 								'valid_format' => 'boolean',
@@ -238,7 +238,7 @@ sub modify_farmguardian
 		 and not exists $json_obj->{ force }
 		 and $json_obj->{ force } ne 'true' )
 	{
-		if ( exists $json_obj->{ command } or exists $json_obj->{ alias } )
+		if ( exists $json_obj->{ command } or exists $json_obj->{ backend_alias } )
 		{
 			my $error_msg =
 			  "Farm guardian '$fgname' is running in: '$run_farms'. To apply, send parameter 'force'";
