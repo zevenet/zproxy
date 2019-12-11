@@ -28,6 +28,7 @@ struct JSON_OP_RESULT {
   static const std::string OK;
   static const std::string ERROR;
   static const std::string WRONG_JSON_FORMAT;
+  static const std::string EMPTY_OBJECT;
 };
 
 struct JSON_KEYS {
