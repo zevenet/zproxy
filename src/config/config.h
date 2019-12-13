@@ -91,7 +91,9 @@ class Config {
   size_t cur_fin;
   DH *DHCustom_params;
   int EC_nid;
-  static int listener_id_counter;
+  int listener_id_counter;
+  bool abort_on_error;
+
  public:
   int log_level;
   int def_facility;
@@ -195,14 +197,14 @@ public:
   ListenerConfig *listeners; /* all available listeners */
 
  public:
-  Config();
+  Config(bool _abort_on_error = false);
   ~Config();
 
   /*
    * prepare to parse the config file provided.
    */
   bool init(const global::StartOptions& start_options);
-
+  bool init(const std::string& file_name);
   bool found_parse_error{false};
   void setAsCurrent();
 };

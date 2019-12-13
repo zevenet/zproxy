@@ -30,30 +30,28 @@
 #include <cstddef>
 #include <syslog.h>
 #undef SYSLOG_NAMES
-#include "config.h"
 #include "../debug/logger.h"
 #include "../util/network.h"
+#include "config.h"
 #include "regex_manager.h"
+
 
 #ifdef WAF_ENABLED
 #include <modsecurity/rules.h>
 #endif
-int Config::listener_id_counter = 0;
-
-Config::Config() {
-  log_level = 1;
-  def_facility = LOG_DAEMON;
-  clnt_to = 10;
-  be_to = 15;
-  be_connto = 15;
-  dynscale = 0;
-  ignore_case = 0;
-  EC_nid = 0;  // NID_X9_62_prime256v1;
-  print_log = 0;
-  ctrl_mode = -1;
-  log_facility = -1;
-
-}
+Config::Config(bool _abort_on_error)
+    : clnt_to(10),
+      be_to(15),
+      be_connto(15),
+      dynscale(0),
+      ignore_case(0),
+      EC_nid(0),  // NID_X9_62_prime256v1;
+      abort_on_error(_abort_on_error),
+      log_level(5),
+      def_facility(LOG_DAEMON),
+      ctrl_mode(-1),
+      log_facility(-1),
+      print_log(0) {}
 
 Config::~Config() {}
 
@@ -222,8 +220,6 @@ void Config::parse_file() {
 
 
 bool Config::init(const global::StartOptions& start_options) {
-  int check_only;
-  check_only = 0;
   conf_file_name =start_options.conf_file_name.empty() ? F_CONF : start_options.conf_file_name;
   pid_name = start_options.pid_file_name.empty() ? F_PID : start_options.pid_file_name;
 
@@ -1668,8 +1664,9 @@ void Config::parseSession(ServiceConfig *const svc) {
 }
 
 void Config::conf_err(const char *msg) {
-  Logger::logmsg(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(), n_lin[cur_fin], msg);
-  //exit(EXIT_FAILURE);
+  Logger::logmsg(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
+                 n_lin[cur_fin], msg);
+  if (abort_on_error) exit(EXIT_FAILURE);
   this->found_parse_error = true;
 }
 
@@ -1783,4 +1780,40 @@ void Config::setAsCurrent() {
   global::run_options::getCurrent().backend_resurrect_timeout = alive_to;
   global::run_options::getCurrent().grace_time = grace;
   global::run_options::getCurrent().root_jail = root_jail;
+  global::StartOptions::getCurrent().conf_file_name = conf_file_name;
+}
+bool Config::init(const std::string &file_name) {
+  conf_file_name = file_name;
+
+  //init configuration file lists.
+  f_name[0] = std::string(conf_file_name);
+  if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
+    Logger::logmsg(LOG_ERR, "can't open open %s", conf_file_name.data());
+    return false;
+  }
+  n_lin[0] = 0;
+  cur_fin = 0;
+
+  DHCustom_params = nullptr;
+  numthreads = 0;
+  alive_to = 30;
+  daemonize = 1;
+  grace = 30;
+  ignore_100 = 1;
+  services = nullptr;
+  listeners = nullptr;
+#ifdef CACHE_ENABLED
+  cache_s = 0;
+  cache_thr = 0;
+#endif
+  parse_file();
+  if (listeners == nullptr) {
+    Logger::logmsg(LOG_ERR, "no listeners defined - aborted");
+    return false;
+  }
+
+  /* set the facility only here to ensure the syslog gets opened if necessary
+   */
+  log_facility = def_facility;
+  return !found_parse_error;
 }
