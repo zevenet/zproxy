@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   }
 
   ::openlog("zproxy", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
-  Config config;
+  Config config(true);
   Logger::logmsg(LOG_NOTICE, "zproxy starting...");
   auto start_options = global::StartOptions::parsePoundOption(argc,argv, true);
   auto parse_result = config.init(*start_options);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
 
   for (auto listener_conf = config.listeners; listener_conf != nullptr;
        listener_conf = listener_conf->next) {
-    if (!listener.init(std::shared_ptr<ListenerConfig>(listener_conf))) {
+    if (!listener.addListener(std::shared_ptr<ListenerConfig>(listener_conf))) {
       Logger::LogInfo("Error initializing listener socket", LOG_ERR);
       return EXIT_FAILURE;
     }

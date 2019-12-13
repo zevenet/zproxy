@@ -23,8 +23,11 @@
 
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
+#include "../event/epoll_manager.h"
 #include "../event/timer_fd.h"
 #include "../service/backend.h"
+#include "../service/service_manager.h"
+#include "../ssl/ssl_connection_manager.h"
 #include "http_request.h"
 #if WAF_ENABLED
 #include <modsecurity/modsecurity.h>
@@ -74,5 +77,5 @@ class HttpStream : public Counter<HttpStream> {
   /** This struct indicates the upgrade mechanism status. */
   UpgradeStatus upgrade;
 
-  std::shared_ptr<ListenerConfig> listener_config;
+  std::shared_ptr<ServiceManager> service_manager;
 };

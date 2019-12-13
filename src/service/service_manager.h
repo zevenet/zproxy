@@ -20,8 +20,6 @@
  */
 
 #pragma once
-
-#include "../http/http_request.h"
 #include "service.h"
 #include <map>
 #include <ostream>
@@ -32,22 +30,25 @@
  * @brief The ServiceManager class contains all the operations related with the
  * management of the services.
  */
-class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
+class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
+                       public std::enable_shared_from_this<ServiceManager> {
   std::vector<Service *> services;
+  static std::map<int, std::shared_ptr<ServiceManager>> instance;
 
  public:
   /** ListenerConfig from the listener related with all the services managed by
    * the class. */
   std::shared_ptr<ListenerConfig> listener_config_;
   /** ServiceManager instance. */
-  static std::map<int,std::shared_ptr<ServiceManager>>  instance;
-  static std::shared_ptr<ServiceManager> getInstance(std::shared_ptr<ListenerConfig>& listener_config);
+  static std::shared_ptr<ServiceManager> &getInstance(
+      std::shared_ptr<ListenerConfig> listener_config);
   static std::map<int,std::shared_ptr<ServiceManager>>& getInstance() ;
   explicit ServiceManager(std::shared_ptr<ListenerConfig> listener_config);
   ~ServiceManager() final;
+
   int id;
   std::string name;
-  std::atomic<bool> disabled;
+  std::atomic<bool> disabled{false};
   /**
    * @brief Gets the Service that handles the HttpRequest.
    *
@@ -75,7 +76,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string> {
    * @param id used to assign the new Service id.
    * @return @c false if there is any error, @c true if not.
    */
-  bool addService(ServiceConfig &service_config, int id);
+  bool addService(ServiceConfig &service_config, int _id);
 
   /**
    * @brief This function handles the @p tasks received with the API format.

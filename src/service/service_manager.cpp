@@ -26,16 +26,16 @@
 
 std::map<int,std::shared_ptr<ServiceManager>> ServiceManager::instance;
 
-std::shared_ptr<ServiceManager> ServiceManager::getInstance(
-    std::shared_ptr<ListenerConfig> &listener_config) {
-  if (instance[listener_config->id] == nullptr)
+std::shared_ptr<ServiceManager> &ServiceManager::getInstance(
+    std::shared_ptr<ListenerConfig> listener_config) {
+  auto it = instance.find(listener_config->id);
+  if ( it == instance.end())
     instance[listener_config->id] =
         std::make_shared<ServiceManager>(listener_config);
   return instance[listener_config->id];
 }
 
-std::map<int, std::shared_ptr<ServiceManager>> &ServiceManager::getInstance()
-{
+std::map<int, std::shared_ptr<ServiceManager>> &ServiceManager::getInstance() {
   return instance;
 }
 
@@ -43,15 +43,16 @@ ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
     : listener_config_(std::move(listener_config)),
       id(listener_config_->id),
       name(listener_config_->name),
-      disabled(listener_config_->disabled) {
+      disabled(listener_config_->disabled != 0) {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
 }
 
 ServiceManager::~ServiceManager() {
+  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
   for (auto srv : services) {
     delete srv;
   }
-  //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }
 
 Service *ServiceManager::getService(HttpRequest &request) {
@@ -68,9 +69,9 @@ Service *ServiceManager::getService(HttpRequest &request) {
 
 std::vector<Service *> ServiceManager::getServices() { return services; }
 
-bool ServiceManager::addService(ServiceConfig &service_config, int id) {
+bool ServiceManager::addService(ServiceConfig &service_config, int _id) {
   Service *service = new Service(service_config);
-  service->id = id;
+  service->id = _id;
   service->name = std::string(service_config.name);
   service->disabled = service_config.disabled;
   service->pinned_connection = service_config.pinned_connection == 1;
@@ -103,16 +104,24 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
               std::make_unique<JsonObject>();
           root->emplace(JSON_KEYS::ADDRESS, std::make_unique<JsonDataValue>(
                                                 listener_config_->address));
-          root->emplace(JSON_KEYS::PORT,
-                        std::make_unique<JsonDataValue>(listener_config_->port));
+          root->emplace(JSON_KEYS::PORT, std::make_unique<JsonDataValue>(
+                                             listener_config_->port));
           root->emplace(JSON_KEYS::ID,
                         std::make_unique<JsonDataValue>(listener_config_->id));
-          root->emplace(JSON_KEYS::HTTPS, std::make_unique<JsonDataValue>(
-                                              listener_config_->ctx != nullptr));
+          root->emplace(JSON_KEYS::HTTPS,
+                        std::make_unique<JsonDataValue>(listener_config_->ctx !=
+                                                        nullptr));
           root->emplace(JSON_KEYS::STATUS,
                         std::make_unique<JsonDataValue>(
                             this->disabled ? JSON_KEYS::STATUS_DOWN
                                            : JSON_KEYS::STATUS_ACTIVE));
+          root->emplace(JSON_KEYS::NAME, std::make_unique<JsonDataValue>(name));
+
+          auto sm = this->weak_from_this();
+          auto count = this->disabled ? sm.use_count() : sm.use_count() - 1;
+          root->emplace(JSON_KEYS::CONNECTIONS,
+                        std::make_unique<JsonDataValue>(count));
+
           auto services_array = std::make_unique<JsonArray>();
           for (auto service : services)
             services_array->emplace_back(service->getServiceJson());
@@ -159,13 +168,10 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
             if (value == JSON_KEYS::STATUS_ACTIVE ||
                 value == JSON_KEYS::STATUS_UP) {
               this->disabled = false;
-              this->listener_config_->disabled = false;  // TODO::remove
             } else if (value == JSON_KEYS::STATUS_DOWN) {
               this->disabled = true;
-              this->listener_config_->disabled = true;  // TODO::remove
             } else if (value == JSON_KEYS::STATUS_DISABLED) {
               this->disabled = true;
-              this->listener_config_->disabled = true;  // TODO::remove
             }
             Logger::logmsg(LOG_NOTICE, "Set Service %d %s", id, value.c_str());
             return JSON_OP_RESULT::OK;

@@ -22,8 +22,9 @@
 #include <chrono>
 #include <string>
 #include <unordered_map>
-#include "../http/http_stream.h"
+#include "../http/http_request.h"
 #include "../json/json_data_value.h"
+#include "../service/backend.h"
 
 using namespace std::chrono;
 
@@ -83,13 +84,15 @@ class HttpSessionManager {
   // return the created SessionInfo
   // must check if it already exist !!!
   bool addSession(JsonObject *json_object, std::vector<Backend *> backend_set);
-  SessionInfo *addSession(HttpStream &stream, Backend &backend_to_assign);
+  SessionInfo *addSession(Connection &source, HttpRequest &request,
+                          Backend &backend_to_assign);
   bool deleteSessionByKey(const std::string& key);
   bool deleteSession(const JsonObject &json_object);
-  void deleteSession(HttpStream &stream);
+  void deleteSession(Connection &source, HttpRequest &request);
   // return the assigned backend or nullptr if no session is found or sesssion
   // has expired
-  SessionInfo *getSession(HttpStream &stream, bool update_if_exist = false);
+  SessionInfo *getSession(Connection &source, HttpRequest &request,
+                          bool update_if_exist = false);
   std::unique_ptr<json::JsonArray> getSessionsJson();
   void deleteBackendSessions(int backend_id);
   void flushSessions();
@@ -101,6 +104,6 @@ class HttpSessionManager {
   static std::string getCookieValue(const std::string &cookie_header_value,
                                     std::string_view sess_id);
   static std::string getUrlParameter(const std::string &url);
-  std::string getSessionKey(HttpStream &stream);
+  std::string getSessionKey(Connection &source, HttpRequest &request);
 };
 }  // namespace sessions

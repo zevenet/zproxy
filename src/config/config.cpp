@@ -46,6 +46,7 @@ Config::Config(bool _abort_on_error)
       dynscale(0),
       ignore_case(0),
       EC_nid(0),  // NID_X9_62_prime256v1;
+      listener_id_counter(0),
       abort_on_error(_abort_on_error),
       log_level(5),
       def_facility(LOG_DAEMON),

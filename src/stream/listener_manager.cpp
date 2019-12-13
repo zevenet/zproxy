@@ -31,24 +31,25 @@
 #include "../handlers/waf.h"
 #endif
 #ifndef DEFAULT_MAINTENANCE_INTERVAL
-#define DEFAULT_MAINTENANCE_INTERVAL 2
+#define DEFAULT_MAINTENANCE_INTERVAL 30
 #endif
 #ifndef MALLOC_TRIM_TIMER_INTERVAL
-#define MALLOC_TRIM_TIMER_INTERVAL 300
+#define MALLOC_TRIM_TIMER_INTERVAL 3600
 #endif
 
-void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
+void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type,
+                                  EVENT_GROUP event_group) {
   if (event_group == EVENT_GROUP::MAINTENANCE) {
     if (fd == timer_maintenance.getFileDescriptor()) {
       // general maintenance timer
-      for (auto& lc : listener_config_set){
-        if(lc->disabled)
-          continue;
-        for(auto service : ServiceManager::getInstance(lc)->getServices()) {
-            service->doMaintenance();
+      for (auto &[sm_id, sm] : ServiceManager::getInstance()) {
+        if (sm->disabled) continue;
+        for (auto service : sm->getServices()) {
+          service->doMaintenance();
         }
       }
-      timer_maintenance.set(global::run_options::getCurrent().backend_resurrect_timeout * 1000);
+      timer_maintenance.set(
+          global::run_options::getCurrent().backend_resurrect_timeout * 1000);
       updateFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
                EVENT_GROUP::MAINTENANCE);
     }
@@ -64,15 +65,17 @@ void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP eve
       // release memory back to the system
       ::malloc_trim(0);
       timer_internal_maintenance.set(MALLOC_TRIM_TIMER_INTERVAL * 1000);
-      updateFd(timer_internal_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
+      updateFd(timer_internal_maintenance.getFileDescriptor(),
+               EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
     }
 #endif
     return;
-  } else if (event_group == EVENT_GROUP::SIGNAL && fd == signal_fd.getFileDescriptor()) {
+  } else if (event_group == EVENT_GROUP::SIGNAL &&
+             fd == signal_fd.getFileDescriptor()) {
     Logger::logmsg(LOG_DEBUG, "Received singal %x", signal_fd.getSignal());
     if (signal_fd.getSignal() == SIGTERM) {
-//      stop();
-//      exit(EXIT_SUCCESS);
+      //      stop();
+      //      exit(EXIT_SUCCESS);
     }
     return;
   }
@@ -98,11 +101,14 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
 #ifdef CACHE_ENABLED
       std::unique_ptr<JsonObject> cache_count{new JsonObject()};
 #endif
-      status->emplace("ClientConnection",
-                      std::make_unique<JsonDataValue>(Counter<ClientConnection>::count));
-      status->emplace("BackendConnection",
-                      std::make_unique<JsonDataValue>(Counter<BackendConnection>::count));
-      status->emplace("HttpStream", std::make_unique<JsonDataValue>(Counter<HttpStream>::count));
+      status->emplace(
+          "ClientConnection",
+          std::make_unique<JsonDataValue>(Counter<ClientConnection>::count));
+      status->emplace(
+          "BackendConnection",
+          std::make_unique<JsonDataValue>(Counter<BackendConnection>::count));
+      status->emplace("HttpStream", std::make_unique<JsonDataValue>(
+                                        Counter<HttpStream>::count));
       // root->emplace(JSON_KEYS::DEBUG, std::unique_ptr<JsonDataValue>(new
       // JsonDataValue(Counter<HttpStream>)));
       double vm, rss;
@@ -112,56 +118,75 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
       root->emplace("status", std::move(status));
 #if DEBUG_STREAM_EVENTS_COUNT
 
-      clients_stats->emplace("on_client_connect", std::unique_ptr<JsonDataValue>(
-                                                      new JsonDataValue(Counter<debug__::on_client_connect>::count)));
+      clients_stats->emplace("on_client_connect",
+                             std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                 Counter<debug__::on_client_connect>::count)));
       backends_stats->emplace(
           "on_backend_connect",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_backend_connect>::count)));
+          std::unique_ptr<JsonDataValue>(
+              new JsonDataValue(Counter<debug__::on_backend_connect>::count)));
       backends_stats->emplace(
           "on_backend_connect_timeout",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_backend_connect_timeout>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<debug__::on_backend_connect_timeout>::count)));
       ssl_stats->emplace("on_handshake",
-                         std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_handshake>::count)));
+                         std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                             Counter<debug__::on_handshake>::count)));
       clients_stats->emplace("on_request",
-                             std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_request>::count)));
+                             std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                 Counter<debug__::on_request>::count)));
       backends_stats->emplace("on_response",
-                              std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_response>::count)));
-      clients_stats->emplace("on_request_timeout", std::unique_ptr<JsonDataValue>(
-                                                       new JsonDataValue(Counter<debug__::on_request_timeout>::count)));
+                              std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                  Counter<debug__::on_response>::count)));
+      clients_stats->emplace("on_request_timeout",
+                             std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                 Counter<debug__::on_request_timeout>::count)));
       backends_stats->emplace(
           "on_response_timeout",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_response_timeout>::count)));
-      backends_stats->emplace("on_send_request", std::unique_ptr<JsonDataValue>(
-                                                     new JsonDataValue(Counter<debug__::on_send_request>::count)));
-      clients_stats->emplace("on_send_response", std::unique_ptr<JsonDataValue>(
-                                                     new JsonDataValue(Counter<debug__::on_send_response>::count)));
+          std::unique_ptr<JsonDataValue>(
+              new JsonDataValue(Counter<debug__::on_response_timeout>::count)));
+      backends_stats->emplace("on_send_request",
+                              std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                  Counter<debug__::on_send_request>::count)));
+      clients_stats->emplace("on_send_response",
+                             std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                 Counter<debug__::on_send_response>::count)));
       clients_stats->emplace(
           "on_client_disconnect",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_client_disconnect>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<debug__::on_client_disconnect>::count)));
       backends_stats->emplace(
           "on_backend_disconnect",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::on_backend_disconnect>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<debug__::on_backend_disconnect>::count)));
 
-      events_count->emplace(
-          "client_read", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::event_client_read>::count)));
-      events_count->emplace("client_write", std::unique_ptr<JsonDataValue>(
-                                                new JsonDataValue(Counter<debug__::event_client_write>::count)));
+      events_count->emplace("client_read",
+                            std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                Counter<debug__::event_client_read>::count)));
+      events_count->emplace("client_write",
+                            std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                Counter<debug__::event_client_write>::count)));
       events_count->emplace(
           "client_disconnect",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::event_client_disconnect>::count)));
-      events_count->emplace("backend_read", std::unique_ptr<JsonDataValue>(
-                                                new JsonDataValue(Counter<debug__::event_backend_read>::count)));
-      events_count->emplace("backend_write", std::unique_ptr<JsonDataValue>(
-                                                 new JsonDataValue(Counter<debug__::event_backend_write>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<debug__::event_client_disconnect>::count)));
+      events_count->emplace("backend_read",
+                            std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                Counter<debug__::event_backend_read>::count)));
+      events_count->emplace("backend_write",
+                            std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                Counter<debug__::event_backend_write>::count)));
       events_count->emplace(
           "backend_disconnect",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::event_backend_disconnect>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<debug__::event_backend_disconnect>::count)));
 
       events_count->emplace("event_connect",
-                            std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::event_connect>::count)));
-      events_count->emplace(
-          "event_connect_failed",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<debug__::event_connect_fail>::count)));
+                            std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                Counter<debug__::event_connect>::count)));
+      events_count->emplace("event_connect_failed",
+                            std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                                Counter<debug__::event_connect_fail>::count)));
 #ifdef CACHE_ENABLED
 #if MEMCACHED_ENABLED == 1
       RamICacheStorage *ram_storage = MemcachedStorage::getInstance();
@@ -174,28 +199,41 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
       int ram_used = (ram_storage->current_size);
       int disk_used = (disk_storage->current_size);
 
-      cache_count->emplace(
-          "cache_hit", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<cache_stats__::cache_match>::count)));
+      cache_count->emplace("cache_hit",
+                           std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                               Counter<cache_stats__::cache_match>::count)));
       cache_count->emplace(
           "cache_ram_entries",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<cache_stats__::cache_RAM_entries>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<cache_stats__::cache_RAM_entries>::count)));
       cache_count->emplace(
           "cache_disk_entries",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<cache_stats__::cache_DISK_entries>::count)));
-      cache_count->emplace("cache_staled", std::unique_ptr<JsonDataValue>(
-                                               new JsonDataValue(Counter<cache_stats__::cache_staled_entries>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<cache_stats__::cache_DISK_entries>::count)));
       cache_count->emplace(
-          "cache_miss", std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<cache_stats__::cache_miss>::count)));
-      cache_count->emplace("cache_ram_free", std::unique_ptr<JsonDataValue>(new JsonDataValue(ram_free)));
-      cache_count->emplace("cache_ram_usage", std::unique_ptr<JsonDataValue>(new JsonDataValue(ram_used)));
-      cache_count->emplace("cache_disk_usage", std::unique_ptr<JsonDataValue>(new JsonDataValue(disk_used)));
+          "cache_staled",
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<cache_stats__::cache_staled_entries>::count)));
+      cache_count->emplace("cache_miss",
+                           std::unique_ptr<JsonDataValue>(new JsonDataValue(
+                               Counter<cache_stats__::cache_miss>::count)));
+      cache_count->emplace("cache_ram_free", std::unique_ptr<JsonDataValue>(
+                                                 new JsonDataValue(ram_free)));
+      cache_count->emplace("cache_ram_usage", std::unique_ptr<JsonDataValue>(
+                                                  new JsonDataValue(ram_used)));
+      cache_count->emplace(
+          "cache_disk_usage",
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(disk_used)));
       cache_count->emplace("cache_ram_mountpoint",
-                           std::unique_ptr<JsonDataValue>(new JsonDataValue(ram_storage->mount_path)));
+                           std::unique_ptr<JsonDataValue>(
+                               new JsonDataValue(ram_storage->mount_path)));
       cache_count->emplace("cache_disk_mountpoint",
-                           std::unique_ptr<JsonDataValue>(new JsonDataValue(disk_storage->mount_path)));
+                           std::unique_ptr<JsonDataValue>(
+                               new JsonDataValue(disk_storage->mount_path)));
       cache_count->emplace(
           "cache_responses_not_stored",
-          std::unique_ptr<JsonDataValue>(new JsonDataValue(Counter<cache_stats__::cache_not_stored>::count)));
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(
+              Counter<cache_stats__::cache_not_stored>::count)));
       root->emplace("cache", std::move(cache_count));
 #endif
       root->emplace("events", std::move(events_count));
@@ -204,8 +242,10 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
       root->emplace("ssl", std::move(ssl_stats));
 
 #if ENABLE_SSL_SESSION_CACHING
-      root->emplace("SESSION list size", std::unique_ptr<JsonDataValue>(new JsonDataValue(static_cast<int>(
-                                             ssl::SslSessionManager::getInstance()->sessions.size()))));
+      root->emplace(
+          "SESSION list size",
+          std::unique_ptr<JsonDataValue>(new JsonDataValue(static_cast<int>(
+              ssl::SslSessionManager::getInstance()->sessions.size()))));
 #endif
 #endif
 
@@ -227,20 +267,29 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
 
       return root->stringify();
     }
+    case ctl::CTL_SUBJECT::CONFIG: {
+      if (task.command == ctl::CTL_COMMAND::UPDATE) {
+        reloadConfigFile();
+        return JSON_OP_RESULT::OK;
+      }
+      break;
+    }
     default: {
-      return JSON_OP_RESULT::ERROR;
+      break;
     }
   }
+  return JSON_OP_RESULT::ERROR;
 }
 
 bool ListenerManager::isHandler(ctl::CtlTask &task) {
-  return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER_MANAGER || task.target == ctl::CTL_HANDLER_TYPE::ALL);
+  return (task.target == ctl::CTL_HANDLER_TYPE::LISTENER_MANAGER ||
+          task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }
 
 ListenerManager::ListenerManager() : is_running(false), stream_manager_set() {}
 
 ListenerManager::~ListenerManager() {
-  Logger::logmsg(LOG_REMOVE, "Destructor");
+  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
   is_running = false;
   for (auto &sm : stream_manager_set) {
     sm.second->stop();
@@ -280,42 +329,14 @@ void ListenerManager::start() {
   for (int sm = 0; sm < num_threads; sm++) {
     stream_manager_set[sm] = new StreamManager();
   }
-  int service_id = 0;
-  for(auto& listener_config_item : listener_config_set) {
-    if(listener_config_item->disabled) continue;
-    for (auto service_config = listener_config_item->services;
-         service_config != nullptr; service_config = service_config->next) {
-      if (!service_config->disabled) {
-        ServiceManager::getInstance(listener_config_item)
-            ->addService(*service_config, service_id++);
-      } else {
-        Logger::logmsg(LOG_NOTICE,
-                       " (%s) service %s disabled in config file ",
-                       listener_config_item->name.data(),
-                       service_config->name.data());
-      }
-    }
-  }
 #ifdef ENABLE_HEAP_PROFILE
   HeapProfilerStart("/tmp/zproxy");
 #endif
   is_running = true;
-  for (int i = 0; i < stream_manager_set.size(); i++) {
+  for (size_t i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
-      for (auto &listener_config : listener_config_set) {
-        if(listener_config->disabled)
-          continue;
-        if (!sm->registerListener(listener_config)) {
-          Logger::logmsg(LOG_ERR,
-                         "Error initializing StreamManager for farm %s",
-                         listener_config->name.data());
-          exit(EXIT_FAILURE);
-        }
-      }
       sm->start(i);
-    } else {
-      Logger::logmsg(LOG_ERR, "StreamManager id: %d doesn't exist  ", i);
     }
   }
   //  signal_fd.init();
@@ -324,13 +345,15 @@ void ListenerManager::start() {
       (alive_to > 0 ? alive_to : DEFAULT_MAINTENANCE_INTERVAL) * 1000);
   //  addFd(signal_fd.getFileDescriptor(), EVENT_TYPE::READ,
   //  EVENT_GROUP::SIGNAL);
-  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
+  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+        EVENT_GROUP::MAINTENANCE);
   ssl_maintenance_timer.set(T_RSA_KEYS * 1000);
   addFd(ssl_maintenance_timer.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
         EVENT_GROUP::MAINTENANCE);
 #if MALLOC_TRIM_TIMER
   timer_internal_maintenance.set(MALLOC_TRIM_TIMER_INTERVAL * 1000);
-  addFd(timer_internal_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
+  addFd(timer_internal_maintenance.getFileDescriptor(),
+        EVENT_TYPE::READ_ONESHOT, EVENT_GROUP::MAINTENANCE);
 #endif
   //  helper::ThreadHelper::setThreadAffinity(
   //      0, pthread_self());  // worker_thread.native_handle());
@@ -345,13 +368,87 @@ StreamManager *ListenerManager::getManager(int fd) {
   return stream_manager_set[id];
 }
 
-bool ListenerManager::init(std::shared_ptr<ListenerConfig> config) {
-#if WAF_ENABLED
-  config->modsec = std::make_shared<modsecurity::ModSecurity>();
-  config->modsec->setConnectorInformation(
-      "zproxy_" + config->name + "_connector");
-  config->modsec->setServerLogCb(Waf::logModsec);
-#endif
-  listener_config_set.push_back(std::move(config));
+bool ListenerManager::addListener(
+    std::shared_ptr<ListenerConfig> listener_config) {
+  int service_id = 0;
+  for (auto service_config = listener_config->services;
+       service_config != nullptr; service_config = service_config->next) {
+    if (!service_config->disabled) {
+      ServiceManager::getInstance(listener_config)
+          ->addService(*service_config, service_id++);
+    } else {
+      Logger::logmsg(LOG_NOTICE, " (%s) listener %s disabled in config file ",
+                     listener_config->name.data(), service_config->name.data());
+    }
+  }
+  return true;
+}
+
+bool ListenerManager::reloadConfigFile() {
+  Config config;
+  if (!config.init(global::run_options::getCurrent().config_file_name)) {
+    Logger::logmsg(LOG_NOTICE, "Error loading configuration file %s",
+                   global::run_options::getCurrent().config_file_name.data());
+    return false;
+  }
+  // register new listeners
+  Logger::log_level = config.log_level;
+  if (config.listeners == nullptr)
+    Logger::logmsg(LOG_NOTICE, "Error getting listener configurations");
+
+  // clear and stop old config
+  auto &sm_set = ServiceManager::getInstance();
+  for (auto it = sm_set.begin(); it != sm_set.end();) {
+    // stop the listener in all stream workers
+    it->second->disabled = true;
+    for (auto &[sm_id, sm] : stream_manager_set) {
+      sm->stopListener((it->second)->id);
+    }
+    // remove Listener from StreamManager set
+    sm_set[(it->second)->id] = nullptr;
+    it = sm_set.erase(it);
+  }
+  // create new instances with new configuration, connections may be lost during
+  // this switch
+  for (auto lc = config.listeners; lc != nullptr; lc = lc->next) {
+    auto listener_config = std::shared_ptr<ListenerConfig>(lc);
+    auto sm = ServiceManager::getInstance(listener_config);
+    if (lc->disabled) continue;
+    int service_id = 0;
+    for (auto service_config = lc->services; service_config != nullptr;
+         service_config = service_config->next) {
+      if (!service_config->disabled) {
+        sm->addService(*service_config, service_id++);
+      } else {
+        Logger::logmsg(LOG_NOTICE, " (%s) service %s disabled in config file ",
+                       lc->name.data(), service_config->name.data());
+      }
+    }
+  }
+
+  for (size_t i = 0; i < stream_manager_set.size(); i++) {
+    auto sm = stream_manager_set[i];
+    if (sm != nullptr) {
+      for (auto &[svm_id, svm] : ServiceManager::getInstance()) {
+        if (svm->disabled) continue;
+        if (!sm->registerListener(svm)) {
+          Logger::logmsg(LOG_ERR,
+                         "Error initializing StreamManager for farm %s",
+                         svm->listener_config_->name.data());
+          return false;
+        }
+      }
+    } else {
+      Logger::logmsg(LOG_ERR, "StreamManager id: %d doesn't exist  ", i);
+    }
+  }
+  // update maintenance timeouts
+  this->deleteFd(timer_maintenance.getFileDescriptor());
+  global::run_options::getCurrent().backend_resurrect_timeout = config.alive_to;
+  timer_maintenance.set(
+      (config.alive_to > 0 ? config.alive_to : DEFAULT_MAINTENANCE_INTERVAL) *
+      1000);
+  addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
+        EVENT_GROUP::MAINTENANCE);
   return true;
 }

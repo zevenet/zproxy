@@ -47,6 +47,7 @@ struct run_options {
   // TODO::To implement
   int grace_time{30};    /* Grace time before forcing shutdown */
   std::string root_jail; /* directory to chroot to */
+  std::string config_file_name;
  private:
   static struct run_options current;
 };

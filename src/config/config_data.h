@@ -141,7 +141,7 @@ struct POUND_CTX {
 /* Listener definition */
 struct ListenerConfig {
   std::string name;
-  int id;
+  int id{0};
   std::string address;
   int port;
   addrinfo addr{};         /* IPv4/6 address */
@@ -172,7 +172,7 @@ struct ListenerConfig {
   int rewr_dest{0};                    /* rewrite destination header */
   int rewr_host{0};                    /* rewrite host header */
   std::string ssl_config_section;      /* OpenSSL config section */
-  int disabled;                        /* true if the listener is disabled */
+  int disabled{0};                        /* true if the listener is disabled */
   int log_level;                       /* log level for this listener */
   int allow_client_reneg;              /* Allow Client SSL Renegotiation */
   int disable_ssl_v2;                  /* Disable SSL version 2 */

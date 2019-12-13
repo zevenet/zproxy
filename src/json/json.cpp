@@ -28,6 +28,7 @@ const std::string JSON_OP_RESULT::OK = "{\"result\":\"ok\"}";
 const std::string JSON_OP_RESULT::ERROR = "{\"result\":\"error\"}";
 const std::string JSON_OP_RESULT::WRONG_JSON_FORMAT = "{\"result\":\"error\",\"description\":\"wrong json format\"}";
 const std::string JSON_OP_RESULT::EMPTY_OBJECT = "{}";
+const std::string JSON_OP_RESULT::NONE = "";
 
 // JSON_KEYS
 const std::string JSON_KEYS::LISTENER = "listener";

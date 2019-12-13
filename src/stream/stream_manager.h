@@ -111,7 +111,7 @@ using namespace http;
 
 /**
  * @class StreamManager StreamManager.h "src/stream/StreamManager.h"
- * @brief Manage the streams and the operations related with them.
+ * @brief Manage the streams and the operations related with them.CtlObserver
  *
  * It is event-driven and in order to accomplish that it inherits from
  * EpollManager. This class is the main core of the project, managing all the
@@ -128,9 +128,8 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
 
   int worker_id{};
   std::thread worker;
-  std::shared_ptr<ServiceManager> service_manager{};
   ssl::SSLConnectionManager * ssl_manager{};
-  std::map<int, std::shared_ptr<ListenerConfig>> listener_config_set;
+  std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
   std::atomic<bool> is_running{};
   std::unordered_map<int, HttpStream *> streams_set;
   std::unordered_map<int, HttpStream *> timers_set;
@@ -153,7 +152,7 @@ public:
    * @param fd is the file descriptor to add.
    * @param listener_config of the accepted connection to add.
    */
-  void addStream(int fd, std::shared_ptr<ListenerConfig>& listener_config);
+  void addStream(int fd, std::shared_ptr<ServiceManager> service_manager);
 
   /**
    * @brief Returns the worker id associated to the StreamManager.
@@ -175,7 +174,7 @@ public:
    * @param listener_config from the configuration file.
    * @returns @c true if everything is fine.
    */
-  bool registerListener(std::shared_ptr<ListenerConfig> listener_config);
+  bool registerListener(std::weak_ptr<ServiceManager> service_manager);
 
   /**
    * @brief Starts the StreamManager event manager.
@@ -313,5 +312,3 @@ public:
   /** True if the listener is HTTPS, false if not. */
   bool is_https_listener;
 };
-
-

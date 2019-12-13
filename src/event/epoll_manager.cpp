@@ -178,13 +178,14 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
   return true;
 }
 bool EpollManager::stopAccept(int listener_fd) {
+  this->deleteFd(listener_fd);
   for (auto it = accept_fd_set.begin(); it != accept_fd_set.end(); ) {
     if ((*it) == listener_fd) {
-      accept_fd_set.erase(it++);
+      it = accept_fd_set.erase(it);
     }else {
       it++;
     }
   }
-  return this->deleteFd(listener_fd);
+  return true;
 }
 }; // namespace events

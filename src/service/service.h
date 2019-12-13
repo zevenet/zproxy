@@ -24,7 +24,6 @@
 #include "../connection/connection.h"
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
-#include "../http/http_request.h"
 #include "../json/json_data_value_types.h"
 #include "backend.h"
 #include "http_session_manager.h"
@@ -103,7 +102,7 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
    * for it.
    * @return always a Backend. A new one or the associated to the session.
    */
-  Backend *getBackend(HttpStream &stream);
+  Backend *getBackend(Connection &source, HttpRequest &request);
   explicit Service(ServiceConfig &service_config_);
   ~Service() final;
 

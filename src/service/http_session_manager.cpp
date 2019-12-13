@@ -30,10 +30,11 @@ HttpSessionManager::~HttpSessionManager() {
   }
 }
 
-SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
+SessionInfo *HttpSessionManager::addSession(Connection &source,
+                                            HttpRequest &request,
                                             Backend &backend_to_assign) {
   if (this->session_type == sessions::SESS_NONE) return nullptr;
-  std::string key = getSessionKey(stream);
+  std::string key = getSessionKey(source, request);
   // check if we have a new key to insert,
   if (!key.empty()) {
     auto new_session = new SessionInfo();
@@ -45,17 +46,19 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
   return nullptr;
 }
 
-void HttpSessionManager::deleteSession(HttpStream &stream) {
+void HttpSessionManager::deleteSession(Connection &source,
+                                       HttpRequest &request) {
   std::lock_guard<std::recursive_mutex> locker(lock_mtx);
-  auto session_key = getSessionKey(stream);
+  auto session_key = getSessionKey(source, request);
   if (!session_key.empty()) {
     deleteSessionByKey(session_key);
   }
 }
 
-SessionInfo *HttpSessionManager::getSession(HttpStream &stream,
+SessionInfo *HttpSessionManager::getSession(Connection &source,
+                                            HttpRequest &request,
                                             bool update_if_exist) {
-  std::string session_key = getSessionKey(stream);
+  std::string session_key = getSessionKey(source, request);
   if (session_key.empty()) return nullptr;
   auto session_it = sessions_set.find(session_key);
   if (session_it == sessions_set.end()) return nullptr;
@@ -216,18 +219,19 @@ bool HttpSessionManager::deleteSessionByKey(const std::string &key) {
   sessions_set.erase(it);
   return true;
 }
-std::string HttpSessionManager::getSessionKey(HttpStream &stream) {
+std::string HttpSessionManager::getSessionKey(Connection &source,
+                                              HttpRequest &request) {
   std::string session_key;
   switch (session_type) {
     case sessions::SESS_NONE:
       break;
     case sessions::SESS_IP: {
-      session_key = stream.client_connection.getPeerAddress();
+      session_key = source.getPeerAddress();
       break;
     }
     case sessions::SESS_COOKIE: {
-      if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE,
-                                         session_key)) {
+      if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE,
+                                  session_key)) {
         session_key = "";
       } else {
         session_key = getCookieValue(session_key, sess_id);
@@ -235,25 +239,25 @@ std::string HttpSessionManager::getSessionKey(HttpStream &stream) {
       break;
     }
     case sessions::SESS_URL: {
-      std::string url = stream.request.getUrl();
+      std::string url = request.getUrl();
       session_key = getQueryParameter(url, sess_id);
       break;
     }
     case sessions::SESS_PARM: {
-      std::string url = stream.request.getUrl();
+      std::string url = request.getUrl();
       session_key = getUrlParameter(url);
       break;
     }
     case sessions::SESS_HEADER: {
       std::string sess_key;
-      if (!stream.request.getHeaderValue(sess_id, sess_key)) {
+      if (!request.getHeaderValue(sess_id, sess_key)) {
         sess_key = "";
       }
       break;
     }
     case sessions::SESS_BASIC: {
-      if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION,
-                                         session_key)) {
+      if (!request.getHeaderValue(http::HTTP_HEADER_NAME::AUTHORIZATION,
+                                  session_key)) {
         session_key = "";
       } else {
         std::stringstream string_to_iterate(session_key);

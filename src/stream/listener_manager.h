@@ -47,7 +47,7 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
   std::thread worker_thread;
   std::atomic<bool> is_running;
   std::map<int, StreamManager *> stream_manager_set;
-  std::vector<std::shared_ptr<ListenerConfig>> listener_config_set;
+  //  std::vector<std::shared_ptr<ListenerConfig>> listener_config_set;
   TimerFd timer_maintenance;
   TimerFd ssl_maintenance_timer;
 #if MALLOC_TRIM_TIMER
@@ -71,7 +71,7 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
    * @param config is the ListenerConfig to use by the listener.
    * @return @c false if there is any error, if not @c true.
    */
-  bool init(std::shared_ptr<ListenerConfig> config);
+  bool addListener(std::shared_ptr<ListenerConfig> listener_config);
 
   /**
    * @brief Starts the Listener event manager.
@@ -113,4 +113,11 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
    * @return true if should handle the task, false if not.
    */
   bool isHandler(ctl::CtlTask &task) override;
+  /**
+ * @brief Reload the listeners config from the current loaded configuration file.
+ *
+ * @param task to check.
+ * @return true if reload succeded compeletely.
+ */
+  bool reloadConfigFile();
 };

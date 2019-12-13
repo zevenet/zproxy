@@ -23,17 +23,17 @@
 #include "../util/network.h"
 #include <numeric>
 
-Backend *Service::getBackend(HttpStream &stream) {
+Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   if (backend_set.empty()) return getEmergencyBackend();
 
   if (session_type != sessions::SESS_NONE) {
-    auto session = getSession(stream);
+    auto session = getSession(source, request);
     if (session != nullptr) {
       if(session->assigned_backend->status != BACKEND_STATUS::BACKEND_UP)
       {
         //invalidate all sessions backend is down
         deleteBackendSessions(session->assigned_backend->backend_id);
-        return getBackend(stream);
+        return getBackend(source, request);
       }
       session->update();
       return session->assigned_backend;
@@ -42,7 +42,7 @@ Backend *Service::getBackend(HttpStream &stream) {
       // need to set a new backend server for the newly created session!!!!
       Backend *new_backend = nullptr;
       if ((new_backend = getNextBackend()) != nullptr) {
-        session = addSession(stream, *new_backend);
+        session = addSession(source, request, *new_backend);
         if (session == nullptr) {
           Logger::logmsg(LOG_DEBUG, "Error adding new session, session info not found in request");
         }
