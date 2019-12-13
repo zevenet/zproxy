@@ -26,11 +26,19 @@
 template <typename T, typename IResponse>
 class CtlObserver {
  public:
-  CtlObserver() = default;
+  uint64_t __id__;
+  CtlObserver() {
+    static uint64_t id;
+    id++;
+    this->__id__ = id;
+  }
   virtual ~CtlObserver() = default;
   virtual IResponse handleTask(T &arg) = 0;
   static IResponse handle(T arg, CtlObserver<T, IResponse> &obj) { return obj.handleTask(arg); }
   virtual bool isHandler(T &arg) = 0;
+  bool operator==(const CtlObserver& rhs) {
+    return this->__id__ == rhs.__id__;
+  }
 };
 template <typename T, typename IResponse>
 class CtlNotify {
@@ -39,20 +47,39 @@ class CtlNotify {
 
  public:
   void attach(CtlObserver<T, IResponse> &listener) {
+    Logger::logmsg(LOG_ERR, "Attaching id: %d observer", listener.__id__);
     observers.push_back(&listener);
     onAttach(listener);
   }
   void deAttach(CtlObserver<T, IResponse> &listener) {
-    // TODO:: how to do this    observers.erase(&listener);
+    for (auto it = observers.begin(); it != observers.end();) {
+      if(*it == nullptr){
+        Logger::logmsg(LOG_ERR, "Removing null observer");
+        it = observers.erase(it);
+        continue;
+      }else if(*(*it) == listener){
+        Logger::logmsg(LOG_ERR, "deAttaching id: %d observer", listener.__id__);
+        it = observers.erase(it);
+        break;
+      }
+      it++;
+    }
   }
 
   std::vector<std::future<IResponse>> notify(T arg, bool lazy_eval = false) {
     std::vector<std::future<IResponse>> result_future;
-    for (auto receiver : observers) {
-      if (receiver->isHandler(arg)) {
-        result_future.push_back(std::async(lazy_eval ? std::launch::deferred : std::launch::async, receiver->handle,
-                                           arg, std::ref(*receiver)));
+    for (auto it = observers.begin(); it != observers.end();) {
+
+      if(*it == nullptr){
+        Logger::logmsg(LOG_REMOVE, "observer not found, removing");
+        it = observers.erase(it);
+        continue;
       }
+      if ((*it)->isHandler(arg)) {
+        result_future.push_back(std::async(lazy_eval ? std::launch::deferred : std::launch::async, (*it)->handle,
+                                           arg, std::ref(*(*it))));
+      }
+      it++;
     }
     return result_future;
   }
