@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Log;
 
 =begin nd
 Function: getHttpServerPort

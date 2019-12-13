@@ -44,7 +44,8 @@ See Also:
 
 sub getCodeEncode
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $clear_msg = shift;    # output
 	my $encode_msg;
 
@@ -94,7 +95,8 @@ See Also:
 
 sub getCodeDecode
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $encode_msg = shift;
 	my $clear_msg;    # output
 
@@ -141,7 +143,8 @@ Returns:
 
 sub setCryptString
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $clearString = shift;
 
 	require Crypt::CBC;
@@ -170,14 +173,15 @@ Returns:
 
 sub validateCryptString
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $encryptString = shift;
 	my $clearString   = shift;
 
 	require Crypt::CBC;
 
-	my $decrypt       = '';
-	my $out           = 0;
+	my $decrypt = '';
+	my $out     = 0;
 
 	my $cipher = Crypt::CBC->new( -key    => $crypt_key,
 								  -cipher => 'Blowfish', );
@@ -196,18 +200,6 @@ sub validateCryptString
 	}
 
 	return $out;
-}
-
-sub migrate_zapi_to_52
-{
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
-	require Zevenet::Config;
-
-	my $zapikey = &getGlobalConfiguration( 'zapikey' );
-
-	$zapikey = &setCryptString( $zapikey );
-
-	&setGlobalConfiguration( 'zapikey', $zapikey );
 }
 
 1;

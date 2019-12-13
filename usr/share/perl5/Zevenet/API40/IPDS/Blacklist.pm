@@ -101,7 +101,7 @@ sub add_blacklists_list
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -269,7 +269,7 @@ sub set_blacklists_list
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -564,7 +564,7 @@ sub actions_blacklists
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -733,7 +733,7 @@ sub add_blacklists_source
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -827,7 +827,7 @@ sub set_blacklists_source
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -922,7 +922,7 @@ sub add_blacklists_to_farm
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 

@@ -123,7 +123,7 @@ General {
 \t\tBacklog 20
 \t}
 \tNetlinkBufferSize 2097152
-\tNetlinkBufferSizeMaxGrowth 8388608
+\tNetlinkBufferSizeMaxGrowth 33554432
 $systemd_policy
 \tFilter From Kernelspace {
 \t\tProtocol Accept {

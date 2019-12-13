@@ -131,7 +131,7 @@ sub modify_cluster
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -257,7 +257,7 @@ sub set_cluster_actions
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -475,7 +475,7 @@ sub enable_cluster
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 

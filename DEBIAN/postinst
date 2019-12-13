@@ -173,6 +173,11 @@ if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
 	fi
 fi
 
+# Reconfigure APT repo for add zcmc source list
+if [ $BM_tag -eq 0 ]; then
+	echo "" | /usr/local/zevenet/bin/enterprise.bin Zevenet::Apt setAPTRepo >/dev/null
+fi
+
 ## Run checkupgrades to update message
 if [ $BM_tag -eq 0 ]; then
 	$checkupgrades_bin > /dev/null

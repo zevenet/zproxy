@@ -27,6 +27,24 @@ my $farm_re  = &getValidFormat( 'farm_name' );
 my $set_name = &getValidFormat( 'waf_set_name' );
 my $rule_id  = &getValidFormat( 'waf_rule_id' );
 my $index    = &getValidFormat( 'waf_chain_id' );
+my $file     = &getValidFormat( 'waf_file' );
+
+if ( $ENV{ PATH_INFO } =~ qr{^/ipds/waf/files} )
+{
+	my $mod = 'Zevenet::API40::IPDS::WAF::Files';
+
+	#  GET /ipds/waf/files
+	GET qr{^/ipds/waf/files$}, 'list_waf_file', $mod;
+
+	#  GET /ipds/waf/files/<file>
+	GET qr{^/ipds/waf/files/($file)$}, 'get_waf_file', $mod;
+
+	#  PUT /ipds/waf/files/<file>
+	PUT qr{^/ipds/waf/files/($file)$}, 'create_waf_file', $mod;
+
+	#  DELETE /ipds/waf/files/<file>
+	DELETE qr{^/ipds/waf/files/($file)$}, 'delete_waf_file', $mod;
+}
 
 if ( $ENV{ PATH_INFO } =~ qr{^/ipds/waf/$set_name/rules} )
 {

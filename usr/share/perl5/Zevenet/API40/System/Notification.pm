@@ -73,7 +73,7 @@ sub set_notif_methods
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -148,7 +148,7 @@ sub set_notif_alert
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -188,7 +188,7 @@ sub set_notif_alert_actions
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -236,7 +236,7 @@ sub send_test_mail
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 

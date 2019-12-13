@@ -23,9 +23,10 @@
 use strict;
 
 # POST /farms/FARM/certificates (Add certificate to farm)
-sub add_farm_certificate # ( $json_obj, $farmname )
+sub add_farm_certificate    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -43,17 +44,18 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $cert_pem_re = &getValidFormat('cert_pem');
+	my $configdir   = &getGlobalConfiguration( 'certdir' );
+	my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
 	unless ( -f $configdir . "/" . $json_obj->{ file }
 			 && &getValidFormat( 'cert_pem', $json_obj->{ file } ) )
 	{
 		&zenlog(
-			"Error trying to add a certificate to the SNI list, invalid certificate name.", "error", "LSLB"
+			 "Error trying to add a certificate to the SNI list, invalid certificate name.",
+			 "error", "LSLB"
 		);
 
 		# Error
@@ -64,7 +66,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# FIXME: Show error if the certificate is already in the list
@@ -73,7 +75,8 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 
 	if ( $status == 0 )
 	{
-		&zenlog( "Success, trying to add a certificate to the SNI list.", "info", "LSLB" );
+		&zenlog( "Success, trying to add a certificate to the SNI list.",
+				 "info", "LSLB" );
 
 		# Success
 		my $message =
@@ -93,12 +96,13 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 			$body->{ status } = 'needed restart';
 		}
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to add a certificate to the SNI list, it's not possible to add the certificate.", "error", "LSLB"
+			"Error trying to add a certificate to the SNI list, it's not possible to add the certificate.",
+			"error", "LSLB"
 		);
 
 		# Error
@@ -111,14 +115,15 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 
 # DELETE /farms/FARM/certificates/CERTIFICATE
-sub delete_farm_certificate # ( $farmname, $certfilename )
+sub delete_farm_certificate    # ( $farmname, $certfilename )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname     = shift;
 	my $certfilename = shift;
 
@@ -136,7 +141,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	if ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
@@ -164,13 +169,15 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 				$body->{ status } = 'needed restart';
 			}
 
-			&httpResponse({ code => 200, body => $body });
+			&httpResponse( { code => 200, body => $body } );
 		}
 
 		if ( $status == -1 )
 		{
 			&zenlog(
-				"Error trying to delete a certificate to the SNI list, it's not possible to delete the certificate."," error", "LSLB"
+				"Error trying to delete a certificate to the SNI list, it's not possible to delete the certificate.",
+				" error",
+				"LSLB"
 			);
 
 			# Error
@@ -182,13 +189,14 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		if ( $status == 1 )
 		{
 			&zenlog(
-				"Error trying to delete the certificates from the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS.", "error", "LSLB"
+				"Error trying to delete the certificates from the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS.",
+				"error", "LSLB"
 			);
 
 			# Error
@@ -200,13 +208,14 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to delete a certificate from the SNI list, invalid certificate id.", "error", "LSLB"
+			"Error trying to delete a certificate from the SNI list, invalid certificate id.",
+			"error", "LSLB"
 		);
 
 		# Error
@@ -217,7 +226,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 

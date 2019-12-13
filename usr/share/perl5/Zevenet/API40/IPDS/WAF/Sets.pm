@@ -106,7 +106,7 @@ sub create_waf_set
 							   'valid_format' => 'waf_set_name',
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
-							   'exceptions'   => ['options'],
+							   'exceptions'   => ['options', 'files'],
 				   },
 				   "copy_from" => {
 									'valid_format' => 'waf_set_name',
@@ -122,7 +122,7 @@ sub create_waf_set
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -215,7 +215,7 @@ sub modify_waf_set
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -324,7 +324,7 @@ sub add_farm_waf_set
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -450,7 +450,7 @@ sub move_farm_waf_set
 	  };
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -502,6 +502,7 @@ sub actions_waf
 	my $error;
 
 	include 'Zevenet::IPDS::WAF::Config';
+	include 'Zevenet::IPDS::WAF::Runtime';
 
 	my $desc = "Apply a action to the set rule $set";
 	my $msg  = "Error, applying the action to the set rule.";
@@ -515,20 +516,22 @@ sub actions_waf
 
 	my $params = {
 				   "action" => {
-								 'values'    => ['start', 'stop'],
+								 'values'    => ['start', 'stop', 'restart'],
 								 'non_blank' => 'true',
 								 'required'  => 'true',
 				   }
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
 	# set the status
 	my $rule_param->{ status } =
-	  ( $json_obj->{ action } eq 'start' ) ? 'true' : 'false';
+	  ( $json_obj->{ action } eq 'start' or $json_obj->{ action } eq 'restart' )
+	  ? 'true'
+	  : 'false';
 	$error = &setWAFSet( $set, $rule_param );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error )
 	  if $error;

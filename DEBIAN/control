@@ -1,9 +1,9 @@
 Package: zevenet
-Version: 6.0.11
+Version: 6.1.0
 Maintainer: ZEVENET Company SL <support@zevenet.com>
 Architecture: amd64
 Section: admin
 Priority: optional
 Description: ZEVENET Load Balancer Enterprise Edition
  ZEVENET Load Balancer Enterprise Edition
-Depends: rrdtool, libnet-netmask-perl, libdata-structure-util-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, unzip, libev4, libjson-perl, libjson-xs-perl, libcgi-session-perl, libauthen-simple-perl, libauthen-simple-passwd-perl, conntrack, libcurses-perl, libcurses-ui-perl, liburi-perl, libtimedate-perl, libconfig-tiny-perl, snmpd, sec, libnet-ssleay-perl, libnetaddr-ip-perl, conntrackd, keepalived, arptables, ipset, libswitch-perl, expect, libcgi-simple-perl, libunix-syslog-perl, packetbl, health-checks, cherokee, pound, gdnsd, ssyncd, libregexp-ipv6-perl, libcrypt-cbc-perl, libcrypt-blowfish-perl, curl, netplug, libproc-find-perl, linux-image-4.19.37-z6000, zproxy
+Depends: rrdtool, libnet-netmask-perl, libdata-structure-util-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, unzip, libev4, libjson-perl, libjson-xs-perl, libcgi-session-perl, libauthen-simple-perl, libauthen-simple-passwd-perl, conntrack, libcurses-perl, libcurses-ui-perl, liburi-perl, libtimedate-perl, libconfig-tiny-perl, snmpd, sec, libnet-ssleay-perl, libnetaddr-ip-perl, conntrackd, keepalived, arptables, ipset, libswitch-perl, expect, libcgi-simple-perl, libunix-syslog-perl, packetbl, health-checks, cherokee, pound (>=2.8a-6.0.14), gdnsd, ssyncd, libregexp-ipv6-perl, libcrypt-cbc-perl, libcrypt-blowfish-perl, curl, netplug, libproc-find-perl, linux-image-4.19.37-z6000, zproxy, netcat-openbsd, libauthen-simple-ldap-perl, libnet-ldap-perl

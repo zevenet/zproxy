@@ -41,6 +41,10 @@
 # zcluster-manager interface float-update
 # zcluster-manager interface [start|stop|delete] <interface> [4|6]
 #
+# zcluster-manager routing_rule [stop|start] <id>
+# zcluster-manager routing_table [stop|start] <table> <route_id>
+# zcluster-manager routing_table [reload] <table>
+#
 # zcluster-manager gateway [update|delete] <interface> [4|6]
 #
 # zcluster-manager farm [start|stop|restart|delete] <farm> [backend <backendid>]
@@ -179,6 +183,16 @@ elsif ( $object eq 'notify_backup' )
 elsif ( $object eq 'notify_fault' )
 {
 	exit &setNodeStatusMaintenance();
+}
+elsif ( $object eq 'enable_ssyncd' )
+{
+	include 'Zevenet::Ssyncd';
+	&setSsyncd( 'true' );
+}
+elsif ( $object eq 'disable_ssyncd' )
+{
+	include 'Zevenet::Ssyncd';
+	&setSsyncd( 'false' );
 }
 
 # farm commands
@@ -568,6 +582,52 @@ if ( $object eq 'interface' )
 	}
 }
 
+
+if ( $object =~ /^routing_(rule|table)/ )
+{
+	my $submod = $1;
+	my ( $id, $route ) = @ARGV;
+	my $err = 1;
+
+	include 'Zevenet::Net::Routing';
+
+	if ($submod eq 'rule')
+	{
+		my $conf  = &getRoutingRulesConf( $id );
+		my $act;
+
+		if ($command eq 'start')
+		{
+			$act = 'add';
+		}
+		elsif ($command eq 'stop')
+		{
+			$act = 'del';
+		}
+		$err = &setRule( $act, $conf );
+	}
+	elsif($submod eq 'table')
+	{
+		if ($command eq 'reload')
+		{
+			$id =~ s/table_//;
+			$err = &reloadRoutingTable($id);
+		}
+		elsif ($command eq 'stop')
+		{
+			my $conf = &getRoutingTableConf($id, $route);
+			$err = &setRoute('del', $conf->{raw});
+		}
+		elsif ($command eq 'start')
+		{
+			my $conf = &getRoutingTableConf($id, $route);
+			$err = &setRoute('add', $conf->{raw});
+		}
+	}
+
+	exit $err;
+}
+
 if ( $object eq 'gateway' )
 {
 	my $iface_name = shift @ARGV;
@@ -826,3 +886,5 @@ sub quit
 }
 
 #~ &zenlog( `grep RSS /proc/$$/status` );
+
+1;

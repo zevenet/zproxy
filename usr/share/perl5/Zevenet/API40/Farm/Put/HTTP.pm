@@ -80,9 +80,11 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 							   'non_blank' => 'true',
 		},
 		"httpverb" => {
-			'values' =>
-			  ["standardHTTP", "extendedHTTP", "standardWebDAV", "MSextWebDAV", "MSRPCext"],
-			'non_blank' => 'true',
+			   'values' => [
+							"standardHTTP", "extendedHTTP", "standardWebDAV", "MSextWebDAV",
+							"MSRPCext",     "optionsHTTP"
+			   ],
+			   'non_blank' => 'true',
 		},
 		"error414" => {
 						'regex' => ".*",
@@ -155,12 +157,27 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
 	# Get current conf
 	my $farm_st = &getFarmStruct( $farmname );
+
+	my $vip   = $json_obj->{ vip }   // $farm_st->{ vip };
+	my $vport = $json_obj->{ vport } // $farm_st->{ vport };
+
+	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
+	{
+		require Zevenet::Net::Validate;
+		if (     $farm_st->{ status } eq 'up'
+			 and &checkport( $vip, $vport, $farmname ) eq 'true' )
+		{
+			my $msg =
+			  "The '$vip' ip and '$vport' port are being used for another farm. This farm should be sopped before modifying it";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
 
 	# Flags
 	my $reload_ipds = 0;
@@ -536,9 +553,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	# Modify vip and vport
 	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
 	{
-		my $vip   = $json_obj->{ vip }   // $farm_st->{ vip };
-		my $vport = $json_obj->{ vport } // $farm_st->{ vport };
-
 		if ( &setFarmVirtualConf( $vip, $vport, $farmname ) )
 		{
 			my $msg = "Could not set the virtual configuration.";

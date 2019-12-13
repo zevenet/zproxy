@@ -66,7 +66,7 @@ sub new_bond    # ( $json_obj )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	zenlog( "ERROR MSG: $error_msg" );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
@@ -187,7 +187,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	if ( $error_msg )
 	{
 		&unlockBondResource();
@@ -297,6 +297,9 @@ sub delete_interface_bond    # ( $bond )
 		my $msg = "This interface is being used as vip in the farm(s): $str.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	include 'Zevenet::Net::Zapi';
+	&checkZapiIfDepsRouting( $bond, 'del' );
 
 	eval {
 		if ( defined $if_ref->{ addr } and defined $if_ref->{ mask } )
@@ -552,7 +555,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -676,7 +679,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -718,6 +721,9 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			}
 		}
 	}
+
+	include 'Zevenet::Net::Zapi';
+	&checkZapiIfDepsRouting( $bond, 'put', $json_obj );
 
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 
@@ -795,11 +801,18 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			}
 		}
 
-   # Do not modify gateway or netmask if exists a virtual interface using this interface
 		if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 		{
-			my @wrong_conf;
+			# check ip and netmas are configured
+			unless ( $new_if->{ addr } ne "" and $new_if->{ mask } ne "" )
+			{
+				my $msg =
+				  "The networking configuration is not valid. It needs an IP ('$new_if->{addr}') and a netmask ('$new_if->{mask}')";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 
+	   # Do not modify gateway or netmask if exists a virtual interface using this interface
+			my @wrong_conf;
 			foreach my $child_name ( @child )
 			{
 				my $child_if = &getInterfaceConfig( $child_name );

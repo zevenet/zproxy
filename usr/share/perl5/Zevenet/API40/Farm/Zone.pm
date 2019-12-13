@@ -57,7 +57,7 @@ sub new_farm_zone    # ( $json_obj, $farmname )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -170,7 +170,7 @@ sub new_farm_zone_resource    # ( $json_obj, $farmname, $zone )
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -406,8 +406,8 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	$rsc->{ rname } = $json_obj->{ rname } // $resource->{ rname };
-	$rsc->{ ttl }   = $json_obj->{ ttl } // $resource->{ ttl };
-	$rsc->{ type }  = $json_obj->{ type } // $resource->{ type };
+	$rsc->{ ttl }   = $json_obj->{ ttl }   // $resource->{ ttl };
+	$rsc->{ type }  = $json_obj->{ type }  // $resource->{ type };
 	$rsc->{ rdata } = $json_obj->{ rdata } // $resource->{ rdata };
 
 	# validate RESOURCE
@@ -418,7 +418,7 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -518,7 +518,7 @@ sub modify_zones    # ( $json_obj, $farmname, $zone )
 	};
 
 	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 

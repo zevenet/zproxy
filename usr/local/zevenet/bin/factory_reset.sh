@@ -152,8 +152,10 @@ rm /etc/cron.d/*
 
 # create local conf dir
 mkdir "$localconfig"
+mkdir "$certdir"
 
 # set template
+cp $confhttp_tpl $confhttp
 cp $http_server_key_tpl $http_server_key
 cp $http_server_cert_tpl $http_server_cert
 cp $GLOBALCONF_TPL ${CONF_DIR}/global.conf
@@ -194,7 +196,7 @@ if [ $HW -eq 1 ]; then
 	echo "mask=$NETMASK_MANAGEMENT" >> $IF_CONF
 	echo "gateway=$GW_MANAGEMENT" >> $IF_CONF
 	echo "status=up" >> $IF_CONF
-	
+
 	if [ ! -f $migration_flag ]; then
 			touch $migration_flag
 	fi

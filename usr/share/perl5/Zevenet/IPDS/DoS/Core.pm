@@ -28,6 +28,8 @@ use Config::Tiny;
 use Zevenet::Core;
 use Zevenet::Debug;
 
+my $confFile = &getGlobalConfiguration( 'dosConf' );
+
 =begin nd
 Function: getDOSExists
 
@@ -48,7 +50,6 @@ sub getDOSExists
 	my $name = shift;
 
 	my $output     = 0;
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
 	$output = 1 if ( exists $fileHandle->{ $name } );
@@ -93,7 +94,6 @@ sub getDOSParam
 	my $param    = shift;
 
 	my $output;
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
 	$output = $fileHandle->{ $ruleName }->{ $param };
@@ -187,7 +187,6 @@ sub getDOSZapiRule
 	my $ruleName = shift;
 	my $output;
 
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
 	# get all params
@@ -230,6 +229,25 @@ sub setDOSUnlockConfigFile
 	my $lock_fd = shift;
 
 	close $lock_fd;
+}
+
+sub listDOSByFarm
+{
+	my $farm  = shift;
+	my @rules = ();
+	if ( -e $confFile )
+	{
+		my $fileHandle = Config::Tiny->read( $confFile );
+		foreach my $key ( sort keys %{ $fileHandle } )
+		{
+			if ( exists $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farm( |$)/ )
+			{
+				push @rules, $key;
+			}
+		}
+	}
+	return @rules;
 }
 
 1;

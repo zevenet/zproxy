@@ -23,6 +23,7 @@
 
 use strict;
 use Regexp::IPv6 qw($IPv6_re);
+require Zevenet::Net::Validate;
 
 # Notes about regular expressions:
 #
@@ -68,12 +69,15 @@ my $dos_tcp    = qr/(?:bogustcpflags|limitrst)/;
 
 my $run_actions = qr/^(?:stop|start|restart)$/;
 
+my $name = qr/^(?:[a-zA-Z0-9][\w]{5,31})$/;
+
 my %format_re = (
 
 	# generic types
 	'integer'     => $integer,
 	'natural_num' => $natural,
 	'boolean'     => $boolean,
+	'ipv4v6'      => $ipv4v6,
 
 	# hostname
 	'hostname' => $hostname,
@@ -155,6 +159,7 @@ my %format_re = (
 
 	# interfaces ( WARNING: length in characters < 16  )
 	'mac_addr'         => $mac_addr,
+	'interface'        => $interface,
 	'nic_interface'    => $nic_if,
 	'bond_interface'   => $bond_if,
 	'vlan_interface'   => $vlan_if,
@@ -231,6 +236,7 @@ my %format_re = (
 	'waf_skip'       => qr/[0-9]+/,
 	'waf_skip_after' => qr/\w+/,
 	'waf_set_status' => qr/(?:$boolean|detection)/,
+	'waf_file'       => qr/(?:[\w-]+)/,
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
@@ -268,6 +274,11 @@ my %format_re = (
 	'alias_interface' => qr/$interface/,
 	'alias_name'      => qr/[\w-]+/,
 	'alias_type'      => qr/(?:backend|interface)/,
+
+	# routing
+	'route_rule_id'  => qr/$natural/,
+	'route_table_id' => qr/\w+/,
+	'route_entry_id' => qr/$natural/,
 
 );
 
@@ -334,7 +345,7 @@ sub getValidFormat
 =begin nd
 Function: getValidPort
 
-	Validate port format and check if available when possible.
+	Validate if the port is valid for a type of farm.
 
 Parameters:
 	ip - IP address.
@@ -363,14 +374,12 @@ sub getValidPort    # ( $ip, $port, $profile )
 	require Zevenet::Net::Validate;
 	if ( $profile =~ /^(?:HTTP|GSLB)$/i )
 	{
-		return &isValidPortNumber( $port ) eq 'true'
-		  && &checkport( $ip, $port ) eq 'false';
+		return &isValidPortNumber( $port ) eq 'true';
 	}
 	elsif ( $profile =~ /^(?:L4XNAT)$/i )
 	{
 		require Zevenet::Farm::L4xNAT::Validate;
-		return &ismport( $port ) eq 'true'
-		  && &checkport( $ip, $port, $farmname ) eq 'false';
+		return &ismport( $port ) eq 'true';
 	}
 	elsif ( $profile =~ /^(?:DATALINK)$/i )
 	{
@@ -378,8 +387,7 @@ sub getValidPort    # ( $ip, $port, $profile )
 	}
 	elsif ( !defined $profile )
 	{
-		return &isValidPortNumber( $port ) eq 'true'
-		  && &checkport( $ip, $port ) eq 'false';
+		return &isValidPortNumber( $port ) eq 'true';
 	}
 	else    # profile not supported
 	{
@@ -561,8 +569,9 @@ sub checkZAPIParams
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $json_obj  = shift;
-	my $param_obj = shift;
+	my $json_obj    = shift;
+	my $param_obj   = shift;
+	my $description = shift;
 	my $err_msg;
 
 	my @rec_keys = keys %{ $json_obj };
@@ -570,7 +579,7 @@ sub checkZAPIParams
 	# Returns a help with the expected input parameters
 	if ( !@rec_keys )
 	{
-		&httpResponseHelp( $param_obj );
+		&httpResponseHelp( $param_obj, $description );
 	}
 
 	# All required parameters must exist
@@ -849,6 +858,7 @@ Function: httpResponseHelp
 
 Parameters:
 	Model - It is the struct with all allowed parameters and its possible values and options
+	Description - Descriptive message about the zapi call
 
 Returns:
 	None - .
@@ -860,6 +870,7 @@ sub httpResponseHelp
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $param_obj  = shift;
+	my $desc       = shift;
 	my $resp_param = [];
 
 	# build the output
@@ -876,7 +887,7 @@ sub httpResponseHelp
 		}
 		if ( exists $param_obj->{ $p }->{ interval } )
 		{
-			my ( $ll, $hl ) = split ( ',', $param_obj->{ $p }->{ values } );
+			my ( $ll, $hl ) = split ( ',', $param_obj->{ $p }->{ interval } );
 			$ll = '-' if ( !defined $ll );
 			$hl = '-' if ( !defined $hl );
 			$param->{ interval } = "Expects a value between '$ll' and '$hl'.";
@@ -899,11 +910,13 @@ sub httpResponseHelp
 		push @{ $resp_param }, $param;
 	}
 
-	my $msg = "No parameter has been sent. Please, try with:";
+	my $msg  = "No parameter has been sent. Please, try with:";
 	my $body = {
-				 description => $msg,
-				 params      => $resp_param,
+
+		message => $msg,
+		params  => $resp_param,
 	};
+	$body->{ description } = $desc if ( defined $desc );
 
 	return &httpResponse( { code => 400, body => $body } );
 }

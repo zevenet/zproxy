@@ -266,6 +266,80 @@ sub sendGArp    # ($if,$ip)
 }
 
 =begin nd
+Function: setArpAnnounce
+
+	Set a cron task to cast a ARP packet each minute
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - Error code: 0 on success or another value on failure
+
+=cut
+
+sub setArpAnnounce
+{
+	my $script = &getGlobalConfiguration( "arp_announce_bin" );
+	my $path   = &getGlobalConfiguration( "arp_announce_cron_path" );
+	my $err    = 0;
+
+	my $fh = &openlock( $path, 'w' ) or return 1;
+	print $fh "* * * * *	root	$script &>/dev/null\n";
+	close $fh;
+
+	my $cron_service = &getGlobalConfiguration( 'cron_service' );
+	$err = &logAndRun( "$cron_service reload" );
+
+	if ( !$err )
+	{
+		$err = &setGlobalConfiguration( 'arp_announce', "true" );
+	}
+
+	return $err;
+}
+
+=begin nd
+Function: unsetArpAnnounce
+
+	Remove the cron task to cast a ARP packet each minute
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - Error code: 0 on success or another value on failure
+
+=cut
+
+sub unsetArpAnnounce
+{
+	my $script       = &getGlobalConfiguration( "arp_announce_bin" );
+	my $path         = &getGlobalConfiguration( "arp_announce_cron_path" );
+	my $cron_service = &getGlobalConfiguration( 'cron_service' );
+	my $err          = 0;
+
+	if ( -f $path )
+	{
+		my $rem = unlink $path;
+		if ( !$rem )
+		{
+			&zenlog( "Error deleting the file '$path'", "error", "NETWORK" );
+			return 1;
+		}
+	}
+
+	$err = &logAndRun( "$cron_service reload" );
+
+	if ( !$err )
+	{
+		$err = &setGlobalConfiguration( 'arp_announce', "false" );
+	}
+
+	return $err;
+}
+
+=begin nd
 Function: iponif
 
 	Get the (primary) ip address on a network interface.

@@ -35,8 +35,9 @@ if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/services/$service_re/actions$} )
 	  $mod;
 }
 
-if (
-	 $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/(?:addheader|headremove)(:?/\d+)?$} )
+if ( $ENV{ PATH_INFO } =~
+	qr{^/farms/$farm_re/(?:addheader|headremove|addresponseheader|removeresponseheader)(:?/\d+)?$}
+  )
 {
 	my $mod     = 'Zevenet::API40::Farm::HTTP::Ext';
 	my $cert_re = &getValidFormat( 'certificate' );
@@ -45,6 +46,14 @@ if (
 	DELETE qr{^/farms/($farm_re)/addheader/(\d+)$},  'del_addheader',  $mod;
 	POST qr{^/farms/($farm_re)/headremove$},         'add_headremove', $mod;
 	DELETE qr{^/farms/($farm_re)/headremove/(\d+)$}, 'del_headremove', $mod;
+
+	POST qr{^/farms/($farm_re)/addresponseheader$}, 'add_addResponseheader', $mod;
+	DELETE qr{^/farms/($farm_re)/addresponseheader/(\d+)$},
+	  'del_addResponseheader', $mod;
+	POST qr{^/farms/($farm_re)/removeresponseheader$}, 'add_removeResponseheader',
+	  $mod;
+	DELETE qr{^/farms/($farm_re)/removeresponseheader/(\d+)$},
+	  'del_removeResponseHeader', $mod;
 }
 
 if (

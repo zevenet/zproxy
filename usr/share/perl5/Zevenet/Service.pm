@@ -316,6 +316,14 @@ sub start_modules_without_cert
 	my $out_msg = "";
 	my $msg     = "";
 
+	# Routing
+	$msg     = "Starting Routing...";
+	$out_msg = "* $msg\n\n";
+	&zenlog( "Zevenet Service: $msg", "info", "net" );
+
+	include 'Zevenet::Net::Routing';
+	&initRoutingModule();
+
 	# Notifications
 	$msg     = "Starting Notification...";
 	$out_msg = "* $msg\n\n";

@@ -123,7 +123,10 @@ sub createRBACUser
 
 	# Change pass
 	require Zevenet::Login;
-	$error = &changePassword( $user, $passwd ) if ( !$error );
+	if ( defined $passwd and !$error )
+	{
+		$error = &changePassword( $user, $passwd );
+	}
 
 	# write in config file
 	if ( !$error )
@@ -132,8 +135,9 @@ sub createRBACUser
 		my ( undef, $encrypt_pass ) = getpwnam ( $user );
 
 		# save it
-		$user_obj->{ 'password' }           = $encrypt_pass;
-		$user_obj->{ 'zapi_permissions' }   = 'false';
+		$user_obj->{ 'ldap' }             = ( $encrypt_pass eq '*' ) ? 'true' : 'false';
+		$user_obj->{ 'password' }         = $encrypt_pass;
+		$user_obj->{ 'zapi_permissions' } = 'false';
 		$user_obj->{ 'webgui_permissions' } = 'false';
 		$user_obj->{ 'zapikey' }            = '';
 

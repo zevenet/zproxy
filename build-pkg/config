@@ -229,6 +229,8 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
 	usr/share/perl5/Zevenet/API40/System/Ext.pm
+	usr/share/perl5/Zevenet/API41/Interfaces/Routing.pm
+	usr/share/perl5/Zevenet/API41/Routes/Routing.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
@@ -285,6 +287,8 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Net/Throughput.pm
 	usr/share/perl5/Zevenet/Net/Mac.pm
 	usr/share/perl5/Zevenet/Net/DHCP.pm
+	usr/share/perl5/Zevenet/Net/Routing.pm
+	usr/share/perl5/Zevenet/Net/Zapi.pm
 	usr/share/perl5/Zevenet/Notify.pm
 	usr/share/perl5/Zevenet/RBAC/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Core.pm

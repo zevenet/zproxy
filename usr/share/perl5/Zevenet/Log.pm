@@ -234,6 +234,56 @@ sub logAndRunBG    # ($command)
 	return $return_code == -1;
 }
 
+
+=begin nd
+Function: logAndGet
+
+	Execute a command in the system to get the output. If the command fails,
+	it logs the error and returns a empty string.
+
+Parameters:
+	command - String with the command to be run in order to get info from the system.
+	type output - Force that the output will be convert to 'string' or 'array'
+
+Returns:
+	Array ref or string - data obtained from the system. The type of output is specified
+	in the type input param
+
+See Also:
+	logAndRun
+
+=cut
+
+sub logAndGet
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $cmd = shift;
+	my $type = shift // 'string';
+
+	&zenlog( "Executed: $cmd", "debug", "system" );
+
+	my $resource = "logAndGet";
+
+	my $out = `$cmd 2>/dev/null`;
+	if ( $? )
+	{
+		# execute again, removing stdout and getting stderr
+		my @print_err = `$cmd 2>&1 >/dev/null`;
+
+		&zenlog( "Command failed, <$cmd>", "error", "system" ) if (!&debug());
+		&zenlog( "Output: @print_err", "error", "system" );
+	}
+
+	if ( $type eq 'array' )
+	{
+		my @out = split( "\n", $out );
+		return \@out;
+	}
+
+	return $out;
+}
+
 sub zdie
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
