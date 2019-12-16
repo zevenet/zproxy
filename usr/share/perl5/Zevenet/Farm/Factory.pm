@@ -138,15 +138,17 @@ sub runFarmCreateFrom
 	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	# add ipds rules
-	include 'Zevenet::IPDS::Core';
-	include 'Zevenet::IPDS::Blacklist::Runtime';
-	include 'Zevenet::IPDS::DoS::Runtime';
-	include 'Zevenet::IPDS::RBL::Config';
-	include 'Zevenet::IPDS::WAF::Runtime';
+	my $ipds;
+	if ( $eload )
+	{
+		$ipds = &eload(
+						module => 'Zevenet::IPDS::Core',
+						func   => 'getIPDSfarmsRules',
+						args   => [$params->{ copy_from }],
+		);
+	}
 
 	# create file
-	my $ipds = &getIPDSfarmsRules( $params->{ copy_from } );
-
 	require Zevenet::Farm::Action;
 	$err = &copyFarm( $params->{ copy_from }, $params->{ farmname } );
 
@@ -191,22 +193,31 @@ sub runFarmCreateFrom
 		);
 	}
 
-	# adding ipds rules
-	foreach my $rule ( @{ $ipds->{ blacklists } } )
+	if ( $eload )
 	{
-		&setBLApplyToFarm( $params->{ farmname }, $rule->{ name } );
-	}
-	foreach my $rule ( @{ $ipds->{ dos } } )
-	{
-		&setDOSApplyRule( $rule->{ name }, $params->{ farmname } );
-	}
-	foreach my $rule ( @{ $ipds->{ rbl } } )
-	{
-		&addRBLFarm( $params->{ farmname }, $rule->{ name } );
-	}
-	foreach my $rule ( @{ $ipds->{ waf } } )
-	{
-		&addWAFsetToFarm( $params->{ farmname }, $rule->{ name } );
+		include 'Zevenet::IPDS::Core';
+		include 'Zevenet::IPDS::Blacklist::Runtime';
+		include 'Zevenet::IPDS::DoS::Runtime';
+		include 'Zevenet::IPDS::RBL::Config';
+		include 'Zevenet::IPDS::WAF::Runtime';
+
+		# adding ipds rules
+		foreach my $rule ( @{ $ipds->{ blacklists } } )
+		{
+			&setBLApplyToFarm( $params->{ farmname }, $rule->{ name } );
+		}
+		foreach my $rule ( @{ $ipds->{ dos } } )
+		{
+			&setDOSApplyRule( $rule->{ name }, $params->{ farmname } );
+		}
+		foreach my $rule ( @{ $ipds->{ rbl } } )
+		{
+			&addRBLFarm( $params->{ farmname }, $rule->{ name } );
+		}
+		foreach my $rule ( @{ $ipds->{ waf } } )
+		{
+			&addWAFsetToFarm( $params->{ farmname }, $rule->{ name } );
+		}
 	}
 
 	return $err;
