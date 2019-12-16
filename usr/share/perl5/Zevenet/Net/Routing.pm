@@ -379,16 +379,19 @@ sub modifyRoutingRules
 	my $params = shift;
 	my $err    = 0;
 
-	my $err = &setRule( 'add', $params );
+	# delete
+	my $old_conf = &getRoutingRulesConf( $id );
+	my $err = &setRule( 'del', $old_conf );
+
 	if ( !$err )
 	{
-		# delete
-		my $old_conf = &getRoutingRulesConf( $id );
-		$err = &setRule( 'del', $old_conf );
-
 		# overwrite conf
-		$err = &createRoutingRulesConf( $params );
+		$err = &setRule( 'add', $params );
+		$err = &createRoutingRulesConf( $params ) if ( !$err );
 	}
+
+	# if there is an error, revert route
+	&setRule( 'add', $old_conf ) if ( $err );
 
 	return $err;
 }

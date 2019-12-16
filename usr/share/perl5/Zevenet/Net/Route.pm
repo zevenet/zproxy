@@ -427,9 +427,23 @@ sub isRule
 			 "debug", "PROFILING" );
 	my $params = shift;
 
-	my $cmd   = &buildRuleCmd( 'list', $params );
-	my $out   = `$cmd`;
+	my $cmd = &buildRuleCmd( 'list', $params );
+	my $out = `$cmd`;
+
 	my $exist = ( $out ne '' ) ? 1 : 0;
+
+	# there is an error in list command with the parameter error, this is a bugfix
+	if ( $exist )
+	{
+		if ( $params->{ not } eq 'true' and $out !~ /not/ )
+		{
+			$exist = 0;
+		}
+		elsif ( $params->{ not } ne 'true' and $out =~ /not/ )
+		{
+			$exist = 0;
+		}
+	}
 
 	if ( &debug() > 1 )
 	{
@@ -517,6 +531,7 @@ sub genRoutingRulesPrio
 		$min = $userInit;
 		$max = $ifacesInit;
 	}
+
 	# iface
 	else
 	{
@@ -639,7 +654,7 @@ sub setRule
 
 	my $isrule = &isRule( $rule );
 
-	&zenlog( "action $action and the rule exist=$isrule", "debug", "net" );
+	&zenlog( "action '$action' and the rule exist=$isrule", "debug", "net" );
 
 	if (    ( $action eq "add" && $isrule == 0 )
 		 || ( $action eq "del" && $isrule != 0 ) )

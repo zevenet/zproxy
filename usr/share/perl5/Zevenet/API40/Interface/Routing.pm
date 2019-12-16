@@ -39,7 +39,8 @@ sub listOutRules
 			type     => $r->{ type },
 			not      => 'false',
 		  };
-		$list->[-1]->{ not } = 'true' if ( exists $r->{ not } );
+		$list->[-1]->{ not } = 'true'
+		  if ( exists $r->{ not } and $r->{ not } eq 'true' );
 	}
 	return $list // [];
 }
