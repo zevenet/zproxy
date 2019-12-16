@@ -146,6 +146,14 @@ sub set_system_global
 									   'values'    => ["true", "false"],
 									   'non_blank' => 'true',
 				   },
+				   "proxy_new_generation" => {
+											   'values'    => ["true", "false"],
+											   'non_blank' => 'true',
+				   },
+				   "force" => {
+								'values'    => ["true", "false"],
+								'non_blank' => 'true',
+				   },
 	};
 
 	# Check allowed parameters
@@ -153,8 +161,24 @@ sub set_system_global
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	if ( exists $json_obj->{ proxy_new_generation }
+		 and !( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' ) )
+	{
+		my $msg =
+		  "Modifying 'proxy_new_generation' requires a HTTP farms restart. Please, use the parameter 'force' if you are sure.";
+		return &httpResponse(
+					   { code => 400, body => { description => $desc, message => $msg } } );
+	}
+
 	my $err = &setSystemGlobal( $json_obj );
-	if ( $err )
+	if ( $err == 2 )
+	{
+		my $msg =
+		  "There was an error stopping the http farms. Plase, check that the configuration is correct";
+		return &httpResponse(
+					   { code => 400, body => { description => $desc, message => $msg } } );
+	}
+	elsif ( $err )
 	{
 		my $msg = "There was an error modifying the global settings";
 		return &httpResponse(

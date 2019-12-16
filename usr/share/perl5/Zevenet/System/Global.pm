@@ -47,11 +47,13 @@ sub getSystemGlobal
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 	my $duplicated_net = &getGlobalConfiguration( 'duplicated_net' );
 	my $arp_announce   = &getGlobalConfiguration( 'arp_announce' );
+	my $proxy          = &getGlobalConfiguration( 'proxy_ng' );
 
 	my $out = {};
 	$out->{ ssyncd }             = ( $ssyncd_enabled eq 'true' ) ? 'true' : 'false';
 	$out->{ duplicated_network } = ( $duplicated_net eq 'true' ) ? 'true' : 'false';
 	$out->{ arp_announce }       = ( $arp_announce eq 'true' )   ? 'true' : 'false';
+	$out->{ proxy_new_generation } = ( $proxy eq 'true' ) ? 'true' : 'false';
 
 	return $out;
 }
@@ -59,17 +61,15 @@ sub getSystemGlobal
 =begin nd
 Function: setSystemGlobal
 
-	Set a primary or secondary dns server.
+	Get the global settings of the system.
 
 Parameters:
-	dns - 'primary' or 'secondary'.
-	value - ip addres of dns server.
+	none - . Returns: 0 on success,
+						2 if there was an error related to stop http farms
+						another value on failure
 
 Returns:
-	none - .
-
-Bugs:
-	Returned value.
+	Ingeger - Error code.
 
 =cut
 
@@ -78,7 +78,7 @@ sub setSystemGlobal
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $global = shift;
-	my $err    = 1;
+	my $err    = 0;
 
 	if ( exists $global->{ ssyncd } )
 	{
@@ -102,6 +102,60 @@ sub setSystemGlobal
 		  ? &setArpAnnounce()
 		  : &unsetArpAnnounce();
 		return $err if $err;
+	}
+
+	my $ng_val = &getGlobalConfiguration( 'proxy_ng' );
+	if ( exists $global->{ proxy_new_generation }
+		 and ( $ng_val ne $global->{ proxy_new_generation } ) )
+	{
+		require Zevenet::Farm::Core;
+		require Zevenet::Farm::Base;
+		require Zevenet::Farm::Action;
+
+		my $ng   = $global->{ proxy_new_generation };
+		my $base = ( $ng eq 'true' ) ? 'base_zproxy' : 'base_pound';
+		my $bin  = ( $ng eq 'true' ) ? 'zproxy' : 'pound';
+		my $ctl  = ( $ng eq 'true' ) ? 'zproxyctl' : 'poundctl';
+		my $base = &getGlobalConfiguration( $base );
+		my $bin  = &getGlobalConfiguration( $bin );
+		my $ctl  = &getGlobalConfiguration( $ctl );
+		$err = 0;
+
+		# stop l7 farms
+		my @farmsf = &getFarmsByType( 'http' );
+		push @farmsf, &getFarmsByType( 'https' );
+		my @farms_stopped;
+		my $farm_err;
+
+		foreach my $farmname ( @farmsf )
+		{
+			if ( &getFarmStatus( $farmname ) eq "up" )
+			{
+				$err = &runFarmStop( $farmname, "false" );
+				if ( $err )
+				{
+					$err = 2;
+					last;
+				}
+				else { push @farms_stopped, $farmname; }
+			}
+		}
+
+		if ( !$err )
+		{
+			# set binary
+			$err += &setGlobalConfiguration( 'base_proxy', $base );
+			$err += &setGlobalConfiguration( 'proxy',      $bin );
+			$err += &setGlobalConfiguration( 'proxyctl',   $ctl );
+			$err += &setGlobalConfiguration( 'proxy_ng',   $ng ) if ( !$err );
+		}
+
+		# start l7 farms
+		foreach my $farmname ( @farms_stopped )
+		{
+			my $farm_err = &runFarmStart( $farmname, "false" );
+			$err = 3 if ( $farm_err and !$err );
+		}
 	}
 
 	return $err;
