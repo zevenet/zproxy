@@ -121,7 +121,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 
 		&zenlog( "running $exec", "info", "GSLB" );
 		require Zevenet::System;
-		$out = &zsystem( "$exec > /dev/null 2>&1" );
+		$output = &zsystem( "$exec > /dev/null 2>&1" );
 	}
 	else
 	{
