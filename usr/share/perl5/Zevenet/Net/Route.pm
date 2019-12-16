@@ -391,8 +391,11 @@ sub buildRuleCmd
 
 	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
 	$cmd .= "$ip_bin $ipv rule $action" if ( defined $action );
-	$cmd .= " priority $conf->{priority}"
-	  if ( exists $conf->{ priority } and $conf->{ priority } =~ /\d/ );
+	if (     ( defined $action and $action ne 'list' )
+		 and ( exists $conf->{ priority } and $conf->{ priority } =~ /\d/ ) )
+	{
+		$cmd .= " priority $conf->{priority} ";
+	}
 	$cmd .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
 	$cmd .= " from $conf->{from}";
 	$cmd .= " fwmark $conf->{fwmark}"
@@ -416,7 +419,7 @@ Parameters:
 Returns:
 	scalar - number of times the rule was found. True if found.
 
-Bugs:
+Todo:
 	Rules for Datalink farms are included.
 
 =cut
@@ -425,25 +428,25 @@ sub isRule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $params = shift;
+	my $conf = shift;
 
-	my $cmd = &buildRuleCmd( 'list', $params );
-	my $out = `$cmd`;
+	my $ipv = ( exists $conf->{ ip_v } ) ? "-$conf->{ip_v}" : "";
 
-	my $exist = ( $out ne '' ) ? 1 : 0;
+	# ip rule { add | del } [ not ] [ from IP/NETMASK ] TABLE_ID
+	my $cmd  = "$ip_bin $ipv rule list";
+	my $rule = "";
+	$rule .= " not" if ( exists $conf->{ not } and $conf->{ not } eq 'true' );
+	$rule .= " from $conf->{from}";
+	$rule .= " fwmark $conf->{fwmark}"
+	  if ( exists $conf->{ fwmark } && $conf->{ fwmark } ne "" );
+	$rule .= " lookup $conf->{table}";
+	$rule =~ s/^\s+//;
+	$rule =~ s/\s+$//;
 
-	# there is an error in list command with the parameter error, this is a bugfix
-	if ( $exist )
-	{
-		if ( $params->{ not } eq 'true' and $out !~ /not/ )
-		{
-			$exist = 0;
-		}
-		elsif ( $params->{ not } ne 'true' and $out =~ /not/ )
-		{
-			$exist = 0;
-		}
-	}
+	my @out = @{ &logAndGet( $cmd, 'array' ) };
+	chomp @out;
+
+	my $exist = ( grep ( /^\d+:\s*$rule\s*$/, @out ) ) ? 1 : 0;
 
 	if ( &debug() > 1 )
 	{
