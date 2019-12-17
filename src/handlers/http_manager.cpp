@@ -500,8 +500,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(
 }
 
 void http_manager::replyError(http::Code code, const std::string &code_string,
-                              const std::string &str, Connection &target,
-                              SSLConnectionManager *ssl_manager) {
+                              const std::string &str, Connection &target) {
   char caddr[200];
 
   if (UNLIKELY(Network::getPeerAddress(target.getFileDescriptor(), caddr,
@@ -522,10 +521,10 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
     if (!target.ssl_connected) {
       result = target.write(response_.c_str() + written,
                             response_.length() - written, sent);
-    } else if (ssl_manager != nullptr) {
-      result =
-          ssl_manager->handleWrite(target, response_.c_str() + written,
-                                   response_.length() - written, written, true);
+    } else if (target.ssl != nullptr) {
+      result = ssl::SSLConnectionManager::handleWrite(
+          target, response_.c_str() + written, response_.length() - written,
+          written, true);
     }
     if (sent > 0) written += sent;
   } while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
@@ -533,9 +532,7 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
 }
 
 void http_manager::replyRedirect(HttpStream &stream,
-                                 SSLConnectionManager *ssl_manager,
-                                 const Backend & redirect_backend) {
-  regmatch_t matches[4];
+                                 const Backend &redirect_backend) {
   /* 0 - redirect is absolute,
    * 1 - the redirect should include the request path, or
    * 2 if it should use perl dynamic replacement */
@@ -601,11 +598,10 @@ void http_manager::replyRedirect(HttpStream &stream,
       redirect_code = 302;  // FOUND
       break;
   }
-  replyRedirect(redirect_code, new_url, stream.client_connection, ssl_manager);
+  replyRedirect(redirect_code, new_url, stream.client_connection);
 }
 void http_manager::replyRedirect(int code, const std::string &url,
-                                 Connection &target,
-                                 SSLConnectionManager *ssl_manager) {
+                                 Connection &target) {
   auto response_ =
       http::getRedirectResponse(static_cast<http::Code>(code), url);
   size_t written = 0;
@@ -615,10 +611,10 @@ void http_manager::replyRedirect(int code, const std::string &url,
     if (!target.ssl_connected) {
       result = target.write(response_.c_str() + written,
                             response_.length() - written, sent);
-    } else if (ssl_manager != nullptr) {
-      result =
-          ssl_manager->handleWrite(target, response_.c_str() + written,
-                                   response_.length() - written, written, true);
+    } else if (target.ssl != nullptr) {
+      result = ssl::SSLConnectionManager::handleWrite(
+          target, response_.c_str() + written, response_.length() - written,
+          written, true);
     }
     if (sent > 0) written += sent;
   } while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&

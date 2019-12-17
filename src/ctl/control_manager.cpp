@@ -200,7 +200,9 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   auto result = notify(task, false);
   std::string res = "[";
   for(auto it = result.begin();it < result.end(); it++){
-    res += it->get();
+    auto res_string = it->get();
+    if (res_string.empty()) continue;
+    res += res_string;
     if(it + 1 < result.end())
       res += ",";
   }

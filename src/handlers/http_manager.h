@@ -119,8 +119,8 @@ class http_manager {
    * @param ssl_manager is the SSLConnectionManager that handles the HTTPS
    * client connection.
    */
-  static void replyError(http::Code code, const std::string &code_string, const std::string &str, Connection &target,
-                         ssl::SSLConnectionManager *ssl_manager);
+  static void replyError(http::Code code, const std::string &code_string,
+                         const std::string &str, Connection &target);
 
   /**
    * @brief Reply a redirect message with the configuration specified in the
@@ -129,8 +129,7 @@ class http_manager {
    * @param backend_config is the BackendConfig to get the redirect information.
    */
   static void replyRedirect(HttpStream &stream,
-                            SSLConnectionManager *ssl_manager,
-                            const Backend & redirect_backend);
+                            const Backend &redirect_backend);
 
   /**
    * @brief Reply a redirect message with the @p code and pointing to the
@@ -139,5 +138,6 @@ class http_manager {
    * @param code is the redirect code.
    * @param url is the url itself.
    */
-  static void replyRedirect(int code, const std::string &url, Connection &target, SSLConnectionManager *ssl_manager);
+  static void replyRedirect(int code, const std::string &url,
+                            Connection &target);
 };

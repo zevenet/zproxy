@@ -25,6 +25,6 @@
 #include "../ssl/ssl_common.h"
 #include "../ssl/ssl_connection_manager.h"
 
-void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager, int clnt_check);
+void httpsHeaders(HttpStream *stream, int clnt_check);
 
 void setStrictTransportSecurity(Service *service, HttpStream *stream);

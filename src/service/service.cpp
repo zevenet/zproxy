@@ -71,7 +71,6 @@ void Service::addBackend(BackendConfig *backend_config, std::string address, int
     backend->bekey = backend_config->bekey;
     backend->nf_mark = backend_config->nf_mark;
     backend->ctx = backend_config->ctx;
-    if (backend->ctx != nullptr) backend->ssl_manager.init(*backend_config);
     if (emergency)
       emergency_backend_set.push_back(backend);
     else
@@ -98,7 +97,6 @@ void Service::addBackend(BackendConfig *backend_config, int backend_id, bool eme
     config->backend_type = BACKEND_TYPE::REDIRECT;
     config->nf_mark = backend_config->nf_mark;
     config->ctx = backend_config->ctx;
-    if (config->ctx != nullptr) config->ssl_manager.init(*backend_config);
     if (emergency)
       emergency_backend_set.push_back(config);
     else
@@ -110,7 +108,7 @@ bool Service::addBackend(JsonObject *json_object) {
   if (json_object == nullptr) {
     return false;
   } else {  // Redirect
-    auto *config = new Backend();
+    auto config = std::make_unique<Backend>();
     if (json_object->count(JSON_KEYS::ID) > 0 && json_object->at(JSON_KEYS::ID)->isValue()) {
       config->backend_id = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID).get())->number_value;
     } else {
@@ -140,10 +138,9 @@ bool Service::addBackend(JsonObject *json_object) {
     } else {
       return false;
     }
-
     config->status = BACKEND_STATUS::BACKEND_DISABLED;
     config->backend_type = BACKEND_TYPE::REMOTE;
-    backend_set.push_back(config);
+    backend_set.push_back(config.release());
   }
 
   return true;

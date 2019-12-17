@@ -44,6 +44,11 @@ ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
       id(listener_config_->id),
       name(listener_config_->name),
       disabled(listener_config_->disabled != 0) {
+  if (listener_config_->ctx != nullptr) {
+    if (ssl_context != nullptr) delete ssl_context;
+    ssl_context = new SSLContext();
+    is_https_listener = ssl_context->init(*listener_config_);
+  }
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
 }
 
@@ -52,7 +57,9 @@ ServiceManager::~ServiceManager() {
   for (auto srv : services) {
     delete srv;
   }
-  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+  if (ssl_context != nullptr) {
+    delete ssl_context;
+  }
 }
 
 Service *ServiceManager::getService(HttpRequest &request) {

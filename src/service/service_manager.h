@@ -38,7 +38,10 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
  public:
   /** ListenerConfig from the listener related with all the services managed by
    * the class. */
+  /** SSLContext used by the manager. */
+  SSLContext *ssl_context{nullptr};
   std::shared_ptr<ListenerConfig> listener_config_;
+  bool is_https_listener;
   /** ServiceManager instance. */
   static std::shared_ptr<ServiceManager> &getInstance(
       std::shared_ptr<ListenerConfig> listener_config);

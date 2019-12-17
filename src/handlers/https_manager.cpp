@@ -32,8 +32,8 @@
  *  - X-SSL-cipher: the cipher currently in use
  *  - X-SSL-certificate: the full client certificate (multi-line)
  */
-void httpsHeaders(HttpStream *stream, ssl::SSLConnectionManager *ssl_manager, int clnt_check) {
-  if (ssl_manager == nullptr) return;
+void httpsHeaders(HttpStream *stream, int clnt_check) {
+  if (stream->service_manager->ssl_context == nullptr) return;
   std::string header_value;
   header_value.reserve(MAXBUF);
   const SSL_CIPHER *cipher;

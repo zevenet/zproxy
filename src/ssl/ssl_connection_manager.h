@@ -49,8 +49,6 @@ class SSLConnectionManager {
   IO::IO_RESULT getSslErrorResult(SSL *ssl_connection_context, int &rc);
 
  public:
-  /** SSLContext used by the manager. */
-  SSLContext *ssl_context;
   SSLConnectionManager();
   virtual ~SSLConnectionManager();
   /**
@@ -58,7 +56,7 @@ class SSLConnectionManager {
    * @param ssl_connection used to read from.
    * @return the result of the read operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT handleDataRead(Connection &ssl_connection);
+  static IO::IO_RESULT handleDataRead(Connection &ssl_connection);
 
   /**
    * @brief Handles the SSL handshake with the @p ssl_connection.
@@ -71,7 +69,11 @@ class SSLConnectionManager {
    * a server.
    * @return @c true if everything is ok, if not @c false.
    */
-  bool handleHandshake(Connection &ssl_connection, bool client_mode = false);
+  static bool handleHandshake(const SSLContext &ssl_context,
+                              Connection &ssl_connection,
+                              bool client_mode = false);
+  static bool handleHandshake(SSL_CTX *ssl_ctx, Connection &ssl_connection,
+                              bool client_mode = false);
 
   /**
    * @brief Writes to the @p target_ssl_connection.
@@ -84,8 +86,9 @@ class SSLConnectionManager {
    * @param http_data
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT handleDataWrite(Connection &target_ssl_connection, Connection &ssl_connection,
-                                http_parser::HttpData &http_data);
+  static IO::IO_RESULT handleDataWrite(Connection &target_ssl_connection,
+                                       Connection &ssl_connection,
+                                       http_parser::HttpData &http_data);
 
   /**
    * @brief Writes to the @p target_ssl_connection.
@@ -101,8 +104,9 @@ class SSLConnectionManager {
    * @param flush_data true if the data is deleted after the write operation.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT handleWrite(Connection &target_ssl_connection, Connection &source_ssl_connection, size_t &written,
-                            bool flush_data = true);
+  static IO::IO_RESULT handleWrite(Connection &target_ssl_connection,
+                                   Connection &source_ssl_connection,
+                                   size_t &written, bool flush_data = true);
   /**
    * @brief Writes to the @p target_ssl_connection.
    *
@@ -117,15 +121,16 @@ class SSLConnectionManager {
    * @param flush_data true if the data is deleted after the write operation.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data, size_t data_size, size_t &written,
-                            bool flush_data = true);
+  static IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data,
+                                   size_t data_size, size_t &written,
+                                   bool flush_data = true);
 
   /**
    * @brief Reads from the @p ssl_connection.
    * @param ssl_connection used to read from.
    * @return the result of the read operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT sslRead(Connection &ssl_connection);
+  static IO::IO_RESULT sslRead(Connection &ssl_connection);
 
   /**
    * @brief Writes to the @p target_ssl_connection using SSL functions.
@@ -139,45 +144,34 @@ class SSLConnectionManager {
    * @param written is the amount of data written.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT sslWrite(Connection &ssl_connection, const char *data, size_t data_size, size_t &written);
+  static IO::IO_RESULT sslWrite(Connection &ssl_connection, const char *data,
+                                size_t data_size, size_t &written);
 
-  IO::IO_RESULT sslWriteIOvec(Connection &target_ssl_connection, const iovec *__iovec, int count, size_t &nwritten);
-  IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection, iovec *iov, size_t &iovec_size,
-                                 size_t &iovec_written, size_t &nwritten);
-
-  /**
-   * @brief Initialize the SSLConnectionManager with the configuration specified
-   * in the @p backend_config.
-   *
-   * @param backend_config to get the configuration.
-   * @return @c true if everything is ok, if not @c false.
-   */
-  bool init(const BackendConfig &backend_config);
-
-  /**
-   * @brief Initialize the SSLConnectionManager with the configuration specified
-   * in the @p listener_config.
-   *
-   * @param listener_config to get the configuration.
-   * @return @c true if everything is ok, if not @c false.
-   */
-  bool init(const ListenerConfig &listener_config);
+  static IO::IO_RESULT sslWriteIOvec(Connection &target_ssl_connection,
+                                     const iovec *__iovec, int count,
+                                     size_t &nwritten);
+  static IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection,
+                                        iovec *iov, size_t &iovec_size,
+                                        size_t &iovec_written,
+                                        size_t &nwritten);
 
   /**
    * @brief Initialize the @p ssl_connection with the configuration established
    * in the SSLConnectionManager.
    *
    * @param ssl_connection to initialize.
-   * @param client_mode specify if the @p ssl_connection is a client or a server.
+   * @param client_mode specify if the @p ssl_connection is a client or a
+   * server.
    * @return @c true if everything is ok, if not @c false.
    */
-  bool initSslConnection(Connection &ssl_connection, bool client_mode = false);
+  static bool initSslConnection(SSL_CTX *ssl_ctx, Connection &ssl_connection,
+                                bool client_mode = false);
 
   /**
    * @brief Async Ssl connection Shutdown
    * @param ssl_connection used to read from.
    * @return the result of the read operation with a IO:IO_RESULT format.
    */
-  IO::IO_RESULT sslShutdown(Connection &ssl_connection);
+  static IO::IO_RESULT sslShutdown(Connection &ssl_connection);
 };
 }  // namespace ssl

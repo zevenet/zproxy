@@ -25,37 +25,15 @@
 
 using namespace ssl;
 
-bool SSLConnectionManager::init(const BackendConfig &backend_config) {
-  if (backend_config.ctx != nullptr) {
-    if (ssl_context != nullptr) delete ssl_context;
-    ssl_context = new SSLContext();
-    if (!ssl_context->init(backend_config)) {
-      Logger::LogInfo("SSLContext initialization error", LOG_DEBUG);
-      return false;
-    }
-    return true;
-  }
-  return false;
-}
-
-bool SSLConnectionManager::init(const ListenerConfig &listener_config) {
-  //  CRYPTO_set_mem_debug(1);
-  //  CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-  if (listener_config.ctx != nullptr) {
-    if (ssl_context != nullptr) delete ssl_context;
-    ssl_context = new SSLContext();
-    return ssl_context->init(listener_config);
-  }
-  return false;
-}
-
-bool SSLConnectionManager::initSslConnection(Connection &ssl_connection, bool client_mode) {
+bool SSLConnectionManager::initSslConnection(SSL_CTX *ssl_ctx,
+                                             Connection &ssl_connection,
+                                             bool client_mode) {
   if (ssl_connection.ssl != nullptr) {
     SSL_shutdown(ssl_connection.ssl);
     SSL_clear(ssl_connection.ssl);
     SSL_free(ssl_connection.ssl);
   }
-  ssl_connection.ssl = SSL_new(ssl_context->ssl_ctx);
+  ssl_connection.ssl = SSL_new(ssl_ctx);
   if (ssl_connection.ssl == nullptr) {
     Logger::logmsg(LOG_ERR, "SSL_new failed");
     return false;
@@ -190,11 +168,36 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
   //                data_size, IO::getResultString(result).c_str());
   return result;
 }
+bool SSLConnectionManager::handleHandshake(const SSLContext &ssl_context,
+                                           Connection &ssl_connection,
+                                           bool client_mode) {
+  auto result =
+      handleHandshake(ssl_context.ssl_ctx, ssl_connection, client_mode);
+  if (result && ssl_connection.ssl_connected) {
+    if (!client_mode &&
+        ssl_context.listener_config.ssl_forward_sni_server_name) {
+      if ((ssl_connection.server_name = SSL_get_servername(
+               ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
+        Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
+                       pthread_self(), ssl_connection.server_name);
+      } else {
+        Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
+                       ssl_connection.server_name);
+        ssl_connection.server_name = nullptr;
+      }
+    } else {
+      ssl_connection.server_name = nullptr;
+    }
+  }
+  return result;
+}
 
-bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool client_mode) {
+bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
+                                           Connection &ssl_connection,
+                                           bool client_mode) {
   //    Logger::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl == nullptr) {
-    if (!initSslConnection(ssl_connection, client_mode)) {
+    if (!initSslConnection(ssl_ctx, ssl_connection, client_mode)) {
       return false;
     }
   }
@@ -288,20 +291,6 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
   auto session_info = ssl::ossGetSslSessionInfo(session);
   Logger::logmsg(LOG_ERR, session_info.get());
 #endif
-  if (!client_mode &&
-      ssl_context->listener_config.ssl_forward_sni_server_name) {
-    if ((ssl_connection.server_name = SSL_get_servername(
-             ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
-      Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
-                     pthread_self(), ssl_connection.server_name);
-    } else {
-      Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
-                     ssl_connection.server_name);
-      ssl_connection.server_name = nullptr;
-    }
-  } else {
-    ssl_connection.server_name = nullptr;
-  }
   ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
   !client_mode ? ssl_connection.enableReadEvent()
                : ssl_connection.enableWriteEvent();
@@ -368,13 +357,9 @@ else {
 #endif
 }
 
-SSLConnectionManager::~SSLConnectionManager() {
-  if (ssl_context != nullptr) {
-    delete ssl_context;
-  }
-}
+SSLConnectionManager::~SSLConnectionManager() {}
 
-SSLConnectionManager::SSLConnectionManager() : ssl_context(nullptr) {}
+SSLConnectionManager::SSLConnectionManager() {}
 
 IO::IO_RESULT SSLConnectionManager::getSslErrorResult(SSL *ssl_connection_context, int &rc) {
   rc = SSL_get_error(ssl_connection_context, rc);

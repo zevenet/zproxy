@@ -128,7 +128,6 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
 
   int worker_id{};
   std::thread worker;
-  ssl::SSLConnectionManager * ssl_manager{};
   std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
   std::atomic<bool> is_running{};
   std::unordered_map<int, HttpStream *> streams_set;
@@ -309,6 +308,4 @@ public:
    * @return true if should handle the task, false if not.
    */
   void stopListener(int listener_id, bool cut_connection = false);
-  /** True if the listener is HTTPS, false if not. */
-  bool is_https_listener;
 };
