@@ -139,8 +139,9 @@ sub new_farm_zone_resource    # ( $json_obj, $farmname, $zone )
 				   },
 				   "type" => {
 							   'valid_format' => 'resource_type',
-							   'required'     => 'true',
-							   'non_blank'    => 'true',
+							   'values' => [qw(NS A AAAA CNAME DYNA MX SRV TXT PTR NAPTR)],
+							   'required'  => 'true',
+							   'non_blank' => 'true',
 				   },
 				   "rdata" => {
 								'required'  => 'true',
@@ -350,20 +351,22 @@ sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 	  if ( $json_obj->{ type } eq 'PTR' );
 
 	my $params = {
-				   "rname" => {
-								'valid_format' => 'resource_name',
-								'non_blank'    => 'true',
-				   },
-				   "ttl" => {
-							  'valid_format' => 'resource_ttl',
-				   },
-				   "type" => {
-							   'valid_format' => 'resource_type',
-							   'non_blank'    => 'true',
-				   },
-				   "rdata" => {
-								'non_blank' => 'true',
-				   },
+		"rname" => {
+					 'valid_format' => 'resource_name',
+					 'non_blank'    => 'true',
+		},
+		"ttl" => {
+				   'valid_format' => 'resource_ttl',
+		},
+		"type" => {
+			'valid_format' => 'resource_type',
+			'non_blank'    => 'true',
+			'values'       => [qw(NS A AAAA CNAME DYNA MX SRV TXT PTR NAPTR)],
+
+		},
+		"rdata" => {
+					 'non_blank' => 'true',
+		},
 	};
 
 	# validate FARM NAME

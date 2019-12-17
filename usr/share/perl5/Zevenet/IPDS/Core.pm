@@ -714,7 +714,8 @@ Returns:
 
 sub addIPDSFarms
 {
-	my $farmname = shift my $ipds = shift;
+	my $farmname = shift;
+	my $ipds     = shift;
 
 	include 'Zevenet::IPDS::Blacklist::Runtime';
 	include 'Zevenet::IPDS::DoS::Runtime';

@@ -272,8 +272,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		$params->{ redirect_code } = { 'values'       => [301, 302, 307], };
 		$params->{ sts_timeout }   = { 'valid_format' => 'http_sts_timeout', };
-		$params->{ sts_status }    = { 'valid_format' => 'http_sts_status', };
-		$params->{ cookieinsert }  = { 'valid_format' => 'boolean', };
+		$params->{ sts_status }    = { 'values'       => ['true', 'false'], };
+		$params->{ cookieinsert }  = { 'values'       => ['true', 'false'], };
 		$params->{ cookiettl } = {
 								   'valid_format' => 'integer',
 								   'non_blank'    => 'true',

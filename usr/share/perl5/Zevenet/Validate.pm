@@ -62,7 +62,6 @@ my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
-#~ my $dos_global= qr/(?:sshbruteforce|dropicmp)/;		# Next version
 my $dos_global = qr/(?:sshbruteforce)/;
 my $dos_all    = qr/(?:limitconns|limitsec)/;
 my $dos_tcp    = qr/(?:bogustcpflags|limitrst)/;
@@ -120,10 +119,11 @@ my %format_re = (
 	'gslb_service'          => qr/[a-zA-Z0-9][\w\-]*/,
 	'farm_modules'          => qr/(?:gslb|dslb|lslb)/,
 	'service_position'      => qr/\d+/,
-	'farm_maintenance_mode' => qr/(?:drain|cut)/,
+	'farm_maintenance_mode' => qr/(?:drain|cut)/,              # not used from API 4
 
 	# cipher
-	'ciphers' => qr/(?:all|highsecurity|customsecurity|ssloffloading)/,
+	'ciphers' =>
+	  qr/(?:all|highsecurity|customsecurity|ssloffloading)/,   # not used from API 4
 
 	# backup
 	'backup'        => qr/[\w-]+/,
@@ -135,27 +135,28 @@ my %format_re = (
 	'mount_point'      => qr/root[\w\-\.\/]*/,
 
 	# http
-	'redirect_code'    => qr/(?:301|302|307)/,
-	'http_sts_status'  => qr/(?:true|false)/,
+	'redirect_code'    => qr/(?:301|302|307)/,                 # not used from API 4
+	'http_sts_status'  => qr/(?:true|false)/,                  # not used from API 4
 	'http_sts_timeout' => qr/(?:\d+)/,
 
 	# GSLB
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
 	'resource_name' => qr/(?:[\w\-\.]+|\@)/,
-	'resource_ttl'  => qr/$natural/,                    # except zero
-	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
-	'resource_data'      => qr/.+/,            # alow anything (because of TXT type)
-	'resource_data_A'    => $ipv4_addr,
-	'resource_data_AAAA' => $ipv6_addr,
-	'resource_data_DYNA' => $service,
-	'resource_data_NS'   => qr/[a-zA-Z0-9\-]+/,
+	'resource_ttl'  => qr/$natural/,                           # except zero
+	'resource_type' =>
+	  qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,       # not used from API 4
+	'resource_data'       => qr/.+/,            # allow anything (TXT type needs it)
+	'resource_data_A'     => $ipv4_addr,
+	'resource_data_AAAA'  => $ipv6_addr,
+	'resource_data_DYNA'  => $service,
+	'resource_data_NS'    => qr/[a-zA-Z0-9\-]+/,
 	'resource_data_CNAME' => qr/[a-z\.]+/,
 	'resource_data_MX'    => qr/[a-z\.\ 0-9]+/,
-	'resource_data_TXT'   => qr/.+/,              # all characters allow
+	'resource_data_TXT'   => qr/.+/,            # all characters allow
 	'resource_data_SRV'   => qr/[a-z0-9 \.]/,
 	'resource_data_PTR'   => qr/[a-z\.]+/,
-	'resource_data_NAPTR' => qr/.+/,              # all characters allow
+	'resource_data_NAPTR' => qr/.+/,            # all characters allow
 
 	# interfaces ( WARNING: length in characters < 16  )
 	'mac_addr'         => $mac_addr,
@@ -170,7 +171,8 @@ my %format_re = (
 	'virtual_tag'      => qr/$virtual_tag/,
 	'bond_mode_num'    => qr/[0-6]/,
 	'bond_mode_short' =>
-	  qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/,
+	  qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/
+	,    # not used from API 4
 
 	# notifications
 	'notif_alert'  => qr/(?:backends|cluster)/,
@@ -181,21 +183,16 @@ my %format_re = (
 
 	# IPDS
 	# blacklists
-	'day_of_month'              => qr{$dayofmonth},
-	'weekdays'                  => qr{$weekdays},
-	'blacklists_name'           => qr{\w+},
-	'blacklists_source'         => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
-	'blacklists_source_id'      => qr{\d+},
-	'blacklists_type'           => qr{(?:local|remote)},
-	'blacklists_policy'         => qr{(?:allow|deny)},
-	'blacklists_url'            => qr{.+},
-	'blacklists_hour'           => $hours,
-	'blacklists_minutes'        => $minutes,
-	'blacklists_period'         => $natural,
-	'blacklists_unit'           => qr{(:?hours|minutes)},
-	'blacklists_day'            => qr{(:?$dayofmonth|$weekdays)},
-	'blacklists_frequency'      => qr{(:?daily|weekly|monthly)},
-	'blacklists_frequency_type' => qr{(:?period|exact)},
+	'day_of_month'         => qr{$dayofmonth},
+	'weekdays'             => qr{$weekdays},
+	'blacklists_name'      => qr{\w+},
+	'blacklists_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'blacklists_source_id' => qr{\d+},
+	'blacklists_url'       => qr{.+},
+	'blacklists_hour'      => $hours,
+	'blacklists_minutes'   => $minutes,
+	'blacklists_period'    => $natural,
+	'blacklists_day'       => qr{(:?$dayofmonth|$weekdays)},
 
 	# DoS
 	'dos_name'        => qr/[\w]+/,
@@ -208,7 +205,6 @@ my %format_re = (
 	'dos_limit_conns' => $natural,
 	'dos_limit'       => $natural,
 	'dos_limit_burst' => $natural,
-	'dos_status'      => qr/(?:down|up)/,
 	'dos_port'        => $port_range,
 	'dos_hits'        => $natural,
 
@@ -222,7 +218,7 @@ my %format_re = (
 	'rbl_queue_size'    => $natural,
 	'rbl_thread_max'    => $natural,
 	'rbl_local_traffic' => $boolean,
-	'rbl_actions'       => $run_actions,
+	'rbl_actions'       => $run_actions,    # not used from API 4
 
 	# WAF
 	'http_code'      => qr/[0-9]{3}/,
@@ -257,10 +253,10 @@ my %format_re = (
 
 	# farm guardian
 	'fg_name'    => qr/[\w-]+/,
-	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,
+	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,    # not used from API 4
 	'fg_enabled' => $boolean,
 	'fg_log'     => $boolean,
-	'fg_time'    => qr/$natural/,                     # this value can't be 0
+	'fg_time'    => qr/$natural/,                      # this value can't be 0
 
 	# RBAC
 	'user_name'     => qr/[a-z][-a-z0-9_]+/,

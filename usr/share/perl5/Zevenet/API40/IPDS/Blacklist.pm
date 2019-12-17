@@ -81,9 +81,9 @@ sub add_blacklists_list
 							   'required'     => 'true',
 				   },
 				   "type" => {
-							   'valid_format' => 'blacklists_type',
-							   'non_blank'    => 'true',
-							   'required'     => 'true',
+							   'values'    => ['local', 'remote'],
+							   'non_blank' => 'true',
+							   'required'  => 'true',
 				   },
 				   "policy" => {
 								 'values'    => ['allow', 'deny'],
