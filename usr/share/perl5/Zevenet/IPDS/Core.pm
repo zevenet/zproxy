@@ -730,7 +730,7 @@ sub addIPDSFarms
 	}
 	foreach my $rule ( @{ $ipds->{ dos } } )
 	{
-		$err += &setDOSApplyRule( $rule->{ name }, $farmname );
+		$err += &setDOSApplyRule( $farmname, $rule->{ name } );
 	}
 	foreach my $rule ( @{ $ipds->{ rbl } } )
 	{

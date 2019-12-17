@@ -179,8 +179,8 @@ Function: setDOSApplyRule
 	System type: Put rule in up status
 
 Parameters:
-	rule	- Rule name
 	farmname - Farm name
+	rule	- Rule name
 
 Returns:
 	Integer - Error code. 0 on succes or other value on failure.
@@ -191,7 +191,7 @@ sub setDOSApplyRule
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $ruleName, $farmName ) = @_;
+	my ( $farmName, $ruleName ) = @_;
 
 	require Zevenet::Farm::Base;
 	require Config::Tiny;

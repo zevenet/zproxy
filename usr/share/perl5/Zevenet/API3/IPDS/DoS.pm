@@ -348,7 +348,7 @@ sub add_dos_to_farm
 		else
 		{
 			include 'Zevenet::IPDS::DoS::Runtime';
-			&setDOSApplyRule( $name, $farmName );
+			&setDOSApplyRule( $farmName, $name );
 
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
 

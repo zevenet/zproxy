@@ -338,7 +338,7 @@ sub add_dos_to_farm
 		}
 	}
 
-	&setDOSApplyRule( $name, $farmName );
+	&setDOSApplyRule( $farmName, $name );
 
 	my $output = &getDOSZapiRule( $name );
 	if ( !grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
