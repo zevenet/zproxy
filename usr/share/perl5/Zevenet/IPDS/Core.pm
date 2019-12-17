@@ -698,4 +698,50 @@ sub delIPDSFarmService
 	return $output;
 }
 
+=begin nd
+Function: addIPDSFarms
+
+	Add a set of IPDS rules to a farm. The rules are of different modules of IPDS
+
+Parameters:
+	farm - farm name
+	ipds - it is a hash with the keys 'blacklists', 'dos', 'rbl' and 'waf'. Each keys contains an array ref with the names of ipds rules to add to the farm
+
+Returns:
+	Integer - Error code. 0 on success or another value on failure
+
+=cut
+
+sub addIPDSFarms
+{
+	my $farmname = shift my $ipds = shift;
+
+	include 'Zevenet::IPDS::Blacklist::Runtime';
+	include 'Zevenet::IPDS::DoS::Runtime';
+	include 'Zevenet::IPDS::RBL::Config';
+	include 'Zevenet::IPDS::WAF::Runtime';
+
+	my $err = 0;
+
+	# adding ipds rules
+	foreach my $rule ( @{ $ipds->{ blacklists } } )
+	{
+		$err += &setBLApplyToFarm( $farmname, $rule->{ name } );
+	}
+	foreach my $rule ( @{ $ipds->{ dos } } )
+	{
+		$err += &setDOSApplyRule( $rule->{ name }, $farmname );
+	}
+	foreach my $rule ( @{ $ipds->{ rbl } } )
+	{
+		$err += &addRBLFarm( $farmname, $rule->{ name } );
+	}
+	foreach my $rule ( @{ $ipds->{ waf } } )
+	{
+		$err += &addWAFsetToFarm( $farmname, $rule->{ name } );
+	}
+
+	return $err;
+}
+
 1;

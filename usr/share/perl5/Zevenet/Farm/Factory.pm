@@ -193,31 +193,13 @@ sub runFarmCreateFrom
 		);
 	}
 
-	if ( $eload )
+	if ( $eload and !$err )
 	{
-		include 'Zevenet::IPDS::Core';
-		include 'Zevenet::IPDS::Blacklist::Runtime';
-		include 'Zevenet::IPDS::DoS::Runtime';
-		include 'Zevenet::IPDS::RBL::Config';
-		include 'Zevenet::IPDS::WAF::Runtime';
-
-		# adding ipds rules
-		foreach my $rule ( @{ $ipds->{ blacklists } } )
-		{
-			&setBLApplyToFarm( $params->{ farmname }, $rule->{ name } );
-		}
-		foreach my $rule ( @{ $ipds->{ dos } } )
-		{
-			&setDOSApplyRule( $rule->{ name }, $params->{ farmname } );
-		}
-		foreach my $rule ( @{ $ipds->{ rbl } } )
-		{
-			&addRBLFarm( $params->{ farmname }, $rule->{ name } );
-		}
-		foreach my $rule ( @{ $ipds->{ waf } } )
-		{
-			&addWAFsetToFarm( $params->{ farmname }, $rule->{ name } );
-		}
+		$err = &eload(
+					   module => 'Zevenet::IPDS::Core',
+					   func   => 'addIPDSFarms',
+					   args   => [$params->{ farmname }, $ipds],
+		);
 	}
 
 	return $err;
