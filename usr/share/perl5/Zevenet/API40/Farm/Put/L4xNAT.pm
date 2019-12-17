@@ -62,6 +62,9 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 410, desc => $desc, msg => $msg );
 	}
 
+	require Zevenet::Net::Interface;
+	my $ip_list = &getIpAddressList();
+
 	my $params = {
 		   "newfarmname" => {
 							  'valid_format' => 'farm_name',
@@ -71,7 +74,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 						'non_blank' => 'true',
 		   },
 		   "vip" => {
-					  'function'   => \&getIpAddressExists,
+					  'values'     => $ip_list,
 					  'non_blank'  => 'true',
 					  'format_msg' => 'The vip IP must exist in some interface.'
 		   },

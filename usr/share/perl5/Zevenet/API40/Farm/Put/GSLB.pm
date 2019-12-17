@@ -45,6 +45,9 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	# Check that the farm exists
 	# it is checked in the global PUT function
 
+	require Zevenet::Net::Interface;
+	my $ip_list = &getIpAddressList();
+
 	my $params = {
 				   "newfarmname" => {
 									  'valid_format' => 'farm_name',
@@ -55,9 +58,9 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 								'non_blank' => 'true',
 				   },
 				   "vip" => {
-							  'valid_format' => 'ip_addr',
-							  'non_blank'    => 'true',
-							  'format_msg'   => 'expects an IP'
+							  'values'     => $ip_list,
+							  'non_blank'  => 'true',
+							  'format_msg' => 'expects an IP'
 				   },
 	};
 

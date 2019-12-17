@@ -255,7 +255,8 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	use Data::Dumper;
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
 	  if &debug() > 2;
-	my @if_params = ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac', 'dhcp', 'isolate' );
+	my @if_params =
+	  ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac', 'dhcp', 'isolate' );
 
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
@@ -274,7 +275,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		$fileHandle->{ $if_ref->{ name } }->{ $field } = $if_ref->{ $field };
 	}
 
-	if ( ! exists $fileHandle->{status} )
+	if ( !exists $fileHandle->{ status } )
 	{
 		$fileHandle->{ $if_ref->{ name } }->{ status } = $if_ref->{ status } // "up";
 	}
@@ -1260,6 +1261,36 @@ sub getIpAddressExists
 	}
 
 	return $output;
+}
+
+=begin nd
+Function: getIpAddressList
+
+	It returns a list with the IPv4 and IPv6 that exist in the system
+
+Parameters:
+	none - .
+
+Returns:
+	Array ref - List of IPs
+
+=cut
+
+sub getIpAddressList
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my @out = ();
+
+	foreach my $if_ref ( @{ &getConfigInterfaceList() } )
+	{
+		if ( defined $if_ref->{ addr } )
+		{
+			push @out, $if_ref->{ addr };
+		}
+	}
+
+	return \@out;
 }
 
 =begin nd

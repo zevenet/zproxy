@@ -65,6 +65,9 @@ sub new_farm    # ( $json_obj )
 		}
 	}
 
+	require Zevenet::Net::Interface;
+	my $ip_list = &getIpAddressList();
+
 	my $params = {
 		"profile" => {
 					   'required'  => 'true',
@@ -79,9 +82,8 @@ sub new_farm    # ( $json_obj )
 			  "The farm name is required to have alphabet letters, numbers or hypens (-) only.",
 		},
 		"vip" => {
-				   'valid_format' => 'ip_addr',
-				   'non_blank'    => 'true',
-				   'required'     => 'true',
+				   'values'   => $ip_list,
+				   'required' => 'true',
 		},
 		"copy_from" => {
 						 'valid_format' => 'farm_name',

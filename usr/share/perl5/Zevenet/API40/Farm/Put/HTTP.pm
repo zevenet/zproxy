@@ -41,6 +41,9 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	my $desc = "Modify HTTP farm $farmname";
 
+	require Zevenet::Net::Interface;
+	my $ip_list = &getIpAddressList();
+
 	my $params = {
 		"newfarmname" => {
 						   'valid_format' => 'farm_name',
@@ -51,9 +54,9 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 					 'non_blank' => 'true',
 		},
 		"vip" => {
-				   'valid_format' => 'ip_addr',
-				   'non_blank'    => 'true',
-				   'format_msg'   => 'expects an IP'
+				   'values'     => $ip_list,
+				   'non_blank'  => 'true',
+				   'format_msg' => 'expects an IP'
 		},
 		"contimeout" => {
 						  'valid_format' => 'natural_num',
