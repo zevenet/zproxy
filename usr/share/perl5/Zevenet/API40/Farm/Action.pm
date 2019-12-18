@@ -97,6 +97,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 		}
 
 		require Zevenet::Farm::Base;
+		require Zevenet::Lock;
 		if ( &getLockStatus( $farmname ) )
 		{
 			my $msg = "The farm has changes pending of applying, it has to be restarted.";
