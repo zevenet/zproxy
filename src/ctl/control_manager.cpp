@@ -224,7 +224,7 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
         }
       case 'd':
         if (str == JSON_KEYS::DEBUG) {
-          task.target = CTL_HANDLER_TYPE::ALL;
+          task.target = CTL_HANDLER_TYPE::LISTENER_MANAGER;
           task.subject = CTL_SUBJECT::DEBUG;
         }
         break;

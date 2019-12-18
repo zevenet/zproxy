@@ -54,9 +54,11 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   }
 }
 
-void Service::addBackend(BackendConfig *backend_config, std::string address, int port, int backend_id, bool emergency) {
+void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
+                         std::string address, int port, int backend_id,
+                         bool emergency) {
   auto *backend = new Backend();
-  backend->backend_config = *backend_config;
+  backend->backend_config = backend_config;
   backend->address_info = Network::getAddress(address, port).release();
   if (backend->address_info != nullptr) {
     backend->address = std::move(address);
@@ -81,13 +83,14 @@ void Service::addBackend(BackendConfig *backend_config, std::string address, int
   }
 }
 
-void Service::addBackend(BackendConfig *backend_config, int backend_id, bool emergency) {
+void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
+                         int backend_id, bool emergency) {
   if (backend_config->be_type == 0) {
     this->addBackend(backend_config, backend_config->address, backend_config->port, backend_id);
   } else {
     // Redirect
     auto *config = new Backend();
-    config->backend_config = *backend_config;
+    config->backend_config = backend_config;
     config->backend_id = backend_id;
     config->weight = backend_config->priority;
     config->name = "bck_" + std::to_string(backend_id);
@@ -186,16 +189,15 @@ Service::Service(ServiceConfig &service_config_) : service_config(service_config
 }
 
 bool Service::doMatch(HttpRequest &request) {
-  MATCHER *m;
   int i, found;
 
   /* check for request */
   auto url = std::string(request.path, request.path_length);
-  for (m = service_config.url; m; m = m->next)
+  for (auto &m = service_config.url; m; m = m->next)
     if (regexec(&m->pat, url.data(), 0, nullptr, 0)) return false;
 
   /* check for required headers */
-  for (m = service_config.req_head; m; m = m->next) {
+  for (auto &m = service_config.req_head; m; m = m->next) {
     for (found = i = 0; i < static_cast<int>(request.num_headers) && !found;
          i++)
       if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0)) found = 1;
@@ -203,7 +205,7 @@ bool Service::doMatch(HttpRequest &request) {
   }
 
   /* check for forbidden headers */
-  for (m = service_config.deny_head; m; m = m->next) {
+  for (auto &m = service_config.deny_head; m; m = m->next) {
     for (found = i = 0; i < static_cast<int>(request.num_headers); i++)
       if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0))
         return false;

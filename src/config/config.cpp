@@ -58,8 +58,8 @@ Config::~Config() {}
 
 void Config::parse_file() {
   char lin[MAXBUF];
-  ServiceConfig *svc{nullptr};
-  ListenerConfig *lstn{nullptr};
+  std::shared_ptr<ServiceConfig> svc{nullptr};
+  std::shared_ptr<ListenerConfig> lstn{nullptr};
   int i;
   regmatch_t matches[5];
 
@@ -272,17 +272,16 @@ std::string Config::file2str(const char *fname) {
   return res;
 }
 
-ListenerConfig *Config::parse_HTTP() {
+std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
   char lin[MAXBUF];
-  ListenerConfig *res;
-  ServiceConfig *svc;
+  auto res = std::make_shared<ListenerConfig>();
+  std::shared_ptr<ServiceConfig> svc;
   MATCHER *m;
   int has_addr, has_port;
   sockaddr_in in{};
   sockaddr_in6 in6{};
   regmatch_t matches[5];
 
-  res = new ListenerConfig();
   res->name = name;
   res->id = listener_id_counter++;
   res->to = clnt_to;
@@ -309,7 +308,8 @@ ListenerConfig *Config::parse_HTTP() {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) conf_err("Unknown Listener address");
+      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC))
+        conf_err("Unknown Listener address");
       if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
       has_addr = 1;
@@ -321,12 +321,14 @@ ListenerConfig *Config::parse_HTTP() {
       switch (res->addr.ai_family) {
         case AF_INET:
           memcpy(&in, res->addr.ai_addr, sizeof(in));
-          in.sin_port = reinterpret_cast<in_port_t>(htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
+          in.sin_port = reinterpret_cast<in_port_t>(
+              htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
           memcpy(res->addr.ai_addr, &in, sizeof(in));
           break;
         case AF_INET6:
           memcpy(&in6, res->addr.ai_addr, sizeof(in6));
-          in6.sin6_port = reinterpret_cast<in_port_t>(htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
+          in6.sin6_port = reinterpret_cast<in_port_t>(
+              htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
           memcpy(res->addr.ai_addr, &in6, sizeof(in6));
           break;
         default:
@@ -369,7 +371,8 @@ ListenerConfig *Config::parse_HTTP() {
       if (res->head_off) {
         for (m = res->head_off; m->next; m = m->next)
           ;
-        if ((m->next = new MATCHER()) == nullptr) conf_err("HeadRemove config: out of memory - aborted");
+        if ((m->next = new MATCHER()) == nullptr)
+          conf_err("HeadRemove config: out of memory - aborted");
         m = m->next;
       } else {
         res->head_off = new MATCHER();
@@ -393,11 +396,11 @@ ListenerConfig *Config::parse_HTTP() {
       if(res->response_head_off) {
         for(m = res->response_head_off; m->next; m = m->next)
           ;
-        if((m->next = new MATCHER()) == nullptr)
+        if ((m->next = new MATCHER()) == nullptr)
           conf_err("RemoveResponseHead config: out of memory - aborted");
         m = m->next;
       } else {
-        if((res->response_head_off =  new MATCHER()) == nullptr)
+        if ((res->response_head_off = new MATCHER()) == nullptr)
           conf_err("RemoveResponseHead config: out of memory - aborted");
         m = res->response_head_off;
       }
@@ -495,16 +498,16 @@ ListenerConfig *Config::parse_HTTP() {
   return nullptr;
 }
 
-ListenerConfig *Config::parse_HTTPS() {
+std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
   char lin[MAXBUF];
-  ListenerConfig *res;
-  ServiceConfig *svc;
+  auto res = std::make_shared<ListenerConfig>();
+  std::shared_ptr<ServiceConfig> svc;
   MATCHER *m;
   int has_addr, has_port, has_other;
   unsigned long ssl_op_enable, ssl_op_disable;
   struct sockaddr_in in {};
   struct sockaddr_in6 in6 {};
-  POUND_CTX *pc;
+  std::shared_ptr<POUND_CTX> pc;
   regmatch_t matches[5];
   bool openssl_file_exists = false;
 
@@ -515,7 +518,6 @@ ListenerConfig *Config::parse_HTTPS() {
   ssl_op_disable =
       SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION | SSL_OP_LEGACY_SERVER_CONNECT | SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
-  res = new ListenerConfig();
   res->to = clnt_to;
   res->rewr_loc = 1;
   res->name = name;
@@ -542,7 +544,8 @@ ListenerConfig *Config::parse_HTTPS() {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC)) conf_err("Unknown Listener address");
+      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC))
+        conf_err("Unknown Listener address");
       if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
       has_addr = 1;
@@ -579,11 +582,13 @@ ListenerConfig *Config::parse_HTTPS() {
     } else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
       if (res->addr.ai_family == AF_INET) {
         memcpy(&in, res->addr.ai_addr, sizeof(in));
-        in.sin_port = static_cast<in_port_t>(htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
+        in.sin_port = static_cast<in_port_t>(
+            htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
         memcpy(res->addr.ai_addr, &in, sizeof(in));
       } else {
         memcpy(&in6, res->addr.ai_addr, sizeof(in6));
-        in6.sin6_port = htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so)));
+        in6.sin6_port =
+            htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so)));
         memcpy(res->addr.ai_addr, &in6, sizeof(in6));
       }
       has_port = 1;
@@ -694,29 +699,37 @@ ListenerConfig *Config::parse_HTTPS() {
       switch (res->clnt_check = atoi(lin + matches[1].rm_so)) {
         case 0:
           /* don't ask */
-          for (pc = res->ctx; pc; pc = pc->next) SSL_CTX_set_verify(pc->ctx, SSL_VERIFY_NONE, nullptr);
+          for (pc = res->ctx; pc; pc = pc->next)
+            SSL_CTX_set_verify(pc->ctx.get(), SSL_VERIFY_NONE, nullptr);
           break;
         case 1:
           /* ask but OK if no client certificate */
           for (pc = res->ctx; pc; pc = pc->next) {
-            SSL_CTX_set_verify(pc->ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, nullptr);
-            SSL_CTX_set_verify_depth(pc->ctx, atoi(lin + matches[2].rm_so));
+            SSL_CTX_set_verify(pc->ctx.get(),
+                               SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
+                               nullptr);
+            SSL_CTX_set_verify_depth(pc->ctx.get(),
+                                     atoi(lin + matches[2].rm_so));
           }
           break;
         case 2:
           /* ask and fail if no client certificate */
           for (pc = res->ctx; pc; pc = pc->next) {
-            SSL_CTX_set_verify(pc->ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
-            SSL_CTX_set_verify_depth(pc->ctx, atoi(lin + matches[2].rm_so));
+            SSL_CTX_set_verify(
+                pc->ctx.get(),
+                SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+            SSL_CTX_set_verify_depth(pc->ctx.get(),
+                                     atoi(lin + matches[2].rm_so));
           }
           break;
         case 3:
           /* ask but do not verify client certificate */
           for (pc = res->ctx; pc; pc = pc->next) {
-            SSL_CTX_set_verify(pc->ctx,
+            SSL_CTX_set_verify(pc->ctx.get(),
                                SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
                                global::SslHelper::verifyCertificate_OK);
-            SSL_CTX_set_verify_depth(pc->ctx, atoi(lin + matches[2].rm_so));
+            SSL_CTX_set_verify_depth(pc->ctx.get(),
+                                     atoi(lin + matches[2].rm_so));
           }
           break;
       }
@@ -779,7 +792,8 @@ ListenerConfig *Config::parse_HTTPS() {
       has_other = 1;
       if (res->ctx == nullptr) conf_err("Ciphers may only be used after Cert - aborted");
       lin[matches[1].rm_eo] = '\0';
-      for (pc = res->ctx; pc; pc = pc->next) SSL_CTX_set_cipher_list(pc->ctx, lin + matches[1].rm_so);
+      for (pc = res->ctx; pc; pc = pc->next)
+        SSL_CTX_set_cipher_list(pc->ctx.get(), lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::CAlist, lin, 4, matches, 0)) {
       STACK_OF(X509_NAME) * cert_names;
 
@@ -788,13 +802,15 @@ ListenerConfig *Config::parse_HTTPS() {
       lin[matches[1].rm_eo] = '\0';
       if ((cert_names = SSL_load_client_CA_file(lin + matches[1].rm_so)) == nullptr)
         conf_err("SSL_load_client_CA_file failed - aborted");
-      for (pc = res->ctx; pc; pc = pc->next) SSL_CTX_set_client_CA_list(pc->ctx, cert_names);
+      for (pc = res->ctx; pc; pc = pc->next)
+        SSL_CTX_set_client_CA_list(pc->ctx.get(), cert_names);
     } else if (!regexec(&regex_set::VerifyList, lin, 4, matches, 0)) {
       has_other = 1;
       if (res->ctx == nullptr) conf_err("VerifyList may only be used after Cert - aborted");
       lin[matches[1].rm_eo] = '\0';
       for (pc = res->ctx; pc; pc = pc->next)
-        if (SSL_CTX_load_verify_locations(pc->ctx, lin + matches[1].rm_so, nullptr) != 1)
+        if (SSL_CTX_load_verify_locations(pc->ctx.get(), lin + matches[1].rm_so,
+                                          nullptr) != 1)
           conf_err("SSL_CTX_load_verify_locations failed - aborted");
     } else if (!regexec(&regex_set::SSLConfigFile, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
@@ -811,7 +827,7 @@ ListenerConfig *Config::parse_HTTPS() {
       if (res->ctx == nullptr) conf_err("CRLlist may only be used after Cert - aborted");
       lin[matches[1].rm_eo] = '\0';
       for (pc = res->ctx; pc; pc = pc->next) {
-        store = SSL_CTX_get_cert_store(pc->ctx);
+        store = SSL_CTX_get_cert_store(pc->ctx.get());
         if ((lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file())) == nullptr)
           conf_err("X509_STORE_add_lookup failed - aborted");
         if (X509_load_crl_file(lookup, lin + matches[1].rm_so, X509_FILETYPE_PEM) != 1)
@@ -856,26 +872,30 @@ ListenerConfig *Config::parse_HTTPS() {
       }
     } else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
       if (openssl_file_exists) {
-        if ((res->ctx = new POUND_CTX()) == nullptr) conf_err("ListenHTTPS new POUND_CTX: out of memory - aborted");
-        if ((res->ctx->ctx = SSL_CTX_new(SSLv23_server_method())) == nullptr) conf_err("SSL_CTX_new failed - aborted");
+        res->ctx = std::make_shared<POUND_CTX>();
+        res->ctx->ctx = std::shared_ptr<SSL_CTX>(
+            SSL_CTX_new(SSLv23_server_method()), &::__SSL_CTX_free);
       }
       if ((!has_addr || !has_port || res->ctx == nullptr) && !openssl_file_exists)
         conf_err("ListenHTTPS missing Address, Port, SSL Config file or Certificate - aborted");
       if (!openssl_file_exists) {
         for (pc = res->ctx; pc; pc = pc->next) {
-          SSL_CTX_set_app_data(pc->ctx, res);
-          SSL_CTX_set_mode(pc->ctx, SSL_MODE_RELEASE_BUFFERS);
-          SSL_CTX_set_options(pc->ctx, ssl_op_enable);
-          SSL_CTX_clear_options(pc->ctx, ssl_op_disable);
+          SSL_CTX_set_app_data(pc->ctx.get(), res.get());
+          SSL_CTX_set_mode(pc->ctx.get(), SSL_MODE_RELEASE_BUFFERS);
+          SSL_CTX_set_options(pc->ctx.get(), ssl_op_enable);
+          SSL_CTX_clear_options(pc->ctx.get(), ssl_op_disable);
           sprintf(lin, "%d-zproxy-%ld", getpid(), random());
-          SSL_CTX_set_session_id_context(pc->ctx, reinterpret_cast<unsigned char *>(lin),
-                                         static_cast<unsigned int>(strlen(lin)));
+          SSL_CTX_set_session_id_context(
+              pc->ctx.get(), reinterpret_cast<unsigned char *>(lin),
+              static_cast<unsigned int>(strlen(lin)));
           SSL_CTX_set_tmp_rsa_callback(pc->ctx, global::SslHelper::RSA_tmp_callback);
-          SSL_CTX_set_info_callback(pc->ctx, global::SslHelper::SSLINFO_callback);
+          SSL_CTX_set_info_callback(pc->ctx.get(),
+                                    global::SslHelper::SSLINFO_callback);
           if (nullptr == DHCustom_params)
-            SSL_CTX_set_tmp_dh_callback(pc->ctx, global::SslHelper::DH_tmp_callback);
+            SSL_CTX_set_tmp_dh_callback(pc->ctx.get(),
+                                        global::SslHelper::DH_tmp_callback);
           else
-            SSL_CTX_set_tmp_dh(pc->ctx, DHCustom_params);
+            SSL_CTX_set_tmp_dh(pc->ctx.get(), DHCustom_params);
 
 #ifndef OPENSSL_NO_ECDH
           /* This generates a EC_KEY structure with no key, but a group defined
@@ -887,8 +907,8 @@ ListenerConfig *Config::parse_HTTPS() {
             if ((ecdh = EC_KEY_new_by_curve_name(res->ecdh_curve_nid)) ==
                 nullptr)
               conf_err("Unable to generate Listener temp ECDH key");
-            SSL_CTX_set_tmp_ecdh(pc->ctx, ecdh);
-            SSL_CTX_set_options(pc->ctx, SSL_OP_SINGLE_ECDH_USE);
+            SSL_CTX_set_tmp_ecdh(pc->ctx.get(), ecdh);
+            SSL_CTX_set_options(pc->ctx.get(), SSL_OP_SINGLE_ECDH_USE);
             EC_KEY_free(ecdh);
           }
 #if defined(SSL_CTX_set_ecdh_auto)
@@ -909,7 +929,7 @@ ListenerConfig *Config::parse_HTTPS() {
   return nullptr;
 }
 
-unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count) {
+unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count_) {
   size_t local_count;
   unsigned char **result;
   STACK_OF(GENERAL_NAME) *san_stack =
@@ -921,7 +941,7 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count) {
   local_count = 0;
   result = nullptr;
   name__ = nullptr;
-  *count = 0;
+  *count_ = 0;
   if (san_stack == nullptr) return nullptr;
   while (sk_GENERAL_NAME_num(san_stack) > 0) {
     name__ = sk_GENERAL_NAME_pop(san_stack);
@@ -945,22 +965,21 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count) {
     if (result[i] == nullptr) conf_err("out of memory");
     free(temp[i]);
   }
-  *count = static_cast<unsigned int>(local_count);
+  *count_ = static_cast<unsigned int>(local_count);
 
   sk_GENERAL_NAME_pop_free(san_stack, GENERAL_NAME_free);
 
   return result;
 }
 
-void Config::load_cert(int has_other, ListenerConfig *res, char *filename) {
-  POUND_CTX *pc;
+void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
+                       char *filename) {
+  auto res = listener_.lock();
+  std::shared_ptr<POUND_CTX> pc;
 #ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
   /* we have support for SNI */
-  FILE *fcert;
   char server_name[MAXBUF] /*, *cp*/;
-  X509 *x509;
   regmatch_t matches[5];
-
   if (has_other)
     conf_err(
         "Cert directives MUST precede other SSL-specific directives - "
@@ -968,37 +987,41 @@ void Config::load_cert(int has_other, ListenerConfig *res, char *filename) {
   if (res->ctx) {
     for (pc = res->ctx; pc->next; pc = pc->next)
       ;
-    if ((pc->next = new POUND_CTX()) == nullptr) conf_err("ListenHTTPS new POUND_CTX: out of memory - aborted");
+    pc->next = std::make_shared<POUND_CTX>();
     pc = pc->next;
   } else {
-    if ((res->ctx = new POUND_CTX()) == nullptr) conf_err("ListenHTTPS new POUND_CTX: out of memory - aborted");
+    res->ctx = std::make_shared<POUND_CTX>();
     pc = res->ctx;
   }
-  if ((pc->ctx = SSL_CTX_new(SSLv23_server_method())) == nullptr) conf_err("SSL_CTX_new failed - aborted");
+  pc->ctx = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()),
+                                     &::__SSL_CTX_free);
   pc->server_name = nullptr;
   pc->next = nullptr;
-  if (SSL_CTX_use_certificate_chain_file(pc->ctx, filename) != 1)
+  if (SSL_CTX_use_certificate_chain_file(pc->ctx.get(), filename) != 1)
     conf_err("SSL_CTX_use_certificate_chain_file failed - aborted");
-  if (SSL_CTX_use_PrivateKey_file(pc->ctx, filename, SSL_FILETYPE_PEM) != 1)
+  if (SSL_CTX_use_PrivateKey_file(pc->ctx.get(), filename, SSL_FILETYPE_PEM) !=
+      1)
     conf_err("SSL_CTX_use_PrivateKey_file failed - aborted");
-  if (SSL_CTX_check_private_key(pc->ctx) != 1) conf_err("SSL_CTX_check_private_key failed - aborted");
-  if ((fcert = fopen(filename, "r")) == nullptr) conf_err("ListenHTTPS: could not open certificate file");
-  if ((x509 = PEM_read_X509(fcert, nullptr, nullptr, nullptr)) == nullptr)
-    conf_err("ListenHTTPS: could not get certificate subject");
-  fclose(fcert);
+  if (SSL_CTX_check_private_key(pc->ctx.get()) != 1)
+    conf_err("SSL_CTX_check_private_key failed - aborted");
+  std::unique_ptr<BIO, decltype(&::BIO_free)> bio_cert(
+      BIO_new_file(filename, "r"), ::BIO_free);
+  std::unique_ptr<X509, decltype(&::X509_free)> x509(
+      ::PEM_read_bio_X509(bio_cert.get(), nullptr, nullptr, nullptr),
+      ::X509_free);
   memset(server_name, '\0', MAXBUF);
-  X509_NAME_oneline(X509_get_subject_name(x509), server_name, MAXBUF - 1);
+  X509_NAME_oneline(X509_get_subject_name(x509.get()), server_name, MAXBUF - 1);
   pc->subjectAltNameCount = 0;
   pc->subjectAltNames = nullptr;
-  pc->subjectAltNames = get_subjectaltnames(x509, &(pc->subjectAltNameCount));
-  X509_free(x509);
+  pc->subjectAltNames =
+      get_subjectaltnames(x509.get(), &(pc->subjectAltNameCount));
   if (!regexec(&regex_set::CNName, server_name, 4, matches, 0)) {
     server_name[matches[1].rm_eo] = '\0';
     if ((pc->server_name = strdup(server_name + matches[1].rm_so)) == nullptr)
       conf_err("ListenHTTPS: could not set certificate subject");
   } else
     Logger::logmsg(LOG_ERR, "ListenHTTPS: could not get certificate CN");
-// ZLB Patch - Disable exit error when CN is not present
+
 // conf_err("ListenHTTPS: could not get certificate CN");
 #else
   /* no SNI support */
@@ -1020,7 +1043,9 @@ void Config::load_cert(int has_other, ListenerConfig *res, char *filename) {
 #endif
 }
 
-void Config::load_certdir(int has_other, ListenerConfig *res, const std::string &dir_path) {
+void Config::load_certdir(int has_other,
+                          std::weak_ptr<ListenerConfig> listener_,
+                          const std::string &dir_path) {
   DIR *dp;
   struct dirent *de;
 
@@ -1029,7 +1054,7 @@ void Config::load_certdir(int has_other, ListenerConfig *res, const std::string 
   char *pattern;
   int filecnt = 0;
   int idx, use;
-
+  auto res = listener_.lock();
   Logger::logmsg(LOG_DEBUG, "Including Certs from Dir %s", dir_path.data());
 
   pattern = const_cast<char *>(strrchr(dir_path.data(), '/'));
@@ -1073,17 +1098,16 @@ void Config::load_certdir(int has_other, ListenerConfig *res, const std::string 
   closedir(dp);
 }
 
-ServiceConfig *Config::parseService(const char *svc_name) {
+std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
   char lin[MAXBUF];
   char pat[MAXBUF];
   char *ptr;
-  ServiceConfig *res;
-  BackendConfig *be;
+  auto res = std::make_shared<ServiceConfig>();
+  std::shared_ptr<BackendConfig> be;
   MATCHER *m;
   int ign_case;
   regmatch_t matches[5];
 
-  res = new ServiceConfig();
   res->f_name = name;
   res->max_headers_allowed = 128;
   res->sess_type = SESS_TYPE::SESS_NONE;
@@ -1098,7 +1122,8 @@ ServiceConfig *Config::parseService(const char *svc_name) {
       if (res->url) {
         for (m = res->url; m->next; m = m->next)
           ;
-        if ((m->next = new MATCHER()) == nullptr) conf_err("URL config: out of memory - aborted");
+        if ((m->next = new MATCHER()) == nullptr)
+          conf_err("URL config: out of memory - aborted");
         m = m->next;
       } else {
         if ((res->url = new MATCHER()) == nullptr) conf_err("URL config: out of memory - aborted");
@@ -1157,10 +1182,10 @@ ServiceConfig *Config::parseService(const char *svc_name) {
       if (res->backends) {
         for (be = res->backends; be->next; be = be->next)
           ;
-        if ((be->next = new BackendConfig()) == nullptr) conf_err("Redirect config: out of memory - aborted");
+        be->next = std::make_shared<BackendConfig>();
         be = be->next;
       } else {
-        if ((res->backends = new BackendConfig()) == nullptr) conf_err("Redirect config: out of memory - aborted");
+        res->backends = std::make_shared<BackendConfig>();
         be = res->backends;
       }
       // 1 - Dynamic or not, 2 - Request Redirect #, 3 - Destination URL
@@ -1178,9 +1203,10 @@ ServiceConfig *Config::parseService(const char *svc_name) {
       be->alive = 1;
       pthread_mutex_init(&be->mut, nullptr);
       lin[matches[3].rm_eo] = '\0';
-      if ((be->url = strdup(lin + matches[3].rm_so)) == nullptr) conf_err("Redirector config: out of memory - aborted");
+      be->url = std::string(lin + matches[3].rm_so);
       /* split the URL into its fields */
-      if (regexec(&regex_set::LOCATION, be->url, 4, matches, 0)) conf_err("Redirect bad URL - aborted");
+      if (regexec(&regex_set::LOCATION, be->url.data(), 4, matches, 0))
+        conf_err("Redirect bad URL - aborted");
       if ((matches[3].rm_eo - matches[3].rm_so) == 1) /* the path is a single '/', so remove it */
         be->url[matches[3].rm_so] = '\0';
     } else if (!regexec(&regex_set::BackEnd, lin, 4, matches, 0)) {
@@ -1302,18 +1328,16 @@ char *Config::parse_orurls() {
   return nullptr;
 }
 
-BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency) {
+std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
+                                                    const int is_emergency) {
   char lin[MAXBUF];
   regmatch_t matches[5];
   char *cp;
-  BackendConfig *res;
+  auto res = std::make_shared<BackendConfig>();
   int has_addr, has_port;
-  hostent *host;
   sockaddr_in in{};
   sockaddr_in6 in6{};
 
-
-  res = new BackendConfig();
   res->f_name = name;
   res->srv_name = svc_name;
   res->be_type = 0;
@@ -1324,8 +1348,6 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
   memset(&res->addr, 0, sizeof(res->addr));
   res->priority = 5;
   memset(&res->ha_addr, 0, sizeof(res->ha_addr));
-  res->url = nullptr;
-  res->bekey = nullptr;
   res->connections = 0;
   res->next = nullptr;
   res->ctx = nullptr;
@@ -1371,7 +1393,7 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
       has_port = 1;
     } else if (!regexec(&regex_set::BackendKey, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if ((res->bekey = strdup(lin + matches[1].rm_so)) == nullptr) conf_err("out of memory");
+      res->bekey = std::string(lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::SSLConfigFile, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->ssl_config_file = std::string(lin + matches[1].rm_so);
@@ -1438,62 +1460,74 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
             conf_err("Unknown HA address type");
         }
     } else if (!regexec(&regex_set::HTTPS, lin, 4, matches, 0)) {
-      if ((res->ctx = SSL_CTX_new(SSLv23_client_method())) == nullptr) conf_err("SSL_CTX_new failed - aborted");
-      SSL_CTX_set_app_data(res->ctx, res);
-      SSL_CTX_set_verify(res->ctx, SSL_VERIFY_NONE, nullptr);
-      SSL_CTX_set_mode(res->ctx, SSL_MODE_RELEASE_BUFFERS);
+      res->ctx = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_client_method()),
+                                          &__SSL_CTX_free);
+      SSL_CTX_set_app_data(res->ctx.get(), res.get());
+      SSL_CTX_set_verify(res->ctx.get(), SSL_VERIFY_NONE, nullptr);
+      SSL_CTX_set_mode(res->ctx.get(), SSL_MODE_RELEASE_BUFFERS);
 #ifdef SSL_MODE_SEND_FALLBACK_SCSV
-      SSL_CTX_set_mode(res->ctx, SSL_MODE_SEND_FALLBACK_SCSV);
+      SSL_CTX_set_mode(res->ctx.get(), SSL_MODE_SEND_FALLBACK_SCSV);
 #endif
-      SSL_CTX_set_options(res->ctx, SSL_OP_ALL);
+      SSL_CTX_set_options(res->ctx.get(), SSL_OP_ALL);
 #ifdef SSL_OP_NO_COMPRESSION
-      SSL_CTX_set_options(res->ctx, SSL_OP_NO_COMPRESSION);
+      SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_COMPRESSION);
 #endif
-      SSL_CTX_clear_options(res->ctx, SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION);
-      SSL_CTX_clear_options(res->ctx, SSL_OP_LEGACY_SERVER_CONNECT);
+      SSL_CTX_clear_options(res->ctx.get(),
+                            SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION);
+      SSL_CTX_clear_options(res->ctx.get(), SSL_OP_LEGACY_SERVER_CONNECT);
       sprintf(lin, "%d-zproxy-%ld", getpid(), random());
-      SSL_CTX_set_session_id_context(res->ctx, reinterpret_cast<unsigned char *>(lin),
+      SSL_CTX_set_session_id_context(res->ctx.get(),
+                                     reinterpret_cast<unsigned char *>(lin),
                                      static_cast<uint32_t>(strlen(lin)));
       SSL_CTX_set_tmp_rsa_callback(res->ctx, global::SslHelper::RSA_tmp_callback);
       if (nullptr == DHCustom_params)
-        SSL_CTX_set_tmp_dh_callback(res->ctx, global::SslHelper::DH_tmp_callback);
+        SSL_CTX_set_tmp_dh_callback(res->ctx.get(),
+                                    global::SslHelper::DH_tmp_callback);
       else
-        SSL_CTX_set_tmp_dh(res->ctx, DHCustom_params);
+        SSL_CTX_set_tmp_dh(res->ctx.get(), DHCustom_params);
     } else if (!regexec(&regex_set::Cert, lin, 4, matches, 0)) {
       if (res->ctx == nullptr) conf_err("BackEnd Cert can only be used after HTTPS - aborted");
       lin[matches[1].rm_eo] = '\0';
-      if (SSL_CTX_use_certificate_chain_file(res->ctx, lin + matches[1].rm_so) != 1)
+      if (SSL_CTX_use_certificate_chain_file(res->ctx.get(),
+                                             lin + matches[1].rm_so) != 1)
         conf_err("SSL_CTX_use_certificate_chain_file failed - aborted");
-      if (SSL_CTX_use_PrivateKey_file(res->ctx, lin + matches[1].rm_so, SSL_FILETYPE_PEM) != 1)
+      if (SSL_CTX_use_PrivateKey_file(res->ctx.get(), lin + matches[1].rm_so,
+                                      SSL_FILETYPE_PEM) != 1)
         conf_err("SSL_CTX_use_PrivateKey_file failed - aborted");
-      if (SSL_CTX_check_private_key(res->ctx) != 1) conf_err("SSL_CTX_check_private_key failed - aborted");
+      if (SSL_CTX_check_private_key(res->ctx.get()) != 1)
+        conf_err("SSL_CTX_check_private_key failed - aborted");
     } else if (!regexec(&regex_set::Ciphers, lin, 4, matches, 0)) {
       if (res->ctx == nullptr) conf_err("BackEnd Ciphers can only be used after HTTPS - aborted");
       lin[matches[1].rm_eo] = '\0';
-      SSL_CTX_set_cipher_list(res->ctx, lin + matches[1].rm_so);
+      SSL_CTX_set_cipher_list(res->ctx.get(), lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::DisableProto, lin, 4, matches, 0)) {
       if (res->ctx == nullptr) conf_err("BackEnd Disable can only be used after HTTPS - aborted");
       lin[matches[1].rm_eo] = '\0';
       if (strcasecmp(lin + matches[1].rm_so, "SSLv2") == 0)
-        SSL_CTX_set_options(res->ctx, SSL_OP_NO_SSLv2);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_SSLv2);
       else if (strcasecmp(lin + matches[1].rm_so, "SSLv3") == 0)
-        SSL_CTX_set_options(res->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 #ifdef SSL_OP_NO_TLSv1
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1") == 0)
-        SSL_CTX_set_options(res->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+                                                SSL_OP_NO_TLSv1);
 #endif
 #ifdef SSL_OP_NO_TLSv1_1
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_1") == 0)
-        SSL_CTX_set_options(res->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+                                                SSL_OP_NO_TLSv1 |
+                                                SSL_OP_NO_TLSv1_1);
 #endif
 #ifdef SSL_OP_NO_TLSv1_2
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_2") == 0)
-        SSL_CTX_set_options(
-            res->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+                                                SSL_OP_NO_TLSv1 |
+                                                SSL_OP_NO_TLSv1_1 |
+                                                SSL_OP_NO_TLSv1_2);
 #endif
 #ifdef SSL_OP_NO_TLSv1_3
       else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0)
-        SSL_CTX_set_options(res->ctx, SSL_OP_NO_TLSv1_3);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_NO_TLSv1_3);
 #endif
 #ifndef OPENSSL_NO_ECDH
     } else if (!regexec(&regex_set::ECDHCurve, lin, 4, matches, 0)) {
@@ -1509,13 +1543,13 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
         EC_KEY *ecdh;
         if ((ecdh = EC_KEY_new_by_curve_name(res->ecdh_curve_nid)) == nullptr)
           conf_err("Unable to generate temp ECDH key");
-        SSL_CTX_set_tmp_ecdh(res->ctx, ecdh);
-        SSL_CTX_set_options(res->ctx, SSL_OP_SINGLE_ECDH_USE);
+        SSL_CTX_set_tmp_ecdh(res->ctx.get(), ecdh);
+        SSL_CTX_set_options(res->ctx.get(), SSL_OP_SINGLE_ECDH_USE);
         EC_KEY_free(ecdh);
       }
 #if defined(SSL_CTX_set_ecdh_auto)
       else {
-        SSL_CTX_set_ecdh_auto(res->ctx, 1);
+        SSL_CTX_set_ecdh_auto(res->ctx.get(), 1);
       }
 #endif
 #endif
@@ -1525,7 +1559,7 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
       if (!has_addr) conf_err("BackEnd missing Address - aborted");
       if ((res->addr.ai_family == AF_INET || res->addr.ai_family == AF_INET6) && !has_port)
         conf_err("BackEnd missing Port - aborted");
-      if (!res->bekey) {
+      if (!res->bekey.empty()) {
         if (res->addr.ai_family == AF_INET)
           snprintf(lin, MAXBUF - 1, "4-%08x-%x",
                    htonl((reinterpret_cast<sockaddr_in *>(res->addr.ai_addr))->sin_addr.s_addr),
@@ -1539,7 +1573,7 @@ BackendConfig *Config::parseBackend(const char *svc_name, const int is_emergency
                    cp[14], cp[15], htons((reinterpret_cast<sockaddr_in6 *>(res->addr.ai_addr))->sin6_port));
         } else
           conf_err("cannot autogenerate backendkey, please specify one");
-        if ((res->bekey = strdup(lin)) == nullptr) conf_err("out of memory autogenerating backendkey");
+        res->bekey = std::string(lin);
       }
       return res;
     } else {
@@ -1583,10 +1617,11 @@ void Config::parseCache(ServiceConfig *const svc) {
   }
 }
 #endif
-void Config::parseSession(ServiceConfig *const svc) {
+void Config::parseSession(std::weak_ptr<ServiceConfig> svc_spt) {
   char lin[MAXBUF], *cp, *parm;
   regmatch_t matches[5];
-  parm = NULL;
+  parm = nullptr;
+  auto svc = svc_spt.lock();
   svc->f_name = name;
   while (conf_fgets(lin, MAXBUF)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
@@ -1714,7 +1749,7 @@ void Config::include_dir(const char *conf_path) {
   struct dirent *de;
 
   char buf[512];
-  char *files[200], *cp;
+  char *files[200];
   int filecnt = 0;
   int idx, use;
 
@@ -1818,3 +1853,5 @@ bool Config::init(const std::string &file_name) {
   log_facility = def_facility;
   return !found_parse_error;
 }
+
+void __SSL_CTX_free(SSL_CTX *ssl_ctx) { ::SSL_CTX_free(ssl_ctx); }

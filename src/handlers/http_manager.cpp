@@ -536,10 +536,10 @@ void http_manager::replyRedirect(HttpStream &stream,
   /* 0 - redirect is absolute,
    * 1 - the redirect should include the request path, or
    * 2 if it should use perl dynamic replacement */
-  std::string new_url(redirect_backend.backend_config.url);
+  std::string new_url(redirect_backend.backend_config->url);
   auto service =
       static_cast<Service*>(stream.request.getService());
-  switch (redirect_backend.backend_config.redir_req) {
+  switch (redirect_backend.backend_config->redir_req) {
     case 1:
           new_url += std::string(stream.request.path, stream.request.path_length);
       break;
@@ -559,7 +559,8 @@ void http_manager::replyRedirect(HttpStream &stream,
         chptr = buf.get();
         enptr = buf.get() + MAXBUF - 1;
         *enptr = '\0';
-        srcptr = redirect_backend.backend_config.url;
+        srcptr =
+            const_cast<char *>(redirect_backend.backend_config->url.data());
         for (; *srcptr && chptr < enptr - 1;) {
           if (srcptr[0] == '$' && srcptr[1] == '$') {
             *chptr++ = *srcptr++;
@@ -589,8 +590,8 @@ void http_manager::replyRedirect(HttpStream &stream,
     default:
       break;
   }
-  int redirect_code = redirect_backend.backend_config.be_type;
-  switch (redirect_backend.backend_config.be_type ) {
+  int redirect_code = redirect_backend.backend_config->be_type;
+  switch (redirect_backend.backend_config->be_type) {
     case 301:
     case 307:
       break;

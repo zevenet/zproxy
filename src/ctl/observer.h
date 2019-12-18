@@ -47,7 +47,8 @@ class CtlNotify {
 
  public:
   void attach(CtlObserver<T, IResponse> &listener) {
-    Logger::logmsg(LOG_ERR, "Attaching id: %d observer", listener.__id__);
+    //    Logger::logmsg(LOG_DEBUG, "Attaching id: %d observer",
+    //    listener.__id__);
     observers.push_back(&listener);
     onAttach(listener);
   }
@@ -58,7 +59,8 @@ class CtlNotify {
         it = observers.erase(it);
         continue;
       }else if(*(*it) == listener){
-        Logger::logmsg(LOG_ERR, "deAttaching id: %d observer", listener.__id__);
+        //        Logger::logmsg(LOG_DEBUG, "deAttaching id: %d observer",
+        //        listener.__id__);
         it = observers.erase(it);
         break;
       }

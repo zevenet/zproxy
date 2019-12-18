@@ -45,11 +45,10 @@
 #include <cstring>
 #include <mutex>
 #include <string>
-#include "config_data.h"
+#include "../stats/counter.h"
 #include "../version.h"
+#include "config_data.h"
 #include "global.h"
-
-
 
 #ifndef F_CONF
 constexpr auto F_CONF = "/usr/local/etc/zproxy.cfg";
@@ -60,8 +59,8 @@ constexpr auto F_PID = "/var/run/zproxy.pid";
 constexpr int MAX_FIN = 100;
 constexpr int UNIX_PATH_MAX = 108;
 
-
-class Config {
+void __SSL_CTX_free(SSL_CTX *ssl_ctx);
+class Config : public Counter<Config> {
   const char *xhttp[6] = {
       "^(GET|POST|HEAD) ([^ ]+) HTTP/1.[01].*$",
       "^(GET|POST|HEAD|PUT|PATCH|DELETE) ([^ ]+) HTTP/1.[01].*$",
@@ -146,24 +145,25 @@ public:
   /*
    * parse an HTTP listener
    */
-  ListenerConfig *parse_HTTP();
+  std::shared_ptr<ListenerConfig> parse_HTTP();
 
   /*
    * parse an HTTPS listener
    */
-  ListenerConfig *parse_HTTPS();
+  std::shared_ptr<ListenerConfig> parse_HTTPS();
 
   unsigned char **get_subjectaltnames(X509 *x509, unsigned int *count);
 
-  void load_cert(int has_other, ListenerConfig *res, char *filename);
+  void load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
+                 char *filename);
 
-  void load_certdir(int has_other, ListenerConfig *res, const std::string &dir_path);
+  void load_certdir(int has_other, std::weak_ptr<ListenerConfig> listener_,
+                    const std::string &dir_path);
 
   /*
    * parse a service
    */
-  ServiceConfig *parseService(const char *svc_name);
-
+  std::shared_ptr<ServiceConfig> parseService(const char *svc_name);
 
   /*
    * parse an OrURLs block
@@ -176,7 +176,8 @@ public:
   /*
    * parse a back-end
    */
-  BackendConfig *parseBackend(const char *svc_name, const int is_emergency);
+  std::shared_ptr<BackendConfig> parseBackend(const char *svc_name,
+                                              const int is_emergency);
   /*
    * Parse the cache configuration
    */
@@ -186,15 +187,16 @@ public:
   /*
    * parse a session
    */
-  void parseSession(ServiceConfig *const svc);
+  void parseSession(std::weak_ptr<ServiceConfig> svc_spt);
   /*
    * parse the config file
    */
   void parse_file();
 
  public:
-  ServiceConfig *services;   /* global services (if any) */
-  ListenerConfig *listeners; /* all available listeners */
+  std::shared_ptr<ServiceConfig> services;
+  /* global services (if any) */             // Not used
+  std::shared_ptr<ListenerConfig> listeners; /* all available listeners */
 
  public:
   Config(bool _abort_on_error = false);

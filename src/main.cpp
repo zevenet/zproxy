@@ -78,81 +78,92 @@ int main(int argc, char *argv[]) {
   }
 
   ::openlog("zproxy", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
-  Config config(true);
   Logger::logmsg(LOG_NOTICE, "zproxy starting...");
-  auto start_options = global::StartOptions::parsePoundOption(argc,argv, true);
-  auto parse_result = config.init(*start_options);
-  if(!parse_result){
-    Logger::logmsg(LOG_ERR,"Error parsing configuration file %s",
-        start_options->conf_file_name.data());
-    std::exit(EXIT_FAILURE);
-  }
+  {
+    Config config(true);
+    auto start_options =
+        global::StartOptions::parsePoundOption(argc, argv, true);
+    auto parse_result = config.init(*start_options);
+    if (!parse_result) {
+      Logger::logmsg(LOG_ERR, "Error parsing configuration file %s",
+                     start_options->conf_file_name.data());
+      std::exit(EXIT_FAILURE);
+    }
 
-  if(start_options->check_only ){
-    std::exit(EXIT_SUCCESS);
-  }
+    if (start_options->check_only) {
+      std::exit(EXIT_SUCCESS);
+    }
 
-  Logger::log_level = config.listeners->log_level;
-  Logger::log_facility = config.log_facility;
+    Logger::log_level = config.listeners->log_level;
+    Logger::log_facility = config.log_facility;
 
-  config.setAsCurrent();
+    config.setAsCurrent();
 
-  // Syslog initialization
-  if (config.daemonize) {
-    if (!Environment::daemonize()) {
-      Logger::logmsg(LOG_ERR, "error: daemonize failed\n");
-      closelog();
-      return EXIT_FAILURE;
+    // Syslog initialization
+    if (config.daemonize) {
+      if (!Environment::daemonize()) {
+        Logger::logmsg(LOG_ERR, "error: daemonize failed\n");
+        closelog();
+        return EXIT_FAILURE;
+      }
+    }
+
+    //  /* block all signals. we take signals synchronously via signalfd */
+    //  sigset_t all;
+    //  sigfillset(&all);
+    //  sigprocmask(SIG_SETMASK,&all,NULL);
+
+    ::signal(SIGPIPE, SIG_IGN);
+    ::signal(SIGINT, handleInterrupt);
+    ::signal(SIGTERM, handleInterrupt);
+    ::signal(SIGABRT, handleInterrupt);
+    ::signal(SIGHUP, handleInterrupt);
+    ::signal(SIGSEGV, handleInterrupt);
+    ::signal(SIGUSR1, handleInterrupt);
+    ::umask(077);
+    ::srandom(static_cast<unsigned int>(::getpid()));
+    Environment::setUlimitData();
+
+    /* record pid in file */
+    if (!config.pid_name.empty()) {
+      Environment::createPidFile(config.pid_name, ::getpid());
+    }
+    /* chroot if necessary */
+    if (!config.root_jail.empty()) {
+      Environment::setChrootRoot(config.root_jail);
+    }
+
+    /*Set process user and group*/
+    if (!config.user.empty()) {
+      Environment::setUid(std::string(config.user));
+    }
+
+    if (!config.group.empty()) {
+      Environment::setGid(std::string(config.group));
+    }
+
+    if (!config.ctrl_name.empty() || !config.ctrl_ip.empty()) {
+      control_manager->init(config);
+      control_manager->start();
+    }
+    int listener_count = Counter<ListenerConfig>::count;
+    int service_count = Counter<ServiceConfig>::count;
+    int backend_count = Counter<BackendConfig>::count;
+    Logger::logmsg(LOG_ERR, "listeners: %d services: %d backends: %d",
+                   listener_count, service_count, backend_count);
+    for (auto listener_conf = config.listeners; listener_conf != nullptr;
+         listener_conf = listener_conf->next) {
+      if (!listener.addListener(listener_conf)) {
+        Logger::LogInfo("Error initializing listener socket", LOG_ERR);
+        return EXIT_FAILURE;
+      }
     }
   }
-
-  //  /* block all signals. we take signals synchronously via signalfd */
-  //  sigset_t all;
-  //  sigfillset(&all);
-  //  sigprocmask(SIG_SETMASK,&all,NULL);
-
-  ::signal(SIGPIPE, SIG_IGN);
-  ::signal(SIGINT, handleInterrupt);
-  ::signal(SIGTERM, handleInterrupt);
-  ::signal(SIGABRT, handleInterrupt);
-  ::signal(SIGHUP, handleInterrupt);
-  ::signal(SIGSEGV, handleInterrupt);
-  ::signal(SIGUSR1, handleInterrupt);
-  ::umask(077);
-  ::srandom(static_cast<unsigned int>(::getpid()));
-  Environment::setUlimitData();
-
-  /* record pid in file */
-  if (!config.pid_name.empty()) {
-    Environment::createPidFile(config.pid_name, ::getpid());
-  }
-  /* chroot if necessary */
-  if (!config.root_jail.empty()) {
-    Environment::setChrootRoot(config.root_jail);
-  }
-
-  /*Set process user and group*/
-  if (!config.user.empty()) {
-    Environment::setUid(std::string(config.user));
-  }
-
-  if (!config.group.empty()) {
-    Environment::setGid(std::string(config.group));
-  }
-
-  if (!config.ctrl_name.empty() || !config.ctrl_ip.empty()) {
-    control_manager->init(config);
-    control_manager->start();
-  }
-
-  for (auto listener_conf = config.listeners; listener_conf != nullptr;
-       listener_conf = listener_conf->next) {
-    if (!listener.addListener(std::shared_ptr<ListenerConfig>(listener_conf))) {
-      Logger::LogInfo("Error initializing listener socket", LOG_ERR);
-      return EXIT_FAILURE;
-    }
-  }
-
+  int listener_count = Counter<ListenerConfig>::count;
+  int service_count = Counter<ServiceConfig>::count;
+  int backend_count = Counter<BackendConfig>::count;
+  Logger::logmsg(LOG_ERR, "listeners: %d services: %d backends: %d",
+                 listener_count, service_count, backend_count);
   listener.start();
   std::this_thread::sleep_for(std::chrono::seconds(1));
   cleanExit();

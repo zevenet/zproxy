@@ -73,7 +73,7 @@ class Network {
         return EAI_NONAME;
       }
       *res = *ap;
-      if ((res->ai_addr = static_cast<sockaddr *>(malloc(ap->ai_addrlen))) == nullptr) {
+      if ((res->ai_addr = new sockaddr()) == nullptr) {
         freeaddrinfo(chain);
         return EAI_MEMORY;
       }
@@ -105,7 +105,8 @@ class Network {
       return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(nullptr,
                                                                   freeaddrinfo);
     }
-    return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(result,freeaddrinfo);
+    return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(result,
+                                                                &freeaddrinfo);
   }
 
   inline static int getPeerPort(int socket_fd) {

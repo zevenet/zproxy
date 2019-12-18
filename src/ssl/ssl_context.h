@@ -51,12 +51,10 @@ struct SSLData {
  */
 class SSLContext {
  public:
-  /** BIO used for errors. */
-  BIO *error_bio{nullptr};
   /** SSL_CTX used for store the ssl information of the connection. */
-  SSL_CTX *ssl_ctx{nullptr};
+  std::shared_ptr<SSL_CTX> ssl_ctx{nullptr};
   /** ListenerConfig used to get the information needed for the SSL_CTX. */
-  ListenerConfig listener_config;
+  std::shared_ptr<ListenerConfig> listener_config;
   /** This struct is used to support SNI. */
   SSLData ctx;
 
@@ -67,7 +65,7 @@ class SSLContext {
    * @brief Initialize SSLContext with default configurations.
    * @return @c true if everything is ok, @c false if not.
    */
-  bool init();
+  static bool initOpenssl();
 
   /**
    * @brief Initialize SSLContext with the @p cert_file and @p key_file
@@ -83,7 +81,7 @@ class SSLContext {
    *
    * @return @c true if everything is ok, @c false if not.
    */
-  bool init(const BackendConfig &backend_config_);
+  bool init(std::shared_ptr<BackendConfig> backend_config_);
 
   /**
    * @brief Initialize SSLContext with the configuration from the
@@ -91,7 +89,7 @@ class SSLContext {
    *
    * @return @c true if everything is ok, @c false if not.
    */
-  bool init(const ListenerConfig &listener_config_);
+  bool init(std::shared_ptr<ListenerConfig> listener_config_);
 
   /**
    * @brief Read the configuration from a OpenSSL configuration file and loads

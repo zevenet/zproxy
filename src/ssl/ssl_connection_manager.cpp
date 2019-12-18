@@ -172,10 +172,10 @@ bool SSLConnectionManager::handleHandshake(const SSLContext &ssl_context,
                                            Connection &ssl_connection,
                                            bool client_mode) {
   auto result =
-      handleHandshake(ssl_context.ssl_ctx, ssl_connection, client_mode);
+      handleHandshake(ssl_context.ssl_ctx.get(), ssl_connection, client_mode);
   if (result && ssl_connection.ssl_connected) {
     if (!client_mode &&
-        ssl_context.listener_config.ssl_forward_sni_server_name) {
+        ssl_context.listener_config->ssl_forward_sni_server_name) {
       if ((ssl_connection.server_name = SSL_get_servername(
                ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
         Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",

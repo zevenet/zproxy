@@ -47,7 +47,7 @@ ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
   if (listener_config_->ctx != nullptr) {
     if (ssl_context != nullptr) delete ssl_context;
     ssl_context = new SSLContext();
-    is_https_listener = ssl_context->init(*listener_config_);
+    is_https_listener = ssl_context->init(listener_config_);
   }
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
 }

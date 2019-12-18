@@ -116,6 +116,19 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
       status->emplace("VM", std::make_unique<JsonDataValue>(vm));
       status->emplace("RSS", std::make_unique<JsonDataValue>(rss));
       root->emplace("status", std::move(status));
+      int listener_count = Counter<ListenerConfig>::count;
+      int service_count = Counter<ServiceConfig>::count;
+      int backend_count = Counter<BackendConfig>::count;
+
+      root->emplace("config_count", std::make_unique<JsonDataValue>(
+                                        Counter<Config>::count.load()));
+      root->emplace("listener_count",
+                    std::make_unique<JsonDataValue>(listener_count));
+      root->emplace("service_count",
+                    std::make_unique<JsonDataValue>(service_count));
+      root->emplace("backend_count",
+                    std::make_unique<JsonDataValue>(backend_count));
+
 #if DEBUG_STREAM_EVENTS_COUNT
 
       clients_stats->emplace("on_client_connect",
@@ -392,10 +405,9 @@ bool ListenerManager::reloadConfigFile() {
     return false;
   }
   // register new listeners
-  Logger::log_level = config.log_level;
   if (config.listeners == nullptr)
     Logger::logmsg(LOG_NOTICE, "Error getting listener configurations");
-
+  Logger::log_level = config.log_level;
   // clear and stop old config
   auto &sm_set = ServiceManager::getInstance();
   for (auto it = sm_set.begin(); it != sm_set.end();) {

@@ -29,11 +29,15 @@ TEST(SSLContextTest, LoadFileTest){
   SSLContext ssl;
   bool result;
 
-  ssl.ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-  result = ssl.loadOpensslConfig("/home/ffmancera/pifostio/zevenet/zproxy/tests/data/listener_ssl.cnf", "",ssl.ssl_ctx);
+  ssl.ssl_ctx = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()),
+                                         &::SSL_CTX_free);
+  result = ssl.loadOpensslConfig(
+      "/home/ffmancera/pifostio/zevenet/zproxy/tests/data/listener_ssl.cnf", "",
+      ssl.ssl_ctx.get());
   EXPECT_TRUE(result);
 
-  result = ssl.loadOpensslConfig("this/path/is/not/valid.cnf", "", ssl.ssl_ctx);
+  result = ssl.loadOpensslConfig("this/path/is/not/valid.cnf", "",
+                                 ssl.ssl_ctx.get());
   EXPECT_FALSE(result);
 }
 
@@ -41,6 +45,8 @@ TEST(SSLContextTest, LoadFileTestNotInitialized){
   SSLContext ssl;
   bool result;
 
-  result = ssl.loadOpensslConfig("/home/ffmancera/pifostio/zevenet/zproxy/tests/data/listener_ssl.cnf", "",ssl.ssl_ctx);
+  result = ssl.loadOpensslConfig(
+      "/home/ffmancera/pifostio/zevenet/zproxy/tests/data/listener_ssl.cnf", "",
+      ssl.ssl_ctx.get());
   EXPECT_FALSE(result);
 }

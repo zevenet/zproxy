@@ -24,32 +24,37 @@
 
 using namespace ssl;
 
-bool SSLContext::init(const std::string &cert_file, const std::string &key_file) {
-  init();
-  ssl_ctx = SSL_CTX_new(SSLv23_method());
+bool SSLContext::init(const std::string &cert_file,
+                      const std::string &key_file) {
+  initOpenssl();
+  ssl_ctx =
+      std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_method()), &::SSL_CTX_free);
   if (ssl_ctx == nullptr) {
     Logger::LogInfo("SSL_CTX_new failed", LOG_ERR);
     return false;
   }
-  int r = SSL_CTX_use_certificate_file(ssl_ctx, cert_file.c_str(), SSL_FILETYPE_PEM);
+  int r = SSL_CTX_use_certificate_file(ssl_ctx.get(), cert_file.c_str(),
+                                       SSL_FILETYPE_PEM);
   if (r <= 0) {
     Logger::logmsg(LOG_ERR, "SSL_CTX_use_certificate_file %s failed", cert_file.c_str());
     return false;
   }
-  r = SSL_CTX_use_PrivateKey_file(ssl_ctx, key_file.c_str(), SSL_FILETYPE_PEM);
+  r = SSL_CTX_use_PrivateKey_file(ssl_ctx.get(), key_file.c_str(),
+                                  SSL_FILETYPE_PEM);
   if (r <= 0) {
     Logger::logmsg(LOG_ERR, "SSL_CTX_use_PrivateKey_file %s failed", key_file.c_str());
     return false;
   }
 
-  r = SSL_CTX_check_private_key(ssl_ctx);
+  r = SSL_CTX_check_private_key(ssl_ctx.get());
   if (!r) {
     Logger::logmsg(LOG_ERR, "SSL_CTX_check_private_key failed");
     return false;
   }
 
   /* Recommended to avoid SSLv2 & SSLv3 */
-  SSL_CTX_set_options(ssl_ctx, SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);  // set ssl option
+  SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_ALL | SSL_OP_NO_SSLv2 |
+                                         SSL_OP_NO_SSLv3);  // set ssl option
 #if SSL_DISABLE_SESSION_CACHE
   // Attempt to disable session and ticket caching..
   //  SSL_CTX_set_options(ssl_ctx,
@@ -58,45 +63,48 @@ bool SSLContext::init(const std::string &cert_file, const std::string &key_file)
   SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TICKET);
   SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_OFF);
 #endif
-  SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_COMPRESSION);
-  SSL_CTX_set_mode(ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+  SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_NO_COMPRESSION);
+  SSL_CTX_set_mode(ssl_ctx.get(), SSL_MODE_RELEASE_BUFFERS);
 
   Logger::LogInfo("SSL initialized", LOG_DEBUG);
   return true;
 }
 
-bool SSLContext::init(const BackendConfig &backend_config_) {
-  if (backend_config_.ctx != nullptr) {
-    ssl_ctx = backend_config_.ctx;
+bool SSLContext::init(std::shared_ptr<BackendConfig> backend_config_) {
+  if (backend_config_->ctx != nullptr) {
+    ssl_ctx = backend_config_->ctx;
   } else {
     const SSL_METHOD *method = TLS_client_method();
     if (method == nullptr) return false;
-    this->ssl_ctx = SSL_CTX_new(method);
+    this->ssl_ctx =
+        std::shared_ptr<SSL_CTX>(SSL_CTX_new(method), &::SSL_CTX_free);
     if (ssl_ctx == nullptr) return false;
-    SSL_CTX_set_verify(this->ssl_ctx, SSL_VERIFY_NONE, nullptr);
-    SSL_CTX_set_mode(this->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
-    SSL_CTX_set_options(this->ssl_ctx, SSL_OP_ALL);
+    SSL_CTX_set_verify(this->ssl_ctx.get(), SSL_VERIFY_NONE, nullptr);
+    SSL_CTX_set_mode(this->ssl_ctx.get(), SSL_MODE_RELEASE_BUFFERS);
+    SSL_CTX_set_options(this->ssl_ctx.get(), SSL_OP_ALL);
 #ifdef SSL_OP_NO_COMPRESSION
-    SSL_CTX_set_options(this->ssl_ctx, SSL_OP_NO_COMPRESSION);
+    SSL_CTX_set_options(this->ssl_ctx.get(), SSL_OP_NO_COMPRESSION);
 #endif
   }
-  Logger::logmsg(LOG_DEBUG, "Backend %s:%d SSLContext initialized", backend_config_.address.data(),
-                backend_config_.port);
+  Logger::logmsg(LOG_DEBUG, "Backend %s:%d SSLContext initialized",
+                 backend_config_->address.data(), backend_config_->port);
   return true;
 }
 
-bool SSLContext::init(const ListenerConfig &listener_config_) {
-  init();
+bool SSLContext::init(std::shared_ptr<ListenerConfig> listener_config_) {
+  initOpenssl();
   listener_config = listener_config_;
-  if (listener_config.ctx != nullptr) {
+  if (listener_config->ctx != nullptr) {
 #ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
-    if (listener_config_.ctx->next)
-      if (!SSL_CTX_set_tlsext_servername_callback(listener_config_.ctx->ctx, SNIServerName) ||
-          !SSL_CTX_set_tlsext_servername_arg(listener_config_.ctx->ctx, listener_config_.ctx))
+    if (listener_config_->ctx->next)
+      if (!SSL_CTX_set_tlsext_servername_callback(
+              listener_config_->ctx->ctx.get(), SNIServerName) ||
+          !SSL_CTX_set_tlsext_servername_arg(listener_config_->ctx->ctx.get(),
+                                             listener_config_->ctx.get()))
         Logger::logmsg(LOG_ERR, "ListenHTTPS: can't set SNI callback");
 #endif
 
-    ssl_ctx = listener_config.ctx->ctx;
+    ssl_ctx = listener_config->ctx->ctx;
 
 #if ENABLE_SSL_SESSION_CACHING
     SslSessionManager::attachCallbacks(ssl_ctx);
@@ -110,16 +118,18 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TICKET);
     SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_OFF);
 #endif
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_COMPRESSION);
-    SSL_CTX_set_mode(ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+    SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_NO_COMPRESSION);
+    SSL_CTX_set_mode(ssl_ctx.get(), SSL_MODE_RELEASE_BUFFERS);
     return true;
   }
 
-  if (!listener_config.engine_id.empty()) initEngine(listener_config.engine_id);
+  if (!listener_config->engine_id.empty())
+    initEngine(listener_config->engine_id);
 
-  if (!listener_config.ssl_config_file.empty()) {
-    if (!loadOpensslConfig(listener_config.ssl_config_file, listener_config.ssl_config_section,
-                           listener_config.ctx->ctx))
+  if (!listener_config->ssl_config_file.empty()) {
+    if (!loadOpensslConfig(listener_config->ssl_config_file,
+                           listener_config->ssl_config_section,
+                           listener_config->ctx->ctx.get()))
       return false;
   }
   Logger::LogInfo("SSL initialized", LOG_DEBUG);
@@ -129,22 +139,23 @@ bool SSLContext::init(const ListenerConfig &listener_config_) {
 SSLContext::SSLContext() {}
 
 SSLContext::~SSLContext() {
-  BIO_free(error_bio);
-  SSL_CTX_free(ssl_ctx);
-  ERR_free_strings();
 }
 
-bool SSLContext::init() {
-  error_bio = BIO_new_fd(2, BIO_NOCLOSE);
-  int r = SSL_library_init();
-  if (!r) {
-    Logger::LogInfo("SSL_library_init failed", LOG_ERR);
-    return false;
-  }
-  ERR_load_crypto_strings();
-  ERR_load_SSL_strings();
-  SSL_load_error_strings();
-  OpenSSL_add_all_algorithms();
+std::once_flag flag;
+
+bool SSLContext::initOpenssl() {
+  std::call_once(flag, []() {
+    int r = SSL_library_init();
+    if (!r) {
+      Logger::LogInfo("SSL_library_init failed", LOG_ERR);
+      return false;
+    }
+    ERR_load_crypto_strings();
+    ERR_load_SSL_strings();
+    SSL_load_error_strings();
+    OpenSSL_add_all_algorithms();
+    return true;
+  });
   return true;
 }
 

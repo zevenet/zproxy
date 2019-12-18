@@ -871,7 +871,7 @@ void StreamManager::onResponseEvent(int fd) {
       stream->backend_connection.server_name =
           stream->client_connection.server_name;
       if (!ssl::SSLConnectionManager::handleHandshake(
-              stream->backend_connection.getBackend()->ctx,
+              stream->backend_connection.getBackend()->ctx.get(),
               stream->backend_connection, true)) {
         Logger::logmsg(LOG_INFO, "Backend handshake error with %s ",
                       stream->backend_connection.address_str.c_str());
@@ -1154,7 +1154,7 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
     this->clearStream(stream);
   }
 }
-void StreamManager::onSignalEvent(int fd) {
+void StreamManager::onSignalEvent([[maybe_unused]] int fd) {
   // TODO::IMPLEMENET
 }
 
@@ -1354,7 +1354,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
       case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
         if (!ssl::SSLConnectionManager::handleHandshake(
-                stream->backend_connection.getBackend()->ctx,
+                stream->backend_connection.getBackend()->ctx.get(),
                 stream->backend_connection, true)) {
           Logger::logmsg(
               LOG_DEBUG, "Handshake error with %s ",
@@ -1429,7 +1429,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       stream->backend_connection.server_name =
           stream->client_connection.server_name;
       if (!ssl::SSLConnectionManager::handleHandshake(
-              stream->backend_connection.getBackend()->ctx,
+              stream->backend_connection.getBackend()->ctx.get(),
               stream->backend_connection, true)) {
         Logger::logmsg(LOG_DEBUG, "Handshake error with %s ",
                        stream->backend_connection.address_str.data());
@@ -1838,8 +1838,9 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
         stream->backend_connection.getBackend()->port,
         listener_config_.name.data(),
         stream->backend_connection.getBackend()
-            ->backend_config.srv_name.data());
-    stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
+            ->backend_config->srv_name.data());
+    stream->backend_connection.getBackend()->status =
+        BACKEND_STATUS::BACKEND_DOWN;
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
     setStreamBackend(stream);
     return;

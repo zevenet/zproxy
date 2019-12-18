@@ -24,7 +24,10 @@
 #include <openssl/ssl.h>
 #include <pcreposix.h>
 #include <sys/socket.h>
+#include <memory>
 #include <string>
+#include "../stats/counter.h"
+
 #if WAF_ENABLED
 #include <modsecurity/modsecurity.h>
 #endif
@@ -39,7 +42,11 @@ enum class RENEG_STATE {
 /* matcher chain */
 struct MATCHER {
   regex_t pat; /* pattern to match the request/header against */
-  MATCHER *next;
+  MATCHER *next{nullptr};
+  ~MATCHER() {
+    if (next != nullptr) delete next;
+    ::regfree(&pat);
+  }
 };
 
 /* back-end types */
@@ -54,7 +61,7 @@ enum class SESS_TYPE {
 };
 
 /* back-end definition */
-class BackendConfig {
+class BackendConfig : Counter<BackendConfig> {
  public:
   std::string f_name;
   std::string srv_name;
@@ -66,12 +73,12 @@ class BackendConfig {
   int rw_timeout;          /* read/write time-out */
   int conn_to;             /* connection time-out */
   struct addrinfo ha_addr; /* HA address/port */
-  char *url;               /* for redirectors */
+  std::string url;         /* for redirectors */
   int redir_req; /* 0 - redirect is absolute, 1 - the redirect should include
                     the request path, or 2 if it should use perl dynamic
                     replacement */
-  char *bekey;   /* Backend Key for Cookie */
-  SSL_CTX *ctx = nullptr;  /* CTX for SSL connections */
+  std::string bekey;                      /* Backend Key for Cookie */
+  std::shared_ptr<SSL_CTX> ctx = nullptr; /* CTX for SSL connections */
   std::string ssl_config_file; /* ssl config file path */
   std::string ssl_config_section; /* ssl config file path */
   pthread_mutex_t mut; /* mutex for this back-end */
@@ -83,22 +90,23 @@ class BackendConfig {
   int disabled;        /* true if the back-end is disabled */
   int connections;
   int ecdh_curve_nid{0};
-  BackendConfig *next = nullptr;
+  std::shared_ptr<BackendConfig> next = nullptr;
   int key_id;
   int nf_mark;
+  ~BackendConfig() { delete addr.ai_addr; }
 };
 
-class ServiceConfig {
+class ServiceConfig : Counter<ServiceConfig> {
  public:
   int key_id;
   int listener_key_id;
   std::string name; /* symbolic name */
   std::string f_name;       /* farm name */
-  MATCHER *url,            /* request matcher */
-      *req_head,           /* required headers */
-      *deny_head;          /* forbidden headers */
-  BackendConfig *backends;
-  BackendConfig *emergency;
+  MATCHER *url,             /* request matcher */
+      *req_head,            /* required headers */
+      *deny_head;           /* forbidden headers */
+  std::shared_ptr<BackendConfig> backends;
+  std::shared_ptr<BackendConfig> emergency;
   int abs_pri;         /* abs total priority for all back-ends */
   int tot_pri;         /* total priority for current back-ends */
   pthread_mutex_t mut; /* mutex for this service */
@@ -127,26 +135,41 @@ class ServiceConfig {
   int routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
   int pinned_connection; /* Pin the connection by default */
   std::string compression_algorithm; /* Compression algorithm */
-  ServiceConfig *next;
+  std::shared_ptr<ServiceConfig> next;
+
+  ~ServiceConfig() {
+    delete becookie;
+    delete becdomain;
+    delete becpath;
+    delete url;
+    delete req_head;
+    delete deny_head;
+    ::regfree(&sess_start);
+    ::regfree(&sess_pat);
+  }
 };
 
 struct POUND_CTX {
-  SSL_CTX *ctx;
-  char *server_name;
-  unsigned char **subjectAltNames;
+  std::shared_ptr<SSL_CTX> ctx;
+  char *server_name{nullptr};
+  unsigned char **subjectAltNames{nullptr};
   unsigned int subjectAltNameCount;
-  POUND_CTX *next;
+  std::shared_ptr<POUND_CTX> next;
+  ~POUND_CTX() {
+    if (server_name != nullptr) delete server_name;
+    if (subjectAltNames != nullptr) delete subjectAltNames;
+  }
 };
 
 /* Listener definition */
-struct ListenerConfig {
+struct ListenerConfig : Counter<ListenerConfig> {
   std::string name;
   int id{0};
   std::string address;
   int port;
   addrinfo addr{};         /* IPv4/6 address */
   int sock;                /* listening socket */
-  POUND_CTX *ctx{nullptr}; /* CTX for SSL connections */
+  std::shared_ptr<POUND_CTX> ctx{nullptr}; /* CTX for SSL connections */
   int clnt_check;          /* client verification mode */
   int noHTTPS11;           /* HTTP 1.1 mode for SSL */
   MATCHER *forcehttp10{
@@ -181,12 +204,21 @@ struct ListenerConfig {
   std::string engine_id; /* Engine id loaded by openssl*/
   bool ssl_forward_sni_server_name{false}; /* enable SNI hostname forwarding to
                                          https backends, param ForwardSNI*/
-  int ecdh_curve_nid{0};
-  ServiceConfig *services{nullptr};
 #if WAF_ENABLED
   std::shared_ptr<modsecurity::ModSecurity> modsec{
       nullptr}; /* API connector with Modsecurity */
   std::shared_ptr<modsecurity::Rules> rules{nullptr}; /* Rules of modsecurity */
 #endif
-  ListenerConfig *next{nullptr};
+  int ecdh_curve_nid{0};
+  std::shared_ptr<ServiceConfig> services{nullptr};
+  std::shared_ptr<ListenerConfig> next{nullptr};
+  ~ListenerConfig() {
+    delete forcehttp10;
+    delete ssl_uncln_shutdn;
+    ::regfree(&verb);
+    ::regfree(&url_pat);
+    delete head_off;
+    delete response_head_off;
+    delete addr.ai_addr;
+  }
 };

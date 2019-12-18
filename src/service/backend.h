@@ -76,7 +76,7 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   /** Backend type using the Backend::BACKEND_TYPE enum. */
   BACKEND_TYPE backend_type;
   /** BackendConfig parameters from the backend section. */
-  BackendConfig backend_config;
+  std::shared_ptr<BackendConfig> backend_config;
   /** Backend Address as a addrinfo type. */
   addrinfo *address_info{nullptr};
   /** Backend id. */
@@ -96,7 +96,7 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   /** Response timeout time parameter. */
   int response_timeout{};
   /** SSL_CTX if the Backend is HTTPS. */
-  SSL_CTX *ctx{nullptr};
+  std::shared_ptr<SSL_CTX> ctx{nullptr};
   bool cut;
   /**
    * @brief Checks if the Backend still alive.

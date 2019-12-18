@@ -85,7 +85,9 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
   };
 
  private:
-  void addBackend(BackendConfig *backend_config, std::string address, int port, int backend_id, bool emergency = false);
+  void addBackend(std::shared_ptr<BackendConfig> backend_config,
+                  std::string address, int port, int backend_id,
+                  bool emergency = false);
   bool addBackend(JsonObject *json_object);
 
  public:
@@ -116,7 +118,8 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
    * @param backend_id to assign the Backend.
    * @param emergency set the Backend as emergency.
    */
-  void addBackend(BackendConfig *backend_config, int backend_id, bool emergency = false);
+  void addBackend(std::shared_ptr<BackendConfig> backend_config, int backend_id,
+                  bool emergency = false);
 
   /**
    * @brief Checks if the backends still alive and deletes the expired sessions.
