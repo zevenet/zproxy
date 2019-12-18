@@ -100,8 +100,18 @@ POST {field_name: value} http://address:port/listener/<listener_id>/service/<ser
 
 POST {field_name: value} http://address:port/listener/<listener_id>/service/<service_id>/backend/<backend_id>/<field_name>
 
+*Reload all listeners in configuration file in use, draining connections*
+
+PATCH  http://address:port/config
 
 - Examples of the API usage
+
+**Reload current configuration file.**
+
+```bash
+curl -X PATCH  --unix-socket /tmp/zproxy.socket http://localhost/config
+[{"result":"ok"}]
+```
 
 **Get all the services status.**
 

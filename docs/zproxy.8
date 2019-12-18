@@ -1219,6 +1219,11 @@ requested or the operation result.
 
     curl http://address:port/listener/0/service/0/backend/1
 
+
+    \fBReload all listeners in configuration file in use, draining connections\fR
+
+    curl -X PATCH http://address:port/config
+    
 .SH EXAMPLES
 To translate HTTPS requests to a local HTTP server (assuming your network address
 is 123.123.123.123):
