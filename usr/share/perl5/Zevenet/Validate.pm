@@ -193,9 +193,11 @@ my %format_re = (
 	'blacklists_minutes'   => $minutes,
 	'blacklists_period'    => $natural,
 	'blacklists_day'       => qr{(:?$dayofmonth|$weekdays)},
-	'blacklists_policy' => qr{(:?allow|deny)},       # not used from API 4
-	'blacklists_type'   => qr{(:?local|remote)},     # not used from API 4
-	'blacklists_unit'   => qr{(:?hours|minutes)},    # not used from API 4
+	'blacklists_policy'    => qr{(:?allow|deny)},              # not used from API 4
+	'blacklists_type'      => qr{(:?local|remote)},            # not used from API 4
+	'blacklists_unit'      => qr{(:?hours|minutes)},           # not used from API 4
+	'blacklists_frequency' => qr{(:?daily|weekly|monthly)},    # not used from API 4
+	'blacklists_frequency_type' => qr{(:?period|exact)},       # not used from API 4
 
 	# DoS
 	'dos_name'        => qr/[\w]+/,
