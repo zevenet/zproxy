@@ -83,18 +83,19 @@ std::string Listener::handleTask(ctl::CtlTask &task) {
   switch (task.subject) {
 #if WAF_ENABLED
     case ctl::CTL_SUBJECT::RELOAD_WAF: {
-        switch (task.command) {
+      switch (task.command) {
         case ctl::CTL_COMMAND::UPDATE: {
-            //          auto json_data = JsonParser::parse(task.data);
-            modsecurity::Rules* new_rules=nullptr;
-            if (!Waf::reloadRules(&new_rules)){
-                delete  new_rules;
-                return JSON_OP_RESULT::ERROR;
-            }
-            this->listener_config.rules = std::shared_ptr<modsecurity::Rules>(new_rules);
-            return JSON_OP_RESULT::OK;
+          //          auto json_data = JsonParser::parse(task.data);
+          auto new_rules = Waf::reloadRules();
+          if (new_rules == nullptr) {
+            return JSON_OP_RESULT::ERROR;
+          }
+          this->listener_config.rules = new_rules;
+          return JSON_OP_RESULT::OK;
         }
-        }
+        default:
+          return JSON_OP_RESULT::ERROR;
+      }
     }
 #endif
     case ctl::CTL_SUBJECT::DEBUG: {
@@ -251,9 +252,6 @@ Listener::Listener() : is_running(false), stream_manager_set() {}
 Listener::~Listener() {
   Logger::logmsg(LOG_REMOVE, "Destructor");
   is_running = false;
-#if WAF_ENABLED
-    delete listener_config.modsec;
-#endif
   for (auto &sm : stream_manager_set) {
     sm.second->stop();
     delete sm.second;
@@ -344,15 +342,10 @@ bool Listener::init(ListenerConfig &config) {
   listener_config = config;
   service_manager = ServiceManager::getInstance(listener_config);
 #if WAF_ENABLED
-   listener_config.modsec = new modsecurity::ModSecurity();
-   listener_config.modsec->setConnectorInformation("WAF");  //add the farm name ???
-   listener_config.modsec->setServerLogCb(Waf::logModsec);
-   modsecurity::Rules *waf_rules=nullptr;
-   if (Config::loadWafConfig(&(waf_rules), listener_config.waf_rules_file)){
-         //free waf_rules
-       return false;
-   }
-   listener_config.rules = std::shared_ptr<modsecurity::Rules>(waf_rules);
+  listener_config.modsec = std::make_shared<modsecurity::ModSecurity>();
+  listener_config.modsec->setConnectorInformation(
+      "zproxy_" + listener_config.name + "_connector");
+  listener_config.modsec->setServerLogCb(Waf::logModsec);
 #endif
   return true;
 }

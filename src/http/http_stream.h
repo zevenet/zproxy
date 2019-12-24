@@ -23,13 +23,13 @@
 
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
-#include "../event/epoll_manager.h"
 #include "../event/timer_fd.h"
 #include "../service/backend.h"
-#include "../ssl/ssl_connection_manager.h"
 #include "http_request.h"
 #if WAF_ENABLED
-#include "../handlers/waf.h"
+#include <modsecurity/modsecurity.h>
+#include <modsecurity/rules.h>
+#include <modsecurity/transaction.h>
 #endif
 
 struct UpgradeStatus {
@@ -57,8 +57,9 @@ class HttpStream : public Counter<HttpStream> {
   HttpStream(const HttpStream&) = delete;
   HttpStream& operator=(const HttpStream&) = delete;
 #if WAF_ENABLED
+  modsecurity::ModSecurityIntervention *intervention{nullptr};
   modsecurity::Transaction *modsec_transaction{nullptr};
-  std::shared_ptr<modsecurity::Rules> waf_rules;
+  std::shared_ptr<modsecurity::Rules> waf_rules{nullptr};
 #endif
   /** Connection between zproxy and the client. */
   ClientConnection client_connection;

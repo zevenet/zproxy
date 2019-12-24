@@ -1,205 +1,171 @@
 #include "waf.h"
 
-void Waf::freeFileList(FILE_LIST **list)
-{
-    FILE_LIST *next =*list;
+bool Waf::checkRequestWaf(HttpStream &stream) {
+  modsecurity::intervention::free(stream.intervention);
+  modsecurity::intervention::clean(stream.intervention);
+  std::string httpVersion = "";
 
-    while (next != nullptr){
-        *list = (*list)->next;
-        free(next);
-        next =*list;
+  switch (stream.request.http_version) {
+    case http::HTTP_VERSION::HTTP_1_0:
+      httpVersion = "1.0";
+      break;
+    case http::HTTP_VERSION::HTTP_1_1:
+      httpVersion = "1.1";
+      break;
+    case http::HTTP_VERSION::HTTP_2_0:
+      httpVersion = "2.0";
+      break;
+  }
+
+  stream.modsec_transaction->processConnection(
+      stream.client_connection.getPeerAddress().c_str(),
+      stream.client_connection.getPeerPort(),
+      stream.client_connection.getLocalAddress().c_str(),
+      stream.client_connection.getLocalPort());
+
+  for (int i = 0; i < static_cast<int>(stream.request.num_headers); i++) {
+    auto name = reinterpret_cast<unsigned char *>(
+        const_cast<char *>(stream.request.headers[i].name));
+    auto value = reinterpret_cast<unsigned char *>(
+        const_cast<char *>(stream.request.headers[i].value));
+    stream.modsec_transaction->addRequestHeader(
+        name, stream.request.headers[i].name_len, value,
+        stream.request.headers[i].value_len);
+  }
+
+  stream.modsec_transaction->processURI(
+      stream.request.path, stream.request.method, httpVersion.c_str());
+  stream.modsec_transaction->processRequestHeaders();
+
+  stream.modsec_transaction->appendRequestBody(
+      (unsigned char *)stream.request.message, stream.request.message_length);
+  stream.modsec_transaction->processRequestBody();
+
+  // Checking interaction
+  if (stream.modsec_transaction->intervention(stream.intervention)) {
+    // log event?
+    if (stream.intervention->log != nullptr) {
+      Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
+                     stream.intervention->log);
     }
+
+    // redirect returns disruptive=1
+
+    // process is going to be cut. Execute the logging phase
+    if (stream.intervention->disruptive) {
+      if (!stream.modsec_transaction->processLogging())
+        Logger::logmsg(LOG_WARNING, "(%lx) WAF, error processing the log",
+                       pthread_self());
+    }
+  }
+
+  return stream.intervention->disruptive != 0;
 }
 
-void Waf::newModsecTransaction(modsecurity::Transaction **transaction, modsecurity::ModSecurity *mod,std::shared_ptr<modsecurity::Rules> rules) {
-    // If a modsecuriy transaction exists, delete it. This mustn't occur
-    delModsecTransaction(transaction);
+bool Waf::checkResponseWaf(HttpStream &stream) {
+  modsecurity::intervention::free(stream.intervention);
+  modsecurity::intervention::clean(stream.intervention);
+  std::string httpVersion = "";
 
-    if (rules.get() != nullptr){
-        *transaction = new modsecurity::Transaction(mod, rules.get(), nullptr);
-        Logger::logmsg(LOG_DEBUG, "Created Modsecurity transaction");
+  switch (stream.request.http_version) {
+    case http::HTTP_VERSION::HTTP_1_0:
+      httpVersion = "1.0";
+      break;
+    case http::HTTP_VERSION::HTTP_1_1:
+      httpVersion = "1.1";
+      break;
+    case http::HTTP_VERSION::HTTP_2_0:
+      httpVersion = "2.0";
+      break;
+  }
+
+  for (int i = 0; i < static_cast<int>(stream.response.num_headers); i++) {
+    auto name = reinterpret_cast<unsigned char *>(
+        const_cast<char *>(stream.response.headers[i].name));
+    auto value = reinterpret_cast<unsigned char *>(
+        const_cast<char *>(stream.response.headers[i].value));
+    stream.modsec_transaction->addResponseHeader(
+        name, stream.response.headers[i].name_len, value,
+        stream.response.headers[i].value_len);
+  }
+  stream.modsec_transaction->appendResponseBody(
+      reinterpret_cast<unsigned char *>(stream.response.message),
+      stream.response.message_length);
+  stream.modsec_transaction->processResponseHeaders(
+      stream.response.http_status_code, httpVersion);
+  stream.modsec_transaction->processResponseBody();
+  stream.modsec_transaction->processLogging();
+  // Checking interaction
+  if (stream.modsec_transaction->intervention(stream.intervention)) {
+    // log event?
+    if (stream.intervention->log != nullptr) {
+      Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
+                     stream.intervention->log);
     }
-}
+  }
 
-void Waf::delModsecTransaction(modsecurity::Transaction **transaction) {
-    if (*transaction != nullptr) {
-        // modsec_transaction->processLogging();
+  if (stream.intervention->disruptive) {
+    stream.modsec_transaction->processLogging();  // TODO:: is it necessary??
+    Logger::logmsg(LOG_DEBUG, "WAF wants to apply an action for the REQUEST");
+  }
 
-        Logger::logmsg(LOG_DEBUG, "Deleted Modsecurity transaction");
-        delete *transaction;
-        *transaction = nullptr;
-    }
-}
-
-modsecurity::ModSecurityIntervention Waf::checkRequestWaf(modsecurity::Transaction *transaction, HttpRequest *request, ClientConnection *client) {
-
-    modsecurity::ModSecurityIntervention intervention;
-    intervention.status = 200;
-    intervention.url = nullptr;
-    intervention.log = nullptr;
-    intervention.disruptive = 0;
-    intervention.pause = 0;
-    std::string httpVersion = "";
-
-    switch (request->http_version) {
-    case http::HTTP_VERSION::HTTP_1_0:httpVersion = "1.0";
-        break;
-    case http::HTTP_VERSION::HTTP_1_1:httpVersion = "1.1";
-        break;
-    case http::HTTP_VERSION::HTTP_2_0:httpVersion = "2.0";
-    }
-
-    transaction->processConnection( client->getPeerAddress().c_str(),
-                                      client->getPeerPort(),
-                                      client->getLocalAddress().c_str(),
-                                      client->getLocalPort());
-
-    for (int i = 0; i < (int)request->num_headers; i++) {
-        transaction->addRequestHeader((unsigned char *) request->headers[i].name, request->headers[i].name_len, \
-                                             (unsigned char *) request->headers[i].value, request->headers[i].value_len);
-    }
-
-    transaction->processURI(request->path, request->method, httpVersion.c_str());
-    transaction->processRequestHeaders();
-
-    transaction->appendRequestBody((unsigned char *) request->message, request->message_length);
-    transaction->processRequestBody();
-
-    // Checking interaction
-    if (transaction->intervention(&intervention)) {
-
-        // log event?
-        if (intervention.log != nullptr) {
-          Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(), intervention.log );
-        }
-
-        // redirect returns disruptive=1
-
-        // process is going to be cut. Execute the logging phase
-        if (intervention.disruptive) {
-            if (!transaction->processLogging())
-                Logger::logmsg(LOG_WARNING, "(%lx) WAF, error processing the log", pthread_self());
-        }
-    }
-
-    return intervention;
-}
-
-modsecurity::ModSecurityIntervention Waf::checkResponseWaf(modsecurity::Transaction *transaction, HttpResponse *response, http::HTTP_VERSION http_version) {
-
-    modsecurity::ModSecurityIntervention intervention;
-    intervention.status = 200;
-    intervention.url = nullptr;
-    intervention.log = nullptr;
-    intervention.disruptive = 0;
-    std::string httpVersion = "";
-
-    switch (http_version) {
-    case http::HTTP_VERSION::HTTP_1_0:httpVersion = "1.0";
-        break;
-    case http::HTTP_VERSION::HTTP_1_1:httpVersion = "1.1";
-        break;
-    case http::HTTP_VERSION::HTTP_2_0:httpVersion = "2.0";
-    }
-
-    for (int i = 0; i < response->num_headers; i++) {
-        transaction->addResponseHeader((unsigned char *) response->headers[i].name,
-                                              response->headers[i].name_len,
-                                              (unsigned char *) response->headers[i].value,
-                                              response->headers[i].value_len);
-    }
-    transaction->appendResponseBody((unsigned char *) response->message, response->message_length);
-
-    transaction->processResponseHeaders(response->http_status_code, "HTTP " + httpVersion);
-    transaction->processResponseBody();
-
-    transaction->processLogging();
-
-    // Checking interaction
-    if (transaction->intervention(&intervention)) {
-        // log event?
-        if (intervention.log != nullptr) {
-          Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(), intervention.log );
-        }
-    }
-
-    if (intervention.disruptive) {
-        transaction->processLogging();
-        Logger::logmsg(LOG_DEBUG, "WAF wants to apply an action for the REQUEST");
-    }
-
-    return intervention;
-}
-
-bool Waf::reloadRules(modsecurity::Rules **rules) {
-
-    // parse file
-    FILE_LIST *waf_files = parseConf();
-
-    // reload rules
-    if (Config::loadWafConfig(rules, waf_files))
-        return false;
-
-    Logger::logmsg(LOG_INFO, "The WAF rulesets waf reloaded properly");
-
-    return true;
+  return stream.intervention->disruptive != 0;
 }
 
 // todo: parse only the directives of a listener
-FILE_LIST *Waf::parseConf()
-{
-    FILE_LIST *bef_file, *file, *initList = nullptr;
-    int err = 0;
-    regex_t WafRules;
-    char lin[MAXBUF];
-    regmatch_t matches[5];
-    Config config;
-    config.conf_init(Config::config_file);
-    config.compile_regex();
+std::shared_ptr<Rules> Waf::reloadRules() {
+  int err = 0;
+  regex_t WafRules;
+  char lin[MAXBUF];
+  regmatch_t matches[5];
+  Config config;
+  config.conf_init(Config::config_file);
+  config.compile_regex();
+  auto rules = std::make_shared<Rules>();
+  Logger::logmsg(LOG_WARNING, "file to update %s", Config::config_file.c_str());
 
-    Logger::logmsg(LOG_WARNING, "file to update %s", Config::config_file.c_str());
+  if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
+              REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+    return nullptr;
 
-    if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
-               REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+  // compile regexp
+  while (config.conf_fgets(lin, MAXBUF) && !err) {
+    if (!regexec(&WafRules, lin, 4, matches, 0)) {
+      auto file = std::string(lin + matches[1].rm_so,
+                              lin + matches[1].rm_eo - lin + matches[1].rm_so);
+      err = rules->loadFromUri(file.data());
+      if (err == -1) {
+        logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
+               rules->getParserError().data());
+        config.clean_regex();
         return nullptr;
-
-    // compile regexp
-    while (config.conf_fgets(lin, MAXBUF) && !err) {
-
-        if(!regexec(&WafRules, lin, 4, matches, 0)) {
-            if ((file = (FILE_LIST *)malloc(sizeof (FILE_LIST)) ) == nullptr ){
-                logmsg(LOG_ERR, "WAF config: out of memory - aborted");
-                err=1;
-            }
-
-            else {
-                lin[matches[1].rm_eo] = '\0';
-                file->file = strdup(lin + matches[1].rm_so);
-                file->next = nullptr;
-                if(initList == nullptr)
-                    initList = file;
-                else
-                    bef_file->next = file;
-                bef_file = file;
-            }
-        }
+      }
     }
-
-    // remove regexp
-    config.clean_regex();
-
-    if (err){
-        Waf::freeFileList(&initList);
-        return nullptr;
-    }
-
-    return initList;
+  }
+  dumpRules(*rules);
+  // remove regexp
+  config.clean_regex();
+  Logger::logmsg(LOG_INFO, "The WAF rulesets waf reloaded properly");
+  return rules;
 }
 
 void Waf::logModsec(void *data, const void *message) {
+  if (data != nullptr)
+    Logger::logmsg(LOG_WARNING, "%s", static_cast<char *>(data));
+  if (message != nullptr)
+    Logger::logmsg(LOG_WARNING, "[WAF] %s",
+                   static_cast<char *>(const_cast<void *>(message)));
+}
 
-    if (data != nullptr)
-        Logger::logmsg(LOG_WARNING, "%s", (const char *)data);
-    if (message != nullptr)
-        Logger::logmsg(LOG_WARNING, "[WAF] %s", (const char *)message);
+void Waf::dumpRules(modsecurity::Rules &rules) {
+  Logger::logmsg(LOG_DEBUG, "Rules: ");
+  for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
+    auto rule = rules.getRulesForPhase(i);
+    if (rule) {
+      for (auto &x : *rule) {
+        Logger::logmsg(LOG_DEBUG, "\tRule Id: %d From %s at %d ", x->m_ruleId,
+                       x->m_fileName.data(), x->m_lineNumber);
+      }
+    }
+  }
 }

@@ -267,18 +267,6 @@ class Config {
   void parseConfig(const int argc, char **const argv);
   bool exportConfigToJsonFile(std::string save_path);
 
-#if WAF_ENABLED
-   /**
-    * @brief loads the rulesets from the WafRules struct to a rules object.
-    * If the rule object already contains rules, they are not overwrite if an error exists
-    * while the load. If there aren't WafRules directives, the rules is cleaned
-    * @param is the WAf rule object where is going to be loaded the rules
-    * @param is the FILE_LIST struct that contains the WafRules ruleset files
-    * @return returns an 1 on failure or 0 on success
-    */
-   static int loadWafConfig( modsecurity::Rules **waf_rules, FILE_LIST *waf_rules_file);
-#endif
-
  private:
   /*
    * return a pre-generated RSA key

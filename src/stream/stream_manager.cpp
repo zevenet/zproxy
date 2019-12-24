@@ -270,8 +270,9 @@ void StreamManager::start(int thread_id_) {
   }
 }
 
-StreamManager::StreamManager(ListenerConfig &listener_config)
-    : is_https_listener(false),listener_config_(listener_config){
+StreamManager::StreamManager(ListenerConfig& listener_config)
+    : listener_config_(listener_config),
+      is_https_listener(false){
           // TODO:: do attach for config changes
       };
 
@@ -283,6 +284,7 @@ StreamManager::~StreamManager() {
     delete key_pair.second;
   }
 }
+
 void StreamManager::doWork() {
   while (is_running) {
     if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
@@ -326,6 +328,12 @@ void StreamManager::addStream(int fd) {
   if (this->is_https_listener) {
     stream->client_connection.ssl_conn_status = ssl::SSL_STATUS::NEED_HANDSHAKE;
   }
+#if WAF_ENABLED
+  if (listener_config_.rules) {
+    stream->waf_rules = listener_config_.rules;
+    stream->intervention = new modsecurity::ModSecurityIntervention();
+  }
+#endif
 // configurar
 #else
   if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
@@ -484,6 +492,38 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
+#if WAF_ENABLED
+      if (stream->waf_rules) {  // rule struct is unitializate if no
+        // rulesets are configured
+        delete stream->modsec_transaction;
+        stream->modsec_transaction =
+            new modsecurity::Transaction(listener_config_.modsec.get(),
+                                         listener_config_.rules.get(), nullptr);
+        if (Waf::checkRequestWaf(*stream)) {
+          if (stream->intervention->url != nullptr) {
+            // send redirect
+            http_manager::replyRedirect(stream->intervention->status,
+                                        stream->intervention->url,
+                                        stream->client_connection, ssl_manager);
+            Logger::logmsg(
+                LOG_WARNING, "(%lx) WAF redirected a request from %s",
+                pthread_self(), stream->client_connection.address_str.c_str());
+          } else {
+            // reject the request
+            http::Code code =
+                static_cast<http::Code>(stream->intervention->status);
+            http_manager::replyError(code, reasonPhrase(code),
+                                     listener_config_.err403,
+                                     stream->client_connection, ssl_manager);
+            Logger::logmsg(LOG_WARNING, "(%lx) WAF rejected a request from %s",
+                           pthread_self(),
+                           stream->client_connection.address_str.c_str());
+          }
+          clearStream(stream);
+          return;
+        }
+      }
+#endif
       std::string x_forwarded_for_header;
       if (!stream->request.x_forwarded_for_string.empty()) {
         // set extra header to forward to the backends
@@ -630,34 +670,6 @@ void StreamManager::onRequestEvent(int fd) {
                 }
               }
             }
-
-#if WAF_ENABLED
-            if ( listener_config_.rules != nullptr){    // rule struct is unitializate if no rulesets are configured
-                stream->waf_rules = listener_config_.rules;
-                Waf::newModsecTransaction(&stream->modsec_transaction, listener_config_.modsec, listener_config_.rules);
-                modsecurity::ModSecurityIntervention it = Waf::checkRequestWaf(stream->modsec_transaction, &stream->request,
-                                                                               &stream->client_connection);
-                if (it.disruptive) {
-                    if (it.url != nullptr) {
-                        // send redirect
-                        http_manager::replyRedirect(it.status, it.url,stream->client_connection,ssl_manager);
-                        Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
-                    } else {
-                        // reject the request
-                        http::Code code = (http::Code)it.status;
-                        http_manager::replyError(code,
-                                           reasonPhrase(code),
-                                           listener_config_.err403,
-                                           stream->client_connection,
-                                           ssl_manager);
-                        Logger::logmsg(LOG_WARNING, "(%lx) WAF rejected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
-                    }
-                    clearStream(stream);
-                    return;
-                }
-            }
-#endif
-
             // Rewrite destination
             if (stream->request.add_destination_header) {
               std::string header_value =
@@ -923,7 +935,6 @@ void StreamManager::onResponseEvent(int fd) {
     }
 #endif
 
-    // TODO:: maybe quick response
 #if PRINT_DEBUG_FLOW_BUFFERS
     Logger::logmsg(
         LOG_REMOVE,
@@ -1007,28 +1018,31 @@ void StreamManager::onResponseEvent(int fd) {
     }
 
 #if WAF_ENABLED
-  if ( stream->modsec_transaction != nullptr){ //transaction is not initializate if does not exist rules when the stream was created
-      modsecurity::ModSecurityIntervention it = Waf::checkResponseWaf(stream->modsec_transaction, &stream->response, stream->request.http_version );
-      if (it.disruptive) {
-          if (it.url != nullptr) {
-              // send redirect
-              http_manager::replyRedirect(it.status, it.url,stream->client_connection,ssl_manager);
-              Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
-          } else {
-              // reject the request
-              http::Code code = (http::Code)it.status;
-              http_manager::replyError(code,
-                                 reasonPhrase(code),
-                                 listener_config_.err403,
-                                 stream->client_connection,
-                                 ssl_manager);
-              Logger::logmsg(LOG_WARNING, "(%lx) WAF rejected a request from %s", pthread_self(), stream->client_connection.address_str.c_str());
-          }
-          clearStream(stream);
-          return;
+    if (stream->modsec_transaction != nullptr) {
+      if (Waf::checkResponseWaf(*stream)) {
+        if (stream->intervention->url != nullptr) {
+          // send redirect
+          http_manager::replyRedirect(stream->intervention->status,
+                                      stream->intervention->url,
+                                      stream->client_connection, ssl_manager);
+          Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s",
+                         pthread_self(),
+                         stream->client_connection.address_str.c_str());
+        } else {
+          // reject the request
+          http::Code code =
+              static_cast<http::Code>(stream->intervention->status);
+          http_manager::replyError(code, reasonPhrase(code),
+                                   listener_config_.err403,
+                                   stream->client_connection, ssl_manager);
+          Logger::logmsg(LOG_WARNING, "(%lx) WAF rejected a request from %s",
+                         pthread_self(),
+                         stream->client_connection.address_str.c_str());
+        }
+        clearStream(stream);
+        return;
       }
-      Waf::delModsecTransaction(&stream->modsec_transaction);
-   }
+    }
 #endif
 
     auto service = static_cast<Service*>(stream->request.getService());
@@ -1694,6 +1708,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 
 bool StreamManager::init(ListenerConfig& listener_config) {
   service_manager = ServiceManager::getInstance(listener_config);
+  listener_config_ = listener_config;
   if (listener_config.ctx != nullptr ||
       !listener_config.ssl_config_file.empty()) {
     this->is_https_listener = true;

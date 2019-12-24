@@ -36,12 +36,6 @@ enum class RENEG_STATE {
   RENEG_ABORT
 };
 
-// struct to create a list of filenames
-typedef struct _file_list{
-      char *file;
-      struct _file_list *next;
-} FILE_LIST;
-
 /* matcher chain */
 struct MATCHER {
   regex_t pat; /* pattern to match the request/header against */
@@ -165,7 +159,7 @@ struct ListenerConfig {
   int to;                        /* client time-out */
   int has_pat;                   /* was a URL pattern defined? */
   regex_t url_pat;               /* pattern to match the request URL against */
-  std::string err414,            /* error messages */
+  std::string err403, err414,    /* error messages */
       err500, err501, err503, errnossl;
   std::string nossl_url; /* If a user goes to a https port with a http: url,
                       redirect them to this url */
@@ -190,10 +184,9 @@ struct ListenerConfig {
   int ecdh_curve_nid{0};
   ServiceConfig *services{nullptr};
 #if WAF_ENABLED
-  char *err403;
-  FILE_LIST *waf_rules_file{nullptr};
-  modsecurity::ModSecurity *modsec;        /* API connector with Modsecurity */
-  std::shared_ptr<modsecurity::Rules> rules;    /* Rules of modsecurity */
+  std::shared_ptr<modsecurity::ModSecurity> modsec{
+      nullptr}; /* API connector with Modsecurity */
+  std::shared_ptr<modsecurity::Rules> rules{nullptr}; /* Rules of modsecurity */
 #endif
   ListenerConfig *next{nullptr};
 };

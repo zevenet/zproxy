@@ -295,21 +295,8 @@ void Config::parseConfig(const int argc, char **const argv) {
   cache_s = 0;
   cache_thr = 0;
 #endif
-#if WAF_ENABLED
-  modsecurity::Rules *waf_rules=nullptr;
-#endif
 
   parse_file();
-
-#if WAF_ENABLED
-  if(listeners[0].waf_rules_file!=nullptr){
-    if (Config::loadWafConfig(&waf_rules, listeners[0].waf_rules_file)){
-        delete waf_rules;
-        exit(1);
-    }
-     delete waf_rules;
-  }
-#endif
 
   if (check_only) {
     Logger::logmsg(LOG_INFO, "Config file %s is OK", conf_name.data());
@@ -364,8 +351,6 @@ ListenerConfig *Config::parse_HTTP() {
   res->ignore100continue = ignore_100;
 #if WAF_ENABLED
   res->err403 = "The request was rejected by the server.";
-  FILE_LIST *bef_file, *file = nullptr;
-  res->waf_rules_file = nullptr;
 #endif
 
   res->ssl_forward_sni_server_name = false;
@@ -521,19 +506,32 @@ ListenerConfig *Config::parse_HTTP() {
       return res;
 #if WAF_ENABLED
     } else if(!regexec(&WafRules, lin, 4, matches, 0)) {
-        if ((file = (FILE_LIST *)malloc(sizeof (FILE_LIST)) ) == nullptr ) {
-            conf_err("WAF config: out of memory - aborted");
+      auto file = std::string(lin + matches[1].rm_so,
+                              matches[1].rm_eo - matches[1].rm_so);
+      if (!res->rules) {
+        res->rules = std::make_shared<modsecurity::Rules>();
+      }
+      auto err = res->rules->loadFromUri(file.data());
+      if (err == -1) {
+        logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
+               res->rules->getParserError().data());
+        conf_err("Error loading waf ruleset");
+        break;
+      }
+      if (!res->rules) {
+        res->rules = std::make_shared<modsecurity::Rules>();
+      }
+      Logger::logmsg(LOG_DEBUG, "Rules: ");
+      for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
+        auto rule = res->rules->getRulesForPhase(i);
+        if (rule) {
+          Logger::logmsg(LOG_DEBUG, "Phase: %d ( %d rules )", i, rule->size());
+          for (auto &x : *rule) {
+            Logger::logmsg(LOG_DEBUG, "\tRule Id: %d From %s at %d ",
+                           x->m_ruleId, x->m_fileName.data(), x->m_lineNumber);
+          }
         }
-        else {
-            lin[matches[1].rm_eo] = '\0';
-            file->file = strdup(lin + matches[1].rm_so);
-            file->next = nullptr;
-            if(res->waf_rules_file == nullptr)
-                res->waf_rules_file = file;
-            else
-                bef_file->next = file;
-            bef_file = file;
-        }
+      }
 #endif
     } else {
       conf_err("unknown directive - aborted");
@@ -581,8 +579,6 @@ ListenerConfig *Config::parse_HTTPS() {
   res->engine_id = engine_id;
 #if WAF_ENABLED
   res->err403 = "The request was rejected by the server.";
-  FILE_LIST *bef_file, *file = nullptr;
-  res->waf_rules_file = nullptr;
 #endif
   res->ssl_forward_sni_server_name = true;
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -598,20 +594,30 @@ ListenerConfig *Config::parse_HTTPS() {
       has_addr = 1;
       res->address = lin + matches[1].rm_so;
 #if WAF_ENABLED
-    } else if(!regexec(&WafRules, lin, 4, matches, 0)) {
-        if ((file = (FILE_LIST *)malloc(sizeof (FILE_LIST)) ) == nullptr ) {
-            conf_err("WAF config: out of memory - aborted");
+    } else if (!regexec(&WafRules, lin, 4, matches, 0)) {
+      auto file = std::string(lin + matches[1].rm_so,
+                              matches[1].rm_eo - matches[1].rm_so);
+      if (!res->rules) {
+        res->rules = std::make_shared<modsecurity::Rules>();
+      }
+      auto err = res->rules->loadFromUri(file.data());
+      if (err == -1) {
+        logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
+               res->rules->getParserError().data());
+        conf_err("Error loading waf ruleset");
+        break;
+      }
+      Logger::logmsg(LOG_DEBUG, "Rules: ");
+      for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
+        auto rule = res->rules->getRulesForPhase(i);
+        if (rule) {
+          Logger::logmsg(LOG_DEBUG, "Phase: %d ( %d rules )", i, rule->size());
+          for (auto &x : *rule) {
+            Logger::logmsg(LOG_DEBUG, "\tRule Id: %d From %s at %d ",
+                           x->m_ruleId, x->m_fileName.data(), x->m_lineNumber);
+          }
         }
-        else {
-            lin[matches[1].rm_eo] = '\0';
-            file->file = strdup(lin + matches[1].rm_so);
-            file->next = nullptr;
-            if(res->waf_rules_file != nullptr)
-                res->waf_rules_file = file;
-            else
-                bef_file->next = file;
-            bef_file = file;
-        }
+      }
 #endif
     } else if (!regexec(&Port, lin, 4, matches, 0)) {
       if (res->addr.ai_family == AF_INET) {
@@ -2081,49 +2087,6 @@ void Config::include_dir(const char *conf_path) {
   closedir(dp);
 }
 bool Config::exportConfigToJsonFile(std::string save_path) { return false; }
-
-#if WAF_ENABLED
-int Config::loadWafConfig( modsecurity::Rules **waf_rules, FILE_LIST *waf_rules_file) {
-
-    int err = 0;
-    int err_flag  = 0;
-    int rules_number = 0;
-    FILE_LIST *file = nullptr;
-    modsecurity::Rules *tmp_set = nullptr;
-
-    if (waf_rules_file) {
-        tmp_set = new modsecurity::Rules();
-
-        for ( file = waf_rules_file; file!= nullptr; file=file->next ) {
-            //msc_rules_add
-            err = tmp_set->loadFromUri( file->file);
-
-            if (err == -1) {
-                err_flag++;
-                logmsg(LOG_ERR,"Error loading waf ruleset %s", file->file);
-                logmsg(LOG_ERR,"%s", tmp_set->getParserError().c_str());
-                delete tmp_set;
-                tmp_set = nullptr;
-                break;
-            }
-            else
-                rules_number += err;
-        }
-    }
-
-    // re-asign the listener WAF rules
-    if ( !err_flag ) {
-        if ( *waf_rules != nullptr )
-            delete *waf_rules;
-        // Point to the new set
-        *waf_rules = tmp_set;
-        logmsg(LOG_INFO,"%d WAF rule(s) has been added", rules_number);
-    }
-
-    return err_flag;
-}
-#endif
-
 
 RSA *Config::RSA_tmp_callback(/* not used */ SSL *ssl, /* not used */ int is_export, int keylength) {
   RSA *res;
