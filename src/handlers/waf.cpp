@@ -24,6 +24,7 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
       stream.client_connection.getLocalPort());
 
   for (int i = 0; i < static_cast<int>(stream.request.num_headers); i++) {
+    if (stream.request.headers[i].header_off) continue;
     auto name = reinterpret_cast<unsigned char *>(
         const_cast<char *>(stream.request.headers[i].name));
     auto value = reinterpret_cast<unsigned char *>(
@@ -80,6 +81,7 @@ bool Waf::checkResponseWaf(HttpStream &stream) {
   }
 
   for (int i = 0; i < static_cast<int>(stream.response.num_headers); i++) {
+    if (stream.response.headers[i].header_off) continue;
     auto name = reinterpret_cast<unsigned char *>(
         const_cast<char *>(stream.response.headers[i].name));
     auto value = reinterpret_cast<unsigned char *>(
