@@ -42,34 +42,7 @@ Connection::Connection()
       is_connected(false),
       ssl(nullptr),
       ssl_connected(false) {}
-Connection::~Connection() {
-  is_connected = false;
-  if (ssl != nullptr) {
-    SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-    SSL_shutdown(ssl);
-    SSL_clear(ssl);
-    SSL_free(ssl);
-#if USE_SSL_BIO_BUFFER
-    if (sbio != nullptr) {
-      BIO_vfree(sbio);
-      sbio = nullptr;
-    }
-    if (io != nullptr) {
-      BIO_free(io);
-      io = nullptr;
-    }
-    if (ssl_bio != nullptr) {
-      BIO_free(ssl_bio);
-      ssl_bio = nullptr;
-    }
-#endif
-  }
-  if (fd_ > 0) this->closeConnection();
-  if (address != nullptr) {
-    if (address->ai_addr != nullptr) delete address->ai_addr;
-  }
-  delete address;
-}
+Connection::~Connection() { reset(); }
 
 IO::IO_RESULT Connection::read() {
   bool done = false;
@@ -139,6 +112,45 @@ int Connection::getLocalPort() {
     local_port = Network::getlocalPort(this->fd_);
   }
   return local_port;
+}
+
+void Connection::reset() {
+  is_connected = false;
+  freeSsl();
+  if (fd_ > 0) this->closeConnection();
+  fd_ = -1;
+  buffer_size = 0;
+  buffer_offset = 0;
+  if (address != nullptr) {
+    if (address->ai_addr != nullptr) delete address->ai_addr;
+  }
+  delete address;
+  address = nullptr;
+}
+
+void Connection::freeSsl() {
+  this->ssl_connected = false;
+  if (ssl != nullptr) {
+    SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+    SSL_shutdown(ssl);
+    SSL_clear(ssl);
+    SSL_free(ssl);
+    ssl = nullptr;
+#if USE_SSL_BIO_BUFFER
+    if (sbio != nullptr) {
+      BIO_vfree(sbio);
+      sbio = nullptr;
+    }
+    if (io != nullptr) {
+      BIO_free(io);
+      io = nullptr;
+    }
+    if (ssl_bio != nullptr) {
+      BIO_free(ssl_bio);
+      ssl_bio = nullptr;
+    }
+#endif
+  }
 }
 
 #if ENABLE_ZERO_COPY

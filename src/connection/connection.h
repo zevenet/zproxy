@@ -90,7 +90,8 @@ class Connection : public Descriptor {
   std::string getLocalAddress();
   int getPeerPort();
   int getLocalPort();
-
+  void reset();
+  void freeSsl();
 #if ENABLE_ZERO_COPY
   IO::IO_RESULT zeroRead();
   IO::IO_RESULT zeroWrite(int dst_fd, http_parser::HttpData &http_data);
