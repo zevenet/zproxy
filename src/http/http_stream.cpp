@@ -38,9 +38,8 @@ HttpStream::HttpStream()
 
 HttpStream::~HttpStream() {
 #if WAF_ENABLED
-  if (intervention != nullptr) {
-    modsecurity::intervention::free(intervention);
-    delete intervention;
+  if (modsec_transaction != nullptr) {
+    modsecurity::intervention::free(&modsec_transaction->m_it);
   }
   delete this->modsec_transaction;
 #endif

@@ -1,8 +1,6 @@
 #include "waf.h"
 
 bool Waf::checkRequestWaf(HttpStream &stream) {
-  modsecurity::intervention::free(stream.intervention);
-  modsecurity::intervention::clean(stream.intervention);
   std::string httpVersion = "";
 
   switch (stream.request.http_version) {
@@ -16,7 +14,7 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
       httpVersion = "2.0";
       break;
   }
-
+  modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
   stream.modsec_transaction->processConnection(
       stream.client_connection.getPeerAddress().c_str(),
       stream.client_connection.getPeerPort(),
@@ -43,29 +41,27 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
   stream.modsec_transaction->processRequestBody();
 
   // Checking interaction
-  if (stream.modsec_transaction->intervention(stream.intervention)) {
+  if (stream.modsec_transaction->m_it.disruptive) {
     // log event?
-    if (stream.intervention->log != nullptr) {
+    if (stream.modsec_transaction->m_it.log != nullptr) {
       Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
-                     stream.intervention->log);
+                     stream.modsec_transaction->m_it.log);
     }
 
     // redirect returns disruptive=1
 
     // process is going to be cut. Execute the logging phase
-    if (stream.intervention->disruptive) {
-      if (!stream.modsec_transaction->processLogging())
-        Logger::logmsg(LOG_WARNING, "(%lx) WAF, error processing the log",
-                       pthread_self());
-    }
+    if (!stream.modsec_transaction->processLogging())
+      Logger::logmsg(LOG_WARNING, "(%lx) WAF, error processing the log",
+                     pthread_self());
+
+    return true;
   }
 
-  return stream.intervention->disruptive != 0;
+  return false;
 }
 
 bool Waf::checkResponseWaf(HttpStream &stream) {
-  modsecurity::intervention::free(stream.intervention);
-  modsecurity::intervention::clean(stream.intervention);
   std::string httpVersion = "";
 
   switch (stream.request.http_version) {
@@ -79,7 +75,7 @@ bool Waf::checkResponseWaf(HttpStream &stream) {
       httpVersion = "2.0";
       break;
   }
-
+  modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
   for (int i = 0; i < static_cast<int>(stream.response.num_headers); i++) {
     if (stream.response.headers[i].header_off) continue;
     auto name = reinterpret_cast<unsigned char *>(
@@ -98,20 +94,18 @@ bool Waf::checkResponseWaf(HttpStream &stream) {
   stream.modsec_transaction->processResponseBody();
   stream.modsec_transaction->processLogging();
   // Checking interaction
-  if (stream.modsec_transaction->intervention(stream.intervention)) {
+  if (stream.modsec_transaction->m_it.disruptive) {
     // log event?
-    if (stream.intervention->log != nullptr) {
+    if (stream.modsec_transaction->m_it.log != nullptr) {
       Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
-                     stream.intervention->log);
+                     stream.modsec_transaction->m_it.log);
     }
-  }
-
-  if (stream.intervention->disruptive) {
     stream.modsec_transaction->processLogging();  // TODO:: is it necessary??
     Logger::logmsg(LOG_DEBUG, "WAF wants to apply an action for the REQUEST");
-  }
 
-  return stream.intervention->disruptive != 0;
+    return true;
+  }
+  return false;
 }
 
 // todo: parse only the directives of a listener

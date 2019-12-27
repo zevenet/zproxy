@@ -331,7 +331,6 @@ void StreamManager::addStream(int fd) {
 #if WAF_ENABLED
   if (listener_config_.rules) {
     stream->waf_rules = listener_config_.rules;
-    stream->intervention = new modsecurity::ModSecurityIntervention();
   }
 #endif
 // configurar
@@ -500,18 +499,18 @@ void StreamManager::onRequestEvent(int fd) {
             new modsecurity::Transaction(listener_config_.modsec.get(),
                                          listener_config_.rules.get(), nullptr);
         if (Waf::checkRequestWaf(*stream)) {
-          if (stream->intervention->url != nullptr) {
+          if (stream->modsec_transaction->m_it.url != nullptr) {
             // send redirect
-            http_manager::replyRedirect(stream->intervention->status,
-                                        stream->intervention->url,
+            http_manager::replyRedirect(stream->modsec_transaction->m_it.status,
+                                        stream->modsec_transaction->m_it.url,
                                         stream->client_connection, ssl_manager);
             Logger::logmsg(
                 LOG_WARNING, "(%lx) WAF redirected a request from %s",
                 pthread_self(), stream->client_connection.address_str.c_str());
           } else {
             // reject the request
-            http::Code code =
-                static_cast<http::Code>(stream->intervention->status);
+            http::Code code = static_cast<http::Code>(
+                stream->modsec_transaction->m_it.status);
             http_manager::replyError(code, reasonPhrase(code),
                                      listener_config_.err403,
                                      stream->client_connection, ssl_manager);
@@ -1020,10 +1019,10 @@ void StreamManager::onResponseEvent(int fd) {
 #if WAF_ENABLED
     if (stream->modsec_transaction != nullptr) {
       if (Waf::checkResponseWaf(*stream)) {
-        if (stream->intervention->url != nullptr) {
+        if (stream->modsec_transaction->m_it.url != nullptr) {
           // send redirect
-          http_manager::replyRedirect(stream->intervention->status,
-                                      stream->intervention->url,
+          http_manager::replyRedirect(stream->modsec_transaction->m_it.status,
+                                      stream->modsec_transaction->m_it.url,
                                       stream->client_connection, ssl_manager);
           Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s",
                          pthread_self(),
@@ -1031,7 +1030,7 @@ void StreamManager::onResponseEvent(int fd) {
         } else {
           // reject the request
           http::Code code =
-              static_cast<http::Code>(stream->intervention->status);
+              static_cast<http::Code>(stream->modsec_transaction->m_it.status);
           http_manager::replyError(code, reasonPhrase(code),
                                    listener_config_.err403,
                                    stream->client_connection, ssl_manager);

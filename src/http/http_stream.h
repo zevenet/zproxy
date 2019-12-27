@@ -57,7 +57,7 @@ class HttpStream : public Counter<HttpStream> {
   HttpStream(const HttpStream&) = delete;
   HttpStream& operator=(const HttpStream&) = delete;
 #if WAF_ENABLED
-  modsecurity::ModSecurityIntervention *intervention{nullptr};
+  //    modsecurity::ModSecurityIntervention *intervention{nullptr};
   modsecurity::Transaction *modsec_transaction{nullptr};
   std::shared_ptr<modsecurity::Rules> waf_rules{nullptr};
 #endif
