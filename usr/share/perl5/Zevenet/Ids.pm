@@ -51,6 +51,8 @@ sub getIdsTree
 	include 'Zevenet::Alias';
 	include 'Zevenet::IPDS::WAF::Core';
 
+	my $l4_default_srv_tag = "default_service";
+
 	my $tree = $FIN;
 
 	$tree->{ 'farms' } = $FIN;
@@ -65,7 +67,8 @@ sub getIdsTree
 			$tree->{ 'farms' }->{ $f }->{ 'services' } = $FIN;
 
 			# add srv
-			my @srv = ( $type =~ /http|gslb/ ) ? &getFarmServices( $f ) : ( '_' );
+			my @srv =
+			  ( $type =~ /http|gslb/ ) ? &getFarmServices( $f ) : ( $l4_default_srv_tag );
 			foreach my $s ( @srv )
 			{
 				require Zevenet::Farm::Backend;
