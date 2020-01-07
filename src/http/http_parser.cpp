@@ -180,33 +180,6 @@ bool http_parser::HttpData::getHeaderValue(const std::string &header_name,
   return false;
 }
 
-std::string http_parser::HttpData::getUrlParameter(const std::string &url) {
-  std::string expr_ = "[;][^?]*";
-  std::smatch match;
-  std::regex rgx(expr_);
-  if (std::regex_search(url, match, rgx)) {
-    std::string result = match[0];
-    return result.substr(1);
-  } else {
-    return std::string();
-  }
-}
-
-std::string http_parser::HttpData::getQueryParameter(const std::string &url,
-                                                     const std::string &sess_id) {
-  std::string expr_ = "[?&]" + sess_id + "=[^&;#]*";
-  std::smatch match;
-  // TODO: Sacarlo y hacerlo por test para comprobarlo por PCREPOSIX en bench
-  std::regex rgx(expr_);
-  if (std::regex_search(url, match, rgx)) {
-    std::string result = match[0];
-    auto cpos = result.find('=');
-    return result.substr(cpos);
-  } else {
-    return std::string();
-  }
-}
-
 http_parser::PARSE_RESULT
 http_parser::HttpData::parseRequest(const std::string &data, size_t *used_bytes,
                                     bool reset) {

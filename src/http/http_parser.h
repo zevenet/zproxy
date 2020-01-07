@@ -61,10 +61,8 @@ public:
   void printResponse();
   void reset_parser();
 
-  bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);//FIXME
-  bool getHeaderValue(const std::string &, std::string &out_key); //FIXME
-  std::string getUrlParameter(const std::string &url);
-  std::string getQueryParameter(const std::string &url, const std::string &sess_id);
+  bool getHeaderValue(http::HTTP_HEADER_NAME header_name, std::string &out_key);
+  bool getHeaderValue(const std::string &, std::string &out_key);
   void setBuffer(char *ext_buffer, size_t ext_buffer_size);
 
 public:
