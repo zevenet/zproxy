@@ -45,7 +45,7 @@ class Descriptor {
   inline bool disableEvents() {
     current_event = events::EVENT_TYPE::NONE;
     cancelled = true;
-    if (fd_ > 0) return event_manager_->deleteFd(fd_);
+    if (event_manager_ != nullptr && fd_ > 0) return event_manager_->deleteFd(fd_);
     return false;
   }
 
