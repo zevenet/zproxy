@@ -49,6 +49,80 @@ sub getRBACConfPath
 }
 
 =begin nd
+Function: getRBACServicesConfPath
+
+	It returns the path of rbac services config file
+
+Parameters:
+	None - .
+
+Returns:
+	String - path
+
+=cut
+
+sub getRBACServicesConfPath
+{
+	return &getRBACConfPath() . "/services.conf";
+}
+
+=begin nd
+Function: getRBACLocalEnabled
+
+	It gets the status of the authentication using the system users.
+
+Parameters:
+	None - .
+
+Returns:
+	String - 'true' if the users are being authentication using the system or 'false' if they aren't
+
+=cut
+
+sub getRBACLocalEnabled
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $srv_file = &getRBACServicesConfPath();
+	my $loc      = &getTiny( $srv_file );
+	$loc = $loc->{ 'local_user' };
+
+	# enabled by default
+	return ( exists $loc->{ enabled } and $loc->{ enabled } eq 'false' )
+	  ? 'false'
+	  : 'true';
+}
+
+=begin nd
+Function: setRBACLocalEnabled
+
+	It modify the status for authenticate users using the system.
+	To enable or disable the status is written in a configuration file that is checked
+	before than authentica the user
+
+Parameters:
+	None - .
+
+Returns:
+	Integer - Error code: 0 on success or another value on failure
+
+=cut
+
+sub setRBACLocalEnabled
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $enabled = shift;
+
+	die "Error in parameters for the function setRBACLocalEnabled"
+	  if $enabled !~ /^true|false$/;
+
+	my $srv_file = &getRBACServicesConfPath();
+	my $err = &setTinyObj( $srv_file, 'local_user', 'enabled', $enabled );
+	return $err;
+}
+
+=begin nd
 Function: getRBACGroupMembers
 
 	Get the list of members in a group

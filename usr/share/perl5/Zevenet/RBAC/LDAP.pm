@@ -26,7 +26,7 @@ use Zevenet::Core;
 use Zevenet::Config;
 include 'Zevenet::RBAC::Core';
 
-my $ldap_file = &getRBACConfPath() . "/ldap.conf";
+my $ldap_file = &getRBACServicesConfPath();
 
 =begin nd
 Function: getLDAP
@@ -38,6 +38,7 @@ Parameters:
 
 Returns:
 	hash ref - the LDAP server settings. The list of parameters are:
+		enabled, it indicates if the service is enabled (value 'true') or if it is not (value 'false')
 		host, it is the LDAP URL or the server IP
 		port, it is the port where the LDAP server is listening. This filed is skipt if the host is a URL or overwrite the port
 	    binddn, it is the LDAP admin user used to modify manage. It is not necessary if the LDAP can be queried anonimously
@@ -53,7 +54,7 @@ Returns:
 sub getLDAP
 {
 	my $ldap = &getTiny( $ldap_file );
-	$ldap = $ldap->{ '_' };
+	$ldap = $ldap->{ 'ldap' };
 
 #~ my $ldap_host = "192.168.101.253";
 #~ my $ldap_binddn = "cn=admin,dc=zevenet,dc=com";
@@ -61,6 +62,7 @@ sub getLDAP
 #~ my $ldap_basedn = "dc=zevenet,dc=com";
 #~ my $ldap_filter = '(&(objectClass=inetOrgPerson)(objectClass=posixAccount)(uid=%s))';
 
+	$ldap->{ enabled } //= 'false';
 	$ldap->{ host }    //= '';
 	$ldap->{ port }    //= '389';
 	$ldap->{ binddn }  //= '';
@@ -81,6 +83,7 @@ Function: setLDAP
 
 Parameters:
 	hash ref - the LDAP server settings. The list of parameters are:
+		enabled, it indicates if the service is enabled (value 'true') or if it is not (value 'false')
 		host, it is the LDAP URL or the server IP
 		port, it is the port where the LDAP server is listening. This filed is skipt if the host is a URL or overwrite the port
 	    binddn, it is the LDAP admin user used to modify manage. It is not necessary if the LDAP can be queried anonimously
@@ -106,7 +109,7 @@ sub setLDAP
 		$conf->{ bindpw } = &getCodeEncode( $conf->{ bindpw } );
 	}
 
-	my $err = &setTinyObj( $ldap_file, '_', $conf );
+	my $err = &setTinyObj( $ldap_file, 'ldap', $conf );
 	return $err;
 }
 
@@ -201,7 +204,7 @@ sub authLDAP
 	my $ldap_conf = &getLDAP();
 	delete $ldap_conf->{ filter } if ( $ldap_conf->{ filter } eq '' );
 
-	if ( $ldap_conf->{ host } )
+	if ( $ldap_conf->{ host } and $ldap_conf->{ enabled } eq 'true' )
 	{
 		require Authen::Simple::LDAP;
 		eval {

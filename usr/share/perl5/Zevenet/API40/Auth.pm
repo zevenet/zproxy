@@ -113,6 +113,7 @@ sub authenticateCredentials    #($user,$curpasswd)
 
 	my $valid_credentials = 0;    # output
 
+	# try ldap
 	if ( $eload )
 	{
 		$valid_credentials = &eload(
@@ -124,16 +125,28 @@ sub authenticateCredentials    #($user,$curpasswd)
 	}
 
 	# try standard login
-	require Authen::Simple::Passwd;
-	Authen::Simple::Passwd->import;
-
-	my $passfile = "/etc/shadow";
-	my $simple = Authen::Simple::Passwd->new( path => "$passfile" );
-
-	if ( $simple->authenticate( $user, $pass ) )
+	my $loc_enabled = 'true';
+	if ( $eload )
 	{
-		&zenlog( "The user '$user' login locally", "debug", "auth" );
-		return 1;
+		$loc_enabled = &eload(
+							   module => 'Zevenet::RBAC::Core',
+							   func   => 'getRBACLocalEnabled',
+							   args   => []
+		);
+	}
+	if ( $user eq 'root' or $loc_enabled eq 'true' )
+	{
+		require Authen::Simple::Passwd;
+		Authen::Simple::Passwd->import;
+
+		my $passfile = "/etc/shadow";
+		my $simple = Authen::Simple::Passwd->new( path => "$passfile" );
+
+		if ( $simple->authenticate( $user, $pass ) )
+		{
+			&zenlog( "The user '$user' login locally", "debug", "auth" );
+			return 1;
+		}
 	}
 
 	return $valid_credentials;

@@ -23,6 +23,17 @@
 
 use strict;
 
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/services} )
+{
+	my $mod = 'Zevenet::API40::RBAC::Services';
+
+	#  GET /rbac/services
+	GET qr{^/rbac/services$}, 'get_rbac_services', $mod;
+
+	#  POST /rbac/services
+	POST qr{^/rbac/services$}, 'set_rbac_services', $mod;
+}
+
 if ( $ENV{ PATH_INFO } =~ qr{^/rbac/ldap} )
 {
 	my $mod = 'Zevenet::API40::RBAC::LDAP';
@@ -48,7 +59,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/rbac/menus} )
 	GET qr{^/rbac/menus$}, 'get_rbac_menus', $mod;
 }
 
-if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users)} )
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/users} )
 {
 	my $mod = 'Zevenet::API40::RBAC::User';
 
