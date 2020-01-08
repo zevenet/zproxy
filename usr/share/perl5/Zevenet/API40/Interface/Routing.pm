@@ -35,10 +35,10 @@ sub listOutRules
 			priority => $r->{ priority } + 0,
 			from     => $r->{ from },
 			table    => $r->{ table },
-			id       => $r->{ id } + 0,
 			type     => $r->{ type },
 			not      => 'false',
 		  };
+		$list->[-1]->{ id } = ( exists $r->{ id } ) ? $r->{ id } + 0 : undef;
 		$list->[-1]->{ not } = 'true'
 		  if ( exists $r->{ not } and $r->{ not } eq 'true' );
 	}
@@ -323,7 +323,7 @@ sub create_routing_rule
 	require Zevenet::Net::Route;
 	if ( !&getRoutingTableExists( $json_obj->{ table } ) )
 	{
-		my $msg = "The table '$json_obj->{table} does not exist";
+		my $msg = "The table '$json_obj->{table}' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -591,6 +591,11 @@ sub create_routing_entry
 	{
 		my $msg = "The table '$table' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+	if ( $table eq 'local' or $table eq 'default' )
+	{
+		my $msg = "The tables '$table' cannot be modified";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $err_msg = &validateRouteInput( $table, $json_obj );
