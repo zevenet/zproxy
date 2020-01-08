@@ -485,7 +485,7 @@ void StreamManager::onRequestEvent(int fd) {
       if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
         http_manager::replyError(
             http::Code::NotImplemented,
-            validation::request_result_reason.at(valid).c_str(),
+            validation::request_result_reason.at(valid),
             listener_config_.err501, stream->client_connection,
             this->ssl_manager);
         this->clearStream(stream);
@@ -1083,6 +1083,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
                    /*std::this_thread::get_id()*/ pthread_self(),
                    stream->backend_connection.getBackend()->address.c_str(),
                    stream->backend_connection.getBackend()->conn_timeout);
+    stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
     setStreamBackend(stream);
   }
 }
@@ -1164,11 +1165,11 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
     if (stream->backend_connection.getFileDescriptor() > 0) {
       if (stream->backend_connection.isConnected())
         stream->backend_connection.getBackend()->decreaseConnection();
-      stream->backend_connection.disableEvents();
-      stream->backend_connection.closeConnection();
       streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
       streams_set.erase(stream->backend_connection.getFileDescriptor());
     }
+    stream->backend_connection.reset();
+    stream->backend_connection.setBackend(nullptr);
   }
   auto bck = service->getBackend(*stream);
   if (bck == nullptr) {
@@ -1184,9 +1185,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
     // update log info
     StreamDataLogger logger(stream, listener_config_);
     IO::IO_OP op_state;
+    stream->backend_connection.reset();
     stream->response.reset_parser();
-    stream->backend_connection.buffer_offset = 0;
-    stream->backend_connection.buffer_size = 0;
     Logger::logmsg(
         LOG_DEBUG, "RETRY [%s] %.*s [%s (%d) -> %s (%d)]",
         service->name.c_str(), stream->request.http_message_length,
@@ -1819,6 +1819,7 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
         stream->backend_connection.getBackend()
             ->backend_config.srv_name.data());
     stream->backend_connection.getBackend()->status = BACKEND_STATUS::BACKEND_DOWN;
+    stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
     setStreamBackend(stream);
     return;
   }

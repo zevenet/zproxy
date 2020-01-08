@@ -115,6 +115,7 @@ int Connection::getLocalPort() {
 }
 
 void Connection::reset() {
+  this->disableEvents();
   is_connected = false;
   freeSsl();
   if (fd_ > 0) this->closeConnection();

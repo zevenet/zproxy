@@ -29,6 +29,12 @@ Backend *Service::getBackend(HttpStream &stream) {
   if (session_type != sessions::SESS_NONE) {
     auto session = getSession(stream);
     if (session != nullptr) {
+      if(session->assigned_backend->status != BACKEND_STATUS::BACKEND_UP)
+      {
+        //invalidate all sessions backend is down
+        deleteBackendSessions(session->assigned_backend->backend_id);
+        return getBackend(stream);
+      }
       session->update();
       return session->assigned_backend;
     } else {
