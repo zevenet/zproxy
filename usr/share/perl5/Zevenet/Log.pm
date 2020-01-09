@@ -188,8 +188,8 @@ sub logAndRun    # ($command)
 	}
 	else
 	{
-		&zenlog( $program . " running: $command", "debug", "SYSTEM" );
-		&zenlog( "out: @cmd_output", "error", "debug2", "SYSTEM" );
+		&zenlog( $program . " running: $command", "debug",  "SYSTEM" );
+		&zenlog( "out: @cmd_output",              "debug2", "SYSTEM" );
 	}
 
 	# returning error code from execution
@@ -278,8 +278,8 @@ sub zsystem
 	}
 	else
 	{
-		&zenlog( $program . " running: @exec", "debug", "SYSTEM" );
-		&zenlog( "out: @cmd_output", "error", "debug2", "SYSTEM" );
+		&zenlog( $program . " running: @exec", "debug",  "SYSTEM" );
+		&zenlog( "out: @cmd_output",           "debug2", "SYSTEM" );
 	}
 
 	return $out;
