@@ -1439,8 +1439,8 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 	chomp @run;
 	my $msg;
 
-	&zenlog( "Error checking $configdir\/$farm_filename." );
-	&zenlog( $run[0], "Error", "http" );
+	&zenlog( "Error checking $configdir\/$farm_filename.", "Error", "http" );
+	&zenlog( $run[0],                                      "Error", "http" );
 
 	return "Error loading waf configuration" if ( $run[0] =~ /waf/i );
 

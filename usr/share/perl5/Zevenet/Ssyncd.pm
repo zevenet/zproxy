@@ -39,7 +39,7 @@ sub setSsyncdFarmUp
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	return 0 if $ssyncd_enabled eq 'false';
+	return 0 if !&getSsyncdRunning();
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 	my $type          = &getFarmType( $farm_name );
@@ -71,7 +71,7 @@ sub setSsyncdFarmDown
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	return 0 if $ssyncd_enabled eq 'false';
+	return 0 if !&getSsyncdRunning();
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 	my $type          = &getFarmType( $farm_name );

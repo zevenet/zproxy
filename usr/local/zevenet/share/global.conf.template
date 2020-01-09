@@ -279,9 +279,9 @@ $dmidecode_bin="/usr/sbin/dmidecode";
 #where is zproxy dir?
 $base_zproxy="$zdir/app/zproxy";#update
 #where is zproxy binary?
-$zproxy="$base_proxy/bin/zproxy";#update
+$zproxy="$base_zproxy/bin/zproxy";#update
 #where is zproxy ctl?
-$zproxyctl="$base_proxy/bin/zproxyctl";#update
+$zproxyctl="$base_zproxy/bin/zproxyctl";#update
 
 # Pound
 #where is pound binary?
