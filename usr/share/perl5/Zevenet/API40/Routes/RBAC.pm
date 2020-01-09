@@ -46,9 +46,6 @@ if ( $ENV{ PATH_INFO } =~ qr{^/rbac/ldap} )
 
 	#  POST /rbac/ldap/actions
 	POST qr{^/rbac/ldap/actions$}, 'set_rbac_ldap_actions', $mod;
-
-	#  DELETE /rbac/ldap/actions
-	DELETE qr{^/rbac/ldap$}, 'del_rbac_ldap', $mod;
 }
 
 if ( $ENV{ PATH_INFO } =~ qr{^/rbac/menus} )

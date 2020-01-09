@@ -101,7 +101,7 @@ sub set_rbac_ldap
 					 params      => $out,
 					 message     => $msg,
 		};
-		return &httpResponse( { code => 201, body => $body } );
+		return &httpResponse( { code => 200, body => $body } );
 	}
 
 	my $msg = "There was an error configuring the LDAP service";
