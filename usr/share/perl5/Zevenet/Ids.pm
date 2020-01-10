@@ -170,7 +170,9 @@ sub getIdsTree
 	$tree->{ 'certificates' } = &addIdsArrays( \@certs );
 
 	# add interfaces
-	foreach my $type ( 'nic', 'bond', 'vlan', 'virtual' )
+	my @if_list = ( 'nic', 'vlan', 'virtual' );
+	push @if_list, 'bond' if ( $eload );
+	foreach my $type ( @if_list )
 	{
 		my $if_key = ( $type eq 'bond' ) ? 'bonding' : $type;
 		$tree->{ 'interfaces' }->{ $if_key } = $FIN;
