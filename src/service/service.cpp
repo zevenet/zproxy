@@ -236,7 +236,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
       case ctl::CTL_COMMAND::DELETE: {
         auto json_data = JsonParser::parse(task.data);
         if (task.subject == ctl::CTL_SUBJECT::SESSION) {
-          if (!deleteSession(*json_data, backend_set)) return JSON_OP_RESULT::ERROR;
+          if (!deleteSession(*json_data)) return JSON_OP_RESULT::ERROR;
           return JSON_OP_RESULT::OK;
         } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
           // TODO::Implement

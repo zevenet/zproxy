@@ -84,9 +84,8 @@ class HttpSessionManager {
   // must check if it already exist !!!
   bool addSession(JsonObject *json_object, std::vector<Backend *> backend_set);
   SessionInfo *addSession(HttpStream &stream, Backend &backend_to_assign);
-
-  bool deleteSession(const JsonObject &json_object,
-                     std::vector<Backend *> backend_set);
+  bool deleteSessionByKey(const std::string& key);
+  bool deleteSession(const JsonObject &json_object);
   void deleteSession(HttpStream &stream);
   // return the assigned backend or nullptr if no session is found or sesssion
   // has expired
@@ -101,5 +100,6 @@ class HttpSessionManager {
   static std::string getCookieValue(const std::string &cookie_header_value,
                                     std::string_view sess_id);
   static std::string getUrlParameter(const std::string &url);
+  std::string getSessionKey(HttpStream &stream);
 };
 }  // namespace sessions
