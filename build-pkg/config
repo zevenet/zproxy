@@ -96,8 +96,6 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
-	usr/share/perl5/Zevenet/API40/Interface/Routing.pm
-	usr/share/perl5/Zevenet/API40/Routes/Routing.pm
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
 	usr/share/perl5/Zevenet/RBAC/
@@ -234,8 +232,8 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
 	usr/share/perl5/Zevenet/API40/System/Ext.pm
-	usr/share/perl5/Zevenet/API41/Interfaces/Routing.pm
-	usr/share/perl5/Zevenet/API41/Routes/Routing.pm
+	usr/share/perl5/Zevenet/API40/Interfaces/Routing.pm
+	usr/share/perl5/Zevenet/API40/Routes/Routing.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
