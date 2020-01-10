@@ -225,7 +225,7 @@ sub getIdsTree
 
 	# add logs
 	my $logs = &getLogs();
-	$tree->{ 'logs' } = $FIN;
+	$tree->{ 'system' }->{ 'logs' } = $FIN;
 	foreach my $l ( @{ $logs } )
 	{
 		$tree->{ 'system' }->{ 'logs' }->{ $l->{ file } } = $FIN;
