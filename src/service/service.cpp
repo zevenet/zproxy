@@ -234,9 +234,13 @@ std::string Service::handleTask(ctl::CtlTask &task) {
 #endif
     switch (task.command) {
       case ctl::CTL_COMMAND::DELETE: {
-        auto json_data = JsonParser::parse(task.data);
         if (task.subject == ctl::CTL_SUBJECT::SESSION) {
-          if (!deleteSession(*json_data)) return JSON_OP_RESULT::ERROR;
+          if (!task.data.empty()) {
+            auto json_data = JsonParser::parse(task.data);
+            if (!deleteSession(*json_data)) return JSON_OP_RESULT::ERROR;
+          }else{
+            flushSessions();
+          }
           return JSON_OP_RESULT::OK;
         } else if (task.subject == ctl::CTL_SUBJECT::BACKEND) {
           // TODO::Implement
@@ -244,7 +248,6 @@ std::string Service::handleTask(ctl::CtlTask &task) {
           // TODO::Implements
         }
         return "";
-        break;
       }
       case ctl::CTL_COMMAND::ADD: {
         switch (task.subject) {
@@ -291,7 +294,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
           }
           case ctl::CTL_SUBJECT::STATUS: {
             std::unique_ptr<JsonObject> status(JsonParser::parse(task.data));
-            if (status.get() == nullptr) return "";
+            if (status == nullptr) return "";
             if (status->at(JSON_KEYS::STATUS)->isValue()) {
               auto value = dynamic_cast<JsonDataValue *>(status->at(JSON_KEYS::STATUS).get())->string_value;
               if (value == JSON_KEYS::STATUS_ACTIVE || value == JSON_KEYS::STATUS_UP) {
@@ -311,7 +314,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
         }
         break;
       default:
-        return "{\"result\",\"ok\"}";
+        return JSON_OP_RESULT::OK;
     }
 #ifdef CACHE_ENABLED
   }

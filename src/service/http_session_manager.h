@@ -65,7 +65,7 @@ struct SessionInfo {
 
 class HttpSessionManager {
   // used
-  std::mutex lock_mtx;
+  std::recursive_mutex lock_mtx;
   std::unordered_map<std::string, SessionInfo *>
       sessions_set;  // key can be anything, depending on the session type
  protected:
@@ -92,6 +92,7 @@ class HttpSessionManager {
   SessionInfo *getSession(HttpStream &stream, bool update_if_exist = false);
   std::unique_ptr<json::JsonArray> getSessionsJson();
   void deleteBackendSessions(int backend_id);
+  void flushSessions();
   void doMaintenance();
 
  private:

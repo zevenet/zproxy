@@ -38,7 +38,7 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
   if (!key.empty()) {
     auto new_session = new SessionInfo();
     new_session->assigned_backend = &backend_to_assign;
-    std::lock_guard<std::mutex> locker(lock_mtx);
+    std::lock_guard<std::recursive_mutex> locker(lock_mtx);
     sessions_set.emplace(std::make_pair(key, new_session));
     return new_session;
   }
@@ -46,7 +46,7 @@ SessionInfo *HttpSessionManager::addSession(HttpStream &stream,
 }
 
 void HttpSessionManager::deleteSession(HttpStream &stream) {
-  std::lock_guard<std::mutex> locker(lock_mtx);
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
   auto session_key = getSessionKey(stream);
   if (!session_key.empty()) {
     deleteSessionByKey(session_key);
@@ -90,7 +90,7 @@ std::unique_ptr<json::JsonArray> HttpSessionManager::getSessionsJson() {
 }
 
 void HttpSessionManager::deleteBackendSessions(int backend_id) {
-  std::lock_guard<std::mutex> locker(lock_mtx);
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
   for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
     if (it->second != nullptr &&
         it->second->assigned_backend->backend_id == backend_id) {
@@ -101,7 +101,7 @@ void HttpSessionManager::deleteBackendSessions(int backend_id) {
 }
 
 void HttpSessionManager::doMaintenance() {
-  std::lock_guard<std::mutex> locker(lock_mtx);
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
   for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
     if (it->second != nullptr && it->second->hasExpired(ttl)) {
       sessions_set.erase(it++);
@@ -125,7 +125,7 @@ bool HttpSessionManager::addSession(JsonObject *json_object,
       new_session->assigned_backend = backend;
     }
     if (new_session->assigned_backend == nullptr) return false;
-    std::lock_guard<std::mutex> locker(lock_mtx);
+    std::lock_guard<std::recursive_mutex> locker(lock_mtx);
     std::string key =
         dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ID).get())
             ->string_value;
@@ -143,7 +143,7 @@ bool HttpSessionManager::addSession(JsonObject *json_object,
 }
 
 bool HttpSessionManager::deleteSession(const JsonObject &json_object) {
-  std::lock_guard<std::mutex> locker(lock_mtx);
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
   if (json_object.count(JSON_KEYS::BACKEND_ID) > 0 &&
       json_object.at(JSON_KEYS::BACKEND_ID)->isValue()) {
     auto session_json_backend_id =
@@ -208,7 +208,7 @@ std::string HttpSessionManager::getUrlParameter(const std::string &url) {
 }
 
 bool HttpSessionManager::deleteSessionByKey(const std::string &key) {
-  std::lock_guard<std::mutex> locker(lock_mtx);
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
   auto it = sessions_set.find(key);
   if (it == sessions_set.end()) return false;
   delete it->second;
@@ -274,4 +274,10 @@ std::string HttpSessionManager::getSessionKey(HttpStream &stream) {
     }
   }
   return session_key;
+}
+void HttpSessionManager::flushSessions() {
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
+  for(const auto& session :  sessions_set)
+    delete session.second;
+  sessions_set.clear();
 }
