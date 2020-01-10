@@ -40,6 +40,9 @@ enterprise_files=(
 	usr/local/zevenet/bin/netplug
 	usr/local/zevenet/bin/supportsave_ext
 	usr/local/zevenet/bin/factory_reset.sh
+	usr/local/zevenet/bin/arp_announce
+	usr/local/zevenet/bin/check_cluster.sh
+
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/check-nic-dhcp
@@ -93,6 +96,8 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
+	usr/share/perl5/Zevenet/API40/Interface/Routing.pm
+	usr/share/perl5/Zevenet/API40/Routes/Routing.pm
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
 	usr/share/perl5/Zevenet/RBAC/
@@ -308,4 +313,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/System/Proxy.pm
 	usr/share/perl5/Zevenet/System/Ext.pm
 	usr/share/perl5/Zevenet/Alias.pm
+	usr/share/perl5/Zevenet/System/Global.pm
+
 )
