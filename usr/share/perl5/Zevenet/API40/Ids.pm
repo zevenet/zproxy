@@ -25,7 +25,7 @@ use strict;
 
 include 'Zevenet::Ids';
 
-# DELETE /ids
+# GET /ids
 sub list_ids
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",

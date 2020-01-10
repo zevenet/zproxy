@@ -745,4 +745,81 @@ sub addIPDSFarms
 	return $err;
 }
 
+=begin nd
+Function: getIPDSIds
+
+	Creates a struct used to complete the ID tree with the IPDS rules IDs
+
+Parameters:
+	none - .
+
+Returns:
+	Hash ref - Struct with the IPDS ids. It looks like:
+		{
+			blacklists => {
+				rule1 => undef,
+				rule2 => undef,
+				....
+			},
+			dos => {
+				rule1 => undef,
+				rule2 => undef,
+				....
+			},
+			rbl => {
+				rule1 => undef,
+				rule2 => undef,
+				....
+			},
+			waf => {
+				rule1 => undef,
+				rule2 => undef,
+				....
+			},
+		}
+
+=cut
+
+sub getIPDSIds
+{
+	require Zevenet::Ids;
+
+	my $ids;
+	my $fileHandle;
+	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $rblPath        = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
+	my $rblConf        = "$rblPath/rbl.conf";
+
+	my @bl  = ();
+	my @dos = ();
+	my @rbl = ();
+	my @waf = sort &listWAFSet();
+
+	if ( -e $dosConf )
+	{
+		$fileHandle = Config::Tiny->read( $dosConf );
+		@dos        = sort keys %{ $fileHandle };
+	}
+
+	if ( -e $blacklistsConf )
+	{
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
+		@bl         = sort keys %{ $fileHandle };
+	}
+
+	if ( -e $rblConf )
+	{
+		$fileHandle = Config::Tiny->read( $rblConf );
+		@rbl        = sort keys %{ $fileHandle };
+	}
+
+	$ids->{ 'blacklists' } = &addIdsArrays( \@bl );
+	$ids->{ 'dos' }        = &addIdsArrays( \@dos );
+	$ids->{ 'rbl' }        = &addIdsArrays( \@rbl );
+	$ids->{ 'waf' }        = &addIdsArrays( \@waf );
+
+	return $ids;
+}
+
 1;
