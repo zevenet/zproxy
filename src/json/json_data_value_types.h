@@ -86,6 +86,7 @@ class JsonObject : public Json, private std::map<std::string, std::unique_ptr<Js
   using map_::end;
   using map_::iterator;
   using map_::size;
+  using map_::find;
 
   ~JsonObject() = default;
   JsonObject() = default;
