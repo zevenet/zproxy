@@ -74,7 +74,7 @@ my $q = &getCGI();
 #~ }
 
 ##### OPTIONS method request #########################################
-require Zevenet::API40::Routes::Options
+require Zevenet::API40::Options
   if ( $ENV{ REQUEST_METHOD } eq 'OPTIONS' );
 
 ##### Load more basic modules ########################################
@@ -86,7 +86,7 @@ require Zevenet::API40::Auth;
 require Zevenet::Zapi;
 
 # Session request
-require Zevenet::API40::Routes::Session if ( $q->path_info eq '/session' );
+require Zevenet::API40::Session if ( $q->path_info eq '/session' );
 
 # Verify authentication
 unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
