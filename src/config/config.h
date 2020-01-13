@@ -224,7 +224,8 @@ class Config {
   /*
    * Dummy certificate verification - always OK
    */
-  static int verify_OK(int pre_ok, X509_STORE_CTX *ctx);
+  static int verify_OK([[maybe_unused]] int pre_ok,
+                       [[maybe_unused]] X509_STORE_CTX *ctx);
 
   /*
    * parse an OrURLs block
@@ -278,7 +279,7 @@ class Config {
   /*
    * Search for a host name, return the addrinfo for it
    */
-  int get_host(char *const name, struct addrinfo *res, int ai_family);
+  int get_host(char *const name_, struct addrinfo *res, int ai_family);
 
   static void SSLINFO_callback(const SSL *ssl, int where, int rc);
 

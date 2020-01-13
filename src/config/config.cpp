@@ -2117,7 +2117,7 @@ void Config::SSLINFO_callback(const SSL *ssl, int where, int rc) {
   }
 }
 
-int Config::get_host(char *const name, addrinfo *res, int ai_family) {
+int Config::get_host(char *const name_, addrinfo *res, int ai_family) {
   addrinfo *chain, *ap;
   addrinfo hints{};
   int ret_val;
@@ -2125,7 +2125,7 @@ int Config::get_host(char *const name, addrinfo *res, int ai_family) {
   hints.ai_family = ai_family;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_CANONNAME;
-  if ((ret_val = getaddrinfo(name, nullptr, &hints, &chain)) == 0) {
+  if ((ret_val = getaddrinfo(name_, nullptr, &hints, &chain)) == 0) {
     for (ap = chain; ap != nullptr; ap = ap->ai_next)
       if (ap->ai_socktype == SOCK_STREAM) break;
 
