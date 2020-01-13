@@ -42,7 +42,6 @@ enterprise_files=(
 	usr/local/zevenet/bin/factory_reset.sh
 	usr/local/zevenet/bin/arp_announce
 	usr/local/zevenet/bin/check_cluster.sh
-
 	usr/local/zevenet/config/routing.conf
 	usr/local/zevenet/share/rbac_roles/
 	usr/local/zevenet/share/check-nic-dhcp
@@ -74,23 +73,7 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API31/Farm/Service/
 	usr/share/perl5/Zevenet/API32/
 	usr/share/perl5/Zevenet/API40/Certificate/
-	usr/share/perl5/Zevenet/API40/Routes/Activation.pm
-	usr/share/perl5/Zevenet/API40/Routes/Alias.pm
-	usr/share/perl5/Zevenet/API40/Routes/Blacklists.pm
-	usr/share/perl5/Zevenet/API40/Routes/Bonding.pm
-	usr/share/perl5/Zevenet/API40/Routes/Certificate.pm
-	usr/share/perl5/Zevenet/API40/Routes/Cluster.pm
-	usr/share/perl5/Zevenet/API40/Routes/DoS.pm
-	usr/share/perl5/Zevenet/API40/Routes/Floating.pm
-	usr/share/perl5/Zevenet/API40/Routes/GSLB.pm
-	usr/share/perl5/Zevenet/API40/Routes/HTTP.pm
-	usr/share/perl5/Zevenet/API40/Routes/IPDS.pm
-	usr/share/perl5/Zevenet/API40/Routes/Notifications.pm
-	usr/share/perl5/Zevenet/API40/Routes/RBL.pm
-	usr/share/perl5/Zevenet/API40/Routes/System.pm
-	usr/share/perl5/Zevenet/API40/Routes/RBAC.pm
-	usr/share/perl5/Zevenet/API40/Routes/WAF.pm
-	usr/share/perl5/Zevenet/API40/Routes/Statistics.pm
+	usr/share/perl5/Zevenet/API40/Routes/
 	usr/share/perl5/Zevenet/API40/RBAC/
 	usr/share/perl5/Zevenet/API40/IPDS/
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
@@ -233,7 +216,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
 	usr/share/perl5/Zevenet/API40/System/Ext.pm
 	usr/share/perl5/Zevenet/API40/Interfaces/Routing.pm
-	usr/share/perl5/Zevenet/API40/Routes/Routing.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
