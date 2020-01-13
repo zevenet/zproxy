@@ -784,6 +784,8 @@ sub getIPDSIds
 {
 	require Zevenet::Ids;
 
+	include 'Zevenet::IPDS::WAF::Core';
+
 	my $ids;
 	my $fileHandle;
 	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
