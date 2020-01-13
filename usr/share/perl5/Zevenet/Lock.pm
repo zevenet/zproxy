@@ -44,34 +44,6 @@ sub getLockFile
 }
 
 =begin nd
-Function: getLockStatus
-
-	This function responses if a farm has pending changes waiting for restarting
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - 1 if the farm has to be restarted or 0 if it is not
-
-NOTE:
-	Generic function
-
-=cut
-
-sub getLockStatus
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $fname = shift;
-
-	my $lfile = &getLockFile( $fname );
-
-	return 1 if ( -e $lfile );
-	return 0;
-}
-
-=begin nd
 Function: openlock
 
 	Open file and lock it, return the filehandle.

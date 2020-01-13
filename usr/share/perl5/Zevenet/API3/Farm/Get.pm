@@ -43,6 +43,7 @@ sub farms    # ()
 	my @out;
 	my @files = &getFarmList();
 
+	require Zevenet::Farm::Action;
 	foreach my $file ( @files )
 	{
 		my $name   = &getFarmName( $file );
@@ -51,7 +52,7 @@ sub farms    # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
+		$status = "needed restart" if $status eq 'up' && &getFarmRestartStatus( $name );
 
 		push @out,
 		  {
@@ -80,6 +81,7 @@ sub farms_lslb    # ()
 	my @out;
 	my @files = &getFarmList();
 
+	require Zevenet::Farm::Action;
 	foreach my $file ( @files )
 	{
 		my $name = &getFarmName( $file );
@@ -89,7 +91,7 @@ sub farms_lslb    # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
+		$status = "needed restart" if $status eq 'up' && &getFarmRestartStatus( $name );
 
 		push @out,
 		  {
@@ -118,6 +120,7 @@ sub farms_gslb    # ()
 	my @out;
 	my @files = &getFarmList();
 
+	require Zevenet::Farm::Action;
 	foreach my $file ( @files )
 	{
 		my $name = &getFarmName( $file );
@@ -127,7 +130,7 @@ sub farms_gslb    # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
+		$status = "needed restart" if $status eq 'up' && &getFarmRestartStatus( $name );
 
 		push @out, {
 			farmname => $name,

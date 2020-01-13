@@ -176,13 +176,13 @@ sub getFarmVipStatus    # ($farm_name)
 
 	$output = "problem";
 
-	require Zevenet::Lock;
+	require Zevenet::Farm::Action;
 
 	if ( $farmStatus eq "down" )
 	{
 		return "down";
 	}
-	elsif ( &getLockStatus( $farm_name ) )
+	elsif ( &getFarmRestartStatus( $farm_name ) )
 	{
 		return "needed restart";
 	}

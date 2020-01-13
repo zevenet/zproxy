@@ -51,8 +51,8 @@ sub getAllFarmStats
 		my $established = 0;
 		my $pending     = 0;
 
-		require Zevenet::Lock;
-		$status = "needed restart" if $status eq 'up' && &getLockStatus( $name );
+		require Zevenet::Farm::Action;
+		$status = "needed restart" if $status eq 'up' && &getFarmRestartStatus( $name );
 
 		if ( $status eq "up" )
 		{

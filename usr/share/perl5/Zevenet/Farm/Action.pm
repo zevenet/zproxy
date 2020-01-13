@@ -394,6 +394,60 @@ sub runFarmDelete    # ($farm_name)
 }
 
 =begin nd
+Function: getFarmRestartFile
+
+	This function returns a file name that indicates that a farm is waiting to be restarted
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	sting - path to flag file
+
+NOTE:
+	Generic function
+
+=cut
+
+sub getFarmRestartFile    # ($farm_name)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farm_name = shift;
+
+	return "/tmp/_farm_need_restart_$farm_name";
+}
+
+=begin nd
+Function: getFarmRestartStatus
+
+	This function responses if a farm has pending changes waiting for restarting
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - 1 if the farm has to be restarted or 0 if it is not
+
+NOTE:
+	Generic function
+
+=cut
+
+sub getFarmRestartStatus
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $fname = shift;
+
+	require Zevenet::Farm::Action;
+	my $lfile = &getFarmRestartFile( $fname );
+
+	return 1 if ( -e $lfile );
+	return 0;
+}
+
+=begin nd
 Function: setFarmRestart
 
 	This function creates a file to tell that the farm needs to be restarted to apply changes
@@ -420,7 +474,7 @@ sub setFarmRestart    # ($farm_name)
 	return if &getFarmStatus( $farm_name ) ne 'up';
 
 	require Zevenet::Lock;
-	my $lf = &getLockFile( $farm_name );
+	my $lf = &getFarmRestartFile( $farm_name );
 	my $fh = &openlock( $lf, 'w' );
 	close $fh;
 }
@@ -447,8 +501,7 @@ sub setFarmNoRestart    # ($farm_name)
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
 
-	require Zevenet::Lock;
-	my $lf = &getLockFile( $farm_name );
+	my $lf = &getFarmRestartFile( $farm_name );
 	unlink ( $lf ) if -e $lf;
 }
 
