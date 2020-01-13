@@ -487,13 +487,13 @@ sub initRoutingModule
 =begin nd
 Function: getRoutingIsolateTables
 
-	It returns a list of the interfaces and info about they are banned in a routing table
+	It returns a list of the interfaces and info about if they are managed in a routing table
 
 Parameters:
 	table - table name to ckeck
 
 Returns:
-	array ref - it is the list of interface with information about if it is banned in the table
+	array ref - it is the list of interface with information about if it is managed in the table
 
 =cut
 
@@ -513,7 +513,7 @@ sub getRoutingIsolateTables
 		my $iface;
 		@tables = &getRoutingIsolate( $if );
 		$iface->{ interface } = $if;
-		$iface->{ banned } = ( grep ( /^$table$/, @tables ) ) ? 'true' : 'false';
+		$iface->{ unmanaged } = ( grep ( /^$table$/, @tables ) ) ? 'true' : 'false';
 		push @ifaces, $iface;
 	}
 

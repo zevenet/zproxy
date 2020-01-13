@@ -780,13 +780,14 @@ sub delete_routing_entry
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# GET /routing/tables/<table>/banned
+# GET /routing/tables/<table>/unmanaged
 sub get_routing_isolate
 {
 	my $table = shift;
 	require Zevenet::Net::Route;
 
-	my $desc = "Get the interfaces banned for the table '$table'";
+	my $desc =
+	  "Get the list of interfaces that cannot manage traffic when traffic incoming through the table '$table'";
 
 	if ( !&getRoutingTableExists( $table ) )
 	{
@@ -803,7 +804,7 @@ sub get_routing_isolate
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# POST /routing/tables/<table>/banned
+# POST /routing/tables/<table>/unmanaged
 sub add_routing_isolate
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -815,7 +816,7 @@ sub add_routing_isolate
 
 	require Zevenet::Net::Route;
 
-	my $desc = "Ban an interface for the table '$table'";
+	my $desc = "Do not route traffic through an interface for the table '$table'";
 
 	my $params = {
 		"interface" => {
@@ -853,8 +854,7 @@ sub add_routing_isolate
 	}
 
 	my @table_list = &listRoutingTablesNames();
-	unless ( $table eq '*'
-			 or grep ( /^$table$/, @table_list ) )
+	unless ( $table eq '*' or grep ( /^$table$/, @table_list ) )
 	{
 		my $msg =
 		  "The table '$table' does not exist. Try with a valid table or '*' to select all tables";
@@ -876,7 +876,7 @@ sub add_routing_isolate
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-# DELETE /routing/tables/<table>/banned/<interface>
+# DELETE /routing/tables/<table>/unmanaged/<interface>
 sub del_routing_isolate
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -886,7 +886,7 @@ sub del_routing_isolate
 	my $interface = shift;
 	require Zevenet::Net::Route;
 
-	my $desc = "Un-ban an interface for the table '$table'";
+	my $desc = "Enable an interface as possible route path from the table '$table'";
 
 	# if
 	require Zevenet::Net::Validate;
