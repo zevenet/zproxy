@@ -1399,9 +1399,10 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 
 	if ( $rc or &debug() )
 	{
-		my $message = $rc ? 'failed' : 'running';
-		&zenlog( "$message: $proxy_command", "error", "LSLB" );
-		&zenlog( "output: $run ",            "error", "LSLB" );
+		my $tag     = ( $rc ) ? 'error'  : 'debug';
+		my $message = $rc     ? 'failed' : 'running';
+		&zenlog( "$message: $proxy_command", $tag, "LSLB" );
+		&zenlog( "output: $run ",            $tag, "LSLB" );
 	}
 
 	return $rc;
