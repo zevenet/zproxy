@@ -85,17 +85,21 @@ sub add_rbac_user
 		},
 	};
 
-	# Check if it exists
-	if ( &getRBACUserExists( $json_obj->{ 'name' } ) )
-	{
-		my $msg = "$json_obj->{ 'name' } already exists.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
+
+	# Check if it exists
+	if ( my $output = &getRBACUserExists( $json_obj->{ 'name' } ) )
+	{
+		my $msg = "$json_obj->{ 'name' } already exists.";
+		if ( $output == 2 )
+		{
+			$msg = "$json_obj->{ 'name' } is a Operating System User.";
+		}
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	# executing the action
 	&createRBACUser( $json_obj->{ 'name' }, $json_obj->{ 'password' } );

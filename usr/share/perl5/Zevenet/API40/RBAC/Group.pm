@@ -84,9 +84,14 @@ sub add_rbac_group
 	  if ( $error_msg );
 
 	# Check if it exists
-	if ( &getRBACGroupExists( $json_obj->{ 'name' } ) )
+	if ( my $output = &getRBACGroupExists( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
+		if ( $output == 2 )
+		{
+			$msg = "$json_obj->{ 'name' } is a Operating System Group.";
+		}
+
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
