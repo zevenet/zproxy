@@ -72,6 +72,40 @@ sub getRBACUserList
 }
 
 =begin nd
+Function: getRBACUserSysList
+
+List all Operating System users
+
+Parameters:
+	None - .
+
+Returns:
+	Array - List of users
+
+=cut
+
+sub getRBACUserSysList
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my @userSet = ();
+	my $user_file = &openlock( "/etc/passwd", "r" );
+	while ( my $user = <$user_file> )
+	{
+		if ( $user =~ m/(\w+):x:.*/g )
+		{
+			push @userSet, $1;
+		}
+	}
+	close $user_file;
+
+	return @userSet;
+
+}
+
+=begin nd
+
 Function: getRBACUserExists
 
 	Check if a user exists in the load balancer
@@ -80,7 +114,7 @@ Parameters:
 	User - User name
 
 Returns:
-	Integer - 1 if the user exists or 0 if it doesn't exist
+	Integer - 0 if the user does not exist, 1 if the user exists and is a RBAC user, 2 if the user exists and is a system user
 
 =cut
 
@@ -91,7 +125,11 @@ sub getRBACUserExists
 	my $user = shift;
 
 	my $out = 0;
-	$out = 1 if ( grep ( /^$user$/, &getRBACUserList() ) );
+	if ( grep ( /^$user$/, &getRBACUserSysList() ) )
+	{
+		$out = 2;
+		$out = 1 if ( grep ( /^$user$/, &getRBACUserList() ) );
+	}
 
 	return $out;
 }

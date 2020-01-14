@@ -72,6 +72,39 @@ sub getRBACGroupList
 }
 
 =begin nd
+Function: getRBACGroupSysList
+
+List all Operating System groups
+
+Parameters:
+	None - .
+
+Returns:
+	Array - List of groups
+
+=cut
+
+sub getRBACGroupSysList
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my @groupSet = ();
+	my $group_file = &openlock( "/etc/group", "r" );
+	while ( my $group = <$group_file> )
+	{
+		if ( $group =~ m/(\w+):x:.*/g )
+		{
+			push @groupSet, $1;
+		}
+	}
+	close $group_file;
+
+	return @groupSet;
+
+}
+
+=begin nd
 Function: getRBACGroupExists
 
 	Check if a group exists in the load balancer
@@ -80,7 +113,7 @@ Parameters:
 	Group - Group name
 
 Returns:
-	Integer - 1 if the group exists or 0 if it doesn't exist
+	Integer - 0 if the group does not exist, 1 if the group exists and is a RBAC group, 2 if the group exists and is a system group
 
 =cut
 
@@ -91,7 +124,11 @@ sub getRBACGroupExists
 	my $group = shift;
 
 	my $out = 0;
-	$out = 1 if ( grep ( /^$group$/, &getRBACGroupList() ) );
+	if ( grep ( /^$group$/, &getRBACGroupSysList() ) )
+	{
+		$out = 2;
+		$out = 1 if ( grep ( /^$group$/, &getRBACGroupList() ) );
+	}
 
 	return $out;
 }
