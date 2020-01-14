@@ -32,7 +32,7 @@ sub get_rbac_services
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $desc   = "List the log in configuration enabled";
+	my $desc   = "List the status of the authentication services";
 	my $params = &getZapiRbacServices();
 
 	return &httpResponse(
