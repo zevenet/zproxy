@@ -1972,7 +1972,7 @@ void Config::clean_regex() {
   regfree(&ECDHCurve);
 #endif
   regfree(&DHParams);
- // if (nullptr == DHCustom_params) DH_free(DHCustom_params);
+  if (nullptr == DHCustom_params) DH_free(DHCustom_params);
   regfree(&NfMark);
   regfree(&ForwardSNI);
 }
