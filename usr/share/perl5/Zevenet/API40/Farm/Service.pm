@@ -254,8 +254,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 						 'non_blank'    => 'true',
 		},
 		"persistence" => {
-				 'values'    => ["IP", "BASIC",          "URL", "PARM", "COOKIE", "HEADER"],
-				 'non_blank' => 'false', # it is allowed ''
+			'values' => ["IP", "BASIC", "NONE", "URL", "PARM", "COOKIE", "HEADER"],
+			'non_blank' => 'false',    # it is allowed '' and it is equal to 'NONE'
 		},
 		"sessionid" => {},
 		"ttl"       => {
@@ -288,6 +288,14 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	# translate params
+	if ( exists $json_obj->{ persistence }
+		 and $json_obj->{ persistence } eq 'NONE' )
+	{
+		$json_obj->{ persistence } = "";
+	}
+
+	# modifying params
 	if ( exists $json_obj->{ vhost } )
 	{
 		&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
