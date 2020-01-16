@@ -127,6 +127,7 @@ std::shared_ptr<Rules> Waf::reloadRules() {
   // compile regexp
   while (config.conf_fgets(lin, MAXBUF) && !err) {
     if (!regexec(&WafRules, lin, 4, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
       auto file = std::string(lin + matches[1].rm_so,
                               lin + matches[1].rm_eo - lin + matches[1].rm_so);
       err = rules->loadFromUri(file.data());
@@ -138,7 +139,8 @@ std::shared_ptr<Rules> Waf::reloadRules() {
       }
     }
   }
-  dumpRules(*rules);
+  //enable for debug purpose only
+  //dumpRules(*rules);
   // remove regexp
   config.clean_regex();
   Logger::logmsg(LOG_INFO, "The WAF rulesets waf reloaded properly");
