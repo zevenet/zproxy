@@ -63,7 +63,7 @@ Function: zenlog
 Parametes:
 	string - String to be written in log.
 	type   - Log level. info, error, debug, debug2, warn
-	tag    - RBAC, LSLB, GSLB, DSLB, IPDS, FG, NOTIF, NETWORK, MONITOR, SYSTEM, CLUSTER
+	tag    - RBAC, LSLB, GSLB, DSLB, IPDS, FG, NOTIF, NETWORK, MONITOR, SYSTEM, CLUSTER, AWS
 
 Returns:
 	none - .

@@ -127,6 +127,7 @@ sub get_system_info
 	my $user          = &getUser();
 	my @zapi_versions = &listZapiVersions();
 	my $edition       = ( $eload ) ? "enterprise" : "community";
+	my $platform      = &whereIam();
 
 	my $params = {
 				   'system_date'             => $date,
@@ -138,6 +139,7 @@ sub get_system_info
 				   'supported_zapi_versions' => \@zapi_versions,
 				   'last_zapi_version'       => $zapi_versions[-1],
 				   'edition'                 => $edition,
+				   'platform'                => $platform,
 	};
 
 	if ( $eload )

@@ -439,6 +439,30 @@ sub disable_cluster
 		unlink $cl_file;
 	}
 
+	require Zevenet::SystemInfo;
+	my $provider = &whereIam();
+	if ( $provider eq 'aws' )
+	{
+		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+
+		include 'Zevenet::Aws';
+		my $local_error = &setSshForCluster( $zcl_conf->{ $rhost }->{ ip }, 'delete' );
+		my $remote_error =
+		  &runRemotely( "$zcluster_manager disableSshCluster",
+						$zcl_conf->{ $rhost }->{ ip } );
+
+		if ( $local_error )
+		{
+			my $msg = "It is no possible destroy the local SSH configuration for cluster";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		if ( $remote_error )
+		{
+			my $msg = "It is no possible destroy the remote SSH configuration for cluster";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	my $message = "Cluster disabled successfully";
 	my $body = {
 				 description => $desc,
@@ -498,6 +522,32 @@ sub enable_cluster
 	{
 		my $msg = "Local IP address value is not valid";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	require Zevenet::SystemInfo;
+	my $provider = &whereIam();
+	if ( $provider eq 'aws' )
+	{
+		include 'Zevenet::Aws';
+		my $local_error = &setSshForCluster( $json_obj->{ remote_ip }, 'add' );
+		my $remote_error =
+		  &setSshRemoteForCluster(
+								   $json_obj->{ remote_ip },
+								   $json_obj->{ remote_password },
+								   $json_obj->{ local_ip }
+		  );
+
+		if ( $local_error )
+		{
+			my $msg = "It is no possible to change the local SSH configuration for cluster";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		if ( $remote_error )
+		{
+			my $msg =
+			  "It is no possible to change the remote SSH configuration for cluster";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	eval {

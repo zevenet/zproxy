@@ -62,7 +62,7 @@ sub get_http
 	{
 		$http->{ 'ip' } = $interface->{ 'ip' };
 	}
-	$http->{ 'port' } = &getHttpServerPort;
+	$http->{ 'port' } = &getHttpServerPort();
 
 	return &httpResponse(
 				   { code => 200, body => { description => $desc, params => $http } } );

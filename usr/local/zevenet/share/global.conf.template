@@ -73,7 +73,8 @@ $update_dir="/usr/local/zevenet/updates";
 $repo_url_zevenet="repo.zevenet.com";
 # Zevenet GPG key
 $gpg_key_zevenet="ee.zevenet.com.gpg.key";
-
+# Bios version
+$bios_version="/sys/devices/virtual/dmi/id/bios_version";
 
 # networking service
 $networking_service="/etc/init.d/networking";
@@ -465,5 +466,11 @@ $throughput_period="5";
 $throughput_enabled="false";
 
 $doc_v4_0="https://www.zevenet.com/zapidocv4.0";
+
+# cloud
+$cloud_address_metadata="169.254.169.254";
+$aws_bin="/usr/bin/aws";
+$aws_credentials="/root/.aws/credentials";
+$aws_config="/root/.aws/config";
 
 #::END Global Section

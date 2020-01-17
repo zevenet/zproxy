@@ -157,6 +157,11 @@ elsif ( $object eq 'getZClusterArpStatus' )
 	say $status;
 	exit 0;
 }
+elsif ( $object eq 'disableSshCluster' )
+{
+	include 'Zevenet::Aws';
+	return &disableSshCluster();
+}
 elsif ( $object eq 'sync' )
 {
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -620,6 +625,20 @@ sub setNodeStatusMaster
 
 	&zenlog( "Switching node to master" );
 	&setZClusterNodeStatus( 'master' );
+
+	require Zevenet::SystemInfo;
+	my $provider = &whereIam();
+	if ( $provider eq "aws" )
+	{
+		include 'Zevenet::Aws';
+		&zenlog( "Reassigning AWS virtual interfaces" );
+		my $error = &reassignInterfaces();
+		if ( $error )
+		{
+			&zenlog( "There was a problem to reassign interfaces in AWS",
+					 "error", "CLUSTER" );
+		}
+	}
 
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;

@@ -56,9 +56,11 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API31/Farm/HTTP/
 	usr/share/perl5/Zevenet/API31/Farm/Service/
 	usr/share/perl5/Zevenet/API32/
+	usr/share/perl5/Zevenet/API40/Aws.pm
 	usr/share/perl5/Zevenet/API40/Certificate/
 	usr/share/perl5/Zevenet/API40/Routes/Activation.pm
 	usr/share/perl5/Zevenet/API40/Routes/Alias.pm
+	usr/share/perl5/Zevenet/API40/Routes/Aws.pm
 	usr/share/perl5/Zevenet/API40/Routes/Blacklists.pm
 	usr/share/perl5/Zevenet/API40/Routes/Bonding.pm
 	usr/share/perl5/Zevenet/API40/Routes/Certificate.pm
@@ -79,6 +81,7 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
+	usr/share/perl5/Zevenet/Aws.pm	
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
 	usr/share/perl5/Zevenet/RBAC/
@@ -118,6 +121,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API31/System/Service/HTTP.pm
 	usr/share/perl5/Zevenet/API31/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API32/Alias.pm
+	usr/share/perl5/Zevenet/API32/Aws.pm
 	usr/share/perl5/Zevenet/API32/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/API32/Farm/Get/GSLB.pm
 	usr/share/perl5/Zevenet/API32/Farm/GSLB.pm
@@ -187,6 +191,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API3/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API3/System/User.pm
 	usr/share/perl5/Zevenet/API40/Alias.pm
+	usr/share/perl5/Zevenet/API40/Aws.pm
 	usr/share/perl5/Zevenet/API40/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/API40/Farm/Get/GSLB.pm
 	usr/share/perl5/Zevenet/API40/Farm/GSLB.pm
@@ -216,6 +221,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
 	usr/share/perl5/Zevenet/API40/System/Ext.pm
 	usr/share/perl5/Zevenet/Apt.pm
+	usr/share/perl5/Zevenet/Aws.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
 	usr/share/perl5/Zevenet/Cmd/supportsave_ext.pm
