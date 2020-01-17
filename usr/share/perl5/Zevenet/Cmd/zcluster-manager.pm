@@ -161,6 +161,11 @@ elsif ( $object eq 'getZClusterArpStatus' )
 	say $status;
 	exit 0;
 }
+elsif ( $object eq 'disableSshCluster' )
+{
+	include 'Zevenet::Aws';
+	return &disableSshCluster();
+}
 elsif ( $object eq 'sync' )
 {
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -582,7 +587,6 @@ if ( $object eq 'interface' )
 	}
 }
 
-
 if ( $object =~ /^routing_(rule|table)/ )
 {
 	my $submod = $1;
@@ -591,37 +595,37 @@ if ( $object =~ /^routing_(rule|table)/ )
 
 	include 'Zevenet::Net::Routing';
 
-	if ($submod eq 'rule')
+	if ( $submod eq 'rule' )
 	{
-		my $conf  = &getRoutingRulesConf( $id );
+		my $conf = &getRoutingRulesConf( $id );
 		my $act;
 
-		if ($command eq 'start')
+		if ( $command eq 'start' )
 		{
 			$act = 'add';
 		}
-		elsif ($command eq 'stop')
+		elsif ( $command eq 'stop' )
 		{
 			$act = 'del';
 		}
 		$err = &setRule( $act, $conf );
 	}
-	elsif($submod eq 'table')
+	elsif ( $submod eq 'table' )
 	{
-		if ($command eq 'reload')
+		if ( $command eq 'reload' )
 		{
 			$id =~ s/table_//;
-			$err = &reloadRoutingTable($id);
+			$err = &reloadRoutingTable( $id );
 		}
-		elsif ($command eq 'stop')
+		elsif ( $command eq 'stop' )
 		{
-			my $conf = &getRoutingTableConf($id, $route);
-			$err = &setRoute('del', $conf->{raw});
+			my $conf = &getRoutingTableConf( $id, $route );
+			$err = &setRoute( 'del', $conf->{ raw } );
 		}
-		elsif ($command eq 'start')
+		elsif ( $command eq 'start' )
 		{
-			my $conf = &getRoutingTableConf($id, $route);
-			$err = &setRoute('add', $conf->{raw});
+			my $conf = &getRoutingTableConf( $id, $route );
+			$err = &setRoute( 'add', $conf->{ raw } );
 		}
 	}
 
@@ -680,6 +684,20 @@ sub setNodeStatusMaster
 
 	&zenlog( "Switching node to master" );
 	&setZClusterNodeStatus( 'master' );
+
+	require Zevenet::SystemInfo;
+	my $provider = &whereIam();
+	if ( $provider eq "aws" )
+	{
+		include 'Zevenet::Aws';
+		&zenlog( "Reassigning AWS virtual interfaces" );
+		my $error = &reassignInterfaces();
+		if ( $error )
+		{
+			&zenlog( "There was a problem to reassign interfaces in AWS",
+					 "error", "CLUSTER" );
+		}
+	}
 
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;
