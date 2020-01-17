@@ -58,6 +58,7 @@
 #
 
 use strict;
+
 #~ use warnings;
 use feature 'say';
 use Zevenet::Log;
@@ -67,7 +68,6 @@ use Zevenet::Debug;
 #~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
 &zenlog( "zcluster-manager args: @ARGV", 'debug', 'cluster' );
-
 
 my $object  = shift @ARGV // '';
 my $command = shift @ARGV // '';
@@ -155,6 +155,11 @@ elsif ( $object eq 'getZClusterArpStatus' )
 
 	say $status;
 	exit 0;
+}
+elsif ( $object eq 'disableSshCluster' )
+{
+	include 'Zevenet::Aws';
+	return &disableSshCluster();
 }
 elsif ( $object eq 'sync' )
 {
@@ -587,6 +592,20 @@ sub setNodeStatusMaster
 	&zenlog( "Switching node to master" );
 	&setZClusterNodeStatus( 'master' );
 
+	require Zevenet::SystemInfo;
+	my $provider = &whereIam();
+	if ( $provider eq "aws" )
+	{
+		include 'Zevenet::Aws';
+		&zenlog( "Reassigning AWS virtual interfaces" );
+		my $error = &reassignInterfaces();
+		if ( $error )
+		{
+			&zenlog( "There was a problem to reassign interfaces in AWS",
+					 "error", "CLUSTER" );
+		}
+	}
+
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
@@ -618,14 +637,14 @@ sub setNodeStatusMaster
 		local %ENV = ( %ENV );
 		$ENV{ _ } = $zenino;
 
-		system( "$zenino >dev/null 2>&1 &" );
+		system ( "$zenino >dev/null 2>&1 &" );
 	}
 
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
-	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref = &getSystemInterface( $maint_if );
-	system("$ip_bin link set $maint_if up");
+	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref   = &getSystemInterface( $maint_if );
+	system ( "$ip_bin link set $maint_if up" );
 
 	# start farmguardians
 	require Zevenet::FarmGuardian;
@@ -681,11 +700,11 @@ sub setNodeStatusBackup
 
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
-	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref = &getSystemInterface( $maint_if );
-	system("$ip_bin link set $maint_if up");
+	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref   = &getSystemInterface( $maint_if );
+	system ( "$ip_bin link set $maint_if up" );
 
-	unless ( system( $zenino_proc ) )
+	unless ( system ( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -729,9 +748,9 @@ sub setNodeStatusMaintenance
 
 	# put interface as down
 	my $maint_if = 'cl_maintenance';
-	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref = &getSystemInterface( $maint_if );
-	system("$ip_bin link set $maint_if down");
+	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref   = &getSystemInterface( $maint_if );
+	system ( "$ip_bin link set $maint_if down" );
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
@@ -741,7 +760,7 @@ sub setNodeStatusMaintenance
 	&setSsyncdDisabled();
 
 	# stop zeninotify
-	unless ( system( $zenino_proc ) )
+	unless ( system ( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 

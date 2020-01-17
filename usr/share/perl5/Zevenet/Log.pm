@@ -23,7 +23,7 @@
 
 use strict;
 
-use Unix::Syslog qw(:macros :subs);  # Syslog macros
+use Unix::Syslog qw(:macros :subs);    # Syslog macros
 
 # Get the program name for zenlog
 my $TAG = "[Log.pm]";
@@ -52,7 +52,7 @@ Function: zenlog
 Parametes:
 	string - String to be written in log.
 	type   - Log level. info, error, debug, debug2, warn
-	tag    - RBAC, LSLB, GSLB, DSLB, IPDS, FG, NOTIF, NETWORK, MONITOR, SYSTEM, CLUSTER
+	tag    - RBAC, LSLB, GSLB, DSLB, IPDS, FG, NOTIF, NETWORK, MONITOR, SYSTEM, CLUSTER, AWS
 
 Returns:
 	none - .
@@ -157,7 +157,7 @@ sub logAndRun    # ($command)
 	my $return_code;
 	my $program = $basename;
 
-	my @cmd_output  = `$command 2>&1`;
+	my @cmd_output = `$command 2>&1`;
 	$return_code = $?;
 
 	if ( $return_code )

@@ -321,10 +321,44 @@ Returns:
 	none - .
 
 =cut
+
 sub setEnv
 {
 	use Zevenet::Config;
-	$ENV{ http_proxy } = &getGlobalConfiguration( 'http_proxy' ) // "";
+	$ENV{ http_proxy }  = &getGlobalConfiguration( 'http_proxy' )  // "";
 	$ENV{ https_proxy } = &getGlobalConfiguration( 'https_proxy' ) // "";
 }
+
+=begin nd
+Function: whereIam
+
+	Check if zevenet is running in some cloud platform or no
+
+Returns:
+	String - It returns the name of the cloud platform or zevenet
+
+=cut
+
+sub whereIam
+{
+	my $provider = 'nocloud';
+
+	# Check if it is an Amazon VM
+	my $bios_version = &getGlobalConfiguration( 'bios_version' );
+	my $dpkg         = &getGlobalConfiguration( 'dpkg_bin' );
+	my $grep         = &getGlobalConfiguration( 'grep_bin' );
+	my $cat          = &getGlobalConfiguration( 'cat_bin' );
+
+	if ( grep ( /amazon/, `$cat $bios_version` ) )
+	{
+		$provider = "aws";
+	}
+	elsif ( !&logAndRun( "$dpkg -l | $grep waagent" ) )
+	{
+		$provider = "azure";
+	}
+
+	return $provider;
+}
+
 1;

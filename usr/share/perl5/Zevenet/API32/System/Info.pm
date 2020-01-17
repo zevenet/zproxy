@@ -53,14 +53,14 @@ sub get_license
 	}
 	close $license_fh;
 
-	&httpResponse({ code => 200, body => $file, type => 'text/plain' });
+	&httpResponse( { code => 200, body => $file, type => 'text/plain' } );
 }
 
 sub get_supportsave
 {
 	my $desc = "Get supportsave file";
 
-	my $zbindir = &getGlobalConfiguration( 'zbindir' );
+	my $zbindir   = &getGlobalConfiguration( 'zbindir' );
 	my @ss_output = `${zbindir}/supportsave 2>&1`;
 
 	# get the last "word" from the first line
@@ -87,15 +87,18 @@ sub get_version
 	my $hostname   = &getHostname();
 	my $date       = &getDate();
 	my $applicance = &getApplianceVersion();
+	my $platform   = &whereIam();
 
 	chomp $kernel;
 
 	my $params = {
-				   'kernel_version'    => $kernel,
-				   'zevenet_version'   => $zevenet,
-				   'hostname'          => $hostname,
-				   'system_date'       => $date,
-				   'appliance_version' => $applicance,
+		'kernel_version'    => $kernel,
+		'zevenet_version'   => $zevenet,
+		'hostname'          => $hostname,
+		'system_date'       => $date,
+		'appliance_version' => $applicance,
+		'platform'          => $platform,
+
 	};
 	my $body = { description => $desc, params => $params };
 

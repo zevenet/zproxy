@@ -348,8 +348,8 @@ if ( $q->path_info =~ qr{^/system/users} )
 {
 	require Zevenet::API32::System::User;
 
-	GET qr{^/system/users$} 	=> \&get_system_user;    #  GET users
-	POST qr{^/system/users$}	=> \&set_system_user;    #  POST users
+	GET qr{^/system/users$}  => \&get_system_user;    #  GET users
+	POST qr{^/system/users$} => \&set_system_user;    #  POST users
 }
 
 if ( $q->path_info =~ qr{^/system/log} )
@@ -400,9 +400,9 @@ if ( $q->path_info =~ qr{^/aliases} )
 	my $alias_type = &getValidFormat( 'alias_type' );
 
 	# /aliases/(backend)s, not match the charater 's'
-	GET qr{^/aliases/($alias_type)s$}               => \&get_by_type;
+	GET qr{^/aliases/($alias_type)s$}            => \&get_by_type;
 	PUT qr{^/aliases/($alias_type)s/([^/]+)$}    => \&set_alias;
-	DELETE qr{^/aliases/($alias_type)s/([^/]+)$}   => \&delete_alias;
+	DELETE qr{^/aliases/($alias_type)s/([^/]+)$} => \&delete_alias;
 }
 
 ##### Load modules dynamically #######################################

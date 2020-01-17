@@ -159,6 +159,14 @@ $groupdel_bin="/usr/sbin/groupdel";
 $groups_bin="/usr/bin/groups";
 #Where is echo?
 $echo_bin="/bin/echo";
+#Where id curl?
+$curl_bin="/usr/bin/curl";
+#Where is cat binary?
+$cat_bin="/bin/cat";
+#Where is dpkg binary?
+$dpkg_bin="/usr/bin/dpkg";
+#Where is grep binary?
+$grep_bin="/bin/grep";
 
 #proxy
 $http_proxy="";
@@ -256,6 +264,9 @@ $key_id="id_rsa";
 # ssh keygen command
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
+# Bios version
+$bios_version="/sys/devices/virtual/dmi/id/bios_version";
+
 #Zen backup
 $zenbackup="/usr/local/zevenet/bin/zenbackup.pl";#update
 
@@ -297,6 +308,12 @@ $throughput_enabled = "false";
 # connection logs for farms. If this parameter is "true" all traffic will be logged
 # else only the new connections will be logged
 $full_farm_logs = "false";
+
+# cloud
+$cloud_address_metadata="169.254.169.254";
+$aws_bin="/usr/bin/aws";
+$aws_credentials="/root/.aws/credentials";
+$aws_config="/root/.aws/config";
 
 #::END Global Section
 
