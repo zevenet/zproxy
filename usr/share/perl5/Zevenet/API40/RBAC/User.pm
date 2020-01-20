@@ -67,6 +67,7 @@ sub add_rbac_user
 			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
+	require Zevenet::User;
 	include 'Zevenet::RBAC::User::Config';
 
 	my $desc = "Create the RBAC user, $json_obj->{ 'name' }";
@@ -92,14 +93,18 @@ sub add_rbac_user
 	  if ( $error_msg );
 
 	# Check if it exists
-	if ( my $output = &getRBACUserExists( $json_obj->{ 'name' } ) )
+	if ( &getRBACUserExists( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
-		if ( $output == 2 )
-		{
-			$msg = "$json_obj->{ 'name' } is a Operating System User.";
-		}
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	else
+	{
+		if ( &getSysUserExists( $json_obj->{ 'name' } ) )
+		{
+			my $msg = "$json_obj->{ 'name' } is a Operating System User.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# executing the action

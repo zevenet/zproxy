@@ -114,7 +114,7 @@ Parameters:
 	User - User name
 
 Returns:
-	Integer - 0 if the user does not exist, 1 if the user exists and is a RBAC user, 2 if the user exists and is a system user
+	Integer - 1 if the user exists or 0 if it doesn't exist
 
 =cut
 
@@ -125,11 +125,7 @@ sub getRBACUserExists
 	my $user = shift;
 
 	my $out = 0;
-	if ( grep ( /^$user$/, &getRBACUserSysList() ) )
-	{
-		$out = 2;
-		$out = 1 if ( grep ( /^$user$/, &getRBACUserList() ) );
-	}
+	$out = 1 if ( grep ( /^$user$/, &getRBACUserList() ) );
 
 	return $out;
 }

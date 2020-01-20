@@ -67,6 +67,7 @@ sub add_rbac_group
 			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
+	require Zevenet::User;
 	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Create the RBAC group, $json_obj->{ 'name' }";
@@ -79,14 +80,18 @@ sub add_rbac_group
 	};
 
 	# Check if it exists
-	if ( my $output = &getRBACGroupExists( $json_obj->{ 'name' } ) )
+	if ( &getRBACGroupExists( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
-		if ( $output == 2 )
-		{
-			$msg = "$json_obj->{ 'name' } is a Operating System Group.";
-		}
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	else
+	{
+		if ( &getSysGroupExists( $json_obj->{ 'name' } ) )
+		{
+			my $msg = "$json_obj->{ 'name' } is an Operating System group.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# Check allowed parameters
