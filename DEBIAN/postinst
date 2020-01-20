@@ -164,6 +164,25 @@ if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
 	if [ $? -eq 0 ]; then
 		cp ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ${NET_CONFIG_DIR}
 		${NET_CONFIG_DIR}${CHECK_NIC_DHCP}
+
+		# Change netcat path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('netcat_bin', '$aws_netcat_bin');"
+		# Change cat path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('cat_bin', '$aws_cat_bin');"
+		# Change lsmod path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('lsmod', '$aws_lsmod');"
+		# Change modprobe path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('modprobe', '$aws_modprobe');"
+		# Change poweroff path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('poweroff_bin', '$aws_poweroff_bin');"
+		# Change reboot path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('reboot_bin', '$aws_reboot_bin');"
+		# Change dhclient path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('dhcp_bin', '$aws_dhcp_bin');"
+		# Change ifcofnig path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('ifconfig_bin', '$aws_ifconfig_bin');"
+		# Change fdisk path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('fdisk_bin', '$aws_fdisk_bin');"
 	fi
 	# Check if it is an Azure VM
 	dpkg -l | grep waagent >/dev/null

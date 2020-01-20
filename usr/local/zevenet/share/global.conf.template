@@ -137,6 +137,9 @@ $sys_net_dir="/sys/class/net";
 #Where is file binary?
 $file_bin="/usr/bin/file";
 #Where is cat binary?
+$aws_cat_bin="/bin/cat";#update
+$default_cat_bin="/usr/bin/cat";#update
+#This variable is modified from postinst
 $cat_bin="/usr/bin/cat";
 #Where is hostname binary?
 $hostname="/bin/hostname";
@@ -147,12 +150,18 @@ $uname="/bin/uname";
 #Where is tar binary?
 $tar="/bin/tar";
 #where is ifconfig binary?
+$aws_ifconfig_bin="/sbin/ifconfig";#update
+$default_ifconfig_bin="/usr/sbin/ifconfig";#update
+#This variable is modified from postinst
 $ifconfig_bin="/usr/sbin/ifconfig";
 #Where is ip bynary?
 $ip_bin="/bin/ip";#update
 #Where is wc binary?
 $wc_bin="/usr/bin/wc";
 #Where is fdisk binary?
+$aws_fdisk_bin="/sbin/fdisk";#update
+$default_fdisk_bin="/usr/sbin/fdisk";#update
+#This variable is modified from postinst
 $fdisk_bin="/usr/sbin/fdisk";
 #Where is df binary?
 $df_bin="/bin/df";
@@ -217,8 +226,14 @@ $cp="/bin/cp";
 #Where is rm?
 $rm="/bin/rm";
 #Where is modprobe?
+$aws_modprobe="/sbin/modprobe";#update
+$default_modprobe="/usr/sbin/modprobe";#update
+#This variable is modified from postinst
 $modprobe="/usr/sbin/modprobe";
 #Where is lsmod?
+$aws_lsmod="/sbin/lsmod";#update
+$default_lsmod="/usr/sbin/lsmod";#update
+#This variable is modified from postinst
 $lsmod="/usr/sbin/lsmod";
 #Where is gdnsd?
 $gdnsd="/usr/sbin/gdnsd";#update
@@ -263,12 +278,21 @@ $nft_bin="/usr/local/sbin/nft";#update
 #Where is nftlb?
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
 #Where is poweroff
+$aws_poweroff_bin="/sbin/poweroff";#update
+$default_poweroff_bin="/usr/sbin/poweroff";#update
+#This variable is modified from postinst
 $poweroff_bin="/usr/sbin/poweroff";
 #Where is reboot
+$aws_reboot_bin="/sbin/reboot";#update
+$default_reboot_bin="/usr/sbin/reboot";#update
+#This variable is modified from postinst
 $reboot_bin="/usr/sbin/reboot";
 #Where is arpsend
 $arpsend_bin="/usr/sbin/arpsend";
 #Where is dhclient
+$aws_dhcp_bin="/sbin/dhclient";#update
+$default_dhcp_bin="/usr/sbin/dhclient";#update
+#This variable is modified from postinst
 $dhcp_bin="/usr/sbin/dhclient";
 #Where is netcat
 $netcat_bin="/usr/bin/nc.openbsd";#update
