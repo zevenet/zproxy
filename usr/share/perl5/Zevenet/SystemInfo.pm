@@ -327,6 +327,15 @@ sub setEnv
 	use Zevenet::Config;
 	$ENV{ http_proxy }  = &getGlobalConfiguration( 'http_proxy' )  // "";
 	$ENV{ https_proxy } = &getGlobalConfiguration( 'https_proxy' ) // "";
+
+	require Zevenet::SystemInfo;
+	my $provider = &whereIam();
+	if ( $provider eq 'aws' )
+	{
+		$ENV{ AWS_SHARED_CREDENTIALS_FILE } =
+		  &getGlobalConfiguration( 'aws_credentials' ) // "";
+		$ENV{ AWS_CONFIG_FILE } = &getGlobalConfiguration( 'aws_config' ) // "";
+	}
 }
 
 =begin nd

@@ -312,8 +312,8 @@ $full_farm_logs = "false";
 # cloud
 $cloud_address_metadata="169.254.169.254";
 $aws_bin="/usr/bin/aws";
-$aws_credentials="/root/.aws/credentials";
-$aws_config="/root/.aws/config";
+$aws_credentials="$configdir/cloud/.aws/credentials";
+$aws_config="$configdir/cloud/.aws/config";
 
 #::END Global Section
 

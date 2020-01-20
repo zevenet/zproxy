@@ -434,7 +434,7 @@ sub getCredentials
 		close $zcl_file;
 	}
 
-	my $config = Config::Tiny->read( $file );
+	my $config = Config::Tiny->read( $file ) // {};
 
 	# returns object on success or undef on error.
 	return $config;
