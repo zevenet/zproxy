@@ -96,6 +96,7 @@ struct SslHelper {
   static int verifyCertificate_OK([[maybe_unused]] int pre_ok, 
                                   [[maybe_unused]] X509_STORE_CTX *ctx);
   SslHelper() { initDhParams(); }
+  ~SslHelper();
   static SslHelper &getCurrent();
 
  private:

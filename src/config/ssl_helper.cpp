@@ -38,8 +38,8 @@ DH *global::SslHelper::DH2048_params{nullptr};
 
 global::SslHelper global::SslHelper::current{};
 
-RSA *global::SslHelper::RSA_tmp_callback(/* not used */ SSL *ssl,
-                                         /* not used */ int is_export,
+RSA *global::SslHelper::RSA_tmp_callback([[maybe_unused]] SSL *ssl,
+                                         [[maybe_unused]] int is_export,
                                          int keylength) {
   RSA *res;
   std::lock_guard<std::mutex> lock__(RSA_mut);
@@ -48,7 +48,8 @@ RSA *global::SslHelper::RSA_tmp_callback(/* not used */ SSL *ssl,
   return res;
 }
 
-void global::SslHelper::SSLINFO_callback(const SSL *ssl, int where, int rc) {
+void global::SslHelper::SSLINFO_callback(const SSL *ssl, int where,
+                                         [[maybe_unused]] int rc) {
   RENEG_STATE *reneg_state;
 
   /* Get our thr_arg where we're tracking this connection info */
@@ -125,6 +126,25 @@ void global::SslHelper::doRSAgen() {
   }
 }
 
+global::SslHelper::~SslHelper() {
+  if (DH512_params != nullptr) {
+    DH_free(DH512_params);
+  }
+#if DH_LEN == 1024
+  if (DH1024_params != nullptr) {
+    DH_free(DH1024_params);
+  }
+#else
+  if (DH2048_params != nullptr) {
+    DH_free(DH2048_params);
+  }
+#endif
+  for (int n = 0; n < N_RSA_KEYS; n++) {
+    RSA_free(RSA512_keys[n]);
+    RSA_free(RSA1024_keys[n]);
+  }
+}
+
 void global::SslHelper::initDhParams() {
   int n;
   /*
@@ -151,6 +171,7 @@ void global::SslHelper::initDhParams() {
 
 global::SslHelper &global::SslHelper::getCurrent() { return current; }
 
-int global::SslHelper::verifyCertificate_OK(int pre_ok, X509_STORE_CTX *ctx) {
+int global::SslHelper::verifyCertificate_OK(
+    [[maybe_unused]] int pre_ok, [[maybe_unused]] X509_STORE_CTX *ctx) {
   return 1;
 }
