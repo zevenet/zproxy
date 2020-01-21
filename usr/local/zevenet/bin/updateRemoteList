@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 lockdir=/tmp/$(basename $0).lock
 timeout=60 # secs, integer
