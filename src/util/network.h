@@ -73,7 +73,8 @@ class Network {
         return EAI_NONAME;
       }
       *res = *ap;
-      if ((res->ai_addr = new sockaddr()) == nullptr) {
+      if ((res->ai_addr = static_cast<sockaddr *>(
+               std::malloc(ap->ai_addrlen))) == nullptr) {
         freeaddrinfo(chain);
         return EAI_MEMORY;
       }
