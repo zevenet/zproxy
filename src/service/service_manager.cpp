@@ -21,15 +21,15 @@
 
 #include "service_manager.h"
 #include <memory>
-#include "../handlers/waf.h"
 #include <utility>
+#include "../handlers/waf.h"
 
-std::map<int,std::shared_ptr<ServiceManager>> ServiceManager::instance;
+std::map<int, std::shared_ptr<ServiceManager>> ServiceManager::instance;
 
 std::shared_ptr<ServiceManager> &ServiceManager::getInstance(
     std::shared_ptr<ListenerConfig> listener_config) {
   auto it = instance.find(listener_config->id);
-  if ( it == instance.end())
+  if (it == instance.end())
     instance[listener_config->id] =
         std::make_shared<ServiceManager>(listener_config);
   return instance[listener_config->id];
@@ -49,6 +49,12 @@ ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
     ssl_context = new SSLContext();
     is_https_listener = ssl_context->init(listener_config_);
   }
+#if WAF_ENABLED
+  listener_config_->modsec = std::make_shared<modsecurity::ModSecurity>();
+  listener_config_->modsec->setConnectorInformation(
+      "zproxy_" + listener_config_->name + "_connector");
+  listener_config_->modsec->setServerLogCb(Waf::logModsec);
+#endif
   ctl_manager = ctl::ControlManager::getInstance();
   ctl_manager->attach(std::ref(*this));
 }
@@ -67,7 +73,8 @@ Service *ServiceManager::getService(HttpRequest &request) {
   for (auto srv : services) {
     if (!srv->service_config.disabled) {
       if (srv->doMatch(request)) {
-        // Logger::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id, srv->service_config.name, LOG_DEBUG);
+        // Logger::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id,
+        // srv->service_config.name, LOG_DEBUG);
         return srv;
       }
     }
@@ -85,9 +92,12 @@ bool ServiceManager::addService(ServiceConfig &service_config, int _id) {
   service->pinned_connection = service_config.pinned_connection == 1;
 
   // Information related with the setCookie
-  if (service_config.becookie != nullptr) service->becookie = std::string(service_config.becookie);
-  if (service_config.becdomain != nullptr) service->becdomain = std::string(service_config.becdomain);
-  if (service_config.becpath != nullptr) service->becpath = std::string(service_config.becpath);
+  if (service_config.becookie != nullptr)
+    service->becookie = std::string(service_config.becookie);
+  if (service_config.becdomain != nullptr)
+    service->becdomain = std::string(service_config.becdomain);
+  if (service_config.becpath != nullptr)
+    service->becpath = std::string(service_config.becpath);
   service->becage = service_config.becage;
   services.push_back(service);
   return true;

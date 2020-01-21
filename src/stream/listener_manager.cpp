@@ -384,12 +384,6 @@ StreamManager *ListenerManager::getManager(int fd) {
 bool ListenerManager::addListener(
     std::shared_ptr<ListenerConfig> listener_config) {
   int service_id = 0;
-#if WAF_ENABLED
-  listener_config->modsec = std::make_shared<modsecurity::ModSecurity>();
-  listener_config->modsec->setConnectorInformation(
-      "zproxy_" + listener_config->name + "_connector");
-  listener_config->modsec->setServerLogCb(Waf::logModsec);
-#endif
   for (auto service_config = listener_config->services;
        service_config != nullptr; service_config = service_config->next) {
     if (!service_config->disabled) {
@@ -411,8 +405,10 @@ bool ListenerManager::reloadConfigFile() {
     return false;
   }
   // register new listeners
-  if (config.listeners == nullptr)
+  if (config.listeners == nullptr) {
     Logger::logmsg(LOG_NOTICE, "Error getting listener configurations");
+    return false;
+  }
   Logger::log_level = config.log_level;
   // clear and stop old config
   auto &sm_set = ServiceManager::getInstance();
