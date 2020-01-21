@@ -176,15 +176,14 @@ sub getRemoteSession
 		return -1;
 	}
 
-	my $cookie_file_lock      = &getLockFile( $fcookie );
-	my $lock_fcookie_download = &openlock( '<', $cookie_file_lock );
-	my $cat                   = &getGlobalConfiguration( 'cat_bin' );
+	my $cookie_file_lock = &openlock( '<', $fcookie );
+	my $cat = &getGlobalConfiguration( 'cat_bin' );
 
 	my @match = grep /CGISESSID\t(.+)/, `$cat $fcookie`;
 	$match[0] =~ /CGISESSID\t([a-z0-9]+)/;
 	my $cookie = $1;
 
-	close $lock_fcookie_download;
+	close $cookie_file_lock;
 	unlink $fcookie;
 
 	if ( !$cookie )
