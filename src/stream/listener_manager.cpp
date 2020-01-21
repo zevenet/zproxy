@@ -384,6 +384,12 @@ StreamManager *ListenerManager::getManager(int fd) {
 bool ListenerManager::addListener(
     std::shared_ptr<ListenerConfig> listener_config) {
   int service_id = 0;
+#if WAF_ENABLED
+  listener_config->modsec = std::make_shared<modsecurity::ModSecurity>();
+  listener_config->modsec->setConnectorInformation(
+      "zproxy_" + listener_config->name + "_connector");
+  listener_config->modsec->setServerLogCb(Waf::logModsec);
+#endif
   for (auto service_config = listener_config->services;
        service_config != nullptr; service_config = service_config->next) {
     if (!service_config->disabled) {
