@@ -301,7 +301,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			&zenlog( "Error Message: $self->{ body }->{ message }", "error", "ZAPI" )
+			my $tag = ( $self->{ code } =~ /^2/ ) ? 'info' : 'error';
+			&zenlog( "$self->{ body }->{ message }", $tag, "ZAPI" )
 			  if ( exists $self->{ body }->{ message } );
 		}
 	}
