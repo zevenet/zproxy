@@ -65,14 +65,14 @@ class BackendConfig : Counter<BackendConfig> {
  public:
   std::string f_name;
   std::string srv_name;
-  std::string address;
-  int port;
+  std::string address; /* IPv4/6 address */
+  int port{0};
   int be_type; /* 0 if real back-end, otherwise code (301, 302/default, 307) */
-  struct addrinfo addr;    /* IPv4/6 address */
   int priority;            /* priority */
   int rw_timeout;          /* read/write time-out */
   int conn_to;             /* connection time-out */
-  struct addrinfo ha_addr; /* HA address/port */
+  std::string ha_address;  /* HA address/port */
+  int ha_port{0};
   std::string url;         /* for redirectors */
   int redir_req; /* 0 - redirect is absolute, 1 - the redirect should include
                     the request path, or 2 if it should use perl dynamic
@@ -93,7 +93,7 @@ class BackendConfig : Counter<BackendConfig> {
   std::shared_ptr<BackendConfig> next = nullptr;
   int key_id;
   int nf_mark;
-  ~BackendConfig() { free(addr.ai_addr); }
+  ~BackendConfig() {}
 };
 
 class ServiceConfig : Counter<ServiceConfig> {
