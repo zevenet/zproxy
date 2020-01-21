@@ -504,7 +504,11 @@ Function: genRoutingRulesPrio
 	Create a priority according to the type of route is going to be created
 
 Parameters:
-	Type - type of route. 'iface' for the default interface routes, 'farm' for the l4xnat backend routes or 'user' for the customized routes created for the user
+	Type - type of route, the possible values are:
+		'iface' for the default interface routes,
+		'farm-l4' for the l4xnat backend routes,
+		'farm-datalink' for the rules applied by datalink farms,
+		'user' for the customized routes created for the user
 
 Returns:
 	Integer - Priority for the route
@@ -517,25 +521,37 @@ sub genRoutingRulesPrio
 
 	my $type = shift;    # user, farm, ifaces
 
-	my $farmInit   = &getGlobalConfiguration( 'routingRulePrioFarm' );
-	my $userInit   = &getGlobalConfiguration( 'routingRulePrioUserMin' );
-	my $ifacesInit = &getGlobalConfiguration( 'routingRulePrioIfaces' );
+	my $farmL4       = &getGlobalConfiguration( 'routingRulePrioFarmL4' );
+	my $farmDatalink = &getGlobalConfiguration( 'routingRulePrioFarmDatalink' );
+	my $userInit     = &getGlobalConfiguration( 'routingRulePrioUserMin' );
+	my $ifacesInit   = &getGlobalConfiguration( 'routingRulePrioIfaces' );
 	my $systemLimit = '32766';    # maximun priority value
 
 	my $min;
 	my $max;
-	if ( $type eq 'farm' )
+
+	# l4xnat farm rules
+	if ( $type eq 'farm-l4' )
 	{
-		$min = $farmInit;
+		$min = $farmL4;
+		$max = $farmDatalink;
+	}
+
+	# datalink farm rules
+	elsif ( $type eq 'farm-datalink' )
+	{
+		$min = $farmDatalink;
 		$max = $userInit;
 	}
+
+	# custom rules
 	elsif ( $type eq 'user' )
 	{
 		$min = $userInit;
 		$max = $ifacesInit;
 	}
 
-	# iface
+	# iface rules
 	else
 	{
 		return $ifacesInit;

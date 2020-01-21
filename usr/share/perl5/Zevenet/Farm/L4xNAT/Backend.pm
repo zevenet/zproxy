@@ -317,7 +317,7 @@ Parameters:
 	backend - Backend id
 	status - Backend status. The possible values are: "up" or "down"
 	cutmode - cut to force the traffic stop for such backend
-	priority - true / false, if true then only sessions and conntrack inputs are deleted, current backend need to release connections because higher priority has been enabled. 
+	priority - true / false, if true then only sessions and conntrack inputs are deleted, current backend need to release connections because higher priority has been enabled.
 
 Returns:
 	Integer - 0 on success or other value on failure
@@ -731,15 +731,16 @@ sub setL4BackendRule
 	  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 	use NetAddr::IP;
-	my $from = ($vip_if->{ mask } =~ /^\d$/ ) ?
-			"$vip_if->{ net }/$vip_if->{ mask }" :
-			NetAddr::IP->new( $vip_if->{ net }, $vip_if->{ mask });
+	my $from =
+	  ( $vip_if->{ mask } =~ /^\d$/ )
+	  ? "$vip_if->{ net }/$vip_if->{ mask }"
+	  : NetAddr::IP->new( $vip_if->{ net }, $vip_if->{ mask } );
 
 	my $rule = {
-		table => "table_$table_if",
-		type => 'farm',
-		from => $from,
-		fwmark => "$mark/0x7fffffff",
+				 table  => "table_$table_if",
+				 type   => 'farm-l4',
+				 from   => $from,
+				 fwmark => "$mark/0x7fffffff",
 	};
 	return &setRule( $action, $rule );
 }

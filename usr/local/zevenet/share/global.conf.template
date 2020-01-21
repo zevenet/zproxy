@@ -493,8 +493,10 @@ $l4sdpid="/var/run/l4sd.pid";#update
 $l4sdcfg="$configdir/l4sd.cfg";#update
 
 # routing
-# initial farm prio
-$routingRulePrioFarm="25000";
+# L4 farm prio
+$routingRulePrioFarmL4="25000";
+# datalink farm prio
+$routingRulePrioFarmDatalink="26000";
 # Min prio for rules created by the user. It must be greater than all farms rules
 $routingRulePrioUserMin="29000";
 # Maximum prio for rules created by the user. It must be lower than ifaces priority

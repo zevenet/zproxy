@@ -23,6 +23,8 @@
 
 use strict;
 
+require Zevenet::Net::Route;
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -59,22 +61,29 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 	}
 
 	# include cron task to check backends
-	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
-	my @farmcron = grep /\# \_\_$farm_name\_\_/, @cron_file;
+	my $cron_tag  = "# __${farm_name}__";
+	my $cron_file = &getGlobalConfiguration( "cron_conf" );
 
-	if ( scalar @farmcron eq 0 )
+	tie my @cron_file, 'Tie::File', $cron_file;
+	if ( !grep ( /$cron_tag/, @cron_file ) )
 	{
+		my $libexec_path = &getGlobalConfiguration( 'libexec_dir' );
 		push ( @cron_file,
-			   "* * * * *	root	\/usr\/local\/zevenet\/app\/libexec\/check_uplink $farm_name \# \_\_$farm_name\_\_"
-		);
+			   "* * * * *	root	$libexec_path/check_uplink $farm_name $cron_tag" );
 	}
 	untie @cron_file;
 
 	# Apply changes online
 	# Set default uplinks as gateways
-	my $iface     = &getDatalinkFarmInterface( $farm_name );
-	my $ip_bin    = &getGlobalConfiguration( 'ip_bin' );
-	my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
+	my $iface  = &getDatalinkFarmInterface( $farm_name );
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+
+	my $cmd_params = "default table table_$iface";
+	if ( &isRoute( $cmd_params ) )
+	{
+		my $err = &logAndRun( "$ip_bin route del $cmd_params" );
+	}
+
 	my $backends  = &getDatalinkFarmBackends( $farm_name );
 	my $algorithm = &getDatalinkFarmAlgorithm( $farm_name );
 	my $routes    = "";
@@ -144,9 +153,14 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 			return -1;
 		}
 
-		&zenlog( "running $ip_bin rule add from $net/$mask lookup table_$iface",
-				 "info", "DSLB" );
-		my @eject = `$ip_bin rule add from $net/$mask lookup table_$iface 2> /dev/null`;
+		&zenlog( "Adding rules for $farm_name", "debug", "DSLB" );
+
+		my $rule = {
+					 table => "table_$iface",
+					 type  => 'farm-datalink',
+					 from  => "$net/$mask",
+		};
+		my $err = &setRule( 'add', $rule );
 	}
 
 	# Enable IP forwarding
@@ -193,8 +207,11 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	}
 
 	# delete cron task to check backends
-	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
-	@cron_file = grep !/\# \_\_$farm_name\_\_/, @cron_file;
+	my $cron_tag  = "# __${farm_name}__";
+	my $cron_path = &getGlobalConfiguration( "cron_conf" );
+
+	tie my @cron_file, 'Tie::File', $cron_path;
+	@cron_file = grep !/$cron_tag/, @cron_file;
 	untie @cron_file;
 
 	my $iface  = &getDatalinkFarmInterface( $farm_name );
@@ -208,13 +225,22 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 		my $ipmask = &maskonif( $iface );
 		my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
 
-		&zenlog( "running $ip_bin rule del from $net/$mask lookup table_$iface",
-				 "info", "DSLB" );
-		my @eject = `$ip_bin rule del from $net/$mask lookup table_$iface 2> /dev/null`;
+		&zenlog( "removing rules for $farm_name", "debug", "DSLB" );
+
+		my $rule = {
+					 table => "table_$iface",
+					 type  => 'farm-datalink',
+					 from  => "$net/$mask",
+		};
+		my $err = &setRule( 'del', $rule );
 	}
 
 	# Disable default uplink gateways
-	my @eject = `$ip_bin route del default table table_$iface 2> /dev/null`;
+	my $cmd_params = "default table table_$iface";
+	if ( &isRoute( $cmd_params ) )
+	{
+		my $err = &logAndRun( "$ip_bin route del $cmd_params" );
+	}
 
 	# Disable active datalink file
 	my $piddir = &getGlobalConfiguration( 'piddir' );
