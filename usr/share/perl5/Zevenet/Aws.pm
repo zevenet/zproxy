@@ -261,8 +261,8 @@ sub getInstanceId
 	my $wget          = &getGlobalConfiguration( 'wget' );
 	my $cloud_address = &getGlobalConfiguration( 'cloud_address_metadata' );
 
-	my $instance_id = &logAndGet(
-			  "$wget -q -O - -T 5 http://$cloud_address/latest/meta-data/instance-id" );
+	my $instance_id =
+	  `$wget -q -O - -T 5 http://$cloud_address/latest/meta-data/instance-id`;
 
 	return $instance_id;
 }
@@ -303,11 +303,8 @@ sub reassignInterfaces
 	{
 		my @network_ids = @{ &getNetworksInterfaces( $instance_id ) };
 
-		my $query = @{
-			&logAndGet(
-				"$aws ec2 describe-instances --instance-ids $remote_instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
-			)
-		};
+		my $query =
+		  `$aws ec2 describe-instances --instance-ids $remote_instance_id --query "Reservations[*].Instances[*].NetworkInterfaces[*]"`;
 
 		my $json = eval { JSON::XS::decode_json( $query ) };
 		my @virtuals_ip = @{ $json->[0]->[0] };
@@ -363,11 +360,8 @@ sub getNetworksInterfaces
 	my $instance_id = shift;
 	my $aws         = &getGlobalConfiguration( 'aws_bin' );
 
-	my $query = @{
-		&logAndGet(
-			"$aws ec2 describe-instances --instance-ids $instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
-		)
-	};
+	my $query =
+	  `$aws ec2 describe-instances --instance-ids $instance_id --query "Reservations[*].Instances[*].NetworkInterfaces[*]"`;
 
 	require JSON::XS;
 	my $json = eval { JSON::XS::decode_json( $query ) };
