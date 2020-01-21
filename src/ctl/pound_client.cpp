@@ -33,8 +33,7 @@ bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
 void PoundClient::trySetAllTargetId(char *argv[], int &option_index) {
   int to_consume = 1;
   // workaround for listeners
-  if (CTL_SUBJECT::LISTENER == ctl_command_subject)
-      to_consume = 0;
+  if (CTL_SUBJECT::LISTENER == ctl_command_subject) to_consume = 0;
 
   int next_index = option_index + to_consume;
   switch (ctl_command_subject) { /*Intentional fallthrough*/
@@ -80,8 +79,7 @@ void PoundClient::showHelp(const std::string error, bool exit_on_error) {
   std::cout << "\t-L n - enable listener n" << std::endl;
   std::cout << "\t-l n - disable listener n" << std::endl;
 #if WAF_ENABLED
-  std::cout << "\t-R n - reload the waf rules in the listener n"
-            << std::endl;
+  std::cout << "\t-R n - reload the waf rules in the listener n" << std::endl;
 #endif
 
   std::cout << "\t-S n m - enable service m in listener n (use -1 for "
@@ -129,7 +127,7 @@ bool PoundClient::executeCommand() {
           std::stoi(this->address.substr(pos + 1, this->address.size() - pos));
       this->address = this->address.substr(0, pos);
       client.address = Network::getAddress(this->address, port).release();
-      IO::IO_OP res_connect = client.doConnect(*client.address, 0,false);
+      IO::IO_OP res_connect = client.doConnect(*client.address, 0, false);
       if (res_connect != IO::IO_OP::OP_SUCCESS)
         showError("Error: TCP mode connection failed.");
       break;
@@ -174,7 +172,7 @@ bool PoundClient::executeCommand() {
   }
 #if WAF_ENABLED
   if (ctl_command == CTL_ACTION::RELOAD_WAF) {
-    path += "/waf";
+    path = "/config";
     method = http::REQUEST_METHOD::UPDATE;
   }
 #endif
@@ -274,7 +272,7 @@ bool PoundClient::init(int argc, char *argv[]) {
         ctl_command_subject = CTL_SUBJECT::LISTENER;
         trySetAllTargetId(argv, optind);
         break;
-    }
+      }
 #endif
       case 'L': {
         ctl_command = CTL_ACTION::ENABLE;
@@ -363,10 +361,9 @@ bool PoundClient::init(int argc, char *argv[]) {
         break;
 #if WAF_ENABLED
       case CTL_ACTION::RELOAD_WAF:
-	    action_message = "Reload WAF rulesets";
+        action_message = "Reload WAF rulesets";
         break;
 #endif
-
     }
 
     if (!session_key.empty()) {
