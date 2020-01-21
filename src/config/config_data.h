@@ -93,7 +93,7 @@ class BackendConfig : Counter<BackendConfig> {
   std::shared_ptr<BackendConfig> next = nullptr;
   int key_id;
   int nf_mark;
-  ~BackendConfig() { delete addr.ai_addr; }
+  ~BackendConfig() { free(addr.ai_addr); }
 };
 
 class ServiceConfig : Counter<ServiceConfig> {
@@ -156,8 +156,8 @@ struct POUND_CTX {
   unsigned int subjectAltNameCount;
   std::shared_ptr<POUND_CTX> next;
   ~POUND_CTX() {
-    if (server_name != nullptr) delete server_name;
-    if (subjectAltNames != nullptr) delete subjectAltNames;
+    if (server_name != nullptr) free(server_name);
+    if (subjectAltNames != nullptr) free(subjectAltNames);
   }
 };
 
@@ -165,10 +165,8 @@ struct POUND_CTX {
 struct ListenerConfig : Counter<ListenerConfig> {
   std::string name;
   int id{0};
-  std::string address;
+  std::string address; /* IPv4/6 address */
   int port;
-  addrinfo addr{};         /* IPv4/6 address */
-  int sock;                /* listening socket */
   std::shared_ptr<POUND_CTX> ctx{nullptr}; /* CTX for SSL connections */
   int clnt_check;          /* client verification mode */
   int noHTTPS11;           /* HTTP 1.1 mode for SSL */
@@ -219,6 +217,5 @@ struct ListenerConfig : Counter<ListenerConfig> {
     ::regfree(&url_pat);
     delete head_off;
     delete response_head_off;
-    delete addr.ai_addr;
   }
 };

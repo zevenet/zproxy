@@ -308,33 +308,20 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC))
+      addrinfo addr{};
+      if (Network::getHost(lin + matches[1].rm_so, &addr, PF_UNSPEC))
         conf_err("Unknown Listener address");
-      if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
+      if (addr.ai_family != AF_INET && addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
+      free(addr.ai_addr);
       has_addr = 1;
       res->address = lin + matches[1].rm_so;
     } else if (!regexec(&regex_set::Name, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       res->name = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
     } else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
-      switch (res->addr.ai_family) {
-        case AF_INET:
-          memcpy(&in, res->addr.ai_addr, sizeof(in));
-          in.sin_port = reinterpret_cast<in_port_t>(
-              htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
-          memcpy(res->addr.ai_addr, &in, sizeof(in));
-          break;
-        case AF_INET6:
-          memcpy(&in6, res->addr.ai_addr, sizeof(in6));
-          in6.sin6_port = reinterpret_cast<in_port_t>(
-              htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
-          memcpy(res->addr.ai_addr, &in6, sizeof(in6));
-          break;
-        default:
-          conf_err("Unknown Listener address family");
-      }
       has_port = 1;
+      lin[matches[1].rm_eo] = '\0';
       res->port = std::atoi(lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::Disabled, lin, 4, matches, 0)) {
       res->disabled = atoi(lin + matches[1].rm_so) == 1;
@@ -544,10 +531,12 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
-      if (Network::getHost(lin + matches[1].rm_so, &res->addr, PF_UNSPEC))
+      addrinfo addr{};
+      if (Network::getHost(lin + matches[1].rm_so, &addr, PF_UNSPEC))
         conf_err("Unknown Listener address");
-      if (res->addr.ai_family != AF_INET && res->addr.ai_family != AF_INET6)
+      if (addr.ai_family != AF_INET && addr.ai_family != AF_INET6)
         conf_err("Unknown Listener address family");
+      free(addr.ai_addr);
       has_addr = 1;
       res->address = lin + matches[1].rm_so;
 #if WAF_ENABLED
@@ -580,17 +569,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
       lin[matches[1].rm_eo] = '\0';
       res->name = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
     } else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
-      if (res->addr.ai_family == AF_INET) {
-        memcpy(&in, res->addr.ai_addr, sizeof(in));
-        in.sin_port = static_cast<in_port_t>(
-            htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so))));
-        memcpy(res->addr.ai_addr, &in, sizeof(in));
-      } else {
-        memcpy(&in6, res->addr.ai_addr, sizeof(in6));
-        in6.sin6_port =
-            htons(static_cast<uint16_t>(atoi(lin + matches[1].rm_so)));
-        memcpy(res->addr.ai_addr, &in6, sizeof(in6));
-      }
+      lin[matches[1].rm_eo] = '\0';
       has_port = 1;
       res->port = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::xHTTP, lin, 4, matches, 0)) {
@@ -656,8 +635,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
     } else if (!regexec(&regex_set::RewriteLocation, lin, 4, matches, 0)) {
       res->rewr_loc = atoi(lin + matches[1].rm_so);
 
-
-    } else if(!regexec(&regex_set::RemoveResponseHeader, lin, 4, matches, 0)) {
+    } else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4, matches, 0)) {
       if(res->response_head_off) {
         for(m = res->response_head_off; m->next; m = m->next)
           ;
@@ -673,7 +651,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
       lin[matches[1].rm_eo] = '\0';
       if(regcomp(&m->pat, lin + matches[1].rm_so, REG_ICASE | REG_NEWLINE | REG_EXTENDED))
         conf_err("RemoveResponseHead bad pattern - aborted");
-    } else if(!regexec(&regex_set::AddResponseHeader, lin, 4, matches, 0)) {
+    } else if (!regexec(&regex_set::AddResponseHeader, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       if (res->response_add_head.empty()) {
         res->response_add_head = std::string(lin + matches[1].rm_so, static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
