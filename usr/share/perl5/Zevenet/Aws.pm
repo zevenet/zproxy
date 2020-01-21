@@ -176,7 +176,6 @@ sub getRemoteSession
 		return -1;
 	}
 
-	#my $cookie_file_lock      = &getLockFile( 'remote_cookie' );
 	my $cookie_file_lock = &openlock( $fcookie, '<' );
 	my $cat = &getGlobalConfiguration( 'cat_bin' );
 
