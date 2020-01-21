@@ -410,7 +410,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
   //  PRINT_BUFFER_SIZE
-  while (!done) {
+  while (!done && sent < size) {
     count = ::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
