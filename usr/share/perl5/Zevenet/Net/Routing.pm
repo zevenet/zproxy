@@ -815,7 +815,7 @@ sub applyRoutingTableByIface
 	{
 		if ( $rule->{ interface } eq $iface )
 		{
-			$err = &setRoute( $rule->{ raw } );
+			$err = &setRoute( 'add', $rule->{ raw } );
 			return $err if $err;
 		}
 	}

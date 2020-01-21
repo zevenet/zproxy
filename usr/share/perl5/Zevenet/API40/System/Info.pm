@@ -130,18 +130,16 @@ sub get_system_info
 	my $edition       = ( $eload ) ? "enterprise" : "community";
 
 	my $params = {
-		'system_date'             => $date,
-		'appliance_version'       => $applicance,
-		'kernel_version'          => $kernel,
-		'zevenet_version'         => $zevenet,
-		'hostname'                => $hostname,
-		'user'                    => $user,
-		'supported_zapi_versions' => \@zapi_versions,
-		'last_zapi_version'       => $zapi_versions[-1],
-		'edition'                 => 'community',
-
-		#~ 'edition'                 => $edition,
-		'language' => $lang,
+				   'system_date'             => $date,
+				   'appliance_version'       => $applicance,
+				   'kernel_version'          => $kernel,
+				   'zevenet_version'         => $zevenet,
+				   'hostname'                => $hostname,
+				   'user'                    => $user,
+				   'supported_zapi_versions' => \@zapi_versions,
+				   'last_zapi_version'       => $zapi_versions[-1],
+				   'edition'                 => $edition,
+				   'language'                => $lang,
 	};
 
 	if ( $eload )

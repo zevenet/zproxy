@@ -374,7 +374,7 @@ $arp_announce_bin="/usr/local/zevenet/bin/arp_announce";
 #path for cron task of arp announcement
 $arp_announce_cron_path="/etc/cron.d/arp_announce";
 
-#Network duplicated net
+#Network duplicated net. It is used to include the route of a virtual interface in all of interfaces where this networking segment is defined
 $duplicated_net="false";
 
 
@@ -474,8 +474,10 @@ $routingRulePrioFarm="25000";
 $routingRulePrioUserMin="29000";
 # Maximum prio for rules created by the user. It must be lower than ifaces priority
 $routingRulePrioUserMax="30999";
+# Prio for virtual interfaces that have the networking segmend defined in two interfaces
+$routingRulePrioIfacesDuplicated="31000";
 # initial interface tables prio
-$routingRulePrioIfaces="31000";
+$routingRulePrioIfaces="32000";
 # deafult priority for routing entries
 $routingRoutePrio="5";
 
