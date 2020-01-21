@@ -49,11 +49,12 @@ ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
     ssl_context = new SSLContext();
     is_https_listener = ssl_context->init(listener_config_);
   }
-  ctl::ControlManager::getInstance()->attach(std::ref(*this));
+  ctl_manager = ctl::ControlManager::getInstance();
+  ctl_manager->attach(std::ref(*this));
 }
 
 ServiceManager::~ServiceManager() {
-  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
+  ctl_manager->deAttach(std::ref(*this));
   for (auto srv : services) {
     delete srv;
   }

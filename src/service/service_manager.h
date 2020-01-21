@@ -20,10 +20,10 @@
  */
 
 #pragma once
-#include "service.h"
 #include <map>
 #include <ostream>
 #include <vector>
+#include "service.h"
 
 /**
  * @class ServiceManager ServiceManager.h "src/service/ServiceManager.h"
@@ -34,6 +34,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
                        public std::enable_shared_from_this<ServiceManager> {
   std::vector<Service *> services;
   static std::map<int, std::shared_ptr<ServiceManager>> instance;
+  std::shared_ptr<ctl::ControlManager> ctl_manager{nullptr};
 
  public:
   /** ListenerConfig from the listener related with all the services managed by
