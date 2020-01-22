@@ -219,7 +219,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Service/SSH.pm
 	usr/share/perl5/Zevenet/API40/System/Service/Proxy.pm
 	usr/share/perl5/Zevenet/API40/System/Ext.pm
-	usr/share/perl5/Zevenet/API40/Interfaces/Routing.pm
+	usr/share/perl5/Zevenet/API40/Interface/Routing.pm
 	usr/share/perl5/Zevenet/Apt.pm
 	usr/share/perl5/Zevenet/Aws.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
