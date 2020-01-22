@@ -26,10 +26,7 @@ global::StartOptions global::StartOptions::current{};
 global::run_options& global::run_options::getCurrent() { return current; }
 global::run_options::run_options(bool overwrite_current) {}
 
-
-
-global::StartOptions& global::StartOptions::getCurrent() {
-  return current; }
+global::StartOptions& global::StartOptions::getCurrent() { return current; }
 
 void global::StartOptions::setCurrent(const global::StartOptions& options) {
   current.conf_file_name = options.conf_file_name;
@@ -65,7 +62,7 @@ std::unique_ptr<global::StartOptions> global::StartOptions::parsePoundOption(
         Logger::logmsg(LOG_ALERT, "Build: %s %s", ZPROXY_HOST_INFO,
                        ZPROXY_BUILD_INFO);
         Logger::logmsg(LOG_ALERT, "%s", ZPROXY_COPYRIGHT);
-        return nullptr;
+        std::exit(EXIT_FAILURE);
       }
       default: {
         Logger::logmsg(LOG_ERR, "bad flag -%c", optopt);
@@ -76,8 +73,9 @@ std::unique_ptr<global::StartOptions> global::StartOptions::parsePoundOption(
     Logger::logmsg(LOG_ERR, "unknown extra arguments (%s...)", argv[optind]);
     exit(EXIT_FAILURE);
   }
-  //we must write to the current configuration the first time we parse the options
-  if(write_to_current){
+  // we must write to the current configuration the first time we parse the
+  // options
+  if (write_to_current) {
     current.setCurrent(*res);
   }
   return std::move(res);

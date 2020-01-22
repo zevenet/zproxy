@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
     Config config(true);
     auto start_options =
         global::StartOptions::parsePoundOption(argc, argv, true);
+    if (start_options == nullptr) std::exit(EXIT_FAILURE);
     auto parse_result = config.init(*start_options);
     if (!parse_result) {
       Logger::logmsg(LOG_ERR, "Error parsing configuration file %s",
