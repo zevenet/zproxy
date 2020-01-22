@@ -140,7 +140,7 @@ sub getAPTUpdatesList
 	my $status = "unknown";
 	my $install_msg =
 	  "To upgrade the system, please, execute in a shell the following command:
-	'apt-get --with-new-pkgs upgrade'";
+	'checkupgrades -i'";
 
 	my $fh = &openlock( $package_list, '<' );
 	if ( $fh )
@@ -238,14 +238,14 @@ sub uploadAPTIsoOffline
 	my $upload_filehandle = shift;
 
 	my $error;
-	my $dir = &getGlobalConfiguration( 'update_dir' );
-	my $file_bin = &getGlobalConfiguration( 'file_bin' );
+	my $dir              = &getGlobalConfiguration( 'update_dir' );
+	my $file_bin         = &getGlobalConfiguration( 'file_bin' );
 	my $checkupgrade_bin = &getGlobalConfiguration( 'checkupgrades_bin' );
-	my $filepath = "$dir/iso.tmp";
+	my $filepath         = "$dir/iso.tmp";
 
 	mkdir $dir if !-d $dir;
 
-	if (open ( my $disk_fh, '>', $filepath ))
+	if ( open ( my $disk_fh, '>', $filepath ) )
 	{
 		binmode $disk_fh;
 
@@ -256,13 +256,13 @@ sub uploadAPTIsoOffline
 	}
 	else
 	{
-		&zenlog ("The file $filepath could not be created", 'error', 'apt');
+		&zenlog( "The file $filepath could not be created", 'error', 'apt' );
 		return 1;
 	}
 
-	if( &logAndRun("$file_bin $filepath | grep ISO") )
+	if ( &logAndRun( "$file_bin $filepath | grep ISO" ) )
 	{
-		&zenlog ("The uploaded ISO doesn't look a valid ISO", 'error', 'apt');
+		&zenlog( "The uploaded ISO doesn't look a valid ISO", 'error', 'apt' );
 		unlink $filepath;
 		return 2;
 	}
