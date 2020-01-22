@@ -36,9 +36,6 @@ int Logger::log_facility = LOG_DAEMON;
 
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 
-
-
-
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
@@ -146,11 +143,6 @@ int main(int argc, char *argv[]) {
       control_manager->init(config);
       control_manager->start();
     }
-    int listener_count = Counter<ListenerConfig>::count;
-    int service_count = Counter<ServiceConfig>::count;
-    int backend_count = Counter<BackendConfig>::count;
-    Logger::logmsg(LOG_ERR, "listeners: %d services: %d backends: %d",
-                   listener_count, service_count, backend_count);
     for (auto listener_conf = config.listeners; listener_conf != nullptr;
          listener_conf = listener_conf->next) {
       if (!listener.addListener(listener_conf)) {
@@ -159,11 +151,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-  int listener_count = Counter<ListenerConfig>::count;
-  int service_count = Counter<ServiceConfig>::count;
-  int backend_count = Counter<BackendConfig>::count;
-  Logger::logmsg(LOG_ERR, "listeners: %d services: %d backends: %d",
-                 listener_count, service_count, backend_count);
   listener.start();
   std::this_thread::sleep_for(std::chrono::seconds(1));
   cleanExit();

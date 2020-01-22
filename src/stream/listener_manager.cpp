@@ -384,11 +384,11 @@ StreamManager *ListenerManager::getManager(int fd) {
 bool ListenerManager::addListener(
     std::shared_ptr<ListenerConfig> listener_config) {
   int service_id = 0;
+  auto &lm = ServiceManager::getInstance(listener_config);
   for (auto service_config = listener_config->services;
        service_config != nullptr; service_config = service_config->next) {
     if (!service_config->disabled) {
-      ServiceManager::getInstance(listener_config)
-          ->addService(*service_config, service_id++);
+      lm->addService(*service_config, service_id++);
     } else {
       Logger::logmsg(LOG_NOTICE, " (%s) listener %s disabled in config file ",
                      listener_config->name.data(), service_config->name.data());
@@ -425,19 +425,9 @@ bool ListenerManager::reloadConfigFile() {
   // create new instances with new configuration, connections may be lost during
   // this switch
   for (auto lc = config.listeners; lc != nullptr; lc = lc->next) {
-    auto listener_config = std::shared_ptr<ListenerConfig>(lc);
-    auto sm = ServiceManager::getInstance(listener_config);
     if (lc->disabled) continue;
-    int service_id = 0;
-    for (auto service_config = lc->services; service_config != nullptr;
-         service_config = service_config->next) {
-      if (!service_config->disabled) {
-        sm->addService(*service_config, service_id++);
-      } else {
-        Logger::logmsg(LOG_NOTICE, " (%s) service %s disabled in config file ",
-                       lc->name.data(), service_config->name.data());
-      }
-    }
+    auto listener_config = std::shared_ptr<ListenerConfig>(lc);
+    this->addListener(listener_config);
   }
 
   for (size_t i = 0; i < stream_manager_set.size(); i++) {
