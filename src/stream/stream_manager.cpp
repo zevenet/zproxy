@@ -436,9 +436,10 @@ void StreamManager::onRequestEvent(int fd) {
                          pthread_self(),
                          stream->client_connection.getPeerAddress().c_str(),
                          listener_config_.nossl_url.data());
-          http_manager::replyRedirect(listener_config_.nossl_redir,
-                                      listener_config_.nossl_url,
-                                      stream->client_connection);
+          if (http_manager::replyRedirect(listener_config_.nossl_redir,
+                                          listener_config_.nossl_url, *stream))
+            clearStream(stream);
+          return;
         } else {
           Logger::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s sending error",
                          pthread_self(),
@@ -498,8 +499,7 @@ void StreamManager::onRequestEvent(int fd) {
 
   switch (parse_result) {
     case http_parser::PARSE_RESULT::SUCCESS: {
-      auto valid =
-          http_manager::validateRequest(stream->request, listener_config_);
+      auto valid = http_manager::validateRequest(*stream);
       if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
         http_manager::replyError(http::Code::NotImplemented,
                                  validation::request_result_reason.at(valid),
@@ -517,16 +517,18 @@ void StreamManager::onRequestEvent(int fd) {
                                          listener_config_.rules.get(), nullptr);
         if (Waf::checkRequestWaf(*stream)) {
           if (stream->modsec_transaction->m_it.url != nullptr) {
-            // send redirect
-            http_manager::replyRedirect(stream->modsec_transaction->m_it.status,
-                                        stream->modsec_transaction->m_it.url,
-                                        stream->client_connection);
             Logger::logmsg(
                 LOG_WARNING, "(%lx) WAF redirected a request from %s",
                 pthread_self(), stream->client_connection.address_str.c_str());
+            // send redirect
+            if (http_manager::replyRedirect(
+                stream->modsec_transaction->m_it.status,
+                stream->modsec_transaction->m_it.url, *stream))
+              clearStream(stream);
+            return;
           } else {
             // reject the request
-            http::Code code = static_cast<http::Code>(
+            auto code = static_cast<http::Code>(
                 stream->modsec_transaction->m_it.status);
             http_manager::replyError(code, reasonPhrase(code),
                                      listener_config_.err403,
@@ -721,8 +723,8 @@ void StreamManager::onRequestEvent(int fd) {
 
             break;
           case BACKEND_TYPE::REDIRECT: {
-            http_manager::replyRedirect(*stream, *bck);
-            clearStream(stream);
+            if(http_manager::replyRedirect(*stream, *bck))
+              clearStream(stream);
             return;
           }
           case BACKEND_TYPE::CACHE_SYSTEM:
@@ -786,7 +788,7 @@ void StreamManager::onResponseEvent(int fd) {
     stream->client_connection.enableWriteEvent();
     return;
   }
- #if PRINT_DEBUG_FLOW_BUFFERS
+#if PRINT_DEBUG_FLOW_BUFFERS
   auto buffer_size_in = stream->backend_connection.buffer_size;
   if (stream->backend_connection.buffer_size != 0)
     Logger::logmsg(
@@ -1013,7 +1015,7 @@ void StreamManager::onResponseEvent(int fd) {
             stream->backend_connection.time_start)
             .count());
 
-    if (http_manager::validateResponse(*stream, listener_config_) !=
+    if (http_manager::validateResponse(*stream) !=
         validation::REQUEST_RESULT::OK) {
       Logger::logmsg(LOG_NOTICE,
                      "(%lx) backend %s response validation error\n %.*s",
@@ -1033,16 +1035,18 @@ void StreamManager::onResponseEvent(int fd) {
     if (stream->modsec_transaction != nullptr) {
       if (Waf::checkResponseWaf(*stream)) {
         if (stream->modsec_transaction->m_it.url != nullptr) {
-          // send redirect
-          http_manager::replyRedirect(stream->modsec_transaction->m_it.status,
-                                      stream->modsec_transaction->m_it.url,
-                                      stream->client_connection);
           Logger::logmsg(LOG_WARNING, "(%lx) WAF redirected a request from %s",
                          pthread_self(),
                          stream->client_connection.address_str.c_str());
+          // send redirect
+          if (http_manager::replyRedirect(
+                  stream->modsec_transaction->m_it.status,
+                  stream->modsec_transaction->m_it.url, *stream))
+            clearStream(stream);
+          return;
         } else {
           // reject the request
-          http::Code code =
+          auto code =
               static_cast<http::Code>(stream->modsec_transaction->m_it.status);
           http_manager::replyError(code, reasonPhrase(code),
                                    listener_config_.err403,
@@ -1204,13 +1208,13 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
     IO::IO_OP op_state;
     stream->backend_connection.reset();
     stream->response.reset_parser();
-    Logger::logmsg(
-        LOG_DEBUG, "RETRY [%s] %.*s [%s (%d) -> %s (%d)]",
-        service->name.c_str(), stream->request.http_message_length,
-        stream->request.http_message,
-        stream->client_connection.getPeerAddress().c_str(),
-        stream->client_connection.getFileDescriptor(), bck->address.c_str(),
-        stream->backend_connection.getFileDescriptor());
+    Logger::logmsg(LOG_DEBUG, "RETRY [%s] %.*s [%s (%d) -> %s (%d)]",
+                   service->name.c_str(), stream->request.http_message_length,
+                   stream->request.http_message,
+                   stream->client_connection.getPeerAddress().c_str(),
+                   stream->client_connection.getFileDescriptor(),
+                   bck->address.c_str(),
+                   stream->backend_connection.getFileDescriptor());
     switch (bck->backend_type) {
       case BACKEND_TYPE::REMOTE: {
         stream->backend_connection.setBackend(bck);
@@ -1290,8 +1294,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
         break;
       case BACKEND_TYPE::REDIRECT: {
-        http_manager::replyRedirect(*stream, *bck);
-        clearStream(stream);
+        if(http_manager::replyRedirect(*stream, *bck))
+          clearStream(stream);
         return;
       }
       case BACKEND_TYPE::CACHE_SYSTEM:
@@ -1624,9 +1628,11 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
                            pthread_self(),
                            stream->client_connection.getPeerAddress().c_str(),
                            listener_config_.nossl_url.data());
-            http_manager::replyRedirect(listener_config_.nossl_redir,
-                                        listener_config_.nossl_url,
-                                        stream->client_connection);
+            if (http_manager::replyRedirect(listener_config_.nossl_redir,
+                                            listener_config_.nossl_url,
+                                            *stream))
+              clearStream(stream);
+            return;
           } else {
             Logger::logmsg(LOG_NOTICE, "(%lx) errNoSsl from %s sending error",
                            pthread_self(),

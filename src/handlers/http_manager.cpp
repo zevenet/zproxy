@@ -142,11 +142,10 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
   }
 }
 
-validation::REQUEST_RESULT http_manager::validateRequest(
-    HttpRequest &request,
-    const ListenerConfig &listener_config_) {  // FIXME
+validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
   regmatch_t matches[4];
-
+  auto &listener_config_ = *stream.service_manager->listener_config_;
+  HttpRequest &request = stream.request;
   auto res = ::regexec(&listener_config_.verb, request.getRequestLine().data(),
                        3,  // include validation data package
                        matches, REG_EXTENDED);
@@ -280,8 +279,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(
   return validation::REQUEST_RESULT::OK;
 }
 
-validation::REQUEST_RESULT http_manager::validateResponse(
-    HttpStream &stream, const ListenerConfig &listener_config_) {
+validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
+  auto &listener_config_ = *stream.service_manager->listener_config_;
   HttpResponse &response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
   if (response.http_status_code < 200) {
@@ -354,22 +353,24 @@ validation::REQUEST_RESULT http_manager::validateResponse(
           std::string host_ip(ip);
           if (host_ip == listener_config_.address ||
               host_ip == stream.backend_connection.getBackend()->address) {
-            if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host_ip)){
+            if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST,
+                                               host_ip)) {
               host_ip = listener_config_.address;
               host_ip += ":";
               host_ip += std::to_string(listener_config_.port);
             }
             std::string header_value_;
-            if(listener_config_.rewr_loc < 2) {
+            if (listener_config_.rewr_loc < 2) {
               header_value_ =
                   listener_config_.ctx != nullptr ? "https://" : "http://";
-            }else {
+            } else {
               header_value_ = proto;
               header_value_ += "://";
             }
             header_value_ += host_ip;
             header_value_ += path;
-            response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION, header_value_);
+            response.addHeader(http::HTTP_HEADER_NAME::CONTENT_LOCATION,
+                               header_value_);
             response.headers[i].header_off = true;
           }
           break;
@@ -408,16 +409,17 @@ validation::REQUEST_RESULT http_manager::validateResponse(
           std::string host_ip(ip);
           if (host_ip == listener_config_.address ||
               host_ip == stream.backend_connection.getBackend()->address) {
-            if(!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host_ip)){
+            if (!stream.request.getHeaderValue(http::HTTP_HEADER_NAME::HOST,
+                                               host_ip)) {
               host_ip = listener_config_.address;
               host_ip += ":";
               host_ip += std::to_string(listener_config_.port);
             }
             std::string header_value_;
-            if(listener_config_.rewr_loc < 2) {
+            if (listener_config_.rewr_loc < 2) {
               header_value_ =
                   listener_config_.ctx != nullptr ? "https://" : "http://";
-            }else {
+            } else {
               header_value_ = proto;
               header_value_ += "://";
             }
@@ -531,19 +533,18 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
            written < response_.length());
 }
 
-void http_manager::replyRedirect(HttpStream &stream,
+bool http_manager::replyRedirect(HttpStream &stream,
                                  const Backend &redirect_backend) {
   /* 0 - redirect is absolute,
    * 1 - the redirect should include the request path, or
    * 2 if it should use perl dynamic replacement */
   std::string new_url(redirect_backend.backend_config->url);
-  auto service =
-      static_cast<Service*>(stream.request.getService());
+  auto service = static_cast<Service *>(stream.request.getService());
   switch (redirect_backend.backend_config->redir_req) {
     case 1:
-          new_url += std::string(stream.request.path, stream.request.path_length);
+      new_url += std::string(stream.request.path, stream.request.path_length);
       break;
-    case 2: { //Dynamic redirect
+    case 2: {  // Dynamic redirect
       auto buf = std::make_unique<char[]>(MAXBUF);
       std::string request_url(stream.request.path, stream.request.path_length);
       memset(buf.get(), 0, MAXBUF);
@@ -555,7 +556,7 @@ void http_manager::replyRedirect(HttpStream &stream,
             LOG_WARNING,
             "URL pattern didn't match in redirdynamic... shouldn't happen %s",
             request_url.data());
-      }else {
+      } else {
         chptr = buf.get();
         enptr = buf.get() + MAXBUF - 1;
         *enptr = '\0';
@@ -599,25 +600,31 @@ void http_manager::replyRedirect(HttpStream &stream,
       redirect_code = 302;  // FOUND
       break;
   }
-  replyRedirect(redirect_code, new_url, stream.client_connection);
+  return replyRedirect(redirect_code, new_url, stream);
 }
-void http_manager::replyRedirect(int code, const std::string &url,
-                                 Connection &target) {
+bool http_manager::replyRedirect(int code, const std::string &url,
+                                 HttpStream &stream) {
   auto response_ =
       http::getRedirectResponse(static_cast<http::Code>(code), url);
-  size_t written = 0;
+
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  do {
-    size_t sent = 0;
-    if (!target.ssl_connected) {
-      result = target.write(response_.c_str() + written,
-                            response_.length() - written, sent);
-    } else if (target.ssl != nullptr) {
-      result = ssl::SSLConnectionManager::handleWrite(
-          target, response_.c_str() + written, response_.length() - written,
-          written, true);
-    }
-    if (sent > 0) written += sent;
-  } while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
-           written < response_.length());
+  size_t sent = 0;
+  if (!stream.client_connection.ssl_connected) {
+    result = stream.client_connection.write(response_.c_str(),
+                                            response_.length(), sent);
+  } else if (stream.client_connection.ssl != nullptr) {
+    result = ssl::SSLConnectionManager::handleWrite(
+        stream.client_connection, response_.c_str(), response_.length(), sent,
+        true);
+  }
+
+  if (result == IO::IO_RESULT::DONE_TRY_AGAIN && sent < response_.length()) {
+    std::strncpy(stream.backend_connection.buffer, response_.data() + sent,
+                 response_.size() - sent);
+    stream.backend_connection.buffer_size = response_.size() - sent;
+    stream.upgrade.pinned_connection = true;
+    stream.client_connection.enableWriteEvent();
+    return false;
+  }
+  return true;
 }

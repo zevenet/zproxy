@@ -27,7 +27,6 @@
 #include "../service/service.h"
 #include "../util/common.h"
 #include "../util/zlib_util.h"
-#include <glob.h>
 
 using namespace http;
 
@@ -40,11 +39,11 @@ class http_manager {
    * needed.
    *
    * @param request is the HttpRequest to modify.
-   * @return if there is not any error it returns validation::REQUEST_RESULT::OK.
-   * If errors happen, it returns the corresponding element of
-   * validation::REQUEST_RESULT.
+   * @return if there is not any error it returns
+   * validation::REQUEST_RESULT::OK. If errors happen, it returns the
+   * corresponding element of validation::REQUEST_RESULT.
    */
-  static validation::REQUEST_RESULT validateRequest(HttpRequest &request, const ListenerConfig &listener_config_);
+  static validation::REQUEST_RESULT validateRequest(HttpStream &stream);
 
   /**
    * @brief Validates the response.
@@ -53,15 +52,15 @@ class http_manager {
    * needed.
    *
    * @param stream is the HttpStream to get the HttpResponse from.
-   * @return if there is not any error it returns validation::REQUEST_RESULT::OK.
-   * If errors happen, it returns the corresponding element of
-   * validation::REQUEST_RESULT.
+   * @return if there is not any error it returns
+   * validation::REQUEST_RESULT::OK. If errors happen, it returns the
+   * corresponding element of validation::REQUEST_RESULT.
    */
-  static validation::REQUEST_RESULT validateResponse(HttpStream &stream, const ListenerConfig &listener_config_);
+  static validation::REQUEST_RESULT validateResponse(HttpStream &stream);
 
   /**
-   * @brief If the backend cookie is enabled adds the headers with the parameters
-   * set.
+   * @brief If the backend cookie is enabled adds the headers with the
+   * parameters set.
    *
    * @param service is the Service to get the backend cookie parameters set.
    * @param stream is the HttpStream to get the request to add the headers.
@@ -69,11 +68,13 @@ class http_manager {
   static void setBackendCookie(Service *service, HttpStream *stream);
 
   /**
-   * @brief Check if last chunk found in stream response and set stream chunk status
+   * @brief Check if last chunk found in stream response and set stream chunk
+   * status
    *
    * @param stream is the HttpStream to get the response to take the chunked
    * data.
-   * @return current chunk pending bytes or -1 if need more data to get chunk size.
+   * @return current chunk pending bytes or -1 if need more data to get chunk
+   * size.
    */
 
   /**/
@@ -89,7 +90,8 @@ class http_manager {
    */
 
   /**/
-  static ssize_t getChunkSize(const std::string &data, size_t data_size, int &chunk_size_line_len);
+  static ssize_t getChunkSize(const std::string &data, size_t data_size,
+                              int &chunk_size_line_len);
   /**
    * @brief Search for last chunk size in buffer data
    *
@@ -97,14 +99,17 @@ class http_manager {
    * @param data buffer to search chunks
    * @param data_size buffer size
    * @param data_offset bytes of data consumed in search
-   * @param chunk_size_bytes_left reference to variable to store bytes left to read for last chunk found
+   * @param chunk_size_bytes_left reference to variable to store bytes left to
+   * read for last chunk found
    * @param total_chunks_size reference to variable to add chunks size found
    * @return last chunk size found.
    */
 
   /**/
-  static ssize_t getLastChunkSize(const char *data, size_t data_size, size_t &data_offset,
-                                  size_t &chunk_size_bytes_left, size_t &total_chunks_size);
+  static ssize_t getLastChunkSize(const char *data, size_t data_size,
+                                  size_t &data_offset,
+                                  size_t &chunk_size_bytes_left,
+                                  size_t &total_chunks_size);
   /**
    * @brief Replies an specified error to the client.
    *
@@ -128,7 +133,7 @@ class http_manager {
    *
    * @param backend_config is the BackendConfig to get the redirect information.
    */
-  static void replyRedirect(HttpStream &stream,
+  static bool replyRedirect(HttpStream &stream,
                             const Backend &redirect_backend);
 
   /**
@@ -138,6 +143,6 @@ class http_manager {
    * @param code is the redirect code.
    * @param url is the url itself.
    */
-  static void replyRedirect(int code, const std::string &url,
-                            Connection &target);
+  static bool replyRedirect(int code, const std::string &url,
+                            HttpStream &stream);
 };
