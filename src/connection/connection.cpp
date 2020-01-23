@@ -33,13 +33,10 @@ Connection::Connection()
     : buffer_size(0),
       buffer_offset(0),
       address(nullptr),
-      last_read_(0),
-      last_write_(0),
       address_str(""),
       local_address_str(""),
       port(-1),
       local_port(-1),
-      is_connected(false),
       ssl(nullptr),
       ssl_connected(false) {}
 Connection::~Connection() { reset(); }
@@ -116,7 +113,6 @@ int Connection::getLocalPort() {
 
 void Connection::reset() {
   this->disableEvents();
-  is_connected = false;
   freeSsl();
   if (fd_ > 0) this->closeConnection();
   fd_ = -1;
@@ -437,7 +433,6 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
 }
 
 void Connection::closeConnection() {
-  is_connected = false;
   if (fd_ > 0) {
     ::close(fd_);
   }
