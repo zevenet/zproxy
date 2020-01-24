@@ -198,15 +198,25 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   }
 
   auto result = notify(task, false);
-  std::string res = "[";
-  for(auto it = result.begin();it < result.end(); it++){
+  std::string str;
+  bool multiple = false;
+  for (auto it = result.begin(); it < result.end(); it++) {
     auto res_string = it->get();
     if (res_string.empty()) continue;
-    res += res_string;
-    if(it + 1 < result.end())
-      res += ",";
+    str += res_string;
+    if (it + 1 < result.end()) {
+      multiple = true;
+      str += ",";
+    }
   }
-  res += "]";
+  std::string res;
+  if (multiple) {
+    res = "[";
+    res += str;
+    res += "]";
+  } else {
+    res += str;
+  }
   if (res.empty()) res = JSON_OP_RESULT::ERROR;
   auto response = http::getHttpResponse(http::Code::OK, "", res);
   return response;
@@ -260,7 +270,7 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
 bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss) {
   std::string str;
   task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
-  task.subject = CTL_SUBJECT::STATUS;
+  task.subject = CTL_SUBJECT::NONE;
   if (getline(ss, str, '/')) {
     if (!helper::try_lexical_cast<int>(str, task.listener_id)) {
       return false;
