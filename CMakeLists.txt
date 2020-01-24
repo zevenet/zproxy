@@ -39,7 +39,7 @@ SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_TESTS "Build tests" ON)
-option(UNIQUE_BUILD_DIRECTORY "enable build directory" OFF)
+option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)
 option(BUNDLED_ZLIB "Use Bundled ZLIB (build latest version)" OFF)
 #debugging
