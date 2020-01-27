@@ -212,6 +212,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/RBAC/Role.pm
 	usr/share/perl5/Zevenet/API40/RBAC/Structs.pm
 	usr/share/perl5/Zevenet/API40/RBAC/User.pm
+	usr/share/perl5/Zevenet/API40/RBAC/Services.pm
 	usr/share/perl5/Zevenet/API40/Stats/Statistics.pm
 	usr/share/perl5/Zevenet/API40/System/Cluster.pm
 	usr/share/perl5/Zevenet/API40/System/Notification.pm
@@ -282,6 +283,9 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Notify.pm
 	usr/share/perl5/Zevenet/RBAC/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Core.pm
+	usr/share/perl5/Zevenet/RBAC/Runtime.pm
+	usr/share/perl5/Zevenet/RBAC/LDAP.pm
+	usr/share/perl5/Zevenet/RBAC/LOCAL.pm
 	usr/share/perl5/Zevenet/RBAC/Group/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Group/Config.pm
 	usr/share/perl5/Zevenet/RBAC/Group/Core.pm
