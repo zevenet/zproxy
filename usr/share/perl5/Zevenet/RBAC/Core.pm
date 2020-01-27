@@ -83,14 +83,46 @@ sub getRBACLocalEnabled
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $srv_file = &getRBACServicesConfPath();
-	my $loc      = &getTiny( $srv_file );
-	$loc = $loc->{ 'local_user' };
+
+	#my $srv_file = &getRBACServicesConfPath();
+	#my $loc      = &getTiny( $srv_file );
+	#$loc = $loc->{ 'local_user' };
 
 	# enabled by default
-	return ( exists $loc->{ enabled } and $loc->{ enabled } eq 'false' )
-	  ? 'false'
-	  : 'true';
+	#return ( exists $loc->{ enabled } and $loc->{ enabled } eq 'false' )
+	#  ? 'false'
+	#  : 'true';
+	return ( &getRBACServiceEnabled( "local" ) );
+}
+
+=begin nd
+Function: getRBACServiceEnabled
+
+	It gets the status of the authentication service.
+
+Parameters:
+	Service - Authentication Service.
+
+Returns:
+	String - 'true' if the users can be authenticated by the service or 'false' if they aren't
+
+=cut
+
+sub getRBACServiceEnabled
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $srv      = shift;
+	my $srv_file = &getRBACServicesConfPath();
+	my $services = &getTiny( $srv_file );
+	my $service  = $services->{ $srv };
+
+	my $output = 'false';
+	if ( exists $service->{ enabled } )
+	{
+		$output = $service->{ enabled };
+	}
+	return $output;
 }
 
 =begin nd
@@ -101,7 +133,7 @@ Function: setRBACLocalEnabled
 	before than authentica the user
 
 Parameters:
-	None - .
+	Status - Status to set.
 
 Returns:
 	Integer - Error code: 0 on success or another value on failure
@@ -117,8 +149,39 @@ sub setRBACLocalEnabled
 	die "Error in parameters for the function setRBACLocalEnabled"
 	  if $enabled !~ /^true|false$/;
 
+	#my $srv_file = &getRBACServicesConfPath();
+	#my $err = &setTinyObj( $srv_file, 'local', 'enabled', $enabled );
+	return ( &setRBACServiceEnabled( 'local', $enabled ) );
+}
+
+=begin nd
+Function: setRBACServiceEnabled
+
+	It modify the status for authenticating service.
+	To enable or disable the status is written in a configuration file that is checked
+	before than authenticate the user
+
+Parameters:
+	Service - Authentication Service.
+	Status - Status to set.
+
+Returns:
+	Integer - Error code: 0 on success or another value on failure
+
+=cut
+
+sub setRBACServiceEnabled
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $srv     = shift;
+	my $enabled = shift;
+
+	die "Error in parameters for the function setRBACServiceEnabled"
+	  if $enabled !~ /^true|false$/;
+
 	my $srv_file = &getRBACServicesConfPath();
-	my $err = &setTinyObj( $srv_file, 'local_user', 'enabled', $enabled );
+	my $err = &setTinyObj( $srv_file, $srv, 'enabled', $enabled );
 	return $err;
 }
 
@@ -147,6 +210,30 @@ sub getRBACGroupMembers
 	my @members = split ( ' ', $members );
 
 	return @members;
+}
+
+=begin nd
+Function: getRBACUserAuthservice
+
+	Get the Authentication Service used by the user
+
+Parameters:
+	User - User name
+
+Returns:
+	String - Authentication Service
+
+=cut
+
+sub getRBACUserAuthservice
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $user = shift;
+	include 'Zevenet::RBAC::User::Core';
+
+	return &getRBACUserParam( $user, 'service' );
+
 }
 
 =begin nd
@@ -179,7 +266,7 @@ sub getRBACUserIsMember
 =begin nd
 Function: getRBACUserGroup
 
-	Get the group where the user is incluied
+	Get the group where the user is included
 
 Parameters:
 	User - User name

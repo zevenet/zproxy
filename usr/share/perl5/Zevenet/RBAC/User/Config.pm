@@ -104,6 +104,7 @@ Function: createRBACUser
 Parameters:
 	User - User name
 	Password - Password for the user
+	Authentication Service - Authentication method for the user
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
@@ -114,8 +115,9 @@ sub createRBACUser
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $user   = shift;
-	my $passwd = shift;
+	my $user         = shift;
+	my $passwd       = shift;
+	my $auth_service = shift;
 	my $user_obj;
 
 	# execute cmd
@@ -135,9 +137,9 @@ sub createRBACUser
 		my ( undef, $encrypt_pass ) = getpwnam ( $user );
 
 		# save it
-		$user_obj->{ 'ldap' }             = ( $encrypt_pass eq '*' ) ? 'true' : 'false';
-		$user_obj->{ 'password' }         = $encrypt_pass;
-		$user_obj->{ 'zapi_permissions' } = 'false';
+		$user_obj->{ 'service' }            = $auth_service;
+		$user_obj->{ 'password' }           = $encrypt_pass;
+		$user_obj->{ 'zapi_permissions' }   = 'false';
 		$user_obj->{ 'webgui_permissions' } = 'false';
 		$user_obj->{ 'zapikey' }            = '';
 

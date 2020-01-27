@@ -49,6 +49,7 @@ sub getZapiRBACUsers
 	{
 		my $group = &getRBACUserGroup( $user );
 		$out->{ 'name' }               = $user;
+		$out->{ 'service' }            = $obj->{ 'service' };
 		$out->{ 'webgui_permissions' } = $obj->{ 'webgui_permissions' };
 		$out->{ 'zapi_permissions' }   = $obj->{ 'zapi_permissions' };
 		$out->{ 'group' }              = $group;

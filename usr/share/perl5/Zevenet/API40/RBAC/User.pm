@@ -79,13 +79,25 @@ sub add_rbac_user
 					'exceptcions'  => ["zapi"]
 		},
 
-	   # this parameter is not required. If it is not sent, the user will be a LDAP user
+		"service" => {
+					   'values'    => ['local', 'ldap'],
+					   'non_blank' => 'true',
+					   'required'  => 'true'
+		},
+
+		# this parameter is not required when authentication method is local.
 		"password" => {
 			'valid_format' => 'rbac_password',
 			'non_blank'    => 'true',
 			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
 		},
+
 	};
+	if (     ( defined $json_obj->{ 'service' } )
+		 and ( $json_obj->{ 'service' } eq 'local' ) )
+	{
+		$params->{ 'password' }->{ 'required' } = 'true';
+	}
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
@@ -108,7 +120,11 @@ sub add_rbac_user
 	}
 
 	# executing the action
-	&createRBACUser( $json_obj->{ 'name' }, $json_obj->{ 'password' } );
+	&createRBACUser(
+					 $json_obj->{ 'name' },
+					 $json_obj->{ 'password' },
+					 $json_obj->{ 'service' }
+	);
 
 	my $output = &getZapiRBACUsers( $json_obj->{ 'name' } );
 
@@ -141,6 +157,7 @@ sub set_rbac_user
 	my $json_obj = shift;
 	my $user     = shift;
 
+	include 'Zevenet::RBAC::User::Core';
 	include 'Zevenet::RBAC::User::Config';
 
 	my $desc = "Modify the RBAC user $user";
@@ -156,20 +173,24 @@ sub set_rbac_user
 		my $msg = "The RBAC user $user doesn't exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
-	my $user_conf = &getRBACUserObject( $user );
-	if ( $user_conf->{ ldap } ne 'true' )
-	{
-		$params->{ "newpassword" } = {
-			'valid_format' => 'rbac_password',
-			'non_blank'    => 'true',
-			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
-		};
-	}
+	$params->{ "newpassword" } = {
+		'valid_format' => 'rbac_password',
+		'non_blank'    => 'true',
+		'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+	};
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
+
+	if (     ( &getRBACUserAuthservice( $user ) ne 'local' )
+		 and ( exists $json_obj->{ 'newpassword' } ) )
+	{
+		$error_msg = "The parameter 'newpassword' is only expected with local users";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+		  if ( $error_msg );
+	}
 
 	# Checking the user has a group
 	if (    exists $json_obj->{ 'webgui_permissions' }

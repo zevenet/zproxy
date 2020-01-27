@@ -204,24 +204,33 @@ sub authLDAP
 	my $ldap_conf = &getLDAP();
 	delete $ldap_conf->{ filter } if ( $ldap_conf->{ filter } eq '' );
 
-	if ( $ldap_conf->{ host } and $ldap_conf->{ enabled } eq 'true' )
+	if ( &getRBACServiceEnabled( 'ldap' ) eq 'true' )
 	{
+		delete $ldap_conf->{ enabled };
 		require Authen::Simple::LDAP;
 		eval {
+
 			include 'Zevenet::Code';
 			$ldap_conf->{ bindpw } = &getCodeDecode( $ldap_conf->{ bindpw } )
 			  if ( defined $ldap_conf->{ bindpw } );
+
 			my $ldap = Authen::Simple::LDAP->new( $ldap_conf );
 			if ( $ldap->authenticate( $user, $pass ) )
 			{
-				&zenlog( "The user '$user' login with LDAP", "debug", "auth" );
+				&zenlog( "The user '$user' login with ldap auth service", "debug", "auth" );
 				$suc = 1;
 			}
 		};
 		if ( $@ )
 		{
 			$suc = 0;
+			&zenlog( "The load balancer cannot run the LDAP query: $@", "debug", "rbac" );
 		}
+	}
+	else
+	{
+		$suc = 0;
+		&zenlog( "LDAP Authentication Service is not active", "debug", "rbac" );
 	}
 
 	return $suc;

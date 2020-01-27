@@ -64,23 +64,18 @@ sub set_rbac_services
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( exists $json_obj->{ local } )
+	my @services = ( 'local', 'ldap' );
+	foreach my $service ( @services )
 	{
-		if ( &setRBACLocalEnabled( $json_obj->{ local } ) )
+		if ( exists $json_obj->{ $service } )
 		{
-			my $msg = "There was an error configuring the RBAC local service";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			if ( &setRBACServiceEnabled( $service, $json_obj->{ $service } ) )
+			{
+				my $msg = "There was an error configuring the RBAC $service service";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 	}
-	if ( exists $json_obj->{ ldap } )
-	{
-		if ( &setLDAP( { enabled => $json_obj->{ ldap } } ) )
-		{
-			my $msg = "There was an error configuring the RBAC LDAP status";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
 	my $params = &getZapiRbacServices();
 	return &httpResponse(
 				 { code => 200, body => { description => $desc, params => $params } } );
@@ -88,10 +83,13 @@ sub set_rbac_services
 
 sub getZapiRbacServices
 {
-	return {
-			 local => &getRBACLocalEnabled(),
-			 ldap  => &getLDAP()->{ enabled },
-	};
+	my @services = ( 'local', 'ldap' );
+	my %out;
+	foreach my $service ( @services )
+	{
+		$out{ $service } = &getRBACServiceEnabled( $service );
+	}
+	return \%out;
 }
 
 1;

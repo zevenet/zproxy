@@ -131,6 +131,32 @@ sub getRBACUserExists
 }
 
 =begin nd
+
+Function: getRBACUserLocal
+
+	Check if a user authenticates via Operating System
+
+Parameters:
+	User - User name
+
+Returns:
+	Integer - 1 if the user authenticates via OS or 0 if it doesn't
+
+=cut
+
+sub getRBACUserLocal
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $user = shift;
+
+	my $out = 0;
+	$out = 1 if ( &getRBACUserParam( $user, 'service' ) eq 'local' );
+
+	return $out;
+}
+
+=begin nd
 Function: getRBACUserObject
 
 	get a object with all parameters of a user
@@ -153,7 +179,6 @@ sub getRBACUserObject
 	my $fileHandle = Config::Tiny->read( $rbacUserConfig );
 
 	my $cfg = $fileHandle->{ $user };
-	$cfg->{ 'ldap' } //= 'false';
 
 	return $cfg;
 }
