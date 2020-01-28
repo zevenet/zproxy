@@ -381,7 +381,6 @@ sub whereIam
 {
 	my $provider = 'nocloud';
 
-	# Check if it is an Amazon VM
 	my $bios_version = &getGlobalConfiguration( 'bios_version' );
 	my $dpkg         = &getGlobalConfiguration( 'dpkg_bin' );
 	my $grep         = &getGlobalConfiguration( 'grep_bin' );
@@ -391,7 +390,7 @@ sub whereIam
 	{
 		$provider = "aws";
 	}
-	elsif ( !system ( "$dpkg -l | $grep waagent &>/dev/null" ) )
+	elsif ( !system ( "$dpkg -l | $grep waagent" ) )
 	{
 		$provider = "azure";
 	}
