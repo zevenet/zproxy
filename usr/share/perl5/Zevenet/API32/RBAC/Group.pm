@@ -58,6 +58,7 @@ sub add_rbac_group
 {
 	my $json_obj = shift;
 
+	require Zevenet::User;
 	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Create the RBAC group, $json_obj->{ 'name' }";
@@ -74,6 +75,14 @@ sub add_rbac_group
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	else
+	{
+		if ( &getSysGroupExists( $json_obj->{ 'name' } ) )
+		{
+			my $msg = "$json_obj->{ 'name' } is an Operating System group.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# Check allowed parameters
@@ -139,7 +148,7 @@ sub set_rbac_group
 	# Check if role exists
 	include 'Zevenet::RBAC::Role::Config';
 
-	if ( ! grep( /^$json_obj->{ role }$/, &getRBACRolesList() ) )
+	if ( !grep ( /^$json_obj->{ role }$/, &getRBACRolesList() ) )
 	{
 		my $msg = "The role $json_obj->{ 'role' } doesn't exist.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -249,7 +258,7 @@ sub add_rbac_group_resource
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 
-		elsif ( ! &getValidFormat( 'virt_interface', $resource ) )
+		elsif ( !&getValidFormat( 'virt_interface', $resource ) )
 		{
 			my $msg = "The interface has to be a virtual interface.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

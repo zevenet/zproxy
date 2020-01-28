@@ -58,22 +58,23 @@ sub add_rbac_user
 {
 	my $json_obj = shift;
 
+	require Zevenet::User;
 	include 'Zevenet::RBAC::User::Config';
 
 	my $desc = "Create the RBAC user, $json_obj->{ 'name' }";
 	my $params = {
-		  "name" => {
-					  'valid_format' => 'user_name',
-					  'non_blank'    => 'true',
-					  'required'     => 'true',
-					  'exceptcions'  => ["zapi"]
-		  },
-		  "password" => {
-				  'valid_format' => 'rbac_password',
-				  'non_blank'    => 'true',
-				  'required'     => 'true',
-				  'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
-		  },
+		"name" => {
+					'valid_format' => 'user_name',
+					'non_blank'    => 'true',
+					'required'     => 'true',
+					'exceptcions'  => ["zapi"]
+		},
+		"password" => {
+			'valid_format' => 'rbac_password',
+			'non_blank'    => 'true',
+			'required'     => 'true',
+			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+		},
 	};
 
 	# Check if it exists
@@ -81,6 +82,14 @@ sub add_rbac_user
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	else
+	{
+		if ( &getSysUserExists( $json_obj->{ 'name' } ) )
+		{
+			my $msg = "$json_obj->{ 'name' } is a Operating System User.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# Check allowed parameters
@@ -124,14 +133,14 @@ sub set_rbac_user
 
 	my $desc = "Modify the RBAC user $user";
 	my $params = {
-		 "zapikey"            => { 'valid_format' => 'zapi_key' },
-		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_black' => 'true' },
-		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_black' => 'true' },
-		 "newpassword" => {
-				  'valid_format' => 'rbac_password',
-				  'non_blank'    => 'true',
-				  'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
-		 },
+		"zapikey"            => { 'valid_format' => 'zapi_key' },
+		"zapi_permissions"   => { 'valid_format' => 'boolean', 'non_black' => 'true' },
+		"webgui_permissions" => { 'valid_format' => 'boolean', 'non_black' => 'true' },
+		"newpassword" => {
+			'valid_format' => 'rbac_password',
+			'non_blank'    => 'true',
+			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+		},
 	};
 
 	# check if the user exists
@@ -146,9 +155,9 @@ sub set_rbac_user
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-
 	# Checking the user has a group
-	if ( exists $json_obj->{ 'webgui_permissions' } or exists $json_obj->{ 'zapi_permissions' } )
+	if (    exists $json_obj->{ 'webgui_permissions' }
+		 or exists $json_obj->{ 'zapi_permissions' } )
 	{
 		unless ( &getRBACUserGroup( $user ) )
 		{
@@ -257,7 +266,6 @@ sub del_rbac_user
 	}
 }
 
-
 # 	GET /system/users
 sub get_system_user_rbac
 {
@@ -265,17 +273,17 @@ sub get_system_user_rbac
 	my $user = &getUser();
 
 	my $desc = "Retrieve the user $user";
-	my $obj   = &getRBACUserObject( $user );
+	my $obj  = &getRBACUserObject( $user );
 
 	if ( $obj )
 	{
 		my $params = {
-					 'user'   => $user,
-					 'zapi_permissions' => $obj->{ 'zapi_permissions' },
+					   'user'             => $user,
+					   'zapi_permissions' => $obj->{ 'zapi_permissions' },
 		};
 
 		&httpResponse(
-			   { code => 200, body => { description => $desc, params => $params } } );
+					 { code => 200, body => { description => $desc, params => $params } } );
 	}
 }
 
@@ -288,8 +296,8 @@ sub set_system_user_rbac
 	include 'Zevenet::User';
 
 	my $error = 0;
-	my $user = &getUser();
-	my $desc = "Modify the user $user";
+	my $user  = &getUser();
+	my $desc  = "Modify the user $user";
 
 	$desc = "Modify the user $user";
 
