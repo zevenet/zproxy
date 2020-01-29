@@ -94,6 +94,9 @@ sed -i -e 's!^. /lib/lsb/init-functions!#. /lib/lsb/init-functions!' /etc/init.d
 sed -i -e 's!\slog_!: #log_!' /etc/init.d/keepalived
 
 # boot dependencies
+# snmp
+sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$network \$remote_fs \$syslog zevenet/g' /etc/init.d/snmpd
+sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$network \$remote_fs \$syslog zevenet/g' /etc/init.d/snmpd
 # ssh
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
