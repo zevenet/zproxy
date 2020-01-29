@@ -464,6 +464,9 @@ if ( $action eq "start" )
 		system ( "/etc/init.d/ssh start >/dev/null 2>&1" );
 	}
 
+	# Bugfix: SNMP didn't start if the IP is not up
+	&logAndRun ( "/etc/init.d/snmpd restart" );
+
 	&local_http_service( 'start' );
 
 	&printAndLog( "Start proccess finished." );
