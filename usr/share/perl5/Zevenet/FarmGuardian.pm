@@ -1105,7 +1105,22 @@ sub runFGFarmStart
 		else             { &zenlog( "running $fg_cmd", 'debug', 'FG' ); }
 
 		# necessary for waiting that fg process write its process
-		sleep ( 1 );
+		#sleep ( 1 );
+		use Time::HiRes qw(usleep);
+		$status = 0;
+		my $pid_file = &getFGPidFile();
+		for ( my $it = 0 ; $it < 1000 ; $it += 10 )
+		{
+			if ( -f $pid_file )
+			{
+				$status = 1;
+				last;
+			}
+
+			# 1 millisecond == 1000 microseconds
+			usleep( 10 );
+		}
+
 	}
 	elsif ( $ftype ne 'gslb' )
 	{

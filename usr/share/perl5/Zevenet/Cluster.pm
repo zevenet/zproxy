@@ -409,10 +409,10 @@ vrrp_script chk_cl_status {
 \tscript \"/usr/local/zevenet/bin/check_cluster.sh\"
 
 \t# Check every 2 seconds
-\tinterval 30
+\tinterval 5
 
 \t# Add 2 points to priority if OK
-\tweight 2
+\t# weight 2
 }
 
 vrrp_instance ZCluster {
