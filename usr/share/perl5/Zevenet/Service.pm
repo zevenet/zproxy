@@ -408,11 +408,11 @@ sub enable_cluster
 	my $remote_node_status = &runRemotely( "cat $znode_status_file", $remote_ip );
 
 	# force sync with master
-	if ( $remote_node_status eq 'master' )
+	if ( $remote_node_status =~ /master/ )
 	{
 		# FIXME: use zcluster_manager function
 		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-
+		$local_node_status = "backup";
 		&runRemotely( "$zcluster_manager sync", $remote_ip );
 		&enableZCluster( 10 );
 
