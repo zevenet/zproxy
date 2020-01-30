@@ -1006,6 +1006,8 @@ sub getZClusterNodeStatus
 	$status = '' if not defined $status;
 	chomp $status;
 
+	close $znode_status;
+
 	return $status;
 }
 
