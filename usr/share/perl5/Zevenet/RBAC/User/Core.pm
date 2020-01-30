@@ -179,6 +179,7 @@ sub getRBACUserObject
 	my $fileHandle = Config::Tiny->read( $rbacUserConfig );
 
 	my $cfg = $fileHandle->{ $user };
+	$cfg->{ 'service' } = 'local' if !( defined $cfg->{ 'service' } );
 
 	return $cfg;
 }

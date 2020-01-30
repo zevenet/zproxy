@@ -86,8 +86,13 @@ sub initRBACModule
 	&updateRBACAllGroup();
 
 	# create services
-	&setRBACServiceEnabled( 'local', 'true' );
-	&setRBACServiceEnabled( 'ldap',  'false' );
+	if ( !-s &getRBACServicesConfPath() )
+	{
+		foreach my $service ( &getRBACServices )
+		{
+			&setRBACServiceEnabled( $service, &getRBACServiceDefault( $service ) );
+		}
+	}
 
 }
 

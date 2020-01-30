@@ -84,15 +84,57 @@ sub getRBACLocalEnabled
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	#my $srv_file = &getRBACServicesConfPath();
-	#my $loc      = &getTiny( $srv_file );
-	#$loc = $loc->{ 'local_user' };
-
-	# enabled by default
-	#return ( exists $loc->{ enabled } and $loc->{ enabled } eq 'false' )
-	#  ? 'false'
-	#  : 'true';
 	return ( &getRBACServiceEnabled( "local" ) );
+}
+
+=begin nd
+Function: getRBACServices
+
+	It gets the authentication services.
+
+Parameters:
+	None - 
+
+Returns:
+	Array - List of Services
+
+=cut
+
+sub getRBACServices
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my @services = ( 'local', 'ldap' );
+
+	return @services;
+}
+
+=begin nd
+Function: getRBACServiceDefault
+
+	It gets the authentication service default value.
+
+Parameters:
+	String - Authentication service
+
+Returns:
+	String - Default value
+
+=cut
+
+sub getRBACServiceDefault
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $service = shift;
+
+	my %services = (
+					 'local' => 'true',
+					 'ldap'  => 'false',
+	);
+
+	return $services{ $service };
 }
 
 =begin nd
@@ -149,8 +191,6 @@ sub setRBACLocalEnabled
 	die "Error in parameters for the function setRBACLocalEnabled"
 	  if $enabled !~ /^true|false$/;
 
-	#my $srv_file = &getRBACServicesConfPath();
-	#my $err = &setTinyObj( $srv_file, 'local', 'enabled', $enabled );
 	return ( &setRBACServiceEnabled( 'local', $enabled ) );
 }
 

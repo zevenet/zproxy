@@ -76,16 +76,15 @@ sub add_rbac_user
 					'valid_format' => 'user_name',
 					'non_blank'    => 'true',
 					'required'     => 'true',
-					'exceptcions'  => ["zapi"]
+					'exceptions'   => ["zapi"]
 		},
 
 		"service" => {
 					   'values'    => ['local', 'ldap'],
 					   'non_blank' => 'true',
-					   'required'  => 'true'
 		},
 
-		# this parameter is not required when authentication method is local.
+		# this parameter is required when authentication method is local.
 		"password" => {
 			'valid_format' => 'rbac_password',
 			'non_blank'    => 'true',
@@ -93,6 +92,7 @@ sub add_rbac_user
 		},
 
 	};
+	$json_obj->{ 'service' } = 'local' if !( defined $json_obj->{ 'service' } );
 	if (     ( defined $json_obj->{ 'service' } )
 		 and ( $json_obj->{ 'service' } eq 'local' ) )
 	{

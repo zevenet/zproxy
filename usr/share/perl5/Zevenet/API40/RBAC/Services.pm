@@ -64,8 +64,7 @@ sub set_rbac_services
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my @services = ( 'local', 'ldap' );
-	foreach my $service ( @services )
+	foreach my $service ( &getRBACServices() )
 	{
 		if ( exists $json_obj->{ $service } )
 		{
@@ -83,9 +82,8 @@ sub set_rbac_services
 
 sub getZapiRbacServices
 {
-	my @services = ( 'local', 'ldap' );
 	my %out;
-	foreach my $service ( @services )
+	foreach my $service ( &getRBACServices() )
 	{
 		$out{ $service } = &getRBACServiceEnabled( $service );
 	}
