@@ -507,8 +507,9 @@ sub getRoutingIsolateTables
 
 	foreach my $if ( &getLinkNameList() )
 	{
-		next if "table_$if" eq $table;    # does not add the same interface
-		next if $if eq 'lo';              # does not add the lo interface
+		next if "table_$if" eq $table;      # does not add the same interface
+		next if $if eq 'lo';                # does not add the lo interface
+		next if $if eq 'cl_maintenance';    # does not add the cluster interface
 
 		my $iface;
 		@tables = &getRoutingIsolate( $if );
