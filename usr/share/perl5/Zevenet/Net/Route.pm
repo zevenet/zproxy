@@ -749,6 +749,9 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 			my $rule = &getRuleFromIface( $if_ref );
 			$status = &setRule( "add", $rule );
+
+			#~ require Zevenet::Farm::Config;
+			#~ &reloadFarmsSourceAddress() if $status == 0;
 		}
 		else
 		{
@@ -784,9 +787,6 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 					&setGlobalConfiguration( 'defaultgw',   $gateway );
 					&setGlobalConfiguration( 'defaultgwif', $$if_ref{ name } );
 				}
-
-				require Zevenet::Farm::Config;
-				&reloadFarmsSourceAddress() if $status == 0;
 			}
 		}
 		$if_announce = $$if_ref{ name };

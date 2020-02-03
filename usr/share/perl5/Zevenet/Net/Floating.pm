@@ -298,6 +298,81 @@ sub setFloatingSourceAddr
 	  );
 }
 
+#	&setFloatingSourceAddr( $farm_name );
+sub replaceL4ServerSourceAddr
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $farm      = shift;
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $out_if    = 0;
+	my $srcaddr;
+
+	require Zevenet::Nft;
+	require Zevenet::Net::Validate;
+	require Zevenet::Net::Interface;
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::L4xNAT::Config;    # Currently, only for L4
+	require Zevenet::Farm::L4xNAT::Action;
+
+	my $farm_if_name = &getInterfaceByIp( $farm->{ vip } );
+	my $farm_if      = &getInterfaceConfig( $farm_if_name );
+
+	my $configdir     = &getGlobalConfiguration( 'configdir' );
+	my $farm_filename = &getFarmFile( $farm->{ name } );
+	my $farm_file     = "$configdir/$farm_filename";
+
+	my $id = 0;
+
+	# returns the backends with theirs source-addr
+	my $bk_ids = {};
+	foreach my $server ( @{ $farm->{ servers } } )
+	{
+		$srcaddr = "";
+
+		if ( $server->{ ip } )
+		{
+			my $net =
+			  &getNetValidate( $farm->{ vip }, $farm_if->{ mask }, $server->{ ip } );
+
+			# delete if the backend is not accesible now for the floating ip
+			if ( !$net )
+			{
+				$out_if = &getFloatInterfaceForAddress( $server->{ ip } );
+				$srcaddr = ( $out_if ) ? $out_if->{ addr } : "";
+			}
+		}
+		$bk_ids->{ $id++ } = $srcaddr;
+	}
+
+	require JSON::XS;
+	JSON::XS->import;
+	my $json = JSON::XS->new->utf8->pretty( 1 );
+	$json->canonical( [1] );
+
+	# replace in config file
+	my $file_str;
+	open my $fd, '<', "$farm_file";
+	{
+		local $/ = undef;
+		$file_str = <$fd>;
+	}
+	close $fd;
+
+	my $f_json = $json->decode( $file_str );
+	my $id     = 0;
+	foreach my $bk ( @{ $f_json->{ servers } } )
+	{
+		$bk->{ 'source-addr' } = $bk_ids->{ $id }->{ source_addr };
+		$id++;
+	}
+
+	my $file_str = $json->encode( $f_json );
+	print $fd $file_str;
+	close $fd;
+}
+
 sub get_floating_struct
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",

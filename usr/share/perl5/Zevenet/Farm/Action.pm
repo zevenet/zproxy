@@ -160,7 +160,7 @@ sub runFarmStart    # ($farm_name, $writeconf)
 		);
 
 		require Zevenet::Farm::Config;
-		&reloadFarmsSourceAddressByFarm( $farm_name );
+
 		if ( &getPersistence( $farm_name ) == 0 )
 		{
 			&eload(
