@@ -150,17 +150,24 @@ sub runFarmStart    # ($farm_name, $writeconf)
 
 		require Zevenet::Farm::Config;
 		&reloadFarmsSourceAddressByFarm( $farm_name );
-		if (&getPersistence($farm_name) == 0){
-		&eload(
-			module	=> 'Zevenet::Ssyncd',
-			func	=> 'setSsyncdFarmUp',
-			args	=> [$farm_name],
+		if ( &getPersistence( $farm_name ) == 0 )
+		{
+			&eload(
+					module => 'Zevenet::Ssyncd',
+					func   => 'setSsyncdFarmUp',
+					args   => [$farm_name],
 			);
 		}
-        }
 
-
-
+		if ( &getPersistence( $farm_name ) == 0 )
+		{
+			&eload(
+					module => 'Zevenet::Ssyncd',
+					func   => 'setSsyncdFarmUp',
+					args   => [$farm_name],
+			);
+		}
+	}
 	return $status;
 }
 
@@ -195,11 +202,11 @@ sub runFarmStop    # ($farm_name, $writeconf)
 				func   => 'runIPDSStopByFarm',
 				args   => [$farm_name],
 		);
-                &eload(
-                                module  => 'Zevenet::Ssyncd',
-                                func    => 'setSsyncdFarmDown',
-                                args    => [$farm_name],
-                );
+		&eload(
+				module => 'Zevenet::Ssyncd',
+				func   => 'setSsyncdFarmDown',
+				args   => [$farm_name],
+		);
 
 	}
 
