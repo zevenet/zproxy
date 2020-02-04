@@ -198,6 +198,9 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
       return false;
     }
   }
+  if (++ssl_connection.handshake_retries > 50) {
+    return false;
+  }
   ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_START;
   ERR_clear_error();
 #if USE_SSL_BIO_BUFFER
@@ -207,23 +210,25 @@ bool SSLConnectionManager::handleHandshake(Connection &ssl_connection, bool clie
     auto errno__ = errno;
     if (!BIO_should_retry(ssl_connection.io)) {
       if (SSL_in_init(ssl_connection.ssl)) {
-//        Logger::logmsg(LOG_DEBUG,
-//                       ">>PROGRESS>>fd:%d BIO_do_handshake "
-//                       "return:%d error: with %s errno: %d:%s \n "
-//                       "Ossl errors: %s",
-//                       ssl_connection.getFileDescriptor(), i,
-//                       ssl_connection.getPeerAddress().data(), errno__,
-//                       std::strerror(errno__), ossGetErrorStackString().get());
+        //        Logger::logmsg(LOG_DEBUG,
+        //                       ">>PROGRESS>>fd:%d BIO_do_handshake "
+        //                       "return:%d error: with %s errno: %d:%s \n "
+        //                       "Ossl errors: %s",
+        //                       ssl_connection.getFileDescriptor(), i,
+        //                       ssl_connection.getPeerAddress().data(),
+        //                       errno__, std::strerror(errno__),
+        //                       ossGetErrorStackString().get());
         return true;
       }
       if (SSL_is_init_finished(ssl_connection.ssl)) {
-//        Logger::logmsg(LOG_DEBUG,
-//                       ">>FINISHED>>fd:%d BIO_do_handshake "
-//                       "return:%d error: with %s errno: %d:%s \n "
-//                       "Ossl errors: %s",
-//                       ssl_connection.getFileDescriptor(), i,
-//                       ssl_connection.getPeerAddress().data(), errno__,
-//                       std::strerror(errno__), ossGetErrorStackString().get());
+        //        Logger::logmsg(LOG_DEBUG,
+        //                       ">>FINISHED>>fd:%d BIO_do_handshake "
+        //                       "return:%d error: with %s errno: %d:%s \n "
+        //                       "Ossl errors: %s",
+        //                       ssl_connection.getFileDescriptor(), i,
+        //                       ssl_connection.getPeerAddress().data(),
+        //                       errno__, std::strerror(errno__),
+        //                       ossGetErrorStackString().get());
         return true;
       }
       Logger::logmsg(LOG_DEBUG,

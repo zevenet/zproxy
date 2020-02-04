@@ -120,6 +120,7 @@ class Connection : public Descriptor {
   // SSL stuff
  public:
   ssl::SSL_STATUS ssl_conn_status{ssl::SSL_STATUS::NONE};
+  int handshake_retries{0};
   SSL *ssl{nullptr};
   // socket bio
   BIO *sbio{nullptr};

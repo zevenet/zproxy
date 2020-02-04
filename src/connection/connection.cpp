@@ -131,6 +131,7 @@ void Connection::reset() {
 
 void Connection::freeSsl() {
   this->ssl_connected = false;
+  handshake_retries = 0;
   if (ssl != nullptr) {
     SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
     SSL_shutdown(ssl);
