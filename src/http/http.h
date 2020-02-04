@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include "../version.h"
 #include <memory>
+#include "../util/utils.h"
 
 #ifndef MAX_HEADER_LEN
 #define MAX_HEADER_LEN 4096
@@ -341,7 +342,13 @@ enum class Code {
   // 512-599	Unassigned
 };
 struct http_info {
-  static const std::map<std::string, HTTP_HEADER_NAME, std::less<>> headers_names;
+  static const std::map<std::string, HTTP_HEADER_NAME,
+#if ENABLE_CI_HEADERS
+                        helper::ci_less>
+#else
+                        std::less<>>
+#endif
+headers_names;
   static const std::unordered_map<HTTP_HEADER_NAME, const std::string> headers_names_strings;
   static const std::map<std::string, REQUEST_METHOD, std::less<>> http_verbs;
   static const std::unordered_map<REQUEST_METHOD, const std::string> http_verb_strings;

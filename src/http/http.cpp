@@ -23,7 +23,13 @@
 
 using namespace http;
 
-const std::map<std::string, HTTP_HEADER_NAME, std::less<>> http_info::headers_names = {
+const std::map<std::string, HTTP_HEADER_NAME,
+#if ENABLE_CI_HEADERS
+               helper::ci_less>
+#else
+               std::less<>>
+#endif
+    http_info::headers_names = {
     {"", HTTP_HEADER_NAME::NONE},
     {"Accept", HTTP_HEADER_NAME::ACCEPT},
     {"Accept-Charset", HTTP_HEADER_NAME::ACCEPT_CHARSET},

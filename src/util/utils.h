@@ -116,6 +116,14 @@ inline bool headerEqual(const phr_header &header,
   return std::strncmp(header.name, header_name.c_str(), header.name_len) == 0;
 }
 
+struct ci_less {
+  template <typename _Tp, typename _Up>
+  constexpr bool operator()(_Tp &&__t, _Up &&__u) const noexcept {
+    return ::strncasecmp(__t.data() ,__u.data(), __u.length()) < 0;
+  }
+  typedef int is_transparent;
+};
+
 template <typename T> T try_lexical_cast(const std::string &s, T &out) {
   std::stringstream ss(s);
   return !((ss >> out).fail() || !(ss >> std::ws).eof());
