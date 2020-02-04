@@ -499,6 +499,8 @@ sub getL4FarmSessions
 			 "debug", "PROFILING" );
 	my $farmname = shift;
 
+	require Zevenet::Lock;
+	require Zevenet::JSON;
 	require Zevenet::Net::ConnStats;
 
 	my $nft_bin  = &getGlobalConfiguration( 'nft_bin' );
@@ -509,28 +511,32 @@ sub getL4FarmSessions
 
 	return [] if ( $farm->{ persist } eq "" );
 
-	my $map_name   = "persist-$farmname";
-	my @persistmap = `$nft_bin list map nftlb $map_name`;
+	my $session_tmp = "/tmp/session_$farmname.data";
+	my $lock_f      = &getLockFile( $session_tmp );
+	my $lock_fd     = &openlock( $lock_f, '>' );
+	my $err = &httpNlbRequest(
+							   {
+								 method => "GET",
+								 uri    => "/farms/" . $farmname . '/sessions',
+								 file   => $session_tmp,
+							   }
+	);
+
+	my $nftlb_resp;
+	if ( !$err )
+	{
+		$nftlb_resp = &decodeJSONFile( $session_tmp );
+	}
+
+	close $lock_fd;
+	return [] if ( $err or !defined $nftlb_resp );
 
 	my $client_id = 0;
-
-	foreach my $line ( @persistmap )
+	foreach my $s ( @{ $nftlb_resp->{ sessions } } )
 	{
-		$data = 1 if ( $line =~ /elements = / );
-		next if ( !$data );
-
-		my @subline = split ( ',', $line );
-		foreach my $sub ( @subline )
-		{
-			$it = &parseSession( $farm, $sub );
-			if ( defined $it )
-			{
-				$it->{ client } = $client_id++;
-				push @sessions, $it;
-			}
-		}
-
-		last if ( $data && $line =~ /\}/ );
+		$it = &parseL4Session( $farm, $s );
+		$it->{ client } = $client_id++;
+		push @sessions, $it;
 	}
 
 	return \@sessions;
@@ -543,7 +549,12 @@ Function: parseSession
 
 Parameters:
 	farmname - Farm struct with the farm configuration
-	line - nftables persist line. Example: "192.168.0.186 . 40788 expires 9m56s416ms : 0x80000201,"
+	session ref - It is the session hash returned for nftlb. Example:
+		session = {
+			'expiration' => '1h25m31s364ms',
+			'backend' => 'bck0',
+			'client' => '192.168.10.162'
+		}
 
 Returns:
 	Hash ref - It is a hash with two keys: 'session' returns the session token and
@@ -557,23 +568,20 @@ Returns:
 
 =cut
 
-sub parseSession
+sub parseL4Session
 {
 	my $farm = shift;
-	my $line = shift;
-	my $obj;
+	my $s    = shift;
 
-	$line =~ s/(.*{)?\s*//;
+	my $obj = {
+				'session' => $s->{ client },
+				'type'    => ( exists $s->{ expiration } ) ? 'dynamic' : 'static',
+	};
 
-	my ( $session, $time, $value ) =
-	  ( $line =~ /([\w \.\s\:]+) expires (\w+) : (\w+)(?:[\s,]|$)/ );
-	$session =~ s/ \. /:/;
-
-	$obj = {
-		'id' => &getL4ServerByMark( $farm->{ servers }, $value )
-		,    # 'id' is the backend id
-		'session' => $session,
-	} if ( $session );
+	if ( $s->{ backend } =~ /bck(\d+)/ )
+	{
+		$obj->{ id } = $1;
+	}
 
 	return $obj;
 }

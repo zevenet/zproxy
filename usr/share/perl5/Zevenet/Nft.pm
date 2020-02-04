@@ -181,7 +181,7 @@ sub httpNlbRequest
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $self     = shift;
-	my $curl_cmd = `which curl`;
+	my $curl_cmd = &getGlobalConfiguration( 'curl_bin' );
 	my $output   = -1;
 	my $body     = "";
 
@@ -202,7 +202,7 @@ sub httpNlbRequest
 
 	my $file = "/tmp/nft_$$";
 	$file = $self->{ file }
-	  if ( defined $self->{ file } && $self->{ file } =~ /ipds/ );
+	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds|session)/ );
 
 	if ( defined $self->{ file } && $self->{ file } ne "" )
 	{

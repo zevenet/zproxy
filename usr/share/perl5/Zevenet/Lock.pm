@@ -181,14 +181,6 @@ Function: lockResource
 
 	lock or release an API resource.
 
-	Usage:
-
-		$handleArray = &tielock($file, $oper);
-
-	Examples:
-
-		$handleArray = &tielock("test.dat", "l");
-
 Parameters:
 	resource - Path to file.
 	operation - l (lock), u (unlock), ud (unlock, delete the lock file), r (read)
@@ -201,6 +193,11 @@ sub lockResource
 {
 	my $resource = shift;
 	my $oper     = shift;    # l (lock), r (release), rd (release, delete)
+
+	# TOODO: Define here the available resources
+	# bonding
+	# crl
+	# ...
 
 	if ( $oper =~ /l/ )
 	{

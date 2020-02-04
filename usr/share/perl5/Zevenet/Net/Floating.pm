@@ -309,6 +309,7 @@ sub replaceL4ServerSourceAddr
 	my $out_if    = 0;
 	my $srcaddr;
 
+	require Zevenet::JSON;
 	require Zevenet::Nft;
 	require Zevenet::Net::Validate;
 	require Zevenet::Net::Interface;
@@ -346,31 +347,17 @@ sub replaceL4ServerSourceAddr
 		$bk_ids->{ $id++ } = $srcaddr;
 	}
 
-	require JSON::XS;
-	JSON::XS->import;
-	my $json = JSON::XS->new->utf8->pretty( 1 );
-	$json->canonical( [1] );
+	my $f_json = &decodeJSONFile( $farm_file );
+	return undef if !defined $f_json;
 
-	# replace in config file
-	my $file_str;
-	open my $fd, '<', "$farm_file";
-	{
-		local $/ = undef;
-		$file_str = <$fd>;
-	}
-	close $fd;
-
-	my $f_json = $json->decode( $file_str );
-	my $id     = 0;
+	my $id = 0;
 	foreach my $bk ( @{ $f_json->{ servers } } )
 	{
 		$bk->{ 'source-addr' } = $bk_ids->{ $id }->{ source_addr };
 		$id++;
 	}
 
-	my $file_str = $json->encode( $f_json );
-	print $fd $file_str;
-	close $fd;
+	&encodeJSONFile( $f_json, $farm_file );
 }
 
 sub get_floating_struct
