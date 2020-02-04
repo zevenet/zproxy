@@ -383,8 +383,12 @@ Returns:
 
 sub _getL4ParseFarmConfig
 {
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
+	{
+		no warnings;
+		&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+				 "debug", "PROFILING" );
+		use warnings;
+	}
 	my ( $param, $value, $config ) = @_;
 	my $output = -1;
 	my $exit   = 1;
