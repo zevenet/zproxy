@@ -141,7 +141,7 @@ case "$1" in
 ;;
 
 '-i')   # Install the non-updated packages
-	$apt_bin --with-new-pkgs upgrade
+	DEBIAN_FRONTEND=noninteractive $apt_bin --with-new-pkgs upgrade
 ;;
 
 '-h')
