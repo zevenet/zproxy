@@ -362,8 +362,8 @@ while ( 1 )
 					}
 				}
 
-				system ( "$zcluster_send_action farm restart $farmname &" )
-				  if -f $zcluster_send_action;
+				#system ( "$zcluster_send_action farm restart $farmname &" )
+				#  if -f $zcluster_send_action;
 			}
 
 			$backendstatus[$j] = 'active';
@@ -403,8 +403,8 @@ while ( 1 )
                                 $auxLog = " in farm: '$farmname'";
                                 #&setL4FarmBackendsSessionsRemove( $farmname, $backendid[$j] )
 
-                                system ( "$zcluster_send_action farm restart $farmname &" )
-                                  if -f $zcluster_send_action;
+                                #system ( "$zcluster_send_action farm restart $farmname &" )
+                                #  if -f $zcluster_send_action;
 			}
 
 			$backendstatus[$j] = 'fgDOWN';
