@@ -134,6 +134,7 @@ sub farm_stats    # ( $farmname )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
+		require Zevenet::Farm::L4xNAT::Sessions;
 
 		my $stats    = &getL4FarmBackendsStats( $farmname );
 		my $sessions = &getL4FarmSessions( $farmname );
