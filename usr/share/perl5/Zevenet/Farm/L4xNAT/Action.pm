@@ -459,7 +459,7 @@ sub sendL4NlbCmd
 	$self->{ uri }    = "/farms/" . $self->{ farm };
 	$self->{ body }   = "";
 
-	$output = &httpNlbRequest( $self ) || $output;
+	$output = &httpNlbRequest( $self );
 
 	return $output;
 }
