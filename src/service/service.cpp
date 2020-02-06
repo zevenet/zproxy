@@ -193,11 +193,11 @@ bool Service::doMatch(HttpRequest &request) {
 
   /* check for request */
   auto url = std::string(request.path, request.path_length);
-  for (auto &m = service_config.url; m; m = m->next)
+  for (auto m = service_config.url; m; m = m->next)
     if (regexec(&m->pat, url.data(), 0, nullptr, 0)) return false;
 
   /* check for required headers */
-  for (auto &m = service_config.req_head; m; m = m->next) {
+  for (auto m = service_config.req_head; m; m = m->next) {
     for (found = i = 0; i < static_cast<int>(request.num_headers) && !found;
          i++)
       if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0)) found = 1;
@@ -205,7 +205,7 @@ bool Service::doMatch(HttpRequest &request) {
   }
 
   /* check for forbidden headers */
-  for (auto &m = service_config.deny_head; m; m = m->next) {
+  for (auto m = service_config.deny_head; m; m = m->next) {
     for (found = i = 0; i < static_cast<int>(request.num_headers); i++)
       if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0))
         return false;

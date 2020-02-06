@@ -350,7 +350,7 @@ void StreamManager::addStream(int fd,
 #endif
 // configurar
 #else
-  if (!this->addFd(fd, READ, EVENT_GROUP::CLIENT)) {
+  if (!this->addFd(fd, EVENT_TYPE::READ, EVENT_GROUP::CLIENT)) {
     Logger::LogInfo("Error adding to epoll manager", LOG_NOTICE);
   }
 #endif
