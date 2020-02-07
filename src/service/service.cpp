@@ -350,6 +350,10 @@ Backend *Service::getNextBackend() {
   std::lock_guard<std::mutex> locker(mtx_lock);
   Backend *bck;
   if (backend_set.empty()) return nullptr;
+  else if (backend_set.size() == 1)
+    return backend_set[0]->status != BACKEND_STATUS::BACKEND_UP
+               ? nullptr
+               : backend_set[0];
   switch (service_config.routing_policy) {
     default:
     case LP_ROUND_ROBIN: {
