@@ -152,7 +152,9 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setL4FarmServer( $farmname, $id,
+		my $status = &setL4FarmServer(
+									   $farmname,
+									   $id,
 									   $json_obj->{ ip },
 									   $json_obj->{ port },
 									   $json_obj->{ weight },
@@ -307,11 +309,14 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setDatalinkFarmServer( $id,
+		my $status = &setDatalinkFarmServer(
+											 $id,
 											 $json_obj->{ ip },
 											 $json_obj->{ interface },
 											 $json_obj->{ weight },
-											 $json_obj->{ priority }, $farmname, );
+											 $json_obj->{ priority },
+											 $farmname,
+		);
 
 		if ( $status != -1 )
 		{
@@ -530,12 +535,15 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
 		require Zevenet::Farm::Backend;
 
-		my $status = &setHTTPFarmServer( "",
+		my $status = &setHTTPFarmServer(
+										 "",
 										 $json_obj->{ ip },
 										 $json_obj->{ port },
 										 $json_obj->{ weight },
 										 $json_obj->{ timeout },
-										 $farmname, $service, );
+										 $farmname,
+										 $service,
+		);
 
 		if ( $status != -1 )
 		{
@@ -564,8 +572,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
 				require Zevenet::Farm::Action;
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
+				&runFarmReload( $farmname );
 			}
 
 			&httpResponse( { code => 201, body => $body } );
@@ -1045,7 +1052,8 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		if ( !$error )
 		{
-			my $status = &setL4FarmServer( $farmname,
+			my $status = &setL4FarmServer(
+										   $farmname,
 										   $backend->{ id },
 										   $backend->{ vip },
 										   $backend->{ vport },
@@ -1389,7 +1397,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 			{
 				require Zevenet::Farm::Action;
 
-				&setFarmRestart( $farmname );
+				&runFarmReload( $farmname );
 			}
 		}
 	}
@@ -1809,9 +1817,6 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 			"info", ""
 		);
 
-		require Zevenet::Farm::Action;
-		&setFarmRestart( $farmname );
-
 		my $message = "Backend removed";
 		my $body = {
 					 description => $description,
@@ -1821,8 +1826,16 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			$body->{ status } = "needed restart";
-			&setFarmRestart( $farmname );
+			require Zevenet::Farm::Action;
+			if ( $type eq "gslb" )
+			{
+				$body->{ status } = "needed restart";
+				&setFarmRestart( $farmname );
+			}
+			else
+			{
+				&runFarmReload( $farmname );
+			}
 		}
 
 		&httpResponse( { code => 200, body => $body } );

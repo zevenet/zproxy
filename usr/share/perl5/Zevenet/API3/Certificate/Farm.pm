@@ -92,8 +92,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			require Zevenet::Farm::Action;
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		&httpResponse( { code => 200, body => $body } );
@@ -165,8 +164,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
 				require Zevenet::Farm::Action;
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
+				&runFarmReload( $farmname );
 			}
 
 			&httpResponse( { code => 200, body => $body } );

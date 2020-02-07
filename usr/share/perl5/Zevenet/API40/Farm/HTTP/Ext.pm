@@ -78,8 +78,7 @@ sub add_addheader    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -127,8 +126,7 @@ sub del_addheader
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -189,8 +187,7 @@ sub add_headremove    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -238,8 +235,7 @@ sub del_headremove
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -300,8 +296,7 @@ sub add_addResponseheader    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -349,8 +344,7 @@ sub del_addResponseheader
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -411,8 +405,7 @@ sub add_removeResponseheader    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -460,8 +453,7 @@ sub del_removeResponseHeader
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
+			&runFarmReload( $farmname );
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -545,10 +537,7 @@ sub farm_move_certs
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		require Zevenet::Farm::Action;
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-		$body->{ info } =
-		  "There're changes that need to be applied, stop and start farm to apply them!";
+		&runFarmReload( $farmname );
 
 		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );

@@ -394,6 +394,79 @@ sub runFarmDelete    # ($farm_name)
 }
 
 =begin nd
+Function: runFarmReload
+
+	Reload a farm
+
+Parameters:
+	farm_name - Farm name
+
+Returns:
+Integer - return 0 on success, another value on another failure
+
+=cut
+
+sub runFarmReload    # ($farm_name)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farm_name = shift;
+	require Zevenet::Farm::Action;
+	if ( &getFarmRestartStatus( $farm_name ) )
+	{
+		&zenlog( "'Reload' on $farm_name is not executed. 'Restart' is needed.",
+				 "info", "FARMS" );
+		return 2;
+	}
+	my $farm_type = &getFarmType( $farm_name );
+	my $status    = 0;
+
+	&zenlog( "running 'Reload' for $farm_name", "info", "FARMS" );
+
+	# Reload config daemon
+	$status = &_runFarmReload( $farm_name );
+
+	# Reload Farm status from its cfg file
+	require Zevenet::Farm::HTTP::Backend;
+	&setHTTPFarmBackendStatus( $farm_name );
+
+	return $status;
+}
+
+=begin nd
+Function: _runFarmReload
+
+	It reloads a farm to update the configuration.
+
+Parameters:
+	Farm - It is the farm name
+
+Returns:
+	Integer - It returns 0 on success or another value on failure.
+
+=cut
+
+sub _runFarmReload    # ($farm_name)
+
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farm = shift;
+	my $err  = 0;
+
+	require Zevenet::Farm::Base;
+	return 0 if ( &getFarmStatus( $farm ) ne 'up' );
+
+	require Zevenet::Farm::HTTP::Config;
+	my $proxy_ctl = &getGlobalConfiguration( 'proxyctl' );
+	my $socket    = &getHTTPFarmSocket( $farm );
+
+	$err = &logAndRun( "$proxy_ctl -c $socket -R 0" );
+
+	return $err;
+}
+
+=begin nd
 Function: getFarmRestartFile
 
 	This function returns a file name that indicates that a farm is waiting to be restarted

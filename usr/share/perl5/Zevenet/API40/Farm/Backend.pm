@@ -274,7 +274,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		require Zevenet::Farm::Action;
-		&setFarmRestart( $farmname );
+		&runFarmReload( $farmname );
 	}
 
 	my $message = "Added backend to service successfully";
@@ -619,7 +619,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	if ( &getFarmStatus( $farmname ) eq "up" )
 	{
-		&setFarmRestart( $farmname );
+		&runFarmReload( $farmname );
 	}
 
 	my $body = {
@@ -792,7 +792,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		&setFarmRestart( $farmname );
+		&runFarmReload( $farmname );
 	}
 
 	my $message = "Backend removed";

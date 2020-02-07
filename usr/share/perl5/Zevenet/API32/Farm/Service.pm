@@ -25,12 +25,16 @@ use strict;
 use Zevenet::Farm::Core;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # POST
 sub new_farm_service    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -115,7 +119,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	# no error found, return successful response
 	&zenlog(
-		"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "FARMS"
+		"Success, a new service has been created in farm $farmname with id $json_obj->{id}.",
+		"info", "FARMS"
 	);
 
 	my $body = {
@@ -127,8 +132,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	{
 		require Zevenet::Farm::Action;
 
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 201, body => $body } );
@@ -139,7 +143,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 #GET /farms/<name>/services/<service>
 sub farm_services
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $servicename ) = @_;
 
 	require Zevenet::API32::Farm::Get::HTTP;
@@ -189,7 +194,8 @@ sub farm_services
 
 sub modify_services    # ( $json_obj, $farmname, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
@@ -270,7 +276,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			if ( $backends )
 			{
 				$bk_msg = "The backends of $service have been deleted.";
-				for( my $id = $backends - 1; $id >= 0; $id-- )
+				for ( my $id = $backends - 1 ; $id >= 0 ; $id-- )
 				{
 					&runHTTPFarmServerDelete( $id, $farmname, $service );
 				}
@@ -413,7 +419,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
-			if ( ! &getValidFormat( 'redirect_code', $json_obj->{ redirect_code } ) )
+			if ( !&getValidFormat( 'redirect_code', $json_obj->{ redirect_code } ) )
 			{
 				my $msg = "The available values for redirect_code are: 301, 302 or 307";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -444,15 +450,16 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		if ( $eload )
 		{
 			# status
-			if ( $type ne 'https'  )
+			if ( $type ne 'https' )
 			{
 				my $msg = "The farms have to be HTTPS to modify STS";
-                return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 
 			}
-			if ( ! &getValidFormat( 'http_sts_status', $json_obj->{ sts_status } ) )
+			if ( !&getValidFormat( 'http_sts_status', $json_obj->{ sts_status } ) )
 			{
-				my $msg = "The value $json_obj->{ sts_status } of the param sts_status is invalid";
+				my $msg =
+				  "The value $json_obj->{ sts_status } of the param sts_status is invalid";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -480,15 +487,16 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
-			if ( $type ne 'https'  )
+			if ( $type ne 'https' )
 			{
 				my $msg = "The farms have to be HTTPS to modify STS";
-                return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 
 			}
-			if ( ! &getValidFormat( 'http_sts_timeout', $json_obj->{ sts_timeout } ) )
+			if ( !&getValidFormat( 'http_sts_timeout', $json_obj->{ sts_timeout } ) )
 			{
-				my $msg = "The value $json_obj->{ sts_timeout } of the param sts_timeout is invalid";
+				my $msg =
+				  "The value $json_obj->{ sts_timeout } of the param sts_timeout is invalid";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -516,7 +524,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	$output_params = &get_http_service_struct( $farmname, $service );
 
 	&zenlog(
-		"Success, some parameters have been changed in service $service in farm $farmname.", "info", "FARMS"
+		"Success, some parameters have been changed in service $service in farm $farmname.",
+		"info", "FARMS"
 	);
 
 	my $body = {
@@ -530,10 +539,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		require Zevenet::Farm::Action;
 
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-		$body->{ info } =
-		  "There're changes that need to be applied, stop and start farm to apply them!";
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );
@@ -544,7 +550,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 # DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
 sub delete_service    # ( $farmname, $service )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $service ) = @_;
 
 	my $desc = "Delete service";
@@ -612,8 +619,8 @@ sub delete_service    # ( $farmname, $service )
 	}
 
 	# no errors found, returning successful response
-	&zenlog(
-			 "Success, the service $service has been deleted in farm $farmname.", "info", "FARMS" );
+	&zenlog( "Success, the service $service has been deleted in farm $farmname.",
+			 "info", "FARMS" );
 
 	my $message = "The service $service has been deleted in farm $farmname.";
 	my $body = {
@@ -626,8 +633,7 @@ sub delete_service    # ( $farmname, $service )
 	{
 		require Zevenet::Farm::Action;
 
-		$body->{ status } = "needed restart";
-		&setFarmRestart( $farmname );
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );

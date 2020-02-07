@@ -173,7 +173,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
 	{
 		require Zevenet::Net::Validate;
-		if (     $farm_st->{ status } eq 'up'
+		if (     $farm_st->{ status } ne 'down'
 			 and &checkport( $vip, $vport, $farmname ) eq 'true' )
 		{
 			my $msg =
@@ -604,10 +604,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	if ( $farm_st->{ status } ne 'down' )
 	{
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-		$body->{ info } =
-		  "There're changes that need to be applied, stop and start farm to apply them!";
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );

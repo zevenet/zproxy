@@ -442,9 +442,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );
@@ -552,8 +550,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 	{
 		require Zevenet::Farm::Action;
 
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
+		&runFarmReload( $farmname );
 	}
 
 	&zenlog( "Success trying to delete a certificate to the SNI list.",

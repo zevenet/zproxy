@@ -129,8 +129,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	{
 		require Zevenet::Farm::Action;
 
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 201, body => $body } );
@@ -334,21 +333,13 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	if ( exists $json_obj->{ redirecttype } )
 	{
-		my $redirecttype = $json_obj->{ redirecttype };
+		my $redirecttype = "redirect";
 
-		if ( $redirecttype eq "default" )
+		if ( $json_obj->{ redirecttype } eq "append" )
 		{
-			&setFarmVS( $farmname, $service, "redirect", $redirect );
+			$redirecttype = "redirectappend";
 		}
-		elsif ( $redirecttype eq "append" )
-		{
-			&setFarmVS( $farmname, $service, "redirectappend", $redirect );
-		}
-		elsif ( exists $json_obj->{ redirect } && $json_obj->{ redirect } )
-		{
-			my $msg = "Invalid redirecttype value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+		&setFarmVS( $farmname, $service, $redirecttype, $redirect );
 	}
 
 	if ( exists $json_obj->{ leastresp } )
@@ -532,11 +523,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-		$body->{ info } =
-		  "There're changes that need to be applied, stop and start farm to apply them!";
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );
@@ -630,8 +617,7 @@ sub delete_service    # ( $farmname, $service )
 	{
 		require Zevenet::Farm::Action;
 
-		$body->{ status } = "needed restart";
-		&setFarmRestart( $farmname );
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );

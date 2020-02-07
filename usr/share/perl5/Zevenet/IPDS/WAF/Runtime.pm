@@ -267,10 +267,4 @@ sub reloadWAFByRule
 	return $err;
 }
 
-# ???? add function to change wafbodysize. It is needed to restart
-#~ my $bodysize = &getGlobalConfiguration( 'waf_body_size' );
-#~ ... tener en cuenta que debe borrarse o comentarse la directiva si en
-#~ globalconf esta vacia ... cambiar este parametro en el reload de la granja
-#~ . Si cambia ... pedir un restart
-
 1;

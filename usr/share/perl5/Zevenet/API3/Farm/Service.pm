@@ -96,8 +96,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
 				require Zevenet::Farm::Action;
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
+				&runFarmReload( $farmname );
 			}
 
 			&httpResponse( { code => 201, body => $body } );
@@ -220,8 +219,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 			{
 				require Zevenet::Farm::Action;
 
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
+				&runFarmReload( $farmname );
 			}
 
 			&httpResponse( { code => 201, body => $body } );
@@ -640,10 +638,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		{
 			require Zevenet::Farm::Action;
 
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
-			$body->{ info } =
-			  "There're changes that need to be applied, stop and start farm to apply them!";
+			&runFarmReload( $farmname );
 		}
 
 		&httpResponse( { code => 200, body => $body } );
@@ -917,8 +912,7 @@ sub delete_service    # ( $farmname, $service )
 		{
 			require Zevenet::Farm::Action;
 
-			$body->{ status } = "needed restart";
-			&setFarmRestart( $farmname );
+			&runFarmReload( $farmname );
 		}
 
 		&httpResponse( { code => 200, body => $body } );

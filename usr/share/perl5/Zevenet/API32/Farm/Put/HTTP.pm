@@ -720,10 +720,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	if ( $restart_flag eq "true" && &getFarmStatus( $farmname ) ne 'down' )
 	{
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-		$body->{ info } =
-		  "There're changes that need to be applied, stop and start farm to apply them!";
+		&runFarmReload( $farmname );
 	}
 
 	&httpResponse( { code => 200, body => $body } );
