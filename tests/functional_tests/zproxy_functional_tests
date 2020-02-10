@@ -63,6 +63,10 @@ if (!$no_zproxy) {
 test_get_200_ok();
 # Test POST request with a file
 test_check_POST_file();
+# Test POST request with a file
+test_check_POST_file_null_expect();
+# Test POST request with a file
+test_check_PUT_file();
 # Test the connect timeout
 test_connect_timeout();
 if (!$no_zproxy) {
@@ -153,14 +157,34 @@ sub assert_non_equal {
     }
 }
 
-sub test_check_POST_file {
+sub test_check_POST_file_null_expect {
 
     my $response = `curl -s --data-binary "\@${file_path}" -H "Expect: " http://${ip}:${port}`;
     my $decoded = decode_json($response);
     my $file_crc = file_md5_hex($file_path);
     my $crc = $decoded->{'body'};
 
+    assert_equal($crc, $file_crc, "POST_NULL_EXPECT file checksum");
+}
+
+sub test_check_POST_file {
+
+    my $response = `curl -s --data-binary "\@${file_path}" http://${ip}:${port}`;
+    my $decoded = decode_json($response);
+    my $file_crc = file_md5_hex($file_path);
+    my $crc = $decoded->{'body'};
+
     assert_equal($crc, $file_crc, "POST file checksum");
+}
+
+sub test_check_PUT_file {
+
+    my $response = `curl -X PUT -s --data-binary "\@${file_path}" http://${ip}:${port}`;
+    my $decoded = decode_json($response);
+    my $file_crc = file_md5_hex($file_path);
+    my $crc = $decoded->{'body'};
+
+    assert_equal($crc, $file_crc, "PUT file checksum");
 }
 
 sub test_get_200_ok {
