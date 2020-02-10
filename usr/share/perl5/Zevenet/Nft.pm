@@ -201,16 +201,15 @@ sub httpNlbRequest
 
 	my $file = "/tmp/nft_$$";
 	$file = $self->{ file }
-	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds|session)/ );
+	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds)/ );
 
-	#~ if ( defined $self->{ file } && $self->{ file } ne "" )
-	{
-		$execmd = $execmd . " -f -o $file";
-	}
+	# Send output to a file to get only the http code by the standard output
+	$execmd = $execmd . " -f -o $file";
 
 	my $output = &logAndGet( $execmd );
 	if ( $output !~ /^2/ )    # err
 	{
+		&zenlog( "cmd ($output): $execmd", 'error' );
 		return -1;
 	}
 	elsif ( &debug )
@@ -222,7 +221,6 @@ sub httpNlbRequest
 	if (    defined $self->{ file }
 		 && $self->{ file } ne ""
 		 && !-z "$file"
-		 && $self->{ file } !~ /\/tmp\//
 		 && $file !~ /ipds/ )
 	{
 		require Zevenet::Farm::L4xNAT::Config;

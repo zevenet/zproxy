@@ -61,10 +61,11 @@ if ( $q->path_info =~ qr{^/certificates} )
 }
 
 # Farms
-my $farm_re    = &getValidFormat( 'farm_name' );
-my $service_re = &getValidFormat( 'service' );
-my $be_re      = &getValidFormat( 'backend' );
-my $fg_name_re = &getValidFormat( 'fg_name' );
+my $farm_re       = &getValidFormat( 'farm_name' );
+my $service_re    = &getValidFormat( 'service' );
+my $be_re         = &getValidFormat( 'backend' );
+my $fg_name_re    = &getValidFormat( 'fg_name' );
+my $l4_session_re = &getValidFormat( 'l4_session' );
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 {
@@ -74,6 +75,18 @@ if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 
 	DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} =>
 	  \&delete_farm_certificate;
+}
+
+if ( $q->path_info =~ qr{^/farms/$farm_re/sessions} )
+{
+	require Zevenet::API40::Farm::Session;
+
+	GET qr{^/farms/($farm_re)/sessions$} => \&get_farm_sessions;
+
+	POST qr{^/farms/($farm_re)/sessions$} => \&add_farm_sessions;
+
+	DELETE qr{^/farms/($farm_re)/sessions/($l4_session_re)$} =>
+	  \&delete_farm_sessions;
 }
 
 # Farmguardian

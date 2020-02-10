@@ -27,9 +27,54 @@ use warnings;
 use Zevenet::Farm::L4xNAT::Config;
 
 =begin nd
-Function: getL4FarmSessions
+Function: parseL4FarmSessions
 
-	Get a list of the current l4 sessions in a farm.
+	It transform the session output of nftlb output in a Zevenet session struct
+
+Parameters:
+	farmname - Farm struct with the farm configuration
+	session ref - It is the session hash returned for nftlb. Example:
+		session = {
+			'expiration' => '1h25m31s364ms',
+			'backend' => 'bck0',
+			'client' => '192.168.10.162'
+		}
+
+Returns:
+	Hash ref - It is a hash with two keys: 'session' returns the session token and
+		'id' returns the backen linked with the session token. If any session was found
+		the function will return 'undef'.
+
+	ref = {
+		"id" : 3,
+		"session" : "192.168.1.186"
+	}
+
+=cut
+
+sub parseL4FarmSessions
+{
+	my $farm = shift;
+	my $s    = shift;
+
+	my $obj = {
+				'session' => $s->{ client },
+				'type'    => ( exists $s->{ expiration } ) ? 'dynamic' : 'static',
+				'ttl'     => ( exists $s->{ expiration } ) ? $s->{ expiration } : undef,
+	};
+
+	if ( $s->{ backend } =~ /bck(\d+)/ )
+	{
+		$obj->{ id } = $1;
+	}
+
+	return $obj;
+}
+
+=begin nd
+Function: listL4FarmSessions
+
+	Get a list of the static and dynamic l4 sessions in a farm. Using nftlb
 
 Parameters:
 	farmname - Farm name
@@ -50,7 +95,7 @@ Returns:
 
 =cut
 
-sub getL4FarmSessions
+sub listL4FarmSessions
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -91,7 +136,7 @@ sub getL4FarmSessions
 	my $client_id = 0;
 	foreach my $s ( @{ $nftlb_resp->{ sessions } } )
 	{
-		$it = &parseL4Session( $farm, $s );
+		$it = &parseL4FarmSessions( $farm, $s );
 		$it->{ client } = $client_id++;
 		push @sessions, $it;
 	}
@@ -100,47 +145,141 @@ sub getL4FarmSessions
 }
 
 =begin nd
-Function: parseSession
+Function: getL4FarmSession
 
-	It transform the session output of nftlb output in a Zevenet session struct
+	It selects an session item of the sessions list. The session key is used to select the item
 
 Parameters:
-	farmname - Farm struct with the farm configuration
-	session ref - It is the session hash returned for nftlb. Example:
-		session = {
-			'expiration' => '1h25m31s364ms',
-			'backend' => 'bck0',
-			'client' => '192.168.10.162'
-		}
+	farmname - Farm name
+	session - Session value. It is the session tocken used to forward the connection
 
 Returns:
-	Hash ref - It is a hash with two keys: 'session' returns the session token and
-		'id' returns the backen linked with the session token. If any session was found
-		the function will return 'undef'.
+	Hash ref - Returns session struct with information about the session.
+		"client" is the client position entry in the session table
+		"id" is the backend id assigned to session
+		"session" is the key that identifies the session
 
-	ref = {
-		"id" : 3,
-		"session" : "192.168.1.186"
-	}
+		[
+			{
+			"client" : 0,
+			"id" : 3,
+			"session" : "192.168.1.186"
+			}
+		]
 
 =cut
 
-sub parseL4Session
+sub getL4FarmSession
 {
-	my $farm = shift;
-	my $s    = shift;
+	my $farm    = shift;
+	my $session = shift;
 
-	my $obj = {
-				'session' => $s->{ client },
-				'type'    => ( exists $s->{ expiration } ) ? 'dynamic' : 'static',
-	};
+	my $list = &listL4FarmSessions( $farm );
 
-	if ( $s->{ backend } =~ /bck(\d+)/ )
+	foreach my $s ( @{ $list } )
 	{
-		$obj->{ id } = $1;
+		return $s if ( $s->{ session } eq $session );
 	}
 
-	return $obj;
+	return undef;
 }
+
+=begin nd
+Function: addL4FarmSession
+
+	It adds a static session to the l4xnat farm.
+
+Parameters:
+	farmname - Farm name
+	session - Session value. It is the session tocken used to forward the connection
+	backend - Backend id. It is the backend id where the connection will be sent when the client info matches with the session
+
+Returns:
+	Error code - 0 on success or another value on failure.
+
+=cut
+
+sub addL4FarmSession
+{
+	my ( $farm_name, $session, $bck ) = @_;
+
+	require Zevenet::Farm::L4xNAT::Action;
+
+	my $configdir     = &getGlobalConfiguration( 'configdir' );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $err = &sendL4NlbCmd(
+		{
+		   farm   => $farm_name,
+		   uri    => "/farms",
+		   file   => "$configdir/$farm_filename",
+		   method => "PUT",
+		   body =>
+			 qq({"farms" : [ { "name" : "$farm_name", "sessions" : [ { "client" : "$session", "backend" : "bck$bck" } ] } ] })
+		}
+	);
+
+	return $err;
+}
+
+=begin nd
+Function: delL4FarmSession
+
+	It deletes a static session of a l4xnat farm.
+
+Parameters:
+	farmname - Farm name
+	session - Session value. It is the session tocken used to forward the connection
+
+Returns:
+	Error code - 0 on success or another value on failure.
+
+=cut
+
+sub delL4FarmSession
+{
+	my ( $farm_name, $session ) = @_;
+
+	require Zevenet::Farm::L4xNAT::Action;
+
+	my $configdir     = &getGlobalConfiguration( 'configdir' );
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	my $err = &httpNlbRequest(
+							 {
+							   farm   => $farm_name,
+							   uri    => "/farms/" . $farm_name . '/sessions/' . $session,
+							   method => "DELETE",
+							 }
+	);
+
+	if ( !$err )
+	{
+		$err = &saveL4Conf( $farm_name );
+	}
+
+	return $err;
+}
+
+=begin nd
+Function: validateL4FarmSession
+
+	It deletes a static session of a l4xnat farm.
+
+Parameters:
+	farmname - Farm name
+	session - Session value. It is the session tocken used to forward the connection
+
+Returns:
+	Error code - 0 on success or another value on failure.
+
+=cut
+
+#~ sub validateL4FarmSession
+#~ {
+#~ my ($persis_type, $session) = @_;
+#~ my $suc = 0;
+
+#~ return $suc;
+#~ }
 
 1;

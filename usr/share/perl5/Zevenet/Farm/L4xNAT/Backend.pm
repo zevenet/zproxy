@@ -470,6 +470,11 @@ sub _getL4FarmParseServers
 			push ( @servers, $server );
 		}
 
+		if ( $stage == 2 && $line =~ /\]/ )
+		{
+			last;
+		}
+
 		if ( $stage == 3 && $line =~ /\"name\"/ )
 		{
 			my @l = split /"/, $line;
