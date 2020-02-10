@@ -1850,6 +1850,12 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
     setStreamBackend(stream);
     return;
+  } else if (!stream->request.getHeaderSent()) {
+    http_manager::replyError(http::Code::ServiceUnavailable,
+                             validation::request_result_reason.at(
+                                 validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
+                             listener_config_.err503,
+                             stream->client_connection);
   }
   clearStream(stream);
 }
