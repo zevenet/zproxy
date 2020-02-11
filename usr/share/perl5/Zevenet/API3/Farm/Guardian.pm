@@ -217,7 +217,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				my $status =
 				  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 										  $usefarmguardian, $farmguardianlog, "" );
-				if ( $status != -1 )
+				if ( $status )
 				{
 					$errormsg =
 					  "Error, trying to modify the farm guardian in a farm $farmname, it's not possible to create the FarmGuardian configuration file.";
