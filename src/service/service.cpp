@@ -154,7 +154,7 @@ Service::Service(ServiceConfig &service_config_) : service_config(service_config
   // session data initialization
   this->session_type = static_cast<sessions::HttpSessionType>(service_config_.sess_type);
   this->ttl = static_cast<unsigned int>(service_config_.sess_ttl);
-  this->sess_id = service_config_.sess_id;
+  this->sess_id = service_config_.sess_id + '=';
   this->sess_pat = service_config_.sess_pat;
   this->sess_start = service_config_.sess_start;
 #ifdef CACHE_ENABLED
