@@ -182,7 +182,6 @@ sub httpNlbRequest
 			 "debug", "PROFILING" );
 	my $self     = shift;
 	my $curl_cmd = &getGlobalConfiguration( 'curl_bin' );
-	my $output   = -1;
 	my $body     = "";
 
 	my $pid = &startNlb();
@@ -198,31 +197,35 @@ sub httpNlbRequest
 	  if ( defined $self->{ body } && $self->{ body } ne "" );
 
 	my $execmd =
-	  qq($curl_cmd --noproxy "*" -s -H "Key: HoLa" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
+	  qq($curl_cmd -w "%{http_code}" --noproxy "*" -s -H "Key: HoLa" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
 	my $file = "/tmp/nft_$$";
 	$file = $self->{ file }
-	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds|session)/ );
+	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds)/ );
 
-	if ( defined $self->{ file } && $self->{ file } ne "" )
+	# Send output to a file to get only the http code by the standard output
+	$execmd = $execmd . " -f -o $file";
+
+	my $output = &logAndGet( $execmd );
+	if ( $output !~ /^2/ )    # err
 	{
-		$execmd = $execmd . " -f -o $file";
+		&zenlog( "cmd ($output): $execmd", 'error' );
+		return -1;
 	}
-
-	$output = &logAndRun( $execmd );
+	elsif ( &debug )
+	{
+		&zenlog( "cmd: $execmd", 'debug' );
+	}
 
 	# filter ipds params into the configuration file
 	if (    defined $self->{ file }
 		 && $self->{ file } ne ""
-		 && -f "$file"
-		 && $self->{ file } !~ /\/tmp\//
+		 && !-z "$file"
 		 && $file !~ /ipds/ )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		&writeL4NlbConfigFile( $file, $self->{ file } );
 	}
-
-	return -1 if ( $output != 0 );
 
 	return 0;
 }

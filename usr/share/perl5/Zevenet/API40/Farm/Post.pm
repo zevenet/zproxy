@@ -160,7 +160,7 @@ sub new_farm    # ( $json_obj )
 		);
 	}
 
-	if ( $status == -1 )
+	if ( $status )
 	{
 		my $msg = "The $json_obj->{ farmname } farm can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

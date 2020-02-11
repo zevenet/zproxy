@@ -323,7 +323,7 @@ sub setIPDSFarmParam
 
 		require Zevenet::Nft;
 
-		$output = httpNlbRequest(
+		$output = &httpNlbRequest(
 			{
 			   farm   => $farm,
 			   method => "PUT",
@@ -529,12 +529,12 @@ sub getIPDSPolicyParam
 
 	require Zevenet::Nft;
 
-	$output = httpNlbRequest(
-							  {
-								method => "GET",
-								file   => $file,
-								uri    => "/policies$attrib",
-							  }
+	$output = &httpNlbRequest(
+							   {
+								 method => "GET",
+								 file   => $file,
+								 uri    => "/policies$attrib",
+							   }
 	);
 
 	if ( !-e "$file" )

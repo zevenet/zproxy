@@ -450,6 +450,7 @@ sub sendL4NlbCmd
 
 	return $output if ( $self->{ method } eq "GET" or !defined $self->{ file } );
 
+	# save the conf
 	if ( $self->{ method } =~ /PUT|DELETE/ )
 	{
 		$self->{ file } = $cfgfile;
@@ -459,9 +460,28 @@ sub sendL4NlbCmd
 	$self->{ uri }    = "/farms/" . $self->{ farm };
 	$self->{ body }   = "";
 
-	$output = &httpNlbRequest( $self ) || $output;
+	$output = &httpNlbRequest( $self );
 
 	return $output;
+}
+
+sub saveL4Conf
+{
+	my $farm = shift;
+
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $farmfile  = &getFarmFile( $farm );
+	my $file      = "$configdir/$farmfile";
+
+	my $req = {
+				method => "GET",
+				file   => $file,
+				uri    => "/farms/" . $farm,
+	};
+
+	my $err = &httpNlbRequest( $req );
+
+	return $err;
 }
 
 1;

@@ -26,6 +26,7 @@ use warnings;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
+use Zevenet::Config;
 use Zevenet::Nft;
 
 my $eload;
@@ -991,6 +992,8 @@ sub writeL4NlbConfigFile
 	{
 		return 1;
 	}
+
+	&zenlog( "Saving farm conf '$cfgfile'", "debug" );
 
 	my $fo = &openlock( $cfgfile, 'w' );
 	open my $fi, '<', "$nftfile";
