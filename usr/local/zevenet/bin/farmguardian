@@ -193,6 +193,10 @@ elsif ( $type eq 'http' )
 	$portadmin = &getHTTPFarmSocket( $farmname );
 }
 
+
+# This is a cluster bugfix, to ensure the backend status is correct in the config file.
+my $first_exec = 1;
+
 #Get servers list
 while ( 1 )
 {
@@ -337,7 +341,7 @@ while ( 1 )
 
 		### Enable backend
 		my $auxLog;
-		if ( $timedout == 0 && $errorcode == 0 && $backendstatus[$j] =~ /down/i )
+		if ( ($timedout == 0 && $errorcode == 0 && $backendstatus[$j] =~ /down/i) or $first_exec )
 		{
 			if ( $logging eq 'enabled' )
 			{
@@ -377,18 +381,16 @@ while ( 1 )
 					}
 				}
 
-				&logAndRunBG ( "$zcluster_send_action farm restart $farmname" )
-				  if -f $zcluster_send_action;
 			}
 
 			$backendstatus[$j] = 'active';
 
 			# WARNING: This message format is expected by 'sec'
-			&zenlog( "BackEnd $backendserv[$j]:$backendport[$j] resurrect$auxLog" );
+			&zenlog( "BackEnd $backendserv[$j]:$backendport[$j] resurrect$auxLog" ) if (!$first_exec);
 		}
 		### Disable backend
-		elsif ( ( $timedout == 1 || $errorcode != 0 )
-				&& $backendstatus[$j] ne 'fgDOWN' )
+		elsif ( ( ( $timedout == 1 || $errorcode != 0 )
+				&& $backendstatus[$j] ne 'fgDOWN' ) or $first_exec )
 		{
 			if ( $logging eq 'enabled' )
 			{
@@ -416,17 +418,17 @@ while ( 1 )
 				}
 
 				$auxLog = " in farm: '$farmname'";
-				&logAndRunBG ( "$zcluster_send_action farm restart $farmname" )
-				  if -f $zcluster_send_action;
 			}
 
 			$backendstatus[$j] = 'fgDOWN';
 
 			# WARNING: This message format is expected by 'sec'
-			&zenlog( "BackEnd $backendserv[$j]:$backendport[$j] down$auxLog" );
+			&zenlog( "BackEnd $backendserv[$j]:$backendport[$j] down$auxLog" ) if (!$first_exec);
 		}
 		$j++;
 	}
+
+	$first_exec = 0;
 
 	#~ &zenlog( "backendid " . Dumper( \@backendid ) );
 	#~ &zenlog( "backendserv " . Dumper( \@backendserv ) );

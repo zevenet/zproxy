@@ -404,16 +404,16 @@ sub setKeepalivedConfig
 	my $ka_conf = "! Zevenet configuration file for keepalived
 
 
-vrrp_script chk_cl_status {
+#vrrp_script chk_cl_status {
 \t# Check the cluster role
-\tscript \"/usr/local/zevenet/bin/check_cluster.sh\"
+\t#script \"/usr/local/zevenet/bin/check_cluster.sh\"
 
 \t# Check every 2 seconds
-\tinterval 5
+\t#interval 5
 
 \t# Add 2 points to priority if OK
 \t# weight 2
-}
+#}
 
 vrrp_instance ZCluster {
 \tinterface $zcl_conf->{_}->{interface}

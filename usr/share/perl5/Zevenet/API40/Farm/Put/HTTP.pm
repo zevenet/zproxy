@@ -54,9 +54,9 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 					 'non_blank' => 'true',
 		},
 		"vip" => {
-				   'values'     => $ip_list,
-				   'non_blank'  => 'true',
-				   'format_msg' => 'expects an IP'
+				   'valid_format' => 'ip_addr',
+				   'non_blank'    => 'true',
+				   'format_msg'   => 'expects an IP'
 		},
 		"contimeout" => {
 						  'valid_format' => 'natural_num',

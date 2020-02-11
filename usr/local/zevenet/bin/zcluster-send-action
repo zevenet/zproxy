@@ -1,2 +1,2 @@
-#!/usr/bin/perl
+#!/bin/bash
 /usr/local/zevenet/bin/enterprise.bin zcluster-send-action "$@"

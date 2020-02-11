@@ -98,6 +98,14 @@ sub add_rbac_user
 	{
 		$params->{ 'password' }->{ 'required' } = 'true';
 	}
+	else
+	{
+		if ( &getSysUserExists( $json_obj->{ 'name' } ) )
+		{
+			my $msg = "$json_obj->{ 'name' } is a Operating System User.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );

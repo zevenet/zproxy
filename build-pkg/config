@@ -80,6 +80,7 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
+	usr/share/perl5/Zevenet/Aws.pm	
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
 	usr/share/perl5/Zevenet/RBAC/

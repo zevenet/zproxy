@@ -626,8 +626,9 @@ sub enable_cluster
 								   $zcl_conf->{ $remote_hostname }->{ ip } );
 		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 
-		# start remote interfaces, farms and cluster
-		$cl_output = &runRemotely( '/etc/init.d/zevenet start',
+# start remote interfaces, farms and cluster
+# bugfix: this process is executed in background, because it was blocking the call when the other node has to configure a lot of services.
+		$cl_output = &runRemotely( 'nohup /etc/init.d/zevenet start > /dev/null 2>&1 &',
 								   $zcl_conf->{ $remote_hostname }->{ ip } );
 		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 

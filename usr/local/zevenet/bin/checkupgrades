@@ -118,7 +118,7 @@ case "$1" in
 	if [ $packages \> 0 ]
 	then
 		echo "$packages package(s) require upgrade"
-		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade"
+		echo "To upgrade, execute: checkupgrades -i, or help with checkupgrades -h"
 		echo "last check at `date` - $packages package(s) require upgrade, update this information with: checkupgrades" > $apt_msg
 		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade" >> $apt_msg
 		$apt_bin list --upgradable 2>/dev/null | cut -d"/" -f 1  | sed '1d' | tr  '\n' ' ' > $apt_outdated_list
@@ -140,7 +140,11 @@ case "$1" in
 	$apt_bin list --upgradable 2>/dev/null | awk 'FNR > 1'
 ;;
 
-'-help')
+'-i')   # Install the non-updated packages
+	DEBIAN_FRONTEND=noninteractive $apt_bin --with-new-pkgs upgrade
+;;
+
+'-h')
 	echo "Usage:	checkupgrades"
 	echo "	checkupgrades name-pkg"
 	echo "	checkupgrades [options]"
@@ -149,9 +153,10 @@ case "$1" in
 	echo ""
 	echo "Options:"
 	echo ""
-	echo "  -n			displays number non-updated packages"
-	echo "  -l			displays a list of non-updated packages"
-	echo "  -help			display this help"
+	echo "  -n			Displays the number non-updated packages"
+	echo "  -l			Displays a list of non-updated packages"
+	echo "  -i			Installs the non-updated packages"
+	echo "  -h			Displays this help"
 	echo ""
 ;;
 
