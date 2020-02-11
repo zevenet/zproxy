@@ -26,7 +26,8 @@ use strict;
 #  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
 sub modify_farmguardian    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -175,8 +176,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			}
 
 			my $timetocheck;
-			$timetocheck  = $fgconfig[1] + 0 if defined $fgconfig[1];
-			$timetocheck = 5 if ( ! $timetocheck );
+			$timetocheck = $fgconfig[1] + 0 if defined $fgconfig[1];
+			$timetocheck = 5 if ( !$timetocheck );
 
 			my $check_script = ( defined $fgconfig[2] ) ? $fgconfig[2] : "";
 			$check_script =~ s/\n//g;
@@ -217,20 +218,6 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 										  $usefarmguardian, $farmguardianlog, "" );
 				if ( $status != -1 )
-				{
-					require Zevenet::Farm::Base;
-
-					# run farmguardian, if the farm is running
-					if ( &getFarmStatus( $farmname ) eq 'up' )
-					{
-						if ( $usefarmguardian eq "true" && &runFarmGuardianStart( $farmname, "" ) )
-						{
-							$errormsg =
-							  "Error, trying to modify the farm guardian in a farm $farmname, an error ocurred while starting the FarmGuardian service.";
-						}
-					}
-				}
-				else
 				{
 					$errormsg =
 					  "Error, trying to modify the farm guardian in a farm $farmname, it's not possible to create the FarmGuardian configuration file.";
