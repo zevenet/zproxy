@@ -211,8 +211,9 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
 }
 
 bool ServiceManager::isHandler(ctl::CtlTask &task) {
-  return (
-      ((task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER) &&
-       (task.listener_id == listener_config_->id || task.listener_id == -1)) ||
-      task.target == ctl::CTL_HANDLER_TYPE::ALL);
+  return !disabled &&
+         (((task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER) &&
+           (task.listener_id == listener_config_->id ||
+            task.listener_id == -1)) ||
+          task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }
