@@ -433,6 +433,12 @@ sub delIf    # ($if_ref)
 		&eload( module => 'Zevenet::Net::Ext',
 				func   => 'reloadNetplug', );
 
+		#delete custom routes
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'delRoutingDependIface',
+				args   => [$$if_ref{ name }],
+		);
 	}
 
 	return $status;

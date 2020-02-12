@@ -298,9 +298,6 @@ sub delete_interface_bond    # ( $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	include 'Zevenet::Net::Zapi';
-	&checkZapiIfDepsRouting( $bond, 'del' );
-
 	eval {
 		if ( defined $if_ref->{ addr } and defined $if_ref->{ mask } )
 		{
@@ -722,9 +719,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 	}
 
-	include 'Zevenet::Net::Zapi';
-	&checkZapiIfDepsRouting( $bond, 'put', $json_obj );
-
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 
 	# only allow dhcp when no other parameter was sent
@@ -857,6 +851,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			}
 		}
 
+		my $old_ip = $if_ref->{ addr };
+
 		# Setup new interface configuration structure
 		$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 		$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
@@ -875,6 +871,10 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		include 'Zevenet::Net::Bonding';
+
+		# remove custom routes
+		include 'Zevenet::Net::Routing';
+		&updateRoutingVirtualIfaces( $if_ref->{ parent }, $old_ip ) if ( $old_ip );
 
 		#Change Bonding IP Address
 		if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } )

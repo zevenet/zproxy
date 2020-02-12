@@ -593,7 +593,7 @@ sub setRoutingIsolate
 Function: writeRoutingIsolateConf
 
 	It writes in the configuration file option set from the API. Delete to remove
-	the entry from the configuration file and allow the vibility of the interface;
+	the entry from the configuration file and allow the visibility of the interface;
 	or 'add' to add the entry to de config file and does not allow the visibility
 	of the interface from the table
 
@@ -757,7 +757,7 @@ sub listRoutingTableSys
 =begin nd
 Function: delRoutingDependIface
 
-	Delete all routes that have dependence of a interface
+	Delete all routes, rules and isolate infor that have dependence on a interface
 
 Parameters:
 	interface - name of the interface
@@ -774,8 +774,9 @@ sub delRoutingDependIface
 
 	my $iface = shift;
 
-	&zenlog( "Deleting the routes that are depending on '$iface'", 'net' );
-	foreach my $rule ( &listRoutingDependIface( $iface ) )
+	&zenlog( "Deleting the routes that are depending on '$iface'", 'info', 'net' );
+	my $rule_list = &listRoutingDependIface( $iface );
+	foreach my $rule ( @{ $rule_list } )
 	{
 		my $err = &setRoute( 'del', $rule->{ raw } );
 		return 1 if $err;
@@ -786,7 +787,84 @@ sub delRoutingDependIface
 		return 1 if $err;
 	}
 
+	# the rules were removed from the system when the interface was set down
+	my $file = &getRoutingTableFile( $iface );
+	unlink $file;
+
+	&zenlog( "Deleting the rules that are depending on '$iface'", 'info', 'net' );
+	$rule_list = &listRoutingRulesConf();
+	foreach my $rule ( @{ $rule_list } )
+	{
+		if ( $rule->{ table } eq "table_$iface" )
+		{
+			&delRoutingRules( $rule->{ id } );
+		}
+	}
+
+	&zenlog( "Deleting unmanage information about '$iface'", 'info', 'net' );
+	&lockResource( $lock_isolate, "l" );
+	my $fh = Config::Tiny->read( $isolate_conf );
+	foreach my $if ( keys %{ $fh } )
+	{
+		$fh->{ $if }->{ table } =~ s/(^| )table_$iface( |$)/ /;
+	}
+	delete $fh->{ $iface };
+	$fh->write( $isolate_conf );
+	&lockResource( $lock_isolate, "ud" );
+
 	return 0;
+}
+
+=begin nd
+Function: updateRoutingVirtualIfaces
+
+	This function replace a virtual interface from all routing tables where is being used
+	as source.
+	If the new interface IP is 'undef'. The routes where the virtual interface appears will be
+	deleted.
+
+Parameters:
+	interface - name of the interface where the virtual IP appends
+	old ip - IP that will be deleted from the routes
+	new ip - New IP for the virtual interface
+
+Returns:
+	none - .
+
+=cut
+
+sub updateRoutingVirtualIfaces
+{
+	my $parent_name = shift;
+	my $old_ip      = shift;
+	my $new_ip      = shift;
+
+	&zenlog( "Refresing rules for ip '$old_ip'", 'info', 'net' );
+	&zenlog( "new ip '$new_ip'", 'info', 'net' ) if ( defined $new_ip );
+
+	my $list = &listRoutingDependIface( $parent_name );
+	foreach my $rule ( @{ $list } )
+	{
+		next unless ( $old_ip eq $rule->{ source } );
+
+		my $new_rule;
+		if ( defined $new_ip and $new_ip ne '' )
+		{
+			my $new_rule = $rule;
+			$new_rule->{ source } = $new_ip;
+			$new_rule->{ raw } = &buildRouteCmd( $new_rule->{ table }, $new_rule );
+		}
+		my $err = &delRoutingCustom( $rule->{ table }, $rule->{ id } );
+
+		if ( defined $new_rule )
+		{
+			$err = &createRoutingCustom( $rule->{ table }, $new_rule );
+		}
+
+		&zenlog( "There was an error changing the routes for the virtual IP $old_ip",
+				 "error", "net" )
+		  if $err;
+	}
 }
 
 =begin nd
@@ -847,7 +925,7 @@ sub listRoutingDependIface
 
 	foreach my $table ( &listRoutingTablesNames() )
 	{
-		my $ruleList = &listRoutingTableCustom();
+		my $ruleList = &listRoutingTableCustom( $table );
 		foreach my $rule ( @{ $ruleList } )
 		{
 			if ( $rule->{ interface } eq $iface )
@@ -1258,7 +1336,7 @@ Parameters:
 	route id - id of the route
 
 Returns:
-	Hash ref -
+	Integer - 0 on success or 1 on failure
 
 =cut
 
@@ -1306,6 +1384,7 @@ sub setRoute
 	if (    ( $exist and $action eq 'add' )
 		 or ( !$exist and $action eq 'del' ) )
 	{
+		&zenlog( "Does not found the route in the system: '$cmd_params'", "debug2" );
 		return 0;
 	}
 

@@ -345,7 +345,7 @@ sub isRoute
 	$ipv = "-$ipv" if ( $ipv ne '' );
 
 	my $ip_cmd = "$ip_bin $ipv route list $route";
-	my $out    = `$ip_cmd 2>/dev/null`;
+	my $out    = &logAndGet( "$ip_cmd" );
 	my $exist  = ( $out eq '' ) ? 0 : 1;
 
 	if ( &debug() > 1 )
@@ -1266,7 +1266,7 @@ sub getRoutingTableExists
 
 	my $table = shift;
 
-	my $err = system ( "$ip_bin route list table $table" );
+	my $err = &logAndRunCheck( "$ip_bin route list table $table" );
 
 	return ( $err ) ? 0 : 1;
 }

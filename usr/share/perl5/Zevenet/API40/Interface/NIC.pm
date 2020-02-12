@@ -83,15 +83,6 @@ sub delete_interface_nic    # ( $nic )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $eload )
-	{
-		&eload(
-				module => 'Zevenet::Net::Zapi',
-				func   => 'checkZapiIfDepsRouting',
-				args   => [$nic, 'del'],
-		);
-	}
-
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &delIf( $if_ref );
@@ -354,15 +345,6 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 	}
 
-	if ( $eload )
-	{
-		&eload(
-				module => 'Zevenet::Net::Zapi',
-				func   => 'checkZapiIfDepsRouting',
-				args   => [$nic, 'put', $json_obj],
-		);
-	}
-
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 
 	if ( exists $json_obj->{ dhcp } )
@@ -485,6 +467,16 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 
 	if ( $if_ref->{ addr } )
 	{
+		# remove custom routes
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'updateRoutingVirtualIfaces',
+					args   => [$if_ref->{ parent }, $json_obj->{ ip }],
+			);
+		}
+
 		# Delete old IP and Netmask from system to replace it
 		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
 

@@ -312,15 +312,6 @@ sub delete_interface_vlan    # ( $vlan )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $eload )
-	{
-		&eload(
-				module => 'Zevenet::Net::Zapi',
-				func   => 'checkZapiIfDepsRouting',
-				args   => [$vlan, 'del'],
-		);
-	}
-
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 
@@ -524,6 +515,8 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 
 	my $desc   = "Modify VLAN interface";
 	my $if_ref = &getInterfaceConfig( $vlan );
+	my $old_ip = $if_ref->{ addr };
+
 	my @farms;
 
 	# Check interface errors
@@ -603,15 +596,6 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
-	}
-
-	if ( $eload )
-	{
-		&eload(
-				module => 'Zevenet::Net::Zapi',
-				func   => 'checkZapiIfDepsRouting',
-				args   => [$vlan, 'put', $json_obj],
-		);
 	}
 
 	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
@@ -753,6 +737,15 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
+
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'updateRoutingVirtualIfaces',
+				args   => [$if_ref->{ parent }, $old_ip],
+		);
+	}
 
 	require Zevenet::Lock;
 	my $vlan_config_file =

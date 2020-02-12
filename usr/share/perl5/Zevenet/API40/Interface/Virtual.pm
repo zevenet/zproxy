@@ -234,19 +234,20 @@ sub delete_interface_virtual    # ( $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $eload )
-	{
-		&eload(
-				module => 'Zevenet::Net::Zapi',
-				func   => 'checkZapiVirtDepsRouting',
-				args   => [$virtual, 'del'],
-		);
-	}
-
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Core;
 
 	eval {
+
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'updateRoutingVirtualIfaces',
+					args   => [$if_ref->{ parent }, $if_ref->{ addr }, undef],
+			);
+		}
+
 		if ( $if_ref->{ status } eq 'up' )
 		{
 			# removing before in the remote node
@@ -455,6 +456,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 
 	my $desc   = "Modify virtual interface";
 	my $if_ref = &getInterfaceConfig( $virtual );
+	my $old_ip = $if_ref->{ addr };
 	my @farms;
 
 	my $params = {
@@ -486,15 +488,6 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		my $msg =
 		  "Before modifying $virtual interface, disable the floating IPs: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $eload )
-	{
-		&eload(
-				module => 'Zevenet::Net::Zapi',
-				func   => 'checkZapiVirtDepsRouting',
-				args   => [$virtual, 'put', $json_obj],
-		);
 	}
 
 	require Zevenet::Farm::Base;
@@ -568,6 +561,15 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 
 		# Add new IP, netmask and gateway
 		&setInterfaceConfig( $if_ref ) or die;
+
+		if ( $eload and $old_ip )
+		{
+			&eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'updateRoutingVirtualIfaces',
+					args   => [$if_ref->{ parent }, $old_ip, $json_obj->{ ip }],
+			);
+		}
 
 		# change farm vip,
 		if ( @farms )
