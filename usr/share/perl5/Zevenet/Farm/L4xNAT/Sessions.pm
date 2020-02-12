@@ -57,8 +57,12 @@ sub parseL4FarmSessions
 	my $farm = shift;
 	my $s    = shift;
 
+	# translate session
+	my $session = $s->{ client };
+	$session =~ s/ \. /_/;
+
 	my $obj = {
-				'session' => $s->{ client },
+				'session' => $session,
 				'type'    => ( exists $s->{ expiration } ) ? 'dynamic' : 'static',
 				'ttl'     => ( exists $s->{ expiration } ) ? $s->{ expiration } : undef,
 	};
@@ -205,6 +209,9 @@ sub addL4FarmSession
 
 	require Zevenet::Farm::L4xNAT::Action;
 
+	# translate to nftlb format
+	$session =~ s/_/ \. /;
+
 	my $configdir     = &getGlobalConfiguration( 'configdir' );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $err = &sendL4NlbCmd(
@@ -244,6 +251,9 @@ sub delL4FarmSession
 	my $configdir     = &getGlobalConfiguration( 'configdir' );
 	my $farm_filename = &getFarmFile( $farm_name );
 
+	# translate to nftlb format
+	$session =~ s/_/ \. /;
+
 	my $err = &httpNlbRequest(
 							 {
 							   farm   => $farm_name,
@@ -263,23 +273,36 @@ sub delL4FarmSession
 =begin nd
 Function: validateL4FarmSession
 
-	It deletes a static session of a l4xnat farm.
+	It validates the session with the type of persistence configured in the farm
 
 Parameters:
-	farmname - Farm name
+	persistence - Persistence type
 	session - Session value. It is the session tocken used to forward the connection
 
 Returns:
-	Error code - 0 on success or another value on failure.
+	Error code - It returns 0 if the session is not valid, or 1 if it is valid
 
 =cut
 
-#~ sub validateL4FarmSession
-#~ {
-#~ my ($persis_type, $session) = @_;
-#~ my $suc = 0;
+sub validateL4FarmSession
+{
+	my ( $persis_type, $session ) = @_;
+	my $suc = 0;
 
-#~ return $suc;
-#~ }
+	my $mac_reg  = &getValidFormat( 'mac_addr' );
+	my $ip_reg   = &getValidFormat( 'ipv4v6' );
+	my $port_reg = &getValidFormat( 'port' );
+
+	$suc = 1
+	  if (
+		      ( $persis_type eq 'srcmac'         and $session =~ /^$mac_reg$/ )
+		   or ( $persis_type eq 'srcport'        and $session =~ /^$port_reg$/ )
+		   or ( $persis_type =~ /^(?:srcip|ip)$/ and $session =~ /^$ip_reg$/ )
+		   or (     $persis_type =~ /^(?:srcip_srcport|srcip_dstport)$/
+				and $session =~ /^${ip_reg}_$port_reg/ )
+	  );
+
+	return $suc;
+}
 
 1;

@@ -75,6 +75,12 @@ sub add_farm_sessions
 				  'required'  => 'true',
 		},
 
+		# session format:
+		# mac: 02:8e:6q:33:02:8e:6q:33
+		# ip or srcip: 195.2.3.66
+		# port: 5445
+		# srcip_srcport or srcip_dstport or : 122.36.54.2_80
+
 		"session" => {
 					   'non_blank' => 'true',
 					   'required'  => 'true',
@@ -99,12 +105,18 @@ sub add_farm_sessions
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-#~ my $persis_type = &getFarmPersistence($farm);
-#~ if (!&validateL4FarmSession($persis_type, $json_obj->{session}))
-#~ {
-#~ my $msg = "The session '$json_obj->{session}' is not valid for the persistence '$persis_type'.";
-#~ return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-#~ }
+	my $persis_type = &getL4FarmParam( 'persist', $farm );
+	if ( $persis_type eq '' )
+	{
+		my $msg = "The farm $farm has not configured any persistence.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( !&validateL4FarmSession( $persis_type, $json_obj->{ session } ) )
+	{
+		my $msg =
+		  "The session '$json_obj->{session}' is not valid for the persistence '$persis_type'.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	# executing the action
 	my $err =
