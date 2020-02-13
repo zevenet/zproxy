@@ -454,12 +454,18 @@ void StreamManager::onRequestEvent(int fd) {
     }
     case IO::IO_RESULT::SUCCESS:
     case IO::IO_RESULT::DONE_TRY_AGAIN:
-    case IO::IO_RESULT::FULL_BUFFER:
-      break;
     case IO::IO_RESULT::ZERO_DATA:
-      return;
+      if (stream->client_connection.buffer_size == 0) {
+        stream->client_connection.enableReadEvent();
+        return;
+      }
+      break;
+    case IO::IO_RESULT::FULL_BUFFER:
     case IO::IO_RESULT::FD_CLOSED:
-      return;
+      if (stream->client_connection.buffer_size > 0)
+        break;
+      else
+        return;
     case IO::IO_RESULT::ERROR:
     case IO::IO_RESULT::CANCELLED:
     default: {
@@ -478,7 +484,11 @@ void StreamManager::onRequestEvent(int fd) {
         stream->client_connection.buffer_size, stream->request.content_length,
         stream->request.message_bytes_left, IO::getResultString(result).data());
 #endif
+#if ENABLE_QUICK_RESPONSE
+    onServerWriteEvent(stream);
+#else
     stream->backend_connection.enableWriteEvent();
+#endif
     return;
   }
 #if PRINT_DEBUG_FLOW_BUFFERS
@@ -1443,8 +1453,9 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
               stream->backend_connection.getBackend()->ctx.get(),
               stream->backend_connection, true)) {
         Logger::logmsg(LOG_DEBUG, "Handshake error with %s ",
-                       stream->backend_connection.address_str.data());
+                       stream->backend_connection.getBackend()->address.data());
         clearStream(stream);
+        return;
       }
       if (!stream->backend_connection.ssl_connected) {
         stream->backend_connection.enableReadEvent();

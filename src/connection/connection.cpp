@@ -46,6 +46,8 @@ IO::IO_RESULT Connection::read() {
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   //  PRINT_BUFFER_SIZE
+  if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0)
+    return IO::IO_RESULT::FULL_BUFFER;
   while (!done) {
     count = ::recv(fd_, (buffer + buffer_offset + buffer_size),
                    (MAX_DATA_SIZE - buffer_size - buffer_offset), MSG_NOSIGNAL);

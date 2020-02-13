@@ -83,6 +83,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
+  if ((MAX_DATA_SIZE -
+       (ssl_connection.buffer_size + ssl_connection.buffer_offset)) == 0)
+    return IO::IO_RESULT::FULL_BUFFER;
   //  Logger::logmsg(LOG_DEBUG, "> handleRead");
   int rc = -1;
   int bytes_read = 0;
