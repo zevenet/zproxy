@@ -90,6 +90,7 @@ sub delete_interface_nic    # ( $nic )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", 'error', 'net' );
 		my $msg = "The configuration for the network interface $nic can't be deleted.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

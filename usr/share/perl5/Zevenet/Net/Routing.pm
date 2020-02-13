@@ -802,15 +802,18 @@ sub delRoutingDependIface
 	}
 
 	&zenlog( "Deleting unmanage information about '$iface'", 'info', 'net' );
-	&lockResource( $lock_isolate, "l" );
-	my $fh = Config::Tiny->read( $isolate_conf );
-	foreach my $if ( keys %{ $fh } )
+	if ( -f $isolate_conf )
 	{
-		$fh->{ $if }->{ table } =~ s/(^| )table_$iface( |$)/ /;
+		&lockResource( $lock_isolate, "l" );
+		my $fh = Config::Tiny->read( $isolate_conf );
+		foreach my $if ( keys %{ $fh } )
+		{
+			$fh->{ $if }->{ table } =~ s/(^| )table_$iface( |$)/ /;
+		}
+		delete $fh->{ $iface };
+		$fh->write( $isolate_conf );
+		&lockResource( $lock_isolate, "ud" );
 	}
-	delete $fh->{ $iface };
-	$fh->write( $isolate_conf );
-	&lockResource( $lock_isolate, "ud" );
 
 	return 0;
 }
