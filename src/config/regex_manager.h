@@ -96,6 +96,7 @@ static const Regex StrictTransportSecurity("^[ \t]*StrictTransportSecurity[ \t]+
 static const Regex BackEnd("^[ \t]*BackEnd[ \t]*$");
 static const Regex Emergency("^[ \t]*Emergency[ \t]*$");
 static const Regex Priority("^[ \t]*Priority[ \t]+([1-9])[ \t]*$");
+static const Regex Weight("^[ \t]*Weight[ \t]+([1-9]*)[ \t]*$");
 static const Regex TimeOut("^[ \t]*TimeOut[ \t]+([1-9][0-9]*)[ \t]*$");
 static const Regex HAport("^[ \t]*HAport[ \t]+([1-9][0-9]*)[ \t]*$");
 static const Regex HAportAddr("^[ \t]*HAport[ \t]+([^ \t]+)[ \t]+([1-9][0-9]*)[ \t]*$");

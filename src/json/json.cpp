@@ -61,6 +61,7 @@ const std::string JSON_KEYS::PENDING_CONNS = "pending-connections";
 const std::string JSON_KEYS::RESPONSE_TIME = "response-time";
 const std::string JSON_KEYS::CONNECT_TIME = "connect-time";
 const std::string JSON_KEYS::WEIGHT = "weight";
+const std::string JSON_KEYS::PRIORITY = "priority";
 const std::string JSON_KEYS::CONFIG = "config";
 const std::string JSON_KEYS::TYPE = "type";
 #if WAF_ENABLED

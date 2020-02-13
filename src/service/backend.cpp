@@ -76,22 +76,28 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
         break;
       case ctl::CTL_SUBJECT::STATUS: {
         if (status_object->at(JSON_KEYS::STATUS)->isValue()) {
-          auto value = dynamic_cast<JsonDataValue*>(status_object->at(JSON_KEYS::STATUS).get())->string_value;
-          if (value == JSON_KEYS::STATUS_ACTIVE || value == JSON_KEYS::STATUS_UP) {
+          auto value = dynamic_cast<JsonDataValue*>(
+                           status_object->at(JSON_KEYS::STATUS).get())
+                           ->string_value;
+          if (value == JSON_KEYS::STATUS_ACTIVE ||
+              value == JSON_KEYS::STATUS_UP) {
             this->status = BACKEND_STATUS::BACKEND_UP;
           } else if (value == JSON_KEYS::STATUS_DOWN) {
             this->status = BACKEND_STATUS::BACKEND_DOWN;
           } else if (value == JSON_KEYS::STATUS_DISABLED) {
             this->status = BACKEND_STATUS::BACKEND_DISABLED;
           }
-          Logger::logmsg(LOG_NOTICE, "Set Backend %d %s", backend_id, value.c_str());
+          Logger::logmsg(LOG_NOTICE, "Set Backend %d %s", backend_id,
+                         value.c_str());
           return JSON_OP_RESULT::OK;
         }
         break;
       }
       case ctl::CTL_SUBJECT::WEIGHT: {
         if (status_object->at(JSON_KEYS::WEIGHT)->isValue()) {
-          auto value = dynamic_cast<JsonDataValue*>(status_object->at(JSON_KEYS::WEIGHT).get())->number_value;
+          auto value = dynamic_cast<JsonDataValue*>(
+                           status_object->at(JSON_KEYS::WEIGHT).get())
+                           ->number_value;
           this->weight = static_cast<int>(value);
           return JSON_OP_RESULT::OK;
         }
@@ -110,8 +116,7 @@ bool Backend::isHandler(ctl::CtlTask& task) {
 }
 
 std::unique_ptr<JsonObject> Backend::getBackendJson() {
-  std::unique_ptr<JsonObject> root{new JsonObject()};
-
+  auto root = std::make_unique<JsonObject>();
   root->emplace(JSON_KEYS::NAME, std::make_unique<JsonDataValue>(this->name));
   root->emplace(JSON_KEYS::HTTPS,
                 std::make_unique<JsonDataValue>(this->isHttps()));
@@ -125,6 +130,8 @@ std::unique_ptr<JsonObject> Backend::getBackendJson() {
     root->emplace(JSON_KEYS::PORT, std::make_unique<JsonDataValue>(this->port));
     root->emplace(JSON_KEYS::WEIGHT,
                   std::make_unique<JsonDataValue>(this->weight));
+    root->emplace(JSON_KEYS::PRIORITY,
+                  std::make_unique<JsonDataValue>(this->priority));
     switch (this->status) {
       case BACKEND_STATUS::BACKEND_UP:
         root->emplace(JSON_KEYS::STATUS, std::make_unique<JsonDataValue>(
@@ -163,7 +170,6 @@ void Backend::doMaintenance() {
 
   switch (res) {
     case IO::IO_OP::OP_SUCCESS: {
-      // poundlogs, BackEnd 192.168.100.253:80 resurrect in farm: 'poundlogs', service: 'assur'
       Logger::logmsg(
           LOG_NOTICE, "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
           this->address.data(), this->port, this->backend_config->f_name.data(),

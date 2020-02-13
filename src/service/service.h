@@ -35,18 +35,34 @@ using namespace json;
 
 /**
  * @class Service Service.h "src/service/Service.h"
- * @brief The Service class contains the configuration parameters set in the service section.
+ * @brief The Service class contains the configuration parameters set in the
+ * service section.
  *
  * This class contains the backend set in the configuration file and inherits
  * from sessions::HttpSessionManager to be able to manage all the sessions of
  * this Service.
  */
-class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::CtlTask, std::string> {
+class Service : public sessions::HttpSessionManager,
+                public CtlObserver<ctl::CtlTask, std::string> {
   std::vector<Backend *> backend_set;
   std::vector<Backend *> emergency_backend_set;
   // if no backend available, return an emergency backend if possible.
   Backend *getNextBackend();
   std::mutex mtx_lock;
+  /** The enum Service::LOAD_POLICY defines the different types of load
+   * balancing available. All the methods are weighted except the Round Robin
+   * one.
+   */
+  enum class ROUTING_POLICY {
+    /** Selects the next backend following the Round Robin algorithm. */
+    ROUND_ROBIN,
+    /** Selects the backend with less stablished connections. */
+    W_LEAST_CONNECTIONS,  // we are using weighted
+    /** Selects the backend with less response time. */
+    RESPONSE_TIME,
+    /** Selects the backend with less pending connections. */
+    PENDING_CONNECTIONS,
+  };
 
  public:
   /** True if the Service is disabled, false if it is enabled. */
@@ -54,7 +70,9 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
   bool cache_enabled = false;
   std::shared_ptr<HttpCache> http_cache;
 #endif
-  std::atomic<bool> disabled;
+  std::atomic<bool> disabled{false};
+  std::atomic<int> backend_priority{0};
+  int max_backend_priority = 0;
   /** Service id. */
   int id;
   bool ignore_case;
@@ -69,25 +87,9 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
   int becage;
   /** True if the connection if pinned, false if not. */
   bool pinned_connection;
-
-  /** The enum Service::LOAD_POLICY defines the different types of load balancing
-   * available. All the methods are weighted except the Round Robin one.
-   */
-  enum LOAD_POLICY {
-    /** Selects the next backend following the Round Robin algorithm. */
-    LP_ROUND_ROBIN,
-    /** Selects the backend with less stablished connections. */
-    LP_W_LEAST_CONNECTIONS,  // we are using weighted
-    /** Selects the backend with less response time. */
-    LP_RESPONSE_TIME,
-    /** Selects the backend with less pending connections. */
-    LP_PENDING_CONNECTIONS,
-  };
+  ROUTING_POLICY routing_policy;
 
  private:
-  void addBackend(std::shared_ptr<BackendConfig> backend_config,
-                  std::string address, int port, int backend_id,
-                  bool emergency = false);
   bool addBackend(JsonObject *json_object);
 
  public:
@@ -111,8 +113,8 @@ class Service : public sessions::HttpSessionManager, public CtlObserver<ctl::Ctl
   /**
    * @brief Creates a new Backend from a BackendConfig.
    *
-   * Creates a new Backend from the @p backend_config and adds it to the service's
-   * backend vector.
+   * Creates a new Backend from the @p backend_config and adds it to the
+   * service's backend vector.
    *
    * @param backend_config to get the Backend information.
    * @param backend_id to assign the Backend.

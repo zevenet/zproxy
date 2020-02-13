@@ -1261,9 +1261,8 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
         } else if ((lin[matches[1].rm_so] & ~0x20) == 'A')
           be->redir_req = 1;
       }
-      if (matches[2].rm_eo != matches[2].rm_so)
-        be->be_type = atoi(lin + matches[2].rm_so);
-      be->priority = 1;
+      if (matches[2].rm_eo != matches[2].rm_so) be->be_type = atoi(lin + matches[2].rm_so);
+      be->weight = 1;
       be->alive = 1;
       pthread_mutex_init(&be->mut, nullptr);
       lin[matches[3].rm_eo] = '\0';
@@ -1344,8 +1343,8 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
       res->disabled = atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
       for (be = res->backends; be; be = be->next) {
-        if (!be->disabled) res->tot_pri += be->priority;
-        res->abs_pri += be->priority;
+        if (!be->disabled) res->tot_pri += be->weight;
+        res->abs_pri += be->weight;
       }
       return res;
     } else {
@@ -1419,7 +1418,8 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
   res->rw_timeout = is_emergency ? 120 : be_to;
   res->conn_to = is_emergency ? 120 : be_connto;
   res->alive = 1;
-  res->priority = 5;
+  res->priority = 1;
+  res->weight = 5;
   res->connections = 0;
   res->next = nullptr;
   res->ctx = nullptr;
@@ -1462,6 +1462,10 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
       if (is_emergency)
         conf_err("Priority is not supported for Emergency back-ends");
       res->priority = std::atoi(lin + matches[1].rm_so);
+    } else if (!regexec(&regex_set::Weight, lin, 4, matches, 0)) {
+      if (is_emergency)
+        conf_err("Weight is not supported for Emergency back-ends");
+      res->weight = std::atoi(lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::TimeOut, lin, 4, matches, 0)) {
       res->rw_timeout = std::atoi(lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::NfMark, lin, 4, matches, 0)) {

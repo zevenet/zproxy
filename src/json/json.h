@@ -64,6 +64,7 @@ struct JSON_KEYS {
   static const std::string RESPONSE_TIME;
   static const std::string CONNECT_TIME;
   static const std::string WEIGHT;
+  static const std::string PRIORITY;
   static const std::string CONFIG;
   static const std::string TYPE;
 #if WAF_ENABLED
@@ -113,7 +114,9 @@ class Json {
   virtual bool isObject() { return false; }
   virtual bool isData() { return false; }
   virtual bool isValue() { return false; }
-  virtual std::string stringify(bool prettyfy = false, int tabs = -1) { return std::string(); }
+  virtual std::string stringify(bool prettyfy = false, int tabs = -1) {
+    return std::string();
+  }
 };
 
 }  // namespace json

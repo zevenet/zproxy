@@ -85,6 +85,8 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
   std::string name;
   /** Backend weight, used for the balancing algorithms. */
   int weight;
+  /** Backend priority, used for the balancing algorithms. */
+  int priority{0};
   /** Backend Address as a std::string type. */
   std::string address;
   /** Backend port. */

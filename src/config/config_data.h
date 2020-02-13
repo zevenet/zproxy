@@ -68,6 +68,7 @@ class BackendConfig : Counter<BackendConfig> {
   std::string address; /* IPv4/6 address */
   int port{0};
   int be_type; /* 0 if real back-end, otherwise code (301, 302/default, 307) */
+  int weight;              /* weight */
   int priority;            /* priority */
   int rw_timeout;          /* read/write time-out */
   int conn_to;             /* connection time-out */
