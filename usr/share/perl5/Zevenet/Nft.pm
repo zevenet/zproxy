@@ -204,12 +204,23 @@ sub httpNlbRequest
 	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds)/ );
 
 	# Send output to a file to get only the http code by the standard output
-	$execmd = $execmd . " -f -o $file";
+	$execmd = $execmd . " -o $file";
 
 	my $output = &logAndGet( $execmd );
 	if ( $output !~ /^2/ )    # err
 	{
-		&zenlog( "cmd ($output): $execmd", 'error' );
+		&zenlog( "cmd failed: $execmd", 'error', 'system' );
+		if ( open ( my $fh, '<', $file ) )
+		{
+			local $/ = undef;
+			my $err = <$fh>;
+			&zenlog( "(code: $output): $err", 'error', 'system' );
+			close $fh;
+		}
+		else
+		{
+			&zenlog( "The file '$file' could not be opened", 'error', 'system' );
+		}
 		return -1;
 	}
 	elsif ( &debug )
