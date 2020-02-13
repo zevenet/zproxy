@@ -846,6 +846,10 @@ sub service_backends
 		require Zevenet::Farm::HTTP::Service;
 
 		my $service_ref = &getHTTPServiceStruct( $farmname, $service );
+		foreach my $be ( @{ $service_ref->{ backends } } )
+		{
+			delete ( $be->{ priority } );
+		}
 
 		# check if the requested service exists
 		if ( $service_ref == -1 )

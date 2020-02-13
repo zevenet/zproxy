@@ -177,7 +177,7 @@ sub setFarmServer    # $output ($farm_name,$service,$bk_id,$bk_params)
 							  $bk->{ port },
 							  $bk->{ weight },
 							  $bk->{ timeout },
-							  $farm_name, $service );
+							  $farm_name, $service, $bk->{ priority } );
 	}
 
 	# FIXME: include setGSLBFarmNewBackend

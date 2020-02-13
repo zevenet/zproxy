@@ -305,6 +305,7 @@ sub farm_services
 	foreach my $be ( @{ $service->{ backends } } )
 	{
 		$be->{ status } = "up" if $be->{ status } eq "undefined";
+		delete $be->{ priority };
 	}
 
 	# Success
@@ -567,6 +568,10 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 
 		$output_params = &getHTTPServiceStruct( $farmname, $service );
+		foreach my $be_ref ( @{ $output_params->{ backends } } )
+		{
+			delete $be_ref->{ priority };
+		}
 	}
 
 	if ( $type eq "gslb" )

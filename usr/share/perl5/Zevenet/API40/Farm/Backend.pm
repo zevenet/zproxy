@@ -171,6 +171,9 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				   "weight" => {
 								 'interval' => '1,9',
 				   },
+				   "priority" => {
+								   'interval' => '1,9',
+				   },
 				   "timeout" => {
 								  'valid_format' => 'natural_num',
 				   },
@@ -253,6 +256,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 									 $json_obj->{ timeout },
 									 $farmname,
 									 $service,
+									 $json_obj->{ priority },
 	);
 
 	# check if there was an error adding a new backend
@@ -515,6 +519,9 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 				   "weight" => {
 								 'interval' => '1,9',
 				   },
+				   "priority" => {
+								   'interval' => '1,9',
+				   },
 				   "timeout" => {
 								  'valid_format' => 'natural_num',
 				   },
@@ -591,17 +598,22 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	# apply BACKEND change
 
-	$be->{ ip }      = $json_obj->{ ip }      // $be->{ ip };
-	$be->{ port }    = $json_obj->{ port }    // $be->{ port };
-	$be->{ weight }  = $json_obj->{ weight }  // $be->{ weight };
-	$be->{ timeout } = $json_obj->{ timeout } // $be->{ timeout };
+	$be->{ ip }       = $json_obj->{ ip }       // $be->{ ip };
+	$be->{ port }     = $json_obj->{ port }     // $be->{ port };
+	$be->{ weight }   = $json_obj->{ weight }   // $be->{ weight };
+	$be->{ priority } = $json_obj->{ priority } // $be->{ priority };
+	$be->{ timeout }  = $json_obj->{ timeout }  // $be->{ timeout };
 
-	my $status = &setHTTPFarmServer( $id_server,
+	my $status = &setHTTPFarmServer(
+									 $id_server,
 									 $be->{ ip },
 									 $be->{ port },
 									 $be->{ weight },
 									 $be->{ timeout },
-									 $farmname, $service );
+									 $farmname,
+									 $service,
+									 $be->{ priority }
+	);
 
 	# check if there was an error modifying the backend
 	if ( $status == -1 )
@@ -628,12 +640,6 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 				 message     => "Backend modified",
 				 status      => &getFarmVipStatus( $farmname ),
 	};
-
-	if ( &getFarmStatus( $farmname ) eq "up" )
-	{
-		$body->{ info } =
-		  "There're changes that need to be applied, stop and start farm to apply them!";
-	}
 
 	&httpResponse( { code => 200, body => $body } );
 }

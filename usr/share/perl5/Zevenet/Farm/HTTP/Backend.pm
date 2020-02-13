@@ -39,22 +39,23 @@ Parameters:
 	ids - backend id
 	rip - backend ip
 	port - backend port
-	weight - The weight of this backend (between 1 and 9). Higher weight backends will be used more often than lower weight ones. This parameter is called priority in l7 proxy directives
+	weight - The weight of this backend (between 1 and 9). Higher weight backends will be used more often than lower weight ones.
 	timeout - Override the global time out for this backend
 	farmname - Farm name
 	service - service name
+	priority - The priority of this backend (between 1 and 9). Lower value indicates higher priority
 
 Returns:
 	Integer - return 0 on success or -1 on failure
 
 =cut
 
-sub setHTTPFarmServer   # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service)
+sub setHTTPFarmServer # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service,$priority)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $ids, $rip, $port, $priority, $timeout, $farm_name, $service ) = @_;
-
+	my ( $ids, $rip, $port, $weight, $timeout, $farm_name, $service, $priority ) =
+	  @_;
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
@@ -96,22 +97,66 @@ sub setHTTPFarmServer   # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service)
 					$output           = $?;
 					$contents[$i + 1] = "\t\t\tAddress $rip";
 					$contents[$i + 2] = "\t\t\tPort $port";
-					my $p_m = 0;
+					my $p_t = 0;
+					my $p_p = 0;
+					my $p_w = 0;
+					my $mod = 0;
+
 					if ( $contents[$i + 3] =~ /TimeOut/ )
 					{
-						$contents[$i + 3] = "\t\t\tTimeOut $timeout";
-						&zenlog( "Modified current timeout", "info", "LSLB", "info", "LSLB" );
-					}
-					if ( $contents[$i + 4] =~ /Priority/ )
-					{
-						$contents[$i + 4] = "\t\t\tPriority $priority";
-						&zenlog( "Modified current priority", "info", "LSLB" );
-						$p_m = 1;
+						if ( $timeout != ~/^$/ )
+						{
+							$contents[$i + 3] = "\t\t\tTimeOut $timeout";
+							$p_t = 1;
+						}
+						if ( $contents[$i + 4] =~ /Priority/ )
+						{
+							if ( defined ( $priority ) and ( $priority != ~/^$/ ) )
+							{
+								$contents[$i + 4] = "\t\t\tPriority $priority";
+								$p_p = 1;
+							}
+							if ( $contents[$i + 5] =~ /Weight/ )
+							{
+								if ( $weight != ~/^$/ )
+								{
+									$contents[$i + 5] = "\t\t\tWeight $weight";
+									$p_w = 1;
+								}
+							}
+						}
+						if ( $contents[$i + 4] =~ /Weight/ )
+						{
+							if ( $weight != ~/^$/ )
+							{
+								$contents[$i + 4] = "\t\t\tWeight $weight";
+								$p_w = 1;
+							}
+						}
 					}
 					if ( $contents[$i + 3] =~ /Priority/ )
 					{
-						$contents[$i + 3] = "\t\t\tPriority $priority";
-						$p_m = 1;
+						if ( defined ( $priority ) and ( $priority != ~/^$/ ) )
+						{
+							$contents[$i + 3] = "\t\t\tPriority $priority";
+							$p_p = 1;
+						}
+						if ( $contents[$i + 4] =~ /Weight/ )
+						{
+							if ( $weight != ~/^$/ )
+							{
+								$contents[$i + 4] = "\t\t\tWeight $weight";
+								$p_w = 1;
+							}
+						}
+					}
+					if ( $contents[$i + 3] =~ /Weight/ )
+					{
+						if ( $weight != ~/^$/ )
+						{
+							$contents[$i + 3] = "\t\t\tWeight $weight";
+							$p_w = 1;
+						}
 					}
 
 					#delete item
@@ -120,44 +165,97 @@ sub setHTTPFarmServer   # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service)
 						if ( $contents[$i + 3] =~ /TimeOut/ )
 						{
 							splice @contents, $i + 3, 1,;
+							$mod = 1;
 						}
 					}
-					if ( $priority =~ /^$/ )
+					if ( ( defined ( $priority ) ) and ( $priority =~ /^$/ ) )
 					{
 						if ( $contents[$i + 3] =~ /Priority/ )
 						{
 							splice @contents, $i + 3, 1,;
+							$mod = 1;
 						}
 						if ( $contents[$i + 4] =~ /Priority/ )
 						{
 							splice @contents, $i + 4, 1,;
+							$mod = 1;
+						}
+					}
+					if ( $weight =~ /^$/ )
+					{
+						if ( $contents[$i + 3] =~ /Weight/ )
+						{
+							splice @contents, $i + 3, 1,;
+							$mod = 1;
+						}
+						if ( $contents[$i + 4] =~ /Weight/ )
+						{
+							splice @contents, $i + 4, 1,;
+							$mod = 1;
+						}
+						if ( $contents[$i + 5] =~ /Weight/ )
+						{
+							splice @contents, $i + 5, 1,;
+							$mod = 1;
 						}
 					}
 
 					#new item
-					if (
-						 $timeout !~ /^$/
-						 && (    $contents[$i + 3] =~ /End/
-							  || $contents[$i + 3] =~ /Priority/ )
-					  )
+					if ( ( $timeout !~ /^$/ ) and ( $p_t == 0 ) )
 					{
-						splice @contents, $i + 3, 0, "\t\t\tTimeOut $timeout";
+						if ( $contents[$i + 3] =~ /(Priority|Weight|End)/ )
+						{
+							splice @contents, $i + 3, 0, "\t\t\tTimeOut $timeout";
+							$mod = 1;
+						}
 					}
-					if (
-						    $p_m eq 0
-						 && $priority !~ /^$/
-						 && (    $contents[$i + 3] =~ /End/
-							  || $contents[$i + 4] =~ /End/ )
-					  )
+					if ( ( $priority !~ /^$/ ) and ( $p_p == 0 ) )
 					{
-						if ( $contents[$i + 3] =~ /TimeOut/ )
+						if ( $contents[$i + 3] =~ /(Weight|End)/ )
+						{
+							splice @contents, $i + 3, 0, "\t\t\tPriority $priority";
+							$mod = 1;
+						}
+						elsif ( $contents[$i + 3] =~ /TimeOut/ )
 						{
 							splice @contents, $i + 4, 0, "\t\t\tPriority $priority";
+							$mod = 1;
+						}
+					}
+					if ( ( $weight !~ /^$/ ) and ( $p_w == 0 ) )
+					{
+						if ( $contents[$i + 3] =~ /End/ )
+						{
+							splice @contents, $i + 3, 0, "\t\t\tWeight $weight";
+							$mod = 1;
 						}
 						else
 						{
-							splice @contents, $i + 3, 0, "\t\t\tPriority $priority";
+							if ( $contents[$i + 3] =~ /TimeOut/ )
+							{
+								if ( $contents[$i + 4] =~ /End/ )
+								{
+									splice @contents, $i + 4, 0, "\t\t\tWeight $weight";
+									$mod = 1;
+								}
+								elsif ( $contents[$i + 4] =~ /Priority/ )
+								{
+									splice @contents, $i + 5, 0, "\t\t\tWeight $weight";
+									$mod = 1;
+								}
+
+							}
+							elsif ( $contents[$i + 3] =~ /Priority/ )
+							{
+								splice @contents, $i + 4, 0, "\t\t\tWeight $weight";
+								$mod = 1;
+							}
 						}
+					}
+					if ( $mod == 1 or $p_t == 1 or $p_p == 1 or $p_w == 1 )
+					{
+						&zenlog( "Backend modified", "info", "LSLB" );
+
 					}
 				}
 			}
@@ -214,6 +312,13 @@ sub setHTTPFarmServer   # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service)
 				if ( $priority )
 				{
 					splice @contents, $index, 0, "\t\t\tPriority $priority";
+					$index++;
+				}
+
+				#Weight?
+				if ( $weight )
+				{
+					splice @contents, $index, 0, "\t\t\tWeight $weight";
 					$index++;
 				}
 				splice @contents, $index, 0, "\t\tEnd";
@@ -366,21 +471,24 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 		my $port = $subbe[5] + 0;
 		my $tout = $subbe[7];
 		my $prio = $subbe[9];
+		my $weig = $subbe[11];
 
 		$tout = $tout eq '-' ? undef : $tout + 0;
 		$prio = $prio eq '-' ? undef : $prio + 0;
+		$weig = $weig eq '-' ? undef : $weig + 0;
 
 		my $status = "undefined";
 		$status = $be_status[$id] if $be_status[$id];
 
 		push @out_ba,
 		  {
-			id      => $id,
-			status  => $status,
-			ip      => $ip,
-			port    => $port + 0,
-			timeout => $tout,
-			weight  => $prio
+			id       => $id,
+			status   => $status,
+			ip       => $ip,
+			port     => $port + 0,
+			timeout  => $tout,
+			priority => $prio,
+			weight   => $weig
 		  };
 	}
 
@@ -754,10 +862,10 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 		my $proxyctl_command =
 		  "$proxyctl -c /tmp/$farm_name\_proxy.socket -b 0 $idsv $backend";
 
-		$output = &logAndRun($proxyctl_command);
+		$output = &logAndRun( $proxyctl_command );
 	}
 
-	if (!$output)
+	if ( !$output )
 	{
 		&setHTTPFarmBackendStatusFile( $farm_name, $backend, "maintenance", $idsv );
 	}

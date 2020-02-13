@@ -421,9 +421,13 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	my $message = "Added backend to service successfully";
+
+	my $params = @{ &getFarmServers( $farmname, $service ) }[$id];
+	delete $params->{ priority };
+
 	my $body = {
 				 description => $desc,
-				 params      => @{ &getFarmServers( $farmname, $service ) }[$id],
+				 params      => $params,
 				 message     => $message,
 				 status      => &getFarmVipStatus( $farmname ),
 	};
@@ -522,6 +526,11 @@ sub service_backends
 	require Zevenet::Farm::HTTP::Service;
 
 	my $service_ref = &getHTTPServiceStruct( $farmname, $service );
+
+	foreach my $be_ref ( @{ $service_ref->{ backends } } )
+	{
+		delete ( $be_ref->{ priority } );
+	}
 
 	# check if the requested service exists
 	if ( $service_ref == -1 )

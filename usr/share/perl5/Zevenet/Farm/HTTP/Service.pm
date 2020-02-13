@@ -514,8 +514,6 @@ sub getHTTPServiceStruct
 	$dyns    = "false" if $dyns eq '';
 	$httpsbe = "false" if $httpsbe eq '';
 
-	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
-
 	# Backends
 	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
 
@@ -620,6 +618,8 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 	my $output_ti  = "";
 	my $sw_pr      = 0;
 	my $output_pr  = "";
+	my $sw_w       = 0;
+	my $output_w   = "";
 	my $outputa;
 	my $outputp;
 	my @return;
@@ -790,11 +790,17 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 					{
 						$output_pr = "Priority -";
 					}
-					$output    = "$output $outputa $outputp $output_ti $output_pr\n";
+					if ( $sw_w == 0 )
+					{
+						$output_w = "Weight -";
+					}
+
+					$output    = "$output $outputa $outputp $output_ti $output_pr $output_w\n";
 					$output_ti = "";
 					$output_pr = "";
 					$sw_ti     = 0;
 					$sw_pr     = 0;
+					$sw_w      = 0;
 				}
 				if ( $line =~ /Address/ )
 				{
@@ -822,6 +828,14 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 					#$output = $output . "$line";
 					$output_pr = $line;
 					$sw_pr     = 1;
+				}
+				if ( $line =~ /Weight/ )
+				{
+					chomp ( $line );
+
+					#$output = $output . "$line";
+					$output_w = $line;
+					$sw_w     = 1;
 				}
 			}
 			if ( $sw == 1 && $be_section == 1 && $line =~ /#End/ )

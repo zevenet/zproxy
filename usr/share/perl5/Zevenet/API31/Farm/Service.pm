@@ -184,6 +184,7 @@ sub farm_services
 	foreach my $be ( @{ $service->{ backends } } )
 	{
 		$be->{ status } = "up" if $be->{ status } eq "undefined";
+		delete $be->{ priority };
 	}
 
 	my $body = {
@@ -408,6 +409,10 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	# no error found, return succesful response
 	$output_params = &getHTTPServiceStruct( $farmname, $service );
+	foreach my $be_ref ( @{ $output_params->{ backends } } )
+	{
+		delete $be_ref->{ priority };
+	}
 
 	&zenlog(
 		"Success, some parameters have been changed in service $service in farm $farmname.",

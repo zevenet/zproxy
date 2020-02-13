@@ -181,6 +181,10 @@ sub farm_services
 
 	# no error found, return successful response
 	my $service = &get_http_service_struct( $farmname, $servicename );
+	foreach my $be_ref ( @{ $service->{ backends } } )
+	{
+		delete ( $be_ref->{ priority } );
+	}
 
 	my $body = {
 				 description => $desc,
