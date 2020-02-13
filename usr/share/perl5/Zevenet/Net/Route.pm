@@ -1179,7 +1179,7 @@ sub listRoutingRulesSys
 	my $dec_data = eval { decode_json( $data ); };
 	if ( $@ )
 	{
-		&zenlog( "Error decoding json info" );
+		&zenlog( "Decoding json: $@", "error", "net" );
 		$dec_data = [];
 	}
 

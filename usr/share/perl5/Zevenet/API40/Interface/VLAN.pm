@@ -323,6 +323,7 @@ sub delete_interface_vlan    # ( $vlan )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The VLAN interface $vlan can't be deleted";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

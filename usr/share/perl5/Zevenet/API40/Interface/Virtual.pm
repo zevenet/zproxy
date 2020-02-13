@@ -170,6 +170,7 @@ sub new_vini    # ( $json_obj )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The $json_obj->{ name } virtual network interface can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -265,6 +266,7 @@ sub delete_interface_virtual    # ( $virtual )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The virtual interface $virtual can't be deleted";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -582,6 +584,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "Errors found trying to modify interface $virtual";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

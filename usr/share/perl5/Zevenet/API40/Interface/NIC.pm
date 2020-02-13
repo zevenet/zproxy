@@ -595,6 +595,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 
 		if ( $@ )
 		{
+			&zenlog( "Module failed: $@", "error", "net" );
 			my $msg = "Errors found trying to modify interface $nic";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}

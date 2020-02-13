@@ -123,6 +123,7 @@ sub new_bond    # ( $json_obj )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -212,6 +213,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	};
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "Could not add the slave interface to this bonding";
 		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -222,6 +224,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	eval { die if &applyBondChange( $bonds->{ $bond }, 'writeconf' ); };
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
 		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -312,6 +315,7 @@ sub delete_interface_bond    # ( $bond )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg =
 		  "The configuration for the bonding interface $bond couldn't be deleted.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -411,6 +415,7 @@ sub delete_bond    # ( $bond )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The bonding interface $bond could not be deleted";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -472,6 +477,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The bonding slave interface $slave could not be removed";
 		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

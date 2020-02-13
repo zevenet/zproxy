@@ -54,6 +54,7 @@ sub delete_interface_floating    # ( $floating )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "The floating interface could not be removed";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -149,6 +150,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 	if ( $@ )
 	{
+		&zenlog( "Module failed: $@", "error", "net" );
 		my $msg = "Floating interface modification failed";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

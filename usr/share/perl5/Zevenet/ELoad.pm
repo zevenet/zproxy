@@ -89,7 +89,7 @@ sub eload
 	{
 		my $msg = "eload: Error encoding JSON: $@";
 
-		zenlog( $msg, "error", "SYSTEM" );
+		&zenlog( $msg, "error", "SYSTEM" );
 		die $msg;
 	}
 	$input =~ s/\\/\\\\/g;
