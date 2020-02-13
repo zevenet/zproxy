@@ -343,8 +343,7 @@ sub setEnv
 	$ENV{ http_proxy }  = &getGlobalConfiguration( 'http_proxy' )  // "";
 	$ENV{ https_proxy } = &getGlobalConfiguration( 'https_proxy' ) // "";
 
-	require Zevenet::SystemInfo;
-	my $provider = &whereIam();
+	my $provider = &getGlobalConfiguration( 'cloud_provider' );
 	if ( $provider eq 'aws' )
 	{
 		$ENV{ AWS_SHARED_CREDENTIALS_FILE } =
@@ -365,38 +364,6 @@ sub getKernelVersion
 	chomp $version;
 
 	return $version;
-}
-
-=begin nd
-Function: whereIam
-
-	Check if zevenet is running in some cloud platform or no
-
-Returns:
-	String - It returns the name of the cloud platform or zevenet
-
-=cut
-
-sub whereIam
-{
-	my $provider = 'nocloud';
-
-	# Check if it is an Amazon VM
-	my $bios_version = &getGlobalConfiguration( 'bios_version' );
-	my $dpkg         = &getGlobalConfiguration( 'dpkg_bin' );
-	my $grep         = &getGlobalConfiguration( 'grep_bin' );
-	my $cat          = &getGlobalConfiguration( 'cat_bin' );
-
-	if ( grep ( /amazon/, `$cat $bios_version` ) )
-	{
-		$provider = "aws";
-	}
-	elsif ( !&logAndRunCheck( "$dpkg -l | $grep waagent" ) )
-	{
-		$provider = "azure";
-	}
-
-	return $provider;
 }
 
 1;

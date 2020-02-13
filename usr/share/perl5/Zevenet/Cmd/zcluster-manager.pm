@@ -685,8 +685,7 @@ sub setNodeStatusMaster
 	&zenlog( "Switching node to master" );
 	&setZClusterNodeStatus( 'master' );
 
-	require Zevenet::SystemInfo;
-	my $provider = &whereIam();
+	my $provider = &getGlobalConfiguration( 'cloud_provider' );
 	if ( $provider eq "aws" )
 	{
 		include 'Zevenet::Aws';

@@ -521,6 +521,7 @@ $doc_v4_0="https://www.zevenet.com/zapidocv4.0";
 $lang="";
 
 # cloud
+$cloud_provider="nocloud";
 $cloud_address_metadata="169.254.169.254";
 $aws_bin="/usr/bin/aws";
 $aws_credentials="$configdir/cloud/.aws/credentials";

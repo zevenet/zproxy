@@ -82,7 +82,7 @@ sub get_version
 	my $hostname   = &getHostname();
 	my $date       = &getDate();
 	my $applicance = &getApplianceVersion();
-	my $platform   = &whereIam();
+	my $platform   = &getGlobalConfiguration( 'cloud_provider' );
 
 	my $params = {
 		'kernel_version'    => $kernel,

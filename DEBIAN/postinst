@@ -165,6 +165,9 @@ if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
 	# Check if it is an Amazon VM
 	grep "amazon" /sys/devices/virtual/dmi/id/bios_version >/dev/null
 	if [ $? -eq 0 ]; then
+		# Change cloud provider
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('cloud_provider', 'aws');"
+
 		cp ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ${NET_CONFIG_DIR}
 		${NET_CONFIG_DIR}${CHECK_NIC_DHCP}
 
@@ -190,6 +193,9 @@ if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
 	# Check if it is an Azure VM
 	dpkg -l | grep waagent >/dev/null
 	if [ $? -eq 0 ]; then
+		# Change cloud provider
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('cloud_provider', 'azure');"
+
 		cp ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ${NET_CONFIG_DIR}
 		${NET_CONFIG_DIR}${CHECK_NIC_DHCP}
 	fi

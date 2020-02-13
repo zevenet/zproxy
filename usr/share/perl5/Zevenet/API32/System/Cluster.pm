@@ -465,8 +465,7 @@ sub disable_cluster
 		unlink $cl_file;
 	}
 
-	require Zevenet::SystemInfo;
-	my $provider = &whereIam();
+	my $provider = &getGlobalConfiguration( 'cloud_provider' );
 	if ( $provider eq 'aws' )
 	{
 		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
@@ -559,8 +558,7 @@ sub enable_cluster
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::SystemInfo;
-	my $provider = &whereIam();
+	my $provider = &getGlobalConfiguration( 'cloud_provider' );
 	if ( $provider eq 'aws' )
 	{
 		include 'Zevenet::Aws';

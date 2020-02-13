@@ -128,7 +128,7 @@ sub get_system_info
 	my $user          = &getUser();
 	my @zapi_versions = &listZapiVersions();
 	my $edition       = ( $eload ) ? "enterprise" : "community";
-	my $platform      = &whereIam();
+	my $platform      = &getGlobalConfiguration( 'cloud_provider' );
 
 	my $params = {
 				   'system_date'             => $date,
