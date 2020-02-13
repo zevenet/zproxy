@@ -77,6 +77,7 @@ sub zenlog    # ($string, $type)
 
 	if ( $tag eq 'PROFILING' )
 	{
+		$type = "debug5";
 		require Zevenet::Debug;
 		return 0 if ( &debug() < 5 );
 	}
