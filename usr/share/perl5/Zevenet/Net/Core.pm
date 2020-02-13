@@ -617,9 +617,55 @@ sub setRuleIPtoTable
 	my @ifname = split ( /:/, $iface );
 	my $ip_cmd =
 	  "$ip_bin rule $action from $ip/32 lookup table_$ifname[0] prio $prio";
-	&zenlog( "ip rule command: $ip_cmd", "debug", "NETWORK" );
-	my $status = &logAndRun( $ip_cmd );
-	return $status;
+	return ( &execIpCmd( $ip_cmd ) > 0 );
+}
+
+=begin nd
+Function: execIpCmd
+
+        This function replaces to logAndRun to exec ip commands. It does not print
+        error message if the command already was applied or removed.
+
+Parameters:
+        Ip Command: command line with the ip command
+
+Returns:
+        Integer - It returns 0 on success, -1 if the command is already applied or 1 if there was an error
+
+=cut
+
+sub execIpCmd
+{
+	my $command = shift;
+
+	my @cmd_output  = `$command 2>&1`;
+	my $return_code = $?;
+
+	if ( $return_code == 512 )    # code 2 in shell
+	{
+		my $msg =
+		  ( $command =~ /add/ )
+		  ? "Trying to apply the rule but it already was applied"
+		  : "Trying to remove the rule but it was not found";
+		&zenlog( $msg,                "debug",  "net" );
+		&zenlog( "running: $command", "debug",  "SYSTEM" );
+		&zenlog( "out: @cmd_output",  "debug2", "SYSTEM" );
+		$return_code = -1;
+	}
+	elsif ( $return_code )
+	{
+		&zenlog( "Command failed: $command", "error", "SYSTEM" );
+		&zenlog( "out: @cmd_output", "error", "error", "SYSTEM" );
+		$return_code = 1;
+	}
+	else
+	{
+		&zenlog( "running: $command", "debug",  "SYSTEM" );
+		&zenlog( "out: @cmd_output",  "debug2", "SYSTEM" );
+		$return_code = 0;
+	}
+
+	return $return_code;
 }
 
 1;
