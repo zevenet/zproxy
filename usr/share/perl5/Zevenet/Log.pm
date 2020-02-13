@@ -311,12 +311,13 @@ sub logAndGet
 	my $cmd = shift;
 	my $type = shift // 'string';
 
+	my $tmp_err = "/tmp/err.log";
 	my $program = $basename;
 	my @print_err;
 
 	my $resource = "logAndGet";
 
-	my $out      = `$cmd 2>/dev/null`;
+	my $out      = `$cmd 2>$tmp_err`;
 	my $err_code = $?;
 	my $tag      = ( $err_code ) ? 'error' : 'debug2';
 	&zenlog( "Executed: $cmd", $tag, "system" );
@@ -324,10 +325,16 @@ sub logAndGet
 	if ( $err_code )
 	{
 		# execute again, removing stdout and getting stderr
-		@print_err = `$cmd 2>&1 >/dev/null`;
-		if ( @print_err )
+		if ( open ( my $fh, '<', $tmp_err ) )
 		{
-			&zenlog( "out: @print_err", "error", "SYSTEM" );
+			local $/ = undef;
+			my $err_str = <$fh>;
+			&zenlog( "sterr: $err_str", "error", "SYSTEM" );
+			close $fh;
+		}
+		else
+		{
+			&zenlog( "file '$tmp_err' not found", "error", "SYSTEM" );
 		}
 	}
 
