@@ -28,13 +28,15 @@ void StreamDataLogger::logTransaction(HttpStream& stream) {
   // 192.168.100.241:8080 192.168.0.186 - - "GET / HTTP/1.1" 200 11383 ""
   // "curl/7.64.0"
   static const std::string str_fmt =
-      "%s %s - \"%.*s \" \"%.*s\" "
+      "%s %s - \"%s \" \"%s\" "
       "Content-Length: %d \"%s\" "
       "\"%s\"";
   Logger::logmsg(LOG_INFO, str_fmt.c_str(), !host.empty() ? host.c_str() : "-",
-                 stream.client_connection.getPeerAddress().c_str(), stream.request.http_message_length,
-                 stream.request.http_message, stream.response.http_message_length, stream.response.http_message,
-                 stream.response.content_length, referer.c_str(), agent.c_str());
+                 stream.client_connection.getPeerAddress().c_str(),
+                 stream.request.http_message_str.data(),
+                 stream.response.http_message_str.data(),
+                 stream.response.content_length, referer.c_str(),
+                 agent.c_str());
 }
 
 void StreamDataLogger::resetLogData() {

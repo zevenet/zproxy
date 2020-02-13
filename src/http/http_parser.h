@@ -92,7 +92,7 @@ public:
   char *method;
   size_t method_len;
   int minor_version;
-
+  std::string http_message_str;
   char *path;
   size_t path_length;
   // response

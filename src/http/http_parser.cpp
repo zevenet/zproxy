@@ -60,6 +60,7 @@ void http_parser::HttpData::reset_parser() {
   extra_headers.clear();
   iov_size = 0;
   chunk_size_left = 0;
+  http_message_str.clear();
 }
 
 void http_parser::HttpData::setBuffer(char *ext_buffer,
@@ -220,6 +221,8 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
     message_length = buffer_size - static_cast<size_t>(pret);
     http_message = method;
     http_message_length = std::string_view(method).find('\r');
+    if (http_message_length > buffer_size) http_message_length = buffer_size;
+    http_message_str = std::string(http_message, http_message_length);
     //    for (auto i = 0; i < static_cast<int>(num_headers); i++) {
     //      if (std::string(headers[i].name, headers[i].name_len) !=
     //          http::headers_names_strings.at(
@@ -259,8 +262,10 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
     // http_message_length = num_headers > 0 ?
     // static_cast<size_t>(headers[0].name - buffer) : buffer_size - 2;
     http_message_length = std::string_view(buffer).find('\r');
+    if (http_message_length > buffer_size) http_message_length = buffer_size;
     message = &buffer[pret];
     message_length = buffer_size - static_cast<size_t>(pret);
+    http_message_str = std::string(http_message, http_message_length);
 #if DEBUG_HTTP_PARSER
     printResponse();
 #endif

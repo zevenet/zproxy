@@ -999,11 +999,10 @@ void StreamManager::onResponseEvent(int fd) {
 
     total_responses++;
     Logger::logmsg(
-        LOG_DEBUG, " %lu [%s] %.*s -> %.*s [%s (%d) <- %s (%d)]",
-        total_responses,
+        LOG_DEBUG, " %lu [%s] %s -> %s [%s (%d) <- %s (%d)]", total_responses,
         static_cast<Service*>(stream->request.getService())->name.c_str(),
-        stream->response.http_message_length - 2, stream->response.http_message,
-        stream->request.http_message_length - 2, stream->request.http_message,
+        stream->response.http_message_str.data(),
+        stream->request.http_message_str.data(),
         stream->client_connection.getPeerAddress().c_str(),
         stream->client_connection.getFileDescriptor(),
         stream->backend_connection.getBackend()->address.c_str(),
@@ -1101,6 +1100,14 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
                    /*std::this_thread::get_id()*/ pthread_self(),
                    stream->backend_connection.getBackend()->address.c_str(),
                    stream->backend_connection.getBackend()->conn_timeout);
+    Logger::logmsg(
+        LOG_NOTICE,
+        "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
+        pthread_self(), stream->backend_connection.getBackend()->address.data(),
+        stream->backend_connection.getBackend()->port,
+        listener_config_.name.data(),
+        stream->backend_connection.getBackend()
+            ->backend_config->srv_name.data());
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
     setStreamBackend(stream);
   }
