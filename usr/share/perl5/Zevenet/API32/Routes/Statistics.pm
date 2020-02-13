@@ -25,26 +25,23 @@ use strict;
 
 my $q = getCGI();
 
-
 # Statistics
 if ( $q->path_info =~ qr{^/stats} )
 {
 	my $modules_re = &getValidFormat( 'farm_modules' );
-	my $mod = 'Zevenet::API32::Stats::Statistics';
+	my $mod        = 'Zevenet::API32::Stats::Statistics';
 
 	# System stats
-	GET qr{^/stats/system/network/interfaces$} , 'stats_network_interfaces', $mod;
-	GET qr{^/stats/system/memory$}             , 'stats_mem', $mod;
-	GET qr{^/stats/system/load$}               , 'stats_load', $mod;
-	GET qr{^/stats/system/cpu$}                , 'stats_cpu', $mod;
-	GET qr{^/stats/system/connections$}        , 'stats_conns', $mod;
-
-	GET qr{^/stats/interfaces/throughput$}	   , 'stats_throughput', $mod;
+	GET qr{^/stats/system/network/interfaces$}, 'stats_network_interfaces', $mod;
+	GET qr{^/stats/system/memory$},             'stats_mem',                $mod;
+	GET qr{^/stats/system/load$},               'stats_load',               $mod;
+	GET qr{^/stats/system/cpu$},                'stats_cpu',                $mod;
+	GET qr{^/stats/system/connections$},        'stats_conns',              $mod;
 
 	# Farm stats
-	GET qr{^/stats/farms/total$}                 , 'farms_number', $mod;
-	GET qr{^/stats/farms/modules$}               , 'module_stats_status', $mod;
-	GET qr{^/stats/farms/modules/($modules_re)$} , 'module_stats', $mod;
+	GET qr{^/stats/farms/total$},                 'farms_number',        $mod;
+	GET qr{^/stats/farms/modules$},               'module_stats_status', $mod;
+	GET qr{^/stats/farms/modules/($modules_re)$}, 'module_stats',        $mod;
 }
 
 1;

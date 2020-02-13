@@ -38,8 +38,6 @@ if ( $q->path_info =~ qr{^/stats} )
 	GET qr{^/stats/system/cpu$},                'stats_cpu',                $mod;
 	GET qr{^/stats/system/connections$},        'stats_conns',              $mod;
 
-	GET qr{^/stats/interfaces/throughput$}, 'stats_throughput', $mod;
-
 	# Farm stats
 	GET qr{^/stats/farms/total$},                 'farms_number',        $mod;
 	GET qr{^/stats/farms/modules$},               'module_stats_status', $mod;

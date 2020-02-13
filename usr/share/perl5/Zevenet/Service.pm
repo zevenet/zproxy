@@ -344,10 +344,6 @@ sub start_modules_without_cert
 	include 'Zevenet::IPDS::Setup';
 	&initIPDSModule();
 
-	# enable monitoring interface throughput
-	#~ include 'Zevenet::Net::Throughput';
-	#~ &startTHROUTask();
-
 	return $out_msg;
 }
 
@@ -492,7 +488,6 @@ sub stop_service
 			 "debug", "PROFILING" );
 	include 'Zevenet::Notify';
 	include 'Zevenet::IPDS::Base';
-	include 'Zevenet::Net::Throughput';
 	include 'Zevenet::Cluster';
 
 	my $out_msg = "";
@@ -500,8 +495,6 @@ sub stop_service
 	# stop all modules
 	&zlbstopNotifications();
 	&runIPDSStopModule();
-
-	#~ &stopTHROUTask();
 
 	if ( &getZClusterStatus() )
 	{

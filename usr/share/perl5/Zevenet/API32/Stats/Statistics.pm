@@ -394,21 +394,4 @@ sub stats_network_interfaces
 	&httpResponse( { code => 200, body => $body } );
 }
 
-# /stats/throughput
-sub stats_throughput
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	include 'Zevenet::Net::Throughput';
-
-	my $out = &getTHROUStats();
-
-	my $body = {
-				 description => "throughput stats",
-				 params      => $out
-	};
-
-	&httpResponse( { code => 200, body => $body } );
-}
-
 1;
