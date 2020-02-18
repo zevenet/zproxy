@@ -80,7 +80,6 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API40/Farm/Stats/
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/
 	usr/share/perl5/Zevenet/API40/Farm/Service/
-	usr/share/perl5/Zevenet/Aws.pm	
 	usr/share/perl5/Zevenet/ELoad.pm
 	usr/share/perl5/Zevenet/IPDS/
 	usr/share/perl5/Zevenet/RBAC/
@@ -224,7 +223,6 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/System/Ext.pm
 	usr/share/perl5/Zevenet/API40/Interface/Routing.pm
 	usr/share/perl5/Zevenet/Apt.pm
-	usr/share/perl5/Zevenet/Aws.pm
 	usr/share/perl5/Zevenet/Certificate/Activation.pm
 	usr/share/perl5/Zevenet/Cluster.pm
 	usr/share/perl5/Zevenet/Cmd/supportsave_ext.pm
@@ -278,11 +276,9 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Net/Ext.pm
 	usr/share/perl5/Zevenet/Net/Bonding.pm
 	usr/share/perl5/Zevenet/Net/Floating.pm
-	usr/share/perl5/Zevenet/Net/Throughput.pm
 	usr/share/perl5/Zevenet/Net/Mac.pm
 	usr/share/perl5/Zevenet/Net/DHCP.pm
 	usr/share/perl5/Zevenet/Net/Routing.pm
-	usr/share/perl5/Zevenet/Net/Zapi.pm
 	usr/share/perl5/Zevenet/Notify.pm
 	usr/share/perl5/Zevenet/RBAC/Action.pm
 	usr/share/perl5/Zevenet/RBAC/Core.pm
@@ -307,5 +303,4 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Alias.pm
 	usr/share/perl5/Zevenet/Aws.pm
 	usr/share/perl5/Zevenet/System/Global.pm
-
 )
