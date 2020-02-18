@@ -35,17 +35,18 @@ int Logger::log_level = 5;
 int Logger::log_facility = LOG_DAEMON;
 
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
-
+std::once_flag terminate_flag;
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
   Logger::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
   switch (sig) {
     case SIGINT:
-    case SIGHUP:
     case SIGTERM: {
-      auto cm = ctl::ControlManager::getInstance();
-      cm->stop();
+      std::call_once(terminate_flag, [] {
+        auto cm = ctl::ControlManager::getInstance();
+        cm->stop();
+      });
       break;
     }
     case SIGABRT:
@@ -71,7 +72,7 @@ void handleInterrupt(int sig) {
 int main(int argc, char *argv[]) {
   debug::EnableBacktraceOnTerminate();
 
-  ListenerManager listener;
+  static ListenerManager listener;
   auto control_manager = ctl::ControlManager::getInstance();
   if (setjmp(jmpbuf)) {
     // we are in signal context here
@@ -159,7 +160,8 @@ int main(int argc, char *argv[]) {
     }
   }
   listener.start();
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  listener.stop();
+  control_manager->stop();
   cleanExit();
-  return EXIT_SUCCESS;
+  std::exit(EXIT_SUCCESS);
 }

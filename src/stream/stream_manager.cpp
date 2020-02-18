@@ -256,7 +256,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 }
 #endif
 
-void StreamManager::stop() { is_running = false; }
+void StreamManager::stop() {
+  is_running = false;
+  if (this->worker.joinable()) this->worker.join();
+}
 
 void StreamManager::start(int thread_id_) {
   ctl::ControlManager::getInstance()->attach(std::ref(*this));
@@ -1823,7 +1826,8 @@ std::string StreamManager::handleTask(ctl::CtlTask& task) {
 
   if (task.command == ctl::CTL_COMMAND::EXIT) {
     Logger::logmsg(LOG_REMOVE, "Exit command received");
-    is_running = false;
+    stop();
+
     return JSON_OP_RESULT::OK;
   }
   return JSON_OP_RESULT::ERROR;

@@ -71,11 +71,11 @@ void ctl::ControlManager::stop() {
   // Notify stop to suscribers
   if (!is_running) return;
   is_running = false;
-  Logger::logmsg(LOG_REMOVE, "Stop");
   CtlTask task;
   task.command = CTL_COMMAND::EXIT;
   task.target = CTL_HANDLER_TYPE::ALL;
   auto result = notify(task, false);
+  if(this->control_thread.joinable()) this->control_thread.join();
 }
 
 void ControlManager::sendCtlCommand(CTL_COMMAND command,
