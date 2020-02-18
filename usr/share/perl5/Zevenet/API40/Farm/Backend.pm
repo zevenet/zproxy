@@ -99,7 +99,9 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $id = &getFarmBackendAvailableID( $farmname );
+	my $id       = &getFarmBackendAvailableID( $farmname );
+	my $backends = &getL4FarmServers( $farmname );
+	my $info_msg;
 
 	# check of interface for datalink
 	if ( $type eq 'datalink' )
@@ -108,6 +110,15 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( $msg )
 		{
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+	elsif ( exists $json_obj->{ priority } )
+	{
+		my $prio_use = $json_obj->{ priority } - 1;
+		if ( @{ $backends } < $prio_use )
+		{
+			$info_msg =
+			  "This backend has a low priority, maybe, it won't be used. It will be used when at least $prio_use backend(s) will be unabled";
 		}
 	}
 
@@ -139,13 +150,14 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 	&getAPIFarmBackends( $out_b, $type );
 
-	my $message = "Backend added";
+	my $message = "Backend added.";
 	my $body = {
 				 description => $desc,
 				 params      => $out_b,
 				 message     => $message,
 				 status      => &getFarmVipStatus( $farmname ),
 	};
+	$body->{ warning } = $info_msg if defined $info_msg;
 
 	&eload(
 			module => 'Zevenet::Cluster',
@@ -267,6 +279,17 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $info_msg = "";
+	if ( $type =~ /http/ and exists $json_obj->{ priority } )
+	{
+		my $prio_use = $json_obj->{ priority } - 1;
+		if ( @services < $prio_use )
+		{
+			$info_msg =
+			  "This backend has a low priority, maybe, it won't be used. It will be used when at least $prio_use backend(s) will be unabled";
+		}
+	}
+
 	# no error found, return successful response
 	&zenlog(
 		"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.",
@@ -281,7 +304,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&runFarmReload( $farmname );
 	}
 
-	my $message = "Added backend to service successfully";
+	my $message = "Added backend to service successfully. $info_msg";
 	my $body = {
 				 description => $desc,
 				 params      => @{ &getFarmServers( $farmname, $service ) }[$id],
@@ -294,7 +317,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 # GET
 
-#GET /farms/<name>/backends
+#GET /farms/<name>encuentro el/backends
 sub backends
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -464,12 +487,24 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	$backend->{ interface } = $json_obj->{ interface }
 	  if exists $json_obj->{ interface };    # datalink
 
+	my $info_msg;
+	my $backends = &getL4FarmServers( $farmname );
+
 	if ( $type eq 'datalink' )
 	{
 		my $msg = &validateDatalinkBackendIface( $backend );
 		if ( $msg )
 		{
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+	elsif ( exists $json_obj->{ priority } )
+	{
+		my $prio_use = $json_obj->{ priority } - 1;
+		if ( @{ $backends } < $prio_use )
+		{
+			$info_msg =
+			  "This backend has a low priority, maybe, it won't be used. It will be used when at least $prio_use backend(s) will be unabled.";
 		}
 	}
 
@@ -490,13 +525,14 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		"info", "FARMS"
 	);
 
-	my $message = "Backend modified";
+	my $message = "Backend modified.";
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
 				 message     => $message,
 				 status      => &getFarmVipStatus( $farmname ),
 	};
+	$body->{ warning } = $info_msg if defined $info_msg;
 
 	&eload(
 			module => 'Zevenet::Cluster',
@@ -569,6 +605,17 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	# validate SERVICE
 	my @services = &getHTTPFarmServices( $farmname );
 	my $found_service = grep { $service eq $_ } @services;
+	my $info_msg;
+
+	if ( exists $json_obj->{ priority } )
+	{
+		my $prio_use = $json_obj->{ priority } - 1;
+		if ( @services < $prio_use )
+		{
+			$info_msg =
+			  "This backend has a low priority, maybe, it won't be used. It will be used when at least $prio_use backend(s) will be unabled.";
+		}
+	}
 
 	# check if the service exists
 	if ( !$found_service )
@@ -623,12 +670,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# no error found, return successful response
-	&zenlog(
-		"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.",
-		"info", "FARMS"
-	);
-
+	my $msg = "Backend modified.";
 	if ( &getFarmStatus( $farmname ) eq "up" )
 	{
 		&runFarmReload( $farmname );
@@ -637,9 +679,10 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
-				 message     => "Backend modified",
+				 message     => $msg,
 				 status      => &getFarmVipStatus( $farmname ),
 	};
+	$body->{ warning } = $info_msg if defined $info_msg;
 
 	&httpResponse( { code => 200, body => $body } );
 }
