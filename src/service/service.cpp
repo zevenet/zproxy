@@ -514,7 +514,6 @@ Backend *Service::getEmergencyBackend() {
   return bck;
 }
 Service::~Service() {
-  Logger::logmsg(LOG_REMOVE, "Destructor");
   for (auto &bck : backend_set) delete bck;
   //  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }

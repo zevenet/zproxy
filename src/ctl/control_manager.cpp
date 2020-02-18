@@ -78,6 +78,18 @@ void ctl::ControlManager::stop() {
   auto result = notify(task, false);
 }
 
+void ControlManager::sendCtlCommand(CTL_COMMAND command,
+                                    CTL_HANDLER_TYPE handler,
+                                    CTL_SUBJECT subject, std::string data) {
+  Logger::logmsg(LOG_REMOVE, "Reload config");
+  CtlTask task;
+  task.command = command;
+  task.target = handler;
+  task.subject = subject;
+  task.data = data;
+  auto result = notify(task, false);
+}
+
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   if (event_group != EVENT_GROUP::CTL_INTERFACE && event_group != EVENT_GROUP::ACCEPTOR) {
     ::close(fd);

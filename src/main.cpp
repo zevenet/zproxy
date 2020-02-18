@@ -56,6 +56,12 @@ void handleInterrupt(int sig) {
     case SIGUSR1:  // Release free heap memory
       ::malloc_trim(0);
       break;
+    case SIGHUP: {
+      auto cm = ctl::ControlManager::getInstance();
+      cm->sendCtlCommand(ctl::CTL_COMMAND::UPDATE,
+                         ctl::CTL_HANDLER_TYPE::LISTENER_MANAGER,
+                         ctl::CTL_SUBJECT::CONFIG);
+    }
     default: {
       //  ::longjmp(jmpbuf, 1);
     }

@@ -52,6 +52,8 @@ class ControlManager : public EpollManager, public CtlNotify<CtlTask, std::strin
   bool init(Config &configuration, CTL_INTERFACE_MODE listener_mode = CTL_INTERFACE_MODE::CTL_UNIX);
   void start();
   void stop();
+  void sendCtlCommand(CTL_COMMAND command, CTL_HANDLER_TYPE handler,
+                      CTL_SUBJECT subject, std::string data = "");
 
  private:
   std::string handleCommand(HttpRequest &request);
