@@ -216,12 +216,39 @@ bool PoundClient::executeCommand() {
   IO::IO_RESULT read_result = client.write(buffer.c_str(), buffer.size(), sent);
   if (read_result != IO::IO_RESULT::SUCCESS)
     showError("Error: Request sending failed.");  // TODO::print error
-  read_result = client.read();
+  bool done = false;
+  std::string str;
+  do {
+    read_result = client.read();
+    switch (read_result) {
+      case IO::IO_RESULT::SUCCESS: {
+        str += std::string(client.buffer, client.buffer_size);
+        client.buffer_size = 0;
+        done = true;
+        break;
+      }
+      case IO::IO_RESULT::FULL_BUFFER:
+      case IO::IO_RESULT::DONE_TRY_AGAIN:
+      case IO::IO_RESULT::ZERO_DATA:{
+        str += std::string(client.buffer, client.buffer_size);
+        client.buffer_size = 0;
+        break;
+      }
+      default:
+        if(client.buffer_size > 0){
+          str += std::string(client.buffer, client.buffer_size);
+          client.buffer_size = 0;
+        }
+        done = true;
+        break;
+    }
+  } while (!done);
+
   if (read_result != IO::IO_RESULT::SUCCESS)
     showError("Error: Response reading failed.");
   HttpResponse response;
   size_t used_bytes;
-  auto str = std::string(client.buffer, client.buffer_size);
+
   auto parse_result = response.parseResponse(str, &used_bytes);
   if (parse_result != http_parser::PARSE_RESULT::SUCCESS)
     showError("Error parsing response");
