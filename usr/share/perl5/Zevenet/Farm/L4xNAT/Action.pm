@@ -24,15 +24,10 @@
 use strict;
 use warnings;
 
-my $configdir = &getGlobalConfiguration( 'configdir' );
-
-my $eload;
-if ( eval { require Zevenet::ELoad; } )
-{
-	$eload = 1;
-}
-
+use Zevenet::Config;
 use Zevenet::Nft;
+
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: startL4Farm
@@ -67,26 +62,6 @@ sub startL4Farm    # ($farm_name)
 	  if &debug;
 
 	&loadL4Modules( $$farm{ vproto } );
-
-	if ( $eload )
-	{
-		# reload the backend source address
-		if ( @{ $farm->{ servers } } )
-		{
-			&eload(
-					module => 'Zevenet::Net::Floating',
-					func   => 'replaceL4ServerSourceAddr',
-					args   => [$farm],
-			);
-		}
-
-		# force the reload of the global global source addr
-		&eload(
-				module => 'Zevenet::Net::Floating',
-				func   => 'setFloatingSourceAddr',
-				args   => [$farm],
-		);
-	}
 
 	$status = &startL4FarmNlb( $farm_name, $writeconf );
 	if ( $status != 0 )

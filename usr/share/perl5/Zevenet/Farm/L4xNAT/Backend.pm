@@ -24,9 +24,10 @@
 use strict;
 use warnings;
 
-my $configdir = &getGlobalConfiguration( 'configdir' );
-
+use Zevenet::Config;
 use Zevenet::Nft;
+
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 my $eload;
 
@@ -491,6 +492,12 @@ sub _getL4FarmParseServers
 			my @l = split /"/, $line;
 			$server->{ ip }  = $l[3];
 			$server->{ rip } = $l[3];
+		}
+
+		if ( $stage == 3 && $line =~ /\"source-addr\"/ )
+		{
+			my @l = split /"/, $line;
+			$server->{ sourceip } = $l[3];
 		}
 
 		if ( $stage == 3 && $line =~ /\"port\"/ )

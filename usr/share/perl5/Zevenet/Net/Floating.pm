@@ -258,6 +258,11 @@ sub setFloatingSourceAddr
 			$srcaddr = ( $out_if ) ? $out_if->{ addr } : "";
 		}
 
+		return 0 if ( !exists $server->{ sourceip } and $srcaddr eq "" );
+		return 0
+		  if ( exists $server->{ sourceip } and $server->{ sourceip } eq $srcaddr );
+		return 0 if ( $farm->{ sourceip } eq $srcaddr );
+
 		my $err = &sendL4NlbCmd(
 			{
 			   method => "PUT",
@@ -282,9 +287,7 @@ sub setFloatingSourceAddr
 	}
 
 	$srcaddr = $out_if->{ addr };
-	my $current = &getL4FarmParam( 'sourceaddr', $farm->{ name } );
-
-	return 0 if ( $current eq $srcaddr );
+	return 0 if ( $farm->{ sourceip } eq $srcaddr );
 
 	return
 	  &sendL4NlbCmd(
@@ -296,68 +299,6 @@ sub setFloatingSourceAddr
 			 qq({"farms" : [ { "name" : "$farm->{ name }", "source-addr" : "$srcaddr" } ] })
 		}
 	  );
-}
-
-#	&setFloatingSourceAddr( $farm_name );
-sub replaceL4ServerSourceAddr
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-
-	my $farm      = shift;
-	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $out_if    = 0;
-	my $srcaddr;
-
-	require Zevenet::JSON;
-	require Zevenet::Nft;
-	require Zevenet::Net::Validate;
-	require Zevenet::Net::Interface;
-	require Zevenet::Farm::Core;
-	require Zevenet::Farm::L4xNAT::Config;    # Currently, only for L4
-	require Zevenet::Farm::L4xNAT::Action;
-
-	my $farm_if_name = &getInterfaceByIp( $farm->{ vip } );
-	my $farm_if      = &getInterfaceConfig( $farm_if_name );
-
-	my $configdir     = &getGlobalConfiguration( 'configdir' );
-	my $farm_filename = &getFarmFile( $farm->{ name } );
-	my $farm_file     = "$configdir/$farm_filename";
-
-	my $id = 0;
-
-	# returns the backends with theirs source-addr
-	my $bk_ids = {};
-	foreach my $server ( @{ $farm->{ servers } } )
-	{
-		$srcaddr = "";
-
-		if ( $server->{ ip } )
-		{
-			my $net =
-			  &getNetValidate( $farm->{ vip }, $farm_if->{ mask }, $server->{ ip } );
-
-			# delete if the backend is not accesible now for the floating ip
-			if ( !$net )
-			{
-				$out_if = &getFloatInterfaceForAddress( $server->{ ip } );
-				$srcaddr = ( $out_if ) ? $out_if->{ addr } : "";
-			}
-		}
-		$bk_ids->{ $id++ } = $srcaddr;
-	}
-
-	my $f_json = &decodeJSONFile( $farm_file );
-	return undef if !defined $f_json;
-
-	my $id = 0;
-	foreach my $bk ( @{ $f_json->{ servers } } )
-	{
-		$bk->{ 'source-addr' } = $bk_ids->{ $id }->{ source_addr };
-		$id++;
-	}
-
-	&encodeJSONFile( $f_json, $farm_file );
 }
 
 sub get_floating_struct

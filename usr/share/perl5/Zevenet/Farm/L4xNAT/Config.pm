@@ -620,7 +620,7 @@ Parameters:
 
 Returns:
 	hash ref -
-		\%farm = { $name, $filename, $nattype, $lbalg, $vip, $vport, $vproto, $persist, $ttl, $proto, $status, \@servers }
+		\%farm = { $name, $filename, $nattype, $lbalg, $vip, $vport, $vproto, $sourceip, $persist, $ttl, $proto, $status, \@servers }
 		\@servers = [ \%backend1, \%backend2, ... ]
 
 =cut
@@ -656,6 +656,8 @@ sub getL4FarmStruct
 	$farm{ vip }    = &_getL4ParseFarmConfig( 'vip',   undef, $config );
 	$farm{ vport }  = &_getL4ParseFarmConfig( 'vipp',  undef, $config );
 	$farm{ vproto } = &_getL4ParseFarmConfig( 'proto', undef, $config );
+	$farm{ sourceip } = "";
+	$farm{ sourceip } = &_getL4ParseFarmConfig( 'sourceaddr', undef, $config );
 
 	my $persist = &_getL4ParseFarmConfig( 'persist', undef, $config );
 	$farm{ persist } = ( $persist eq "-1" ) ? '' : $persist;
