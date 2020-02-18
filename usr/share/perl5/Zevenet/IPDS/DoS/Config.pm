@@ -151,6 +151,7 @@ sub setDOSParam
 
 	#Stop related rules
 	my $status = &getDOSStatusRule( $name );
+	my $next_status = ( $param eq 'status' ) ? $value : $status;
 	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
@@ -178,7 +179,7 @@ sub setDOSParam
 	$fileHandle->write( $confFile );
 	&setDOSUnlockConfigFile( $lock );
 
-	&runDOSStartByRule( $name ) if ( $status eq "up" );
+	&runDOSStartByRule( $name ) if ( $next_status eq "up" );
 }
 
 =begin nd

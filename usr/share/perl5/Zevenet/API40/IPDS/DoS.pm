@@ -503,16 +503,12 @@ sub actions_dos
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
-
-		&setDOSParam( $rule, 'status', 'up' );
-
-		my $error = &runDOSStartByRule( $rule );
+		my $error = &setDOSParam( $rule, 'status', 'up' );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
-		&setDOSParam( $rule, 'status', 'down' );
-		my $error = &runDOSStopByRule( $rule );
+		my $error = &setDOSParam( $rule, 'status', 'down' );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )

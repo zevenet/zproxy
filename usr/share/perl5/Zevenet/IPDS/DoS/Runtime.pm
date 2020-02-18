@@ -56,6 +56,9 @@ sub setDOSRunRule
 
 	return 1 if ( !defined $farmName || $farmName eq "" );
 
+	&zenlog( "Starting DoS rule '$ruleName' for farm '$farmName'",
+			 "debug2", "ipds" );
+
 	my $rule = &getDOSParam( $ruleName, "rule" );
 
 	if ( $rule eq 'sshbruteforce' )
@@ -130,6 +133,9 @@ sub setDOSStopRule
 	return 1 if ( !defined $farmName || $farmName eq "" );
 
 	my $rule = &getDOSParam( $ruleName, "rule" );
+
+	&zenlog( "Stopping DoS rule '$ruleName' for the farm '$farmName'",
+			 "debug2", "ipds" );
 
 	include 'Zevenet::IPDS::Core';
 
