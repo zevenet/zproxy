@@ -872,7 +872,13 @@ sub delRoutes    # ($table,$if_ref)
 		if ( $table eq "local" )
 		{
 			# exists if the tables does not exist
-			return 0 if ( !grep ( /^table_$if_ref->{name}/, &listRoutingTablesNames() ) );
+			if ( !grep ( /^table_$if_ref->{name}/, &listRoutingTablesNames() ) )
+			{
+				&zenlog(
+						 "The table table_$if_ref->{name} was not flushed because it was not found",
+						 "debug2", "net" );
+				return 0;
+			}
 
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
