@@ -871,6 +871,9 @@ sub delRoutes    # ($table,$if_ref)
 
 		if ( $table eq "local" )
 		{
+			# exists if the tables does not exist
+			return 0 if ( !grep ( /^table_$if_ref->{name}/, &listRoutingTablesNames() ) );
+
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
 
