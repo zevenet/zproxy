@@ -119,7 +119,7 @@ my %format_re = (
 	'gslb_service'          => qr/[a-zA-Z0-9][\w\-]*/,
 	'farm_modules'          => qr/(?:gslb|dslb|lslb)/,
 	'service_position'      => qr/\d+/,
-	'l4_session'            => qr/[ \._\d]+/,
+	'l4_session'            => qr/[ \._\:\w]+/,
 	'farm_maintenance_mode' => qr/(?:drain|cut)/,              # not used from API 4
 
 	# cipher

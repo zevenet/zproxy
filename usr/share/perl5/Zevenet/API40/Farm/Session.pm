@@ -68,18 +68,18 @@ sub add_farm_sessions
 	my $json_obj = shift;
 	my $farm     = shift;
 
-	my $desc = "Adding a static session to $farm";
+	my $desc = "Adding a static session to the $farm";
 	my $params = {
 		"id" => {
 				  'non_blank' => 'true',
 				  'required'  => 'true',
 		},
 
-		# session format:
-		# mac: 02:8e:6q:33:02:8e:6q:33
-		# ip or srcip: 195.2.3.66
-		# port: 5445
-		# srcip_srcport or srcip_dstport or : 122.36.54.2_80
+# session format:
+# mac: 02:8e:6q:33:02:8e
+# ip or srcip: 195.2.3.66
+# port: 5445
+# srcip_srcport or srcip_dstport or : 122.36.54.2_80, is used the character '_' to difference when IP is v6
 
 		"session" => {
 					   'non_blank' => 'true',
@@ -157,14 +157,19 @@ sub delete_farm_sessions
 	if ( &getFarmType( $farm ) ne 'l4xnat' )
 	{
 		my $msg = "This feature is only available for l4xnat profiles.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $session_obj = &getL4FarmSession( $farm, $session );
-	if ( $session_obj->{ type } ne 'static' )
+	if ( !defined $session_obj )
+	{
+		my $msg = "The session '$session' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+	elsif ( $session_obj->{ type } ne 'static' )
 	{
 		my $msg = "Only the 'static' sessions can be managed.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $err = &delL4FarmSession( $farm, $session );
