@@ -99,8 +99,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $id       = &getFarmBackendAvailableID( $farmname );
-	my $backends = &getL4FarmServers( $farmname );
+	my $id = &getFarmBackendAvailableID( $farmname );
+
 	my $info_msg;
 
 	# check of interface for datalink
@@ -114,6 +114,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	}
 	elsif ( exists $json_obj->{ priority } )
 	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		my $backends = &getL4FarmServers( $farmname );
 		my $prio_use = $json_obj->{ priority } - 1;
 		if ( @{ $backends } < $prio_use )
 		{
@@ -488,7 +490,6 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	  if exists $json_obj->{ interface };    # datalink
 
 	my $info_msg;
-	my $backends = &getL4FarmServers( $farmname );
 
 	if ( $type eq 'datalink' )
 	{
@@ -500,6 +501,8 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	}
 	elsif ( exists $json_obj->{ priority } )
 	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		my $backends = &getL4FarmServers( $farmname );
 		my $prio_use = $json_obj->{ priority } - 1;
 		if ( @{ $backends } < $prio_use )
 		{
