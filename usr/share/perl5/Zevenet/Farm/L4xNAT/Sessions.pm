@@ -41,14 +41,20 @@ Parameters:
 		}
 
 Returns:
-	Hash ref - It is a hash with two keys: 'session' returns the session token and
+	Hash ref - It is a hash with the following keys:
+		'session' returns the session token.
 		'id' returns the backen linked with the session token. If any session was found
 		the function will return 'undef'.
+		'type' will have the value 'static' if the session is preloaded by the user;
+			or 'dynamic' if the session is created automatically by the system when the connection arrives.
+		'ttl' is the time out of the session. This field will be 'undef' when the session is static.
 
-	ref = {
-		"id" : 3,
-		"session" : "192.168.1.186"
-	}
+		{
+			"id" : 3,
+			"session" : "192.168.1.186"
+			"type" : "dynamic"
+			"ttl" : "1h25m31s364ms"
+		}
 
 =cut
 
@@ -88,12 +94,15 @@ Returns:
 		"client" is the client position entry in the session table
 		"id" is the backend id assigned to session
 		"session" is the key that identifies the session
+		"type" is the key that identifies the session
 
 		[
 			{
-			"client" : 0,
-			"id" : 3,
-			"session" : "192.168.1.186"
+				"client" : 0,
+				"id" : 3,
+				"session" : "192.168.1.186",
+				"type" : "dynamic",
+				"ttl" : "54m5s",
 			}
 		]
 
