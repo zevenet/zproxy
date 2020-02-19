@@ -49,16 +49,19 @@ sub getAllFarmStats
 		my $name = &getFarmName( $file );
 		my $type = &getFarmType( $name );
 
-		# datalink has not got stats
-		next if ( $type eq 'datalink' );
-
 		my $status      = &getFarmVipStatus( $name );
 		my $vip         = &getFarmVip( 'vip', $name );
 		my $port        = &getFarmVip( 'vipp', $name );
 		my $established = 0;
 		my $pending     = 0;
 
-		if ( $status ne "down" )
+		# datalink has not got stats
+		if ( $type eq 'datalink' )
+		{
+			$established = undef;
+			$pending     = undef;
+		}
+		elsif ( $status ne "down" )
 		{
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
