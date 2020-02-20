@@ -30,7 +30,7 @@ include 'Zevenet::Net::DHCP';
 
 # This two sentences should make zenbui behave like zenbui.sh
 $ENV{ NCURSES_NO_UTF8_ACS } = 1;
-open ( STDERR, '>', '/dev/null' ) if &debug();
+open ( STDERR, '>>', '/var/log/syslog' );
 my $ifconfig_bin = &getGlobalConfiguration( 'ifconfig_bin' );
 my $zlbmenu;
 my $win3;

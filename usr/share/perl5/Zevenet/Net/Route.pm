@@ -1142,6 +1142,7 @@ sub listRoutingTablesNames
 	my @list = ();
 	my @exceptions = ( 'local', 'default', 'unspec' );
 
+	require Zevenet::Lock;
 	my $fh = &openlock( $rttables, '<' );
 
 	foreach my $line ( <$fh> )
