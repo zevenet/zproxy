@@ -267,6 +267,7 @@ static const char *parse_http_version(const char *buf, const char *buf_end, int 
 static const char *parse_headers(const char *buf, const char *buf_end, struct phr_header *headers, size_t *num_headers,
                                  size_t max_headers, int *ret) {
   for (;; ++*num_headers) {
+    headers[*num_headers].reset();
     CHECK_EOF();
     if (*buf == '\015') {
       ++buf;

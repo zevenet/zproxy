@@ -64,6 +64,12 @@ struct phr_header {
   size_t value_len;
   bool header_off;
   size_t line_size;
+  inline void reset(){
+    name_len = 0;
+    value_len = 0;
+    line_size = 0;
+    header_off = false;
+  }
 };
 
 /* returns number of bytes consumed if successful, -2 if request is partial,
