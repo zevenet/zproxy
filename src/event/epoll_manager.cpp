@@ -87,7 +87,7 @@ int EpollManager::loopOnce(int time_out) {
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
     auto event_group = static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff);
-    if ((events[i].events & (EPOLLHUP | EPOLLERR)) != 0u) {
+    if ((events[i].events & EPOLLERR) != 0u) {
       HandleEvent(fd, EVENT_TYPE::DISCONNECT, event_group);
       continue;
     } else {
@@ -102,7 +102,7 @@ int EpollManager::loopOnce(int time_out) {
           onReadEvent(events[i]);
         }
       }
-      if (events[i].events & EPOLLRDHUP) {
+      if ((events[i].events & (EPOLLRDHUP | EPOLLHUP)) != 0u) {
         HandleEvent(fd, EVENT_TYPE::DISCONNECT, event_group);
         continue;
       }
