@@ -259,7 +259,8 @@ sub start_service
 
 					if ( $return_code )
 					{
-						my @ip_output = `$ip_bin address show dev $$iface{name}`;
+						my @ip_output =
+						  @{ &logAndGet( "$ip_bin address show dev $$iface{name}", "array" ) };
 						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 					}
 

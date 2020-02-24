@@ -23,6 +23,8 @@
 
 use strict;
 
+use Zevenet::Core;
+
 =begin nd
 Function: setSshForCluster
 
@@ -55,8 +57,9 @@ sub setSshForCluster
 	require Zevenet::Lock;
 	my $cat = &getGlobalConfiguration( 'cat_bin' );
 
+	my @file_content = @{ &logAndGet( "$cat $sshFile", "array" ) };
 	if ( $type eq 'delete'
-		 && grep ( /Match Address ${remote_ip}/, `$cat $sshFile` ) )
+		 && grep ( /Match Address ${remote_ip}/, @file_content ) )
 	{
 
 		&ztielock( \my @file, "$sshFile" );
@@ -92,7 +95,7 @@ sub setSshForCluster
 }
 
 =begin nd
-Function: setSshRemoteForCluster 
+Function: setSshRemoteForCluster
 
 	Set the SSH configuration in remote node for cluster
 
@@ -128,9 +131,9 @@ sub setSshRemoteForCluster
 }
 
 =begin nd
-Function: getRemoteSession 
+Function: getRemoteSession
 
-	Get SESSION_ID of a session with a remote load balancer 
+	Get SESSION_ID of a session with a remote load balancer
 
 Parameters:
 	ip - Remote Ip of a load balancer
@@ -179,7 +182,8 @@ sub getRemoteSession
 	my $cookie_file_lock = &openlock( $fcookie, '<' );
 	my $cat = &getGlobalConfiguration( 'cat_bin' );
 
-	my @match = grep /CGISESSID\t(.+)/, `$cat $fcookie`;
+	my @file_content = @{ &logAndGet( "$cat $fcookie", "array" ) };
+	my @match = grep /CGISESSID\t(.+)/, @file_content;
 	$match[0] =~ /CGISESSID\t([a-z0-9]+)/;
 	my $cookie = $1;
 
@@ -196,7 +200,7 @@ sub getRemoteSession
 }
 
 =begin nd
-Function: remoteSshCall 
+Function: remoteSshCall
 
 	Call to remote load balancer to set the SSH configuration
 
@@ -267,7 +271,7 @@ sub getInstanceId
 }
 
 =begin nd
-Function: reassignInterfaces 
+Function: reassignInterfaces
 
 	Reassign interfaces of the remote node to this node
 
@@ -302,11 +306,9 @@ sub reassignInterfaces
 	{
 		my @network_ids = @{ &getNetworksInterfaces( $instance_id ) };
 
-		my $query = @{
-			&logAndGet(
-				"$aws ec2 describe-instances --instance-ids $remote_instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
-			)
-		};
+		my $query = &logAndGet(
+			"$aws ec2 describe-instances --instance-ids $remote_instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
+		);
 
 		my $json = eval { JSON::XS::decode_json( $query ) };
 		my @virtuals_ip = @{ $json->[0]->[0] };
@@ -343,7 +345,7 @@ sub reassignInterfaces
 }
 
 =begin nd
-Function: getNetworksInterfaces 
+Function: getNetworksInterfaces
 
 	Get the network interfaces IDs of a instance
 
@@ -362,11 +364,9 @@ sub getNetworksInterfaces
 	my $instance_id = shift;
 	my $aws         = &getGlobalConfiguration( 'aws_bin' );
 
-	my $query = @{
-		&logAndGet(
-			"$aws ec2 describe-instances --instance-ids $instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
-		)
-	};
+	my $query = &logAndGet(
+		"$aws ec2 describe-instances --instance-ids $instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
+	);
 
 	require JSON::XS;
 	my $json = eval { JSON::XS::decode_json( $query ) };
@@ -376,7 +376,7 @@ sub getNetworksInterfaces
 }
 
 =begin nd
-Function: disableSshCluster 
+Function: disableSshCluster
 
 	Disable the SSH configuration for cluster
 
@@ -404,7 +404,7 @@ sub disableSshCluster
 }
 
 =begin nd
-Function: getCredentials 
+Function: getCredentials
 
 	Get AWS credentials
 
@@ -425,7 +425,7 @@ sub getCredentials
 	require Config::Tiny;
 	require Zevenet::Config;
 
-	my $file = &getGlobalConfiguration( "aws_$file" );
+	$file = &getGlobalConfiguration( "aws_$file" );
 
 	if ( !-f $file )
 	{
@@ -447,7 +447,7 @@ sub getCredentials
 }
 
 =begin nd
-Function: setCredentials 
+Function: setCredentials
 
 	Set AWS credentials
 

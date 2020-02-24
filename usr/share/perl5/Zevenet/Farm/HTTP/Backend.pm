@@ -431,7 +431,7 @@ sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 
 	my $proxyctl = &getGlobalConfiguration( 'proxyctl' );
 
-	return `$proxyctl -c  /tmp/$farm_name\_proxy.socket`;
+	return @{ &logAndGet( "$proxyctl -c /tmp/$farm_name\_proxy.socket", "array" ) };
 }
 
 =begin nd
@@ -656,7 +656,8 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 	{
 		open my $fd, '>', "$statusfile";
 		my $proxyctl = &getGlobalConfiguration( 'proxyctl' );
-		my @run      = `$proxyctl -c /tmp/$farm_name\_proxy.socket`;
+		my @run =
+		  @{ &logAndGet( "$proxyctl -c /tmp/$farm_name\_proxy.socket", "array" ) };
 		my @sw;
 		my @bw;
 
@@ -1046,7 +1047,7 @@ Parameters:
 	backend - Backend id
 
 Returns:
-	none - .
+	Integer - Error code: It returns 0 on success or another value if it fails deleting some sessions
 
 FIXME:
 
@@ -1067,7 +1068,7 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	my $sessid;
 	my $sessionid2;
 	my $proxyctl = &getGlobalConfiguration( 'proxyctl' );
-	my @output;
+	my $err      = 0;
 
 	&zenlog(
 		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service",
@@ -1094,13 +1095,11 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 			$sessionid2 = $sessionid[1];
 			@sessionid  = split ( /\ /, $sessionid2 );
 			$sessid     = $sessionid[1];
-			@output = `$proxyctl -c  /tmp/$farm_name\_proxy.socket -n 0 $serviceid $sessid`;
-			&zenlog(
-				"Executing:  $proxyctl -c /tmp/$farm_name\_proxy.socket -n 0 $serviceid $sessid",
-				"info", "LSLB"
-			);
+			$err += &logAndRun(
+						 "$proxyctl -c /tmp/$farm_name\_proxy.socket -n 0 $serviceid $sessid" );
 		}
 	}
+	return $err;
 }
 
 sub getHTTPFarmBackendAvailableID

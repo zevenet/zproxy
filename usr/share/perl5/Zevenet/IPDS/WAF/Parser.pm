@@ -942,7 +942,7 @@ sub checkWAFFileSyntax
 	my $rule_st = shift // {};
 
 	my $waf_check = &getGlobalConfiguration( 'waf_rule_check_bin' );
-	my $out       = `$waf_check $file 2>&1`;
+	my $out       = &logAndGet( "$waf_check $file", "string", 1 );
 	my $err       = $?;
 	&zenlog( "cmd: $waf_check $file", "debug1", "waf" );
 

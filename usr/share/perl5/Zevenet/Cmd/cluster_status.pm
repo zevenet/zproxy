@@ -49,12 +49,11 @@ my $remotehost = &getZClusterRemoteHost();
 my $local_n  = &getZClusterNodeStatusInfo();
 my $remote_n = &getZClusterNodeStatusInfo( $cl_conf->{ $remotehost }->{ ip } );
 
-
 ## VRRP protocol instance
 
-my $vrrp_local_rc = $local_n->{ ka };
+my $vrrp_local_rc  = $local_n->{ ka };
 my $vrrp_remote_rc = $remote_n->{ ka };
-my $vrrp_ok = ( !$vrrp_local_rc && !$vrrp_remote_rc );
+my $vrrp_ok        = ( !$vrrp_local_rc && !$vrrp_remote_rc );
 
 unless ( $vrrp_ok )
 {
@@ -67,41 +66,17 @@ unless ( $vrrp_ok )
 	exit 1;
 }
 
-#~ ## Cluster interface
-#~
-#~ my $ip_bin = &getGlobalConfiguration('ip_bin');
-#~ my ( $vipcl ) = &getClusterConfigVipInterface( $filecluster );
-#~
-#~ # local
-#~ my $vip_local = grep ( / $vipcl\//, `$ip_bin addr list`);
-#~ my $vip_loc_stat = $?;
-#~
-#~ # remote
-#~ my $vip_remote = grep ( / $vipcl\//,
-  #~ `ssh -o \"ConnectTimeout=5\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip \"$ip_bin addr list\" `);
-#~ my $vip_rem_stat = $?;
-#~
-#~
-#~ # ^ == xor
-#~ my $vip_ok = (!$vip_rem_stat && !$vip_loc_stat) && &xor_op( $vip_local, $vip_remote );
-#~
-#~ if ( !$vip_ok ){
-	#~ print "vip NO OK\n" if $DEBUG;
-	#~ exit 1;
-#~ }
-
-
 # Sync daemon
 
-my $sync_local_rc = $local_n->{ zi };
+my $sync_local_rc  = $local_n->{ zi };
 my $sync_remote_rc = $remote_n->{ zi };
 
-my $sync_local_ok = ( $sync_local_rc == 0 );
+my $sync_local_ok  = ( $sync_local_rc == 0 );
 my $sync_remote_ok = ( $sync_remote_rc == 0 );
 
 ## Check all
-my $master_local = ($sync_local_ok && $local_n->{ role } eq 'master');
-my $master_remote = ($sync_remote_ok && $remote_n->{ role } eq 'master');
+my $master_local  = ( $sync_local_ok  && $local_n->{ role } eq 'master' );
+my $master_remote = ( $sync_remote_ok && $remote_n->{ role } eq 'master' );
 
 my $one_master = &xor_op( $master_local, $master_remote );
 
@@ -118,13 +93,12 @@ if (    ( $master_local && !$sync_local_ok )
 	exit 1;
 }
 
-#~ if ( $vrrp_ok && $vip_ok && $one_master )
 if ( $vrrp_ok && $one_master )
 {
 	# all ok
-	print "Master\n" if $master_local;
-	print "Slave\n" if $master_remote;
-	system("grep RSS /proc/$$/status") if $DEBUG;
+	print "Master\n"                      if $master_local;
+	print "Slave\n"                       if $master_remote;
+	system ( "grep RSS /proc/$$/status" ) if $DEBUG;
 	exit 0;
 }
 
@@ -147,29 +121,27 @@ exit 1;
 
 sub xor_op
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $a, $b ) = @_;
 
-	return ( ( $a && ! $b ) || ( ! $a && $b ) );
+	return ( ( $a && !$b ) || ( !$a && $b ) );
 }
 
 sub zdebug
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	print "cl_status:$cl_status\n";
 	print "localhost:$localhost\n";
 	print "remotehost:$remotehost\n";
 	print "vrrp_local_rc:$vrrp_local_rc\n";
 	print "vrrp_remote_rc:$vrrp_remote_rc\n";
 	print "vrrp_ok:$vrrp_ok\n";
-	#~ print "vipcl:$vipcl\n";
-	#~ print "vip_local:$vip_local\n";
-	#~ print "vip_remote:$vip_remote\n";
-	#~ print "vip_ok:$vip_ok\n";
 	print "sync_local_rc:$sync_local_rc\n"   if defined $sync_local_rc;
 	print "sync_remote_rc:$sync_remote_rc\n" if defined $sync_remote_rc;
 	print "master_local:$master_local\n"     if defined $master_local;
 	print "master_remote:$master_remote\n"   if defined $master_remote;
 	print "one_master:$one_master\n"         if defined $one_master;
-	system("grep RSS /proc/$$/status");
+	system ( "grep RSS /proc/$$/status" );
 }

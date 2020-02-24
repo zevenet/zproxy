@@ -23,6 +23,8 @@
 
 use strict;
 
+use Zevenet::Core;
+
 my $eload;
 if ( eval { require Zevenet::ELoad; } )
 {
@@ -963,7 +965,7 @@ sub getDefaultGW    # ($if)
 
 		if ( grep { /^...\ttable_$cif$/ } <$rt_fd> )
 		{
-			@routes = `$ip_bin route list table table_$cif`;
+			@routes = @{ &logAndGet( "$ip_bin route list table table_$cif", "array" ) };
 		}
 
 		close $rt_fd;
@@ -974,10 +976,10 @@ sub getDefaultGW    # ($if)
 	}
 	else
 	{
-		@routes = `$ip_bin route list`;
-		@defgw  = grep ( /^default/, @routes );
-		@line   = split ( / /, $defgw[0] );
-		$gw     = $line[2];
+		@routes = @{ &logAndGet( "$ip_bin route list", "array" ) };
+		@defgw = grep ( /^default/, @routes );
+		@line = split ( / /, $defgw[0] );
+		$gw = $line[2];
 		return $gw;
 	}
 }
@@ -1001,7 +1003,7 @@ sub getIPv6DefaultGW    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my @routes = `$ip_bin -6 route list`;
+	my @routes = @{ &logAndGet( "$ip_bin -6 route list", "array" ) };
 	my ( $default_line ) = grep { /^default/ } @routes;
 
 	my $default_gw;
@@ -1032,7 +1034,7 @@ sub getIPv6IfDefaultGW    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my @routes = `$ip_bin -6 route list`;
+	my @routes = @{ &logAndGet( "$ip_bin -6 route list", "array" ) };
 	my ( $default_line ) = grep { /^default/ } @routes;
 
 	my $if_default_gw;
@@ -1064,9 +1066,9 @@ sub getIfDefaultGW    # ()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my @routes = `$ip_bin route list`;
-	my @defgw  = grep ( /^default/, @routes );
-	my @line   = split ( / /, $defgw[0] );
+	my @routes = @{ &logAndGet( "$ip_bin route list", "array" ) };
+	my @defgw = grep ( /^default/, @routes );
+	my @line = split ( / /, $defgw[0] );
 
 	return $line[4];
 }

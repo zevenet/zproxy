@@ -23,6 +23,7 @@
 
 use strict;
 
+use Zevenet::Core;
 require Zevenet::Farm::Base;
 require Zevenet::Net::ConnStats;
 
@@ -48,7 +49,7 @@ sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 
 	my $wget       = &getGlobalConfiguration( 'wget' );
 	my $httpPort   = &getGSLBControlPort( $farmName );
-	my $gdnsdStats = `$wget -qO- http://127.0.0.1:$httpPort/json`;
+	my $gdnsdStats = &logAndGet( "$wget -qO- http://127.0.0.1:$httpPort/json" );
 	my $stats;
 
 	if ( $gdnsdStats )

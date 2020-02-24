@@ -207,7 +207,7 @@ sub getBLlastUptdate
 	return -1 if ( &getBLParam( $listName, 'type' ) eq 'local' );
 	return 0 if ( !-f $listFile );
 
-	my $outCmd = `$stat -c %y $listFile`;
+	my $outCmd = &logAndGet( "$stat -c %y $listFile" );
 
 	# 2016-12-22 10:21:07.000000000 -0500
 	if ( $outCmd =~ /^(.+)\./ )

@@ -93,7 +93,7 @@ Function: getRBACServices
 	It gets the authentication services.
 
 Parameters:
-	None - 
+	None -
 
 Returns:
 	Array - List of Services
@@ -323,8 +323,7 @@ sub getRBACUserGroup
 	my $user = shift;
 	my @groups_list;
 	my $groups_bin = &getGlobalConfiguration( "groups_bin" );
-	my $groups     = `$groups_bin $user`;
-	chomp $groups;
+	my $groups     = &logAndGet( "$groups_bin $user" );
 	$groups =~ s/^$user : (:?nogroup) ?/ /;
 	$groups =~ s/(^| )rbac($| )/ /;
 	$groups =~ s/(^| )webgui($| )/ /;

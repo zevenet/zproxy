@@ -324,8 +324,8 @@ sub getRBLPacketblPid
 	my $rule = shift;
 	my $pid;
 
-	my $ps      = &getGlobalConfiguration( 'ps' );
-	my @process = `$ps x`;
+	my $ps = &getGlobalConfiguration( 'ps' );
+	my @process = @{ &logAndGet( "$ps x", "array" ) };
 	if ( @process = grep ( /\/packetbl_$rule\.conf/, @process ) )
 	{
 		$pid = $1 if ( $process[0] =~ /^\s*(\d+)\s/ );

@@ -181,8 +181,12 @@ sub getGSLBFarm
 			 "debug", "PROFILING" );
 	my ( $pid ) = @_;
 
+	my $grep = &getGlobalConfiguration( 'grep_bin' );
+	my $ps   = &getGlobalConfiguration( 'ps' );
+
 	my $farm;
-	my @aux = `ps -ef | grep $pid `;
+	my $cmd = "$ps -ef | $grep $pid";
+	my @aux = @{ &logAndGet( $cmd, "array" ) };
 
 	foreach my $line ( @aux )
 	{

@@ -289,7 +289,7 @@ sub getIpdsPackageStatus
 	require Zevenet::Config;
 	my $checkupgrades_bin = &getGlobalConfiguration( "checkupgrades_bin" );
 
-	my $output = `$checkupgrades_bin "zevenet-ipds"`;
+	my $output = &logAndGet( "$checkupgrades_bin zevenet-ipds" );
 	return 0 if ( $output =~ /already\sthe\snewest\sversion/ );
 	return 1 if ( $output =~ /new\sversion/ );
 	return 2 if ( $output =~ /not\sinstalled/ );
@@ -319,7 +319,7 @@ sub getIpdsRulesetDate
 	my $date_regex = qw/^\w+\s+zevenet-ipds\s+\d+\.\d+\.\d+\.(\d+)/;
 	my $date       = undef;
 
-	my $output = `$dpkg_bin -l "zevenet-ipds" | $tail_bin -n 1`;
+	my $output = &logAndGet( "$dpkg_bin -l zevenet-ipds | $tail_bin -n 1" );
 
 	$date = $1 if ( $output =~ $date_regex );
 

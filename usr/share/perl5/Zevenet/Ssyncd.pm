@@ -118,9 +118,24 @@ sub setSsyncdDisabled
 	return $error;
 }
 
+=begin nd
+Function: getSsyncdRunning
+
+	Check if the ssyncd process is running in the system
+
+Parameters:
+	none -.
+
+Returns:
+	Integer - It returns 0 if the process is not running, or another value if it is running
+
+=cut
+
 sub getSsyncdRunning
 {
-	return ( `pgrep ssyncd` ) ? 1 : 0;
+	my $pgrep = &getGlobalConfiguration( "pgrep" );
+	my $err   = &logAndRunCheck( "$pgrep ssyncd" );
+	return !$err;
 }
 
 sub setSsyncdBackup
@@ -135,12 +150,12 @@ sub setSsyncdBackup
 	my $ssyncd_port   = &getGlobalConfiguration( 'ssyncd_port' );
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 
-	if ( `pgrep ssyncd` )
+	if ( &getSsyncdRunning() )
 	{
 		# check mode
 		# ./ssyncdctl show mode --> master|backup
 		my $ssync_cmd = "$ssyncdctl_bin show mode";
-		chomp ( my ( $mode ) = `$ssync_cmd` );
+		my $mode      = &logAndGet( $ssync_cmd );
 
 		if ( $mode eq 'backup' )
 		{
@@ -181,12 +196,12 @@ sub setSsyncdMaster
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 	my $ssync_cmd;
 
-	if ( `pgrep ssyncd` )
+	if ( &getSsyncdRunning() )
 	{
 		# check mode
 		# ./ssyncdctl show mode --> master|slave
 		$ssync_cmd = "$ssyncdctl_bin show mode";
-		chomp ( my ( $mode ) = `$ssync_cmd` );
+		my $mode = &logAndGet( $ssync_cmd );
 
 		if ( $mode eq 'master' )
 		{

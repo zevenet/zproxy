@@ -24,8 +24,6 @@
 use strict;
 use warnings;
 
-use Zevenet::Nft;
-
 =begin nd
 Function: getNlbPid
 
@@ -118,7 +116,7 @@ sub startNlb
 		#required to wait at startup to ensure the process is up
 		sleep 1;
 
-		$nlbpid = `$pidof nftlb`;
+		$nlbpid = &logAndGet( "$pidof nftlb" );
 		if ( $nlbpid eq "" )
 		{
 			return -1;
@@ -282,15 +280,15 @@ sub execNft
 		if ( $chain eq "" )
 		{
 			&zenlog( "Deleting cluster table $table" );
-			$output = `$nft delete table $table 2> /dev/null`;
+			$output = &logAndRun( "$nft delete table $table" );
 		}
 		elsif ( $rule eq "" )
 		{
-			$output = `$nft delete chain $table $chain 2> /dev/null`;
+			$output = &logAndRun( "$nft delete chain $table $chain" );
 		}
 		else
 		{
-			my @rules  = `$nft -a list chain $table $chain 2> /dev/null`;
+			my @rules = @{ &logAndGet( "$nft -a list chain $table $chain", 'array' ) };
 			my $handle = "";
 			foreach my $r ( @rules )
 			{
@@ -308,13 +306,13 @@ sub execNft
 		if ( $chain eq "" )
 		{
 			$output = 1;
-			my @rules = `$nft list table $table 2> /dev/null`;
+			my @rules = @{ &logAndGet( "$nft list table $table", 'array' ) };
 			$output = 0 if ( scalar @rules == 0 );
 			return $output;
 		}
 		else
 		{
-			my @rules = `$nft list chain $table $chain 2> /dev/null`;
+			my @rules = @{ &logAndGet( "$nft list chain $table $chain", 'array' ) };
 			foreach my $r ( @rules )
 			{
 				if ( $r =~ / $rule / )

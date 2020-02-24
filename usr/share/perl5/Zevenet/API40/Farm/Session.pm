@@ -79,7 +79,7 @@ sub add_farm_sessions
 # mac: 02:8e:6q:33:02:8e
 # ip or srcip: 195.2.3.66
 # port: 5445
-# srcip_srcport or srcip_dstport or : 122.36.54.2_80, is used the character '_' to difference when IP is v6
+# srcip_srcport or srcip_dstport or : 122.36.54.2_80, the character '_'is used to difference when IP is v6
 
 		"session" => {
 					   'non_blank' => 'true',

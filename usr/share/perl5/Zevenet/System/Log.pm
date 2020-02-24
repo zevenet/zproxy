@@ -70,8 +70,8 @@ sub getLogs
 		my $filepath = "$logdir/$line";
 		chomp ( $filepath );
 		my $datetime_string = ctime( stat ( $filepath )->mtime );
-		$datetime_string = `date -d "${datetime_string}" +%F" "%T" "%Z -u`;
-		chomp $datetime_string;
+		$datetime_string =
+		  &logAndGet( "date -d " . $datetime_string . ' +%F" "%T" "%Z -u' );
 		push @logs, { 'file' => $line, 'date' => $datetime_string };
 	}
 
@@ -107,11 +107,12 @@ sub getLogLines
 	if ( $logFile =~ /\.gz$/ )
 	{
 		my $zcat = &getGlobalConfiguration( 'zcat' );
-		@lines = `$zcat ${path}/$logFile | $tail -n $lines_number`;
+		@lines =
+		  @{ &logAndGet( "$zcat ${path}/$logFile | $tail -n $lines_number", "array" ) };
 	}
 	else
 	{
-		@lines = `$tail -n $lines_number ${path}/$logFile`;
+		@lines = @{ &logAndGet( "$tail -n $lines_number ${path}/$logFile", "array" ) };
 	}
 
 	return \@lines;

@@ -47,8 +47,8 @@ my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 1 );
 #my $co = $Curses::UI::color_object;
 #$co->define_color('white', 70, 185, 113);
 
-my $zlbhostname = `hostname`;
-chomp $zlbhostname;
+my $hostname    = &getGlobalConfiguration( 'hostname' );
+my $zlbhostname = &logAndGet( $hostname );
 
 my $win1 = $zenui->add(
 						'win1', 'Window',
@@ -378,7 +378,7 @@ sub manage_power()
 				   if ( $ret )
 				   {
 					   my $reboot_bin = &getGlobalConfiguration( 'reboot_bin' );
-					   my @run        = `$reboot_bin &`;
+					   &logAndRunBG( "$reboot_bin" );
 					   exit ( 0 );
 				   }
 			   },
@@ -392,7 +392,7 @@ sub manage_power()
 				   if ( $ret )
 				   {
 					   my $poweroff_bin = &getGlobalConfiguration( 'poweroff_bin' );
-					   my @run          = `$poweroff_bin &`;
+					   &logAndRunBG( $poweroff_bin );
 					   exit ( 0 );
 				   }
 			   },
@@ -1039,13 +1039,15 @@ sub manage_zlb_services()
 	my $cherokeestatus   = "STOPPED";
 	my $zlbservicestatus = "STOPPED";
 	my $ps_bin           = &getGlobalConfiguration( 'ps' );
-	my @run              = `$ps_bin ex`;
+	my @run              = @{ &logAndGet( "$ps_bin ex", "array" ) };
 	if ( grep ( /$services[0]/, @run ) )
 	{
 		$cherokeestatus = "ACTIVE";
 	}
-	@run = `ifconfig`;
-	@run = grep ( !/^ /, @run );
+
+	my $ifconfig_bin = &getGlobalConfiguration( 'ifconfig_bin' );
+	@run = @{ &logAndGet( "$ifconfig_bin", "array" ) };
+	@run = grep ( !/^ /,  @run );
 	@run = grep ( !/^lo/, @run );
 	if ( grep ( /^[a-z]/, @run ) )
 	{
@@ -1226,8 +1228,9 @@ sub manage_zlb_hostname()
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	$zlbhostname = `hostname`;
-	chomp $zlbhostname;
+
+	my $hostname = &getGlobalConfiguration( 'hostname' );
+	$zlbhostname = &logAndGet( $hostname );
 	$zlbhostinput = $win3->add(
 								'win3id1', 'TextEntry',
 								-bg     => 'black',
@@ -1277,8 +1280,10 @@ sub set_new_hostname()
 			my $newhost = $zlbhostinput->get();
 			if ( $newhost && $newhost ne $zlbhostname )
 			{
-				my @run = `echo $newhost > /etc/hostname`;
-				@run = `hostname $newhost`;
+				my $echo     = &getGlobalConfiguration( 'echo_bin' );
+				my $hostname = &getGlobalConfiguration( 'hostname' );
+				&logAndRun( "$echo $newhost > /etc/hostname" );
+				&logAndRun( "$hostname $newhost" );
 			}
 			else
 			{
@@ -1305,9 +1310,13 @@ sub show_status_system()
 	my $cpustring     = &set_data_string( @cpudata );
 	my $zlbversion    = &getGlobalConfiguration( 'version' );
 	my $zaversion     = &getApplianceVersion();
-	my $ncores = 1 + `grep processor /proc/cpuinfo | tail -1 | awk '{printf \$3}'`;
-	$zlbhostname = `hostname`;
-	chomp $zlbhostname;
+	my $grep          = &getGlobalConfiguration( 'grep_bin' );
+	my $tail          = &getGlobalConfiguration( 'tail' );
+	my $awk           = &getGlobalConfiguration( 'awk' );
+	my $core_cmd = "$grep processor /proc/cpuinfo | $tail -1 | $awk '{printf \$3}'";
+	my $ncores   = 1 + &logAndGet( $core_cmd );
+	my $hostname_bin = &getGlobalConfiguration( "hostname" );
+	$zlbhostname = &logAndGet( $hostname_bin );
 
 	my $refresh = $win3->add(
 							  'win3id1',

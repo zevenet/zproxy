@@ -281,9 +281,10 @@ sub setL4FarmBackendsSessionsRemove
 
 	my $be = $farm->{ servers }[$backend];
 	( my $tag = $be->{ tag } ) =~ s/0x//g;
-	my $map_name   = "persist-$farmname";
-	my @persistmap = `$nft_bin list map nftlb $map_name`;
-	my $data       = 0;
+	my $map_name = "persist-$farmname";
+	my @persistmap =
+	  @{ &logAndGet( "$nft_bin list map nftlb $map_name", "array" ) };
+	my $data = 0;
 
 	foreach my $line ( @persistmap )
 	{

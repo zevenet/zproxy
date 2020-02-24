@@ -39,7 +39,7 @@ sub loadNfModule    # ($modname,$params)
 
 	my $status  = 0;
 	my $lsmod   = &getGlobalConfiguration( 'lsmod' );
-	my @modules = `$lsmod`;
+	my @modules = @{ &logAndGet( $lsmod, "array" ) };
 
 	if ( !grep { /^$modname /x } @modules )
 	{

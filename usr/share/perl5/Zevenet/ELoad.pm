@@ -107,7 +107,8 @@ sub eload
 	{
 		local %ENV = %ENV;
 		delete $ENV{ GATEWAY_INTERFACE };
-		$ret_output = `echo -n '$input' | $cmd`;
+		my $echo = &getGlobalConfiguration( 'echo_bin' );
+		$ret_output = `$echo -n '$input' | $cmd`;
 	}
 	my $rc = $?;
 
@@ -126,7 +127,7 @@ sub eload
 
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
-		&zenlog( "$msg. $ret_output", "error" . "SYSTEM" );
+		&zenlog( "$msg. $ret_output", "error", "SYSTEM" );
 
 	  # add exception to bonding module to not die when it is configuring nic interfaces
 		exit 1

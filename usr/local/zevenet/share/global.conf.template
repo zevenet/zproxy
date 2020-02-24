@@ -183,6 +183,8 @@ $tail="/usr/bin/tail";
 $zcat="/bin/zcat";
 #Where is ntpserver?
 $datentp="/usr/sbin/ntpdate";
+#Where is date?
+$date="/usr/bin/date";
 #Where is arping?
 $arping_bin="/usr/bin/arping";
 #Where is ping?
@@ -219,6 +221,8 @@ $sed_bin="/bin/sed";
 $cut_bin="/bin/cut";
 #Where is ls?
 $ls="/bin/ls";
+#Where is pgrep?
+$pgrep="/usr/bin/pgrep";
 #Where is stat?
 $stat="/usr/bin/stat";
 #Where is cp?
@@ -271,6 +275,10 @@ $groups_bin="/usr/bin/groups";
 $echo_bin="/bin/echo";
 #Where is dpkg?
 $dpkg_bin="/usr/bin/dpkg";
+#Where is dpkg-query?
+$dpkg_query ="/usr/bin/dpkg-query";
+#Where is nproc?
+$nproc_bin="/usr/bin/nproc";
 #Where is grep?
 $grep_bin="/bin/grep";
 #Where is nft?

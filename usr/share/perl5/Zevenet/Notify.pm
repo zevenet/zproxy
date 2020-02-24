@@ -366,7 +366,7 @@ sub zlbstopNotifications
 	return 0 if ( !$sec );
 
 	my $pidof = &getGlobalConfiguration( 'pidof' );
-	my $pid   = `$pidof -x sec`;
+	my $pid   = &logAndGet( "$pidof -x sec" );
 
 	if ( $pid )
 	{
@@ -403,7 +403,7 @@ sub runNotifications
 	my $pidof      = &getGlobalConfiguration( 'pidof' );
 	my $sec        = &getGlobalConfiguration( 'sec' );
 	my $syslogFile = &getGlobalConfiguration( 'syslogFile' );
-	my $pid        = `$pidof -x sec`;
+	my $pid        = &logAndGet( "$pidof -x sec" );
 
 	if ( $pid eq "" )
 	{
@@ -411,7 +411,7 @@ sub runNotifications
 
 		# start sec process
 		&logAndRunBG( "$sec --conf=$secConf --input=$syslogFile" );
-		$pid = `$pidof -x sec`;
+		$pid = &logAndGet( "$pidof -x sec" );
 		if ( $pid )
 		{
 			&zenlog( "run SEC, pid $pid", "info", "NOTIFICATIONS" );
@@ -435,7 +435,7 @@ sub reloadNotifications
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $pidof = &getGlobalConfiguration( 'pidof' );
-	my $pid   = `$pidof -x sec`;
+	my $pid   = &logAndGet( "$pidof -x sec" );
 
 	if ( $pid )
 	{

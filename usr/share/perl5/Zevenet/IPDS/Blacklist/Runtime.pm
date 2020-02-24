@@ -159,11 +159,11 @@ sub setBLDownloadRemoteList
 	&zenlog( "Downloading $listName...", "info", "IPDS" );
 
 	# Not direct standard output to null, this output is used for web variable
-	my @web           = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`;
+	my $curl = &getGlobalConfiguration( 'curl_bin' );
+	my @web  = @{ &logAndGet( "$curl --connect-timeout $timeout \"$url\"" ) };
+
 	my $source_format = &getValidFormat( 'blacklists_source' );
-
 	my @ipList;
-
 	foreach my $line ( @web )
 	{
 		if ( $line =~ /($source_format)/ )

@@ -78,8 +78,7 @@ sub getHostname
 			 "debug", "PROFILING" );
 
 	my $uname    = &getGlobalConfiguration( 'uname' );
-	my $hostname = `$uname -n`;
-	chomp $hostname;
+	my $hostname = &logAndGet( "$uname -n" );
 
 	return $hostname;
 }
@@ -109,7 +108,7 @@ sub getApplianceVersion
 	my $hyperv;
 	my $applianceFile = &getGlobalConfiguration( 'applianceVersionFile' );
 	my $lsmod         = &getGlobalConfiguration( 'lsmod' );
-	my @packages      = `$lsmod`;
+	my @packages      = @{ &logAndGet( "$lsmod", "array" ) };
 	my @hypervisor    = grep ( /(xen|vm|hv|kvm)_/, @packages );
 
 	# look for appliance vesion
@@ -132,7 +131,7 @@ sub getApplianceVersion
 		my $ifconfig = &getGlobalConfiguration( 'ifconfig' );
 
 		# look for mgmt interface
-		my @ifaces = `$ifconfig -s | $awk '{print $1}'`;
+		my @ifaces = @{ &logAndGet( "$ifconfig -s | $awk '{print $1}'", "array" ) };
 
 		# Network appliance
 		if ( grep ( /mgmt/, @ifaces ) )
@@ -359,9 +358,7 @@ sub getKernelVersion
 	require Zevenet::Config;
 
 	my $uname   = &getGlobalConfiguration( 'uname' );
-	my $version = `$uname -r`;
-
-	chomp $version;
+	my $version = &logAndGet( "$uname -r" );
 
 	return $version;
 }

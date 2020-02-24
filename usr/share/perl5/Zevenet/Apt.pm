@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 use strict;
+
+use Zevenet::Core;
 use Zevenet::SystemInfo;
-use Zevenet::Log;
 include 'Zevenet::Certificate::Activation';
 
 my $cert_path = &getGlobalConfiguration( 'zlbcertfile_path' );
@@ -14,9 +15,10 @@ sub setAPTRepo
 	# Variables
 	my $keyid     = &getKeySigned();
 	my $host      = &getGlobalConfiguration( 'repo_url_zevenet' );
+	my $openssl   = &getGlobalConfiguration( 'openssl' );
 	my $port      = "443";
-	my $subserial = "openssl x509 -in $cert_path -serial -noout";
-	my $subkeyid  = "openssl x509 -in $cert_path -noout -text | grep \"$keyid\"";
+	my $subserial = "$openssl x509 -in $cert_path -serial -noout";
+	my $subkeyid  = "$openssl x509 -in $cert_path -noout -text | grep \"$keyid\"";
 	my $subkeyidentifier =
 	  "openssl x509 -in $cert_path -noout -text | grep -A1 \"Subject Key Identifier\"";
 	my $file          = &getGlobalConfiguration( 'apt_source_zevenet' );
@@ -38,23 +40,23 @@ sub setAPTRepo
 	# check zevenet version. Versions prior to 5.2.5 will not be able to subscribe.
 	my $cmd = "$dpkg -l | $grep \"^ii\\s\\szevenet\\s*[0-9]\"";
 
-	my $version = `$cmd`;
+	my $version = &logAndGet( $cmd );
 
 	$version =~ s/[\r\n]//g;
 	$version =~ s/^ii\s\szevenet\s*//;
 	$version =~ s/\s*[a-zA-Z].*//;
 
 	# command to check keyid
-	my $keyid = `$subkeyid`;
-	if ( $? != 0 )
+	my $err = &logAndRun( $subkeyid );
+	if ( $err )
 	{
 		&zenlog( "Keyid is not correct", "error", "apt" );
 		return 1;
 	}
 
 	# command to get the serial
-	my $serial = `$subserial`;
-	if ( $? != 0 )
+	my $serial = &logAndGet( $subserial );
+	if ( $serial eq '' )
 	{
 		&zenlog( "Serial is not correct", "error", "apt" );
 		return 1;
@@ -67,7 +69,7 @@ sub setAPTRepo
 	$serial =~ s/[\r\n]//g;
 
 	# command to get the Subject Key Identifier
-	my $subjectkeyidentifier = `$subkeyidentifier`;
+	my $subjectkeyidentifier = &logAndGet( $subkeyidentifier );
 	if ( $? != 0 )
 	{
 		&zenlog( "Subject ID is not correct", "error", "apt" );

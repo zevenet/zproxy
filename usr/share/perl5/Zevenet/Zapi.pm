@@ -108,17 +108,16 @@ sub setZAPI    #($name,$value)
 	#Enable ZAPI
 	if ( $name eq "enable" )
 	{
-		my @run =
-		  `adduser --system --shell /bin/false --no-create-home zapi 1> /dev/null 2> /dev/null`;
-		return $?;
+		my $cmd = "adduser --system --shell /bin/false --no-create-home zapi";
+		return &logAndRun( $cmd );
 	}
 
 	#Disable ZAPI
 	if ( $name eq "disable" )
 	{
 		my $deluser_bin = &getGlobalConfiguration( 'deluser_bin' );
-		my @run         = `$deluser_bin zapi 1> /dev/null 2> /dev/null`;
-		return $?;
+		my $cmd         = "$deluser_bin zapi";
+		return &logAndRun( $cmd );
 	}
 
 	#Set Random key for zapi

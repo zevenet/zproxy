@@ -190,7 +190,9 @@ sub getCertActivationData
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $zlbcertfile = shift;
-	my @data        = `$openssl x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+
+# do not migrate to the function logAndGet. That function will log if debug is enabled
+	my @data = `$openssl x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 	return \@data;
 }
 
@@ -504,7 +506,9 @@ sub get_sys_uuid
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
+
+	my $out = &logAndGet( "/usr/sbin/dmidecode", "array" );
+	my ( $dmi ) = grep ( /UUID\:/, @{ $out } );
 	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
 	chomp $dmi;
@@ -533,11 +537,22 @@ sub get_mod_appl
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my @mod = grep ( /\w{3} ?\d{4}/, `cat /etc/zevenet_version` );
-	$mod[0] =~ /(\w{3} ?\d{4})/;
 
-	my $mod_appl = $1;
-	$mod_appl =~ s/ //;
+	my $applianceVersionFile = &getGlobalConfiguration( 'applianceVersionFile' );
+	my $mod_appl             = "";
+	if ( open ( my $fh, '<', $applianceVersionFile ) )
+	{
+		foreach my $line ( <$fh> )
+		{
+			if ( $line =~ /(\w{3} ?\d{4})/ )
+			{
+				$mod_appl = $1;
+				$mod_appl =~ s/ //;
+				last;
+			}
+		}
+		close $fh;
+	}
 
 	return $mod_appl;
 }
@@ -645,7 +660,9 @@ sub getCertSerial
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $zlbcertfile = shift;
-	my $serial      = `$openssl x509 -in $zlbcertfile -serial -noout`;
+
+# do not migrate to the function logAndGet. That function will log if debug is enabled
+	my $serial = `$openssl x509 -in $zlbcertfile -serial -noout`;
 	$serial =~ /serial\=(\w+)/;
 	$serial = $1;
 	return $serial;
@@ -816,7 +833,6 @@ Function: validateCertificate
 Parameters:
 	Certificate - Text array with the certificate lines
 	Key - Host certificate key
-	hostname - name of the host
 	cert type - If the certificate is the new o old type
 
 Returns:
@@ -830,8 +846,7 @@ sub validateCertificate
 			 "debug", "PROFILING" );
 	my $zen_cert  = $_[0];
 	my $key       = $_[1];
-	my $hostname  = $_[2];
-	my $cert_type = $_[3];
+	my $cert_type = $_[2];
 
 	my $hostname = &getHostname();
 
@@ -942,7 +957,7 @@ sub getCertActivationInfo
 	  : 'temporal';
 	$info->{ signed } = ( grep /keyid:$keyid/, @{ $cert_data } ) ? 'true' : 'false';
 	$info->{ valid } =
-	  ( &validateCertificate( $cert_data, $key, $hostname, $cert_version ) )
+	  ( &validateCertificate( $cert_data, $key, $cert_version ) )
 	  ? 'true'
 	  : 'false';
 

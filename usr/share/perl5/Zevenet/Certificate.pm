@@ -26,6 +26,8 @@ use strict;
 use File::stat;
 use Time::localtime;
 
+use Zevenet::Core;
+
 my $openssl = &getGlobalConfiguration( 'openssl' );
 
 =begin nd
@@ -158,7 +160,10 @@ sub getCertCN    # ($certfile)
 	my $certcn = "";
 
 	my $type = ( &getCertType( $certfile ) eq "Certificate" ) ? "x509" : "req";
-	my @eject = `$openssl $type -noout -in $certfile -text | grep Subject:`;
+	my @eject = @{
+		&logAndGet( "$openssl $type -noout -in $certfile -text | grep Subject:",
+					"array" )
+	};
 
 	my $string = $eject[0];
 	chomp $string;
@@ -201,7 +206,12 @@ sub getCertIssuer    # ($certfile)
 
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
-		my @eject = `$openssl x509 -noout -in $certfile -text | grep Issuer:`;
+		my @eject = @{
+			&logAndGet(
+						"$openssl x509 -noout -in $certfile -text | grep Issuer:",
+						"array"
+			)
+		};
 		@eject = split ( /CN=/,             $eject[0] );
 		@eject = split ( /\/emailAddress=/, $eject[1] );
 		$certissu = $eject[0] // '';
@@ -239,14 +249,12 @@ sub getCertCreation    # ($certfile)
 			 "debug", "PROFILING" );
 	my ( $certfile ) = @_;
 
-	#~ use File::stat;
-	#~ use Time::localtime;
-
 	my $datecreation = "";
 
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
-		my @eject = `$openssl x509 -noout -in $certfile -dates`;
+		my @eject =
+		  @{ &logAndGet( "$openssl x509 -noout -in $certfile -dates", "array" ) };
 		my @datefrom = split ( /=/, $eject[0] );
 		$datecreation = $datefrom[1];
 	}
@@ -287,7 +295,8 @@ sub getCertExpiration    # ($certfile)
 
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
-		my @eject = `$openssl x509 -noout -in $certfile -dates`;
+		my @eject =
+		  @{ &logAndGet( "$openssl x509 -noout -in $certfile -dates", "array" ) };
 		my @dateto = split ( /=/, $eject[1] );
 		$dateexpiration = $dateto[1];
 	}
@@ -523,18 +532,18 @@ sub getCertData    # ($certfile)
 			 "debug", "PROFILING" );
 	my ( $filepath ) = @_;
 
-	my @eject;
+	my $cmd;
 
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{
-		@eject = `$openssl x509 -in $filepath -text`;
+		$cmd = "$openssl x509 -in $filepath -text";
 	}
 	else
 	{
-		@eject = `$openssl req -in $filepath -text`;
+		$cmd = "$openssl req -in $filepath -text";
 	}
 
-	return @eject;
+	return @{ &logAndGet( $cmd, "array" ) };
 }
 
 =begin nd
@@ -580,9 +589,12 @@ sub getCertInfo    # ($certfile)
 
 	if ( $type eq "Certificate" )
 	{
-		@cert_data = `$openssl x509 -in $filepath -text`;
+		@cert_data = @{ &logAndGet( "$openssl x509 -in $filepath -text", "array" ) };
 	}
-	elsif ( $type eq "CSR" ) { @cert_data = `$openssl req -in $filepath -text`; }
+	elsif ( $type eq "CSR" )
+	{
+		@cert_data = @{ &logAndGet( "$openssl req -in $filepath -text", "array" ) };
+	}
 
 # Cert CN
 # Stretch: Subject: C = SP, ST = SP, L = SP, O = Test, O = f9**3b, OU = al**X6, CN = zevenet-hostname, emailAddress = cr**@zevenet.com
@@ -641,7 +653,6 @@ sub getCertInfo    # ($certfile)
 	{
 		my ( $line ) = grep /\sNot Before/, @cert_data;
 
-		#~ my @eject = `$openssl x509 -noout -in $certfile -dates`;
 		( undef, $creation ) = split ( /: /, $line );
 	}
 	elsif ( $type eq "CSR" )
@@ -652,8 +663,10 @@ sub getCertInfo    # ($certfile)
 		$creation = join ( ' ', @eject );
 	}
 	chomp $creation;
-	$creation = `date -d "${creation}" +%F" "%T" "%Z -u`;
-	chomp $creation;
+	my $date = &getGlobalConfiguration( 'date' );
+	my $cmd  = "$date -d \"${creation}\" +%F\" \"%T\" \"%Z -u";
+
+	$creation = &logAndGet( $cmd );
 
 	# Cert Expiration Date
 	my $expiration = "";
@@ -662,8 +675,8 @@ sub getCertInfo    # ($certfile)
 		my ( $line ) = grep /\sNot After/, @cert_data;
 		( undef, $expiration ) = split ( /: /, $line );
 		chomp $expiration;
-		$expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
-		chomp $expiration;
+		$cmd        = "$date -d \"${expiration}\" +%F\" \"%T\" \"%Z -u";
+		$expiration = &logAndGet( $cmd );
 	}
 	elsif ( $type eq "CSR" )
 	{

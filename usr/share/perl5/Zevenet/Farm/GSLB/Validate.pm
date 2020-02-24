@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Core;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -48,6 +49,7 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 	my $gdnsd         = &getGlobalConfiguration( 'gdnsd' );
 	my $gdnsd_command = "$gdnsd -c $configdir\/$ffile/etc checkconf";
 
+	# does not use logAndGet because here it is necessary the error output
 	my $run         = `$gdnsd_command 2>&1`;
 	my $return_code = $?;
 

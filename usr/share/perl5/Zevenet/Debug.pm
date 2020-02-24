@@ -45,7 +45,7 @@ See Also:
 sub debug
 {
 	require Zevenet::Config;
-	return &getGlobalConfiguration( 'debug' ) + 0;
+	return &getGlobalConfiguration( 'debug' ) // 0;
 }
 
 =begin nd

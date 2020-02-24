@@ -944,7 +944,8 @@ sub getHTTPFarmGlobalStatus    # ($farm_name)
 
 	my $proxyctl = &getGlobalConfiguration( 'proxyctl' );
 
-	return `$proxyctl -c "/tmp/$farm_name\_proxy.socket"`;
+	return
+	  @{ &logAndGet( "$proxyctl -c \"/tmp/$farm_name\_proxy.socket\"", "array" ) };
 }
 
 =begin nd
@@ -1202,11 +1203,11 @@ sub getHTTPFarmPid    # ($farm_name)
 
 	my $output  = -1;
 	my $piddir  = &getGlobalConfiguration( 'piddir' );
+	my $nproc   = &getGlobalConfiguration( 'nproc_bin' );
 	my $pidfile = "$piddir\/$farm_name\_proxy.pid";
 
 	# Get number of cores
-	my $processors = `nproc`;
-	chomp $processors;
+	my $processors = &logAndGet( $nproc );
 
 	# If the LB has one core, wait 20ms for l7 proxy child process to generate pid.
 	select ( undef, undef, undef, 0.020 ) if ( $processors == 1 );
@@ -1394,6 +1395,7 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $proxy_command = "$proxy -f $configdir\/$farm_filename -c";
 
+# do not use the function 'logAndGet' here is managing the error output and error code
 	my $run = `$proxy_command 2>&1`;
 	my $rc  = $?;
 
@@ -1426,11 +1428,13 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farm_name = shift;
+	my $service;
 
 	my $proxy         = &getGlobalConfiguration( 'proxy' );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $proxy_command = "$proxy -f $configdir\/$farm_filename -c";
 
+# do not use the function 'logAndGet' here is managing the error output and error code
 	my @run = `$proxy_command 2>&1`;
 	my $rc  = $?;
 
@@ -1449,7 +1453,7 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 	my $line_num = $1;
 
 	# get line
-	my ( $farm_name, $service ) = @_;
+	( $farm_name, $service ) = @_;
 	my $file_id = 0;
 	my $file_line;
 	my $srv;
@@ -1517,7 +1521,7 @@ sub getHTTPFarmStruct
 	# Output hash reference or undef if the farm does not exist.
 	my $farm;
 
-	return unless $farmname;
+	return $farm unless $farmname;
 
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname ) + 0;
@@ -1546,21 +1550,21 @@ sub getHTTPFarmStruct
 	my $err501 = &getFarmErr( $farmname, "501" );
 	my $err503 = &getFarmErr( $farmname, "503" );
 
-	my $farm = {
-				 status          => $status,
-				 restimeout      => $timeout,
-				 contimeout      => $connto,
-				 resurrectime    => $alive,
-				 reqtimeout      => $client,
-				 rewritelocation => $rewritelocation,
-				 httpverb        => $httpverb,
-				 listener        => $type,
-				 vip             => $vip,
-				 vport           => $vport,
-				 error500        => $err500,
-				 error414        => $err414,
-				 error501        => $err501,
-				 error503        => $err503
+	$farm = {
+			  status          => $status,
+			  restimeout      => $timeout,
+			  contimeout      => $connto,
+			  resurrectime    => $alive,
+			  reqtimeout      => $client,
+			  rewritelocation => $rewritelocation,
+			  httpverb        => $httpverb,
+			  listener        => $type,
+			  vip             => $vip,
+			  vport           => $vport,
+			  error500        => $err500,
+			  error414        => $err414,
+			  error501        => $err501,
+			  error503        => $err503
 	};
 
 	# HTTPS parameters

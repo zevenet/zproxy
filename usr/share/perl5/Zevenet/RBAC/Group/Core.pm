@@ -221,8 +221,7 @@ sub getRBACGroupsSys
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $groups_bin = &getGlobalConfiguration( "groups_bin" );
-	my $users      = `$groups_bin rbac`;
-	chomp $users;
+	my $users      = &logAndGet( "$groups_bin rbac" );
 	$users =~ s/^rbac : (:?nogroup) ?//;
 
 	my @users_arr = split ( ' ', $users );

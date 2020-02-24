@@ -318,10 +318,11 @@ sub disableZCluster
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
+	my $pgrep      = &getGlobalConfiguration( "pgrep" );
 	my $error_code = &logAndRun( "/etc/init.d/keepalived stop" );
 
 	# confirm keepalived stop
-	my @keepalived_process = `pgrep keepalived 2>/dev/null`;
+	my @keepalived_process = @{ &logAndGet( "$pgrep keepalived", "array" ) };
 	kill 'KILL', @keepalived_process if ( @keepalived_process );
 
 	require Zevenet::Net::Interface;
@@ -591,13 +592,10 @@ sub generateIdKey    # $rc ()
 		mkdir $key_path;
 	}
 
-	my $gen_output = `$keygen_cmd 2>&1`;
-	my $error_code = $?;
-
+	my $error_code = &logAndRun( $keygen_cmd );
 	if ( $error_code != 0 )
 	{
-		&zenlog( "An error happened generating the RSA id key: $gen_output",
-				 "error", "CLUSTER" );
+		&zenlog( "An error happened generating the RSA id key", "error", "CLUSTER" );
 	}
 
 	return $error_code;
@@ -631,14 +629,12 @@ sub copyIdKey    # $rc ( $ip_addr, $pass )
 	my $copyId_cmd =
 	  "HOME=\"/root\" /usr/local/zevenet/bin/ssh-copy-id.sh $safe_password root\@$ip_address";
 
-	my $copy_output = `$copyId_cmd`;    # WARNING: Do not redirect stderr to stdout
-	my $error_code  = $?;
+	my $error_code = &logAndRun( $copyId_cmd );
 
 	if ( $error_code != 0 )
 	{
-		&zenlog(
-			   "An error happened copying the Id key to the host $ip_address: $copy_output",
-			   "error", "CLUSTER" );
+		&zenlog( "An error happened copying the Id key to the host $ip_address",
+				 "error", "CLUSTER" );
 	}
 
 	return $error_code;
@@ -763,7 +759,7 @@ See Also:
 	zapi/v3/cluster.cgi
 =cut
 
-sub runRemotely    # `output` ( $cmd, $ip_addr [, $port ] )
+sub runRemotely    # output ( $cmd, $ip_addr [, $port ] )
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -784,7 +780,8 @@ sub runRemotely    # `output` ( $cmd, $ip_addr [, $port ] )
 	&zenlog( "Running: $ssh_cmd", "debug", "CLUSTER" ) if &debug() > 2;
 
 	# capture output and return it
-	return `$ssh_cmd 2>/dev/null`;
+	my $out = &logAndGet( $ssh_cmd );
+	return $out;
 }
 
 =begin nd
@@ -832,7 +829,8 @@ sub zsync
 		die;
 	}
 
-#~ &zenlog( "running zsync with $args->{ip_addr} for $args->{path}", "info", "CLUSTER" );
+	&zenlog( "running zsync with $args->{ip_addr} for $args->{path}",
+			 "debug2", "CLUSTER" );
 
 	my $exclude = '';
 	for my $pattern ( @{ $args->{ exclude } } )
@@ -862,16 +860,8 @@ sub zsync
 	my $zenrsync  = &getGlobalConfiguration( 'zenrsync' );
 	my $rsync_cmd = "$rsync $zenrsync $include $exclude $src $dest";
 
-	&zenlog( "Running: $rsync_cmd", "info", "CLUSTER" );
-	my $rsync_output = `$rsync_cmd`;
-	my $error_code   = $?;
-
-	#~ &zenlog_thread("$rsync_output", "info", "CLUSTER");
-
-	if ( $error_code )
-	{
-		&zenlog( "rsync output: $rsync_output", "info", "CLUSTER" );
-	}
+	&zenlog( "Syncronizing: $rsync_cmd", "info", "CLUSTER" );
+	my $error_code = &logAndRun( $rsync_cmd );
 
 	return $error_code;
 }
@@ -1200,7 +1190,7 @@ sub enableAllInterfacesDiscovery
 	require Zevenet::Nft;
 
 	my $output = &execNft( "delete", "netdev cluster", "", "" );
-	my $output = &execNft( "delete", "arp cluster",    "", "" );
+	$output = &execNft( "delete", "arp cluster", "", "" );
 
 	return $output;
 }
@@ -1391,8 +1381,7 @@ sub getZClusterNodeStatusInfo
 		$node->{ ka } = pgrep( 'keepalived' );
 		$node->{ zi } = &logAndRunCheck( $zeninotify_cmd );
 		$node->{ ct } = pgrep( 'conntrackd' );
-
-		chomp ( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` )
+		$node->{ sy } = &logAndGet( "$ssyncdctl_bin show mode" )
 		  if $ssyncd_enabled eq 'true';
 
 		$node->{ role } = &getZClusterNodeStatus();
@@ -1597,7 +1586,7 @@ sub getKeepalivedVersion
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $line )    = `keepalived -v 2>&1`;
+	my ( $line )    = &logAndGet( "keepalived -v" );
 	my ( $version ) = $line =~ / v([1-9]+\.[1-9]+\.[1-9]+)/;
 
 	return $version;

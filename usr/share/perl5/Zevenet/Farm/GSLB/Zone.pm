@@ -194,13 +194,13 @@ sub setGSLBFarmZoneSerial    # ($farm_name,$zone)
 
 	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
-
+	my $date_bin = &getGlobalConfiguration( "date" );
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /@\tSOA / )
 		{
-			my $date = `date +%s`;
-			splice @fileconf, $index + 1, 1, "\t$date";
+			my $date = &logAndGet( "$date_bin +%s" );
+			splice @fileconf, $index + 1, 1, "\t$date\n";
 		}
 		$index++;
 	}
@@ -370,9 +370,9 @@ sub getGSLBFarmZonesStruct
 		push (
 			   @out_z,
 			   {
-				 id        => $zone,
-				 defnamesv => $ns,
-				 resources => $resources,
+				  id        => $zone,
+				  defnamesv => $ns,
+				  resources => $resources,
 			   }
 		);
 	}

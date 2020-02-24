@@ -102,14 +102,15 @@ sub upIf    # ($if_ref, $writeconf)
 	if ( $if_ref->{ type } ne "virtual" )
 	{
    #check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
-		my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
+		my $cat       = &getGlobalConfiguration( 'cat_bin' );
+		my $status_if = &logAndGet( "$cat /sys/class/net/$$if_ref{name}/operstate" );
 		&zenlog( "Link status for $$if_ref{name} is $status_if", "info", "NETWORK" );
 		&zenlog( "Waiting link up for $$if_ref{name}",           "info", "NETWORK" );
 		my $iter = 6;
 
 		while ( $status_if =~ /down/ && $iter > 0 )
 		{
-			$status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
+			$status_if = &logAndGet( "$cat /sys/class/net/$$if_ref{name}/operstate" );
 			if ( $status_if !~ /down/ )
 			{
 				&zenlog( "Link up for $$if_ref{name}", "info", "NETWORK" );
@@ -519,7 +520,9 @@ sub addIp    # ($if_ref)
 	my $extra_params = '';
 	$extra_params = 'nodad' if $$if_ref{ ip_v } == 6;
 
-	my @ip_output = `$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface`;
+	my @ip_output =
+	  @{ &logAndGet( "$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface",
+					 "array" ) };
 
 	if ( $$if_ref{ addr } eq "" || $$if_ref{ addr } eq "" )
 	{
@@ -638,6 +641,7 @@ sub execIpCmd
 {
 	my $command = shift;
 
+# do not use the logAndGet function, this function is managing the error output and error code
 	my @cmd_output  = `$command 2>&1`;
 	my $return_code = $?;
 

@@ -388,7 +388,7 @@ sub getModuleInfo
 		use Data::Dumper;
 		$mod->{ key } = '';
 		&zenlog(
-			"FAILURE!!! Not found module $mod->{ name } : $mod->{ lib_path }/$mod->{ path }(.e)"
+			"FAILURE!!! Not found module $mod->{ name } : $mod->{ lib_path }/$mod->{ path }(.e)", "error", "system"
 		);
 	}
 

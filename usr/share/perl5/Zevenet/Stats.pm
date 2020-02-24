@@ -603,7 +603,7 @@ sub getDiskSpace
 	my @data;    # output
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
-	my @system = `$df_bin -k`;
+	my @system = @{ &logAndGet( "$df_bin -k", "array" ) };
 	chomp ( @system );
 	my @df_system = @system;
 
@@ -678,7 +678,8 @@ sub getDiskPartitionsInfo
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
 
-	my @df_lines = grep { /^\/dev/ } `$df_bin -k`;
+	my @out = @{ &logAndGet( "$df_bin -k" ) };
+	my @df_lines = grep { /^\/dev/ } @out;
 	chomp ( @df_lines );
 
 	foreach my $line ( @df_lines )
@@ -722,8 +723,8 @@ sub getDiskMountPoint
 			 "debug", "PROFILING" );
 	my ( $dev ) = @_;
 
-	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
-	my @df_system = `$df_bin -k`;
+	my $df_bin = &getGlobalConfiguration( 'df_bin' );
+	my @df_system = @{ &logAndGet( "$df_bin -k", "array" ) };
 	my $mount;
 
 	for my $line_df ( @df_system )

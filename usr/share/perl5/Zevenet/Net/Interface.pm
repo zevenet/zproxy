@@ -452,7 +452,7 @@ sub getInterfaceSystemStatus    # ($if_ref)
 	}
 
 	my $ip_bin    = &getGlobalConfiguration( 'ip_bin' );
-	my $ip_output = `$ip_bin link show $status_if_name`;
+	my $ip_output = &logAndGet( "$ip_bin link show $status_if_name" );
 	$ip_output =~ / state (\w+) /;
 	my $if_status = lc $1;
 
@@ -472,7 +472,7 @@ sub getInterfaceSystemStatus    # ($if_ref)
 	}
 
 	# Set as down vinis not available
-	$ip_output = `$ip_bin addr show $status_if_name`;
+	$ip_output = &logAndGet( "$ip_bin addr show $status_if_name" );
 
 	if ( $ip_output !~ /$$if_ref{ addr }/ && $if_ref->{ vini } ne '' )
 	{
@@ -834,8 +834,9 @@ sub getInterfaceType
 		my ( $parent_if ) = split ( ':', $if_name );
 		my $quoted_if     = quotemeta $if_name;
 		my $ip_bin        = &getGlobalConfiguration( 'ip_bin' );
+		my @out = @{ &logAndGet( "$ip_bin addr show $parent_if", "array" ) };
 		my $found =
-		  grep ( /inet .+ $quoted_if$/, `$ip_bin addr show $parent_if 2>/dev/null` );
+		  grep ( /inet .+ $quoted_if$/, @out );
 
 		if ( !$found )
 		{

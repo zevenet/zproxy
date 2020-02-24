@@ -67,7 +67,8 @@ sub setConntrackdConfig
 	my $systemd_policy = '';
 
 	# Check conntrackd version
-	my $connt_version_string = `dpkg-query --show conntrackd`;
+	my $dpkg_query           = &getGlobalConfiguration( "dpkg_query" );
+	my $connt_version_string = &logAndGet( "$dpkg_query --show conntrackd" );
 	$connt_version_string =~ /:([0-9\.]+)/;
 	$connt_version_string = $1;
 	my @ct_version = split ( /\./, $connt_version_string );

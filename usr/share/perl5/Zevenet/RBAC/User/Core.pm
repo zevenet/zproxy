@@ -245,7 +245,7 @@ sub validateRBACUserZapi
 
 	# check permissions
 	my $groups      = &getGlobalConfiguration( 'groups_bin' );
-	my $user_groups = `$groups $user`;
+	my $user_groups = &logAndGet( "$groups $user" );
 	chomp $user_groups;
 
 	if ( !grep ( / zapi( |$)/, $user_groups ) )

@@ -130,9 +130,9 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 		# do not remove service if it is still in use
 		my ( $plugin_name ) = split ( '.cfg', $pluginfile );
 		my $grep_cmd =
-		  qq{grep '$plugin_name!$svice ;' $configdir\/$fname\_gslb.cfg\/etc\/zones/* 2>/dev/null};
+		  qq{grep '$plugin_name!$svice ;' $configdir\/$fname\_gslb.cfg\/etc\/zones/*};
 
-		my $grep_output = `$grep_cmd`;
+		my $grep_output = &logAndGet( $grep_cmd );
 
 		if ( $grep_output ne '' )
 		{

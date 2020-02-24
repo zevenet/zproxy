@@ -128,23 +128,17 @@ sub getGSLBFarmPid    # ($farm_name)
 	my ( $fname ) = @_;
 
 	my $farm_filename = &getFarmFile( $fname );
-	my $output        = -1;
 	my $ps            = &getGlobalConfiguration( 'ps' );
 	my $gdnsd         = &getGlobalConfiguration( 'gdnsd' );
+	my $grep          = &getGlobalConfiguration( 'grep_bin' );
+	my $awk           = &getGlobalConfiguration( 'awk' );
 
-	my @run =
-	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
+	my $pid =
+	  &logAndGet(
+		"$ps -ef | $grep \"$gdnsd -c $configdir\/$farm_filename\" | $grep -Ev grep | $awk {'print \$2'}"
+	  );
 
-	chomp ( @run );
-
-	if ( $run[0] )
-	{
-		$output = $run[0];
-	}
-	else
-	{
-		$output = "-";
-	}
+	my $output = ( $pid ) ? $pid : "-";
 
 	return $output;
 }
