@@ -7,17 +7,65 @@
 
 changed=$(git diff --cached --name-only)
 perltidy_flag=1
+critic_lvl=0	# 5 is lower value and 1 is the higher value
+REJECT=0
+include_dir="/build-pkg/tools"
+include_file="define_include"
+
+export PERL5LIB=$include_dir
 
 
 if [[ -z "$changed" ]]; then
     exit 0
 fi
 
-REJECT=0
+if [ $critic_lvl -ne 0 ];then
+	perlcritic_bin=`which perlcritic`
+	if [ $? -ne 0 ]; then
+		echo "-------------------------------------------------"
+		echo "# Perlcritic is required to check the a minimun critic level '$critic_lvl'"
+		echo "# Required the Debian package 'libperl-critic-perl'"
+		echo "-------------------------------------------------"
+		exit 1
+	fi
+fi
+
 
 for FILE in $changed; do
     case $FILE in
     *.pl | *.pm)
+
+		# check perl critic
+		if [ $critic_lvl -ne 0 ];then
+			perlcritic -$critic_lvl $FILE
+			if [ $? -ne 0 ]; then
+				echo "-------------------------------------------------"
+				echo "# Error: The file $FILE does not pass the perl critic lvl $critic_lvl"
+				echo "-------------------------------------------------"
+				exit 1
+			fi
+		fi
+
+		# check perl syntax
+		echo "export PERL5LIB=$include_dir; perl -cw -M$include_file $FILE"
+		perl -cw -M$include_file $FILE
+		if [ $? -ne 0 ]; then
+			echo "-------------------------------------------------"
+			echo "# Error: Syntax error in the file $FILE"
+            echo "-------------------------------------------------"
+			exit 1
+		fi
+
+		# check debug msg
+		OUT=`grep '???' $FILE`
+		if [ "$OUT" != '' ]; then
+			echo "-------------------------------------------------"
+			echo "# Error: There is debug message in the file $FILE"
+            echo "-------------------------------------------------"
+			exit 1
+		fi
+
+		# check perltidy
         perltidy_opts="-t -et=4 -bt=0 -bl -sbl -bbvt=0 -pt=0 -sbt=2 -skp -nolq -lp -vt=0 -vtc=0 -vmll"
 
         org_hash="$(sha256sum "$FILE" | cut -d " " -f 1)"
@@ -29,16 +77,19 @@ for FILE in $changed; do
             if [ $perltidy_flag -eq 0 ]; then
                 REJECT=1
             elif [ $perltidy_flag -eq 1 ]; then
-              echo "# Applying perltidy for $FILE"
-              echo "-------------------------------------------------"
-              perltidy "./$FILE" $perltidy_opts
-              mv "./$FILE.tdy" "./$FILE"
-	      git add "./$FILE"
+				echo "# Applying perltidy for $FILE"
+				echo "-------------------------------------------------"
+				perltidy "./$FILE" $perltidy_opts
+				mv "./$FILE.tdy" "./$FILE"
+				git add "./$FILE"
             fi
         fi
+
+        echo ""
+        echo ""
+
         ;;
     esac
 done
 
 exit $REJECT
-#exit 0
