@@ -74,7 +74,7 @@ add_executable(${PROJECT_NAME}
     #src/t_cache.h
     #src/t_cache_storage.h
     src/cache_helpers.h
-    )
+	src/t_priority.h)
 
 add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 

@@ -30,6 +30,8 @@
 #include "t_sslcontext.h"
 #include "t_timerfd.h"
 #include "tst_basictest.h"
+#include "t_priority.h"
+
 #if CACHE_ENABLED
 //#include "t_cache.h"
 //#include "t_cache_storage.h"

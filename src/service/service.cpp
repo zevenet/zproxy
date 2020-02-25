@@ -368,36 +368,22 @@ std::unique_ptr<JsonObject> Service::getServiceJson() {
 /** Selects the corresponding Backend to which the connection will be routed
  * according to the established balancing algorithm. */
 Backend *Service::getNextBackend() {
-  if (backend_set.empty()) return nullptr;
+  if (backend_set.empty())
+    return nullptr;
   else if (backend_set.size() == 1)
     return backend_set[0]->status != BACKEND_STATUS::BACKEND_UP
                ? nullptr
                : backend_set[0];
   int enabled_priority = 1;
-  int first_backend_up_priority = 0;
-  bool done = false;
-  // get priority of first backend active with lowest priority
-  for (int priority_index = 1; priority_index <= max_backend_priority && !done;
-       priority_index++) {  // make sure that every backend has been checked
-    // for the current priority
+  for (int priority_index = 1; priority_index <= enabled_priority;
+       priority_index++) {
     for (auto &bck : backend_set) {
-      if (bck->priority != priority_index) continue;
-      if (bck->status == BACKEND_STATUS::BACKEND_UP) {
-        first_backend_up_priority = bck->priority;
-        done = true;
-        break;
+      if (bck->priority == priority_index &&
+          bck->status != BACKEND_STATUS::BACKEND_UP) {
+        enabled_priority++;
       }
     }
   }
-  // increment priority for every backend not active
-  for (auto &bck : backend_set) {
-    if (bck->priority > first_backend_up_priority) continue;
-    if (bck->status != BACKEND_STATUS::BACKEND_UP) {
-      enabled_priority++;
-    }
-  }
-
-  std::lock_guard<std::mutex> locker(mtx_lock);
   backend_priority = enabled_priority;
   switch (routing_policy) {
     default:
