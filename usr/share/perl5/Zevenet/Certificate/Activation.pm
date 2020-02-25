@@ -1003,7 +1003,6 @@ sub uploadCertActivation
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $upload_data = shift;
-	my $errmsg;
 	my $tmpFilename = '/tmp/zlbcertfile.tmp.pem';
 
 	require Zevenet::File;

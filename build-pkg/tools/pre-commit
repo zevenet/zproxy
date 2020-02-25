@@ -10,7 +10,7 @@ perltidy_flag=1
 critic_lvl=0	# 5 is lower value and 1 is the higher value
 REJECT=0
 include_dir="/build-pkg/tools"
-include_file="define_include.pm"
+include_file="define_include"
 
 export PERL5LIB=$include_dir
 
@@ -47,8 +47,6 @@ for FILE in $changed; do
 		fi
 
 		# check perl syntax
-		echo "export PERL5LIB=$include_dir; perl -cw -M$include_file $FILE"
-
 		F="/tmp/f_commit"
 		cat "${include_dir}/${include_file}" > $F
 		cat $FILE >> $F
