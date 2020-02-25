@@ -10,7 +10,7 @@ perltidy_flag=1
 critic_lvl=0	# 5 is lower value and 1 is the higher value
 REJECT=0
 include_dir="/build-pkg/tools"
-include_file="define_include"
+include_file="define_include.pm"
 
 export PERL5LIB=$include_dir
 
@@ -48,10 +48,17 @@ for FILE in $changed; do
 
 		# check perl syntax
 		echo "export PERL5LIB=$include_dir; perl -cw -M$include_file $FILE"
-		perl -cw -M$include_file $FILE
-		if [ $? -ne 0 ]; then
+
+		F="/tmp/f_commit"
+		cat "${include_dir}/${include_file}" > $F
+		cat $FILE >> $F
+		echo "perl -cw $F 2>&1 >/dev/null | grep -Ev OK"
+		OUT=`perl -cw $F 2>&1 >/dev/null | grep -Ev OK`
+
+		if [ "$OUT" != "" ]; then
 			echo "-------------------------------------------------"
-			echo "# Error: Syntax error in the file $FILE"
+			echo "# Error: Syntax error in the file $FILE":
+			echo "$OUT"
             echo "-------------------------------------------------"
 			exit 1
 		fi
