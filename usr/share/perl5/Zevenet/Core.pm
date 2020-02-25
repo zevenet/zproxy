@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use feature 'state';
 
 use Zevenet::Log;
 use Zevenet::Config;

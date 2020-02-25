@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use feature 'state';
 
 =begin nd
 Function: getDate
@@ -52,7 +53,7 @@ sub getDate
 =begin nd
 Function: getHostname
 
-	Get system hostname
+	Get system hostname, and it is saved all the process life time
 
 Parameters:
 	none - .
@@ -77,8 +78,8 @@ sub getHostname
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $uname    = &getGlobalConfiguration( 'uname' );
-	my $hostname = &logAndGet( "$uname -n" );
+	my $uname = &getGlobalConfiguration( 'uname' );
+	state $hostname = &logAndGet( "$uname -n" );
 
 	return $hostname;
 }

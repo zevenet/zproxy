@@ -21,8 +21,12 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 use Time::Local;
 use Crypt::CBC;
+use feature 'state';
 use POSIX qw(strftime);
 use File::Copy;
 
@@ -241,7 +245,7 @@ sub keycert_old
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $dmi      = get_sys_uuid();
+	my $dmi      = &get_sys_uuid();
 	my $hostname = &getHostname();
 
 	my $block1 = crypt ( "${dmi}${hostname}", "93" );
@@ -507,15 +511,22 @@ sub get_sys_uuid
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $out = &logAndGet( "/usr/sbin/dmidecode", "array" );
-	my ( $dmi ) = grep ( /UUID\:/, @{ $out } );
-	( undef, $dmi ) = split ( /:\s+/, $dmi );
+	state $dmi;
 
-	chomp $dmi;
+	if ( !defined $dmi )
+	{
+		# does not use the logAndGet function. This info is hidden
+		my @out = `/usr/sbin/dmidecode`;
+		&zenlog( "Important system info is missing", "error", "system" ) if ( $? );
+
+		( $dmi ) = grep ( /UUID\:/, @out );
+		( undef, $dmi ) = split ( /:\s+/, $dmi );
+		chomp $dmi;
 
 # dmidcode for zevenet 6 shows UUID data in lowercase, in previous versions shown in uppercase.
-	my $zen_version_type = &get_mod_appl();
-	$dmi = uc ( $dmi ) if ( $zen_version_type =~ /ZNA.*/ );
+		my $zen_version_type = &get_mod_appl();
+		$dmi = uc ( $dmi ) if ( $zen_version_type =~ /ZNA.*/ );
+	}
 
 	return $dmi;
 }

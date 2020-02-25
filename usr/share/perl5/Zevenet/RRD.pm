@@ -299,10 +299,9 @@ sub genDiskGraph    #($type,$graph,$time)
 			 "debug", "PROFILING" );
 	my ( $type, $graph, $time ) = @_;
 
-	my $db_hd     = "$type.rrd";
-	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
-	my @df_system = @{ &logAndGet( "$df_bin -k", "array" ) };
-	my $dev       = $type;
+	my $db_hd  = "$type.rrd";
+	my $df_bin = &getGlobalConfiguration( 'df_bin' );
+	my $dev    = $type;
 	$dev =~ s/hd$//;
 	$dev =~ s/dev-//;
 	$dev =~ s/-/\// if $dev !~ /dm-/;
