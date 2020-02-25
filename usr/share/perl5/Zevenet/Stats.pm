@@ -678,7 +678,7 @@ sub getDiskPartitionsInfo
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
 
-	my @out = @{ &logAndGet( "$df_bin -k" ) };
+	my @out = @{ &logAndGet( "$df_bin -k", "array" ) };
 	my @df_lines = grep { /^\/dev/ } @out;
 	chomp ( @df_lines );
 

@@ -19,7 +19,7 @@ if [[ -z "$changed" ]]; then
     exit 0
 fi
 
-if [ $critic_lvl -ne 0 ];then
+if [ $critic_lvl -ne 0 ]; then
 	perlcritic_bin=`which perlcritic`
 	if [ $? -ne 0 ]; then
 		echo "-------------------------------------------------"
