@@ -47,7 +47,7 @@
 #
 # zcluster-manager gateway [update|delete] <interface> [4|6]
 #
-# zcluster-manager farm [start|stop|restart|delete] <farm> [backend <backendid>]
+# zcluster-manager farm [start|stop|restart|delete|reload] <farm> [backend <backendid>]
 #
 # zcluster-manager fg 		[stop|start|stop] <fg>
 # zcluster-manager fg_farm 	[stop|start|stop] <farm> [<service>]
@@ -239,6 +239,14 @@ if ( $object eq 'farm' )
 
 		exit $status;
 	}
+	elsif ( $command eq 'reload' )
+	{
+		&_runFarmReload( $farm_name );
+		my $status = &_runFarmReload( $farm_name );
+
+		exit $status;
+	}
+
 	elsif ( $command eq 'delete' && $backend ne "" )
 	{
 		include 'Zevenet::Farm::Core';

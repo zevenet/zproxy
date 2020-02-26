@@ -28,6 +28,12 @@ include 'Zevenet::Farm::Base';
 include 'Zevenet::Farm::Config';
 include 'Zevenet::Farm::HTTP::Ext';
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 # POST	/farms/<>/addheader
 sub add_addheader    # ( $json_obj, $farmname )
 {
@@ -78,7 +84,20 @@ sub add_addheader    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&runFarmReload( $farmname );
+			if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+			else
+			{
+				&runFarmReload( $farmname );
+				&eload(
+						module => 'Zevenet::Cluster',
+						func   => 'runZClusterRemoteManager',
+						args   => ['farm', 'reload', $farmname],
+				) if ( $eload );
+			}
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -126,7 +145,20 @@ sub del_addheader
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&runFarmReload( $farmname );
+			if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+			else
+			{
+				&runFarmReload( $farmname );
+				&eload(
+						module => 'Zevenet::Cluster',
+						func   => 'runZClusterRemoteManager',
+						args   => ['farm', 'reload', $farmname],
+				) if ( $eload );
+			}
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -187,7 +219,20 @@ sub add_headremove    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&runFarmReload( $farmname );
+			if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+			else
+			{
+				&runFarmReload( $farmname );
+				&eload(
+						module => 'Zevenet::Cluster',
+						func   => 'runZClusterRemoteManager',
+						args   => ['farm', 'reload', $farmname],
+				) if ( $eload );
+			}
 		}
 
 		return &httpResponse( { code => 200, body => $body } );
@@ -235,7 +280,20 @@ sub del_headremove
 		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
-			&runFarmReload( $farmname );
+			if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+			else
+			{
+				&runFarmReload( $farmname );
+				&eload(
+						module => 'Zevenet::Cluster',
+						func   => 'runZClusterRemoteManager',
+						args   => ['farm', 'reload', $farmname],
+				) if ( $eload );
+			}
 		}
 
 		return &httpResponse( { code => 200, body => $body } );

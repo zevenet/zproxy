@@ -704,7 +704,20 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	if ( $restart_flag eq "true" && &getFarmStatus( $farmname ) eq 'up' )
 	{
-		&runFarmReload( $farmname );
+		if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+		{
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
+		else
+		{
+			&runFarmReload( $farmname );
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['farm', 'reload', $farmname],
+			) if ( $eload );
+		}
 	}
 
 	&httpResponse( { code => 200, body => $body } );

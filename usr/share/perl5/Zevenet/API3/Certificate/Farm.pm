@@ -21,6 +21,11 @@
 ###############################################################################
 
 use strict;
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # POST /farms/FARM/certificates (Add certificate to farm)
 sub add_farm_certificate    # ( $json_obj, $farmname )
@@ -92,9 +97,21 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			require Zevenet::Farm::Action;
-			&runFarmReload( $farmname );
+			if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+			else
+			{
+				&runFarmReload( $farmname );
+				&eload(
+						module => 'Zevenet::Cluster',
+						func   => 'runZClusterRemoteManager',
+						args   => ['farm', 'reload', $farmname],
+				) if ( $eload );
+			}
 		}
-
 		&httpResponse( { code => 200, body => $body } );
 	}
 	else
@@ -164,9 +181,21 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
 				require Zevenet::Farm::Action;
-				&runFarmReload( $farmname );
+				if ( &getGlobalConfiguration( 'proxy_ng' ) ne 'true' )
+				{
+					&setFarmRestart( $farmname );
+					$body->{ status } = 'needed restart';
+				}
+				else
+				{
+					&runFarmReload( $farmname );
+					&eload(
+							module => 'Zevenet::Cluster',
+							func   => 'runZClusterRemoteManager',
+							args   => ['farm', 'reload', $farmname],
+					) if ( $eload );
+				}
 			}
-
 			&httpResponse( { code => 200, body => $body } );
 		}
 
