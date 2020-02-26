@@ -390,7 +390,7 @@ sub whereIam
 	{
 		$provider = "aws";
 	}
-	elsif ( !system ( "$dpkg -l | $grep waagent" ) )
+	elsif ( grep ( /waagent/, `$dpkg -l` ) )
 	{
 		$provider = "azure";
 	}
