@@ -957,6 +957,8 @@ sub getCertActivationInfo
 
 	# get basic info
 	my $info = &getCertInfo( $zlbcertfile );
+	$info->{ creation }   = &getDateUtc( $info->{ creation } );
+	$info->{ expiration } = &getDateUtc( $info->{ expiration } );
 
 	# get activation cert
 	my ( $key, $cert_version ) = &getCertKey( $cert_data );

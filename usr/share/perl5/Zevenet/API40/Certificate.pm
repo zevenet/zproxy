@@ -42,11 +42,9 @@ sub certificates    # ()
 	my $configdir    = &getGlobalConfiguration( 'certdir' );
 	my @out;
 
-	foreach my $cert ( @certificates )
+	foreach my $cert ( sort @certificates )
 	{
-		my $cert = &getCertInfo( "$configdir/$cert" );
-		delete $cert->{ key };
-		push @out, $cert;
+		push @out, &getCertInfo( "$configdir/$cert" );
 	}
 
 	my $body = {
