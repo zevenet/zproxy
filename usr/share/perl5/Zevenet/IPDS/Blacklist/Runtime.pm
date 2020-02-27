@@ -108,8 +108,7 @@ sub setBLRefreshList
 			 "debug", "PROFILING" );
 	my ( $listName ) = @_;
 
-	my $ipList    = &getBLIpList( $listName );
-	my $source_re = &getValidFormat( 'blacklists_source' );
+	my $ipList = &getBLIpList( $listName );
 	my $output;
 
 	&zenlog( "Refreshing the list $listName", "info", "IPDS" );
@@ -160,7 +159,8 @@ sub setBLDownloadRemoteList
 
 	# Not direct standard output to null, this output is used for web variable
 	my $curl = &getGlobalConfiguration( 'curl_bin' );
-	my @web  = @{ &logAndGet( "$curl --connect-timeout $timeout \"$url\"" ) };
+	my @web =
+	  @{ &logAndGet( "$curl --connect-timeout $timeout \"$url\"", "array" ) };
 
 	my $source_format = &getValidFormat( 'blacklists_source' );
 	my @ipList;
@@ -223,8 +223,6 @@ sub setBLCreateRule
 	include 'Zevenet::IPDS::Core';
 
 	my $output;
-	my $action = &getBLParam( $listName, 'policy' );
-
 	if ( &getBLIpsetStatus( $listName ) eq "down" )
 	{
 		&setBLRunList( $listName );
@@ -336,7 +334,6 @@ sub setBLCronTask
 	{
 		# the task is going to be executed starting in the current minute.
 		my ( $cur_time ) = localtime ();
-		my $period = $rblFormat->{ 'period' };
 
 		if ( $rblFormat->{ 'unit' } eq 'minutes' )
 		{
