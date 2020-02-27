@@ -908,10 +908,11 @@ sub getDateUtc
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $gmt  = shift;                               # Nov 29 09:29:37 2019 GMT;
-	my $date = &getGlobalConfiguration( 'date' );
+	my $gmt = shift;    # Nov 29 09:29:37 2019 GMT;
 
-	my $cmd = "$date -d \"$gmt\" +%F\" \"%T\" \"%Z -u";
+	return $gmt if ( $gmt =~ /UTC/ );
+
+	my $cmd = "date -d \"$gmt\" +%F\" \"%T\" \"%Z -u";
 	my $utc = `$cmd`;
 	my $tag = ( $? ) ? 'error' : 'debug2';
 	chomp $utc;

@@ -130,6 +130,8 @@ $sys_net_dir="/sys/class/net";
 
 
 ## binaries
+#Where is cat date?
+$date="/usr/bin/date";#update
 #Where is cat binary?
 $aws_cat_bin="/bin/cat";#update
 $default_cat_bin="/usr/bin/cat";#update
