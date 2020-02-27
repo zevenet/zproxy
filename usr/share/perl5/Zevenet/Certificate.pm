@@ -539,35 +539,6 @@ sub getCertData    # ($certfile)
 }
 
 =begin nd
-Function: getDateUtc
-
-	It converts a date from GMT format to UTC
-
-Parameters:
-	GMT date - Date with GMT format
-
-Returns:
-	String - Date with UTC format
-
-=cut
-
-sub getDateUtc
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $gmt  = shift;                               # Nov 29 09:29:37 2019 GMT;
-	my $date = &getGlobalConfiguration( 'date' );
-
-	my $cmd = "$date -d \"$gmt\" +%F\" \"%T\" \"%Z -u";
-	my $utc = `$cmd`;
-	my $tag = ( $? ) ? 'error' : 'debug2';
-	chomp $utc;
-	&zenlog( "executed: $cmd", $tag, "system" );
-
-	return $utc;
-}
-
-=begin nd
 Function: getCertInfo
 
 	It returns an object with the certificate information parsed
