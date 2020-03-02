@@ -16,7 +16,6 @@ sub setAPTRepo
 	my $keyid     = &getKeySigned();
 	my $host      = &getGlobalConfiguration( 'repo_url_zevenet' );
 	my $openssl   = &getGlobalConfiguration( 'openssl' );
-	my $port      = "443";
 	my $subserial = "$openssl x509 -in $cert_path -serial -noout";
 	my $subkeyid  = "$openssl x509 -in $cert_path -noout -text | grep \"$keyid\"";
 	my $subkeyidentifier =
@@ -47,7 +46,8 @@ sub setAPTRepo
 	$version =~ s/\s*[a-zA-Z].*//;
 
 	# command to check keyid
-	my $err = &logAndRun( $subkeyid );
+	# do not use the logAndRun function to obfuscate the signing cert keyid
+	my $err = system ( $subkeyid );
 	if ( $err )
 	{
 		&zenlog( "Keyid is not correct", "error", "apt" );
@@ -69,10 +69,11 @@ sub setAPTRepo
 	$serial =~ s/[\r\n]//g;
 
 	# command to get the Subject Key Identifier
-	my $subjectkeyidentifier = &logAndGet( $subkeyidentifier );
+	my $subjectkeyidentifier = `$subkeyidentifier`;
 	if ( $? != 0 )
 	{
-		&zenlog( "Subject ID is not correct", "error", "apt" );
+		&zenlog( "The subject ID '$subjectkeyidentifier' is not correct",
+				 "error", "apt" );
 		return 1;
 	}
 	$subjectkeyidentifier =~ s/[\r\n]//g;
@@ -89,8 +90,7 @@ sub setAPTRepo
 		return 0;
 	}
 
-	my $http_proxy  = &getGlobalConfiguration( 'http_proxy' );
-	my $https_proxy = &getGlobalConfiguration( 'https_proxy' );
+	my $http_proxy = &getGlobalConfiguration( 'http_proxy' );
 
 	# configuring user-agent
 	open ( my $fh, '>', $apt_conf_file )

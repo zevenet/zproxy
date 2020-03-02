@@ -186,10 +186,10 @@ sub addlocalnet    # ($if_ref)
 
 		if ( $eload )
 		{
-			my $err = &eload(
-							  module => 'Zevenet::Net::Routing',
-							  func   => 'applyRoutingTableByIface',
-							  args   => [$table, $$if_ref{ name }],
+			&eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'applyRoutingTableByIface',
+					args   => [$table, $$if_ref{ name }],
 			);
 		}
 	}
@@ -249,10 +249,10 @@ sub addlocalnet    # ($if_ref)
 
 	if ( $eload )
 	{
-		my $err = &eload(
-						  module => 'Zevenet::Net::Routing',
-						  func   => 'applyRoutingCustom',
-						  args   => ['add', "table_$$if_ref{name}"],
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'applyRoutingCustom',
+				args   => ['add', "table_$$if_ref{name}"],
 		);
 	}
 
@@ -314,10 +314,10 @@ sub dellocalnet    # ($if_ref)
 
 	if ( $eload )
 	{
-		my $err = &eload(
-						  module => 'Zevenet::Net::Routing',
-						  func   => 'applyRoutingCustom',
-						  args   => ['del', "table_$$if_ref{name}"],
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'applyRoutingCustom',
+				args   => ['del', "table_$$if_ref{name}"],
 		);
 	}
 }
@@ -523,11 +523,11 @@ sub genRoutingRulesPrio
 
 	my $type = shift;    # user, farm, ifaces
 
+	# The maximun priority value in the system is '32766'
 	my $farmL4       = &getGlobalConfiguration( 'routingRulePrioFarmL4' );
 	my $farmDatalink = &getGlobalConfiguration( 'routingRulePrioFarmDatalink' );
 	my $userInit     = &getGlobalConfiguration( 'routingRulePrioUserMin' );
 	my $ifacesInit   = &getGlobalConfiguration( 'routingRulePrioIfaces' );
-	my $systemLimit = '32766';    # maximun priority value
 
 	my $min;
 	my $max;
@@ -707,7 +707,6 @@ See Also:
 	<delRoutes>
 =cut
 
-# apply routes
 sub applyRoutes    # ($table,$if_ref,$gateway)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -852,7 +851,6 @@ See Also:
 	<applyRoutes>
 =cut
 
-# delete routes
 sub delRoutes    # ($table,$if_ref)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",

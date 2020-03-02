@@ -102,9 +102,6 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	#~ &zenlog( "[CALL] getInterfaceConfig( $if_name )" );
 
-	my $ip_version;
-	my $if_line;
-	my $if_status;
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_${if_name}_conf";
 
@@ -253,7 +250,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		return;
 	}
 	use Data::Dumper;
-	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK" )
+	&zenlog( "setInterfaceConfig: " . Dumper( $if_ref ), "debug", "NETWORK" )
 	  if &debug() > 2;
 	my @if_params =
 	  ( 'status', 'name', 'addr', 'mask', 'gateway', 'mac', 'dhcp', 'isolate' );

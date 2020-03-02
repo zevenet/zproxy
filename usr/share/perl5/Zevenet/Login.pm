@@ -68,7 +68,7 @@ $verifypass
 EOF
 	";
 
-	my $output = &logAndRun( $cmd );
+	my $output = system ( $cmd );
 	if ( $output )
 	{
 		&zenlog( "Error trying to change the $user password", "error" );
