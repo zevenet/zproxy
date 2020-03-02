@@ -90,11 +90,8 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 			{
 				$weight = $serv->{ weight };
 			}
-			if ( $stat eq "up" )
-			{
-				$routes =
-				  "$routes nexthop via $serv->{ ip } dev $serv->{ interface } weight $weight";
-			}
+			$routes =
+			  "$routes nexthop via $serv->{ ip } dev $serv->{ interface } weight $weight";
 		}
 	}
 
@@ -105,8 +102,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 		{
 			my $stat = $serv->{ status };
 
-			if (    $stat eq "up"
-				 && $serv->{ priority } > 0
+			if (    $serv->{ priority } > 0
 				 && $serv->{ priority } < 10
 				 && $serv->{ priority } < $bestprio )
 			{
