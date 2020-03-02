@@ -92,8 +92,11 @@ require Zevenet::API40::Session if ( $q->path_info eq '/session' );
 unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 		 or ( exists $ENV{ HTTP_COOKIE } && &validCGISession() ) )
 {
-	&httpResponse(
-				   { code => 401, body => { message => 'Authorization required' } } );
+	&httpErrorResponse(
+						code => 401,
+						msg  => 'Authorization required',
+						desc => 'Login failed'
+	);
 }
 
 # log parameters passed
