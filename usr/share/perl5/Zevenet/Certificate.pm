@@ -596,6 +596,8 @@ sub getCertInfo
 	# CSR
 	else
 	{
+		require Zevenet::File;
+
 		my @cert_data =
 		  @{ &logAndGet( "$openssl req -in $filepath -text -noout", "array" ) };
 
@@ -606,18 +608,12 @@ sub getCertInfo
 			$cn = $1;
 		}
 
-		my @eject = split ( / /, gmtime ( stat ( $filepath )->mtime ) );
-		splice ( @eject, 0, 1 );
-		push ( @eject, "GMT" );
-		my $creation = join ( ' ', @eject );
-		chomp $creation;
-
 		%response = (
 					  file       => $certfile,
 					  type       => 'CSR',
 					  CN         => $cn,
 					  issuer     => "NA",
-					  creation   => $creation,
+					  creation   => &getFileDateGmt( $filepath ),
 					  expiration => "NA",
 					  status     => 'valid',
 		);
