@@ -118,9 +118,8 @@ sub new_vlan    # ( $json_obj )
 	$json_obj->{ tag }    = $2;
 
 	# validate PARENT
-	my $parent_exist = &ifexist( $json_obj->{ parent } );
-
-	unless ( $parent_exist eq "true" || $parent_exist eq "created" )
+	my $if_parent = &getInterfaceConfig( $json_obj->{ parent } );
+	unless ( defined $if_parent )
 	{
 		my $msg = "The parent interface $json_obj->{ parent } doesn't exist";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -159,7 +158,7 @@ sub new_vlan    # ( $json_obj )
 	$if_ref = {
 				name   => $json_obj->{ name },
 				dev    => $json_obj->{ parent },
-				status => "up",
+				status => $if_parent->{ status },
 				vlan   => $json_obj->{ tag },
 				dhcp   => $json_obj->{ dhcp } // 'false',
 				mac    => $socket->if_hwaddr( $json_obj->{ parent } ),

@@ -1865,7 +1865,13 @@ sub setVlan    # if_ref
 		$oldAddr = $oldIf_ref->{ addr };
 	}
 
-	my $state = &upIf( $if_ref, 'writeconf' );
+	my $state = 1;
+
+	if ( $if_ref->{ status } eq 'up' )
+	{
+		$state = &upIf( $if_ref, 'writeconf' );
+	}
+
 	return 1 if ( !&setInterfaceConfig( $if_ref ) );
 
 	if ( $state == 0 )
