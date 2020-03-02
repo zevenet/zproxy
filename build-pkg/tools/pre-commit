@@ -77,9 +77,9 @@ for FILE in $changed; do
         tidy_hash="$(perltidy "$FILE" $perltidy_opts -st | sha256sum | cut -d " " -f 1)"
 
         if [[ "$org_hash" != "$tidy_hash" ]]; then
-            echo "# Error: perltidy failed for $FILE"
-            echo "-------------------------------------------------"
             if [ $perltidy_flag -eq 0 ]; then
+                echo "# Error: perltidy failed for $FILE"
+                echo "-------------------------------------------------"
                 REJECT=1
             elif [ $perltidy_flag -eq 1 ]; then
 				echo "# Applying perltidy for $FILE"
