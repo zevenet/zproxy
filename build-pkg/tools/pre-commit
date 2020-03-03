@@ -32,8 +32,17 @@ fi
 
 
 for FILE in $changed; do
-    case $FILE in
-    *.pl | *.pm)
+
+	PERLFILE=`head -1 $FILE | grep perl`
+	if [ "$PERLFILE" != "" ]; then
+		PERLFILE=1
+	else
+		case "$FILE" in
+			*.pl | .pm ) PERLFILE=1;;
+		esac
+	fi
+
+	if [ "$PERLFILE" != "" ]; then
 
 		# check perl critic
 		if [ $critic_lvl -ne 0 ];then
@@ -93,8 +102,7 @@ for FILE in $changed; do
         echo ""
         echo ""
 
-        ;;
-    esac
+    fi
 done
 
 exit $REJECT
