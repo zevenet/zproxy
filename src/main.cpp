@@ -43,10 +43,8 @@ void handleInterrupt(int sig) {
   switch (sig) {
     case SIGINT:
     case SIGTERM: {
-      std::call_once(terminate_flag, [] {
-        auto cm = ctl::ControlManager::getInstance();
-        cm->stop();
-      });
+      auto cm = ctl::ControlManager::getInstance();
+      cm->stop();
       break;
     }
     case SIGABRT:
@@ -70,7 +68,7 @@ void handleInterrupt(int sig) {
 }
 
 int main(int argc, char *argv[]) {
-  debug::EnableBacktraceOnTerminate();
+  //  debug::EnableBacktraceOnTerminate();
 
   static ListenerManager listener;
   auto control_manager = ctl::ControlManager::getInstance();
@@ -163,5 +161,5 @@ int main(int argc, char *argv[]) {
   listener.stop();
   control_manager->stop();
   cleanExit();
-  std::exit(EXIT_SUCCESS);
+  return EXIT_SUCCESS;
 }
