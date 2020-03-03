@@ -562,6 +562,7 @@ Returns:
 		issuer, name of the certificate authority
 		creation, date of certificate creation. "019-08-13 09:31:33 UTC"
 		expiration, date of certificate expiration. "2020-07-11 09:31:33 UTC"
+		status, status of the certificate. 'expired' if the certificate is expired, 'about to expire' if the expiration date is in less than 15 days, 'valid' the expiration date is greater than 15 days
 
 =cut
 
