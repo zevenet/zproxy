@@ -999,22 +999,26 @@ sub writeL4NlbConfigFile
 
 	my $fo = &openlock( $cfgfile, 'w' );
 	open my $fi, '<', "$nftfile";
-	my $backends = 0;
-	my $policies = 0;
-	while ( my $line = <$fi> )
+	my $write = 1;
+	my $line  = <$fi>;
+	my $next_line;
+	while ( defined $line )
 	{
-		$backends = 1 if ( $line =~ /\"backends\"\:/ );
-		$policies = 1 if ( $line =~ /\"policies\"\:/ );
-		if ( $backends == 1 && $line =~ /\]/ )
+		$next_line = <$fi>;
+		$write = 0 if ( $line =~ /\"policies\"\:/ );
+
+		if ( $next_line =~ /\"policies\"\:/ && $line =~ /\]/ )
 		{
-			$backends = 0;
 			$line =~ s/,$//g;
 		}
 		print $fo $line
 		  if (
 			   $line !~ /new-rtlimit|rst-rtlimit|tcp-strict|queue|^[\s]{24}.est-connlimit/
-			   && $policies == 0 );
-		$policies = 0 if ( $policies == 1 && $line =~ /\]/ );
+			   && $write == 1 );
+
+		$write = 1 if ( $write == 0 && $line =~ /\]/ );
+
+		$line = $next_line;
 	}
 	close $fo;
 	close $fi;
