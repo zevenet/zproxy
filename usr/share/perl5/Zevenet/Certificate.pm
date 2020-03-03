@@ -582,6 +582,14 @@ sub getCertInfo
 		require Crypt::OpenSSL::X509;
 		my $x509 = Crypt::OpenSSL::X509->new_from_file( $filepath );
 
+		my $time_offset = 60 * 60 * 24 * 15;    # 15 days
+		my $status;
+		if ( $x509->checkend( 0 ) ) { $status = 'expired' }
+		else
+		{
+			$status = ( $x509->checkend( $time_offset ) ) ? 'about to expire' : 'valid';
+		}
+
 		%response = (
 					  file       => $certfile,
 					  type       => 'Certificate',
@@ -589,7 +597,7 @@ sub getCertInfo
 					  issuer     => $x509->issuer_name()->get_entry_by_type( 'CN' )->value,
 					  creation   => $x509->notBefore(),
 					  expiration => $x509->notAfter(),
-					  status     => ( $x509->checkend( 0 ) ) ? 'expired' : 'valid',
+					  status     => $status,
 		);
 	}
 
