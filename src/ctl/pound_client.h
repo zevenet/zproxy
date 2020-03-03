@@ -33,42 +33,40 @@
 #define NO_VALUE -1
 using namespace ctl;
 
-static const struct option long_options[] = {{"control-socket", required_argument, nullptr, 'c'},
-                                             {"control-address", required_argument, nullptr, 'a'},
-                                             {"enable-listener", required_argument, nullptr, 'L'},
-                                             {"disable-listener", required_argument, nullptr, 'l'},
-                                             {"enable-service", required_argument, nullptr, 'S'},
-                                             {"disable-service", required_argument, nullptr, 's'},
-                                             {"enable-backend", required_argument, nullptr, 'B'},
-                                             {"disable-backend", required_argument, nullptr, 'b'},
-                                             {"flush-sessions", required_argument, nullptr, 'f'},
-                                             {"add-session", required_argument, nullptr, 'N'},
-                                             {"delete-session", required_argument, nullptr, 'n'},
-#if WAF_ENABLED
-                                             {"reload-waf-conf", required_argument, nullptr, 'R'},
-#endif
+static const struct option long_options[] = {
+    {"control-socket", required_argument, nullptr, 'c'},
+    {"control-address", required_argument, nullptr, 'a'},
+    {"enable-listener", required_argument, nullptr, 'L'},
+    {"disable-listener", required_argument, nullptr, 'l'},
+    {"enable-service", required_argument, nullptr, 'S'},
+    {"disable-service", required_argument, nullptr, 's'},
+    {"enable-backend", required_argument, nullptr, 'B'},
+    {"disable-backend", required_argument, nullptr, 'b'},
+    {"flush-sessions", required_argument, nullptr, 'f'},
+    {"add-session", required_argument, nullptr, 'N'},
+    {"delete-session", required_argument, nullptr, 'n'},
+    {"reload-listener-conf", required_argument, nullptr, 'R'},
 
-
-                                             {"enable-XML-output", no_argument, nullptr, 'X'},
-                                             {"resolve-host", no_argument, nullptr, 'H'},
-                                             {"verbose", no_argument, nullptr, 'v'},
-                                             {"help", no_argument, nullptr, 'h'},
-                                             {nullptr, no_argument, nullptr, 0}};
+    {"enable-XML-output", no_argument, nullptr, 'X'},
+    {"resolve-host", no_argument, nullptr, 'H'},
+    {"verbose", no_argument, nullptr, 'v'},
+    {"help", no_argument, nullptr, 'h'},
+    {nullptr, no_argument, nullptr, 0}};
 
 enum class CTL_ACTION {
-#if WAF_ENABLED
-  RELOAD_WAF,
-#endif
-  NONE, ENABLE, DISABLE, ADD_SESSION, DELETE_SESSION, FLUSH_SESSIONS };
+  RELOAD,
+  NONE,
+  ENABLE,
+  DISABLE,
+  ADD_SESSION,
+  DELETE_SESSION,
+  FLUSH_SESSIONS
+};
 
 struct OptionArgs {};
 
 class PoundClient /*: public EpollManager*/ {
-#if WAF_ENABLED
   const char *options_string = "a:vc:LlRSsBbNnfXH";
-#else
-  const char *options_string = "a:vc:LlSsBbNnfXH";
-#endif
   std::string binary_name;    /*argv[0]*/
   std::string control_socket; /* -c option */
   std::string session_key;    /* -k option */

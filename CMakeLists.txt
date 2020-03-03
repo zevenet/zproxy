@@ -51,7 +51,7 @@ option(ENABLE_THREAD_SANITIZER "Enable thread sanitizer" OFF)
 option(ENABLE_COVERAGE "Enable coverage" OFF)
 #experimental, do not enable WIP
 option(CACHE_SUPPORT "Build with cache support" OFF)
-option(ENABLE_WAF "Compile zproxy using WAF features" ON)
+option(ENABLE_WAF "Compile zproxy using WAF features" OFF)
 set(CACHE_STORAGE_TYPE 1) # 1 ramfs,2 stdmap,3 memcached, default(1)
 #option(MEMCACHED_ENABLED "memcached" OFF) deprecated
 #option(ENABLE_APACHE_LOG_FORMAT "Enable message log in apache format" OFF) not implemented yet
@@ -71,12 +71,12 @@ SET(PROJECT_CODENAME "${PROJECT_NAME}")
 SET(PROJECT_VERSION_MAJOR 0)
 SET(PROJECT_VERSION_MINOR 1)
 SET(PROJECT_VERSION_PATCH 3)
-SET(PROJECT_VERSION_TWEAK 0)
+SET(PROJECT_VERSION_TWEAK 9)
 
 SET(PROJECT_VENDOR_NAME "Zevenet")
 SET(PROJECT_VENDOR_URL "https://www.zevenet.com")
-#execute_process(COMMAND "date" "+%Y"
-#        OUTPUT_VARIABLE DATE_YEAR)
+execute_process(COMMAND "date" "+%Y"
+        OUTPUT_VARIABLE DATE_YEAR)
 string(TIMESTAMP DATE_YEAR "%Y")
 
 SET(PROJECT_COPYRIGHT "Copyright (C) ${DATE_YEAR} ${PROJECT_VENDOR_NAME}")
@@ -210,44 +210,45 @@ if (ENABLE_WAF)
     include_directories(${LIBMODSECURITY_INCLUDE_DIR})
     add_definitions(-DWAF_ENABLED=1)
 endif()
+if(ENABLE_ON_FLY_COMRESSION)
+    add_definitions(-DENABLE_ON_FLY_COMRESSION=1)
+    if (BUNDLED_ZLIB)
+        #
+        # zlib
+        #
+        message(STATUS "Building zlib")
+        include(ExternalProject)
+        include(GNUInstallDirs)
+        set(ZLIB_BUNDLE_DIR "${MAINFOLDER}/build/zlib/src/zlib")
+        set(ZLIB_INSTALL_DIR "${MAINFOLDER}/build/zlib/target")
+        set(ZLIB_INCLUDE_DIR "${MAINFOLDER}/build/zlib/target/include")
+        set(ZLIB_LIBRARY_SO "${ZLIB_INSTALL_DIR}/lib/libz.so")
+        set(ZLIB_LIBRARIES "${ZLIB_INSTALL_DIR}/lib/libz.a")
+        set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
+        message(STATUS "Using bundled zlib in '${ZLIB_BUNDLE_DIR}'")
+        #Debug build
+        # ./config --prefix=/usr/local/ssl --zlibdir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
+        ExternalProject_Add( zlib
+            URL "http://zlib.net/zlib-1.2.11.tar.gz"
+            CONFIGURE_COMMAND ./configure --static --prefix=${ZLIB_INSTALL_DIR}
+            BUILD_COMMAND make -j8
+            BUILD_IN_SOURCE 1
+            INSTALL_COMMAND make install -j8)
 
-if (BUNDLED_ZLIB)
-    #
-    # zlib
-    #
-    message(STATUS "Building zlib")
-    include(ExternalProject)
-    include(GNUInstallDirs)
-    set(ZLIB_BUNDLE_DIR "${MAINFOLDER}/build/zlib/src/zlib")
-    set(ZLIB_INSTALL_DIR "${MAINFOLDER}/build/zlib/target")
-    set(ZLIB_INCLUDE_DIR "${MAINFOLDER}/build/zlib/target/include")
-    set(ZLIB_LIBRARY_SO "${ZLIB_INSTALL_DIR}/lib/libz.so")
-    set(ZLIB_LIBRARIES "${ZLIB_INSTALL_DIR}/lib/libz.a")
-    set(BUILD_AND_INSTALL_CMD "${CMD_MAKE} make install")
-    message(STATUS "Using bundled zlib in '${ZLIB_BUNDLE_DIR}'")
-    #Debug build
-    # ./config --prefix=/usr/local/ssl --zlibdir=/usr/local/ssl -d shared no-asm no-ssl2 -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer
-    ExternalProject_Add( zlib
-        URL "http://zlib.net/zlib-1.2.11.tar.gz"
-        CONFIGURE_COMMAND ./configure --static --prefix=${ZLIB_INSTALL_DIR}
-        BUILD_COMMAND make -j8
-        BUILD_IN_SOURCE 1
-        INSTALL_COMMAND make install -j8)
-
-    #    set(ENV{PKG_CONFIG_PATH} "${ZLIB_INSTALL_DIR}/lib/pkgconfig")
-    #add_dependencies(zlib)
-    include_directories(${ZLIB_INCLUDE_DIR})
-    link_directories(${ZLIB_INSTALL_DIR}/lib)
-else ()
-    find_package(ZLIB REQUIRED)
-    if (ZLIB_FOUND)
-        #message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
-        #message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
-        include_directories(${ZLIB_INCLUDE_DIRS})
-        message(STATUS "Using Zlib ${ZLIB_VERSION_STRING}")
-    endif ()
+        #    set(ENV{PKG_CONFIG_PATH} "${ZLIB_INSTALL_DIR}/lib/pkgconfig")
+        #add_dependencies(zlib)
+        include_directories(${ZLIB_INCLUDE_DIR})
+        link_directories(${ZLIB_INSTALL_DIR}/lib)
+    else ()
+        find_package(ZLIB REQUIRED)
+        if (ZLIB_FOUND)
+            #message(STATUS "Zlib includes ${ZLIB_INCLUDE_DIRS}")
+            #message(STATUS "Zlib link ${ZLIB_LIBRARIES}")
+            include_directories(${ZLIB_INCLUDE_DIRS})
+            message(STATUS "Using Zlib ${ZLIB_VERSION_STRING}")
+        endif ()
+    endif()
 endif()
-
 if (BUNDLED_OPENSSL)
     #
     # OpenSSL

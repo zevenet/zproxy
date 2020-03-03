@@ -78,10 +78,8 @@ void PoundClient::showHelp(const std::string error, bool exit_on_error) {
   std::cout << "\twhere cmd is one of:" << std::endl;
   std::cout << "\t-L n - enable listener n" << std::endl;
   std::cout << "\t-l n - disable listener n" << std::endl;
-#if WAF_ENABLED
-  std::cout << "\t-R n - reload the waf rules in the listener n" << std::endl;
-#endif
-
+  std::cout << "\t-R n - reload the listener configuration from file"
+            << std::endl;
   std::cout << "\t-S n m - enable service m in listener n (use -1 for "
                "global services)"
             << std::endl;
@@ -170,12 +168,10 @@ bool PoundClient::executeCommand() {
         exit(EXIT_FAILURE);
     }
   }
-#if WAF_ENABLED
-  if (ctl_command == CTL_ACTION::RELOAD_WAF) {
+  if (ctl_command == CTL_ACTION::RELOAD) {
     path = "/config";
     method = http::REQUEST_METHOD::UPDATE;
   }
-#endif
   if (ctl_command_subject == CTL_SUBJECT::SESSION) {
     path += "/service/" + std::to_string(service_id) + "/session/";
     switch (ctl_command) {
@@ -293,14 +289,12 @@ bool PoundClient::init(int argc, char *argv[]) {
       case 'v':
         verbose = true;
         break;
-#if WAF_ENABLED
       case 'R': {
-        ctl_command = CTL_ACTION::RELOAD_WAF;
+        ctl_command = CTL_ACTION::RELOAD;
         ctl_command_subject = CTL_SUBJECT::LISTENER;
         trySetAllTargetId(argv, optind);
         break;
       }
-#endif
       case 'L': {
         ctl_command = CTL_ACTION::ENABLE;
         ctl_command_subject = CTL_SUBJECT::LISTENER;
@@ -386,11 +380,9 @@ bool PoundClient::init(int argc, char *argv[]) {
       case CTL_ACTION::FLUSH_SESSIONS:
         action_message = "Flush session";
         break;
-#if WAF_ENABLED
-      case CTL_ACTION::RELOAD_WAF:
+      case CTL_ACTION::RELOAD:
         action_message = "Reload WAF rulesets";
         break;
-#endif
     }
 
     if (!session_key.empty()) {

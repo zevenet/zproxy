@@ -19,7 +19,9 @@
  *
  */
 #include "../../src/debug/logger.h"
+#ifdef ENABLE_ON_FLY_COMRESSION
 #include "t_compression.h"
+#endif
 #include "t_config.h"
 #include "t_control_manager.h"
 #include "t_crypto.h"
