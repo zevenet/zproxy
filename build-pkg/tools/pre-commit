@@ -12,8 +12,9 @@ REJECT=0
 include_dir="/build-pkg/tools"
 include_file="define_include"
 
-export PERL5LIB=$include_dir
-
+# install from cpan: cpan install warnings::unused
+HEADER_CODE='#!/usr/bin/perl
+use warnings::unused;use warnings;use strict;sub include { }'
 
 if [[ -z "$changed" ]]; then
     exit 0
@@ -38,7 +39,7 @@ for FILE in $changed; do
 		PERLFILE=1
 	else
 		case "$FILE" in
-			*.pl | .pm ) PERLFILE=1;;
+			*.pl | *.pm ) PERLFILE=1;;
 		esac
 	fi
 
@@ -57,14 +58,14 @@ for FILE in $changed; do
 
 		# check perl syntax
 		F="/tmp/f_commit"
-		cat "${include_dir}/${include_file}" > $F
+		echo -e "$HEADER_CODE" > $F
 		cat $FILE >> $F
 		echo "perl -cw $F 2>&1 >/dev/null | grep -Ev OK"
 		OUT=`perl -cw $F 2>&1 >/dev/null | grep -Ev OK`
 
 		if [ "$OUT" != "" ]; then
 			echo "-------------------------------------------------"
-			echo "# Error: Syntax error in the file $FILE":
+			echo "# Error: Syntax error in the file $FILE: (the lines were moved 2 positions)"
 			echo "$OUT"
             echo "-------------------------------------------------"
 			exit 1
