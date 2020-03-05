@@ -2167,4 +2167,99 @@ sub cleanHashValues
 	return $hash_ref if defined wantarray;
 }
 
+=begin nd
+Function: setFarmProxyNGConf
+
+	It changes the meaning of params Priority and weight in config file.
+
+Parameters:
+	ProxyNGEnabled - 'true' if ProxyNG is used, 'false' if not.
+
+Returns:
+	Integer - return 0 on success or different on failure
+
+=cut
+
+sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $proxy_mode, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $stat          = 1;
+
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
+
+	require Tie::File;
+	tie my @array, 'Tie::File', "$configdir\/$farm_filename";
+	my $size      = @array;
+	my @array_bak = @array;
+
+	for ( my $i = 0 ; $i < $size ; $i++ )
+	{
+		if ( $array[$i] =~ /Priority\ (\d+)/ )
+		{
+			my $priority = $1;
+			if ( $proxy_mode eq "true" )
+			{
+				if ( $array[$i] =~ s/.*Priority\ .*/\t\t\tWeight\ $priority/ )
+				{
+					$stat = 0;
+				}
+			}
+			elsif ( $proxy_mode eq "false" )
+			{
+				if ( $array[$i + 1] =~ /Weight\ (\d+)/ )
+				{
+					my $weight = $1;
+					if ( $array[$i] =~ s/.*Priority\ .*/\t\t\tPriority\ $weight/ )
+					{
+						splice @array, $i + 1, 1;
+						$stat = 0;
+						$size--;
+					}
+				}
+				else
+				{
+					splice @array, $i, 1;
+					$stat = 0;
+					$size--;
+				}
+
+			}
+		}
+		elsif ( $array[$i] =~ /Weight\ (\d+)/ )
+		{
+			my $weight = $1;
+			if ( $proxy_mode eq "false" )
+			{
+				if ( $array[$i] =~ s/.*Weight\ .*/\t\t\tPriority\ $weight/ )
+				{
+					$stat = 0;
+				}
+			}
+			elsif ( $proxy_mode eq "true" )
+			{
+				#This directive should not be here
+				splice @array, $i, 1;
+				$size--;
+			}
+		}
+	}
+
+	if ( &getHTTPFarmConfigIsOK( $farm_name ) )
+	{
+		@array = @array_bak;
+		$stat  = 1;
+		&zenlog( "Error in $farm_name config file!", "error", "SYSTEM" );
+	}
+
+	untie @array;
+	close $lock_fh;
+
+	return $stat;
+}
+
 1;

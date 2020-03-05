@@ -199,6 +199,16 @@ elsif ( $object eq 'disable_ssyncd' )
 	include 'Zevenet::Ssyncd';
 	&setSsyncd( 'false' );
 }
+elsif ( $object eq 'enable_proxyng' )
+{
+	include 'Zevenet::System::Global';
+	&setProxyNG( 'true' );
+}
+elsif ( $object eq 'disable_proxyng' )
+{
+	include 'Zevenet::System::Global';
+	&setProxyNG( 'false' );
+}
 
 # farm commands
 if ( $object eq 'farm' )

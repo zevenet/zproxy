@@ -174,7 +174,7 @@ sub set_system_global
 	if ( $err == 2 )
 	{
 		my $msg =
-		  "There was an error stopping the http farms. Plase, check that the configuration is correct";
+		  "There was an error stopping the http farms. Please, check the configuration is correct";
 		return &httpResponse(
 					   { code => 400, body => { description => $desc, message => $msg } } );
 	}
@@ -192,6 +192,15 @@ sub set_system_global
 		  if ( $json_obj->{ ssyncd } eq 'true' );
 		&runZClusterRemoteManager( 'disable_ssyncd' )
 		  if ( $json_obj->{ ssyncd } eq 'false' );
+	}
+
+	if ( exists $json_obj->{ proxy_new_generation } )
+	{
+		include 'Zevenet::Cluster';
+		&runZClusterRemoteManager( 'enable_proxyng' )
+		  if ( $json_obj->{ proxy_new_generation } eq 'true' );
+		&runZClusterRemoteManager( 'disable_proxyng' )
+		  if ( $json_obj->{ proxy_new_generation } eq 'false' );
 	}
 
 	my $body =

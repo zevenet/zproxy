@@ -61,15 +61,18 @@ sub getSystemGlobal
 =begin nd
 Function: setSystemGlobal
 
-	Get the global settings of the system.
+	Set the global settings of the system.
 
 Parameters:
-	none - . Returns: 0 on success,
-						2 if there was an error related to stop http farms
-						another value on failure
+	Hash -  Hash of global settings
 
 Returns:
-	Ingeger - Error code.
+	Integer - Error code.  Returns: 0 on success,
+					2 if there was an error related to stop http farms
+					3 if there was an error setting up the global config
+					4 if there was an error setting up the Farm config
+					5 if there was an error related to start a stopped http farm
+
 
 =cut
 
@@ -104,27 +107,25 @@ sub setSystemGlobal
 		return $err if $err;
 	}
 
-	my $ng_val = &getGlobalConfiguration( 'proxy_ng' );
+	my $ng_cur = &getGlobalConfiguration( 'proxy_ng' );
 	if ( exists $global->{ proxy_new_generation }
-		 and ( $ng_val ne $global->{ proxy_new_generation } ) )
+		 and ( $ng_cur ne $global->{ proxy_new_generation } ) )
 	{
 		require Zevenet::Farm::Core;
 		require Zevenet::Farm::Base;
 		require Zevenet::Farm::Action;
+		require Zevenet::Farm::Config;
 
-		my $ng   = $global->{ proxy_new_generation };
-		my $base = ( $ng eq 'true' ) ? 'base_zproxy' : 'base_pound';
-		my $bin  = ( $ng eq 'true' ) ? 'zproxy' : 'pound';
-		my $ctl  = ( $ng eq 'true' ) ? 'zproxyctl' : 'poundctl';
-		my $base = &getGlobalConfiguration( $base );
-		my $bin  = &getGlobalConfiguration( $bin );
-		my $ctl  = &getGlobalConfiguration( $ctl );
 		$err = 0;
+		my $base_cur = &getGlobalConfiguration( 'base_proxy' );
+		my $bin_cur  = &getGlobalConfiguration( 'proxy' );
+		my $ctl_cur  = &getGlobalConfiguration( 'proxyctl' );
 
 		# stop l7 farms
 		my @farmsf = &getFarmsByType( 'http' );
 		push @farmsf, &getFarmsByType( 'https' );
 		my @farms_stopped;
+		my @farms_config;
 		my $farm_err;
 
 		foreach my $farmname ( @farmsf )
@@ -143,20 +144,84 @@ sub setSystemGlobal
 
 		if ( !$err )
 		{
+			if ( &setProxyNG( $global->{ proxy_new_generation } ) )
+			{
+				$err = 3;
+			}
+		}
+		if ( !$err )
+		{
+			# set farms config
+			foreach my $farmname ( @farmsf )
+			{
+				if ( &setFarmProxyNGConf( $global->{ proxy_new_generation }, $farmname ) )
+				{
+					$err = 4;
+					last;
+				}
+				else
+				{
+					push @farms_config, $farmname;
+				}
+			}
+		}
+
+		if ( $err == 4 )
+		{
 			# set binary
-			$err += &setGlobalConfiguration( 'base_proxy', $base );
-			$err += &setGlobalConfiguration( 'proxy',      $bin );
-			$err += &setGlobalConfiguration( 'proxyctl',   $ctl );
-			$err += &setGlobalConfiguration( 'proxy_ng',   $ng ) if ( !$err );
+			&setGlobalConfiguration( 'base_proxy', $base_cur );
+			&setGlobalConfiguration( 'proxy',      $bin_cur );
+			&setGlobalConfiguration( 'proxyctl',   $ctl_cur );
+			&setGlobalConfiguration( 'proxy_ng',   $ng_cur );
+			foreach my $farmname ( @farms_config )
+			{
+				&setFarmProxyNGConf( $ng_cur, $farmname );
+			}
 		}
 
 		# start l7 farms
 		foreach my $farmname ( @farms_stopped )
 		{
 			my $farm_err = &runFarmStart( $farmname, "false" );
-			$err = 3 if ( $farm_err and !$err );
+			$err = 5 if ( $farm_err and !$err );
 		}
 	}
+
+	return $err;
+}
+
+=begin nd
+Function: setProxyNG
+
+	Set the ProxyNG settings of the system.
+
+Parameters:
+	arg - "true" to turn it on or "false" to turn it off. 
+
+Returns:
+	Integer - Error code. Returns: 0 on success, another value on failure.
+
+=cut
+
+sub setProxyNG    # ($ng)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $ng  = shift;
+	my $err = 0;
+
+	my $base = ( $ng eq 'true' ) ? 'base_zproxy' : 'base_pound';
+	my $bin  = ( $ng eq 'true' ) ? 'zproxy'      : 'pound';
+	my $ctl  = ( $ng eq 'true' ) ? 'zproxyctl'   : 'poundctl';
+	$base = &getGlobalConfiguration( $base );
+	$bin  = &getGlobalConfiguration( $bin );
+	$ctl  = &getGlobalConfiguration( $ctl );
+
+	# set binary
+	$err += &setGlobalConfiguration( 'base_proxy', $base );
+	$err += &setGlobalConfiguration( 'proxy',      $bin );
+	$err += &setGlobalConfiguration( 'proxyctl',   $ctl );
+	$err += &setGlobalConfiguration( 'proxy_ng',   $ng ) if ( !$err );
 
 	return $err;
 }
