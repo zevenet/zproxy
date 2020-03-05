@@ -24,6 +24,8 @@
 use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
+my $proxy_ng  = &getGlobalConfiguration( 'proxy_ng' );
+
 my $eload;
 if ( eval { require Zevenet::ELoad; } )
 {
@@ -43,7 +45,7 @@ Parameters:
 	timeout - Override the global time out for this backend
 	farmname - Farm name
 	service - service name
-	priority - The priority of this backend (between 1 and 9). Lower value indicates higher priority
+	priority - The priority of this backend (greater than 1). Lower value indicates higher priority
 
 Returns:
 	Integer - return 0 on success or -1 on failure
@@ -51,6 +53,226 @@ Returns:
 =cut
 
 sub setHTTPFarmServer # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service,$priority)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $ids, $rip, $port, $weight, $timeout, $farm_name, $service, $priority ) =
+	  @_;
+
+	if ( $proxy_ng eq 'true' )
+	{
+		return
+		  &setHTTPNGFarmServer( $ids, $rip, $port, $weight, $timeout, $farm_name,
+								$service, $priority );
+	}
+	elsif ( $proxy_ng eq 'false' )
+	{
+		$priority = $weight;
+	}
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	require Zevenet::Lock;
+	my $lock_file = &getLockFile( $farm_name );
+	my $lock_fh = &openlock( $lock_file, 'w' );
+
+	require Tie::File;
+	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
+
+	if ( $ids !~ /^$/ )
+	{
+		my $index_count = -1;
+		my $i           = -1;
+		my $sw          = 0;
+
+		foreach my $line ( @contents )
+		{
+			$i++;
+
+			#search the service to modify
+			if ( $line =~ /Service \"$service\"/ )
+			{
+				$sw = 1;
+			}
+			if ( $line =~ /BackEnd/ && $line !~ /#/ && $sw eq 1 )
+			{
+				$index_count++;
+				if ( $index_count == $ids )
+				{
+					#server for modify $ids;
+					#HTTPS
+					my $httpsbe = &getHTTPFarmVS( $farm_name, $service, "httpsbackend" );
+					if ( $httpsbe eq "true" )
+					{
+						#add item
+						$i++;
+					}
+					$output           = $?;
+					$contents[$i + 1] = "\t\t\tAddress $rip";
+					$contents[$i + 2] = "\t\t\tPort $port";
+					my $p_m = 0;
+					if ( $contents[$i + 3] =~ /TimeOut/ )
+					{
+						$contents[$i + 3] = "\t\t\tTimeOut $timeout";
+						&zenlog( "Modified current timeout", "info", "LSLB", "info", "LSLB" );
+					}
+					if ( $contents[$i + 4] =~ /Priority/ )
+					{
+						$contents[$i + 4] = "\t\t\tPriority $priority";
+						&zenlog( "Modified current priority", "info", "LSLB" );
+						$p_m = 1;
+					}
+					if ( $contents[$i + 3] =~ /Priority/ )
+					{
+						$contents[$i + 3] = "\t\t\tPriority $priority";
+						$p_m = 1;
+					}
+
+					#delete item
+					if ( $timeout =~ /^$/ )
+					{
+						if ( $contents[$i + 3] =~ /TimeOut/ )
+						{
+							splice @contents, $i + 3, 1,;
+						}
+					}
+					if ( $priority =~ /^$/ )
+					{
+						if ( $contents[$i + 3] =~ /Priority/ )
+						{
+							splice @contents, $i + 3, 1,;
+						}
+						if ( $contents[$i + 4] =~ /Priority/ )
+						{
+							splice @contents, $i + 4, 1,;
+						}
+					}
+
+					#new item
+					if (
+						 $timeout !~ /^$/
+						 && (    $contents[$i + 3] =~ /End/
+							  || $contents[$i + 3] =~ /Priority/ )
+					  )
+					{
+						splice @contents, $i + 3, 0, "\t\t\tTimeOut $timeout";
+					}
+					if (
+						    $p_m eq 0
+						 && $priority !~ /^$/
+						 && (    $contents[$i + 3] =~ /End/
+							  || $contents[$i + 4] =~ /End/ )
+					  )
+					{
+						if ( $contents[$i + 3] =~ /TimeOut/ )
+						{
+							splice @contents, $i + 4, 0, "\t\t\tPriority $priority";
+						}
+						else
+						{
+							splice @contents, $i + 3, 0, "\t\t\tPriority $priority";
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		#add new server
+		my $nsflag     = "true";
+		my $index      = -1;
+		my $backend    = 0;
+		my $be_section = -1;
+
+		foreach my $line ( @contents )
+		{
+			$index++;
+			if ( $be_section == 1 && $line =~ /Address/ )
+			{
+				$backend++;
+			}
+			if ( $line =~ /Service \"$service\"/ && $be_section == -1 )
+			{
+				$be_section++;
+			}
+			if ( $line =~ /#BackEnd/ && $be_section == 0 )
+			{
+				$be_section++;
+			}
+			if ( $be_section == 1 && $line =~ /#End/ )
+			{
+				splice @contents, $index, 0, "\t\tBackEnd";
+				$output = $?;
+				$index++;
+				splice @contents, $index, 0, "\t\t\tAddress $rip";
+				my $httpsbe = &getHTTPFarmVS( $farm_name, $service, "httpsbackend" );
+				if ( $httpsbe eq "true" )
+				{
+					#add item
+					splice @contents, $index, 0, "\t\t\tHTTPS";
+					$index++;
+				}
+				$index++;
+				splice @contents, $index, 0, "\t\t\tPort $port";
+				$index++;
+
+				#Timeout?
+				if ( $timeout )
+				{
+					splice @contents, $index, 0, "\t\t\tTimeOut $timeout";
+					$index++;
+				}
+
+				#Priority?
+				if ( $priority )
+				{
+					splice @contents, $index, 0, "\t\t\tPriority $priority";
+					$index++;
+				}
+				splice @contents, $index, 0, "\t\tEnd";
+				$be_section++;    # Backend Added
+			}
+
+			# if backend added then go out of form
+		}
+		if ( $nsflag eq "true" )
+		{
+			my $idservice = &getFarmVSI( $farm_name, $service );
+			if ( $idservice ne "" )
+			{
+				&setHTTPFarmBackendStatusFile( $farm_name, $backend, "active", $idservice );
+			}
+		}
+	}
+	untie @contents;
+	close $lock_fh;
+
+	return $output;
+}
+
+=begin nd
+Function: setHTTPNGFarmServer
+
+	Add a new backend to a HTTP service or modify if it exists
+
+Parameters:
+	ids - backend id
+	rip - backend ip
+	port - backend port
+	weight - The weight of this backend (between 1 and 9). Higher weight backends will be used more often than lower weight ones.
+	timeout - Override the global time out for this backend
+	farmname - Farm name
+	service - service name
+	priority - The priority of this backend (greater than 1). Lower value indicates higher priority
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+
+=cut
+
+sub setHTTPNGFarmServer # ($ids,$rip,$port,$weight,$timeout,$farm_name,$service,$priority)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -480,16 +702,32 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 		my $status = "undefined";
 		$status = $be_status[$id] if $be_status[$id];
 
-		push @out_ba,
-		  {
-			id       => $id,
-			status   => $status,
-			ip       => $ip,
-			port     => $port + 0,
-			timeout  => $tout,
-			priority => $prio,
-			weight   => $weig
-		  };
+		if ( $proxy_ng eq 'true' )
+		{
+			push @out_ba,
+			  {
+				id       => $id,
+				status   => $status,
+				ip       => $ip,
+				port     => $port + 0,
+				timeout  => $tout,
+				priority => $prio,
+				weight   => $weig
+			  };
+		}
+		elsif ( $proxy_ng )
+		{
+			push @out_ba,
+			  {
+				id      => $id,
+				status  => $status,
+				ip      => $ip,
+				port    => $port + 0,
+				timeout => $tout,
+				weight  => $prio
+			  };
+
+		}
 	}
 
 	return \@out_ba;
