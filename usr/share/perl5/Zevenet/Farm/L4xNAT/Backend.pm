@@ -792,4 +792,39 @@ sub getL4ServerByMark
 	return -1;
 }
 
+=begin nd
+Function: getL4FarmPriorities
+
+	Get the list of the backends priorities in a L4 farm
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array Ref - it returns an array ref of priority values
+
+=cut
+
+sub getL4FarmPriorities    # ( $farmname )
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farmname ) = shift;
+	my @priorities;
+	my $backends = &getL4FarmServers( $farmname );
+	foreach my $backend ( @{ $backends } )
+	{
+		if ( defined $backend->{ priority } )
+		{
+			push @priorities, $backend->{ priority };
+		}
+		else
+		{
+			push @priorities, 1;
+		}
+
+	}
+	return \@priorities;
+}
+
 1;

@@ -1235,4 +1235,41 @@ sub get_http_all_services_summary_struct
 	return \@services_list;
 }
 
+=begin nd
+Function: getHTTPFarmPriorities
+
+        Get the list of the backends priorities of the service in a http farm
+
+Parameters:
+        farmname - Farm name
+        service - Service name
+
+Returns:
+        Array Ref - it returns an array ref of priority values
+
+=cut
+
+sub getHTTPFarmPriorities    # ( $farmname, $service_name )
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $farmname     = shift;
+	my $service_name = shift;
+	my @priorities;
+	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
+	foreach my $backend ( @{ $backends } )
+	{
+		if ( defined $backend->{ priority } )
+		{
+			push @priorities, $backend->{ priority };
+		}
+		else
+		{
+			push @priorities, 1;
+		}
+
+	}
+	return \@priorities;
+}
+
 1;
