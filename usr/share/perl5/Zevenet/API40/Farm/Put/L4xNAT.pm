@@ -112,7 +112,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	if ( $eload )
 	{
 		$params->{ "logs" } = {
-								'valid_format' => 'boolean',
+								'values'    => ['true', 'false'],
 								'non_blank'    => 'true',
 		};
 	}
