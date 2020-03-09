@@ -319,7 +319,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name)
 
 				# not show fgDOWN status
 				$backendHash->{ "status" } = "down"
-				  if ( $backendHash->{ "status" } eq "fgDOWN" );
+				  if ( $backendHash->{ "status" } ne "maintenance" );
 			}
 			elsif ( $backendHash->{ "status" } eq "alive" )
 			{

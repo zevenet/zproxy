@@ -764,13 +764,12 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 	my @status;
 	my $farmStatus = &getFarmStatus( $farm_name );
+	my $stats;
 
 	if ( $farmStatus eq "up" )
 	{
 		require Zevenet::Farm::HTTP::Stats;
-
-		my $stats = &getHTTPFarmBackendsStats( $farm_name );
-
+		$stats = &getHTTPFarmBackendsStats( $farm_name );
 	}
 
 	require Zevenet::Farm::HTTP::Service;
@@ -782,16 +781,17 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	# @be is used to get size of backend array
 	for ( @be )
 	{
-
 		my $backendstatus = &getHTTPBackendStatusFromFile( $farm_name, $id, $service );
-
-		if ( $backendstatus eq "maintenance" )
+		if ( $backendstatus ne "maintenance" )
 		{
-			$backendstatus = "maintenance";
-		}
-		else
-		{
-			$backendstatus = "undefined";
+			if ( $farmStatus eq "up" )
+			{
+				$backendstatus = $stats->{ backends }[$id]->{ status };
+			}
+			else
+			{
+				$backendstatus = "undefined";
+			}
 		}
 		push @status, $backendstatus;
 		$id = $id + 1;
