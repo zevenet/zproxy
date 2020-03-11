@@ -611,7 +611,6 @@ sub manage_mgmt()
 			 "debug", "PROFILING" );
 	require Zevenet::Net::Interface;
 
-	my $mgmtif         = "";
 	my @all_interfaces = &getInterfaceTypeList( 'nic' );
 
 	# widget sizes
@@ -854,6 +853,15 @@ sub set_net()
 		my $newmask = $mgmtmaskinput->get();
 		my $newgw   = $mgmtgwinput->get();
 
+		# Get interface configuration structure
+		my $if_ref = &getInterfaceConfig( $newif ) // &getSystemInterface( $newif );
+
+		# Set new interface configuration
+		$if_ref->{ addr }    = $newip   if $newip;
+		$if_ref->{ mask }    = $newmask if $newmask;
+		$if_ref->{ gateway } = $newgw   if $newgw;
+		$if_ref->{ ip_v }    = 4;
+
 		if ( &ipisok( $newip ) eq "false" )
 		{
 			&error_dialog( "IP Address $newip structure is not ok" );
@@ -867,12 +875,17 @@ sub set_net()
 			$setchanges = 0;
 		}
 
+		require Zevenet::Net::Validate;
+
 		# check if the new gateway is correct, if empty don't worry
-		if ( $newgw !~ /^$/ && &ipisok( $newgw ) eq "false" )
+		if ( $newgw !~ /^$/
+			 && !&getNetValidate( $if_ref->{ addr }, $if_ref->{ mask },
+								  $if_ref->{ gateway } ) )
 		{
 			&inform_dialog(
-						  "Gateway address $newgw structure is not ok, set it in the web GUI" );
-			$newgw = "";
+				"Gateway address $newgw is not in the networking segment $if_ref->{ addr }/$if_ref->{ mask }"
+			);
+			$setchanges = 0;
 		}
 
 		if ( $setchanges )
@@ -880,9 +893,6 @@ sub set_net()
 			require Zevenet::Net::Interface;
 			my $ret = &confirm_dialog(
 							   "Are you sure you want to change your ZEVENET MGMT Interface?" );
-
-			# Get interface configuration structure
-			my $if_ref = &getInterfaceConfig( $newif ) // &getSystemInterface( $newif );
 
 			if ( $ret )
 			{
@@ -896,12 +906,6 @@ sub set_net()
 					# Remove routes if the interface has its own route table: nic and vlan
 					&delRoutes( "local", $if_ref );
 				}
-
-				# Set new interface configuration
-				$if_ref->{ addr }    = $newip   if $newip;
-				$if_ref->{ mask }    = $newmask if $newmask;
-				$if_ref->{ gateway } = $newgw   if $newgw;
-				$if_ref->{ ip_v }    = 4;
 
 				# Add new IP, netmask and gateway
 				&addIp( $if_ref );
@@ -1053,24 +1057,24 @@ sub manage_zlb_services()
 	{
 		$zlbservicestatus = "ACTIVE";
 	}
-	my $servicestatus = $win3->add(
-									'win3id1', 'TextViewer',
-									-bg         => 'black',
-									-tfg        => 'black',
-									-tbg        => 'white',
-									-border     => 1,
-									-y          => 0,
-									-height     => 5,
-									-vscrollbar => 1,
-									-title      => 'Services Status',
-									-text       => "ZEVENET Services:\n"
-									  . "\tWeb Service:\t"
-									  . $cherokeestatus . "\n"
-									  . "\tZEVENET:\t"
-									  . $zlbservicestatus . "\n",
+	$win3->add(
+				'win3id1', 'TextViewer',
+				-bg         => 'black',
+				-tfg        => 'black',
+				-tbg        => 'white',
+				-border     => 1,
+				-y          => 0,
+				-height     => 5,
+				-vscrollbar => 1,
+				-title      => 'Services Status',
+				-text       => "ZEVENET Services:\n"
+				  . "\tWeb Service:\t"
+				  . $cherokeestatus . "\n"
+				  . "\tZEVENET:\t"
+				  . $zlbservicestatus . "\n",
 	);
 
-	my $service1 = $win3->add(
+	$win3->add(
 		'win3id2',
 		'Buttonbox',
 		-bg      => 'black',
@@ -1131,7 +1135,7 @@ sub manage_zlb_services()
 		],
 	);
 
-	my $service2 = $win3->add(
+	$win3->add(
 		'win3id3',
 		'Buttonbox',
 		-bg      => 'black',
@@ -1342,26 +1346,26 @@ sub show_status_system()
 							  ],
 	);
 
-	my $textviewer = $win3->add(
-								 'win3id2', 'TextViewer',
-								 -bg         => 'black',
-								 -border     => 1,
-								 -y          => 3,
-								 -vscrollbar => 1,
-								 -text       => "\nAppliance Version:\n" . "\t"
-								   . $zaversion . "\n"
-								   . "\nSoftware Version:\n" . "\t"
-								   . $zlbversion . "\n"
-								   . "\nHostname:\n" . "\t"
-								   . $zlbhostname . "\n"
-								   . "\nMemory (MB):\n"
-								   . $memstring
-								   . "\nLoad AVG:\n"
-								   . $loadavgstring
-								   . "\nNumber of CPU cores:\n" . "\t"
-								   . $ncores . "\n"
-								   . "\nCPU Usage (%):\n"
-								   . $cpustring,
+	$win3->add(
+				'win3id2', 'TextViewer',
+				-bg         => 'black',
+				-border     => 1,
+				-y          => 3,
+				-vscrollbar => 1,
+				-text       => "\nAppliance Version:\n" . "\t"
+				  . $zaversion . "\n"
+				  . "\nSoftware Version:\n" . "\t"
+				  . $zlbversion . "\n"
+				  . "\nHostname:\n" . "\t"
+				  . $zlbhostname . "\n"
+				  . "\nMemory (MB):\n"
+				  . $memstring
+				  . "\nLoad AVG:\n"
+				  . $loadavgstring
+				  . "\nNumber of CPU cores:\n" . "\t"
+				  . $ncores . "\n"
+				  . "\nCPU Usage (%):\n"
+				  . $cpustring,
 	);
 
 	$refresh->focus();
