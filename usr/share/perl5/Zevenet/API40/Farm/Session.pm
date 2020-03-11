@@ -123,6 +123,12 @@ sub add_farm_sessions
 		  "The session '$json_obj->{session}' is not valid for the persistence '$persis_type'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+	my $session_obj = &getL4FarmSession( $farm, $json_obj->{ session } );
+	if ( defined $session_obj )
+	{
+		my $msg = "The session '$json_obj->{session}' already exists.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
 	# executing the action
 	my $err =
