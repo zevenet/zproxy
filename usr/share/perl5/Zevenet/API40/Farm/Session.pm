@@ -71,8 +71,9 @@ sub add_farm_sessions
 	my $desc = "Adding a static session to the $farm";
 	my $params = {
 		"id" => {
-				  'non_blank' => 'true',
-				  'required'  => 'true',
+				  'non_blank'    => 'true',
+				  'required'     => 'true',
+				  'valid_format' => 'integer',
 		},
 
 # session format:
@@ -87,21 +88,26 @@ sub add_farm_sessions
 		},
 	};
 
+	require Zevenet::Farm::Backend;
+	my $f_type = &getFarmType( $farm );
+	if ( $f_type eq 'l4xnat' )
+	{
+		my $num_bks = @{ &getFarmServers( $farm ) };
+		if ( $num_bks )
+		{
+			$params->{ id }->{ 'values' } = [0 .. $num_bks - 1];
+			delete $params->{ id }->{ 'valid_format' };
+		}
+	}
+
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	require Zevenet::Farm::Backend;
-
-	if ( &getFarmType( $farm ) ne 'l4xnat' )
+	if ( $f_type ne 'l4xnat' )
 	{
 		my $msg = "This feature is only available for l4xnat profiles.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-	elsif ( @{ &getFarmServers( $farm ) } < $json_obj->{ id } + 1 )
-	{
-		my $msg = "The backend '$json_obj->{id}' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
