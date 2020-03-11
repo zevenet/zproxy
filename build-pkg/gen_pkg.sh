@@ -8,7 +8,6 @@ CRL_URL='https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl'
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 DATE=$(date +%y%m%d_%H%M%S)
 arch="amd64"
-CERT_FUNCTIONS="usr/share/perl5/Zevenet/Certificate/Activation.pm"
 
 # Default options
 devel="false"
@@ -150,8 +149,6 @@ if [[ $distribution == "install" ]]; then
 	# bash script
 	sed -E -i 's/^.+_BM_tag_/BM_tag=1/' DEBIAN/postinst
 else
-	# add certificate module to preinst. I has to be in the head of the file
-	cat $CERT_FUNCTIONS | cat - DEBIAN/preinst > temp && mv temp DEBIAN/preinst
 	chmod +x DEBIAN/preinst
 fi
 

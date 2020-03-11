@@ -21,18 +21,30 @@
 #
 ###############################################################################
 
-use File::Copy 'move';
+use strict;
 
 my $BM_tag = 0; # _BM_tag_
 
 if ( ! $BM_tag )
 {
-	my $certerr = &certcontrol();
-	if ( $certerr != 0 )
+	if ( eval { require Zevenet::ELoad; } )
 	{
-		print "Your certificate key is not valid, error code $certerr\n";
+        	my $certerr = &eload(
+                                         module => 'Zevenet::Certificate::Activation',
+                                         func   => 'certcontrol'
+        	);
+		if ( $certerr != 0 )
+		{
+			print "Your certificate key is not valid, error code $certerr\n";
+			exit 1;    #Abort deploy
+		}
+	}
+	else
+	{
+		print "Error: Missing Zevenet package!\n";
 		exit 1;    #Abort deploy
 	}
+
 }
 
 # Reset the sysctl in order to establish the new parameters
