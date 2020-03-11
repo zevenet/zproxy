@@ -195,6 +195,7 @@ sub getFileDateGmt
 {
 	my $filepath = shift;
 
+	use File::stat;
 	my @eject = split ( / /, gmtime ( stat ( $filepath )->mtime ) );
 	splice ( @eject, 0, 1 );
 	push ( @eject, "GMT" );
