@@ -41,7 +41,7 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 	if ( $param eq "logs" )
 	{
 		$srvparam = "log";
-		$value    = "input" if ( $value eq "true" );
+		$value    = "forward" if ( $value eq "true" );
 		$value    = "none" if ( $value eq "false" );
 	}
 	else
