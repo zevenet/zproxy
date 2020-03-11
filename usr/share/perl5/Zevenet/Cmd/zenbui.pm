@@ -860,7 +860,7 @@ sub set_net()
 		$if_ref->{ addr }    = $newip   if $newip;
 		$if_ref->{ mask }    = $newmask if $newmask;
 		$if_ref->{ gateway } = $newgw   if $newgw;
-		$if_ref->{ ip_v }    = 4;
+		$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
 
 		if ( &ipisok( $newip ) eq "false" )
 		{
