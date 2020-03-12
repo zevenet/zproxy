@@ -28,14 +28,30 @@ require Zevenet::Debug;
 
 my $debug = &getGlobalConfiguration( 'debug' );
 
-sub eload
+=begin nd
+Function: eload
+
+	It executes a function using enterprise.bin
+
+Parameters:
+	Arguements - The input is a hash with the following options
+		module - It is the module that contains the function
+		function - It is the function to be excuted
+		args - Optional. It is an array reference with the arguments expected by the function
+		just_ret - Optional. It is a flag to indicate that is not executed by the API (Zevenet::API)
+
+Returns:
+	It returns the type of data returned by the function executed
+
+=cut
+
+sub eload    # (module, func, args, just_ret )
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my %req = @_;
 
 	my @required = ( qw(module func) );
-	my @params   = ( qw(module func args just_ret ) );
 
 	# check required params
 	if ( my ( $required ) = grep { not exists $req{ $_ } } @required )
@@ -143,8 +159,6 @@ sub eload
 
 	#~ &zenlog( $ret_output ) if $debug;
 
-	my $output =
-	  ( not $ret_f && $api_f ) ? decode_json( $ret_output ) : $ret_output;
 	my @output = eval { @{ decode_json( $ret_output ) } };
 
 	if ( $@ )
@@ -167,3 +181,4 @@ sub eload
 }
 
 1;
+

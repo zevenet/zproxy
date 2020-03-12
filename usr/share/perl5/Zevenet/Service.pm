@@ -377,7 +377,6 @@ sub enable_cluster
 	my $zcl_configured    = &getZClusterStatus();
 	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
 	my $local_node_status;
-	my $master_node;
 
 	# end this function if the cluster is not configured
 	unless ( $zcl_configured )
@@ -474,7 +473,6 @@ sub start_cluster
 
 			my $maint_if = 'cl_maintenance';
 			my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
-			my $if_ref   = &getSystemInterface( $maint_if );
 
 			&logAndRun( "$ip_bin link set $maint_if down" );
 		}
@@ -567,3 +565,4 @@ sub service_cert_message
 }
 
 1;
+

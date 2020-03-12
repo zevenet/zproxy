@@ -503,7 +503,6 @@ sub getZClusterRemoteHost
 
 	my $zcl_conf = &getZClusterConfig();
 	my $hostname = &getHostname();
-	my @hosts    = keys %{ $zcl_conf };
 	my $remotehost;
 
 	for my $zcl_key ( keys %{ $zcl_conf } )
@@ -748,7 +747,6 @@ Function: runRemotely
 Parameters:
 	cmd - Command to be run.
 	ip_address - Remote ip addtress.
-	port - SSH port. Optional. (Default: 22)
 
 Returns:
 	Returns remote command output.
@@ -765,7 +763,6 @@ sub runRemotely    # output ( $cmd, $ip_addr [, $port ] )
 			 "debug", "PROFILING" );
 	my $cmd        = shift;
 	my $ip_address = shift;
-	my $port       = shift // '22';
 
 	my $ssh_options = '';
 	$ssh_options .= '-o "ConnectTimeout=2" ';           # ssh-connect timeout
@@ -1593,3 +1590,4 @@ sub getKeepalivedVersion
 }
 
 1;
+

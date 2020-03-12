@@ -319,10 +319,7 @@ sub logAndGet
 	my $add_stderr = shift // 0;
 
 	my $tmp_err = ( $add_stderr ) ? '&1' : "/tmp/err.log";
-	my $program = $basename;
 	my @print_err;
-
-	my $resource = "logAndGet";
 
 	my $out      = `$cmd 2>$tmp_err`;
 	my $err_code = $?;
@@ -404,3 +401,4 @@ sub logAndRunCheck
 }
 
 1;
+

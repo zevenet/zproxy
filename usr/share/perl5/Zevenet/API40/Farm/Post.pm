@@ -44,8 +44,7 @@ sub new_farm    # ( $json_obj )
    #	- vip
    #	- vport: optional for L4xNAT and not used in Datalink profile.
 
-	my $error = "false";
-	my $desc  = "Creating a farm";
+	my $desc = "Creating a farm";
 
 	# check if FARM NAME already exists
 	unless ( &getFarmType( $json_obj->{ farmname } ) == 1 )
@@ -130,13 +129,7 @@ sub new_farm    # ( $json_obj )
 	}
 
 	# VPORT validation
-	if (
-		 !&getValidPort(
-						 $json_obj->{ vip },
-						 $json_obj->{ vport },
-						 $json_obj->{ profile }
-		 )
-	  )
+	if ( !&getValidPort( $json_obj->{ vport }, $json_obj->{ profile } ) )
 	{
 		my $msg = "The virtual port must be an acceptable value and must be available.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

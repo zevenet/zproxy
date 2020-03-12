@@ -148,10 +148,8 @@ sub stopNlb
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $nftlbd     = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
-	my $pidof      = &getGlobalConfiguration( 'pidof' );
-	my $nlbpidfile = &getNlbPidFile();
-	my $nlbpid     = &getNlbPid();
+	my $nftlbd = &getGlobalConfiguration( 'zbindir' ) . "/nftlbd";
+	my $nlbpid = &getNlbPid();
 
 	if ( $nlbpid ne "-1" )
 	{
@@ -289,7 +287,6 @@ sub execNft
 		else
 		{
 			my @rules = @{ &logAndGet( "$nft -a list chain $table $chain", 'array' ) };
-			my $handle = "";
 			foreach my $r ( @rules )
 			{
 				my ( $handle ) = $r =~ / $rule.* \# handle (\d)$/;
@@ -334,3 +331,4 @@ sub execNft
 }
 
 1;
+

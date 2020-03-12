@@ -39,3 +39,4 @@ include 'Zevenet::API3::Stats';
 include 'Zevenet::API3::Graph';
 
 1;
+

@@ -26,7 +26,8 @@ use Zevenet::Net::Util;
 
 sub new_farm    # ( $json_obj )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 
    # 3 Mandatory Parameters ( 1 mandatory for HTTP or GSBL and optional for L4xNAT )
@@ -36,7 +37,6 @@ sub new_farm    # ( $json_obj )
    #	- vip
    #	- vport: optional for L4xNAT and not used in Datalink profile.
 
-	my $error       = "false";
 	my $description = "Creating farm '$json_obj->{ farmname }'";
 
 	# validate FARM NAME
@@ -119,13 +119,7 @@ sub new_farm    # ( $json_obj )
    #~ {
    #~ $vport = $json_obj->{ vport };
    #~ }
-	if (
-		 !&getValidPort(
-						 $json_obj->{ vip },
-						 $json_obj->{ vport },
-						 $json_obj->{ profile }
-		 )
-	  )
+	if ( !&getValidPort( $json_obj->{ vport }, $json_obj->{ profile } ) )
 	{
 		my $errormsg =
 		  "Error trying to create a new farm, the Virtual port must be an acceptable value and must be available.";
@@ -156,7 +150,8 @@ sub new_farm    # ( $json_obj )
 	if ( $status eq '-1' )
 	{
 		&zenlog(
-			"Error trying to create a new farm $json_obj->{ farmname }, it can't be created.", "error", "FARMS"
+			"Error trying to create a new farm $json_obj->{ farmname }, it can't be created.",
+			"error", "FARMS"
 		);
 
 		# Error
@@ -173,8 +168,8 @@ sub new_farm    # ( $json_obj )
 	else
 	{
 		&zenlog(
-			 "Success, the farm $json_obj->{ farmname } has been created successfully.", "info", "FARMS"
-		);
+				 "Success, the farm $json_obj->{ farmname } has been created successfully.",
+				 "info", "FARMS" );
 
 		# Success
 		my $out_p;

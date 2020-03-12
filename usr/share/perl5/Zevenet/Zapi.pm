@@ -101,8 +101,6 @@ sub setZAPI    #($name,$value)
 			 "debug", "PROFILING" );
 	my ( $name, $value ) = @_;
 
-	my $out       = 0;
-	my $result    = "false";
 	my $globalcfg = &getGlobalConfiguration( 'globalcfg' );
 
 	#Enable ZAPI
@@ -240,3 +238,4 @@ sub listZapiVersions
 }
 
 1;
+

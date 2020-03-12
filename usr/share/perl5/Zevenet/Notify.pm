@@ -47,7 +47,6 @@ sub setNotifCreateConfFile
 	my $senderFile = "$confdir/sender.conf";
 	my $alertsFile = "$confdir/alert_$hostname.conf";
 	my $version = 1;    # version of senders config file
-	my $fileHandle;
 	my $output;
 
 	# create config directory
@@ -125,7 +124,6 @@ sub setNotifSenders
 	my $sender = shift;
 	my $params = shift;
 
-	my $sendersFile = &getGlobalConfiguration( 'senders' );
 	my $errMsg;
 
 	foreach my $key ( keys %{ $params } )
@@ -160,7 +158,6 @@ sub setNotifAlerts
 	my $notif  = shift;
 	my $params = shift;
 
-	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
 
 	$notif = "Backend" if ( $notif =~ /backends/i );
@@ -195,9 +192,7 @@ sub setNotifAlertsAction
 	my $notif = shift;
 	my $action = shift // "";
 
-	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
-	my $noChanged;
 
 	$notif = "Backend" if ( $notif =~ /backends/i );
 	$notif = "Cluster" if ( $notif =~ /cluster/i );
@@ -340,7 +335,6 @@ sub zlbstartNotifications
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' );
 	my $output;
 
 	# create conf file if don't exists
@@ -605,7 +599,6 @@ sub sendByMail
 	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
 	$body .= $bodycomp;
 
-	my $from = &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
 	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
@@ -687,7 +680,6 @@ sub sendTestMail
 	my $body = "\n***** Notifications *****\n\n";
 	$body .= $bodycomp;
 
-	my $from = &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
 	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
@@ -753,7 +745,6 @@ sub encryptNotifPass
 		if ( $pass )
 		{
 			include 'Zevenet::Code';
-			my $coded = &getCodeEncode( $pass );
 			&setNotifData( "senders", "Smtp", "auth-password", &getCodeEncode( $pass ) );
 		}
 
@@ -762,3 +753,4 @@ sub encryptNotifPass
 }
 
 1;
+

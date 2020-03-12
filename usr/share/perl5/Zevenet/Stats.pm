@@ -438,7 +438,6 @@ sub getCPU
 	my $cpu_total2;
 
 	my @line_s;
-	my $line;
 
 	open my $file, '<', $cpuinfo_filename;
 
@@ -788,3 +787,4 @@ sub getCPUTemp
 }
 
 1;
+

@@ -239,8 +239,8 @@ sub setSsyncdMaster
 	# ./ssyncd -d -M -p 9999 --> start master node
 
 	$ssync_cmd = "$ssyncd_bin -d -M -p $ssyncd_port";
-	my $error = &logAndRun( "$ssync_cmd" );
-	&zenlog( "/// ssyncd as master: $error > cmd: $ssync_cmd", "info", "CLUSTER" );
+	&zenlog( "/// setting ssyncd as master", "info", "CLUSTER" );
+	&logAndRun( "$ssync_cmd" );
 
 	# ./ssyncdctl start http <farm>
 	# ./ssyncdctl start nft <farm>
@@ -255,7 +255,7 @@ sub setSsyncdMaster
 		my $status = &getFarmStatus( $farm );
 		next if $status ne 'up';
 
-		my $error = &setSsyncdFarmUp( $farm );
+		&setSsyncdFarmUp( $farm );
 	}
 }
 
@@ -290,3 +290,4 @@ sub setSsyncd
 	return 0;
 }
 1;
+

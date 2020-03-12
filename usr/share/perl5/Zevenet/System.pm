@@ -232,7 +232,7 @@ Function: getSupportSaveSize
 	a offset of 20MB
 
 Parameters:
-	directory - Directory where the supportsave will be created
+	none - .
 
 Returns:
 	Integer - Number of bytes that supportsave will use
@@ -244,7 +244,6 @@ sub getSupportSaveSize
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 
-	my $dir    = shift;
 	my $offset = "20971520";                             # 20 MB
 	my $dirs   = "/usr/local/zevenet/config /var/log";
 
@@ -378,3 +377,4 @@ sub applyFactoryReset
 }
 
 1;
+
