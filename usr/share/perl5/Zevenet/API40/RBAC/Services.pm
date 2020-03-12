@@ -75,7 +75,7 @@ sub set_rbac_services
 			}
 		}
 	}
-	my $params = &getZapiRbacServices();
+	$params = &getZapiRbacServices();
 	return &httpResponse(
 				 { code => 200, body => { description => $desc, params => $params } } );
 }
@@ -91,3 +91,4 @@ sub getZapiRbacServices
 }
 
 1;
+

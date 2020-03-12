@@ -108,7 +108,6 @@ sub get_waf_rule
 			 "debug", "PROFILING" );
 	my $set = shift;
 	my $id  = shift;
-	my $err;
 
 	my $desc = "Get the WAF rule $id of the set $set";
 
@@ -262,7 +261,6 @@ sub modify_waf_rule
 
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Modify the rule $id from the set $set";
-	my $type;
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -337,14 +335,12 @@ sub modify_waf_rule
 
 	if ( $err )
 	{
-		my $msg = "Modifying the rule $id";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $err );
 	}
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg          = "Settings were changed successfully.";
 	my $rule_updated = &getWAFRule( $set, $id );
 	my $outRule      = &getZapiWAFRule( $rule_updated );
 	my $body         = { description => $desc, params => $outRule };
@@ -359,7 +355,6 @@ sub delete_waf_rule
 			 "debug", "PROFILING" );
 	my $set = shift;
 	my $id  = shift;
-	my $err;
 
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Delete the rule $id from the set $set";
@@ -405,7 +400,6 @@ sub move_waf_rule
 
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Move a rule in the set $set";
-	my $params;
 
 	# check if the set exists
 	if ( !&existWAFSet( $set ) )
@@ -558,16 +552,14 @@ sub modify_waf_rule_match
 	  &setWAFMatch( $set, $rule_index, $chain_index, $rule_st, $json_obj );
 	if ( $error_msg )
 	{
-		my $msg = "Modifying the match $chain_index of the rule $rule_index";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 	}
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_waf', 'reload_rule', $set );
 
-	my $msg          = "Settings were changed successfully.";
 	my $rule_updated = &getWAFRule( $set, $rule_index );
-	my $outRule      = &getZapiWAFRule( $rule_updated );
+	my $outRule = &getZapiWAFRule( $rule_updated );
 
 	my $out = $outRule->{ matches }->[$chain_index];
 	$out->{ raw } = $outRule->{ raw };
@@ -585,7 +577,6 @@ sub delete_waf_rule_match
 	my $set         = shift;
 	my $id          = shift;
 	my $chain_index = shift;
-	my $err;
 
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Delete the match $chain_index from rule $id for the set $set";
@@ -622,7 +613,7 @@ sub delete_waf_rule_match
 	my $rule_updated = &getWAFRule( $set, $id );
 	my $out = &getZapiWAFRule( $rule_updated );
 
-	my $msg = "The match $chain_index has been deleted properly";
+	$msg = "The match $chain_index has been deleted properly";
 	my $body =
 	  { description => $desc, message => $msg, params => { raw => $out->{ raw } } };
 
@@ -630,3 +621,4 @@ sub delete_waf_rule_match
 }
 
 1;
+

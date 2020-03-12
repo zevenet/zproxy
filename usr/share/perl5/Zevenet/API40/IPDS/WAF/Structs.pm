@@ -148,7 +148,6 @@ sub translateWafVariables
 			 "debug", "PROFILING" );
 	my $var    = shift;
 	my $output = shift;
-	my @list;
 
 	if ( $output eq 'toApi' )
 	{
@@ -286,9 +285,6 @@ sub getZapiWAFRule
 				 'redirect_url' => $rule->{ redirect_url } // '',
 				 'matches'      => [],
 		};
-
-		my $operator;
-		my $not_match;
 
 		# add match condition to the first place
 		if ( $rule->{ type } eq 'match_action' )
@@ -450,3 +446,4 @@ sub validateTransformations
 }
 
 1;
+

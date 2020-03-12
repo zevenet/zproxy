@@ -352,9 +352,8 @@ sub set_system_user_rbac
 	include 'Zevenet::RBAC::User::Config';
 	include 'Zevenet::User';
 
-	my $error = 0;
-	my $user  = &getUser();
-	my $desc  = "Modify the user $user";
+	my $user = &getUser();
+	my $desc = "Modify the user $user";
 
 	$desc = "Modify the user $user";
 
@@ -412,3 +411,4 @@ sub set_system_user_rbac
 }
 
 1;
+

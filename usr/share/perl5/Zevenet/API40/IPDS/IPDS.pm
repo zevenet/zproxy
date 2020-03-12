@@ -68,7 +68,6 @@ sub get_ipds_package
 	#Obtain last update ruleset date
 	if ( $output == 0 || $output == 1 )
 	{
-		my $error  = 0;
 		my $output = &getIpdsRulesetDate();
 		if ( defined $output && $output =~ s/^(\d\d)(\d\d)(\d\d).*/$3\-$2\-20$1/ )
 		{
@@ -88,7 +87,7 @@ sub get_ipds_package
 	}
 
 	#Obtain schedule
-	my $output = &getIpdsSchedule();
+	$output = &getIpdsSchedule();
 	if ( defined $output )
 	{
 		$params->{ scheduled } =
@@ -134,7 +133,6 @@ sub set_ipds_package
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $json_obj = shift;
-	my $dpkg_bin = &getGlobalConfiguration( 'dpkg_bin' );
 	my $desc     = "Execute an action over the zevenet-ipds package";
 	my $outParam = {};
 	my $msg      = "";
@@ -306,3 +304,4 @@ sub set_ipds_package
 }
 
 1;
+

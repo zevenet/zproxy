@@ -172,3 +172,4 @@ sub delete_waf_file
 }
 
 1;
+

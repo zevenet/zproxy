@@ -381,7 +381,6 @@ sub add_rbl_domain
 
 	my $desc   = "Add the domain '$json_obj->{ 'domain' }'";
 	my $domain = $json_obj->{ 'domain' };
-	my @optionalParams;
 
 	my $params = {
 				   "domain" => {
@@ -434,8 +433,6 @@ sub set_rbl_domain
 	my $desc             = "Replace the domain $domain_id";
 	my $new_domain       = $json_obj->{ 'domain' };
 	my @user_domain_list = @{ &getRBLUserDomains() };
-
-	my $tam = scalar @user_domain_list;
 
 	if ( $domain_id >= scalar @user_domain_list )
 	{
@@ -899,3 +896,4 @@ sub set_rbl_actions
 }
 
 1;
+

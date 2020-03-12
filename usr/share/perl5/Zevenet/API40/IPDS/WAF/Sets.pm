@@ -560,3 +560,4 @@ sub actions_waf
 }
 
 1;
+
