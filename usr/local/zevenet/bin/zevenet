@@ -116,7 +116,7 @@ sub local_http_service
 	die "local_http_service '$command' command not recognized"
 	  unless $command =~ /^(?:start|stop|restart)$/;
 
-	&logAndRunBG ( "/etc/init.d/cherokee $command" );
+	&logAndRunBG( "/etc/init.d/cherokee $command" );
 }
 
 # Compare and rewrite the zna version in the zevenet_version file if they are different.
@@ -170,10 +170,11 @@ if ( $action eq "start" )
 		while ( my $SCRIPT = readdir ( DIR ) )
 		{
 			next if ( $SCRIPT =~ m/^\./ );
+
 			# does not use 'logAndRun' function, it is necessary to print the stdoutput
 			system ( $MIG_DIR . $SCRIPT );
 		}
-		&logAndRun ( "$rm $migration_flag" );
+		&logAndRun( "$rm $migration_flag" );
 		closedir ( DIR );
 	}
 
@@ -205,7 +206,6 @@ if ( $action eq "start" )
 		# FIXME: Make function of this procedure
 		if ( !grep ( /zenmodified/, @file ) )
 		{
-			my %interface;
 			my @blocks = &getInterfaceBlocks( @file );
 
 			for my $block ( @blocks )
@@ -554,13 +554,13 @@ if ( $action eq "start" )
 	&eload( module => $mod, func => 'start_cluster' ) if $eload;
 
 	# make sure related system services are runnig
-	if ( &logAndRunCheck ( "/etc/init.d/ssh status" ) )
+	if ( &logAndRunCheck( "/etc/init.d/ssh status" ) )
 	{
-		&logAndRun ( "/etc/init.d/ssh start" );
+		&logAndRun( "/etc/init.d/ssh start" );
 	}
 
 	# Bugfix: SNMP didn't start if the IP is not up
-	&logAndRun ( "/etc/init.d/snmpd restart" );
+	&logAndRun( "/etc/init.d/snmpd restart" );
 
 	&local_http_service( 'start' );
 
@@ -676,3 +676,4 @@ if ( $action eq "stop" )
 }
 
 &configureDefaultGW();
+

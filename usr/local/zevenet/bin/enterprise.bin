@@ -33,8 +33,8 @@ use Zevenet::Config;
 use Zevenet::SystemInfo;
 
 my $SYMKEY = "1135628147310";
-my $SALT="2D04E04389FBB423";
-my $ITER="14";
+my $SALT   = "2D04E04389FBB423";
+my $ITER   = "14";
 my $mod;
 my $symbolic_link = "";
 my $program_name  = "";
@@ -300,8 +300,7 @@ if ( ref $returned_value )
 
 	#~ unless ( eval { $json_out = encode_json( $returned_value ); } )
 	unless (
-		eval
-		{
+		eval {
 			$output =
 			  $json->pretty->indent->canonical->allow_blessed->convert_blessed->encode(
 																			  $returned_value );
@@ -388,7 +387,8 @@ sub getModuleInfo
 		use Data::Dumper;
 		$mod->{ key } = '';
 		&zenlog(
-			"FAILURE!!! Not found module $mod->{ name } : $mod->{ lib_path }/$mod->{ path }(.e)", "error", "system"
+			"FAILURE!!! Not found module $mod->{ name } : $mod->{ lib_path }/$mod->{ path }(.e)",
+			"error", "system"
 		);
 	}
 
@@ -439,9 +439,6 @@ sub include
 	}
 	elsif ( $mod->{ enc } eq 'true' )    # Load encrypted module
 	{
-		my $uname          = &getGlobalConfiguration( 'uname' );
-		my $kernel_release = `$uname -r`;
-
 		my $cmd =
 		  "openssl aes-256-cbc -d -a -salt -S \"$SALT\" -iter $ITER -k \"${SYMKEY}\" -md md5 -in $mod->{ fullpath }";
 
@@ -472,7 +469,6 @@ sub include
 	if ( $func )
 	{
 		# Function. Check the function is in the module, load params from input in JSON
-		my @code = split ( "\n", $code );
 		my $func_found = grep { /^sub $func(?:\W|$)/ } split ( "\n", $code );
 
 		# check if the function is available

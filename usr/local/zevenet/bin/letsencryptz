@@ -10,109 +10,129 @@ use Zevenet::Config;
 
 #Global Variables
 our @farms_to_reboot = "";
-#Variables for configuration: 
-my $temp_farm="letsencryptZevenet";
-my $le_binary=&getGlobalConfiguration('le_binary');
-my $le_fullchain_path=&getGlobalConfiguration('le_fullchain_path');
-my $le_webroot_path=&getGlobalConfiguration('le_webroot_path');
-my $le_config_path=&getGlobalConfiguration('le_config_path');
-my $le_email=&getGlobalConfiguration('le_email');
 
-if ($le_email =~ /^$/){
-	print "There is not email configured for Let's encrypt Certificates, please check \$le_email in " . &getGlobalConfiguration('globalcfg') . "\n";
+#Variables for configuration:
+my $temp_farm         = "letsencryptZevenet";
+my $le_binary         = &getGlobalConfiguration( 'le_binary' );
+my $le_fullchain_path = &getGlobalConfiguration( 'le_fullchain_path' );
+my $le_webroot_path   = &getGlobalConfiguration( 'le_webroot_path' );
+my $le_config_path    = &getGlobalConfiguration( 'le_config_path' );
+my $le_email          = &getGlobalConfiguration( 'le_email' );
+
+if ( $le_email =~ /^$/ )
+{
+	print
+	  "There is not email configured for Let's encrypt Certificates, please check \$le_email in "
+	  . &getGlobalConfiguration( 'globalcfg' ) . "\n";
 	exit 1;
 }
 
 #local variables
-my $vip="";
-my $farm_name="";
-my $domains="";
-my $action="";
-my $cert_name="";
-my $test="";
-my $restart="";
-
+my $vip       = "";
+my $farm_name = "";
+my $domains   = "";
+my $action    = "";
+my $cert_name = "";
+my $test      = "";
+my $restart   = "";
 
 GetOptions(
-    'obtain'            => sub {$action="obtain"},
-    'vip=s'             => \$vip,
-    'farm=s'            => \$farm_name,
-    'domain=s@'         => \$domains,
-    'help'              => \&help,
-    'destroy'           => sub {$action="destroy"},
-    'list'		=> sub {$action="list"},
-    'renew'		=> sub {$action="renew"},
-    'listconf'		=> sub {$action="listconf"},
-    'certname=s'	=> \$cert_name,
-    'test'		=> sub {$test="test"},
-    'forcerestart'	=> \$restart,
+			'obtain' => sub { $action = "obtain" },
+			'vip=s'  => \$vip,
+			'farm=s' => \$farm_name,
+			'domain=s@'    => \$domains,
+			'help'         => \&help,
+			'destroy'      => sub { $action = "destroy" },
+			'list'         => sub { $action = "list" },
+			'renew'        => sub { $action = "renew" },
+			'listconf'     => sub { $action = "listconf" },
+			'certname=s'   => \$cert_name,
+			'test'         => sub { $test = "test" },
+			'forcerestart' => \$restart,
 );
 
-
-switch ($action){
-        case "obtain"{
+switch ( $action )
+{
+	case "obtain"
+	{
 		&getLocalNodeClusterStatus();
-		if (! $domains){ 
+		if ( !$domains )
+		{
 			print "ERROR: the action obtain requires at least one domain, use --domain\n";
 			&help;
-		
+
 		}
-		if (! $vip && ! $farm_name){
-			print "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
+		if ( !$vip && !$farm_name )
+		{
+			print
+			  "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
 			&help;
 
 		}
-		if (! $farm_name){
-			print "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
+		if ( !$farm_name )
+		{
+			print
+			  "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
 			$farm_name = $temp_farm;
 		}
 		print "farm start\n";
-		&webServer("start");
-		&obtain_cert($vip, $farm_name, $domains);
+		&webServer( "start" );
+		&obtain_cert( $vip, $farm_name, $domains );
 		print "farm stop\n";
-		&webServer("stop");
+		&webServer( "stop" );
 		print "Restarting farms using renewed certificates: @farms_to_reboot\n";
-		exit;
-        }
-
-	case "renew"{
-		&getLocalNodeClusterStatus();
-               	if (! $vip && ! $farm_name){
-                        print "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
-                        &help;
-
-                }
-		if (! $farm_name){
-                        print "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
-                        $farm_name = $temp_farm;
-                }
-                &webServer("start");
-		&create_webroot($farm_name, $vip);
-		&renew_certs();
-		if ($restart){
-			&restart_farms();
-		}
-		&destroy_webroot($farm_name);
-		&webServer("stop");
 		exit;
 	}
 
-        case "destroy"{
+	case "renew"
+	{
 		&getLocalNodeClusterStatus();
-		if (! $cert_name){
-			print "ERROR: Certificate Name is required, obtain this information with --list\n";
+		if ( !$vip && !$farm_name )
+		{
+			print
+			  "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
+			&help;
+
+		}
+		if ( !$farm_name )
+		{
+			print
+			  "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
+			$farm_name = $temp_farm;
+		}
+		&webServer( "start" );
+		&create_webroot( $farm_name, $vip );
+		&renew_certs();
+		if ( $restart )
+		{
+			&restart_farms();
+		}
+		&destroy_webroot( $farm_name );
+		&webServer( "stop" );
+		exit;
+	}
+
+	case "destroy"
+	{
+		&getLocalNodeClusterStatus();
+		if ( !$cert_name )
+		{
+			print
+			  "ERROR: Certificate Name is required, obtain this information with --list\n";
 			&help;
 		}
-		&revoke_cert($cert_name);
+		&revoke_cert( $cert_name );
 		exit;
-        }
+	}
 
-	case "list"{
+	case "list"
+	{
 		&list_cert();
 		exit;
 	}
 
-	case "listconf"{
+	case "listconf"
+	{
 		&list_conf();
 		exit;
 	}
@@ -121,14 +141,14 @@ switch ($action){
 #if I am here then I need help:
 &help;
 
-
 #LIBRARY#
 #
 #help output
 #
-sub help{
+sub help
+{
 
-print "description:
+	print "description:
 
 letsencryptz is a let's encrypt (certbot) wrapper with minimal parameters ready to manage Let's encrypt certificates for ZEVENET https profiles. Take into account that this wrapper uses certbot webroot feature so the public Let's encrypt architecture requires to connect with a local Virtual IP and port (TCP 80 by default) in order to do a request validation for the requested doamin, so as soon as the \"obtain\" param is used, this script will configure a HTTP farm which will be accesed by Let's encrypt for verification purpose, this configuration is done automatically by this script itself, only ensure that the used Virtual IP and HTTP port 80 is not used by any another load balanced farm, and also ensure that the DNS resolution for the requested domain is reachable from let's encrypt system.
 
@@ -149,36 +169,38 @@ action: --obtain | --destroy | --renew | --list | --listconf | --help
 			--test: Optional parameter, if used the certificate is requested for test purpose.
 
 	--destroy: Revoke and delete the indicated Certificate Name, the action is rejected if the given certificate is in use by a farm.
-		
+
 		commands: --certname <Certificate Name>
-	       	
+
 			--certname: Certificate Name, this value can be obtained from the action --list.
 
 	--renew: Renew the certificates near to expiry, no commands needed
-		
+
 		commands: --test --forcerestart --vip <Virtual IP> --farm <Farm Name>
-	       		--test:	Optional parameter, if used a dry-run is executed, the renew of the certificates is simulated. 
+	       		--test:	Optional parameter, if used a dry-run is executed, the renew of the certificates is simulated.
 			--forcerestart: Optional parameter, if used the farms that are using the renewed certificates will be restarted in order to apply the changes.
 			--vip: The Virtual IP already configured where to publish a temporal web server, this will be connected by let's encrypt public servers to verify the certificate renew. The Virtual IP has to be free on the 80 port in order to be bound by a local process if it isn't free then use --farm instead.
                         --farm: The farm name which configures a temporal Service called \"letsencryptz\", if no farm is used a temporal farm called \"letsencryptZevenet\" will be configured in the selected Virtual IP.
 
 	--list: List all the local certificates managed by let's encrypt and the status, no commands needed.
 
-	--listconf: List the Zevenet let's encrypt configuration module (check global.conf file), no commands needed. 
+	--listconf: List the Zevenet let's encrypt configuration module (check global.conf file), no commands needed.
 
 	--help: Obtain this help.
 
 \n";
 
-exit;
+	exit;
 
 }
 
 #this call is only created to prepare the server where webroot letsencryt connect
-#for validation purpose. 
-sub create_webroot(){
+#for validation purpose.
+sub create_webroot()
+{
 	my $farm_name = shift;
-	my $vip = shift;
+	my $vip       = shift;
+
 	#run the farm in http profile in TCP 80 port
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Config;
@@ -188,203 +210,251 @@ sub create_webroot(){
 	require Zevenet::Farm::Action;
 
 	#Temporal farm and service configuration for letsencrypt verification
-	#if farm_name exist then the function does nothing. 
+	#if farm_name exist then the function does nothing.
 	##eq tempfarm
-	if ($farm_name eq $temp_farm){
-		&runHTTPFarmCreate($vip,80,$farm_name,"HTTP");
+	if ( $farm_name eq $temp_farm )
+	{
+		&runHTTPFarmCreate( $vip, 80, $farm_name, "HTTP" );
 	}
-	&setFarmHTTPNewService($farm_name,"letsencryptz");
-	#creates a temporal service called "letsencryptz" 
-	&setHTTPFarmServer("","127.0.0.1", 80, "", "", $farm_name, "letsencryptz");
-	&setHTTPFarmVS($farm_name,"letsencryptz","urlp","^/.well-known/acme-challenge/");
-	my $eload=1;
-	require Zevenet::ELoad; 
-	
+	&setFarmHTTPNewService( $farm_name, "letsencryptz" );
+
+	#creates a temporal service called "letsencryptz"
+	&setHTTPFarmServer( "", "127.0.0.1", 80, "", "", $farm_name, "letsencryptz" );
+	&setHTTPFarmVS( $farm_name, "letsencryptz", "urlp",
+					"^/.well-known/acme-challenge/" );
+	require Zevenet::ELoad;
+
 	&eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'setHTTPFarmMoveService',
-		args   => [$farm_name, "letsencryptz", 0],
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'setHTTPFarmMoveService',
+			args   => [$farm_name, "letsencryptz", 0],
 	);
-	&runFarmStop($farm_name,"");
-	&runFarmStart($farm_name,"");
+	&runFarmStop( $farm_name, "" );
+	&runFarmStart( $farm_name, "" );
 	#
-	
+
 }
 
-sub destroy_webroot(){
+sub destroy_webroot()
+{
 	my $farm_name = shift;
-	my $service = "letsencryptz";
+	my $service   = "letsencryptz";
+
 	#delete the already created service for letsencrypt verification
 	print "Deleting already configuration for $farm_name, service $service\n";
-	if ($farm_name eq $temp_farm){
+	if ( $farm_name eq $temp_farm )
+	{
 		require Zevenet::Farm::Action;
-		&runFarmStop($farm_name);
-		&runFarmDelete($farm_name);
-	}else{
+		&runFarmStop( $farm_name );
+		&runFarmDelete( $farm_name );
+	}
+	else
+	{
 		require Zevenet::Farm::HTTP::Service;
-		&delHTTPFarmService ($farm_name, $service);
-		&runFarmStop($farm_name,"");
-		&runFarmStart($farm_name,"");
+		&delHTTPFarmService( $farm_name, $service );
+		&runFarmStop( $farm_name, "" );
+		&runFarmStart( $farm_name, "" );
 		print "Deleted the already created Service letsencryptz\n";
 
+	}
 
-	}	
 	#my @run = `/etc/init.d/mini-httpd stop`;
-
 
 }
 
 #function that creates pem files or renew them, if some of renewed files are in use by a farm, the farm is restarted.
-sub create_pem(){
-	my $domain = shift;
+sub create_pem()
+{
+	my $domain      = shift;
 	my $domain_file = $domain;
 	$domain_file =~ s/\./_/g;
 
-	if (-d "/usr/local/zevenet/config/letsencrypt/live/$domain"){
-		my @run = `cat /usr/local/zevenet/config/letsencrypt/live/$domain/privkey.pem > /usr/local/zevenet/config/${domain_file}.pem; cat /usr/local/zevenet/config/letsencrypt/live/$domain/fullchain.pem >> /usr/local/zevenet/config/${domain_file}.pem`;
-		print "Created Certificate name $domain in PEM format ready for HTTPS profile\n";
+	if ( -d "/usr/local/zevenet/config/letsencrypt/live/$domain" )
+	{
+		`cat /usr/local/zevenet/config/letsencrypt/live/$domain/privkey.pem > /usr/local/zevenet/config/${domain_file}.pem; cat /usr/local/zevenet/config/letsencrypt/live/$domain/fullchain.pem >> /usr/local/zevenet/config/${domain_file}.pem`;
+		print
+		  "Created Certificate name $domain in PEM format ready for HTTPS profile\n";
 		my $cert_domain_file = "/usr/local/zevenet/config/${domain_file}.pem";
+
 		#if file is in used and file changed then a farm restart is needed.
-		&cert_used_farm($cert_domain_file);
+		&cert_used_farm( $cert_domain_file );
 	}
 }
 
 #INPUT: VIP, FARM_NAME; DOMAINS
 #call &obtain_certs($vip, $farm_name, $domains);
-sub obtain_cert(){
-	my ($vip, $farm_name, $domains) = @_;
+sub obtain_cert()
+{
+	my ( $vip, $farm_name, $domains ) = @_;
 	require Zevenet::Net::Validate;
-	if ( $vip and &checkport($vip, "80" eq "true")){
+	if ( $vip and &checkport( $vip, "80" eq "true" ) )
+	{
 		require Zevenet::Farm::Base;
+
 		#A farm http is already configured, configure service
-		my @farms = &getFarmListByVip($vip);
-		for my $farm_name_byVIP (@farms){
-			if (&getHTTPFarmVip("vipp",$farm_name_byVIP) eq "80" and &getHTTPFarmStatus($farm_name_byVIP) eq "up"){ 
+		my @farms = &getFarmListByVip( $vip );
+		for my $farm_name_byVIP ( @farms )
+		{
+			if (     &getHTTPFarmVip( "vipp", $farm_name_byVIP ) eq "80"
+				 and &getHTTPFarmStatus( $farm_name_byVIP ) eq "up" )
+			{
 				$farm_name = $farm_name_byVIP;
-				print "IP $vip and port 80 is in use in farms: $farm_name, configuring here the required service for let's encrypt\n";
+				print
+				  "IP $vip and port 80 is in use in farms: $farm_name, configuring here the required service for let's encrypt\n";
 			}
-			
+
 		}
-	}else{
+	}
+	else
+	{
 		#port and vip is not in use so createa a farm, in this case $vip is needed.
-		if (! $vip){
+		if ( !$vip )
+		{
 			print "ERROR: No VIP selected\n";
 			&help;
 		}
 	}
 	print "Configuring farm for let's encrypt Certificate Name verification\n";
-	&create_webroot($farm_name, $vip);
+	&create_webroot( $farm_name, $vip );
 	print "Obtaining Certificate for domains @$domains...\n";
-	#run request
-	$test = "--test-cert" if ($test);
-	&zenlog("Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test");
-	my @run = `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
 
-	if ($? ne 0){
+	#run request
+	$test = "--test-cert" if ( $test );
+	&zenlog(
+		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
+	);
+	my @run =
+	  `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
+
+	if ( $? ne 0 )
+	{
 		print "Error executing the request for domain(s) @$domains message: @run\n";
-	}else{
+	}
+	else
+	{
 		print "Certificate Request for domain(s) @$domains OK\n";
+
 		#if previous command worked then move certs to certs storage
 		#building pem for HTTPS profiles.
-		foreach my $domain (@$domains){
-			&create_pem($domain);
+		foreach my $domain ( @$domains )
+		{
+			&create_pem( $domain );
 		}
 	}
+
 	#if ($farm_name ne $temp_farm){
 	print "Destroying webroot configuration for the farm $farm_name\n";
-	&destroy_webroot($farm_name);
+	&destroy_webroot( $farm_name );
+
 	#}
 
-		
 }
 
-sub list_cert(){
-	print "Listing all available certificates for the current configuration in config dir $le_config_path\n";
-	my @run = `$le_binary certificates --config-dir $le_config_path`;
-	my $certificate_name ="";
+sub list_cert()
+{
+	print
+	  "Listing all available certificates for the current configuration in config dir $le_config_path\n";
+	my @run              = `$le_binary certificates --config-dir $le_config_path`;
+	my $certificate_name = "";
 
-	foreach my $line (@run){
-		if ($line =~ /Certificate Name:/i){
+	foreach my $line ( @run )
+	{
+		if ( $line =~ /Certificate Name:/i )
+		{
 			#Certificate line
-			my @spl_cert = split(/\: /, $line);
-			chomp($spl_cert[1]);
+			my @spl_cert = split ( /\: /, $line );
+			chomp ( $spl_cert[1] );
 			print "\tCertificate Name: $spl_cert[1]\n";
 			$certificate_name = $spl_cert[1];
 		}
-		if ($line =~ /Domains:/i){
+		if ( $line =~ /Domains:/i )
+		{
 			#Domain line
-			my @spl_domains = split(/: /, $line);
-			chomp($spl_domains[1]);
+			my @spl_domains = split ( /: /, $line );
+			chomp ( $spl_domains[1] );
 			print "\tDomain(s): $spl_domains[1]\n";
 		}
-		if ($line =~ /Expiry Date:/i){
+		if ( $line =~ /Expiry Date:/i )
+		{
 			#Expliry Data line
-			my @spl_date = split(/Date: /, $line);
-			chomp($spl_date[1]);
+			my @spl_date = split ( /Date: /, $line );
+			chomp ( $spl_date[1] );
 			print "\tExpiry Date: $spl_date[1]\n";
 		}
-		if ($line =~ /Certificate Path:/i){
+		if ( $line =~ /Certificate Path:/i )
+		{
 			#File path
-			my @spl_file = split(/\: /, $line);
 			$certificate_name =~ s/\./_/g;
-			print "\tPem Certificate file: /usr/local/zevenet/config/${certificate_name}.pem\n\n";
+			print
+			  "\tPem Certificate file: /usr/local/zevenet/config/${certificate_name}.pem\n\n";
 		}
 	}
 }
 
-
-sub list_conf(){
-	print "Current configuration for Zevenet Let's Encrypt module: 
-	\$temp_farm = " . &getGlobalConfiguration('temp_farm') . " 
-	\$le_binary = " . &getGlobalConfiguration('le_binary') . " 
-	\$le_fullchain_path = ". &getGlobalConfiguration('le_fullchain_path') . "
-	\$le_webroot_path = ". &getGlobalConfiguration('le_webroot_path'). "
-	\$le_config_path = " . &getGlobalConfiguration('le_config_path') . "
-	\$le_email = " . &getGlobalConfiguration('le_email') . "\n";
+sub list_conf()
+{
+	print "Current configuration for Zevenet Let's Encrypt module:
+	\$temp_farm = " . &getGlobalConfiguration( 'temp_farm' ) . "
+	\$le_binary = " . &getGlobalConfiguration( 'le_binary' ) . "
+	\$le_fullchain_path = " . &getGlobalConfiguration( 'le_fullchain_path' ) . "
+	\$le_webroot_path = " . &getGlobalConfiguration( 'le_webroot_path' ) . "
+	\$le_config_path = " . &getGlobalConfiguration( 'le_config_path' ) . "
+	\$le_email = " . &getGlobalConfiguration( 'le_email' ) . "\n";
 }
 
 #INPUT Certificate Name
 #obs: revoke and delete at the same command
-sub revoke_cert(){
-	my $cert = shift;	
-	print "Revoking and deleting certificate(s) $cert for the current configuration...\n";
+sub revoke_cert()
+{
+	my $cert = shift;
+	print
+	  "Revoking and deleting certificate(s) $cert for the current configuration...\n";
 	my $domain_file = $cert;
 	$domain_file =~ s/\./_/g;
 	my $cert_domain_file = "/usr/local/zevenet/config/${domain_file}.pem";
-	my @used_farms = &cert_used_farm($cert_domain_file);
-	if ( $#farms_to_reboot > 0 ) {
-		print "This file can't be deleted because is used by the farm(s): @farms_to_reboot\n";
+	&cert_used_farm( $cert_domain_file );
+	if ( $#farms_to_reboot > 0 )
+	{
+		print
+		  "This file can't be deleted because is used by the farm(s): @farms_to_reboot\n";
 		exit;
 	}
-	my @run = `$le_binary delete --cert-name $cert --config-dir $le_config_path --reason unspecified`;
-	if ($? ne 0){
+	my @run =
+	  `$le_binary delete --cert-name $cert --config-dir $le_config_path --reason unspecified`;
+	if ( $? ne 0 )
+	{
 		print "Error revoking certficate $cert. @run\n";
-	}else{
+	}
+	else
+	{
 		my $cert_file = $cert;
 		$cert_file =~ s/\./_/g;
-		print "Deleted certificate(s) $cert in path /usr/local/zevenet/config/${cert_file}.pem\n";
-		if (-e "/usr/local/zevenet/config/${cert_file}.pem"){
-			my @run = `rm /usr/local/zevenet/config/${cert_file}.pem`;
+		print
+		  "Deleted certificate(s) $cert in path /usr/local/zevenet/config/${cert_file}.pem\n";
+		if ( -e "/usr/local/zevenet/config/${cert_file}.pem" )
+		{
+			`rm /usr/local/zevenet/config/${cert_file}.pem`;
 		}
-	}		
+	}
 }
 
-sub renew_certs(){
+sub renew_certs()
+{
 	print "Renewing all the required certificates\n";
-	$test = "--dry-run" if ($test);
+	$test = "--dry-run" if ( $test );
 	##a local service needs to be running in order to connect from letsencrypt
 	my @run = `$le_binary renew --config-dir $le_config_path $test`;
-	my $sw = 0;
-	foreach my $line (@run){
-		if ( $line =~ /Congratulations/){
+	my $sw  = 0;
+	foreach my $line ( @run )
+	{
+		if ( $line =~ /Congratulations/ )
+		{
 			$sw = 1;
 		}
-		if ($sw eq 1 and $line =~ /live/){
-			my @renewed_cert = split(/\ /,$line);
-			my @certfile_cert = split '/',$line;
-			#print "Certificate file is: $renewed_cert[2] and cert name is $certfile_cert[7]";
-			&create_pem($certfile_cert[7]);
-
+		if ( $sw eq 1 and $line =~ /live/ )
+		{
+			my @certfile_cert = split '/', $line;
+			&create_pem( $certfile_cert[7] );
 		}
 
 	}
@@ -397,90 +467,107 @@ sub renew_certs(){
 #INPUT: cert file path
 #OUTPUT: farm name array
 
-sub cert_used_farm(){
-	
+sub cert_used_farm()
+{
+
 	my $cert_file = shift;
-	my $configdir = &getGlobalConfiguration('configdir');
-	my @run = `grep -H $cert_file ${configdir}\/*proxy.cfg 2>/dev/null | cut -d: -f1 `;
-	my @farms = "";
-	if ((scalar @run) > 0){
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my @run =
+	  `grep -H $cert_file ${configdir}\/*proxy.cfg 2>/dev/null | cut -d: -f1 `;
+	if ( ( scalar @run ) > 0 )
+	{
 		require Zevenet::Farm::Core;
 		require Zevenet::Farm::HTTP::Config;
-		foreach my $line (@run){
-			my @farm_file = split (/\//,$line);
-			my $farmname = &getFarmName($farm_file[5]);
-			#print "farm file names is $farm_file[5] farm" . &getFarmName($farm_file[5]) . "\n";
-			push (@farms_to_reboot,$farmname) if (!grep /$farmname/, @farms_to_reboot and &getHTTPFarmStatus($farmname) eq "up");
-			
+		foreach my $line ( @run )
+		{
+			my @farm_file = split ( /\//, $line );
+			my $farmname = &getFarmName( $farm_file[5] );
+
+		#print "farm file names is $farm_file[5] farm" . &getFarmName($farm_file[5]) . "\n";
+			push ( @farms_to_reboot, $farmname )
+			  if ( !grep /$farmname/,
+				   @farms_to_reboot and &getHTTPFarmStatus( $farmname ) eq "up" );
+
 		}
 	}
 }
 
-
 #after any renew a restart is needed.
-sub restart_farms(){
+sub restart_farms()
+{
 
-	print "Resting the following farms using certificates already renewed: @farms_to_reboot\n";
-	foreach my $farm_to_reboot (@farms_to_reboot){
+	print
+	  "Resting the following farms using certificates already renewed: @farms_to_reboot\n";
+	foreach my $farm_to_reboot ( @farms_to_reboot )
+	{
 		require Zevenet::Farm::Action;
-        	&runFarmStop($farm_to_reboot,"");
-                &runFarmStart($farm_to_reboot,"");
+		&runFarmStop( $farm_to_reboot, "" );
+		&runFarmStart( $farm_to_reboot, "" );
 	}
 
 }
 
-sub getLocalNodeClusterStatus(){
+sub getLocalNodeClusterStatus()
+{
 
 	#getZClusterNodeStatus
 	my $eload;
 	$eload = 1 if ( eval { require Zevenet::ELoad; } );
 	my $cl_status = "";
- 	    
-	if ( $eload ){
+
+	if ( $eload )
+	{
 		$cl_status = &eload(
-		module => 'Zevenet::Cluster',
-		func   => 'getZClusterNodeStatus',
-		args   => [],
+							 module => 'Zevenet::Cluster',
+							 func   => 'getZClusterNodeStatus',
+							 args   => [],
 		);
 	}
-	if (!(!defined $cl_status or $cl_status eq "master")){
+	if ( !( !defined $cl_status or $cl_status eq "master" ) )
+	{
 		print "Error: This node is not the Master in the cluster\n";
 		exit;
 	}
 }
 
 #starts / stops the webserver if neeeded
-sub webServer(){
-	my $action = shift;
+sub webServer()
+{
+	my $action   = shift;
 	my $pid_file = "/usr/local/zevenet/app/cherokee/var/run/cherokee_localhost.pid";
-	my $pid = "0";
+	my $pid      = "0";
 
-	my $le_webserver_config_file = &getGlobalConfiguration('le_webserver_config_file');
-	my $http_bin = &getGlobalConfiguration('http_bin');
-	my $kill_bin = &getGlobalConfiguration('kill_bin');
-	my $cat_bin = &getGlobalConfiguration('cat_bin');
+	my $le_webserver_config_file =
+	  &getGlobalConfiguration( 'le_webserver_config_file' );
+	my $http_bin = &getGlobalConfiguration( 'http_bin' );
+	my $kill_bin = &getGlobalConfiguration( 'kill_bin' );
+	my $cat_bin  = &getGlobalConfiguration( 'cat_bin' );
 
-	 if (-e $pid_file){
-                $pid = `$cat_bin $pid_file`;
-        }
-
-
-
-	if ($action eq "start" and (! -e $pid_file)){
-		my @run = `$http_bin -d -C $le_webserver_config_file >/dev/null 2>&1 &`;
-		&zenlog("$http_bin -d -C $le_webserver_config_file 2>/dev/null");
-		&zenlog("Running temporal webserver for Let's Encrypt");
-		
+	if ( -e $pid_file )
+	{
+		$pid = `$cat_bin $pid_file`;
 	}
 
-	if ($action eq "stop"){
-		if ($pid > 0){
-			my @run = `$kill_bin -15 $pid`;
-			&zenlog("Stopping temporal webserver for Let's Encrypt PID:$pid");
-		}else{
-			&zenlog("Temporal webserver can't be stopped, it is not running");
+	if ( $action eq "start" and ( !-e $pid_file ) )
+	{
+		`$http_bin -d -C $le_webserver_config_file >/dev/null 2>&1 &`;
+		&zenlog( "$http_bin -d -C $le_webserver_config_file 2>/dev/null" );
+		&zenlog( "Running temporal webserver for Let's Encrypt" );
+
+	}
+
+	if ( $action eq "stop" )
+	{
+		if ( $pid > 0 )
+		{
+			`$kill_bin -15 $pid`;
+			&zenlog( "Stopping temporal webserver for Let's Encrypt PID:$pid" );
+		}
+		else
+		{
+			&zenlog( "Temporal webserver can't be stopped, it is not running" );
 		}
 	}
 
-
 }
+

@@ -420,7 +420,7 @@ sub delFGObject
 	my $fg_name = shift;
 
 	my $out = &runFGStop( $fg_name );
-	my $out = &delTinyObj( $fg_conf, $fg_name );
+	$out = &delTinyObj( $fg_conf, $fg_name );
 
 	return $out;
 }
@@ -972,11 +972,10 @@ sub runFGFarmStop
 					while ( $lines >= 0 )
 					{
 						$lines--;
-						my $line = $fileAux[$lines];
 						if ( $fileAux[$lines] =~ /0 $idsv (\d+) fgDOWN/ )
 						{
 							my $index = $1;
-							my $auxlin = splice ( @fileAux, $lines, 1, );
+							splice ( @fileAux, $lines, 1, );
 
 							&logAndRun( "$proxyctl -c $portadmin -B 0 $idsv $index" );
 						}
@@ -1424,7 +1423,7 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 				'enable'   => $usefg,
 	};
 
-	my $output = &setOldFarmguardian( $obj );
+	$output = &setOldFarmguardian( $obj );
 
 	# start
 	$output |= &runFGFarmStart( $fname, $svice );
