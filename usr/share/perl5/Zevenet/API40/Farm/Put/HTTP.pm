@@ -42,7 +42,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $desc = "Modify HTTP farm $farmname";
 
 	require Zevenet::Net::Interface;
-	my $ip_list = &getIpAddressList();
 
 	my $params = {
 		"newfarmname" => {
@@ -624,3 +623,4 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 }
 
 1;
+

@@ -161,7 +161,6 @@ sub farm_services
 	require Zevenet::Farm::HTTP::Service;
 
 	my $desc = "Get services of a farm";
-	my $service;
 
 	# Check if the farm exists
 	if ( !&getFarmExists( $farmname ) )
@@ -316,8 +315,6 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
 	}
-
-	my $redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
 
 	if ( exists $json_obj->{ redirect } )
 	{
@@ -662,3 +659,4 @@ sub delete_service    # ( $farmname, $service )
 }
 
 1;
+

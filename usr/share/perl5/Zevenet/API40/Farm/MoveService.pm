@@ -36,7 +36,6 @@ sub move_services
 	include 'Zevenet::Farm::HTTP::Service::Ext';    # Load MoveService functions
 
 	my $desc = "Move service";
-	my $moveservice;
 
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
@@ -113,3 +112,4 @@ sub move_services
 }
 
 1;
+

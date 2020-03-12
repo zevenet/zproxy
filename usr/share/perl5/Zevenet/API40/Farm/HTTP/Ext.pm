@@ -584,7 +584,6 @@ sub farm_move_certs
 	include 'Zevenet::Farm::HTTP::HTTPS::Ext';
 
 	my $desc = "Move service";
-	my $moveservice;
 
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
@@ -670,3 +669,4 @@ sub farm_move_certs
 }
 
 1;
+

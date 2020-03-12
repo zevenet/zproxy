@@ -389,9 +389,7 @@ sub list_gslb_service_backends
 	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc          = "List service backends";
-	my $type          = &getFarmType( $farmname );
 	my @services_list = &getGSLBFarmServices( $farmname );
-	my @backends;    # output
 
 	# check if the service exists
 	unless ( grep { $service eq $_ } @services_list )
@@ -581,3 +579,4 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 }
 
 1;
+

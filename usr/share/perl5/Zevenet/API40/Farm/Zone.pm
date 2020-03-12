@@ -637,8 +637,6 @@ sub delete_zone_resource    # ( $farmname, $zone, $resource )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $res_aref = &getGSLBResources( $farmname, $zone );
-
 	# validate RESOURCE
 	unless ( defined $resource )
 	{
@@ -682,3 +680,4 @@ sub delete_zone_resource    # ( $farmname, $zone, $resource )
 }
 
 1;
+

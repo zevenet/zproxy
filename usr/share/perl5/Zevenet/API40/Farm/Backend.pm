@@ -385,7 +385,6 @@ sub service_backends
 	my ( $farmname, $service ) = @_;
 
 	my $desc = "List service backends";
-	my $backendstatus;
 
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
@@ -976,3 +975,4 @@ sub validateDatalinkBackendIface
 }
 
 1;
+
