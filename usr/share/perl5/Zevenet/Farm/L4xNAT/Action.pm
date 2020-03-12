@@ -27,6 +27,12 @@ use warnings;
 use Zevenet::Config;
 use Zevenet::Nft;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -157,15 +163,21 @@ sub setL4NewFarmName    # ($farm_name, $new_farm_name)
 			 "debug", "PROFILING" );
 	my $farm_name     = shift;
 	my $new_farm_name = shift;
-	my $output        = 0;
 
-	require Tie::File;
-
-	$output = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
+	my $err = &setL4FarmParam( 'name', "$new_farm_name", $farm_name );
 
 	unlink "$configdir\/${farm_name}_l4xnat.cfg";
 
-	return $output;
+	if ( !$err and $eload )
+	{
+		$err = &eload(
+					   module => 'Zevenet::Farm::L4xNAT::Config::Ext',
+					   func   => 'setL4FarmParamExt',
+					   args   => ['log-prefix', undef, $new_farm_name],
+		);
+	}
+
+	return $err;
 }
 
 =begin nd
@@ -306,8 +318,6 @@ sub stopL4FarmNlb    # ($farm_name)
 	my $writeconf = shift;
 
 	require Zevenet::Farm::Core;
-
-	my $farmfile = &getFarmFile( $farm_name );
 
 	my $out = &setL4FarmParam( ( $writeconf ) ? 'bootstatus' : 'status',
 							   "down", $farm_name );
