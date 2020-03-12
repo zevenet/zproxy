@@ -196,7 +196,6 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;
-	my @linesplt;
 	my $found      = 0;
 	my $index      = 0;
 	my $idx        = 0;
@@ -310,7 +309,6 @@ sub getGSLBFarmBackends    # ($farm_name)
 	include 'Zevenet::Farm::GSLB::Service';
 
 	my @backendStats;
-	my @services = &getGSLBFarmServices( $farmname );
 
 	my $farmStatus = &getFarmStatus( $farmname );
 	my $gslb_stats;
@@ -399,3 +397,4 @@ sub getGSLBFarmServiceBackendAvailableID
 }
 
 1;
+

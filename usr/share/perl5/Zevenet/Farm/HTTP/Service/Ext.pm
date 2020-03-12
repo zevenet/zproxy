@@ -605,17 +605,13 @@ sub setHTTPFarmMoveService
 	my $lock_file     = &getLockFile( $farm );
 	my $lock_fh       = &openlock( $lock_file, 'w' );
 
-	# reduce a index if service was in a previuos position.
-	my $srv_index = &getFarmVSI( $farm, $srv );
-
 	# get service code
 	my $srv_block = &getHTTPServiceBlocks( $farm, $srv );
 
 	my @sort_list = @{ $srv_block->{ farm } };
 
-	my $size     = scalar keys %{ $srv_block->{ services } };
-	my $srv_flag = 0;
-	my $id       = 0;
+	my $size = scalar keys %{ $srv_block->{ services } };
+	my $id   = 0;
 
 	for ( my $i = 0 ; $i < $size + 1 ; $i++ )
 	{
@@ -723,3 +719,4 @@ sub setHTTPFarmMoveServiceStatusFile
 }
 
 1;
+

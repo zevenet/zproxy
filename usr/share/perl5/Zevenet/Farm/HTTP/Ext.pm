@@ -199,9 +199,8 @@ sub addHTTPAddheader    # ($farm_name,$service,$code)
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -258,9 +257,8 @@ sub delHTTPAddheader    # ($farm_name,$service,$code)
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -335,9 +333,8 @@ sub addHTTPHeadremove    # ($farm_name,$service,$code)
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -393,9 +390,8 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -470,9 +466,8 @@ sub addHTTPAddRespheader    # ($farm_name,$service,$code)
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -528,9 +523,8 @@ sub delHTTPAddRespheader    # ($farm_name,$service,$code)
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -607,9 +601,8 @@ sub addHTTPRemRespHeader
 	my ( $farm_name, $header ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -665,9 +658,8 @@ sub delHTTPRemRespHeader    # ($farm_name,$service,$code)
 	my ( $farm_name, $header_ind ) = @_;
 
 	require Zevenet::Farm::Core;
-	my $ffile    = &getFarmFile( $farm_name );
-	my $srv_flag = 0;
-	my $errno    = 1;
+	my $ffile = &getFarmFile( $farm_name );
+	my $errno = 1;
 
 	require Zevenet::Lock;
 	&ztielock( \my @fileconf, "$configdir/$ffile" );
@@ -785,3 +777,4 @@ sub get_http_farm_ee_struct
 }
 
 1;
+

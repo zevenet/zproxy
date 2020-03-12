@@ -43,8 +43,6 @@ sub getGSLBFarmZones    # ($farm_name)
 			 "debug", "PROFILING" );
 	my ( $farm_name ) = @_;
 
-	my $output = -1;
-
 	opendir ( DIR, "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^[a-zA-Z]/ } readdir ( DIR );
 	closedir ( DIR );
@@ -344,10 +342,9 @@ sub getGSLBFarmZonesStruct
 			 "debug", "PROFILING" );
 	my $farmname = shift;
 
-	my @zones   = &getGSLBFarmZones( $farmname );
-	my $first   = 0;
-	my $vserver = 0;
-	my $pos     = 0;
+	my @zones = &getGSLBFarmZones( $farmname );
+	my $first = 0;
+	my $pos   = 0;
 
 	my @out_z = ();
 
@@ -355,10 +352,7 @@ sub getGSLBFarmZonesStruct
 	{
 		$pos++;
 		$first = 1;
-		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
-		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-		my @be = split ( "\n", $backendsvs );
-		my @out_re;
+		my $ns = &getFarmVS( $farmname, $zone, "ns" );
 		my $resources = &getGSLBResources( $farmname, $zone );
 
 		for my $resource ( @{ $resources } )
@@ -381,3 +375,4 @@ sub getGSLBFarmZonesStruct
 }
 
 1;
+

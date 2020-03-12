@@ -45,8 +45,7 @@ sub priorityAlgorithmIsOK    # ( \@Priorities )
 	my @backends     = sort @{ $priority_ref };
 	my @backendstmp;
 
-	my $n_backends = @backends;
-	my $prio_last  = 0;
+	my $prio_last = 0;
 	foreach my $prio_cur ( @backends )
 	{
 		if ( $prio_cur != $prio_last )
@@ -65,3 +64,4 @@ sub priorityAlgorithmIsOK    # ( \@Priorities )
 }
 
 1;
+

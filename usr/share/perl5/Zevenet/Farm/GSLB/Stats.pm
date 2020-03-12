@@ -103,7 +103,6 @@ sub getGSLBFarmBackendsStats
 	require Zevenet::Farm::Config;
 	include 'Zevenet::Farm::GSLB::Service';
 
-	my $out_rss;
 	my $gslb_stats = &getGSLBGdnsdStats( $farmname );
 	my @services   = &getGSLBFarmServices( $farmname );
 
@@ -117,10 +116,8 @@ sub getGSLBFarmBackendsStats
 	{
 		# Default port health check
 		my $port       = &getFarmVS( $farmname, $srv, "dpc" );
-		my $lb         = &getFarmVS( $farmname, $srv, "algorithm" );
 		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
 		my @be = split ( "\n", $backendsvs );
-		my $out_b = [];
 
 		foreach my $subline ( @be )
 		{
@@ -189,3 +186,4 @@ sub getGSLBFarmStats    # ($farm_name,$netstat)
 }
 
 1;
+

@@ -88,8 +88,6 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		}
 	}
 
-	my $farm_filename = &getFarmFile( $farm_name );
-
 	&zenlog( "Starting farm $farm_name with type $farm_type", "info", "FARMS" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
@@ -314,11 +312,7 @@ sub runFarmDelete    # ($farm_name)
 	require Zevenet::Netfilter;
 
 	# global variables
-	my $basedir   = &getGlobalConfiguration( 'basedir' );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
-	my $logdir    = &getGlobalConfiguration( 'logdir' );
-	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
 
 	if ( $eload )
 	{
@@ -416,8 +410,7 @@ sub runFarmReload    # ($farm_name)
 				 "info", "FARMS" );
 		return 2;
 	}
-	my $farm_type = &getFarmType( $farm_name );
-	my $status    = 0;
+	my $status = 0;
 
 	&zenlog( "running 'Reload' for $farm_name", "info", "FARMS" );
 
@@ -602,7 +595,6 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	my $fg_status;
 	my $farm_status;
 
 	# farmguardian renaming
@@ -732,3 +724,4 @@ sub copyFarm    # ($farm_name,$new_farm_name)
 }
 
 1;
+

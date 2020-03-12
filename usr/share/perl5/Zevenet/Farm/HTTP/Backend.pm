@@ -824,7 +824,6 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	require Zevenet::Farm::HTTP::Service;
 
 	my $index;
-	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
 
 	# if the status file does not exist the backend is ok
@@ -1266,7 +1265,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 	while ( my $line_aux = <$fh> )
 	{
 		my @line = split ( "\ ", $line_aux );
-		my $err = &logAndRun(
+		&logAndRun(
 			"$proxyctl -c /tmp/$farm_name\_proxy.socket $line[0] $line[1] $line[2] $line[3]"
 		);
 	}
@@ -1298,7 +1297,6 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	my ( $farm_name, $service, $backendid ) = @_;
 
 	my @content = &getHTTPFarmBackendStatusCtl( $farm_name );
-	my @sessions = &getHTTPFarmBackendsClientsList( $farm_name, @content );
 	my @service;
 	my $sw = 0;
 	my $serviceid;
@@ -1366,3 +1364,4 @@ sub getHTTPFarmBackendAvailableID
 }
 
 1;
+

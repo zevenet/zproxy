@@ -474,7 +474,7 @@ sub setGSLBRemoveTcpPort
 
 		if ( $found == 1 )
 		{
-			my $rs = splice ( @fileconf, $index, 1 );
+			splice ( @fileconf, $index, 1 );
 
 			if ( $line =~ /\}/ )
 			{
@@ -634,7 +634,6 @@ sub getGSLBParseFarmConfig    # ($param, $value, $config)
 
 	# Temporal hash for iteration saving a service
 	my $tmpServiceHashRef = { backends => [], cmd => undef };
-	my $index = 0;
 
 	# Parsing Flags
 	my $serviceFlag = 0;
@@ -753,3 +752,4 @@ sub getGSLBParseBe
 }
 
 1;
+

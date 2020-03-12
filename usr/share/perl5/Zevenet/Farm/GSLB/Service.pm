@@ -44,7 +44,6 @@ sub getGSLBFarmServices    # ($farm_name)
 			 "debug", "PROFILING" );
 	my ( $fname ) = @_;
 
-	my $output = -1;
 	my @srvarr = ();
 
 	opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
@@ -742,7 +741,7 @@ sub setGSLBFarmPort
 	&setFarmVS( $farmname, $service, "dpc", $defport );
 
 	# Update farmguardian
-	my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
+	my ( undef, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
 
 	# Changing farm guardian port check
 	if ( $fgScript =~ s/-p $old_deftcpport/-p$defport/ )
@@ -809,3 +808,4 @@ sub addGSLBDefCheck
 }
 
 1;
+

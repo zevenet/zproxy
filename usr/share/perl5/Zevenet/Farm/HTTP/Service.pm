@@ -77,7 +77,6 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my $count    = 0;
 		my $proxytpl = &getGlobalConfiguration( 'proxytpl' );
 		tie my @proxytpl, 'Tie::File', "$proxytpl";
-		my $countend = 0;
 
 		foreach my $line ( @proxytpl )
 		{
@@ -183,13 +182,7 @@ sub delHTTPFarmService    # ($farm_name,$service)
 	my $sindex = &getFarmVSI( $farm_name, $service );
 	my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
-	my $counter = -1;
-
-	foreach my $subline ( @be )
-	{
-		my @subbe = split ( "\ ", $subline );
-		$counter++;
-	}
+	my $counter = @be;
 
 	# Stop FG service
 	&delFGFarm( $farm_name, $service );
@@ -383,13 +376,9 @@ sub getHTTPServiceBlocks
 				services => {},
 				request  => [],
 	};
-	my @block;
-	my @srv_block;
 	my $current_srv;
 	my $srv_flag;
-	my @srv_request;
 	my $farm_flag = 1;
-	my @aux;
 
 	my $farm_filename = &getFarmFile( $farm );
 	open my $fileconf, '<', "$configdir/$farm_filename";
@@ -607,7 +596,6 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "";
-	my $l;
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
@@ -877,7 +865,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	my $output        = 0;
 	my $sw            = 0;
 	my $j             = -1;
-	my $l;
 
 	$string =~ s/^\s+//;
 	$string =~ s/\s+$//;
@@ -1273,3 +1260,4 @@ sub getHTTPFarmPriorities    # ( $farmname, $service_name )
 }
 
 1;
+

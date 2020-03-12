@@ -97,8 +97,6 @@ sub _runHTTPFarmStop    # ($farm_name, $writeconf)
 
 	require Zevenet::FarmGuardian;
 
-	my $status = -1;
-
 	&runFarmGuardianStop( $farm_name, "" );
 	&setHTTPFarmBootStatus( $farm_name, "down" ) if ( $writeconf );
 
@@ -238,3 +236,4 @@ sub copyHTTPFarm    # ($farm_name,$new_farm_name)
 }
 
 1;
+

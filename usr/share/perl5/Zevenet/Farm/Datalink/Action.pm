@@ -53,7 +53,6 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 	require Zevenet::Farm::Datalink::Backend;
 
 	my $status;
-	my $farm_filename = &getFarmFile( $farm_name );
 
 	if ( $writeconf )
 	{
@@ -81,7 +80,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 	my $cmd_params = "default table table_$iface";
 	if ( &isRoute( $cmd_params ) )
 	{
-		my $err = &logAndRun( "$ip_bin route del $cmd_params" );
+		&logAndRun( "$ip_bin route del $cmd_params" );
 	}
 
 	my $backends  = &getDatalinkFarmBackends( $farm_name );
@@ -92,7 +91,6 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 	{
 		foreach my $serv ( @{ $backends } )
 		{
-			my $stat   = $serv->{ status };
 			my $weight = 1;
 
 			if ( $serv->{ weight } ne "" )
@@ -109,8 +107,6 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 		my $bestprio = 100;
 		foreach my $serv ( @{ $backends } )
 		{
-			my $stat = $serv->{ status };
-
 			if (    $serv->{ priority } > 0
 				 && $serv->{ priority } < 10
 				 && $serv->{ priority } < $bestprio )
@@ -156,7 +152,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf)
 					 type  => 'farm-datalink',
 					 from  => "$net/$mask",
 		};
-		my $err = &setRule( 'add', $rule );
+		&setRule( 'add', $rule );
 	}
 
 	# Enable IP forwarding
@@ -194,8 +190,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::Datalink::Config;
 
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $status        = 0;
+	my $status = 0;
 
 	if ( $writeconf )
 	{
@@ -228,14 +223,14 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 					 type  => 'farm-datalink',
 					 from  => "$net/$mask",
 		};
-		my $err = &setRule( 'del', $rule );
+		&setRule( 'del', $rule );
 	}
 
 	# Disable default uplink gateways
 	my $cmd_params = "default table table_$iface";
 	if ( &isRoute( $cmd_params ) )
 	{
-		my $err = &logAndRun( "$ip_bin route del $cmd_params" );
+		&logAndRun( "$ip_bin route del $cmd_params" );
 	}
 
 	# Disable active datalink file
@@ -303,3 +298,4 @@ sub copyDatalinkFarm    # ($farm_name,$new_farm_name)
 }
 
 1;
+

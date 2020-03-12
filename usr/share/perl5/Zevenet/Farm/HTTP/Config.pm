@@ -1104,8 +1104,6 @@ sub setHTTPFarmBootStatus    # ($farm_name, $value)
 	my ( $farm_name, $value ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = "down";
-	my $lastline;
 
 	my $lock_file = &getLockFile( $farm_name );
 	my $lock_fh = &openlock( $lock_file, 'w' );
@@ -2263,3 +2261,4 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 }
 
 1;
+

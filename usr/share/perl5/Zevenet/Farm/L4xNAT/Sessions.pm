@@ -32,7 +32,6 @@ Function: parseL4FarmSessions
 	It transform the session output of nftlb output in a Zevenet session struct
 
 Parameters:
-	farmname - Farm struct with the farm configuration
 	session ref - It is the session hash returned for nftlb. Example:
 		session = {
 			'expiration' => '1h25m31s364ms',
@@ -60,8 +59,7 @@ Returns:
 
 sub parseL4FarmSessions
 {
-	my $farm = shift;
-	my $s    = shift;
+	my $s = shift;
 
 	# translate session
 	my $session = $s->{ client };
@@ -118,10 +116,8 @@ sub listL4FarmSessions
 	require Zevenet::JSON;
 	require Zevenet::Nft;
 
-	my $nft_bin  = &getGlobalConfiguration( 'nft_bin' );
 	my $farm     = &getL4FarmStruct( $farmname );
 	my @sessions = ();
-	my $data     = 0;
 	my $it;
 
 	return [] if ( $farm->{ persist } eq "" );
@@ -149,7 +145,7 @@ sub listL4FarmSessions
 	my $client_id = 0;
 	foreach my $s ( @{ $nftlb_resp->{ sessions } } )
 	{
-		$it = &parseL4FarmSessions( $farm, $s );
+		$it = &parseL4FarmSessions( $s );
 		$it->{ client } = $client_id++;
 		push @sessions, $it;
 	}
@@ -257,9 +253,6 @@ sub delL4FarmSession
 
 	require Zevenet::Farm::L4xNAT::Action;
 
-	my $configdir     = &getGlobalConfiguration( 'configdir' );
-	my $farm_filename = &getFarmFile( $farm_name );
-
 	# translate to nftlb format
 	$session =~ s/_/ \. /;
 
@@ -315,3 +308,4 @@ sub validateL4FarmSession
 }
 
 1;
+

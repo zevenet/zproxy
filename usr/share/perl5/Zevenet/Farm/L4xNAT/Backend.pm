@@ -619,7 +619,6 @@ sub getL4BackendsWeightProbability
 		# only calculate probability for the servers running
 		if ( $$server{ status } eq 'up' )
 		{
-			my $delta = $$server{ weight };
 			$weight_sum += $$server{ weight };
 			$$server{ prob } = $weight_sum / $$farm{ prob };
 		}
@@ -828,3 +827,4 @@ sub getL4FarmPriorities    # ( $farmname )
 }
 
 1;
+
