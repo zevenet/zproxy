@@ -204,8 +204,6 @@ sub setDOSApplyRule
 
 	my $output;
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
-	my $rule     = &getDOSParam( $ruleName, 'rule' );
-	my $protocol = &getFarmProto( $farmName );
 
 	my $lock       = &setDOSLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $confFile );
@@ -288,3 +286,4 @@ sub setDOSUnsetRule
 }
 
 1;
+

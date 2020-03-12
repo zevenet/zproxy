@@ -232,8 +232,7 @@ sub updateWAFSetPreload
 	foreach my $pre_set ( @prel_path )
 	{
 		# get data of the test
-		my $setname  = "";
-		my $filename = "";
+		my $setname = "";
 		my $set_file;
 		my $cur_set;
 		my $file_type = "";
@@ -333,3 +332,4 @@ sub updateWAFSetPreload
 }
 
 1;
+

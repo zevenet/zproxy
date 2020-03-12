@@ -189,7 +189,6 @@ sub removeWAFSetFromFarm
 
 	require Zevenet::Farm::Core;
 
-	my $proxy     = &getGlobalConfiguration( 'proxy' );
 	my $set_file  = &getWAFSetFile( $set );
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -268,3 +267,4 @@ sub reloadWAFByRule
 }
 
 1;
+

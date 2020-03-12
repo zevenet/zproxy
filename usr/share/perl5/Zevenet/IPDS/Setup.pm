@@ -469,7 +469,6 @@ sub setCronConfig
 	my $params       = shift;
 	my $aptget_bin   = &getGlobalConfiguration( "aptget_bin" );
 	my $ipdsCronFile = &getGlobalConfiguration( "ipdsCronFile" );
-	my $error        = 0;
 	my $cronOpts = {
 					 min   => "",
 					 hour  => "",
@@ -535,3 +534,4 @@ sub setCronConfig
 }
 
 1;
+

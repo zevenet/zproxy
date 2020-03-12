@@ -109,7 +109,6 @@ sub runRBLStartByRule
 		return 0;
 	}
 
-	my $flag = 0;
 	foreach my $farmname ( @farms )
 	{
 		&runRBLStart( $rule, $farmname );
@@ -264,10 +263,7 @@ sub runRBLStop
 	&runRBLFarmRule( $rule, $farm, 'delete' );
 
 	# if are not another farm using this rule, the rule is stopped
-	if ( !&getRBLRunningFarmList( $rule ) )
-	{
-		&runRBLStopPacketbl( $rule );
-	}
+	&runRBLStopPacketbl( $rule );
 
 	return $error;
 }
@@ -303,3 +299,4 @@ sub runRBLRestart
 }
 
 1;
+

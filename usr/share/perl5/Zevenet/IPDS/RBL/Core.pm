@@ -198,35 +198,6 @@ sub getRBLObjectRuleParam
 }
 
 =begin nd
-Function: getRBLRunningFarmList
-
-	Return a list with all farms that are using currently this rule.
-
-Parameters:
-	Rule - Rule name
-
-Returns:
-	Array - List of farm names
-
-=cut
-
-sub getRBLRunningFarmList
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $rule = shift;
-
-	require Zevenet::Validate;
-	include 'Zevenet::IPDS::Core';
-
-	#TODO: implement this
-
-	my @farms;
-
-	return @farms;
-}
-
-=begin nd
 Function: getRBLUserDomains
 
 	Get a list with the domains added by the user
@@ -517,3 +488,4 @@ sub getRBLZapiRule
 }
 
 1;
+

@@ -869,7 +869,7 @@ sub buildWAFSet
 	my $index = -1;
 	foreach my $rule_st ( @{ $struct->{ rules } } )
 	{
-		my $index++;
+		$index++;
 		my $rule = &buildWAFRule( $rule_st );
 		if ( $rule )
 		{
@@ -939,7 +939,6 @@ sub checkWAFFileSyntax
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $file = shift;
-	my $rule_st = shift // {};
 
 	my $waf_check = &getGlobalConfiguration( 'waf_rule_check_bin' );
 	my $out       = &logAndGet( "$waf_check $file", "string", 1 );
@@ -1147,3 +1146,4 @@ sub parseWAFError
 }
 
 1;
+

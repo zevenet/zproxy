@@ -146,7 +146,6 @@ sub setBLDeleteList
 
 	my $fileHandle;
 	my $output = 0;
-	my $error;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
@@ -304,13 +303,10 @@ sub setBLParam
 	my $output;
 
 	# get conf
-	my $type           = &getBLParam( $name, 'type' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $fileHandle     = Config::Tiny->read( $blacklistsConf );
 	my $conf           = $fileHandle->{ $name };
-	my @farmList       = @{ &getBLParam( $name, 'farms' ) };
-	my $ipList         = &getBLParam( $name, 'source' );
 
 	# change name of the list
 	if ( 'name' eq $key )
@@ -427,7 +423,6 @@ sub delBLParam
 			 "debug", "PROFILING" );
 	my ( $listName, $key ) = @_;
 
-	my $output;
 	my $fileHandle;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -502,7 +497,6 @@ sub setBLAddSource
 	my ( $listName, $source ) = @_;
 
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
-	my $policy = &getBLParam( $listName, 'policy' );
 	my $error;
 
 	require Zevenet::Lock;
@@ -539,7 +533,6 @@ sub setBLModifSource
 			 "debug", "PROFILING" );
 	my ( $listName, $id, $source ) = @_;
 
-	my $policy = &getBLParam( $listName, 'policy' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
@@ -580,7 +573,6 @@ sub setBLDeleteSource
 			 "debug", "PROFILING" );
 	my ( $listName, $id ) = @_;
 
-	my $policy = &getBLParam( $listName, 'policy' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
@@ -600,3 +592,4 @@ sub setBLDeleteSource
 }
 
 1;
+

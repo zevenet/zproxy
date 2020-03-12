@@ -107,41 +107,6 @@ sub getDOSParam
 }
 
 =begin nd
-	Function: getDOSLookForRule
-
-	Look for a:
-		- global name 				( key )
-		- set of rules applied a farm 	( key, farmName )
-
-	Parameters:
-		key		 - id that indetify a rule
-		farmName - farm name
-
-	Returns:
-		== 0	- don't find any rule
-		@out	- Array with reference hashs
-				- out[i]= {
-						line  => num,
-						table => string,
-						chain => string
-					  }
-=cut
-
-sub getDOSLookForRule
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $ruleName, $farmName ) = @_;
-
-	require Zevenet::Validate;
-	include 'Zevenet::IPDS::Core';
-
-	my @output;
-
-	return \@output;
-}
-
-=begin nd
 Function: getDOSStatusRule
 
 	Check if a DoS rule is applied
@@ -251,3 +216,4 @@ sub listDOSByFarm
 }
 
 1;
+

@@ -185,7 +185,6 @@ sub setWAFRule
 	my $set      = shift;
 	my $id       = shift;
 	my $rule_ref = shift;
-	my $rule;
 
 	if ( ref $rule_ref ne 'HASH' )
 	{
@@ -228,7 +227,6 @@ sub createWAFRule
 	my $set      = shift;
 	my $rule_ref = shift;
 	my $err_msg  = 0;
-	my $rule;
 
 	if ( ref $rule_ref ne 'HASH' )
 	{
@@ -697,14 +695,12 @@ sub moveWAFSet
 
 	require Zevenet::Farm::Core;
 
-	my $set_file  = &getWAFSetFile( $set );
 	my $farm_file = &getFarmFile( $farm );
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	# write conf
 	my $lock_file = &getLockFile( $farm );
-	my $lock_fh   = &openlock( $lock_file, 'w' );
-	my $flag_sets = 0;
+	my $lock_fh = &openlock( $lock_file, 'w' );
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_file";
@@ -863,3 +859,4 @@ sub updateWAFRule
 }
 
 1;
+
