@@ -88,11 +88,12 @@ sub add_farm_sessions
 		},
 	};
 
+	my $num_bks = 0;
 	require Zevenet::Farm::Backend;
 	my $f_type = &getFarmType( $farm );
 	if ( $f_type eq 'l4xnat' )
 	{
-		my $num_bks = @{ &getFarmServers( $farm ) };
+		$num_bks = @{ &getFarmServers( $farm ) };
 		if ( $num_bks )
 		{
 			$params->{ id }->{ 'values' } = [0 .. $num_bks - 1];
@@ -115,6 +116,11 @@ sub add_farm_sessions
 	if ( $persis_type eq '' )
 	{
 		my $msg = "The farm $farm has not configured any persistence.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( !$num_bks )
+	{
+		my $msg = "The farm $farm has not configured any backend.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	elsif ( !&validateL4FarmSession( $persis_type, $json_obj->{ session } ) )
