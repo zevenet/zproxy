@@ -299,3 +299,4 @@ sub getRBACMenus
 }
 
 1;
+

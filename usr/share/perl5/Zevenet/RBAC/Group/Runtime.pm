@@ -44,7 +44,8 @@ Returns:
 
 sub runRBACCreateGroupCmd
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group    = shift;
 	my $groupadd = &getGlobalConfiguration( "groupadd_bin" );
 
@@ -73,7 +74,8 @@ Returns:
 
 sub runRBACDeleteGroupCmd
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $group    = shift;
 	my $groupdel = &getGlobalConfiguration( "groupdel_bin" );
 
@@ -84,3 +86,4 @@ sub runRBACDeleteGroupCmd
 }
 
 1;
+

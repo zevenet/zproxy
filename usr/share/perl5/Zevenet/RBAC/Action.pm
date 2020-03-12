@@ -97,3 +97,4 @@ sub initRBACModule
 }
 
 1;
+

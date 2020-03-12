@@ -343,3 +343,4 @@ sub unlockRBACGroupResource
 }
 
 1;
+

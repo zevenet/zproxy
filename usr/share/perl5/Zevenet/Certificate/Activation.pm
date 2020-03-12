@@ -934,7 +934,7 @@ sub getDateUtc
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $gmt  = shift;                               # Nov 29 09:29:37 2019 GMT;
+	my $gmt = shift;    # Nov 29 09:29:37 2019 GMT;
 	my $date = &getGlobalConfiguration( 'date' ) // 'date';
 
 	return $gmt if ( $gmt =~ /UTC/ );
@@ -1082,3 +1082,4 @@ sub uploadCertActivation
 }
 
 1;
+

@@ -113,3 +113,4 @@ sub getLogLines
 }
 
 1;
+

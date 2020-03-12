@@ -461,7 +461,6 @@ sub getRBACRolePermission
 
 	my $out = 0;
 
-	my $roleFile;
 	my $fileHandle;
 	require Zevenet::User;
 	my $user = &getUser();
@@ -793,15 +792,12 @@ sub getRBACPermissionFarmHash
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $zone_re         = &getValidFormat( 'zone' );
-	my $resource_id_re  = &getValidFormat( 'resource_id' );
-	my $farm_re         = &getValidFormat( 'farm_name' );
-	my $service_re      = &getValidFormat( 'service' );
-	my $be_re           = &getValidFormat( 'backend' );
-	my $blacklists_list = &getValidFormat( 'blacklists_name' );
-	my $rbl_name        = &getValidFormat( 'rbl_name' );
-	my $dos_rule        = &getValidFormat( 'dos_name' );
-	my $cert_pem_re     = &getValidFormat( 'cert_pem' );
+	my $zone_re        = &getValidFormat( 'zone' );
+	my $resource_id_re = &getValidFormat( 'resource_id' );
+	my $farm_re        = &getValidFormat( 'farm_name' );
+	my $service_re     = &getValidFormat( 'service' );
+	my $be_re          = &getValidFormat( 'backend' );
+	my $cert_pem_re    = &getValidFormat( 'cert_pem' );
 
 	my $hash = {
 		'PUT' => [
@@ -1479,3 +1475,4 @@ sub getRBACPermissionFgHash
 }
 
 1;
+

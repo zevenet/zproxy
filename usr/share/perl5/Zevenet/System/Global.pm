@@ -126,7 +126,6 @@ sub setSystemGlobal
 		push @farmsf, &getFarmsByType( 'https' );
 		my @farms_stopped;
 		my @farms_config;
-		my $farm_err;
 
 		foreach my $farmname ( @farmsf )
 		{
@@ -180,9 +179,10 @@ sub setSystemGlobal
 		}
 
 		# start l7 farms
+		my $farm_err;
 		foreach my $farmname ( @farms_stopped )
 		{
-			my $farm_err = &runFarmStart( $farmname, "false" );
+			$farm_err = &runFarmStart( $farmname, "false" );
 			$err = 5 if ( $farm_err and !$err );
 		}
 	}
@@ -196,7 +196,7 @@ Function: setProxyNG
 	Set the ProxyNG settings of the system.
 
 Parameters:
-	arg - "true" to turn it on or "false" to turn it off. 
+	arg - "true" to turn it on or "false" to turn it off.
 
 Returns:
 	Integer - Error code. Returns: 0 on success, another value on failure.
@@ -227,3 +227,4 @@ sub setProxyNG    # ($ng)
 }
 
 1;
+
