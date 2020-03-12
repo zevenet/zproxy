@@ -178,7 +178,7 @@ sub set_language
 	  if ( $error_msg );
 
 	# Check allowed parameters
-	my $error_msg = &setGlobalConfiguration( 'lang', $json_obj->{ language } );
+	&setGlobalConfiguration( 'lang', $json_obj->{ language } );
 
 	&httpResponse(
 				   {
@@ -192,3 +192,4 @@ sub set_language
 }
 
 1;
+

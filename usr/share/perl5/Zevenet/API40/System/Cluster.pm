@@ -194,7 +194,7 @@ sub modify_cluster
 			);
 
 			# reload keepalived configuration local and remotely
-			my $error_code = &enableZCluster();
+			&enableZCluster();
 
 			&zenlog(
 					 &runRemotely(
@@ -262,7 +262,7 @@ sub set_cluster_actions
 	  if ( $error_msg );
 
 	# ACTIONS: maintenance
-	my $desc = "Setting maintenance mode";
+	$desc = "Setting maintenance mode";
 
 	# make sure the cluster is enabled
 	unless ( &getZClusterStatus() )
@@ -720,3 +720,4 @@ sub get_cluster_nodes_status
 }
 
 1;
+

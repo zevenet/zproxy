@@ -81,6 +81,7 @@ sub set_notif_methods
 	if ( $error )
 	{
 		my $msg = "There was a error modifying $key.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	return &httpResponse(
@@ -254,3 +255,4 @@ sub send_test_mail
 }
 
 1;
+

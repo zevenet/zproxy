@@ -99,7 +99,7 @@ sub download_backup
 
 	# Download function ends communication if itself finishes successful.
 	# It is not necessary to send "200 OK" msg here
-	my $error = &downloadBackup( $backup );
+	&downloadBackup( $backup );
 
 	my $msg = "Error, downloading backup.";
 	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -248,3 +248,4 @@ sub apply_backup
 }
 
 1;
+

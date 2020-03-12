@@ -75,8 +75,6 @@ sub set_factory_reset
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $remove_backups =
-	  ( $json_obj->{ remove_backups } eq 'true' ) ? 'remove-backups' : '';
 	require Zevenet::System;
 	if (
 		 &applyFactoryReset( $json_obj->{ interface }, $json_obj->{ remove_backups } ) )
@@ -215,3 +213,4 @@ sub set_system_global
 }
 
 1;
+
