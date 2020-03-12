@@ -199,8 +199,7 @@ while ( 1 )
 		  ;                                     # ipds package is been updating
 
 		my $event_fullname = $event->fullname;
-		my $event_name     = $event->name;
-		my $event_mask     = sprintf ( "%#.8x", $event->mask );    # hexadecimal string
+		my $event_mask = sprintf ( "%#.8x", $event->mask );    # hexadecimal string
 
 		&zenlog( "Event: $event_mask File: '$event_fullname'" );
 
@@ -219,8 +218,6 @@ while ( 1 )
 			}
 			next;
 		}
-
-		my ( undef, $local_name ) = split ( "$configdir/", $event->fullname );
 
 		if ( $event->fullname =~ /^$configdir/ )
 		{
@@ -292,3 +289,4 @@ sub getSubdirectories
 
 	return @dir_list;
 }
+

@@ -48,3 +48,4 @@ if ( &getBLStatus( $listName ) eq 'up' )
 }
 
 exit $output;
+

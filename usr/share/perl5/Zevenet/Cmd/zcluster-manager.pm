@@ -729,7 +729,7 @@ sub setNodeStatusMaster
 	&setSsyncdMaster();
 
 	# flush arp rules
-	my $rc = &enableAllInterfacesDiscovery();
+	&enableAllInterfacesDiscovery();
 
 	# announce ips ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -752,7 +752,6 @@ sub setNodeStatusMaster
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref   = &getSystemInterface( $maint_if );
 	&logAndRun( "$ip_bin link set $maint_if up" );
 
 	# start farmguardians
@@ -812,7 +811,6 @@ sub setNodeStatusBackup
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref   = &getSystemInterface( $maint_if );
 	&logAndRun( "$ip_bin link set $maint_if up" );
 
 	unless ( &logAndRunCheck( $zenino_proc ) )
@@ -865,7 +863,6 @@ sub setNodeStatusMaintenance
 	# put interface as down
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
-	my $if_ref   = &getSystemInterface( $maint_if );
 	&logAndRun( "$ip_bin link set $maint_if down" );
 
 	# conntrackd
@@ -923,3 +920,4 @@ sub quit
 #~ &zenlog( `grep RSS /proc/$$/status` );
 
 1;
+
