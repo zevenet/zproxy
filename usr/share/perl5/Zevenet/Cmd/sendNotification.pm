@@ -111,7 +111,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 # l7 proxy msg
 # example:
 # (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed) in farm: 'test', service: 'srv1'
-	elsif ( ( $program =~ /zhttp/ || $program =~ /farmguardian/ )
+	elsif ( ( $program =~ /zproxy/ || $program =~ /farmguardian/ )
 		&& $msg =~
 		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+)? (\w+)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '([\w-]+)')?/
 	  )
@@ -124,7 +124,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 		if ( $service =~ /'(.+)'/ ) { $service = "$1"; }
 
-		if    ( $program =~ /zhttp/ )        { $program = "It has been"; }
+		if    ( $program =~ /zproxy/ )       { $program = "It has been"; }
 		elsif ( $program =~ /farmguardian/ ) { $program = "Farmguardian"; }
 
 		if ( $status =~ /dead/ || $status =~ /down/ ) { $status = "DOWN"; }

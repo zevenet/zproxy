@@ -1974,7 +1974,7 @@ Control 	"$conf->{ Control }"
 
 	if ( $listener_type eq 'HTTP' )
 	{
-		$global_str .= qq(#DHParams 	"/usr/local/zevenet/app/zhttp/etc/dh2048.pem"
+		$global_str .= qq(#DHParams 	"/usr/local/zevenet/app/zproxy/etc/dh2048.pem"
 #ECDHCurve	"prime256v1"
 );
 	}
