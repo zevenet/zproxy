@@ -13,6 +13,8 @@ do
 	) -i -- $i
 
 	sed -i -e 's/pound.socket/proxy.socket/' $i
-	sed -i -e 's/(pound\/etc/zproxy\/etc/' $i
+	sed -i -e 's/pound\/etc/zproxy\/etc/' $i
+	sed -i -e 's/Priority/Weight/' $i
+
 	mv "$i" "$(echo "$i" | sed s/pound.cfg/proxy.cfg/)"
 done
