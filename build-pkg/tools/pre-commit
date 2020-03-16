@@ -5,12 +5,16 @@
 # automatic use of perltidy when doing a commit, set perltidy_flag to 1.
 #
 
+
+#NOWARN=0	# Set 1 using enviroment variables
+
 changed=$(git diff --cached --name-only)
 perltidy_flag=1
 critic_lvl=0	# 5 is lower value and 1 is the higher value
 REJECT=0
 include_dir="/build-pkg/tools"
 include_file="define_include"
+warnings=0
 
 # install from cpan: cpan install warnings::unused
 HEADER_CODE='#!/usr/bin/perl
@@ -65,10 +69,10 @@ for FILE in $changed; do
 
 		if [ "$OUT" != "" ]; then
 			echo "-------------------------------------------------"
-			echo "# Error: Syntax error in the file $FILE: (the lines were moved 2 positions)"
+			echo "# WARNING in the file $FILE: (the lines were moved 2 positions)"
 			echo "$OUT"
-            echo "-------------------------------------------------"
-			exit 1
+			echo "-------------------------------------------------"
+			warnings=1
 		fi
 
 		# check debug msg
@@ -76,7 +80,7 @@ for FILE in $changed; do
 		if [ "$OUT" != '' ]; then
 			echo "-------------------------------------------------"
 			echo "# Error: There is debug message in the file $FILE"
-            echo "-------------------------------------------------"
+			echo "-------------------------------------------------"
 			exit 1
 		fi
 
@@ -105,5 +109,16 @@ for FILE in $changed; do
 
     fi
 done
+
+if [ $warnings -ne 0 ]; then
+	if [ "$NOWARN" == "" ]; then
+                echo "-------------------------------------------------"
+		echo "ERROR: There are some warnings, to ignore them set then envirovement variable: 'NOWARN=1'"
+		echo ""
+		echo ""
+		exit 1
+	fi
+fi
+
 
 exit $REJECT
