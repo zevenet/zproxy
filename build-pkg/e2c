@@ -9,6 +9,7 @@ CE_REPO="git@gitlab.zevenet.com:zevenet_team/zevenet-ce.git"
 CE_BRANCH="merge-ee"
 
 zevenet_home='usr/local/zevenet'
+zevenet_lib='usr/share/perl5/Zevenet'
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 com_dir="${BASE_DIR}/CE_WORKDIR"
 tmp_dir="${BASE_DIR}/TMP_CE_WORKDIR"
@@ -104,6 +105,9 @@ done
 for file in "${enterprise_files[@]}"; do
 	rm -rf ${tmp_dir}/$file
 done
+# remove empty directories in lib
+find ${tmp_dir}/$zevenet_lib -type d -empty -delete
+
 
 # copy community files
 msg "Copying CE files..."

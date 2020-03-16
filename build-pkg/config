@@ -72,21 +72,8 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API31/Farm/HTTP/
 	usr/share/perl5/Zevenet/API31/Farm/Service/
 	usr/share/perl5/Zevenet/API32/
-	usr/share/perl5/Zevenet/API40/Certificate/
 	usr/share/perl5/Zevenet/API40/Routes/
-	usr/share/perl5/Zevenet/API40/RBAC/
-	usr/share/perl5/Zevenet/API40/IPDS/
-	usr/share/perl5/Zevenet/API40/Farm/Stats/
-	usr/share/perl5/Zevenet/API40/Farm/HTTP/
-	usr/share/perl5/Zevenet/API40/Farm/Service/
 	usr/share/perl5/Zevenet/ELoad.pm
-	usr/share/perl5/Zevenet/IPDS/
-	usr/share/perl5/Zevenet/RBAC/
-	usr/share/perl5/Zevenet/Cmd/
-	usr/share/perl5/Zevenet/Certificate/
-	usr/share/perl5/Zevenet/Farm/GSLB
-	usr/share/perl5/Zevenet/Farm/HTTP/Service
-	usr/share/perl5/Zevenet/Farm/HTTP/HTTPS
 	usr/local/zevenet/www/zapi/
 	DEBIAN/
 	build-pkg/
@@ -205,6 +192,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/IPDS/IPDS.pm
 	usr/share/perl5/Zevenet/API40/IPDS/RBL.pm
 	usr/share/perl5/Zevenet/API40/IPDS/WAF/Rules.pm
+	usr/share/perl5/Zevenet/API40/IPDS/WAF/Files.pm
 	usr/share/perl5/Zevenet/API40/IPDS/WAF/Sets.pm
 	usr/share/perl5/Zevenet/API40/IPDS/WAF/Structs.pm
 	usr/share/perl5/Zevenet/API40/RBAC/LDAP.pm
