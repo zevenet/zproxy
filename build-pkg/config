@@ -196,6 +196,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/Ext.pm
 	usr/share/perl5/Zevenet/API40/Farm/MoveService.pm
 	usr/share/perl5/Zevenet/API40/Farm/Put/GSLB.pm
+	usr/share/perl5/Zevenet/API40/Farm/Sessions.pm
 	usr/share/perl5/Zevenet/API40/Farm/Service/Ext.pm
 	usr/share/perl5/Zevenet/API40/Farm/Zone.pm
 	usr/share/perl5/Zevenet/API40/Interface/Bonding.pm
@@ -252,6 +253,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/Farm/HTTP/HTTPS/Ext.pm
 	usr/share/perl5/Zevenet/Farm/HTTP/Service/Ext.pm
 	usr/share/perl5/Zevenet/Farm/L4xNAT/Config/Ext.pm
+	usr/share/perl5/Zevenet/Farm/L4xNAT/Sessions/Ext.pm
 	usr/share/perl5/Zevenet/IPDS/Base.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Actions.pm
 	usr/share/perl5/Zevenet/IPDS/Blacklist/Config.pm
