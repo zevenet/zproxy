@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Zevenet::Farm::L4xNAT::Config;
+use Zevenet::Farm::L4xNAT::Sessions;
 
 =begin nd
 Function: addL4FarmSession

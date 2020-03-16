@@ -72,7 +72,6 @@ enterprise_files=(
 	usr/share/perl5/Zevenet/API31/Farm/HTTP/
 	usr/share/perl5/Zevenet/API31/Farm/Service/
 	usr/share/perl5/Zevenet/API32/
-	usr/share/perl5/Zevenet/API40/Aws.pm
 	usr/share/perl5/Zevenet/API40/Certificate/
 	usr/share/perl5/Zevenet/API40/Routes/
 	usr/share/perl5/Zevenet/API40/RBAC/
@@ -196,7 +195,7 @@ encrypted_files=(
 	usr/share/perl5/Zevenet/API40/Farm/HTTP/Ext.pm
 	usr/share/perl5/Zevenet/API40/Farm/MoveService.pm
 	usr/share/perl5/Zevenet/API40/Farm/Put/GSLB.pm
-	usr/share/perl5/Zevenet/API40/Farm/Sessions.pm
+	usr/share/perl5/Zevenet/API40/Farm/Session.pm
 	usr/share/perl5/Zevenet/API40/Farm/Service/Ext.pm
 	usr/share/perl5/Zevenet/API40/Farm/Zone.pm
 	usr/share/perl5/Zevenet/API40/Interface/Bonding.pm

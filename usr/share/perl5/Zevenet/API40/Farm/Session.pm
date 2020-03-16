@@ -23,7 +23,7 @@
 
 use strict;
 require Zevenet::Farm::Core;
-use Zevenet::Farm::L4xNAT::Sessions;
+include 'Zevenet::Farm::L4xNAT::Sessions::Ext';
 
 # GET /farms/<farms>/sessions
 sub get_farm_sessions    # ( $farmname )
