@@ -7,6 +7,7 @@ use warnings;
 use Getopt::Long;
 use Switch;
 use Zevenet::Config;
+use Zevenet::Log;
 
 #Global Variables
 our @farms_to_reboot = "";
@@ -18,6 +19,7 @@ my $le_fullchain_path = &getGlobalConfiguration( 'le_fullchain_path' );
 my $le_webroot_path   = &getGlobalConfiguration( 'le_webroot_path' );
 my $le_config_path    = &getGlobalConfiguration( 'le_config_path' );
 my $le_email          = &getGlobalConfiguration( 'le_email' );
+my $cert_dir          = &getGlobalConfiguration( 'certdir' );
 
 if ( $le_email =~ /^$/ )
 {
@@ -268,13 +270,16 @@ sub create_pem()
 	my $domain      = shift;
 	my $domain_file = $domain;
 	$domain_file =~ s/\./_/g;
+	my $cat_bin = &getGlobalConfiguration( 'cat_bin' );
 
-	if ( -d "/usr/local/zevenet/config/letsencrypt/live/$domain" )
+	if ( -d "$le_config_path/live/$domain" )
 	{
-		`cat /usr/local/zevenet/config/letsencrypt/live/$domain/privkey.pem > /usr/local/zevenet/config/${domain_file}.pem; cat /usr/local/zevenet/config/letsencrypt/live/$domain/fullchain.pem >> /usr/local/zevenet/config/${domain_file}.pem`;
+		&logAndRun(
+			"$cat_bin $le_config_path/live/$domain/privkey.pem > $cert_dir/${domain_file}.pem; $cat_bin $le_config_path/live/$domain/fullchain.pem >> $cert_dir/${domain_file}.pem"
+		);
 		print
 		  "Created Certificate name $domain in PEM format ready for HTTPS profile\n";
-		my $cert_domain_file = "/usr/local/zevenet/config/${domain_file}.pem";
+		my $cert_domain_file = "$cert_dir/${domain_file}.pem";
 
 		#if file is in used and file changed then a farm restart is needed.
 		&cert_used_farm( $cert_domain_file );
@@ -320,9 +325,12 @@ sub obtain_cert()
 
 	#run request
 	$test = "--test-cert" if ( $test );
+
 	&zenlog(
 		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
 	);
+
+	# do no use logAndGet. It managings the error output
 	my @run =
 	  `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
 
@@ -346,15 +354,14 @@ sub obtain_cert()
 	print "Destroying webroot configuration for the farm $farm_name\n";
 	&destroy_webroot( $farm_name );
 
-	#}
-
 }
 
 sub list_cert()
 {
 	print
 	  "Listing all available certificates for the current configuration in config dir $le_config_path\n";
-	my @run              = `$le_binary certificates --config-dir $le_config_path`;
+	my @run = @{ &logAndGet( "$le_binary certificates --config-dir $le_config_path",
+							 "array" ) };
 	my $certificate_name = "";
 
 	foreach my $line ( @run )
@@ -385,8 +392,7 @@ sub list_cert()
 		{
 			#File path
 			$certificate_name =~ s/\./_/g;
-			print
-			  "\tPem Certificate file: /usr/local/zevenet/config/${certificate_name}.pem\n\n";
+			print "\tPem Certificate file: $cert_dir/${certificate_name}.pem\n\n";
 		}
 	}
 }
@@ -411,7 +417,7 @@ sub revoke_cert()
 	  "Revoking and deleting certificate(s) $cert for the current configuration...\n";
 	my $domain_file = $cert;
 	$domain_file =~ s/\./_/g;
-	my $cert_domain_file = "/usr/local/zevenet/config/${domain_file}.pem";
+	my $cert_domain_file = "$cert_dir/${domain_file}.pem";
 	&cert_used_farm( $cert_domain_file );
 	if ( $#farms_to_reboot > 0 )
 	{
@@ -419,9 +425,18 @@ sub revoke_cert()
 		  "This file can't be deleted because is used by the farm(s): @farms_to_reboot\n";
 		exit;
 	}
+
+	# do no use logAndGet. It managings the error output
 	my @run =
 	  `$le_binary delete --cert-name $cert --config-dir $le_config_path --reason unspecified`;
-	if ( $? ne 0 )
+	my $err = $?;
+
+	my $tag = ( $err ) ? "error" : "debug";
+	&zenlog(
+		"$le_binary delete --cert-name $cert --config-dir $le_config_path --reason unspecified",
+		$tag
+	);
+	if ( $err )
 	{
 		print "Error revoking certficate $cert. @run\n";
 	}
@@ -429,11 +444,10 @@ sub revoke_cert()
 	{
 		my $cert_file = $cert;
 		$cert_file =~ s/\./_/g;
-		print
-		  "Deleted certificate(s) $cert in path /usr/local/zevenet/config/${cert_file}.pem\n";
-		if ( -e "/usr/local/zevenet/config/${cert_file}.pem" )
+		print "Deleted certificate(s) $cert in path $cert_dir/${cert_file}.pem\n";
+		if ( -e "$cert_dir/${cert_file}.pem" )
 		{
-			`rm /usr/local/zevenet/config/${cert_file}.pem`;
+			unlink "$cert_dir/${cert_file}.pem";
 		}
 	}
 }
@@ -443,8 +457,9 @@ sub renew_certs()
 	print "Renewing all the required certificates\n";
 	$test = "--dry-run" if ( $test );
 	##a local service needs to be running in order to connect from letsencrypt
-	my @run = `$le_binary renew --config-dir $le_config_path $test`;
-	my $sw  = 0;
+	my @run = @{ &logAndGet( "$le_binary renew --config-dir $le_config_path $test",
+							 "array" ) };
+	my $sw = 0;
 	foreach my $line ( @run )
 	{
 		if ( $line =~ /Congratulations/ )
@@ -469,11 +484,14 @@ sub renew_certs()
 
 sub cert_used_farm()
 {
-
 	my $cert_file = shift;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $grep      = &getGlobalConfiguration( 'grep' );
+	my $cut       = &getGlobalConfiguration( 'cut_bin' );
+
+	# do no use logAndGet. It managings the error output
 	my @run =
-	  `grep -H $cert_file ${configdir}\/*proxy.cfg 2>/dev/null | cut -d: -f1 `;
+	  `$grep -H $cert_file ${configdir}\/*proxy.cfg 2>/dev/null | $cut -d: -f1`;
 	if ( ( scalar @run ) > 0 )
 	{
 		require Zevenet::Farm::Core;
@@ -495,7 +513,6 @@ sub cert_used_farm()
 #after any renew a restart is needed.
 sub restart_farms()
 {
-
 	print
 	  "Resting the following farms using certificates already renewed: @farms_to_reboot\n";
 	foreach my $farm_to_reboot ( @farms_to_reboot )
@@ -534,7 +551,8 @@ sub getLocalNodeClusterStatus()
 sub webServer()
 {
 	my $action   = shift;
-	my $pid_file = "/usr/local/zevenet/app/cherokee/var/run/cherokee_localhost.pid";
+	my $http_dir = &getGlobalConfiguration( 'http_server_dir' );
+	my $pid_file = "$http_dir/var/run/cherokee_localhost.pid";
 	my $pid      = "0";
 
 	my $le_webserver_config_file =
@@ -545,22 +563,20 @@ sub webServer()
 
 	if ( -e $pid_file )
 	{
-		$pid = `$cat_bin $pid_file`;
+		$pid = &logAndGet( "$cat_bin $pid_file" );
 	}
 
 	if ( $action eq "start" and ( !-e $pid_file ) )
 	{
-		`$http_bin -d -C $le_webserver_config_file >/dev/null 2>&1 &`;
-		&zenlog( "$http_bin -d -C $le_webserver_config_file 2>/dev/null" );
+		&logAndRunBG( "$http_bin -d -C $le_webserver_config_file" );
 		&zenlog( "Running temporal webserver for Let's Encrypt" );
-
 	}
 
 	if ( $action eq "stop" )
 	{
 		if ( $pid > 0 )
 		{
-			`$kill_bin -15 $pid`;
+			&logAndRun( "$kill_bin -15 $pid" );
 			&zenlog( "Stopping temporal webserver for Let's Encrypt PID:$pid" );
 		}
 		else
@@ -568,6 +584,4 @@ sub webServer()
 			&zenlog( "Temporal webserver can't be stopped, it is not running" );
 		}
 	}
-
 }
-
