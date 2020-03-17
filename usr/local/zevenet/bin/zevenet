@@ -124,9 +124,10 @@ sub zna_version
 {
 	my $file          = &getGlobalConfiguration( 'applianceVersionFile' );
 	my $dmidecode_bin = &getGlobalConfiguration( 'dmidecode_bin' );
+	my $grep          = &getGlobalConfiguration( 'grep_bin' );
 
 	# get ZNA version from dmidecode
-	my $zna_version = `$dmidecode_bin -t1 | grep "ZNA-6[5,7]08"`;
+	my $zna_version = &logAndGet( "$dmidecode_bin -t1 | $grep 'ZNA-6[5,7]08'" );
 	$zna_version =~ s/\sVersion: //;
 	$zna_version =~ s/-/ /;
 
@@ -330,7 +331,8 @@ if ( $action eq "start" )
 
 					if ( $return_code )
 					{
-						my @ip_output = `$ip_bin address show dev $$iface{name}`;
+						my @ip_output =
+						  @{ &logAndGet( "$ip_bin address show dev $$iface{name}", "array" ) };
 						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 					}
 
@@ -404,7 +406,8 @@ if ( $action eq "start" )
 
 				if ( $return_code )
 				{
-					my @ip_output = `$ip_bin address show dev $$iface{name}`;
+					my @ip_output =
+					  @{ &logAndGet( "$ip_bin address show dev $$iface{name}", "array" ) };
 					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 				}
 
@@ -457,7 +460,8 @@ if ( $action eq "start" )
 				{
 					my $toif = &getParentInterfaceName( $$iface{ name } );
 					&zenlog( "failed addIp" );
-					my @ip_output = `$ip_bin -$$iface{ip_v} address list dev $toif`;
+					my @ip_output =
+					  @{ &logAndGet( "$ip_bin -$$iface{ip_v} address list dev $toif", "array" ) };
 					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 				}
 
@@ -624,8 +628,9 @@ if ( $action eq "stop" )
 
 	print ( "* Stopping nftlb service:" );
 
-	my $stop_nftlb = `/usr/local/zevenet/bin/nftlbd stop`;
-	my $status     = `/usr/local/zevenet/bin/nftlbd status`;
+	my $nftlb_srv  = &getGlobalConfiguration( 'nftlb_bin' );
+	my $stop_nftlb = &logAndRun( "$nftlb_srv stop" );
+	my $status     = &logAndGet( "$nftlb_srv status" );
 	my $rtn_code   = 1;
 	$rtn_code = 0 if ( grep /nftlb is not running/, $status );
 
