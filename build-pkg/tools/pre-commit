@@ -17,6 +17,7 @@ include_file="define_include"
 warnings=0
 
 # install from cpan: cpan install warnings::unused
+# It depends on make, gcc and libtest-warn-perl
 HEADER_CODE='#!/usr/bin/perl
 use warnings::unused;use warnings;use strict;sub include { }'
 
