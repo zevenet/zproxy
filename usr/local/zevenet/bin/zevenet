@@ -628,10 +628,10 @@ if ( $action eq "stop" )
 
 	print ( "* Stopping nftlb service:" );
 
-	my $nftlb_srv  = &getGlobalConfiguration( 'nftlb_bin' );
-	my $stop_nftlb = &logAndRun( "$nftlb_srv stop" );
-	my $status     = &logAndGet( "$nftlb_srv status" );
-	my $rtn_code   = 1;
+	my $nftlb_svc = &getGlobalConfiguration( 'nftlb_svc' );
+	&logAndRun( "$nftlb_svc stop" );
+	my $status   = &logAndGet( "$nftlb_svc status" );
+	my $rtn_code = 1;
 	$rtn_code = 0 if ( grep /nftlb is not running/, $status );
 
 	if ( $rtn_code == 0 )
