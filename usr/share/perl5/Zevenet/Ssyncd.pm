@@ -24,6 +24,7 @@
 use strict;
 
 require Zevenet::Farm::Core;
+require Zevenet::Farm::Base;
 
 # my $ssyncd_enabled = 'true';
 # my $ssyncd_bin     = '/usr/local/zevenet/app/ssyncd/bin/ssyncd';
@@ -144,6 +145,7 @@ sub setSsyncdBackup
 			 "debug", "PROFILING" );
 	&zenlog( "/// Starting setSsyncdBackup", "info", "CLUSTER" );
 
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );
@@ -189,6 +191,8 @@ sub setSsyncdMaster
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
+
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );
