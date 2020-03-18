@@ -2253,6 +2253,10 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 		$stat  = 1;
 		&zenlog( "Error in $farm_name config file!", "error", "SYSTEM" );
 	}
+	else
+	{
+		$stat = 0;
+	}
 
 	untie @array;
 	close $lock_fh;
