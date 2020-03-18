@@ -332,8 +332,7 @@ sub logAndGet
 		{
 			local $/ = undef;
 			my $err_str = <$fh>;
-			&zenlog( "sterr: $err_str", "warning", "SYSTEM" )
-			  ;    # change to debug2, really this could not be an error
+			&zenlog( "sterr: $err_str", "debug2", "SYSTEM" );
 			close $fh;
 		}
 		else
