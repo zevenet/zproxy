@@ -16,7 +16,7 @@
 #type=Single
 #ptype=RegExp
 #continue=takenext
-#pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (dead|down)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '.+')?
+#pattern=(farmguardian|pound|zproxy).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (dead|down)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '.+')?
 #context=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down && !BLOCK_NOTIF
 #desc=MARK
 #action=shellcmd logger "sec rule matched" -i -t sec; create $1_$4_$5_$2_down_up 5
@@ -24,7 +24,7 @@
 #type=Single
 #ptype=RegExp
 #continue=takenext
-#pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (resurrect)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
+#pattern=(farmguardian|pound|zproxy).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (resurrect)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
 #context=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
 #desc=MARK
 #action=shellcmd logger "sec rule matched" -i -t sec; create $1_$4_$5_$2_up_down 5
@@ -32,12 +32,12 @@
 #type=PairWithWindow
 #continue=takenext
 #ptype=RegExp
-#pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (dead|down)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
+#pattern=(farmguardian|pound|zproxy).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (dead|down)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
 #context=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down  && !BLOCK_NOTIF
 #desc=$2_down
 #action=shellcmd /usr/local/zevenet/bin/sendNotification sendNotification Backend "$0"; shellcmd logger "$1 notification sent" -i -t sec
 #ptype2=RegExp
-#pattern2=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (resurrect)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
+#pattern2=(farmguardian|pound|zproxy).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (resurrect)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
 #context2=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down && !BLOCK_NOTIF
 #desc2=$2_down
 #action2=shellcmd logger "Backend $2 flapped" -i -t sec; delete $1_$4_$5_$2_down_up
@@ -46,12 +46,12 @@
 #type=PairWithWindow
 #continue=takenext
 #ptype=RegExp
-#pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (resurrect)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
+#pattern=(farmguardian|pound|zproxy).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (resurrect)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
 #context=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
 #desc=$2_up
 #action=shellcmd /usr/local/zevenet/bin/sendNotification sendNotification Backend "$0"; shellcmd logger "$1 notification sent" -i -t sec
 #ptype2=RegExp
-#pattern2=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (dead|down)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
+#pattern2=(farmguardian|pound|zproxy).+ (BackEnd \d+\.\d+\.\d+\.\d+:(\d+)?) (dead|down)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '[\w-]+')?
 #context2=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
 #desc2=$2_up
 #action2=shellcmd logger "Backend $2 flapped" -i -t sec; delete $1_$4_$5_$2_up_down

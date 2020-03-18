@@ -26,6 +26,7 @@ use warnings;
 
 use Config::Tiny;
 use Zevenet::Config;
+use Zevenet::Log;
 include 'Zevenet::Notify';
 
 ( my $section, my $pattern ) = @ARGV;
@@ -36,7 +37,8 @@ my $logger = &getGlobalConfiguration( 'logger' );
 
 if ( $subject eq "error" || !$bodycomp )
 {
-	system ( "$logger \"Error creating body to alert: '$pattern'\" -i -t sec" );
+	# log the pattern is a trigger for the sec event
+	# &zenlog ( "Error parsing the alert pattern: '$pattern'", "error", "notif" );
 	exit 1;
 }
 
@@ -68,6 +70,10 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 		$program = $3;
 		$pid     = $4;
 		$pid =~ s/[\[\]]//g;
+	}
+	else
+	{
+		&zenlog( "Error getting system information", 'error', "notif" );
 	}
 
 	# Gdnsd msg
@@ -111,7 +117,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 # l7 proxy msg
 # example:
 # (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed) in farm: 'test', service: 'srv1'
-	elsif ( ( $program =~ /zproxy/ || $program =~ /farmguardian/ )
+	elsif ( ( $program =~ /zproxy|pound/ || $program =~ /farmguardian/ )
 		&& $msg =~
 		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+)? (\w+)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '([\w-]+)')?/
 	  )
@@ -124,7 +130,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 		if ( $service =~ /'(.+)'/ ) { $service = "$1"; }
 
-		if    ( $program =~ /zproxy/ )       { $program = "It has been"; }
+		if    ( $program =~ /zproxy|pound/ ) { $program = "It has been"; }
 		elsif ( $program =~ /farmguardian/ ) { $program = "Farmguardian"; }
 
 		if ( $status =~ /dead/ || $status =~ /down/ ) { $status = "DOWN"; }
