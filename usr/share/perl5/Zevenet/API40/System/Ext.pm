@@ -183,24 +183,6 @@ sub set_system_global
 					   { code => 400, body => { description => $desc, message => $msg } } );
 	}
 
-	if ( exists $json_obj->{ ssyncd } )
-	{
-		include 'Zevenet::Cluster';
-		&runZClusterRemoteManager( 'enable_ssyncd' )
-		  if ( $json_obj->{ ssyncd } eq 'true' );
-		&runZClusterRemoteManager( 'disable_ssyncd' )
-		  if ( $json_obj->{ ssyncd } eq 'false' );
-	}
-
-	if ( exists $json_obj->{ proxy_new_generation } )
-	{
-		include 'Zevenet::Cluster';
-		&runZClusterRemoteManager( 'enable_proxyng' )
-		  if ( $json_obj->{ proxy_new_generation } eq 'true' );
-		&runZClusterRemoteManager( 'disable_proxyng' )
-		  if ( $json_obj->{ proxy_new_generation } eq 'false' );
-	}
-
 	my $body =
 	  { code => 200, body => { description => $desc, params => $json_obj } };
 	if ( exists $json_obj->{ duplicated_network } )

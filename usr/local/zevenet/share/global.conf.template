@@ -285,8 +285,6 @@ $grep_bin="/bin/grep";
 $nft_bin="/usr/local/sbin/nft";#update
 #Where is nftlb?
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
-#Where is nftlb service
-$nftlb_svc="$zbindir/nftlbd";
 #Where is poweroff
 $aws_poweroff_bin="/sbin/poweroff";#update
 $default_poweroff_bin="/usr/sbin/poweroff";#update
@@ -495,10 +493,30 @@ $lockIpdsPackage="/tmp/ipds_package.lock";
 # Rabc Module
 $rbacRolesTpl_dir="$templatedir/rbac_roles";
 
+# Ssyncd for pound
+#where is pound ssyncd base?
+$base_ssyncd_pound="$zdir/app/ssyncd/pound";#update
+#where is pound ssyncd binary?
+$ssyncd_pound_bin="$base_ssyncd_pound/bin/ssyncd";#update
+#where is pound ssyncd ctl?
+$ssyncdctl_pound_bin="$base_ssyncd_pound/bin/ssyncdctl";#update
+
+# Ssyncd for zproxy
+#where is zproxy ssyncd base?
+$base_ssyncd_zproxy="$zdir/app/ssyncd/zproxy";#update
+#where is zproxy ssyncd binary?
+$ssyncd_zproxy_bin="$base_ssyncd_zproxy/bin/ssyncd";#update
+#where is zproxy ssyncd ctl?
+$ssyncdctl_zproxy_bin="$base_ssyncd_zproxy/bin/ssyncdctl";#update
+
 #Ssyncd
 $ssyncd_enabled="true";
-$ssyncd_bin="$zdir/app/ssyncd/bin/ssyncd";#update
-$ssyncdctl_bin="$zdir/app/ssyncd/bin/ssyncdctl";#update
+#where is ssyncd dir?
+$base_ssyncd="$base_ssyncd_zproxy";
+#where ssyncd binary?
+$ssyncd_bin="$ssyncd_zproxy_bin";
+#where is ssyncd ctl?
+$ssyncdctl_bin="$ssyncdctl_zproxy_bin";
 $ssyncd_port="9999";
 
 #L4sd configuration

@@ -202,11 +202,13 @@ elsif ( $object eq 'disable_ssyncd' )
 elsif ( $object eq 'enable_proxyng' )
 {
 	include 'Zevenet::System::Global';
+	&setSsyncdNG( 'true' );
 	&setProxyNG( 'true' );
 }
 elsif ( $object eq 'disable_proxyng' )
 {
 	include 'Zevenet::System::Global';
+	&setSsyncdNG( 'false' );
 	&setProxyNG( 'false' );
 }
 

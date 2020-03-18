@@ -36,6 +36,7 @@ Returns:
 		ssyncd, shows if ssyncd is enabled "true" or disabled "false"
 		duplicated_network, shows if the system will duplicate a network segment for each interface "true" or it will be applied only once in the system "false"
 		arp_announce, the system will send a arg packet to the net when it is set up or stood up, "true". The system will not notice anything to the net when it is set up or stood up, "false"
+		proxy_new_generation, shows if zproxy is enabled "true" or pound is enabled "false"
 
 =cut
 
@@ -87,7 +88,17 @@ sub setSystemGlobal
 	{
 		include 'Zevenet::Ssyncd';
 		$err = &setSsyncd( $global->{ ssyncd } );
-		return $err if $err;
+		if ( $err )
+		{
+			return $err;
+		}
+		else
+		{
+			require 'Zevenet::Cluster';
+			( $global->{ ssyncd } eq 'true' )
+			  ? &runZClusterRemoteManager( 'enable_ssyncd' )
+			  : &runZClusterRemoteManager( 'disable_ssyncd' );
+		}
 	}
 
 	if ( exists $global->{ duplicated_network } )
@@ -117,9 +128,13 @@ sub setSystemGlobal
 		require Zevenet::Farm::Config;
 
 		$err = 0;
-		my $base_cur = &getGlobalConfiguration( 'base_proxy' );
-		my $bin_cur  = &getGlobalConfiguration( 'proxy' );
-		my $ctl_cur  = &getGlobalConfiguration( 'proxyctl' );
+		my $base_cur          = &getGlobalConfiguration( 'base_proxy' );
+		my $bin_cur           = &getGlobalConfiguration( 'proxy' );
+		my $ctl_cur           = &getGlobalConfiguration( 'proxyctl' );
+		my $ssyncd_base_cur   = &getGlobalConfiguration( 'base_ssyncd' );
+		my $ssyncd_bin_cur    = &getGlobalConfiguration( 'ssyncd_bin' );
+		my $ssyncdctl_bin_cur = &getGlobalConfiguration( 'ssyncdctl_bin' );
+		my $ssyncd_enabled    = &getGlobalConfiguration( 'ssyncd_enabled' );
 
 		# stop l7 farms
 		my @farmsf = &getFarmsByType( 'http' );
@@ -134,10 +149,45 @@ sub setSystemGlobal
 				$err = &runFarmStop( $farmname, "false" );
 				if ( $err )
 				{
+					&zenlog( "There was an error stopping farm $farmname", "debug2", "lslb" );
 					$err = 2;
 					last;
 				}
-				else { push @farms_stopped, $farmname; }
+				else
+				{
+					&zenlog( "REN: Farm $farmname stopped", "", "" );
+					push @farms_stopped, $farmname;
+				}
+			}
+		}
+
+		if ( ( !$err ) and ( $ssyncd_enabled eq "true" ) )
+		{
+			require Zevenet::Ssyncd;
+			if ( &setSsyncdDisabled() )
+			{
+				&zenlog( "There was an error stopping Ssyncd", "debug2", "ssyncd" );
+				$err = 3;
+			}
+			else
+			{
+				require Zevenet::Cluster;
+				&runZClusterRemoteManager( 'disable_ssyncd' );
+			}
+		}
+
+		if ( !$err )
+		{
+			if ( &setSsyncdNG( $global->{ proxy_new_generation } ) )
+			{
+				&zenlog(
+						 "There was an error setting SsyncdNG ( "
+						   . $global->{ proxy_new_generation }
+						   . " ) binaries",
+						 "debug2",
+						 "System"
+				);
+				$err = 4;
 			}
 		}
 
@@ -145,9 +195,23 @@ sub setSystemGlobal
 		{
 			if ( &setProxyNG( $global->{ proxy_new_generation } ) )
 			{
-				$err = 3;
+				&zenlog(
+						 "There was an error setting ProxyNG ( "
+						   . $global->{ proxy_new_generation }
+						   . " ) binaries",
+						 "debug2",
+						 "System"
+				);
+				$err = 5;
+			}
+			else
+			{
+				( $global->{ proxy_new_generation } eq "true" )
+				  ? &runZClusterRemoteManager( 'enable_proxyng' )
+				  : &runZClusterRemoteManager( 'disable_proxyng' );
 			}
 		}
+
 		if ( !$err )
 		{
 			# set farms config
@@ -155,7 +219,15 @@ sub setSystemGlobal
 			{
 				if ( &setFarmProxyNGConf( $global->{ proxy_new_generation }, $farmname ) )
 				{
-					$err = 4;
+					&zenlog( "There was an error setting Proxy Confguration in farm $farmname",
+							 "debug2", "system" );
+					foreach my $farmname ( @farms_config )
+					{
+						&zenlog( "Reverting proxyng conf ($ng_cur) in Farm $farmname ",
+								 "debug2", "system" );
+						&setFarmProxyNGConf( $ng_cur, $farmname );
+					}
+					$err = 6;
 					last;
 				}
 				else
@@ -165,16 +237,21 @@ sub setSystemGlobal
 			}
 		}
 
-		if ( $err == 4 )
+		if ( $err >= 4 )
 		{
-			# set binary
-			&setGlobalConfiguration( 'base_proxy', $base_cur );
-			&setGlobalConfiguration( 'proxy',      $bin_cur );
-			&setGlobalConfiguration( 'proxyctl',   $ctl_cur );
-			&setGlobalConfiguration( 'proxy_ng',   $ng_cur );
-			foreach my $farmname ( @farms_config )
+			if ( &setSsyncdNG( $ng_cur ) )
 			{
-				&setFarmProxyNGConf( $ng_cur, $farmname );
+				&zenlog( "Fatal Error: There was an error reverting Ssyncd binaries settings",
+						 "debug2", "System" );
+			}
+		}
+
+		if ( $err >= 5 )
+		{
+			if ( &setProxyNG( $ng_cur ) )
+			{
+				&zenlog( "Fatal Error: There was an error reverting Proxy binaries settings",
+						 "debug2", "System" );
 			}
 		}
 
@@ -182,9 +259,38 @@ sub setSystemGlobal
 		my $farm_err;
 		foreach my $farmname ( @farms_stopped )
 		{
-			$farm_err = &runFarmStart( $farmname, "false" );
-			$err = 5 if ( $farm_err and !$err );
+			if ( &runFarmStart( $farmname, "false" ) )
+			{
+				&zenlog( "There was an error starting Farm $farmname", "debug2", "lslb" );
+				$err = 7;
+			}
 		}
+
+		if ( ( ( !$err ) or ( $err > 3 ) ) and ( $ssyncd_enabled eq "true" ) )
+		{
+			# Start Ssyncd
+			my $node_role = &getZClusterNodeStatus();
+			if ( $node_role eq 'master' )
+			{
+				if ( &setSsyncdMaster() )
+				{
+					&zenlog( "There was an error starting Ssyncd mode $node_role",
+							 "debug2", "ssyncd" );
+					$err = 8;
+				}
+			}
+			elsif ( $node_role eq 'backup' )
+			{
+				if ( &setSsyncdBackup() )
+				{
+					&zenlog( "There was an error starting Ssyncd mode $node_role",
+							 "debug2", "ssyncd" );
+					$err = 8;
+				}
+			}
+			&runZClusterRemoteManager( 'enable_ssyncd' );
+		}
+
 	}
 
 	return $err;
@@ -196,7 +302,7 @@ Function: setProxyNG
 	Set the ProxyNG settings of the system.
 
 Parameters:
-	arg - "true" to turn it on or "false" to turn it off.
+	arg - "true" to enable zproxy binaries, or "false" to enable pound binaries.
 
 Returns:
 	Integer - Error code. Returns: 0 on success, another value on failure.
@@ -222,6 +328,43 @@ sub setProxyNG    # ($ng)
 	$err += &setGlobalConfiguration( 'proxy',      $bin );
 	$err += &setGlobalConfiguration( 'proxyctl',   $ctl );
 	$err += &setGlobalConfiguration( 'proxy_ng',   $ng ) if ( !$err );
+
+	return $err;
+}
+
+=begin nd
+Function: setSsyncdNG
+
+	Set the Ssysncd settings of the system.
+
+Parameters:
+	arg - "true" to enable Ssyncd zproxy binaries, or "false" to enable Ssyncd pound binaries.
+
+Returns:
+	Integer - Error code. Returns: 0 on success, another value on failure.
+
+=cut
+
+sub setSsyncdNG    # ($ng)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $ng  = shift;
+	my $err = 0;
+
+	my $ssyncd_base =
+	  ( $ng eq 'true' ) ? 'base_ssyncd_zproxy' : 'base_ssyncd_pound';
+	my $ssyncd_bin = ( $ng eq 'true' ) ? 'ssyncd_zproxy_bin' : 'ssyncd_pound_bin';
+	my $ssyncdctl_bin =
+	  ( $ng eq 'true' ) ? 'ssyncdctl_zproxy_bin' : 'ssyncdctl_pound_bin';
+	$ssyncd_base   = &getGlobalConfiguration( $ssyncd_base );
+	$ssyncd_bin    = &getGlobalConfiguration( $ssyncd_bin );
+	$ssyncdctl_bin = &getGlobalConfiguration( $ssyncdctl_bin );
+
+	# set binary
+	$err += &setGlobalConfiguration( 'base_ssyncd',   $ssyncd_base );
+	$err += &setGlobalConfiguration( 'ssyncd_bin',    "$ssyncd_bin" );
+	$err += &setGlobalConfiguration( 'ssyncdctl_bin', "$ssyncdctl_bin" );
 
 	return $err;
 }
