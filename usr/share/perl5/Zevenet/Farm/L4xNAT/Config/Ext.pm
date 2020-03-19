@@ -68,7 +68,9 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 	elsif ( $param eq "log-prefix" )
 	{
 		$srvparam = "log-prefix";
-		$value    = "l4: $farm_name";
+		$value    = "l4:$farm_name ";
+
+	  # TODO: put a warning msg when farm name is longer than nftables reserved log size
 	}
 	else
 	{
