@@ -2247,6 +2247,15 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 		}
 	}
 
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Farm::HTTP::Ext',
+				func   => 'migrateHTTPFarmLogs',
+				args   => [$farm_name, $proxy_mode],
+		);
+	}
+
 	if ( &getHTTPFarmConfigIsOK( $farm_name ) )
 	{
 		@array = @array_bak;

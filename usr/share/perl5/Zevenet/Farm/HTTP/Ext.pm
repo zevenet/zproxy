@@ -99,6 +99,7 @@ Function: getHTTPFarmLogs
 
 Parameters:
 	farmname - Farm name
+	ng_proxy - It is used to set the log parameter depending on the zproxy or pound. It is termporary, it should disappear when pound will be removed from Zevenet
 
 Returns:
 	scalar - The possible values are: 0 on disabled, possitive value on enabled or -1 on failure
@@ -109,8 +110,32 @@ sub getHTTPFarmLogs    # ($farm_name)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name ) = @_;
-	return &get_http_farm_ee_struct( $farm_name )->{ logs };
+	my ( $farm_name, $proxy_ng ) = @_;
+	return &get_http_farm_ee_struct( $farm_name, undef, $proxy_ng )->{ logs };
+}
+
+=begin nd
+Function: migrateHTTPFarmLogs
+
+	This function is temporary. It is used while zproxy and pound are available in zevenet.
+	This should disappear when pound will be removed
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - The possible values are: 0 on disabled, possitive value on enabled or -1 on failure
+
+=cut
+
+sub migrateHTTPFarmLogs
+{
+	my ( $farm_name, $proxy_mode ) = @_;
+
+	# invert the log
+	my $read_log = ( $proxy_mode eq 'true' ) ? 'false' : 'true';
+	my $log = &getHTTPFarmLogs( $farm_name, $read_log );
+	&setHTTPFarmLogs( $farm_name, $log, $proxy_mode );
 }
 
 =begin nd
@@ -121,6 +146,7 @@ Function: setHTTPFarmLogs
 Parameters:
 	farmname - Farm name
 	action - The available actions are: "true" to enable or "false" to disable
+	ng_proxy - It is used to set the log parameter depending on the zproxy or pound. It is termporary, it should disappear when pound will be removed from Zevenet
 
 Returns:
 	scalar - The possible values are: 0 on success or -1 on failure
@@ -131,12 +157,22 @@ sub setHTTPFarmLogs    # ($farm_name, $action)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $action ) = @_;
+	my $farm_name = shift;
+	my $action    = shift;
+	my $proxy_ng  = shift // &getGlobalConfiguration( 'proxy_ng' );
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	my $loglvl = ( $action eq "true" ) ? 5 : 0;
+	my $loglvl;
+	if ( $proxy_ng eq 'true' )
+	{
+		$loglvl = ( $action eq "true" ) ? 6 : 5;
+	}
+	else
+	{
+		$loglvl = ( $action eq "true" ) ? 5 : 0;
+	}
 
 	require Tie::File;
 	tie my @file, 'Tie::File', "$configdir/$farm_filename";
@@ -710,7 +746,8 @@ sub get_http_farm_ee_struct
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $farmname = shift;
-	my $farm_st = shift // {};
+	my $farm_st  = shift // {};
+	my $proxy_ng = shift // &getGlobalConfiguration( 'proxy_ng' );
 
 	$farm_st->{ ignore_100_continue }  = "false";
 	$farm_st->{ logs }                 = "false";
@@ -767,7 +804,15 @@ sub get_http_farm_ee_struct
 		}
 		elsif ( $line =~ /LogLevel\s+(\d).*/ )
 		{
-			$farm_st->{ logs } = ( $1 eq '0' ) ? 'false' : 'true';
+			my $lvl = $1 + 0;
+			if ( $proxy_ng eq 'true' )
+			{
+				$farm_st->{ logs } = 'true' if ( $lvl >= 6 );
+			}
+			else
+			{
+				$farm_st->{ logs } = 'true' if ( $lvl >= 5 );
+			}
 		}
 
 	}
