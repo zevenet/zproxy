@@ -285,6 +285,8 @@ $grep_bin="/bin/grep";
 $nft_bin="/usr/local/sbin/nft";#update
 #Where is nftlb?
 $nftlb_bin="/usr/local/zevenet/app/nftlb/sbin/nftlb";
+#Where is the nftlb service?
+$nftlb_svc="$zbindir/nftlbd";
 #Where is poweroff
 $aws_poweroff_bin="/sbin/poweroff";#update
 $default_poweroff_bin="/usr/sbin/poweroff";#update
