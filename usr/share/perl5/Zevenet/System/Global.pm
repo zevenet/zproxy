@@ -157,7 +157,7 @@ sub setSystemGlobal
 
 		if ( ( !$err ) and ( $ssyncd_enabled eq "true" ) )
 		{
-			include Zevenet::Ssyncd;
+			include 'Zevenet::Ssyncd';
 			if ( &setSsyncdDisabled() )
 			{
 				&zenlog( "There was an error stopping Ssyncd", "debug2", "ssyncd" );
@@ -165,7 +165,7 @@ sub setSystemGlobal
 			}
 			else
 			{
-				include Zevenet::Cluster;
+				include 'Zevenet::Cluster';
 				&runZClusterRemoteManager( 'disable_ssyncd' );
 			}
 		}
