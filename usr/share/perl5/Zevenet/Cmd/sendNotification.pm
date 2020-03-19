@@ -39,6 +39,9 @@ if ( $subject eq "error" || !$bodycomp )
 {
 	# log the pattern is a trigger for the sec event
 	# &zenlog ( "Error parsing the alert pattern: '$pattern'", "error", "notif" );
+
+	&zenlog( "Error parsing the $section alert. Notification couldn't be sent",
+			 "error", "notif" );
 	exit 1;
 }
 

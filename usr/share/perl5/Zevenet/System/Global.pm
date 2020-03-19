@@ -128,13 +128,7 @@ sub setSystemGlobal
 		require Zevenet::Farm::Config;
 
 		$err = 0;
-		my $base_cur          = &getGlobalConfiguration( 'base_proxy' );
-		my $bin_cur           = &getGlobalConfiguration( 'proxy' );
-		my $ctl_cur           = &getGlobalConfiguration( 'proxyctl' );
-		my $ssyncd_base_cur   = &getGlobalConfiguration( 'base_ssyncd' );
-		my $ssyncd_bin_cur    = &getGlobalConfiguration( 'ssyncd_bin' );
-		my $ssyncdctl_bin_cur = &getGlobalConfiguration( 'ssyncdctl_bin' );
-		my $ssyncd_enabled    = &getGlobalConfiguration( 'ssyncd_enabled' );
+		my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 
 		# stop l7 farms
 		my @farmsf = &getFarmsByType( 'http' );
@@ -256,7 +250,6 @@ sub setSystemGlobal
 		}
 
 		# start l7 farms
-		my $farm_err;
 		foreach my $farmname ( @farms_stopped )
 		{
 			if ( &runFarmStart( $farmname, "false" ) )
@@ -290,7 +283,7 @@ sub setSystemGlobal
 			}
 			&runZClusterRemoteManager( 'enable_ssyncd' );
 		}
-
+		&zenlog( "Error modifying proxy, code '$err'", "error", "system" ) if ( $err );
 	}
 
 	return $err;
