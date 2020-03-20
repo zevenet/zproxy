@@ -197,9 +197,9 @@ bool SSLContext::loadOpensslConfig(const std::string &config_file_path, const st
   }
 }
 
-int SSLContext::SNIServerName(SSL *ssl, int dummy, SSLData *ctx) {
+int SSLContext::SNIServerName(SSL *ssl, int dummy, POUND_CTX *ctx) {
   const char *server_name;
-  SSLData *pc;
+  POUND_CTX *pc;
 
   if ((server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) return SSL_TLSEXT_ERR_NOACK;
 
@@ -207,16 +207,16 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SSLData *ctx) {
    * servername); */
 
   SSL_set_SSL_CTX(ssl, nullptr);
-  for (pc = ctx; pc; pc = pc->next) {
+  for (pc = ctx; pc; pc = pc->next.get()) {
     if (fnmatch(pc->server_name, server_name, 0) == 0) {
       /* logmsg(LOG_DEBUG, "Found cert for %s", servername); */
-      SSL_set_SSL_CTX(ssl, pc->ctx);
+      SSL_set_SSL_CTX(ssl, pc->ctx.get());
       return SSL_TLSEXT_ERR_OK;
     } else if (pc->subjectAltNameCount > 0 && pc->subjectAltNames != nullptr) {
       size_t i;
       for (i = 0; i < pc->subjectAltNameCount; i++) {
         if (fnmatch(reinterpret_cast<char *>(pc->subjectAltNames[i]), server_name, 0) == 0) {
-          SSL_set_SSL_CTX(ssl, pc->ctx);
+          SSL_set_SSL_CTX(ssl, pc->ctx.get());
           return SSL_TLSEXT_ERR_OK;
         }
       }
@@ -224,7 +224,7 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SSLData *ctx) {
   }
 
   /* logmsg(LOG_DEBUG, "No match for %s, default used", server_name); */
-  SSL_set_SSL_CTX(ssl, ctx->ctx);
+  SSL_set_SSL_CTX(ssl, ctx->ctx.get());
   return SSL_TLSEXT_ERR_OK;
 }
 
