@@ -1007,7 +1007,7 @@ sub writeL4NlbConfigFile
 		$next_line = <$fi>;
 		$write = 0 if ( $line =~ /\"policies\"\:/ );
 
-		if ( $next_line =~ /\"policies\"\:/ && $line =~ /\]/ )
+		if ( defined ( $next_line ) && $next_line =~ /\"policies\"\:/ && $line =~ /\]/ )
 		{
 			$line =~ s/,$//g;
 		}

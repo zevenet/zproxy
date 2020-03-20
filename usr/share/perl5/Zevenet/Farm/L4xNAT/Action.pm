@@ -384,7 +384,7 @@ sub sendL4NlbCmd
 	if ( $self->{ method } =~ /PUT/
 		 || ( $self->{ method } =~ /DELETE/ && $self->{ uri } =~ /farms\/.*\/.*/ ) )
 	{
-		my $file  = "/tmp/nft_$$";
+		my $file  = "/tmp/get_farm_$$";
 		my $match = 0;
 
 		$output = &httpNlbRequest(
