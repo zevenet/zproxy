@@ -491,6 +491,8 @@ $blacklistsCronFile="/etc/cron.d/blacklists";
 $dosConf="$configdir/ipds/dos/dos.conf";#update
 $dosConfDir="$configdir/ipds/dos";#update
 $lockIpdsPackage="/tmp/ipds_package.lock";
+$rblDNSTemplate="$templatedir/zevenet_nameservers.conf";
+$rblDNSConfig="$configdir/ipds/rbl/zevenet_nameservers.conf";
 
 # Rabc Module
 $rbacRolesTpl_dir="$templatedir/rbac_roles";

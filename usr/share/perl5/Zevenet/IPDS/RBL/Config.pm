@@ -29,6 +29,8 @@ my $rblPath              = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
 my $rblConfigFile        = "$rblPath/rbl.conf";
 my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
 my $userDomainsFile      = "$rblPath/user_domains.conf";
+my $rblDNSTemplateFile   = &getGlobalConfiguration( 'rblDNSTemplate' );
+my $rblDNSConfigFile     = &getGlobalConfiguration( 'rblDNSConfig' );
 
 sub setRBLLockConfigFile
 {
@@ -76,6 +78,12 @@ sub initRBLModule
 		&logAndRun( &getGlobalConfiguration( 'touch' ) . " $userDomainsFile" );
 		&zenlog( "Created $userDomainsFile file." );
 	}
+
+	# create list nameserver
+	&logAndRun(   &getGlobalConfiguration( 'cp' )
+				. " $rblDNSTemplateFile"
+				. " $rblDNSConfigFile" );
+	&zenlog( "Created $rblDNSConfigFile file." );
 }
 
 =begin nd

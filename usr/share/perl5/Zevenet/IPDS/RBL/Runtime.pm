@@ -31,6 +31,7 @@ my $rblPath              = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
 my $rblConfigFile        = "$rblPath/rbl.conf";
 my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
 my $userDomainsFile      = "$rblPath/user_domains.conf";
+my $rblDNSConfigFile     = &getGlobalConfiguration( 'rblDNSConfig' );
 
 =begin nd
 Function: runRBLFarmRule
@@ -212,7 +213,7 @@ CacheSize	$params->{'cache_size'}
 CacheTTL		$params->{'cache_time'}
 LogFacility	daemon
 AlternativeDomain		rbl.zevenet.com
-AlternativeResolveFile	usr/local/zevenet/config/ipds/rbl/zevenet_nameservers.conf
+AlternativeResolveFile	$rblDNSConfigFile
 Queueno		$params->{'nf_queue_number'}
 Queuesize	$params->{'queue_size'}
 Threadmax	$params->{'threadmax'}
