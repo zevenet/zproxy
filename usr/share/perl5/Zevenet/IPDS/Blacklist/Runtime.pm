@@ -239,9 +239,78 @@ sub setBLCreateRule
 }
 
 =begin nd
+Function: getBLFarmRuleRunning
+
+	It checks if the blacklist rule (nft) is applied to the farm.
+
+Parameters:
+
+	farmName - farm where rules will be applied
+	list	 - ip list name
+
+Returns:
+
+	Integer - It returns 1 if the blacklist rule is applied to the farm, or 0 if it is no
+
+=cut
+
+sub getBLFarmRuleRunning
+{
+	my ( $farm, $bl ) = @_;
+
+	require Zevenet::Nft;
+
+	my $file = "/tmp/policy";
+	my $output = &httpNlbRequest(
+								  {
+									method => "GET",
+									uri    => "/farms/" . $farm,
+									file   => $file,
+								  }
+	);
+
+	if ( $output == -1 )
+	{
+		$output = 0;
+	}
+	else
+	{
+		$output = 0;
+		open my $fh, '<', $file;
+
+		my $policy = 0;
+		while ( my $line = <$fh> )
+		{
+			if ( $policy == 1 and $line =~ /"name"\s*:\s*"$bl"/ )
+			{
+				$output = 1;
+				last;
+			}
+			elsif ( $line =~ /\"policies\"\:/ )
+			{
+				$policy = 1;
+			}
+			elsif ( $policy == 1 and $line =~ /\]/ )
+			{
+				last;
+			}
+		}
+
+		close $fh;
+		unlink $fh;
+	}
+
+	&zenlog(
+			 "Cheking ($output) if the blacklist '$bl' is applied in the farm '$farm'",
+			 'debug', 'ipds' );
+
+	return $output;
+}
+
+=begin nd
 Function: setBLDeleteRule
 
-	Delete a iptables rule.
+	Delete a nftables rule if it is running.
 
 Parameters:
 
@@ -261,18 +330,14 @@ sub setBLDeleteRule
 			 "debug", "PROFILING" );
 	my ( $farmName, $listName ) = @_;
 
-	my $output;
+	my $output = 0;
 
 	include 'Zevenet::IPDS::Core';
 
-	$output = &delIPDSFarmParam( 'policy', $listName, $farmName );
-
-	# delete list if it isn't used. This has to be the last call.
-	if ( !&getBLListUsed( $listName ) )
+	if ( &getBLFarmRuleRunning( $farmName, $listName ) )
 	{
-		&setBLDestroyList( $listName );
+		$output = &delIPDSFarmParam( 'policy', $listName, $farmName );
 	}
-
 	return $output;
 }
 

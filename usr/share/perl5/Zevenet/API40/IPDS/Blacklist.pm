@@ -1004,9 +1004,6 @@ sub del_blacklists_from_farm
 		  if ( !@{ &getBLParam( $listName, 'farms' ) } );
 	}
 
-	# Call to remove service if possible
-	&delIPDSFarmService( $farmName );
-
 	if ( $error )
 	{
 		my $msg = "Error, removing $listName rule from $farmName.";

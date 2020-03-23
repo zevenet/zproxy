@@ -377,11 +377,11 @@ sub delIPDSFarmParam
 
 	require Zevenet::Nft;
 
-	$output = httpNlbRequest(
-							  {
-								method => "DELETE",
-								uri    => "/farms/" . $farm . $attrib,
-							  }
+	$output = &httpNlbRequest(
+							   {
+								 method => "DELETE",
+								 uri    => "/farms/" . $farm . $attrib,
+							   }
 	);
 
 	if ( $type eq "l4xnat" )
@@ -390,12 +390,12 @@ sub delIPDSFarmParam
 		my $farm_filename = &getFarmFile( $farm );
 		my $configdir     = &getGlobalConfiguration( 'configdir' );
 
-		$output = httpNlbRequest(
-								  {
-									method => "GET",
-									uri    => "/farms/" . $farm,
-									file   => "$configdir/$farm_filename",
-								  }
+		$output = &httpNlbRequest(
+								   {
+									 method => "GET",
+									 uri    => "/farms/" . $farm,
+									 file   => "$configdir/$farm_filename",
+								   }
 		);
 	}
 	else
@@ -686,12 +686,12 @@ sub delIPDSFarmService
 		 && !@{ $rules->{ 'blacklists' } }
 		 && !@{ $rules->{ 'rbl' } } )
 	{
-		$output = httpNlbRequest(
-								  {
-									farm   => $farm,
-									method => "DELETE",
-									uri    => "/farms/" . $farm,
-								  }
+		$output = &httpNlbRequest(
+								   {
+									 farm   => $farm,
+									 method => "DELETE",
+									 uri    => "/farms/" . $farm,
+								   }
 		);
 	}
 

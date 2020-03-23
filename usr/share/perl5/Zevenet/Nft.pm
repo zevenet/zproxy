@@ -205,7 +205,7 @@ sub httpNlbRequest
 	my $output = &logAndGet( $execmd );
 	if ( $output !~ /^2/ )    # err
 	{
-		&zenlog( "cmd failed: $execmd", 'error', 'system' );
+		&zenlog( "cmd failed: $execmd", 'error', 'system' ) if ( !&debug );
 		if ( open ( my $fh, '<', $file ) )
 		{
 			local $/ = undef;
@@ -218,10 +218,6 @@ sub httpNlbRequest
 			&zenlog( "The file '$file' could not be opened", 'error', 'system' );
 		}
 		return -1;
-	}
-	elsif ( &debug )
-	{
-		&zenlog( "cmd: $execmd", 'debug' );
 	}
 
 	# filter ipds params into the configuration file
