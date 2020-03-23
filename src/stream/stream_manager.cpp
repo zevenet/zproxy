@@ -684,7 +684,7 @@ void StreamManager::onRequestEvent(int fd) {
                   [[fallthrough]];
                 case IO::IO_OP::OP_SUCCESS: {
                   DEBUG_COUNTER_HIT(debug__::on_backend_connect);
-                  stream->backend_connection.getBackend()->increaseConnection();
+                  //stream->backend_connection.getBackend()->increaseConnection();
                   streams_set[stream->backend_connection.getFileDescriptor()] =
                       stream;
                   /*
@@ -1271,7 +1271,7 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
             [[fallthrough]];
           case IO::IO_OP::OP_SUCCESS: {
             DEBUG_COUNTER_HIT(debug__::on_backend_connect);
-            stream->backend_connection.getBackend()->increaseConnection();
+            //stream->backend_connection.getBackend()->increaseConnection();
             streams_set[stream->backend_connection.getFileDescriptor()] =
                 stream;
             stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE,
@@ -1340,7 +1340,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       Network::isConnected(fd) && stream->timer_fd.is_set) {
     stream->timer_fd.unset();
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
-
+    stream->backend_connection.getBackend()->increaseConnection();
     stream->backend_connection.getBackend()->setAvgConnTime(
         std::chrono::duration_cast<std::chrono::duration<double>>(
             std::chrono::steady_clock::now() -
