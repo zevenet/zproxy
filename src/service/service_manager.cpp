@@ -22,7 +22,9 @@
 #include "service_manager.h"
 #include <memory>
 #include <utility>
+#ifdef WAF_ENABLED
 #include "../handlers/waf.h"
+#endif
 
 std::map<int, std::shared_ptr<ServiceManager>> ServiceManager::instance;
 
