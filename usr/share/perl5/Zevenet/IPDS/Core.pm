@@ -685,6 +685,7 @@ sub delIPDSFarmService
 									file   => $file,
 									method => "GET",
 									uri    => "/farms/" . $farm,
+									check  => 1,
 								  }
 	);
 

@@ -165,7 +165,13 @@ Function: httpNlbRequest
 	Send an action to nftlb
 
 Parameters:
-	self - hash that includes hash_keys -> ( $file, $method, $uri, $body )
+	self - hash that includes hash_keys:
+		file, file where the HTTP body response of the nftlb is saved
+		method, HTTP verb for nftlb request
+		uri, HTTP URI for nftlb request
+		body, body to use in POST and PUT requests
+		check, if this parameter is defined is a flag to not print error if
+				the request is used to check if a element exists.
 
 Returns:
 	Integer - return code of the request command
@@ -205,12 +211,13 @@ sub httpNlbRequest
 	my $output = &logAndGet( $execmd );
 	if ( $output !~ /^2/ )    # err
 	{
-		&zenlog( "cmd failed: $execmd", 'error', 'system' ) if ( !&debug );
+		my $tag = ( exists $self->{ check } ) ? 'debug' : 'error';
+		&zenlog( "cmd failed: $execmd", $tag, 'system' ) if ( !&debug );
 		if ( open ( my $fh, '<', $file ) )
 		{
 			local $/ = undef;
 			my $err = <$fh>;
-			&zenlog( "(code: $output): $err", 'error', 'system' );
+			&zenlog( "(code: $output): $err", $tag, 'system' );
 			close $fh;
 		}
 		else
