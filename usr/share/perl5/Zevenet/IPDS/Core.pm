@@ -679,20 +679,48 @@ sub delIPDSFarmService
 
 	require Zevenet::Nft;
 
-	# if there is no rule remaining, delete the service
-	my $rules = &getIPDSfarmsRules( $farm, "up" );
+	# check if the service exists
+	my $file = "/tmp/rm_svc_$farm";
+	&httpNlbRequest(
+					 {
+					   file   => $file,
+					   method => "GET",
+					   uri    => "/farms/" . $farm,
+					 }
+	);
 
-	if (    !@{ $rules->{ 'dos' } }
-		 && !@{ $rules->{ 'blacklists' } }
-		 && !@{ $rules->{ 'rbl' } } )
+# this is tmp until GET /farm/fname does not return 200 if the farm does not is loaded
+	if ( -e $file )
 	{
-		$output = &httpNlbRequest(
-								   {
-									 farm   => $farm,
-									 method => "DELETE",
-									 uri    => "/farms/" . $farm,
-								   }
-		);
+		open my $fh, '<', $file;
+		while ( my $line = <$fh> )
+		{
+			if ( $line =~ /"name"\s*:\s*"$farm"/ )
+			{
+				$output = 1;
+				last;
+			}
+		}
+		unlink $file;
+	}
+
+	if ( $output )
+	{
+		# if there is no rule remaining, delete the service
+		my $rules = &getIPDSfarmsRules( $farm, "up" );
+
+		if (    !@{ $rules->{ 'dos' } }
+			 && !@{ $rules->{ 'blacklists' } }
+			 && !@{ $rules->{ 'rbl' } } )
+		{
+			$output = &httpNlbRequest(
+									   {
+										 farm   => $farm,
+										 method => "DELETE",
+										 uri    => "/farms/" . $farm,
+									   }
+			);
+		}
 	}
 
 	return $output;
