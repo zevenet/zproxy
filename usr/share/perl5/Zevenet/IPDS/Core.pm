@@ -669,8 +669,7 @@ sub delIPDSFarmService
 
 	require Zevenet::Farm::Core;
 
-	my $output = 0;
-	my $type   = &getFarmType( $farm );
+	my $type = &getFarmType( $farm );
 
 	if ( $type eq "l4xnat" )
 	{
@@ -681,30 +680,15 @@ sub delIPDSFarmService
 
 	# check if the service exists
 	my $file = "/tmp/rm_svc_$farm";
-	&httpNlbRequest(
-					 {
-					   file   => $file,
-					   method => "GET",
-					   uri    => "/farms/" . $farm,
-					 }
+	my $output = &httpNlbRequest(
+								  {
+									file   => $file,
+									method => "GET",
+									uri    => "/farms/" . $farm,
+								  }
 	);
 
-# this is tmp until GET /farm/fname does not return 200 if the farm does not is loaded
-	if ( -e $file )
-	{
-		open my $fh, '<', $file;
-		while ( my $line = <$fh> )
-		{
-			if ( $line =~ /"name"\s*:\s*"$farm"/ )
-			{
-				$output = 1;
-				last;
-			}
-		}
-		unlink $file;
-	}
-
-	if ( $output )
+	if ( !$output )
 	{
 		# if there is no rule remaining, delete the service
 		my $rules = &getIPDSfarmsRules( $farm, "up" );
@@ -713,6 +697,7 @@ sub delIPDSFarmService
 			 && !@{ $rules->{ 'blacklists' } }
 			 && !@{ $rules->{ 'rbl' } } )
 		{
+			&zenlog( "Removing IPDS farm service", "info", "IPDS" );
 			$output = &httpNlbRequest(
 									   {
 										 farm   => $farm,
