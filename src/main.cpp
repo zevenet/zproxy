@@ -161,5 +161,6 @@ int main(int argc, char *argv[]) {
   listener.stop();
   control_manager->stop();
   cleanExit();
-  return EXIT_SUCCESS;
+  std::exit(EXIT_SUCCESS);
+  //return EXIT_SUCCESS;
 }
