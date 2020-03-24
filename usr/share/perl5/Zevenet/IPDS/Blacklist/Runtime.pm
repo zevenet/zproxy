@@ -260,12 +260,13 @@ sub getBLFarmRuleRunning
 
 	require Zevenet::Nft;
 
-	my $file = "/tmp/policy";
+	my $file = "/tmp/policy_$farm";
 	my $output = &httpNlbRequest(
 								  {
 									method => "GET",
 									uri    => "/farms/" . $farm,
 									file   => $file,
+									check  => 1,
 								  }
 	);
 

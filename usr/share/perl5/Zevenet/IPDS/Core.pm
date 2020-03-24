@@ -678,6 +678,8 @@ sub delIPDSFarmService
 
 	require Zevenet::Nft;
 
+	&zenlog( "Checking if the IPDS farm service exists", "debug", "IPDS" );
+
 	# check if the service exists
 	my $file = "/tmp/rm_svc_$farm";
 	my $output = &httpNlbRequest(

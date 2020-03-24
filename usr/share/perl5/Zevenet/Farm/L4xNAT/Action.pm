@@ -391,7 +391,7 @@ sub sendL4NlbCmd
 								   {
 									 method => "GET",
 									 uri    => "/farms/" . $self->{ farm },
-									 file   => "$file"
+									 file   => "$file",
 								   }
 		);
 
