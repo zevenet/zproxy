@@ -410,7 +410,11 @@ sub sendL4NlbCmd
 			unlink $file;
 		}
 
-		&loadL4FarmNlb( $self->{ farm } ) if ( !$match );
+		if ( !$match )
+		{
+			&zenlog( "The farms was not loaded properly, trying it again", "error", );
+			&loadL4FarmNlb( $self->{ farm } );
+		}
 	}
 
 	if ( $self->{ method } =~ /PUT|DELETE/ )
@@ -434,6 +438,10 @@ sub sendL4NlbCmd
 	$output = &httpNlbRequest( $self );
 
 	return $output if ( $self->{ method } eq "GET" or !defined $self->{ file } );
+
+	# end if the farm was deleted
+	return $output
+	  if ( $self->{ method } eq "DELETE" and !exists $self->{ backend } );
 
 	# save the conf
 	if ( $self->{ method } =~ /PUT|DELETE/ )
