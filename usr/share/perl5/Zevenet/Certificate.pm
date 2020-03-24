@@ -592,15 +592,21 @@ sub getCertInfo
 		}
 
 		my $CN = "no CN";
-		if ( defined $x509->issuer_name->get_entry_by_type( 'CN' ) )
+		if ( defined $x509->subject_name()->get_entry_by_type( 'CN' ) )
 		{
-			$CN = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
+			$CN = $x509->subject_name()->get_entry_by_type( 'CN' )->value;
 		}
+		my $ISSUER = "no issuer";
+		if ( defined $x509->issuer_name()->get_entry_by_type( 'CN' ) )
+		{
+			$ISSUER = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
+		}
+
 		%response = (
 					  file       => $certfile,
 					  type       => 'Certificate',
 					  CN         => $CN,
-					  issuer     => $x509->issuer_name()->get_entry_by_type( 'O' )->value,
+					  issuer     => $ISSUER,
 					  creation   => $x509->notBefore(),
 					  expiration => $x509->notAfter(),
 					  status     => $status,
