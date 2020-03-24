@@ -591,11 +591,16 @@ sub getCertInfo
 			$status = ( $x509->checkend( $time_offset ) ) ? 'about to expire' : 'valid';
 		}
 
+		my $CN = "no CN";
+		if ( defined $x509->issuer_name->get_entry_by_type( 'CN' ) )
+		{
+			$CN = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
+		}
 		%response = (
 					  file       => $certfile,
 					  type       => 'Certificate',
-					  CN         => $x509->subject_name()->get_entry_by_type( 'CN' )->value,
-					  issuer     => $x509->issuer_name()->get_entry_by_type( 'CN' )->value,
+					  CN         => $CN,
+					  issuer     => $x509->issuer_name()->get_entry_by_type( 'O' )->value,
 					  creation   => $x509->notBefore(),
 					  expiration => $x509->notAfter(),
 					  status     => $status,
