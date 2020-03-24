@@ -347,7 +347,8 @@ sub setL4FarmParam
 
 	$output = &sendL4NlbCmd(
 				{
-				  farm   => $farm_req,
+				  farm          => $farm_name,
+				  farm_new_name => $farm_req,
 				  file   => ( $param ne 'status' ) ? "$configdir/$farm_filename" : undef,
 				  method => "PUT",
 				  body   => qq({"farms" : [ { "name" : "$farm_name"$parameters } ] })

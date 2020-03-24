@@ -356,7 +356,16 @@ Function: sendL4NlbCmd
 	Send the param to Nlb for a L4 Farm
 
 Parameters:
-	self - hash that includes hash_keys -> ( $farm, $backend, $file, $method, $body )
+	self - hash that includes hash_keys:
+		farm, it is the farm that is going to be modified
+		farm_new_name, this field is defined when the farm name is going to be modified.
+		backend, backend id to modify
+		file, file where the HTTP body response of the nftlb is saved
+		method, HTTP verb for nftlb request
+		body, body to use in POST and PUT requests
+
+
+
 
 Returns:
 	Integer - return code of the request command
@@ -434,6 +443,9 @@ sub sendL4NlbCmd
 		$self->{ uri } = "/farms/" . $self->{ farm }
 		  if ( $self->{ method } eq "DELETE" );
 	}
+
+	# use the new name
+	$self->{ farm } = $self->{ farm_new_name } if exists $self->{ farm_new_name };
 
 	$output = &httpNlbRequest( $self );
 
