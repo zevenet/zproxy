@@ -146,7 +146,7 @@ sub set_rbl_rule
 							   'exceptions'   => ['domains'],
 				   },
 				   "threadmax" => {
-									'valid_format' => 'natural_num',
+									'valid_format' => 'integer',
 									'non_blank'    => 'true',
 				   },
 				   "only_logging" => {
