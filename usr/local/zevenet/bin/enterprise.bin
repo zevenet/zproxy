@@ -326,7 +326,7 @@ if ( &debug() )
 {
 	my $msg = "MODULE: $mod->{ name } FUNCTION: $func " . &getMemoryUsage();
 
-	&zenlog( $msg );
+	&zenlog( $msg, 'debug4', 'system' );
 }
 
 exit 0;
