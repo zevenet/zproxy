@@ -130,7 +130,7 @@ sub add_farm_sessions
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	my $session_obj = &getL4FarmSession( $farm, $json_obj->{ session } );
-	if ( defined $session_obj )
+	if ( defined $session_obj and $json_obj->{ type } eq "dynamic" )
 	{
 		my $msg = "The session '$json_obj->{session}' already exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -196,7 +196,7 @@ sub delete_farm_sessions
 		#~ include 'Zevenet::Cluster';
 		#~ &runZClusterRemoteManager( 'rbac_user', 'delete', $user );
 
-		my $msg = "The session '$session' was added properly to the farm '$farm'.";
+		my $msg = "The session '$session' was deleted properly from the farm '$farm'.";
 		my $body = {
 					 description => $desc,
 					 success     => "true",
