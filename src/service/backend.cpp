@@ -20,8 +20,7 @@
  */
 #include "backend.h"
 
-Backend::Backend() : status(BACKEND_STATUS::NO_BACKEND) {
-}
+Backend::Backend() : status(BACKEND_STATUS::NO_BACKEND) {}
 
 Backend::~Backend() {
   if (address_info != nullptr) {
@@ -30,7 +29,7 @@ Backend::~Backend() {
 }
 
 std::string Backend::handleTask(ctl::CtlTask& task) {
-  if (!isHandler(task)) return "";
+  if (!isHandler(task) || this->backend_type != BACKEND_TYPE::REMOTE) return "";
   //  Logger::logmsg(LOG_REMOVE, "Backend %d handling task", backend_id);
   if (task.command == ctl::CTL_COMMAND::GET) {
     switch (task.subject) {
