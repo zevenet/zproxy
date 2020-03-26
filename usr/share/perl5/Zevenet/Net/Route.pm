@@ -196,10 +196,11 @@ sub addlocalnet    # ($if_ref)
 
 	# filling the own table
 	my @ifaces = @{ &getConfigInterfaceList() };
-
 	foreach my $iface ( @ifaces )
 	{
-		next if $iface->{ status } ne 'up';
+		my $iface_sys = &getSystemInterface( $iface->{ name } );
+
+		next if $iface_sys->{ status } ne 'up';
 		next if $iface->{ type } eq 'virtual';
 		next if $iface->{ is_slave } eq 'true';    # Is in bonding iface
 
@@ -207,6 +208,7 @@ sub addlocalnet    # ($if_ref)
 		  if (   !defined $iface->{ addr }
 			   or length $iface->{ addr } == 0 );    #IP addr doesn't exist
 		next if $iface->{ name } eq $if_ref->{ name };
+		next if ( !&isIp( $iface ) );
 
 		# do not import the iface route if it is isolate
 		my @isolates = ();

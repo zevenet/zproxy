@@ -487,6 +487,44 @@ sub delIp    # 	($if, $ip ,$netmask)
 }
 
 =begin nd
+Function: isIp
+
+	It checks if an IP is already applied in the dev
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - 0 if the IP is not applied or 1 if it is
+
+See Also:
+	<delIp>, <setIfacesUp>
+=cut
+
+sub isIp
+{
+	my $if_ref = shift;
+
+	# finish if the address is already assigned
+	my $routed_iface = $$if_ref{ dev };
+	$routed_iface .= ".$$if_ref{vlan}"
+	  if defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '';
+
+	my @ip_output =
+	  @{ &logAndGet( "$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface",
+					 "array" ) };
+
+	if ( grep /$$if_ref{addr}\//, @ip_output )
+	{
+		&zenlog( "The IP '$$if_ref{addr}' already is applied in '$routed_iface'",
+				 "debug2", "NETWORK" );
+		return 1;
+	}
+
+	return 0;
+}
+
+=begin nd
 Function: addIp
 
 	Add an IPv4 to an Interface, Vlan or Vini
@@ -512,27 +550,18 @@ sub addIp    # ($if_ref)
 	&zenlog( "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}",
 			 "info", "NETWORK" );
 
-	# finish if the address is already assigned
-	my $routed_iface = $$if_ref{ dev };
-	$routed_iface .= ".$$if_ref{vlan}"
-	  if defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '';
+	if ( $$if_ref{ addr } eq "" )
+	{
+		return 0;
+	}
+
+	if ( &isIp( $if_ref ) )
+	{
+		return 0;
+	}
 
 	my $extra_params = '';
 	$extra_params = 'nodad' if $$if_ref{ ip_v } == 6;
-
-	my @ip_output =
-	  @{ &logAndGet( "$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface",
-					 "array" ) };
-
-	if ( $$if_ref{ addr } eq "" || $$if_ref{ addr } eq "" )
-	{
-		return 0;
-	}
-
-	if ( grep /$$if_ref{addr}\//, @ip_output )
-	{
-		return 0;
-	}
 
 	my $ip_cmd;
 
