@@ -274,7 +274,7 @@ my %format_re = (
 	'alias_id'        => qr/(?:$ipv4v6|$interface)/,
 	'alias_backend'   => qr/$ipv4v6/,
 	'alias_interface' => qr/$interface/,
-	'alias_name'      => qr/[\w-]+/,
+	'alias_name'      => qr/(?:$zone|[\w-]+)/,
 	'alias_type'      => qr/(?:backend|interface)/,
 
 	# routing
