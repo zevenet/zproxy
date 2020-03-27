@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Alias and function to debug in Zevenet
+
+# To use, add the following lines to the ~/.bashrc file
+#BASHRC_DEV="/build-pkg/tools/bashrc_dev"
+#if [ -f $BASHRC_DEV ]; then
+#        source $BASHRC_DEV
+#fi
+
+
+alias config="cd /usr/local/zevenet/config"
+alias lib="cd /usr/share/perl5/Zevenet/"
+alias log="tail -F /var/log/syslog /var/log/cherokee-error.log | grep -Ev CRON &"
+alias update="echo 'deb https://repo.zevenet.com/ee/dev_v6/4.19-amd64 buster main' > /etc/apt/sources.list.d/zevenet.list && apt-get update"
+
+function debug { sed -i "s/\$debug\=.*$/\$debug\=\"$1\";/" /usr/local/zevenet/config/global.conf; echo "debug changed to '$1'"; }
+
