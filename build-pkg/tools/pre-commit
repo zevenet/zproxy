@@ -6,7 +6,7 @@
 #
 
 
-#NOWARN=0	# Set 1 using enviroment variables
+NOWARN=1	# Set 1 using enviroment variables
 
 changed=$(git diff --cached --name-only)
 perltidy_flag=1

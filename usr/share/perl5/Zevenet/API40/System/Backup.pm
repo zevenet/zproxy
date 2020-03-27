@@ -234,16 +234,16 @@ sub apply_backup
 		}
 	}
 
-	#~ my $error = &applyBackup( $backup );
-
-	#~ if ( $error )
-	#~ {
-	#~ my $msg = "There was a error applying the backup.";
-	#~ &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	#~ }
-
 	my $msg =
 	  "The backup was properly applied. Some changes need a system reboot to work.";
+	my $error = &applyBackup( $backup );
+
+	if ( $error )
+	{
+		$msg = "There was a error applying the backup.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	&httpResponse( { code => 200, body => { description => $desc, msg => $msg } } );
 }
 
