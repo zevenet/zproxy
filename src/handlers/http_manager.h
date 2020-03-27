@@ -80,7 +80,7 @@ class http_manager {
    */
 
   /**/
-  static ssize_t handleChunkedData(HttpStream &stream);
+  static ssize_t handleChunkedData(Connection &connection, http_parser::HttpData & http_data);
   /**
    * @brief Get chunk size from buffer
    * if

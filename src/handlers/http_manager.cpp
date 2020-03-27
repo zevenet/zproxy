@@ -23,45 +23,50 @@
 #include "../config/regex_manager.h"
 #include "../util/network.h"
 
-ssize_t http_manager::handleChunkedData(HttpStream &stream) {
-  auto last_chunk_size = stream.response.chunk_size_left;
-  if (last_chunk_size >= stream.backend_connection.buffer_size) {
-    stream.response.chunk_size_left -= stream.backend_connection.buffer_size;
+//#define PRINT_DEBUG_CHUNKED 1
+
+ssize_t http_manager::handleChunkedData(Connection &connection, http_parser::HttpData & http_data) {
+  auto last_chunk_size = http_data.chunk_size_left;
+  if (last_chunk_size >= connection.buffer_size) {
+    http_data.chunk_size_left -= connection.buffer_size;
   } else {
     size_t data_offset = last_chunk_size;
     size_t new_chunk_left = 0;
     auto chunk_size = http_manager::getLastChunkSize(
-        stream.backend_connection.buffer + last_chunk_size,
-        stream.backend_connection.buffer_size - stream.response.chunk_size_left,
-        data_offset, new_chunk_left, stream.response.content_length);
+        connection.buffer + last_chunk_size,
+        connection.buffer_size - http_data.chunk_size_left,
+        data_offset, new_chunk_left, http_data.content_length);
     //#if PRINT_DEBUG_CHUNKED
     const char *status = chunk_size < 0 ? "*" : chunk_size == 0 ? "/" : "";
     Logger::logmsg(LOG_REMOVE,
                    "[%s] buffer size: %6lu chunk left: %8d => Chunk size: %8d "
                    "Data offset: %6lu Content_length: %8d  next chunk left %8d",
-                   status, stream.backend_connection.buffer_size,
+                   status, connection.buffer_size,
                    last_chunk_size, chunk_size, data_offset,
-                   stream.response.content_length, new_chunk_left);
+                   http_data.content_length, new_chunk_left);
     //#endif
     if (chunk_size < 0) {
-      //	  const char *new_chunk_buff = stream.backend_connection.buffer
-      //+ stream.response.chunk_size_left - 5;
+      //	  const char *new_chunk_buff = connection.buffer
+      //+ http_data.chunk_size_left - 5;
       /* here we have a tricky situation, we have received the last pendind part
        * of last chunk, bute not enough data to process next chunk size */
-      //	  stream.response.chunk_buffer_size_offset =
-      // stream.backend_connection.buffer_size -
-      // stream.response.chunk_size_left;
+      //	  http_data.chunk_buffer_size_offset =
+      // connection.buffer_size -
+      // http_data.chunk_size_left;
       return -1;
     } else if (chunk_size == 0) {
-      stream.response.chunk_size_left = 0;
-      stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+      http_data.chunk_size_left = 0;
+      http_data.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+#if PRINT_DEBUG_CHUNKED
+      Logger::logmsg(LOG_REMOVE, "LAST CHUNK");
+#endif
       return 0;
     } else {
-      stream.response.chunk_size_left = new_chunk_left;
+      http_data.chunk_size_left = new_chunk_left;
     }
     return static_cast<ssize_t>(new_chunk_left);
   }
-  return static_cast<ssize_t>(stream.response.chunk_size_left);
+  return static_cast<ssize_t>(http_data.chunk_size_left);
 }
 
 ssize_t http_manager::getChunkSize(const std::string &data, size_t data_size,
@@ -241,8 +246,56 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
           //          request.headers[i].header_off = true;
           break;
         case http::HTTP_HEADER_NAME::TRANSFER_ENCODING:
-          if (listener_config_.ignore100continue)
-            request.headers[i].header_off = true;
+       //   if (listener_config_.ignore100continue)
+         //   request.headers[i].header_off = true;
+          switch (header_value[0]) {
+            case 'c': {
+              if (header_value[1] == 'h') {  // no content-length
+                request.transfer_encoding_type =
+                    TRANSFER_ENCODING_TYPE::CHUNKED;
+                request.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+#ifdef CACHE_ENABLED
+                if (request.message_length > 0) {
+                  size_t data_offset = 0;
+                  size_t new_chunk_left = 0;
+                  auto chunk_size = http_manager::getLastChunkSize(
+                      request.message, request.message_length,
+                      data_offset, new_chunk_left, request.content_length);
+#if PRINT_DEBUG_CHUNKED
+                  Logger::logmsg(LOG_REMOVE, ">>>> Chunk size %d left %d ",
+                                 chunk_size, new_chunk_left);
+#endif
+                  request.content_length +=
+                      static_cast<size_t>(chunk_size);
+                  if (chunk_size == 0) {
+#if PRINT_DEBUG_CHUNKED
+                    Logger::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+#endif
+                    request.chunk_size_left = 0;
+                    request.chunked_status =
+                        CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+                  } else {
+                    request.chunk_size_left = new_chunk_left;
+                  }
+                }
+#endif
+              } else if (header_value[2] == 'o') {
+                request.transfer_encoding_type =
+                    TRANSFER_ENCODING_TYPE::COMPRESS;
+              }
+              break;
+            }
+            case 'd':  // deflate
+              request.transfer_encoding_type = TRANSFER_ENCODING_TYPE::DEFLATE;
+              break;
+            case 'g':  // gzip
+              request.transfer_encoding_type = TRANSFER_ENCODING_TYPE::GZIP;
+              break;
+            case 'i':  // identity
+              request.transfer_encoding_type =
+                  TRANSFER_ENCODING_TYPE::IDENTITY;
+              break;
+          }
           break;
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
           request.content_length =

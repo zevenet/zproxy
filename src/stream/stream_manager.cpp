@@ -480,6 +480,17 @@ void StreamManager::onRequestEvent(int fd) {
 
   DEBUG_COUNTER_HIT(debug__::on_request);
   if (stream->upgrade.pinned_connection || stream->request.hasPendingData()) {
+#ifdef CACHE_ENABLED
+    if (stream->request.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
+      auto pending_chunk_bytes = http_manager::handleChunkedData(
+          stream->client_connection, stream->request);
+      if (pending_chunk_bytes < 0) {  // we don't have enough data to get next
+        // chunk size, so we wait for more data
+        stream->client_connection.enableReadEvent();
+        return;
+      }
+    }
+#endif
 #if PRINT_DEBUG_FLOW_BUFFERS
     Logger::logmsg(
         LOG_REMOVE,
@@ -950,7 +961,8 @@ void StreamManager::onResponseEvent(int fd) {
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
-      auto pending_chunk_bytes = http_manager::handleChunkedData(*stream);
+      auto pending_chunk_bytes = http_manager::handleChunkedData(
+          stream->backend_connection, stream->response);
       if (pending_chunk_bytes < 0) {  // we don't have enough data to get next
                                       // chunk size, so we wait for more data
         stream->backend_connection.enableReadEvent();
@@ -985,8 +997,13 @@ void StreamManager::onResponseEvent(int fd) {
         stream->backend_connection.buffer_size, &parsed);
     static size_t total_responses;
     switch (ret) {
-      case http_parser::PARSE_RESULT::SUCCESS:
+      case http_parser::PARSE_RESULT::SUCCESS: {
+        stream->request.chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
+        stream->backend_connection.buffer_offset = 0;
+        stream->client_connection.buffer_offset = 0;
+        stream->client_connection.buffer_size = 0;
         break;
+      }
       case http_parser::PARSE_RESULT::TOOLONG:
       case http_parser::PARSE_RESULT::FAILED: {
         Logger::logmsg(
@@ -1419,7 +1436,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       if (stream->request.chunked_status ==
               http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK &&
           stream->client_connection.buffer_size == 0) {
-        stream->response.reset_parser();
+        stream->request.reset_parser();
       } else if (stream->request.message_bytes_left > 0) {
         stream->request.message_bytes_left -= written;
         if (stream->request.message_bytes_left == 0) {

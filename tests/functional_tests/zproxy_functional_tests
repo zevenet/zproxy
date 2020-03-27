@@ -66,6 +66,7 @@ test_check_POST_file();
 # Test POST request with a file
 test_check_POST_file_null_expect();
 # Test POST request with a file
+test_check_POST_chunked();
 test_check_PUT_file();
 # Test the connect timeout
 test_connect_timeout();
@@ -165,6 +166,16 @@ sub test_check_POST_file_null_expect {
     my $crc = $decoded->{'body'};
 
     assert_equal($crc, $file_crc, "POST_NULL_EXPECT file checksum");
+}
+
+sub test_check_POST_chunked {
+
+    my $response = `curl -H "Transfer-Encoding: chunked" -s --data-binary "\@${file_path}" http://${ip}:${port}`;
+    my $decoded = decode_json($response);
+    my $file_crc = file_md5_hex($file_path);
+    my $crc = $decoded->{'body'};
+
+    assert_equal($crc, $file_crc, "Chunked POST file checksum");
 }
 
 sub test_check_POST_file {
