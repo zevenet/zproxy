@@ -122,6 +122,7 @@ overwrite_globalconf_param "backupfor" '"$configdir $basedir/*.pem $confhttp $rt
 #~ overwrite_globalconf_param "recent_ip_list_tot" '"";'
 #~ overwrite_globalconf_param "recent_ip_list_hash_size" '"";'
 overwrite_globalconf_param "doc_v4_0" '"https://www.zevenet.com/zapidoc_ce_v4.0/";'
+overwrite_globalconf_param "default_modprobe" '"/sbin/modprobe";'
 
 # Remove EE params from global.conf
 delete_globalconf_param "blacklistsPath"
