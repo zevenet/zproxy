@@ -833,9 +833,9 @@ sub setNodeStatusBackup
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
-
 	for my $if_ref ( @configured_interfaces )
 	{
+
 		next unless $if_ref->{ type } eq 'virtual';
 		&disableInterfaceDiscovery( $if_ref );
 	}

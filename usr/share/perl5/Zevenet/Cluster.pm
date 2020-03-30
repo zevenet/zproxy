@@ -1071,7 +1071,6 @@ sub disableInterfaceDiscovery
 	require Zevenet::Nft;
 
 	my $rule_ip = "ip";
-
 	if ( $iface->{ ip_v } == 4 )
 	{
 		&execNft( "add", "arp cluster",
