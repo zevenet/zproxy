@@ -38,7 +38,7 @@ Parameters:
 	backend - Backend id. It is the backend id where the connection will be sent when the client info matches with the session
 
 Returns:
-	Error code - 0 on success or another value on failure.
+	Error code - 0 on success, 2 if the session already exists or 1 on failure
 
 =cut
 
@@ -47,6 +47,20 @@ sub addL4FarmSession
 	my ( $farm_name, $session, $bck ) = @_;
 
 	require Zevenet::Farm::L4xNAT::Action;
+
+	# delete the dynamic session if it exists in another backend
+	my $session_obj = &getL4FarmSession( $farm_name, $session );
+	if ( defined $session_obj )
+	{
+		if ( $session_obj->{ type } eq "static" )
+		{
+			return 2;
+		}
+
+		# else remove dynamic session
+		my $err = &delL4FarmSessionNft( $farm_name, $session );
+		return 1 if $err;
+	}
 
 	# translate to nftlb format
 	$session =~ s/_/ \. /;
@@ -63,6 +77,7 @@ sub addL4FarmSession
 			 qq({"farms" : [ { "name" : "$farm_name", "sessions" : [ { "client" : "$session", "backend" : "bck$bck" } ] } ] })
 		}
 	);
+	$err = 1 if $err;
 
 	return $err;
 }
@@ -85,6 +100,19 @@ sub delL4FarmSession
 {
 	my ( $farm_name, $session ) = @_;
 
+	my $err = &delL4FarmSessionNft( $farm_name, $session );
+	if ( !$err )
+	{
+		$err = &saveL4Conf( $farm_name );
+	}
+
+	return $err;
+}
+
+sub delL4FarmSessionNft
+{
+	my ( $farm_name, $session ) = @_;
+
 	require Zevenet::Farm::L4xNAT::Action;
 
 	# translate to nftlb format
@@ -97,11 +125,6 @@ sub delL4FarmSession
 							   method => "DELETE",
 							 }
 	);
-
-	if ( !$err )
-	{
-		$err = &saveL4Conf( $farm_name );
-	}
 
 	return $err;
 }

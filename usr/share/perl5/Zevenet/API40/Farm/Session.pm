@@ -129,18 +129,18 @@ sub add_farm_sessions
 		  "The session '$json_obj->{session}' is not valid for the persistence '$persis_type'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	my $session_obj = &getL4FarmSession( $farm, $json_obj->{ session } );
-	if ( defined $session_obj and $json_obj->{ type } eq "dynamic" )
-	{
-		my $msg = "The session '$json_obj->{session}' already exists.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
 
 	# executing the action
 	my $err =
 	  &addL4FarmSession( $farm, $json_obj->{ 'session' }, $json_obj->{ 'id' } );
-	if ( !$err )
+	if ( $err == 2 )
 	{
+		my $msg = "The session '$json_obj->{session}' already exists.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+	elsif ( !$err )
+	{
+		require Zevenet::Farm::Base;
 		if ( &getFarmStatus( $farm ) eq 'up' )
 		{
 			include 'Zevenet::Cluster';
@@ -196,6 +196,7 @@ sub delete_farm_sessions
 	my $err = &delL4FarmSession( $farm, $session );
 	if ( !$err )
 	{
+		require Zevenet::Farm::Base;
 		if ( &getFarmStatus( $farm ) eq 'up' )
 		{
 			include 'Zevenet::Cluster';

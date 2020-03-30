@@ -168,13 +168,13 @@ Returns:
 		"id" is the backend id assigned to session
 		"session" is the key that identifies the session
 
-		[
-			{
+		{
 			"client" : 0,
 			"id" : 3,
-			"session" : "192.168.1.186"
-			}
-		]
+			"session" : "192.168.1.186",
+			"type" : "dynamic",
+			"ttl" : "54m5s",
+		}
 
 =cut
 
