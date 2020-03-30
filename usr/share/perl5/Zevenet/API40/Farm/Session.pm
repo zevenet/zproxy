@@ -141,8 +141,11 @@ sub add_farm_sessions
 	  &addL4FarmSession( $farm, $json_obj->{ 'session' }, $json_obj->{ 'id' } );
 	if ( !$err )
 	{
-		#~ include 'Zevenet::Cluster';
-		#~ &runZClusterRemoteManager( 'rbac_user', 'add', $json_obj->{ 'name' } );
+		if ( &getFarmStatus( $farm ) eq 'up' )
+		{
+			include 'Zevenet::Cluster';
+			&runZClusterRemoteManager( 'farm', 'restart', $farm );
+		}
 
 		my $session = &getL4FarmSession( $farm, $json_obj->{ session } );
 
@@ -193,8 +196,11 @@ sub delete_farm_sessions
 	my $err = &delL4FarmSession( $farm, $session );
 	if ( !$err )
 	{
-		#~ include 'Zevenet::Cluster';
-		#~ &runZClusterRemoteManager( 'rbac_user', 'delete', $user );
+		if ( &getFarmStatus( $farm ) eq 'up' )
+		{
+			include 'Zevenet::Cluster';
+			&runZClusterRemoteManager( 'farm', 'restart', $farm );
+		}
 
 		my $msg = "The session '$session' was deleted properly from the farm '$farm'.";
 		my $body = {
