@@ -159,10 +159,22 @@ $CURL --noproxy "*" --connect-timeout 10 -s -H "Key: HoLa" http://127.0.0.1:27/p
 
 echo "- Reverse Proxy"
 proxyctl=`perl -MZevenet::Config -e 'print getGlobalConfiguration("proxyctl");'`;
+fstatus="$backup_dir/proxy_status.txt"
 for i in `ls /tmp/*_proxy.socket 2>/dev/null`
 do
-	echo "Farm $i"	>> $backup_dir/proxy_status.txt
-	$proxyctl -c $i >> $backup_dir/proxy_status.txt
+	echo "############# Farm: $i" >> $fstatus
+	echo "" >> $fstatus
+	echo "# $proxyctl -c $i" >> $fstatus
+	$proxyctl -c $i >> $fstatus
+	echo "" >> $fstatus
+	echo "# curl --unix-socket $i http://localhost/listener" >> $backup_dir/proxy_status.txt
+	curl --unix-socket $i http://localhost/listener >> $backup_dir/proxy_status.txt
+	echo "" >> $fstatus
+	echo "" >> $fstatus
+	echo "# curl --unix-socket $i http://localhost/debug" >> $backup_dir/proxy_status.txt
+	curl --unix-socket $i http://localhost/debug  >> $fstatus
+	echo "" >> $fstatus
+	echo "" >> $fstatus
 done
 
 
