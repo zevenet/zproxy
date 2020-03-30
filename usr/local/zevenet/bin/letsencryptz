@@ -79,6 +79,7 @@ switch ( $action )
 		}
 		print "farm start\n";
 		&webServer( "start" );
+		print "obtain cert..\n\n";
 		&obtain_cert( $vip, $farm_name, $domains );
 		print "farm stop\n";
 		&webServer( "stop" );
@@ -486,7 +487,7 @@ sub cert_used_farm()
 {
 	my $cert_file = shift;
 	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $grep      = &getGlobalConfiguration( 'grep' );
+	my $grep      = &getGlobalConfiguration( 'grep_bin' );
 	my $cut       = &getGlobalConfiguration( 'cut_bin' );
 
 	# do no use logAndGet. It managings the error output
@@ -568,6 +569,7 @@ sub webServer()
 
 	if ( $action eq "start" and ( !-e $pid_file ) )
 	{
+		&zenlog( "$http_bin -d -C $le_webserver_config_file" );
 		&logAndRunBG( "$http_bin -d -C $le_webserver_config_file" );
 		&zenlog( "Running temporal webserver for Let's Encrypt" );
 	}
