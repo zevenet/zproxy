@@ -177,7 +177,7 @@ action: --obtain | --destroy | --renew | --list | --listconf | --help
 
 			--certname: Certificate Name, this value can be obtained from the action --list.
 
-	--renew: Renew the certificates near to expiry, no commands needed
+	--renew: Renew the certificates near to expiry.
 
 		commands: --test --forcerestart --vip <Virtual IP> --farm <Farm Name>
 	       		--test:	Optional parameter, if used a dry-run is executed, the renew of the certificates is simulated.
@@ -326,14 +326,16 @@ sub obtain_cert()
 
 	#run request
 	$test = "--test-cert" if ( $test );
+	my $domains_list = join ( ',', @$domains );
+	print "DOMAINS to request: $domains_list\n";
 
 	&zenlog(
-		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
+		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
 	);
 
 	# do no use logAndGet. It managings the error output
 	my @run =
-	  `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d @$domains --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
+	  `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
 
 	if ( $? ne 0 )
 	{
