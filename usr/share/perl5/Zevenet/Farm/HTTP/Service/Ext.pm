@@ -605,6 +605,8 @@ sub setHTTPFarmMoveService
 	my $lock_file     = &getLockFile( $farm );
 	my $lock_fh       = &openlock( $lock_file, 'w' );
 
+	my $index_cur = &getFarmVSI( $farm, $srv );
+
 	# get service code
 	my $srv_block = &getHTTPServiceBlocks( $farm, $srv );
 
@@ -641,7 +643,7 @@ sub setHTTPFarmMoveService
 	close $lock_fh;
 
 	# move fg
-	&setHTTPFarmMoveServiceStatusFile( $farm, $srv, $req_index );
+	&setHTTPFarmMoveServiceStatusFile( $farm, $srv, $req_index, $index_cur );
 
 	return $out;
 }
@@ -669,13 +671,12 @@ sub setHTTPFarmMoveServiceStatusFile
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farmname, $service, $req_index ) = @_;
+	my ( $farmname, $service, $req_index, $srv_id ) = @_;
 
 	use Tie::File;
 	my $fileName = "$configdir\/${farmname}_status.cfg";
 	tie my @file, 'Tie::File', $fileName;
 
-	my $srv_id = &getFarmVSI( $farmname, $service );
 	return if ( $srv_id == -1 );
 	return if ( $srv_id == $req_index );
 	#
