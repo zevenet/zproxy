@@ -51,7 +51,7 @@ option(ENABLE_THREAD_SANITIZER "Enable thread sanitizer" OFF)
 option(ENABLE_COVERAGE "Enable coverage" OFF)
 #experimental, do not enable WIP
 option(CACHE_SUPPORT "Build with cache support" OFF)
-option(ENABLE_WAF "Compile zproxy using WAF features" OFF)
+option(ENABLE_WAF "Compile zproxy using WAF features" ON)
 set(CACHE_STORAGE_TYPE 1) # 1 ramfs,2 stdmap,3 memcached, default(1)
 #option(MEMCACHED_ENABLED "memcached" OFF) deprecated
 #option(ENABLE_APACHE_LOG_FORMAT "Enable message log in apache format" OFF) not implemented yet
