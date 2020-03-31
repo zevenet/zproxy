@@ -529,6 +529,7 @@ sub genRoutingRulesPrio
 	my $farmL4       = &getGlobalConfiguration( 'routingRulePrioFarmL4' );
 	my $farmDatalink = &getGlobalConfiguration( 'routingRulePrioFarmDatalink' );
 	my $userInit     = &getGlobalConfiguration( 'routingRulePrioUserMin' );
+	my $userEnd      = &getGlobalConfiguration( 'routingRulePrioUserMax' ) + 1;
 	my $ifacesInit   = &getGlobalConfiguration( 'routingRulePrioIfaces' );
 
 	my $min;
@@ -552,7 +553,7 @@ sub genRoutingRulesPrio
 	elsif ( $type eq 'user' )
 	{
 		$min = $userInit;
-		$max = $ifacesInit;
+		$max = $userEnd;
 	}
 
 	# iface rules
