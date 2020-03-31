@@ -43,15 +43,17 @@ sub new_vini    # ( $json_obj )
 	my $virtual_tag_re = &getValidFormat( 'virtual_tag' );
 
 	my $params = {
-				   "name" => {
-							   'valid_format' => 'virt_interface',
-							   'required'     => 'true',
-							   'non_blank'    => 'true',
-				   },
-				   "ip" => {
-							 'valid_format' => 'ip_addr',
-							 'required'     => 'true',
-				   },
+		"name" => {
+			'valid_format' => 'virt_interface',
+			'required'     => 'true',
+			'non_blank'    => 'true',
+			"format_msg" =>
+			  "is a string formed with the parent interface name, colon (':') and a virtual interface tag. E.g. 'eth1:virt1'",
+		},
+		"ip" => {
+				  'valid_format' => 'ip_addr',
+				  'required'     => 'true',
+		},
 	};
 
 	# Check allowed parameters

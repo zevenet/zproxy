@@ -47,20 +47,22 @@ sub new_vlan    # ( $json_obj )
 	my $vlan_tag_re = &getValidFormat( 'vlan_tag' );
 
 	my $params = {
-				   "name" => {
-							   'valid_format' => 'vlan_interface',
-							   'required'     => 'true',
-							   'non_blank'    => 'true',
-				   },
-				   "ip" => {
-							 'valid_format' => 'ip_addr',
-				   },
-				   "netmask" => {
-								  'valid_format' => 'ip_mask',
-				   },
-				   "gateway" => {
-								  'valid_format' => 'ip_addr',
-				   },
+		"name" => {
+			'valid_format' => 'vlan_interface',
+			'required'     => 'true',
+			'non_blank'    => 'true',
+			"format_msg" =>
+			  "is a string formed with the parent interface name, dot ('.') and a VLAN tag. E.g. 'eth1.1'",
+		},
+		"ip" => {
+				  'valid_format' => 'ip_addr',
+		},
+		"netmask" => {
+					   'valid_format' => 'ip_mask',
+		},
+		"gateway" => {
+					   'valid_format' => 'ip_addr',
+		},
 	};
 
 	if ( $eload )
