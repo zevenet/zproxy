@@ -141,7 +141,46 @@ case "$1" in
 ;;
 
 '-i')   # Install the non-updated packages
-	DEBIAN_FRONTEND=noninteractive $apt_bin --with-new-pkgs upgrade
+	upgrade=1
+	node_status=`$cat_bin $znode_status_file`
+	if [ "$node_status" == "backup" ]
+	then
+		localhost=`$hostname`
+		hostlist=($(grep "\[" $filecluster | cut -d"[" -f2 | cut -d"]" -f1))
+		if [ "$localhost" == "${hostlist[0]}" ]
+		then
+			remotehost=${hostlist[1]};
+		else
+			remotehost=${hostlist[0]};
+		fi
+	
+		remote_ip=`$grep_bin -A 1 $remotehost $filecluster | $tail -1 | $cut_bin -d= -f2`
+	
+		denyline="sshd: $remote_ip"
+		echo $denyline >> /etc/hosts.deny
+	fi
+	if [ "$node_status" == "master" ]
+	then
+		echo "Warning! The system is in Master Mode. It should be in Maintenance Mode"
+		read -r -p "Are you sure? [y/n] " response
+		case "$response" in
+		[yY][eE][sS]|[yY]) 
+			upgrade=1
+		;;
+		*)
+			upgrade=0
+		;;
+		esac
+	fi	
+	if [ $upgrade -eq 1 ]
+	then
+		DEBIAN_FRONTEND=noninteractive $apt_bin --with-new-pkgs upgrade
+	fi
+	if [ "$node_status" == "backup" ]
+	then
+		$sed_bin -i "/$denyline/d" /etc/hosts.deny
+	fi
+	
 ;;
 
 '-h')
