@@ -138,6 +138,7 @@ sub getHTTPBackendEstConns    # ($farm_name,$backend_ip,$backend_port, $netstat)
 				   state         => 'ESTABLISHED',
 	};
 
+	require Zevenet::Net::ConnStats;
 	my $ct_params = &getConntrackParams( $filter );
 	my $count     = &getConntrackCount( $ct_params );
 
