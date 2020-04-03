@@ -92,8 +92,9 @@ echo "- Time"
 ${zbindir}/zenntp                    	>> $backup_dir/ntp_test.txt 2>&1
 
 echo "- Sessions Table"
-${home_dir}/app/ssyncd/bin/ssyncdctl show http	>> $backup_dir/sessions_http.txt 2>&1
-${home_dir}/app/ssyncd/bin/ssyncdctl show nft	>> $backup_dir/sessions_nft.txt 2>&1
+ssyncdctl=`perl -MZevenet::Config -e 'print getGlobalConfiguration("ssyncdctl_bin");'`;
+$ssyncdctl show http    >> $backup_dir/sessions_http.txt 2>&1
+$ssyncdctl show nft     >> $backup_dir/sessions_nft.txt 2>&1
 
 if [[ -d ${home_dir}/lib/Zevenet/RBAC ]];
 then
