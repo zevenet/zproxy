@@ -138,9 +138,6 @@ sub farm_stats    # ( $farmname )
 
 		my $stats = &getL4FarmBackendsStats( $farmname );
 
-		require Zevenet::API32::Farm::Get;
-		&getAPIFarmBackends( $stats, $type, ['established', 'pending'] );
-
 		my $sessions = &listL4FarmSessions( $farmname );
 		my $body = {
 					 description => $desc,

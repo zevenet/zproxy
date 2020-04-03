@@ -278,17 +278,7 @@ sub getAPIFarmBackends
 	# add static translations
 	$translate->{ status } = { "opt" => "fgdown", "rep" => "down" };
 
-	&buildAPIParams( $out_b, \@api_keys, $translate );
-
-	if ( $eload )
-	{
-		$out_b = &eload(
-						 module => 'Zevenet::Alias',
-						 func   => 'addAliasBackendsStruct',
-						 args   => [$out_b],
-		);
-	}
-	return undef;
+	return &buildAPIParams( $out_b, \@api_keys, $translate );
 }
 
 1;
