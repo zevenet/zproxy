@@ -111,12 +111,22 @@ for FILE in $changed; do
     fi
 done
 
+
+
 if [ $warnings -ne 0 ]; then
-	if [ "$NOWARN" == "" ]; then
-                echo "-------------------------------------------------"
-		echo "ERROR: There are some warnings, to ignore them set then envirovement variable: 'NOWARN=1'"
+	echo "####################################################"
+	echo "####################################################"
+	echo ""
+
+	echo -n "  ERROR: There are some warnings, type [y] to ignore them: "
+	read < /dev/tty
+
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		echo "Accepting the blame"
 		echo ""
-		echo ""
+	else
+		echo "The commit was cancelled"
 		exit 1
 	fi
 fi
