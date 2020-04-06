@@ -112,10 +112,11 @@ sub _runHTTPFarmStop    # ($farm_name, $writeconf)
 		else
 		{
 			my $time = &getGlobalConfiguration( "http_farm_stop_grace_time" );
+			my $signal = ( &getGlobalConfiguration( "proxy_ng" ) eq 'true' ) ? 9 : 15;
 			&zenlog( "Stopping HTTP farm $farm_name with PID $pid", "info", "LSLB" );
 
 			# Returns the number of arguments that were successfully used to signal.
-			kill 15, $pid;
+			kill $signal, $pid;
 			sleep ( $time );
 		}
 
