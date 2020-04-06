@@ -44,14 +44,9 @@ sub get_farm_sessions    # ( $farmname )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $sessions = [];
+	require Zevenet::Farm::L4xNAT::Sessions;
+	my $sessions = &listL4FarmSessions( $farmname );
 
-	require Zevenet::Farm::L4xNAT::Config;
-	if ( &getL4FarmStatus( $farmname ) ne "down" )
-	{
-		require Zevenet::Farm::L4xNAT::Sessions;
-		$sessions = &listL4FarmSessions( $farmname );
-	}
 	my $body = {
 				 description => $desc,
 				 params      => $sessions,

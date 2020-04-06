@@ -125,12 +125,13 @@ sub listL4FarmSessions
 	my $session_tmp = "/tmp/session_$farmname.data";
 	my $lock_f      = &getLockFile( $session_tmp );
 	my $lock_fd     = &openlock( $lock_f, '>' );
-	my $err = &httpNlbRequest(
-							   {
-								 method => "GET",
-								 uri    => "/farms/" . $farmname . '/sessions',
-								 file   => $session_tmp,
-							   }
+	my $err = &sendL4NlbCmd(
+							 {
+							   method => "GET",
+							   uri    => "/farms/" . $farmname . '/sessions',
+							   farm   => $farmname,
+							   file   => $session_tmp,
+							 }
 	);
 
 	my $nftlb_resp;

@@ -116,7 +116,7 @@ sub delL4FarmSessionNft
 	require Zevenet::Farm::L4xNAT::Action;
 
 	# translate to nftlb format
-	$session =~ s/_/ \. /;
+	$session =~ s/_/_\._/;
 
 	my $err = &httpNlbRequest(
 							 {

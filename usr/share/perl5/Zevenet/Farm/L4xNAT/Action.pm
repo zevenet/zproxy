@@ -364,9 +364,6 @@ Parameters:
 		method, HTTP verb for nftlb request
 		body, body to use in POST and PUT requests
 
-
-
-
 Returns:
 	Integer - return code of the request command
 
@@ -437,7 +434,7 @@ sub sendL4NlbCmd
 		$self->{ uri } =
 		  "/farms/" . $self->{ farm } . "/backends/" . $self->{ backend };
 	}
-	else
+	elsif ( !defined $self->{ uri } )
 	{
 		$self->{ uri } = "/farms";
 		$self->{ uri } = "/farms/" . $self->{ farm }
