@@ -142,33 +142,43 @@ case "$1" in
 
 '-i')   # Install the non-updated packages
 	upgrade=1
-	node_status=`$cat_bin $znode_status_file`
+	if [ -f "$znode_status_file" ]
+	then
+		node_status=`$cat_bin $znode_status_file`
+	fi
 	if [ "$node_status" == "backup" ]
 	then
 		localhost=`$hostname`
-		hostlist=($(grep "\[" $filecluster | cut -d"[" -f2 | cut -d"]" -f1))
-		if [ "$localhost" == "${hostlist[0]}" ]
+		if [ -z "$filecluster" ]
 		then
-			remotehost=${hostlist[1]};
+			hostlist=($(grep "\[" $filecluster | cut -d"[" -f2 | cut -d"]" -f1))
+			if [ "$localhost" == "${hostlist[0]}" ]
+			then
+				remotehost=${hostlist[1]};
+			else
+				remotehost=${hostlist[0]};
+			fi
+		
+			remote_ip=`$grep_bin -A 1 $remotehost $filecluster | $tail -1 | $cut_bin -d= -f2`
+		
+			denyline="sshd: $remote_ip"
+			echo $denyline >> /etc/hosts.deny
 		else
-			remotehost=${hostlist[0]};
+			echo "Error: There is no cluster configuration at $filecluster"
+			exit
 		fi
-	
-		remote_ip=`$grep_bin -A 1 $remotehost $filecluster | $tail -1 | $cut_bin -d= -f2`
-	
-		denyline="sshd: $remote_ip"
-		echo $denyline >> /etc/hosts.deny
 	fi
 	if [ "$node_status" == "master" ]
 	then
 		echo "Warning! The system is in Master Mode. It should be in Maintenance Mode"
-		read -r -p "Are you sure? [y/n] " response
+		read -r -p "Are you sure? [y/N] " response
 		case "$response" in
 		[yY][eE][sS]|[yY]) 
 			upgrade=1
 		;;
 		*)
 			upgrade=0
+			echo "Abort."
 		;;
 		esac
 	fi	
