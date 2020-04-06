@@ -904,6 +904,10 @@ sub httpResponseHelp
 		{
 			$param->{ description } = $param_obj->{ $p }->{ format_msg };
 		}
+		if ( exists $param_obj->{ $p }->{ ref } )
+		{
+			$param->{ ref } = $param_obj->{ $p }->{ ref };
+		}
 
 		push @{ $resp_param }, $param;
 	}

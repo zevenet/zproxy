@@ -183,8 +183,19 @@ sub set_rbac_role
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# Check allowed parameters
 	my $confStruct = &getRBACRoleParamDefaultStruct();
+	my $params     = {};
+
+	# Check allowed parameters
+	foreach my $key ( keys %{ $confStruct } )
+	{
+		$params->{ $key }->{ 'ref' } = 'hash';
+	}
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# Check allowed parameters
 	foreach my $key ( keys %{ $json_obj } )
 	{
 		foreach my $param ( keys %{ $json_obj->{ $key } } )
