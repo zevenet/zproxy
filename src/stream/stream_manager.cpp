@@ -588,15 +588,15 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
-
+      auto last_service_ptr = stream->request.getService();
       stream->request.setService(service);
       // update log info
-      logger.setLogData(stream, listener_config_);
+      StreamDataLogger::setLogData(stream, listener_config_);
 
 #ifdef CACHE_ENABLED
       // If the cache is enabled and the request is cached and it is also fresh
-      auto ret = CacheManager::handleRequest(stream, service,
-                                             listener_config_set);
+      auto ret =
+          CacheManager::handleRequest(stream, service, listener_config_set);
       // Must return error
       if (ret == -1) {
         // If the directive only-if-cached is in the request and the content
@@ -635,31 +635,31 @@ void StreamManager::onRequestEvent(int fd) {
         stream->backend_connection.buffer_offset = 0;
         stream->client_connection.buffer_offset = 0;
         stream->backend_connection.buffer_size = 0;
-        Logger::logmsg(
-            LOG_DEBUG, "%lu [%s] %.*s [%s (%d) -> %s (%d)]", total_request,
-            service->name.c_str(), stream->request.http_message_length,
-            stream->request.http_message,
-            stream->client_connection.getPeerAddress().c_str(),
-            stream->client_connection.getFileDescriptor(), bck->address.c_str(),
-            stream->backend_connection.getFileDescriptor());
         switch (bck->backend_type) {
           case BACKEND_TYPE::REMOTE: {
-            if (stream->backend_connection.getBackend() == nullptr ||
-                !stream->backend_connection.isConnected()) {
+            bool need_new_backend = true;
+            if (last_service_ptr != nullptr) {
+              auto last_service = static_cast<Service*>(last_service_ptr);
+              if (last_service->id == service->id &&
+                  stream->backend_connection.isConnected() &&
+                  stream->backend_connection.getBackend() != nullptr) {
+                need_new_backend = false;
+              }
+            }
+            if (need_new_backend) {
               // null
-              if (stream->backend_connection.getFileDescriptor() > 0) {  //
-
-                deleteFd(stream->backend_connection
+              if (stream->backend_connection.getFileDescriptor() > 0) {
+                  deleteFd(stream->backend_connection
                              .getFileDescriptor());  // Client cannot
-                // be connected to more
-                // than one backend at
+                // Client cannot  be connected to more than one backend at
                 // time
                 streams_set.erase(
                     stream->backend_connection.getFileDescriptor());
-                stream->backend_connection.closeConnection();
-                if (stream->backend_connection.isConnected())
+                if (stream->backend_connection.isConnected() &&
+                    stream->backend_connection.getBackend() != nullptr)
                   stream->backend_connection.getBackend()->decreaseConnection();
               }
+              stream->backend_connection.reset();
               stream->backend_connection.setBackend(bck);
               stream->backend_connection.time_start =
                   std::chrono::steady_clock::now();
@@ -668,7 +668,7 @@ void StreamManager::onRequestEvent(int fd) {
               switch (op_state) {
                 case IO::IO_OP::OP_ERROR: {
                   Logger::logmsg(LOG_NOTICE, "Error connecting to backend %s",
-                                bck->address.data());
+                                 bck->address.data());
                   http_manager::replyError(
                       http::Code::ServiceUnavailable,
                       http::reasonPhrase(http::Code::ServiceUnavailable),
@@ -695,15 +695,8 @@ void StreamManager::onRequestEvent(int fd) {
                   [[fallthrough]];
                 case IO::IO_OP::OP_SUCCESS: {
                   DEBUG_COUNTER_HIT(debug__::on_backend_connect);
-                  //stream->backend_connection.getBackend()->increaseConnection();
                   streams_set[stream->backend_connection.getFileDescriptor()] =
                       stream;
-                  /*
-                              if
-                     (stream->backend_connection.getBackend()->backend_config.ctx
-                     != nullptr)
-                                ssl_manager->init(stream->backend_connection.getBackend()->backend_config);
-                  */
                   stream->backend_connection.enableEvents(
                       this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
                   break;
@@ -711,6 +704,15 @@ void StreamManager::onRequestEvent(int fd) {
               }
             }
 
+            Logger::logmsg(
+                LOG_DEBUG, "%s %lu [%s] %.*s [%s (%d) -> %s:%d (%d)]",
+                need_new_backend ? "NEW" : "REUSED", total_request,
+                service->name.c_str(), stream->request.http_message_length,
+                stream->request.http_message,
+                stream->client_connection.getPeerAddress().c_str(),
+                stream->client_connection.getFileDescriptor(),
+                bck->address.c_str(), bck->port,
+                stream->backend_connection.getFileDescriptor());
             // Rewrite destination
             if (stream->request.add_destination_header) {
               std::string header_value =
@@ -747,8 +749,8 @@ void StreamManager::onRequestEvent(int fd) {
 
             break;
           case BACKEND_TYPE::REDIRECT: {
-            if(http_manager::replyRedirect(*stream, *bck))
-              clearStream(stream);
+            // TODO:: Add log
+            if (http_manager::replyRedirect(*stream, *bck)) clearStream(stream);
             return;
           }
           case BACKEND_TYPE::CACHE_SYSTEM:
@@ -1889,13 +1891,15 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
     stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
     setStreamBackend(stream);
     return;
-  } else if (!stream->request.getHeaderSent()) {
+  }
+  /*else if (!stream->request.getHeaderSent() &&
+  !stream->response.getHeaderSent()) {
     http_manager::replyError(http::Code::ServiceUnavailable,
                              validation::request_result_reason.at(
                                  validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
                              listener_config_.err503,
                              stream->client_connection);
-  }
+  }*/
   clearStream(stream);
 }
 
