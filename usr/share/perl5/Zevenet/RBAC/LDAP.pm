@@ -62,16 +62,19 @@ sub getLDAP
 #~ my $ldap_basedn = "dc=zevenet,dc=com";
 #~ my $ldap_filter = '(&(objectClass=inetOrgPerson)(objectClass=posixAccount)(uid=%s))';
 
+	# connection parameters
 	$ldap->{ enabled } //= 'false';
 	$ldap->{ host }    //= '';
 	$ldap->{ port }    //= '389';
 	$ldap->{ binddn }  //= '';
 	$ldap->{ bindpw }  //= '';
-	$ldap->{ basedn }  //= '';
-	$ldap->{ filter }  //= '';
 	$ldap->{ version } //= 3;
-	$ldap->{ scope }   //= 'sub';
 	$ldap->{ timeout } //= 60;
+
+	# search parameters
+	$ldap->{ filter } //= '';
+	$ldap->{ scope }  //= 'sub';
+	$ldap->{ basedn } //= '';
 
 	return $ldap;
 }
@@ -114,27 +117,35 @@ sub setLDAP
 }
 
 =begin nd
-Function: testLDAP
+Function: bindLDAP
 
-	Do a connect against the LDAP server to check the availability
+	It connects with the LDAP server if the LDAP configuration is completed.
+	If the connection was successfully, the unbind ($ldap->unbind) must be done when the object will have no more use.
 
 Parameters:
 	none - .
 
 Returns:
-	Integer - Returns 1 when the server is reachable or 0 on connecting failure
+	Net::LDAP object - It retuns a Net::LDAP object if it was success or undef if the configuration is not complete or there was an error connecting.
 
 =cut
 
-sub testLDAP
+sub bindLDAP
 {
-	my $suc       = 0;
+	my $ldap;
+	my $err       = 0;
+	my $cfg_flag  = 0;
 	my $ldap_conf = &getLDAP();
+
+	if ( $ldap_conf->{ enabled } ne 'true' )
+	{
+		&zenlog( "The LDAP service is disabled", 'debug', 'rbac' );
+		return $ldap;
+	}
 
 	if ( $ldap_conf->{ host } )
 	{
-		require Authen::Simple::LDAP;
-		my $ldap;
+		require Net::LDAP;
 		if (
 			 $ldap = Net::LDAP->new(
 									 $ldap_conf->{ host },
@@ -146,6 +157,8 @@ sub testLDAP
 		{
 			if ( $ldap_conf->{ binddn } )
 			{
+				$cfg_flag = 1;
+
 				my @bind_cfg = ( $ldap_conf->{ binddn } );
 				if ( $ldap_conf->{ bindpw } )
 				{
@@ -155,29 +168,47 @@ sub testLDAP
 				}
 
 				my $msg = $ldap->bind( @bind_cfg );
-				unless ( $msg->code )
+				if ( $msg->code )
 				{
-					$suc = 1;
-					$ldap->unbind();
+					$err = 1;
+					&zenlog( "Error trying to connect with LDAP: " . $msg->code, 'warning',
+							 'rbac' );
 				}
-			}
-
-			# anonymous bind
-			else
-			{
-				$suc = 1;
 			}
 		}
 	}
 
-	if ( $suc )
+	if ( !$cfg_flag )
+	{
+		&zenlog( "The LDAP configuration is not complete", 'debug', 'rbac' );
+	}
+
+	return $ldap;
+}
+
+=begin nd
+Function: testLDAP
+
+	Do a connection with the LDAP server to check the availability and after it is closed.
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - Returns 1 when the server is reachable or 0 on connecting failure.
+
+=cut
+
+sub testLDAP
+{
+	my $suc  = 0;
+	my $ldap = &bindLDAP();
+
+	if ( defined $ldap )
 	{
 		&zenlog( "The load balancer can access to the LDAP service", "debug", "rbac" );
-	}
-	else
-	{
-		&zenlog( "The load balancer cannot access to the LDAP service",
-				 "debug", "rbac" );
+		$suc = 1;
+		$ldap->unbind();
 	}
 
 	return $suc;
@@ -234,6 +265,63 @@ sub authLDAP
 	}
 
 	return $suc;
+}
+
+=begin nd
+Function: getLDAPUserExists
+
+	It checks if the user exists in the LDAP remote server. It used when the user do not need authentication, it using the ZAPI key.
+	Before, the ldap setting is checked (using function bindLDAP).
+
+Parameters:
+	User - User name
+
+Returns:
+	Integer - Return 1 if the user exists or 0 if it does not.
+
+=cut
+
+sub getLDAPUserExists
+{
+	my $user  = shift;
+	my $exist = 0;
+
+	my $ldap = &bindLDAP();
+
+	if ( defined $ldap )
+	{
+		my $ldap_conf = &getLDAP();
+
+		# add filter:
+		my $filter = $ldap_conf->{ filter };
+
+		# setting the default value of the Auth::LDAP::simple module
+		$filter = '(uid=%s)' if ( $filter eq '' );
+		$filter =~ s/\%s/$user/g;
+
+		my $result = $ldap->search(
+									base   => $ldap_conf->{ basedn },
+									scope  => $ldap_conf->{ scope },
+									filter => $filter,
+		);
+
+		if ( $result->count == 1 )
+		{
+			&zenlog( "The '$user' was found successfully", "debug", "RBAC" );
+			$exist = 1;
+		}
+		elsif ( $result->count > 1 )
+		{
+			&zenlog( "More than a entry '$user' was found in LDAP service",
+					 "warning", "RBAC" );
+		}
+		else
+		{
+			&zenlog( "The '$user' user was not found in LDAP service", "warning", "RBAC" );
+		}
+	}
+
+	return $exist;
 }
 
 1;
