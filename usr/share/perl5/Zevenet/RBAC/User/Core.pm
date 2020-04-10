@@ -211,7 +211,7 @@ sub getRBACUserParam
 =begin nd
 Function: validateRBACUserZapi
 
-	It validate if a user has zapi permissions and check if the zapikey is correct
+	It validates if a user has zapi permissions and check if the zapikey is correct
 
 Parameters:
 	User - User name
@@ -252,6 +252,13 @@ sub validateRBACUserZapi
 	{
 		&zenlog( "RBAC, the user $user has not zapi permissions", "warning", "RBAC" );
 		return 0;
+	}
+
+	# check if the user exists in ldap
+	if ( &getRBACUserParam( $user, 'service' ) eq 'ldap' )
+	{
+		include 'Zevenet::RBAC::LDAP';
+		return 0 if ( !&getLDAPUserExists( $user ) );
 	}
 
 	return $user;
