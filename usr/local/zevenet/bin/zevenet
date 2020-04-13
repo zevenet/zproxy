@@ -555,8 +555,23 @@ if ( $action eq "start" )
 		&logAndRun( "/etc/init.d/ssh start" );
 	}
 
-	# Bugfix: SNMP didn't start if the IP is not up
-	&logAndRun( "/etc/init.d/snmpd restart" );
+	my $systemctl = &getGlobalConfiguration( 'systemctl' );
+	my $snmpdstatus;
+	if ( -e $systemctl )
+	{
+		$snmpdstatus = &logAndGet( "$systemctl is-enabled snmpd" );
+	}
+	else
+	{
+		my $ls = &getGlobalConfiguration( 'ls' );
+		$snmpdstatus = &logAndGet( "$ls /etc/rc*.d/S*snmpd" ) ? 'enabled' : 'disabled';
+	}
+
+	if ( $snmpdstatus eq 'enabled' )
+	{
+		# Bugfix: SNMP didn't start if the IP is not up
+		&logAndRun( "/etc/init.d/snmpd restart" );
+	}
 
 	&local_http_service( 'start' );
 
