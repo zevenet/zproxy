@@ -749,7 +749,11 @@ void StreamManager::onRequestEvent(int fd) {
 
             break;
           case BACKEND_TYPE::REDIRECT: {
-            // TODO:: Add log
+            Logger::logmsg(LOG_INFO, " (%s) %.*s < REDIRECT %s",
+                           stream->client_connection.getPeerAddress().c_str(),
+                           stream->request.http_message_length,
+                           stream->request.http_message,
+                           bck->backend_config->url.data());
             if (http_manager::replyRedirect(*stream, *bck)) clearStream(stream);
             return;
           }
