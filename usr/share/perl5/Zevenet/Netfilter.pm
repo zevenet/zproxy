@@ -130,9 +130,10 @@ sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 }
 
 #
-sub getNewMark    # ($farm_name)
+sub getNewMark    # ($farm_name, mark)
 {
 	my $farm_name = shift;
+	my $mark      = shift;
 
 	require Tie::File;
 
@@ -142,27 +143,36 @@ sub getNewMark    # ($farm_name)
 
 	tie my @contents, 'Tie::File', "$fwmarksconf";
 
-	for my $i ( 512 .. 1023 )
-	{
-		# end loop if found
-		last if defined $found;
+	s/\00//g for @contents;
+	@contents = grep { !/^$/ } @contents;
 
-		my $num = sprintf ( "0x%x", $i );
-		if ( !grep { /^$num/x } @contents )
+	if ( defined $mark && $mark ne "" )
+	{
+		$marknum = $mark;
+		$found   = 'true';
+	}
+	else
+	{
+		for my $i ( 512 .. 1023 )
 		{
-			$found   = 'true';
-			$marknum = $num;
+			# end loop if found
+			last if defined $found;
+
+			my $num = sprintf ( "0x%x", $i );
+			if ( !grep { /^$num/x } @contents )
+			{
+				$found   = 'true';
+				$marknum = $num;
+			}
 		}
 	}
 
-	untie @contents;
-
 	if ( $found eq 'true' )
 	{
-		open ( my $marksfile, '>>', "$fwmarksconf" );
-		print $marksfile "$marknum // FARM\_$farm_name\_\n";
-		close $marksfile;
+		push ( @contents, "$marknum // FARM\_$farm_name\_\n" );
 	}
+
+	untie @contents;
 
 	return $marknum;
 }
@@ -179,8 +189,10 @@ sub delMarks    # ($farm_name,$mark)
 	{
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$fwmarksconf";
+		s/\00//g for @contents;
+		@contents = grep { !/^$/ } @contents;
 		@contents = grep { !/ \/\/ FARM\_$farm_name\_$/ } @contents;
-		$status = $?;
+		$status   = $?;
 		untie @contents;
 	}
 
@@ -188,8 +200,10 @@ sub delMarks    # ($farm_name,$mark)
 	{
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$fwmarksconf";
+		s/\00//g for @contents;
+		@contents = grep { !/^$/ } @contents;
 		@contents = grep { !/^$mark \// } @contents;
-		$status = $?;
+		$status   = $?;
 		untie @contents;
 	}
 
@@ -209,6 +223,8 @@ sub renameMarks    # ($farm_name,$newfname)
 	{
 		my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
 		tie my @contents, 'Tie::File', "$fwmarksconf";
+		s/\00//g for @contents;
+		@contents = grep { !/^$/ } @contents;
 		foreach my $line ( @contents )
 		{
 			$line =~ s/ \/\/ FARM\_$farm_name\_/ \/\/ FARM\_$newfname\_/x;
@@ -218,6 +234,31 @@ sub renameMarks    # ($farm_name,$newfname)
 	}
 
 	return $status;      # FIXME
+}
+
+#
+sub existMark            # ($mark)
+{
+	my ( $mark ) = @_;
+
+	require Tie::File;
+
+	my $status = 0;
+
+	if ( $mark eq "" )
+	{
+		return $status;
+	}
+
+	my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
+	tie my @contents, 'Tie::File', "$fwmarksconf";
+	if ( scalar ( grep { /^$mark/ } @contents ) )
+	{
+		$status = 1;
+	}
+	untie @contents;
+
+	return $status;
 }
 
 #

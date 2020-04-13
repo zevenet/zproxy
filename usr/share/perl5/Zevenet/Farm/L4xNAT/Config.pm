@@ -1237,6 +1237,13 @@ sub getL4ServerStruct
 		}
 	}
 
+	# if tag doesn't exist, create it
+	require Zevenet::Netfilter;
+	if ( !&existMark( $server{ tag } ) )
+	{
+		&getNewMark( $$farm{ name }, $server{ tag } );
+	}
+
 	return \%server;    # return reference
 }
 
