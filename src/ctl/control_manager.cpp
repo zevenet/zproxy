@@ -47,7 +47,7 @@ bool ctl::ControlManager::init(Config &configuration, ctl::CTL_INTERFACE_MODE li
     ctl_listener_mode = ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode ? listener_mode : ctl_listener_mode;
   }
   if (listener_mode == CTL_INTERFACE_MODE::CTL_UNIX) {
-    std::string control_path_name(configuration.ctrl_name);
+    control_path_name = configuration.ctrl_name;
     control_listener.listen(control_path_name);
     if (!configuration.ctrl_user.empty())
       Environment::setFileUserName(std::string(configuration.ctrl_user), control_path_name);
@@ -71,6 +71,9 @@ void ctl::ControlManager::stop() {
   // Notify stop to suscribers
   if (!is_running) return;
   is_running = false;
+  if (!control_path_name.empty()) {
+    ::unlink(control_path_name.data());
+  }
   CtlTask task;
   task.command = CTL_COMMAND::EXIT;
   task.target = CTL_HANDLER_TYPE::ALL;

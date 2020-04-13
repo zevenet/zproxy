@@ -40,7 +40,7 @@ class ControlManager : public EpollManager, public CtlNotify<CtlTask, std::strin
   Connection control_listener;
   std::atomic<bool> is_running;
   CTL_INTERFACE_MODE ctl_listener_mode;
-
+  std::string control_path_name;
   void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
   void doWork();
 
