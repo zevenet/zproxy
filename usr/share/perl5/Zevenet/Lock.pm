@@ -52,16 +52,17 @@ sub lockfile
 	{
 		if ( flock ( $lock_fd, LOCK_EX ) )
 		{
-			&zenlog( "Success locking IPTABLES", "info", "SYSTEM" ) if &debug == 3;
+			&zenlog( "Success locking $lockfile $lock_fd", "info", "SYSTEM" )
+			  if &debug == 3;
 		}
 		else
 		{
-			&zenlog( "Cannot lock iptables: $!", "error", "SYSTEM" );
+			&zenlog( "Cannot lock $lockfile $lock_fd: $!", "error", "SYSTEM" );
 		}
 	}
 	else
 	{
-		&zenlog( "Cannot open $lockfile: $!", "error", "SYSTEM" );
+		&zenlog( "Cannot open $lockfile $lock_fd: $!", "error", "SYSTEM" );
 	}
 
 	return $lock_fd;
@@ -73,11 +74,11 @@ sub unlockfile
 
 	if ( flock ( $lock_fd, LOCK_UN ) )
 	{
-		&zenlog( "Success unlocking IPTABLES", "info", "SYSTEM" ) if &debug == 3;
+		&zenlog( "Success unlocking $lock_fd", "info", "SYSTEM" ) if &debug == 3;
 	}
 	else
 	{
-		&zenlog( "Cannot unlock iptables: $!", "error", "SYSTEM" );
+		&zenlog( "Cannot unlock $lock_fd: $!", "error", "SYSTEM" );
 	}
 }
 

@@ -775,6 +775,9 @@ sub getL4ServerActionRules
 
 	require Zevenet::Netfilter;
 
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
+
 	my $rules = &getIptRulesStruct();
 	my $rule;
 
@@ -837,6 +840,8 @@ sub getL4ServerActionRules
 
 		push ( @{ $$rules{ t_mangle } }, $rule );
 	}
+
+	&setIptUnlock( $ipt_lockfile );
 
 	return $rules;
 }

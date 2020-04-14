@@ -196,6 +196,9 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
+		my $ipt_lockfile = &setIptLock();
+		return 1 if ( !defined $ipt_lockfile );
+
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
 			#~ next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
@@ -218,6 +221,8 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 				$output = &applyIptRules( $rule );
 			}
 		}
+
+		&setIptUnlock( $ipt_lockfile );
 
 		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
@@ -337,6 +342,9 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
+		my $ipt_lockfile = &setIptLock();
+		return 1 if ( !defined $ipt_lockfile );
+
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
 			my $rule;
@@ -421,6 +429,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			}
 		}
 
+		&setIptUnlock( $ipt_lockfile );
+
 		# manage l4sd
 		my $l4sd_pidfile = '/var/run/l4sd.pid';
 		my $l4sd         = &getGlobalConfiguration( 'l4sd' );
@@ -433,9 +443,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		{
 			require Zevenet::Netfilter;
 			## lock iptables use ##
-			my $iptlock = &getGlobalConfiguration( 'iptlock' );
-			open my $ipt_lockfile, '>', $iptlock;
-			&setIptLock( $ipt_lockfile );
+			my $ipt_lockfile = &setIptLock();
 
 			# Get the binary of iptables (iptables or ip6tables)
 			my $iptables_bin = &getBinVersion( $farm_name );
@@ -444,8 +452,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			  `$iptables_bin --numeric --table mangle --list PREROUTING`;
 
 			## unlock iptables use ##
-			&setIptUnlock( $ipt_lockfile );
-			close $ipt_lockfile;
+			&setIptUnlock( $ipt_lockfile ) if ( defined $ipt_lockfile );
 
 			if ( $num_lines == 0 )
 			{
@@ -796,6 +803,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	my $i             = 0;
 
 	require Zevenet::FarmGuardian;
+	require Zevenet::Netfilter;
 	require Tie::File;
 
 	my $farm       = &getL4FarmStruct( $farm_name );
@@ -831,10 +839,11 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
-		require Zevenet::Netfilter;
-
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
+
+		my $ipt_lockfile = &setIptLock();
+		return 1 if ( !defined $ipt_lockfile );
 
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
@@ -850,8 +859,9 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 			}
 		}
 
-		require Zevenet::Netfilter;
 		$output = &applyIptRules( @rules );
+
+		&setIptUnlock( $ipt_lockfile );
 
 		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
 		{
@@ -1309,14 +1319,8 @@ sub refreshL4FarmRules    # AlgorithmRules
 	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
 
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
@@ -1390,11 +1394,10 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 	}
 
+	&reloadL4FarmLogsRule( $$farm{ name } );
+
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
-
-	&reloadL4FarmLogsRule( $$farm{ name } );
 
 	# apply new rules
 	return $return_code;
@@ -1487,8 +1490,14 @@ sub setL4FarmLogs
 	my $action   = shift;    # true or false
 	my $out;
 
+	require Zevenet::Netfilter;
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
+
 	# execute action
 	&reloadL4FarmLogsRule( $farmname, $action );
+
+	&setIptUnlock( $ipt_lockfile );
 
 	# write configuration
 	require Tie::File;
@@ -1540,8 +1549,8 @@ sub reloadL4FarmLogsRule
 	# If the CHAIN is created, has a rule: -N LOG_CONNS
 	if ( scalar @ipt_list <= 1 and !$err )
 	{
-		&iptSystem( "$bin -D $ipt_hook -t $table -j $log_chain" );
-		&iptSystem( "$bin -X $log_chain -t $table" );
+		&iptSystemUnlocked( "$bin -D $ipt_hook -t $table -j $log_chain" );
+		&iptSystemUnlocked( "$bin -X $log_chain -t $table" );
 	}
 
 	# not to apply rules if:
@@ -1553,10 +1562,10 @@ sub reloadL4FarmLogsRule
 	my $log_tag     = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
 
 	# create chain if it does not exist
-	if ( &iptSystem( "$bin -S $log_chain -t $table" ) )
+	if ( &iptSystemUnlocked( "$bin -S $log_chain -t $table" ) )
 	{
-		$error = &iptSystem( "$bin -N $log_chain -t $table" );
-		$error = &iptSystem( "$bin -A $ipt_hook -t $table -j $log_chain" );
+		$error = &iptSystemUnlocked( "$bin -N $log_chain -t $table" );
+		$error = &iptSystemUnlocked( "$bin -A $ipt_hook -t $table -j $log_chain" );
 	}
 
 	my %farm_st = %{ &getL4FarmStruct( $farmname ) };
@@ -1567,7 +1576,7 @@ sub reloadL4FarmLogsRule
 		# log only the new connections
 		if ( &getGlobalConfiguration( 'full_farm_logs' ) ne 'true' )
 		{
-			$error |= &iptSystem(
+			$error |= &iptSystemUnlocked(
 				 "$bin -A $log_chain -t $table -m state --state NEW $mark $log_tag $comment_tag"
 			);
 		}
@@ -1576,7 +1585,8 @@ sub reloadL4FarmLogsRule
 		else
 		{
 			$error |=
-			  &iptSystem( "$bin -A $log_chain -t $table $mark $log_tag $comment_tag" );
+			  &iptSystemUnlocked(
+								  "$bin -A $log_chain -t $table $mark $log_tag $comment_tag" );
 		}
 	}
 

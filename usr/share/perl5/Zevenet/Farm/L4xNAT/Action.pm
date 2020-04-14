@@ -186,6 +186,10 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		system ( "$l4sd >/dev/null 2>&1 &" );
 	}
 
+	## lock iptables use ##
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
+
 	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 	{
 		&loadL4Modules( $$farm{ vproto } );
@@ -212,6 +216,9 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 # WARNING: Set Connmark rules BEFORE getting the farm rules or Connmark rules will be misplaced
 	&setIptConnmarkSave( $farm_name, 'true' );
 	&setIptConnmarkRestore( $farm_name, 'true' );
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
@@ -255,14 +262,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	}
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
 
 	for my $table ( qw(t_mangle_p t_mangle t_nat t_snat) )
 	{
@@ -270,9 +271,14 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		return $status if $status;
 	}
 
+	#enable log rule
+	if ( &getL4FarmLogs( $farm_name ) eq "true" )
+	{
+		&reloadL4FarmLogsRule( $farm_name, "true" );
+	}
+
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
 
 	# Enable IP forwarding
 	&setIpForward( 'true' );
@@ -283,12 +289,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		my $piddir = &getGlobalConfiguration( 'piddir' );
 		open my $fi, '>', "$piddir\/$$farm{name}\_l4xnat.pid";
 		close $fi;
-	}
-
-	#enable log rule
-	if ( &getL4FarmLogs( $farm_name ) eq "true" )
-	{
-		&reloadL4FarmLogsRule( $farm_name, "true" );
 	}
 
 	return $status;
@@ -316,6 +316,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	require Zevenet::Net::Util;
+	require Zevenet::Netfilter;
 	require Zevenet::Farm::L4xNAT::Config;
 
 	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
@@ -336,26 +337,15 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		untie @configfile;
 	}
 
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
+
 	# Remove log rules
 	&reloadL4FarmLogsRule( $farm_name, "false" );
-
-	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
-
-	require Zevenet::Netfilter;
-	&setIptLock( $ipt_lockfile );
 
 	# Disable rules
 	my @allrules;
 
-	require Zevenet::Netfilter;
 	@allrules = &getIptList( $farm_name, "mangle", "PREROUTING" );
 	$status =
 	  &deleteIptRules( $farm_name,   "farm", $farm_name, "mangle",
@@ -375,9 +365,12 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	  &deleteIptRules( $farm_name,   "farm", $farm_name, "raw",
 					   "PREROUTING", @allrules );
 
+	## Delete ip rule mark END ##
+	&setIptConnmarkRestore( $farm_name );
+	&setIptConnmarkSave( $farm_name );
+
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
 
 	# Disable active l4xnat file
 	my $piddir = &getGlobalConfiguration( 'piddir' );
@@ -413,10 +406,6 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
 	}
-
-	## Delete ip rule mark END ##
-	&setIptConnmarkRestore( $farm_name );
-	&setIptConnmarkSave( $farm_name );
 
 	# Reload conntrack modules
 	if ( $$farm{ vproto } =~ /sip|ftp/ )
@@ -513,6 +502,9 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 		# refresh backends probability values
 		&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
 
+		my $ipt_lockfile = &setIptLock();
+		return 1 if ( !defined $ipt_lockfile );
+
 		# get new rules
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
@@ -597,6 +589,8 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 		# apply new rules
 		$output = &applyIptRules( @rules );
+
+		&setIptUnlock( $ipt_lockfile );
 	}
 
 	return $output;
