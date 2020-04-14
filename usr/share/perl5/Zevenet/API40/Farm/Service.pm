@@ -338,17 +338,10 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	my $redirect = &getFarmVS( $farmname, $service, "redirect" );
-
 	if ( exists $json_obj->{ redirecttype } )
 	{
-		my $redirecttype = "redirect";
-
-		if ( $json_obj->{ redirecttype } eq "append" )
-		{
-			$redirecttype = "redirectappend";
-		}
-		&setFarmVS( $farmname, $service, $redirecttype, $redirect );
+		my $redirecttype = $json_obj->{ redirecttype };
+		&setFarmVS( $farmname, $service, "redirecttype", $redirecttype );
 	}
 
 	if ( exists $json_obj->{ leastresp } )

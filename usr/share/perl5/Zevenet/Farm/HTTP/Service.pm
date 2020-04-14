@@ -929,19 +929,34 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 
 		#client redirect default
-		if ( $tag eq "redirect" or $tag eq "redirectappend" )
+		if ( $tag eq "redirect" )
 		{
-			if ( $line =~ /^\t\t#?Redirect(?:Append)?\s/ )
+			if ( $line =~ /^\t\t#?(Redirect(?:Append)?) (30[127] )?.*/ )
 			{
-				my $policy = 'Redirect';
-				$policy .= 'Append' if $tag eq "redirectappend";
+				my $policy        = $1;
+				my $redirect_code = $2;
+				my $comment       = '';
+				if ( $string eq "" )
+				{
+					$comment = '#';
+					$policy  = "Redirect";
+				}
+				$line = "\t\t${comment}${policy} ${redirect_code}\"${string}\"";
+				&zenlog( "REN: redirect line $line" );
+				last;
+			}
+		}
 
-				my $comment = ( $string eq "" ) ? '#' : '';
+		#client redirect default
+		if ( $tag eq "redirecttype" )
+		{
+			if ( $line =~ /^\t\tRedirect(?:Append)? (.*)/ )
+			{
+				my $rest = $1;
+				my $policy = ( $string eq 'append' ) ? 'RedirectAppend' : 'Redirect';
 
-				$line =~ /Redirect(?:Append)? (30[127] )?"/;
-				my $redirect_code = $1 // "";
-
-				$line = "\t\t${comment}${policy} $redirect_code\"$string\"";
+				$line = "\t\t${policy} $rest";
+				&zenlog( "REN: redirecttype line $line" );
 				last;
 			}
 		}
