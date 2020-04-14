@@ -942,7 +942,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 					$policy  = "Redirect";
 				}
 				$line = "\t\t${comment}${policy} ${redirect_code}\"${string}\"";
-				&zenlog( "REN: redirect line $line" );
 				last;
 			}
 		}
@@ -956,7 +955,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				my $policy = ( $string eq 'append' ) ? 'RedirectAppend' : 'Redirect';
 
 				$line = "\t\t${policy} $rest";
-				&zenlog( "REN: redirecttype line $line" );
 				last;
 			}
 		}
