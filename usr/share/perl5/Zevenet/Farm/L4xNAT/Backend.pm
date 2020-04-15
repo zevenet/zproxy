@@ -819,7 +819,11 @@ sub getL4ServerActionRules
 	## rules for source nat or nat ##
 	if ( $$farm{ nattype } eq 'nat' )
 	{
+		&setIptUnlock( $ipt_lockfile );
 		my $rule_ref = &genIptMasquerade( $farm, $server );
+		$ipt_lockfile = &setIptLock();
+		return 1 if ( !defined $ipt_lockfile );
+
 		foreach my $rule ( @{ $rule_ref } )
 		{
 			$rule = ( $switch eq 'off' )

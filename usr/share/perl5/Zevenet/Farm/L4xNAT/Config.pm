@@ -733,7 +733,11 @@ sub setFarmNatType    # ($nat,$farm_name)
 			my $rule;
 
 			# get the rule 'template'
+			&setIptUnlock( $ipt_lockfile );
 			my $rule_ref = &genIptMasquerade( $farm, $server );
+			$ipt_lockfile = &setIptLock();
+			return 1 if ( !defined $ipt_lockfile );
+
 			foreach my $rule ( @{ $rule_ref } )
 			{
 				# apply the desired action to the rule template
@@ -1388,7 +1392,11 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 		if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 		{
+			&setIptUnlock( $ipt_lockfile );
 			my $rule_ref = &genIptMasquerade( $farm, $server );
+			$ipt_lockfile = &setIptLock();
+			return 1 if ( !defined $ipt_lockfile );
+
 			foreach my $rule ( @{ $rule_ref } )
 			{
 				$rule =
@@ -1456,11 +1464,15 @@ sub reloadL4FarmsSNAT
 		foreach my $server ( @{ $$l4f_conf{ servers } } )
 		{
 			my $rule_ref = &genIptMasquerade( $l4f_conf, $server );
+
+			my $ipt_lockfile = &setIptLock();
+			return 1 if ( !defined $ipt_lockfile );
 			foreach my $rule ( @{ $rule_ref } )
 			{
 				$rule = &getIptRuleReplace( $l4f_conf, $server, $rule );
 				&applyIptRules( $rule );
 			}
+			&setIptUnlock( $ipt_lockfile );
 		}
 	}
 }
