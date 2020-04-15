@@ -387,6 +387,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				{
 					my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
 
+					&setIptUnlock( $ipt_lockfile );
+
 					# start not started servers
 					if ( $rule_num == -1 )    # no rule was found
 					{
@@ -401,6 +403,10 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 						&_runL4ServerStart( $$farm{ name }, $$server{ id } );
 						$rule = undef;        # changes are already done
 					}
+
+					$ipt_lockfile = &setIptLock();
+					return 1 if ( !defined $ipt_lockfile );
+
 					&applyIptRules( $rule ) if defined ( $rule );
 				}
 			}
@@ -423,7 +429,13 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				}
 				else
 				{
+					&setIptUnlock( $ipt_lockfile );
+
 					&_runL4ServerStop( $$farm{ name }, $$server{ id } );
+
+					$ipt_lockfile = &setIptLock();
+					return 1 if ( !defined $ipt_lockfile );
+
 					$rule = undef;    # changes are already done
 				}
 			}

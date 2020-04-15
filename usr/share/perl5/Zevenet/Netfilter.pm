@@ -726,11 +726,11 @@ sub getIptRuleNumber
 
 	# debugging
 	( defined ( $rule ) && $rule ne '' )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $rule invalid', "error", "SYSTEM" );
-	( defined ( $farm_name ) && !ref $farm_name )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $farm_name invalid', "error", "SYSTEM" );
-	( defined ( $index ) && !ref $index )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid', "error", "SYSTEM" );
+	  or &zenlog( ( caller ( 0 ) )[3] . ' rule ' . $rule . ' invalid',
+				  "error", "SYSTEM" );
+	( defined ( $farm_name ) && $farm_name ne '' )
+	  or &zenlog( ( caller ( 0 ) )[3] . ' farm_name ' . $farm_name . ' invalid',
+				  "error", "SYSTEM" );
 
 	my $rule_num;      # output: rule number for requested rule
 
