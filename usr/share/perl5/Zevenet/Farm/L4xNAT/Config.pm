@@ -720,6 +720,9 @@ sub setFarmNatType    # ($nat,$farm_name)
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
+		my $ipt_lockfile = &setIptLock();
+		return 1 if ( !defined $ipt_lockfile );
+
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
 			&zlog( "server:$$server{id}" ) if &debug == 2;
@@ -742,6 +745,8 @@ sub setFarmNatType    # ($nat,$farm_name)
 				$output |= &applyIptRules( $rule );
 			}
 		}
+
+		&setIptUnlock( $ipt_lockfile );
 
 		if ( $fg_enabled eq 'true' )
 		{
