@@ -334,6 +334,7 @@ while ()
 							   10 - ( $connsperfarm{ $fname }{ $bck } / $connsperfarm{ $fname }{ total } ) * 10
 							) + 0.5
 						);
+						$newweight = 1 if $newweight <= 0;
 						printf "Setting new weight: $fname - $bck - $newweight \n" if ( $debug );
 
 			  #~ &setL4FarmServer( $fname, $bck, undef, undef, $newweight, undef, undef, undef, undef );
