@@ -153,7 +153,6 @@ sub sendGPing    # ($pif)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $pif ) = @_;
-
 	my $if_conf = &getInterfaceConfig( $pif );
 	my $gw      = $if_conf->{ gateway };
 
@@ -161,9 +160,10 @@ sub sendGPing    # ($pif)
 	{
 		my $ping_bin = &getGlobalConfiguration( 'ping_bin' );
 		my $pingc    = &getGlobalConfiguration( 'pingc' );
-		my $ping_cmd = "$ping_bin -c $pingc $gw";
+		my $ping_cmd = "$ping_bin -c $pingc -I $if_conf->{addr} $gw";
 
-		&zenlog( "Sending $pingc ping(s) to gateway $gw", "info", "NETWORK" );
+		&zenlog( "Sending $pingc ping(s) to gateway $gw from $if_conf->{addr}",
+				 "info", "NETWORK" );
 		&logAndRunBG( "$ping_cmd" );
 	}
 }

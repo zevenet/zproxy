@@ -7,13 +7,14 @@ sub arp_announce
 	return if ( $arp_announce ne "true" );
 	my @interfaces = @{ &getConfigInterfaceList() };
 
-#if cluster is running master need to take this action, avoided to use getZClusterNodeStatus with eload
+	#it shouldn't work if the node is status is backup or maintenance
 	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
-	return if ( !-e $znode_status_file && !-s $znode_status_file );
-	open my $znode_status, '<', $znode_status_file;
-	return if ( !$znode_status );
-	my $status = <$znode_status>;
-	return if ( $status !~ /master/ );
+	if ( -e $znode_status_file && -s $znode_status_file )
+	{
+		open my $znode_status, '<', $znode_status_file;
+		my $status = <$znode_status>;
+		return if ( $status =~ /backup|maintenance/ );
+	}
 	#
 
 	foreach my $iface ( @interfaces )
