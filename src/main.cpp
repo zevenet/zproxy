@@ -39,23 +39,29 @@ std::once_flag terminate_flag;
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
-  Logger::logmsg(LOG_NOTICE, "[%s] received", ::strsignal(sig));
+  Logger::logmsg(LOG_DEBUG, "[%s] received", ::strsignal(sig));
   switch (sig) {
+    case SIGQUIT:
+    case SIGTERM:
+      ::_exit(EXIT_SUCCESS);
+      return;
     case SIGINT:
-    case SIGTERM: {
+    case SIGHUP: {
       auto cm = ctl::ControlManager::getInstance();
       cm->stop();
+      ::_exit(EXIT_SUCCESS);
       break;
     }
     case SIGABRT:
+      ::_exit(EXIT_FAILURE);
     case SIGSEGV: {
       debug::printBackTrace();
-      std::exit(EXIT_FAILURE);
+      ::_exit(EXIT_FAILURE);
     }
     case SIGUSR1:  // Release free heap memory
       ::malloc_trim(0);
       break;
-    case SIGHUP: {
+    case SIGUSR2: {
       auto cm = ctl::ControlManager::getInstance();
       cm->sendCtlCommand(ctl::CTL_COMMAND::UPDATE,
                          ctl::CTL_HANDLER_TYPE::LISTENER_MANAGER,
@@ -123,6 +129,8 @@ int main(int argc, char *argv[]) {
     ::signal(SIGHUP, handleInterrupt);
     ::signal(SIGSEGV, handleInterrupt);
     ::signal(SIGUSR1, handleInterrupt);
+    ::signal(SIGUSR2, handleInterrupt);
+    ::signal(SIGQUIT, handleInterrupt);
     ::umask(077);
     ::srandom(static_cast<unsigned int>(::getpid()));
     Environment::setUlimitData();
