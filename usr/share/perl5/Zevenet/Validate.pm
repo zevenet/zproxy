@@ -52,7 +52,9 @@ my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z0-9][a-zA-Z0-9_\-\.]*/;
 my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
 
-my $vlan_tag    = qr/\d{1,4}/;
+my $cert_name = qr/\w[\w\.\(\)\@ \-]*/,
+
+  my $vlan_tag = qr/\d{1,4}/;
 my $virtual_tag = qr/[a-zA-Z0-9\-]{1,13}/;
 my $nic_if      = qr/[a-zA-Z0-9\-]{1,15}/;
 my $bond_if     = qr/[a-zA-Z0-9\-]{1,15}/;
@@ -241,11 +243,12 @@ my %format_re = (
 	'waf_file'       => qr/(?:[\w-]+)/,
 
 	# certificates filenames
-	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
-	'cert_pem'    => qr/\w[\w\.\(\)\@ \-]*\.pem/,
-	'cert_name'   => qr/[a-zA-Z0-9\-]+/,
-	'cert_csr'    => qr/\w[\w\.\-]*\.csr/,
-	'cert_dh2048' => qr/\w[\w\.\-]*_dh2048\.pem/,
+	'certificate_name' => $cert_name,
+	'certificate'      => qr/$cert_name\.(?:pem|csr)/,
+	'cert_pem'         => qr/$cert_name\.pem/,
+	'cert_name'        => qr/[a-zA-Z0-9\-]+/,
+	'cert_csr'         => qr/\w[\w\.\-]*\.csr/,
+	'cert_dh2048'      => qr/\w[\w\.\-]*_dh2048\.pem/,
 
 	# IPS
 	'IPv4_addr' => qr/$ipv4_addr/,
