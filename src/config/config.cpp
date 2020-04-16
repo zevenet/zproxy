@@ -1597,7 +1597,7 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
       if ((addr.ai_family == AF_INET || addr.ai_family == AF_INET6) &&
           !has_port)
         conf_err("BackEnd missing Port - aborted");
-      if (!res->bekey.empty()) {
+      if (res->bekey.empty()) {
         if (addr.ai_family == AF_INET)
           snprintf(
               lin, MAXBUF - 1, "4-%08x-%x",
