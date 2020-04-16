@@ -224,7 +224,7 @@ sub setNotifAlertsAction
 			 && $action eq 'enable' )
 		{
 			$errMsg = &setNotifData( 'alerts', 'Notifications', 'Status', 'on' );
-			&runNotifications();
+			$errMsg = &runNotifications() if ( !$errMsg );
 		}
 
 		# disable sec process
@@ -398,19 +398,15 @@ sub runNotifications
 	my $sec        = &getGlobalConfiguration( 'sec' );
 	my $syslogFile = &getGlobalConfiguration( 'syslogFile' );
 	my $pid        = &logAndGet( "$pidof -x sec" );
+	my $err        = 0;
 
 	if ( $pid eq "" )
 	{
 		&createSecConfig();
 
 		# start sec process
-		&logAndRunBG( "$sec --conf=$secConf --input=$syslogFile" );
-		$pid = &logAndGet( "$pidof -x sec" );
-		if ( $pid )
-		{
-			&zenlog( "run SEC, pid $pid", "info", "NOTIFICATIONS" );
-		}
-		else
+		$err = &logAndRun( "$sec --detach --conf=$secConf --input=$syslogFile" );
+		if ( $err )
 		{
 			&zenlog( "SEC could not run", "error", "NOTIFICATIONS" );
 		}
@@ -422,6 +418,7 @@ sub runNotifications
 			"info", "NOTIFICATIONS"
 		);
 	}
+	return $err;
 }
 
 sub reloadNotifications

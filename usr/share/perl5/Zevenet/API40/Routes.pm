@@ -40,6 +40,7 @@ my $cert_pem_re = &getValidFormat( 'cert_pem' );
 if ( $q->path_info =~ qr{^/certificates} )
 {
 	require Zevenet::API40::Certificate;
+	my $cert_name_re = &getValidFormat( 'certificate_name' );
 
 	#  GET List SSL certificates
 	GET qr{^/certificates$} => \&certificates;
@@ -54,7 +55,7 @@ if ( $q->path_info =~ qr{^/certificates} )
 	POST qr{^/certificates$} => \&create_csr;
 
 	#  POST certificates
-	POST qr{^/certificates/($cert_pem_re)$} => \&upload_certificate;
+	POST qr{^/certificates/($cert_name_re)$} => \&upload_certificate;
 
 	#  DELETE certificate
 	DELETE qr{^/certificates/($cert_re)$} => \&delete_certificate;

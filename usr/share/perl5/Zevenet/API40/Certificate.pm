@@ -269,11 +269,8 @@ sub upload_certificate    # ()
 	my $desc      = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration( 'certdir' );
 
-	if ( not &getValidFormat( 'certificate', $filename ) )
-	{
-		my $msg = "Invalid certificate file name";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	# add extension if it does not exist
+	$filename .= ".pem" if $filename !~ /\.pem$/;
 
 	# check if the certificate filename already exists
 	$filename =~ s/[\(\)\@ ]//g;

@@ -149,7 +149,6 @@ sub setSystemGlobal
 				}
 				else
 				{
-					&zenlog( "REN: Farm $farmname stopped", "", "" );
 					push @farms_stopped, $farmname;
 				}
 			}
