@@ -86,7 +86,10 @@ class HttpSessionManager {
   bool addSession(JsonObject *json_object, std::vector<Backend *> backend_set);
   SessionInfo *addSession(Connection &source, HttpRequest &request,
                           Backend &backend_to_assign);
-  bool deleteSessionByKey(const std::string& key);
+  bool updateSessionCookie(Connection &source, HttpRequest &request,
+                           std::string_view set_cookie_value,
+                           Backend &backend_to_assign);
+  bool deleteSessionByKey(const std::string &key);
   bool deleteSession(const JsonObject &json_object);
   void deleteSession(Connection &source, HttpRequest &request);
   // return the assigned backend or nullptr if no session is found or sesssion
@@ -101,7 +104,7 @@ class HttpSessionManager {
  private:
   static std::string getQueryParameter(const std::string &url,
                                        const std::string &sess_id);
-  static std::string getCookieValue(const std::string &cookie_header_value,
+  static std::string getCookieValue(std::string_view cookie_header_value,
                                     std::string_view sess_id);
   static std::string getUrlParameter(const std::string &url);
   std::string getSessionKey(Connection &source, HttpRequest &request);

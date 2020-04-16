@@ -538,6 +538,15 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
               break;
           }
           break;
+        case http::HTTP_HEADER_NAME::SET_COOKIE: {
+          auto service = static_cast<Service *>(stream.request.getService());
+          if (service->service_config.sess_type == SESS_TYPE::SESS_COOKIE) {
+            service->updateSessionCookie(
+                stream.client_connection, stream.request, header_value,
+                *stream.backend_connection.getBackend());
+          }
+          break;
+        }
         default:
           break;
       }

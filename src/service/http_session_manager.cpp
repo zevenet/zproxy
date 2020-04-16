@@ -46,6 +46,30 @@ SessionInfo *HttpSessionManager::addSession(Connection &source,
   return nullptr;
 }
 
+bool sessions::HttpSessionManager::updateSessionCookie(
+    Connection &source, HttpRequest &request, std::string_view set_cookie_value,
+    Backend &backend_to_assign) {
+  if (this->session_type != sessions::SESS_COOKIE) return false;
+  std::string old_cookie = getSessionKey(source, request);
+  auto new_cookie = getCookieValue(set_cookie_value, this->sess_id);
+  if (!new_cookie.empty()) {
+    std::lock_guard<std::recursive_mutex> locker(lock_mtx);
+    if (!old_cookie.empty()) {
+      auto it = sessions_set.find(old_cookie);
+      if (it == sessions_set.end()) return false;
+      auto session_data = it->second;
+      sessions_set.erase(it);
+      sessions_set.emplace(std::make_pair(new_cookie, session_data));
+      return true;
+    } else {
+      auto new_session = new SessionInfo();
+      new_session->assigned_backend = &backend_to_assign;
+      sessions_set.emplace(std::make_pair(new_cookie, new_session));
+    }
+  }
+  return false;
+}
+
 void HttpSessionManager::deleteSession(Connection &source,
                                        HttpRequest &request) {
   std::lock_guard<std::recursive_mutex> locker(lock_mtx);
@@ -188,7 +212,7 @@ std::string HttpSessionManager::getQueryParameter(const std::string &url,
 }
 
 std::string HttpSessionManager::getCookieValue(
-    const std::string &cookie_header_value, std::string_view sess_id) {
+    std::string_view cookie_header_value, std::string_view sess_id) {
   auto it_start = cookie_header_value.find(sess_id);
   if (it_start == std::string::npos) return std::string();
   it_start = cookie_header_value.find('=', it_start);
