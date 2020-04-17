@@ -733,10 +733,11 @@ sub setFarmNatType    # ($nat,$farm_name)
 			my $rule;
 
 			# get the rule 'template'
-			&setIptUnlock( $ipt_lockfile );
+			#~ &setIptUnlock( $ipt_lockfile );
 			my $rule_ref = &genIptMasquerade( $farm, $server );
-			$ipt_lockfile = &setIptLock();
-			return 1 if ( !defined $ipt_lockfile );
+
+			#~ $ipt_lockfile = &setIptLock();
+			#~ return 1 if ( !defined $ipt_lockfile );
 
 			foreach my $rule ( @{ $rule_ref } )
 			{
@@ -1334,6 +1335,8 @@ sub refreshL4FarmRules    # AlgorithmRules
 	my @rules;
 	my $return_code = 0;
 
+	&zenlog( "refreshL4FarmRules(farm_name:$farm)", "error", "SYSTEM" );
+
 	$prio_server = &getL4ServerWithLowestPriority( $farm );
 
 	# refresh backends probability values
@@ -1392,10 +1395,11 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 		if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 		{
-			&setIptUnlock( $ipt_lockfile );
+			#~ &setIptUnlock( $ipt_lockfile );
 			my $rule_ref = &genIptMasquerade( $farm, $server );
-			$ipt_lockfile = &setIptLock();
-			return 1 if ( !defined $ipt_lockfile );
+
+			#~ $ipt_lockfile = &setIptLock();
+			#~ return 1 if ( !defined $ipt_lockfile );
 
 			foreach my $rule ( @{ $rule_ref } )
 			{
@@ -1418,8 +1422,10 @@ sub refreshL4FarmRules    # AlgorithmRules
 		}
 
 	}
+	&zenlog( "refreshL4FarmRules(farm_name:$farm)", "error", "SYSTEM" );
 
 	&reloadL4FarmLogsRule( $$farm{ name } );
+	&zenlog( "refreshL4FarmRules(farm_name:$farm)", "error", "SYSTEM" );
 
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );

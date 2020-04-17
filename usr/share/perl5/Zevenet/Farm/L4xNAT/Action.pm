@@ -565,10 +565,11 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 			if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 			{
-				&setIptUnlock( $ipt_lockfile );
+				#~ &setIptUnlock( $ipt_lockfile );
 				my $rule_ref = &genIptMasquerade( $farm, $server );
-				$ipt_lockfile = &setIptLock();
-				return 1 if ( !defined $ipt_lockfile );
+
+				#~ $ipt_lockfile = &setIptLock();
+				#~ return 1 if ( !defined $ipt_lockfile );
 
 				foreach my $rule ( @{ $rule_ref } )
 				{

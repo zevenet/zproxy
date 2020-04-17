@@ -362,7 +362,7 @@ Returns:
 
 =cut
 
-sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
+sub setL4FarmBackendStatus
 {
 	my ( $farm_name, $server_id, $status ) = @_;
 
@@ -372,8 +372,13 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my %farm = %{ &getL4FarmStruct( $farm_name ) };
 
 	my $output   = 0;
-	my $line_num = 0;         # line index tracker
-	my $serverid = 0;         # server index tracker
+	my $line_num = 0;    # line index tracker
+	my $serverid = 0;    # server index tracker
+
+	&zenlog(
+		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)",
+		"error", "SYSTEM"
+	);
 
 	&zenlog(
 		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)",
@@ -423,8 +428,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 	$farm{ servers } = undef;
 
-	#~ %farm = undef;
-
 	%farm = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
 
@@ -454,9 +457,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 		&sendL4ConfChange( $farm{ name } );
 	}
 
-	$farm{ servers } = undef;
-
-	#~ %farm             = undef;
 	$$farm{ servers } = undef;
 	$farm = undef;
 
@@ -819,10 +819,11 @@ sub getL4ServerActionRules
 	## rules for source nat or nat ##
 	if ( $$farm{ nattype } eq 'nat' )
 	{
-		&setIptUnlock( $ipt_lockfile );
+		#~ &setIptUnlock( $ipt_lockfile );
 		my $rule_ref = &genIptMasquerade( $farm, $server );
-		$ipt_lockfile = &setIptLock();
-		return 1 if ( !defined $ipt_lockfile );
+
+		#~ $ipt_lockfile = &setIptLock();
+		#~ return 1 if ( !defined $ipt_lockfile );
 
 		foreach my $rule ( @{ $rule_ref } )
 		{
