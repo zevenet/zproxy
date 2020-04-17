@@ -1049,17 +1049,17 @@ sub setIptLock    # ()
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 	open ( my $ipt_lockfile, '>', $iptlock );
 
-	&zenlog( "Trying to lock IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
+	&zenlog( "Trying to lock IPTABLES", "error", "SYSTEM" );
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "SYSTEM" );
+		&zenlog( "Could not open $iptlock: $!", "error", "SYSTEM" );
 		return;
 	}
 
 	if ( flock ( $ipt_lockfile, LOCK_EX ) )
 	{
-		&zenlog( "Success locking IPTABLES", "debug", "SYSTEM" );
+		&zenlog( "Success locking IPTABLES", "error", "SYSTEM" );
 	}
 	else
 	{
@@ -1076,11 +1076,11 @@ sub setIptUnlock    # ($lockfile)
 {
 	my $ipt_lockfile = shift;
 
-	&zenlog( "Trying to unlock IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
+	&zenlog( "Trying to unlock IPTABLES", "error", "SYSTEM" );
 
 	if ( flock ( $ipt_lockfile, LOCK_UN ) )
 	{
-		&zenlog( "Success unlocking IPTABLES", "debug", "SYSTEM" );
+		&zenlog( "Success unlocking IPTABLES", "error", "SYSTEM" );
 	}
 	else
 	{
