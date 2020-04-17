@@ -1059,7 +1059,7 @@ sub setIptLock    # ()
 
 	if ( flock ( $ipt_lockfile, LOCK_EX ) )
 	{
-		&zenlog( "Success locking IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
+		&zenlog( "Success locking IPTABLES", "debug", "SYSTEM" );
 	}
 	else
 	{
@@ -1080,7 +1080,7 @@ sub setIptUnlock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_UN ) )
 	{
-		&zenlog( "Success unlocking IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
+		&zenlog( "Success unlocking IPTABLES", "debug", "SYSTEM" );
 	}
 	else
 	{
