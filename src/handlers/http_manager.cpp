@@ -123,27 +123,29 @@ ssize_t http_manager::getLastChunkSize(const char *data, size_t data_size,
 }
 
 void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
-  if (!service->becookie.empty()) {
-    std::string set_cookie_header =
-        service->becookie + "=" +
-        stream->backend_connection.getBackend()->bekey;
-    if (!service->becdomain.empty())
-      set_cookie_header += "; Domain=" + service->becdomain;
-    if (!service->becpath.empty())
-      set_cookie_header += "; Path=" + service->becpath;
-    time_t time = std::time(nullptr);
-    if (service->becage > 0) {
-      time += service->becage;
-    } else {
-      time += service->ttl;
-    }
-    char time_string[MAXBUF];
-    strftime(time_string, MAXBUF - 1, "%a, %e-%b-%Y %H:%M:%S GMT",
-             gmtime(&time));
-    set_cookie_header += "; expires=";
-    set_cookie_header += time_string;
+  if (!service->becookie.empty() && !stream->backend_connection.getBackend()->bekey.empty()) {
+//    std::string set_cookie_header =
+//        service->becookie + "=" +
+//        stream->backend_connection.getBackend()->bekey;
+//    if (!service->becdomain.empty())
+//      set_cookie_header += "; Domain=" + service->becdomain;
+//    if (!service->becpath.empty())
+//      set_cookie_header += "; Path=" + service->becpath;
+//    time_t time = std::time(nullptr);
+//    if(service->becage != 0) {
+//      if (service->becage > 0) {
+//        time += service->becage;
+//      } else {
+//        time += service->ttl;
+//      }
+//      char time_string[MAXBUF];
+//      strftime(time_string, MAXBUF - 1, "%a, %e-%b-%Y %H:%M:%S GMT",
+//               gmtime(&time));
+//      set_cookie_header += "; expires=";
+//      set_cookie_header += time_string;
+//    }
     stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
-                               set_cookie_header);
+                               stream->backend_connection.getBackend()->bekey);
   }
 }
 

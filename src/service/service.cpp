@@ -20,8 +20,8 @@
  */
 
 #include "service.h"
-#include "../util/network.h"
 #include <numeric>
+#include "../util/network.h"
 
 Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   if (backend_set.empty()) return getEmergencyBackend();
@@ -29,9 +29,8 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   if (session_type != sessions::SESS_NONE) {
     auto session = getSession(source, request);
     if (session != nullptr) {
-      if(session->assigned_backend->status != BACKEND_STATUS::BACKEND_UP)
-      {
-        //invalidate all sessions backend is down
+      if (session->assigned_backend->status != BACKEND_STATUS::BACKEND_UP) {
+        // invalidate all sessions backend is down
         deleteBackendSessions(session->assigned_backend->backend_id);
         return getBackend(source, request);
       }
@@ -44,7 +43,9 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request) {
       if ((new_backend = getNextBackend()) != nullptr) {
         session = addSession(source, request, *new_backend);
         if (session == nullptr) {
-          Logger::logmsg(LOG_DEBUG, "Error adding new session, session info not found in request");
+          Logger::logmsg(
+              LOG_DEBUG,
+              "Error adding new session, session info not found in request");
         }
       }
       return new_backend;
@@ -72,11 +73,28 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
       backend->address = std::move(backend_config->address);
       backend->port = backend_config->port;
       backend->backend_type = BACKEND_TYPE::REMOTE;
-      backend->bekey = backend_config->bekey;
       backend->nf_mark = backend_config->nf_mark;
       backend->ctx = backend_config->ctx;
       backend->conn_timeout = backend_config->conn_to;
       backend->response_timeout = backend_config->rw_timeout;
+      if (!becookie.empty()) {
+        backend->bekey = becookie;
+        backend->bekey += "=";
+        backend->bekey += backend_config->bekey;
+
+        if (!becdomain.empty()) backend->bekey += "; Domain=" + becdomain;
+        if (!becpath.empty()) backend->bekey += "; Path=" + becpath;
+
+        if (becage != 0) {
+          backend->bekey += "; Max-Age=";
+          if (becage > 0) {
+            backend->bekey += std::to_string(becage * 1000);
+          } else {
+            backend->bekey += std::to_string(ttl * 1000);
+          }
+        }
+      }
+
     } else {
       Logger::LogInfo("Backend Configuration not valid ", LOG_NOTICE);
       return;
@@ -155,6 +173,18 @@ Service::Service(ServiceConfig &service_config_)
     : service_config(service_config_) {
   //  ctl::ControlManager::getInstance()->attach(std::ref(*this));
   // session data initialization
+  name = std::string(service_config.name);
+  disabled = service_config.disabled;
+  pinned_connection = service_config.pinned_connection == 1;
+
+  // Information related with the setCookie
+  if (service_config.becookie != nullptr)
+    becookie = std::string(service_config.becookie);
+  if (service_config.becdomain != nullptr)
+    becdomain = std::string(service_config.becdomain);
+  if (service_config.becpath != nullptr)
+    becpath = std::string(service_config.becpath);
+  becage = service_config.becage;
   this->session_type =
       static_cast<sessions::HttpSessionType>(service_config_.sess_type);
   this->ttl = static_cast<unsigned int>(service_config_.sess_ttl);

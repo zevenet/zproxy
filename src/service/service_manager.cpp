@@ -87,20 +87,8 @@ Service *ServiceManager::getService(HttpRequest &request) {
 std::vector<Service *> ServiceManager::getServices() { return services; }
 
 bool ServiceManager::addService(ServiceConfig &service_config, int _id) {
-  Service *service = new Service(service_config);
+  auto service = new Service(service_config);
   service->id = _id;
-  service->name = std::string(service_config.name);
-  service->disabled = service_config.disabled;
-  service->pinned_connection = service_config.pinned_connection == 1;
-
-  // Information related with the setCookie
-  if (service_config.becookie != nullptr)
-    service->becookie = std::string(service_config.becookie);
-  if (service_config.becdomain != nullptr)
-    service->becdomain = std::string(service_config.becdomain);
-  if (service_config.becpath != nullptr)
-    service->becpath = std::string(service_config.becpath);
-  service->becage = service_config.becage;
   services.push_back(service);
   return true;
 }
