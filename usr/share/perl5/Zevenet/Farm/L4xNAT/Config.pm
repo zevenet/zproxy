@@ -1425,7 +1425,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	&zenlog( "refreshL4FarmRules(farm_name:$farm)", "error", "SYSTEM" );
 
 	&reloadL4FarmLogsRule( $$farm{ name } );
-	&zenlog( "refreshL4FarmRules(farm_name:$farm)", "error", "SYSTEM" );
 
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );

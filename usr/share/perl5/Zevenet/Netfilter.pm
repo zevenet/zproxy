@@ -1043,7 +1043,7 @@ sub getBinVersion    # ($farm_name)
 }
 
 #lock iptables
-sub setIptLock    # ()
+sub setIptLock
 {
 	require Zevenet::Debug;
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
