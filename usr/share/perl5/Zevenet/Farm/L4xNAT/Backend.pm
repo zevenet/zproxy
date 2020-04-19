@@ -72,17 +72,13 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
 	$weight   ||= 1;
 	$priority ||= 1;
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'STOP' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	require Tie::File;
@@ -154,9 +150,9 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 
 		&refreshL4FarmRules( $farm );
 
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
+		if ( $fg_enabled eq 'true' )
 		{
-			kill 'CONT' => $fg_pid;
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 	}
 
@@ -193,10 +189,11 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	kill 'STOP' => $fg_pid
-	  if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' && $fg_pid > 0 );
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
+	{
+		&sendFGSignal( $farm_name, 'STOP' );
+	}
 
 	if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
 	{
@@ -257,12 +254,9 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 		## Remove ip rule mark END ##
 	}
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'CONT' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'CONT' );
 	}
 
 	return $output;
@@ -389,19 +383,13 @@ sub setL4FarmBackendStatus
 	my $fg_enabled  = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $caller      = ( caller ( 2 ) )[3];
 	my $stopping_fg = ( $caller =~ /runFarmGuardianStop/ );
-	my $fg_pid      = &getFarmGuardianPid( $farm_name );
 
-	#~ &zlog("(caller(2))[3]:$caller");
-
-	if ( $$farm{ status } eq 'up' )
+	if (    $$farm{ status } eq 'up'
+		 && $fg_enabled eq 'true'
+		 && !$stopping_fg
+		 && $0 !~ /farmguardian/ )
 	{
-		if ( $fg_enabled eq 'true' && !$stopping_fg )
-		{
-			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
-			{
-				kill 'STOP' => $fg_pid;
-			}
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	# load farm configuration file
@@ -443,12 +431,9 @@ sub setL4FarmBackendStatus
 			&setL4FarmBackendsSessionsRemove( $farm{ name }, $server_id );
 		}
 
-		if ( $fg_enabled eq 'true' && !$stopping_fg )
+		if ( $fg_enabled eq 'true' && !$stopping_fg && $0 !~ /farmguardian/ )
 		{
-			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
-			{
-				kill 'CONT' => $fg_pid;
-			}
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 	}
 
@@ -658,16 +643,12 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $setting_be         = ( $caller =~ /setFarmServer/ );
-	my $fg_pid             = &getFarmGuardianPid( $farm_name );
-
-	#~ &zlog("(caller(2))[3]:$caller");
 
 	if (    $fg_enabled eq 'true'
 		 && !$changing_algorithm
-		 && !$setting_be
-		 && $fg_pid > 0 )
+		 && !$setting_be )
 	{
-		kill 'STOP' => $fg_pid;
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	# initialize a farm struct
@@ -685,10 +666,9 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 
 	if (    $fg_enabled eq 'true'
 		 && !$changing_algorithm
-		 && !$setting_be
-		 && $fg_pid > 0 )
+		 && !$setting_be )
 	{
-		kill 'CONT' => $fg_pid;
+		&sendFGSignal( $farm_name, 'CONT' );
 	}
 
 	return $status;
@@ -723,13 +703,11 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $caller             = ( caller ( 2 ) )[3];
 	my $changing_algorithm = ( $caller =~ /setL4FarmAlgorithm/ );
 	my $removing_be        = ( $caller =~ /runL4FarmServerDelete/ );
-	my $fg_pid             = &getFarmGuardianPid( $farm_name );
 
-	kill 'STOP' => $fg_pid
+	&sendFGSignal( $farm_name, 'STOP' )
 	  if (    $fg_enabled eq 'true'
 		   && !$changing_algorithm
-		   && !$removing_be
-		   && $fg_pid > 0 );
+		   && !$removing_be );
 
 	$farm = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
@@ -743,11 +721,10 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	$output |= &applyIptRules( reverse @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	kill 'CONT' => $fg_pid
+	&sendFGSignal( $farm_name, 'CONT' )
 	  if (    $fg_enabled eq 'true'
 		   && !$changing_algorithm
-		   && !$removing_be
-		   && $fg_pid > 0 );
+		   && !$removing_be );
 
 	return $output;
 }
@@ -1038,6 +1015,26 @@ sub resetL4FarmBackendConntrackMark
 	}
 
 	return $return_code;
+}
+
+sub sendFGSignal
+{
+	my $farm_name = shift;
+	my $signal    = shift;
+
+	my $fg_pid  = &getFarmGuardianPid( $farm_name );
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
+
+	return 0 if ( $fg_pid <= 0 );
+
+	my $ipt_lockfile = &setIptLock();
+	return 1 if ( !defined $ipt_lockfile );
+
+	kill '$signal' => $fg_pid;
+
+	&setIptUnlock( $ipt_lockfile );
+
+	return 0;
 }
 
 1;

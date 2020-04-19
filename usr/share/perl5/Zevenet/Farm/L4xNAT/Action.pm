@@ -456,14 +456,10 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'STOP' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -583,12 +579,9 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $0 !~ /farmguardian/ )
 		{
-			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
-			{
-				kill 'CONT' => $fg_pid;
-			}
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 
 		# apply new rules

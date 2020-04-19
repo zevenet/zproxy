@@ -160,14 +160,10 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'STOP' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	&zlog( "setL4FarmSessionType: SessionType" ) if &debug;
@@ -224,9 +220,9 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 		&setIptUnlock( $ipt_lockfile );
 
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
+		if ( $fg_enabled eq 'true' )
 		{
-			kill 'CONT' => $fg_pid;
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 	}
 
@@ -306,14 +302,10 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'STOP' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -486,9 +478,9 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			}
 		}
 
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
+		if ( $fg_enabled eq 'true' )
 		{
-			kill 'CONT' => $fg_pid;
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 	}
 
@@ -567,14 +559,10 @@ sub setFarmProto    # ($proto,$farm_name)
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $old_proto  = $$farm{ vproto };
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'STOP' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	require Tie::File;
@@ -604,7 +592,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		$output |= &_runL4FarmStart( $farm_name );
-		kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
+		&sendFGSignal( $farm_name, 'CONT' ) if ( $fg_enabled eq 'true' );
 	}
 
 	return $output;
@@ -681,15 +669,9 @@ sub setFarmNatType    # ($nat,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' && $0 !~ /farmguardian/ )
 	{
-		if ( $fg_enabled eq 'true' )
-		{
-			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
-			{
-				kill 'STOP' => $fg_pid;
-			}
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	if ( $farm_type eq "l4xnat" )
@@ -753,12 +735,9 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 		&setIptUnlock( $ipt_lockfile );
 
-		if ( $fg_enabled eq 'true' )
+		if ( $fg_enabled eq 'true' && $0 !~ /farmguardian/ )
 		{
-			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
-			{
-				kill 'CONT' => $fg_pid;
-			}
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 	}
 
@@ -830,14 +809,10 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	if ( $$farm{ status } eq 'up' )
+	if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' )
 	{
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
-		{
-			kill 'STOP' => $fg_pid;
-		}
+		&sendFGSignal( $farm_name, 'STOP' );
 	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -885,9 +860,9 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 		&setIptUnlock( $ipt_lockfile );
 
-		if ( $fg_enabled eq 'true' && $fg_pid > 0 )
+		if ( $fg_enabled eq 'true' )
 		{
-			kill 'CONT' => $fg_pid;
+			&sendFGSignal( $farm_name, 'CONT' );
 		}
 	}
 
@@ -1045,10 +1020,9 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	kill 'STOP' => $fg_pid
-	  if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' && $fg_pid > 0 );
+	&sendFGSignal( $farm_name, 'STOP' )
+	  if ( $$farm{ status } eq 'up' && $fg_enabled eq 'true' );
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -1073,7 +1047,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	&refreshL4FarmRules( $farm );
 
-	kill 'CONT' => $fg_pid if ( $fg_enabled eq 'true' && $fg_pid > 0 );
+	&sendFGSignal( $farm_name, 'CONT' ) if ( $fg_enabled eq 'true' );
 
 	if ( $$farm{ vproto } =~ /sip|ftp/ )    # helpers
 	{
