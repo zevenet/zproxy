@@ -1027,6 +1027,7 @@ sub sendFGSignal
 
 	return 0 if ( $fg_pid <= 0 );
 
+	require Zevenet::Netfilter;
 	my $ipt_lockfile = &setIptLock();
 	return 1 if ( !defined $ipt_lockfile );
 
