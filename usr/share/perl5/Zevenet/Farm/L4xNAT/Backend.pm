@@ -371,11 +371,6 @@ sub setL4FarmBackendStatus
 
 	&zenlog(
 		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)",
-		"error", "SYSTEM"
-	);
-
-	&zenlog(
-		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)",
 		"debug", "LSLB"
 	);
 
@@ -796,11 +791,7 @@ sub getL4ServerActionRules
 	## rules for source nat or nat ##
 	if ( $$farm{ nattype } eq 'nat' )
 	{
-		#~ &setIptUnlock( $ipt_lockfile );
 		my $rule_ref = &genIptMasquerade( $farm, $server );
-
-		#~ $ipt_lockfile = &setIptLock();
-		#~ return 1 if ( !defined $ipt_lockfile );
 
 		foreach my $rule ( @{ $rule_ref } )
 		{
