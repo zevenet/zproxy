@@ -95,9 +95,9 @@ sub set_system_user
 						'non_blank' => 'true',
 		},
 		"newpassword" => {
-				  'valid_format' => 'rbac_password',
-				  'non_blank'    => 'true',
-				  'format_msg' => 'must be alphanumeric and must have at least 8 characters'
+						   'valid_format' => 'rbac_password',
+						   'non_blank'    => 'true',
+						   'format_msg' => 'must contain almost 8 alphanumeric characters.'
 		},
 	};
 

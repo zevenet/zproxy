@@ -86,9 +86,9 @@ sub add_rbac_user
 
 		# this parameter is required when authentication method is local.
 		"password" => {
-			'valid_format' => 'rbac_password',
-			'non_blank'    => 'true',
-			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+						'valid_format' => 'rbac_password',
+						'non_blank'    => 'true',
+						'format_msg'   => 'must contain almost 8 alphanumeric characters.'
 		},
 
 	};
@@ -175,9 +175,9 @@ sub set_rbac_user
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	$params->{ "newpassword" } = {
-		'valid_format' => 'rbac_password',
-		'non_blank'    => 'true',
-		'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+						'valid_format' => 'rbac_password',
+						'non_blank'    => 'true',
+						'format_msg' => 'must contain almost 8 alphanumeric characters.'
 	};
 
 	# Check allowed parameters
