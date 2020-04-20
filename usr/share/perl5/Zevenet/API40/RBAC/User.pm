@@ -86,9 +86,10 @@ sub add_rbac_user
 
 		# this parameter is required when authentication method is local.
 		"password" => {
-						'valid_format' => 'rbac_password',
-						'non_blank'    => 'true',
-						'format_msg'   => 'must contain almost 8 alphanumeric characters.'
+			'valid_format' => 'rbac_password',
+			'non_blank'    => 'true',
+			'format_msg' =>
+			  'must contain at least a letter and a number and a minimum length of 8 characters.'
 		},
 
 	};
@@ -175,9 +176,10 @@ sub set_rbac_user
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	$params->{ "newpassword" } = {
-						'valid_format' => 'rbac_password',
-						'non_blank'    => 'true',
-						'format_msg' => 'must contain almost 8 alphanumeric characters.'
+		'valid_format' => 'rbac_password',
+		'non_blank'    => 'true',
+		'format_msg' =>
+		  'must contain at least a letter and a number and a minimum length of 8 characters.'
 	};
 
 	# Check allowed parameters
@@ -347,8 +349,6 @@ sub set_system_user_rbac
 
 	my $user = &getUser();
 	my $desc = "Modify the user $user";
-
-	$desc = "Modify the user $user";
 
 	if ( !&getRBACUserExists( $user ) )
 	{
