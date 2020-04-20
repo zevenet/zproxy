@@ -1272,7 +1272,7 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
         conf_err("Redirect bad URL - aborted");
       if ((matches[3].rm_eo - matches[3].rm_so) ==
           1) /* the path is a single '/', so remove it */
-        be->url[matches[3].rm_so] = '\0';
+        be->url.pop_back();
     } else if (!regexec(&regex_set::BackEnd, lin, 4, matches, 0)) {
       if (res->backends) {
         for (be = res->backends; be->next; be = be->next)
