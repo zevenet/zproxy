@@ -225,6 +225,8 @@ sub set_dos_rule
 		&setDOSParam( $name, $param, $json_obj->{ $param } );
 	}
 
+	my $refRule = &getDOSZapiRule( $name );
+
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_dos', 'restart', $name );
 
