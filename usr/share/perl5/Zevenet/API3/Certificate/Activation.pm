@@ -36,16 +36,9 @@ sub get_activation_certificate_info    # ()
 	if ( -f $cert_path )
 	{
 		require Zevenet::Certificate;
-		my @cert_info = &getCertData( $cert_path );
-		my $body;
+		my $cert = &getCertData( $cert_path );
 
-		# Success
-		foreach my $line ( @cert_info )
-		{
-			$body .= $line;
-		}
-
-		&httpResponse( { code => 200, body => $body, type => 'text/plain' } );
+		&httpResponse( { code => 200, body => $cert, type => 'text/plain' } );
 	}
 	else
 	{

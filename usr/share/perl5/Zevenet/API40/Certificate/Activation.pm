@@ -73,10 +73,9 @@ sub get_activation_certificate    # ()
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @cert_info = &getCertData( $cert_path );
-	my $body      = "@cert_info";
+	my $cert = &getCertData( $cert_path );
 
-	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
+	return &httpResponse( { code => 200, body => $cert, type => 'text/plain' } );
 }
 
 # DELETE /certificates/activation
