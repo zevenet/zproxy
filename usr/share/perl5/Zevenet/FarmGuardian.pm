@@ -1103,7 +1103,7 @@ sub runFGFarmStart
 
 		# necessary for waiting that fg process write its process
 		use Time::HiRes qw(usleep);
-		$status = 0;
+		$status = 1;
 		my $pid_file = &getFGPidFile( $farm, $svice );
 
 		# wait for 2 seconds
@@ -1111,7 +1111,7 @@ sub runFGFarmStart
 		{
 			if ( -f $pid_file )
 			{
-				$status = 1;
+				$status = 0;
 				last;
 			}
 
@@ -1119,6 +1119,13 @@ sub runFGFarmStart
 			usleep( 500 );
 		}
 
+		if ( $status )
+		{
+			my $msg = "The farmguardian for the farm '$farm'";
+			$msg .= " and the service '$svice'" if ( $svice );
+			$msg .= " could not start properly";
+			&zenlog( $msg, "error", "fg" );
+		}
 	}
 	elsif ( $ftype ne 'gslb' )
 	{
