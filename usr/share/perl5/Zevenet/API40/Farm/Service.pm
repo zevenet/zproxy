@@ -69,7 +69,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
-		my $msg = "The farm profile $type does not support services.";
+		my $msg = "The farm profile $type does not support services actions.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -226,7 +226,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	unless ( $type eq 'gslb' || $type eq 'http' || $type eq 'https' )
 	{
-		my $msg = "The $type farm profile does not support services.";
+		my $msg = "The $type farm profile does not support services settings.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -575,7 +575,7 @@ sub delete_service    # ( $farmname, $service )
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
-		my $msg = "The farm profile $type does not support services.";
+		my $msg = "The farm profile $type does not support services actions.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
