@@ -243,15 +243,11 @@ sub set_dos_rule
 		}
 	}
 
-	my $status = &getDOSParam( $name, 'status' );
-	&runDOSStopByRule( $name ) if ( $status eq "up" );
-
 	foreach my $param ( keys %{ $json_obj } )
 	{
 		&setDOSParam( $name, $param, $json_obj->{ $param } );
 	}
 
-	&runDOSStartByRule( $name ) if ( $status eq "up" );
 	my $refRule = &getDOSZapiRule( $name );
 
 	include 'Zevenet::Cluster';

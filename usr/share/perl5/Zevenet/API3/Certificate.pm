@@ -127,16 +127,9 @@ sub get_certificate_info    # ()
 	{
 		require Zevenet::Certificate;
 
-		my @cert_info = &getCertData( "$cert_dir\/$cert_filename" );
-		my $body;
+		my $cert = &getCertData( "$cert_dir\/$cert_filename" );
 
-		# Success
-		foreach my $line ( @cert_info )
-		{
-			$body .= $line;
-		}
-
-		&httpResponse( { code => 200, body => $body, type => 'text/plain' } );
+		&httpResponse( { code => 200, body => $cert, type => 'text/plain' } );
 	}
 	else
 	{
@@ -233,7 +226,7 @@ sub create_csr
 		&zenlog( "Error $json_obj->{name} already exists.", "error", "LSLB" );
 
 		# Error
-		my $errormsg = "$json_obj->{name} already exists.";
+		$errormsg = "$json_obj->{name} already exists.";
 		my $body = {
 					 description => $description,
 					 error       => "true",

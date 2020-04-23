@@ -309,7 +309,7 @@ sub getFGFarm
 
 	my $fg;
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
-	my $fg_list = &getTiny( $fg_conf );
+	my $fg_list  = &getTiny( $fg_conf );
 
 	foreach my $fg_name ( keys %{ $fg_list } )
 	{
@@ -673,7 +673,7 @@ sub delFGFarm
 	require Zevenet::Farm::Service;
 
 	my $fg;
-	my $err = &runFGFarmStop( $farm, $service );
+	my $err  = &runFGFarmStop( $farm, $service );
 	my $type = &getFarmType( $farm );
 
 	if ( $type =~ /http/ or $type eq 'gslb' )
@@ -1069,7 +1069,7 @@ sub runFGFarmStart
 
 		# Iterate over every farm service
 		my $services = &getFarmVS( $farm, "", "" );
-		my @servs = split ( " ", $services );
+		my @servs    = split ( " ", $services );
 
 		foreach my $service ( @servs )
 		{
@@ -1102,22 +1102,30 @@ sub runFGFarmStart
 		$status = &logAndRunBG( "$fg_cmd" );
 
 		# necessary for waiting that fg process write its process
-		#sleep ( 1 );
 		use Time::HiRes qw(usleep);
-		$status = 0;
-		my $pid_file = &getFGPidFile();
-		for ( my $it = 0 ; $it < 1000 ; $it += 10 )
+		$status = 1;
+		my $pid_file = &getFGPidFile( $farm, $svice );
+
+		# wait for 2 seconds
+		for ( my $it = 0 ; $it < 4000 ; $it += 1 )
 		{
 			if ( -f $pid_file )
 			{
-				$status = 1;
+				$status = 0;
 				last;
 			}
 
-			# 1 millisecond == 1000 microseconds
-			usleep( 10 );
+			# 500 microseconds == 0.5 milliseconds
+			usleep( 500 );
 		}
 
+		if ( $status )
+		{
+			my $msg = "The farmguardian for the farm '$farm'";
+			$msg .= " and the service '$svice'" if ( $svice );
+			$msg .= " could not start properly";
+			&zenlog( $msg, "error", "fg" );
+		}
 	}
 	elsif ( $ftype ne 'gslb' )
 	{
@@ -1510,7 +1518,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	my $fg = &getFGFarm( $fname, $svice );
 	if ( not $fg )
 	{
-		$fg = $old if &getFGExists( $old );
+		$fg    = $old if &getFGExists( $old );
 		$usefg = "false";
 	}
 

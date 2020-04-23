@@ -269,7 +269,7 @@ my %format_re = (
 
 	# RBAC
 	'user_name'     => qr/[a-z][-a-z0-9_]+/,
-	'rbac_password' => qr/(?=.*[0-9])(?=.*[a-zA-Z]).{8,16}/,
+	'rbac_password' => qr/(?=.*[0-9])(?=.*[a-zA-Z]).{8,512}/,
 	'group_name'    => qr/[\w-]+/,
 	'role_name'     => qr/[\w-]+/,
 

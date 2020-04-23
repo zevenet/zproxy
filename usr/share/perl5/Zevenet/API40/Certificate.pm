@@ -76,15 +76,9 @@ sub get_certificate_info    # ()
 
 	if ( &getValidFormat( 'certificate', $cert_filename ) )
 	{
-		my @cert_info = &getCertData( "$cert_dir\/$cert_filename" );
-		my $body;
+		my $cert = &getCertData( "$cert_dir\/$cert_filename" );
 
-		foreach my $line ( @cert_info )
-		{
-			$body .= $line;
-		}
-
-		&httpResponse( { code => 200, body => $body, type => 'text/plain' } );
+		&httpResponse( { code => 200, body => $cert, type => 'text/plain' } );
 	}
 	else
 	{

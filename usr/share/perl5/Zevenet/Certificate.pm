@@ -518,7 +518,7 @@ Parameters:
 	String - Certificate path.
 
 Returns:
-	list - List of lines with the information stored in the certificate.
+	string - It returns a string with the certificate content. It contains new line characters.
 
 Bugs:
 
@@ -543,7 +543,7 @@ sub getCertData    # ($certfile)
 		$cmd = "$openssl req -in $filepath -text";
 	}
 
-	return @{ &logAndGet( $cmd, "array" ) };
+	return &logAndGet( $cmd );
 }
 
 =begin nd

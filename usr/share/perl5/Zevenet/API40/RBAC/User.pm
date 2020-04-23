@@ -88,7 +88,8 @@ sub add_rbac_user
 		"password" => {
 			'valid_format' => 'rbac_password',
 			'non_blank'    => 'true',
-			'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+			'format_msg' =>
+			  'must contain at least a letter and a number and a minimum length of 8 characters.'
 		},
 
 	};
@@ -163,9 +164,10 @@ sub set_rbac_user
 
 	my $desc = "Modify the RBAC user $user";
 	my $params = {
-		 "zapikey"            => { 'valid_format' => 'zapi_key' },
-		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
-		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
+		 "zapikey" => { 'valid_format' => 'zapi_key' },
+		 "zapi_permissions" => { 'values' => ['false', 'true'], 'non_blank' => 'true' },
+		 "webgui_permissions" =>
+		   { 'values' => ['false', 'true'], 'non_blank' => 'true' },
 	};
 
 	# check if the user exists
@@ -177,7 +179,8 @@ sub set_rbac_user
 	$params->{ "newpassword" } = {
 		'valid_format' => 'rbac_password',
 		'non_blank'    => 'true',
-		'format_msg' => 'must be alphanumeric and must have between 8 and 16 characters'
+		'format_msg' =>
+		  'must contain at least a letter and a number and a minimum length of 8 characters.'
 	};
 
 	# Check allowed parameters
@@ -347,8 +350,6 @@ sub set_system_user_rbac
 
 	my $user = &getUser();
 	my $desc = "Modify the user $user";
-
-	$desc = "Modify the user $user";
 
 	if ( !&getRBACUserExists( $user ) )
 	{
