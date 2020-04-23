@@ -164,9 +164,10 @@ sub set_rbac_user
 
 	my $desc = "Modify the RBAC user $user";
 	my $params = {
-		 "zapikey"            => { 'valid_format' => 'zapi_key' },
-		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
-		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_blank' => 'true' },
+		 "zapikey" => { 'valid_format' => 'zapi_key' },
+		 "zapi_permissions" => { 'values' => ['false', 'true'], 'non_blank' => 'true' },
+		 "webgui_permissions" =>
+		   { 'values' => ['false', 'true'], 'non_blank' => 'true' },
 	};
 
 	# check if the user exists
