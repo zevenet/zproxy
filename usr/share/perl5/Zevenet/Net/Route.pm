@@ -817,8 +817,9 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 									args   => [],
 			);
 
-			if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
-				 && $cl_status ne "backup" )
+			#if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
+			#	 && $cl_status ne "backup" )
+			if ( $cl_status ne "backup" )
 			{
 				require Zevenet::Net::Util;
 
