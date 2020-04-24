@@ -109,35 +109,37 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my $lock_fh = &openlock( $lock_file, 'w' );
 
 		my @fileconf;
-		tie @fileconf, 'Tie::File', "$configdir/$farm_name\_proxy.cfg";
-		my $i         = 0;
-		my $farm_type = "";
-		$farm_type = &getFarmType( $farm_name );
-
-		foreach my $line ( @fileconf )
+		if ( !fgrep { /^\s*Service "$service"/ } "$configdir/$farm_name\_proxy.cfg" )
 		{
-			if ( $line =~ /#ZWACL-END/ )
-			{
-				$output = 0;
-				foreach my $lline ( @newservice )
-				{
-					if ( $lline =~ /\[DESC\]/ )
-					{
-						$lline =~ s/\[DESC\]/$service/;
-					}
-					if (    $lline =~ /StrictTransportSecurity/
-						 && $farm_type eq "https" )
-					{
-						$lline =~ s/#//;
-					}
-					splice @fileconf, $i, 0, "$lline";
-					$i++;
-				}
-				last;
-			}
-			$i++;
-		}
+			tie @fileconf, 'Tie::File', "$configdir/$farm_name\_proxy.cfg";
+			my $i         = 0;
+			my $farm_type = "";
+			$farm_type = &getFarmType( $farm_name );
 
+			foreach my $line ( @fileconf )
+			{
+				if ( $line =~ /#ZWACL-END/ )
+				{
+					$output = 0;
+					foreach my $lline ( @newservice )
+					{
+						if ( $lline =~ /\[DESC\]/ )
+						{
+							$lline =~ s/\[DESC\]/$service/;
+						}
+						if (    $lline =~ /StrictTransportSecurity/
+							 && $farm_type eq "https" )
+						{
+							$lline =~ s/#//;
+						}
+						splice @fileconf, $i, 0, "$lline";
+						$i++;
+					}
+					last;
+				}
+				$i++;
+			}
+		}
 		untie @fileconf;
 		close $lock_fh;
 	}
