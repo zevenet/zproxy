@@ -344,6 +344,7 @@ Parameters:
 	mask - mask of the network segment
 	exception - This parameter is optional, if it is sent, that interface will not be checked.
 		It is used to exclude the interface that is been changed
+	duplicateNetwork - This parameter is optional, if it is sent, defines duplicated network is enabled or disabled.
 
 Returns:
 	String - interface name where the checked network exists
@@ -355,11 +356,18 @@ sub checkNetworkExists
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $net, $mask, $exception ) = @_;
+	my ( $net, $mask, $exception, $duplicated ) = @_;
 
 	#if duplicated network is allowed then don't check if network exists.
-	require Zevenet::Config;
-	return "" if ( &getGlobalConfiguration( "duplicated_net" ) eq "true" );
+	if ( defined $duplicated )
+	{
+		return "" if $duplicated eq "true";
+	}
+	else
+	{
+		require Zevenet::Config;
+		return "" if ( &getGlobalConfiguration( "duplicated_net" ) eq "true" );
+	}
 
 	require Zevenet::Net::Interface;
 	require NetAddr::IP;
@@ -386,6 +394,51 @@ sub checkNetworkExists
 			}
 		};
 		return $if_ref->{ name } if ( $found );
+	}
+
+	return "";
+}
+
+=begin nd
+Function: checkDuplicateNetworkExists
+
+	Check if duplicate network exists in the interfaces
+
+Parameters:
+
+Returns:
+	String - interface name where the checked network exists
+
+	v3.2/interface/vlan, v3.2/interface/nic, v3.2/interface/bonding
+=cut
+
+sub checkDuplicateNetworkExists
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $exception ) = @_;
+
+	#if duplicated network is not allowed then don't check if network exists.
+	require Zevenet::Config;
+	return "" if ( &getGlobalConfiguration( "duplicated_net" ) eq "false" );
+
+	require Zevenet::Net::Interface;
+	require NetAddr::IP;
+
+	my @interfaces = &getInterfaceTypeList( 'nic' );
+	push @interfaces, &getInterfaceTypeList( 'bond' );
+	push @interfaces, &getInterfaceTypeList( 'vlan' );
+
+	my $found = 0;
+	foreach my $if_ref ( @interfaces )
+	{
+		my $iface = &checkNetworkExists(
+										 $if_ref->{ addr },
+										 $if_ref->{ mask },
+										 $if_ref->{ name },
+										 "false"
+		);
+		return $iface if ( $iface ne "" );
 	}
 
 	return "";

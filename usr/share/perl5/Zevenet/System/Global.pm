@@ -103,6 +103,15 @@ sub setSystemGlobal
 
 	if ( exists $global->{ duplicated_network } )
 	{
+		if ( $global->{ duplicated_network } eq "false" )
+		{
+			$err = &checkDuplicateNetworkExists();
+			if ( $err ne "" )
+			{
+				return $err;
+			}
+		}
+
 		$err =
 		  &setGlobalConfiguration( 'duplicated_net', $global->{ duplicated_network } );
 		return $err if $err;

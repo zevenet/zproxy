@@ -176,6 +176,12 @@ sub set_system_global
 		return &httpResponse(
 					   { code => 400, body => { description => $desc, message => $msg } } );
 	}
+	elsif ( $err =~ /^\D\w+$/ )
+	{
+		my $msg = "Duplicated network exists on $err.";
+		return &httpResponse(
+					   { code => 400, body => { description => $desc, message => $msg } } );
+	}
 	elsif ( $err )
 	{
 		my $msg = "There was an error modifying the global settings";
