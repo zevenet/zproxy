@@ -27,16 +27,32 @@
 use strict;
 use Zevenet::Config;
 
-my $err = 0;
+my $err      = 0;
+my $proxy_ng = &getGlobalConfiguration( 'proxy_ng' );
+my $ssyncd_bin;
+my $ssyncdctl_bin;
+my $ssyncd_base;
 
 print "Setting new path for ssyncd ";
-my $ssyncd_zproxy_bin = &getGlobalConfiguration( 'ssyncd_zproxy_bin' );
-$err += &setGlobalConfiguration( 'ssyncd_bin', $ssyncd_zproxy_bin );
+if ( $proxy_ng eq "true" )
+{
+	$ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_zproxy_bin' );
+	$ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_zproxy_bin' );
+	$ssyncd_base   = &getGlobalConfiguration( 'base_ssyncd_zproxy' );
+}
+elsif ( $proxy_ng eq "false" )
+{
+	$ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_pound_bin' );
+	$ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_pound_bin' );
+	$ssyncd_base   = &getGlobalConfiguration( 'base_ssyncd_pound' );
+}
+
+$err += &setGlobalConfiguration( 'ssyncd_bin', $ssyncd_bin );
 print ".";
-my $ssyncdctl_zproxy_bin = &getGlobalConfiguration( 'ssyncdctl_zproxy_bin' );
-$err += &setGlobalConfiguration( 'ssyncdctl_bin', $ssyncdctl_zproxy_bin );
+$err += &setGlobalConfiguration( 'ssyncdctl_bin', $ssyncdctl_bin );
+print ".";
+$err += &setGlobalConfiguration( 'base_ssyncd', $ssyncd_base );
 print ".";
 
 $err ? print " ERROR\n" : print " OK\n";
-
 1;
