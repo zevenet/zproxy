@@ -569,7 +569,7 @@ int Connection::listen(const addrinfo &address_) {
       listen_fd = -1;
       return listen_fd;
     }
-    ::listen(listen_fd, SOMAXCONN);
+    ::listen(listen_fd, -1);
     break;
   }
   return listen_fd;
