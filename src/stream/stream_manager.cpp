@@ -181,20 +181,22 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     case EVENT_TYPE::WRITE: {
       auto stream = streams_set[fd];
       if (stream == nullptr) {
-        switch (event_group) {
-          case EVENT_GROUP::ACCEPTOR:
-            break;
-          case EVENT_GROUP::SERVER:
-            Logger::LogInfo("SERVER_WRITE : Stream doesn't exist for " +
-                           std::to_string(fd));
-            break;
-          case EVENT_GROUP::CLIENT:
-            Logger::LogInfo("CLIENT_WRITE : Stream doesn't exist for " +
-                           std::to_string(fd));
-            break;
-          default:
-            break;
-        }
+        //        switch (event_group) {
+        //          case EVENT_GROUP::ACCEPTOR:
+        //            break;
+        //          case EVENT_GROUP::SERVER:
+        //            Logger::LogInfo("SERVER_WRITE : Stream doesn't exist for "
+        //            +
+        //                            std::to_string(fd));
+        //            break;
+        //          case EVENT_GROUP::CLIENT:
+        //            Logger::LogInfo("CLIENT_WRITE : Stream doesn't exist for "
+        //            +
+        //                            std::to_string(fd));
+        //            break;
+        //          default:
+        //            break;
+        //        }
         deleteFd(fd);
         ::close(fd);
         return;
@@ -1881,7 +1883,7 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
     return;
   }
   if (!stream->backend_connection.isConnected() &&
-      !stream->request.getHeaderSent()) {
+      !stream->request.getHeaderSent() && !stream->response.getHeaderSent()) {
     Logger::logmsg(
         LOG_NOTICE,
         "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
