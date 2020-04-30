@@ -120,25 +120,23 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 #if SM_HANDLE_ACCEPT
     case EVENT_TYPE::CONNECT: {
       DEBUG_COUNTER_HIT(debug__::event_connect);
-      auto spt = service_manager_set[fd].lock();
-      if (!spt) {
-        deleteFd(fd);  // remove listener from epoll manager.
-        ::close(fd);   // we close the listening socket
-        return;
-      }
+
       int new_fd;
-#ifndef EPOLLEXCLUSIVE
       do {
-#endif
         new_fd = Connection::doAccept(fd);
         if (new_fd > 0) {
+          auto spt = service_manager_set[fd].lock();
+          if (!spt) {
+            deleteFd(fd);  // remove listener from epoll manager.
+            ::close(fd);   // we close the listening socket
+            return;
+          }
           addStream(new_fd, std::move(spt));
         } else {
           DEBUG_COUNTER_HIT(debug__::event_connect_fail);
         }
-#ifndef EPOLLEXCLUSIVE
       } while (new_fd > 0);
-#endif
+
       return;
     }
 #endif

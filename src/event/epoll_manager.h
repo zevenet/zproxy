@@ -28,7 +28,7 @@
 
 namespace events {
 
-#define MAX_EPOLL_EVENT 100000
+#define MAX_EPOLL_EVENT 200
 #define EPOLL_WAIT_TIMEOUT 500
 /** The enum EVENT_GROUP defines the different group types. */
 enum class EVENT_GROUP : char {
