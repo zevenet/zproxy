@@ -1011,9 +1011,10 @@ sub getInterfaceTypeList
 				my $iface = &getInterfaceConfig( $1 );
 				$iface->{ status } = &getInterfaceSystemStatus( $iface );
 
-				# put the gateway and netmask of parent interface
+				# put the mac, gateway and netmask of the parent interface
 				my $parent_if = &getInterfaceConfig( $iface->{ parent } );
 				$iface->{ mask }    = $parent_if->{ mask };
+				$iface->{ mac }     = $parent_if->{ mac };
 				$iface->{ gateway } = $parent_if->{ gateway };
 				push ( @interfaces, $iface );
 			}
