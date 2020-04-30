@@ -149,7 +149,7 @@ case "$1" in
 	if [ "$node_status" == "backup" ]
 	then
 		localhost=`$hostname`
-		if [ -z "$filecluster" ]
+		if [ ! -z "$filecluster" ]
 		then
 			hostlist=($(grep "\[" $filecluster | cut -d"[" -f2 | cut -d"]" -f1))
 			if [ "$localhost" == "${hostlist[0]}" ]
@@ -158,9 +158,9 @@ case "$1" in
 			else
 				remotehost=${hostlist[0]};
 			fi
-		
+
 			remote_ip=`$grep_bin -A 1 $remotehost $filecluster | $tail -1 | $cut_bin -d= -f2`
-		
+
 			denyline="sshd: $remote_ip"
 			echo $denyline >> /etc/hosts.deny
 		else
@@ -173,7 +173,7 @@ case "$1" in
 		echo "Warning! The system is in Master Mode. It should be in Maintenance Mode"
 		read -r -p "Are you sure? [y/N] " response
 		case "$response" in
-		[yY][eE][sS]|[yY]) 
+		[yY][eE][sS]|[yY])
 			upgrade=1
 		;;
 		*)
@@ -181,7 +181,7 @@ case "$1" in
 			echo "Abort."
 		;;
 		esac
-	fi	
+	fi
 	if [ $upgrade -eq 1 ]
 	then
 		DEBIAN_FRONTEND=noninteractive $apt_bin --with-new-pkgs upgrade
@@ -190,7 +190,7 @@ case "$1" in
 	then
 		$sed_bin -i "/$denyline/d" /etc/hosts.deny
 	fi
-	
+
 ;;
 
 '-h')
