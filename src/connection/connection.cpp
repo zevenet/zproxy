@@ -116,18 +116,25 @@ int Connection::getLocalPort() {
 void Connection::reset() {
   this->disableEvents();
   freeSsl();
-  if (fd_ > 0) this->closeConnection();
-  fd_ = -1;
   buffer_size = 0;
   buffer_offset = 0;
+  if (fd_ > 0) {
+    // drain connecition socket data
+    while (::read(fd_, buffer ,
+                     MAX_DATA_SIZE ) > 0);
+    this->closeConnection();
+  }
+  fd_ = -1;
+
   if (address != nullptr) {
     if (address->ai_addr != nullptr) delete address->ai_addr;
+    delete address;
   }
-  local_address_str ="";
+  local_address_str.clear();
   port = -1;
   local_port = -1;
-  delete address;
   address = nullptr;
+  address_str.clear();
 }
 
 void Connection::freeSsl() {
@@ -437,6 +444,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
 void Connection::closeConnection() {
   if (fd_ > 0) {
     ::close(fd_);
+    fd_= -1;
   }
 }
 IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
