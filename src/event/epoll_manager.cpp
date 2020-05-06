@@ -86,7 +86,7 @@ int EpollManager::loopOnce(int time_out) {
   if (ev_count <= 0) return ev_count;
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
-    auto event_group = static_cast<EVENT_GROUP>(events[i].data.u32 & 0xff);
+    auto event_group = static_cast<EVENT_GROUP>(events[i].data.u64 & 0xff);
     if ((events[i].events & EPOLLERR) != 0u) {
       HandleEvent(fd, EVENT_TYPE::DISCONNECT, event_group);
       continue;
@@ -96,6 +96,7 @@ int EpollManager::loopOnce(int time_out) {
           for (auto accept_fd : accept_fd_set) {
             if (fd == accept_fd) {
               onConnectEvent(events[i]);
+              continue;
             }
           }
         } else {
