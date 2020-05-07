@@ -191,7 +191,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
                request.request_method != http::REQUEST_METHOD::RPC_OUT_DATA)) {
     return validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
   }
-
+  bool connection_close_pending = false;
   // Check for correct headers
   for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_HTTP_HEADERS
@@ -236,13 +236,17 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
           request.upgrade_header = true;
 
           break;
-        case http::HTTP_HEADER_NAME::CONNECTION:
+        case http::HTTP_HEADER_NAME::CONNECTION: {
           if (http_info::connection_values.count(std::string(header_value)) >
                   0 &&
               http_info::connection_values.at(std::string(header_value)) ==
                   CONNECTION_VALUES::UPGRADE)
             request.connection_header_upgrade = true;
+          else if(header_value.find("close") != std::string::npos){
+            connection_close_pending = true;
+          }
           break;
+        }
         case http::HTTP_HEADER_NAME::ACCEPT_ENCODING:
           request.accept_encoding_header = true;
           //          request.headers[i].header_off = true;
@@ -330,7 +334,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
     }
   }
   // waf
-
+  if(connection_close_pending && request.content_length == 0 && request.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED){
+    //we have unknown amount of body data pending, wait until connection is closed
+    //FIXME:: As workaround we use chunked
+    request.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
+    request.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
+  }
   return validation::REQUEST_RESULT::OK;
 }
 
@@ -348,6 +357,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
   stream.request.c_opt.no_store ? response.c_opt.cacheable = false
                                 : response.c_opt.cacheable = true;
 #endif
+  bool connection_close_pending = false;
   for (size_t i = 0; i != response.num_headers; i++) {
     // check header values length
 
@@ -365,6 +375,12 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
     if (it != http::http_info::headers_names.end()) {
       const auto header_name = it->second;
       switch (header_name) {
+        case http::HTTP_HEADER_NAME::CONNECTION:
+        {
+          if(header_value.find("close") != std::string::npos){
+            connection_close_pending = true;
+          }
+        }
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
           stream.response.content_length =
               static_cast<size_t>(std::atoi(header_value.data()));
@@ -561,6 +577,12 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
         break;
       }
     }
+  }
+  if(connection_close_pending && response.content_length == 0 && response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED){
+    //we have unknown amount of body data pending, wait until connection is closed
+    //FIXME:: As workaround we use chunked
+    response.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
+    response.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
   }
   return validation::REQUEST_RESULT::OK;
 }
