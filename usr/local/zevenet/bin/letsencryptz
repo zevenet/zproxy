@@ -71,19 +71,19 @@ switch ( $action )
 			&help;
 
 		}
-		if ( !$farm_name )
-		{
-			print
-			  "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
-			$farm_name = $temp_farm;
-		}
-		print "farm start\n";
+		print "LocalWebServer start\n";
 		&webServer( "start" );
+		&getFarmListening( $vip, 80 );
+		print "Configuring farm for let's encrypt Certificate Name verification\n";
+		&create_webroot( $farm_name, $vip );
 		print "obtain cert..\n\n";
-		&obtain_cert( $vip, $farm_name, $domains );
-		print "farm stop\n";
+		&obtain_cert( $domains );
+		print "Destroying webroot configuration for the farm $farm_name\n";
+		&destroy_webroot( $farm_name );
+		print "LocalWebServer stop\n";
 		&webServer( "stop" );
-		print "Restarting farms using renewed certificates: @farms_to_reboot\n";
+		print
+		  "Farms needed to be restarted to use renewed certificates: @farms_to_reboot\n";
 		exit;
 	}
 
@@ -93,17 +93,12 @@ switch ( $action )
 		if ( !$vip && !$farm_name )
 		{
 			print
-			  "ERROR: the action obtain requires to know where to configure the temporal web service for Let's Encrypt validation\n";
+			  "ERROR: the action renew requires to know where to configure the temporal web service for Let's Encrypt validation\n";
 			&help;
 
 		}
-		if ( !$farm_name )
-		{
-			print
-			  "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
-			$farm_name = $temp_farm;
-		}
 		&webServer( "start" );
+		&getFarmListening( $vip, 80 );
 		&create_webroot( $farm_name, $vip );
 		&renew_certs();
 		if ( $restart )
@@ -291,37 +286,8 @@ sub create_pem()
 #call &obtain_certs($vip, $farm_name, $domains);
 sub obtain_cert()
 {
-	my ( $vip, $farm_name, $domains ) = @_;
-	require Zevenet::Net::Validate;
-	if ( $vip and &checkport( $vip, "80" eq "true" ) )
-	{
-		require Zevenet::Farm::Base;
+	my ( $domains ) = @_;
 
-		#A farm http is already configured, configure service
-		my @farms = &getFarmListByVip( $vip );
-		for my $farm_name_byVIP ( @farms )
-		{
-			if (     &getHTTPFarmVip( "vipp", $farm_name_byVIP ) eq "80"
-				 and &getHTTPFarmStatus( $farm_name_byVIP ) eq "up" )
-			{
-				$farm_name = $farm_name_byVIP;
-				print
-				  "IP $vip and port 80 is in use in farms: $farm_name, configuring here the required service for let's encrypt\n";
-			}
-
-		}
-	}
-	else
-	{
-		#port and vip is not in use so createa a farm, in this case $vip is needed.
-		if ( !$vip )
-		{
-			print "ERROR: No VIP selected\n";
-			&help;
-		}
-	}
-	print "Configuring farm for let's encrypt Certificate Name verification\n";
-	&create_webroot( $farm_name, $vip );
 	print "Obtaining Certificate for domains @$domains...\n";
 
 	#run request
@@ -352,10 +318,6 @@ sub obtain_cert()
 			&create_pem( $domain );
 		}
 	}
-
-	#if ($farm_name ne $temp_farm){
-	print "Destroying webroot configuration for the farm $farm_name\n";
-	&destroy_webroot( $farm_name );
 
 }
 
@@ -586,6 +548,48 @@ sub webServer()
 		else
 		{
 			&zenlog( "Temporal webserver can't be stopped, it is not running" );
+		}
+	}
+}
+
+# update global $farm_name if there is a farm listening on vip $vip and vport $port
+sub getFarmListening()
+{
+	my $vip  = shift;
+	my $port = shift;
+
+	require Zevenet::Net::Validate;
+	if ( $vip and &checkport( $vip, $port ) eq "true" )
+	{
+		require Zevenet::Farm::Base;
+
+		#A farm http is already configured, configure service
+		my @farms = &getFarmListByVip( $vip );
+		for my $farm_name_byVIP ( @farms )
+		{
+			if (     &getHTTPFarmVip( "vipp", $farm_name_byVIP ) eq "$port"
+				 and &getHTTPFarmStatus( $farm_name_byVIP ) eq "up" )
+			{
+				$farm_name = $farm_name_byVIP;
+				print
+				  "IP $vip and port $port is in use in farms: $farm_name, configuring here the required service for let's encrypt\n";
+			}
+
+		}
+	}
+	else
+	{
+		#port and vip is not in use so createa a farm, in this case $vip is needed.
+		if ( !$vip )
+		{
+			print "ERROR: No VIP selected\n";
+			&help;
+		}
+		if ( !$farm_name )
+		{
+			print
+			  "WARNING: No farm name especified, a temporal farm with name $temp_farm will be created in VIP $vip port 80.\n";
+			$farm_name = $temp_farm;
 		}
 	}
 }
