@@ -218,8 +218,9 @@ sub create_webroot()
 
 	#creates a temporal service called "letsencryptz"
 	&setHTTPFarmServer( "", "127.0.0.1", 80, "", "", $farm_name, "letsencryptz" );
-	&setHTTPFarmVS( $farm_name, "letsencryptz", "urlp",
-					"^/.well-known/acme-challenge/" );
+	&setHTTPFarmVS( $farm_name, "letsencryptz", "urlp", "" );
+
+	#	"^/.well-known/acme-challenge/" );
 	require Zevenet::ELoad;
 
 	&eload(
