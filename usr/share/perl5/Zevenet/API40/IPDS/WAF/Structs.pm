@@ -98,71 +98,227 @@ sub getWafVariables
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	return (
-		{ name => "ARGS",               type => 'collection' },
-		{ name => "ARGS_JSON",          type => 'collection' },
-		{ name => "ARGS_NAMES",         type => 'collection' },
-		{ name => "ARGS_COMBINED_SIZE", type => 'scalar' },
+		{
+		   name        => "ARGS",
+		   type        => 'collection',
+		   description => 'It is a collection with the values of arguments in a request.',
+		},
+		{
+		   name => "ARGS_JSON",
+		   type => 'collection',
+		   description =>
+			 'It is a collection with the values of arguments in a JSON request. This variable will be available in the case that WAF parses the JSON arguments, for it, the rule set REQUEST-901-INITIALIZATION should be enabled.',
+		},
+		{
+		   name        => "ARGS_COMBINED_SIZE",
+		   type        => 'collection',
+		   description => 'Total size of the request parameters. The files are excluded.',
+		},
+		{
+		   name => "ARGS_NAMES",
+		   type => 'scalar',
+		   description =>
+			 'It is a collection with the names of the of arguments in a request.',
+		},
 
-		{ name => "FILES",               type => 'collection' },
-		{ name => "FILES_COMBINED_SIZE", type => 'scalar' },
-		{ name => "FILES_NAMES",         type => 'collection' },
-		{ name => "FILES_SIZES",         type => 'collection' },
+		{
+		   name => "FILES",
+		   type => 'collection',
+		   description =>
+			 'It contains the file names in the user filesys. Only when the data is multipart/form-data.',
+		},
+		{
+		   name => "FILES_COMBINED_SIZE",
+		   type => 'scalar',
+		   description =>
+			 'It is the total size of the files in a request. Only when the data is multipart/form-data.',
+		},
+		{
+		   name => "FILES_NAMES",
+		   type => 'collection',
+		   description =>
+			 'It is a list of file names used to upload the files. Only when the data is multipart/form-data.',
+		},
+		{
+		   name => "FILES_SIZES",
+		   type => 'collection',
+		   description =>
+			 'It contains a list of individual file sizes. Only when the data is multipart/form-data.',
+		},
 
-		{ name => "REQBODY_ERROR",         type => 'scalar' },
-		{ name => "REQUEST_BODY",          type => 'scalar' },
-		{ name => "REQUEST_BODY_LENGTH",   type => 'scalar' },
-		{ name => "REQUEST_COOKIES",       type => 'collection' },
-		{ name => "REQUEST_COOKIES_NAMES", type => 'collection' },
-		{ name => "REQUEST_FILENAME",      type => 'scalar' },
-		{ name => "REQUEST_HEADERS",       type => 'collection' },
-		{ name => "REQUEST_HEADERS_NAMES", type => 'collection' },
-		{ name => "REQUEST_LINE",          type => 'scalar' },
-		{ name => "REQUEST_METHOD",        type => 'scalar' },
-		{ name => "REQUEST_PROTOCOL",      type => 'scalar' },
-		{ name => "REQUEST_URI",           type => 'scalar' },
-		{ name => "REQUEST_URI_RAW",       type => 'scalar' },
+		{
+		   name => "REQBODY_ERROR",
+		   type => 'scalar',
+		   description =>
+			 'This variable is 1 if the request body format is not correct for a JSON or XML, else it has the value 0.',
+		},
+		{
+		   name => "REQUEST_BODY",
+		   type => 'scalar',
+		   description =>
+			 'It is the raw body request. If the request has not the "application/x-www-form-urlencoded" header, it is necessary to use "ctl:forceRequestBodyVariable" in the REQUEST_HEADER phase.',
+		},
+		{
+		   name        => "REQUEST_BODY_LENGTH",
+		   type        => 'scalar',
+		   description => 'It is the number of bytes of the request body.',
+		},
+		{
+		   name        => "REQUEST_COOKIES",
+		   type        => 'collection',
+		   description => 'It is a list with all request cookies values.',
+		},
+		{
+		   name        => "REQUEST_COOKIES_NAMES",
+		   type        => 'collection',
+		   description => 'It is a list with all request cookies names.',
+		},
+		{
+		   name        => "REQUEST_HEADERS",
+		   type        => 'collection',
+		   description => 'This variable has all request headers.',
+		},
+		{
+		   name        => "REQUEST_HEADERS_NAMES",
+		   type        => 'collection',
+		   description => 'This variable has a list with the request headers names.',
+		},
+		{
+		   name        => "REQUEST_METHOD",
+		   type        => 'scalar',
+		   description => 'It is the request method.',
+		},
+		{
+		   name        => "REQUEST_PROTOCOL",
+		   type        => 'scalar',
+		   description => 'This variable holds the request HTTP version protocol.',
+		},
+		{
+		   name        => "REQUEST_URI",
+		   type        => 'scalar',
+		   description => 'It is the URI request path. The virtual host is excluded.',
+		},
 
-		{ name => "RESPONSE_BODY",           type => 'scalar' },
-		{ name => "RESPONSE_CONTENT_LENGTH", type => 'scalar' },
-		{ name => "RESPONSE_CONTENT_TYPE",   type => 'scalar' },
-		{ name => "RESPONSE_HEADERS",        type => 'collection' },
-		{ name => "RESPONSE_HEADERS_NAMES",  type => 'collection' },
-		{ name => "RESPONSE_PROTOCOL",       type => 'scalar' },
-		{ name => "RESPONSE_STATUS",         type => 'scalar' },
+		{
+		   name        => "RESPONSE_BODY",
+		   type        => 'scalar',
+		   description => 'It is the raw body response.',
+		},
+		{
+		   name        => "RESPONSE_CONTENT_LENGTH",
+		   type        => 'scalar',
+		   description => 'It is the number of bytes of the response body.',
+		},
+		{
+		   name        => "RESPONSE_HEADERS",
+		   type        => 'collection',
+		   description => 'This variable has all response headers.',
+		},
+		{
+		   name        => "RESPONSE_HEADERS_NAMES",
+		   type        => 'collection',
+		   description => 'This variable has a list with the response headers names.',
+		},
+		{
+		   name        => "RESPONSE_PROTOCOL",
+		   type        => 'scalar',
+		   description => 'This variable holds the response HTTP version protocol.',
+		},
+		{
+		   name        => "RESPONSE_STATUS",
+		   type        => 'scalar',
+		   description => 'It is the response HTTP code.',
+		},
 
-		{ name => "REMOTE_ADDR", type => 'scalar' },
-		{ name => "REMOTE_HOST", type => 'scalar' },
-		{ name => "REMOTE_PORT", type => 'scalar' },
-		{ name => "REMOTE_USER", type => 'scalar' },
+		{
+		   name        => "REMOTE_ADDR",
+		   type        => 'scalar',
+		   description => 'It is the IP address of the client.',
+		},
+		{
+		   name        => "REMOTE_PORT",
+		   type        => 'scalar',
+		   description => 'It is the port where the client initializes the connection.',
+		},
+		{
+		   name        => "REMOTE_USER",
+		   type        => 'scalar',
+		   description => 'It is the name of the authenticated user.',
+		},
 
-		{ name => "TIME",       type => 'scalar' },
-		{ name => "TIME_DAY",   type => 'scalar' },
-		{ name => "TIME_EPOCH", type => 'scalar' },
-		{ name => "TIME_HOUR",  type => 'scalar' },
-		{ name => "TIME_MIN",   type => 'scalar' },
-		{ name => "TIME_MON",   type => 'scalar' },
-		{ name => "TIME_SEC",   type => 'scalar' },
-		{ name => "TIME_WDAY",  type => 'scalar' },
-		{ name => "TIME_YEAR",  type => 'scalar' },
+		{
+		   name => "DURATION",
+		   type => 'scalar',
+		   description =>
+			 'It is the number of milliseconds since the beginning of the current transaction.',
+		},
+		{
+		   name        => "TIME",
+		   type        => 'scalar',
+		   description => 'It is the server time. The format is hours:minutes:seconds.',
+		},
 
-		{ name => "MULTIPART_FILENAME", type => 'scalar' },
-		{ name => "MULTIPART_NAME",     type => 'scalar' },
+		{
+		   name        => "MULTIPART_FILENAME",
+		   type        => 'scalar',
+		   description => 'It is the field filename in a multipart request.',
+		},
+		{
+		   name        => "MULTIPART_NAME",
+		   type        => 'scalar',
+		   description => 'It is the field name in a multipart request.',
+		},
 
-		{ name => "MATCHED_VAR",        type => 'scalar' },
-		{ name => "MATCHED_VARS",       type => 'collection' },
-		{ name => "MATCHED_VAR_NAME",   type => 'scalar' },
-		{ name => "MATCHED_VARS_NAMES", type => 'collection' },
+		{
+		   name => "MATCHED_VAR",
+		   type => 'scalar',
+		   description =>
+			 'It is the matched value in the last match operation. This value does not need the capture option but it is replaced in each match operation.',
+		},
+		{
+		   name        => "MATCHED_VARS",
+		   type        => 'collection',
+		   description => 'It is a list of all matched values.',
+		},
 
-		{ name => "SERVER_ADDR", type => 'scalar' },
-		{ name => "SERVER_NAME", type => 'scalar' },
-		{ name => "SERVER_PORT", type => 'scalar' },
+		{
+		   name        => "SERVER_ADDR",
+		   type        => 'scalar',
+		   description => 'It is the IP address of the server.',
+		},
+		{
+		   name        => "SERVER_NAME",
+		   type        => 'scalar',
+		   description => 'It is the virtual host, it gets from the request URI.',
+		},
 
-		{ name => "FULL_REQUEST",        type => 'scalar' },
-		{ name => "FULL_REQUEST_LENGTH", type => 'scalar' },
-		{ name => "PATH_INFO",           type => 'scalar' },
+		{
+		   name        => "FULL_REQUEST",
+		   type        => 'scalar',
+		   description => 'It is the full request.',
+		},
+		{
+		   name        => "FULL_REQUEST_LENGTH",
+		   type        => 'scalar',
+		   description => 'It is the number of bytes that full request can have.',
+		},
+		{
+		   name        => "PATH_INFO",
+		   type        => 'scalar',
+		   description => 'It is the information before than the URI path.',
+		},
 
-		{ name => "ENV", type => 'collection' },
-		{ name => "TX",  type => 'collection' },
+		{
+		   name        => "ENV",
+		   type        => 'collection',
+		   description => 'It is the environment variables of the WAF.',
+		},
+		{
+		   name => "TX",
+		   type => 'collection',
+		   description =>
+			 'It is a collection of variables for the current transaction. These variables will be removed when the transaction ends. The variables TX:0-TX:9 saves the values captured with the strRegex or strPhrases operators.',
+		},
 	);
 }
 
