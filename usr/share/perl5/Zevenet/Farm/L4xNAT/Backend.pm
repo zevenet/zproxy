@@ -365,8 +365,19 @@ sub setL4FarmBackendStatus
 		#delete backend session
 		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
 
+		my $server;
+
+		# get backend with id $backend
+		foreach my $srv ( @{ $$farm{ servers } } )
+		{
+			if ( $srv->{ 'id' } == $backend )
+			{
+				$server = $srv;
+				last;
+			}
+		}
+
 		# remove conntrack
-		my $server = $$farm{ servers }[$backend];
 		&resetL4FarmBackendConntrackMark( $server );
 
 		# delete backend session again in case new connections are created
