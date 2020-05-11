@@ -77,6 +77,8 @@ sub startL4Farm    # ($farm_name)
 
 	&doL4FarmRules( "start", $farm_name );
 
+	&reloadFarmsSourceAddressByFarm( $farm_name );
+
 	# Enable IP forwarding
 	require Zevenet::Net::Util;
 	&setIpForward( 'true' );
