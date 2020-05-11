@@ -111,12 +111,12 @@ sub getWafVariables
 		},
 		{
 		   name        => "ARGS_COMBINED_SIZE",
-		   type        => 'collection',
+		   type        => 'scalar',
 		   description => 'Total size of the request parameters. The files are excluded.',
 		},
 		{
 		   name => "ARGS_NAMES",
-		   type => 'scalar',
+		   type => 'collection',
 		   description =>
 			 'It is a collection with the names of the of arguments in a request.',
 		},
