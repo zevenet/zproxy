@@ -309,7 +309,7 @@ sub getFGFarm
 
 	my $fg;
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
-	my $fg_list  = &getTiny( $fg_conf );
+	my $fg_list = &getTiny( $fg_conf );
 
 	foreach my $fg_name ( keys %{ $fg_list } )
 	{
@@ -673,7 +673,7 @@ sub delFGFarm
 	require Zevenet::Farm::Service;
 
 	my $fg;
-	my $err  = &runFGFarmStop( $farm, $service );
+	my $err = &runFGFarmStop( $farm, $service );
 	my $type = &getFarmType( $farm );
 
 	if ( $type =~ /http/ or $type eq 'gslb' )
@@ -709,7 +709,7 @@ Function: getFGPidFile
 
 Parameters:
 	Farm - Farm name
-	Service - Service name. It is used for GSLB and HTTP farms
+	Service - Service name. It is used for GSLB and HTTP farms. It expects 'undef' for l4 farms
 
 Returns:
 	String - Pid file path.
@@ -725,7 +725,7 @@ sub getFGPidFile
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $file;
 
-	if ( $svice )
+	if ( defined $svice )
 	{
 		# return a regexp for a farm the request service
 		$file = "$piddir/${fname}_${svice}_guardian.pid";
@@ -902,7 +902,7 @@ Function: runFGFarmStop
 
 Parameters:
 	Farm - Farm name
-	Service - Service name. This parameter is for HTTP and GSLB farms.
+	Service - Service name. This parameter is for HTTP and GSLB farms. If the farm has not services, this parameter expect 'undef'
 
 Returns:
 	Integer - 0 on failure, or another value on success
@@ -916,13 +916,18 @@ sub runFGFarmStop
 	my $farm    = shift;
 	my $service = shift
 	  ; # optional, if the farm is http and the service is not sent to the function, all services will be restarted
+
+	$service = undef
+	  if ( defined $service and $service eq '' )
+	  ;    # overwrite the parameter is it a empty string
+
 	my $out = 0;
 	my $srvtag;
 	my $status_file = &getFGStatusFile( $farm, $service );
 
 	require Zevenet::Farm::Core;
 	my $type = &getFarmType( $farm );
-	if ( $type =~ /http/ and not $service )
+	if ( $type =~ /http/ and !defined $service )
 	{
 		require Zevenet::Farm::Service;
 		foreach my $srv ( &getFarmServices( $farm ) )
@@ -1000,7 +1005,7 @@ sub runFGFarmStop
 				}
 			}
 		}
-		$srvtag = "${service}_" if ( $service );
+		$srvtag = "${service}_" if ( defined $service );
 		unlink "$configdir/${farm}_${srvtag}status.cfg";
 	}
 
@@ -1069,7 +1074,7 @@ sub runFGFarmStart
 
 		# Iterate over every farm service
 		my $services = &getFarmVS( $farm, "", "" );
-		my @servs    = split ( " ", $services );
+		my @servs = split ( " ", $services );
 
 		foreach my $service ( @servs )
 		{
@@ -1518,7 +1523,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	my $fg = &getFGFarm( $fname, $svice );
 	if ( not $fg )
 	{
-		$fg    = $old if &getFGExists( $old );
+		$fg = $old if &getFGExists( $old );
 		$usefg = "false";
 	}
 

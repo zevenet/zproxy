@@ -77,6 +77,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 				   "id" => {
 							 'valid_format' => 'http_service',
 							 'non_blank'    => 'true',
+							 'exceptions'   => ['0'],
 				   },
 	};
 
