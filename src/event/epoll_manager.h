@@ -24,12 +24,14 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
+#include "../util/time.h"
 
 namespace events {
 
 #define MAX_EPOLL_EVENT 200
-#define EPOLL_WAIT_TIMEOUT 500
+#define EPOLL_WAIT_TIMEOUT 250
 /** The enum EVENT_GROUP defines the different group types. */
 enum class EVENT_GROUP : char {
   /** This group accept connections. */
@@ -83,7 +85,20 @@ enum class EVENT_TYPE : uint32_t {
   DISCONNECT,
   NONE
 };
-
+#if USE_TIMER_FD_TIMEOUT==0
+enum class TIMEOUT_TYPE:uint8_t {
+  INACTIVE_TIMEOUT,
+  CLIENT_READ_TIMEOUT,
+  SERVER_READ_TIMEOUT,
+  CLIENT_WRITE_TIMEOUT,
+  SERVER_WRITE_TIMEOUT,
+};
+struct TimeOut{
+  TIMEOUT_TYPE type;
+  time_t last_seent{0};
+  int timeout{0};
+};
+#endif
 // TODO:: Make it static polimorphosm, template<typename Handler>
 /**
  * @class EpollManager epoll_manager.h "src/event/epoll_manager.h"
@@ -92,22 +107,20 @@ enum class EVENT_TYPE : uint32_t {
  * the operations needed.
  */
 class EpollManager {
-  //  std::mutex epoll_mutex;
-  /** Epoll file descriptor. */
   int epoll_fd;
-  // TODO: Documentar abdess
+#if USE_TIMER_FD_TIMEOUT==0
+  std::unordered_map<int /*fd*/,TimeOut> timeouts;
+#endif
   std::vector<int> accept_fd_set;
   /** Array of epoll_event. This array contains all the events. */
   epoll_event events[MAX_EPOLL_EVENT];
-
 protected:
   virtual void HandleEvent(int fd, EVENT_TYPE event_type,
 						   EVENT_GROUP event_group) = 0;
   inline void onReadEvent(epoll_event &event);
   inline void onWriteEvent(epoll_event &event);
   inline void onConnectEvent(epoll_event &event);
-
-public:
+ public:
   EpollManager();
 
   virtual ~EpollManager();
@@ -141,7 +154,7 @@ public:
    * @param event_group of the new event.
    * @return @c true if everything is ok, @c false if not.
    */
-  bool addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
+  bool addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group, int time_out = 0);
 
   /**
    * @brief Deletes an event to the event manager with the @p fd.
@@ -164,6 +177,14 @@ public:
    * @param event_group to update the event.
    * @return @c true if everything is ok, @c false if not.
    */
-  bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
+  bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group, int time_out = 0);
+
+#if USE_TIMER_FD_TIMEOUT==0
+  void setTimeOut(int fd, TIMEOUT_TYPE type, int timeout_sec);
+  void stopTimeOut(int fd);
+  void deleteTimeOut(int fd);
+  virtual void onTimeOut(int fd, TIMEOUT_TYPE type){};
+#endif
+
 };
 } // namespace events

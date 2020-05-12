@@ -19,6 +19,7 @@
  *
  */
 #include "backend_stats.h"
+#include "../util/time.h"
 
 void Statistics::BackendInfo::setAvgResponseTime(double latency) {
   if (avg_response_time < 0) {
@@ -40,7 +41,8 @@ void Statistics::BackendInfo::setMaxResponseTime(double latency) {
   if (latency > max_response_time) max_response_time = latency;
 }
 
-void Statistics::BackendInfo::setAvgConnTime(double latency) {
+void Statistics::BackendInfo::setAvgConnTime(const timeval & start_time) {
+  double latency = Time::getDiff(start_time);
   if (avg_conn_time < 0) {
     avg_conn_time = latency;
   } else {
@@ -49,7 +51,7 @@ void Statistics::BackendInfo::setAvgConnTime(double latency) {
 }
 
 Statistics::BackendInfo::BackendInfo() {
-  current_time = std::chrono::steady_clock::now();
+  current_time = Time::getTimeSec();
   established_conn = 0;
   total_connections = 0;
   pending_connections = 0;
@@ -64,11 +66,12 @@ Statistics::BackendInfo::~BackendInfo() {}
 
 void Statistics::BackendInfo::increaseConnection() { established_conn++; }
 
-void Statistics::BackendInfo::setAvgTransferTime(double latency) {
-  if (std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - current_time)
-          .count() > 60) {
+void Statistics::BackendInfo::setAvgTransferTime(const timeval & start_time ){
+  if (Time::getTimeSec() - current_time > 60) {
     avg_complete_response_time = -1;
+    current_time = Time::getTimeSec();
   }
+  auto latency = Time::getDiff(start_time);
   if (avg_complete_response_time < 0) {
     avg_complete_response_time = latency;
   } else {
@@ -92,15 +95,16 @@ int Statistics::BackendInfo::getEstablishedConn() { return established_conn; }
 
 double Statistics::BackendInfo::getAvgLatency() { return avg_response_time; }
 
-void Statistics::BackendInfo::calculateLatency(double latency) {
-  if (std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - current_time)
-          .count() > 60) {
-    current_time = std::chrono::steady_clock::now();
-    total_connections = 0;
-    max_response_time = -1;
-    avg_response_time = -1;
-    min_response_time = -1;
-  }
+void Statistics::BackendInfo::calculateLatency(const timeval & start_time) {
+//  if (Time::getTimeSec() - current_time > 60) {
+//    total_connections = 0;
+//    max_response_time = -1;
+//    avg_response_time = -1;
+//    min_response_time = -1;
+//  }
+//  current_time = Time::getTimeSec();
+
+  double latency = Time::getDiff(start_time);
   setAvgResponseTime(latency);
   setMaxResponseTime(latency);
   setMinResponseTime(latency);

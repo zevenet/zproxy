@@ -75,7 +75,7 @@ void handleInterrupt(int sig) {
 
 int main(int argc, char *argv[]) {
   //  debug::EnableBacktraceOnTerminate();
-
+  Time::updateTime();
   static ListenerManager listener;
   auto control_manager = ctl::ControlManager::getInstance();
   if (setjmp(jmpbuf)) {

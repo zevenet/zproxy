@@ -68,11 +68,11 @@ using namespace ssl;
  * backend section of the configuration file.
  */
 class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInfo {
+  /** Backend status using the Backend::BACKEND_STATUS enum. */
+  std::atomic<BACKEND_STATUS> status;
  public:
   Backend();
   ~Backend();
-  /** Backend status using the Backend::BACKEND_STATUS enum. */
-  std::atomic<BACKEND_STATUS> status;
   /** Backend type using the Backend::BACKEND_TYPE enum. */
   BACKEND_TYPE backend_type;
   /** BackendConfig parameters from the backend section. */
@@ -129,6 +129,9 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>, public BackendInf
    * @return JsonObject with the Backend information.
    */
   std::unique_ptr<JsonObject> getBackendJson();
+
+  void setStatus(BACKEND_STATUS new_status);
+  BACKEND_STATUS getStatus() ;
   int nf_mark;
   bool isHttps();
 };

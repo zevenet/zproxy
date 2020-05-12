@@ -93,6 +93,7 @@ DEFINE_OBJECT_COUNTER(on_response_timeout)
 DEFINE_OBJECT_COUNTER(on_send_request)
 DEFINE_OBJECT_COUNTER(on_send_response)
 DEFINE_OBJECT_COUNTER(on_client_disconnect)
+DEFINE_OBJECT_COUNTER(on_clear_stream)
 
 DEFINE_OBJECT_COUNTER(event_client_read)
 DEFINE_OBJECT_COUNTER(event_client_disconnect)
@@ -102,7 +103,6 @@ DEFINE_OBJECT_COUNTER(event_backend_write)
 DEFINE_OBJECT_COUNTER(event_backend_disconnect)
 DEFINE_OBJECT_COUNTER(event_connect)
 DEFINE_OBJECT_COUNTER(event_connect_fail)
-
 }  // namespace debug__
 #endif
 
@@ -125,13 +125,20 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
       "no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: "
       "text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
 #endif
-
+#if DEBUG_STREAM_EVENTS_COUNT
+  int clear_stream{0};
+  int clear_timer{0};
+  int clear_backend{0};
+  int clear_client{0};
+#endif
   int worker_id{};
   std::thread worker;
   std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
   std::atomic<bool> is_running{};
   std::unordered_map<int, HttpStream *> streams_set;
+#if USE_TIMER_FD_TIMEOUT
   std::unordered_map<int, HttpStream *> timers_set;
+#endif
   void HandleEvent(int fd, EVENT_TYPE event_type,
                    EVENT_GROUP event_group) override;
   void doWork();
@@ -308,4 +315,7 @@ public:
    * @return true if should handle the task, false if not.
    */
   void stopListener(int listener_id, bool cut_connection = false);
+#if USE_TIMER_FD_TIMEOUT==0
+  void onTimeOut(int fd, TIMEOUT_TYPE type) override ;
+#endif
 };

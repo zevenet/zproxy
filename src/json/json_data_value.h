@@ -45,6 +45,7 @@ class JsonDataValue : public Json {
   explicit JsonDataValue(const std::string &value);
   explicit JsonDataValue(const char *value);
   explicit JsonDataValue(int value);
+  explicit JsonDataValue(unsigned long value);
   explicit JsonDataValue(unsigned int value);
   explicit JsonDataValue(long value);
   explicit JsonDataValue(double value);

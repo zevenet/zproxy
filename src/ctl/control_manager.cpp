@@ -277,6 +277,12 @@ bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task) {
         }
         break;
       }
+      case 'w':{
+        if (task.subject  == CTL_SUBJECT::DEBUG) {
+          task.target = CTL_HANDLER_TYPE::STREAM_MANAGER;
+        }
+        break;
+      }
     }
   }
   return false;

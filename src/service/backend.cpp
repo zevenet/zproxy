@@ -181,3 +181,8 @@ void Backend::doMaintenance() {
   }
 }
 bool Backend::isHttps() { return ctx != nullptr; }
+
+void Backend::setStatus(BACKEND_STATUS new_status) {
+  this->status = new_status;
+}
+BACKEND_STATUS Backend::getStatus() { return status; }

@@ -37,7 +37,26 @@
 
 struct UpgradeStatus {
   http::UPGRADE_PROTOCOLS protocol{http::UPGRADE_PROTOCOLS::NONE};
-  bool pinned_connection{0};
+  bool pinned_connection{false};
+};
+
+enum class STREAM_OPTION:uint32_t {
+  NO_OPT = 0x0,
+  PINNED_CONNECTION = 0x1,
+  H2 = 0x1 << 1,
+};
+
+enum class STREAM_STATUS : uint32_t {
+  ERROR = 0x0,
+  BCK_CONN_PENDING = 0x1,
+  BCK_CONN_ERROR = 0x1 << 1,
+  BCK_READ_PENDING = 0x1 << 2,
+  BCK_WRITE_PENDING = 0x1 << 3,
+  CL_READ_PENDING = 0x1 << 4,
+  CL_WRITE_PENDING= 0x1 << 5,
+  REQUEST_PENDING = 0x1 << 6,
+  RESPONSE_PENDING = 0x1 << 7,
+  CLOSE_CONNECTION = 0x1 << 8
 };
 
 /**
@@ -68,14 +87,34 @@ class HttpStream : public Counter<HttpStream> {
   ClientConnection client_connection;
   /** Connection between zproxy and the backend. */
   BackendConnection backend_connection;
+#if USE_TIMER_FD_TIMEOUT
   /** Timer descriptor used for the stream timeouts. */
   TimerFd timer_fd;
+#endif
   /** HttpRequest containing the request sent by the client. */
   HttpRequest request;
   /** HttpResponse containing the response sent by the backend. */
   HttpResponse response;
   /** This struct indicates the upgrade mechanism status. */
   UpgradeStatus upgrade;
+  uint32_t status{0x0};
+  uint32_t options{0x0};
+
+  inline bool hasOption(STREAM_OPTION _option) const{
+    return (options & helper::to_underlying(_option)) != 0u;
+  }
+
+  inline bool hasStatus(STREAM_STATUS _status) const{
+    return (status & helper::to_underlying(_status)) != 0u;
+  }
+
+  inline void clearOption(STREAM_OPTION _option){
+    options &= ~helper::to_underlying(_option);
+  }
+
+  inline void clearStatus(STREAM_STATUS _status){
+    status &= ~helper::to_underlying(_status);
+  }
 
   std::shared_ptr<ServiceManager> service_manager;
 };

@@ -27,7 +27,9 @@
 HttpStream::HttpStream()
     : client_connection(),
       backend_connection(),
+#if USE_TIMER_FD_TIMEOUT
       timer_fd(),
+#endif
       request(),
       response() {
 #ifdef CACHE_ENABLED

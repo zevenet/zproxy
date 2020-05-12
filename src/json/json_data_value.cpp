@@ -34,6 +34,7 @@ json::JsonDataValue::JsonDataValue(bool value) { setValue(value); }
 json::JsonDataValue::JsonDataValue(const json::JsonArray &json_array) { setValue(json_array); }
 json::JsonDataValue::JsonDataValue(const json::JsonObject &json_object) { setValue(json_object); }
 json::JsonDataValue::JsonDataValue(long value) { setValue(value); }
+json::JsonDataValue::JsonDataValue(unsigned long value) {setValue(static_cast<long>(value));}
 
 json::JsonDataValue &json::JsonDataValue::operator=(const json::JsonDataValue &other) {
   setValue(other);

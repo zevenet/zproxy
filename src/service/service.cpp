@@ -29,7 +29,7 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   if (session_type != sessions::SESS_NONE) {
     auto session = getSession(source, request);
     if (session != nullptr) {
-      if (session->assigned_backend->status != BACKEND_STATUS::BACKEND_UP) {
+      if (session->assigned_backend->getStatus() != BACKEND_STATUS::BACKEND_UP) {
         // invalidate all sessions backend is down
         deleteBackendSessions(session->assigned_backend->backend_id);
         return getBackend(source, request);
@@ -63,8 +63,8 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
   backend->weight = backend_config->weight;
   backend->priority = backend_config->priority;
   backend->name = "bck_" + std::to_string(backend_id);
-  backend->status = backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED
-                                             : BACKEND_STATUS::BACKEND_UP;
+  backend->setStatus( backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED
+                                             : BACKEND_STATUS::BACKEND_UP);
   if (backend_config->be_type == 0) {
     backend->address_info =
         Network::getAddress(backend_config->address, backend_config->port)
@@ -161,7 +161,7 @@ bool Service::addBackend(JsonObject *json_object) {
     } else {
       return false;
     }
-    config->status = BACKEND_STATUS::BACKEND_DISABLED;
+    config->setStatus(BACKEND_STATUS::BACKEND_DISABLED);
     config->backend_type = BACKEND_TYPE::REMOTE;
     backend_set.push_back(config.release());
   }
@@ -401,7 +401,7 @@ Backend *Service::getNextBackend() {
   if (backend_set.empty())
     return nullptr;
   else if (backend_set.size() == 1)
-    return backend_set[0]->status != BACKEND_STATUS::BACKEND_UP
+    return backend_set[0]->getStatus() != BACKEND_STATUS::BACKEND_UP
                ? nullptr
                : backend_set[0];
   int enabled_priority = 1;
@@ -409,7 +409,7 @@ Backend *Service::getNextBackend() {
        priority_index++) {
     for (auto &bck : backend_set) {
       if (bck->priority == priority_index &&
-          bck->status != BACKEND_STATUS::BACKEND_UP) {
+          bck->getStatus() != BACKEND_STATUS::BACKEND_UP) {
         enabled_priority++;
       }
     }
@@ -424,7 +424,7 @@ Backend *Service::getNextBackend() {
         seed++;
         bck_res = backend_set[seed % backend_set.size()];
         if (bck_res != nullptr) {
-          if (bck_res->status != BACKEND_STATUS::BACKEND_UP ||
+          if (bck_res->getStatus() != BACKEND_STATUS::BACKEND_UP ||
               bck_res->priority > backend_priority) {
             bck_res = nullptr;
             continue;
@@ -438,7 +438,7 @@ Backend *Service::getNextBackend() {
     case ROUTING_POLICY::W_LEAST_CONNECTIONS: {
       Backend *selected_backend = nullptr;
       for (auto &it : backend_set) {
-        if (it->weight <= 0 || (it->status != BACKEND_STATUS::BACKEND_UP ||
+        if (it->weight <= 0 || (it->getStatus() != BACKEND_STATUS::BACKEND_UP ||
                                 it->priority > backend_priority))
           continue;
         if (selected_backend == nullptr) {
@@ -457,7 +457,7 @@ Backend *Service::getNextBackend() {
     case ROUTING_POLICY::RESPONSE_TIME: {
       Backend *selected_backend = nullptr;
       for (auto &it : backend_set) {
-        if (it->weight <= 0 || (it->status != BACKEND_STATUS::BACKEND_UP ||
+        if (it->weight <= 0 || (it->getStatus() != BACKEND_STATUS::BACKEND_UP ||
                                 it->priority > backend_priority))
           continue;
         if (selected_backend == nullptr) {
@@ -476,7 +476,7 @@ Backend *Service::getNextBackend() {
       Backend *selected_backend = nullptr;
 
       for (auto &it : backend_set) {
-        if (it->weight <= 0 || (it->status != BACKEND_STATUS::BACKEND_UP ||
+        if (it->weight <= 0 || (it->getStatus() != BACKEND_STATUS::BACKEND_UP ||
                                 it->priority > backend_priority))
           continue;
         if (selected_backend == nullptr) {
@@ -498,7 +498,7 @@ void Service::doMaintenance() {
   HttpSessionManager::doMaintenance();
   for (Backend *bck : this->backend_set) {
     bck->doMaintenance();
-    if (bck->status == BACKEND_STATUS::BACKEND_DOWN) {
+    if (bck->getStatus() == BACKEND_STATUS::BACKEND_DOWN) {
       deleteBackendSessions(bck->backend_id);
     }
   }
@@ -520,7 +520,7 @@ Backend *Service::getEmergencyBackend() {
     emergency_seed++;
     bck = emergency_backend_set[emergency_seed % backend_set.size()];
     if (bck != nullptr) {
-      if (bck->status != BACKEND_STATUS::BACKEND_UP) {
+      if (bck->getStatus() != BACKEND_STATUS::BACKEND_UP) {
         bck = nullptr;
         continue;
       }

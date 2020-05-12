@@ -44,6 +44,7 @@ add_definitions(-DDEBUG_HTTP_HEADERS=0)
 add_definitions(-DMALLOC_TRIM_TIMER=1 -DMALLOC_TRIM_TIMER_INTERVAL=600) # force release of memory back to the system
 add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=10)
 add_definitions(-DENABLE_CI_HEADERS=1) #enable case insensitive comparator in header map.
+add_definitions(-DUSE_TIMER_FD_TIMEOUT=0)
 
 set(l7core_sources
     debug/logger.h debug/logger.cpp
@@ -86,7 +87,8 @@ set(l7core_sources
     handlers/http_manager.h handlers/http_manager.cpp
     handlers/https_manager.h handlers/https_manager.cpp
     config/regex_manager.cpp config/regex_manager.h
-    config/ssl_helper.cpp config/ssl_helper.h config/global.cpp config/global.h)
+    config/ssl_helper.cpp config/ssl_helper.h config/global.cpp config/global.h
+    util/time.h)
 
 if (ENABLE_ON_FLY_COMRESSION)
     set(l7core_sources ${l7core_sources}

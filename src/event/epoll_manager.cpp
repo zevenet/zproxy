@@ -77,12 +77,27 @@ bool EpollManager::deleteFd(int fd) {
     Logger::LogInfo(error, LOG_DEBUG);
     return false;
   }
+#if USE_TIMER_FD_TIMEOUT == 0
+  deleteTimeOut(fd);
+#endif
   return true;
 }
 
 int EpollManager::loopOnce(int time_out) {
   int fd, i, ev_count = 0;
   ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
+  Time::updateTime();
+#if USE_TIMER_FD_TIMEOUT==0
+  for (auto &[fd_k,it] : timeouts) {
+    if (it.timeout > 0) {
+      if (Time::getTimeSec() - it.last_seent > it.timeout) {
+        onTimeOut(fd_k,it.type);
+        it.timeout = 0;
+      }
+    }
+  }
+#endif
+
   if (ev_count <= 0) return ev_count;
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
@@ -126,7 +141,7 @@ bool EpollManager::handleAccept(int listener_fd) {
 }
 
 bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
-                         EVENT_GROUP event_group) {
+                         EVENT_GROUP event_group, int time_out) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
   struct epoll_event epevent = {};
   epevent.events = static_cast<uint32_t>(event_type);
@@ -148,11 +163,32 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
                  " To EpollFD: " + std::to_string(epoll_fd),
              LOG_DEBUG);
 #endif
+  if(time_out != 0) {
+    switch (event_type) {
+      case EVENT_TYPE::READ:
+      case EVENT_TYPE::READ_ONESHOT:
+        setTimeOut(fd,
+                   event_group == EVENT_GROUP::SERVER
+                       ? TIMEOUT_TYPE::SERVER_READ_TIMEOUT
+                       : TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
+                   time_out);
+        break;
+      case EVENT_TYPE::WRITE:
+        setTimeOut(fd,
+                   event_group == EVENT_GROUP::SERVER
+                       ? TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT
+                       : TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
+                   time_out);
+        break;
+      default:
+        setTimeOut(fd, TIMEOUT_TYPE::INACTIVE_TIMEOUT, time_out);
+    }
+  }
   return true;
 }
 
 bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
-                            EVENT_GROUP event_group) {
+                            EVENT_GROUP event_group, int time_out) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
 #if DEBUG_EVENT_MANAGER
   Logger::LogInfo("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
@@ -175,7 +211,27 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
       return false;
     }
   }
-
+  if(time_out != 0) {
+    switch (event_type) {
+      case EVENT_TYPE::READ:
+      case EVENT_TYPE::READ_ONESHOT:
+        setTimeOut(fd,
+                   event_group == EVENT_GROUP::SERVER
+                   ? TIMEOUT_TYPE::SERVER_READ_TIMEOUT
+                   : TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
+                   time_out);
+        break;
+      case EVENT_TYPE::WRITE:
+        setTimeOut(fd,
+                   event_group == EVENT_GROUP::SERVER
+                   ? TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT
+                   : TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
+                   time_out);
+        break;
+      default:
+        setTimeOut(fd, TIMEOUT_TYPE::INACTIVE_TIMEOUT, time_out);
+    }
+  }
   return true;
 }
 bool EpollManager::stopAccept(int listener_fd) {
@@ -189,4 +245,35 @@ bool EpollManager::stopAccept(int listener_fd) {
   }
   return true;
 }
-}; // namespace events
+
+#if USE_TIMER_FD_TIMEOUT==0
+void EpollManager::setTimeOut(int fd, TIMEOUT_TYPE type, int timeout_sec) {
+  if (timeout_sec > 0) {
+    auto it = timeouts.find(fd);
+    if (it != timeouts.end()) {
+      it->second.last_seent = Time::getTimeSec();
+      it->second.timeout = timeout_sec;
+      it->second.type = type;
+    } else {
+      TimeOut item;
+      item.last_seent = Time::getTimeSec();
+      item.timeout = timeout_sec;
+      item.type = type;
+      timeouts[fd] = item;
+    }
+  }
+}
+void EpollManager::stopTimeOut(int fd) {
+  auto it = timeouts.find(fd);
+  if (it != timeouts.end()) {
+    it->second.timeout = 0;
+  }
+}
+void EpollManager::deleteTimeOut(int fd) {
+  auto it = timeouts.find(fd);
+  if (it != timeouts.end()) {
+    timeouts.erase(it);
+  }
+}
+#endif
+  };  // namespace events

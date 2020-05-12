@@ -36,4 +36,5 @@ class TimerFd : public Descriptor {
   bool isOneShot() const;
   bool isTriggered();
   bool is_set;
+  void close();
 };

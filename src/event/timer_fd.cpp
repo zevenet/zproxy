@@ -78,3 +78,9 @@ bool TimerFd::isTriggered() {
   size_t s = 0;
   return read(fd_, &s, sizeof(s)) != -1;
 }
+void TimerFd::close() {
+  if(fd_>0) {
+    ::close(fd_);
+    fd_ = -1;
+  }
+}

@@ -129,6 +129,13 @@ template <typename T> T try_lexical_cast(const std::string &s, T &out) {
   return !((ss >> out).fail() || !(ss >> std::ws).eof());
 }
 
+template <typename E>
+constexpr auto to_underlying(E e) noexcept
+{
+  return static_cast<std::underlying_type_t<E>>(e);
+}
+
+
 struct DateTime {
   inline static std::string getDayTime() {
     auto now = std::time(nullptr);

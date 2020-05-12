@@ -35,7 +35,6 @@ enum BACKENDSTATS_PARAMETER {
 
 class BackendInfo {
  protected:
-  std::chrono::steady_clock::time_point current_time;
   std::atomic<double> max_response_time;
   std::atomic<double> avg_response_time;
   std::atomic<double> min_response_time;
@@ -44,6 +43,7 @@ class BackendInfo {
   std::atomic<int> established_conn;
   std::atomic<int> total_connections;
   std::atomic<int> pending_connections;
+  time_t current_time;
   // TODO: TRANSFERENCIA BYTES/SEC (NO HACER)
   // TODO: WRITE/READ TIME (TIEMPO COMPLETO)
  public:
@@ -53,7 +53,7 @@ class BackendInfo {
 
   void setMaxResponseTime(double latency);
 
-  void setAvgConnTime(double latency);
+  void setAvgConnTime(const timeval & start_time);
 
  public:
   BackendInfo();
@@ -62,7 +62,7 @@ class BackendInfo {
 
   void increaseConnection();
 
-  void setAvgTransferTime(double latency);
+  void setAvgTransferTime(const timeval & start_time);
 
   void decreaseConnection();
 
@@ -80,7 +80,7 @@ class BackendInfo {
 
   double getAvgLatency();
 
-  void calculateLatency(double latency);
+  void calculateLatency(const timeval & start_time);
 
   double getConnPerSec();
 };
