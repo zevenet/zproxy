@@ -127,6 +127,7 @@ sub getIdsTree
 								 func   => 'listBLByFarm',
 								 args   => [$f],
 				);
+
 				$tree->{ 'farms' }->{ $f }->{ 'ipds' }->{ 'blacklists' } =
 				  &addIdsArrays( \@bl );
 
@@ -144,7 +145,7 @@ sub getIdsTree
 								  func   => 'listRBLByFarm',
 								  args   => [$f],
 				);
-				$tree->{ 'farms' }->{ $f }->{ 'ipds' }->{ 'blacklists' } =
+				$tree->{ 'farms' }->{ $f }->{ 'ipds' }->{ 'rbl' } =
 				  &addIdsArrays( \@rbl );
 
 				#add waf
