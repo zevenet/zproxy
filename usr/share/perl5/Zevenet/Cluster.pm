@@ -731,7 +731,7 @@ sub exchangeIdKeys    # $bool ( $ip_addr, $pass )
 
 		return 1 if ( !$auth_keys );
 
-		print $auth_keys $key_id_pub;
+		print $auth_keys $key_id_pub . "\n";
 		close $auth_keys;
 	}
 
