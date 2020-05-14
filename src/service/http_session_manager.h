@@ -19,14 +19,11 @@
  *
  */
 #pragma once
-#include <chrono>
 #include <string>
 #include <unordered_map>
 #include "../http/http_request.h"
 #include "../json/json_data_value.h"
 #include "../service/backend.h"
-
-using namespace std::chrono;
 
 namespace sessions {
 
@@ -40,27 +37,25 @@ enum HttpSessionType {
   SESS_BASIC
 };
 
-typedef std::chrono::duration<long double> SessionDurationSeconds;
 
 struct SessionInfo {
-  SessionInfo() : last_seen(system_clock::now()), assigned_backend(nullptr) {}
-  system_clock::time_point last_seen;
+  SessionInfo() :  assigned_backend(nullptr) {
+    last_seen = Time::getTimeSec();
+  }
+  time_t last_seen;
   Backend *assigned_backend{nullptr};
   bool hasExpired(unsigned int ttl) {
-    SessionDurationSeconds time_span(system_clock::now() - last_seen);
     // check if has not reached ttl
-    return time_span.count() > ttl;
+    return Time::getTimeSec() - last_seen > ttl;
   }
-  void update() { last_seen = system_clock::now(); }
+  void update() { last_seen = Time::getTimeSec(); }
   long getTimeStamp() {
-    return std::chrono::duration_cast<std::chrono::seconds>(
-               last_seen.time_since_epoch())
-        .count();
+    return last_seen;
   }
   void setTimeStamp(long seconds_since_epoch_count) {
     std::chrono::seconds dur(seconds_since_epoch_count);
     std::chrono::time_point<std::chrono::system_clock> dt(dur);
-    last_seen = dt;
+    last_seen = dt.time_since_epoch().count();
   }
 };
 
