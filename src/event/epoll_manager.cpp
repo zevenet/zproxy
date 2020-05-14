@@ -88,11 +88,12 @@ int EpollManager::loopOnce(int time_out) {
   ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
   Time::updateTime();
 #if USE_TIMER_FD_TIMEOUT==0
-  for (auto &[fd_k,it] : timeouts) {
-    if (it.timeout > 0) {
-      if (Time::getTimeSec() - it.last_seent > it.timeout) {
-        onTimeOut(fd_k,it.type);
-        it.timeout = 0;
+  for (auto it= timeouts.begin(); it != timeouts.end();) {
+    auto current = it++;
+    if (current->second.timeout > 0) {
+      if (Time::getTimeSec() - current->second.last_seent > current->second.timeout) {
+        current->second.timeout = 0;
+        onTimeOut(current->first,current->second.type);
       }
     }
   }
