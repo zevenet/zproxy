@@ -31,16 +31,10 @@ class Counter {
     if (decrement__) count--;
   }
   static std::atomic<int> count;
-  static std::atomic<int> established;
-
-  void onConnect() { established++; }
-  void onDisconect() { --established; }
 };
 
 template <typename T>
 std::atomic<int> Counter<T>::count(0);
-template <typename T>
-std::atomic<int> Counter<T>::established(0);
 
 namespace debug__ {
 #define DEFINE_OBJECT_COUNTER(ObjectName)        \
