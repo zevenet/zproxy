@@ -41,7 +41,7 @@ add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
 add_definitions(-DENABLE_QUICK_RESPONSE=1)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_definitions(-DDEBUG_HTTP_HEADERS=0)
-add_definitions(-DMALLOC_TRIM_TIMER=1 -DMALLOC_TRIM_TIMER_INTERVAL=600) # force release of memory back to the system
+add_definitions(-DMALLOC_TRIM_TIMER=1 -DMALLOC_TRIM_TIMER_INTERVAL=60) # force release of memory back to the system
 add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=10)
 add_definitions(-DENABLE_CI_HEADERS=1) #enable case insensitive comparator in header map.
 add_definitions(-DUSE_TIMER_FD_TIMEOUT=0)
