@@ -5,13 +5,6 @@ for i in $(find /usr/local/zevenet/config/ -name "*pound.cfg");
 do
 	echo "Migrating config file $i from pound to l7 proxy"
 
-	REWRITE=`grep "RewriteLocation" $i`
-	WAF=`grep WafRules $i | sed -E "s/^/\t/g"`
-	sed -i -e '/^[\s#]*WafRules\s/d' $i
-	sed "/$REWRITE/r"<(
-		echo "$WAF"
-	) -i -- $i
-
 	sed -i -e 's/pound.socket/proxy.socket/' $i
 	sed -i -E 's/^LogLevel\s+0/LogLevel\t5/g' $i
 

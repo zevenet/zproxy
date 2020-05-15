@@ -54,9 +54,17 @@ sub reloadWAFByFarm
 
 	require Zevenet::Farm::HTTP::Config;
 	my $proxy_ctl = &getGlobalConfiguration( 'proxyctl' );
+	my $proxy_ng  = &getGlobalConfiguration( 'proxy_ng' );
 	my $socket    = &getHTTPFarmSocket( $farm );
 
-	$err = &logAndRun( "$proxy_ctl -c $socket -R 0" );
+	if ( $proxy_ng eq "true" )
+	{
+		$err = &logAndRun( "$proxy_ctl -c $socket -R 0" );
+	}
+	elsif ( $proxy_ng eq "false" )
+	{
+		$err = &logAndRun( "$proxy_ctl -c $socket -R" );
+	}
 
 	return $err;
 }
@@ -92,6 +100,7 @@ sub addWAFsetToFarm
 	my $farm_path = "$configdir/$farm_file";
 	my $tmp_conf  = "/tmp/waf_$farm.tmp";
 	my $proxy     = &getGlobalConfiguration( 'proxy' );
+	my $proxy_ng  = &getGlobalConfiguration( 'proxy_ng' );
 	my $cp        = &getGlobalConfiguration( 'cp' );
 	my $mv        = &getGlobalConfiguration( 'mv' );
 
@@ -121,17 +130,26 @@ sub addWAFsetToFarm
 		elsif ( $line !~ /[\s#]*WafRules/ and $flag_sets )
 		{
 			$err  = 0;
-			$line = "\tWafRules	\"$set_file\"" . "\n" . $line;
+			$line = "WafRules	\"$set_file\"" . "\n" . $line;
+			$line = "\t" . $line if ( $proxy_ng eq "true" );
 			last;
 		}
 
 		# not found any waf directive
-		elsif ( $line =~ /[\s#]*ZWACL-INI"/ or $line =~ /[\s#]*Service "/ )
+		elsif (     ( $line =~ /[\s#]*ZWACL-INI"/ or $line =~ /[\s#]*Service "/ )
+				and ( $proxy_ng eq "true" ) )
 		{
 			$err  = 0;
 			$line = "\tWafRules	\"$set_file\"" . "\n" . $line;
 			last;
 		}
+		elsif ( $line =~ /#HTTP\(S\) LISTENERS/ and ( $proxy_ng eq "false" ) )
+		{
+			$err  = 0;
+			$line = "WafRules	\"$set_file\"" . "\n" . $line;
+			last;
+		}
+
 	}
 	untie @filefarmhttp;
 

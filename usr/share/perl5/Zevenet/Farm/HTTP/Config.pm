@@ -2194,6 +2194,7 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 	tie my @array, 'Tie::File', "$configdir\/$farm_filename";
 	my $size      = @array;
 	my @array_bak = @array;
+	my @wafs;
 
 	for ( my $i = 0 ; $i < $size ; $i++ )
 	{
@@ -2243,6 +2244,38 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 				#This directive should not be here
 				splice @array, $i, 1;
 				$size--;
+			}
+		}
+		elsif ( $array[$i] =~ /^(\s*)(WafRules.*)/ )
+		{
+			push @wafs, "\t" . $2 if ( $proxy_mode eq "true" );
+			push @wafs, $2        if ( $proxy_mode eq "false" );
+			splice @array, $i, 1;
+			$i--;
+			$size--;
+		}
+	}
+	for ( my $i = 0 ; $i < $size ; $i++ )
+	{
+		if ( $array[$i] =~ /#HTTP\(S\) LISTENERS/ )
+		{
+			if ( $proxy_mode eq "false" )
+			{
+				my $sizewaf = @wafs;
+				splice @array, $i, 0, @wafs;
+				$i = $i + $sizewaf;
+				next;
+			}
+
+		}
+		if ( $array[$i] =~ /#ZWACL-INI/ )
+		{
+			if ( $proxy_mode eq "true" )
+			{
+				my $sizewaf = @wafs;
+				splice @array, $i + 1, 0, @wafs;
+				$i = $i + $sizewaf;
+				next;
 			}
 		}
 	}
