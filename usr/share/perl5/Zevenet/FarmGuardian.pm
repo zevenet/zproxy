@@ -725,7 +725,7 @@ sub getFGPidFile
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	my $file;
 
-	if ( defined $svice )
+	if ( $svice ne '' and defined $svice )
 	{
 		# return a regexp for a farm the request service
 		$file = "$piddir/${fname}_${svice}_guardian.pid";
