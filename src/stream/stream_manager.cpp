@@ -956,9 +956,7 @@ void StreamManager::onResponseEvent(int fd) {
             ? "T"
             : "F");
 #endif
-  stream->backend_connection.getBackend()->calculateLatency(
-          stream->backend_connection.time_start
-          );
+
 
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
 #ifdef CACHE_ENABLED
@@ -1000,6 +998,9 @@ void StreamManager::onResponseEvent(int fd) {
     static size_t total_responses;
     switch (ret) {
       case http_parser::PARSE_RESULT::SUCCESS: {
+        stream->backend_connection.getBackend()->calculateLatency(
+            stream->backend_connection.time_start
+        );
         stream->request.chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
         stream->backend_connection.buffer_offset = 0;
         stream->client_connection.buffer_offset = 0;
