@@ -95,9 +95,9 @@ sub add_rbl_rule
 		my $msg = "A RBL rule already exists with the name '$name'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	elsif ( &getRBLExists( $json_obj->{ copy_from } ) )
+	elsif ( !&getRBLExists( $json_obj->{ copy_from } ) )
 	{
-		my $msg = "The RBL rule '$json_obj->{copy_from}' already exist.";
+		my $msg = "The RBL rule '$json_obj->{copy_from}' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
