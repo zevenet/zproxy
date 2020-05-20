@@ -1249,6 +1249,18 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
     stream->request.setService(service);
   }
   if (stream->backend_connection.getBackend() != nullptr) {
+      if(stream->backend_connection.connection_retries >= service->getBackendSetSize()){
+          //No backend is available for this backend, send error.
+          // No backend available
+          Logger::logmsg(LOG_NOTICE, "Backend connection number reached ");
+          http_manager::replyError(http::Code::ServiceUnavailable,
+                                   validation::request_result_reason.at(
+                                       validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
+                                   listener_config_.err503,
+                                   stream->client_connection);
+          this->clearStream(stream);
+          return;
+      }
     streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
     streams_set.erase(stream->backend_connection.getFileDescriptor());
   }

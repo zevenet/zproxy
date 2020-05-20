@@ -21,7 +21,7 @@
 
 #include "backend_connection.h"
 
-BackendConnection::BackendConnection() : backend_id(-1), backend(nullptr) {}
+BackendConnection::BackendConnection() : connection_retries(0), backend(nullptr) {}
 Backend *BackendConnection::getBackend() const { return backend; }
 
-void BackendConnection::setBackend(Backend *bck) { backend = bck; }
+void BackendConnection::setBackend(Backend *bck) { backend = bck; connection_retries++; }

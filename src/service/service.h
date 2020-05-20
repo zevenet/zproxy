@@ -166,4 +166,5 @@ class Service : public sessions::HttpSessionManager,
    * @return JsonObject with the Service information.
    */
   std::unique_ptr<JsonObject> getServiceJson();
+  inline int getBackendSetSize(){return backend_set.size();}
 };
