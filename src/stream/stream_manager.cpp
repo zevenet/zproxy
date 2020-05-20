@@ -1119,7 +1119,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
   HttpStream* stream = streams_set[fd];
 #endif
   if (stream == nullptr) {
-    Logger::LogInfo("Stream null pointer", LOG_REMOVE);
+    //Logger::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
     ::close(fd);
     return;
@@ -1194,9 +1194,10 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
   HttpStream* stream = streams_set[fd];
 #endif
   if (stream == nullptr) {
-    Logger::LogInfo("Stream null pointer", LOG_REMOVE);
+    //Logger::LogInfo("Stream null pointer", LOG_REMOVE);
     deleteFd(fd);
     ::close(fd);
+    return;
   }
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
