@@ -356,6 +356,23 @@ sub get_floating_struct
 	return $output;
 }
 
+sub getFloatingList
+{
+	my @list   = ();
+	my @ifaces = @{ &getSystemInterfaceList() };
+
+	foreach my $iface ( @ifaces )
+	{
+		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
+		next if $iface->{ type } eq 'virtual';
+		next unless $iface->{ addr };
+
+		push @list, $iface->{ name };
+	}
+
+	return \@list;
+}
+
 sub get_floating_list_struct
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",

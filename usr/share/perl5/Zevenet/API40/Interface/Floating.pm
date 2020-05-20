@@ -96,19 +96,6 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 	my $desc = "Modify floating interface";
 
-	my $params = {
-				   "floating_ip" => {
-									  'valid_format' => 'ip_addr',
-									  'non_blank'    => 'true',
-									  'required'     => 'true',
-				   },
-	};
-
-	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
-
 	my $if_ref = &getInterfaceConfig( $interface );
 
 	unless ( $if_ref )
@@ -116,6 +103,25 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		my $msg = "Floating interface not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	my @virt = ();
+	foreach my $if_virt ( @{ &get_virtual_list_struct() } )
+	{
+		push @virt, $if_virt->{ ip } if $if_virt->{ parent } eq $interface;
+	}
+
+	my $params = {
+				   "floating_ip" => {
+									  'values'    => \@virt,
+									  'non_blank' => 'true',
+									  'required'  => 'true',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
 
 	$if_ref = undef;
 

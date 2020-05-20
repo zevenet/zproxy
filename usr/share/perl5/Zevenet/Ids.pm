@@ -187,6 +187,11 @@ sub getIdsTree
 
 	if ( $eload )
 	{
+		# add floating interfaces
+		my $float = &eload( module => 'Zevenet::Net::Floating',
+							func   => 'getFloatingList', );
+		$tree->{ 'interfaces' }->{ 'floating' } = &addIdsArrays( $float );
+
 		# add routing
 		my @routing_table = &eload( module => 'Zevenet::Net::Route',
 									func   => 'listRoutingTablesNames', );
