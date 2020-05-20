@@ -197,19 +197,23 @@ sub modify_farmguardian
 								  'non_blank' => 'true',
 				   },
 				   "log" => {
-							  'valid_format' => 'boolean',
+							  'values' => ['true', 'false'],
+							  'blank'  => 'false',
 				   },
 				   "interval" => {
 								   'valid_format' => 'natural_num',
 				   },
 				   "cut_conns" => {
-									'valid_format' => 'boolean',
+									'values' => ['true', 'false'],
+									'blank'  => 'false',
 				   },
 				   "backend_alias" => {
-										'valid_format' => 'boolean',
+										'values' => ['true', 'false'],
+										'blank'  => 'false',
 				   },
 				   "force" => {
-								'valid_format' => 'boolean',
+								'values' => ['true', 'false'],
+								'blank'  => 'false',
 				   },
 	};
 
