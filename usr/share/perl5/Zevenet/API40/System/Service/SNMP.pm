@@ -47,18 +47,23 @@ sub set_snmp
 	my $json_obj = shift;
 
 	my $desc = "Post snmp";
+
+	require Zevenet::Net::Interface;
+	my $ip_list = &getIpAddressList();
+	push @{ $ip_list }, '*';
+
 	my $params = {
 				   "port" => {
 							   'valid_format' => 'snmp_port',
 							   'non_blank'    => 'true',
 				   },
 				   "status" => {
-								 'valid_format' => 'snmp_status',
-								 'non_blank'    => 'true',
+								 'values'    => ['true', 'false'],
+								 'non_blank' => 'true',
 				   },
 				   "ip" => {
-							 'valid_format' => 'snmp_ip',
-							 'non_blank'    => 'true',
+							 'values'    => $ip_list,
+							 'non_blank' => 'true',
 				   },
 				   "community" => {
 									'length'    => 32,
