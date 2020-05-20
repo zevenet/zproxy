@@ -288,6 +288,9 @@ sub create_routing_rule
 	my $min_prio = &getGlobalConfiguration( 'routingRulePrioUserMin' );
 	my $max_prio = &getGlobalConfiguration( 'routingRulePrioUserMax' );
 
+	require Zevenet::Net::Route;
+	my @tables = &listRoutingTablesNames();
+
 	my $params = {
 		"priority" => {
 			'non_blank' => 'true',
@@ -303,6 +306,7 @@ sub create_routing_rule
 			  "It is the source address IP or the source networking net that will be routed to the table 'table'",
 		},
 		"table" => {
+			'values'    => \@tables,
 			'non_blank' => 'true',
 			'required'  => 'true',
 			'format_msg' =>
@@ -319,13 +323,6 @@ sub create_routing_rule
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
-
-	require Zevenet::Net::Route;
-	if ( !&getRoutingTableExists( $json_obj->{ table } ) )
-	{
-		my $msg = "The table '$json_obj->{table}' does not exist";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
 
 	# check if already exists an equal rule
 	if ( &isRule( $json_obj ) )
@@ -371,6 +368,9 @@ sub modify_routing_rule
 	my $min_prio = &getGlobalConfiguration( 'routingRulePrioUserMin' );
 	my $max_prio = &getGlobalConfiguration( 'routingRulePrioUserMax' );
 
+	require Zevenet::Net::Route;
+	my @tables = &listRoutingTablesNames();
+
 	my $params = {
 		"priority" => {
 			'non_blank' => 'true',
@@ -385,6 +385,7 @@ sub modify_routing_rule
 			  "It is the source address IP or the source networking net that will be routed to the table 'table'",
 		},
 		"table" => {
+			'values'    => \@tables,
 			'non_blank' => 'true',
 			'format_msg' =>
 			  "It is the tabled used to route the packet if it matches with the parameter 'from'",
@@ -404,14 +405,6 @@ sub modify_routing_rule
 	if ( !&getRoutingRulesExists( $id ) )
 	{
 		my $msg = "The rule id '$id' does not exist";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	require Zevenet::Net::Route;
-	if ( exists $json_obj->{ table }
-		 and !&getRoutingTableExists( $json_obj->{ table } ) )
-	{
-		my $msg = "The table '$json_obj->{table} does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -582,7 +575,7 @@ sub create_routing_entry
 		delete $params->{ raw };
 		$params->{ to }->{ required } = 'true';
 	}
-	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
+	$error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -862,7 +855,7 @@ sub add_routing_isolate
 	}
 
 	# configured
-	my $err = &setRoutingIsolate( $interface, $table, 'add' );
+	&setRoutingIsolate( $interface, $table, 'add' );
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$interface" );
@@ -917,7 +910,7 @@ sub del_routing_isolate
 	}
 
 	# configured
-	my $err = &setRoutingIsolate( $interface, $table, 'del' );
+	&setRoutingIsolate( $interface, $table, 'del' );
 
 	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$interface" );
