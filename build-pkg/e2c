@@ -115,7 +115,7 @@ cp -r ${ce_files_dir}/* ${tmp_dir}
 
 
 # Overwrite CE global.conf parameters
-overwrite_globalconf_param "nft_bin" '"/usr/sbin/nft";#update'
+overwrite_globalconf_param "nft_bin" '"/usr/local/sbin/nft";#update'
 overwrite_globalconf_param "libexec_dir" '"/usr/lib/nagios/plugins";'
 overwrite_globalconf_param "routeparams" '"";'
 overwrite_globalconf_param "backupfor" '"$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file /etc/hostname $filedns /etc/cron.d/zevenet $applianceVersionFile";#update'
