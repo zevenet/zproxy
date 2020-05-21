@@ -624,17 +624,17 @@ sub del_domain_from_rbl
 
 	include 'Zevenet::IPDS::RBL::Config';
 
-	my $desc = "Delete the domain $domain from a RBL rule $name";
+	my $desc = "Delete the domain '$domain' from a RBL rule '$name'";
 
 	if ( !&getRBLExists( $name ) )
 	{
-		my $msg = "$name doesn't exist.";
+		my $msg = "'$name' doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !grep ( /^$domain$/, @{ &getRBLObjectRuleParam( $name, 'domains' ) } ) )
 	{
-		my $msg = "The domains is not applied to the RBL rule.";
+		my $msg = "The '$domain' domain is not applied to the '$name' RBL rule.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -655,7 +655,7 @@ sub del_domain_from_rbl
 	&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 	my $msg =
-	  "The domain $domain has been deleted successfully from the RBL rule $name.";
+	  "The domain '$domain' has been deleted successfully from the RBL rule '$name'.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -758,19 +758,19 @@ sub del_rbl_from_farm
 
 	if ( !&getFarmExists( $farmName ) )
 	{
-		my $msg = "$farmName doesn't exist.";
+		my $msg = "'$farmName' doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getRBLExists( $name ) )
 	{
-		my $msg = "$name doesn't exist.";
+		my $msg = "'$name' doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
-		my $msg = "Not found a rule associated to $name and $farmName.";
+		my $msg = "Not found a rule associated to '$name' and '$farmName'.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -781,11 +781,12 @@ sub del_rbl_from_farm
 
 	if ( grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
-		my $msg = "Error, removing $name rule from $farmName.";
+		my $msg = "Error, removing '$name' rule from '$farmName'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "RBL rule $name was removed successfully from the farm $farmName.";
+	my $msg =
+	  "RBL rule '$name' was removed successfully from the farm '$farmName'.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
