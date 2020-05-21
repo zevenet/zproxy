@@ -596,7 +596,7 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
     Logger::LogInfo("Error getting peer address", LOG_DEBUG);
   } else {
     auto request_data_len = std::string_view(target.buffer).find('\r');
-    Logger::logmsg(LOG_WARNING, "(%lx) e%d %s %.*s from %s",
+    Logger::logmsg(LOG_INFO, "(%lx) e%d %s %.*s from %s",
                    std::this_thread::get_id(), static_cast<int>(code),
                    code_string.data(), request_data_len, target.buffer, caddr);
   }

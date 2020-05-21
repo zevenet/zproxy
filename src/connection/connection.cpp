@@ -53,9 +53,7 @@ IO::IO_RESULT Connection::read() {
                    (MAX_DATA_SIZE - buffer_size - buffer_offset), MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
-        std::string error = "read() failed  ";
-        error += std::strerror(errno);
-        Logger::LogInfo(error, LOG_NOTICE);
+        Logger::logmsg(LOG_DEBUG, " read() failed: %s",std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -360,9 +358,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
       if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;  // do not persist changes
       } else {
-        std::string error = "writev() failed  ";
-        error += std::strerror(errno);
-        Logger::LogInfo(error, LOG_NOTICE);
+        Logger::logmsg(LOG_DEBUG, " writev() failed: %s",std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       }
       break;
@@ -420,9 +416,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
           errno != ECONNRESET*/) {
-        std::string error = "write() failed  ";
-        error += std::strerror(errno);
-        Logger::LogInfo(error, LOG_NOTICE);
+        Logger::logmsg(LOG_DEBUG, " write() failed: %s",std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
