@@ -686,7 +686,7 @@ sub modify_routing_entry
 
 	if ( !&getRoutingCustomExists( $table, $id_route ) )
 	{
-		my $msg = "The route entry '$id_route' does not exist.";
+		my $msg = "The route entry with id '$id_route' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -749,7 +749,7 @@ sub delete_routing_entry
 
 	if ( !&getRoutingCustomExists( $table, $route_id ) )
 	{
-		my $msg = "The route entry '$route_id' does not exist.";
+		my $msg = "The route entry with id '$route_id' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -881,9 +881,16 @@ sub del_routing_isolate
 
 	my $desc = "Enable an interface as possible route path from the table '$table'";
 
+	my @table_list = &listRoutingTablesNames();
+	unless ( $table eq '*' or grep ( /^$table$/, @table_list ) )
+	{
+		my $msg = "The table '$table' does not exist.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
 	# if
 	require Zevenet::Net::Validate;
-	if ( !&ifexist( $interface ) )
+	if ( &ifexist( $interface ) eq 'false' )
 	{
 		my $msg = "The interface '$interface' does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -905,7 +912,8 @@ sub del_routing_isolate
 	my @tables = &getRoutingIsolate( $interface );
 	unless ( grep ( /^$table$/, @tables ) )
 	{
-		my $msg = "The table '$table' does not exist.";
+		my $msg =
+		  "The interface '$interface' already isn't in the unmanaged list or the table '$table'.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 

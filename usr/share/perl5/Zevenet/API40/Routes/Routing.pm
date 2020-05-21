@@ -40,7 +40,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/routing} )
 	GET qr{^/routing/tables$},                     'list_routing_tables',  $mod;
 	GET qr{^/routing/tables/($id_table)$},         'get_routing_table',    $mod;
 	POST qr{^/routing/tables/($id_table)/routes$}, 'create_routing_entry', $mod;
-	PUT qr{^/routing/tables/($id_table)/routes/($id_route)$},
+	PUT qr{^/routing/tables/($id_table)/routes/([^\/]+)$},
 	  'modify_routing_entry', $mod;
 	DELETE qr{^/routing/tables/($id_table)/routes/($id_route)$},
 	  'delete_routing_entry', $mod;
