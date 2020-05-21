@@ -95,15 +95,15 @@ sub add_rbl_rule
 		my $msg = "A RBL rule already exists with the name '$name'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	elsif ( !&getRBLExists( $json_obj->{ copy_from } ) )
-	{
-		my $msg = "The RBL rule '$json_obj->{copy_from}' does not exist.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
 
 	# copy rule
 	if ( exists $json_obj->{ copy_from } )
 	{
+		if ( !&getRBLExists( $json_obj->{ copy_from } ) )
+		{
+			my $msg = "The RBL rule '$json_obj->{copy_from}' does not exist.";
+			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		}
 		if ( &addRBLCopyObjectRule( $json_obj->{ copy_from }, $name ) )
 		{
 			my $msg = "Error, copying a RBL rule.";
@@ -150,8 +150,8 @@ sub set_rbl_rule
 									'non_blank'    => 'true',
 				   },
 				   "only_logging" => {
-									   'valid_format' => 'boolean',
-									   'non_blank'    => 'true',
+									   'values'    => ['true', 'false'],
+									   'non_blank' => 'true',
 				   },
 				   "log_level" => {
 									'interval'  => '0,7',
@@ -170,8 +170,8 @@ sub set_rbl_rule
 									 'non_blank'    => 'true',
 				   },
 				   "local_traffic" => {
-										'valid_format' => 'boolean',
-										'non_blank'    => 'true',
+										'values'    => ['true', 'false'],
+										'non_blank' => 'true',
 				   },
 	};
 
