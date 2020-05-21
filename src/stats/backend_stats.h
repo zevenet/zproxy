@@ -22,6 +22,8 @@
 
 #include <atomic>
 #include <chrono>
+#include "../util/time.h"
+#include "../util/common.h"
 
 namespace Statistics {
 enum BACKENDSTATS_PARAMETER {
@@ -64,24 +66,37 @@ class BackendInfo {
 
   void setAvgTransferTime(const timeval & start_time);
 
-  void decreaseConnection();
+  inline void decreaseConnection() { if(established_conn.load() > 0 ) established_conn--; }
 
-  void increaseTotalConn();
+  inline void increaseTotalConn() { if(total_connections.load() > 0)total_connections++; }
 
-  void increaseConnTimeoutAlive();
+  inline void increaseConnTimeoutAlive() { pending_connections++; }
 
-  void decreaseConnTimeoutAlive();
+  inline void decreaseConnTimeoutAlive() {if(pending_connections.load() > 0) pending_connections--; }
 
-  int getPendingConn();
+  inline int getPendingConn() { return pending_connections; }
 
-  int getAssignedConn();
+  inline int getAssignedConn() { return total_connections; }
 
-  int getEstablishedConn();
+  inline int getEstablishedConn() { return established_conn; }
 
-  double getAvgLatency();
+  inline double getAvgLatency() { return avg_response_time; }
 
-  void calculateLatency(const timeval & start_time);
+  inline void calculateLatency(const timeval & start_time) {
+  //  if (Time::getTimeSec() - current_time > 60) {
+  //    total_connections = 0;
+  //    max_response_time = -1;
+  //    avg_response_time = -1;
+  //    min_response_time = -1;
+  //  }
+  //  current_time = Time::getTimeSec();
 
-  double getConnPerSec();
+    double latency = Time::getDiff(start_time);
+    setAvgResponseTime(latency);
+    setMaxResponseTime(latency);
+    setMinResponseTime(latency);
+  }
+
+  inline double getConnPerSec() { return total_connections / 60.0; }
 };
 }  // namespace Statistics
