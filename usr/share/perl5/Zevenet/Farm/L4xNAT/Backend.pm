@@ -103,6 +103,11 @@ sub setL4FarmServer
 			$msg  .= "port:$port ";
 		}
 	}
+	elsif ( defined $port && $port eq "" )
+	{
+		$json .= qq(, "port" : "$port");
+		$msg  .= "port:$port ";
+	}
 
 	if (   defined $ip
 		&& $ip ne ""
