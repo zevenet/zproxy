@@ -207,7 +207,6 @@ sub copyL4Farm    # ($farm_name, $new_farm_name)
 	my $del           = shift // '';
 	my $output        = 0;
 
-	require Tie::File;
 	use File::Copy qw(copy);
 
 	my $file_ori = "$configdir/" . &getFarmFile( $farm_name );
@@ -216,8 +215,28 @@ sub copyL4Farm    # ($farm_name, $new_farm_name)
 	copy( $file_ori, $file_new );
 
 	# replace the farm directive
-	tie my @lines, 'Tie::File', $file_new;
-	s/"name": "$farm_name"/"name": "$new_farm_name"/ for @lines;
+	my @lines;
+	&ztielock( \@lines, $file_new );
+	require Zevenet::Netfilter;
+	my $backend_block = 0;
+
+	foreach my $line ( @lines )
+	{
+		if ( $line =~ /(^\s+"name": )"$farm_name",/ )
+		{
+			$line = $1 . "\"$new_farm_name\",";
+		}
+		if ( $line =~ /^\s+"backends": \[/ )
+		{
+			$backend_block = 1;
+		}
+		if ( ( $backend_block ) and ( $line =~ /(^\s+"mark": )"0x\w+",/ ) )
+		{
+			my $new_mark = &getNewMark( $new_farm_name );
+			$line = $1 . "\"$new_mark\",";
+		}
+	}
+
 	untie @lines;
 
 	unlink $file_ori if ( $del eq 'del' );
