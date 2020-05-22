@@ -75,12 +75,12 @@ sub getIdsTree
 				$tree->{ 'farms' }->{ $f }->{ 'services' }->{ $s }->{ 'backends' } = $FIN;
 
 				# add bk
-				my $bks = &getFarmServers( $f, $s );
+				my $bks = &getFarmServerIds( $f, $s );
 
 				foreach my $b ( @{ $bks } )
 				{
-					$tree->{ 'farms' }->{ $f }->{ 'services' }->{ $s }->{ 'backends' }
-					  ->{ $b->{ 'id' } } = $FIN;
+					$tree->{ 'farms' }->{ $f }->{ 'services' }->{ $s }->{ 'backends' }->{ $b } =
+					  $FIN;
 				}
 
 				my $fg = &getFGFarm( $f, ( $type =~ /datalink|l4xnat/ ) ? undef : $s );

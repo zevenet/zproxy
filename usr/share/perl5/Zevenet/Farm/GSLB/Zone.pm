@@ -51,6 +51,27 @@ sub getGSLBFarmZones    # ($farm_name)
 }
 
 =begin nd
+Function: getGSLBFarmZoneExists
+
+	It checks if a gslb zone already exist for a farm
+
+Parameters:
+	farmname - Farm name
+	zone - DNS zone
+
+Returns:
+	Integer - 0 if the zone does not exist or 1 if it is
+=cut
+
+sub getGSLBFarmZoneExists
+{
+	my $farm  = shift;
+	my $zones = shift;
+
+	return ( grep ( /^$zones$/, &getGSLBFarmZones( $farm ) ) );
+}
+
+=begin nd
 Function: remGSLBFarmZoneResource
 
 	Remove a resource from a gslb zone

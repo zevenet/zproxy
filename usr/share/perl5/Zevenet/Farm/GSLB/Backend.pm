@@ -107,6 +107,7 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 			}
 			else
 			{
+				$output = 0;
 				if ( $flagNoDel )
 				{
 					$line = "\t\t$id => $default_ip";
@@ -198,7 +199,6 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	my @fileconf;
 	my $found      = 0;
 	my $index      = 0;
-	my $idx        = 0;
 	my $pluginfile = "";
 
 	require Tie::File;
@@ -265,17 +265,9 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 			splice @fileconf, $index, 1, "		$id => $ipaddress";
 			last;
 		}
-		if ( $found == 1 && $lb eq "roundrobin" && $line =~ / => / )
-		{
-			# What is the latest id used?
-			my @temp = split ( " => ", $line );
-			$idx = $temp[0];
-			$idx =~ s/^\s+//;
-		}
 		if ( $found == 1 && $lb eq "roundrobin" && $line =~ /\}/ )
 		{
-			$idx++;
-			splice @fileconf, $index, 0, "		$idx => $ipaddress";
+			splice @fileconf, $index, 0, "		$id => $ipaddress";
 			last;
 		}
 		$index++;
@@ -381,16 +373,25 @@ sub getGSLBFarmServiceBackendAvailableID
 
 	include 'Zevenet::Farm::GSLB::Service';
 
-	# Get an ID for the new backend
-	my $id         = 1;
-	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
-	my @be         = split ( "\n", $backendsvs );
+	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
 
-	foreach my $subline ( @be )
+	my $id = 0;
+	my $used;
+	while ( $id < 10000 )
 	{
-		$subline =~ s/^\s+//;
-		next unless length $subline;
 		$id++;
+		$used = 0;
+
+		foreach my $be ( @{ $be_aref } )
+		{
+			if ( $be->{ id } == $id )
+			{
+				$used = 1;
+				last;
+			}
+		}
+
+		last if ( !$used );
 	}
 
 	return $id;

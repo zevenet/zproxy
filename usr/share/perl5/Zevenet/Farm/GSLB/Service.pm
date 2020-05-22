@@ -34,7 +34,7 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	Array - list of service names or -1 on failure
+	Array - list of service names
 
 =cut
 

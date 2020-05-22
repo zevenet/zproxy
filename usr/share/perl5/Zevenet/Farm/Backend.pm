@@ -32,6 +32,84 @@ if ( eval { require Zevenet::ELoad; } )
 }
 
 =begin nd
+Function: getFarmServerIds
+
+	It returns a list with the backend servers for a farm and service.
+	The backends are read from the config file.
+	This function is to not use the getFarmservers that does stats checks.
+
+Parameters:
+	farmname - Farm name
+	service - service backends related (optional)
+
+Returns:
+	array ref - list of backends IDs
+
+=cut
+
+sub getFarmServerIds
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name, $service ) = @_;
+	my @servers   = ();
+	my $farm_type = &getFarmType( $farm_name );
+
+	if ( $farm_type =~ /http/ )
+	{
+		require Zevenet::Farm::HTTP::Service;
+		my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
+		@servers = split ( "\n", $backendsvs );
+		@servers = 0 .. $#servers if ( @servers );
+	}
+	elsif ( $farm_type eq "l4xnat" )
+	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		@servers = @{ &getL4FarmServers( $farm_name ) };
+		@servers = 0 .. $#servers if ( @servers );
+	}
+	elsif ( $farm_type eq "datalink" )
+	{
+		my $configdir     = &getGlobalConfiguration( 'configdir' );
+		my $farm_filename = &getFarmFile( $farm_name );
+		open my $fh, '<', "$configdir/$farm_filename";
+		{
+			foreach my $line ( <$fh> )
+			{
+				push @servers, $line if ( $line =~ /^;server;/ );
+			}
+		}
+		close $fh;
+		@servers = 0 .. $#servers if ( @servers );
+	}
+	elsif ( $farm_type eq "gslb" && $eload )
+	{
+		my $backendsvs = &eload(
+								 module => 'Zevenet::Farm::GSLB::Backend',
+								 func   => 'getGSLBFarmVS',
+								 args   => [$farm_name, $service, "backends"],
+		);
+		my @be = split ( "\n", $backendsvs );
+		my $id;
+		foreach my $b ( @be )
+		{
+			$b =~ s/^\s+//;
+			next if ( $b =~ /^$/ );
+
+			# ID and IP
+			my @subbe = split ( " => ", $b );
+			$id = $subbe[0];
+			$id =~ s/^primary$/1/;
+			$id =~ s/^secondary$/2/;
+			$id + 0;
+			push @servers, $id;
+		}
+	}
+
+	return \@servers;
+}
+
+=begin nd
 Function: getFarmServers
 
 	List all farm backends and theirs configuration
@@ -95,7 +173,7 @@ Parameters:
 	id - Backend ID to retrieve
 
 Returns:
-	hash ref - bachend hash reference or undef if not exists
+	hash ref - bachend hash reference or undef if there aren't backends
 
 =cut
 

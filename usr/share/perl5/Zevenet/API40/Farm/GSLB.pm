@@ -434,10 +434,11 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 	# get requested backend info
 	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
-	my $be = $be_aref->[$id_server - 1];
+	require Zevenet::Farm::Backend;
+	my $be_found = &getFarmServer( $be_aref, $id_server );
 
 	# check if the BACKEND exists
-	if ( !$be )
+	if ( !$be_found )
 	{
 		my $msg = "Could not find a service backend with such id.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -534,7 +535,9 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 
 	# check if the backend id is available
 	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
-	my $be_found = defined $be_aref->[$id_server - 1];
+
+	require Zevenet::Farm::Backend;
+	my $be_found = &getFarmServer( $be_aref, $id_server );
 
 	unless ( $be_found )
 	{
@@ -545,7 +548,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 	my $status = &remFarmServiceBackend( $id_server, $farmname, $service );
 
 	# check if there was an error removing the backend
-	if ( $status == -1 )
+	if ( $status )
 	{
 		&zenlog( "It's not possible to delete the backend.", "warning", "GSLB" );
 
