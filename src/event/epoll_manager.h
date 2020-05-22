@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <vector>
 #include "../util/time.h"
-
+#include "../stats/counter.h"
 namespace events {
 
 #define MAX_EPOLL_EVENT 200
@@ -93,7 +93,7 @@ enum class TIMEOUT_TYPE:uint8_t {
   CLIENT_WRITE_TIMEOUT,
   SERVER_WRITE_TIMEOUT,
 };
-struct TimeOut{
+struct TimeOut: public Counter<TimeOut>{
   TIMEOUT_TYPE type;
   time_t last_seent{0};
   int timeout{0};

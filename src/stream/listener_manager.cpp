@@ -128,6 +128,8 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
                     std::make_unique<JsonDataValue>(service_count));
       root->emplace("backend_count",
                     std::make_unique<JsonDataValue>(backend_count));
+      root->emplace("timeout_count",
+                    std::make_unique<JsonDataValue>(Counter<TimeOut>::count));
 
 #if DEBUG_STREAM_EVENTS_COUNT
 
