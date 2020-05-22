@@ -226,6 +226,10 @@ sub copyL4Farm    # ($farm_name, $new_farm_name)
 		{
 			$line = $1 . "\"$new_farm_name\",";
 		}
+		if ( ( !$backend_block ) and ( $line =~ /^(\s+"state": )"\w+",/ ) )
+		{
+			$line = $1 . "\"down\",";
+		}
 		if ( $line =~ /^\s+"backends": \[/ )
 		{
 			$backend_block = 1;

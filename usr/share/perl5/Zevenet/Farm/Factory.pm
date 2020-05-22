@@ -202,6 +202,17 @@ sub runFarmCreateFrom
 		);
 	}
 
+	if ( ( $params->{ profile } eq 'l4xnat' ) and ( !$err ) )
+	{
+		require Zevenet::Net::Interface;
+		if (
+			 &checkport( $params->{ vip }, $params->{ vport }, $params->{ farmname } ) eq
+			 'false' )
+		{
+			$err = &startL4Farm( $params->{ farmname } );
+		}
+	}
+
 	return $err;
 }
 
