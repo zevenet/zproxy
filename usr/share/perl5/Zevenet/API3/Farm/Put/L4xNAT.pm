@@ -48,7 +48,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => "Modify farm",
 					 error       => "true",

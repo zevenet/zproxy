@@ -184,7 +184,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -323,7 +323,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 

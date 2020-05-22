@@ -30,7 +30,8 @@ include 'Zevenet::Farm::GSLB::Config';
 
 sub modify_gslb_farm    # ( $json_obj,	$farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -44,9 +45,9 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	my $status;
 
 	# Check that the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -176,6 +177,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	}
 
 	require Zevenet::Farm::Config;
+
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
@@ -218,7 +220,8 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	}
 
 	# no error found, return successful response
-	&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "GSLB" );
+	&zenlog( "Success, some parameters have been changed in farm $farmname.",
+			 "info", "GSLB" );
 
 	if ( $reload_ipds )
 	{

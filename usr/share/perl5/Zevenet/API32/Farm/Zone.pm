@@ -25,13 +25,13 @@ use strict;
 
 use Zevenet::API32::HTTP;
 
-
 # POST
 
 # POST /farms/<farmname>/zones Create a new zone in a gslb Farm
-sub new_farm_zone # ( $json_obj, $farmname )
+sub new_farm_zone    # ( $json_obj, $farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -41,16 +41,17 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	# Check that the farm exists
 	require Zevenet::Farm::Core;
 
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( ! &getValidFormat( 'zone', $json_obj->{ id } ) )
+	if ( !&getValidFormat( 'zone', $json_obj->{ id } ) )
 	{
 		&zenlog(
-			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created", "error", "GSLB"
+			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created",
+			"error", "GSLB"
 		);
 
 		my $msg =
@@ -70,7 +71,8 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	}
 
 	&zenlog(
-		"Success, a new zone has been created in farm $farmname with id $json_obj->{id}.", "info", "GSLB"
+		"Success, a new zone has been created in farm $farmname with id $json_obj->{id}.",
+		"info", "GSLB"
 	);
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -87,13 +89,14 @@ sub new_farm_zone # ( $json_obj, $farmname )
 				 params      => { id => $json_obj->{ id } },
 	};
 
-	return &httpResponse({ code => 201, body => $body });
+	return &httpResponse( { code => 201, body => $body } );
 }
 
 # POST /farms/<farmname>/zoneresources Create a new resource of a zone in a gslb Farm
-sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
+sub new_farm_zone_resource    # ( $json_obj, $farmname, $zone )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 	my $zone     = shift;
@@ -101,13 +104,13 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	require Zevenet::Farm::Core;
 	include 'Zevenet::Farm::GSLB::Zone';
 
-	my $desc = "New zone resource";
+	my $desc        = "New zone resource";
 	my $default_ttl = '';
 
 	# validate FARM NAME
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -126,48 +129,74 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate RESOURCE NAME
-	unless ( $json_obj->{ rname } && &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
+	unless (    $json_obj->{ rname }
+			 && &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 	{
-		my $msg = "The parameter zone resource name (rname) doesn't exist, please insert a valid value.";
+		my $msg =
+		  "The parameter zone resource name (rname) doesn't exist, please insert a valid value.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate RESOURCE TTL
-	$json_obj->{ ttl } = $default_ttl if ! exists $json_obj->{ ttl };
+	$json_obj->{ ttl } = $default_ttl if !exists $json_obj->{ ttl };
 
-	unless ( $json_obj->{ ttl } eq '' || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } != 0 ) ) # (1second-1year)
+	unless (
+			 $json_obj->{ ttl } eq ''
+			 || (    &getValidFormat( 'resource_ttl', $json_obj->{ ttl } )
+				  && $json_obj->{ ttl } != 0 )
+	  )    # (1second-1year)
 	{
-		my $msg = "The parameter time to live value (ttl) doesn't exist, please insert a valid value.";
+		my $msg =
+		  "The parameter time to live value (ttl) doesn't exist, please insert a valid value.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate RESOURCE TYPE
 	unless ( &getValidFormat( 'resource_type', $json_obj->{ type } ) )
 	{
-		my $msg = "The parameter DNS record type (type) doesn't exist, please insert a valid value.";
+		my $msg =
+		  "The parameter DNS record type (type) doesn't exist, please insert a valid value.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate RESOURCE DATA
 	include 'Zevenet::Farm::GSLB::Service';
 
-	unless ( ! grep ( /$json_obj->{ rdata }/, &getGSLBFarmServices ( $farmname ) && $json_obj->{ type } eq 'DYNA' ) &&
-						&getValidFormat( "resource_data_$json_obj->{ type }", $json_obj->{ rdata } ) )
+	unless (
+		 !grep ( /$json_obj->{ rdata }/,
+				 &getGSLBFarmServices( $farmname ) && $json_obj->{ type } eq 'DYNA' )
+		 && &getValidFormat( "resource_data_$json_obj->{ type }", $json_obj->{ rdata } )
+	  )
 	{
 		my $log_msg = "If you choose $json_obj->{ type } type, ";
-		$log_msg .= "RDATA must be a valid IPv4 address," 							if ( $json_obj->{ type } eq "A" );
-		$log_msg .= "RDATA must be a valid IPv6 address,"							if ( $json_obj->{ type } eq "AAAA" );
-		$log_msg .= "RDATA format is not valid,"									if ( $json_obj->{ type } eq "NS" );
-		$log_msg .= "RDATA must be a valid format ( foo.bar.com ),"				if ( $json_obj->{ type } eq "CNAME" );
-		$log_msg .= "RDATA must be a valid service,"								if ( $json_obj->{ type } eq 'DYNA' );
-		$log_msg .= "RDATA must be a valid format ( mail.example.com ),"			if ( $json_obj->{ type } eq 'MX' );
-		$log_msg .= "RDATA must be a valid format ( 10 60 5060 host.example.com )," if ( $json_obj->{ type } eq 'SRV' );
-		$log_msg .= "RDATA must be a valid format ( foo.bar.com ),"				if ( $json_obj->{ type } eq 'PTR' );
+		$log_msg .= "RDATA must be a valid IPv4 address,"
+		  if ( $json_obj->{ type } eq "A" );
+		$log_msg .= "RDATA must be a valid IPv6 address,"
+		  if ( $json_obj->{ type } eq "AAAA" );
+		$log_msg .= "RDATA format is not valid," if ( $json_obj->{ type } eq "NS" );
+		$log_msg .= "RDATA must be a valid format ( foo.bar.com ),"
+		  if ( $json_obj->{ type } eq "CNAME" );
+		$log_msg .= "RDATA must be a valid service,"
+		  if ( $json_obj->{ type } eq 'DYNA' );
+		$log_msg .= "RDATA must be a valid format ( mail.example.com ),"
+		  if ( $json_obj->{ type } eq 'MX' );
+		$log_msg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"
+		  if ( $json_obj->{ type } eq 'SRV' );
+		$log_msg .= "RDATA must be a valid format ( foo.bar.com ),"
+		  if ( $json_obj->{ type } eq 'PTR' );
+
 		# TXT and NAPTR input let all characters
 		$log_msg .= " $json_obj->{ rname } not added to zone $zone";
 
-		my $msg = "The parameter zone resource server (rdata) doesn't correct format, please insert a valid value.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg, log_msg => $log_msg );
+		my $msg =
+		  "The parameter zone resource server (rdata) doesn't correct format, please insert a valid value.";
+		return
+		  &httpErrorResponse(
+							  code    => 400,
+							  desc    => $desc,
+							  msg     => $msg,
+							  log_msg => $log_msg
+		  );
 	}
 
 	my $status = &setGSLBFarmZoneResource(
@@ -182,15 +211,16 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 
 	if ( $status == -1 )
 	{
-		my $msg = "It's not possible to create a new resource in the zone $zone in farm $farmname.";
+		my $msg =
+		  "It's not possible to create a new resource in the zone $zone in farm $farmname.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::Farm::Base;
 
 	&zenlog(
-		"Success, a new resource has been created in zone $zone in farm $farmname.", "info", "GSLB"
-	);
+			"Success, a new resource has been created in zone $zone in farm $farmname.",
+			"info", "GSLB" );
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
@@ -201,7 +231,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
-	$json_obj->{ ttl } = undef if ! $json_obj->{ ttl };
+	$json_obj->{ ttl } = undef if !$json_obj->{ ttl };
 
 	my $message = "Resource added";
 	my $body = {
@@ -217,32 +247,34 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	};
 
 	include 'Zevenet::Farm::GSLB::Validate';
-	my $checkConf = &getGSLBCheckConf  ( $farmname );
+	my $checkConf = &getGSLBCheckConf( $farmname );
 
 	if ( $checkConf =~ /^(.+?)\s/ )
 	{
-		$checkConf = "The resource $1 gslb farm break the configuration. Please check the configuration";
-		$body->{ params }->{ warning }  =  $checkConf;
+		$checkConf =
+		  "The resource $1 gslb farm break the configuration. Please check the configuration";
+		$body->{ params }->{ warning } = $checkConf;
 	}
 
-	return &httpResponse({ code => 201, body => $body });
+	return &httpResponse( { code => 201, body => $body } );
 }
 
 # GET
 
 #	/farms/<GSLBfarm>/zones/<zone>/resources
-sub gslb_zone_resources # ( $farmname, $zone )
+sub gslb_zone_resources    # ( $farmname, $zone )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmname = shift;
-	my $zone = shift;
+	my $zone     = shift;
 
 	my $desc = "List zone resources";
 
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( ! &getFarmExists( $farmname )  )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm name not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -258,7 +290,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	# validate ZONE
 	include 'Zevenet::Farm::GSLB::Zone';
 
-	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
+	if ( !scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
 		my $msg = "Could not find the requested zone.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -268,11 +300,11 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	# Zones
 	#
 
-	my $resources = &getGSLBResources  ( $farmname, $zone );
+	my $resources = &getGSLBResources( $farmname, $zone );
 
 	for my $resource ( @{ $resources } )
 	{
-		$resource->{ ttl } = undef if ! $resource->{ ttl };
+		$resource->{ ttl } = undef if !$resource->{ ttl };
 		$resource->{ ttl } += 0 if $resource->{ ttl };
 	}
 
@@ -281,14 +313,15 @@ sub gslb_zone_resources # ( $farmname, $zone )
 				 params      => $resources,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # PUT
 
-sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
+sub modify_zone_resource    # ( $json_obj, $farmname, $zone, $id_resource )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $zone, $id_resource ) = @_;
 
 	my $desc = "Modify zone resource";
@@ -297,9 +330,9 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -321,7 +354,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	unless ( defined $res_aref->[ $id_resource ] )
+	unless ( defined $res_aref->[$id_resource] )
 	{
 		my $msg = "Could not find the requested resource.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -340,7 +373,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	# Functions
 	if ( exists ( $json_obj->{ rname } ) )
 	{
-		if ( ! &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
+		if ( !&getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 		{
 			my $msg = "Invalid rname.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -351,7 +384,9 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 	if ( exists ( $json_obj->{ ttl } ) )
 	{
-		unless ( !defined $json_obj->{ ttl } || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } ) )
+		unless ( !defined $json_obj->{ ttl }
+				 || (    &getValidFormat( 'resource_ttl', $json_obj->{ ttl } )
+					  && $json_obj->{ ttl } ) )
 		{
 			my $msg = "Invalid ttl.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -382,18 +417,24 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	# validate RESOURCE DATA
 	include 'Zevenet::Farm::GSLB::Service';
 
-	unless ( ! grep ( /$auxData/, &getGSLBFarmServices ( $farmname ) && $auxType eq 'DYNA' ) &&
-						&getValidFormat( "resource_data_$auxType", $auxData ) )
+	unless (
+		   !grep ( /$auxData/, &getGSLBFarmServices( $farmname ) && $auxType eq 'DYNA' )
+		   && &getValidFormat( "resource_data_$auxType", $auxData ) )
 	{
 		my $msg = "If you choose $auxType type, ";
-		$msg .= "RDATA must be a valid IPv4 address," 		if ($auxType eq "A" );
-		$msg .= "RDATA must be a valid IPv6 address,"		if ($auxType eq "AAAA" );
-		$msg .= "RDATA format is not valid,"						if ($auxType eq "NS" );
-		$msg .= "RDATA must be a valid format ( foo.bar.com ),"		if ($auxType eq "CNAME" );
-		$msg .= "RDATA must be a valid service,"									if ( $auxType eq 'DYNA' );
-		$msg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $auxType eq 'MX' );
-		$msg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $auxType eq 'SRV' );
-		$msg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $auxType eq 'PTR' );
+		$msg .= "RDATA must be a valid IPv4 address," if ( $auxType eq "A" );
+		$msg .= "RDATA must be a valid IPv6 address," if ( $auxType eq "AAAA" );
+		$msg .= "RDATA format is not valid,"          if ( $auxType eq "NS" );
+		$msg .= "RDATA must be a valid format ( foo.bar.com ),"
+		  if ( $auxType eq "CNAME" );
+		$msg .= "RDATA must be a valid service," if ( $auxType eq 'DYNA' );
+		$msg .= "RDATA must be a valid format ( mail.example.com ),"
+		  if ( $auxType eq 'MX' );
+		$msg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"
+		  if ( $auxType eq 'SRV' );
+		$msg .= "RDATA must be a valid format ( foo.bar.com ),"
+		  if ( $auxType eq 'PTR' );
+
 		# TXT and NAPTR input let all characters
 
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -418,10 +459,11 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 		if ( $status == -1 )
 		{
-			my $msg = "It's not possible to modify the resource $id_resource in zone $zone.";
+			my $msg =
+			  "It's not possible to modify the resource $id_resource in zone $zone.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		elsif ($status == -2)
+		elsif ( $status == -2 )
 		{
 			my $msg = "The resource with ID $id_resource does not exist.";
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -429,32 +471,34 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	&zenlog(
-		"Success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname.", "info", "GSLB"
+		"Success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname.",
+		"info", "GSLB"
 	);
 
 	my $message = "Resource modified";
 	my $body = {
 				 description => $desc,
-				 success       => "true",
-				 params       => $json_obj,
-				 message      => $message,
+				 success     => "true",
+				 params      => $json_obj,
+				 message     => $message,
 	};
 
 	include 'Zevenet::Farm::GSLB::Validate';
 
-	my $checkConf = &getGSLBCheckConf  ( $farmname );
+	my $checkConf = &getGSLBCheckConf( $farmname );
 
-	if( $checkConf )
+	if ( $checkConf )
 	{
-		$body->{ warning }  =  $checkConf;
+		$body->{ warning } = $checkConf;
 	}
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
-sub modify_zones # ( $json_obj, $farmname, $zone )
+sub modify_zones    # ( $json_obj, $farmname, $zone )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $json_obj, $farmname, $zone ) = @_;
 
 	my $desc = "Modify zone";
@@ -463,9 +507,9 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# Check that the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -493,22 +537,26 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 		&runGSLBFarmReload( $farmname );
 	}
 
-	&zenlog( "Success, some parameters have been changed  in zone $zone in farm $farmname.", "info", "GSLB" );
+	&zenlog(
+		 "Success, some parameters have been changed  in zone $zone in farm $farmname.",
+		 "info", "GSLB"
+	);
 
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE
 
 # DELETE /farms/<farmname>/zones/<zonename> Delete a zone of a  gslb Farm
-sub delete_zone # ( $farmname, $zone )
+sub delete_zone    # ( $farmname, $zone )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -517,9 +565,9 @@ sub delete_zone # ( $farmname, $zone )
 	my $desc = "Delete zone";
 
 	# Check that the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -531,7 +579,8 @@ sub delete_zone # ( $farmname, $zone )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "Success, the zone $zone in farm $farmname has been deleted.", "info", "GSLB" );
+	&zenlog( "Success, the zone $zone in farm $farmname has been deleted.",
+			 "info", "GSLB" );
 
 	require Zevenet::Farm::Base;
 
@@ -551,13 +600,14 @@ sub delete_zone # ( $farmname, $zone )
 				 message     => $message
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  @api {delete} /farms/<farmname>/zones/<zonename>/resources/<resourceid> Delete a resource of a Zone
-sub delete_zone_resource # ( $farmname, $zone, $resource )
+sub delete_zone_resource    # ( $farmname, $zone, $resource )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my ( $farmname, $zone, $resource ) = @_;
 
 	require Zevenet::Farm::Core;
@@ -565,9 +615,9 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	my $desc = "Delete zone resource";
 
 	# validate FARM NAME
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -581,7 +631,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	# validate ZONE
 	include 'Zevenet::Farm::GSLB::Zone';
 
-	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
+	if ( !scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
 		my $msg = "Invalid zone name, please insert a valid value.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -590,7 +640,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	unless ( defined $res_aref->[ $resource ] )
+	unless ( defined $res_aref->[$resource] )
 	{
 		my $msg = "Could not find the requested resource.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -600,11 +650,15 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 
 	if ( $status == -1 )
 	{
-		my $msg = "It's not possible to delete the resource with id $resource in the zone $zone of the farm $farmname.";
+		my $msg =
+		  "It's not possible to delete the resource with id $resource in the zone $zone of the farm $farmname.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "Success, the resource $resource in zone $zone in farm $farmname has been deleted.", "info", "GSLB" );
+	&zenlog(
+		"Success, the resource $resource in zone $zone in farm $farmname has been deleted.",
+		"info", "GSLB"
+	);
 
 	require Zevenet::Farm::Base;
 
@@ -624,7 +678,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 				 message     => $message,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

@@ -39,7 +39,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -205,7 +205,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -402,7 +402,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",

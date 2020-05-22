@@ -52,7 +52,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -212,7 +212,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -446,7 +446,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -459,10 +459,12 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 	# get backends
 	my $serversArray = &getFarmServers( $farmname );
+
 	my $backend = &getFarmServer( $serversArray, $id_server );
 
 	if ( !$backend || ref ( $backend ) ne "HASH" )
 	{
+
 		my $msg = "Could not find a backend with such id.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
@@ -749,7 +751,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -830,7 +832,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 

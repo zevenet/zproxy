@@ -45,14 +45,14 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	# Check if the farm exists
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check if the service exists
 	if ( grep ( /^$json_obj->{id}$/, &getFarmServices( $farmname ) ) )
 	{
-		my $msg = "Error, the service $json_obj->{id} already exists.";
+		my $msg = "Error, the service $json_obj->{id} already exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -559,7 +559,7 @@ sub delete_service    # ( $farmname, $service )
 	# Check if the farm exists
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 

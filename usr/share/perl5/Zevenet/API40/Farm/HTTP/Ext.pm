@@ -588,7 +588,7 @@ sub farm_move_certs
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 

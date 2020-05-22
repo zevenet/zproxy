@@ -50,7 +50,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
 	{
-		$errormsg = "The farmname $farmname does not exists.";
+		$errormsg = "The farmname $farmname does not exist.";
 		my $body =
 		  { description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );

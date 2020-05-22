@@ -22,9 +22,10 @@
 
 use strict;
 
-sub modify_gslb_farm # ( $json_obj,	$farmname )
+sub modify_gslb_farm    # ( $json_obj,	$farmname )
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $json_obj = shift;
 	my $farmname = shift;
 
@@ -49,30 +50,31 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		$errormsg = "The farmname $farmname does not exists.";
+		$errormsg = "The farmname $farmname does not exist.";
 		my $body = {
-					   description => $description,
-					   error       => "true",
-					   message     => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
-
-	if ( $errormsg = &getValidOptParams ( $json_obj, [ "vip", "vport", "newfarmname" ] ) )
+	if ( $errormsg =
+		 &getValidOptParams( $json_obj, ["vip", "vport", "newfarmname"] ) )
 	{
 		# Error
 		my $body = {
-					   description => $description,
-					   error       => "true",
-					   message     => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
-	&runIPDSStopByFarm($farmname);
+	&runIPDSStopByFarm( $farmname );
+
 	# Get current vip & vport
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
@@ -85,7 +87,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
 			&zenlog(
-				"Error trying to modify a gslb farm $farmname, cannot change the farm name while it is running", "error", "GSLB"
+				"Error trying to modify a gslb farm $farmname, cannot change the farm name while it is running",
+				"error", "GSLB"
 			);
 
 			my $errormsg = 'Cannot change the farm name while running';
@@ -96,7 +99,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		my $newfstat;
@@ -104,7 +107,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"Error trying to modify a gslb farm $farmname, invalid new farm name, can't be blank.", "error", "GSLB"
+				"Error trying to modify a gslb farm $farmname, invalid new farm name, can't be blank.",
+				"error", "GSLB"
 			);
 		}
 		else
@@ -112,7 +116,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			# Check if farmname has correct characters (letters, numbers and hyphens)
 			if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
 			{
-				if ($json_obj->{newfarmname} ne $farmname)
+				if ( $json_obj->{ newfarmname } ne $farmname )
 				{
 					#Check if the new farm's name alredy exists
 					my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
@@ -120,7 +124,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 					{
 						$error = "true";
 						&zenlog(
-							"Error trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name.", "error", "GSLB"
+							"Error trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name.",
+							"error", "GSLB"
 						);
 					}
 					else
@@ -130,7 +135,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 						{
 							$error = "true";
 							&zenlog(
-								"Error trying to modify a gslb farm $farmname, the farm is not disabled, are you sure it's running?", "error", "GSLB"
+								"Error trying to modify a gslb farm $farmname, the farm is not disabled, are you sure it's running?",
+								"error", "GSLB"
 							);
 						}
 						else
@@ -143,34 +149,40 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 							{
 								&error = "true";
 								&zenlog(
-									"Error trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one.", "error", "GSLB"
+									"Error trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one.",
+									"error", "GSLB"
 								);
 							}
 							elsif ( $fnchange == -2 )
 							{
 								$error = "true";
 								&zenlog(
-									"Error trying to modify a gslb farm $farmname, invalid new farm name, the new name can't be empty.", "error", "GSLB"
+									"Error trying to modify a gslb farm $farmname, invalid new farm name, the new name can't be empty.",
+									"error", "GSLB"
 								);
+
 								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
 									&zenlog(
-										"Error trying to modify a gslb farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use.", "error", "GSLB"
+										"Error trying to modify a gslb farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use.",
+										"error", "GSLB"
 									);
 								}
 							}
 							else
 							{
 								$farmname_old = $farmname;
-								$farmname = $json_obj->{ newfarmname };
+								$farmname     = $json_obj->{ newfarmname };
+
 								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
 									&zenlog(
-										"Error trying to modify a gslb farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use.", "error", "GSLB"
+										"Error trying to modify a gslb farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use.",
+										"error", "GSLB"
 									);
 								}
 							}
@@ -181,8 +193,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-						   "Error trying to modify a gslb farm $farmname, invalid new farm name.", "error", "GSLB" );
+				&zenlog( "Error trying to modify a gslb farm $farmname, invalid new farm name.",
+						 "error", "GSLB" );
 			}
 		}
 	}
@@ -194,14 +206,15 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"Error trying to modify a gslb farm $farmname, invalid Virtual IP, can't be blank.", "error", "GSLB"
+				"Error trying to modify a gslb farm $farmname, invalid Virtual IP, can't be blank.",
+				"error", "GSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
-			&zenlog(
-					  "Error trying to modify a gslb farm $farmname, invalid Virtual IP.", "error", "GSLB" );
+			&zenlog( "Error trying to modify a gslb farm $farmname, invalid Virtual IP.",
+					 "error", "GSLB" );
 		}
 		else
 		{
@@ -209,8 +222,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&zenlog(
-						  "Error trying to modify a gslb farm $farmname, invalid Virtual IP.", "error", "GSLB" );
+				&zenlog( "Error trying to modify a gslb farm $farmname, invalid Virtual IP.",
+						 "error", "GSLB" );
 			}
 			else
 			{
@@ -226,14 +239,15 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"Error trying to modify a gslb farm $farmname, invalid Virtual port, can't be blank.", "error", "GSLB"
+				"Error trying to modify a gslb farm $farmname, invalid Virtual port, can't be blank.",
+				"error", "GSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 		{
 			$error = "true";
-			&zenlog(
-					  "Error trying to modify a gslb farm $farmname, invalid Virtual port.", "error", "GSLB" );
+			&zenlog( "Error trying to modify a gslb farm $farmname, invalid Virtual port.",
+					 "error", "GSLB" );
 		}
 		else
 		{
@@ -242,8 +256,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&zenlog(
-						  "Error trying to modify a gslb farm $farmname, invalid Virtual port.", "error", "GSLB" );
+				&zenlog( "Error trying to modify a gslb farm $farmname, invalid Virtual port.",
+						 "error", "GSLB" );
 			}
 			else
 			{
@@ -259,14 +273,15 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"Error trying to modify a gslb farm $farmname, invalid Virtual IP, can't be blank.", "error", "GSLB"
+				"Error trying to modify a gslb farm $farmname, invalid Virtual IP, can't be blank.",
+				"error", "GSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
-			&zenlog(
-					  "Error trying to modify a gslb farm $farmname, invalid Virtual IP.", "error", "GSLB" );
+			&zenlog( "Error trying to modify a gslb farm $farmname, invalid Virtual IP.",
+					 "error", "GSLB" );
 		}
 		else
 		{
@@ -276,14 +291,15 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 				{
 					$error = "true";
 					&zenlog(
-						"Error trying to modify a gslb farm $farmname, invalid Virtual port, can't be blank.", "error", "GSLB"
+						"Error trying to modify a gslb farm $farmname, invalid Virtual port, can't be blank.",
+						"error", "GSLB"
 					);
 				}
 				elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 				{
 					$error = "true";
-					&zenlog(
-							  "Error trying to modify a gslb farm $farmname, invalid Virtual port.", "error", "GSLB" );
+					&zenlog( "Error trying to modify a gslb farm $farmname, invalid Virtual port.",
+							 "error", "GSLB" );
 				}
 				else
 				{
@@ -294,7 +310,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 					{
 						$error = "true";
 						&zenlog(
-							"Error trying to modify a gslb farm $farmname, invalid Virtual port or invalid Virtual IP.", "error", "GSLB"
+							"Error trying to modify a gslb farm $farmname, invalid Virtual port or invalid Virtual IP.",
+							"error", "GSLB"
 						);
 					}
 					else
@@ -306,14 +323,13 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		}
 	}
 
-
 	# Check errors and print JSON
 	if ( $error ne "true" )
 	{
-		&zenlog(
-				  "Success, some parameters have been changed in farm $farmname.", "error", "GSLB" );
+		&zenlog( "Success, some parameters have been changed in farm $farmname.",
+				 "error", "GSLB" );
 
-		&runIPDSStartByFarm($farmname);
+		&runIPDSStartByFarm( $farmname );
 
 		if ( $changedname ne "true" )
 		{
@@ -331,7 +347,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 				$body->{ status } = 'needed restart';
 			}
 
-			&httpResponse({ code => 200, body => $body });
+			&httpResponse( { code => 200, body => $body } );
 		}
 		else
 		{
@@ -341,13 +357,14 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 						 params      => $json_obj,
 			};
 
-			&httpResponse({ code => 200, body => $body });
+			&httpResponse( { code => 200, body => $body } );
 		}
 	}
 	else
 	{
 		&zenlog(
-			"Error trying to modify a gslb farm $farmname, it's not possible to modify the farm.", "error", "GSLB"
+			"Error trying to modify a gslb farm $farmname, it's not possible to modify the farm.",
+			"error", "GSLB"
 		);
 
 		# Error
@@ -358,15 +375,15 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
-
 
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules_zapiv3
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Config::Tiny;
@@ -387,7 +404,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -399,7 +417,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -411,7 +430,8 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' }
+				 && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}
@@ -422,6 +442,5 @@ sub getIPDSfarmsRules_zapiv3
 	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
 	return $rules;
 }
-
 
 1;

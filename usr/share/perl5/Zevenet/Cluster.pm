@@ -974,7 +974,7 @@ sub getZClusterNodeStatus
 
 	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
 
-	# Empty return if the file does not exists or is empty
+	# Empty return if the file does not exist or is empty
 	unless ( -e $znode_status_file && -s $znode_status_file )
 	{
 		return;

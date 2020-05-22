@@ -48,7 +48,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -407,7 +407,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -951,7 +951,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1624,7 +1624,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1729,7 +1729,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",

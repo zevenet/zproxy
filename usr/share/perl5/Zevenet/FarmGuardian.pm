@@ -781,7 +781,7 @@ sub getFGPidFarm
 		$run = kill 0, $pid;
 	}
 
-	# if it does not exists, remove the pid file
+	# if it does not exist, remove the pid file
 	if ( !$run )
 	{
 		$pid = 0;

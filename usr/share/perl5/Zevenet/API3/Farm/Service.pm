@@ -45,7 +45,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 
 		my $body = {
 					 description => "New service",
@@ -725,7 +725,7 @@ sub move_services
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		$errormsg = "The farmname $farmname does not exists.";
+		$errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -859,7 +859,7 @@ sub delete_service    # ( $farmname, $service )
 	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => "Delete service",
 					 error       => "true",
