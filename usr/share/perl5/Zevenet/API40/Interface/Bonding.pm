@@ -195,26 +195,23 @@ sub new_bond_slave    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 	}
 
-	if ( &getInterfaceConfig( $json_obj->{ name } )
-		 && ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
+	# validate SLAVE
+	my $msg;
+	if ( grep ( { $json_obj->{ name } eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
 	{
-		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
-		&unlockBondResource();
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		$msg = "The '$json_obj->{ name }' interface already is added as slave";
+	}
+	elsif ( !&getValidFormat( 'nic_interface', $json_obj->{ name } ) )
+	{
+		$msg = "The interface should be a NIC.";
+	}
+	elsif ( !grep ( { $json_obj->{ name } eq $_ } &getBondAvailableSlaves() ) )
+	{
+		$msg = "The '$json_obj->{name}' interface should be down and unset";
 	}
 
-	# validate SLAVE
-	eval {
-		$json_obj->{ name } or die;
-		&getValidFormat( 'nic_interface', $json_obj->{ name } ) or die;
-		grep ( { $json_obj->{ name } eq $_ } &getBondAvailableSlaves() ) or die;
-		die
-		  if grep ( { $json_obj->{ name } eq $_ } @{ $bonds->{ $bond }->{ slaves } } );
-	};
-	if ( $@ )
+	if ( defined $msg )
 	{
-		&zenlog( "Module failed: $@", "error", "net" );
-		my $msg = "Could not add the slave interface to this bonding";
 		&unlockBondResource();
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -464,7 +461,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	# validate SLAVE
 	unless ( grep ( { $slave eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
 	{
-		my $msg = "Bonding slave interface not found";
+		my $msg = "The '$slave' bonding slave interface was not found";
 		&unlockBondResource();
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
@@ -645,7 +642,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	require Zevenet::Net::Validate;
 
 	my $desc = "Modify bond address";
-	my @farms;
 
 	# validate BOND NAME
 	my $type = &getInterfaceType( $bond );
