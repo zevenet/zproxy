@@ -84,7 +84,7 @@ sub getNewMark    # ($farm_name)
 
 	&ztielock( \@contents, "$fwmarksconf" );
 
-	for my $i ( 512 .. 1023 )
+	for my $i ( 512 .. 4095 )
 	{
 		my $num = sprintf ( "0x%x", $i );
 		if ( !grep { /^$num/x } @contents )
