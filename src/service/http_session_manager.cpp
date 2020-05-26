@@ -84,6 +84,7 @@ SessionInfo *HttpSessionManager::getSession(Connection &source,
                                             bool update_if_exist) {
   std::string session_key = getSessionKey(source, request);
   if (session_key.empty()) return nullptr;
+  std::lock_guard<std::recursive_mutex> locker(lock_mtx);
   auto session_it = sessions_set.find(session_key);
   if (session_it == sessions_set.end()) return nullptr;
   if (session_it->second != nullptr) {
