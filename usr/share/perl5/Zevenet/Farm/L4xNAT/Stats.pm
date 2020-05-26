@@ -164,6 +164,10 @@ sub getL4FarmEstConns
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
+# states : NONE | SYN_SENT | SYN_RECV | ESTABLISHED | FIN_WAIT | CLOSE_WAIT | LAST_ACK | TIME_WAIT | CLOSE | LISTEN
+	my $established_filter =
+	  '(?:SYN_RECV|ESTABLISHED|FIN_WAIT|CLOSE_WAIT|LAST_ACK)';
+
 	my @fportlist   = &getFarmPortList( $farm->{ vport } );
 	my $regexp      = "";
 	my $connections = 0;
@@ -193,7 +197,7 @@ sub getL4FarmEstConns
 						&getNetstatFilter(
 							"tcp",
 							"",
-							"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
+							"\.* $established_filter src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
 							"",
 							$netstat
 						)
@@ -221,7 +225,7 @@ sub getL4FarmEstConns
 						&getNetstatFilter(
 							"tcp",
 							"",
-							"\.* ESTABLISHED src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
+							"\.* $established_filter src=\.* dst=$farm->{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
 							"",
 							$netstat
 						)
