@@ -29,47 +29,167 @@ my $DEFAULT_PHASE      = 2;
 my $DEFAULT_RESOLUTION = 'pass';
 my $DEFAULT_SKIP       = 0;
 
-# translate
-
-my $trOperator = &createTRANSLATE(
-								  {
-									strBegins            => "beginsWith",
-									strContains          => "contains",
-									strContainsWord      => "containsWord",
-									strEnds              => "endsWith",
-									strWithin            => "within",
-									strMatch             => "strmatch",
-									strEq                => "streq",
-									strRegex             => "rx",
-									strPhrases           => "pm",
-									strPhrasesFromFile   => "pmFromFile",
-									intEQ                => "eq",
-									intGE                => "ge",
-									intGT                => "gt",
-									intLE                => "le",
-									intLT                => "lt",
-									detectSQLi           => "detectSQLi",
-									detectXSS            => "detectXSS",
-									geoLookup            => "geoLookup",
-									ipMatch              => "ipMatch",
-									ipMatchFromFile      => "ipMatchFromFile",
-									validateByteRange    => "validateByteRange",
-									validateDTD          => "validateDTD",
-									validateSchema       => "validateSchema",
-									validateUrlEncoding  => "validateUrlEncoding",
-									validateUtf8Encoding => "validateUtf8Encoding",
-									verifyCreditCard     => "verifyCC",
-									verifySSN            => "verifySSN",
-									matchAllways         => "unconditionalMatch",
-									matchNever           => "noMatch",
-								  }
-);
-
 sub getWafOperators
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	return @{ &getTRANSLATEInputs( $trOperator ) };
+	return (
+		{
+		   name   => 'strBegins',
+		   libkey => "beginsWith",
+		   description =>
+			 'The rule will match if any of the variables begin with the value of operating.'
+		},
+		{
+		   name   => 'strContains',
+		   libkey => "contains",
+		   description =>
+			 'The rule will match if any of the variables contain the value of operating.'
+		},
+		{
+		   name   => 'strContainsWord',
+		   libkey => "containsWord",
+		   description =>
+			 'The rule will match if any of the variables contain a word as the string one.'
+		},
+		{
+		   name   => 'strEnds',
+		   libkey => "endsWith",
+		   description =>
+			 'The rule will match if any of the variables end with the value of operating.'
+		},
+		{
+		   name   => 'strWithin',
+		   libkey => "within",
+		   description =>
+			 'The rule will match if any of the variables match with the value of operating.'
+		},
+		{
+		   name   => 'strMatch',
+		   libkey => "strmatch",
+		   description =>
+			 'The rule will match if any of the variables match with the value of operating.'
+		},
+		{
+		   name   => 'strEq',
+		   libkey => "streq",
+		   description =>
+			 'The rule will match if any of the variables is identical to the value of operating.'
+		},
+		{
+		   name   => 'strRegex',
+		   libkey => "rx",
+		   description =>
+			 'The rule will match if any of the variables matches in the regular expression used in operating.'
+		},
+		{
+		   name   => 'strPhrases',
+		   libkey => "pm",
+		   description =>
+			 'The rule will match if any of the variables match in any of the values of the list operating.'
+		},
+		{
+		   name   => 'strPhrasesFromFile',
+		   libkey => "pmFromFile",
+		   description =>
+			 'It the same that the operator strPhrases but the operating is a file where it is defined a list of phrases.'
+		},
+		{
+		   name   => 'intEQ',
+		   libkey => "eq",
+		   description =>
+			 'The rule will match if any of the variables is equal to the number used in operating.'
+		},
+		{
+		   name   => 'intGE',
+		   libkey => "ge",
+		   description =>
+			 'The rule will match if any of the variables is greater or equal to the number used in operating.'
+		},
+		{
+		   name   => 'intGT',
+		   libkey => "gt",
+		   description =>
+			 'The rule will match if any of the variables is greater than the number used in operating.'
+		},
+		{
+		   name   => 'intLE',
+		   libkey => "le",
+		   description =>
+			 'The rule will match if any of the variables is lower or equal to the number used in operating.'
+		},
+		{
+		   name   => 'intLT',
+		   libkey => "lt",
+		   description =>
+			 'The rule will match if any of the variables is lower than the number used in operating.'
+		},
+		{
+		   name   => 'detectSQLi',
+		   libkey => "detectSQLi",
+		   description =>
+			 'It applies the detection of SQL injection to the list of variables. This operator does not expect any operating.'
+		},
+		{
+		   name   => 'detectXSS',
+		   libkey => "detectXSS",
+		   description =>
+			 'It applies the detection of XSS injection to the list of variables. This operator does not expect any operating.'
+		},
+		{
+		   name   => 'ipMatch',
+		   libkey => "ipMatch",
+		   description =>
+			 'Try to match the IP or network segments of operating with the list of variables.'
+		},
+		{
+		   name   => 'ipMatchFromFile',
+		   libkey => "ipMatchFromFile",
+		   description =>
+			 'It is the same than the operator ipMatch, but this tries the match of the variables against a file with a list of IPs and network segments.'
+		},
+		{
+		   name   => 'validateByteRange',
+		   libkey => "validateByteRange",
+		   description =>
+			 'It checks that the number of byte of the variables are in one of the operating values. An example of operating is “10, 13, 32-126”.'
+		},
+		{
+		   name   => 'validateUrlEncoding',
+		   libkey => "validateUrlEncoding",
+		   description =>
+			 'It validates encoded data. This operator must be used only for data that does not encode data commonly or for data are encoded several times.'
+		},
+		{
+		   name   => 'validateUtf8Encoding',
+		   libkey => "validateUtf8Encoding",
+		   description =>
+			 'It validate that variables are UTF-8. This operator does not expect any operating.'
+		},
+		{
+		   name   => 'verifyCreditCard',
+		   libkey => "verifyCC",
+		   description =>
+			 'It verifies if variables are a credit card number. This parameter accepts a regular expression as operating, if it matches then it applies the credit card verified.'
+		},
+		{
+		   name   => 'verifySSN',
+		   libkey => "verifySSN",
+		   description =>
+			 'It verifies if variables are a US Social Security Number. This parameter accepts a regular expression as operating, if it matches then it applies the SSN verify.'
+		},
+		{
+		   name        => 'matchAllways',
+		   libkey      => "unconditionalMatch",
+		   description => 'It returns true always, forcing a match.'
+		},
+		{
+		   name        => 'matchNever',
+		   libkey      => "noMatch",
+		   description => 'It returns false always, forcing a non-match.'
+		}
+	);
+
 }
 
 sub getWafTransformations
@@ -77,19 +197,150 @@ sub getWafTransformations
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	return (
-			 "base64Decode",     "sqlHexDecode",     "base64DecodeExt",
-			 "base64Encode",     "cmdLine",          "compressWhitespace",
-			 "cssDecode",        "escapeSeqDecode",  "hexDecode",
-			 "hexEncode",        "htmlEntityDecode", "jsDecode",
-			 "length",           "lowercase",        "md5",
-			 "none",             "normalisePath",    "normalizePath",
-			 "normalisePathWin", "normalizePathWin", "parityEven7bit",
-			 "parityOdd7bit",    "parityZero7bit",   "removeNulls",
-			 "removeWhitespace", "replaceComments",  "removeCommentsChar",
-			 "removeComments",   "replaceNulls",     "urlDecode",
-			 "uppercase",        "urlDecodeUni",     "urlEncode",
-			 "utf8toUnicode",    "sha1",             "trimLeft",
-			 "trimRight",        "trim",
+		{ name => 'base64Decode', description => 'Decodes a Base64-encoded string.' },
+		{
+		   name        => 'base64DecodeExt',
+		   description => 'Decodes a Base64-encoded string ignoring invalid characters.'
+		},
+		{ name => 'sqlHexDecode', description => 'Decodes SQL hex data.' },
+		{ name => 'base64Encode', description => 'Encodes using Base64 encoding.' },
+		{
+		   name        => 'cmdLine',
+		   description => 'Avoids the problem related with the escaped command line.'
+		},
+		{
+		   name => 'compressWhitespace',
+		   description =>
+			 'Converts any of the whitespace characters (0x20, \\f, \\t, \\n, \\r, \\v, 0xa0) to spaces (ASCII 0x20), compressing multiple consecutive space characters into one.'
+		},
+		{
+		   name => 'cssDecode',
+		   description =>
+			 'Decodes characters encoded using the CSS 2.x escape rules. This function uses only up to two bytes in the decoding process, meaning that it is useful to uncover ASCII characters encoded using CSS encoding (that wouldn’t normally be encoded), or to counter evasion, which is a combination of a backslash and non-hexadecimal characters (e.g., ja\\vascript is equivalent to javascript).'
+		},
+		{
+		   name => 'escapeSeqDecode',
+		   description =>
+			 'Decodes ANSI C escape sequences: \\a, \\b, \\f, \\n, \\r, \\t, \\v, \\, \\?, \\’, \\”, \\xHH (hexadecimal), \\0OOO (octal). Invalid encodings are left in the output.'
+		},
+		{
+		   name => 'hexDecode',
+		   description =>
+			 'Decodes a string that has been encoded using the same algorithm as the one used in hexEncode (see following entry).'
+		},
+		{
+		   name => 'hexEncode',
+		   description =>
+			 'Encodes string (possibly containing binary characters) by replacing each input byte with two hexadecimal characters. For example, xyz is encoded as 78797a.'
+		},
+		{
+		   name        => 'htmlEntityDecode',
+		   description => 'Decodes the characters encoded as HTML entities.'
+		},
+		{ name => 'jsDecode', description => 'Decodes JavaScript escape sequences.' },
+		{
+		   name => 'length',
+		   description =>
+			 'Looks up the length of the input string in bytes, placing it (as string) in output.'
+		},
+		{
+		   name        => 'lowercase',
+		   description => 'Converts all characters to lowercase using the current C locale.'
+		},
+		{
+		   name => 'md5',
+		   description =>
+			 'Calculates an MD5 hash from the data in input. The computed hash is in a raw binary form and may need to be encoded into the text to be printed (or logged). Hash functions are commonly used in combination with hexEncode.'
+		},
+		{
+		   name => 'none',
+		   description =>
+			 'Not an actual transformation function, but an instruction to remove previous transformation functions associated with the current rule.'
+		},
+		{
+		   name => 'normalizePath',
+		   description =>
+			 'Removes multiple slashes, directory self-references, and directory back-references (except when at the beginning of the input) from input string.'
+		},
+		{
+		   name => 'normalizePathWin',
+		   description =>
+			 'Same as normalizePath, but first converts backslash characters to forward slashes.'
+		},
+		{
+		   name => 'parityEven7bit',
+		   description =>
+			 'Calculates even parity of 7-bit data replacing the 8th bit of each target byte with the calculated parity bit.'
+		},
+		{
+		   name => 'parityOdd7bit',
+		   description =>
+			 'Calculates odd parity of 7-bit data replacing the 8th bit of each target byte with the calculated parity bit.'
+		},
+		{
+		   name => 'parityZero7bit',
+		   description =>
+			 'Calculates zero parity of 7-bit data replacing the 8th bit of each target byte with a zero-parity bit, which allows inspection of even/odd parity 7-bit data as ASCII7 data.'
+		},
+		{ name => 'removeNulls', description => 'Removes all NUL bytes from input.' },
+		{
+		   name        => 'removeWhitespace',
+		   description => 'Removes all whitespace characters from input.'
+		},
+		{
+		   name => 'replaceComments',
+		   description =>
+			 'Replaces each occurrence of a C-style comment (/* … */) with a single space (multiple consecutive occurrences of which will not be compressed). Unterminated comments will also be replaced with space (ASCII 0x20). However, a standalone termination of a comment (*/) will not be acted upon.'
+		},
+		{
+		   name        => 'removeCommentsChar',
+		   description => 'Removes common comments chars (/*, */, –, #).'
+		},
+		{
+		   name        => 'replaceNulls',
+		   description => 'Replaces NUL bytes in input with space characters (ASCII 0x20).'
+		},
+		{
+		   name => 'urlDecode',
+		   description =>
+			 'Decodes a URL-encoded input string. Invalid encodings (i.e., the ones that use non-hexadecimal characters, or the ones that are at the end of the string and have one or two bytes missing) are not converted, but no error is raised.'
+		},
+		{
+		   name        => 'uppercase',
+		   description => 'Converts all characters to uppercase using the current C locale.'
+		},
+		{
+		   name => 'urlDecodeUni',
+		   description =>
+			 'Like urlDecode, but with support for the Microsoft-specific %u encoding.'
+		},
+		{
+		   name        => 'urlEncode',
+		   description => 'Encodes input string using URL encoding.'
+		},
+		{
+		   name => 'utf8toUnicode',
+		   description =>
+			 'Converts all UTF-8 characters sequences to Unicode. This help input normalization especially for non-english languages minimizing false-positives and false-negatives.'
+		},
+		{
+		   name => 'sha1',
+		   description =>
+			 'Calculates a SHA1 hash from the input string. The computed hash is in a raw binary form and may need to be encoded into the text to be printed (or logged). Hash functions are commonly used in combination with hexEncode.'
+		},
+		{
+		   name        => 'trimLeft',
+		   description => 'Removes whitespace from the left side of the input string.'
+		},
+		{
+		   name        => 'trimRight',
+		   description => 'Removes whitespace from the right side of the input string.'
+		},
+		{
+		   name => 'trim',
+		   description =>
+			 'Removes whitespace from both the left and right sides of the input string.'
+		}
 	);
 }
 
@@ -321,6 +572,15 @@ sub getWafVariables
 		},
 	);
 }
+
+# translate
+
+my $trOperator = {};
+foreach my $it ( &getWafOperators() )
+{
+	$trOperator->{ $it->{ name } } = $it->{ libkey };
+}
+$trOperator = &createTRANSLATE( $trOperator );
 
 sub translateWafVariables
 {
@@ -586,13 +846,17 @@ sub getWafRuleParameters
 	return $out;
 }
 
-my @transformations = &getWafTransformations();
+my @transformations = ();
+foreach my $t ( &getWafTransformations() )
+{
+	push @transformations, $t->{ name };
+}
 
 sub getWafMatchParameters
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my @operators = &getWafOperators();
+	my @operators = @{ &getTRANSLATEInputs( $trOperator ) };
 
 	return {
 			 'not_match' => { 'valid_format' => 'boolean' },

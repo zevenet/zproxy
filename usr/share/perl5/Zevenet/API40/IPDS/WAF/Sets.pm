@@ -32,7 +32,8 @@ sub get_waf_options
 			 "debug", "PROFILING" );
 	my $desc = "List the available options to create a rule match";
 
-	my @operators       = &getWafOperators();
+	my @operators = &getWafOperators();
+	delete $_->{ libkey } for ( @operators );    # remove the 'libkey' key
 	my @variables       = &getWafVariables();
 	my @transformations = &getWafTransformations();
 
