@@ -144,6 +144,9 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
 //      set_cookie_header += "; expires=";
 //      set_cookie_header += time_string;
 //    }
+      service->updateSessionCookie(
+          stream->client_connection, stream->request, stream->backend_connection.getBackend()->bekey,
+          *stream->backend_connection.getBackend());
     stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
                                stream->backend_connection.getBackend()->bekey);
   }
