@@ -578,7 +578,7 @@ sub getIPDSPolicyParam
 			next;
 		}
 
-		if ( $list eq $name && $line =~ /\"farms-used\"/ && $param eq 'farms' )
+		if ( $list eq $name && $line =~ /\"used\"/ && $param eq 'used' )
 		{
 			my @l = split /"/, $line;
 			my $val = $l[3];

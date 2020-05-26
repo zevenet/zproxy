@@ -121,7 +121,7 @@ sub getBLListUsed
 
 	include 'Zevenet::IPDS::Core';
 
-	$matches = &getIPDSPolicyParam( 'farms', $listName );
+	$matches = &getIPDSPolicyParam( 'used', $listName );
 	$matches = 0 if ( $matches <= 0 );
 
 	return $matches;

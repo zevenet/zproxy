@@ -203,7 +203,8 @@ sub httpNlbRequest
 
 	my $file = "/tmp/nft_$$";
 	$file = $self->{ file }
-	  if ( defined $self->{ file } && $self->{ file } =~ /(?:ipds)/ );
+	  if ( defined $self->{ file } && ( $self->{ file } =~ /(?:ipds)/ )
+		   or ( $self->{ file } =~ /(?:policy)/ ) );
 
 	# Send output to a file to get only the http code by the standard output
 	$execmd = $execmd . " -o $file";
@@ -231,7 +232,9 @@ sub httpNlbRequest
 	if (    defined $self->{ file }
 		 && $self->{ file } ne ""
 		 && !-z "$file"
-		 && $file !~ /ipds/ )
+		 && $file !~ /ipds/
+		 && $file !~ /policy/ )
+
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		&writeL4NlbConfigFile( $file, $self->{ file } );
