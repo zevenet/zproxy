@@ -76,6 +76,7 @@ sub getNewMark    # ($farm_name)
 	my $farm_name = shift;
 
 	require Tie::File;
+	require Zevenet::Lock;
 
 	my $found       = 0;
 	my $marknum     = 0x200;
@@ -111,6 +112,8 @@ sub delMarks    # ($farm_name,$mark)
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my ( $farm_name, $mark ) = @_;
+
+	require Zevenet::Lock;
 
 	my $status      = 0;
 	my $fwmarksconf = &getGlobalConfiguration( 'fwmarksconf' );
