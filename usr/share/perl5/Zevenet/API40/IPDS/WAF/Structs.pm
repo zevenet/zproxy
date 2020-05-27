@@ -152,7 +152,7 @@ sub getWafOperators
 		   name   => 'validateByteRange',
 		   libkey => "validateByteRange",
 		   description =>
-			 'It checks that the number of byte of the variables are in one of the operating values. An example of operating is “10, 13, 32-126”.'
+			 'It checks that the number of byte of the variables are in one of the operating values. An example of operating is "10, 13, 32-126".'
 		},
 		{
 		   name   => 'validateUrlEncoding',
