@@ -377,7 +377,6 @@ sub modifyRoutingRules
 			 "debug", "PROFILING" );
 	my $id     = shift;
 	my $params = shift;
-	my $err    = 0;
 
 	# delete
 	my $old_conf = &getRoutingRulesConf( $id );
@@ -962,7 +961,6 @@ sub listRoutingTable
 			 "debug", "PROFILING" );
 
 	my $table = shift;
-	my $list  = [];
 
 	my $list   = &listRoutingTableCustom( $table );
 	my @routes = @{ $list };
@@ -1183,15 +1181,19 @@ sub modifyRoutingCustom
 	my $lock_rules = &getRoutingTableLock( $table );
 	&lockResource( $lock_rules, 'l' );
 
+	#delete
+	my $old_conf = &getRoutingTableConf( $table, $route_id );
+	&setRoute( 'del', $old_conf->{ raw } );
+
 	my $err = &setRoute( 'add', $new_conf->{ raw } );
 	if ( !$err )
 	{
-		#delete
-		my $old_conf = &getRoutingTableConf( $table, $route_id );
-		&setRoute( 'del', $old_conf->{ raw } );
-
 		# save conf
 		&writeRoutingConf( $table, $new_conf );
+	}
+	else
+	{
+		&setRoute( 'add', $old_conf->{ raw } );
 	}
 
 	&lockResource( $lock_rules, 'ud' );
