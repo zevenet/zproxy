@@ -528,6 +528,8 @@ sub setBLRemFromFarm
 		$output = &setBLParam( $listName, 'farms-del', $farmName );
 	}
 
+	&delIPDSFarmService( $farmName );
+
 	# delete list if it isn't used. This has to be the last call.
 	if ( !$output && !&getBLListUsed( $listName ) )
 	{
