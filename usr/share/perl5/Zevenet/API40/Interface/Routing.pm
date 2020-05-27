@@ -410,11 +410,29 @@ sub modify_routing_rule
 
 	$json_obj = &updateRoutingRules( $id, $json_obj );
 
-	# check if already exists an equal rule
-	if ( &isRule( $json_obj ) )
+	# Do not check if only the priority is modified
+	# This avoid an error when only priority is modified
+	my $curr_conf  = &getRoutingRulesConf( $id );
+	my $skip_exist = 1;
+	foreach my $k ( keys %$json_obj )
 	{
-		my $msg = "A rule with this configuration already exists";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		next if $k eq 'priority';
+
+		if ( $json_obj->{ $k } ne $curr_conf->{ $k } )
+		{
+			$skip_exist = 0;
+			last;
+		}
+	}
+
+	# check if already exists an equal rule
+	if ( !$skip_exist )
+	{
+		if ( &isRule( $json_obj ) )
+		{
+			my $msg = "A rule with this configuration already exists";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	my $err = &modifyRoutingRules( $id, $json_obj );
