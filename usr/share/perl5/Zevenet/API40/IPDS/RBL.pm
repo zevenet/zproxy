@@ -704,21 +704,25 @@ sub add_rbl_to_farm
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
-	{
-		my $msg = "$name is already applied to $farmName.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# for start a RBL rule it is necessary that the rule has almost one domain
-	elsif ( !@{ &getRBLObjectRuleParam( $name, 'domains' ) } )
+	# it is necessary that the rule has almost one domain to start a RBL rule
+	if ( !@{ &getRBLObjectRuleParam( $name, 'domains' ) } )
 	{
 		my $msg =
 		  "The RBL rule '$name' was not started because it has not got any domain.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# only allow a RBL rule for farm. It's currently a nftlb limitation
+	&lockResource( "rbl-$farmName", 'l' );
+	if ( &listRBLByFarm( $farmName ) )
+	{
+		&lockResource( "rbl-$farmName", 'ud' );
+		my $msg = "The '$farmName' farm already is linked with a RBL rule.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	&addRBLFarm( $farmName, $name );
+	&lockResource( "rbl-$farmName", 'ud' );
 	if ( !grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Error, applying $name to $farmName";
