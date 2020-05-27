@@ -545,6 +545,13 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	# the farm has to have one backend at least
+	if ( @{ $be_aref } < 2 )
+	{
+		my $msg = "The service has to have one backend at least.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
 	my $status = &remFarmServiceBackend( $id_server, $farmname, $service );
 
 	# check if there was an error removing the backend
