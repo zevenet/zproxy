@@ -89,12 +89,14 @@ int EpollManager::loopOnce(int time_out) {
   Time::updateTime();
 #if USE_TIMER_FD_TIMEOUT==0
   for (auto it= timeouts.begin(); it != timeouts.end();) {
-    auto current = it++;
-    if (current->second.timeout > 0) {
-      if (Time::getTimeSec() - current->second.last_seent > current->second.timeout) {
-        current->second.timeout = 0;
-        onTimeOut(current->first,current->second.type);
+    if (it->second.timeout > 0) {
+      if (Time::getTimeSec() - it->second.last_seent > it->second.timeout) {
+        it->second.timeout = 0;
+        onTimeOut(it->first, it->second.type);
       }
+      it++;
+    } else {
+      it = timeouts.erase(it);
     }
   }
 #endif
@@ -273,7 +275,7 @@ void EpollManager::stopTimeOut(int fd) {
 void EpollManager::deleteTimeOut(int fd) {
   auto it = timeouts.find(fd);
   if (it != timeouts.end()) {
-    timeouts.erase(it);
+    it->second.timeout = 0;
   }
 }
 #endif
