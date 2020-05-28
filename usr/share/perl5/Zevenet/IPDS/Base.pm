@@ -178,6 +178,7 @@ sub runIPDSStopByFarm
 	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
 
 	my $name;
+	my $del = 0;
 
 	if ( !defined $type || $type eq "" || $type eq "bl" )
 	{
@@ -187,6 +188,7 @@ sub runIPDSStopByFarm
 			next if ( $rule->{ status } eq "down" );
 			$name = $rule->{ name };
 			&runBLStop( $name, $farmname );
+			$del = 1;
 		}
 	}
 
@@ -198,6 +200,7 @@ sub runIPDSStopByFarm
 			next if ( $rule->{ status } eq "down" );
 			$name = $rule->{ name };
 			&runDOSStop( $name, $farmname );
+			$del = 1;
 		}
 	}
 
@@ -209,8 +212,27 @@ sub runIPDSStopByFarm
 			next if ( $rule->{ status } eq "down" );
 			$name = $rule->{ name };
 			&runRBLStop( $name, $farmname );
+			$del = 1;
 		}
 	}
+
+	if ( $del )
+	{
+		require Zevenet::Farm::Core;
+		my $type = &getFarmType( $farmname );
+		if ( ( $type eq "http" ) or ( $type eq "https" ) )
+		{
+			require Zevenet::Nft;
+			&httpNlbRequest(
+							 {
+							   farm   => $farmname,
+							   method => "DELETE",
+							   uri    => "/farms/" . $farmname
+							 }
+			);
+		}
+	}
+
 }
 
 =begin nd
