@@ -94,15 +94,16 @@ class Logger {
       //        buffer += COUT_GREEN_COLOR(str);
     }
 #endif
-    if (!log_info[std::this_thread::get_id()].farm_name.empty()) {
+    auto it = log_info.find(std::this_thread::get_id());
+    if (it != log_info.end() && !it->second.farm_name.empty()) {
       buffer += "(";
-      buffer += log_info[std::this_thread::get_id()].farm_name;
-      if (!log_info[std::this_thread::get_id()].service_name.empty()) {
+      buffer += it->second.farm_name;
+      if (!it->second.service_name.empty()) {
         buffer += ",";
         buffer += log_info[std::this_thread::get_id()].service_name;
-        if (log_info[std::this_thread::get_id()].backend_id != -1) {
+        if (it->second.backend_id != -1) {
           buffer += ",";
-          buffer += std::to_string(log_info[std::this_thread::get_id()].backend_id);
+          buffer += std::to_string(it->second.backend_id);
         }
       }
       buffer += ") ";
