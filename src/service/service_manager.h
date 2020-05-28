@@ -43,7 +43,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
   SSLContext *ssl_context{nullptr};
   std::shared_ptr<ListenerConfig> listener_config_;
   bool is_https_listener{false};
-  std::atomic<int> established_connection;
+  std::atomic<int> established_connection{0};
   /** ServiceManager instance. */
   static std::shared_ptr<ServiceManager> &getInstance(
       std::shared_ptr<ListenerConfig> listener_config);
