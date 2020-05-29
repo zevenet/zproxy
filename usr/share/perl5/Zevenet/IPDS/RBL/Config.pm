@@ -465,7 +465,7 @@ sub delRBLFarm
 	$error = &runRBLFarmRule( $rule, $farmname, 'delete' );
 
 	# if another farm is not using this rule, the rule is stopped
-	if ( !$error )
+	if ( ( !$error ) and ( scalar @{ &getRBLFarm( $rule ) } == 1 ) )
 	{
 		$error = &runRBLStopPacketbl( $rule );
 	}
