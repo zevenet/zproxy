@@ -165,6 +165,8 @@ cp $confhttp_tpl $confhttp
 cp $zlb_start_tpl $zlb_start_script && chmod +x $zlb_start_script
 cp $zlb_stop_tpl $zlb_stop_script && chmod +x $zlb_stop_script
 
+#set default ssh
+echo '[{"listen" : "0.0.0.0","port" : 22 }]' | /usr/local/zevenet/bin/enterprise.bin Zevenet::System::SSH setSsh
 
 if [ -d "$TEMPLATE_DIR/rbac_roles" ]; then
 	mkdir ${CONF_DIR}/rbac/
