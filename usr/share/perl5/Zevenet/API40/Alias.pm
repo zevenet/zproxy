@@ -85,6 +85,66 @@ sub set_alias
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $alias_list = &getAlias( $type );
+	foreach my $key ( keys %{ $alias_list } )
+	{
+		if ( $alias_list->{ $key } eq $json_obj->{ alias } )
+		{
+			my $msg = "The alias $json_obj->{ alias } already exists in the $type $key.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	if ( !exists $alias_list->{ $id } )
+	{
+		my $msg = "The $type $id has not been found";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	&setAlias( $type, $id, $json_obj->{ alias } );
+
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => "Alias for $id has been updated successfully"
+	};
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+# POST /alias/(alias_type)
+sub add_alias
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $json_obj = shift;
+	my $type     = shift;
+	my $desc     = "Add an alias";
+
+	my $params = {
+				   "alias" => {
+								'valid_format' => 'alias_name',
+								'non_blank'    => 'true',
+								'required'     => 'true',
+				   },
+	};
+
+	if ( ( $type eq 'interface' ) or ( $type eq 'backend' ) )
+	{
+		$params->{ 'id' } = {
+							  'valid_format' => 'alias_' . $type,
+							  'non_blank'    => 'true',
+							  'required'     => 'true',
+		};
+	}
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	my $id = $json_obj->{ 'id' };
+
 	if ( $type eq 'interface' )
 	{
 		require Zevenet::Net::Interface;
@@ -96,6 +156,13 @@ sub set_alias
 	}
 
 	my $alias_list = &getAlias( $type );
+
+	if ( exists $alias_list->{ $id } )
+	{
+		my $msg = "The alias for $type $id exists";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
 	foreach my $key ( keys %{ $alias_list } )
 	{
 		if ( $alias_list->{ $key } eq $json_obj->{ alias } )
@@ -105,19 +172,12 @@ sub set_alias
 		}
 	}
 
-	my $message;
-	if ( exists $alias_list->{ $id } )
-	{
-		$message = "Alias for $id has been updated successfully";
-	}
-	else { $message = "Alias for $id has been created successfully"; }
-
 	&setAlias( $type, $id, $json_obj->{ alias } );
 
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 message     => $message
+				 message     => "Alias for $id has been created successfully"
 	};
 
 	return &httpResponse( { code => 200, body => $body } );

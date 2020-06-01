@@ -31,6 +31,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/aliases} )
 
 	# /aliases/(backend)s, not match the charater 's'
 	GET qr{^/aliases/($alias_type)s$},            'get_by_type',  $mod;
+	POST qr{^/aliases/($alias_type)s$},           'add_alias',    $mod;
 	PUT qr{^/aliases/($alias_type)s/([^/]+)$},    'set_alias',    $mod;
 	DELETE qr{^/aliases/($alias_type)s/([^/]+)$}, 'delete_alias', $mod;
 }
