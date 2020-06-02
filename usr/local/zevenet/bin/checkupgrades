@@ -185,6 +185,9 @@ case "$1" in
 	if [ $upgrade -eq 1 ]
 	then
 		DEBIAN_FRONTEND=noninteractive $apt_bin --with-new-pkgs upgrade
+		#checkupgrades
+		#do this in order to update the web GUI alerts after any installation
+		$aptget_bin update > /dev/null
 	fi
 	if [ "$node_status" == "backup" ]
 	then
