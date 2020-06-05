@@ -53,6 +53,7 @@ GetOptions(
 			'forcerestart' => \$restart,
 );
 
+&check_letsencrypt_dir();
 switch ( $action )
 {
 	case "obtain"
@@ -594,4 +595,53 @@ sub getFarmListening()
 			$farm_name = $temp_farm;
 		}
 	}
+}
+
+sub check_letsencrypt_dir()
+{
+	my $le_letsencrypt_dir =
+	  &getGlobalConfiguration( 'le_fullchain_path' ) . "live";
+	my $find_bin = &getGlobalConfiguration( 'find' );
+	my @run      = `$find_bin $le_letsencrypt_dir -xtype l`;
+	my $run      = @run;
+	if ( $run > 0 )
+	{
+		print "checking letsencrypt Live Directory integrity: $le_letsencrypt_dir\n";
+		print "The follwing certificate symlinks are broken:\n @run fixing them\n";
+		for my $file ( @run )
+		{
+			#unlink $file
+			chomp ( $file );
+			print "Broken symlink: $file\n";
+			my $pem_file = ( split '\/', $file )[-1];
+			chomp ( $pem_file );
+			my $pem_name   = ( split '\.', $pem_file )[0];
+			my $domain_pem = ( split '\/', $file )[-2];
+			chomp ( $domain_pem );
+			print "file:$pem_file, pem:$pem_name, domain: $domain_pem\n";
+			my $pem_orig =
+			  `$find_bin ${le_fullchain_path}archive/$domain_pem/${pem_name}*.pem 2>/dev/null`;
+
+			if ( $? == 0 )
+			{
+				print "Found $pem_orig";
+				unlink $file;
+				my $pem_orig_filename = ( split '\/', $pem_orig )[-1];
+				chomp ( $pem_orig_filename );
+				symlink ( "../../archive/$domain_pem/${pem_orig_filename}", "${file}" );
+				if ( $? == 0 )
+				{
+					print
+					  "Symlink for $file was created properly pointing to ${le_fullchain_path}archive/$domain_pem/${pem_orig_filename}\n";
+				}
+			}
+			else
+			{
+				print
+				  "Candidate for a symlink in directory ${le_fullchain_path}archive/$domain_pem/ not found for file $pem_file\n";
+			}
+
+		}
+	}
+
 }

@@ -229,6 +229,8 @@ $stat="/usr/bin/stat";
 $cp="/bin/cp";
 #Where is rm?
 $rm="/bin/rm";
+#Where is find?
+$find="/bin/find";
 #Where is modprobe?
 $aws_modprobe="/sbin/modprobe";#update
 $default_modprobe="/usr/sbin/modprobe";#update
