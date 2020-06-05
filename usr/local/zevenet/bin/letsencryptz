@@ -602,8 +602,9 @@ sub check_letsencrypt_dir()
 	my $le_letsencrypt_dir =
 	  &getGlobalConfiguration( 'le_fullchain_path' ) . "live";
 	my $find_bin = &getGlobalConfiguration( 'find' );
-	my @run      = `$find_bin $le_letsencrypt_dir -xtype l`;
-	my $run      = @run;
+	return 1 if ( !-e $le_letsencrypt_dir );
+	my @run = `$find_bin $le_letsencrypt_dir -xtype l`;
+	my $run = @run;
 	if ( $run > 0 )
 	{
 		print "checking letsencrypt Live Directory integrity: $le_letsencrypt_dir\n";
