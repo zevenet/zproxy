@@ -1153,6 +1153,13 @@ sub getRBACPermissionAliasHash
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $hash = {
+				 'POST' => [
+							{
+							  'regex'   => qr{^/aliases},
+							  'section' => 'alias',
+							  'action'  => 'create',
+							},
+				 ],
 				 'PUT' => [
 						   {
 							 'regex'   => qr{^/aliases},
