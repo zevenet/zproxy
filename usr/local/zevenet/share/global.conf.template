@@ -184,6 +184,9 @@ $zcat="/bin/zcat";
 #Where is ntpserver?
 $datentp="/usr/sbin/ntpdate";
 #Where is date?
+$aws_date_bin="/bin/date";#update
+$default_date_bin="/usr/bin/date";#update
+#This variable is modified from postinst
 $date="/usr/bin/date";
 #Where is arping?
 $arping_bin="/usr/bin/arping";
@@ -218,6 +221,9 @@ $touch="/usr/bin/touch";
 #Where is sed?
 $sed_bin="/bin/sed";
 #Where is cut?
+$aws_cut_bin="/usr/bin/cut";#update
+$default_cut_bin="/bin/cut";#update
+#This variable is modified from postinst
 $cut_bin="/bin/cut";
 #Where is ls?
 $ls="/bin/ls";

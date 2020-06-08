@@ -189,6 +189,10 @@ if [ -f ${ZEVENET_SHARE}${CHECK_NIC_DHCP} ]; then
 		perl -E " require Zevenet::Config; &setGlobalConfiguration('ifconfig_bin', '$aws_ifconfig_bin');"
 		# Change fdisk path
 		perl -E " require Zevenet::Config; &setGlobalConfiguration('fdisk_bin', '$aws_fdisk_bin');"
+		# Change date path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('date', '$aws_date_bin');"
+		# Change cut path
+		perl -E " require Zevenet::Config; &setGlobalConfiguration('cut_bin', '$aws_cut_bin');"
 	fi
 	# Check if it is an Azure VM
 	dpkg -l | grep waagent >/dev/null
