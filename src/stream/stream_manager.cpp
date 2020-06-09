@@ -329,7 +329,7 @@ void StreamManager::addStream(int fd,
   auto& listener_config = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config);
-  stream->status |= helper::to_underlying(STREAM_STATUS::REQUEST_PENDING);
+  stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
 #if USE_TIMER_FD_TIMEOUT
   stream->timer_fd.set(listener_config.to * 1000);
   addFd(stream->timer_fd.getFileDescriptor(), EVENT_TYPE::TIMEOUT,
@@ -489,7 +489,18 @@ void StreamManager::onRequestEvent(int fd) {
   }
 
   DEBUG_COUNTER_HIT(debug__::on_request);
-  stream->client_connection.enableReadEvent();
+  this->stopTimeOut(stream->client_connection.getFileDescriptor());
+  if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
+    Logger::logmsg(
+        LOG_REMOVE,
+        "Request pending: buffer size: %8lu\tContent-length: %lu\tleft:% lu ",
+        stream->client_connection.buffer_size, stream->request.content_length,
+        stream->request.message_bytes_left);
+    stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+    deleteFd(stream->client_connection.getFileDescriptor());
+    return;
+  }
+  stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
   if (stream->upgrade.pinned_connection || stream->request.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->request.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -543,6 +554,7 @@ void StreamManager::onRequestEvent(int fd) {
         this->clearStream(stream);
         return;
       }
+      stream->status |= helper::to_underlying(STREAM_STATUS::REQUEST_PENDING);
       break;
     }
     case http_parser::PARSE_RESULT::TOOLONG:
@@ -952,7 +964,12 @@ void StreamManager::onResponseEvent(int fd) {
             : "F");
 #endif
 
-
+  if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
+    stream->status |= helper::to_underlying(STREAM_STATUS::BCK_READ_PENDING);
+    deleteFd(stream->backend_connection.getFileDescriptor());
+    return;
+  }
+  stream->clearStatus(STREAM_STATUS::BCK_READ_PENDING);
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -1054,6 +1071,7 @@ void StreamManager::onResponseEvent(int fd) {
       this->clearStream(stream);
       return;
     }
+    stream->status |= helper::to_underlying(STREAM_STATUS::RESPONSE_PENDING);
 
 #if WAF_ENABLED
     if (stream->modsec_transaction != nullptr) {
@@ -1539,8 +1557,20 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
              TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
              stream->backend_connection.getBackend()->response_timeout);
 #endif
+#if PRINT_DEBUG_FLOW_BUFFERS
+  Logger::logmsg(
+      LOG_REMOVE,
+      "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
+      "%lu\tIO: %s",
+      stream->client_connection.buffer_size, stream->request.content_length,
+      stream->request.message_bytes_left, IO::getResultString(result).data());
+#endif
   Time::getTime(stream->backend_connection.time_start);
   stream->backend_connection.enableReadEvent();
+  stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
+  if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
+    onRequestEvent(stream->client_connection.getFileDescriptor());
+  }
   stream->client_connection.enableReadEvent();
 }
 
@@ -1563,6 +1593,8 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       stream->response.message_bytes_left);
   auto buffer_size_in = stream->backend_connection.buffer_size;
 #endif
+  stream->backend_connection.enableReadEvent();
+  stream->client_connection.enableReadEvent();
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
    * content without applying any kind of modification. */
@@ -1788,6 +1820,10 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
     auto it = http::http_info::upgrade_protocols.find(upgrade_header_value);
     if (it != http::http_info::upgrade_protocols.end())
       stream->upgrade.protocol = it->second;
+  }
+  stream->clearStatus(STREAM_STATUS::RESPONSE_PENDING);
+  if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
+    onResponseEvent(stream->backend_connection.getFileDescriptor());
   }
 
   if (stream->backend_connection.buffer_size > 0)

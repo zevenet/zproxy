@@ -31,7 +31,9 @@ HttpStream::HttpStream()
       timer_fd(),
 #endif
       request(),
-      response() {
+      response(),
+      status(0x0),
+      options(0x0) {
 #ifdef CACHE_ENABLED
     this->current_time = time_helper::gmtTimeNow();
     this->prev_time = std::chrono::steady_clock::now();
