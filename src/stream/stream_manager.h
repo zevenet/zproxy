@@ -94,6 +94,7 @@ DEFINE_OBJECT_COUNTER(on_send_request)
 DEFINE_OBJECT_COUNTER(on_send_response)
 DEFINE_OBJECT_COUNTER(on_client_disconnect)
 DEFINE_OBJECT_COUNTER(on_clear_stream)
+DEFINE_OBJECT_COUNTER(on_backend_connect_error)
 
 DEFINE_OBJECT_COUNTER(event_client_read)
 DEFINE_OBJECT_COUNTER(event_client_disconnect)
@@ -318,4 +319,5 @@ public:
 #if USE_TIMER_FD_TIMEOUT==0
   void onTimeOut(int fd, TIMEOUT_TYPE type) override ;
 #endif
+  void onBackendConnectionError(HttpStream *stream);
 };

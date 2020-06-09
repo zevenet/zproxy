@@ -695,21 +695,7 @@ void StreamManager::onRequestEvent(int fd) {
           case IO::IO_OP::OP_ERROR: {
             Logger::logmsg(LOG_NOTICE, "Error connecting to backend %s",
                            bck->address.data());
-              if(stream->backend_connection.getBackend()->getAssignedConn() == 0 &&
-                 stream->backend_connection.getBackend()->getPendingConn() == 0) {
-                Logger::logmsg(
-                    LOG_NOTICE,
-                    "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
-                    pthread_self(),
-                    stream->backend_connection.getBackend()->address.data(),
-                    stream->backend_connection.getBackend()->port,
-                    listener_config_.name.data(),
-                    stream->backend_connection.getBackend()
-                        ->backend_config->srv_name.data());
-                stream->backend_connection.getBackend()->setStatus(
-                    BACKEND_STATUS::BACKEND_DOWN);
-              }
-            setStreamBackend(stream);
+            onBackendConnectionError(stream);
             return;
         }
           case IO::IO_OP::OP_IN_PROGRESS: {
@@ -1141,23 +1127,8 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
                      /*std::this_thread::get_id()*/ pthread_self(),
                      stream->backend_connection.getBackend()->address.c_str(),
                      stream->backend_connection.getBackend()->conn_timeout);
-    if(stream->backend_connection.getBackend()->getAssignedConn() == 0 &&
-       stream->backend_connection.getBackend()->getPendingConn() == 0) {
-        stream->backend_connection.getBackend()->setStatus(
-            BACKEND_STATUS::BACKEND_DOWN);
-
-        Logger::logmsg(
-            LOG_NOTICE,
-            "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
-            pthread_self(),
-            stream->backend_connection.getBackend()->address.data(),
-            stream->backend_connection.getBackend()->port,
-            listener_config_.name.data(),
-            stream->backend_connection.getBackend()
-                ->backend_config->srv_name.data());
-      }
-      stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
-      setStreamBackend(stream);
+      onBackendConnectionError(stream);
+      return;
   }
 }
 
@@ -1311,22 +1282,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
         switch (op_state) {
           case IO::IO_OP::OP_ERROR: {
             Logger::logmsg(LOG_NOTICE, "Error connecting to backend %s",
-                           bck->address.data());
-            if(stream->backend_connection.getBackend()->getAssignedConn() == 0 &&
-               stream->backend_connection.getBackend()->getPendingConn() == 0) {
-              Logger::logmsg(
-                  LOG_NOTICE,
-                  "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
-                  pthread_self(),
-                  stream->backend_connection.getBackend()->address.data(),
-                  stream->backend_connection.getBackend()->port,
-                  listener_config_.name.data(),
-                  stream->backend_connection.getBackend()
-                      ->backend_config->srv_name.data());
-              stream->backend_connection.getBackend()->setStatus(
-                  BACKEND_STATUS::BACKEND_DOWN);
-            }
-            setStreamBackend(stream);
+                           bck->address.data());           
+            onBackendConnectionError(stream);
             return;
           }
           case IO::IO_OP::OP_IN_PROGRESS: {
@@ -1983,22 +1940,7 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
   }
 
   if (stream->backend_connection.getBackend() != nullptr && stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
-    if(stream->backend_connection.getBackend()->getAssignedConn() == 0 &&
-       stream->backend_connection.getBackend()->getPendingConn() == 0) {
-      Logger::logmsg(
-          LOG_NOTICE,
-          "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
-          pthread_self(),
-          stream->backend_connection.getBackend()->address.data(),
-          stream->backend_connection.getBackend()->port,
-          listener_config_.name.data(),
-          stream->backend_connection.getBackend()
-              ->backend_config->srv_name.data());
-      stream->backend_connection.getBackend()->setStatus(
-          BACKEND_STATUS::BACKEND_DOWN);
-    }
-    stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
-    setStreamBackend(stream);
+    onBackendConnectionError(stream);
     return;
   }else {
       if(stream->backend_connection.getBackend() != nullptr)
@@ -2062,6 +2004,35 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type) {
       break;
     case TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT:
       break;
-  }
+    }
 }
 #endif
+
+void StreamManager::onBackendConnectionError(HttpStream *stream)
+{
+  DEBUG_COUNTER_HIT(debug__::on_backend_connect_error);
+  auto& listener_config_ = *stream->service_manager->listener_config_;
+  if (stream->backend_connection.getBackend()->getAssignedConn() == 0 &&
+      stream->backend_connection.getBackend()->getPendingConn() == 0) {
+    stream->backend_connection.getBackend()->setStatus(
+        BACKEND_STATUS::BACKEND_DOWN);
+    Logger::logmsg(
+        LOG_NOTICE,
+        "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
+        pthread_self(), stream->backend_connection.getBackend()->address.data(),
+        stream->backend_connection.getBackend()->port,
+        listener_config_.name.data(),
+        stream->backend_connection.getBackend()
+            ->backend_config->srv_name.data());
+  }
+  stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
+  setStreamBackend(stream);
+
+  //  // No backend available
+  //  http_manager::replyError(http::Code::ServiceUnavailable,
+  //                           validation::request_result_reason.at(
+  //                               validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
+  //                           listener_config_.err503,
+  //                           stream->client_connection);
+  //  this->clearStream(stream);
+}

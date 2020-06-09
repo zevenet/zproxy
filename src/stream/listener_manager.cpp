@@ -174,6 +174,11 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
           std::make_unique<JsonDataValue>(
               Counter<debug__::on_backend_disconnect>::count));
 
+      backends_stats->emplace(
+          "connect_error",
+          std::make_unique<JsonDataValue>(
+              Counter<debug__::on_backend_connect_error>::count));
+
       events_count->emplace("client_read",
                             std::make_unique<JsonDataValue>(
                                 Counter<debug__::event_client_read>::count));
