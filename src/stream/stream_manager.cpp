@@ -472,11 +472,13 @@ void StreamManager::onRequestEvent(int fd) {
       }
       break;
     case IO::IO_RESULT::FULL_BUFFER:
-    case IO::IO_RESULT::FD_CLOSED:
       if (stream->client_connection.buffer_size > 0)
         break;
       else
         return;
+    case IO::IO_RESULT::FD_CLOSED:
+      onClientDisconnect(stream);
+      return;
     case IO::IO_RESULT::ERROR:
     case IO::IO_RESULT::CANCELLED:
     default: {
@@ -918,11 +920,13 @@ void StreamManager::onResponseEvent(int fd) {
       break;
     }
     case IO::IO_RESULT::FULL_BUFFER:
-    case IO::IO_RESULT::FD_CLOSED:
       if (stream->backend_connection.buffer_size > 0)
         break;
       else
         return;
+    case IO::IO_RESULT::FD_CLOSED:
+      onServerDisconnect(stream);
+      return;
     case IO::IO_RESULT::ERROR:
     case IO::IO_RESULT::CANCELLED:
     default: {
