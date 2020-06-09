@@ -30,7 +30,7 @@
 #include "../stats/counter.h"
 namespace events {
 
-#define MAX_EPOLL_EVENT 200
+#define MAX_EPOLL_EVENT 500
 #define EPOLL_WAIT_TIMEOUT 250
 /** The enum EVENT_GROUP defines the different group types. */
 enum class EVENT_GROUP : char {
@@ -74,9 +74,8 @@ enum class EVENT_TYPE : uint32_t {
   READ = ((EPOLLIN | EPOLLRDHUP | EPOLLHUP ) & ~EPOLLOUT),
   /** Read from the connection. */
   READ_ONESHOT = ((EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP) & ~EPOLLOUT),
-  /** Write to the connection. */
-  WRITE = ((EPOLLOUT | EPOLLONESHOT | EPOLLRDHUP |
-            EPOLLHUP) & ~EPOLLIN), // is always one shot
+  /** Write to the connection, is always one shot */
+  WRITE = (EPOLLOUT | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP | EPOLLIN),
   /** Read or write event */
   ANY = (EPOLLONESHOT | EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLOUT),
   /** Connect event */
