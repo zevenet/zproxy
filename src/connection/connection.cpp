@@ -49,8 +49,8 @@ IO::IO_RESULT Connection::read() {
   if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0)
     return IO::IO_RESULT::FULL_BUFFER;
   while (!done) {
-    count = ::recv(fd_, (buffer + buffer_offset + buffer_size),
-                   (MAX_DATA_SIZE - buffer_size - buffer_offset), MSG_NOSIGNAL);
+    count = ::read(fd_, (buffer + buffer_offset + buffer_size),
+                   (MAX_DATA_SIZE - buffer_size - buffer_offset));
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
         Logger::logmsg(LOG_DEBUG, " read() failed: %s",std::strerror(errno));
@@ -118,8 +118,8 @@ void Connection::reset() {
   buffer_offset = 0;
   if (fd_ > 0) {
     // drain connecition socket data
-    while (::read(fd_, buffer ,
-                     MAX_DATA_SIZE ) > 0);
+    while (::recv(fd_, buffer ,
+                     MAX_DATA_SIZE,MSG_DONTWAIT ) > 0);
     this->closeConnection();
   }
   fd_ = -1;
