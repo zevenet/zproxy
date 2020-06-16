@@ -1,34 +1,34 @@
 /*
-*    Zevenet zproxy Load Balancer Software License
-*    This file is part of the Zevenet zproxy Load Balancer software package.
-*
-*    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
-*
-*    This program is free software: you can redistribute it and/or modify
-*    it under the terms of the GNU Affero General Public License as
-*    published by the Free Software Foundation, either version 3 of the
-*    License, or any later version.
-*
-*    This program is distributed in the hope that it will be useful,
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*    GNU Affero General Public License for more details.
-*
-*    You should have received a copy of the GNU Affero General Public License
-*    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ *    Zevenet zproxy Load Balancer Software License
+ *    This file is part of the Zevenet zproxy Load Balancer software package.
+ *
+ *    Copyright (C) 2019-today ZEVENET SL, Sevilla (Spain)
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
-#include "../debug/logger.h"
 #include <arpa/inet.h>
-#include <cstring>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
+#include <sys/un.h>
+#include <cstring>
+#include "../debug/logger.h"
 class Network {
  public:
   inline static char *getPeerAddress(int socket_fd, char *buf, size_t bufsiz, bool include_port = false) {
@@ -220,6 +220,43 @@ class Network {
 
     return false;
   }
+
+  inline static bool equalSockAddr(sockaddr *addr1, sockaddr *addr2,
+                                   bool compare_port = true) {
+    if (addr1->sa_family != addr2->sa_family) return false;
+    if (addr1->sa_family == AF_UNIX) {
+      auto a1_un = reinterpret_cast<sockaddr_un *>(addr1);
+      auto a2_un = reinterpret_cast<sockaddr_un *>(addr2);
+      int r = strcmp(a1_un->sun_path, a2_un->sun_path);
+      if (r != 0) return r;
+    } else if (addr1->sa_family == AF_INET) {
+      auto a1_in = reinterpret_cast<sockaddr_in *>(addr1);
+      auto a2_in = reinterpret_cast<sockaddr_in *>(addr2);
+      if (ntohl(a1_in->sin_addr.s_addr) != ntohl(a2_in->sin_addr.s_addr))
+        return false;
+      if (compare_port && ntohs(a1_in->sin_port) != ntohs(a2_in->sin_port))
+        return false;
+    } else if (addr1->sa_family == AF_INET6) {
+      auto a1_in6 = reinterpret_cast<sockaddr_in6 *>(addr1);
+      auto a2_in6 = reinterpret_cast<sockaddr_in6 *>(addr2);
+      int r = memcmp(a1_in6->sin6_addr.s6_addr, a2_in6->sin6_addr.s6_addr,
+                     sizeof(a1_in6->sin6_addr.s6_addr));
+      if (r != 0) return r;
+      if (compare_port && ntohs(a1_in6->sin6_port) != ntohs(a2_in6->sin6_port))
+        return false;
+      if (a1_in6->sin6_flowinfo != a2_in6->sin6_flowinfo) return false;
+      if (a1_in6->sin6_scope_id != a2_in6->sin6_scope_id) return false;
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  inline static bool equalSockAddr(addrinfo *x, addrinfo *y,
+                                   bool compare_port = true) {
+    return equalSockAddr(x->ai_addr, y->ai_addr, compare_port);
+  }
+
   static bool setSocketNonBlocking(int fd, bool blocking = false) {
     // set socket non blocking
     int flags;

@@ -166,7 +166,8 @@ struct POUND_CTX {
 struct ListenerConfig : Counter<ListenerConfig> {
   std::string name;
   int id{0};
-  std::string address; /* IPv4/6 address */
+  std::string address;
+  addrinfo *addr_info; /* IPv4/6 address */
   int port;
   std::shared_ptr<POUND_CTX> ctx{nullptr}; /* CTX for SSL connections */
   int clnt_check;          /* client verification mode */
@@ -218,5 +219,6 @@ struct ListenerConfig : Counter<ListenerConfig> {
     ::regfree(&url_pat);
     delete head_off;
     delete response_head_off;
+    ::freeaddrinfo(addr_info);
   }
 };

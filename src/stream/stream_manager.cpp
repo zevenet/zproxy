@@ -1846,7 +1846,8 @@ bool StreamManager::registerListener(
   auto& listener_config = service_manager.lock()->listener_config_;
   auto address =
       Network::getAddress(listener_config->address, listener_config->port);
-  int listen_fd = Connection::listen(*address);
+  listener_config->addr_info = address.release();
+  int listen_fd = Connection::listen(*listener_config->addr_info);
 
   if (listen_fd > 0) {
     service_manager_set[listen_fd] = service_manager;
