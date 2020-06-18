@@ -874,7 +874,13 @@ sub del_blacklists_source
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( @{ &getBLParam( $listName, 'source' ) } <= $id )
+	if ( ( $id =~ /^\d+$/ ) && ( @{ &getBLParam( $listName, 'source' ) } <= $id ) )
+	{
+		my $msg = "ID $id doesn't exist in the list $listName.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+
+	}
+	elsif ( !grep ( /$id/, @{ &getBLParam( $listName, 'source' ) } ) )
 	{
 		my $msg = "ID $id doesn't exist in the list $listName.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

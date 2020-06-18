@@ -561,7 +561,7 @@ Function: setBLDeleteSource
 
 Parameters:
 	list	- ip list name
-	id		- line to delete
+	id	- line to delete or source[/mask] to delete
 
 Returns:
 
@@ -578,6 +578,22 @@ sub setBLDeleteSource
 
 	require Zevenet::Lock;
 	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
+
+	#source not ID
+	if ( $id !~ /^\d+$/ )
+	{
+		my $i = -1;
+		foreach ( @list )
+		{
+			$i++;
+			if ( $_ =~ /^$id$/ )
+			{
+				$id = $i;
+				last;
+			}
+		}
+
+	}
 	my $source = splice @list, $id, 1;
 	untie @list;
 
