@@ -222,6 +222,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       return;
     }
     case EVENT_TYPE::DISCONNECT: {
+      DEBUG_COUNTER_HIT(debug__::event_disconnect);
       auto stream = streams_set[fd];
       if (stream == nullptr) {
         char addr[150];
@@ -2053,7 +2054,7 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 {
   DEBUG_COUNTER_HIT(debug__::on_backend_connect_error);
   auto& listener_config_ = *stream->service_manager->listener_config_;
-  if (stream->backend_connection.getBackend()->getAssignedConn() == 0 &&
+  if (stream->backend_connection.getBackend()->getEstablishedConn() == 0 &&
       stream->backend_connection.getBackend()->getPendingConn() == 0) {
     stream->backend_connection.getBackend()->setStatus(
         BACKEND_STATUS::BACKEND_DOWN);

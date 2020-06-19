@@ -199,6 +199,9 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
           "backend_disconnect",
           std::make_unique<JsonDataValue>(
               Counter<debug__::event_backend_disconnect>::count));
+      events_count->emplace("disconnect",
+                            std::make_unique<JsonDataValue>(
+                                Counter<debug__::event_disconnect>::count));
 
       events_count->emplace("event_connect",
                             std::make_unique<JsonDataValue>(
