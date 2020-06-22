@@ -30,7 +30,7 @@
 
 #ifndef MAX_HEADER_LEN
 #define MAX_HEADER_LEN 4096
-#define MAX_HEADERS_SIZE 50
+#define MAX_HEADERS_SIZE 100
 #endif
 
 namespace http {
