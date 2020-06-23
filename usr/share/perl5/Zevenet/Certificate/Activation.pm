@@ -370,7 +370,7 @@ sub certcontrol
 
 	if ( $cert_info->{ support } ne 'true' )
 	{
-		if ( $cert_info->{ cert_type } eq 'permanent' )
+		if ( $cert_info->{ type_cert } eq 'permanent' )
 		{
 			# It is not allow to upgrade without support
 
