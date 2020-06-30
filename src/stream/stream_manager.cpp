@@ -177,39 +177,29 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       return;
     }
     case EVENT_TYPE::WRITE: {
-      auto stream = streams_set[fd];
-      if (stream == nullptr) {
-        //        switch (event_group) {
-        //          case EVENT_GROUP::ACCEPTOR:
-        //            break;
-        //          case EVENT_GROUP::SERVER:
-        //            Logger::LogInfo("SERVER_WRITE : Stream doesn't exist for "
-        //            +
-        //                            std::to_string(fd));
-        //            break;
-        //          case EVENT_GROUP::CLIENT:
-        //            Logger::LogInfo("CLIENT_WRITE : Stream doesn't exist for "
-        //            +
-        //                            std::to_string(fd));
-        //            break;
-        //          default:
-        //            break;
-        //        }
-        deleteFd(fd);
-        ::close(fd);
-        return;
-      }
 
       switch (event_group) {
         case EVENT_GROUP::ACCEPTOR:
           break;
         case EVENT_GROUP::SERVER: {
           DEBUG_COUNTER_HIT(debug__::event_backend_write);
+          auto stream = bck_streams_set[fd];
+          if (stream == nullptr) {
+            deleteFd(fd);
+            ::close(fd);
+            return;
+          }
           onServerWriteEvent(stream);
           break;
         }
         case EVENT_GROUP::CLIENT: {
           DEBUG_COUNTER_HIT(debug__::event_client_write);
+          auto stream = cl_streams_set[fd];
+          if (stream == nullptr) {
+            deleteFd(fd);
+            ::close(fd);
+            return;
+          }
           onClientWriteEvent(stream);
           break;
         }
@@ -223,24 +213,35 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
     }
     case EVENT_TYPE::DISCONNECT: {
       DEBUG_COUNTER_HIT(debug__::event_disconnect);
-      auto stream = streams_set[fd];
-      if (stream == nullptr) {
-        char addr[150];
-        Network::getPeerAddress(fd, addr, 150);
-        Logger::logmsg(LOG_DEBUG,
-                       "Remote host %s closed connection prematurely ", addr);
-        deleteFd(fd);
-        ::close(fd);
-        return;
-      }
+
       switch (event_group) {
         case EVENT_GROUP::SERVER: {
           DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
+          auto stream = bck_streams_set[fd];
+          if (stream == nullptr) {
+            char addr[150];
+            Network::getPeerAddress(fd, addr, 150);
+            Logger::logmsg(LOG_DEBUG,
+                           "Remote backend host %s closed connection prematurely ", addr);
+            deleteFd(fd);
+            ::close(fd);
+            return;
+          }
           onServerDisconnect(stream);
           return;
         }
         case EVENT_GROUP::CLIENT: {
           DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
+          auto stream = cl_streams_set[fd];
+          if (stream == nullptr) {
+            char addr[150];
+            Network::getPeerAddress(fd, addr, 150);
+            Logger::logmsg(LOG_DEBUG,
+                           "Remote client host %s closed connection prematurely ", addr);
+            deleteFd(fd);
+            ::close(fd);
+            return;
+          }
           onClientDisconnect(stream);
           return;
         }
@@ -299,7 +300,10 @@ StreamManager::~StreamManager() {
   ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
   stop();
   if (worker.joinable()) worker.join();
-  for (auto& key_pair : streams_set) {
+  for (auto& key_pair : cl_streams_set) {
+    delete key_pair.second;
+  }
+  for (auto& key_pair : bck_streams_set) {
     delete key_pair.second;
   }
 }
@@ -318,15 +322,14 @@ void StreamManager::addStream(int fd,
                               std::shared_ptr<ServiceManager> service_manager) {
   DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
-  HttpStream *stream = streams_set[fd];
-
+  HttpStream* stream = cl_streams_set[fd];
   if (UNLIKELY(stream != nullptr)) {
     clearStream(stream);
   }
   stream = new HttpStream();
   stream->client_connection.setFileDescriptor(fd);
   stream->service_manager = std::move(service_manager);  // TODO::benchmark!!
-  streams_set[fd] = stream;
+  cl_streams_set[fd] = stream;
   auto& listener_config = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config);
@@ -370,7 +373,7 @@ void StreamManager::addStream(int fd,
 int StreamManager::getWorkerId() { return worker_id; }
 
 void StreamManager::onRequestEvent(int fd) {
-  HttpStream* stream = streams_set[fd];
+  HttpStream* stream = cl_streams_set[fd];
 
   if (stream != nullptr) {
     if (stream->client_connection.isCancelled()) {
@@ -696,7 +699,7 @@ void StreamManager::onRequestEvent(int fd) {
               stream->backend_connection.getFileDescriptor());  // Client cannot
           // Client cannot  be connected to more than one backend at
           // time
-          streams_set.erase(stream->backend_connection.getFileDescriptor());
+          bck_streams_set.erase(stream->backend_connection.getFileDescriptor());
           if (stream->backend_connection.isConnected() &&
               stream->backend_connection.getBackend() != nullptr)
             stream->backend_connection.getBackend()->decreaseConnection();
@@ -734,7 +737,14 @@ void StreamManager::onRequestEvent(int fd) {
             break;
           }
         }
-        streams_set[stream->backend_connection.getFileDescriptor()] = stream;
+        auto bck_stream = bck_streams_set.find(
+            stream->backend_connection.getFileDescriptor());
+        if (bck_stream != bck_streams_set.end()) {
+          Logger::logmsg(LOG_DEBUG, "## BCK Stream exists in set");
+          // delete bck_stream->second;
+        }
+        bck_streams_set[stream->backend_connection.getFileDescriptor()] =
+            stream;
         stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE,
                                                 EVENT_GROUP::SERVER);
       }
@@ -799,10 +809,8 @@ void StreamManager::onRequestEvent(int fd) {
 }
 
 void StreamManager::onResponseEvent(int fd) {
-  HttpStream* stream = streams_set[fd];
-
+  HttpStream* stream = bck_streams_set[fd];
   if (stream == nullptr) {
-//    Logger::LogInfo("Backend Connection, Stream closed", LOG_DEBUG);
     deleteFd(fd);
     ::close(fd);
     return;
@@ -1130,7 +1138,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
 #if USE_TIMER_FD_TIMEOUT
   HttpStream* stream = timers_set[fd];
 #else
-  HttpStream* stream = streams_set[fd];
+  HttpStream* stream = bck_streams_set[fd];
 #endif
   if (stream == nullptr) {
     //Logger::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -1160,7 +1168,7 @@ void StreamManager::onRequestTimeoutEvent(int fd) {
 #if USE_TIMER_FD_TIMEOUT
   HttpStream* stream = timers_set[fd];
 #else
-  HttpStream* stream = streams_set[fd];
+  HttpStream* stream = cl_streams_set[fd];
 #endif
   if (stream == nullptr) {
     deleteFd(fd);
@@ -1189,7 +1197,7 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
 #if USE_TIMER_FD_TIMEOUT
   HttpStream* stream = timers_set[fd];
 #else
-  HttpStream* stream = streams_set[fd];
+  HttpStream* stream = bck_streams_set[fd];
 #endif
   if (stream == nullptr) {
     //Logger::LogInfo("Stream null pointer", LOG_REMOVE);
@@ -1267,8 +1275,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
           stream->backend_connection.getBackend()->decreaseConnection();
       }
     deleteFd(stream->backend_connection.getFileDescriptor());
-    streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
-    streams_set.erase(stream->backend_connection.getFileDescriptor());
+    bck_streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
+    bck_streams_set.erase(stream->backend_connection.getFileDescriptor());
     stream->backend_connection.closeConnection();
   }
   stream->backend_connection.reset();
@@ -1329,7 +1337,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
             break;
           }
         }
-        streams_set[stream->backend_connection.getFileDescriptor()] = stream;
+        bck_streams_set[stream->backend_connection.getFileDescriptor()] =
+            stream;
         stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE,
                                                 EVENT_GROUP::SERVER);
         if (stream->backend_connection.getBackend()->nf_mark > 0)
@@ -1880,8 +1889,8 @@ void StreamManager::clearStream(HttpStream* stream) {
 #endif
   if (stream->client_connection.getFileDescriptor() > 0) {
     deleteFd(stream->client_connection.getFileDescriptor());
-    streams_set[stream->client_connection.getFileDescriptor()] = nullptr;
-    streams_set.erase(stream->client_connection.getFileDescriptor());
+    cl_streams_set[stream->client_connection.getFileDescriptor()] = nullptr;
+    cl_streams_set.erase(stream->client_connection.getFileDescriptor());
     stream->client_connection.closeConnection();
 #if DEBUG_STREAM_EVENTS_COUNT
     clear_client++;
@@ -1897,8 +1906,8 @@ void StreamManager::clearStream(HttpStream* stream) {
     clear_backend++;
 #endif
     deleteFd(stream->backend_connection.getFileDescriptor());
-    streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
-    streams_set.erase(stream->backend_connection.getFileDescriptor());
+    bck_streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
+    bck_streams_set.erase(stream->backend_connection.getFileDescriptor());
     stream->backend_connection.closeConnection();
   }
 #if DEBUG_STREAM_EVENTS_COUNT
@@ -1976,8 +1985,8 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
     clear_backend++;
 #endif
     deleteFd(stream->backend_connection.getFileDescriptor());
-    streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
-    streams_set.erase(stream->backend_connection.getFileDescriptor());
+    bck_streams_set[stream->backend_connection.getFileDescriptor()] = nullptr;
+    bck_streams_set.erase(stream->backend_connection.getFileDescriptor());
     stream->backend_connection.closeConnection();
   }
 
@@ -2023,7 +2032,7 @@ void StreamManager::stopListener(int listener_id, bool cut_connection) {
     }
   }
   if (cut_connection) {
-    for (auto it = streams_set.begin(); it != streams_set.end();) {
+    for (auto it = cl_streams_set.begin(); it != cl_streams_set.end();) {
       if (it->second->service_manager->id == listener_id) {
         auto item = it++;
         clearStream(item->second);

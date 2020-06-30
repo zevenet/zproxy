@@ -137,7 +137,8 @@ class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std:
   std::thread worker;
   std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
   std::atomic<bool> is_running{};
-  std::unordered_map<int, HttpStream *> streams_set;
+  std::unordered_map<int, HttpStream *> cl_streams_set;
+  std::unordered_map<int, HttpStream *> bck_streams_set;
 #if USE_TIMER_FD_TIMEOUT
   std::unordered_map<int, HttpStream *> timers_set;
 #endif
