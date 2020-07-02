@@ -963,9 +963,8 @@ sub getL4BackendsWeightProbability
 		# only calculate probability for servers running
 		if ( $$server{ status } eq 'up' )
 		{
-			my $delta = $$server{ weight };
+			$$server{ prob } = $$server{ weight } / ( $$farm{ prob } - $weight_sum );
 			$weight_sum += $$server{ weight };
-			$$server{ prob } = $weight_sum / $$farm{ prob };
 		}
 		else
 		{
