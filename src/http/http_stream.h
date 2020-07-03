@@ -117,4 +117,6 @@ class HttpStream : public Counter<HttpStream> {
   }
 
   std::shared_ptr<ServiceManager> service_manager;
+
+  void dumpDebugData(const char* debug_str);
 };

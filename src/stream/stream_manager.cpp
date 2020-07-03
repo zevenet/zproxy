@@ -375,37 +375,32 @@ int StreamManager::getWorkerId() { return worker_id; }
 void StreamManager::onRequestEvent(int fd) {
   HttpStream* stream = cl_streams_set[fd];
 
-  if (stream != nullptr) {
-    if (stream->client_connection.isCancelled()) {
-      clearStream(stream);
-      return;
-    }
-    if (UNLIKELY(fd != stream->client_connection.getFileDescriptor())) {
-      Logger::LogInfo("stream connection data inconsistency detected",
-                      LOG_DEBUG);
-      clearStream(stream);
-      return;
-    }
-  } else {
-#if !SM_HANDLE_ACCEPT
-    stream = new HttpStream();
-    stream->client_connection.setFileDescriptor(fd);
-    streams_set[fd] = stream;
-    if (fd != stream->client_connection.getFileDescriptor()) {
-      Logger::LogInfo("stream connection data inconsistency detected",
-                      LOG_DEBUG);
-      clearStream(stream);
-      return;
-    }
-#endif
+  if (stream == nullptr) {
     deleteFd(fd);
     ::close(fd);
     return;
   }
+
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
-
+  DEBUG_COUNTER_HIT(debug__::on_request);
+  if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
+    stream->dumpDebugData("Request pending");
+    //    Logger::logmsg(
+    //        LOG_DEBUG, "Request pending: [%s] %s -> %s [%s (%d) <- %s (%d)]",
+    //        static_cast<Service*>(stream->request.getService())->name.c_str(),
+    //        stream->response.http_message_str.data(),
+    //        stream->request.http_message_str.data(),
+    //        stream->client_connection.getPeerAddress().c_str(),
+    //        stream->client_connection.getFileDescriptor(),
+    //        stream->backend_connection.getBackend()->address.c_str(),
+    //        stream->backend_connection.getFileDescriptor());
+    stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+    stream->client_connection.disableEvents();
+    stream->backend_connection.enableWriteEvent();
+    return;
+  }
 #if PRINT_DEBUG_FLOW_BUFFERS
   Logger::logmsg(
       LOG_REMOVE, "IN buffer size: %8lu\tContent-length: %lu\tleft: %lu",
@@ -494,16 +489,6 @@ void StreamManager::onRequestEvent(int fd) {
 
   DEBUG_COUNTER_HIT(debug__::on_request);
   this->stopTimeOut(stream->client_connection.getFileDescriptor());
-  if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
-    Logger::logmsg(
-        LOG_REMOVE,
-        "Request pending: buffer size: %8lu\tContent-length: %lu\tleft:% lu ",
-        stream->client_connection.buffer_size, stream->request.content_length,
-        stream->request.message_bytes_left);
-    stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
-    deleteFd(stream->client_connection.getFileDescriptor());
-    return;
-  }
   stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
   if (stream->upgrade.pinned_connection || stream->request.hasPendingData()) {
 #ifdef CACHE_ENABLED
@@ -818,14 +803,25 @@ void StreamManager::onResponseEvent(int fd) {
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
+  if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
+    //    Logger::logmsg(LOG_REMOVE,
+    //                   "Response read pending: buffer size:
+    //                   %8lu\tContent-length: "
+    //                   "%lu\tleft:% lu ",
+    //                   stream->client_connection.buffer_size,
+    //                   stream->request.content_length,
+    //                   stream->request.message_bytes_left);
+    stream->dumpDebugData("Response pending");
+    stream->status |= helper::to_underlying(STREAM_STATUS::BCK_READ_PENDING);
+    stream->client_connection.enableWriteEvent();
+    stream->backend_connection.disableEvents();
+    return;
+  }
+  stream->dumpDebugData("ON_RESPONSE");
   if (UNLIKELY(stream->client_connection.isCancelled() ||
                stream->backend_connection
                    .isCancelled())) {  // check if client is still active
     clearStream(stream);
-    return;
-  }
-  if (stream->backend_connection.buffer_size == MAX_DATA_SIZE) {
-    stream->client_connection.enableWriteEvent();
     return;
   }
 #if PRINT_DEBUG_FLOW_BUFFERS
@@ -853,11 +849,7 @@ void StreamManager::onResponseEvent(int fd) {
 #else
   this->stopTimeOut(fd);
 #endif
-  if (stream->backend_connection.buffer_size > 0 &&
-      stream->response.getHeaderSent()) {
-    stream->client_connection.enableWriteEvent();
-    return;
-  }
+
   DEBUG_COUNTER_HIT(debug__::on_response);
   IO::IO_RESULT result;
 
@@ -972,12 +964,6 @@ void StreamManager::onResponseEvent(int fd) {
             ? "T"
             : "F");
 #endif
-
-  if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
-    stream->status |= helper::to_underlying(STREAM_STATUS::BCK_READ_PENDING);
-    deleteFd(stream->backend_connection.getFileDescriptor());
-    return;
-  }
   stream->clearStatus(STREAM_STATUS::BCK_READ_PENDING);
   if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
 #ifdef CACHE_ENABLED
@@ -1392,6 +1378,8 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
 void StreamManager::onServerWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
+  ScopeExit logStream{
+      [stream] { stream->dumpDebugData("onServerWriteEvent"); }};
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
@@ -1545,7 +1533,6 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       clearStream(stream);
       return;
     case IO::IO_RESULT::SUCCESS:
-      break;
     case IO::IO_RESULT::DONE_TRY_AGAIN:
       if (!stream->request.getHeaderSent()) {
         stream->backend_connection.enableWriteEvent();
@@ -1576,17 +1563,28 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       stream->request.message_bytes_left, IO::getResultString(result).data());
 #endif
   Time::getTime(stream->backend_connection.time_start);
-  stream->backend_connection.enableReadEvent();
   stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
   if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
+    Logger::logmsg(
+        LOG_DEBUG, "Wrote Request pending: [%s] %s -> %s [%s (%d) <- %s (%d)]",
+        static_cast<Service*>(stream->request.getService())->name.c_str(),
+        stream->response.http_message_str.data(),
+        stream->request.http_message_str.data(),
+        stream->client_connection.getPeerAddress().c_str(),
+        stream->client_connection.getFileDescriptor(),
+        stream->backend_connection.getBackend()->address.c_str(),
+        stream->backend_connection.getFileDescriptor());
     onRequestEvent(stream->client_connection.getFileDescriptor());
   }
   stream->client_connection.enableReadEvent();
+  stream->backend_connection.enableReadEvent();
 }
 
 void StreamManager::onClientWriteEvent(HttpStream* stream) {
   if(stream == nullptr) return;
   DEBUG_COUNTER_HIT(debug__::on_send_response);
+  ScopeExit logStream{
+      [stream] { stream->dumpDebugData("onClientWriteEvent"); }};
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
@@ -1781,7 +1779,6 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       clearStream(stream);
       return;
     case IO::IO_RESULT::SUCCESS:
-      break;
     case IO::IO_RESULT::DONE_TRY_AGAIN:
       if (!stream->response.getHeaderSent()) {
         // TODO:: retry with left headers data in response.
@@ -1946,7 +1943,7 @@ std::string StreamManager::handleTask(ctl::CtlTask& task) {
       std::unique_ptr<JsonObject> status{new JsonObject()};
       status->emplace(
           "HttpSteam",
-          std::make_unique<JsonDataValue>(streams_set.size()));
+          std::make_unique<JsonDataValue>(cl_streams_set.size()));
       status->emplace(
           "clear_stream",
           std::make_unique<JsonDataValue>(clear_stream));

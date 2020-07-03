@@ -101,7 +101,7 @@ public:
   char *status_message;
   char *message;             // body data start
   size_t message_length;     // body data lenght in current received message
-  size_t message_bytes_left; // content-lenght
+  ssize_t message_bytes_left;  // content-lenght
   size_t content_length;
   size_t chunk_size_left;
   /** This enumerate indicates the chunked mechanism status. */

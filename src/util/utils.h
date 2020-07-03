@@ -226,5 +226,26 @@ namespace time_helper {
       return str_time;
     }
 
-    inline std::time_t getAge(time_t creation) { return gmtTimeNow() - creation; }
-}
+    inline std::time_t getAge(time_t creation) {
+      return gmtTimeNow() - creation;
+    }
+    }  // namespace time_helper
+
+    template <typename F>
+    class ScopeExit {
+     private:
+      F _f;
+      int uncaughtExceptionCount = std::uncaught_exceptions();
+
+     public:
+      explicit ScopeExit(const F &f) : _f(f) {}
+      ScopeExit(const ScopeExit &) = delete;
+      ScopeExit &operator=(const ScopeExit &) = delete;
+
+      // f() might throw, as it can be caught normally.
+      ~ScopeExit() noexcept(noexcept(_f())) {
+        if (uncaughtExceptionCount == std::uncaught_exceptions()) {
+          _f();
+        }
+      }
+    };

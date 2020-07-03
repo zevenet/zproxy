@@ -18,7 +18,7 @@ void StreamDataLogger::setLogData(HttpStream* stream, ListenerConfig& listener_c
 }
 
 void StreamDataLogger::logTransaction(HttpStream& stream) {
-  if (Logger::log_level < LOG_INFO) return;
+  if (Logger::log_level != LOG_INFO) return;
   std::string agent;
   std::string referer;
   std::string host;
