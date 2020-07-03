@@ -308,7 +308,10 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent) {
 IO::IO_RESULT Connection::writeTo(int target_fd,
                                   http_parser::HttpData &http_data) {
   //  PRINT_BUFFER_SIZE
-  if (http_data.iov_size == 0) http_data.prepareToSend();
+  if (http_data.iov_size == 0) {
+    buffer_offset = buffer_size;
+    http_data.prepareToSend();
+  }
 
   size_t nwritten = 0;
   size_t iovec_written = 0;
@@ -321,7 +324,8 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   //                IO::getResultString(result).data());
   if (result != IO::IO_RESULT::SUCCESS) return result;
 
-  buffer_size = 0;  // buffer_offset;
+  buffer_size = buffer_size - buffer_offset;
+  if (buffer_size == 0) buffer_offset = 0;
   http_data.message_length = 0;
   http_data.setHeaderSent(true);
 #if PRINT_DEBUG_FLOW_BUFFERS

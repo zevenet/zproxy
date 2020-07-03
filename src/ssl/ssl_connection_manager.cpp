@@ -544,7 +544,10 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   if (!target_ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
-  if (http_data.iov_size == 0) http_data.prepareToSend();
+  if (http_data.iov_size == 0) {
+    ssl_connection.buffer_offset = ssl_connection.buffer_size;
+    http_data.prepareToSend();
+  }
 
   size_t nwritten = 0;
   size_t iovec_written = 0;
@@ -556,7 +559,10 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
 
   if (result != IO::IO_RESULT::SUCCESS) return result;
 
-  ssl_connection.buffer_size = 0;  // buffer_offset;
+  ssl_connection.buffer_size =
+      ssl_connection.buffer_size - ssl_connection.buffer_offset;
+  if (ssl_connection.buffer_size == 0) ssl_connection.buffer_offset = 0;
+
   http_data.message_length = 0;
   http_data.setHeaderSent(true);
   http_data.iov_size = 0;
