@@ -308,10 +308,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
           break;
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
           request.content_length =
-              static_cast<size_t>(std::atoi(request.headers[i].value));
-          if ((request.content_length - request.message_length) > 0)
-            request.message_bytes_left =
-                request.content_length - request.message_length;
+              static_cast<size_t>(std::atoi(request.headers[i].value));         
           continue;
         }
         case http::HTTP_HEADER_NAME::HOST: {
@@ -339,6 +336,11 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
     }
   }
   // waf
+  if (request.content_length > 0 &&
+      (request.content_length - request.message_length) > 0) {
+    request.message_bytes_left =
+        request.content_length - request.message_length;
+  }
   if(connection_close_pending && request.content_length == 0 && request.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED){
     //we have unknown amount of body data pending, wait until connection is closed
     //FIXME:: As workaround we use chunked
@@ -385,14 +387,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
           if(header_value.find("close") != std::string::npos){
             connection_close_pending = true;
           }
+          continue;
         }
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
           stream.response.content_length =
               static_cast<size_t>(std::atoi(header_value.data()));
-          if ((stream.response.content_length -
-               stream.response.message_length) > 0)
-            stream.response.message_bytes_left =
-                stream.response.content_length - stream.response.message_length;
           continue;
         }
         case http::HTTP_HEADER_NAME::CONTENT_LOCATION:
@@ -542,6 +541,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
         break;
       }
     }
+  }
+  if (stream.response.content_length > 0 &&
+      (stream.response.content_length - stream.response.message_length) > 0) {
+    stream.response.message_bytes_left =
+        stream.response.content_length - stream.response.message_length;
   }
   if(connection_close_pending && response.content_length == 0 && response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED){
     //we have unknown amount of body data pending, wait until connection is closed
