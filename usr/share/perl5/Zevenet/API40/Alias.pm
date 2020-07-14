@@ -95,19 +95,18 @@ sub set_alias
 		}
 	}
 
-	if ( !exists $alias_list->{ $id } )
-	{
-		my $msg = "The $type $id has not been found";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	&setAlias( $type, $id, $json_obj->{ alias } );
-
 	my $body = {
 				 description => $desc,
 				 success     => "true",
 				 message     => "Alias for $id has been updated successfully"
 	};
+
+	if ( !exists $alias_list->{ $id } )
+	{
+		$body->{ message } = "Alias for $id has been created successfully";
+	}
+
+	&setAlias( $type, $id, $json_obj->{ alias } );
 
 	return &httpResponse( { code => 200, body => $body } );
 }
@@ -157,12 +156,6 @@ sub add_alias
 
 	my $alias_list = &getAlias( $type );
 
-	if ( exists $alias_list->{ $id } )
-	{
-		my $msg = "The alias for $type $id exists";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
 	foreach my $key ( keys %{ $alias_list } )
 	{
 		if ( $alias_list->{ $key } eq $json_obj->{ alias } )
@@ -179,6 +172,10 @@ sub add_alias
 				 success     => "true",
 				 message     => "Alias for $id has been created successfully"
 	};
+	if ( exists $alias_list->{ $id } )
+	{
+		$body->{ message } = "Alias for $id has been updated successfully";
+	}
 
 	return &httpResponse( { code => 200, body => $body } );
 }
