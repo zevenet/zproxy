@@ -592,6 +592,21 @@ sub enable_cluster
 			die $msg;
 		}
 
+		#configure instance-id if AWS
+		my $cl_prov       = &getGlobalConfiguration( 'cloud_provider' );
+		my $cloud_address = &getGlobalConfiguration( 'cloud_address_metadata' );
+		my $wget          = &getGlobalConfiguration( 'wget' );
+		if ( $cl_prov eq "aws" )
+		{
+			#obtain local and remote instance id
+			my $remote_instance_id = &runRemotely(
+						"$wget -q -O - -T 5 http://$cloud_address/latest/meta-data/instance-id",
+						$zcl_conf->{ $remote_hostname }->{ ip } );
+			my $instance_id = &getInstanceId();
+			$zcl_conf->{ $local_hostname }->{ instance_id }  = $instance_id;
+			$zcl_conf->{ $remote_hostname }->{ instance_id } = $remote_instance_id;
+		}
+
 		&setZClusterConfig( $zcl_conf ) or die;
 
 		## Starting cluster services ##

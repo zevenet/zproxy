@@ -295,12 +295,9 @@ sub reassignInterfaces
 	my $aws           = &getGlobalConfiguration( 'aws_bin' );
 	my $wget          = &getGlobalConfiguration( 'wget' );
 
-	my $remote_instance_id = &runRemotely(
-				"$wget -q -O - -T 5 http://$cloud_address/latest/meta-data/instance-id",
-				$zcl_conf->{ $remote_hn }->{ ip } );
-
-	my $instance_id = &getInstanceId();
-	my $error       = 0;
+	my $remote_instance_id = $zcl_conf->{ $remote_hn }->{ instance_id };
+	my $instance_id        = &getInstanceId();
+	my $error              = 0;
 
 	if ( $instance_id && $remote_instance_id )
 	{
@@ -310,6 +307,8 @@ sub reassignInterfaces
 			"$aws ec2 describe-instances --instance-ids $remote_instance_id --query \"Reservations[*].Instances[*].NetworkInterfaces[*]\""
 		);
 
+		$query =~ s/true/"true"/g;
+		$query =~ s/false/"false"/g;
 		my $json = eval { JSON::XS::decode_json( $query ) };
 		my @virtuals_ip = @{ $json->[0]->[0] };
 
@@ -320,8 +319,11 @@ sub reassignInterfaces
 
 			foreach my $line ( @{ $network->{ PrivateIpAddresses } } )
 			{
-				if ( !$line->{ Primary } )
+				if ( $line->{ Primary } eq "false" )
 				{
+					&zenlog(
+						"Changing to this current instance $instance_id the MAC for the source: $line->{ PrivateIpAddress }"
+					);
 					$error = &logAndRun(
 						"$aws ec2 assign-private-ip-addresses --allow-reassignment --network-interface-id $network_iface[0]->{ NetworkInterfaceId } --private-ip-addresses $line->{ PrivateIpAddress }"
 					);
