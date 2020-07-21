@@ -51,26 +51,27 @@ HttpStream::~HttpStream() {
 #endif
 }
 
-void HttpStream::dumpDebugData(const char* debug_str , const char * data ) {
+void HttpStream::dumpDebugData(HttpStream *stream, const char* debug_str , const char * data ) {
+  if(stream == nullptr) return;
   Logger::logmsg(
       LOG_DEBUG,
       "\e[1;32m[%lu][%s][%.*s]\e[0m cl_buff: %5lu cl_off: %lu CL: %lu R: %d "
       "HS: %s CHR: %d CH: %s TP:%s RP: %s"
       " | bck_buff: %5lu\tbck_off: %lu\tCL: %lu\tR: %d "
-      "HS: %s CHR: %d CH: %s TP:%s RP: %s\t%s", stream_id,
-      debug_str, request.path_length, request.path,
-      client_connection.buffer_size, client_connection.buffer_offset,
-      request.content_length, request.message_bytes_left,
-      request.getHeaderSent() ? "T" : "F", request.chunk_size_left,
-      request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED ? "T"
+      "HS: %s CHR: %d CH: %s TP:%s RP: %s\t%s", stream->stream_id,
+      debug_str, stream->request.path_length, stream->request.path,
+      stream->client_connection.buffer_size, stream->client_connection.buffer_offset,
+      stream->request.content_length, stream->request.message_bytes_left,
+      stream->request.getHeaderSent() ? "T" : "F", stream->request.chunk_size_left,
+      stream->request.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED ? "T"
                                                                        : "F",
-      this->hasStatus(STREAM_STATUS::REQUEST_PENDING) ? "T" : "F",
-      this->hasStatus(STREAM_STATUS::CL_READ_PENDING) ? "T" : "F",
-      backend_connection.buffer_size, backend_connection.buffer_offset,
-      response.content_length, response.message_bytes_left,
-      response.getHeaderSent() ? "T" : "F", response.chunk_size_left,
-      response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED ? "T"
+      stream->hasStatus(STREAM_STATUS::REQUEST_PENDING) ? "T" : "F",
+      stream->hasStatus(STREAM_STATUS::CL_READ_PENDING) ? "T" : "F",
+      stream->backend_connection.buffer_size, stream->backend_connection.buffer_offset,
+      stream->response.content_length, stream->response.message_bytes_left,
+      stream->response.getHeaderSent() ? "T" : "F", stream->response.chunk_size_left,
+      stream->response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED ? "T"
                                                                         : "F",
-      this->hasStatus(STREAM_STATUS::RESPONSE_PENDING) ? "T" : "F",
-      this->hasStatus(STREAM_STATUS::BCK_READ_PENDING) ? "T" : "F", data);
+      stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING) ? "T" : "F",
+      stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING) ? "T" : "F", data);
 }

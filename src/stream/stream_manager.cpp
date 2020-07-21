@@ -297,7 +297,7 @@ void StreamManager::onRequestEvent(int fd) {
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{
-      [stream, &extra_log] { stream->dumpDebugData("OnRequest",extra_log.data()); }};
+      [stream, &extra_log] {  HttpStream::dumpDebugData(stream,"OnRequest",extra_log.data()); }};
 #endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
@@ -710,7 +710,8 @@ void StreamManager::onResponseEvent(int fd) {
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{[stream, &extra_log] {
-    stream->dumpDebugData("OnResponse", extra_log.data());
+    //check not null
+     HttpStream::dumpDebugData(stream,"OnResponse", extra_log.data());
   }};
 #endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
@@ -1289,7 +1290,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{[stream, &extra_log] {
-    stream->dumpDebugData("onServerW", extra_log.data());
+     HttpStream::dumpDebugData(stream,"onServerW", extra_log.data());
   }};
 #endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
@@ -1492,8 +1493,8 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_response);
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
-   ScopeExit logStream{
-      [stream, &extra_log] { stream->dumpDebugData("onClientW",extra_log.data()); }};
+  ScopeExit logStream{
+      [stream, &extra_log] {  HttpStream::dumpDebugData(stream,"onClientW",extra_log.data()); }};
 #endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
@@ -1778,7 +1779,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   stream->clearStatus(STREAM_STATUS::RESPONSE_PENDING);
   if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
 #if EXTENDED_DEBUG_LOG
-    stream->dumpDebugData("ClientW-ReadPending", "WROTE RESP PENDING ");
+     HttpStream::dumpDebugData(stream,"ClientW-ReadPending", "PENDING ");
 #endif
     stream->backend_connection.enableReadEvent();
     onResponseEvent(stream->backend_connection.getFileDescriptor());
