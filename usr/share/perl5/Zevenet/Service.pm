@@ -524,6 +524,8 @@ sub disable_cluster
 
 	my $zcl_configured = &getZClusterStatus();
 	&enableAllInterfacesDiscovery() if $zcl_configured;
+	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
+	&logAndRun( "echo '' > $znode_status_file" ) if $zcl_configured;
 
 	return 0;
 }
