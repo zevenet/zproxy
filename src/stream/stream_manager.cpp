@@ -135,9 +135,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
           auto stream = bck_streams_set[fd];
           if (stream == nullptr) {
             char addr[150];
-            Network::getPeerAddress(fd, addr, 150);
-            Logger::logmsg(LOG_DEBUG,
-                           "Remote backend host %s closed connection prematurely ", addr);
+            Logger::logmsg(
+                LOG_DEBUG,
+                "Remote backend host %s closed connection prematurely ",
+                Network::getPeerAddress(fd, addr, 150) != nullptr ? addr : "");
             deleteFd(fd);
             ::close(fd);
             return;
@@ -150,9 +151,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
           auto stream = cl_streams_set[fd];
           if (stream == nullptr) {
             char addr[150];
-            Network::getPeerAddress(fd, addr, 150);
-            Logger::logmsg(LOG_DEBUG,
-                           "Remote client host %s closed connection prematurely ", addr);
+            Logger::logmsg(
+                LOG_DEBUG,
+                "Remote client host %s closed connection prematurely ",
+                Network::getPeerAddress(fd, addr, 150) != nullptr ? addr : "");
             deleteFd(fd);
             ::close(fd);
             return;
