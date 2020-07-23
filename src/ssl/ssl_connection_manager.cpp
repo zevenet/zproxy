@@ -83,31 +83,35 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
-  if ((MAX_DATA_SIZE -
-       (ssl_connection.buffer_size + ssl_connection.buffer_offset)) == 0)
+  if (MAX_DATA_SIZE == ssl_connection.buffer_size)
     return IO::IO_RESULT::FULL_BUFFER;
   //  Logger::logmsg(LOG_DEBUG, "> handleRead");
   int rc = -1;
-  int bytes_read = 0;
+  size_t total_bytes_read = 0;
   for (;;) {
     BIO_clear_retry_flags(ssl_connection.io);
     ERR_clear_error();
-    rc = BIO_read(ssl_connection.io,
-                  ssl_connection.buffer + ssl_connection.buffer_offset +
-                      ssl_connection.buffer_size,
-                  static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size -
-                                   ssl_connection.buffer_offset));
-    //    Logger::logmsg(LOG_DEBUG, "BIO_read return code %d buffer size %d ERRNO %s", rc,
-    //                  ssl_connection.buffer_size, std::strerror(errno));
+    size_t bytes_read = 0;
+    rc = BIO_read_ex(
+        ssl_connection.io,
+        ssl_connection.buffer + ssl_connection.buffer_offset +
+            ssl_connection.buffer_size,
+        static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size -
+                         ssl_connection.buffer_offset),
+        &bytes_read);
+    Logger::logmsg(LOG_DEBUG,
+                   "BIO_read return code %d buffer size %d bytes_read %d", rc,
+                   ssl_connection.buffer_size, bytes_read);
+
     if (rc == 0) {
-      if (bytes_read > 0)
+      if (total_bytes_read > 0)
         return IO::IO_RESULT::SUCCESS;
       else {
         return IO::IO_RESULT::ZERO_DATA;
       }
     } else if (rc < 0) {
       if (BIO_should_retry(ssl_connection.io)) {
-        if (bytes_read > 0)
+        if (total_bytes_read > 0)
           return IO::IO_RESULT::SUCCESS;
         else {
           return IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -115,14 +119,17 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
       }
       return IO::IO_RESULT::ERROR;
     }
-    bytes_read += rc;
-    ssl_connection.buffer_size += static_cast<size_t>(rc);
-    return IO::IO_RESULT::SUCCESS;
+    total_bytes_read += bytes_read;
+    ssl_connection.buffer_size += static_cast<size_t>(bytes_read);
+    if (static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size -
+                         ssl_connection.buffer_offset) == 0)
+      return IO::IO_RESULT::FULL_BUFFER;
+    // return IO::IO_RESULT::SUCCESS;
   }
 }
 
 IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, const char *data, size_t data_size,
-                                                size_t &written, bool flush_data) {
+                                                size_t &total_written, bool flush_data) {
   if (!ssl_connection.ssl_connected) {
     return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
   }
@@ -131,19 +138,29 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
   int rc = -1;
   //  // FIXME: Buggy, used just for test
   //  Logger::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
-  written = 0;
+  total_written = 0;
   ERR_clear_error();
   for (;;) {
+    size_t written = 0;
     BIO_clear_retry_flags(ssl_connection.io);
-    rc = BIO_write(ssl_connection.io, data + written, static_cast<int>(data_size - written));
-    //    Logger::logmsg(LOG_DEBUG, "BIO_write return code %d writen %d", rc, written);
+    rc = BIO_write_ex(ssl_connection.io, data + total_written, static_cast<int>(data_size - total_written), &written);
+//    if(rc != written){
+//      Logger::logmsg(LOG_DEBUG, "BIO_write_ex return code %d written: %d total %d size: %d", rc,written, total_written, data_size);
+//    }
+
     if (rc == 0) {
-      result = IO::IO_RESULT::DONE_TRY_AGAIN;
+      if (total_written > 0) {
+        if ((data_size - total_written) == 0)
+          result = IO::IO_RESULT::SUCCESS;
+        else
+          result = IO::IO_RESULT::DONE_TRY_AGAIN;
+      } else
+        result = IO::IO_RESULT::ZERO_DATA;
       break;
     } else if (rc < 0) {
       if (BIO_should_retry(ssl_connection.io)) {
         {
-          if ((data_size - written) == 0)
+          if ((data_size - total_written) == 0)
             result = IO::IO_RESULT::SUCCESS;
           else
             result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -155,12 +172,11 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
           break;
         }
       }
-    } else {
-      written += static_cast<size_t>(rc);
-      if ((data_size - written) == 0) {
-        result = IO::IO_RESULT::SUCCESS;
-        break;
-      }
+    }
+    total_written += static_cast<size_t>(written);
+    if ((data_size - total_written) == 0) {
+      result = IO::IO_RESULT::SUCCESS;
+      break;
     }
   }
   if (flush_data && result == IO::IO_RESULT::SUCCESS) {

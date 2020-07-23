@@ -110,19 +110,19 @@ class SSLConnectionManager {
   /**
    * @brief Writes to the @p target_ssl_connection.
    *
-   * Writes the @p data to the @p ssl_connection and set the written bytes in
-   * @p written. If the @p flush_data is @c true, the data is deleted from the
+   * Writes the @p data to the @p ssl_connection and set the total_written bytes in
+   * @p total_written. If the @p flush_data is @c true, the data is deleted from the
    * buffer.
    *
    * @param ssl_connection is the Connection to write to.
    * @param data is the data to write.
    * @param data_size bytes to write.
-   * @param written is the amount of data written.
+   * @param total_written is the amount of data total_written.
    * @param flush_data true if the data is deleted after the write operation.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
   static IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data,
-                                   size_t data_size, size_t &written,
+                                   size_t data_size, size_t &total_written,
                                    bool flush_data = true);
 
   /**
