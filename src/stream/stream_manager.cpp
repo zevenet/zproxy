@@ -23,97 +23,12 @@
 #include <cstdio>
 #include <thread>
 #include "../handlers/https_manager.h"
-#include "../util/network.h"
 #include "stream_data_logger.h"
 
 #ifdef ON_FLY_COMRESSION
 #include "../handlers/compression.h"
 #endif
 
-#if HELLO_WORLD_SERVER
-void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
-                                EVENT_GROUP event_group) {
-  switch (event_type) {
-    case READ_ONESHOT: {
-      HttpStream* stream = streams_set[fd];
-      if (stream == nullptr) {
-        stream = new HttpStream();
-        stream->client_connection.setFileDescriptor(fd);
-        streams_set[fd] = stream;
-      }
-      auto connection = stream->getConnection(fd);
-      connection->read();
-      connection->buffer_size = 1;  // reset buffer size to avoid buffer
-                                    // overflow due to not consuming buffer
-                                    // data.
-      updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
-      break;
-    }
-
-    case READ: {
-      HttpStream* stream = streams_set[fd];
-      if (stream == nullptr) {
-        stream = new HttpStream();
-        stream->client_connection.setFileDescriptor(fd);
-        streams_set[fd] = stream;
-      }
-      auto connection = stream->getConnection(fd);
-      connection->read();
-      connection->buffer_size = 1;
-      updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
-    }
-
-    case WRITE: {
-      auto stream = streams_set[fd];
-      if (stream == nullptr) {
-        Logger::LogInfo("Connection closed prematurely" + std::to_string(fd));
-        return;
-      }
-      auto io_result = stream->client_connection.write(this->e200.c_str(),
-                                                       this->e200.length());
-      switch (io_result) {
-        case IO::ERROR:
-        case IO::FD_CLOSED:
-        case IO::FULL_BUFFER:
-          Logger::LogInfo("Something happend sentid e200", LOG_DEBUG);
-          break;
-        case IO::SUCCESS:
-        case IO::DONE_TRY_AGAIN:
-          updateFd(fd, READ, EVENT_GROUP::CLIENT);
-          break;
-      }
-
-      break;
-    }
-    case CONNECT: {
-      int new_fd;
-      //      do {
-      new_fd = listener_connection.doAccept();
-      if (new_fd > 0) {
-        addStream(new_fd);
-      }
-      //      } while (new_fd > 0);
-      return;
-    }
-    case ACCEPT:
-      break;
-    case DISCONNECT: {
-      auto stream = streams_set[fd];
-      if (stream == nullptr) {
-        Logger::LogInfo("Stream doesn't exist for " + std::to_string(fd));
-        deleteFd(fd);
-        ::close(fd);
-        return;
-      }
-      /*      streams_set.erase(fd);
-      delete stream*/
-      ;
-      clearStream(stream);
-      break;
-    }
-  }
-}
-#else
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
   switch (event_type) {
@@ -258,7 +173,6 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
       ::close(fd);
   }
 }
-#endif
 
 void StreamManager::stop() {
   is_running = false;
