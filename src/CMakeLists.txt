@@ -38,7 +38,7 @@ add_definitions(-DDEBUG_SSL=0)
 add_definitions(-DENABLE_SSL_SESSION_CACHING=0)
 add_definitions(-DENABLE_ZERO_COPY=0)
 add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
-add_definitions(-DENABLE_QUICK_RESPONSE=1)
+add_definitions(-DENABLE_QUICK_RESPONSE=0)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
 add_definitions(-DDEBUG_HTTP_HEADERS=0)
 add_definitions(-DMALLOC_TRIM_TIMER=1 -DMALLOC_TRIM_TIMER_INTERVAL=60) # force release of memory back to the system
