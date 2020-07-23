@@ -443,7 +443,7 @@ void StreamManager::onRequestEvent(int fd) {
   http_parser::PARSE_RESULT parse_result;
   // do {
   parse_result = stream->request.parseRequest(
-      stream->client_connection.buffer, stream->client_connection.buffer_size,
+      stream->client_connection.buffer + stream->client_connection.buffer_offset, stream->client_connection.buffer_size,
       &parsed);  // parsing http data as response structured
 
   switch (parse_result) {
@@ -577,9 +577,6 @@ void StreamManager::onRequestEvent(int fd) {
   static size_t total_request;
   total_request++;
   stream->response.reset_parser();
-  stream->backend_connection.buffer_offset = 0;
-  stream->client_connection.buffer_offset = 0;
-  stream->backend_connection.buffer_size = 0;
   switch (bck->backend_type) {
     case BACKEND_TYPE::REMOTE: {
       bool need_new_backend = true;
