@@ -294,7 +294,11 @@ void StreamManager::onRequestEvent(int fd) {
     ::close(fd);
     return;
   }
-
+#if EXTENDED_DEBUG_LOG
+  std::string extra_log;
+  ScopeExit logStream{
+      [stream, &extra_log] { stream->dumpDebugData("OnRequest",extra_log.data()); }};
+#endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
@@ -328,7 +332,9 @@ void StreamManager::onRequestEvent(int fd) {
   } else {
     result = stream->client_connection.read();
   }
-
+#if EXTENDED_DEBUG_LOG
+  extra_log = IO::getResultString(result);
+#endif
   switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -711,18 +717,19 @@ void StreamManager::onResponseEvent(int fd) {
     ::close(fd);
     return;
   }
+#if EXTENDED_DEBUG_LOG
+  std::string extra_log;
+  ScopeExit logStream{[stream, &extra_log] {
+    stream->dumpDebugData("OnResponse", extra_log.data());
+  }};
+#endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
   if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
-    //    Logger::logmsg(LOG_REMOVE,
-    //                   "Response read pending: buffer size:
-    //                   %8lu\tContent-length: "
-    //                   "%lu\tleft:% lu ",
-    //                   stream->client_connection.buffer_size,
-    //                   stream->request.content_length,
-    //                   stream->request.message_bytes_left);
-    stream->dumpDebugData("Response pending");
+#if EXTENDED_DEBUG_LOG
+    extra_log = "RESPONSE_PENDING";
+#endif
     stream->status |= helper::to_underlying(STREAM_STATUS::BCK_READ_PENDING);
     stream->client_connection.enableWriteEvent();
     stream->backend_connection.disableEvents();
@@ -805,6 +812,9 @@ void StreamManager::onResponseEvent(int fd) {
       stream->response.message_bytes_left,
       stream->response.getHeaderSent() ? "true" : "false",
       stream->response.chunk_size_left, IO::getResultString(result).data());
+#endif
+#if EXTENDED_DEBUG_LOG
+  extra_log = IO::getResultString(result);
 #endif
   switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
@@ -1291,8 +1301,12 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
 void StreamManager::onServerWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
-  ScopeExit logStream{
-      [stream] { stream->dumpDebugData("onServerWriteEvent"); }};
+#if EXTENDED_DEBUG_LOG
+  std::string extra_log;
+  ScopeExit logStream{[stream, &extra_log] {
+    stream->dumpDebugData("onServerW", extra_log.data());
+  }};
+#endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
@@ -1340,6 +1354,9 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
             stream->backend_connection.getFileDescriptor(), stream->request);
 #endif
     }
+#if EXTENDED_DEBUG_LOG
+    extra_log = IO::getResultString(result);
+#endif
     switch (result) {
       case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
       case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -1412,7 +1429,9 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
     result = stream->client_connection.writeTo(stream->backend_connection,
                                                stream->request);
   }
-
+#if EXTENDED_DEBUG_LOG
+  extra_log = IO::getResultString(result);
+#endif
   switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -1474,15 +1493,9 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   Time::getTime(stream->backend_connection.time_start);
   stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
   if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
-    Logger::logmsg(
-        LOG_DEBUG, "Wrote Request pending: [%s] %s -> %s [%s (%d) <- %s (%d)]",
-        static_cast<Service*>(stream->request.getService())->name.c_str(),
-        stream->response.http_message_str.data(),
-        stream->request.http_message_str.data(),
-        stream->client_connection.getPeerAddress().c_str(),
-        stream->client_connection.getFileDescriptor(),
-        stream->backend_connection.getBackend()->address.c_str(),
-        stream->backend_connection.getFileDescriptor());
+#if EXTENDED_DEBUG_LOG
+    stream->dumpDebugData("ClientW-ReadPending", "WROTE REQ PENDING ");
+#endif
     onRequestEvent(stream->client_connection.getFileDescriptor());
   }
   stream->client_connection.enableReadEvent();
@@ -1492,8 +1505,11 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
 void StreamManager::onClientWriteEvent(HttpStream* stream) {
   if(stream == nullptr) return;
   DEBUG_COUNTER_HIT(debug__::on_send_response);
-  ScopeExit logStream{
-      [stream] { stream->dumpDebugData("onClientWriteEvent"); }};
+#if EXTENDED_DEBUG_LOG
+  std::string extra_log;
+   ScopeExit logStream{
+      [stream, &extra_log] { stream->dumpDebugData("onClientW",extra_log.data()); }};
+#endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
@@ -1526,6 +1542,9 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
             stream->client_connection.getFileDescriptor(), stream->response);
 #endif
     }
+#if EXTENDED_DEBUG_LOG
+    extra_log = IO::getResultString(result);
+#endif
     switch (result) {
       case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
       case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -1626,6 +1645,9 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
     result = stream->backend_connection.writeTo(stream->client_connection,
                                                 stream->response);
   }
+#if EXTENDED_DEBUG_LOG
+  extra_log = IO::getResultString(result);
+#endif
   switch (result) {
     case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
     case IO::IO_RESULT::SSL_NEED_HANDSHAKE: {
@@ -1891,8 +1913,9 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
-//
-//  Logger::LogInfo("Backend closed connection", LOG_DEBUG);
+#if EXTENDED_DEBUG_LOG
+    stream->dumpDebugData("onServerDisconnect", "DISCONNECT");
+#endif
   if(stream->backend_connection.getFileDescriptor() > 0) {
 #if DEBUG_STREAM_EVENTS_COUNT
     clear_backend++;

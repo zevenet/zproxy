@@ -93,11 +93,10 @@ class HttpStream : public Counter<HttpStream> {
   HttpRequest request;
   /** HttpResponse containing the response sent by the backend. */
   HttpResponse response;
-  /** This struct indicates the upgrade mechanism status. */
-  UpgradeStatus upgrade;
+
   uint32_t status{0x0};
   uint32_t options{0x0};
-
+  uint32_t stream_id{0};
   inline bool hasOption(STREAM_OPTION _option) const{
     return (options & helper::to_underlying(_option)) != 0u;
   }
@@ -116,5 +115,5 @@ class HttpStream : public Counter<HttpStream> {
 
   std::shared_ptr<ServiceManager> service_manager;
 
-  void dumpDebugData(const char* debug_str);
+  void dumpDebugData(const char* debug_str, const char * data);
 };
