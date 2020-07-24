@@ -677,7 +677,7 @@ bool http_manager::replyRedirect(int code, const std::string &url,
     std::strncpy(stream.backend_connection.buffer, response_.data() + sent,
                  response_.size() - sent);
     stream.backend_connection.buffer_size = response_.size() - sent;
-    stream.upgrade.pinned_connection = true;
+    stream.options |= helper::to_underlying(STREAM_OPTION::PINNED_CONNECTION);
     stream.client_connection.enableWriteEvent();
     return false;
   }

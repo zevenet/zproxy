@@ -35,15 +35,13 @@
 #include <modsecurity/transaction.h>
 #endif
 
-struct UpgradeStatus {
-  http::UPGRADE_PROTOCOLS protocol{http::UPGRADE_PROTOCOLS::NONE};
-  bool pinned_connection{false};
-};
 
 enum class STREAM_OPTION:uint32_t {
   NO_OPT = 0x0,
   PINNED_CONNECTION = 0x1,
   H2 = 0x1 << 1,
+  H2C = 0x1 << 2,
+  WS = 0x1 << 3 ,//web socket
 };
 
 enum class STREAM_STATUS : uint32_t {

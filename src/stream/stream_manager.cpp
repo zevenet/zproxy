@@ -490,7 +490,7 @@ void StreamManager::onRequestEvent(int fd) {
   DEBUG_COUNTER_HIT(debug__::on_request);
   this->stopTimeOut(stream->client_connection.getFileDescriptor());
   stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
-  if (stream->upgrade.pinned_connection || stream->request.hasPendingData()) {
+  if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) || stream->request.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->request.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
       auto pending_chunk_bytes = http_manager::handleChunkedData(
@@ -769,7 +769,7 @@ void StreamManager::onRequestEvent(int fd) {
        * pin the connection if the PinnedConnection service config
        * parameter is true. Note: The first request must be HTTP. */
       if (service->service_config.pinned_connection) {
-        stream->upgrade.pinned_connection = true;
+        stream->options |= helper::to_underlying(STREAM_OPTION::PINNED_CONNECTION);
       }
       stream->backend_connection.enableWriteEvent();
       return;
@@ -964,8 +964,17 @@ void StreamManager::onResponseEvent(int fd) {
             ? "T"
             : "F");
 #endif
+  // disable response timeout timerfd
+#if USE_TIMER_FD_TIMEOUT
+  if (stream->backend_connection.getBackend()->response_timeout > 0) {
+    stream->timer_fd.unset();
+    events::EpollManager::deleteFd(stream->timer_fd.getFileDescriptor());
+  }
+#else
+  this->stopTimeOut(fd);
+#endif
   stream->clearStatus(STREAM_STATUS::BCK_READ_PENDING);
-  if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
+  if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) || stream->response.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
       auto pending_chunk_bytes = http_manager::handleChunkedData(
@@ -1357,7 +1366,7 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
          * pin the connection if the PinnedConnection service config
          * parameter is true. Note: The first request must be HTTP. */
         if (service->service_config.pinned_connection) {
-          stream->upgrade.pinned_connection = true;
+          stream->options |= helper::to_underlying(STREAM_OPTION::PINNED_CONNECTION);
         }
         break;
       }
@@ -1415,7 +1424,8 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
    * , then we need to write the buffer content without
    * applying any kind of modification. */
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  if (stream->upgrade.pinned_connection || stream->request.hasPendingData()) {
+  if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)
+      || stream->request.hasPendingData()) {
     size_t written = 0;
 
     if (stream->backend_connection.getBackend()->isHttps()) {
@@ -1472,7 +1482,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
                    stream->request.message_bytes_left, written,
                    IO::getResultString(result).data());
 #endif
-    if (!stream->upgrade.pinned_connection) {
+    if (!stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)) {
       if (stream->request.chunked_status ==
               http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK &&
           stream->client_connection.buffer_size == 0) {
@@ -1606,7 +1616,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
    * content without applying any kind of modification. */
-  if (stream->upgrade.pinned_connection || stream->response.hasPendingData()) {
+  if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) || stream->response.hasPendingData()) {
     size_t written = 0;
 
     if (stream->service_manager->is_https_listener) {
@@ -1666,7 +1676,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
         clearStream(stream);
         return;
     }
-    if (!stream->upgrade.pinned_connection) {
+    if (!stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)) {
       if (stream->response.chunked_status ==
               http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK &&
           stream->backend_connection.buffer_size == 0) {
@@ -1820,13 +1830,25 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   if (stream->request.upgrade_header &&
       stream->request.connection_header_upgrade &&
       stream->response.http_status_code == 101) {
-    stream->upgrade.pinned_connection = true;
+    stream->options |= helper::to_underlying(STREAM_OPTION::PINNED_CONNECTION);
     std::string upgrade_header_value;
     stream->request.getHeaderValue(http::HTTP_HEADER_NAME::UPGRADE,
                                    upgrade_header_value);
     auto it = http::http_info::upgrade_protocols.find(upgrade_header_value);
-    if (it != http::http_info::upgrade_protocols.end())
-      stream->upgrade.protocol = it->second;
+    if (it != http::http_info::upgrade_protocols.end()) {
+      switch (it->second) {
+        case UPGRADE_PROTOCOLS::NONE:
+          break;
+        case UPGRADE_PROTOCOLS::WEBSOCKET:
+          stream->options |= helper::to_underlying(STREAM_OPTION::WS);
+          break;
+        case UPGRADE_PROTOCOLS::H2C:
+          stream->options |= helper::to_underlying(STREAM_OPTION::H2C);
+          break;
+        case UPGRADE_PROTOCOLS::TLS:
+          break;
+      }
+    }
   }
   stream->clearStatus(STREAM_STATUS::RESPONSE_PENDING);
   if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
