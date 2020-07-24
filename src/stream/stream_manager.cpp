@@ -817,13 +817,6 @@ void StreamManager::onResponseEvent(int fd) {
     stream->backend_connection.disableEvents();
     return;
   }
-  stream->dumpDebugData("ON_RESPONSE");
-  if (UNLIKELY(stream->client_connection.isCancelled() ||
-               stream->backend_connection
-                   .isCancelled())) {  // check if client is still active
-    clearStream(stream);
-    return;
-  }
 #if PRINT_DEBUG_FLOW_BUFFERS
   auto buffer_size_in = stream->backend_connection.buffer_size;
   if (stream->backend_connection.buffer_size != 0)
@@ -1392,11 +1385,6 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
-  if (UNLIKELY(stream->backend_connection.isCancelled())) {
-    clearStream(stream);
-    return;
-  }
-  // StreamWatcher watcher(*stream);
   int fd = stream->backend_connection.getFileDescriptor();
   // Send client request to backend server
 #if USE_TIMER_FD_TIMEOUT
@@ -1598,11 +1586,6 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
-
-  if (UNLIKELY(stream->client_connection.isCancelled())) {
-    clearStream(stream);
-    return;
-  }
 
 #if PRINT_DEBUG_FLOW_BUFFERS
   Logger::logmsg(
