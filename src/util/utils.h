@@ -73,7 +73,7 @@ inline std::string getResultString(IO_RESULT result) {
   // case  IO_RESULT::SSL_HANDSHAKE_START: return "// SSL_HANDSHAKE_START";
   // case  IO_RESULT::SSL_HANDSHAKE_DONE: return "// SSL_HANDSHAKE_DONE";
   default:
-    return "result reason not found";
+    return "UNKNOW";
   }
 }
 
