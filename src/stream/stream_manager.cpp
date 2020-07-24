@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <thread>
 #include "../handlers/https_manager.h"
+#include "../util/network.h"
 #include "stream_data_logger.h"
 
 #ifdef ON_FLY_COMRESSION
