@@ -309,7 +309,7 @@ sub getFGFarm
 
 	my $fg;
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
-	my $fg_list = &getTiny( $fg_conf );
+	my $fg_list  = &getTiny( $fg_conf );
 
 	foreach my $fg_name ( keys %{ $fg_list } )
 	{
@@ -673,7 +673,7 @@ sub delFGFarm
 	require Zevenet::Farm::Service;
 
 	my $fg;
-	my $err = &runFGFarmStop( $farm, $service );
+	my $err  = &runFGFarmStop( $farm, $service );
 	my $type = &getFarmType( $farm );
 
 	if ( $type =~ /http/ or $type eq 'gslb' )
@@ -1074,7 +1074,7 @@ sub runFGFarmStart
 
 		# Iterate over every farm service
 		my $services = &getFarmVS( $farm, "", "" );
-		my @servs = split ( " ", $services );
+		my @servs    = split ( " ", $services );
 
 		foreach my $service ( @servs )
 		{
@@ -1265,7 +1265,7 @@ sub setOldFarmguardian
 	# default object
 	my $def = {
 		'description' =>
-		  "Deprecated. This farm guardian was created using a zapi version before than 3.2",
+		  "This farmguardian was created automatically to migrate to Zevenet 5.2 version or higher",
 		'command'   => $obj->{ command },
 		'log'       => $obj->{ log },
 		'interval'  => $obj->{ interval },
@@ -1523,7 +1523,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	my $fg = &getFGFarm( $fname, $svice );
 	if ( not $fg )
 	{
-		$fg = $old if &getFGExists( $old );
+		$fg    = $old if &getFGExists( $old );
 		$usefg = "false";
 	}
 
