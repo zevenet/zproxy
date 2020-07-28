@@ -99,9 +99,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
         static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size -
                          ssl_connection.buffer_offset),
         &bytes_read);
-    Logger::logmsg(LOG_DEBUG,
-                   "BIO_read return code %d buffer size %d bytes_read %d", rc,
-                   ssl_connection.buffer_size, bytes_read);
+    //    Logger::logmsg(LOG_DEBUG,
+    //                   "BIO_read return code %d buffer size %d bytes_read %d",
+    //                   rc, ssl_connection.buffer_size, bytes_read);
 
     if (rc == 0) {
       if (total_bytes_read > 0)
