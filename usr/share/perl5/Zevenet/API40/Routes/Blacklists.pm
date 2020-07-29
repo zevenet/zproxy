@@ -64,6 +64,8 @@ if ( $ENV{ PATH_INFO } =~ qr{/ipds/blacklists} )
 	  'set_blacklists_source', $mod;
 
 	#  DELETE a source from a blacklists
+	&zenlog(
+		" ECM DEBUG: $ENV{ PATH_INFO } and filter blacklist is $blacklists_source_id" );
 	DELETE
 	  qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$},
 	  'del_blacklists_source', $mod;

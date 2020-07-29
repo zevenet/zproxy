@@ -186,11 +186,16 @@ my %format_re = (
 
 	# IPDS
 	# blacklists
-	'day_of_month'         => qr{$dayofmonth},
-	'weekdays'             => qr{$weekdays},
-	'blacklists_name'      => qr{\w+},
-	'blacklists_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
-	'blacklists_source_id' => qr{(?:\d+|(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)},
+	'day_of_month'      => qr{$dayofmonth},
+	'weekdays'          => qr{$weekdays},
+	'blacklists_name'   => qr{\w+},
+	'blacklists_source' => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+
+	#orig#'blacklists_source_id' => qr{(?:\d+|(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)},
+	'blacklists_source_id' =>
+	  qr{(?:\d+|[(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?]{1,100}[,]{0,100})},
+
+  #'blacklists_source_id'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?[,]{0,100}},
 	'blacklists_url'       => qr{.+},
 	'blacklists_hour'      => $hours,
 	'blacklists_minutes'   => $minutes,

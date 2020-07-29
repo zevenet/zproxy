@@ -578,31 +578,65 @@ sub setBLDeleteSource
 
 	require Zevenet::Lock;
 	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
+	my $source = "99";
+	my @source_delete;
 
-	#source not ID
-	if ( $id !~ /^\d+$/ )
+	#if ID
+	if ( $id =~ /^\d+$/ )
 	{
+		push ( @source_delete, $id );
+
+		#if source[,source....]
+	}
+	else
+	{
+
+		my @sources = split ( /\,/, $id );
+		push ( @sources, $id ) if ( scalar @sources == 1 );
 		my $i = -1;
-		foreach ( @list )
+		foreach my $line ( @list )
 		{
 			$i++;
-			if ( $_ =~ /^$id$/ )
+			my $j = -1;
+			foreach my $source_line ( @sources )
 			{
-				$id = $i;
-				last;
+				$j++;
+				if ( $line eq $source_line )
+				{
+					$source = splice @sources, $j, 1;
+					push ( @source_delete, $i );
+				}
 			}
 		}
 
 	}
-	my $source = splice @list, $id, 1;
+
+	#delete elements of the @list
+	&zenlog( "DELETE in array list the following value @source_delete" );
+	my $delete = "false";
+	foreach my $source ( @source_delete )
+	{
+		if ( $delete eq "true" )
+		{
+			$source = $source - 1;
+			$source = 0 if ( $source < 0 );
+		}
+		&zenlog( "ECM DEBUG: I AM DELETING POS $source" );
+		$source = splice @list, $source, 1;
+		$delete = "true";
+
+	}
 	untie @list;
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$err = &delIPDSPolicy( 'element', $source, $listName );
+		foreach my $source ( @source_delete )
+		{
+			$err = &delIPDSPolicy( 'element', $source, $listName );
+		}
 	}
 
-	&zenlog( "$source was deleted from $listName", "info", "IPDS" ) if ( !$err );
+	&zenlog( "@source_delete deleted from $listName", "info", "IPDS" ) if ( !$err );
 
 	return $err;
 }

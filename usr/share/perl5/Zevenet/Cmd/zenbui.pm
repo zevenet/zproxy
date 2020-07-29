@@ -455,7 +455,7 @@ sub manage_keyboard()
 			   -value    => 1,
 			   -shortcut => 1,
 			   -onpress  => sub {
-				   &logAndRun( 'dpkg-reconfigure keyboard-configuration' );
+				   system ( 'dpkg-reconfigure keyboard-configuration' );
 				   $zenui->reset_curses();
 				   &inform_dialog( "You have to reboot the host to apply the changes." );
 				   &refresh_win3();
@@ -516,13 +516,11 @@ sub manage_timezone()
 			   -value    => 1,
 			   -shortcut => 1,
 			   -onpress  => sub {           #$zenui->leave_curses();
-				   &logAndRun( 'dpkg-reconfigure tzdata' );
+				                            #&logAndRun( 'dpkg-reconfigure tzdata' );
+				   system ( 'dpkg-reconfigure tzdata' );
 				   $zenui->reset_curses();
-				   &logAndRun( "ntpdate pool.ntp.org" );
-
-				   #$zenui->reset_curses();
+				   &logAndRunBG( "ntpdate pool.ntp.org" );
 				   &inform_dialog( "Synchronizing time with pool.ntp.org..." );
-				   &refresh_win3();
 			   },
 			},
 			{

@@ -725,17 +725,40 @@ sub add_blacklists_source
 	}
 
 	my $params = {
-				   "source" => {
-								 'valid_format' => 'blacklists_source',
-								 'non_blank'    => 'true',
-								 'required'     => 'true',
-				   },
+		"source" => {
+
+			#'valid_format' => 'blacklists_source_id',
+			'non_blank' => 'true',
+			'required'  => 'true',
+			'ref'       => 'array',
+		},
 	};
 
 	# Check allowed parameters
+	# #ECM SUPPORT a bunch of sources
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
+
+	my $source_format = &getValidFormat( 'blacklists_source_id' );
+	if ( ref $params->{ source } eq 'ARRAY' )
+	{
+		if ( !grep ( /^$source_format$/, @{ $params->{ source } } ) )
+		{
+			my $msg = "Some of the sources is not in the correct format IP or IP/MASK";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+
+		}
+	}
+	else
+	{
+		&zenlog( "ECM DEBUG: " . Dumper( $json_obj->{ 'source' } ) );
+
+		#if (!&getValidFormat( 'blacklists_source_id', $params->{source} )){
+		#	my $msg ="$params->{source} doesn't have a valid format IP or IP/MASK";
+		#	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		#}
+	}
 
 	if (
 		 grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
@@ -859,6 +882,7 @@ sub del_blacklists_source
 
 	include 'Zevenet::IPDS::Blacklist::Config';
 
+	&zenlog( "ECM DEBUG: I am here" );
 	my $desc = "Delete a source from the blacklist $listName";
 
 	if ( !&getBLExists( $listName ) )
@@ -880,12 +904,12 @@ sub del_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 
 	}
-	elsif ( !grep ( /$id/, @{ &getBLParam( $listName, 'source' ) } ) )
+	elsif (    ( $id !~ /,/ )
+			&& ( !grep ( /$id/, @{ &getBLParam( $listName, 'source' ) } ) ) )
 	{
 		my $msg = "ID $id doesn't exist in the list $listName.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
-
 	if ( &setBLDeleteSource( $listName, $id ) )
 	{
 		my $msg = "Error deleting source $id";
