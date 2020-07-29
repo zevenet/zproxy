@@ -23,6 +23,7 @@
 ###############################################################################
 
 # Place this file in /etc/network/if-up.d/
+#
 
 use strict;      #a good habit to start your program with line
 use warnings;    #another good habit too...
@@ -33,169 +34,38 @@ $Data::Dumper::Sortkeys = 1;
 require Zevenet;
 require Zevenet::Net::Route;
 
-sub getSystemData    #($if_name)
-{
+###############################
+#AWS environment variables
+###############################
+#CLASS = hotplug
+#IFACE = eth0
+#IFUPDOWN_eth0 = post-up
+#LOGICAL = eth0
+#METHOD = dhcp
+#MODE = start
+#PATH = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+#PHASE = post-up
+#PWD = /
+#VERBOSITY = 0
+##############################
 
-	my ( $if_name ) = @_;
 
-	my $if_ref = getSystemInterface( $if_name );
-	my $line   = `ip addr list dev $if_name | grep -E '$if_ref->{ name }\$'`;
-
-	#&zenlog( "found line: $line", "debug", "NETWORK" );
-
-	# Searching IPv4 String for IP#IPv6? #FIXME
-	if ( $line =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/([0-9]+)/ )
-	{
-
-		#split strings
-		my @words = split ( / /, $line );
-		chomp ( @words );
-		my ( $hostaddr, $bits ) = ( $1, $2 );
-
-		#bit mask
-		use Net::Netmask;
-		my $in      = "$hostaddr/$bits";
-		my $cidr    = $in;
-		my $block   = Net::Netmask->new2( $cidr ) or die $Net::Netmask::error;
-		my $netmask = $block->mask;
-
-		#charge in $if_ref the pending values of system
-		$if_ref->{ addr } = $hostaddr;
-		$if_ref->{ mask } = $netmask;
-		$if_ref->{ ip_v } = "4";
-
-		my $gw       = getDefaultGW( $if_ref->{ name } );
-		my $gwGlobal = getDefaultGW();
-		my $if_gw    = getIfDefaultGW();
-		&zenlog( "GW: $gw",                      "debug", "NETWORK" ) if ( $gw );
-		&zenlog( "IF default GW:" . $if_gw . "", "debug", "NETWORK" ) if ( $if_gw );
-		$if_ref->{ gateway } = $gw;
-
-		#Save Default GW configuration from global.
-		if ( "$if_gw" eq "$if_ref->{ dev }" )
-		{
-			&zenlog( "Changing Default GW for table Global", "debug", "NETWORK" );
-
-			#save routes in global.conf?
-			applyRoutes( "global", $if_ref, $gwGlobal );
-		}
-
-	}
-
-	return ( $if_ref );
-
+my $vble = "";
+&zenlog ("##############################");
+$ARGV[0]  = $vble;
+foreach my $key (sort keys(%ENV)) {
+  &zenlog("ENV VBLE:  $key = $ENV{$key}");
 }
-######
+&zenlog ("##############################");
 
-my $if_name;
-my @iflist;
+#ENABLE DHCP FOR CLOUD (AWS, AZURE, etc) 
+if ( defined $ENV{'ADDRFAM'} and $ENV{'ADDRFAM'} eq "inet"){
 
-#Get a Interface List
-if ( defined $ENV{ 'IFACE' } )
-{
-	&zenlog( "Defined " . "$ENV{'IFACE'}" . "", "debug", "NETWORK" );
-	@iflist = "$ENV{'IFACE'}";
+	&zenlog("Configuring dhcp file for $ENV{'IFACE'}");
+
+	my $if_ref = &getSystemInterface( $ENV{'IFACE'} );
+
+	$if_ref->{'dhcp'} = "true";
+	&setInterfaceConfig ( $if_ref );
 }
-elsif ( defined $ARGV[0] )
-{
-	&zenlog( "NIC defined $ARGV[0]", "debug", "NETWORK" );
-	@iflist = $ARGV[0];
-}
-else
-{
-	&zenlog( "NIC not defined; check all NICs", "debug", "NETWORK" );
-	@iflist = getInterfaceList();
-}
-
-use Data::Dumper;
-
-&zenlog( "Current Interface List: @iflist", "debug", "NETWORK" );
-
-foreach $if_name ( @iflist )
-{
-	next if $if_name eq 'lo';
-	next if $if_name eq 'cl_maintenance';
-	&zenlog( "Working with if_name: $if_name", "debug", "NETWORK" );
-
-	my $if_ref     = getSystemData( $if_name );
-	my $if_old_ref = getInterfaceConfig( $if_name );
-
-	&zenlog( "Interface from System", "debug", "NETWORK" );
-
-	#say Dumper $if_ref;
-	&zenlog( Dumper( $if_ref ), "debug", "NETWORK" );
-
-	&zenlog( "Interface from File", "debug", "NETWORK" );
-
-	#say Dumper $if_old_ref;
-	&zenlog( Dumper( $if_old_ref ), "debug", "NETWORK" );
-
-	if ( !defined $if_old_ref->{ addr } )
-	{
-		&zenlog(
-				 "$if_name is not defined in configuration files because it is a new NIC",
-				 "debug", "NETWORK" );
-		if ( setInterfaceConfig( $if_ref ) == 0 )
-		{
-			&zenlog( "configuring if: " . $if_ref->{ name } . "", "debug", "NETWORK" );
-			&zenlog( "ERROR Setting Interface",                   "debug", "NETWORK" );
-		}
-		else
-		{
-			&zenlog( "Writing Routes for $if_name", "debug", "NETWORK" );
-			writeRoutes( $if_ref->{ name } );
-		}
-	}
-	elsif (    ( $if_ref->{ addr } // '' ) ne ( $if_old_ref->{ addr } // '' )
-			|| ( $if_ref->{ gateway } // '' ) ne ( $if_old_ref->{ gateway } // '' )
-			|| ( $if_ref->{ mask } // '' ) ne ( $if_old_ref->{ mask } // '' ) )
-	{
-		&zenlog( "$if_name configured, maybe by DHCP service?", "debug", "NETWORK" );
-		&zenlog( "New if data",                                 "debug", "NETWORK" );
-		&zenlog( "$if_ref->{ addr }",                           "debug", "NETWORK" );
-		&zenlog( "old if data",                                 "debug", "NETWORK" );
-		&zenlog( "$if_old_ref->{ addr } ",                      "debug", "NETWORK" )
-		  if defined $if_old_ref->{ addr };
-
-		if ( setInterfaceConfig( $if_ref ) == 0 )
-		{
-			&zenlog( "configuring if: " . $if_ref->{ name } . "", "debug", "NETWORK" );
-			&zenlog( "ERROR Setting Interface",                   "debug", "NETWORK" );
-		}
-		else
-		{
-			&zenlog( "Writing Routes for $if_name", "debug", "NETWORK" );
-			writeRoutes( $if_ref->{ name } );
-		}
-
-		my @farms = getFarmNameList();
-		foreach my $farm_name ( @farms )
-		{
-			&zenlog( "Checking VIP changes for farm: $farm_name", "debug", "NETWORK" );
-			my $vip      = getFarmVip( "vip",  "$farm_name" );
-			my $vip_port = getFarmVip( "vipp", "$farm_name" );
-			my $new_ip   = $if_ref->{ addr };
-			if (    ( $vip eq $if_old_ref->{ addr } )
-				 && ( ( $if_ref->{ addr } // '' ) ne ( $if_old_ref->{ addr } // '' ) ) )
-			{
-				setFarmVirtualConf( $new_ip, $vip_port, $farm_name );  # ($vip,$vipp,$farm_name)
-				&zenlog( "Modified Farm $farm_name", "debug", "NETWORK" );
-			}
-
-			if ( setInterfaceConfig( $if_ref ) == 0 )
-			{
-				&zenlog( "configuring if: " . $if_ref->{ name } . "", "debug", "NETWORK" );
-				&zenlog( "ERROR Setting Interface",                   "debug", "NETWORK" );
-			}
-			else
-			{
-				writeRoutes( $if_ref->{ name } );
-			}
-		}
-	}
-	else
-	{
-		&zenlog( "Interface $if_name does not need to be modified\n",
-				 "debug", "NETWORK" );
-	}
-}
+exit 0;
