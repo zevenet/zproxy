@@ -993,10 +993,15 @@ This directive may appear only after the
 .I HTTPS
 directive.
 .TP
+\fBWeight\fR val
+The weight of this back-end (between 1 and 9, 5 is default). Higher weight
+back-ends will be used more often than lower weight ones, so you should
+define higher weights for more capable servers.
+.TP
 \fBPriority\fR val
-The priority of this back-end (between 1 and 9, 5 is default). Higher priority
-back-ends will be used more often than lower priority ones, so you should
-define higher priorities for more capable servers.
+The priority of this back-end (between 1 and 9, 1 is default). The requests will
+be forwarded to the backends with higher priority (1 is the highest priority).
+When a back-end with high priority becomes unreacheable the priority level is decreased.
 .TP
 \fBTimeOut\fR val
 Override the global
@@ -1223,7 +1228,7 @@ requested or the operation result.
     \fBReload all listeners in configuration file in use, draining connections\fR
 
     curl -X PATCH http://address:port/config
-    
+
 .SH EXAMPLES
 To translate HTTPS requests to a local HTTP server (assuming your network address
 is 123.123.123.123):
