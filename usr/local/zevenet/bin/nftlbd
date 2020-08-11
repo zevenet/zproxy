@@ -29,7 +29,7 @@ DAEMON_HOST="127.0.0.1"
 DAEMON_ARGS="$DEBUG -H $DAEMON_HOST -k $DAEMON_KEY -P $DAEMON_PORT"
 
 PIDFILE=/var/run/$NAME.pid
-SCRIPTNAME=/etc/init.d/$NAME
+SCRIPTNAME=$nftlb_svc
 SAVEFILEFARMS="/tmp/nft_save_farms"
 SAVEFILEPOLICIES="/tmp/nft_save_policies"
 
