@@ -77,10 +77,13 @@ if ( $eload )
 				 "info", "NETWORK" );
 		my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
 		my $maint_if = 'cl_maintenance';
+		my $clstatus = &eload( module => 'Zevenet::Cluster',
+							   func   => 'getZClusterNodeStatus', );
+		$clstatus = "backup" if $clstatus ne "maintenance";
 		my $set_clstatus = &eload(
 								   module => 'Zevenet::Cluster',
 								   func   => 'setZClusterNodeStatus',
-								   args   => ['backup'],
+								   args   => [$clstatus],
 		);
 		&logAndRun( "$ip_bin link set $maint_if up" );
 
