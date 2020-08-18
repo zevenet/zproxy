@@ -543,7 +543,10 @@ sub getCertData    # ($certfile)
 		$cmd = "$openssl req -in $filepath -text";
 	}
 
-	return &logAndGet( $cmd );
+	my $cert = &logAndGet( $cmd );
+	$cert = $cert eq "" ? "This certificate is not valid." : $cert;
+
+	return $cert;
 }
 
 =begin nd
