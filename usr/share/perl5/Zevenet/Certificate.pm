@@ -581,36 +581,53 @@ sub getCertInfo
 	if ( $certfile =~ /\.pem$/ )
 	{
 		require Crypt::OpenSSL::X509;
-		my $x509 = Crypt::OpenSSL::X509->new_from_file( $filepath );
+		my $status = "expired";
+		my $CN     = "no CN";
+		my $ISSUER = "no issuer";
+		my $x509;
+		eval {
+			$x509 = Crypt::OpenSSL::X509->new_from_file( $filepath );
 
-		my $time_offset = 60 * 60 * 24 * 15;    # 15 days
-		my $status;
-		if ( $x509->checkend( 0 ) ) { $status = 'expired' }
+			my $time_offset = 60 * 60 * 24 * 15;    # 15 days
+			if ( $x509->checkend( 0 ) ) { $status = 'expired' }
+			else
+			{
+				$status = ( $x509->checkend( $time_offset ) ) ? 'about to expire' : 'valid';
+			}
+
+			if ( defined $x509->subject_name()->get_entry_by_type( 'CN' ) )
+			{
+				$CN = $x509->subject_name()->get_entry_by_type( 'CN' )->value;
+			}
+			if ( defined $x509->issuer_name()->get_entry_by_type( 'CN' ) )
+			{
+				$ISSUER = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
+			}
+		};
+		if ( $@ )
+		{
+			%response = (
+						  file       => $certfile,
+						  type       => 'Certificate',
+						  CN         => '-',
+						  issuer     => '-',
+						  creation   => '-',
+						  expiration => '-',
+						  status     => $status,
+			);
+		}
 		else
 		{
-			$status = ( $x509->checkend( $time_offset ) ) ? 'about to expire' : 'valid';
+			%response = (
+						  file       => $certfile,
+						  type       => 'Certificate',
+						  CN         => $CN,
+						  issuer     => $ISSUER,
+						  creation   => $x509->notBefore(),
+						  expiration => $x509->notAfter(),
+						  status     => $status,
+			);
 		}
-
-		my $CN = "no CN";
-		if ( defined $x509->subject_name()->get_entry_by_type( 'CN' ) )
-		{
-			$CN = $x509->subject_name()->get_entry_by_type( 'CN' )->value;
-		}
-		my $ISSUER = "no issuer";
-		if ( defined $x509->issuer_name()->get_entry_by_type( 'CN' ) )
-		{
-			$ISSUER = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
-		}
-
-		%response = (
-					  file       => $certfile,
-					  type       => 'Certificate',
-					  CN         => $CN,
-					  issuer     => $ISSUER,
-					  creation   => $x509->notBefore(),
-					  expiration => $x509->notAfter(),
-					  status     => $status,
-		);
 	}
 
 	# CSR
