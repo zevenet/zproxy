@@ -550,6 +550,32 @@ sub getCertData    # ($certfile)
 }
 
 =begin nd
+Function: getCertIsValid
+	Check if a certificate is a valid x509 object	
+
+Parameters:
+	String - Certificate path.
+
+Returns:
+	Integer - 0 if the cert is a valid x509 object, 1 if not
+
+=cut
+
+sub getCertIsValid    # ($cert_filepath)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $cert_filepath ) = shift;
+	my $rc = 1;
+	eval {
+		my $x509 = Crypt::OpenSSL::X509->new_from_file( $cert_filepath );
+		$rc = 0;
+	};
+	return $rc;
+
+}
+
+=begin nd
 Function: getCertInfo
 
 	It returns an object with the certificate information parsed

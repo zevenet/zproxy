@@ -101,6 +101,13 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 
 	&zenlog( "setting 'Certificate $cfile' for $fname farm $type", "info", "LSLB" );
 
+	require Zevenet::Certificate;
+	unless ( !&getCertIsValid( "$certdir/$cfile" ) )
+	{
+		&zenlog( "'Certificate $cfile' for farm $fname is not valid", "error", "LSLB" );
+		return $output;
+	}
+
 	if ( $type eq "https" )
 	{
 		require Tie::File;
