@@ -204,11 +204,13 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
         request.headers[i].name);
 #endif
     /* maybe header to be removed */
-    MATCHER *m;
-    for (m = listener_config_.head_off; m; m = m->next) {
-      if (::regexec(&m->pat, request.headers[i].name, 0, nullptr, 0) == 0) {
-        request.headers[i].header_off = true;
-        break;
+    if(listener_config_.head_off != nullptr) {
+      auto str =  std::string(request.headers[i].name, request.headers[i].line_size);
+      for (auto m = listener_config_.head_off; m; m = m->next) {
+        if (::regexec(&m->pat, str.data(), 0, nullptr, 0) == 0) {
+          request.headers[i].header_off = true;
+          break;
+        }
       }
     }
     if (request.headers[i].header_off) continue;
@@ -366,12 +368,24 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
 #endif
   bool connection_close_pending = false;
   for (size_t i = 0; i != response.num_headers; i++) {
-    // check header values length
 
+    // check header values length
     auto header = std::string_view(response.headers[i].name,
                                    response.headers[i].name_len);
     auto header_value = std::string_view(response.headers[i].value,
                                          response.headers[i].value_len);
+    /* maybe header to be removed from response */
+//    MATCHER *m;
+    if(listener_config_.response_head_off != nullptr) {
+      auto str =
+          std::string(response.headers[i].name, response.headers[i].line_size);
+      for (auto m = listener_config_.response_head_off; m; m = m->next) {
+        if (::regexec(&m->pat, str.data(), 0, nullptr, 0) == 0) {
+          response.headers[i].header_off = true;
+          break;
+        }
+      }
+    }
 #if DEBUG_HTTP_HEADERS
     Logger::logmsg(
         LOG_DEBUG, "\t%.*s",
@@ -531,14 +545,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
         }
         default:
           break;
-      }
-    }
-    /* maybe header to be removed from response */
-    MATCHER *m;
-    for (m = listener_config_.response_head_off; m; m = m->next) {
-      if (::regexec(&m->pat, response.headers[i].name, 0, nullptr, 0) == 0) {
-        response.headers[i].header_off = true;
-        break;
       }
     }
   }
