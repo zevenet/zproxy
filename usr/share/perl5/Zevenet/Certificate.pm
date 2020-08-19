@@ -533,6 +533,7 @@ sub getCertData    # ($certfile)
 	my ( $filepath ) = @_;
 
 	my $cmd;
+	$filepath = quotemeta ( $filepath );
 
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{
