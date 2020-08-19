@@ -173,7 +173,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 
 		for ( @array )
 		{
-			if ( $_ =~ /^\s*Cert "$certdir\/$certname"/ )
+			if ( $_ =~ /^\s*Cert "$certdir\/\Q$certname\E"/ )
 			{
 				splice @array, $j, 1,;
 				$output = 0;
