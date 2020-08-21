@@ -234,23 +234,28 @@ bool Service::doMatch(HttpRequest &request) {
   int i, found;
 
   /* check for request */
-  auto url = std::string(request.path, request.path_length);
+  regmatch_t eol{0,static_cast<regoff_t>(request.path_length)};
   for (auto m = service_config.url; m; m = m->next)
-    if (regexec(&m->pat, url.data(), 0, nullptr, 0)) return false;
+    if (regexec(&m->pat, request.path, 1, &eol, REG_STARTEND) != 0) return false;
 
   /* check for required headers */
   for (auto m = service_config.req_head; m; m = m->next) {
     for (found = i = 0; i < static_cast<int>(request.num_headers) && !found;
-         i++)
-      if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0)) found = 1;
+         i++){
+      eol.rm_so = 0;
+      eol.rm_eo = request.headers[i].line_size;
+      if (regexec(&m->pat, request.headers[i].name, 1, &eol, REG_STARTEND) == 0) found = 1;}
     if (!found) return false;
   }
 
   /* check for forbidden headers */
   for (auto m = service_config.deny_head; m; m = m->next) {
-    for (found = i = 0; i < static_cast<int>(request.num_headers); i++)
-      if (!regexec(&m->pat, request.headers[i].name, 0, nullptr, 0))
+    for (found = i = 0; i < static_cast<int>(request.num_headers); i++){
+      eol.rm_so = 0;
+      eol.rm_eo = request.headers[i].line_size;
+      if (regexec(&m->pat, request.headers[i].name, 1, &eol, REG_STARTEND) == 0)
         return false;
+    }
   }
   return true;
 }

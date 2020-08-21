@@ -153,15 +153,14 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
 }
 
 validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
-  regmatch_t matches[4];
   auto &listener_config_ = *stream.service_manager->listener_config_;
   HttpRequest &request = stream.request;
-  auto res = ::regexec(&listener_config_.verb, request.getRequestLine().data(),
-                       3,  // include validation data package
-                       matches, REG_EXTENDED);
-  if (UNLIKELY(res == REG_NOMATCH)) {
+  regmatch_t eol{0,static_cast<regoff_t>(request.http_message_length)};
+  auto res = ::regexec(&listener_config_.verb, request.http_message,
+                       1,  // include validation data package
+                       &eol, REG_STARTEND);
+  if (UNLIKELY(res != 0)) {
     // TODO:: check RPC
-
     /*
        * if(!strncasecmp(request + matches[1].rm_so, "RPC_IN_DATA",
              matches[1].rm_eo - matches[1].rm_so)) is_rpc = 1; else
@@ -169,20 +168,18 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
              matches[1].rm_eo - matches[1].rm_so)) is_rpc = 0;
             *
             */
-
-    // TODO:: Content lentgh required on POST command
-    // error 411 Length Required
     return validation::REQUEST_RESULT::METHOD_NOT_ALLOWED;
   } else {
     request.setRequestMethod();
   }
-  const auto request_url = std::string(request.path, request.path_length);
+  auto request_url = std::string_view(request.path, request.path_length);
   if (request_url.find("%00") != std::string::npos) {
     return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
   }
-
+  eol.rm_so = 0;
+  eol.rm_eo = request.path_length;
   if (listener_config_.has_pat &&
-      regexec(&listener_config_.url_pat, request.path, 0, nullptr, 0)) {
+      regexec(&listener_config_.url_pat, request.path, 1, &eol, REG_STARTEND)) {
     return validation::REQUEST_RESULT::BAD_URL;
   }
 
@@ -204,15 +201,16 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
         request.headers[i].name);
 #endif
     /* maybe header to be removed */
-    if(listener_config_.head_off != nullptr) {
-      auto str =  std::string(request.headers[i].name, request.headers[i].line_size);
-      for (auto m = listener_config_.head_off; m; m = m->next) {
-        if (::regexec(&m->pat, str.data(), 0, nullptr, 0) == 0) {
-          request.headers[i].header_off = true;
-          break;
-        }
+
+    eol.rm_so = 0;
+    eol.rm_so = request.headers[i].line_size;
+    for (auto m = listener_config_.head_off; m; m = m->next) {
+      if (::regexec(&m->pat, request.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
+        request.headers[i].header_off = true;
+        break;
       }
     }
+
     if (request.headers[i].header_off) continue;
 
     //      Logger::logmsg(LOG_REMOVE, "\t%.*s",request.headers[i].name_len +
@@ -310,7 +308,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
           break;
         case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
           request.content_length =
-              static_cast<size_t>(std::atoi(request.headers[i].value));         
+              static_cast<size_t>(std::atoi(request.headers[i].value));
           continue;
         }
         case http::HTTP_HEADER_NAME::HOST: {
@@ -375,17 +373,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
     auto header_value = std::string_view(response.headers[i].value,
                                          response.headers[i].value_len);
     /* maybe header to be removed from response */
-//    MATCHER *m;
-    if(listener_config_.response_head_off != nullptr) {
-      auto str =
-          std::string(response.headers[i].name, response.headers[i].line_size);
-      for (auto m = listener_config_.response_head_off; m; m = m->next) {
-        if (::regexec(&m->pat, str.data(), 0, nullptr, 0) == 0) {
-          response.headers[i].header_off = true;
-          break;
-        }
+    regmatch_t eol{0,static_cast<regoff_t>(response.headers[i].line_size)};
+    for (auto m = listener_config_.response_head_off; m; m = m->next) {
+      if (::regexec(&m->pat,response.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
+        response.headers[i].header_off = true;
+        break;
       }
     }
+
 #if DEBUG_HTTP_HEADERS
     Logger::logmsg(
         LOG_DEBUG, "\t%.*s",
@@ -420,9 +415,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
           std::string location_header_value(response.headers[i].value,
                                             response.headers[i].value_len);
           regmatch_t matches[4];
-
-          if (regexec(&regex_set::LOCATION, location_header_value.data(), 4,
-                      matches, 0)) {
+          //std::memset(matches,0,4);
+          matches[0].rm_so = 0;
+          matches[0].rm_eo = response.headers[i].value_len;
+          if (regexec(&regex_set::LOCATION,response.headers[i].value, 4,
+                      matches, REG_STARTEND)) {
             continue;
           }
 
