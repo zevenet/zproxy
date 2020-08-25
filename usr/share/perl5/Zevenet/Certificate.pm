@@ -422,20 +422,36 @@ sub delCert    # ($certname)
 			 "debug", "PROFILING" );
 	my ( $certname ) = @_;
 
-	# escaping special caracters
-	$certname = quotemeta $certname;
-	my $certdir;
+	my $certdir = &getGlobalConfiguration( 'certdir' );
 
-	$certdir = &getGlobalConfiguration( 'certdir' );
+	# escaping special caracters
+	$certname =~ s/ /\ /g;
+
+	my $files_removed;
 
 	# verify existance in config directory for security reasons
-	opendir ( DIR, $certdir );
-	my @file = grep ( /^$certname$/, readdir ( DIR ) );
-	closedir ( DIR );
+	if ( -f "$certdir/$certname" )
+	{
+		$files_removed = unlink ( "$certdir/$certname" );
 
-	my $files_removed = unlink ( "$certdir\/$file[0]" );
+		# remove key file for CSR
+		if ( $certname =~ /.csr$/ )
+		{
+			my $key_file = $certname;
+			$key_file =~ s/\.csr$/\.key/;
 
-	&zenlog( "Error removing certificate $certdir\/$file[0]", "error", "LSLB" )
+			if ( -f "$certdir/$key_file" )
+			{
+				unlink "$certdir/$key_file";
+			}
+			else
+			{
+				&zenlog( "Key file was not found '$certdir/$key_file'", "error", "LSLB" );
+			}
+		}
+	}
+
+	&zenlog( "Error removing certificate '$certdir/$certname'", "error", "LSLB" )
 	  if !$files_removed;
 
 	return $files_removed;
@@ -552,7 +568,7 @@ sub getCertData    # ($certfile)
 
 =begin nd
 Function: getCertIsValid
-	Check if a certificate is a valid x509 object	
+	Check if a certificate is a valid x509 object
 
 Parameters:
 	String - Certificate path.
