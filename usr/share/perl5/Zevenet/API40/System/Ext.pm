@@ -69,9 +69,9 @@ sub set_factory_reset
 	unless ( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' )
 	{
 		my $msg =
-		  "While the execution of the factory reset process, the system will be restarted. "
-		  . "When the process will finish, the load balancer will be accesible by the ip $if_ref->{addr}. "
-		  . "If you are agree, execute again sending the parameter 'force'";
+		  "While the factory reset process is executing, the system will be inaccesible. "
+		  . "Once the process finishes, the load balancer will be accessible by the IP $if_ref->{addr}. "
+		  . "If you agree, execute the action sending the parameter 'force'";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

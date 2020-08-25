@@ -1,7 +1,5 @@
 FROM zevenet/zvn-builder-base:#{version}
 
-RUN apt-get --allow-releaseinfo-change update
-
 # Base packages
 RUN apt-get update && apt-get install -y \
     libssl-dev \

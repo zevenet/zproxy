@@ -485,6 +485,7 @@ $bonding_masters_filename="/sys/class/net/bonding_masters";
 $bonding_mode_filename="bonding/mode";
 $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
+$bonding_hwaddr_filename="bonding_slave/perm_hwaddr";
 
 #Notifications Module
 $notifConfDir="$configdir/notifications";#update

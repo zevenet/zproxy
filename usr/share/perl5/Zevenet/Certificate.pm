@@ -422,20 +422,36 @@ sub delCert    # ($certname)
 			 "debug", "PROFILING" );
 	my ( $certname ) = @_;
 
-	# escaping special caracters
-	$certname = quotemeta $certname;
-	my $certdir;
+	my $certdir = &getGlobalConfiguration( 'certdir' );
 
-	$certdir = &getGlobalConfiguration( 'certdir' );
+	# escaping special caracters
+	$certname =~ s/ /\ /g;
+
+	my $files_removed;
 
 	# verify existance in config directory for security reasons
-	opendir ( DIR, $certdir );
-	my @file = grep ( /^$certname$/, readdir ( DIR ) );
-	closedir ( DIR );
+	if ( -f "$certdir/$certname" )
+	{
+		$files_removed = unlink ( "$certdir/$certname" );
 
-	my $files_removed = unlink ( "$certdir\/$file[0]" );
+		# remove key file for CSR
+		if ( $certname =~ /.csr$/ )
+		{
+			my $key_file = $certname;
+			$key_file =~ s/\.csr$/\.key/;
 
-	&zenlog( "Error removing certificate $certdir\/$file[0]", "error", "LSLB" )
+			if ( -f "$certdir/$key_file" )
+			{
+				unlink "$certdir/$key_file";
+			}
+			else
+			{
+				&zenlog( "Key file was not found '$certdir/$key_file'", "error", "LSLB" );
+			}
+		}
+	}
+
+	&zenlog( "Error removing certificate '$certdir/$certname'", "error", "LSLB" )
 	  if !$files_removed;
 
 	return $files_removed;
@@ -533,6 +549,7 @@ sub getCertData    # ($certfile)
 	my ( $filepath ) = @_;
 
 	my $cmd;
+	$filepath = quotemeta ( $filepath );
 
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{
@@ -543,7 +560,36 @@ sub getCertData    # ($certfile)
 		$cmd = "$openssl req -in $filepath -text";
 	}
 
-	return &logAndGet( $cmd );
+	my $cert = &logAndGet( $cmd );
+	$cert = $cert eq "" ? "This certificate is not valid." : $cert;
+
+	return $cert;
+}
+
+=begin nd
+Function: getCertIsValid
+	Check if a certificate is a valid x509 object
+
+Parameters:
+	String - Certificate path.
+
+Returns:
+	Integer - 0 if the cert is a valid x509 object, 1 if not
+
+=cut
+
+sub getCertIsValid    # ($cert_filepath)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $cert_filepath ) = shift;
+	my $rc = 1;
+	eval {
+		my $x509 = Crypt::OpenSSL::X509->new_from_file( $cert_filepath );
+		$rc = 0;
+	};
+	return $rc;
+
 }
 
 =begin nd
@@ -581,36 +627,53 @@ sub getCertInfo
 	if ( $certfile =~ /\.pem$/ )
 	{
 		require Crypt::OpenSSL::X509;
-		my $x509 = Crypt::OpenSSL::X509->new_from_file( $filepath );
+		my $status = "expired";
+		my $CN     = "no CN";
+		my $ISSUER = "no issuer";
+		my $x509;
+		eval {
+			$x509 = Crypt::OpenSSL::X509->new_from_file( $filepath );
 
-		my $time_offset = 60 * 60 * 24 * 15;    # 15 days
-		my $status;
-		if ( $x509->checkend( 0 ) ) { $status = 'expired' }
+			my $time_offset = 60 * 60 * 24 * 15;    # 15 days
+			if ( $x509->checkend( 0 ) ) { $status = 'expired' }
+			else
+			{
+				$status = ( $x509->checkend( $time_offset ) ) ? 'about to expire' : 'valid';
+			}
+
+			if ( defined $x509->subject_name()->get_entry_by_type( 'CN' ) )
+			{
+				$CN = $x509->subject_name()->get_entry_by_type( 'CN' )->value;
+			}
+			if ( defined $x509->issuer_name()->get_entry_by_type( 'CN' ) )
+			{
+				$ISSUER = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
+			}
+		};
+		if ( $@ )
+		{
+			%response = (
+						  file       => $certfile,
+						  type       => 'Certificate',
+						  CN         => '-',
+						  issuer     => '-',
+						  creation   => '-',
+						  expiration => '-',
+						  status     => $status,
+			);
+		}
 		else
 		{
-			$status = ( $x509->checkend( $time_offset ) ) ? 'about to expire' : 'valid';
+			%response = (
+						  file       => $certfile,
+						  type       => 'Certificate',
+						  CN         => $CN,
+						  issuer     => $ISSUER,
+						  creation   => $x509->notBefore(),
+						  expiration => $x509->notAfter(),
+						  status     => $status,
+			);
 		}
-
-		my $CN = "no CN";
-		if ( defined $x509->subject_name()->get_entry_by_type( 'CN' ) )
-		{
-			$CN = $x509->subject_name()->get_entry_by_type( 'CN' )->value;
-		}
-		my $ISSUER = "no issuer";
-		if ( defined $x509->issuer_name()->get_entry_by_type( 'CN' ) )
-		{
-			$ISSUER = $x509->issuer_name()->get_entry_by_type( 'CN' )->value;
-		}
-
-		%response = (
-					  file       => $certfile,
-					  type       => 'Certificate',
-					  CN         => $CN,
-					  issuer     => $ISSUER,
-					  creation   => $x509->notBefore(),
-					  expiration => $x509->notAfter(),
-					  status     => $status,
-		);
 	}
 
 	# CSR

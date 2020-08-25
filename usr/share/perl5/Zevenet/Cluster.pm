@@ -1588,5 +1588,33 @@ sub getKeepalivedVersion
 	return $version;
 }
 
+=begin nd
+Function: checkZClusterLocalIsPrimary
+
+	It checks if the local node is the primary node in the cluster configuration
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - Error code. 0 on success another value on failure
+
+=cut
+
+sub checkZClusterLocalIsPrimary
+{
+	require Zevenet::SystemInfo;
+	my $localhost = &getHostname();
+	my $cfg       = &getZClusterConfig();
+
+	return 0 if ( !defined $cfg );
+
+	if ( $localhost eq $cfg->{ _ }->{ primary } )
+	{
+		return 1;
+	}
+	return 0;
+}
+
 1;
 

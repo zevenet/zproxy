@@ -356,14 +356,14 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 		"info", "GSLB"
 	);
 
+	my $bck_out = { id => $id, ip => $json_obj->{ ip } };
+	&getAPIFarmBackends( $bck_out, 'gslb' );
+
 	my $message = "Added backend to service successfully";
 	my $body = {
 				 description => $desc,
-				 params      => {
-							 id => $id,
-							 ip => $json_obj->{ ip },
-				 },
-				 message => $message,
+				 params      => $bck_out,
+				 message     => $message,
 	};
 
 	if ( &getFarmStatus( $farmname ) ne 'down' )
@@ -399,6 +399,8 @@ sub list_gslb_service_backends
 	}
 
 	my $backends = &getGSLBFarmBackends( $farmname, $service );
+
+	include 'Zevenet::Alias';
 	$backends = &addAliasBackendsStruct( $backends );
 
 	my $body = {

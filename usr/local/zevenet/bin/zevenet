@@ -132,7 +132,7 @@ sub zna_version
 	$zna_version =~ s/-/ /;
 
 	# get version from zevenet_version file
-	my $fh = &openlock( $file, '<' );
+	my $fh           = &openlock( $file, '<' );
 	my $file_version = <$fh>;
 	close ( $fh );
 
@@ -574,6 +574,17 @@ if ( $action eq "start" )
 	}
 
 	&local_http_service( 'start' );
+
+	# Check the failback configuration
+	if ( $eload )
+	{
+		if (
+			 &eload( module => 'Zevenet::Cluster', func => 'checkZClusterLocalIsPrimary' ) )
+		{
+			&zenlog( "Local node detected as primary", "debug", "cluster" );
+			&eload( module => 'Zevenet::Cluster', func => 'enableZCluster' );
+		}
+	}
 
 	&printAndLog( "Start process finished." );
 }

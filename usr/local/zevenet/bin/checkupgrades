@@ -101,7 +101,7 @@ case "$1" in
 	if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
 
 	# test connection with zevenet update system
-	$netcat_bin $flag_netcatSSL -z www.zevenet.com 443 2>/dev/null
+	$netcat_bin $flag_netcatSSL -z repo.zevenet.com 443 2>/dev/null
 	if [ $? != 0 ]; then
 		echo "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
 		logger "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
@@ -120,7 +120,7 @@ case "$1" in
 		echo "$packages package(s) require upgrade"
 		echo "To upgrade, execute: checkupgrades -i, or help with checkupgrades -h"
 		echo "last check at `date` - $packages package(s) require upgrade, update this information with: checkupgrades" > $apt_msg
-		echo "To upgrade, execute: apt-get --with-new-pkgs upgrade" >> $apt_msg
+		echo "To upgrade, execute: checkupgrades -i, or help with checkupgrades -h" >> $apt_msg
 		$apt_bin list --upgradable 2>/dev/null | cut -d"/" -f 1  | sed '1d' | tr  '\n' ' ' > $apt_outdated_list
 	else
 		echo "Zevenet Packages are up-to-date."

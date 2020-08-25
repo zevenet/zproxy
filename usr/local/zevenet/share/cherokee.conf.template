@@ -10,6 +10,7 @@ server!pid_file = /usr/local/zevenet/app/cherokee/var/run/cherokee.pid
 server!server_tokens = full
 server!timeout = 60
 server!tls = libssl
+vserver!1!ssl_dh_length = 2048
 server!tls!protocol!SSLv2 = 0
 server!user = root
 vserver!1!directory_index = index.html

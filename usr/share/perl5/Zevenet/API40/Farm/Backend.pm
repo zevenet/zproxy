@@ -307,12 +307,14 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		"info", "FARMS"
 	);
 
-	$json_obj->{ timeout } = $json_obj->{ timeout } + 0 if $json_obj->{ timeout };
-
 	my $message = "Added backend to service successfully. $info_msg";
+
+	my $out_b = &getFarmServers( $farmname, $service )->[$id];
+	&getAPIFarmBackends( $out_b, $type );
+
 	my $body = {
 				 description => $desc,
-				 params      => @{ &getFarmServers( $farmname, $service ) }[$id],
+				 params      => $out_b,
 				 message     => $message,
 				 status      => &getFarmVipStatus( $farmname ),
 	};

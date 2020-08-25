@@ -137,6 +137,40 @@ See Also:
 
 =cut
 
+sub getBondMacInterface
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $slave_name = shift;
+
+	my $sys_net_dir = &getGlobalConfiguration( 'sys_net_dir' );
+	my $hwaddr_path = "$sys_net_dir/$slave_name/device/net/$slave_name/";
+
+	if ( !-d $hwaddr_path )
+	{
+		&zenlog( "Could not find file $hwaddr_path", "error", "NETWORK" );
+		return;
+	}
+
+	my $hwaddr_filename = &getGlobalConfiguration( 'bonding_hwaddr_filename' );
+
+	open ( my $hwaddr_file, '<', "$hwaddr_path/$hwaddr_filename" );
+
+	if ( !$hwaddr_file )
+	{
+		&zenlog( "Could not open file $hwaddr_path/$hwaddr_filename: $!",
+				 "error", "NETWORK" );
+		return;
+	}
+
+	# input example: 11:aa:22:bb:33:cc
+	my $hwaddr = <$hwaddr_file>;
+	close $hwaddr_file,;
+	chomp ( $hwaddr );
+
+	return $hwaddr;
+}
+
 sub getBondMode
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -327,12 +361,18 @@ sub applyBondChange
 		}
 	}
 
+	my $mac_updated = 0;
 	for my $slave ( keys %sys_bond_slaves )
 	{
 		if ( $sys_bond_slaves{ $slave } )
 		{
 			&zenlog( "removing $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'del' );
+			if ( $slave eq @{ $sys_bond->{ slaves } }[0] )
+			{
+				my $bond_local = &getBondLocalConfig( $bond->{ name } );
+				$mac_updated = 1 if ( $bond_local->{ mac } eq "" );
+			}
 		}
 	}
 
@@ -344,8 +384,14 @@ sub applyBondChange
 		&setBondConfig( $bond_conf );
 
 		# creating configuration file
-		my $if_ref = { name => $bond->{ name } };
-		return 1 if ( !&setInterfaceConfig( $if_ref ) );
+		if ( !$sys_bond or $mac_updated )
+		{
+			my $if_ref = {
+						   name => $bond->{ name },
+						   mac  => "",
+			};
+			&setBondMac( $if_ref );
+		}
 	}
 
 	$return_code = 0;
@@ -1014,21 +1060,21 @@ sub setBondMac
 	return 1 unless ( exists $if_ref->{ mac } );
 
 	# If the mac is clear, let's restore the mac address
+	my $mac = $if_ref->{ mac };
 	if ( length $if_ref->{ mac } == 0 )
 	{
-		my $default_conf = &getBondDefaultConfig( $if_ref->{ name } );
-		return 1 if ( ref ( $default_conf ) ne "HASH" );
-		$if_ref->{ mac } = $default_conf->{ mac };
+		$mac = &getBondDefaultMac( $if_ref->{ name } );
 	}
 
 	&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
 	{
 		my $slaveConf = &getSystemInterface( $slave );
+		require Zevenet::Net::Core;
 		$status += &downIf( $slaveConf ) if ( $slaveConf->{ status } ne "down" );
 	}
 	include 'Zevenet::Net::Mac';
-	$status += &addMAC( $if_ref->{ name }, $if_ref->{ mac } );
+	$status += &addMAC( $if_ref->{ name }, $mac );
 
 	&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
 	foreach my $slave ( @{ $bondSlaves } )
@@ -1039,8 +1085,9 @@ sub setBondMac
 
 	my $config_ref = &getInterfaceConfig( $if_ref->{ name } )
 	  // &getSystemInterface( $if_ref->{ name } );
-	$config_ref->{ mac } = $if_ref->{ mac };
+	$config_ref->{ mac } = $mac;
 	&setInterfaceConfig( $config_ref );
+	&saveBondMacConfig( $if_ref->{ name }, $if_ref->{ mac } );
 
 	return $status;
 }
@@ -1089,6 +1136,62 @@ sub saveBondDefaultConfig
 	return 0;
 }
 
+=begin nd
+Function: saveBondMacConfig
+
+	Store the current mac configuration in the non replicable directory
+	/usr/local/zevenet/local
+
+	Parameters:
+		bond_name - The bond name which will be stored,
+		macaddress - The macaddress to be stored. Empty means default ( first slave )
+
+	Returns:
+		status - 0 on success, other than 0 in other case.
+
+See Also:
+
+=cut
+
+sub saveBondMacConfig
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_name  = shift;
+	my $macaddress = shift;
+
+	my $bond_conf = &getBondConfig( $bond_name );
+
+	require Zevenet::Config;
+	my $local_dir       = &getGlobalConfiguration( "localconfig" );
+	my $local_bond_file = $local_dir . "/bonding.conf";
+
+	use Config::Tiny;
+	my $file_h = Config::Tiny->read( $local_bond_file )
+	  // Config::Tiny->new( $local_bond_file );
+	$file_h->{ $bond_name }->{ mac } = $macaddress;
+
+	$file_h->write( $local_bond_file );
+
+	return 0;
+}
+
+=begin nd
+Function: getBondDefaultConfig
+
+	Get the mac configuration from the non replicable directory
+	/usr/local/zevenet/local
+
+	Parameters:
+		bond_name - The bond name
+
+	Returns:
+		Hash - hash reference on success, 1 in other case.
+
+See Also:
+
+=cut
+
 sub getBondDefaultConfig
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -1107,6 +1210,66 @@ sub getBondDefaultConfig
 	return 1 if ( !exists $file_h->{ $bond_name } );
 
 	return $file_h->{ $bond_name };
+}
+
+=begin nd
+Function: getBondLocalConfig
+
+	Get the mac configuration from the non replicable directory
+	/usr/local/zevenet/local
+
+	Parameters:
+		bond_name - The bond name
+
+	Returns:
+		Hash - hash reference on success, 1 in other case.
+=cut
+
+sub getBondLocalConfig
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_name = shift;
+
+	require Zevenet::Config;
+	my $local_dir       = &getGlobalConfiguration( "localconfig" );
+	my $local_bond_file = $local_dir . "/bonding.conf";
+
+	return 1 if ( !-f $local_bond_file );
+
+	use Config::Tiny;
+	my $file_h = Config::Tiny->read( $local_bond_file );
+
+	return 1 if ( !exists $file_h->{ $bond_name } );
+
+	return $file_h->{ $bond_name };
+}
+
+=begin nd
+Function: getBondDefaultMac
+
+	Get the default Mac definition: the first slave mac.
+	Parameters:
+		bond_name - The bond name which will be stored,
+
+	Returns:
+		string - mac on success, 1 in other case.
+=cut
+
+sub getBondDefaultMac
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_name = shift;
+
+	my $bond_conf = &getBondConfig( $bond_name );
+
+	return 1 unless $bond_conf;
+
+	my $slave_hwmac =
+	  &getBondMacInterface( @{ $bond_conf->{ $bond_name }->{ slaves } }[0] );
+
+	return $slave_hwmac;
 }
 
 =begin nd
