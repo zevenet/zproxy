@@ -90,15 +90,14 @@ sub setAPTRepo
 		return 0;
 	}
 
-	my $http_proxy = &getGlobalConfiguration( 'http_proxy' );
-
 	# configuring user-agent
 	open ( my $fh, '>', $apt_conf_file )
 	  or die "Could not open file '$apt_conf_file' $!";
 	print $fh "Acquire { http::User-Agent \"$serial:$subjectkeyidentifier\"; };\n";
-	print $fh "Acquire::http::proxy \"$http_proxy\/\";\n";
-	print $fh "Acquire::https::proxy \"$http_proxy\/\";\n";
+	print $fh "Acquire::http::proxy \"\/\";\n";
+	print $fh "Acquire::https::proxy \"\/\";\n";
 	close $fh;
+	&setAPTProxy;
 
 	# get the kernel version
 	my $kernelversion = &getKernelVersion();
@@ -150,7 +149,7 @@ sub getAPTUpdatesList
 		@pkg_list = split ( ' ', <$fh> );
 		close $fh;
 
-		# remove the fisrt item
+		# remove the first item
 		shift @pkg_list if ( $pkg_list[0] eq 'Listing...' );
 	}
 
@@ -276,5 +275,39 @@ sub uploadAPTIsoOffline
 
 	return $error;
 }
-1;
 
+=begin nd
+Function: setAPTProxy
+
+        Sets http_proxy and https_proxy variables in the APT conf
+
+Parameters:
+
+
+Returns:
+
+=cut
+
+sub setAPTProxy
+{
+	my $http_proxy    = &getGlobalConfiguration( 'http_proxy' );
+	my $https_proxy   = &getGlobalConfiguration( 'https_proxy' );
+	my $apt_conf_file = &getGlobalConfiguration( 'apt_conf_file' );
+
+	use Zevenet::Lock;
+	&ztielock( \my @apt_conf, $apt_conf_file );
+	foreach my $line ( @apt_conf )
+	{
+		if ( $line =~ /^Acquire::http::proxy/ )
+		{
+			$line = "Acquire::http::proxy \"$http_proxy\/\";\n";
+		}
+		if ( $line =~ /Acquire::https::proxy/ )
+		{
+			$line = "Acquire::https::proxy \"$https_proxy\/\";\n";
+		}
+	}
+	untie @apt_conf;
+
+}
+1;

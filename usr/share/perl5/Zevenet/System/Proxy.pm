@@ -97,6 +97,12 @@ sub setProxy
 		}
 	}
 
+	if ( $err == 0 )
+	{
+		require Zevenet::Apt;
+		&setAPTProxy;
+	}
+
 	return $err;
 }
 
