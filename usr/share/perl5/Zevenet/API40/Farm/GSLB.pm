@@ -399,6 +399,8 @@ sub list_gslb_service_backends
 	}
 
 	my $backends = &getGSLBFarmBackends( $farmname, $service );
+
+	include 'Zevenet::Alias';
 	$backends = &addAliasBackendsStruct( $backends );
 
 	my $body = {
