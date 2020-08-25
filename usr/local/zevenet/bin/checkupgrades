@@ -101,7 +101,7 @@ case "$1" in
 	if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
 
 	# test connection with zevenet update system
-	$netcat_bin $flag_netcatSSL -z www.zevenet.com 443 2>/dev/null
+	$netcat_bin $flag_netcatSSL -z repo.zevenet.com 443 2>/dev/null
 	if [ $? != 0 ]; then
 		echo "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
 		logger "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
