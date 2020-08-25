@@ -501,8 +501,6 @@ sub getCPU
 	my $diff_cpu_softirq = $cpu_softirq2 - $cpu_softirq1;
 	my $diff_cpu_total   = $cpu_total2 - $cpu_total1;
 
-	#$diff_cpu_total = 1 if $diff_cpu_total == 0;
-	&zenlog( "HOLA MUNDO $diff_cpu_user and $diff_cpu_total" );
 	my $cpu_user    = ( 100 * $diff_cpu_user ) / $diff_cpu_total;
 	my $cpu_nice    = ( 100 * $diff_cpu_nice ) / $diff_cpu_total;
 	my $cpu_sys     = ( 100 * $diff_cpu_sys ) / $diff_cpu_total;
