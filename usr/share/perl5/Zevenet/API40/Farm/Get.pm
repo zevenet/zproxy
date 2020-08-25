@@ -270,6 +270,14 @@ sub getAPIFarmBackends
 	{
 		push @api_keys, qw(id weight ip priority status interface);
 	}
+	elsif ( $type =~ /http/ )
+	{
+		push @api_keys, qw(id ip port priority status timeout weight );
+	}
+	elsif ( $type eq 'gslb' )
+	{
+		push @api_keys, qw(id ip );
+	}
 
 	# add static translations
 	$translate->{ status } = { "opt" => "fgdown", "rep" => "down" };
