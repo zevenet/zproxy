@@ -49,7 +49,7 @@ sub addMAC    # ($if_ref)
 
 	&zenlog( "Adding MAC address $if_mac to $if_name", "info", "NETWORK" );
 
-	my $ip_cmd = "$ip_bin link set $if_name address $if_mac";
+	my $ip_cmd = "$ip_bin link set dev $if_name address $if_mac";
 
 	my $status = &logAndRun( $ip_cmd );
 
