@@ -77,7 +77,7 @@ for FILE in $changed; do
 		fi
 
 		# check debug msg
-		OUT=`grep '???' $FILE`
+		OUT=`grep -i 'ecm|???' $FILE`
 		if [ "$OUT" != '' ]; then
 			echo "-------------------------------------------------"
 			echo "# Error: There is debug message in the file $FILE"
