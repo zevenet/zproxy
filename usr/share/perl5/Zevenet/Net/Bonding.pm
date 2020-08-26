@@ -1266,10 +1266,8 @@ sub getBondDefaultMac
 
 	return 1 unless $bond_conf;
 
-	my $slave_hwmac =
-	  &getBondMacInterface( @{ $bond_conf->{ $bond_name }->{ slaves } }[0] );
-
-	return $slave_hwmac;
+	include 'Zevenet::Net::Mac';
+	return &genMACRandom();
 }
 
 =begin nd

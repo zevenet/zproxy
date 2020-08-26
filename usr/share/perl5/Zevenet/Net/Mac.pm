@@ -56,4 +56,40 @@ sub addMAC    # ($if_ref)
 	return $status;
 }
 
+=begin nd
+Function: genMACRandom
+
+	It generates a random MAC setting the unicast and local managed bits.
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - ip link set command return code.
+
+=cut
+
+sub genMACRandom
+{
+	my $mac = int ( rand ( 255 ) );
+
+	# apply bit masks for "local managed"
+	$mac |= 0b00000010;
+
+	# apply bit masks for "unicast", last bit is set 0
+	$mac &= 0b11111110;
+
+	$mac = sprintf ( "%02X", $mac );
+
+	# A mac has 6 octects: 82:c8:ec:3d:02:a2
+	for ( my $it = 0 ; $it < 5 ; $it++ )
+	{
+		$mac .= sprintf ( ":%02X", rand ( 255 ) );
+	}
+
+	&zenlog( "A MAC was generated: $mac", 'debug', 'network' );
+
+	return $mac;
+}
+
 1;
