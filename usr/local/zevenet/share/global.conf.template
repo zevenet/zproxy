@@ -319,7 +319,8 @@ $default_netcat_bin="/usr/bin/nc.openbsd";#update
 $netcat_bin="/usr/bin/nc.openbsd";
 #Where is dmidecode
 $dmidecode_bin="/usr/sbin/dmidecode";
-
+#Where is expect binary?
+$expect_bin="/usr/bin/expect";
 
 # zproxy
 #where is zproxy dir?

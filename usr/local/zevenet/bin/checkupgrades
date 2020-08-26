@@ -1,5 +1,7 @@
 #!/bin/bash
 
+REPO="repo.zevenet.com"
+
 # load global.conf variables
 if [ -f "/usr/local/zevenet/bin/load_global_conf" ];
 then
@@ -96,12 +98,30 @@ function UmountMountPoint {
 
 case "$1" in
 '')
-	# to activate flag netcat SSL if https proxy is configured
-	https_proxy=`sed -E 's|https?://||g' <<< $https_proxy`
-	if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
+        # check if proxy uses credentials
+        proxy_credentials=""
+        echo $https_proxy | grep "@" > /dev/null
+        if [ $? == 0 ]; then
+                # get proxy credentials
+                proxy_credentials=`sed -E 's|https?://||g' <<< $https_proxy`
+                proxy_credentials=`sed -E 's|\@.*||g' <<< $proxy_credentials`
+                proxy_user=`sed -E 's|\:.*||g' <<< $proxy_credentials`
+                proxy_passwd=`sed -E 's|.*\:||g' <<< $proxy_credentials`
+        fi
 
-	# test connection with zevenet update system
-	$netcat_bin $flag_netcatSSL -z repo.zevenet.com 443 2>/dev/null
+        # test connection with zevenet update system
+        if [ ! -z $proxy_credentials ]; then
+                # set https_proxy
+                https_proxy=`sed -E 's|https?://.*@||g' <<< $https_proxy`
+
+                $expect_bin -c "spawn $netcat_bin -P $proxy_user -X connect -x $https_proxy -z ${REPO} 443 ; expect \"Proxy password*\" ; send \"${proxy_passwd}\r\" ; interact" > /dev/null
+        else
+                # to activate flag netcat SSL if https proxy is configured
+                https_proxy=`sed -E 's|https?://||g' <<< $https_proxy`
+                if [ ! -z $https_proxy ]; then flag_netcatSSL="-X connect -x $https_proxy"; fi;
+
+                $netcat_bin $flag_netcatSSL -z $REPO 443 2>/dev/null
+        fi
 	if [ $? != 0 ]; then
 		echo "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
 		logger "Error connecting to Zevenet Update System, check connection to https://repo.zevenet.com"
