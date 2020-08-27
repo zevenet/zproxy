@@ -88,10 +88,15 @@ sub add_farm_sessions
 	my $f_type = &getFarmType( $farm );
 	if ( $f_type eq 'l4xnat' )
 	{
-		$num_bks = @{ &getFarmServers( $farm ) };
+		my $backendList = &getFarmServers( $farm );
+		$num_bks = @{ $backendList };
 		if ( $num_bks )
 		{
-			$params->{ id }->{ 'values' } = [0 .. $num_bks - 1];
+			$params->{ id }->{ 'values' } = ();
+			foreach my $b ( @{ $backendList } )
+			{
+				push @{ $params->{ id }->{ 'values' } }, $b->{ id };
+			}
 			delete $params->{ id }->{ 'valid_format' };
 		}
 	}
