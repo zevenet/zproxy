@@ -52,9 +52,9 @@ my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z0-9][a-zA-Z0-9_\-\.]*/;
 my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
 
-my $cert_name = qr/\w[\w\.\(\)\@ \-]*/,
+my $cert_name = qr/\w[\w\.\(\)\@ \-]*/;
 
-  my $vlan_tag = qr/\d{1,4}/;
+my $vlan_tag    = qr/\d{1,4}/;
 my $virtual_tag = qr/[a-zA-Z0-9\-]{1,13}/;
 my $nic_if      = qr/[a-zA-Z0-9\-]{1,15}/;
 my $bond_if     = qr/[a-zA-Z0-9\-]{1,15}/;
@@ -64,9 +64,10 @@ my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
-my $dos_global = qr/(?:sshbruteforce)/;
-my $dos_all    = qr/(?:limitconns|limitsec)/;
-my $dos_tcp    = qr/(?:bogustcpflags|limitrst)/;
+my $blacklists_source = qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?};
+my $dos_global        = qr/(?:sshbruteforce)/;
+my $dos_all           = qr/(?:limitconns|limitsec)/;
+my $dos_tcp           = qr/(?:bogustcpflags|limitrst)/;
 
 my $run_actions = qr/^(?:stop|start|restart)$/;
 
@@ -186,16 +187,12 @@ my %format_re = (
 
 	# IPDS
 	# blacklists
-	'day_of_month'      => qr{$dayofmonth},
-	'weekdays'          => qr{$weekdays},
-	'blacklists_name'   => qr{\w+},
-	'blacklists_source' => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'day_of_month'         => qr{$dayofmonth},
+	'weekdays'             => qr{$weekdays},
+	'blacklists_name'      => qr{\w+},
+	'blacklists_source'    => qr{$blacklists_source},
+	'blacklists_source_id' => qr{(?:\d+|$blacklists_source(,$blacklists_source)*)},
 
-	#orig#'blacklists_source_id' => qr{(?:\d+|(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)},
-	'blacklists_source_id' =>
-	  qr{(?:\d+|[(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?]{1,100}[,]{0,100})},
-
-  #'blacklists_source_id'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?[,]{0,100}},
 	'blacklists_url'       => qr{.+},
 	'blacklists_hour'      => $hours,
 	'blacklists_minutes'   => $minutes,
@@ -553,7 +550,7 @@ Parameters:
 			"values" : ["priority", "weight"],		# list of possible values for a parameter
 			"length" : 32,				# it is the maximum string size for the value
 			"regex"	: "/\w+,\d+/",		# regex format
-			"ref"	: "array|hash",		# the expected input must be an array or hash ref
+			"ref"	: "array|hash",		# the expected input must be an array or hash ref. To allow ref inputs and non ref for a parameter use the word 'none'. Example:  'ref' => 'array|none'
 			"valid_format"	: "farmname",		# regex stored in Validate.pm file, it checks with the function getValidFormat
 			"function" : \&func,		# function of validating, the input parameter is the value of the argument. The function has to return 0 or 'false' when a error exists
 			"format_msg"	: "must have letters and digits",	# used message when a value is not correct
@@ -633,7 +630,15 @@ sub checkZAPIParams
 		my $r = ref $json_obj->{ $param } // '';
 		if ( exists $param_obj->{ $param }->{ 'ref' } )
 		{
-			if ( $r !~ /^$param_obj->{ $param }->{ 'ref' }$/i )
+			if ( $r eq '' )
+			{
+				if ( 'none' !~ /$param_obj->{ $param }->{ 'ref' }/ )
+				{
+					return
+					  "The parameter '$param' expects a '$param_obj->{ $param }->{ref}' reference as input";
+				}
+			}
+			elsif ( $r !~ /^$param_obj->{ $param }->{ 'ref' }$/i )
 			{
 				return
 				  "The parameter '$param' expects a '$param_obj->{ $param }->{ref}' reference as input";

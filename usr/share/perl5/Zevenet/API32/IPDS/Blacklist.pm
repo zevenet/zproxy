@@ -709,7 +709,7 @@ sub add_blacklists_source
 	}
 
 	include 'Zevenet::IPDS::Blacklist::Config';
-	my $error = &setBLAddSource( $listName, $json_obj->{ 'source' } );
+	my $error = &setBLAddSource( $listName, [$json_obj->{ 'source' }] );
 
 	if ( $error )
 	{
@@ -837,7 +837,7 @@ sub del_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &setBLDeleteSource( $listName, $id ) != 0 )
+	if ( &setBLDeleteSourceByIndex( $listName, $id ) != 0 )
 	{
 		my $msg = "Error deleting source $id";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

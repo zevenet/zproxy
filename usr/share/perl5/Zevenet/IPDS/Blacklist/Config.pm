@@ -481,13 +481,14 @@ sub setBLAddToList
 =begin nd
 Function: setBLAddSource
 
-	Add a source from a list
+	Add a list of the sources to a black/white list
 
 Parameters:
 	list	- ip list name
-	source	- new source to add
+	source list ref	- List of sources to add to the list
 
 Returns:
+	Integer - Error code. 0 on success another value on failure
 =cut
 
 sub setBLAddSource
@@ -501,15 +502,25 @@ sub setBLAddSource
 
 	require Zevenet::Lock;
 	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
-	push @list, $source;
-	untie @list;
+	push @list, @{ $source };
+	require Zevenet::Arrays;
+	&uniqueArray( \@list );
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		$error = &setIPDSPolicyParam( 'element', $source, $listName );
+		$error = &delIPDSPolicy( 'elements', "", $listName );
+		$error = &setIPDSPolicyParam( 'elements', \@list, $listName );
+
+		# fixme: send difference of sources
+		# now there is an error when sources are combined in the same range
+		#$error = &setIPDSPolicyParam( 'elements', $source, $listName );
 	}
 
-	&zenlog( "$source was added to $listName", "info", "IPDS" ) if ( !$error );
+	if ( !$error )
+	{
+		&zenlog( "$source was added to $listName", "info", "IPDS" );
+		untie @list;
+	}
 
 	return $error;
 }
@@ -557,7 +568,63 @@ sub setBLModifSource
 =begin nd
 Function: setBLDeleteSource
 
-	Delete a source from a list
+	It deletes a list of sources from a list and it reload the whole set
+
+Parameters:
+	list	- ip list name
+	removed source list	- list of sources to remove from the list
+
+Returns:
+
+=cut
+
+sub setBLDeleteSource
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $listName, $removeList ) = @_;
+
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
+	my $err;
+
+	require Zevenet::Lock;
+	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
+
+	my @newList = ();
+	foreach my $s ( @list )
+	{
+		if ( !grep ( /^$s$/, @{ $removeList } ) )
+		{
+			push @newList, $s;
+		}
+	}
+
+	@list = @newList;
+
+	# fix me: use the new nftlb feature to remove sources in batch
+	# it is not developed yet
+	if ( &getBLIpsetStatus( $listName ) eq 'up' )
+	{
+		$err = &delIPDSPolicy( 'elements', "", $listName );
+
+		$err = &setIPDSPolicyParam( 'elements', \@list, $listName );
+	}
+
+	if ( !$err )
+	{
+		&zenlog( "The sources of the list '$listName' were updated properly",
+				 "info", "IPDS" );
+		untie @list;
+	}
+	return $err;
+}
+
+=begin nd
+Function: setBLDeleteSourceByIndex
+
+	Delete a source from a list using the index.
+
+	This is the old way of managing sources, now deprecated. The new function is setBLDeleteSource.
 
 Parameters:
 	list	- ip list name
@@ -567,7 +634,7 @@ Returns:
 
 =cut
 
-sub setBLDeleteSource
+sub setBLDeleteSourceByIndex
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
@@ -578,66 +645,38 @@ sub setBLDeleteSource
 
 	require Zevenet::Lock;
 	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
-	my $source = "99";
-	my @source_delete;
 
-	#if ID
-	if ( $id =~ /^\d+$/ )
+	#source not ID
+	if ( $id !~ /^\d+$/ )
 	{
-		push ( @source_delete, $id );
-
-		#if source[,source....]
-	}
-	else
-	{
-
-		my @sources = split ( /\,/, $id );
-		push ( @sources, $id ) if ( scalar @sources == 1 );
 		my $i = -1;
-		foreach my $line ( @list )
+		foreach ( @list )
 		{
 			$i++;
-			my $j = -1;
-			foreach my $source_line ( @sources )
+			if ( $_ =~ /^$id$/ )
 			{
-				$j++;
-				if ( $line eq $source_line )
-				{
-					$source = splice @sources, $j, 1;
-					push ( @source_delete, $i );
-				}
+				$id = $i;
+				last;
 			}
 		}
 
 	}
-
-	#delete elements of the @list
-	&zenlog( "DELETE in array list the following value @source_delete" );
-	my $delete = "false";
-	foreach my $source ( @source_delete )
-	{
-		if ( $delete eq "true" )
-		{
-			$source = $source - 1;
-			$source = 0 if ( $source < 0 );
-		}
-		&zenlog( "ECM DEBUG: I AM DELETING POS $source" );
-		$source = splice @list, $source, 1;
-		$delete = "true";
-
-	}
-	untie @list;
+	my $source = splice @list, $id, 1;
 
 	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
-		foreach my $source ( @source_delete )
-		{
-			$err = &delIPDSPolicy( 'element', $source, $listName );
-		}
+		$err = &delIPDSPolicy( 'elements', "", $listName );
+		$err = &setIPDSPolicyParam( 'elements', \@list, $listName );
+
+		# fixme: delete only one element
+		#~ $err = &delIPDSPolicy( 'element', $source, $listName );
 	}
 
-	&zenlog( "@source_delete deleted from $listName", "info", "IPDS" ) if ( !$err );
-
+	if ( !$err )
+	{
+		&zenlog( "$source was deleted from $listName", "info", "IPDS" );
+		untie @list;
+	}
 	return $err;
 }
 

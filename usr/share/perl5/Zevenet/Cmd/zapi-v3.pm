@@ -1039,7 +1039,7 @@ if ( $q->path_info =~ qr{/ipds/blacklist} )
 	include 'Zevenet::API3::IPDS::Blacklist';
 
 	my $blacklists_list      = &getValidFormat( 'blacklists_name' );
-	my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
+	my $blacklists_source_id = '\d+';
 
 	# BLACKLISTS
 	#  GET all blacklists

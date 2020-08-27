@@ -482,12 +482,12 @@ sub setIPDSPolicyParam
 	print $fh qq({"policies" : [ { "name" : "$list"$attrib } ] });
 	close $fh;
 
-	$output = httpNlbRequest(
-							  {
-								method => "PUT",
-								uri    => "/policies",
-								body   => "@" . "$file"
-							  }
+	$output = &httpNlbRequest(
+							   {
+								 method => "PUT",
+								 uri    => "/policies",
+								 body   => "@" . "$file"
+							   }
 	);
 
 	unlink ( $file );

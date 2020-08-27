@@ -23,14 +23,13 @@
 
 use strict;
 
-
 if ( $ENV{ PATH_INFO } =~ qr{/ipds/blacklists} )
 {
 	my $mod = 'Zevenet::API31::IPDS::Blacklist';
 
 	my $farm_re              = &getValidFormat( 'farm_name' );
 	my $blacklists_list      = &getValidFormat( 'blacklists_name' );
-	my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
+	my $blacklists_source_id = '\d+';
 
 	# BLACKLISTS
 	#  GET all blacklists
@@ -49,25 +48,32 @@ if ( $ENV{ PATH_INFO } =~ qr{/ipds/blacklists} )
 	DELETE qr{^/ipds/blacklists/($blacklists_list)$}, 'del_blacklists_list', $mod;
 
 	#  action for a blacklists
-	POST qr{^/ipds/blacklists/($blacklists_list)/actions$}, 'actions_blacklists', $mod;
+	POST qr{^/ipds/blacklists/($blacklists_list)/actions$}, 'actions_blacklists',
+	  $mod;
 
 	#  GET a source from a blacklists
-	GET qr{^/ipds/blacklists/($blacklists_list)/sources$}, 'get_blacklists_source', $mod;
+	GET qr{^/ipds/blacklists/($blacklists_list)/sources$}, 'get_blacklists_source',
+	  $mod;
 
 	#  POST a source from a blacklists
-	POST qr{^/ipds/blacklists/($blacklists_list)/sources$}, 'add_blacklists_source', $mod;
+	POST qr{^/ipds/blacklists/($blacklists_list)/sources$},
+	  'add_blacklists_source', $mod;
 
 	#  PUT a source from a blacklists
-	PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$}, 'set_blacklists_source', $mod;
+	PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$},
+	  'set_blacklists_source', $mod;
 
 	#  DELETE a source from a blacklists
-	DELETE qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$}, 'del_blacklists_source', $mod;
+	DELETE
+	  qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$},
+	  'del_blacklists_source', $mod;
 
 	#  POST list to farm
 	POST qr{^/farms/($farm_re)/ipds/blacklists$}, 'add_blacklists_to_farm', $mod;
 
 	#  DELETE list from farm
-	DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$}, 'del_blacklists_from_farm', $mod;
+	DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$},
+	  'del_blacklists_from_farm', $mod;
 }
 
 1;

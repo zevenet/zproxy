@@ -54,6 +54,20 @@ sub moveByIndex
 	splice ( @{ $list }, $dst_index, 0, $elem );
 }
 
+=begin nd
+Function: getARRIndex
+
+	It retuns the index of for a value of a list. It retunrs the first index where the value appears.
+
+Parameters:
+	Array ref - Array reference with the list to look for.
+	Value - Value to get its index
+
+Returns:
+	Integer - index for an array value
+
+=cut
+
 sub getARRIndex
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -72,7 +86,37 @@ sub getARRIndex
 		$id++;
 	}
 
+	# fixme:  return undef when the index is not found
+
 	return $ind;
+}
+
+=begin nd
+Function: uniqueArray
+
+	It gets an array for reference and it removes the items that are repated.
+	The original input array is modified. This function does not return anything
+
+Parameters:
+	Array ref - It is the array is going to be managed
+
+Returns:
+	None - .
+
+=cut
+
+sub uniqueArray
+{
+	my $arr = shift;
+
+	my %hold = ();
+
+	foreach my $v ( @{ $arr } )
+	{
+		$hold{ $v } = 1 unless exists $hold{ $v };
+	}
+
+	@{ $arr } = keys %hold;
 }
 
 1;

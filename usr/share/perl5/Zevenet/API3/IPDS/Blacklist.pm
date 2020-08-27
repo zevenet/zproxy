@@ -705,7 +705,7 @@ sub add_blacklists_source
 				}
 				else
 				{
-					$errormsg = &setBLAddSource( $listName, $json_obj->{ 'source' } );
+					$errormsg = &setBLAddSource( $listName, [$json_obj->{ 'source' }] );
 				}
 				if ( !$errormsg )
 				{
@@ -855,7 +855,7 @@ sub del_blacklists_source
 	}
 	else
 	{
-		if ( &setBLDeleteSource( $listName, $id ) != 0 )
+		if ( &setBLDeleteSourceByIndex( $listName, $id ) != 0 )
 		{
 			$errormsg = "Error deleting source $id";
 		}

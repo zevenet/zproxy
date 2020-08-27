@@ -730,54 +730,40 @@ sub add_blacklists_source
 			#'valid_format' => 'blacklists_source_id',
 			'non_blank' => 'true',
 			'required'  => 'true',
-			'ref'       => 'array',
+			'ref'       => 'array|none',
 		},
 	};
 
 	# Check allowed parameters
-	# #ECM SUPPORT a bunch of sources
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	my $source_format = &getValidFormat( 'blacklists_source_id' );
-	if ( ref $params->{ source } eq 'ARRAY' )
+	# transform source in array
+	if ( ref $json_obj->{ source } ne 'ARRAY' )
 	{
-		if ( !grep ( /^$source_format$/, @{ $params->{ source } } ) )
-		{
-			my $msg = "Some of the sources is not in the correct format IP or IP/MASK";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-
-		}
-	}
-	else
-	{
-		&zenlog( "ECM DEBUG: " . Dumper( $json_obj->{ 'source' } ) );
-
-		#if (!&getValidFormat( 'blacklists_source_id', $params->{source} )){
-		#	my $msg ="$params->{source} doesn't have a valid format IP or IP/MASK";
-		#	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		#}
-	}
-
-	if (
-		 grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
-	{
-		my $msg = "$json_obj->{'source'} already exists in the list.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
 # ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
-	if ( $json_obj->{ 'source' } eq '0.0.0.0/0' )
+		if ( $json_obj->{ 'source' } eq '0.0.0.0/0' )
+		{
+			my $msg =
+			  "Error, the source $json_obj->{'source'} is not valid, for this action, use the list \"All\".";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		$json_obj->{ source } = [$json_obj->{ source }];
+	}
+
+	my $source_format = &getValidFormat( 'blacklists_source' );
+
+	if ( grep ( !/^$source_format$/, @{ $json_obj->{ source } } ) )
 	{
-		my $msg =
-		  "Error, the source $json_obj->{'source'} is not valid, for this action, use the list \"All\".";
+		my $msg = "Some of the sources is not in the correct format IP or IP/MASK";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+
 	}
 
 	include 'Zevenet::IPDS::Blacklist::Config';
 	my $error = &setBLAddSource( $listName, $json_obj->{ 'source' } );
-
 	if ( $error )
 	{
 		my $msg = "Error, adding source to $listName.";
@@ -872,6 +858,7 @@ sub set_blacklists_source
 	return &httpResponse( { code => 200, body => $body } );
 }
 
+#  DELETE /ipds/blacklists/<listname>/sources/<IP/MASK,IP2/MASK...>	Delete a source from a black list
 #  DELETE /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
 sub del_blacklists_source
 {
@@ -882,41 +869,60 @@ sub del_blacklists_source
 
 	include 'Zevenet::IPDS::Blacklist::Config';
 
-	&zenlog( "ECM DEBUG: I am here" );
 	my $desc = "Delete a source from the blacklist $listName";
+	my $msg  = "Source $id has been deleted successfully.";
 
 	if ( !&getBLExists( $listName ) )
 	{
-		my $msg = "$listName doesn't exist.";
+		$msg = "$listName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# do not delete preloaded lists
 	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
-		my $msg = "Preloaded lists are not editable.";
+		$msg = "Preloaded lists are not editable.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( ( $id =~ /^\d+$/ ) && ( @{ &getBLParam( $listName, 'source' ) } <= $id ) )
+	# deleting using array index
+	if ( $id =~ /^\d+$/ )
 	{
-		my $msg = "ID $id doesn't exist in the list $listName.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-
-	}
-	elsif (    ( $id !~ /,/ )
-			&& ( !grep ( /$id/, @{ &getBLParam( $listName, 'source' ) } ) ) )
-	{
-		my $msg = "ID $id doesn't exist in the list $listName.";
-		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-	if ( &setBLDeleteSource( $listName, $id ) )
-	{
-		my $msg = "Error deleting source $id";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if ( @{ &getBLParam( $listName, 'source' ) } <= $id )
+		{
+			$msg = "ID $id doesn't exist in the list $listName.";
+			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		}
+		if ( &setBLDeleteSourceByIndex( $listName, $id ) )
+		{
+			$msg = "Error deleting source $id";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
-	my $msg = "Source $id has been deleted successfully.";
+	# deleting using source
+	else
+	{
+		my @sourceList = split ( ',', $id );
+		my @currentSources = @{ &getBLParam( $listName, 'source' ) };
+		foreach my $s ( @sourceList )
+		{
+			if ( !grep ( /$s/, @currentSources ) )
+			{
+				$msg = "ID $id doesn't exist in the list $listName.";
+				return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+			}
+		}
+
+		if ( &setBLDeleteSource( $listName, \@sourceList ) )
+		{
+			$msg = "Error deleting sources";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		$msg = "The sources were deleted properly";
+	}
+
 	my $body = {
 				 description => $desc,
 				 success     => "true",
