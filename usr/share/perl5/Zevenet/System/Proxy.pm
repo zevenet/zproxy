@@ -99,7 +99,7 @@ sub setProxy
 
 	if ( $err == 0 )
 	{
-		require Zevenet::Apt;
+		include 'Zevenet::Apt';
 		&setAPTProxy;
 	}
 
