@@ -719,12 +719,13 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 		{
 			push @out_ba,
 			  {
-				id      => $id,
-				status  => $status,
-				ip      => $ip,
-				port    => $port + 0,
-				timeout => $tout,
-				weight  => $prio
+				id       => $id,
+				status   => $status,
+				ip       => $ip,
+				port     => $port + 0,
+				timeout  => $tout,
+				weight   => $prio,
+				priority => undef
 			  };
 
 		}
