@@ -405,9 +405,8 @@ sub maskonif    # ($if)
 
 	require IO::Socket;
 
-	my $s          = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces = &getInterfaceList();
-	my $maskonif   = $s->if_netmask( $if );
+	my $s = IO::Socket::INET->new( Proto => 'udp' );
+	my $maskonif = $s->if_netmask( $if );
 
 	return $maskonif;
 }
