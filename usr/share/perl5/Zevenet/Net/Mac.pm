@@ -87,6 +87,8 @@ sub genMACRandom
 		$mac .= sprintf ( ":%02X", rand ( 255 ) );
 	}
 
+	$mac = lc $mac;
+
 	&zenlog( "A MAC was generated: $mac", 'debug', 'network' );
 
 	return $mac;
