@@ -358,6 +358,8 @@ sub get_floating_struct
 
 sub getFloatingList
 {
+	require Zevenet::Net::Interface;
+
 	my @list   = ();
 	my @ifaces = @{ &getSystemInterfaceList() };
 

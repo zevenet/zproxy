@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Zevenet::Core;
+use Config::Tiny;
 
 # rbl configuration path
 my $rblPath              = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";

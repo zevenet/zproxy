@@ -85,7 +85,7 @@ sub getFarmServerIds
 	elsif ( $farm_type eq "gslb" && $eload )
 	{
 		my $backendsvs = &eload(
-								 module => 'Zevenet::Farm::GSLB::Backend',
+								 module => 'Zevenet::Farm::GSLB::Service',
 								 func   => 'getGSLBFarmVS',
 								 args   => [$farm_name, $service, "backends"],
 		);

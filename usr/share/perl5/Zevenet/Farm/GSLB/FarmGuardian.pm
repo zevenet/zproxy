@@ -178,7 +178,10 @@ sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 	my @file;
 	my $flagSvc = 0;
 	my $err     = -1;
-	my $port    = &getGSLBFarmVS( $fname, $service, 'dpc' );
+
+	include 'Zevenet::Farm::GSLB::Service';
+
+	my $port = &getGSLBFarmVS( $fname, $service, 'dpc' );
 
 	tie @file, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 
