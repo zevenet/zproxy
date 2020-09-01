@@ -133,7 +133,6 @@ Returns:
 sub bindLDAP
 {
 	my $ldap;
-	my $err       = 0;
 	my $cfg_flag  = 0;
 	my $ldap_conf = &getLDAP();
 
@@ -170,9 +169,8 @@ sub bindLDAP
 				my $msg = $ldap->bind( @bind_cfg );
 				if ( $msg->code )
 				{
-					$err = 1;
-					&zenlog( "Error trying to connect with LDAP: " . $msg->code, 'warning',
-							 'rbac' );
+					$ldap = undef;
+					&zenlog( "Error trying to bind with LDAP: " . $msg->code, 'warning', 'rbac' );
 				}
 			}
 		}
