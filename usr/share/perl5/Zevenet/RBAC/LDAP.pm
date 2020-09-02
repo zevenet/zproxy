@@ -228,14 +228,46 @@ sub testLDAP
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $rc = &bindLDAP();
+	my $rc        = 0;
+	my $ldap      = &bindLDAP();
+	my $ldap_conf = &getLDAP();
 
-	if ( ref ( $rc ) eq 'Net::LDAP' )
+	if ( ref ( $ldap ) eq 'Net::LDAP' )
 	{
-		$rc->unbind();
-		&zenlog( "The load balancer can access to the LDAP service", "debug", "rbac" );
 		$rc = 0;
+		my $filter = $ldap_conf->{ filter };
+		$filter =~ s/\%s/\*/g;
+		my $result = $ldap->search(
+									base   => $ldap_conf->{ basedn },
+									filter => $filter,
+									scope  => 'base',
+									attrs  => ['1.1']
+		);
+		$ldap->unbind();
 
+		# LDAP_REFERRAL (10)
+		# LDAP_NO_SUCH_OBJECT (32)
+		# LDAP_INVALID_DN_SYNTAX (34)
+		# LDAP_FILTER_ERROR (87)
+		# LDAP_PARAM_ERROR (89)
+		my $error_code = $result->code;
+		if ( $error_code == 32 or $error_code == 10 )
+		{
+			$rc = 5;
+			&zenlog( "The BaseDN is not valid", "debug", "rbac" );
+			return $rc;
+		}
+		if ( $error_code == 87 or $error_code == 89 )
+		{
+			$rc = 6;
+			&zenlog( "The search Filter is not valid", "debug", "rbac" );
+			return $rc;
+		}
+		&zenlog( "The load balancer can access to the LDAP service", "debug", "rbac" );
+	}
+	else
+	{
+		$rc = $ldap;
 	}
 
 	return $rc;

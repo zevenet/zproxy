@@ -156,6 +156,14 @@ sub set_rbac_ldap_actions
 	{
 		$msg = "Error trying to bind with binddn";
 	}
+	elsif ( $error == 5 )
+	{
+		$msg = "The BaseDN is not valid";
+	}
+	elsif ( $error == 6 )
+	{
+		$msg = "The search Filter is not valid";
+	}
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 }
 
