@@ -129,17 +129,33 @@ sub set_rbac_ldap_actions
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( &testLDAP() )
+	my $error = &testLDAP();
+	my $msg;
+	if ( !$error )
 	{
-		my $msg = "The connection with the server was successful";
+		$msg = "The connection with the server was successful";
 		my $body = {
 					 description => $desc,
 					 message     => $msg,
 		};
 		return &httpResponse( { code => 200, body => $body } );
 	}
-
-	my $msg = "It could not connect with the server";
+	elsif ( $error == 1 )
+	{
+		$msg = "Service LDAP is disabled.";
+	}
+	elsif ( $error == 2 )
+	{
+		$msg = "Configuration is not complete.";
+	}
+	elsif ( $error == 3 )
+	{
+		$msg = "Error trying to connect with the server";
+	}
+	elsif ( $error == 4 )
+	{
+		$msg = "Error trying to bind with binddn";
+	}
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 }
 

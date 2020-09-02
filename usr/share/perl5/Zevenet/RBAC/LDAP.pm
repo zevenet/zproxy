@@ -53,6 +53,9 @@ Returns:
 
 sub getLDAP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
 	my $ldap = &getTiny( $ldap_file );
 	$ldap = $ldap->{ 'ldap' };
 
@@ -104,6 +107,8 @@ Returns:
 
 sub setLDAP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $conf = shift;
 
 	if ( exists $conf->{ bindpw } )
@@ -126,20 +131,26 @@ Parameters:
 	none - .
 
 Returns:
-	Net::LDAP object - It retuns a Net::LDAP object if it was success or undef if the configuration is not complete or there was an error connecting.
+	Net::LDAP object - It retuns a Net::LDAP object if it was success,
+					1 if LDAP service is disabled,
+					2 if LDAP configuration is not complete,
+					3 if cannot connect with server,
+					4 if cannot bind with server.
 
 =cut
 
 sub bindLDAP
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $rc = 2;
 	my $ldap;
-	my $cfg_flag  = 0;
 	my $ldap_conf = &getLDAP();
 
 	if ( $ldap_conf->{ enabled } ne 'true' )
 	{
 		&zenlog( "The LDAP service is disabled", 'debug', 'rbac' );
-		return $ldap;
+		return 1;
 	}
 
 	if ( $ldap_conf->{ host } )
@@ -156,7 +167,6 @@ sub bindLDAP
 		{
 			if ( $ldap_conf->{ binddn } )
 			{
-				$cfg_flag = 1;
 
 				my @bind_cfg = ( $ldap_conf->{ binddn } );
 				if ( $ldap_conf->{ bindpw } )
@@ -169,47 +179,66 @@ sub bindLDAP
 				my $msg = $ldap->bind( @bind_cfg );
 				if ( $msg->code )
 				{
-					$ldap = undef;
+					$ldap->unbind();
+					$rc = 4;
 					&zenlog( "Error trying to bind with LDAP: " . $msg->code, 'warning', 'rbac' );
+				}
+				else
+				{
+					$rc = $ldap;
 				}
 			}
 		}
+		else
+		{
+			$rc = 3;
+			&zenlog(
+				"Error trying to connect with LDAP server $ldap_conf->{ host } : $ldap_conf->{ port }",
+				'warning', 'rbac'
+			);
+		}
 	}
 
-	if ( !$cfg_flag )
+	if ( $rc == 2 )
 	{
 		&zenlog( "The LDAP configuration is not complete", 'debug', 'rbac' );
 	}
 
-	return $ldap;
+	return $rc;
 }
 
 =begin nd
 Function: testLDAP
 
-	Do a connection with the LDAP server to check the availability and after it is closed.
+	Do a connection with the LDAP server to check the availability
 
 Parameters:
 	none - .
 
 Returns:
-	Integer - Returns 1 when the server is reachable or 0 on connecting failure.
+	Integer - Returns 0 when the server is reachable and bind is succesful, 
+		          1 on LDAP service disabled,
+		          2 on configuration failure,
+		          3 on connecting failure,
+			  4 on connection succesful and bind failure
 
 =cut
 
 sub testLDAP
 {
-	my $suc  = 0;
-	my $ldap = &bindLDAP();
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $rc = &bindLDAP();
 
-	if ( defined $ldap )
+	if ( ref ( $rc ) eq 'Net::LDAP' )
 	{
+		$rc->unbind();
 		&zenlog( "The load balancer can access to the LDAP service", "debug", "rbac" );
-		$suc = 1;
-		$ldap->unbind();
+		$rc = 0;
+
 	}
 
-	return $suc;
+	return $rc;
 }
 
 =begin nd
@@ -281,12 +310,14 @@ Returns:
 
 sub getLDAPUserExists
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $user  = shift;
 	my $exist = 0;
 
 	my $ldap = &bindLDAP();
 
-	if ( defined $ldap )
+	if ( ref ( $ldap ) eq 'Net::LDAP' )
 	{
 		my $ldap_conf = &getLDAP();
 
@@ -317,6 +348,7 @@ sub getLDAPUserExists
 		{
 			&zenlog( "The '$user' user was not found in LDAP service", "warning", "RBAC" );
 		}
+		$ldap->unbind();
 	}
 
 	return $exist;
