@@ -438,9 +438,9 @@ vrrp_instance ZCluster {
 \tnotify_fault  \"/usr/local/zevenet/bin/zcluster-manager notify_fault\"
 \tnotify        \"/usr/local/zevenet/bin/zcluster-manager\"
 
-\ttrack_script {
-\t\tchk_cl_status
-\t  }
+\t#track_script {
+\t\t#chk_cl_status
+\t  #}
 
 }
 
