@@ -269,6 +269,15 @@ sub delete_interface_bond    # ( $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	include 'Zevenet::Cluster';
+	my $zcl_conf = &getZClusterConfig();
+	if ( defined $zcl_conf->{ _ }->{ interface }
+		 and $zcl_conf->{ _ }->{ interface } eq $if_ref->{ name } )
+	{
+		$msg = "The cluster interface $if_ref->{ name } cannot be modified.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# Do not delete the interface if it has some vlan configured
 	my @child = &getInterfaceChild( $bond );
 
@@ -690,6 +699,14 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		if ( $msg ne "" )
 		{
 			$msg = "The interface cannot be modified. $msg";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		include 'Zevenet::Cluster';
+		my $zcl_conf = &getZClusterConfig();
+		if ( defined $zcl_conf->{ _ }->{ interface }
+			 and $zcl_conf->{ _ }->{ interface } eq $if_ref->{ name } )
+		{
+			$msg = "The cluster interface $if_ref->{ name } cannot be modified.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 

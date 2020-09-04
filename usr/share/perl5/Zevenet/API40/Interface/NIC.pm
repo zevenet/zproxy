@@ -61,6 +61,19 @@ sub delete_interface_nic    # ( $nic )
 			$msg = "The interface cannot be modified. $msg";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+		my $zcl_conf = &eload( module => 'Zevenet::Cluster',
+							   func   => 'getZClusterConfig', );
+		if ( defined $zcl_conf->{ _ }->{ interface }
+			 and $zcl_conf->{ _ }->{ interface } eq $if_ref->{ name } )
+		{
+			$msg = "The cluster interface $if_ref->{ name } cannot be modified.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		if ( defined $if_ref->{ is_slave } and $if_ref->{ is_slave } eq "true" )
+		{
+			$msg = "The slave interface $if_ref->{ name } cannot be modified.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# not delete the interface if it has some vlan configured
@@ -319,6 +332,19 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 			if ( $msg ne "" )
 			{
 				$msg = "The interface cannot be modified. $msg";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+			my $zcl_conf = &eload( module => 'Zevenet::Cluster',
+								   func   => 'getZClusterConfig', );
+			if ( defined $zcl_conf->{ _ }->{ interface }
+				 and $zcl_conf->{ _ }->{ interface } eq $if_ref->{ name } )
+			{
+				$msg = "The cluster interface $if_ref->{ name } cannot be modified.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+			if ( defined $if_ref->{ is_slave } and $if_ref->{ is_slave } eq "true" )
+			{
+				$msg = "The slave interface $if_ref->{ name } cannot be modified.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
