@@ -1066,21 +1066,27 @@ sub setBondMac
 		$mac = &getBondDefaultMac( $if_ref->{ name } );
 	}
 
-	&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
-	foreach my $slave ( @{ $bondSlaves } )
-	{
-		my $slaveConf = &getSystemInterface( $slave );
-		require Zevenet::Net::Core;
-		$status += &downIf( $slaveConf ) if ( $slaveConf->{ status } ne "down" );
-	}
-	include 'Zevenet::Net::Mac';
-	$status += &addMAC( $if_ref->{ name }, $mac );
+	my $if_system = &getSystemInterface( $if_ref->{ name } );
 
-	&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
-	foreach my $slave ( @{ $bondSlaves } )
+	# change mac if mac on system is not equal
+	if ( $if_system->{ mac } ne $if_ref->{ mac } )
 	{
-		my $slaveConf = &getSystemInterface( $slave );
-		$status += &upIf( $slaveConf );
+		&zenlog( "Turning slaves of $if_ref->{ name } down", "info", "NETWORK" );
+		foreach my $slave ( @{ $bondSlaves } )
+		{
+			my $slaveConf = &getSystemInterface( $slave );
+			require Zevenet::Net::Core;
+			$status += &downIf( $slaveConf ) if ( $slaveConf->{ status } ne "down" );
+		}
+		include 'Zevenet::Net::Mac';
+		$status += &addMAC( $if_ref->{ name }, $mac );
+
+		&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
+		foreach my $slave ( @{ $bondSlaves } )
+		{
+			my $slaveConf = &getSystemInterface( $slave );
+			$status += &upIf( $slaveConf );
+		}
 	}
 
 	my $config_ref = &getInterfaceConfig( $if_ref->{ name } )
