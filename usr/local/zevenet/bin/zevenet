@@ -132,7 +132,7 @@ sub zna_version
 	$zna_version =~ s/-/ /;
 
 	# get version from zevenet_version file
-	my $fh           = &openlock( $file, '<' );
+	my $fh = &openlock( $file, '<' );
 	my $file_version = <$fh>;
 	close ( $fh );
 
@@ -308,6 +308,11 @@ if ( $action eq "start" )
 	# first real interfaces
 	foreach my $iface ( @interfaces )
 	{
+		if ( $eload )
+		{
+			next if ( $iface->{ type } eq 'bond' );
+		}
+
 		# interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
 		{
