@@ -322,9 +322,9 @@ Comparing Requests/sec and latency, results are very impressive, zproxy is almos
 
 **Pull Requests are WELCOME!** Please submit any fixes or improvements:
 
-* [Project Github Home](https://github.com/abdessamad-zevenet/zproxy)
-* [Submit Issues](https://github.com/abdessamad-zevenet/zproxy/issues)
-* [Pull Requests](https://github.com/abdessamad-zevenet/zproxy/pulls)
+* [Project Github Home](https://github.com/zevenet/zproxy)
+* [Submit Issues](https://github.com/zevenet/zproxy/issues)
+* [Pull Requests](https://github.com/zevenet/zproxy/pulls)
 
 ### License
 
