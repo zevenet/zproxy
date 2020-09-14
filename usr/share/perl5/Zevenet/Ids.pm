@@ -209,8 +209,24 @@ sub getIdsTree
 		my @roles = &eload( module => 'Zevenet::RBAC::Role::Config',
 							func   => 'getRBACRolesList', );
 		$tree->{ 'rbac' }->{ 'users' }  = &addIdsArrays( \@users );
-		$tree->{ 'rbac' }->{ 'groups' } = &addIdsArrays( \@groups );
 		$tree->{ 'rbac' }->{ 'roles' }  = &addIdsArrays( \@roles );
+		$tree->{ 'rbac' }->{ 'groups' } = &addIdsArrays( \@groups );
+
+		foreach my $g ( @groups )
+		{
+			my $g_cfg = &eload(
+								module => 'Zevenet::RBAC::Group::Core',
+								func   => 'getRBACGroupObject',
+								args   => [$g]
+			);
+
+			$tree->{ 'rbac' }->{ 'groups' }->{ $g }->{ 'users' } =
+			  &addIdsArrays( $g_cfg->{ 'users' } );
+			$tree->{ 'rbac' }->{ 'groups' }->{ $g }->{ 'farms' } =
+			  &addIdsArrays( $g_cfg->{ 'farms' } );
+			$tree->{ 'rbac' }->{ 'groups' }->{ $g }->{ 'interfaces' } =
+			  &addIdsArrays( $g_cfg->{ 'interfaces' } );
+		}
 
 		# add aliases
 		my $alias_bck_ref = &eload(

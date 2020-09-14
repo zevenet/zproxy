@@ -141,7 +141,6 @@ sub create_waf_rule
 
 	include 'Zevenet::IPDS::WAF::Config';
 	my $desc = "Create a rule in the set $set";
-	my $params;
 	my $type;
 
 	# check if the set exists
@@ -151,39 +150,52 @@ sub create_waf_rule
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( exists $json_obj->{ copy_from } )
-	{
-		$type = 'copy';
-		$params =
-		  { "copy_from" => { 'required' => 'true', 'valid_format' => 'waf_rule_id' }, };
-	}
-	elsif ( exists $json_obj->{ raw } )
-	{
-		$type = 'custom';
-		$params = { "raw" => { 'required' => 'true', 'non_blank' => 'true' }, };
-	}
-	elsif ( exists $json_obj->{ mark } )
-	{
-		$type = 'mark';
-		$params = { "mark" => { 'required' => 'true', 'non_blank' => 'true' }, };
-	}
-
-	# rule or action
-	else
-	{
-		$type   = 'action';
-		$params = &getWafRuleParameters();
-	}
+	my $params = &getWafRuleParameters();
+	$params->{ "mark" }      = { 'non_blank'    => 'true' };
+	$params->{ "raw" }       = { 'non_blank'    => 'true' };
+	$params->{ "copy_from" } = { 'valid_format' => 'waf_rule_id' };
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( $type eq 'copy' )
+	if ( exists $json_obj->{ raw } )
 	{
+		if ( keys %$json_obj > 1 )
+		{
+			my $msg = "The field 'raw' can not be combined with another one.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		$type = 'custom';
+		my @arr = split ( "\n", $json_obj->{ raw } );
+		$json_obj->{ raw } = \@arr;
+		$err = &setWAFSetRaw( $set, $json_obj->{ raw } );
+	}
+	elsif ( exists $json_obj->{ mark } )
+	{
+		if ( keys %$json_obj > 1 )
+		{
+			my $msg = "The field 'mark' can not be combined with another one.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		$type = 'mark';
+		### create marker
+		$err = &createWAFMark( $set, $json_obj->{ mark } );
+
+	}
+	elsif ( exists $json_obj->{ copy_from } )
+	{
+		$type = 'copy';
+		if ( keys %$json_obj > 1 )
+		{
+			my $msg = "The field 'copy_from' can not be combined with another one.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		# check if the source of the copy exists
-		unless ( &existWAFRuleId( $json_obj->{ copy_from } ) )
+		elsif ( !&existWAFRuleId( $json_obj->{ copy_from } ) )
 		{
 			my $msg = "The WAF rule $json_obj->{ copy_from } does not exist";
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -192,21 +204,10 @@ sub create_waf_rule
 		# Copy
 		$err = &copyWAFRule( $set, $json_obj->{ copy_from } );
 	}
-	elsif ( $type eq 'custom' )
-	{
-		my @arr = split ( "\n", $json_obj->{ raw } );
-		$json_obj->{ raw } = \@arr;
-		$err = &setWAFSetRaw( $set, $json_obj->{ raw } );
-	}
-	elsif ( $type eq 'mark' )
-	{
-		### create marker
-		$err = &createWAFMark( $set, $json_obj->{ mark } );
-	}
-
-	# rule and action
 	else
 	{
+		# rule and action
+		$type = 'action';
 		if ( exists $json_obj->{ rule_id } )
 		{
 			my $set_id = &getWAFSetByRuleId( $json_obj->{ rule_id } );

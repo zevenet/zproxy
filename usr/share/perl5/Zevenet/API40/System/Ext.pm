@@ -31,10 +31,20 @@ sub set_factory_reset
 	my $json_obj = shift;
 	my $desc     = "Apply a factory reset";
 
+	require Zevenet::Net::Interface;
+
+	## The interface must be of NIC type and it has to be configured
+	my @nic_list = ();
+	foreach my $if ( &getInterfaceTypeList( 'nic' ) )
+	{
+		push @nic_list, $if->{ name } if ( $if->{ addr } );
+	}
+
 	my $params = {
 				   "interface" => {
 									'non_blank' => 'true',
 									'required'  => 'true',
+									'values'    => \@nic_list,
 				   },
 				   "remove_backups" => {
 										 'values'    => ["true", "false"],
@@ -52,19 +62,6 @@ sub set_factory_reset
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
-
-	## The interface must be of NIC type and it has to be configured
-	my $if_ref = &getInterfaceConfig( $json_obj->{ interface } );
-	if ( $if_ref->{ type } ne 'nic' )
-	{
-		my $msg = "The interface has to be of type NIC.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-	elsif ( !$if_ref->{ addr } )
-	{
-		my $msg = "The interface has to be configured.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
 
 	unless ( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' )
 	{
