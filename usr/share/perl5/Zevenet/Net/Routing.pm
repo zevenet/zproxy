@@ -734,12 +734,14 @@ sub listRoutingTableSys
 
 	my $data = &logAndGet( "$ip_bin route list table $table", 'array' );
 
+	my $routeparams = &getGlobalConfiguration( "routeparams" );
+
 	# filter data
 	my @routes = ();
 	foreach my $cmd ( @{ $data } )
 	{
 		# it is not a system rule
-		next if ( $cmd !~ /initcwnd 10 initrwnd 10/ );
+		next if ( $cmd !~ /$routeparams/ );
 
 		my $r = {};
 		$r->{ type } = 'system';
@@ -1457,7 +1459,8 @@ sub sanitazeRouteCmd
 	my $table = shift;
 
 	&zenlog( "Sanitazing route cmd: $cmd", "debug2", "net" );
-	if ( $cmd =~ s/initcwnd 10 initrwnd 10// )
+	my $routeparams = &getGlobalConfiguration( "routeparams" );
+	if ( $cmd =~ s/$routeparams// )
 	{
 		# this is used to identify the rules are from system
 		&zenlog( "Removing: window sizes", "debug2", "net" );
