@@ -50,6 +50,12 @@ sub add_addheader    # ( $json_obj, $farmname )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my $params = {
 				   "header" => {
 								 'non_blank' => 'true',
@@ -124,6 +130,12 @@ sub del_addheader
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# check if the header is already added
 	if ( ( scalar @{ &getHTTPAddReqHeader( $farmname ) } ) < $index + 1 )
 	{
@@ -183,6 +195,12 @@ sub add_headremove    # ( $json_obj, $farmname )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $params = {
@@ -259,6 +277,12 @@ sub del_headremove
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# check if the headremove is already added
 	if ( ( scalar @{ &getHTTPRemReqHeader( $farmname ) } ) < $index + 1 )
 	{
@@ -318,6 +342,12 @@ sub add_addResponseheader    # ( $json_obj, $farmname )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $params = {
@@ -394,6 +424,12 @@ sub del_addResponseheader
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# check if the header is already added
 	if ( ( scalar @{ &getHTTPAddRespHeader( $farmname ) } ) < $index + 1 )
 	{
@@ -453,6 +489,12 @@ sub add_removeResponseheader    # ( $json_obj, $farmname )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $params = {
@@ -527,6 +569,12 @@ sub del_removeResponseHeader
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		my $msg = "This feature is only for HTTP profiles.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if the headremove is already added
