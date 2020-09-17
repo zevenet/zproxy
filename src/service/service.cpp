@@ -55,6 +55,65 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   }
 }
 
+bool Service::setBackendHostInfo(Backend *backend) {
+  if (backend == nullptr) return false;
+  ::freeaddrinfo(backend->address_info);
+  auto address = Network::getAddress(backend->address, backend->port);
+  if (address == nullptr) {
+    // maybe the backend still not available, we set it as down;
+    backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
+    Logger::logmsg(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
+                   backend->address.data());
+    return false;
+  }
+  backend->address_info = address.release();
+  //  if (Network::getHost(backend->address.data(), backend->address_info, PF_UNSPEC, backend->port)) {
+  //    // maybe the backend still not available, we set it as down;
+  //    backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
+  //    Logger::logmsg(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
+  //                   backend->address.data());
+  //    return false;
+  //  }
+  if (backend->address_info == nullptr) return false;
+  if (becookie.empty()) return true;
+  if (backend->backend_config->bekey.empty()) {
+    char lin[MAXBUF];
+    char *cp;
+    if (backend->address_info->ai_family == AF_INET)
+      snprintf(lin, MAXBUF - 1, "4-%08x-%x",
+               htonl((reinterpret_cast<sockaddr_in *>(backend->address_info->ai_addr))->sin_addr.s_addr),
+               htons((reinterpret_cast<sockaddr_in *>(backend->address_info->ai_addr))->sin_port));
+    else if (backend->address_info->ai_family == AF_INET6) {
+      cp = reinterpret_cast<char *>(&((reinterpret_cast<sockaddr_in6 *>(backend->address_info->ai_addr))->sin6_addr));
+      snprintf(lin, MAXBUF - 1,
+               "6-%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
+               "02x%02x-%x",
+               cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7], cp[8], cp[9], cp[10], cp[11], cp[12], cp[13],
+               cp[14], cp[15], htons((reinterpret_cast<sockaddr_in6 *>(backend->address_info->ai_addr))->sin6_port));
+    } else {
+      backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
+      Logger::logmsg(LOG_NOTICE, "cannot autogenerate backendkey, please specify one'");
+      return false;
+    }
+    backend->bekey = becookie;
+    backend->bekey += "=";
+    backend->bekey += std::string(lin);
+
+    if (!becdomain.empty()) backend->bekey += "; Domain=" + becdomain;
+    if (!becpath.empty()) backend->bekey += "; Path=" + becpath;
+
+    if (becage != 0) {
+      backend->bekey += "; Max-Age=";
+      if (becage > 0) {
+        backend->bekey += std::to_string(becage * 1000);
+      } else {
+        backend->bekey += std::to_string(ttl * 1000);
+      }
+    }
+  }
+  return true;
+}
+
 void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
                          int backend_id, bool emergency) {
   auto backend = std::make_unique<Backend>();
@@ -66,39 +125,14 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
   backend->setStatus( backend_config->disabled ? BACKEND_STATUS::BACKEND_DISABLED
                                              : BACKEND_STATUS::BACKEND_UP);
   if (backend_config->be_type == 0) {
-    backend->address_info =
-        Network::getAddress(backend_config->address, backend_config->port)
-            .release();
-    if (backend->address_info != nullptr) {
-      backend->address = std::move(backend_config->address);
-      backend->port = backend_config->port;
-      backend->backend_type = BACKEND_TYPE::REMOTE;
-      backend->nf_mark = backend_config->nf_mark;
-      backend->ctx = backend_config->ctx;
-      backend->conn_timeout = backend_config->conn_to;
-      backend->response_timeout = backend_config->rw_timeout;
-      if (!becookie.empty()) {
-        backend->bekey = becookie;
-        backend->bekey += "=";
-        backend->bekey += backend_config->bekey;
-
-        if (!becdomain.empty()) backend->bekey += "; Domain=" + becdomain;
-        if (!becpath.empty()) backend->bekey += "; Path=" + becpath;
-
-        if (becage != 0) {
-          backend->bekey += "; Max-Age=";
-          if (becage > 0) {
-            backend->bekey += std::to_string(becage * 1000);
-          } else {
-            backend->bekey += std::to_string(ttl * 1000);
-          }
-        }
-      }
-
-    } else {
-      Logger::LogInfo("Backend Configuration not valid ", LOG_NOTICE);
-      return;
-    }
+    backend->address = std::move(backend_config->address);
+    backend->port = backend_config->port;
+    backend->backend_type = BACKEND_TYPE::REMOTE;
+    backend->nf_mark = backend_config->nf_mark;
+    backend->ctx = backend_config->ctx;
+    backend->conn_timeout = backend_config->conn_to;
+    backend->response_timeout = backend_config->rw_timeout;
+    setBackendHostInfo(backend.get());
   } else if (backend_config->be_type == 2) {
     backend->backend_type = BACKEND_TYPE::TEST_SERVER;
   } else if (backend_config->be_type >= 300) {
@@ -147,9 +181,8 @@ bool Service::addBackend(JsonObject *json_object) {
 
     if (json_object->count(JSON_KEYS::ADDRESS) > 0 &&
         json_object->at(JSON_KEYS::ADDRESS)->isValue()) {
-      config->address = dynamic_cast<JsonDataValue *>(
-                            json_object->at(JSON_KEYS::ADDRESS).get())
-                            ->string_value;
+      config->address = dynamic_cast<JsonDataValue *>(json_object->at(JSON_KEYS::ADDRESS).get())->string_value;
+      setBackendHostInfo(config.get());
     } else {
       return false;
     }
@@ -503,7 +536,9 @@ Backend *Service::getNextBackend() {
 void Service::doMaintenance() {
   HttpSessionManager::doMaintenance();
   for (Backend *bck : this->backend_set) {
-    bck->doMaintenance();
+    if (setBackendHostInfo(bck)) {
+      bck->doMaintenance();
+    }
     if (bck->getStatus() == BACKEND_STATUS::BACKEND_DOWN) {
       deleteBackendSessions(bck->backend_id);
     }

@@ -1448,9 +1448,16 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
       lin[matches[1].rm_eo] = '\0';
 
       if (Network::getHost(lin + matches[1].rm_so, &addr, PF_UNSPEC)) {
-        /* if we can't resolve it assume this is a UNIX domain socket */
-        if ((strlen(lin + matches[1].rm_so) + 1) > UNIX_PATH_MAX)
-          conf_err("UNIX path name too long");
+        /* if we can't resolve it, maybe this is a UNIX domain socket */
+        if (std::string_view(lin + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so).find('/') !=
+            std::string::npos) {
+          if ((strlen(lin + matches[1].rm_so) + 1) > UNIX_PATH_MAX) conf_err("UNIX path name too long");
+        } else {
+          // maybe the backend still not available, we set it as down;
+          res->alive = 0;
+          Logger::logmsg(LOG_ERR, "%s line %d: Could not resolve backend host \"%s\".", f_name[cur_fin].data(),
+                         n_lin[cur_fin], lin + matches[1].rm_so);
+        }
       }
       res->address = lin + matches[1].rm_so;
       has_addr = 1;
@@ -1610,28 +1617,6 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
       if ((addr.ai_family == AF_INET || addr.ai_family == AF_INET6) &&
           !has_port)
         conf_err("BackEnd missing Port - aborted");
-      if (res->bekey.empty()) {
-        if (addr.ai_family == AF_INET)
-          snprintf(
-              lin, MAXBUF - 1, "4-%08x-%x",
-              htonl((reinterpret_cast<sockaddr_in *>(addr.ai_addr))
-                        ->sin_addr.s_addr),
-              htons((reinterpret_cast<sockaddr_in *>(addr.ai_addr))->sin_port));
-        else if (addr.ai_family == AF_INET6) {
-          cp = reinterpret_cast<char *>(
-              &((reinterpret_cast<sockaddr_in6 *>(addr.ai_addr))->sin6_addr));
-          snprintf(
-              lin, MAXBUF - 1,
-              "6-%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
-              "02x%02x-%x",
-              cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7], cp[8],
-              cp[9], cp[10], cp[11], cp[12], cp[13], cp[14], cp[15],
-              htons(
-                  (reinterpret_cast<sockaddr_in6 *>(addr.ai_addr))->sin6_port));
-        } else
-          conf_err("cannot autogenerate backendkey, please specify one");
-        res->bekey = std::string(lin);
-      }
       std::free(addr.ai_addr);
       return res;
     } else {

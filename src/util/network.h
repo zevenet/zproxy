@@ -56,7 +56,7 @@ class Network {
   /*
  * Search for a host name_, return the addrinfo for it
  */
-  inline static int getHost(const char *name, addrinfo *res, int ai_family) {
+  inline static int getHost(const char *name, addrinfo *res, int ai_family = AF_UNSPEC, int port = 0) {
     struct addrinfo *chain, *ap;
     struct addrinfo hints;
     int ret_val;
@@ -64,7 +64,7 @@ class Network {
     hints.ai_family = ai_family;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
-    if ((ret_val = getaddrinfo(name, nullptr, &hints, &chain)) == 0) {
+    if ((ret_val = getaddrinfo(name, port > 0 ? std::to_string(port).data() : nullptr, &hints, &chain)) == 0) {
       for (ap = chain; ap != nullptr; ap = ap->ai_next)
         if (ap->ai_socktype == SOCK_STREAM) break;
 
@@ -78,14 +78,14 @@ class Network {
         freeaddrinfo(chain);
         return EAI_MEMORY;
       }
-      memcpy(res->ai_addr, ap->ai_addr, ap->ai_addrlen);
+      std::memcpy(res->ai_addr, ap->ai_addr, ap->ai_addrlen);
       freeaddrinfo(chain);
     }
     return ret_val;
   }
 
-  inline static std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> getAddress(
-      const std::string &address, int port = 0) {
+  inline static std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> getAddress(const std::string &address,
+                                                                                int port = 0) {
     addrinfo hints{};
     addrinfo *result{nullptr};
     int sfd;
@@ -98,16 +98,12 @@ class Network {
     hints.ai_addr = nullptr;
     hints.ai_next = nullptr;
 
-    sfd = getaddrinfo(address.data(),
-                      port > 0 ? std::to_string(port).data() : nullptr, &hints,
-                      &result);
+    sfd = getaddrinfo(address.data(), port > 0 ? std::to_string(port).data() : nullptr, &hints, &result);
     if (sfd != 0) {
-      logmsg(LOG_NOTICE, "getaddrinfo: %s\n", gai_strerror(sfd));
-      return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(nullptr,
-                                                                  freeaddrinfo);
+      logmsg(LOG_DEBUG, "getaddrinfo: %s\n", gai_strerror(sfd));
+      return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(nullptr, freeaddrinfo);
     }
-    return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(result,
-                                                                &freeaddrinfo);
+    return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(result, &freeaddrinfo);
   }
 
   inline static int getPeerPort(int socket_fd) {
@@ -164,7 +160,7 @@ class Network {
   /*
    * Translate inet/inet6 address/port into a string
    */
-  static void addr2str(char *const res, size_t res_len, const struct addrinfo *addr, const int no_port) {
+  static void addr2str(char *const res, size_t res_len, const struct addrinfo *addr, bool include_port = false) {
     char buf[MAXBUF];
     int port;
     void *src;
@@ -195,30 +191,11 @@ class Network {
         port = 0;
         break;
     }
-    if (no_port)
+    if (!include_port)
       ::snprintf(res, res_len, "%s", buf);
     else
       ::snprintf(res, res_len, "%s:%d", buf, port);
     return;
-  }
-  static bool HostnameToIp(const char *hostname, char *ip) {
-    struct hostent *he;
-    struct in_addr **addr_list;
-    int i;
-
-    if ((he = gethostbyname(hostname)) == nullptr) {
-      // get the host info
-
-      return false;
-    }
-    addr_list = reinterpret_cast<in_addr **>(he->h_addr_list);
-    for (i = 0; addr_list[i] != nullptr; i++) {
-      // Return the first one;
-      strcpy(ip, inet_ntoa(*addr_list[i]));
-      return true;
-    }
-
-    return false;
   }
 
   inline static bool equalSockAddr(sockaddr *addr1, sockaddr *addr2,

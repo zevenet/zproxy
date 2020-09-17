@@ -167,4 +167,5 @@ class Service : public sessions::HttpSessionManager,
    */
   std::unique_ptr<JsonObject> getServiceJson();
   inline int getBackendSetSize(){return backend_set.size();}
+  bool setBackendHostInfo(Backend *backend);
 };
