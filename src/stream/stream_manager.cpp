@@ -1488,7 +1488,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
   stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
   if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
 #if EXTENDED_DEBUG_LOG
-    stream->dumpDebugData("ClientW-ReadPending", "WROTE REQ PENDING ");
+    HttpStream::dumpDebugData(stream, "ClientW-ReadPending", "WROTE REQ PENDING ");
 #endif
     onRequestEvent(stream->client_connection.getFileDescriptor());
   }
@@ -1625,7 +1625,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 
     if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
 #if EXTENDED_DEBUG_LOG
-      stream->dumpDebugData("ClientW-ReadPending", "WROTE RESP PENDING ");
+      HttpStream::dumpDebugData(stream, "ClientW-ReadPending", "WROTE RESP PENDING ");
 #endif
       onResponseEvent(stream->backend_connection.getFileDescriptor());
     }
@@ -1920,7 +1920,7 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
   // update log info
   StreamDataLogger logger(stream, listener_config_);
 #if EXTENDED_DEBUG_LOG
-    stream->dumpDebugData("onServerDisconnect", "DISCONNECT");
+  HttpStream::dumpDebugData(stream, "onServerDisconnect", "DISCONNECT");
 #endif
   if(stream->backend_connection.getFileDescriptor() > 0) {
 #if DEBUG_STREAM_EVENTS_COUNT
