@@ -99,8 +99,9 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
       Logger::LogInfo("Backend Configuration not valid ", LOG_NOTICE);
       return;
     }
-  } else {
-    // Redirect
+  } else if (backend_config->be_type == 2) {
+    backend->backend_type = BACKEND_TYPE::TEST_SERVER;
+  } else if (backend_config->be_type >= 300) {
     backend->backend_type = BACKEND_TYPE::REDIRECT;
   }
   if (emergency)

@@ -699,6 +699,9 @@ void StreamManager::onRequestEvent(int fd) {
     }
     case BACKEND_TYPE::CACHE_SYSTEM:
       break;
+    case BACKEND_TYPE::TEST_SERVER:
+      http_manager::replyTestServer(*stream);
+      return;
   }
   stream->client_connection.enableReadEvent();
 }

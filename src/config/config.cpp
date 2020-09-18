@@ -1240,6 +1240,19 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
     } else if (!regexec(&regex_set::StrictTransportSecurity, lin, 4, matches,
                         0)) {
       res->sts = atoi(lin + matches[1].rm_so);
+    }else if(!regexec(&regex_set::TestServer,lin,4, matches,0)){
+      if (res->backends) {
+        for (be = res->backends; be->next; be = be->next)
+          ;
+        be->next = std::make_shared<BackendConfig>();
+        be = be->next;
+      } else {
+        res->backends = std::make_shared<BackendConfig>();
+        be = res->backends;
+      }
+      be->be_type = 2;
+      //maximum request number allowed per TCP connection
+      be->max_request = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&regex_set::Redirect, lin, 4, matches, 0)) {
       if (res->backends) {
         for (be = res->backends; be->next; be = be->next)

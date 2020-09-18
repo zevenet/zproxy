@@ -147,4 +147,6 @@ class http_manager {
    */
   static bool replyRedirect(int code, const std::string &url,
                             HttpStream &stream);
+  static bool replyTestServer(HttpStream &stream, bool async = false);
+
 };

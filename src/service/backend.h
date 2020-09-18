@@ -56,6 +56,7 @@ enum class BACKEND_TYPE {
   REDIRECT,
   /** Backend used for the cache system. */
   CACHE_SYSTEM,
+  TEST_SERVER,
 };
 using namespace Statistics;
 using namespace json;

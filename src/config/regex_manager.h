@@ -156,4 +156,5 @@ static const Regex NfMark("^[ \t]*NfMark[ \t]+([1-9][0-9]*)[ \t]*$");
 #if WAF_ENABLED
 static const Regex WafRules("^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$");
 #endif
+static const Regex TestServer("^[ \t]*Server[ \t]+([1-9-][0-9]*)[ \t]*$");
 };

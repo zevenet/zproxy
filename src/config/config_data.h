@@ -94,6 +94,7 @@ class BackendConfig : Counter<BackendConfig> {
   std::shared_ptr<BackendConfig> next = nullptr;
   int key_id;
   int nf_mark;
+  int max_request{0};          /*Maximum request number allowed per connection*/
   ~BackendConfig() {}
 };
 

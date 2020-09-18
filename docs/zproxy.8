@@ -893,6 +893,14 @@ yet supported by all clients (in particular HTTP 1.0 ones), so
 currently replies by default with a "302 Found" instead. You may override this
 behaviour by specifying the code to be used (301, 302 or 307).
 .TP
+\fBServer Max-request\fR
+Create a dummy server with a hello world 200 OK response and 100 as the maximum
+number of requests allowed on the same connection.
+Service "server"
+        Url "/server"
+        Server 100
+End
+.TP
 \fBEmergency\fR
 Directives enclosed between an
 .I Emergency

@@ -680,9 +680,52 @@ bool http_manager::replyRedirect(int code, const std::string &url,
     std::strncpy(stream.backend_connection.buffer, response_.data() + sent,
                  response_.size() - sent);
     stream.backend_connection.buffer_size = response_.size() - sent;
-    stream.options |= helper::to_underlying(STREAM_OPTION::PINNED_CONNECTION);
+    stream.response.setHeaderSent(true);
+    stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_ENABLED;
     stream.client_connection.enableWriteEvent();
     return false;
+  }
+  return true;
+}
+
+bool http_manager::replyTestServer(HttpStream &stream,bool async)
+{
+  const std::string response_ = "HTTP/1.1 200 OK\r\nServer: zproxy 1.0\r\nExpires: now\r\nPragma: "
+      "no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: "
+      "text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
+  if(async){
+    IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+    size_t sent = 0;
+    if (!stream.client_connection.ssl_connected) {
+      result = stream.client_connection.write(response_.c_str(),
+                                              response_.length() - 1, sent);
+    } else if (stream.client_connection.ssl != nullptr) {
+      result = ssl::SSLConnectionManager::handleWrite(
+          stream.client_connection, response_.c_str(), response_.length() - 1, sent,
+          true);
+    }
+
+    if (result == IO::IO_RESULT::DONE_TRY_AGAIN && sent < response_.length() - 1) {
+      std::strncpy(stream.backend_connection.buffer, response_.data() + sent,
+                   response_.size() -1 - sent);
+      stream.backend_connection.buffer_size = response_.size() - sent - 1;
+      stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_ENABLED;
+      stream.status |= helper::to_underlying(STREAM_STATUS::REQUEST_PENDING);
+      stream.client_connection.buffer_size = 0;
+      stream.client_connection.buffer_offset = 0;
+      stream.client_connection.enableWriteEvent();
+      return false;
+    }
+  }else{
+    std::strncpy(stream.backend_connection.buffer, response_.data() ,
+                 response_.size() );
+    stream.backend_connection.buffer_size = response_.size() - 1 ;
+    stream.response.setHeaderSent(true);
+    stream.response.chunked_status = CHUNKED_STATUS::CHUNKED_ENABLED;
+    stream.status |= helper::to_underlying(STREAM_STATUS::REQUEST_PENDING);
+    stream.client_connection.buffer_size = 0;
+    stream.client_connection.buffer_offset = 0;
+    stream.client_connection.enableWriteEvent();
   }
   return true;
 }
