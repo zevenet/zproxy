@@ -75,12 +75,14 @@ class Descriptor {
   }
 
   inline bool enableReadEvent(bool one_shot = false) {
-    if (event_manager_ != nullptr &&
-        current_event != (!one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT) && fd_ > 0) {
+    if (event_manager_ != nullptr && current_event != events::EVENT_TYPE::READ && fd_ > 0) {
+      auto res = current_event == events::EVENT_TYPE::NONE
+                     ? event_manager_->addFd(
+                           fd_, !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT, event_group_)
+                     : event_manager_->updateFd(
+                           fd_, !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT, event_group_);
       current_event = !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT;
-
-      return event_manager_->updateFd(fd_, !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT,
-                                      event_group_);
+      return res;
     }
     //    Logger::LogInfo("InReadModeAlready", LOG_REMOVE);
     return false;
@@ -88,8 +90,9 @@ class Descriptor {
 
   inline bool enableWriteEvent() {
     if (event_manager_ != nullptr && fd_ > 0) {
+      auto res = event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE, event_group_);
       current_event = events::EVENT_TYPE::WRITE;
-      return event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE, event_group_);
+      return res;
     }
     //    Logger::LogInfo("InWriteModeAlready", LOG_REMOVE);
     return false;

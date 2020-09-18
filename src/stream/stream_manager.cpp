@@ -25,7 +25,7 @@
 #include "../handlers/https_manager.h"
 #include "../util/network.h"
 #include "stream_data_logger.h"
-
+#define EXTENDED_DEBUG_LOG 0
 #ifdef ON_FLY_COMRESSION
 #include "../handlers/compression.h"
 #endif
@@ -300,19 +300,22 @@ void StreamManager::onRequestEvent(int fd) {
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{
-      [stream, &extra_log] {  HttpStream::dumpDebugData(stream,"OnRequest",extra_log.data()); }};
+      [stream, &extra_log] { HttpStream::dumpDebugData(stream, "OnRequest", extra_log.data()); }};
 #endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
-  DEBUG_COUNTER_HIT(debug__::on_request);
-// TODO::ENABLE if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
-//    stream->dumpDebugData("Request pending", "PENDING");
-//    stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
-////    stream->client_connection.disableEvents();
-////    stream->backend_connection.enableWriteEvent();
-//    return;
-//  }
+
+  if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
+    DEBUG_COUNTER_HIT(debug__::on_request);
+#if EXTENDED_DEBUG_LOG
+    extra_log = "RESPONSE_PENDING";
+#endif
+    stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+    stream->backend_connection.enableWriteEvent();
+    stream->client_connection.disableEvents();
+    return;
+  }
 #if PRINT_DEBUG_FLOW_BUFFERS
   Logger::logmsg(
       LOG_REMOVE, "IN buffer size: %8lu\tContent-length: %lu\tleft: %lu",
@@ -383,7 +386,7 @@ void StreamManager::onRequestEvent(int fd) {
     case IO::IO_RESULT::ZERO_DATA:     
       break;
     case IO::IO_RESULT::FULL_BUFFER:
-      stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+
       break;
     case IO::IO_RESULT::FD_CLOSED:
       break;
@@ -402,7 +405,12 @@ void StreamManager::onRequestEvent(int fd) {
     return;
   }
   this->stopTimeOut(stream->client_connection.getFileDescriptor());
-  stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
+  if (result == IO::IO_RESULT::FULL_BUFFER) {
+    stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+    stream->client_connection.disableEvents();
+  } else {
+    stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
+  }
   if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) || stream->request.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->request.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -1329,8 +1337,7 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
    * , then we need to write the buffer content without
    * applying any kind of modification. */
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)
-      || stream->request.hasPendingData()) {
+  if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) || stream->request.hasPendingData()) {
     size_t written = 0;
 
     if (stream->backend_connection.getBackend()->isHttps()) {
@@ -1406,11 +1413,18 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
       stream->client_connection.buffer_offset += written;
       stream->backend_connection.enableWriteEvent();
       return;
+    }
+    stream->client_connection.buffer_offset = 0;
+    if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
+#if EXTENDED_DEBUG_LOG
+      HttpStream::dumpDebugData(stream, "ClientW-ReadPending", "WROTE REQ PENDING ");
+#endif
+      onRequestEvent(stream->client_connection.getFileDescriptor());
     } else {
-      stream->client_connection.buffer_offset = 0;
       stream->backend_connection.enableReadEvent();
       stream->client_connection.enableReadEvent();
     }
+
     return;
   }
 
@@ -1512,6 +1526,12 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       stream->backend_connection.buffer_size, stream->response.content_length,
       stream->response.message_bytes_left);
   auto buffer_size_in = stream->backend_connection.buffer_size;
+#endif
+#if USE_TIMER_FD_TIMEOUT
+  this->deleteFd(stream->timer_fd.getFileDescriptor());
+  stream->timer_fd.unset();
+#else
+  stopTimeOut(stream->client_connection.getFileDescriptor());
 #endif
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   /* If the connection is pinned, then we need to write the buffer
