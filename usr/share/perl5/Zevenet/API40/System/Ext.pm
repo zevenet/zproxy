@@ -56,8 +56,6 @@ sub set_factory_reset
 				   },
 	};
 
-	require Zevenet::Net::Interface;
-
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
@@ -65,6 +63,7 @@ sub set_factory_reset
 
 	unless ( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' )
 	{
+		my $if_ref = &getInterfaceConfig( $json_obj->{ interface } );
 		my $msg =
 		  "While the factory reset process is executing, the system will be inaccesible. "
 		  . "Once the process finishes, the load balancer will be accessible by the IP $if_ref->{addr}. "
