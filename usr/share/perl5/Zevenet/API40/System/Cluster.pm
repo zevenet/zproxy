@@ -548,15 +548,16 @@ sub enable_cluster
 		}
 	}
 
+	my $msg;
 	eval {
 		my $error =
 		  &exchangeIdKeys( $json_obj->{ remote_ip }, $json_obj->{ remote_password } );
 
 		if ( $error )
 		{
-			&zenlog( "Error enabling the cluster: Keys Ids exchange failed",
-					 "error", "CLUSTER" );
-			die;
+			$msg = "SSH Keys Ids exchange failed";
+			&zenlog( $msg, "error", "CLUSTER" );
+			die $msg;
 		}
 
 		my $zcl_conf        = &getZClusterConfig();
@@ -587,7 +588,75 @@ sub enable_cluster
 
 		unless ( scalar grep ( { /^\d+: $cl_if\s+inet? $rm_ip\// } @remote_ips ) )
 		{
-			my $msg = "Remote address does not match with the cluster interface";
+			$msg = "Remote address does not match with the cluster interface";
+			&zenlog( $msg, "error", "CLUSTER" );
+			die $msg;
+		}
+
+		# verify ssh listen on cluster interface
+		require Zevenet::System::SSH;
+		my $ssh_conf = &getSsh();
+		if (     ( $ssh_conf->{ listen } ne "*" )
+			 and ( $ssh_conf->{ listen } ne $json_obj->{ local_ip } ) )
+		{
+			$msg = "SSH service is not listening on cluster interface";
+			&zenlog( $msg, "error", "CLUSTER" );
+			die $msg;
+		}
+
+		require Zevenet::System::Global;
+		my $local_global_conf = &getSystemGlobal;
+
+		# verify global proxyng
+		my $remote_proxyng = &runRemotely(
+			"perl -e \"
+					use Zevenet;
+					require Zevenet::ELoad;
+					print &eload(module => Zevenet::System::Global, func => getSystemGlobal)->{ proxy_new_generation };
+				\"", $json_obj->{ remote_ip }
+		);
+
+		if ( $local_global_conf->{ proxy_new_generation } ne $remote_proxyng )
+		{
+			my $msg_value =
+			  $local_global_conf->{ proxy_new_generation } eq 'true'
+			  ? "Enabled"
+			  : "Disabled";
+			$msg = "Global New Generation Proxy on Remote is not $msg_value";
+			&zenlog( $msg, "error", "CLUSTER" );
+			die $msg;
+		}
+
+		# verify global ssyncd
+		my $remote_ssyncd = &runRemotely(
+			"perl -e \"
+					use Zevenet;
+					require Zevenet::ELoad;
+					print &eload(module => Zevenet::System::Global, func => getSystemGlobal)->{ ssyncd };
+				\"", $json_obj->{ remote_ip }
+		);
+		if ( $local_global_conf->{ ssyncd } ne $remote_ssyncd )
+		{
+			my $msg_value =
+			  $local_global_conf->{ ssyncd } eq 'true' ? "Enabled" : "Disabled";
+			$msg = "Global Session Replication on Remote is not $msg_value";
+			&zenlog( $msg, "error", "CLUSTER" );
+			die $msg;
+		}
+
+		# verify global duplicate network
+		my $remote_duplicated_network = &runRemotely(
+			"perl -e \"
+					use Zevenet;
+					require Zevenet::ELoad;
+					print &eload(module => Zevenet::System::Global, func => getSystemGlobal)->{ duplicated_network };
+				\"", $json_obj->{ remote_ip }
+		);
+		if ( $local_global_conf->{ duplicated_network } ne $remote_duplicated_network )
+		{
+			my $msg_value =
+			  $local_global_conf->{ duplicated_network } eq 'true' ? "Enabled" : "Disabled";
+			$msg = "Global Duplicated Network on Remote is not $msg_value";
 			&zenlog( $msg, "error", "CLUSTER" );
 			die $msg;
 		}
@@ -648,7 +717,7 @@ sub enable_cluster
 	};
 	if ( $@ )
 	{
-		my $msg = "An error happened configuring the cluster.";
+		$msg = "An error happened configuring the cluster." if !$msg;
 		return
 		  &httpErrorResponse(
 							  code    => 400,
