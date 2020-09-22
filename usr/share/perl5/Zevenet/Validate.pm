@@ -263,7 +263,7 @@ my %format_re = (
 	'ip_mask' => qr/(?:$ipv4_addr|$UNSIGNED7BITS)/,
 
 	# farm guardian
-	'fg_name'    => qr/[\w-]+/,
+	'fg_name'    => qr/[\w-.]+/,
 	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,    # not used from API 4
 	'fg_enabled' => $boolean,
 	'fg_log'     => $boolean,
