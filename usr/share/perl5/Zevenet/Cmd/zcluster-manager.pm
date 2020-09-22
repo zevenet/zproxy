@@ -826,7 +826,7 @@ sub setNodeStatusBackup
 	}
 
 	# stop farmguardians
-	if ( &logAndRunCheck( 'pgrep farmguardian' ) )
+	unless ( &logAndRunCheck( 'pgrep farmguardian' ) )
 	{
 		&logAndRun( "pkill farmguardian" );
 	}
@@ -886,7 +886,7 @@ sub setNodeStatusMaintenance
 	}
 
 	# stop farmguardian
-	if ( &logAndRunCheck( 'pgrep farmguardian' ) )
+	unless ( &logAndRunCheck( 'pgrep farmguardian' ) )
 	{
 		&logAndRun( "pkill farmguardian" );
 	}

@@ -345,7 +345,7 @@ sub disableZCluster
 
 		my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
-		# create the interface and put it up
+		# delete the interface
 		my $ip_cmd = "$ip_bin link delete $maint_if type dummy";
 		&logAndRun( $ip_cmd );
 	}
