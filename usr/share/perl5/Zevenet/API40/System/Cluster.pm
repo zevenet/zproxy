@@ -334,6 +334,15 @@ sub set_cluster_actions
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
+			# ensure the cluster interface is UP
+			my $zcl_conf = &getZClusterConfig();
+			$if_ref = getSystemInterface( $zcl_conf->{ _ }->{ interface } );
+			if ( $if_ref->{ status } ne 'up' )
+			{
+				my $msg = "The Cluster Interface '$zcl_conf->{ _ }->{ interface }' is not UP";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			&logAndRun( "$ip_bin link set $maint_if up" );
 
