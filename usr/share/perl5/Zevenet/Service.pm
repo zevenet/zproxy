@@ -410,7 +410,7 @@ sub enable_cluster
 		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 		$local_node_status = "backup";
 		&runRemotely( "$zcluster_manager sync", $remote_ip );
-		&enableZCluster( 10 );
+		&enableZCluster( 50 );
 
 		&zenlog( "Syncing RBAC users", "info", "RBAC" );
 
@@ -438,7 +438,7 @@ sub enable_cluster
 	$msg =
 	  "The nodo has been configured with the role \033[1;32m $local_node_status \033[0m";
 	$out_msg .= "\n  $msg";
-	&zenlog( "Zevenet Service: $msg", "info", "RBAC" );
+	&zenlog( "Zevenet Service: $msg", "info", "CLUSTER" );
 
 	return $out_msg;
 }
