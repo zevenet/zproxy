@@ -263,14 +263,14 @@ my %format_re = (
 	'ip_mask' => qr/(?:$ipv4_addr|$UNSIGNED7BITS)/,
 
 	# farm guardian
-	'fg_name'    => qr/[\w-.]+/,
+	'fg_name'    => qr/[\w-]+/,
 	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,    # not used from API 4
 	'fg_enabled' => $boolean,
 	'fg_log'     => $boolean,
 	'fg_time'    => qr/$natural/,                      # this value can't be 0
 
 	# RBAC
-	'user_name'     => qr/[a-z][-a-z0-9_]+/,
+	'user_name'     => qr/[a-z][-a-z0-9_.]+/,
 	'rbac_password' => qr/(?=.*[0-9])(?=.*[a-zA-Z]).{8,512}/,
 	'group_name'    => qr/[\w-]+/,
 	'role_name'     => qr/[\w-]+/,
