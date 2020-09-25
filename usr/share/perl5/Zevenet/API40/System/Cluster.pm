@@ -299,11 +299,6 @@ sub set_cluster_actions
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			&logAndRun( "$ip_bin link set $maint_if down" );
 
-			# required for no failback configuration
-			if ( &getZClusterNodeStatus() eq 'backup' )
-			{
-				&setZClusterNodeStatus( 'maintenance' );
-			}
 		}
 	}
 
@@ -343,11 +338,21 @@ sub set_cluster_actions
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
+			&setZClusterNodeStatus( 'backup' );
+
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			&logAndRun( "$ip_bin link set $maint_if up" );
 
-			# required for no failback configuration
-			&setZClusterNodeStatus( 'backup' );
+			# get sync from master
+			my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+			my $master_host      = &getZClusterRemoteHost();
+			&runRemotely( "$zcluster_manager sync", $zcl_conf->{ $master_host }->{ ip } );
+
+			# reload keepalived configuration
+			&enableZCluster();
+
+			# sync globals
+
 		}
 	}
 	else

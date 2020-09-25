@@ -1616,5 +1616,61 @@ sub checkZClusterLocalIsPrimary
 	return 0;
 }
 
+=begin nd
+Function: getKeepalivedConfigSystem
+
+	Gets keepalived running configuration from system.
+
+Parameters:
+	- None.
+
+Returns:
+	scalar - Hash reference.
+
+	Hash reference example:
+
+	$ka_conf_ref = {
+		Status   => 'value',
+		Interface   => 'value',
+		Priority   => 'value',
+	}
+=cut
+
+sub getKeepalivedConfigSystem
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $ka_conf_ref;
+	if ( &getZClusterRunning() )
+	{
+		my $ka_conf_sys_file = "/tmp/keepalived.data";
+		unlink "$ka_conf_sys_file" if ( -f "$ka_conf_sys_file" );
+		&logAndRun( "pkill -USR1 keepalived" );
+		open my $ka_conf, "<$ka_conf_sys_file" or return;
+		my $tag;
+		my @properties =
+		  ( "State", "Wantstate", "Interface", "Priority", "Effective priority" );
+		my $search_properties;
+		foreach ( @properties )
+		{
+			$search_properties .= $_ . "|";
+		}
+		chop $search_properties;
+
+		while ( <$ka_conf> )
+		{
+			chomp;
+			$tag = "start" if $_ =~ /^------< VRRP Topology >------$/;
+			$tag = "end"   if $_ =~ /^------< VRRP Sockpool >------$/;
+			last if $tag eq "end";
+			next if $tag ne "start";
+			$ka_conf_ref->{ $1 } = $2 if $_ =~ /^\s+($search_properties) = (\w+)$/;
+		}
+		close $ka_conf;
+		unlink "$ka_conf_sys_file";
+	}
+	return $ka_conf_ref;
+}
+
 1;
 
