@@ -186,14 +186,14 @@ sub modify_cluster
 			# reconfigure remote conntrackd
 			&zenlog(
 					 &runRemotely(
-								   "$zcluster_manager setKeepalivedConfig",
+								   "$zcluster_manager setConntrackdConfig",
 								   $zcl_conf->{ $rhost }->{ ip }
 					 ),
 					 "info",
 					 "CLUSTER"
 			);
 
-			# reload keepalived configuration local and remotely
+			# reload keepalived and conntrackd configuration local and remotely
 			&enableZCluster();
 
 			&zenlog(
