@@ -66,6 +66,7 @@ Function: setSystemGlobal
 
 Parameters:
 	Hash -  Hash of global settings
+	cluster_sync - Integer. 0 to skip sync , 1 to enable sync . Default :1 .
 
 Returns:
 	Integer - Error code.  Returns: 0 on success,
@@ -81,8 +82,14 @@ sub setSystemGlobal
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $global = shift;
-	my $err    = 0;
+	my $global       = shift;
+	my $cluster_sync = shift;
+	my $err          = 0;
+
+	$cluster_sync = 1 if ( !$cluster_sync );
+
+	include 'Zevenet::Cluster';
+	$cluster_sync = 0 unless ( &getZClusterStatus() );
 
 	if ( exists $global->{ ssyncd } )
 	{
@@ -94,10 +101,12 @@ sub setSystemGlobal
 		}
 		else
 		{
-			include 'Zevenet::Cluster';
-			( $global->{ ssyncd } eq 'true' )
-			  ? &runZClusterRemoteManager( 'enable_ssyncd' )
-			  : &runZClusterRemoteManager( 'disable_ssyncd' );
+			if ( $cluster_sync )
+			{
+				( $global->{ ssyncd } eq 'true' )
+				  ? &runZClusterRemoteManager( 'enable_ssyncd' )
+				  : &runZClusterRemoteManager( 'disable_ssyncd' );
+			}
 		}
 	}
 
@@ -159,6 +168,10 @@ sub setSystemGlobal
 				else
 				{
 					push @farms_stopped, $farmname;
+					if ( $cluster_sync )
+					{
+						&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+					}
 				}
 			}
 		}
@@ -173,8 +186,10 @@ sub setSystemGlobal
 			}
 			else
 			{
-				include 'Zevenet::Cluster';
-				&runZClusterRemoteManager( 'disable_ssyncd' );
+				if ( $cluster_sync )
+				{
+					&runZClusterRemoteManager( 'disable_ssyncd' );
+				}
 			}
 		}
 
@@ -208,9 +223,12 @@ sub setSystemGlobal
 			}
 			else
 			{
-				( $global->{ proxy_new_generation } eq "true" )
-				  ? &runZClusterRemoteManager( 'enable_proxyng' )
-				  : &runZClusterRemoteManager( 'disable_proxyng' );
+				if ( $cluster_sync )
+				{
+					( $global->{ proxy_new_generation } eq "true" )
+					  ? &runZClusterRemoteManager( 'enable_proxyng' )
+					  : &runZClusterRemoteManager( 'disable_proxyng' );
+				}
 			}
 		}
 
@@ -265,6 +283,11 @@ sub setSystemGlobal
 				&zenlog( "There was an error starting Farm $farmname", "debug2", "lslb" );
 				$err = 7;
 			}
+			if ( $cluster_sync )
+			{
+				# start farm on remote node
+				&runZClusterRemoteManager( 'farm', 'start', $farmname );
+			}
 		}
 
 		if ( ( ( !$err ) or ( $err > 3 ) ) and ( $ssyncd_enabled eq "true" ) )
@@ -289,7 +312,10 @@ sub setSystemGlobal
 					$err = 8;
 				}
 			}
-			&runZClusterRemoteManager( 'enable_ssyncd' );
+			if ( $cluster_sync )
+			{
+				&runZClusterRemoteManager( 'enable_ssyncd' );
+			}
 		}
 		&zenlog( "Error modifying proxy, code '$err'", "error", "system" ) if ( $err );
 	}

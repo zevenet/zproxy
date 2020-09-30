@@ -403,12 +403,61 @@ sub enable_cluster
 	my $remote_ip          = $zcl_conf->{ &getZClusterRemoteHost() }->{ ip };
 	my $remote_node_status = &runRemotely( "cat $znode_status_file", $remote_ip );
 
-	# force sync with master
+	# force sync with reachable master
 	if ( $remote_node_status =~ /master/ )
 	{
-		# FIXME: use zcluster_manager function
 		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 		$local_node_status = "backup";
+
+		my $globals_json =
+		  &runRemotely( "$zcluster_manager getSystemGlobals", $remote_ip );
+		my $remote_global = eval { JSON::XS::decode_json( $globals_json ) };
+		include 'Zevenet::System::Global';
+		my $local_global = &getSystemGlobal();
+
+		if (
+			 $local_global->{ duplicated_network } ne $remote_global->{ duplicated_network }
+		  )
+		{
+			&zenlog( "Syncing duplicated network", "info", "CLUSTER" );
+			&setGlobalConfiguration( 'duplicated_net',
+									 $remote_global->{ duplicated_network } );
+		}
+
+		if ( $local_global->{ proxy_new_generation } ne
+			 $remote_global->{ proxy_new_generation } )
+		{
+			require Zevenet::Farm::Core;
+			require Zevenet::Farm::Base;
+			require Zevenet::Farm::Action;
+
+			my @farmsf = &getFarmsByType( 'http' );
+			push @farmsf, &getFarmsByType( 'https' );
+			&zenlog( "Stopping proxy farms", "info", "CLUSTER" );
+			foreach my $farmname ( @farmsf )
+			{
+				if ( &getFarmStatus( $farmname ) eq "up" )
+				{
+					unless ( &runFarmStop( $farmname, "false" ) )
+					{
+						&zenlog( "There was an error stopping farm $farmname", "debug2", "lslb" );
+					}
+				}
+			}
+			&zenlog( "Syncing proxy new generation", "info", "CLUSTER" );
+			&setSsyncdNG( $remote_global->{ proxy_new_generation } );
+			&setProxyNG( $remote_global->{ proxy_new_generation } );
+		}
+
+		if ( $local_global->{ ssyncd } ne $remote_global->{ ssyncd } )
+		{
+			&zenlog( "Syncing ssyncd", "info", "CLUSTER" );
+			include 'Zevenet::Ssyncd';
+			&setSsyncd( $remote_global->{ ssyncd } );
+		}
+
+		# FIXME: use zcluster_manager function
+		&zenlog( "Syncing master configuration", "info", "CLUSTER" );
 		&runRemotely( "$zcluster_manager sync", $remote_ip );
 		&enableZCluster( 50 );
 
@@ -416,8 +465,6 @@ sub enable_cluster
 
 		include 'Zevenet::RBAC::Action';
 		&updateRBACAllUser();
-
-		&zenlog( "enableZCluster returned", "info", "CLUSTER" );
 	}
 
 	# disable ip announcement if the node is not master

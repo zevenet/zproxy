@@ -211,6 +211,20 @@ elsif ( $object eq 'disable_proxyng' )
 	&setSsyncdNG( 'false' );
 	&setProxyNG( 'false' );
 }
+elsif ( $object eq 'getSystemGlobals' )
+{
+	include 'Zevenet::System::Global';
+	my $system_globals = &getSystemGlobal();
+	my $json           = "{";
+	$json .= "\"ssyncd\" : \"$system_globals->{ ssyncd }\",";
+	$json .=
+	  "\"duplicated_network\" : \"$system_globals->{ duplicated_network }\",";
+	$json .=
+	  "\"proxy_new_generation\" : \"$system_globals->{ proxy_new_generation }\"";
+	$json .= "}";
+	say $json;
+	exit 0;
+}
 
 # farm commands
 if ( $object eq 'farm' )

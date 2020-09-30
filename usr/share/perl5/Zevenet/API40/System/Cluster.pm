@@ -343,15 +343,83 @@ sub set_cluster_actions
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			&logAndRun( "$ip_bin link set $maint_if up" );
 
-			# get sync from master
-			my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
-			my $master_host      = &getZClusterRemoteHost();
-			&runRemotely( "$zcluster_manager sync", $zcl_conf->{ $master_host }->{ ip } );
+			my $master_host        = &getZClusterRemoteHost();
+			my $master_ip          = $zcl_conf->{ $master_host }->{ ip };
+			my $znode_status_file  = &getGlobalConfiguration( 'znode_status_file' );
+			my $remote_node_status = &runRemotely( "cat $znode_status_file", $master_ip );
+			if ( $remote_node_status =~ /master/ )
+			{
+				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+
+				# get sync globals from master
+				my $globals_json =
+				  &runRemotely( "$zcluster_manager getSystemGlobals", $master_ip );
+				my $remote_global = eval { JSON::XS::decode_json( $globals_json ) };
+				include 'Zevenet::System::Global';
+				my $local_global = &getSystemGlobal();
+
+				if (
+					 $local_global->{ duplicated_network } ne $remote_global->{ duplicated_network }
+				  )
+				{
+					&zenlog( "Syncing duplicated network", "info", "CLUSTER" );
+					&setGlobalConfiguration( 'duplicated_net',
+											 $remote_global->{ duplicated_network } );
+				}
+
+				my @farmsf;
+				if ( $local_global->{ proxy_new_generation } ne
+					 $remote_global->{ proxy_new_generation } )
+				{
+					require Zevenet::Farm::Core;
+					require Zevenet::Farm::Base;
+					require Zevenet::Farm::Action;
+
+					@farmsf = &getFarmsByType( 'http' );
+					push @farmsf, &getFarmsByType( 'https' );
+					&zenlog( "Stopping proxy farms", "info", "CLUSTER" );
+					foreach my $farmname ( @farmsf )
+					{
+						if ( &getFarmStatus( $farmname ) eq "up" )
+						{
+							unless ( &runFarmStop( $farmname, "false" ) )
+							{
+								&zenlog( "There was an error stopping farm $farmname", "debug2", "lslb" );
+							}
+						}
+					}
+					&zenlog( "Syncing proxy new generation", "info", "CLUSTER" );
+					&setSsyncdNG( $remote_global->{ proxy_new_generation } );
+					&setProxyNG( $remote_global->{ proxy_new_generation } );
+				}
+				if ( $local_global->{ ssyncd } ne $remote_global->{ ssyncd } )
+				{
+					&zenlog( "Syncing ssyncd", "info", "CLUSTER" );
+					include 'Zevenet::Ssyncd';
+					&setSsyncd( $remote_global->{ ssyncd } );
+				}
+
+				# get sync conf from master
+				&zenlog( "Syncing from master configuration", "info", "CLUSTER" );
+
+				&runRemotely( "$zcluster_manager sync", $master_ip );
+
+				# start proxy farms
+				if ( @farmsf )
+				{
+					zenlog( "Starting proxy farms", "info", "CLUSTER" );
+					foreach my $farmname ( @farmsf )
+					{
+						if ( &getFarmBootStatus( $farmname ) eq "up" )
+						{
+							&runFarmStart( $farmname, "false" );
+						}
+					}
+				}
+			}
 
 			# reload keepalived configuration
 			&enableZCluster();
-
-			# sync globals
 
 		}
 	}
@@ -608,7 +676,7 @@ sub enable_cluster
 		}
 
 		# verify ssh listen on cluster interface
-		require Zevenet::System::SSH;
+		include 'Zevenet::System::SSH';
 		my $ssh_conf = &getSsh();
 		if (     ( $ssh_conf->{ listen } ne "*" )
 			 and ( $ssh_conf->{ listen } ne $json_obj->{ local_ip } ) )
@@ -618,7 +686,7 @@ sub enable_cluster
 			die $msg;
 		}
 
-		require Zevenet::System::Global;
+		include 'Zevenet::System::Global';
 		my $local_global_conf = &getSystemGlobal;
 
 		# verify global proxyng
