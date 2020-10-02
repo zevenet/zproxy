@@ -44,20 +44,23 @@ if ( $if_ref->{ status } ne 'up' )
 
 &upIf( $if_ref );
 
-exit 0 if ( $if_ref->{ dhcp } eq 'true' );
-
-&addIp( $if_ref );
-
-#if nic is used for global gw the apply global routes
-if ( &getGlobalConfiguration( 'defaultgwif' ) eq $if_ref->{ name } )
+if ( $if_ref->{ dhcp } ne 'true' )
 {
-	&zenlog( "Applying default GW for table main", "info", "NETWORK" );
-	$gateway = &getGlobalConfiguration( 'defaultgw' );
-	&applyRoutes( 'global', $if_ref, $gateway );
-}
 
-#finally apply local routes
-&applyRoutes( 'local', $if_ref );
+	&addIp( $if_ref );
+
+	#if nic is used for global gw the apply global routes
+	if ( &getGlobalConfiguration( 'defaultgwif' ) eq $if_ref->{ name } )
+	{
+		&zenlog( "Applying default GW for table main", "info", "NETWORK" );
+		$gateway = &getGlobalConfiguration( 'defaultgw' );
+		&applyRoutes( 'global', $if_ref, $gateway );
+	}
+
+	#finally apply local routes
+	&applyRoutes( 'local', $if_ref );
+
+}
 
 #Check cluster
 #if dev interface is part of cluster, then get up the cl_maintenance
@@ -79,7 +82,7 @@ if ( $eload )
 		my $maint_if = 'cl_maintenance';
 		my $clstatus = &eload( module => 'Zevenet::Cluster',
 							   func   => 'getZClusterNodeStatus', );
-		$clstatus = "backup" if $clstatus ne "maintenance";
+		$clstatus = "backup";
 		my $set_clstatus = &eload(
 								   module => 'Zevenet::Cluster',
 								   func   => 'setZClusterNodeStatus',
