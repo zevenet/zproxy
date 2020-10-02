@@ -108,17 +108,18 @@ sub farm_actions    # ( $json_obj, $farmname )
 		my $farm_type = &getFarmType( $farmname );
 		if ( $farm_type ne "datalink" )
 		{
-			my $port = &getFarmVip( "vipp", $farmname );
-			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
-			{
-				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
 			my $if_name = &getInterfaceByIp( $ip );
 			my $if_ref  = &getInterfaceConfig( $if_name );
 			if ( &getInterfaceSystemStatus( $if_ref ) ne "up" )
 			{
 				my $msg = "The virtual IP '$ip' is not UP";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $port = &getFarmVip( "vipp", $farmname );
+			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
+			{
+				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
@@ -157,6 +158,14 @@ sub farm_actions    # ( $json_obj, $farmname )
 		my $farm_type = &getFarmType( $farmname );
 		if ( $farm_type ne "datalink" )
 		{
+			my $if_name = &getInterfaceByIp( $ip );
+			my $if_ref  = &getInterfaceConfig( $if_name );
+			if ( &getInterfaceSystemStatus( $if_ref ) ne "up" )
+			{
+				my $msg = "The virtual IP '$ip' is not UP";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
 			my $port = &getFarmVip( "vipp", $farmname );
 			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
 			{
