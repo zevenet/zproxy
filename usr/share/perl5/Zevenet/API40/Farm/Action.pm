@@ -114,6 +114,13 @@ sub farm_actions    # ( $json_obj, $farmname )
 				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
+			my $if_name = &getInterfaceByIp( $ip );
+			my $if_ref  = &getInterfaceConfig( $if_name );
+			if ( &getInterfaceSystemStatus( $if_ref ) ne "up" )
+			{
+				my $msg = "The virtual IP '$ip' is not UP";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 
 		my $status = &runFarmStart( $farmname, "true" );
