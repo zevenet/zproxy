@@ -274,9 +274,8 @@ std::string HttpSessionManager::getSessionKey(Connection &source,
       break;
     }
     case sessions::SESS_HEADER: {
-      std::string sess_key;
-      if (!request.getHeaderValue(sess_id, sess_key)) {
-        sess_key = "";
+      if (!request.getHeaderValue(sess_id, session_key)) {
+        session_key = "";
       }
       break;
     }
