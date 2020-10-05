@@ -399,12 +399,149 @@ sub set_cluster_actions
 					&setSsyncd( $remote_global->{ ssyncd } );
 				}
 
+				# get all config files
+				my $configdir = &getGlobalConfiguration( 'configdir' );
+				use Zevenet::File;
+				my $old_conf_md5 = &getFileChecksumMD5( $configdir );
+
 				# get sync conf from master
 				&zenlog( "Syncing from master configuration", "info", "CLUSTER" );
 
 				&runRemotely( "$zcluster_manager sync", $master_ip );
 
-				# start proxy farms
+				# get all config files
+				my $new_conf_md5 = &getFileChecksumMD5( $configdir );
+
+				# get files changed
+				my $files_changed;
+
+				foreach my $file ( keys %{ $old_conf_md5 } )
+				{
+					if ( !defined $new_conf_md5->{ $file } )
+					{
+						$files_changed->{ $file } = "del";
+					}
+					elsif ( $old_conf_md5->{ $file } ne $new_conf_md5->{ $file } )
+					{
+						$files_changed->{ $file } = "modify";
+						delete $new_conf_md5->{ $file };
+					}
+					else
+					{
+						delete $new_conf_md5->{ $file };
+					}
+					delete $old_conf_md5->{ $file };
+				}
+
+				# get new files
+
+				foreach my $file ( keys %{ $new_conf_md5 } )
+				{
+					$files_changed->{ $file } = "add";
+				}
+
+				# check type of file changed
+				my $objects;
+				foreach my $file ( keys %{ $files_changed } )
+				{
+					if ( $file =~ /^\Q$configdir\/\E(\w+)_proxy.cfg$/ )
+					{
+						next if ( @farmsf );
+						my $farm_name = $1;
+						$objects->{ farm }->{ $farm_name } = $files_changed->{ $file };
+					}
+					elsif ( $file =~ /^\Q$configdir\/\E(\w+)_l4xnat.cfg$/ )
+					{
+						# L4 farm
+						my $farm_name = $1;
+						$objects->{ farm }->{ $farm_name } = $files_changed->{ $file };
+					}
+					elsif ( $file =~ /^\Q$configdir\/\Eif_(\w+:\w+)_conf$/ )
+					{
+						# virtual interface
+						my $vini = $1;
+						$objects->{ vini }->{ $vini } = $files_changed->{ $file };
+					}
+				}
+
+				# update virtual interfaces
+				foreach my $object ( keys %{ $objects->{ vini } } )
+				{
+					my $vini   = $object;
+					my $action = $objects->{ vini }->{ $object };
+					require Zevenet::Net::Interface;
+					require Zevenet::Net::Route;
+					require Zevenet::Net::Core;
+
+					my $if_conf = &getInterfaceConfig( $vini );
+					my $bstatus = $if_conf->{ status };
+
+					if ( $action eq "del" )
+					{
+						my $if_ref = &getSystemInterface( $vini );
+						if ( $if_ref->{ status } eq 'up' )
+						{
+							&delRoutes( "local", $if_ref );
+							&downIf( $if_ref );
+						}
+						&delIf( $if_ref );
+					}
+					else
+					{
+						if ( $action eq "modify" )
+						{
+							my $if_ref = &getSystemInterface( $vini );
+							if ( ( $bstatus eq "up" ) and ( $bstatus eq $if_ref->{ status } ) )
+							{
+								&delRoutes( "local", $if_ref );
+								&downIf( $if_ref );
+							}
+						}
+						if ( $bstatus eq "down" )
+						{
+							&delRoutes( "local", $if_conf );
+							&downIf( $if_conf );
+						}
+						else
+						{
+							&addIp( $if_conf );
+							&upIf( $if_conf );
+							&applyRoutes( "local", $if_conf );
+						}
+					}
+
+				}
+
+				# update farms
+				foreach my $object ( keys %{ $objects->{ farm } } )
+				{
+					my $farm_name = $object;
+					my $action    = $objects->{ farm }->{ $object };
+					require Zevenet::Farm::Action;
+					require Zevenet::Farm::Base;
+
+					if ( $action eq "del" )
+					{
+						&runFarmDelete( $farm_name );
+					}
+					else
+					{
+						my $bstatus = &getFarmBootStatus( $farm_name );
+						if ( $action eq "modify" )
+						{
+							my $status = &getFarmStatus( $farm_name );
+							if ( ( $bstatus eq "up" ) and ( $bstatus eq $status ) )
+							{
+								&runFarmStop( $farm_name, "false" );
+							}
+						}
+						$bstatus eq "down"
+						  ? &runFarmStop( $farm_name, "false" )
+						  : &runFarmStart( $farm_name, "false" );
+					}
+				}
+
+				# start new proxy farms
 				if ( @farmsf )
 				{
 					zenlog( "Starting proxy farms", "info", "CLUSTER" );
