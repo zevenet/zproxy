@@ -598,6 +598,11 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 				func   => 'runZClusterRemoteManager',
 				args   => ['interface', 'start', $if_ref->{ name }],
 		);
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['farm', 'restart_farms', @farms],
+		);
 	}
 
 	my $body = {

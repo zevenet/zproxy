@@ -47,7 +47,7 @@
 #
 # zcluster-manager gateway [update|delete] <interface> [4|6]
 #
-# zcluster-manager farm [start|stop|restart|delete|reload] <farm> [backend <backendid>]
+# zcluster-manager farm { [start|stop|restart|delete|reload] <farm> [backend <backendid>] | [reload_farms|restart_farms] <@farms> }
 #
 # zcluster-manager fg 		[stop|start|stop] <fg>
 # zcluster-manager fg_farm 	[stop|start|stop] <farm> [<service>]
@@ -229,13 +229,23 @@ elsif ( $object eq 'getSystemGlobals' )
 # farm commands
 if ( $object eq 'farm' )
 {
-	my $farm_name = shift @ARGV;
-	&quit( "Missing farm name argument" ) if !$farm_name;
-
-	my $backend = shift @ARGV // '';
-	if ( $backend eq "backend" )
+	my $farm_name;
+	my $backend;
+	my @farms;
+	if ( $command eq 'reload_farms' or $command eq 'restart_farms' )
 	{
+		@farms = @ARGV;
+	}
+	else
+	{
+		$farm_name = shift @ARGV;
+		&quit( "Missing farm name argument" ) if !$farm_name;
+
 		$backend = shift @ARGV // '';
+		if ( $backend eq "backend" )
+		{
+			$backend = shift @ARGV // '';
+		}
 	}
 
 	require Zevenet::Farm::Action;
@@ -267,7 +277,6 @@ if ( $object eq 'farm' )
 	}
 	elsif ( $command eq 'reload' )
 	{
-		&_runFarmReload( $farm_name );
 		my $status = &_runFarmReload( $farm_name );
 
 		exit $status;
@@ -283,6 +292,32 @@ if ( $object eq 'farm' )
 	{
 		&_runFarmStop( $farm_name );
 		exit &runFarmDelete( $farm_name );
+	}
+	elsif ( $command eq 'reload_farms' )
+	{
+		include 'Zevenet::Farm::Core';
+		my $status = 0;
+		foreach my $farm_name ( @farms )
+		{
+			$status += &_runFarmReload( $farm_name );
+		}
+		exit $status;
+	}
+	elsif ( $command eq 'restart_farms' )
+	{
+		include 'Zevenet::Farm::Core';
+		include 'Zevenet::IPDS::Base';
+		my $status = 0;
+		foreach my $farm_name ( @farms )
+		{
+			&runIPDSStopByFarm( $farm_name );
+			&_runFarmStop( $farm_name );
+
+			$status += &_runFarmStart( $farm_name );
+
+			&runIPDSStartByFarm( $farm_name );
+		}
+		exit $status;
 	}
 	else
 	{
