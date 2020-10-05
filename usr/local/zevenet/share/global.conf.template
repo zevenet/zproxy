@@ -398,6 +398,9 @@ $farmguardian="$zbindir/farmguardian";#update
 $apt_msg="$localconfig/apt_message.txt";
 $apt_outdated_list="$localconfig/apt_outdated_list.txt";
 
+#maintenance status under human action, flag
+$maintenance_enabled="$localconfig/maintenance_flag";
+
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="$zdir/app/zenrrd";#update
 #Relative path in Web Root directory ($basedir) where is graphs from ZenRRD *no modify

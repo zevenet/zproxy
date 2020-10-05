@@ -66,6 +66,10 @@ if ( $if_ref->{ dhcp } ne 'true' )
 #if dev interface is part of cluster, then get up the cl_maintenance
 if ( $eload )
 {
+	my $maintenance_enabled =
+	  &eload( module => 'Zevenet::Cluster', func => 'getClMaintenanceManual', );
+	exit if ( $maintenance_enabled eq "true" );
+
 	my $zcl_conf = &eload( module => 'Zevenet::Cluster',
 						   func   => 'getZClusterConfig', );
 

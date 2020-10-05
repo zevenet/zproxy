@@ -300,6 +300,7 @@ sub set_cluster_actions
 			&logAndRun( "$ip_bin link set $maint_if down" );
 
 		}
+		&enableClMaintenanceManual();
 	}
 
 	# Disable maintenance mode
@@ -422,6 +423,7 @@ sub set_cluster_actions
 			&enableZCluster();
 
 		}
+		&disableClMaintenanceManual();
 	}
 	else
 	{

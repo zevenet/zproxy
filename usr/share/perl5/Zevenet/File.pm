@@ -178,6 +178,20 @@ sub createFile
 	return 0;
 }
 
+sub deleteFile
+{
+	my $file = shift;
+	my $fh;
+
+	if ( !-f $file )
+	{
+		&zenlog( "The file $file doesn't exist", "error", "System" );
+		return 1;
+	}
+	unlink $file;
+	return 0;
+}
+
 =begin nd
 Function: getFileDateGmt
 

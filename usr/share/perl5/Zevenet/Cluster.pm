@@ -1672,5 +1672,89 @@ sub getKeepalivedConfigSystem
 	return $ka_conf_ref;
 }
 
-1;
+=begin nd
+Function: getClMaintenanceManual
 
+	Gets if the cluster is configured in maintenace mode with human interaction
+
+Parameters:
+	- None.
+
+Returns:
+	true  if cluster is configured in maintenance with human interaction
+	false if cluster is not configured in maintenance mode with huma interaction
+=cut
+
+sub getClMaintenanceManual
+{
+	my $output              = "false";
+	my $maintenance_enabled = &getGlobalConfiguration( 'maintenance_enabled' );
+	$output = "true" if ( -e $maintenance_enabled );
+
+	return $output;
+}
+
+=begin nd
+Function: enableClMaintenanceManual
+	
+	Creates a flag to indicate that the cluster has been configured in maintenance with human interaction
+
+Parameters:
+
+	-None.
+
+Returns:
+	0 - File created properly 
+	1 - Error creating the file	
+
+=cut
+
+sub enableClMaintenanceManual
+{
+	my $output = 1;
+
+	my $maintenance_enabled = &getGlobalConfiguration( 'maintenance_enabled' );
+	if ( !-e $maintenance_enabled )
+	{
+		require Zevenet::File;
+		&createFile( $maintenance_enabled );
+		$output = 0 if ( $? == 0 );
+	}
+
+	return $output;
+
+}
+
+=begin nd
+Function: disableClMaintenanceManual
+
+	Deletes a flag when the cluster has been disabled of maintenance with human interaction
+
+Parameters:
+
+	-None. 
+
+Returns:
+
+	0 - File deleted properly
+	1 - Error deleting the file
+
+=cut
+
+sub disableClMaintenanceManual
+{
+	my $output = 1;
+
+	my $maintenance_enabled = &getGlobalConfiguration( 'maintenance_enabled' );
+	if ( -e $maintenance_enabled )
+	{
+		require Zevenet::File;
+		&deleteFile( $maintenance_enabled );
+		$output = 0 if ( $? == 0 );
+	}
+
+	return $output;
+
+}
+
+1;
