@@ -513,8 +513,8 @@ sub start_cluster
 	{
 		&enableAllInterfacesDiscovery();
 		&enableZCluster();
-
-		if ( &getZClusterNodeStatus() eq 'maintenance' )
+		if (    &getZClusterNodeStatus() eq 'maintenance'
+			 || &getClMaintenanceManual() eq 'true' )
 		{
 			require Zevenet::Net::Interface;
 

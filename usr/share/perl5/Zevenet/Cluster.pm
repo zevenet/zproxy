@@ -1717,8 +1717,7 @@ sub enableClMaintenanceManual
 	if ( !-e $maintenance_enabled )
 	{
 		require Zevenet::File;
-		&createFile( $maintenance_enabled );
-		$output = 0 if ( $? == 0 );
+		$output = 0 if ( &createFile( $maintenance_enabled ) == 0 );
 	}
 
 	return $output;
@@ -1749,8 +1748,7 @@ sub disableClMaintenanceManual
 	if ( -e $maintenance_enabled )
 	{
 		require Zevenet::File;
-		&deleteFile( $maintenance_enabled );
-		$output = 0 if ( $? == 0 );
+		$output = 0 if ( &deleteFile( $maintenance_enabled ) == 0 );
 	}
 
 	return $output;
