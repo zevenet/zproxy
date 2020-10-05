@@ -220,5 +220,48 @@ sub getFileDateGmt
 	return $date;
 }
 
+=begin nd
+Function: getFileChecksumMD5
+
+	Returns the checksum MD5 of the file or directory including subdirs.
+
+Parameters:
+	file path - File path or Directory path
+
+Returns:
+	Hash ref - Hash ref with filepath as key and checksummd5 as value.
+
+=cut
+
+sub getFileChecksumMD5
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $filepath = shift;
+	my $md5      = {};
+
+	if ( -d $filepath )
+	{
+		opendir ( DIR, $filepath );
+		my @files = readdir ( DIR );
+		closedir ( DIR );
+		foreach my $file ( @files )
+		{
+			next if ( $file eq "." or $file eq ".." );
+			$md5 = { %{ $md5 }, %{ &getFileChecksumMD5( $filepath . "/" . $file ) } };
+		}
+	}
+	else
+	{
+		use Digest::MD5;
+		open ( my $fh, '<', $filepath );
+		binmode ( $fh );
+		$md5->{ $filepath } = Digest::MD5->new->addfile( $fh )->hexdigest;
+		close $fh;
+	}
+	return $md5;
+}
+
 1;
 
