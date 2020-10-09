@@ -518,6 +518,59 @@ sub getZClusterRemoteHost
 }
 
 =begin nd
+Function: getZClusterRemoteNodeStatus
+
+	Get the node_status of the remote node.
+
+Parameters:
+	none - .
+
+Returns:
+	string - Remote node status.
+=cut
+
+sub getZClusterRemoteNodeStatus
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $remote_node_status;
+	my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+	my $remote_host      = &getZClusterRemoteHost();
+	my $remote_ip        = &getZClusterConfig()->{ $remote_host }->{ ip };
+	$remote_node_status =
+	  &runRemotely( "$zcluster_manager getZClusterNodeStatus", $remote_ip );
+	return $remote_node_status;
+}
+
+=begin nd
+Function: getZClusterRemoteSystemGlobal
+
+	Get the System Global configuration of the remote node.
+
+Parameters:
+	none - .
+
+Returns:
+	Hash ref - Remote node System global.
+=cut
+
+sub getZClusterRemoteSystemGlobal
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $remote_system_global;
+	my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+	my $remote_host      = &getZClusterRemoteHost();
+	my $remote_ip        = &getZClusterConfig()->{ $remote_host }->{ ip };
+	my $globals_json =
+	  &runRemotely( "$zcluster_manager getSystemGlobals", $remote_ip );
+	my $remote_system_global = eval { JSON::XS::decode_json( $globals_json ) };
+	return $remote_system_global;
+}
+
+=begin nd
 Function: parallel_run
 
 	NOT USED (yet?). Run a command on every node of the cluster via ssh.
@@ -1687,6 +1740,8 @@ Returns:
 
 sub getClMaintenanceManual
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $output              = "false";
 	my $maintenance_enabled = &getGlobalConfiguration( 'maintenance_enabled' );
 	$output = "true" if ( -e $maintenance_enabled );
@@ -1711,6 +1766,8 @@ Returns:
 
 sub enableClMaintenanceManual
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $output = 1;
 
 	my $maintenance_enabled = &getGlobalConfiguration( 'maintenance_enabled' );
@@ -1742,6 +1799,8 @@ Returns:
 
 sub disableClMaintenanceManual
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $output = 1;
 
 	my $maintenance_enabled = &getGlobalConfiguration( 'maintenance_enabled' );
@@ -1753,6 +1812,214 @@ sub disableClMaintenanceManual
 
 	return $output;
 
+}
+
+=begin nd
+Function: runZClusterUpdateConfig
+
+	Update Config.
+
+Parameters:
+	config_changed - Hash ref of Objects to be changed
+
+Returns:
+	0 if Ok .
+
+=cut
+
+sub runZClusterUpdateConfig
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $config_changed = shift;
+	my $rc             = 0;
+
+	my @farms;
+
+	if ( defined $config_changed->{ duplicated_network } )
+	{
+		&zenlog( "Updating  duplicated network", "info", "CLUSTER" );
+		&setGlobalConfiguration( 'duplicated_net',
+								 $config_changed->{ duplicated_network } );
+	}
+	if ( defined $config_changed->{ proxy_new_generation } )
+	{
+		&zenlog( "Updating proxy new generation", "info", "CLUSTER" );
+		require Zevenet::Farm::Core;
+		require Zevenet::Farm::Base;
+		require Zevenet::Farm::Action;
+		@farms = &getFarmsByType( 'http' );
+		push @farms, &getFarmsByType( 'https' );
+		&zenlog( "Stopping proxy farms", "info", "CLUSTER" );
+		foreach my $farmname ( @farms )
+		{
+
+			if ( &getFarmStatus( $farmname ) eq "up" )
+			{
+				unless ( &runFarmStop( $farmname, "false" ) )
+				{
+					&zenlog( "There was an error stopping farm $farmname", "debug2", "lslb" );
+				}
+			}
+		}
+		include 'Zevenet::System::Global';
+		&setSsyncdNG( $config_changed->{ proxy_new_generation } );
+		&setProxyNG( $config_changed->{ proxy_new_generation } );
+	}
+	if ( defined $config_changed->{ ssyncd } )
+	{
+		&zenlog( "Updating ssyncd", "info", "CLUSTER" );
+		include 'Zevenet::Ssyncd';
+		&setSsyncd( $config_changed->{ ssyncd } );
+	}
+	if ( defined $config_changed->{ vini } )
+	{
+		require Zevenet::Net::Interface;
+		require Zevenet::Net::Route;
+		require Zevenet::Net::Core;
+
+		foreach my $object ( keys %{ $config_changed->{ vini } } )
+		{
+			my $vini   = $object;
+			my $action = $config_changed->{ vini }->{ $object };
+			&zenlog( "Updating Virtual Interface $object : $action", "info", "CLUSTER" );
+			my $if_conf = &getInterfaceConfig( $vini );
+			my $bstatus = $if_conf->{ status };
+
+			if ( $action eq "del" )
+			{
+				my $if_ref = &getSystemInterface( $vini );
+				if ( $if_ref->{ status } eq 'up' )
+				{
+					&delRoutes( "local", $if_ref );
+					&downIf( $if_ref );
+				}
+				&delIf( $if_ref );
+			}
+			else
+			{
+				if ( $action eq "modify" )
+				{
+					my $if_ref = &getSystemInterface( $vini );
+					if ( ( $bstatus eq "up" ) and ( $bstatus eq $if_ref->{ status } ) )
+					{
+						&delRoutes( "local", $if_ref );
+						&downIf( $if_ref );
+					}
+				}
+				if ( $bstatus eq "down" )
+				{
+					&delRoutes( "local", $if_conf );
+					&downIf( $if_conf );
+				}
+				else
+				{
+					&addIp( $if_conf );
+					&upIf( $if_conf );
+					&applyRoutes( "local", $if_conf );
+				}
+			}
+		}
+	}
+
+	if ( defined $config_changed->{ farm } )
+	{
+		require Zevenet::Farm::Action;
+		require Zevenet::Farm::Base;
+		foreach my $object ( keys %{ $config_changed->{ farm } } )
+		{
+			my $farm_name = $object;
+			my $action    = $config_changed->{ farm }->{ $object };
+			&zenlog( "Updating Farm $object : $action", "info", "CLUSTER" );
+			if ( $action eq "del" )
+			{
+				&runFarmDelete( $farm_name );
+			}
+			else
+			{
+				if ( !defined $config_changed->{ proxy_new_generation } )
+				{
+					my $bstatus = &getFarmBootStatus( $farm_name );
+					if ( $action eq "modify" )
+					{
+						my $status = &getFarmStatus( $farm_name );
+						if ( ( $bstatus eq "up" ) and ( $bstatus eq $status ) )
+						{
+							&runFarmStop( $farm_name, "false" );
+						}
+					}
+					$bstatus eq "down"
+					  ? &runFarmStop( $farm_name, "false" )
+					  : &runFarmStart( $farm_name, "false" );
+				}
+			}
+		}
+	}
+	if (     ( defined $config_changed->{ proxy_new_generation } )
+		 and ( defined $config_changed->{ farm } ) )
+	{
+		&zenlog( "Starting new proxy farms", "info", "CLUSTER" );
+		foreach my $farmname ( @farms )
+		{
+			if ( &getFarmBootStatus( $farmname ) eq "up" )
+			{
+				&runFarmStart( $farmname, "false" );
+			}
+		}
+
+	}
+	return $rc;
+}
+
+=begin nd
+Function: getZClusterConfigChangedStruct
+
+	Returns a Struct of config object changed and action
+
+Parameters:
+	files_changed - Hash ref of absolute Filepath as keys and action as values
+
+Returns:
+	Hash ref of config objects.
+
+	$objects = { farm => { farm1 => add,
+			       farm2 => modify,
+			       farm3 => modify,
+			       farm4 => del },
+		     vini => { eth0:virt1 => modify,
+			       eth0:virt2 => del }
+		   }	
+=cut
+
+sub getZClusterConfigChangedStruct
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $files_changed = shift;
+	my $objects       = {};
+
+	return $objects if not defined $files_changed;
+
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	foreach my $file ( keys %{ $files_changed } )
+	{
+		if ( $file =~ /^\Q$configdir\/\E(\w+)_proxy.cfg$/ )
+		{
+			my $farm_name = $1;
+			$objects->{ farm }->{ $farm_name } = $files_changed->{ $file };
+		}
+		elsif ( $file =~ /^\Q$configdir\/\E(\w+)_l4xnat.cfg$/ )
+		{
+			my $farm_name = $1;
+			$objects->{ farm }->{ $farm_name } = $files_changed->{ $file };
+		}
+		elsif ( $file =~ /^\Q$configdir\/\Eif_(\w+:\w+)_conf$/ )
+		{
+			my $vini = $1;
+			$objects->{ vini }->{ $vini } = $files_changed->{ $file };
+		}
+	}
+	return $objects;
 }
 
 1;

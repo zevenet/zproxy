@@ -263,5 +263,51 @@ sub getFileChecksumMD5
 	return $md5;
 }
 
+=begin nd
+Function: getFileChecksumAction
+
+	Compare two Hashes of checksum filepaths and returns the actions to take.
+
+Parameters:
+	checksum_filepath1 - Hash ref checksumMD5 file path1
+	checksum_filepath2 - Hash ref checksumMD5 file path2
+
+Returns:
+	Hash ref - Hash ref with filepath as key and action as value
+
+=cut
+
+sub getFileChecksumAction
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $checksum_filepath1 = shift;
+	my $checksum_filepath2 = shift;
+	my $files_changed;
+
+	foreach my $file ( keys %{ $checksum_filepath1 } )
+	{
+		if ( !defined $checksum_filepath2->{ $file } )
+		{
+			$files_changed->{ $file } = "del";
+		}
+		elsif ( $checksum_filepath1->{ $file } ne $checksum_filepath2->{ $file } )
+		{
+			$files_changed->{ $file } = "modify";
+			delete $checksum_filepath2->{ $file };
+		}
+		else
+		{
+			delete $checksum_filepath2->{ $file };
+		}
+	}
+	foreach my $file ( keys %{ $checksum_filepath2 } )
+	{
+		$files_changed->{ $file } = "add";
+	}
+	return $files_changed;
+}
+
 1;
 

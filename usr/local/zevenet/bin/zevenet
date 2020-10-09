@@ -451,6 +451,8 @@ if ( $action eq "start" )
 
 	&zenlog( "zevenet: Setting up virtual interfaces..." );
 
+	@interfaces = @{ &getConfigInterfaceList() };
+
 	# virtual interfaces (ie. eth0:20, eth0.20:2)
 	foreach my $iface ( @interfaces )
 	{

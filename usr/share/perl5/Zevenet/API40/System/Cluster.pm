@@ -344,18 +344,13 @@ sub set_cluster_actions
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			&logAndRun( "$ip_bin link set $maint_if up" );
 
-			my $master_host        = &getZClusterRemoteHost();
-			my $master_ip          = $zcl_conf->{ $master_host }->{ ip };
-			my $znode_status_file  = &getGlobalConfiguration( 'znode_status_file' );
-			my $remote_node_status = &runRemotely( "cat $znode_status_file", $master_ip );
+			my $remote_node_status = &getZClusterRemoteNodeStatus();
 			if ( $remote_node_status =~ /master/ )
 			{
-				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+				my $config_changed;
 
 				# get sync globals from master
-				my $globals_json =
-				  &runRemotely( "$zcluster_manager getSystemGlobals", $master_ip );
-				my $remote_global = eval { JSON::XS::decode_json( $globals_json ) };
+				my $remote_global = &getZClusterRemoteSystemGlobal();
 				include 'Zevenet::System::Global';
 				my $local_global = &getSystemGlobal();
 
@@ -363,50 +358,31 @@ sub set_cluster_actions
 					 $local_global->{ duplicated_network } ne $remote_global->{ duplicated_network }
 				  )
 				{
-					&zenlog( "Syncing duplicated network", "info", "CLUSTER" );
-					&setGlobalConfiguration( 'duplicated_net',
-											 $remote_global->{ duplicated_network } );
+					$config_changed->{ duplicated_network } =
+					  $remote_global->{ duplicated_network };
 				}
 
-				my @farmsf;
 				if ( $local_global->{ proxy_new_generation } ne
 					 $remote_global->{ proxy_new_generation } )
 				{
-					require Zevenet::Farm::Core;
-					require Zevenet::Farm::Base;
-					require Zevenet::Farm::Action;
-
-					@farmsf = &getFarmsByType( 'http' );
-					push @farmsf, &getFarmsByType( 'https' );
-					&zenlog( "Stopping proxy farms", "info", "CLUSTER" );
-					foreach my $farmname ( @farmsf )
-					{
-						if ( &getFarmStatus( $farmname ) eq "up" )
-						{
-							unless ( &runFarmStop( $farmname, "false" ) )
-							{
-								&zenlog( "There was an error stopping farm $farmname", "debug2", "lslb" );
-							}
-						}
-					}
-					&zenlog( "Syncing proxy new generation", "info", "CLUSTER" );
-					&setSsyncdNG( $remote_global->{ proxy_new_generation } );
-					&setProxyNG( $remote_global->{ proxy_new_generation } );
+					$config_changed->{ proxy_new_generation } =
+					  $remote_global->{ proxy_new_generation };
 				}
 				if ( $local_global->{ ssyncd } ne $remote_global->{ ssyncd } )
 				{
-					&zenlog( "Syncing ssyncd", "info", "CLUSTER" );
-					include 'Zevenet::Ssyncd';
-					&setSsyncd( $remote_global->{ ssyncd } );
+					$config_changed->{ ssyncd } = $remote_global->{ ssyncd };
 				}
 
 				# get all config files
-				my $configdir = &getGlobalConfiguration( 'configdir' );
+				my $configdir        = &getGlobalConfiguration( 'configdir' );
+				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 				use Zevenet::File;
 				my $old_conf_md5 = &getFileChecksumMD5( $configdir );
 
 				# get sync conf from master
 				&zenlog( "Syncing from master configuration", "info", "CLUSTER" );
+				my $master_host = &getZClusterRemoteHost();
+				my $master_ip   = $zcl_conf->{ $master_host }->{ ip };
 
 				&runRemotely( "$zcluster_manager sync", $master_ip );
 
@@ -414,146 +390,23 @@ sub set_cluster_actions
 				my $new_conf_md5 = &getFileChecksumMD5( $configdir );
 
 				# get files changed
-				my $files_changed;
-
-				foreach my $file ( keys %{ $old_conf_md5 } )
-				{
-					if ( !defined $new_conf_md5->{ $file } )
-					{
-						$files_changed->{ $file } = "del";
-					}
-					elsif ( $old_conf_md5->{ $file } ne $new_conf_md5->{ $file } )
-					{
-						$files_changed->{ $file } = "modify";
-						delete $new_conf_md5->{ $file };
-					}
-					else
-					{
-						delete $new_conf_md5->{ $file };
-					}
-					delete $old_conf_md5->{ $file };
-				}
-
-				# get new files
-
-				foreach my $file ( keys %{ $new_conf_md5 } )
-				{
-					$files_changed->{ $file } = "add";
-				}
+				my $files_changed = &getFileChecksumAction( $old_conf_md5, $new_conf_md5 );
 
 				# check type of file changed
-				my $objects;
-				foreach my $file ( keys %{ $files_changed } )
+				if ( $files_changed )
 				{
-					if ( $file =~ /^\Q$configdir\/\E(\w+)_proxy.cfg$/ )
+					$files_changed = &getZClusterConfigChangedStruct( $files_changed );
+					if ( $config_changed )
 					{
-						next if ( @farmsf );
-						my $farm_name = $1;
-						$objects->{ farm }->{ $farm_name } = $files_changed->{ $file };
-					}
-					elsif ( $file =~ /^\Q$configdir\/\E(\w+)_l4xnat.cfg$/ )
-					{
-						# L4 farm
-						my $farm_name = $1;
-						$objects->{ farm }->{ $farm_name } = $files_changed->{ $file };
-					}
-					elsif ( $file =~ /^\Q$configdir\/\Eif_(\w+:\w+)_conf$/ )
-					{
-						# virtual interface
-						my $vini = $1;
-						$objects->{ vini }->{ $vini } = $files_changed->{ $file };
-					}
-				}
-
-				# update virtual interfaces
-				foreach my $object ( keys %{ $objects->{ vini } } )
-				{
-					my $vini   = $object;
-					my $action = $objects->{ vini }->{ $object };
-					require Zevenet::Net::Interface;
-					require Zevenet::Net::Route;
-					require Zevenet::Net::Core;
-
-					my $if_conf = &getInterfaceConfig( $vini );
-					my $bstatus = $if_conf->{ status };
-
-					if ( $action eq "del" )
-					{
-						my $if_ref = &getSystemInterface( $vini );
-						if ( $if_ref->{ status } eq 'up' )
-						{
-							&delRoutes( "local", $if_ref );
-							&downIf( $if_ref );
-						}
-						&delIf( $if_ref );
+						$config_changed = { %{ $config_changed }, %{ $files_changed } };
 					}
 					else
 					{
-						if ( $action eq "modify" )
-						{
-							my $if_ref = &getSystemInterface( $vini );
-							if ( ( $bstatus eq "up" ) and ( $bstatus eq $if_ref->{ status } ) )
-							{
-								&delRoutes( "local", $if_ref );
-								&downIf( $if_ref );
-							}
-						}
-						if ( $bstatus eq "down" )
-						{
-							&delRoutes( "local", $if_conf );
-							&downIf( $if_conf );
-						}
-						else
-						{
-							&addIp( $if_conf );
-							&upIf( $if_conf );
-							&applyRoutes( "local", $if_conf );
-						}
-					}
-
-				}
-
-				# update farms
-				foreach my $object ( keys %{ $objects->{ farm } } )
-				{
-					my $farm_name = $object;
-					my $action    = $objects->{ farm }->{ $object };
-					require Zevenet::Farm::Action;
-					require Zevenet::Farm::Base;
-
-					if ( $action eq "del" )
-					{
-						&runFarmDelete( $farm_name );
-					}
-					else
-					{
-						my $bstatus = &getFarmBootStatus( $farm_name );
-						if ( $action eq "modify" )
-						{
-							my $status = &getFarmStatus( $farm_name );
-							if ( ( $bstatus eq "up" ) and ( $bstatus eq $status ) )
-							{
-								&runFarmStop( $farm_name, "false" );
-							}
-						}
-						$bstatus eq "down"
-						  ? &runFarmStop( $farm_name, "false" )
-						  : &runFarmStart( $farm_name, "false" );
+						$config_changed = $files_changed;
 					}
 				}
+				&runZClusterUpdateConfig( $config_changed ) if $config_changed;
 
-				# start new proxy farms
-				if ( @farmsf )
-				{
-					zenlog( "Starting proxy farms", "info", "CLUSTER" );
-					foreach my $farmname ( @farmsf )
-					{
-						if ( &getFarmBootStatus( $farmname ) eq "up" )
-						{
-							&runFarmStart( $farmname, "false" );
-						}
-					}
-				}
 			}
 
 			# reload keepalived configuration

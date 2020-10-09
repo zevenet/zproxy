@@ -93,7 +93,64 @@ if ( $eload )
 								   args   => [$clstatus],
 		);
 		&logAndRun( "$ip_bin link set $maint_if up" );
+		my $remote_node_status = &eload( module => 'Zevenet::Cluster',
+										 func   => 'getZClusterRemoteNodeStatus' );
 
+		if ( $remote_node_status =~ /master/ )
+		{
+			my $config_changed;
+			my $remote_global = &eload( module => 'Zevenet::Cluster',
+										func   => 'getZClusterRemoteSystemGlobal' );
+			my $local_global = &eload( module => 'Zevenet::System::Global',
+									   func   => 'getSystemGlobal' );
+			$config_changed->{ duplicated_network } = $remote_global->{ duplicated_network }
+			  if (
+				 $local_global->{ duplicated_network } ne $remote_global->{ duplicated_network }
+			  );
+			$config_changed->{ proxy_new_generation } =
+			  $remote_global->{ proxy_new_generation }
+			  if ( $local_global->{ proxy_new_generation } ne
+				   $remote_global->{ proxy_new_generation } );
+			$config_changed->{ ssyncd } = $remote_global->{ ssyncd }
+			  if ( $local_global->{ ssyncd } ne $remote_global->{ ssyncd } );
+			my $configdir        = &getGlobalConfiguration( 'configdir' );
+			my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+			use Zevenet::File;
+			my $old_conf_md5 = &getFileChecksumMD5( $configdir );
+			my $master_host = &eload( module => 'Zevenet::Cluster',
+									  func   => 'getZClusterRemoteHost' );
+			my $master_ip = $zcl_conf->{ $master_host }->{ ip };
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runRemotely',
+					args   => ["$zcluster_manager sync", $master_ip]
+			);
+
+			my $new_conf_md5 = &getFileChecksumMD5( $configdir );
+			my $files_changed = &getFileChecksumAction( $old_conf_md5, $new_conf_md5 );
+			if ( $files_changed )
+			{
+				$files_changed = &eload(
+										 module => 'Zevenet::Cluster',
+										 func   => 'getZClusterConfigChangedStruct',
+										 args   => [$files_changed]
+				);
+
+				$config_changed =
+				  $config_changed
+				  ? { %{ $config_changed }, %{ $files_changed } }
+				  : $files_changed;
+			}
+
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterUpdateConfig',
+					args   => [$config_changed]
+			) if $config_changed;
+
+			&eload( module => 'Zevenet::Cluster',
+					func   => 'enableZCluster' );
+		}
 	}
 }
 

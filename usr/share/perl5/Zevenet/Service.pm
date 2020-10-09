@@ -408,57 +408,51 @@ sub enable_cluster
 	{
 		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 		$local_node_status = "backup";
+		my $config_changed;
 
-		my $globals_json =
-		  &runRemotely( "$zcluster_manager getSystemGlobals", $remote_ip );
-		my $remote_global = eval { JSON::XS::decode_json( $globals_json ) };
 		include 'Zevenet::System::Global';
-		my $local_global = &getSystemGlobal();
+		my $local_global  = &getSystemGlobal();
+		my $remote_global = &getZClusterRemoteSystemGlobal();
 
-		if (
+		$config_changed->{ duplicated_network } = $remote_global->{ duplicated_network }
+		  if (
 			 $local_global->{ duplicated_network } ne $remote_global->{ duplicated_network }
-		  )
-		{
-			&zenlog( "Syncing duplicated network", "info", "CLUSTER" );
-			&setGlobalConfiguration( 'duplicated_net',
-									 $remote_global->{ duplicated_network } );
-		}
+		  );
+		$config_changed->{ proxy_new_generation } =
+		  $remote_global->{ proxy_new_generation }
+		  if ( $local_global->{ proxy_new_generation } ne
+			   $remote_global->{ proxy_new_generation } );
+		$config_changed->{ ssyncd } = $remote_global->{ ssyncd }
+		  if ( $local_global->{ ssyncd } ne $remote_global->{ ssyncd } );
 
-		if ( $local_global->{ proxy_new_generation } ne
-			 $remote_global->{ proxy_new_generation } )
-		{
-			require Zevenet::Farm::Core;
-			require Zevenet::Farm::Base;
-			require Zevenet::Farm::Action;
+		&runZClusterUpdateConfig( $config_changed ) if $config_changed;
 
-			my @farmsf = &getFarmsByType( 'http' );
-			push @farmsf, &getFarmsByType( 'https' );
-			&zenlog( "Stopping proxy farms", "info", "CLUSTER" );
-			foreach my $farmname ( @farmsf )
-			{
-				if ( &getFarmStatus( $farmname ) eq "up" )
-				{
-					unless ( &runFarmStop( $farmname, "false" ) )
-					{
-						&zenlog( "There was an error stopping farm $farmname", "debug2", "lslb" );
-					}
-				}
-			}
-			&zenlog( "Syncing proxy new generation", "info", "CLUSTER" );
-			&setSsyncdNG( $remote_global->{ proxy_new_generation } );
-			&setProxyNG( $remote_global->{ proxy_new_generation } );
-		}
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		use Zevenet::File;
+		my $conf_md5_old   = &getFileChecksumMD5( $configdir );
+		my @interfaces_old = @{ &getConfigInterfaceList() };
 
-		if ( $local_global->{ ssyncd } ne $remote_global->{ ssyncd } )
-		{
-			&zenlog( "Syncing ssyncd", "info", "CLUSTER" );
-			include 'Zevenet::Ssyncd';
-			&setSsyncd( $remote_global->{ ssyncd } );
-		}
-
-		# FIXME: use zcluster_manager function
 		&zenlog( "Syncing master configuration", "info", "CLUSTER" );
 		&runRemotely( "$zcluster_manager sync", $remote_ip );
+		my $conf_md5_new = &getFileChecksumMD5( $configdir );
+		my $files_changed = &getFileChecksumAction( $conf_md5_old, $conf_md5_new );
+		$files_changed = &getZClusterConfigChangedStruct( $files_changed )
+		  if $files_changed;
+
+		foreach my $vini ( keys %{ $files_changed->{ vini } } )
+		{
+			if ( $files_changed->{ vini }->{ $vini } ne 'add' )
+			{
+				foreach my $if_ref ( @interfaces_old )
+				{
+					next if $if_ref->{ name } ne $vini;
+					$if_ref->{ ip_v } = 4 if not defined $if_ref->{ ip_v };
+					&enableInterfaceDiscovery( $if_ref );
+					last;
+				}
+			}
+		}
+
 		&enableZCluster( 50 );
 
 		&zenlog( "Syncing RBAC users", "info", "RBAC" );
@@ -472,7 +466,6 @@ sub enable_cluster
 	{
 		require Zevenet::Net::Interface;
 		my @configured_interfaces = @{ &getConfigInterfaceList() };
-
 		foreach my $iface ( @configured_interfaces )
 		{
 			next if ( !defined $$iface{ vini } || $$iface{ vini } eq '' );
