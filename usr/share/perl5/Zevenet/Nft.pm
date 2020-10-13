@@ -203,8 +203,11 @@ sub httpNlbRequest
 
 	my $file = "/tmp/nft_$$";
 	$file = $self->{ file }
-	  if ( defined $self->{ file } && ( $self->{ file } =~ /(?:ipds)/ )
-		   or ( $self->{ file } =~ /(?:policy)/ ) );
+	  if (
+		   defined $self->{ file }
+		   && (    ( $self->{ file } =~ /(?:ipds)/ )
+				or ( $self->{ file } =~ /(?:policy)/ ) )
+	  );
 
 	# Send output to a file to get only the http code by the standard output
 	$execmd = $execmd . " -o $file";
