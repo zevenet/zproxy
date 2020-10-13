@@ -1874,9 +1874,10 @@ sub runZClusterUpdateConfig
 	}
 	if ( defined $config_changed->{ vini } )
 	{
-		require Zevenet::Net::Interface;
-		require Zevenet::Net::Route;
 		require Zevenet::Net::Core;
+		require Zevenet::Net::Interface;
+		require Zevenet::Net::Validate;
+		require Zevenet::Net::Route;
 
 		foreach my $object ( keys %{ $config_changed->{ vini } } )
 		{
@@ -1889,6 +1890,10 @@ sub runZClusterUpdateConfig
 			if ( $action eq "del" )
 			{
 				my $if_ref = &getSystemInterface( $vini );
+				$if_ref->{ addr } = IO::Socket::INET->new( Proto => 'udp' )->if_addr( $vini );
+				$if_ref->{ mask } =
+				  IO::Socket::INET->new( Proto => 'udp' )->if_netmask( $vini );
+				$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 				if ( $if_ref->{ status } eq 'up' )
 				{
 					&delRoutes( "local", $if_ref );
@@ -1901,6 +1906,10 @@ sub runZClusterUpdateConfig
 				if ( $action eq "modify" )
 				{
 					my $if_ref = &getSystemInterface( $vini );
+					$if_ref->{ addr } = IO::Socket::INET->new( Proto => 'udp' )->if_addr( $vini );
+					$if_ref->{ mask } =
+					  IO::Socket::INET->new( Proto => 'udp' )->if_netmask( $vini );
+					$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 					if ( ( $bstatus eq "up" ) and ( $bstatus eq $if_ref->{ status } ) )
 					{
 						&delRoutes( "local", $if_ref );
