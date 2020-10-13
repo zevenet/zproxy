@@ -1238,8 +1238,26 @@ sub enableAllInterfacesDiscovery
 
 	require Zevenet::Nft;
 
-	my $output = &execNft( "delete", "netdev cluster", "", "" );
-	$output = &execNft( "delete", "arp cluster", "", "" );
+	my $output;
+	my $ip_v6;
+	my $ip_v4;
+	require Zevenet::Net::Interface;
+	my @interfaces = &getInterfaceTypeList( 'virtual' );
+	foreach my $if_ref ( @interfaces )
+	{
+		$ip_v4 = 1 if $if_ref->{ ip_v } == 4;
+		$ip_v6 = 1 if $if_ref->{ ip_v } == 6;
+	}
+	if ( $ip_v6 )
+	{
+		$output = &execNft( "delete", "netdev cluster", "", "" )
+		  if &execNft( "check", "netdev cluster", "", "" );
+	}
+	if ( $ip_v4 )
+	{
+		$output = &execNft( "delete", "arp cluster", "", "" )
+		  if &execNft( "check", "arp cluster", "", "" );
+	}
 
 	return $output;
 }
