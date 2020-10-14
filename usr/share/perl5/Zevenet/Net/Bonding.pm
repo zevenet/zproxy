@@ -1019,6 +1019,19 @@ sub setBondIP
 		}
 	}
 
+	# if the netmask is changed, change it in all appending virtual interfaces
+	if ( $if_ref->{ mask } ne $old_ref->{ mask } )
+	{
+		foreach my $appending ( &getInterfaceChild( $if_ref->{ name } ) )
+		{
+			my $app_config = &getInterfaceConfig( $appending );
+			&delRoutes( "local", $app_config );
+			&downIf( $app_config );
+			$app_config->{ mask } = $if_ref->{ mask };
+			&setInterfaceConfig( $app_config );
+		}
+	}
+
 	# put all dependant interfaces up
 	require Zevenet::Net::Util;
 	&setIfacesUp( $if_ref->{ name }, "vini" );

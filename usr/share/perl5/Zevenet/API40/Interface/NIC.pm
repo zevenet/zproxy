@@ -606,6 +606,19 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 				}
 			}
 
+			# modify netmask on all dependent interfaces
+			if ( exists $json_obj->{ netmask } )
+			{
+				foreach my $appending ( &getInterfaceChild( $nic ) )
+				{
+					my $app_config = &getInterfaceConfig( $appending );
+					&delRoutes( "local", $app_config );
+					&downIf( $app_config );
+					$app_config->{ mask } = $json_obj->{ netmask };
+					&setInterfaceConfig( $app_config );
+				}
+			}
+
 			# put all dependent interfaces up
 			require Zevenet::Net::Util;
 			&setIfacesUp( $nic, "vini" );

@@ -1908,6 +1908,19 @@ sub setVlan    # if_ref
 		}
 	}
 
+	# if the netmask is changed, change it in all appending virtual interfaces
+	if ( exists $params->{ netmask } )
+	{
+		foreach my $appending ( &getInterfaceChild( $if_ref->{ name } ) )
+		{
+			my $app_config = &getInterfaceConfig( $appending );
+			&delRoutes( "local", $app_config );
+			&downIf( $app_config );
+			$app_config->{ mask } = $params->{ netmask };
+			&setInterfaceConfig( $app_config );
+		}
+	}
+
 	# put all dependant interfaces up
 	require Zevenet::Net::Util;
 	&setIfacesUp( $if_ref->{ name }, "vini" );

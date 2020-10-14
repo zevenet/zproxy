@@ -890,7 +890,9 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		&updateRoutingVirtualIfaces( $if_ref->{ parent }, $old_ip ) if ( $old_ip );
 
 		#Change Bonding IP Address
-		if ( exists $json_obj->{ ip } || exists $json_obj->{ gateway } )
+		if (    exists $json_obj->{ ip }
+			 || exists $json_obj->{ gateway }
+			 || exists $json_obj->{ netmask } )
 		{
 			if ( &setBondIP( $if_ref ) )
 			{
