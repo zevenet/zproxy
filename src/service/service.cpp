@@ -537,6 +537,7 @@ Backend *Service::getNextBackend() {
 void Service::doMaintenance() {
   HttpSessionManager::doMaintenance();
   for (Backend *bck : this->backend_set) {
+    if(bck->backend_type != BACKEND_TYPE::REMOTE) continue;
     if (setBackendHostInfo(bck)) {
       bck->doMaintenance();
     }
