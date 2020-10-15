@@ -34,8 +34,11 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+
 #include "../util/utils.h"
-#include "fstream"
+#include <fstream>
+#include "../util/time.h"
+
 
 #define MAXBUF 4096
 #define LOG_REMOVE LOG_DEBUG
@@ -110,10 +113,18 @@ class Logger {
     }
     std::lock_guard<std::mutex> locker(log_lock);
     if (log_facility == -1) {
+#if SHOW_LOG_TIMESTAMP
+      fprintf(stdout, "%s %s %s\n", Time::current_time_str, buffer.data(), str.data());
+#else
       fprintf(stdout, "%s %s\n", buffer.data(), str.data());
+#endif
       fflush(stdout);
     } else {
+#if SHOW_LOG_TIMESTAMP
+      syslog(level, "%s %s %s", Time::current_time_str, buffer.data(), str.data());
+#else
       syslog(level, "%s %s", buffer.data(), str.data());
+#endif
     }
 
     //    fflush(stdout);
