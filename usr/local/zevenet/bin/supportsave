@@ -44,9 +44,6 @@ fi
 
 backup_dir="${prefix}/${ss_dir}"
 
-config_paths=`perl -MZevenet::Config -e 'print getGlobalConfiguration("backupfor");'`;
-zbindir=`perl -MZevenet::Config -e 'print getGlobalConfiguration("zbindir");'`;
-
 monitoring_paths="${home_dir}/app/zenrrd/rrd ${home_dir}/logs /var/log/messages* /var/log/syslog* /var/log/letsencrypt /var/log/cherokee* ${home_dir}/node_status /var/log/apt /var/run/*_proxy.pid";
 
 
@@ -91,10 +88,11 @@ echo "- Partitions"
 echo "- Time"
 ${zbindir}/zenntp                    	>> $backup_dir/ntp_test.txt 2>&1
 
-echo "- Sessions Table"
-ssyncdctl=`perl -MZevenet::Config -e 'print getGlobalConfiguration("ssyncdctl_bin");'`;
-$ssyncdctl show http	>> $backup_dir/sessions_http.txt 2>&1
-$ssyncdctl show nft	>> $backup_dir/sessions_nft.txt 2>&1
+if [[ ! -z $ssyncdctl_bin ]]; then
+	echo "- Sessions Table"
+	$ssyncdctl_bin show http >> $backup_dir/sessions_http.txt 2>&1
+	$ssyncdctl_bin show nft	>> $backup_dir/sessions_nft.txt 2>&1
+fi
 
 if [[ -d ${home_dir}/lib/Zevenet/RBAC ]];
 then
@@ -107,7 +105,7 @@ echo "- Subscription"
 cat /etc/apt/apt.conf			>> $backup_dir/apt.conf.txt
 cat /etc/apt/sources.list		>> $backup_dir/sources.list.txt
 for i in `ls /etc/apt/sources.list.d/`; do
-	cat /etc/apt/sources.list.d/$i 				>> $backup_dir/sources.list.d.$i.txt
+	cat /etc/apt/sources.list.d/$i >> $backup_dir/sources.list.d.$i.txt
 done
 
 echo "Saving network information:"
@@ -159,8 +157,6 @@ echo "nftlb daemon policies data"		>> $backup_dir/nftlb.txt
 $CURL --noproxy "*" --connect-timeout 10 -s -H "Key: HoLa" http://127.0.0.1:27/policies >> $backup_dir/nftlb.txt
 
 echo "- Reverse Proxy"
-proxyctl=`perl -MZevenet::Config -e 'print getGlobalConfiguration("proxyctl");'`;
-proxyng=`perl -MZevenet::Config -e 'print getGlobalConfiguration("proxy_ng");'`;
 fstatus="$backup_dir/proxy_status.txt"
 for i in `ls /tmp/*_proxy.socket 2>/dev/null`
 do
@@ -200,12 +196,11 @@ if [ -f /etc/zevenet_version ]; then
 	/bin/cp /etc/zevenet_version $backup_dir/template_version
 fi
 
-package_vers=`perl -MZevenet::Config -e 'print getGlobalConfiguration("version");'`;
-echo $package_vers > $backup_dir/zevenet_pkg_version
+echo $version > $backup_dir/zevenet_pkg_version
 
 echo "Saving configuration files"
 #################################
-/bin/tar zcf $backup_dir/config.tar.gz $config_paths 2>/dev/null
+/bin/tar zcf $backup_dir/config.tar.gz $backupfor 2>/dev/null
 
 
 echo "Saving monitoring files"
