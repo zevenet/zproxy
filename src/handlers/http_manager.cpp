@@ -468,8 +468,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
             if ((stream.service_manager->listener_config_->ctx != nullptr &&
                  listener_config_.port != 443) ||
                 (listener_config_.port != 80)) {
-              header_value_ += ":";
-              header_value_ += std::to_string(listener_config_.port);
+              if (header_value.find(':') == std::string::npos) {
+                header_value_ += ":";
+                header_value_ += std::to_string(listener_config_.port);
+              }
             }
             header_value_ += path;
             response.addHeader(header_name, header_value_);
