@@ -144,9 +144,9 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
 //      set_cookie_header += "; expires=";
 //      set_cookie_header += time_string;
 //    }
-      service->updateSessionCookie(
-          stream->client_connection, stream->request, stream->backend_connection.getBackend()->bekey,
-          *stream->backend_connection.getBackend());
+service->updateSession(stream->client_connection, stream->request,
+                       stream->backend_connection.getBackend()->bekey,
+                       *stream->backend_connection.getBackend());
     stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
                                stream->backend_connection.getBackend()->bekey);
   }
@@ -352,6 +352,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
 
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
   auto &listener_config_ = *stream.service_manager->listener_config_;
+  auto service = static_cast<Service *>(stream.request.getService());
   HttpResponse &response = stream.response;
   /* If the response is 100 continue we need to enable chunked transfer. */
   if (response.http_status_code < 200) {
@@ -532,10 +533,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
           }
           break;
         case http::HTTP_HEADER_NAME::SET_COOKIE: {
-          auto service = static_cast<Service *>(stream.request.getService());
-          if (service->service_config.sess_type == SESS_TYPE::SESS_COOKIE) {
-            service->updateSessionCookie(
-                stream.client_connection, stream.request, header_value,
+          if (service->session_type == sessions::HttpSessionType::SESS_COOKIE) {
+            service->updateSession(
+                stream.client_connection, stream.request,
+                std::string(response.headers[i].value, response.headers[i].value_len),
                 *stream.backend_connection.getBackend());
           }
           break;
@@ -543,6 +544,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
         default:
           break;
       }
+
+    }
+
+    if (service->session_type == sessions::HttpSessionType::SESS_HEADER && service->sess_id == header ) {
+      service->updateSession(
+          stream.client_connection, stream.request,
+          std::string(response.headers[i].value, response.headers[i].value_len),
+          *stream.backend_connection.getBackend());
     }
   }
   if (stream.response.content_length > 0 &&

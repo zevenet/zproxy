@@ -64,7 +64,7 @@ class HttpSessionManager {
   std::recursive_mutex lock_mtx;
   std::unordered_map<std::string, SessionInfo *>
       sessions_set;  // key can be anything, depending on the session type
- protected:
+ public:
   HttpSessionType session_type;
   std::string sess_id;  /* id to construct the pattern */
   regex_t sess_start{}; /* pattern to identify the session data */
@@ -79,11 +79,9 @@ class HttpSessionManager {
   // return the created SessionInfo
   // must check if it already exist !!!
   bool addSession(JsonObject *json_object, std::vector<Backend *> backend_set);
-  SessionInfo *addSession(Connection &source, HttpRequest &request,
-                          Backend &backend_to_assign);
-  bool updateSessionCookie(Connection &source, HttpRequest &request,
-                           std::string_view set_cookie_value,
-                           Backend &backend_to_assign);
+  SessionInfo *addSession(Connection &source, HttpRequest &request, Backend &backend_to_assign);
+  bool updateSession(Connection &source, HttpRequest &request, const std::string &new_session_id,
+                     Backend &backend_to_assign);
   bool deleteSessionByKey(const std::string &key);
   bool deleteSession(const JsonObject &json_object);
   void deleteSession(Connection &source, HttpRequest &request);

@@ -46,26 +46,37 @@ SessionInfo *HttpSessionManager::addSession(Connection &source,
   return nullptr;
 }
 
-bool sessions::HttpSessionManager::updateSessionCookie(
-    Connection &source, HttpRequest &request, std::string_view set_cookie_value,
-    Backend &backend_to_assign) {
-  if (this->session_type != sessions::SESS_COOKIE) return false;
-  std::string old_cookie = getSessionKey(source, request);
-  auto new_cookie = getCookieValue(set_cookie_value, this->sess_id);
-  if (!new_cookie.empty()) {
+bool sessions::HttpSessionManager::updateSession(Connection &source, HttpRequest &request,
+                                                 const std::string &new_session_id,
+                                                 Backend &backend_to_assign) {
+  std::string request_session_id = getSessionKey(source, request);
+  std::string session_id = new_session_id;
+  if (this->session_type == sessions::SESS_COOKIE) {
+    session_id = getCookieValue(new_session_id, this->sess_id);
+  }
+  if (request_session_id == new_session_id) return true;
+  if (!session_id.empty()) {
     std::lock_guard<std::recursive_mutex> locker(lock_mtx);
-    if (!old_cookie.empty()) {
-      auto it = sessions_set.find(old_cookie);
-      if (it == sessions_set.end()) return false;
-      auto session_data = it->second;
-      sessions_set.erase(it);
-      sessions_set.emplace(std::make_pair(new_cookie, session_data));
-      return true;
-    } else {
-      auto new_session = new SessionInfo();
-      new_session->assigned_backend = &backend_to_assign;
-      sessions_set.emplace(std::make_pair(new_cookie, new_session));
+    SessionInfo *session_data{nullptr};
+    if (!request_session_id.empty()) {
+      auto it_old = sessions_set.find(request_session_id);
+      if (it_old != sessions_set.end()) {
+        session_data = it_old->second;
+        sessions_set.erase(it_old);
+      }
     }
+    auto it_new = sessions_set.find(session_id);
+    if (it_new != sessions_set.end()) {
+      if (session_data == nullptr)
+        session_data = it_new->second;
+      else
+        delete it_new->second;
+      sessions_set.erase(it_new);
+    }
+    session_data = session_data == nullptr ? new SessionInfo() : session_data;
+    session_data->assigned_backend = &backend_to_assign;
+    sessions_set.emplace(std::make_pair(session_id, session_data));
+    return true;
   }
   return false;
 }
