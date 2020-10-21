@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-if ( $ARGV[0] =~ /cl_maintenance/ )
+if ( $ARGV[0] =~ /cl_maintenance/ or $ARGV[0] =~ /^lo$/ )
 {
 	&zenlog( "$ARGV[0] is not managed by netplug", "warning", "NETWORK" );
 	exit;
@@ -39,15 +39,14 @@ if ( $if_ref->{ status } ne 'up' )
 {
 	&zenlog( "Interface $iface is not configured to be started",
 			 "warning", "NETWORK" );
+	&downIf( $if_ref );
 	exit 1;
 }
-
-&upIf( $if_ref );
 
 if ( $if_ref->{ dhcp } ne 'true' )
 {
 
-	&addIp( $if_ref );
+	&addIp( $if_ref ) if $if_ref->{ ip_addr };
 
 	#if nic is used for global gw the apply global routes
 	if ( &getGlobalConfiguration( 'defaultgwif' ) eq $if_ref->{ name } )
@@ -59,6 +58,7 @@ if ( $if_ref->{ dhcp } ne 'true' )
 
 	#finally apply local routes
 	&applyRoutes( 'local', $if_ref );
+	&setIfacesUp( $if_ref->{ name }, "vini" );
 
 }
 

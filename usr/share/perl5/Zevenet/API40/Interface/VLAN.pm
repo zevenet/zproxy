@@ -432,9 +432,6 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 		# Delete routes in case that it is not a vini
 		&delRoutes( "local", $if_ref );
 
-		# Add IP
-		&addIp( $if_ref );
-
 		# Check the parent's status before up the interface
 		my $parent_if_name   = &getParentInterfaceName( $if_ref->{ name } );
 		my $parent_if_status = 'up';
@@ -455,15 +452,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 
 		my $state = &upIf( $if_ref, 'writeconf' );
 
-		if ( !$state )
-		{
-			&applyRoutes( "local", $if_ref );
-
-			# put all dependant interfaces up
-			require Zevenet::Net::Util;
-			&setIfacesUp( $if_ref->{ name }, "vini" );
-		}
-		else
+		if ( $state )
 		{
 			my $msg = "The interface $if_ref->{ name } could not be set UP";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

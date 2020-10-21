@@ -208,20 +208,9 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 			&delRoutes( "local", $if_ref ) if $if_ref;
 		}
 
-		&addIp( $if_ref ) if $if_ref;
-
 		my $state = &upIf( $if_ref, 'writeconf' );
 
-		if ( !$state )
-		{
-			require Zevenet::Net::Util;
-			&applyRoutes( "local", $if_ref ) if $if_ref->{ addr };
-
-			# put all dependant interfaces up
-			&setIfacesUp( $nic, "vlan" );
-			&setIfacesUp( $nic, "vini" ) if $if_ref;
-		}
-		else
+		if ( $state )
 		{
 			my $msg = "The interface $nic could not be set UP";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
