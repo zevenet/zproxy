@@ -261,6 +261,37 @@ sub getBondSlaves
 }
 
 =begin nd
+Function: getBondSlavesStatus
+
+	Get a reference to a list of Slaves of the bonding interface with specific status
+
+Parameters:
+	bond_master - Name of bonding interface.
+	status - Status to check
+
+Returns:
+	scalar - reference to a list of slaves matching the status.
+
+See Also:
+
+=cut
+
+sub getBondSlavesStatus
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $bond_master = shift;
+	my $status      = shift;
+	my @slaves;
+	require Zevenet::Net::Interface;
+	foreach my $slave ( @{ &getBondSlaves( $bond_master ) } )
+	{
+		push @slaves, $slave if &getSystemInterface( $slave )->{ status } eq $status;
+	}
+	return \@slaves;
+}
+
+=begin nd
 Function: applyBondChange
 
 	Configure the bonding interface, and optionally store the configuration.

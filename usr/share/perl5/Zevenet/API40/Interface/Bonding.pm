@@ -577,8 +577,16 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
-		require Zevenet::Net::Route;
+		include 'Zevenet::Net::Bonding';
+		if ( scalar ( @{ &getBondSlavesStatus( $bond, "up" ) } ) == 0 )
+		{
+			my $msg =
+			  "The interface $bond has no slave interfaces UP, check the slaves status";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 
+		}
+
+		require Zevenet::Net::Route;
 		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
 			&delRoutes( "local", $if_ref ) if $if_ref;
