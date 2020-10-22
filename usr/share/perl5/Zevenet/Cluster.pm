@@ -1525,10 +1525,7 @@ sub getZClusterNodeStatusDigest
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
 	my $ip = shift;    # IP for remote host, or undef for local host
-
-	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
-	my $n              = &getZClusterNodeStatusInfo( $ip );
-	my $node->{ role } = $n->{ role };
+	my $node;
 
 	if ( !&getZClusterStatus() )
 	{
@@ -1536,80 +1533,87 @@ sub getZClusterNodeStatusDigest
 		$node->{ status }  = 'not configured';
 		$node->{ message } = 'cluster not configured';
 	}
-	elsif ( $node->{ role } && $node->{ role } eq 'master' )
-	{
-		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'master';
-
-		if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } && $ssync_ok )
-		{
-			$node->{ status }  = 'ok';
-			$node->{ message } = 'Node online and active';
-		}
-		else
-		{
-			$node->{ status }  = 'failure';
-			$node->{ message } = 'Failed services: ';
-			my @services;
-			push ( @services, 'keepalived' ) if $n->{ ka };
-			push ( @services, 'zeninotify' ) if $n->{ zi };
-			push ( @services, 'conntrackd' ) if $n->{ ct };
-			push ( @services, 'ssyncd' ) unless $ssync_ok;
-			$node->{ message } .= join ', ', @services;
-		}
-	}
-	elsif ( $node->{ role } && $node->{ role } eq 'backup' )
-	{
-		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'backup';
-
-		if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } && $ssync_ok )
-		{
-			$node->{ status }  = 'ok';
-			$node->{ message } = 'Node online and passive';
-		}
-		else
-		{
-			$node->{ status }  = 'failure';
-			$node->{ message } = 'Failed services: ';
-			my @services;
-			push ( @services, 'keepalived' ) if $n->{ ka };
-			push ( @services, 'zeninotify' ) if !$n->{ zi };
-			push ( @services, 'conntrackd' ) if $n->{ ct };
-			push ( @services, 'ssyncd' ) unless $ssync_ok;
-			$node->{ message } .= join ', ', @services;
-		}
-	}
-	elsif ( $node->{ role } && $node->{ role } eq 'maintenance' )
-	{
-		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'error';
-
-		if ( !$n->{ ka } || $n->{ zi } || !$n->{ ct } || $ssync_ok )
-		{
-			$node->{ status }  = 'ok';
-			$node->{ message } = 'Node in maintenance mode';
-		}
-		else
-		{
-			$node->{ status }  = 'failure';
-			$node->{ message } = 'Services not running: ';
-			my @services;
-			push ( @services, 'keepalived' ) if $n->{ ka };
-			push ( @services, 'zeninotify' ) if !$n->{ zi };
-			push ( @services, 'conntrackd' ) if $n->{ ct };
-			push ( @services, 'ssyncd' ) unless $ssync_ok;
-			$node->{ message } .= join ', ', @services;
-		}
-	}
-	elsif ( exists $node->{ role } && !$node->{ role } )
-	{
-		$node->{ role }    = 'unreachable';
-		$node->{ status }  = 'unreachable';
-		$node->{ message } = 'Node unreachable';
-	}
 	else
 	{
-		$node->{ role }    = 'error';
-		$node->{ status }  = 'error';
-		$node->{ message } = 'error';
+		my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
+		my $n              = &getZClusterNodeStatusInfo( $ip );
+		$node->{ role } = $n->{ role };
+
+		if ( $node->{ role } && $node->{ role } eq 'master' )
+		{
+			my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'master';
+
+			if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } && $ssync_ok )
+			{
+				$node->{ status }  = 'ok';
+				$node->{ message } = 'Node online and active';
+			}
+			else
+			{
+				$node->{ status }  = 'failure';
+				$node->{ message } = 'Failed services: ';
+				my @services;
+				push ( @services, 'keepalived' ) if $n->{ ka };
+				push ( @services, 'zeninotify' ) if $n->{ zi };
+				push ( @services, 'conntrackd' ) if $n->{ ct };
+				push ( @services, 'ssyncd' ) unless $ssync_ok;
+				$node->{ message } .= join ', ', @services;
+			}
+		}
+		elsif ( $node->{ role } && $node->{ role } eq 'backup' )
+		{
+			my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'backup';
+
+			if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } && $ssync_ok )
+			{
+				$node->{ status }  = 'ok';
+				$node->{ message } = 'Node online and passive';
+			}
+			else
+			{
+				$node->{ status }  = 'failure';
+				$node->{ message } = 'Failed services: ';
+				my @services;
+				push ( @services, 'keepalived' ) if $n->{ ka };
+				push ( @services, 'zeninotify' ) if !$n->{ zi };
+				push ( @services, 'conntrackd' ) if $n->{ ct };
+				push ( @services, 'ssyncd' ) unless $ssync_ok;
+				$node->{ message } .= join ', ', @services;
+			}
+		}
+		elsif ( $node->{ role } && $node->{ role } eq 'maintenance' )
+		{
+			my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'error';
+
+			if ( !$n->{ ka } || $n->{ zi } || !$n->{ ct } || $ssync_ok )
+			{
+				$node->{ status }  = 'ok';
+				$node->{ message } = 'Node in maintenance mode';
+			}
+			else
+			{
+				$node->{ status }  = 'failure';
+				$node->{ message } = 'Services not running: ';
+				my @services;
+				push ( @services, 'keepalived' ) if $n->{ ka };
+				push ( @services, 'zeninotify' ) if !$n->{ zi };
+				push ( @services, 'conntrackd' ) if $n->{ ct };
+				push ( @services, 'ssyncd' ) unless $ssync_ok;
+				$node->{ message } .= join ', ', @services;
+			}
+		}
+		elsif ( exists $node->{ role } && !$node->{ role } )
+		{
+			$node->{ role }    = 'unreachable';
+			$node->{ status }  = 'unreachable';
+			$node->{ message } = 'Node unreachable';
+		}
+		else
+		{
+			$node->{ role }    = 'error';
+			$node->{ status }  = 'error';
+			$node->{ message } = 'error';
+		}
 	}
 
 	return $node;
