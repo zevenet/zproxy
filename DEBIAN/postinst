@@ -103,7 +103,6 @@ sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g'
 # netplug
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$local_fs zevenet/g' /etc/init.d/netplug
 
-systemctl daemon-reload
 # Add Zevenet services to boot process including dependencies
 update-rc.d zevenet defaults
 
@@ -132,6 +131,8 @@ if [ $BM_tag -eq 0 ]; then
 	MIG_DIR="/usr/local/zevenet/migrating/"
 	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
 fi
+
+systemctl daemon-reload
 
 ## kill previous l7 processes
 pkill -9 pound
