@@ -839,6 +839,8 @@ Returns:
 
 sub updateRoutingVirtualIfaces
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $parent_name = shift;
 	my $old_ip      = shift;
 	my $new_ip      = shift;

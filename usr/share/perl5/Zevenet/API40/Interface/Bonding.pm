@@ -866,6 +866,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 		$if_ref->{ mac }     = lc $json_obj->{ mac }  if exists $json_obj->{ mac };
 		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
+		$if_ref->{ net } =
+		  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 		$if_ref->{ name } = $bond;
 
 		unless (
