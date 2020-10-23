@@ -7,7 +7,11 @@ use Zevenet::Log;
 use feature qw( say );
 use Config::Tiny;
 
-my $eload = 0;
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 my $iface_files_dir = "/usr/local/zevenet/config";
 my @iface_files;
@@ -95,7 +99,7 @@ sub _getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	}
 
 	# includes !$if_status to avoid warning
-	if ( !$if_line && ( !$if_status || $if_status !~ /up/ ) )
+	if ( !$if_line && ( !$if_status || $if_status !~ /up|down/ ) )
 	{
 		return;
 	}
@@ -186,6 +190,13 @@ sub _getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 		$iface{ is_slave } =
 		  ( grep { $iface{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
+	}
+
+	if ( $iface{ is_slave } eq 'true' )
+	{
+		open my $fh, '<', "/sys/class/net/$if_name/bonding_slave/perm_hwaddr";
+		chomp ( $iface{ mac } = <$fh> );
+		close $fh;
 	}
 
 	# for virtual interface, overwrite mask and gw with parent values
