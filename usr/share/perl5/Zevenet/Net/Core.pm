@@ -388,6 +388,13 @@ sub delIf    # ($if_ref)
 			$status = &logAndRun( $ip_cmd );
 		}
 
+		#delete custom routes
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'delRoutingDependIface',
+				args   => [$$if_ref{ name }],
+		) if ( $eload );
+
 		# check if alternative stack is in use
 		my $ip_v_to_check = ( $$if_ref{ ip_v } == 4 ) ? 6 : 4;
 		my $interface = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
@@ -434,12 +441,6 @@ sub delIf    # ($if_ref)
 		&eload( module => 'Zevenet::Net::Ext',
 				func   => 'reloadNetplug', );
 
-		#delete custom routes
-		&eload(
-				module => 'Zevenet::Net::Routing',
-				func   => 'delRoutingDependIface',
-				args   => [$$if_ref{ name }],
-		);
 	}
 
 	return $status;
