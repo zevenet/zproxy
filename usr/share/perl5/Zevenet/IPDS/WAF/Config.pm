@@ -710,7 +710,7 @@ sub moveWAFSet
 	foreach my $line ( @filefarmhttp )
 	{
 		$waf_ind++;
-		last if ( $line =~ /^WafRules/ );
+		last if ( $line =~ /^\s*WafRules/ );
 	}
 
 	# get set id
