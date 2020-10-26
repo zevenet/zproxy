@@ -835,10 +835,12 @@ sub delWAFMatch
 	# Clean match parameters of the rule. Match index = 1
 	else
 	{
-		$rule_st->{ variables } = [];
-		$rule_st->{ operator }  = '';
-		$rule_st->{ operating } = '';
-		$rule_st->{ not_match } = 'false';
+		$rule_st->{ variables }       = [];
+		$rule_st->{ operator }        = '';
+		$rule_st->{ operating }       = '';
+		$rule_st->{ transformations } = [];
+		$rule_st->{ multi_match }     = 'false';
+		$rule_st->{ not_match }       = 'false';
 
 		# it is necessary a rule id for the first chained rule else modsec fails
 		if ( defined $rule_st->{ chain }->[0] )
