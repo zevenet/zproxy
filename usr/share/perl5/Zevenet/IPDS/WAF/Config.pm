@@ -764,7 +764,6 @@ sub createWAFMatch
 	my ( $set, $rule_index, $rule_st, $rule_updates ) = @_;
 	my $err_msg;
 
-# add a description, this is needed, because if any action is defined, the rule fails in the creation
 	$rule_st->{ description } //= 'Custom Match';
 
 	# modify the directive and change from 'secAction' to 'secRule'
@@ -777,6 +776,10 @@ sub createWAFMatch
 	else
 	{
 		my $chain_st = &getWAFRulesStruct( 'match_action' );
+
+# add a description, this is needed, because if any action is defined, the rule fails in the creation
+		$chain_st->{ description } //= 'Custom Match';
+
 		&updateWAFRule( $chain_st, $rule_updates );
 
 		push @{ $rule_st->{ chain } }, $chain_st;

@@ -593,7 +593,7 @@ sub translateWafVariables
 	{
 		foreach my $it ( @{ $var } )
 		{
-			$it =~ s/ARGS:json\./ARGS_JSON:/;
+			$it =~ s/ARGS:json\.?/ARGS_JSON:/;
 		}
 	}
 	elsif ( $output eq 'toLib' )
@@ -601,6 +601,8 @@ sub translateWafVariables
 		foreach my $it ( @{ $var } )
 		{
 			$it =~ s/ARGS_JSON:/ARGS:json\./;
+			$it =~ s/ARGS_JSON/ARGS:json/;
+
 		}
 	}
 	else
