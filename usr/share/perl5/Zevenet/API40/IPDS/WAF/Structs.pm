@@ -674,9 +674,6 @@ sub translateWafMatch
 	  &translateWafVariables( $json_obj->{ variables }, 'toLib' )
 	  if ( exists $json_obj->{ variables } );
 
-# add a description, this is needed, because if any action is defined, the rule fails in the creation
-	$json_obj->{ description } = 'Custom Match';
-
 	return undef;
 }
 

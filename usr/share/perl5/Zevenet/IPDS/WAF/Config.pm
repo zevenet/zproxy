@@ -764,6 +764,9 @@ sub createWAFMatch
 	my ( $set, $rule_index, $rule_st, $rule_updates ) = @_;
 	my $err_msg;
 
+# add a description, this is needed, because if any action is defined, the rule fails in the creation
+	$rule_st->{ description } //= 'Custom Match';
+
 	# modify the directive and change from 'secAction' to 'secRule'
 	if ( $rule_st->{ type } eq 'action' )
 	{
