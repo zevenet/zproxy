@@ -201,7 +201,8 @@ sub httpNlbRequest
 	my $execmd =
 	  qq($curl_cmd -w "%{http_code}" --noproxy "*" -s -H "Key: HoLa" -X "$self->{ method }" $body http://127.0.0.1:27$self->{ uri });
 
-	my $file = "/tmp/nft_$$";
+	my $file_tmp = "/tmp/nft_$$";
+	my $file     = $file_tmp;
 	$file = $self->{ file }
 	  if (
 		   defined $self->{ file }
@@ -223,6 +224,7 @@ sub httpNlbRequest
 			my $err = <$fh>;
 			&zenlog( "(code: $output): $err", $tag, 'system' );
 			close $fh;
+			unlink $file_tmp if ( -f $file_tmp );
 		}
 		else
 		{
@@ -242,6 +244,7 @@ sub httpNlbRequest
 		require Zevenet::Farm::L4xNAT::Config;
 		&writeL4NlbConfigFile( $file, $self->{ file } );
 	}
+	unlink $file_tmp if ( -f $file_tmp );
 
 	return 0;
 }
