@@ -65,6 +65,14 @@ switch ( $action )
 			&help;
 
 		}
+
+		my $domains_tmp = ();
+		foreach my $domain ( @$domains )
+		{
+			push @$domains_tmp, lc $domain;
+		}
+		$domains = $domains_tmp;
+
 		if ( !$vip && !$farm_name )
 		{
 			print
@@ -296,7 +304,6 @@ sub obtain_cert()
 	$test = "--test-cert" if ( $test );
 	my $domains_list = join ( ',', @$domains );
 	print "DOMAINS to request: $domains_list\n";
-
 	&zenlog(
 		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
 	);
