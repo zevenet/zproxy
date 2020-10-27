@@ -63,47 +63,48 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	my $ip_list = &getIpAddressList();
 
 	my $params = {
-		   "newfarmname" => {
-							  'valid_format' => 'farm_name',
-							  'non_blank'    => 'true',
-		   },
-		   "vport" => {
+		"newfarmname" => {
+						   'valid_format' => 'farm_name',
+						   'non_blank'    => 'true',
+		},
+		"vport" => {
+					 'non_blank' => 'true',
+		},
+		"vip" => {
+				   'values'     => $ip_list,
+				   'non_blank'  => 'true',
+				   'format_msg' => 'The vip IP must exist in some interface.'
+		},
+		"algorithm" => {
+						 'values' => [
+									  'weight',             'roundrobin',
+									  'hash_srcip_srcport', 'hash_srcip',
+									  'symhash',            'leastconn'
+						 ],
+						 'non_blank' => 'true',
+		},
+		"persistence" => {
+			'values' => [
+					'ip', 'srcip', 'srcport', 'srcmac', 'srcip_srcport', 'srcip_dstport', 'none'
+			],
+		},
+		"protocol" => {
+						'values' => [
+									 'all',  'tcp', 'udp',        'sctp',
+									 'sip',  'ftp', 'tftp',       'amanda',
+									 'h323', 'irc', 'netbios-ns', 'pptp',
+									 'sane', 'snmp'
+						],
 						'non_blank' => 'true',
-		   },
-		   "vip" => {
-					  'values'     => $ip_list,
-					  'non_blank'  => 'true',
-					  'format_msg' => 'The vip IP must exist in some interface.'
-		   },
-		   "algorithm" => {
-							'values' => [
-										 'weight',             'roundrobin',
-										 'hash_srcip_srcport', 'hash_srcip',
-										 'symhash',            'leastconn'
-							],
-							'non_blank' => 'true',
-		   },
-		   "persistence" => {
-				   'values' =>
-					 ['ip', 'srcip', 'srcport', 'srcmac', 'srcip_srcport', 'srcip_dstport'],
-		   },
-		   "protocol" => {
-						   'values' => [
-										'all',  'tcp', 'udp',        'sctp',
-										'sip',  'ftp', 'tftp',       'amanda',
-										'h323', 'irc', 'netbios-ns', 'pptp',
-										'sane', 'snmp'
-						   ],
-						   'non_blank' => 'true',
-		   },
-		   "nattype" => {
-						  'values'    => ['nat', 'dnat', 'dsr', 'stateless_dnat'],
-						  'non_blank' => 'true',
-		   },
-		   "ttl" => {
-					  'valid_format' => 'natural_num',
-					  'non_blank'    => 'true',
-		   },
+		},
+		"nattype" => {
+					   'values'    => ['nat', 'dnat', 'dsr', 'stateless_dnat'],
+					   'non_blank' => 'true',
+		},
+		"ttl" => {
+				   'valid_format' => 'natural_num',
+				   'non_blank'    => 'true',
+		},
 	};
 
 	if ( $eload )
@@ -120,6 +121,11 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	{
 		$json_obj->{ vport }    = "*";
 		$json_obj->{ protocol } = "all";
+	}
+	if ( exists $json_obj->{ persistence }
+		 and $json_obj->{ persistence } eq 'none' )
+	{
+		$json_obj->{ persistence } = '';
 	}
 
 	# Check allowed parameters
