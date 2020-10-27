@@ -749,7 +749,7 @@ sub get_http_farm_ee_struct
 	my $farm_st  = shift // {};
 	my $proxy_ng = shift // &getGlobalConfiguration( 'proxy_ng' );
 
-	$farm_st->{ ignore_100_continue }  = "false";
+	$farm_st->{ ignore_100_continue }  = "true";
 	$farm_st->{ logs }                 = "false";
 	$farm_st->{ addheader }            = [];
 	$farm_st->{ headremove }           = [];
