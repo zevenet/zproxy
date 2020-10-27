@@ -1128,14 +1128,15 @@ sub setBondMac
 		&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
 		foreach my $slave ( @{ $bondSlaves } )
 		{
-			my $slaveConf = &getSystemInterface( $slave );
-			$status += &upIf( $slaveConf );
+			my $slaveConf = &getInterfaceConfig( $slave );
+			$status += &upIf( $slaveConf ) if ( $slaveConf->{ status } eq "up" );
 		}
 	}
 
 	my $config_ref = &getInterfaceConfig( $if_ref->{ name } )
 	  // &getSystemInterface( $if_ref->{ name } );
 	$config_ref->{ mac } = $mac;
+	$config_ref->{ status } = "down" if ( !$config_ref->{ status } );
 	&setInterfaceConfig( $config_ref );
 	&saveBondMacConfig( $if_ref->{ name }, $if_ref->{ mac } );
 
