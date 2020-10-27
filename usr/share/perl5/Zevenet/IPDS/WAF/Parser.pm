@@ -770,6 +770,7 @@ sub buildWAFSetConf
 	my $defaults = "SecDefaultAction \"$def_action";
 	$defaults .= ",nolog" if ( $conf->{ default_log } eq 'false' );
 	$defaults .= ",log"   if ( $conf->{ default_log } eq 'true' );
+	$defaults .= ',logdata:\'client:%{REMOTE_ADDR}\'';    # Add client IP to logs
 
 	foreach my $phase ( @{ $def_phases } )
 	{
