@@ -55,12 +55,23 @@ sub new_farm    # ( $json_obj )
 
 	if ( exists $json_obj->{ copy_from } )
 	{
-		my $type = &getFarmType( $json_obj->{ copy_from } );
-		$json_obj->{ profile } = ( $type eq 'https' ) ? 'http' : $type;
-		if ( $type == 1 )
+		my $ori_type = &getFarmType( $json_obj->{ copy_from } );
+		$ori_type = 'http' if $ori_type eq 'https';
+		if ( $ori_type == 1 )
 		{
 			my $msg = "The farm '$json_obj->{copy_from}' does not exist.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		}
+		if ( exists ( $json_obj->{ profile } )
+			 and ( $ori_type ne $json_obj->{ profile } ) )
+		{
+			my $msg =
+			  "The profile '$json_obj->{ profile }' does not match with the profile '$ori_type' of the farm '$json_obj->{ copy_from }'.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		else
+		{
+			$json_obj->{ profile } = $ori_type;
 		}
 	}
 
