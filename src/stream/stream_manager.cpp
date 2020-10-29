@@ -658,7 +658,8 @@ void StreamManager::onRequestEvent(int fd) {
                      stream->request.http_message,
                      stream->client_connection.getPeerAddress().c_str(),
                      stream->client_connection.getFileDescriptor(),
-                     bck->address.c_str(), bck->port,
+                     stream->backend_connection.getBackend()->address.c_str(),
+                     stream->backend_connection.getBackend()->port,
                      stream->backend_connection.getFileDescriptor());
       if (stream->backend_connection.getBackend()->nf_mark > 0)
         Network::setSOMarkOption(
