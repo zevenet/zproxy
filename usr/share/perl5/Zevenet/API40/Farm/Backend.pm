@@ -112,21 +112,6 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	elsif ( exists $json_obj->{ priority } )
-	{
-		require Zevenet::Farm::L4xNAT::Backend;
-		require Zevenet::Farm::Validate;
-		my $prio = &getL4FarmPriorities( $farmname );
-		push @{ $prio }, $json_obj->{ priority };
-		if ( &priorityAlgorithmIsOK( $prio ) )
-		{
-			$info_msg = "This backend will not be used due to a high priority value.";
-			&zenlog(
-				"Warning, backend with high priority value ($json_obj->{ priority }) in farm $farmname with IP $json_obj->{ip}.",
-				"warning", "FARMS"
-			);
-		}
-	}
 
 	# Create backend
 	my $status = &setFarmServer( $farmname, undef, $id, $json_obj );
@@ -143,6 +128,20 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 	&zenlog( "New backend created in farm $farmname with IP $json_obj->{ip}.",
 			 "info", "FARMS" );
+
+	# check priority for l4xnat
+	if ( $type eq 'l4xnat' )
+	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		require Zevenet::Farm::Validate;
+		my $priorities = &getL4FarmPriorities( $farmname );
+		if ( my $prio = &priorityAlgorithmIsOK( $priorities ) )
+		{
+			$info_msg = "Backends with high priority value ($prio) will not be used.";
+			&zenlog( "Warning, backend with high priority value ($prio) in farm $farmname.",
+					 "warning", "FARMS" );
+		}
+	}
 
 	# Backend retrieval
 	my $serversArray = &getFarmServers( $farmname );
@@ -286,26 +285,25 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $info_msg = "";
-	if ( $type =~ /http/ and exists $json_obj->{ priority } )
-	{
-		my $prio = &getHTTPFarmPriorities( $farmname, $service );
-		push @{ $prio }, $json_obj->{ priority };
-		if ( &priorityAlgorithmIsOK( $prio ) )
-		{
-			$info_msg = "This backend will not be used due to a high priority value.";
-			&zenlog(
-				"Warning, new backend with high priority value ($json_obj->{ priority }) added in farm $farmname in service $service with IP $json_obj->{ip}.",
-				"info", "FARMS"
-			);
-		}
-	}
-
 	# no error found, return successful response
 	&zenlog(
 		"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.",
 		"info", "FARMS"
 	);
+
+	my $info_msg = "";
+	if ( $type =~ /http/ )
+	{
+		my $priorities = &getHTTPFarmPriorities( $farmname, $service );
+		if ( my $prio = &priorityAlgorithmIsOK( $priorities ) )
+		{
+			$info_msg = "Backends with high priority value ($prio) will not be used.";
+			&zenlog(
+				"Warning, backend with high priority value ($prio) in farm $farmname in service $service.",
+				"warning", "FARMS"
+			);
+		}
+	}
 
 	my $message = "Added backend to service successfully.";
 
@@ -545,8 +543,9 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		{
 			$info_msg = "Backends with high priority value ($prio) will not be used.";
 			&zenlog(
-				"Warning, backend with high priority value ($prio) in farm $farmname with IP $json_obj->{ip}.",
+				"Warning, backend with high priority value ($prio) in farm $farmname.",
 				"warning", "FARMS"
+
 			);
 		}
 	}
@@ -701,7 +700,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 		{
 			$info_msg = "Backends with high priority value ($prio) will not be used.";
 			&zenlog(
-				"Warning, backend with high priority value ($prio) in farm $farmname in service $service with IP $json_obj->{ip}.",
+				"Warning, backend with high priority value ($prio) in farm $farmname in service $service.",
 				"warning", "FARMS"
 			);
 		}
@@ -790,7 +789,7 @@ sub delete_backend    # ( $farmname, $id_server )
 		require Zevenet::Farm::Validate;
 		if ( my $prio = &priorityAlgorithmIsOK( &getL4FarmPriorities( $farmname ) ) )
 		{
-			$info_msg = "Backends with priority value ($prio) will not be used.";
+			$info_msg = "Backends with high priority value ($prio) will not be used.";
 			&zenlog( "Warning, backend with high priority value ($prio) in farm $farmname.",
 					 "warning", "FARMS" );
 		}
