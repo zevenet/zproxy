@@ -307,7 +307,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		"info", "FARMS"
 	);
 
-	my $message = "Added backend to service successfully. $info_msg";
+	my $message = "Added backend to service successfully.";
 
 	my $out_b = &getFarmServers( $farmname, $service )->[$id];
 	&getAPIFarmBackends( $out_b, $type );
@@ -318,6 +318,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				 message     => $message,
 				 status      => &getFarmVipStatus( $farmname ),
 	};
+	$body->{ warning } = $info_msg if defined $info_msg;
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
