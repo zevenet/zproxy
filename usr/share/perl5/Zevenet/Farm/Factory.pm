@@ -146,6 +146,9 @@ sub runFarmCreateFrom
 						func   => 'getIPDSfarmsRules',
 						args   => [$params->{ copy_from }],
 		);
+
+		# they doesn't have to be applied, they already are in the config file
+		delete $ipds->{ waf };
 	}
 
 	# create file
