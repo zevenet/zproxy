@@ -634,6 +634,7 @@ sub getRuleFromIface
 				 table => "table_$if_ref->{name}",
 				 type  => 'iface',
 				 from  => $from,
+				 ip_v  => $if_ref->{ ip_v }
 	};
 
 	return $rule;
