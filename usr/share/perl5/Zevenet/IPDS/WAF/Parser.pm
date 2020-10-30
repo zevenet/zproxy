@@ -497,7 +497,7 @@ sub buildWAFRule
 		{
 			$secrule .= "\ttag:$tag,\\\n";
 		}
-		$secrule .= "\tver:" . $st->{ version } . ",\\\n"
+		$secrule .= "\tver:'" . $st->{ version } . "',\\\n"
 		  if ( $st->{ version } );
 		$secrule .= "\tmaturity:" . $st->{ maturity } . ",\\\n"
 		  if ( $st->{ maturity } =~ /\d/ );
