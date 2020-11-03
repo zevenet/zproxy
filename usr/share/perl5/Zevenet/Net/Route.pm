@@ -624,11 +624,14 @@ sub getRuleFromIface
 			 "debug", "PROFILING" );
 
 	my $if_ref = shift;
-
-	my $from =
-	  ( $if_ref->{ mask } =~ /^\d$/ )
-	  ? "$if_ref->{ net }/$if_ref->{ mask }"
-	  : NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } );
+	my $from   = "";
+	if ( defined ( $if_ref->{ net } ) && $if_ref->{ net } ne '' )
+	{
+		$from =
+		  ( $if_ref->{ mask } =~ /^\d$/ )
+		  ? "$if_ref->{ net }/$if_ref->{ mask }"
+		  : NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } );
+	}
 
 	my $rule = {
 				 table => "table_$if_ref->{name}",
@@ -671,8 +674,9 @@ sub setRule
 
 	my $action = shift;
 	my $rule   = shift;
-
 	my $output = 0;
+
+	return 0 if ( !defined ( $rule->{ from } ) || $rule->{ from } eq '' );
 
 	return -1 if ( $action != /add|del/ );
 	return -1 if ( defined $rule->{ fwmark } && $rule->{ fwmark } =~ /^0x0$/ );

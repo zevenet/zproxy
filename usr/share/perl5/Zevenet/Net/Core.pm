@@ -638,6 +638,9 @@ sub setRuleIPtoTable
 			 "debug", "PROFILING" );
 
 	my ( $iface, $ip, $action ) = @_;
+
+	return 0 if ( $ip eq '' or !defined ( $ip ) );
+
 	my $prio = &getGlobalConfiguration( 'routingRulePrioIfacesDuplicated' );
 
 	if ( &getGlobalConfiguration( 'duplicated_net' ) ne "true" )
