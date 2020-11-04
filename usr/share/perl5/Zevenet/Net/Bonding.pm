@@ -346,6 +346,9 @@ sub applyBondChange
 		{
 			&zenlog( "adding $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'add' );
+			my $slave_ref = &getInterfaceConfig( $slave );
+			require Zevenet::Net::Core;
+			&upIf( $slave_ref, 'writeconf' );
 		}
 		else
 		{
@@ -354,6 +357,9 @@ sub applyBondChange
 			{
 				&zenlog( "adding $slave", "info", "NETWORK" );
 				&setBondSlave( $bond->{ name }, $slave, 'add' );
+				my $slave_ref = &getInterfaceConfig( $slave );
+				require Zevenet::Net::Core;
+				&upIf( $slave_ref, 'writeconf' );
 			}
 
 			# discard all checked slaves
@@ -368,6 +374,9 @@ sub applyBondChange
 		{
 			&zenlog( "removing $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'del' );
+			my $slave_ref = &getInterfaceConfig( $slave );
+			require Zevenet::Net::Core;
+			&downIf( $slave_ref, 'writeconf' );
 			if ( $slave eq @{ $sys_bond->{ slaves } }[0] )
 			{
 				my $bond_local = &getBondLocalConfig( $bond->{ name } );
