@@ -341,6 +341,8 @@ sub applyBondChange
 
 	# verify every slave interface
 	require Zevenet::Net::Interface;
+	require Zevenet::Net::Core;
+
 	my @interface_list = &getInterfaceList();
 
 	for my $slave ( @{ $bond->{ slaves } } )
@@ -357,6 +359,10 @@ sub applyBondChange
 			&zenlog( "Could not find $slave", "error", "NETWORK" );
 			return $return_code;
 		}
+
+		# set each slave in down status
+		my $slave_ref = &getInterfaceConfig( $slave );
+		&downIf( $slave_ref );
 	}
 
 	# add bond master and set mode only if it is a new one
@@ -375,11 +381,8 @@ sub applyBondChange
 	{
 		if ( !$sys_bond )
 		{
-			&zenlog( "adding $slave", "info", "NETWORK" );
+			&zenlog( "creating bond, adding $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'add' );
-			my $slave_ref = &getInterfaceConfig( $slave );
-			require Zevenet::Net::Core;
-			&upIf( $slave_ref, 'writeconf' );
 		}
 		else
 		{
@@ -388,14 +391,14 @@ sub applyBondChange
 			{
 				&zenlog( "adding $slave", "info", "NETWORK" );
 				&setBondSlave( $bond->{ name }, $slave, 'add' );
-				my $slave_ref = &getInterfaceConfig( $slave );
-				require Zevenet::Net::Core;
-				&upIf( $slave_ref, 'writeconf' );
 			}
 
 			# discard all checked slaves
 			$sys_bond_slaves{ $slave } = undef;
 		}
+
+		my $slave_ref = &getInterfaceConfig( $slave );
+		&upIf( $slave_ref, 'writeconf' );
 	}
 
 	my $mac_updated = 0;
@@ -405,14 +408,15 @@ sub applyBondChange
 		{
 			&zenlog( "removing $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'del' );
-			my $slave_ref = &getInterfaceConfig( $slave );
-			require Zevenet::Net::Core;
-			&downIf( $slave_ref, 'writeconf' );
 			if ( $slave eq @{ $sys_bond->{ slaves } }[0] )
 			{
 				my $bond_local = &getBondLocalConfig( $bond->{ name } );
 				$mac_updated = 1 if ( $bond_local->{ mac } eq "" );
 			}
+
+			# maintein the interface UP
+			my $slave_ref = &getInterfaceConfig( $slave );
+			&upIf( $slave_ref, 'writeconf' );
 		}
 	}
 
@@ -654,11 +658,7 @@ sub setBondSlave
 		#return $return_code;
 	}
 
-	&logAndRun( "echo $operator$bond_slave > $bondslave" );
-
-	#close $bond_slaves_file;
-
-	$return_code = 0;
+	$return_code = &logAndRun( "echo $operator$bond_slave > $bondslave" );
 
 	return $return_code;
 }
@@ -819,9 +819,8 @@ sub getBondAvailableSlaves
 		next if $dir_entry =~ /(:|\.)/;                 # not vlan nor vini
 		next if grep ( /^$dir_entry$/, @bond_list );    # not a bond
 		my $iface = &getSystemInterface( $dir_entry );
-		next
-		  if $iface->{ status } ne 'down'
-		  ; # must be down		next if $iface->{ addr };                       # without address
+
+		#~ next if $iface->{ status } ne 'down'; # must be down
 		$iface = &getInterfaceConfig( $iface->{ name } );
 		next if $iface->{ addr };
 

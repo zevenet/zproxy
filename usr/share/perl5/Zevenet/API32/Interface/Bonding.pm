@@ -78,14 +78,6 @@ sub new_bond    # ( $json_obj )
 
 	for my $slave ( @{ $json_obj->{ slaves } } )
 	{
-		if ( &getInterfaceConfig( $slave )
-			 && ( &getInterfaceConfig( $slave )->{ status } eq 'up' ) )
-		{
-			my $msg =
-			  "The $slave interface has to be in DOWN status to add it to a bonding.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		unless ( grep { $slave eq $_ } &getBondAvailableSlaves() )
 		{
 			$missing_slave = $slave;
@@ -154,13 +146,6 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	{
 		my $msg = "Bond interface name not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	if ( &getInterfaceConfig( $json_obj->{ name } )
-		 && ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
-	{
-		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate SLAVE
