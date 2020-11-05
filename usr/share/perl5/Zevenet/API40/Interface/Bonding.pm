@@ -590,11 +590,24 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
 			&delRoutes( "local", $if_ref ) if $if_ref;
+			&addIp( $if_ref ) if $if_ref;
 		}
 
 		my $state = &upIf( { name => $bond }, 'writeconf' );
 
-		if ( $state )
+		if ( !$state )
+		{
+			require Zevenet::Net::Util;
+			if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
+			{
+				&applyRoutes( "local", $if_ref ) if $if_ref;
+			}
+
+			# put all dependant interfaces up
+			&setIfacesUp( $bond, "vlan" );
+			&setIfacesUp( $bond, "vini" ) if $if_ref;
+		}
+		else
 		{
 			my $msg = "The interface $bond could not be set UP";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

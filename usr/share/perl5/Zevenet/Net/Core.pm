@@ -504,6 +504,8 @@ See Also:
 
 sub isIp
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $if_ref = shift;
 
 	# finish if the address is already assigned
