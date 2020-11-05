@@ -420,6 +420,10 @@ sub applyBondChange
 		}
 	}
 
+	# Writing new parameters in configuration file
+	require Zevenet::Net::Route;
+	&writeRoutes( $bond->{ name } );
+
 	# write bonding configuration
 	if ( $writeconf )
 	{
@@ -1022,11 +1026,12 @@ sub setBondIP
 		return 1 if &delRoutes( "local", $old_ref );
 	}
 
+	# Writing new parameters in configuration file
+	return 1 if ( &writeRoutes( $if_ref->{ name } ) );
+
 	# Add new IP, netmask and gateway
 	return 1 if ( &addIp( $if_ref ) );
 
-	# Writing new parameters in configuration file
-	return 1 if ( &writeRoutes( $if_ref->{ name } ) );
 	return 1 if ( !&setInterfaceConfig( $if_ref ) );
 
 	# Put the interface up
