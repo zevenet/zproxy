@@ -1021,7 +1021,7 @@ sub parseWAFBatch
 
 	foreach my $line ( @{ $batch } )
 	{
-		$chain = 1 if ( $line =~ /[\"\s,]chain[\"\s,]/ );
+		$chain = 1 if ( $line =~ /(?:^|[\"\s,])chain[\"\s,]/ );
 		push @{ $rule }, $line;
 
 		# if the line is not splitted '\', it is the final
@@ -1036,6 +1036,7 @@ sub parseWAFBatch
 			else
 			{
 				my $hash_rule = &parseWAFRule( @rules_nested );
+
 				$hash_rule->{ id } = $id;
 				$id++;
 
