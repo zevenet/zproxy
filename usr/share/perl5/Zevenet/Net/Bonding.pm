@@ -359,10 +359,6 @@ sub applyBondChange
 			&zenlog( "Could not find $slave", "error", "NETWORK" );
 			return $return_code;
 		}
-
-		# set each slave in down status
-		my $slave_ref = &getInterfaceConfig( $slave );
-		&downIf( $slave_ref );
 	}
 
 	# add bond master and set mode only if it is a new one
@@ -379,20 +375,17 @@ sub applyBondChange
 
 	for my $slave ( @{ $bond->{ slaves } } )
 	{
-		if ( !$sys_bond )
+		if ( !$sys_bond || grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
 		{
-			&zenlog( "creating bond, adding $slave", "info", "NETWORK" );
+			# set each slave in down status
+			my $slave_ref = &getInterfaceConfig( $slave );
+			&downIf( $slave_ref );
+
+			&zenlog( "adding $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'add' );
 		}
-		else
+		if ( $sys_bond )
 		{
-			# add slave if not already configured
-			if ( grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
-			{
-				&zenlog( "adding $slave", "info", "NETWORK" );
-				&setBondSlave( $bond->{ name }, $slave, 'add' );
-			}
-
 			# discard all checked slaves
 			$sys_bond_slaves{ $slave } = undef;
 		}
@@ -934,7 +927,6 @@ sub get_bond_list_struct
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Cluster';
 
-	my $desc      = "List bonding interfaces";
 	my $bond_conf = &getBondConfig();
 
 	# get cluster interface
@@ -1223,8 +1215,6 @@ sub saveBondMacConfig
 			 "debug", "PROFILING" );
 	my $bond_name  = shift;
 	my $macaddress = shift;
-
-	my $bond_conf = &getBondConfig( $bond_name );
 
 	require Zevenet::Config;
 	my $local_dir       = &getGlobalConfiguration( "localconfig" );
