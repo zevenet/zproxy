@@ -330,6 +330,7 @@ sub delete_bond    # ( $bond )
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 	include 'Zevenet::Net::Bonding';
 
 	my $desc  = "Remove bonding interface";
@@ -399,8 +400,8 @@ sub delete_bond    # ( $bond )
 		{
 			die if &downIf( $bonds->{ $bond }, 'writeconf' );
 		}
-
 		die if &setBondMaster( $bond, 'del', 'writeconf' );
+		&deleteRoutesTable( $bond );
 	};
 
 	if ( $@ )

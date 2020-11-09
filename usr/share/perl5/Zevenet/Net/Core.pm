@@ -23,6 +23,8 @@
 
 use strict;
 
+require Zevenet::Core;
+
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 my $eload;
 if ( eval { require Zevenet::ELoad; } )
@@ -401,18 +403,7 @@ sub delIf    # ($if_ref)
 		if ( !$interface
 			 or ( $interface->{ type } eq "bond" and !exists $interface->{ addr } ) )
 		{
-			my $rttables = &getGlobalConfiguration( 'rttables' );
-
-			# Delete routes table, complementing writeRoutes()
-			open my $rt_fd, '<', $rttables;
-			my @contents = <$rt_fd>;
-			close $rt_fd;
-
-			@contents = grep !/^...\ttable_$$if_ref{name}$/, @contents;
-
-			open $rt_fd, '>', $rttables;
-			print $rt_fd @contents;
-			close $rt_fd;
+			&deleteRoutesTable( $$if_ref{ name } );
 		}
 	}
 

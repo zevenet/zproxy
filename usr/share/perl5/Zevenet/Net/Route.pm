@@ -36,7 +36,7 @@ my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 =begin nd
 Function: writeRoutes
 
-	Sets a routing table id and name pair in rt_tables file.
+	It sets a routing table id and name pair in rt_tables file.
 
 	Only required setting up a routed interface. Complemented in delIf()
 
@@ -86,6 +86,40 @@ sub writeRoutes    # ($if_name)
 	}
 
 	return;
+}
+
+=begin nd
+Function: deleteRoutesTable
+
+	It removes the a routing table id and name pair from the rt_tables file.
+
+Parameters:
+	if_name - network interface name.
+
+Returns:
+	none - .
+=cut
+
+sub deleteRoutesTable
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $if_name = shift;
+
+	my $rttables = &getGlobalConfiguration( 'rttables' );
+
+	open my $rt_fd, '<', $rttables;
+	my @contents = <$rt_fd>;
+	close $rt_fd;
+
+	@contents = grep ( !/\ttable_$if_name\n/, @contents );
+
+	open $rt_fd, '>', $rttables;
+	foreach my $table ( @contents )
+	{
+		print $rt_fd $table;
+	}
+	close $rt_fd;
 }
 
 =begin nd
