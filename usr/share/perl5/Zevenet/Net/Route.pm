@@ -203,8 +203,12 @@ sub addlocalnet    # ($if_ref)
 				);
 				$skip_route = 1;
 			}
-
 		}
+		elsif ( grep ( /^(?:\*|$table)$/, @isolates ) )
+		{
+			$skip_route = 1;
+		}
+
 		if ( !$skip_route )
 		{
 			&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
@@ -327,9 +331,27 @@ sub dellocalnet    # ($if_ref)
 	{
 		next if $link eq 'lo';
 		next if $link eq 'cl_maintenance';
-		next if $link eq 'main';
 
 		my $table = "table_$link";
+
+		# Manage the main table
+		if ( $link eq 'main' )
+		{
+			$table = "main";
+			if ( $eload )
+			{
+				my @isolates = &eload(
+									   module => 'Zevenet::Net::Routing',
+									   func   => 'getRoutingIsolate',
+									   args   => [$$if_ref{ name }],
+				);
+				next if ( !grep ( /^(?:\*|main)$/, @isolates ) );
+			}
+			else
+			{
+				next;
+			}
+		}
 
 		my $cmd_param = "$net dev $$if_ref{name} src $$if_ref{addr} table $table";
 		next if ( !$cmd_param );
