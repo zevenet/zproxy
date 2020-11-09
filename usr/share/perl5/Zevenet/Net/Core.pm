@@ -315,7 +315,7 @@ sub stopIf    # ($if_ref)
 		if ( $ip =~ /\./ )
 		{
 			use Net::IPv4Addr qw(ipv4_network);
-			my ( $net, $mask ) = ipv4_network( "$ip / $$if_ref{mask}" );
+			my ( undef, $mask ) = ipv4_network( "$ip / $$if_ref{mask}" );
 			my $cmd = "$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if";
 
 			&logAndRun( "$cmd" );
@@ -348,7 +348,6 @@ sub delIf    # ($if_ref)
 	my ( $if_ref ) = @_;
 
 	my $status;
-	my $has_more_ips;
 
 	# remove dhcp configuration
 	if ( exists $if_ref->{ dhcp } and $if_ref->{ dhcp } eq 'true' )
@@ -614,6 +613,17 @@ sub addIp    # ($if_ref)
 	};
 
 	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "add" );
+
+# Bugfix: This is necessary to remove the entry from the "main" table if it is isolated in the routing module
+# this entry is added automatically for the "ip addr add" cmd
+	if ( $eload )
+	{
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'reloadRoutingTable',
+				args   => [$$if_ref{ name }],
+		);
+	}
 
 	return $status;
 }
