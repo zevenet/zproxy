@@ -371,7 +371,7 @@ sub delIf    # ($if_ref)
 	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "del" );
 
 	# If $if is Vini do nothing
-	if ( $$if_ref{ vini } eq '' )
+	if ( $$if_ref{ vini } eq '' or !defined ( $$if_ref{ vini } ) )
 	{
 		my $ip_cmd;
 		if ( $if_ref->{ dhcp } ne 'true' )
@@ -605,7 +605,8 @@ sub addIp    # ($if_ref)
 
 # Bugfix: This is necessary to remove the entry from the "main" table if it is isolated in the routing module
 # this entry is added automatically for the "ip addr add" cmd
-	if ( $eload )
+
+	if ( $eload and $$if_ref{ status } eq 'up' )
 	{
 		&eload(
 				module => 'Zevenet::Net::Routing',

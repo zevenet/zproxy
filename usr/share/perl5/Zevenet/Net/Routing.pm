@@ -775,7 +775,7 @@ sub delRoutingDependIface
 
 	my $iface = shift;
 
-	&zenlog( "Deleting the routes that are depending on '$iface'", 'info', 'net' );
+	&zenlog( "Deleting the routes that depende on '$iface'", 'info', 'net' );
 	my $rule_list = &listRoutingDependIface( $iface );
 	foreach my $rule ( @{ $rule_list } )
 	{
