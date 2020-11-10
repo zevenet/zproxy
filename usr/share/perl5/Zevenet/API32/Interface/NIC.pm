@@ -297,7 +297,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	if ( $if_ref )
 	{
 		$new_if = {
-					addr    => $json_obj->{ ip } // $if_ref->{ addr },
+					addr    => $json_obj->{ ip }      // $if_ref->{ addr },
 					mask    => $json_obj->{ netmask } // $if_ref->{ mask },
 					gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 		};
@@ -411,7 +411,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 	$if_ref->{ net } =
 	  &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
@@ -422,30 +422,15 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	}
 
 	eval {
+
+		&setInterfaceConfig( $if_ref ) or die;
+
 		# Add new IP, netmask and gateway
 		# sometimes there are expected errors pending to be controlled
 		&addIp( $if_ref );
 
 		# Writing new parameters in configuration file
 		&writeRoutes( $if_ref->{ name } );
-
-		# Put the interface up
-		my $previous_status = $if_ref->{ status };
-
-		if ( $previous_status eq "up" )
-		{
-			if ( &upIf( $if_ref, 'writeconf' ) == 0 )
-			{
-				$if_ref->{ status } = "up";
-				&applyRoutes( "local", $if_ref );
-			}
-			else
-			{
-				$if_ref->{ status } = $previous_status;
-			}
-		}
-
-		&setInterfaceConfig( $if_ref ) or die;
 
 		# if the GW is changed, change it in all appending virtual interfaces
 		if ( exists $json_obj->{ gateway } )

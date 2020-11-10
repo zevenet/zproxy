@@ -775,7 +775,7 @@ sub delRoutingDependIface
 
 	my $iface = shift;
 
-	&zenlog( "Deleting the routes that are depending on '$iface'", 'info', 'net' );
+	&zenlog( "Deleting the routes that depende on '$iface'", 'info', 'net' );
 	my $rule_list = &listRoutingDependIface( $iface );
 	foreach my $rule ( @{ $rule_list } )
 	{
@@ -789,7 +789,7 @@ sub delRoutingDependIface
 	}
 
 	# the rules were removed from the system when the interface was set down
-	my $file = &getRoutingTableFile( $iface );
+	my $file = &getRoutingTableFile( "table_$iface" );
 	unlink $file;
 
 	&zenlog( "Deleting the rules that are depending on '$iface'", 'info', 'net' );
