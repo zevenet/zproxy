@@ -380,5 +380,33 @@ sub delTinyObj
 	return $error;
 }
 
+=begin nd
+Function: migrateConfigFiles
+
+	Apply all migrating scripts to zevenet
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+=cut
+
+sub migrateConfigFiles
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $MIG_DIR = &getGlobalConfiguration( 'mig_dir' );
+
+	my @listing = `ls $MIG_DIR`;
+	foreach my $file ( @listing )
+	{
+		my @run = `${MIG_DIR}/${file}`;
+	}
+
+}
+
 1;
 

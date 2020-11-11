@@ -79,14 +79,8 @@ if ( $action eq "-D52to60" )
 	print "@eject\n";
 	print "Configuration files have been moved to local system.\n";
 
-	#migrating config files
-	my $MIG_DIR = "/usr/local/zevenet/migrating/";
-	my @listing = `ls $MIG_DIR`;
-	foreach my $file ( @listing )
-	{
-		print "Running Migration: ${MIG_DIR}${file}\n";
-		my @run = `${MIG_DIR}${file}`;
-	}
+	# Migrating config files
+	&migrateConfigFiles();
 
 	print
 	  "A restart of the load balancer is pending in order to apply the changes...\n";

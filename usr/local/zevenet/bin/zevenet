@@ -160,23 +160,14 @@ if ( $action eq "start" )
 
 	# ZNA firmware upgrade
 	my $migration_flag = &getGlobalConfiguration( 'migration_flag' );
-	if ( -f $migration_flag )
+	if ( -e $migration_flag )
 	{
 		my $rm = &getGlobalConfiguration( 'rm' );
 		&zna_version;
 
 		# Migrating config files
-		my $MIG_DIR = "/usr/local/zevenet/migrating/";
-		opendir ( DIR, $MIG_DIR ) or die "can't opendir $MIG_DIR: $!";
-		while ( my $SCRIPT = readdir ( DIR ) )
-		{
-			next if ( $SCRIPT =~ m/^\./ );
-
-			# do not use 'logAndRun' function, it is necessary to print the stdoutput
-			system ( $MIG_DIR . $SCRIPT );
-		}
+		&migrateConfigFiles();
 		&logAndRun( "$rm $migration_flag" );
-		closedir ( DIR );
 	}
 
 	my $version = &getGlobalConfiguration( 'version' );

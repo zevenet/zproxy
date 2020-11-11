@@ -55,6 +55,8 @@ $first_boot_flag="/etc/firstzlbboot";
 $migration_flag="/etc/zlbmigration";
 #zevenet service
 $zevenet_service="/etc/init.d/zevenet";
+# directory of the migration scripts
+$mig_dir="$zdir/migrating";
 
 # System files
 #rt tables file

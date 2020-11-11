@@ -37,6 +37,7 @@ load_global_conf
 
 GLOBALCF=$globalcfg
 GLOBALCFT=$globalcfg_tpl
+ZBINDIR=$zbindir
 
 ## Apply system configurations
 
@@ -127,9 +128,8 @@ fi
 
 # Apply all migrating scripts to zevenet
 if [ $BM_tag -eq 0 ]; then
-	#migrating config files
-	MIG_DIR="/usr/local/zevenet/migrating/"
-	for SCRIPT in `ls $MIG_DIR`; do ${MIG_DIR}$SCRIPT; done
+	# Migrating config files
+	echo "" | ${ZBINDIR}/enterprise.bin Zevenet::Config migrateConfigFiles >/dev/null
 fi
 
 systemctl daemon-reload
@@ -208,7 +208,7 @@ fi
 
 # Reconfigure APT repo for add zcmc source list
 if [ $BM_tag -eq 0 ]; then
-	echo "" | /usr/local/zevenet/bin/enterprise.bin Zevenet::Apt setAPTRepo >/dev/null
+	echo "" | ${ZBINDIR}/enterprise.bin Zevenet::Apt setAPTRepo >/dev/null
 fi
 
 ## Run checkupgrades to update message
