@@ -261,37 +261,6 @@ sub getBondSlaves
 }
 
 =begin nd
-Function: getBondSlavesStatus
-
-	Get a reference to a list of Slaves of the bonding interface with specific status
-
-Parameters:
-	bond_master - Name of bonding interface.
-	status - Status to check
-
-Returns:
-	scalar - reference to a list of slaves matching the status.
-
-See Also:
-
-=cut
-
-sub getBondSlavesStatus
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $bond_master = shift;
-	my $status      = shift;
-	my @slaves;
-	require Zevenet::Net::Interface;
-	foreach my $slave ( @{ &getBondSlaves( $bond_master ) } )
-	{
-		push @slaves, $slave if &getSystemInterface( $slave )->{ status } eq $status;
-	}
-	return \@slaves;
-}
-
-=begin nd
 Function: applyBondChange
 
 	Configure the bonding interface, and optionally store the configuration.
@@ -341,8 +310,6 @@ sub applyBondChange
 
 	# verify every slave interface
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Core;
-
 	my @interface_list = &getInterfaceList();
 
 	for my $slave ( @{ $bond->{ slaves } } )
@@ -375,23 +342,23 @@ sub applyBondChange
 
 	for my $slave ( @{ $bond->{ slaves } } )
 	{
-		if ( !$sys_bond || grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
+		if ( !$sys_bond )
 		{
-			# set each slave in down status
-			my $slave_ref = &getInterfaceConfig( $slave );
-			&downIf( $slave_ref );
-
 			&zenlog( "adding $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'add' );
 		}
-		if ( $sys_bond )
+		else
 		{
+			# add slave if not already configured
+			if ( grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
+			{
+				&zenlog( "adding $slave", "info", "NETWORK" );
+				&setBondSlave( $bond->{ name }, $slave, 'add' );
+			}
+
 			# discard all checked slaves
 			$sys_bond_slaves{ $slave } = undef;
 		}
-
-		my $slave_ref = &getInterfaceConfig( $slave );
-		&upIf( $slave_ref, 'writeconf' );
 	}
 
 	my $mac_updated = 0;
@@ -406,10 +373,6 @@ sub applyBondChange
 				my $bond_local = &getBondLocalConfig( $bond->{ name } );
 				$mac_updated = 1 if ( $bond_local->{ mac } eq "" );
 			}
-
-			# maintein the interface UP
-			my $slave_ref = &getInterfaceConfig( $slave );
-			&upIf( $slave_ref, 'writeconf' );
 		}
 	}
 
@@ -655,7 +618,11 @@ sub setBondSlave
 		#return $return_code;
 	}
 
-	$return_code = &logAndRun( "echo $operator$bond_slave > $bondslave" );
+	&logAndRun( "echo $operator$bond_slave > $bondslave" );
+
+	#close $bond_slaves_file;
+
+	$return_code = 0;
 
 	return $return_code;
 }
@@ -816,8 +783,9 @@ sub getBondAvailableSlaves
 		next if $dir_entry =~ /(:|\.)/;                 # not vlan nor vini
 		next if grep ( /^$dir_entry$/, @bond_list );    # not a bond
 		my $iface = &getSystemInterface( $dir_entry );
-
-		#~ next if $iface->{ status } ne 'down'; # must be down
+		next
+		  if $iface->{ status } ne 'down'
+		  ; # must be down		next if $iface->{ addr };                       # without address
 		$iface = &getInterfaceConfig( $iface->{ name } );
 		next if $iface->{ addr };
 
@@ -927,6 +895,7 @@ sub get_bond_list_struct
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Cluster';
 
+	my $desc      = "List bonding interfaces";
 	my $bond_conf = &getBondConfig();
 
 	# get cluster interface
@@ -1133,15 +1102,14 @@ sub setBondMac
 		&zenlog( "Turning slaves of $if_ref->{ name } up", "info", "NETWORK" );
 		foreach my $slave ( @{ $bondSlaves } )
 		{
-			my $slaveConf = &getInterfaceConfig( $slave );
-			$status += &upIf( $slaveConf ) if ( $slaveConf->{ status } eq "up" );
+			my $slaveConf = &getSystemInterface( $slave );
+			$status += &upIf( $slaveConf );
 		}
 	}
 
 	my $config_ref = &getInterfaceConfig( $if_ref->{ name } )
 	  // &getSystemInterface( $if_ref->{ name } );
 	$config_ref->{ mac } = $mac;
-	$config_ref->{ status } = "down" if ( !$config_ref->{ status } );
 	&setInterfaceConfig( $config_ref );
 	&saveBondMacConfig( $if_ref->{ name }, $if_ref->{ mac } );
 
@@ -1215,6 +1183,8 @@ sub saveBondMacConfig
 			 "debug", "PROFILING" );
 	my $bond_name  = shift;
 	my $macaddress = shift;
+
+	my $bond_conf = &getBondConfig( $bond_name );
 
 	require Zevenet::Config;
 	my $local_dir       = &getGlobalConfiguration( "localconfig" );

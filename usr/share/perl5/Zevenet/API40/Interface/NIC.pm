@@ -372,7 +372,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 	}
 
-	$json_obj->{ dhcp } // $if_ref->{ dhcp };
+	my $dhcp_status = $json_obj->{ dhcp } // $if_ref->{ dhcp };
 
 	if ( exists $json_obj->{ dhcp } )
 	{
@@ -537,10 +537,10 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 
 		my $func = ( $json_obj->{ dhcp } eq 'true' ) ? "enableDHCP" : "disableDHCP";
-		&eload(
-				module => 'Zevenet::Net::DHCP',
-				func   => $func,
-				args   => [$if_ref],
+		my $err = &eload(
+						  module => 'Zevenet::Net::DHCP',
+						  func   => $func,
+						  args   => [$if_ref],
 		);
 
 		if (    $json_obj->{ dhcp } eq 'false' and !exists $json_obj->{ ip }
@@ -572,11 +572,28 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		 and $set_flag )
 	{
 		eval {
+			# Add new IP, netmask and gateway
+			# sometimes there are expected errors pending to be controlled
+			&addIp( $if_ref );
+
 			# Writing new parameters in configuration file
 			&writeRoutes( $if_ref->{ name } );
 
-			# Add new IP, netmask and gateway. It applies the routing rules too
-			&addIp( $if_ref );
+			# Put the interface up
+			my $previous_status = $if_ref->{ status };
+
+			if ( $previous_status eq "up" )
+			{
+				if ( &upIf( $if_ref, 'writeconf' ) == 0 )
+				{
+					$if_ref->{ status } = "up";
+					&applyRoutes( "local", $if_ref );
+				}
+				else
+				{
+					$if_ref->{ status } = $previous_status;
+				}
+			}
 
 			# if the GW is changed, change it in all appending virtual interfaces
 			if ( exists $json_obj->{ gateway } )

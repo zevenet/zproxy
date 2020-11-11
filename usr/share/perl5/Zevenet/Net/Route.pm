@@ -151,8 +151,8 @@ sub addlocalnet    # ($if_ref)
 
 	# Get network
 	use NetAddr::IP;
-	my $ip_local = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
-	my $net_local = $ip_local->network();
+	my $ip = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+	my $net = $ip->network();
 
 	# Get params
 	my $routeparams = &getGlobalConfiguration( 'routeparams' );
@@ -189,23 +189,22 @@ sub addlocalnet    # ($if_ref)
 			next if !defined $iface->{ addr };
 
 			$skip_route = 1 if ( grep ( /^(?:\*|$table)$/, @isolates ) );
-
-			#if duplicated network, next
-			my $ip_table =
-			  new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
-			my $net_local_table = $ip_table->network();
-
-			if ( $net_local_table eq $net_local && $$if_ref{ name } ne $link )
-			{
-				&zenlog(
-					"The network $net_local of dev $$if_ref{name} is the same than the network for $link, route is not going to be applied in table $table",
-					"error", "network"
-				);
-				$skip_route = 1;
-			}
 		}
-		elsif ( grep ( /^(?:\*|$table)$/, @isolates ) )
+
+		#if duplicated network, next
+		my $ip_local     = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+		my $net_local    = $ip_local->network();
+		my $if_ref_table = getInterfaceConfig( $link );
+		my $ip_table =
+		  new NetAddr::IP( $$if_ref_table{ addr }, $$if_ref_table{ mask } );
+		my $net_local_table = $ip_table->network();
+
+		if ( $net_local_table eq $net_local && $$if_ref{ name } ne $link )
 		{
+			&zenlog(
+				"The network $net and $net_local of dev $$if_ref{name} is the same than the network for $link, route is not going to be applied in table $table",
+				"error", "network"
+			);
 			$skip_route = 1;
 		}
 
@@ -215,7 +214,7 @@ sub addlocalnet    # ($if_ref)
 			  if &debug();
 
 			my $ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} route replace $net_local dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
+			  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
 			&logAndRun( $ip_cmd );
 		}
 
@@ -233,7 +232,6 @@ sub addlocalnet    # ($if_ref)
 	my @ifaces = @{ &getConfigInterfaceList() };
 	foreach my $iface ( @ifaces )
 	{
-		next if $iface->{ name } eq $if_ref->{ name };
 		my $iface_sys = &getSystemInterface( $iface->{ name } );
 
 		next if $iface_sys->{ status } ne 'up';
@@ -243,6 +241,7 @@ sub addlocalnet    # ($if_ref)
 		next
 		  if (   !defined $iface->{ addr }
 			   or length $iface->{ addr } == 0 );    #IP addr doesn't exist
+		next if $iface->{ name } eq $if_ref->{ name };
 		next if ( !&isIp( $iface ) );
 
 		# do not import the iface route if it is isolate
@@ -263,9 +262,11 @@ sub addlocalnet    # ($if_ref)
 		  if &debug();
 
 		#if duplicated network, next
-		my $ip    = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
-		my $net   = $ip->network();
-		my $table = "table_$$if_ref{ name }";
+		my $ip        = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
+		my $net       = $ip->network();
+		my $table     = "table_$$if_ref{ name }";
+		my $ip_ref    = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+		my $net_local = $ip_ref->network();
 
 		if ( $net eq $net_local && $$iface{ name } ne $$if_ref{ name } )
 		{
@@ -331,27 +332,9 @@ sub dellocalnet    # ($if_ref)
 	{
 		next if $link eq 'lo';
 		next if $link eq 'cl_maintenance';
+		next if $link eq 'main';
 
 		my $table = "table_$link";
-
-		# Manage the main table
-		if ( $link eq 'main' )
-		{
-			$table = "main";
-			if ( $eload )
-			{
-				my @isolates = &eload(
-									   module => 'Zevenet::Net::Routing',
-									   func   => 'getRoutingIsolate',
-									   args   => [$$if_ref{ name }],
-				);
-				next if ( !grep ( /^(?:\*|main)$/, @isolates ) );
-			}
-			else
-			{
-				next;
-			}
-		}
 
 		my $cmd_param = "$net dev $$if_ref{name} src $$if_ref{addr} table $table";
 		next if ( !$cmd_param );

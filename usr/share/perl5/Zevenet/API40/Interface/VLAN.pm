@@ -429,6 +429,12 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 			&createIf( $if_ref );
 		}
 
+		# Delete routes in case that it is not a vini
+		&delRoutes( "local", $if_ref );
+
+		# Add IP
+		&addIp( $if_ref );
+
 		# Check the parent's status before up the interface
 		my $parent_if_name   = &getParentInterfaceName( $if_ref->{ name } );
 		my $parent_if_status = 'up';
@@ -446,11 +452,6 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 			  "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
-		# Delete routes in case that it is not a vini
-		&delRoutes( "local", $if_ref );
-
-		&addIp( $if_ref );
 
 		my $state = &upIf( $if_ref, 'writeconf' );
 

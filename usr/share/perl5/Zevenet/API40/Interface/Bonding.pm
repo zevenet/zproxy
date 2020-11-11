@@ -67,6 +67,7 @@ sub new_bond    # ( $json_obj )
 
 	# Check allowed parameters
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
+	zenlog( "ERROR MSG: $error_msg" );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
@@ -91,6 +92,14 @@ sub new_bond    # ( $json_obj )
 
 	for my $slave ( @{ $json_obj->{ slaves } } )
 	{
+		if ( &getInterfaceConfig( $slave )
+			 && ( &getInterfaceConfig( $slave )->{ status } eq 'up' ) )
+		{
+			my $msg =
+			  "The $slave interface has to be in DOWN status to add it to a bonding.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		unless ( grep { $slave eq $_ } &getBondAvailableSlaves() )
 		{
 			$missing_slave = $slave;
@@ -192,7 +201,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	}
 	elsif ( !grep ( { $json_obj->{ name } eq $_ } &getBondAvailableSlaves() ) )
 	{
-		$msg = "The '$json_obj->{name}' is not valid to be added to the bonding";
+		$msg = "The '$json_obj->{name}' interface should be down and unset";
 	}
 
 	if ( defined $msg )
@@ -568,16 +577,8 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
-		include 'Zevenet::Net::Bonding';
-		if ( scalar ( @{ &getBondSlavesStatus( $bond, "up" ) } ) == 0 )
-		{
-			my $msg =
-			  "The interface $bond has no slave interfaces UP, check the slaves status";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-
-		}
-
 		require Zevenet::Net::Route;
+
 		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
 			&delRoutes( "local", $if_ref ) if $if_ref;
@@ -589,6 +590,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		if ( !$state )
 		{
 			require Zevenet::Net::Util;
+
 			if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 			{
 				&applyRoutes( "local", $if_ref ) if $if_ref;

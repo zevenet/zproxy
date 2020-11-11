@@ -106,23 +106,27 @@ sub setIfacesUp    # ($if_name,$type)
 
 	if ( @ifaces )
 	{
-		my $msg;
 		for my $iface ( @ifaces )
 		{
 			if ( $iface->{ status } eq 'up' )
 			{
 				&addIp( $iface );
-				$msg = "Virtual";
 				if ( $iface->{ type } eq 'vlan' )
 				{
 					&applyRoutes( "local", $iface );
-					$msg = "VLAN";
 				}
 			}
 		}
 
-		&zenlog( "$msg interfaces of $if_name have been put up.", "info", "NETWORK" )
-		  if ( $msg );
+		if ( $type eq "vini" )
+		{
+			&zenlog( "Virtual interfaces of $if_name have been put up.", "info",
+					 "NETWORK" );
+		}
+		elsif ( $type eq "vlan" )
+		{
+			&zenlog( "VLAN interfaces of $if_name have been put up.", "info", "NETWORK" );
+		}
 	}
 
 	return;

@@ -1950,10 +1950,16 @@ sub createVlan
 	my $if_ref = shift;
 
 	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 
 	my $err = 0;
 
 	$err = &createIf( $if_ref );    # Create interface
+
+	if ( !$err )
+	{
+		&writeRoutes( $if_ref->{ name } );
+	}
 
 	if ( !$err )
 	{

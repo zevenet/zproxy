@@ -39,7 +39,6 @@ if ( $if_ref->{ status } ne 'up' )
 {
 	&zenlog( "Interface $iface is not configured to be started",
 			 "warning", "NETWORK" );
-	&downIf( $if_ref );
 	exit 1;
 }
 
