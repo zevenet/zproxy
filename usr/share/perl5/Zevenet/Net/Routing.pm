@@ -789,7 +789,7 @@ sub delRoutingDependIface
 	}
 
 	# the rules were removed from the system when the interface was set down
-	my $file = &getRoutingTableFile( $iface );
+	my $file = &getRoutingTableFile( "table_$iface" );
 	unlink $file;
 
 	&zenlog( "Deleting the rules that are depending on '$iface'", 'info', 'net' );
