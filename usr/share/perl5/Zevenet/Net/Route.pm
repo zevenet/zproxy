@@ -177,18 +177,19 @@ sub addlocalnet    # ($if_ref)
 		next if $link eq 'lo';
 		next if $link eq 'cl_maintenance';
 
-		my $table = 'main';
+		my $table = ( $link eq 'main' ) ? 'main' : "table_$link";
 
-		if ( $link ne 'main' )
+		if ( grep ( /^(?:\*|$table)$/, @isolates ) )
 		{
-			$table = "table_$link";
+			$skip_route = 1;
+		}
+		elsif ( $link ne 'main' )
+		{
 			my $iface = &getInterfaceConfig( $link );
 
 			# ignores interfaces down or not configured
 			next if $iface->{ status } ne 'up';
 			next if !defined $iface->{ addr };
-
-			$skip_route = 1 if ( grep ( /^(?:\*|$table)$/, @isolates ) );
 
 			#if duplicated network, next
 			my $ip_table =
@@ -204,14 +205,11 @@ sub addlocalnet    # ($if_ref)
 				$skip_route = 1;
 			}
 		}
-		elsif ( grep ( /^(?:\*|$table)$/, @isolates ) )
-		{
-			$skip_route = 1;
-		}
 
 		if ( !$skip_route )
 		{
-			&zenlog( "addlocalnet: setting route in table $table", "debug", "NETWORK" )
+			&zenlog( "addlocalnet: setting route for $$if_ref{name} in table $table",
+					 "debug", "NETWORK" )
 			  if &debug();
 
 			my $ip_cmd =
@@ -259,8 +257,7 @@ sub addlocalnet    # ($if_ref)
 
 		&zenlog(
 			   "addlocalnet: into current interface: name $$iface{name} type $$iface{type}",
-			   "debug", "NETWORK" )
-		  if &debug();
+			   "debug", "NETWORK" );
 
 		#if duplicated network, next
 		my $ip    = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
@@ -275,6 +272,10 @@ sub addlocalnet    # ($if_ref)
 			);
 			next;
 		}
+
+		&zenlog(
+				 "addlocalnet: own table ($table): name $$iface{name} type $$iface{type}",
+				 "debug", "NETWORK" );
 
 		my $ip_cmd =
 		  "$ip_bin -$$iface{ip_v} route replace $net dev $$iface{name} src $$iface{addr} table $table $routeparams";
@@ -778,6 +779,9 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 	my $status = 0;
 
+	# do not add routes if the inteface is down
+	my $if_sys = &getSystemInterface( $$if_ref{ name } );
+	return 0 if ( $$if_sys{ status } ne 'up' );
 	return 0 if ( $$if_ref{ ip_v } != 4 and $$if_ref{ ip_v } != 6 );
 
 	unless ( $$if_ref{ net } )
