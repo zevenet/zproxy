@@ -46,20 +46,41 @@ sub getHTTPFarmEstConns    # ($farm_name)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $netstat ) = @_;
+	my ( $farm_name ) = @_;
+	my $count = 0;
 
-	my $vip      = &getFarmVip( "vip",  $farm_name );
-	my $vip_port = &getFarmVip( "vipp", $farm_name );
+	if ( &getGlobalConfiguration( 'proxy_ng' ) eq 'true' )
+	{
+		require JSON;
 
-	my $filter = {
-				   proto         => 'tcp',
-				   orig_dst      => $vip,
-				   orig_port_dst => $vip_port,
-				   state         => 'ESTABLISHED',
-	};
+		# curl --unix-socket /tmp/webfarm_proxy.socket  http://localhost/listener/0
+		my $curl_bin = &getGlobalConfiguration( 'curl_bin' );
+		my $url      = "http://localhost/listener/0";
+		my $socket   = &getHTTPFarmSocket( $farm_name );
+		my $cmd      = "$curl_bin --unix-socket $socket $url";
+		my $resp     = &logAndGet( $cmd, 'string' );
 
-	my $ct_params = &getConntrackParams( $filter );
-	my $count     = &getConntrackCount( $ct_params );
+		if ( $resp )
+		{
+			$resp = &JSON::decode_json( $resp );
+			$count = $resp->{ connections } if $resp;
+		}
+	}
+	else
+	{
+		my $vip      = &getFarmVip( "vip",  $farm_name );
+		my $vip_port = &getFarmVip( "vipp", $farm_name );
+
+		my $filter = {
+					   proto         => 'tcp',
+					   orig_dst      => $vip,
+					   orig_port_dst => $vip_port,
+					   state         => 'ESTABLISHED',
+		};
+
+		my $ct_params = &getConntrackParams( $filter );
+		$count = &getConntrackCount( $ct_params );
+	}
 
 	#~ &zenlog( "getHTTPFarmEstConns: $farm_name farm -> $count connections." );
 
@@ -83,7 +104,7 @@ sub getHTTPFarmSYNConns    # ($farm_name)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $netstat ) = @_;
+	my ( $farm_name ) = @_;
 
 	my $vip      = &getFarmVip( "vip",  $farm_name );
 	my $vip_port = &getFarmVip( "vipp", $farm_name );
@@ -129,7 +150,7 @@ sub getHTTPBackendEstConns    # ($farm_name,$backend_ip,$backend_port, $netstat)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $backend_ip, $backend_port, $netstat ) = @_;
+	my ( $farm_name, $backend_ip, $backend_port ) = @_;
 
 	my $filter = {
 				   proto         => 'tcp',
@@ -168,7 +189,7 @@ sub getHTTPBackendSYNConns    # ($farm_name, $backend_ip, $backend_port)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $farm_name, $backend_ip, $backend_port, $netstat ) = @_;
+	my ( $farm_name, $backend_ip, $backend_port ) = @_;
 
 	my $filter = {
 				   proto         => 'tcp',
@@ -241,7 +262,6 @@ sub getHTTPFarmBackendsStats    # ($farm_name)
 	};
 
 	my $serviceName;
-	my $fvip = &getFarmVip( "vip", $farm_name );
 	my $service_re = &getValidFormat( 'service' );
 
 	unless ( $eload )
