@@ -551,8 +551,11 @@ sub addIp    # ($if_ref)
 		return 0;
 	}
 
-	my $extra_params = '';
-	$extra_params = 'nodad' if $$if_ref{ ip_v } == 6;
+	# Do not add automatically route in the main table
+	# The routes are managed by zevenet
+	my $extra_params = "noprefixroute";
+
+	$extra_params .= ' nodad' if $$if_ref{ ip_v } == 6;
 
 	my $ip_cmd;
 
@@ -602,18 +605,6 @@ sub addIp    # ($if_ref)
 	};
 
 	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "add" );
-
-# Bugfix: This is necessary to remove the entry from the "main" table if it is isolated in the routing module
-# this entry is added automatically for the "ip addr add" cmd
-
-	if ( $eload and $$if_ref{ status } eq 'up' )
-	{
-		&eload(
-				module => 'Zevenet::Net::Routing',
-				func   => 'reloadRoutingTable',
-				args   => [$$if_ref{ name }],
-		);
-	}
 
 	return $status;
 }

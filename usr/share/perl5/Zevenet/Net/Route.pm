@@ -56,6 +56,8 @@ sub writeRoutes    # ($if_name)
 
 	my $rttables = &getGlobalConfiguration( 'rttables' );
 
+	&zenlog( "Creating table 'table_$if_name'", "debug" );
+
 	open my $rt_fd, '<', $rttables;
 	my @contents = <$rt_fd>;
 	close $rt_fd;
@@ -83,6 +85,8 @@ sub writeRoutes    # ($if_name)
 		open ( my $rt_fd, ">>", "$rttables" );
 		print $rt_fd "$rtnumber\ttable_$if_name\n";
 		close $rt_fd;
+
+		&zenlog( "Created the table ID 'table_$if_name'", "info", "network" );
 	}
 
 	return;

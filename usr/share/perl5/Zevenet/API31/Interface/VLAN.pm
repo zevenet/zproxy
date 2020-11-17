@@ -189,8 +189,8 @@ sub new_vlan    # ( $json_obj )
 	eval {
 		&zenlog( "new_vlan: $if_ref->{name}", "info", "NETWORK" );
 		die if &createIf( $if_ref );
-		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{ name } );
+		die if &addIp( $if_ref );
 
 		my $state = &upIf( $if_ref, 'writeconf' );
 
