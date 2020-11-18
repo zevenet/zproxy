@@ -483,7 +483,7 @@ $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 $zenbackup="$zbindir/zenbackup.pl";#update
 
 #Do backup to
-$backupfor="$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file $keepalived_conf $conntrackd_conf /etc/hostname $filedns $cron_conf $applianceVersionFile";#update
+$backupfor="$configdir $basedir/*.pem $confhttp $rttables $sshConf $snmpdconfig_file $keepalived_conf $conntrackd_conf /etc/hostname $filedns /etc/cron.d/ $applianceVersionFile";#update
 
 #Bonding interfaces
 $bond_config_file="$configdir/bonding.conf";#update
