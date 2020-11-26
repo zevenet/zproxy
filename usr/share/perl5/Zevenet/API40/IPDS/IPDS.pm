@@ -146,7 +146,7 @@ sub set_ipds_package
 				   },
 				   mode      => { required => "false" },
 				   frequency => { required => "false" },
-				   time      => { required => "false" },
+				   time      => { required => "false", ref => "hash|", },
 	};
 
 	#Check input format for schedule
