@@ -416,7 +416,6 @@ sub checkDuplicateNetworkExists
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $exception ) = @_;
 
 	#if duplicated network is not allowed then don't check if network exists.
 	require Zevenet::Config;
@@ -429,7 +428,6 @@ sub checkDuplicateNetworkExists
 	push @interfaces, &getInterfaceTypeList( 'bond' );
 	push @interfaces, &getInterfaceTypeList( 'vlan' );
 
-	my $found = 0;
 	foreach my $if_ref ( @interfaces )
 	{
 		my $iface = &checkNetworkExists(
@@ -475,6 +473,51 @@ sub validBackendStack
 	}
 
 	return ( !$ipv_mismatch );
+}
+
+# returns 1 on success or 0 on failure
+
+=begin nd
+Function: validateNetmask
+
+	It validates if a netmask is valid for IPv4 or IPv6
+
+Parameters:
+	netmask - Netmask to check
+	ip_version - it is optionally, it accepts '4' or '6' for the ip versions.
+		If no value is passed, it checks if the netmask is valid in some of the ip version
+
+Returns:
+	Integer - Returns 1 on success or 0 on failure
+
+=cut
+
+sub validateNetmask
+{
+	my $mask      = shift;
+	my $ipversion = shift // 0;
+	my $success   = 0;
+	my $ip        = "127.0.0.1";
+
+	if ( $ipversion == 0 or $ipversion == 6 )
+	{
+		return 1 if ( $mask =~ /^\d+$/ and $mask <= 64 );
+	}
+	if ( $ipversion == 0 or $ipversion == 4 )
+	{
+		if ( $mask =~ /^\d+$/ )
+		{
+			$success = 1 if $mask <= 32;
+		}
+		else
+		{
+			require Net::Netmask;
+			my $block = Net::Netmask->new( $ip, $mask );
+			$success = ( !exists $block->{ 'ERROR' } );
+		}
+	}
+
+	return $success;
 }
 
 1;

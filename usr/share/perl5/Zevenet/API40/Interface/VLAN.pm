@@ -172,6 +172,12 @@ sub new_vlan    # ( $json_obj )
 	{
 		$json_obj->{ ip_v } = ipversion( $json_obj->{ ip } );
 
+		if ( !&validateNetmask( $json_obj->{ netmask }, $json_obj->{ ip_v } ) )
+		{
+			my $msg = "The netmask is not valid";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		# check if network exists in other interface
 		if ( $json_obj->{ ip } or $json_obj->{ netmask } )
 		{
