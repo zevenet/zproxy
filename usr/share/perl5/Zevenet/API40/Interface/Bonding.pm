@@ -810,13 +810,13 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 			my $ip_v = &ipversion( $new_if->{ addr } );
 			my $gw_v = &ipversion( $new_if->{ gateway } );
 
-			my $mask_v =
-			    ( $ip_v == 4 && &getValidFormat( 'IPv4_mask', $new_if->{ mask } ) ) ? 4
-			  : ( $ip_v == 6 && &getValidFormat( 'IPv6_mask', $new_if->{ mask } ) ) ? 6
-			  :                                                                       '';
+			if ( !&validateNetmask( $json_obj->{ netmask }, $json_obj->{ ip_v } ) )
+			{
+				my $msg = "The netmask is not valid";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 
-			if ( $ip_v ne $mask_v
-				 || ( $new_if->{ gateway } && $ip_v ne $gw_v ) )
+			if ( $new_if->{ gateway } && $ip_v ne $gw_v )
 			{
 				my $msg = "Invalid IP stack version match.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
