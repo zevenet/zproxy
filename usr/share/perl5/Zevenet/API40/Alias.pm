@@ -70,6 +70,7 @@ sub set_alias
 								'valid_format' => 'alias_name',
 								'non_blank'    => 'true',
 								'required'     => 'true',
+								'exceptions'   => ['0'],
 				   },
 	};
 
@@ -125,6 +126,7 @@ sub add_alias
 								'valid_format' => 'alias_name',
 								'non_blank'    => 'true',
 								'required'     => 'true',
+								'exceptions'   => ['0'],
 				   },
 	};
 
