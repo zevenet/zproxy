@@ -877,8 +877,8 @@ sub set_net()
 
 		# check if the new gateway is correct, if empty don't worry
 		if ( $newgw !~ /^$/
-			 && !&getNetValidate( $if_ref->{ addr }, $if_ref->{ mask },
-								  $if_ref->{ gateway } ) )
+			 && !&validateGateway( $if_ref->{ addr }, $if_ref->{ mask },
+								   $if_ref->{ gateway } ) )
 		{
 			&inform_dialog(
 				"Gateway address $newgw is not in the networking segment $if_ref->{ addr }/$if_ref->{ mask }"

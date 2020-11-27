@@ -126,7 +126,7 @@ sub new_vini    # ( $json_obj )
 	$if_ref->{ type }    = 'virtual';
 
 	unless (
-		 &getNetValidate( $if_parent->{ addr }, $if_ref->{ mask }, $if_ref->{ addr } ) )
+		&validateGateway( $if_parent->{ addr }, $if_ref->{ mask }, $if_ref->{ addr } ) )
 	{
 		my $msg =
 		  "IP Address $json_obj->{ip} must be same net than the parent interface.";
@@ -500,10 +500,10 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent } );
 
 	unless (
-			 &getNetValidate(
-							  $if_ref_parent->{ addr },
-							  $if_ref_parent->{ mask },
-							  $json_obj->{ ip }
+			 &validateGateway(
+							   $if_ref_parent->{ addr },
+							   $if_ref_parent->{ mask },
+							   $json_obj->{ ip }
 			 )
 	  )
 	{

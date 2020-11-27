@@ -175,7 +175,7 @@ sub new_vlan    # ( $json_obj )
 	if ( $if_ref->{ gateway } )
 	{
 		unless (
-			 &getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ gateway } ) )
+			&validateGateway( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ gateway } ) )
 		{
 			my $msg = "The gateway is not valid for the network.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -598,7 +598,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	{
 		require Zevenet::Net::Validate;
 		unless (
-			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
+			&validateGateway( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{
 			my $msg = "The gateway is not valid for the network.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

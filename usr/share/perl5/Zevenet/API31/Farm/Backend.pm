@@ -198,10 +198,10 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		require Zevenet::Net::Validate;
 		my $iface_ref = &getInterfaceConfig( $json_obj->{ interface } );
 		if (
-			 !&getNetValidate(
-							   $iface_ref->{ addr },
-							   $iface_ref->{ mask },
-							   $json_obj->{ ip }
+			 !&validateGateway(
+								$iface_ref->{ addr },
+								$iface_ref->{ mask },
+								$json_obj->{ ip }
 			 )
 		  )
 		{
@@ -748,7 +748,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		require Zevenet::Net::Validate;
 		my $iface_ref = &getInterfaceConfig( $be->{ interface } );
 		if (
-			 !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $be->{ ip } ) )
+			 !&validateGateway( $iface_ref->{ addr }, $iface_ref->{ mask }, $be->{ ip } ) )
 		{
 			my $msg = "The IP must be in the same network than the local interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

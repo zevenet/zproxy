@@ -248,7 +248,7 @@ sub setFloatingSourceAddr
 	if ( defined $server && $server->{ ip } )
 	{
 		my $net =
-		  &getNetValidate( $farm->{ vip }, $farm_if->{ mask }, $server->{ ip } );
+		  &validateGateway( $farm->{ vip }, $farm_if->{ mask }, $server->{ ip } );
 
 		# delete if the backend is not accesible now for the floating ip
 		my $srcaddr = "";

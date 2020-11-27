@@ -117,7 +117,7 @@ sub modify_gateway    # ( $json_obj )
 	# check if network is correct
 	require Zevenet::Net::Validate;
 
-	unless ( &getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $address ) )
+	unless ( &validateGateway( $if_ref->{ addr }, $if_ref->{ mask }, $address ) )
 	{
 		my $msg = "The gateway is not valid for the network.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

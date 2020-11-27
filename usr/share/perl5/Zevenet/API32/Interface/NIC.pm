@@ -340,7 +340,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		{
 			my $child_if = &getInterfaceConfig( $child_name );
 			unless (
-				  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
+				 &validateGateway( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
 			{
 				push @wrong_conf, $child_name;
 			}
@@ -359,7 +359,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	if ( $new_if->{ gateway } )
 	{
 		unless (
-			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
+			&validateGateway( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{
 			my $msg = "The gateway is not valid for the network.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

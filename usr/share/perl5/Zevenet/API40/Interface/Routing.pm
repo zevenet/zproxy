@@ -159,7 +159,7 @@ sub validateRouteHelper
 	{
 		if ( $if )
 		{
-			if ( !&getNetValidate( $if->{ addr }, $if->{ mask }, $in->{ via } ) )
+			if ( !&validateGateway( $if->{ addr }, $if->{ mask }, $in->{ via } ) )
 			{
 				return
 				  "The 'via' parameter has to be in the same network segment that the 'interface'";

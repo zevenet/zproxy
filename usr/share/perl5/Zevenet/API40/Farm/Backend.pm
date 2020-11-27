@@ -967,8 +967,11 @@ sub validateDatalinkBackendIface
 		$msg = "It is not possible to configure vlan interface for datalink backends";
 	}
 	elsif (
-		  !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $backend->{ ip }
-		  )
+			!&validateGateway(
+							   $iface_ref->{ addr },
+							   $iface_ref->{ mask },
+							   $backend->{ ip }
+			)
 	  )
 	{
 		$msg =

@@ -211,7 +211,7 @@ sub ipversion    # ($checkip)
 }
 
 =begin nd
-Function: getNetValidate
+Function: validateGateway
 
 	Check if the network configuration is valid. This function receive two IP
 	address and a net segment and check if both address are in the segment.
@@ -228,7 +228,7 @@ Returns:
 
 =cut
 
-sub getNetValidate    # ($ip, $mask, $ip2)
+sub validateGateway    # ($ip, $mask, $ip2)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
