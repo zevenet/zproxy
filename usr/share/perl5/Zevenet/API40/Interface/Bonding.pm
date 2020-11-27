@@ -590,7 +590,6 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			my $msg =
 			  "The interface $bond has no slave interfaces UP, check the slaves status";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-
 		}
 
 		require Zevenet::Net::Route;
@@ -600,7 +599,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			&addIp( $if_ref ) if $if_ref;
 		}
 
-		my $state = &upIf( { name => $bond }, 'writeconf' );
+		my $state = &upIf( $if_ref, 'writeconf' );
 
 		if ( !$state )
 		{
@@ -631,7 +630,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $state = &downIf( { name => $bond }, 'writeconf' );
+		my $state = &downIf( $if_ref, 'writeconf' );
 		if ( $state )
 		{
 			my $msg = "The interface $bond could not be set UP";

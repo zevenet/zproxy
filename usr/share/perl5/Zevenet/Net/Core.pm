@@ -142,8 +142,13 @@ sub upIf    # ($if_ref, $writeconf)
 		$fileHandler->write( $file );
 	}
 
+	&zenlog( "???? antes de apcliar: $status" );
+	&zenlog( Dumper( $if_ref ), "???? " );
+
 	if ( !$status and $eload and $if_ref->{ dhcp } eq 'true' )
 	{
+		&zenlog( "???? lanzando" );
+
 		$status = &eload(
 						  'module' => 'Zevenet::Net::DHCP',
 						  'func'   => 'startDHCP',
