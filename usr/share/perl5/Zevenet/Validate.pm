@@ -61,7 +61,7 @@ my $bond_if     = qr/[a-zA-Z0-9\-]{1,15}/;
 my $vlan_if     = qr/[a-zA-Z0-9\-]{1,13}\.$vlan_tag/;
 my $interface   = qr/$nic_if(?:\.$vlan_tag)?(?:\:$virtual_tag)?/;
 my $port_range =
-  qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
+  qr/(?:[1-9]\d{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
 my $blacklists_source = qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?};
@@ -96,7 +96,10 @@ my %format_re = (
 	'zapi_password' => qr/.+/,
 
 	# common
-	'port'     => $port_range,
+	'port' => $port_range,
+	'multiport' =>
+	  qr/(?:\*|(?:$port_range|$port_range\:$port_range)(?:,$port_range|$port_range\:$port_range)*)/,
+
 	'user'     => qr/[\w]+/,
 	'password' => qr/.+/,
 

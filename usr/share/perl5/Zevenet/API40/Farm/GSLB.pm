@@ -93,6 +93,7 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 							 'valid_format' => 'gslb_service',
 							 'non_blank'    => 'true',
 							 'required'     => 'true',
+							 'exceptions'   => ['0'],
 				   },
 				   "algorithm" => {
 									'values'    => ['roundrobin', 'prio'],
@@ -159,6 +160,7 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 									 'valid_format' => 'port',
 									 'non_blank'    => 'true',
 									 'required'     => 'true',
+									 'exceptions'   => ['0'],
 				   },
 	};
 

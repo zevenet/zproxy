@@ -202,7 +202,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				   },
 				   "port" => {
 							   'valid_format' => 'port',
-							   'format_msg'   => 'expects a port',
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
 				   },
@@ -486,11 +485,8 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 	if ( $type eq 'l4xnat' )
 	{
-		$params->{ "port" } = {
-								'function'   => \&isValidPortNumber,
-								'format_msg' => 'expects an port or port range'
-		};
-		$params->{ "max_conns" } = { 'interval' => '0,' };
+		$params->{ "port" }      = { 'valid_format' => 'port', };
+		$params->{ "max_conns" } = { 'interval'     => '0,' };
 	}
 	else
 	{
@@ -597,9 +593,8 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 							 'format_msg'   => 'expects an IP',
 				   },
 				   "port" => {
-							   'function'   => \&isValidPortNumber,
-							   'format_msg' => 'expects a port',
-							   'non_blank'  => 'true',
+							   'valid_format' => 'port',
+							   'non_blank'    => 'true',
 				   },
 	};
 

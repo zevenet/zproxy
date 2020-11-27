@@ -130,6 +130,7 @@ sub create_farmguardian
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
 							   'valid_format' => 'fg_name',
+							   'exceptions'   => ['0'],
 				   },
 				   "copy_from" => {
 									'valid_format' => 'fg_name',

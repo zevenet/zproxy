@@ -87,6 +87,7 @@ sub new_farm    # ( $json_obj )
 		"farmname" => {
 			'required'     => 'true',
 			'non_blank'    => 'true',
+			'exceptions'   => ['0'],
 			'valid_format' => 'farm_name',
 			'format_msg' =>
 			  "The farm name is required to have alphabet letters, numbers or hypens (-) only.",

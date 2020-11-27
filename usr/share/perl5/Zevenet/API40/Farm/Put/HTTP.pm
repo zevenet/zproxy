@@ -47,6 +47,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		"newfarmname" => {
 						   'valid_format' => 'farm_name',
 						   'non_blank'    => 'true',
+						   'exceptions'   => ['0'],
 		},
 		"vport" => {
 					 'interval'  => "1,65535",

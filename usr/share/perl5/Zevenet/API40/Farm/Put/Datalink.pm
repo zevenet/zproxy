@@ -50,6 +50,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 				   "newfarmname" => {
 									  'valid_format' => 'farm_name',
 									  'non_blank'    => 'true',
+									  'exceptions'   => ['0'],
 				   },
 				   "algorithm" => {
 									'values'    => ['prio', 'weight'],

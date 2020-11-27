@@ -66,6 +66,7 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		"newfarmname" => {
 						   'valid_format' => 'farm_name',
 						   'non_blank'    => 'true',
+						   'exceptions'   => ['0'],
 		},
 		"vport" => {
 					 'non_blank' => 'true',
@@ -85,7 +86,8 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		},
 		"persistence" => {
 			'values' => [
-					'ip', 'srcip', 'srcport', 'srcmac', 'srcip_srcport', 'srcip_dstport', 'none'
+						 'ip', 'srcip', 'srcport', 'srcmac', 'srcip_srcport', 'srcip_dstport',
+						 'none'
 			],
 		},
 		"protocol" => {
