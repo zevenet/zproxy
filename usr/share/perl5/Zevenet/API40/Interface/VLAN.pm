@@ -783,6 +783,14 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	#Release lock file
 	&lockResource( $vlan_config_file, "ud" ) if ( $dhcp_flag eq "true" );
 
+	# change farm vip,
+	if ( @farms )
+	{
+		require Zevenet::Farm::Config;
+		&setAllFarmByVip( $json_obj->{ ip }, \@farms );
+		&reloadFarmsSourceAddress();
+	}
+
 	my $if_out = &get_vlan_struct( $vlan );
 	my $body = {
 				 description => $desc,

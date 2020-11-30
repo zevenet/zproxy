@@ -922,6 +922,14 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	include 'Zevenet::Net::Bonding';
 	my $error = &setBondMac( $if_ref ) if ( exists $json_obj->{ mac } );
 
+	# change farm vip,
+	if ( @farms )
+	{
+		require Zevenet::Farm::Config;
+		&setAllFarmByVip( $json_obj->{ ip }, \@farms );
+		&reloadFarmsSourceAddress();
+	}
+
 	if ( $error )
 	{
 		my $msg = "Errors found trying to modify MAC address on interface $bond";
