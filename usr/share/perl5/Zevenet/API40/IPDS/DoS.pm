@@ -101,7 +101,7 @@ sub create_dos_rule
 							'valid_format' => 'dos_name',
 							'non_blank'    => 'true',
 							'required'     => 'true',
-							'exceptions'   => ['rules'],
+							'exceptions'   => ['rules', '0'],
 				},
 				"rule" => {
 						'non_blank' => 'true',

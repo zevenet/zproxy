@@ -78,6 +78,7 @@ sub add_blacklists_list
 				   "name" => {
 							   'valid_format' => 'blacklists_name',
 							   'non_blank'    => 'true',
+							   'exceptions'   => ['0'],
 							   'required'     => 'true',
 				   },
 				   "type" => {
@@ -180,8 +181,10 @@ sub set_blacklists_list
 	if ( $preload ne 'true' )
 	{
 		$params->{ "name" } = {
-								'valid_format' => 'blacklists_name',
-								'non_blank'    => 'true',
+			'valid_format' => 'blacklists_name',
+			'non_blank'    => 'true',
+			'exceptions'   => ['0'],
+
 		};
 		if ( $type eq 'local' )
 		{

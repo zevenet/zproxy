@@ -76,7 +76,7 @@ sub add_rbl_rule
 							   'valid_format' => 'rbl_name',
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
-							   'exceptions'   => ['domains'],
+							   'exceptions'   => ['domains', '0'],
 				   },
 				   "copy_from" => {
 									'valid_format' => 'rbl_name',
@@ -143,7 +143,7 @@ sub set_rbl_rule
 				   "name" => {
 							   'valid_format' => 'rbl_name',
 							   'non_blank'    => 'true',
-							   'exceptions'   => ['domains'],
+							   'exceptions'   => ['domains', '0'],
 				   },
 				   "threadmax" => {
 									'valid_format' => 'integer',
@@ -387,6 +387,7 @@ sub add_rbl_domain
 								 'valid_format' => 'rbl_domain',
 								 'non_blank'    => 'true',
 								 'required'     => 'true',
+								 'exceptions'   => ['0'],
 				   },
 	};
 

@@ -107,7 +107,7 @@ sub create_waf_set
 							   'valid_format' => 'waf_set_name',
 							   'non_blank'    => 'true',
 							   'required'     => 'true',
-							   'exceptions'   => ['options', 'files'],
+							   'exceptions'   => ['options', 'files', '0'],
 				   },
 				   "copy_from" => {
 									'valid_format' => 'waf_set_name',
