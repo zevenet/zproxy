@@ -341,10 +341,11 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias }   = $alias->{ $iface->{ interface } } if $eload;
-			$iface->{ mac }     = $extrainfo->{ mac };
-			$iface->{ ip }      = $extrainfo->{ addr };
-			$iface->{ status }  = $extrainfo->{ status };
+			$iface->{ alias } = $alias->{ $iface->{ interface } } if $eload;
+			$iface->{ mac } = $extrainfo->{ mac }  // "";
+			$iface->{ ip }  = $extrainfo->{ addr } // "";
+			$iface->{ status } = $extrainfo->{ status }
+			  // &getInterfaceSystemStatus( $iface );
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 
@@ -363,10 +364,11 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias }   = $alias->{ $iface->{ interface } } if $eload;
-			$iface->{ mac }     = $extrainfo->{ mac };
-			$iface->{ ip }      = $extrainfo->{ addr };
-			$iface->{ status }  = $extrainfo->{ status };
+			$iface->{ alias } = $alias->{ $iface->{ interface } } if $eload;
+			$iface->{ mac } = $extrainfo->{ mac }  // "";
+			$iface->{ ip }  = $extrainfo->{ addr } // "";
+			$iface->{ status } = $extrainfo->{ status }
+			  // &getInterfaceSystemStatus( $iface );
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 			$iface->{ slaves } = &eload(
