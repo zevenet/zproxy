@@ -546,7 +546,6 @@ sub getRBACPermissionsMsg
 	{
 		# it is resource?
 		$msg = &getRBACResourcePermissions( $path );
-
 		if ( !$msg )
 		{
 			# get action and section of config file
@@ -646,8 +645,13 @@ sub getRBACExceptions
 		return 1;
 	}
 	if ( $path eq "/system/version" and $method eq 'GET' ) { return 1; }
-	if ( $path =~ "/stats"          and $method eq 'GET' ) { return 1; }
-	if ( $path =~ "/graphs"         and $method eq 'GET' ) { return 1; }
+	if ( $path =~ "/stats" and $path !~ "/farms" and $method eq 'GET' ) {
+		return 1;
+	}
+	if ( $path =~ "/graphs" and $path !~ "/farms" and $method eq 'GET' )
+	{
+		return 1;
+	}
 
 	return 0;
 }
