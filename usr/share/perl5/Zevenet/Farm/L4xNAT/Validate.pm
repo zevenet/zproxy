@@ -25,37 +25,6 @@ use strict;
 use warnings;
 
 =begin nd
-Function: ismport
-
-	Check if the string is a valid multiport definition
-
-Parameters:
-	port - Multiport string
-
-Returns:
-	String - "true" if port has a correct format or "false" if port has a wrong format
-
-
-=cut
-
-sub ismport
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $string = shift;
-
-	chomp ( $string );
-	if ( &getValidFormat( 'multiport', $string ) )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
-}
-
-=begin nd
 Function: checkL4Port
 
 	Check if the port is used by some running l4 farm. It expands the port lists if the farm is using multiport

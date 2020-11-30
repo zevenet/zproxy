@@ -301,40 +301,6 @@ sub ifexist    # ($nif)
 }
 
 =begin nd
-Function: isValidPortNumber
-
-	Check if the input is a valid port number.
-
-Parameters:
-	port - Port number.
-
-Returns:
-	boolean - "true" or "false".
-
-See Also:
-	snmp_functions.cgi, check_functions.cgi, zapi/v3/post.cgi, zapi/v3/put.cgi
-=cut
-
-sub isValidPortNumber    # ($port)
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my $port = shift;
-	my $valid;
-
-	if ( $port >= 1 && $port <= 65535 )
-	{
-		$valid = 'true';
-	}
-	else
-	{
-		$valid = 'false';
-	}
-
-	return $valid;
-}
-
-=begin nd
 Function: checkNetworkExists
 
 	Check if a network exists in other interface

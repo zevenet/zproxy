@@ -88,7 +88,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate PORT
-		unless (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
+		unless (    &getValidFormat( 'port', $json_obj->{ port } )
 				 || $json_obj->{ port } eq '' )
 		{
 			&zenlog(
@@ -479,7 +479,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 		# validate PORT
 		require Zevenet::Net::Validate;
-		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
+		unless ( &getValidFormat( 'port', $json_obj->{ port } ) )
 		{
 			&zenlog(
 				"Error trying to create a new backend http in service $service in farm $farmname, invalid IP address and port for a backend, ir can't be blank.",
@@ -1010,7 +1010,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
-			if (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
+			if (    &getValidFormat( 'port', $json_obj->{ port } )
 				 || $json_obj->{ port } == undef )
 			{
 				$backend->{ vport } = $json_obj->{ port };
@@ -1357,7 +1357,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 		{
 			require Zevenet::Net::Validate;
 
-			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
+			if ( &getValidFormat( 'port', $json_obj->{ port } ) )
 			{
 				$be->{ port } = $json_obj->{ port };
 			}

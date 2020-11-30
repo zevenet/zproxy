@@ -78,7 +78,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate PORT
-		unless (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
+		unless (    &getValidFormat( 'port', $json_obj->{ port } )
 				 || $json_obj->{ port } eq '' )
 		{
 			my $msg = "Invalid IP address and port for a backend, it can't be blank.";
@@ -358,7 +358,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# validate PORT
-	unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
+	unless ( &getValidFormat( 'port', $json_obj->{ port } ) )
 	{
 		&zenlog( "Invalid IP address and port for a backend, ir can't be blank.",
 				 "error", "FARMS" );
@@ -617,7 +617,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ port } ) )
 		{
-			unless (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
+			unless (    &getValidFormat( 'port', $json_obj->{ port } )
 					 || $json_obj->{ port } == undef )
 			{
 				my $msg = "Invalid port number.";
@@ -892,7 +892,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	# validate BACKEND new port
 	if ( exists ( $json_obj->{ port } ) )
 	{
-		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
+		unless ( &getValidFormat( 'port', $json_obj->{ port } ) )
 		{
 			my $msg = "Invalid port.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

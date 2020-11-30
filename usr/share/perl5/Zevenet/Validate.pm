@@ -377,15 +377,13 @@ sub getValidPort    # ( $ip, $port, $profile )
 	my $port    = shift;
 	my $profile = shift;    # farm profile, optional
 
-	require Zevenet::Net::Validate;
 	if ( $profile =~ /^(?:HTTP|GSLB)$/i )
 	{
-		return &isValidPortNumber( $port ) eq 'true';
+		return &getValidFormat( 'port', $port );
 	}
 	elsif ( $profile =~ /^(?:L4XNAT)$/i )
 	{
-		require Zevenet::Farm::L4xNAT::Validate;
-		return &ismport( $port ) eq 'true';
+		return &getValidFormat( 'multiport', $port );
 	}
 	elsif ( $profile =~ /^(?:DATALINK)$/i )
 	{
@@ -393,7 +391,7 @@ sub getValidPort    # ( $ip, $port, $profile )
 	}
 	elsif ( !defined $profile )
 	{
-		return &isValidPortNumber( $port ) eq 'true';
+		return &getValidFormat( 'port', $port );
 	}
 	else    # profile not supported
 	{
