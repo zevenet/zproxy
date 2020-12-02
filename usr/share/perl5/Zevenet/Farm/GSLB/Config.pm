@@ -343,12 +343,11 @@ Function: setGSLBFarmBootStatus
 
 Parameters:
 	farmname - Farm name
+	status - Status to save in the config file. The possible values are "down" or "up".
 
 Returns:
-	integer - Always return 0
+	integer - Error code. 1 on failure or 0 on success
 
-FIXME:
-	Set a output and do error control
 =cut
 
 sub setGSLBFarmBootStatus    # ($farm_name, $status)
@@ -358,8 +357,7 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 	my ( $farm_name, $status ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output;
-	my $first = 1;
+	my $first         = 1;
 
 	require Tie::File;
 	tie my @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
@@ -368,7 +366,7 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 	{
 		if ( $first eq 1 )
 		{
-			if ( $status eq "start" )
+			if ( $status eq "up" )
 			{
 				s/\;down/\;up/g;
 			}
@@ -382,59 +380,14 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 	}
 	untie @filelines;
 
-	return $output;
-}
-
-=begin nd
-Function: setGSLBFarmStatus
-
-	Start or stop a gslb farm
-
-Parameters:
-	farmname - Farm name
-	zone - Zone name
-
-Returns:
-	Integer - Error code: 0 on success or -1 on failure
-
-BUG:
-	Always return success
-
-=cut
-
-sub setGSLBFarmStatus    # ($farm_name, $status)
-{
-	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
-			 "debug", "PROFILING" );
-	my ( $farm_name, $status ) = @_;
-
-	my $command;
-
-	unlink ( "/tmp/$farm_name.lock" );
-
-	&setGSLBFarmBootStatus( $farm_name, $status );
-
-	if ( $status eq "start" )
+	if ( $first )
 	{
-		$command = &getGSLBStartCommand( $farm_name );
-	}
-	else
-	{
-		$command = &getGSLBStopCommand( $farm_name );
+		&zenlog(
+			  "The status couldn't be updated in the config file for the '$farm_name' farm",
+			  "error", "gslb" );
 	}
 
-	&zenlog( "setGSLBFarmStatus(): Executing $command", "info", "GSLB" );
-	&zsystem( "$command" );
-
-	#TODO
-	my $output = 0;
-
-	if ( $output != 0 )
-	{
-		$output = -1;
-	}
-
-	return $output;
+	return $first;
 }
 
 =begin nd

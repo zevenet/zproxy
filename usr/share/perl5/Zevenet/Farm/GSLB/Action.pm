@@ -58,14 +58,9 @@ sub _runGSLBFarmStart    # ($fname, $writeconf)
 	require Zevenet::FarmGuardian;
 
 	my $output;
-	my $status = &getFarmStatus( $fname );
-	my $file   = &getFarmFile( $fname );
+	my $status = &getGSLBFarmStatus( $fname );
 
-	chomp ( $status );
-	if ( $status eq "up" )
-	{
-		return 0;
-	}
+	return 0 if ( $status eq "up" );
 
 	# set fg foreach service
 	foreach my $srv ( &getGSLBFarmServices( $fname ) )
@@ -85,34 +80,15 @@ sub _runGSLBFarmStart    # ($fname, $writeconf)
 		}
 	}
 
-	if ( $writeconf )
-	{
-		unlink ( "/tmp/$fname.lock" );
-		tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
-		my $first = 1;
+	$output = &setGSLBFarmBootStatus( $fname, "up" ) if ( $writeconf );
 
-		foreach ( @filelines )
-		{
-			if ( $first eq 1 )
-			{
-				s/\;down/\;up/g;
-				$first = 0;
-				last;
-			}
-		}
-		untie @filelines;
-	}
+	unlink ( "/tmp/$fname.lock" ) if -f "/tmp/$fname.lock";
 
 	my $exec = &getGSLBStartCommand( $fname );
-
 	&zenlog( "running $exec", "info", "GSLB" );
 
 	$output = &zsystem( "$exec > /dev/null 2>&1" );
-
-	if ( $output != 0 )
-	{
-		$output = -1;
-	}
+	$output = -1 if ( $output != 0 );
 
 	return $output;
 }
@@ -141,21 +117,10 @@ sub _runGSLBFarmStop    # ($fname, $writeconf)
 	include 'Zevenet::Farm::GSLB::Config';
 	require Zevenet::Farm::Base;
 
-	my $status = &getFarmStatus( $fname );
-	if ( $status eq "down" )
-	{
-		return 0;
-	}
-
 	my $filename = &getFarmFile( $fname );
-	if ( $filename eq '-1' )
-	{
-		return -1;
-	}
+	return -1 if ( $filename eq '-1' );
 
-	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
-
-	if ( $checkfarm )
+	if ( &getGSLBFarmConfigIsOK( $fname ) )
 	{
 		&zenlog(
 				"Farm $fname can't be stopped, check the logs and modify the configuration",
@@ -163,23 +128,15 @@ sub _runGSLBFarmStop    # ($fname, $writeconf)
 		return 1;
 	}
 
+	unlink ( "/tmp/$fname.lock" ) if -f "/tmp/$fname.lock";
+
 	if ( $writeconf )
 	{
-		require Tie::File;
-		tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
-		my $first = 1;
-
-		foreach ( @filelines )
-		{
-			if ( $first eq 1 )
-			{
-				s/\;up/\;down/g;
-				$status = $?;
-				$first  = 0;
-			}
-		}
-		untie @filelines;
+		my $output = &setGSLBFarmBootStatus( $fname, "down" );
+		return $output if $output;
 	}
+
+	return 0 if ( &getGSLBFarmStatus( $fname ) eq "down" );
 
 	my $exec    = &getGSLBStopCommand( $fname );
 	my $pidfile = &getGSLBFarmPidFile( $fname );

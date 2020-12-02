@@ -100,6 +100,8 @@ sub _runHTTPFarmStop    # ($farm_name, $writeconf)
 	&runFarmGuardianStop( $farm_name, "" );
 	&setHTTPFarmBootStatus( $farm_name, "down" ) if ( $writeconf );
 
+	return 0 if ( &getHTTPFarmStatus( $farm_name ) eq "down" );
+
 	if ( &getHTTPFarmConfigIsOK( $farm_name ) == 0 )
 	{
 		my $pid    = &getFarmPid( $farm_name );

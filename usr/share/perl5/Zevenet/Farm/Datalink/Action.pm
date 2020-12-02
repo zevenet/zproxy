@@ -191,11 +191,8 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	require Zevenet::Farm::Datalink::Config;
 
 	my $status = 0;
-
-	if ( $writeconf )
-	{
-		$status = &setDatalinkFarmBootStatus( $farm_name, "down" );
-	}
+	$status = &setDatalinkFarmBootStatus( $farm_name, "down" ) if ( $writeconf );
+	return 0 if ( &getDatalinkFarmStatus( $farm_name ) eq "down" );
 
 	# delete cron task to check backends
 	my $cron_tag  = "# __${farm_name}__";

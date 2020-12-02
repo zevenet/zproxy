@@ -237,15 +237,10 @@ sub _runFarmStop    # ($farm_name, $writeconf)
 			 "debug", "PROFILING" );
 	my ( $farm_name, $writeconf ) = @_;
 
-	# The parameter expect "undef" to not write it
+	# The parameter expects "undef" to not write it
 	$writeconf = undef if ( $writeconf eq 'false' );
 
 	require Zevenet::Farm::Base;
-	my $status = &getFarmStatus( $farm_name );
-	if ( $status eq "down" )
-	{
-		return 0;
-	}
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	if ( $farm_filename eq '-1' )
@@ -254,7 +249,7 @@ sub _runFarmStop    # ($farm_name, $writeconf)
 	}
 
 	my $farm_type = &getFarmType( $farm_name );
-	$status = $farm_type;
+	my $status    = $farm_type;
 
 	&zenlog( "Stopping farm $farm_name with type $farm_type", "info", "FARMS" );
 
