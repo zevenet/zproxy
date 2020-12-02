@@ -142,13 +142,8 @@ sub upIf    # ($if_ref, $writeconf)
 		$fileHandler->write( $file );
 	}
 
-	&zenlog( "???? antes de apcliar: $status" );
-	&zenlog( Dumper( $if_ref ), "???? " );
-
 	if ( !$status and $eload and $if_ref->{ dhcp } eq 'true' )
 	{
-		&zenlog( "???? lanzando" );
-
 		$status = &eload(
 						  'module' => 'Zevenet::Net::DHCP',
 						  'func'   => 'startDHCP',
@@ -317,7 +312,7 @@ sub stopIf    # ($if_ref)
 	else
 	{
 		my @ifphysic = split ( /:/, $if );
-		my $ip = $$if_ref{ addr };
+		my $ip       = $$if_ref{ addr };
 
 		if ( $ip =~ /\./ )
 		{
@@ -403,7 +398,7 @@ sub delIf    # ($if_ref)
 
 		# check if alternative stack is in use
 		my $ip_v_to_check = ( $$if_ref{ ip_v } == 4 ) ? 6 : 4;
-		my $interface = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
+		my $interface     = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
 
 		if ( !$interface
 			 or ( $interface->{ type } eq "bond" and !exists $interface->{ addr } ) )
