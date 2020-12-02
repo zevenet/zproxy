@@ -341,14 +341,18 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias } = $alias->{ $iface->{ interface } } if $eload;
-			$iface->{ mac } = $extrainfo->{ mac }  // "";
-			$iface->{ ip }  = $extrainfo->{ addr } // "";
+			$iface->{ name }   = $iface->{ interface };
+			$iface->{ alias }  = $alias->{ $iface->{ interface } } if $eload;
+			$iface->{ mac }    = $extrainfo->{ mac } // "";
+			$iface->{ ip }     = $extrainfo->{ addr } // "";
 			$iface->{ status } = $extrainfo->{ status }
 			  // &getInterfaceSystemStatus( $iface );
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 
+		 # The $iface->{name} field is added and deleted so as not to modify the API output.
+		 # FIXME: The field should be called name instead of interface.
+			delete $iface->{ name };
 			push @nicList, $iface;
 		}
 
@@ -364,9 +368,10 @@ sub stats_network_interfaces
 				}
 			}
 
-			$iface->{ alias } = $alias->{ $iface->{ interface } } if $eload;
-			$iface->{ mac } = $extrainfo->{ mac }  // "";
-			$iface->{ ip }  = $extrainfo->{ addr } // "";
+			$iface->{ name }   = $iface->{ interface };
+			$iface->{ alias }  = $alias->{ $iface->{ interface } } if $eload;
+			$iface->{ mac }    = $extrainfo->{ mac } // "";
+			$iface->{ ip }     = $extrainfo->{ addr } // "";
 			$iface->{ status } = $extrainfo->{ status }
 			  // &getInterfaceSystemStatus( $iface );
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
@@ -377,6 +382,9 @@ sub stats_network_interfaces
 										 args   => [$iface->{ interface }],
 			);
 
+		 # The $iface->{name} field is added and deleted so as not to modify the API output.
+		 # FIXME: The field should be called name instead of interface.
+			delete $iface->{ name };
 			push @bondList, $iface;
 		}
 		else
