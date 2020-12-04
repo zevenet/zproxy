@@ -96,30 +96,51 @@ sub _runHTTPFarmStop    # ($farm_name, $writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	require Zevenet::FarmGuardian;
+	my $time = &getGlobalConfiguration( "http_farm_stop_grace_time" );
 
 	&runFarmGuardianStop( $farm_name, "" );
 	&setHTTPFarmBootStatus( $farm_name, "down" ) if ( $writeconf );
 
 	return 0 if ( &getHTTPFarmStatus( $farm_name ) eq "down" );
 
+	my $piddir = &getGlobalConfiguration( 'piddir' );
+
 	if ( &getHTTPFarmConfigIsOK( $farm_name ) == 0 )
 	{
-		my $pid    = &getFarmPid( $farm_name );
-		my $piddir = &getGlobalConfiguration( 'piddir' );
-
-		if ( $pid eq '-' || $pid == -1 )
+		if ( &getGlobalConfiguration( "proxy_ng" ) eq 'true' )
 		{
-			&zenlog( "Not found pid", "warning", "LSLB" );
+			my $pid = &getFarmPid( $farm_name );
+
+			if ( $pid eq '-' || $pid == -1 )
+			{
+				&zenlog( "Not found pid", "warning", "LSLB" );
+			}
+			else
+			{
+				&zenlog( "Stopping HTTP farm $farm_name with PID $pid", "info", "LSLB" );
+
+				# Returns the number of arguments that were successfully used to signal.
+				kill 9, $pid;
+				sleep ( $time );
+			}
 		}
+
+		# workaround to stop pound ensuring that the process finishes
 		else
 		{
-			my $time = &getGlobalConfiguration( "http_farm_stop_grace_time" );
-			my $signal = ( &getGlobalConfiguration( "proxy_ng" ) eq 'true' ) ? 9 : 15;
-			&zenlog( "Stopping HTTP farm $farm_name with PID $pid", "info", "LSLB" );
+			my @pids = &getHTTPFarmPidPound( $farm_name );
+			if ( !@pids )
+			{
+				&zenlog( "Not found pid", "warning", "LSLB" );
+			}
+			else
+			{
+				my $pid = join ( ', ', @pids );
+				&zenlog( "Stopping HTTP farm $farm_name with PID $pid", "info", "LSLB" );
 
-			# Returns the number of arguments that were successfully used to signal.
-			kill $signal, $pid;
-			sleep ( $time );
+				kill 9, @pids;
+				sleep ( $time );
+			}
 		}
 
 		unlink ( "$piddir\/$farm_name\_proxy.pid" )

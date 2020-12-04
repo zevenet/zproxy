@@ -1237,6 +1237,41 @@ sub getHTTPFarmPid    # ($farm_name)
 }
 
 =begin nd
+Function: getHTTPFarmPidPound
+
+	This function returns all the pids of a process looking for in the ps table.
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - list of pids
+
+=cut
+
+sub getHTTPFarmPidPound
+{
+	my $farm_name = shift;
+
+	my $ps        = &getGlobalConfiguration( 'ps' );
+	my $grep      = &getGlobalConfiguration( 'grep_bin' );
+	my @pid       = ();
+	my $farm_file = "$configdir/" . &getFarmFile( $farm_name );
+	my $cmd       = "$ps aux | $grep '\\-f $farm_file' | $grep -v grep";
+
+	my $out = &logAndGet( $cmd, 'array' );
+	foreach my $l ( @{ $out } )
+	{
+		if ( $l =~ /^\s*[^\s]+\s+([^\s]+)\s/ )
+		{
+			push @pid, $1;
+		}
+	}
+
+	return @pid;
+}
+
+=begin nd
 Function: getHTTPFarmPidFile
 
 	Returns farm PID File
