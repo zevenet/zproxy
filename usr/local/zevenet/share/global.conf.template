@@ -354,7 +354,7 @@ $proxyctl="$poundctl";
 $proxytpl="$templatedir/proxytpl.cfg";#update
 
 #maximum value of http body to pass to modsecurity
-$waf_body_size="";
+$waf_max_body="32000";
 #Where is modsec rules check
 $waf_rule_check_bin="/usr/bin/modsec-rules-check";
 #time to ensure that the farm has been stopped completaly

@@ -55,6 +55,8 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	my ( $vip, $vip_port, $farm_name, $farm_type, $status ) = @_;
 	$status = 'up' if not defined $status;
 
+	my $proxy_ng = &getGlobalConfiguration( 'proxy_ng' );
+
 	require Tie::File;
 	require File::Copy;
 	File::Copy->import();
@@ -107,6 +109,12 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 				func   => 'setHTTPFarmLogs',
 				args   => [$farm_name, 'false'],
 		);
+
+		&eload(
+				module => 'Zevenet::Farm::HTTP::Ext',
+				func   => 'addHTTPFarmWafBodySize',
+				args   => [$farm_name],
+		) if ( $proxy_ng eq 'false' );
 	}
 
 	require Zevenet::Farm::HTTP::Config;

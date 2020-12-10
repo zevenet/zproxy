@@ -821,5 +821,79 @@ sub get_http_farm_ee_struct
 	return $farm_st;
 }
 
+=begin nd
+Function: addHTTPFarmWafBodySize
+
+	It adds a directive to pound configuration file to limit the HTTP body
+	size passed to WAF.
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or another value on failure
+=cut
+
+sub addHTTPFarmWafBodySize
+{
+	my $farm_name     = shift;
+	my $err           = 1;
+	my $waf_max_body  = &getGlobalConfiguration( 'waf_max_body' );
+	my $farm_filename = &getFarmFile( $farm_name );
+	require Tie::File;
+
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
+
+	foreach my $l ( @file )
+	{
+		if ( $l =~ s/^\s*Control\s/WafBodySize $waf_max_body\nControl / )
+		{
+			$err = 0;
+			last;
+		}
+	}
+	untie @file;
+
+	return $err;
+}
+
+=begin nd
+Function: delHTTPFarmWafBodySize
+
+	It removes the maximum size directive of pound.
+	This function is used when the proxy is changed to zproxy.
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or another value on failure
+=cut
+
+sub delHTTPFarmWafBodySize
+{
+	my $farm_name = shift;
+	my $err       = 1;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	require Tie::File;
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
+
+	my $index = 0;
+	foreach my $l ( @file )
+	{
+		if ( $l =~ /^\s*WafBodySize\s/ )
+		{
+			splice @file, $index, 1;
+			$err = 0;
+			last;
+		}
+		$index++;
+	}
+	untie @file;
+
+	return $err;
+}
+
 1;
 

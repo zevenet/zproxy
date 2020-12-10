@@ -2315,6 +2315,8 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 		}
 	}
 
+	untie @array;
+
 	if ( $eload )
 	{
 		&eload(
@@ -2322,12 +2324,24 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 				func   => 'migrateHTTPFarmLogs',
 				args   => [$farm_name, $proxy_mode],
 		);
+
+		my $func =
+		  ( $proxy_mode eq 'false' )
+		  ? 'addHTTPFarmWafBodySize'
+		  : 'delHTTPFarmWafBodySize';
+		&eload(
+				module => 'Zevenet::Farm::HTTP::Ext',
+				func   => $func,
+				args   => [$farm_name],
+		);
 	}
 
 	if ( &getHTTPFarmConfigIsOK( $farm_name ) )
 	{
+		tie my @array, 'Tie::File', "$configdir\/$farm_filename";
 		@array = @array_bak;
-		$stat  = 1;
+		untie @array;
+		$stat = 1;
 		&zenlog( "Error in $farm_name config file!", "error", "SYSTEM" );
 	}
 	else
@@ -2335,7 +2349,6 @@ sub setFarmProxyNGConf    # ($proxy_mode,$farm_name)
 		$stat = 0;
 	}
 
-	untie @array;
 	close $lock_fh;
 
 	return $stat;
