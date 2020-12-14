@@ -50,13 +50,19 @@ sub checkL4Port
 	@farm_list = grep ( !/^$farmname$/, @farm_list ) if defined $farmname;
 
 	# cannot set all ports because almost a port is set
-	if ( $port eq '*' and @farm_list )
+	if ( $port eq '*' )
 	{
-		&zenlog(
-			"cannot be set all ports because there are more farms using ports in this interface",
-			"error", "net"
-		);
-		return 1;
+		foreach my $f ( @farm_list )
+		{
+			if ( &getFarmStatus( $f ) eq 'up' )
+			{
+				&zenlog(
+					"cannot be set all ports because there are more farms ('$f') using ports in this interface",
+					"error", "net"
+				);
+				return 1;
+			}
+		}
 	}
 
 	# check intervals
