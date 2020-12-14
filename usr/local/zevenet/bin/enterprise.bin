@@ -259,7 +259,7 @@ if ( eval { $args = decode_json( $input ); } )
 {
 	1 || &zenlog( "#### Function input JSON decode: [OK]" );
 }    ####
-else { &zenlog( "#### Function input JSON decode: Failed!" ); }    ####
+else { &zenlog( "#### Function input JSON decode: Failed!", "error" ); }    ####
 
 ## Run call
 
