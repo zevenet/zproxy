@@ -1,7 +1,10 @@
 #include "waf.h"
 
 bool Waf::checkRequestWaf(HttpStream &stream) {
+
   std::string httpVersion = "";
+  std::string httpPath (stream.request.path, stream.request.path_length);
+  std::string httpMethod (stream.request.method, stream.request.method_len);
 
   switch (stream.request.http_version) {
     case http::HTTP_VERSION::HTTP_1_0:
@@ -16,10 +19,13 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
   }
   modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
   stream.modsec_transaction->processConnection(
-      stream.client_connection.getPeerAddress().c_str(),
+      stream.client_connection.getPeerAddress().data(),
       stream.client_connection.getPeerPort(),
-      stream.client_connection.getLocalAddress().c_str(),
+      stream.client_connection.getLocalAddress().data(),
       stream.client_connection.getLocalPort());
+
+  stream.modsec_transaction->processURI(
+      httpPath.data(), httpMethod.data(), httpVersion.data());
 
   for (int i = 0; i < static_cast<int>(stream.request.num_headers); i++) {
     if (stream.request.headers[i].header_off) continue;
@@ -31,13 +37,12 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
         name, stream.request.headers[i].name_len, value,
         stream.request.headers[i].value_len);
   }
-
-  stream.modsec_transaction->processURI(
-      stream.request.path, stream.request.method, httpVersion.c_str());
   stream.modsec_transaction->processRequestHeaders();
 
-  stream.modsec_transaction->appendRequestBody(
+  if (stream.request.message_length > 0) {
+    stream.modsec_transaction->appendRequestBody(
       (unsigned char *)stream.request.message, stream.request.message_length);
+  }
   stream.modsec_transaction->processRequestBody();
 
   // Checking interaction
@@ -86,12 +91,18 @@ bool Waf::checkResponseWaf(HttpStream &stream) {
         name, stream.response.headers[i].name_len, value,
         stream.response.headers[i].value_len);
   }
-  stream.modsec_transaction->appendResponseBody(
-      reinterpret_cast<unsigned char *>(stream.response.message),
-      stream.response.message_length);
+
   stream.modsec_transaction->processResponseHeaders(
       stream.response.http_status_code, httpVersion);
+
+  if (stream.response.message_length > 0) {
+    stream.modsec_transaction->appendResponseBody(
+      reinterpret_cast<unsigned char *>(stream.response.message),
+      stream.response.message_length);
+  }
+
   stream.modsec_transaction->processResponseBody();
+
   stream.modsec_transaction->processLogging();
   // Checking interaction
   if (stream.modsec_transaction->m_it.disruptive) {
