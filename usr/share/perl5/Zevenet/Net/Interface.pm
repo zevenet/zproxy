@@ -759,9 +759,6 @@ sub getSystemInterface    # ($if_name)
 
 	return if not $$if_ref{ mac };
 	$$if_ref{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
-	&zenlog( "ASMJ: ---------------------------" );
-	&zenlog( Dumper( $if_flags ), "STATUS: $$if_ref{ status }" );
-	&zenlog( "ASMJ: ---------------------------" );
 	$$if_ref{ addr }   = '';
 	$$if_ref{ mask }   = '';
 	$$if_ref{ dev }    = $if_parts{ dev };
@@ -993,15 +990,9 @@ sub getInterfaceTypeList
 			if ( $list_type eq &getInterfaceType( $if_name ) )
 			{
 				my $output_if = &getInterfaceConfig( $if_name );
-				&zenlog( "ASMJ: ---------------------------" );
-				&zenlog( Dumper( $output_if ), "LEYENDO DEL FICHERO DE CONFIGURACION:" );
-				&zenlog( "ASMJ: ---------------------------" );
 				if ( !$output_if || !$output_if->{ mac } || $output_if->{ is_slave } eq 'true' )
 				{
 					$output_if = &getSystemInterface( $if_name );
-					&zenlog( "ASMJ: ---------------------------" );
-					&zenlog( Dumper( $output_if ), "LEYENDO DEL SYSTEMA:" );
-					&zenlog( "ASMJ: ---------------------------" );
 				}
 
 				push ( @interfaces, $output_if );
@@ -1528,9 +1519,6 @@ sub get_nic_struct
 		next unless $if_ref->{ name } eq $nic;
 
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-		&zenlog( "ASMJ: ---------------------------" );
-		&zenlog( Dumper( $if_ref ), "ASMJ: GET if_ref" );
-		&zenlog( "ASMJ: ---------------------------" );
 
 		# Any key must contain a value or "" but can't be null
 		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
@@ -1553,9 +1541,7 @@ sub get_nic_struct
 		$interface->{ is_slave } = $if_ref->{ is_slave }         if $eload;
 		$interface->{ dhcp }     = $if_ref->{ dhcp }             if $eload;
 	}
-	&zenlog( "ASMJ: ---------------------------" );
-	&zenlog( Dumper( $interface ), "ASMJ: return if_ref" );
-	&zenlog( "ASMJ: ---------------------------" );
+
 	return $interface;
 }
 
