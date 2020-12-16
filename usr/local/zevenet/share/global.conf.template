@@ -111,7 +111,7 @@ $filecluster="$configdir/cluster.conf";#update
 
 #let's encrypt configuration
 $temp_farm="letsencryptZevenet";
-$le_binary="certbot-auto";
+$le_binary="certbot-auto --no-self-upgrade";#update
 $le_fullchain_path="/usr/local/zevenet/config/letsencrypt/";
 $le_webroot_path="/usr/local/zevenet/app/letsencryptz/webroot/";
 $le_webserver_config_file="/usr/local/zevenet/app/letsencryptz/etc/cherokee_localhost.conf";
@@ -136,6 +136,8 @@ $sys_net_dir="/sys/class/net";
 
 
 ## binaries
+#Where is netstat binary?
+$netstat_bin="/usr/bin/file";
 #Where is file binary?
 $file_bin="/usr/bin/file";
 #Where is cat binary?
