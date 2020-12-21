@@ -117,7 +117,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 			}
 
 			my $port = &getFarmVip( "vipp", $farmname );
-			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
+			if ( !&validatePort( $ip, $port, undef, $farmname ) )
 			{
 				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -167,7 +167,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 			}
 
 			my $port = &getFarmVip( "vipp", $farmname );
-			if ( &checkport( $ip, $port, $farmname ) eq 'true' )
+			if ( !&validatePort( $ip, $port, undef, $farmname ) )
 			{
 				my $msg = "There is another farm using the ip '$ip' and the port '$port'";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

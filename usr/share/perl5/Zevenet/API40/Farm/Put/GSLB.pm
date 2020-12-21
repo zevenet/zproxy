@@ -78,7 +78,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
 	{
 		require Zevenet::Net::Validate;
-		if ( $status eq 'up' and &checkport( $vip, $vport, $farmname ) eq 'true' )
+		if ( $status eq 'up' and !&validatePort( $vip, $vport, 'gslb', $farmname ) )
 		{
 			my $msg =
 			  "The '$vip' ip and '$vport' port are being used for another farm. This farm should be sopped before modifying it";

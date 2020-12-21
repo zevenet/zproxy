@@ -107,6 +107,8 @@ Returns:
 
 sub uniqueArray
 {
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $arr = shift;
 
 	my %hold = ();
@@ -117,6 +119,39 @@ sub uniqueArray
 	}
 
 	@{ $arr } = keys %hold;
+}
+
+=begin nd
+Function: getArrayCollision
+
+	It checks if two arrays have some value repeted.
+	The arrays have to contain scalar values.
+
+Parameters:
+	Array ref 1 - List of values 1
+	Array ref 2 - List of values 2
+
+Returns:
+	scalar - It returns the first value which is contained in both arrays
+
+=cut
+
+sub getArrayCollision
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $arr1 = shift;
+	my $arr2 = shift;
+
+	foreach my $it ( sort @{ $arr1 } )
+	{
+		if ( grep ( /^$it$/, @{ $arr2 } ) )
+		{
+			return $it;
+		}
+	}
+
+	return undef;
 }
 
 1;

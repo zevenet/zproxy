@@ -121,8 +121,8 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	if (    ( exists $json_obj->{ protocol } and $json_obj->{ protocol } eq 'all' )
 		 or ( exists $json_obj->{ vport } and $json_obj->{ vport } eq '*' ) )
 	{
-		$json_obj->{ vport }    = "*";
-		$json_obj->{ protocol } = "all";
+		$json_obj->{ vport }    = "*";      # fixme
+		$json_obj->{ protocol } = "all";    # fixme
 	}
 	if ( exists $json_obj->{ persistence }
 		 and $json_obj->{ persistence } eq 'none' )
@@ -141,13 +141,17 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	my $vport = $json_obj->{ vport } // &getFarmVip( 'vipp', $farmname );
 
 	# Modify vip and vport
-	if ( exists ( $json_obj->{ vip } ) or exists ( $json_obj->{ vport } ) )
+	if (    exists ( $json_obj->{ vip } )
+		 or exists ( $json_obj->{ vport } )
+		 or exists ( $json_obj->{ protocol } ) )
 	{
 		require Zevenet::Net::Validate;
-		if ( $status eq 'up' and &checkport( $vip, $vport, $farmname ) eq 'true' )
+		require Zevenet::Farm::L4xNAT::Config;
+		my $proto = $json_obj->{ protocol } // &getL4FarmParam( 'proto', $farmname );
+		if ( $status eq 'up' and !&validatePort( $vip, $vport, $proto, $farmname ) )
 		{
 			my $msg =
-			  "The '$vip' ip and '$vport' port are being used for another farm. This farm should be sopped before modifying it";
+			  "The '$vip' ip and '$vport' port are being used for another farm. This farm should be stopped before modifying it";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 

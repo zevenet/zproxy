@@ -61,7 +61,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	push @gslb_ports, &getGSLBControlPort( $_ ) for @gslb_farms;
 	do
 	{
-		$httpport = &getRandomPort();
+		$httpport = &getRandomPort( 'tcp' );
 	} while ( grep ( /^$httpport$/, @gslb_ports ) );
 
 	my $type   = "gslb";

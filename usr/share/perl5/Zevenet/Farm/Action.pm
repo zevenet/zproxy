@@ -81,7 +81,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	if ( $farm_type ne "datalink" )
 	{
 		my $port = &getFarmVip( "vipp", $farm_name );
-		if ( &checkport( $ip, $port, $farm_name ) eq 'true' )
+		if ( !&validatePort( $ip, $port, undef, $farm_name ) )
 		{
 			&zenlog( "The networking '$ip:$port' is being used." );
 			return 2;

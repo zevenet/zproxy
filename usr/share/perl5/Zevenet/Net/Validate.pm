@@ -23,84 +23,368 @@
 
 use strict;
 
-use Zevenet::Log;
+use Zevenet::Core;
 
 =begin nd
-Function: checkport
+Function: getProtoTransport
 
-	Check if a TCP port is open in a local or remote IP.
+	It returns the protocols of layer 4 that use a profile or another protocol.
 
 Parameters:
-	host - IP address (or hostname?).
-	port - TCP port number.
+	profile or protocol - This parameter accepts a load balancer profile (for l4
+	it returns the default one when the farm is created): "http", "https", "l4xnat", "gslb";
+	or another protocol: "tcp", "udp", "sctp", "amanda", "tftp", "netbios-ns",
+	"snmp", "ftp", "irc", "pptp", "sane", "all", "sip" or "h323"
 
 Returns:
-	boolean - string "true" or "false".
-
-See Also:
-	<getRandomPort>
+	Array ref - It the list of transport protocols that use the passed protocol. The
+		possible values are "udp", "tcp" or "sctp"
 =cut
 
-#check if a port in a ip is up
-sub checkport    # ($host, $port)
+sub getProtoTransport
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $host, $port, $farmname ) = @_;
+	my $profile = shift;
 
-	# check local ports;
-	if ( $host eq '127.0.0.1' || $host =~ /local/ )
+	my $proto = [];
+	my $all = ["tcp", "udp", "sctp"];
+
+	# profiles
+	if ( $profile eq "gslb" )
 	{
-		my $flag = &logAndRunCheck( "netstat -putan | grep $port" );
-		if ( !$flag )
+		$proto = ["tcp", "udp"];
+	}
+	elsif ( $profile eq "l4xnat" )
+	{
+		$proto = ["tcp"];    # default protocol when a l4xnat farm is created
+	}
+
+	# protocols
+	elsif ( $profile =~ /^(?:tcp|udp|sctp)$/ )
+	{
+		$proto = [$profile];
+	}
+
+	# udp
+	elsif ( $profile =~ /^(?:amanda|tftp|netbios-ns|snmp)$/ )
+	{
+		$proto = ["udp"];
+	}
+
+	# tcp
+	elsif ( $profile =~ /^(?:ftp|irc|pptp|sane|https?)$/ )
+	{
+		$proto = ["tcp"];
+	}
+
+	# mix
+	elsif ( $profile eq "all" )
+	{
+		$proto = $all;
+	}
+	elsif ( $profile eq "sip" )
+	{
+		$proto = ["tcp", "udp"];
+	}
+	elsif ( $profile eq "h323" )
+	{
+		$proto = ["tcp", "udp"];
+	}
+	else
+	{
+		&zenlog(
+				 "The funct 'getProfileProto' does not understand the parameter '$profile'",
+				 "error", "networking" );
+	}
+
+	return $proto;
+}
+
+=begin nd
+Function: validatePortKernelSpace
+
+	It checks if the IP, port and protocol are used in some l4xnat farm.
+	This function does the following actions to validate that the protocol
+	is not used:
+	* Remove the incoming farmname from the farm list
+	* Check only with l4xnat farms
+	* Check with farms with up status
+	* Check that farms contain the same VIP
+	* There is not collision with multiport
+
+Parameters:
+	vip - virtual IP
+	port - It accepts multiport string format
+	proto - it is an array reference with the list of protocols to check in the port. The protocols can be 'sctp', 'udp', 'tcp' or 'all'
+	farmname - It is the farm that is being modified, if this parameter is passed, the configuration of this farm is ignored to avoid checking with itself. This parameter is optional
+
+Returns:
+	Integer - It returns 1 if the incoming info is valid, or 0 if there is another farm with that networking information
+=cut
+
+sub validatePortKernelSpace
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $ip, $port, $proto, $farmname ) = @_;
+
+	# get l4 farms
+	require Zevenet::Farm::Base;
+	require Zevenet::Arrays;
+	my @farm_list = &getFarmListByVip( $ip );
+	return 1 if !@farm_list;
+
+	@farm_list = grep ( !/^$farmname$/, @farm_list ) if defined $farmname;
+	return 1 if !@farm_list;
+
+	# check intervals
+	my $port_list = &getMultiporExpanded( $port );
+
+	foreach my $farm ( @farm_list )
+	{
+		next if ( &getFarmType( $farm ) ne 'l4xnat' );
+		next if ( &getFarmStatus( $farm ) ne 'up' );
+
+		# check protocol collision
+		my $f_proto = &getProtoTransport( &getL4FarmParam( 'proto', $farm ) );
+		next if ( !&getArrayCollision( $proto, $f_proto ) );
+
+		my $f_port = &getFarmVip( 'vipp', $farm );
+
+		# check if farm is all ports
+		if ( $port eq '*' or $f_port eq '*' )
 		{
-			return "true";
+			&zenlog( "Port collision with farm '$farm' for using all ports",
+					 "warning", "net" );
+			return 0;
+		}
+
+		# check port collision
+		my $f_port_list = &getMultiporExpanded( $f_port );
+		my $col = &getArrayCollision( $f_port_list, $port_list );
+		if ( defined $col )
+		{
+			&zenlog( "Port collision ($col) with farm '$farm'", "warning", "net" );
+			return 0;
 		}
 	}
 
-	# check remote ports
-	else
+	return 1;
+}
+
+=begin nd
+Function: getMultiporExpanded
+
+	It returns the list of ports that a multiport string contains.
+
+Parameters:
+	port - multiport port
+
+Returns:
+	Array ref - It is the list of ports used by the farm
+=cut
+
+sub getMultiporExpanded
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $port       = shift;
+	my @total_port = ();
+	if ( $port ne '*' )
+	{
+		foreach my $p ( split ( ',', $port ) )
+		{
+			my ( $init, $end ) = split ( ':', $p );
+			if ( defined $end )
+			{
+				push @total_port, ( $init .. $end );
+			}
+			else
+			{
+				push @total_port, $init;
+			}
+		}
+	}
+	return \@total_port;
+}
+
+=begin nd
+Function: getMultiportRegex
+
+	It creates a regular expression to look for a list of ports.
+	It expands the l4xnat port format (':' for ranges and ',' for listing ports).
+
+Parameters:
+	port - port or multiport
+
+Returns:
+	String - Regular expression
+=cut
+
+sub getMultiportRegex
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my $port = shift;
+	my $reg  = $port;
+
+	if ( $port eq '*' )
+	{
+		$reg = '\d+';
+	}
+	elsif ( $port =~ /[:,]/ )
+	{
+		my $total_port = &getMultiporExpanded( $port );
+		$reg = '(?:' . join ( '|', @{ $total_port } ) . ')';
+	}
+
+	return $reg;
+}
+
+=begin nd
+Function: validatePortUserSpace
+
+	It validates if the port is being used for some process in the user space
+
+Parameters:
+	ip - IP address. If the IP is '0.0.0.0', it checks that other farm or process are not using the port
+	port - TCP port number. It accepts l4xnat multport format: intervals (55:66,70), all ports (*).
+	protocol - It is an array reference with the protocols to check ("udp", "tcp" and "sctp"), if some of them is used, the function returns 0.
+	farmname - If the configuration is set in this farm, the check is ignored and true. This parameters is optional.
+
+Returns:
+	Integer - It returns '1' if the port and IP are valid to be used or '0' if the port and IP are already applied in the system
+
+=cut
+
+sub validatePortUserSpace
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $ip, $port, $proto, $farmname ) = @_;
+
+	# skip if the running farm is itself
+	if ( defined $farmname )
 	{
 		require Zevenet::Farm::Base;
-		my $cur_vip  = &getFarmVip( 'vip',  $farmname );
-		my $cur_port = &getFarmVip( 'vipp', $farmname );
 
-		# discart the running farm is itself
 		my $type = &getFarmType( $farmname );
 		if ( $type =~ /http|gslb/ )
 		{
+			my $cur_vip  = &getFarmVip( 'vip',  $farmname );
+			my $cur_port = &getFarmVip( 'vipp', $farmname );
+
 			if (     &getFarmStatus( $farmname ) eq 'up'
-				 and $cur_vip eq $host
+				 and $cur_vip eq $ip
 				 and $cur_port eq $port )
 			{
-				return "false";
+				&zenlog( "The networking configuration matches with the own farm",
+						 "debug", "networking" );
+				return 1;
 			}
 		}
+	}
 
-		# check if it used by a l4 farm
-		require Zevenet::Farm::L4xNAT::Validate;
-		return "true" if ( &checkL4Port( $host, $port, $farmname ) );
+	my $netstat = &getGlobalConfiguration( 'netstat_bin' );
 
-		# TODO: add check for avoiding collision with datalink VIPs
+	my $f_ipversion = ( &ipversion( $ip ) == 6 ) ? "6" : "4";
+	my $f           = "lpn";
+	my $f_proto     = "";
 
-		require IO::Socket;
-		my $sock = IO::Socket::INET->new(
-										  PeerAddr => $host,
-										  PeerPort => $port,
-										  Proto    => 'tcp'
-		);
-
-		if ( $sock )
+	foreach my $p ( @{ $proto } )
+	{
+		if ( $p eq 'sctp' )
 		{
-			close ( $sock );
-			return "true";
+			# it is not supported in the system
+			next;
 		}
 		else
 		{
-			return "false";
+			$f_proto .= "--$p ";
 		}
 	}
-	return "false";
+
+	my $cmd = "$netstat -$f_ipversion -${f} ${f_proto} ";
+	my @out = @{ &logAndGet( $cmd, 'array' ) };
+	shift @out;
+	shift @out;
+
+	my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:0.0.0.0|$ip)";
+	my $port_reg = &getMultiportRegex( $port );
+
+	my $filter = '^\s*(?:[^\s]+\s+){3,3}' . $ip_reg . ':' . $port_reg . '\s';
+
+	@out = grep ( /$filter/, @out );
+	if ( @out )
+	{
+		&zenlog( "The ip '$ip' and the port '$port' are being used for some process" );
+		return 0;
+	}
+
+	return 1;
+}
+
+=begin nd
+Function: validatePort
+
+	It checks if an IP and a port (checking the protocol) are already configured in the system.
+	This is used to validate that more than one process or farm are not running with the same
+	networking configuration.
+
+	It checks the information with the "netstat" command, if the port is not found it will look for
+	between the l4xnat farms (that are up).
+
+	If this function is called with more than one protocol. It will recall itself recursively
+	for each one.
+
+Parameters:
+	ip - IP address. If the IP is '0.0.0.0', it checks that other farm or process are not using the port
+	port - TCP port number. It accepts l4xnat multport format: intervals (55:66,70), all ports (*).
+	protocol - It is an array reference with the protocols to check, if some of them is used, the function returns 0. The accepted protocols are: 'all' (no one is checked), sctp, tcp and udp
+	farmname - If the configuration is set in this farm, the check is ignored and true. This parameters is optional.
+
+Returns:
+	Integer - It returns '1' if the port and IP are valid to be used or '0' if the port and IP are already applied in the system
+
+See Also:
+	<getFarmProto> <getProfileProto>
+
+=cut
+
+sub validatePort
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $ip, $port, $proto, $farmname ) = @_;
+
+	# validate inputs
+	if ( !defined $proto and !defined $farmname )
+	{
+		&zenlog(
+			  "Check port needs the protocol to validate the ip '$ip' and the port '$port'",
+			  "error", "networking" );
+		return 0;
+	}
+
+	if ( !defined $proto )
+	{
+		$proto = &getFarmType( $farmname );
+		if ( $proto eq 'l4xnat' )
+		{
+			require Zevenet::Farm::L4xNAT::Config;
+			$proto = &getL4FarmParam( 'proto', $farmname );
+		}
+	}
+	$proto = &getProtoTransport( $proto );
+
+	return 0 if ( !&validatePortUserSpace( $ip, $port, $proto, $farmname ) );
+
+	return 0 if ( !&validatePortKernelSpace( $ip, $port, $proto, $farmname ) );
+
+	# TODO: add check for avoiding collision with datalink VIPs
+
+	return 1;
 }
 
 =begin nd
@@ -116,7 +400,6 @@ Returns:
 	boolean - string "true" or "false".
 =cut
 
-#check if a ip is ok structure
 sub ipisok    # ($checkip, $version)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -183,7 +466,6 @@ Returns:
 
 =cut
 
-#check if a ip is IPv4 or IPv6
 sub ipversion    # ($checkip)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -263,7 +545,6 @@ Bugs:
 	"created"
 =cut
 
-#function check if interface exist
 sub ifexist    # ($nif)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -440,8 +721,6 @@ sub validBackendStack
 
 	return ( !$ipv_mismatch );
 }
-
-# returns 1 on success or 0 on failure
 
 =begin nd
 Function: validateNetmask

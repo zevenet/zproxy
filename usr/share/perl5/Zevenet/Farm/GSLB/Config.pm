@@ -316,7 +316,7 @@ sub setGSLBControlPort    # ( $farm_name )
 	require Zevenet::Net::Util;
 
 	# set random port
-	my $port  = &getRandomPort();
+	my $port  = &getRandomPort( 'tcp' );
 	my $ffile = &getFarmFile( $farmName );
 	$ffile = "$configdir/$ffile/etc/config";
 

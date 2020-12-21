@@ -262,7 +262,7 @@ sub setL4FarmParam
 		elsif ( $value =~ /sip|h323/ )
 		{
 			$addition = $addition . qq( , "helper" : "$value" );
-			$value    = "all";
+			$value    = "all";                                     # fixme
 		}
 		else
 		{

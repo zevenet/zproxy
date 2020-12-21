@@ -69,7 +69,8 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 	if ( $farm_type ne 'datalink' )
 	{
 		require Zevenet::Net::Interface;
-		$status = 'down' if ( &checkport( $vip, $vip_port, $farm_name ) eq 'true' );
+		$status = 'down'
+		  if ( !&validatePort( $vip, $vip_port, $farm_type, $farm_name ) );
 	}
 
 	&zenlog( "running 'Create' for $farm_name farm $farm_type", "info", "LSLB" );
@@ -209,8 +210,13 @@ sub runFarmCreateFrom
 	{
 		require Zevenet::Net::Interface;
 		if (
-			 &checkport( $params->{ vip }, $params->{ vport }, $params->{ farmname } ) eq
-			 'false' )
+			 &validatePort(
+							$params->{ vip },
+							$params->{ vport },
+							'l4xnat',
+							$params->{ farmname }
+			 )
+		  )
 		{
 			$err = &startL4Farm( $params->{ farmname } );
 		}

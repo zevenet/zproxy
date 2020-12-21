@@ -137,7 +137,7 @@ $sys_net_dir="/sys/class/net";
 
 ## binaries
 #Where is netstat binary?
-$netstat_bin="/usr/bin/file";
+$netstat_bin="/usr/bin/netstat";
 #Where is file binary?
 $file_bin="/usr/bin/file";
 #Where is cat binary?
