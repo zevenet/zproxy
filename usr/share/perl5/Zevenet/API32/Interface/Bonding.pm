@@ -344,6 +344,12 @@ sub delete_bond    # ( $bond )
 			die if &downIf( $bonds->{ $bond }, 'writeconf' );
 		}
 
+		foreach my $slave ( @{ $bonds->{ $bond }->{ slaves } } )
+		{
+			my $if = &getInterfaceConfig( $slave );
+			&downIf( $if, 'writeconf' );
+		}
+
 		die if &setBondMaster( $bond, 'del', 'writeconf' );
 	};
 
