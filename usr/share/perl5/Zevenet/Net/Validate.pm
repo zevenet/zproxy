@@ -26,6 +26,43 @@ use strict;
 use Zevenet::Core;
 
 =begin nd
+Function: getNetIpFormat
+
+	It gets an IP and it retuns the same IP with the format that system uses for
+	the binary choosed
+
+Parameters:
+	ip - String with the ipv6
+	bin - It is the binary for the format
+
+Returns:
+	String - It is the IPv6 with the format of the binary parameter.
+
+=cut
+
+sub getNetIpFormat
+{
+	my $ip  = shift;
+	my $bin = shift;
+
+	require Net::IPv6Addr;
+	my $x = Net::IPv6Addr->new( $ip );
+
+	if ( $bin eq 'netstat' )
+	{
+		return $x->to_string_compressed();
+	}
+	else
+	{
+		&zenlog(
+				 "The bin '$bin' is not recoignized. The ip '$ip' couldn't be converted",
+				 "error", "networking" );
+	}
+
+	return $ip;
+}
+
+=begin nd
 Function: getProtoTransport
 
 	It returns the protocols of layer 4 that use a profile or another protocol.
@@ -290,20 +327,16 @@ sub validatePortUserSpace
 	my $netstat = &getGlobalConfiguration( 'netstat_bin' );
 
 	my $f_ipversion = ( &ipversion( $ip ) == 6 ) ? "6" : "4";
-	my $f           = "lpn";
-	my $f_proto     = "";
+	$ip = &getNetIpFormat( $ip, 'netstat' ) if ( $f_ipversion eq '6' );
+
+	my $f       = "lpnW";
+	my $f_proto = "";
 
 	foreach my $p ( @{ $proto } )
 	{
-		if ( $p eq 'sctp' )
-		{
-			# it is not supported in the system
-			next;
-		}
-		else
-		{
-			$f_proto .= "--$p ";
-		}
+		# it is not supported in the system
+		if   ( $p eq 'sctp' ) { next; }
+		else                  { $f_proto .= "--$p "; }
 	}
 
 	my $cmd = "$netstat -$f_ipversion -${f} ${f_proto} ";
@@ -318,11 +351,10 @@ sub validatePortUserSpace
 		return 1 if ( !@out );
 	}
 
-	my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:0.0.0.0|$ip)";
+	my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:0.0.0.0|::1|$ip)";
 	my $port_reg = &getMultiportRegex( $port );
 
 	my $filter = '^\s*(?:[^\s]+\s+){3,3}' . $ip_reg . ':' . $port_reg . '\s';
-
 	@out = grep ( /$filter/, @out );
 	if ( @out )
 	{
