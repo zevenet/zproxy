@@ -252,6 +252,7 @@ Parameters:
 	port - TCP port number. It accepts l4xnat multport format: intervals (55:66,70), all ports (*).
 	protocol - It is an array reference with the protocols to check ("udp", "tcp" and "sctp"), if some of them is used, the function returns 0.
 	farmname - If the configuration is set in this farm, the check is ignored and true. This parameters is optional.
+	process - It is the process name to ignore. It is used when a process wants to be modified with all IPs parameter. The services to ignore are: "cherokee", "sshd" and "snmp"
 
 Returns:
 	Integer - It returns '1' if the port and IP are valid to be used or '0' if the port and IP are already applied in the system
@@ -262,7 +263,7 @@ sub validatePortUserSpace
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $ip, $port, $proto, $farmname ) = @_;
+	my ( $ip, $port, $proto, $farmname, $process ) = @_;
 
 	# skip if the running farm is itself
 	if ( defined $farmname )
@@ -310,6 +311,13 @@ sub validatePortUserSpace
 	shift @out;
 	shift @out;
 
+	if ( defined $process )
+	{
+		my $filter = '^\s*(?:[^\s]+\s+){6,6}\d+\/' . $process;
+		@out = grep ( !/$filter/, @out );
+		return 1 if ( !@out );
+	}
+
 	my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:0.0.0.0|$ip)";
 	my $port_reg = &getMultiportRegex( $port );
 
@@ -318,7 +326,8 @@ sub validatePortUserSpace
 	@out = grep ( /$filter/, @out );
 	if ( @out )
 	{
-		&zenlog( "The ip '$ip' and the port '$port' are being used for some process" );
+		&zenlog( "The ip '$ip' and the port '$port' are being used for some process",
+				 "warning", "networking" );
 		return 0;
 	}
 
@@ -343,6 +352,7 @@ Parameters:
 	port - TCP port number. It accepts l4xnat multport format: intervals (55:66,70), all ports (*).
 	protocol - It is an array reference with the protocols to check, if some of them is used, the function returns 0. The accepted protocols are: 'all' (no one is checked), sctp, tcp and udp
 	farmname - If the configuration is set in this farm, the check is ignored and true. This parameters is optional.
+	process - It is the process name to ignore. It is used when a process wants to be modified with all IPs parameter. The services to ignore are: "cherokee", "sshd" and "snmp"
 
 Returns:
 	Integer - It returns '1' if the port and IP are valid to be used or '0' if the port and IP are already applied in the system
@@ -356,9 +366,10 @@ sub validatePort
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my ( $ip, $port, $proto, $farmname ) = @_;
+	my ( $ip, $port, $proto, $farmname, $process ) = @_;
 
 	# validate inputs
+	$ip = '0.0.0.0' if $ip eq '*';
 	if ( !defined $proto and !defined $farmname )
 	{
 		&zenlog(
@@ -378,7 +389,8 @@ sub validatePort
 	}
 	$proto = &getProtoTransport( $proto );
 
-	return 0 if ( !&validatePortUserSpace( $ip, $port, $proto, $farmname ) );
+	return 0
+	  if ( !&validatePortUserSpace( $ip, $port, $proto, $farmname, $process ) );
 
 	return 0 if ( !&validatePortKernelSpace( $ip, $port, $proto, $farmname ) );
 

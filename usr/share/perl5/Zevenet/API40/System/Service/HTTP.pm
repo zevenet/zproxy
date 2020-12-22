@@ -125,11 +125,24 @@ sub set_http
 		}
 	}
 
+	my $port_cur = &getHttpServerPort();
+	my $ip_cur   = &getHttpServerIp();
+	my $port     = $json_obj->{ 'port' } // $port_cur;
+	my $ip       = $json_obj->{ 'ip' } // $ip_cur;
+	if ( ( $port ne $port_cur ) or ( $ip ne $ip_cur ) )
+	{
+		if ( !&validatePort( $ip, $port, 'http', undef, 'cherokee' ) )
+		{
+			my $msg = "The '$ip' ip and '$port' port are in use.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	unless ( exists $json_obj->{ force } and $json_obj->{ force } eq 'true' )
 	{
 		my $msg =
 		  "The web server will be restarted and won't be accessible from its current IP anymore. "
-		  . "The load balancer GUI will be accesible from $json_obj->{ip} when the restart is over. "
+		  . "The load balancer GUI will be accesible from '$ip:$port' when the restart is over. "
 		  . "If you agree, execute again sending the parameter 'force'";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}

@@ -96,6 +96,18 @@ sub set_ssh
 		}
 	}
 
+	my $ssh  = &getSsh();
+	my $port = $json_obj->{ 'port' } // $ssh->{ port };
+	my $ip   = $json_obj->{ 'listen' } // $ssh->{ listen };
+	if ( ( $port ne $ssh->{ port } ) or ( $ip ne $ssh->{ listen } ) )
+	{
+		if ( !&validatePort( $ip, $port, 'http', undef, 'ssh' ) )
+		{
+			my $msg = "The '$ip' ip and '$port' port are in use.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	my $error = &setSsh( $json_obj );
 	if ( $error )
 	{
