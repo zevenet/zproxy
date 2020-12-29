@@ -84,7 +84,7 @@
 #type=Single
 #ptype=RegExp
 #continue=takenext
-#pattern=Keepalived_vrrp\[\d+\]: \(ZCluster\) Entering \w+ STATE
+#pattern=^\w+\s+\d+\s+\d+:\d+:\d+\s+[\w-]+\s+Keepalived_vrrp\[\d+\]: \(ZCluster\) Entering \w+ STATE
 #context=!BLOCK_CLUSTER
 #desc=cluster_alert
 #action=shellcmd /usr/local/zevenet/bin/sendNotification sendNotification Cluster "$0"; shellcmd logger "Cluster notification sent" -i -t sec
