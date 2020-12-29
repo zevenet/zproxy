@@ -316,7 +316,7 @@ sub getNetworkStats
 	while ( <$file> )
 	{
 		chomp $_;
-		if ( $_ =~ /\:/ && $_ !~ /lo/ )
+		if ( $_ =~ /\:/ && $_ !~ /^\s*lo\:/ )
 		{
 			$i++;
 			my @iface = split ( ":", $_ );
