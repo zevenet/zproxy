@@ -317,7 +317,7 @@ if ( $q->path_info =~ qr{^/graphs} )
 	GET qr{^/graphs/interfaces/($nic_re|$vlan_re)$} => \&get_iface_graphs;
 
 	#  GET frequency interfaces graphs
-	GET qr{^/graphs/interfaces/($nic_re)/($frequency_re)$} =>
+	GET qr{^/graphs/interfaces/($nic_re|$vlan_re)/($frequency_re)$} =>
 	  \&get_frec_iface_graphs;
 
 	##### /graphs/farms
