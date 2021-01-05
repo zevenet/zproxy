@@ -280,56 +280,74 @@ if ( $q->path_info =~ qr{^/graphs} )
 
 	my $frequency_re = &getValidFormat( 'graphs_frequency' );
 	my $system_id_re = &getValidFormat( 'graphs_system_id' );
+	my $rrd_re       = &getValidFormat( 'rrd_time' );
 
 	#  GET possible graphs
-	GET qr{^/graphs$} => \&possible_graphs;
+	GET qr{^/graphs$} => \&list_possible_graphs;
 
 	##### /graphs/system
 	#  GET all possible system graphs
-	GET qr{^/graphs/system$} => \&get_all_sys_graphs;
+	GET qr{^/graphs/system$} => \&list_sys_graphs;
 
 	#  GET system graphs
 	GET qr{^/graphs/system/($system_id_re)$} => \&get_sys_graphs;
 
 	#  GET frequency system graphs
 	GET qr{^/graphs/system/($system_id_re)/($frequency_re)$} =>
-	  \&get_frec_sys_graphs;
+	  \&get_sys_graphs_freq;
+
+	#  GET the interval of a system graph
+	GET qr{^/graphs/system/($system_id_re)/custom/start/($rrd_re)/end/($rrd_re)$} =>
+	  \&get_sys_graphs_interval;
 
 	##### /graphs/system/disk
 
 	# $disk_re includes 'root' at the beginning
 	my $disk_re = &getValidFormat( 'mount_point' );
 
-	GET qr{^/graphs/system/disk$} => \&list_disks;
+	GET qr{^/graphs/system/disk$} => \&list_disks_graphs;
+
+	#  GET the interval of a disk graph
+	GET qr{^/graphs/system/disk/($disk_re)/custom/start/($rrd_re)/end/($rrd_re)$} =>
+	  \&get_disk_graphs_interval;
 
 	# keep before next request
 	GET qr{^/graphs/system/disk/($disk_re)/($frequency_re)$} =>
-	  \&graph_disk_mount_point_freq;
+	  \&get_disk_graphs_freq;
 
-	GET qr{^/graphs/system/disk/($disk_re)$} => \&graphs_disk_mount_point_all;
+	GET qr{^/graphs/system/disk/($disk_re)$} => \&get_disk_graphs;
 
 	##### /graphs/interfaces
 
-	#  GET all posible interfaces graphs
-	GET qr{^/graphs/interfaces$} => \&get_all_iface_graphs;
+	#  GET all possible interfaces graphs
+	GET qr{^/graphs/interfaces$} => \&list_iface_graphs;
 
 	#  GET interfaces graphs
 	GET qr{^/graphs/interfaces/($nic_re|$vlan_re)$} => \&get_iface_graphs;
 
 	#  GET frequency interfaces graphs
 	GET qr{^/graphs/interfaces/($nic_re|$vlan_re)/($frequency_re)$} =>
-	  \&get_frec_iface_graphs;
+	  \&get_iface_graphs_frec;
+
+	#  GET the interval of an interface graph
+	GET
+	  qr{^/graphs/interfaces/($nic_re|$vlan_re)/custom/start/($rrd_re)/end/($rrd_re)$}
+	  => \&get_iface_graphs_interval;
 
 	##### /graphs/farms
 
 	#  GET all posible farm graphs
-	GET qr{^/graphs/farms$} => \&get_all_farm_graphs;
+	GET qr{^/graphs/farms$} => \&list_farm_graphs;
 
 	#  GET farm graphs
 	GET qr{^/graphs/farms/($farm_re)$} => \&get_farm_graphs;
 
 	#  GET frequency farm graphs
-	GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => \&get_frec_farm_graphs;
+	GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => \&get_farm_graphs_frec;
+
+	#  GET the interval of a farm graph
+	GET qr{^/graphs/farms/($farm_re)/custom/start/($rrd_re)/end/($rrd_re)$} =>
+	  \&get_farm_graphs_interval;
 }
 
 # System

@@ -110,13 +110,13 @@ sub get_sys_graphs    #()
 
 	# Print Graph Function
 	my @output;
-	my $graph = &printGraph( $key, 'd' );
+	my $graph = &printGraph( $key, 'd' )->{ img };
 	push @output, { frequency => 'daily', graph => $graph };
-	$graph = &printGraph( $key, 'w' );
+	$graph = &printGraph( $key, 'w' )->{ img };
 	push @output, { frequency => 'weekly', graph => $graph };
-	$graph = &printGraph( $key, 'm' );
+	$graph = &printGraph( $key, 'm' )->{ img };
 	push @output, { frequency => 'monthly', graph => $graph };
-	$graph = &printGraph( $key, 'y' );
+	$graph = &printGraph( $key, 'y' )->{ img };
 	push @output, { frequency => 'yearly', graph => $graph };
 
 	my $body = { description => $description, graphs => \@output };
@@ -140,7 +140,7 @@ sub get_frec_sys_graphs    #()
 
 	# Print Graph Function
 	my @output;
-	my $graph = &printGraph( $key, $frequency );
+	my $graph = &printGraph( $key, $frequency )->{ img };
 
 	my $body = { description => $description, graphs => $graph };
 	&httpResponse( { code => 200, body => $body } );
@@ -195,13 +195,13 @@ sub get_iface_graphs    #()
 	{
 		# Print Graph Function
 		my @output;
-		my $graph = &printGraph( "${iface}iface", 'd' );
+		my $graph = &printGraph( "${iface}iface", 'd' )->{ img };
 		push @output, { frequency => 'daily', graph => $graph };
-		$graph = &printGraph( "${iface}iface", 'w' );
+		$graph = &printGraph( "${iface}iface", 'w' )->{ img };
 		push @output, { frequency => 'weekly', graph => $graph };
-		$graph = &printGraph( "${iface}iface", 'm' );
+		$graph = &printGraph( "${iface}iface", 'm' )->{ img };
 		push @output, { frequency => 'monthly', graph => $graph };
-		$graph = &printGraph( "${iface}iface", 'y' );
+		$graph = &printGraph( "${iface}iface", 'y' )->{ img };
 		push @output, { frequency => 'yearly', graph => $graph };
 
 		my $body = { description => $description, graphs => \@output };
@@ -254,7 +254,7 @@ sub get_frec_iface_graphs    #()
 		}
 
 		# Print Graph Function
-		my $graph = &printGraph( "${iface}iface", $frequency );
+		my $graph = &printGraph( "${iface}iface", $frequency )->{ img };
 		my $body = { description => $description, graph => $graph };
 		&httpResponse( { code => 200, body => $body } );
 	}
@@ -307,13 +307,13 @@ sub get_farm_graphs    #()
 	{
 		# Print Graph Function
 		my @output;
-		my $graph = &printGraph( "$farmName-farm", 'd' );
+		my $graph = &printGraph( "$farmName-farm", 'd' )->{ img };
 		push @output, { frequency => 'daily', graph => $graph };
-		$graph = &printGraph( "$farmName-farm", 'w' );
+		$graph = &printGraph( "$farmName-farm", 'w' )->{ img };
 		push @output, { frequency => 'weekly', graph => $graph };
-		$graph = &printGraph( "$farmName-farm", 'm' );
+		$graph = &printGraph( "$farmName-farm", 'm' )->{ img };
 		push @output, { frequency => 'monthly', graph => $graph };
-		$graph = &printGraph( "$farmName-farm", 'y' );
+		$graph = &printGraph( "$farmName-farm", 'y' )->{ img };
 		push @output, { frequency => 'yearly', graph => $graph };
 
 		my $body = { description => $description, graphs => \@output };
@@ -362,7 +362,7 @@ sub get_frec_farm_graphs    #()
 		}
 
 		# Print Graph Function
-		my $graph = &printGraph( "$farmName-farm", $frequency );
+		my $graph = &printGraph( "$farmName-farm", $frequency )->{ img };
 		my $body = { description => $description, graph => $graph };
 		&httpResponse( { code => 200, body => $body } );
 	}
@@ -431,10 +431,22 @@ sub graphs_disk_mount_point_all    #()
 
 	# Success
 	my @graphs = (
-				   { frequency => 'daily',   graph => &printGraph( $dev_id, 'd' ) },
-				   { frequency => 'weekly',  graph => &printGraph( $dev_id, 'w' ) },
-				   { frequency => 'monthly', graph => &printGraph( $dev_id, 'm' ) },
-				   { frequency => 'yearly',  graph => &printGraph( $dev_id, 'y' ) },
+				   {
+					  frequency => 'daily',
+					  graph     => &printGraph( $dev_id, 'd' )->{ img }
+				   },
+				   {
+					  frequency => 'weekly',
+					  graph     => &printGraph( $dev_id, 'w' )->{ img }
+				   },
+				   {
+					  frequency => 'monthly',
+					  graph     => &printGraph( $dev_id, 'm' )->{ img }
+				   },
+				   {
+					  frequency => 'yearly',
+					  graph     => &printGraph( $dev_id, 'y' )->{ img }
+				   },
 	);
 
 	my $body = {
@@ -482,7 +494,7 @@ sub graph_disk_mount_point_freq    #()
 	my $body = {
 				 description => $description,
 				 frequency   => $frequency,
-				 graph       => &printGraph( $dev_id, $freq ),
+				 graph       => &printGraph( $dev_id, $freq )->{ img },
 	};
 
 	&httpResponse( { code => 200, body => $body } );

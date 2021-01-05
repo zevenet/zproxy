@@ -26,7 +26,10 @@ use strict;
 use Zevenet::RRD;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 # Supported graphs periods
 my $graph_period = {
@@ -39,7 +42,8 @@ my $graph_period = {
 #GET disk
 sub possible_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
@@ -85,7 +89,8 @@ sub possible_graphs    #()
 # GET all system graphs
 sub get_all_sys_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	# System values
@@ -118,7 +123,8 @@ sub get_all_sys_graphs    #()
 # GET system graphs
 sub get_sys_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $key = shift;
 
 	my $desc = "Get $key graphs";
@@ -128,13 +134,13 @@ sub get_sys_graphs    #()
 
 	# Print Graph Function
 	my @output;
-	my $graph = &printGraph( $key, 'd' );
+	my $graph = &printGraph( $key, 'd' )->{ img };
 	push @output, { frequency => 'daily', graph => $graph };
-	$graph = &printGraph( $key, 'w' );
+	$graph = &printGraph( $key, 'w' )->{ img };
 	push @output, { frequency => 'weekly', graph => $graph };
-	$graph = &printGraph( $key, 'm' );
+	$graph = &printGraph( $key, 'm' )->{ img };
 	push @output, { frequency => 'monthly', graph => $graph };
-	$graph = &printGraph( $key, 'y' );
+	$graph = &printGraph( $key, 'y' )->{ img };
 	push @output, { frequency => 'yearly', graph => $graph };
 
 	my $body = { description => $desc, graphs => \@output };
@@ -145,7 +151,8 @@ sub get_sys_graphs    #()
 # GET frequency system graphs
 sub get_frec_sys_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $key       = shift;
 	my $frequency = shift;
 
@@ -159,7 +166,7 @@ sub get_frec_sys_graphs    #()
 
 	# Print Graph Function
 	my @output;
-	my $graph = &printGraph( $key, $frequency );
+	my $graph = &printGraph( $key, $frequency )->{ img };
 	my $body = { description => $desc, graphs => $graph };
 
 	&httpResponse( { code => 200, body => $body } );
@@ -168,7 +175,8 @@ sub get_frec_sys_graphs    #()
 # GET all interface graphs
 sub get_all_iface_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @iface = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my $body = {
 		description =>
@@ -182,7 +190,8 @@ sub get_all_iface_graphs    #()
 # GET interface graphs
 sub get_iface_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iface = shift;
 
 	require Zevenet::Net::Interface;
@@ -207,16 +216,16 @@ sub get_iface_graphs    #()
 	# Print Graph Function
 	my @output;
 
-	my $graph = &printGraph( "${iface}iface", 'd' );
+	my $graph = &printGraph( "${iface}iface", 'd' )->{ img };
 	push @output, { frequency => 'daily', graph => $graph };
 
-	$graph = &printGraph( "${iface}iface", 'w' );
+	$graph = &printGraph( "${iface}iface", 'w' )->{ img };
 	push @output, { frequency => 'weekly', graph => $graph };
 
-	$graph = &printGraph( "${iface}iface", 'm' );
+	$graph = &printGraph( "${iface}iface", 'm' )->{ img };
 	push @output, { frequency => 'monthly', graph => $graph };
 
-	$graph = &printGraph( "${iface}iface", 'y' );
+	$graph = &printGraph( "${iface}iface", 'y' )->{ img };
 	push @output, { frequency => 'yearly', graph => $graph };
 
 	my $body = { description => $desc, graphs => \@output };
@@ -227,7 +236,8 @@ sub get_iface_graphs    #()
 # GET frequency interface graphs
 sub get_frec_iface_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $iface     = shift;
 	my $frequency = shift;
 
@@ -257,7 +267,7 @@ sub get_frec_iface_graphs    #()
 	}
 
 	# Print Graph Function
-	my $graph = &printGraph( "${iface}iface", $frequency );
+	my $graph = &printGraph( "${iface}iface", $frequency )->{ img };
 	my $body = { description => $desc, graph => $graph };
 
 	&httpResponse( { code => 200, body => $body } );
@@ -266,15 +276,16 @@ sub get_frec_iface_graphs    #()
 # GET all farm graphs
 sub get_all_farm_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 
 	if ( $eload )
 	{
 		my $ref_farm = &eload(
-						 module => 'Zevenet::RBAC::Group::Core',
-						 func   => 'getRBACResourcesFromList',
-						 args   => ['farms', \@farms]
+							   module => 'Zevenet::RBAC::Group::Core',
+							   func   => 'getRBACResourcesFromList',
+							   args   => ['farms', \@farms]
 		);
 		@farms = @{ $ref_farm };
 	}
@@ -291,7 +302,8 @@ sub get_all_farm_graphs    #()
 # GET farm graphs
 sub get_farm_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName = shift;
 
 	require Zevenet::Farm::Core;
@@ -299,7 +311,7 @@ sub get_farm_graphs    #()
 	my $desc = "Get farm graphs";
 
 	# this farm doesn't exist
-	if ( ! &getFarmExists( $farmName ) )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -315,16 +327,16 @@ sub get_farm_graphs    #()
 	# Print Graph Function
 	my @output;
 
-	my $graph = &printGraph( "$farmName-farm", 'd' );
+	my $graph = &printGraph( "$farmName-farm", 'd' )->{ img };
 	push @output, { frequency => 'daily', graph => $graph };
 
-	$graph = &printGraph( "$farmName-farm", 'w' );
+	$graph = &printGraph( "$farmName-farm", 'w' )->{ img };
 	push @output, { frequency => 'weekly', graph => $graph };
 
-	$graph = &printGraph( "$farmName-farm", 'm' );
+	$graph = &printGraph( "$farmName-farm", 'm' )->{ img };
 	push @output, { frequency => 'monthly', graph => $graph };
 
-	$graph = &printGraph( "$farmName-farm", 'y' );
+	$graph = &printGraph( "$farmName-farm", 'y' )->{ img };
 	push @output, { frequency => 'yearly', graph => $graph };
 
 	my $body = { description => $desc, graphs => \@output };
@@ -335,7 +347,8 @@ sub get_farm_graphs    #()
 # GET frequency farm graphs
 sub get_frec_farm_graphs    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $farmName  = shift;
 	my $frequency = shift;
 
@@ -344,7 +357,7 @@ sub get_frec_farm_graphs    #()
 	my $desc = "Get farm graphs";
 
 	# this farm doesn't exist
-	if ( ! &getFarmExists( $farmName ) )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -366,7 +379,7 @@ sub get_frec_farm_graphs    #()
 	}
 
 	# Print Graph Function
-	my $graph = &printGraph( "$farmName-farm", $frequency );
+	my $graph = &printGraph( "$farmName-farm", $frequency )->{ img };
 	my $body = { description => $desc, graph => $graph };
 
 	&httpResponse( { code => 200, body => $body } );
@@ -375,7 +388,8 @@ sub get_frec_farm_graphs    #()
 #GET mount points list
 sub list_disks    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	require Zevenet::Stats;
 
 	my @mount_points;
@@ -400,7 +414,8 @@ sub list_disks    #()
 #GET disk graphs for all periods
 sub graphs_disk_mount_point_all    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $mount_point = shift;
 
 	require Zevenet::Stats;
@@ -420,10 +435,22 @@ sub graphs_disk_mount_point_all    #()
 
 	my $dev_id = $parts->{ $part_key }->{ rrd_id };
 	my @graphs = (
-				   { frequency => 'daily',   graph => &printGraph( $dev_id, 'd' ) },
-				   { frequency => 'weekly',  graph => &printGraph( $dev_id, 'w' ) },
-				   { frequency => 'monthly', graph => &printGraph( $dev_id, 'm' ) },
-				   { frequency => 'yearly',  graph => &printGraph( $dev_id, 'y' ) },
+				   {
+					  frequency => 'daily',
+					  graph     => &printGraph( $dev_id, 'd' )->{ img }
+				   },
+				   {
+					  frequency => 'weekly',
+					  graph     => &printGraph( $dev_id, 'w' )->{ img }
+				   },
+				   {
+					  frequency => 'monthly',
+					  graph     => &printGraph( $dev_id, 'm' )->{ img }
+				   },
+				   {
+					  frequency => 'yearly',
+					  graph     => &printGraph( $dev_id, 'y' )->{ img }
+				   },
 	);
 	my $body = {
 				 description => $desc,
@@ -436,7 +463,8 @@ sub graphs_disk_mount_point_all    #()
 #GET disk graph for a single period
 sub graph_disk_mount_point_freq    #()
 {
-	&zenlog(__FILE__ . ":" . __LINE__ . ":" . (caller(0))[3] . "( @_ )", "debug", "PROFILING" );
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
 	my $mount_point = shift;
 	my $frequency   = shift;
 
@@ -460,7 +488,7 @@ sub graph_disk_mount_point_freq    #()
 	my $body = {
 				 description => $desc,
 				 frequency   => $frequency,
-				 graph       => &printGraph( $dev_id, $freq ),
+				 graph       => &printGraph( $dev_id, $freq )->{ img },
 	};
 
 	&httpResponse( { code => 200, body => $body } );

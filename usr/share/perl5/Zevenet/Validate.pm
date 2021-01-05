@@ -46,7 +46,9 @@ my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)/;
 my $minutes  = qr/(?:\d|[0-5]\d)/;
 my $hours    = qr/(?:\d|[0-1]\d|2[0-3])/;
 my $months   = qr/(?:[1-9]|1[0-2])/;
-my $dayofmonth = qr/(?:[1-9]|[1-2]\d|3[01])/;    # day of month
+my $dayofmonth = qr/(?:[1-9]|[1-2]\d|3[01])/;            # day of month
+my $rrdTime    = qr/\d\d-\d\d-(?:\d\d)?\d\d-\d\d:\d\d/
+  ;    # MM-DD-[YY]YY-hh:mm ; example: "11-09-2020-14:05";
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z0-9][a-zA-Z0-9_\-\.]*/;
@@ -80,6 +82,7 @@ my %format_re = (
 	'natural_num' => $natural,
 	'boolean'     => $boolean,
 	'ipv4v6'      => $ipv4v6,
+	'rrd_time'    => $rrdTime,
 
 	# hostname
 	'hostname' => $hostname,
