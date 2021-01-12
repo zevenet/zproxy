@@ -115,5 +115,8 @@ class HttpStream : public Counter<HttpStream> {
 
   std::shared_ptr<ServiceManager> service_manager;
 
-  static void dumpDebugData(HttpStream * stream, const char* debug_str, const char * data);
+  static void dumpDebugData_(const std::string& file, const std::string& function, int line,
+                             HttpStream* stream, const char* debug_str, const char* data);
 };
+
+#define dumpDebugData(...) dumpDebugData_(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)

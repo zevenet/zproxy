@@ -297,31 +297,25 @@ void StreamManager::onRequestEvent(int fd) {
     ::close(fd);
     return;
   }
+  auto& listener_config_ = *stream->service_manager->listener_config_;
+  // update log info
+  StreamDataLogger logger(stream, listener_config_);
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{
       [stream, &extra_log] { HttpStream::dumpDebugData(stream, "OnRequest", extra_log.data()); }};
 #endif
-  auto& listener_config_ = *stream->service_manager->listener_config_;
-  // update log info
-  StreamDataLogger logger(stream, listener_config_);
 
   if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
     DEBUG_COUNTER_HIT(debug__::on_request);
 #if EXTENDED_DEBUG_LOG
-    extra_log = "RESPONSE_PENDING";
+    extra_log = "REQUEST_PENDING";
 #endif
     stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
     stream->backend_connection.enableWriteEvent();
     stream->client_connection.disableEvents();
     return;
   }
-#if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(
-      LOG_REMOVE, "IN buffer size: %8lu\tContent-length: %lu\tleft: %lu",
-      stream->client_connection.buffer_size, stream->request.content_length,
-      stream->request.message_bytes_left);
-#endif
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
   if (stream->service_manager->is_https_listener) {
     result =
@@ -424,11 +418,7 @@ void StreamManager::onRequestEvent(int fd) {
     }
 #endif
 #if PRINT_DEBUG_FLOW_BUFFERS
-    Logger::logmsg(
-        LOG_REMOVE,
-        "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
-        stream->client_connection.buffer_size, stream->request.content_length,
-        stream->request.message_bytes_left, IO::getResultString(result).data());
+    HttpStream::dumpDebugData(stream, "OnRequest", extra_log.data());
 #endif
 #if ENABLE_QUICK_RESPONSE
     onServerWriteEvent(stream);
@@ -438,13 +428,7 @@ void StreamManager::onRequestEvent(int fd) {
     return;
   }
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(
-      LOG_DEBUG,
-      "IN buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: "
-      "%s Header sent: %s",
-      stream->client_connection.buffer_size, stream->request.content_length,
-      stream->request.message_bytes_left, IO::getResultString(result).data(),
-      stream->request.getHeaderSent() ? "true" : "false");
+  HttpStream::dumpDebugData(stream, "OnRequest", extra_log.data());
 #endif
   size_t parsed = 0;
   http_parser::PARSE_RESULT parse_result;
@@ -581,8 +565,6 @@ void StreamManager::onRequestEvent(int fd) {
   // update log info
   StreamDataLogger::setLogData(stream, listener_config_);
   IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
-  static size_t total_request;
-  total_request++;
   stream->response.reset_parser();
   switch (bck->backend_type) {
     case BACKEND_TYPE::REMOTE: {
@@ -653,7 +635,7 @@ void StreamManager::onRequestEvent(int fd) {
       }
 
       Logger::logmsg(LOG_DEBUG, "%s %lu [%s] %.*s [%s (%d) -> %s:%d (%d)]",
-                     need_new_backend ? "NEW" : "REUSED", total_request,
+                     need_new_backend ? "NEW" : "REUSED", stream->stream_id,
                      service->name.c_str(), stream->request.http_message_length,
                      stream->request.http_message,
                      stream->client_connection.getPeerAddress().c_str(),
@@ -722,16 +704,16 @@ void StreamManager::onResponseEvent(int fd) {
     ::close(fd);
     return;
   }
+  auto& listener_config_ = *stream->service_manager->listener_config_;
+  // update log info
+  StreamDataLogger logger(stream, listener_config_);
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{[stream, &extra_log] {
     //check not null
-     HttpStream::dumpDebugData(stream,"OnResponse", extra_log.data());
+    HttpStream::dumpDebugData(stream,"OnResponse", extra_log.data());
   }};
 #endif
-  auto& listener_config_ = *stream->service_manager->listener_config_;
-  // update log info
-  StreamDataLogger logger(stream, listener_config_);
   if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
 #if EXTENDED_DEBUG_LOG
     extra_log = "RESPONSE_PENDING";
@@ -741,24 +723,11 @@ void StreamManager::onResponseEvent(int fd) {
     stream->backend_connection.disableEvents();
     return;
   }
-#if PRINT_DEBUG_FLOW_BUFFERS
-  auto buffer_size_in = stream->backend_connection.buffer_size;
-  if (stream->backend_connection.buffer_size != 0)
-    Logger::logmsg(
-        LOG_REMOVE,
-        "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
-        "header_sent: %s chunk left: %d chunked: %s",
-        stream->backend_connection.getFileDescriptor(),
-        stream->backend_connection.buffer_size, stream->response.content_length,
-        stream->response.message_bytes_left,
-        stream->response.getHeaderSent() ? "true" : "false",
-        stream->response.chunk_size_left,
-        stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
-            ? "TRUE"
-            : "false");
+
+
+#if EXTENDED_DEBUG_LOG
+  HttpStream::dumpDebugData(stream,"OnResponse", extra_log.data());
 #endif
-
-
   DEBUG_COUNTER_HIT(debug__::on_response);
   IO::IO_RESULT result;
 
@@ -800,17 +769,6 @@ void StreamManager::onResponseEvent(int fd) {
 #endif
       result = stream->backend_connection.read();
   }
-#if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(
-      LOG_REMOVE,
-      "fd:%d IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu "
-      "header_sent: %s chunk_size_left: %d IO RESULT: %s",
-      stream->backend_connection.getFileDescriptor(),
-      stream->backend_connection.buffer_size, stream->response.content_length,
-      stream->response.message_bytes_left,
-      stream->response.getHeaderSent() ? "true" : "false",
-      stream->response.chunk_size_left, IO::getResultString(result).data());
-#endif
 #if EXTENDED_DEBUG_LOG
   extra_log = IO::getResultString(result);
 #endif
@@ -859,22 +817,7 @@ void StreamManager::onResponseEvent(int fd) {
       return;
     }
   }
-#if PRINT_DEBUG_FLOW_BUFFERS
-  if (buffer_size_in > 0)
-    Logger::logmsg(
-        LOG_REMOVE,
-        "%.*s IN\tbuffer size: %lu:%8lu \tContent-length: %lu\tleft: %lu "
-        "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
-        stream->request.http_message_length, stream->request.http_message,
-        buffer_size_in, stream->backend_connection.buffer_size,
-        stream->response.content_length, stream->response.message_bytes_left,
-        stream->response.getHeaderSent() ? "true" : "false",
-        stream->response.chunk_size_left, IO::getResultString(result).data(),
-        stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
-            ? "T"
-            : "F");
-#endif
-  // disable response timeout timerfd
+// disable response timeout timerfd
 #if USE_TIMER_FD_TIMEOUT
   if (stream->backend_connection.getBackend()->response_timeout > 0) {
     stream->timer_fd.unset();
@@ -889,6 +832,9 @@ void StreamManager::onResponseEvent(int fd) {
   }else {
     stream->clearStatus(STREAM_STATUS::BCK_READ_PENDING);
   }
+#if PRINT_DEBUG_FLOW_BUFFERS
+  HttpStream::dumpDebugData(stream, "OnResponse", extra_log.data());
+#endif
   if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) || stream->response.hasPendingData()) {
 #ifdef CACHE_ENABLED
     if (stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -906,14 +852,6 @@ void StreamManager::onResponseEvent(int fd) {
     }
 #endif
 
-#if PRINT_DEBUG_FLOW_BUFFERS
-    Logger::logmsg(
-        LOG_REMOVE,
-        "OUT buffer size: %8lu\tContent-length: %lu\tleft: %lu\tIO: %s",
-        stream->backend_connection.buffer_size, stream->response.content_length,
-        stream->response.message_bytes_left,
-        IO::getResultString(result).data());
-#endif
 #if ENABLE_QUICK_RESPONSE
     onClientWriteEvent(stream);
 #else
@@ -926,7 +864,6 @@ void StreamManager::onResponseEvent(int fd) {
     auto ret = stream->response.parseResponse(
         stream->backend_connection.buffer,
         stream->backend_connection.buffer_size, &parsed);
-    static size_t total_responses;
     switch (ret) {
       case http_parser::PARSE_RESULT::SUCCESS: {
         stream->backend_connection.getBackend()->calculateLatency(
@@ -945,7 +882,7 @@ void StreamManager::onResponseEvent(int fd) {
             "%d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer "
             "size: %lu \n\t\t Content length: %lu \n\t\t "
             "left: %lu\n%.*s header sent: %s \n",
-            total_responses, stream->client_connection.getFileDescriptor(),
+            stream->stream_id, stream->client_connection.getFileDescriptor(),
             stream->backend_connection.getFileDescriptor(),
             stream->backend_connection.buffer_size,
             stream->response.content_length,
@@ -960,17 +897,16 @@ void StreamManager::onResponseEvent(int fd) {
         stream->backend_connection.enableReadEvent();
         return;
     }
-
-    total_responses++;
+    auto latency = Time::getElapsed(stream->backend_connection.time_start);
     Logger::logmsg(
-        LOG_DEBUG, " %lu [%s] %s -> %s [%s (%d) <- %s (%d)]", total_responses,
+        LOG_DEBUG, " %lu [%s] %s -> %s [%s (%d) <- %s (%d)] %lf", stream->stream_id,
         static_cast<Service*>(stream->request.getService())->name.c_str(),
         stream->response.http_message_str.data(),
         stream->request.http_message_str.data(),
         stream->client_connection.getPeerAddress().c_str(),
         stream->client_connection.getFileDescriptor(),
         stream->backend_connection.getBackend()->address.c_str(),
-        stream->backend_connection.getFileDescriptor());
+        stream->backend_connection.getFileDescriptor(), latency);
 
     stream->backend_connection.getBackend()->setAvgTransferTime(
         stream->backend_connection.time_start);
@@ -1223,7 +1159,7 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
         switch (op_state) {
           case IO::IO_OP::OP_ERROR: {
             Logger::logmsg(LOG_NOTICE, "Error connecting to backend %s",
-                           bck->address.data());           
+                           bck->address.data());
             onBackendConnectionError(stream);
             return;
           }
@@ -1302,15 +1238,15 @@ void StreamManager::setStreamBackend(HttpStream* stream) {
 
 void StreamManager::onServerWriteEvent(HttpStream* stream) {
   DEBUG_COUNTER_HIT(debug__::on_send_request);
-#if EXTENDED_DEBUG_LOG
-  std::string extra_log;
-  ScopeExit logStream{[stream, &extra_log] {
-     HttpStream::dumpDebugData(stream,"onServerW", extra_log.data());
-  }};
-#endif
   auto& listener_config_ = *stream->service_manager->listener_config_;
   // update log info
   StreamDataLogger logger(stream, listener_config_);
+#if EXTENDED_DEBUG_LOG
+  std::string extra_log;
+  ScopeExit logStream{[stream, &extra_log] {
+    HttpStream::dumpDebugData(stream,"onServerW", extra_log.data());
+  }};
+#endif
   int fd = stream->backend_connection.getFileDescriptor();
   // Send client request to backend server
 #if USE_TIMER_FD_TIMEOUT

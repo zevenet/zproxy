@@ -67,6 +67,14 @@ struct Time {
     return (milliseconds - TV_TO_MS(start_point))/1000.0;
   }
 
+  inline static double getElapsed(const timeval& start_point) {
+    timeval result{};
+    result.tv_sec = current_time.tv_sec - start_point.tv_sec;
+    result.tv_usec = current_time.tv_usec - start_point.tv_usec;
+    /* Return 1 if result is negative. */
+    return TV_TO_S(result);
+  }
+
  private:
   inline static thread_local double milliseconds;
 };
