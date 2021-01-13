@@ -466,7 +466,46 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
           ;
         svc->next = parseService(lin + matches[1].rm_so);
       }
-    } else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
+    } else if (!regexec(&regex_set::ReplaceHeader, lin, 5, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      lin[matches[2].rm_eo] = '\0';
+      lin[matches[3].rm_eo] = '\0';
+      lin[matches[4].rm_eo] = '\0';
+      lin[matches[5].rm_eo] = '\0';
+      auto type_ = std::string(lin + matches[1].rm_so);
+      auto name_ = std::string(lin + matches[2].rm_so);
+      auto match_ = std::string(lin + matches[3].rm_so);
+      auto replace_ = std::string(lin + matches[4].rm_so);
+      ReplaceHeader *current{nullptr};
+      if (!strcasecmp(type_.data(), "Request")) {
+        if (res->replace_header_request) {
+          for (current = res->replace_header_request; current->next; current = current->next)
+            ;
+          current->next = new ReplaceHeader();
+          current = current->next;
+        } else {
+          res->replace_header_request = new ReplaceHeader();
+          current = res->replace_header_request;
+        }
+      } else if (!strcasecmp(type_.data(), "Response")) {
+        if (res->replace_header_response) {
+          for (current = res->replace_header_response; current->next; current = current->next)
+            ;
+          current->next = new ReplaceHeader();
+          current = current->next;
+        } else {
+          res->replace_header_response = new ReplaceHeader();
+          current = res->replace_header_response;
+        }
+      } else {
+        conf_err("ReplceHeader type not specified");
+      }
+      if (::regcomp(&current->name, name_.data(), REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("Error compiling Name regex ");
+      if (::regcomp(&current->match, match_.data(), REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("Error compiling Match regex ");
+      current->replace = replace_;
+      } else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
       if (!has_addr || !has_port)
         conf_err("ListenHTTP missing Address or Port - aborted");
       return res;
@@ -907,6 +946,45 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
           ;
         svc->next = parseService(lin + matches[1].rm_so);
       }
+    } else if (!regexec(&regex_set::ReplaceHeader, lin, 5, matches, 0)) {
+      lin[matches[1].rm_eo] = '\0';
+      lin[matches[2].rm_eo] = '\0';
+      lin[matches[3].rm_eo] = '\0';
+      lin[matches[4].rm_eo] = '\0';
+      lin[matches[5].rm_eo] = '\0';
+      auto type_ = std::string(lin + matches[1].rm_so);
+      auto name_ = std::string(lin + matches[2].rm_so);
+      auto match_ = std::string(lin + matches[3].rm_so);
+      auto replace_ = std::string(lin + matches[4].rm_so);
+      ReplaceHeader *current{nullptr};
+      if (!strcasecmp(type_.data(), "Request")) {
+        if (res->replace_header_request) {
+          for (current = res->replace_header_request; current->next; current = current->next)
+            ;
+          current->next = new ReplaceHeader();
+          current = current->next;
+        } else {
+          res->replace_header_request = new ReplaceHeader();
+          current = res->replace_header_request;
+        }
+      } else if (!strcasecmp(type_.data(), "Response")) {
+        if (res->replace_header_response) {
+          for (current = res->replace_header_response; current->next; current = current->next)
+            ;
+          current->next = new ReplaceHeader();
+          current = current->next;
+        } else {
+          res->replace_header_response = new ReplaceHeader();
+          current = res->replace_header_response;
+        }
+      } else {
+        conf_err("ReplceHeader type not specified");
+      }
+      if (::regcomp(&current->name, name_.data(), REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("Error compiling Name regex ");
+      if (::regcomp(&current->match, match_.data(), REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+        conf_err("Error compiling Match regex ");
+      current->replace = replace_;
     } else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
       if (openssl_file_exists) {
         res->ctx = std::make_shared<POUND_CTX>();
@@ -1155,7 +1233,7 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
   std::shared_ptr<BackendConfig> be;
   MATCHER *m;
   int ign_case;
-  regmatch_t matches[5];
+  regmatch_t matches[10];
 
   res->f_name = name;
   res->max_headers_allowed = 128;

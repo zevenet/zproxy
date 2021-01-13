@@ -203,11 +203,56 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
     /* maybe header to be removed */
 
     eol.rm_so = 0;
-    eol.rm_so = request.headers[i].line_size;
+    eol.rm_eo = request.headers[i].line_size;
     for (auto m = listener_config_.head_off; m; m = m->next) {
       if (::regexec(&m->pat, request.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
         request.headers[i].header_off = true;
         break;
+      }
+    }
+    // check for header to be replaced in request
+    for (auto m = listener_config_.replace_header_request; m; m = m->next) {
+      eol.rm_eo = request.headers[i].line_size;
+      if (::regexec(&m->name, request.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
+        auto buf = std::make_unique<char[]>(MAXBUF);
+        memset(buf.get(), 0, MAXBUF);
+        regmatch_t umtch[10];
+        char *chptr, *enptr, *srcptr;
+        umtch[0].rm_so = 0;
+        umtch[0].rm_eo = request.headers[i].value_len;
+        if (regexec(&m->match, request.headers[i].value, 10, umtch, REG_STARTEND)) {
+          Logger::logmsg(LOG_INFO, "Header Match pattern didn't match %.*s",
+                         request.headers[i].line_size, request.headers[i].name);
+          break;
+        } else {
+          chptr = buf.get();
+          enptr = buf.get() + MAXBUF - 1;
+          *enptr = '\0';
+          srcptr = const_cast<char *>(m->replace.data());
+          for (; *srcptr && chptr < enptr - 1;) {
+            if (srcptr[0] == '$' && srcptr[1] == '$') {
+              *chptr++ = *srcptr++;
+              srcptr++;
+            }
+            if (srcptr[0] == '$' && isdigit(srcptr[1])) {
+              if (chptr + umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so > enptr - 1)
+                break;
+              memcpy(chptr, request.headers[i].value + umtch[srcptr[1] - 0x30].rm_so,
+                     umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so);
+              chptr += umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so;
+              srcptr += 2;
+              continue;
+            }
+            *chptr++ = *srcptr++;
+          }
+          *chptr++ = '\0';
+
+          auto new_header_value = std::string(request.headers[i].name, request.headers[i].name_len);
+          new_header_value += ": ";
+          new_header_value += buf.get();
+          request.addHeader(new_header_value);
+          request.headers[i].header_off = true;
+        }
       }
     }
 
@@ -368,11 +413,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
   bool connection_close_pending = false;
   for (size_t i = 0; i != response.num_headers; i++) {
 
-    // check header values length
-    auto header = std::string_view(response.headers[i].name,
-                                   response.headers[i].name_len);
-    auto header_value = std::string_view(response.headers[i].value,
-                                         response.headers[i].value_len);
     /* maybe header to be removed from response */
     regmatch_t eol{0,static_cast<regoff_t>(response.headers[i].line_size)};
     for (auto m = listener_config_.response_head_off; m; m = m->next) {
@@ -381,13 +421,63 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
         break;
       }
     }
+    // check for header to be replaced in request
+    for (auto m = listener_config_.replace_header_response; m; m = m->next) {
+      eol.rm_eo = response.headers[i].line_size;
+      if (::regexec(&m->name, response.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
+        auto buf = std::make_unique<char[]>(MAXBUF);
+        memset(buf.get(), 0, MAXBUF);
+        regmatch_t umtch[10];
+        char *chptr, *enptr, *srcptr;
+        umtch[0].rm_so = 0;
+        umtch[0].rm_eo = response.headers[i].value_len;
+        if (regexec(&m->match, response.headers[i].value, 10, umtch, REG_STARTEND)) {
+          Logger::logmsg(LOG_INFO, "Header Match pattern didn't match %.*s",
+                         response.headers[i].line_size, response.headers[i].name);
+          break;
+        } else {
+          chptr = buf.get();
+          enptr = buf.get() + MAXBUF - 1;
+          *enptr = '\0';
+          srcptr = const_cast<char *>(m->replace.data());
+          for (; *srcptr && chptr < enptr - 1;) {
+            if (srcptr[0] == '$' && srcptr[1] == '$') {
+              *chptr++ = *srcptr++;
+              srcptr++;
+            }
+            if (srcptr[0] == '$' && isdigit(srcptr[1])) {
+              if (chptr + umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so > enptr - 1)
+                break;
+              memcpy(chptr, response.headers[i].value + umtch[srcptr[1] - 0x30].rm_so,
+                     umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so);
+              chptr += umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so;
+              srcptr += 2;
+              continue;
+            }
+            *chptr++ = *srcptr++;
+          }
+          *chptr++ = '\0';
 
+          auto new_header_value =
+              std::string(response.headers[i].name, response.headers[i].name_len);
+          new_header_value += ": ";
+          new_header_value += buf.get();
+          response.addHeader(new_header_value);
+          response.headers[i].header_off = true;
+        }
+      }
+    }
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(
-        LOG_DEBUG, "\t%.*s",
-        response.headers[i].name_len + response.headers[i].value_len + 2,
-        response.headers[i].name);
+    Logger::logmsg(LOG_DEBUG, "\t%.*s",
+                   response.headers[i].name_len + response.headers[i].value_len + 2,
+                   response.headers[i].name);
 #endif
+    if (response.headers[i].header_off) continue;
+    // check header values length
+    auto header = std::string_view(response.headers[i].name,
+                                   response.headers[i].name_len);
+    auto header_value = std::string_view(response.headers[i].value,
+                                         response.headers[i].value_len);
     auto it = http::http_info::headers_names.find(header);
     if (it != http::http_info::headers_names.end()) {
       const auto header_name = it->second;

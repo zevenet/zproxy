@@ -97,7 +97,17 @@ class BackendConfig : Counter<BackendConfig> {
   int max_request{0};          /*Maximum request number allowed per connection*/
   ~BackendConfig() {}
 };
-
+struct ReplaceHeader{
+  regex_t name,             /* header name to replace */
+  match;            /* header value match, if don't */
+  std::string replace;           /* replace formated pattern from patch */
+  ReplaceHeader * next{nullptr};
+  ~ReplaceHeader(){
+    ::regfree(&name);
+    ::regfree(&match);
+    delete next;
+  }
+};
 class ServiceConfig : Counter<ServiceConfig> {
  public:
   int key_id;
@@ -211,9 +221,13 @@ struct ListenerConfig : Counter<ListenerConfig> {
   std::shared_ptr<modsecurity::Rules> rules{nullptr}; /* Rules of modsecurity */
 #endif
   int ecdh_curve_nid{0};
+  ReplaceHeader* replace_header_request{nullptr};
+  ReplaceHeader* replace_header_response{nullptr};
   std::shared_ptr<ServiceConfig> services{nullptr};
   std::shared_ptr<ListenerConfig> next{nullptr};
   ~ListenerConfig() {
+    delete replace_header_request;
+    delete replace_header_response;
     delete forcehttp10;
     delete ssl_uncln_shutdn;
     ::regfree(&verb);
