@@ -154,8 +154,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
             char addr[150];
             Logger::logmsg(
                 LOG_DEBUG,
-                "Remote client host %s closed connection prematurely ",
-                Network::getPeerAddress(fd, addr, 150) != nullptr ? addr : "");
+                "Remote client host closed connection prematurely ");
             deleteFd(fd);
             ::close(fd);
             return;
@@ -377,11 +376,8 @@ void StreamManager::onRequestEvent(int fd) {
     }
     case IO::IO_RESULT::SUCCESS:
     case IO::IO_RESULT::DONE_TRY_AGAIN:
-    case IO::IO_RESULT::ZERO_DATA:     
-      break;
+    case IO::IO_RESULT::ZERO_DATA:
     case IO::IO_RESULT::FULL_BUFFER:
-
-      break;
     case IO::IO_RESULT::FD_CLOSED:
       break;
     case IO::IO_RESULT::ERROR:
@@ -793,6 +789,8 @@ void StreamManager::onResponseEvent(int fd) {
       }
       return;
     }
+    case IO::IO_RESULT::FULL_BUFFER:
+    case IO::IO_RESULT::FD_CLOSED:
     case IO::IO_RESULT::ZERO_DATA:
     case IO::IO_RESULT::SUCCESS:
     case IO::IO_RESULT::DONE_TRY_AGAIN: {
@@ -802,12 +800,6 @@ void StreamManager::onResponseEvent(int fd) {
       }
       break;
     }
-    case IO::IO_RESULT::FULL_BUFFER:    
-        break;  
-    case IO::IO_RESULT::FD_CLOSED:
-      if(!stream->backend_connection.ssl_connected)
-      onServerDisconnect(stream);
-      return;
     case IO::IO_RESULT::ERROR:
     case IO::IO_RESULT::CANCELLED:
     default: {
@@ -1448,14 +1440,14 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
 void StreamManager::onClientWriteEvent(HttpStream* stream) {
   if(stream == nullptr) return;
   DEBUG_COUNTER_HIT(debug__::on_send_response);
+  auto& listener_config_ = *stream->service_manager->listener_config_;
+  // update log info
+  StreamDataLogger logger(stream, listener_config_);
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{
       [stream, &extra_log] {  HttpStream::dumpDebugData(stream,"onClientW",extra_log.data()); }};
 #endif
-  auto& listener_config_ = *stream->service_manager->listener_config_;
-  // update log info
-  StreamDataLogger logger(stream, listener_config_);
 
 #if PRINT_DEBUG_FLOW_BUFFERS
   Logger::logmsg(
@@ -1566,7 +1558,7 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
     if (!stream->response.isCached())
 #endif
       if (stream->backend_connection.buffer_size > 0) {
-        stream->backend_connection.buffer_offset = written;
+        stream->backend_connection.buffer_offset += written;
         stream->client_connection.enableWriteEvent();
       } else {
         if(stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)){
@@ -1574,8 +1566,6 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
           return;
         }
         stream->backend_connection.buffer_offset = 0;
-        stream->backend_connection.enableReadEvent();
-        stream->client_connection.enableReadEvent();
       }
     stream->client_connection.enableReadEvent();
     stream->backend_connection.enableReadEvent();
