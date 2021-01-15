@@ -686,7 +686,7 @@ sub getRuleFromIface
 		$from =
 		  ( $if_ref->{ mask } =~ /^\d$/ )
 		  ? "$if_ref->{ net }/$if_ref->{ mask }"
-		  : NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } );
+		  : NetAddr::IP->new( $if_ref->{ net }, $if_ref->{ mask } )->cidr();
 	}
 
 	my $rule = {
@@ -734,7 +734,7 @@ sub setRule
 
 	return 0 if ( !defined ( $rule->{ from } ) || $rule->{ from } eq '' );
 
-	return -1 if ( $action != /add|del/ );
+	return -1 if ( $action !~ /^add$|^del$/ );
 	return -1 if ( defined $rule->{ fwmark } && $rule->{ fwmark } =~ /^0x0$/ );
 
 	my $isrule = &isRule( $rule );
