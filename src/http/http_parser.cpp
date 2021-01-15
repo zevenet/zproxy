@@ -295,7 +295,7 @@ void http_parser::HttpData::printRequest() {
   }
 }
 bool http_parser::HttpData::hasPendingData() {
-  return headers_sent &&
+  return headers_sent /*&&
          (message_bytes_left > 0 ||
-          chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED);
+          chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED)*/;
 }

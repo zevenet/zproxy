@@ -33,7 +33,7 @@
 #include <unistd.h>
 
 #ifndef MAX_DATA_SIZE
-#define MAX_DATA_SIZE (1024 * 32)
+#define MAX_DATA_SIZE (1024 * 64)
 #endif
 
 #define FAKE_ZERO_COPY 0
