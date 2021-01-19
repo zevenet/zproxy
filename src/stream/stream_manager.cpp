@@ -1871,8 +1871,12 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
       stream->status |= helper::to_underlying(STREAM_STATUS::CLOSE_CONNECTION);
       stream->client_connection.enableWriteEvent();
       return;
+    }else if(!stream->response.getHeaderSent()){
+      http_manager::replyError(
+          http::Code::InternalServerError,
+          http::reasonPhrase(http::Code::InternalServerError),
+          listener_config_.err503, stream->client_connection);
     }
-
   }
   clearStream(stream);
 }
