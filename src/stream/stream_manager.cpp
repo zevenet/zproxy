@@ -1437,7 +1437,9 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 #if EXTENDED_DEBUG_LOG
   std::string extra_log;
   ScopeExit logStream{
-      [stream, &extra_log] {  HttpStream::dumpDebugData(stream,"onClientW",extra_log.data()); }};
+      [stream, &extra_log] {
+        HttpStream::dumpDebugData(stream,"onClientW",extra_log.data());
+      }};
 #endif
 
 #if PRINT_DEBUG_FLOW_BUFFERS
@@ -1502,23 +1504,9 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
       case IO::IO_RESULT::FULL_BUFFER:
       case IO::IO_RESULT::ERROR:
       default:
-        Logger::logmsg(
-            LOG_DEBUG,
-            "fd: %d:%d %.*s Error sending response IN\tbuffer size: "
-            "%8lu\tContent-length: %lu\tleft: %lu "
-            "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
-            stream->client_connection.getFileDescriptor(),
-            stream->backend_connection.getFileDescriptor(),
-            stream->request.http_message_length, stream->request.http_message,
-            stream->backend_connection.buffer_size,
-            stream->response.content_length,
-            stream->response.message_bytes_left,
-            stream->response.getHeaderSent() ? "true" : "false",
-            stream->response.chunk_size_left,
-            IO::getResultString(result).data(),
-            stream->response.chunked_status != CHUNKED_STATUS::CHUNKED_DISABLED
-                ? "T"
-                : "F");
+        std::string error = "Error sending response: ";
+            error += IO::getResultString(result);
+        HttpStream::dumpDebugData(stream,"onServerW-ERROR", error.data());
         clearStream(stream);
         return;
     }
@@ -1534,18 +1522,11 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
         }
     }
     if (stream->backend_connection.buffer_size > 0) {
-        stream->backend_connection.buffer_offset += written;
-        stream->client_connection.enableWriteEvent();
-        return;
-    } else {
-        if(stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)){
-            clearStream(stream);
-            return;
-        }
-        stream->backend_connection.buffer_offset = 0;
+      stream->backend_connection.buffer_offset += written;
+      stream->client_connection.enableWriteEvent();
+      return;
     }
     stream->client_connection.enableReadEvent();
-    stream->backend_connection.enableReadEvent();
 
     if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
 #if EXTENDED_DEBUG_LOG
@@ -1553,7 +1534,15 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 #endif
       //stream->backend_connection.enableReadEvent();
       onResponseEvent(stream->backend_connection.getFileDescriptor());
+      return;
     }
+    if (stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)) {
+      clearStream(stream);
+      return;
+    }
+    stream->backend_connection.buffer_offset = 0;
+    stream->backend_connection.enableReadEvent();
+
     return;
   }
 
@@ -1694,27 +1683,28 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
     }
   }
 
-  if (stream->backend_connection.buffer_size > 0){
-      stream->client_connection.enableWriteEvent();
-      return;
-  } else {
-    if (stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)) {
-      clearStream(stream);
-      return;
-    }
-#ifdef CACHE_ENABLED
-    if (!stream->response.isCached())
-#endif
-      stream->backend_connection.enableReadEvent();
-    stream->client_connection.enableReadEvent();
+  if (stream->backend_connection.buffer_size > 0) {
+    stream->client_connection.enableWriteEvent();
+    return;
   }
   stream->clearStatus(STREAM_STATUS::RESPONSE_PENDING);
+  stream->client_connection.enableReadEvent();
   if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
-#if EXTENDED_DEBUG_LOG
-     HttpStream::dumpDebugData(stream,"ClientW-ReadPending", "PENDING ");
-#endif
+    #if EXTENDED_DEBUG_LOG
+    HttpStream::dumpDebugData(stream, "ClientW-ReadPending", "PENDING ");
+    #endif
+    //stream->backend_connection.enableReadEvent();
     onResponseEvent(stream->backend_connection.getFileDescriptor());
+    return;
   }
+  if (stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)) {
+    clearStream(stream);
+    return;
+  }
+#ifdef CACHE_ENABLED
+  if (!stream->response.isCached())
+#endif
+  stream->backend_connection.enableReadEvent();
 }
 
 bool StreamManager::registerListener(
@@ -1847,7 +1837,9 @@ void StreamManager::onServerDisconnect(HttpStream* stream) {
 #if EXTENDED_DEBUG_LOG
   HttpStream::dumpDebugData(stream, "onServerDisconnect", "DISCONNECT");
 #endif
-  if(stream->backend_connection.getFileDescriptor() > 0) {
+
+  if (stream->backend_connection.getFileDescriptor() > 0 &&
+      !stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
 #if DEBUG_STREAM_EVENTS_COUNT
     clear_backend++;
 #endif
