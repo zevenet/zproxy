@@ -121,9 +121,9 @@ class Logger {
       fflush(stdout);
     } else {
 #if SHOW_LOG_TIMESTAMP
-      syslog(level, "%s %s %s", Time::current_time_str, buffer.data(), str.data());
+      syslog(log_facility | level, "%s %s %s", Time::current_time_str, buffer.data(), str.data());
 #else
-      syslog(level, "%s %s", buffer.data(), str.data());
+      syslog(log_facility | level, "%s %s", buffer.data(), str.data());
 #endif
     }
 

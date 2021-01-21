@@ -1968,6 +1968,7 @@ void Config::setAsCurrent() {
   global::run_options::getCurrent().root_jail = root_jail;
   global::run_options::getCurrent().config_file_name = conf_file_name;
   global::StartOptions::getCurrent().conf_file_name = conf_file_name;
+  Logger::log_facility = log_facility;
 }
 bool Config::init(const std::string &file_name) {
   conf_file_name = file_name;
