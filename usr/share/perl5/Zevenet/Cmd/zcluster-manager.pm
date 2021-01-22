@@ -755,14 +755,17 @@ sub setNodeStatusMaster
 	&setZClusterNodeStatus( 'master' );
 
 	my $provider = &getGlobalConfiguration( 'cloud_provider' );
-	if ( $provider eq "aws" )
+	if ( $provider eq "aws" || $provider eq "azure" )
 	{
-		include 'Zevenet::Aws';
-		&zenlog( "Reassigning AWS virtual interfaces" );
+		include 'Zevenet::Aws'   if ( $provider eq 'aws' );
+		include 'Zevenet::Azure' if ( $provider eq 'azure' );
+
+		&zenlog( "Reassigning Cloud virtual interfaces" );
+
 		my $error = &reassignInterfaces();
 		if ( $error )
 		{
-			&zenlog( "There was a problem to reassign interfaces in AWS",
+			&zenlog( "There was a problem to reassign interfaces in Cloud",
 					 "error", "CLUSTER" );
 		}
 	}
