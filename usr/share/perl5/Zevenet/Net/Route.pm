@@ -871,7 +871,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		$if_announce = $toif;
 	}
 
-	#if arp_announce is enabled then send garps to network
+	# not send garps to network if node is backup or it is in maintenance
 	eval {
 		if ( $eload )
 		{
@@ -880,10 +880,13 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 									func   => 'getZClusterNodeStatus',
 									args   => [],
 			);
+			my $cl_maintenance = &eload(
+										 module => 'Zevenet::Cluster',
+										 func   => 'getClMaintenanceManual',
+										 args   => [],
+			);
 
-			#if (    &getGlobalConfiguration( 'arp_announce' ) eq "true"
-			#	 && $cl_status ne "backup" )
-			if ( $cl_status ne "backup" )
+			if ( $cl_status ne "backup" and $cl_maintenance ne "true" )
 			{
 				require Zevenet::Net::Util;
 
