@@ -1122,6 +1122,11 @@ sub disableInterfaceDiscovery
 	my $iface = shift;
 
 	require Zevenet::Nft;
+	my $output = 0;
+
+	my $lockfile = "/tmp/discovery_" . $iface->{ name } . ".lock";
+	require Zevenet::Lock;
+	my $lh = &openlock( $lockfile, 'w' );
 
 	my $rule_ip = "ip";
 	if ( $iface->{ ip_v } == 4 )
@@ -1159,8 +1164,10 @@ sub disableInterfaceDiscovery
 	else
 	{
 		&zenlog( "IP version not supported", "error", "CLUSTER" );
-		return 1;
+		$output = 1;
 	}
+	close $lh;
+	return $output;
 }
 
 =begin nd
@@ -1183,9 +1190,13 @@ sub enableInterfaceDiscovery
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
 			 "debug", "PROFILING" );
-	my $iface = shift;
-
+	my $iface  = shift;
+	my $output = 0;
 	require Zevenet::Nft;
+
+	my $lockfile = "/tmp/discovery_" . $iface->{ name } . ".lock";
+	require Zevenet::Lock;
+	my $lh = &openlock( $lockfile, 'w' );
 
 	if ( $iface->{ ip_v } == 4 )
 	{
@@ -1212,8 +1223,10 @@ sub enableInterfaceDiscovery
 	else
 	{
 		&zenlog( "IP version not supported", "error", "CLUSTER" );
-		return 1;
+		$output = 1;
 	}
+	close $lh;
+	return $output;
 }
 
 =begin nd
