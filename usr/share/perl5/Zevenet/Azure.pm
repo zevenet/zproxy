@@ -384,6 +384,7 @@ sub reassignInterfaces
 				{
 					my $name       = $line->{ name };
 					my $private_ip = $line->{ privateIpAddress };
+					my $public_ip  = $line->{ publicIpAddress }->{ id };
 
 					# This command takes around 1 minute to finish.
 					my $deleted =
@@ -397,7 +398,7 @@ sub reassignInterfaces
 
 					# This command takes around 15 seconds to finish.
 					my $added = &logAndRun(
-						"$az network nic ip-config create --name $name --nic-name $network_iface[0]->{ name } --private-ip-address $private_ip -g $nic_group"
+						"$az network nic ip-config create --name $name --nic-name $network_iface[0]->{ name } --private-ip-address $private_ip --public-ip-address $public_ip -g $instance_group"
 					);
 					if ( $added )
 					{
@@ -450,8 +451,9 @@ sub getNetworksInterfaces
 		$network_ids = $network_ids . " $iface->{ id }";
 	}
 
-	my $query2      = &logAndGet( "$az network nic show --ids $network_ids" );
-	my $json2       = eval { JSON::XS::decode_json( $query2 ) };
+	my $query2 = &logAndGet( "$az network nic show --ids $network_ids" );
+	my $json2 = eval { JSON::XS::decode_json( $query2 ) };
+	$json2 = [$json2] if ( ref ( $json2 ) eq 'HASH' );
 	my @virtuals_ip = @{ $json2 };
 
 	return \@virtuals_ip;
