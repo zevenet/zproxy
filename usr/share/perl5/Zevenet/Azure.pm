@@ -547,6 +547,28 @@ sub setCredentials
 		{
 			return $error;
 		}
+		my $ServiceName = &getInstanceName() . "_service_principal";
+		my $service_principal =
+		  &logAndGet( "$az ad sp create-for-rbac -n $ServiceName" );
+
+		my $json     = JSON::XS::decode_json( $service_principal );
+		my $tenant   = $json->{ tenant };
+		my $username = $json->{ name };
+		my $password = $json->{ password };
+
+		# sleep(10);
+		&zenlog(
+			"$az login --service-principal --username $username --tenant $tenant --password $password"
+		);
+		my $error =
+		  &logAndRunCheck(
+			"$az login --service-principal --username $username --tenant $tenant --password $password"
+		  );
+		if ( $error )
+		{
+			return $error;
+		}
+
 	}
 
 	return 0;
