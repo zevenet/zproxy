@@ -522,15 +522,6 @@ sub actions_blacklists
 	}
 	elsif ( $json_obj->{ action } eq 'start' )
 	{
-		if ( &getBLParam( $listName, 'type' ) ne "remote" )
-		{
-			if ( !@{ &getBLParam( $listName, 'farms' ) } )
-			{
-				$msg = "The list has to be applied to some farm to start it.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
 		include 'Zevenet::IPDS::Blacklist::Config';
 
 		&setBLParam( $listName, 'status', 'up' );
