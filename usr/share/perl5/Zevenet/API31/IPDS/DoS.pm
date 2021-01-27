@@ -435,7 +435,7 @@ sub actions_dos
 	include 'Zevenet::IPDS::DoS::Actions';
 	include 'Zevenet::IPDS::DoS::Config';
 
-	my $desc = "Apply a action to the DoS rule $rule";
+	my $desc = "Apply an action to the DoS rule $rule";
 	my $msg  = "Error, applying the action to the DoS rule.";
 
 	if ( !&getDOSExists( $rule ) )

@@ -505,7 +505,7 @@ sub actions_waf
 	include 'Zevenet::IPDS::WAF::Config';
 	include 'Zevenet::IPDS::WAF::Runtime';
 
-	my $desc = "Apply a action to the set rule $set";
+	my $desc = "Apply an action to the set rule $set";
 	my $msg  = "Error, applying the action to the set rule.";
 
 	# check if the set exists

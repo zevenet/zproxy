@@ -167,8 +167,10 @@ sub set_rbl_rule
 
 	my $desc = "Modify the RBL rule $name.";
 	my @allowParams = (
-						"name",      "cache_size",    "cache_time",   "queue_size",
-						"threadmax", "local_traffic", "only_logging", "log_level"
+						"name",         "cache_size",
+						"cache_time",   "queue_size",
+						"threadmax",    "local_traffic",
+						"only_logging", "log_level"
 	);
 
 	if ( !&getRBLExists( $name ) )
@@ -865,7 +867,7 @@ sub set_rbl_actions
 
 	include 'Zevenet::IPDS::RBL::Actions';
 
-	my $desc   = "Apply a action to the RBL rule $name";
+	my $desc   = "Apply an action to the RBL rule $name";
 	my $action = $json_obj->{ 'action' };
 
 	my $param_msg = &getValidReqParams( $json_obj, ["action"] );

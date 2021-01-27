@@ -549,7 +549,7 @@ sub actions_blacklists
 
 	include 'Zevenet::IPDS::Blacklist::Actions';
 
-	my $desc = "Apply a action to a blacklist $listName";
+	my $desc = "Apply an action to a blacklist $listName";
 	my $msg  = "Error, applying the action to the blacklist.";
 
 	if ( !&getBLExists( $listName ) )

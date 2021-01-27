@@ -817,7 +817,7 @@ sub set_rbl_actions
 
 	include 'Zevenet::IPDS::RBL::Actions';
 
-	my $desc   = "Apply a action to the RBL rule $name";
+	my $desc   = "Apply an action to the RBL rule $name";
 	my $action = $json_obj->{ 'action' };
 
 	my $params = {
