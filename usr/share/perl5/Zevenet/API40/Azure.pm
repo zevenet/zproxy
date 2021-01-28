@@ -65,22 +65,20 @@ sub get_credentials
 	my $desc = "Retrieve the Azure credentials";
 
 	include 'Zevenet::Azure';
-	my $file_credentials = &getCredentials();
+	my $user_data = &getCredentials();
 
-	my %credentials = (
-						user     => '',
-						password => '',
-	);
-	if ( $file_credentials )
-	{
-		$credentials{ user } =
-		  $file_credentials->{ subscriptions }[0]->{ user }->name;
-		$credentials{ password } = '********************'
-		  if $credentials{ user };
-	}
+	# my %credentials = (
+	# 					id     => '',
+	# 					name   => '',
+	# );
+	# if ( $dataCredentials )
+	# {
+	# 	$credentials{ id } = $dataCredentials->{ id };
+	# 	$credentials{ name } = $dataCredentials->{ user }->{ name };
+	# }
 
 	return &httpResponse(
-		   { code => 200, body => { description => $desc, params => \%credentials } } );
+			  { code => 200, body => { description => $desc, params => $user_data } } );
 }
 
 #POST /azure/credentials
@@ -114,8 +112,10 @@ sub modify_credentials
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 	}
 
+	my $user_data = &getCredentials();
+
 	return &httpResponse(
-			   { code => 200, body => { description => $desc, params => $json_obj } } );
+			  { code => 200, body => { description => $desc, params => $user_data } } );
 }
 
 1;

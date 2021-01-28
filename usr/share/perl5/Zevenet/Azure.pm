@@ -314,20 +314,17 @@ sub reassignInterfaces
 			 "debug", "PROFILING" );
 
 	include 'Zevenet::Cluster';
-	my $zcl_conf      = &getZClusterConfig();
-	my $remote_hn     = &getZClusterRemoteHost();
-	my $cloud_address = &getGlobalConfiguration( 'cloud_address_metadata' );
-	my $az            = &getGlobalConfiguration( 'az_bin' );
-	my $wget          = &getGlobalConfiguration( 'wget' );
+	my $az                   = &getGlobalConfiguration( 'az_bin' );
+	my $remote_instance_name = &getZClusterRemoteHost();
+	my $remote_ip = &getZClusterConfig()->{ $remote_instance_name }->{ ip };
 
-	my $remote_instance_name = &runRemotely(
-		"$wget --header=\"Metadata: true\" -q -O - -T 5 \"http://$cloud_address/metadata/instance/compute/name?api-version=2019-08-15&format=text\"",
-		$zcl_conf->{ $remote_hn }->{ ip }
+	my $query = &logAndGet(
+		"$az vm list-ip-addresses --query \"[?contains(virtualMachine.network.privateIpAddresses, '$remote_ip')].virtualMachine.resourceGroup\""
 	);
-	my $remote_instance_group = &runRemotely(
-		"$wget --header=\"Metadata: true\" -q -O - -T 5 \"http://$cloud_address/metadata/instance/compute/resourceGroupName?api-version=2019-08-15&format=text\"",
-		$zcl_conf->{ $remote_hn }->{ ip }
-	);
+
+	require JSON::XS;
+	my $json = eval { JSON::XS::decode_json( $query ) };
+	my $remote_instance_group = @{ $json }[0];
 
 	my $instance_name  = &getInstanceName();
 	my $instance_group = &getInstanceGroup();
@@ -342,33 +339,6 @@ sub reassignInterfaces
 		## Local networks interfaces
 		my @local_network_ifaces =
 		  @{ &getNetworksInterfaces( $instance_name, $instance_group ) };
-
-	  #		my @remote_network_ifaces =
-	  #		  @{ &getNetworksInterfaces( $remote_instance_name, $remote_instance_group ) };
-	  #		my $remote_network_ids;
-
-		#		foreach my $iface ( @remote_network_ifaces )
-		#		{
-		#			$remote_network_ids = $remote_network_ids . " $iface->{ id }";
-		#		}
-
-   #		my $remote_query = &logAndGet( "$az network nic show --ids $remote_network_ids" );
-   #		my $remote_json = eval { JSON::XS::decode_json( $remote_query ) };
-   #		my @remote_network_ifaces = @{ $remote_json };
-
-		## Local networks interfaces
-		#		my @local_network_ifaces =
-		#		  @{ &getNetworksInterfaces( $instance_name, $instance_group ) };
-		#		my $local_network_ids;
-
-		#		foreach my $iface_local ( @local_network_ifaces )
-		#		{
-		#			$local_network_ids = $local_network_ids . " $iface_local->{ id }";
-		#		}
-
-	 #		my $query_local = &logAndGet( "$az network nic show --ids $local_network_ids" );
-	 #		my $json_local = eval { JSON::XS::decode_json( $query_local ) };
-	 #		my @local_network_ifaces = @{ $json_local };
 
 		foreach my $network ( @remote_network_ifaces )
 		{
@@ -508,14 +478,24 @@ sub getCredentials
 	require Config::Tiny;
 	require Zevenet::Config;
 
-	my $file   = &getGlobalConfiguration( "az_config" );
-	my $fh     = &openlock( $file, 'r' );
-	my $config = do { local $/; <$fh> };
+	my $az = &getGlobalConfiguration( "az_bin" );
+
+	my $account_data = &logAndGet( "$az account show" );
 
 	require JSON::XS;
-	my $credentials = eval { JSON::XS::decode_json( $config ) };
+	my $account = eval { JSON::XS::decode_json( $account_data ) };
 
-	return $credentials;
+	my %credentials = (
+						id   => '',
+						name => '',
+	);
+	if ( $account )
+	{
+		$credentials{ id }   = $account->{ id };
+		$credentials{ name } = $account->{ user }->{ name };
+	}
+
+	return \%credentials;
 }
 
 =begin nd
@@ -547,22 +527,26 @@ sub setCredentials
 		{
 			return $error;
 		}
-		my $ServiceName = &getInstanceName() . "_service_principal";
+		my $network_role = &getGlobalConfiguration( 'network_role' );
+		my $vm_user_role = &getGlobalConfiguration( 'vm_user_role' );
+		my $service_name = &getInstanceName() . "_service_principal";
 		my $service_principal =
-		  &logAndGet( "$az ad sp create-for-rbac -n $ServiceName" );
+		  &logAndGet(
+					"$az ad sp create-for-rbac -n $service_name --role \"$vm_user_role\"" );
 
-		my $json     = JSON::XS::decode_json( $service_principal );
-		my $tenant   = $json->{ tenant };
-		my $username = $json->{ name };
-		my $password = $json->{ password };
+		my $json = JSON::XS::decode_json( $service_principal );
 
-		# sleep(10);
-		&zenlog(
-			"$az login --service-principal --username $username --tenant $tenant --password $password"
+		&logAndRun(
+			"$az role assignment create --assignee $json->{ name } --role \"$network_role\""
 		);
+
+  # logAndRun( "$az role assignment delete --assignee $username --role 'Contributor'" );
+
+		sleep ( 10 );
+
 		my $error =
 		  &logAndRunCheck(
-			"$az login --service-principal --username $username --tenant $tenant --password $password"
+			"$az login --service-principal --username $json->{ name } --tenant $json->{ tenant } --password $json->{ password }"
 		  );
 		if ( $error )
 		{
