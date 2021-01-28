@@ -511,11 +511,20 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 
 	# check if the backend id is available
 	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
-	my $be_found = defined $be_aref->[$id_server - 1];
+
+	require Zevenet::Farm::Backend;
+	my $be_found = &getFarmServer( $be_aref, $id_server );
 
 	unless ( $be_found )
 	{
 		my $msg = "Could not find the requested backend.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# the farm has to have one backend at least
+	if ( @{ $be_aref } < 2 )
+	{
+		my $msg = "The service has to have one backend at least.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
