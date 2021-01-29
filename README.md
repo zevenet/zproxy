@@ -206,12 +206,44 @@ curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/stat
 curl -X PATCH --data-ascii '{"status": "disabled"}'  --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/backend/0/status
 {"result":"ok"}
 ```
-**Insert new session to service **
-```bash
-curl -X PUT --data-ascii '{"backend-id": 1,"id": "127.0.0.1","last-seen": 1570807787}'  --unix-socket //tmp/zproxy.socket http://localhost/listener/0/service/0/sessions
-{"result":"ok"}
+
+**Flush service sessions**
+
+```
+$ curl -X DELETE --data-binary '{"backend-id" : 0}' --unix-socket /tmp/simple_https.socket  http://localhost/listener/0/service/0/session
 ```
 
+
+**Flush service sessions for backend id**
+
+```
+$ curl -X DELETE --unix-socket /tmp/simple_https.socket  http://localhost/listener/0/service/0/session
+```
+
+
+**Delete service session with id "value**
+
+```
+$ curl -X DELETE --data-binary '{"id" : "value"}' --unix-socket /tmp/simple_https.socket  http://localhost/listener/0/service/0/session
+```
+
+**Create new session**
+
+```
+$ curl -X PUT --data-ascii '{"backend-id": 0,"id": "ba2","last-seen": 1593307875}'  --unix-socket /tmp/simple_https.socket http://localhost/listener/0/service/0/sessions
+```
+
+**get low level debug info**
+
+```
+curl -s --unix-socket /tmp/zproxy.socket  http://localhost/debug
+```
+
+**Add backend to service in runtime**
+
+```
+curl -X PUT --data-ascii '{"id": "1", "name": "bck", "address": "127.0.0.1", "port": 8000, "weight": 5}'  --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/backends
+```
 
 Ctl:
 
