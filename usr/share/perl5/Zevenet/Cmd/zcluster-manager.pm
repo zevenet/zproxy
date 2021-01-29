@@ -754,6 +754,18 @@ sub setNodeStatusMaster
 	&zenlog( "Switching node to master" );
 	&setZClusterNodeStatus( 'master' );
 
+	require Zevenet::Net::Interface;
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
+	include 'Zevenet::Ssyncd';
+
+	# conntrackd sync
+	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
+	&logAndRun( "$primary_backup primary" );
+
+	# Ssyncd
+	&setSsyncdMaster();
+
 	my $provider = &getGlobalConfiguration( 'cloud_provider' );
 	if ( $provider eq "aws" || $provider eq "azure" )
 	{
@@ -769,18 +781,6 @@ sub setNodeStatusMaster
 					 "error", "CLUSTER" );
 		}
 	}
-
-	require Zevenet::Net::Interface;
-	require Zevenet::Farm::Core;
-	require Zevenet::Farm::Base;
-	include 'Zevenet::Ssyncd';
-
-	# conntrackd sync
-	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
-	&logAndRun( "$primary_backup primary" );
-
-	# Ssyncd
-	&setSsyncdMaster();
 
 	# flush arp rules
 	&enableAllInterfacesDiscovery();

@@ -462,11 +462,8 @@ Function: getCredentials
 
 	Get Azure credentials
 
-Parameters:
-	file - File to get. Credentials or credentials config
-
 Returns:
-	Array - It returns the credentials or the credentials config
+	Array - It returns the logged ad sp id and name
 
 =cut
 
@@ -501,10 +498,11 @@ sub getCredentials
 =begin nd
 Function: setCredentials 
 
-	Set Azure credentials
+	Create an Azure Active Directory Service Principal(ad sp) with network and vm user roles.  That ad sp allow
+	to manage remote and host nics and their ip configurations.
 
 Parameters:
-	json_obj - Object with parameter to set.
+	json_obj - Object with Azure account user and password
 
 Returns:
 	String - It returns the code error.
@@ -540,8 +538,7 @@ sub setCredentials
 			"$az role assignment create --assignee $json->{ name } --role \"$network_role\""
 		);
 
-  # logAndRun( "$az role assignment delete --assignee $username --role 'Contributor'" );
-
+		# Time for azure
 		sleep ( 10 );
 
 		my $error =
