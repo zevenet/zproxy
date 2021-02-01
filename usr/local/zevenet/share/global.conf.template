@@ -576,6 +576,12 @@ $aws_bin="/usr/bin/aws";
 $aws_credentials="$configdir/cloud/.aws/credentials";
 $aws_config="$configdir/cloud/.aws/config";
 
+$az_bin="/usr/bin/az";
+$az_directory="$configdir/cloud/.azure";
+$az_config="$az_directory/azureProfile.json";
+$network_role="Network Contributor"
+$vm_user_role="Virtual Machine User Login"
+
 # docker
 $docker_flag="/.dockerenv";
 

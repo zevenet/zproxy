@@ -514,11 +514,12 @@ sub disable_cluster
 	}
 
 	my $provider = &getGlobalConfiguration( 'cloud_provider' );
-	if ( $provider eq 'aws' )
+	if ( $provider eq 'aws' || $provider eq 'azure' )
 	{
 		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 
-		include 'Zevenet::Aws';
+		include 'Zevenet::Aws'   if ( $provider eq 'aws' );
+		include 'Zevenet::Azure' if ( $provider eq 'azure' );
 		my $local_error = &setSshForCluster( $zcl_conf->{ $rhost }->{ ip }, 'delete' );
 		my $remote_error =
 		  &runRemotely( "$zcluster_manager disableSshCluster",
@@ -598,9 +599,10 @@ sub enable_cluster
 	}
 
 	my $provider = &getGlobalConfiguration( 'cloud_provider' );
-	if ( $provider eq 'aws' )
+	if ( $provider eq 'aws' || $provider eq 'azure' )
 	{
-		include 'Zevenet::Aws';
+		include 'Zevenet::Aws'   if ( $provider eq 'aws' );
+		include 'Zevenet::Azure' if ( $provider eq 'azure' );
 		my $local_error = &setSshForCluster( $json_obj->{ remote_ip }, 'add' );
 		my $remote_error =
 		  &setSshRemoteForCluster(

@@ -754,19 +754,6 @@ sub setNodeStatusMaster
 	&zenlog( "Switching node to master" );
 	&setZClusterNodeStatus( 'master' );
 
-	my $provider = &getGlobalConfiguration( 'cloud_provider' );
-	if ( $provider eq "aws" )
-	{
-		include 'Zevenet::Aws';
-		&zenlog( "Reassigning AWS virtual interfaces" );
-		my $error = &reassignInterfaces();
-		if ( $error )
-		{
-			&zenlog( "There was a problem to reassign interfaces in AWS",
-					 "error", "CLUSTER" );
-		}
-	}
-
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
@@ -778,6 +765,22 @@ sub setNodeStatusMaster
 
 	# Ssyncd
 	&setSsyncdMaster();
+
+	my $provider = &getGlobalConfiguration( 'cloud_provider' );
+	if ( $provider eq "aws" || $provider eq "azure" )
+	{
+		include 'Zevenet::Aws'   if ( $provider eq 'aws' );
+		include 'Zevenet::Azure' if ( $provider eq 'azure' );
+
+		&zenlog( "Reassigning Cloud virtual interfaces" );
+
+		my $error = &reassignInterfaces();
+		if ( $error )
+		{
+			&zenlog( "There was a problem to reassign interfaces in Cloud",
+					 "error", "CLUSTER" );
+		}
+	}
 
 	# flush arp rules
 	&enableAllInterfacesDiscovery();
