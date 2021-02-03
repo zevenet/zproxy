@@ -135,6 +135,12 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	if ( $json_obj->{ protocol } =~ /^(?:amanda|h323|irc|netbios-ns|sane)$/ )
+	{
+		my $msg = "'$json_obj->{ protocol }' protocol is not supported anymore.";
+		&httpErrorResponse( code => 410, desc => $desc, msg => $msg );
+	}
+
 	# Extend parameter checks
 	# Get current vip & vport
 	my $vip   = $json_obj->{ vip }   // &getFarmVip( 'vip',  $farmname );
