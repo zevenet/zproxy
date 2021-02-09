@@ -351,7 +351,10 @@ sub validatePortUserSpace
 		return 1 if ( !@out );
 	}
 
-	my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:0.0.0.0|::1|$ip)";
+	# This code was modified for a bugfix. There was a issue when a l4 farm
+	# is set and some management interface is set to use all the interfaces
+	# my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:0.0.0.0|::1|$ip)";
+	my $ip_reg = ( $ip eq '0.0.0.0' ) ? '[^\s]+' : "(?:$ip)";
 	my $port_reg = &getMultiportRegex( $port );
 
 	my $filter = '^\s*(?:[^\s]+\s+){3,3}' . $ip_reg . ':' . $port_reg . '\s';
