@@ -65,7 +65,7 @@ set(DH "2048" CACHE STRING "Diffie-Hellman parameters bits length")
 #file(MAKE_DIRECTORY "${MAINFOLDER}/build")
 #file(MAKE_DIRECTORY "${MAINFOLDER}/build/docs")
 
-SET(PROJECT_DESCRIPTION "Zevenet L7 proxy core for zevenet load balancer")
+SET(PROJECT_DESCRIPTION "High-performance multithreaded and event-driven reverse proxy and load balancer")
 SET(PROJECT_CODENAME "${PROJECT_NAME}")
 
 SET(PROJECT_VERSION_MAJOR 0)
@@ -73,7 +73,7 @@ SET(PROJECT_VERSION_MINOR 2)
 SET(PROJECT_VERSION_PATCH 5)
 SET(PROJECT_VERSION_TWEAK 0)
 
-SET(PROJECT_VENDOR_NAME "Zevenet")
+SET(PROJECT_VENDOR_NAME "ZEVENET")
 SET(PROJECT_VENDOR_URL "https://www.zevenet.com")
 execute_process(COMMAND "date" "+%Y"
         OUTPUT_VARIABLE DATE_YEAR)
