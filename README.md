@@ -1,6 +1,6 @@
 # ZPROXY
 
-Zevenet zproxy is a high-performance multithreaded and event-driven L7 reverse proxy and load balancer inspired by Pound reverse proxy simplicity.
+ZEVENET zproxy is a high-performance multithreaded and event-driven L7 reverse proxy and load balancer inspired by Pound reverse proxy simplicity.
 
 zproxy main features:
 
@@ -52,8 +52,8 @@ $ bin/zproxytests
 
 * `src/*` — C++ code that compiles into a library (libl7proxy.a) and the main zproxy binary.
 * `src/ctl` — Generate a pound command line interface like binary - zproxyctl
-* `test/lib` — C++ libraries used for tests ( Google Test).
-* `test/src` — C++ test suite.
+* `tests/lib` — C++ libraries used for tests ( Google Test).
+* `tests/src` — C++ test suite.
 * `cmake/*` — Cmake input files.
 * `docs/` _ Doxygen configuration file (Doxyfile) and man pages.
 
@@ -63,7 +63,7 @@ By following this guide you will end up having a zproxy deployed and running.
 
 1. Download and build zproxy.
 
-2. Take one of the example configuration files at `tests/data`. It is recommended to use `simple_http.cfg` or `simple_https.cfg` and modify it to use your infrastructure.
+2. Take one of the example configuration files at `tests/`. It is recommended to use `simple_http.cfg` or `simple_https.cfg` and modify it to use your infrastructure.
 
 3. Run `$ bin/zproxy -f /path/to/config_file.cfg`
 
@@ -360,9 +360,9 @@ Comparing Requests/sec and latency, results are very impressive, zproxy is almos
 
 ### License
 
-&copy; 2019 Zevenet.
+&copy; 2019 ZEVENET.
 AGPL-3.0.
 
 ### Authors
 
-Zevenet Team 
+ZEVENET Team
