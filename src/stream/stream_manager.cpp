@@ -29,6 +29,7 @@
 #ifdef ON_FLY_COMRESSION
 #include "../handlers/compression.h"
 #endif
+#include "../../zcutils/zcutils.h"
 
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
                                 EVENT_GROUP event_group) {
@@ -870,11 +871,11 @@ void StreamManager::onResponseEvent(int fd) {
       }
       case http_parser::PARSE_RESULT::TOOLONG:
       case http_parser::PARSE_RESULT::FAILED: {
-        Logger::logmsg(
-            LOG_REMOVE,
-            "%d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer "
+        zcutils_log_print(LOG_DEBUG,
+			"%s():%d: %d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer ",
             "size: %lu \n\t\t Content length: %lu \n\t\t "
             "left: %lu\n%.*s header sent: %s \n",
+			__FUNCTION__, __LINE__,
             stream->stream_id, stream->client_connection.getFileDescriptor(),
             stream->backend_connection.getFileDescriptor(),
             stream->backend_connection.buffer_size,
@@ -882,7 +883,7 @@ void StreamManager::onResponseEvent(int fd) {
             stream->response.message_bytes_left,
             stream->backend_connection.buffer_size,
             stream->backend_connection.buffer,
-            stream->response.getHeaderSent() ? "true" : "false");
+			stream->response.getHeaderSent() ? "true" : "false");
         clearStream(stream);
         return;
       }
@@ -980,7 +981,7 @@ void StreamManager::onConnectTimeoutEvent(int fd) {
   HttpStream* stream = bck_streams_set[fd];
 #endif
   if (stream == nullptr) {
-    //Logger::LogInfo("Stream null pointer", LOG_REMOVE);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: stream null pointer", __FUNCTION__, __LINE__);
     deleteFd(fd);
     ::close(fd);
     return;
@@ -1039,7 +1040,7 @@ void StreamManager::onResponseTimeoutEvent(int fd) {
   HttpStream* stream = bck_streams_set[fd];
 #endif
   if (stream == nullptr) {
-    //Logger::LogInfo("Stream null pointer", LOG_REMOVE);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: stream null pointer", __FUNCTION__, __LINE__);
     deleteFd(fd);
     ::close(fd);
     return;
@@ -1409,10 +1410,9 @@ void StreamManager::onServerWriteEvent(HttpStream* stream) {
              stream->backend_connection.getBackend()->response_timeout);
 #endif
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(
-      LOG_REMOVE,
-      "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
-      "%lu\tIO: %s",
+  zcutils_log_print(LOG_DEBUG, "%s():%d: OUT buffer size: %8lu\tContent-length: %lu\tleft: "
+		"%lu\tIO: %s",
+		__FUNCTION__, __LINE__,
       stream->client_connection.buffer_size, stream->request.content_length,
       stream->request.message_bytes_left, IO::getResultString(result).data());
 #endif
@@ -1443,10 +1443,10 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
 #endif
 
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(
-      LOG_REMOVE, "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
-      stream->backend_connection.buffer_size, stream->response.content_length,
-      stream->response.message_bytes_left);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
+		__FUNCTION__, __LINE__,
+		stream->backend_connection.buffer_size, stream->response.content_length,
+		stream->response.message_bytes_left);
   auto buffer_size_in = stream->backend_connection.buffer_size;
 #endif
 #if USE_TIMER_FD_TIMEOUT
@@ -1649,11 +1649,11 @@ void StreamManager::onClientWriteEvent(HttpStream* stream) {
   }
 #if PRINT_DEBUG_FLOW_BUFFERS
   if (stream->backend_connection.buffer_size != 0)
-    Logger::logmsg(
-        LOG_REMOVE,
-        " OUT EAGAIN  %.*s buffer size: %lu > %8lu \tContent-length: "
+    zcutils_log_print(LOG_DEBUG, "%s():%d: "
+		"OUT EAGAIN  %.*s buffer size: %lu > %8lu \tContent-length: "
         "%lu\tleft: "
         "%lu\tIO: %s",
+		__FUNCTION__, __LINE__,
         stream->request.http_message_length, stream->request.http_message,
         buffer_size_in, stream->backend_connection.buffer_size,
         stream->response.content_length, stream->response.message_bytes_left,
@@ -1790,7 +1790,7 @@ std::string StreamManager::handleTask(ctl::CtlTask& task) {
   if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
 
   if (task.command == ctl::CTL_COMMAND::EXIT) {
-    Logger::logmsg(LOG_REMOVE, "Exit command received");
+    zcutils_log_print(LOG_DEBUG, "%s():%d: exit command received", __FUNCTION__, __LINE__);
     stop();
 
     return JSON_OP_RESULT::OK;

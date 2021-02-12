@@ -19,6 +19,7 @@
  *
  */
 #include "backend.h"
+#include "../../zcutils/zcutils.h"
 
 Backend::Backend() : status(BACKEND_STATUS::NO_BACKEND) {}
 
@@ -30,7 +31,7 @@ Backend::~Backend() {
 
 std::string Backend::handleTask(ctl::CtlTask& task) {
   if (!isHandler(task) || this->backend_type != BACKEND_TYPE::REMOTE) return "";
-  //  Logger::logmsg(LOG_REMOVE, "Backend %d handling task", backend_id);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: backend %d handling task", __FUNCTION__, __LINE__, backend_id);
   if (task.command == ctl::CTL_COMMAND::GET) {
     switch (task.subject) {
       case ctl::CTL_SUBJECT::STATUS: {

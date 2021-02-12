@@ -22,8 +22,10 @@
 #pragma once
 
 #include "../debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "epoll_manager.h"
 #include <atomic>
+
 namespace events {
 class Descriptor {
   events::EpollManager *event_manager_{nullptr};
@@ -84,7 +86,7 @@ class Descriptor {
       current_event = !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT;
       return res;
     }
-    //    Logger::LogInfo("InReadModeAlready", LOG_REMOVE);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: InReadModeAlready", __FUNCTION__, __LINE__);
     return false;
   }
 
@@ -94,7 +96,7 @@ class Descriptor {
       current_event = events::EVENT_TYPE::WRITE;
       return res;
     }
-    //    Logger::LogInfo("InWriteModeAlready", LOG_REMOVE);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: InWriteModeAlready", __FUNCTION__, __LINE__);
     return false;
   }
 
@@ -102,7 +104,7 @@ class Descriptor {
 
   inline void setFileDescriptor(int fd) {
     if (fd < 0) {
-      Logger::LogInfo("File descriptor not valid", LOG_REMOVE);
+      zcutils_log_print(LOG_DEBUG, "%s():%d: file descriptor not valid", __FUNCTION__, __LINE__);
       return;
     }
 

@@ -41,7 +41,6 @@
 
 
 #define MAXBUF 4096
-#define LOG_REMOVE LOG_DEBUG
 #if LOGGER_DEBUG
 #ifndef __FILENAME__
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)

@@ -20,6 +20,7 @@
  */
 #include "ssl_session.h"
 #include "../debug/logger.h"
+#include "../../zcutils/zcutils.h"
 
 using namespace ssl;
 
@@ -72,7 +73,7 @@ int SslSessionManager::addSession(SSL *ssl, SSL_SESSION *session) {
 SSL_SESSION *SslSessionManager::getSession(SSL *ssl, const unsigned char *id, int id_length, int *do_copy) {
   unsigned char *buff;
   std::lock_guard<std::mutex> lock(data_mtx);
-  Logger::logmsg(LOG_REMOVE, "SESSION GET id: %x", id);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: session get id %x", __FUNCTION__, __LINE__, id);
   *do_copy = 0;
 
   for (auto data : sessions) {

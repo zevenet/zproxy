@@ -20,6 +20,7 @@
  */
 
 #include "listener_manager.h"
+#include "../../zcutils/zcutils.h"
 
 #include <memory>
 #include "../config/global.h"
@@ -85,7 +86,7 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
 
   if (task.command == ctl::CTL_COMMAND::EXIT) {
-    Logger::logmsg(LOG_REMOVE, "Exit command received");
+    zcutils_log_print(LOG_DEBUG, "%s():%d: exit command received", __FUNCTION__, __LINE__);
     is_running = false;
     return JSON_OP_RESULT::OK;
   }
@@ -317,7 +318,7 @@ void ListenerManager::doWork() {
       //      Logger::LogInfo("No event received");
     }
   }
-  Logger::logmsg(LOG_REMOVE, "Exiting loop");
+  zcutils_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__, __LINE__);
 }
 
 void ListenerManager::stop() {

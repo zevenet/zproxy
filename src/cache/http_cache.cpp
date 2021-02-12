@@ -21,6 +21,7 @@
 
 #include "http_cache.h"
 #include "../handlers/cache_manager.h"
+#include "../../zcutils/zcutils.h"
 
 // Returns the cache content with all the information stored
 cache_commons::CacheObject *HttpCache::getCacheObject(HttpRequest request) {
@@ -810,7 +811,7 @@ void HttpCache::doCacheMaintenance() {
           current_time - iter->second->date;
       //            Greater than 10 times the max age
       if (entry_age > iter->second->max_age * expiration_to) {
-        Logger::logmsg(LOG_REMOVE, "Removing old cache entry: %zu", iter->first);
+        zcutils_log_print(LOG_DEBUG, "%s():%d: removing old cache entry: %zu", __FUNCTION__, __LINE__, iter->first);
         deleteEntry((iter++)->first);
         break;
       }

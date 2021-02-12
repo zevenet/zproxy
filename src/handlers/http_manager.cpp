@@ -22,6 +22,7 @@
 #include "http_manager.h"
 #include "../config/regex_manager.h"
 #include "../util/network.h"
+#include "../../zcutils/zcutils.h"
 
 //#define PRINT_DEBUG_CHUNKED 1
 
@@ -38,12 +39,11 @@ ssize_t http_manager::handleChunkedData(Connection &connection, http_parser::Htt
         data_offset, new_chunk_left, http_data.content_length);
     //#if PRINT_DEBUG_CHUNKED
     const char *status = chunk_size < 0 ? "*" : chunk_size == 0 ? "/" : "";
-    Logger::logmsg(LOG_REMOVE,
-                   "[%s] buffer size: %6lu chunk left: %8d => Chunk size: %8d "
-                   "Data offset: %6lu Content_length: %8d  next chunk left %8d",
-                   status, connection.buffer_size,
-                   last_chunk_size, chunk_size, data_offset,
-                   http_data.content_length, new_chunk_left);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: [%s] buffer size: %6lu chunk left: %8d => Chunk size: %8d "
+		"Data offset: %6lu Content_length: %8d  next chunk left %8d",
+		__FUNCTION__, __LINE__, status, connection.buffer_size,
+        last_chunk_size, chunk_size, data_offset,
+        http_data.content_length, new_chunk_left);
     //#endif
     if (chunk_size < 0) {
       //	  const char *new_chunk_buff = connection.buffer
@@ -58,7 +58,7 @@ ssize_t http_manager::handleChunkedData(Connection &connection, http_parser::Htt
       http_data.chunk_size_left = 0;
       http_data.chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
 #if PRINT_DEBUG_CHUNKED
-      Logger::logmsg(LOG_REMOVE, "LAST CHUNK");
+      zcutils_log_print(LOG_DEBUG, "%s():%d: last chunk", __FUNCTION__, __LINE__);
 #endif
       return 0;
     } else {
@@ -258,8 +258,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
 
     if (request.headers[i].header_off) continue;
 
-    //      Logger::logmsg(LOG_REMOVE, "\t%.*s",request.headers[i].name_len +
-    //      request.headers[i].value_len + 2, request.headers[i].name);
+	zcutils_log_print(LOG_DEBUG, "%s():%d: \t%.*s", __FUNCTION__, __LINE__,
+		request.headers[i].name_len + request.headers[i].value_len + 2, request.headers[i].name);
 
     // check header values length
     if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
@@ -316,14 +316,14 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
                       request.message, request.message_length,
                       data_offset, new_chunk_left, request.content_length);
 #if PRINT_DEBUG_CHUNKED
-                  Logger::logmsg(LOG_REMOVE, ">>>> Chunk size %d left %d ",
-                                 chunk_size, new_chunk_left);
+                  zcutils_log_print(LOG_DEBUG, "%s():%d: >>>> Chunk size %d left %d ",
+                  __FUNCTION__, __LINE__, chunk_size, new_chunk_left);
 #endif
                   request.content_length +=
                       static_cast<size_t>(chunk_size);
                   if (chunk_size == 0) {
 #if PRINT_DEBUG_CHUNKED
-                    Logger::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+                    zcutils_log_print(LOG_DEBUG, "%s():%d: set last chunk", __FUNCTION__, __LINE__);
 #endif
                     request.chunk_size_left = 0;
                     request.chunked_status =
@@ -365,7 +365,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
         }
         case http::HTTP_HEADER_NAME::EXPECT: {
           if (header_value == "100-continue") {
-            Logger::logmsg(LOG_REMOVE, "Client Expects 100 continue");
+            zcutils_log_print(LOG_DEBUG, "%s():%d: client Expects 100 continue", __FUNCTION__, __LINE__);
           }
           request.headers[i].header_off = listener_config_.ignore100continue;
           break;
@@ -589,14 +589,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
                       stream.response.message, stream.response.message_length,
                       data_offset, new_chunk_left, response.content_length);
 #if PRINT_DEBUG_CHUNKED
-                  Logger::logmsg(LOG_REMOVE, ">>>> Chunk size %d left %d ",
-                                 chunk_size, new_chunk_left);
+				  zcutils_log_print(LOG_DEBUG, "%s():%d: >>>> Chunk size %d left %d",
+						__FUNCTION__, __LINE__, chunk_size, new_chunk_left);
 #endif
                   stream.response.content_length +=
                       static_cast<size_t>(chunk_size);
                   if (chunk_size == 0) {
 #if PRINT_DEBUG_CHUNKED
-                    Logger::logmsg(LOG_REMOVE, "Set LAST CHUNK");
+                    zcutils_log_print(LOG_DEBUG, "%s():%d: set last chunk", __FUNCTION__, __LINE__);
 #endif
                     stream.response.chunk_size_left = 0;
                     stream.response.chunked_status =

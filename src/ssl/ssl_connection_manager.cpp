@@ -21,6 +21,7 @@
 
 #include "ssl_connection_manager.h"
 #include "../util/common.h"
+#include "../../zcutils/zcutils.h"
 #include <openssl/err.h>
 
 using namespace ssl;
@@ -180,7 +181,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
     }
   }
   if (flush_data && result == IO::IO_RESULT::SUCCESS) {
-    //    Logger::logmsg(LOG_REMOVE," FLUSHING");
+    zcutils_log_print(LOG_DEBUG, "%s():%d: flushing", __FUNCTION__, __LINE__);
     BIO_flush(ssl_connection.io);
   }
   //  Logger::logmsg(LOG_DEBUG, "### IN handleWrite data write: %d ssl error: %s",
@@ -489,12 +490,12 @@ IO::IO_RESULT SSLConnectionManager::sslWriteIOvec(
     size_t &nwritten) {
   size_t written = 0;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  //  Logger::logmsg(LOG_REMOVE, ">>>-------- Count: %d written: %d
-  //  totol_written: %d ",count, written, nwritten);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: count: %d written: %d totol_written: %d",
+	__FUNCTION__, __LINE__, count, written, nwritten);
   for (auto it = 0; it < count; it++) {
     if (__iovec[it].iov_len == 0) continue;
-      //    Logger::logmsg(LOG_REMOVE, "-------- it = %d iov base len: %d",it,
-      //    __iovec[it].iov_len);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: it = %d iov base len: %d",
+		__FUNCTION__, __LINE__, it, __iovec[it].iov_len);
 #if USE_SSL_BIO_BUFFER
     result = handleWrite(target_ssl_connection, static_cast<char *>(__iovec[it].iov_base), __iovec[it].iov_len, written,
                          (it == count - 1));
@@ -502,12 +503,12 @@ IO::IO_RESULT SSLConnectionManager::sslWriteIOvec(
     result = sslWrite(target_ssl_connection,  static_cast<char *>(__iovec[it].iov_base), __iovec[it].iov_len, written);
 #endif
     nwritten += written;
-    //    Logger::logmsg(LOG_REMOVE, "-------- it = %d  written: %d
-    //    totol_written: %d",it, written, nwritten);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: it = %d written: %d totol_written: %d",
+		__FUNCTION__, __LINE__, it, written, nwritten);
     if (result != IO::IO_RESULT::SUCCESS) break;
   }
-  //  Logger::logmsg(LOG_REMOVE, "<<<-------- result: %s errno: %d = %s
-  //  ",IO::getResultString(result).data(), errno,std::strerror(errno));
+  zcutils_log_print(LOG_DEBUG, "%s():%d: result: %s errno: %d = %s",
+	__FUNCTION__, __LINE__, IO::getResultString(result).data(), errno,std::strerror(errno));
   return result;
 }
 
@@ -520,8 +521,8 @@ IO::IO_RESULT SSLConnectionManager::handleWriteIOvec(Connection &target_ssl_conn
   iovec_written = 0;
   do {
     result = sslWriteIOvec(target_ssl_connection, &(iov[iovec_written]), static_cast<int>(nvec - iovec_written), count);
-    //    Logger::logmsg(LOG_REMOVE," result: %s written %d  iovecwritten
-    //    %d",IO::getResultString(result).data(),count,iovec_written);
+	zcutils_log_print(LOG_DEBUG, "%s():%d: result: %s written %d iovecwritten %d",
+		__FUNCTION__, __LINE__, IO::getResultString(result).data(), count, iovec_written);
     if (count > 0) {
       size_t remaining = static_cast<size_t>(count);
       for (auto it = iovec_written; it != iovec_size; it++) {
@@ -531,10 +532,8 @@ IO::IO_RESULT SSLConnectionManager::handleWriteIOvec(Connection &target_ssl_conn
           iovec_written++;
         } else {
           iov[it].iov_base = static_cast<char *>(iov[iovec_written].iov_base) + remaining;
-          Logger::logmsg(LOG_REMOVE,
-                        "Recalculating data ... remaining %d niovec_written: "
-                        "%d iov size %d",
-                        iov[it].iov_len - remaining, iovec_written, iovec_size);
+          zcutils_log_print(LOG_DEBUG, "%s():%d: recalculating data ... remaining %d niovec_written: %d iov size %d",
+			__FUNCTION__, __LINE__, iov[it].iov_len - remaining, iovec_written, iovec_size);
           iov[it].iov_len -= remaining;
           break;
         }
@@ -546,8 +545,8 @@ IO::IO_RESULT SSLConnectionManager::handleWriteIOvec(Connection &target_ssl_conn
     else
       result = IO::IO_RESULT::SUCCESS;
 #if PRINT_DEBUG_FLOW_BUFFERS
-    Logger::logmsg(LOG_REMOVE, "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s", nvec, iovec_written,
-                  nwritten, IO::getResultString(result).data());
+	zcutils_log_print(LOG_DEBUG, "%s():%d: headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
+		__FUNCTION__, __LINE__, nvec, iovec_written, nwritten, IO::getResultString(result).data());
 #endif
 
   } while (iovec_written < nvec && result == IO::IO_RESULT::SUCCESS);
@@ -570,8 +569,8 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
 
   auto result = handleWriteIOvec(target_ssl_connection, &http_data.iov[0], http_data.iov_size, iovec_written, nwritten);
 
-  //    Logger::logmsg(LOG_REMOVE, "iov_written %d bytes_written: %d IO RESULT:
-  //    %s\n", iovec_written, nwritten, IO::getResultString(result).data());
+  zcutils_log_print(LOG_DEBUG, "%s():%d: iov_written %d bytes_written: %d IO result: %s",
+	__FUNCTION__, __LINE__, iovec_written, nwritten, IO::getResultString(result).data());
 
   if (result != IO::IO_RESULT::SUCCESS) return result;
 
@@ -584,15 +583,13 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &target_ssl_conne
   http_data.iov_size = 0;
 
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(LOG_REMOVE, "\tIn buffer size: %d", ssl_connection.buffer_size);
-  Logger::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
-  Logger::logmsg(LOG_REMOVE, "\tOut buffer size: %d", ssl_connection.buffer_size);
-  Logger::logmsg(LOG_REMOVE, "\tbuffer offset: %d", ssl_connection.buffer_offset);
-  Logger::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
-  Logger::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
-  Logger::logmsg(LOG_REMOVE, "\tmessage bytes left: %d", http_data.message_bytes_left);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tin buffer size: %d", __FUNCTION__, __LINE__, ssl_connection.buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tbuffer offset: %d", __FUNCTION__, __LINE__, ssl_connection.buffer_offset);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tout buffer size: %d", __FUNCTION__, __LINE__, ssl_connection.buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tcontent length: %d", __FUNCTION__, __LINE__, http_data.content_length);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tmessage length: %d", __FUNCTION__, __LINE__, http_data.message_length);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tmessage bytes left: %d", __FUNCTION__, __LINE__, http_data.message_bytes_left);
 #endif
-  //  PRINT_BUFFER_SIZE
   return IO::IO_RESULT::SUCCESS;
 }
 
@@ -608,13 +605,13 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection &ssl_connection) {
     if (ret < 0) {
       switch (SSL_get_error(ssl_connection.ssl, ret)) {
         case SSL_ERROR_WANT_READ:
-          Logger::LogInfo("SSL_ERROR_WANT_READ", LOG_REMOVE);
+          zcutils_log_print(LOG_DEBUG, "%s():%d: SSL_ERROR_WANT_READ", __FUNCTION__, __LINE__);
           continue;
         case SSL_ERROR_WANT_WRITE:
-          Logger::LogInfo("SSL_ERROR_WANT_WRITE", LOG_REMOVE);
+          zcutils_log_print(LOG_DEBUG, "%s():%d: SSL_ERROR_WANT_WRITE", __FUNCTION__, __LINE__);
           continue;
         case SSL_ERROR_WANT_ASYNC:
-          Logger::LogInfo("SSL_ERROR_WANT_ASYNC", LOG_REMOVE);
+          zcutils_log_print(LOG_DEBUG, "%s():%d: SSL_ERROR_WANT_ASYNC", __FUNCTION__, __LINE__);
           continue;
       }
       ret = 0;

@@ -22,6 +22,7 @@
 #include "connection.h"
 #include "../util/common.h"
 #include "../util/network.h"
+#include "../../zcutils/zcutils.h"
 #include <sys/un.h>
 
 #define PRINT_BUFFER_SIZE \
@@ -183,18 +184,15 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     }
   }
-  Logger::logmsg(LOG_REMOVE, "ZERO READ write %d  buffer %d", splice_pipe.bytes,
-                buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: ZERO READ write %d  buffer %d",
+		__FUNCTION__, __LINE__, splice_pipe.bytes, buffer_size);
   return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
-  //  Logger::LogInfo("ZERO_BUFFER::SIZE = " + std::to_string(splice_pipe.bytes),
-  //  LOG_DEBUG);
-
-  Logger::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
-                splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: ZERO WRITE write %d left %d  buffer %d",
+		__FUNCTION__, __LINE__, splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
     if (bytes > BUFSZ) bytes = BUFSZ;
@@ -219,8 +217,8 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 #else
 IO::IO_RESULT Connection::zeroRead() {
   IO::IO_RESULT result = IO::IO_RESULT::ZERO_DATA;
-  //  Logger::logmsg(LOG_REMOVE, "ZERO READ IN %d  buffer %d", splice_pipe.bytes,
-  //  buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: ZERO READ IN %d  buffer %d",
+		__FUNCTION__, __LINE__, splice_pipe.bytes, buffer_size);
   for (;;) {
     if (splice_pipe.bytes >= BUFSZ) {
       result = IO::IO_RESULT::FULL_BUFFER;
@@ -239,15 +237,15 @@ IO::IO_RESULT Connection::zeroRead() {
       break;
     }
   }
-  //  Logger::logmsg(LOG_REMOVE, "ZERO READ OUT %d  buffer %d",
-  //  splice_pipe.bytes, buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: ZERO READ OUT %d  buffer %d",
+		__FUNCTION__, __LINE__, splice_pipe.bytes, buffer_size);
   return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
                                     http_parser::HttpData &http_data) {
-  //  Logger::logmsg(LOG_REMOVE, "ZERO WRITE write %d  left %d  buffer %d",
-  //  splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: ZERO WRITE write %d  left %d  buffer %d",
+		__FUNCTION__, __LINE__, splice_pipe.bytes, http_data.message_bytes_left, buffer_size);
   int sent = 0;
   while (splice_pipe.bytes > 0) {
     int bytes = splice_pipe.bytes;
@@ -318,10 +316,10 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 
   auto result = writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size,
                            iovec_written, nwritten);
-  //  Logger::logmsg(LOG_REMOVE, "IOV size: %d iov written %d bytes_written: %d
-  //  IO RESULT: %s\n", http_data.iov.size(),
-  //                iovec_written, nwritten,
-  //                IO::getResultString(result).data());
+  zcutils_log_print(LOG_DEBUG, "%s():%d: IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n",
+		__FUNCTION__, __LINE__, http_data.iov.size(),
+		iovec_written, nwritten,
+		IO::getResultString(result).data());
   if (result != IO::IO_RESULT::SUCCESS) return result;
 
   buffer_size = buffer_size - buffer_offset;
@@ -329,15 +327,12 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
   http_data.message_length = 0;
   http_data.setHeaderSent(true);
 #if PRINT_DEBUG_FLOW_BUFFERS
-  Logger::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
-  Logger::logmsg(LOG_REMOVE, "\tOut buffer size: %d", buffer_size);
-  Logger::logmsg(LOG_REMOVE, "\tbuffer offset: %d", buffer_offset);
-  Logger::logmsg(LOG_REMOVE, "\tcontent length: %d", http_data.content_length);
-  Logger::logmsg(LOG_REMOVE, "\tmessage length: %d", http_data.message_length);
-  Logger::logmsg(LOG_REMOVE, "\tmessage bytes left: %d",
-                http_data.message_bytes_left);
-#endif
-  //    PRINT_BUFFER_SIZE
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tbuffer offset: %d", __FUNCTION__, __LINE__, buffer_offset);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tOut buffer size: %d", __FUNCTION__, __LINE__, buffer_size);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tcontent length: %d", __FUNCTION__, __LINE__, http_data.content_length);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tmessage length: %d", __FUNCTION__, __LINE__, http_data.message_length);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: \tmessage bytes left: %d", __FUNCTION__, __LINE__, http_data.message_bytes_left);
+  #endif
   return IO::IO_RESULT::SUCCESS;
 }
 
@@ -352,12 +347,8 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
   do {
     count = ::writev(target_fd, &(iov[iovec_written]),
                      static_cast<int>(nvec - iovec_written));
-    //    Logger::logmsg(LOG_REMOVE,
-    //                  "writev() count %d errno: %d = %s iovecwritten %d",
-    //                  count,
-    //                  errno,
-    //                  std::strerror(errno),
-    //                  iovec_written);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: writev() count %d errno: %d = %s iovecwritten %d",
+			__FUNCTION__, __LINE__, count, errno, std::strerror(errno), iovec_written);
     if (count < 0) {
       if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;  // do not persist changes
@@ -375,10 +366,9 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
           iov[it].iov_len = 0;
           iovec_written++;
         } else {
-          Logger::logmsg(LOG_REMOVE,
-                        "Recalculating data ... remaining %d niovec_written: "
+          zcutils_log_print(LOG_DEBUG, "%s():%d: Recalculating data ... remaining %d niovec_written: "
                         "%d iov size %d",
-                        remaining, iovec_written, iovec_size);
+                        __FUNCTION__, __LINE__, remaining, iovec_written, iovec_size);
           iov[it].iov_len -= remaining;
           iov[it].iov_base =
               static_cast<char *>(iov[iovec_written].iov_base) + remaining;
@@ -392,10 +382,8 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
       else
         result = IO::IO_RESULT::SUCCESS;
 #if PRINT_DEBUG_FLOW_BUFFERS
-      Logger::logmsg(
-          LOG_REMOVE,
-          "# Headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
-          nvec, iovec_written, nwritten, IO::getResultString(result).data());
+      zcutils_log_print(LOG_DEBUG, "%s():%d: headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
+			__FUNCTION__, __LINE__, nvec, iovec_written, nwritten, IO::getResultString(result).data());
 #endif
     }
   } while (iovec_written < nvec);

@@ -19,6 +19,7 @@
  *
  */
 #include "ram_cache_storage.h"
+#include "../../zcutils/zcutils.h"
 
 // Ram Static variables definitions
 RamICacheStorage *RamICacheStorage::instance = nullptr;
@@ -143,8 +144,8 @@ st::STORAGE_STATUS RamfsCacheStorage::putInStorage(const std::string &rel_path,
 st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage() {
   int err = umount(mount_path.data());
   if (err) {
-    Logger::logmsg(LOG_REMOVE, "Error umounting the cache path %s ",
-                  mount_path.data());
+    zcutils_log_print(LOG_DEBUG, "%s():%d: Error umounting the cache path %s ",
+		__FUNCTION__, __LINE__, mount_path.data());
     return st::STORAGE_STATUS::GENERIC_ERROR;
   }
   std::filesystem::remove(mount_path.data());

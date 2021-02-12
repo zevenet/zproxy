@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "../../zcutils/zcutils.h"
 #include <future>
 #include <vector>
 
@@ -73,7 +74,7 @@ class CtlNotify {
     for (auto it = observers.begin(); it != observers.end();) {
 
       if(*it == nullptr){
-        Logger::logmsg(LOG_REMOVE, "observer not found, removing");
+        zcutils_log_print(LOG_DEBUG, "%s():%d: observer not found, removing", __FUNCTION__, __LINE__);
         it = observers.erase(it);
         continue;
       }

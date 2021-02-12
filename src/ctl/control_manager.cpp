@@ -84,7 +84,7 @@ void ctl::ControlManager::stop() {
 void ControlManager::sendCtlCommand(CTL_COMMAND command,
                                     CTL_HANDLER_TYPE handler,
                                     CTL_SUBJECT subject, std::string data) {
-  Logger::logmsg(LOG_REMOVE, "Reload config");
+  zcutils_log_print(LOG_DEBUG, "%s():%d: reload config", __FUNCTION__, __LINE__);
   CtlTask task;
   task.command = command;
   task.target = handler;
@@ -160,7 +160,7 @@ void ctl::ControlManager::doWork() {
       // this should not happends
     }
   }
-  Logger::logmsg(LOG_REMOVE, "Exiting loop");
+  zcutils_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__, __LINE__);
 }
 
 std::shared_ptr<ControlManager> ctl::ControlManager::getInstance() {

@@ -22,6 +22,7 @@
 #include "service.h"
 #include <numeric>
 #include "../util/network.h"
+#include "../../zcutils/zcutils.h"
 
 Backend *Service::getBackend(Connection &source, HttpRequest &request) {
   if (backend_set.empty()) return getEmergencyBackend();
@@ -301,7 +302,7 @@ void Service::setBackendsPriorityBy(BACKENDSTATS_PARAMETER) {
 
 std::string Service::handleTask(ctl::CtlTask &task) {
   if (!isHandler(task)) return JSON_OP_RESULT::ERROR;
-  //  Logger::logmsg(LOG_REMOVE, "Service %d handling task", id);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: service %d handling task", __FUNCTION__, __LINE__, id);
   if (task.backend_id > -1) {
     for (auto backend : backend_set) {
       if (backend->isHandler(task)) return backend->handleTask(task);
