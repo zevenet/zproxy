@@ -26,6 +26,7 @@
 #include "../debug/logger.h"
 #include "../version.h"
 #include "ssl_helper.h"
+#include "../../zcutils/zcutils.h"
 
 namespace global {
 struct run_options {
@@ -59,6 +60,9 @@ struct StartOptions {
   bool check_only{false};
   bool sync_is_enabled{false};
   bool verbose_mode{false};
+  int loglevel = zcutils_log_level;
+  int logoutput = zcutils_log_output;
+
   /*Set current start options as global, this must be called at least once*/
   void setCurrent(const StartOptions &options);
   static std::unique_ptr<StartOptions> parsePoundOption(

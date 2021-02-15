@@ -27,6 +27,7 @@
 #include "debug/backtrace.h"
 #include "stream/listener_manager.h"
 #include "util/system.h"
+#include "../zcutils/zcutils.h"
 
 static jmp_buf jmpbuf;
 
@@ -105,6 +106,7 @@ int main(int argc, char *argv[]) {
 
     Logger::log_level = config.listeners->log_level;
     Logger::log_facility = config.log_facility;
+	zcutils_log_set_level(config.listeners->log_level);
 
     config.setAsCurrent();
 
