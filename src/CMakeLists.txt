@@ -22,6 +22,7 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
+add_definitions(-DDEBUG_ZCU_LOG=0)
 add_definitions(-DLOGGER_DEBUG=1)
 add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
 add_definitions(-DPRINT_READ_STADISTICS=0)

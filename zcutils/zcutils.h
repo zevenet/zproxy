@@ -29,9 +29,6 @@
 #include <stdarg.h>
 #include <syslog.h>
 
-#define ZCUTILS_LOG_LEVEL_DEFAULT			LOG_NOTICE
-#define ZCUTILS_LOG_OUTPUT_DEFAULT			VALUE_LOG_OUTPUT_SYSLOG
-
 #define ZCUTILS_LOG_OUTPUT_SYSLOG			(1 << 0)
 #define ZCUTILS_LOG_OUTPUT_STDOUT			(1 << 1)
 #define ZCUTILS_LOG_OUTPUT_STDERR			(1 << 2)
@@ -44,8 +41,11 @@ enum zcutils_log_output {
 	VALUE_LOG_OUTPUT_SYSERR,
 };
 
-static inline int zcutils_log_output;
-static inline int zcutils_log_level;
+#define ZCUTILS_LOG_LEVEL_DEFAULT			LOG_NOTICE
+#define ZCUTILS_LOG_OUTPUT_DEFAULT			ZCUTILS_LOG_OUTPUT_SYSLOG
+
+static inline int zcutils_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
+static inline int zcutils_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
 
 static inline void zcutils_log_set_level(int loglevel)
 {
@@ -75,11 +75,11 @@ static inline void zcutils_log_set_output(int output)
 	return;
 }
 
-static inline int zcutils_log_print(int loglevel, const char *fmt, ...)
+static int zcutils_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
-#ifndef DEBUG
+#ifndef DEBUG_ZCU_LOG
 	if (loglevel == LOG_DEBUG)
 		return 0;
 #endif
