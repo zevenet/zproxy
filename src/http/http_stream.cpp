@@ -51,15 +51,15 @@ HttpStream::~HttpStream() {
 #endif
 }
 
-void HttpStream::dumpDebugData_(const std::string& file, const std::string& function, int line,
+void HttpStream::dumpDebugData_(const std::string& function, int line,
                                 HttpStream* stream, const char* debug_str, const char* data) {
-  if(stream == nullptr || Logger::log_level < LOG_DEBUG) return;
-  Logger::logmsg2(file,"",line,
+  if(stream == nullptr) return;
+  zcutils_log_print(
       LOG_DEBUG,
-      "\e[1;32m[%lu][%s][%.*s]\e[0m cl_buff: %5lu cl_off: %lu CL: %lu R: %d "
+      "%s():%d: \e[1;32m[%lu][%s][%.*s]\e[0m cl_buff: %5lu cl_off: %lu CL: %lu R: %d "
       "HS: %s CHR: %d CH: %s TP:%s RP: %s"
       " | bck_buff: %5lu\tbck_off: %lu\tCL: %lu\tR: %d "
-      "HS: %s CHR: %d CH: %s TP:%s RP: %s\t%s", stream->stream_id,
+      "HS: %s CHR: %d CH: %s TP:%s RP: %s\t%s", function, line, stream->stream_id,
       debug_str, stream->request.path_length, stream->request.path,
       stream->client_connection.buffer_size, stream->client_connection.buffer_offset,
       stream->request.content_length, stream->request.message_bytes_left,

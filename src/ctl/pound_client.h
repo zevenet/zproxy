@@ -20,7 +20,6 @@
  */
 #pragma once
 #include "../connection/connection.h"
-#include "../debug/logger.h"
 #include "../event/epoll_manager.h"
 #include "../http/http_request.h"
 #include "../json/json.h"

@@ -31,16 +31,12 @@
 
 static jmp_buf jmpbuf;
 
-// Default Log initilization
-int Logger::log_level = 5;
-int Logger::log_facility = LOG_DAEMON;
-
 std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 std::once_flag terminate_flag;
 void cleanExit() { closelog(); }
 
 void handleInterrupt(int sig) {
-  Logger::logmsg(LOG_DEBUG, "[%s] received", ::strsignal(sig));
+  zcutils_log_print(LOG_DEBUG, "[%s] received", ::strsignal(sig));
   switch (sig) {
     case SIGQUIT:
     case SIGTERM:
@@ -86,8 +82,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_SUCCESS);
   }
 
-  ::openlog("zproxy", LOG_PERROR | LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
-  Logger::logmsg(LOG_NOTICE, "zproxy starting...");
+  zcutils_log_print(LOG_NOTICE, "zproxy starting...");
   {
     Config config(true);
     auto start_options =
@@ -95,7 +90,7 @@ int main(int argc, char *argv[]) {
     if (start_options == nullptr) std::exit(EXIT_FAILURE);
     auto parse_result = config.init(*start_options);
     if (!parse_result) {
-      Logger::logmsg(LOG_ERR, "Error parsing configuration file %s",
+	  zcutils_log_print(LOG_ERR, "error parsing configuration file %s",
                      start_options->conf_file_name.data());
       std::exit(EXIT_FAILURE);
     }
@@ -104,8 +99,6 @@ int main(int argc, char *argv[]) {
       std::exit(EXIT_SUCCESS);
     }
 
-    Logger::log_level = config.listeners->log_level;
-    Logger::log_facility = config.log_facility;
 	zcutils_log_set_level(config.listeners->log_level);
 
     config.setAsCurrent();
@@ -113,7 +106,7 @@ int main(int argc, char *argv[]) {
     // Syslog initialization
     if (config.daemonize) {
       if (!Environment::daemonize()) {
-        Logger::logmsg(LOG_ERR, "error: daemonize failed\n");
+		zcutils_log_print(LOG_ERR, "error: daemonize failed");
         closelog();
         return EXIT_FAILURE;
       }
@@ -162,7 +155,7 @@ int main(int argc, char *argv[]) {
     for (auto listener_conf = config.listeners; listener_conf != nullptr;
          listener_conf = listener_conf->next) {
       if (!listener.addListener(listener_conf)) {
-        Logger::LogInfo("Error initializing listener socket", LOG_ERR);
+		zcutils_log_print(LOG_ERR, "error initializing listener socket");
         return EXIT_FAILURE;
       }
     }

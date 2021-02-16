@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "../../zcutils/zcutils.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -28,7 +29,8 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <cstring>
-#include "../debug/logger.h"
+#include <memory>
+
 class Network {
  public:
   inline static char *getPeerAddress(int socket_fd, char *buf, size_t bufsiz, bool include_port = false) {
@@ -100,7 +102,7 @@ class Network {
 
     sfd = getaddrinfo(address.data(), port > 0 ? std::to_string(port).data() : nullptr, &hints, &result);
     if (sfd != 0) {
-      logmsg(LOG_DEBUG, "getaddrinfo: %s\n", gai_strerror(sfd));
+		zcutils_log_print(LOG_ERR, "%s():%d: getaddrinfo: %s", __FUNCTION__, __LINE__, gai_strerror(sfd));
       return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(nullptr, freeaddrinfo);
     }
     return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(result, &freeaddrinfo);
@@ -161,7 +163,7 @@ class Network {
    * Translate inet/inet6 address/port into a string
    */
   static void addr2str(char *const res, size_t res_len, const struct addrinfo *addr, bool include_port = false) {
-    char buf[MAXBUF];
+    char buf[ZCU_DEF_BUFFER_SIZE];
     int port;
     void *src;
 
@@ -170,24 +172,24 @@ class Network {
       case AF_INET:
         src = static_cast<void *>(&(reinterpret_cast<sockaddr_in *>(addr->ai_addr))->sin_addr.s_addr);
         port = ntohs((reinterpret_cast<sockaddr_in *>(addr->ai_addr))->sin_port);
-        if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == nullptr) strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+        if (inet_ntop(AF_INET, src, buf, ZCU_DEF_BUFFER_SIZE - 1) == nullptr) strncpy(buf, "(UNKNOWN)", ZCU_DEF_BUFFER_SIZE - 1);
         break;
       case AF_INET6:
         src = static_cast<void *>(&(reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_addr.s6_addr);
         port = ntohs((reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_port);
         if (IN6_IS_ADDR_V4MAPPED(&((reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_addr))) {
           src = static_cast<void *>(&(reinterpret_cast<sockaddr_in6 *>(addr->ai_addr))->sin6_addr.s6_addr[12]);
-          if (inet_ntop(AF_INET, src, buf, MAXBUF - 1) == nullptr) strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+          if (inet_ntop(AF_INET, src, buf, ZCU_DEF_BUFFER_SIZE - 1) == nullptr) strncpy(buf, "(UNKNOWN)", ZCU_DEF_BUFFER_SIZE - 1);
         } else {
-          if (inet_ntop(AF_INET6, src, buf, MAXBUF - 1) == nullptr) strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+          if (inet_ntop(AF_INET6, src, buf, ZCU_DEF_BUFFER_SIZE - 1) == nullptr) strncpy(buf, "(UNKNOWN)", ZCU_DEF_BUFFER_SIZE - 1);
         }
         break;
       case AF_UNIX:
-        strncpy(buf, reinterpret_cast<char *>(addr->ai_addr), MAXBUF - 1);
+        strncpy(buf, reinterpret_cast<char *>(addr->ai_addr), ZCU_DEF_BUFFER_SIZE - 1);
         port = 0;
         break;
       default:
-        strncpy(buf, "(UNKNOWN)", MAXBUF - 1);
+        strncpy(buf, "(UNKNOWN)", ZCU_DEF_BUFFER_SIZE - 1);
         port = 0;
         break;
     }
@@ -246,7 +248,7 @@ class Network {
     if (::fcntl(fd, F_SETFL, flags) < 0) {
       std::string error = "fcntl(2) failed";
       error += std::strerror(errno);
-      Logger::LogInfo(error);
+      zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
       return false;
     }
     return true;

@@ -22,14 +22,13 @@
 #pragma once
 
 #include <pcreposix.h>
-#include "../debug/logger.h"
+#include "../../zcutils/zcutils.h"
 
 struct Regex : public regex_t {
   explicit Regex(const char* reg_ex_expression) : regex_t() {
     if (::regcomp(this, reg_ex_expression,
                   REG_ICASE | REG_NEWLINE | REG_EXTENDED)) {
-      // error compiling
-      Logger::logmsg(LOG_ERR, "Error compiling regex: %s", reg_ex_expression);
+      zcutils_log_print(LOG_ERR, "%s():%d: error compiling regex: %s", __FUNCTION__, __LINE__, reg_ex_expression);
     }
   }
   bool doMatch(const char* str, size_t n_match, regmatch_t p_match[], int e_flags = 0){

@@ -87,7 +87,7 @@ std::string Backend::handleTask(ctl::CtlTask& task) {
           } else if (value == JSON_KEYS::STATUS_DISABLED) {
             this->status = BACKEND_STATUS::BACKEND_DISABLED;
           }
-          Logger::logmsg(LOG_NOTICE, "Set Backend %d %s", backend_id,
+          zcutils_log_print(LOG_NOTICE, "Set Backend %d %s", backend_id,
                          value.c_str());
           return JSON_OP_RESULT::OK;
         }
@@ -170,8 +170,7 @@ void Backend::doMaintenance() {
 
   switch (res) {
     case IO::IO_OP::OP_SUCCESS: {
-      Logger::logmsg(
-          LOG_NOTICE, "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
+	  zcutils_log_print(LOG_NOTICE, "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
           this->address.data(), this->port, this->backend_config->f_name.data(),
           this->backend_config->srv_name.data());
       this->status = BACKEND_STATUS::BACKEND_UP;

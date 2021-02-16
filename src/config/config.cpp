@@ -32,10 +32,10 @@
 #include <syslog.h>
 #undef NULL
 #undef SYSLOG_NAMES
-#include "../debug/logger.h"
 #include "../util/network.h"
 #include "config.h"
 #include "regex_manager.h"
+#include "../../zcutils/zcutils.h"
 
 #ifdef WAF_ENABLED
 #include <modsecurity/rules.h>
@@ -58,13 +58,13 @@ Config::Config(bool _abort_on_error)
 Config::~Config() {}
 
 void Config::parse_file() {
-  char lin[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
   std::shared_ptr<ServiceConfig> svc{nullptr};
   std::shared_ptr<ListenerConfig> lstn{nullptr};
   int i;
   regmatch_t matches[5];
 
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n') lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::User, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
@@ -150,7 +150,7 @@ void Config::parse_file() {
       lin[matches[1].rm_eo] = '\0';
       ctrl_mode = std::strtol(lin + matches[1].rm_so, nullptr, 8);
       if (errno == ERANGE || errno == EINVAL) {
-        Logger::logmsg(LOG_ERR, "line %d: ControlMode config: %s - aborted", n_lin, strerror(errno));
+		zcutils_log_print(LOG_ERR, "line %d: ControlMode config: %s - aborted", n_lin, strerror(errno));
         exit(1);
       }
     } else if (!regexec(&regex_set::ListenHTTP, lin, 4, matches, 0)) {
@@ -234,7 +234,7 @@ bool Config::init(const global::StartOptions &start_options) {
   // init configuration file lists.
   f_name[0] = std::string(conf_file_name);
   if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
-    Logger::logmsg(LOG_ERR, "can't open open %s", conf_file_name.data());
+	zcutils_log_print(LOG_ERR, "can't open open %s", conf_file_name.data());
     return false;
   }
   n_lin[0] = 0;
@@ -255,12 +255,12 @@ bool Config::init(const global::StartOptions &start_options) {
   parse_file();
 
   if (start_options.check_only) {
-    Logger::logmsg(LOG_INFO, "Config file %s is OK", conf_file_name.data());
+	zcutils_log_print(LOG_INFO, "Config file %s is OK", conf_file_name.data());
     return true;
   }
 
   if (listeners == nullptr) {
-    Logger::logmsg(LOG_ERR, "no listeners defined - aborted");
+	zcutils_log_print(LOG_ERR, "no listeners defined - aborted");
     return false;
   }
 
@@ -280,7 +280,7 @@ std::string Config::file2str(const char *fname) {
 }
 
 std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
-  char lin[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
   auto res = std::make_shared<ListenerConfig>();
   std::shared_ptr<ServiceConfig> svc;
   MATCHER *m;
@@ -311,7 +311,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = 0;
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
@@ -518,7 +518,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
       }
       auto err = res->rules->loadFromUri(file.data());
       if (err == -1) {
-        logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
+		zcutils_log_print(LOG_ERR, "error loading waf ruleset file %s: %s", file.data(),
                res->rules->getParserError().data());
         conf_err("Error loading waf ruleset");
         break;
@@ -526,13 +526,13 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
       if (!res->rules) {
         res->rules = std::make_shared<modsecurity::Rules>();
       }
-      Logger::logmsg(LOG_DEBUG, "Rules: ");
+      zcutils_log_print(LOG_DEBUG, "Rules: ");
       for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
         auto rule = res->rules->getRulesForPhase(i);
         if (rule) {
-          Logger::logmsg(LOG_DEBUG, "Phase: %d ( %d rules )", i, rule->size());
+		  zcutils_log_print(LOG_DEBUG, "Phase: %d ( %d rules )", i, rule->size());
           for (auto &x : *rule) {
-            Logger::logmsg(LOG_DEBUG, "\tRule Id: %d From %s at %d ",
+			zcutils_log_print(LOG_DEBUG, "\tRule Id: %d From %s at %d ",
                            x->m_ruleId, x->m_fileName.data(), x->m_lineNumber);
           }
         }
@@ -548,7 +548,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
 }
 
 std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
-  char lin[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
   auto res = std::make_shared<ListenerConfig>();
   std::shared_ptr<ServiceConfig> svc;
   MATCHER *m;
@@ -590,7 +590,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
   if (regcomp(&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     conf_err("xHTTP bad default pattern - aborted");
   has_addr = has_port = has_other = 0;
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
@@ -612,18 +612,18 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
       }
       auto err = res->rules->loadFromUri(file.data());
       if (err == -1) {
-        logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
+		zcutils_log_print(LOG_ERR, "error loading waf ruleset file %s: %s", file.data(),
                res->rules->getParserError().data());
         conf_err("Error loading waf ruleset");
         break;
       }
-      Logger::logmsg(LOG_DEBUG, "Rules: ");
+      zcutils_log_print(LOG_DEBUG, "Rules: ");
       for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
         auto rule = res->rules->getRulesForPhase(i);
         if (rule) {
-          Logger::logmsg(LOG_DEBUG, "Phase: %d ( %d rules )", i, rule->size());
+		  zcutils_log_print(LOG_DEBUG, "Phase: %d ( %d rules )", i, rule->size());
           for (auto &x : *rule) {
-            Logger::logmsg(LOG_DEBUG, "\tRule Id: %d From %s at %d ",
+			zcutils_log_print(LOG_DEBUG, "\tRule Id: %d From %s at %d ",
                            x->m_ruleId, x->m_fileName.data(), x->m_lineNumber);
           }
         }
@@ -1071,8 +1071,7 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count_) {
         local_count++;
         break;
       default:
-        Logger::logmsg(LOG_INFO,
-                       "unsupported subjectAltName type encountered: %i",
+        zcutils_log_print(LOG_WARNING, "unsupported subjectAltName type encountered: %i",
                        name__->type);
     }
     GENERAL_NAME_free(name__);
@@ -1101,7 +1100,7 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
   std::shared_ptr<POUND_CTX> pc;
 #ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
   /* we have support for SNI */
-  char server_name[MAXBUF] /*, *cp*/;
+  char server_name[ZCU_DEF_BUFFER_SIZE] /*, *cp*/;
   regmatch_t matches[5];
   if (has_other)
     conf_err(
@@ -1132,8 +1131,8 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
   std::unique_ptr<X509, decltype(&::X509_free)> x509(
       ::PEM_read_bio_X509(bio_cert.get(), nullptr, nullptr, nullptr),
       ::X509_free);
-  memset(server_name, '\0', MAXBUF);
-  X509_NAME_oneline(X509_get_subject_name(x509.get()), server_name, MAXBUF - 1);
+  memset(server_name, '\0', ZCU_DEF_BUFFER_SIZE);
+  X509_NAME_oneline(X509_get_subject_name(x509.get()), server_name, ZCU_DEF_BUFFER_SIZE - 1);
   pc->subjectAltNameCount = 0;
   pc->subjectAltNames = nullptr;
   pc->subjectAltNames =
@@ -1143,7 +1142,7 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
     if ((pc->server_name = strdup(server_name + matches[1].rm_so)) == nullptr)
       conf_err("ListenHTTPS: could not set certificate subject");
   } else
-    Logger::logmsg(LOG_ERR, "ListenHTTPS: could not get certificate CN");
+    zcutils_log_print(LOG_WARNING, "ListenHTTPS: could not get certificate CN");
 
 // conf_err("ListenHTTPS: could not get certificate CN");
 #else
@@ -1182,7 +1181,8 @@ void Config::load_certdir(int has_other,
   int filecnt = 0;
   int idx, use;
   auto res = listener_.lock();
-  Logger::logmsg(LOG_DEBUG, "Including Certs from Dir %s", dir_path.data());
+
+  zcutils_log_print(LOG_DEBUG, "including Certs from Dir %s", dir_path.data());
 
   pattern = const_cast<char *>(strrchr(dir_path.data(), '/'));
   if (pattern) {
@@ -1216,7 +1216,7 @@ void Config::load_certdir(int has_other,
     for (idx = 1; idx < filecnt; idx++)
       if (strcmp(files[use], files[idx]) > 0) use = idx;
 
-    Logger::logmsg(LOG_DEBUG, " I Cert ==> %s", files[use]);
+	zcutils_log_print(LOG_DEBUG, " I Cert ==> %s", files[use]);
 
     load_cert(has_other, res, files[use]);
     files[use] = files[--filecnt];
@@ -1226,8 +1226,8 @@ void Config::load_certdir(int has_other,
 }
 
 std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
-  char lin[MAXBUF];
-  char pat[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
+  char pat[ZCU_DEF_BUFFER_SIZE];
   char *ptr;
   auto res = std::make_shared<ServiceConfig>();
   std::shared_ptr<BackendConfig> be;
@@ -1243,7 +1243,7 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
   pthread_mutex_init(&res->mut, nullptr);
   if (svc_name) res->name = svc_name;
   ign_case = ignore_case;
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::URL, lin, 4, matches, 0)) {
@@ -1378,7 +1378,7 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
       lin[matches[2].rm_eo] = '\0';
       lin[matches[3].rm_eo] = '\0';
       lin[matches[4].rm_eo] = '\0';
-      snprintf(pat, MAXBUF - 1, "Cookie[^:]*:.*[; \t]%s=\"?([^\";]*)\"?",
+      snprintf(pat, ZCU_DEF_BUFFER_SIZE - 1, "Cookie[^:]*:.*[; \t]%s=\"?([^\";]*)\"?",
                lin + matches[1].rm_so);
       if (matches[1].rm_so == matches[1].rm_eo)
         conf_err("Backend cookie must have a name");
@@ -1448,13 +1448,13 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name) {
 }
 
 char *Config::parse_orurls() {
-  char lin[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
   char *pattern;
   regex_t comp;
   regmatch_t matches[5];
 
   pattern = nullptr;
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::URL, lin, 4, matches, 0)) {
@@ -1495,7 +1495,7 @@ char *Config::parse_orurls() {
 
 std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
                                                     const int is_emergency) {
-  char lin[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
   regmatch_t matches[5];
   char *cp;
   auto res = std::make_shared<BackendConfig>();
@@ -1519,7 +1519,7 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
   addrinfo addr{};
   addrinfo ha_addr{};
   pthread_mutex_init(&res->mut, nullptr);
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
@@ -1533,7 +1533,7 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
         } else {
           // maybe the backend still not available, we set it as down;
           res->alive = 0;
-          Logger::logmsg(LOG_ERR, "%s line %d: Could not resolve backend host \"%s\".", f_name[cur_fin].data(),
+          zcutils_log_print(LOG_ERR, "%s line %d: Could not resolve backend host \"%s\".", f_name[cur_fin].data(),
                          n_lin[cur_fin], lin + matches[1].rm_so);
         }
       }
@@ -1709,7 +1709,7 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
 
 #ifdef CACHE_ENABLED
 void Config::parseCache(ServiceConfig *const svc) {
-  char lin[MAXBUF], *cp;
+  char lin[ZCU_DEF_BUFFER_SIZE], *cp;
   if (cache_s == 0 || cache_thr == 0)
     conf_err("There is no CacheRamSize nor CacheThreshold configured, exiting");
   regmatch_t matches[5];
@@ -1721,7 +1721,7 @@ void Config::parseCache(ServiceConfig *const svc) {
   if (cache_disk_path.size() != 0) {
     svc->cache_disk_path = cache_disk_path;
   }
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&MaxSize, lin, 2, matches, 0))
@@ -1744,12 +1744,12 @@ void Config::parseCache(ServiceConfig *const svc) {
 }
 #endif
 void Config::parseSession(std::weak_ptr<ServiceConfig> svc_spt) {
-  char lin[MAXBUF], *cp, *parm;
+  char lin[ZCU_DEF_BUFFER_SIZE], *cp, *parm;
   regmatch_t matches[5];
   parm = nullptr;
   auto svc = svc_spt.lock();
   svc->f_name = name;
-  while (conf_fgets(lin, MAXBUF)) {
+  while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
     if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
       lin[strlen(lin) - 1] = '\0';
     if (!regexec(&regex_set::Type, lin, 4, matches, 0)) {
@@ -1794,7 +1794,7 @@ void Config::parseSession(std::weak_ptr<ServiceConfig> svc_spt) {
           parm == nullptr)
         conf_err("Session ID not defined - aborted");
       if (svc->sess_type == SESS_TYPE::SESS_COOKIE) {
-        snprintf(lin, MAXBUF - 1, "Cookie[^:]*:.*[; \t]%s=", parm);
+        snprintf(lin, ZCU_DEF_BUFFER_SIZE - 1, "Cookie[^:]*:.*[; \t]%s=", parm);
         if (regcomp(&svc->sess_start, lin,
                     REG_ICASE | REG_NEWLINE | REG_EXTENDED))
           conf_err("COOKIE pattern failed - aborted");
@@ -1802,7 +1802,7 @@ void Config::parseSession(std::weak_ptr<ServiceConfig> svc_spt) {
                     REG_ICASE | REG_NEWLINE | REG_EXTENDED))
           conf_err("COOKIE pattern failed - aborted");
       } else if (svc->sess_type == SESS_TYPE::SESS_URL) {
-        snprintf(lin, MAXBUF - 1, "[?&]%s=", parm);
+        snprintf(lin, ZCU_DEF_BUFFER_SIZE - 1, "[?&]%s=", parm);
         if (regcomp(&svc->sess_start, lin,
                     REG_ICASE | REG_NEWLINE | REG_EXTENDED))
           conf_err("URL pattern failed - aborted");
@@ -1824,7 +1824,7 @@ void Config::parseSession(std::weak_ptr<ServiceConfig> svc_spt) {
                     REG_ICASE | REG_NEWLINE | REG_EXTENDED))
           conf_err("BASIC pattern failed - aborted");
       } else if (svc->sess_type == SESS_TYPE::SESS_HEADER) {
-        snprintf(lin, MAXBUF - 1, "%s:[ \t]*", parm);
+        snprintf(lin, ZCU_DEF_BUFFER_SIZE - 1, "%s:[ \t]*", parm);
         if (regcomp(&svc->sess_start, lin,
                     REG_ICASE | REG_NEWLINE | REG_EXTENDED))
           conf_err("HEADER pattern failed - aborted");
@@ -1843,7 +1843,7 @@ void Config::parseSession(std::weak_ptr<ServiceConfig> svc_spt) {
 }
 
 void Config::conf_err(const char *msg) {
-  Logger::logmsg(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
+  zcutils_log_print(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
                  n_lin[cur_fin], msg);
   if (abort_on_error) exit(EXIT_FAILURE);
   this->found_parse_error = true;
@@ -1899,7 +1899,7 @@ void Config::include_dir(const char *conf_path) {
   int filecnt = 0;
   int idx, use;
 
-  Logger::logmsg(LOG_DEBUG, "Including Dir %s", conf_path);
+  zcutils_log_print(LOG_DEBUG, "Including Dir %s", conf_path);
 
   if ((dp = opendir(conf_path)) == nullptr) {
     conf_err("can't open IncludeDir directory");
@@ -1932,14 +1932,14 @@ void Config::include_dir(const char *conf_path) {
     for (idx = 1; idx < filecnt; idx++)
       if (strcmp(files[use], files[idx]) < 0) use = idx;
 
-    Logger::logmsg(LOG_DEBUG, " I==> %s", files[use]);
+	zcutils_log_print(LOG_DEBUG, " I==> %s", files[use]);
 
     // Copied from Include logic
     if (cur_fin == (MAX_FIN - 1)) conf_err("Include nesting too deep");
     cur_fin++;
     f_name[cur_fin] = files[use];
     if ((f_in[cur_fin] = fopen(files[use], "rt")) == nullptr) {
-      Logger::logmsg(LOG_ERR, "%s line %d: Can't open included file %s",
+	  zcutils_log_print(LOG_ERR, "%s line %d: Can't open included file %s",
                      f_name[cur_fin].data(), n_lin[cur_fin], files[use]);
       exit(1);
     }
@@ -1968,7 +1968,6 @@ void Config::setAsCurrent() {
   global::run_options::getCurrent().root_jail = root_jail;
   global::run_options::getCurrent().config_file_name = conf_file_name;
   global::StartOptions::getCurrent().conf_file_name = conf_file_name;
-  Logger::log_facility = log_facility;
 }
 bool Config::init(const std::string &file_name) {
   conf_file_name = file_name;
@@ -1976,7 +1975,7 @@ bool Config::init(const std::string &file_name) {
   // init configuration file lists.
   f_name[0] = std::string(conf_file_name);
   if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
-    Logger::logmsg(LOG_ERR, "can't open open %s", conf_file_name.data());
+	zcutils_log_print(LOG_ERR, "can't open open %s", conf_file_name.data());
     return false;
   }
   n_lin[0] = 0;
@@ -1996,7 +1995,7 @@ bool Config::init(const std::string &file_name) {
 #endif
   parse_file();
   if (listeners == nullptr) {
-    Logger::logmsg(LOG_ERR, "no listeners defined - aborted");
+	zcutils_log_print(LOG_ERR, "no listeners defined - aborted", __FUNCTION__, __LINE__);
     return false;
   }
 

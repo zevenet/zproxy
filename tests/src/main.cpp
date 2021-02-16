@@ -18,7 +18,7 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "../../src/debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #ifdef ENABLE_ON_FLY_COMRESSION
 #include "t_compression.h"
 #endif
@@ -38,9 +38,6 @@
 //#include "t_cache.h"
 //#include "t_cache_storage.h"
 #endif
-
-int Logger::log_level = 8;
-int Logger::log_facility = -1;
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -22,7 +22,7 @@
 
 //#include "gmock/gmock-matchers.h"
 #include "../../src/ctl/observer.h"
-#include "../../src/debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "gtest/gtest.h"
 #include <string>
 
@@ -38,7 +38,7 @@ class Student : public CtlObserver<Task, Result> {
   int id;
   Student(int id_) : id(id_){};
   Result handleTask(Task &arg) override {
-    Logger::logmsg(LOG_DEBUG, "%d received command", id);
+    zcutils_log_print(LOG_DEBUG, "%d received command", id);
     return {id};
   }
   bool isHandler(Task &arg) override { return true; }
@@ -50,7 +50,8 @@ class Teacher : public CtlNotify<Task, Result> {
     auto res = notify({"Who are you?"});
     //    std::this_thread::sleep_for(std::chrono::seconds(5));
     for (auto &data : res) {
-      Logger::LogInfo("Yielding result from: " + std::to_string(data.get().i));
+      zcutils_log_print(LOG_INFO, "Yielding result from: %s",
+			std::to_string(data.get().i));
     }
     return static_cast<int>(res.size());
   }
@@ -58,13 +59,13 @@ class Teacher : public CtlNotify<Task, Result> {
   void onResponseReady(CtlObserver<Task, Result> &obj, Result arg) override {}
 
   void onAttach(CtlObserver<Task, Result> &obj) override {
-    Logger::LogInfo("Attached student id: " +
-               std::to_string(dynamic_cast<Student *>(&obj)->id));
+    zcutils_log_print(LOG_INFO, "Attached student id: %s",
+                   std::to_string(dynamic_cast<Student *>(&obj)->id));
   }
 };
 
 TEST(IObserver, IObserver1) {
-  Logger::LogInfo("Starting Observer test");
+  zcutils_log_print(LOG_INFO, "Starting Observer test");
   std::vector<Student *> students;
   Teacher teacher;
   int num_student = 20;
@@ -74,6 +75,6 @@ TEST(IObserver, IObserver1) {
     students.push_back(student);
   }
   auto res = teacher.run();
-  Logger::LogInfo("Result " + std::to_string(res));
+  zcutils_log_print(LOG_INFO, "Result %s", std::to_string(res));
   ASSERT_TRUE(res == num_student);
 }

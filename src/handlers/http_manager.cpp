@@ -78,18 +78,18 @@ ssize_t http_manager::getChunkSize(const std::string &data, size_t data_size,
     char *error;
     auto chunk_length = ::strtol(hex.data(), &error, 16);
     if (*error != 0) {
-      Logger::logmsg(LOG_NOTICE, "strtol() failed: Data size: %d  Buffer: %.*s",
+      zcutils_log_print(LOG_NOTICE, "strtol() failed: Data size: %d  Buffer: %.*s",
                      data_size, 10, data.data());
       return -1;
     } else {
 #if PRINT_DEBUG_CHUNKED
-      Logger::logmsg(LOG_DEBUG, "CHUNK found size %s => %d ", hex.data(),
+      zcutils_log_print(LOG_DEBUG, "CHUNK found size %s => %d ", hex.data(),
                      chunk_length);
 #endif
       return static_cast<ssize_t>(chunk_length);
     }
   }
-  //  Logger::logmsg(LOG_NOTICE, "Chunk not found, need more data: Buff size: %d
+  //  zcutils_log_print(LOG_NOTICE, "Chunk not found, need more data: Buff size: %d
   //  Buff %.*s ",data_size, 5, data.data());
   return -1;
 }
@@ -138,8 +138,8 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream) {
 //      } else {
 //        time += service->ttl;
 //      }
-//      char time_string[MAXBUF];
-//      strftime(time_string, MAXBUF - 1, "%a, %e-%b-%Y %H:%M:%S GMT",
+//      char time_string[ZCU_DEF_BUFFER_SIZE];
+//      strftime(time_string, ZCU_DEF_BUFFER_SIZE - 1, "%a, %e-%b-%Y %H:%M:%S GMT",
 //               gmtime(&time));
 //      set_cookie_header += "; expires=";
 //      set_cookie_header += time_string;
@@ -195,7 +195,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
   // Check for correct headers
   for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(
+    zcutils_log_print(
         LOG_DEBUG, "\t%.*s",
         request.headers[i].name_len + request.headers[i].value_len + 2,
         request.headers[i].name);
@@ -214,19 +214,19 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream) {
     for (auto m = listener_config_.replace_header_request; m; m = m->next) {
       eol.rm_eo = request.headers[i].line_size;
       if (::regexec(&m->name, request.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
-        auto buf = std::make_unique<char[]>(MAXBUF);
-        memset(buf.get(), 0, MAXBUF);
+        auto buf = std::make_unique<char[]>(ZCU_DEF_BUFFER_SIZE);
+        memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
         regmatch_t umtch[10];
         char *chptr, *enptr, *srcptr;
         umtch[0].rm_so = 0;
         umtch[0].rm_eo = request.headers[i].value_len;
         if (regexec(&m->match, request.headers[i].value, 10, umtch, REG_STARTEND)) {
-          Logger::logmsg(LOG_INFO, "Header Match pattern didn't match %.*s",
+          zcutils_log_print(LOG_INFO, "Header Match pattern didn't match %.*s",
                          request.headers[i].line_size, request.headers[i].name);
           break;
         } else {
           chptr = buf.get();
-          enptr = buf.get() + MAXBUF - 1;
+          enptr = buf.get() + ZCU_DEF_BUFFER_SIZE - 1;
           *enptr = '\0';
           srcptr = const_cast<char *>(m->replace.data());
           for (; *srcptr && chptr < enptr - 1;) {
@@ -402,7 +402,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
   /* If the response is 100 continue we need to enable chunked transfer. */
   if (response.http_status_code < 200) {
     //    stream.response.chunked_status =
-    //    http::CHUNKED_STATUS::CHUNKED_ENABLED; Logger::logmsg(LOG_DEBUG,
+    //    http::CHUNKED_STATUS::CHUNKED_ENABLED; zcutils_log_print(LOG_DEBUG,
     //    "Chunked transfer enabled");
     return validation::REQUEST_RESULT::OK;
   }
@@ -425,19 +425,19 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
     for (auto m = listener_config_.replace_header_response; m; m = m->next) {
       eol.rm_eo = response.headers[i].line_size;
       if (::regexec(&m->name, response.headers[i].name, 1, &eol, REG_STARTEND) == 0) {
-        auto buf = std::make_unique<char[]>(MAXBUF);
-        memset(buf.get(), 0, MAXBUF);
+        auto buf = std::make_unique<char[]>(ZCU_DEF_BUFFER_SIZE);
+        memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
         regmatch_t umtch[10];
         char *chptr, *enptr, *srcptr;
         umtch[0].rm_so = 0;
         umtch[0].rm_eo = response.headers[i].value_len;
         if (regexec(&m->match, response.headers[i].value, 10, umtch, REG_STARTEND)) {
-          Logger::logmsg(LOG_INFO, "Header Match pattern didn't match %.*s",
+          zcutils_log_print(LOG_INFO, "Header Match pattern didn't match %.*s",
                          response.headers[i].line_size, response.headers[i].name);
           break;
         } else {
           chptr = buf.get();
-          enptr = buf.get() + MAXBUF - 1;
+          enptr = buf.get() + ZCU_DEF_BUFFER_SIZE - 1;
           *enptr = '\0';
           srcptr = const_cast<char *>(m->replace.data());
           for (; *srcptr && chptr < enptr - 1;) {
@@ -468,7 +468,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
       }
     }
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(LOG_DEBUG, "\t%.*s",
+    zcutils_log_print(LOG_DEBUG, "\t%.*s",
                    response.headers[i].name_len + response.headers[i].value_len + 2,
                    response.headers[i].name);
 #endif
@@ -537,7 +537,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream) {
           }
           auto in_addr = Network::getAddress(host, port);
           if (in_addr == nullptr) {
-            Logger::logmsg(LOG_NOTICE, "Couldn't get host ip");
+            zcutils_log_print(LOG_NOTICE, "Couldn't get host ip");
             continue;
           }
           /*rewrite location if it points to the backend or the listener
@@ -666,10 +666,10 @@ void http_manager::replyError(http::Code code, const std::string &code_string,
 
   if (UNLIKELY(Network::getPeerAddress(target.getFileDescriptor(), caddr,
                                        200) == nullptr)) {
-    Logger::LogInfo("Error getting peer address", LOG_DEBUG);
+    zcutils_log_print(LOG_DEBUG, "Error getting peer address");
   } else {
     auto request_data_len = std::string_view(target.buffer).find('\r');
-    Logger::logmsg(LOG_INFO, "(%lx) e%d %s %.*s from %s",
+    zcutils_log_print(LOG_INFO, "(%lx) e%d %s %.*s from %s",
                    std::this_thread::get_id(), static_cast<int>(code),
                    code_string.data(), request_data_len, target.buffer, caddr);
   }
@@ -704,20 +704,20 @@ bool http_manager::replyRedirect(HttpStream &stream,
       new_url += std::string(stream.request.path, stream.request.path_length);
       break;
     case 2: {  // Dynamic redirect
-      auto buf = std::make_unique<char[]>(MAXBUF);
+      auto buf = std::make_unique<char[]>(ZCU_DEF_BUFFER_SIZE);
       std::string request_url(stream.request.path, stream.request.path_length);
-      memset(buf.get(), 0, MAXBUF);
+      memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
       regmatch_t umtch[10];
       char *chptr, *enptr, *srcptr;
       if (regexec(&service->service_config.url->pat, request_url.data(), 10,
                   umtch, 0)) {
-        Logger::logmsg(
+        zcutils_log_print(
             LOG_WARNING,
             "URL pattern didn't match in redirdynamic... shouldn't happen %s",
             request_url.data());
       } else {
         chptr = buf.get();
-        enptr = buf.get() + MAXBUF - 1;
+        enptr = buf.get() + ZCU_DEF_BUFFER_SIZE - 1;
         *enptr = '\0';
         srcptr =
             const_cast<char *>(redirect_backend.backend_config->url.data());

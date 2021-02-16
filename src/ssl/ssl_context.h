@@ -22,7 +22,6 @@
 #pragma once
 
 #include "../config/config.h"
-#include "../debug/logger.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>

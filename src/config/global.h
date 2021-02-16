@@ -21,12 +21,12 @@
 
 #pragma once
 
-#include <getopt.h>
-#include <string>
-#include "../debug/logger.h"
 #include "../version.h"
 #include "ssl_helper.h"
 #include "../../zcutils/zcutils.h"
+#include <memory>
+#include <getopt.h>
+#include <string>
 
 namespace global {
 struct run_options {

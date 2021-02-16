@@ -20,16 +20,17 @@
  */
 
 #include "epoll_manager.h"
-#include "../debug/logger.h"
 #include "../util/network.h"
+#include "../../zcutils/zcutils.h"
 #include <climits>
+
 namespace events {
 
 EpollManager::EpollManager() : accept_fd_set() {
   if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
     std::string error = "epoll_create(2) failed: ";
     error += std::strerror(errno);
-    Logger::LogInfo(error, LOG_ERR);
+	zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
     throw std::system_error(errno, std::system_category());
   }
 }
@@ -37,8 +38,8 @@ EpollManager::EpollManager() : accept_fd_set() {
 /** Handles the connect events. */
 void EpollManager::onConnectEvent(epoll_event &event) {
 #if DEBUG_EVENT_MANAGER
-  Logger::logmsg(LOG_DEBUG, "~~ONConnectEvent fd: %d",
-                static_cast<int>(event.data.u64 >> CHAR_BIT));
+	zcutils_log_print(LOG_DEBUG, "%s():%d: ~~ONConnectEvent fd: %d",
+			__FUNCTION__, __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
 #endif
   HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), EVENT_TYPE::CONNECT,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -47,8 +48,8 @@ void EpollManager::onConnectEvent(epoll_event &event) {
 /** Handles the write events. */
 void EpollManager::onWriteEvent(epoll_event &event) {
 #if DEBUG_EVENT_MANAGER
-  Logger::logmsg(LOG_DEBUG, "~~ONWriteEvent fd: %d",
-                static_cast<int>(event.data.u64 >> CHAR_BIT));
+	zcutils_log_print(LOG_DEBUG, "%s():%d: ~~ONWriteEvent fd: %d",
+			__FUNCTION__, __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
 #endif
   HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), EVENT_TYPE::WRITE,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -57,8 +58,8 @@ void EpollManager::onWriteEvent(epoll_event &event) {
 /** Handles the read events. */
 void EpollManager::onReadEvent(epoll_event &event) {
 #if DEBUG_EVENT_MANAGER
-  Logger::logmsg(LOG_DEBUG, "~~ONReadEvent fd: %d",
-                static_cast<int>(event.data.u64 >> CHAR_BIT));
+	zcutils_log_print(LOG_DEBUG, "%s():%d: ~~ONReadEvent fd: %d",
+			__FUNCTION__, __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
 #endif
   HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT), EVENT_TYPE::READ,
               static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -69,12 +70,12 @@ bool EpollManager::deleteFd(int fd) {
     if (errno == ENOENT || errno == EBADF || errno == EPERM) {
       //      std::string error = "epoll_ctl(delete) unnecessary. ";
       //      error += std::strerror(errno);
-      //      Logger::LogInfo(error, LOG_DEBUG);
+      //	zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
       return true;
     }
     std::string error = "epoll_ctl(delete) failed ";
     error += std::strerror(errno);
-    Logger::LogInfo(error, LOG_DEBUG);
+    zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
     return false;
   }
 #if USE_TIMER_FD_TIMEOUT == 0
@@ -137,7 +138,7 @@ int EpollManager::loopOnce(int time_out) {
 EpollManager::~EpollManager() { ::close(epoll_fd); }
 
 bool EpollManager::handleAccept(int listener_fd) {
-  Logger::logmsg(LOG_DEBUG, "Adding listener fd: %d", listener_fd);
+  zcutils_log_print(LOG_DEBUG, "%s():%d: adding listener fd: %d", __FUNCTION__, __LINE__, listener_fd);
   accept_fd_set.emplace_back(listener_fd);
   Network::setSocketNonBlocking(listener_fd);
   return addFd(listener_fd, EVENT_TYPE::ACCEPT, EVENT_GROUP::ACCEPTOR);
@@ -157,14 +158,12 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type,
     } else {
       std::string error = "epoll_ctl(add) failed ";
       error += std::strerror(errno);
-      Logger::LogInfo(error, LOG_DEBUG);
+      zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
       return false;
     }
   }
 #if DEBUG_EVENT_MANAGER
-  Logger::LogInfo("Epoll::AddFD " + std::to_string(fd) +
-                 " To EpollFD: " + std::to_string(epoll_fd),
-             LOG_DEBUG);
+	zcutils_log_print(LOG_DEBUG, "%s():%d: Epoll::AddFD %s To EpollFD: %s", __FUNCTION__, __LINE__, std::to_string(fd), std::to_string(epoll_fd));
 #endif
   if(time_out != 0) {
     switch (event_type) {
@@ -194,7 +193,7 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
                             EVENT_GROUP event_group, int time_out) {
   //  std::lock_guard<std::mutex> loc(epoll_mutex);
 #if DEBUG_EVENT_MANAGER
-  Logger::LogInfo("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
+	zcutils_log_print(LOG_DEBUG, "%s():%d: Epoll::UpdateFd %s", __FUNCTION__, __LINE__, std::to_string(fd));
 #endif
   struct epoll_event epevent = {};
   epevent.events = static_cast<uint32_t>(event_type);
@@ -205,12 +204,12 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
     if (errno == ENOENT) {
       std::string error = "epoll_ctl(update) failed, fd reopened, adding .. ";
       error += std::strerror(errno);
-      Logger::LogInfo(error, LOG_DEBUG);
+		zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
       return addFd(fd, event_type, event_group);
     } else {
       std::string error = "epoll_ctl(update) failed ";
       error += std::strerror(errno);
-      Logger::LogInfo(error, LOG_DEBUG);
+      zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
       return false;
     }
   }

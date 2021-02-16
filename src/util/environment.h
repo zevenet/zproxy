@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "system.h"
 #include <csignal>
 #include <fcntl.h>
@@ -41,12 +41,13 @@ public:
       struct passwd *pw;
 
       if ((pw = ::getpwnam(user_name.c_str())) == nullptr) {
-        Logger::logmsg(LOG_ERR, "no such user %s - aborted", user_name.c_str());
+		  zcutils_log_print(LOG_ERR, "%s():%d: no such user %s - aborted",
+				__FUNCTION__, __LINE__, user_name.c_str());
         return false;
       }
       if (::chown(file_name.c_str(), pw->pw_uid, -1)) {
-        Logger::logmsg(LOG_ERR, "chown error on control socket - aborted (%s)",
-                      strerror(errno));
+		  zcutils_log_print(LOG_ERR, "%s():%d: chown error on control socket - aborted (%s)",
+				__FUNCTION__, __LINE__, strerror(errno));
         return false;
       }
       return true;
@@ -59,13 +60,13 @@ public:
     if (!group_name.empty()) {
       struct group *gr;
       if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
-        Logger::logmsg(LOG_ERR, "no such group %s - aborted",
-                      group_name.c_str());
+		  zcutils_log_print(LOG_ERR, "%s():%d: no such group %s - aborted",
+				__FUNCTION__, __LINE__, group_name.c_str());
         return false;
       }
       if (::chown(file_name.c_str(), -1, gr->gr_gid)) {
-        Logger::logmsg(LOG_ERR, "chown error on control socket - aborted (%s)",
-                      strerror(errno));
+		  zcutils_log_print(LOG_ERR, "%s():%d: chown error on control socket - aborted (%s)",
+				__FUNCTION__, __LINE__, strerror(errno));
         return false;
       }
       return true;
@@ -75,8 +76,8 @@ public:
 
   static bool setFileUserMode(long user_mode, const std::string &file_name) {
     if (::chmod(file_name.c_str(), user_mode)) {
-      Logger::logmsg(LOG_ERR, "chmod error on control socket - aborted (%s)",
-                    strerror(errno));
+      zcutils_log_print(LOG_ERR, "%s():%d: chmod error on control socket - aborted (%s)",
+			__FUNCTION__, __LINE__, strerror(errno));
       return false;
     }
     return true;
@@ -86,12 +87,14 @@ public:
     if (!user.empty()) {
       struct passwd *pw;
       if ((pw = ::getpwnam(user.c_str())) == nullptr) {
-        Logger::logmsg(LOG_ERR, "no such user %s - aborted", user.c_str());
+		zcutils_log_print(LOG_ERR, "%s():%d: no such user %s - aborted",
+				__FUNCTION__, __LINE__, user.c_str());
         return false;
       }
       auto user_id = pw->pw_uid;
       if (::setuid(user_id) || seteuid(user_id)) {
-        Logger::logmsg(LOG_ERR, "setuid: %s - aborted", strerror(errno));
+		zcutils_log_print(LOG_ERR, "%s():%d: setuid: %s - aborted",
+				__FUNCTION__, __LINE__, strerror(errno));
         return false;
       }
       return true;
@@ -103,13 +106,14 @@ public:
     if (!group_name.empty()) {
       struct group *gr;
       if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
-        Logger::logmsg(LOG_ERR, "no such group %s - aborted",
-                      group_name.c_str());
+		zcutils_log_print(LOG_ERR, "%s():%d: no such group %s - aborted",
+				__FUNCTION__, __LINE__, group_name.c_str());
         return false;
       }
       auto group_id = gr->gr_gid;
       if (::setgid(group_id) || setegid(group_id)) {
-        Logger::logmsg(LOG_ERR, "setgid: %s - aborted", strerror(errno));
+		zcutils_log_print(LOG_ERR, "%s():%d: setgid: %s - aborted",
+				__FUNCTION__, __LINE__, strerror(errno));
         return false;
       }
       return true;
@@ -124,8 +128,8 @@ public:
       fclose(pid_file_hl);
       return true;
     } else
-      logmsg(LOG_NOTICE, "Create \"%s\": %s", pid_file_name.c_str(),
-             strerror(errno));
+      zcutils_log_print(LOG_ERR, "Create \"%s\": %s",
+			__FUNCTION__, __LINE__, pid_file_name.c_str(), strerror(errno));
     return false;
   }
 
@@ -142,11 +146,13 @@ public:
   static bool setChrootRoot(const std::string &chroot_path) {
     if (!chroot_path.empty()) {
       if (::chroot(chroot_path.c_str())) {
-        Logger::logmsg(LOG_ERR, "chroot: %s - aborted", strerror(errno));
+        zcutils_log_print(LOG_ERR, "%s():%d: chroot: %s - aborted",
+				__FUNCTION__, __LINE__, strerror(errno));
         return false;
       }
       if (chdir("/")) {
-        Logger::logmsg(LOG_ERR, "chroot/chdir: %s - aborted", strerror(errno));
+        zcutils_log_print(LOG_ERR, "%s():%d: chroot/chdir: %s - aborted",
+				__FUNCTION__, __LINE__, strerror(errno));
         return false;
       }
       return true;
@@ -156,25 +162,33 @@ public:
 
   // Increase num file descriptor ulimit
   static bool setUlimitData() {
-
-//    Logger::logmsg(LOG_DEBUG,"System info:");
-//    Logger::logmsg(LOG_DEBUG,"\tL1 Data cache size: %lu", SystemInfo::data()->getL1DataCacheSize());
-//    Logger::logmsg(LOG_DEBUG,"\t\tCache line size: %lu",SystemInfo::data()->getL1DataCacheLineSize());
-//    Logger::logmsg(LOG_DEBUG,"\tL2 Cache size: %lu",SystemInfo::data()->getL2DataCacheSize());
-//    Logger::logmsg(LOG_DEBUG,"\t\tCache line size: %lu" ,SystemInfo::data()->getL2DataCacheLineSize());
+    zcutils_log_print(LOG_DEBUG, "%s():%d: System info:",
+			__FUNCTION__, __LINE__);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \tL1 Data cache size: %lu",
+			__FUNCTION__, __LINE__, SystemInfo::data()->getL1DataCacheSize());
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \t\tCache line size: %lu",
+			__FUNCTION__, __LINE__, SystemInfo::data()->getL1DataCacheLineSize());
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \tL2 Cache size: %lu",
+			__FUNCTION__, __LINE__, SystemInfo::data()->getL2DataCacheSize());
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \t\tCache line size: %lu",
+			__FUNCTION__, __LINE__, SystemInfo::data()->getL2DataCacheLineSize());
     rlimit r{};
     ::getrlimit(RLIMIT_NOFILE, &r);
-//    Logger::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tCurrent %lu" , r.rlim_cur);
-//    Logger::logmsg(LOG_DEBUG,"\tRLIMIT_NOFILE\tMaximum %lu" , ::sysconf(_SC_OPEN_MAX));
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \tRLIMIT_NOFILE\tCurrent %lu",
+			__FUNCTION__, __LINE__, r.rlim_cur);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \tRLIMIT_NOFILE\tMaximum %lu",
+			__FUNCTION__, __LINE__, ::sysconf(_SC_OPEN_MAX));
     if (r.rlim_cur != r.rlim_max) {
       r.rlim_cur = r.rlim_max;
       if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-        Logger::logmsg(LOG_ERR, "\tsetrlimit failed ");
+        zcutils_log_print(LOG_ERR, "%s():%d: \tsetrlimit failed",
+				__FUNCTION__, __LINE__);
         return false;
       }
     }
     ::getrlimit(RLIMIT_NOFILE, &r);
-//    Logger::LogInfo("\tRLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur), LOG_DEBUG);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \tRLIMIT_NOFILE\tSetCurrent %s",
+			__FUNCTION__, __LINE__, std::to_string(r.rlim_cur));
     return true;
   }
 
@@ -214,7 +228,7 @@ public:
  static bool daemonize() {
      pid_t child;
      if ((child = fork()) < 0) {
-       Logger::logmsg(LOG_ERR, "error: failed fork");
+		zcutils_log_print(LOG_ERR, "%s():%d: error: failed fork", __FUNCTION__, __LINE__);
          return false;
      }
      if (child != 0) { // parent

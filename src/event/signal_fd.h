@@ -27,6 +27,8 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 #include "descriptor.h"
+#include "../../zcutils/zcutils.h"
+
 using namespace events;
 class SignalFd : public Descriptor {
  public:
@@ -42,12 +44,12 @@ class SignalFd : public Descriptor {
     /* Block signals so that they aren't handled
                   according to their default dispositions */
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
-      Logger::logmsg(LOG_ERR, "sigprocmask () failed");
+		zcutils_log_print(LOG_ERR, "sigprocmask () failed");
       return false;
     }
     fd_ = signalfd(-1, &mask, 0);
     if (fd_ < 0) {
-      Logger::logmsg(LOG_ERR, "sigprocmask () failed");
+		zcutils_log_print(LOG_ERR, "sigprocmask () failed");
       return false;
     }
     return true;
@@ -57,7 +59,7 @@ class SignalFd : public Descriptor {
     signalfd_siginfo fdsi{};
     s = read(fd_, &fdsi, sizeof(struct signalfd_siginfo));
     if (s != sizeof(struct signalfd_siginfo)) {
-      Logger::logmsg(LOG_ERR, "sigprocmask () failed");
+		zcutils_log_print(LOG_ERR, "sigprocmask () failed");
       return false;
     }
     return fdsi.ssi_signo;

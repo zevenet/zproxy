@@ -20,7 +20,7 @@
  */
 
 #include "control_manager.h"
-
+#include "../../zcutils/zcutils.h"
 #include <memory>
 
 /* Not used right now */
@@ -128,7 +128,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP
         connection.closeConnection();
         return;
       }
-      // Logger::logmsg(LOG_DEBUG, "CTL API Request: %s", connection.buffer);
+      zcutils_log_print(LOG_DEBUG, "%s():%d: CTL API Request: %s", __FUNCTION__, __LINE__, connection.buffer);
       std::string response = handleCommand(request);
       size_t written = 0;
       if (!response.empty()) {
@@ -205,7 +205,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request) {
   // remove tailing "/"
 
   if (!setTaskTarget(request, task) && task.target == CTL_HANDLER_TYPE::NONE) {
-    Logger::logmsg(LOG_WARNING, "Bad API request : %s", request.getUrl().c_str());
+	zcutils_log_print(LOG_WARNING, "%s():%d: bad API request : %s", __FUNCTION__, __LINE__, request.getUrl().c_str());
     return http::getHttpResponse(http::Code::BadRequest, "", "");
   }
   if (task.command == CTL_COMMAND::ADD || task.command == CTL_COMMAND::UPDATE || task.command == CTL_COMMAND::DELETE) {

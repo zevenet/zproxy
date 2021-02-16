@@ -254,12 +254,12 @@ void CacheManager::validateCacheRequest(HttpRequest &request) {
                   request.c_opt.only_if_cached = true;
                   break;
                 default:
-                  Logger::logmsg(LOG_ERR, "Malformed cache-control, found response directive %s in the request",
+                  zcutils_log_print(LOG_ERR, "Malformed cache-control, found response directive %s in the request",
                                 directive.data());
                   break;
               }
             } else {
-              Logger::logmsg(LOG_ERR, "Unrecognized directive %s in the request", directive.data());
+              zcutils_log_print(LOG_ERR, "Unrecognized directive %s in the request", directive.data());
             }
           }
           break;

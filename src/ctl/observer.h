@@ -48,20 +48,18 @@ class CtlNotify {
 
  public:
   void attach(CtlObserver<T, IResponse> &listener) {
-    //    Logger::logmsg(LOG_DEBUG, "Attaching id: %d observer",
-    //    listener.__id__);
+    zcutils_log_print(LOG_DEBUG, "%s():%d: attaching id: %d observer", __FUNCTION__, __LINE__, listener.__id__);
     observers.push_back(&listener);
     onAttach(listener);
   }
   void deAttach(CtlObserver<T, IResponse> &listener) {
     for (auto it = observers.begin(); it != observers.end();) {
       if(*it == nullptr){
-        Logger::logmsg(LOG_ERR, "Removing null observer");
+        zcutils_log_print(LOG_DEBUG, "%s():%d: removing null observer", __FUNCTION__, __LINE__);
         it = observers.erase(it);
         continue;
       }else if(*(*it) == listener){
-        //        Logger::logmsg(LOG_DEBUG, "deAttaching id: %d observer",
-        //        listener.__id__);
+        zcutils_log_print(LOG_DEBUG, "%s():%d: deAttaching id: %d observer", __FUNCTION__, __LINE__, listener.__id__);
         it = observers.erase(it);
         break;
       }

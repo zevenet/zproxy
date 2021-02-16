@@ -20,9 +20,11 @@
  */
 #pragma once
 
+#include "../event/descriptor.h"
 #include <sys/timerfd.h>
 #include <unistd.h>
-#include "../event/descriptor.h"
+#include <cstring>
+
 using namespace events;
 class TimerFd : public Descriptor {
   bool one_shot_;

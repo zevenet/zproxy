@@ -35,17 +35,17 @@
 void httpsHeaders(HttpStream *stream, int clnt_check) {
   if (stream->service_manager->ssl_context == nullptr) return;
   std::string header_value;
-  header_value.reserve(MAXBUF);
+  header_value.reserve(ZCU_DEF_BUFFER_SIZE);
   const SSL_CIPHER *cipher;
   std::unique_ptr<X509, decltype(&::X509_free)> x509(SSL_get_peer_certificate(stream->client_connection.ssl),
                                                      ::X509_free);
   /** client check less than maximum */
   if (x509 != nullptr && clnt_check < 3 && SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK) {
-    Logger::logmsg(LOG_ERR, "Bad certificate from %s", stream->client_connection.address_str.c_str());
+    zcutils_log_print(LOG_ERR, "Bad certificate from %s", stream->client_connection.address_str.c_str());
   }
 
   if ((cipher = SSL_get_current_cipher(stream->client_connection.ssl)) != nullptr) {
-    char cipher_buf[MAXBUF];
+    char cipher_buf[ZCU_DEF_BUFFER_SIZE];
     SSL_CIPHER_description(cipher, cipher_buf, 200);
     header_value = SSL_get_version(stream->client_connection.ssl);
     header_value += '/';
@@ -59,31 +59,31 @@ void httpsHeaders(HttpStream *stream, int clnt_check) {
   /** client check enable */
   if (clnt_check > 0 && x509 != nullptr) {
     int line_len = 0;
-    char buf[MAXBUF]{'\0'};
+    char buf[ZCU_DEF_BUFFER_SIZE]{'\0'};
     std::unique_ptr<BIO, decltype(&::BIO_free)> bb(BIO_new(BIO_s_mem()), ::BIO_free);
     X509_NAME_print_ex(bb.get(), ::X509_get_subject_name(x509.get()), 8, XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-    ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
+    ssl::get_line(bb.get(), buf, ZCU_DEF_BUFFER_SIZE, &line_len);
     stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SUBJECT, buf, true);
 
     X509_NAME_print_ex(bb.get(), X509_get_issuer_name(x509.get()), 8, XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
-    ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
+    ssl::get_line(bb.get(), buf, ZCU_DEF_BUFFER_SIZE, &line_len);
     stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_ISSUER, buf, true);
 
     ASN1_TIME_print(bb.get(), X509_get_notBefore(x509.get()));
-    ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
+    ssl::get_line(bb.get(), buf, ZCU_DEF_BUFFER_SIZE, &line_len);
     stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTBEFORE, buf, true);
 
     ASN1_TIME_print(bb.get(), X509_get0_notAfter(x509.get()));
-    ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
+    ssl::get_line(bb.get(), buf, ZCU_DEF_BUFFER_SIZE, &line_len);
     stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_NOTAFTER, buf, true);
 
     long serial = ASN1_INTEGER_get(X509_get_serialNumber(x509.get()));
     stream->request.addHeader(http::HTTP_HEADER_NAME::X_SSL_SERIAL, std::to_string(serial), true);
 
     PEM_write_bio_X509(bb.get(), x509.get());
-    ssl::get_line(bb.get(), buf, MAXBUF, &line_len);
+    ssl::get_line(bb.get(), buf, ZCU_DEF_BUFFER_SIZE, &line_len);
     header_value = buf;
-    while (ssl::get_line(bb.get(), buf, MAXBUF, &line_len) == 0) {
+    while (ssl::get_line(bb.get(), buf, ZCU_DEF_BUFFER_SIZE, &line_len) == 0) {
       header_value += buf;
     }
     header_value.erase(std::remove_if(header_value.begin(), header_value.end(),

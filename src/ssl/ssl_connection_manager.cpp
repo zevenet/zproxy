@@ -36,7 +36,7 @@ bool SSLConnectionManager::initSslConnection(SSL_CTX *ssl_ctx,
   }
   ssl_connection.ssl = SSL_new(ssl_ctx);
   if (ssl_connection.ssl == nullptr) {
-    Logger::logmsg(LOG_ERR, "SSL_new failed");
+    zcutils_log_print(LOG_ERR, "SSL_new failed");
     return false;
   }
 
@@ -55,17 +55,17 @@ bool SSLConnectionManager::initSslConnection(SSL_CTX *ssl_ctx,
 #else
   int r = SSL_set_fd(ssl_connection.ssl, ssl_connection.getFileDescriptor());
   if (!r) {
-    Logger::logmsg(LOG_ERR, "SSL_set_fd failed");
+    zcutils_log_print(LOG_ERR, "SSL_set_fd failed");
     return false;
   }
 #endif
 
   if (client_mode && ssl_connection.server_name != nullptr) {
     if (!SSL_set_tlsext_host_name(ssl_connection.ssl, ssl_connection.server_name)) {
-      Logger::logmsg(LOG_DEBUG, "could not set SNI host name  to %s", ssl_connection.server_name);
+      zcutils_log_print(LOG_DEBUG, "could not set SNI host name  to %s", ssl_connection.server_name);
       return false;
     } else {
-      Logger::logmsg(LOG_DEBUG, "Set SNI host name \"%s\"", ssl_connection.server_name);
+      zcutils_log_print(LOG_DEBUG, "Set SNI host name \"%s\"", ssl_connection.server_name);
     }
   }
 
@@ -86,7 +86,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
   }
   if (MAX_DATA_SIZE == ssl_connection.buffer_size)
     return IO::IO_RESULT::FULL_BUFFER;
-  //  Logger::logmsg(LOG_DEBUG, "> handleRead");
+  //  zcutils_log_print(LOG_DEBUG, "> handleRead");
   int rc = -1;
   size_t total_bytes_read = 0;
   for (;;) {
@@ -100,7 +100,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection) {
         static_cast<int>(MAX_DATA_SIZE - ssl_connection.buffer_size -
                          ssl_connection.buffer_offset),
         &bytes_read);
-    //    Logger::logmsg(LOG_DEBUG,
+    //    zcutils_log_print(LOG_DEBUG,
     //                   "BIO_read return code %d buffer size %d bytes_read %d",
     //                   rc, ssl_connection.buffer_size, bytes_read);
 
@@ -138,7 +138,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
   IO::IO_RESULT result;
   int rc = -1;
   //  // FIXME: Buggy, used just for test
-  //  Logger::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+  //  zcutils_log_print(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   total_written = 0;
   ERR_clear_error();
   for (;;) {
@@ -146,7 +146,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
     BIO_clear_retry_flags(ssl_connection.io);
     rc = BIO_write_ex(ssl_connection.io, data + total_written, static_cast<int>(data_size - total_written), &written);
 //    if(rc != written){
-//      Logger::logmsg(LOG_DEBUG, "BIO_write_ex return code %d written: %d total %d size: %d", rc,written, total_written, data_size);
+//      zcutils_log_print(LOG_DEBUG, "BIO_write_ex return code %d written: %d total %d size: %d", rc,written, total_written, data_size);
 //    }
 
     if (rc == 0) {
@@ -184,7 +184,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection, cons
     zcutils_log_print(LOG_DEBUG, "%s():%d: flushing", __FUNCTION__, __LINE__);
     BIO_flush(ssl_connection.io);
   }
-  //  Logger::logmsg(LOG_DEBUG, "### IN handleWrite data write: %d ssl error: %s",
+  //  zcutils_log_print(LOG_DEBUG, "### IN handleWrite data write: %d ssl error: %s",
   //                data_size, IO::getResultString(result).c_str());
   return result;
 }
@@ -198,10 +198,10 @@ bool SSLConnectionManager::handleHandshake(const SSLContext &ssl_context,
         ssl_context.listener_config->ssl_forward_sni_server_name) {
       if ((ssl_connection.server_name = SSL_get_servername(
                ssl_connection.ssl, TLSEXT_NAMETYPE_host_name)) == nullptr) {
-        Logger::logmsg(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
+        zcutils_log_print(LOG_DEBUG, "(%lx) could not get SNI host name  to %s",
                        pthread_self(), ssl_connection.server_name);
       } else {
-        Logger::logmsg(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
+        zcutils_log_print(LOG_DEBUG, "(%lx) Got SNI host name %s", pthread_self(),
                        ssl_connection.server_name);
         ssl_connection.server_name = nullptr;
       }
@@ -215,7 +215,7 @@ bool SSLConnectionManager::handleHandshake(const SSLContext &ssl_context,
 bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
                                            Connection &ssl_connection,
                                            bool client_mode) {
-  //    Logger::logmsg(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
+  //    zcutils_log_print(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
   if (ssl_connection.ssl == nullptr) {
     if (!initSslConnection(ssl_ctx, ssl_connection, client_mode)) {
       return false;
@@ -233,7 +233,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
     auto errno__ = errno;
     if (!BIO_should_retry(ssl_connection.io)) {
       if (SSL_in_init(ssl_connection.ssl)) {
-        //        Logger::logmsg(LOG_DEBUG,
+        //        zcutils_log_print(LOG_DEBUG,
         //                       ">>PROGRESS>>fd:%d BIO_do_handshake "
         //                       "return:%d error: with %s errno: %d:%s \n "
         //                       "Ossl errors: %s",
@@ -244,7 +244,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
         return true;
       }
       if (SSL_is_init_finished(ssl_connection.ssl)) {
-        //        Logger::logmsg(LOG_DEBUG,
+        //        zcutils_log_print(LOG_DEBUG,
         //                       ">>FINISHED>>fd:%d BIO_do_handshake "
         //                       "return:%d error: with %s errno: %d:%s \n "
         //                       "Ossl errors: %s",
@@ -254,7 +254,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
         //                       ossGetErrorStackString().get());
         return true;
       }
-      Logger::logmsg(LOG_DEBUG,
+      zcutils_log_print(LOG_DEBUG,
                      "fd:%d BIO_do_handshake "
                      "return:%d error: with %s errno: %d:%s \n "
                      "Ossl errors: %s",
@@ -274,7 +274,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
       ssl_connection.ssl_conn_status = SSL_STATUS::WANT_READ;
       return true;
     } else {
-      Logger::logmsg(LOG_DEBUG, "fd:%d BIO_do_handshake - BIO_should_XXX failed",
+      zcutils_log_print(LOG_DEBUG, "fd:%d BIO_do_handshake - BIO_should_XXX failed",
                      ssl_connection.getFileDescriptor());
       return false;
     }
@@ -282,7 +282,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 #else
   int r = SSL_do_handshake(ssl_connection.ssl);
   if (r == 0) {
-    Logger::logmsg(LOG_DEBUG,
+    zcutils_log_print(LOG_DEBUG,
                    " fd:%d SSL_do_handshake return:%d error: with %s \n "
                    "Ossl errors: %s",
                    ssl_connection.getFileDescriptor(), r,
@@ -296,11 +296,11 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
   ssl_connection.ssl_connected = true;
   const SSL_CIPHER *cipher = SSL_get_current_cipher(ssl_connection.ssl);
   if (cipher) {
-    auto buf = std::make_unique<char[]>(MAXBUF);
-    auto buf_size = MAXBUF;
+    auto buf = std::make_unique<char[]>(ZCU_DEF_BUFFER_SIZE);
+    auto buf_size = ZCU_DEF_BUFFER_SIZE;
     SSL_CIPHER_description(cipher, &buf[0], buf_size - 1);
 
-    Logger::logmsg(
+    zcutils_log_print(
         LOG_DEBUG,
         "SSL: %s, %s REUSED, Ciphers: %s\n",
         SSL_get_version(ssl_connection.ssl),
@@ -309,7 +309,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 #ifdef DEBUG_PRINT_SSL_SESSION_INFO
   SSL_SESSION *session = SSL_get_session(ssl_connection.ssl);
   auto session_info = ssl::ossGetSslSessionInfo(session);
-  Logger::logmsg(LOG_ERR, session_info.get());
+  zcutils_log_print(LOG_ERR, "%s():%d: %s", session_info.get());
 #endif
   ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
   !client_mode ? ssl_connection.enableReadEvent()
@@ -335,7 +335,7 @@ else {
       if (errno__ == EAGAIN) {
         return true;
       }
-      Logger::logmsg(
+      zcutils_log_print(
           LOG_DEBUG,
           "fd:%d SSL_do_handshake error: %s with <<%s>> \n Ossl errors:%s "
               , ssl_connection.getFileDescriptor(), getErrorString(err),
@@ -347,7 +347,7 @@ else {
       return false;
     }
     case SSL_ERROR_SSL: {
-      Logger::logmsg(
+      zcutils_log_print(
           LOG_DEBUG,
           "fd:%d SSL_do_handshake error: %s with <<%s>> \n Ossl errors:%s"
               , ssl_connection.getFileDescriptor(), getErrorString(err),
@@ -360,7 +360,7 @@ else {
     }
     case SSL_ERROR_ZERO_RETURN:
     default: {
-      Logger::logmsg(
+      zcutils_log_print(
           LOG_DEBUG,
           "fd:%d SSL_do_handshake return: %d error: %s  errno = %s with %s "
               "Handshake status: %s Ossl errors: %s ",
@@ -392,19 +392,19 @@ IO::IO_RESULT SSLConnectionManager::getSslErrorResult(SSL *ssl_connection_contex
       // Warning - Renegotiation is not possible in a TLSv1.3 connection!!!!
       // handle renegotiation, after a want write ssl
       // error,
-      Logger::logmsg(LOG_DEBUG,
+      zcutils_log_print(LOG_DEBUG,
                      "Renegotiation of SSL connection requested by peer");
       return IO::IO_RESULT::SSL_WANT_RENEGOTIATION;
     }
     case SSL_ERROR_SSL:
-      Logger::logmsg(LOG_DEBUG, "corrupted data detected while reading");
+      zcutils_log_print(LOG_DEBUG, "corrupted data detected while reading");
       logSslErrorStack();
       [[fallthrough]];
     case SSL_ERROR_ZERO_RETURN: /* Received a SSL close_notify alert.The operation
 failed due to the SSL session being closed. The
 underlying connection medium may still be open.  */
     default:
-      Logger::logmsg(LOG_DEBUG, "SSL_read failed with error %s.",
+      zcutils_log_print(LOG_DEBUG, "SSL_read failed with error %s.",
                      getErrorString(rc));
       return IO::IO_RESULT::ERROR;
   }
@@ -428,16 +428,16 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection) {
         break;
       case SSL_ERROR_WANT_READ:
       case SSL_ERROR_WANT_WRITE: {
-        Logger::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s",
+        zcutils_log_print(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s",
                        rc, ssle, errno, strerror(errno));
         return IO::IO_RESULT::DONE_TRY_AGAIN;  // TODO::  check want read
       }
       case SSL_ERROR_ZERO_RETURN:
-        Logger::logmsg(LOG_NOTICE, "SSL has been shutdown.");
+        zcutils_log_print(LOG_NOTICE, "SSL has been shutdown.");
         return IO::IO_RESULT::FD_CLOSED;
       default:
         ERR_print_errors_fp(stderr);
-        Logger::logmsg(LOG_NOTICE, "Connection has been aborted.");
+        zcutils_log_print(LOG_NOTICE, "Connection has been aborted.");
         return IO::IO_RESULT::FD_CLOSED;
     }
   } while (rc > 0);  // SSL_pending(ssl) seems unreliable
@@ -454,13 +454,13 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   size_t sent = 0;
   ssize_t rc = -1;
   //  // FIXME: Buggy, used just for test
-  // Logger::logmsg(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+  // zcutils_log_print(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
   ERR_clear_error();
   do {
     rc = SSL_write(ssl_connection.ssl, data + sent,
                    static_cast<int>(data_size - sent));  //, &written);
     if (rc > 0) sent += static_cast<size_t>(rc);
-    // Logger::logmsg(LOG_DEBUG, "BIO_write return code %d sent %d", rc,
+    // zcutils_log_print(LOG_DEBUG, "BIO_write return code %d sent %d", rc,
     // sent);
   } while (rc > 0 && static_cast<size_t>(rc) < (data_size - sent));
 
@@ -471,15 +471,15 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
   int ssle = SSL_get_error(ssl_connection.ssl, static_cast<int>(rc));
   if (rc < 0 && ssle != SSL_ERROR_WANT_WRITE) {
     // Renegotiation is not possible in a TLSv1.3 connection
-    Logger::logmsg(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s", rc,
+    zcutils_log_print(LOG_DEBUG, "SSL_read return %d error %d errno %d msg %s", rc,
                    ssle, errno, strerror(errno));
     return IO::IO_RESULT::DONE_TRY_AGAIN;
   }
   if (rc == 0) {
     if (ssle == SSL_ERROR_ZERO_RETURN)
-      Logger::logmsg(LOG_DEBUG, "SSL connection has been shutdown.");
+      zcutils_log_print(LOG_DEBUG, "SSL connection has been shutdown.");
     else
-      Logger::logmsg(LOG_DEBUG, "Connection has been aborted.");
+      zcutils_log_print(LOG_DEBUG, "Connection has been aborted.");
     return IO::IO_RESULT::FD_CLOSED;
   }
   return IO::IO_RESULT::ERROR;

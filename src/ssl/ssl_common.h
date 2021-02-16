@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "../debug/logger.h"
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
@@ -89,7 +88,7 @@ static int get_line(BIO *const in, char *const buf, const int bufsize, int *out_
           n_read = i;
           continue;
         }
-        logmsg(LOG_NOTICE, "(%lx) line too long: %s", pthread_self(), buf);
+        zcutils_log_print(LOG_NOTICE, "(%lx) line too long: %s", pthread_self(), buf);
         /* skip rest of "line" */
         tmp = '\0';
         while (tmp != '\n')
@@ -126,7 +125,7 @@ inline static void logSslErrorStack(void) {
   while ((err = ERR_get_error()) != 0) {
     char details[256];
     ERR_error_string_n(static_cast<uint32_t>(err), details, sizeof(details));
-    Logger::logmsg(LOG_ERR, "%s", details);
+    zcutils_log_print(LOG_ERR, "%s", details);
   }
 }
 

@@ -19,7 +19,6 @@
  *
  */
 #include "ssl_session.h"
-#include "../debug/logger.h"
 #include "../../zcutils/zcutils.h"
 
 using namespace ssl;
@@ -34,7 +33,7 @@ SslSessionManager *SslSessionManager::getInstance() {
 }
 
 void SslSessionManager::removeSessionId(const unsigned char *id, int idLength) {
-  Logger::logmsg(LOG_ERR, "SESSION DELETE id: %s", id);
+  zcutils_log_print(LOG_ERR, "SESSION DELETE id: %s", id);
   std::lock_guard<std::mutex> lock(data_mtx);
   auto i = sessions.begin();
   while (i != sessions.end()) {
@@ -52,7 +51,7 @@ int SslSessionManager::addSession(SSL *ssl, SSL_SESSION *session) {
   unsigned char *buff;
   unsigned int id_length;
   const unsigned char *id = SSL_SESSION_get_id(session, &id_length);
-  Logger::logmsg(LOG_ERR, "SESSION ADD id: %s", id);
+  zcutils_log_print(LOG_ERR, "SESSION ADD id: %s", id);
   removeSessionId(id, id_length);
   std::lock_guard<std::mutex> lock(data_mtx);
 

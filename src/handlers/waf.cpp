@@ -49,7 +49,7 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
   if (stream.modsec_transaction->m_it.disruptive) {
     // log event?
     if (stream.modsec_transaction->m_it.log != nullptr) {
-      Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
+      zcutils_log_print(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
                      stream.modsec_transaction->m_it.log);
     }
 
@@ -57,7 +57,7 @@ bool Waf::checkRequestWaf(HttpStream &stream) {
 
     // process is going to be cut. Execute the logging phase
     if (!stream.modsec_transaction->processLogging())
-      Logger::logmsg(LOG_WARNING, "(%lx) WAF, error processing the log",
+      zcutils_log_print(LOG_WARNING, "(%lx) WAF, error processing the log",
                      pthread_self());
 
     return true;
@@ -108,11 +108,11 @@ bool Waf::checkResponseWaf(HttpStream &stream) {
   if (stream.modsec_transaction->m_it.disruptive) {
     // log event?
     if (stream.modsec_transaction->m_it.log != nullptr) {
-      Logger::logmsg(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
+      zcutils_log_print(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
                      stream.modsec_transaction->m_it.log);
     }
     stream.modsec_transaction->processLogging();  // TODO:: is it necessary??
-    Logger::logmsg(LOG_DEBUG, "WAF wants to apply an action for the REQUEST");
+    zcutils_log_print(LOG_DEBUG, "WAF wants to apply an action for the REQUEST");
 
     return true;
   }
@@ -123,26 +123,26 @@ bool Waf::checkResponseWaf(HttpStream &stream) {
 std::shared_ptr<Rules> Waf::reloadRules() {
   int err = 0;
   regex_t WafRules;
-  char lin[MAXBUF];
+  char lin[ZCU_DEF_BUFFER_SIZE];
   regmatch_t matches[5];
   Config config;
   config.init(global::StartOptions::getCurrent());
   auto rules = std::make_shared<Rules>();
-  Logger::logmsg(LOG_WARNING, "file to update %s", global::StartOptions::getCurrent().conf_file_name.data());
+  zcutils_log_print(LOG_WARNING, "file to update %s", global::StartOptions::getCurrent().conf_file_name.data());
 
   if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED))
     return nullptr;
 
   // compile regexp
-  while (config.conf_fgets(lin, MAXBUF) && !err) {
+  while (config.conf_fgets(lin, ZCU_DEF_BUFFER_SIZE) && !err) {
     if (!regexec(&WafRules, lin, 4, matches, 0)) {
       lin[matches[1].rm_eo] = '\0';
       auto file = std::string(lin + matches[1].rm_so,
                               lin + matches[1].rm_eo - lin + matches[1].rm_so);
       err = rules->loadFromUri(file.data());
       if (err == -1) {
-        logmsg(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
+        zcutils_log_print(LOG_ERR, "Error loading waf ruleset file %s: %s", file.data(),
                rules->getParserError().data());
         return nullptr;
       }
@@ -150,25 +150,25 @@ std::shared_ptr<Rules> Waf::reloadRules() {
   }
   // enable for debug purpose only
   // dumpRules(*rules);
-  Logger::logmsg(LOG_INFO, "The WAF rulesets waf reloaded properly");
+  zcutils_log_print(LOG_INFO, "The WAF rulesets waf reloaded properly");
   return rules;
 }
 
 void Waf::logModsec(void *data, const void *message) {
   if (data != nullptr)
-    Logger::logmsg(LOG_WARNING, "%s", static_cast<char *>(data));
+    zcutils_log_print(LOG_WARNING, "%s", static_cast<char *>(data));
   if (message != nullptr)
-    Logger::logmsg(LOG_WARNING, "[WAF] %s",
+    zcutils_log_print(LOG_WARNING, "[WAF] %s",
                    static_cast<char *>(const_cast<void *>(message)));
 }
 
 void Waf::dumpRules(modsecurity::Rules &rules) {
-  Logger::logmsg(LOG_DEBUG, "Rules: ");
+  zcutils_log_print(LOG_DEBUG, "Rules: ");
   for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
     auto rule = rules.getRulesForPhase(i);
     if (rule) {
       for (auto &x : *rule) {
-        Logger::logmsg(LOG_DEBUG, "\tRule Id: %d From %s at %d ", x->m_ruleId,
+        zcutils_log_print(LOG_DEBUG, "\tRule Id: %d From %s at %d ", x->m_ruleId,
                        x->m_fileName.data(), x->m_lineNumber);
       }
     }

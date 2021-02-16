@@ -27,6 +27,7 @@
 #include "../version.h"
 #include <memory>
 #include "../util/utils.h"
+#include "../../zcutils/zcutils.h"
 
 #ifndef MAX_HEADER_LEN
 #define MAX_HEADER_LEN 4096
@@ -412,7 +413,7 @@ static inline std::string getHttpResponse(Code status_code, const std::string &s
 }
 static inline std::string getRedirectResponse(Code code, const std::string &redirect_url) {
   // make sure it a safe url
-  auto safe_url = std::make_unique < char[]>(MAXBUF);
+  auto safe_url = std::make_unique < char[]>(ZCU_DEF_BUFFER_SIZE);
   int j = 0;
   for (auto c : redirect_url) {
     if (isalnum(c) || c == '_' || c == '.' || c == ':' || c == '/' ||

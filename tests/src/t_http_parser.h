@@ -21,7 +21,7 @@
 #pragma once
 
 //#include "gmock/gmock-matchers.h"
-#include "../../src/debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "../../src/http/http_parser.h"
 #include "gtest/gtest.h"
 #include <string>
@@ -47,12 +47,12 @@ TEST(HttpParserTest, HttpParserTest1) {
                                &num_headers, last_len);
   ASSERT_TRUE(s.length() == s.size());
   ASSERT_TRUE(ret == static_cast<int>(s.length()));
-  Logger::logmsg(LOG_DEBUG, "method is %.*s\n", method_len, method);
-  Logger::logmsg(LOG_DEBUG, "path is %.*s\n", path_len, path);
-  Logger::logmsg(LOG_DEBUG, "HTTP version is 1.%d\n", minor_version);
-  Logger::logmsg(LOG_DEBUG, "headers:\n");
+  zcutils_log_print(LOG_DEBUG, "method is %.*s\n", method_len, method);
+  zcutils_log_print(LOG_DEBUG, "path is %.*s\n", path_len, path);
+  zcutils_log_print(LOG_DEBUG, "HTTP version is 1.%d\n", minor_version);
+  zcutils_log_print(LOG_DEBUG, "headers:\n");
   for (size_t i = 0; i != num_headers; ++i) {
-    Logger::logmsg(LOG_DEBUG, "%.*s: %.*s\n", headers[i].name_len,
+    zcutils_log_print(LOG_DEBUG, "%.*s: %.*s\n", headers[i].name_len,
                   headers[i].name, headers[i].value_len, headers[i].value);
   }
   ASSERT_TRUE(num_headers == 2);

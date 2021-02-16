@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../util/utils.h"
-#include "logger.h"
+#include "../../zcutils/zcutils.h"
 #include <cassert>
 #include <cxxabi.h> // for __cxa_demangle
 #include <dlfcn.h>  // for dladdr
@@ -36,8 +36,8 @@
 namespace debug {
 
 static std::string addr2line(const std::string &bin, const std::string &address) {
-  char cmd[MAXBUF];
-  std::array<char, MAXBUF> buffer;
+  char cmd[ZCU_DEF_BUFFER_SIZE];
+  std::array<char, ZCU_DEF_BUFFER_SIZE> buffer;
   std::string result;
   sprintf(cmd, "addr2line -s -a -p -f -C -e %s %s", bin.c_str(), address.c_str());
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
@@ -63,7 +63,7 @@ static std::string addr2line(const std::string &symbol) {
   if (std::string::npos != e) {
     addr = std::string(symbol.data() + s + 1, e - s - 1);
   }
-  //  Logger::logmsg(LOG_ERR, "[ bin: %s Addr: %s ]", bin.data(), addr.data());
+  // zcutils_log_print(LOG_DEBUG, "%s():%d: [ bin: %s Addr: %s ]", __FUNCTION__, __LINE__, error, bin.data(), addr.data());
   return addr2line(bin, addr);
 }
 
@@ -85,7 +85,7 @@ static void printBackTrace(int max_stack_size = 100) {
       trace_buf << frames[frame_idx];
     }
   }
-  Logger::logmsg(LOG_ERR, trace_buf.str().data());
+  zcutils_log_print(LOG_DEBUG, "%s():%d: %s", __FUNCTION__, __LINE__, trace_buf.str().data());
 }
 
 // enable core dumps for debug builds on crash

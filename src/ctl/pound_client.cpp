@@ -21,6 +21,7 @@
 #include "pound_client.h"
 #include "../service/backend.h"
 #include "../util/network.h"
+#include "../../zcutils/zcutils.h"
 
 bool PoundClient::trySetTargetId(int &target_id, char *possible_value) {
   if (possible_value)  // throw error and show help
@@ -594,6 +595,6 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener) {
 }
 
 void PoundClient::showError(std::string error) {
-  Logger::LogInfo(error, LOG_ERR);
+  zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
   exit(EXIT_FAILURE);
 }

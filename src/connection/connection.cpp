@@ -25,11 +25,6 @@
 #include "../../zcutils/zcutils.h"
 #include <sys/un.h>
 
-#define PRINT_BUFFER_SIZE \
-  Debug::LogInfo("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG);
-//  Logger::LogInfo("BUFFER::STRLEN = " + std::to_string(strlen(buffer)),
-//  LOG_DEBUG);
-
 Connection::Connection()
     : buffer_size(0),
       buffer_offset(0),
@@ -46,7 +41,6 @@ IO::IO_RESULT Connection::read() {
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-  //  PRINT_BUFFER_SIZE
   if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0)
     return IO::IO_RESULT::FULL_BUFFER;
   while (!done) {
@@ -54,7 +48,7 @@ IO::IO_RESULT Connection::read() {
                    (MAX_DATA_SIZE - buffer_size - buffer_offset));
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
-        Logger::logmsg(LOG_DEBUG, " read() failed: %s",std::strerror(errno));
+        zcutils_log_print(LOG_ERR, "%s():%d: read() failed: %s", __FUNCTION__, __LINE__, std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -65,19 +59,15 @@ IO::IO_RESULT Connection::read() {
       done = true;
       result = IO::IO_RESULT::FD_CLOSED;
     } else {
-      // PRINT_BUFFER_SIZE
       buffer_size += static_cast<size_t>(count);
-      // PRINT_BUFFER_SIZE
       if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0) {
-        //        PRINT_BUFFER_SIZE
-        //        Logger::LogInfo("Buffer maximum size reached !!", LOG_DEBUG);
+		  zcutils_log_print(LOG_DEBUG, "%s():%d: Buffer maximum size reached !", __FUNCTION__, __LINE__);
         return IO::IO_RESULT::FULL_BUFFER;
       } else
         result = IO::IO_RESULT::SUCCESS;
       done = true;
     }
   }
-  // PRINT_BUFFER_SIZE
   return result;
 }
 
@@ -198,8 +188,8 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
     if (bytes > BUFSZ) bytes = BUFSZ;
     auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr, bytes,
                       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-    //    Logger::LogInfo("ZERO_BUFFER::SIZE = " +
-    //    std::to_string(splice_pipe.bytes), LOG_DEBUG);
+	  zcutils_log_print(LOG_DEBUG, "%s():%d: ZERO_BUFFER::SIZE = %s",
+			__FUNCTION__, __LINE__, std::to_string(splice_pipe.bytes));
     if (n == 0) break;
     if (n < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -279,9 +269,7 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent) {
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
           errno != ECONNRESET*/) {
-        std::string error = "write() failed  ";
-        error += std::strerror(errno);
-        Logger::LogInfo(error, LOG_NOTICE);
+        zcutils_log_print(LOG_ERR, "%s():%d: write() failed %s", __FUNCTION__, __LINE__, std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -353,7 +341,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
       if (count == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;  // do not persist changes
       } else {
-        Logger::logmsg(LOG_DEBUG, " writev() failed: %s",std::strerror(errno));
+		zcutils_log_print(LOG_ERR, "%s():%d: writev() failed: %s", __FUNCTION__, __LINE__, std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       }
       break;
@@ -408,7 +396,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent) {
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
           errno != ECONNRESET*/) {
-        Logger::logmsg(LOG_DEBUG, " write() failed: %s",std::strerror(errno));
+        zcutils_log_print(LOG_ERR, "%s():%d: write() failed: %s", __FUNCTION__, __LINE__, std::strerror(errno));
         result = IO::IO_RESULT::ERROR;
       } else {
         result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -436,7 +424,7 @@ void Connection::closeConnection() {
 IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
   int result = -1;
   if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
-    Logger::logmsg(LOG_WARNING, "socket() failed ");
+    zcutils_log_print(LOG_ERR, "%s():%d: socket() failed", __FUNCTION__, __LINE__);
     return IO::IO_OP::OP_ERROR;
   }
   Network::setTcpNoDelayOption(fd_);
@@ -457,8 +445,8 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async) {
       char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
       if (getnameinfo(address_.ai_addr, address_.ai_addrlen, hbuf, sizeof(hbuf),
                       sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
-        Logger::logmsg(LOG_DEBUG, "connect(%s:%s) failed: %s", hbuf, sbuf,
-                       strerror(errno));
+        zcutils_log_print(LOG_ERR, "%s():%d: connect(%s:%s) failed: %s",
+				__FUNCTION__, __LINE__, hbuf, sbuf, strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
   }
@@ -470,7 +458,7 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
                                 int timeout) {
   int result = -1;
   if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-    Logger::logmsg(LOG_WARNING, "socket() failed ");
+	  zcutils_log_print(LOG_ERR, "%s():%d: socket() failed", __FUNCTION__, __LINE__);
     return IO::IO_OP::OP_ERROR;
   }
   Network::setTcpNoDelayOption(fd_);
@@ -487,8 +475,8 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
     if (errno == EINPROGRESS && timeout > 0) {
       return IO::IO_OP::OP_IN_PROGRESS;
     } else {
-      Logger::logmsg(LOG_NOTICE, "%s connect() error %d - %s\n",
-                     af_unix_socket_path.data(), errno, strerror(errno));
+		zcutils_log_print(LOG_NOTICE, "%s connect() error %d - %s\n",
+				af_unix_socket_path.data(), errno, strerror(errno));
       return IO::IO_OP::OP_ERROR;
     }
   }
@@ -512,7 +500,7 @@ int Connection::doAccept(int listener_fd) {
     if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
       return 0;  // We have processed all incoming connections.
     }
-    Logger::logmsg(LOG_NOTICE, "accept() failed  %s", std::strerror(errno));
+    zcutils_log_print(LOG_ERR, "%s():%d: accept() failed %s", __FUNCTION__, __LINE__, std::strerror(errno));
     // break;
     return -1;
   }
@@ -526,7 +514,7 @@ int Connection::doAccept(int listener_fd) {
     return new_fd;
   } else {
     ::close(new_fd);
-    Logger::logmsg(LOG_WARNING, "HTTP connection prematurely closed by peer");
+    zcutils_log_print(LOG_WARNING, "HTTP connection prematurely closed by peer");
   }
   return -1;
 }
@@ -546,8 +534,7 @@ int Connection::listen(const addrinfo &address_) {
   for (auto rp = &address_; rp != nullptr; rp = rp->ai_next) {
     if ((listen_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) <
         0) {
-      Logger::logmsg(LOG_ERR, "socket () failed %s s - aborted",
-                     strerror(errno));
+		zcutils_log_print(LOG_ERR, "%s():%d: socket () failed %s s - aborted", __FUNCTION__, __LINE__, strerror(errno));
       continue;
     }
 
@@ -558,7 +545,7 @@ int Connection::listen(const addrinfo &address_) {
 
     if (::bind(listen_fd, rp->ai_addr, static_cast<socklen_t>(rp->ai_addrlen)) <
         0) {
-      Logger::logmsg(LOG_ERR, "bind () failed %s - aborted", strerror(errno));
+      zcutils_log_print(LOG_ERR, "%s():%d: bind () failed %s - aborted", __FUNCTION__, __LINE__, strerror(errno));
       ::close(listen_fd);
       listen_fd = -1;
       return listen_fd;
@@ -581,13 +568,13 @@ bool Connection::listen(const std::string &af_unix_name) {
   ::strncpy(ctrl.sun_path, af_unix_name.c_str(), sizeof(ctrl.sun_path) - 1);
 
   if ((fd_ = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-    Logger::logmsg(LOG_ERR, "Control \"%s\" create: %s", ctrl.sun_path,
-                  strerror(errno));
+	  zcutils_log_print(LOG_ERR, "%s():%d: control \"%s\" create: %s",
+			__FUNCTION__, __LINE__, ctrl.sun_path, strerror(errno));
     return false;
   }
   if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) < 0) {
-    Logger::logmsg(LOG_ERR, "Control \"%s\" bind: %s", ctrl.sun_path,
-                  strerror(errno));
+	  zcutils_log_print(LOG_ERR, "%s():%d: control \"%s\" bind: %s",
+			__FUNCTION__, __LINE__, ctrl.sun_path, strerror(errno));
     return false;
   }
   ::listen(fd_, SOMAXCONN);

@@ -20,7 +20,7 @@
  */
 
 #include "timer_fd.h"
-#include "../debug/logger.h"
+#include "../../zcutils/zcutils.h"
 
 #define GET_SECONDS(ms) ms / 1000
 #define GET_NSECONDS(ms) (ms % 1000) * 1000000
@@ -30,7 +30,7 @@ TimerFd::TimerFd(int timeout_ms, bool one_shot) : timeout_ms_(timeout_ms), one_s
   if (fd_ < 0) {
     std::string error = "timerfd_create() failed: ";
     error += std::strerror(errno);
-    Logger::LogInfo(error, LOG_ERR);
+    zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
     throw std::system_error(errno, std::system_category());
   }
   if (timeout_ms > 0) set();
@@ -60,7 +60,7 @@ bool TimerFd::set(int timeout_ms, bool one_shot) {
   if (::timerfd_settime(fd_, 0, &timer_spec, nullptr) == -1) {
     std::string error = "timerfd_settime() failed: ";
     error += std::strerror(errno);
-    Logger::LogInfo(error, LOG_ERR);
+    zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
     //    throw std::system_error(errno, std::system_category());
     return false;
   }

@@ -25,7 +25,6 @@
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <mutex>
-#include "../debug/logger.h"
 
 #include "dh512.h"
 #if DH_LEN == 1024

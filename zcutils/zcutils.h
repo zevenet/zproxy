@@ -22,12 +22,12 @@
 #ifndef _ZCUTILS_H_
 #define _ZCUTILS_H_
 
-
 /****  LOG  ****/
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <syslog.h>
+#include <cstdlib>
 
 #define ZCUTILS_LOG_OUTPUT_SYSLOG			(1 << 0)
 #define ZCUTILS_LOG_OUTPUT_STDOUT			(1 << 1)
@@ -123,7 +123,7 @@ static inline void zcutils_str_snprintf(char *strdst, int size, char *strsrc)
 
 /****  BUFFER  ****/
 
-#define DEFAULT_BUFFER_SIZE		4096
+#define ZCU_DEF_BUFFER_SIZE		4096
 #define EXTRA_SIZE				1024
 
 struct zcutils_buffer {
@@ -169,13 +169,13 @@ static inline int zcutils_buf_create(struct zcutils_buffer *buf)
 	buf->size = 0;
 	buf->next = 0;
 
-	buf->data = (char *) calloc(1, DEFAULT_BUFFER_SIZE);
+	buf->data = (char *) calloc(1, ZCU_DEF_BUFFER_SIZE);
 	if (!buf->data) {
 		return 1;
 	}
 
 	*buf->data = '\0';
-	buf->size = DEFAULT_BUFFER_SIZE;
+	buf->size = ZCU_DEF_BUFFER_SIZE;
 	return 0;
 }
 

@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "../debug/logger.h"
 #include "../http/http.h"
 #include "../http/http_request.h"
 #include "../service/backend.h"

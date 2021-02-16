@@ -24,7 +24,6 @@
 #include "../ctl/control_manager.h"
 #include "../ctl/ctl.h"
 #include "../ctl/observer.h"
-#include "../debug/logger.h"
 #include "../json/json_data_value.h"
 #include "../json/json_data_value_types.h"
 #include "../json/json_parser.h"

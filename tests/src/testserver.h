@@ -21,7 +21,7 @@
 #pragma once
 
 #include "../../src/connection/connection.h"
-#include "../../src/debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "../../src/event/epoll_manager.h"
 #include "../../src/util/network.h"
 #include "gtest/gtest.h"

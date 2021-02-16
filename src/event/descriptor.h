@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "../debug/logger.h"
 #include "../../zcutils/zcutils.h"
 #include "epoll_manager.h"
 #include <atomic>

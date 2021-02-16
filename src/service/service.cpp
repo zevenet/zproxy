@@ -44,8 +44,7 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request) {
       if ((new_backend = getNextBackend()) != nullptr) {
         session = addSession(source, request, *new_backend);
         if (session == nullptr) {
-          Logger::logmsg(
-              LOG_DEBUG,
+          zcutils_log_print(LOG_DEBUG,
               "Error adding new session, session info not found in request");
         }
       }
@@ -63,7 +62,7 @@ bool Service::setBackendHostInfo(Backend *backend) {
   if (address == nullptr) {
     // maybe the backend still not available, we set it as down;
     backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-    Logger::logmsg(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
+    zcutils_log_print(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
                    backend->address.data());
     return false;
   }
@@ -71,29 +70,29 @@ bool Service::setBackendHostInfo(Backend *backend) {
   //  if (Network::getHost(backend->address.data(), backend->address_info, PF_UNSPEC, backend->port)) {
   //    // maybe the backend still not available, we set it as down;
   //    backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-  //    Logger::logmsg(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
+  //    zcutils_log_print(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
   //                   backend->address.data());
   //    return false;
   //  }
   if (backend->address_info == nullptr) return false;
   if (becookie.empty()) return true;
   if (backend->backend_config->bekey.empty()) {
-    char lin[MAXBUF];
+    char lin[ZCU_DEF_BUFFER_SIZE];
     char *cp;
     if (backend->address_info->ai_family == AF_INET)
-      snprintf(lin, MAXBUF - 1, "4-%08x-%x",
+      snprintf(lin, ZCU_DEF_BUFFER_SIZE - 1, "4-%08x-%x",
                htonl((reinterpret_cast<sockaddr_in *>(backend->address_info->ai_addr))->sin_addr.s_addr),
                htons((reinterpret_cast<sockaddr_in *>(backend->address_info->ai_addr))->sin_port));
     else if (backend->address_info->ai_family == AF_INET6) {
       cp = reinterpret_cast<char *>(&((reinterpret_cast<sockaddr_in6 *>(backend->address_info->ai_addr))->sin6_addr));
-      snprintf(lin, MAXBUF - 1,
+      snprintf(lin, ZCU_DEF_BUFFER_SIZE - 1,
                "6-%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
                "02x%02x-%x",
                cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7], cp[8], cp[9], cp[10], cp[11], cp[12], cp[13],
                cp[14], cp[15], htons((reinterpret_cast<sockaddr_in6 *>(backend->address_info->ai_addr))->sin6_port));
     } else {
       backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-      Logger::logmsg(LOG_NOTICE, "cannot autogenerate backendkey, please specify one'");
+      zcutils_log_print(LOG_NOTICE, "cannot autogenerate backendkey, please specify one'");
       return false;
     }
     backend->bekey = becookie;
@@ -249,9 +248,8 @@ Service::Service(ServiceConfig &service_config_)
       this->addBackend(bck, backend_id++);
       // this->addBackend(bck->address, bck->port, backend_id++);
     } else {
-      Logger::LogInfo("Backend " + bck->address + ":" +
-                          std::to_string(bck->port) + " disabled.",
-                      LOG_NOTICE);
+	  zcutils_log_print(LOG_NOTICE, "Backend %s:%s disabled",
+			bck->address, std::to_string(bck->port));
     }
   }
   for (auto bck = service_config_.emergency; bck != nullptr; bck = bck->next) {
@@ -259,9 +257,8 @@ Service::Service(ServiceConfig &service_config_)
       this->addBackend(bck, backend_id++, true);
       // this->addBackend(bck->address, bck->port, backend_id++);
     } else {
-      Logger::LogInfo("Emergency Backend " + bck->address + ":" +
-                          std::to_string(bck->port) + " disabled.",
-                      LOG_NOTICE);
+	  zcutils_log_print(LOG_NOTICE, "Emergency Backend %s:%s disabled",
+			bck->address, std::to_string(bck->port));
     }
   }
 }
@@ -392,7 +389,7 @@ std::string Service::handleTask(ctl::CtlTask &task) {
               } else if (value == JSON_KEYS::STATUS_DISABLED) {
                 this->disabled = true;
               }
-              Logger::logmsg(LOG_NOTICE, "Set Service %d %s", id,
+              zcutils_log_print(LOG_NOTICE, "set Service %d %s", id,
                              value.c_str());
               return JSON_OP_RESULT::OK;
             }

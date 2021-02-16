@@ -21,6 +21,7 @@
 
 #include "ssl_helper.h"
 #include "config_data.h"
+#include "../../zcutils/zcutils.h"
 
 #ifndef SSL3_ST_SR_CLNT_HELLO_A
 #define SSL3_ST_SR_CLNT_HELLO_A (0x110 | SSL_ST_ACCEPT)
@@ -66,7 +67,7 @@ void global::SslHelper::SSLINFO_callback(const SSL *ssl, int where,
     state = SSL_get_state(ssl);
     if (state == SSL3_ST_SR_CLNT_HELLO_A || state == SSL23_ST_SR_CLNT_HELLO_A) {
       *reneg_state = RENEG_STATE::RENEG_ABORT;
-      Logger::logmsg(LOG_WARNING, "rejecting client initiated renegotiation");
+      zcutils_log_print(LOG_WARNING, "rejecting client initiated renegotiation");
     }
   } else if (where & SSL_CB_HANDSHAKE_DONE &&
              *reneg_state == RENEG_STATE::RENEG_INIT) {
@@ -80,7 +81,7 @@ DH *global::SslHelper::load_dh_params(char *file) {
   BIO *bio;
 
   if ((bio = BIO_new_file(file, "r")) == nullptr) {
-    Logger::logmsg(LOG_WARNING, "Unable to open DH file - %s", file);
+    zcutils_log_print(LOG_WARNING, "unable to open DH file - %s", file);
     return nullptr;
   }
 
@@ -152,11 +153,11 @@ void global::SslHelper::initDhParams() {
    */
   for (n = 0; n < N_RSA_KEYS; n++) {
     if (!generate_key(&RSA512_keys[n], 512)) {
-      Logger::logmsg(LOG_WARNING, "RSA_generate(%d, 512) failed", n);
+	  zcutils_log_print(LOG_WARNING, "%s():%d: RSA_generate(%d, 512) failed", __FUNCTION__, __LINE__, n);
       return;
     }
     if (!generate_key(&RSA1024_keys[n], 1024)) {
-      Logger::logmsg(LOG_WARNING, "RSA_generate(%d, 1024) failed", n);
+	  zcutils_log_print(LOG_WARNING, "%s():%d: RSA_generate(%d, 1024) failed", __FUNCTION__, __LINE__, n);
       return;
     }
   }

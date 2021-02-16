@@ -30,6 +30,7 @@
 #include "../service/service_manager.h"
 #include "../ssl/ssl_connection_manager.h"
 #include "../stats/counter.h"
+#include "../../zcutils/zcutils.h"
 #if WAF_ENABLED
 #include "../handlers/waf.h"
 #endif
@@ -43,14 +44,14 @@ struct StreamWatcher{
   HttpStream * stream{nullptr};
   StreamWatcher(HttpStream &http_stream): stream(&http_stream){
     if(stream == nullptr){
-      Logger::logmsg(LOG_DEBUG,"\nIN Null HttpStream");
+	  zcutils_log_print(LOG_DEBUG, "%s():%d: IN Null HttpStream", __FUNCTION__, __LINE__);
     }else {
-      Logger::logmsg(LOG_DEBUG, "\nIN Stream data");
+	  zcutils_log_print(LOG_DEBUG, "%s():%d: IN Stream data", __FUNCTION__, __LINE__);
       showData();
     }
   }
   void showData(){
-    Logger::logmsg(LOG_DEBUG, "\n\tRequest"
+    zcutils_log_print(LOG_DEBUG, "%s():%d: \n\tRequest"
                              "\n\t\tBuffer size: %d"
                              "\n\t\tContent-length: %d"
                              "\n\t\tMessage bytes: %d"
@@ -60,6 +61,7 @@ struct StreamWatcher{
                              "\n\t\tContent-length: %d"
                              "\n\t\tMessage bytes: %d"
                              "\n\t\tBytes left: %d",
+                              __FUNCTION__, __LINE__,
                               stream->client_connection.buffer_size,
                               stream->request.content_length,
                               stream->request.message_length,
@@ -72,9 +74,9 @@ struct StreamWatcher{
   }
   virtual  ~StreamWatcher(){
     if(stream == nullptr){
-      Logger::logmsg(LOG_DEBUG," OUT Null HttpStream");
+	  zcutils_log_print(LOG_DEBUG, "%s():%d: OUT Null HttpStream", __FUNCTION__, __LINE__);
     }else {
-      Logger::logmsg(LOG_DEBUG, "\nOUT Stream data");
+	  zcutils_log_print(LOG_DEBUG, "%s():%d: OUT Stream data", __FUNCTION__, __LINE__);
       showData();
     }
   }

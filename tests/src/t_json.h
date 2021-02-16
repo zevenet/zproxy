@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../../src/debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "../../src/json/json.h"
 #include "../../src/json/json_data.h"
 #include "../../src/json/json_data_value_types.h"

@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "../debug/logger.h"
 #include "http_parser.h"
 
 #ifdef CACHE_ENABLED

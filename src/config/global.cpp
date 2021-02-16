@@ -106,19 +106,19 @@ std::unique_ptr<global::StartOptions> global::StartOptions::parsePoundOption(
 			res->verbose_mode = true;
 			break;
 		case 'V':
-			Logger::logmsg(LOG_ALERT, "zproxy version %s", ZPROXY_VERSION);
-			Logger::logmsg(LOG_ALERT, "Build: %s %s", ZPROXY_HOST_INFO,
+			zcutils_log_print(LOG_INFO, "zproxy version %s", ZPROXY_VERSION);
+			zcutils_log_print(LOG_INFO, "Build: %s %s", ZPROXY_HOST_INFO,
 						   ZPROXY_BUILD_INFO);
-			Logger::logmsg(LOG_ALERT, "%s", ZPROXY_COPYRIGHT);
+			zcutils_log_print(LOG_INFO, "%s", ZPROXY_COPYRIGHT);
 			exit(EXIT_FAILURE);
 		default:
-			Logger::logmsg(LOG_ERR, "bad flag -%c", optopt);
+			zcutils_log_print(LOG_ERR, "bad flag -%c", optopt);
 			return nullptr;
 		}
 	}
 
 	if (optind < argc) {
-		Logger::logmsg(LOG_ERR, "unknown extra arguments (%s...)", argv[optind]);
+		zcutils_log_print(LOG_WARNING, "unknown extra arguments (%s...)", argv[optind]);
 		exit(EXIT_FAILURE);
 	}
 

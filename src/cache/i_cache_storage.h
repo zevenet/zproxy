@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "../debug/logger.h"
 #include "cache_commons.h"
 #include <cstring>
 #include <filesystem>

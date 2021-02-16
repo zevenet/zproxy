@@ -87,7 +87,7 @@ st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage(
     if (errno == EEXIST)
       return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
     else {
-      Logger::logmsg(LOG_ERR, "Error :  %s", std::strerror(errno));
+      zcutils_log_print(LOG_ERR, "Error :  %s", std::strerror(errno));
       return st::STORAGE_STATUS::MKDIR_ERROR;
     }
   }
@@ -324,7 +324,7 @@ storage_commons::STORAGE_STATUS MemcachedStorage::getFromStorage(
       free(buff);
     }
     const char *err = ::memcached_strerror(tmp_memc, rc);
-    Logger::logmsg(LOG_ERR, "The error is: %s", err);
+    zcutils_log_print(LOG_ERR, "The error is: %s", err);
     memcached_free(tmp_memc);
     return st::STORAGE_STATUS::GENERIC_ERROR;
   }

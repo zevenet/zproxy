@@ -75,8 +75,8 @@ Service *ServiceManager::getService(HttpRequest &request) {
   for (auto srv : services) {
     if (!srv->service_config.disabled) {
       if (srv->doMatch(request)) {
-        // Logger::logmsg(LOG_DEBUG, "Service found id:%d , %s", srv->id,
-        // srv->service_config.name, LOG_DEBUG);
+		zcutils_log_print(LOG_DEBUG, "%s():%d: service found id:%d , %s",
+				__FUNCTION__, __LINE__, srv->id, srv->service_config.name);
         return srv;
       }
     }
@@ -101,7 +101,8 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
     }
     return JSON_OP_RESULT::ERROR;
   }
-  //  Logger::logmsg(LOG_DEBUG, "Service Manager handling task");
+
+  zcutils_log_print(LOG_DEBUG, "%s():%d: service Manager handling task", __FUNCTION__, __LINE__);
   switch (task.command) {
     case ctl::CTL_COMMAND::GET: {
       switch (task.subject) {
@@ -182,7 +183,7 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task) {
             } else if (value == JSON_KEYS::STATUS_DISABLED) {
               this->disabled = true;
             }
-            Logger::logmsg(LOG_NOTICE, "Set Service %d %s", id, value.c_str());
+            zcutils_log_print(LOG_NOTICE, "set Service %d %s", id, value.c_str());
             return JSON_OP_RESULT::OK;
           }
           break;

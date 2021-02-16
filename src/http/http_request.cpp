@@ -19,6 +19,7 @@
  *
  */
 #include "http_request.h"
+#include "../../zcutils/zcutils.h"
 
 void HttpRequest::setRequestMethod() {
   auto sv = std::string_view(method, method_len);
@@ -33,7 +34,7 @@ http::REQUEST_METHOD HttpRequest::getRequestMethod() {
 }
 
 void HttpRequest::printRequestMethod() {
-  Logger::logmsg(LOG_DEBUG, "Request method: %s",
+  zcutils_log_print(LOG_DEBUG, "Request method: %s",
                 http::http_info::http_verb_strings.at(request_method).c_str());
 }
 

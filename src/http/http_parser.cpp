@@ -20,8 +20,8 @@
  */
 
 #include "http_parser.h"
-#include "../debug/logger.h"
 #include "../util/common.h"
+#include "../../zcutils/zcutils.h"
 #include "http.h"
 
 #define DEBUG_HTTP_PARSER 0
@@ -78,7 +78,7 @@ void http_parser::HttpData::prepareToSend() {
     iov[iov_size++] = {const_cast<char *>(headers[i].name),
                        headers[i].line_size};
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(LOG_DEBUG, "%.*s", headers[i].line_size - 2,
+    zcutils_log_print(LOG_DEBUG, "%.*s", headers[i].line_size - 2,
                    headers[i].name);
 #endif
   }
@@ -88,7 +88,7 @@ void http_parser::HttpData::prepareToSend() {
     // it's copied it invalidate c_str() reference.
     iov[iov_size++] = {const_cast<char *>(header.c_str()), header.length()};
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+    zcutils_log_print(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
 #endif
   }
 
@@ -98,14 +98,14 @@ void http_parser::HttpData::prepareToSend() {
     // it's copied it invalidate c_str() reference.
     iov[iov_size++] = {const_cast<char *>(header.c_str()), header.length()};
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
+    zcutils_log_print(LOG_DEBUG, "%.*s", header.length() - 2, header.c_str());
 #endif
   }
   iov[iov_size++] = {const_cast<char *>(http::CRLF), http::CRLF_LEN};
   if (message_length > 0) {
     iov[iov_size++] = {message, message_length};
 #if DEBUG_HTTP_HEADERS
-    Logger::logmsg(LOG_DEBUG, "[%d bytes Content]", message_length);
+    zcutils_log_print(LOG_DEBUG, "[%d bytes Content]", message_length);
 #endif
   }
 }
@@ -208,7 +208,7 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseRequest(
                                 &path_length, &minor_version, headers,
                                 &num_headers, last_length);
   last_length = data_size;
-  //  Logger::logmsg(LOG_DEBUG, "request is %d bytes long\n", pret);
+  //  zcutils_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
     headers_length = pret;
@@ -254,7 +254,7 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
       data, data_size, &minor_version, &http_status_code, status_message_,
       &message_length, headers, &num_headers, last_length);
   last_length = data_size;
-  //  Logger::logmsg(LOG_DEBUG, "request is %d bytes long\n", pret);
+  //  zcutils_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
     headers_length = pret;
@@ -276,21 +276,21 @@ http_parser::PARSE_RESULT http_parser::HttpData::parseResponse(
   return PARSE_RESULT::FAILED;
 }
 void http_parser::HttpData::printResponse() {
-  Logger::logmsg(LOG_DEBUG, "HTTP 1.%d %d %s", minor_version, http_status_code,
+  zcutils_log_print(LOG_DEBUG, "HTTP 1.%d %d %s", minor_version, http_status_code,
                  http::reasonPhrase(http_status_code));
-  Logger::logmsg(LOG_DEBUG, "headers:");
+  zcutils_log_print(LOG_DEBUG, "headers:");
   for (size_t i = 0; i != num_headers; ++i) {
-    Logger::logmsg(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
+    zcutils_log_print(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
                    headers[i].name, headers[i].value_len, headers[i].value);
   }
 }
 void http_parser::HttpData::printRequest() {
-  Logger::logmsg(LOG_DEBUG, "method is %.*s", method_len, method);
-  Logger::logmsg(LOG_DEBUG, "path is %.*s", path_length, path);
-  Logger::logmsg(LOG_DEBUG, "HTTP version is 1.%d", minor_version);
-  Logger::logmsg(LOG_DEBUG, "headers:");
+  zcutils_log_print(LOG_DEBUG, "method is %.*s", method_len, method);
+  zcutils_log_print(LOG_DEBUG, "path is %.*s", path_length, path);
+  zcutils_log_print(LOG_DEBUG, "HTTP version is 1.%d", minor_version);
+  zcutils_log_print(LOG_DEBUG, "headers:");
   for (size_t i = 0; i != num_headers; ++i) {
-    Logger::logmsg(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
+    zcutils_log_print(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
                    headers[i].name, headers[i].value_len, headers[i].value);
   }
 }

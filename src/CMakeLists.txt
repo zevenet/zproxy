@@ -48,7 +48,6 @@ add_definitions(-DENABLE_CI_HEADERS=1) #enable case insensitive comparator in he
 add_definitions(-DUSE_TIMER_FD_TIMEOUT=0)
 
 set(l7core_sources
-    debug/logger.h debug/logger.cpp
     debug/backtrace.h debug/backtrace.cpp
     ssl/ssl_common.h
     ssl/ssl_context.h ssl/ssl_context.cpp
