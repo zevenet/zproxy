@@ -30,30 +30,62 @@
  * @brief The ServiceManager class contains all the operations related with the
  * management of the services.
  */
-class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
-                       public std::enable_shared_from_this<ServiceManager> {
-  std::vector<Service *> services;
-  static std::map<int, std::shared_ptr<ServiceManager>> instance;
-  std::shared_ptr<ctl::ControlManager> ctl_manager{nullptr};
+class ServiceManager:public CtlObserver <
+	ctl::CtlTask,
+	std::string >,
+	public
+	std::enable_shared_from_this <
+	ServiceManager > {
+	std::vector <
+		Service * >
+		services;
+	static
+		std::map < int,
+		std::shared_ptr <
+		ServiceManager >>
+		instance;
+	std::shared_ptr <
+		ctl::ControlManager >
+		ctl_manager
+	{
+	nullptr};
 
- public:
+      public:
   /** ListenerConfig from the listener related with all the services managed by
    * the class. */
   /** SSLContext used by the manager. */
-  SSLContext *ssl_context{nullptr};
-  std::shared_ptr<ListenerConfig> listener_config_;
-  bool is_https_listener{false};
-  std::atomic<int> established_connection{0};
+	SSLContext * ssl_context {
+	nullptr};
+	std::shared_ptr < ListenerConfig > listener_config_;
+	bool
+		is_https_listener
+	{
+	false};
+	std::atomic < int >
+		established_connection
+	{
+	0};
   /** ServiceManager instance. */
-  static std::shared_ptr<ServiceManager> &getInstance(
-      std::shared_ptr<ListenerConfig> listener_config);
-  static std::map<int,std::shared_ptr<ServiceManager>>& getInstance() ;
-  explicit ServiceManager(std::shared_ptr<ListenerConfig> listener_config);
-  ~ServiceManager() final;
+	static
+		std::shared_ptr <
+	ServiceManager > &
+	getInstance(std::shared_ptr < ListenerConfig > listener_config);
+	static
+		std::map < int,
+		std::shared_ptr <
+	ServiceManager >> &
+	getInstance();
+	explicit
+	ServiceManager(std::shared_ptr < ListenerConfig > listener_config);
+	~ServiceManager()final;
 
-  int id;
-  std::string name;
-  std::atomic<bool> disabled{false};
+	int
+		id;
+	std::string name;
+	std::atomic < bool >
+		disabled
+	{
+	false};
   /**
    * @brief Gets the Service that handles the HttpRequest.
    *
@@ -63,13 +95,14 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
    * @return a Service or @c nullptr if there is not a Service that can handle
    * the HttpRequest.
    */
-  Service *getService(HttpRequest &request);
+	Service *
+	getService(HttpRequest & request);
 
   /**
    * @brief Returns all the Service objects that manages the ServiceManager.
    * @return a std::vector containing all the Service objects.
    */
-  std::vector<Service *> getServices();
+	std::vector < Service * >getServices();
 
   /**
    * @brief Adds a new Service object to the ServiceManager.
@@ -81,7 +114,8 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
    * @param id used to assign the new Service id.
    * @return @c false if there is any error, @c true if not.
    */
-  bool addService(ServiceConfig &service_config, int _id);
+	bool
+	addService(ServiceConfig & service_config, int _id);
 
   /**
    * @brief This function handles the @p tasks received with the API format.
@@ -92,7 +126,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
    * @param task to check.
    * @return json formatted string with the result of the operation.
    */
-  std::string handleTask(ctl::CtlTask &task) override;
+	std::string handleTask(ctl::CtlTask & task) override;
 
   /**
    * @brief Checks if the ServiceManager should handle the @p task.
@@ -100,5 +134,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
    * @param task to check.
    * @return true if should handle the task, false if not.
    */
-  bool isHandler(ctl::CtlTask &task) override;
+	bool
+	isHandler(ctl::CtlTask & task)
+		override;
 };

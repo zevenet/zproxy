@@ -21,62 +21,85 @@
 #include "backend_stats.h"
 
 
-void Statistics::BackendInfo::setAvgResponseTime(double latency) {
-  if (avg_response_time < 0) {
-    avg_response_time = latency;
-  } else {
-    avg_response_time = (avg_response_time + latency) / 2;
-  }
+void
+Statistics::BackendInfo::setAvgResponseTime(double latency)
+{
+	if (avg_response_time < 0) {
+		avg_response_time = latency;
+	}
+	else {
+		avg_response_time = (avg_response_time + latency) / 2;
+	}
 }
 
-void Statistics::BackendInfo::setMinResponseTime(double latency) {
-  if (min_response_time < 0) {
-    min_response_time = latency;
-  } else if (latency < min_response_time) {
-    min_response_time = latency;
-  }
+void
+Statistics::BackendInfo::setMinResponseTime(double latency)
+{
+	if (min_response_time < 0) {
+		min_response_time = latency;
+	}
+	else if (latency < min_response_time) {
+		min_response_time = latency;
+	}
 }
 
-void Statistics::BackendInfo::setMaxResponseTime(double latency) {
-  if (latency > max_response_time) max_response_time = latency;
+void
+Statistics::BackendInfo::setMaxResponseTime(double latency)
+{
+	if (latency > max_response_time)
+		max_response_time = latency;
 }
 
-void Statistics::BackendInfo::setAvgConnTime(const timeval & start_time) {
-  double latency = Time::getDiff(start_time);
-  if (avg_conn_time < 0) {
-    avg_conn_time = latency;
-  } else {
-    avg_conn_time = (avg_conn_time + latency) / 2;
-  }
+void
+Statistics::BackendInfo::setAvgConnTime(const timeval & start_time)
+{
+	double
+		latency = Time::getDiff(start_time);
+	if (avg_conn_time < 0) {
+		avg_conn_time = latency;
+	}
+	else {
+		avg_conn_time = (avg_conn_time + latency) / 2;
+	}
 }
 
-Statistics::BackendInfo::BackendInfo() {
-  current_time = Time::getTimeSec();
-  established_conn = 0;
-  total_connections = 0;
-  pending_connections = 0;
-  max_response_time = -1;
-  avg_response_time = -1;
-  min_response_time = -1;
-  avg_conn_time = -1;
-  avg_complete_response_time = -1;
+Statistics::BackendInfo::BackendInfo()
+{
+	current_time = Time::getTimeSec();
+	established_conn = 0;
+	total_connections = 0;
+	pending_connections = 0;
+	max_response_time = -1;
+	avg_response_time = -1;
+	min_response_time = -1;
+	avg_conn_time = -1;
+	avg_complete_response_time = -1;
 }
 
-Statistics::BackendInfo::~BackendInfo() {}
-
-void Statistics::BackendInfo::increaseConnection() { established_conn++; }
-
-void Statistics::BackendInfo::setAvgTransferTime(const timeval & start_time ){
-  if (Time::getTimeSec() - current_time > 60) {
-    avg_complete_response_time = -1;
-    current_time = Time::getTimeSec();
-  }
-  auto latency = Time::getDiff(start_time);
-  if (avg_complete_response_time < 0) {
-    avg_complete_response_time = latency;
-  } else {
-    avg_complete_response_time = (avg_complete_response_time + latency) / 2;
-  }
+Statistics::BackendInfo::~BackendInfo()
+{
 }
 
+void
+Statistics::BackendInfo::increaseConnection()
+{
+	established_conn++;
+}
 
+void
+Statistics::BackendInfo::setAvgTransferTime(const timeval & start_time)
+{
+	if (Time::getTimeSec() - current_time > 60) {
+		avg_complete_response_time = -1;
+		current_time = Time::getTimeSec();
+	}
+	auto
+		latency = Time::getDiff(start_time);
+	if (avg_complete_response_time < 0) {
+		avg_complete_response_time = latency;
+	}
+	else {
+		avg_complete_response_time =
+			(avg_complete_response_time + latency) / 2;
+	}
+}

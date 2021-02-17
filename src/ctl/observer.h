@@ -24,71 +24,97 @@
 #include <future>
 #include <vector>
 
-template <typename T, typename IResponse>
-class CtlObserver {
- public:
-  uint64_t __id__;
-  CtlObserver() {
-    static uint64_t id;
-    id++;
-    this->__id__ = id;
-  }
-  virtual ~CtlObserver() = default;
-  virtual IResponse handleTask(T &arg) = 0;
-  static IResponse handle(T arg, CtlObserver<T, IResponse> &obj) { return obj.handleTask(arg); }
-  virtual bool isHandler(T &arg) = 0;
-  bool operator==(const CtlObserver& rhs) {
-    return this->__id__ == rhs.__id__;
-  }
+template < typename T, typename IResponse > class CtlObserver {
+      public:
+	uint64_t __id__;
+	CtlObserver() {
+		static uint64_t id;
+		id++;
+		this->__id__ = id;
+	}
+	virtual ~ CtlObserver() = default;
+	virtual IResponse handleTask(T & arg) = 0;
+	static IResponse handle(T arg, CtlObserver < T, IResponse > &obj)
+	{
+		return obj.handleTask(arg);
+	}
+	virtual bool isHandler(T & arg) = 0;
+	bool operator==(const CtlObserver & rhs)
+	{
+		return this->__id__ == rhs.__id__;
+	}
 };
-template <typename T, typename IResponse>
-class CtlNotify {
- protected:
-  std::vector<CtlObserver<T, IResponse> *> observers;
 
- public:
-  void attach(CtlObserver<T, IResponse> &listener) {
-    zcutils_log_print(LOG_DEBUG, "%s():%d: attaching id: %d observer", __FUNCTION__, __LINE__, listener.__id__);
-    observers.push_back(&listener);
-    onAttach(listener);
-  }
-  void deAttach(CtlObserver<T, IResponse> &listener) {
-    for (auto it = observers.begin(); it != observers.end();) {
-      if(*it == nullptr){
-        zcutils_log_print(LOG_DEBUG, "%s():%d: removing null observer", __FUNCTION__, __LINE__);
-        it = observers.erase(it);
-        continue;
-      }else if(*(*it) == listener){
-        zcutils_log_print(LOG_DEBUG, "%s():%d: deAttaching id: %d observer", __FUNCTION__, __LINE__, listener.__id__);
-        it = observers.erase(it);
-        break;
-      }
-      it++;
-    }
-  }
+template < typename T, typename IResponse > class CtlNotify {
+      protected:
+	std::vector < CtlObserver < T, IResponse > *>observers;
 
-  std::vector<std::future<IResponse>> notify(T arg, bool lazy_eval = false) {
-    std::vector<std::future<IResponse>> result_future;
-    for (auto it = observers.begin(); it != observers.end();) {
+      public:
+	void attach(CtlObserver < T, IResponse > &listener)
+	{
+		zcutils_log_print(LOG_DEBUG,
+				  "%s():%d: attaching id: %d observer",
+				  __FUNCTION__, __LINE__, listener.__id__);
+		observers.push_back(&listener);
+		onAttach(listener);
+	}
+	void deAttach(CtlObserver < T, IResponse > &listener)
+	{
+		for (auto it = observers.begin(); it != observers.end();) {
+			if (*it == nullptr) {
+				zcutils_log_print(LOG_DEBUG,
+						  "%s():%d: removing null observer",
+						  __FUNCTION__, __LINE__);
+				it = observers.erase(it);
+				continue;
+			}
+			else if (*(*it) == listener) {
+				zcutils_log_print(LOG_DEBUG,
+						  "%s():%d: deAttaching id: %d observer",
+						  __FUNCTION__, __LINE__,
+						  listener.__id__);
+				it = observers.erase(it);
+				break;
+			}
+			it++;
+		}
+	}
 
-      if(*it == nullptr){
-        zcutils_log_print(LOG_DEBUG, "%s():%d: observer not found, removing", __FUNCTION__, __LINE__);
-        it = observers.erase(it);
-        continue;
-      }
-      if ((*it)->isHandler(arg)) {
-        result_future.push_back(std::async(lazy_eval ? std::launch::deferred : std::launch::async, (*it)->handle,
-                                           arg, std::ref(*(*it))));
-      }
-      it++;
-    }
-    return result_future;
-  }
+	std::vector < std::future < IResponse >> notify(T arg,
+							bool lazy_eval =
+							false) {
+		std::vector < std::future < IResponse >> result_future;
+		for (auto it = observers.begin(); it != observers.end();) {
 
-  virtual void onResponseReady(CtlObserver<T, IResponse> &obj, IResponse arg){};
-  virtual void onAttach(CtlObserver<T, IResponse> &listener) {}
+			if (*it == nullptr) {
+				zcutils_log_print(LOG_DEBUG,
+						  "%s():%d: observer not found, removing",
+						  __FUNCTION__, __LINE__);
+				it = observers.erase(it);
+				continue;
+			}
+			if ((*it)->isHandler(arg)) {
+				result_future.push_back(std::async
+							(lazy_eval ?
+							 std::launch::deferred
+							 : std::launch::async,
+							 (*it)->handle, arg,
+							 std::ref(*(*it))));
+			}
+			it++;
+		}
+		return result_future;
+	}
 
- public:
-  CtlNotify() = default;
-  virtual ~CtlNotify() = default;
+	virtual void onResponseReady(CtlObserver < T, IResponse > &obj,
+				     IResponse arg)
+	{
+	};
+	virtual void onAttach(CtlObserver < T, IResponse > &listener)
+	{
+	}
+
+      public:
+	CtlNotify() = default;
+	virtual ~ CtlNotify() = default;
 };

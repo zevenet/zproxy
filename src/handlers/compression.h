@@ -25,8 +25,9 @@
 #include "../service/service.h"
 #include "../util/zlib_util.h"
 
-class Compression {
- public:
+class Compression
+{
+      public:
   /**
    * @brief Applies compression to the response message.
    *
@@ -38,6 +39,5 @@ class Compression {
    * set.
    * @param stream is the HttpStream to get the response to compress.
    */
-  static void applyCompression(Service *service, HttpStream *stream);
+	static void applyCompression(Service * service, HttpStream * stream);
 };
-

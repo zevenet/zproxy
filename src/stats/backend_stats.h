@@ -25,78 +25,112 @@
 #include "../util/time.h"
 #include "../util/common.h"
 
-namespace Statistics {
-enum BACKENDSTATS_PARAMETER {
-  BP_RESPONSE_TIME,
-  BP_CONN_TIME,
-  BP_COMPLETE_RESPONSE_TIME,
-  BP_ESTABLISHED_CONN,
-  BP_PENDING_CONN,
-  BP_TOTAL_CONN,
-};
+namespace Statistics
+{
+	enum BACKENDSTATS_PARAMETER
+	{
+		BP_RESPONSE_TIME,
+		BP_CONN_TIME,
+		BP_COMPLETE_RESPONSE_TIME,
+		BP_ESTABLISHED_CONN,
+		BP_PENDING_CONN,
+		BP_TOTAL_CONN,
+	};
 
-class BackendInfo {
- protected:
-  std::atomic<double> max_response_time;
-  std::atomic<double> avg_response_time;
-  std::atomic<double> min_response_time;
-  std::atomic<double> avg_conn_time;
-  std::atomic<double> avg_complete_response_time;
-  std::atomic<int> established_conn;
-  std::atomic<int> total_connections;
-  std::atomic<int> pending_connections;
-  time_t current_time;
-  // TODO: TRANSFERENCIA BYTES/SEC (NO HACER)
-  // TODO: WRITE/READ TIME (TIEMPO COMPLETO)
- public:
-  void setAvgResponseTime(double latency);
+	class BackendInfo
+	{
+	      protected:
+		std::atomic < double >max_response_time;
+		  std::atomic < double >avg_response_time;
+		  std::atomic < double >min_response_time;
+		  std::atomic < double >avg_conn_time;
+		  std::atomic < double >avg_complete_response_time;
+		  std::atomic < int >established_conn;
+		  std::atomic < int >total_connections;
+		  std::atomic < int >pending_connections;
+		time_t current_time;
+		// TODO: TRANSFERENCIA BYTES/SEC (NO HACER)
+		// TODO: WRITE/READ TIME (TIEMPO COMPLETO)
+	      public:
+		void setAvgResponseTime(double latency);
 
-  void setMinResponseTime(double latency);
+		void setMinResponseTime(double latency);
 
-  void setMaxResponseTime(double latency);
+		void setMaxResponseTime(double latency);
 
-  void setAvgConnTime(const timeval & start_time);
+		void setAvgConnTime(const timeval & start_time);
 
- public:
-  BackendInfo();
+	      public:
+		  BackendInfo();
 
-  ~BackendInfo();
+		 ~BackendInfo();
 
-  void increaseConnection();
+		void increaseConnection();
 
-  void setAvgTransferTime(const timeval & start_time);
+		void setAvgTransferTime(const timeval & start_time);
 
-  inline void decreaseConnection() { if(established_conn.load() > 0 ) established_conn--; }
+		inline void decreaseConnection()
+		{
+			if (established_conn.load() > 0)
+				established_conn--;
+		}
 
-  inline void increaseTotalConn() { if(total_connections.load() > 0)total_connections++; }
+		inline void increaseTotalConn()
+		{
+			if (total_connections.load() > 0)
+				total_connections++;
+		}
 
-  inline void increaseConnTimeoutAlive() { pending_connections++; }
+		inline void increaseConnTimeoutAlive()
+		{
+			pending_connections++;
+		}
 
-  inline void decreaseConnTimeoutAlive() {if(pending_connections.load() > 0) pending_connections--; }
+		inline void decreaseConnTimeoutAlive()
+		{
+			if (pending_connections.load() > 0)
+				pending_connections--;
+		}
 
-  inline int getPendingConn() { return pending_connections; }
+		inline int getPendingConn()
+		{
+			return pending_connections;
+		}
 
-  inline int getAssignedConn() { return total_connections; }
+		inline int getAssignedConn()
+		{
+			return total_connections;
+		}
 
-  inline int getEstablishedConn() { return established_conn; }
+		inline int getEstablishedConn()
+		{
+			return established_conn;
+		}
 
-  inline double getAvgLatency() { return avg_response_time; }
+		inline double getAvgLatency()
+		{
+			return avg_response_time;
+		}
 
-  inline void calculateLatency(const timeval & start_time) {
-  //  if (Time::getTimeSec() - current_time > 60) {
-  //    total_connections = 0;
-  //    max_response_time = -1;
-  //    avg_response_time = -1;
-  //    min_response_time = -1;
-  //  }
-  //  current_time = Time::getTimeSec();
+		inline void calculateLatency(const timeval & start_time)
+		{
+			//  if (Time::getTimeSec() - current_time > 60) {
+			//    total_connections = 0;
+			//    max_response_time = -1;
+			//    avg_response_time = -1;
+			//    min_response_time = -1;
+			//  }
+			//  current_time = Time::getTimeSec();
 
-    double latency = Time::getDiff(start_time);
-    setAvgResponseTime(latency);
-    setMaxResponseTime(latency);
-    setMinResponseTime(latency);
-  }
+			double latency = Time::getDiff(start_time);
+			setAvgResponseTime(latency);
+			setMaxResponseTime(latency);
+			setMinResponseTime(latency);
+		}
 
-  inline double getConnPerSec() { return total_connections / 60.0; }
-};
-}  // namespace Statistics
+		inline double getConnPerSec()
+		{
+			return total_connections / 60.0;
+		}
+	};
+}				// namespace Statistics

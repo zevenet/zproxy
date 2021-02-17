@@ -40,74 +40,89 @@
 
 #if DEBUG_STREAM_EVENTS_COUNT
 
-struct StreamWatcher{
-  HttpStream * stream{nullptr};
-  StreamWatcher(HttpStream &http_stream): stream(&http_stream){
-    if(stream == nullptr){
-	  zcutils_log_print(LOG_DEBUG, "%s():%d: IN Null HttpStream", __FUNCTION__, __LINE__);
-    }else {
-	  zcutils_log_print(LOG_DEBUG, "%s():%d: IN Stream data", __FUNCTION__, __LINE__);
-      showData();
-    }
-  }
-  void showData(){
-    zcutils_log_print(LOG_DEBUG, "%s():%d: \n\tRequest"
-                             "\n\t\tBuffer size: %d"
-                             "\n\t\tContent-length: %d"
-                             "\n\t\tMessage bytes: %d"
-                             "\n\t\tBytes left: %d"
-                             "\n\tResponse"
-                             "\n\t\tBuffer size: %d"
-                             "\n\t\tContent-length: %d"
-                             "\n\t\tMessage bytes: %d"
-                             "\n\t\tBytes left: %d",
-                              __FUNCTION__, __LINE__,
-                              stream->client_connection.buffer_size,
-                              stream->request.content_length,
-                              stream->request.message_length,
-                              stream->request.message_bytes_left,
-                              stream->backend_connection.buffer_size,
-                              stream->response.content_length,
-                              stream->response.message_length,
-                              stream->response.message_bytes_left
-    );
-  }
-  virtual  ~StreamWatcher(){
-    if(stream == nullptr){
-	  zcutils_log_print(LOG_DEBUG, "%s():%d: OUT Null HttpStream", __FUNCTION__, __LINE__);
-    }else {
-	  zcutils_log_print(LOG_DEBUG, "%s():%d: OUT Stream data", __FUNCTION__, __LINE__);
-      showData();
-    }
-  }
+struct StreamWatcher
+{
+	HttpStream *stream
+	{
+	nullptr};
+	  StreamWatcher(HttpStream & http_stream):stream(&http_stream)
+	{
+		if (stream == nullptr) {
+			zcutils_log_print(LOG_DEBUG,
+					  "%s():%d: IN Null HttpStream",
+					  __FUNCTION__, __LINE__);
+		}
+		else
+		{
+			zcutils_log_print(LOG_DEBUG,
+					  "%s():%d: IN Stream data",
+					  __FUNCTION__, __LINE__);
+			showData();
+		}
+	}
+	void showData()
+	{
+		zcutils_log_print(LOG_DEBUG, "%s():%d: \n\tRequest"
+				  "\n\t\tBuffer size: %d"
+				  "\n\t\tContent-length: %d"
+				  "\n\t\tMessage bytes: %d"
+				  "\n\t\tBytes left: %d"
+				  "\n\tResponse"
+				  "\n\t\tBuffer size: %d"
+				  "\n\t\tContent-length: %d"
+				  "\n\t\tMessage bytes: %d"
+				  "\n\t\tBytes left: %d",
+				  __FUNCTION__, __LINE__,
+				  stream->client_connection.buffer_size,
+				  stream->request.content_length,
+				  stream->request.message_length,
+				  stream->request.message_bytes_left,
+				  stream->backend_connection.buffer_size,
+				  stream->response.content_length,
+				  stream->response.message_length,
+				  stream->response.message_bytes_left);
+	}
+	virtual ~ StreamWatcher() {
+		if (stream == nullptr) {
+			zcutils_log_print(LOG_DEBUG,
+					  "%s():%d: OUT Null HttpStream",
+					  __FUNCTION__, __LINE__);
+		}
+		else {
+			zcutils_log_print(LOG_DEBUG,
+					  "%s():%d: OUT Stream data",
+					  __FUNCTION__, __LINE__);
+			showData();
+		}
+	}
 };
 
-namespace debug__ {
-DEFINE_OBJECT_COUNTER(on_client_connect)
-DEFINE_OBJECT_COUNTER(on_backend_connect)
-DEFINE_OBJECT_COUNTER(on_backend_connect_timeout)
-DEFINE_OBJECT_COUNTER(on_backend_disconnect)
-DEFINE_OBJECT_COUNTER(on_handshake)
-DEFINE_OBJECT_COUNTER(on_request)
-DEFINE_OBJECT_COUNTER(on_response)
-DEFINE_OBJECT_COUNTER(on_request_timeout)
-DEFINE_OBJECT_COUNTER(on_response_timeout)
-DEFINE_OBJECT_COUNTER(on_send_request)
-DEFINE_OBJECT_COUNTER(on_send_response)
-DEFINE_OBJECT_COUNTER(on_client_disconnect)
-DEFINE_OBJECT_COUNTER(on_clear_stream)
-DEFINE_OBJECT_COUNTER(on_backend_connect_error)
-
-DEFINE_OBJECT_COUNTER(event_client_read)
-DEFINE_OBJECT_COUNTER(event_client_disconnect)
-DEFINE_OBJECT_COUNTER(event_client_write)
-DEFINE_OBJECT_COUNTER(event_backend_read)
-DEFINE_OBJECT_COUNTER(event_backend_write)
-DEFINE_OBJECT_COUNTER(event_disconnect)
-DEFINE_OBJECT_COUNTER(event_backend_disconnect)
-DEFINE_OBJECT_COUNTER(event_connect)
-DEFINE_OBJECT_COUNTER(event_connect_fail)
-}  // namespace debug__
+namespace debug__
+{
+	DEFINE_OBJECT_COUNTER(on_client_connect)
+	DEFINE_OBJECT_COUNTER(on_backend_connect)
+	DEFINE_OBJECT_COUNTER(on_backend_connect_timeout)
+	DEFINE_OBJECT_COUNTER(on_backend_disconnect)
+	DEFINE_OBJECT_COUNTER(on_handshake)
+	DEFINE_OBJECT_COUNTER(on_request)
+	DEFINE_OBJECT_COUNTER(on_response)
+	DEFINE_OBJECT_COUNTER(on_request_timeout)
+	DEFINE_OBJECT_COUNTER(on_response_timeout)
+	DEFINE_OBJECT_COUNTER(on_send_request)
+	DEFINE_OBJECT_COUNTER(on_send_response)
+	DEFINE_OBJECT_COUNTER(on_client_disconnect)
+	DEFINE_OBJECT_COUNTER(on_clear_stream)
+	DEFINE_OBJECT_COUNTER(on_backend_connect_error)
+	DEFINE_OBJECT_COUNTER(event_client_read)
+	DEFINE_OBJECT_COUNTER(event_client_disconnect)
+	DEFINE_OBJECT_COUNTER(event_client_write)
+	DEFINE_OBJECT_COUNTER(event_backend_read)
+	DEFINE_OBJECT_COUNTER(event_backend_write)
+	DEFINE_OBJECT_COUNTER(event_disconnect)
+	DEFINE_OBJECT_COUNTER(event_backend_disconnect)
+	DEFINE_OBJECT_COUNTER(event_connect)
+	DEFINE_OBJECT_COUNTER(event_connect_fail)
+}				// namespace debug__
 #endif
 
 using namespace events;
@@ -122,36 +137,71 @@ using namespace http;
  * operations with the clients and the backends. It is used to manage both HTTP
  * and HTTPS connections.
  */
-class StreamManager : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
+class StreamManager:public EpollManager, public CtlObserver <
+	ctl::CtlTask,
+	std::string > {
 #if HELLO_WORLD_SERVER
-  std::string e200 =
-      "HTTP/1.1 200 OK\r\nServer: zproxy 1.0\r\nExpires: now\r\nPragma: "
-      "no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: "
-      "text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
+	std::string
+		e200 =
+		"HTTP/1.1 200 OK\r\nServer: zproxy 1.0\r\nExpires: now\r\nPragma: "
+		"no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: "
+		"text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
 #endif
 #if DEBUG_STREAM_EVENTS_COUNT
-  int clear_stream{0};
-  int clear_timer{0};
-  int clear_backend{0};
-  int clear_client{0};
+	int
+		clear_stream
+	{
+	0};
+	int
+		clear_timer
+	{
+	0};
+	int
+		clear_backend
+	{
+	0};
+	int
+		clear_client
+	{
+	0};
 #endif
-  int worker_id{};
-  std::thread worker;
-  std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
-  std::atomic<bool> is_running{};
-  std::unordered_map<int, HttpStream *> cl_streams_set;
-  std::unordered_map<int, HttpStream *> bck_streams_set;
+	int
+		worker_id
+	{
+	};
+	std::thread
+		worker;
+	std::map < int,
+		std::weak_ptr <
+	ServiceManager > >
+		service_manager_set;
+	std::atomic < bool >
+		is_running
+	{
+	};
+	std::unordered_map < int,
+	HttpStream * >
+		cl_streams_set;
+	std::unordered_map < int,
+	HttpStream * >
+		bck_streams_set;
 #if USE_TIMER_FD_TIMEOUT
-  std::unordered_map<int, HttpStream *> timers_set;
+	std::unordered_map < int,
+	HttpStream * >
+		timers_set;
 #endif
-  void HandleEvent(int fd, EVENT_TYPE event_type,
-                   EVENT_GROUP event_group) override;
-  void doWork();
+	void
+	HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group)
+		override;
+	void
+	doWork();
 
-public:
-  StreamManager();
-  StreamManager(const StreamManager &) = delete;
-  ~StreamManager() final;
+      public:
+	StreamManager();
+	StreamManager(const StreamManager &) = delete;
+	 ~
+	StreamManager()
+		final;
 
   /**
    * @brief Adds a HttpStream to the stream set of the StreamManager.registerListener
@@ -163,7 +213,8 @@ public:
    * @param fd is the file descriptor to add.
    * @param listener_config of the accepted connection to add.
    */
-  void addStream(int fd, std::shared_ptr<ServiceManager> service_manager);
+	void
+	addStream(int fd, std::shared_ptr < ServiceManager > service_manager);
 
   /**
    * @brief Returns the worker id associated to the StreamManager.
@@ -173,7 +224,8 @@ public:
    *
    * @return worker_id of the StreamManager.
    */
-  int getWorkerId();
+	int
+	getWorkerId();
 
   /**
    * @brief Initialize the StreamManager.
@@ -185,7 +237,8 @@ public:
    * @param listener_config from the configuration file.
    * @returns @c true if everything is fine.
    */
-  bool registerListener(std::weak_ptr<ServiceManager> service_manager);
+	bool
+	registerListener(std::weak_ptr < ServiceManager > service_manager);
 
   /**
    * @brief Starts the StreamManager event manager.
@@ -194,12 +247,14 @@ public:
    *
    * @param thread_id_ thread id to call functions on them.
    */
-  void start(int thread_id_ = 0);
+	void
+	start(int thread_id_ = 0);
 
   /**
    * @brief Stops the StreamManager event manager.
    */
-  void stop();
+	void
+	stop();
 
   /**
    * @brief Handles the write event from the backend.
@@ -212,7 +267,8 @@ public:
    * @param fd is the file descriptor from the backend connection used to get
    * the HttpStream.
    */
-  inline void onResponseEvent(int fd);
+	inline void
+	onResponseEvent(int fd);
 
   /**
    * @brief Handles the read event from the client.
@@ -225,7 +281,8 @@ public:
    * @param fd is the file descriptor from the client connection used to get
    * the HttpStream.
    */
-  inline void onRequestEvent(int fd);
+	inline void
+	onRequestEvent(int fd);
 
   /**
    * @brief Handles the connect timeout event.
@@ -237,7 +294,8 @@ public:
    *
    * @param fd is the file descriptor used to get the HttpStream.
    */
-  inline void onConnectTimeoutEvent(int fd);
+	inline void
+	onConnectTimeoutEvent(int fd);
 
   /**
    * @brief Handles the response timeout event.
@@ -247,7 +305,8 @@ public:
    *
    * @param fd is the file descriptor used to get the HttpStream.
    */
-  inline void onResponseTimeoutEvent(int fd);
+	inline void
+	onResponseTimeoutEvent(int fd);
 
   /**
    * @brief Handles the request timeout event.
@@ -257,9 +316,12 @@ public:
    *
    * @param fd is the file descriptor used to get the HttpStream.
    */
-  inline void onRequestTimeoutEvent(int fd);
-  inline void onSignalEvent(int fd);
-  inline void setStreamBackend(HttpStream *stream);
+	inline void
+	onRequestTimeoutEvent(int fd);
+	inline void
+	onSignalEvent(int fd);
+	inline void
+	setStreamBackend(HttpStream * stream);
   /**
    * @brief Writes all the client buffer data to the backend.
    *
@@ -269,7 +331,8 @@ public:
    * @param stream HttpStream to get the data and the both client and backend
    * connection information.
    */
-  inline void onServerWriteEvent(HttpStream *stream);
+	inline void
+	onServerWriteEvent(HttpStream * stream);
 
   /**
    * @brief Writes all the backend buffer data to the client.
@@ -280,7 +343,8 @@ public:
    * @param stream HttpStream to get the data and the both client and backend
    * connection information.
    */
-  inline void onClientWriteEvent(HttpStream *stream);
+	inline void
+	onClientWriteEvent(HttpStream * stream);
 
 
   /**
@@ -290,11 +354,14 @@ public:
    *
    * @param stream is the HttpStream to clear.
    */
-  void clearStream(HttpStream *stream);
+	void
+	clearStream(HttpStream * stream);
 
-  inline void onServerDisconnect(HttpStream *stream);
+	inline void
+	onServerDisconnect(HttpStream * stream);
 
-  inline void onClientDisconnect(HttpStream *stream);
+	inline void
+	onClientDisconnect(HttpStream * stream);
 
   /**
    * @brief This function handles the tasks received with the API format.
@@ -305,7 +372,9 @@ public:
    * @param task to handle by the Listener.
    * @return json formatted string with the result of the operation.
    */
-  std::string handleTask(ctl::CtlTask &task) override;
+	std::string
+	handleTask(ctl::CtlTask & task)
+		override;
 
   /**
    * @brief Checks if the Listener should handle the @p task.
@@ -313,15 +382,21 @@ public:
    * @param task to check.
    * @return true if should handle the task, false if not.
    */
-  bool isHandler(ctl::CtlTask &task) override;
+	bool
+	isHandler(ctl::CtlTask & task)
+		override;
   /**
    * @brief Stop gracefully the listener from accepting more connections.
    * @param stop immediately established connections.
    * @return true if should handle the task, false if not.
    */
-  void stopListener(int listener_id, bool cut_connection = false);
+	void
+	stopListener(int listener_id, bool cut_connection = false);
 #if USE_TIMER_FD_TIMEOUT==0
-  void onTimeOut(int fd, TIMEOUT_TYPE type) override ;
+	void
+	onTimeOut(int fd, TIMEOUT_TYPE type)
+		override;
 #endif
-  void onBackendConnectionError(HttpStream *stream);
+	void
+	onBackendConnectionError(HttpStream * stream);
 };

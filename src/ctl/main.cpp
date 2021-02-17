@@ -25,8 +25,10 @@
 
 #define POUND_CTL_MODE 1
 
-int main(int argc, char *argv[]) {
-  PoundClient client;
+int
+main(int argc, char *argv[])
+{
+	PoundClient client;
 
-  return client.init(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return client.init(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

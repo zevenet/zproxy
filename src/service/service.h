@@ -42,59 +42,90 @@ using namespace json;
  * from sessions::HttpSessionManager to be able to manage all the sessions of
  * this Service.
  */
-class Service : public sessions::HttpSessionManager,
-                public CtlObserver<ctl::CtlTask, std::string> {
-  std::vector<Backend *> backend_set;
-  std::vector<Backend *> emergency_backend_set;
-  // if no backend available, return an emergency backend if possible.
-  Backend *getNextBackend();
-  std::mutex mtx_lock;
+class Service:public
+	sessions::HttpSessionManager,
+	public
+	CtlObserver <
+	ctl::CtlTask,
+	std::string > {
+	std::vector <
+		Backend * >
+		backend_set;
+	std::vector <
+	Backend * >
+		emergency_backend_set;
+	// if no backend available, return an emergency backend if possible.
+	Backend *
+	getNextBackend();
+	std::mutex
+		mtx_lock;
   /** The enum Service::LOAD_POLICY defines the different types of load
    * balancing available. All the methods are weighted except the Round Robin
    * one.
    */
-  enum class ROUTING_POLICY {
+	enum class
+		ROUTING_POLICY
+	{
     /** Selects the next backend following the Round Robin algorithm. */
-    ROUND_ROBIN,
+		ROUND_ROBIN,
     /** Selects the backend with less stablished connections. */
-    W_LEAST_CONNECTIONS,  // we are using weighted
+		W_LEAST_CONNECTIONS,	// we are using weighted
     /** Selects the backend with less response time. */
-    RESPONSE_TIME,
+		RESPONSE_TIME,
     /** Selects the backend with less pending connections. */
-    PENDING_CONNECTIONS,
-  };
+		PENDING_CONNECTIONS,
+	};
 
- public:
+      public:
   /** True if the Service is disabled, false if it is enabled. */
 #if CACHE_ENABLED
-  bool cache_enabled = false;
-  std::shared_ptr<HttpCache> http_cache;
+	bool
+		cache_enabled = false;
+	std::shared_ptr <
+		HttpCache >
+		http_cache;
 #endif
-  std::atomic<bool> disabled{false};
-  std::atomic<int> backend_priority{0};
-  int max_backend_priority = 0;
+	std::atomic < bool >
+		disabled
+	{
+	false};
+	std::atomic < int >
+		backend_priority
+	{
+	0};
+	int
+		max_backend_priority = 0;
   /** Service id. */
-  int id;
-  bool ignore_case;
-  std::string name;
+	int
+		id;
+	bool
+		ignore_case;
+	std::string
+		name;
   /** Backend Cookie Name */
-  std::string becookie,
+	std::string
+		becookie,
       /** Backend Cookie domain */
-      becdomain,
+		becdomain,
       /** Backend cookie path */
-      becpath;
+		becpath;
   /** Backend cookie age */
-  int becage;
+	int
+		becage;
   /** True if the connection if pinned, false if not. */
-  bool pinned_connection;
-  ROUTING_POLICY routing_policy;
+	bool
+		pinned_connection;
+	ROUTING_POLICY
+		routing_policy;
 
- private:
-  bool addBackend(JsonObject *json_object);
+      private:
+	bool
+	addBackend(JsonObject * json_object);
 
- public:
+      public:
   /** ServiceConfig from the Service. */
-  ServiceConfig &service_config;
+	ServiceConfig &
+		service_config;
 
   /**
    * @brief Checks if we need a new backend or not.
@@ -106,9 +137,13 @@ class Service : public sessions::HttpSessionManager,
    * for it.
    * @return always a Backend. A new one or the associated to the session.
    */
-  Backend *getBackend(Connection &source, HttpRequest &request);
-  explicit Service(ServiceConfig &service_config_);
-  ~Service() final;
+	Backend *
+	getBackend(Connection & source, HttpRequest & request);
+	explicit
+	Service(ServiceConfig & service_config_);
+	~
+	Service()
+		final;
 
   /**
    * @brief Creates a new Backend from a BackendConfig.
@@ -120,13 +155,15 @@ class Service : public sessions::HttpSessionManager,
    * @param backend_id to assign the Backend.
    * @param emergency set the Backend as emergency.
    */
-  void addBackend(std::shared_ptr<BackendConfig> backend_config, int backend_id,
-                  bool emergency = false);
+	void
+	addBackend(std::shared_ptr < BackendConfig > backend_config,
+		   int backend_id, bool emergency = false);
 
   /**
    * @brief Checks if the backends still alive and deletes the expired sessions.
    */
-  void doMaintenance();
+	void
+	doMaintenance();
 
   /**
    * @brief Check if the Service should handle the HttpRequest.
@@ -138,9 +175,12 @@ class Service : public sessions::HttpSessionManager,
    * @return @c true or @c false if the Service should handle the @p request or
    * not.
    */
-  bool doMatch(HttpRequest &request);
-  static void setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
-  Backend *getEmergencyBackend();
+	bool
+	doMatch(HttpRequest & request);
+	static void
+	setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
+	Backend *
+	getEmergencyBackend();
 
   /**
    * @brief This function handles the @p tasks received with the API format.
@@ -151,7 +191,9 @@ class Service : public sessions::HttpSessionManager,
    * @param task to check.
    * @return json formatted string with the result of the operation.
    */
-  std::string handleTask(ctl::CtlTask &task) override;
+	std::string
+	handleTask(ctl::CtlTask & task)
+		override;
 
   /**
    * @brief Checks if the Service should handle the @p task.
@@ -159,13 +201,22 @@ class Service : public sessions::HttpSessionManager,
    * @param task to check.
    * @return true if should handle the task, false if not.
    */
-  bool isHandler(ctl::CtlTask &task) override;
+	bool
+	isHandler(ctl::CtlTask & task)
+		override;
 
   /**
    * @brief Generates a JsonObject with all the Service information.
    * @return JsonObject with the Service information.
    */
-  std::unique_ptr<JsonObject> getServiceJson();
-  inline int getBackendSetSize(){return backend_set.size();}
-  bool setBackendHostInfo(Backend *backend);
+	std::unique_ptr <
+		JsonObject >
+	getServiceJson();
+	inline int
+	getBackendSetSize()
+	{
+		return backend_set.size();
+	}
+	bool
+	setBackendHostInfo(Backend * backend);
 };

@@ -43,23 +43,37 @@
  * attached to it.
  *
  */
-class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, std::string> {
-  std::thread worker_thread;
-  std::atomic<bool> is_running;
-  std::map<int, StreamManager *> stream_manager_set;
-  //  std::vector<std::shared_ptr<ListenerConfig>> listener_config_set;
-  TimerFd timer_maintenance;
-  TimerFd ssl_maintenance_timer;
+class ListenerManager:public EpollManager, public CtlObserver <
+	ctl::CtlTask,
+	std::string > {
+	std::thread
+		worker_thread;
+	std::atomic < bool >
+		is_running;
+	std::map < int,
+	StreamManager * >
+		stream_manager_set;
+	//  std::vector<std::shared_ptr<ListenerConfig>> listener_config_set;
+	TimerFd
+		timer_maintenance;
+	TimerFd
+		ssl_maintenance_timer;
 #if MALLOC_TRIM_TIMER
-  TimerFd timer_internal_maintenance;
+	TimerFd
+		timer_internal_maintenance;
 #endif
-  SignalFd signal_fd;
-  void doWork();
-  StreamManager *getManager(int fd);
+	SignalFd
+		signal_fd;
+	void
+	doWork();
+	StreamManager *
+	getManager(int fd);
 
- public:
-  ListenerManager();
-  ~ListenerManager() final;
+      public:
+	ListenerManager();
+	~
+	ListenerManager()
+		final;
 
   /**
    * @brief Sets the listener connection address and port specified in the
@@ -71,17 +85,20 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
    * @param config is the ListenerConfig to use by the listener.
    * @return @c false if there is any error, if not @c true.
    */
-  bool addListener(std::shared_ptr<ListenerConfig> listener_config);
+	bool
+	addListener(std::shared_ptr < ListenerConfig > listener_config);
 
   /**
    * @brief Starts the Listener event manager.
    */
-  void start();
+	void
+	start();
 
   /**
    * @brief Stops the Listener event manager.
    */
-  void stop();
+	void
+	stop();
 
   /**
    * @brief Handles the needed operations for the event received.
@@ -93,7 +110,9 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
    * @param event_type is the type of the event.
    * @param event_group is the group of the event.
    */
-  void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
+	void
+	HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group)
+		override;
 
   /**
    * @brief This function handles the tasks received with the API format.
@@ -104,7 +123,9 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
    * @param task to handle by the Listener.
    * @return json formatted string with the result of the operation.
    */
-  std::string handleTask(ctl::CtlTask &task) override;
+	std::string
+	handleTask(ctl::CtlTask & task)
+		override;
 
   /**
    * @brief Checks if the Listener should handle the @p task.
@@ -112,12 +133,15 @@ class ListenerManager : public EpollManager, public CtlObserver<ctl::CtlTask, st
    * @param task to check.
    * @return true if should handle the task, false if not.
    */
-  bool isHandler(ctl::CtlTask &task) override;
+	bool
+	isHandler(ctl::CtlTask & task)
+		override;
   /**
  * @brief Reload the listeners config from the current loaded configuration file.
  *
  * @param task to check.
  * @return true if reload succeded compeletely.
  */
-  bool reloadConfigFile();
+	bool
+	reloadConfigFile();
 };

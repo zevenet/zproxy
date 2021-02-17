@@ -32,8 +32,9 @@
 
 using namespace http;
 
-class http_manager {
- public:
+class http_manager
+{
+      public:
   /**
    * @brief Validates the request.
    *
@@ -45,7 +46,8 @@ class http_manager {
    * validation::REQUEST_RESULT::OK. If errors happen, it returns the
    * corresponding element of validation::REQUEST_RESULT.
    */
-  static validation::REQUEST_RESULT validateRequest(HttpStream &stream);
+	static validation::
+		REQUEST_RESULT validateRequest(HttpStream & stream);
 
   /**
    * @brief Validates the response.
@@ -58,7 +60,8 @@ class http_manager {
    * validation::REQUEST_RESULT::OK. If errors happen, it returns the
    * corresponding element of validation::REQUEST_RESULT.
    */
-  static validation::REQUEST_RESULT validateResponse(HttpStream &stream);
+	static validation::
+		REQUEST_RESULT validateResponse(HttpStream & stream);
 
   /**
    * @brief If the backend cookie is enabled adds the headers with the
@@ -67,7 +70,7 @@ class http_manager {
    * @param service is the Service to get the backend cookie parameters set.
    * @param stream is the HttpStream to get the request to add the headers.
    */
-  static void setBackendCookie(Service *service, HttpStream *stream);
+	static void setBackendCookie(Service * service, HttpStream * stream);
 
   /**
    * @brief Check if last chunk found in stream response and set stream chunk
@@ -79,8 +82,9 @@ class http_manager {
    * size.
    */
 
-  /**/
-  static ssize_t handleChunkedData(Connection &connection, http_parser::HttpData & http_data);
+	  /**/ static ssize_t handleChunkedData(Connection & connection,
+						http_parser::
+						HttpData & http_data);
   /**
    * @brief Get chunk size from buffer
    * if
@@ -91,9 +95,9 @@ class http_manager {
    * @return Chunk size or -1 en case of error.
    */
 
-  /**/
-  static ssize_t getChunkSize(const std::string &data, size_t data_size,
-                              int &chunk_size_line_len);
+	  /**/ static ssize_t getChunkSize(const std::string & data,
+					   size_t data_size,
+					   int &chunk_size_line_len);
   /**
    * @brief Search for last chunk size in buffer data
    *
@@ -107,11 +111,11 @@ class http_manager {
    * @return last chunk size found.
    */
 
-  /**/
-  static ssize_t getLastChunkSize(const char *data, size_t data_size,
-                                  size_t &data_offset,
-                                  size_t &chunk_size_bytes_left,
-                                  size_t &total_chunks_size);
+	  /**/ static ssize_t getLastChunkSize(const char *data,
+					       size_t data_size,
+					       size_t &data_offset,
+					       size_t &chunk_size_bytes_left,
+					       size_t &total_chunks_size);
   /**
    * @brief Replies an specified error to the client.
    *
@@ -126,8 +130,9 @@ class http_manager {
    * @param ssl_manager is the SSLConnectionManager that handles the HTTPS
    * client connection.
    */
-  static void replyError(http::Code code, const std::string &code_string,
-                         const std::string &str, Connection &target);
+	static void replyError(http::Code code,
+			       const std::string & code_string,
+			       const std::string & str, Connection & target);
 
   /**
    * @brief Reply a redirect message with the configuration specified in the
@@ -135,8 +140,8 @@ class http_manager {
    *
    * @param backend_config is the BackendConfig to get the redirect information.
    */
-  static bool replyRedirect(HttpStream &stream,
-                            const Backend &redirect_backend);
+	static bool replyRedirect(HttpStream & stream,
+				  const Backend & redirect_backend);
 
   /**
    * @brief Reply a redirect message with the @p code and pointing to the
@@ -145,8 +150,8 @@ class http_manager {
    * @param code is the redirect code.
    * @param url is the url itself.
    */
-  static bool replyRedirect(int code, const std::string &url,
-                            HttpStream &stream);
-  static bool replyTestServer(HttpStream &stream, bool async = false);
+	static bool replyRedirect(int code, const std::string & url,
+				  HttpStream & stream);
+	static bool replyTestServer(HttpStream & stream, bool async = false);
 
 };

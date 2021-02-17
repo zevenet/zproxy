@@ -25,7 +25,8 @@
 #include "ssl_common.h"
 #include "ssl_context.h"
 
-namespace ssl {
+namespace ssl
+{
 
 /**
  * @class SSLConnectionManager SSLConnectionManager.h "src/ssl/SSLConnectionManager.h"
@@ -35,7 +36,8 @@ namespace ssl {
  *
  * This includes handshake, write and read operations.
  */
-class SSLConnectionManager {
+	class SSLConnectionManager
+	{
   /**
    * @brief Gets the error result in the IO::IO_RESULT format.
    *
@@ -46,17 +48,19 @@ class SSLConnectionManager {
    * @param rc is the pointer where it is load the error code after the look up.
    * @return the error code in a IO::IO_RESULT format.
    */
-  IO::IO_RESULT getSslErrorResult(SSL *ssl_connection_context, int &rc);
+		IO::IO_RESULT getSslErrorResult(SSL * ssl_connection_context,
+						int &rc);
 
- public:
-  SSLConnectionManager();
-  virtual ~SSLConnectionManager();
+	      public:
+		  SSLConnectionManager();
+		  virtual ~ SSLConnectionManager();
   /**
    * @brief Reads from the @p ssl_connection.
    * @param ssl_connection used to read from.
    * @return the result of the read operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT handleDataRead(Connection &ssl_connection);
+		static IO::
+			IO_RESULT handleDataRead(Connection & ssl_connection);
 
   /**
    * @brief Handles the SSL handshake with the @p ssl_connection.
@@ -69,11 +73,12 @@ class SSLConnectionManager {
    * a server.
    * @return @c true if everything is ok, if not @c false.
    */
-  static bool handleHandshake(const SSLContext &ssl_context,
-                              Connection &ssl_connection,
-                              bool client_mode = false);
-  static bool handleHandshake(SSL_CTX *ssl_ctx, Connection &ssl_connection,
-                              bool client_mode = false);
+		static bool handleHandshake(const SSLContext & ssl_context,
+					    Connection & ssl_connection,
+					    bool client_mode = false);
+		static bool handleHandshake(SSL_CTX * ssl_ctx,
+					    Connection & ssl_connection,
+					    bool client_mode = false);
 
   /**
    * @brief Writes to the @p target_ssl_connection.
@@ -86,9 +91,12 @@ class SSLConnectionManager {
    * @param http_data
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT handleDataWrite(Connection &target_ssl_connection,
-                                       Connection &ssl_connection,
-                                       http_parser::HttpData &http_data);
+		static IO::
+			IO_RESULT handleDataWrite(Connection &
+						  target_ssl_connection,
+						  Connection & ssl_connection,
+						  http_parser::
+						  HttpData & http_data);
 
   /**
    * @brief Writes to the @p target_ssl_connection.
@@ -104,9 +112,13 @@ class SSLConnectionManager {
    * @param flush_data true if the data is deleted after the write operation.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT handleWrite(Connection &target_ssl_connection,
-                                   Connection &source_ssl_connection,
-                                   size_t &written, bool flush_data = true);
+		static IO::
+			IO_RESULT handleWrite(Connection &
+					      target_ssl_connection,
+					      Connection &
+					      source_ssl_connection,
+					      size_t &written,
+					      bool flush_data = true);
   /**
    * @brief Writes to the @p target_ssl_connection.
    *
@@ -121,16 +133,18 @@ class SSLConnectionManager {
    * @param flush_data true if the data is deleted after the write operation.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT handleWrite(Connection &ssl_connection, const char *data,
-                                   size_t data_size, size_t &total_written,
-                                   bool flush_data = true);
+		static IO::IO_RESULT handleWrite(Connection & ssl_connection,
+						 const char *data,
+						 size_t data_size,
+						 size_t &total_written,
+						 bool flush_data = true);
 
   /**
    * @brief Reads from the @p ssl_connection.
    * @param ssl_connection used to read from.
    * @return the result of the read operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT sslRead(Connection &ssl_connection);
+		static IO::IO_RESULT sslRead(Connection & ssl_connection);
 
   /**
    * @brief Writes to the @p target_ssl_connection using SSL functions.
@@ -144,16 +158,23 @@ class SSLConnectionManager {
    * @param written is the amount of data written.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT sslWrite(Connection &ssl_connection, const char *data,
-                                size_t data_size, size_t &written);
+		static IO::IO_RESULT sslWrite(Connection & ssl_connection,
+					      const char *data,
+					      size_t data_size,
+					      size_t &written);
 
-  static IO::IO_RESULT sslWriteIOvec(Connection &target_ssl_connection,
-                                     const iovec *__iovec, int count,
-                                     size_t &nwritten);
-  static IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection,
-                                        iovec *iov, size_t &iovec_size,
-                                        size_t &iovec_written,
-                                        size_t &nwritten);
+		static IO::
+			IO_RESULT sslWriteIOvec(Connection &
+						target_ssl_connection,
+						const iovec * __iovec,
+						int count, size_t &nwritten);
+		static IO::
+			IO_RESULT handleWriteIOvec(Connection &
+						   target_ssl_connection,
+						   iovec * iov,
+						   size_t &iovec_size,
+						   size_t &iovec_written,
+						   size_t &nwritten);
 
   /**
    * @brief Initialize the @p ssl_connection with the configuration established
@@ -164,14 +185,15 @@ class SSLConnectionManager {
    * server.
    * @return @c true if everything is ok, if not @c false.
    */
-  static bool initSslConnection(SSL_CTX *ssl_ctx, Connection &ssl_connection,
-                                bool client_mode = false);
+		static bool initSslConnection(SSL_CTX * ssl_ctx,
+					      Connection & ssl_connection,
+					      bool client_mode = false);
 
   /**
    * @brief Async Ssl connection Shutdown
    * @param ssl_connection used to read from.
    * @return the result of the read operation with a IO:IO_RESULT format.
    */
-  static IO::IO_RESULT sslShutdown(Connection &ssl_connection);
-};
-}  // namespace ssl
+		static IO::IO_RESULT sslShutdown(Connection & ssl_connection);
+	};
+}				// namespace ssl
