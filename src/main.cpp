@@ -24,7 +24,6 @@
 #include "config/config.h"
 #include "config/global.h"
 #include "ctl/control_manager.h"
-#include "debug/backtrace.h"
 #include "stream/listener_manager.h"
 #include "util/system.h"
 #include "../zcutils/zcutils.h"
@@ -52,7 +51,7 @@ void handleInterrupt(int sig) {
     case SIGABRT:
       ::_exit(EXIT_FAILURE);
     case SIGSEGV: {
-      debug::printBackTrace();
+      zcutils_bt_print();
       ::_exit(EXIT_FAILURE);
     }
     case SIGUSR1:  // Release free heap memory
