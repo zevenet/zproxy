@@ -157,5 +157,5 @@ static const Regex NfMark("^[ \t]*NfMark[ \t]+([1-9][0-9]*)[ \t]*$");
 static const Regex WafRules("^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$");
 #endif
 static const Regex TestServer("^[ \t]*Server[ \t]+([1-9-][0-9]*)[ \t]*$");
-static const Regex ReplaceHeader("^[ \t]*ReplaceHeader[ \t]+(Request|Response)[ \t]+(\\S+)[ \t]+(\\S+)[ \t]+(\\S+)[\\s+]*$");
+static const Regex ReplaceHeader("^[ \t]*ReplaceHeader[ \t]+(Request|Response)[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]*$");
 };
