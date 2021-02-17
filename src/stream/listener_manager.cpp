@@ -315,7 +315,7 @@ void ListenerManager::doWork() {
   while (is_running) {
     if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
 		// something bad happend
-		zcutils_log_print(LOG_ERR, "%s():%d: No event received", __FUNCTION__, __LINE__);
+		zcutils_log_print(LOG_DEBUG, "%s():%d: No event received", __FUNCTION__, __LINE__);
     }
   }
   zcutils_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__, __LINE__);
