@@ -28,6 +28,9 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <cstdlib>
+#include <execinfo.h>
+#include <cassert>
+#include <sys/resource.h>
 
 #define ZCUTILS_LOG_OUTPUT_SYSLOG			(1 << 0)
 #define ZCUTILS_LOG_OUTPUT_STDOUT			(1 << 1)
@@ -107,7 +110,28 @@ static int zcutils_log_print(int loglevel, const char *fmt, ...)
 	return 0;
 }
 
+/****  BACKTRACE  ****/
 
+static inline void zcutils_bt_print() {
+	void *buffer[255];
+	char **str;
+	int i;
+	const int calls = backtrace(buffer, sizeof(buffer) / sizeof(void *));
+
+	backtrace_symbols_fd(buffer, calls, 1);
+
+	str = backtrace_symbols(buffer, calls);
+	if (!str) {
+		zcutils_log_print(LOG_ERR, "No backtrace strings found!");
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0; i < calls; i++)
+		zcutils_log_print(LOG_ERR, "%s", str[i]);
+	free(str);
+
+	exit(EXIT_FAILURE);
+}
 
 /****  STRING  ****/
 
