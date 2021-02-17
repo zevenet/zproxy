@@ -471,7 +471,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
       lin[matches[2].rm_eo] = '\0';
       lin[matches[3].rm_eo] = '\0';
       lin[matches[4].rm_eo] = '\0';
-      lin[matches[5].rm_eo] = '\0';
       auto type_ = std::string(lin + matches[1].rm_so);
       auto name_ = std::string(lin + matches[2].rm_so);
       auto match_ = std::string(lin + matches[3].rm_so);
@@ -498,7 +497,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP() {
           current = res->replace_header_response;
         }
       } else {
-        conf_err("ReplceHeader type not specified");
+        conf_err("ReplaceHeader type not specified");
       }
       if (::regcomp(&current->name, name_.data(), REG_ICASE | REG_NEWLINE | REG_EXTENDED))
         conf_err("Error compiling Name regex ");
@@ -951,7 +950,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
       lin[matches[2].rm_eo] = '\0';
       lin[matches[3].rm_eo] = '\0';
       lin[matches[4].rm_eo] = '\0';
-      lin[matches[5].rm_eo] = '\0';
       auto type_ = std::string(lin + matches[1].rm_so);
       auto name_ = std::string(lin + matches[2].rm_so);
       auto match_ = std::string(lin + matches[3].rm_so);
@@ -978,7 +976,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS() {
           current = res->replace_header_response;
         }
       } else {
-        conf_err("ReplceHeader type not specified");
+        conf_err("ReplaceHeader type not specified");
       }
       if (::regcomp(&current->name, name_.data(), REG_ICASE | REG_NEWLINE | REG_EXTENDED))
         conf_err("Error compiling Name regex ");
