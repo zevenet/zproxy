@@ -78,7 +78,7 @@ static inline void zcutils_log_set_output(int output)
 	return;
 }
 
-static int zcutils_log_print(int loglevel, const char *fmt, ...)
+static inline int zcutils_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
