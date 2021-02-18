@@ -239,10 +239,12 @@ sub setSsyncdMaster
 		&setSsyncdDisabled();
 	}
 
-	# Start Master mode:
-	# ./ssyncd -d -M -p 9999 --> start master node
+# Start Master mode:
+# ./ssyncd -d -M -p 9999 -a 172.16.1.1 --> start master node listening on 172.16.1.1
 
 	$ssync_cmd = "$ssyncd_bin -d -M -p $ssyncd_port";
+	my $ssyncd_ip = &getZClusterLocalIp();
+	$ssync_cmd .= " -a $ssyncd_ip" if defined $ssyncd_ip;
 	&zenlog( "/// setting ssyncd as master", "info", "CLUSTER" );
 	&logAndRun( "$ssync_cmd" );
 
