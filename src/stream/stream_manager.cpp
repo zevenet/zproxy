@@ -23,7 +23,7 @@
 #include <cstdio>
 #include <thread>
 #include "../handlers/https_manager.h"
-#include "../util/network.h"
+#include "../../zcutils/zcu_network.h"
 #include "stream_data_logger.h"
 #define EXTENDED_DEBUG_LOG 0
 #ifdef ON_FLY_COMRESSION
@@ -149,8 +149,7 @@ StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 						char addr[150];
 						zcutils_log_print(LOG_INFO,
 								  "Remote backend host %s closed connection prematurely",
-								  Network::
-								  getPeerAddress
+								  zcutils_soc_get_peer_address
 								  (fd, addr,
 								   150) !=
 								  nullptr ?
@@ -824,7 +823,7 @@ StreamManager::onRequestEvent(int fd)
 
 			if (stream->backend_connection.getBackend()->nf_mark >
 			    0)
-				Network::setSOMarkOption(stream->
+				zcutils_soc_set_somarkoption(stream->
 							 backend_connection.
 							 getFileDescriptor(),
 							 stream->
@@ -1373,8 +1372,7 @@ StreamManager::onResponseTimeoutEvent(int fd)
 #endif
 		char caddr[50];
 		if (UNLIKELY
-		    (Network::
-		     getPeerAddress(stream->client_connection.
+		    (zcutils_soc_get_peer_address(stream->client_connection.
 				    getFileDescriptor(), caddr,
 				    50) == nullptr)) {
 			zcutils_log_print(LOG_ERR,
@@ -1578,7 +1576,7 @@ StreamManager::setStreamBackend(HttpStream * stream)
 									SERVER);
 				if (stream->backend_connection.getBackend()->
 				    nf_mark > 0)
-					Network::setSOMarkOption(stream->
+					zcutils_soc_set_somarkoption(stream->
 								 backend_connection.
 								 getFileDescriptor
 								 (),
@@ -2304,7 +2302,7 @@ StreamManager::registerListener(std::weak_ptr < ServiceManager >
 {
 	auto & listener_config = service_manager.lock()->listener_config_;
 	auto address =
-		Network::getAddress(listener_config->address,
+		zcutils_net_get_address(listener_config->address,
 				    listener_config->port);
 	listener_config->addr_info = address.release();
 	int listen_fd = Connection::listen(*listener_config->addr_info);

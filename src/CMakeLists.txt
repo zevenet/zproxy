@@ -79,7 +79,7 @@ set(l7core_sources
     http/pico_http_parser.h http/pico_http_parser.cpp
     http/http_request.h http/http_request.cpp
     http/http.h http/http.cpp
-    util/common.h util/system.h util/network.h util/crypto.h util/environment.h util/utils.h
+    util/common.h util/system.h util/crypto.h util/environment.h util/utils.h
     ctl/control_manager.h ctl/control_manager.cpp ctl/observer.h ctl/ctl.h
     stats/backend_stats.h stats/backend_stats.cpp
     stats/counter.h

@@ -21,8 +21,8 @@
 
 #include "connection.h"
 #include "../util/common.h"
-#include "../util/network.h"
 #include "../../zcutils/zcutils.h"
+#include "../../zcutils/zcu_network.h"
 #include <sys/un.h>
 
 Connection::Connection()
@@ -93,7 +93,7 @@ std::string Connection::getPeerAddress()
 	if (this->fd_ > 0 && address_str.empty()) {
 		char
 			addr[150];
-		Network::getPeerAddress(this->fd_, addr, 150);
+		zcutils_soc_get_peer_address(this->fd_, addr, 150);
 		address_str = std::string(addr);
 	}
 	return address_str;
@@ -104,7 +104,7 @@ std::string Connection::getLocalAddress()
 	if (this->fd_ > 0 && local_address_str.empty()) {
 		char
 			addr[150];
-		Network::getlocalAddress(this->fd_, addr, 150);
+		zcutils_soc_get_local_address(this->fd_, addr, 150);
 		local_address_str = std::string(addr);
 	}
 	return local_address_str;
@@ -114,7 +114,7 @@ int
 Connection::getPeerPort()
 {
 	if (this->fd_ > 0 && port == -1) {
-		port = Network::getPeerPort(this->fd_);
+		port = zcutils_soc_get_peer_port(this->fd_);
 	}
 	return port;
 }
@@ -123,7 +123,7 @@ int
 Connection::getLocalPort()
 {
 	if (this->fd_ > 0 && local_port == -1) {
-		local_port = Network::getlocalPort(this->fd_);
+		local_port = zcutils_soc_get_local_port(this->fd_);
 	}
 	return local_port;
 }
@@ -551,11 +551,11 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
 				  __FUNCTION__, __LINE__);
 		return IO::IO_OP::OP_ERROR;
 	}
-	Network::setTcpNoDelayOption(fd_);
-	Network::setSoKeepAliveOption(fd_);
-	Network::setSoLingerOption(fd_, true);
+	zcutils_soc_set_tcpnodelayoption(fd_);
+	zcutils_soc_set_sokeepaliveoption(fd_);
+	zcutils_soc_set_solingeroption(fd_, true);
 	if (LIKELY(async)) {
-		Network::setSocketNonBlocking(fd_);
+		zcutils_soc_set_socket_non_blocking(fd_);
 	}
 	else {
 		struct timeval
@@ -601,12 +601,12 @@ IO::IO_OP Connection::doConnect(const std::string & af_unix_socket_path,
 				  __FUNCTION__, __LINE__);
 		return IO::IO_OP::OP_ERROR;
 	}
-	Network::setTcpNoDelayOption(fd_);
-	Network::setSoKeepAliveOption(fd_);
-	Network::setSoLingerOption(fd_, true);
+	zcutils_soc_set_tcpnodelayoption(fd_);
+	zcutils_soc_set_sokeepaliveoption(fd_);
+	zcutils_soc_set_solingeroption(fd_, true);
 
 	if (timeout > 0)
-		Network::setSocketNonBlocking(fd_);
+		zcutils_soc_set_socket_non_blocking(fd_);
 
 	sockaddr_un
 		server_address
@@ -634,7 +634,7 @@ bool
 Connection::isConnected()
 {
 	if (fd_ > 0)
-		return Network::isConnected(this->fd_);
+		return zcutils_soc_isconnected(this->fd_);
 	else
 		return false;
 }
@@ -664,9 +664,9 @@ Connection::doAccept(int listener_fd)
 	if (peer_address.sin_family == AF_INET ||
 	    peer_address.sin_family == AF_INET6 ||
 	    peer_address.sin_family == AF_UNIX) {
-		Network::setTcpNoDelayOption(new_fd);
-		Network::setSoKeepAliveOption(new_fd);
-		Network::setSoLingerOption(new_fd, true);
+		zcutils_soc_set_tcpnodelayoption(new_fd);
+		zcutils_soc_set_sokeepaliveoption(new_fd);
+		zcutils_soc_set_solingeroption(new_fd, true);
 		return new_fd;
 	}
 	else {
@@ -680,7 +680,7 @@ Connection::doAccept(int listener_fd)
 bool
 Connection::listen(const std::string & address_str_, int port_)
 {
-	this->address = Network::getAddress(address_str_, port_).release();
+	this->address = zcutils_net_get_address(address_str_, port_).release();
 	if (this->address != nullptr) {
 		fd_ = listen(*this->address);
 		return true;
@@ -705,10 +705,10 @@ Connection::listen(const addrinfo & address_)
 			continue;
 		}
 
-		Network::setSoLingerOption(listen_fd);
-		Network::setSoReuseAddrOption(listen_fd);
-		Network::setTcpDeferAcceptOption(listen_fd);
-		Network::setTcpReusePortOption(listen_fd);
+		zcutils_soc_set_solingeroption(listen_fd);
+		zcutils_soc_set_soreuseaddroption(listen_fd);
+		zcutils_soc_set_tcpdeferacceptoption(listen_fd);
+		zcutils_soc_set_tcpreuseportoption(listen_fd);
 
 		if (::
 		    bind(listen_fd, rp->ai_addr,

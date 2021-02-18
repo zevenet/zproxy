@@ -22,7 +22,6 @@
 #include "http_stream.h"
 #include "../service/service.h"
 #include "../util/common.h"
-#include "../util/network.h"
 
 HttpStream::HttpStream()
 :	client_connection(), backend_connection(),

@@ -20,7 +20,7 @@
  */
 #include "pound_client.h"
 #include "../service/backend.h"
-#include "../util/network.h"
+#include "../../zcutils/zcu_network.h"
 #include "../../zcutils/zcutils.h"
 bool
 PoundClient::trySetTargetId(int &target_id, char *possible_value)
@@ -143,7 +143,7 @@ PoundClient::executeCommand()
 							      size() - pos));
 			this->address = this->address.substr(0, pos);
 			client.address =
-				Network::getAddress(this->address,
+				zcutils_net_get_address(this->address,
 						    port).release();
 			IO::IO_OP res_connect =
 				client.doConnect(*client.address, 0, false);

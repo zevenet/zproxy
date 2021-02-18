@@ -5,7 +5,6 @@
 #include <modsecurity/transaction.h>
 #include "../config/config.h"
 #include "../http/http_stream.h"
-#include "../util/network.h"
 
 using
 	modsecurity::ModSecurity;

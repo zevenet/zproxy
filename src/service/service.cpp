@@ -21,8 +21,8 @@
 
 #include "service.h"
 #include <numeric>
-#include "../util/network.h"
 #include "../../zcutils/zcutils.h"
+#include "../../zcutils/zcu_network.h"
 
 Backend *
 Service::getBackend(Connection & source, HttpRequest & request)
@@ -71,7 +71,7 @@ Service::setBackendHostInfo(Backend * backend)
 	if (backend == nullptr)
 		return false;
 	::freeaddrinfo(backend->address_info);
-	auto address = Network::getAddress(backend->address, backend->port);
+	auto address = zcutils_net_get_address(backend->address, backend->port);
 	if (address == nullptr) {
 		// maybe the backend still not available, we set it as down;
 		backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
@@ -81,7 +81,7 @@ Service::setBackendHostInfo(Backend * backend)
 		return false;
 	}
 	backend->address_info = address.release();
-	//  if (Network::getHost(backend->address.data(), backend->address_info, PF_UNSPEC, backend->port)) {
+	//  if (zcutils_net_get_address(backend->address.data(), backend->address_info, PF_UNSPEC, backend->port)) {
 	//    // maybe the backend still not available, we set it as down;
 	//    backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
 	//    zcutils_log_print(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),

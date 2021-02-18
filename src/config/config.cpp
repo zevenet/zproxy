@@ -32,10 +32,10 @@
 #include <syslog.h>
 #undef NULL
 #undef SYSLOG_NAMES
-#include "../util/network.h"
 #include "config.h"
 #include "regex_manager.h"
 #include "../../zcutils/zcutils.h"
+#include "../../zcutils/zcu_network.h"
 
 #ifdef WAF_ENABLED
 #include <modsecurity/rules.h>
@@ -456,8 +456,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 				addr
 			{
 			};
-			if (Network::
-			    getHost(lin + matches[1].rm_so, &addr, PF_UNSPEC))
+			if (zcutils_net_get_host(lin + matches[1].rm_so, &addr, PF_UNSPEC))
 				conf_err("Unknown Listener address");
 			if (addr.ai_family != AF_INET
 			    && addr.ai_family != AF_INET6)
@@ -872,8 +871,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 				addr
 			{
 			};
-			if (Network::
-			    getHost(lin + matches[1].rm_so, &addr, PF_UNSPEC))
+			if (zcutils_net_get_host(lin + matches[1].rm_so, &addr, PF_UNSPEC))
 				conf_err("Unknown Listener address");
 			if (addr.ai_family != AF_INET
 			    && addr.ai_family != AF_INET6)
@@ -2160,8 +2158,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 		if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 
-			if (Network::
-			    getHost(lin + matches[1].rm_so, &addr,
+			if (zcutils_net_get_host(lin + matches[1].rm_so, &addr,
 				    PF_UNSPEC)) {
 				/* if we can't resolve it, maybe this is a UNIX domain socket */
 				if (std::
@@ -2240,8 +2237,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 			if (is_emergency)
 				conf_err("HAportAddr is not supported for Emergency back-ends");
 			lin[matches[1].rm_eo] = '\0';
-			if (Network::
-			    getHost(lin + matches[1].rm_so, &ha_addr,
+			if (zcutils_net_get_host(lin + matches[1].rm_so, &ha_addr,
 				    PF_UNSPEC)) {
 				/* if we can't resolve it assume this is a UNIX domain socket */
 				if ((strlen(lin + matches[1].rm_so) + 1) >

@@ -21,7 +21,7 @@
 
 #include "http_manager.h"
 #include "../config/regex_manager.h"
-#include "../util/network.h"
+#include "../../zcutils/zcu_network.h"
 #include "../../zcutils/zcutils.h"
 
 //#define PRINT_DEBUG_CHUNKED 1
@@ -836,7 +836,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					}
 					auto
 						in_addr =
-						Network::getAddress(host,
+						zcutils_net_get_address(host,
 								    port);
 					if (in_addr == nullptr) {
 						zcutils_log_print(LOG_NOTICE,
@@ -845,11 +845,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					}
 					/*rewrite location if it points to the backend or the listener
 					 * address*/
-					if (Network::
-					    equalSockAddr(in_addr.get(),
+					if (zcutils_net_equal_sockaddr(in_addr.get(),
 							  backend_addr)
-					    || (Network::
-						equalSockAddr(in_addr.get(),
+					    || (zcutils_net_equal_sockaddr(in_addr.get(),
 							      stream.
 							      service_manager->
 							      listener_config_->
@@ -1075,8 +1073,7 @@ http_manager::replyError(http::Code code, const std::string & code_string,
 	char caddr[200];
 
 	if (UNLIKELY
-	    (Network::
-	     getPeerAddress(target.getFileDescriptor(), caddr,
+	    (zcutils_soc_get_peer_address(target.getFileDescriptor(), caddr,
 			    200) == nullptr)) {
 		zcutils_log_print(LOG_DEBUG, "Error getting peer address");
 	}

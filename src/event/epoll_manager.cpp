@@ -20,7 +20,7 @@
  */
 
 #include "epoll_manager.h"
-#include "../util/network.h"
+#include "../../zcutils/zcu_network.h"
 #include "../../zcutils/zcutils.h"
 #include <climits>
 
@@ -189,7 +189,7 @@ namespace events
 				  "%s():%d: adding listener fd: %d",
 				  __FUNCTION__, __LINE__, listener_fd);
 		accept_fd_set.emplace_back(listener_fd);
-		Network::setSocketNonBlocking(listener_fd);
+		zcutils_soc_set_socket_non_blocking(listener_fd);
 		return addFd(listener_fd, EVENT_TYPE::ACCEPT,
 			     EVENT_GROUP::ACCEPTOR);
 	}
