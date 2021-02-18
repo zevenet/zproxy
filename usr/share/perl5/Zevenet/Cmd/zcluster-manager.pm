@@ -791,6 +791,7 @@ sub setNodeStatusMaster
 	for my $if_ref ( @configured_interfaces )
 	{
 		next unless $if_ref->{ type } eq 'virtual';
+		next unless $if_ref->{ status } eq 'up';
 		&broadcastInterfaceDiscovery( $if_ref );
 	}
 
