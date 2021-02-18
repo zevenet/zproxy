@@ -70,77 +70,54 @@ using namespace ssl;
  * backend section of the configuration file.
  */
 class Backend:public CtlObserver <
-	ctl::CtlTask,
-	std::string >,
-	public
-	BackendInfo
+	ctl::CtlTask, std::string >, public BackendInfo
 {
   /** Backend status using the Backend::BACKEND_STATUS enum. */
-	std::atomic <
-		BACKEND_STATUS >
-		status;
+	std::atomic < BACKEND_STATUS > status;
       public:
 	Backend();
-	~
-	Backend();
+	~Backend();
   /** Backend type using the Backend::BACKEND_TYPE enum. */
-	BACKEND_TYPE
-		backend_type;
+	BACKEND_TYPE backend_type;
   /** BackendConfig parameters from the backend section. */
-	std::shared_ptr <
-		BackendConfig >
-		backend_config;
+	std::shared_ptr < BackendConfig > backend_config;
   /** Backend Address as a addrinfo type. */
-	addrinfo *
-		address_info
+	addrinfo *address_info
 	{
 	nullptr};
   /** Backend id. */
-	int
-		backend_id;
+	int backend_id;
   /** Backend name. */
-	std::string
-		name;
+	std::string name;
   /** Backend weight, used for the balancing algorithms. */
-	int
-		weight;
+	int weight;
   /** Backend priority, used for the balancing algorithms. */
-	int
-		priority
+	int priority
 	{
 	0};
   /** Backend Address as a std::string type. */
-	std::string
-		address;
+	std::string address;
   /** Backend port. */
-	int
-		port;
+	int port;
   /** Backend key if set in the configuration. */
-	std::string
-		bekey;
+	std::string bekey;
   /** Connection timeout time parameter. */
-	int
-		conn_timeout
+	int conn_timeout
 	{
 	};
   /** Response timeout time parameter. */
-	int
-		response_timeout
+	int response_timeout
 	{
 	};
   /** SSL_CTX if the Backend is HTTPS. */
-	std::shared_ptr <
-		SSL_CTX >
-		ctx
+	std::shared_ptr < SSL_CTX > ctx
 	{
 	nullptr};
-	bool
-		cut;
+	bool cut;
   /**
    * @brief Checks if the Backend still alive.
    */
-	void
-	doMaintenance();
+	void doMaintenance();
 
   /**
    * @brief This function handles the @p tasks received with the API format.
@@ -159,9 +136,8 @@ class Backend:public CtlObserver <
    * @param task to check.
    * @return true if should handle the task, false if not.
    */
-	bool
-	isHandler(ctl::CtlTask & task)
-		override;
+	bool isHandler(ctl::CtlTask & task)
+	override;
 
   /**
    * @brief Generates a JsonObject with all the Backend information.
@@ -169,12 +145,8 @@ class Backend:public CtlObserver <
    */
 	std::unique_ptr < JsonObject > getBackendJson();
 
-	void
-	setStatus(BACKEND_STATUS new_status);
-	BACKEND_STATUS
-	getStatus();
-	int
-		nf_mark;
-	bool
-	isHttps();
+	void setStatus(BACKEND_STATUS new_status);
+	BACKEND_STATUS getStatus();
+	int nf_mark;
+	bool isHttps();
 };

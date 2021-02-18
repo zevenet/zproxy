@@ -94,8 +94,8 @@ class SystemInfo
 	{
 		page_size =::sysconf(_SC_PAGESIZE);
 		l1_data_cache_size =::sysconf(_SC_LEVEL1_DCACHE_SIZE);
-		l1_data_cache_line_size =::
-			sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+		l1_data_cache_line_size
+			=::sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
 		l2_cache_size =::sysconf(_SC_LEVEL2_CACHE_SIZE);
 		l2_cache_line_size =::sysconf(_SC_LEVEL2_CACHE_LINESIZE);
 	}

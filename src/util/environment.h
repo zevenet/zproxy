@@ -213,16 +213,16 @@ class Environment
 		zcutils_log_print(LOG_DEBUG,
 				  "%s():%d: \t\tCache line size: %lu",
 				  __FUNCTION__, __LINE__,
-				  SystemInfo::data()->
-				  getL1DataCacheLineSize());
+				  SystemInfo::
+				  data()->getL1DataCacheLineSize());
 		zcutils_log_print(LOG_DEBUG, "%s():%d: \tL2 Cache size: %lu",
 				  __FUNCTION__, __LINE__,
 				  SystemInfo::data()->getL2DataCacheSize());
 		zcutils_log_print(LOG_DEBUG,
 				  "%s():%d: \t\tCache line size: %lu",
 				  __FUNCTION__, __LINE__,
-				  SystemInfo::data()->
-				  getL2DataCacheLineSize());
+				  SystemInfo::
+				  data()->getL2DataCacheLineSize());
 		rlimit r
 		{
 		};

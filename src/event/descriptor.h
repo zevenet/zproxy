@@ -106,30 +106,23 @@ namespace events
 			    && fd_ > 0) {
 				auto res =
 					current_event ==
-					events::EVENT_TYPE::
-					NONE ? event_manager_->addFd(fd_,
-								     !one_shot
-								     ?
-								     events::
-								     EVENT_TYPE::
-								     READ :
-								     events::
-								     EVENT_TYPE::
-								     READ_ONESHOT,
-								     event_group_)
+					events::
+					EVENT_TYPE::NONE ? event_manager_->
+					addFd(fd_,
+					      !one_shot ?
+					      events::EVENT_TYPE::READ :
+					      events::EVENT_TYPE::READ_ONESHOT,
+					      event_group_)
 					: event_manager_->updateFd(fd_,
 								   !one_shot ?
-								   events::
-								   EVENT_TYPE::
-								   READ :
-								   events::
-								   EVENT_TYPE::
-								   READ_ONESHOT,
+								   events::EVENT_TYPE::READ
+								   :
+								   events::EVENT_TYPE::READ_ONESHOT,
 								   event_group_);
 				current_event =
-					!one_shot ? events::EVENT_TYPE::
-					READ : events::EVENT_TYPE::
-					READ_ONESHOT;
+					!one_shot ? events::
+					EVENT_TYPE::READ : events::
+					EVENT_TYPE::READ_ONESHOT;
 				return res;
 			}
 			zcutils_log_print(LOG_DEBUG,
@@ -141,12 +134,9 @@ namespace events
 		inline bool enableWriteEvent()
 		{
 			if (event_manager_ != nullptr && fd_ > 0) {
-				auto res =
-					event_manager_->updateFd(fd_,
-								 events::
-								 EVENT_TYPE::
-								 WRITE,
-								 event_group_);
+				auto res = event_manager_->updateFd(fd_,
+								    events::EVENT_TYPE::WRITE,
+								    event_group_);
 				current_event = events::EVENT_TYPE::WRITE;
 				return res;
 			}

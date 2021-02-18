@@ -25,8 +25,7 @@
 #define GET_SECONDS(ms) ms / 1000
 #define GET_NSECONDS(ms) (ms % 1000) * 1000000
 
-TimerFd::TimerFd(int timeout_ms, bool one_shot):
-timeout_ms_(timeout_ms),
+TimerFd::TimerFd(int timeout_ms, bool one_shot):timeout_ms_(timeout_ms),
 one_shot_(one_shot)
 {
 	fd_ =::timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
@@ -41,8 +40,7 @@ one_shot_(one_shot)
 		set();
 }
 
-bool
-TimerFd::unset()
+bool TimerFd::unset()
 {
 	if (fd_ <= 0) {
 		return false;
@@ -51,7 +49,7 @@ TimerFd::unset()
 	{
 		{
 		0, 0}
-		 ,
+		,
 		{
 		0, 0}
 	};
@@ -60,8 +58,7 @@ TimerFd::unset()
 	return true;
 }
 
-bool
-TimerFd::set(int timeout_ms, bool one_shot)
+bool TimerFd::set(int timeout_ms, bool one_shot)
 {
 	if (fd_ <= 0)
 		return false;
@@ -90,8 +87,7 @@ TimerFd::set(int timeout_ms, bool one_shot)
 	return true;
 }
 
-bool
-TimerFd::isOneShot() const
+bool TimerFd::isOneShot() const
 {
 	return one_shot_;
 }
@@ -102,15 +98,13 @@ TimerFd::~TimerFd()
 		::close(fd_);
 }
 
-bool
-TimerFd::isTriggered()
+bool TimerFd::isTriggered()
 {
 	size_t s = 0;
 	return read(fd_, &s, sizeof(s)) != -1;
 }
 
-void
-TimerFd::close()
+void TimerFd::close()
 {
 	if (fd_ > 0) {
 		::close(fd_);

@@ -45,14 +45,14 @@ namespace ssl
 			return "NONE";
 			case SSL_STATUS::WANT_READ:return "WANT_READ";
 			case SSL_STATUS::WANT_WRITE:return "WANT_WRITE";
-			case SSL_STATUS::
-				NEED_HANDSHAKE:return "NEED_HANDSHAKE";
-			case SSL_STATUS::
-				HANDSHAKE_START:return "HANDSHAKE_START";
-			case SSL_STATUS::
-				HANDSHAKE_DONE:return "HANDSHAKE_DONE";
-			case SSL_STATUS::
-				HANDSHAKE_ERROR:return "HANDSHAKE_ERROR";
+			case SSL_STATUS::NEED_HANDSHAKE:return
+				"NEED_HANDSHAKE";
+			case SSL_STATUS::HANDSHAKE_START:return
+				"HANDSHAKE_START";
+			case SSL_STATUS::HANDSHAKE_DONE:return
+				"HANDSHAKE_DONE";
+			case SSL_STATUS::HANDSHAKE_ERROR:return
+				"HANDSHAKE_ERROR";
 			case SSL_STATUS::SSL_ERROR:return "SSL_ERROR";
 		}
 	}

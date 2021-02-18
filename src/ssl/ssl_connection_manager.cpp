@@ -26,10 +26,9 @@
 
 using namespace ssl;
 
-bool
-SSLConnectionManager::initSslConnection(SSL_CTX * ssl_ctx,
-					Connection & ssl_connection,
-					bool client_mode)
+bool SSLConnectionManager::initSslConnection(SSL_CTX * ssl_ctx,
+					     Connection & ssl_connection,
+					     bool client_mode)
 {
 	if (ssl_connection.ssl != nullptr) {
 		SSL_shutdown(ssl_connection.ssl);
@@ -83,15 +82,14 @@ SSLConnectionManager::initSslConnection(SSL_CTX * ssl_ctx,
 	//  SSL_set_options(ssl_connection.ssl, SSL_OP_NO_COMPRESSION);
 	SSL_set_mode(ssl_connection.ssl, SSL_MODE_RELEASE_BUFFERS);
 	SSL_set_mode(ssl_connection.ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-	!client_mode ? SSL_set_accept_state(ssl_connection.
-					    ssl) :
+	!client_mode ? SSL_set_accept_state(ssl_connection.ssl) :
 		SSL_set_connect_state(ssl_connection.ssl);
 	ssl_connection.ssl_conn_status = SSL_STATUS::NEED_HANDSHAKE;
 	return true;
 }
 
-IO::IO_RESULT SSLConnectionManager::
-handleDataRead(Connection & ssl_connection)
+IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &
+						   ssl_connection)
 {
 #if USE_SSL_BIO_BUFFER==0
 	return sslRead(ssl_connection);
@@ -102,15 +100,12 @@ handleDataRead(Connection & ssl_connection)
 	if (MAX_DATA_SIZE == ssl_connection.buffer_size)
 		return IO::IO_RESULT::FULL_BUFFER;
 	//  zcutils_log_print(LOG_DEBUG, "> handleRead");
-	int
-		rc = -1;
-	size_t
-		total_bytes_read = 0;
+	int rc = -1;
+	size_t total_bytes_read = 0;
 	for (;;) {
 		BIO_clear_retry_flags(ssl_connection.io);
 		ERR_clear_error();
-		size_t
-			bytes_read = 0;
+		size_t bytes_read = 0;
 		rc = BIO_read_ex(ssl_connection.io,
 				 ssl_connection.buffer +
 				 ssl_connection.buffer_offset +
@@ -164,15 +159,13 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection & ssl_connection,
 	if (data_size == 0)
 		return IO::IO_RESULT::SUCCESS;
 	IO::IO_RESULT result;
-	int
-		rc = -1;
+	int rc = -1;
 	//  // FIXME: Buggy, used just for test
 	//  zcutils_log_print(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
 	total_written = 0;
 	ERR_clear_error();
 	for (;;) {
-		size_t
-			written = 0;
+		size_t written = 0;
 		BIO_clear_retry_flags(ssl_connection.io);
 		rc = BIO_write_ex(ssl_connection.io, data + total_written,
 				  static_cast <
@@ -186,8 +179,8 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection & ssl_connection,
 				if ((data_size - total_written) == 0)
 					result = IO::IO_RESULT::SUCCESS;
 				else
-					result = IO::IO_RESULT::
-						DONE_TRY_AGAIN;
+					result = IO::
+						IO_RESULT::DONE_TRY_AGAIN;
 			}
 			else
 				result = IO::IO_RESULT::ZERO_DATA;
@@ -197,11 +190,11 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection & ssl_connection,
 			if (BIO_should_retry(ssl_connection.io)) {
 				{
 					if ((data_size - total_written) == 0)
-						result = IO::IO_RESULT::
-							SUCCESS;
+						result = IO::
+							IO_RESULT::SUCCESS;
 					else
-						result = IO::IO_RESULT::
-							DONE_TRY_AGAIN;
+						result = IO::
+							IO_RESULT::DONE_TRY_AGAIN;
 					break;
 				}
 			}
@@ -228,18 +221,17 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection & ssl_connection,
 	return result;
 }
 
-bool
-SSLConnectionManager::handleHandshake(const SSLContext & ssl_context,
-				      Connection & ssl_connection,
-				      bool client_mode)
+bool SSLConnectionManager::handleHandshake(const SSLContext & ssl_context,
+					   Connection & ssl_connection,
+					   bool client_mode)
 {
 	auto result =
 		handleHandshake(ssl_context.ssl_ctx.get(), ssl_connection,
 				client_mode);
 	if (result && ssl_connection.ssl_connected) {
 		if (!client_mode &&
-		    ssl_context.listener_config->
-		    ssl_forward_sni_server_name) {
+		    ssl_context.
+		    listener_config->ssl_forward_sni_server_name) {
 			if ((ssl_connection.server_name =
 			     SSL_get_servername(ssl_connection.ssl,
 						TLSEXT_NAMETYPE_host_name)) ==
@@ -264,10 +256,9 @@ SSLConnectionManager::handleHandshake(const SSLContext & ssl_context,
 	return result;
 }
 
-bool
-SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
-				      Connection & ssl_connection,
-				      bool client_mode)
+bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
+					   Connection & ssl_connection,
+					   bool client_mode)
 {
 	//    zcutils_log_print(LOG_DEBUG, "SSL_HANDSHAKE: %d", ssl_connection.getFileDescriptor());
 	if (ssl_connection.ssl == nullptr) {
@@ -314,8 +305,8 @@ SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 					  "Ossl errors: %s",
 					  ssl_connection.getFileDescriptor(),
 					  i,
-					  ssl_connection.getPeerAddress().
-					  data(), errno__,
+					  ssl_connection.
+					  getPeerAddress().data(), errno__,
 					  std::strerror(errno__),
 					  ossGetErrorStackString().get());
 			ssl_connection.ssl_conn_status =
@@ -370,9 +361,9 @@ SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 			zcutils_log_print(LOG_DEBUG,
 					  "SSL: %s, %s REUSED, Ciphers: %s\n",
 					  SSL_get_version(ssl_connection.ssl),
-					  SSL_session_reused(ssl_connection.
-							     ssl) ? "" :
-					  "Not ", &buf[0]);
+					  SSL_session_reused
+					  (ssl_connection.ssl) ? "" : "Not ",
+					  &buf[0]);
 		}
 #ifdef DEBUG_PRINT_SSL_SESSION_INFO
 		SSL_SESSION *session = SSL_get_session(ssl_connection.ssl);
@@ -407,14 +398,13 @@ SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 				}
 				zcutils_log_print(LOG_DEBUG,
 						  "fd:%d SSL_do_handshake error: %s with <<%s>> \n Ossl errors:%s ",
-						  ssl_connection.
-						  getFileDescriptor(),
-						  getErrorString(err),
-						  ssl_connection.
-						  getPeerAddress()
+						  ssl_connection.getFileDescriptor
+						  (), getErrorString(err),
+						  ssl_connection.getPeerAddress
+						  ()
 						  .data(),
-						  ossGetErrorStackString().
-						  get());
+						  ossGetErrorStackString().get
+						  ());
 				ssl_connection.ssl_conn_status =
 					SSL_STATUS::HANDSHAKE_ERROR;
 				SSL_clear(ssl_connection.ssl);
@@ -423,14 +413,13 @@ SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 		case SSL_ERROR_SSL:{
 				zcutils_log_print(LOG_DEBUG,
 						  "fd:%d SSL_do_handshake error: %s with <<%s>> \n Ossl errors:%s",
-						  ssl_connection.
-						  getFileDescriptor(),
-						  getErrorString(err),
-						  ssl_connection.
-						  getPeerAddress()
+						  ssl_connection.getFileDescriptor
+						  (), getErrorString(err),
+						  ssl_connection.getPeerAddress
+						  ()
 						  .data(),
-						  ossGetErrorStackString().
-						  get());
+						  ossGetErrorStackString().get
+						  ());
 				ssl_connection.ssl_conn_status =
 					SSL_STATUS::HANDSHAKE_ERROR;
 				SSL_clear(ssl_connection.ssl);
@@ -441,18 +430,16 @@ SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 				zcutils_log_print(LOG_DEBUG,
 						  "fd:%d SSL_do_handshake return: %d error: %s  errno = %s with %s "
 						  "Handshake status: %s Ossl errors: %s ",
-						  ssl_connection.
-						  getFileDescriptor(), r,
-						  getErrorString(err),
+						  ssl_connection.getFileDescriptor
+						  (), r, getErrorString(err),
 						  std::strerror(errno__),
-						  ssl_connection.
-						  getPeerAddress().data(),
-						  ssl::
-						  getSslStatusString
-						  (ssl_connection.
-						   ssl_conn_status).data(),
-						  ossGetErrorStackString().
-						  get());
+						  ssl_connection.getPeerAddress
+						  ().data(),
+						  ssl::getSslStatusString
+						  (ssl_connection.ssl_conn_status).
+						  data(),
+						  ossGetErrorStackString().get
+						  ());
 				ssl_connection.ssl_conn_status =
 					SSL_STATUS::HANDSHAKE_ERROR;
 				return false;
@@ -509,8 +496,7 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection & ssl_connection)
 		return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
 	}
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-	int
-		rc = -1;
+	int rc = -1;
 	do {
 		ERR_clear_error();
 		rc = SSL_read(ssl_connection.ssl,
@@ -521,8 +507,7 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection & ssl_connection)
 			      int >(MAX_DATA_SIZE -
 				    ssl_connection.buffer_size -
 				    ssl_connection.buffer_offset));
-		auto
-			ssle = SSL_get_error(ssl_connection.ssl, rc);
+		auto ssle = SSL_get_error(ssl_connection.ssl, rc);
 		switch (ssle) {
 		case SSL_ERROR_NONE:
 			ssl_connection.buffer_size +=
@@ -562,10 +547,8 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection & ssl_connection,
 	}
 	if (data_size == 0)
 		return IO::IO_RESULT::ZERO_DATA;
-	size_t
-		sent = 0;
-	ssize_t
-		rc = -1;
+	size_t sent = 0;
+	ssize_t rc = -1;
 	//  // FIXME: Buggy, used just for test
 	// zcutils_log_print(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
 	ERR_clear_error();
@@ -581,9 +564,7 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection & ssl_connection,
 		written = static_cast < size_t >(sent);
 		return IO::IO_RESULT::SUCCESS;
 	}
-	int
-		ssle =
-		SSL_get_error(ssl_connection.ssl, static_cast < int >(rc));
+	int ssle = SSL_get_error(ssl_connection.ssl, static_cast < int >(rc));
 	if (rc < 0 && ssle != SSL_ERROR_WANT_WRITE) {
 		// Renegotiation is not possible in a TLSv1.3 connection
 		zcutils_log_print(LOG_DEBUG,
@@ -603,12 +584,12 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection & ssl_connection,
 	return IO::IO_RESULT::ERROR;
 }
 
-IO::IO_RESULT SSLConnectionManager::
-sslWriteIOvec(Connection & target_ssl_connection, const iovec * __iovec,
-	      int count, size_t &nwritten)
+IO::IO_RESULT SSLConnectionManager::sslWriteIOvec(Connection &
+						  target_ssl_connection,
+						  const iovec * __iovec,
+						  int count, size_t &nwritten)
 {
-	size_t
-		written = 0;
+	size_t written = 0;
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	zcutils_log_print(LOG_DEBUG,
 			  "%s():%d: count: %d written: %d totol_written: %d",
@@ -646,15 +627,16 @@ sslWriteIOvec(Connection & target_ssl_connection, const iovec * __iovec,
 	return result;
 }
 
-IO::IO_RESULT SSLConnectionManager::
-handleWriteIOvec(Connection & target_ssl_connection, iovec * iov,
-		 size_t &iovec_size, size_t &iovec_written, size_t &nwritten)
+IO::IO_RESULT SSLConnectionManager::handleWriteIOvec(Connection &
+						     target_ssl_connection,
+						     iovec * iov,
+						     size_t &iovec_size,
+						     size_t &iovec_written,
+						     size_t &nwritten)
 {
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-	size_t
-		count = 0;
-	auto
-		nvec = iovec_size;
+	size_t count = 0;
+	auto nvec = iovec_size;
 	nwritten = 0;
 	iovec_written = 0;
 	do {
@@ -668,8 +650,7 @@ handleWriteIOvec(Connection & target_ssl_connection, iovec * iov,
 				  IO::getResultString(result).data(), count,
 				  iovec_written);
 		if (count > 0) {
-			size_t
-				remaining = static_cast < size_t >(count);
+			size_t remaining = static_cast < size_t >(count);
 			for (auto it = iovec_written; it != iovec_size; it++) {
 				if (remaining >= iov[it].iov_len) {
 					remaining -= iov[it].iov_len;
@@ -680,8 +661,7 @@ handleWriteIOvec(Connection & target_ssl_connection, iovec * iov,
 					iov[it].iov_base =
 						static_cast <
 						char *>(iov[iovec_written].
-							iov_base) +
-						remaining;
+							iov_base) + remaining;
 					zcutils_log_print(LOG_DEBUG,
 							  "%s():%d: recalculating data ... remaining %d niovec_written: %d iov size %d",
 							  __FUNCTION__,
@@ -713,10 +693,12 @@ handleWriteIOvec(Connection & target_ssl_connection, iovec * iov,
 	return result;
 }
 
-IO::IO_RESULT SSLConnectionManager::
-handleDataWrite(Connection & target_ssl_connection,
-		Connection & ssl_connection,
-		http_parser::HttpData & http_data)
+IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &
+						    target_ssl_connection,
+						    Connection &
+						    ssl_connection,
+						    http_parser::
+						    HttpData & http_data)
 {
 	if (!target_ssl_connection.ssl_connected) {
 		return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
@@ -726,13 +708,10 @@ handleDataWrite(Connection & target_ssl_connection,
 		http_data.prepareToSend();
 	}
 
-	size_t
-		nwritten = 0;
-	size_t
-		iovec_written = 0;
+	size_t nwritten = 0;
+	size_t iovec_written = 0;
 
-	auto
-		result =
+	auto result =
 		handleWriteIOvec(target_ssl_connection, &http_data.iov[0],
 				 http_data.iov_size, iovec_written, nwritten);
 
@@ -774,11 +753,9 @@ handleDataWrite(Connection & target_ssl_connection,
 
 IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection & ssl_connection)
 {
-	int
-		retries = 0;
+	int retries = 0;
 	ERR_clear_error();
-	int
-		ret = SSL_shutdown(ssl_connection.ssl);
+	int ret = SSL_shutdown(ssl_connection.ssl);
 	do {
 		retries++;
 		ERR_clear_error();
@@ -809,26 +786,27 @@ IO::IO_RESULT SSLConnectionManager::sslShutdown(Connection & ssl_connection)
 	return IO::IO_RESULT::SUCCESS;
 }
 
-IO::IO_RESULT SSLConnectionManager::
-handleWrite(Connection & target_ssl_connection,
-	    Connection & source_ssl_connection, size_t &written,
-	    bool flush_data)
+IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &
+						target_ssl_connection,
+						Connection &
+						source_ssl_connection,
+						size_t &written,
+						bool flush_data)
 {
 #if USE_SSL_BIO_BUFFER
-	auto
-		result = handleWrite(target_ssl_connection,
-				     source_ssl_connection.buffer +
-				     source_ssl_connection.buffer_offset,
-				     source_ssl_connection.buffer_size,
-				     written, flush_data);
+	auto result = handleWrite(target_ssl_connection,
+				  source_ssl_connection.buffer +
+				  source_ssl_connection.buffer_offset,
+				  source_ssl_connection.buffer_size,
+				  written, flush_data);
 #else
-	auto
-		result =
-		stream->backend_connection.getBackend()->ssl_manager.
-		sslWrite(stream->backend_connection,
-			 stream->client_connection.buffer +
-			 source_ssl_connection.buffer_offset,
-			 stream->client_connection.buffer_size, written);
+	auto result =
+		stream->backend_connection.getBackend()->
+		ssl_manager.sslWrite(stream->backend_connection,
+				     stream->client_connection.buffer +
+				     source_ssl_connection.buffer_offset,
+				     stream->client_connection.buffer_size,
+				     written);
 #endif
 	if (written > 0)
 		source_ssl_connection.buffer_size -= written;

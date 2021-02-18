@@ -54,13 +54,13 @@ class RamfsCacheStorage:public RamICacheStorage
 	st::STORAGE_STATUS initCacheStorage(const size_t max_size,
 					    double st_threshold,
 					    const std::string & svc,
-					    const std::
-					    string & m_point) override;
-	  st::STORAGE_STATUS initServiceStorage(const std::
-						string & svc) override;
+					    const std::string & m_point)
+	  override;
+	  st::STORAGE_STATUS initServiceStorage(const std::string & svc)
+	  override;
 	  st::STORAGE_STATUS getFromStorage(const std::string & rel_path,
-					    std::
-					    string & out_buffer) override;
+					    std::string & out_buffer)
+	  override;
 	  st::STORAGE_STATUS putInStorage(const std::string & rel_path,
 					  std::string_view buffer,
 					  size_t response_size) override;
@@ -69,8 +69,8 @@ class RamfsCacheStorage:public RamICacheStorage
 					std::string_view buffer) override;
 	bool isInStorage(const std::string & svc,
 			 const std::string & url) override;
-	  st::STORAGE_STATUS deleteInStorage(const std::
-					     string & path) override;
+	  st::STORAGE_STATUS deleteInStorage(const std::string & path)
+	  override;
 	bool isInStorage(const std::string & path);
 };
 /**
@@ -91,10 +91,10 @@ class StdmapCacheStorage:public RamICacheStorage
 	st::STORAGE_STATUS initCacheStorage(const size_t max_size,
 					    double st_threshold,
 					    const std::string & svc,
-					    const std::
-					    string & m_point) override;
-	st::STORAGE_STATUS initServiceStorage(const std::
-					      string & _svc) override;
+					    const std::string & m_point)
+	  override;
+	st::STORAGE_STATUS initServiceStorage(const std::string & _svc)
+	  override;
 	st::STORAGE_STATUS getFromStorage(const std::string & rel_path,
 					  std::string & out_buffer) override;
 	st::STORAGE_STATUS putInStorage(const std::string & rel_path,
@@ -131,10 +131,10 @@ class MemcachedStorage:public RamICacheStorage
 	st::STORAGE_STATUS initCacheStorage(const size_t max_size,
 					    double st_threshold,
 					    const std::string & svc,
-					    const std::
-					    string & m_point) override;
-	st::STORAGE_STATUS initServiceStorage(const std::
-					      string & svc) override;
+					    const std::string & m_point)
+	  override;
+	st::STORAGE_STATUS initServiceStorage(const std::string & svc)
+	  override;
 	st::STORAGE_STATUS getFromStorage(const std::string & rel_path,
 					  std::string & out_buffer) override;
 	st::STORAGE_STATUS putInStorage(const std::string & rel_path,

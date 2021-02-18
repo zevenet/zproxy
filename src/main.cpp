@@ -32,14 +32,12 @@ static jmp_buf jmpbuf;
 
 std::shared_ptr < SystemInfo > SystemInfo::instance = nullptr;
 std::once_flag terminate_flag;
-void
-cleanExit()
+void cleanExit()
 {
 	closelog();
 }
 
-void
-handleInterrupt(int sig)
+void handleInterrupt(int sig)
 {
 	zcutils_log_print(LOG_DEBUG, "[%s] received",::strsignal(sig));
 	switch (sig) {
@@ -49,8 +47,7 @@ handleInterrupt(int sig)
 		return;
 	case SIGINT:
 	case SIGHUP:{
-			auto
-				cm = ctl::ControlManager::getInstance();
+			auto cm = ctl::ControlManager::getInstance();
 			cm->stop();
 			::_exit(EXIT_SUCCESS);
 			break;
@@ -65,11 +62,10 @@ handleInterrupt(int sig)
 		::malloc_trim(0);
 		break;
 	case SIGUSR2:{
-			auto
-				cm = ctl::ControlManager::getInstance();
+			auto cm = ctl::ControlManager::getInstance();
 			cm->sendCtlCommand(ctl::CTL_COMMAND::UPDATE,
-					   ctl::CTL_HANDLER_TYPE::
-					   LISTENER_MANAGER,
+					   ctl::
+					   CTL_HANDLER_TYPE::LISTENER_MANAGER,
 					   ctl::CTL_SUBJECT::CONFIG);
 		}
 	default:{
@@ -78,15 +74,12 @@ handleInterrupt(int sig)
 	}
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	//  debug::EnableBacktraceOnTerminate();
 	Time::updateTime();
-	static ListenerManager
-		listener;
-	auto
-		control_manager = ctl::ControlManager::getInstance();
+	static ListenerManager listener;
+	auto control_manager = ctl::ControlManager::getInstance();
 	if (setjmp(jmpbuf)) {
 		// we are in signal context here
 		control_manager->stop();
@@ -96,15 +89,12 @@ main(int argc, char *argv[])
 
 	zcutils_log_print(LOG_NOTICE, "zproxy starting...");
 
-	Config
-	config(true);
-	auto
-		start_options =
+	Config config(true);
+	auto start_options =
 		global::StartOptions::parsePoundOption(argc, argv, true);
 	if (start_options == nullptr)
 		std::exit(EXIT_FAILURE);
-	auto
-		parse_result = config.init(*start_options);
+	auto parse_result = config.init(*start_options);
 	if (!parse_result) {
 		zcutils_log_print(LOG_ERR,
 				  "error parsing configuration file %s",

@@ -51,8 +51,7 @@ RSA *global::SslHelper::RSA_tmp_callback([[maybe_unused]] SSL * ssl,
 					 [[maybe_unused]]
 					 int is_export, int keylength)
 {
-	RSA *
-		res;
+	RSA *res;
 	std::lock_guard < std::mutex > lock__(RSA_mut);
 	res = (keylength <= 512) ? RSA512_keys[rand() % N_RSA_KEYS]
 		: RSA1024_keys[rand() % N_RSA_KEYS];
@@ -63,8 +62,7 @@ void global::SslHelper::SSLINFO_callback(const SSL * ssl, int where,
 					 [[maybe_unused]]
 					 int rc)
 {
-	RENEG_STATE *
-		reneg_state;
+	RENEG_STATE *reneg_state;
 
 	/* Get our thr_arg where we're tracking this connection info */
 	if ((reneg_state =
@@ -75,8 +73,7 @@ void global::SslHelper::SSLINFO_callback(const SSL * ssl, int where,
 	 * read. */
 	if ((where & SSL_CB_ACCEPT_LOOP) &&
 	    *reneg_state == RENEG_STATE::RENEG_REJECT) {
-		int
-			state;
+		int state;
 
 		state = SSL_get_state(ssl);
 		if (state == SSL3_ST_SR_CLNT_HELLO_A
@@ -95,10 +92,8 @@ void global::SslHelper::SSLINFO_callback(const SSL * ssl, int where,
 
 DH *global::SslHelper::load_dh_params(char *file)
 {
-	DH *
-		dh = nullptr;
-	BIO *
-		bio;
+	DH *dh = nullptr;
+	BIO *bio;
 
 	if ((bio = BIO_new_file(file, "r")) == nullptr) {
 		zcutils_log_print(LOG_WARNING, "unable to open DH file - %s",
@@ -113,15 +108,12 @@ DH *global::SslHelper::load_dh_params(char *file)
 
 int global::SslHelper::generate_key(RSA ** ret_rsa, unsigned long bits)
 {
-	int
-		rc = 0;
-	RSA *
-		rsa;
+	int rc = 0;
+	RSA *rsa;
 
 	rsa = RSA_new();
 	if (rsa) {
-		BIGNUM *
-			bne = BN_new();
+		BIGNUM *bne = BN_new();
 		if (BN_set_word(bne, RSA_F4))
 			rc = RSA_generate_key_ex(rsa, bits, bne, nullptr);
 		BN_free(bne);
@@ -135,12 +127,9 @@ int global::SslHelper::generate_key(RSA ** ret_rsa, unsigned long bits)
 
 void global::SslHelper::doRSAgen()
 {
-	int
-		n;
-	RSA *
-		t_RSA512_keys[N_RSA_KEYS];
-	RSA *
-		t_RSA1024_keys[N_RSA_KEYS];
+	int n;
+	RSA *t_RSA512_keys[N_RSA_KEYS];
+	RSA *t_RSA1024_keys[N_RSA_KEYS];
 
 	for (n = 0; n < N_RSA_KEYS; n++) {
 		/* FIXME: Error handling */
@@ -156,8 +145,7 @@ void global::SslHelper::doRSAgen()
 	}
 }
 
-global::SslHelper::~
-SslHelper()
+global::SslHelper::~ SslHelper()
 {
 	if (DH512_params != nullptr) {
 		DH_free(DH512_params);
@@ -179,8 +167,7 @@ SslHelper()
 
 void global::SslHelper::initDhParams()
 {
-	int
-		n;
+	int n;
 	/*
 	 * Pre-generate ephemeral RSA keys
 	 */

@@ -25,8 +25,7 @@
 
 #define POUND_CTL_MODE 1
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	PoundClient client;
 

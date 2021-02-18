@@ -26,7 +26,8 @@
 #include <sys/un.h>
 
 Connection::Connection()
-:	
+:
+
 buffer_size(0),
 buffer_offset(0),
 address(nullptr),
@@ -43,10 +44,8 @@ Connection::~Connection()
 
 IO::IO_RESULT Connection::read()
 {
-	bool
-		done = false;
-	ssize_t
-		count;
+	bool done = false;
+	ssize_t count;
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0)
 		return IO::IO_RESULT::FULL_BUFFER;
@@ -91,8 +90,7 @@ IO::IO_RESULT Connection::read()
 std::string Connection::getPeerAddress()
 {
 	if (this->fd_ > 0 && address_str.empty()) {
-		char
-			addr[150];
+		char addr[150];
 		zcutils_soc_get_peer_address(this->fd_, addr, 150);
 		address_str = std::string(addr);
 	}
@@ -102,16 +100,14 @@ std::string Connection::getPeerAddress()
 std::string Connection::getLocalAddress()
 {
 	if (this->fd_ > 0 && local_address_str.empty()) {
-		char
-			addr[150];
+		char addr[150];
 		zcutils_soc_get_local_address(this->fd_, addr, 150);
 		local_address_str = std::string(addr);
 	}
 	return local_address_str;
 }
 
-int
-Connection::getPeerPort()
+int Connection::getPeerPort()
 {
 	if (this->fd_ > 0 && port == -1) {
 		port = zcutils_soc_get_peer_port(this->fd_);
@@ -119,8 +115,7 @@ Connection::getPeerPort()
 	return port;
 }
 
-int
-Connection::getLocalPort()
+int Connection::getLocalPort()
 {
 	if (this->fd_ > 0 && local_port == -1) {
 		local_port = zcutils_soc_get_local_port(this->fd_);
@@ -128,8 +123,7 @@ Connection::getLocalPort()
 	return local_port;
 }
 
-void
-Connection::reset()
+void Connection::reset()
 {
 	this->disableEvents();
 	freeSsl();
@@ -154,8 +148,7 @@ Connection::reset()
 	address_str.clear();
 }
 
-void
-Connection::freeSsl()
+void Connection::freeSsl()
 {
 	this->ssl_connected = false;
 	handshake_retries = 0;
@@ -193,11 +186,8 @@ IO::IO_RESULT Connection::zeroRead()
 			result = IO::IO_RESULT::FULL_BUFFER;
 			break;
 		}
-		auto
-			n =
-			splice(fd_, nullptr, splice_pipe.pipe[1], nullptr,
-			       BUFSZ,
-			       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+		auto n = splice(fd_, nullptr, splice_pipe.pipe[1], nullptr,
+				BUFSZ, SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
 		if (n > 0)
 			splice_pipe.bytes += n;
 		if (n == 0)
@@ -225,14 +215,12 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 			  __FUNCTION__, __LINE__, splice_pipe.bytes,
 			  http_data.message_bytes_left, buffer_size);
 	while (splice_pipe.bytes > 0) {
-		int
-			bytes = splice_pipe.bytes;
+		int bytes = splice_pipe.bytes;
 		if (bytes > BUFSZ)
 			bytes = BUFSZ;
-		auto
-			n =::splice(splice_pipe.pipe[0], nullptr, dst_fd,
-				    nullptr, bytes,
-				    SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+		auto n =::splice(splice_pipe.pipe[0], nullptr, dst_fd,
+				 nullptr, bytes,
+				 SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
 		zcutils_log_print(LOG_DEBUG,
 				  "%s():%d: ZERO_BUFFER::SIZE = %s",
 				  __FUNCTION__, __LINE__,
@@ -264,9 +252,8 @@ IO::IO_RESULT Connection::zeroRead()
 			result = IO::IO_RESULT::FULL_BUFFER;
 			break;
 		}
-		auto
-			n =::read(fd_, buffer_aux + splice_pipe.bytes,
-				  BUFSZ - splice_pipe.bytes);
+		auto n =::read(fd_, buffer_aux + splice_pipe.bytes,
+			       BUFSZ - splice_pipe.bytes);
 		if (n > 0)
 			splice_pipe.bytes += n;
 		if (n == 0)
@@ -293,15 +280,12 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 			  "%s():%d: ZERO WRITE write %d  left %d  buffer %d",
 			  __FUNCTION__, __LINE__, splice_pipe.bytes,
 			  http_data.message_bytes_left, buffer_size);
-	int
-		sent = 0;
+	int sent = 0;
 	while (splice_pipe.bytes > 0) {
-		int
-			bytes = splice_pipe.bytes;
+		int bytes = splice_pipe.bytes;
 		if (bytes > BUFSZ)
 			bytes = BUFSZ;
-		auto
-			n =::write(dst_fd, buffer_aux + sent, bytes - sent);
+		auto n =::write(dst_fd, buffer_aux + sent, bytes - sent);
 		if (n == 0)
 			break;
 		if (n < 0) {
@@ -321,11 +305,9 @@ IO::IO_RESULT Connection::zeroWrite(int dst_fd,
 #endif
 IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 {
-	bool
-		done = false;
+	bool done = false;
 	sent = 0;
-	ssize_t
-		count;
+	ssize_t count;
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	//  PRINT_BUFFER_SIZE
 	while (!done) {
@@ -371,13 +353,10 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 		http_data.prepareToSend();
 	}
 
-	size_t
-		nwritten = 0;
-	size_t
-		iovec_written = 0;
+	size_t nwritten = 0;
+	size_t iovec_written = 0;
 
-	auto
-		result =
+	auto result =
 		writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size,
 			   iovec_written, nwritten);
 	zcutils_log_print(LOG_DEBUG,
@@ -414,10 +393,8 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
 				     size_t &nwritten)
 {
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-	ssize_t
-		count = 0;
-	auto
-		nvec = iovec_size;
+	ssize_t count = 0;
+	auto nvec = iovec_size;
 	nwritten = 0;
 	iovec_written = 0;
 	do {
@@ -442,8 +419,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
 			break;
 		}
 		else {
-			auto
-				remaining = static_cast < size_t >(count);
+			auto remaining = static_cast < size_t >(count);
 			for (auto it = iovec_written; it != iovec_size; it++) {
 				if (remaining >= iov[it].iov_len) {
 					remaining -= iov[it].iov_len;
@@ -463,8 +439,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
 					iov[it].iov_base =
 						static_cast <
 						char *>(iov[iovec_written].
-							iov_base) +
-						remaining;
+							iov_base) + remaining;
 					break;
 				}
 			}
@@ -495,11 +470,9 @@ IO::IO_RESULT Connection::writeTo(const Connection & target_connection,
 
 IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 {
-	bool
-		done = false;
+	bool done = false;
 	sent = 0;
-	ssize_t
-		count;
+	ssize_t count;
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
 	//  PRINT_BUFFER_SIZE
@@ -533,8 +506,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 	return result;
 }
 
-void
-Connection::closeConnection()
+void Connection::closeConnection()
 {
 	if (fd_ > 0) {
 		::close(fd_);
@@ -544,8 +516,7 @@ Connection::closeConnection()
 
 IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
 {
-	int
-		result = -1;
+	int result = -1;
 	if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
 		zcutils_log_print(LOG_ERR, "%s():%d: socket() failed",
 				  __FUNCTION__, __LINE__);
@@ -558,8 +529,7 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
 		zcutils_soc_set_socket_non_blocking(fd_);
 	}
 	else {
-		struct timeval
-			timeout_
+		struct timeval timeout_
 		{
 		};
 		timeout_.tv_sec = timeout;	// after timeout seconds connect()
@@ -572,9 +542,7 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
 			return IO::IO_OP::OP_IN_PROGRESS;
 		}
 		else {
-			char
-				hbuf[NI_MAXHOST],
-				sbuf[NI_MAXSERV];
+			char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 			if (getnameinfo
 			    (address_.ai_addr, address_.ai_addrlen, hbuf,
 			     sizeof(hbuf), sbuf, sizeof(sbuf),
@@ -594,8 +562,7 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
 IO::IO_OP Connection::doConnect(const std::string & af_unix_socket_path,
 				int timeout)
 {
-	int
-		result = -1;
+	int result = -1;
 	if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		zcutils_log_print(LOG_ERR, "%s():%d: socket() failed",
 				  __FUNCTION__, __LINE__);
@@ -608,9 +575,7 @@ IO::IO_OP Connection::doConnect(const std::string & af_unix_socket_path,
 	if (timeout > 0)
 		zcutils_soc_set_socket_non_blocking(fd_);
 
-	sockaddr_un
-		server_address
-	{
+	sockaddr_un server_address {
 	};
 	strcpy(server_address.sun_path, af_unix_socket_path.c_str());
 	server_address.sun_family = AF_UNIX;
@@ -630,8 +595,7 @@ IO::IO_OP Connection::doConnect(const std::string & af_unix_socket_path,
 	return result != -1 ? IO::IO_OP::OP_SUCCESS : IO::IO_OP::OP_ERROR;
 }
 
-bool
-Connection::isConnected()
+bool Connection::isConnected()
 {
 	if (fd_ > 0)
 		return zcutils_soc_isconnected(this->fd_);
@@ -639,8 +603,7 @@ Connection::isConnected()
 		return false;
 }
 
-int
-Connection::doAccept(int listener_fd)
+int Connection::doAccept(int listener_fd)
 {
 	int new_fd = -1;
 	sockaddr_in peer_address
@@ -677,10 +640,10 @@ Connection::doAccept(int listener_fd)
 	return -1;
 }
 
-bool
-Connection::listen(const std::string & address_str_, int port_)
+bool Connection::listen(const std::string & address_str_, int port_)
 {
-	this->address = zcutils_net_get_address(address_str_, port_).release();
+	this->address =
+		zcutils_net_get_address(address_str_, port_).release();
 	if (this->address != nullptr) {
 		fd_ = listen(*this->address);
 		return true;
@@ -688,8 +651,7 @@ Connection::listen(const std::string & address_str_, int port_)
 	return false;
 }
 
-int
-Connection::listen(const addrinfo & address_)
+int Connection::listen(const addrinfo & address_)
 {
 	//  this->address = &address_;
 	/* prepare the socket */
@@ -710,9 +672,8 @@ Connection::listen(const addrinfo & address_)
 		zcutils_soc_set_tcpdeferacceptoption(listen_fd);
 		zcutils_soc_set_tcpreuseportoption(listen_fd);
 
-		if (::
-		    bind(listen_fd, rp->ai_addr,
-			 static_cast < socklen_t > (rp->ai_addrlen)) < 0) {
+		if (::bind(listen_fd, rp->ai_addr,
+			   static_cast < socklen_t > (rp->ai_addrlen)) < 0) {
 			zcutils_log_print(LOG_ERR,
 					  "%s():%d: bind () failed %s - aborted",
 					  __FUNCTION__, __LINE__,
@@ -727,8 +688,7 @@ Connection::listen(const addrinfo & address_)
 	return listen_fd;
 }
 
-bool
-Connection::listen(const std::string & af_unix_name)
+bool Connection::listen(const std::string & af_unix_name)
 {
 	if (af_unix_name.empty())
 		return false;

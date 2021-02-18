@@ -58,9 +58,8 @@ class ICacheStorage
 	  virtual st::STORAGE_STATUS initCacheStorage(const size_t max_size,
 						      double st_threshold,
 						      const std::string & svc,
-						      const std::
-						      string & mount_point) =
-		0;
+						      const std::string &
+						      mount_point) = 0;
     /**
      * @brief initServiceStorage Initialize the service directory once the system is mounted/ initialized
      * @param svc service name

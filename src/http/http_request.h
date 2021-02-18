@@ -47,91 +47,60 @@ struct CacheResponseOptions
 	  cache_commons::CACHE_SCOPE scope;
 };
 #endif
-class HttpRequest:public
-	http_parser::HttpData
+class HttpRequest:public http_parser::HttpData
 {
   /** Service that request was generated for*/
-	void *
-		request_service
+	void *request_service
 	{
 	nullptr};		// fixme; hack to avoid cyclic dependency,
 	// //TODO:: remove
       public:
-	bool
-		add_destination_header
+	bool add_destination_header
 	{
 	false};
-	bool
-		upgrade_header
+	bool upgrade_header
 	{
 	false};
-	bool
-		connection_header_upgrade
+	bool connection_header_upgrade
 	{
 	false};
-	bool
-		accept_encoding_header
+	bool accept_encoding_header
 	{
 	false};
-	bool
-		host_header_found
+	bool host_header_found
 	{
 	false};
-	std::string
-		virtual_host;
-	std::string_view
-		x_forwarded_for_string;
+	std::string virtual_host;
+	std::string_view x_forwarded_for_string;
 #ifdef CACHE_ENABLED
-	struct CacheRequestOptions
-		c_opt;
+	struct CacheRequestOptions c_opt;
 #endif
-	void
-	setRequestMethod();
-	http::REQUEST_METHOD
-	getRequestMethod();
-	void
-	printRequestMethod();
+	void setRequestMethod();
+	http::REQUEST_METHOD getRequestMethod();
+	void printRequestMethod();
 
       public:
-	std::string_view
-	getMethod();
-	std::string_view
-	getRequestLine();
-	std::string
-	getUrl();
-	void
-	setService( /*Service */ void *service);
-	void *
-	getService() const;
+	std::string_view getMethod();
+	std::string_view getRequestLine();
+	std::string getUrl();
+	void setService( /*Service */ void *service);
+	void *getService() const;
 };
 
-class
-	HttpResponse:
-	public
-	http_parser::HttpData
-{
+class HttpResponse:
+public http_parser::HttpData {
       public:
 #ifdef CACHE_ENABLED
-	bool
-		transfer_encoding_header;
-	bool
-		cached = false;
-	struct CacheResponseOptions
-		c_opt;
-	cache_commons::CacheObject *
-		c_object = nullptr;
-	std::string
-		etag;
+	bool transfer_encoding_header;
+	bool cached = false;
+	struct CacheResponseOptions c_opt;
+	cache_commons::CacheObject * c_object = nullptr;
+	std::string etag;
 	// Time specific headers
-	long int
-		date = -1;
-	long int
-		last_mod = -1;
-	long int
-		expires = -1;
-	bool
-	isCached();
-	std::string
-		str_buffer;
+	long int date = -1;
+	long int last_mod = -1;
+	long int expires = -1;
+	bool isCached();
+	std::string str_buffer;
 #endif
 };

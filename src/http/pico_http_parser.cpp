@@ -103,10 +103,10 @@ static const char *token_char_map =
 	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
-static const char *
-findchar_fast(const char *buf,
-	      const char *buf_end,
-	      const char *ranges, size_t ranges_size, int *found)
+static const char *findchar_fast(const char *buf,
+				 const char *buf_end,
+				 const char *ranges, size_t ranges_size,
+				 int *found)
 {
 	*found = 0;
 #if __SSE4_2__
@@ -138,10 +138,10 @@ findchar_fast(const char *buf,
 	return buf;
 }
 
-static const char *
-get_token_to_eol(const char *buf,
-		 const char *buf_end,
-		 const char **token, size_t *token_len, int *ret)
+static const char *get_token_to_eol(const char *buf,
+				    const char *buf_end,
+				    const char **token, size_t *token_len,
+				    int *ret)
 {
 	const char *token_start = buf;
 
@@ -209,8 +209,8 @@ get_token_to_eol(const char *buf,
 	return buf;
 }
 
-static const char *
-is_complete(const char *buf, const char *buf_end, size_t last_len, int *ret)
+static const char *is_complete(const char *buf, const char *buf_end,
+			       size_t last_len, int *ret)
 {
 	int ret_cnt = 0;
 	buf = last_len < 3 ? buf : buf + last_len - 3;
@@ -260,9 +260,8 @@ is_complete(const char *buf, const char *buf_end, size_t last_len, int *ret)
     } while (0)
 
 /* returned pointer is always within [buf, buf_end), or null */
-static const char *
-parse_http_version(const char *buf, const char *buf_end, int *minor_version,
-		   int *ret)
+static const char *parse_http_version(const char *buf, const char *buf_end,
+				      int *minor_version, int *ret)
 {
 	/* we want at least [HTTP/1.<two chars>] to try to parse */
 	if (buf_end - buf < 9) {
@@ -280,10 +279,10 @@ parse_http_version(const char *buf, const char *buf_end, int *minor_version,
 	return buf;
 }
 
-static const char *
-parse_headers(const char *buf, const char *buf_end,
-	      struct phr_header *headers, size_t *num_headers,
-	      size_t max_headers, int *ret)
+static const char *parse_headers(const char *buf, const char *buf_end,
+				 struct phr_header *headers,
+				 size_t *num_headers, size_t max_headers,
+				 int *ret)
 {
 	for (;; ++*num_headers) {
 		headers[*num_headers].reset();
@@ -371,16 +370,16 @@ parse_headers(const char *buf, const char *buf_end,
 	return buf;
 }
 
-static const char *
-parse_request(const char *buf,
-	      const char *buf_end,
-	      const char **method,
-	      size_t *method_len,
-	      const char **path,
-	      size_t *path_len,
-	      int *minor_version,
-	      struct phr_header *headers,
-	      size_t *num_headers, size_t max_headers, int *ret)
+static const char *parse_request(const char *buf,
+				 const char *buf_end,
+				 const char **method,
+				 size_t *method_len,
+				 const char **path,
+				 size_t *path_len,
+				 int *minor_version,
+				 struct phr_header *headers,
+				 size_t *num_headers, size_t max_headers,
+				 int *ret)
 {
 	/* skip first empty line (some clients add CRLF after POST content) */
 	CHECK_EOF();
@@ -468,15 +467,15 @@ phr_parse_request(const char *buf_start,
 	return (int) (buf - buf_start);
 }
 
-static const char *
-parse_response(const char *buf,
-	       const char *buf_end,
-	       int *minor_version,
-	       int *status,
-	       const char **msg,
-	       size_t *msg_len,
-	       struct phr_header *headers,
-	       size_t *num_headers, size_t max_headers, int *ret)
+static const char *parse_response(const char *buf,
+				  const char *buf_end,
+				  int *minor_version,
+				  int *status,
+				  const char **msg,
+				  size_t *msg_len,
+				  struct phr_header *headers,
+				  size_t *num_headers, size_t max_headers,
+				  int *ret)
 {
 	/* parse "HTTP/1.x" */
 	if ((buf =
@@ -595,8 +594,7 @@ enum
 	CHUNKED_IN_TRAILERS_LINE_MIDDLE
 };
 
-static int
-decode_hex(int ch)
+static int decode_hex(int ch)
 {
 	if ('0' <= ch && ch <= '9') {
 		return ch - '0';
@@ -734,8 +732,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 	return ret;
 }
 
-int
-phr_decode_chunked_is_in_data(struct phr_chunked_decoder *decoder)
+int phr_decode_chunked_is_in_data(struct phr_chunked_decoder *decoder)
 {
 	return decoder->_state == CHUNKED_IN_CHUNK_DATA;
 }

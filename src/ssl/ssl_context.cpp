@@ -24,8 +24,8 @@
 
 using namespace ssl;
 
-bool
-SSLContext::init(const std::string & cert_file, const std::string & key_file)
+bool SSLContext::init(const std::string & cert_file,
+		      const std::string & key_file)
 {
 	initOpenssl();
 	ssl_ctx =
@@ -76,8 +76,7 @@ SSLContext::init(const std::string & cert_file, const std::string & key_file)
 	return true;
 }
 
-bool
-SSLContext::init(std::shared_ptr < BackendConfig > backend_config_)
+bool SSLContext::init(std::shared_ptr < BackendConfig > backend_config_)
 {
 	if (backend_config_->ctx != nullptr) {
 		ssl_ctx = backend_config_->ctx;
@@ -107,8 +106,7 @@ SSLContext::init(std::shared_ptr < BackendConfig > backend_config_)
 	return true;
 }
 
-bool
-SSLContext::init(std::shared_ptr < ListenerConfig > listener_config_)
+bool SSLContext::init(std::shared_ptr < ListenerConfig > listener_config_)
 {
 	initOpenssl();
 	listener_config = listener_config_;
@@ -168,11 +166,11 @@ SSLContext::~SSLContext()
 
 std::once_flag flag;
 
-bool
-SSLContext::initOpenssl()
+bool SSLContext::initOpenssl()
 {
 	std::call_once(flag,[]() {
-		       int r = SSL_library_init(); if (!r) {
+		       int r = SSL_library_init();
+		       if (!r) {
 		       zcutils_log_print(LOG_ERR, "SSL_library_init failed");
 		       return false;}
 		       ERR_load_crypto_strings();
@@ -186,10 +184,9 @@ SSLContext::initOpenssl()
 /* This function loads the OpenSSL configuration file.
  * Documentation related with the config file syntax:
  * https://www.openssl.org/docs/manmaster/man5/config.html*/
-bool
-SSLContext::loadOpensslConfig(const std::string & config_file_path,
-			      const std::string & config_file_section,
-			      SSL_CTX * __ctx)
+bool SSLContext::loadOpensslConfig(const std::string & config_file_path,
+				   const std::string & config_file_section,
+				   SSL_CTX * __ctx)
 {
 	/* We use FILE instead of c++ ifstream because it is not
 	 * compatible with the NCONF functions. */
@@ -231,8 +228,7 @@ SSLContext::loadOpensslConfig(const std::string & config_file_path,
 	}
 }
 
-int
-SSLContext::SNIServerName(SSL * ssl, int dummy, POUND_CTX * ctx)
+int SSLContext::SNIServerName(SSL * ssl, int dummy, POUND_CTX * ctx)
 {
 	const char *server_name;
 	POUND_CTX *pc;
@@ -271,8 +267,7 @@ SSLContext::SNIServerName(SSL * ssl, int dummy, POUND_CTX * ctx)
 	return SSL_TLSEXT_ERR_OK;
 }
 
-bool
-SSLContext::initEngine(const std::string & engine_id)
+bool SSLContext::initEngine(const std::string & engine_id)
 {
 	if (engine_id.empty())
 		return false;

@@ -21,8 +21,7 @@
 #include "disk_cache_storage.h"
 
 // Disk Static variables definition
-DiskICacheStorage *
-	DiskICacheStorage::instance = nullptr;
+DiskICacheStorage *DiskICacheStorage::instance = nullptr;
 
 /*
  * DISKst::STORAGE
@@ -30,8 +29,8 @@ DiskICacheStorage *
 st::STORAGE_STATUS DiskCacheStorage::initCacheStorage(size_t m_size,
 						      double st_threshold,
 						      const std::string & svc,
-						      const std::
-						      string & m_point)
+						      const std::string &
+						      m_point)
 {
 	st::STORAGE_STATUS ret = st::STORAGE_STATUS::SUCCESS;
 	if (initialized)
@@ -65,8 +64,7 @@ st::STORAGE_STATUS DiskCacheStorage::initServiceStorage(const std::
 	if (!initialized)
 		return st::STORAGE_STATUS::NOT_INIT;
 	// The mount point is mount_path/service
-	auto
-		path = mount_path;
+	auto path = mount_path;
 	path.append("/");
 	path.append(svc);
 	if (mkdir((path).data(), 0777) == -1) {
@@ -88,8 +86,7 @@ st::STORAGE_STATUS DiskCacheStorage::getFromStorage(const std::
 						    std::string & out_buffer)
 {
 	// We have the file_path created as follows: /mount_point/svc1/hashed_url
-	string
-	file_path(mount_path);
+	string file_path(mount_path);
 	file_path.append("/");
 	file_path.append(rel_path);
 
@@ -117,8 +114,7 @@ st::STORAGE_STATUS DiskCacheStorage::putInStorage(const std::
 	//        return st::STORAGE_STATUS::STORAGE_FULL;
 
 	// We have the file_path created as follows: /mount_point/svc1/hashed_url
-	string
-	file_path(mount_path);
+	string file_path(mount_path);
 	file_path.append("/");
 	file_path.append(rel_path);
 	// increment the current storage size
@@ -141,8 +137,7 @@ st::STORAGE_STATUS DiskCacheStorage::putInStorage(const std::
 
 st::STORAGE_STATUS DiskCacheStorage::stopCacheStorage()
 {
-	const
-		std::filesystem::path
+	const std::filesystem::path
 		path_m_point = std::filesystem::u8path(mount_path);
 	if (!std::filesystem::remove_all(path_m_point))
 		return st::STORAGE_STATUS::GENERIC_ERROR;
@@ -153,11 +148,9 @@ st::STORAGE_STATUS DiskCacheStorage::stopCacheStorage()
 st::STORAGE_STATUS DiskCacheStorage::appendData(const std::string & rel_path,
 						string_view buffer)
 {
-	ofstream
-		fout;		// Create Object of Ofstream
+	ofstream fout;		// Create Object of Ofstream
 	// Create path
-	auto
-		path = mount_path;
+	auto path = mount_path;
 	path.append("/");
 	path.append(rel_path);
 
@@ -172,9 +165,8 @@ st::STORAGE_STATUS DiskCacheStorage::appendData(const std::string & rel_path,
 	return st::STORAGE_STATUS::SUCCESS;
 }
 
-bool
-DiskCacheStorage::isInStorage(const std::string & svc,
-			      const std::string & url)
+bool DiskCacheStorage::isInStorage(const std::string & svc,
+				   const std::string & url)
 {
 	struct stat buffer;
 	size_t hashed_url = std::hash < std::string > ()(url);
@@ -186,8 +178,7 @@ DiskCacheStorage::isInStorage(const std::string & svc,
 	return (stat(path.data(), &buffer) == 0);
 }
 
-bool
-DiskCacheStorage::isInStorage(const std::string & path)
+bool DiskCacheStorage::isInStorage(const std::string & path)
 {
 	struct stat buffer;
 	return (stat(path.data(), &buffer) == 0);
@@ -195,12 +186,10 @@ DiskCacheStorage::isInStorage(const std::string & path)
 
 st::STORAGE_STATUS DiskCacheStorage::deleteInStorage(const std::string & path)
 {
-	auto
-		full_path = mount_path;
+	auto full_path = mount_path;
 	full_path.append("/");
 	full_path.append(path);
-	size_t
-		file_size = std::filesystem::file_size(full_path);
+	size_t file_size = std::filesystem::file_size(full_path);
 	if (isInStorage(full_path)) {
 		if (std::remove(full_path.data()))
 			return st::STORAGE_STATUS::GENERIC_ERROR;

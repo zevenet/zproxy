@@ -53,8 +53,7 @@ namespace json
 							char start_delimiter,
 							char end_delimiter);
 		static std::unique_ptr < Json > parseValue(char current_char,
-							   std::
-							   istringstream &
-							   istringstream);
+							   std::istringstream
+							   & istringstream);
 	};
 }				// namespace json

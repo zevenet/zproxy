@@ -29,10 +29,8 @@ std::string json::JsonParser::getStringDelimitedBy(std::string str,
 						   char start_delimiter,
 						   char end_delimiter)
 {
-	auto
-		first = str.find_first_of(start_delimiter);
-	auto
-		last = str.find_last_of(end_delimiter);
+	auto first = str.find_first_of(start_delimiter);
+	auto last = str.find_last_of(end_delimiter);
 	return str.substr(first + 1, (last - 1) - first);
 }
 
@@ -52,8 +50,7 @@ std::unique_ptr < json::JsonObject >
 	json::JsonParser::parseJsonObject(std::istringstream & ss)
 {
 	while ((ss.get()) != '{');
-	char
-		next_char;
+	char next_char;
 
 	std::unique_ptr < JsonObject > json_object(new JsonObject());
 	if (ss.peek() == '}')
@@ -64,8 +61,7 @@ std::unique_ptr < json::JsonObject >
 			return nullptr;
 		key = getStringDelimitedBy(key, '\"', '\"');
 		next_char = static_cast < char >(ss.peek());
-		auto
-			value = parseValue(next_char, ss);
+		auto value = parseValue(next_char, ss);
 		json_object->emplace(key, std::move(value));
 		if ((next_char = static_cast < char >(ss.get())) == '}')
 			break;
@@ -78,8 +74,7 @@ std::unique_ptr < json::JsonArray >
 	json::JsonParser::parseJsonArray(std::istringstream & ss)
 {
 	while ((ss.get()) != '[');
-	char
-		next_char = static_cast < char >(ss.peek());
+	char next_char = static_cast < char >(ss.peek());
 	std::unique_ptr < JsonArray > json_array(new JsonArray());
 	if (ss.peek() == ']') {
 		ss.get();
@@ -92,8 +87,7 @@ std::unique_ptr < json::JsonArray >
 		}
 		if (next_char == ']')
 			break;
-		auto
-			value = parseValue(next_char, ss);
+		auto value = parseValue(next_char, ss);
 		if (value != nullptr) {
 			json_array->emplace_back(std::move(value));
 		}
@@ -123,12 +117,10 @@ std::unique_ptr < json::JsonDataValue >
 }
 
 std::unique_ptr < json::Json > json::JsonParser::parseValue(char current_char,
-							    std::
-							    istringstream &
-							    ss)
+							    std::istringstream
+							    & ss)
 {
-	char
-		next_char = current_char;
+	char next_char = current_char;
 	switch (next_char) {
 	case '{':{
 			return parseJsonObject(ss);
@@ -166,14 +158,11 @@ std::unique_ptr < json::Json > json::JsonParser::parseValue(char current_char,
 	case '9':{
 			std::string number = "";
 			number += ss.get();
-			bool
-				is_double = false;
-			bool
-				done = false;
+			bool is_double = false;
+			bool done = false;
 			while (!done) {
 				next_char = static_cast < char >(ss.peek());
-				int
-					num;
+				int num;
 				if (next_char == '.') {
 					number += ss.get();
 					is_double = true;

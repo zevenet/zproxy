@@ -33,10 +33,9 @@ HttpSessionManager::~HttpSessionManager()
 	}
 }
 
-SessionInfo *
-HttpSessionManager::addSession(Connection & source,
-			       HttpRequest & request,
-			       Backend & backend_to_assign)
+SessionInfo *HttpSessionManager::addSession(Connection & source,
+					    HttpRequest & request,
+					    Backend & backend_to_assign)
 {
 	if (this->session_type == sessions::SESS_NONE)
 		return nullptr;
@@ -52,12 +51,11 @@ HttpSessionManager::addSession(Connection & source,
 	return nullptr;
 }
 
-bool
-sessions::HttpSessionManager::updateSession(Connection & source,
-					    HttpRequest & request,
-					    const std::
-					    string & new_session_id,
-					    Backend & backend_to_assign)
+bool sessions::HttpSessionManager::updateSession(Connection & source,
+						 HttpRequest & request,
+						 const std::string &
+						 new_session_id,
+						 Backend & backend_to_assign)
 {
 	std::string request_session_id = getSessionKey(source, request);
 	std::string session_id = new_session_id;
@@ -68,21 +66,17 @@ sessions::HttpSessionManager::updateSession(Connection & source,
 		return true;
 	if (!session_id.empty()) {
 		std::lock_guard < std::recursive_mutex > locker(lock_mtx);
-		SessionInfo *
-			session_data
+		SessionInfo *session_data
 		{
 		nullptr};
 		if (!request_session_id.empty()) {
-			auto
-				it_old =
-				sessions_set.find(request_session_id);
+			auto it_old = sessions_set.find(request_session_id);
 			if (it_old != sessions_set.end()) {
 				session_data = it_old->second;
 				sessions_set.erase(it_old);
 			}
 		}
-		auto
-			it_new = sessions_set.find(session_id);
+		auto it_new = sessions_set.find(session_id);
 		if (it_new != sessions_set.end()) {
 			if (session_data == nullptr)
 				session_data = it_new->second;
@@ -94,15 +88,15 @@ sessions::HttpSessionManager::updateSession(Connection & source,
 			session_data ==
 			nullptr ? new SessionInfo() : session_data;
 		session_data->assigned_backend = &backend_to_assign;
-		sessions_set.
-			emplace(std::make_pair(session_id, session_data));
+		sessions_set.emplace(std::
+				     make_pair(session_id, session_data));
 		return true;
 	}
 	return false;
 }
 
-void
-HttpSessionManager::deleteSession(Connection & source, HttpRequest & request)
+void HttpSessionManager::deleteSession(Connection & source,
+				       HttpRequest & request)
 {
 	std::lock_guard < std::recursive_mutex > locker(lock_mtx);
 	auto session_key = getSessionKey(source, request);
@@ -111,9 +105,9 @@ HttpSessionManager::deleteSession(Connection & source, HttpRequest & request)
 	}
 }
 
-SessionInfo *
-HttpSessionManager::getSession(Connection & source,
-			       HttpRequest & request, bool update_if_exist)
+SessionInfo *HttpSessionManager::getSession(Connection & source,
+					    HttpRequest & request,
+					    bool update_if_exist)
 {
 	std::string session_key = getSessionKey(source, request);
 	if (session_key.empty())
@@ -139,19 +133,17 @@ HttpSessionManager::getSession(Connection & source,
 std::unique_ptr < json::JsonArray > HttpSessionManager::getSessionsJson()
 {
 	std::unique_ptr < json::JsonArray > data {
-		new
-	json::JsonArray()};
+	new json::JsonArray()};
       for (auto & session:sessions_set) {
 		std::unique_ptr < JsonObject > json_data {
-			new
-		json::JsonObject()};
+		new json::JsonObject()};
 		json_data->emplace(JSON_KEYS::ID,
 				   std::make_unique < JsonDataValue >
 				   (session.first));
 		json_data->emplace(JSON_KEYS::BACKEND_ID,
 				   std::make_unique < JsonDataValue >
-				   (session.second->assigned_backend->
-				    backend_id));
+				   (session.second->
+				    assigned_backend->backend_id));
 
 		json_data->emplace(JSON_KEYS::LAST_SEEN_TS,
 				   std::make_unique < JsonDataValue >
@@ -161,8 +153,7 @@ std::unique_ptr < json::JsonArray > HttpSessionManager::getSessionsJson()
 	return data;
 }
 
-void
-HttpSessionManager::deleteBackendSessions(int backend_id)
+void HttpSessionManager::deleteBackendSessions(int backend_id)
 {
 	std::lock_guard < std::recursive_mutex > locker(lock_mtx);
 	for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
@@ -175,8 +166,7 @@ HttpSessionManager::deleteBackendSessions(int backend_id)
 	}
 }
 
-void
-HttpSessionManager::doMaintenance()
+void HttpSessionManager::doMaintenance()
 {
 	std::lock_guard < std::recursive_mutex > locker(lock_mtx);
 	for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
@@ -188,9 +178,8 @@ HttpSessionManager::doMaintenance()
 	}
 }
 
-bool
-HttpSessionManager::addSession(JsonObject * json_object,
-			       std::vector < Backend * >backend_set)
+bool HttpSessionManager::addSession(JsonObject * json_object,
+				    std::vector < Backend * >backend_set)
 {
 	if (json_object == nullptr)
 		return false;
@@ -219,12 +208,12 @@ HttpSessionManager::addSession(JsonObject * json_object,
 		    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
 			new_session->setTimeStamp(dynamic_cast <
 						  JsonDataValue *
-						  >(json_object->
-						    at(JSON_KEYS::
-						       LAST_SEEN_TS).get())
+						  >(json_object->at
+						    (JSON_KEYS::LAST_SEEN_TS).
+						    get())
 						  ->number_value);
-		sessions_set.
-			emplace(std::make_pair(key, new_session.release()));
+		sessions_set.emplace(std::
+				     make_pair(key, new_session.release()));
 		return true;
 	}
 	else {
@@ -232,8 +221,7 @@ HttpSessionManager::addSession(JsonObject * json_object,
 	}
 }
 
-bool
-HttpSessionManager::deleteSession(const JsonObject & json_object)
+bool HttpSessionManager::deleteSession(const JsonObject & json_object)
 {
 	std::lock_guard < std::recursive_mutex > locker(lock_mtx);
 	if (json_object.count(JSON_KEYS::BACKEND_ID) > 0 &&
@@ -272,13 +260,11 @@ HttpSessionManager::deleteSession(const JsonObject & json_object)
 std::string HttpSessionManager::getQueryParameter(const std::string & url,
 						  const std::string & sess_id)
 {
-	auto
-		it_start = url.find(sess_id);
+	auto it_start = url.find(sess_id);
 	if (it_start == std::string::npos)
 		return std::string();
 	it_start = url.find('=', it_start);
-	auto
-		it_end = url.find(';', it_start++);
+	auto it_end = url.find(';', it_start++);
 	it_end = it_end != std::string::npos ? it_end : url.find('&',
 								 it_start);;
 	it_end = it_end != std::string::npos ? it_end : url.size();
@@ -286,18 +272,15 @@ std::string HttpSessionManager::getQueryParameter(const std::string & url,
 	return res;
 }
 
-std::string HttpSessionManager::getCookieValue(std::
-					       string_view
+std::string HttpSessionManager::getCookieValue(std::string_view
 					       cookie_header_value,
 					       std::string_view sess_id)
 {
-	auto
-		it_start = cookie_header_value.find(sess_id);
+	auto it_start = cookie_header_value.find(sess_id);
 	if (it_start == std::string::npos)
 		return std::string();
 	it_start = cookie_header_value.find('=', it_start);
-	auto
-		it_end = cookie_header_value.find(';', it_start++);
+	auto it_end = cookie_header_value.find(';', it_start++);
 	it_end = it_end !=
 		std::string::npos ? it_end : cookie_header_value.size();
 	std::string res(cookie_header_value.data() + it_start,
@@ -319,8 +302,7 @@ std::string HttpSessionManager::getUrlParameter(const std::string & url)
 	}
 }
 
-bool
-HttpSessionManager::deleteSessionByKey(const std::string & key)
+bool HttpSessionManager::deleteSessionByKey(const std::string & key)
 {
 	std::lock_guard < std::recursive_mutex > locker(lock_mtx);
 	auto it = sessions_set.find(key);
@@ -344,9 +326,8 @@ std::string HttpSessionManager::getSessionKey(Connection & source,
 			break;
 		}
 	case sessions::SESS_COOKIE:{
-			if (!request.
-			    getHeaderValue(http::HTTP_HEADER_NAME::COOKIE,
-					   session_key)) {
+			if (!request.getHeaderValue
+			    (http::HTTP_HEADER_NAME::COOKIE, session_key)) {
 				session_key = "";
 			}
 			else {
@@ -372,9 +353,9 @@ std::string HttpSessionManager::getSessionKey(Connection & source,
 			break;
 		}
 	case sessions::SESS_BASIC:{
-			if (!request.
-			    getHeaderValue(http::HTTP_HEADER_NAME::
-					   AUTHORIZATION, session_key)) {
+			if (!request.getHeaderValue
+			    (http::HTTP_HEADER_NAME::AUTHORIZATION,
+			     session_key)) {
 				session_key = "";
 			}
 			else {
@@ -401,8 +382,7 @@ std::string HttpSessionManager::getSessionKey(Connection & source,
 	return session_key;
 }
 
-void
-HttpSessionManager::flushSessions()
+void HttpSessionManager::flushSessions()
 {
 	std::lock_guard < std::recursive_mutex > locker(lock_mtx);
       for (const auto & session:sessions_set)

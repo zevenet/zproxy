@@ -107,9 +107,8 @@ namespace ssl
    * @return @c true if everything is ok, @c false if not.
    */
 		bool loadOpensslConfig(const std::string & config_file_path,
-				       const std::
-				       string & config_file_section,
-				       SSL_CTX * __ctx);
+				       const std::string &
+				       config_file_section, SSL_CTX * __ctx);
 
   /**
    * @brief Callback used by OpenSSL SNI support.

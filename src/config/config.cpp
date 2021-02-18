@@ -41,20 +41,11 @@
 #include <modsecurity/rules.h>
 #endif
 Config::Config(bool _abort_on_error)
-	:
-clnt_to(10),
-be_to(15),
-be_connto(15),
-dynscale(0),
-ignore_case(0),
-EC_nid(0),			// NID_X9_62_prime256v1;
+:clnt_to(10), be_to(15), be_connto(15), dynscale(0), ignore_case(0), EC_nid(0),	// NID_X9_62_prime256v1;
 listener_id_counter(0),
 abort_on_error(_abort_on_error),
 log_level(5),
-def_facility(LOG_DAEMON),
-ctrl_mode(-1),
-log_facility(-1),
-print_log(0)
+def_facility(LOG_DAEMON), ctrl_mode(-1), log_facility(-1), print_log(0)
 {
 }
 
@@ -62,8 +53,7 @@ Config::~Config()
 {
 }
 
-void
-Config::parse_file()
+void Config::parse_file()
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
 	std::shared_ptr < ServiceConfig > svc {
@@ -108,8 +98,8 @@ Config::parse_file()
 		else if (!regexec(&regex_set::DHParams, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			DH *dh = global::SslHelper::load_dh_params(lin +
-								   matches[1].
-								   rm_so);
+								   matches
+								   [1].rm_so);
 			if (!dh)
 				conf_err("DHParams config: could not load file");
 			DHCustom_params = dh;
@@ -134,8 +124,8 @@ Config::parse_file()
 					    (facilitynames[i].c_name,
 					     lin + matches[1].rm_so)) {
 						def_facility =
-							facilitynames[i].
-							c_val;
+							facilitynames
+							[i].c_val;
 						break;
 					}
 		}
@@ -336,14 +326,13 @@ Config::parse_file()
 	return;
 }
 
-bool
-Config::init(const global::StartOptions & start_options)
+bool Config::init(const global::StartOptions & start_options)
 {
 	conf_file_name = start_options.conf_file_name.empty()
 		? F_CONF : start_options.conf_file_name;
 	pid_name =
-		start_options.pid_file_name.empty()? F_PID : start_options.
-		pid_file_name;
+		start_options.pid_file_name.
+		empty()? F_PID : start_options.pid_file_name;
 
 	// init configuration file lists.
 	f_name[0] = std::string(conf_file_name);
@@ -388,8 +377,7 @@ Config::init(const global::StartOptions & start_options)
 
 std::string Config::file2str(const char *fname)
 {
-	struct stat
-		st
+	struct stat st
 	{
 	};
 	if (stat(fname, &st))
@@ -402,26 +390,16 @@ std::string Config::file2str(const char *fname)
 
 std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 {
-	char
-		lin[ZCU_DEF_BUFFER_SIZE];
-	auto
-		res = std::make_shared < ListenerConfig > ();
+	char lin[ZCU_DEF_BUFFER_SIZE];
+	auto res = std::make_shared < ListenerConfig > ();
 	std::shared_ptr < ServiceConfig > svc;
-	MATCHER *
-		m;
-	int
-		has_addr,
-		has_port;
-	sockaddr_in
-		in
-	{
+	MATCHER *m;
+	int has_addr, has_port;
+	sockaddr_in in {
 	};
-	sockaddr_in6
-		in6
-	{
+	sockaddr_in6 in6 {
 	};
-	regmatch_t
-		matches[5];
+	regmatch_t matches[5];
 
 	res->name = name;
 	res->id = listener_id_counter++;
@@ -452,11 +430,10 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			lin[strlen(lin) - 1] = '\0';
 		if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
-			addrinfo
-				addr
-			{
+			addrinfo addr {
 			};
-			if (zcutils_net_get_host(lin + matches[1].rm_so, &addr, PF_UNSPEC))
+			if (zcutils_net_get_host
+			    (lin + matches[1].rm_so, &addr, PF_UNSPEC))
 				conf_err("Unknown Listener address");
 			if (addr.ai_family != AF_INET
 			    && addr.ai_family != AF_INET6)
@@ -482,8 +459,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			res->disabled = atoi(lin + matches[1].rm_so) == 1;
 		}
 		else if (!regexec(&regex_set::xHTTP, lin, 4, matches, 0)) {
-			int
-				n;
+			int n;
 
 			n = atoi(lin + matches[1].rm_so);
 			regfree(&res->verb);
@@ -548,20 +524,20 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 				res->add_head =
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 			else {
 				res->add_head += "\r\n";
 				res->add_head +=
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 		}
 		else if (!regexec
@@ -597,20 +573,20 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 				res->response_add_head =
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 			else {
 				res->response_add_head += "\r\n";
 				res->response_add_head +=
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 		}
 		else if (!regexec
@@ -676,17 +652,11 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			lin[matches[2].rm_eo] = '\0';
 			lin[matches[3].rm_eo] = '\0';
 			lin[matches[4].rm_eo] = '\0';
-			auto
-				type_ = std::string(lin + matches[1].rm_so);
-			auto
-				name_ = std::string(lin + matches[2].rm_so);
-			auto
-				match_ = std::string(lin + matches[3].rm_so);
-			auto
-				replace_ =
-				std::string(lin + matches[4].rm_so);
-			ReplaceHeader *
-				current
+			auto type_ = std::string(lin + matches[1].rm_so);
+			auto name_ = std::string(lin + matches[2].rm_so);
+			auto match_ = std::string(lin + matches[3].rm_so);
+			auto replace_ = std::string(lin + matches[4].rm_so);
+			ReplaceHeader *current
 			{
 			nullptr};
 			if (!strcasecmp(type_.data(), "Request")) {
@@ -723,13 +693,11 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			else {
 				conf_err("ReplaceHeader type not specified");
 			}
-			if (::
-			    regcomp(&current->name, name_.data(),
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+			if (::regcomp(&current->name, name_.data(),
+				      REG_ICASE | REG_NEWLINE | REG_EXTENDED))
 				conf_err("Error compiling Name regex ");
-			if (::
-			    regcomp(&current->match, match_.data(),
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+			if (::regcomp(&current->match, match_.data(),
+				      REG_ICASE | REG_NEWLINE | REG_EXTENDED))
 				conf_err("Error compiling Match regex ");
 			current->replace = replace_;
 		}
@@ -740,23 +708,22 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 #if WAF_ENABLED
 		}
 		else if (!regexec(&regex_set::WafRules, lin, 4, matches, 0)) {
-			auto
-				file = std::string(lin + matches[1].rm_so,
-						   matches[1].rm_eo -
-						   matches[1].rm_so);
+			auto file = std::string(lin + matches[1].rm_so,
+						matches[1].rm_eo -
+						matches[1].rm_so);
 			if (!res->rules) {
 				res->rules =
 					std::make_shared <
 					modsecurity::Rules > ();
 			}
-			auto
-				err = res->rules->loadFromUri(file.data());
+			auto err = res->rules->loadFromUri(file.data());
 			if (err == -1) {
 				zcutils_log_print(LOG_ERR,
 						  "error loading waf ruleset file %s: %s",
 						  file.data(),
-						  res->rules->
-						  getParserError().data());
+						  res->
+						  rules->getParserError().
+						  data());
 				conf_err("Error loading waf ruleset");
 				break;
 			}
@@ -769,9 +736,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			for (int i = 0;
 			     i <= modsecurity::Phases::NUMBER_OF_PHASES;
 			     i++) {
-				auto
-					rule =
-					res->rules->getRulesForPhase(i);
+				auto rule = res->rules->getRulesForPhase(i);
 				if (rule) {
 					zcutils_log_print(LOG_DEBUG,
 							  "Phase: %d ( %d rules )",
@@ -781,11 +746,9 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 						zcutils_log_print(LOG_DEBUG,
 								  "\tRule Id: %d From %s at %d ",
 								  x->m_ruleId,
-								  x->
-								  m_fileName.
-								  data(),
-								  x->
-								  m_lineNumber);
+								  x->m_fileName.data
+								  (),
+								  x->m_lineNumber);
 					}
 				}
 			}
@@ -802,33 +765,21 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 
 std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 {
-	char
-		lin[ZCU_DEF_BUFFER_SIZE];
-	auto
-		res = std::make_shared < ListenerConfig > ();
+	char lin[ZCU_DEF_BUFFER_SIZE];
+	auto res = std::make_shared < ListenerConfig > ();
 	std::shared_ptr < ServiceConfig > svc;
-	MATCHER *
-		m;
-	int
-		has_addr,
-		has_port,
-		has_other;
-	unsigned long
-		ssl_op_enable,
-		ssl_op_disable;
-	struct sockaddr_in
-		in
+	MATCHER *m;
+	int has_addr, has_port, has_other;
+	unsigned long ssl_op_enable, ssl_op_disable;
+	struct sockaddr_in in
 	{
 	};
-	struct sockaddr_in6
-		in6
+	struct sockaddr_in6 in6
 	{
 	};
 	std::shared_ptr < POUND_CTX > pc;
-	regmatch_t
-		matches[5];
-	bool
-		openssl_file_exists = false;
+	regmatch_t matches[5];
+	bool openssl_file_exists = false;
 
 	ssl_op_enable = SSL_OP_ALL;
 #ifdef SSL_OP_NO_COMPRESSION
@@ -867,11 +818,10 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			lin[strlen(lin) - 1] = '\0';
 		if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
-			addrinfo
-				addr
-			{
+			addrinfo addr {
 			};
-			if (zcutils_net_get_host(lin + matches[1].rm_so, &addr, PF_UNSPEC))
+			if (zcutils_net_get_host
+			    (lin + matches[1].rm_so, &addr, PF_UNSPEC))
 				conf_err("Unknown Listener address");
 			if (addr.ai_family != AF_INET
 			    && addr.ai_family != AF_INET6)
@@ -882,23 +832,22 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 #if WAF_ENABLED
 		}
 		else if (!regexec(&regex_set::WafRules, lin, 4, matches, 0)) {
-			auto
-				file = std::string(lin + matches[1].rm_so,
-						   matches[1].rm_eo -
-						   matches[1].rm_so);
+			auto file = std::string(lin + matches[1].rm_so,
+						matches[1].rm_eo -
+						matches[1].rm_so);
 			if (!res->rules) {
 				res->rules =
 					std::make_shared <
 					modsecurity::Rules > ();
 			}
-			auto
-				err = res->rules->loadFromUri(file.data());
+			auto err = res->rules->loadFromUri(file.data());
 			if (err == -1) {
 				zcutils_log_print(LOG_ERR,
 						  "error loading waf ruleset file %s: %s",
 						  file.data(),
-						  res->rules->
-						  getParserError().data());
+						  res->
+						  rules->getParserError().
+						  data());
 				conf_err("Error loading waf ruleset");
 				break;
 			}
@@ -906,9 +855,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			for (int i = 0;
 			     i <= modsecurity::Phases::NUMBER_OF_PHASES;
 			     i++) {
-				auto
-					rule =
-					res->rules->getRulesForPhase(i);
+				auto rule = res->rules->getRulesForPhase(i);
 				if (rule) {
 					zcutils_log_print(LOG_DEBUG,
 							  "Phase: %d ( %d rules )",
@@ -918,11 +865,9 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 						zcutils_log_print(LOG_DEBUG,
 								  "\tRule Id: %d From %s at %d ",
 								  x->m_ruleId,
-								  x->
-								  m_fileName.
-								  data(),
-								  x->
-								  m_lineNumber);
+								  x->m_fileName.data
+								  (),
+								  x->m_lineNumber);
 					}
 				}
 			}
@@ -942,8 +887,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			res->port = atoi(lin + matches[1].rm_so);
 		}
 		else if (!regexec(&regex_set::xHTTP, lin, 4, matches, 0)) {
-			int
-				n;
+			int n;
 
 			n = atoi(lin + matches[1].rm_so);
 			regfree(&res->verb);
@@ -1070,20 +1014,20 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 				res->response_add_head =
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 			else {
 				res->response_add_head += "\r\n";
 				res->response_add_head +=
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 		}
 		else if (!regexec
@@ -1126,12 +1070,11 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 							   SSL_VERIFY_PEER |
 							   SSL_VERIFY_CLIENT_ONCE,
 							   nullptr);
-					SSL_CTX_set_verify_depth(pc->ctx.
-								 get(),
+					SSL_CTX_set_verify_depth(pc->
+								 ctx.get(),
 								 atoi(lin +
 								      matches
-								      [2].
-								      rm_so));
+								      [2].rm_so));
 				}
 				break;
 			case 2:
@@ -1141,12 +1084,11 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 							   SSL_VERIFY_PEER |
 							   SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
 							   nullptr);
-					SSL_CTX_set_verify_depth(pc->ctx.
-								 get(),
+					SSL_CTX_set_verify_depth(pc->
+								 ctx.get(),
 								 atoi(lin +
 								      matches
-								      [2].
-								      rm_so));
+								      [2].rm_so));
 				}
 				break;
 			case 3:
@@ -1155,14 +1097,13 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 					SSL_CTX_set_verify(pc->ctx.get(),
 							   SSL_VERIFY_PEER |
 							   SSL_VERIFY_CLIENT_ONCE,
-							   global::SslHelper::
-							   verifyCertificate_OK);
-					SSL_CTX_set_verify_depth(pc->ctx.
-								 get(),
+							   global::
+							   SslHelper::verifyCertificate_OK);
+					SSL_CTX_set_verify_depth(pc->
+								 ctx.get(),
 								 atoi(lin +
 								      matches
-								      [2].
-								      rm_so));
+								      [2].rm_so));
 				}
 				break;
 			}
@@ -1173,20 +1114,20 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 				res->add_head =
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 			else {
 				res->add_head += "\r\n";
 				res->add_head +=
 					std::string(lin + matches[1].rm_so,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			}
 		}
 		else if (!regexec
@@ -1443,13 +1384,11 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			else {
 				conf_err("ReplaceHeader type not specified");
 			}
-			if (::
-			    regcomp(&current->name, name_.data(),
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+			if (::regcomp(&current->name, name_.data(),
+				      REG_ICASE | REG_NEWLINE | REG_EXTENDED))
 				conf_err("Error compiling Name regex ");
-			if (::
-			    regcomp(&current->match, match_.data(),
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+			if (::regcomp(&current->match, match_.data(),
+				      REG_ICASE | REG_NEWLINE | REG_EXTENDED))
 				conf_err("Error compiling Match regex ");
 			current->replace = replace_;
 		}
@@ -1476,39 +1415,25 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 							      ssl_op_disable);
 					sprintf(lin, "%d-zproxy-%ld",
 						getpid(), random());
-					SSL_CTX_set_session_id_context(pc->
-								       ctx.
-								       get(),
-								       reinterpret_cast
-								       <
-								       unsigned
-								       char
-								       *>
-								       (lin),
-								       static_cast
-								       <
-								       unsigned
-								       int
-								       >
-								       (strlen
-									(lin)));
+					SSL_CTX_set_session_id_context
+						(pc->ctx.get(),
+						 reinterpret_cast <
+						 unsigned char *>(lin),
+						 static_cast <
+						 unsigned int >(strlen(lin)));
 					SSL_CTX_set_tmp_rsa_callback(pc->ctx,
-								     global::
-								     SslHelper::
-								     RSA_tmp_callback);
-					SSL_CTX_set_info_callback(pc->ctx.
-								  get(),
-								  global::
-								  SslHelper::
-								  SSLINFO_callback);
+								     global::SslHelper::RSA_tmp_callback);
+					SSL_CTX_set_info_callback(pc->
+								  ctx.get(),
+								  global::SslHelper::SSLINFO_callback);
 					if (nullptr == DHCustom_params)
 						SSL_CTX_set_tmp_dh_callback
 							(pc->ctx.get(),
-							 global::SslHelper::
-							 DH_tmp_callback);
+							 global::
+							 SslHelper::DH_tmp_callback);
 					else
-						SSL_CTX_set_tmp_dh(pc->ctx.
-								   get(),
+						SSL_CTX_set_tmp_dh(pc->
+								   ctx.get(),
 								   DHCustom_params);
 
 #ifndef OPENSSL_NO_ECDH
@@ -1526,18 +1451,19 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 						     (res->ecdh_curve_nid)) ==
 						    nullptr)
 							conf_err("Unable to generate Listener temp ECDH key");
-						SSL_CTX_set_tmp_ecdh(pc->ctx.
-								     get(),
+						SSL_CTX_set_tmp_ecdh(pc->
+								     ctx.get
+								     (),
 								     ecdh);
-						SSL_CTX_set_options(pc->ctx.
-								    get(),
+						SSL_CTX_set_options(pc->
+								    ctx.get(),
 								    SSL_OP_SINGLE_ECDH_USE);
 						EC_KEY_free(ecdh);
 					}
 #if defined(SSL_CTX_set_ecdh_auto)
 					else {
-						SSL_CTX_set_ecdh_auto(res->
-								      ctx, 1);
+						SSL_CTX_set_ecdh_auto
+							(res->ctx, 1);
 					}
 #endif
 #endif
@@ -1554,8 +1480,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 	return nullptr;
 }
 
-unsigned char **
-Config::get_subjectaltnames(X509 * x509, unsigned int *count_)
+unsigned char **Config::get_subjectaltnames(X509 * x509, unsigned int *count_)
 {
 	size_t local_count;
 	unsigned char **result;
@@ -1618,9 +1543,9 @@ Config::get_subjectaltnames(X509 * x509, unsigned int *count_)
 	return result;
 }
 
-void
-Config::load_cert(int has_other, std::weak_ptr < ListenerConfig > listener_,
-		  char *filename)
+void Config::load_cert(int has_other,
+		       std::weak_ptr < ListenerConfig > listener_,
+		       char *filename)
 {
 	auto res = listener_.lock();
 	std::shared_ptr < POUND_CTX > pc;
@@ -1656,9 +1581,8 @@ Config::load_cert(int has_other, std::weak_ptr < ListenerConfig > listener_,
 		bio_cert(BIO_new_file(filename, "r"),::BIO_free);
 	std::unique_ptr < X509,
 		decltype(&::X509_free) >
-		x509(::
-		     PEM_read_bio_X509(bio_cert.get(), nullptr, nullptr,
-				       nullptr),::X509_free);
+		x509(::PEM_read_bio_X509(bio_cert.get(), nullptr, nullptr,
+					 nullptr),::X509_free);
 	memset(server_name, '\0', ZCU_DEF_BUFFER_SIZE);
 	X509_NAME_oneline(X509_get_subject_name(x509.get()), server_name,
 			  ZCU_DEF_BUFFER_SIZE - 1);
@@ -1699,10 +1623,9 @@ Config::load_cert(int has_other, std::weak_ptr < ListenerConfig > listener_,
 #endif
 }
 
-void
-Config::load_certdir(int has_other,
-		     std::weak_ptr < ListenerConfig > listener_,
-		     const std::string & dir_path)
+void Config::load_certdir(int has_other,
+			  std::weak_ptr < ListenerConfig > listener_,
+			  const std::string & dir_path)
 {
 	DIR *dp;
 	struct dirent *de;
@@ -1764,21 +1687,14 @@ Config::load_certdir(int has_other,
 
 std::shared_ptr < ServiceConfig > Config::parseService(const char *svc_name)
 {
-	char
-		lin[ZCU_DEF_BUFFER_SIZE];
-	char
-		pat[ZCU_DEF_BUFFER_SIZE];
-	char *
-		ptr;
-	auto
-		res = std::make_shared < ServiceConfig > ();
+	char lin[ZCU_DEF_BUFFER_SIZE];
+	char pat[ZCU_DEF_BUFFER_SIZE];
+	char *ptr;
+	auto res = std::make_shared < ServiceConfig > ();
 	std::shared_ptr < BackendConfig > be;
-	MATCHER *
-		m;
-	int
-		ign_case;
-	regmatch_t
-		matches[10];
+	MATCHER *m;
+	int ign_case;
+	regmatch_t matches[10];
 
 	res->f_name = name;
 	res->max_headers_allowed = 128;
@@ -2043,8 +1959,7 @@ std::shared_ptr < ServiceConfig > Config::parseService(const char *svc_name)
 	return nullptr;
 }
 
-char *
-Config::parse_orurls()
+char *Config::parse_orurls()
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
 	char *pattern;
@@ -2066,10 +1981,10 @@ Config::parse_orurls()
 			if (pattern == nullptr) {
 				if ((pattern =
 				     static_cast <
-				     char *>(std::
-					     malloc(strlen
-						    (lin + matches[1].rm_so) +
-						    5))) == nullptr)
+				     char *>(std::malloc(strlen
+							 (lin +
+							  matches[1].rm_so) +
+							 5))) == nullptr)
 					conf_err("OrURLs config: out of memory - aborted");
 				*pattern = 0;
 				strcat(pattern, "((");
@@ -2083,8 +1998,8 @@ Config::parse_orurls()
 				     *>(realloc
 					(pattern,
 					 strlen(pattern) + strlen(lin +
-								  matches[1].
-								  rm_so) +
+								  matches
+								  [1].rm_so) +
 					 4))) == nullptr)
 					conf_err("OrURLs config: out of memory - aborted");
 				pattern[strlen(pattern) - 1] = 0;
@@ -2110,24 +2025,14 @@ Config::parse_orurls()
 std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 						       const int is_emergency)
 {
-	char
-		lin[ZCU_DEF_BUFFER_SIZE];
-	regmatch_t
-		matches[5];
-	char *
-		cp;
-	auto
-		res = std::make_shared < BackendConfig > ();
-	int
-		has_addr,
-		has_port;
-	sockaddr_in
-		in
-	{
+	char lin[ZCU_DEF_BUFFER_SIZE];
+	regmatch_t matches[5];
+	char *cp;
+	auto res = std::make_shared < BackendConfig > ();
+	int has_addr, has_port;
+	sockaddr_in in {
 	};
-	sockaddr_in6
-		in6
-	{
+	sockaddr_in6 in6 {
 	};
 
 	res->f_name = name;
@@ -2143,13 +2048,9 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 	res->ctx = nullptr;
 	res->nf_mark = 0;
 	has_addr = has_port = 0;
-	addrinfo
-		addr
-	{
+	addrinfo addr {
 	};
-	addrinfo
-		ha_addr
-	{
+	addrinfo ha_addr {
 	};
 	pthread_mutex_init(&res->mut, nullptr);
 	while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
@@ -2158,14 +2059,13 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 		if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 
-			if (zcutils_net_get_host(lin + matches[1].rm_so, &addr,
-				    PF_UNSPEC)) {
+			if (zcutils_net_get_host
+			    (lin + matches[1].rm_so, &addr, PF_UNSPEC)) {
 				/* if we can't resolve it, maybe this is a UNIX domain socket */
-				if (std::
-				    string_view(lin + matches[1].rm_so,
-						matches[1].rm_eo -
-						matches[1].rm_so).find('/') !=
-				    std::string::npos) {
+				if (std::string_view(lin + matches[1].rm_so,
+						     matches[1].rm_eo -
+						     matches[1].rm_so).
+				    find('/') != std::string::npos) {
 					if ((strlen(lin + matches[1].rm_so) +
 					     1) > UNIX_PATH_MAX)
 						conf_err("UNIX path name too long");
@@ -2175,9 +2075,8 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 					res->alive = 0;
 					zcutils_log_print(LOG_ERR,
 							  "%s line %d: Could not resolve backend host \"%s\".",
-							  f_name[cur_fin].
-							  data(),
-							  n_lin[cur_fin],
+							  f_name[cur_fin].data
+							  (), n_lin[cur_fin],
 							  lin +
 							  matches[1].rm_so);
 				}
@@ -2237,8 +2136,8 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 			if (is_emergency)
 				conf_err("HAportAddr is not supported for Emergency back-ends");
 			lin[matches[1].rm_eo] = '\0';
-			if (zcutils_net_get_host(lin + matches[1].rm_so, &ha_addr,
-				    PF_UNSPEC)) {
+			if (zcutils_net_get_host
+			    (lin + matches[1].rm_so, &ha_addr, PF_UNSPEC)) {
 				/* if we can't resolve it assume this is a UNIX domain socket */
 				if ((strlen(lin + matches[1].rm_so) + 1) >
 				    UNIX_PATH_MAX)
@@ -2283,13 +2182,11 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 						       uint32_t >
 						       (strlen(lin)));
 			SSL_CTX_set_tmp_rsa_callback(res->ctx,
-						     global::SslHelper::
-						     RSA_tmp_callback);
+						     global::
+						     SslHelper::RSA_tmp_callback);
 			if (nullptr == DHCustom_params)
 				SSL_CTX_set_tmp_dh_callback(res->ctx.get(),
-							    global::
-							    SslHelper::
-							    DH_tmp_callback);
+							    global::SslHelper::DH_tmp_callback);
 			else
 				SSL_CTX_set_tmp_dh(res->ctx.get(),
 						   DHCustom_params);
@@ -2300,8 +2197,9 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 			lin[matches[1].rm_eo] = '\0';
 			if (SSL_CTX_use_certificate_chain_file(res->ctx.get(),
 							       lin +
-							       matches[1].
-							       rm_so) != 1)
+							       matches
+							       [1].rm_so) !=
+			    1)
 				conf_err("SSL_CTX_use_certificate_chain_file failed - aborted");
 			if (SSL_CTX_use_PrivateKey_file
 			    (res->ctx.get(), lin + matches[1].rm_so,
@@ -2376,11 +2274,10 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 			if (res->ecdh_curve_nid != 0) {
 				/* This generates a EC_KEY structure with no key, but a group defined
 				 */
-				EC_KEY *
-					ecdh;
+				EC_KEY *ecdh;
 				if ((ecdh =
-				     EC_KEY_new_by_curve_name(res->
-							      ecdh_curve_nid))
+				     EC_KEY_new_by_curve_name
+				     (res->ecdh_curve_nid))
 				    == nullptr)
 					conf_err("Unable to generate temp ECDH key");
 				SSL_CTX_set_tmp_ecdh(res->ctx.get(), ecdh);
@@ -2418,8 +2315,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 }
 
 #ifdef CACHE_ENABLED
-void
-Config::parseCache(ServiceConfig * const svc)
+void Config::parseCache(ServiceConfig * const svc)
 {
 	char lin[ZCU_DEF_BUFFER_SIZE], *cp;
 	if (cache_s == 0 || cache_thr == 0)
@@ -2458,8 +2354,7 @@ Config::parseCache(ServiceConfig * const svc)
 	}
 }
 #endif
-void
-Config::parseSession(std::weak_ptr < ServiceConfig > svc_spt)
+void Config::parseSession(std::weak_ptr < ServiceConfig > svc_spt)
 {
 	char lin[ZCU_DEF_BUFFER_SIZE], *cp, *parm;
 	regmatch_t matches[5];
@@ -2497,10 +2392,10 @@ Config::parseSession(std::weak_ptr < ServiceConfig > svc_spt)
 			svc->sess_id =
 				svc->sess_id.substr(0,
 						    static_cast <
-						    size_t >(matches[1].
-							     rm_eo -
-							     matches[1].
-							     rm_so));
+						    size_t >(matches[1].rm_eo
+							     -
+							     matches
+							     [1].rm_so));
 			if (svc->sess_type != SESS_TYPE::SESS_COOKIE
 			    && svc->sess_type != SESS_TYPE::SESS_URL
 			    && svc->sess_type != SESS_TYPE::SESS_HEADER)
@@ -2589,8 +2484,7 @@ Config::parseSession(std::weak_ptr < ServiceConfig > svc_spt)
 	conf_err("Session premature EOF");
 }
 
-void
-Config::conf_err(const char *msg)
+void Config::conf_err(const char *msg)
 {
 	zcutils_log_print(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
 			  n_lin[cur_fin], msg);
@@ -2599,8 +2493,7 @@ Config::conf_err(const char *msg)
 	this->found_parse_error = true;
 }
 
-char *
-Config::conf_fgets(char *buf, const int max)
+char *Config::conf_fgets(char *buf, const int max)
 {
 	int i;
 	regmatch_t matches[5];
@@ -2643,8 +2536,7 @@ Config::conf_fgets(char *buf, const int max)
 	}
 }
 
-void
-Config::include_dir(const char *conf_path)
+void Config::include_dir(const char *conf_path)
 {
 	DIR *dp;
 	struct dirent *de;
@@ -2711,8 +2603,7 @@ Config::include_dir(const char *conf_path)
 	closedir(dp);
 }
 
-void
-Config::setAsCurrent()
+void Config::setAsCurrent()
 {
 	if (found_parse_error)
 		return;
@@ -2736,8 +2627,7 @@ Config::setAsCurrent()
 	global::StartOptions::getCurrent().conf_file_name = conf_file_name;
 }
 
-bool
-Config::init(const std::string & file_name)
+bool Config::init(const std::string & file_name)
 {
 	conf_file_name = file_name;
 
@@ -2776,8 +2666,7 @@ Config::init(const std::string & file_name)
 	return !found_parse_error;
 }
 
-void
-__SSL_CTX_free(SSL_CTX * ssl_ctx)
+void __SSL_CTX_free(SSL_CTX * ssl_ctx)
 {
 	::SSL_CTX_free(ssl_ctx);
 }

@@ -26,17 +26,13 @@
 #include "../handlers/waf.h"
 #endif
 
-std::map < int,
-	std::shared_ptr <
-	ServiceManager >>
-	ServiceManager::instance;
+std::map < int, std::shared_ptr < ServiceManager >> ServiceManager::instance;
 
 std::shared_ptr < ServiceManager >
 	&ServiceManager::getInstance(std::shared_ptr < ListenerConfig >
 				     listener_config)
 {
-	auto
-		it = instance.find(listener_config->id);
+	auto it = instance.find(listener_config->id);
 	if (it == instance.end())
 		instance[listener_config->id] =
 			std::make_shared < ServiceManager > (listener_config);
@@ -44,16 +40,15 @@ std::shared_ptr < ServiceManager >
 }
 
 std::map < int,
-	std::shared_ptr <
-ServiceManager >> &
-ServiceManager::getInstance()
+	std::shared_ptr < ServiceManager >> & ServiceManager::getInstance()
 {
 	return instance;
 }
 
 ServiceManager::ServiceManager(std::shared_ptr < ListenerConfig >
 			       listener_config)
-:	listener_config_(std::move(listener_config)),
+:	
+listener_config_(std::move(listener_config)),
 id(listener_config_->id), name(listener_config_->name),
 disabled(listener_config_->disabled != 0)
 {
@@ -67,9 +62,8 @@ disabled(listener_config_->disabled != 0)
 	listener_config_->modsec =
 		std::make_shared < modsecurity::ModSecurity > ();
 	listener_config_->modsec->setConnectorInformation("zproxy_" +
-							  listener_config_->
-							  name +
-							  "_connector");
+							  listener_config_->name
+							  + "_connector");
 	listener_config_->modsec->setServerLogCb(Waf::logModsec);
 #endif
 	ctl_manager = ctl::ControlManager::getInstance();
@@ -87,8 +81,7 @@ ServiceManager::~ServiceManager()
 	}
 }
 
-Service *
-ServiceManager::getService(HttpRequest & request)
+Service *ServiceManager::getService(HttpRequest & request)
 {
       for (auto srv:services) {
 		if (!srv->service_config.disabled) {
@@ -110,8 +103,7 @@ std::vector < Service * >ServiceManager::getServices()
 	return services;
 }
 
-bool
-ServiceManager::addService(ServiceConfig & service_config, int _id)
+bool ServiceManager::addService(ServiceConfig & service_config, int _id)
 {
 	auto service = new Service(service_config);
 	service->id = _id;
@@ -146,13 +138,11 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 					root->emplace(JSON_KEYS::ADDRESS,
 						      std::make_unique <
 						      JsonDataValue >
-						      (listener_config_->
-						       address));
+						      (listener_config_->address));
 					root->emplace(JSON_KEYS::PORT,
 						      std::make_unique <
 						      JsonDataValue >
-						      (listener_config_->
-						       port));
+						      (listener_config_->port));
 					root->emplace(JSON_KEYS::ID,
 						      std::make_unique <
 						      JsonDataValue >
@@ -160,27 +150,24 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 					root->emplace(JSON_KEYS::HTTPS,
 						      std::make_unique <
 						      JsonDataValue >
-						      (listener_config_->
-						       ctx != nullptr));
+						      (listener_config_->ctx
+						       != nullptr));
 					root->emplace(JSON_KEYS::STATUS,
 						      std::make_unique <
 						      JsonDataValue >
-						      (this->
-						       disabled ? JSON_KEYS::
-						       STATUS_DOWN :
-						       JSON_KEYS::
-						       STATUS_ACTIVE));
+						      (this->disabled ?
+						       JSON_KEYS::STATUS_DOWN
+						       :
+						       JSON_KEYS::STATUS_ACTIVE));
 					root->emplace(JSON_KEYS::NAME,
 						      std::make_unique <
 						      JsonDataValue > (name));
 
-					auto
-						sm = this->weak_from_this();
-					auto
-						count =
-						this->disabled ? sm.
-						use_count() : sm.use_count() -
-						1;
+					auto sm = this->weak_from_this();
+					auto count =
+						this->
+						disabled ? sm.use_count() :
+						sm.use_count() - 1;
 					root->emplace(JSON_KEYS::CONNECTIONS,
 						      std::make_unique <
 						      JsonDataValue >
@@ -189,20 +176,17 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 						      std::make_unique <
 						      JsonDataValue >
 						      (count));
-					auto
-						services_array =
+					auto services_array =
 						std::make_unique < JsonArray >
 						();
 				      for (auto service:services)
-						services_array->
-							emplace_back(service->
-								     getServiceJson
-								     ());
+						services_array->emplace_back
+							(service->getServiceJson
+							 ());
 					root->emplace(JSON_KEYS::SERVICES,
-						      std::
-						      move(services_array));
-					auto
-						data = root->stringify();
+						      std::move
+						      (services_array));
+					auto data = root->stringify();
 					return data;
 				}
 			}
@@ -223,8 +207,7 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 #if WAF_ENABLED
 		case ctl::CTL_SUBJECT::RELOAD_WAF:{
 				//          auto json_data = JsonParser::parse(task.data);
-				auto
-					new_rules = Waf::reloadRules();	// TODO:: update reload
+				auto new_rules = Waf::reloadRules();	// TODO:: update reload
 				if (new_rules == nullptr) {
 					return JSON_OP_RESULT::ERROR;
 				}
@@ -241,12 +224,11 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 				if (status == nullptr)
 					return JSON_OP_RESULT::ERROR;
 				if (status->at(JSON_KEYS::STATUS)->isValue()) {
-					auto
-						value =
+					auto value =
 						dynamic_cast <
 						JsonDataValue *
-						>(status->
-						  at(JSON_KEYS::STATUS).get())
+						>(status->at
+						  (JSON_KEYS::STATUS).get())
 						->string_value;
 					if (value == JSON_KEYS::STATUS_ACTIVE
 					    || value ==
@@ -282,8 +264,7 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 	return JSON_OP_RESULT::ERROR;
 }
 
-bool
-ServiceManager::isHandler(ctl::CtlTask & task)
+bool ServiceManager::isHandler(ctl::CtlTask & task)
 {
 	return !disabled &&
 		(((task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER) &&

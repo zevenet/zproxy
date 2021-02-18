@@ -83,21 +83,19 @@ json::JsonDataValue::JsonDataValue(unsigned long value)
 	setValue(static_cast < long >(value));
 }
 
-json::JsonDataValue & json::JsonDataValue::operator=(const json::
-						     JsonDataValue & other)
+json::JsonDataValue & json::JsonDataValue::
+operator=(const json::JsonDataValue & other)
 {
 	setValue(other);
 	return *this;
 }
 
-bool
-json::JsonDataValue::isValue()
+bool json::JsonDataValue::isValue()
 {
 	return true;
 }
 
-void
-json::JsonDataValue::setValue(const json::JsonDataValue & value)
+void json::JsonDataValue::setValue(const json::JsonDataValue & value)
 {
 	switch (value.json_type) {
 	case JSON_VALUE_TYPE::JSON_T_NULL:
@@ -121,57 +119,49 @@ json::JsonDataValue::setValue(const json::JsonDataValue & value)
 	}
 }
 
-void
-json::JsonDataValue::setValue(const std::string & value)
+void json::JsonDataValue::setValue(const std::string & value)
 {
 	string_value = std::string(value);
 	json_type = JSON_VALUE_TYPE::JSON_T_STRING;
 }
 
-void
-json::JsonDataValue::setValue(const char *value)
+void json::JsonDataValue::setValue(const char *value)
 {
 	string_value = std::string(value);
 	json_type = JSON_VALUE_TYPE::JSON_T_STRING;
 }
 
-void
-json::JsonDataValue::setValue(double value)
+void json::JsonDataValue::setValue(double value)
 {
 	double_value = value;
 	json_type = JSON_VALUE_TYPE::JSON_T_DOUBLE;
 }
 
-void
-json::JsonDataValue::setValue(long value)
+void json::JsonDataValue::setValue(long value)
 {
 	number_value = value;
 	json_type = JSON_VALUE_TYPE::JSON_T_NUMBER;
 }
 
-void
-json::JsonDataValue::setValue(bool value)
+void json::JsonDataValue::setValue(bool value)
 {
 	bool_value = value;
 	json_type = JSON_VALUE_TYPE::JSON_T_BOOL;
 }
 
-void
-json::JsonDataValue::setNullValue()
+void json::JsonDataValue::setNullValue()
 {
 	string_value = "null";
 	json_type = JSON_VALUE_TYPE::JSON_T_NULL;
 }
 
-void
-json::JsonDataValue::setValue(const json::JsonArray & json_arry)
+void json::JsonDataValue::setValue(const json::JsonArray & json_arry)
 {
 	array_value.reset(new JsonArray(json_arry));
 	json_type = JSON_VALUE_TYPE::JSON_T_ARRAY;
 }
 
-void
-json::JsonDataValue::setValue(const json::JsonObject & json_object)
+void json::JsonDataValue::setValue(const json::JsonObject & json_object)
 {
 	object_value.reset(new JsonObject(json_object));
 	json_type = JSON_VALUE_TYPE::JSON_T_OBJECT;

@@ -32,20 +32,17 @@ StringBuffer & StringBuffer::operator<<(StringBuffer const &s)
 	return *this;
 }
 
-std::string const &
-StringBuffer::string() const
+std::string const & StringBuffer::string() const
 {
 	return buffer;
 }
 
-void
-StringBuffer::erase(unsigned int end)
+void StringBuffer::erase(unsigned int end)
 {
 	buffer.erase(buffer.begin(), buffer.begin() + end);
 }
 
-void
-StringBuffer::addData(char const *s, size_t size)
+void StringBuffer::addData(char const *s, size_t size)
 {
 	for (int i = 0; i < size; i++)
 		buffer += s[0];

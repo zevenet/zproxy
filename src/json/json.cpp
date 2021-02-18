@@ -94,13 +94,11 @@ namespace json
 #endif
 }				// namespace json
 
-json::Json::~
-Json()
+json::Json::~ Json()
 {
 }
 
-bool
-json::Json::isArray()
+bool json::Json::isArray()
 {
 	return false;
 }

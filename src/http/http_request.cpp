@@ -21,8 +21,7 @@
 #include "http_request.h"
 #include "../../zcutils/zcutils.h"
 
-void
-HttpRequest::setRequestMethod()
+void HttpRequest::setRequestMethod()
 {
 	auto sv = std::string_view(method, method_len);
 	//    auto sv = std::string(method, method_len);
@@ -37,12 +36,11 @@ http::REQUEST_METHOD HttpRequest::getRequestMethod()
 	return request_method;
 }
 
-void
-HttpRequest::printRequestMethod()
+void HttpRequest::printRequestMethod()
 {
 	zcutils_log_print(LOG_DEBUG, "Request method: %s",
-			  http::http_info::http_verb_strings.
-			  at(request_method).c_str());
+			  http::http_info::
+			  http_verb_strings.at(request_method).c_str());
 }
 
 std::string_view HttpRequest::getMethod()
@@ -62,21 +60,18 @@ std::string HttpRequest::getUrl()
 					     path_length) : std::string();
 }
 
-void
-HttpRequest::setService(void *service)
+void HttpRequest::setService(void *service)
 {
 	this->request_service = service;
 }
 
-void *
-HttpRequest::getService() const
+void *HttpRequest::getService() const
 {
 	return request_service;
 }
 
 #ifdef CACHE_ENABLED
-bool
-HttpResponse::isCached()
+bool HttpResponse::isCached()
 {
 	return this->cached;
 }

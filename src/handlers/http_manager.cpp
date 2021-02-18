@@ -26,9 +26,8 @@
 
 //#define PRINT_DEBUG_CHUNKED 1
 
-ssize_t
-http_manager::handleChunkedData(Connection & connection,
-				http_parser::HttpData & http_data)
+ssize_t http_manager::handleChunkedData(Connection & connection,
+					http_parser::HttpData & http_data)
 {
 	auto last_chunk_size = http_data.chunk_size_left;
 	if (last_chunk_size >= connection.buffer_size) {
@@ -40,14 +39,12 @@ http_manager::handleChunkedData(Connection & connection,
 		auto chunk_size =
 			http_manager::getLastChunkSize(connection.buffer +
 						       last_chunk_size,
-						       connection.
-						       buffer_size -
-						       http_data.
-						       chunk_size_left,
+						       connection.buffer_size
+						       -
+						       http_data.chunk_size_left,
 						       data_offset,
 						       new_chunk_left,
-						       http_data.
-						       content_length);
+						       http_data.content_length);
 		//#if PRINT_DEBUG_CHUNKED
 		const char *status =
 			chunk_size < 0 ? "*" : chunk_size == 0 ? "/" : "";
@@ -87,9 +84,8 @@ http_manager::handleChunkedData(Connection & connection,
 	return static_cast < ssize_t > (http_data.chunk_size_left);
 }
 
-ssize_t
-http_manager::getChunkSize(const std::string & data, size_t data_size,
-			   int &chunk_size_line_len)
+ssize_t http_manager::getChunkSize(const std::string & data, size_t data_size,
+				   int &chunk_size_line_len)
 {
 	auto pos = data.find(http::CRLF);
 	if (pos != std::string::npos && pos < data_size) {
@@ -118,11 +114,10 @@ http_manager::getChunkSize(const std::string & data, size_t data_size,
 	return -1;
 }
 
-ssize_t
-http_manager::getLastChunkSize(const char *data, size_t data_size,
-			       size_t &data_offset,
-			       size_t &chunk_size_bytes_left,
-			       size_t &content_length)
+ssize_t http_manager::getLastChunkSize(const char *data, size_t data_size,
+				       size_t &data_offset,
+				       size_t &chunk_size_bytes_left,
+				       size_t &content_length)
 {
 	int chunk_size_len = 0;
 	auto chunk_size = getChunkSize(data, data_size, chunk_size_len);
@@ -155,8 +150,7 @@ http_manager::getLastChunkSize(const char *data, size_t data_size,
 	}
 }
 
-void
-http_manager::setBackendCookie(Service * service, HttpStream * stream)
+void http_manager::setBackendCookie(Service * service, HttpStream * stream)
 {
 	if (!service->becookie.empty()
 	    && !stream->backend_connection.getBackend()->bekey.empty()) {
@@ -182,13 +176,14 @@ http_manager::setBackendCookie(Service * service, HttpStream * stream)
 //    }
 		service->updateSession(stream->client_connection,
 				       stream->request,
-				       stream->backend_connection.
-				       getBackend()->bekey,
-				       *stream->backend_connection.
-				       getBackend());
+				       stream->
+				       backend_connection.getBackend()->bekey,
+				       *stream->
+				       backend_connection.getBackend());
 		stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
-					   stream->backend_connection.
-					   getBackend()->bekey);
+					   stream->
+					   backend_connection.getBackend()->
+					   bekey);
 	}
 }
 
@@ -196,16 +191,10 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 {
 	auto & listener_config_ = *stream.service_manager->listener_config_;
 	HttpRequest & request = stream.request;
-	regmatch_t
-		eol
-	{
-		0,
-			static_cast <
-	regoff_t > (request.http_message_length)};
-	auto
-		res =::regexec(&listener_config_.verb, request.http_message,
-			       1,	// include validation data package
-			       &eol, REG_STARTEND);
+	regmatch_t eol {
+	0, static_cast < regoff_t > (request.http_message_length)};
+	auto res =::regexec(&listener_config_.verb, request.http_message, 1,	// include validation data package
+			    &eol, REG_STARTEND);
 	if (UNLIKELY(res != 0)) {
 		// TODO:: check RPC
 		/*
@@ -220,8 +209,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 	else {
 		request.setRequestMethod();
 	}
-	auto
-		request_url =
+	auto request_url =
 		std::string_view(request.path, request.path_length);
 	if (request_url.find("%00") != std::string::npos) {
 		return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
@@ -245,8 +233,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 	{
 		return validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
 	}
-	bool
-		connection_close_pending = false;
+	bool connection_close_pending = false;
 	// Check for correct headers
 	for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_HTTP_HEADERS
@@ -260,9 +247,9 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 		eol.rm_so = 0;
 		eol.rm_eo = request.headers[i].line_size;
 		for (auto m = listener_config_.head_off; m; m = m->next) {
-			if (::
-			    regexec(&m->pat, request.headers[i].name, 1, &eol,
-				    REG_STARTEND) == 0) {
+			if (::regexec
+			    (&m->pat, request.headers[i].name, 1, &eol,
+			     REG_STARTEND) == 0) {
 				request.headers[i].header_off = true;
 				break;
 			}
@@ -271,20 +258,14 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 		for (auto m = listener_config_.replace_header_request; m;
 		     m = m->next) {
 			eol.rm_eo = request.headers[i].line_size;
-			if (::
-			    regexec(&m->name, request.headers[i].name, 1,
-				    &eol, REG_STARTEND) == 0) {
-				auto
-					buf =
+			if (::regexec(&m->name, request.headers[i].name, 1,
+				      &eol, REG_STARTEND) == 0) {
+				auto buf =
 					std::make_unique < char[] >
 					(ZCU_DEF_BUFFER_SIZE);
 				memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
-				regmatch_t
-					umtch[10];
-				char *
-				chptr, *
-				enptr, *
-					srcptr;
+				regmatch_t umtch[10];
+				char *chptr, *enptr, *srcptr;
 				umtch[0].rm_so = 0;
 				umtch[0].rm_eo = request.headers[i].value_len;
 				if (regexec
@@ -292,10 +273,11 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 				     umtch, REG_STARTEND)) {
 					zcutils_log_print(LOG_INFO,
 							  "Header Match pattern didn't match %.*s",
-							  request.headers[i].
-							  line_size,
-							  request.headers[i].
-							  name);
+							  request.
+							  headers
+							  [i].line_size,
+							  request.
+							  headers[i].name);
 					break;
 				}
 				else {
@@ -315,36 +297,32 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 						    && isdigit(srcptr[1])) {
 							if (chptr +
 							    umtch[srcptr[1] -
-								  0x30].
-							    rm_eo -
+								  0x30].rm_eo
+							    -
 							    umtch[srcptr[1] -
-								  0x30].
-							    rm_so > enptr - 1)
+								  0x30].rm_so
+							    > enptr - 1)
 								break;
 							memcpy(chptr,
-							       request.
-							       headers[i].
-							       value +
+							       request.headers
+							       [i].value +
 							       umtch[srcptr[1]
 								     -
-								     0x30].
-							       rm_so,
+								     0x30].rm_so,
 							       umtch[srcptr[1]
 								     -
-								     0x30].
-							       rm_eo -
+								     0x30].rm_eo
+							       -
 							       umtch[srcptr[1]
 								     -
-								     0x30].
-							       rm_so);
+								     0x30].rm_so);
 							chptr += umtch[srcptr
 								       [1] -
-								       0x30].
-								rm_eo -
+								       0x30].rm_eo
+								-
 								umtch[srcptr
 								      [1] -
-								      0x30].
-								rm_so;
+								      0x30].rm_so;
 							srcptr += 2;
 							continue;
 						}
@@ -352,13 +330,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 					}
 					*chptr++ = '\0';
 
-					auto
-						new_header_value =
-						std::string(request.
-							    headers[i].name,
-							    request.
-							    headers[i].
-							    name_len);
+					auto new_header_value =
+						std::
+						string(request.headers[i].
+						       name,
+						       request.headers
+						       [i].name_len);
 					new_header_value += ": ";
 					new_header_value += buf.get();
 					request.addHeader(new_header_value);
@@ -378,23 +355,19 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 
 		// check header values length
 		if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
-			return http::validation::REQUEST_RESULT::
-				REQUEST_TOO_LARGE;
+			return http::validation::
+				REQUEST_RESULT::REQUEST_TOO_LARGE;
 
-		auto
-			header =
+		auto header =
 			std::string_view(request.headers[i].name,
 					 request.headers[i].name_len);
-		auto
-			header_value =
+		auto header_value =
 			std::string_view(request.headers[i].value,
 					 request.headers[i].value_len);
 
-		auto
-			it = http::http_info::headers_names.find(header);
+		auto it = http::http_info::headers_names.find(header);
 		if (it != http::http_info::headers_names.end()) {
-			auto
-				header_name = it->second;
+			auto header_name = it->second;
 			switch (header_name) {
 			case http::HTTP_HEADER_NAME::DESTINATION:
 				if (listener_config_.rewr_dest != 0) {
@@ -407,12 +380,16 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 
 				break;
 			case http::HTTP_HEADER_NAME::CONNECTION:{
-					if (http_info::connection_values.
-					    count(std::string(header_value)) >
-					    0
-					    && http_info::connection_values.
-					    at(std::string(header_value)) ==
-					    CONNECTION_VALUES::UPGRADE)
+					if (http_info::
+					    connection_values.count(std::
+								    string
+								    (header_value))
+					    > 0
+					    && http_info::
+					    connection_values.at(std::
+								 string
+								 (header_value))
+					    == CONNECTION_VALUES::UPGRADE)
 						request.connection_header_upgrade = true;
 					else if (header_value.find("close") !=
 						 std::string::npos) {
@@ -434,32 +411,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 							request.transfer_encoding_type = TRANSFER_ENCODING_TYPE::CHUNKED;
 							request.chunked_status
 								=
-								http::
-								CHUNKED_STATUS::
-								CHUNKED_ENABLED;
+								http::CHUNKED_STATUS::CHUNKED_ENABLED;
 #ifdef CACHE_ENABLED
-							if (request.
-							    message_length >
-							    0) {
-								size_t
-									data_offset
-									= 0;
-								size_t
-									new_chunk_left
-									= 0;
-								auto
-									chunk_size
-									=
-									http_manager::
-									getLastChunkSize
-									(request.
-									 message,
-									 request.
-									 message_length,
-									 data_offset,
-									 new_chunk_left,
-									 request.
-									 content_length);
+							if (request.message_length > 0) {
+								size_t data_offset = 0;
+								size_t new_chunk_left = 0;
+								auto chunk_size = http_manager::getLastChunkSize(request.message, request.message_length, data_offset, new_chunk_left, request.content_length);
 #if PRINT_DEBUG_CHUNKED
 								zcutils_log_print
 									(LOG_DEBUG,
@@ -496,8 +453,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 					}
 				case 'd':	// deflate
 					request.transfer_encoding_type =
-						TRANSFER_ENCODING_TYPE::
-						DEFLATE;
+						TRANSFER_ENCODING_TYPE::DEFLATE;
 					break;
 				case 'g':	// gzip
 					request.transfer_encoding_type =
@@ -505,8 +461,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 					break;
 				case 'i':	// identity
 					request.transfer_encoding_type =
-						TRANSFER_ENCODING_TYPE::
-						IDENTITY;
+						TRANSFER_ENCODING_TYPE::IDENTITY;
 					break;
 				}
 				break;
@@ -521,11 +476,11 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 				}
 			case http::HTTP_HEADER_NAME::HOST:{
 					stream.request.virtual_host =
-						std::string(request.
-							    headers[i].value,
-							    request.
-							    headers[i].
-							    value_len);
+						std::
+						string(request.headers[i].
+						       value,
+						       request.headers
+						       [i].value_len);
 					request.host_header_found =
 						listener_config_.rewr_host ==
 						0;
@@ -542,8 +497,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 								  __LINE__);
 					}
 					request.headers[i].header_off =
-						listener_config_.
-						ignore100continue;
+						listener_config_.ignore100continue;
 					break;
 				}
 			case http::HTTP_HEADER_NAME::X_FORWARDED_FOR:{
@@ -579,9 +533,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 {
 	auto & listener_config_ = *stream.service_manager->listener_config_;
-	auto
-		service =
-		static_cast < Service * >(stream.request.getService());
+	auto service = static_cast < Service * >(stream.request.getService());
 	HttpResponse & response = stream.response;
 	/* If the response is 100 continue we need to enable chunked transfer. */
 	if (response.http_status_code < 200) {
@@ -594,22 +546,17 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 	stream.request.c_opt.no_store ? response.c_opt.cacheable = false
 		: response.c_opt.cacheable = true;
 #endif
-	bool
-		connection_close_pending = false;
+	bool connection_close_pending = false;
 	for (size_t i = 0; i != response.num_headers; i++) {
 
 		/* maybe header to be removed from response */
-		regmatch_t
-			eol
-		{
-			0,
-				static_cast <
-		regoff_t > (response.headers[i].line_size)};
+		regmatch_t eol {
+		0, static_cast <
+				regoff_t > (response.headers[i].line_size)};
 		for (auto m = listener_config_.response_head_off; m;
 		     m = m->next) {
-			if (::
-			    regexec(&m->pat, response.headers[i].name, 1,
-				    &eol, REG_STARTEND) == 0) {
+			if (::regexec(&m->pat, response.headers[i].name, 1,
+				      &eol, REG_STARTEND) == 0) {
 				response.headers[i].header_off = true;
 				break;
 			}
@@ -618,20 +565,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 		for (auto m = listener_config_.replace_header_response; m;
 		     m = m->next) {
 			eol.rm_eo = response.headers[i].line_size;
-			if (::
-			    regexec(&m->name, response.headers[i].name, 1,
-				    &eol, REG_STARTEND) == 0) {
-				auto
-					buf =
+			if (::regexec(&m->name, response.headers[i].name, 1,
+				      &eol, REG_STARTEND) == 0) {
+				auto buf =
 					std::make_unique < char[] >
 					(ZCU_DEF_BUFFER_SIZE);
 				memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
-				regmatch_t
-					umtch[10];
-				char *
-				chptr, *
-				enptr, *
-					srcptr;
+				regmatch_t umtch[10];
+				char *chptr, *enptr, *srcptr;
 				umtch[0].rm_so = 0;
 				umtch[0].rm_eo =
 					response.headers[i].value_len;
@@ -640,10 +581,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 				     umtch, REG_STARTEND)) {
 					zcutils_log_print(LOG_INFO,
 							  "Header Match pattern didn't match %.*s",
-							  response.headers[i].
-							  line_size,
-							  response.headers[i].
-							  name);
+							  response.
+							  headers
+							  [i].line_size,
+							  response.
+							  headers[i].name);
 					break;
 				}
 				else {
@@ -663,36 +605,32 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 						    && isdigit(srcptr[1])) {
 							if (chptr +
 							    umtch[srcptr[1] -
-								  0x30].
-							    rm_eo -
+								  0x30].rm_eo
+							    -
 							    umtch[srcptr[1] -
-								  0x30].
-							    rm_so > enptr - 1)
+								  0x30].rm_so
+							    > enptr - 1)
 								break;
 							memcpy(chptr,
-							       response.
-							       headers[i].
-							       value +
+							       response.headers
+							       [i].value +
 							       umtch[srcptr[1]
 								     -
-								     0x30].
-							       rm_so,
+								     0x30].rm_so,
 							       umtch[srcptr[1]
 								     -
-								     0x30].
-							       rm_eo -
+								     0x30].rm_eo
+							       -
 							       umtch[srcptr[1]
 								     -
-								     0x30].
-							       rm_so);
+								     0x30].rm_so);
 							chptr += umtch[srcptr
 								       [1] -
-								       0x30].
-								rm_eo -
+								       0x30].rm_eo
+								-
 								umtch[srcptr
 								      [1] -
-								      0x30].
-								rm_so;
+								      0x30].rm_so;
 							srcptr += 2;
 							continue;
 						}
@@ -700,13 +638,12 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					}
 					*chptr++ = '\0';
 
-					auto
-						new_header_value =
-						std::string(response.
-							    headers[i].name,
-							    response.
-							    headers[i].
-							    name_len);
+					auto new_header_value =
+						std::
+						string(response.headers[i].
+						       name,
+						       response.headers
+						       [i].name_len);
 					new_header_value += ": ";
 					new_header_value += buf.get();
 					response.addHeader(new_header_value);
@@ -723,19 +660,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 		if (response.headers[i].header_off)
 			continue;
 		// check header values length
-		auto
-			header = std::string_view(response.headers[i].name,
-						  response.headers[i].
-						  name_len);
-		auto
-			header_value =
+		auto header = std::string_view(response.headers[i].name,
+					       response.headers[i].name_len);
+		auto header_value =
 			std::string_view(response.headers[i].value,
 					 response.headers[i].value_len);
-		auto
-			it = http::http_info::headers_names.find(header);
+		auto it = http::http_info::headers_names.find(header);
 		if (it != http::http_info::headers_names.end()) {
-			const auto
-				header_name = it->second;
+			const auto header_name = it->second;
 			switch (header_name) {
 			case http::HTTP_HEADER_NAME::CONNECTION:
 				{
@@ -758,10 +690,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 			case http::HTTP_HEADER_NAME::LOCATION:{
 					if (listener_config_.rewr_loc == 0)
 						continue;
-					auto
-						backend_addr =
-						stream.backend_connection.
-						getBackend()->address_info;
+					auto backend_addr =
+						stream.
+						backend_connection.getBackend
+						()->address_info;
 					if (backend_addr->ai_family != AF_INET
 					    && backend_addr->ai_family !=
 					    AF_INET6)
@@ -770,10 +702,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					std::string
 						location_header_value
 						(response.headers[i].value,
-						 response.headers[i].
-						 value_len);
-					regmatch_t
-						matches[4];
+						 response.
+						 headers[i].value_len);
+					regmatch_t matches[4];
 					//std::memset(matches,0,4);
 					matches[0].rm_so = 0;
 					matches[0].rm_eo =
@@ -786,47 +717,38 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					}
 
 					std::string
-						proto(location_header_value.
-						      data() +
-						      matches[1].rm_so,
-						      static_cast <
-						      size_t >(matches[1].
-							       rm_eo -
-							       matches[1].
-							       rm_so));
+						proto
+						(location_header_value.data()
+						 + matches[1].rm_so,
+						 static_cast <
+						 size_t >(matches[1].rm_eo -
+							  matches[1].rm_so));
 					std::string
-						host(location_header_value.
-						     data() +
-						     matches[2].rm_so,
-						     static_cast <
-						     size_t >(matches[2].
-							      rm_eo -
-							      matches[2].
-							      rm_so));
+						host
+						(location_header_value.data()
+						 + matches[2].rm_so,
+						 static_cast <
+						 size_t >(matches[2].rm_eo -
+							  matches[2].rm_so));
 
 					//          if (location_header_value[matches[3].rm_so] == '/') {
 					//            matches[3].rm_so++;
 					//          }
 					std::string
-						path(location_header_value.
-						     data() +
-						     matches[3].rm_so,
-						     static_cast <
-						     size_t >(matches[3].
-							      rm_eo -
-							      matches[3].
-							      rm_so));
-					int
-						port = 0;
-					auto
-						port_it = host.find(':');
+						path
+						(location_header_value.data()
+						 + matches[3].rm_so,
+						 static_cast <
+						 size_t >(matches[3].rm_eo -
+							  matches[3].rm_so));
+					int port = 0;
+					auto port_it = host.find(':');
 					if (port_it != std::string::npos) {
-						port = std::stoul(host.
-								  substr
+						port = std::stoul(host.substr
 								  (port_it +
 								   1,
-								   host.
-								   length()));
+								   host.length
+								   ()));
 						host = host.substr(0,
 								   port_it);
 					}
@@ -834,10 +756,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 						port = proto ==
 							"https" ? 443 : 80;
 					}
-					auto
-						in_addr =
+					auto in_addr =
 						zcutils_net_get_address(host,
-								    port);
+									port);
 					if (in_addr == nullptr) {
 						zcutils_log_print(LOG_NOTICE,
 								  "Couldn't get host ip");
@@ -845,19 +766,19 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					}
 					/*rewrite location if it points to the backend or the listener
 					 * address*/
-					if (zcutils_net_equal_sockaddr(in_addr.get(),
-							  backend_addr)
-					    || (zcutils_net_equal_sockaddr(in_addr.get(),
-							      stream.
-							      service_manager->
-							      listener_config_->
-							      addr_info))) {
+					if (zcutils_net_equal_sockaddr
+					    (in_addr.get(), backend_addr)
+					    ||
+					    (zcutils_net_equal_sockaddr
+					     (in_addr.get(),
+					      stream.service_manager->listener_config_->addr_info)))
+					{
 						std::string header_value_;
-						if (listener_config_.
-						    rewr_loc < 2) {
+						if (listener_config_.rewr_loc
+						    < 2) {
 							header_value_ =
-								listener_config_.
-								ctx !=
+								listener_config_.ctx
+								!=
 								nullptr ?
 								"https://" :
 								"http://";
@@ -868,36 +789,35 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 								"://";
 						}
 						header_value_ +=
-							stream.request.
-							virtual_host;
-						if ((stream.service_manager->
-						     listener_config_->ctx !=
-						     nullptr
-						     && listener_config_.
-						     port != 443)
-						    || (listener_config_.
-							port != 80)) {
-							if (header_value.
-							    find(':') ==
-							    std::string::
-							    npos) {
+							stream.
+							request.virtual_host;
+						if ((stream.
+						     service_manager->listener_config_->
+						     ctx != nullptr
+						     && listener_config_.port
+						     != 443)
+						    || (listener_config_.port
+							!= 80)) {
+							if (header_value.find
+							    (':') ==
+							    std::
+							    string::npos) {
 								header_value_
 									+=
 									":";
 								header_value_
 									+=
-									std::
-									to_string
-									(listener_config_.
-									 port);
+									std::to_string
+									(listener_config_.port);
 							}
 						}
 						header_value_ += path;
+						response.addHeader
+							(header_name,
+							 header_value_);
 						response.
-							addHeader(header_name,
-								  header_value_);
-						response.headers[i].
-							header_off = true;
+							headers[i].header_off
+							= true;
 					}
 					break;
 				}
@@ -911,42 +831,19 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 				switch (header_value[0]) {
 				case 'c':{
 						if (header_value[1] == 'h') {	// no content-length
-							response.
-								transfer_encoding_type
+							response.transfer_encoding_type
 								=
-								TRANSFER_ENCODING_TYPE::
-								CHUNKED;
-							response.
-								chunked_status
+								TRANSFER_ENCODING_TYPE::CHUNKED;
+							response.chunked_status
 								=
-								http::
-								CHUNKED_STATUS::
-								CHUNKED_ENABLED;
+								http::CHUNKED_STATUS::CHUNKED_ENABLED;
 #ifdef CACHE_ENABLED
-							if (stream.response.
-							    message_length >
-							    0) {
-								size_t
-									data_offset
-									= 0;
-								size_t
-									new_chunk_left
-									= 0;
-								auto
-									chunk_size
-									=
-									http_manager::
-									getLastChunkSize
-									(stream.
-									 response.
-									 message,
-									 stream.
-									 response.
-									 message_length,
-									 data_offset,
-									 new_chunk_left,
-									 response.
-									 content_length);
+							if (stream.
+							    response.message_length
+							    > 0) {
+								size_t data_offset = 0;
+								size_t new_chunk_left = 0;
+								auto chunk_size = http_manager::getLastChunkSize(stream.response.message, stream.response.message_length, data_offset, new_chunk_left, response.content_length);
 #if PRINT_DEBUG_CHUNKED
 								zcutils_log_print
 									(LOG_DEBUG,
@@ -977,18 +874,15 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 						}
 						else if (header_value[2] ==
 							 'o') {
-							response.
-								transfer_encoding_type
+							response.transfer_encoding_type
 								=
-								TRANSFER_ENCODING_TYPE::
-								COMPRESS;
+								TRANSFER_ENCODING_TYPE::COMPRESS;
 						}
 						break;
 					}
 				case 'd':	// deflate
 					response.transfer_encoding_type =
-						TRANSFER_ENCODING_TYPE::
-						DEFLATE;
+						TRANSFER_ENCODING_TYPE::DEFLATE;
 					break;
 				case 'g':	// gzip
 					response.transfer_encoding_type =
@@ -996,33 +890,25 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					break;
 				case 'i':	// identity
 					response.transfer_encoding_type =
-						TRANSFER_ENCODING_TYPE::
-						IDENTITY;
+						TRANSFER_ENCODING_TYPE::IDENTITY;
 					break;
 				}
 				break;
 			case http::HTTP_HEADER_NAME::SET_COOKIE:{
 					if (service->session_type ==
-					    sessions::HttpSessionType::
-					    SESS_COOKIE) {
-						service->updateSession(stream.
-								       client_connection,
-								       stream.
-								       request,
-								       std::
-								       string
-								       (response.
-									headers
-									[i].
-									value,
-									response.
-									headers
-									[i].
-									value_len),
-								       *stream.
-								       backend_connection.
-								       getBackend
-								       ());
+					    sessions::
+					    HttpSessionType::SESS_COOKIE) {
+						service->
+							updateSession
+							(stream.client_connection,
+							 stream.request,
+							 std::string
+							 (response.headers
+							  [i].value,
+							  response.headers
+							  [i].value_len),
+							 *stream.backend_connection.getBackend
+							 ());
 					}
 					break;
 				}
@@ -1037,13 +923,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 		    && service->sess_id == header) {
 			service->updateSession(stream.client_connection,
 					       stream.request,
-					       std::string(response.
-							   headers[i].value,
-							   response.
-							   headers[i].
-							   value_len),
-					       *stream.backend_connection.
-					       getBackend());
+					       std::
+					       string(response.headers[i].
+						      value,
+						      response.headers
+						      [i].value_len),
+					       *stream.
+					       backend_connection.getBackend
+					       ());
 		}
 	}
 	if (stream.response.content_length > 0 &&
@@ -1066,15 +953,15 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 	return validation::REQUEST_RESULT::OK;
 }
 
-void
-http_manager::replyError(http::Code code, const std::string & code_string,
-			 const std::string & str, Connection & target)
+void http_manager::replyError(http::Code code,
+			      const std::string & code_string,
+			      const std::string & str, Connection & target)
 {
 	char caddr[200];
 
 	if (UNLIKELY
 	    (zcutils_soc_get_peer_address(target.getFileDescriptor(), caddr,
-			    200) == nullptr)) {
+					  200) == nullptr)) {
 		zcutils_log_print(LOG_DEBUG, "Error getting peer address");
 	}
 	else {
@@ -1098,11 +985,16 @@ http_manager::replyError(http::Code code, const std::string & code_string,
 					      sent);
 		}
 		else if (target.ssl != nullptr) {
-			result = ssl::SSLConnectionManager::
-				handleWrite(target,
-					    response_.c_str() + written,
-					    response_.length() - written,
-					    written, true);
+			result = ssl::
+				SSLConnectionManager::handleWrite(target,
+								  response_.
+								  c_str() +
+								  written,
+								  response_.
+								  length() -
+								  written,
+								  written,
+								  true);
 		}
 		if (sent > 0)
 			written += sent;
@@ -1110,9 +1002,8 @@ http_manager::replyError(http::Code code, const std::string & code_string,
 		 written < response_.length());
 }
 
-bool
-http_manager::replyRedirect(HttpStream & stream,
-			    const Backend & redirect_backend)
+bool http_manager::replyRedirect(HttpStream & stream,
+				 const Backend & redirect_backend)
 {
 	/* 0 - redirect is absolute,
 	 * 1 - the redirect should include the request path, or
@@ -1201,9 +1092,8 @@ http_manager::replyRedirect(HttpStream & stream,
 	return replyRedirect(redirect_code, new_url, stream);
 }
 
-bool
-http_manager::replyRedirect(int code, const std::string & url,
-			    HttpStream & stream)
+bool http_manager::replyRedirect(int code, const std::string & url,
+				 HttpStream & stream)
 {
 	auto response_ =
 		http::getRedirectResponse(static_cast < http::Code > (code),
@@ -1217,13 +1107,10 @@ http_manager::replyRedirect(int code, const std::string & url,
 							sent);
 	}
 	else if (stream.client_connection.ssl != nullptr) {
-		result = ssl::SSLConnectionManager::handleWrite(stream.
-								client_connection,
-								response_.
-								c_str(),
-								response_.
-								length(),
-								sent, true);
+		result = ssl::SSLConnectionManager::
+			handleWrite(stream.client_connection,
+				    response_.c_str(), response_.length(),
+				    sent, true);
 	}
 
 	if (result == IO::IO_RESULT::DONE_TRY_AGAIN
@@ -1242,8 +1129,7 @@ http_manager::replyRedirect(int code, const std::string & url,
 	return true;
 }
 
-bool
-http_manager::replyTestServer(HttpStream & stream, bool async)
+bool http_manager::replyTestServer(HttpStream & stream, bool async)
 {
 	const std::string response_ =
 		"HTTP/1.1 200 OK\r\nServer: zproxy 1.0\r\nExpires: now\r\nPragma: "
@@ -1253,18 +1139,20 @@ http_manager::replyTestServer(HttpStream & stream, bool async)
 		IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 		size_t sent = 0;
 		if (!stream.client_connection.ssl_connected) {
-			result = stream.client_connection.write(response_.
-								c_str(),
-								response_.
-								length() - 1,
-								sent);
+			result = stream.client_connection.
+				write(response_.c_str(),
+				      response_.length() - 1, sent);
 		}
 		else if (stream.client_connection.ssl != nullptr) {
-			result = ssl::SSLConnectionManager::
-				handleWrite(stream.client_connection,
-					    response_.c_str(),
-					    response_.length() - 1, sent,
-					    true);
+			result = ssl::
+				SSLConnectionManager::handleWrite(stream.
+								  client_connection,
+								  response_.
+								  c_str(),
+								  response_.
+								  length() -
+								  1, sent,
+								  true);
 		}
 
 		if (result == IO::IO_RESULT::DONE_TRY_AGAIN
@@ -1277,8 +1165,8 @@ http_manager::replyTestServer(HttpStream & stream, bool async)
 			stream.response.chunked_status =
 				CHUNKED_STATUS::CHUNKED_ENABLED;
 			stream.status |=
-				helper::to_underlying(STREAM_STATUS::
-						      REQUEST_PENDING);
+				helper::
+				to_underlying(STREAM_STATUS::REQUEST_PENDING);
 			stream.client_connection.buffer_size = 0;
 			stream.client_connection.buffer_offset = 0;
 			stream.client_connection.enableWriteEvent();

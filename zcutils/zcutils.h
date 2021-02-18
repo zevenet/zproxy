@@ -22,8 +22,6 @@
 #ifndef _ZCUTILS_H_
 #define _ZCUTILS_H_
 
-/****  LOG  ****/
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <syslog.h>
@@ -31,6 +29,8 @@
 #include <execinfo.h>
 #include <cassert>
 #include <sys/resource.h>
+
+/****  LOG  ****/
 
 #define ZCUTILS_LOG_OUTPUT_SYSLOG			(1 << 0)
 #define ZCUTILS_LOG_OUTPUT_STDOUT			(1 << 1)
@@ -51,15 +51,13 @@ enum zcutils_log_output
 static inline int zcutils_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
 static inline int zcutils_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
 
-static inline void
-zcutils_log_set_level(int loglevel)
+static inline void zcutils_log_set_level(int loglevel)
 {
 	zcutils_log_level = loglevel;
 	setlogmask(LOG_UPTO(loglevel));
 }
 
-static inline void
-zcutils_log_set_output(int output)
+static inline void zcutils_log_set_output(int output)
 {
 	switch (output) {
 	case VALUE_LOG_OUTPUT_STDOUT:
@@ -83,8 +81,7 @@ zcutils_log_set_output(int output)
 	return;
 }
 
-static inline int
-zcutils_log_print(int loglevel, const char *fmt, ...)
+static inline int zcutils_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
@@ -120,8 +117,7 @@ zcutils_log_print(int loglevel, const char *fmt, ...)
 
 /****  BACKTRACE  ****/
 
-static inline void
-zcutils_bt_print()
+static inline void zcutils_bt_print()
 {
 	void *buffer[255];
 	char **str;
@@ -145,8 +141,7 @@ zcutils_bt_print()
 
 /****  STRING  ****/
 
-static inline void
-zcutils_str_snprintf(char *strdst, int size, char *strsrc)
+static inline void zcutils_str_snprintf(char *strdst, int size, char *strsrc)
 {
 	for (int i = 0; i < size; i++) {
 		strdst[i] = *(strsrc + i);
@@ -168,20 +163,17 @@ struct zcutils_buffer
 	char *data;
 };
 
-static inline int
-zcutils_buf_get_size(struct zcutils_buffer *buf)
+static inline int zcutils_buf_get_size(struct zcutils_buffer *buf)
 {
 	return buf->size;
 }
 
-static inline char *
-zcutils_buf_get_next(struct zcutils_buffer *buf)
+static inline char *zcutils_buf_get_next(struct zcutils_buffer *buf)
 {
 	return buf->data + buf->next;
 }
 
-static inline int
-zcutils_buf_resize(struct zcutils_buffer *buf, int times)
+static inline int zcutils_buf_resize(struct zcutils_buffer *buf, int times)
 {
 	char *pbuf;
 	int newsize;
@@ -203,8 +195,7 @@ zcutils_buf_resize(struct zcutils_buffer *buf, int times)
 	return 0;
 }
 
-static inline int
-zcutils_buf_create(struct zcutils_buffer *buf)
+static inline int zcutils_buf_create(struct zcutils_buffer *buf)
 {
 	buf->size = 0;
 	buf->next = 0;
@@ -219,20 +210,17 @@ zcutils_buf_create(struct zcutils_buffer *buf)
 	return 0;
 }
 
-static inline int
-zcutils_buf_isempty(struct zcutils_buffer *buf)
+static inline int zcutils_buf_isempty(struct zcutils_buffer *buf)
 {
 	return (buf->data[0] == 0);
 }
 
-static inline char *
-zcutils_buf_get_data(struct zcutils_buffer *buf)
+static inline char *zcutils_buf_get_data(struct zcutils_buffer *buf)
 {
 	return buf->data;
 }
 
-static inline int
-zcutils_buf_clean(struct zcutils_buffer *buf)
+static inline int zcutils_buf_clean(struct zcutils_buffer *buf)
 {
 	if (buf->data)
 		free(buf->data);
@@ -241,8 +229,7 @@ zcutils_buf_clean(struct zcutils_buffer *buf)
 	return 0;
 }
 
-static inline int
-zcutils_buf_reset(struct zcutils_buffer *buf)
+static inline int zcutils_buf_reset(struct zcutils_buffer *buf)
 {
 	buf->data[0] = 0;
 	buf->next = 0;

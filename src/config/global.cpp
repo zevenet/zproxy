@@ -53,8 +53,7 @@ void global::StartOptions::setCurrent(const global::StartOptions & options)
 	current.sync_is_enabled = options.sync_is_enabled;
 }
 
-static void
-print_usage(const char *prog_name)
+static void print_usage(const char *prog_name)
 {
 	fprintf(stderr,
 		"%s, high-performance multithreaded and event-driven reverse proxy and load balancer\n"
@@ -72,8 +71,7 @@ print_usage(const char *prog_name)
 		prog_name, ZPROXY_VERSION, ZPROXY_COPYRIGHT, prog_name);
 }
 
-static const struct option
-	options[] = {
+static const struct option options[] = {
 	{.name = "help",.has_arg = 0,.val = 'h'},
 	{.name = "sync",.has_arg = 0,.val = 's'},
 	{.name = "file",.has_arg = 1,.val = 'f'},
@@ -90,12 +88,9 @@ std::unique_ptr < global::StartOptions >
 	global::StartOptions::parsePoundOption(int argc, char **argv,
 					       bool write_to_current)
 {
-	auto
-		res = std::make_unique < StartOptions > ();
-	int
-		c;
-	int
-		opt_err = 0;
+	auto res = std::make_unique < StartOptions > ();
+	int c;
+	int opt_err = 0;
 
 	while ((c =
 		getopt_long(argc, argv, "hsf:cl:L:vVp:", options,

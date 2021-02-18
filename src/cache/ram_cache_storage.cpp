@@ -22,11 +22,9 @@
 #include "../../zcutils/zcutils.h"
 
 // Ram Static variables definitions
-RamICacheStorage *
-	RamICacheStorage::instance = nullptr;
+RamICacheStorage *RamICacheStorage::instance = nullptr;
 
-RamICacheStorage *
-RamICacheStorage::getInstance()
+RamICacheStorage *RamICacheStorage::getInstance()
 {
 	if (instance == nullptr) {
 #ifdef CACHE_STORAGE_STDMAP
@@ -43,10 +41,10 @@ RamICacheStorage::getInstance()
 // FIXME: svc is not used in initcachestorage
 st::STORAGE_STATUS RamfsCacheStorage::initCacheStorage(size_t m_size,
 						       double st_threshold,
-						       const std::
-						       string & svc,
-						       const std::
-						       string & m_point)
+						       const std::string &
+						       svc,
+						       const std::string &
+						       m_point)
 {
 	st::STORAGE_STATUS ret = st::STORAGE_STATUS::SUCCESS;
 	if (initialized)
@@ -92,8 +90,7 @@ st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage(const std::
 {
 	if (!initialized)
 		return st::STORAGE_STATUS::NOT_INIT;
-	auto
-		path = mount_path;
+	auto path = mount_path;
 	path.append("/");
 	path.append(svc);
 	if (mkdir(path.data(), 0777) == -1) {
@@ -118,8 +115,7 @@ st::STORAGE_STATUS RamfsCacheStorage::getFromStorage(const std::
 						     std::string & out_buffer)
 {
 	// We have the file_path created as follows: /mount_point/svc1/hashed_url
-	string
-	file_path(mount_path);
+	string file_path(mount_path);
 	file_path.append(string("/"));
 	file_path.append(rel_path);
 
@@ -146,8 +142,7 @@ st::STORAGE_STATUS RamfsCacheStorage::putInStorage(const std::
 		return st::STORAGE_STATUS::STORAGE_FULL;
 
 	// We have the file_path created as follows: /mount_point/svc1/hashed_url
-	string
-	file_path(mount_path);
+	string file_path(mount_path);
 	file_path.append("/");
 	file_path.append(rel_path);
 
@@ -172,8 +167,7 @@ st::STORAGE_STATUS RamfsCacheStorage::putInStorage(const std::
 
 st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage()
 {
-	int
-		err = umount(mount_path.data());
+	int err = umount(mount_path.data());
 	if (err) {
 		zcutils_log_print(LOG_DEBUG,
 				  "%s():%d: Error umounting the cache path %s ",
@@ -188,10 +182,8 @@ st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage()
 st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string & rel_path,
 						 std::string_view buffer)
 {
-	ofstream
-		fout;		// Create Object of Ofstream
-	auto
-	path(mount_path);
+	ofstream fout;		// Create Object of Ofstream
+	auto path(mount_path);
 	path.append("/");
 	path.append(rel_path);
 
@@ -206,9 +198,8 @@ st::STORAGE_STATUS RamfsCacheStorage::appendData(const std::string & rel_path,
 	return st::STORAGE_STATUS::SUCCESS;
 }
 
-bool
-RamfsCacheStorage::isInStorage(const std::string & svc,
-			       const std::string & url)
+bool RamfsCacheStorage::isInStorage(const std::string & svc,
+				    const std::string & url)
 {
 	size_t hashed_url = std::hash < std::string > ()(url);
 	auto path = mount_path;
@@ -219,8 +210,7 @@ RamfsCacheStorage::isInStorage(const std::string & svc,
 	return isInStorage(path);
 }
 
-bool
-RamfsCacheStorage::isInStorage(const std::string & path)
+bool RamfsCacheStorage::isInStorage(const std::string & path)
 {
 	struct stat buffer;
 	return (stat(path.data(), &buffer) == 0);
@@ -230,12 +220,10 @@ st::STORAGE_STATUS RamfsCacheStorage::deleteInStorage(const std::
 						      string & path)
 {
 	// Create the path string
-	auto
-		full_path = mount_path;
+	auto full_path = mount_path;
 	full_path.append("/");
 	full_path.append(path);
-	size_t
-		file_size = std::filesystem::file_size(full_path);
+	size_t file_size = std::filesystem::file_size(full_path);
 	if (isInStorage(full_path)) {
 		if (std::remove(full_path.data())) {
 			return st::STORAGE_STATUS::GENERIC_ERROR;
@@ -252,9 +240,13 @@ st::STORAGE_TYPE StdmapCacheStorage::getStorageType()
 	return st::STORAGE_TYPE::STDMAP;
 }
 
-st::STORAGE_STATUS StdmapCacheStorage::
-initCacheStorage(const size_t _max_size, double st_threshold,
-		 const std::string & _svc, const std::string & m_point)
+st::STORAGE_STATUS StdmapCacheStorage::initCacheStorage(const size_t
+							_max_size,
+							double st_threshold,
+							const std::string &
+							_svc,
+							const std::string &
+							m_point)
 {
 	this->mount_path = m_point;
 	this->max_size = _max_size;
@@ -315,9 +307,8 @@ st::STORAGE_STATUS StdmapCacheStorage::appendData(const std::
 	return st::STORAGE_STATUS::SUCCESS;
 }
 
-bool
-StdmapCacheStorage::isInStorage(const std::string & _svc,
-				const std::string & url)
+bool StdmapCacheStorage::isInStorage(const std::string & _svc,
+				     const std::string & url)
 {
 	std::string path = mount_path;
 	path.append("/");
@@ -337,8 +328,7 @@ st::STORAGE_STATUS StdmapCacheStorage::deleteInStorage(const std::
 	return st::STORAGE_STATUS::SUCCESS;
 }
 
-bool
-StdmapCacheStorage::isInStorage(const std::string & path)
+bool StdmapCacheStorage::isInStorage(const std::string & path)
 {
 	if (storage.find(path) == storage.end())
 		return false;
@@ -380,27 +370,21 @@ initServiceStorage(const string & svc)
 storage_commons::STORAGE_STATUS MemcachedStorage::
 getFromStorage(const string & rel_path, string & out_buffer)
 {
-	memcached_st *
-		tmp_memc = nullptr;
+	memcached_st *tmp_memc = nullptr;
 	tmp_memc = memcached_clone(tmp_memc, memc);
 	if (tmp_memc == nullptr) {
 		return st::STORAGE_STATUS::GENERIC_ERROR;
 	}
 
-	auto
-		aux_path = svc;
+	auto aux_path = svc;
 	aux_path.append("/");
-	size_t
-		hashed_key = std::hash < std::string > ()(rel_path);
+	size_t hashed_key = std::hash < std::string > ()(rel_path);
 	aux_path.append(to_string(hashed_key));
 
-	size_t
-		buff_length = 0;
-	char *
-		buff = nullptr;
+	size_t buff_length = 0;
+	char *buff = nullptr;
 
-	memcached_return
-		rc;
+	memcached_return rc;
 
 	buff = memcached_get(tmp_memc, aux_path.data(), aux_path.size(),
 			     &buff_length, nullptr, &rc);
@@ -408,8 +392,7 @@ getFromStorage(const string & rel_path, string & out_buffer)
 		if (buff != nullptr) {
 			free(buff);
 		}
-		const char *
-			err =::memcached_strerror(tmp_memc, rc);
+		const char *err =::memcached_strerror(tmp_memc, rc);
 		zcutils_log_print(LOG_ERR, "The error is: %s", err);
 		memcached_free(tmp_memc);
 		return st::STORAGE_STATUS::GENERIC_ERROR;
@@ -428,22 +411,17 @@ storage_commons::STORAGE_STATUS MemcachedStorage::
 putInStorage(const string & rel_path, string_view buffer,
 	     size_t response_size)
 {
-	memcached_st *
-		tmp_memc = nullptr;
+	memcached_st *tmp_memc = nullptr;
 	tmp_memc = memcached_clone(tmp_memc, memc);
 	if (tmp_memc == nullptr) {
 		return st::STORAGE_STATUS::GENERIC_ERROR;
 	}
-	auto
-		aux_path = this->svc;
+	auto aux_path = this->svc;
 	aux_path.append("/");
-	size_t
-		hashed_key = std::hash < std::string > ()(rel_path);
+	size_t hashed_key = std::hash < std::string > ()(rel_path);
 	aux_path.append(to_string(hashed_key));
-	auto
-		err =
-		memcached_set(tmp_memc, aux_path.data(), aux_path.size(),
-			      buffer.data(), buffer.size(), 0, 0);
+	auto err = memcached_set(tmp_memc, aux_path.data(), aux_path.size(),
+				 buffer.data(), buffer.size(), 0, 0);
 	if (err != MEMCACHED_SUCCESS) {
 		memcached_free(tmp_memc);
 		return st::STORAGE_STATUS::GENERIC_ERROR;
@@ -461,17 +439,14 @@ storage_commons::STORAGE_STATUS MemcachedStorage::stopCacheStorage()
 storage_commons::STORAGE_STATUS MemcachedStorage::
 appendData(const string & rel_path, string_view buffer)
 {
-	memcached_st *
-		tmp_memc = nullptr;
+	memcached_st *tmp_memc = nullptr;
 	tmp_memc = memcached_clone(tmp_memc, memc);
 	if (tmp_memc == nullptr) {
 		return st::STORAGE_STATUS::GENERIC_ERROR;
 	}
-	auto
-		aux_path = this->svc;
+	auto aux_path = this->svc;
 	aux_path.append("/");
-	size_t
-		hashed_key = std::hash < std::string > ()(rel_path);
+	size_t hashed_key = std::hash < std::string > ()(rel_path);
 	aux_path.append(to_string(hashed_key));
 	if (memcached_append(tmp_memc, aux_path.data(), aux_path.size(),
 			     buffer.data(), buffer.size(), 0,
@@ -483,9 +458,8 @@ appendData(const string & rel_path, string_view buffer)
 	return st::STORAGE_STATUS::SUCCESS;
 }
 
-bool
-MemcachedStorage::isInStorage(const std::string & svc,
-			      const std::string & url)
+bool MemcachedStorage::isInStorage(const std::string & svc,
+				   const std::string & url)
 {
 	auto aux_path = svc;
 	aux_path.append("/");
@@ -496,25 +470,20 @@ MemcachedStorage::isInStorage(const std::string & svc,
 
 st::STORAGE_STATUS MemcachedStorage::deleteInStorage(const std::string & path)
 {
-	memcached_st *
-		tmp_memc = nullptr;
+	memcached_st *tmp_memc = nullptr;
 	tmp_memc = memcached_clone(tmp_memc, memc);
-	auto
-		aux_path = this->svc;
+	auto aux_path = this->svc;
 	aux_path.append("/");
-	size_t
-		hashed_key = std::hash < std::string > ()(path);
+	size_t hashed_key = std::hash < std::string > ()(path);
 	aux_path.append(to_string(hashed_key));
 
-	time_t
-		expire = 0;
+	time_t expire = 0;
 	memcached_delete(tmp_memc, aux_path.data(), aux_path.size(), expire);
 	memcached_free(tmp_memc);
 	return st::STORAGE_STATUS::SUCCESS;
 }
 
-bool
-MemcachedStorage::isInStorage(const std::string & path)
+bool MemcachedStorage::isInStorage(const std::string & path)
 {
 	memcached_st *tmp_memc = nullptr;
 	memcached_return rc;
@@ -524,10 +493,9 @@ MemcachedStorage::isInStorage(const std::string & path)
 	}
 	std::string buffer;
 	std::size_t buff_length = 0;
-	char *buff =
-		memcached_get(tmp_memc, path.data(), path.size(),
-			      &buff_length,
-			      nullptr, &rc);
+	char *buff = memcached_get(tmp_memc, path.data(), path.size(),
+				   &buff_length,
+				   nullptr, &rc);
 	if (buff == nullptr) {
 		memcached_free(tmp_memc);
 		return false;

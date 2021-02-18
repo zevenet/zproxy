@@ -18,8 +18,7 @@
   //~ }
 //~ }
 
-void
-StreamDataLogger::logTransaction(HttpStream & stream)
+void StreamDataLogger::logTransaction(HttpStream & stream)
 {
 	if (zcutils_log_level != LOG_INFO)
 		return;

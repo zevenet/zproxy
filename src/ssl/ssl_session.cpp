@@ -23,13 +23,11 @@
 
 using namespace ssl;
 
-SslSessionManager *
-	SslSessionManager::ssl_session_manager = nullptr;
+SslSessionManager *SslSessionManager::ssl_session_manager = nullptr;
 std::mutex SslSessionManager::singleton_mtx {
 };
 
-SslSessionManager *
-SslSessionManager::getInstance()
+SslSessionManager *SslSessionManager::getInstance()
 {
 	std::lock_guard < std::mutex > instance_lock(singleton_mtx);
 	if (ssl_session_manager == nullptr)
@@ -37,8 +35,7 @@ SslSessionManager::getInstance()
 	return ssl_session_manager;
 }
 
-void
-SslSessionManager::removeSessionId(const unsigned char *id, int idLength)
+void SslSessionManager::removeSessionId(const unsigned char *id, int idLength)
 {
 	zcutils_log_print(LOG_ERR, "SESSION DELETE id: %s", id);
 	std::lock_guard < std::mutex > lock(data_mtx);
@@ -53,8 +50,7 @@ SslSessionManager::removeSessionId(const unsigned char *id, int idLength)
 	}
 }
 
-int
-SslSessionManager::addSession(SSL * ssl, SSL_SESSION * session)
+int SslSessionManager::addSession(SSL * ssl, SSL_SESSION * session)
 {
 	auto encoded_length = i2d_SSL_SESSION(session, NULL);
 
@@ -79,9 +75,8 @@ SslSessionManager::addSession(SSL * ssl, SSL_SESSION * session)
 	return 1;
 }
 
-SSL_SESSION *
-SslSessionManager::getSession(SSL * ssl, const unsigned char *id,
-			      int id_length, int *do_copy)
+SSL_SESSION *SslSessionManager::getSession(SSL * ssl, const unsigned char *id,
+					   int id_length, int *do_copy)
 {
 	unsigned char *buff;
 	std::lock_guard < std::mutex > lock(data_mtx);
@@ -91,8 +86,8 @@ SslSessionManager::getSession(SSL * ssl, const unsigned char *id,
 
       for (auto data:sessions) {
 		if (std::memcmp(data->sess_id, id, id_length) == 0) {
-			buff = (unsigned char *) malloc(data->
-							encoding_length);
+			buff = (unsigned char *)
+				malloc(data->encoding_length);
 			memcpy(buff, data->encoding_data,
 			       data->encoding_length);
 			return d2i_SSL_SESSION(NULL,
@@ -104,8 +99,7 @@ SslSessionManager::getSession(SSL * ssl, const unsigned char *id,
 	return NULL;
 }
 
-void
-SslSessionManager::deleteSession(SSL_CTX * sctx, SSL_SESSION * session)
+void SslSessionManager::deleteSession(SSL_CTX * sctx, SSL_SESSION * session)
 {
 	unsigned int id_length;
 	const unsigned char *id = SSL_SESSION_get_id(session, &id_length);
@@ -123,8 +117,7 @@ SslSessionManager::~SslSessionManager()
 	}
 }
 
-void
-SslSessionManager::attachCallbacks(SSL_CTX * sctx)
+void SslSessionManager::attachCallbacks(SSL_CTX * sctx)
 {
 	SSL_CTX_set_session_cache_mode(sctx,
 				       SSL_SESS_CACHE_NO_INTERNAL |
@@ -134,21 +127,19 @@ SslSessionManager::attachCallbacks(SSL_CTX * sctx)
 	SSL_CTX_sess_set_remove_cb(sctx, deleteSessionCb);
 }
 
-int
-SslSessionManager::addSessionCb(SSL * ssl, SSL_SESSION * session)
+int SslSessionManager::addSessionCb(SSL * ssl, SSL_SESSION * session)
 {
 	return getInstance()->addSession(ssl, session);
 }
 
-SSL_SESSION *
-SslSessionManager::getSessionCb(SSL * ssl, const unsigned char *id,
-				int id_length, int *do_copy)
+SSL_SESSION *SslSessionManager::getSessionCb(SSL * ssl,
+					     const unsigned char *id,
+					     int id_length, int *do_copy)
 {
 	return getInstance()->getSession(ssl, id, id_length, do_copy);
 }
 
-void
-SslSessionManager::deleteSessionCb(SSL_CTX * sctx, SSL_SESSION * session)
+void SslSessionManager::deleteSessionCb(SSL_CTX * sctx, SSL_SESSION * session)
 {
 	return getInstance()->deleteSession(sctx, session);
 }

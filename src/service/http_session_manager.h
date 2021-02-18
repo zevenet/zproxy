@@ -121,12 +121,12 @@ namespace sessions
 
 	      private:
 		static std::string getQueryParameter(const std::string & url,
-						     const std::
-						     string & sess_id);
-		static std::string getCookieValue(std::
-						  string_view
-						  cookie_header_value,
-						  std::string_view sess_id);
+						     const std::string &
+						     sess_id);
+		static std::
+			string getCookieValue(std:: string_view
+					      cookie_header_value,
+					      std::string_view sess_id);
 		static std::string getUrlParameter(const std::string & url);
 		  std::string getSessionKey(Connection & source,
 					    HttpRequest & request);

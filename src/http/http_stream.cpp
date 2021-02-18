@@ -48,10 +48,9 @@ HttpStream::~HttpStream()
 #endif
 }
 
-void
-HttpStream::dumpDebugData_(const std::string & function, int line,
-			   HttpStream * stream, const char *debug_str,
-			   const char *data)
+void HttpStream::dumpDebugData_(const std::string & function, int line,
+				HttpStream * stream, const char *debug_str,
+				const char *data)
 {
 	if (stream == nullptr)
 		return;
@@ -70,13 +69,10 @@ HttpStream::dumpDebugData_(const std::string & function, int line,
 			  stream->request.chunk_size_left,
 			  stream->request.chunked_status !=
 			  http::CHUNKED_STATUS::CHUNKED_DISABLED ? "T" : "F",
-			  stream->
-			  hasStatus(STREAM_STATUS::
-				    REQUEST_PENDING) ? "T" : "F",
-			  stream->
-			  hasStatus(STREAM_STATUS::
-				    CL_READ_PENDING) ? "T" : "F",
-			  stream->backend_connection.buffer_size,
+			  stream->hasStatus(STREAM_STATUS::REQUEST_PENDING) ?
+			  "T" : "F",
+			  stream->hasStatus(STREAM_STATUS::CL_READ_PENDING) ?
+			  "T" : "F", stream->backend_connection.buffer_size,
 			  stream->backend_connection.buffer_offset,
 			  stream->response.content_length,
 			  stream->response.message_bytes_left,
@@ -84,10 +80,8 @@ HttpStream::dumpDebugData_(const std::string & function, int line,
 			  stream->response.chunk_size_left,
 			  stream->response.chunked_status !=
 			  http::CHUNKED_STATUS::CHUNKED_DISABLED ? "T" : "F",
-			  stream->
-			  hasStatus(STREAM_STATUS::
-				    RESPONSE_PENDING) ? "T" : "F",
-			  stream->
-			  hasStatus(STREAM_STATUS::
-				    BCK_READ_PENDING) ? "T" : "F", data);
+			  stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING) ?
+			  "T" : "F",
+			  stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING) ?
+			  "T" : "F", data);
 }

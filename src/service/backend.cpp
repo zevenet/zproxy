@@ -41,29 +41,25 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 	if (task.command == ctl::CTL_COMMAND::GET) {
 		switch (task.subject) {
 		case ctl::CTL_SUBJECT::STATUS:{
-				JsonObject
-					status_;
+				JsonObject status_;
 				switch (this->status) {
 				case BACKEND_STATUS::BACKEND_UP:
 					status_.emplace(JSON_KEYS::STATUS,
 							std::make_unique <
 							JsonDataValue >
-							(JSON_KEYS::
-							 STATUS_UP));
+							(JSON_KEYS::STATUS_UP));
 					break;
 				case BACKEND_STATUS::BACKEND_DOWN:
 					status_.emplace(JSON_KEYS::STATUS,
 							std::make_unique <
 							JsonDataValue >
-							(JSON_KEYS::
-							 STATUS_DOWN));
+							(JSON_KEYS::STATUS_DOWN));
 					break;
 				case BACKEND_STATUS::BACKEND_DISABLED:
 					status_.emplace(JSON_KEYS::STATUS,
 							std::make_unique <
 							JsonDataValue >
-							(JSON_KEYS::
-							 STATUS_DISABLED));
+							(JSON_KEYS::STATUS_DISABLED));
 					break;
 				default:
 					status_.emplace(JSON_KEYS::STATUS,
@@ -75,8 +71,7 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 				return status_.stringify();
 			}
 		case ctl::CTL_SUBJECT::WEIGHT:{
-				JsonObject
-					weight_;
+				JsonObject weight_;
 				weight_.emplace(JSON_KEYS::WEIGHT,
 						std::make_unique <
 						JsonDataValue >
@@ -91,8 +86,7 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 		}
 	}
 	else if (task.command == ctl::CTL_COMMAND::UPDATE) {
-		auto
-			status_object = JsonParser::parse(task.data);
+		auto status_object = JsonParser::parse(task.data);
 		if (status_object == nullptr)
 			return JSON_OP_RESULT::ERROR;
 		switch (task.subject) {
@@ -100,33 +94,29 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 			// TODO:: update  config (timeouts, headers)
 			break;
 		case ctl::CTL_SUBJECT::STATUS:{
-				if (status_object->at(JSON_KEYS::STATUS)->
-				    isValue()) {
-					auto
-						value =
+				if (status_object->
+				    at(JSON_KEYS::STATUS)->isValue()) {
+					auto value =
 						dynamic_cast <
 						JsonDataValue *
-						>(status_object->
-						  at(JSON_KEYS::STATUS).get())
+						>(status_object->at
+						  (JSON_KEYS::STATUS).get())
 						->string_value;
 					if (value == JSON_KEYS::STATUS_ACTIVE
 					    || value ==
 					    JSON_KEYS::STATUS_UP) {
 						this->status =
-							BACKEND_STATUS::
-							BACKEND_UP;
+							BACKEND_STATUS::BACKEND_UP;
 					}
 					else if (value ==
 						 JSON_KEYS::STATUS_DOWN) {
 						this->status =
-							BACKEND_STATUS::
-							BACKEND_DOWN;
+							BACKEND_STATUS::BACKEND_DOWN;
 					}
 					else if (value ==
 						 JSON_KEYS::STATUS_DISABLED) {
 						this->status =
-							BACKEND_STATUS::
-							BACKEND_DISABLED;
+							BACKEND_STATUS::BACKEND_DISABLED;
 					}
 					zcutils_log_print(LOG_NOTICE,
 							  "Set Backend %d %s",
@@ -137,14 +127,13 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 				break;
 			}
 		case ctl::CTL_SUBJECT::WEIGHT:{
-				if (status_object->at(JSON_KEYS::WEIGHT)->
-				    isValue()) {
-					auto
-						value =
+				if (status_object->
+				    at(JSON_KEYS::WEIGHT)->isValue()) {
+					auto value =
 						dynamic_cast <
 						JsonDataValue *
-						>(status_object->
-						  at(JSON_KEYS::WEIGHT).get())
+						>(status_object->at
+						  (JSON_KEYS::WEIGHT).get())
 						->number_value;
 					this->weight =
 						static_cast < int >(value);
@@ -159,8 +148,7 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 	return "";
 }
 
-bool
-Backend::isHandler(ctl::CtlTask & task)
+bool Backend::isHandler(ctl::CtlTask & task)
 {
 	return			/*task.target == ctl::CTL_HANDLER_TYPE::BACKEND && */
 		(task.backend_id == this->backend_id
@@ -169,8 +157,7 @@ Backend::isHandler(ctl::CtlTask & task)
 
 std::unique_ptr < JsonObject > Backend::getBackendJson()
 {
-	auto
-		root = std::make_unique < JsonObject > ();
+	auto root = std::make_unique < JsonObject > ();
 	root->emplace(JSON_KEYS::NAME,
 		      std::make_unique < JsonDataValue > (this->name));
 	root->emplace(JSON_KEYS::HTTPS,
@@ -179,8 +166,9 @@ std::unique_ptr < JsonObject > Backend::getBackendJson()
 		      std::make_unique < JsonDataValue > (this->backend_id));
 	root->emplace(JSON_KEYS::TYPE,
 		      std::make_unique < JsonDataValue > (static_cast <
-							  int >(this->
-								backend_type)));
+							  int
+							  >
+							  (this->backend_type)));
 	if (this->backend_type != BACKEND_TYPE::REDIRECT) {
 		root->emplace(JSON_KEYS::ADDRESS,
 			      std::make_unique < JsonDataValue >
@@ -232,8 +220,7 @@ std::unique_ptr < JsonObject > Backend::getBackendJson()
 	return root;
 }
 
-void
-Backend::doMaintenance()
+void Backend::doMaintenance()
 {
 	if (this->status != BACKEND_STATUS::BACKEND_DOWN)
 		return;
@@ -247,8 +234,8 @@ Backend::doMaintenance()
 					  "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
 					  this->address.data(), this->port,
 					  this->backend_config->f_name.data(),
-					  this->backend_config->srv_name.
-					  data());
+					  this->backend_config->
+					  srv_name.data());
 			this->status = BACKEND_STATUS::BACKEND_UP;
 			break;
 		}
@@ -257,20 +244,17 @@ Backend::doMaintenance()
 	}
 }
 
-bool
-Backend::isHttps()
+bool Backend::isHttps()
 {
 	return ctx != nullptr;
 }
 
-void
-Backend::setStatus(BACKEND_STATUS new_status)
+void Backend::setStatus(BACKEND_STATUS new_status)
 {
 	this->status = new_status;
 }
 
-BACKEND_STATUS
-Backend::getStatus()
+BACKEND_STATUS Backend::getStatus()
 {
 	return status;
 }

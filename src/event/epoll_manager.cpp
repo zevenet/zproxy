@@ -162,9 +162,8 @@ namespace events
 						onReadEvent(events[i]);
 					}
 				}
-				if ((events[i].
-				     events & (EPOLLRDHUP | EPOLLHUP)) !=
-				    0u) {
+				if ((events[i].events &
+				     (EPOLLRDHUP | EPOLLHUP)) != 0u) {
 					HandleEvent(fd,
 						    EVENT_TYPE::DISCONNECT,
 						    event_group);
@@ -229,16 +228,17 @@ namespace events
 				setTimeOut(fd,
 					   event_group == EVENT_GROUP::SERVER
 					   ? TIMEOUT_TYPE::SERVER_READ_TIMEOUT
-					   : TIMEOUT_TYPE::
-					   CLIENT_READ_TIMEOUT, time_out);
+					   :
+					   TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
+					   time_out);
 				break;
 			case EVENT_TYPE::WRITE:
 				setTimeOut(fd,
 					   event_group == EVENT_GROUP::SERVER
-					   ? TIMEOUT_TYPE::
-					   SERVER_WRITE_TIMEOUT :
-					   TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
-					   time_out);
+					   ?
+					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT
+					   : TIMEOUT_TYPE::
+					   CLIENT_WRITE_TIMEOUT, time_out);
 				break;
 			default:
 				setTimeOut(fd, TIMEOUT_TYPE::INACTIVE_TIMEOUT,
@@ -288,16 +288,17 @@ namespace events
 				setTimeOut(fd,
 					   event_group == EVENT_GROUP::SERVER
 					   ? TIMEOUT_TYPE::SERVER_READ_TIMEOUT
-					   : TIMEOUT_TYPE::
-					   CLIENT_READ_TIMEOUT, time_out);
+					   :
+					   TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
+					   time_out);
 				break;
 			case EVENT_TYPE::WRITE:
 				setTimeOut(fd,
 					   event_group == EVENT_GROUP::SERVER
-					   ? TIMEOUT_TYPE::
-					   SERVER_WRITE_TIMEOUT :
-					   TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
-					   time_out);
+					   ?
+					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT
+					   : TIMEOUT_TYPE::
+					   CLIENT_WRITE_TIMEOUT, time_out);
 				break;
 			default:
 				setTimeOut(fd, TIMEOUT_TYPE::INACTIVE_TIMEOUT,

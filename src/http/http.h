@@ -326,8 +326,7 @@ namespace http
 		PreconditionFailed = 412 /*[RFC8144, Section 3.2] */ ,
 		PayloadTooLarge = 413 /*[RFC7231, Section 6.5.11] */ ,
 		URITooLong = 414 /*[RFC7231, Section 6.5.12] */ ,
-		UnsupportedMediaType =
-			415
+		UnsupportedMediaType = 415
 			/*[RFC7231, Section 6.5.13] [RFC7694, Section 3] */ ,
 		RangeNotSatisfiable = 416 /*[RFC7233, Section 4.4] */ ,
 		ExpectationFailed = 417 /*[RFC7231, Section 6.5.14] */ ,
@@ -413,10 +412,10 @@ namespace http
 	}
 
 	static inline std::string getHttpResponse(Code status_code,
-						  const std::
-						  string & status_code_string,
-						  const std::
-						  string & content_message)
+						  const std::string &
+						  status_code_string,
+						  const std::string &
+						  content_message)
 	{
 		std::string code_error_string;
 		if (status_code_string.empty()) {
@@ -459,8 +458,8 @@ namespace http
 		return err_response;
 	}
 	static inline std::string getRedirectResponse(Code code,
-						      const std::
-						      string & redirect_url)
+						      const std::string &
+						      redirect_url)
 	{
 		// make sure it a safe url
 		auto safe_url =

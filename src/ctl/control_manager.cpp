@@ -44,9 +44,8 @@ ctl::ControlManager::~ControlManager()
 		control_thread.join();
 }
 
-bool
-ctl::ControlManager::init(Config & configuration,
-			  ctl::CTL_INTERFACE_MODE listener_mode)
+bool ctl::ControlManager::init(Config & configuration,
+			       ctl::CTL_INTERFACE_MODE listener_mode)
 {
 	if (!configuration.ctrl_ip.empty() && configuration.ctrl_port != 0) {
 		listener_mode = ctl::CTL_INTERFACE_MODE::CTL_AF_INET;
@@ -60,15 +59,15 @@ ctl::ControlManager::init(Config & configuration,
 		control_path_name = configuration.ctrl_name;
 		control_listener.listen(control_path_name);
 		if (!configuration.ctrl_user.empty())
-			Environment::
-				setFileUserName(std::string
-						(configuration.ctrl_user),
-						control_path_name);
+			Environment::setFileUserName(std::string
+						     (configuration.
+						      ctrl_user),
+						     control_path_name);
 		if (!configuration.ctrl_group.empty())
-			Environment::
-				setFileGroupName(std::string
-						 (configuration.ctrl_group),
-						 control_path_name);
+			Environment::setFileGroupName(std::string
+						      (configuration.
+						       ctrl_group),
+						      control_path_name);
 		if (configuration.ctrl_mode > 0)
 			Environment::setFileUserMode(configuration.ctrl_mode,
 						     control_path_name);
@@ -81,18 +80,17 @@ ctl::ControlManager::init(Config & configuration,
 	return true;
 }
 
-void
-ctl::ControlManager::start()
+void ctl::ControlManager::start()
 {
 	is_running = true;
 	control_thread = std::thread([this] {
-				     doWork();});
+				     doWork();
+				     });
 	helper::ThreadHelper::setThreadName("CTL_WORKER",
 					    control_thread.native_handle());
 }
 
-void
-ctl::ControlManager::stop()
+void ctl::ControlManager::stop()
 {
 	// Notify stop to suscribers
 	if (!is_running)
@@ -109,10 +107,9 @@ ctl::ControlManager::stop()
 		this->control_thread.join();
 }
 
-void
-ControlManager::sendCtlCommand(CTL_COMMAND command,
-			       CTL_HANDLER_TYPE handler,
-			       CTL_SUBJECT subject, std::string data)
+void ControlManager::sendCtlCommand(CTL_COMMAND command,
+				    CTL_HANDLER_TYPE handler,
+				    CTL_SUBJECT subject, std::string data)
 {
 	zcutils_log_print(LOG_DEBUG, "%s():%d: reload config", __FUNCTION__,
 			  __LINE__);
@@ -124,9 +121,8 @@ ControlManager::sendCtlCommand(CTL_COMMAND command,
 	auto result = notify(task, false);
 }
 
-void
-ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
-				 EVENT_GROUP event_group)
+void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
+				      EVENT_GROUP event_group)
 {
 	if (event_group != EVENT_GROUP::CTL_INTERFACE
 	    && event_group != EVENT_GROUP::ACCEPTOR) {
@@ -136,8 +132,7 @@ ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 
 	switch (event_type) {
 	case EVENT_TYPE::CONNECT:{
-			int
-				new_fd;
+			int new_fd;
 			do {
 				new_fd = Connection::doAccept
 					(control_listener.getFileDescriptor
@@ -160,8 +155,7 @@ ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				::close(fd);
 				return;
 			}
-			size_t
-				parsed = 0;
+			size_t parsed = 0;
 			auto parse_result =
 				request.parseRequest(connection.buffer,
 						     connection.buffer_size,
@@ -178,18 +172,18 @@ ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					  __FUNCTION__, __LINE__,
 					  connection.buffer);
 			std::string response = handleCommand(request);
-			size_t
-				written = 0;
+			size_t written = 0;
 			if (!response.empty()) {
 				IO::IO_RESULT result;
 				do {
-					size_t
-						sent;
-					result = connection.
-						write(response.c_str() +
-						      written,
-						      response.length() -
-						      written, sent);
+					size_t sent;
+					result = connection.write(response.
+								  c_str() +
+								  written,
+								  response.
+								  length() -
+								  written,
+								  sent);
 					if (sent > 0)
 						written += sent;
 				} while (result ==
@@ -209,8 +203,7 @@ ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 	}
 }
 
-void
-ctl::ControlManager::doWork()
+void ctl::ControlManager::doWork()
 {
 	while (is_running) {
 		if (loopOnce(EPOLL_WAIT_TIMEOUT) < 1) {
@@ -284,8 +277,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest & request)
 
 	auto result = notify(task, false);
 	std::string str;
-	bool
-		multiple = false;
+	bool multiple = false;
 	for (auto it = result.begin(); it < result.end(); it++) {
 		auto res_string = it->get();
 		if (res_string.empty())
@@ -311,8 +303,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest & request)
 	return response;
 }
 
-bool
-ControlManager::setTaskTarget(HttpRequest & request, CtlTask & task)
+bool ControlManager::setTaskTarget(HttpRequest & request, CtlTask & task)
 {
 	std::istringstream f(request.getUrl());
 	std::string str;
@@ -358,7 +349,8 @@ ControlManager::setTaskTarget(HttpRequest & request, CtlTask & task)
 		case 'w':{
 				if (task.subject == CTL_SUBJECT::DEBUG) {
 					task.target =
-						CTL_HANDLER_TYPE::STREAM_MANAGER;
+						CTL_HANDLER_TYPE::
+						STREAM_MANAGER;
 				}
 				break;
 			}
@@ -367,8 +359,8 @@ ControlManager::setTaskTarget(HttpRequest & request, CtlTask & task)
 	return false;
 }
 
-bool
-ControlManager::setListenerTarget(CtlTask & task, std::istringstream & ss)
+bool ControlManager::setListenerTarget(CtlTask & task,
+				       std::istringstream & ss)
 {
 	std::string str;
 	task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
@@ -404,8 +396,7 @@ ControlManager::setListenerTarget(CtlTask & task, std::istringstream & ss)
 	return true;
 }
 
-bool
-ControlManager::setServiceTarget(CtlTask & task, std::istringstream & ss)
+bool ControlManager::setServiceTarget(CtlTask & task, std::istringstream & ss)
 {
 	std::string str;
 	task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
@@ -444,8 +435,7 @@ ControlManager::setServiceTarget(CtlTask & task, std::istringstream & ss)
 	return true;
 }
 
-bool
-ControlManager::setBackendTarget(CtlTask & task, std::istringstream & ss)
+bool ControlManager::setBackendTarget(CtlTask & task, std::istringstream & ss)
 {
 	std::string str;
 	if (getline(ss, str, '/')) {

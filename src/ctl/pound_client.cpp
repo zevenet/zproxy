@@ -22,8 +22,7 @@
 #include "../service/backend.h"
 #include "../../zcutils/zcu_network.h"
 #include "../../zcutils/zcutils.h"
-bool
-PoundClient::trySetTargetId(int &target_id, char *possible_value)
+bool PoundClient::trySetTargetId(int &target_id, char *possible_value)
 {
 	if (possible_value)	// throw error and show help
 		target_id = std::atoi(possible_value);
@@ -32,8 +31,7 @@ PoundClient::trySetTargetId(int &target_id, char *possible_value)
 	return true;
 }
 
-void
-PoundClient::trySetAllTargetId(char *argv[], int &option_index)
+void PoundClient::trySetAllTargetId(char *argv[], int &option_index)
 {
 	int to_consume = 1;
 	// workaround for listeners
@@ -76,8 +74,7 @@ PoundClient::trySetAllTargetId(char *argv[], int &option_index)
 	}
 }
 
-void
-PoundClient::showHelp(const std::string error, bool exit_on_error)
+void PoundClient::showHelp(const std::string error, bool exit_on_error)
 {
 	if (!error.empty())
 		std::cout << "ERROR: " << error << std::endl;
@@ -124,8 +121,7 @@ PoundClient::showHelp(const std::string error, bool exit_on_error)
 		exit(EXIT_FAILURE);
 }
 
-bool
-PoundClient::executeCommand()
+bool PoundClient::executeCommand()
 {
 	Connection client;
 	switch (interface_mode) {
@@ -139,12 +135,13 @@ PoundClient::executeCommand()
 			if (pos == std::string::npos)
 				return false;
 			port = std::stoi(this->address.substr(pos + 1,
-							      this->address.
-							      size() - pos));
+							      this->
+							      address.size() -
+							      pos));
 			this->address = this->address.substr(0, pos);
 			client.address =
 				zcutils_net_get_address(this->address,
-						    port).release();
+							port).release();
 			IO::IO_OP res_connect =
 				client.doConnect(*client.address, 0, false);
 			if (res_connect != IO::IO_OP::OP_SUCCESS)
@@ -169,11 +166,12 @@ PoundClient::executeCommand()
 		json_object.emplace(json::JSON_KEYS::STATUS,
 				    std::unique_ptr < json::JsonDataValue >
 				    (new json::JsonDataValue(ctl_command ==
-							     CTL_ACTION::
-							     ENABLE ?
-							     json::JSON_KEYS::STATUS_ACTIVE
-							     :
-							     json::JSON_KEYS::STATUS_DISABLED)));
+							     CTL_ACTION::ENABLE
+							     ? json::
+							     JSON_KEYS::
+							     STATUS_ACTIVE :
+							     json::JSON_KEYS::
+							     STATUS_DISABLED)));
 		method = http::REQUEST_METHOD::PATCH;
 		switch (ctl_command_subject) {
 		case CTL_SUBJECT::LISTENER:{
@@ -207,15 +205,14 @@ PoundClient::executeCommand()
 			"/session/";
 		switch (ctl_command) {
 		case CTL_ACTION::ADD_SESSION:{
-				json_object.emplace(json::JSON_KEYS::
-						    BACKEND_ID,
-						    new json::
-						    JsonDataValue
-						    (this->backend_id));
+				json_object.
+					emplace(json::JSON_KEYS::BACKEND_ID,
+						new json::JsonDataValue(this->
+									backend_id));
 				json_object.emplace(json::JSON_KEYS::ID,
-						    new
-						    json::JsonDataValue
-						    (this->session_key));
+						    new json::
+						    JsonDataValue(this->
+								  session_key));
 				method = http::REQUEST_METHOD::PUT;
 				break;
 			}
@@ -228,11 +225,10 @@ PoundClient::executeCommand()
 				break;
 			}
 		case CTL_ACTION::FLUSH_SESSIONS:{
-				json_object.emplace(json::JSON_KEYS::
-						    BACKEND_ID,
-						    new json::
-						    JsonDataValue
-						    (this->backend_id));
+				json_object.
+					emplace(json::JSON_KEYS::BACKEND_ID,
+						new json::JsonDataValue(this->
+									backend_id));
 				method = http::REQUEST_METHOD::DELETE;
 				break;
 			}
@@ -305,8 +301,7 @@ PoundClient::executeCommand()
 	return true;
 }
 
-bool
-PoundClient::init(int argc, char *argv[])
+bool PoundClient::init(int argc, char *argv[])
 {
 	int opt = 0;
 	int option_index = 0;
@@ -474,11 +469,10 @@ PoundClient::init(int argc, char *argv[])
 	return true;
 }
 
-bool
-PoundClient::doRequest(http::REQUEST_METHOD request_method,
-		       http::HTTP_VERSION http_version,
-		       std::string json_object, std::string path,
-		       std::string & buffer)
+bool PoundClient::doRequest(http::REQUEST_METHOD request_method,
+			    http::HTTP_VERSION http_version,
+			    std::string json_object, std::string path,
+			    std::string & buffer)
 {
 	auto it = http::http_info::http_verb_strings.find(request_method);
 	if (it != http::http_info::http_verb_strings.end()) {
@@ -509,15 +503,13 @@ PoundClient::doRequest(http::REQUEST_METHOD request_method,
 	return true;
 }
 
-void
-PoundClient::verboseLog(const std::string & str)
+void PoundClient::verboseLog(const std::string & str)
 {
 	if (verbose)
 		std::cout << str << std::endl;
 }
 
-void
-PoundClient::outputStatus(json::JsonObject * json_response_listener)
+void PoundClient::outputStatus(json::JsonObject * json_response_listener)
 {
 	std::string buffer;
 	buffer += "Requests in queue: 0\n";
@@ -547,8 +539,8 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 	auto services =
 		dynamic_cast <
 		json::JsonArray *
-		>(json_response_listener->
-		  at(json::JSON_KEYS::SERVICES).get());
+		>(json_response_listener->at(json::JSON_KEYS::SERVICES).
+		  get());
 	// TODO recorrer servicios
       for (const auto & service:*services) {
 		// TODO: AQUI DESAPARECE EL RESPONSE-TIME (ES POSIBLE QUE POR EL -1)
@@ -571,8 +563,8 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 			auto backend_type =
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::TYPE).get())
+				>(backend_json->at(json::JSON_KEYS::TYPE).
+				  get())
 				->number_value;
 			if (static_cast < BACKEND_TYPE > (backend_type) ==
 			    BACKEND_TYPE::REDIRECT)
@@ -580,8 +572,8 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 			total_weight +=
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::WEIGHT).get())
+				>(backend_json->at(json::JSON_KEYS::WEIGHT).
+				  get())
 				->number_value;
 		}
 		std::string service_name =
@@ -617,8 +609,8 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 			auto backend_type =
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::TYPE).get())
+				>(backend_json->at(json::JSON_KEYS::TYPE).
+				  get())
 				->number_value;
 			if (static_cast < BACKEND_TYPE > (backend_type) ==
 			    BACKEND_TYPE::REDIRECT)
@@ -626,26 +618,26 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 			auto weight =
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::WEIGHT).get())
+				>(backend_json->at(json::JSON_KEYS::WEIGHT).
+				  get())
 				->number_value;
 			std::string backend_address =
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::ADDRESS).get())
+				>(backend_json->at(json::JSON_KEYS::ADDRESS).
+				  get())
 				->string_value;
 			std::string backend_status =
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::STATUS).get())
+				>(backend_json->at(json::JSON_KEYS::STATUS).
+				  get())
 				->string_value;
 			auto backend_port =
 				dynamic_cast <
 				json::JsonDataValue *
-				>(backend_json->
-				  at(json::JSON_KEYS::PORT).get())
+				>(backend_json->at(json::JSON_KEYS::PORT).
+				  get())
 				->number_value;
 			double response_time =
 				dynamic_cast <
@@ -664,8 +656,8 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 			if (backend_status == "disabled")
 				std::transform(backend_status.begin(),
 					       backend_status.end(),
-					       backend_status.begin(),::
-					       toupper);
+					       backend_status.
+					       begin(),::toupper);
 
 			buffer += "      ";
 			buffer +=
@@ -725,8 +717,7 @@ PoundClient::outputStatus(json::JsonObject * json_response_listener)
 	std::cout << buffer << std::endl;
 }
 
-void
-PoundClient::showError(std::string error)
+void PoundClient::showError(std::string error)
 {
 	zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
 			  error);

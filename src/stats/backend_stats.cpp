@@ -21,8 +21,7 @@
 #include "backend_stats.h"
 
 
-void
-Statistics::BackendInfo::setAvgResponseTime(double latency)
+void Statistics::BackendInfo::setAvgResponseTime(double latency)
 {
 	if (avg_response_time < 0) {
 		avg_response_time = latency;
@@ -32,8 +31,7 @@ Statistics::BackendInfo::setAvgResponseTime(double latency)
 	}
 }
 
-void
-Statistics::BackendInfo::setMinResponseTime(double latency)
+void Statistics::BackendInfo::setMinResponseTime(double latency)
 {
 	if (min_response_time < 0) {
 		min_response_time = latency;
@@ -43,18 +41,15 @@ Statistics::BackendInfo::setMinResponseTime(double latency)
 	}
 }
 
-void
-Statistics::BackendInfo::setMaxResponseTime(double latency)
+void Statistics::BackendInfo::setMaxResponseTime(double latency)
 {
 	if (latency > max_response_time)
 		max_response_time = latency;
 }
 
-void
-Statistics::BackendInfo::setAvgConnTime(const timeval & start_time)
+void Statistics::BackendInfo::setAvgConnTime(const timeval & start_time)
 {
-	double
-		latency = Time::getDiff(start_time);
+	double latency = Time::getDiff(start_time);
 	if (avg_conn_time < 0) {
 		avg_conn_time = latency;
 	}
@@ -80,21 +75,18 @@ Statistics::BackendInfo::~BackendInfo()
 {
 }
 
-void
-Statistics::BackendInfo::increaseConnection()
+void Statistics::BackendInfo::increaseConnection()
 {
 	established_conn++;
 }
 
-void
-Statistics::BackendInfo::setAvgTransferTime(const timeval & start_time)
+void Statistics::BackendInfo::setAvgTransferTime(const timeval & start_time)
 {
 	if (Time::getTimeSec() - current_time > 60) {
 		avg_complete_response_time = -1;
 		current_time = Time::getTimeSec();
 	}
-	auto
-		latency = Time::getDiff(start_time);
+	auto latency = Time::getDiff(start_time);
 	if (avg_complete_response_time < 0) {
 		avg_complete_response_time = latency;
 	}
