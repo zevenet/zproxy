@@ -226,7 +226,7 @@ void Config::parse_file()
 				std::strtol(lin + matches[1].rm_so, nullptr,
 					    8);
 			if (errno == ERANGE || errno == EINVAL) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "line %d: ControlMode config: %s - aborted",
 						  n_lin, strerror(errno));
 				exit(1);
@@ -337,7 +337,7 @@ bool Config::init(const global::StartOptions & start_options)
 	// init configuration file lists.
 	f_name[0] = std::string(conf_file_name);
 	if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
-		zcutils_log_print(LOG_ERR, "can't open open %s",
+		zcu_log_print(LOG_ERR, "can't open open %s",
 				  conf_file_name.data());
 		return false;
 	}
@@ -359,13 +359,13 @@ bool Config::init(const global::StartOptions & start_options)
 	parse_file();
 
 	if (start_options.check_only) {
-		zcutils_log_print(LOG_INFO, "Config file %s is OK",
+		zcu_log_print(LOG_INFO, "Config file %s is OK",
 				  conf_file_name.data());
 		return true;
 	}
 
 	if (listeners == nullptr) {
-		zcutils_log_print(LOG_ERR, "no listeners defined - aborted");
+		zcu_log_print(LOG_ERR, "no listeners defined - aborted");
 		return false;
 	}
 
@@ -432,7 +432,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			lin[matches[1].rm_eo] = '\0';
 			addrinfo addr {
 			};
-			if (zcutils_net_get_host
+			if (zcu_net_get_host
 			    (lin + matches[1].rm_so, &addr, PF_UNSPEC))
 				conf_err("Unknown Listener address");
 			if (addr.ai_family != AF_INET
@@ -718,7 +718,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			}
 			auto err = res->rules->loadFromUri(file.data());
 			if (err == -1) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "error loading waf ruleset file %s: %s",
 						  file.data(),
 						  res->
@@ -732,18 +732,18 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 					std::make_shared <
 					modsecurity::Rules > ();
 			}
-			zcutils_log_print(LOG_DEBUG, "Rules: ");
+			zcu_log_print(LOG_DEBUG, "Rules: ");
 			for (int i = 0;
 			     i <= modsecurity::Phases::NUMBER_OF_PHASES;
 			     i++) {
 				auto rule = res->rules->getRulesForPhase(i);
 				if (rule) {
-					zcutils_log_print(LOG_DEBUG,
+					zcu_log_print(LOG_DEBUG,
 							  "Phase: %d ( %d rules )",
 							  i, rule->size());
 				      for (auto & x:*rule)
 					{
-						zcutils_log_print(LOG_DEBUG,
+						zcu_log_print(LOG_DEBUG,
 								  "\tRule Id: %d From %s at %d ",
 								  x->m_ruleId,
 								  x->m_fileName.data
@@ -820,7 +820,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			lin[matches[1].rm_eo] = '\0';
 			addrinfo addr {
 			};
-			if (zcutils_net_get_host
+			if (zcu_net_get_host
 			    (lin + matches[1].rm_so, &addr, PF_UNSPEC))
 				conf_err("Unknown Listener address");
 			if (addr.ai_family != AF_INET
@@ -842,7 +842,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			}
 			auto err = res->rules->loadFromUri(file.data());
 			if (err == -1) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "error loading waf ruleset file %s: %s",
 						  file.data(),
 						  res->
@@ -851,18 +851,18 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 				conf_err("Error loading waf ruleset");
 				break;
 			}
-			zcutils_log_print(LOG_DEBUG, "Rules: ");
+			zcu_log_print(LOG_DEBUG, "Rules: ");
 			for (int i = 0;
 			     i <= modsecurity::Phases::NUMBER_OF_PHASES;
 			     i++) {
 				auto rule = res->rules->getRulesForPhase(i);
 				if (rule) {
-					zcutils_log_print(LOG_DEBUG,
+					zcu_log_print(LOG_DEBUG,
 							  "Phase: %d ( %d rules )",
 							  i, rule->size());
 				      for (auto & x:*rule)
 					{
-						zcutils_log_print(LOG_DEBUG,
+						zcu_log_print(LOG_DEBUG,
 								  "\tRule Id: %d From %s at %d ",
 								  x->m_ruleId,
 								  x->m_fileName.data
@@ -1509,7 +1509,7 @@ unsigned char **Config::get_subjectaltnames(X509 * x509, unsigned int *count_)
 			local_count++;
 			break;
 		default:
-			zcutils_log_print(LOG_WARNING,
+			zcu_log_print(LOG_WARNING,
 					  "unsupported subjectAltName type encountered: %i",
 					  name__->type);
 		}
@@ -1597,7 +1597,7 @@ void Config::load_cert(int has_other,
 			conf_err("ListenHTTPS: could not set certificate subject");
 	}
 	else
-		zcutils_log_print(LOG_WARNING,
+		zcu_log_print(LOG_WARNING,
 				  "ListenHTTPS: could not get certificate CN");
 
 // conf_err("ListenHTTPS: could not get certificate CN");
@@ -1637,7 +1637,7 @@ void Config::load_certdir(int has_other,
 	int idx, use;
 	auto res = listener_.lock();
 
-	zcutils_log_print(LOG_DEBUG, "including Certs from Dir %s",
+	zcu_log_print(LOG_DEBUG, "including Certs from Dir %s",
 			  dir_path.data());
 
 	pattern = const_cast < char *>(strrchr(dir_path.data(), '/'));
@@ -1676,7 +1676,7 @@ void Config::load_certdir(int has_other,
 			if (strcmp(files[use], files[idx]) > 0)
 				use = idx;
 
-		zcutils_log_print(LOG_DEBUG, " I Cert ==> %s", files[use]);
+		zcu_log_print(LOG_DEBUG, " I Cert ==> %s", files[use]);
 
 		load_cert(has_other, res, files[use]);
 		files[use] = files[--filecnt];
@@ -2059,7 +2059,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 		if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 
-			if (zcutils_net_get_host
+			if (zcu_net_get_host
 			    (lin + matches[1].rm_so, &addr, PF_UNSPEC)) {
 				/* if we can't resolve it, maybe this is a UNIX domain socket */
 				if (std::string_view(lin + matches[1].rm_so,
@@ -2073,7 +2073,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 				else {
 					// maybe the backend still not available, we set it as down;
 					res->alive = 0;
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s line %d: Could not resolve backend host \"%s\".",
 							  f_name[cur_fin].data
 							  (), n_lin[cur_fin],
@@ -2136,7 +2136,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 			if (is_emergency)
 				conf_err("HAportAddr is not supported for Emergency back-ends");
 			lin[matches[1].rm_eo] = '\0';
-			if (zcutils_net_get_host
+			if (zcu_net_get_host
 			    (lin + matches[1].rm_so, &ha_addr, PF_UNSPEC)) {
 				/* if we can't resolve it assume this is a UNIX domain socket */
 				if ((strlen(lin + matches[1].rm_so) + 1) >
@@ -2486,7 +2486,7 @@ void Config::parseSession(std::weak_ptr < ServiceConfig > svc_spt)
 
 void Config::conf_err(const char *msg)
 {
-	zcutils_log_print(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
+	zcu_log_print(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
 			  n_lin[cur_fin], msg);
 	if (abort_on_error)
 		exit(EXIT_FAILURE);
@@ -2546,7 +2546,7 @@ void Config::include_dir(const char *conf_path)
 	int filecnt = 0;
 	int idx, use;
 
-	zcutils_log_print(LOG_DEBUG, "Including Dir %s", conf_path);
+	zcu_log_print(LOG_DEBUG, "Including Dir %s", conf_path);
 
 	if ((dp = opendir(conf_path)) == nullptr) {
 		conf_err("can't open IncludeDir directory");
@@ -2582,7 +2582,7 @@ void Config::include_dir(const char *conf_path)
 			if (strcmp(files[use], files[idx]) < 0)
 				use = idx;
 
-		zcutils_log_print(LOG_DEBUG, " I==> %s", files[use]);
+		zcu_log_print(LOG_DEBUG, " I==> %s", files[use]);
 
 		// Copied from Include logic
 		if (cur_fin == (MAX_FIN - 1))
@@ -2590,7 +2590,7 @@ void Config::include_dir(const char *conf_path)
 		cur_fin++;
 		f_name[cur_fin] = files[use];
 		if ((f_in[cur_fin] = fopen(files[use], "rt")) == nullptr) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s line %d: Can't open included file %s",
 					  f_name[cur_fin].data(),
 					  n_lin[cur_fin], files[use]);
@@ -2634,7 +2634,7 @@ bool Config::init(const std::string & file_name)
 	// init configuration file lists.
 	f_name[0] = std::string(conf_file_name);
 	if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
-		zcutils_log_print(LOG_ERR, "can't open open %s",
+		zcu_log_print(LOG_ERR, "can't open open %s",
 				  conf_file_name.data());
 		return false;
 	}
@@ -2655,7 +2655,7 @@ bool Config::init(const std::string & file_name)
 #endif
 	parse_file();
 	if (listeners == nullptr) {
-		zcutils_log_print(LOG_ERR, "no listeners defined - aborted",
+		zcu_log_print(LOG_ERR, "no listeners defined - aborted",
 				  __FUNCTION__, __LINE__);
 		return false;
 	}

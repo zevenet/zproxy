@@ -97,7 +97,7 @@ st::STORAGE_STATUS RamfsCacheStorage::initServiceStorage(const std::
 		if (errno == EEXIST)
 			return st::STORAGE_STATUS::MPOINT_ALREADY_EXISTS;
 		else {
-			zcutils_log_print(LOG_ERR, "Error :  %s",
+			zcu_log_print(LOG_ERR, "Error :  %s",
 					  std::strerror(errno));
 			return st::STORAGE_STATUS::MKDIR_ERROR;
 		}
@@ -169,7 +169,7 @@ st::STORAGE_STATUS RamfsCacheStorage::stopCacheStorage()
 {
 	int err = umount(mount_path.data());
 	if (err) {
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: Error umounting the cache path %s ",
 				  __FUNCTION__, __LINE__, mount_path.data());
 		return st::STORAGE_STATUS::GENERIC_ERROR;
@@ -393,7 +393,7 @@ getFromStorage(const string & rel_path, string & out_buffer)
 			free(buff);
 		}
 		const char *err =::memcached_strerror(tmp_memc, rc);
-		zcutils_log_print(LOG_ERR, "The error is: %s", err);
+		zcu_log_print(LOG_ERR, "The error is: %s", err);
 		memcached_free(tmp_memc);
 		return st::STORAGE_STATUS::GENERIC_ERROR;
 	}

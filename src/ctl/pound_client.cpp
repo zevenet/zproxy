@@ -140,7 +140,7 @@ bool PoundClient::executeCommand()
 							      pos));
 			this->address = this->address.substr(0, pos);
 			client.address =
-				zcutils_net_get_address(this->address,
+				zcu_net_get_address(this->address,
 							port).release();
 			IO::IO_OP res_connect =
 				client.doConnect(*client.address, 0, false);
@@ -719,7 +719,7 @@ void PoundClient::outputStatus(json::JsonObject * json_response_listener)
 
 void PoundClient::showError(std::string error)
 {
-	zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
+	zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
 			  error);
 	exit(EXIT_FAILURE);
 }

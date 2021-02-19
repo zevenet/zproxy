@@ -84,7 +84,7 @@ void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type,
 	}
 	else if (event_group == EVENT_GROUP::SIGNAL &&
 		 fd == signal_fd.getFileDescriptor()) {
-		zcutils_log_print(LOG_DEBUG, "%s():%d: Received signal %x",
+		zcu_log_print(LOG_DEBUG, "%s():%d: Received signal %x",
 				  __FUNCTION__, __LINE__,
 				  signal_fd.getSignal());
 		if (signal_fd.getSignal() == SIGTERM) {
@@ -101,7 +101,7 @@ std::string ListenerManager::handleTask(ctl::CtlTask & task)
 		return JSON_OP_RESULT::ERROR;
 
 	if (task.command == ctl::CTL_COMMAND::EXIT) {
-		zcutils_log_print(LOG_DEBUG, "%s():%d: exit command received",
+		zcu_log_print(LOG_DEBUG, "%s():%d: exit command received",
 				  __FUNCTION__, __LINE__);
 		is_running = false;
 		return JSON_OP_RESULT::OK;
@@ -423,12 +423,12 @@ void ListenerManager::doWork()
 	while (is_running) {
 		if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
 			// something bad happend
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: No event received",
 					  __FUNCTION__, __LINE__);
 		}
 	}
-	zcutils_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__,
+	zcu_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__,
 			  __LINE__);
 }
 
@@ -505,7 +505,7 @@ bool ListenerManager::addListener(std::shared_ptr < ListenerConfig >
 			lm->addService(*service_config, service_id++);
 		}
 		else {
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "%s():%d: (%s) listener %s disabled in config file",
 					  __FUNCTION__, __LINE__,
 					  listener_config->name.data(),
@@ -520,7 +520,7 @@ bool ListenerManager::reloadConfigFile()
 	Config config;
 	if (!config.init(global::run_options::getCurrent().config_file_name))
 	{
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "%s():%d: Error loading configuration file %s",
 				  __FUNCTION__, __LINE__,
 				  global::run_options::
@@ -529,7 +529,7 @@ bool ListenerManager::reloadConfigFile()
 	}
 	// register new listeners
 	if (config.listeners == nullptr) {
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "%s():%d: error getting listener configurations",
 				  __FUNCTION__, __LINE__);
 		return false;
@@ -564,7 +564,7 @@ bool ListenerManager::reloadConfigFile()
 				if (svm->disabled)
 					continue;
 				if (!sm->registerListener(svm)) {
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: Error initializing StreamManager for farm %s",
 							  __FUNCTION__,
 							  __LINE__,
@@ -575,7 +575,7 @@ bool ListenerManager::reloadConfigFile()
 			}
 		}
 		else {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: StreamManager id: %d doesn't exist",
 					  __FUNCTION__, __LINE__, i);
 		}

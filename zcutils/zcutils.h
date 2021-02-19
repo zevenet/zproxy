@@ -36,7 +36,7 @@
 #define ZCUTILS_LOG_OUTPUT_STDOUT			(1 << 1)
 #define ZCUTILS_LOG_OUTPUT_STDERR			(1 << 2)
 
-enum zcutils_log_output
+enum zcu_log_output
 {
 	VALUE_LOG_OUTPUT_SYSLOG,
 	VALUE_LOG_OUTPUT_STDOUT,
@@ -48,40 +48,40 @@ enum zcutils_log_output
 #define ZCUTILS_LOG_LEVEL_DEFAULT			LOG_NOTICE
 #define ZCUTILS_LOG_OUTPUT_DEFAULT			ZCUTILS_LOG_OUTPUT_SYSLOG
 
-static inline int zcutils_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
-static inline int zcutils_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
+static inline int zcu_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
+static inline int zcu_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
 
-static inline void zcutils_log_set_level(int loglevel)
+static inline void zcu_log_set_level(int loglevel)
 {
-	zcutils_log_level = loglevel;
+	zcu_log_level = loglevel;
 	setlogmask(LOG_UPTO(loglevel));
 }
 
-static inline void zcutils_log_set_output(int output)
+static inline void zcu_log_set_output(int output)
 {
 	switch (output) {
 	case VALUE_LOG_OUTPUT_STDOUT:
-		zcutils_log_output = ZCUTILS_LOG_OUTPUT_STDOUT;
+		zcu_log_output = ZCUTILS_LOG_OUTPUT_STDOUT;
 		break;
 	case VALUE_LOG_OUTPUT_STDERR:
-		zcutils_log_output = ZCUTILS_LOG_OUTPUT_STDERR;
+		zcu_log_output = ZCUTILS_LOG_OUTPUT_STDERR;
 		break;
 	case VALUE_LOG_OUTPUT_SYSOUT:
-		zcutils_log_output =
+		zcu_log_output =
 			ZCUTILS_LOG_OUTPUT_SYSLOG | ZCUTILS_LOG_OUTPUT_STDOUT;
 		break;
 	case VALUE_LOG_OUTPUT_SYSERR:
-		zcutils_log_output =
+		zcu_log_output =
 			ZCUTILS_LOG_OUTPUT_SYSLOG | ZCUTILS_LOG_OUTPUT_STDERR;
 		break;
 	case VALUE_LOG_OUTPUT_SYSLOG:
 	default:
-		zcutils_log_output = ZCUTILS_LOG_OUTPUT_SYSLOG;
+		zcu_log_output = ZCUTILS_LOG_OUTPUT_SYSLOG;
 	}
 	return;
 }
 
-static inline int zcutils_log_print(int loglevel, const char *fmt, ...)
+static inline int zcu_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
@@ -90,23 +90,23 @@ static inline int zcutils_log_print(int loglevel, const char *fmt, ...)
 		return 0;
 #endif
 
-	if (zcutils_log_output & ZCUTILS_LOG_OUTPUT_STDOUT
-	    && loglevel <= zcutils_log_level) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT
+	    && loglevel <= zcu_log_level) {
 		va_start(args, fmt);
 		vfprintf(stdout, fmt, args);
 		fprintf(stdout, "\n");
 		va_end(args);
 	}
 
-	if (zcutils_log_output & ZCUTILS_LOG_OUTPUT_STDERR
-	    && loglevel <= zcutils_log_level) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR
+	    && loglevel <= zcu_log_level) {
 		va_start(args, fmt);
 		vfprintf(stderr, fmt, args);
 		fprintf(stderr, "\n");
 		va_end(args);
 	}
 
-	if (zcutils_log_output & ZCUTILS_LOG_OUTPUT_SYSLOG) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_SYSLOG) {
 		va_start(args, fmt);
 		vsyslog(loglevel, fmt, args);
 		va_end(args);
@@ -117,7 +117,7 @@ static inline int zcutils_log_print(int loglevel, const char *fmt, ...)
 
 /****  BACKTRACE  ****/
 
-static inline void zcutils_bt_print()
+static inline void zcu_bt_print()
 {
 	void *buffer[255];
 	char **str;
@@ -128,12 +128,12 @@ static inline void zcutils_bt_print()
 
 	str = backtrace_symbols(buffer, calls);
 	if (!str) {
-		zcutils_log_print(LOG_ERR, "No backtrace strings found!");
+		zcu_log_print(LOG_ERR, "No backtrace strings found!");
 		exit(EXIT_FAILURE);
 	}
 
 	for (i = 0; i < calls; i++)
-		zcutils_log_print(LOG_ERR, "%s", str[i]);
+		zcu_log_print(LOG_ERR, "%s", str[i]);
 	free(str);
 
 	exit(EXIT_FAILURE);
@@ -141,7 +141,7 @@ static inline void zcutils_bt_print()
 
 /****  STRING  ****/
 
-static inline void zcutils_str_snprintf(char *strdst, int size, char *strsrc)
+static inline void zcu_str_snprintf(char *strdst, int size, char *strsrc)
 {
 	for (int i = 0; i < size; i++) {
 		strdst[i] = *(strsrc + i);
@@ -156,24 +156,24 @@ static inline void zcutils_str_snprintf(char *strdst, int size, char *strsrc)
 #define ZCU_DEF_BUFFER_SIZE		4096
 #define EXTRA_SIZE				1024
 
-struct zcutils_buffer
+struct zcu_buffer
 {
 	int size;
 	int next;
 	char *data;
 };
 
-static inline int zcutils_buf_get_size(struct zcutils_buffer *buf)
+static inline int zcu_buf_get_size(struct zcu_buffer *buf)
 {
 	return buf->size;
 }
 
-static inline char *zcutils_buf_get_next(struct zcutils_buffer *buf)
+static inline char *zcu_buf_get_next(struct zcu_buffer *buf)
 {
 	return buf->data + buf->next;
 }
 
-static inline int zcutils_buf_resize(struct zcutils_buffer *buf, int times)
+static inline int zcu_buf_resize(struct zcu_buffer *buf, int times)
 {
 	char *pbuf;
 	int newsize;
@@ -195,7 +195,7 @@ static inline int zcutils_buf_resize(struct zcutils_buffer *buf, int times)
 	return 0;
 }
 
-static inline int zcutils_buf_create(struct zcutils_buffer *buf)
+static inline int zcu_buf_create(struct zcu_buffer *buf)
 {
 	buf->size = 0;
 	buf->next = 0;
@@ -210,17 +210,17 @@ static inline int zcutils_buf_create(struct zcutils_buffer *buf)
 	return 0;
 }
 
-static inline int zcutils_buf_isempty(struct zcutils_buffer *buf)
+static inline int zcu_buf_isempty(struct zcu_buffer *buf)
 {
 	return (buf->data[0] == 0);
 }
 
-static inline char *zcutils_buf_get_data(struct zcutils_buffer *buf)
+static inline char *zcu_buf_get_data(struct zcu_buffer *buf)
 {
 	return buf->data;
 }
 
-static inline int zcutils_buf_clean(struct zcutils_buffer *buf)
+static inline int zcu_buf_clean(struct zcu_buffer *buf)
 {
 	if (buf->data)
 		free(buf->data);
@@ -229,7 +229,7 @@ static inline int zcutils_buf_clean(struct zcutils_buffer *buf)
 	return 0;
 }
 
-static inline int zcutils_buf_reset(struct zcutils_buffer *buf)
+static inline int zcu_buf_reset(struct zcu_buffer *buf)
 {
 	buf->data[0] = 0;
 	buf->next = 0;
@@ -237,7 +237,7 @@ static inline int zcutils_buf_reset(struct zcutils_buffer *buf)
 }
 
 static inline int
-zcutils_buf_concat_va(struct zcutils_buffer *buf, int len, char *fmt,
+zcu_buf_concat_va(struct zcu_buffer *buf, int len, char *fmt,
 		      va_list args)
 {
 	int times = 0;
@@ -246,14 +246,14 @@ zcutils_buf_concat_va(struct zcutils_buffer *buf, int len, char *fmt,
 	if (buf->next + len >= buf->size)
 		times = ((buf->next + len - buf->size) / EXTRA_SIZE) + 1;
 
-	if (zcutils_buf_resize(buf, times)) {
-		zcutils_log_print(LOG_ERR,
+	if (zcu_buf_resize(buf, times)) {
+		zcu_log_print(LOG_ERR,
 				  "Error resizing the buffer %d times from a size of %d!",
 				  times, buf->size);
 		return 1;
 	}
 
-	pnext = zcutils_buf_get_next(buf);
+	pnext = zcu_buf_get_next(buf);
 	vsnprintf(pnext, len + 1, fmt, args);
 	buf->next += len;
 
@@ -261,7 +261,7 @@ zcutils_buf_concat_va(struct zcutils_buffer *buf, int len, char *fmt,
 }
 
 static inline int
-zcutils_buf_concat(struct zcutils_buffer *buf, char *fmt, ...)
+zcu_buf_concat(struct zcu_buffer *buf, char *fmt, ...)
 {
 	int len;
 	va_list args;
@@ -271,7 +271,7 @@ zcutils_buf_concat(struct zcutils_buffer *buf, char *fmt, ...)
 	va_end(args);
 
 	va_start(args, fmt);
-	zcutils_buf_concat_va(buf, len, fmt, args);
+	zcu_buf_concat_va(buf, len, fmt, args);
 	va_end(args);
 
 	return 0;

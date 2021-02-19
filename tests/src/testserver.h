@@ -57,7 +57,7 @@ class ClientHandler : public EpollManager {
 void ClientHandler::setUp(int n_clients, std::string addr, int port) {
   for (int i = 0; i < n_clients; i++) {
     Connection *connection = new Connection;
-    connection->address = zcutils_net_get_address(addr, port).release();
+    connection->address = zcu_net_get_address(addr, port).release();
     connection->doConnect(*connection->address, 30);
     connections_set[connection->getFileDescriptor()] = connection;
     if (connection->getFileDescriptor() > 0)
@@ -109,7 +109,7 @@ void ClientHandler::HandleEvent(int fd, EVENT_TYPE event_type,
 }
 
 void ServerHandler::setUp(std::string addr, int port) {
-  lst.address = zcutils_net_get_address(addr, port).release();
+  lst.address = zcu_net_get_address(addr, port).release();
   lst.listen(*lst.address);
   handleAccept(lst.getFileDescriptor());
 }

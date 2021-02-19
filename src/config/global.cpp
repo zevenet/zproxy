@@ -113,31 +113,31 @@ std::unique_ptr < global::StartOptions >
 			break;
 		case 'l':
 			res->loglevel = atoi(optarg);
-			zcutils_log_set_level(res->loglevel);
+			zcu_log_set_level(res->loglevel);
 			break;
 		case 'L':
 			res->logoutput = atoi(optarg);
-			zcutils_log_set_output(res->logoutput);
+			zcu_log_set_output(res->logoutput);
 			break;
 		case 'v':
 			res->verbose_mode = true;
 			break;
 		case 'V':
-			zcutils_log_print(LOG_INFO, "zproxy version %s",
+			zcu_log_print(LOG_INFO, "zproxy version %s",
 					  ZPROXY_VERSION);
-			zcutils_log_print(LOG_INFO, "Build: %s %s",
+			zcu_log_print(LOG_INFO, "Build: %s %s",
 					  ZPROXY_HOST_INFO,
 					  ZPROXY_BUILD_INFO);
-			zcutils_log_print(LOG_INFO, "%s", ZPROXY_COPYRIGHT);
+			zcu_log_print(LOG_INFO, "%s", ZPROXY_COPYRIGHT);
 			exit(EXIT_FAILURE);
 		default:
-			zcutils_log_print(LOG_ERR, "bad flag -%c", optopt);
+			zcu_log_print(LOG_ERR, "bad flag -%c", optopt);
 			return nullptr;
 		}
 	}
 
 	if (optind < argc) {
-		zcutils_log_print(LOG_WARNING,
+		zcu_log_print(LOG_WARNING,
 				  "unknown extra arguments (%s...)",
 				  argv[optind]);
 		exit(EXIT_FAILURE);

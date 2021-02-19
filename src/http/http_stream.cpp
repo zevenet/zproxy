@@ -54,7 +54,7 @@ void HttpStream::dumpDebugData_(const std::string & function, int line,
 {
 	if (stream == nullptr)
 		return;
-	zcutils_log_print(LOG_DEBUG,
+	zcu_log_print(LOG_DEBUG,
 			  "%s():%d: \e[1;32m[%lu][%s][%.*s]\e[0m cl_buff: %5lu cl_off: %lu CL: %lu R: %d "
 			  "HS: %s CHR: %d CH: %s TP:%s RP: %s"
 			  " | bck_buff: %5lu\tbck_off: %lu\tCL: %lu\tR: %d "

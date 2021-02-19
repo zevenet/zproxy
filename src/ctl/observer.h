@@ -52,7 +52,7 @@ template < typename T, typename IResponse > class CtlNotify {
       public:
 	void attach(CtlObserver < T, IResponse > &listener)
 	{
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: attaching id: %d observer",
 				  __FUNCTION__, __LINE__, listener.__id__);
 		observers.push_back(&listener);
@@ -62,14 +62,14 @@ template < typename T, typename IResponse > class CtlNotify {
 	{
 		for (auto it = observers.begin(); it != observers.end();) {
 			if (*it == nullptr) {
-				zcutils_log_print(LOG_DEBUG,
+				zcu_log_print(LOG_DEBUG,
 						  "%s():%d: removing null observer",
 						  __FUNCTION__, __LINE__);
 				it = observers.erase(it);
 				continue;
 			}
 			else if (*(*it) == listener) {
-				zcutils_log_print(LOG_DEBUG,
+				zcu_log_print(LOG_DEBUG,
 						  "%s():%d: deAttaching id: %d observer",
 						  __FUNCTION__, __LINE__,
 						  listener.__id__);
@@ -87,7 +87,7 @@ template < typename T, typename IResponse > class CtlNotify {
 		for (auto it = observers.begin(); it != observers.end();) {
 
 			if (*it == nullptr) {
-				zcutils_log_print(LOG_DEBUG,
+				zcu_log_print(LOG_DEBUG,
 						  "%s():%d: observer not found, removing",
 						  __FUNCTION__, __LINE__);
 				it = observers.erase(it);

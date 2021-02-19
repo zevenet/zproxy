@@ -85,8 +85,8 @@ namespace global
 		bool verbose_mode
 		{
 		false};
-		int loglevel = zcutils_log_level;
-		int logoutput = zcutils_log_output;
+		int loglevel = zcu_log_level;
+		int logoutput = zcu_log_output;
 
 		/*Set current start options as global, this must be called at least once */
 		void setCurrent(const StartOptions & options);

@@ -48,7 +48,7 @@ ssize_t http_manager::handleChunkedData(Connection & connection,
 		//#if PRINT_DEBUG_CHUNKED
 		const char *status =
 			chunk_size < 0 ? "*" : chunk_size == 0 ? "/" : "";
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: [%s] buffer size: %6lu chunk left: %8d => Chunk size: %8d "
 				  "Data offset: %6lu Content_length: %8d  next chunk left %8d",
 				  __FUNCTION__, __LINE__, status,
@@ -71,7 +71,7 @@ ssize_t http_manager::handleChunkedData(Connection & connection,
 			http_data.chunked_status =
 				CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
 #if PRINT_DEBUG_CHUNKED
-			zcutils_log_print(LOG_DEBUG, "%s():%d: last chunk",
+			zcu_log_print(LOG_DEBUG, "%s():%d: last chunk",
 					  __FUNCTION__, __LINE__);
 #endif
 			return 0;
@@ -95,21 +95,21 @@ ssize_t http_manager::getChunkSize(const std::string & data, size_t data_size,
 		char *error;
 		auto chunk_length =::strtol(hex.data(), &error, 16);
 		if (*error != 0) {
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "strtol() failed: Data size: %d  Buffer: %.*s",
 					  data_size, 10, data.data());
 			return -1;
 		}
 		else {
 #if PRINT_DEBUG_CHUNKED
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "CHUNK found size %s => %d ",
 					  hex.data(), chunk_length);
 #endif
 			return static_cast < ssize_t > (chunk_length);
 		}
 	}
-	//  zcutils_log_print(LOG_NOTICE, "Chunk not found, need more data: Buff size: %d
+	//  zcu_log_print(LOG_NOTICE, "Chunk not found, need more data: Buff size: %d
 	//  Buff %.*s ",data_size, 5, data.data());
 	return -1;
 }
@@ -237,7 +237,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 	// Check for correct headers
 	for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_HTTP_HEADERS
-		zcutils_log_print(LOG_DEBUG, "\t%.*s",
+		zcu_log_print(LOG_DEBUG, "\t%.*s",
 				  request.headers[i].name_len +
 				  request.headers[i].value_len + 2,
 				  request.headers[i].name);
@@ -271,7 +271,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 				if (regexec
 				    (&m->match, request.headers[i].value, 10,
 				     umtch, REG_STARTEND)) {
-					zcutils_log_print(LOG_INFO,
+					zcu_log_print(LOG_INFO,
 							  "Header Match pattern didn't match %.*s",
 							  request.
 							  headers
@@ -347,7 +347,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 		if (request.headers[i].header_off)
 			continue;
 
-		zcutils_log_print(LOG_DEBUG, "%s():%d: \t%.*s", __FUNCTION__,
+		zcu_log_print(LOG_DEBUG, "%s():%d: \t%.*s", __FUNCTION__,
 				  __LINE__,
 				  request.headers[i].name_len +
 				  request.headers[i].value_len + 2,
@@ -418,7 +418,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 								size_t new_chunk_left = 0;
 								auto chunk_size = http_manager::getLastChunkSize(request.message, request.message_length, data_offset, new_chunk_left, request.content_length);
 #if PRINT_DEBUG_CHUNKED
-								zcutils_log_print
+								zcu_log_print
 									(LOG_DEBUG,
 									 "%s():%d: >>>> Chunk size %d left %d ",
 									 __FUNCTION__,
@@ -430,7 +430,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 								if (chunk_size
 								    == 0) {
 #if PRINT_DEBUG_CHUNKED
-									zcutils_log_print
+									zcu_log_print
 										(LOG_DEBUG,
 										 "%s():%d: set last chunk",
 										 __FUNCTION__,
@@ -491,7 +491,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 				}
 			case http::HTTP_HEADER_NAME::EXPECT:{
 					if (header_value == "100-continue") {
-						zcutils_log_print(LOG_DEBUG,
+						zcu_log_print(LOG_DEBUG,
 								  "%s():%d: client Expects 100 continue",
 								  __FUNCTION__,
 								  __LINE__);
@@ -538,7 +538,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 	/* If the response is 100 continue we need to enable chunked transfer. */
 	if (response.http_status_code < 200) {
 		//    stream.response.chunked_status =
-		//    http::CHUNKED_STATUS::CHUNKED_ENABLED; zcutils_log_print(LOG_DEBUG,
+		//    http::CHUNKED_STATUS::CHUNKED_ENABLED; zcu_log_print(LOG_DEBUG,
 		//    "Chunked transfer enabled");
 		return validation::REQUEST_RESULT::OK;
 	}
@@ -579,7 +579,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 				if (regexec
 				    (&m->match, response.headers[i].value, 10,
 				     umtch, REG_STARTEND)) {
-					zcutils_log_print(LOG_INFO,
+					zcu_log_print(LOG_INFO,
 							  "Header Match pattern didn't match %.*s",
 							  response.
 							  headers
@@ -652,7 +652,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 			}
 		}
 #if DEBUG_HTTP_HEADERS
-		zcutils_log_print(LOG_DEBUG, "\t%.*s",
+		zcu_log_print(LOG_DEBUG, "\t%.*s",
 				  response.headers[i].name_len +
 				  response.headers[i].value_len + 2,
 				  response.headers[i].name);
@@ -757,19 +757,19 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 							"https" ? 443 : 80;
 					}
 					auto in_addr =
-						zcutils_net_get_address(host,
+						zcu_net_get_address(host,
 									port);
 					if (in_addr == nullptr) {
-						zcutils_log_print(LOG_NOTICE,
+						zcu_log_print(LOG_NOTICE,
 								  "Couldn't get host ip");
 						continue;
 					}
 					/*rewrite location if it points to the backend or the listener
 					 * address*/
-					if (zcutils_net_equal_sockaddr
+					if (zcu_net_equal_sockaddr
 					    (in_addr.get(), backend_addr)
 					    ||
-					    (zcutils_net_equal_sockaddr
+					    (zcu_net_equal_sockaddr
 					     (in_addr.get(),
 					      stream.service_manager->listener_config_->addr_info)))
 					{
@@ -845,7 +845,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 								size_t new_chunk_left = 0;
 								auto chunk_size = http_manager::getLastChunkSize(stream.response.message, stream.response.message_length, data_offset, new_chunk_left, response.content_length);
 #if PRINT_DEBUG_CHUNKED
-								zcutils_log_print
+								zcu_log_print
 									(LOG_DEBUG,
 									 "%s():%d: >>>> Chunk size %d left %d",
 									 __FUNCTION__,
@@ -857,7 +857,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 								if (chunk_size
 								    == 0) {
 #if PRINT_DEBUG_CHUNKED
-									zcutils_log_print
+									zcu_log_print
 										(LOG_DEBUG,
 										 "%s():%d: set last chunk",
 										 __FUNCTION__,
@@ -960,14 +960,14 @@ void http_manager::replyError(http::Code code,
 	char caddr[200];
 
 	if (UNLIKELY
-	    (zcutils_soc_get_peer_address(target.getFileDescriptor(), caddr,
+	    (zcu_soc_get_peer_address(target.getFileDescriptor(), caddr,
 					  200) == nullptr)) {
-		zcutils_log_print(LOG_DEBUG, "Error getting peer address");
+		zcu_log_print(LOG_DEBUG, "Error getting peer address");
 	}
 	else {
 		auto request_data_len =
 			std::string_view(target.buffer).find('\r');
-		zcutils_log_print(LOG_INFO, "(%lx) e%d %s %.*s from %s",
+		zcu_log_print(LOG_INFO, "(%lx) e%d %s %.*s from %s",
 				  std::this_thread::get_id(),
 				  static_cast < int >(code),
 				  code_string.data(), request_data_len,
@@ -1028,7 +1028,7 @@ bool http_manager::replyRedirect(HttpStream & stream,
 			if (regexec
 			    (&service->service_config.url->pat,
 			     request_url.data(), 10, umtch, 0)) {
-				zcutils_log_print(LOG_WARNING,
+				zcu_log_print(LOG_WARNING,
 						  "URL pattern didn't match in redirdynamic... shouldn't happen %s",
 						  request_url.data());
 			}

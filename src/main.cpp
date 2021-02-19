@@ -39,7 +39,7 @@ void cleanExit()
 
 void handleInterrupt(int sig)
 {
-	zcutils_log_print(LOG_DEBUG, "[%s] received",::strsignal(sig));
+	zcu_log_print(LOG_DEBUG, "[%s] received",::strsignal(sig));
 	switch (sig) {
 	case SIGQUIT:
 	case SIGTERM:
@@ -55,7 +55,7 @@ void handleInterrupt(int sig)
 	case SIGABRT:
 		::_exit(EXIT_FAILURE);
 	case SIGSEGV:{
-			zcutils_bt_print();
+			zcu_bt_print();
 			::_exit(EXIT_FAILURE);
 		}
 	case SIGUSR1:		// Release free heap memory
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	zcutils_log_print(LOG_NOTICE, "zproxy starting...");
+	zcu_log_print(LOG_NOTICE, "zproxy starting...");
 
 	Config config(true);
 	auto start_options =
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		std::exit(EXIT_FAILURE);
 	auto parse_result = config.init(*start_options);
 	if (!parse_result) {
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "error parsing configuration file %s",
 				  start_options->conf_file_name.data());
 		std::exit(EXIT_FAILURE);
@@ -106,14 +106,14 @@ int main(int argc, char *argv[])
 		std::exit(EXIT_SUCCESS);
 	}
 
-	zcutils_log_set_level(config.listeners->log_level);
+	zcu_log_set_level(config.listeners->log_level);
 
 	config.setAsCurrent();
 
 	// Syslog initialization
 	if (config.daemonize) {
 		if (!Environment::daemonize()) {
-			zcutils_log_print(LOG_ERR, "error: daemonize failed");
+			zcu_log_print(LOG_ERR, "error: daemonize failed");
 			closelog();
 			return EXIT_FAILURE;
 		}
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 	for (auto listener_conf = config.listeners; listener_conf != nullptr;
 	     listener_conf = listener_conf->next) {
 		if (!listener.addListener(listener_conf)) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "error initializing listener socket");
 			return EXIT_FAILURE;
 		}

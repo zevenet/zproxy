@@ -65,7 +65,7 @@ void Compression::applyCompression(Service * service, HttpStream * stream)
 					if (!zlib::compress_message_gzip
 					    (message_no_compressed,
 					     message_compressed_gzip))
-						zcutils_log_print(LOG_ERR,
+						zcu_log_print(LOG_ERR,
 								  "Error while compressing.");
 					strncpy(stream->response.message,
 						message_compressed_gzip.c_str
@@ -80,7 +80,7 @@ void Compression::applyCompression(Service * service, HttpStream * stream)
 					if (!zlib::compress_message_deflate
 					    (message_no_compressed,
 					     message_compressed_deflate))
-						zcutils_log_print(LOG_ERR,
+						zcu_log_print(LOG_ERR,
 								  "Error while compressing.");
 					strncpy(stream->response.message,
 						message_compressed_deflate.c_str

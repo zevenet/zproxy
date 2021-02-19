@@ -38,7 +38,7 @@ http::REQUEST_METHOD HttpRequest::getRequestMethod()
 
 void HttpRequest::printRequestMethod()
 {
-	zcutils_log_print(LOG_DEBUG, "Request method: %s",
+	zcu_log_print(LOG_DEBUG, "Request method: %s",
 			  http::http_info::
 			  http_verb_strings.at(request_method).c_str());
 }

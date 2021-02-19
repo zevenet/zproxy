@@ -47,7 +47,7 @@ void httpsHeaders(HttpStream * stream, int clnt_check)
 	if (x509 != nullptr && clnt_check < 3
 	    && SSL_get_verify_result(stream->client_connection.ssl) !=
 	    X509_V_OK) {
-		zcutils_log_print(LOG_ERR, "Bad certificate from %s",
+		zcu_log_print(LOG_ERR, "Bad certificate from %s",
 				  stream->client_connection.
 				  address_str.c_str());
 	}

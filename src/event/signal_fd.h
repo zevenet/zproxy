@@ -49,12 +49,12 @@ class SignalFd:public Descriptor
 		/* Block signals so that they aren't handled
 		   according to their default dispositions */
 		if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
-			zcutils_log_print(LOG_ERR, "sigprocmask () failed");
+			zcu_log_print(LOG_ERR, "sigprocmask () failed");
 			return false;
 		}
 		fd_ = signalfd(-1, &mask, 0);
 		if (fd_ < 0) {
-			zcutils_log_print(LOG_ERR, "sigprocmask () failed");
+			zcu_log_print(LOG_ERR, "sigprocmask () failed");
 			return false;
 		}
 		return true;
@@ -67,7 +67,7 @@ class SignalFd:public Descriptor
 		};
 		s = read(fd_, &fdsi, sizeof(struct signalfd_siginfo));
 		if (s != sizeof(struct signalfd_siginfo)) {
-			zcutils_log_print(LOG_ERR, "sigprocmask () failed");
+			zcu_log_print(LOG_ERR, "sigprocmask () failed");
 			return false;
 		}
 		return fdsi.ssi_signo;

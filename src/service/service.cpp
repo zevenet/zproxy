@@ -51,7 +51,7 @@ Backend *Service::getBackend(Connection & source, HttpRequest & request)
 					addSession(source, request,
 						   *new_backend);
 				if (session == nullptr) {
-					zcutils_log_print(LOG_DEBUG,
+					zcu_log_print(LOG_DEBUG,
 							  "Error adding new session, session info not found in request");
 				}
 			}
@@ -69,20 +69,20 @@ bool Service::setBackendHostInfo(Backend * backend)
 		return false;
 	::freeaddrinfo(backend->address_info);
 	auto address =
-		zcutils_net_get_address(backend->address, backend->port);
+		zcu_net_get_address(backend->address, backend->port);
 	if (address == nullptr) {
 		// maybe the backend still not available, we set it as down;
 		backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-		zcutils_log_print(LOG_INFO,
+		zcu_log_print(LOG_INFO,
 				  "srv: %s,  Could not resolve backend host \" %s \" .",
 				  this->name.data(), backend->address.data());
 		return false;
 	}
 	backend->address_info = address.release();
-	//  if (zcutils_net_get_address(backend->address.data(), backend->address_info, PF_UNSPEC, backend->port)) {
+	//  if (zcu_net_get_address(backend->address.data(), backend->address_info, PF_UNSPEC, backend->port)) {
 	//    // maybe the backend still not available, we set it as down;
 	//    backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-	//    zcutils_log_print(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
+	//    zcu_log_print(LOG_INFO, "srv: %s,  Could not resolve backend host \" %s \" .", this->name.data(),
 	//                   backend->address.data());
 	//    return false;
 	//  }
@@ -124,7 +124,7 @@ bool Service::setBackendHostInfo(Backend * backend)
 		}
 		else {
 			backend->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "cannot autogenerate backendkey, please specify one'");
 			return false;
 		}
@@ -319,7 +319,7 @@ Service::Service(ServiceConfig & service_config_)
 			// this->addBackend(bck->address, bck->port, backend_id++);
 		}
 		else {
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "Backend %s:%s disabled",
 					  bck->address,
 					  std::to_string(bck->port));
@@ -332,7 +332,7 @@ Service::Service(ServiceConfig & service_config_)
 			// this->addBackend(bck->address, bck->port, backend_id++);
 		}
 		else {
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "Emergency Backend %s:%s disabled",
 					  bck->address,
 					  std::to_string(bck->port));
@@ -393,7 +393,7 @@ std::string Service::handleTask(ctl::CtlTask & task)
 {
 	if (!isHandler(task))
 		return JSON_OP_RESULT::ERROR;
-	zcutils_log_print(LOG_DEBUG, "%s():%d: service %d handling task",
+	zcu_log_print(LOG_DEBUG, "%s():%d: service %d handling task",
 			  __FUNCTION__, __LINE__, id);
 	if (task.backend_id > -1) {
 	      for (auto backend:backend_set) {
@@ -526,7 +526,7 @@ std::string Service::handleTask(ctl::CtlTask & task)
 						{
 							this->disabled = true;
 						}
-						zcutils_log_print(LOG_NOTICE,
+						zcu_log_print(LOG_NOTICE,
 								  "set Service %d %s",
 								  id,
 								  value.c_str

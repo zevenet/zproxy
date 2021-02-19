@@ -30,7 +30,7 @@ struct Regex:public regex_t
 	{
 		if (::regcomp(this, reg_ex_expression,
 			      REG_ICASE | REG_NEWLINE | REG_EXTENDED)) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: error compiling regex: %s",
 					  __FUNCTION__, __LINE__,
 					  reg_ex_expression);

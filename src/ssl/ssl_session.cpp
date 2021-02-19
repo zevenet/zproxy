@@ -37,7 +37,7 @@ SslSessionManager *SslSessionManager::getInstance()
 
 void SslSessionManager::removeSessionId(const unsigned char *id, int idLength)
 {
-	zcutils_log_print(LOG_ERR, "SESSION DELETE id: %s", id);
+	zcu_log_print(LOG_ERR, "SESSION DELETE id: %s", id);
 	std::lock_guard < std::mutex > lock(data_mtx);
 	auto i = sessions.begin();
 	while (i != sessions.end()) {
@@ -57,7 +57,7 @@ int SslSessionManager::addSession(SSL * ssl, SSL_SESSION * session)
 	unsigned char *buff;
 	unsigned int id_length;
 	const unsigned char *id = SSL_SESSION_get_id(session, &id_length);
-	zcutils_log_print(LOG_ERR, "SESSION ADD id: %s", id);
+	zcu_log_print(LOG_ERR, "SESSION ADD id: %s", id);
 	removeSessionId(id, id_length);
 	std::lock_guard < std::mutex > lock(data_mtx);
 
@@ -80,7 +80,7 @@ SSL_SESSION *SslSessionManager::getSession(SSL * ssl, const unsigned char *id,
 {
 	unsigned char *buff;
 	std::lock_guard < std::mutex > lock(data_mtx);
-	zcutils_log_print(LOG_DEBUG, "%s():%d: session get id %x",
+	zcu_log_print(LOG_DEBUG, "%s():%d: session get id %x",
 			  __FUNCTION__, __LINE__, id);
 	*do_copy = 0;
 

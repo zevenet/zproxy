@@ -77,7 +77,7 @@ bool Waf::checkRequestWaf(HttpStream & stream)
 	if (stream.modsec_transaction->m_it.disruptive) {
 		// log event?
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			zcutils_log_print(LOG_WARNING, "[WAF] (%lx) %s",
+			zcu_log_print(LOG_WARNING, "[WAF] (%lx) %s",
 					  pthread_self(),
 					  stream.modsec_transaction->
 					  m_it.log);
@@ -87,7 +87,7 @@ bool Waf::checkRequestWaf(HttpStream & stream)
 
 		// process is going to be cut. Execute the logging phase
 		if (!stream.modsec_transaction->processLogging())
-			zcutils_log_print(LOG_WARNING,
+			zcu_log_print(LOG_WARNING,
 					  "(%lx) WAF, error processing the log",
 					  pthread_self());
 
@@ -160,13 +160,13 @@ bool Waf::checkResponseWaf(HttpStream & stream)
 	if (stream.modsec_transaction->m_it.disruptive) {
 		// log event?
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			zcutils_log_print(LOG_WARNING, "[WAF] (%lx) %s",
+			zcu_log_print(LOG_WARNING, "[WAF] (%lx) %s",
 					  pthread_self(),
 					  stream.modsec_transaction->
 					  m_it.log);
 		}
 		stream.modsec_transaction->processLogging();	// TODO:: is it necessary??
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "WAF wants to apply an action for the REQUEST");
 
 		return true;
@@ -184,7 +184,7 @@ std::shared_ptr < Rules > Waf::reloadRules()
 	Config config;
 	config.init(global::StartOptions::getCurrent());
 	auto rules = std::make_shared < Rules > ();
-	zcutils_log_print(LOG_WARNING, "file to update %s",
+	zcu_log_print(LOG_WARNING, "file to update %s",
 			  global::StartOptions::getCurrent().
 			  conf_file_name.data());
 
@@ -201,7 +201,7 @@ std::shared_ptr < Rules > Waf::reloadRules()
 						lin + matches[1].rm_so);
 			err = rules->loadFromUri(file.data());
 			if (err == -1) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "Error loading waf ruleset file %s: %s",
 						  file.data(),
 						  rules->
@@ -212,29 +212,29 @@ std::shared_ptr < Rules > Waf::reloadRules()
 	}
 	// enable for debug purpose only
 	// dumpRules(*rules);
-	zcutils_log_print(LOG_INFO, "The WAF rulesets waf reloaded properly");
+	zcu_log_print(LOG_INFO, "The WAF rulesets waf reloaded properly");
 	return rules;
 }
 
 void Waf::logModsec(void *data, const void *message)
 {
 	if (data != nullptr)
-		zcutils_log_print(LOG_WARNING, "%s",
+		zcu_log_print(LOG_WARNING, "%s",
 				  static_cast < char *>(data));
 	if (message != nullptr)
-		zcutils_log_print(LOG_WARNING, "[WAF] %s",
+		zcu_log_print(LOG_WARNING, "[WAF] %s",
 				  static_cast < char *>(const_cast <
 							void *>(message)));
 }
 
 void Waf::dumpRules(modsecurity::Rules & rules)
 {
-	zcutils_log_print(LOG_DEBUG, "Rules: ");
+	zcu_log_print(LOG_DEBUG, "Rules: ");
 	for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
 		auto rule = rules.getRulesForPhase(i);
 		if (rule) {
 		      for (auto & x:*rule) {
-				zcutils_log_print(LOG_DEBUG,
+				zcu_log_print(LOG_DEBUG,
 						  "\tRule Id: %d From %s at %d ",
 						  x->m_ruleId,
 						  x->m_fileName.data(),

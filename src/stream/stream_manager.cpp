@@ -146,9 +146,9 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					auto stream = bck_streams_set[fd];
 					if (stream == nullptr) {
 						char addr[150];
-						zcutils_log_print(LOG_INFO,
+						zcu_log_print(LOG_INFO,
 								  "Remote backend host %s closed connection prematurely",
-								  zcutils_soc_get_peer_address
+								  zcu_soc_get_peer_address
 								  (fd, addr,
 								   150) !=
 								  nullptr ?
@@ -166,7 +166,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					auto stream = cl_streams_set[fd];
 					if (stream == nullptr) {
 						char addr[150];
-						zcutils_log_print(LOG_INFO,
+						zcu_log_print(LOG_INFO,
 								  "Remote client host closed connection prematurely");
 						deleteFd(fd);
 						::close(fd);
@@ -183,7 +183,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			break;
 		}
 	default:
-		zcutils_log_print(LOG_ERR, "%s():%d: unexpected  event type",
+		zcu_log_print(LOG_ERR, "%s():%d: unexpected  event type",
 				  __FUNCTION__, __LINE__);
 		deleteFd(fd);
 		::close(fd);
@@ -208,7 +208,7 @@ void StreamManager::start(int thread_id_)
 		if (sm->disabled)
 			continue;
 		if (!this->registerListener(sm)) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: error initializing StreamManager for farm %s",
 					  __FUNCTION__, __LINE__,
 					  sm->listener_config_->name.data());
@@ -313,7 +313,7 @@ void StreamManager::addStream(int fd,
 // configurar
 #else
 	if (!this->addFd(fd, EVENT_TYPE::READ, EVENT_GROUP::CLIENT))
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "%s():%d: error adding to epoll manager",
 				  __FUNCTION__, __LINE__);
 #endif
@@ -379,7 +379,7 @@ void StreamManager::onRequestEvent(int fd)
 								  stream->
 								  client_connection))
 			{
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: fd: %d:%d handshake error with %s",
 						  __FUNCTION__, __LINE__,
 						  stream->
@@ -408,14 +408,14 @@ void StreamManager::onRequestEvent(int fd)
 				 && (ERR_GET_LIB(ERR_peek_error()) ==
 				     ERR_LIB_SSL)) {
 				/* the client speaks plain HTTP on our HTTPS port */
-				zcutils_log_print(LOG_WARNING,
+				zcu_log_print(LOG_WARNING,
 						  "%s():%d: Client %s sent a plain HTTP message to an SSL port",
 						  __FUNCTION__, __LINE__,
 						  stream->
 						  client_connection.getPeerAddress
 						  ().c_str());
 				if (listener_config_.nossl_redir > 0) {
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: (%lx) errNoSsl from %s redirecting to \"%s\"",
 							  __FUNCTION__,
 							  __LINE__,
@@ -432,7 +432,7 @@ void StreamManager::onRequestEvent(int fd)
 					return;
 				}
 				else {
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: (%lx) errNoSsl from %s sending error",
 							  __FUNCTION__,
 							  __LINE__,
@@ -460,7 +460,7 @@ void StreamManager::onRequestEvent(int fd)
 	case IO::IO_RESULT::ERROR:
 	case IO::IO_RESULT::CANCELLED:
 	default:{
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: Error reading request",
 					  __FUNCTION__, __LINE__);
 			clearStream(stream);
@@ -536,7 +536,7 @@ void StreamManager::onRequestEvent(int fd)
 			break;
 		}
 	case http_parser::PARSE_RESULT::TOOLONG:
-		zcutils_log_print(LOG_DEBUG, "%s():%d: Parser TOOLONG",
+		zcu_log_print(LOG_DEBUG, "%s():%d: Parser TOOLONG",
 				  __FUNCTION__, __LINE__);
 		[[fallthrough]];
 	case http_parser::PARSE_RESULT::FAILED:
@@ -548,7 +548,7 @@ void StreamManager::onRequestEvent(int fd)
 		this->clearStream(stream);
 		return;
 	case http_parser::PARSE_RESULT::INCOMPLETE:
-		zcutils_log_print(LOG_DEBUG, "%s():%d: Parser INCOMPLETE",
+		zcu_log_print(LOG_DEBUG, "%s():%d: Parser INCOMPLETE",
 				  __FUNCTION__, __LINE__);
 		return;
 	}
@@ -564,7 +564,7 @@ void StreamManager::onRequestEvent(int fd)
 						     rules.get(), nullptr);
 		if (Waf::checkRequestWaf(*stream)) {
 			if (stream->modsec_transaction->m_it.url != nullptr) {
-				zcutils_log_print(LOG_WARNING,
+				zcu_log_print(LOG_WARNING,
 						  "(%lx) WAF redirected a request from %s",
 						  pthread_self(),
 						  stream->
@@ -588,7 +588,7 @@ void StreamManager::onRequestEvent(int fd)
 							 reasonPhrase(code),
 							 listener_config_.err403,
 							 stream->client_connection);
-				zcutils_log_print(LOG_WARNING,
+				zcu_log_print(LOG_WARNING,
 						  "(%lx) WAF rejected a request from %s",
 						  pthread_self(),
 						  stream->
@@ -719,7 +719,7 @@ void StreamManager::onRequestEvent(int fd)
 								     conn_timeout);
 				switch (op_state) {
 				case IO::IO_OP::OP_ERROR:{
-						zcutils_log_print(LOG_NOTICE,
+						zcu_log_print(LOG_NOTICE,
 								  "error connecting to backend %s",
 								  bck->address.data
 								  ());
@@ -763,7 +763,7 @@ void StreamManager::onRequestEvent(int fd)
 					(stream->backend_connection.getFileDescriptor
 					 ());
 				if (bck_stream != bck_streams_set.end()) {
-					zcutils_log_print(LOG_DEBUG,
+					zcu_log_print(LOG_DEBUG,
 							  "%s():%d: BCK Stream exists in set",
 							  __FUNCTION__,
 							  __LINE__);
@@ -777,7 +777,7 @@ void StreamManager::onRequestEvent(int fd)
 									EVENT_GROUP::SERVER);
 			}
 
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: %s %lu [%s] %.*s [%s (%d) -> %s:%d (%d)]",
 					  __FUNCTION__, __LINE__,
 					  need_new_backend ? "NEW" : "REUSED",
@@ -803,7 +803,7 @@ void StreamManager::onRequestEvent(int fd)
 
 			if (stream->backend_connection.getBackend()->nf_mark >
 			    0)
-				zcutils_soc_set_somarkoption
+				zcu_soc_set_somarkoption
 					(stream->backend_connection.getFileDescriptor
 					 (),
 					 stream->backend_connection.getBackend
@@ -856,7 +856,7 @@ void StreamManager::onRequestEvent(int fd)
 
 		break;
 	case BACKEND_TYPE::REDIRECT:{
-			zcutils_log_print(LOG_INFO, "(%s) %.*s < REDIRECT %s",
+			zcu_log_print(LOG_INFO, "(%s) %.*s < REDIRECT %s",
 					  stream->
 					  client_connection.getPeerAddress().
 					  c_str(),
@@ -930,7 +930,7 @@ void StreamManager::onResponseEvent(int fd)
 		    /*&& stream->response.transfer_encoding_header */ ) {
 			result = stream->backend_connection.zeroRead();
 			if (result == IO::IO_RESULT::ERROR) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: error reading response",
 						  __FUNCTION__, __LINE__);
 				clearStream(stream);
@@ -944,7 +944,7 @@ void StreamManager::onResponseEvent(int fd)
 			switch (result) {
 			case IO::IO_RESULT::FD_CLOSED:
 			case IO::IO_RESULT::ERROR:{
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: error writing response",
 							  __FUNCTION__,
 							  __LINE__);
@@ -981,7 +981,7 @@ void StreamManager::onResponseEvent(int fd)
 								  stream->
 								  backend_connection,
 								  true)) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: backend handshake error with %s",
 						  __FUNCTION__, __LINE__,
 						  stream->
@@ -1014,7 +1014,7 @@ void StreamManager::onResponseEvent(int fd)
 	case IO::IO_RESULT::ERROR:
 	case IO::IO_RESULT::CANCELLED:
 	default:{
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: Backend read error with %s, closing stream",
 					  __FUNCTION__, __LINE__,
 					  stream->
@@ -1100,7 +1100,7 @@ void StreamManager::onResponseEvent(int fd)
 			}
 		case http_parser::PARSE_RESULT::TOOLONG:
 		case http_parser::PARSE_RESULT::FAILED:{
-				zcutils_log_print(LOG_DEBUG,
+				zcu_log_print(LOG_DEBUG,
 						  "%s():%d: %d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer ",
 						  "size: %lu \n\t\t Content length: %lu \n\t\t "
 						  "left: %lu\n%.*s header sent: %s \n",
@@ -1135,7 +1135,7 @@ void StreamManager::onResponseEvent(int fd)
 		auto latency =
 			Time::getElapsed(stream->
 					 backend_connection.time_start);
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: %lu [%s] %s -> %s [%s (%d) <- %s (%d)] %lf",
 				  __FUNCTION__, __LINE__, stream->stream_id,
 				  static_cast <
@@ -1160,7 +1160,7 @@ void StreamManager::onResponseEvent(int fd)
 
 		if (http_manager::validateResponse(*stream) !=
 		    validation::REQUEST_RESULT::OK) {
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "(%lx) backend %s response validation error\n %.*s",
 					  /*std::this_thread::get_id() */
 					  pthread_self(),
@@ -1189,7 +1189,7 @@ void StreamManager::onResponseEvent(int fd)
 			if (Waf::checkResponseWaf(*stream)) {
 				if (stream->modsec_transaction->m_it.url !=
 				    nullptr) {
-					zcutils_log_print(LOG_WARNING,
+					zcu_log_print(LOG_WARNING,
 							  "(%lx) WAF redirected a request from %s",
 							  pthread_self(),
 							  stream->client_connection.address_str.c_str
@@ -1215,7 +1215,7 @@ void StreamManager::onResponseEvent(int fd)
 								 (code),
 								 listener_config_.err403,
 								 stream->client_connection);
-					zcutils_log_print(LOG_WARNING,
+					zcu_log_print(LOG_WARNING,
 							  "(%lx) WAF rejected a request from %s",
 							  pthread_self(),
 							  stream->client_connection.address_str.c_str
@@ -1260,7 +1260,7 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 	HttpStream *stream = bck_streams_set[fd];
 #endif
 	if (stream == nullptr) {
-		zcutils_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
+		zcu_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
 				  __FUNCTION__, __LINE__);
 		deleteFd(fd);
 		::close(fd);
@@ -1274,7 +1274,7 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 	    && stream->timer_fd.isTriggered()
 #endif
 		) {
-		zcutils_log_print(LOG_WARNING,
+		zcu_log_print(LOG_WARNING,
 				  "(%lx) backend %s connection timeout after %d",
 				  /*std::this_thread::get_id() */
 				  pthread_self(),
@@ -1303,7 +1303,7 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 	auto & listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
-	zcutils_log_print(LOG_WARNING,
+	zcu_log_print(LOG_WARNING,
 			  "(%lx) client request timeout after %d seconds",
 			  pthread_self(),
 			  stream->service_manager->listener_config_->to);
@@ -1326,7 +1326,7 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 	HttpStream *stream = bck_streams_set[fd];
 #endif
 	if (stream == nullptr) {
-		zcutils_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
+		zcu_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
 				  __FUNCTION__, __LINE__);
 		deleteFd(fd);
 		::close(fd);
@@ -1340,15 +1340,15 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 #endif
 		char caddr[50];
 		if (UNLIKELY
-		    (zcutils_soc_get_peer_address
+		    (zcu_soc_get_peer_address
 		     (stream->client_connection.getFileDescriptor(), caddr,
 		      50) == nullptr)) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: error getting peer address",
 					  __FUNCTION__, __LINE__);
 		}
 		else {
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "(%lx) e%d %s %.*s from %s",
 					  std::this_thread::get_id(),
 					  static_cast <
@@ -1406,7 +1406,7 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 	if (stream->backend_connection.connection_retries >=
 	    service->getBackendSetSize()) {
 		// No backend available
-		zcutils_log_print(LOG_WARNING,
+		zcu_log_print(LOG_WARNING,
 				  "service connection limit reached");
 		http_manager::replyError(http::Code::ServiceUnavailable,
 					 validation::
@@ -1454,7 +1454,7 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 		IO::IO_OP op_state;
 		stream->backend_connection.reset();
 		stream->response.reset_parser();
-		zcutils_log_print(LOG_INFO,
+		zcu_log_print(LOG_INFO,
 				  "RETRY [%s] %.*s [%s (%d) -> %s (%d)]",
 				  service->name.c_str(),
 				  stream->request.http_message_length,
@@ -1484,7 +1484,7 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 								     conn_timeout);
 				switch (op_state) {
 				case IO::IO_OP::OP_ERROR:{
-						zcutils_log_print(LOG_ERR,
+						zcu_log_print(LOG_ERR,
 								  "%s():%d: Error connecting to backend %s",
 								  __FUNCTION__,
 								  __LINE__,
@@ -1532,7 +1532,7 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 									EVENT_GROUP::SERVER);
 				if (stream->backend_connection.
 				    getBackend()->nf_mark > 0)
-					zcutils_soc_set_somarkoption
+					zcu_soc_set_somarkoption
 						(stream->backend_connection.getFileDescriptor
 						 (),
 						 stream->backend_connection.getBackend
@@ -1688,7 +1688,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 				    (stream->backend_connection.getBackend()->
 				     ctx.get(), stream->backend_connection,
 				     true)) {
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: handshake error with %s",
 							  __FUNCTION__,
 							  __LINE__,
@@ -1713,7 +1713,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		case IO::IO_RESULT::FULL_BUFFER:
 		case IO::IO_RESULT::ERROR:
 		default:
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: error sending request",
 					  __FUNCTION__, __LINE__);
 			clearStream(stream);
@@ -1782,7 +1782,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 								  stream->
 								  backend_connection,
 								  true)) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: handshake error with %s",
 						  __FUNCTION__, __LINE__,
 						  stream->
@@ -1804,7 +1804,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 	case IO::IO_RESULT::CANCELLED:
 	case IO::IO_RESULT::FULL_BUFFER:
 	case IO::IO_RESULT::ERROR:
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "%s():%d: error sending request to backend",
 				  __FUNCTION__, __LINE__);
 		clearStream(stream);
@@ -1817,7 +1817,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		}
 		break;
 	default:
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "%s():%d: error sending data to backend server",
 				  __FUNCTION__, __LINE__);
 		clearStream(stream);
@@ -1834,7 +1834,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		   stream->backend_connection.getBackend()->response_timeout);
 #endif
 #if PRINT_DEBUG_FLOW_BUFFERS
-	zcutils_log_print(LOG_DEBUG,
+	zcu_log_print(LOG_DEBUG,
 			  "%s():%d: OUT buffer size: %8lu\tContent-length: %lu\tleft: "
 			  "%lu\tIO: %s", __FUNCTION__, __LINE__,
 			  stream->client_connection.buffer_size,
@@ -1876,7 +1876,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 #endif
 
 #if PRINT_DEBUG_FLOW_BUFFERS
-	zcutils_log_print(LOG_DEBUG,
+	zcu_log_print(LOG_DEBUG,
 			  "%s():%d: IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
 			  __FUNCTION__, __LINE__,
 			  stream->backend_connection.buffer_size,
@@ -1933,7 +1933,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 				    SSLConnectionManager::handleHandshake
 				    (*stream->service_manager->ssl_context,
 				     stream->client_connection)) {
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: Handshake error with %s",
 							  __FUNCTION__,
 							  __LINE__,
@@ -2045,12 +2045,12 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 				    && (ERR_GET_LIB(ERR_peek_error()) ==
 					ERR_LIB_SSL)) {
 					/* the client speaks plain HTTP on our HTTPS port */
-					zcutils_log_print(LOG_NOTICE,
+					zcu_log_print(LOG_NOTICE,
 							  "Client %s sent a plain HTTP message to an SSL port",
 							  stream->client_connection.getPeerAddress
 							  ().c_str());
 					if (listener_config_.nossl_redir > 0) {
-						zcutils_log_print(LOG_ERR,
+						zcu_log_print(LOG_ERR,
 								  "%s():%d: (%lx) errNoSsl from %s redirecting to \"%s\"",
 								  __FUNCTION__,
 								  __LINE__,
@@ -2065,7 +2065,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 						return;
 					}
 					else {
-						zcutils_log_print(LOG_ERR,
+						zcu_log_print(LOG_ERR,
 								  "%s():%d: (%lx) errNoSsl from %s sending error",
 								  __FUNCTION__,
 								  __LINE__,
@@ -2082,7 +2082,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 					}
 				}
 				else {
-					zcutils_log_print(LOG_ERR,
+					zcu_log_print(LOG_ERR,
 							  "%s():%d: fd: %d:%d Handshake error with %s",
 							  __FUNCTION__,
 							  __LINE__,
@@ -2108,7 +2108,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 	case IO::IO_RESULT::CANCELLED:
 	case IO::IO_RESULT::FULL_BUFFER:
 	case IO::IO_RESULT::ERROR:
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "%s():%d: error sending response: %s",
 				  __FUNCTION__, __LINE__,
 				  IO::getResultString(result).data());
@@ -2123,7 +2123,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		}
 		break;
 	default:
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "fd: %d:%d %.*s Error sending response IN\tbuffer size: "
 				  "%8lu\tContent-length: %lu\tleft: %lu "
 				  "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
@@ -2149,7 +2149,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 	}
 #if PRINT_DEBUG_FLOW_BUFFERS
 	if (stream->backend_connection.buffer_size != 0)
-		zcutils_log_print(LOG_DEBUG, "%s():%d: "
+		zcu_log_print(LOG_DEBUG, "%s():%d: "
 				  "OUT EAGAIN  %.*s buffer size: %lu > %8lu \tContent-length: "
 				  "%lu\tleft: "
 				  "%lu\tIO: %s",
@@ -2224,7 +2224,7 @@ bool StreamManager::registerListener(std::weak_ptr < ServiceManager >
 				     service_manager)
 {
 	auto & listener_config = service_manager.lock()->listener_config_;
-	auto address = zcutils_net_get_address(listener_config->address,
+	auto address = zcu_net_get_address(listener_config->address,
 					       listener_config->port);
 	listener_config->addr_info = address.release();
 	int listen_fd = Connection::listen(*listener_config->addr_info);
@@ -2314,7 +2314,7 @@ std::string StreamManager::handleTask(ctl::CtlTask & task)
 		return JSON_OP_RESULT::ERROR;
 
 	if (task.command == ctl::CTL_COMMAND::EXIT) {
-		zcutils_log_print(LOG_DEBUG, "%s():%d: exit command received",
+		zcu_log_print(LOG_DEBUG, "%s():%d: exit command received",
 				  __FUNCTION__, __LINE__);
 		stop();
 
@@ -2482,7 +2482,7 @@ void StreamManager::onBackendConnectionError(HttpStream * stream)
 	    0) {
 		stream->backend_connection.
 			getBackend()->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-		zcutils_log_print(LOG_NOTICE,
+		zcu_log_print(LOG_NOTICE,
 				  "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
 				  pthread_self(),
 				  stream->backend_connection.

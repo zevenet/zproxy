@@ -35,7 +35,7 @@
 
 /****  SOCKET  ****/
 
-inline static int zcutils_soc_get_local_port(int socket_fd)
+inline static int zcu_soc_get_local_port(int socket_fd)
 {
 	int port = -1;
 	sockaddr_in adr_inet
@@ -52,7 +52,7 @@ inline static int zcutils_soc_get_local_port(int socket_fd)
 }
 
 inline static bool
-zcutils_soc_equal_sockaddr(sockaddr * addr1, sockaddr * addr2,
+zcu_soc_equal_sockaddr(sockaddr * addr1, sockaddr * addr2,
 			   bool compare_port = true)
 {
 	if (addr1->sa_family != addr2->sa_family)
@@ -96,7 +96,7 @@ zcutils_soc_equal_sockaddr(sockaddr * addr1, sockaddr * addr2,
 	return true;
 }
 
-inline static char *zcutils_soc_get_peer_address(int socket_fd, char *buf,
+inline static char *zcu_soc_get_peer_address(int socket_fd, char *buf,
 						 size_t bufsiz,
 						 bool include_port = false)
 {
@@ -127,7 +127,7 @@ inline static char *zcutils_soc_get_peer_address(int socket_fd, char *buf,
 	return buf;
 }
 
-inline static int zcutils_soc_get_peer_port(int socket_fd)
+inline static int zcu_soc_get_peer_port(int socket_fd)
 {
 	int port = -1;
 
@@ -145,7 +145,7 @@ inline static int zcutils_soc_get_peer_port(int socket_fd)
 	return -1;
 }
 
-inline static char *zcutils_soc_get_local_address(int socket_fd, char *buf,
+inline static char *zcu_soc_get_local_address(int socket_fd, char *buf,
 						  size_t bufsiz,
 						  bool include_port = false)
 {
@@ -175,7 +175,7 @@ inline static char *zcutils_soc_get_local_address(int socket_fd, char *buf,
 	return buf;
 }
 
-static bool zcutils_soc_set_socket_non_blocking(int fd, bool blocking = false)
+static bool zcu_soc_set_socket_non_blocking(int fd, bool blocking = false)
 {
 	// set socket non blocking
 	int flags;
@@ -189,14 +189,14 @@ static bool zcutils_soc_set_socket_non_blocking(int fd, bool blocking = false)
 	if (::fcntl(fd, F_SETFL, flags) < 0) {
 		std::string error = "fcntl(2) failed";
 		error += std::strerror(errno);
-		zcutils_log_print(LOG_ERR, "%s():%d: %s",
+		zcu_log_print(LOG_ERR, "%s():%d: %s",
 				  __FUNCTION__, __LINE__, error);
 		return false;
 	}
 	return true;
 }
 
-inline static bool zcutils_soc_set_timeout(int sock_fd, unsigned int seconds)
+inline static bool zcu_soc_set_timeout(int sock_fd, unsigned int seconds)
 {
 	struct timeval tv;
 	tv.tv_sec = seconds;	/* 30 Secs Timeout */
@@ -204,35 +204,35 @@ inline static bool zcutils_soc_set_timeout(int sock_fd, unsigned int seconds)
 			  sizeof(timeval)) != -1;
 }
 
-inline static bool zcutils_soc_set_soreuseaddroption(int sock_fd)
+inline static bool zcu_soc_set_soreuseaddroption(int sock_fd)
 {
 	int flag = 1;
 	return setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &flag,
 			  sizeof(flag)) != -1;
 }
 
-inline static bool zcutils_soc_set_tcpreuseportoption(int sock_fd)
+inline static bool zcu_soc_set_tcpreuseportoption(int sock_fd)
 {
 	int flag = 1;
 	return setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &flag,
 			  sizeof(flag)) != -1;
 }
 
-inline static bool zcutils_soc_set_tcpnodelayoption(int sock_fd)
+inline static bool zcu_soc_set_tcpnodelayoption(int sock_fd)
 {
 	int flag = 1;
 	return setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, &flag,
 			  sizeof(flag)) != -1;
 }
 
-inline static bool zcutils_soc_set_tcpdeferacceptoption(int sock_fd)
+inline static bool zcu_soc_set_tcpdeferacceptoption(int sock_fd)
 {
 	int flag = 5;
 	return setsockopt(sock_fd, SOL_TCP, TCP_DEFER_ACCEPT, &flag,
 			  sizeof(flag)) != -1;
 }
 
-inline static bool zcutils_soc_set_sokeepaliveoption(int sock_fd)
+inline static bool zcu_soc_set_sokeepaliveoption(int sock_fd)
 {
 	int flag = 1;
 	return setsockopt(sock_fd, SOL_SOCKET, SO_KEEPALIVE, &flag,
@@ -240,7 +240,7 @@ inline static bool zcutils_soc_set_sokeepaliveoption(int sock_fd)
 }
 
 inline static bool
-zcutils_soc_set_solingeroption(int sock_fd, bool enable = false)
+zcu_soc_set_solingeroption(int sock_fd, bool enable = false)
 {
 	struct linger l
 	{
@@ -251,7 +251,7 @@ zcutils_soc_set_solingeroption(int sock_fd, bool enable = false)
 			  sizeof(l)) != -1;
 }
 
-inline static bool zcutils_soc_set_tcplinger2option(int sock_fd)
+inline static bool zcu_soc_set_tcplinger2option(int sock_fd)
 {
 	int flag = 5;
 	return setsockopt(sock_fd, SOL_SOCKET, TCP_LINGER2, &flag,
@@ -259,7 +259,7 @@ inline static bool zcutils_soc_set_tcplinger2option(int sock_fd)
 }
 
 	/*useful for use with send file, wait 200 ms to to fill TCP packet */
-inline static bool zcutils_soc_set_tcpcorkoption(int sock_fd)
+inline static bool zcu_soc_set_tcpcorkoption(int sock_fd)
 {
 	int flag = 1;
 	return setsockopt(sock_fd, IPPROTO_TCP, TCP_CORK, &flag,
@@ -268,7 +268,7 @@ inline static bool zcutils_soc_set_tcpcorkoption(int sock_fd)
 
 #ifdef SO_ZEROCOPY
 	/*useful for use with send file, wait 200 ms to to fill TCP packet */
-inline static bool zcutils_soc_set_sozerocopy(int sock_fd)
+inline static bool zcu_soc_set_sozerocopy(int sock_fd)
 {
 	int flag = 1;
 	return setsockopt(sock_fd, SOL_SOCKET, SO_ZEROCOPY, &flag,
@@ -276,7 +276,7 @@ inline static bool zcutils_soc_set_sozerocopy(int sock_fd)
 }
 #endif
 	// set netfilter mark, need root privileges
-inline static bool zcutils_soc_set_somarkoption(int sock_fd, int nf_mark)
+inline static bool zcu_soc_set_somarkoption(int sock_fd, int nf_mark)
 {
 	// enter_suid()/leave_suid().
 	return nf_mark != 0
@@ -284,7 +284,7 @@ inline static bool zcutils_soc_set_somarkoption(int sock_fd, int nf_mark)
 			      sizeof(nf_mark)) != -1;
 }
 
-inline static bool zcutils_soc_isconnected(int sock_fd)
+inline static bool zcu_soc_isconnected(int sock_fd)
 {
 	int error_code = -1;
 	socklen_t error_code_size = sizeof(error_code);
@@ -293,7 +293,7 @@ inline static bool zcutils_soc_isconnected(int sock_fd)
 }
 
 	/*return -1 in case of erro and set errno */
-inline static int zcutils_soc_get_socketsendbuffersize(int socket_fd)
+inline static int zcu_soc_get_socketsendbuffersize(int socket_fd)
 {
 	int res, size;
 	unsigned int m = sizeof(size);
@@ -302,7 +302,7 @@ inline static int zcutils_soc_get_socketsendbuffersize(int socket_fd)
 }
 
 	/*return -1 in case of erro and set errno */
-inline static int zcutils_soc_get_socketreceivebuffersize(int socket_fd)
+inline static int zcu_soc_get_socketreceivebuffersize(int socket_fd)
 {
 	int res, size;
 	unsigned int m = sizeof(size);
@@ -311,7 +311,7 @@ inline static int zcutils_soc_get_socketreceivebuffersize(int socket_fd)
 }
 
 inline static int
-zcutils_soc_set_socketsendbuffersize(int socket_fd, unsigned int new_size)
+zcu_soc_set_socketsendbuffersize(int socket_fd, unsigned int new_size)
 {
 	unsigned int m = sizeof(new_size);
 	return::setsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF,
@@ -319,7 +319,7 @@ zcutils_soc_set_socketsendbuffersize(int socket_fd, unsigned int new_size)
 }
 
 inline static int
-zcutils_soc_set_socketreceivebuffersize(int socket_fd, unsigned int new_size)
+zcu_soc_set_socketreceivebuffersize(int socket_fd, unsigned int new_size)
 {
 	unsigned int m = sizeof(new_size);
 	return::setsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF,
@@ -332,7 +332,7 @@ zcutils_soc_set_socketreceivebuffersize(int socket_fd, unsigned int new_size)
 	 * Search for a host name_, return the addrinfo for it
 	 */
 inline static int
-zcutils_net_get_host(const char *name, addrinfo * res,
+zcu_net_get_host(const char *name, addrinfo * res,
 		     int ai_family = AF_UNSPEC, int port = 0)
 {
 	struct addrinfo *chain, *ap;
@@ -372,7 +372,7 @@ inline static
 	std::unique_ptr <
 	addrinfo,
 decltype(&::freeaddrinfo) >
-zcutils_net_get_address(const std::string & address, int port = 0)
+zcu_net_get_address(const std::string & address, int port = 0)
 {
 	addrinfo hints
 	{
@@ -395,7 +395,7 @@ zcutils_net_get_address(const std::string & address, int port = 0)
 			  0 ? std::to_string(port).data() : nullptr,
 			  &hints, &result);
 	if (sfd != 0) {
-		zcutils_log_print(LOG_ERR, "%s():%d: getaddrinfo: %s",
+		zcu_log_print(LOG_ERR, "%s():%d: getaddrinfo: %s",
 				  __FUNCTION__, __LINE__, gai_strerror(sfd));
 		return std::unique_ptr < addrinfo,
 			decltype(&::freeaddrinfo) > (nullptr, freeaddrinfo);
@@ -404,7 +404,7 @@ zcutils_net_get_address(const std::string & address, int port = 0)
 		decltype(&::freeaddrinfo) > (result, &freeaddrinfo);
 }
 
-inline static int zcutils_net_get_peer_port(struct addrinfo *addr)
+inline static int zcu_net_get_peer_port(struct addrinfo *addr)
 {
 	int port;
 	port = ntohs((reinterpret_cast <
@@ -416,7 +416,7 @@ inline static int zcutils_net_get_peer_port(struct addrinfo *addr)
 	 * Translate inet/inet6 address/port into a string
 	 */
 static void
-zcutils_net_addr2str(char *const res, size_t res_len,
+zcu_net_addr2str(char *const res, size_t res_len,
 		     const struct addrinfo *addr, bool include_port = false)
 {
 	char buf[ZCU_DEF_BUFFER_SIZE];
@@ -489,10 +489,10 @@ zcutils_net_addr2str(char *const res, size_t res_len,
 }
 
 inline static bool
-zcutils_net_equal_sockaddr(addrinfo * x, addrinfo * y,
+zcu_net_equal_sockaddr(addrinfo * x, addrinfo * y,
 			   bool compare_port = true)
 {
-	return zcutils_soc_equal_sockaddr(x->ai_addr, y->ai_addr,
+	return zcu_soc_equal_sockaddr(x->ai_addr, y->ai_addr,
 					  compare_port);
 }
 

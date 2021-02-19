@@ -196,12 +196,12 @@ namespace helper
 			//    // Increase num file descriptor ulimit    //
 			//    struct rlimit r;
 			//    getrlimit(RLIMIT_NOFILE, &r);
-			//    zcutils_log_print(LOG_DEBUG, "%s():%d: current::RLIMIT_NOFILE\n\tCurrent %s", __FUNCTION__, __LINE__, std::to_string(r.rlim_cur));
-			//    zcutils_log_print(LOG_DEBUG, "%s():%d: \tMaximum %s", __FUNCTION__, __LINE__, std::to_string(r.rlim_max));
+			//    zcu_log_print(LOG_DEBUG, "%s():%d: current::RLIMIT_NOFILE\n\tCurrent %s", __FUNCTION__, __LINE__, std::to_string(r.rlim_cur));
+			//    zcu_log_print(LOG_DEBUG, "%s():%d: \tMaximum %s", __FUNCTION__, __LINE__, std::to_string(r.rlim_max));
 			//    if (r.rlim_cur != r.rlim_max) {
 			//      r.rlim_cur = r.rlim_max;
 			//      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-			//        zcutils_log_print(LOG_ERR, "%s():%d: setrlimit failed", __FUNCTION__, __LINE__);
+			//        zcu_log_print(LOG_ERR, "%s():%d: setrlimit failed", __FUNCTION__, __LINE__);
 			//        return EXIT_FAILURE;
 			//      }
 			//    }

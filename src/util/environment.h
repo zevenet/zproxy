@@ -43,7 +43,7 @@ class Environment
 			struct passwd *pw;
 
 			if ((pw =::getpwnam(user_name.c_str())) == nullptr) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: no such user %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  user_name.c_str());
@@ -51,7 +51,7 @@ class Environment
 			}
 			if (::chown(file_name.c_str(), pw->pw_uid, -1))
 			{
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: chown error on control socket - aborted (%s)",
 						  __FUNCTION__, __LINE__,
 						  strerror(errno));
@@ -68,14 +68,14 @@ class Environment
 		if (!group_name.empty()) {
 			struct group *gr;
 			if ((gr =::getgrnam(group_name.c_str())) == nullptr) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: no such group %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  group_name.c_str());
 				return false;
 			}
 			if (::chown(file_name.c_str(), -1, gr->gr_gid)) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: chown error on control socket - aborted (%s)",
 						  __FUNCTION__, __LINE__,
 						  strerror(errno));
@@ -90,7 +90,7 @@ class Environment
 				    const std::string & file_name)
 	{
 		if (::chmod(file_name.c_str(), user_mode)) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: chmod error on control socket - aborted (%s)",
 					  __FUNCTION__, __LINE__,
 					  strerror(errno));
@@ -104,7 +104,7 @@ class Environment
 		if (!user.empty()) {
 			struct passwd *pw;
 			if ((pw =::getpwnam(user.c_str())) == nullptr) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: no such user %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  user.c_str());
@@ -112,7 +112,7 @@ class Environment
 			}
 			auto user_id = pw->pw_uid;
 			if (::setuid(user_id) || seteuid(user_id)) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: setuid: %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  strerror(errno));
@@ -128,7 +128,7 @@ class Environment
 		if (!group_name.empty()) {
 			struct group *gr;
 			if ((gr =::getgrnam(group_name.c_str())) == nullptr) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: no such group %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  group_name.c_str());
@@ -136,7 +136,7 @@ class Environment
 			}
 			auto group_id = gr->gr_gid;
 			if (::setgid(group_id) || setegid(group_id)) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: setgid: %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  strerror(errno));
@@ -157,7 +157,7 @@ class Environment
 			return true;
 		}
 		else
-			zcutils_log_print(LOG_ERR, "Create \"%s\": %s",
+			zcu_log_print(LOG_ERR, "Create \"%s\": %s",
 					  __FUNCTION__, __LINE__,
 					  pid_file_name.c_str(),
 					  strerror(errno));
@@ -183,14 +183,14 @@ class Environment
 	{
 		if (!chroot_path.empty()) {
 			if (::chroot(chroot_path.c_str())) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: chroot: %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  strerror(errno));
 				return false;
 			}
 			if (chdir("/")) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: chroot/chdir: %s - aborted",
 						  __FUNCTION__, __LINE__,
 						  strerror(errno));
@@ -204,21 +204,21 @@ class Environment
 	// Increase num file descriptor ulimit
 	static bool setUlimitData()
 	{
-		zcutils_log_print(LOG_DEBUG, "%s():%d: System info:",
+		zcu_log_print(LOG_DEBUG, "%s():%d: System info:",
 				  __FUNCTION__, __LINE__);
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: \tL1 Data cache size: %lu",
 				  __FUNCTION__, __LINE__,
 				  SystemInfo::data()->getL1DataCacheSize());
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: \t\tCache line size: %lu",
 				  __FUNCTION__, __LINE__,
 				  SystemInfo::
 				  data()->getL1DataCacheLineSize());
-		zcutils_log_print(LOG_DEBUG, "%s():%d: \tL2 Cache size: %lu",
+		zcu_log_print(LOG_DEBUG, "%s():%d: \tL2 Cache size: %lu",
 				  __FUNCTION__, __LINE__,
 				  SystemInfo::data()->getL2DataCacheSize());
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: \t\tCache line size: %lu",
 				  __FUNCTION__, __LINE__,
 				  SystemInfo::
@@ -227,24 +227,24 @@ class Environment
 		{
 		};
 		::getrlimit(RLIMIT_NOFILE, &r);
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: \tRLIMIT_NOFILE\tCurrent %lu",
 				  __FUNCTION__, __LINE__, r.rlim_cur);
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: \tRLIMIT_NOFILE\tMaximum %lu",
 				  __FUNCTION__,
 				  __LINE__,::sysconf(_SC_OPEN_MAX));
 		if (r.rlim_cur != r.rlim_max) {
 			r.rlim_cur = r.rlim_max;
 			if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "%s():%d: \tsetrlimit failed",
 						  __FUNCTION__, __LINE__);
 				return false;
 			}
 		}
 		::getrlimit(RLIMIT_NOFILE, &r);
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: \tRLIMIT_NOFILE\tSetCurrent %s",
 				  __FUNCTION__, __LINE__,
 				  std::to_string(r.rlim_cur));
@@ -290,7 +290,7 @@ class Environment
 	{
 		pid_t child;
 		if ((child = fork()) < 0) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "%s():%d: error: failed fork",
 					  __FUNCTION__, __LINE__);
 			return false;

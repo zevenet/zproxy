@@ -92,7 +92,7 @@ namespace ssl
 					n_read = i;
 					continue;
 				}
-				zcutils_log_print(LOG_NOTICE,
+				zcu_log_print(LOG_NOTICE,
 						  "(%lx) line too long: %s",
 						  pthread_self(), buf);
 				/* skip rest of "line" */
@@ -141,7 +141,7 @@ namespace ssl
 			char details[256];
 			ERR_error_string_n(static_cast < uint32_t > (err),
 					   details, sizeof(details));
-			zcutils_log_print(LOG_ERR, "%s", details);
+			zcu_log_print(LOG_ERR, "%s", details);
 		}
 	}
 

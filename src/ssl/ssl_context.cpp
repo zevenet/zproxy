@@ -32,13 +32,13 @@ bool SSLContext::init(const std::string & cert_file,
 		std::shared_ptr < SSL_CTX > (SSL_CTX_new(SSLv23_method()),
 					     &::SSL_CTX_free);
 	if (ssl_ctx == nullptr) {
-		zcutils_log_print(LOG_ERR, "SSL_CTX_new failed");
+		zcu_log_print(LOG_ERR, "SSL_CTX_new failed");
 		return false;
 	}
 	int r = SSL_CTX_use_certificate_file(ssl_ctx.get(), cert_file.c_str(),
 					     SSL_FILETYPE_PEM);
 	if (r <= 0) {
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "SSL_CTX_use_certificate_file %s failed",
 				  cert_file.c_str());
 		return false;
@@ -46,7 +46,7 @@ bool SSLContext::init(const std::string & cert_file,
 	r = SSL_CTX_use_PrivateKey_file(ssl_ctx.get(), key_file.c_str(),
 					SSL_FILETYPE_PEM);
 	if (r <= 0) {
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "SSL_CTX_use_PrivateKey_file %s failed",
 				  key_file.c_str());
 		return false;
@@ -54,7 +54,7 @@ bool SSLContext::init(const std::string & cert_file,
 
 	r = SSL_CTX_check_private_key(ssl_ctx.get());
 	if (!r) {
-		zcutils_log_print(LOG_ERR,
+		zcu_log_print(LOG_ERR,
 				  "SSL_CTX_check_private_key failed");
 		return false;
 	}
@@ -72,7 +72,7 @@ bool SSLContext::init(const std::string & cert_file,
 	SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_NO_COMPRESSION);
 	SSL_CTX_set_mode(ssl_ctx.get(), SSL_MODE_RELEASE_BUFFERS);
 
-	zcutils_log_print(LOG_DEBUG, "SSL initialized");
+	zcu_log_print(LOG_DEBUG, "SSL initialized");
 	return true;
 }
 
@@ -100,7 +100,7 @@ bool SSLContext::init(std::shared_ptr < BackendConfig > backend_config_)
 				    SSL_OP_NO_COMPRESSION);
 #endif
 	}
-	zcutils_log_print(LOG_DEBUG, "Backend %s:%d SSLContext initialized",
+	zcu_log_print(LOG_DEBUG, "Backend %s:%d SSLContext initialized",
 			  backend_config_->address.data(),
 			  backend_config_->port);
 	return true;
@@ -119,7 +119,7 @@ bool SSLContext::init(std::shared_ptr < ListenerConfig > listener_config_)
 			    !SSL_CTX_set_tlsext_servername_arg
 			    (listener_config_->ctx->ctx.get(),
 			     listener_config_->ctx.get()))
-				zcutils_log_print(LOG_ERR,
+				zcu_log_print(LOG_ERR,
 						  "ListenHTTPS: can't set SNI callback");
 #endif
 
@@ -151,7 +151,7 @@ bool SSLContext::init(std::shared_ptr < ListenerConfig > listener_config_)
 				       listener_config->ctx->ctx.get()))
 			return false;
 	}
-	zcutils_log_print(LOG_DEBUG, "%s():%d: SSL initialized", __FUNCTION__,
+	zcu_log_print(LOG_DEBUG, "%s():%d: SSL initialized", __FUNCTION__,
 			  __LINE__);
 	return true;
 }
@@ -171,7 +171,7 @@ bool SSLContext::initOpenssl()
 	std::call_once(flag,[]() {
 		       int r = SSL_library_init();
 		       if (!r) {
-		       zcutils_log_print(LOG_ERR, "SSL_library_init failed");
+		       zcu_log_print(LOG_ERR, "SSL_library_init failed");
 		       return false;}
 		       ERR_load_crypto_strings();
 		       ERR_load_SSL_strings();
@@ -201,7 +201,7 @@ bool SSLContext::loadOpensslConfig(const std::string & config_file_path,
 	else {
 		cnf = NCONF_new(nullptr);
 		if (NCONF_load_fp(cnf, fp, &eline) == 0) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "Error on line %ld of configuration file\n",
 					  eline);
 			return false;
@@ -209,7 +209,7 @@ bool SSLContext::loadOpensslConfig(const std::string & config_file_path,
 		}
 		else if (CONF_modules_load(cnf, "zproxy", CONF_MFLAGS_NO_DSO)
 			 <= 0) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "Error configuring the application");
 			ERR_print_errors_fp(stderr);
 			return false;
@@ -217,7 +217,7 @@ bool SSLContext::loadOpensslConfig(const std::string & config_file_path,
 		}
 
 		if (SSL_CTX_config(__ctx, config_file_section.c_str()) == 0) {
-			zcutils_log_print(LOG_ERR,
+			zcu_log_print(LOG_ERR,
 					  "Error configuring SSL_CTX");
 			ERR_print_errors_fp(stderr);
 			return false;
@@ -275,15 +275,15 @@ bool SSLContext::initEngine(const std::string & engine_id)
 	ENGINE *e;
 
 	if (!(e = ENGINE_by_id(engine_id.data()))) {
-		zcutils_log_print(LOG_ERR, "could not find engine");
+		zcu_log_print(LOG_ERR, "could not find engine");
 		return false;
 	}
 	else if (!ENGINE_init(e)) {
-		zcutils_log_print(LOG_ERR, "could not init engine");
+		zcu_log_print(LOG_ERR, "could not init engine");
 		return false;
 	}
 	else if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
-		zcutils_log_print(LOG_ERR, "could not set all defaults");
+		zcu_log_print(LOG_ERR, "could not set all defaults");
 		return false;
 	}
 

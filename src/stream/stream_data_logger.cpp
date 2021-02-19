@@ -20,7 +20,7 @@
 
 void StreamDataLogger::logTransaction(HttpStream & stream)
 {
-	if (zcutils_log_level != LOG_INFO)
+	if (zcu_log_level != LOG_INFO)
 		return;
 	std::string agent;
 	std::string referer;
@@ -35,7 +35,7 @@ void StreamDataLogger::logTransaction(HttpStream & stream)
 	// "curl/7.64.0"
 	static const std::string str_fmt =
 		"%s %s - \"%s \" \"%s\" " "%d \"%s\" " "\"%s\" %lf";
-	zcutils_log_print(LOG_INFO, str_fmt.c_str(),
+	zcu_log_print(LOG_INFO, str_fmt.c_str(),
 			  !host.empty()? host.c_str() : "-",
 			  stream.client_connection.getPeerAddress().c_str(),
 			  stream.request.http_message_str.data(),

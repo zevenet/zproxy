@@ -36,7 +36,7 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 {
 	if (!isHandler(task) || this->backend_type != BACKEND_TYPE::REMOTE)
 		return "";
-	zcutils_log_print(LOG_DEBUG, "%s():%d: backend %d handling task",
+	zcu_log_print(LOG_DEBUG, "%s():%d: backend %d handling task",
 			  __FUNCTION__, __LINE__, backend_id);
 	if (task.command == ctl::CTL_COMMAND::GET) {
 		switch (task.subject) {
@@ -118,7 +118,7 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 						this->status =
 							BACKEND_STATUS::BACKEND_DISABLED;
 					}
-					zcutils_log_print(LOG_NOTICE,
+					zcu_log_print(LOG_NOTICE,
 							  "Set Backend %d %s",
 							  backend_id,
 							  value.c_str());
@@ -230,7 +230,7 @@ void Backend::doMaintenance()
 
 	switch (res) {
 	case IO::IO_OP::OP_SUCCESS:{
-			zcutils_log_print(LOG_NOTICE,
+			zcu_log_print(LOG_NOTICE,
 					  "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
 					  this->address.data(), this->port,
 					  this->backend_config->f_name.data(),

@@ -125,7 +125,7 @@ namespace events
 					EVENT_TYPE::READ_ONESHOT;
 				return res;
 			}
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: InReadModeAlready",
 					  __FUNCTION__, __LINE__);
 			return false;
@@ -140,7 +140,7 @@ namespace events
 				current_event = events::EVENT_TYPE::WRITE;
 				return res;
 			}
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: InWriteModeAlready",
 					  __FUNCTION__, __LINE__);
 			return false;
@@ -154,7 +154,7 @@ namespace events
 		inline void setFileDescriptor(int fd)
 		{
 			if (fd < 0) {
-				zcutils_log_print(LOG_DEBUG,
+				zcu_log_print(LOG_DEBUG,
 						  "%s():%d: file descriptor not valid",
 						  __FUNCTION__, __LINE__);
 				return;

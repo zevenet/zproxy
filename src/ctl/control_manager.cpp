@@ -111,7 +111,7 @@ void ControlManager::sendCtlCommand(CTL_COMMAND command,
 				    CTL_HANDLER_TYPE handler,
 				    CTL_SUBJECT subject, std::string data)
 {
-	zcutils_log_print(LOG_DEBUG, "%s():%d: reload config", __FUNCTION__,
+	zcu_log_print(LOG_DEBUG, "%s():%d: reload config", __FUNCTION__,
 			  __LINE__);
 	CtlTask task;
 	task.command = command;
@@ -167,7 +167,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				connection.closeConnection();
 				return;
 			}
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: CTL API Request: %s",
 					  __FUNCTION__, __LINE__,
 					  connection.buffer);
@@ -210,7 +210,7 @@ void ctl::ControlManager::doWork()
 			// this should not happends
 		}
 	}
-	zcutils_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__,
+	zcu_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__,
 			  __LINE__);
 }
 
@@ -262,7 +262,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest & request)
 
 	if (!setTaskTarget(request, task)
 	    && task.target == CTL_HANDLER_TYPE::NONE) {
-		zcutils_log_print(LOG_WARNING,
+		zcu_log_print(LOG_WARNING,
 				  "%s():%d: bad API request : %s",
 				  __FUNCTION__, __LINE__,
 				  request.getUrl().c_str());

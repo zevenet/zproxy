@@ -48,13 +48,13 @@ struct StreamWatcher
 	  StreamWatcher(HttpStream & http_stream):stream(&http_stream)
 	{
 		if (stream == nullptr) {
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: IN Null HttpStream",
 					  __FUNCTION__, __LINE__);
 		}
 		else
 		{
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: IN Stream data",
 					  __FUNCTION__, __LINE__);
 			showData();
@@ -62,7 +62,7 @@ struct StreamWatcher
 	}
 	void showData()
 	{
-		zcutils_log_print(LOG_DEBUG, "%s():%d: \n\tRequest"
+		zcu_log_print(LOG_DEBUG, "%s():%d: \n\tRequest"
 				  "\n\t\tBuffer size: %d"
 				  "\n\t\tContent-length: %d"
 				  "\n\t\tMessage bytes: %d"
@@ -84,12 +84,12 @@ struct StreamWatcher
 	}
 	virtual ~ StreamWatcher() {
 		if (stream == nullptr) {
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: OUT Null HttpStream",
 					  __FUNCTION__, __LINE__);
 		}
 		else {
-			zcutils_log_print(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: OUT Stream data",
 					  __FUNCTION__, __LINE__);
 			showData();

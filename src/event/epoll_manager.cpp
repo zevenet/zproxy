@@ -32,7 +32,7 @@ namespace events
 		if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
 			std::string error = "epoll_create(2) failed: ";
 			error += std::strerror(errno);
-			zcutils_log_print(LOG_ERR, "%s():%d: %s",
+			zcu_log_print(LOG_ERR, "%s():%d: %s",
 					  __FUNCTION__, __LINE__, error);
 			throw std::system_error(errno,
 						std::system_category());
@@ -43,7 +43,7 @@ namespace events
 	void EpollManager::onConnectEvent(epoll_event & event)
 	{
 #if DEBUG_EVENT_MANAGER
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: ~~ONConnectEvent fd: %d",
 				  __FUNCTION__, __LINE__,
 				  static_cast <
@@ -59,7 +59,7 @@ namespace events
 	void EpollManager::onWriteEvent(epoll_event & event)
 	{
 #if DEBUG_EVENT_MANAGER
-		zcutils_log_print(LOG_DEBUG, "%s():%d: ~~ONWriteEvent fd: %d",
+		zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONWriteEvent fd: %d",
 				  __FUNCTION__, __LINE__,
 				  static_cast <
 				  int >(event.data.u64 >> CHAR_BIT));
@@ -74,7 +74,7 @@ namespace events
 	void EpollManager::onReadEvent(epoll_event & event)
 	{
 #if DEBUG_EVENT_MANAGER
-		zcutils_log_print(LOG_DEBUG, "%s():%d: ~~ONReadEvent fd: %d",
+		zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONReadEvent fd: %d",
 				  __FUNCTION__, __LINE__,
 				  static_cast <
 				  int >(event.data.u64 >> CHAR_BIT));
@@ -92,12 +92,12 @@ namespace events
 			    || errno == EPERM) {
 				//      std::string error = "epoll_ctl(delete) unnecessary. ";
 				//      error += std::strerror(errno);
-				//        zcutils_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
+				//        zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
 				return true;
 			}
 			std::string error = "epoll_ctl(delete) failed ";
 			error += std::strerror(errno);
-			zcutils_log_print(LOG_ERR, "%s():%d: %s",
+			zcu_log_print(LOG_ERR, "%s():%d: %s",
 					  __FUNCTION__, __LINE__, error);
 			return false;
 		}
@@ -184,11 +184,11 @@ namespace events
 
 	bool EpollManager::handleAccept(int listener_fd)
 	{
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: adding listener fd: %d",
 				  __FUNCTION__, __LINE__, listener_fd);
 		accept_fd_set.emplace_back(listener_fd);
-		zcutils_soc_set_socket_non_blocking(listener_fd);
+		zcu_soc_set_socket_non_blocking(listener_fd);
 		return addFd(listener_fd, EVENT_TYPE::ACCEPT,
 			     EVENT_GROUP::ACCEPTOR);
 	}
@@ -209,14 +209,14 @@ namespace events
 			else {
 				std::string error = "epoll_ctl(add) failed ";
 				error += std::strerror(errno);
-				zcutils_log_print(LOG_ERR, "%s():%d: %s",
+				zcu_log_print(LOG_ERR, "%s():%d: %s",
 						  __FUNCTION__, __LINE__,
 						  error);
 				return false;
 			}
 		}
 #if DEBUG_EVENT_MANAGER
-		zcutils_log_print(LOG_DEBUG,
+		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: Epoll::AddFD %s To EpollFD: %s",
 				  __FUNCTION__, __LINE__, std::to_string(fd),
 				  std::to_string(epoll_fd));
@@ -253,7 +253,7 @@ namespace events
 	{
 		//  std::lock_guard<std::mutex> loc(epoll_mutex);
 #if DEBUG_EVENT_MANAGER
-		zcutils_log_print(LOG_DEBUG, "%s():%d: Epoll::UpdateFd %s",
+		zcu_log_print(LOG_DEBUG, "%s():%d: Epoll::UpdateFd %s",
 				  __FUNCTION__, __LINE__, std::to_string(fd));
 #endif
 		struct epoll_event epevent = { };
@@ -266,7 +266,7 @@ namespace events
 				std::string error =
 					"epoll_ctl(update) failed, fd reopened, adding .. ";
 				error += std::strerror(errno);
-				zcutils_log_print(LOG_ERR, "%s():%d: %s",
+				zcu_log_print(LOG_ERR, "%s():%d: %s",
 						  __FUNCTION__, __LINE__,
 						  error);
 				return addFd(fd, event_type, event_group);
@@ -275,7 +275,7 @@ namespace events
 				std::string error =
 					"epoll_ctl(update) failed ";
 				error += std::strerror(errno);
-				zcutils_log_print(LOG_ERR, "%s():%d: %s",
+				zcu_log_print(LOG_ERR, "%s():%d: %s",
 						  __FUNCTION__, __LINE__,
 						  error);
 				return false;
