@@ -27,7 +27,7 @@
 #include "../service/service.h"
 #include "../util/common.h"
 #ifdef ENABLE_ON_FLY_COMRESSION
-#include "../util/zlib_util.h"
+#include "../../zcutils/zcu_zlib.h"
 #endif
 
 using namespace http;

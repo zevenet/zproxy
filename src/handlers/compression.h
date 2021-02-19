@@ -23,7 +23,7 @@
 #include "../http/http.h"
 #include "../http/http_stream.h"
 #include "../service/service.h"
-#include "../util/zlib_util.h"
+#include "../../zcutils/zcu_zlib.h"
 
 class Compression
 {

@@ -91,7 +91,6 @@ set(l7core_sources
 
 if (ENABLE_ON_FLY_COMRESSION)
     set(l7core_sources ${l7core_sources}
-        util/zlib_util.h
         handlers/compression.h
         handlers/compression.cpp
         )
