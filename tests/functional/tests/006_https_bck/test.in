@@ -1,0 +1,9 @@
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/bck-https"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/bck-non-https"

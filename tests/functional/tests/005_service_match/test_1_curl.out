@@ -1,0 +1,2 @@
+cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 1 -s -k --show-error --resolve svc1.zproxy:80:10.1.2.1 http://svc1.zproxy/
+bck 1

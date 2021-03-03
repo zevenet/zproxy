@@ -1,0 +1,2 @@
+cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 1 -s -k --show-error --resolve svc.zproxy:80:10.1.2.1 http://svc.zproxy/
+The service is not available. Please try again later.

@@ -1,0 +1,2 @@
+cmd: ip netns exec cl-ns-1 /usr/bin/curl -s -k --show-error https://10.1.2.1:80/
+curl: (35) error:1408F10B:SSL routines:ssl3_get_record:wrong version number

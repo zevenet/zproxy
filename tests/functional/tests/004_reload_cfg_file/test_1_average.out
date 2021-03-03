@@ -1,0 +1,3 @@
+      2 bck 1
+      2 bck 2
+      4 cmd: ip netns exec cl-ns-1 /usr/bin/curl -s -k --show-error http://10.1.2.1:80/
