@@ -570,6 +570,7 @@ sub getFarmListening()
 
 	require Zevenet::Net::Validate;
 	if ( $vip and &checkport( $vip, $port ) eq "true" )
+	if ( $vip and &validatePort( $vip, $port, "tcp" ) eq "true" )
 	{
 		require Zevenet::Farm::Base;
 
