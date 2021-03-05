@@ -700,6 +700,8 @@ IO::IO_RESULT SSLConnectionManager::handleDataWrite(Connection &
 						    http_parser::
 						    HttpData & http_data)
 {
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	if (!target_ssl_connection.ssl_connected) {
 		return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
 	}

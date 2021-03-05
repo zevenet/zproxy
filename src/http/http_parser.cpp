@@ -114,6 +114,7 @@ permanent_extra_headers) {	// header must be always  used as
 	iov[iov_size++] = { const_cast < char *>(http::CRLF),
 		http::CRLF_LEN
 	};
+
 	if (message_length > 0) {
 		iov[iov_size++] = { message, message_length };
 #if DEBUG_HTTP_HEADERS
@@ -232,6 +233,8 @@ http_parser::PARSE_RESULT http_parser::
 			       size_t *used_bytes,[[maybe_unused]]
 			       bool reset)
 {
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	//  if (LIKELY(reset))
 	reset_parser();
 	buffer = const_cast < char *>(data);
@@ -291,6 +294,8 @@ http_parser::PARSE_RESULT http_parser::
 				size_t *used_bytes,[[maybe_unused]]
 				bool reset)
 {
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	//  if (LIKELY(reset))
 	reset_parser();
 	buffer = const_cast < char *>(data);
@@ -357,8 +362,10 @@ void http_parser::HttpData::printRequest()
 
 bool http_parser::HttpData::hasPendingData()
 {
-	return headers_sent	/*&&
+	return headers_sent	&&
+					// New request/response is processed over the same connection,
+					// so HTTP parsing is needed.
 				   (message_bytes_left > 0 ||
-				   chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED) */
+				   chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED)
 		;
 }

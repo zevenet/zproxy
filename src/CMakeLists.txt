@@ -22,8 +22,9 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
-add_definitions(-DDEBUG_ZCU_LOG=0)
+add_definitions(-DDEBUG_ZCU_LOG=1)
 add_definitions(-DLOGGER_DEBUG=1)
+add_definitions(-DEXTENDED_DEBUG_LOG=1)
 add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
 add_definitions(-DPRINT_READ_STADISTICS=0)
 add_definitions(-DDEBUG_CONNECTION_FLOW=0)
@@ -41,7 +42,7 @@ add_definitions(-DENABLE_ZERO_COPY=0)
 add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
 add_definitions(-DENABLE_QUICK_RESPONSE=0)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
-add_definitions(-DDEBUG_HTTP_HEADERS=0)
+add_definitions(-DDEBUG_HTTP_HEADERS=1)
 add_definitions(-DMALLOC_TRIM_TIMER=1 -DMALLOC_TRIM_TIMER_INTERVAL=60) # force release of memory back to the system
 add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=10)
 add_definitions(-DENABLE_CI_HEADERS=1) #enable case insensitive comparator in header map.

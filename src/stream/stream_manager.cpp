@@ -25,7 +25,6 @@
 #include "../handlers/https_manager.h"
 #include "../../zcutils/zcu_network.h"
 #include "stream_data_logger.h"
-#define EXTENDED_DEBUG_LOG 0
 #ifdef ON_FLY_COMRESSION
 #include "../handlers/compression.h"
 #endif
@@ -333,6 +332,9 @@ void StreamManager::onRequestEvent(int fd)
 		::close(fd);
 		return;
 	}
+
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	auto & listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
@@ -482,6 +484,7 @@ void StreamManager::onRequestEvent(int fd)
 	else {
 		stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
 	}
+
 	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)
 	    || stream->request.hasPendingData()) {
 #ifdef CACHE_ENABLED
@@ -879,11 +882,15 @@ void StreamManager::onRequestEvent(int fd)
 void StreamManager::onResponseEvent(int fd)
 {
 	HttpStream *stream = bck_streams_set[fd];
+
 	if (stream == nullptr) {
 		deleteFd(fd);
 		::close(fd);
 		return;
 	}
+
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	auto & listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
@@ -900,6 +907,7 @@ void StreamManager::onResponseEvent(int fd)
 	};
 #endif
 	if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
+
 #if EXTENDED_DEBUG_LOG
 		extra_log = "RESPONSE_PENDING";
 #endif
@@ -910,7 +918,6 @@ void StreamManager::onResponseEvent(int fd)
 		stream->backend_connection.disableEvents();
 		return;
 	}
-
 
 #if EXTENDED_DEBUG_LOG
 	HttpStream::dumpDebugData(stream, "OnResponse", extra_log.data());
@@ -1046,8 +1053,10 @@ void StreamManager::onResponseEvent(int fd)
 #if PRINT_DEBUG_FLOW_BUFFERS
 	HttpStream::dumpDebugData(stream, "OnResponse", extra_log.data());
 #endif
+
 	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)
 	    || stream->response.hasPendingData()) {
+
 #ifdef CACHE_ENABLED
 		if (stream->response.chunked_status !=
 		    CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -1086,6 +1095,7 @@ void StreamManager::onResponseEvent(int fd)
 				      stream->backend_connection.buffer_offset,
 				      stream->backend_connection.buffer_size,
 				      &parsed);
+
 		switch (ret) {
 		case http_parser::PARSE_RESULT::SUCCESS:{
 				stream->backend_connection.
@@ -1859,6 +1869,9 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 {
 	if (stream == nullptr)
 		return;
+
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	DEBUG_COUNTER_HIT(debug__::on_send_response);
 	auto & listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
@@ -1891,6 +1904,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 	stopTimeOut(stream->client_connection.getFileDescriptor());
 #endif
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+
 	/* If the connection is pinned, then we need to write the buffer
 	 * content without applying any kind of modification. */
 	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)
@@ -1923,6 +1937,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 								     response);
 #endif
 		}
+
 #if EXTENDED_DEBUG_LOG
 		extra_log = IO::getResultString(result);
 #endif
@@ -2007,7 +2022,6 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		}
 		stream->backend_connection.buffer_offset = 0;
 		stream->backend_connection.enableReadEvent();
-
 		return;
 	}
 
@@ -2028,6 +2042,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		result = stream->backend_connection.
 			writeTo(stream->client_connection, stream->response);
 	}
+
 #if EXTENDED_DEBUG_LOG
 	extra_log = IO::getResultString(result);
 #endif

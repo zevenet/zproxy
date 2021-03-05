@@ -237,7 +237,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 	// Check for correct headers
 	for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_HTTP_HEADERS
-		zcu_log_print(LOG_DEBUG, "\t%.*s",
+		zcu_log_print(LOG_DEBUG, "%s():%d: \t%.*s",
+				  __FUNCTION__, __LINE__,
 				  request.headers[i].name_len +
 				  request.headers[i].value_len + 2,
 				  request.headers[i].name);
@@ -271,8 +272,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 				if (regexec
 				    (&m->match, request.headers[i].value, 10,
 				     umtch, REG_STARTEND)) {
-					zcu_log_print(LOG_INFO,
-							  "Header Match pattern didn't match %.*s",
+					zcu_log_print(LOG_DEBUG,
+							  "RequestHeader didn't match %.*s",
 							  request.
 							  headers
 							  [i].line_size,
@@ -281,6 +282,13 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 					break;
 				}
 				else {
+					zcu_log_print(LOG_DEBUG,
+							  "RequestHeader matches %.*s",
+							  request.
+							  headers
+							  [i].line_size,
+							  request.
+							  headers[i].name);
 					chptr = buf.get();
 					enptr = buf.get() +
 						ZCU_DEF_BUFFER_SIZE - 1;
@@ -346,12 +354,6 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 
 		if (request.headers[i].header_off)
 			continue;
-
-		zcu_log_print(LOG_DEBUG, "%s():%d: \t%.*s", __FUNCTION__,
-				  __LINE__,
-				  request.headers[i].name_len +
-				  request.headers[i].value_len + 2,
-				  request.headers[i].name);
 
 		// check header values length
 		if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
@@ -535,6 +537,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 	auto & listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast < Service * >(stream.request.getService());
 	HttpResponse & response = stream.response;
+
 	/* If the response is 100 continue we need to enable chunked transfer. */
 	if (response.http_status_code < 200) {
 		//    stream.response.chunked_status =
@@ -542,12 +545,21 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 		//    "Chunked transfer enabled");
 		return validation::REQUEST_RESULT::OK;
 	}
+
 #ifdef CACHE_ENABLED
 	stream.request.c_opt.no_store ? response.c_opt.cacheable = false
 		: response.c_opt.cacheable = true;
 #endif
 	bool connection_close_pending = false;
 	for (size_t i = 0; i != response.num_headers; i++) {
+
+#if DEBUG_HTTP_HEADERS
+		zcu_log_print(LOG_DEBUG, "%s():%d: \t%.*s",
+				  __FUNCTION__, __LINE__,
+				  response.headers[i].name_len +
+				  response.headers[i].value_len + 2,
+				  response.headers[i].name);
+#endif
 
 		/* maybe header to be removed from response */
 		regmatch_t eol {
@@ -579,8 +591,8 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 				if (regexec
 				    (&m->match, response.headers[i].value, 10,
 				     umtch, REG_STARTEND)) {
-					zcu_log_print(LOG_INFO,
-							  "Header Match pattern didn't match %.*s",
+					zcu_log_print(LOG_DEBUG,
+							  "ResponseHeader didn't match %.*s",
 							  response.
 							  headers
 							  [i].line_size,
@@ -589,6 +601,13 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 					break;
 				}
 				else {
+					zcu_log_print(LOG_DEBUG,
+							  "ResponseHeader matches %.*s",
+							  response.
+							  headers
+							  [i].line_size,
+							  response.
+							  headers[i].name);
 					chptr = buf.get();
 					enptr = buf.get() +
 						ZCU_DEF_BUFFER_SIZE - 1;
@@ -651,14 +670,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 				}
 			}
 		}
-#if DEBUG_HTTP_HEADERS
-		zcu_log_print(LOG_DEBUG, "\t%.*s",
-				  response.headers[i].name_len +
-				  response.headers[i].value_len + 2,
-				  response.headers[i].name);
-#endif
+
 		if (response.headers[i].header_off)
 			continue;
+
 		// check header values length
 		auto header = std::string_view(response.headers[i].name,
 					       response.headers[i].name_len);

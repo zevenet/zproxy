@@ -423,9 +423,6 @@ void ListenerManager::doWork()
 	while (is_running) {
 		if (loopOnce(EPOLL_WAIT_TIMEOUT) <= 0) {
 			// something bad happend
-			zcu_log_print(LOG_DEBUG,
-					  "%s():%d: No event received",
-					  __FUNCTION__, __LINE__);
 		}
 	}
 	zcu_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__,
