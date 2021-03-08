@@ -6,7 +6,7 @@ DIR=$(dirname $0)
 cd $DIR
 source "$DIR/variables"
 if [[ $? -ne 0 ]]; then
-	echo "Error: The 'variables' file was not found. Please, copy the 'tpl/variables' file to 'variables'"
+	echo "Error: The 'variables' file was not found. Please, copy the 'tpl/variables.ini' file to 'variables'"
 	exit 1
 fi
 
