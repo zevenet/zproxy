@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DIR=$(dirname $0)
-#~ DIR="."
 
 cd $DIR
 source "$DIR/variables"
@@ -12,6 +11,7 @@ fi
 
 TEST_TPL="$PWD/tpl"
 REPORT_F="$PWD/$DIR/report.tmp"
+rm -f $REPORT_F
 
 TMP="/tmp/env2"
 set >$TMP
@@ -26,16 +26,19 @@ if [[ $DEBUG -gt 0 ]]; then
 fi
 print_help_test () {
 	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec <test_dir>|all]"
-	echo "  - start: it prepares the lab for testing"
-	echo "  - stop: it removes the process that were started for testing"
-	echo "  - save_out: it overwrites the test output files which are used to validate the tests"
-	echo "  - bck_benchmark: it check the maximum backend throughput"
-	echo "  - exec <test_directory>: it executes a test"
-	echo "  - all: it prepares the lab, launch all tests and remove the lab"
+	echo "  * start: it prepares the lab for testing"
+	echo "  * stop: it removes the process that were started for testing"
+	echo "  * save_out: it overwrites the test output files which are used to validate the tests"
+	echo "  * bck_benchmark: it check the maximum backend throughput"
+	echo "  * exec [-k] <test_directory>: it executes a test"
+	echo "	    the -k parameter keep zproxy running before the test finishes"
+	echo "  * all: it prepares the lab, launch all tests and remove the lab"
 }
 
 start_test () {
 	msg "Creating a lab with $TESTS_NUM_CL clients and $TESTS_NUM_BCK backends"
+	echo "Clients: $CL_SUBNET.1-$TESTS_NUM_CL"
+	echo "Backends: $BCK_SUBNET.1-$TESTS_NUM_BCK"
 	create_proxy
 	add_clients $TESTS_NUM_CL
 	add_backends $TESTS_NUM_BCK
@@ -52,10 +55,12 @@ stop_test () {
 exec_test () {
 	local TEST_F="$1"
 	local CFG=""
-	local ZPROXY_FLAG=0
 	local ERR=0
+	local TEST_ERR=0
+	local ZPROXY_FLAG=0
 	local TMP_DIR="/tmp/variables"
 	local TMP_ERR="/tmp/err.out"
+	local DIFF_OUT="/tmp/diff.out"
 
 	local LOCAL_PWD="$PWD"
 	cd $TEST_F
@@ -63,7 +68,7 @@ exec_test () {
 	msg "Executing test '$TEST_F'"
 
 	if [ -f "zproxy.cfg" ]; then
-		start_proxy "zproxy.cfg"
+		restart_proxy "zproxy.cfg"
 		ZPROXY_FLAG=1
     else
 		msg "Continue with the configuration of the previous test"
@@ -97,17 +102,19 @@ exec_test () {
 		source $V
 		local OUT_F=$(get_test_out_f $CMD_NUMB $CMD)
 		local TMP_F=$(get_test_tmp_f $OUT_F)
+		local DIFF_OUT
 
 		if [[ "$CMD" == "curl" ]]; then
 			exec_request >$TMP_F 2>&1
-			diff $OUT_F $TMP_F
+			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
 			ERR=$?
 		elif [[ "$CMD" == "average" ]]; then
 			exec_average >$TMP_F 2>&1
-			diff $OUT_F $TMP_F
+			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
 			ERR=$?
 		elif [[ "$CMD" == "benchmark" ]]; then
 			echo "Executing benchmark, this will take '$BENCH_DELAY' seconds"
+			if [[ $BENCH_DELAY -eq 0 ]]; then echo "The benchmark will be skipped"; continue; fi
 			exec_benchmark >$TMP_F 2>&1
 
 			# Get percentage
@@ -115,17 +122,20 @@ exec_test () {
 			OLD_BENCH=$(cat $OUT_F)
 			RESULT=$(perl -E "\$v=100*$NEW_BENCH/$BENCH_WITHOUT_PROXY;say int \$v;")
 			echo "$RESULT" >$TMP_F
+			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
 
 			ERR_EDGE=$(expr $OLD_BENCH + $BENCH_ERR_ACCEPTED)
 			NEW_EDGE=$(expr $OLD_BENCH - $BENCH_ERR_ACCEPTED)
 			debug "proxy-bench/client-bench: $NEW_BENCH/$BENCH_WITHOUT_PROXY = $RESULT%"
-			if [[ $RESULT -gt $ERR_EDGE ]]; then
-				echo "The new benchmark value is'$RESULT%' ant it is worse than the saved one '$OLD_BENCH+$BENCH_ERR_ACCEPTED%'"
+			if [[ $RESULT -lt $ERR_EDGE ]]; then
+				echo "The new benchmark value '$RESULT%' is worse than the saved one '$OLD_BENCH+$BENCH_ERR_ACCEPTED%'"
 				ERR=1
-			elif [[ $RESULT -lt $NEW_EDGE ]]; then
+			elif [[ $RESULT -gt $NEW_EDGE ]]; then
 				echo "The new benchmark value '$RESULT%' is better than the saved one '$OLD_BENCH~$BENCH_ERR_ACCEPTED%'"
 				echo "Overwrite the file '$OUT_F' with the '$OUT_F.new' is you want to save it"
 				cp $TMP_F "$OUT_F.new"
+				# update diff output with new filename
+				diff $DIFF_OPT $OUT_F "$OUT_F.new" >$DIFF_OUT
 			fi
 		else
 			error "CMD variable '$CMD' is not recoignized"
@@ -135,22 +145,21 @@ exec_test () {
 		if [[ $ERR -eq 0 ]]; then
 			rm $TMP_F;
 		else
-			print_report "$TEST_F" "$CMD_NUMB" "$TMP_F"
+			TEST_ERR=1
+			print_report "$TEST_F" "$CMD_NUMB" "$DIFF_OUT"
 		fi
 	done
 	rm "$PREF"*
 
-	if [[ $ZPROXY_FLAG -ne 0 ]]; then stop_proxy; fi
+	if [[ $ZPROXY_FLAG -ne 0 && $ZPROXY_KEEP_RUNNING -eq 0 ]]; then stop_proxy; fi
 	cd $LOCAL_PWD
 
-	return $ERR
+	return $TEST_ERR
 }
 
 exec_all_test () {
 	TEST_DIR="$DIR/tests"
 	ERRORS=0
-
-	rm -f $REPORT_F
 
 	for LOC_DIR in `ls $TEST_DIR`; do
 		exec_test "$TEST_DIR/$LOC_DIR"
@@ -164,7 +173,7 @@ exec_all_test () {
 
 	msg "The tests finished"
 	if [[ $ERRORS -ne 0 ]]; then
-		echo -e "[${COLOR_ERR}FAILED${COLOR_NON}] There where '$ERRORS' tests that failed"
+		echo -e "[${COLOR_ERR}FAILED${COLOR_NON}] There were '$ERRORS' tests that failed"
 		echo "The report can be checked in the file '$REPORT_F'"
 	else
 		echo -e "[${COLOR_SUC}OK${COLOR_NON}] All tests were successfull"
@@ -194,6 +203,7 @@ save_out)
 	replace_test_out
 	;;
 exec)
+	if [[ $2 == "-k" ]]; then shift; ZPROXY_KEEP_RUNNING=1; fi
 	exec_test $2
 	ERROR_T=$?
 	;;
@@ -218,5 +228,10 @@ all)
 	print_help_test
 	;;
 esac
+
+if [[ $ZPROXY_KEEP_RUNNING -ne 0 ]]; then
+	msg "The zproxy process is running, stop it after executing a new test with the following command:"
+	echo "./exec stop_zproxy"
+fi
 
 exit $ERROR_T

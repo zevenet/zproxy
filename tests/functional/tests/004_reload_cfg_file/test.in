@@ -3,9 +3,3 @@ CL=1
 REQUESTS=4
 METHOD="GET"
 URL="/"
-###############
-CMD=average
-CL=2
-REQUESTS=4
-METHOD="GET"
-URL="/"

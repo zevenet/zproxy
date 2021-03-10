@@ -1,3 +1,11 @@
-      2 bck 1
-      2 bck 2
-      4 cmd: ip netns exec cl-ns-1 /usr/bin/curl -s -k --show-error http://10.1.2.1:80/
+      4 
+      2 Backend: bck-1
+      2 Backend: bck-2
+      4 cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -i --show-error  -X GET http://10.1.2.1:80/
+      4 Connection: keep-alive
+      4 Content-Type: application/octet-stream
+      2 Default response of the backend 1
+      2 Default response of the backend 2
+      4 HTTP/1.1 200 OK
+      4 Server: nginx
+      4 Transfer-Encoding: chunked

@@ -1,9 +1,16 @@
-cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 1 -s -k --show-error  http://10.1.2.1:80/bck-https
+cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -i --show-error  -X GET http://10.1.2.1:80/bck-https
+HTTP/1.1 400 Bad Request
+Server: nginx
+Content-Type: text/html
+Content-Length: 264
+Connection: close
+Strict-Transport-Security: max-age=21600000
+
 <html>
 <head><title>400 The plain HTTP request was sent to HTTPS port</title></head>
 <body bgcolor="white">
 <center><h1>400 Bad Request</h1></center>
 <center>The plain HTTP request was sent to HTTPS port</center>
-<hr><center>nginx/1.14.2</center>
+<hr><center>nginx</center>
 </body>
 </html>

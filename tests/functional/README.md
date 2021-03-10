@@ -11,16 +11,15 @@ tests/
 	<test_name>/
 		zproxy.cfg : If this file exists, the proxy service is STARTED with this config file
 		reload_zproxy.cfg : first is loaded the zproxy.cfg and after this file is reloaded to overwrite de cfg
-		ctl.in  : they are the parameter for the request to the ctl service, the body is in other file **TODO**
-		ctl.json: it is the body of the request to the ctl service **TODO**
-		ctl.out  : it is the response of the request to the ctl service **TODO**
+		ctl.in  : they are the parameter for the request to the ctl service, the body is in other file **TBI**
+		ctl.json: it is the body of the request to the ctl service **TBI**
+		ctl.out  : it is the response of the request to the ctl service **TBI**
 		test.in: It is a configuration file that defines the command executed for this test. See the *tests define* section.
 		test_N.out : it is the output of executing the exec.sh script
 		test_N.out.tmp : it is the tmp file used to comparate with *test_N.out*
 		test_N.out.new : it is the benchmark result if this was better
 report.tmp: It is the report generated after executing the tests
 tpl: They are files used to configure the test envirovement
-
 
 # Test define
 The files **test.in** define the commands that will be executed in order to try the proxy daemon
@@ -80,3 +79,28 @@ SSL=1
                |  bk1  |  |  bk2  | ... |  bkN  |
    Backends    |(vbck1)|  |(vbck2)|     |(vbckN)|     (10.2.1.X/16)
                ---------  ---------     ---------
+
+# Backend responses
+
+All the backend responses incluid the "backend" header that.
+
+The backend responses are managed by the Nginx HTTP echo module.
+The following requests are available:
+
+| Method      | URL      | Description
+| ----------- | ----------- | -----------
+| GET, POST	      			| /					| The server will respond backend ID ignoring the request body
+| GET		      			| /body-size/<tiny|large>	| **TBI**. The server will respond a static body with a large or tiny size. It is useful to trigger the HTTP fragmented response
+| GET		      			| /body-size/<size>/chunked	| The server will respond a body of "size" bytes. The response is chunked encoding.
+| GET		      			| /client-ip		| The server will respond the client IP
+| GET		      			| /sleep-resonse/<seconds>	| The server will wait N seconds before responding
+| GET		      			| /sleep-body/<seconds>		| The server will send the first body part, will wait N seconds and later will continue sending the body
+| GET, POST, PUT, DELETE	| /status/<code>	| The server will respond with the code required. The possible codes are: 200, 201, 301, 302, 400, 401, 403, 404, 405, 500, 503
+| GET      					| /echo				| The server will add to its body the GET arguments
+| POST, PUT 				| /echo				| The server will return the body and content-type that the request send
+| POST 						| /headers			| **TBI**.
+| DELETE					| /headers/<header>	| **TBI**. It deletes the "header" of the response
+| GET 						| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
+| POST	 					| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
+| DELETE 					| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
+

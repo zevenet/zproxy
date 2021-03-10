@@ -84,6 +84,10 @@ stop_proxy_all () {
 
 restart_proxy () {
 	stop_proxy
+
+	ps aux | grep zproxy | grep -v grep >/dev/null 2>&1
+	if [[ $? -eq 0 ]]; then error "The zproxy process does not finish properly"; fi
+
 	start_proxy $1
 }
 
@@ -131,6 +135,7 @@ start_httpd () {
 	local ID="$1"
 	local HTTP_CFG_F=$(get_bck_cfg_f $ID)
 	local HTTP_PID=$(get_bck_pid_f $ID)
+	local BCK_ID="$ID"
 
 	HTTP_SITES_TPL="tpl/nginx-sites.conf"
 	HTTP_SITE="/tmp/nginx-sites-$ID.conf"
@@ -139,10 +144,11 @@ start_httpd () {
 	deploy_tpl $HTTP_TPL $HTTP_CFG_F
 	deploy_tpl $HTTP_SITES_TPL $HTTP_SITE
 	mkdir $HTTP_WEBROOT
-	echo "bck $ID" >$HTTP_WEBROOT/index.html
-	echo "bck $ID, 404 Not Found" >$HTTP_WEBROOT/error_404.html
 
 	cmd "ip netns exec $NS $HTTPD_BIN -c $HTTP_CFG_F"
+
+	if [[ $? -ne 0 ]]; then error "Error running the backend $ID"; fi
+
 }
 
 stop_httpd () {
@@ -329,16 +335,19 @@ exec_request () {
 	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
 
 	local CLNS=$(get_cl_ns $CL)
+	local VHOST_LOC="$VHOST"
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
 	fi
-	if [[ "$VHOST" = "" ]]; then
-		VHOST="$PROXY_VIP:${PROXY_VPORT}"
+	if [[ "$VHOST_LOC" = "" ]]; then
+		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
 	else
-		RESOLV_VHOST="--resolve $VHOST:$PROXY_VPORT:$PROXY_VIP"
+		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
 	fi
-	catch_cmd "ip netns exec $CLNS $CURL_BIN --connect-timeout $CLIENT_CONN_TIMEOUT -s -k --show-error $RESOLV_VHOST $HTTP://${VHOST}$URL"
+	catch_cmd "ip netns exec $CLNS $CURL_BIN --connect-timeout $CLIENT_CONN_TIMEOUT -s -k \
+-i --show-error $RESOLV_VHOST -X $METHOD $HTTP://${VHOST_LOC}$URL"
+
 }
 
 exec_average () {
@@ -392,11 +401,13 @@ check_dependencies () {
 		error "The 'ngnix' binary was not found, try to configure the variable 'HTTPD_BIN'"
 	elif [[ ! -f "$PROXY_BIN" ]]; then
 		error "The 'zproxy' binary was not found, try to configure the variable 'PROXY_BIN'"
-	elif [[ ! -f "$PROXY_BIN" ]]; then
-		error "The 'zproxyctl' binary was not found, try to configure the variable 'PROXY_BIN'"
+	elif [[ ! -f "$PROXYCTL_BIN" ]]; then
+		error "The 'zproxyctl' binary was not found, try to configure the variable 'PROXYCTL_BIN'"
+	elif [[ ! -f "$NGINX_MODULE_ECHO" ]]; then
+		error "The 'echo' nginx module was not found, try to install the package 'libnginx-mod-http-echo'"
+	elif [[ ! -f "$NGINX_MODULE_HEADER" ]]; then
+		error "The 'headers-more' nginx module was not found, try to install the package 'libnginx-mod-http-headers-more-filter'"
 	fi
-
-	#~ add hosts to /etc/hosts
 }
 
 print_report () {
@@ -406,13 +417,27 @@ print_report () {
 
 	# print stdout
 	echo "# Error in test $1, cmd $2"
-	cat $3
-	echo "##############################"
+	if [[ -f $3 ]]; then
+		cat $3
+	else
+		echo $3
+	fi
+	echo ""
+	echo "##########################################################################################"
+	echo ""
+	echo ""
 
 	# print file
 	echo "# Error in test $1, cmd $2" >>$REPORT_F
-	cat $3 >>$REPORT_F
+	if [[ -f $3 ]]; then
+		cat $3 >>$REPORT_F
+	else
+		echo $3 >>$REPORT_F
+	fi
 	echo "" >>$REPORT_F
-	echo "##############################" >>$REPORT_F
+	echo ""
+	echo "##########################################################################################" >>$REPORT_F
+	echo "" >>$REPORT_F
+	echo "" >>$REPORT_F
 }
 

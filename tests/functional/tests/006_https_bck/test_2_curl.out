@@ -1,2 +1,9 @@
-cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 1 -s -k --show-error  http://10.1.2.1:80/bck-non-https
-bck 2, 404 Not Found
+cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -i --show-error  -X GET http://10.1.2.1:80/bck-non-https
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Backend: bck-2
+
+Default response of the backend 2

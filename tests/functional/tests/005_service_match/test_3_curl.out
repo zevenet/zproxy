@@ -1,2 +1,10 @@
-cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 1 -s -k --show-error --resolve svc.zproxy:80:10.1.2.1 http://svc.zproxy/
+cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -i --show-error --resolve svc.zproxy:80:10.1.2.1 -X GET http://svc.zproxy/
+HTTP/1.0 503 no service
+Content-Type: text/html
+Content-Length: 54
+Expires: now
+Pragma: no-cache
+Server: zproxy/0.2.4-1
+Cache-control: no-cache,no-store
+
 The service is not available. Please try again later.
