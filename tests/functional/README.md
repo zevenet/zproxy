@@ -3,6 +3,28 @@
 This test tool deploy a lab with N clients and M backends in order to apply
 different proxy configuration files and analyze its HTTP responses.
 
+# Getting Started
+
+The following steps are required to configure the test application:
+
+* Adding the variables file. This file contains all the environment configuration
+
+`cp tpl/variables.ini variables`
+
+* Setting up the benchmark reference. This measure is used to comparate with other benchmark tests to determine the proxy efficiency.
+During the test execution, an alert could appear if the performance increases more or decreases less than an error range
+
+`./test.sh bck_benchmark`
+
+* The value printed by the previous command has to be configured in the variable **BENCH_WITHOUT_PROXY** (file variables)
+
+* The tests are now configured, just coding confident executing it:
+
+`./test.sh all`
+
+*Note*: For more options check the command: `./test.sh -h`
+
+
 
 # Files
 
