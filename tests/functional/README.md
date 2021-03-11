@@ -41,25 +41,25 @@ This is a description of the files that can be found in this test directory
 - tests/
 
 	- <test_name>/
-	
+
 		- zproxy.cfg : If this file exists, the proxy service is STARTED with this config file
-		
+
 		- reload_zproxy.cfg : first is loaded the zproxy.cfg and after this file is reloaded to overwrite de configuration
-		
-		- ctl.in  : they are the parameter for the request to the ctl service, the body is in another file **TBI**
-		
-		- ctl.json: it is the body of the request to the ctl service **TBI**
-		
-		- ctl.out  : it is the response of the request to the ctl service **TBI**
-		
-		- test.in: It is a configuration file that defines the command executed for this test. See the *tests define* section.
-		
+
+		- ctl.in  : they are the parameter for the request to the ctl service, the body is in another file
+
+		- ctl.json: it is the body of the request to the ctl service
+
+		- ctl.out  : it is the response of the request to the ctl service
+
+		- test.in: It is a configuration file that defines the command executed for this test. See the *tests define* section
+
 		- test_N.out : it is the output of executing the exec.sh script
-		
+
 		- test_N.out.tmp : it is the temporal file used to comparate with *test_N.out*
-		
+
 		- test_N.out.new : it is the benchmark result if this was better
-		
+
 - report.tmp: It is the report generated after executing the tests
 
 - tpl: They are files used to configure the test environment
