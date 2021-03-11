@@ -13,7 +13,7 @@ TEST_TPL="$PWD/tpl"
 REPORT_F="$PWD/$DIR/report.tmp"
 rm -f $REPORT_F
 
-TMP="/tmp/env2"
+TMP="$TMP_DIR/env2"
 set >$TMP
 export $(grep -E '^[a-zA-Z0-9_-]+=' "$TMP" | cut -d= -f1)
 rm $TMP
@@ -25,14 +25,15 @@ if [[ $DEBUG -gt 0 ]]; then
 	start_debug
 fi
 print_help_test () {
-	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec <test_dir>|all]"
+	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec [-k] <test_dir>|all]"
+	echo "  * all: it prepares the lab, launch all tests and remove the lab"
 	echo "  * start: it prepares the lab for testing"
-	echo "  * stop: it removes the process that were started for testing"
-	echo "  * save_out: it overwrites the test output files which are used to validate the tests"
-	echo "  * bck_benchmark: it check the maximum backend throughput"
+	echo "  * stop: it cleans the lab, removing the process and deleting the net namespaces"
 	echo "  * exec [-k] <test_directory>: it executes a test"
 	echo "	    the -k parameter keep zproxy running before the test finishes"
-	echo "  * all: it prepares the lab, launch all tests and remove the lab"
+	echo "  * save: it overwrites the test output files which are used to validate the tests"
+	echo "  * diff: it looks for the error files of the last test execution"
+	echo "  * bck_benchmark: it checks the maximum backend throughput"
 }
 
 start_test () {
@@ -49,23 +50,21 @@ stop_test () {
 	delete_backends $TESTS_NUM_BCK
 	delete_proxy
 	stop_proxy_all
+	rm -rf $TMP_DIR
 	msg "The lab was deleted"
 }
 
+# This function expects running with the user path in the test path in going to be executed
 exec_test () {
 	local TEST_F="$1"
 	local CFG=""
 	local ERR=0
 	local TEST_ERR=0
 	local ZPROXY_FLAG=0
-	local TMP_DIR="/tmp/variables"
-	local TMP_ERR="/tmp/err.out"
-	local DIFF_OUT="/tmp/diff.out"
+	local TMP_ERR="$TMP_DIR/err.out"
+	local DIFF_OUT="$TMP_DIR/diff.out"
 
-	local LOCAL_PWD="$PWD"
-	cd $TEST_F
-
-	msg "Executing test '$TEST_F'"
+	msg "## Executing test '$TEST_F'"
 
 	if [ -f "zproxy.cfg" ]; then
 		restart_proxy "zproxy.cfg"
@@ -79,7 +78,7 @@ exec_test () {
 		reload_proxy "reload_zproxy.cfg" >$TMP_ERR
 		if [[ $? -ne 0 ]]; then
 			print_report "$TEST_F" "Reloading_CFG" "$TMP_ERR"
-			return $ERR
+			return 1
 		fi
 	elif [[ -f "ctl.in" ]]; then
     	clean_test
@@ -87,7 +86,7 @@ exec_test () {
 		apply_proxy_api >$TMP_ERR
 		if [[ $? -ne 0 ]]; then
 			print_report "$TEST_F" "Applying_CTL" "$TMP_ERR"
-			return $ERR
+			return 1
 		fi
 	fi
 
@@ -152,7 +151,6 @@ exec_test () {
 	rm "$PREF"*
 
 	if [[ $ZPROXY_FLAG -ne 0 && $ZPROXY_KEEP_RUNNING -eq 0 ]]; then stop_proxy; fi
-	cd $LOCAL_PWD
 
 	return $TEST_ERR
 }
@@ -160,15 +158,22 @@ exec_test () {
 exec_all_test () {
 	TEST_DIR="$DIR/tests"
 	ERRORS=0
+	local LOCAL_PWD="$PWD"
 
 	for LOC_DIR in `ls $TEST_DIR`; do
-		exec_test "$TEST_DIR/$LOC_DIR"
+
+		cd $TEST_DIR/$LOC_DIR
+		exec_test "$LOC_DIR"
 		if [[ $? -ne 0 ]]; then
 			echo -e "[${COLOR_ERR}Error${COLOR_NON}] $LOC_DIR"
 			ERRORS=$(expr $ERRORS + 1);
 		else
 			echo -e "[${COLOR_SUC}OK${COLOR_NON}] $LOC_DIR"
 		fi
+		echo ""
+		echo "##########################################################################################"
+
+		cd $LOCAL_PWD
 	done
 
 	msg "The tests finished"
@@ -199,13 +204,19 @@ start)
 stop)
 	stop_test
 	;;
-save_out)
+diff)
+	find_diff_files
+	;;
+save)
 	replace_test_out
 	;;
 exec)
+	LOCAL_PWD="$PWD"
 	if [[ $2 == "-k" ]]; then shift; ZPROXY_KEEP_RUNNING=1; fi
+	cd $2
 	exec_test $2
 	ERROR_T=$?
+	cd $LOCAL_PWD
 	;;
 bck_benchmark)
 	start_test

@@ -75,7 +75,9 @@ start_proxy () {
 }
 
 stop_proxy () {
-	cmd "ip netns exec $PROXY_NS kill -9 `cat $PROXY_PID_F`"
+	if [[ -f $PROXY_PID_F ]]; then
+		cmd "ip netns exec $PROXY_NS kill -9 `cat $PROXY_PID_F`"
+	fi
 }
 
 stop_proxy_all () {
@@ -138,8 +140,8 @@ start_httpd () {
 	local BCK_ID="$ID"
 
 	HTTP_SITES_TPL="tpl/nginx-sites.conf"
-	HTTP_SITE="/tmp/nginx-sites-$ID.conf"
-	HTTP_WEBROOT="/tmp/http-app-$ID"
+	HTTP_SITE="$TMP_DIR/nginx-sites-$ID.conf"
+	HTTP_WEBROOT="$TMP_DIR/http-app-$ID"
 
 	deploy_tpl $HTTP_TPL $HTTP_CFG_F
 	deploy_tpl $HTTP_SITES_TPL $HTTP_SITE
@@ -159,8 +161,8 @@ stop_httpd () {
 	local HTTP_PID_F=$(get_bck_pid_f $ID)
 	local NS=$(get_bck_ns $ID)
 
-	HTTP_SITE_F="/tmp/nginx-sites-$ID.conf"
-	HTTP_WEBROOT="/tmp/http-app-$ID"
+	HTTP_SITE_F="$TMP_DIR/nginx-sites-$ID.conf"
+	HTTP_WEBROOT="$TMP_DIR/http-app-$ID"
 
 	cmd "ip netns exec $NS kill -15 `cat $HTTP_PID_F`"
 	rm -rf $HTTP_CFG_F $HTTP_WEBROOT $HTTP_SITE_F
@@ -226,19 +228,19 @@ delete_clients () {
 }
 
 get_bck_pid_f () {
-	local HTTP_PID_F="/tmp/http_bck$1.pid"
+	local HTTP_PID_F="$TMP_DIR/http_bck$1.pid"
 	echo "$HTTP_PID_F"
 }
 
 get_bck_cfg_f () {
-	local HTTP_PID_F="/tmp/http_bck$1.conf"
+	local HTTP_PID_F="$TMP_DIR/http_bck$1.conf"
 	echo "$HTTP_PID_F"
 }
 
 # deploy_tpl $TPL_PATH $DST_PATH
 deploy_tpl () {
 	# expand the template variables with env ones
-	TMP_ENV="/tmp/env.vars"
+	TMP_ENV="$TMP_DIR/env.vars"
 
 	TPL=$1
 	DST=$2
@@ -354,7 +356,7 @@ exec_average () {
 	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
 	if [[ "$REQUESTS" == "" ]]; then error_param "iterations"; fi
 
-	TMP="/tmp/avg"
+	TMP="$TMP_DIR/avg"
 	for IT in $(seq 1 $REQUESTS)
 	do
 		exec_request >> $TMP
@@ -376,7 +378,7 @@ exec_benchmark() {
 	local TIMEOUT=$BENCH_DELAY
 	local THREADS=$BENCH_CL_THREADS
 
-	local TMP="/tmp/bm"
+	local TMP="$TMP_DIR/bm"
 
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
@@ -423,8 +425,6 @@ print_report () {
 		echo $3
 	fi
 	echo ""
-	echo "##########################################################################################"
-	echo ""
 	echo ""
 
 	# print file
@@ -441,3 +441,9 @@ print_report () {
 	echo "" >>$REPORT_F
 }
 
+find_diff_files () {
+	msg "Error files: "
+	find . -name "*.tmp"
+	msg "Benchmark improvements:"
+	find . -name "*.new"
+}
