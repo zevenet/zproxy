@@ -25,12 +25,16 @@ if [[ $DEBUG -gt 0 ]]; then
 	start_debug
 fi
 print_help_test () {
-	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec [-k] <test_dir>|all]"
+	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec [-kfb] <test_dir>|all [-fb]]"
 	echo "  * all: it prepares the lab, launch all tests and remove the lab"
+	echo "	    the -f parameter executes only the functional tests, don't the benchmark ones"
+	echo "	    the -b parameter executes only the benchmark tests, don't the functional ones"
 	echo "  * start: it prepares the lab for testing"
 	echo "  * stop: it cleans the lab, removing the process and deleting the net namespaces"
-	echo "  * exec [-k] <test_directory>: it executes a test"
-	echo "	    the -k parameter keep zproxy running before the test finishes"
+	echo "  * exec [-ktb] <test_directory>: it executes a test"
+	echo "	    the -k parameter keeps zproxy running before the test finishes"
+	echo "	    the -f parameter executes only the functional tests, don't the benchmark ones"
+	echo "	    the -b parameter executes only the benchmark tests, don't the functional ones"
 	echo "  * save: it overwrites the test output files which are used to validate the tests"
 	echo "  * diff: it looks for the error files of the last test execution"
 	echo "  * bck_benchmark: it checks the maximum backend throughput"
@@ -104,16 +108,21 @@ exec_test () {
 		local DIFF_OUT
 
 		if [[ "$CMD" == "curl" ]]; then
+			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			exec_request >$TMP_F 2>&1
 			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
 			ERR=$?
 		elif [[ "$CMD" == "average" ]]; then
+			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			exec_average >$TMP_F 2>&1
 			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
 			ERR=$?
 		elif [[ "$CMD" == "benchmark" ]]; then
+			if [[ $BENCHMARK_FLAG -eq 0 ]]; then msg "The benchmark was skipped"; continue; fi
+
 			echo "Executing benchmark, this will take '$BENCH_DELAY' seconds"
-			if [[ $BENCH_DELAY -eq 0 ]]; then echo "The benchmark will be skipped"; continue; fi
+			if [[ $BENCH_DELAY -eq 0 ]]; then msg "There isn't time configured, the test was skipped"; continue; fi
+
 			exec_benchmark >$TMP_F 2>&1
 
 			# Get percentage
@@ -212,7 +221,14 @@ save)
 	;;
 exec)
 	LOCAL_PWD="$PWD"
-	if [[ $2 == "-k" ]]; then shift; ZPROXY_KEEP_RUNNING=1; fi
+
+	if [[ $2 =~ ^-[ktb]+$ ]]; then
+		if [[ $2 =~ "k" ]]; then ZPROXY_KEEP_RUNNING=1; fi
+		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
+		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
+		if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
+		shift;
+	fi
 	cd $2
 	exec_test $2
 	ERROR_T=$?
@@ -230,6 +246,13 @@ bck_benchmark)
 	stop_test
 	;;
 all)
+	if [[ $2 =~ ^-[tb]+$ ]]; then
+		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
+		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
+		if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
+		shift;
+	fi
+
 	start_test
 	exec_all_test
 	ERROR_T=$?
@@ -242,7 +265,7 @@ esac
 
 if [[ $ZPROXY_KEEP_RUNNING -ne 0 ]]; then
 	msg "The zproxy process is running, stop it after executing a new test with the following command:"
-	echo "./exec stop_zproxy"
+	echo "./exec stop_proxy"
 fi
 
 exit $ERROR_T
