@@ -346,6 +346,12 @@ exec_curl () {
 	local CMD_F="$DIR/cmd.out.tmp"
 	local HEAD_F="$DIR/response_headers.out.tmp"
 	local OUT_F="$DIR/body.out.tmp"
+	local EXT_F="$DIR/extended.out.tmp"
+	local ERR_F="$DIR/error.out.tmp"
+
+	# create files to refresh files if become empty
+	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
+
 	local CLNS=$(get_cl_ns $CL)
 	local VHOST_LOC="$VHOST"
 	local H=""
@@ -368,10 +374,13 @@ exec_curl () {
 		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
 	fi
 
-	local COMMAND="ip netns exec $CLNS $CURL_BIN --connect-timeout $CLIENT_CONN_TIMEOUT -s -k \
--D $HEAD_F --show-error $H $B $RESOLV_VHOST -X $METHOD $HTTP://${VHOST_LOC}$URL"
-	echo "$COMMAND" > $CMD_F
-	$COMMAND >$OUT_F 2>&1
+	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
+$RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
+-D $HEAD_F -o $OUT_F  $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F" > $CMD_F
+
+ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
+$RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
+-D $HEAD_F -o $OUT_F  $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F
 }
 
 exec_average () {
@@ -386,12 +395,12 @@ exec_average () {
 	for IT in $(seq 1 $REQUESTS)
 	do
 		exec_curl $DIR
-		for F in "cmd.out.tmp" "response_headers.out.tmp" "body.out.tmp"; do
+		for F in $AVERAGE_FILES_TMP; do
 			cat "$DIR/$F" >> "${TMP_AVG_PREF}${F}.2"
 		done
 	done
 
-	for F in "cmd.out.tmp" "response_headers.out.tmp" "body.out.tmp"; do
+	for F in $AVERAGE_FILES_TMP; do
 		cat "${TMP_AVG_PREF}${F}.2" | grep -E '.' |  sort | uniq -c >"${TMP_AVG_PREF}${F}"
 		rm "$DIR/$F" "${TMP_AVG_PREF}${F}.2"
 	done
@@ -542,18 +551,16 @@ find_diff_files () {
 find_diff_errors () {
 	if [[ "$1" == "" ]]; then error_param "directory"; fi
 	local DIR=$1
-	local FILES="$DIR/cmd.out $DIR/response_headers.out $DIR/body.out"
 
-	if [[ $DIR =~ benchmark ]]; then
-		FILES="$DIR/cmd.out"
-	fi
-
-	for F in $FILES; do
-		diff $DIFF_OPT $F $F.tmp 2>&1
-		if [[ $? -eq 0 ]]; then
-			rm $F.tmp;
-		else
-			echo ""
+	for F in $OUTPUT_FILES; do
+	    F="$DIR/$F"
+		if [[ -f "$F.tmp" ]]; then
+			diff $DIFF_OPT $F $F.tmp 2>&1
+			if [[ $? -eq 0 ]]; then
+				rm $F.tmp;
+			else
+				echo ""
+			fi
 		fi
 	done
 }
