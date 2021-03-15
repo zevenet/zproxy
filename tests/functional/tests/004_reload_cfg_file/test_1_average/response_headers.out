@@ -1,0 +1,8 @@
+      4 
+      2 Backend: bck-1
+      2 Backend: bck-2
+      4 Connection: keep-alive
+      4 Content-Type: application/octet-stream
+      4 HTTP/1.1 200 OK
+      4 Server: nginx
+      4 Transfer-Encoding: chunked

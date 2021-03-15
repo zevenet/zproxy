@@ -1,0 +1,1 @@
+     10 ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -D /tmp/functional-tests/response_headers.out.tmp --show-error    -X GET https://10.1.2.1:80/

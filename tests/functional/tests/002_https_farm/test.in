@@ -2,13 +2,11 @@ CMD=curl
 CL=1
 METHOD="GET"
 URL="/"
-VHOST=
 #########################
 CMD=curl
 CL=1
 METHOD="GET"
 URL="/"
-VHOST=
 SSL=1
 #########################
 CMD=average
@@ -18,9 +16,16 @@ METHOD="GET"
 URL="/"
 SSL=1
 #########################
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+BODY=file_short.txt
+HEADERS="Content-Type: text/plain"
+SSL=1
+#########################
 CMD=benchmark
 CL=1
 METHOD="GET"
 URL="/"
 SSL=1
-

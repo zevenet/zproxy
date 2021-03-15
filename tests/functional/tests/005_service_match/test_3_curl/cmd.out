@@ -1,0 +1,1 @@
+ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -D test_3_curl/response_headers.out.tmp --show-error   --resolve svc.zproxy:80:10.1.2.1 -X GET http://svc.zproxy/

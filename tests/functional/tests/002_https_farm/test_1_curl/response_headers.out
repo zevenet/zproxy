@@ -1,4 +1,3 @@
-cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -i --show-error  -X GET http://10.1.2.1:80/
 HTTP/1.0 400 Bad Request
 Content-Type: text/html
 Content-Length: 18
@@ -7,4 +6,3 @@ Pragma: no-cache
 Server: zproxy/0.2.4-1
 Cache-control: no-cache,no-store
 
-Please use HTTPS.

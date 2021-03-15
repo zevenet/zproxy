@@ -1,9 +1,0 @@
-cmd: ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -i --show-error  -X GET https://10.1.2.1:80/
-HTTP/1.1 200 OK
-Server: nginx
-Content-Type: application/octet-stream
-Transfer-Encoding: chunked
-Connection: keep-alive
-Backend: bck-1
-
-Default response of the backend 1

@@ -103,58 +103,31 @@ exec_test () {
 		CMD_NUMB=$(expr $CMD_NUMB + 1)
 		clean_test
 		source $V
-		local OUT_F=$(get_test_out_f $CMD_NUMB $CMD)
-		local TMP_F=$(get_test_tmp_f $OUT_F)
-		local DIFF_OUT
+
+		# output
+		local OUT_DIR=$(get_test_out_dir $CMD_NUMB $CMD)
+		mkdir -p $OUT_DIR
 
 		if [[ "$CMD" == "curl" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
-			exec_request >$TMP_F 2>&1
-			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
-			ERR=$?
+			exec_curl $OUT_DIR
 		elif [[ "$CMD" == "average" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
-			exec_average >$TMP_F 2>&1
-			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
-			ERR=$?
+			exec_average $OUT_DIR
 		elif [[ "$CMD" == "benchmark" ]]; then
 			if [[ $BENCHMARK_FLAG -eq 0 ]]; then msg "The benchmark was skipped"; continue; fi
-
 			echo "Executing benchmark, this will take '$BENCH_DELAY' seconds"
 			if [[ $BENCH_DELAY -eq 0 ]]; then msg "There isn't time configured, the test was skipped"; continue; fi
-
-			exec_benchmark >$TMP_F 2>&1
-
-			# Get percentage
-			NEW_BENCH=$(cat $TMP_F)
-			OLD_BENCH=$(cat $OUT_F)
-			RESULT=$(perl -E "\$v=100*$NEW_BENCH/$BENCH_WITHOUT_PROXY;say int \$v;")
-			echo "$RESULT" >$TMP_F
-			diff $DIFF_OPT $OUT_F $TMP_F >$DIFF_OUT
-
-			ERR_EDGE=$(expr $OLD_BENCH + $BENCH_ERR_ACCEPTED)
-			NEW_EDGE=$(expr $OLD_BENCH - $BENCH_ERR_ACCEPTED)
-			debug "proxy-bench/client-bench: $NEW_BENCH/$BENCH_WITHOUT_PROXY = $RESULT%"
-			if [[ $RESULT -lt $ERR_EDGE ]]; then
-				echo "The new benchmark value '$RESULT%' is worse than the saved one '$OLD_BENCH+$BENCH_ERR_ACCEPTED%'"
-				ERR=1
-			elif [[ $RESULT -gt $NEW_EDGE ]]; then
-				echo "The new benchmark value '$RESULT%' is better than the saved one '$OLD_BENCH~$BENCH_ERR_ACCEPTED%'"
-				echo "Overwrite the file '$OUT_F' with the '$OUT_F.new' is you want to save it"
-				cp $TMP_F "$OUT_F.new"
-				# update diff output with new filename
-				diff $DIFF_OPT $OUT_F "$OUT_F.new" >$DIFF_OUT
-			fi
+			exec_benchmark $OUT_DIR
 		else
+			rm "$PREF"*
 			error "CMD variable '$CMD' is not recoignized"
-			ERR=1
 		fi
 
-		if [[ $ERR -eq 0 ]]; then
-			rm $TMP_F;
-		else
+		find_diff_errors $OUT_DIR >$DIFF_OUT
+		if [[ -s $DIFF_OUT ]]; then
 			TEST_ERR=1
-			print_report "$TEST_F" "$CMD_NUMB" "$DIFF_OUT"
+			print_report "$TEST_F" "$OUT_DIR" "$DIFF_OUT"
 		fi
 	done
 	rm "$PREF"*
@@ -215,6 +188,9 @@ stop)
 	;;
 diff)
 	find_diff_files
+	if [[ $? -ne 0 ]]; then
+		exit 1
+	fi
 	;;
 save)
 	replace_test_out
@@ -222,7 +198,8 @@ save)
 exec)
 	LOCAL_PWD="$PWD"
 
-	if [[ $2 =~ ^-[ktb]+$ ]]; then
+	if [[ $2 =~ ^-[kfb]+$ ]]; then
+		if [[ $2 =~ ^[^kfb]$ ]]; then error "An option was not expected"; fi
 		if [[ $2 =~ "k" ]]; then ZPROXY_KEEP_RUNNING=1; fi
 		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
 		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
@@ -246,7 +223,8 @@ bck_benchmark)
 	stop_test
 	;;
 all)
-	if [[ $2 =~ ^-[tb]+$ ]]; then
+	if [[ $2 =~ ^-[fb]+$ ]]; then
+		if [[ $2 =~ ^[^fb]$ ]]; then error "An option was not expected"; fi
 		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
 		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
 		if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
@@ -264,7 +242,7 @@ all)
 esac
 
 if [[ $ZPROXY_KEEP_RUNNING -ne 0 ]]; then
-	msg "The zproxy process is running, stop it after executing a new test with the following command:"
+	msg "The zproxy process is running, it can be stopped executing:"
 	echo "./exec stop_proxy"
 fi
 

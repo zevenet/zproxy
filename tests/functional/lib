@@ -8,6 +8,10 @@ error () {
 	exit 1
 }
 
+dev () {
+	read -p "Stopped, press 'Enter' to continue"
+}
+
 # if [[ "$NUM" == "" ]]; then error_param "backend_number"; fi
 error_param () {
 	error "the function '${FUNCNAME[1]}' expects the parameter '$1'"
@@ -308,12 +312,8 @@ delete_backends () {
 	done
 }
 
-get_test_out_f () {
-	echo "test_$1_$2.out"
-}
-
-get_test_tmp_f () {
-	echo "$1.tmp"
+get_test_out_dir () {
+	echo "test_$1_$2"
 }
 
 clean_test () {
@@ -331,47 +331,79 @@ replace_test_out ()
 }
 
 ## CLIENT ACTIONS
-exec_request () {
+# the directory where the outputs are saved is passed as parameter
+# in the directory will be created the following files:
+#   - cmd, it is the command executed
+#   - response_headers.out, they are the proxy response headers
+#   - body.out, it is the response body returned by the proxy
+exec_curl () {
+	local DIR=$TMP_DIR
+	if [[ $1 != "" ]]; then DIR=$1; fi
 	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
 	if [[ "$URL" == "" ]]; then error_param "url"; fi
 	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
 
+	local CMD_F="$DIR/cmd.out.tmp"
+	local HEAD_F="$DIR/response_headers.out.tmp"
+	local OUT_F="$DIR/body.out.tmp"
 	local CLNS=$(get_cl_ns $CL)
 	local VHOST_LOC="$VHOST"
+	local H=""
+	local B=""
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
+	fi
+	if [[ $HEADERS != "" ]]; then
+		for IT in `echo $HEADERS | tr ";" "\n"`; do
+			H="$H -H $IT"
+		done
+	fi
+	if [[ $BODY != "" ]]; then
+		B="-d @$BODY"
 	fi
 	if [[ "$VHOST_LOC" = "" ]]; then
 		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
 	else
 		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
 	fi
-	catch_cmd "ip netns exec $CLNS $CURL_BIN --connect-timeout $CLIENT_CONN_TIMEOUT -s -k \
--i --show-error $RESOLV_VHOST -X $METHOD $HTTP://${VHOST_LOC}$URL"
 
+	local COMMAND="ip netns exec $CLNS $CURL_BIN --connect-timeout $CLIENT_CONN_TIMEOUT -s -k \
+-D $HEAD_F --show-error $H $B $RESOLV_VHOST -X $METHOD $HTTP://${VHOST_LOC}$URL"
+	echo "$COMMAND" > $CMD_F
+	$COMMAND >$OUT_F 2>&1
 }
 
 exec_average () {
+	if [[ $1 == "" ]]; then error_param "directory"; fi
 	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
 	if [[ "$REQUESTS" == "" ]]; then error_param "iterations"; fi
 
-	TMP="$TMP_DIR/avg"
+	local DIR=$TMP_DIR
+	local TMP_AVG_PREF="$1/"
+	rm -f "$TMP_AVG_PREF*.tmp"
+
 	for IT in $(seq 1 $REQUESTS)
 	do
-		exec_request >> $TMP
+		exec_curl $DIR
+		for F in "cmd.out.tmp" "response_headers.out.tmp" "body.out.tmp"; do
+			cat "$DIR/$F" >> "${TMP_AVG_PREF}${F}.2"
+		done
 	done
 
-	cat $TMP | grep -E '.' |  sort | uniq -c
-	rm $TMP
+	for F in "cmd.out.tmp" "response_headers.out.tmp" "body.out.tmp"; do
+		cat "${TMP_AVG_PREF}${F}.2" | grep -E '.' |  sort | uniq -c >"${TMP_AVG_PREF}${F}"
+		rm "$DIR/$F" "${TMP_AVG_PREF}${F}.2"
+	done
 }
 
 # exec_stress $CL $CONNS $TIMEOUT $THREADS
-exec_benchmark() {
+exec_wrk() {
+	if [[ "$1" == "" ]]; then error_param "directory"; fi
 	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
 	if [[ "$URL" == "" ]]; then error_param "url"; fi
 	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
-
+	local DIR=$1
 	local NS=$NS
 	if [[ "$NS" == "" ]]; then NS=$(get_cl_ns $CL); fi
 	local CONNS=$BENCH_CONNS
@@ -379,6 +411,8 @@ exec_benchmark() {
 	local THREADS=$BENCH_CL_THREADS
 
 	local TMP="$TMP_DIR/bm"
+	local BM_OUT="$DIR/benchmark.out.tmp"
+	local CMD_F="$DIR/cmd.out.tmp"
 
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
@@ -388,8 +422,54 @@ exec_benchmark() {
 		VHOST="$PROXY_VIP:${PROXY_VPORT}"
 	fi
 
-	catch_cmd "ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL" >$TMP
-	grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//'
+	local COMMAND="ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL"
+	echo "$COMMAND" >$CMD_F
+
+	$COMMAND >$TMP
+	grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//' >$BM_OUT
+}
+
+exec_benchmark() {
+	if [[ $1 == "" ]]; then error_param "directory"; fi
+
+	local DIR="$1"
+	local TMP_F="$DIR/benchmark.out.tmp"
+	local OUT_F="$DIR/benchmark.out"
+	local NEW_F="$OUT_F.new"
+	local BM_F="$OUT_F.bm"
+
+	rm -f $NEW_F
+
+	exec_wrk $DIR
+
+	# Get percentage
+	NEW_BENCH=$(cat $TMP_F)
+	echo $NEW_BENCH >$BM_F
+	RESULT=$(perl -E "\$v=100*$NEW_BENCH/$BENCH_WITHOUT_PROXY;say int \$v;")
+	echo "$RESULT" >$TMP_F
+
+	if [[ ! -f $OUT_F ]]; then
+		echo "Reference benchmark does not exist: $OUT_F"
+		return 1
+	fi
+
+	OLD_BENCH=$(cat $OUT_F)
+	ERR_EDGE=$(expr $OLD_BENCH - $BENCH_ERR_ACCEPTED)
+	NEW_EDGE=$(expr $OLD_BENCH + $BENCH_ERR_ACCEPTED)
+	echo "Benchmark: proxy-bench/client-bench = $NEW_BENCH/$BENCH_WITHOUT_PROXY = $RESULT%"
+	if [[ $RESULT -lt $ERR_EDGE ]]; then
+		echo "The new benchmark value '$RESULT%' is worse than the saved one '$OLD_BENCH+$BENCH_ERR_ACCEPTED%'"
+		return 1
+	elif [[ $RESULT -gt $NEW_EDGE ]]; then
+		echo "The new benchmark value '$RESULT%' is better than the saved one '$OLD_BENCH~$BENCH_ERR_ACCEPTED%'"
+		echo "Overwrite the file '$OUT_F' with the '$NEW_F' is you want to save it"
+		mv $TMP_F "$OUT_F.new"
+	else
+		echo "The new benchmark is '$RESULT%' similar to the saved one '$OLD_BENCH~$BENCH_ERR_ACCEPTED%'"
+	fi
+
+	rm $TMP_F
+	return 0
 }
 
 check_dependencies () {
@@ -418,7 +498,8 @@ print_report () {
 	if [[ "$3" == "" ]]; then error_param "output_file"; fi
 
 	# print stdout
-	echo "# Error in test $1, cmd $2"
+	echo "### Error in test '$1', command '$2'"
+	echo ""
 	if [[ -f $3 ]]; then
 		cat $3
 	else
@@ -428,7 +509,7 @@ print_report () {
 	echo ""
 
 	# print file
-	echo "# Error in test $1, cmd $2" >>$REPORT_F
+	echo "### Error in test '$1', command '$2'" >>$REPORT_F
 	if [[ -f $3 ]]; then
 		cat $3 >>$REPORT_F
 	else
@@ -442,8 +523,37 @@ print_report () {
 }
 
 find_diff_files () {
-	msg "Error files: "
-	find . -name "*.tmp"
-	msg "Benchmark improvements:"
-	find . -name "*.new"
+
+	local TMP=$(find . -name "*.tmp")
+	if [[ $TMP != "" ]]; then
+		msg "Error files: "
+		echo "$TMP"
+	fi
+
+	local NEW=$(find . -name "*.new")
+	if [[ $NEW != "" ]]; then
+		msg "Benchmark improvements:"
+		echo "$NEW"
+	fi
+
+	if [[ $NEW != "" || $TMP != "" ]]; then return 1; fi
+}
+
+find_diff_errors () {
+	if [[ "$1" == "" ]]; then error_param "directory"; fi
+	local DIR=$1
+	local FILES="$DIR/cmd.out $DIR/response_headers.out $DIR/body.out"
+
+	if [[ $DIR =~ benchmark ]]; then
+		FILES="$DIR/cmd.out"
+	fi
+
+	for F in $FILES; do
+		diff $DIFF_OPT $F $F.tmp 2>&1
+		if [[ $? -eq 0 ]]; then
+			rm $F.tmp;
+		else
+			echo ""
+		fi
+	done
 }

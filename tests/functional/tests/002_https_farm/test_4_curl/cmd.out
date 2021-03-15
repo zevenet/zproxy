@@ -1,0 +1,1 @@
+ip netns exec cl-ns-1 /usr/bin/curl --connect-timeout 2 -s -k -D test_4_curl/response_headers.out.tmp --show-error  -H Content-Type: -H text/plain -d @file_short.txt  -X POST https://10.1.2.1:80/echo

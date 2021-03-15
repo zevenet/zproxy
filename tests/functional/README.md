@@ -81,8 +81,8 @@ The files **test.in** define the commands that will be executed in order to try 
 | URL      | It is the HTTP URL used for the request (/, /svc...)       | True
 | VHOST      | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
-| HEADERS     | TBI       |
-| BODY      | TBI       |
+| HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'       |
+| BODY      | They are the data to send in the HTTP body. It should be a file in the same directory       |
 
 The following example block will execute a curl command as *curl -X GET https//service.test/* in the client *1*.
 
