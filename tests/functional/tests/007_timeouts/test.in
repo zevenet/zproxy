@@ -1,0 +1,4 @@
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/sleep-response/7"

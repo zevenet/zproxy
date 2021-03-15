@@ -141,7 +141,7 @@ The following requests are available:
 | GET		      			| /body-size/`<tiny,large>`	| **TBI**. The server will respond a static body with a large or tiny size. It is useful to trigger the HTTP fragmented response
 | GET		      			| /body-size/`<size>`/chunked	| The server will respond a body of "size" bytes. The response is chunked encoding.
 | GET		      			| /client-ip		| The server will respond the client IP
-| GET		      			| /sleep-resonse/`<seconds>`	| The server will wait N seconds before responding
+| GET		      			| /sleep-response/`<seconds>`	| The server will wait N seconds before responding
 | GET		      			| /sleep-body/`<seconds>`		| The server will send the first body part, will wait N seconds and later will continue sending the body
 | GET, POST, PUT, DELETE	| /status/`<code>`	| The server will respond with the code required. The possible codes are: 200, 201, 301, 302, 400, 401, 403, 404, 405, 500, 503
 | GET      					| /echo				| The server will add to its body the GET arguments
