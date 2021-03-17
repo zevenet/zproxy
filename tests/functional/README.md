@@ -75,6 +75,7 @@ The files **test.in** define the commands that will be executed in order to try 
 
 | Parameter      | Description     | Required |
 | ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
 | CMD      | It is the command to execute. *curl* should be defined for a simple HTTP(S) request; *average* executes a set of curls in order to get an output average; *benchmark* executes the wrk tool in order to get the number of request/sec that zproxy can manage        | True
 | CL      | It is the client ID that will execute the command       | True
 | METHOD      | It is the HTTP Verb used for the request (GET, POST, PUT..)      | True
@@ -82,7 +83,8 @@ The files **test.in** define the commands that will be executed in order to try 
 | VHOST      | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
 | HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'       |
-| BODY      | They are the data to send in the HTTP body. It should be a file in the same directory       |
+| BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
+| FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 
 The following example block will execute a curl command as *curl -X GET https//service.test/* in the client *1*.
 
@@ -138,6 +140,7 @@ The following requests are available:
 | Method      | URL      | Description
 | ----------- | ----------- | -----------
 | GET, POST	      			| /					| The server will respond backend ID ignoring the request body
+| GET		      			| /download/`<file>`	| The server will respond a static file saved in the tpl download directory
 | GET		      			| /body-size/`<tiny,large>`	| **TBI**. The server will respond a static body with a large or tiny size. It is useful to trigger the HTTP fragmented response
 | GET		      			| /body-size/`<size>`/chunked	| The server will respond a body of "size" bytes. The response is chunked encoding.
 | GET		      			| /client-ip		| The server will respond the client IP

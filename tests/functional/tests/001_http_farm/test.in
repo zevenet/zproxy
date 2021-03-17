@@ -21,4 +21,16 @@ CMD=benchmark
 CL=1
 METHOD="GET"
 URL="/"
-
+#########################
+DESCRIPTION="Upload a file"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+FILE=file.txt
+#########################
+DESCRIPTION="Download a file"
+CMD=curl
+CL=1
+METHOD=GET
+URL=/download/file.txt

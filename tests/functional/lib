@@ -150,6 +150,7 @@ start_httpd () {
 	deploy_tpl $HTTP_TPL $HTTP_CFG_F
 	deploy_tpl $HTTP_SITES_TPL $HTTP_SITE
 	mkdir $HTTP_WEBROOT
+	cp -r "tpl/download" $HTTP_WEBROOT
 
 	cmd "ip netns exec $NS $HTTPD_BIN -c $HTTP_CFG_F"
 
@@ -316,8 +317,9 @@ get_test_out_dir () {
 	echo "test_$1_$2"
 }
 
+# variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
-	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST
+	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE
 }
 
 replace_test_out ()
@@ -350,6 +352,7 @@ exec_curl () {
 	local ERR_F="$DIR/error.out.tmp"
 
 	# create files to refresh files if become empty
+	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 
 	local CLNS=$(get_cl_ns $CL)
@@ -367,6 +370,8 @@ exec_curl () {
 	fi
 	if [[ $BODY != "" ]]; then
 		B="-d @$BODY"
+	elif [[ $FILE != "" ]]; then
+		B="-F 'file=@$FILE'"
 	fi
 	if [[ "$VHOST_LOC" = "" ]]; then
 		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
@@ -378,10 +383,18 @@ exec_curl () {
 $RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
 -D $HEAD_F -o $OUT_F  $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F" > $CMD_F
 
-ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
-$RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
--D $HEAD_F -o $OUT_F  $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F
+	bash $CMD_F
+
+	mask_out $OUT_F
 }
+
+mask_out () {
+	if [[ "$1" == "" ]]; then error_param "file"; fi
+	local FILE=$1
+	# remove bonding headers uploading files
+	sed -Ei "s/--------------------------\w+/--------------------------################/g" $FILE
+}
+
 
 exec_average () {
 	if [[ $1 == "" ]]; then error_param "directory"; fi
