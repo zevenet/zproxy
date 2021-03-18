@@ -1,0 +1,16 @@
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+VHOST="svc1.zproxy"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/service2"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+VHOST="svc.zproxy"

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Script for debugging the funct file
+
+source "./lib"
+
+
+type $1 &>/dev/null 2>&1
+if [ $? -eq 0 ]; then
+	$1 $2 $3 $4
+else
+	echo "Error: funct '$1' not found"
+fi

@@ -524,14 +524,14 @@ Add the defined header to the response passed to the clients. The header
 is added verbatim. Use multiple \fIAddHeader\fR directives if you need to add more
 than one header.
 .TP
-\RemoveResponseHead\fR "header pattern"
+\fBRemoveResponseHead\fR "header pattern"
 Remove certain headers from the outcomming response, the header sent by the
 backend is not sent to the client. All occurences of the
 matching specified header will be removed. Multiple directives may be specified
 in order to remove more than one header, and the header itself may be a regular
 pattern (though this should be used with caution).
 .TP
-\ReplaceHeader\fR <Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>
+\fBReplaceHeader\fR <Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>
 Replace a header in request or response.
 Example:
            ReplaceHeader    Request     ^Cookie:        ^Abdess=(.*) 	Test=$1
