@@ -16,22 +16,22 @@ Zproxy main features:
 
 ## Table of Contents
 
-- [Getting Started](##getting-started)
-	- [Build Prerequisites](###Build-prerequisites)
-	- [Building The Project](###Building-The-Project)
-- [Configuration File](##Configuration-File)
-	- [Global Directives](###Global-Directives)
-	- [HTTP Listener](###HTTP-Listener)
-	- [HTTPS Listener](###HTTPs-Listener)
-	- [Service](###Service)
-	- [Cache](###Cache)
-	- [Backend](###Backend)
-	- [Session](###Session)
-- [API Description](##API-Description)
-- [Benchmark](####Benchmark)
-- [Contributing](####Contributing)
-- [License](####License)
-- [Authors](####Authors)
+- [Getting Started](#getting-started)
+	- [Build Prerequisites](#build-prerequisites)
+	- [Building The Project](#building-the-project)
+- [Configuration File](#configuration-file)
+	- [Global Directives](#global-directives)
+	- [HTTP Listener](#http-listener)
+	- [HTTPS Listener](#https-listener)
+	- [Service](#service)
+	- [Cache](#cache)
+	- [Backend](#backend)
+	- [Session](#session)
+- [API Description](#api-description)
+- [Benchmark](#benchmark)
+- [Contributing](#contributing)
+- [License](#license)
+- [Authors](#authors)
 
 
 ## Getting Started
