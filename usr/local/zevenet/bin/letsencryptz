@@ -305,12 +305,12 @@ sub obtain_cert()
 	my $domains_list = join ( ',', @$domains );
 	print "DOMAINS to request: $domains_list\n";
 	&zenlog(
-		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
+		"Executing the command: $le_binary --fullchain-path $le_fullchain_path certonly --preferred-challenges http --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test"
 	);
 
 	# do no use logAndGet. It managings the error output
 	my @run =
-	  `$le_binary --fullchain-path $le_fullchain_path certonly --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
+	  `$le_binary --fullchain-path $le_fullchain_path certonly --preferred-challenges http --webroot --webroot-path $le_webroot_path -d $domains_list --config-dir $le_config_path -m $le_email --agree-tos --no-eff-email -n $test`;
 
 	if ( $? ne 0 )
 	{
@@ -431,8 +431,12 @@ sub renew_certs()
 	print "Renewing all the required certificates\n";
 	$test = "--dry-run" if ( $test );
 	##a local service needs to be running in order to connect from letsencrypt
-	my @run = @{ &logAndGet( "$le_binary renew --config-dir $le_config_path $test",
-							 "array" ) };
+	my @run = @{
+		&logAndGet(
+			"$le_binary renew --preferred-challenges http --config-dir $le_config_path $test",
+			"array"
+		)
+	};
 	my $sw = 0;
 	foreach my $line ( @run )
 	{
@@ -569,8 +573,9 @@ sub getFarmListening()
 	my $port = shift;
 
 	require Zevenet::Net::Validate;
-	if ( $vip and &checkport( $vip, $port ) eq "true" )
-	if ( $vip and &validatePort( $vip, $port, "tcp" ) eq "true" )
+
+	#if ( $vip and &checkport( $vip, $port ) eq "true" )
+	if ( $vip and ( &validatePort( $vip, $port, "tcp" ) == 0 ) )
 	{
 		require Zevenet::Farm::Base;
 
