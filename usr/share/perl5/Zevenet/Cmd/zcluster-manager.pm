@@ -39,6 +39,7 @@
 # zcluster-manager notify_fault
 #
 # zcluster-manager interface float-update
+# zcluster-manager interface all-broadcast
 # zcluster-manager interface [start|stop|delete] <interface> [4|6]
 #
 # zcluster-manager routing_rule [stop|start] <id>
@@ -611,6 +612,13 @@ if ( $object eq 'interface' )
 		exit 0;
 	}
 
+	if ( $command eq 'all-broadcast' )
+	{
+		include 'Zevenet::Cluster';
+		&broadcastAllInterfacesDiscovery();
+		exit 0;
+	}
+
 	# common interface initial tasks
 	my $if_name = shift @ARGV;      # virtual interface name
 	my $ip_v = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
@@ -892,6 +900,12 @@ sub setNodeStatusBackup
 		next unless $if_ref->{ type } eq 'virtual';
 		&disableInterfaceDiscovery( $if_ref );
 	}
+
+	# tell master ip announce
+	my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+	my $remote_host      = &getZClusterRemoteHost();
+	my $remote_ip        = &getZClusterConfig()->{ $remote_host }->{ ip };
+	&runRemotely( "$zcluster_manager interface all-broadcast", $remote_ip );
 
 	&zenlog( "End of setNodeStatusBackup ####################" );
 
