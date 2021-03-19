@@ -364,6 +364,10 @@ bool Config::init(const global::StartOptions & start_options)
 		return true;
 	}
 
+	if (start_options.disable_daemon) {
+		daemonize = 0;
+	}
+
 	if (listeners == nullptr) {
 		zcu_log_print(LOG_ERR, "no listeners defined - aborted");
 		return false;

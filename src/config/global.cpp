@@ -60,6 +60,7 @@ static void print_usage(const char *prog_name)
 		"Version %s %s\n"
 		"Usage: %s\n"
 		"  [ -h | --help ]				Show this help\n"
+		"  [ -D | --disable-daemon ]			Disable the daemon mode. This option overwrites the config file directive\n"
 		"  [ -s | --sync ]				Enable session synchronization\n"
 		"  [ -f <FILE> | --file <FILE> ]			Launch with the given configuration file\n"
 		"  [ -p <PIDFILE> | --pid <PIDFILE> ]		Set the PID file path\n"
@@ -73,6 +74,7 @@ static void print_usage(const char *prog_name)
 
 static const struct option options[] = {
 	{.name = "help",.has_arg = 0,.val = 'h'},
+	{.name = "disable-daemon",.has_arg = 0,.val = 'D'},
 	{.name = "sync",.has_arg = 0,.val = 's'},
 	{.name = "file",.has_arg = 1,.val = 'f'},
 	{.name = "pid",.has_arg = 1,.val = 'p'},
@@ -90,15 +92,17 @@ std::unique_ptr < global::StartOptions >
 {
 	auto res = std::make_unique < StartOptions > ();
 	int c;
-	int opt_err = 0;
 
 	while ((c =
-		getopt_long(argc, argv, "hsf:cl:L:vVp:", options,
+		getopt_long(argc, argv, "hDsf:cl:L:vVp:", options,
 			    NULL)) != -1) {
 		switch (c) {
 		case 'h':
 			print_usage(argv[0]);
 			exit(EXIT_SUCCESS);
+		case 'D':
+			res->disable_daemon = true;
+			break;
 		case 's':
 			res->sync_is_enabled = true;
 			break;

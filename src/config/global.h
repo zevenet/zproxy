@@ -76,6 +76,9 @@ namespace global
 		bool show_version
 		{
 		false};
+		bool disable_daemon
+		{
+		false};
 		bool check_only
 		{
 		false};
