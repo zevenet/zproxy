@@ -1309,6 +1309,43 @@ sub broadcastInterfaceDiscovery
 }
 
 =begin nd
+Function: broadcastInterfaceDiscovery
+
+	Advertise All interfaces to be discovered.
+
+Parameters:
+
+Returns:
+	0 - On success.
+	1 - On failure.
+
+See Also:
+	zcluster-manager
+=cut
+
+sub broadcastAllInterfacesDiscovery
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	require Zevenet::Net::Util;
+	require Zevenet::Net::Interface;
+
+	my @configured_interfaces = @{ &getConfigInterfaceList() };
+
+	for my $if_ref ( @configured_interfaces )
+	{
+		next unless $if_ref->{ type } eq 'virtual';
+		next unless $if_ref->{ status } eq 'up';
+		&zenlog( "Sending GArping for $if_ref->{ name }: $if_ref->{ addr }",
+				 "info", "CLUSTER" );
+		&sendGArp( $if_ref->{ name }, $if_ref->{ addr } );
+	}
+
+	return 0;
+}
+
+=begin nd
 Function: runZClusterRemoteManager
 
 	Run zcluster-manager on remote node.
