@@ -535,6 +535,12 @@ sub disable_cluster
 			my $msg = "It is no possible destroy the remote SSH configuration for cluster";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+		if ( $provider eq 'azure' )
+		{
+			my $az = &getGlobalConfiguration( 'az_bin' );
+			&logAndRun( "$az logout" );
+			&runRemotely( "$az logout", $zcl_conf->{ $rhost }->{ ip } );
+		}
 	}
 
 	my $message = "Cluster disabled successfully";
