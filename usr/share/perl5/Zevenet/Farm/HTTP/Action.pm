@@ -101,6 +101,7 @@ sub _runHTTPFarmStop    # ($farm_name, $writeconf)
 	&runFarmGuardianStop( $farm_name, "" );
 	&setHTTPFarmBootStatus( $farm_name, "down" ) if ( $writeconf );
 
+	require Zevenet::Farm::HTTP::Config;
 	return 0 if ( &getHTTPFarmStatus( $farm_name ) eq "down" );
 
 	my $piddir = &getGlobalConfiguration( 'piddir' );
