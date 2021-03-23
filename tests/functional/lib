@@ -98,38 +98,35 @@ restart_proxy () {
 }
 
 apply_proxy_api () {
-	local DATA=""
-	if [[ -f ctl.json ]]; then
-		DATA="-d @ctl.json"
+	if [ "$1" == "" ]; then error_param "directory"; fi
+
+	SOCKET_UNIX=1
+
+	exec_curl $1
+
+	if [[ $METHOD != "GET" ]]; then
+		DUMP_DIR="${1}_dump"
+		mkdir -f $DUMP_DIR
+
+		# Dump the CTL configuration and compare the saved one
+		METHOD="$PROXY_CTL_DUMP_METHOD"
+		URL="$PROXY_CTL_DUMP_URL"
+		exec_curl "$DUMP_DIR"
 	fi
 
-	catch_cmd "ip netns exec $PROXY_NS $CURL_BIN -s --show-error --unix-socket $PROXY_CTL_SOCKET -X $METHOD $DATA http://${PROXY_SOCKET_IP}$URL" >ctl.out.tmp
-
-	# Dump the CTL configuration and compare the saved one
-	catch_cmd "ip netns exec $PROXY_NS $CURL_BIN -s --show-error --unix-socket $PROXY_CTL_SOCKET -X $PROXY_CTL_DUMP_METHOD http://${PROXY_SOCKET_IP}$PROXY_CTL_DUMP_URL" >>ctl.out.tmp
-
-	OUT=$(diff ctl.out ctl.out.tmp)
-	if [[ $? -eq 0 ]]; then
-		rm ctl.out.tmp
-	else
-		msg "The CTL API changed"
-		echo $OUT
-		return 1
-	fi
-
-	return 0
+	SOCKET_UNIX=0
 }
 
 # If it receives a configuration file, it will be loaded
 reload_proxy () {
-	if [ "$1" != "" ]; then
-		deploy_tpl "$1" $PROXY_CFG_F
-	fi
+	if [ "$1" == "" ]; then error_param "directory"; fi
+	if [ "$2" == "" ]; then error_param "reload_file"; fi
 
-	clean_test
+	deploy_tpl "$2" $PROXY_CFG_F
+
 	URL="$PROXY_CTL_RELOAD_URL"
 	METHOD="$PROXY_CTL_RELOAD_METHOD"
-	apply_proxy_api
+	apply_proxy_api $1
 	ERR=$?
 
 	wait $PROXY_GRACETIME
@@ -319,7 +316,7 @@ get_test_out_dir () {
 
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
-	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE
+	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND
 }
 
 replace_test_out ()
@@ -340,8 +337,10 @@ replace_test_out ()
 #   - body.out, it is the response body returned by the proxy
 exec_curl () {
 	local DIR=$TMP_DIR
+	local CLNS="$PROXY_NS"
+
 	if [[ $1 != "" ]]; then DIR=$1; fi
-	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
+	if [[ "$CL" != "" ]]; then CLNS=$(get_cl_ns $CL); fi
 	if [[ "$URL" == "" ]]; then error_param "url"; fi
 	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
 
@@ -355,7 +354,6 @@ exec_curl () {
 	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 
-	local CLNS=$(get_cl_ns $CL)
 	local VHOST_LOC="$VHOST"
 	local H=""
 	local B=""
@@ -373,7 +371,11 @@ exec_curl () {
 	elif [[ $FILE != "" ]]; then
 		B="-F 'file=@$FILE'"
 	fi
-	if [[ "$VHOST_LOC" = "" ]]; then
+	local SOCKET=""
+	if [[ $SOCKET_UNIX -ne 0 ]]; then
+		SOCKET="--unix-socket $PROXY_CTL_SOCKET"
+		VHOST_LOC="${PROXY_SOCKET_IP}"
+	elif [[ "$VHOST_LOC" = "" ]]; then
 		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
 	else
 		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
@@ -381,7 +383,7 @@ exec_curl () {
 
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
 $RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
--D $HEAD_F -o $OUT_F  $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F" > $CMD_F
+-D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F" > $CMD_F
 
 	bash $CMD_F
 
@@ -394,7 +396,6 @@ mask_out () {
 	# remove bonding headers uploading files
 	sed -Ei "s/--------------------------\w+/--------------------------################/g" $FILE
 }
-
 
 exec_average () {
 	if [[ $1 == "" ]]; then error_param "directory"; fi
@@ -424,13 +425,14 @@ exec_wrk() {
 	if [[ "$1" == "" ]]; then error_param "directory"; fi
 	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
 	if [[ "$URL" == "" ]]; then error_param "url"; fi
-	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
 	local DIR=$1
 	local NS=$NS
+	local BG=""
 	if [[ "$NS" == "" ]]; then NS=$(get_cl_ns $CL); fi
-	local CONNS=$BENCH_CONNS
-	local TIMEOUT=$BENCH_DELAY
-	local THREADS=$BENCH_CL_THREADS
+	if [[ "$CONNS" == "" ]]; then error_param "connections"; fi
+	if [[ "$TIMEOUT" == "" ]]; then error_param "timeout"; fi
+	if [[ "$THREADS" == "" ]]; then error_param "threads"; fi
+	if [[ "$BACKGROUND" == "1" ]]; then BG="&"; fi;
 
 	local TMP="$TMP_DIR/bm"
 	local BM_OUT="$DIR/benchmark.out.tmp"
@@ -444,11 +446,17 @@ exec_wrk() {
 		VHOST="$PROXY_VIP:${PROXY_VPORT}"
 	fi
 
-	local COMMAND="ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL"
+	local COMMAND="ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL $BG"
 	echo "$COMMAND" >$CMD_F
 
 	$COMMAND >$TMP
 	grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//' >$BM_OUT
+}
+
+exec_kill() {
+	if [[ "$JOB" == "" ]]; then error_param "job"; fi
+
+	kill `jobs -p $JOB`
 }
 
 exec_benchmark() {
@@ -459,6 +467,10 @@ exec_benchmark() {
 	local OUT_F="$DIR/benchmark.out"
 	local NEW_F="$OUT_F.new"
 	local BM_F="$OUT_F.bm"
+
+	CONNS=$BENCH_CONNS
+	TIMEOUT=$BENCH_DELAY
+	THREADS=$BENCH_CL_THREADS
 
 	rm -f $NEW_F
 

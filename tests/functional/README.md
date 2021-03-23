@@ -73,10 +73,83 @@ The files **test.in** define the commands that will be executed in order to try 
 
 ## test.in
 
+Several directives have been created, these can execute requests (curl, average, wrk, benchmark) or apply configuration (ctl, reload) or control actions (wait, killbg).
+
+
+### wait
+
+It orders to the test tool to wait N seconds
+
 | Parameter      | Description     | Required |
 | ----------- | ----------- | ----------- |
 | DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
-| CMD      | It is the command to execute. *curl* should be defined for a simple HTTP(S) request; *average* executes a set of curls in order to get an output average; *benchmark* executes the wrk tool in order to get the number of request/sec that zproxy can manage        | True
+| CMD      | It is the command to execute. *wait* should be defined to wait N seconds. This is useful as grace time after execute some command that required time to consolidate it | True
+| TIMEOUT      | It is the time in seconds to wait | True
+
+```
+CMD=wait
+TIMEOUT=1
+DESCRIPTION="Grace time to wait the configuration will be reloaded"
+```
+
+### killbg
+
+It kills a job that was invoked in background.
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *killbg* should be defined to kill a process executed with the *background* flag | True
+| JOB      | It is the job that will be killed. If several processes are executed in background, the *job* is assigned sequentially  | True
+
+```
+CMD=killbg
+JOB=1
+DESCRIPTION="kill the wrk used for feeding the stats"
+```
+
+### ctl
+
+It executes an API request and dumps the configuration if the request don't have the GET method
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *ctl* should be defined to send a request to the zproxy API | True
+| METHOD   | It is the HTTP method used in the request to the zproxy API | True
+| URL  	 	| It is the HTTP URL used in the request to the zproxy API | True
+| BODY  	| It is the HTTP body sent in the request. It has to be saved in a file | True
+
+```
+CMD=ctl
+METHOD="PATCH"
+BODY=ctl.json
+URL="/listener/0/service/0/backend/0/status"
+DESCRIPTION="Disable the backend 0 in the service 0"
+```
+
+### reload
+
+It is a macro of the ctl command to simplify the configuration reload.
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *reload* should be defined to reload the proxy configuration from a file | True
+| FILE      | It is a zproxy configuration file that will be loaded without restart the proxy process | True
+
+```
+CMD=reload
+FILE="zproxy_new.cfg"
+DESCRIPTION="Disable the backend 0 in the service 0"
+```
+
+### curl
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *curl* should be defined for a simple HTTP(S) request | True
 | CL      | It is the client ID that will execute the command       | True
 | METHOD      | It is the HTTP Verb used for the request (GET, POST, PUT..)      | True
 | URL      | It is the HTTP URL used for the request (/, /svc...)       | True
@@ -86,9 +159,8 @@ The files **test.in** define the commands that will be executed in order to try 
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 
-The following example block will execute a curl command as *curl -X GET https//service.test/* in the client *1*.
-
 ```
+DESCRIPTION="it executes the curl command 'curl -X GET https//service.test/' in the client 1"
 CMD=curl
 CL=1
 METHOD="GET"
@@ -97,8 +169,87 @@ VHOST=service.test
 SSL=1
 ```
 
+### average
 
-*Note*: Some global parameters used for the benchmark command are modified in the **variables** file:
+It executes the same *curl* command N times. It is useful to get metrics about algorithms, sessions...
+It executes the curls sequentially.
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *average* executes a set of curls in order to get an output average | True
+| CL      | It is the client ID that will execute the command       | True
+| METHOD  | It is the HTTP Verb used for the request (GET, POST, PUT..)      | True
+| URL     | It is the HTTP URL used for the request (/, /svc...)       | True
+| VHOST   | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
+| HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'       |
+| BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
+| FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
+| REQUESTS  | It is the number of times to execute the curl      |
+
+
+```
+DESCRIPTION="it executes the curl command 'curl -X GET http//zproxy/index.html' in the client 1 four times"
+CMD=average
+CL=1
+REQUESTS=4
+METHOD="GET"
+VHOST="zproxy"
+URL="/index.html"
+```
+
+### wrk
+
+It executes the wrk tool in order to create a stable flow of connections and requests.
+This can be executed in bg to check the zproxy stats
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *wrk* executes the wrk tool in order to get a stable number of concurrent connections  | True
+| CL      | It is the client ID that will execute the command       | True
+| URL      | It is the HTTP URL used for the request (/, /svc...)       | True
+| VHOST      | **TBI** It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| CONNS      | Number of concurrent connections that are managed by the client | True
+| TIMEOUT      | Time for the test | True
+| THREADS      | If this flag is set with **1** the request will use the HTTPS protocol | True
+| SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
+| BACKGROUND     | If this flag is set with **1** the request will be executed in backgroun. See the **killbg** command in order to stop it |
+
+```
+DESCRIPTION="it executes 10 concurrent connections in background to the URI https://vip:vport/"
+CMD=wrk
+BACKGROUND=1
+CL=1
+URL="/"
+TIMEOUT=20
+CONNS=10
+THREADS=2
+```
+
+### benchmark
+
+It executes the wrk tool and the performance regarding the value without proxy (client->backend).
+After the test is approved if the value is not dispersed mor than an error range.
+
+| Parameter      | Description     | Required |
+| ----------- | ----------- | ----------- |
+| DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
+| CMD      | It is the command to execute. *benchmark* executes the wrk tool in order to get the number of request/sec that zproxy can manage        | True
+| CL      | It is the client ID that will execute the command       | True
+| URL      | It is the HTTP URL used for the request (/, /svc...)       | True
+| VHOST      | **TBI**. It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
+
+```
+DESCRIPTION="it executes the curl command 'curl -X GET https//service.test/' in the client 1"
+CMD=benchmark
+CL=1
+URL="/"
+```
+
+*Note*: Some global parameters used for the benchmark command are modified in the **variables** file, these values are used for all the benchmark tests:
 
 | Parameter      | Description
 | ----------- | -----------

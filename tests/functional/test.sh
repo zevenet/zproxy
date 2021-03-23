@@ -77,23 +77,6 @@ exec_test () {
 		msg "Continue with the configuration of the previous test"
 	fi
 
-	# reloading and ctl actions cannot be applied in the same test, both are API requests
-    if [[ -f "reload_zproxy.cfg" ]]; then
-		reload_proxy "reload_zproxy.cfg" >$TMP_ERR
-		if [[ $? -ne 0 ]]; then
-			print_report "$TEST_F" "Reloading_CFG" "$TMP_ERR"
-			return 1
-		fi
-	elif [[ -f "ctl.in" ]]; then
-    	clean_test
-		source "ctl.in"
-		apply_proxy_api >$TMP_ERR
-		if [[ $? -ne 0 ]]; then
-			print_report "$TEST_F" "Applying_CTL" "$TMP_ERR"
-			return 1
-		fi
-	fi
-
 	PREF="vars."
 	csplit "test.in" -f "$PREF" '/^###/' '{*}' >/dev/null
 	CMD_NUMB=0
@@ -108,12 +91,29 @@ exec_test () {
 		local OUT_DIR=$(get_test_out_dir $CMD_NUMB $CMD)
 		mkdir -p $OUT_DIR
 
-		if [[ "$CMD" == "curl" ]]; then
+		if [[ "$CMD" == "killbg" ]]; then
+			exec_kill
+		elif [[ "$CMD" == "wait" ]]; then
+			wait $TIMEOUT
+		elif [[ "$CMD" == "reload" ]]; then
+			reload_proxy $OUT_DIR "$FILE"
+			# reloading and ctl actions cannot be applied in the same test, both are API requests
+			if [[ $? -ne 0 ]]; then
+				print_report "$TEST_F" "Reloading_CFG" "$TMP_ERR"
+				return 1
+			fi
+		elif [[ "$CMD" == "ctl" ]]; then
+			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
+			apply_proxy_api $OUT_DIR
+		elif [[ "$CMD" == "curl" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			exec_curl $OUT_DIR
 		elif [[ "$CMD" == "average" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			exec_average $OUT_DIR
+		elif [[ "$CMD" == "wrk" ]]; then
+			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
+			exec_wrk $OUT_DIR
 		elif [[ "$CMD" == "benchmark" ]]; then
 			if [[ $BENCHMARK_FLAG -eq 0 ]]; then msg "The benchmark was skipped"; continue; fi
 			echo "Executing benchmark, this will take '$BENCH_DELAY' seconds"

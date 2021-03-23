@@ -1,6 +1,10 @@
+CMD=ctl
+METHOD="PATCH"
+BODY=ctl.json
+URL="/listener/0/service/0/backend/0/status"
+#################
 CMD=average
 CL=1
 REQUESTS=4
 METHOD="GET"
 URL="/"
-

@@ -1,3 +1,6 @@
+CMD=reload
+FILE="reload_zproxy.cfg"
+#################
 CMD=average
 CL=1
 REQUESTS=4
