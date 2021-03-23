@@ -51,7 +51,7 @@ my $defaultgwif  = &getGlobalConfiguration( 'defaultgwif' );
 my $defaultgw6   = &getGlobalConfiguration( 'defaultgw6' );
 my $defaultgwif6 = &getGlobalConfiguration( 'defaultgwif6' );
 my $docker_flag  = &getGlobalConfiguration( 'docker_flag' );
-my $zbindir  	 = &getGlobalConfiguration( 'zbindir' );
+my $zbindir      = &getGlobalConfiguration( 'zbindir' );
 my $action       = shift @ARGV // '';
 my $print_msg    = "";
 
@@ -163,7 +163,7 @@ if ( $action eq "start" )
 	# Configure NIC interfaces in docker.
 	if ( -f $docker_flag )
 	{
-			&logAndRun( "$zbindir/check-nic-dhcp" );
+		&logAndRun( "$zbindir/check-nic-dhcp" );
 	}
 
 	# ZNA firmware upgrade
@@ -298,8 +298,9 @@ if ( $action eq "start" )
 
 	print ( "* Starting Interfaces:\n" );
 
-	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
-	my @interfaces = @{ &getConfigInterfaceList() };
+	my $ip_bin            = &getGlobalConfiguration( 'ip_bin' );
+	my @interfaces        = @{ &getConfigInterfaceList() };
+	my @system_interfaces = &getInterfaceList();
 
 	&zenlog( "zevenet: Setting up NIC interfaces..." );
 	require Zevenet::Net::Core;
@@ -309,12 +310,22 @@ if ( $action eq "start" )
 	{
 		if ( $eload )
 		{
-			next if ( $iface->{ type } eq 'bond' );
+			next if ( defined $iface->{ type } and $iface->{ type } eq 'bond' );
 		}
 
 		# interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
 		{
+			# check if it is an existent device
+			if ( !grep ( /^$$iface{ name }$/, @system_interfaces ) )
+			{
+				&zenlog( "zevenet: Nonexistent NIC interface $$iface{ name } Config found!." );
+				my $if_file = &getInterfaceConfigFile( $$iface{ name } );
+				&zenlog( "zevenet: Deleting Nonexistent NIC interface Config File $if_file." );
+				unlink $if_file if ( -f $if_file );
+				next;
+			}
+
 			use IO::Interface ':flags';
 
 			if ( $$iface{ status } eq "up" )
