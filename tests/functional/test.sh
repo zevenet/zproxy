@@ -125,6 +125,10 @@ exec_test () {
 		fi
 
 		find_diff_errors $OUT_DIR >$DIFF_OUT
+		if [[ -d "${OUT_DIR}_dump" ]]; then
+			# add check for dump directory. After applying an API action
+			find_diff_errors "${OUT_DIR}_dump" >>$DIFF_OUT
+		fi
 		if [[ -s $DIFF_OUT ]]; then
 			TEST_ERR=1
 			print_report "$TEST_F" "$OUT_DIR" "$DIFF_OUT"

@@ -74,8 +74,18 @@ start_proxy () {
 	if [ "$1" != "" ]; then
 		deploy_tpl "$1" $PROXY_CFG_F
 	fi
-	cmd "ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
+
+	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
+
+	cmd $CMD_LOC
 	wait $PROXY_GRACETIME
+
+	ps aux | grep zproxy | grep -v grep >/dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo "command: $CMD_LOC"
+		$CMD_LOC
+		error "The zproxy process couldn't start"
+	fi
 }
 
 stop_proxy () {
@@ -106,7 +116,7 @@ apply_proxy_api () {
 
 	if [[ $METHOD != "GET" ]]; then
 		DUMP_DIR="${1}_dump"
-		mkdir -f $DUMP_DIR
+		mkdir -p $DUMP_DIR
 
 		# Dump the CTL configuration and compare the saved one
 		METHOD="$PROXY_CTL_DUMP_METHOD"
