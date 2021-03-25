@@ -295,7 +295,9 @@ void http_parser::HttpData::printRequest() {
   }
 }
 bool http_parser::HttpData::hasPendingData() {
-  return headers_sent /*&&
-         (message_bytes_left > 0 ||
-          chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED)*/;
+	return headers_sent &&
+		// New request/response is processed over the same connection,
+		// so HTTP parsing is needed.
+		(message_bytes_left > 0 ||
+		chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED);
 }
