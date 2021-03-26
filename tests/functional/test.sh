@@ -91,8 +91,8 @@ exec_test () {
 		local OUT_DIR=$(get_test_out_dir $CMD_NUMB $CMD)
 		mkdir -p $OUT_DIR
 
-		if [[ "$CMD" == "killbg" ]]; then
-			exec_kill
+		if [[ "$CMD" == "killwrk" ]]; then
+			clean_wrk
 		elif [[ "$CMD" == "wait" ]]; then
 			wait $TIMEOUT
 		elif [[ "$CMD" == "reload" ]]; then
@@ -136,6 +136,7 @@ exec_test () {
 	done
 	rm "$PREF"*
 
+	clean_wrk
 	if [[ $ZPROXY_FLAG -ne 0 && $ZPROXY_KEEP_RUNNING -eq 0 ]]; then stop_proxy; fi
 
 	return $TEST_ERR

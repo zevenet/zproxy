@@ -73,7 +73,7 @@ The files **test.in** define the commands that will be executed in order to try 
 
 ## test.in
 
-Several directives have been created, these can execute requests (curl, average, wrk, benchmark) or apply configuration (ctl, reload) or control actions (wait, killbg).
+Several directives have been created, these can execute requests (curl, average, wrk, benchmark) or apply configuration (ctl, reload) or control actions (wait, killwrk).
 
 
 ### wait
@@ -92,20 +92,18 @@ TIMEOUT=1
 DESCRIPTION="Grace time to wait the configuration will be reloaded"
 ```
 
-### killbg
+### killwrk
 
-It kills a job that was invoked in background.
+It kills all wrk processes that are running in background
 
 | Parameter      | Description     | Required |
 | ----------- | ----------- | ----------- |
 | DESCRIPTION   | This parameter is not used. It is a commentary to add more information about the executed command |
-| CMD      | It is the command to execute. *killbg* should be defined to kill a process executed with the *background* flag | True
-| JOB      | It is the job that will be killed. If several processes are executed in background, the *job* is assigned sequentially  | True
+| CMD      | It is the command to execute. *killwrk* should be defined to kill al the wrk background processes | True
 
 ```
-CMD=killbg
-JOB=1
-DESCRIPTION="kill the wrk used for feeding the stats"
+CMD=killwrk
+DESCRIPTION="kill the wrk used to feed the stats"
 ```
 
 ### ctl
@@ -215,7 +213,7 @@ This can be executed in bg to check the zproxy stats
 | TIMEOUT      | Time for the test | True
 | THREADS      | If this flag is set with **1** the request will use the HTTPS protocol | True
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
-| BACKGROUND     | If this flag is set with **1** the request will be executed in backgroun. See the **killbg** command in order to stop it |
+| BACKGROUND     | If this flag is set with **1** the request will be executed in backgroun. The command **killwrk** can be defined to stop it |
 
 ```
 DESCRIPTION="it executes 10 concurrent connections in background to the URI https://vip:vport/"

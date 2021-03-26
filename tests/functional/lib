@@ -77,7 +77,7 @@ start_proxy () {
 
 	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
 
-	cmd $CMD_LOC
+	$CMD_LOC
 	wait $PROXY_GRACETIME
 
 	ps aux | grep zproxy | grep -v grep >/dev/null 2>&1
@@ -398,6 +398,21 @@ $RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
 	bash $CMD_F
 
 	mask_out $OUT_F
+	pretty_json $OUT_F
+}
+
+pretty_json () {
+	if [[ "$1" == "" ]]; then error_param "file"; fi
+
+	local OUT_F=$1
+	local TMP_JSON="$TMP_DIR/pretty.json"
+
+	if [[ -s $OUT_F ]]; then
+		cat $OUT_F | python -m json.tool > $TMP_JSON 2>/dev/null
+		if [[ -s $TMP_JSON ]]; then
+			mv $TMP_JSON $OUT_F
+		fi
+	fi
 }
 
 mask_out () {
@@ -405,6 +420,8 @@ mask_out () {
 	local FILE=$1
 	# remove bonding headers uploading files
 	sed -Ei "s/--------------------------\w+/--------------------------################/g" $FILE
+	sed -Ei "s/\"connect-time\"\s*:\s*[0-9\.]+,/\"connect-time\": \"#######\",/g" $FILE
+	sed -Ei "s/\"response-time\"\s*:\s*[0-9\.]+,/\"response-time\": \"#######\",/g" $FILE
 }
 
 exec_average () {
@@ -459,14 +476,15 @@ exec_wrk() {
 	local COMMAND="ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL $BG"
 	echo "$COMMAND" >$CMD_F
 
-	$COMMAND >$TMP
-	grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//' >$BM_OUT
+	bash $CMD_F >$TMP
+
+	if [[ "$BACKGROUND" == "" ]]; then
+		grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//' >$BM_OUT
+	fi
 }
 
-exec_kill() {
-	if [[ "$JOB" == "" ]]; then error_param "job"; fi
-
-	kill `jobs -p $JOB`
+clean_wrk() {
+	pkill wrk
 }
 
 exec_benchmark() {
@@ -542,7 +560,7 @@ print_report () {
 	if [[ "$3" == "" ]]; then error_param "output_file"; fi
 
 	# print stdout
-	echo "### Error in test '$1', command '$2'"
+	echo "### Error in test '$1$2/'"
 	echo ""
 	if [[ -f $3 ]]; then
 		cat $3
