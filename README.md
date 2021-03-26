@@ -124,7 +124,7 @@ Global directives may appear anywhere within the configuration file, though it i
 	Specify the user zproxy will run as (must be defined in /etc/passwd).
 
 - **Group** "group_name"
- 
+
 	Specify the group zproxy will run as (must be defined in /etc/group).
 
 - **Name** SortName
@@ -132,7 +132,7 @@ Global directives may appear anywhere within the configuration file, though it i
 	Specify a Sort name without blank spaces for the Process, this information will shown in logs
 
 - **RootJail** "directory_path_and_name"
-        
+
 	Specify the directory that zproxy will chroot to at runtime. Please note that OpenSSL requires access to /dev/urandom, so make sure you create a device by that name, accessible from the root jail directory.  zproxy may also require access to /dev/syslog or similar.
 
 - **Daemon** 0|1
@@ -140,31 +140,31 @@ Global directives may appear anywhere within the configuration file, though it i
 	Have zproxy run in the foreground (if 0) or as a daemon (if 1). By default zproxy runs as a daemon (detaches itself from the controlling terminal and puts itself in the background). By specifying this option you can force zproxy to work like a regular process. Useful for debugging or if you want to use something like daemontools.
 
 - **Threads** nnn
-        
+
 	How many Thread workers zproxy should use, (default: automatic). Default to system concurrency level see nproc command.
 
 - **LogFacility** value
-        
+
 	Specify  the  log facility to use.  value (default: daemon) must be one of the symbolic facility names defined in syslog.h. This facility shall be used for logging. Using a for the facility name causes zproxy to log to stdout/stderr.
 
 - **DHParams** "path/to/dhparams.pem"
-        
+
 	Use the supplied dhparams pem file for DH key exchange for non-export-controlled negotiations.  Generate such a file with openssl dhparam.  This can be  used  to  do  2048bit DHE.
 
 - **LogLevel** value
-        
+
 	Specify  the logging level following the syslog scheme, 0 for no logging, 1 (default) for regular information about the Service and BackEnd used).  This value can be overridden for specific listeners.
 
 - **IgnoreCase** 0|1
-        
+
 	Ignore case when matching URLs (default: 0). This value can be overridden for specific services.
 
 - **Ignore100continue** 0|1
-        
+
 	Ignore Header Expect: 100-continue (default: 1, Ignored).  If 0 zproxy manages Expect: 100-continue headers.
 
 - **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
-        
+
 	Specify the routing policy. All the algorithms are weighted with all the weights set in each backend.
 
 	- **ROUND_ROBIN** use the round robin algorithm as a routing policy (used by default).
@@ -179,15 +179,15 @@ Global directives may appear anywhere within the configuration file, though it i
                   using as a proportion the weights set.
 
 - **PinnedConnection**  0|1
-        
+
 	Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1, zproxy directly forwards all data without parsing or editing.
 
 - **CompressionAlgorithm** gzip|deflate
-        
+
 	Specify the compression algorithm to use. If the client supports it and the response from the backend is not already compressed, zproxy applies the compression.
 
 - **Alive** value
-        
+
 	Specify how often zproxy will check for resurected back-end hosts (default: 30 seconds). In general, it is a good idea to  set  this  as  low  as  possible  -  it  will  find resurected hosts faster. However, if you set it too low it will consume resources - so beware.
 
 - **Client** value
@@ -195,35 +195,35 @@ Global directives may appear anywhere within the configuration file, though it i
 	Specify for how long zproxy will wait for a client request (default: 10 seconds). After this long has passed without the client sending any data zproxy will close the connection. Set it higher if your clients time-out on a slow network or over-loaded server, lower if you start getting DOS attacks or run into problems with IE clients.  This value can be overridden for specific listeners.
 
 - **TimeOut** value
-        
+
 	How long should zproxy wait for a response from the back-end (in seconds). Default: 15 seconds.  This value can be overridden for specific back-ends.
 
 - **ConnTO** value
-        
+
 	How long should zproxy wait for a connection to the back-end (in seconds). Default: the TimeOut value. This value can be overridden for specific back-ends.
 
 - **CacheRamSize** value
-        
+
 	The  maximum size (in bytes by default) that the cache will use from RAM. It is allowed to us some byte modifiers as k, K, m, M, g and G, pay attention not to set higher values than the available RAM free.
 
 - **CacheRamPath** "path"
-        
+
 	Indicate the path to an existing directory to use as the root point where the RAM cache storage will be mounted using ramfs filesystem.
 
 - **CacheDiskPath** "path"
-        
+
 	Path to an existing directory which will be used as the root point for the on disk cache storage.
 
 - **CacheThreshold** value
-        
+
 	Percentage of the total size that the cache will use to determine whether an entry should go to ram or to disk.
 
 - **WSTimeOut** value
-        
+
 	How long should zproxy wait for data from either back-end or client in a connection upgraded to a WebSocket (in seconds). Default: 600 seconds.  This value can be  overridden for specific back-ends.
 
 - **Grace** value
-        
+
 	How long should zproxy continue to answer existing connections after a receiving and INT or HUP signal (default: 30 seconds). The configured listeners are closed immediately. You can bypass this behaviour by stopping zproxy with a TERM or QUIT signal, in which case the program exits without any delay.
 
 - **SSLEngine** "name"
@@ -231,23 +231,23 @@ Global directives may appear anywhere within the configuration file, though it i
 	Use an OpenSSL hardware acceleration card called name. Available only if OpenSSL-engine is installed on your system.
 
 - **ECDHcurve** "name"
-        
+
 	Use for listener the named curve for elliptical curve encryption (default: automatic).
 
 - **Control** "/path/to/socket"
-        
+
 	Set the control socket path. If not defined zproxy does not listen for any commands. The commands may be issued by using the zproxyctl(8) program.
 
 - **ControlIP**    IP
-        
+
 	Set the control IP. If not defined zproxy does not listen for any commands. The commands may be issued by using the zproxyctl(8) program.
 
 - **ControlPort**  port
-        
+
 	Set the control port. If not defines zproxy does not listen for any commands. The commands may be issued by using zproxyctl(8) program.
 
 - **ControlUser** "user"
-        
+
 	The username to chown the Control socket to.
 
 - **ControlGroup** "group"
@@ -255,33 +255,33 @@ Global directives may appear anywhere within the configuration file, though it i
 	The groupname to chgrp the Control socket to.
 
 - **ControlMode** 0660
-        
+
 	The mode the Control socket should use, in octal.
 
 - **Include** "/path/to/file"
-        
+
 	Include the file as though it were part of the configuration file.
 
 - **HTTP Listener**
-        
+
 	An HTTP listener defines an address and port that zproxy will listen on for HTTP requests. All configuration directives enclosed between ListenHTTP and End are specific to  a single HTTP listener. At the very least you must specify and address and a port for each listener. The following directives are available:
 
 ### HTTP Listener
 
 - **Address address**
-        
+
 	The address that zproxy will listen on. This can be a numeric IP address, or a symbolic host name that must be resolvable at run-time.  This is a mandatory parameter. The address 0.0.0.0 may be used as an alias for 'all available addresses on this machine', but this practice is strongly discouraged, as it will interfere with the rewriting mechanisms (see below).
 
 - **Port** port
-        
+
 	The port number that zproxy will listen on.  This is a mandatory parameter.
 
 - **Key** "key"
-        
+
 	The key associated to this backend, if using BackendCookie in the service.  If left blank, it'll be autogenerated from the backend address.
 
 - **xHTTP** value
-        
+
 	Defines which HTTP verbs are accepted. The possible values are:
 
 	- **0** (default) accept only standard HTTP requests (GET, POST, HEAD).
@@ -299,33 +299,33 @@ Global directives may appear anywhere within the configuration file, though it i
 	Override the global Client time-out value.
 
 - **CheckURL** "pattern to match"
-        
+
 	Define  a  pattern  that  must be matched by each request sent to this listener. A request that does not match is considered to be illegal.  By default zproxy accepts all requests (i.e. the pattern is ".*"), but you are free to limit it to something more reasonable. Please note that this applies only to the request path - zproxy will still check that the request is syntactically correct.
 
 - **Err414** "filename"
-        
+
 	A file with the text to be displayed if an Error 414 occurs.  Default: "Request URI is too long.".
 
 - **Err500** "filename"
-        
+
 	A file with the text to be displayed if an Error 500 occurs.  Default: "An internal server error occurred. Please try again later.".
 
 - **Err501** "filename"
-        
+
 	A file with the text to be displayed if an Error 501 occurs.  Default: "This method may not be used.".
 
 - **Err503** "filename"
-        
+
 	A file with the text to be displayed if an Error 503 occurs.  Default: "The service is not available. Please try again later.".
 
 - **ErrNoSsl** "filename"
-        
+
 	A file with the text to be displayed if a user connects to a HTTPS listener with HTTP.  Default: "Please use HTTPS.".
 
 	Only valid for HTTPS listeners.
 
 - **NoSslRedirect** [code] "url"
-        
+
 	A url that the user will be redirected to if the user connects to a HTTPS listener with HTTP. The code here is just like the code in Redirect blocks. It defaults to 302, but could be 301 or 307. Only valid for HTTPS listeners.
 
 		Example:
@@ -336,7 +336,7 @@ Global directives may appear anywhere within the configuration file, though it i
 	Request maximal size. All requests will be limited to these many bytes. If a request contains more data than allowed an error 414 is returned. Default: unlimited.
 
 - **HeadRemove** "header pattern"
-        
+
 	Remove  certain  headers  from  the incoming requests. All occurences of the matching specified header will be removed. Please note that this filtering is done prior to other checks (such as HeadRequire or HeadDeny), so you should not try to check for these headers in later matches. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
 - **AddHeader** "header: to add"
@@ -344,17 +344,17 @@ Global directives may appear anywhere within the configuration file, though it i
 	Add the defined header to the request passed to the back-end server. The header is added verbatim. Use multiple AddHeader directives if you need to add more than one header.
 
 - **AddResponseHeader** "header: to add"
-        
+
 	Add the defined header to the response passed to the clients. The header is added verbatim. Use multiple AddHeader directives if you need to add more than one header.
 
 - **RemoveResponseHead** " header pattern"
-        
+
 	Remove  certain  headers  from  the outcomming response, the header sent by the backend is not sent to the client. All occurences of the matching specified header will be removed. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
 - **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
-        
-	Replace a header in request or response.  
-	
+
+	Replace a header in request or response.
+
 		Example:
 		`ReplaceHeader  Request    ^Cookie:         ^COOKIESESSION=(.*)  COOKIEUSER=$1`
 		`ReplaceHeader  Response   ^X-Forward-For:  (.*)                 $1,10.24.5.89`
@@ -364,11 +364,11 @@ Global directives may appear anywhere within the configuration file, though it i
 	If 1 force zproxy to change the Location: and Content-location: headers in responses. If they point to the back-end itself or to the listener (but with  the  wrong  protocol) the response will be changed to show the virtual host in the request. Default: 1 (active).  If the value is set to 2 only the back-end address is compared; this is useful for redirecting a request to an HTTPS listener on the same server as the HTTP listener.
 
 - **RewriteDestination** 0|1
-        
+
 	If 1 force zproxy to change the Destination: header in requests. The header is changed to point to the back-end itself with the correct protocol. Default: 0.
 
 - **WafRules** "file path"
-        
+
 	Apply a WAF ruleset file to the listener. It is possible to add several directives of this type. Those will be analyzed sequentially, in the same order that  they  appear  in the configuration file. The rule file must be compatibility with the Modsecurity syntax (SecLang).
 
 - **LogLevel** value
@@ -376,7 +376,7 @@ Global directives may appear anywhere within the configuration file, though it i
 	Override the global LogLevel value.
 
 - **Service** [ "name" ]
-        
+
 	This  defines a private service (see below for service definition syntax). This service will be used only by this listener. The service may be optionally named, with the name showing in the zproxyctl listings.
 
 
@@ -403,7 +403,7 @@ An HTTPS listener defines an address and port that zproxy will listen on for HTT
 	Specify the OpenSSL configuration section. This section must be in the OpenSSL configuration file specified before.
 
 - **Cert** "certificate file"
-        
+
 	Specify the server certificate. The certificate file is the file containing the certificate, possibly a certificate chain and the signature for this server. This directive or the CertDir directive is mandatory for HTTPS listeners.
 
 	Please note that multiple Cert or CertDir directives are allowed if your OpenSSL version supports SNI. In such cases, the first directive is the default certificate, with additional certificates used if the client requests them.
@@ -413,7 +413,7 @@ An HTTPS listener defines an address and port that zproxy will listen on for HTT
 	Cert and CertDir directives must precede all other SSL-specific directives.
 
 - **CertDir** "certificate directory"
-        
+
 	Specify the server certificate or certificates. The certificate directory is a directory path containing one or more certificates, possibly a certificate chain and the signature for this server. This directive or Cert is mandatory for HTTPS listeners.
 
 	If a wildcard is specified, it will be honored.  Otherwise all files will be loaded from that directory.  For example, "/etc/certs/*.pem" will load all files from that directory that match the file extension given.
@@ -425,23 +425,23 @@ An HTTPS listener defines an address and port that zproxy will listen on for HTT
 	Cert and CertDir directives must precede all other SSL-specific directives.
 
 - **ClientCert** 0|1|2|3 depth
-        
+
 	Ask  for the client's HTTPS certificate: 0 - don't ask (default), 1 - ask, 2 - ask and fail if no certificate was presented, 3 - ask but do not verify.  Depth is the depth of verification for a client certificate (up to 9). The default depth limit is 9, allowing for the peer certificate and additional 9 CA certificates that must be verified.
 
 - **Disable** SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2|TLSv1_3
-        
+
 	Disable the protocol and all lower protocols as well.  This is due to a limitation in OpenSSL, which does not support disabling a single protocol. For example, Disable  TLSv1 would disable SSLv2, SSLv3 and TLSv1, thus allowing only TLSv1_1 and TLSv1_2.  [NOTE]Disable TLSv1_3 would disable only TLSv1_3.
 
 - **ECDHcurve** "name"
-        
+
 	Use the named curve for elliptical curve encryption (default: automatic), overwrite global ECDHcurve.
 
 - **Ciphers** "acceptable:cipher:list"
-        
+
 	This is the list of ciphers that will be accepted by the SSL connection; it is a string in the same format as in OpenSSL ciphers(1) and SSL_CTX_set_cipher_list(3).
 
 - **SSLHonorCipherOrder** 0|1
-        
+
 	If  this  value  is 1, the server will broadcast a preference to use Ciphers in the order supplied in the Ciphers directive.  If the value is 0, the server will treat the Ciphers list as the list of Ciphers it will accept, but no preference will be indicated.  Default value is 0.
 
 - **SSLAllowClientRenegotiation** 0|1|2
@@ -458,11 +458,11 @@ An HTTPS listener defines an address and port that zproxy will listen on for HTT
 	Please note: there is an important difference between the CAlist and the VerifyList. The CAlist tells the client (browser) which client certificates it should send. The VerifyList defines which CAs are actually used for the verification of the returned certificate.
 
 - **CRLlist** "CRL_file"
-        
+
 	Set the CRL (Certificate Revocation List) file. The CRL_file is a file that contains the CRLs (in PEM format).
 
 - **ForwardSNI** "0|1 default=1"
-        
+
 	Enable SNI server host name forwarding to https backends if it presented by client.
 
 
@@ -477,41 +477,41 @@ All configuration directives enclosed between Service and End are specific to a 
 	Match  the  incoming request. If a request fails to match than this service will be skipped and next one tried. If all services fail to match zproxy returns an error. You may define multiple URL conditions per service, in which case all patterns must match. If no URL was defined then all requests match. The matching is by  default  case-sensitive, but this can be overridden by specifying IgnoreCase 1
 
 - **OrURLs**
-	
+
 	Defines a block of URL directives that should be merged into a single pattern, all OR'd together.  This creates a pattern like ((url1)|(url2)|(url3)) for as many URL directives as are specified within the block.  End the block with an End directive.
 
 - **BackendCookie** "cookiename" "domain" "path" age|Session
-        
+
 	If defined, zproxy will inject a cookie in each response with the appropriate backend's key, so that even if the session table is flushed or sessions are disabled, the proper backend can be chosen.  This allows for session databases to be offloaded to the client side via browser cookies.  See Key in the backend definition.  The given age  will  be how  many  seconds  the cookie will persist for.  If set to 0, it will be a so-called "memory" cookie which will expire when the browser closes.  If set to "Session", it will mimick the session TTL behavior.
 
 - **IgnoreCase** 0|1
-        
+
 	Override the global IgnoreCase setting.
 
 - **HeadRequire** "pattern"
-        
+
 	The request must contain at least on header matching the given pattern.  Multiple HeadRequire directives may be defined per service, in which case all of them must be  satisfied.
 
 - **HeadDeny** "pattern"
-        
+
 	The request may not contain any header matching the given pattern.  Multiple HeadDeny directives may be defined per service, in which case all of them must be satisfied.
 
 	Please note: if the listener defined a HeadRemove directive, the matching headers are removed before the service matching is attempted.
 
 - **DynScale** 0|1
-        
+
 	Enable or disable dynamic rescaling for the current service. This value will override the value globally defined.
 
 - **Disabled** 0|1
-        
+
 	Start zproxy with this service disabled (1) or enabled (0). If started as disabled, the service can be later enabled with zproxyctl (8).
 
 - **Cache**
-	
+
 	Directives enclosed between a Cache and the following End directives enable and define an HTTP1.1 Cache mechanism and its behaviour for the current Service. See below for details.
 
 - **BackEnd**
-        
+
 	Directives enclosed between a BackEnd and the following End directives define a single back-end server (see below for details). You may define multiple back-ends per service, in which case zproxy will attempt to load-balance between them.
 
 - **[Redirect | RedirectAppend | RedirectDynamic]** [code] "url"
@@ -540,11 +540,11 @@ All configuration directives enclosed between Service and End are specific to a 
 
 - **Server** Max-request
 
-	Create a dummy server with a hello world 200 OK response and 100 as the maximum number of requests allowed on the same connection.  
-	
+	Create a dummy server with a hello world 200 OK response and 100 as the maximum number of requests allowed on the same connection.
+
 		Service "server"
 		    Url "/server"
-		    Server 100 
+		    Server 100
 		End
 
 - **Emergency**
@@ -564,11 +564,11 @@ The zproxy HTTP1.1 Cache mechanism is based on RFC 7234 and uses regular express
 	Regular expression following PCRE format, determines which kind of resources will be put in Cache depending on its URI.
 
 - **CacheTO** Seconds
-        
+
 	Time in seconds that the cache will use to determine whether a cache entry is staled or not. This value may change for specific entries depending on HTTP cache related headers.
 
 - **MaxSize** Bytes
-        
+
 	The maximum number of bytes that a response can have in order to be put on the cache system. Any entry with higher Content-Length header won't be stored in the cache.
 
 
@@ -585,67 +585,71 @@ A back-end is a definition of a single back-end server zproxy will use to reply 
 	The port number that zproxy will connect to. This is a mandatory parameter for non Unix-domain back-ends.
 
 - **HTTPS**
-	
+
 	The back-end is using HTTPS.
 
 - **Cert** "certificate file"
-        
+
 	Specify the certificate that zproxy will use as a client. The certificate file is the file containing the certificate, possibly a certificate chain and the signature.  This directive may appear only  after the HTTPS directive.
 
 - **Disable** SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2|TLSv1_3
-        
+
 	Disable  the protocol and all lower protocols as well.  This is due to a limitation in OpenSSL, which does not support disabling a single protocol. For example, Disable TLSv1 would disable SSLv2, SSLv3 and TLSv1, thus allowing only TLSv1_1 and TLSv1_2.
-	
+
 	*NOTE: Disable TLSv1_3 would disable only TLSv1_3.  HTTPS directive.*
 
 - **Ciphers** "acceptable:cipher:list"
-        
+
 	This is the list of ciphers that will be accepted by the SSL connection; it is a string in the same format as in OpenSSL ciphers(1) and SSL_CTX_set_cipher_list(3).  This directive may appear only after the HTTPS directive.
 
 - **Weight** value
-        
+
 	The weight of this back-end (between 1 and 9, 5 is default). Higher weight back-ends will be used more often than lower weight ones, so you should define higher weights for more capable servers.
 
 - **Priority** value
-        
+
 	The  priority  of this back-end (between 1 and 9, 1 is default). The requests will be forwarded to the backends with higher priority (1 is the highest priority).  When a back-end with high priority becomes unreacheable the priority level is decreased.
 
+- **ConnLimit** value
+
+	The maximum number of established connection per backend. With a value of 0, there will not be a limit in the backend. The client will receive a 503 error if there aren't available backends.
+
 - **TimeOut** value
-        
+
 	Override the global TimeOut value.
 
 - **ConnTO** value
-        
+
 	Override the global ConnTO value.
 
 - **WSTimeOut** value
-        
+
 	Override the global WSTimeOut value.
 
 - **HAport** [ address ] port
-        
+
 	A port (and optional address) to be used for server function checks. See below the "High Availability" section for a more detailed discussion. By default zproxy  uses  the  same  address  as  the  back-end server, but you may use a separate address if you wish. This directive applies only to non Unix-domain servers.
 
 - **Disabled** 0|1
-        
+
 	Start zproxy with this back-end disabled (1) or enabled (0). If started as disabled, the back-end can be later enabled with zproxyctl (8).
 
 - **Nfmark** value
-        
+
 	Allow to mark all the zproxy back-end connections in order to track them and allow to the Kernel network stack to manage them. (Decimal format)
 
 - **Emergency**
-        
+
 	The  emergency  server  will  be used once all existing back-ends are "dead".  All configuration directives enclosed between Emergency and End are specific to a single service.
 
 	The following directives are available:
 
 	- **Address** address
-        
+
 		The address that zproxy will connect to. This can be a numeric IP address, or a symbolic host name that must be resolvable at run-time. If the name cannot be resolved to a valid address, zproxy will assume that it represents the path for a Unix-domain socket. This is a mandatory parameter.
 
 	- **Port** port
-	        
+
 		The port number that zproxy will connect to. This is a mandatory parameter for non Unix-domain back-ends.
 
 
@@ -660,11 +664,11 @@ The following directives are available:
 	What kind of sessions are we looking for: IP (the client address), BASIC (basic authentication), URL (a request parameter), PARM (a URI parameter), COOKIE (a certain cookie), or HEADER (a  certain  request header).  This is a mandatory parameter.
 
 - **TTL** seconds
-        
+
 	How long can a session be idle (in seconds). A session that has been idle for longer than the specified number of seconds will be discarded.  This is a mandatory parameter.
 
 - **ID** "name"
-        
+
 	The session identifier. This directive is permitted only for sessions of type URL (the name of the request parameter we need to track), COOKIE (the name of the cookie) and HEADER (the header name).
 
 
