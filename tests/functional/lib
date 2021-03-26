@@ -9,7 +9,7 @@ error () {
 }
 
 dev () {
-	read -p "Stopped, press 'Enter' to continue"
+	read -p "Test stopped, press 'Enter' to continue"
 }
 
 # if [[ "$NUM" == "" ]]; then error_param "backend_number"; fi

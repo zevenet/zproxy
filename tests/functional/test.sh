@@ -25,16 +25,18 @@ if [[ $DEBUG -gt 0 ]]; then
 	start_debug
 fi
 print_help_test () {
-	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec [-kfb] <test_dir>|all [-fb]]"
+	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec [-dkfb] <test_dir>|all [-dfb]]"
 	echo "  * all: it prepares the lab, launch all tests and remove the lab"
-	echo "	    the -f parameter executes only the functional tests, don't the benchmark ones"
-	echo "	    the -b parameter executes only the benchmark tests, don't the functional ones"
+	echo "	    the -d (debug) parameter stop the tests after each command and it wait an enter to continue"
+	echo "	    the -f (functional) parameter executes only the functional tests, don't the benchmark ones"
+	echo "	    the -b (benchmark) parameter executes only the benchmark tests, don't the functional ones"
 	echo "  * start: it prepares the lab for testing"
 	echo "  * stop: it cleans the lab, removing the process and deleting the net namespaces"
-	echo "  * exec [-ktb] <test_directory>: it executes a test"
-	echo "	    the -k parameter keeps zproxy running before the test finishes"
-	echo "	    the -f parameter executes only the functional tests, don't the benchmark ones"
-	echo "	    the -b parameter executes only the benchmark tests, don't the functional ones"
+	echo "  * exec [-dktb] <test_directory>: it executes a test"
+	echo "	    the -d (debug) parameter stop the tests after each command and it wait an enter to continue"
+	echo "	    the -k (keep running)parameter keeps zproxy running before the test finishes"
+	echo "	    the -f (functional) parameter executes only the functional tests, don't the benchmark ones"
+	echo "	    the -b (benchmark) parameter executes only the benchmark tests, don't the functional ones"
 	echo "  * save: it overwrites the test output files which are used to validate the tests"
 	echo "  * diff: it looks for the error files of the last test execution"
 	echo "  * bck_benchmark: it checks the maximum backend throughput"
@@ -133,6 +135,16 @@ exec_test () {
 			TEST_ERR=1
 			print_report "$TEST_F" "$OUT_DIR" "$DIFF_OUT"
 		fi
+
+		if [[ $DEBUG_FLAG -ne 0 ]]; then
+			if [[ ! -f "$OUT_DIR/cmd.out.tmp" && -f "$OUT_DIR/cmd.out" ]]; then
+				msg "command executed: $OUT_DIR"
+				cat "$OUT_DIR/cmd.out"
+				echo ""
+			fi
+			dev
+		fi
+
 	done
 	rm "$PREF"*
 
@@ -203,7 +215,8 @@ save)
 exec)
 	LOCAL_PWD="$PWD"
 
-	if [[ $2 =~ ^-[kfb]+$ ]]; then
+	if [[ $2 =~ ^-[dkfb]+$ ]]; then
+		if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
 		if [[ $2 =~ ^[^kfb]$ ]]; then error "An option was not expected"; fi
 		if [[ $2 =~ "k" ]]; then ZPROXY_KEEP_RUNNING=1; fi
 		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
@@ -228,7 +241,8 @@ bck_benchmark)
 	stop_test
 	;;
 all)
-	if [[ $2 =~ ^-[fb]+$ ]]; then
+	if [[ $2 =~ ^-[dfb]+$ ]]; then
+		if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
 		if [[ $2 =~ ^[^fb]$ ]]; then error "An option was not expected"; fi
 		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
 		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
