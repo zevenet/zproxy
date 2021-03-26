@@ -148,6 +148,18 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 	return "";
 }
 
+bool Backend::isConnectionLimit() {
+	bool ret = (connection_limit > 0 && (connection_limit <= getEstablishedConn()) ) ? true : false;
+	if (ret) {
+		zcu_log_print(LOG_DEBUG,
+			  "Connection limit %d hit in backend %d",
+			  backend_id,
+			  connection_limit );
+	}
+	return ret;
+}
+
+
 bool Backend::isHandler(ctl::CtlTask & task)
 {
 	return			/*task.target == ctl::CTL_HANDLER_TYPE::BACKEND && */
@@ -206,7 +218,10 @@ std::unique_ptr < JsonObject > Backend::getBackendJson()
 		}
 		root->emplace(JSON_KEYS::CONNECTIONS,
 			      std::make_unique < JsonDataValue >
-			      (this->established_conn));
+				  (this->established_conn));
+		root->emplace(JSON_KEYS::CONNECTION_LIMIT,
+				  std::make_unique < JsonDataValue >
+				  (this->connection_limit));
 		root->emplace(JSON_KEYS::PENDING_CONNS,
 			      std::make_unique < JsonDataValue >
 			      (this->pending_connections));

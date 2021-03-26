@@ -182,6 +182,7 @@ namespace regex_set
 	static const Regex Include("^[ \t]*Include[ \t]+\"(.+)\"[ \t]*$");
 	static const Regex
 		IncludeDir("^[ \t]*IncludeDir[ \t]+\"(.+)\"[ \t]*$");
+	static const Regex ConnLimit("^[ \t]*ConnLimit[ \t]+([1-9][0-9]*)[ \t]*$");
 	static const Regex ConnTO("^[ \t]*ConnTO[ \t]+([1-9][0-9]*)[ \t]*$");
 	static const Regex IgnoreCase("^[ \t]*IgnoreCase[ \t]+([01])[ \t]*$");
 	static const Regex

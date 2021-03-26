@@ -2048,6 +2048,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 	res->priority = 1;
 	res->weight = 5;
 	res->connections = 0;
+	res->connection_limit = 0;
 	res->next = nullptr;
 	res->ctx = nullptr;
 	res->nf_mark = 0;
@@ -2126,6 +2127,9 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 		}
 		else if (!regexec(&regex_set::NfMark, lin, 4, matches, 0)) {
 			res->nf_mark = std::atoi(lin + matches[1].rm_so);
+		}
+		else if (!regexec(&regex_set::ConnLimit, lin, 4, matches, 0)) {
+			res->connection_limit = std::atoi(lin + matches[1].rm_so);
 		}
 		else if (!regexec(&regex_set::ConnTO, lin, 4, matches, 0)) {
 			res->conn_to = std::atoi(lin + matches[1].rm_so);

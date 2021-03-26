@@ -196,7 +196,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			return;
 		}
 	default:
-		// why would we be here???
+		// why would we be here?
 		deleteFd(fd);
 		::close(fd);
 		break;

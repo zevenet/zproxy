@@ -47,8 +47,41 @@ class Service:public
 	public CtlObserver < ctl::CtlTask, std::string > {
 	std::vector < Backend * >backend_set;
 	std::vector < Backend * >emergency_backend_set;
-	// if no backend available, return an emergency backend if possible.
+
+  /**
+   * @brief It checks if the backend is ready to manage the request.
+   *
+   * It checks if the backend accomplishment the requirement to get the connection:
+   * the status is up, the limit of connections were not reached...
+   *
+   * @param the backend struct to check.
+   * @param the current service priority, the backend one has to be lower or equal to this value.
+   * @return is true if the backend is available, or false if it's not.
+   */
+	bool checkBackendAvailable(Backend *bck, int enabled_priority);
+
+  /**
+   * @brief It get the current service priority.
+   *
+   * The service priority shows the number of backends that failed. This priority
+   * increases for each backend disabled/failed
+   *
+   * @return is an integer with the current service priority
+   */
+	int getEnabledBackendPriority ();
+
+  /**
+   * @brief It selects the backend to forward the incoming request
+   *
+   * This function check the backends of the service and it decides which will
+   * receive the request using the configured algorithm.
+   *
+   * If no backend available, return an emergency backend if possible.
+   *
+   * @return always a Backend. A new one or the associated to the session.
+   */
 	Backend *getNextBackend();
+
 	std::mutex mtx_lock;
   /** The enum Service::LOAD_POLICY defines the different types of load
    * balancing available. All the methods are weighted except the Round Robin

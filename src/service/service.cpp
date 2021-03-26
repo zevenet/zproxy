@@ -172,6 +172,7 @@ void Service::addBackend(std::shared_ptr < BackendConfig > backend_config,
 		backend->ctx = backend_config->ctx;
 		backend->conn_timeout = backend_config->conn_to;
 		backend->response_timeout = backend_config->rw_timeout;
+		backend->connection_limit = backend_config->connection_limit;
 		setBackendHostInfo(backend.get());
 	}
 	else if (backend_config->be_type == 2) {
@@ -578,16 +579,22 @@ std::unique_ptr < JsonObject > Service::getServiceJson()
 	return std::move(root);
 }
 
-/** Selects the corresponding Backend to which the connection will be routed
- * according to the established balancing algorithm. */
-Backend *Service::getNextBackend()
+bool Service::checkBackendAvailable(Backend *bck, int enabled_priority) {
+
+	bool valid;
+	valid = ( bck->getStatus() != BACKEND_STATUS::BACKEND_UP
+		|| bck->priority > enabled_priority
+		|| bck->weight <= 0		/* This line maybe is not required */
+		|| bck->isConnectionLimit() /* This is an early check */
+		) ? false : true;
+
+	return valid;
+}
+
+int Service::getEnabledBackendPriority ()
 {
-	if (backend_set.empty())
-		return nullptr;
-	else if (backend_set.size() == 1)
-		return backend_set[0]->getStatus() !=
-			BACKEND_STATUS::BACKEND_UP ? nullptr : backend_set[0];
 	int enabled_priority = 1;
+
 	for (int priority_index = 1; priority_index <= enabled_priority;
 	     priority_index++) {
 	      for (auto & bck:backend_set) {
@@ -597,39 +604,46 @@ Backend *Service::getNextBackend()
 			}
 		}
 	}
-	backend_priority = enabled_priority;
+
+	return enabled_priority;
+}
+/** Selects the corresponding Backend to which the connection will be routed
+ * according to the established balancing algorithm. */
+Backend *Service::getNextBackend()
+{
+	if (backend_set.empty())
+		return nullptr;
+	else if (backend_set.size() == 1)
+		return backend_set[0]->getStatus() !=
+			BACKEND_STATUS::BACKEND_UP ? nullptr : backend_set[0];
+
+	int enabled_priority = getEnabledBackendPriority();
+
 	switch (routing_policy) {
 	default:
 	case ROUTING_POLICY::ROUND_ROBIN:{
 			static unsigned long long seed;
-			Backend *bck_res = nullptr;
-		      for ([[maybe_unused]] auto & item:backend_set)
+			Backend *selected_backend = nullptr;
+		      for ([[maybe_unused]] auto & it:backend_set)
 			{
 				seed++;
-				bck_res =
+				selected_backend =
 					backend_set[seed %
 						    backend_set.size()];
-				if (bck_res != nullptr) {
-					if (bck_res->getStatus() !=
-					    BACKEND_STATUS::BACKEND_UP
-					    || bck_res->priority >
-					    backend_priority) {
-						bck_res = nullptr;
-						continue;
-					}
-					break;
+				if (selected_backend != nullptr) {
+					if (!checkBackendAvailable(selected_backend, enabled_priority))
+						selected_backend = nullptr;
+					else
+						break;
 				}
 			}
-			return bck_res;
+			return selected_backend;
 		}
 
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS:{
 			Backend *selected_backend = nullptr;
 		      for (auto & it:backend_set) {
-				if (it->weight <= 0
-				    || (it->getStatus() !=
-					BACKEND_STATUS::BACKEND_UP
-					|| it->priority > backend_priority))
+				if (!checkBackendAvailable(selected_backend, enabled_priority))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
@@ -637,7 +651,8 @@ Backend *Service::getNextBackend()
 				else {
 					if (selected_backend->getEstablishedConn() == 0)
 						return selected_backend;
-					if (selected_backend->getEstablishedConn() * it->weight > it->getEstablishedConn() * selected_backend->weight)
+					if (selected_backend->getEstablishedConn() * it->weight >
+							it->getEstablishedConn() * selected_backend->weight)
 						selected_backend = it;
 				}
 			}
@@ -647,10 +662,7 @@ Backend *Service::getNextBackend()
 	case ROUTING_POLICY::RESPONSE_TIME:{
 			Backend *selected_backend = nullptr;
 		      for (auto & it:backend_set) {
-				if (it->weight <= 0
-				    || (it->getStatus() !=
-					BACKEND_STATUS::BACKEND_UP
-					|| it->priority > backend_priority))
+				if (!checkBackendAvailable(selected_backend, enabled_priority))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
@@ -673,10 +685,7 @@ Backend *Service::getNextBackend()
 			Backend *selected_backend = nullptr;
 
 		      for (auto & it:backend_set) {
-				if (it->weight <= 0
-				    || (it->getStatus() !=
-					BACKEND_STATUS::BACKEND_UP
-					|| it->priority > backend_priority))
+				if (!checkBackendAvailable(selected_backend, enabled_priority))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;

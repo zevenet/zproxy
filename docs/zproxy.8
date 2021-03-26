@@ -1017,6 +1017,11 @@ The priority of this back-end (between 1 and 9, 1 is default). The requests will
 be forwarded to the backends with higher priority (1 is the highest priority).
 When a back-end with high priority becomes unreacheable the priority level is decreased.
 .TP
+\fBConnLimit\fR val
+The maximum number of established connection per backend. With a value of 0, there
+will not be a limit in the backend. The client will receive a 503 error if there aren't
+available backends.
+.TP
 \fBTimeOut\fR val
 Override the global
 .I TimeOut

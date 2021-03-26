@@ -101,6 +101,7 @@ class BackendConfig:Counter < BackendConfig > {
 	int resurrect;		/* this back-end is to be resurrected */
 	int disabled;		/* true if the back-end is disabled */
 	int connections;
+	int connection_limit;   /* It is the limit of established connection that can manage simultanoausly*/
 	int ecdh_curve_nid
 	{
 	0};

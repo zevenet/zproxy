@@ -60,6 +60,7 @@ namespace json
 	const std::string JSON_KEYS::LAST_SEEN_TS = "last-seen";
 	const std::string JSON_KEYS::CONNECTIONS = "connections";
 	const std::string JSON_KEYS::PENDING_CONNS = "pending-connections";
+	const std::string JSON_KEYS::CONNECTION_LIMIT = "connections-limit";
 	const std::string JSON_KEYS::RESPONSE_TIME = "response-time";
 	const std::string JSON_KEYS::CONNECT_TIME = "connect-time";
 	const std::string JSON_KEYS::WEIGHT = "weight";

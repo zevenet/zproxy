@@ -756,6 +756,15 @@ void StreamManager::onRequestEvent(int fd)
 				case IO::IO_OP::OP_SUCCESS:{
 						DEBUG_COUNTER_HIT
 							(debug__::on_backend_connect);
+						if (stream->backend_connection.getBackend()->isConnectionLimit()) {
+							http_manager::replyError(http::Code::ServiceUnavailable,
+							 validation::
+							 request_result_reason.at(validation::
+										  REQUEST_RESULT::BACKEND_NOT_FOUND),
+							 listener_config_.err503,
+							 stream->client_connection);
+							this->clearStream(stream);
+						}
 						stream->backend_connection.getBackend()->increaseConnection();
 						break;
 					}
@@ -1530,6 +1539,13 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 				case IO::IO_OP::OP_SUCCESS:{
 						DEBUG_COUNTER_HIT
 							(debug__::on_backend_connect);
+						if (stream->backend_connection.getBackend()->isConnectionLimit()) {
+							http_manager::replyError(http::Code::ServiceUnavailable,
+								validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
+								listener_config_.err503,
+								stream->client_connection);
+							this->clearStream(stream);
+						}
 						stream->backend_connection.getBackend()->increaseConnection();
 						break;
 					}
@@ -1639,7 +1655,16 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		DEBUG_COUNTER_HIT(debug__::on_backend_connect);
 		stream->clearStatus(STREAM_STATUS::BCK_CONN_PENDING);
 		stream->backend_connection.
-			getBackend()->decreaseConnTimeoutAlive();
+					getBackend()->decreaseConnTimeoutAlive();
+
+		if (stream->backend_connection.getBackend()->isConnectionLimit()) {
+			http_manager::replyError(http::Code::ServiceUnavailable,
+								validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
+								listener_config_.err503,
+								stream->client_connection);
+			clearStream(stream);
+			return;
+		}
 		stream->backend_connection.getBackend()->increaseConnection();
 		stream->backend_connection.
 			getBackend()->setAvgConnTime(stream->

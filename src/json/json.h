@@ -63,6 +63,7 @@ namespace json
 		static const std::string TO;
 		static const std::string LAST_SEEN_TS;
 		static const std::string CONNECTIONS;
+		static const std::string CONNECTION_LIMIT;
 		static const std::string PENDING_CONNS;
 		static const std::string RESPONSE_TIME;
 		static const std::string CONNECT_TIME;

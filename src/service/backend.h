@@ -105,6 +105,10 @@ class Backend:public CtlObserver <
 	int conn_timeout
 	{
 	};
+  /** Connection timeout time parameter. */
+    int connection_limit
+    {
+    };
   /** Response timeout time parameter. */
 	int response_timeout
 	{
@@ -145,6 +149,7 @@ class Backend:public CtlObserver <
    */
 	std::unique_ptr < JsonObject > getBackendJson();
 
+	bool isConnectionLimit();
 	void setStatus(BACKEND_STATUS new_status);
 	BACKEND_STATUS getStatus();
 	int nf_mark;
