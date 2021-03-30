@@ -653,7 +653,9 @@ sub parseWAFSetConf
 			$conf->{ process_response_body } = 'true'  if ( $value eq 'on' );
 			$conf->{ process_response_body } = 'false' if ( $value eq 'off' );
 		}
-		if ( $line =~ /^\s*SecRequestBodyNoFilesLimit\s+(\d+)/ )
+
+		# The 'SecRequestBodyNoFilesLimit' directive is read for a bugfix
+		if ( $line =~ /^\s*(?:SecRequestBodyNoFilesLimit|SecRequestBodyLimit)\s+(\d+)/ )
 		{
 			$conf->{ request_body_limit } = $1;
 		}
@@ -704,7 +706,7 @@ $VAR1 = [
           'SecAuditLog /var/log/waf_audit.log',
           'SecRequestBodyAccess on',
           'SecResponseBodyAccess on',
-          'SecRequestBodyNoFilesLimit 6456456',
+          'SecRequestBodyLimit 6456456',
           'SecRuleEngine DetectionOnly',
           'SecRuleRemoveById 100',
           'SecDefaultAction "pass,phase:2,log"',
@@ -736,9 +738,10 @@ sub buildWAFSetConf
 	{
 		push @txt, "SecResponseBodyAccess on";
 	}
-	if ( $conf->{ request_body_limit } )
+	if (     $conf->{ request_body_limit }
+		 and $conf->{ process_request_body } ne 'false' )
 	{
-		push @txt, "SecRequestBodyNoFilesLimit $conf->{ request_body_limit }";
+		push @txt, "SecRequestBodyLimit $conf->{ request_body_limit }";
 	}
 
 	if ( $conf->{ status } eq 'true' )

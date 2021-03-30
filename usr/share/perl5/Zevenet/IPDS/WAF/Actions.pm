@@ -206,7 +206,7 @@ sub updateWAFSetPreload
 	foreach my $set ( &listWAFSetPreload() )
 	{
 		# do not to delete it if it is in the package
-		next if ( grep ( /^$waf_pkg_dir\/${set}\.conf$/, @prel_path ) );
+		next if ( grep ( /^${set}\.conf$/, @prel_path ) );
 
 		# Delete it only if it is not used by any farm
 		next if ( &listWAFBySet( $set ) );
@@ -217,15 +217,20 @@ sub updateWAFSetPreload
 # delete it from the register log. Only add and delete entries in Preload file the migration process
 		$err = &delWAFSetPreload( $set );
 
-		&zenlog( "The WAF set $set has been deleted properly", 'info', 'waf' )
-		  if !$err;
-		&zenlog( "Error deleting the WAF set $set", 'error', 'waf' ) if $err;
+		if ( !$err )
+		{
+			&zenlog( "The WAF set $set has been deleted properly", 'info', 'waf' );
+		}
+		else
+		{
+			&zenlog( "Error deleting the WAF set $set", 'error', 'waf' );
+		}
 	}
 	return $err if $err;
 
 	# copying the data files
 	my $cp = &getGlobalConfiguration( 'cp' );
-	$err = &logAndRun( "$cp $waf_pkg_dir/*.data $wafSetDir" );
+	$err = &logAndRun( "$cp q$waf_pkg_dir/*.data $wafSetDir" );
 	&zenlog( "Error updating WAF data files", 'error', 'waf' ) if $err;
 
 	# add and modify the sets
