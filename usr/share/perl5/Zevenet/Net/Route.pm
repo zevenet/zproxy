@@ -127,6 +127,49 @@ sub deleteRoutesTable
 }
 
 =begin nd
+Function: applyRoutingCmd
+
+	It creates the command to add a routing entry in a table.
+
+	Depend on the passed parameter, it can delete, add or replace the route
+
+Parameters:
+	action - it is the action to apply: add, replace or del
+	if_ref - network interface hash reference
+	table - it is the routing table where the entry will be added
+
+Returns:
+	Integer - Error code, it is 0 on success or another value on
+
+TODO:
+	use the 'buildRouteCmd' function
+
+=cut
+
+sub applyRoutingCmd
+{
+	my $action = shift;
+	my $if_ref = shift;
+	my $table  = shift;
+
+	# Get params
+	my $routeparams = &getGlobalConfiguration( 'routeparams' );
+	use NetAddr::IP;
+	my $ip_local = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
+	my $net_local = $ip_local->network();
+
+	&zenlog( "addlocalnet: $action route for $$if_ref{name} in table $table",
+			 "debug", "NETWORK" )
+	  if &debug();
+
+	my $ip_cmd =
+	  "$ip_bin -$$if_ref{ip_v} route $action $net_local dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
+
+	my $err = &logAndRun( $ip_cmd );
+	return $err;
+}
+
+=begin nd
 Function: addlocalnet
 
 	Set routes to interface subnet into interface routing tables and fills the interface table.
@@ -141,7 +184,6 @@ See Also:
 	Only used here: <applyRoutes>
 =cut
 
-# add local network into routing table
 sub addlocalnet    # ($if_ref)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -157,9 +199,6 @@ sub addlocalnet    # ($if_ref)
 	use NetAddr::IP;
 	my $ip_local = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
 	my $net_local = $ip_local->network();
-
-	# Get params
-	my $routeparams = &getGlobalConfiguration( 'routeparams' );
 
 	# Add or replace local net to all tables
 	my @links = ( 'main', &getLinkNameList() );
@@ -212,13 +251,7 @@ sub addlocalnet    # ($if_ref)
 
 		if ( !$skip_route )
 		{
-			&zenlog( "addlocalnet: setting route for $$if_ref{name} in table $table",
-					 "debug", "NETWORK" )
-			  if &debug();
-
-			my $ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} route replace $net_local dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
-			&logAndRun( $ip_cmd );
+			&applyRoutingCmd( 'replace', $if_ref, $table );
 		}
 
 		if ( $eload )
@@ -277,14 +310,7 @@ sub addlocalnet    # ($if_ref)
 			next;
 		}
 
-		&zenlog(
-				 "addlocalnet: own table ($table): name $$iface{name} type $$iface{type}",
-				 "debug", "NETWORK" );
-
-		my $ip_cmd =
-		  "$ip_bin -$$iface{ip_v} route replace $net dev $$iface{name} src $$iface{addr} table $table $routeparams";
-
-		&logAndRun( $ip_cmd );
+		&applyRoutingCmd( 'replace', $iface, $table );
 	}
 
 	if ( $eload )
@@ -305,8 +331,9 @@ sub addlocalnet    # ($if_ref)
 =begin nd
 Function: dellocalnet
 
-	Remove the input interface of the other routing tables. It does not do any
-	action about the main table
+	Remove the input interface of the other routing tables.
+	It removes the interfaces own table too.
+	It removes the custom routes too.
 
 Parameters:
 	if_ref - network interface hash reference.
@@ -316,7 +343,6 @@ Returns:
 
 =cut
 
-# add local network into routing table
 sub dellocalnet    # ($if_ref)
 {
 	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
@@ -328,46 +354,21 @@ sub dellocalnet    # ($if_ref)
 	my $ip = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
 	my $net = $ip->network();
 
-	# Add or replace local net to all tables
 	my @links = ( 'main', &getLinkNameList() );
 
-	# filling the other tables
 	foreach my $link ( @links )
 	{
 		next if $link eq 'lo';
 		next if $link eq 'cl_maintenance';
 
-		my $table = "table_$link";
+		my $table = ( $link eq 'main' ) ? "main" : "table_$link";
 
-		# Manage the main table
-		if ( $link eq 'main' )
-		{
-			$table = "main";
-			if ( $eload )
-			{
-				my @isolates = &eload(
-									   module => 'Zevenet::Net::Routing',
-									   func   => 'getRoutingIsolate',
-									   args   => [$$if_ref{ name }],
-				);
-				next if ( !grep ( /^(?:\*|main)$/, @isolates ) );
-			}
-			else
-			{
-				next;
-			}
-		}
-
+# TODO: use the function 'buildRouteCmd' to create this command and use it here and with 'applyRoutingCmd'
 		my $cmd_param = "$net dev $$if_ref{name} src $$if_ref{addr} table $table";
-		next if ( !$cmd_param );
 
 		next if ( !&isRoute( $cmd_param, $$if_ref{ ip_v } ) );
 
-		&zenlog( "dellocal: del $net route from table $table", "debug", "NETWORK" )
-		  if &debug();
-
-		my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route del $cmd_param";
-		&logAndRun( $ip_cmd );
+		&applyRoutingCmd( 'del', $if_ref, $table );
 	}
 
 	if ( $eload )
@@ -1173,7 +1174,6 @@ sub configureDefaultGW    #()
 		my $if_ref = &getInterfaceConfig( $defaultgwif, 4 );
 		if ( $if_ref )
 		{
-			print "Default Gateway:$defaultgw Device:$defaultgwif\n";
 			&applyRoutes( "global", $if_ref, $defaultgw );
 		}
 	}
@@ -1184,7 +1184,6 @@ sub configureDefaultGW    #()
 		my $if_ref = &getInterfaceConfig( $defaultgwif, 6 );
 		if ( $if_ref )
 		{
-			print "Default Gateway:$defaultgw6 Device:$defaultgwif6\n";
 			&applyRoutes( "global", $if_ref, $defaultgw6 );
 		}
 	}

@@ -1145,7 +1145,7 @@ sub getVirtualInterfaceNameList
 =begin nd
 Function: getLinkInterfaceNameList
 
-	Get a list of the link interfaces names.
+	Get a list of the link interfaces names. (nic, bond and vlan)
 
 Parameters:
 	none - .
