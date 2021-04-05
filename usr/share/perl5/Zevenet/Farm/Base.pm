@@ -203,9 +203,18 @@ sub getFarmVipStatus    # ($farm_name)
 	# HTTP, optimized for many services
 	if ( $type =~ /http/ )
 	{
-		require Zevenet::Farm::HTTP::Stats;
-		my $stats = &getHTTPFarmBackendsStats( $farm_name );
-		$backends = $stats->{ backends };
+		require Zevenet::Farm::HTTP::Backend;
+		my $status = &getHTTPFarmBackendsStatusInfo( $farm_name );
+		foreach my $service ( keys %{ $status } )
+		{
+			if ( defined $status->{ $service }->{ backends } )
+			{
+				foreach my $backend ( @{ $status->{ $service }->{ backends } } )
+				{
+					push @{ $backends }, $backend;
+				}
+			}
+		}
 	}
 
 	# GSLB

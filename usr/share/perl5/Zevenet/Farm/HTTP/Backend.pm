@@ -769,8 +769,8 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 	if ( $farmStatus eq "up" )
 	{
-		require Zevenet::Farm::HTTP::Stats;
-		$stats = &getHTTPFarmBackendsStats( $farm_name );
+		require Zevenet::Farm::HTTP::Backend;
+		$stats = &getHTTPFarmBackendsStatusInfo( $farm_name );
 	}
 
 	require Zevenet::Farm::HTTP::Service;
@@ -787,7 +787,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 		{
 			if ( $farmStatus eq "up" )
 			{
-				$backendstatus = $stats->{ backends }[$id]->{ status };
+				$backendstatus = $stats->{ $service }->{ backends }[$id]->{ status };
 			}
 			else
 			{
@@ -1362,6 +1362,116 @@ sub getHTTPFarmBackendAvailableID
 	$id = 0 if $id eq '';
 
 	return $id;
+}
+
+=begin nd
+Function: getHTTPFarmBackendsStatusInfo
+
+	This function take data from proxy and it gives hash format
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	hash ref - hash with backends farm status
+
+		services =>
+		[
+			"id" => $service_id,				 # it is the index in the backend array too
+			"name" => $service_name,
+			"backends" =>
+			[
+				{
+					"id" = $backend_id		# it is the index in the backend array too
+					"ip" = $backend_ip
+					"port" = $backend_port
+					"status" = $backend_status
+					"service" = $service_name
+				}
+			]
+		]
+
+=cut
+
+sub getHTTPFarmBackendsStatusInfo    # ($farm_name)
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+	my ( $farm_name ) = @_;
+
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::HTTP::Config;
+	require Zevenet::Validate;
+	my $status;
+
+	my $serviceName;
+	my $service_re = &getValidFormat( 'service' );
+
+	# Get l7 proxy info
+	#i.e. of proxyctl:
+
+	#Requests in queue: 0
+	#0. http Listener 185.76.64.223:80 a
+	#0. Service "HTTP" active (4)
+	#0. Backend 172.16.110.13:80 active (1 0.780 sec) alive (61)
+	#1. Backend 172.16.110.14:80 active (1 0.878 sec) alive (90)
+	#2. Backend 172.16.110.11:80 active (1 0.852 sec) alive (99)
+	#3. Backend 172.16.110.12:80 active (1 0.826 sec) alive (75)
+	my @proxyctl = &getHTTPFarmGlobalStatus( $farm_name );
+
+	# Parse l7 proxy info
+	foreach my $line ( @proxyctl )
+	{
+		# i.e.
+		#     0. Service "HTTP" active (10)
+		if ( $line =~ /(\d+)\. Service "($service_re)"/ )
+		{
+			$serviceName = $2;
+		}
+
+		# Parse backend connections
+		# i.e.
+		#      0. Backend 192.168.100.254:80 active (5 0.000 sec) alive (0)
+		if ( $line =~
+			/(\d+)\. Backend (\d+\.\d+\.\d+\.\d+|[a-fA-F0-9:]+):(\d+) (\w+) .+ (\w+)(?: \((\d+)\))?/
+		  )
+		{
+			my $backendHash = {
+								id     => $1 + 0,
+								ip     => $2,
+								port   => $3 + 0,
+								status => $5,
+			};
+
+			# Getting real status
+			my $backend_disabled = $4;
+			if ( $backend_disabled eq "DISABLED" )
+			{
+				require Zevenet::Farm::HTTP::Backend;
+
+				#Checkstatusfile
+				$backendHash->{ "status" } =
+				  &getHTTPBackendStatusFromFile( $farm_name, $backendHash->{ id },
+												 $serviceName );
+
+				# not show fgDOWN status
+				$backendHash->{ "status" } = "down"
+				  if ( $backendHash->{ "status" } ne "maintenance" );
+			}
+			elsif ( $backendHash->{ "status" } eq "alive" )
+			{
+				$backendHash->{ "status" } = "up";
+			}
+			elsif ( $backendHash->{ "status" } eq "DEAD" )
+			{
+				$backendHash->{ "status" } = "down";
+			}
+
+			push ( @{ $status->{ $serviceName }->{ backends } }, $backendHash );
+		}
+	}
+
+	return $status;
 }
 
 1;
