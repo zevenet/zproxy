@@ -644,7 +644,8 @@ sub writeRoutingIsolateConf
 =begin nd
 Function: reloadRoutingTable
 
-	It reloads the routing entries (in the system) of a routing table of a interface
+	It reloads the routing entries (in the system) where a interface appears.
+	It does not flush the tables and create it again.
 
 Parameters:
 	interface - interface name

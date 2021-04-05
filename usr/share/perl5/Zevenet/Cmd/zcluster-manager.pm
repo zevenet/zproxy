@@ -44,7 +44,7 @@
 #
 # zcluster-manager routing_rule [stop|start] <id>
 # zcluster-manager routing_table [stop|start] <table> <route_id>
-# zcluster-manager routing_table [reload] <table>
+# zcluster-manager routing_table [reload] <interface>
 #
 # zcluster-manager gateway [update|delete] <interface> [4|6]
 #
@@ -691,7 +691,6 @@ if ( $object =~ /^routing_(rule|table)/ )
 	{
 		if ( $command eq 'reload' )
 		{
-			$id =~ s/table_//;
 			$err = &reloadRoutingTable( $id );
 		}
 		elsif ( $command eq 'stop' )

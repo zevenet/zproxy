@@ -631,7 +631,7 @@ sub create_routing_entry
 	}
 
 	include 'Zevenet::Cluster';
-	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
+	&runZClusterRemoteManager( 'routing_table', 'start', "$table", $id );
 
 	my $list = &listOutRoutes( $table );
 	my $route = &getOutId( $list, $id );
@@ -729,7 +729,7 @@ sub modify_routing_entry
 	my $err = &modifyRoutingCustom( $table, $id_route, $json_obj );
 
 	# reload the modified entry if it was success or if it was error
-	&runZClusterRemoteManager( 'routing_table', 'reload', "$table" );
+	&runZClusterRemoteManager( 'routing_table', 'start', "$table", $id_route );
 
 	if ( $err )
 	{
@@ -876,7 +876,7 @@ sub add_routing_isolate
 	&setRoutingIsolate( $interface, $table, 'add' );
 
 	include 'Zevenet::Cluster';
-	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$interface" );
+	&runZClusterRemoteManager( 'routing_table', 'reload', "$interface" );
 
 	my $body = {
 				description => $desc,
@@ -939,7 +939,7 @@ sub del_routing_isolate
 	&setRoutingIsolate( $interface, $table, 'del' );
 
 	include 'Zevenet::Cluster';
-	&runZClusterRemoteManager( 'routing_table', 'reload', "table_$interface" );
+	&runZClusterRemoteManager( 'routing_table', 'reload', "$interface" );
 
 	my $msg = ( $table eq '*' ) ? "all tables" : "the table '$table'";
 	my $body = {
