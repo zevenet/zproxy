@@ -473,11 +473,18 @@ sub create_waf_rule_match
 
 	# get parameter for a match
 	my $params = &getWafMatchParameters();
+	$params->{ variables }->{ required } = "true";
 
 	# Check allowed parameters
 	$err = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $err )
 	  if ( $err );
+
+	if ( !@{ $json_obj->{ variables } } )
+	{
+		my $msg = "The parameter 'variables' must contain at least one element";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	&translateWafMatch( $json_obj );
 
@@ -545,6 +552,12 @@ sub modify_waf_rule_match
 	my $error_msg = &checkZAPIParams( $json_obj, $params, $desc );
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
+
+	if ( exists $json_obj->{ variables } and !@{ $json_obj->{ variables } } )
+	{
+		my $msg = "The parameter 'variables' must contain at least one element";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	# modify a rule
 	&translateWafMatch( $json_obj );

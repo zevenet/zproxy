@@ -859,7 +859,7 @@ sub getWafMatchParameters
 
 	return {
 			 'not_match' => { 'valid_format' => 'boolean' },
-			 'variables' => { 'ref'          => 'array' },
+			 'variables' => { 'non_blank'    => 'true', 'ref' => 'array' },
 			 'operator'  => { 'non_blank'    => 'true', 'values' => \@operators },
 			 'operating'       => {},
 			 'transformations' => {
