@@ -947,6 +947,112 @@ sub listRoutingDependIface
 }
 
 =begin nd
+Function: listRoutingDependIfaceVirt
+
+	It returns a list of custom routes that depend on an virtual interface.
+	This function looks for that the virtual IP matches with the 'source' parameter
+	of the route
+
+Parameters:
+	interface - name of the interface or hash reference with the interface configuration
+
+Returns:
+	Array ref - List of routes, each item is a hash with the routes parameters
+
+=cut
+
+sub listRoutingDependIfaceVirt
+{
+	&zenlog( __FILE__ . ":" . __LINE__ . ":" . ( caller ( 0 ) )[3] . "( @_ )",
+			 "debug", "PROFILING" );
+
+	my $iface = shift;
+
+	my $ip = $iface->{ addr };
+	return [] if $ip eq '';
+
+	my @list = ();
+
+	foreach my $table ( &listRoutingTablesNames() )
+	{
+		my $ruleList = &listRoutingTableCustom( $table );
+		foreach my $rule ( @{ $ruleList } )
+		{
+			if ( $rule->{ source } eq $ip )
+			{
+				$rule->{ table } = $table;
+				push @list, $rule;
+			}
+		}
+	}
+
+	return \@list;
+}
+
+=begin nd
+Function: applyRoutingDependIfaceVirt
+
+	This function applies an action (in the system) in all the routes that depend on a virtual interface.
+	The action could be 'add' or 'delete' all routes that depend on the passed virtual interface.
+
+Parameters:
+	action - 'add' to apply all routes, 'del' to delete all routes
+	interface - it is an interface object with the interface configuration
+
+Returns:
+	Integer - Error code. It returns 0 on successful or another value on failure
+
+=cut
+
+sub applyRoutingDependIfaceVirt
+{
+	my $action = shift;
+	my $iface  = shift;
+	my $err    = 0;
+
+	if ( ref $iface ne 'HASH' )
+	{
+		&zenlog( "The function 'applyRoutingDeendIfaceVirt' expects a hash as argument",
+				 'error' );
+		return 1;
+	}
+
+	foreach my $rule ( @{ &listRoutingDependIfaceVirt( $iface ) } )
+	{
+		$err = &setRoute( $action, $rule->{ raw } );
+		return $err if $err;
+	}
+
+	return 0;
+}
+
+=begin nd
+Function: delRoutingDependIfaceVirt
+
+	It deletes from system and configuration file all routes that depend on a
+	virtual interface.
+
+Parameters:
+	interface - it is an interface object with the interface configuration
+
+Returns:
+	Integer - Error code. It returns 0 on successful or another value on failure
+
+=cut
+
+sub delRoutingDependIfaceVirt
+{
+	my $iface = shift;
+	my $err;
+	foreach my $rule ( @{ &listRoutingDependIfaceVirt( $iface ) } )
+	{
+		$err = &delRoutingCustom( $rule->{ table }, $rule->{ id } );
+		return $err if $err;
+	}
+	return 0;
+}
+
+=begin nd
 Function: listRoutingTable
 
 	It returns a list of rules (rules objects) of a routing table.

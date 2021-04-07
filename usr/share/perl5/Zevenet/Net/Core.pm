@@ -211,6 +211,12 @@ sub downIf    # ($if_ref, $writeconf)
 		my ( $routed_iface ) = split ( ":", $$if_ref{ name } );
 
 		$ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $routed_iface";
+
+		&eload(
+				module => 'Zevenet::Net::Routing',
+				func   => 'applyRoutingDependIfaceVirt',
+				args   => ['del', $if_ref]
+		) if $eload;
 	}
 
 	&setRuleIPtoTable( $$if_ref{ name }, $$if_ref{ addr }, "del" );
@@ -312,7 +318,7 @@ sub stopIf    # ($if_ref)
 	else
 	{
 		my @ifphysic = split ( /:/, $if );
-		my $ip       = $$if_ref{ addr };
+		my $ip = $$if_ref{ addr };
 
 		if ( $ip =~ /\./ )
 		{
@@ -321,6 +327,12 @@ sub stopIf    # ($if_ref)
 			my $cmd = "$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if";
 
 			&logAndRun( "$cmd" );
+
+			&eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'applyRoutingDependIfaceVirt',
+					args   => ['del', $if_ref]
+			) if $eload;
 		}
 	}
 
@@ -398,7 +410,7 @@ sub delIf    # ($if_ref)
 
 		# check if alternative stack is in use
 		my $ip_v_to_check = ( $$if_ref{ ip_v } == 4 ) ? 6 : 4;
-		my $interface     = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
+		my $interface = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
 
 		if ( !$interface
 			 or ( $interface->{ type } eq "bond" and !exists $interface->{ addr } ) )

@@ -486,6 +486,12 @@ if ( $action eq "start" )
 
 				&applyRoutes( "local", $iface );
 
+				&eload(
+						module => 'Zevenet::Net::Routing',
+						func   => 'applyRoutingDependIfaceVirt',
+						args   => ['add', $iface]
+				) if $eload;
+
 				if ( $return_code == 0 )
 				{
 					print ( " \033[1;32m OK \033[0m \n" );

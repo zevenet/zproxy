@@ -246,8 +246,8 @@ sub delete_interface_virtual    # ( $virtual )
 		{
 			&eload(
 					module => 'Zevenet::Net::Routing',
-					func   => 'updateRoutingVirtualIfaces',
-					args   => [$if_ref->{ parent }, $if_ref->{ addr }, undef],
+					func   => 'delRoutingDependIfaceVirt',
+					args   => [$if_ref],
 			);
 		}
 
@@ -405,6 +405,12 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 		{
 			require Zevenet::Net::Route;
 			&applyRoutes( "local", $if_ref );
+
+			&eload(
+					module => 'Zevenet::Net::Routing',
+					func   => 'applyRoutingDependIfaceVirt',
+					args   => ['add', $if_ref]
+			) if $eload;
 		}
 		else
 		{
