@@ -719,7 +719,10 @@ void StreamManager::onRequestEvent(int fd)
 					backend_connection.doConnect(*bck->
 								     address_info,
 								     bck->
-								     conn_timeout);
+									 conn_timeout,
+									 true,
+									 bck->
+									 nf_mark);
 				switch (op_state) {
 				case IO::IO_OP::OP_ERROR:{
 						zcu_log_print(LOG_NOTICE,
@@ -813,13 +816,6 @@ void StreamManager::onRequestEvent(int fd)
 					  backend_connection.getFileDescriptor
 					  ());
 
-			if (stream->backend_connection.getBackend()->nf_mark >
-			    0)
-				zcu_soc_set_somarkoption
-					(stream->backend_connection.getFileDescriptor
-					 (),
-					 stream->backend_connection.getBackend
-					 ()->nf_mark);
 			// Rewrite destination
 			if (stream->request.add_destination_header) {
 				std::string header_value =
@@ -1500,7 +1496,11 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 					backend_connection.doConnect(*bck->
 								     address_info,
 								     bck->
-								     conn_timeout);
+									 conn_timeout,
+									 true,
+									 bck->
+									 nf_mark
+									 );
 				switch (op_state) {
 				case IO::IO_OP::OP_ERROR:{
 						zcu_log_print(LOG_ERR,

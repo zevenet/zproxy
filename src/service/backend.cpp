@@ -241,7 +241,7 @@ void Backend::doMaintenance()
 		return;
 
 	Connection checkOut;
-	auto res = checkOut.doConnect(*address_info, 5, false);
+	auto res = checkOut.doConnect(*address_info, 5, false, this->nf_mark);
 
 	switch (res) {
 	case IO::IO_OP::OP_SUCCESS:{

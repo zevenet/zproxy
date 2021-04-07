@@ -514,7 +514,7 @@ void Connection::closeConnection()
 	}
 }
 
-IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
+IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async, int nf_mark)
 {
 	int result = -1;
 	if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
@@ -528,6 +528,10 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async)
 	if (LIKELY(async)) {
 		zcu_soc_set_socket_non_blocking(fd_);
 	}
+
+	if (nf_mark > 0)
+		zcu_soc_set_somarkoption(fd_,nf_mark);
+
 	else {
 		struct timeval timeout_
 		{

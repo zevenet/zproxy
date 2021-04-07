@@ -131,7 +131,7 @@ class Connection:public Descriptor
 
 	static int doAccept(int listener_fd);
 	IO::IO_OP doConnect(addrinfo & address, int timeout, bool async =
-			    true);
+				true, int nf_mark = 0);
 	IO::IO_OP doConnect(const std::string & af_unix_socket_path,
 			    int timeout);
 	bool isConnected();
