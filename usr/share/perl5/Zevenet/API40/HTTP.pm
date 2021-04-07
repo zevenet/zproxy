@@ -606,8 +606,10 @@ sub buildBackendAPIParams
 
 	foreach my $param ( keys %{ $translate } )
 	{
-		$out_b->{ $param } =~
-		  s/$translate->{$param}->{opt}/$translate->{$param}->{rep}/i;
+		foreach my $opt ( keys %{ $translate->{ $param } } )
+		{
+			$out_b->{ $param } =~ s/$opt/$translate->{$param}->{$opt}/i;
+		}
 	}
 
 	foreach my $param ( @bk_keys )

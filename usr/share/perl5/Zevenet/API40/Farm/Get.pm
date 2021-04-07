@@ -280,7 +280,7 @@ sub getAPIFarmBackends
 	}
 
 	# add static translations
-	$translate->{ status } = { "opt" => "fgdown", "rep" => "down" };
+	$translate->{ status } = { "fgdown" => "down", "undefined" => "up" };
 
 	&buildAPIParams( $out_b, \@api_keys, $translate );
 
