@@ -141,10 +141,29 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 410, desc => $desc, msg => $msg );
 	}
 
-	# Extend parameter checks
-	# Get current vip & vport
+	# Get current vip & vport & proto
 	my $vip   = $json_obj->{ vip }   // &getFarmVip( 'vip',  $farmname );
 	my $vport = $json_obj->{ vport } // &getFarmVip( 'vipp', $farmname );
+	my $proto = $json_obj->{ protocol } // &getL4FarmParam( 'proto', $farmname );
+
+	# Extend parameter checks
+	if ( exists $json_obj->{ protocol } and $json_obj->{ protocol } ne 'all' )
+	{
+		if ( $vport eq '*' )
+		{
+			my $msg = "Protocol can not be '$json_obj->{ protocol }' with port '$vport'";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	if ( exists $json_obj->{ vport } and $json_obj->{ vport } ne '*' )
+	{
+		if ( $proto eq 'all' )
+		{
+			my $msg = "Port can not be '$json_obj->{ vport }' with protocol '$proto'";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
 
 	# Modify vip and vport
 	if (    exists ( $json_obj->{ vip } )
@@ -153,7 +172,6 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 	{
 		require Zevenet::Net::Validate;
 		require Zevenet::Farm::L4xNAT::Config;
-		my $proto = $json_obj->{ protocol } // &getL4FarmParam( 'proto', $farmname );
 		if ( $status eq 'up' and !&validatePort( $vip, $vport, $proto, $farmname ) )
 		{
 			my $msg =
