@@ -245,6 +245,12 @@ sub delete_interface_virtual    # ( $virtual )
 		if ( $eload )
 		{
 			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['interface', 'stop', $if_ref->{ name }],
+			);
+
+			&eload(
 					module => 'Zevenet::Net::Routing',
 					func   => 'delRoutingDependIfaceVirt',
 					args   => [$if_ref],
@@ -254,12 +260,6 @@ sub delete_interface_virtual    # ( $virtual )
 		if ( $if_ref->{ status } eq 'up' )
 		{
 			# removing before in the remote node
-			&eload(
-					module => 'Zevenet::Cluster',
-					func   => 'runZClusterRemoteManager',
-					args   => ['interface', 'stop', $if_ref->{ name }],
-			) if ( $eload );
-
 			die if &delRoutes( "local", $if_ref );
 			die if &downIf( $if_ref, 'writeconf' );
 		}
