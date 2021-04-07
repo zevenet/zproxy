@@ -640,19 +640,23 @@ if ( $object eq 'interface' )
 	if ( $command eq 'start' )
 	{
 		include 'Zevenet::Cluster';
+		include 'Zevenet::Net::Routing';
 		require Zevenet::Farm::Config;
 
 		&disableInterfaceDiscovery( $if_ref );    # backup node only
 		$status = &addIp( $if_ref );
 		$status = &applyRoutes( "local", $if_ref ) if $status == 0;
+		&applyRoutingDependIfaceVirt( 'add', $if_ref ) if ( $if_ref->{ vini } ne '' );
 		&reloadFarmsSourceAddress();
 		exit $status;
 	}
 	elsif ( $command eq 'stop' )                  # flush ip
 	{
 		include 'Zevenet::Cluster';
+		include 'Zevenet::Net::Routing';
 		require Zevenet::Farm::Config;
 		$status = &delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
+		&applyRoutingDependIfaceVirt( 'del', $if_ref ) if ( $if_ref->{ vini } ne '' );
 		&reloadFarmsSourceAddress();
 		&enableInterfaceDiscovery( $if_ref );
 		exit $status;
