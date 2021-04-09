@@ -165,6 +165,23 @@ sub modify_l4xnat_farm    # ( $json_obj, $farmname )
 		}
 	}
 
+	# check ranges
+	if ( exists $json_obj->{ vport } )
+	{
+		my @ranges = split ( /,/, $json_obj->{ vport } );
+		foreach my $range ( @ranges )
+		{
+			if ( $range =~ /^(\d+):(\d+)$/ )
+			{
+				if ( $1 > $2 )
+				{
+					my $msg = "Range $range in virtual port is not a valid value.";
+					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
+			}
+		}
+	}
+
 	# Modify vip and vport
 	if (    exists ( $json_obj->{ vip } )
 		 or exists ( $json_obj->{ vport } )

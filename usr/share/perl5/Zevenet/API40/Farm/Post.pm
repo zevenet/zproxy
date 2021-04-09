@@ -147,6 +147,20 @@ sub new_farm    # ( $json_obj )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# check ranges
+	my @ranges = split ( /,/, $json_obj->{ vport } );
+	foreach my $range ( @ranges )
+	{
+		if ( $range =~ /^(\d+):(\d+)$/ )
+		{
+			if ( $1 > $2 )
+			{
+				my $msg = "Range $range in virtual port is not a valid value.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+
 	$json_obj->{ 'interface' } = &getInterfaceOfIp( $json_obj->{ 'vip' } );
 
 	my $status = 0;
