@@ -228,8 +228,11 @@ struct ListenerConfig:Counter < ListenerConfig > {
 	int to;			/* client time-out */
 	int has_pat;		/* was a URL pattern defined? */
 	regex_t url_pat;	/* pattern to match the request URL against */
-	std::string err403, err414,	/* error messages */
+	std::string err414,	/* error messages */
 		err500, err501, err503, errnossl;
+#if WAF_ENABLED
+	std::string errwaf;
+#endif
 	std::string nossl_url;	/* If a user goes to a https port with a http: url,
 				   redirect them to this url */
 	int nossl_redir;	/* Code to use for redirect (301 302 307) */

@@ -409,7 +409,10 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 	res->id = listener_id_counter++;
 	res->to = clnt_to;
 	res->rewr_loc = 1;
-	res->err414 = "Request URI is too long";
+#if WAF_ENABLED
+	res->errwaf = "The request was rejected by the server.";
+#endif
+	res->err414 = "Request URI is too long.";
 	res->err500 =
 		"An internal server error occurred. Please try again later.";
 	res->err501 = "This method may not be used.";
@@ -420,9 +423,6 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 	res->log_level = log_level;
 	res->alive_to = alive_to;
 	res->ignore100continue = ignore_100;
-#if WAF_ENABLED
-	res->err403 = "The request was rejected by the server.";
-#endif
 
 	res->ssl_forward_sni_server_name = false;
 	if (regcomp
@@ -486,6 +486,12 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 				conf_err("CheckURL bad pattern - aborted");
 			res->has_pat = 1;
 		}
+#if WAF_ENABLED
+		else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
+			lin[matches[1].rm_eo] = '\0';
+			res->errwaf = file2str(lin + matches[1].rm_so);
+		}
+#endif
 		else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			res->err414 = file2str(lin + matches[1].rm_so);
@@ -797,7 +803,10 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 	res->rewr_loc = 1;
 	res->name = name;
 	res->id = listener_id_counter++;
-	res->err414 = "Request URI is too long";
+#if WAF_ENABLED
+	res->errwaf = "The request was rejected by the server.";
+#endif
+	res->err414 = "Request URI is too long.";
 	res->err500 =
 		"An internal server error occurred. Please try again later.";
 	res->err501 = "This method may not be used.";
@@ -809,9 +818,6 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 	res->log_level = log_level;
 	res->alive_to = alive_to;
 	res->engine_id = engine_id;
-#if WAF_ENABLED
-	res->err403 = "The request was rejected by the server.";
-#endif
 	res->ssl_forward_sni_server_name = true;
 	if (regcomp
 	    (&res->verb, xhttp[0], REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -917,6 +923,12 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 				conf_err("CheckURL bad pattern - aborted");
 			res->has_pat = 1;
 		}
+#if WAF_ENABLED
+		else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
+			lin[matches[1].rm_eo] = '\0';
+			res->errwaf = file2str(lin + matches[1].rm_so);
+		}
+#endif
 		else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			res->err414 = file2str(lin + matches[1].rm_so);

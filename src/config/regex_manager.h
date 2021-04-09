@@ -86,6 +86,9 @@ namespace regex_set
 	static const Regex xHTTP("^[ \t]*xHTTP[ \t]+([012345])[ \t]*$");
 	static const Regex Client("^[ \t]*Client[ \t]+([1-9][0-9]*)[ \t]*$");
 	static const Regex CheckURL("^[ \t]*CheckURL[ \t]+\"(.+)\"[ \t]*$");
+#if WAF_ENABLED
+	static const Regex ErrWAF("^[ \t]*ErrWAF[ \t]+\"(.+)\"[ \t]*$");
+#endif
 	static const Regex Err414("^[ \t]*Err414[ \t]+\"(.+)\"[ \t]*$");
 	static const Regex Err500("^[ \t]*Err500[ \t]+\"(.+)\"[ \t]*$");
 	static const Regex Err501("^[ \t]*Err501[ \t]+\"(.+)\"[ \t]*$");

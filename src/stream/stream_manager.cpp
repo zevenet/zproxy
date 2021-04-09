@@ -589,7 +589,7 @@ void StreamManager::onRequestEvent(int fd)
 					 m_it.status);
 				http_manager::replyError(code,
 							 reasonPhrase(code),
-							 listener_config_.err403,
+							 listener_config_.errwaf,
 							 stream->client_connection);
 				zcu_log_print(LOG_WARNING,
 						  "(%lx) WAF rejected a request from %s",
@@ -1228,7 +1228,7 @@ void StreamManager::onResponseEvent(int fd)
 					http_manager::replyError(code,
 								 reasonPhrase
 								 (code),
-								 listener_config_.err403,
+								 listener_config_.errwaf,
 								 stream->client_connection);
 					zcu_log_print(LOG_WARNING,
 							  "(%lx) WAF rejected a request from %s",

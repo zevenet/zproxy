@@ -302,6 +302,10 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	Define  a  pattern  that  must be matched by each request sent to this listener. A request that does not match is considered to be illegal.  By default zproxy accepts all requests (i.e. the pattern is ".*"), but you are free to limit it to something more reasonable. Please note that this applies only to the request path - zproxy will still check that the request is syntactically correct.
 
+- **ErrWAF** "filename"
+
+	A file with the text to be displayed if the WAF reject a request.  Default: "The request was rejected by the server.".
+
 - **Err414** "filename"
 
 	A file with the text to be displayed if an Error 414 occurs.  Default: "Request URI is too long.".
