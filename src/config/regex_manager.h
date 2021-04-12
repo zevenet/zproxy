@@ -232,7 +232,7 @@ namespace regex_set
 	static const Regex
 		AUTHORIZATION
 		("Authorization:[ \t]*Basic[ \t]*\"?([^ \t]*)\"?[ \t]*");
-	static const Regex NfMark("^[ \t]*NfMark[ \t]+([1-9][0-9]*)[ \t]*$");
+	static const Regex NfMark("^[ \t]*NfMark[ \t](0x)?+([1-9][0-9]*)[ \t]*$");
 #if WAF_ENABLED
 	static const Regex WafRules("^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$");
 #endif
