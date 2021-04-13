@@ -1322,7 +1322,7 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 			  "(%lx) client %s request to %s timeout after %d seconds",
 			  pthread_self(),
 			  stream->client_connection.getPeerAddress(),
-			  stream->request.getUrl(),
+			  stream->request.path,
 			  stream->service_manager->listener_config_->to);
 #if USE_TIMER_FD_TIMEOUT
 	if (stream->timer_fd.isTriggered()) {
