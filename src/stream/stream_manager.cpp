@@ -1319,8 +1319,9 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
 	zcu_log_print(LOG_WARNING,
-			  "(%lx) client request to %s timeout after %d seconds",
+			  "(%lx) client %s request to %s timeout after %d seconds",
 			  pthread_self(),
+			  stream->client_connection.getPeerAddress(),
 			  stream->request.getUrl(),
 			  stream->service_manager->listener_config_->to);
 #if USE_TIMER_FD_TIMEOUT
