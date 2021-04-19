@@ -134,6 +134,7 @@ reload_proxy () {
 
 	deploy_tpl "$2" $PROXY_CFG_F
 
+	FILE="$PROXY_CFG_F"
 	URL="$PROXY_CTL_RELOAD_URL"
 	METHOD="$PROXY_CTL_RELOAD_METHOD"
 	apply_proxy_api $1

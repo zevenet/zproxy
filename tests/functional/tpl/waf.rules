@@ -1,0 +1,16 @@
+SecRuleEngine on
+#SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:1"
+SecDefaultAction "deny,log,logdata:'client:%{REMOTE_ADDR}',phase:1"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:2"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:3"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:4"
+
+SecDebugLog /tmp/debug.log 
+SecDebugLogLevel 4 
+
+SecRule REQUEST_URI "@beginsWith /deny" "\
+	id:2,\
+	msg:'asdf',\
+	phase:1,\
+	deny" #
+
