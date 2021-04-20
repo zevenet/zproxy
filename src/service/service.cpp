@@ -622,22 +622,30 @@ Backend *Service::getNextBackend()
 	switch (routing_policy) {
 	default:
 	case ROUTING_POLICY::ROUND_ROBIN:{
-			static unsigned long long seed;
+			static int backend_id = 0;
+			static int backend_counter = 0;
+
 			Backend *selected_backend = nullptr;
-		      for ([[maybe_unused]] auto & it:backend_set)
-			{
-				seed++;
-				selected_backend =
-					backend_set[seed %
-						    backend_set.size()];
-				if (selected_backend != nullptr) {
-					if (!checkBackendAvailable(selected_backend, enabled_priority))
-						selected_backend = nullptr;
-					else
-						break;
+			int bck_size = static_cast<int>(backend_set.size());
+
+			for (int i = 0; i < bck_size; i++) {
+				selected_backend = backend_set[backend_id];
+				backend_counter++;
+
+				// select the next backend
+				if (selected_backend->weight < backend_counter) {
+					backend_counter = 0;
+					backend_id++;
+
+					if (backend_id >= bck_size)
+						backend_id=0;
+
+					continue;
 				}
+
+				if (checkBackendAvailable(selected_backend, enabled_priority))
+					return selected_backend;
 			}
-			return selected_backend;
 		}
 
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS:{
