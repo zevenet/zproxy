@@ -1,0 +1,5 @@
+CMD=average
+CL=1
+REQUESTS=12
+METHOD="GET"
+URL="/"
