@@ -127,13 +127,13 @@ std::unique_ptr < global::StartOptions >
 			res->verbose_mode = true;
 			break;
 		case 'V':
-			zcu_log_print(LOG_INFO, "zproxy version %s",
-					  ZPROXY_VERSION);
-			zcu_log_print(LOG_INFO, "Build: %s %s",
-					  ZPROXY_HOST_INFO,
-					  ZPROXY_BUILD_INFO);
-			zcu_log_print(LOG_INFO, "%s", ZPROXY_COPYRIGHT);
-			exit(EXIT_FAILURE);
+			fprintf(stdout,
+				"zproxy version %s\n"
+				"Build: %s %s\n"
+				"%s\n",
+				ZPROXY_VERSION, ZPROXY_HOST_INFO,
+				ZPROXY_BUILD_INFO, ZPROXY_COPYRIGHT);
+			exit(EXIT_SUCCESS);
 		default:
 			zcu_log_print(LOG_ERR, "bad flag -%c", optopt);
 			return nullptr;
