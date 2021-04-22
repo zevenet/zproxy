@@ -2058,7 +2058,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 	res->conn_to = is_emergency ? 120 : be_connto;
 	res->alive = 1;
 	res->priority = 1;
-	res->weight = 5;
+	res->weight = 1;
 	res->connections = 0;
 	res->connection_limit = 0;
 	res->next = nullptr;

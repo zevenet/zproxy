@@ -71,6 +71,20 @@ class Service:public
 	int getEnabledBackendPriority ();
 
   /**
+   * @brief It modifies the backend index and get the following one
+   *
+   * This function checks if the index get the last possition and restart index in that case.
+   * It resets the connection counter too.
+   *
+   * It is used for the round robin algorithm
+   *
+   * @param is the current backend id passed by reference.
+   * @param is the counter passed by reference.
+   * @param is the number of backends in the service.
+   */
+    void getNextBackendIndex (int *bck_id, int *bck_counter, int bck_list_size);
+
+  /**
    * @brief It selects the backend to forward the incoming request
    *
    * This function check the backends of the service and it decides which will

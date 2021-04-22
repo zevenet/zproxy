@@ -607,6 +607,15 @@ int Service::getEnabledBackendPriority ()
 
 	return enabled_priority;
 }
+
+void Service::getNextBackendIndex (int *bck_id, int *bck_counter, int bck_list_size) {
+	*bck_counter = 0;
+	*bck_id += 1;
+
+	if (*bck_id >= bck_list_size)
+		*bck_id=0;
+}
+
 /** Selects the corresponding Backend to which the connection will be routed
  * according to the established balancing algorithm. */
 Backend *Service::getNextBackend()
@@ -630,22 +639,17 @@ Backend *Service::getNextBackend()
 
 			for (int i = 0; i < bck_size; i++) {
 				selected_backend = backend_set[backend_id];
-				backend_counter++;
 
-				// select the next backend
-				if (selected_backend->weight < backend_counter) {
-					backend_counter = 0;
-					backend_id++;
-
-					if (backend_id >= bck_size)
-						backend_id=0;
-
-					continue;
-				}
-
-				if (checkBackendAvailable(selected_backend, enabled_priority))
+				if (!checkBackendAvailable(selected_backend, enabled_priority))
+					getNextBackendIndex(&backend_id, &backend_counter, bck_size);
+				else {
+					backend_counter++;
+					if (selected_backend->weight <= backend_counter)
+						getNextBackendIndex(&backend_id, &backend_counter, bck_size);
 					return selected_backend;
+				}
 			}
+		break;
 		}
 
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS:{
@@ -665,6 +669,7 @@ Backend *Service::getNextBackend()
 				}
 			}
 			return selected_backend;
+			break;
 		}
 
 	case ROUTING_POLICY::RESPONSE_TIME:{
@@ -687,6 +692,7 @@ Backend *Service::getNextBackend()
 				}
 			}
 			return selected_backend;
+			break;
 		}
 
 	case ROUTING_POLICY::PENDING_CONNECTIONS:{
@@ -710,6 +716,7 @@ Backend *Service::getNextBackend()
 				}
 			}
 			return selected_backend;
+			break;
 		}
 	}
 	return getEmergencyBackend();
