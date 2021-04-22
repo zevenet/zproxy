@@ -49,7 +49,6 @@ void global::StartOptions::setCurrent(const global::StartOptions & options)
 	current.check_only = options.check_only;
 	current.loglevel = options.loglevel;
 	current.logoutput = options.logoutput;
-	current.verbose_mode = options.verbose_mode;
 	current.sync_is_enabled = options.sync_is_enabled;
 }
 
@@ -66,8 +65,7 @@ static void print_usage(const char *prog_name)
 		"  [ -p <PIDFILE> | --pid <PIDFILE> ]		Set the PID file path\n"
 		"  [ -c | --check ]				Check the configuration without launching it\n"
 		"  [ -l <LEVEL> | --log <LEVEL> ]		Set the syslog level\n"
-		"  [ -L <OUTPUT> | --log-output <OUTPUT> ]	Set the daemon logs output\n"
-		"  [ -v | --verbose ]				Run in verbose mode\n"
+		"  [ -L <OUTPUT> | --log-output <OUTPUT> ]	Set the daemon logs output: 0 syslog (default), 1 stdout, 2 stderr\n"
 		"  [ -V | --version ]				Print the proxy version\n",
 		prog_name, ZPROXY_VERSION, ZPROXY_COPYRIGHT, prog_name);
 }
@@ -81,21 +79,20 @@ static const struct option options[] = {
 	{.name = "check",.has_arg = 0,.val = 'c'},
 	{.name = "log",.has_arg = 1,.val = 'l'},
 	{.name = "log-output",.has_arg = 1,.val = 'L'},
-	{.name = "verbose",.has_arg = 0,.val = 'v'},
 	{.name = "version",.has_arg = 0,.val = 'V'},
 	{NULL},
 };
 
 std::unique_ptr < global::StartOptions >
 	global::StartOptions::parsePoundOption(int argc, char **argv,
-					       bool write_to_current)
+						bool write_to_current)
 {
 	auto res = std::make_unique < StartOptions > ();
 	int c;
 
 	while ((c =
 		getopt_long(argc, argv, "hDsf:cl:L:vVp:", options,
-			    NULL)) != -1) {
+				NULL)) != -1) {
 		switch (c) {
 		case 'h':
 			print_usage(argv[0]);
@@ -122,9 +119,6 @@ std::unique_ptr < global::StartOptions >
 		case 'L':
 			res->logoutput = atoi(optarg);
 			zcu_log_set_output(res->logoutput);
-			break;
-		case 'v':
-			res->verbose_mode = true;
 			break;
 		case 'V':
 			fprintf(stdout,

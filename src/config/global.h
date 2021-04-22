@@ -85,9 +85,6 @@ namespace global
 		bool sync_is_enabled
 		{
 		false};
-		bool verbose_mode
-		{
-		false};
 		int loglevel = zcu_log_level;
 		int logoutput = zcu_log_output;
 
