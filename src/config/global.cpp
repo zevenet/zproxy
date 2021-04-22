@@ -91,7 +91,7 @@ std::unique_ptr < global::StartOptions >
 	int c;
 
 	while ((c =
-		getopt_long(argc, argv, "hDsf:cl:L:vVp:", options,
+		getopt_long(argc, argv, "hDsf:cl:L:Vp:", options,
 				NULL)) != -1) {
 		switch (c) {
 		case 'h':
