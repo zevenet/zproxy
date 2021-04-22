@@ -382,8 +382,8 @@ std::string ListenerManager::handleTask(ctl::CtlTask & task)
 		}
 	case ctl::CTL_SUBJECT::CONFIG:{
 			if (task.command == ctl::CTL_COMMAND::UPDATE) {
-				reloadConfigFile();
-				return JSON_OP_RESULT::OK;
+				if (reloadConfigFile())
+					return JSON_OP_RESULT::OK;
 			}
 			break;
 		}
