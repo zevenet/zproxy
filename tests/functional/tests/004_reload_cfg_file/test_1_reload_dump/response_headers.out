@@ -1,6 +1,6 @@
 HTTP/1.0 200 OK
 Content-Type: text/html
-Content-Length: 764
+Content-Length: 747
 Expires: now
 Pragma: no-cache
 Server: zproxy/0.2.5-0

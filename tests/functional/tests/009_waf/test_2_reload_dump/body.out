@@ -4,7 +4,6 @@
     "https": true,
     "id": 0,
     "name": "env",
-    "object_ref": 0,
     "port": 80,
     "services": [
         {
@@ -23,7 +22,7 @@
                     "response-time": -1.0,
                     "status": "active",
                     "type": 0,
-                    "weight": 5
+                    "weight": 1
                 }
             ],
             "id": 0,

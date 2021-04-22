@@ -4,7 +4,6 @@
     "https": false,
     "id": 0,
     "name": "env",
-    "object_ref": 10,
     "port": 80,
     "services": [
         {
@@ -23,7 +22,7 @@
                     "response-time": "#######",
                     "status": "active",
                     "type": 0,
-                    "weight": 5
+                    "weight": 1
                 },
                 {
                     "address": "10.2.1.2",
@@ -39,7 +38,7 @@
                     "response-time": "#######",
                     "status": "active",
                     "type": 0,
-                    "weight": 5
+                    "weight": 1
                 }
             ],
             "id": 0,

@@ -561,7 +561,7 @@ print_report () {
 	if [[ "$3" == "" ]]; then error_param "output_file"; fi
 
 	# print stdout
-	echo "### Error in test '$1$2/'"
+	echo "### Error in test '$1/$2/'"
 	echo ""
 	if [[ -f $3 ]]; then
 		cat $3
