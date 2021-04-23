@@ -256,6 +256,23 @@ bool SSLConnectionManager::handleHandshake(const SSLContext & ssl_context,
 	return result;
 }
 
+static bool ssl_negotiate_ciphers(Connection &ssl_connection) {
+	ssl_connection.ssl_connected = true;
+	const SSL_CIPHER *cipherp = SSL_get_current_cipher(ssl_connection.ssl);
+	if (cipherp) {
+		auto buf = std::make_unique < char[] > (ZCU_DEF_BUFFER_SIZE);
+		auto buf_size = ZCU_DEF_BUFFER_SIZE;
+		SSL_CIPHER_description(cipherp, &buf[0], buf_size - 1);
+
+		zcu_log_print(
+			LOG_DEBUG,
+			"SSL: %s, %s REUSED, Ciphers: %s\n",
+			SSL_get_version(ssl_connection.ssl),
+			SSL_session_reused(ssl_connection.ssl) ? "" : "Not ", &buf[0]);
+	}
+	return true;
+}
+
 bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 					   Connection & ssl_connection,
 					   bool client_mode)
@@ -269,6 +286,16 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 	if (++ssl_connection.handshake_retries > 50) {
 		return false;
 	}
+
+	if (!client_mode) {
+		bool result = ssl_negotiate_ciphers(ssl_connection);
+		if (result) {
+			ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
+			ssl_connection.enableReadEvent();
+		}
+		return result;
+	}
+
 	ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_START;
 	ERR_clear_error();
 #if USE_SSL_BIO_BUFFER
@@ -348,23 +375,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 	}
 	else if (r == 1) {
 #endif
-		ssl_connection.ssl_connected = true;
-		const SSL_CIPHER *cipher =
-			SSL_get_current_cipher(ssl_connection.ssl);
-		if (cipher) {
-			auto buf =
-				std::make_unique < char[] >
-				(ZCU_DEF_BUFFER_SIZE);
-			auto buf_size = ZCU_DEF_BUFFER_SIZE;
-			SSL_CIPHER_description(cipher, &buf[0], buf_size - 1);
-
-			zcu_log_print(LOG_DEBUG,
-					  "SSL: %s, %s REUSED, Ciphers: %s\n",
-					  SSL_get_version(ssl_connection.ssl),
-					  SSL_session_reused
-					  (ssl_connection.ssl) ? "" : "Not ",
-					  &buf[0]);
-		}
+		ssl_negotiate_ciphers(ssl_connection);
 #ifdef DEBUG_PRINT_SSL_SESSION_INFO
 		SSL_SESSION *session = SSL_get_session(ssl_connection.ssl);
 		auto session_info = ssl::ossGetSslSessionInfo(session);
