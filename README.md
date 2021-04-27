@@ -28,6 +28,7 @@ Zproxy main features:
 	- [Backend](#backend)
 	- [Session](#session)
 - [API Description](#api-description)
+- [Other Binaries](#other-binaries)
 - [Benchmark](#benchmark)
 - [Contributing](#contributing)
 - [License](#license)
@@ -682,6 +683,8 @@ The following directives are available:
 
 *All request must be directed to the zproxy unix socket or to the control IP address and port. The response is going to be a JSON formatted response with all the information requested or the operation result.*
 
+### API Requests
+
 **Get the services status of the listener with the id "listener_id"**
 
 GET http://address:port/listener/<listener_id>/services
@@ -712,7 +715,177 @@ POST {field_name: value} http://address:port/listener/<listener_id>/service/<ser
 
 PATCH  http://address:port/config
 
-- Examples of the API usage
+
+### API status response parameters
+
+The following list of parameters are returned by the API after a GET request
+
+#### Global
+
+The global section defines global daemon configuration and information about the virtual entry
+
+- **3xx-code-hits** "integer"
+
+	It is the number of 3xx codes that the zproxy generated and responded to the clients. These responses don't come 
+from the backends.
+
+- **4xx-code-hits** "integer"
+
+	It is the number of 4xx codes that the zproxy generated and responded to the clients. These responses don't come 
+from the backends.
+
+- **5xx-code-hits** "integer"
+
+	It is the number of 5xx codes that the zproxy generated and responded to the clients. These responses don't come 
+from the backends.
+
+- **waf-hits** "integer"
+
+	It is the number of requests rejected by zproxy. They will be counted in *xxx-code-hits* depend on the response code.
+
+- **address** "string"
+
+	It is the IPv4/IPv6 address used by the zproxy to listen to HTTP requests. This parameter can be modified through a configuration file directive.
+
+- **connections** "integer"
+
+	It is the number of currently established connections that zproxy has established with the clients (on the VIP).
+	
+- **https** "bool"
+
+	It informs if the listener is configured with SSL. This parameter can be modified through a configuration file directive. 
+
+- **id** "integer"
+
+	It is the listener identifier.
+
+- **name** "string"
+
+	It is a friendly name for the listener. This parameter can be modified through a configuration file directive.
+	
+- **port** "integer"
+
+	It is the virtual port open in the system where zproxy is listening. This parameter can be modified through a configuration file directive.	
+	
+- **status** "string"
+
+	It informs about the listener status. It can be *active* or *down* (if it is disabled).	It can be modified through the API.
+	
+- **services** "service list"
+
+	It is a list of the service objects with their configuration and status.
+	
+	
+#### Service Object
+
+- **backends** "backend list"
+
+	It is a list of the backend objects with their configuration and status.
+
+- **id** "integer"
+
+	It is the service identifier.
+
+- **name** "string"
+
+	It is a friendly name for the service. This parameter can be modified through a configuration file directive.
+
+- **sessions** "session list"
+
+	It is a list of the session objects registered in zproxy.
+	
+- **status** "string"
+
+	It informs about the listener status. It can be *active* or *down* (if it is disabled).	It can be modified through the API.
+
+#### Session Object
+
+- **backend-id** "integer"
+
+	It is the backend id to which the session is pinned.
+
+- **id** "integer"
+
+	It is a unique identifier for the session.
+	
+- **last-seen** "integer"
+
+	It is the number of seconds since the last packet regarding this session was managed by zproxy.
+
+#### Backend Object
+
+- **2xx-code-hits** "integer"
+
+	It is the number of 2xx codes that the zproxy forwarded from the backend to the client.
+
+- **3xx-code-hits** "integer"
+
+	It is the number of 3xx codes that the zproxy forwarded from the backend to the client.
+
+- **4xx-code-hits** "integer"
+
+	It is the number of 4xx codes that the zproxy forwarded from the backend to the client.
+
+- **5xx-code-hits** "integer"
+
+	It is the number of 5xx codes that the zproxy forwarded from the backend to the client.
+	
+- **address** "string"
+
+	It is the IPv4/IPv6 of the backend. This parameter can be modified through a configuration file directive.
+	
+- **connect-time** "floating"
+
+	It is the average time that zproxy takes to connect with this backend.
+
+- **connections** "integer"
+
+	It is the number of currently established connections that zproxy has with this backend.
+
+- **connections-limit** "integer"
+
+	It is the number of maximum concurrent connections that zproxy will send to this backend. This parameter can be modified through a configuration file directive.
+	
+- **https** "bool"
+
+	It informs if the backend is configured with SSL. This parameter can be modified through a configuration file directive. 
+
+- **id** "integer"
+
+	It is the backend identifier.
+
+- **name** "string"
+
+	It is a friendly name for the backend. This parameter can be modified through a configuration file directive.
+
+- **pending-connections** "integer"
+
+	It is the number of connections that were sent to this backend and they are not accepted yet.
+
+- **port** "integer"
+
+	It is the port in the backend where zproxy will send the HTTP requests. This parameter can be modified through a configuration file directive.
+	
+- **response-time** "floating"
+
+	It is the average of seconds that a backend takes to respond a request
+	
+- **status** "string"
+
+	It informs about the backend status. It can be *active* or *down* (if it is disabled).	It can be modified through the API.
+	
+- **type** "integer"
+	
+	It informs about the kind of backend 0 (it's a remote backend) or 1 (it's a redirect).
+
+- **weight** "integer"
+
+	It is a value to select more a backend than others. This parameter can be modified through a configuration file directive.
+
+	
+	
+
+### Examples of the API usage
 
 **Reload current configuration file.**
 
@@ -721,83 +894,87 @@ curl -X PATCH  --unix-socket /tmp/zproxy.socket http://localhost/config
 [{"result":"ok"}]
 ```
 
-**Get all the services status.**
+**Get the status of a listener and its objects.**
 
-GET <http://localhost/listener/0/services>
+GET <http://localhost/listener/0
 
 ```bash
 curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/services
 {
-    "address": "0.0.0.0",
-    "port": 9999,
-    "services": [
+  "3xx-code-hits": 0,
+  "4xx-code-hits": 2,
+  "5xx-code-hits": 0,
+  "address": "0.0.0.0",
+  "connections": 0,
+  "https": false,
+  "id": 0,
+  "name": "env",
+  "port": 8080,
+  "services": [
+    {
+      "backends": [
         {
-            "backends": [
-                {
-                    "address": "192.168.0.253",
-                    "connect-time": 0.0,
-                    "connections": 0,
-                    "id": 1,
-                    "name": "bck_1",
-                    "pending-connections": 0,
-                    "port": 80,
-                    "response-time": -1.0,
-                    "status": "active",
-                    "weight": 5
-                },
-                {
-                    "address": "192.168.0.254",
-                    "connect-time": 0.0,
-                    "connections": 0,
-                    "id": 2,
-                    "name": "bck_2",
-                    "pending-connections": 0,
-                    "port": 80,
-                    "response-time": 0.007924,
-                    "status": "active",
-                    "weight": 6
-                }
-            ],
-            "id": 1,
-            "name": "srv1",
-            "sessions": [
+          "2xx-code-hits": 0,
+          "3xx-code-hits": 0,
+          "4xx-code-hits": 1,
+          "5xx-code-hits": 0,
+          "address": "127.0.0.1",
+          "connect-time": 0.004252,
+          "connections": 0,
+          "connections-limit": 0,
+          "https": false,
+          "id": 0,
+          "name": "bck_0",
+          "pending-connections": 0,
+          "port": 80,
+          "priority": 1,
+          "response-time": 0.000268,
+          "status": "active",
+          "type": 0,
+          "weight": 9
+        }
+      ],
+      "id": 0,
+      "name": "default",
+      "sessions": [
                 {"backend-id": 2,"id": "127.0.0.1","last-seen": 1540807787}
             ],
-            "status": "active"
-        },
+      "priority": 0,
+      "sessions": [],
+      "status": "active"
+    },
+    {
+      "backends": [
         {
-            "backends": [
-                {
-                    "address": "192.168.0.253",
-                    "connect-time": 0.0,
-                    "connections": 0,
-                    "id": 1,
-                    "name": "bck_1",
-                    "pending-connections": 0,
-                    "port": 80,
-                    "response-time": -1.0,
-                    "status": "active",
-                    "weight": 5
-                },
-                {
-                    "address": "192.168.0.254",
-                    "connect-time": 0.0,
-                    "connections": 0,
-                    "id": 2,
-                    "name": "bck_2",
-                    "pending-connections": 0,
-                    "port": 80,
-                    "response-time": -1.0,
-                    "status": "active",
-                    "weight": 6
-                }
-            ],
-            "id": 2,
-            "name": "srv2",
-            "sessions": [],
-            "status": "active"
+          "2xx-code-hits": 1,
+          "3xx-code-hits": 0,
+          "4xx-code-hits": 1,
+          "5xx-code-hits": 0,
+          "address": "127.0.0.1",
+          "connect-time": 0.003715,
+          "connections": 0,
+          "connections-limit": 0,
+          "https": false,
+          "id": 0,
+          "name": "bck_0",
+          "pending-connections": 0,
+          "port": 80,
+          "priority": 1,
+          "response-time": 0.001529,
+          "status": "active",
+          "type": 0,
+          "weight": 1
         }
-    ]
+      ],
+      "id": 1,
+      "name": "default",
+      "priority": 0,
+      "sessions": [],
+      "status": "active"
+    }
+  ],
+  "status": "active",
+  "waf-hits": 2
 }
 ```
 
@@ -852,6 +1029,8 @@ curl -s --unix-socket /tmp/zproxy.socket  http://localhost/debug
 ```
 curl -X PUT --data-ascii '{"id": "1", "name": "bck", "address": "127.0.0.1", "port": 8000, "weight": 5}'  --unix-socket /tmp/zproxy.socket http://localhost/listener/0/service/0/backends
 ```
+
+#### Other binaries
 
 Ctl:
 
