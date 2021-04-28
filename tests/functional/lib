@@ -101,7 +101,7 @@ stop_proxy_all () {
 restart_proxy () {
 	stop_proxy
 
-	ps aux | grep zproxy | grep -v grep >/dev/null 2>&1
+	ps aux | grep "$PROXY_BIN" | grep -v grep >/dev/null 2>&1
 	if [[ $? -eq 0 ]]; then error "The zproxy process does not finish properly"; fi
 
 	start_proxy $1
@@ -337,6 +337,15 @@ replace_test_out ()
 		BASE=$(echo $F | sed -E "s/.tmp$//")
 		echo "Renaming $BASE"
 		mv $F ${BASE}
+	done
+}
+
+rm_test_out ()
+{
+	for F in  `find $DIR/tests/ -name *.tmp`
+	do
+		echo "Removed $F"
+		rm $F
 	done
 }
 

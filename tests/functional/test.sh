@@ -9,8 +9,8 @@ if [[ $? -ne 0 ]]; then
 	exit 1
 fi
 
-TEST_TPL="$PWD/tpl"
-REPORT_F="$PWD/$DIR/report.tmp"
+TEST_TPL="$DIR/tpl"
+REPORT_F="$DIR/report.tmp"
 rm -f $REPORT_F
 
 TMP="$TMP_DIR/env2"
@@ -39,6 +39,7 @@ print_help_test () {
 	echo "	    the -b (benchmark) parameter executes only the benchmark tests, don't the functional ones"
 	echo "  * save: it overwrites the test output files which are used to validate the tests"
 	echo "  * diff: it looks for the error files of the last test execution"
+	echo "  * rm: it removes all .tmp files"
 	echo "  * bck_benchmark: it checks the maximum backend throughput"
 }
 
@@ -208,6 +209,9 @@ diff)
 	if [[ $? -ne 0 ]]; then
 		exit 1
 	fi
+	;;
+rm)
+	rm_test_out
 	;;
 save)
 	replace_test_out
