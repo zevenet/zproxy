@@ -1,4 +1,4 @@
-HTTP/1.0 403 Forbidden
+HTTP/1.0 401 Unauthorized
 Content-Type: text/html
 Content-Length: 19
 Expires: now

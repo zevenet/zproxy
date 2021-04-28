@@ -1,6 +1,6 @@
-HTTP/1.0 401 Unauthorized
+HTTP/1.0 200 OK
 Content-Type: text/html
-Content-Length: 40
+Content-Length: 640
 Expires: now
 Pragma: no-cache
 Server: zproxy/0.2.5-0
