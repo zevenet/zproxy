@@ -17,11 +17,6 @@ REQUESTS=10
 METHOD="GET"
 URL="/"
 #########################
-CMD=benchmark
-CL=1
-METHOD="GET"
-URL="/"
-#########################
 DESCRIPTION="Upload a file"
 CMD=curl
 CL=1
@@ -34,3 +29,13 @@ CMD=curl
 CL=1
 METHOD=GET
 URL=/download/file.txt
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
+#########################
+CMD=benchmark
+CL=1
+METHOD="GET"
+URL="/"

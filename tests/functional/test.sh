@@ -162,6 +162,10 @@ exec_all_test () {
 
 	for LOC_DIR in `ls $TEST_DIR`; do
 
+		if [ ! -d "$TEST_DIR/$LOC_DIR" ]; then
+			error "The directroy '$LOC_DIR' does not exist"
+		fi
+
 		cd $TEST_DIR/$LOC_DIR
 		exec_test "$LOC_DIR"
 		if [[ $? -ne 0 ]]; then
@@ -227,6 +231,10 @@ exec)
 		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
 		if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
 		shift;
+	fi
+
+	if [ ! -d "$2" ]; then
+		error "The directroy '$2' does not exist"
 	fi
 	cd $2
 	exec_test $2

@@ -1,4 +1,7 @@
 {
+    "3xx-code-hits": 0,
+    "4xx-code-hits": 0,
+    "5xx-code-hits": 5577,
     "address": "0.0.0.0",
     "connections": 10,
     "https": false,
@@ -9,14 +12,18 @@
         {
             "backends": [
                 {
+                    "2xx-code-hits": 13914,
+                    "3xx-code-hits": 0,
+                    "4xx-code-hits": 0,
+                    "5xx-code-hits": 0,
                     "address": "10.2.1.1",
                     "connect-time": "#######",
-                    "connections": 2,
+                    "connections": 1,
                     "connections-limit": 2,
                     "https": false,
                     "id": 0,
                     "name": "bck_0",
-                    "pending-connections": 0,
+                    "pending-connections": 1,
                     "port": 80,
                     "priority": 1,
                     "response-time": "#######",
@@ -25,6 +32,10 @@
                     "weight": 1
                 },
                 {
+                    "2xx-code-hits": 13872,
+                    "3xx-code-hits": 0,
+                    "4xx-code-hits": 0,
+                    "5xx-code-hits": 0,
                     "address": "10.2.1.2",
                     "connect-time": "#######",
                     "connections": 2,
@@ -48,5 +59,6 @@
             "status": "active"
         }
     ],
-    "status": "active"
+    "status": "active",
+    "waf-hits": 0
 }

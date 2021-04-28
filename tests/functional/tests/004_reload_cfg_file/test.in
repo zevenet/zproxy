@@ -6,3 +6,8 @@ CL=1
 REQUESTS=4
 METHOD="GET"
 URL="/"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
