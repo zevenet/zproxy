@@ -113,6 +113,7 @@ class Backend:public CtlObserver <
 	int response_timeout
 	{
 	};
+	Statistics::HttpResponseHits response_stats;
   /** SSL_CTX if the Backend is HTTPS. */
 	std::shared_ptr < SSL_CTX > ctx
 	{

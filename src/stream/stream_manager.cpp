@@ -447,7 +447,8 @@ void StreamManager::onRequestEvent(int fd)
 								 (http::
 								  Code::BadRequest),
 								 listener_config_.errnossl,
-								 stream->client_connection);
+								 stream->client_connection,
+								 listener_config_.response_stats);
 					clearStream(stream);
 				}
 			}
@@ -529,7 +530,8 @@ void StreamManager::onRequestEvent(int fd)
 							 validation::request_result_reason.at
 							 (valid),
 							 listener_config_.err501,
-							 stream->client_connection);
+							 stream->client_connection,
+							 listener_config_.response_stats);
 				this->clearStream(stream);
 				return;
 			}
@@ -547,7 +549,8 @@ void StreamManager::onRequestEvent(int fd)
 					 http::reasonPhrase(http::
 							    Code::BadRequest),
 					 listener_config_.err501,
-					 stream->client_connection);
+					 stream->client_connection,
+					 listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
 	case http_parser::PARSE_RESULT::INCOMPLETE:
@@ -566,6 +569,7 @@ void StreamManager::onRequestEvent(int fd)
 						     listener_config_.
 						     rules.get(), nullptr);
 		if (Waf::checkRequestWaf(*stream)) {
+			listener_config_.response_stats.increaseWaf();
 			if (stream->modsec_transaction->m_it.url != nullptr) {
 				zcu_log_print(LOG_WARNING,
 						  "(%lx) WAF redirected a request from %s",
@@ -590,7 +594,8 @@ void StreamManager::onRequestEvent(int fd)
 				http_manager::replyError(code,
 							 reasonPhrase(code),
 							 listener_config_.errwaf,
-							 stream->client_connection);
+							 stream->client_connection,
+							 listener_config_.response_stats);
 				zcu_log_print(LOG_WARNING,
 						  "(%lx) WAF rejected a request from %s",
 						  pthread_self(),
@@ -627,7 +632,8 @@ void StreamManager::onRequestEvent(int fd)
 					 request_result_reason.at(validation::
 								  REQUEST_RESULT::SERVICE_NOT_FOUND),
 					 listener_config_.err503,
-					 stream->client_connection);
+					 stream->client_connection,
+					 listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
 	}
@@ -667,7 +673,8 @@ void StreamManager::onRequestEvent(int fd)
 					 request_result_reason.at(validation::
 								  REQUEST_RESULT::BACKEND_NOT_FOUND),
 					 listener_config_.err503,
-					 stream->client_connection);
+					 stream->client_connection,
+					 listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
 	}
@@ -765,7 +772,8 @@ void StreamManager::onRequestEvent(int fd)
 							 request_result_reason.at(validation::
 										  REQUEST_RESULT::BACKEND_NOT_FOUND),
 							 listener_config_.err503,
-							 stream->client_connection);
+							 stream->client_connection,
+							 listener_config_.response_stats);
 							this->clearStream(stream);
 						}
 						stream->backend_connection.getBackend()->increaseConnection();
@@ -1004,7 +1012,8 @@ void StreamManager::onResponseEvent(int fd)
 							 http::reasonPhrase
 							 (http::Code::ServiceUnavailable),
 							 listener_config_.err503,
-							 stream->client_connection);
+							 stream->client_connection,
+							 listener_config_.response_stats);
 				clearStream(stream);
 			}
 			if (stream->backend_connection.ssl_connected) {
@@ -1191,7 +1200,8 @@ void StreamManager::onResponseEvent(int fd)
 						 reasonPhrase
 						 (http::Code::ServiceUnavailable),
 						 listener_config_.err503,
-						 stream->client_connection);
+						 stream->client_connection,
+						 listener_config_.response_stats);
 			this->clearStream(stream);
 			return;
 		}
@@ -1202,6 +1212,7 @@ void StreamManager::onResponseEvent(int fd)
 #if WAF_ENABLED
 		if (stream->modsec_transaction != nullptr) {
 			if (Waf::checkResponseWaf(*stream)) {
+				listener_config_.response_stats.increaseWaf();
 				if (stream->modsec_transaction->m_it.url !=
 				    nullptr) {
 					zcu_log_print(LOG_WARNING,
@@ -1229,7 +1240,8 @@ void StreamManager::onResponseEvent(int fd)
 								 reasonPhrase
 								 (code),
 								 listener_config_.errwaf,
-								 stream->client_connection);
+								 stream->client_connection,
+								 listener_config_.response_stats);
 					zcu_log_print(LOG_WARNING,
 							  "(%lx) WAF rejected a request from %s",
 							  pthread_self(),
@@ -1241,6 +1253,10 @@ void StreamManager::onResponseEvent(int fd)
 			}
 		}
 #endif
+		// increase stat for backend response code
+		auto code = static_cast < http::Code >
+						(stream->response.http_status_code);
+		stream->backend_connection.getBackend()->response_stats.increaseCode(code);
 
 		auto service =
 			static_cast <
@@ -1384,7 +1400,8 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 							    Code::GatewayTimeout),
 					 http::reasonPhrase(http::
 							    Code::GatewayTimeout),
-					 stream->client_connection);
+					 stream->client_connection,
+					 listener_config_.response_stats);
 		this->clearStream(stream);
 #if USE_TIMER_FD_TIMEOUT
 	}
@@ -1413,7 +1430,8 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 						 validation::request_result_reason.at
 						 (validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
 						 listener_config_.err503,
-						 stream->client_connection);
+						 stream->client_connection,
+						 listener_config_.response_stats);
 			this->clearStream(stream);
 			return;
 		}
@@ -1430,7 +1448,8 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 					 request_result_reason.at(validation::
 								  REQUEST_RESULT::BACKEND_NOT_FOUND),
 					 listener_config_.err503,
-					 stream->client_connection);
+					 stream->client_connection,
+					 listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
 	}
@@ -1461,7 +1480,8 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 					 request_result_reason.at(validation::
 								  REQUEST_RESULT::BACKEND_NOT_FOUND),
 					 listener_config_.err503,
-					 stream->client_connection);
+					 stream->client_connection,
+					 listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
 	}
@@ -1545,7 +1565,8 @@ void StreamManager::setStreamBackend(HttpStream * stream)
 							http_manager::replyError(http::Code::ServiceUnavailable,
 								validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 								listener_config_.err503,
-								stream->client_connection);
+								stream->client_connection,
+								listener_config_.response_stats);
 							this->clearStream(stream);
 						}
 						stream->backend_connection.getBackend()->increaseConnection();
@@ -1663,7 +1684,8 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 			http_manager::replyError(http::Code::ServiceUnavailable,
 								validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 								listener_config_.err503,
-								stream->client_connection);
+								stream->client_connection,
+								listener_config_.response_stats);
 			clearStream(stream);
 			return;
 		}
@@ -1737,7 +1759,8 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 								 (http::
 								  Code::ServiceUnavailable),
 								 listener_config_.err503,
-								 stream->client_connection);
+								 stream->client_connection,
+								 listener_config_.response_stats);
 					clearStream(stream);
 				}
 				if (stream->backend_connection.ssl_connected) {
@@ -2120,7 +2143,8 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 							 http::reasonPhrase
 							 (http::Code::BadRequest),
 							 listener_config_.errnossl,
-							 stream->client_connection);
+							 stream->client_connection,
+							 listener_config_.response_stats);
 					}
 				}
 				else {
@@ -2454,7 +2478,8 @@ void StreamManager::onServerDisconnect(HttpStream * stream)
 						 reasonPhrase
 						 (http::Code::InternalServerError),
 						 listener_config_.err503,
-						 stream->client_connection);
+						 stream->client_connection,
+						 listener_config_.response_stats);
 		}
 	}
 	clearStream(stream);
@@ -2544,6 +2569,7 @@ void StreamManager::onBackendConnectionError(HttpStream * stream)
 	//                           validation::request_result_reason.at(
 	//                               validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 	//                           listener_config_.err503,
-	//                           stream->client_connection);
+	//                           stream->client_connection
+	//                           listener_config_.response_stats);
 	//  this->clearStream(stream);
 }

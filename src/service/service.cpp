@@ -185,7 +185,7 @@ void Service::addBackend(std::shared_ptr < BackendConfig > backend_config,
 		emergency_backend_set.push_back(backend.release());
 	else
 		backend_set.push_back(backend.release());
-	// recalculate backend maximum priorit
+	// recalculate backend maximum priority
 	if (backend_config->priority >= max_backend_priority)
 		max_backend_priority = backend_config->priority;
 }

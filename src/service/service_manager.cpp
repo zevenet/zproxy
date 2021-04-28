@@ -178,6 +178,24 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 					root->emplace(JSON_KEYS::SERVICES,
 						      std::move
 						      (services_array));
+					root->emplace(JSON_KEYS::CODE_300_HITS,
+							  std::make_unique <
+							  JsonDataValue >
+							  (listener_config_->response_stats.code_3xx));
+					root->emplace(JSON_KEYS::CODE_400_HITS,
+							  std::make_unique <
+							  JsonDataValue >
+							  (listener_config_->response_stats.code_4xx));
+					root->emplace(JSON_KEYS::CODE_500_HITS,
+							  std::make_unique <
+							  JsonDataValue >
+							  (listener_config_->response_stats.code_5xx));
+#if WAF_ENABLED
+					root->emplace(JSON_KEYS::WAF_HITS,
+							  std::make_unique <
+							  JsonDataValue >
+							  (listener_config_->response_stats.waf));
+#endif
 					auto data = root->stringify();
 					return data;
 				}

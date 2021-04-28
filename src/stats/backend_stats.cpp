@@ -20,7 +20,6 @@
  */
 #include "backend_stats.h"
 
-
 void Statistics::BackendInfo::setAvgResponseTime(double latency)
 {
 	if (avg_response_time < 0) {

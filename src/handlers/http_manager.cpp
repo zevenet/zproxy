@@ -970,7 +970,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 
 void http_manager::replyError(http::Code code,
 			      const std::string & code_string,
-			      const std::string & str, Connection & target)
+				  const std::string & str,
+				  Connection & target,
+				  Statistics::HttpResponseHits & resp_stats)
 {
 	char caddr[200];
 
@@ -1015,6 +1017,8 @@ void http_manager::replyError(http::Code code,
 			written += sent;
 	} while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
 		 written < response_.length());
+
+	resp_stats.increaseCode(code);
 }
 
 bool http_manager::replyRedirect(HttpStream & stream,
@@ -1141,6 +1145,9 @@ bool http_manager::replyRedirect(int code, const std::string & url,
 		stream.client_connection.enableWriteEvent();
 		return false;
 	}
+
+	stream.service_manager->listener_config_->response_stats.increaseCode(static_cast < http::Code > (code));
+
 	return true;
 }
 

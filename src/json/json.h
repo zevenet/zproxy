@@ -71,7 +71,12 @@ namespace json
 		static const std::string PRIORITY;
 		static const std::string CONFIG;
 		static const std::string TYPE;
+		static const std::string CODE_200_HITS;
+		static const std::string CODE_300_HITS;
+		static const std::string CODE_400_HITS;
+		static const std::string CODE_500_HITS;
 #if WAF_ENABLED
+		static const std::string WAF_HITS;
 		static const std::string WAF;
 #endif
 

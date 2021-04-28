@@ -67,7 +67,12 @@ namespace json
 	const std::string JSON_KEYS::PRIORITY = "priority";
 	const std::string JSON_KEYS::CONFIG = "config";
 	const std::string JSON_KEYS::TYPE = "type";
+	const std::string JSON_KEYS::CODE_200_HITS = "2xx-code-hits";
+	const std::string JSON_KEYS::CODE_300_HITS = "3xx-code-hits";
+	const std::string JSON_KEYS::CODE_400_HITS = "4xx-code-hits";
+	const std::string JSON_KEYS::CODE_500_HITS = "5xx-code-hits";
 #if WAF_ENABLED
+	const std::string JSON_KEYS::WAF_HITS = "waf-hits";
 	const std::string JSON_KEYS::WAF = "waf";
 #endif
 

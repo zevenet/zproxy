@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include "../stats/counter.h"
+#include "../stats/backend_stats.h"
 
 #if WAF_ENABLED
 #include <modsecurity/modsecurity.h>
@@ -267,6 +268,7 @@ struct ListenerConfig:Counter < ListenerConfig > {
 	{
 	false};			/* enable SNI hostname forwarding to
 				   https backends, param ForwardSNI */
+	Statistics::HttpResponseHits response_stats;
 #if WAF_ENABLED
 	std::shared_ptr < modsecurity::ModSecurity > modsec {
 	nullptr};		/* API connector with Modsecurity */

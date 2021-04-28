@@ -24,6 +24,7 @@
 #include <chrono>
 #include "../util/time.h"
 #include "../util/common.h"
+#include "../http/http.h"
 
 namespace Statistics
 {
@@ -35,6 +36,42 @@ namespace Statistics
 		BP_ESTABLISHED_CONN,
 		BP_PENDING_CONN,
 		BP_TOTAL_CONN,
+	};
+
+	class HttpResponseHits
+	{
+		public:
+		std::atomic < int >code_2xx {0};
+		std::atomic < int >code_3xx {0};
+		std::atomic < int >code_4xx {0};
+		std::atomic < int >code_5xx {0};
+		std::atomic < int >others {0};
+#if WAF_ENABLED
+		std::atomic < int >waf {0};
+#endif
+
+		inline void increaseCode(http::Code codeName)
+		{
+			int code = helper::to_underlying(codeName) / 100;
+
+			if (code == 2) {
+				code_2xx++;
+			} else if (code == 3) {
+				code_3xx++;
+			} else if (code == 4) {
+				code_4xx++;
+			} else if (code == 5) {
+				code_5xx++;
+			} else {
+				others++;
+			}
+		}
+#if WAF_ENABLED
+		inline void increaseWaf()
+		{
+			waf++;
+		}
+#endif
 	};
 
 	class BackendInfo

@@ -128,11 +128,13 @@ class http_manager
    * @param listener_config is the ListenerConfig used to get the HTTPS
    * information.
    * @param ssl_manager is the SSLConnectionManager that handles the HTTPS
+   * @param httpResponseHits is the stats struct where increase the response code
    * client connection.
    */
 	static void replyError(http::Code code,
 			       const std::string & code_string,
-			       const std::string & str, Connection & target);
+				   const std::string & str, Connection & target,
+				   Statistics::HttpResponseHits & stats);
 
   /**
    * @brief Reply a redirect message with the configuration specified in the
