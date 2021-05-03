@@ -19,7 +19,6 @@
  *
  */
 #pragma once
-
 #include "../config/config_data.h"
 #include "../ctl/control_manager.h"
 #include "../ctl/ctl.h"
@@ -77,6 +76,11 @@ class Backend:public CtlObserver <
       public:
 	Backend();
 	~Backend();
+
+//	Service *service{nullptr};
+
+  /** This flag is used to update the service priority if the backend changed of status **/
+    std::atomic < bool > *status_flag {nullptr};
   /** Backend type using the Backend::BACKEND_TYPE enum. */
 	BACKEND_TYPE backend_type;
   /** BackendConfig parameters from the backend section. */

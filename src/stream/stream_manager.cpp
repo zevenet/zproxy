@@ -2544,12 +2544,9 @@ void StreamManager::onBackendConnectionError(HttpStream * stream)
 {
 	DEBUG_COUNTER_HIT(debug__::on_backend_connect_error);
 	auto & listener_config_ = *stream->service_manager->listener_config_;
-	if (stream->backend_connection.getBackend()->getEstablishedConn() == 0
-	    && stream->backend_connection.getBackend()->getPendingConn() ==
-	    0) {
-		stream->backend_connection.
-			getBackend()->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-		zcu_log_print(LOG_NOTICE,
+
+	stream->backend_connection.getBackend()->setStatus(BACKEND_STATUS::BACKEND_DOWN);
+	zcu_log_print(LOG_NOTICE,
 				  "(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
 				  pthread_self(),
 				  stream->backend_connection.
@@ -2560,7 +2557,6 @@ void StreamManager::onBackendConnectionError(HttpStream * stream)
 				  stream->backend_connection.
 				  getBackend()->backend_config->srv_name.
 				  data());
-	}
 	stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
 	setStreamBackend(stream);
 

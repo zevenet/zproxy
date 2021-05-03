@@ -105,18 +105,15 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 					if (value == JSON_KEYS::STATUS_ACTIVE
 					    || value ==
 					    JSON_KEYS::STATUS_UP) {
-						this->status =
-							BACKEND_STATUS::BACKEND_UP;
+						this->setStatus(BACKEND_STATUS::BACKEND_UP);
 					}
 					else if (value ==
 						 JSON_KEYS::STATUS_DOWN) {
-						this->status =
-							BACKEND_STATUS::BACKEND_DOWN;
+						this->setStatus(BACKEND_STATUS::BACKEND_DOWN);
 					}
 					else if (value ==
 						 JSON_KEYS::STATUS_DISABLED) {
-						this->status =
-							BACKEND_STATUS::BACKEND_DISABLED;
+						this->setStatus(BACKEND_STATUS::BACKEND_DISABLED);
 					}
 					zcu_log_print(LOG_NOTICE,
 							  "Set Backend %d %s",
@@ -263,11 +260,11 @@ void Backend::doMaintenance()
 					  this->backend_config->f_name.data(),
 					  this->backend_config->
 					  srv_name.data());
-			this->status = BACKEND_STATUS::BACKEND_UP;
+			this->setStatus(BACKEND_STATUS::BACKEND_UP);
 			break;
 		}
 	default:
-		this->status = BACKEND_STATUS::BACKEND_DOWN;
+		this->setStatus(BACKEND_STATUS::BACKEND_DOWN);
 	}
 }
 
@@ -278,7 +275,10 @@ bool Backend::isHttps()
 
 void Backend::setStatus(BACKEND_STATUS new_status)
 {
-	this->status = new_status;
+	if (this->status != new_status && status_flag != nullptr) {
+		this->status = new_status;
+		*status_flag = true;
+	}
 }
 
 BACKEND_STATUS Backend::getStatus()

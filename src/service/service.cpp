@@ -33,7 +33,7 @@ Backend *Service::getBackend(Connection & source, HttpRequest & request)
 		auto session = getSession(source, request);
 		if (session != nullptr) {
 			if (session->assigned_backend->getStatus() !=
-			    BACKEND_STATUS::BACKEND_UP) {
+				BACKEND_STATUS::BACKEND_UP) {
 				// invalidate all sessions backend is down
 				deleteBackendSessions
 					(session->assigned_backend->backend_id);
@@ -108,9 +108,9 @@ bool Service::setBackendHostInfo(Backend * backend)
 				char
 				*>(&
 				   ((reinterpret_cast <
-				     sockaddr_in6 *
-				     >(backend->address_info->ai_addr))->
-				    sin6_addr));
+					 sockaddr_in6 *
+					 >(backend->address_info->ai_addr))->
+					sin6_addr));
 			snprintf(lin, ZCU_DEF_BUFFER_SIZE - 1,
 				 "6-%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
 				 "02x%02x-%x", cp[0], cp[1], cp[2], cp[3],
@@ -155,6 +155,7 @@ void Service::addBackend(std::shared_ptr < BackendConfig > backend_config,
 			 int backend_id, bool emergency)
 {
 	auto backend = std::make_unique < Backend > ();
+	backend->status_flag = &this->update_piority;
 	backend->backend_config = backend_config;
 	backend->backend_id = backend_id;
 	backend->weight = backend_config->weight;
@@ -185,9 +186,6 @@ void Service::addBackend(std::shared_ptr < BackendConfig > backend_config,
 		emergency_backend_set.push_back(backend.release());
 	else
 		backend_set.push_back(backend.release());
-	// recalculate backend maximum priority
-	if (backend_config->priority >= max_backend_priority)
-		max_backend_priority = backend_config->priority;
 }
 
 bool Service::addBackend(JsonObject * json_object)
@@ -198,7 +196,7 @@ bool Service::addBackend(JsonObject * json_object)
 	else {			// Redirect
 		auto config = std::make_unique < Backend > ();
 		if (json_object->count(JSON_KEYS::ID) > 0 &&
-		    json_object->at(JSON_KEYS::ID)->isValue()) {
+			json_object->at(JSON_KEYS::ID)->isValue()) {
 			config->backend_id =
 				dynamic_cast <
 				JsonDataValue *
@@ -210,7 +208,7 @@ bool Service::addBackend(JsonObject * json_object)
 		}
 
 		if (json_object->count(JSON_KEYS::WEIGHT) > 0 &&
-		    json_object->at(JSON_KEYS::WEIGHT)->isValue()) {
+			json_object->at(JSON_KEYS::WEIGHT)->isValue()) {
 			config->weight =
 				dynamic_cast <
 				JsonDataValue *
@@ -222,7 +220,7 @@ bool Service::addBackend(JsonObject * json_object)
 		}
 
 		if (json_object->count(JSON_KEYS::NAME) > 0 &&
-		    json_object->at(JSON_KEYS::NAME)->isValue()) {
+			json_object->at(JSON_KEYS::NAME)->isValue()) {
 			config->name =
 				dynamic_cast <
 				JsonDataValue *
@@ -235,7 +233,7 @@ bool Service::addBackend(JsonObject * json_object)
 		}
 
 		if (json_object->count(JSON_KEYS::ADDRESS) > 0 &&
-		    json_object->at(JSON_KEYS::ADDRESS)->isValue()) {
+			json_object->at(JSON_KEYS::ADDRESS)->isValue()) {
 			config->address =
 				dynamic_cast <
 				JsonDataValue *
@@ -248,7 +246,7 @@ bool Service::addBackend(JsonObject * json_object)
 		}
 
 		if (json_object->count(JSON_KEYS::PORT) > 0 &&
-		    json_object->at(JSON_KEYS::PORT)->isValue()) {
+			json_object->at(JSON_KEYS::PORT)->isValue()) {
 			config->port =
 				dynamic_cast <
 				JsonDataValue *
@@ -301,20 +299,20 @@ Service::Service(ServiceConfig & service_config_)
 		this->cache_enabled = true;
 		http_cache = make_shared < HttpCache > ();
 		http_cache->cacheInit(&service_config.cache_content,
-				      service_config.cache_timeout,
-				      service_config.name,
-				      service_config.cache_size,
-				      service_config.cache_threshold,
-				      service_config.f_name,
-				      service_config.cache_ram_path,
-				      service_config.cache_disk_path);
+					  service_config.cache_timeout,
+					  service_config.name,
+					  service_config.cache_size,
+					  service_config.cache_threshold,
+					  service_config.f_name,
+					  service_config.cache_ram_path,
+					  service_config.cache_disk_path);
 		http_cache->cache_max_size = service_config.cache_max_size;
 	}
 #endif
 	// backend initialization
 	int backend_id = 0;
 	for (auto bck = service_config_.backends; bck != nullptr;
-	     bck = bck->next) {
+		 bck = bck->next) {
 		if (!bck->disabled) {
 			this->addBackend(bck, backend_id++);
 			// this->addBackend(bck->address, bck->port, backend_id++);
@@ -327,7 +325,7 @@ Service::Service(ServiceConfig & service_config_)
 		}
 	}
 	for (auto bck = service_config_.emergency; bck != nullptr;
-	     bck = bck->next) {
+		 bck = bck->next) {
 		if (!bck->disabled) {
 			this->addBackend(bck, backend_id++, true);
 			// this->addBackend(bck->address, bck->port, backend_id++);
@@ -351,19 +349,19 @@ bool Service::doMatch(HttpRequest & request)
 	0, static_cast < regoff_t > (request.path_length)};
 	for (auto m = service_config.url; m; m = m->next)
 		if (regexec(&m->pat, request.path, 1, &eol, REG_STARTEND) !=
-		    0)
+			0)
 			return false;
 
 	/* check for required headers */
 	for (auto m = service_config.req_head; m; m = m->next) {
 		for (found = i = 0;
-		     i < static_cast < int >(request.num_headers) && !found;
-		     i++) {
+			 i < static_cast < int >(request.num_headers) && !found;
+			 i++) {
 			eol.rm_so = 0;
 			eol.rm_eo = request.headers[i].line_size;
 			if (regexec
-			    (&m->pat, request.headers[i].name, 1, &eol,
-			     REG_STARTEND) == 0)
+				(&m->pat, request.headers[i].name, 1, &eol,
+				 REG_STARTEND) == 0)
 				found = 1;
 		}
 		if (!found)
@@ -373,12 +371,12 @@ bool Service::doMatch(HttpRequest & request)
 	/* check for forbidden headers */
 	for (auto m = service_config.deny_head; m; m = m->next) {
 		for (found = i = 0;
-		     i < static_cast < int >(request.num_headers); i++) {
+			 i < static_cast < int >(request.num_headers); i++) {
 			eol.rm_so = 0;
 			eol.rm_eo = request.headers[i].line_size;
 			if (regexec
-			    (&m->pat, request.headers[i].name, 1, &eol,
-			     REG_STARTEND) == 0)
+				(&m->pat, request.headers[i].name, 1, &eol,
+				 REG_STARTEND) == 0)
 				return false;
 		}
 	}
@@ -397,7 +395,7 @@ std::string Service::handleTask(ctl::CtlTask & task)
 	zcu_log_print(LOG_DEBUG, "%s():%d: service %d handling task",
 			  __FUNCTION__, __LINE__, id);
 	if (task.backend_id > -1) {
-	      for (auto backend:backend_set) {
+		  for (auto backend:backend_set) {
 			if (backend->isHandler(task))
 				return backend->handleTask(task);
 		}
@@ -417,7 +415,7 @@ std::string Service::handleTask(ctl::CtlTask & task)
 							JsonParser::parse
 							(task.data);
 						if (!deleteSession
-						    (*json_data))
+							(*json_data))
 							return JSON_OP_RESULT::ERROR;
 					}
 					else {
@@ -442,8 +440,8 @@ std::string Service::handleTask(ctl::CtlTask & task)
 							JsonParser::parse
 							(task.data);
 						if (!addSession
-						    (json_data.get(),
-						     backend_set))
+							(json_data.get(),
+							 backend_set))
 							return JSON_OP_RESULT::ERROR;
 						return JSON_OP_RESULT::OK;
 					}
@@ -452,7 +450,7 @@ std::string Service::handleTask(ctl::CtlTask & task)
 							JsonParser::parse
 							(task.data);
 						if (!addBackend
-						    (json_data.get()))
+							(json_data.get()))
 							return JSON_OP_RESULT::ERROR;
 						return JSON_OP_RESULT::OK;
 					}
@@ -472,9 +470,9 @@ std::string Service::handleTask(ctl::CtlTask & task)
 			case ctl::CTL_SUBJECT::STATUS:{
 					JsonObject status;
 					status.emplace(JSON_KEYS::STATUS,
-						       std::make_unique <
-						       JsonDataValue >
-						       (this->disabled ?
+							   std::make_unique <
+							   JsonDataValue >
+							   (this->disabled ?
 							JSON_KEYS::STATUS_DOWN
 							:
 							JSON_KEYS::STATUS_ACTIVE));
@@ -497,12 +495,12 @@ std::string Service::handleTask(ctl::CtlTask & task)
 			case ctl::CTL_SUBJECT::STATUS:{
 					std::unique_ptr < JsonObject >
 						status(JsonParser::parse
-						       (task.data));
+							   (task.data));
 					if (status == nullptr)
 						return JSON_OP_RESULT::ERROR;
 					if (status->
-					    at(JSON_KEYS::
-					       STATUS)->isValue()) {
+						at(JSON_KEYS::
+						   STATUS)->isValue()) {
 						auto value =
 							dynamic_cast <
 							JsonDataValue *
@@ -511,9 +509,9 @@ std::string Service::handleTask(ctl::CtlTask & task)
 							  get())
 							->string_value;
 						if (value ==
-						    JSON_KEYS::STATUS_ACTIVE
-						    || value ==
-						    JSON_KEYS::STATUS_UP) {
+							JSON_KEYS::STATUS_ACTIVE
+							|| value ==
+							JSON_KEYS::STATUS_UP) {
 							this->disabled =
 								false;
 						}
@@ -559,18 +557,18 @@ std::unique_ptr < JsonObject > Service::getServiceJson()
 {
 	auto root = std::make_unique < JsonObject > ();
 	root->emplace(JSON_KEYS::NAME,
-		      std::make_unique < JsonDataValue > (this->name));
+			  std::make_unique < JsonDataValue > (this->name));
 	root->emplace(JSON_KEYS::ID,
-		      std::make_unique < JsonDataValue > (this->id));
+			  std::make_unique < JsonDataValue > (this->id));
 	root->emplace(JSON_KEYS::PRIORITY,
-		      std::make_unique < JsonDataValue >
-		      (this->backend_priority));
+			  std::make_unique < JsonDataValue >
+			  (this->backend_priority));
 	root->emplace(JSON_KEYS::STATUS,
-		      std::make_unique < JsonDataValue >
-		      (this->disabled ? JSON_KEYS::
-		       STATUS_DISABLED : JSON_KEYS::STATUS_ACTIVE));
+			  std::make_unique < JsonDataValue >
+			  (this->disabled ? JSON_KEYS::
+			   STATUS_DISABLED : JSON_KEYS::STATUS_ACTIVE));
 	auto backends_array = std::make_unique < JsonArray > ();
-      for (auto backend:backend_set) {
+	  for (auto backend:backend_set) {
 		auto bck = backend->getBackendJson();
 		backends_array->emplace_back(std::move(bck));
 	}
@@ -579,11 +577,11 @@ std::unique_ptr < JsonObject > Service::getServiceJson()
 	return std::move(root);
 }
 
-bool Service::checkBackendAvailable(Backend *bck, int enabled_priority) {
+bool Service::checkBackendAvailable(Backend *bck) {
 
 	bool valid;
 	valid = ( bck->getStatus() != BACKEND_STATUS::BACKEND_UP
-		|| bck->priority > enabled_priority
+		|| bck->priority > backend_priority
 		|| bck->weight <= 0		/* This line maybe is not required */
 		|| bck->isConnectionLimit() /* This is an early check */
 		) ? false : true;
@@ -591,21 +589,53 @@ bool Service::checkBackendAvailable(Backend *bck, int enabled_priority) {
 	return valid;
 }
 
-int Service::getEnabledBackendPriority ()
-{
-	int enabled_priority = 1;
+std::vector < int > Service::sortBackendsByPrio() {
+	std::vector < int > sorted_index;
 
-	for (int priority_index = 1; priority_index <= enabled_priority;
-	     priority_index++) {
-	      for (auto & bck:backend_set) {
-			if (bck->priority == priority_index &&
-			    bck->getStatus() != BACKEND_STATUS::BACKEND_UP) {
-				enabled_priority++;
+	for (int index = 0; index < backend_set.size(); index++)
+	{
+		if (sorted_index.empty())
+			sorted_index.insert(sorted_index.begin(), index);
+		else {
+			for (int id = 0; id < sorted_index.size(); id++) {
+				if (backend_set[sorted_index[id]]->priority > backend_set[index]->priority ) {
+					sorted_index.insert(sorted_index.begin()+id, index);
+					break;
+				} else if (id == sorted_index.size()-1) { // last item and the greater
+					sorted_index.emplace_back(index);
+					break;
+				}
 			}
 		}
 	}
+	return sorted_index;
+}
 
-	return enabled_priority;
+void Service::updateBackendPriority() {
+
+	int enabled_priority = 1;
+	std::vector < int > sort_bcks;
+
+	if (!update_piority)
+		return;
+	update_piority = false;
+
+	if (backend_set.empty()) {
+		backend_priority = enabled_priority;
+		return;
+	}
+
+	sort_bcks = sortBackendsByPrio();
+	// set the minimum value
+	for (int index = 0; index < backend_set.size(); index++) {
+			if (backend_set[sort_bcks[index]]->priority <= enabled_priority &&
+				backend_set[sort_bcks[index]]->getStatus() != BACKEND_STATUS::BACKEND_UP) {
+				enabled_priority++;
+			} else
+				break;
+	}
+
+	backend_priority = enabled_priority;
 }
 
 void Service::getNextBackendIndex (int *bck_id, int *bck_counter, int bck_list_size) {
@@ -626,7 +656,7 @@ Backend *Service::getNextBackend()
 		return backend_set[0]->getStatus() !=
 			BACKEND_STATUS::BACKEND_UP ? nullptr : backend_set[0];
 
-	int enabled_priority = getEnabledBackendPriority();
+	updateBackendPriority();
 
 	switch (routing_policy) {
 	default:
@@ -640,7 +670,7 @@ Backend *Service::getNextBackend()
 			for (int i = 0; i < bck_size; i++) {
 				selected_backend = backend_set[backend_id];
 
-				if (!checkBackendAvailable(selected_backend, enabled_priority))
+				if (!checkBackendAvailable(selected_backend))
 					getNextBackendIndex(&backend_id, &backend_counter, bck_size);
 				else {
 					backend_counter++;
@@ -654,8 +684,8 @@ Backend *Service::getNextBackend()
 
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS:{
 			Backend *selected_backend = nullptr;
-		      for (auto & it:backend_set) {
-				if (!checkBackendAvailable(selected_backend, enabled_priority))
+			  for (auto & it:backend_set) {
+				if (!checkBackendAvailable(selected_backend))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
@@ -674,20 +704,20 @@ Backend *Service::getNextBackend()
 
 	case ROUTING_POLICY::RESPONSE_TIME:{
 			Backend *selected_backend = nullptr;
-		      for (auto & it:backend_set) {
-				if (!checkBackendAvailable(selected_backend, enabled_priority))
+			  for (auto & it:backend_set) {
+				if (!checkBackendAvailable(selected_backend))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
 				}
 				else {
 					if (selected_backend->getAvgLatency()
-					    < 0)
+						< 0)
 						return selected_backend;
 					if (it->getAvgLatency() *
-					    selected_backend->weight >
-					    selected_backend->getAvgLatency()
-					    * selected_backend->weight)
+						selected_backend->weight >
+						selected_backend->getAvgLatency()
+						* selected_backend->weight)
 						selected_backend = it;
 				}
 			}
@@ -698,20 +728,20 @@ Backend *Service::getNextBackend()
 	case ROUTING_POLICY::PENDING_CONNECTIONS:{
 			Backend *selected_backend = nullptr;
 
-		      for (auto & it:backend_set) {
-				if (!checkBackendAvailable(selected_backend, enabled_priority))
+			  for (auto & it:backend_set) {
+				if (!checkBackendAvailable(selected_backend))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
 				}
 				else {
 					if (selected_backend->getPendingConn()
-					    == 0)
+						== 0)
 						return selected_backend;
 					if (selected_backend->getPendingConn()
-					    * selected_backend->weight >
-					    it->getPendingConn() *
-					    selected_backend->weight)
+						* selected_backend->weight >
+						it->getPendingConn() *
+						selected_backend->weight)
 						selected_backend = it;
 				}
 			}
@@ -724,17 +754,17 @@ Backend *Service::getNextBackend()
 
 void Service::doMaintenance()
 {
-	HttpSessionManager::doMaintenance();
+    HttpSessionManager::doMaintenance();
       for (Backend * bck:this->backend_set) {
-		if (bck->backend_type != BACKEND_TYPE::REMOTE)
-			continue;
-		if (setBackendHostInfo(bck)) {
-			bck->doMaintenance();
-		}
-		if (bck->getStatus() == BACKEND_STATUS::BACKEND_DOWN) {
-			deleteBackendSessions(bck->backend_id);
-		}
-	}
+        if (bck->backend_type != BACKEND_TYPE::REMOTE)
+            continue;
+        if (setBackendHostInfo(bck)) {
+            bck->doMaintenance();
+        }
+        if (bck->getStatus() == BACKEND_STATUS::BACKEND_DOWN) {
+            deleteBackendSessions(bck->backend_id);
+        }
+    }
 #ifdef CACHE_ENABLED
 	if (this->cache_enabled) {
 		http_cache->doCacheMaintenance();
@@ -752,11 +782,11 @@ Backend *Service::getEmergencyBackend()
 	Backend *bck
 	{
 	nullptr};
-      for ([[maybe_unused]] auto & tmp:emergency_backend_set) {
+	  for ([[maybe_unused]] auto & tmp:emergency_backend_set) {
 		static uint64_t emergency_seed;
 		emergency_seed++;
 		bck = emergency_backend_set[emergency_seed %
-					    backend_set.size()];
+						backend_set.size()];
 		if (bck != nullptr) {
 			if (bck->getStatus() != BACKEND_STATUS::BACKEND_UP) {
 				bck = nullptr;
@@ -770,7 +800,7 @@ Backend *Service::getEmergencyBackend()
 
 Service::~Service()
 {
-      for (auto & bck:backend_set)
+	  for (auto & bck:backend_set)
 		delete bck;
 	//  ctl::ControlManager::getInstance()->deAttach(std::ref(*this));
 }

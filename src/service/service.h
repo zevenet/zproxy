@@ -19,7 +19,6 @@
  *
  */
 #pragma once
-
 #include "../config/config_data.h"
 #include "../connection/connection.h"
 #include "../ctl/ctl.h"
@@ -58,17 +57,16 @@ class Service:public
    * @param the current service priority, the backend one has to be lower or equal to this value.
    * @return is true if the backend is available, or false if it's not.
    */
-	bool checkBackendAvailable(Backend *bck, int enabled_priority);
+    bool checkBackendAvailable(Backend *bck);
 
-  /**
-   * @brief It get the current service priority.
+    /**
+   * @brief It sort the list of backend based on the priority
    *
-   * The service priority shows the number of backends that failed. This priority
-   * increases for each backend disabled/failed
+   * It returns a vector with the backend index ordered by backend priority
    *
-   * @return is an integer with the current service priority
+   * @return is the backend indexes vector
    */
-	int getEnabledBackendPriority ();
+   std::vector < int > sortBackendsByPrio();
 
   /**
    * @brief It modifies the backend index and get the following one
@@ -122,10 +120,12 @@ class Service:public
 	std::atomic < bool > disabled
 	{
 	false};
+	/** If a backend change of status, this flag is enabled
+	 * to update the service priority limit*/
+	std::atomic < bool > update_piority{false};
 	std::atomic < int > backend_priority
 	{
-	0};
-	int max_backend_priority = 0;
+	1};
   /** Service id. */
 	int id;
 	bool ignore_case;
@@ -148,6 +148,15 @@ class Service:public
       public:
   /** ServiceConfig from the Service. */
 	ServiceConfig & service_config;
+
+  /**
+   * @brief It updates the maximum backend priority for the service
+   *
+   * This values does as limit, the backends that have a priority as this
+   * o minor will entry in the active backend pool
+   *
+   */
+    void updateBackendPriority();
 
   /**
    * @brief Checks if we need a new backend or not.
