@@ -1,7 +1,7 @@
 {
     "3xx-code-hits": 0,
     "4xx-code-hits": 0,
-    "5xx-code-hits": 5577,
+    "5xx-code-hits": 6865,
     "address": "0.0.0.0",
     "connections": 10,
     "https": false,
@@ -12,18 +12,18 @@
         {
             "backends": [
                 {
-                    "2xx-code-hits": 13914,
+                    "2xx-code-hits": 17281,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
                     "address": "10.2.1.1",
                     "connect-time": "#######",
-                    "connections": 1,
+                    "connections": 2,
                     "connections-limit": 2,
                     "https": false,
                     "id": 0,
                     "name": "bck_0",
-                    "pending-connections": 1,
+                    "pending-connections": 0,
                     "port": 80,
                     "priority": 1,
                     "response-time": "#######",
@@ -32,13 +32,13 @@
                     "weight": 1
                 },
                 {
-                    "2xx-code-hits": 13872,
+                    "2xx-code-hits": 17327,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
                     "address": "10.2.1.2",
                     "connect-time": "#######",
-                    "connections": 2,
+                    "connections": 1,
                     "connections-limit": 2,
                     "https": false,
                     "id": 1,
@@ -54,7 +54,7 @@
             ],
             "id": 0,
             "name": "default",
-            "priority": 0,
+            "priority": 1,
             "sessions": [],
             "status": "active"
         }

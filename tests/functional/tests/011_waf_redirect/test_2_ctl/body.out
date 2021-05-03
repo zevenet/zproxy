@@ -34,7 +34,7 @@
             ],
             "id": 0,
             "name": "default",
-            "priority": 0,
+            "priority": 1,
             "sessions": [],
             "status": "active"
         }

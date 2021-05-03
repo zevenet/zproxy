@@ -1,0 +1,45 @@
+DESCRIPTION="Load balancing between backends with prio 1"
+CMD=average
+CL=1
+REQUESTS=12
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
+#########################
+DESCRIPTION="Disable one backend of prio 1 and the backend with prio 2 must go into to the backend pool"
+CMD=ctl
+METHOD="PATCH"
+BODY=ctl_down.json
+URL="/listener/0/service/0/backend/0/status"
+#########################
+CMD=average
+CL=1
+REQUESTS=12
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
+#########################
+DESCRIPTION="Enable the backend to recover the priority"
+CMD=ctl
+METHOD="PATCH"
+BODY=ctl_up.json
+URL="/listener/0/service/0/backend/0/status"
+#########################
+CMD=average
+CL=1
+REQUESTS=12
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"

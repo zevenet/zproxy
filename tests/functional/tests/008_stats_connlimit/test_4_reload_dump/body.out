@@ -1,9 +1,9 @@
 {
     "3xx-code-hits": 0,
     "4xx-code-hits": 0,
-    "5xx-code-hits": 109,
+    "5xx-code-hits": 80,
     "address": "0.0.0.0",
-    "connections": 8,
+    "connections": 9,
     "https": false,
     "id": 0,
     "name": "env",
@@ -12,7 +12,7 @@
         {
             "backends": [
                 {
-                    "2xx-code-hits": 184,
+                    "2xx-code-hits": 196,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
@@ -32,7 +32,7 @@
                     "weight": 1
                 },
                 {
-                    "2xx-code-hits": 135,
+                    "2xx-code-hits": 213,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
@@ -54,7 +54,7 @@
             ],
             "id": 0,
             "name": "default",
-            "priority": 0,
+            "priority": 1,
             "sessions": [],
             "status": "active"
         }

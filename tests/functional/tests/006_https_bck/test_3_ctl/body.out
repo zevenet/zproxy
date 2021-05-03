@@ -34,7 +34,7 @@
             ],
             "id": 0,
             "name": "virtualhost",
-            "priority": 0,
+            "priority": 1,
             "sessions": [],
             "status": "active"
         },
@@ -63,7 +63,7 @@
             ],
             "id": 1,
             "name": "url",
-            "priority": 0,
+            "priority": 1,
             "sessions": [],
             "status": "active"
         }
