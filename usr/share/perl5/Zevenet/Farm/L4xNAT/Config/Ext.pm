@@ -71,7 +71,8 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 			require Zevenet::Farm::L4xNAT::Config;
 			my $farm_ref = &getL4FarmStruct( $farm_name );
 			$value = "forward";
-			if ( $farm_ref->{ nattype } eq "dsr" or $farm_ref->{ nattype } eq "stlsdnat" )
+			if (    $farm_ref->{ nattype } eq "dsr"
+				 or $farm_ref->{ nattype } eq "stateless_dnat" )
 			{
 				$value = "input";
 			}

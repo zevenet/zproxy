@@ -200,14 +200,17 @@ sub setL4FarmParam
 			}
 
 			# take care of logging type
-			if (     ( $farm_ref->{ nattype } ne $value )
-				 and ( $value eq "dsr" or $value eq "stlsdnat" ) )
+			if ( $farm_ref->{ logs } eq "true" )
 			{
-				$addition = qq( , "log" : "input" );
-			}
-			else
-			{
-				$addition = qq( , "log" : "forward" );
+				if (     ( $farm_ref->{ nattype } ne $value )
+					 and ( $value eq "dsr" or $value eq "stlsdnat" ) )
+				{
+					$addition = qq( , "log" : "input" );
+				}
+				else
+				{
+					$addition = qq( , "log" : "forward" );
+				}
 			}
 		}
 		$parameters = qq(, "mode" : "$value" ) . $addition;
