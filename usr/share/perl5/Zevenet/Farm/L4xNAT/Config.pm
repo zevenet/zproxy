@@ -162,10 +162,9 @@ sub setL4FarmParam
 	{
 		$value = "snat"     if ( $value eq "nat" );
 		$value = "stlsdnat" if ( $value eq "stateless_dnat" );
-		$parameters = qq(, "mode" : "$value" );
 
 		# deactivate leastconn and persistence for ingress modes
-		if ( $value eq "dsr" || $value eq "stateless_dnat" )
+		if ( $value eq "dsr" || $value eq "stlsdnat" )
 		{
 			require Zevenet::Farm::L4xNAT::L4sd;
 			&setL4sdType( $farm_name, "none" );
@@ -186,16 +185,33 @@ sub setL4FarmParam
 			}
 		}
 
-		# take care of floating interfaces without masquerading
-		if ( $value eq "snat" && $eload )
+		if ( $eload )
 		{
 			my $farm_ref = &getL4FarmStruct( $farm_name );
-			&eload(
-					module => 'Zevenet::Net::Floating',
-					func   => 'setFloatingSourceAddr',
-					args   => [$farm_ref, undef],
-			);
+
+			# take care of floating interfaces without masquerading
+			if ( $value eq "snat" )
+			{
+				&eload(
+						module => 'Zevenet::Net::Floating',
+						func   => 'setFloatingSourceAddr',
+						args   => [$farm_ref, undef],
+				);
+			}
+
+			# take care of logging type
+			if (     ( $farm_ref->{ nattype } ne $value )
+				 and ( $value eq "dsr" or $value eq "stlsdnat" ) )
+			{
+				$addition = qq( , "log" : "input" );
+			}
+			else
+			{
+				$addition = qq( , "log" : "forward" );
+			}
 		}
+		$parameters = qq(, "mode" : "$value" ) . $addition;
+
 	}
 	elsif ( $param eq "vip" )
 	{

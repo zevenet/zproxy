@@ -62,8 +62,20 @@ sub setL4FarmParamExt    # ($param, $value, $farm_name)
 	if ( $param eq "logs" )
 	{
 		$srvparam = "log";
-		$value    = "forward" if ( $value eq "true" );
-		$value    = "none" if ( $value eq "false" );
+		if ( $value eq "false" )
+		{
+			$value = "none";
+		}
+		elsif ( $value eq "true" )
+		{
+			require Zevenet::Farm::L4xNAT::Config;
+			my $farm_ref = &getL4FarmStruct( $farm_name );
+			$value = "forward";
+			if ( $farm_ref->{ nattype } eq "dsr" or $farm_ref->{ nattype } eq "stlsdnat" )
+			{
+				$value = "input";
+			}
+		}
 	}
 	elsif ( $param eq "log-prefix" )
 	{
