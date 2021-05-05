@@ -77,6 +77,9 @@ Statistics::BackendInfo::~BackendInfo()
 void Statistics::BackendInfo::increaseConnection()
 {
 	established_conn++;
+	if (listener_stats != nullptr) {
+		listener_stats->total_connections++;
+	}
 }
 
 void Statistics::BackendInfo::setAvgTransferTime(const timeval & start_time)

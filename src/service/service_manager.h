@@ -50,6 +50,7 @@ class ServiceManager:public CtlObserver <
 	bool is_https_listener
 	{
 	false};
+	ListenerInfo conns_stats;
 	std::atomic < int > established_connection
 	{
 	0};

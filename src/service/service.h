@@ -236,4 +236,11 @@ class Service:public
 		return backend_set.size();
 	}
 	bool setBackendHostInfo(Backend * backend);
+
+	inline void initBackendStats(Statistics::ListenerInfo *listener_stats) {
+		for (auto & bck:backend_set) {
+			bck->listener_stats=listener_stats;
+		}
+	}
+
 };

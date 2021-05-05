@@ -107,6 +107,7 @@ bool ServiceManager::addService(ServiceConfig & service_config, int _id)
 {
 	auto service = new Service(service_config);
 	service->id = _id;
+	service->initBackendStats(&conns_stats);
 	services.push_back(service);
 	return true;
 }
@@ -162,8 +163,10 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 					root->emplace(JSON_KEYS::NAME,
 						      std::make_unique <
 						      JsonDataValue > (name));
-
-					auto sm = this->weak_from_this();
+					root->emplace(JSON_KEYS::PENDING_CONNS,
+							  std::make_unique <
+							  JsonDataValue >
+							  (established_connection - conns_stats.total_connections));
 					root->emplace(JSON_KEYS::CONNECTIONS,
 						      std::make_unique <
 						      JsonDataValue >

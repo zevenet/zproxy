@@ -77,8 +77,6 @@ class Backend:public CtlObserver <
 	Backend();
 	~Backend();
 
-//	Service *service{nullptr};
-
   /** This flag is used to update the service priority if the backend changed of status **/
     std::atomic < bool > *status_flag {nullptr};
   /** Backend type using the Backend::BACKEND_TYPE enum. */

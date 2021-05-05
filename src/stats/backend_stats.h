@@ -74,6 +74,14 @@ namespace Statistics
 #endif
 	};
 
+	class ListenerInfo
+	{
+		public:
+	  std::atomic < int > total_connections {0}; // sumatory of backend connections
+		//std::atomic < int > established_connection {0};
+	};
+
+
 	class BackendInfo
 	{
 	      protected:
@@ -85,6 +93,9 @@ namespace Statistics
 		  std::atomic < int >established_conn;
 		  std::atomic < int >total_connections;
 		  std::atomic < int >pending_connections;
+		  public:
+		  ListenerInfo *listener_stats {nullptr};
+		protected:
 		time_t current_time;
 		// TODO: TRANSFERENCIA BYTES/SEC (NO HACER)
 		// TODO: WRITE/READ TIME (TIEMPO COMPLETO)
@@ -108,14 +119,18 @@ namespace Statistics
 
 		inline void decreaseConnection()
 		{
-			if (established_conn.load() > 0)
+			if (established_conn.load() > 0) {
 				established_conn--;
+				if (listener_stats != nullptr && listener_stats->total_connections > 0)
+					listener_stats->total_connections--;
+			}
 		}
 
 		inline void increaseTotalConn()
 		{
-			if (total_connections.load() > 0)
+			if (total_connections.load() > 0) {
 				total_connections++;
+			}
 		}
 
 		inline void increaseConnTimeoutAlive()
