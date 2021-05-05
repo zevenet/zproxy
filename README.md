@@ -762,6 +762,10 @@ from the backends.
 - **name** "string"
 
 	It is a friendly name for the listener. This parameter can be modified through a configuration file directive.
+
+- **pending-connections** "integer"
+
+	It is the number of connections that zproxy has received but they are not established in any backend. It is the number of established connection in the vip substranting it the established connection in all backends of the farm.
 	
 - **port** "integer"
 
@@ -909,6 +913,7 @@ curl --unix-socket /tmp/zproxy.socket http://localhost/listener/0/services
   "https": false,
   "id": 0,
   "name": "env",
+  "pending-connections": 0,
   "port": 8080,
   "services": [
     {
