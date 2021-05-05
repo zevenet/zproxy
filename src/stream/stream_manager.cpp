@@ -164,7 +164,6 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 						(debug__::event_client_disconnect);
 					auto stream = cl_streams_set[fd];
 					if (stream == nullptr) {
-						char addr[150];
 						zcu_log_print(LOG_INFO,
 								  "Remote client host closed connection prematurely");
 						deleteFd(fd);
@@ -1297,9 +1296,6 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 		::close(fd);
 		return;
 	}
-	auto & listener_config_ = *stream->service_manager->listener_config_;
-	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)
 #if USE_TIMER_FD_TIMEOUT
 	    && stream->timer_fd.isTriggered()
@@ -1331,9 +1327,6 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 		::close(fd);
 		return;
 	}
-	auto & listener_config_ = *stream->service_manager->listener_config_;
-	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
 	zcu_log_print(LOG_WARNING,
 			  "(%lx) client %s request to %s timeout after %d seconds",
 			  pthread_self(),
@@ -2369,8 +2362,6 @@ void StreamManager::onClientDisconnect(HttpStream * stream)
 	if (stream == nullptr)
 		return;
 	DEBUG_COUNTER_HIT(debug__::on_client_disconnect);
-	auto & listener_config_ = *stream->service_manager->listener_config_;
-	//~ StreamDataLogger logger(stream, listener_config_);
 	clearStream(stream);
 }
 

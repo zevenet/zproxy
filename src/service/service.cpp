@@ -597,11 +597,11 @@ std::vector < int > Service::sortBackendsByPrio() {
 		if (sorted_index.empty())
 			sorted_index.insert(sorted_index.begin(), index);
 		else {
-			for (int id = 0; id < sorted_index.size(); id++) {
-				if (backend_set[sorted_index[id]]->priority > backend_set[index]->priority ) {
-					sorted_index.insert(sorted_index.begin()+id, index);
+			for (int index2 = 0; index2 < sorted_index.size(); index2++) {
+				if (backend_set[sorted_index[index2]]->priority > backend_set[index]->priority ) {
+					sorted_index.insert(sorted_index.begin()+index2, index);
 					break;
-				} else if (id == sorted_index.size()-1) { // last item and the greater
+				} else if (index2 == sorted_index.size()-1) { // last item and the greater
 					sorted_index.emplace_back(index);
 					break;
 				}
