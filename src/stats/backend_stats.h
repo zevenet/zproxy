@@ -78,7 +78,7 @@ namespace Statistics
 	{
 		public:
 	  std::atomic < int > total_connections {0}; // sumatory of backend connections
-		//std::atomic < int > established_connection {0};
+	  std::atomic < int > established_connection {0};
 	};
 
 

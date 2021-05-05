@@ -166,11 +166,11 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 					root->emplace(JSON_KEYS::PENDING_CONNS,
 							  std::make_unique <
 							  JsonDataValue >
-							  (established_connection - conns_stats.total_connections));
+							  (conns_stats.established_connection - conns_stats.total_connections));
 					root->emplace(JSON_KEYS::CONNECTIONS,
 						      std::make_unique <
 						      JsonDataValue >
-						      (established_connection));
+							  (conns_stats.established_connection));
 					auto services_array =
 						std::make_unique < JsonArray >
 						();

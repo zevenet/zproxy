@@ -51,9 +51,6 @@ class ServiceManager:public CtlObserver <
 	{
 	false};
 	ListenerInfo conns_stats;
-	std::atomic < int > established_connection
-	{
-	0};
   /** ServiceManager instance. */
 	static std::shared_ptr <
 		ServiceManager > &

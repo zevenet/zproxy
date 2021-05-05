@@ -290,7 +290,7 @@ void StreamManager::addStream(int fd,
 	stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
 					       EVENT_GROUP::CLIENT);
 	//increment connections
-	stream->service_manager->established_connection++;
+	stream->service_manager->conns_stats.established_connection++;
 	// Add requested header to the stream permanent header set, not cleared during
 	// the http stream lifetime
 	if (!listener_config.add_head.empty()) {
@@ -2360,7 +2360,7 @@ void StreamManager::clearStream(HttpStream * stream)
 	clear_stream++;
 #endif
 	DEBUG_COUNTER_HIT(debug__::on_clear_stream);
-	stream->service_manager->established_connection--;
+	stream->service_manager->conns_stats.established_connection--;
 	delete stream;
 }
 
