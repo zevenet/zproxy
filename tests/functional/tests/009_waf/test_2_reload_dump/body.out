@@ -7,6 +7,7 @@
     "https": true,
     "id": 0,
     "name": "env",
+    "pending-connections": 0,
     "port": 80,
     "services": [
         {

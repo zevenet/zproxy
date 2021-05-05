@@ -26,3 +26,11 @@ METHOD="GET"
 ############
 CMD=killwrk
 JOB=1
+############
+DESCRIPTION="wait for all counter will be reseted"
+CMD=wait
+TIMEOUT=3
+############
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
