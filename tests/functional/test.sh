@@ -248,7 +248,11 @@ bck_benchmark)
 	VHOST="$IP:80"
 	NS="$PROXY_NS"
 	msg "Measuring the throughput between client and backend... (this will take $BENCH_DELAY seconds) "
-	VAL=$(exec_benchmark)
+	BENCH_DIR="$TMP_DIR/bck_benchmark"
+	mkdir -p $BENCH_DIR
+	exec_benchmark $BENCH_DIR
+	VAL=$(cat $BENCH_DIR/benchmark.out.tmp)
+	rm -rf $BENCH_DIR
 	msg "The variable 'BENCH_WITHOUT_PROXY' should be set with the value '$VAL' in the file 'variables'"
 	stop_test
 	;;
