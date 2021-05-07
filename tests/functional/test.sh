@@ -193,7 +193,7 @@ exec_all_test () {
 	return $ERRORS
 }
 
-if [[ "$BENCH_WITHOUT_PROXY" == "" && "$1" != "bck_benchmark" ]]; then
+if [[ "$BENCH_WITHOUT_PROXY" == "" && "$1" =~ "exec|all" ]]; then
 	error "The variable 'BENCH_WITHOUT_PROXY' is not set. Please, execute '$0 bck_benchmark' and set the output value"
 fi
 
