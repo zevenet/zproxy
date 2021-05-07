@@ -3,6 +3,6 @@ Content-Type: text/html
 Content-Length: 1016
 Expires: now
 Pragma: no-cache
-Server: zproxy/0.2.5-0
+Server: zproxy/VERSION
 Cache-control: no-cache,no-store
 

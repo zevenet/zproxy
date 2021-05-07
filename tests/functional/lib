@@ -407,6 +407,7 @@ $RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
 
 	bash $CMD_F
 
+	mask_headers $HEAD_F
 	mask_out $OUT_F
 	pretty_json $OUT_F
 }
@@ -423,6 +424,12 @@ pretty_json () {
 			mv $TMP_JSON $OUT_F
 		fi
 	fi
+}
+
+mask_headers () {
+	if [[ "$1" == "" ]]; then error_param "file"; fi
+	local FILE=$1
+	sed -Ei 's/Server: zproxy\/.*$/Server: zproxy\/VERSION/g' $FILE
 }
 
 mask_out () {
