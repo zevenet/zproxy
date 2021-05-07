@@ -254,7 +254,9 @@ bck_benchmark)
 	mkdir -p $BENCH_DIR
 	exec_benchmark $BENCH_DIR
 	VAL=$(cat $BENCH_DIR/benchmark.out.bm)
+	cp $BENCH_DIR/benchmark.out.bm $DEFAULT_BCK_BENCH_PATH
 	msg "The variable 'BENCH_WITHOUT_PROXY' should be set with the value '$VAL' in the file 'variables'"
+	echo "The output was saved in $DEFAULT_BCK_BENCH_PATH"
 	stop_test
 	;;
 all)
