@@ -418,7 +418,7 @@ pretty_json () {
 	local TMP_JSON="$TMP_DIR/pretty.json"
 
 	if [[ -s $OUT_F ]]; then
-		cat $OUT_F | python -m json.tool > $TMP_JSON 2>/dev/null
+		cat $OUT_F | python3 -m json.tool > $TMP_JSON 2>/dev/null
 		if [[ -s $TMP_JSON ]]; then
 			mv $TMP_JSON $OUT_F
 		fi
