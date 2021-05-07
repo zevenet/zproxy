@@ -3,13 +3,15 @@
 DIR=$(dirname $0)
 
 cd $DIR
+DIR="$PWD"
+TEST_TPL="$DIR/tpl"
+
 source "$DIR/variables"
 if [[ $? -ne 0 ]]; then
 	echo "Error: The 'variables' file was not found. Please, copy the 'tpl/variables.ini' file to 'variables'"
 	exit 1
 fi
 
-TEST_TPL="$DIR/tpl"
 REPORT_F="$DIR/report.tmp"
 rm -f $REPORT_F
 
@@ -251,8 +253,7 @@ bck_benchmark)
 	BENCH_DIR="$TMP_DIR/bck_benchmark"
 	mkdir -p $BENCH_DIR
 	exec_benchmark $BENCH_DIR
-	VAL=$(cat $BENCH_DIR/benchmark.out.tmp)
-	rm -rf $BENCH_DIR
+	VAL=$(cat $BENCH_DIR/benchmark.out.bm)
 	msg "The variable 'BENCH_WITHOUT_PROXY' should be set with the value '$VAL' in the file 'variables'"
 	stop_test
 	;;
