@@ -163,25 +163,6 @@ Global directives may appear anywhere within the configuration file, though it i
         
 	Ignore Header Expect: 100-continue (default: 1, Ignored).  If 0 zproxy manages Expect: 100-continue headers.
 
-- **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
-        
-	Specify the routing policy. All the algorithms are weighted with all the weights set in each backend.
-
-	- **ROUND_ROBIN** use the round robin algorithm as a routing policy (used by default).
-
-	- **LEAST_CONNECTIONS** select the backend with least connections established
-                  using as a proportion the weights set.
-
-	- **RESPONSE_TIME** select the backend with the lowest response time using
-                  as a proportion the weights set.
-
-	- **PENDING_CONNECTIONS** select the backend with least pending connections
-                  using as a proportion the weights set.
-
-- **PinnedConnection**  0|1
-        
-	Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1, zproxy directly forwards all data without parsing or editing.
-
 - **CompressionAlgorithm** gzip|deflate
         
 	Specify the compression algorithm to use. If the client supports it and the response from the backend is not already compressed, zproxy applies the compression.
@@ -192,7 +173,7 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **Client** value
 
-	Specify for how long zproxy will wait for a client request (default: 10 seconds). After this long has passed without the client sending any data zproxy will close the connection. Set it higher if your clients time-out on a slow network or over-loaded server, lower if you start getting DOS attacks or run into problems with IE clients.  This value can be overridden for specific listeners.
+	Specify for how long zproxy will wait for a client request (default: 10 seconds). After this long has passed without the client sending any data zproxy will close the connection. Set it higher if your clients time-out on a slow network or over-loaded server, lower if you start getting DOS attacks or run into problems with IE clients.  This value can be overridden for specific lristeners.
 
 - **TimeOut** value
         
@@ -497,6 +478,25 @@ All configuration directives enclosed between Service and End are specific to a 
 	The request may not contain any header matching the given pattern.  Multiple HeadDeny directives may be defined per service, in which case all of them must be satisfied.
 
 	Please note: if the listener defined a HeadRemove directive, the matching headers are removed before the service matching is attempted.
+
+- **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
+        
+	Specify the routing policy. All the algorithms are weighted with all the weights set in each backend.
+
+	- **ROUND_ROBIN** use the round robin algorithm as a routing policy (used by default).
+
+	- **LEAST_CONNECTIONS** select the backend with least connections established
+                  using as a proportion the weights set.
+
+	- **RESPONSE_TIME** select the backend with the lowest response time using
+                  as a proportion the weights set.
+
+	- **PENDING_CONNECTIONS** select the backend with least pending connections
+                  using as a proportion the weights set.
+
+- **PinnedConnection**  0|1
+        
+	Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1, zproxy directly forwards all data without parsing or editing.
 
 - **DynScale** 0|1
         
