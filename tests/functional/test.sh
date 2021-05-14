@@ -29,7 +29,7 @@ if [[ $DEBUG -gt 0 ]]; then
 	start_debug
 fi
 print_help_test () {
-	echo "Usage: $0 [start|stop|save_out|bck_benchmark|exec [-dkfb] <test_dir>|all [-dfb]]"
+	echo "Usage: $0 [start|stop|save_out|bck_benchmark|benchmark_report|exec [-dkfb] <test_dir>|all [-dfb]]"
 	echo "  * all: it prepares the lab, launch all tests and remove the lab"
 	echo "	    the -d (debug) parameter stop the tests after each command and it wait an enter to continue"
 	echo "	    the -f (functional) parameter executes only the functional tests, don't the benchmark ones"
