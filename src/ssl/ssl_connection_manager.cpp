@@ -241,15 +241,6 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
     return false;
   }
 
-  if (!client_mode) {
-    bool result = ssl_negotiate_ciphers(ssl_connection);
-    if (result) {
-      ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_DONE;
-      ssl_connection.enableReadEvent();
-    }
-    return result;
-  }
-
   ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_START;
   ERR_clear_error();
 #if USE_SSL_BIO_BUFFER
