@@ -543,7 +543,8 @@ exec_benchmark() {
 	# Get percentage
 	NEW_BENCH=$(cat $TMP_F)
 	echo $NEW_BENCH >$BM_F
-	RESULT=$(perl -E "\$v=100*$NEW_BENCH/$BENCH_WITHOUT_PROXY;say int \$v;")
+
+	RESULT=$((100*$NEW_BENCH/$BENCH_WITHOUT_PROXY))
 	echo "$RESULT" >$TMP_F
 
 	if [[ ! -f $OUT_F ]]; then
@@ -625,13 +626,15 @@ create_benchmark_report () {
 	local BM=$(find . -name "*.new")
 	if [[ "$BM" != "" ]]; then
 		echo "Ideal throughput CLIENT - BACKEND: $BENCH_WITHOUT_PROXY" >$BENCH_REPORT
+		echo "(The following percents are regarding the ideal throughput)" >>$BENCH_REPORT
 		echo "" >>$BENCH_REPORT
-		echo "These percents are regarding the ideal throughput:" >>$BENCH_REPORT
 		for B in $BM; do
 			F=`echo $B | sed 's/.new//'`
-			OLD=`cat $F`
 			NEW=`cat $B`
-			echo "	$F: $OLD => $NEW" >>$BENCH_REPORT
+			BM_NEW=`cat ${F}.bm`
+			OLD=`cat $F`
+			BM_OLD=$(($OLD*$BENCH_WITHOUT_PROXY/100))
+			echo "   $F: $BM_OLD ($OLD%) => $BM_NEW ($NEW%)" >>$BENCH_REPORT
 		done
 
 		echo "A benchmark report has been generated in '$BENCH_REPORT'"
