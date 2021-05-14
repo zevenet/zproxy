@@ -544,7 +544,7 @@ exec_benchmark() {
 	NEW_BENCH=$(cat $TMP_F)
 	echo $NEW_BENCH >$BM_F
 
-	RESULT=$((100*$NEW_BENCH/$BENCH_WITHOUT_PROXY))
+	RESULT=$(perl -E "\$v=100*$NEW_BENCH/$BENCH_WITHOUT_PROXY;say int \$v;")
 	echo "$RESULT" >$TMP_F
 
 	if [[ ! -f $OUT_F ]]; then
@@ -633,7 +633,8 @@ create_benchmark_report () {
 			NEW=`cat $B`
 			BM_NEW=`cat ${F}.bm`
 			OLD=`cat $F`
-			BM_OLD=$(($OLD*$BENCH_WITHOUT_PROXY/100))
+			BM_OLD=$(perl -E "\$v=$OLD*$BENCH_WITHOUT_PROXY/100;say int \$v;")
+
 			echo "   $F: $BM_OLD ($OLD%) => $BM_NEW ($NEW%)" >>$BENCH_REPORT
 		done
 
