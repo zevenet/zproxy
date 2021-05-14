@@ -13,6 +13,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 REPORT_F="$DIR/report.tmp"
+BENCH_REPORT="$DIR/benchmark_report.tmp"
+
 rm -f $REPORT_F
 
 TMP="$TMP_DIR/env2"
@@ -43,6 +45,7 @@ print_help_test () {
 	echo "  * diff: it looks for the error files of the last test execution"
 	echo "  * rm: it removes all .tmp files"
 	echo "  * bck_benchmark: it checks the maximum backend throughput"
+	echo "  * benchmark_report: it creates a report about the benchmark in the path '$BENCH_REPORT'"
 }
 
 start_test () {
@@ -259,6 +262,9 @@ bck_benchmark)
 	msg "The variable 'BENCH_WITHOUT_PROXY' should be set with the value '$VAL' in the file 'variables'"
 	echo "The output was saved in $DEFAULT_BCK_BENCH_PATH"
 	stop_test
+	;;
+benchmark_report)
+	create_benchmark_report
 	;;
 all)
 	if [[ $2 =~ ^-[dfb]+$ ]]; then

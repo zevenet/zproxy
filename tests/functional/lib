@@ -620,6 +620,24 @@ print_report () {
 	echo "" >>$REPORT_F
 }
 
+create_benchmark_report () {
+	rm -f $BENCH_REPORT
+	local BM=$(find . -name "*.new")
+	if [[ "$BM" != "" ]]; then
+		echo "Ideal throughput CLIENT - BACKEND: $BENCH_WITHOUT_PROXY" >$BENCH_REPORT
+		echo "" >>$BENCH_REPORT
+		echo "These percents are regarding the ideal throughput:" >>$BENCH_REPORT
+		for B in $BM; do
+			F=`echo $B | sed 's/.new//'`
+			OLD=`cat $F`
+			NEW=`cat $B`
+			echo "	$F: $OLD => $NEW" >>$BENCH_REPORT
+		done
+
+		echo "A benchmark report has been generated in '$BENCH_REPORT'"
+	fi
+}
+
 find_diff_files () {
 
 	local TMP=$(find . -name "*.tmp")
