@@ -226,9 +226,9 @@ void Config::parse_file()
 				std::strtol(lin + matches[1].rm_so, nullptr,
 					    8);
 			if (errno == ERANGE || errno == EINVAL) {
-				zcu_log_print(LOG_ERR,
+				fprintf(stderr,
 						  "line %d: ControlMode config: %s - aborted",
-						  n_lin, strerror(errno));
+						  *n_lin, strerror(errno));
 				exit(1);
 			}
 		}
@@ -337,7 +337,7 @@ bool Config::init(const global::StartOptions & start_options)
 	// init configuration file lists.
 	f_name[0] = std::string(conf_file_name);
 	if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
-		zcu_log_print(LOG_ERR, "can't open open %s",
+		fprintf(stderr, "can't open open %s",
 				  conf_file_name.data());
 		return false;
 	}
@@ -369,7 +369,7 @@ bool Config::init(const global::StartOptions & start_options)
 	}
 
 	if (listeners == nullptr) {
-		zcu_log_print(LOG_ERR, "no listeners defined - aborted");
+		fprintf(stderr, "no listeners defined - aborted");
 		return false;
 	}
 
@@ -728,7 +728,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTP()
 			}
 			auto err = res->rules->loadFromUri(file.data());
 			if (err == -1) {
-				zcu_log_print(LOG_ERR,
+				fprintf(stderr,
 						  "error loading waf ruleset file %s: %s",
 						  file.data(),
 						  res->
@@ -852,7 +852,7 @@ std::shared_ptr < ListenerConfig > Config::parse_HTTPS()
 			}
 			auto err = res->rules->loadFromUri(file.data());
 			if (err == -1) {
-				zcu_log_print(LOG_ERR,
+				fprintf(stderr,
 						  "error loading waf ruleset file %s: %s",
 						  file.data(),
 						  res->
@@ -2090,7 +2090,7 @@ std::shared_ptr < BackendConfig > Config::parseBackend(const char *svc_name,
 				else {
 					// maybe the backend still not available, we set it as down;
 					res->alive = 0;
-					zcu_log_print(LOG_ERR,
+					zcu_log_print(LOG_WARNING,
 							  "%s line %d: Could not resolve backend host \"%s\".",
 							  f_name[cur_fin].data
 							  (), n_lin[cur_fin],
@@ -2506,7 +2506,7 @@ void Config::parseSession(std::weak_ptr < ServiceConfig > svc_spt)
 
 void Config::conf_err(const char *msg)
 {
-	zcu_log_print(LOG_ERR, "%s line %d: %s", f_name[cur_fin].data(),
+	fprintf(stderr, "%s line %d: %s\n", f_name[cur_fin].data(),
 			  n_lin[cur_fin], msg);
 	if (abort_on_error)
 		exit(EXIT_FAILURE);
@@ -2610,7 +2610,7 @@ void Config::include_dir(const char *conf_path)
 		cur_fin++;
 		f_name[cur_fin] = files[use];
 		if ((f_in[cur_fin] = fopen(files[use], "rt")) == nullptr) {
-			zcu_log_print(LOG_ERR,
+			fprintf(stderr,
 					  "%s line %d: Can't open included file %s",
 					  f_name[cur_fin].data(),
 					  n_lin[cur_fin], files[use]);
@@ -2654,7 +2654,7 @@ bool Config::init(const std::string & file_name)
 	// init configuration file lists.
 	f_name[0] = std::string(conf_file_name);
 	if ((f_in[0] = fopen(conf_file_name.data(), "rt")) == nullptr) {
-		zcu_log_print(LOG_ERR, "can't open open %s",
+		fprintf(stderr, "can't open open %s",
 				  conf_file_name.data());
 		return false;
 	}

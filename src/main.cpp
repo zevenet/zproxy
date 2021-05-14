@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		std::exit(EXIT_FAILURE);
 	auto parse_result = config.init(*start_options);
 	if (!parse_result) {
-		zcu_log_print(LOG_ERR,
+		fprintf(stderr,
 				  "error parsing configuration file %s",
 				  start_options->conf_file_name.data());
 		std::exit(EXIT_FAILURE);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 	// Syslog initialization
 	if (config.daemonize) {
 		if (!Environment::daemonize()) {
-			zcu_log_print(LOG_ERR, "error: daemonize failed");
+			fprintf(stderr, "error: daemonize failed");
 			closelog();
 			return EXIT_FAILURE;
 		}

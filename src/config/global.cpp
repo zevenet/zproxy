@@ -54,7 +54,7 @@ void global::StartOptions::setCurrent(const global::StartOptions & options)
 
 static void print_usage(const char *prog_name)
 {
-	fprintf(stderr,
+	fprintf(stdout,
 		"%s, high-performance multithreaded and event-driven reverse proxy and load balancer\n"
 		"Version %s %s\n"
 		"Usage: %s\n"
