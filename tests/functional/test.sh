@@ -148,6 +148,7 @@ exec_test () {
 			dev
 		fi
 
+		lookfor_segfault
 	done
 	rm "$PREF"*
 

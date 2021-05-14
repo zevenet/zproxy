@@ -68,6 +68,18 @@ catch_cmd () {
 }
 
 ## proxy actions
+lookfor_segfault () {
+	# May 14 08:30:58 lb zproxy: /home/cano/git/zproxy/build/bin/zproxy(+0x80635) [0x5618196cb635]
+	if [[ "$SYSLOG_ZPROXY_START" == "" ]]; then
+		SYSLOG_ZPROXY_START=`tac $SYSLOG | grep -m1 "zproxy start..."`
+	fi
+
+	LOGS_SEGFAULT=`grep -A10000 "$SYSLOG_ZPROXY_START" $SYSLOG | grep -E "$PROXY_BIN\(\+0x[0-9a-f]+\) \[0x[0-9a-f]+\]"`
+	if [[ "$LOGS_SEGFAULT" != "" ]]; then
+		echo "$LOGS_SEGFAULT"
+		error "There was an zproxy SEGFAULT"
+	fi
+}
 
 # If it receives a configuration file, it will be loaded
 start_proxy () {
@@ -76,16 +88,17 @@ start_proxy () {
 	fi
 
 	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
-
-	$CMD_LOC
-	wait $PROXY_GRACETIME
-
-	ps aux | grep zproxy | grep -v grep >/dev/null 2>&1
+	CMD_OUT=`$CMD_LOC 2>&1`
 	if [[ $? -ne 0 ]]; then
 		echo "command: $CMD_LOC"
-		$CMD_LOC
+		echo "$CMD_OUT"
 		error "The zproxy process couldn't start"
 	fi
+
+	wait $PROXY_GRACETIME
+
+	SYSLOG_ZPROXY_START=`tail -1 $SYSLOG`
+	lookfor_segfault
 }
 
 stop_proxy () {
@@ -374,9 +387,11 @@ exec_curl () {
 	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 
+	local EXTENDED_OUT="-w 'HTTP_VERSION: %{http_version}\n'"
 	local VHOST_LOC="$VHOST"
 	local H=""
 	local B=""
+	local FG=""
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
@@ -400,10 +415,14 @@ exec_curl () {
 	else
 		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
 	fi
+	if [[ "$BACKGROUND" -eq 1 ]]; then
+		FG="&"
+		EXTENDED_OUT=""
+	fi
 
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
-$RESOLV_VHOST -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' \
--D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F" > $CMD_F
+$RESOLV_VHOST -s -k --show-error $EXTENDED_OUT \
+-D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
 	bash $CMD_F
 
@@ -625,7 +644,7 @@ find_diff_errors () {
 	for F in $OUTPUT_FILES; do
 	    F="$DIR/$F"
 		if [[ -f "$F.tmp" ]]; then
-			diff $DIFF_OPT $F $F.tmp 2>&1
+			diff -w $DIFF_OPT $F $F.tmp 2>&1
 			if [[ $? -eq 0 ]]; then
 				rm $F.tmp;
 			else
