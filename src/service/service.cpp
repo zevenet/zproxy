@@ -685,7 +685,7 @@ Backend *Service::getNextBackend()
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS:{
 			Backend *selected_backend = nullptr;
 			  for (auto & it:backend_set) {
-				if (!checkBackendAvailable(selected_backend))
+				if (!checkBackendAvailable(it))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
@@ -705,7 +705,7 @@ Backend *Service::getNextBackend()
 	case ROUTING_POLICY::RESPONSE_TIME:{
 			Backend *selected_backend = nullptr;
 			  for (auto & it:backend_set) {
-				if (!checkBackendAvailable(selected_backend))
+				if (!checkBackendAvailable(it))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
@@ -729,7 +729,7 @@ Backend *Service::getNextBackend()
 			Backend *selected_backend = nullptr;
 
 			  for (auto & it:backend_set) {
-				if (!checkBackendAvailable(selected_backend))
+				if (!checkBackendAvailable(it))
 					continue;
 				if (selected_backend == nullptr) {
 					selected_backend = it;
