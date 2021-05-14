@@ -156,6 +156,7 @@ DESCRIPTION="Disable the backend 0 in the service 0"
 | HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'       |
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
+| BACKGROUND     | If this flag is set with **1** the request will be executed in background. The command **killwrk** can be defined to stop it |
 
 ```
 DESCRIPTION="it executes the curl command 'curl -X GET https//service.test/' in the client 1"
@@ -185,6 +186,7 @@ It executes the curls sequentially.
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | REQUESTS  | It is the number of times to execute the curl      |
+| BACKGROUND     | If this flag is set with **1** the request will be executed in background. The command **killwrk** can be defined to stop it |
 
 
 ```
@@ -213,7 +215,7 @@ This can be executed in bg to check the zproxy stats
 | TIMEOUT      | Time for the test | True
 | THREADS      | If this flag is set with **1** the request will use the HTTPS protocol | True
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
-| BACKGROUND     | If this flag is set with **1** the request will be executed in backgroun. The command **killwrk** can be defined to stop it |
+| BACKGROUND     | If this flag is set with **1** the request will be executed in background. The command **killwrk** can be defined to stop it |
 
 ```
 DESCRIPTION="it executes 10 concurrent connections in background to the URI https://vip:vport/"
