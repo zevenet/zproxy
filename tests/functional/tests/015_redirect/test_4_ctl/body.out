@@ -1,0 +1,61 @@
+{
+    "3xx-code-hits": 3,
+    "4xx-code-hits": 0,
+    "5xx-code-hits": 0,
+    "address": "0.0.0.0",
+    "connections": 0,
+    "https": false,
+    "id": 0,
+    "name": "env",
+    "pending-connections": 0,
+    "port": 80,
+    "services": [
+        {
+            "backends": [
+                {
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "type": 2
+                }
+            ],
+            "id": 0,
+            "name": "default",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "type": 2
+                }
+            ],
+            "id": 1,
+            "name": "append",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "type": 2
+                }
+            ],
+            "id": 2,
+            "name": "dynamic",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        }
+    ],
+    "status": "active",
+    "waf-hits": 0
+}

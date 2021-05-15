@@ -300,6 +300,7 @@ The following requests are available:
 | GET, POST, PUT, DELETE	| /status/`<code>`	| The server will respond with the code required. The possible codes are: 200, 201, 301, 302, 400, 401, 403, 404, 405, 500, 503
 | GET      					| /echo				| The server will add to its body the GET arguments
 | POST, PUT 				| /echo				| The server will return the body and content-type that the request send
+| GET 						| /headers			| The server will return the request headers in the body.
 | POST 						| /headers			| **TBI**.
 | DELETE					| /headers/`<header>`	| **TBI**. It deletes the "header" of the response
 | GET 						| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
