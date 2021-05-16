@@ -623,19 +623,30 @@ print_report () {
 
 create_benchmark_report () {
 	rm -f $BENCH_REPORT
-	local BM=$(find . -name "*.new")
+	local BM=$(find . -name "*.bm" | sort)
 	if [[ "$BM" != "" ]]; then
 		echo "Ideal throughput CLIENT - BACKEND: $BENCH_WITHOUT_PROXY" >$BENCH_REPORT
 		echo "(The following percents are regarding the ideal throughput)" >>$BENCH_REPORT
 		echo "" >>$BENCH_REPORT
 		for B in $BM; do
-			F=`echo $B | sed 's/.new//'`
-			NEW=`cat $B`
-			BM_NEW=`cat ${F}.bm`
+			BM_NEW=`cat $B`
+			F=`echo $B | sed 's/.bm//'`
 			OLD=`cat $F`
+
+			OK=1
+
+			if [[ -f "${F}.new" ]]; then
+				NEW=`cat $F.new`
+			elif [[ -f "${F}.tmp" ]]; then
+				NEW=`cat $F.tmp`
+				OK=0
+			else
+				NEW="$OLD"
+			fi
+
 			BM_OLD=$(perl -E "\$v=$OLD*$BENCH_WITHOUT_PROXY/100;say int \$v;")
 
-			echo "   $F: $BM_OLD ($OLD%) => $BM_NEW ($NEW%)" >>$BENCH_REPORT
+			echo "  passed=$OK $F: $BM_OLD ($OLD%) => $BM_NEW ($NEW%)" >>$BENCH_REPORT
 		done
 
 		echo "A benchmark report has been generated in '$BENCH_REPORT'"
