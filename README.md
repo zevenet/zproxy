@@ -352,7 +352,7 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	Add the defined header to the response passed to the clients. The header is added verbatim. Use multiple AddHeader directives if you need to add more than one header.
 
-- **RemoveResponseHead** " header pattern"
+- **RemoveResponseHead** "header pattern"
 
 	Remove  certain  headers  from  the outcomming response, the header sent by the backend is not sent to the client. All occurences of the matching specified header will be removed. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
@@ -361,8 +361,8 @@ Global directives may appear anywhere within the configuration file, though it i
 	Replace a header in request or response.
 
 		Example:
-		`ReplaceHeader  Request    ^Cookie:         ^COOKIESESSION=(.*)  COOKIEUSER=$1`
-		`ReplaceHeader  Response   ^X-Forward-For:  (.*)                 $1,10.24.5.89`
+		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
+		  ReplaceHeader  Response   "^X-Forward-For:"  "(.*)"                 "$1,10.24.5.89"
 
 - **RewriteLocation** 0|1|2
 
