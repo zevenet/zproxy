@@ -29,6 +29,9 @@
 #include <execinfo.h>
 #include <cassert>
 #include <sys/resource.h>
+#include <pcreposix.h>
+#include <ctype.h>
+#include <string.h>
 
 /****  LOG  ****/
 
@@ -277,5 +280,56 @@ zcu_buf_concat(struct zcu_buffer *buf, char *fmt, ...)
 	return 0;
 }
 
+/*
+ * It replaces a chain in the original string.
+ *    Returns :  1 if the function did some action
+ *               0 if it didn't do anything
+*/
+static inline int
+zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *match, char *replace_str)
+{
+	//memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
+	regmatch_t umtch[10];
+	char *chptr, *enptr, *srcptr;
+	umtch[0].rm_so = 0;
+	umtch[0].rm_eo = ori_len;
+	if (regexec(match, ori_str, 10, umtch, REG_STARTEND)) {
+		zcu_log_print(LOG_DEBUG,
+				  "String didn't match %.*s",
+				  ori_len,
+				  ori_str);
+		return 0;
+	}
+
+	zcu_log_print(LOG_DEBUG,
+			  "String matches %.*s",
+			  ori_len,
+			  ori_str);
+	chptr = buf;
+	enptr = buf + ZCU_DEF_BUFFER_SIZE - 1;
+	*enptr = '\0';
+	srcptr = replace_str;
+	for (; *srcptr && chptr < enptr - 1;) {
+		if (srcptr[0] == '$' && srcptr[1] == '$') {
+			*chptr++ = *srcptr++;
+			srcptr++;
+		}
+		if (srcptr[0] == '$' && isdigit(srcptr[1])) {
+			if (chptr + umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so> enptr - 1)
+				break;
+			memcpy(chptr, ori_str + umtch[srcptr[1] - 0x30].rm_so,
+				   umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so);
+			chptr += umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr [1] - 0x30].rm_so;
+			srcptr += 2;
+			continue;
+		}
+		*chptr++ = *srcptr++;
+	}
+	*chptr++ = '\0';
+
+	ori_str = chptr;
+
+	return 1;
+}
 
 #endif /* _ZCUTILS_H_ */

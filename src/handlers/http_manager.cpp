@@ -189,6 +189,7 @@ void http_manager::setBackendCookie(Service * service, HttpStream * stream)
 
 validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 {
+	char buf[ZCU_DEF_BUFFER_SIZE];
 	auto & listener_config_ = *stream.service_manager->listener_config_;
 	HttpRequest & request = stream.request;
 	regmatch_t eol {
@@ -261,97 +262,21 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 			eol.rm_eo = request.headers[i].line_size;
 			if (::regexec(&m->name, request.headers[i].name, 1,
 				      &eol, REG_STARTEND) == 0) {
-				auto buf =
-					std::make_unique < char[] >
-					(ZCU_DEF_BUFFER_SIZE);
-				memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
-				regmatch_t umtch[10];
-				char *chptr, *enptr, *srcptr;
-				umtch[0].rm_so = 0;
-				umtch[0].rm_eo = request.headers[i].value_len;
-				if (regexec
-				    (&m->match, request.headers[i].value, 10,
-				     umtch, REG_STARTEND)) {
-					zcu_log_print(LOG_DEBUG,
-							  "RequestHeader didn't match %.*s",
-							  request.
-							  headers
-							  [i].line_size,
-							  request.
-							  headers[i].name);
-					break;
-				}
-				else {
-					zcu_log_print(LOG_DEBUG,
-							  "RequestHeader matches %.*s",
-							  request.
-							  headers
-							  [i].line_size,
-							  request.
-							  headers[i].name);
-					chptr = buf.get();
-					enptr = buf.get() +
-						ZCU_DEF_BUFFER_SIZE - 1;
-					*enptr = '\0';
-					srcptr = const_cast <
-						char *>(m->replace.data());
-					for (; *srcptr && chptr < enptr - 1;) {
-						if (srcptr[0] == '$'
-						    && srcptr[1] == '$') {
-							*chptr++ = *srcptr++;
-							srcptr++;
-						}
-						if (srcptr[0] == '$'
-						    && isdigit(srcptr[1])) {
-							if (chptr +
-							    umtch[srcptr[1] -
-								  0x30].rm_eo
-							    -
-							    umtch[srcptr[1] -
-								  0x30].rm_so
-							    > enptr - 1)
-								break;
-							memcpy(chptr,
-							       request.headers
-							       [i].value +
-							       umtch[srcptr[1]
-								     -
-								     0x30].rm_so,
-							       umtch[srcptr[1]
-								     -
-								     0x30].rm_eo
-							       -
-							       umtch[srcptr[1]
-								     -
-								     0x30].rm_so);
-							chptr += umtch[srcptr
-								       [1] -
-								       0x30].rm_eo
-								-
-								umtch[srcptr
-								      [1] -
-								      0x30].rm_so;
-							srcptr += 2;
-							continue;
-						}
-						*chptr++ = *srcptr++;
-					}
-					*chptr++ = '\0';
 
+				if ( zcu_str_replace_regexp(buf,request.headers[i].value,
+					request.headers[i].value_len, &m->match, const_cast<char *>(m->replace.c_str())) ){
 					auto new_header_value =
-						std::
-						string(request.headers[i].
+						std::string(request.headers[i].
 						       name,
 						       request.headers
 						       [i].name_len);
 					new_header_value += ": ";
-					new_header_value += buf.get();
+					new_header_value += buf;
 					request.addHeader(new_header_value);
 					request.headers[i].header_off = true;
 				}
 			}
 		}
-
 		if (request.headers[i].header_off)
 			continue;
 
@@ -537,6 +462,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 	auto & listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast < Service * >(stream.request.getService());
 	HttpResponse & response = stream.response;
+	char buf[ZCU_DEF_BUFFER_SIZE];
 
 	/* If the response is 100 continue we need to enable chunked transfer. */
 	if (response.http_status_code < 200) {
@@ -579,84 +505,9 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 			eol.rm_eo = response.headers[i].line_size;
 			if (::regexec(&m->name, response.headers[i].name, 1,
 				      &eol, REG_STARTEND) == 0) {
-				auto buf =
-					std::make_unique < char[] >
-					(ZCU_DEF_BUFFER_SIZE);
-				memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
-				regmatch_t umtch[10];
-				char *chptr, *enptr, *srcptr;
-				umtch[0].rm_so = 0;
-				umtch[0].rm_eo =
-					response.headers[i].value_len;
-				if (regexec
-				    (&m->match, response.headers[i].value, 10,
-				     umtch, REG_STARTEND)) {
-					zcu_log_print(LOG_DEBUG,
-							  "ResponseHeader didn't match %.*s",
-							  response.
-							  headers
-							  [i].line_size,
-							  response.
-							  headers[i].name);
-					break;
-				}
-				else {
-					zcu_log_print(LOG_DEBUG,
-							  "ResponseHeader matches %.*s",
-							  response.
-							  headers
-							  [i].line_size,
-							  response.
-							  headers[i].name);
-					chptr = buf.get();
-					enptr = buf.get() +
-						ZCU_DEF_BUFFER_SIZE - 1;
-					*enptr = '\0';
-					srcptr = const_cast <
-						char *>(m->replace.data());
-					for (; *srcptr && chptr < enptr - 1;) {
-						if (srcptr[0] == '$'
-						    && srcptr[1] == '$') {
-							*chptr++ = *srcptr++;
-							srcptr++;
-						}
-						if (srcptr[0] == '$'
-						    && isdigit(srcptr[1])) {
-							if (chptr +
-							    umtch[srcptr[1] -
-								  0x30].rm_eo
-							    -
-							    umtch[srcptr[1] -
-								  0x30].rm_so
-							    > enptr - 1)
-								break;
-							memcpy(chptr,
-							       response.headers
-							       [i].value +
-							       umtch[srcptr[1]
-								     -
-								     0x30].rm_so,
-							       umtch[srcptr[1]
-								     -
-								     0x30].rm_eo
-							       -
-							       umtch[srcptr[1]
-								     -
-								     0x30].rm_so);
-							chptr += umtch[srcptr
-								       [1] -
-								       0x30].rm_eo
-								-
-								umtch[srcptr
-								      [1] -
-								      0x30].rm_so;
-							srcptr += 2;
-							continue;
-						}
-						*chptr++ = *srcptr++;
-					}
-					*chptr++ = '\0';
 
+				if ( zcu_str_replace_regexp(buf,response.headers[i].value,
+					response.headers[i].value_len, &m->match, const_cast<char *>(m->replace.c_str())) ){
 					auto new_header_value =
 						std::
 						string(response.headers[i].
@@ -664,7 +515,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 						       response.headers
 						       [i].name_len);
 					new_header_value += ": ";
-					new_header_value += buf.get();
+					new_header_value += buf;
 					response.addHeader(new_header_value);
 					response.headers[i].header_off = true;
 				}
@@ -1029,6 +880,8 @@ bool http_manager::replyRedirect(HttpStream & stream,
 	 * 2 if it should use perl dynamic replacement */
 	std::string new_url(redirect_backend.backend_config->url);
 	auto service = static_cast < Service * >(stream.request.getService());
+	char buf[ZCU_DEF_BUFFER_SIZE];
+
 	switch (redirect_backend.backend_config->redir_req) {
 	case 1:
 		new_url +=
@@ -1036,62 +889,17 @@ bool http_manager::replyRedirect(HttpStream & stream,
 				    stream.request.path_length);
 		break;
 	case 2:{		// Dynamic redirect
-			auto buf =
-				std::make_unique < char[] >
-				(ZCU_DEF_BUFFER_SIZE);
 			std::string request_url(stream.request.path,
 						stream.request.path_length);
-			memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
-			regmatch_t umtch[10];
-			char *chptr, *enptr, *srcptr;
-			if (regexec
-			    (&service->service_config.url->pat,
-			     request_url.data(), 10, umtch, 0)) {
-				zcu_log_print(LOG_WARNING,
-						  "URL pattern didn't match in redirdynamic... shouldn't happen %s",
-						  request_url.data());
-			}
-			else {
-				chptr = buf.get();
-				enptr = buf.get() + ZCU_DEF_BUFFER_SIZE - 1;
-				*enptr = '\0';
-				srcptr = const_cast <
-					char *>(redirect_backend.
-						backend_config->url.data());
-				for (; *srcptr && chptr < enptr - 1;) {
-					if (srcptr[0] == '$'
-					    && srcptr[1] == '$') {
-						*chptr++ = *srcptr++;
-						srcptr++;
-					}
-					if (srcptr[0] == '$'
-					    && isdigit(srcptr[1])) {
-						if (chptr +
-						    umtch[srcptr[1] -
-							  0x30].rm_eo -
-						    umtch[srcptr[1] -
-							  0x30].rm_so >
-						    enptr - 1)
-							break;
-						memcpy(chptr,
-						       request_url.data() +
-						       umtch[srcptr[1] -
-							     0x30].rm_so,
-						       umtch[srcptr[1] -
-							     0x30].rm_eo -
-						       umtch[srcptr[1] -
-							     0x30].rm_so);
-						chptr += umtch[srcptr[1] -
-							       0x30].rm_eo -
-							umtch[srcptr[1] -
-							      0x30].rm_so;
-						srcptr += 2;
-						continue;
-					}
-					*chptr++ = *srcptr++;
-				}
-				*chptr++ = '\0';
-				new_url = buf.get();
+
+
+			if ( zcu_str_replace_regexp(buf,request_url.data(),
+					request_url.length(),
+					&service->service_config.url->pat,
+					const_cast<char *>(redirect_backend.
+						backend_config->url.data())) ){
+
+				new_url = buf;
 			}
 			break;
 		}
