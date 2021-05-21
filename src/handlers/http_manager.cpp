@@ -878,9 +878,13 @@ bool http_manager::replyRedirect(HttpStream & stream,
 	/* 0 - redirect is absolute,
 	 * 1 - the redirect should include the request path, or
 	 * 2 if it should use perl dynamic replacement */
-	std::string new_url(redirect_backend.backend_config->url);
+	std::string new_url(redirect_backend.backend_config->url.data());
 	auto service = static_cast < Service * >(stream.request.getService());
 	char buf[ZCU_DEF_BUFFER_SIZE];
+
+	if (stream.replaceVhostMacro(buf, redirect_backend.backend_config->url.data(),
+			redirect_backend.backend_config->url.length()))
+		new_url = buf;
 
 	switch (redirect_backend.backend_config->redir_req) {
 	case 1:
@@ -892,13 +896,10 @@ bool http_manager::replyRedirect(HttpStream & stream,
 			std::string request_url(stream.request.path,
 						stream.request.path_length);
 
-
 			if ( zcu_str_replace_regexp(buf,request_url.data(),
 					request_url.length(),
 					&service->service_config.url->pat,
-					const_cast<char *>(redirect_backend.
-						backend_config->url.data())) ){
-
+					new_url.data()) ){
 				new_url = buf;
 			}
 			break;

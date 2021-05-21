@@ -327,7 +327,96 @@ zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *mat
 	}
 	*chptr++ = '\0';
 
-	ori_str = chptr;
+	return 1;
+}
+
+  /**
+   * @brief It looks for a substring inside of a string.
+   *
+   * @param It is the start offset where the substrng was found
+   * @param It is the end offset of the substring
+   * @param It is the string where look for
+   * @param It is the string lenght
+   * @param It is the sub string that is going to be looked for
+   * @param It is the sub string lenght
+   *
+   * @return 1 if the string was found of 0 if it didn't
+   */
+static inline int
+zcu_str_find_str(int *off_start, int *off_end, const char *ori_str,
+				int ori_len, const char *match_str, int match_len ) {
+	int i, flag=0;
+	*off_start=-1;
+	*off_end=-1;
+
+	for (i=0; i < ori_len && flag < match_len; i++) {
+		if ( ori_str[i] == match_str[flag]) {
+			if (flag == 0)
+				*off_start = i;
+			flag++;
+		} else
+			flag = 0;
+	}
+	if (flag == 0)
+		return 0;
+
+	*off_end = *off_start + match_len;
+	return 1;
+}
+
+  /**
+   * @brief It replaces a substring for another inside of a string
+   *
+   * @param It is the buffer where the string modified will be returned
+   * @param It is the original string where looks for
+   * @param It is the lenght of the original string
+   * @param It is the sub string that is going to be removed
+   * @param It is the sub string lenght
+   * @param It is the string that will be insert
+   * @param It is the length of the string to insert
+   *
+   * @return 1 if the string was modified or 0 if it doesn't
+   */
+static inline int
+zcu_str_replace_str(char *buf, const char *ori_str, int ori_len,
+	const char *match_str, int match_len, char *replace_str, int replace_len)
+{
+	int offst=-1, offend=-1, offcopy = 0, buf_len = ori_len - match_len + replace_len;
+	char *chptr, *enptr, *srcptr;
+
+	if (!zcu_str_find_str(&offst, &offend, ori_str, ori_len, match_str, match_len)) {
+		zcu_log_print(LOG_DEBUG,
+				  "String didn't match %.*s",
+				  ori_len,
+				  ori_str);
+		return 0;
+	}
+
+	zcu_log_print(LOG_DEBUG,
+			  "String matches %.*s",
+			  ori_len,
+			  ori_str);
+
+	if (buf_len > ZCU_DEF_BUFFER_SIZE) {
+		zcu_log_print(LOG_WARNING,
+				  "String could not be replaced, the buffer size is not enought - %.*s",
+				  ori_len,
+				  ori_str);
+		return 0;
+	}
+
+	if ( offst != 0 ) {
+		memcpy(buf, ori_str, offst );
+	}
+
+	offcopy += offst;
+	memcpy(buf + offcopy, replace_str, replace_len);
+
+	if ( offend != ori_len ) {
+		offcopy += replace_len;
+		memcpy(buf + offcopy, ori_str + offend, ori_len - offend);
+	}
+	buf[buf_len]='\0';
 
 	return 1;
 }

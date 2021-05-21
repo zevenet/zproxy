@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <string>
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
 #include "../event/epoll_manager.h"
@@ -29,12 +30,14 @@
 #include "../service/service_manager.h"
 #include "../ssl/ssl_connection_manager.h"
 #include "http_request.h"
+#include "../../zcutils/zcutils.h"
 #if WAF_ENABLED
 #include <modsecurity/modsecurity.h>
 #include <modsecurity/rules.h>
 #include <modsecurity/transaction.h>
 #endif
 
+static const std::string MACRO_VHOST("${VHOST}");
 
 enum class STREAM_OPTION:uint32_t
 {
@@ -98,7 +101,6 @@ class HttpStream:public Counter < HttpStream > {
 	HttpRequest request;
   /** HttpResponse containing the response sent by the backend. */
 	HttpResponse response;
-
 	uint32_t status
 	{
 	0x0};
@@ -108,6 +110,22 @@ class HttpStream:public Counter < HttpStream > {
 	uint32_t stream_id
 	{
 	0};
+
+	/* Params:
+	 *	- macro to look for and replace
+	 *  - string where replace the macro. This same string will be replaced
+	 *
+	 *  Returns:
+	 *		1 if the
+	 *
+	*/
+	inline int replaceVhostMacro( char *buf, char *ori_str, int ori_len ) const
+	{
+		return zcu_str_replace_str(buf, ori_str, ori_len, MACRO_VHOST.data(), MACRO_VHOST.length(),
+			const_cast<char *>(this->request.virtual_host.data()),
+			this->request.virtual_host.length() );
+	}
+
 	inline bool hasOption(STREAM_OPTION _option) const
 	{
 		return (options & helper::to_underlying(_option)) != 0u;
