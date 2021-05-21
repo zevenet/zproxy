@@ -1,5 +1,5 @@
 HTTP/1.0 302 Found
 Content-Type: text/html
-Content-Length: 153
-Location: http://abc.example
+Content-Length: 155
+Location: https://abc.example
 

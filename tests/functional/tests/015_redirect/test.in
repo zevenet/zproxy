@@ -15,6 +15,26 @@ CMD=curl
 CL=1
 METHOD="GET"
 URL="/a/200/b/status"
+##############################
+DESCRIPTION="Test the macro in redirect"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/replace"
+
+##############################
+DESCRIPTION="Test the macro in redirect"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/append/this/url"
+
+##############################
+DESCRIPTION="Test the macro in redirect"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/rep/dyn/200/status"
 
 #########################
 

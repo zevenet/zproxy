@@ -1,5 +1,5 @@
 {
-    "3xx-code-hits": 3,
+    "3xx-code-hits": 6,
     "4xx-code-hits": 0,
     "5xx-code-hits": 0,
     "address": "0.0.0.0",
@@ -51,6 +51,51 @@
             ],
             "id": 2,
             "name": "dynamic",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "type": 2
+                }
+            ],
+            "id": 3,
+            "name": "replace",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "type": 2
+                }
+            ],
+            "id": 4,
+            "name": "replace-append",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "type": 2
+                }
+            ],
+            "id": 5,
+            "name": "replace-dynamic",
             "priority": 1,
             "sessions": [],
             "status": "active"

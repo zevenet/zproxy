@@ -655,13 +655,13 @@ create_benchmark_report () {
 
 find_diff_files () {
 
-	local TMP=$(find . -name "*.tmp")
+	local TMP=$(find . -name "*.tmp" | sort)
 	if [[ $TMP != "" ]]; then
 		msg "Error files: "
 		echo "$TMP"
 	fi
 
-	local NEW=$(find . -name "*.new")
+	local NEW=$(find . -name "*.new" | sort)
 	if [[ $NEW != "" ]]; then
 		msg "Benchmark improvements:"
 		echo "$NEW"
