@@ -24,8 +24,6 @@
 #include "../../zcutils/zcu_network.h"
 #include "../../zcutils/zcutils.h"
 
-//#define PRINT_DEBUG_CHUNKED 1
-
 ssize_t http_manager::handleChunkedData(Connection & connection,
 					http_parser::HttpData & http_data)
 {
@@ -45,7 +43,6 @@ ssize_t http_manager::handleChunkedData(Connection & connection,
 							   data_offset,
 							   new_chunk_left,
 							   http_data.content_length);
-		//#if PRINT_DEBUG_CHUNKED
 		const char *status =
 			chunk_size < 0 ? "*" : chunk_size == 0 ? "/" : "";
 		zcu_log_print(LOG_DEBUG,
@@ -55,7 +52,6 @@ ssize_t http_manager::handleChunkedData(Connection & connection,
 				  connection.buffer_size, last_chunk_size,
 				  chunk_size, data_offset,
 				  http_data.content_length, new_chunk_left);
-		//#endif
 		if (chunk_size < 0) {
 			//          const char *new_chunk_buff = connection.buffer
 			//+ http_data.chunk_size_left - 5;
@@ -70,7 +66,7 @@ ssize_t http_manager::handleChunkedData(Connection & connection,
 			http_data.chunk_size_left = 0;
 			http_data.chunked_status =
 				CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
-#if PRINT_DEBUG_CHUNKED
+#if DEBUG_ZCU_LOG
 			zcu_log_print(LOG_DEBUG, "%s():%d: last chunk",
 					  __FUNCTION__, __LINE__);
 #endif
@@ -101,7 +97,7 @@ ssize_t http_manager::getChunkSize(const std::string & data, size_t data_size,
 			return -1;
 		}
 		else {
-#if PRINT_DEBUG_CHUNKED
+#if DEBUG_ZCU_LOG
 			zcu_log_print(LOG_DEBUG,
 					  "CHUNK found size %s => %d ",
 					  hex.data(), chunk_length);
@@ -238,8 +234,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 	bool connection_close_pending = false;
 	// Check for correct headers
 	for (size_t i = 0; i != request.num_headers; i++) {
-#if DEBUG_HTTP_HEADERS
-		zcu_log_print(LOG_DEBUG, "%s():%d: \t%.*s",
+#if DEBUG_ZCU_LOG
+		zcu_log_print(LOG_DEBUG, "%s():%d: %.*s",
 				  __FUNCTION__, __LINE__,
 				  request.headers[i].name_len +
 				  request.headers[i].value_len + 2,
@@ -269,7 +265,6 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 			eol.rm_eo = request.headers[i].line_size;
 			if (::regexec(&m->name, request.headers[i].name, 1,
 					  &eol, REG_STARTEND) == 0) {
-
 				if ( zcu_str_replace_regexp(buf,request.headers[i].value,
 					request.headers[i].value_len, &m->match, const_cast<char *>(m->replace.c_str())) ){
 					auto new_header_value =
@@ -343,7 +338,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 								size_t data_offset = 0;
 								size_t new_chunk_left = 0;
 								auto chunk_size = http_manager::getLastChunkSize(request.message, request.message_length, data_offset, new_chunk_left, request.content_length);
-#if PRINT_DEBUG_CHUNKED
+#if DEBUG_ZCU_LOG
 								zcu_log_print
 									(LOG_DEBUG,
 									 "%s():%d: >>>> Chunk size %d left %d ",
@@ -355,7 +350,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream & stream)
 								request.content_length += static_cast < size_t >(chunk_size);
 								if (chunk_size
 									== 0) {
-#if PRINT_DEBUG_CHUNKED
+#if DEBUG_ZCU_LOG
 									zcu_log_print
 										(LOG_DEBUG,
 										 "%s():%d: set last chunk",
@@ -473,8 +468,8 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 	bool connection_close_pending = false;
 	for (size_t i = 0; i != response.num_headers; i++) {
 
-#if DEBUG_HTTP_HEADERS
-		zcu_log_print(LOG_DEBUG, "%s():%d: \t%.*s",
+#if DEBUG_ZCU_LOG
+		zcu_log_print(LOG_DEBUG, "%s():%d: %.*s",
 				  __FUNCTION__, __LINE__,
 				  response.headers[i].name_len +
 				  response.headers[i].value_len + 2,
@@ -499,7 +494,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 			eol.rm_eo = response.headers[i].line_size;
 			if (::regexec(&m->name, response.headers[i].name, 1,
 					  &eol, REG_STARTEND) == 0) {
-
 				if ( zcu_str_replace_regexp(buf,response.headers[i].value,
 					response.headers[i].value_len, &m->match, const_cast<char *>(m->replace.c_str())) ){
 					auto new_header_value =
@@ -704,7 +698,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 								size_t data_offset = 0;
 								size_t new_chunk_left = 0;
 								auto chunk_size = http_manager::getLastChunkSize(stream.response.message, stream.response.message_length, data_offset, new_chunk_left, response.content_length);
-#if PRINT_DEBUG_CHUNKED
+#if DEBUG_ZCU_LOG
 								zcu_log_print
 									(LOG_DEBUG,
 									 "%s():%d: >>>> Chunk size %d left %d",
@@ -716,7 +710,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream & stream)
 								stream.response.content_length += static_cast < size_t >(chunk_size);
 								if (chunk_size
 									== 0) {
-#if PRINT_DEBUG_CHUNKED
+#if DEBUG_ZCU_LOG
 									zcu_log_print
 										(LOG_DEBUG,
 										 "%s():%d: set last chunk",

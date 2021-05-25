@@ -42,7 +42,7 @@ namespace events
 /** Handles the connect events. */
 	void EpollManager::onConnectEvent(epoll_event & event)
 	{
-#if DEBUG_EVENT_MANAGER
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG,
 				  "%s():%d: ~~ONConnectEvent fd: %d",
 				  __FUNCTION__, __LINE__,
@@ -58,7 +58,7 @@ namespace events
 /** Handles the write events. */
 	void EpollManager::onWriteEvent(epoll_event & event)
 	{
-#if DEBUG_EVENT_MANAGER
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONWriteEvent fd: %d",
 				  __FUNCTION__, __LINE__,
 				  static_cast <
@@ -73,7 +73,7 @@ namespace events
 /** Handles the read events. */
 	void EpollManager::onReadEvent(epoll_event & event)
 	{
-#if DEBUG_EVENT_MANAGER
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONReadEvent fd: %d",
 				  __FUNCTION__, __LINE__,
 				  static_cast <
@@ -215,11 +215,10 @@ namespace events
 				return false;
 			}
 		}
-#if DEBUG_EVENT_MANAGER
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: Epoll::AddFD %s To EpollFD: %s",
-				  __FUNCTION__, __LINE__, std::to_string(fd),
-				  std::to_string(epoll_fd));
+						"%s():%d: Epoll::AddFD %d To EpollFD: %d",
+						__FUNCTION__, __LINE__, fd, epoll_fd);
 #endif
 		if (time_out != 0) {
 			switch (event_type) {
@@ -252,9 +251,9 @@ namespace events
 				    EVENT_GROUP event_group, int time_out)
 	{
 		//  std::lock_guard<std::mutex> loc(epoll_mutex);
-#if DEBUG_EVENT_MANAGER
-		zcu_log_print(LOG_DEBUG, "%s():%d: Epoll::UpdateFd %s",
-				  __FUNCTION__, __LINE__, std::to_string(fd));
+#if DEBUG_ZCU_LOG
+		zcu_log_print(LOG_DEBUG, "%s():%d: Epoll::UpdateFd %d",
+						__FUNCTION__, __LINE__, fd);
 #endif
 		struct epoll_event epevent = { };
 		epevent.events = static_cast < uint32_t > (event_type);

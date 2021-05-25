@@ -294,17 +294,22 @@ zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *mat
 	umtch[0].rm_so = 0;
 	umtch[0].rm_eo = ori_len;
 	if (regexec(match, ori_str, 10, umtch, REG_STARTEND)) {
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG,
 				  "String didn't match %.*s",
 				  ori_len,
 				  ori_str);
+#endif
 		return 0;
 	}
 
+#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG,
 			  "String matches %.*s",
 			  ori_len,
 			  ori_str);
+#endif
+
 	chptr = buf;
 	enptr = buf + ZCU_DEF_BUFFER_SIZE - 1;
 	*enptr = '\0';

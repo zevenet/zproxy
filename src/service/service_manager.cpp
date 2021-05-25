@@ -90,7 +90,7 @@ Service *ServiceManager::getService(HttpRequest & request)
 						  "%s():%d: service found id:%d , %s",
 						  __FUNCTION__, __LINE__,
 						  srv->id,
-						  srv->service_config.name);
+						  srv->service_config.name.c_str());
 				return srv;
 			}
 		}

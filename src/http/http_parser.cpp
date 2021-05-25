@@ -24,8 +24,6 @@
 #include "../../zcutils/zcutils.h"
 #include "http.h"
 
-#define DEBUG_HTTP_PARSER 0
-
 http_parser::HttpData::HttpData()
 :
 
@@ -83,7 +81,7 @@ void http_parser::HttpData::prepareToSend()
 		iov[iov_size++] = { const_cast < char *>(headers[i].name),
 			headers[i].line_size
 		};
-#if DEBUG_HTTP_HEADERS
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", headers[i].line_size - 2,
 				  headers[i].name);
 #endif
@@ -94,7 +92,7 @@ extra_headers) {		// header must be always  used as reference,
 		// it's copied it invalidate c_str() reference.
 		iov[iov_size++] = {const_cast < char *>(header.c_str()),
 				   header.length()};
-#if DEBUG_HTTP_HEADERS
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
 				  header.c_str());
 #endif
@@ -106,7 +104,7 @@ permanent_extra_headers) {	// header must be always  used as
 		// it's copied it invalidate c_str() reference.
 		iov[iov_size++] = {const_cast < char *>(header.c_str()),
 				   header.length()};
-#if DEBUG_HTTP_HEADERS
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
 				  header.c_str());
 #endif
@@ -117,7 +115,7 @@ permanent_extra_headers) {	// header must be always  used as
 
 	if (message_length > 0) {
 		iov[iov_size++] = { message, message_length };
-#if DEBUG_HTTP_HEADERS
+#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "[%d bytes Content]",
 				  message_length);
 #endif
@@ -252,7 +250,7 @@ http_parser::PARSE_RESULT http_parser::
 	if (pret > 0) {
 		*used_bytes = static_cast < size_t >(pret);
 		headers_length = pret;
-#if DEBUG_HTTP_PARSER
+#if DEBUG_ZCU_LOG
 		printRequest();
 #endif
 		http_version =
@@ -323,7 +321,7 @@ http_parser::PARSE_RESULT http_parser::
 		message_length = buffer_size - static_cast < size_t >(pret);
 		http_message_str =
 			std::string(http_message, http_message_length);
-#if DEBUG_HTTP_PARSER
+#if DEBUG_ZCU_LOG
 		printResponse();
 #endif
 		return PARSE_RESULT::SUCCESS;	/* successfully parsed the request */

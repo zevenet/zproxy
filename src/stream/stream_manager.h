@@ -38,7 +38,7 @@
 #include <unordered_map>
 #include <vector>
 
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 
 struct StreamWatcher
 {
@@ -146,7 +146,7 @@ class StreamManager:public EpollManager, public CtlObserver <
 		"no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: "
 		"text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
 #endif
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 	int clear_stream
 	{
 	0};

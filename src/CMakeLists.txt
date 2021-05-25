@@ -23,26 +23,18 @@
 cmake_minimum_required(VERSION 3.6)
 
 add_definitions(-DDEBUG_ZCU_LOG=1)
-add_definitions(-DLOGGER_DEBUG=1)
-add_definitions(-DEXTENDED_DEBUG_LOG=0)
-add_definitions(-DDEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
-add_definitions(-DPRINT_READ_STADISTICS=0)
-add_definitions(-DDEBUG_CONNECTION_FLOW=0)
+add_definitions(-DHELLO_WORLD_SERVER=0)
 add_definitions(-DMAXBUF=4096)
 add_definitions(-DMAX_URI_SIZE=16500)
 add_definitions(-DMAX_HEADER_VALUE_SIZE=16500)
 add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
-add_definitions(-DDEBUG_STREAM_EVENTS_COUNT=0)
 #SSL stuff
 add_definitions(-DSSL_DISABLE_SESSION_CACHE=0) #internal ssl session caching
-add_definitions(-DDEBUG_SSL=0)
 add_definitions(-DENABLE_SSL_SESSION_CACHING=0)
 add_definitions(-DENABLE_ZERO_COPY=0)
-add_definitions(-DPRINT_DEBUG_FLOW_BUFFERS=0)
 add_definitions(-DENABLE_QUICK_RESPONSE=0)
 add_definitions(-DUSE_SSL_BIO_BUFFER=1)
-add_definitions(-DDEBUG_HTTP_HEADERS=1)
 add_definitions(-DMALLOC_TRIM_TIMER=1 -DMALLOC_TRIM_TIMER_INTERVAL=60) # force release of memory back to the system
 add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=10)
 add_definitions(-DENABLE_CI_HEADERS=1) #enable case insensitive comparator in header map.

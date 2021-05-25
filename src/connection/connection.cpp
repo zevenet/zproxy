@@ -372,18 +372,9 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 		buffer_offset = 0;
 	http_data.message_length = 0;
 	http_data.setHeaderSent(true);
-#if PRINT_DEBUG_FLOW_BUFFERS
-	zcu_log_print(LOG_DEBUG, "%s():%d: \tbuffer offset: %d",
-			  __FUNCTION__, __LINE__, buffer_offset);
-	zcu_log_print(LOG_DEBUG, "%s():%d: \tOut buffer size: %d",
-			  __FUNCTION__, __LINE__, buffer_size);
-	zcu_log_print(LOG_DEBUG, "%s():%d: \tcontent length: %d",
-			  __FUNCTION__, __LINE__, http_data.content_length);
-	zcu_log_print(LOG_DEBUG, "%s():%d: \tmessage length: %d",
-			  __FUNCTION__, __LINE__, http_data.message_length);
-	zcu_log_print(LOG_DEBUG, "%s():%d: \tmessage bytes left: %d",
-			  __FUNCTION__, __LINE__,
-			  http_data.message_bytes_left);
+#if DEBUG_ZCU_LOG
+	zcu_log_print(LOG_DEBUG, "%s():%d: Buffer offset: %d, Out buffer size: %d, Content length: %d, Message length: %d, Message bytes left: %d",
+					__FUNCTION__, __LINE__, buffer_offset, buffer_size, http_data.content_length, http_data.message_length, http_data.message_bytes_left);
 #endif
 	return IO::IO_RESULT::SUCCESS;
 }
@@ -449,7 +440,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
 				return IO::IO_RESULT::DONE_TRY_AGAIN;
 			else
 				result = IO::IO_RESULT::SUCCESS;
-#if PRINT_DEBUG_FLOW_BUFFERS
+#if DEBUG_ZCU_LOG
 			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
 					  __FUNCTION__, __LINE__, nvec,

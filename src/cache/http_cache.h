@@ -215,7 +215,7 @@ class HttpCache
 
 namespace cache_stats__
 {
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 	DEFINE_OBJECT_COUNTER(cache_RAM_entries)
 	DEFINE_OBJECT_COUNTER(cache_DISK_entries)
 	DEFINE_OBJECT_COUNTER(cache_RAM_mountpoint)

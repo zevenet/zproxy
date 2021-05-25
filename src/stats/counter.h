@@ -43,9 +43,5 @@ namespace debug__ {
     ObjectName() : Counter<ObjectName>(false) {} \
   };
 
-#if DEBUG_STREAM_EVENTS_COUNT
 #define DEBUG_COUNTER_HIT(x) x UNIQUE_NAME(counter_hit)
-#else
-#define DEBUG_COUNTER_HIT(x)
-#endif
 }				// namespace debug__

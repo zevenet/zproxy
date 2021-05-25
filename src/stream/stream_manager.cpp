@@ -335,42 +335,32 @@ void StreamManager::onRequestEvent(int fd)
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
 	auto & listener_config_ = *stream->service_manager->listener_config_;
-	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
-#if EXTENDED_DEBUG_LOG
-	std::string extra_log;
-	ScopeExit logStream
-	{
-		[stream, &extra_log]
-		{
-			HttpStream::dumpDebugData(stream, "OnRequest",
-						  extra_log.data());
-		}
-	};
+#if DEBUG_ZCU_LOG
+	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "init");
 #endif
 
 	if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
 		DEBUG_COUNTER_HIT(debug__::on_request);
-#if EXTENDED_DEBUG_LOG
-		extra_log = "REQUEST_PENDING";
-#endif
 		stream->status |=
 			helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
 		stream->backend_connection.enableWriteEvent();
 		stream->client_connection.disableEvents();
+		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "REQUEST_PENDING");
 		return;
 	}
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	if (stream->service_manager->is_https_listener) {
+		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "HTTPS");
 		result = ssl::SSLConnectionManager::
 			handleDataRead(stream->client_connection);
 	}
 	else {
+		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "HTTP");
 		result = stream->client_connection.read();
 	}
-#if EXTENDED_DEBUG_LOG
-	extra_log = IO::getResultString(result);
-#endif
+
+	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", IO::getResultString(result).data());
+
 	switch (result) {
 	case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
 	case IO::IO_RESULT::SSL_NEED_HANDSHAKE:{
@@ -380,9 +370,13 @@ void StreamManager::onRequestEvent(int fd)
 								  stream->
 								  client_connection))
 			{
+				HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "HANDSHAKE");
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: fd: %d:%d handshake error with %s",
+						  "%s():%d: [%lx][%lu][%s] fd: %d:%d handshake error with %s",
 						  __FUNCTION__, __LINE__,
+						  pthread_self(),
+						  stream->stream_id,
+						  listener_config_.name.data(),
 						  stream->
 						  client_connection.getFileDescriptor
 						  (),
@@ -396,6 +390,7 @@ void StreamManager::onRequestEvent(int fd)
 				return;
 			}
 			if (stream->client_connection.ssl_connected) {
+				HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "HANDSHAKE");
 				DEBUG_COUNTER_HIT(debug__::on_handshake);
 				httpsHeaders(stream,
 					     listener_config_.clnt_check);
@@ -410,17 +405,22 @@ void StreamManager::onRequestEvent(int fd)
 				     ERR_LIB_SSL)) {
 				/* the client speaks plain HTTP on our HTTPS port */
 				zcu_log_print(LOG_WARNING,
-						  "%s():%d: Client %s sent a plain HTTP message to an SSL port",
+						  "%s():%d: [%lx][%lu][%s] Client %s sent a plain HTTP message to an SSL port",
 						  __FUNCTION__, __LINE__,
+						  pthread_self(),
+						  stream->stream_id,
+						  listener_config_.name.data(),
 						  stream->
 						  client_connection.getPeerAddress
 						  ().c_str());
 				if (listener_config_.nossl_redir > 0) {
 					zcu_log_print(LOG_ERR,
-							  "%s():%d: (%lx) errNoSsl from %s redirecting to \"%s\"",
+							  "%s():%d: [%lx][%lu][%s] errNoSsl from %s redirecting to \"%s\"",
 							  __FUNCTION__,
 							  __LINE__,
 							  pthread_self(),
+							  stream->stream_id,
+							  listener_config_.name.data(),
 							  stream->client_connection.getPeerAddress
 							  ().c_str(),
 							  listener_config_.nossl_url.
@@ -434,10 +434,12 @@ void StreamManager::onRequestEvent(int fd)
 				}
 				else {
 					zcu_log_print(LOG_ERR,
-							  "%s():%d: (%lx) errNoSsl from %s sending error",
+							  "%s():%d: [%lx][%lu][%s] errNoSsl from %s sending error",
 							  __FUNCTION__,
 							  __LINE__,
 							  pthread_self(),
+							  stream->stream_id,
+							  listener_config_.name.data(),
 							  stream->client_connection.getPeerAddress
 							  ().c_str());
 					http_manager::replyError(http::
@@ -463,8 +465,11 @@ void StreamManager::onRequestEvent(int fd)
 	case IO::IO_RESULT::CANCELLED:
 	default:{
 			zcu_log_print(LOG_ERR,
-					  "%s():%d: Error reading request",
-					  __FUNCTION__, __LINE__);
+					  "%s():%d: [%lx][%lu][%s] Error reading request",
+					  __FUNCTION__, __LINE__,
+					  pthread_self(),
+					  stream->stream_id,
+					  listener_config_.name.data());
 			clearStream(stream);
 			return;
 		}
@@ -501,9 +506,8 @@ void StreamManager::onRequestEvent(int fd)
 			}
 		}
 #endif
-#if PRINT_DEBUG_FLOW_BUFFERS
-		HttpStream::dumpDebugData(stream, "OnRequest",
-					  extra_log.data());
+#if DEBUG_ZCU_LOG
+		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequestContinue", "");
 #endif
 #if ENABLE_QUICK_RESPONSE
 		onServerWriteEvent(stream);
@@ -512,8 +516,8 @@ void StreamManager::onRequestEvent(int fd)
 #endif
 		return;
 	}
-#if PRINT_DEBUG_FLOW_BUFFERS
-	HttpStream::dumpDebugData(stream, "OnRequest", extra_log.data());
+#if DEBUG_ZCU_LOG
+	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest", "");
 #endif
 	size_t parsed = 0;
 	http_parser::PARSE_RESULT parse_result;
@@ -540,8 +544,12 @@ void StreamManager::onRequestEvent(int fd)
 			break;
 		}
 	case http_parser::PARSE_RESULT::TOOLONG:
-		zcu_log_print(LOG_DEBUG, "%s():%d: Parser TOOLONG",
-				  __FUNCTION__, __LINE__);
+		zcu_log_print(LOG_DEBUG, "%s():%d: [%lx][%lu][%s] http parser TOOLONG from %s",
+				  __FUNCTION__, __LINE__,
+				  pthread_self(),
+				  stream->stream_id,
+				  listener_config_.name.data(),
+				  stream->client_connection.getPeerAddress().c_str());
 		[[fallthrough]];
 	case http_parser::PARSE_RESULT::FAILED:
 		http_manager::replyError(http::Code::BadRequest,
@@ -553,8 +561,12 @@ void StreamManager::onRequestEvent(int fd)
 		this->clearStream(stream);
 		return;
 	case http_parser::PARSE_RESULT::INCOMPLETE:
-		zcu_log_print(LOG_DEBUG, "%s():%d: Parser INCOMPLETE",
-				  __FUNCTION__, __LINE__);
+		zcu_log_print(LOG_DEBUG, "%s():%d: [%lx][%lu][%s] http parser INCOMPLETE from %s",
+				  __FUNCTION__, __LINE__,
+				  pthread_self(),
+				  stream->stream_id,
+				  listener_config_.name.data(),
+				  stream->client_connection.getPeerAddress().c_str());
 		return;
 	}
 
@@ -571,11 +583,12 @@ void StreamManager::onRequestEvent(int fd)
 			listener_config_.response_stats.increaseWaf();
 			if (stream->modsec_transaction->m_it.url != nullptr) {
 				zcu_log_print(LOG_WARNING,
-						  "(%lx) WAF redirected a request from %s",
+						  "%s():%d: [%lx][%lu][%s] WAF redirected a request from %s",
+						  __FUNCTION__, __LINE__,
 						  pthread_self(),
-						  stream->
-						  client_connection.address_str.
-						  c_str());
+						  stream->stream_id,
+						  listener_config_.name.data(),
+						  stream->client_connection.getPeerAddress().c_str());
 				// send redirect
 				if (http_manager::replyRedirect
 				    (stream->modsec_transaction->m_it.status,
@@ -596,11 +609,12 @@ void StreamManager::onRequestEvent(int fd)
 							 stream->client_connection,
 							 listener_config_.response_stats);
 				zcu_log_print(LOG_WARNING,
-						  "(%lx) WAF rejected a request from %s",
+						  "%s():%d: [%lx][%lu][%s] WAF rejected a request from %s",
+						  __FUNCTION__, __LINE__,
 						  pthread_self(),
-						  stream->
-						  client_connection.address_str.
-						  c_str());
+						  stream->stream_id,
+						  listener_config_.name.data(),
+						  stream->client_connection.getPeerAddress().c_str());
 			}
 			clearStream(stream);
 			return;
@@ -732,9 +746,13 @@ void StreamManager::onRequestEvent(int fd)
 				switch (op_state) {
 				case IO::IO_OP::OP_ERROR:{
 						zcu_log_print(LOG_NOTICE,
-								  "error connecting to backend %s",
-								  bck->address.data
-								  ());
+								  "[%lx][%lu][%s][%s] error connecting to backend %s from %s",
+								  pthread_self(),
+								  stream->stream_id,
+								  listener_config_.name.data(),
+								  service->name.c_str(),
+								  bck->address.data(),
+								  stream->client_connection.getPeerAddress().c_str());
 						onBackendConnectionError
 							(stream);
 						return;
@@ -786,9 +804,14 @@ void StreamManager::onRequestEvent(int fd)
 					 ());
 				if (bck_stream != bck_streams_set.end()) {
 					zcu_log_print(LOG_DEBUG,
-							  "%s():%d: BCK Stream exists in set",
+							  "%s():%d: [%lx][%lu][%s][%s] bck stream exists in set from %s",
 							  __FUNCTION__,
-							  __LINE__);
+							  __LINE__,
+							  pthread_self(),
+							  stream->stream_id,
+							  listener_config_.name.data(),
+							  service->name.c_str(),
+							  stream->client_connection.getPeerAddress().c_str());
 					// delete bck_stream->second;
 				}
 				bck_streams_set[stream->
@@ -800,28 +823,20 @@ void StreamManager::onRequestEvent(int fd)
 			}
 
 			zcu_log_print(LOG_DEBUG,
-					  "%s():%d: %s %lu [%s] %.*s [%s (%d) -> %s:%d (%d)]",
+					  "%s():%d: [%lx][%lu][%s][%s] %s %.*s [%s (%d) -> %s:%d (%d)]",
 					  __FUNCTION__, __LINE__,
-					  need_new_backend ? "NEW" : "REUSED",
+					  pthread_self(),
 					  stream->stream_id,
+					  listener_config_.name.data(),
 					  service->name.c_str(),
+					  need_new_backend ? "NEW" : "REUSED",
 					  stream->request.http_message_length,
 					  stream->request.http_message,
-					  stream->
-					  client_connection.getPeerAddress().
-					  c_str(),
-					  stream->
-					  client_connection.getFileDescriptor
-					  (),
-					  stream->
-					  backend_connection.getBackend()->
-					  address.c_str(),
-					  stream->
-					  backend_connection.getBackend()->
-					  port,
-					  stream->
-					  backend_connection.getFileDescriptor
-					  ());
+					  stream->client_connection.getPeerAddress().c_str(),
+					  stream->client_connection.getFileDescriptor(),
+					  stream->backend_connection.getBackend()->address.c_str(),
+					  stream->backend_connection.getBackend()->port,
+					  stream->backend_connection.getFileDescriptor());
 
 			// Rewrite destination
 			if (stream->request.add_destination_header) {
@@ -871,7 +886,11 @@ void StreamManager::onRequestEvent(int fd)
 
 		break;
 	case BACKEND_TYPE::REDIRECT:{
-			zcu_log_print(LOG_INFO, "(%s) %.*s < REDIRECT %s",
+			zcu_log_print(LOG_INFO, "[%lx][%lu][%s][%s] (%s) %.*s < redirect %s",
+					  pthread_self(),
+					  stream->stream_id,
+					  listener_config_.name.data(),
+					  service->name.c_str(),
 					  stream->
 					  client_connection.getPeerAddress().
 					  c_str(),
@@ -904,25 +923,8 @@ void StreamManager::onResponseEvent(int fd)
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
 	auto & listener_config_ = *stream->service_manager->listener_config_;
-	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
-#if EXTENDED_DEBUG_LOG
-	std::string extra_log;
-	ScopeExit logStream
-	{
-		[stream, &extra_log]
-		{
-			//check not null
-			HttpStream::dumpDebugData(stream, "OnResponse",
-						  extra_log.data());
-		}
-	};
-#endif
-	if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
 
-#if EXTENDED_DEBUG_LOG
-		extra_log = "RESPONSE_PENDING";
-#endif
+	if (stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING)) {
 		stream->status |=
 			helper::
 			to_underlying(STREAM_STATUS::BCK_READ_PENDING);
@@ -931,11 +933,15 @@ void StreamManager::onResponseEvent(int fd)
 		return;
 	}
 
-#if EXTENDED_DEBUG_LOG
-	HttpStream::dumpDebugData(stream, "OnResponse", extra_log.data());
+#if DEBUG_ZCU_LOG
+	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnResponse", "RESPONSE_PENDING");
 #endif
 	DEBUG_COUNTER_HIT(debug__::on_response);
 	IO::IO_RESULT result;
+
+	auto service =
+		static_cast <
+		Service * >(stream->request.getService());
 
 	if (stream->backend_connection.getBackend()->isHttps()) {
 		result = ssl::SSLConnectionManager::
@@ -950,8 +956,14 @@ void StreamManager::onResponseEvent(int fd)
 			result = stream->backend_connection.zeroRead();
 			if (result == IO::IO_RESULT::ERROR) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: error reading response",
-						  __FUNCTION__, __LINE__);
+						  "%s():%d: [%lx][%lu][%s][%s] error reading response from backend %s to client %s",
+						  __FUNCTION__, __LINE__,
+						  pthread_self(),
+						  stream->stream_id,
+						  listener_config_.name.data(),
+						  service->name.c_str(),
+						  stream->backend_connection.getBackend()->address.c_str(),
+						  stream->client_connection.getPeerAddress().c_str());
 				clearStream(stream);
 				return;
 			}
@@ -964,9 +976,13 @@ void StreamManager::onResponseEvent(int fd)
 			case IO::IO_RESULT::FD_CLOSED:
 			case IO::IO_RESULT::ERROR:{
 					zcu_log_print(LOG_ERR,
-							  "%s():%d: error writing response",
+							  "%s():%d: [%lx][%lu][%s][%s] error writing response from backend %s to client %s",
 							  __FUNCTION__,
-							  __LINE__);
+							  __LINE__,
+							  pthread_self(),
+							  stream->stream_id,
+							  listener_config_.name.data(),
+							  service->name.c_str());
 					clearStream(stream);
 					return;
 				}
@@ -984,9 +1000,7 @@ void StreamManager::onResponseEvent(int fd)
 #endif
 			result = stream->backend_connection.read();
 	}
-#if EXTENDED_DEBUG_LOG
-	extra_log = IO::getResultString(result);
-#endif
+
 	switch (result) {
 	case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
 	case IO::IO_RESULT::SSL_NEED_HANDSHAKE:{
@@ -1001,11 +1015,13 @@ void StreamManager::onResponseEvent(int fd)
 								  backend_connection,
 								  true)) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: backend handshake error with %s",
+						  "%s():%d: [%lx][%lu][%s][%s] backend handshake error with %s",
 						  __FUNCTION__, __LINE__,
-						  stream->
-						  backend_connection.address_str.
-						  c_str());
+						  pthread_self(),
+						  stream->stream_id,
+						  listener_config_.name.data(),
+						  service->name.c_str(),
+						  stream->backend_connection.address_str.c_str());
 				http_manager::replyError(http::
 							 Code::ServiceUnavailable,
 							 http::reasonPhrase
@@ -1035,11 +1051,14 @@ void StreamManager::onResponseEvent(int fd)
 	case IO::IO_RESULT::CANCELLED:
 	default:{
 			zcu_log_print(LOG_ERR,
-					  "%s():%d: Backend read error with %s, closing stream",
+					  "%s():%d: [%lx][%lu][%s][%s] backend read error from backend %s to client %s, closing stream",
 					  __FUNCTION__, __LINE__,
-					  stream->
-					  backend_connection.address_str.
-					  c_str());
+					  pthread_self(),
+					  stream->stream_id,
+					  listener_config_.name.data(),
+					  service->name.c_str(),
+					  stream->backend_connection.address_str.c_str(),
+					  stream->client_connection.getPeerAddress().c_str());
 			clearStream(stream);
 			return;
 		}
@@ -1063,8 +1082,8 @@ void StreamManager::onResponseEvent(int fd)
 	else {
 		stream->clearStatus(STREAM_STATUS::BCK_READ_PENDING);
 	}
-#if PRINT_DEBUG_FLOW_BUFFERS
-	HttpStream::dumpDebugData(stream, "OnResponse", extra_log.data());
+#if DEBUG_ZCU_LOG
+	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnResponse", IO::getResultString(result).data());
 #endif
 
 	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)
@@ -1083,9 +1102,6 @@ void StreamManager::onResponseEvent(int fd)
 				return;
 			}
 		}
-		auto service =
-			static_cast <
-			Service * >(stream->request.getService());
 		if (service->cache_enabled) {
 			CacheManager::handleResponse(stream, service);
 		}
@@ -1124,29 +1140,22 @@ void StreamManager::onResponseEvent(int fd)
 		case http_parser::PARSE_RESULT::TOOLONG:
 		case http_parser::PARSE_RESULT::FAILED:{
 				zcu_log_print(LOG_DEBUG,
-						  "%s():%d: %d (%d - %d) PARSE FAILED \nRESPONSE DATA IN\n\t\t buffer ",
-						  "size: %lu \n\t\t Content length: %lu \n\t\t "
-						  "left: %lu\n%.*s header sent: %s \n",
+						  "%s():%d: [%lx][%lu][%s][%s] HTTP PARSE FAILED from backend %s to client %s - Response data in buffer ",
+						  "size:%lu Content length:%lu "
+						  "left:%lu %.*s header sent:%s ",
 						  __FUNCTION__, __LINE__,
+						  pthread_self(),
 						  stream->stream_id,
-						  stream->
-						  client_connection.getFileDescriptor
-						  (),
-						  stream->
-						  backend_connection.getFileDescriptor
-						  (),
-						  stream->
-						  backend_connection.buffer_size,
-						  stream->
-						  response.content_length,
-						  stream->
-						  response.message_bytes_left,
-						  stream->
-						  backend_connection.buffer_size,
-						  stream->
-						  backend_connection.buffer,
-						  stream->
-						  response.getHeaderSent()?
+						  listener_config_.name.data(),
+						  service->name.c_str(),
+						  stream->backend_connection.getBackend()->address.c_str(),
+						  stream->client_connection.getPeerAddress().c_str(),
+						  stream->backend_connection.buffer_size,
+						  stream->response.content_length,
+						  stream->response.message_bytes_left,
+						  stream->backend_connection.buffer_size,
+						  stream->backend_connection.buffer,
+						  stream->response.getHeaderSent()?
 						  "true" : "false");
 				clearStream(stream);
 				return;
@@ -1159,12 +1168,12 @@ void StreamManager::onResponseEvent(int fd)
 			Time::getElapsed(stream->
 					 backend_connection.time_start);
 		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: %lu [%s] %s -> %s [%s (%d) <- %s (%d)] %lf",
-				  __FUNCTION__, __LINE__, stream->stream_id,
-				  static_cast <
-				  Service *
-				  >(stream->request.getService())->
-				  name.c_str(),
+				  "%s():%d: [%lx][%lu][%s][%s] %s -> %s [%s (%d) <- %s (%d)] %lf",
+				  __FUNCTION__, __LINE__,
+				  pthread_self(),
+				  stream->stream_id,
+				  listener_config_.name.data(),
+				  service->name.c_str(),
 				  stream->response.http_message_str.data(),
 				  stream->request.http_message_str.data(),
 				  stream->client_connection.
@@ -1184,14 +1193,14 @@ void StreamManager::onResponseEvent(int fd)
 		if (http_manager::validateResponse(*stream) !=
 		    validation::REQUEST_RESULT::OK) {
 			zcu_log_print(LOG_NOTICE,
-					  "(%lx) backend %s response validation error\n %.*s",
-					  /*std::this_thread::get_id() */
+					  "[%lx][%lu][%s][%s] backend %s response to client %s validation error - %.*s",
 					  pthread_self(),
-					  stream->
-					  backend_connection.getBackend()->
-					  address.c_str(),
-					  stream->
-					  backend_connection.buffer_size,
+					  stream->stream_id,
+					  listener_config_.name.data(),
+					  service->name.c_str(),
+					  stream->backend_connection.getBackend()->address.c_str(),
+					  stream->client_connection.getPeerAddress().c_str(),
+					  stream->backend_connection.buffer_size,
 					  stream->backend_connection.buffer);
 			http_manager::replyError(http::
 						 Code::ServiceUnavailable,
@@ -1214,11 +1223,13 @@ void StreamManager::onResponseEvent(int fd)
 				listener_config_.response_stats.increaseWaf();
 				if (stream->modsec_transaction->m_it.url !=
 				    nullptr) {
-					zcu_log_print(LOG_WARNING,
-							  "(%lx) WAF redirected a request from %s",
+					zcu_log_print(LOG_WARNING, "%s():%d: [%lx][%lu][%s] WAF redirected a response from backend %s to client %s",
+							  __FUNCTION__, __LINE__,
 							  pthread_self(),
-							  stream->client_connection.address_str.c_str
-							  ());
+							  stream->stream_id,
+							  listener_config_.name.data(),
+							  stream->backend_connection.getBackend()->address.c_str(),
+							  stream->client_connection.getPeerAddress().c_str());
 					// send redirect
 					if (http_manager::replyRedirect
 					    (stream->modsec_transaction->m_it.
@@ -1241,11 +1252,13 @@ void StreamManager::onResponseEvent(int fd)
 								 listener_config_.errwaf,
 								 stream->client_connection,
 								 listener_config_.response_stats);
-					zcu_log_print(LOG_WARNING,
-							  "(%lx) WAF rejected a request from %s",
+					zcu_log_print(LOG_WARNING, "%s():%d: [%lx][%lu][%s] WAF rejected a response from backend %s to client %s",
+							  __FUNCTION__, __LINE__,
 							  pthread_self(),
-							  stream->client_connection.address_str.c_str
-							  ());
+							  stream->stream_id,
+							  listener_config_.name.data(),
+							  stream->backend_connection.getBackend()->address.c_str(),
+							  stream->client_connection.getPeerAddress().c_str());
 				}
 				clearStream(stream);
 				return;
@@ -1257,9 +1270,6 @@ void StreamManager::onResponseEvent(int fd)
 						(stream->response.http_status_code);
 		stream->backend_connection.getBackend()->response_stats.increaseCode(code);
 
-		auto service =
-			static_cast <
-			Service * >(stream->request.getService());
 #ifdef CACHE_ENABLED
 		if (service->cache_enabled) {
 			CacheManager::handleResponse(stream, service);
@@ -1301,10 +1311,17 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 	    && stream->timer_fd.isTriggered()
 #endif
 		) {
+		auto & listener_config_ = *stream->service_manager->listener_config_;
+		auto service =
+			static_cast <
+			Service * >(stream->request.getService());
+
 		zcu_log_print(LOG_WARNING,
-				  "(%lx) backend %s connection timeout after %d",
-				  /*std::this_thread::get_id() */
+				  "[%lx][%lu][%s][%s] backend %s connection timeout after %d seconds from client %s",
 				  pthread_self(),
+				  stream->stream_id,
+				  listener_config_.name.data(),
+				  service->name.c_str(),
 				  stream->backend_connection.
 				  getBackend()->address.c_str(),
 				  stream->backend_connection.
@@ -1327,12 +1344,20 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 		::close(fd);
 		return;
 	}
+
+	auto & listener_config_ = *stream->service_manager->listener_config_;
+	auto service = stream->service_manager->getService(stream->request);
 	zcu_log_print(LOG_WARNING,
-			  "(%lx) client %s request to %s timeout after %d seconds",
+			  "[%lx][%lu][%s][%s] backend %s request %s timeout after %d seconds from client %s",
 			  pthread_self(),
-			  stream->client_connection.getPeerAddress().c_str(),
+			  stream->stream_id,
+			  listener_config_.name.data(),
+			  service->name.c_str(),
+			  stream->backend_connection.getBackend()->address.c_str(),
 			  stream->request.path,
-			  stream->service_manager->listener_config_->to);
+			  stream->service_manager->listener_config_->to,
+			  stream->client_connection.getPeerAddress().c_str());
+
 #if USE_TIMER_FD_TIMEOUT
 	if (stream->timer_fd.isTriggered()) {
 #endif
@@ -1359,6 +1384,7 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 		return;
 	}
 	auto & listener_config_ = *stream->service_manager->listener_config_;
+	auto service = stream->service_manager->getService(stream->request);
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
 #if USE_TIMER_FD_TIMEOUT
@@ -1375,18 +1401,17 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 		}
 		else {
 			zcu_log_print(LOG_NOTICE,
-					  "(%lx) e%d %s %.*s from %s",
-					  std::this_thread::get_id(),
+					  "[%lx][%lu][%s][%s] e%d %s %.*s from %s",
+					  pthread_self(),
+					  stream->stream_id,
+					  listener_config_.name.data(),
+					  service->name.c_str(),
 					  static_cast <
 					  int >(http::Code::GatewayTimeout),
-					  validation::
-					  request_result_reason.at
-					  (validation::
-					   REQUEST_RESULT::BACKEND_TIMEOUT)
-					  .c_str(),
+					  validation::request_result_reason.at(validation::REQUEST_RESULT::BACKEND_TIMEOUT).c_str(),
 					  stream->request.http_message_length,
 					  stream->request.http_message,
-					  caddr);
+					  stream->client_connection.getPeerAddress().c_str());
 		}
 		http_manager::replyError(http::Code::GatewayTimeout,
 					 http::reasonPhrase(http::
@@ -1647,18 +1672,9 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 {
 	DEBUG_COUNTER_HIT(debug__::on_send_request);
 	auto & listener_config_ = *stream->service_manager->listener_config_;
-	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
-#if EXTENDED_DEBUG_LOG
-	std::string extra_log;
-	ScopeExit logStream
-	{
-		[stream, &extra_log]
-		{
-			HttpStream::dumpDebugData(stream, "onServerW",
-						  extra_log.data());
-	}};
-#endif
+
+	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
+
 	int fd = stream->backend_connection.getFileDescriptor();
 	// Send client request to backend server
 #if USE_TIMER_FD_TIMEOUT
@@ -1729,9 +1745,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 								    request);
 #endif
 		}
-#if EXTENDED_DEBUG_LOG
-		extra_log = IO::getResultString(result);
-#endif
+
 		switch (result) {
 		case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
 		case IO::IO_RESULT::SSL_NEED_HANDSHAKE:{
@@ -1797,8 +1811,8 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		stream->backend_connection.enableReadEvent();
 		stream->client_connection.enableReadEvent();
 		if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
-#if EXTENDED_DEBUG_LOG
-			HttpStream::dumpDebugData(stream,
+#if DEBUG_ZCU_LOG
+			HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 						  "ClientW-ReadPending",
 						  "WROTE REQ PENDING ");
 #endif
@@ -1819,9 +1833,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		result = stream->client_connection.
 			writeTo(stream->backend_connection, stream->request);
 	}
-#if EXTENDED_DEBUG_LOG
-	extra_log = IO::getResultString(result);
-#endif
+
 	switch (result) {
 	case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
 	case IO::IO_RESULT::SSL_NEED_HANDSHAKE:{
@@ -1886,7 +1898,7 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 		   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
 		   stream->backend_connection.getBackend()->response_timeout);
 #endif
-#if PRINT_DEBUG_FLOW_BUFFERS
+#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG,
 			  "%s():%d: OUT buffer size: %8lu\tContent-length: %lu\tleft: "
 			  "%lu\tIO: %s", __FUNCTION__, __LINE__,
@@ -1900,8 +1912,8 @@ void StreamManager::onServerWriteEvent(HttpStream * stream)
 	stream->backend_connection.enableReadEvent();
 	stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
 	if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
-#if EXTENDED_DEBUG_LOG
-		HttpStream::dumpDebugData(stream, "ClientW-ReadPending",
+#if DEBUG_ZCU_LOG
+		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "ClientW-ReadPending",
 					  "WROTE REQ PENDING ");
 #endif
 		onRequestEvent(stream->client_connection.getFileDescriptor());
@@ -1917,21 +1929,8 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 
 	DEBUG_COUNTER_HIT(debug__::on_send_response);
 	auto & listener_config_ = *stream->service_manager->listener_config_;
-	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
-#if EXTENDED_DEBUG_LOG
-	std::string extra_log;
-	ScopeExit logStream
-	{
-		[stream, &extra_log]
-		{
-			HttpStream::dumpDebugData(stream, "onClientW",
-						  extra_log.data());
-		}
-	};
-#endif
 
-#if PRINT_DEBUG_FLOW_BUFFERS
+#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG,
 			  "%s():%d: IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
 			  __FUNCTION__, __LINE__,
@@ -1981,9 +1980,6 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 #endif
 		}
 
-#if EXTENDED_DEBUG_LOG
-		extra_log = IO::getResultString(result);
-#endif
 		switch (result) {
 		case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
 		case IO::IO_RESULT::SSL_NEED_HANDSHAKE:{
@@ -2022,7 +2018,7 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		default:
 			std::string error = "Error sending response: ";
 			error += IO::getResultString(result);
-			HttpStream::dumpDebugData(stream, "onServerW-ERROR",
+			HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "onServerW-ERROR",
 						  error.data());
 			clearStream(stream);
 			return;
@@ -2048,8 +2044,8 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		stream->client_connection.enableReadEvent();
 
 		if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
-#if EXTENDED_DEBUG_LOG
-			HttpStream::dumpDebugData(stream,
+#if DEBUG_ZCU_LOG
+			HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 						  "ClientW-ReadPending",
 						  "WROTE RESP PENDING ");
 #endif
@@ -2086,9 +2082,6 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 			writeTo(stream->client_connection, stream->response);
 	}
 
-#if EXTENDED_DEBUG_LOG
-	extra_log = IO::getResultString(result);
-#endif
 	switch (result) {
 	case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
 	case IO::IO_RESULT::SSL_NEED_HANDSHAKE:{
@@ -2183,10 +2176,10 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		break;
 	default:
 		zcu_log_print(LOG_DEBUG,
-				  "fd: %d:%d %.*s Error sending response IN\tbuffer size: "
+				  "%s():%d: [%lx] fd: %d:%d %.*s Error sending response IN\tbuffer size: "
 				  "%8lu\tContent-length: %lu\tleft: %lu "
 				  "header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
-				  __FUNCTION__, __LINE__,
+				  __FUNCTION__, __LINE__, pthread_self(),
 				  stream->
 				  client_connection.getFileDescriptor(),
 				  stream->
@@ -2206,13 +2199,13 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 		clearStream(stream);
 		return;
 	}
-#if PRINT_DEBUG_FLOW_BUFFERS
+#if DEBUG_ZCU_LOG
 	if (stream->backend_connection.buffer_size != 0)
-		zcu_log_print(LOG_DEBUG, "%s():%d: "
+		zcu_log_print(LOG_DEBUG, "%s():%d: [%lx]"
 				  "OUT EAGAIN  %.*s buffer size: %lu > %8lu \tContent-length: "
 				  "%lu\tleft: "
 				  "%lu\tIO: %s",
-				  __FUNCTION__, __LINE__,
+				  __FUNCTION__, __LINE__, pthread_self(),
 				  stream->request.http_message_length,
 				  stream->request.http_message,
 				  buffer_size_in,
@@ -2260,8 +2253,8 @@ void StreamManager::onClientWriteEvent(HttpStream * stream)
 	stream->clearStatus(STREAM_STATUS::RESPONSE_PENDING);
 	stream->client_connection.enableReadEvent();
 	if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
-#if EXTENDED_DEBUG_LOG
-		HttpStream::dumpDebugData(stream, "ClientW-ReadPending",
+#if DEBUG_ZCU_LOG
+		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "ClientW-ReadPending",
 					  "PENDING ");
 #endif
 		//stream->backend_connection.enableReadEvent();
@@ -2312,7 +2305,7 @@ void StreamManager::clearStream(HttpStream * stream)
 		stream->timer_fd.unset();
 		timers_set[stream->timer_fd.getFileDescriptor()] = nullptr;
 		timers_set.erase(stream->timer_fd.getFileDescriptor());
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 		clear_timer++;
 #endif
 	}
@@ -2325,7 +2318,7 @@ void StreamManager::clearStream(HttpStream * stream)
 		cl_streams_set.erase(stream->
 				     client_connection.getFileDescriptor());
 		stream->client_connection.closeConnection();
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 		clear_client++;
 #endif
 	}
@@ -2338,7 +2331,7 @@ void StreamManager::clearStream(HttpStream * stream)
 			stream->backend_connection.
 				getBackend()->decreaseConnection();
 		}
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 		clear_backend++;
 #endif
 		deleteFd(stream->backend_connection.getFileDescriptor());
@@ -2349,7 +2342,7 @@ void StreamManager::clearStream(HttpStream * stream)
 				      backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 	clear_stream++;
 #endif
 	DEBUG_COUNTER_HIT(debug__::on_clear_stream);
@@ -2377,7 +2370,7 @@ std::string StreamManager::handleTask(ctl::CtlTask & task)
 
 		return JSON_OP_RESULT::OK;
 	}
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 	switch (task.subject) {
 	case ctl::CTL_SUBJECT::DEBUG:{
 			std::unique_ptr < JsonObject > root {
@@ -2423,13 +2416,13 @@ void StreamManager::onServerDisconnect(HttpStream * stream)
 	auto & listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
-#if EXTENDED_DEBUG_LOG
-	HttpStream::dumpDebugData(stream, "onServerDisconnect", "DISCONNECT");
+#if DEBUG_ZCU_LOG
+	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "onServerDisconnect", "DISCONNECT");
 #endif
 
 	if (stream->backend_connection.getFileDescriptor() > 0 &&
 	    !stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
-#if DEBUG_STREAM_EVENTS_COUNT
+#if DEBUG_ZCU_LOG
 		clear_backend++;
 #endif
 		deleteFd(stream->backend_connection.getFileDescriptor());
