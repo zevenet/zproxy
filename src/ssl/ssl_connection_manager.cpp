@@ -306,14 +306,13 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 				        zcu_log_print(LOG_DEBUG,
 				                       "%s():%d: [%lx] >>PROGRESS>> fd:%d BIO_do_handshake "
 				                       "return:%d error: with %s errno: %d:%s "
-				                       "Ossl errors: %s from %s",
+									   "from %s",
 				                       __FUNCTION__, __LINE__,
 				                       pthread_self(),
 				                       ssl_connection.getFileDescriptor(), i,
 				                       ssl_connection.getPeerAddress().data(),
-				                       errno__, std::strerror(errno__),
-				                       ossGetErrorStackString().get(),
-				                       ssl_connection.getPeerAddress().c_str());
+									   errno__, std::strerror(errno__),
+									   ssl_connection.getPeerAddress().c_str());
 #endif
 				return true;
 			}
@@ -322,13 +321,12 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 				        zcu_log_print(LOG_DEBUG,
 				                       "%s():%d: [%lx] >>FINISHED>> fd:%d BIO_do_handshake "
 				                       "return:%d error: with %s errno: %d:%s "
-				                       "Ossl errors: %s from %s",
+									   "from %s",
 				                       __FUNCTION__, __LINE__,
 				                       pthread_self(),
 				                       ssl_connection.getFileDescriptor(), i,
 				                       ssl_connection.getPeerAddress().data(),
-				                       errno__, std::strerror(errno__),
-				                       ossGetErrorStackString().get(),
+				                       errno__, std::strerror(errno__),									  
 				                       ssl_connection.getPeerAddress().c_str());
 #endif
 				return true;
@@ -337,7 +335,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 			zcu_log_print(LOG_DEBUG,
 					  "%s():%d: [%lx] fd:%d BIO_do_handshake "
 					  "return:%d error: with %s errno: %d:%s "
-					  "Ossl errors: %s from %s",
+					  "from %s",
 					  __FUNCTION__, __LINE__,
 					  pthread_self(),
 					  ssl_connection.getFileDescriptor(),
@@ -345,7 +343,6 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX * ssl_ctx,
 					  ssl_connection.
 					  getPeerAddress().data(), errno__,
 					  std::strerror(errno__),
-					  ossGetErrorStackString().get(),
 					  ssl_connection.getPeerAddress().c_str());
 #endif
 			ssl_connection.ssl_conn_status =
