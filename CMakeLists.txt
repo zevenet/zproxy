@@ -29,14 +29,14 @@ project(zproxy LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ()
 
+SET (CMAKE_ENABLE_EXPORTS TRUE)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
-
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
