@@ -164,25 +164,6 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	Ignore Header Expect: 100-continue (default: 1, Ignored).  If 0 zproxy manages Expect: 100-continue headers.
 
-- **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
-
-	Specify the routing policy. All the algorithms are weighted with all the weights set in each backend.
-
-	- **ROUND_ROBIN** use the round robin algorithm as a routing policy (used by default).
-
-	- **LEAST_CONNECTIONS** select the backend with least connections established
-                  using as a proportion the weights set.
-
-	- **RESPONSE_TIME** select the backend with the lowest response time using
-                  as a proportion the weights set.
-
-	- **PENDING_CONNECTIONS** select the backend with least pending connections
-                  using as a proportion the weights set.
-
-- **PinnedConnection**  0|1
-
-	Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1, zproxy directly forwards all data without parsing or editing.
-
 - **CompressionAlgorithm** gzip|deflate
 
 	Specify the compression algorithm to use. If the client supports it and the response from the backend is not already compressed, zproxy applies the compression.
@@ -503,6 +484,24 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	Please note: if the listener defined a HeadRemove directive, the matching headers are removed before the service matching is attempted.
 
+- **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
+        
+	Specify the routing policy. All the algorithms are weighted with all the weights set in each backend.
+
+	- **ROUND_ROBIN** use the round robin algorithm as a routing policy (used by default).
+
+	- **LEAST_CONNECTIONS** select the backend with least connections established
+                  using as a proportion the weights set.
+
+	- **RESPONSE_TIME** select the backend with the lowest response time using
+                  as a proportion the weights set.
+
+	- **PENDING_CONNECTIONS** select the backend with least pending connections
+                  using as a proportion the weights set.
+
+- **PinnedConnection**  0|1
+        
+	Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1, zproxy directly forwards all data without parsing or editing.
 - **DynScale** 0|1
 
 	Enable or disable dynamic rescaling for the current service. This value will override the value globally defined.
