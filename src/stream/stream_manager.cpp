@@ -1325,7 +1325,8 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 				  stream->backend_connection.
 				  getBackend()->address.c_str(),
 				  stream->backend_connection.
-				  getBackend()->conn_timeout);
+				  getBackend()->conn_timeout,
+				  stream->client_connection.address_str.data());
 		onBackendConnectionError(stream);
 		return;
 	}
