@@ -26,15 +26,14 @@
 #include "../stats/counter.h"
 #include "connection.h"
 
-class BackendConnection:public Connection,
-	public Counter < BackendConnection > {
-	Backend * backend {nullptr};
+class BackendConnection : public Connection, public Counter<BackendConnection> {
+	Backend *backend{ nullptr };
 
-      public:
-	Backend * getBackend() const;
-	void setBackend(Backend * backend);
+    public:
+	Backend *getBackend() const;
+	void setBackend(Backend *backend);
 
-	  BackendConnection();
-	  virtual ~ BackendConnection() = default;
+	BackendConnection();
+	virtual ~BackendConnection() = default;
 	int connection_retries;
 };

@@ -41,13 +41,12 @@ using namespace json;
  * from sessions::HttpSessionManager to be able to manage all the sessions of
  * this Service.
  */
-class Service:public
-	sessions::HttpSessionManager,
-	public CtlObserver < ctl::CtlTask, std::string > {
-	std::vector < Backend * >backend_set;
-	std::vector < Backend * >emergency_backend_set;
+class Service : public sessions::HttpSessionManager,
+		public CtlObserver<ctl::CtlTask, std::string> {
+	std::vector<Backend *> backend_set;
+	std::vector<Backend *> emergency_backend_set;
 
-  /**
+	/**
    * @brief It checks if the backend is ready to manage the request.
    *
    * It checks if the backend accomplishment the requirement to get the connection:
@@ -57,18 +56,18 @@ class Service:public
    * @param the current service priority, the backend one has to be lower or equal to this value.
    * @return is true if the backend is available, or false if it's not.
    */
-    bool checkBackendAvailable(Backend *bck);
+	bool checkBackendAvailable(Backend *bck);
 
-    /**
+	/**
    * @brief It sort the list of backend based on the priority
    *
    * It returns a vector with the backend index ordered by backend priority
    *
    * @return is the backend indexes vector
    */
-   std::vector < int > sortBackendsByPrio();
+	std::vector<int> sortBackendsByPrio();
 
-  /**
+	/**
    * @brief It modifies the backend index and get the following one
    *
    * This function checks if the index get the last possition and restart index in that case.
@@ -80,9 +79,10 @@ class Service:public
    * @param is the counter passed by reference.
    * @param is the number of backends in the service.
    */
-    void getNextBackendIndex (int *bck_id, int *bck_counter, int bck_list_size);
+	void getNextBackendIndex(int *bck_id, int *bck_counter,
+				 int bck_list_size);
 
-  /**
+	/**
    * @brief It selects the backend to forward the incoming request
    *
    * This function check the backends of the service and it decides which will
@@ -95,70 +95,65 @@ class Service:public
 	Backend *getNextBackend();
 
 	std::mutex mtx_lock;
-  /** The enum Service::LOAD_POLICY defines the different types of load
+	/** The enum Service::LOAD_POLICY defines the different types of load
    * balancing available. All the methods are weighted except the Round Robin
    * one.
    */
-	enum class ROUTING_POLICY
-	{
-    /** Selects the next backend following the Round Robin algorithm. */
+	enum class ROUTING_POLICY {
+		/** Selects the next backend following the Round Robin algorithm. */
 		ROUND_ROBIN,
-    /** Selects the backend with less stablished connections. */
-		W_LEAST_CONNECTIONS,	// we are using weighted
-    /** Selects the backend with less response time. */
+		/** Selects the backend with less stablished connections. */
+		W_LEAST_CONNECTIONS, // we are using weighted
+		/** Selects the backend with less response time. */
 		RESPONSE_TIME,
-    /** Selects the backend with less pending connections. */
+		/** Selects the backend with less pending connections. */
 		PENDING_CONNECTIONS,
 	};
 
-      public:
-  /** True if the Service is disabled, false if it is enabled. */
+    public:
+	/** True if the Service is disabled, false if it is enabled. */
 #if CACHE_ENABLED
 	bool cache_enabled = false;
-	std::shared_ptr < HttpCache > http_cache;
+	std::shared_ptr<HttpCache> http_cache;
 #endif
-	std::atomic < bool > disabled
-	{
-	false};
+	std::atomic<bool> disabled{ false };
 	/** If a backend change of status, this flag is enabled
 	 * to update the service priority limit*/
-	std::atomic < bool > update_piority{false};
-	std::atomic < int > backend_priority
-	{
-	1};
-  /** Service id. */
+	std::atomic<bool> update_piority{ false };
+	std::atomic<int> backend_priority{ 1 };
+	/** Service id. */
 	int id;
 	bool ignore_case;
 	std::string name;
-  /** Backend Cookie Name */
+	/** Backend Cookie Name */
 	std::string becookie,
-      /** Backend Cookie domain */
+		/** Backend Cookie domain */
 		becdomain,
-      /** Backend cookie path */
+		/** Backend cookie path */
 		becpath;
-  /** Backend cookie age */
+	/** Backend cookie age */
 	int becage;
-  /** True if the connection if pinned, false if not. */
+	/** True if the connection if pinned, false if not. */
 	bool pinned_connection;
 	ROUTING_POLICY routing_policy;
 
-      private:
-	bool addBackend(JsonObject * json_object);
+    private:
+	bool addBackend(JsonObject *json_object);
 
-      public:
-  /** ServiceConfig from the Service. */
-	ServiceConfig & service_config;
+    public:
+	/** ServiceConfig from the Service. */
+	ServiceConfig &service_config;
 
-  /**
+	/**
    * @brief It updates the maximum backend priority for the service
    *
    * This values does as limit, the backends that have a priority as this
    * o minor will entry in the active backend pool
    *
    */
-    void updateBackendPriority();
+	void updateBackendPriority();
 
-  /**
+	/**
    * @brief Checks if we need a new backend or not.
    *
    * If we already have a session it returns the backend associated to the
@@ -168,12 +163,11 @@ class Service:public
    * for it.
    * @return always a Backend. A new one or the associated to the session.
    */
-	Backend *getBackend(Connection & source, HttpRequest & request);
-	explicit Service(ServiceConfig & service_config_);
-	~ Service()
-	final;
+	Backend *getBackend(Connection &source, HttpRequest &request);
+	explicit Service(ServiceConfig &service_config_);
+	~Service() final;
 
-  /**
+	/**
    * @brief Creates a new Backend from a BackendConfig.
    *
    * Creates a new Backend from the @p backend_config and adds it to the
@@ -183,15 +177,15 @@ class Service:public
    * @param backend_id to assign the Backend.
    * @param emergency set the Backend as emergency.
    */
-	void addBackend(std::shared_ptr < BackendConfig > backend_config,
+	void addBackend(std::shared_ptr<BackendConfig> backend_config,
 			int backend_id, bool emergency = false);
 
-  /**
+	/**
    * @brief Checks if the backends still alive and deletes the expired sessions.
    */
 	void doMaintenance();
 
-  /**
+	/**
    * @brief Check if the Service should handle the HttpRequest.
    *
    * It checks the request line, required headers and the forbidden headers. If
@@ -201,11 +195,11 @@ class Service:public
    * @return @c true or @c false if the Service should handle the @p request or
    * not.
    */
-	bool doMatch(HttpRequest & request);
+	bool doMatch(HttpRequest &request);
 	static void setBackendsPriorityBy(BACKENDSTATS_PARAMETER);
 	Backend *getEmergencyBackend();
 
-  /**
+	/**
    * @brief This function handles the @p tasks received with the API format.
    *
    * It calls the needed functions depending on the @p task received. The task
@@ -214,33 +208,31 @@ class Service:public
    * @param task to check.
    * @return json formatted string with the result of the operation.
    */
-	std::string handleTask(ctl::CtlTask & task)
-	override;
+	std::string handleTask(ctl::CtlTask &task) override;
 
-  /**
+	/**
    * @brief Checks if the Service should handle the @p task.
    *
    * @param task to check.
    * @return true if should handle the task, false if not.
    */
-	bool isHandler(ctl::CtlTask & task)
-	override;
+	bool isHandler(ctl::CtlTask &task) override;
 
-  /**
+	/**
    * @brief Generates a JsonObject with all the Service information.
    * @return JsonObject with the Service information.
    */
-	std::unique_ptr < JsonObject > getServiceJson();
+	std::unique_ptr<JsonObject> getServiceJson();
 	inline int getBackendSetSize()
 	{
 		return backend_set.size();
 	}
-	bool setBackendHostInfo(Backend * backend);
+	bool setBackendHostInfo(Backend *backend);
 
-	inline void initBackendStats(Statistics::ListenerInfo *listener_stats) {
-		for (auto & bck:backend_set) {
-			bck->listener_stats=listener_stats;
+	inline void initBackendStats(Statistics::ListenerInfo *listener_stats)
+	{
+		for (auto &bck : backend_set) {
+			bck->listener_stats = listener_stats;
 		}
 	}
-
 };

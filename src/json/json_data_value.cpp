@@ -22,18 +22,17 @@
 #include "json_data_value.h"
 #include <functional>
 
-json::JsonDataValue::JsonDataValue(const json::JsonDataValue & value)
+json::JsonDataValue::JsonDataValue(const json::JsonDataValue &value)
 {
 	setValue(value);
 }
 
-json::JsonDataValue::JsonDataValue(const json::JsonDataValue && value)
-	noexcept
+json::JsonDataValue::JsonDataValue(const json::JsonDataValue &&value) noexcept
 {
 	setValue(value);
 }
 
-json::JsonDataValue::JsonDataValue(const std::string & value)
+json::JsonDataValue::JsonDataValue(const std::string &value)
 {
 	setValue(value);
 }
@@ -45,12 +44,12 @@ json::JsonDataValue::JsonDataValue(const char *value)
 
 json::JsonDataValue::JsonDataValue(int value)
 {
-	setValue(static_cast < long >(value));
+	setValue(static_cast<long>(value));
 }
 
 json::JsonDataValue::JsonDataValue(unsigned int value)
 {
-	setValue(static_cast < long >(value));
+	setValue(static_cast<long>(value));
 }
 
 json::JsonDataValue::JsonDataValue(double value)
@@ -63,12 +62,12 @@ json::JsonDataValue::JsonDataValue(bool value)
 	setValue(value);
 }
 
-json::JsonDataValue::JsonDataValue(const json::JsonArray & json_array)
+json::JsonDataValue::JsonDataValue(const json::JsonArray &json_array)
 {
 	setValue(json_array);
 }
 
-json::JsonDataValue::JsonDataValue(const json::JsonObject & json_object)
+json::JsonDataValue::JsonDataValue(const json::JsonObject &json_object)
 {
 	setValue(json_object);
 }
@@ -80,11 +79,11 @@ json::JsonDataValue::JsonDataValue(long value)
 
 json::JsonDataValue::JsonDataValue(unsigned long value)
 {
-	setValue(static_cast < long >(value));
+	setValue(static_cast<long>(value));
 }
 
-json::JsonDataValue & json::JsonDataValue::
-operator=(const json::JsonDataValue & other)
+json::JsonDataValue &
+json::JsonDataValue::operator=(const json::JsonDataValue &other)
 {
 	setValue(other);
 	return *this;
@@ -95,7 +94,7 @@ bool json::JsonDataValue::isValue()
 	return true;
 }
 
-void json::JsonDataValue::setValue(const json::JsonDataValue & value)
+void json::JsonDataValue::setValue(const json::JsonDataValue &value)
 {
 	switch (value.json_type) {
 	case JSON_VALUE_TYPE::JSON_T_NULL:
@@ -119,7 +118,7 @@ void json::JsonDataValue::setValue(const json::JsonDataValue & value)
 	}
 }
 
-void json::JsonDataValue::setValue(const std::string & value)
+void json::JsonDataValue::setValue(const std::string &value)
 {
 	string_value = std::string(value);
 	json_type = JSON_VALUE_TYPE::JSON_T_STRING;
@@ -155,13 +154,13 @@ void json::JsonDataValue::setNullValue()
 	json_type = JSON_VALUE_TYPE::JSON_T_NULL;
 }
 
-void json::JsonDataValue::setValue(const json::JsonArray & json_arry)
+void json::JsonDataValue::setValue(const json::JsonArray &json_arry)
 {
 	array_value.reset(new JsonArray(json_arry));
 	json_type = JSON_VALUE_TYPE::JSON_T_ARRAY;
 }
 
-void json::JsonDataValue::setValue(const json::JsonObject & json_object)
+void json::JsonDataValue::setValue(const json::JsonObject &json_object)
 {
 	object_value.reset(new JsonObject(json_object));
 	json_type = JSON_VALUE_TYPE::JSON_T_OBJECT;

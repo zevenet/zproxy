@@ -21,7 +21,7 @@
 
 #include "backend_connection.h"
 
-BackendConnection::BackendConnection():connection_retries(0), backend(nullptr)
+BackendConnection::BackendConnection() : connection_retries(0), backend(nullptr)
 {
 }
 
@@ -30,7 +30,7 @@ Backend *BackendConnection::getBackend() const
 	return backend;
 }
 
-void BackendConnection::setBackend(Backend * bck)
+void BackendConnection::setBackend(Backend *bck)
 {
 	backend = bck;
 	connection_retries++;

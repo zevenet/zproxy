@@ -38,15 +38,15 @@ http::REQUEST_METHOD HttpRequest::getRequestMethod()
 
 void HttpRequest::printRequestMethod()
 {
-	zcu_log_print(LOG_DEBUG, "Request method: %s",
-			  http::http_info::
-			  http_verb_strings.at(request_method).c_str());
+	zcu_log_print(
+		LOG_DEBUG, "Request method: %s",
+		http::http_info::http_verb_strings.at(request_method).c_str());
 }
 
 std::string_view HttpRequest::getMethod()
 {
-	return method != nullptr ? std::string_view(method, method_len)
-		: std::string_view();
+	return method != nullptr ? std::string_view(method, method_len) :
+					 std::string_view();
 }
 
 std::string_view HttpRequest::getRequestLine()
@@ -56,8 +56,7 @@ std::string_view HttpRequest::getRequestLine()
 
 std::string HttpRequest::getUrl()
 {
-	return path != nullptr ? std::string(path,
-					     path_length) : std::string();
+	return path != nullptr ? std::string(path, path_length) : std::string();
 }
 
 void HttpRequest::setService(void *service)

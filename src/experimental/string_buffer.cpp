@@ -2,37 +2,36 @@
 // Created by abdess on 4/5/18.
 //
 #include "string_buffer.h"
-StringBuffer::StringBuffer():buffer()
+StringBuffer::StringBuffer() : buffer()
 {
-
 }
 
-StringBuffer & StringBuffer::operator<<(const char *s)
+StringBuffer &StringBuffer::operator<<(const char *s)
 {
 	buffer += s;
-//  buffer.insert(std::string(s));
+	//  buffer.insert(std::string(s));
 	return *this;
 }
 
-StringBuffer & StringBuffer::operator<<(int i)
+StringBuffer &StringBuffer::operator<<(int i)
 {
 	buffer += std::to_string(i);
 	return *this;
 }
 
-StringBuffer & StringBuffer::operator<<(std::string const &s)
+StringBuffer &StringBuffer::operator<<(std::string const &s)
 {
 	buffer += s;
 	return *this;
 }
 
-StringBuffer & StringBuffer::operator<<(StringBuffer const &s)
+StringBuffer &StringBuffer::operator<<(StringBuffer const &s)
 {
 	*this << s.string();
 	return *this;
 }
 
-std::string const & StringBuffer::string() const
+std::string const &StringBuffer::string() const
 {
 	return buffer;
 }

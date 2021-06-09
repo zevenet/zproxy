@@ -1,8 +1,7 @@
 #include "waf.h"
 
-bool Waf::checkRequestWaf(HttpStream & stream)
+bool Waf::checkRequestWaf(HttpStream &stream)
 {
-
 	std::string httpVersion = "";
 	std::string httpPath(stream.request.path, stream.request.path_length);
 	std::string httpMethod(stream.request.method,
@@ -20,56 +19,32 @@ bool Waf::checkRequestWaf(HttpStream & stream)
 		break;
 	}
 	modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
-	stream.modsec_transaction->processConnection(stream.
-						     client_connection.getPeerAddress
-						     ().data(),
-						     stream.
-						     client_connection.getPeerPort
-						     (),
-						     stream.
-						     client_connection.getLocalAddress
-						     ().data(),
-						     stream.
-						     client_connection.getLocalPort
-						     ());
+	stream.modsec_transaction->processConnection(
+		stream.client_connection.getPeerAddress().data(),
+		stream.client_connection.getPeerPort(),
+		stream.client_connection.getLocalAddress().data(),
+		stream.client_connection.getLocalPort());
 
-	stream.modsec_transaction->processURI(httpPath.data(),
-					      httpMethod.data(),
-					      httpVersion.data());
+	stream.modsec_transaction->processURI(
+		httpPath.data(), httpMethod.data(), httpVersion.data());
 
-	for (int i = 0; i < static_cast < int >(stream.request.num_headers);
-	     i++) {
+	for (int i = 0; i < static_cast<int>(stream.request.num_headers); i++) {
 		if (stream.request.headers[i].header_off)
 			continue;
-		auto name =
-			reinterpret_cast < unsigned char *>(const_cast <
-							    char
-							    *>
-							    (stream.request.headers
-							     [i].name));
-		auto value =
-			reinterpret_cast < unsigned char *>(const_cast <
-							    char
-							    *>
-							    (stream.request.headers
-							     [i].value));
-		stream.modsec_transaction->addRequestHeader(name,
-							    stream.
-							    request.headers
-							    [i].name_len,
-							    value,
-							    stream.
-							    request.headers
-							    [i].value_len);
+		auto name = reinterpret_cast<unsigned char *>(
+			const_cast<char *>(stream.request.headers[i].name));
+		auto value = reinterpret_cast<unsigned char *>(
+			const_cast<char *>(stream.request.headers[i].value));
+		stream.modsec_transaction->addRequestHeader(
+			name, stream.request.headers[i].name_len, value,
+			stream.request.headers[i].value_len);
 	}
 	stream.modsec_transaction->processRequestHeaders();
 
 	if (stream.request.message_length > 0) {
-		stream.modsec_transaction->appendRequestBody((unsigned char *)
-							     stream.
-							     request.message,
-							     stream.
-							     request.message_length);
+		stream.modsec_transaction->appendRequestBody(
+			(unsigned char *)stream.request.message,
+			stream.request.message_length);
 	}
 	stream.modsec_transaction->processRequestBody();
 
@@ -78,9 +53,8 @@ bool Waf::checkRequestWaf(HttpStream & stream)
 		// log event?
 		if (stream.modsec_transaction->m_it.log != nullptr) {
 			zcu_log_print(LOG_WARNING, "[WAF] (%lx) %s",
-					  pthread_self(),
-					  stream.modsec_transaction->
-					  m_it.log);
+				      pthread_self(),
+				      stream.modsec_transaction->m_it.log);
 		}
 
 		// redirect returns disruptive=1
@@ -88,8 +62,8 @@ bool Waf::checkRequestWaf(HttpStream & stream)
 		// process is going to be cut. Execute the logging phase
 		if (!stream.modsec_transaction->processLogging())
 			zcu_log_print(LOG_WARNING,
-					  "(%lx) WAF, error processing the log",
-					  pthread_self());
+				      "(%lx) WAF, error processing the log",
+				      pthread_self());
 
 		return true;
 	}
@@ -97,7 +71,7 @@ bool Waf::checkRequestWaf(HttpStream & stream)
 	return false;
 }
 
-bool Waf::checkResponseWaf(HttpStream & stream)
+bool Waf::checkResponseWaf(HttpStream &stream)
 {
 	std::string httpVersion = "";
 
@@ -113,44 +87,27 @@ bool Waf::checkResponseWaf(HttpStream & stream)
 		break;
 	}
 	modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
-	for (int i = 0; i < static_cast < int >(stream.response.num_headers);
+	for (int i = 0; i < static_cast<int>(stream.response.num_headers);
 	     i++) {
 		if (stream.response.headers[i].header_off)
 			continue;
-		auto name =
-			reinterpret_cast < unsigned char *>(const_cast <
-							    char
-							    *>
-							    (stream.response.headers
-							     [i].name));
-		auto value =
-			reinterpret_cast < unsigned char *>(const_cast <
-							    char
-							    *>
-							    (stream.response.headers
-							     [i].value));
-		stream.modsec_transaction->addResponseHeader(name,
-							     stream.
-							     response.headers
-							     [i].name_len,
-							     value,
-							     stream.
-							     response.headers
-							     [i].value_len);
+		auto name = reinterpret_cast<unsigned char *>(
+			const_cast<char *>(stream.response.headers[i].name));
+		auto value = reinterpret_cast<unsigned char *>(
+			const_cast<char *>(stream.response.headers[i].value));
+		stream.modsec_transaction->addResponseHeader(
+			name, stream.response.headers[i].name_len, value,
+			stream.response.headers[i].value_len);
 	}
 
-	stream.modsec_transaction->processResponseHeaders(stream.
-							  response.http_status_code,
-							  httpVersion);
+	stream.modsec_transaction->processResponseHeaders(
+		stream.response.http_status_code, httpVersion);
 
 	if (stream.response.message_length > 0) {
-		stream.modsec_transaction->appendResponseBody(reinterpret_cast
-							      <
-							      unsigned char
-							      *>(stream.
-								 response.message),
-							      stream.response.
-							      message_length);
+		stream.modsec_transaction->appendResponseBody(
+			reinterpret_cast<unsigned char *>(
+				stream.response.message),
+			stream.response.message_length);
 	}
 
 	stream.modsec_transaction->processResponseBody();
@@ -161,13 +118,13 @@ bool Waf::checkResponseWaf(HttpStream & stream)
 		// log event?
 		if (stream.modsec_transaction->m_it.log != nullptr) {
 			zcu_log_print(LOG_WARNING, "[WAF] (%lx) %s",
-					  pthread_self(),
-					  stream.modsec_transaction->
-					  m_it.log);
+				      pthread_self(),
+				      stream.modsec_transaction->m_it.log);
 		}
-		stream.modsec_transaction->processLogging();	// TODO:: is it necessary??
+		stream.modsec_transaction
+			->processLogging(); // TODO:: is it necessary??
 		zcu_log_print(LOG_DEBUG,
-				  "WAF wants to apply an action for the REQUEST");
+			      "WAF wants to apply an action for the REQUEST");
 
 		return true;
 	}
@@ -175,7 +132,7 @@ bool Waf::checkResponseWaf(HttpStream & stream)
 }
 
 // todo: parse only the directives of a listener
-std::shared_ptr < Rules > Waf::reloadRules()
+std::shared_ptr<Rules> Waf::reloadRules()
 {
 	int err = 0;
 	regex_t WafRules;
@@ -183,10 +140,9 @@ std::shared_ptr < Rules > Waf::reloadRules()
 	regmatch_t matches[5];
 	Config config;
 	config.init(global::StartOptions::getCurrent());
-	auto rules = std::make_shared < Rules > ();
+	auto rules = std::make_shared<Rules>();
 	zcu_log_print(LOG_WARNING, "file to update %s",
-			  global::StartOptions::getCurrent().
-			  conf_file_name.data());
+		      global::StartOptions::getCurrent().conf_file_name.data());
 
 	if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
 		    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -197,15 +153,15 @@ std::shared_ptr < Rules > Waf::reloadRules()
 		if (!regexec(&WafRules, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			auto file = std::string(lin + matches[1].rm_so,
-						lin + matches[1].rm_eo -
-						lin + matches[1].rm_so);
+						lin + matches[1].rm_eo - lin +
+							matches[1].rm_so);
 			err = rules->loadFromUri(file.data());
 			if (err == -1) {
-				zcu_log_print(LOG_ERR,
-						  "Error loading waf ruleset file %s: %s",
-						  file.data(),
-						  rules->
-						  getParserError().data());
+				zcu_log_print(
+					LOG_ERR,
+					"Error loading waf ruleset file %s: %s",
+					file.data(),
+					rules->getParserError().data());
 				return nullptr;
 			}
 		}
@@ -219,26 +175,23 @@ std::shared_ptr < Rules > Waf::reloadRules()
 void Waf::logModsec(void *data, const void *message)
 {
 	if (data != nullptr)
-		zcu_log_print(LOG_WARNING, "%s",
-				  static_cast < char *>(data));
+		zcu_log_print(LOG_WARNING, "%s", static_cast<char *>(data));
 	if (message != nullptr)
 		zcu_log_print(LOG_WARNING, "[WAF] %s",
-				  static_cast < char *>(const_cast <
-							void *>(message)));
+			      static_cast<char *>(const_cast<void *>(message)));
 }
 
-void Waf::dumpRules(modsecurity::Rules & rules)
+void Waf::dumpRules(modsecurity::Rules &rules)
 {
 	zcu_log_print(LOG_DEBUG, "Rules: ");
 	for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
 		auto rule = rules.getRulesForPhase(i);
 		if (rule) {
-		      for (auto & x:*rule) {
+			for (auto &x : *rule) {
 				zcu_log_print(LOG_DEBUG,
-						  "\tRule Id: %d From %s at %d ",
-						  x->m_ruleId,
-						  x->m_fileName.data(),
-						  x->m_lineNumber);
+					      "\tRule Id: %d From %s at %d ",
+					      x->m_ruleId, x->m_fileName.data(),
+					      x->m_lineNumber);
 			}
 		}
 	}

@@ -59,33 +59,32 @@ constexpr auto F_PID = "/var/run/zproxy.pid";
 constexpr int MAX_FIN = 100;
 constexpr int UNIX_PATH_MAX = 108;
 
-void __SSL_CTX_free(SSL_CTX * ssl_ctx);
-class Config:public Counter < Config > {
+void __SSL_CTX_free(SSL_CTX *ssl_ctx);
+class Config : public Counter<Config> {
 	const char *xhttp[6] = {
 		"^(GET|POST|HEAD) ([^ ]+) HTTP/1.[01].*$",
 		"^(GET|POST|HEAD|PUT|PATCH|DELETE) ([^ ]+) HTTP/1.[01].*$",
 		"^(GET|POST|HEAD|PUT|PATCH|DELETE|LOCK|UNLOCK|PROPFIND|PROPPATCH|SEARCH|"
-			"MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
-			"REPORT) ([^ ]+) HTTP/1.[01].*$",
+		"MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
+		"REPORT) ([^ ]+) HTTP/1.[01].*$",
 		"^(GET|POST|HEAD|PUT|PATCH|DELETE|LOCK|UNLOCK|PROPFIND|PROPPATCH|SEARCH|"
-			"MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
-			"REPORT|SUBSCRIBE|UNSUBSCRIBE|BPROPPATCH|POLL|BMOVE|BCOPY|BDELETE|"
-			"BPROPFIND|NOTIFY|CONNECT) ([^ ]+) HTTP/1.[01].*$",
+		"MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
+		"REPORT|SUBSCRIBE|UNSUBSCRIBE|BPROPPATCH|POLL|BMOVE|BCOPY|BDELETE|"
+		"BPROPFIND|NOTIFY|CONNECT) ([^ ]+) HTTP/1.[01].*$",
 		"^(GET|POST|HEAD|PUT|PATCH|DELETE|LOCK|UNLOCK|PROPFIND|PROPPATCH|SEARCH|"
-			"MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
-			"REPORT|SUBSCRIBE|UNSUBSCRIBE|BPROPPATCH|POLL|BMOVE|BCOPY|BDELETE|"
-			"BPROPFIND|NOTIFY|CONNECT|RPC_IN_DATA|RPC_OUT_DATA|VERSION-CONTROL) ([^ "
-			"]+) HTTP/1.[01].*$",
+		"MKCOL|MKCALENDAR|MOVE|COPY|OPTIONS|TRACE|MKACTIVITY|CHECKOUT|MERGE|"
+		"REPORT|SUBSCRIBE|UNSUBSCRIBE|BPROPPATCH|POLL|BMOVE|BCOPY|BDELETE|"
+		"BPROPFIND|NOTIFY|CONNECT|RPC_IN_DATA|RPC_OUT_DATA|VERSION-CONTROL) ([^ "
+		"]+) HTTP/1.[01].*$",
 		"^(GET|POST|HEAD|PUT|PATCH|DELETE|OPTIONS) ([^ ]+) HTTP/1.[01].*$"
 	};
-
 
 	int clnt_to;
 	int be_to;
 	int be_connto;
 	bool dynscale;
 	int ignore_case;
-	std::array < std::string, MAX_FIN > f_name;
+	std::array<std::string, MAX_FIN> f_name;
 	FILE *f_in[MAX_FIN];
 	int n_lin[MAX_FIN];
 	size_t cur_fin;
@@ -94,38 +93,38 @@ class Config:public Counter < Config > {
 	int listener_id_counter;
 	bool abort_on_error;
 
-      public:
+    public:
 	int log_level;
 	int def_facility;
 	/*
 	 * Global variables needed by everybody
 	 */
 
-	std::string user,	/* user to run as */
-		group,		/* group to run as */
-		name,		/* farm name to run as */
-		root_jail,	/* directory to chroot to */
-		pid_name,	/* file to record pid in */
-		ctrl_name,	/* control socket name */
-		ctrl_ip,	/* control socket ip */
-		ctrl_user,	/* control socket username */
-		ctrl_group,	/* control socket group name */
-		engine_id,	/* openssl engine id */
-		conf_file_name;	/* Configuration file path name */
+	std::string user, /* user to run as */
+		group, /* group to run as */
+		name, /* farm name to run as */
+		root_jail, /* directory to chroot to */
+		pid_name, /* file to record pid in */
+		ctrl_name, /* control socket name */
+		ctrl_ip, /* control socket ip */
+		ctrl_user, /* control socket username */
+		ctrl_group, /* control socket group name */
+		engine_id, /* openssl engine id */
+		conf_file_name; /* Configuration file path name */
 
-	long ctrl_mode;		/* octal mode of the control socket */
+	long ctrl_mode; /* octal mode of the control socket */
 
-	int numthreads,		/* number of worker threads */
-	  anonymise,		/* anonymise client address */
-	  alive_to,		/* check interval for resurrection */
-	  daemonize,		/* run as daemon */
-	  log_facility,		/* log facility to use */
-	  print_log,		/* print log messages to stdout/stderr */
-	  grace,		/* grace period before shutdown */
-	  ignore_100,		/* ignore header "Expect: 100-continue" */
+	int numthreads, /* number of worker threads */
+		anonymise, /* anonymise client address */
+		alive_to, /* check interval for resurrection */
+		daemonize, /* run as daemon */
+		log_facility, /* log facility to use */
+		print_log, /* print log messages to stdout/stderr */
+		grace, /* grace period before shutdown */
+		ignore_100, /* ignore header "Expect: 100-continue" */
 		/* 1 Ignore header (Default) */
 		/* 0 Manages header */
-	  ctrl_port = 0, sync_is_enabled;	/*session sync enabled */
+		ctrl_port = 0, sync_is_enabled; /*session sync enabled */
 #ifdef CACHE_ENABLED
 	long cache_s;
 	int cache_thr;
@@ -133,7 +132,7 @@ class Config:public Counter < Config > {
 	std::string cache_disk_path;
 #endif
 
-      public:
+    public:
 	void conf_err(const char *msg);
 	char *conf_fgets(char *buf, const int max);
 	void include_dir(const char *conf_path);
@@ -146,27 +145,26 @@ class Config:public Counter < Config > {
 	/*
 	 * parse an HTTP listener
 	 */
-	std::shared_ptr < ListenerConfig > parse_HTTP();
+	std::shared_ptr<ListenerConfig> parse_HTTP();
 
 	/*
 	 * parse an HTTPS listener
 	 */
-	std::shared_ptr < ListenerConfig > parse_HTTPS();
+	std::shared_ptr<ListenerConfig> parse_HTTPS();
 
-	unsigned char **get_subjectaltnames(X509 * x509, unsigned int *count);
+	unsigned char **get_subjectaltnames(X509 *x509, unsigned int *count);
 
-	void load_cert(int has_other,
-		       std::weak_ptr < ListenerConfig > listener_,
+	void load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 		       char *filename);
 
 	void load_certdir(int has_other,
-			  std::weak_ptr < ListenerConfig > listener_,
-			  const std::string & dir_path);
+			  std::weak_ptr<ListenerConfig> listener_,
+			  const std::string &dir_path);
 
 	/*
 	 * parse a service
 	 */
-	std::shared_ptr < ServiceConfig > parseService(const char *svc_name);
+	std::shared_ptr<ServiceConfig> parseService(const char *svc_name);
 
 	/*
 	 * parse an OrURLs block
@@ -179,40 +177,37 @@ class Config:public Counter < Config > {
 	/*
 	 * parse a back-end
 	 */
-	std::shared_ptr < BackendConfig > parseBackend(const char *svc_name,
-						       const int
-						       is_emergency);
+	std::shared_ptr<BackendConfig> parseBackend(const char *svc_name,
+						    const int is_emergency);
 	/*
 	 * Parse the cache configuration
 	 */
 #ifdef CACHE_ENABLED
-	void parseCache(ServiceConfig * const svc);
+	void parseCache(ServiceConfig *const svc);
 #endif
 	/*
 	 * parse a session
 	 */
-	void parseSession(std::weak_ptr < ServiceConfig > svc_spt);
+	void parseSession(std::weak_ptr<ServiceConfig> svc_spt);
 	/*
 	 * parse the config file
 	 */
 	void parse_file();
 
-      public:
-	std::shared_ptr < ServiceConfig > services;
-	/* global services (if any) */// Not used
-	std::shared_ptr < ListenerConfig > listeners;	/* all available listeners */
+    public:
+	std::shared_ptr<ServiceConfig> services;
+	/* global services (if any) */ // Not used
+	std::shared_ptr<ListenerConfig> listeners; /* all available listeners */
 
-      public:
+    public:
 	Config(bool _abort_on_error = false);
 	~Config();
 
 	/*
 	 * prepare to parse the config file provided.
 	 */
-	bool init(const global::StartOptions & start_options);
-	bool init(const std::string & file_name);
-	bool found_parse_error
-	{
-	false};
+	bool init(const global::StartOptions &start_options);
+	bool init(const std::string &file_name);
+	bool found_parse_error{ false };
 	void setAsCurrent();
 };

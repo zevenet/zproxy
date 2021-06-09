@@ -1,4 +1,4 @@
-ï »¿				/*
+ï »¿ /*
 				 *    Zevenet zproxy Load Balancer Software License
 				 *    This file is part of the Zevenet zproxy Load Balancer software package.
 				 *
@@ -21,16 +21,16 @@
 #include "http_cache.h"
 #include "../handlers/cache_manager.h"
 #include "../../zcutils/zcutils.h"
-// Returns the cache content with all the information stored
+	// Returns the cache content with all the information stored
 	cache_commons::CacheObject *
 	HttpCache::getCacheObject(HttpRequest request)
 {
-	return getCacheObject(std::hash < std::string > ()(request.getUrl()));
+	return getCacheObject(std::hash<std::string>()(request.getUrl()));
 }
 
-cache_commons::CacheObject * HttpCache::getCacheObject(size_t hashed_url)
+cache_commons::CacheObject *HttpCache::getCacheObject(size_t hashed_url)
 {
-	cache_commons::CacheObject * c_object = nullptr;
+	cache_commons::CacheObject *c_object = nullptr;
 	auto iter = cache.find(hashed_url);
 	if (iter != cache.end()) {
 		c_object = iter->second;
@@ -39,7 +39,7 @@ cache_commons::CacheObject * HttpCache::getCacheObject(size_t hashed_url)
 }
 
 // Store in cache the response checking CacheObject parameters
-void HttpCache::handleResponse(HttpResponse & response, HttpRequest request)
+void HttpCache::handleResponse(HttpResponse &response, HttpRequest request)
 {
 	auto c_opt = getCacheObject(request);
 	if (c_opt != nullptr && c_opt->dirty == true) {
@@ -56,35 +56,34 @@ void HttpCache::handleResponse(HttpResponse & response, HttpRequest request)
 	if (!response.c_opt.cacheable) {
 		this->stats.cache_not_stored++;
 		return;
-	}
-	else if (response.cache_control == false && response.pragma == true) {
+	} else if (response.cache_control == false && response.pragma == true) {
 		// Check the pragma only if no cache-control header in request nor in
 		// response, if the pragma was present, disable cache
 		this->stats.cache_not_stored++;
 		return;
 	}
 	//  Check status code
-	if (response.http_status_code != 200
-	    && response.http_status_code != 301
-	    && response.http_status_code != 308) {
+	if (response.http_status_code != 200 &&
+	    response.http_status_code != 301 &&
+	    response.http_status_code != 308) {
 		this->stats.cache_not_stored++;
 		return;
 	}
 	if (((response.content_length + response.headers_length) >=
-	     cache_max_size) && cache_max_size != 0) {
+	     cache_max_size) &&
+	    cache_max_size != 0) {
 		//    cache_stats::cache_RAM_inserted_entries++;
 		DEBUG_COUNTER_HIT(cache_stats__::cache_not_stored);
 		this->stats.cache_not_stored++;
-		zcu_log_print(LOG_WARNING,
-				  "Not caching response with %d bytes size",
-				  response.content_length +
-				  response.headers_length);
+		zcu_log_print(
+			LOG_WARNING, "Not caching response with %d bytes size",
+			response.content_length + response.headers_length);
 		return;
 	}
 
 	// Check HTTP verb
-	switch (http::http_info::http_verbs.
-		at(std::string(request.method, request.method_len))) {
+	switch (http::http_info::http_verbs.at(
+		std::string(request.method, request.method_len))) {
 	case http::REQUEST_METHOD::GET:
 		addResponse(response, request);
 		break;
@@ -104,19 +103,21 @@ void HttpCache::updateResponse(HttpResponse response, HttpRequest request)
 	auto c_object = getCacheObject(request);
 	if (response.content_length == 0) {
 		zcu_log_print(LOG_WARNING,
-				  "Content-Length header with 0 value when trying "
-				  "to update content in the cache");
+			      "Content-Length header with 0 value when trying "
+			      "to update content in the cache");
 	}
 	if (response.content_length != c_object->content_length) {
-		zcu_log_print(LOG_WARNING,
-				  "Content-Length in response and Content-Length cached missmatch for %s",
-				  request.getUrl().data());
+		zcu_log_print(
+			LOG_WARNING,
+			"Content-Length in response and Content-Length cached missmatch for %s",
+			request.getUrl().data());
 		return;
 	}
 	if (response.etag.compare(c_object->etag) != 0) {
-		zcu_log_print(LOG_WARNING,
-				  "ETag in response and ETag cached missmatch for %s",
-				  request.getUrl().data());
+		zcu_log_print(
+			LOG_WARNING,
+			"ETag in response and ETag cached missmatch for %s",
+			request.getUrl().data());
 		return;
 	}
 	c_object->staled = false;
@@ -146,14 +147,14 @@ st::STORAGE_TYPE HttpCache::getStorageType(HttpResponse response)
 	size_t response_size =
 		response.http_message_length + response.content_length;
 	// If chunked -> store in disk
-	if ((response.chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED
-	     && response.transfer_encoding_type ==
-	     http::TRANSFER_ENCODING_TYPE::CHUNKED)
-	    || response_size > ram_storage->max_size * ram_storage->cache_thr
-	    || response_size >= ram_size_left) {
+	if ((response.chunked_status !=
+		     http::CHUNKED_STATUS::CHUNKED_DISABLED &&
+	     response.transfer_encoding_type ==
+		     http::TRANSFER_ENCODING_TYPE::CHUNKED) ||
+	    response_size > ram_storage->max_size * ram_storage->cache_thr ||
+	    response_size >= ram_size_left) {
 		return st::STORAGE_TYPE::DISK;
-	}
-	else {
+	} else {
 		return getStorageType();
 	}
 }
@@ -172,33 +173,32 @@ HttpCache::~HttpCache()
 }
 
 // Init cache storage and set needed parameters
-void HttpCache::cacheInit(regex_t * pattern, const int timeout,
-			  const std::string & svc, long storage_size,
-			  int storage_threshold, const std::string & f_name,
-			  const std::string & cache_ram_mpoint,
-			  const std::string & cache_disk_mpoint)
+void HttpCache::cacheInit(regex_t *pattern, const int timeout,
+			  const std::string &svc, long storage_size,
+			  int storage_threshold, const std::string &f_name,
+			  const std::string &cache_ram_mpoint,
+			  const std::string &cache_disk_mpoint)
 {
 	if (pattern != nullptr) {
 		if (pattern->re_pcre != nullptr) {
 			this->cache_pattern = pattern;
 			this->cache_timeout = timeout;
 			this->service_name = svc;
-		}
-		else {
+		} else {
 			return;
 		}
 		if (cache_ram_mpoint.size() > 0) {
 			ramfs_mount_point = cache_ram_mpoint;
 			if (ramfs_mount_point.back() == '/') {
-				ramfs_mount_point.erase(ramfs_mount_point.
-							size() - 1);
+				ramfs_mount_point.erase(
+					ramfs_mount_point.size() - 1);
 			}
 		}
 		if (cache_disk_mpoint.size() > 0) {
 			disk_mount_point = cache_disk_mpoint;
 			if (disk_mount_point.back() == '/') {
-				disk_mount_point.erase(disk_mount_point.
-						       size() - 1);
+				disk_mount_point.erase(disk_mount_point.size() -
+						       1);
 			}
 		}
 		// Create directory, if fails, and it's not because the folder is already
@@ -206,16 +206,16 @@ void HttpCache::cacheInit(regex_t * pattern, const int timeout,
 		if (mkdir(ramfs_mount_point.data(), 0777) == -1) {
 			if (errno != EEXIST) {
 				zcu_log_print(LOG_ERR,
-						  "Error creating the directory %s",
-						  ramfs_mount_point.data());
+					      "Error creating the directory %s",
+					      ramfs_mount_point.data());
 				exit(1);
 			}
 		}
 		if (mkdir(disk_mount_point.data(), 0777) == -1) {
 			if (errno != EEXIST) {
 				zcu_log_print(LOG_ERR,
-						  "Error creating the directory %s",
-						  disk_mount_point.data());
+					      "Error creating the directory %s",
+					      disk_mount_point.data());
 				exit(1);
 			}
 		}
@@ -231,14 +231,10 @@ void HttpCache::cacheInit(regex_t * pattern, const int timeout,
 		switch (getStorageType()) {
 		case st::STORAGE_TYPE::RAMFS:
 			ram_storage = RamfsCacheStorage::getInstance();
-			ram_storage->initCacheStorage(static_cast <
-						      unsigned long
-						      >(storage_size),
-						      static_cast <
-						      double
-						      >(storage_threshold) /
-						      100, svc,
-						      ramfs_mount_point);
+			ram_storage->initCacheStorage(
+				static_cast<unsigned long>(storage_size),
+				static_cast<double>(storage_threshold) / 100,
+				svc, ramfs_mount_point);
 			svc_status = ram_storage->initServiceStorage(svc);
 			// recover cache status
 			if (svc_status ==
@@ -248,14 +244,10 @@ void HttpCache::cacheInit(regex_t * pattern, const int timeout,
 			break;
 		case st::STORAGE_TYPE::STDMAP:
 			ram_storage = StdmapCacheStorage::getInstance();
-			ram_storage->initCacheStorage(static_cast <
-						      unsigned long
-						      >(storage_size),
-						      static_cast <
-						      double
-						      >(storage_threshold) /
-						      100, svc,
-						      ramfs_mount_point);
+			ram_storage->initCacheStorage(
+				static_cast<unsigned long>(storage_size),
+				static_cast<double>(storage_threshold) / 100,
+				svc, ramfs_mount_point);
 			svc_status = ram_storage->initServiceStorage(svc);
 			// recover cache status
 			if (svc_status ==
@@ -266,21 +258,18 @@ void HttpCache::cacheInit(regex_t * pattern, const int timeout,
 #if MEMCACHED_ENABLED == 1
 		case st::STORAGE_TYPE::MEMCACHED:
 			ram_storage = MemcachedStorage::getInstance();
-			ram_storage->initCacheStorage(static_cast <
-						      unsigned long
-						      >(storage_size),
-						      static_cast <
-						      double
-						      >(storage_threshold) /
-						      100, svc,
-						      cache_ram_mpoint);
+			ram_storage->initCacheStorage(
+				static_cast<unsigned long>(storage_size),
+				static_cast<double>(storage_threshold) / 100,
+				svc, cache_ram_mpoint);
 			svc_status = ram_storage->initServiceStorage(svc);
 			// recover cache status
 			break;
 #endif
 		default:
-			zcu_log_print(LOG_ERR,
-					  "ERROR Fatal, not able to determine the storage");
+			zcu_log_print(
+				LOG_ERR,
+				"ERROR Fatal, not able to determine the storage");
 		}
 
 		// DISK
@@ -298,11 +287,11 @@ void HttpCache::cacheInit(regex_t * pattern, const int timeout,
 }
 
 // Add response to CacheObject representation and to storage
-void HttpCache::addResponse(HttpResponse & response, HttpRequest request)
+void HttpCache::addResponse(HttpResponse &response, HttpRequest request)
 {
 	auto cache_entry = new cache_commons::CacheObject();
-	std::unique_ptr < cache_commons::CacheObject > c_object(cache_entry);
-	auto hashed_url = hash < std::string > ()(request.getUrl());
+	std::unique_ptr<cache_commons::CacheObject> c_object(cache_entry);
+	auto hashed_url = hash<std::string>()(request.getUrl());
 	cache[hashed_url] = c_object.get();
 
 	createResponseEntry(response, c_object.get());
@@ -323,33 +312,27 @@ void HttpCache::addResponse(HttpResponse & response, HttpRequest request)
 	case st::STORAGE_TYPE::STDMAP:
 	case st::STORAGE_TYPE::MEMCACHED:
 	case st::STORAGE_TYPE::RAMFS:
-		err = ram_storage->putInStorage(rel_path,
-						std::string(response.buffer,
-							    response.
-							    buffer_size),
-						(response.content_length +
-						 response.headers_length));
+		err = ram_storage->putInStorage(
+			rel_path,
+			std::string(response.buffer, response.buffer_size),
+			(response.content_length + response.headers_length));
 		if (err == st::STORAGE_STATUS::SUCCESS) {
 			DEBUG_COUNTER_HIT(cache_stats__::cache_RAM_entries);
 			this->stats.cache_RAM_inserted_entries++;
 			this->stats.cache_RAM_used =
-				static_cast <
-				long >(ram_storage->current_size);
+				static_cast<long>(ram_storage->current_size);
 		}
 		break;
 	case st::STORAGE_TYPE::DISK:
-		err = disk_storage->putInStorage(rel_path,
-						 std::string(response.buffer,
-							     response.
-							     buffer_size),
-						 (response.content_length +
-						  response.headers_length));
+		err = disk_storage->putInStorage(
+			rel_path,
+			std::string(response.buffer, response.buffer_size),
+			(response.content_length + response.headers_length));
 		if (err == st::STORAGE_STATUS::SUCCESS) {
 			DEBUG_COUNTER_HIT(cache_stats__::cache_DISK_entries);
 			this->stats.cache_DISK_inserted_entries++;
 			this->stats.cache_DISK_used =
-				static_cast <
-				long >(disk_storage->current_size);
+				static_cast<long>(disk_storage->current_size);
 		}
 		break;
 	default:
@@ -358,7 +341,7 @@ void HttpCache::addResponse(HttpResponse & response, HttpRequest request)
 	// If success, store in the unordered map
 	if (err != st::STORAGE_STATUS::SUCCESS) {
 		zcu_log_print(LOG_ERR,
-				  "Error trying to store the response in storage");
+			      "Error trying to store the response in storage");
 		deleteEntry(request);
 		return;
 	}
@@ -381,7 +364,7 @@ void HttpCache::addResponse(HttpResponse & response, HttpRequest request)
 
 // Create the CacheObject with important information about the req/resp cached
 void HttpCache::createResponseEntry(HttpResponse response,
-				    cache_commons::CacheObject * c_object)
+				    cache_commons::CacheObject *c_object)
 {
 	if (c_object == nullptr) {
 		c_object = new cache_commons::CacheObject();
@@ -400,27 +383,24 @@ void HttpCache::createResponseEntry(HttpResponse response,
 	// heuristically
 	if (response.c_opt.max_age >= 0 && this->cache_timeout != 0) {
 		// Set the most restrictive value
-		response.c_opt.max_age > this->cache_timeout
-			? c_object->max_age = this->cache_timeout
-			: c_object->max_age = response.c_opt.max_age;
-	}
-	else if (this->cache_timeout >= 0) {
+		response.c_opt.max_age > this->cache_timeout ?
+			      c_object->max_age = this->cache_timeout :
+			      c_object->max_age = response.c_opt.max_age;
+	} else if (this->cache_timeout >= 0) {
 		// Store the config file timeout
 		c_object->max_age = this->cache_timeout;
-	}
-	else if (response.c_opt.max_age >= 0) {
+	} else if (response.c_opt.max_age >= 0) {
 		// Store the response cache max-age
 		c_object->max_age = response.c_opt.max_age;
-	}
-	else if (response.last_mod >= 0) {
+	} else if (response.last_mod >= 0) {
 		// heuristic algorithm -> 10% of last-modified
 		time_t now = this->t_stamp;
 		c_object->max_age =
-			static_cast < long >((now - response.last_mod) * 0.1);
-	}
-	else {
+			static_cast<long>((now - response.last_mod) * 0.1);
+	} else {
 		// If not available value, use the defined default timeout
-	c_object->max_age = DEFAULT_TIMEOUT}
+		c_object->max_age = DEFAULT_TIMEOUT
+	}
 	/*
 	 *must-revalidate, proxy-revalidate
 	 */
@@ -454,8 +434,7 @@ void HttpCache::createResponseEntry(HttpResponse response,
 		c_object->storage = st::STORAGE_TYPE::MEMCACHED;
 		break;
 	default:
-		zcu_log_print(LOG_ERR,
-				  "Not able to decide storage, exiting");
+		zcu_log_print(LOG_ERR, "Not able to decide storage, exiting");
 		exit(-1);
 	}
 
@@ -465,20 +444,20 @@ void HttpCache::createResponseEntry(HttpResponse response,
 }
 
 // Append pending data to its cached content
-void HttpCache::addData(HttpResponse & response, std::string_view data,
-			const std::string & url)
+void HttpCache::addData(HttpResponse &response, std::string_view data,
+			const std::string &url)
 {
-	auto c_object = getCacheObject(std::hash < std::string > ()(url));
+	auto c_object = getCacheObject(std::hash<std::string>()(url));
 	if (c_object == nullptr) {
 		zcu_log_print(LOG_ERR,
-				  "Incoming data for a cache entry not stored yet");
+			      "Incoming data for a cache entry not stored yet");
 		return;
 	}
 	if (response.c_object == nullptr)
 		return;
 
 	// create the path string
-	size_t hashed_url = std::hash < std::string > ()(url);
+	size_t hashed_url = std::hash<std::string>()(url);
 	std::string rel_path = service_name;
 	rel_path.append("/");
 	rel_path.append(to_string(hashed_url));
@@ -491,28 +470,29 @@ void HttpCache::addData(HttpResponse & response, std::string_view data,
 	case st::STORAGE_TYPE::RAMFS:
 		err = ram_storage->appendData(rel_path, data);
 		this->stats.cache_RAM_used =
-			static_cast < long >(ram_storage->current_size);
+			static_cast<long>(ram_storage->current_size);
 		break;
 	case st::STORAGE_TYPE::DISK:
 		err = disk_storage->appendData(rel_path, data);
 		this->stats.cache_DISK_used =
-			static_cast < long >(disk_storage->current_size);
+			static_cast<long>(disk_storage->current_size);
 		break;
 	default:
 		return;
 	}
 	if (err != storage_commons::STORAGE_STATUS::SUCCESS) {
-		zcu_log_print(LOG_WARNING,
-				  "There was an unexpected error result while appending data "
-				  "to the cache content %s", url.data());
+		zcu_log_print(
+			LOG_WARNING,
+			"There was an unexpected error result while appending data "
+			"to the cache content %s",
+			url.data());
 	}
 	// disable flag
-	if (response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED
-	    && response.message_bytes_left == data.size()) {
+	if (response.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED &&
+	    response.message_bytes_left == data.size()) {
 		response.c_object->dirty = false;
-	}
-	else if (response.chunked_status ==
-		 http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
+	} else if (response.chunked_status ==
+		   http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
 		response.c_object->dirty = false;
 		c_object->content_length = response.content_length;
 	}
@@ -521,9 +501,9 @@ void HttpCache::addData(HttpResponse & response, std::string_view data,
 
 // Check if the request can be satisfied with the stored content.
 cache_commons::CacheObject *
-	HttpCache::canBeServedFromCache(HttpRequest & request)
+HttpCache::canBeServedFromCache(HttpRequest &request)
 {
-	cache_commons::CacheObject * c_object = getCacheObject(request);
+	cache_commons::CacheObject *c_object = getCacheObject(request);
 
 	if (c_object == nullptr) {
 		return nullptr;
@@ -531,8 +511,8 @@ cache_commons::CacheObject *
 	if (c_object->dirty) {
 		return nullptr;
 	}
-	if (request.c_opt.no_cache
-	    || (!request.cache_control && request.pragma)) {
+	if (request.c_opt.no_cache ||
+	    (!request.cache_control && request.pragma)) {
 		return nullptr;
 	}
 	if (request.c_opt.only_if_cached) {
@@ -588,8 +568,8 @@ cache_commons::CacheObject *
 }
 
 int HttpCache::getResponseFromCache(HttpRequest request,
-				    HttpResponse & cached_response,
-				    std::string & buffer)
+				    HttpResponse &cached_response,
+				    std::string &buffer)
 {
 	auto c_object = getCacheObject(request);
 	c_object->updateFreshness(this->t_stamp);
@@ -597,8 +577,7 @@ int HttpCache::getResponseFromCache(HttpRequest request,
 	size_t parsed = 0;
 	std::string rel_path = service_name;
 	rel_path.append("/");
-	rel_path.append(to_string
-			(std::hash < std::string > ()(request.getUrl())));
+	rel_path.append(to_string(std::hash<std::string>()(request.getUrl())));
 
 	buffer = "";
 	// Get the response from the right storage
@@ -619,48 +598,43 @@ int HttpCache::getResponseFromCache(HttpRequest request,
 	cached_response.cached = true;
 
 	for (size_t j = 0; j < cached_response.num_headers; j++) {
-		if (std::string(cached_response.headers[j].name).
-		    compare("date") == 0) {
+		if (std::string(cached_response.headers[j].name)
+			    .compare("date") == 0) {
 			cached_response.headers[j].header_off = true;
-			cached_response.
-				addHeader(http::HTTP_HEADER_NAME::DATE,
-					  time_helper::strTime(c_object->
-							       date));
+			cached_response.addHeader(
+				http::HTTP_HEADER_NAME::DATE,
+				time_helper::strTime(c_object->date));
 		}
 		cached_response.headers[j].header_off = false;
 	}
 
 	if (ret == http_parser::PARSE_RESULT::FAILED) {
 		zcu_log_print(LOG_ERR,
-				  "The cached response failed to be parsed");
+			      "The cached response failed to be parsed");
 		return -1;
-	}
-	else if (ret == http_parser::PARSE_RESULT::SUCCESS) {
+	} else if (ret == http_parser::PARSE_RESULT::SUCCESS) {
 		// Add warning header
-		std::vector < std::string > w_codes;
-		std::vector < std::string > w_text;
+		std::vector<std::string> w_codes;
+		std::vector<std::string> w_text;
 		// Take the date for the warning
 		auto w_date = this->t_stamp;
 		// Create warnings if needed
 		if (c_object->staled) {
-			w_codes.push_back(std::to_string
-					  (http::WARNING_CODE::
-					   RESPONSE_STALE));
-			w_text.push_back(http::http_info::
-					 warning_code_values_strings.
-					 at(http::WARNING_CODE::
-					    RESPONSE_STALE));
+			w_codes.push_back(std::to_string(
+				http::WARNING_CODE::RESPONSE_STALE));
+			w_text.push_back(
+				http::http_info::warning_code_values_strings.at(
+					http::WARNING_CODE::RESPONSE_STALE));
 		}
 		// Defined by RFC7234
-		if (c_object->heuristic && c_object->max_age >= 86400
-		    && c_object->staled) {
-			w_codes.push_back(std::to_string
-					  (http::WARNING_CODE::
-					   HEURISTIC_EXPIRATION));
-			w_text.push_back(http::http_info::
-					 warning_code_values_strings.
-					 at(http::WARNING_CODE::
-					    HEURISTIC_EXPIRATION));
+		if (c_object->heuristic && c_object->max_age >= 86400 &&
+		    c_object->staled) {
+			w_codes.push_back(std::to_string(
+				http::WARNING_CODE::HEURISTIC_EXPIRATION));
+			w_text.push_back(
+				http::http_info::warning_code_values_strings.at(
+					http::WARNING_CODE::
+						HEURISTIC_EXPIRATION));
 		}
 		// Add warning headers if needed
 		std::string warn;
@@ -673,102 +647,93 @@ int HttpCache::getResponseFromCache(HttpRequest request,
 			warn.append("\" \"");
 			warn.append(time_helper::strTime(w_date));
 			warn.append("\"");
-			cached_response.
-				addHeader(http::HTTP_HEADER_NAME::WARNING,
-					  warn);
+			cached_response.addHeader(
+				http::HTTP_HEADER_NAME::WARNING, warn);
 		}
 		// Add Age header
 		time_t now = this->t_stamp - c_object->date;
-		cached_response.addHeader(http::HTTP_HEADER_NAME::AGE, std::to_string(now >= 0 ? now : 0));	// ensure that it is greater or equal than 0
+		cached_response.addHeader(
+			http::HTTP_HEADER_NAME::AGE,
+			std::to_string(
+				now >= 0 ?
+					      now :
+					      0)); // ensure that it is greater or equal than 0
 	}
 	this->stats.cache_match++;
 	return 0;
 }
 
 // Handle API commands
-std::string HttpCache::handleCacheTask(ctl::CtlTask & task)
+std::string HttpCache::handleCacheTask(ctl::CtlTask &task)
 {
 	int err = 0;
 	if (task.subject != ctl::CTL_SUBJECT::CACHE)
 		return JSON_OP_RESULT::ERROR;
 	switch (task.command) {
-	case ctl::CTL_COMMAND::GET:{
-			JsonObject response;
-			json::JsonArray * data {
-			new json::JsonArray()};
-			JsonObject *json_data
-			{
-			new json::JsonObject()};
-			json_data->emplace(JSON_KEYS::CACHE_HIT,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.cache_match));
-			json_data->emplace(JSON_KEYS::CACHE_MISS,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.cache_miss));
-			json_data->emplace(JSON_KEYS::CACHE_STALE,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.
-					    cache_staled_entries));
-			json_data->emplace(JSON_KEYS::CACHE_AVOIDED,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.cache_not_stored));
-			json_data->emplace(JSON_KEYS::CACHE_RAM,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.
-					    cache_RAM_inserted_entries));
-			json_data->emplace(JSON_KEYS::CACHE_RAM_USAGE,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.cache_RAM_used));
-			json_data->emplace(JSON_KEYS::CACHE_RAM_PATH,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.
-					    cache_RAM_mountpoint));
-			json_data->emplace(JSON_KEYS::CACHE_DISK,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.
-					    cache_DISK_inserted_entries));
-			json_data->emplace(JSON_KEYS::CACHE_DISK_USAGE,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.cache_DISK_used));
-			json_data->emplace(JSON_KEYS::CACHE_DISK_PATH,
-					   std::make_unique < JsonDataValue >
-					   (this->stats.
-					    cache_DISK_mountpoint));
-			data->emplace_back(json_data);
-			response.emplace(JSON_KEYS::CACHE.data(), data);
-			return response.stringify();
-		}
-	case ctl::CTL_COMMAND::DELETE:{
-			auto json_data = JsonParser::parse(task.data);
-			if (json_data != nullptr) {
-				// Error handling when trying to use the key
-				try {
-					json_data->
-						at(JSON_KEYS::CACHE_CONTENT);
-				}
-				catch(const std::out_of_range & oor)
-				{
-					std::cerr <<
-						"Wrong key found, must be \""
-						<< JSON_KEYS::CACHE_CONTENT <<
-						"\", caused by " << oor.what()
-						<< '\n';
-					return JSON_OP_RESULT::ERROR;
-				}
-				auto url =
-					dynamic_cast <
-					JsonDataValue *
-					>(json_data->at
-					  (JSON_KEYS::CACHE_CONTENT).get())
+	case ctl::CTL_COMMAND::GET: {
+		JsonObject response;
+		json::JsonArray *data{ new json::JsonArray() };
+		JsonObject *json_data{ new json::JsonObject() };
+		json_data->emplace(JSON_KEYS::CACHE_HIT,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_match));
+		json_data->emplace(JSON_KEYS::CACHE_MISS,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_miss));
+		json_data->emplace(JSON_KEYS::CACHE_STALE,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_staled_entries));
+		json_data->emplace(JSON_KEYS::CACHE_AVOIDED,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_not_stored));
+		json_data->emplace(
+			JSON_KEYS::CACHE_RAM,
+			std::make_unique<JsonDataValue>(
+				this->stats.cache_RAM_inserted_entries));
+		json_data->emplace(JSON_KEYS::CACHE_RAM_USAGE,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_RAM_used));
+		json_data->emplace(JSON_KEYS::CACHE_RAM_PATH,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_RAM_mountpoint));
+		json_data->emplace(
+			JSON_KEYS::CACHE_DISK,
+			std::make_unique<JsonDataValue>(
+				this->stats.cache_DISK_inserted_entries));
+		json_data->emplace(JSON_KEYS::CACHE_DISK_USAGE,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_DISK_used));
+		json_data->emplace(JSON_KEYS::CACHE_DISK_PATH,
+				   std::make_unique<JsonDataValue>(
+					   this->stats.cache_DISK_mountpoint));
+		data->emplace_back(json_data);
+		response.emplace(JSON_KEYS::CACHE.data(), data);
+		return response.stringify();
+	}
+	case ctl::CTL_COMMAND::DELETE: {
+		auto json_data = JsonParser::parse(task.data);
+		if (json_data != nullptr) {
+			// Error handling when trying to use the key
+			try {
+				json_data->at(JSON_KEYS::CACHE_CONTENT);
+			} catch (const std::out_of_range &oor) {
+				std::cerr << "Wrong key found, must be \""
+					  << JSON_KEYS::CACHE_CONTENT
+					  << "\", caused by " << oor.what()
+					  << '\n';
+				return JSON_OP_RESULT::ERROR;
+			}
+			auto url =
+				dynamic_cast<JsonDataValue *>(
+					json_data->at(JSON_KEYS::CACHE_CONTENT)
+						.get())
 					->string_value;
-				err = deleteEntry(std::hash < std::string >
-						  ()(url));
-			}
-			else {
-				flushCache();
-			}
-			break;
+			err = deleteEntry(std::hash<std::string>()(url));
+		} else {
+			flushCache();
 		}
+		break;
+	}
 	default:
 		zcu_log_print(LOG_ERR, "Not a valid cache command");
 		return JSON_OP_RESULT::ERROR;
@@ -779,7 +744,7 @@ std::string HttpCache::handleCacheTask(ctl::CtlTask & task)
 	return JSON_OP_RESULT::OK;
 }
 
-void HttpCache::recoverCache(const string & svc, st::STORAGE_TYPE st_type)
+void HttpCache::recoverCache(const string &svc, st::STORAGE_TYPE st_type)
 {
 	// We have to read all headers and load it in memory
 	std::string path;
@@ -800,10 +765,9 @@ void HttpCache::recoverCache(const string & svc, st::STORAGE_TYPE st_type)
 	std::ifstream in_file;
 	std::string in_line, file_name;
 	std::string buffer;
-	std::unique_ptr < cache_commons::CacheObject >
-		c_object(new cache_commons::CacheObject);
-      for (const auto & entry:std::filesystem::directory_iterator(path))
-	{
+	std::unique_ptr<cache_commons::CacheObject> c_object(
+		new cache_commons::CacheObject);
+	for (const auto &entry : std::filesystem::directory_iterator(path)) {
 		HttpResponse stored_response;
 		// Iterate through all the files
 		in_file.open(entry.path());
@@ -816,13 +780,11 @@ void HttpCache::recoverCache(const string & svc, st::STORAGE_TYPE st_type)
 				size_t bytes = 0;
 
 				stored_response.parseResponse(buffer, &bytes);
-				CacheManager::validateCacheResponse
-					(stored_response);
+				CacheManager::validateCacheResponse(
+					stored_response);
 				if (c_object.get() == nullptr) {
-					c_object =
-						make_unique <
-						cache_commons::CacheObject >
-						();
+					c_object = make_unique<
+						cache_commons::CacheObject>();
 				}
 				createResponseEntry(stored_response,
 						    c_object.get());
@@ -833,18 +795,16 @@ void HttpCache::recoverCache(const string & svc, st::STORAGE_TYPE st_type)
 				case st::STORAGE_TYPE::RAMFS:
 					ram_storage->current_size +=
 						c_object->content_length +
-						stored_response.
-						headers_length;
+						stored_response.headers_length;
 					break;
 				case st::STORAGE_TYPE::DISK:
 					disk_storage->current_size +=
 						c_object->content_length +
-						stored_response.
-						headers_length;
+						stored_response.headers_length;
 					break;
 				default:
 					zcu_log_print(LOG_WARNING,
-							  "Wrong storage type");
+						      "Wrong storage type");
 					break;
 				}
 				break;
@@ -865,7 +825,7 @@ void HttpCache::recoverCache(const string & svc, st::STORAGE_TYPE st_type)
 
 int HttpCache::deleteEntry(HttpRequest request)
 {
-	return deleteEntry(std::hash < std::string > ()(request.getUrl()));
+	return deleteEntry(std::hash<std::string>()(request.getUrl()));
 }
 
 int HttpCache::deleteEntry(size_t hashed_url)
@@ -875,8 +835,9 @@ int HttpCache::deleteEntry(size_t hashed_url)
 	path.append(to_string(hashed_url));
 	auto c_object = getCacheObject(hashed_url);
 	if (c_object == nullptr) {
-		zcu_log_print(LOG_WARNING,
-				  "Trying to discard a non existing entry from the cache");
+		zcu_log_print(
+			LOG_WARNING,
+			"Trying to discard a non existing entry from the cache");
 		return -1;
 	}
 	// Create the key and the file path
@@ -889,20 +850,21 @@ int HttpCache::deleteEntry(size_t hashed_url)
 	case storage_commons::STORAGE_TYPE::RAMFS:
 		err = ram_storage->deleteInStorage(path);
 		this->stats.cache_RAM_used =
-			static_cast < long >(ram_storage->current_size);
+			static_cast<long>(ram_storage->current_size);
 		break;
 	case storage_commons::STORAGE_TYPE::DISK:
 		err = disk_storage->deleteInStorage(path);
 		this->stats.cache_DISK_used =
-			static_cast < long >(disk_storage->current_size);
+			static_cast<long>(disk_storage->current_size);
 		break;
 	default:
 		return -1;
 	}
 	if (err != storage_commons::STORAGE_STATUS::SUCCESS &&
 	    err != storage_commons::STORAGE_STATUS::NOT_FOUND) {
-		zcu_log_print(LOG_ERR,
-				  "Error trying to delete cache content from the storage");
+		zcu_log_print(
+			LOG_ERR,
+			"Error trying to delete cache content from the storage");
 		return -1;
 	}
 	free(c_object);
@@ -925,8 +887,7 @@ void HttpCache::doCacheMaintenance()
 		if (!iter->second->staled) {
 			iter++;
 			continue;
-		}
-		else {
+		} else {
 			if (!prev_staled) {
 				this->stats.cache_staled_entries++;
 			}
@@ -934,10 +895,10 @@ void HttpCache::doCacheMaintenance()
 				current_time - iter->second->date;
 			//            Greater than 10 times the max age
 			if (entry_age > iter->second->max_age * expiration_to) {
-				zcu_log_print(LOG_DEBUG,
-						  "%s():%d: removing old cache entry: %zu",
-						  __FUNCTION__, __LINE__,
-						  iter->first);
+				zcu_log_print(
+					LOG_DEBUG,
+					"%s():%d: removing old cache entry: %zu",
+					__FUNCTION__, __LINE__, iter->first);
 				deleteEntry((iter++)->first);
 				break;
 			}
@@ -947,8 +908,7 @@ void HttpCache::doCacheMaintenance()
 }
 
 bool HttpCache::validateResponseEncoding(HttpRequest request,
-					 cache_commons::CacheObject *
-					 c_object)
+					 cache_commons::CacheObject *c_object)
 {
 	if (c_object == nullptr) {
 		return false;
@@ -994,8 +954,7 @@ void HttpCache::flushCache()
 		if (iter->second == nullptr) {
 			iter++;
 			continue;
-		}
-		else {
+		} else {
 			deleteEntry((iter++)->first);
 		}
 	}

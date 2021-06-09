@@ -26,14 +26,11 @@
 #include <sys/un.h>
 
 Connection::Connection()
-:
+	:
 
-buffer_size(0),
-buffer_offset(0),
-address(nullptr),
-address_str(""),
-local_address_str(""),
-port(-1), local_port(-1), ssl(nullptr), ssl_connected(false)
+	  buffer_size(0), buffer_offset(0), address(nullptr), address_str(""),
+	  local_address_str(""), port(-1), local_port(-1), ssl(nullptr),
+	  ssl_connected(false)
 {
 }
 
@@ -50,36 +47,33 @@ IO::IO_RESULT Connection::read()
 	if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) == 0)
 		return IO::IO_RESULT::FULL_BUFFER;
 	while (!done) {
-		count =::read(fd_, (buffer + buffer_offset + buffer_size),
-			      (MAX_DATA_SIZE - buffer_size - buffer_offset));
+		count = ::read(fd_, (buffer + buffer_offset + buffer_size),
+			       (MAX_DATA_SIZE - buffer_size - buffer_offset));
 		if (count < 0) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: read() failed: %s",
-						  __FUNCTION__, __LINE__,
-						  std::strerror(errno));
+					      "%s():%d: read() failed: %s",
+					      __FUNCTION__, __LINE__,
+					      std::strerror(errno));
 				result = IO::IO_RESULT::ERROR;
-			}
-			else {
+			} else {
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
 			}
 			done = true;
-		}
-		else if (count == 0) {
+		} else if (count == 0) {
 			//  The  remote has closed the connection, wait for EPOLLRDHUP
 			done = true;
 			result = IO::IO_RESULT::FD_CLOSED;
-		}
-		else {
-			buffer_size += static_cast < size_t >(count);
+		} else {
+			buffer_size += static_cast<size_t>(count);
 			if ((MAX_DATA_SIZE - (buffer_size + buffer_offset)) ==
 			    0) {
-				zcu_log_print(LOG_DEBUG,
-						  "%s():%d: Buffer maximum size reached !",
-						  __FUNCTION__, __LINE__);
+				zcu_log_print(
+					LOG_DEBUG,
+					"%s():%d: Buffer maximum size reached !",
+					__FUNCTION__, __LINE__);
 				return IO::IO_RESULT::FULL_BUFFER;
-			}
-			else
+			} else
 				result = IO::IO_RESULT::SUCCESS;
 			done = true;
 		}
@@ -131,7 +125,8 @@ void Connection::reset()
 	buffer_offset = 0;
 	if (fd_ > 0) {
 		// drain connecition socket data
-		while (::recv(fd_, buffer, MAX_DATA_SIZE, MSG_DONTWAIT) > 0);
+		while (::recv(fd_, buffer, MAX_DATA_SIZE, MSG_DONTWAIT) > 0)
+			;
 		this->closeConnection();
 	}
 	fd_ = -1;
@@ -202,29 +197,26 @@ IO::IO_RESULT Connection::zeroRead()
 		}
 	}
 	zcu_log_print(LOG_DEBUG, "%s():%d: ZERO READ write %d  buffer %d",
-			  __FUNCTION__, __LINE__, splice_pipe.bytes,
-			  buffer_size);
+		      __FUNCTION__, __LINE__, splice_pipe.bytes, buffer_size);
 	return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
-				    http_parser::HttpData & http_data)
+				    http_parser::HttpData &http_data)
 {
 	zcu_log_print(LOG_DEBUG,
-			  "%s():%d: ZERO WRITE write %d left %d  buffer %d",
-			  __FUNCTION__, __LINE__, splice_pipe.bytes,
-			  http_data.message_bytes_left, buffer_size);
+		      "%s():%d: ZERO WRITE write %d left %d  buffer %d",
+		      __FUNCTION__, __LINE__, splice_pipe.bytes,
+		      http_data.message_bytes_left, buffer_size);
 	while (splice_pipe.bytes > 0) {
 		int bytes = splice_pipe.bytes;
 		if (bytes > BUFSZ)
 			bytes = BUFSZ;
-		auto n =::splice(splice_pipe.pipe[0], nullptr, dst_fd,
-				 nullptr, bytes,
-				 SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: ZERO_BUFFER::SIZE = %s",
-				  __FUNCTION__, __LINE__,
-				  std::to_string(splice_pipe.bytes));
+		auto n = ::splice(splice_pipe.pipe[0], nullptr, dst_fd, nullptr,
+				  bytes, SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+		zcu_log_print(LOG_DEBUG, "%s():%d: ZERO_BUFFER::SIZE = %s",
+			      __FUNCTION__, __LINE__,
+			      std::to_string(splice_pipe.bytes));
 		if (n == 0)
 			break;
 		if (n < 0) {
@@ -245,15 +237,14 @@ IO::IO_RESULT Connection::zeroRead()
 {
 	IO::IO_RESULT result = IO::IO_RESULT::ZERO_DATA;
 	zcu_log_print(LOG_DEBUG, "%s():%d: ZERO READ IN %d  buffer %d",
-			  __FUNCTION__, __LINE__, splice_pipe.bytes,
-			  buffer_size);
+		      __FUNCTION__, __LINE__, splice_pipe.bytes, buffer_size);
 	for (;;) {
 		if (splice_pipe.bytes >= BUFSZ) {
 			result = IO::IO_RESULT::FULL_BUFFER;
 			break;
 		}
-		auto n =::read(fd_, buffer_aux + splice_pipe.bytes,
-			       BUFSZ - splice_pipe.bytes);
+		auto n = ::read(fd_, buffer_aux + splice_pipe.bytes,
+				BUFSZ - splice_pipe.bytes);
 		if (n > 0)
 			splice_pipe.bytes += n;
 		if (n == 0)
@@ -268,24 +259,23 @@ IO::IO_RESULT Connection::zeroRead()
 		}
 	}
 	zcu_log_print(LOG_DEBUG, "%s():%d: ZERO READ OUT %d  buffer %d",
-			  __FUNCTION__, __LINE__, splice_pipe.bytes,
-			  buffer_size);
+		      __FUNCTION__, __LINE__, splice_pipe.bytes, buffer_size);
 	return result;
 }
 
 IO::IO_RESULT Connection::zeroWrite(int dst_fd,
-				    http_parser::HttpData & http_data)
+				    http_parser::HttpData &http_data)
 {
 	zcu_log_print(LOG_DEBUG,
-			  "%s():%d: ZERO WRITE write %d  left %d  buffer %d",
-			  __FUNCTION__, __LINE__, splice_pipe.bytes,
-			  http_data.message_bytes_left, buffer_size);
+		      "%s():%d: ZERO WRITE write %d  left %d  buffer %d",
+		      __FUNCTION__, __LINE__, splice_pipe.bytes,
+		      http_data.message_bytes_left, buffer_size);
 	int sent = 0;
 	while (splice_pipe.bytes > 0) {
 		int bytes = splice_pipe.bytes;
 		if (bytes > BUFSZ)
 			bytes = BUFSZ;
-		auto n =::write(dst_fd, buffer_aux + sent, bytes - sent);
+		auto n = ::write(dst_fd, buffer_aux + sent, bytes - sent);
 		if (n == 0)
 			break;
 		if (n < 0) {
@@ -311,29 +301,26 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	//  PRINT_BUFFER_SIZE
 	while (!done) {
-		count =::send(fd, buffer + buffer_offset + sent,
-			      buffer_size - sent, MSG_NOSIGNAL);
+		count = ::send(fd, buffer + buffer_offset + sent,
+			       buffer_size - sent, MSG_NOSIGNAL);
 		if (count < 0) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK	/* && errno != EPIPE &&
 									   errno != ECONNRESET */ ) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: write() failed %s",
-						  __FUNCTION__, __LINE__,
-						  std::strerror(errno));
+					      "%s():%d: write() failed %s",
+					      __FUNCTION__, __LINE__,
+					      std::strerror(errno));
 				result = IO::IO_RESULT::ERROR;
-			}
-			else {
+			} else {
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
 			}
 			done = true;
 			break;
-		}
-		else if (count == 0) {
+		} else if (count == 0) {
 			done = true;
 			break;
-		}
-		else {
-			sent += static_cast < size_t >(count);
+		} else {
+			sent += static_cast<size_t>(count);
 			result = IO::IO_RESULT::SUCCESS;
 		}
 	}
@@ -345,7 +332,7 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 }
 
 IO::IO_RESULT Connection::writeTo(int target_fd,
-				  http_parser::HttpData & http_data)
+				  http_parser::HttpData &http_data)
 {
 	//  PRINT_BUFFER_SIZE
 	if (http_data.iov_size == 0) {
@@ -356,14 +343,13 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 	size_t nwritten = 0;
 	size_t iovec_written = 0;
 
-	auto result =
-		writeIOvec(target_fd, &http_data.iov[0], http_data.iov_size,
-			   iovec_written, nwritten);
-	zcu_log_print(LOG_DEBUG,
-			  "%s():%d: IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n",
-			  __FUNCTION__, __LINE__, http_data.iov.size(),
-			  iovec_written, nwritten,
-			  IO::getResultString(result).data());
+	auto result = writeIOvec(target_fd, &http_data.iov[0],
+				 http_data.iov_size, iovec_written, nwritten);
+	zcu_log_print(
+		LOG_DEBUG,
+		"%s():%d: IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n",
+		__FUNCTION__, __LINE__, http_data.iov.size(), iovec_written,
+		nwritten, IO::getResultString(result).data());
 	if (result != IO::IO_RESULT::SUCCESS)
 		return result;
 
@@ -373,13 +359,17 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 	http_data.message_length = 0;
 	http_data.setHeaderSent(true);
 #if DEBUG_ZCU_LOG
-	zcu_log_print(LOG_DEBUG, "%s():%d: Buffer offset: %d, Out buffer size: %d, Content length: %d, Message length: %d, Message bytes left: %d",
-					__FUNCTION__, __LINE__, buffer_offset, buffer_size, http_data.content_length, http_data.message_length, http_data.message_bytes_left);
+	zcu_log_print(
+		LOG_DEBUG,
+		"%s():%d: Buffer offset: %d, Out buffer size: %d, Content length: %d, Message length: %d, Message bytes left: %d",
+		__FUNCTION__, __LINE__, buffer_offset, buffer_size,
+		http_data.content_length, http_data.message_length,
+		http_data.message_bytes_left);
 #endif
 	return IO::IO_RESULT::SUCCESS;
 }
 
-IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
+IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
 				     size_t iovec_size, size_t &iovec_written,
 				     size_t &nwritten)
 {
@@ -389,63 +379,63 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
 	nwritten = 0;
 	iovec_written = 0;
 	do {
-		count =::writev(target_fd, &(iov[iovec_written]),
-				static_cast < int >(nvec - iovec_written));
-		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: writev() count %d errno: %d = %s iovecwritten %d",
-				  __FUNCTION__, __LINE__, count, errno,
-				  std::strerror(errno), iovec_written);
+		count = ::writev(target_fd, &(iov[iovec_written]),
+				 static_cast<int>(nvec - iovec_written));
+		zcu_log_print(
+			LOG_DEBUG,
+			"%s():%d: writev() count %d errno: %d = %s iovecwritten %d",
+			__FUNCTION__, __LINE__, count, errno,
+			std::strerror(errno), iovec_written);
 		if (count < 0) {
-			if (count == -1
-			    && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-				result = IO::IO_RESULT::DONE_TRY_AGAIN;	// do not persist changes
-			}
-			else {
+			if (count == -1 &&
+			    (errno == EAGAIN || errno == EWOULDBLOCK)) {
+				result = IO::IO_RESULT::
+					DONE_TRY_AGAIN; // do not persist changes
+			} else {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: writev() failed: %s",
-						  __FUNCTION__, __LINE__,
-						  std::strerror(errno));
+					      "%s():%d: writev() failed: %s",
+					      __FUNCTION__, __LINE__,
+					      std::strerror(errno));
 				result = IO::IO_RESULT::ERROR;
 			}
 			break;
-		}
-		else {
-			auto remaining = static_cast < size_t >(count);
+		} else {
+			auto remaining = static_cast<size_t>(count);
 			for (auto it = iovec_written; it != iovec_size; it++) {
 				if (remaining >= iov[it].iov_len) {
 					remaining -= iov[it].iov_len;
 					//          iov.erase(it++);
 					iov[it].iov_len = 0;
 					iovec_written++;
-				}
-				else {
-					zcu_log_print(LOG_DEBUG,
-							  "%s():%d: Recalculating data ... remaining %d niovec_written: "
-							  "%d iov size %d",
-							  __FUNCTION__,
-							  __LINE__, remaining,
-							  iovec_written,
-							  iovec_size);
+				} else {
+					zcu_log_print(
+						LOG_DEBUG,
+						"%s():%d: Recalculating data ... remaining %d niovec_written: "
+						"%d iov size %d",
+						__FUNCTION__, __LINE__,
+						remaining, iovec_written,
+						iovec_size);
 					iov[it].iov_len -= remaining;
 					iov[it].iov_base =
-						static_cast <
-						char *>(iov[iovec_written].
-							iov_base) + remaining;
+						static_cast<char *>(
+							iov[iovec_written]
+								.iov_base) +
+						remaining;
 					break;
 				}
 			}
 
-			nwritten += static_cast < size_t >(count);
+			nwritten += static_cast<size_t>(count);
 			if (errno == EINPROGRESS && remaining != 0)
 				return IO::IO_RESULT::DONE_TRY_AGAIN;
 			else
 				result = IO::IO_RESULT::SUCCESS;
 #if DEBUG_ZCU_LOG
-			zcu_log_print(LOG_DEBUG,
-					  "%s():%d: headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
-					  __FUNCTION__, __LINE__, nvec,
-					  iovec_written, nwritten,
-					  IO::getResultString(result).data());
+			zcu_log_print(
+				LOG_DEBUG,
+				"%s():%d: headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
+				__FUNCTION__, __LINE__, nvec, iovec_written,
+				nwritten, IO::getResultString(result).data());
 #endif
 		}
 	} while (iovec_written < nvec);
@@ -453,8 +443,8 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec * iov,
 	return result;
 }
 
-IO::IO_RESULT Connection::writeTo(const Connection & target_connection,
-				  http_parser::HttpData & http_data)
+IO::IO_RESULT Connection::writeTo(const Connection &target_connection,
+				  http_parser::HttpData &http_data)
 {
 	return writeTo(target_connection.getFileDescriptor(), http_data);
 }
@@ -468,28 +458,25 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 
 	//  PRINT_BUFFER_SIZE
 	while (!done && sent < size) {
-		count =::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
+		count = ::send(fd_, data + sent, size - sent, MSG_NOSIGNAL);
 		if (count < 0) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK	/* && errno != EPIPE &&
 									   errno != ECONNRESET */ ) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: write() failed: %s",
-						  __FUNCTION__, __LINE__,
-						  std::strerror(errno));
+					      "%s():%d: write() failed: %s",
+					      __FUNCTION__, __LINE__,
+					      std::strerror(errno));
 				result = IO::IO_RESULT::ERROR;
-			}
-			else {
+			} else {
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
 			}
 			done = true;
 			break;
-		}
-		else if (count == 0) {
+		} else if (count == 0) {
 			done = true;
 			break;
-		}
-		else {
-			sent += static_cast < size_t >(count);
+		} else {
+			sent += static_cast<size_t>(count);
 			result = IO::IO_RESULT::SUCCESS;
 		}
 	}
@@ -505,12 +492,13 @@ void Connection::closeConnection()
 	}
 }
 
-IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async, int nf_mark)
+IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async,
+				int nf_mark)
 {
 	int result = -1;
 	if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
-		zcu_log_print(LOG_ERR, "%s():%d: socket() failed",
-				  __FUNCTION__, __LINE__);
+		zcu_log_print(LOG_ERR, "%s():%d: socket() failed", __FUNCTION__,
+			      __LINE__);
 		return IO::IO_OP::OP_ERROR;
 	}
 	zcu_soc_set_tcpnodelayoption(fd_);
@@ -521,32 +509,29 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async, in
 	}
 
 	if (nf_mark > 0)
-		zcu_soc_set_somarkoption(fd_,nf_mark);
+		zcu_soc_set_somarkoption(fd_, nf_mark);
 
 	else {
-		struct timeval timeout_
-		{
+		struct timeval timeout_ {
 		};
-		timeout_.tv_sec = timeout;	// after timeout seconds connect()
+		timeout_.tv_sec = timeout; // after timeout seconds connect()
 		timeout_.tv_usec = 0;
 		setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout_,
 			   sizeof(timeout_));
 	}
-	if ((result =::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
+	if ((result = ::connect(fd_, address_.ai_addr, sizeof(address_))) < 0) {
 		if (errno == EINPROGRESS && async) {
 			return IO::IO_OP::OP_IN_PROGRESS;
-		}
-		else {
+		} else {
 			char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-			if (getnameinfo
-			    (address_.ai_addr, address_.ai_addrlen, hbuf,
-			     sizeof(hbuf), sbuf, sizeof(sbuf),
-			     NI_NUMERICHOST | NI_NUMERICSERV) == 0)
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: connect(%s:%s) failed: %s",
-						  __FUNCTION__, __LINE__,
-						  hbuf, sbuf,
-						  strerror(errno));
+			if (getnameinfo(address_.ai_addr, address_.ai_addrlen,
+					hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
+					NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: connect(%s:%s) failed: %s",
+					__FUNCTION__, __LINE__, hbuf, sbuf,
+					strerror(errno));
 			return IO::IO_OP::OP_ERROR;
 		}
 	}
@@ -554,13 +539,13 @@ IO::IO_OP Connection::doConnect(addrinfo & address_, int timeout, bool async, in
 	return result != -1 ? IO::IO_OP::OP_SUCCESS : IO::IO_OP::OP_ERROR;
 }
 
-IO::IO_OP Connection::doConnect(const std::string & af_unix_socket_path,
+IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
 				int timeout)
 {
 	int result = -1;
 	if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-		zcu_log_print(LOG_ERR, "%s():%d: socket() failed",
-				  __FUNCTION__, __LINE__);
+		zcu_log_print(LOG_ERR, "%s():%d: socket() failed", __FUNCTION__,
+			      __LINE__);
 		return IO::IO_OP::OP_ERROR;
 	}
 	zcu_soc_set_tcpnodelayoption(fd_);
@@ -570,20 +555,18 @@ IO::IO_OP Connection::doConnect(const std::string & af_unix_socket_path,
 	if (timeout > 0)
 		zcu_soc_set_socket_non_blocking(fd_);
 
-	sockaddr_un server_address {
-	};
+	sockaddr_un server_address{};
 	strcpy(server_address.sun_path, af_unix_socket_path.c_str());
 	server_address.sun_family = AF_UNIX;
-	if ((result =::connect(fd_, (struct sockaddr *) &server_address,
-			       SUN_LEN(&server_address))) < 0) {
+	if ((result = ::connect(fd_, (struct sockaddr *)&server_address,
+				SUN_LEN(&server_address))) < 0) {
 		if (errno == EINPROGRESS && timeout > 0) {
 			return IO::IO_OP::OP_IN_PROGRESS;
-		}
-		else {
+		} else {
 			zcu_log_print(LOG_NOTICE,
-					  "%s connect() error %d - %s\n",
-					  af_unix_socket_path.data(), errno,
-					  strerror(errno));
+				      "%s connect() error %d - %s\n",
+				      af_unix_socket_path.data(), errno,
+				      strerror(errno));
 			return IO::IO_OP::OP_ERROR;
 		}
 	}
@@ -601,20 +584,17 @@ bool Connection::isConnected()
 int Connection::doAccept(int listener_fd)
 {
 	int new_fd = -1;
-	sockaddr_in peer_address
-	{
-	};
+	sockaddr_in peer_address{};
 	socklen_t peer_addr_length = sizeof(peer_address);
 
-	if ((new_fd =
-	     accept4(listener_fd, (sockaddr *) & peer_address,
-		     &peer_addr_length, SOCK_NONBLOCK | SOCK_CLOEXEC)) < 0) {
+	if ((new_fd = accept4(listener_fd, (sockaddr *)&peer_address,
+			      &peer_addr_length,
+			      SOCK_NONBLOCK | SOCK_CLOEXEC)) < 0) {
 		if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-			return 0;	// We have processed all incoming connections.
+			return 0; // We have processed all incoming connections.
 		}
 		zcu_log_print(LOG_ERR, "%s():%d: accept() failed %s",
-				  __FUNCTION__, __LINE__,
-				  std::strerror(errno));
+			      __FUNCTION__, __LINE__, std::strerror(errno));
 		// break;
 		return -1;
 	}
@@ -626,19 +606,17 @@ int Connection::doAccept(int listener_fd)
 		zcu_soc_set_sokeepaliveoption(new_fd);
 		zcu_soc_set_solingeroption(new_fd, true);
 		return new_fd;
-	}
-	else {
+	} else {
 		::close(new_fd);
 		zcu_log_print(LOG_WARNING,
-				  "HTTP connection prematurely closed by peer");
+			      "HTTP connection prematurely closed by peer");
 	}
 	return -1;
 }
 
-bool Connection::listen(const std::string & address_str_, int port_)
+bool Connection::listen(const std::string &address_str_, int port_)
 {
-	this->address =
-		zcu_net_get_address(address_str_, port_).release();
+	this->address = zcu_net_get_address(address_str_, port_).release();
 	if (this->address != nullptr) {
 		fd_ = listen(*this->address);
 		return true;
@@ -646,19 +624,18 @@ bool Connection::listen(const std::string & address_str_, int port_)
 	return false;
 }
 
-int Connection::listen(const addrinfo & address_)
+int Connection::listen(const addrinfo &address_)
 {
 	//  this->address = &address_;
 	/* prepare the socket */
 	int listen_fd = -1;
 	for (auto rp = &address_; rp != nullptr; rp = rp->ai_next) {
-		if ((listen_fd =
-		     socket(rp->ai_family, rp->ai_socktype,
-			    rp->ai_protocol)) < 0) {
-			zcu_log_print(LOG_ERR,
-					  "%s():%d: socket () failed %s s - aborted",
-					  __FUNCTION__, __LINE__,
-					  strerror(errno));
+		if ((listen_fd = socket(rp->ai_family, rp->ai_socktype,
+					rp->ai_protocol)) < 0) {
+			zcu_log_print(
+				LOG_ERR,
+				"%s():%d: socket () failed %s s - aborted",
+				__FUNCTION__, __LINE__, strerror(errno));
 			continue;
 		}
 
@@ -668,11 +645,10 @@ int Connection::listen(const addrinfo & address_)
 		zcu_soc_set_tcpreuseportoption(listen_fd);
 
 		if (::bind(listen_fd, rp->ai_addr,
-			   static_cast < socklen_t > (rp->ai_addrlen)) < 0) {
+			   static_cast<socklen_t>(rp->ai_addrlen)) < 0) {
 			zcu_log_print(LOG_ERR,
-					  "%s():%d: bind () failed %s - aborted",
-					  __FUNCTION__, __LINE__,
-					  strerror(errno));
+				      "%s():%d: bind () failed %s - aborted",
+				      __FUNCTION__, __LINE__, strerror(errno));
 			::close(listen_fd);
 			listen_fd = -1;
 			return listen_fd;
@@ -683,7 +659,7 @@ int Connection::listen(const addrinfo & address_)
 	return listen_fd;
 }
 
-bool Connection::listen(const std::string & af_unix_name)
+bool Connection::listen(const std::string &af_unix_name)
 {
 	if (af_unix_name.empty())
 		return false;
@@ -691,26 +667,23 @@ bool Connection::listen(const std::string & af_unix_name)
 	::unlink(af_unix_name.c_str());
 
 	// Initialize AF_UNIX socket
-	sockaddr_un ctrl
-	{
-	};
+	sockaddr_un ctrl{};
 	::memset(&ctrl, 0, sizeof(ctrl));
 	ctrl.sun_family = AF_UNIX;
 	::strncpy(ctrl.sun_path, af_unix_name.c_str(),
 		  sizeof(ctrl.sun_path) - 1);
 
-	if ((fd_ =::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-		zcu_log_print(LOG_ERR,
-				  "%s():%d: control \"%s\" create: %s",
-				  __FUNCTION__, __LINE__, ctrl.sun_path,
-				  strerror(errno));
+	if ((fd_ = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+		zcu_log_print(LOG_ERR, "%s():%d: control \"%s\" create: %s",
+			      __FUNCTION__, __LINE__, ctrl.sun_path,
+			      strerror(errno));
 		return false;
 	}
-	if (::bind(fd_, (struct sockaddr *) &ctrl, (socklen_t) sizeof(ctrl)) <
+	if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) <
 	    0) {
 		zcu_log_print(LOG_ERR, "%s():%d: control \"%s\" bind: %s",
-				  __FUNCTION__, __LINE__, ctrl.sun_path,
-				  strerror(errno));
+			      __FUNCTION__, __LINE__, ctrl.sun_path,
+			      strerror(errno));
 		return false;
 	}
 	::listen(fd_, SOMAXCONN);

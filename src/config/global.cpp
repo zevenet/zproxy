@@ -21,14 +21,10 @@
 
 #include "global.h"
 
-global::run_options global::run_options::current
-{
-};
-global::StartOptions global::StartOptions::current
-{
-};
+global::run_options global::run_options::current{};
+global::StartOptions global::StartOptions::current{};
 
-global::run_options & global::run_options::getCurrent()
+global::run_options &global::run_options::getCurrent()
 {
 	return current;
 }
@@ -37,12 +33,12 @@ global::run_options::run_options(bool overwrite_current)
 {
 }
 
-global::StartOptions & global::StartOptions::getCurrent()
+global::StartOptions &global::StartOptions::getCurrent()
 {
 	return current;
 }
 
-void global::StartOptions::setCurrent(const global::StartOptions & options)
+void global::StartOptions::setCurrent(const global::StartOptions &options)
 {
 	current.conf_file_name = options.conf_file_name;
 	current.pid_file_name = options.pid_file_name;
@@ -71,28 +67,27 @@ static void print_usage(const char *prog_name)
 }
 
 static const struct option options[] = {
-	{.name = "help",.has_arg = 0,.val = 'h'},
-	{.name = "disable-daemon",.has_arg = 0,.val = 'D'},
-	{.name = "sync",.has_arg = 0,.val = 's'},
-	{.name = "file",.has_arg = 1,.val = 'f'},
-	{.name = "pid",.has_arg = 1,.val = 'p'},
-	{.name = "check",.has_arg = 0,.val = 'c'},
-	{.name = "log",.has_arg = 1,.val = 'l'},
-	{.name = "log-output",.has_arg = 1,.val = 'L'},
-	{.name = "version",.has_arg = 0,.val = 'V'},
-	{NULL},
+	{ .name = "help", .has_arg = 0, .val = 'h' },
+	{ .name = "disable-daemon", .has_arg = 0, .val = 'D' },
+	{ .name = "sync", .has_arg = 0, .val = 's' },
+	{ .name = "file", .has_arg = 1, .val = 'f' },
+	{ .name = "pid", .has_arg = 1, .val = 'p' },
+	{ .name = "check", .has_arg = 0, .val = 'c' },
+	{ .name = "log", .has_arg = 1, .val = 'l' },
+	{ .name = "log-output", .has_arg = 1, .val = 'L' },
+	{ .name = "version", .has_arg = 0, .val = 'V' },
+	{ NULL },
 };
 
-std::unique_ptr < global::StartOptions >
-	global::StartOptions::parsePoundOption(int argc, char **argv,
-						bool write_to_current)
+std::unique_ptr<global::StartOptions>
+global::StartOptions::parsePoundOption(int argc, char **argv,
+				       bool write_to_current)
 {
-	auto res = std::make_unique < StartOptions > ();
+	auto res = std::make_unique<StartOptions>();
 	int c;
 
-	while ((c =
-		getopt_long(argc, argv, "hDsf:cl:L:Vp:", options,
-				NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hDsf:cl:L:Vp:", options, NULL)) !=
+	       -1) {
 		switch (c) {
 		case 'h':
 			print_usage(argv[0]);
@@ -135,9 +130,8 @@ std::unique_ptr < global::StartOptions >
 	}
 
 	if (optind < argc) {
-		zcu_log_print(LOG_WARNING,
-				  "unknown extra arguments (%s...)",
-				  argv[optind]);
+		zcu_log_print(LOG_WARNING, "unknown extra arguments (%s...)",
+			      argv[optind]);
 		exit(EXIT_FAILURE);
 	}
 

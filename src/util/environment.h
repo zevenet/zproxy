@@ -31,30 +31,28 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-class Environment
-{
-
-      public:
-	static bool setFileUserName(const std::string & user_name,
-				    const std::string & file_name)
+class Environment {
+    public:
+	static bool setFileUserName(const std::string &user_name,
+				    const std::string &file_name)
 	{
-
 		if (!user_name.empty()) {
 			struct passwd *pw;
 
-			if ((pw =::getpwnam(user_name.c_str())) == nullptr) {
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: no such user %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  user_name.c_str());
+			if ((pw = ::getpwnam(user_name.c_str())) == nullptr) {
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: no such user %s - aborted",
+					__FUNCTION__, __LINE__,
+					user_name.c_str());
 				return false;
 			}
-			if (::chown(file_name.c_str(), pw->pw_uid, -1))
-			{
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: chown error on control socket - aborted (%s)",
-						  __FUNCTION__, __LINE__,
-						  strerror(errno));
+			if (::chown(file_name.c_str(), pw->pw_uid, -1)) {
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: chown error on control socket - aborted (%s)",
+					__FUNCTION__, __LINE__,
+					strerror(errno));
 				return false;
 			}
 			return true;
@@ -62,23 +60,25 @@ class Environment
 		return false;
 	}
 
-	static bool setFileGroupName(const std::string & group_name,
-				     const std::string & file_name)
+	static bool setFileGroupName(const std::string &group_name,
+				     const std::string &file_name)
 	{
 		if (!group_name.empty()) {
 			struct group *gr;
-			if ((gr =::getgrnam(group_name.c_str())) == nullptr) {
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: no such group %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  group_name.c_str());
+			if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: no such group %s - aborted",
+					__FUNCTION__, __LINE__,
+					group_name.c_str());
 				return false;
 			}
 			if (::chown(file_name.c_str(), -1, gr->gr_gid)) {
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: chown error on control socket - aborted (%s)",
-						  __FUNCTION__, __LINE__,
-						  strerror(errno));
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: chown error on control socket - aborted (%s)",
+					__FUNCTION__, __LINE__,
+					strerror(errno));
 				return false;
 			}
 			return true;
@@ -87,35 +87,35 @@ class Environment
 	}
 
 	static bool setFileUserMode(long user_mode,
-				    const std::string & file_name)
+				    const std::string &file_name)
 	{
 		if (::chmod(file_name.c_str(), user_mode)) {
-			zcu_log_print(LOG_ERR,
-					  "%s():%d: chmod error on control socket - aborted (%s)",
-					  __FUNCTION__, __LINE__,
-					  strerror(errno));
+			zcu_log_print(
+				LOG_ERR,
+				"%s():%d: chmod error on control socket - aborted (%s)",
+				__FUNCTION__, __LINE__, strerror(errno));
 			return false;
 		}
 		return true;
 	}
 
-	static bool setUid(const std::string & user)
+	static bool setUid(const std::string &user)
 	{
 		if (!user.empty()) {
 			struct passwd *pw;
-			if ((pw =::getpwnam(user.c_str())) == nullptr) {
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: no such user %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  user.c_str());
+			if ((pw = ::getpwnam(user.c_str())) == nullptr) {
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: no such user %s - aborted",
+					__FUNCTION__, __LINE__, user.c_str());
 				return false;
 			}
 			auto user_id = pw->pw_uid;
 			if (::setuid(user_id) || seteuid(user_id)) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: setuid: %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  strerror(errno));
+					      "%s():%d: setuid: %s - aborted",
+					      __FUNCTION__, __LINE__,
+					      strerror(errno));
 				return false;
 			}
 			return true;
@@ -123,23 +123,24 @@ class Environment
 		return false;
 	}
 
-	static bool setGid(const std::string & group_name)
+	static bool setGid(const std::string &group_name)
 	{
 		if (!group_name.empty()) {
 			struct group *gr;
-			if ((gr =::getgrnam(group_name.c_str())) == nullptr) {
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: no such group %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  group_name.c_str());
+			if ((gr = ::getgrnam(group_name.c_str())) == nullptr) {
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: no such group %s - aborted",
+					__FUNCTION__, __LINE__,
+					group_name.c_str());
 				return false;
 			}
 			auto group_id = gr->gr_gid;
 			if (::setgid(group_id) || setegid(group_id)) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: setgid: %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  strerror(errno));
+					      "%s():%d: setgid: %s - aborted",
+					      __FUNCTION__, __LINE__,
+					      strerror(errno));
 				return false;
 			}
 			return true;
@@ -147,24 +148,23 @@ class Environment
 		return false;
 	}
 
-	static bool createPidFile(const std::string & pid_file_name, int pid =
-				  -1) {
-		auto pid_file_hl =::fopen(pid_file_name.c_str(), "wt");
+	static bool createPidFile(const std::string &pid_file_name,
+				  int pid = -1)
+	{
+		auto pid_file_hl = ::fopen(pid_file_name.c_str(), "wt");
 		if (pid_file_hl != nullptr) {
 			fprintf(pid_file_hl, "%d\n",
 				pid != -1 ? pid : getpid());
 			fclose(pid_file_hl);
 			return true;
-		}
-		else
+		} else
 			zcu_log_print(LOG_ERR, "Create \"%s\": %s",
-					  __FUNCTION__, __LINE__,
-					  pid_file_name.c_str(),
-					  strerror(errno));
+				      __FUNCTION__, __LINE__,
+				      pid_file_name.c_str(), strerror(errno));
 		return false;
 	}
 
-	static bool removePidFile(const std::string & pid_file_name)
+	static bool removePidFile(const std::string &pid_file_name)
 	{
 		struct stat info;
 		if (lstat(pid_file_name.data(), &info) != 0)
@@ -173,27 +173,28 @@ class Environment
 			return false;
 		if (info.st_uid != getuid())
 			return false;
-		if (info.st_size > static_cast < int >(sizeof("65535\r\n")))
+		if (info.st_size > static_cast<int>(sizeof("65535\r\n")))
 			return false;
 		unlink(pid_file_name.data());
 		return true;
 	}
 
-	static bool setChrootRoot(const std::string & chroot_path)
+	static bool setChrootRoot(const std::string &chroot_path)
 	{
 		if (!chroot_path.empty()) {
 			if (::chroot(chroot_path.c_str())) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: chroot: %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  strerror(errno));
+					      "%s():%d: chroot: %s - aborted",
+					      __FUNCTION__, __LINE__,
+					      strerror(errno));
 				return false;
 			}
 			if (chdir("/")) {
-				zcu_log_print(LOG_ERR,
-						  "%s():%d: chroot/chdir: %s - aborted",
-						  __FUNCTION__, __LINE__,
-						  strerror(errno));
+				zcu_log_print(
+					LOG_ERR,
+					"%s():%d: chroot/chdir: %s - aborted",
+					__FUNCTION__, __LINE__,
+					strerror(errno));
 				return false;
 			}
 			return true;
@@ -204,57 +205,48 @@ class Environment
 	// Increase num file descriptor ulimit
 	static bool setUlimitData()
 	{
-		zcu_log_print(LOG_DEBUG, "%s():%d: System info:",
-				  __FUNCTION__, __LINE__);
-		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: \tL1 Data cache size: %lu",
-				  __FUNCTION__, __LINE__,
-				  SystemInfo::data()->getL1DataCacheSize());
-		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: \t\tCache line size: %lu",
-				  __FUNCTION__, __LINE__,
-				  SystemInfo::
-				  data()->getL1DataCacheLineSize());
+		zcu_log_print(LOG_DEBUG, "%s():%d: System info:", __FUNCTION__,
+			      __LINE__);
+		zcu_log_print(LOG_DEBUG, "%s():%d: \tL1 Data cache size: %lu",
+			      __FUNCTION__, __LINE__,
+			      SystemInfo::data()->getL1DataCacheSize());
+		zcu_log_print(LOG_DEBUG, "%s():%d: \t\tCache line size: %lu",
+			      __FUNCTION__, __LINE__,
+			      SystemInfo::data()->getL1DataCacheLineSize());
 		zcu_log_print(LOG_DEBUG, "%s():%d: \tL2 Cache size: %lu",
-				  __FUNCTION__, __LINE__,
-				  SystemInfo::data()->getL2DataCacheSize());
-		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: \t\tCache line size: %lu",
-				  __FUNCTION__, __LINE__,
-				  SystemInfo::
-				  data()->getL2DataCacheLineSize());
-		rlimit r
-		{
-		};
+			      __FUNCTION__, __LINE__,
+			      SystemInfo::data()->getL2DataCacheSize());
+		zcu_log_print(LOG_DEBUG, "%s():%d: \t\tCache line size: %lu",
+			      __FUNCTION__, __LINE__,
+			      SystemInfo::data()->getL2DataCacheLineSize());
+		rlimit r{};
 		::getrlimit(RLIMIT_NOFILE, &r);
 		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: \tRLIMIT_NOFILE\tCurrent %lu",
-				  __FUNCTION__, __LINE__, r.rlim_cur);
+			      "%s():%d: \tRLIMIT_NOFILE\tCurrent %lu",
+			      __FUNCTION__, __LINE__, r.rlim_cur);
 		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: \tRLIMIT_NOFILE\tMaximum %lu",
-				  __FUNCTION__,
-				  __LINE__,::sysconf(_SC_OPEN_MAX));
+			      "%s():%d: \tRLIMIT_NOFILE\tMaximum %lu",
+			      __FUNCTION__, __LINE__, ::sysconf(_SC_OPEN_MAX));
 		if (r.rlim_cur != r.rlim_max) {
 			r.rlim_cur = r.rlim_max;
 			if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
 				zcu_log_print(LOG_ERR,
-						  "%s():%d: \tsetrlimit failed",
-						  __FUNCTION__, __LINE__);
+					      "%s():%d: \tsetrlimit failed",
+					      __FUNCTION__, __LINE__);
 				return false;
 			}
 		}
 		::getrlimit(RLIMIT_NOFILE, &r);
 		zcu_log_print(LOG_DEBUG,
-				  "%s():%d: \tRLIMIT_NOFILE\tSetCurrent %s",
-				  __FUNCTION__, __LINE__,
-				  std::to_string(r.rlim_cur));
+			      "%s():%d: \tRLIMIT_NOFILE\tSetCurrent %s",
+			      __FUNCTION__, __LINE__,
+			      std::to_string(r.rlim_cur));
 		return true;
 	}
 
-	static void redirectLogOutput(std::string name,
-				      std::string chroot_path,
-				      std::string outfile,
-				      std::string errfile, std::string infile)
+	static void redirectLogOutput(std::string name, std::string chroot_path,
+				      std::string outfile, std::string errfile,
+				      std::string infile)
 	{
 		if (chroot_path.empty()) {
 			chroot_path = "/";
@@ -290,13 +282,12 @@ class Environment
 	{
 		pid_t child;
 		if ((child = fork()) < 0) {
-			zcu_log_print(LOG_ERR,
-					  "%s():%d: error: failed fork",
-					  __FUNCTION__, __LINE__);
+			zcu_log_print(LOG_ERR, "%s():%d: error: failed fork",
+				      __FUNCTION__, __LINE__);
 			return false;
 		}
-		if (child != 0) {	// parent
-			_exit(EXIT_SUCCESS);	//avoid triggering atexit() processing using _exit()
+		if (child != 0) { // parent
+			_exit(EXIT_SUCCESS); //avoid triggering atexit() processing using _exit()
 		}
 
 		/* Don't hold files open. */
@@ -313,7 +304,7 @@ class Environment
 		::close(0);
 
 		//  become session leader so SIGTERM do not affect child
-		if (setsid() == static_cast < pid_t > (-1)) {
+		if (setsid() == static_cast<pid_t>(-1)) {
 			std::cerr << "error: failed setsid\n";
 			return false;
 		}
@@ -325,14 +316,14 @@ class Environment
 		// catch/ignore signals
 		signal(SIGCHLD, SIG_IGN);
 		signal(SIGHUP, SIG_IGN);
-//     // fork second time since parent exits
-//     if ((child = fork()) < 0) { // failed fork
-//         std::cerr << "error: failed fork\n";
-//         exit(EXIT_FAILURE);
-//     }
-//     if (child > 0) {
-//         exit(EXIT_SUCCESS);
-//     }
+		//     // fork second time since parent exits
+		//     if ((child = fork()) < 0) { // failed fork
+		//         std::cerr << "error: failed fork\n";
+		//         exit(EXIT_FAILURE);
+		//     }
+		//     if (child > 0) {
+		//         exit(EXIT_SUCCESS);
+		//     }
 		/* Discard our parent's umask. */
 		umask(0);
 		return true;

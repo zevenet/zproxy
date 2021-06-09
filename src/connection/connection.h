@@ -42,19 +42,16 @@
 
 #define BUFSZ MAX_DATA_SIZE
 
-struct SplicePipe
-{
+struct SplicePipe {
 	int pipe[2];
-	int bytes
-	{
-	0};
-	  SplicePipe()
+	int bytes{ 0 };
+	SplicePipe()
 	{
 		if (pipe2(pipe, O_NONBLOCK) < 0) {
 			perror("pipe");
 		}
 	}
-	 ~SplicePipe()
+	~SplicePipe()
 	{
 		close(pipe[0]);
 		close(pipe[1]);
@@ -63,13 +60,12 @@ struct SplicePipe
 
 #endif
 using namespace events;
-class Connection:public Descriptor
-{
-      protected:
-	IO::IO_RESULT writeTo(int target_fd,
-			      http_parser::HttpData & http_data);
-      public:
-	  timeval time_start;
+class Connection : public Descriptor {
+    protected:
+	IO::IO_RESULT writeTo(int target_fd, http_parser::HttpData &http_data);
+
+    public:
+	timeval time_start;
 //  std::time_t date;
 //  std::string str_buffer;
 #if ENABLE_ZERO_COPY
@@ -78,27 +74,16 @@ class Connection:public Descriptor
 	char buffer_aux[MAX_DATA_SIZE];
 #endif
 #endif
-	  std::string address_str
-	{
-	""};			// the remote socket ip
-	std::string local_address_str {
-	""};			// the local socket ip
-	int port
-	{
-	-1};			// the remote socket port
-	int local_port
-	{
-	-1};			// the local socket port
+	std::string address_str{ "" }; // the remote socket ip
+	std::string local_address_str{ "" }; // the local socket ip
+	int port{ -1 }; // the remote socket port
+	int local_port{ -1 }; // the local socket port
 	addrinfo *address;
 
 	// StringBuffer string_buffer;
 	char buffer[MAX_DATA_SIZE];
-	size_t buffer_size
-	{
-	0};
-	size_t buffer_offset
-	{
-	0};			// TODO::REMOVE
+	size_t buffer_size{ 0 };
+	size_t buffer_offset{ 0 }; // TODO::REMOVE
 	std::string getPeerAddress();
 	std::string getLocalAddress();
 	int getPeerPort();
@@ -107,58 +92,44 @@ class Connection:public Descriptor
 	void freeSsl();
 #if ENABLE_ZERO_COPY
 	IO::IO_RESULT zeroRead();
-	IO::IO_RESULT zeroWrite(int dst_fd,
-				http_parser::HttpData & http_data);
+	IO::IO_RESULT zeroWrite(int dst_fd, http_parser::HttpData &http_data);
 #endif
-	static IO::IO_RESULT writeIOvec(int target_fd, iovec * iov,
+	static IO::IO_RESULT writeIOvec(int target_fd, iovec *iov,
 					size_t iovec_size,
 					size_t &iovec_written,
 					size_t &nwritten);
 	IO::IO_RESULT write(const char *data, size_t size, size_t &sent);
 	IO::IO_RESULT writeTo(int fd, size_t &sent);
-	IO::IO_RESULT writeTo(const Connection & target_connection,
-			      http_parser::HttpData & http_data);
+	IO::IO_RESULT writeTo(const Connection &target_connection,
+			      http_parser::HttpData &http_data);
 
 	IO::IO_RESULT read();
 
 	void closeConnection();
 	Connection();
-	virtual ~ Connection();
+	virtual ~Connection();
 
-	bool listen(const std::string & address_str_, int port_);
-	static int listen(const addrinfo & address_);
-	bool listen(const std::string & af_unix_name);
+	bool listen(const std::string &address_str_, int port_);
+	static int listen(const addrinfo &address_);
+	bool listen(const std::string &af_unix_name);
 
 	static int doAccept(int listener_fd);
-	IO::IO_OP doConnect(addrinfo & address, int timeout, bool async =
-				true, int nf_mark = 0);
-	IO::IO_OP doConnect(const std::string & af_unix_socket_path,
+	IO::IO_OP doConnect(addrinfo &address, int timeout, bool async = true,
+			    int nf_mark = 0);
+	IO::IO_OP doConnect(const std::string &af_unix_socket_path,
 			    int timeout);
 	bool isConnected();
 	// SSL stuff
-      public:
-	ssl::SSL_STATUS ssl_conn_status {
-	ssl::SSL_STATUS::NONE};
-	int handshake_retries
-	{
-	0};
-	SSL *ssl
-	{
-	nullptr};
+    public:
+	ssl::SSL_STATUS ssl_conn_status{ ssl::SSL_STATUS::NONE };
+	int handshake_retries{ 0 };
+	SSL *ssl{ nullptr };
 	// socket bio
-	BIO *sbio
-	{
-	nullptr};
+	BIO *sbio{ nullptr };
 	// buffer bio
-	BIO *io
-	{
-	nullptr};
+	BIO *io{ nullptr };
 	// ssl bio
-	BIO *ssl_bio
-	{
-	nullptr};
-	const char *server_name
-	{
-	nullptr};
-	std::atomic < bool >ssl_connected;
+	BIO *ssl_bio{ nullptr };
+	const char *server_name{ nullptr };
+	std::atomic<bool> ssl_connected;
 };

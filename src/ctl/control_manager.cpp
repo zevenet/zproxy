@@ -29,10 +29,10 @@
 
 using namespace ctl;
 
-std::shared_ptr < ControlManager > ControlManager::instance = nullptr;
+std::shared_ptr<ControlManager> ControlManager::instance = nullptr;
 
 ctl::ControlManager::ControlManager(ctl::CTL_INTERFACE_MODE listener_mode)
-:	is_running(false), ctl_listener_mode(listener_mode)
+	: is_running(false), ctl_listener_mode(listener_mode)
 {
 }
 
@@ -44,35 +44,32 @@ ctl::ControlManager::~ControlManager()
 		control_thread.join();
 }
 
-bool ctl::ControlManager::init(Config & configuration,
+bool ctl::ControlManager::init(Config &configuration,
 			       ctl::CTL_INTERFACE_MODE listener_mode)
 {
 	if (!configuration.ctrl_ip.empty() && configuration.ctrl_port != 0) {
 		listener_mode = ctl::CTL_INTERFACE_MODE::CTL_AF_INET;
-	}
-	else {
+	} else {
 		ctl_listener_mode =
-			ctl::CTL_INTERFACE_MODE::CTL_UNIX !=
-			listener_mode ? listener_mode : ctl_listener_mode;
+			ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode ?
+				      listener_mode :
+				      ctl_listener_mode;
 	}
 	if (listener_mode == CTL_INTERFACE_MODE::CTL_UNIX) {
 		control_path_name = configuration.ctrl_name;
 		control_listener.listen(control_path_name);
 		if (!configuration.ctrl_user.empty())
-			Environment::setFileUserName(std::string
-						     (configuration.
-						      ctrl_user),
-						     control_path_name);
+			Environment::setFileUserName(
+				std::string(configuration.ctrl_user),
+				control_path_name);
 		if (!configuration.ctrl_group.empty())
-			Environment::setFileGroupName(std::string
-						      (configuration.
-						       ctrl_group),
-						      control_path_name);
+			Environment::setFileGroupName(
+				std::string(configuration.ctrl_group),
+				control_path_name);
 		if (configuration.ctrl_mode > 0)
 			Environment::setFileUserMode(configuration.ctrl_mode,
 						     control_path_name);
-	}
-	else {
+	} else {
 		control_listener.listen(configuration.ctrl_ip,
 					configuration.ctrl_port);
 	}
@@ -83,9 +80,7 @@ bool ctl::ControlManager::init(Config & configuration,
 void ctl::ControlManager::start()
 {
 	is_running = true;
-	control_thread = std::thread([this] {
-				     doWork();
-				     });
+	control_thread = std::thread([this] { doWork(); });
 	helper::ThreadHelper::setThreadName("CTL_WORKER",
 					    control_thread.native_handle());
 }
@@ -112,7 +107,7 @@ void ControlManager::sendCtlCommand(CTL_COMMAND command,
 				    CTL_SUBJECT subject, std::string data)
 {
 	zcu_log_print(LOG_DEBUG, "%s():%d: reload config", __FUNCTION__,
-			  __LINE__);
+		      __LINE__);
 	CtlTask task;
 	task.command = command;
 	task.target = handler;
@@ -124,77 +119,66 @@ void ControlManager::sendCtlCommand(CTL_COMMAND command,
 void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				      EVENT_GROUP event_group)
 {
-	if (event_group != EVENT_GROUP::CTL_INTERFACE
-	    && event_group != EVENT_GROUP::ACCEPTOR) {
+	if (event_group != EVENT_GROUP::CTL_INTERFACE &&
+	    event_group != EVENT_GROUP::ACCEPTOR) {
 		::close(fd);
 		return;
 	}
 
 	switch (event_type) {
-	case EVENT_TYPE::CONNECT:{
-			int new_fd;
-			do {
-				new_fd = Connection::doAccept
-					(control_listener.getFileDescriptor
-					 ());
-				if (new_fd > 0) {
-					addFd(new_fd, EVENT_TYPE::READ,
-					      EVENT_GROUP::CTL_INTERFACE);
-				}
-			} while (new_fd > 0);
-			break;
+	case EVENT_TYPE::CONNECT: {
+		int new_fd;
+		do {
+			new_fd = Connection::doAccept(
+				control_listener.getFileDescriptor());
+			if (new_fd > 0) {
+				addFd(new_fd, EVENT_TYPE::READ,
+				      EVENT_GROUP::CTL_INTERFACE);
+			}
+		} while (new_fd > 0);
+		break;
+	}
+	case EVENT_TYPE::READ: {
+		Connection connection;
+		HttpRequest request;
+		connection.setFileDescriptor(fd);
+		auto res = connection.read();
+		if (res != IO::IO_RESULT::SUCCESS &&
+		    res != IO::IO_RESULT::DONE_TRY_AGAIN) {
+			deleteFd(fd);
+			::close(fd);
+			return;
 		}
-	case EVENT_TYPE::READ:{
-			Connection connection;
-			HttpRequest request;
-			connection.setFileDescriptor(fd);
-			auto res = connection.read();
-			if (res != IO::IO_RESULT::SUCCESS
-			    && res != IO::IO_RESULT::DONE_TRY_AGAIN) {
-				deleteFd(fd);
-				::close(fd);
-				return;
-			}
-			size_t parsed = 0;
-			auto parse_result =
-				request.parseRequest(connection.buffer,
-						     connection.buffer_size,
-						     &parsed);
+		size_t parsed = 0;
+		auto parse_result = request.parseRequest(
+			connection.buffer, connection.buffer_size, &parsed);
 
-			if (parse_result !=
-			    http_parser::PARSE_RESULT::SUCCESS) {
-				deleteFd(fd);
-				connection.closeConnection();
-				return;
-			}
-			zcu_log_print(LOG_DEBUG,
-					  "%s():%d: CTL API Request: %s",
-					  __FUNCTION__, __LINE__,
-					  connection.buffer);
-			std::string response = handleCommand(request);
-			size_t written = 0;
-			if (!response.empty()) {
-				IO::IO_RESULT result;
-				do {
-					size_t sent;
-					result = connection.write(response.
-								  c_str() +
-								  written,
-								  response.
-								  length() -
-								  written,
-								  sent);
-					if (sent > 0)
-						written += sent;
-				} while (result ==
-					 IO::IO_RESULT::DONE_TRY_AGAIN
-					 && written < response.length());
-			}
-
+		if (parse_result != http_parser::PARSE_RESULT::SUCCESS) {
 			deleteFd(fd);
 			connection.closeConnection();
 			return;
 		}
+		zcu_log_print(LOG_DEBUG, "%s():%d: CTL API Request: %s",
+			      __FUNCTION__, __LINE__, connection.buffer);
+		std::string response = handleCommand(request);
+		size_t written = 0;
+		if (!response.empty()) {
+			IO::IO_RESULT result;
+			do {
+				size_t sent;
+				result = connection.write(
+					response.c_str() + written,
+					response.length() - written, sent);
+				if (sent > 0)
+					written += sent;
+			} while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
+				 written < response.length());
+		}
+
+		deleteFd(fd);
+		connection.closeConnection();
+		return;
+	}
 	default:
 		// why would we be here?
 		deleteFd(fd);
@@ -211,17 +195,17 @@ void ctl::ControlManager::doWork()
 		}
 	}
 	zcu_log_print(LOG_DEBUG, "%s():%d: exiting loop", __FUNCTION__,
-			  __LINE__);
+		      __LINE__);
 }
 
-std::shared_ptr < ControlManager > ctl::ControlManager::getInstance()
+std::shared_ptr<ControlManager> ctl::ControlManager::getInstance()
 {
 	if (instance == nullptr)
-		instance = std::make_shared < ControlManager > ();
+		instance = std::make_shared<ControlManager>();
 	return instance;
 }
 
-std::string ctl::ControlManager::handleCommand(HttpRequest & request)
+std::string ctl::ControlManager::handleCommand(HttpRequest &request)
 {
 	/*
 	 *PUT: create or replace the object
@@ -260,17 +244,15 @@ std::string ctl::ControlManager::handleCommand(HttpRequest & request)
 
 	// remove tailing "/"
 
-	if (!setTaskTarget(request, task)
-	    && task.target == CTL_HANDLER_TYPE::NONE) {
-		zcu_log_print(LOG_WARNING,
-				  "%s():%d: bad API request : %s",
-				  __FUNCTION__, __LINE__,
-				  request.getUrl().c_str());
+	if (!setTaskTarget(request, task) &&
+	    task.target == CTL_HANDLER_TYPE::NONE) {
+		zcu_log_print(LOG_WARNING, "%s():%d: bad API request : %s",
+			      __FUNCTION__, __LINE__, request.getUrl().c_str());
 		return http::getHttpResponse(http::Code::BadRequest, "", "");
 	}
-	if (task.command == CTL_COMMAND::ADD
-	    || task.command == CTL_COMMAND::UPDATE
-	    || task.command == CTL_COMMAND::DELETE) {
+	if (task.command == CTL_COMMAND::ADD ||
+	    task.command == CTL_COMMAND::UPDATE ||
+	    task.command == CTL_COMMAND::DELETE) {
 		task.data =
 			std::string(request.message, request.message_length);
 	}
@@ -293,8 +275,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest & request)
 		res = "[";
 		res += str;
 		res += "]";
-	}
-	else {
+	} else {
 		res += str;
 	}
 	if (res.empty())
@@ -303,7 +284,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest & request)
 	return response;
 }
 
-bool ControlManager::setTaskTarget(HttpRequest & request, CtlTask & task)
+bool ControlManager::setTaskTarget(HttpRequest &request, CtlTask &task)
 {
 	std::istringstream f(request.getUrl());
 	std::string str;
@@ -322,73 +303,65 @@ bool ControlManager::setTaskTarget(HttpRequest & request, CtlTask & task)
 				task.subject = CTL_SUBJECT::DEBUG;
 			}
 			break;
-		case 'l':{
-				if (str == JSON_KEYS::LISTENER) {
-					if (setListenerTarget(task, f)) {
-						return true;
-					}
+		case 'l': {
+			if (str == JSON_KEYS::LISTENER) {
+				if (setListenerTarget(task, f)) {
+					return true;
 				}
-				break;
 			}
-		case 's':{
-				if (str == JSON_KEYS::SERVICE) {
-					if (setServiceTarget(task, f)) {
-						return true;
-					}
+			break;
+		}
+		case 's': {
+			if (str == JSON_KEYS::SERVICE) {
+				if (setServiceTarget(task, f)) {
+					return true;
 				}
-				break;
 			}
-		case 'b':{
-				if (str == JSON_KEYS::BACKEND) {
-					if (setBackendTarget(task, f)) {
-						return true;
-					}
+			break;
+		}
+		case 'b': {
+			if (str == JSON_KEYS::BACKEND) {
+				if (setBackendTarget(task, f)) {
+					return true;
 				}
-				break;
 			}
-		case 'w':{
-				if (task.subject == CTL_SUBJECT::DEBUG) {
-					task.target =
-						CTL_HANDLER_TYPE::
-						STREAM_MANAGER;
-				}
-				break;
+			break;
+		}
+		case 'w': {
+			if (task.subject == CTL_SUBJECT::DEBUG) {
+				task.target = CTL_HANDLER_TYPE::STREAM_MANAGER;
 			}
+			break;
+		}
 		}
 	}
 	return false;
 }
 
-bool ControlManager::setListenerTarget(CtlTask & task,
-				       std::istringstream & ss)
+bool ControlManager::setListenerTarget(CtlTask &task, std::istringstream &ss)
 {
 	std::string str;
 	task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
 	task.subject = CTL_SUBJECT::NONE;
 	if (getline(ss, str, '/')) {
-		if (!helper::try_lexical_cast < int >(str, task.listener_id)) {
+		if (!helper::try_lexical_cast<int>(str, task.listener_id)) {
 			return false;
 		}
 		if (getline(ss, str, '/')) {
-			if (str == JSON_KEYS::SERVICE
-			    || str == JSON_KEYS::SERVICES) {
+			if (str == JSON_KEYS::SERVICE ||
+			    str == JSON_KEYS::SERVICES) {
 				return setServiceTarget(task, ss);
-			}
-			else if (str == JSON_KEYS::CONFIG) {
+			} else if (str == JSON_KEYS::CONFIG) {
 				task.subject = CTL_SUBJECT::CONFIG;
-			}
-			else if (str == JSON_KEYS::STATUS) {
+			} else if (str == JSON_KEYS::STATUS) {
 				task.subject = CTL_SUBJECT::STATUS;
-			}
-			else if (str == JSON_KEYS::DEBUG) {
+			} else if (str == JSON_KEYS::DEBUG) {
 				task.subject = CTL_SUBJECT::DEBUG;
 #if WAF_ENABLED
-			}
-			else if (str == JSON_KEYS::WAF) {
+			} else if (str == JSON_KEYS::WAF) {
 				task.subject = CTL_SUBJECT::RELOAD_WAF;
 #endif
-			}
-			else {
+			} else {
 				return false;
 			}
 		}
@@ -396,38 +369,32 @@ bool ControlManager::setListenerTarget(CtlTask & task,
 	return true;
 }
 
-bool ControlManager::setServiceTarget(CtlTask & task, std::istringstream & ss)
+bool ControlManager::setServiceTarget(CtlTask &task, std::istringstream &ss)
 {
 	std::string str;
 	task.target = CTL_HANDLER_TYPE::SERVICE_MANAGER;
 	if (getline(ss, str, '/')) {
-		if (!helper::try_lexical_cast < int >(str, task.service_id)) {
+		if (!helper::try_lexical_cast<int>(str, task.service_id)) {
 			task.service_id = -1;
 			task.service_name = str;
 		}
 		if (getline(ss, str, '/')) {
 			if (str == JSON_KEYS::BACKEND) {
 				return setBackendTarget(task, ss);
-			}
-			else if (str == JSON_KEYS::CONFIG) {
+			} else if (str == JSON_KEYS::CONFIG) {
 				task.subject = CTL_SUBJECT::CONFIG;
-			}
-			else if (str == JSON_KEYS::STATUS) {
+			} else if (str == JSON_KEYS::STATUS) {
 				task.subject = CTL_SUBJECT::STATUS;
-			}
-			else if (str == JSON_KEYS::SESSION
-				 || str == JSON_KEYS::SESSIONS) {
+			} else if (str == JSON_KEYS::SESSION ||
+				   str == JSON_KEYS::SESSIONS) {
 				task.subject = CTL_SUBJECT::SESSION;
 #ifdef CACHE_ENABLED
-			}
-			else if (str == JSON_KEYS::CACHE) {
+			} else if (str == JSON_KEYS::CACHE) {
 				task.subject = CTL_SUBJECT::CACHE;
 #endif
-			}
-			else if (str == JSON_KEYS::BACKENDS) {
+			} else if (str == JSON_KEYS::BACKENDS) {
 				task.subject = CTL_SUBJECT::S_BACKEND;
-			}
-			else {
+			} else {
 				return false;
 			}
 		}
@@ -435,25 +402,22 @@ bool ControlManager::setServiceTarget(CtlTask & task, std::istringstream & ss)
 	return true;
 }
 
-bool ControlManager::setBackendTarget(CtlTask & task, std::istringstream & ss)
+bool ControlManager::setBackendTarget(CtlTask &task, std::istringstream &ss)
 {
 	std::string str;
 	if (getline(ss, str, '/')) {
-		if (!helper::try_lexical_cast < int >(str, task.backend_id)) {
+		if (!helper::try_lexical_cast<int>(str, task.backend_id)) {
 			task.backend_id = -1;
 			task.backend_name = str;
 		}
 		if (getline(ss, str, '/')) {
 			if (str == JSON_KEYS::CONFIG) {
 				task.subject = CTL_SUBJECT::CONFIG;
-			}
-			else if (str == JSON_KEYS::STATUS) {
+			} else if (str == JSON_KEYS::STATUS) {
 				task.subject = CTL_SUBJECT::STATUS;
-			}
-			else if (str == JSON_KEYS::WEIGHT) {
+			} else if (str == JSON_KEYS::WEIGHT) {
 				task.subject = CTL_SUBJECT::WEIGHT;
-			}
-			else {
+			} else {
 				return false;
 			}
 		}

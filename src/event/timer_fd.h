@@ -26,13 +26,12 @@
 #include <cstring>
 
 using namespace events;
-class TimerFd:public Descriptor
-{
+class TimerFd : public Descriptor {
 	bool one_shot_;
 	int timeout_ms_;
 
-      public:
-	  virtual ~ TimerFd();
+    public:
+	virtual ~TimerFd();
 	explicit TimerFd(int timeout_ms = -1, bool one_shot = true);
 	bool set(int timeout_ms = -1, bool one_shot = true);
 	bool unset();

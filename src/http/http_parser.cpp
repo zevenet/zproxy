@@ -25,18 +25,12 @@
 #include "http.h"
 
 http_parser::HttpData::HttpData()
-:
+	:
 
-buffer(nullptr),
-buffer_size(0),
-last_length(0),
-num_headers(0),
-method(nullptr),
-method_len(0),
-minor_version(-1),
-path(nullptr),
-path_length(0),
-http_status_code(0), status_message(nullptr), message_length(0)
+	  buffer(nullptr), buffer_size(0), last_length(0), num_headers(0),
+	  method(nullptr), method_len(0), minor_version(-1), path(nullptr),
+	  path_length(0), http_status_code(0), status_message(nullptr),
+	  message_length(0)
 {
 	reset_parser();
 }
@@ -63,8 +57,7 @@ void http_parser::HttpData::reset_parser()
 	http_message_str.clear();
 }
 
-void http_parser::HttpData::setBuffer(char *ext_buffer,
-				      size_t ext_buffer_size)
+void http_parser::HttpData::setBuffer(char *ext_buffer, size_t ext_buffer_size)
 {
 	buffer = ext_buffer;
 	buffer_size = ext_buffer_size;
@@ -77,89 +70,85 @@ void http_parser::HttpData::prepareToSend()
 
 	for (size_t i = 0; i != num_headers; i++) {
 		if (headers[i].header_off)
-			continue;	// skip unwanted headers
-		iov[iov_size++] = { const_cast < char *>(headers[i].name),
-			headers[i].line_size
-		};
+			continue; // skip unwanted headers
+		iov[iov_size++] = { const_cast<char *>(headers[i].name),
+				    headers[i].line_size };
 #if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", headers[i].line_size - 2,
-				  headers[i].name);
+			      headers[i].name);
 #endif
 	}
 
-      for (const auto & header:
-extra_headers) {		// header must be always  used as reference,
+	for (const auto &header :
+	     extra_headers) { // header must be always  used as reference,
 		// it's copied it invalidate c_str() reference.
-		iov[iov_size++] = {const_cast < char *>(header.c_str()),
-				   header.length()};
+		iov[iov_size++] = { const_cast<char *>(header.c_str()),
+				    header.length() };
 #if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
-				  header.c_str());
+			      header.c_str());
 #endif
 	}
 
-      for (const auto & header:
-permanent_extra_headers) {	// header must be always  used as
+	for (const auto &header :
+	     permanent_extra_headers) { // header must be always  used as
 		// reference,
 		// it's copied it invalidate c_str() reference.
-		iov[iov_size++] = {const_cast < char *>(header.c_str()),
-				   header.length()};
+		iov[iov_size++] = { const_cast<char *>(header.c_str()),
+				    header.length() };
 #if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
-				  header.c_str());
+			      header.c_str());
 #endif
 	}
-	iov[iov_size++] = { const_cast < char *>(http::CRLF),
-		http::CRLF_LEN
-	};
+	iov[iov_size++] = { const_cast<char *>(http::CRLF), http::CRLF_LEN };
 
 	if (message_length > 0) {
 		iov[iov_size++] = { message, message_length };
 #if DEBUG_ZCU_LOG
-		zcu_log_print(LOG_DEBUG, "[%d bytes Content]",
-				  message_length);
+		zcu_log_print(LOG_DEBUG, "[%d bytes Content]", message_length);
 #endif
 	}
 }
 
 void http_parser::HttpData::addHeader(http::HTTP_HEADER_NAME header_name,
-				      const std::string & header_value,
+				      const std::string &header_value,
 				      bool permanent)
 {
 	std::string newh;
-	newh.reserve(http::http_info::headers_names_strings.
-		     at(header_name).size() + http::CRLF_LEN +
-		     header_value.size() + http::CRLF_LEN);
+	newh.reserve(
+		http::http_info::headers_names_strings.at(header_name).size() +
+		http::CRLF_LEN + header_value.size() + http::CRLF_LEN);
 	newh += http::http_info::headers_names_strings.at(header_name);
 	newh += ": ";
 	newh += header_value;
 	newh += http::CRLF;
-	!permanent ? extra_headers.push_back(std::move(newh))
-		: permanent_extra_headers.push_back(std::move(newh));
+	!permanent ? extra_headers.push_back(std::move(newh)) :
+			   permanent_extra_headers.push_back(std::move(newh));
 }
 
-void http_parser::HttpData::addHeader(const std::string & header_value,
+void http_parser::HttpData::addHeader(const std::string &header_value,
 				      bool permanent)
 {
 	std::string newh;
 	newh.reserve(header_value.size() + http::CRLF_LEN);
 	newh += header_value;
 	newh += http::CRLF;
-	!permanent ? extra_headers.push_back(newh)
-		: permanent_extra_headers.push_back(std::move(newh));
+	!permanent ? extra_headers.push_back(newh) :
+			   permanent_extra_headers.push_back(std::move(newh));
 }
 
 void http_parser::HttpData::removeHeader(http::HTTP_HEADER_NAME header_name)
 {
 	auto header_to_remove =
 		http::http_info::headers_names_strings.at(header_name);
-	extra_headers.erase(std::remove_if
-			    (extra_headers.begin(), extra_headers.end(),
-			     [header_to_remove] (const std::string & header) {
-			     return header.find(header_to_remove) !=
-			     std::string::npos;
-			     }
-			    ), extra_headers.end());
+	extra_headers.erase(
+		std::remove_if(extra_headers.begin(), extra_headers.end(),
+			       [header_to_remove](const std::string &header) {
+				       return header.find(header_to_remove) !=
+					      std::string::npos;
+			       }),
+		extra_headers.end());
 	//  for (auto it = extra_headers.begin(); it != extra_headers.end();) {
 	//    if (it->find(header_to_remove) != std::string::npos) {
 	//      extra_headers.erase(it++);
@@ -184,7 +173,7 @@ void http_parser::HttpData::setHeaderSent(bool value)
 }
 
 bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
-					   std::string & out_key)
+					   std::string &out_key)
 {
 	for (size_t i = 0; i != num_headers; ++i) {
 		std::string header(headers[i].name, headers[i].name_len);
@@ -192,8 +181,7 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
 					 headers[i].value_len);
 		if (http_info::headers_names.find(header) !=
 		    http_info::headers_names.end()) {
-			auto header_name_ =
-				http_info::headers_names.at(header);
+			auto header_name_ = http_info::headers_names.at(header);
 			if (header_name_ == header_name) {
 				out_key = header_value;
 				return true;
@@ -203,16 +191,15 @@ bool http_parser::HttpData::getHeaderValue(http::HTTP_HEADER_NAME header_name,
 	return false;
 }
 
-bool http_parser::HttpData::getHeaderValue(const std::string & header_name,
-					   std::string & out_key)
+bool http_parser::HttpData::getHeaderValue(const std::string &header_name,
+					   std::string &out_key)
 {
 	for (size_t i = 0; i != num_headers; ++i) {
 		std::string_view header(headers[i].name, headers[i].name_len);
 
 		if (header_name == header) {
-			out_key =
-				std::string(headers[i].value,
-					    headers[i].value_len);
+			out_key = std::string(headers[i].value,
+					      headers[i].value_len);
 			return true;
 		}
 	}
@@ -220,44 +207,42 @@ bool http_parser::HttpData::getHeaderValue(const std::string & header_name,
 	return false;
 }
 
-http_parser::PARSE_RESULT http_parser::HttpData::
-parseRequest(const std::string & data, size_t *used_bytes, bool reset)
+http_parser::PARSE_RESULT
+http_parser::HttpData::parseRequest(const std::string &data, size_t *used_bytes,
+				    bool reset)
 {
 	return parseRequest(data.c_str(), data.length(), used_bytes, reset);
 }
 
-http_parser::PARSE_RESULT http_parser::
-	HttpData::parseRequest(const char *data, const size_t data_size,
-			       size_t *used_bytes,[[maybe_unused]]
-			       bool reset)
+http_parser::PARSE_RESULT
+http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
+				    size_t *used_bytes,
+				    [[maybe_unused]] bool reset)
 {
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
 	//  if (LIKELY(reset))
 	reset_parser();
-	buffer = const_cast < char *>(data);
+	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
 	num_headers = sizeof(headers) / sizeof(headers[0]);
-	const char **method_ = const_cast < const char **>(&method);
-	const char **path_ = const_cast < const char **>(&path);
-	auto pret =
-		phr_parse_request(data, data_size, method_, &method_len,
-				  path_,
-				  &path_length, &minor_version, headers,
-				  &num_headers, last_length);
+	const char **method_ = const_cast<const char **>(&method);
+	const char **path_ = const_cast<const char **>(&path);
+	auto pret = phr_parse_request(data, data_size, method_, &method_len,
+				      path_, &path_length, &minor_version,
+				      headers, &num_headers, last_length);
 	last_length = data_size;
 	//  zcu_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
 	if (pret > 0) {
-		*used_bytes = static_cast < size_t >(pret);
+		*used_bytes = static_cast<size_t>(pret);
 		headers_length = pret;
 #if DEBUG_ZCU_LOG
 		printRequest();
 #endif
-		http_version =
-			minor_version ==
-			1 ? HTTP_VERSION::HTTP_1_1 : HTTP_VERSION::HTTP_1_0;
+		http_version = minor_version == 1 ? HTTP_VERSION::HTTP_1_1 :
+							  HTTP_VERSION::HTTP_1_0;
 		message = &buffer[pret];
-		message_length = buffer_size - static_cast < size_t >(pret);
+		message_length = buffer_size - static_cast<size_t>(pret);
 		http_message = method;
 		http_message_length = std::string_view(method).find('\r');
 		if (http_message_length > buffer_size)
@@ -272,44 +257,43 @@ http_parser::PARSE_RESULT http_parser::
 		//      message_bytes_left =
 		//      static_cast<size_t>(std::atoi(headers[i].value)); break;
 		//    }
-		return PARSE_RESULT::SUCCESS;	/* successfully parsed the request */
-	}
-	else if (pret == -2) {	/* request is incomplete, continue the loop */
+		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
+	} else if (pret == -2) { /* request is incomplete, continue the loop */
 		return PARSE_RESULT::INCOMPLETE;
 	}
 	return PARSE_RESULT::FAILED;
 }
 
-http_parser::PARSE_RESULT http_parser::HttpData::
-parseResponse(const std::string & data, size_t *used_bytes,[[maybe_unused]]
-	      bool reset)
+http_parser::PARSE_RESULT
+http_parser::HttpData::parseResponse(const std::string &data,
+				     size_t *used_bytes,
+				     [[maybe_unused]] bool reset)
 {
 	return parseResponse(data.c_str(), data.length(), used_bytes);
 }
 
-http_parser::PARSE_RESULT http_parser::
-	HttpData::parseResponse(const char *data, const size_t data_size,
-				size_t *used_bytes,[[maybe_unused]]
-				bool reset)
+http_parser::PARSE_RESULT
+http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
+				     size_t *used_bytes,
+				     [[maybe_unused]] bool reset)
 {
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
 	//  if (LIKELY(reset))
 	reset_parser();
-	buffer = const_cast < char *>(data);
+	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
 	num_headers = sizeof(headers) / sizeof(headers[0]);
 	const char **status_message_ =
-		const_cast < const char **>(&status_message);
-	auto pret =
-		phr_parse_response(data, data_size, &minor_version,
-				   &http_status_code, status_message_,
-				   &message_length, headers, &num_headers,
-				   last_length);
+		const_cast<const char **>(&status_message);
+	auto pret = phr_parse_response(data, data_size, &minor_version,
+				       &http_status_code, status_message_,
+				       &message_length, headers, &num_headers,
+				       last_length);
 	last_length = data_size;
 	//  zcu_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
 	if (pret > 0) {
-		*used_bytes = static_cast < size_t >(pret);
+		*used_bytes = static_cast<size_t>(pret);
 		headers_length = pret;
 		http_message = buffer;
 		// http_message_length = num_headers > 0 ?
@@ -318,15 +302,14 @@ http_parser::PARSE_RESULT http_parser::
 		if (http_message_length > buffer_size)
 			http_message_length = buffer_size;
 		message = &buffer[pret];
-		message_length = buffer_size - static_cast < size_t >(pret);
+		message_length = buffer_size - static_cast<size_t>(pret);
 		http_message_str =
 			std::string(http_message, http_message_length);
 #if DEBUG_ZCU_LOG
 		printResponse();
 #endif
-		return PARSE_RESULT::SUCCESS;	/* successfully parsed the request */
-	}
-	else if (pret == -2) {	/* response is incomplete, continue the loop */
+		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
+	} else if (pret == -2) { /* response is incomplete, continue the loop */
 		return PARSE_RESULT::INCOMPLETE;
 	}
 	return PARSE_RESULT::FAILED;
@@ -335,13 +318,12 @@ http_parser::PARSE_RESULT http_parser::
 void http_parser::HttpData::printResponse()
 {
 	zcu_log_print(LOG_DEBUG, "HTTP 1.%d %d %s", minor_version,
-			  http_status_code,
-			  http::reasonPhrase(http_status_code));
+		      http_status_code, http::reasonPhrase(http_status_code));
 	zcu_log_print(LOG_DEBUG, "headers:");
 	for (size_t i = 0; i != num_headers; ++i) {
-		zcu_log_print(LOG_DEBUG, "\t%.*s: %.*s",
-				  headers[i].name_len, headers[i].name,
-				  headers[i].value_len, headers[i].value);
+		zcu_log_print(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
+			      headers[i].name, headers[i].value_len,
+			      headers[i].value);
 	}
 }
 
@@ -352,18 +334,17 @@ void http_parser::HttpData::printRequest()
 	zcu_log_print(LOG_DEBUG, "HTTP version is 1.%d", minor_version);
 	zcu_log_print(LOG_DEBUG, "headers:");
 	for (size_t i = 0; i != num_headers; ++i) {
-		zcu_log_print(LOG_DEBUG, "\t%.*s: %.*s",
-				  headers[i].name_len, headers[i].name,
-				  headers[i].value_len, headers[i].value);
+		zcu_log_print(LOG_DEBUG, "\t%.*s: %.*s", headers[i].name_len,
+			      headers[i].name, headers[i].value_len,
+			      headers[i].value);
 	}
 }
 
 bool http_parser::HttpData::hasPendingData()
 {
-	return headers_sent	&&
-					// New request/response is processed over the same connection,
-					// so HTTP parsing is needed.
-				   (message_bytes_left > 0 ||
-				   chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED)
-		;
+	return headers_sent &&
+	       // New request/response is processed over the same connection,
+	       // so HTTP parsing is needed.
+	       (message_bytes_left > 0 ||
+		chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED);
 }

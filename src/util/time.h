@@ -31,8 +31,7 @@
 #define TV_TO_MS(x) (x.tv_sec * 1000.0 + x.tv_usec / 1000.0)
 #define TV_TO_S(x) (x.tv_sec + x.tv_usec / 1000000.0);
 
-struct Time
-{
+struct Time {
 	inline static thread_local timeval current_time;
 #if SHOW_LOG_TIMESTAMP
 	inline static thread_local char current_time_str[128];
@@ -42,19 +41,19 @@ struct Time
 		::gettimeofday(&Time::current_time, nullptr);
 		milliseconds = TV_TO_MS(current_time);
 #if SHOW_LOG_TIMESTAMP
-		std::tm * time_info = std::localtime(&current_time.tv_sec);
-		int string_size =::strftime(current_time_str,
-					    sizeof(current_time_str),
-					    "%Y-%m-%d %H:%M:%S", time_info);
-		  string_size +=
+		std::tm *time_info = std::localtime(&current_time.tv_sec);
+		int string_size =
+			::strftime(current_time_str, sizeof(current_time_str),
+				   "%Y-%m-%d %H:%M:%S", time_info);
+		string_size +=
 			std::snprintf(current_time_str + string_size,
 				      sizeof(current_time_str) - string_size,
 				      ".%03d", current_time.tv_usec);
-		  current_time_str[string_size] = '\0';
+		current_time_str[string_size] = '\0';
 #endif
 	}
 
-	inline static void getTime(timeval & time_val)
+	inline static void getTime(timeval &time_val)
 	{
 		time_val.tv_sec = current_time.tv_sec;
 		time_val.tv_usec = current_time.tv_usec;
@@ -70,22 +69,20 @@ struct Time
 		return milliseconds;
 	}
 
-	inline static double getDiff(const timeval & start_point)
+	inline static double getDiff(const timeval &start_point)
 	{
 		return (milliseconds - TV_TO_MS(start_point)) / 1000.0;
 	}
 
-	inline static double getElapsed(const timeval & start_point)
+	inline static double getElapsed(const timeval &start_point)
 	{
-		timeval result
-		{
-		};
+		timeval result{};
 		result.tv_sec = current_time.tv_sec - start_point.tv_sec;
 		result.tv_usec = current_time.tv_usec - start_point.tv_usec;
 		/* Return 1 if result is negative. */
 		return TV_TO_S(result);
 	}
 
-      private:
+    private:
 	inline static thread_local double milliseconds;
 };

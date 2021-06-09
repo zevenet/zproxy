@@ -30,43 +30,34 @@
 #define SSL23_ST_SR_CLNT_HELLO_A (0x210 | SSL_ST_ACCEPT)
 #endif
 
-DH *global::SslHelper::DH512_params
-{
-nullptr};
+DH *global::SslHelper::DH512_params{ nullptr };
 #if DH_LEN == 1024
-DH *global::Config::DH1024_params
-{
-nullptr};
+DH *global::Config::DH1024_params{ nullptr };
 #else
-DH *global::SslHelper::DH2048_params
-{
-nullptr};
+DH *global::SslHelper::DH2048_params{ nullptr };
 #endif
 
-global::SslHelper global::SslHelper::current
-{
-};
+global::SslHelper global::SslHelper::current{};
 
-RSA *global::SslHelper::RSA_tmp_callback([[maybe_unused]] SSL * ssl,
-					 [[maybe_unused]]
-					 int is_export, int keylength)
+RSA *global::SslHelper::RSA_tmp_callback([[maybe_unused]] SSL *ssl,
+					 [[maybe_unused]] int is_export,
+					 int keylength)
 {
 	RSA *res;
-	std::lock_guard < std::mutex > lock__(RSA_mut);
-	res = (keylength <= 512) ? RSA512_keys[rand() % N_RSA_KEYS]
-		: RSA1024_keys[rand() % N_RSA_KEYS];
+	std::lock_guard<std::mutex> lock__(RSA_mut);
+	res = (keylength <= 512) ? RSA512_keys[rand() % N_RSA_KEYS] :
+					 RSA1024_keys[rand() % N_RSA_KEYS];
 	return res;
 }
 
-void global::SslHelper::SSLINFO_callback(const SSL * ssl, int where,
-					 [[maybe_unused]]
-					 int rc)
+void global::SslHelper::SSLINFO_callback(const SSL *ssl, int where,
+					 [[maybe_unused]] int rc)
 {
 	RENEG_STATE *reneg_state;
 
 	/* Get our thr_arg where we're tracking this connection info */
-	if ((reneg_state =
-	     static_cast < RENEG_STATE * >(SSL_get_app_data(ssl))) == nullptr)
+	if ((reneg_state = static_cast<RENEG_STATE *>(SSL_get_app_data(ssl))) ==
+	    nullptr)
 		return;
 
 	/* If we're rejecting renegotiations, move to ABORT if Client Hello is being
@@ -76,15 +67,15 @@ void global::SslHelper::SSLINFO_callback(const SSL * ssl, int where,
 		int state;
 
 		state = SSL_get_state(ssl);
-		if (state == SSL3_ST_SR_CLNT_HELLO_A
-		    || state == SSL23_ST_SR_CLNT_HELLO_A) {
+		if (state == SSL3_ST_SR_CLNT_HELLO_A ||
+		    state == SSL23_ST_SR_CLNT_HELLO_A) {
 			*reneg_state = RENEG_STATE::RENEG_ABORT;
-			zcu_log_print(LOG_WARNING,
-					  "rejecting client initiated renegotiation");
+			zcu_log_print(
+				LOG_WARNING,
+				"rejecting client initiated renegotiation");
 		}
-	}
-	else if (where & SSL_CB_HANDSHAKE_DONE &&
-		 *reneg_state == RENEG_STATE::RENEG_INIT) {
+	} else if (where & SSL_CB_HANDSHAKE_DONE &&
+		   *reneg_state == RENEG_STATE::RENEG_INIT) {
 		// Reject any followup renegotiations
 		*reneg_state = RENEG_STATE::RENEG_REJECT;
 	}
@@ -96,8 +87,7 @@ DH *global::SslHelper::load_dh_params(char *file)
 	BIO *bio;
 
 	if ((bio = BIO_new_file(file, "r")) == nullptr) {
-		zcu_log_print(LOG_WARNING, "unable to open DH file - %s",
-				  file);
+		zcu_log_print(LOG_WARNING, "unable to open DH file - %s", file);
 		return nullptr;
 	}
 
@@ -106,7 +96,7 @@ DH *global::SslHelper::load_dh_params(char *file)
 	return dh;
 }
 
-int global::SslHelper::generate_key(RSA ** ret_rsa, unsigned long bits)
+int global::SslHelper::generate_key(RSA **ret_rsa, unsigned long bits)
 {
 	int rc = 0;
 	RSA *rsa;
@@ -136,7 +126,7 @@ void global::SslHelper::doRSAgen()
 		generate_key(&t_RSA512_keys[n], 512);
 		generate_key(&t_RSA1024_keys[n], 1024);
 	}
-	std::lock_guard < std::mutex > lock__(RSA_mut);
+	std::lock_guard<std::mutex> lock__(RSA_mut);
 	for (n = 0; n < N_RSA_KEYS; n++) {
 		RSA_free(RSA512_keys[n]);
 		RSA512_keys[n] = t_RSA512_keys[n];
@@ -145,7 +135,7 @@ void global::SslHelper::doRSAgen()
 	}
 }
 
-global::SslHelper::~ SslHelper()
+global::SslHelper::~SslHelper()
 {
 	if (DH512_params != nullptr) {
 		DH_free(DH512_params);
@@ -174,18 +164,18 @@ void global::SslHelper::initDhParams()
 	for (n = 0; n < N_RSA_KEYS; n++) {
 		if (!generate_key(&RSA512_keys[n], 512)) {
 			zcu_log_print(LOG_WARNING,
-					  "%s():%d: RSA_generate(%d, 512) failed",
-					  __FUNCTION__, __LINE__, n);
+				      "%s():%d: RSA_generate(%d, 512) failed",
+				      __FUNCTION__, __LINE__, n);
 			return;
 		}
 		if (!generate_key(&RSA1024_keys[n], 1024)) {
 			zcu_log_print(LOG_WARNING,
-					  "%s():%d: RSA_generate(%d, 1024) failed",
-					  __FUNCTION__, __LINE__, n);
+				      "%s():%d: RSA_generate(%d, 1024) failed",
+				      __FUNCTION__, __LINE__, n);
 			return;
 		}
 	}
-	std::lock_guard < std::mutex > lock__(RSA_mut);
+	std::lock_guard<std::mutex> lock__(RSA_mut);
 	DH512_params = get_dh512();
 #if DH_LEN == 1024
 	DH1024_params = get_dh1024();
@@ -194,15 +184,13 @@ void global::SslHelper::initDhParams()
 #endif
 }
 
-global::SslHelper & global::SslHelper::getCurrent()
+global::SslHelper &global::SslHelper::getCurrent()
 {
 	return current;
 }
 
-int global::SslHelper::verifyCertificate_OK([[maybe_unused]]
-					    int pre_ok,
-					    [[maybe_unused]] X509_STORE_CTX *
-					    ctx)
+int global::SslHelper::verifyCertificate_OK(
+	[[maybe_unused]] int pre_ok, [[maybe_unused]] X509_STORE_CTX *ctx)
 {
 	return 1;
 }

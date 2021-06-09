@@ -25,10 +25,9 @@
 #include "../service/service.h"
 #include "../../zcutils/zcu_zlib.h"
 
-class Compression
-{
-      public:
-  /**
+class Compression {
+    public:
+	/**
    * @brief Applies compression to the response message.
    *
    * If one of the encoding accepted in the Accept Encoding Header matchs with
@@ -39,5 +38,5 @@ class Compression
    * set.
    * @param stream is the HttpStream to get the response to compress.
    */
-	static void applyCompression(Service * service, HttpStream * stream);
+	static void applyCompression(Service *service, HttpStream *stream);
 };

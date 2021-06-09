@@ -25,15 +25,15 @@
 #define GET_SECONDS(ms) ms / 1000
 #define GET_NSECONDS(ms) (ms % 1000) * 1000000
 
-TimerFd::TimerFd(int timeout_ms, bool one_shot):timeout_ms_(timeout_ms),
-one_shot_(one_shot)
+TimerFd::TimerFd(int timeout_ms, bool one_shot)
+	: timeout_ms_(timeout_ms), one_shot_(one_shot)
 {
-	fd_ =::timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+	fd_ = ::timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
 	if (fd_ < 0) {
 		std::string error = "timerfd_create() failed: ";
 		error += std::strerror(errno);
-		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
-				  __LINE__, error);
+		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
+			      error);
 		throw std::system_error(errno, std::system_category());
 	}
 	if (timeout_ms > 0)
@@ -45,14 +45,7 @@ bool TimerFd::unset()
 	if (fd_ <= 0) {
 		return false;
 	}
-	itimerspec timer_spec
-	{
-		{
-		0, 0}
-		,
-		{
-		0, 0}
-	};
+	itimerspec timer_spec{ { 0, 0 }, { 0, 0 } };
 	::timerfd_settime(fd_, 0, &timer_spec, nullptr);
 	is_set = false;
 	return true;
@@ -66,9 +59,7 @@ bool TimerFd::set(int timeout_ms, bool one_shot)
 		timeout_ms_ = timeout_ms;
 		one_shot_ = one_shot;
 	}
-	itimerspec timer_spec
-	{
-	};
+	itimerspec timer_spec{};
 	timer_spec.it_value.tv_sec = GET_SECONDS(timeout_ms);
 	timer_spec.it_value.tv_nsec = GET_NSECONDS(timeout_ms);
 	timer_spec.it_interval.tv_sec =
@@ -78,8 +69,8 @@ bool TimerFd::set(int timeout_ms, bool one_shot)
 	if (::timerfd_settime(fd_, 0, &timer_spec, nullptr) == -1) {
 		std::string error = "timerfd_settime() failed: ";
 		error += std::strerror(errno);
-		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
-				  __LINE__, error);
+		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
+			      error);
 		//    throw std::system_error(errno, std::system_category());
 		return false;
 	}

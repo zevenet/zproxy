@@ -21,8 +21,7 @@
 
 #pragma once
 
-class CtlClient
-{
-      public:
+class CtlClient {
+    public:
 	virtual bool init() = 0;
 };

@@ -30,13 +30,11 @@
 #include "../../zcutils/zcutils.h"
 
 using namespace events;
-class SignalFd:public Descriptor
-{
-      public:
-	sigset_t mask
+class SignalFd : public Descriptor {
+    public:
+	sigset_t mask{};
+	SignalFd()
 	{
-	};
-	SignalFd() {
 	}
 	bool init()
 	{
@@ -62,9 +60,7 @@ class SignalFd:public Descriptor
 	uint32_t getSignal()
 	{
 		ssize_t s;
-		signalfd_siginfo fdsi
-		{
-		};
+		signalfd_siginfo fdsi{};
 		s = read(fd_, &fdsi, sizeof(struct signalfd_siginfo));
 		if (s != sizeof(struct signalfd_siginfo)) {
 			zcu_log_print(LOG_ERR, "sigprocmask () failed");

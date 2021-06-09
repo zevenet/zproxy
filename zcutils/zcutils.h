@@ -35,12 +35,11 @@
 
 /****  LOG  ****/
 
-#define ZCUTILS_LOG_OUTPUT_SYSLOG			(1 << 0)
-#define ZCUTILS_LOG_OUTPUT_STDOUT			(1 << 1)
-#define ZCUTILS_LOG_OUTPUT_STDERR			(1 << 2)
+#define ZCUTILS_LOG_OUTPUT_SYSLOG (1 << 0)
+#define ZCUTILS_LOG_OUTPUT_STDOUT (1 << 1)
+#define ZCUTILS_LOG_OUTPUT_STDERR (1 << 2)
 
-enum zcu_log_output
-{
+enum zcu_log_output {
 	VALUE_LOG_OUTPUT_SYSLOG,
 	VALUE_LOG_OUTPUT_STDOUT,
 	VALUE_LOG_OUTPUT_STDERR,
@@ -48,8 +47,8 @@ enum zcu_log_output
 	VALUE_LOG_OUTPUT_SYSERR,
 };
 
-#define ZCUTILS_LOG_LEVEL_DEFAULT			LOG_NOTICE
-#define ZCUTILS_LOG_OUTPUT_DEFAULT			ZCUTILS_LOG_OUTPUT_SYSLOG
+#define ZCUTILS_LOG_LEVEL_DEFAULT LOG_NOTICE
+#define ZCUTILS_LOG_OUTPUT_DEFAULT ZCUTILS_LOG_OUTPUT_SYSLOG
 
 static inline int zcu_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
 static inline int zcu_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
@@ -93,16 +92,16 @@ static inline int zcu_log_print(int loglevel, const char *fmt, ...)
 		return 0;
 #endif
 
-	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT
-	    && loglevel <= zcu_log_level) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT &&
+	    loglevel <= zcu_log_level) {
 		va_start(args, fmt);
 		vfprintf(stdout, fmt, args);
 		fprintf(stdout, "\n");
 		va_end(args);
 	}
 
-	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR
-	    && loglevel <= zcu_log_level) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR &&
+	    loglevel <= zcu_log_level) {
 		va_start(args, fmt);
 		vfprintf(stderr, fmt, args);
 		fprintf(stderr, "\n");
@@ -152,15 +151,12 @@ static inline void zcu_str_snprintf(char *strdst, int size, char *strsrc)
 	strdst[size] = '\0';
 }
 
-
-
 /****  BUFFER  ****/
 
-#define ZCU_DEF_BUFFER_SIZE		4096
-#define EXTRA_SIZE				1024
+#define ZCU_DEF_BUFFER_SIZE 4096
+#define EXTRA_SIZE 1024
 
-struct zcu_buffer
-{
+struct zcu_buffer {
 	int size;
 	int next;
 	char *data;
@@ -189,7 +185,7 @@ static inline int zcu_buf_resize(struct zcu_buffer *buf, int times)
 	if (!buf->data)
 		return 1;
 
-	pbuf = (char *) realloc(buf->data, newsize);
+	pbuf = (char *)realloc(buf->data, newsize);
 	if (!pbuf)
 		return 1;
 
@@ -203,7 +199,7 @@ static inline int zcu_buf_create(struct zcu_buffer *buf)
 	buf->size = 0;
 	buf->next = 0;
 
-	buf->data = (char *) calloc(1, ZCU_DEF_BUFFER_SIZE);
+	buf->data = (char *)calloc(1, ZCU_DEF_BUFFER_SIZE);
 	if (!buf->data) {
 		return 1;
 	}
@@ -239,9 +235,8 @@ static inline int zcu_buf_reset(struct zcu_buffer *buf)
 	return 0;
 }
 
-static inline int
-zcu_buf_concat_va(struct zcu_buffer *buf, int len, char *fmt,
-		      va_list args)
+static inline int zcu_buf_concat_va(struct zcu_buffer *buf, int len, char *fmt,
+				    va_list args)
 {
 	int times = 0;
 	char *pnext;
@@ -250,9 +245,10 @@ zcu_buf_concat_va(struct zcu_buffer *buf, int len, char *fmt,
 		times = ((buf->next + len - buf->size) / EXTRA_SIZE) + 1;
 
 	if (zcu_buf_resize(buf, times)) {
-		zcu_log_print(LOG_ERR,
-				  "Error resizing the buffer %d times from a size of %d!",
-				  times, buf->size);
+		zcu_log_print(
+			LOG_ERR,
+			"Error resizing the buffer %d times from a size of %d!",
+			times, buf->size);
 		return 1;
 	}
 
@@ -263,8 +259,7 @@ zcu_buf_concat_va(struct zcu_buffer *buf, int len, char *fmt,
 	return 0;
 }
 
-static inline int
-zcu_buf_concat(struct zcu_buffer *buf, char *fmt, ...)
+static inline int zcu_buf_concat(struct zcu_buffer *buf, char *fmt, ...)
 {
 	int len;
 	va_list args;
@@ -285,8 +280,9 @@ zcu_buf_concat(struct zcu_buffer *buf, char *fmt, ...)
  *    Returns :  1 if the function did some action
  *               0 if it didn't do anything
 */
-static inline int
-zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *match, char *replace_str)
+static inline int zcu_str_replace_regexp(char *buf, const char *ori_str,
+					 int ori_len, regex_t *match,
+					 char *replace_str)
 {
 	//memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
 	regmatch_t umtch[10];
@@ -295,19 +291,14 @@ zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *mat
 	umtch[0].rm_eo = ori_len;
 	if (regexec(match, ori_str, 10, umtch, REG_STARTEND)) {
 #if DEBUG_ZCU_LOG
-		zcu_log_print(LOG_DEBUG,
-				  "String didn't match %.*s",
-				  ori_len,
-				  ori_str);
+		zcu_log_print(LOG_DEBUG, "String didn't match %.*s", ori_len,
+			      ori_str);
 #endif
 		return 0;
 	}
 
 #if DEBUG_ZCU_LOG
-	zcu_log_print(LOG_DEBUG,
-			  "String matches %.*s",
-			  ori_len,
-			  ori_str);
+	zcu_log_print(LOG_DEBUG, "String matches %.*s", ori_len, ori_str);
 #endif
 
 	chptr = buf;
@@ -320,11 +311,15 @@ zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *mat
 			srcptr++;
 		}
 		if (srcptr[0] == '$' && isdigit(srcptr[1])) {
-			if (chptr + umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so> enptr - 1)
+			if (chptr + umtch[srcptr[1] - 0x30].rm_eo -
+				    umtch[srcptr[1] - 0x30].rm_so >
+			    enptr - 1)
 				break;
 			memcpy(chptr, ori_str + umtch[srcptr[1] - 0x30].rm_so,
-				   umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr[1] - 0x30].rm_so);
-			chptr += umtch[srcptr[1] - 0x30].rm_eo - umtch[srcptr [1] - 0x30].rm_so;
+			       umtch[srcptr[1] - 0x30].rm_eo -
+				       umtch[srcptr[1] - 0x30].rm_so);
+			chptr += umtch[srcptr[1] - 0x30].rm_eo -
+				 umtch[srcptr[1] - 0x30].rm_so;
 			srcptr += 2;
 			continue;
 		}
@@ -335,7 +330,7 @@ zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *mat
 	return 1;
 }
 
-  /**
+/**
    * @brief It looks for a substring inside of a string.
    *
    * @param It is the start offset where the substrng was found
@@ -347,15 +342,16 @@ zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len, regex_t *mat
    *
    * @return 1 if the string was found of 0 if it didn't
    */
-static inline int
-zcu_str_find_str(int *off_start, int *off_end, const char *ori_str,
-				int ori_len, const char *match_str, int match_len ) {
-	int i, flag=0;
-	*off_start=-1;
-	*off_end=-1;
+static inline int zcu_str_find_str(int *off_start, int *off_end,
+				   const char *ori_str, int ori_len,
+				   const char *match_str, int match_len)
+{
+	int i, flag = 0;
+	*off_start = -1;
+	*off_end = -1;
 
-	for (i=0; i < ori_len && flag < match_len; i++) {
-		if ( ori_str[i] == match_str[flag]) {
+	for (i = 0; i < ori_len && flag < match_len; i++) {
+		if (ori_str[i] == match_str[flag]) {
 			if (flag == 0)
 				*off_start = i;
 			flag++;
@@ -369,7 +365,7 @@ zcu_str_find_str(int *off_start, int *off_end, const char *ori_str,
 	return 1;
 }
 
-  /**
+/**
    * @brief It replaces a substring for another inside of a string
    *
    * @param It is the buffer where the string modified will be returned
@@ -382,46 +378,44 @@ zcu_str_find_str(int *off_start, int *off_end, const char *ori_str,
    *
    * @return 1 if the string was modified or 0 if it doesn't
    */
-static inline int
-zcu_str_replace_str(char *buf, const char *ori_str, int ori_len,
-	const char *match_str, int match_len, char *replace_str, int replace_len)
+static inline int zcu_str_replace_str(char *buf, const char *ori_str,
+				      int ori_len, const char *match_str,
+				      int match_len, char *replace_str,
+				      int replace_len)
 {
-	int offst=-1, offend=-1, offcopy = 0, buf_len = ori_len - match_len + replace_len;
+	int offst = -1, offend = -1, offcopy = 0,
+	    buf_len = ori_len - match_len + replace_len;
 	char *chptr, *enptr, *srcptr;
 
-	if (!zcu_str_find_str(&offst, &offend, ori_str, ori_len, match_str, match_len)) {
-		zcu_log_print(LOG_DEBUG,
-				  "String didn't match %.*s",
-				  ori_len,
-				  ori_str);
+	if (!zcu_str_find_str(&offst, &offend, ori_str, ori_len, match_str,
+			      match_len)) {
+		zcu_log_print(LOG_DEBUG, "String didn't match %.*s", ori_len,
+			      ori_str);
 		return 0;
 	}
 
-	zcu_log_print(LOG_DEBUG,
-			  "String matches %.*s",
-			  ori_len,
-			  ori_str);
+	zcu_log_print(LOG_DEBUG, "String matches %.*s", ori_len, ori_str);
 
 	if (buf_len > ZCU_DEF_BUFFER_SIZE) {
-		zcu_log_print(LOG_WARNING,
-				  "String could not be replaced, the buffer size is not enought - %.*s",
-				  ori_len,
-				  ori_str);
+		zcu_log_print(
+			LOG_WARNING,
+			"String could not be replaced, the buffer size is not enought - %.*s",
+			ori_len, ori_str);
 		return 0;
 	}
 
-	if ( offst != 0 ) {
-		memcpy(buf, ori_str, offst );
+	if (offst != 0) {
+		memcpy(buf, ori_str, offst);
 	}
 
 	offcopy += offst;
 	memcpy(buf + offcopy, replace_str, replace_len);
 
-	if ( offend != ori_len ) {
+	if (offend != ori_len) {
 		offcopy += replace_len;
 		memcpy(buf + offcopy, ori_str + offend, ori_len - offend);
 	}
-	buf[buf_len]='\0';
+	buf[buf_len] = '\0';
 
 	return 1;
 }

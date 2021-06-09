@@ -26,31 +26,27 @@
 #include "../handlers/waf.h"
 #endif
 
-std::map < int, std::shared_ptr < ServiceManager >> ServiceManager::instance;
+std::map<int, std::shared_ptr<ServiceManager> > ServiceManager::instance;
 
-std::shared_ptr < ServiceManager >
-	&ServiceManager::getInstance(std::shared_ptr < ListenerConfig >
-				     listener_config)
+std::shared_ptr<ServiceManager> &
+ServiceManager::getInstance(std::shared_ptr<ListenerConfig> listener_config)
 {
 	auto it = instance.find(listener_config->id);
 	if (it == instance.end())
 		instance[listener_config->id] =
-			std::make_shared < ServiceManager > (listener_config);
+			std::make_shared<ServiceManager>(listener_config);
 	return instance[listener_config->id];
 }
 
-std::map < int,
-	std::shared_ptr < ServiceManager >> & ServiceManager::getInstance()
+std::map<int, std::shared_ptr<ServiceManager> > &ServiceManager::getInstance()
 {
 	return instance;
 }
 
-ServiceManager::ServiceManager(std::shared_ptr < ListenerConfig >
-			       listener_config)
-:	
-listener_config_(std::move(listener_config)),
-id(listener_config_->id), name(listener_config_->name),
-disabled(listener_config_->disabled != 0)
+ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
+	: listener_config_(std::move(listener_config)),
+	  id(listener_config_->id), name(listener_config_->name),
+	  disabled(listener_config_->disabled != 0)
 {
 	if (listener_config_->ctx != nullptr) {
 		if (ssl_context != nullptr)
@@ -59,11 +55,9 @@ disabled(listener_config_->disabled != 0)
 		is_https_listener = ssl_context->init(listener_config_);
 	}
 #if WAF_ENABLED
-	listener_config_->modsec =
-		std::make_shared < modsecurity::ModSecurity > ();
-	listener_config_->modsec->setConnectorInformation("zproxy_" +
-							  listener_config_->name
-							  + "_connector");
+	listener_config_->modsec = std::make_shared<modsecurity::ModSecurity>();
+	listener_config_->modsec->setConnectorInformation(
+		"zproxy_" + listener_config_->name + "_connector");
 	listener_config_->modsec->setServerLogCb(Waf::logModsec);
 #endif
 	ctl_manager = ctl::ControlManager::getInstance();
@@ -73,7 +67,7 @@ disabled(listener_config_->disabled != 0)
 ServiceManager::~ServiceManager()
 {
 	ctl_manager->deAttach(std::ref(*this));
-      for (auto srv:services) {
+	for (auto srv : services) {
 		delete srv;
 	}
 	if (ssl_context != nullptr) {
@@ -81,16 +75,16 @@ ServiceManager::~ServiceManager()
 	}
 }
 
-Service *ServiceManager::getService(HttpRequest & request)
+Service *ServiceManager::getService(HttpRequest &request)
 {
-      for (auto srv:services) {
+	for (auto srv : services) {
 		if (!srv->service_config.disabled) {
 			if (srv->doMatch(request)) {
-				zcu_log_print(LOG_DEBUG,
-						  "%s():%d: service found id:%d , %s",
-						  __FUNCTION__, __LINE__,
-						  srv->id,
-						  srv->service_config.name.c_str());
+				zcu_log_print(
+					LOG_DEBUG,
+					"%s():%d: service found id:%d , %s",
+					__FUNCTION__, __LINE__, srv->id,
+					srv->service_config.name.c_str());
 				return srv;
 			}
 		}
@@ -98,12 +92,12 @@ Service *ServiceManager::getService(HttpRequest & request)
 	return nullptr;
 }
 
-std::vector < Service * >ServiceManager::getServices()
+std::vector<Service *> ServiceManager::getServices()
 {
 	return services;
 }
 
-bool ServiceManager::addService(ServiceConfig & service_config, int _id)
+bool ServiceManager::addService(ServiceConfig &service_config, int _id)
 {
 	auto service = new Service(service_config);
 	service->id = _id;
@@ -112,12 +106,12 @@ bool ServiceManager::addService(ServiceConfig & service_config, int _id)
 	return true;
 }
 
-std::string ServiceManager::handleTask(ctl::CtlTask & task)
+std::string ServiceManager::handleTask(ctl::CtlTask &task)
 {
 	if (!this->isHandler(task))
 		return "";
 	if (task.service_id > -1) {
-	      for (auto service:services) {
+		for (auto service : services) {
 			if (service->isHandler(task))
 				return service->handleTask(task);
 		}
@@ -125,86 +119,75 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 	}
 
 	zcu_log_print(LOG_DEBUG, "%s():%d: service Manager handling task",
-			  __FUNCTION__, __LINE__);
+		      __FUNCTION__, __LINE__);
 	switch (task.command) {
-	case ctl::CTL_COMMAND::GET:{
-			switch (task.subject) {
-			case ctl::CTL_SUBJECT::DEBUG:
-				return JSON_OP_RESULT::EMPTY_OBJECT;
-			default:{
-					std::unique_ptr < json::JsonObject >
-						root =
-						std::make_unique <
-						JsonObject > ();
-					root->emplace(JSON_KEYS::ADDRESS,
-						      std::make_unique <
-						      JsonDataValue >
-						      (listener_config_->address));
-					root->emplace(JSON_KEYS::PORT,
-						      std::make_unique <
-						      JsonDataValue >
-						      (listener_config_->port));
-					root->emplace(JSON_KEYS::ID,
-						      std::make_unique <
-						      JsonDataValue >
-						      (listener_config_->id));
-					root->emplace(JSON_KEYS::HTTPS,
-						      std::make_unique <
-						      JsonDataValue >
-						      (listener_config_->ctx
-						       != nullptr));
-					root->emplace(JSON_KEYS::STATUS,
-						      std::make_unique <
-						      JsonDataValue >
-						      (this->disabled ?
-						       JSON_KEYS::STATUS_DOWN
-						       :
-						       JSON_KEYS::STATUS_ACTIVE));
-					root->emplace(JSON_KEYS::NAME,
-						      std::make_unique <
-						      JsonDataValue > (name));
-					root->emplace(JSON_KEYS::PENDING_CONNS,
-							  std::make_unique <
-							  JsonDataValue >
-							  (conns_stats.established_connection - conns_stats.total_connections));
-					root->emplace(JSON_KEYS::CONNECTIONS,
-						      std::make_unique <
-						      JsonDataValue >
-							  (conns_stats.established_connection));
-					auto services_array =
-						std::make_unique < JsonArray >
-						();
-				      for (auto service:services)
-						services_array->emplace_back
-							(service->getServiceJson
-							 ());
-					root->emplace(JSON_KEYS::SERVICES,
-						      std::move
-						      (services_array));
-					root->emplace(JSON_KEYS::CODE_300_HITS,
-							  std::make_unique <
-							  JsonDataValue >
-							  (listener_config_->response_stats.code_3xx));
-					root->emplace(JSON_KEYS::CODE_400_HITS,
-							  std::make_unique <
-							  JsonDataValue >
-							  (listener_config_->response_stats.code_4xx));
-					root->emplace(JSON_KEYS::CODE_500_HITS,
-							  std::make_unique <
-							  JsonDataValue >
-							  (listener_config_->response_stats.code_5xx));
+	case ctl::CTL_COMMAND::GET: {
+		switch (task.subject) {
+		case ctl::CTL_SUBJECT::DEBUG:
+			return JSON_OP_RESULT::EMPTY_OBJECT;
+		default: {
+			std::unique_ptr<json::JsonObject> root =
+				std::make_unique<JsonObject>();
+			root->emplace(JSON_KEYS::ADDRESS,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->address));
+			root->emplace(JSON_KEYS::PORT,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->port));
+			root->emplace(JSON_KEYS::ID,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->id));
+			root->emplace(JSON_KEYS::HTTPS,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->ctx !=
+					      nullptr));
+			root->emplace(
+				JSON_KEYS::STATUS,
+				std::make_unique<JsonDataValue>(
+					this->disabled ?
+						      JSON_KEYS::STATUS_DOWN :
+						      JSON_KEYS::STATUS_ACTIVE));
+			root->emplace(JSON_KEYS::NAME,
+				      std::make_unique<JsonDataValue>(name));
+			root->emplace(
+				JSON_KEYS::PENDING_CONNS,
+				std::make_unique<JsonDataValue>(
+					conns_stats.established_connection -
+					conns_stats.total_connections));
+			root->emplace(
+				JSON_KEYS::CONNECTIONS,
+				std::make_unique<JsonDataValue>(
+					conns_stats.established_connection));
+			auto services_array = std::make_unique<JsonArray>();
+			for (auto service : services)
+				services_array->emplace_back(
+					service->getServiceJson());
+			root->emplace(JSON_KEYS::SERVICES,
+				      std::move(services_array));
+			root->emplace(JSON_KEYS::CODE_300_HITS,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->response_stats
+						      .code_3xx));
+			root->emplace(JSON_KEYS::CODE_400_HITS,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->response_stats
+						      .code_4xx));
+			root->emplace(JSON_KEYS::CODE_500_HITS,
+				      std::make_unique<JsonDataValue>(
+					      listener_config_->response_stats
+						      .code_5xx));
 #if WAF_ENABLED
-					root->emplace(JSON_KEYS::WAF_HITS,
-							  std::make_unique <
-							  JsonDataValue >
-							  (listener_config_->response_stats.waf));
+			root->emplace(
+				JSON_KEYS::WAF_HITS,
+				std::make_unique<JsonDataValue>(
+					listener_config_->response_stats.waf));
 #endif
-					auto data = root->stringify();
-					return data;
-				}
-			}
-			break;
+			auto data = root->stringify();
+			return data;
 		}
+		}
+		break;
+	}
 	case ctl::CTL_COMMAND::NONE:
 		break;
 	case ctl::CTL_COMMAND::ADD:
@@ -218,51 +201,46 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 	case ctl::CTL_COMMAND::UPDATE:
 		switch (task.subject) {
 #if WAF_ENABLED
-		case ctl::CTL_SUBJECT::RELOAD_WAF:{
-				//          auto json_data = JsonParser::parse(task.data);
-				auto new_rules = Waf::reloadRules();	// TODO:: update reload
-				if (new_rules == nullptr) {
-					return JSON_OP_RESULT::ERROR;
-				}
-				this->listener_config_->rules = new_rules;
-				return JSON_OP_RESULT::OK;
+		case ctl::CTL_SUBJECT::RELOAD_WAF: {
+			//          auto json_data = JsonParser::parse(task.data);
+			auto new_rules =
+				Waf::reloadRules(); // TODO:: update reload
+			if (new_rules == nullptr) {
+				return JSON_OP_RESULT::ERROR;
 			}
+			this->listener_config_->rules = new_rules;
+			return JSON_OP_RESULT::OK;
+		}
 #endif
 		case ctl::CTL_SUBJECT::CONFIG:
 			// TODO:: update service config (timeouts, headers, routing policy)
 			break;
-		case ctl::CTL_SUBJECT::STATUS:{
-				std::unique_ptr < JsonObject >
-					status(JsonParser::parse(task.data));
-				if (status == nullptr)
-					return JSON_OP_RESULT::ERROR;
-				if (status->at(JSON_KEYS::STATUS)->isValue()) {
-					auto value =
-						dynamic_cast <
-						JsonDataValue *
-						>(status->at
-						  (JSON_KEYS::STATUS).get())
+		case ctl::CTL_SUBJECT::STATUS: {
+			std::unique_ptr<JsonObject> status(
+				JsonParser::parse(task.data));
+			if (status == nullptr)
+				return JSON_OP_RESULT::ERROR;
+			if (status->at(JSON_KEYS::STATUS)->isValue()) {
+				auto value =
+					dynamic_cast<JsonDataValue *>(
+						status->at(JSON_KEYS::STATUS)
+							.get())
 						->string_value;
-					if (value == JSON_KEYS::STATUS_ACTIVE
-					    || value ==
-					    JSON_KEYS::STATUS_UP) {
-						this->disabled = false;
-					}
-					else if (value ==
-						 JSON_KEYS::STATUS_DOWN) {
-						this->disabled = true;
-					}
-					else if (value ==
-						 JSON_KEYS::STATUS_DISABLED) {
-						this->disabled = true;
-					}
-					zcu_log_print(LOG_NOTICE,
-							  "set Service %d %s",
-							  id, value.c_str());
-					return JSON_OP_RESULT::OK;
+				if (value == JSON_KEYS::STATUS_ACTIVE ||
+				    value == JSON_KEYS::STATUS_UP) {
+					this->disabled = false;
+				} else if (value == JSON_KEYS::STATUS_DOWN) {
+					this->disabled = true;
+				} else if (value ==
+					   JSON_KEYS::STATUS_DISABLED) {
+					this->disabled = true;
 				}
-				break;
+				zcu_log_print(LOG_NOTICE, "set Service %d %s",
+					      id, value.c_str());
+				return JSON_OP_RESULT::OK;
 			}
+			break;
+		}
 		default:
 			break;
 		}
@@ -277,11 +255,11 @@ std::string ServiceManager::handleTask(ctl::CtlTask & task)
 	return JSON_OP_RESULT::ERROR;
 }
 
-bool ServiceManager::isHandler(ctl::CtlTask & task)
+bool ServiceManager::isHandler(ctl::CtlTask &task)
 {
 	return !disabled &&
-		(((task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER) &&
-		  (task.listener_id == listener_config_->id ||
-		   task.listener_id == -1)) ||
-		 task.target == ctl::CTL_HANDLER_TYPE::ALL);
+	       (((task.target == ctl::CTL_HANDLER_TYPE::SERVICE_MANAGER) &&
+		 (task.listener_id == listener_config_->id ||
+		  task.listener_id == -1)) ||
+		task.target == ctl::CTL_HANDLER_TYPE::ALL);
 }

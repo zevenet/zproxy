@@ -21,7 +21,7 @@
 #include "backend.h"
 #include "../../zcutils/zcutils.h"
 
-Backend::Backend():status(BACKEND_STATUS::NO_BACKEND)
+Backend::Backend() : status(BACKEND_STATUS::NO_BACKEND)
 {
 }
 
@@ -32,60 +32,56 @@ Backend::~Backend()
 	}
 }
 
-std::string Backend::handleTask(ctl::CtlTask & task)
+std::string Backend::handleTask(ctl::CtlTask &task)
 {
 	if (!isHandler(task) || this->backend_type != BACKEND_TYPE::REMOTE)
 		return "";
 	zcu_log_print(LOG_DEBUG, "%s():%d: backend %d handling task",
-			  __FUNCTION__, __LINE__, backend_id);
+		      __FUNCTION__, __LINE__, backend_id);
 	if (task.command == ctl::CTL_COMMAND::GET) {
 		switch (task.subject) {
-		case ctl::CTL_SUBJECT::STATUS:{
-				JsonObject status_;
-				switch (this->status) {
-				case BACKEND_STATUS::BACKEND_UP:
-					status_.emplace(JSON_KEYS::STATUS,
-							std::make_unique <
-							JsonDataValue >
-							(JSON_KEYS::STATUS_UP));
-					break;
-				case BACKEND_STATUS::BACKEND_DOWN:
-					status_.emplace(JSON_KEYS::STATUS,
-							std::make_unique <
-							JsonDataValue >
-							(JSON_KEYS::STATUS_DOWN));
-					break;
-				case BACKEND_STATUS::BACKEND_DISABLED:
-					status_.emplace(JSON_KEYS::STATUS,
-							std::make_unique <
-							JsonDataValue >
-							(JSON_KEYS::STATUS_DISABLED));
-					break;
-				default:
-					status_.emplace(JSON_KEYS::STATUS,
-							std::make_unique <
-							JsonDataValue >
-							(JSON_KEYS::UNKNOWN));
-					break;
-				}
-				return status_.stringify();
+		case ctl::CTL_SUBJECT::STATUS: {
+			JsonObject status_;
+			switch (this->status) {
+			case BACKEND_STATUS::BACKEND_UP:
+				status_.emplace(JSON_KEYS::STATUS,
+						std::make_unique<JsonDataValue>(
+							JSON_KEYS::STATUS_UP));
+				break;
+			case BACKEND_STATUS::BACKEND_DOWN:
+				status_.emplace(
+					JSON_KEYS::STATUS,
+					std::make_unique<JsonDataValue>(
+						JSON_KEYS::STATUS_DOWN));
+				break;
+			case BACKEND_STATUS::BACKEND_DISABLED:
+				status_.emplace(
+					JSON_KEYS::STATUS,
+					std::make_unique<JsonDataValue>(
+						JSON_KEYS::STATUS_DISABLED));
+				break;
+			default:
+				status_.emplace(JSON_KEYS::STATUS,
+						std::make_unique<JsonDataValue>(
+							JSON_KEYS::UNKNOWN));
+				break;
 			}
-		case ctl::CTL_SUBJECT::WEIGHT:{
-				JsonObject weight_;
-				weight_.emplace(JSON_KEYS::WEIGHT,
-						std::make_unique <
-						JsonDataValue >
-						(this->weight));
-				return weight_.stringify();
-			}
+			return status_.stringify();
+		}
+		case ctl::CTL_SUBJECT::WEIGHT: {
+			JsonObject weight_;
+			weight_.emplace(
+				JSON_KEYS::WEIGHT,
+				std::make_unique<JsonDataValue>(this->weight));
+			return weight_.stringify();
+		}
 		default:
 			auto backend_status = this->getBackendJson();
 			if (backend_status != nullptr)
 				return backend_status->stringify();
 			return JSON_OP_RESULT::ERROR;
 		}
-	}
-	else if (task.command == ctl::CTL_COMMAND::UPDATE) {
+	} else if (task.command == ctl::CTL_COMMAND::UPDATE) {
 		auto status_object = JsonParser::parse(task.data);
 		if (status_object == nullptr)
 			return JSON_OP_RESULT::ERROR;
@@ -93,51 +89,45 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 		case ctl::CTL_SUBJECT::CONFIG:
 			// TODO:: update  config (timeouts, headers)
 			break;
-		case ctl::CTL_SUBJECT::STATUS:{
-				if (status_object->
-				    at(JSON_KEYS::STATUS)->isValue()) {
-					auto value =
-						dynamic_cast <
-						JsonDataValue *
-						>(status_object->at
-						  (JSON_KEYS::STATUS).get())
+		case ctl::CTL_SUBJECT::STATUS: {
+			if (status_object->at(JSON_KEYS::STATUS)->isValue()) {
+				auto value =
+					dynamic_cast<JsonDataValue *>(
+						status_object
+							->at(JSON_KEYS::STATUS)
+							.get())
 						->string_value;
-					if (value == JSON_KEYS::STATUS_ACTIVE
-					    || value ==
-					    JSON_KEYS::STATUS_UP) {
-						this->setStatus(BACKEND_STATUS::BACKEND_UP);
-					}
-					else if (value ==
-						 JSON_KEYS::STATUS_DOWN) {
-						this->setStatus(BACKEND_STATUS::BACKEND_DOWN);
-					}
-					else if (value ==
-						 JSON_KEYS::STATUS_DISABLED) {
-						this->setStatus(BACKEND_STATUS::BACKEND_DISABLED);
-					}
-					zcu_log_print(LOG_NOTICE,
-							  "Set Backend %d %s",
-							  backend_id,
-							  value.c_str());
-					return JSON_OP_RESULT::OK;
+				if (value == JSON_KEYS::STATUS_ACTIVE ||
+				    value == JSON_KEYS::STATUS_UP) {
+					this->setStatus(
+						BACKEND_STATUS::BACKEND_UP);
+				} else if (value == JSON_KEYS::STATUS_DOWN) {
+					this->setStatus(
+						BACKEND_STATUS::BACKEND_DOWN);
+				} else if (value ==
+					   JSON_KEYS::STATUS_DISABLED) {
+					this->setStatus(
+						BACKEND_STATUS::BACKEND_DISABLED);
 				}
-				break;
+				zcu_log_print(LOG_NOTICE, "Set Backend %d %s",
+					      backend_id, value.c_str());
+				return JSON_OP_RESULT::OK;
 			}
-		case ctl::CTL_SUBJECT::WEIGHT:{
-				if (status_object->
-				    at(JSON_KEYS::WEIGHT)->isValue()) {
-					auto value =
-						dynamic_cast <
-						JsonDataValue *
-						>(status_object->at
-						  (JSON_KEYS::WEIGHT).get())
+			break;
+		}
+		case ctl::CTL_SUBJECT::WEIGHT: {
+			if (status_object->at(JSON_KEYS::WEIGHT)->isValue()) {
+				auto value =
+					dynamic_cast<JsonDataValue *>(
+						status_object
+							->at(JSON_KEYS::WEIGHT)
+							.get())
 						->number_value;
-					this->weight =
-						static_cast < int >(value);
-					return JSON_OP_RESULT::OK;
-				}
-				return JSON_OP_RESULT::ERROR;
+				this->weight = static_cast<int>(value);
+				return JSON_OP_RESULT::OK;
 			}
+			return JSON_OP_RESULT::ERROR;
+		}
 		default:
 			break;
 		}
@@ -145,101 +135,96 @@ std::string Backend::handleTask(ctl::CtlTask & task)
 	return "";
 }
 
-bool Backend::isConnectionLimit() {
-	bool ret = (connection_limit > 0 && (connection_limit <= getEstablishedConn()) ) ? true : false;
+bool Backend::isConnectionLimit()
+{
+	bool ret = (connection_limit > 0 &&
+		    (connection_limit <= getEstablishedConn())) ?
+				 true :
+				 false;
 	if (ret) {
 		zcu_log_print(LOG_DEBUG,
-			  "Connection limit %d hit in backend %d",
-			  backend_id,
-			  connection_limit );
+			      "Connection limit %d hit in backend %d",
+			      backend_id, connection_limit);
 	}
 	return ret;
 }
 
-
-bool Backend::isHandler(ctl::CtlTask & task)
+bool Backend::isHandler(ctl::CtlTask &task)
 {
-	return			/*task.target == ctl::CTL_HANDLER_TYPE::BACKEND && */
-		(task.backend_id == this->backend_id
-		 || task.backend_id == -1);
+	return /*task.target == ctl::CTL_HANDLER_TYPE::BACKEND && */
+		(task.backend_id == this->backend_id || task.backend_id == -1);
 }
 
-std::unique_ptr < JsonObject > Backend::getBackendJson()
+std::unique_ptr<JsonObject> Backend::getBackendJson()
 {
-	auto root = std::make_unique < JsonObject > ();
+	auto root = std::make_unique<JsonObject>();
 	root->emplace(JSON_KEYS::NAME,
-		      std::make_unique < JsonDataValue > (this->name));
+		      std::make_unique<JsonDataValue>(this->name));
 	root->emplace(JSON_KEYS::HTTPS,
-		      std::make_unique < JsonDataValue > (this->isHttps()));
+		      std::make_unique<JsonDataValue>(this->isHttps()));
 	root->emplace(JSON_KEYS::ID,
-		      std::make_unique < JsonDataValue > (this->backend_id));
+		      std::make_unique<JsonDataValue>(this->backend_id));
 	root->emplace(JSON_KEYS::TYPE,
-		      std::make_unique < JsonDataValue > (static_cast <
-							  int
-							  >
-							  (this->backend_type)));
+		      std::make_unique<JsonDataValue>(
+			      static_cast<int>(this->backend_type)));
 	if (this->backend_type != BACKEND_TYPE::REDIRECT) {
 		root->emplace(JSON_KEYS::ADDRESS,
-			      std::make_unique < JsonDataValue >
-			      (this->address));
+			      std::make_unique<JsonDataValue>(this->address));
 		root->emplace(JSON_KEYS::PORT,
-			      std::make_unique < JsonDataValue >
-			      (this->port));
+			      std::make_unique<JsonDataValue>(this->port));
 		root->emplace(JSON_KEYS::WEIGHT,
-			      std::make_unique < JsonDataValue >
-			      (this->weight));
+			      std::make_unique<JsonDataValue>(this->weight));
 		root->emplace(JSON_KEYS::PRIORITY,
-			      std::make_unique < JsonDataValue >
-			      (this->priority));
+			      std::make_unique<JsonDataValue>(this->priority));
 		switch (this->status) {
 		case BACKEND_STATUS::BACKEND_UP:
 			root->emplace(JSON_KEYS::STATUS,
-				      std::make_unique < JsonDataValue >
-				      (JSON_KEYS::STATUS_ACTIVE));
+				      std::make_unique<JsonDataValue>(
+					      JSON_KEYS::STATUS_ACTIVE));
 			break;
 		case BACKEND_STATUS::BACKEND_DOWN:
 			root->emplace(JSON_KEYS::STATUS,
-				      std::make_unique < JsonDataValue >
-				      (JSON_KEYS::STATUS_DOWN));
+				      std::make_unique<JsonDataValue>(
+					      JSON_KEYS::STATUS_DOWN));
 			break;
 		case BACKEND_STATUS::BACKEND_DISABLED:
 			root->emplace(JSON_KEYS::STATUS,
-				      std::make_unique < JsonDataValue >
-				      (JSON_KEYS::STATUS_DISABLED));
+				      std::make_unique<JsonDataValue>(
+					      JSON_KEYS::STATUS_DISABLED));
 			break;
 		default:
 			root->emplace(JSON_KEYS::STATUS,
-				      std::make_unique < JsonDataValue >
-				      (JSON_KEYS::UNKNOWN));
+				      std::make_unique<JsonDataValue>(
+					      JSON_KEYS::UNKNOWN));
 			break;
 		}
 		root->emplace(JSON_KEYS::CONNECTIONS,
-			      std::make_unique < JsonDataValue >
-				  (this->established_conn));
+			      std::make_unique<JsonDataValue>(
+				      this->established_conn));
 		root->emplace(JSON_KEYS::CONNECTION_LIMIT,
-				  std::make_unique < JsonDataValue >
-				  (this->connection_limit));
+			      std::make_unique<JsonDataValue>(
+				      this->connection_limit));
 		root->emplace(JSON_KEYS::PENDING_CONNS,
-			      std::make_unique < JsonDataValue >
-			      (this->pending_connections));
+			      std::make_unique<JsonDataValue>(
+				      this->pending_connections));
 		root->emplace(JSON_KEYS::RESPONSE_TIME,
-			      std::make_unique < JsonDataValue >
-			      (this->avg_response_time));
-		root->emplace(JSON_KEYS::CONNECT_TIME,
-			      std::make_unique < JsonDataValue >
-			      (this->avg_conn_time));
+			      std::make_unique<JsonDataValue>(
+				      this->avg_response_time));
+		root->emplace(
+			JSON_KEYS::CONNECT_TIME,
+			std::make_unique<JsonDataValue>(this->avg_conn_time));
 		root->emplace(JSON_KEYS::CODE_200_HITS,
-				  std::make_unique < JsonDataValue >
-				  (this->response_stats.code_2xx));
+			      std::make_unique<JsonDataValue>(
+				      this->response_stats.code_2xx));
 		root->emplace(JSON_KEYS::CODE_300_HITS,
-				  std::make_unique < JsonDataValue >
-				  (this->response_stats.code_3xx));
+			      std::make_unique<JsonDataValue>(
+				      this->response_stats.code_3xx));
 		root->emplace(JSON_KEYS::CODE_400_HITS,
-				  std::make_unique < JsonDataValue >
-				  (this->response_stats.code_4xx));
+			      std::make_unique<JsonDataValue>(
+				      this->response_stats.code_4xx));
 		root->emplace(JSON_KEYS::CODE_500_HITS,
-				  std::make_unique < JsonDataValue >
-				  (this->response_stats.code_5xx));
+			      std::make_unique<JsonDataValue>(
+				      this->response_stats.code_5xx));
 	}
 	return root;
 }
@@ -253,16 +238,16 @@ void Backend::doMaintenance()
 	auto res = checkOut.doConnect(*address_info, 5, false, this->nf_mark);
 
 	switch (res) {
-	case IO::IO_OP::OP_SUCCESS:{
-			zcu_log_print(LOG_NOTICE,
-					  "BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
-					  this->address.data(), this->port,
-					  this->backend_config->f_name.data(),
-					  this->backend_config->
-					  srv_name.data());
-			this->setStatus(BACKEND_STATUS::BACKEND_UP);
-			break;
-		}
+	case IO::IO_OP::OP_SUCCESS: {
+		zcu_log_print(
+			LOG_NOTICE,
+			"BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
+			this->address.data(), this->port,
+			this->backend_config->f_name.data(),
+			this->backend_config->srv_name.data());
+		this->setStatus(BACKEND_STATUS::BACKEND_UP);
+		break;
+	}
 	default:
 		this->setStatus(BACKEND_STATUS::BACKEND_DOWN);
 	}

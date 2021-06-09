@@ -30,7 +30,7 @@
 
 static jmp_buf jmpbuf;
 
-std::shared_ptr < SystemInfo > SystemInfo::instance = nullptr;
+std::shared_ptr<SystemInfo> SystemInfo::instance = nullptr;
 std::once_flag terminate_flag;
 void cleanExit()
 {
@@ -39,38 +39,37 @@ void cleanExit()
 
 void handleInterrupt(int sig)
 {
-	zcu_log_print(LOG_DEBUG, "[%s] received",::strsignal(sig));
+	zcu_log_print(LOG_DEBUG, "[%s] received", ::strsignal(sig));
 	switch (sig) {
 	case SIGQUIT:
 	case SIGTERM:
 		::_exit(EXIT_SUCCESS);
 		return;
 	case SIGINT:
-	case SIGHUP:{
-			auto cm = ctl::ControlManager::getInstance();
-			cm->stop();
-			::_exit(EXIT_SUCCESS);
-			break;
-		}
+	case SIGHUP: {
+		auto cm = ctl::ControlManager::getInstance();
+		cm->stop();
+		::_exit(EXIT_SUCCESS);
+		break;
+	}
 	case SIGABRT:
 		::_exit(EXIT_FAILURE);
-	case SIGSEGV:{
-			zcu_bt_print();
-			::_exit(EXIT_FAILURE);
-		}
-	case SIGUSR1:		// Release free heap memory
+	case SIGSEGV: {
+		zcu_bt_print();
+		::_exit(EXIT_FAILURE);
+	}
+	case SIGUSR1: // Release free heap memory
 		::malloc_trim(0);
 		break;
-	case SIGUSR2:{
-			auto cm = ctl::ControlManager::getInstance();
-			cm->sendCtlCommand(ctl::CTL_COMMAND::UPDATE,
-					   ctl::
-					   CTL_HANDLER_TYPE::LISTENER_MANAGER,
-					   ctl::CTL_SUBJECT::CONFIG);
-		}
-	default:{
-			//  ::longjmp(jmpbuf, 1);
-		}
+	case SIGUSR2: {
+		auto cm = ctl::ControlManager::getInstance();
+		cm->sendCtlCommand(ctl::CTL_COMMAND::UPDATE,
+				   ctl::CTL_HANDLER_TYPE::LISTENER_MANAGER,
+				   ctl::CTL_SUBJECT::CONFIG);
+	}
+	default: {
+		//  ::longjmp(jmpbuf, 1);
+	}
 	}
 }
 
@@ -96,9 +95,8 @@ int main(int argc, char *argv[])
 		std::exit(EXIT_FAILURE);
 	auto parse_result = config.init(*start_options);
 	if (!parse_result) {
-		fprintf(stderr,
-				  "error parsing configuration file %s",
-				  start_options->conf_file_name.data());
+		fprintf(stderr, "error parsing configuration file %s",
+			start_options->conf_file_name.data());
 		std::exit(EXIT_FAILURE);
 	}
 
@@ -134,12 +132,12 @@ int main(int argc, char *argv[])
 	::signal(SIGUSR2, handleInterrupt);
 	::signal(SIGQUIT, handleInterrupt);
 	::umask(077);
-	::srandom(static_cast < unsigned int >(::getpid()));
+	::srandom(static_cast<unsigned int>(::getpid()));
 	Environment::setUlimitData();
 
 	/* record pid in file */
 	if (!config.pid_name.empty()) {
-		Environment::createPidFile(config.pid_name,::getpid());
+		Environment::createPidFile(config.pid_name, ::getpid());
 	}
 	/* chroot if necessary */
 	if (!config.root_jail.empty()) {
@@ -163,7 +161,7 @@ int main(int argc, char *argv[])
 	     listener_conf = listener_conf->next) {
 		if (!listener.addListener(listener_conf)) {
 			zcu_log_print(LOG_ERR,
-					  "error initializing listener socket");
+				      "error initializing listener socket");
 			return EXIT_FAILURE;
 		}
 	}
