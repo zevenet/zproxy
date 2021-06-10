@@ -374,9 +374,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 		"An internal server error occurred. Please try again later.";
 	res->err501 = "This method may not be used.";
 	res->err503 = "The service is not available. Please try again later.";
-	res->errnossl = "Please use HTTPS.";
-	res->nossl_url = "";
-	res->nossl_redir = 0;
 	res->log_level = log_level;
 	res->alive_to = alive_to;
 	res->ignore100continue = ignore_100;
@@ -432,14 +429,12 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 					    (ignore_case ? REG_ICASE : 0)))
 				conf_err("CheckURL bad pattern - aborted");
 			res->has_pat = 1;
-		}
 #if WAF_ENABLED
-		else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
+		} else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			res->errwaf = file2str(lin + matches[1].rm_so);
-		}
 #endif
-		else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
+		} else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			res->err414 = file2str(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::Err500, lin, 4, matches, 0)) {
@@ -722,10 +717,11 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 		"An internal server error occurred. Please try again later.";
 	res->err501 = "This method may not be used.";
 	res->err503 = "The service is not available. Please try again later.";
-	res->allow_client_reneg = 0;
 	res->errnossl = "Please use HTTPS.";
+	res->codenossl = http::Code::BadRequest;
 	res->nossl_url = "";
 	res->nossl_redir = 0;
+	res->allow_client_reneg = 0;
 	res->log_level = log_level;
 	res->alive_to = alive_to;
 	res->engine_id = engine_id;
@@ -817,14 +813,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 					    (ignore_case ? REG_ICASE : 0)))
 				conf_err("CheckURL bad pattern - aborted");
 			res->has_pat = 1;
-		}
-#if WAF_ENABLED
-		else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->errwaf = file2str(lin + matches[1].rm_so);
-		}
-#endif
-		else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
+		} else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			res->err414 = file2str(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::Err500, lin, 4, matches, 0)) {
@@ -837,8 +826,22 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			lin[matches[1].rm_eo] = '\0';
 			res->err503 = file2str(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::ErrNoSsl, lin, 4, matches, 0)) {
+			res->codenossl = http::Code::BadRequest;
+			if (matches[1].rm_eo != matches[1].rm_so) {
+				res->codenossl = static_cast<http::Code>(
+					atoi(lin + matches[1].rm_so));
+				if (!strcmp(http::reasonPhrase(res->codenossl),
+					    "(UNKNOWN)"))
+					conf_err(
+						"The http code for ErrNoSsl is not valid - aborted");
+			}
+			lin[matches[2].rm_eo] = '\0';
+			res->errnossl = file2str(lin + matches[2].rm_so);
+#if WAF_ENABLED
+		} else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
-			res->errnossl = file2str(lin + matches[1].rm_so);
+			res->errwaf = file2str(lin + matches[1].rm_so);
+#endif
 		} else if (!regexec(&regex_set::NoSslRedirect, lin, 4, matches,
 				    0)) {
 			res->nossl_redir = 302;

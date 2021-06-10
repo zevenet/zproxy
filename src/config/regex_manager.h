@@ -79,19 +79,20 @@ static const Regex CertDir("^[ \t]*CertDir[ \t]+\"(.+)\"[ \t]*$");
 static const Regex xHTTP("^[ \t]*xHTTP[ \t]+([012345])[ \t]*$");
 static const Regex Client("^[ \t]*Client[ \t]+([1-9][0-9]*)[ \t]*$");
 static const Regex CheckURL("^[ \t]*CheckURL[ \t]+\"(.+)\"[ \t]*$");
+static const Regex SSLConfigFile("^[ \t]*SSLConfigFile[ \t]+\"(.+)\"[ \t]*$");
 #if WAF_ENABLED
 static const Regex ErrWAF("^[ \t]*ErrWAF[ \t]+\"(.+)\"[ \t]*$");
 #endif
+static const Regex
+	ErrNoSsl("^[ \t]*ErrNoSsl[ \t]+([45][0-9][0-9][ \t]+)?\"(.+)\"[ \t]*$");
 static const Regex Err414("^[ \t]*Err414[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Err500("^[ \t]*Err500[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Err501("^[ \t]*Err501[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Err503("^[ \t]*Err503[ \t]+\"(.+)\"[ \t]*$");
-static const Regex SSLConfigFile("^[ \t]*SSLConfigFile[ \t]+\"(.+)\"[ \t]*$");
-static const Regex
-	SSLConfigSection("^[ \t]*SSLConfigSection[ \t]+([^ \t]+)[ \t]*$");
-static const Regex ErrNoSsl("^[ \t]*ErrNoSsl[ \t]+\"(.+)\"[ \t]*$");
 static const Regex NoSslRedirect(
 	"^[ \t]*NoSslRedirect[ \t]+(30[127][ \t]+)?\"(.+)\"[ \t]*$");
+static const Regex
+	SSLConfigSection("^[ \t]*SSLConfigSection[ \t]+([^ \t]+)[ \t]*$");
 static const Regex MaxRequest("^[ \t]*MaxRequest[ \t]+([1-9][0-9]*)[ \t]*$");
 static const Regex HeadRemove("^[ \t]*HeadRemove[ \t]+\"(.+)\"[ \t]*$");
 static const Regex

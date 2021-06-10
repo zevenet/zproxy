@@ -206,6 +206,7 @@ struct ListenerConfig : Counter<ListenerConfig> {
 	regex_t url_pat; /* pattern to match the request URL against */
 	std::string err414, /* error messages */
 		err500, err501, err503, errnossl;
+	http::Code codenossl;
 #if WAF_ENABLED
 	std::string errwaf;
 #endif

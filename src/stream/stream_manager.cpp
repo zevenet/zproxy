@@ -423,9 +423,9 @@ void StreamManager::onRequestEvent(int fd)
 						.getPeerAddress()
 						.c_str());
 				http_manager::replyError(
-					http::Code::BadRequest,
+					listener_config_.codenossl,
 					http::reasonPhrase(
-						http::Code::BadRequest),
+						listener_config_.codenossl),
 					listener_config_.errnossl,
 					stream->client_connection,
 					listener_config_.response_stats);
@@ -2002,9 +2002,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 							.getPeerAddress()
 							.c_str());
 					http_manager::replyError(
-						http::Code::BadRequest,
+						listener_config_.codenossl,
 						http::reasonPhrase(
-							http::Code::BadRequest),
+							listener_config_
+								.codenossl),
 						listener_config_.errnossl,
 						stream->client_connection,
 						listener_config_.response_stats);

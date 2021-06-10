@@ -37,7 +37,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 #options
-option(BUILD_DOC "Build Documentation" ON)
+option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(UNIQUE_BUILD_DIRECTORY "enable build directory" ON)
 option(BUNDLED_OPENSSL "Use Bundled Openssl (build latest version)" OFF)

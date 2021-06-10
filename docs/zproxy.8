@@ -466,10 +466,11 @@ Default: "This method may not be used.".
 A file with the text to be displayed if an Error 503 occurs.
 Default: "The service is not available. Please try again later.".
 .TP
-\fBErrNoSsl\fR "filename"
-A file with the text to be displayed if a user connects to a HTTPS listener with HTTP.
-Default: "Please use HTTPS.".
-
+\fBErrNoSsl\fR [code] "filename"
+A file with the text to be displayed if a user connects to a HTTPS listener with HTTP. Default: "Please use HTTPS.".
+.br
+The optional parameter "code" is the HTTP response code, it expects an 4xx or 5xx value. Default: "400".
+.br
 Only valid for HTTPS listeners.
 .TP
 \fBNoSslRedirect\fR [code] "url"

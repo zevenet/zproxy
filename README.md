@@ -304,9 +304,11 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	A file with the text to be displayed if an Error 503 occurs.  Default: "The service is not available. Please try again later.".
 
-- **ErrNoSsl** "filename"
+- **ErrNoSsl** [code] "filename"
 
 	A file with the text to be displayed if a user connects to a HTTPS listener with HTTP.  Default: "Please use HTTPS.".
+
+	The optional parameter "code" is the HTTP response code, it expects an 4xx or 5xx value. Default: "400".
 
 	Only valid for HTTPS listeners.
 
@@ -485,7 +487,7 @@ All configuration directives enclosed between Service and End are specific to a 
 	Please note: if the listener defined a HeadRemove directive, the matching headers are removed before the service matching is attempted.
 
 - **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
-        
+
 	Specify the routing policy. All the algorithms are weighted with all the weights set in each backend.
 
 	- **ROUND_ROBIN** use the round robin algorithm as a routing policy (used by default).
@@ -500,7 +502,7 @@ All configuration directives enclosed between Service and End are specific to a 
                   using as a proportion the weights set.
 
 - **PinnedConnection**  0|1
-        
+
 	Specify if we want to pin all the connections, (default: 0, no pinned). If PinnedConnection is set to 1, zproxy directly forwards all data without parsing or editing.
 - **DynScale** 0|1
 
@@ -725,17 +727,17 @@ The global section defines global daemon configuration and information about the
 
 - **3xx-code-hits** "integer"
 
-	It is the number of 3xx codes that the zproxy generated and responded to the clients. These responses don't come 
+	It is the number of 3xx codes that the zproxy generated and responded to the clients. These responses don't come
 from the backends.
 
 - **4xx-code-hits** "integer"
 
-	It is the number of 4xx codes that the zproxy generated and responded to the clients. These responses don't come 
+	It is the number of 4xx codes that the zproxy generated and responded to the clients. These responses don't come
 from the backends.
 
 - **5xx-code-hits** "integer"
 
-	It is the number of 5xx codes that the zproxy generated and responded to the clients. These responses don't come 
+	It is the number of 5xx codes that the zproxy generated and responded to the clients. These responses don't come
 from the backends.
 
 - **waf-hits** "integer"
@@ -749,10 +751,10 @@ from the backends.
 - **connections** "integer"
 
 	It is the number of currently established connections that zproxy has established with the clients (on the VIP).
-	
+
 - **https** "bool"
 
-	It informs if the listener is configured with SSL. This parameter can be modified through a configuration file directive. 
+	It informs if the listener is configured with SSL. This parameter can be modified through a configuration file directive.
 
 - **id** "integer"
 
@@ -765,20 +767,20 @@ from the backends.
 - **pending-connections** "integer"
 
 	It is the number of connections that zproxy has received but they are not established in any backend. It is the number of established connection in the vip substranting it the established connection in all backends of the farm.
-	
+
 - **port** "integer"
 
-	It is the virtual port open in the system where zproxy is listening. This parameter can be modified through a configuration file directive.	
-	
+	It is the virtual port open in the system where zproxy is listening. This parameter can be modified through a configuration file directive.
+
 - **status** "string"
 
 	It informs about the listener status. It can be *active* or *down* (if it is disabled).	It can be modified through the API.
-	
+
 - **services** "service list"
 
 	It is a list of the service objects with their configuration and status.
-	
-	
+
+
 #### Service Object
 
 - **backends** "backend list"
@@ -796,7 +798,7 @@ from the backends.
 - **sessions** "session list"
 
 	It is a list of the session objects registered in zproxy.
-	
+
 - **status** "string"
 
 	It informs about the listener status. It can be *active* or *down* (if it is disabled).	It can be modified through the API.
@@ -810,7 +812,7 @@ from the backends.
 - **id** "integer"
 
 	It is a unique identifier for the session.
-	
+
 - **last-seen** "integer"
 
 	It is the number of seconds since the last packet regarding this session was managed by zproxy.
@@ -832,11 +834,11 @@ from the backends.
 - **5xx-code-hits** "integer"
 
 	It is the number of 5xx codes that the zproxy forwarded from the backend to the client.
-	
+
 - **address** "string"
 
 	It is the IPv4/IPv6 of the backend. This parameter can be modified through a configuration file directive.
-	
+
 - **connect-time** "floating"
 
 	It is the average time that zproxy takes to connect with this backend.
@@ -848,10 +850,10 @@ from the backends.
 - **connections-limit** "integer"
 
 	It is the number of maximum concurrent connections that zproxy will send to this backend. This parameter can be modified through a configuration file directive.
-	
+
 - **https** "bool"
 
-	It informs if the backend is configured with SSL. This parameter can be modified through a configuration file directive. 
+	It informs if the backend is configured with SSL. This parameter can be modified through a configuration file directive.
 
 - **id** "integer"
 
@@ -868,25 +870,25 @@ from the backends.
 - **port** "integer"
 
 	It is the port in the backend where zproxy will send the HTTP requests. This parameter can be modified through a configuration file directive.
-	
+
 - **response-time** "floating"
 
 	It is the average of seconds that a backend takes to respond a request
-	
+
 - **status** "string"
 
 	It informs about the backend status. It can be *active* or *down* (if it is disabled).	It can be modified through the API.
-	
+
 - **type** "integer"
-	
+
 	It informs about the kind of backend 0 (it's a remote backend) or 1 (it's a redirect).
 
 - **weight** "integer"
 
 	It is a value to select more a backend than others. This parameter can be modified through a configuration file directive.
 
-	
-	
+
+
 
 ### Examples of the API usage
 
