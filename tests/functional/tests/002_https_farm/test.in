@@ -1,3 +1,13 @@
+DESCRIPTION=http request, a custom error is expected
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+#########################
+CMD=reload
+FILE="zproxy_default_errnossl.cfg"
+#########################
+DESCRIPTION=http request, the default error is expected
 CMD=curl
 CL=1
 METHOD="GET"
