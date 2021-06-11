@@ -221,10 +221,10 @@ bool SSLContext::loadOpensslConfig(const std::string &config_file_path,
 	}
 }
 
-int SSLContext::SNIServerName(SSL *ssl, int dummy, POUND_CTX *ctx)
+int SSLContext::SNIServerName(SSL *ssl, int dummy, SNI_CERTS_CTX *ctx)
 {
 	const char *server_name;
-	POUND_CTX *pc;
+	SNI_CERTS_CTX *pc;
 
 	if ((server_name = SSL_get_servername(
 		     ssl, TLSEXT_NAMETYPE_host_name)) == nullptr)

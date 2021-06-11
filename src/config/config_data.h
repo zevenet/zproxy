@@ -169,13 +169,13 @@ class ServiceConfig : Counter<ServiceConfig> {
 	}
 };
 
-struct POUND_CTX {
+struct SNI_CERTS_CTX {
 	std::shared_ptr<SSL_CTX> ctx;
 	char *server_name{ nullptr };
 	unsigned char **subjectAltNames{ nullptr };
 	unsigned int subjectAltNameCount;
-	std::shared_ptr<POUND_CTX> next;
-	~POUND_CTX()
+	std::shared_ptr<SNI_CERTS_CTX> next;
+	~SNI_CERTS_CTX()
 	{
 		if (server_name != nullptr)
 			free(server_name);
@@ -191,7 +191,9 @@ struct ListenerConfig : Counter<ListenerConfig> {
 	std::string address;
 	addrinfo *addr_info; /* IPv4/6 address */
 	int port;
-	std::shared_ptr<POUND_CTX> ctx{ nullptr }; /* CTX for SSL connections */
+	std::shared_ptr<SNI_CERTS_CTX> ctx{
+		nullptr
+	}; /* CTX for SSL connections */
 	int clnt_check; /* client verification mode */
 	int noHTTPS11; /* HTTP 1.1 mode for SSL */
 	MATCHER *forcehttp10{

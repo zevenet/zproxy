@@ -113,7 +113,7 @@ class SSLContext {
    * @return SSL_TLSEXT_ERR_OK if everything is ok, if not return an OpenSSL
    * error code.
    */
-	static int SNIServerName(SSL *ssl, int dummy, POUND_CTX *ctx);
+	static int SNIServerName(SSL *ssl, int dummy, SNI_CERTS_CTX *ctx);
 
 	/**
    * @brief Check if the @p engine_id set in the configuration file is valid and

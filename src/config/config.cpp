@@ -693,7 +693,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 	};
 	struct sockaddr_in6 in6 {
 	};
-	std::shared_ptr<POUND_CTX> pc;
+	std::shared_ptr<SNI_CERTS_CTX> pc;
 	regmatch_t matches[5];
 	bool openssl_file_exists = false;
 
@@ -1261,7 +1261,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			current->replace = replace_;
 		} else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
 			if (openssl_file_exists) {
-				res->ctx = std::make_shared<POUND_CTX>();
+				res->ctx = std::make_shared<SNI_CERTS_CTX>();
 				res->ctx->ctx = std::shared_ptr<SSL_CTX>(
 					SSL_CTX_new(SSLv23_server_method()),
 					&::__SSL_CTX_free);
@@ -1407,7 +1407,7 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 		       char *filename)
 {
 	auto res = listener_.lock();
-	std::shared_ptr<POUND_CTX> pc;
+	std::shared_ptr<SNI_CERTS_CTX> pc;
 #ifdef SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
 	/* we have support for SNI */
 	char server_name[ZCU_DEF_BUFFER_SIZE] /*, *cp */;
@@ -1419,10 +1419,10 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 	if (res->ctx) {
 		for (pc = res->ctx; pc->next; pc = pc->next)
 			;
-		pc->next = std::make_shared<POUND_CTX>();
+		pc->next = std::make_shared<SNI_CERTS_CTX>();
 		pc = pc->next;
 	} else {
-		res->ctx = std::make_shared<POUND_CTX>();
+		res->ctx = std::make_shared<SNI_CERTS_CTX>();
 		pc = res->ctx;
 	}
 	pc->ctx = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()),
@@ -1468,8 +1468,9 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 	if (res->ctx)
 		conf_err(
 			"ListenHTTPS: multiple certificates not supported - aborted");
-	if ((res->ctx = std::malloc(sizeof(POUND_CTX))) == NULL)
-		conf_err("ListenHTTPS new POUND_CTX: out of memory - aborted");
+	if ((res->ctx = std::malloc(sizeof(SNI_CERTS_CTX))) == NULL)
+		conf_err(
+			"ListenHTTPS new SNI_CERTS_CTX: out of memory - aborted");
 	res->ctx->server_name = NULL;
 	res->ctx->next = NULL;
 	if ((res->ctx->ctx = SSL_CTX_new(SSLv23_server_method())) == NULL)
