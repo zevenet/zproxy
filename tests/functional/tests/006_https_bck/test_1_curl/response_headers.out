@@ -1,0 +1,7 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Content-Type: text/html
+Content-Length: 264
+Connection: close
+Strict-Transport-Security: max-age=21600000
+

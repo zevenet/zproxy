@@ -22,11 +22,13 @@
 #include "json.h"
 #include <sstream>
 
-namespace json {
+namespace json
+{
 // JSON_OP_RESULT
 const std::string JSON_OP_RESULT::OK = "{\"result\":\"ok\"}";
 const std::string JSON_OP_RESULT::ERROR = "{\"result\":\"error\"}";
-const std::string JSON_OP_RESULT::WRONG_JSON_FORMAT = "{\"result\":\"error\",\"description\":\"wrong json format\"}";
+const std::string JSON_OP_RESULT::WRONG_JSON_FORMAT =
+	"{\"result\":\"error\",\"description\":\"wrong json format\"}";
 const std::string JSON_OP_RESULT::EMPTY_OBJECT = "{}";
 const std::string JSON_OP_RESULT::NONE = "";
 
@@ -58,13 +60,19 @@ const std::string JSON_KEYS::TO = "to";
 const std::string JSON_KEYS::LAST_SEEN_TS = "last-seen";
 const std::string JSON_KEYS::CONNECTIONS = "connections";
 const std::string JSON_KEYS::PENDING_CONNS = "pending-connections";
+const std::string JSON_KEYS::CONNECTION_LIMIT = "connections-limit";
 const std::string JSON_KEYS::RESPONSE_TIME = "response-time";
 const std::string JSON_KEYS::CONNECT_TIME = "connect-time";
 const std::string JSON_KEYS::WEIGHT = "weight";
 const std::string JSON_KEYS::PRIORITY = "priority";
 const std::string JSON_KEYS::CONFIG = "config";
 const std::string JSON_KEYS::TYPE = "type";
+const std::string JSON_KEYS::CODE_200_HITS = "2xx-code-hits";
+const std::string JSON_KEYS::CODE_300_HITS = "3xx-code-hits";
+const std::string JSON_KEYS::CODE_400_HITS = "4xx-code-hits";
+const std::string JSON_KEYS::CODE_500_HITS = "5xx-code-hits";
 #if WAF_ENABLED
+const std::string JSON_KEYS::WAF_HITS = "waf-hits";
 const std::string JSON_KEYS::WAF = "waf";
 #endif
 
@@ -90,8 +98,13 @@ const std::string JSON_KEYS::CACHE_DISK_PATH = "disk-path";
 const std::string JSON_KEYS::CACHE_AVOIDED = "not-stored";
 const std::string JSON_KEYS::CACHE_CONTENT = "cache-content";
 #endif
-}  // namespace json
+} // namespace json
 
-json::Json::~Json() {}
+json::Json::~Json()
+{
+}
 
-bool json::Json::isArray() { return false; }
+bool json::Json::isArray()
+{
+	return false;
+}

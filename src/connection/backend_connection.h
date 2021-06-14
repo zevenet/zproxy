@@ -27,13 +27,13 @@
 #include "connection.h"
 
 class BackendConnection : public Connection, public Counter<BackendConnection> {
-  Backend *backend{nullptr};
+	Backend *backend{ nullptr };
 
- public:
-  Backend *getBackend() const;
-  void setBackend(Backend *backend);
+    public:
+	Backend *getBackend() const;
+	void setBackend(Backend *backend);
 
-  BackendConnection();
-  virtual ~BackendConnection() = default;
-  int connection_retries;
+	BackendConnection();
+	virtual ~BackendConnection() = default;
+	int connection_retries;
 };

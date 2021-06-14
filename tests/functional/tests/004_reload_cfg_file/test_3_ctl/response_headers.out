@@ -1,0 +1,8 @@
+HTTP/1.0 200 OK
+Content-Type: text/html
+Content-Length: 1004
+Expires: now
+Pragma: no-cache
+Server: zproxy/VERSION
+Cache-control: no-cache,no-store
+

@@ -22,4 +22,5 @@
 #include "../stats/counter.h"
 #include "connection.h"
 
-class ClientConnection : public Connection, public Counter<ClientConnection> {};
+class ClientConnection : public Connection, public Counter<ClientConnection> {
+};

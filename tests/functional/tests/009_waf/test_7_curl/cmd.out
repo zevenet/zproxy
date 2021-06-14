@@ -1,0 +1,1 @@
+ip netns exec cl-ns-1 /usr/bin/curl -X GET   --connect-timeout 2  -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' -D test_7_curl/response_headers.out.tmp -o test_7_curl/body.out.tmp  https://10.1.2.1:80/deny >test_7_curl/extended.out.tmp 2>test_7_curl/error.out.tmp

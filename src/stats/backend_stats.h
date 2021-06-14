@@ -24,79 +24,165 @@
 #include <chrono>
 #include "../util/time.h"
 #include "../util/common.h"
+#include "../http/http.h"
 
-namespace Statistics {
+namespace Statistics
+{
 enum BACKENDSTATS_PARAMETER {
-  BP_RESPONSE_TIME,
-  BP_CONN_TIME,
-  BP_COMPLETE_RESPONSE_TIME,
-  BP_ESTABLISHED_CONN,
-  BP_PENDING_CONN,
-  BP_TOTAL_CONN,
+	BP_RESPONSE_TIME,
+	BP_CONN_TIME,
+	BP_COMPLETE_RESPONSE_TIME,
+	BP_ESTABLISHED_CONN,
+	BP_PENDING_CONN,
+	BP_TOTAL_CONN,
+};
+
+class HttpResponseHits {
+    public:
+	std::atomic<int> code_2xx{ 0 };
+	std::atomic<int> code_3xx{ 0 };
+	std::atomic<int> code_4xx{ 0 };
+	std::atomic<int> code_5xx{ 0 };
+	std::atomic<int> others{ 0 };
+#if WAF_ENABLED
+	std::atomic<int> waf{ 0 };
+#endif
+
+	inline void increaseCode(http::Code codeName)
+	{
+		int code = helper::to_underlying(codeName) / 100;
+
+		if (code == 2) {
+			code_2xx++;
+		} else if (code == 3) {
+			code_3xx++;
+		} else if (code == 4) {
+			code_4xx++;
+		} else if (code == 5) {
+			code_5xx++;
+		} else {
+			others++;
+		}
+	}
+#if WAF_ENABLED
+	inline void increaseWaf()
+	{
+		waf++;
+	}
+#endif
+};
+
+class ListenerInfo {
+    public:
+	std::atomic<int> total_connections{
+		0
+	}; // sumatory of backend connections
+	std::atomic<int> established_connection{ 0 };
 };
 
 class BackendInfo {
- protected:
-  std::atomic<double> max_response_time;
-  std::atomic<double> avg_response_time;
-  std::atomic<double> min_response_time;
-  std::atomic<double> avg_conn_time;
-  std::atomic<double> avg_complete_response_time;
-  std::atomic<int> established_conn;
-  std::atomic<int> total_connections;
-  std::atomic<int> pending_connections;
-  time_t current_time;
-  // TODO: TRANSFERENCIA BYTES/SEC (NO HACER)
-  // TODO: WRITE/READ TIME (TIEMPO COMPLETO)
- public:
-  void setAvgResponseTime(double latency);
+    protected:
+	std::atomic<double> max_response_time;
+	std::atomic<double> avg_response_time;
+	std::atomic<double> min_response_time;
+	std::atomic<double> avg_conn_time;
+	std::atomic<double> avg_complete_response_time;
+	std::atomic<int> established_conn;
+	std::atomic<int> total_connections;
+	std::atomic<int> pending_connections;
 
-  void setMinResponseTime(double latency);
+    public:
+	ListenerInfo *listener_stats{ nullptr };
 
-  void setMaxResponseTime(double latency);
+    protected:
+	time_t current_time;
+	// TODO: TRANSFERENCIA BYTES/SEC (NO HACER)
+	// TODO: WRITE/READ TIME (TIEMPO COMPLETO)
+    public:
+	void setAvgResponseTime(double latency);
 
-  void setAvgConnTime(const timeval & start_time);
+	void setMinResponseTime(double latency);
 
- public:
-  BackendInfo();
+	void setMaxResponseTime(double latency);
 
-  ~BackendInfo();
+	void setAvgConnTime(const timeval &start_time);
 
-  void increaseConnection();
+    public:
+	BackendInfo();
 
-  void setAvgTransferTime(const timeval & start_time);
+	~BackendInfo();
 
-  inline void decreaseConnection() { if(established_conn.load() > 0 ) established_conn--; }
+	void increaseConnection();
 
-  inline void increaseTotalConn() { if(total_connections.load() > 0)total_connections++; }
+	void setAvgTransferTime(const timeval &start_time);
 
-  inline void increaseConnTimeoutAlive() { pending_connections++; }
+	inline void decreaseConnection()
+	{
+		if (established_conn.load() > 0) {
+			established_conn--;
+			if (listener_stats != nullptr &&
+			    listener_stats->total_connections > 0)
+				listener_stats->total_connections--;
+		}
+	}
 
-  inline void decreaseConnTimeoutAlive() {if(pending_connections.load() > 0) pending_connections--; }
+	inline void increaseTotalConn()
+	{
+		if (total_connections.load() > 0) {
+			total_connections++;
+		}
+	}
 
-  inline int getPendingConn() { return pending_connections; }
+	inline void increaseConnTimeoutAlive()
+	{
+		pending_connections++;
+	}
 
-  inline int getAssignedConn() { return total_connections; }
+	inline void decreaseConnTimeoutAlive()
+	{
+		if (pending_connections.load() > 0)
+			pending_connections--;
+	}
 
-  inline int getEstablishedConn() { return established_conn; }
+	inline int getPendingConn()
+	{
+		return pending_connections;
+	}
 
-  inline double getAvgLatency() { return avg_response_time; }
+	inline int getAssignedConn()
+	{
+		return total_connections;
+	}
 
-  inline void calculateLatency(const timeval & start_time) {
-  //  if (Time::getTimeSec() - current_time > 60) {
-  //    total_connections = 0;
-  //    max_response_time = -1;
-  //    avg_response_time = -1;
-  //    min_response_time = -1;
-  //  }
-  //  current_time = Time::getTimeSec();
+	inline int getEstablishedConn()
+	{
+		return established_conn;
+	}
 
-    double latency = Time::getDiff(start_time);
-    setAvgResponseTime(latency);
-    setMaxResponseTime(latency);
-    setMinResponseTime(latency);
-  }
+	inline double getAvgLatency()
+	{
+		return avg_response_time;
+	}
 
-  inline double getConnPerSec() { return total_connections / 60.0; }
+	inline void calculateLatency(const timeval &start_time)
+	{
+		//  if (Time::getTimeSec() - current_time > 60) {
+		//    total_connections = 0;
+		//    max_response_time = -1;
+		//    avg_response_time = -1;
+		//    min_response_time = -1;
+		//  }
+		//  current_time = Time::getTimeSec();
+
+		double latency = Time::getDiff(start_time);
+		setAvgResponseTime(latency);
+		setMaxResponseTime(latency);
+		setMinResponseTime(latency);
+	}
+
+	inline double getConnPerSec()
+	{
+		return total_connections / 60.0;
+	}
 };
-}  // namespace Statistics
+} // namespace Statistics

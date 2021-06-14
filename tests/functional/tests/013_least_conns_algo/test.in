@@ -1,0 +1,28 @@
+DESCRIPTION="Do a connection that is maintained openned, while, the other backend will respond the following conns"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/sleep-body/3"
+BACKGROUND=1
+
+#########################
+
+DESCRIPTION="Do other requests that should be responsed by the other backend"
+CMD=average
+REQUESTS=5
+CL=1
+METHOD="GET"
+URL="/"
+
+#########################
+
+DESCRIPTION="Wait for the first connnection"
+CMD=wait
+TIMEOUT=5
+
+#########################
+
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"

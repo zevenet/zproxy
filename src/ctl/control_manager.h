@@ -31,37 +31,43 @@
 #include "observer.h"
 #include <atomic>
 
-namespace ctl {
+namespace ctl
+{
 using namespace events;
 using namespace json;
-class ControlManager : public EpollManager, public CtlNotify<CtlTask, std::string> {
-  static std::shared_ptr<ControlManager> instance;
-  std::thread control_thread;
-  Connection control_listener;
-  std::atomic<bool> is_running;
-  CTL_INTERFACE_MODE ctl_listener_mode;
-  std::string control_path_name;
-  void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
-  void doWork();
+class ControlManager : public EpollManager,
+		       public CtlNotify<CtlTask, std::string> {
+	static std::shared_ptr<ControlManager> instance;
+	std::thread control_thread;
+	Connection control_listener;
+	std::atomic<bool> is_running;
+	CTL_INTERFACE_MODE ctl_listener_mode;
+	std::string control_path_name;
+	void HandleEvent(int fd, EVENT_TYPE event_type,
+			 EVENT_GROUP event_group) override;
+	void doWork();
 
- public:
-  static std::shared_ptr<ControlManager> getInstance();
-  explicit ControlManager(CTL_INTERFACE_MODE listener_mode = CTL_INTERFACE_MODE::CTL_UNIX);
-  ControlManager(ControlManager &) = delete;
-  ~ControlManager() final;
-  bool init(Config &configuration, CTL_INTERFACE_MODE listener_mode = CTL_INTERFACE_MODE::CTL_UNIX);
-  void start();
-  void stop();
-  void sendCtlCommand(CTL_COMMAND command, CTL_HANDLER_TYPE handler,
-                      CTL_SUBJECT subject, std::string data = "");
+    public:
+	static std::shared_ptr<ControlManager> getInstance();
+	explicit ControlManager(CTL_INTERFACE_MODE listener_mode =
+					CTL_INTERFACE_MODE::CTL_UNIX);
+	ControlManager(ControlManager &) = delete;
+	~ControlManager() final;
+	bool
+	init(Config &configuration,
+	     CTL_INTERFACE_MODE listener_mode = CTL_INTERFACE_MODE::CTL_UNIX);
+	void start();
+	void stop();
+	void sendCtlCommand(CTL_COMMAND command, CTL_HANDLER_TYPE handler,
+			    CTL_SUBJECT subject, std::string data = "");
 
- private:
-  std::string handleCommand(HttpRequest &request);
-  /*get request component target which will provide the response*/
-  bool setTaskTarget(HttpRequest &request, CtlTask &task);
-  bool setListenerTarget(CtlTask &task, std::istringstream &ss);
-  bool setServiceTarget(CtlTask &task, std::istringstream &ss);
-  bool setBackendTarget(CtlTask &task, std::istringstream &ss);
+    private:
+	std::string handleCommand(HttpRequest &request);
+	/*get request component target which will provide the response */
+	bool setTaskTarget(HttpRequest &request, CtlTask &task);
+	bool setListenerTarget(CtlTask &task, std::istringstream &ss);
+	bool setServiceTarget(CtlTask &task, std::istringstream &ss);
+	bool setBackendTarget(CtlTask &task, std::istringstream &ss);
 };
 
-}  // namespace ctl
+} // namespace ctl

@@ -25,7 +25,6 @@
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <mutex>
-#include "../debug/logger.h"
 
 #include "dh512.h"
 #if DH_LEN == 1024
@@ -34,7 +33,8 @@
 #include "dh2048.h"
 #endif
 
-namespace global {
+namespace global
+{
 /*
  * RSA ephemeral keys: how many and how often
  */
@@ -42,64 +42,71 @@ constexpr int N_RSA_KEYS = 11;
 #ifndef T_RSA_KEYS /* Timeout for RSA ephemeral keys generation */
 constexpr int T_RSA_KEYS = 7200;
 #endif
-static std::mutex RSA_mut;            /*Mutex for RSA keygen*/
-static RSA *RSA512_keys[N_RSA_KEYS];  /* ephemeral RSA keys */
+static std::mutex RSA_mut; /*Mutex for RSA keygen */
+static RSA *RSA512_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-#define general_name_string(n)                                             \
-  reinterpret_cast<unsigned char *>(strndup(                               \
-      reinterpret_cast<const char *>(ASN1_STRING_get0_data(n->d.dNSName)), \
-      ASN1_STRING_length(n->d.dNSName) + 1))
+#define general_name_string(n)                                                 \
+	reinterpret_cast<unsigned char *>(                                     \
+		strndup(reinterpret_cast<const char *>(                        \
+				ASN1_STRING_get0_data(n->d.dNSName)),          \
+			ASN1_STRING_length(n->d.dNSName) + 1))
 #else
-#define general_name_string(n)                                     \
-  (unsigned char *)strndup((char *)ASN1_STRING_data(n->d.dNSName), \
-                           ASN1_STRING_length(n->d.dNSName) + 1)
+#define general_name_string(n)                                                 \
+	(unsigned char *)strndup((char *)ASN1_STRING_data(n->d.dNSName),       \
+				 ASN1_STRING_length(n->d.dNSName) + 1)
 #endif
 
 struct SslHelper {
-  /*
-   * return a pre-generated RSA key
-   */
-  static RSA *RSA_tmp_callback(/* not used */ SSL *ssl,
-                               /* not used */ int is_export, int keylength);
-  static DH *load_dh_params(char *file);
-  static void SSLINFO_callback(const SSL *ssl, int where, int rc);
-  static int generate_key(RSA **ret_rsa, unsigned long bits);
+	/*
+		 * return a pre-generated RSA key
+		 */
+	static RSA *RSA_tmp_callback(/* not used */ SSL *ssl,
+				     /* not used */ int is_export,
+				     int keylength);
+	static DH *load_dh_params(char *file);
+	static void SSLINFO_callback(const SSL *ssl, int where, int rc);
+	static int generate_key(RSA **ret_rsa, unsigned long bits);
 #if DH_LEN == 1024
-  static DH *DH512_params, *DH1024_params;
-  static DH *DH_tmp_callback(/* not used */ SSL *s,
-                             /* not used */ int is_export, int keylength) {
-    return keylength == 512 ? DH512_params : DH1024_params;
-  }
+	static DH *DH512_params, *DH1024_params;
+	static DH *DH_tmp_callback(/* not used */ SSL *s,
+				   /* not used */ int is_export, int keylength)
+	{
+		return keylength == 512 ? DH512_params : DH1024_params;
+	}
 #else
-  static DH *DH512_params, *DH2048_params;
-  static DH *DH_tmp_callback(/* not used */ SSL *s,
-                             /* not used */ int is_export, int keylength) {
-    return keylength == 512 ? DH512_params : DH2048_params;
-  }
+	static DH *DH512_params, *DH2048_params;
+	static DH *DH_tmp_callback(/* not used */ SSL *s,
+				   /* not used */ int is_export, int keylength)
+	{
+		return keylength == 512 ? DH512_params : DH2048_params;
+	}
 #endif
 
-  /*
-   * initialise DH and RSA keys
-   */
-  static void initDhParams();
+	/*
+		 * initialise DH and RSA keys
+		 */
+	static void initDhParams();
 
-  /*
-   * Periodically regenerate ephemeral RSA keys
-   * runs every T_RSA_KEYS seconds
-   */
-  static void doRSAgen();
-  /*
-   * Dummy certificate verification - always OK
-   */
-  static int verifyCertificate_OK([[maybe_unused]] int pre_ok, 
-                                  [[maybe_unused]] X509_STORE_CTX *ctx);
-  SslHelper() { initDhParams(); }
-  ~SslHelper();
-  static SslHelper &getCurrent();
+	/*
+		 * Periodically regenerate ephemeral RSA keys
+		 * runs every T_RSA_KEYS seconds
+		 */
+	static void doRSAgen();
+	/*
+		 * Dummy certificate verification - always OK
+		 */
+	static int verifyCertificate_OK([[maybe_unused]] int pre_ok,
+					[[maybe_unused]] X509_STORE_CTX *ctx);
+	SslHelper()
+	{
+		initDhParams();
+	}
+	~SslHelper();
+	static SslHelper &getCurrent();
 
- private:
-  static SslHelper current;
+    private:
+	static SslHelper current;
 };
-};  // namespace global
+}; // namespace global

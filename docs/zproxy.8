@@ -446,6 +446,10 @@ only to the request path -
 .B zproxy
 will still check that the request is syntactically correct.
 .TP
+\fBErrWAF\fR "filename"
+A file with the text to be displayed if the WAF reject a request.
+Default: "The request was rejected by the server.".
+.TP
 \fBErr414\fR "filename"
 A file with the text to be displayed if an Error 414 occurs.
 Default: "Request URI is too long.".
@@ -504,14 +508,14 @@ Add the defined header to the response passed to the clients. The header
 is added verbatim. Use multiple \fIAddHeader\fR directives if you need to add more
 than one header.
 .TP
-\RemoveResponseHead\fR "header pattern"
+\fBRemoveResponseHead\fR "header pattern"
 Remove certain headers from the outcomming response, the header sent by the
 backend is not sent to the client. All occurences of the
 matching specified header will be removed. Multiple directives may be specified
 in order to remove more than one header, and the header itself may be a regular
 pattern (though this should be used with caution).
 .TP
-\ReplaceHeader\fR <Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>
+\fBReplaceHeader\fR <Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>
 Replace a header in request or response.
 Example:
            ReplaceHeader    Request     ^Cookie:        ^Abdess=(.*) 	Test=$1
@@ -1016,6 +1020,11 @@ define higher weights for more capable servers.
 The priority of this back-end (between 1 and 9, 1 is default). The requests will
 be forwarded to the backends with higher priority (1 is the highest priority).
 When a back-end with high priority becomes unreacheable the priority level is decreased.
+.TP
+\fBConnLimit\fR val
+The maximum number of established connection per backend. With a value of 0, there
+will not be a limit in the backend. The client will receive a 503 error if there aren't
+available backends.
 .TP
 \fBTimeOut\fR val
 Override the global

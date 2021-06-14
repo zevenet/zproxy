@@ -1,0 +1,25 @@
+SecRuleEngine on
+#SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:1"
+SecDefaultAction "deny,log,logdata:'client:%{REMOTE_ADDR}',phase:1"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:2"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:3"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:4"
+
+SecDebugLog /tmp/debug.log
+SecDebugLogLevel 4
+
+# this status is not the default one
+SecRule REQUEST_URI "@beginsWith /deny" "\
+	id:2,\
+	msg:'asdf',\
+	phase:1,\
+	status:401,\
+	deny" #
+
+SecRule REQUEST_URI "@beginsWith /redirect" "\
+	id:3,\
+	msg:'redirected by waf',\
+	phase:1,\
+	status:307,\
+	redirect:'https://github.com'" #
+

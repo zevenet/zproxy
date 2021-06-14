@@ -1,0 +1,5 @@
+HTTP/1.0 302 Found
+Content-Type: text/html
+Content-Length: 179
+Location: https://10.2.1.1/abc/status/200
+

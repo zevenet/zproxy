@@ -1,0 +1,688 @@
+#!/bin/bash
+
+DIR="."
+source "$DIR/variables"
+
+error () {
+	echo "ERROR: $1"
+	exit 1
+}
+
+dev () {
+	read -p "Test stopped, press 'Enter' to continue"
+}
+
+# if [[ "$NUM" == "" ]]; then error_param "backend_number"; fi
+error_param () {
+	error "the function '${FUNCNAME[1]}' expects the parameter '$1'"
+}
+
+msg () {
+	echo ""
+	echo "# $1"
+}
+
+start_debug () {
+	rm -f $DEBUG_OUT
+	tail -F $DEBUG_OUT 2>/dev/null &
+}
+
+stop_debug () {
+	kill `ps aux |grep "tail -F $DEBUG_OUT" | grep -v grep | awk {'print$2'}` 2>/dev/null
+}
+
+debug () {
+	if [[ $DEBUG -gt 0 ]]; then
+		echo "debug> $1" >> $DEBUG_OUT
+	fi
+}
+
+wait () {
+	echo "Waiting for '$1' seconds..."
+	sleep $1
+}
+
+cmd () {
+	local CMD="$1"
+	local OUT=$($CMD 2>&1)
+
+	if [[ $? -ne 0 ]]; then
+		echo "FAILED> CMD: $CMD"
+		echo "FAILED> OUT: $OUT"
+		echo ""
+		return 1
+	elif [[ $DEBUG -ge 2 ]]; then
+		echo "debug> CMD: $CMD"
+		if [[ $DEBUG -ge 3 ]]; then
+			echo "OUT: $OUT"
+		fi
+		echo ""
+	fi
+	return 0
+}
+
+catch_cmd () {
+	local CMD="$1"
+	echo "cmd: $CMD"
+	$CMD 2>&1
+}
+
+## proxy actions
+lookfor_segfault () {
+	# May 14 08:30:58 lb zproxy: /home/cano/git/zproxy/build/bin/zproxy(+0x80635) [0x5618196cb635]
+	if [[ "$SYSLOG_ZPROXY_START" == "" ]]; then
+		SYSLOG_ZPROXY_START=`tac $SYSLOG | grep -m1 "zproxy start..."`
+	fi
+
+	LOGS_SEGFAULT=`grep -A10000 "$SYSLOG_ZPROXY_START" $SYSLOG | grep -E "$PROXY_BIN\(\+0x[0-9a-f]+\) \[0x[0-9a-f]+\]"`
+	if [[ "$LOGS_SEGFAULT" != "" ]]; then
+		echo "$LOGS_SEGFAULT"
+		error "There was an zproxy SEGFAULT"
+	fi
+}
+
+# If it receives a configuration file, it will be loaded
+start_proxy () {
+	if [ "$1" != "" ]; then
+		deploy_tpl "$1" $PROXY_CFG_F
+	fi
+
+	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
+	CMD_OUT=`$CMD_LOC 2>&1`
+	if [[ $? -ne 0 ]]; then
+		echo "command: $CMD_LOC"
+		echo "$CMD_OUT"
+		error "The zproxy process couldn't start"
+	fi
+
+	wait $PROXY_GRACETIME
+
+	SYSLOG_ZPROXY_START=`tail -1 $SYSLOG`
+	lookfor_segfault
+}
+
+stop_proxy () {
+	if [[ -f $PROXY_PID_F ]]; then
+		cmd "ip netns exec $PROXY_NS kill -9 `cat $PROXY_PID_F`"
+	fi
+}
+
+stop_proxy_all () {
+	cmd "pkill -9 zproxy"
+}
+
+restart_proxy () {
+	stop_proxy
+
+	ps aux | grep "$PROXY_BIN" | grep -v grep >/dev/null 2>&1
+	if [[ $? -eq 0 ]]; then error "The zproxy process does not finish properly"; fi
+
+	start_proxy $1
+}
+
+apply_proxy_api () {
+	if [ "$1" == "" ]; then error_param "directory"; fi
+
+	SOCKET_UNIX=1
+
+	exec_curl $1
+
+	if [[ $METHOD != "GET" ]]; then
+		DUMP_DIR="${1}_dump"
+		mkdir -p $DUMP_DIR
+
+		# Dump the CTL configuration and compare the saved one
+		METHOD="$PROXY_CTL_DUMP_METHOD"
+		URL="$PROXY_CTL_DUMP_URL"
+		exec_curl "$DUMP_DIR"
+	fi
+
+	SOCKET_UNIX=0
+}
+
+# If it receives a configuration file, it will be loaded
+reload_proxy () {
+	if [ "$1" == "" ]; then error_param "directory"; fi
+	if [ "$2" == "" ]; then error_param "reload_file"; fi
+
+	deploy_tpl "$2" $PROXY_CFG_F
+
+	FILE="$PROXY_CFG_F"
+	URL="$PROXY_CTL_RELOAD_URL"
+	METHOD="$PROXY_CTL_RELOAD_METHOD"
+	apply_proxy_api $1
+	ERR=$?
+
+	wait $PROXY_GRACETIME
+	return $ERR
+}
+
+## functions to manage the httpd backend server
+start_httpd () {
+	local ID="$1"
+	local HTTP_CFG_F=$(get_bck_cfg_f $ID)
+	local HTTP_PID=$(get_bck_pid_f $ID)
+	local BCK_ID="$ID"
+
+	HTTP_SITES_TPL="tpl/nginx-sites.conf"
+	HTTP_SITE="$TMP_DIR/nginx-sites-$ID.conf"
+	HTTP_WEBROOT="$TMP_DIR/http-app-$ID"
+
+	deploy_tpl $HTTP_TPL $HTTP_CFG_F
+	deploy_tpl $HTTP_SITES_TPL $HTTP_SITE
+	mkdir $HTTP_WEBROOT
+	cp -r "tpl/download" $HTTP_WEBROOT
+
+	cmd "ip netns exec $NS $HTTPD_BIN -c $HTTP_CFG_F"
+
+	if [[ $? -ne 0 ]]; then error "Error running the backend $ID"; fi
+
+}
+
+stop_httpd () {
+	local ID=$1
+	if [[ "$ID" == "" ]]; then ID=1; fi
+
+	local HTTP_CFG_F=$(get_bck_cfg_f $ID)
+	local HTTP_PID_F=$(get_bck_pid_f $ID)
+	local NS=$(get_bck_ns $ID)
+
+	HTTP_SITE_F="$TMP_DIR/nginx-sites-$ID.conf"
+	HTTP_WEBROOT="$TMP_DIR/http-app-$ID"
+
+	cmd "ip netns exec $NS kill -15 `cat $HTTP_PID_F`"
+	rm -rf $HTTP_CFG_F $HTTP_WEBROOT $HTTP_SITE_F
+}
+
+create_proxy () {
+
+	cmd "ip netns add $PROXY_NS"
+
+	cmd "ip link add $PROXY_IF netns $PROXY_NS type dummy"
+	cmd "ip -net $PROXY_NS addr add $PROXY_VIP/16 dev $PROXY_IF"
+	cmd "ip -net $PROXY_NS link set up dev $PROXY_IF"
+}
+
+delete_proxy () {
+	cmd "ip netns del $PROXY_NS"
+}
+
+create_client () {
+
+	local ID="$1"
+	if [[ "$ID" == "" ]]; then ID=1; fi
+
+	local NS=$(get_cl_ns $ID)
+	local IF=$(get_cl_if $ID)
+	local IP=$(get_cl_ip $ID)
+	local GW=$(get_cl_gw $ID)
+
+	cmd "ip netns add $NS"
+	cmd "ip link add $IF netns $PROXY_NS type veth peer name $IF netns $NS"
+	cmd "ip -net $NS addr add $IP/16 dev $IF"
+	cmd "ip -net $NS link set up dev $IF"
+
+	# add GW info
+	cmd "ip -net $PROXY_NS addr add $GW/16 dev $IF"
+	cmd "ip -net $PROXY_NS link set up dev $IF"
+	cmd "ip -net $PROXY_NS route add to $IP dev $IF"
+	cmd "ip -net $NS route add default via $GW"
+}
+
+add_clients () {
+	local NUM="$1"
+	if [[ "$NUM" == "" ]]; then error_param "client_number"; fi
+
+	for ID in $(seq 1 $NUM); do
+		create_client $ID
+	done
+}
+
+delete_client () {
+	local ID=$1
+	if [[ "$ID" == "" ]]; then ID=1; fi
+	local NS=$(get_cl_ns $ID)
+	cmd "ip netns del $NS"
+}
+
+delete_clients () {
+	local NUM="$1"
+	if [[ "$NUM" == "" ]]; then error_param "client_number"; fi
+	for ID in $(seq 1 $NUM); do
+		delete_client $ID
+	done
+}
+
+get_bck_pid_f () {
+	local HTTP_PID_F="$TMP_DIR/http_bck$1.pid"
+	echo "$HTTP_PID_F"
+}
+
+get_bck_cfg_f () {
+	local HTTP_PID_F="$TMP_DIR/http_bck$1.conf"
+	echo "$HTTP_PID_F"
+}
+
+# deploy_tpl $TPL_PATH $DST_PATH
+deploy_tpl () {
+	# expand the template variables with env ones
+	TMP_ENV="$TMP_DIR/env.vars"
+
+	TPL=$1
+	DST=$2
+	if [[ "$TPL" == "" ]]; then error_param "template_path"; fi
+	if [[ "$DST" == "" ]]; then error_param "destination_path"; fi
+
+	set >$TMP_ENV
+	cp $TPL $DST
+	for VAR in `grep -E '#{[a-zA-Z0-9_-]+}' $TPL | sed -E 's/^.*#\{//g' | sed -E 's/\}.*($|#\{)//g'`; do
+		VAL=$(grep -E "^$VAR=" $TMP_ENV | sed -E 's/.*=//')
+		if [ "$VAL" != "" ]; then
+			sed -Ei "s,#\{$VAR\},$VAL,g" $DST
+		else
+			error "The '$VAR' variable for the '$TPL' template is not defined"
+		fi
+	done
+}
+
+create_backend () {
+
+	local ID="$1"
+	if [[ "$ID" == "" ]]; then ID=1; fi
+	local NS=$(get_bck_ns $ID)
+	local IF=$(get_bck_if $ID)
+	local IP=$(get_bck_ip $ID)
+	local ROUTER_IP=$(get_bck_gw $ID)
+
+	cmd "ip netns add $NS"
+	cmd "ip link add $IF netns $PROXY_NS type veth peer name $IF netns $NS"
+	cmd "ip -net $NS addr add $IP/16 dev $IF"
+	cmd "ip -net $NS link set up dev $IF"
+
+	# add GW info
+	cmd "ip -net $PROXY_NS addr add $ROUTER_IP/16 dev $IF"
+	cmd "ip -net $PROXY_NS link set up dev $IF"
+	cmd "ip -net $PROXY_NS route add to $IP dev $IF via $ROUTER_IP"
+	cmd "ip -net $NS route add default via $ROUTER_IP"
+
+	start_httpd $ID
+}
+
+add_backends () {
+
+	for ID in $(seq 1 $1); do
+		create_backend $ID
+	done
+}
+
+delete_backend () {
+
+	local ID=$1
+	if [[ "$ID" == "" ]]; then ID=1; fi
+	local NS=$(get_bck_ns $ID)
+
+	stop_httpd $ID
+	cmd "ip netns del $NS"
+}
+
+delete_backends () {
+	local NUM="$1"
+	if [[ "$NUM" == "" ]]; then error_param "backend_number"; fi
+
+	for ID in $(seq $NUM); do
+		delete_backend $ID
+	done
+}
+
+get_test_out_dir () {
+	echo "test_$1_$2"
+}
+
+# variables used to form the curl command, these has to be cleaned beetwen tests
+clean_test () {
+	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND
+}
+
+replace_test_out ()
+{
+	for F in  `find $DIR/tests/ -name *.out.tmp`
+	do
+		BASE=$(echo $F | sed -E "s/.tmp$//")
+		echo "Renaming $BASE"
+		mv $F ${BASE}
+	done
+}
+
+rm_test_out ()
+{
+	for F in  `find $DIR/tests/ -name *.tmp`
+	do
+		echo "Removed $F"
+		rm $F
+	done
+}
+
+## CLIENT ACTIONS
+# the directory where the outputs are saved is passed as parameter
+# in the directory will be created the following files:
+#   - cmd, it is the command executed
+#   - response_headers.out, they are the proxy response headers
+#   - body.out, it is the response body returned by the proxy
+exec_curl () {
+	local DIR=$TMP_DIR
+	local CLNS="$PROXY_NS"
+
+	if [[ $1 != "" ]]; then DIR=$1; fi
+	if [[ "$CL" != "" ]]; then CLNS=$(get_cl_ns $CL); fi
+	if [[ "$URL" == "" ]]; then error_param "url"; fi
+	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
+
+	local CMD_F="$DIR/cmd.out.tmp"
+	local HEAD_F="$DIR/response_headers.out.tmp"
+	local OUT_F="$DIR/body.out.tmp"
+	local EXT_F="$DIR/extended.out.tmp"
+	local ERR_F="$DIR/error.out.tmp"
+
+	# create files to refresh files if become empty
+	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
+	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
+
+	local EXTENDED_OUT="-w 'HTTP_VERSION: %{http_version}\n'"
+	local VHOST_LOC="$VHOST"
+	local H=""
+	local B=""
+	local FG=""
+	HTTP="http"
+	if [[ $SSL -eq 1 ]]; then
+		HTTP="https"
+	fi
+	if [[ $HEADERS != "" ]]; then
+		for IT in `echo $HEADERS | tr ";" "\n"`; do
+			H="$H -H $IT"
+		done
+	fi
+	if [[ $BODY != "" ]]; then
+		B="-d @$BODY"
+	elif [[ $FILE != "" ]]; then
+		B="-F 'file=@$FILE'"
+	fi
+	local SOCKET=""
+	if [[ $SOCKET_UNIX -ne 0 ]]; then
+		SOCKET="--unix-socket $PROXY_CTL_SOCKET"
+		VHOST_LOC="${PROXY_SOCKET_IP}"
+	elif [[ "$VHOST_LOC" = "" ]]; then
+		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
+	else
+		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
+	fi
+	if [[ "$BACKGROUND" -eq 1 ]]; then
+		FG="&"
+		EXTENDED_OUT=""
+	fi
+
+	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
+$RESOLV_VHOST -s -k --show-error $EXTENDED_OUT \
+-D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F $FG" > $CMD_F
+
+	bash $CMD_F
+
+	mask_headers $HEAD_F
+	mask_out $OUT_F
+	pretty_json $OUT_F
+}
+
+pretty_json () {
+	if [[ "$1" == "" ]]; then error_param "file"; fi
+
+	local OUT_F=$1
+	local TMP_JSON="$TMP_DIR/pretty.json"
+
+	if [[ -s $OUT_F ]]; then
+		cat $OUT_F | python3 -m json.tool > $TMP_JSON 2>/dev/null
+		if [[ -s $TMP_JSON ]]; then
+			mv $TMP_JSON $OUT_F
+		fi
+	fi
+}
+
+mask_headers () {
+	if [[ "$1" == "" ]]; then error_param "file"; fi
+	local FILE=$1
+	sed -Ei 's/Server: zproxy\/.*$/Server: zproxy\/VERSION/g' $FILE
+}
+
+mask_out () {
+	if [[ "$1" == "" ]]; then error_param "file"; fi
+	local FILE=$1
+	# remove bonding headers uploading files
+	sed -Ei "s/--------------------------\w+/--------------------------################/g" $FILE
+	sed -Ei "s/\"connect-time\"\s*:\s*[0-9\.]+,/\"connect-time\": \"#######\",/g" $FILE
+	sed -Ei "s/\"response-time\"\s*:\s*[0-9\.]+,/\"response-time\": \"#######\",/g" $FILE
+}
+
+exec_average () {
+	if [[ $1 == "" ]]; then error_param "directory"; fi
+	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
+	if [[ "$REQUESTS" == "" ]]; then error_param "iterations"; fi
+
+	local DIR=$TMP_DIR
+	local TMP_AVG_PREF="$1/"
+	rm -f "$TMP_AVG_PREF*.tmp"
+
+	for IT in $(seq 1 $REQUESTS)
+	do
+		exec_curl $DIR
+		for F in $AVERAGE_FILES_TMP; do
+			cat "$DIR/$F" >> "${TMP_AVG_PREF}${F}.2"
+		done
+	done
+
+	for F in $AVERAGE_FILES_TMP; do
+		cat "${TMP_AVG_PREF}${F}.2" | grep -E '.' |  sort | uniq -c >"${TMP_AVG_PREF}${F}"
+		rm "$DIR/$F" "${TMP_AVG_PREF}${F}.2"
+	done
+}
+
+# exec_stress $CL $CONNS $TIMEOUT $THREADS
+exec_wrk() {
+	if [[ "$1" == "" ]]; then error_param "directory"; fi
+	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
+	if [[ "$URL" == "" ]]; then error_param "url"; fi
+	local DIR=$1
+	local NS=$NS
+	local BG=""
+	if [[ "$NS" == "" ]]; then NS=$(get_cl_ns $CL); fi
+	if [[ "$CONNS" == "" ]]; then error_param "connections"; fi
+	if [[ "$TIMEOUT" == "" ]]; then error_param "timeout"; fi
+	if [[ "$THREADS" == "" ]]; then error_param "threads"; fi
+	if [[ "$BACKGROUND" == "1" ]]; then BG="&"; fi;
+
+	local TMP="$TMP_DIR/bm"
+	local BM_OUT="$DIR/benchmark.out.tmp"
+	local CMD_F="$DIR/cmd.out.tmp"
+
+	HTTP="http"
+	if [[ $SSL -eq 1 ]]; then
+		HTTP="https"
+	fi
+	if [[ "$VHOST" = "" ]]; then
+		VHOST="$PROXY_VIP:${PROXY_VPORT}"
+	fi
+
+	local COMMAND="ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL $BG"
+	echo "$COMMAND" >$CMD_F
+
+	bash $CMD_F >$TMP
+
+	if [[ "$BACKGROUND" == "" ]]; then
+		grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//' >$BM_OUT
+	fi
+}
+
+clean_wrk() {
+	pkill wrk
+}
+
+exec_benchmark() {
+	if [[ $1 == "" ]]; then error_param "directory"; fi
+
+	local DIR="$1"
+	local TMP_F="$DIR/benchmark.out.tmp"
+	local OUT_F="$DIR/benchmark.out"
+	local NEW_F="$OUT_F.new"
+	local BM_F="$OUT_F.bm"
+
+	CONNS=$BENCH_CONNS
+	TIMEOUT=$BENCH_DELAY
+	THREADS=$BENCH_CL_THREADS
+
+	rm -f $NEW_F
+
+	exec_wrk $DIR
+
+	# Get percentage
+	NEW_BENCH=$(cat $TMP_F)
+	echo $NEW_BENCH >$BM_F
+
+	RESULT=$(perl -E "\$v=100*$NEW_BENCH/$BENCH_WITHOUT_PROXY;say int \$v;")
+	echo "$RESULT" >$TMP_F
+
+	if [[ ! -f $OUT_F ]]; then
+		echo "Reference benchmark does not exist: $OUT_F"
+		return 1
+	fi
+
+	OLD_BENCH=$(cat $OUT_F)
+	ERR_EDGE=$(expr $OLD_BENCH - $BENCH_ERR_ACCEPTED)
+	NEW_EDGE=$(expr $OLD_BENCH + $BENCH_ERR_ACCEPTED)
+	echo "Benchmark: proxy-bench/client-bench = $NEW_BENCH/$BENCH_WITHOUT_PROXY = $RESULT%"
+	if [[ $RESULT -lt $ERR_EDGE ]]; then
+		echo "The new benchmark value '$RESULT%' is worse than the saved one '$OLD_BENCH+$BENCH_ERR_ACCEPTED%'"
+		return 1
+	elif [[ $RESULT -gt $NEW_EDGE ]]; then
+		echo "The new benchmark value '$RESULT%' is better than the saved one '$OLD_BENCH~$BENCH_ERR_ACCEPTED%'"
+		echo "Overwrite the file '$OUT_F' with the '$NEW_F' is you want to save it"
+		mv $TMP_F "$OUT_F.new"
+	else
+		echo "The new benchmark is '$RESULT%' similar to the saved one '$OLD_BENCH~$BENCH_ERR_ACCEPTED%'"
+	fi
+
+	rm $TMP_F
+	return 0
+}
+
+check_dependencies () {
+	if [ $UID -ne 0 ]; then
+		error "You must be root to run this test script"
+	elif [[ ! -f "$CURL_BIN" ]]; then
+		error "The 'curl' binary was not found, try to configure the variable 'CURL_BIN'"
+	elif [[ ! -f "$WRK_BIN" ]]; then
+		error "The 'wrk' binary was not found, try to configure the variable 'WRK_BIN'"
+	elif [[ ! -f "$HTTPD_BIN" ]]; then
+		error "The 'ngnix' binary was not found, try to configure the variable 'HTTPD_BIN'"
+	elif [[ ! -f "$PROXY_BIN" ]]; then
+		error "The 'zproxy' binary was not found, try to configure the variable 'PROXY_BIN'"
+	elif [[ ! -f "$PROXYCTL_BIN" ]]; then
+		error "The 'zproxyctl' binary was not found, try to configure the variable 'PROXYCTL_BIN'"
+	elif [[ ! -f "$NGINX_MODULE_ECHO" ]]; then
+		error "The 'echo' nginx module was not found, try to install the package 'libnginx-mod-http-echo'"
+	elif [[ ! -f "$NGINX_MODULE_HEADER" ]]; then
+		error "The 'headers-more' nginx module was not found, try to install the package 'libnginx-mod-http-headers-more-filter'"
+	fi
+}
+
+print_report () {
+	if [[ "$1" == "" ]]; then error_param "test_name"; fi
+	if [[ "$2" == "" ]]; then error_param "command_name"; fi
+	if [[ "$3" == "" ]]; then error_param "output_file"; fi
+
+	# print stdout
+	echo "### Error in test '$1/$2/'"
+	echo ""
+	if [[ -f $3 ]]; then
+		cat $3
+	else
+		echo $3
+	fi
+	echo ""
+	echo ""
+
+	# print file
+	echo "### Error in test '$1', command '$2'" >>$REPORT_F
+	if [[ -f $3 ]]; then
+		cat $3 >>$REPORT_F
+	else
+		echo $3 >>$REPORT_F
+	fi
+	echo "" >>$REPORT_F
+	echo ""
+	echo "##########################################################################################" >>$REPORT_F
+	echo "" >>$REPORT_F
+	echo "" >>$REPORT_F
+}
+
+create_benchmark_report () {
+	rm -f $BENCH_REPORT
+	local BM=$(find . -name "*.bm" | sort)
+	if [[ "$BM" != "" ]]; then
+		echo "Ideal throughput CLIENT - BACKEND: $BENCH_WITHOUT_PROXY" >$BENCH_REPORT
+		echo "(The following percents are regarding the ideal throughput)" >>$BENCH_REPORT
+		echo "" >>$BENCH_REPORT
+		for B in $BM; do
+			BM_NEW=`cat $B`
+			F=`echo $B | sed 's/.bm//'`
+			OLD=`cat $F`
+
+			OK=1
+
+			if [[ -f "${F}.new" ]]; then
+				NEW=`cat $F.new`
+			elif [[ -f "${F}.tmp" ]]; then
+				NEW=`cat $F.tmp`
+				OK=0
+			else
+				NEW="$OLD"
+			fi
+
+			BM_OLD=$(perl -E "\$v=$OLD*$BENCH_WITHOUT_PROXY/100;say int \$v;")
+
+			echo "  passed=$OK $F: $BM_OLD ($OLD%) => $BM_NEW ($NEW%)" >>$BENCH_REPORT
+		done
+
+		echo "A benchmark report has been generated in '$BENCH_REPORT'"
+	fi
+}
+
+find_diff_files () {
+
+	local TMP=$(find . -name "*.tmp" | sort)
+	if [[ $TMP != "" ]]; then
+		msg "Error files: "
+		echo "$TMP"
+	fi
+
+	local NEW=$(find . -name "*.new" | sort)
+	if [[ $NEW != "" ]]; then
+		msg "Benchmark improvements:"
+		echo "$NEW"
+	fi
+
+	if [[ $NEW != "" || $TMP != "" ]]; then return 1; fi
+}
+
+find_diff_errors () {
+	if [[ "$1" == "" ]]; then error_param "directory"; fi
+	local DIR=$1
+
+	for F in $OUTPUT_FILES; do
+	    F="$DIR/$F"
+		if [[ -f "$F.tmp" ]]; then
+			diff -w $DIFF_OPT $F $F.tmp 2>&1
+			if [[ $? -eq 0 ]]; then
+				rm $F.tmp;
+			else
+				echo ""
+			fi
+		fi
+	done
+}

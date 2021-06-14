@@ -1,0 +1,5 @@
+HTTP/1.0 302 Found
+Content-Type: text/html
+Content-Length: 189
+Location: https://10.1.2.1/rep/append/this/url
+

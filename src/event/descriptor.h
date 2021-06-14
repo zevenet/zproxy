@@ -21,92 +21,140 @@
 
 #pragma once
 
-#include "../debug/logger.h"
+#include "../../zcutils/zcutils.h"
 #include "epoll_manager.h"
 #include <atomic>
-namespace events {
+
+namespace events
+{
 class Descriptor {
-  events::EpollManager *event_manager_{nullptr};
-  std::atomic<events::EVENT_TYPE> current_event{events::EVENT_TYPE::NONE};
-  std::atomic<events::EVENT_GROUP> event_group_{events::EVENT_GROUP::NONE};
+	events::EpollManager *event_manager_{ nullptr };
+	std::atomic<events::EVENT_TYPE> current_event{
+		events::EVENT_TYPE::NONE
+	};
+	std::atomic<events::EVENT_GROUP> event_group_{
+		events::EVENT_GROUP::NONE
+	};
 
- protected:
-  int fd_;
+    protected:
+	int fd_;
 
- public:
-  Descriptor() : event_manager_(nullptr),  fd_(-1) {}
-  virtual ~Descriptor() {
-    if (event_manager_ != nullptr && fd_ > 0) event_manager_->deleteFd(fd_);
-  }
+    public:
+	Descriptor() : event_manager_(nullptr), fd_(-1)
+	{
+	}
+	virtual ~Descriptor()
+	{
+		if (event_manager_ != nullptr && fd_ > 0)
+			event_manager_->deleteFd(fd_);
+	}
 
-  inline void setEventManager(events::EpollManager &event_manager) { event_manager_ = &event_manager; }
-  inline bool disableEvents() {
-    current_event = events::EVENT_TYPE::NONE;
-    if (event_manager_ != nullptr && fd_ > 0) return event_manager_->deleteFd(fd_);
-    return false;
-  }
+	inline void setEventManager(events::EpollManager &event_manager)
+	{
+		event_manager_ = &event_manager;
+	}
+	inline bool disableEvents()
+	{
+		current_event = events::EVENT_TYPE::NONE;
+		if (event_manager_ != nullptr && fd_ > 0)
+			return event_manager_->deleteFd(fd_);
+		return false;
+	}
 
-  inline bool enableEvents(events::EpollManager *epoll_manager, events::EVENT_TYPE event_type,
-                           events::EVENT_GROUP event_group) {
-    if (epoll_manager != nullptr && fd_ > 0) {
-      current_event = event_type;
-      event_manager_ = epoll_manager;
-      event_group_ = event_group;
-      return event_manager_->addFd(fd_, event_type, event_group_);
-    }
-    return false;
-  }
+	inline bool enableEvents(events::EpollManager *epoll_manager,
+				 events::EVENT_TYPE event_type,
+				 events::EVENT_GROUP event_group)
+	{
+		if (epoll_manager != nullptr && fd_ > 0) {
+			current_event = event_type;
+			event_manager_ = epoll_manager;
+			event_group_ = event_group;
+			return event_manager_->addFd(fd_, event_type,
+						     event_group_);
+		}
+		return false;
+	}
 
-  inline bool setEvents(events::EVENT_TYPE event_type, events::EVENT_GROUP event_group) {
-    if (event_manager_ != nullptr && fd_ > 0) {
-      current_event = event_type;
-      event_group_ = event_group;
-      return event_manager_->updateFd(fd_, event_type, event_group_);
-    }
-    return false;
-  }
+	inline bool setEvents(events::EVENT_TYPE event_type,
+			      events::EVENT_GROUP event_group)
+	{
+		if (event_manager_ != nullptr && fd_ > 0) {
+			current_event = event_type;
+			event_group_ = event_group;
+			return event_manager_->updateFd(fd_, event_type,
+							event_group_);
+		}
+		return false;
+	}
 
-  inline bool setEvent(events::EVENT_TYPE event_type) {
-    if (event_manager_ != nullptr && fd_ > 0) {
-      current_event = event_type;
-      return event_manager_->updateFd(fd_, event_type, event_group_);
-    }
-    return false;
-  }
+	inline bool setEvent(events::EVENT_TYPE event_type)
+	{
+		if (event_manager_ != nullptr && fd_ > 0) {
+			current_event = event_type;
+			return event_manager_->updateFd(fd_, event_type,
+							event_group_);
+		}
+		return false;
+	}
 
-  inline bool enableReadEvent(bool one_shot = false) {
-    if (event_manager_ != nullptr && current_event != events::EVENT_TYPE::READ && fd_ > 0) {
-      auto res = current_event == events::EVENT_TYPE::NONE
-                     ? event_manager_->addFd(
-                           fd_, !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT, event_group_)
-                     : event_manager_->updateFd(
-                           fd_, !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT, event_group_);
-      current_event = !one_shot ? events::EVENT_TYPE::READ : events::EVENT_TYPE::READ_ONESHOT;
-      return res;
-    }
-    //    Logger::LogInfo("InReadModeAlready", LOG_REMOVE);
-    return false;
-  }
+	inline bool enableReadEvent(bool one_shot = false)
+	{
+		if (event_manager_ != nullptr &&
+		    current_event != events::EVENT_TYPE::READ && fd_ > 0) {
+			auto res =
+				current_event == events::EVENT_TYPE::NONE ?
+					      event_manager_->addFd(
+						fd_,
+						!one_shot ?
+							      events::EVENT_TYPE::READ :
+							      events::EVENT_TYPE::
+								READ_ONESHOT,
+						event_group_) :
+					      event_manager_->updateFd(
+						fd_,
+						!one_shot ?
+							      events::EVENT_TYPE::READ :
+							      events::EVENT_TYPE::
+								READ_ONESHOT,
+						event_group_);
+			current_event =
+				!one_shot ? events::EVENT_TYPE::READ :
+						  events::EVENT_TYPE::READ_ONESHOT;
+			return res;
+		}
+		zcu_log_print(LOG_DEBUG, "%s():%d: InReadModeAlready",
+			      __FUNCTION__, __LINE__);
+		return false;
+	}
 
-  inline bool enableWriteEvent() {
-    if (event_manager_ != nullptr && fd_ > 0) {
-      auto res = event_manager_->updateFd(fd_, events::EVENT_TYPE::WRITE, event_group_);
-      current_event = events::EVENT_TYPE::WRITE;
-      return res;
-    }
-    //    Logger::LogInfo("InWriteModeAlready", LOG_REMOVE);
-    return false;
-  }
+	inline bool enableWriteEvent()
+	{
+		if (event_manager_ != nullptr && fd_ > 0) {
+			auto res = event_manager_->updateFd(
+				fd_, events::EVENT_TYPE::WRITE, event_group_);
+			current_event = events::EVENT_TYPE::WRITE;
+			return res;
+		}
+		zcu_log_print(LOG_DEBUG, "%s():%d: InWriteModeAlready",
+			      __FUNCTION__, __LINE__);
+		return false;
+	}
 
-  inline int getFileDescriptor() const { return fd_; }
+	inline int getFileDescriptor() const
+	{
+		return fd_;
+	}
 
-  inline void setFileDescriptor(int fd) {
-    if (fd < 0) {
-      Logger::LogInfo("File descriptor not valid", LOG_REMOVE);
-      return;
-    }
+	inline void setFileDescriptor(int fd)
+	{
+		if (fd < 0) {
+			zcu_log_print(LOG_DEBUG,
+				      "%s():%d: file descriptor not valid",
+				      __FUNCTION__, __LINE__);
+			return;
+		}
 
-    fd_ = fd;
-  }
+		fd_ = fd;
+	}
 };
-}  // namespace events
+} // namespace events

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <string>
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
 #include "../event/epoll_manager.h"
@@ -29,32 +30,34 @@
 #include "../service/service_manager.h"
 #include "../ssl/ssl_connection_manager.h"
 #include "http_request.h"
+#include "../../zcutils/zcutils.h"
 #if WAF_ENABLED
 #include <modsecurity/modsecurity.h>
 #include <modsecurity/rules.h>
 #include <modsecurity/transaction.h>
 #endif
 
+static const std::string MACRO_VHOST("${VHOST}");
 
-enum class STREAM_OPTION:uint32_t {
-  NO_OPT = 0x0,
-  PINNED_CONNECTION = 0x1,
-  H2 = 0x1 << 1,
-  H2C = 0x1 << 2,
-  WS = 0x1 << 3 ,//web socket
+enum class STREAM_OPTION : uint32_t {
+	NO_OPT = 0x0,
+	PINNED_CONNECTION = 0x1,
+	H2 = 0x1 << 1,
+	H2C = 0x1 << 2,
+	WS = 0x1 << 3, //web socket
 };
 
 enum class STREAM_STATUS : uint32_t {
-  ERROR = 0x0,
-  BCK_CONN_PENDING = 0x1,
-  BCK_CONN_ERROR = 0x1 << 1,
-  BCK_READ_PENDING = 0x1 << 2,
-  BCK_WRITE_PENDING = 0x1 << 3,
-  CL_READ_PENDING = 0x1 << 4,
-  CL_WRITE_PENDING= 0x1 << 5,
-  REQUEST_PENDING = 0x1 << 6,
-  RESPONSE_PENDING = 0x1 << 7,
-  CLOSE_CONNECTION = 0x1 << 8
+	ERROR = 0x0,
+	BCK_CONN_PENDING = 0x1,
+	BCK_CONN_ERROR = 0x1 << 1,
+	BCK_READ_PENDING = 0x1 << 2,
+	BCK_WRITE_PENDING = 0x1 << 3,
+	CL_READ_PENDING = 0x1 << 4,
+	CL_WRITE_PENDING = 0x1 << 5,
+	REQUEST_PENDING = 0x1 << 6,
+	RESPONSE_PENDING = 0x1 << 7,
+	CLOSE_CONNECTION = 0x1 << 8
 };
 
 /**
@@ -66,57 +69,78 @@ enum class STREAM_STATUS : uint32_t {
  *
  */
 class HttpStream : public Counter<HttpStream> {
- public:
+    public:
 #if CACHE_ENABLED
-  time_t current_time;
-  std::chrono::steady_clock::time_point prev_time;
+	time_t current_time;
+	std::chrono::steady_clock::time_point prev_time;
 #endif
-  HttpStream();
-  ~HttpStream() final;
-  // no copy allowed
-  HttpStream(const HttpStream&) = delete;
-  HttpStream& operator=(const HttpStream&) = delete;
+	HttpStream();
+	~HttpStream() final;
+	// no copy allowed
+	HttpStream(const HttpStream &) = delete;
+	HttpStream &operator=(const HttpStream &) = delete;
 #if WAF_ENABLED
-  //    modsecurity::ModSecurityIntervention *intervention{nullptr};
-  modsecurity::Transaction *modsec_transaction{nullptr};
-  std::shared_ptr<modsecurity::Rules> waf_rules{nullptr};
+	//    modsecurity::ModSecurityIntervention *intervention{nullptr};
+	modsecurity::Transaction *modsec_transaction{ nullptr };
+	std::shared_ptr<modsecurity::Rules> waf_rules{ nullptr };
 #endif
-  /** Connection between zproxy and the client. */
-  ClientConnection client_connection;
-  /** Connection between zproxy and the backend. */
-  BackendConnection backend_connection;
+	/** Connection between zproxy and the client. */
+	ClientConnection client_connection;
+	/** Connection between zproxy and the backend. */
+	BackendConnection backend_connection;
 #if USE_TIMER_FD_TIMEOUT
-  /** Timer descriptor used for the stream timeouts. */
-  TimerFd timer_fd;
+	/** Timer descriptor used for the stream timeouts. */
+	TimerFd timer_fd;
 #endif
-  /** HttpRequest containing the request sent by the client. */
-  HttpRequest request;
-  /** HttpResponse containing the response sent by the backend. */
-  HttpResponse response;
+	/** HttpRequest containing the request sent by the client. */
+	HttpRequest request;
+	/** HttpResponse containing the response sent by the backend. */
+	HttpResponse response;
+	uint32_t status{ 0x0 };
+	uint32_t options{ 0x0 };
+	uint32_t stream_id{ 0 };
 
-  uint32_t status{0x0};
-  uint32_t options{0x0};
-  uint32_t stream_id{0};
-  inline bool hasOption(STREAM_OPTION _option) const{
-    return (options & helper::to_underlying(_option)) != 0u;
-  }
+	/* Params:
+	 *	- macro to look for and replace
+	 *  - string where replace the macro. This same string will be replaced
+	 *
+	 *  Returns:
+	 *		1 if the
+	 *
+	*/
+	inline int replaceVhostMacro(char *buf, char *ori_str,
+				     int ori_len) const
+	{
+		return zcu_str_replace_str(
+			buf, ori_str, ori_len, MACRO_VHOST.data(),
+			MACRO_VHOST.length(),
+			const_cast<char *>(this->request.virtual_host.data()),
+			this->request.virtual_host.length());
+	}
 
-  inline bool hasStatus(STREAM_STATUS _status) const{
-    return (status & helper::to_underlying(_status)) != 0u;
-  }
+	inline bool hasOption(STREAM_OPTION _option) const
+	{
+		return (options & helper::to_underlying(_option)) != 0u;
+	}
 
-  inline void clearOption(STREAM_OPTION _option){
-    options &= ~helper::to_underlying(_option);
-  }
+	inline bool hasStatus(STREAM_STATUS _status) const
+	{
+		return (status & helper::to_underlying(_status)) != 0u;
+	}
 
-  inline void clearStatus(STREAM_STATUS _status){
-    status &= ~helper::to_underlying(_status);
-  }
+	inline void clearOption(STREAM_OPTION _option)
+	{
+		options &= ~helper::to_underlying(_option);
+	}
 
-  std::shared_ptr<ServiceManager> service_manager;
+	inline void clearStatus(STREAM_STATUS _status)
+	{
+		status &= ~helper::to_underlying(_status);
+	}
 
-  static void dumpDebugData_(const std::string& file, const std::string& function, int line,
-                             HttpStream* stream, const char* debug_str, const char* data);
+	std::shared_ptr<ServiceManager> service_manager;
+
+	static void debugBufferData(const std::string &function, int line,
+				    HttpStream *stream, const char *debug_str,
+				    const char *data);
 };
-
-#define dumpDebugData(...) dumpDebugData_(__FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)

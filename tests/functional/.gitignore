@@ -1,0 +1,6 @@
+*.bm
+*.tmp
+*.new
+variables
+*/vars.*
+tests/*/vars.*

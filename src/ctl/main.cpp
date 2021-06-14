@@ -19,19 +19,15 @@
  *
  */
 #include "pound_client.h"
+#include "../../zcutils/zcutils.h"
 #include <cstdlib>
 #include <iostream>
 
 #define POUND_CTL_MODE 1
 
-std::mutex Logger::log_lock;
-int Logger::log_level = 8;
-int Logger::log_facility = -1;
+int main(int argc, char *argv[])
+{
+	PoundClient client;
 
-std::map<std::thread::id, thread_info> Logger::log_info;
-
-int main(int argc, char *argv[]) {
-  PoundClient client;
-
-  return client.init(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return client.init(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
