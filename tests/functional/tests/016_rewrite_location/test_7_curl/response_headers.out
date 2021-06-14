@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Location: http://vip.zproxy/
+Content-Location: http://vip.zproxy/alt
+Proxy: zproxy
+RewriteLocation: 2
+

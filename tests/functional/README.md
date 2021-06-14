@@ -303,6 +303,7 @@ The following requests are available:
 | GET 						| /headers			| The server will return the request headers in the body.
 | POST 						| /headers			| **TBI**.
 | DELETE					| /headers/`<header>`	| **TBI**. It deletes the "header" of the response
+| GET						| /resp-headers/location/`<value>`	| It adds the location and content-location headers in the backend response
 | GET 						| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
 | POST	 					| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
 | DELETE 					| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
