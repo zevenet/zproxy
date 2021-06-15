@@ -134,6 +134,7 @@ static inline void zcu_bt_print()
 		exit(EXIT_FAILURE);
 	}
 
+	zcu_log_print(LOG_ERR, "Backtrace: ");
 	for (i = 0; i < calls; i++)
 		zcu_log_print(LOG_ERR, "%s", str[i]);
 	free(str);

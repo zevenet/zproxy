@@ -1290,7 +1290,9 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 		"[%lx][%lu][%s][%s] backend %s request %s timeout after %d seconds from client %s",
 		pthread_self(), stream->stream_id, listener_config_.name.data(),
 		service->name.c_str(),
-		stream->backend_connection.getBackend()->address.c_str(),
+		(stream->backend_connection.getBackend() == nullptr) ?
+			      "-" :
+			      stream->backend_connection.getBackend()->address.c_str(),
 		stream->request.path,
 		stream->service_manager->listener_config_->to,
 		stream->client_connection.getPeerAddress().c_str());

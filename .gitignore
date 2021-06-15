@@ -11,3 +11,4 @@ wrkdir/
 build-pkg/
 src/config/dh*
 tests/data
+QtCreatorDeployment.txt

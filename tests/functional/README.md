@@ -210,7 +210,7 @@ This can be executed in bg to check the zproxy stats
 | CMD      | It is the command to execute. *wrk* executes the wrk tool in order to get a stable number of concurrent connections  | True
 | CL      | It is the client ID that will execute the command       | True
 | URL      | It is the HTTP URL used for the request (/, /svc...)       | True
-| VHOST      | **TBI** It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| VHOST      | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | CONNS      | Number of concurrent connections that are managed by the client | True
 | TIMEOUT      | Time for the test | True
 | THREADS      | If this flag is set with **1** the request will use the HTTPS protocol | True
@@ -239,7 +239,7 @@ After the test is approved if the value is not dispersed mor than an error range
 | CMD      | It is the command to execute. *benchmark* executes the wrk tool in order to get the number of request/sec that zproxy can manage        | True
 | CL      | It is the client ID that will execute the command       | True
 | URL      | It is the HTTP URL used for the request (/, /svc...)       | True
-| VHOST      | **TBI**. It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| VHOST      | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
 
 ```
