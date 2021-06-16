@@ -575,7 +575,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 				}
 				auto in_addr = zcu_net_get_address(host, port);
 				if (in_addr == nullptr) {
-					zcu_log_print(LOG_NOTICE,
+					zcu_log_print(LOG_WARNING,
 						      "Couldn't get host ip");
 					continue;
 				}
@@ -583,22 +583,16 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 					 * address*/
 				if (zcu_net_equal_sockaddr(in_addr.get(),
 							   backend_addr) ||
-				    (zcu_net_equal_sockaddr(
-					    in_addr.get(),
-					    stream.service_manager
-						    ->listener_config_
-						    ->addr_info))) {
+				    (listener_config_.rewr_loc == 1 &&
+				     zcu_net_equal_sockaddr(
+					     in_addr.get(),
+					     stream.service_manager
+						     ->listener_config_
+						     ->addr_info))) {
 					std::string header_value_;
-					if (listener_config_.rewr_loc < 2) {
-						header_value_ =
-							listener_config_.ctx !=
-									nullptr ?
-								      "https://" :
-								      "http://";
-					} else {
-						header_value_ = proto;
-						header_value_ += "://";
-					}
+
+					header_value_ = proto;
+					header_value_ += "://";
 					header_value_ +=
 						stream.request.virtual_host;
 					if ((stream.service_manager

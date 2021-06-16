@@ -1291,7 +1291,7 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 		pthread_self(), stream->stream_id, listener_config_.name.data(),
 		service->name.c_str(),
 		(stream->backend_connection.getBackend() == nullptr) ?
-			      "-" :
+			      "(null)" :
 			      stream->backend_connection.getBackend()->address.c_str(),
 		stream->request.path,
 		stream->service_manager->listener_config_->to,
