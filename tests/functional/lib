@@ -275,7 +275,8 @@ deploy_tpl () {
 
 	set >$TMP_ENV
 	cp $TPL $DST
-	for VAR in `grep -E '#{[a-zA-Z0-9_-]+}' $TPL | sed -E 's/^.*#\{//g' | sed -E 's/\}.*($|#\{)//g'`; do
+
+	for VAR in `sed 's,#{,\n#{,g' $TPL | grep -E '#{[a-zA-Z0-9_-]+}' | sed -E 's/^.*#\{//g' | sed -E 's/\}.*($|#\{)//g'`; do
 		VAL=$(grep -E "^$VAR=" $TMP_ENV | sed -E 's/.*=//')
 		if [ "$VAL" != "" ]; then
 			sed -Ei "s,#\{$VAR\},$VAL,g" $DST
@@ -306,6 +307,8 @@ create_backend () {
 	cmd "ip -net $NS route add default via $ROUTER_IP"
 
 	start_httpd $ID
+
+	add_etc_hosts "$IP	$ID.backend"
 }
 
 add_backends () {
@@ -412,8 +415,6 @@ exec_curl () {
 		VHOST_LOC="${PROXY_SOCKET_IP}"
 	elif [[ "$VHOST_LOC" = "" ]]; then
 		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
-	else
-		RESOLV_VHOST="--resolve $VHOST_LOC:$PROXY_VPORT:$PROXY_VIP"
 	fi
 	if [[ "$BACKGROUND" -eq 1 ]]; then
 		FG="&"
@@ -421,7 +422,7 @@ exec_curl () {
 	fi
 
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
-$RESOLV_VHOST -s -k --show-error $EXTENDED_OUT \
+-s -k --show-error $EXTENDED_OUT \
 -D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
 	bash $CMD_F
@@ -685,4 +686,25 @@ find_diff_errors () {
 			fi
 		fi
 	done
+}
+
+# /etc/hosts
+create_etc_hosts () {
+	grep "$ETC_TAG" $ETC_FILE >/dev/null
+	if [[ $? -ne 0 ]]; then
+		cp $ETC_FILE $ETC_FILE_SAVED
+		echo "$ETC_TAG" >> $ETC_FILE
+		deploy_tpl $ETC_TPL $ETC_TPL_TMP
+		cat $ETC_TPL_TMP >> $ETC_FILE
+		rm $ETC_TPL_TMP
+	fi
+}
+
+add_etc_hosts () {
+	if [[ "$1" == "" ]]; then error_param "host_entry"; fi
+	echo "$1" >> $ETC_FILE
+}
+
+del_etc_hosts() {
+	cp $ETC_FILE_SAVED $ETC_FILE
 }

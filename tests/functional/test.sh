@@ -50,6 +50,7 @@ print_help_test () {
 
 start_test () {
 	msg "Creating a lab with $TESTS_NUM_CL clients and $TESTS_NUM_BCK backends"
+	create_etc_hosts
 	echo "Clients: $CL_SUBNET.1-$TESTS_NUM_CL"
 	echo "Backends: $BCK_SUBNET.1-$TESTS_NUM_BCK"
 	create_proxy
@@ -62,6 +63,7 @@ stop_test () {
 	delete_backends $TESTS_NUM_BCK
 	delete_proxy
 	stop_proxy_all
+	del_etc_hosts
 	rm -rf $TMP_DIR
 	msg "The lab was deleted"
 }
