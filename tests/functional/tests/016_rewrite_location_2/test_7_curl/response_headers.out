@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Loc-raw: http://remote-host/
+Location: http://remote-host/
+Content-Location: http://remote-host/alt
+Proxy: zproxy
+

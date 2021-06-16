@@ -1,0 +1,63 @@
+DESCRIPTION="Respond backend http"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/http/backend"
+
+##############################
+
+DESCRIPTION="Respond backend https"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/https/backend"
+
+##############################
+DESCRIPTION="responde vip http"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/http/vip"
+
+##############################
+DESCRIPTION="responde vip https"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/https/vip"
+
+##############################
+DESCRIPTION="Use a virtual host that is not the backend or the vip"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/http/2.1.2.1"
+
+##############################
+DESCRIPTION="Use a virtual host that is not the backend or the vip"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/https/2.1.2.1"
+
+##############################
+DESCRIPTION="Use a virtual host cannot be solved"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="vip.zproxy"
+URL="/resp-headers/location/http/remote-host"
+
+##############################
+DESCRIPTION="Regresion test. It points to the VIP"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="zevenet.com"
+URL="/resp-headers/location/http/www.zevenet.com"

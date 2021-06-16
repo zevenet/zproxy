@@ -1,1 +1,0 @@
-ip netns exec proxy-ns /usr/bin/curl -X PATCH -F 'file=@/tmp/functional-tests/zproxy.cfg'  --connect-timeout 2  -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' -D test_3_reload/response_headers.out.tmp -o test_3_reload/body.out.tmp --unix-socket /tmp/functional-tests/env_proxy.socket http://localhost/config >test_3_reload/extended.out.tmp 2>test_3_reload/error.out.tmp 
