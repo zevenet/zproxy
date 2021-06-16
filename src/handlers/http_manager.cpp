@@ -579,40 +579,45 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 						      "Couldn't get host ip");
 					continue;
 				}
-				/*rewrite location if it points to the backend or the listener
-					 * address*/
-				if (zcu_net_equal_sockaddr(in_addr.get(),
-							   backend_addr) ||
-				    (listener_config_.rewr_loc == 1 &&
-				     zcu_net_equal_sockaddr(
-					     in_addr.get(),
-					     stream.service_manager
-						     ->listener_config_
-						     ->addr_info))) {
-					std::string header_value_;
 
+				std::string header_value_;
+				/*rewrite location if it points to the backend */
+				if (zcu_net_equal_sockaddr(in_addr.get(),
+							   backend_addr)) {
 					header_value_ = proto;
-					header_value_ += "://";
-					header_value_ +=
-						stream.request.virtual_host;
-					if ((stream.service_manager
-							     ->listener_config_
-							     ->ctx != nullptr &&
-					     listener_config_.port != 443) ||
-					    (listener_config_.port != 80)) {
-						if (header_value.find(':') ==
-						    std::string::npos) {
-							header_value_ += ":";
-							header_value_ += std::to_string(
-								listener_config_
-									.port);
-						}
+
+					/* or the listener address with different port */
+				} else if (listener_config_.rewr_loc == 1 &&
+					   listener_config_.port != port &&
+					   zcu_net_equal_sockaddr(
+						   in_addr.get(),
+						   stream.service_manager
+							   ->listener_config_
+							   ->addr_info,
+						   false)) {
+					header_value_ = (proto == "https") ?
+								      "http" :
+								      "https";
+				} else
+					continue;
+
+				header_value_ += "://";
+				header_value_ += stream.request.virtual_host;
+				if ((stream.service_manager->listener_config_
+						     ->ctx != nullptr &&
+				     listener_config_.port != 443) ||
+				    (listener_config_.port != 80)) {
+					if (header_value.find(':') ==
+					    std::string::npos) {
+						header_value_ += ":";
+						header_value_ += std::to_string(
+							listener_config_.port);
 					}
-					header_value_ += path;
-					response.addHeader(header_name,
-							   header_value_);
-					response.headers[i].header_off = true;
 				}
+				header_value_ += path;
+				response.addHeader(header_name, header_value_);
+				response.headers[i].header_off = true;
+
 				break;
 			}
 			case http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY:

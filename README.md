@@ -349,7 +349,17 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **RewriteLocation** 0|1|2
 
-	If 1 force zproxy to change the Location: and Content-location: headers in responses. If they point to the back-end itself or to the listener (but with  the  wrong  protocol) the response will be changed to show the virtual host in the request. Default: 1 (active).  If the value is set to 2 only the back-end address is compared; this is useful for redirecting a request to an HTTPS listener on the same server as the HTTP listener.
+	This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request.
+	It can apply the rewrite in two modes:
+
+	Backend. The rewrite is applied if the location header points to the backend itself. This is useful to mask and hide the backend address.
+	Listener. It rewrites the header if it points to the listener but with  the  wrong  protocol. It is useful for redirecting a request to an HTTPS listener on the same server as the HTTP listener.
+
+	The value 0 disables this directive.
+	The value 1 (by default) enables the backend and listener rewrites.
+	The value 2 only enables the backend rewrites.
+
+	*Note: if the URL location contains a hostname, zproxy should be able to resolve it or the rewrite will be skipped.*
 
 - **RewriteDestination** 0|1
 
