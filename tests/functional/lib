@@ -419,6 +419,7 @@ exec_curl () {
 	if [[ "$BACKGROUND" -eq 1 ]]; then
 		FG="&"
 		EXTENDED_OUT=""
+		HEAD_F="/dev/null"
 	fi
 
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
