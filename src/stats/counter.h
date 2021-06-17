@@ -47,6 +47,9 @@ namespace debug__
 		{                                                              \
 		}                                                              \
 	};
-
+#if DEBUG_ZCU_LOG
 #define DEBUG_COUNTER_HIT(x) x UNIQUE_NAME(counter_hit)
+#else
+#define DEBUG_COUNTER_HIT(x)
+#endif
 } // namespace debug__
