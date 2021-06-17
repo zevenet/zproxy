@@ -428,7 +428,9 @@ exec_curl () {
 
 	bash $CMD_F
 
-	mask_headers $HEAD_F
+	if [[ "$BACKGROUND" -ne 1 ]]; then
+		mask_headers $HEAD_F
+	fi
 	mask_out $OUT_F
 	pretty_json $OUT_F
 }
