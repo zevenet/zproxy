@@ -144,6 +144,8 @@ exec_test () {
 			print_report "$TEST_F" "$OUT_DIR" "$DIFF_OUT"
 		fi
 
+		lookfor_segfault
+
 		if [[ $DEBUG_FLAG -ne 0 ]]; then
 			if [[ ! -f "$OUT_DIR/cmd.out.tmp" && -f "$OUT_DIR/cmd.out" ]]; then
 				msg "command executed: $OUT_DIR"
@@ -153,7 +155,6 @@ exec_test () {
 			dev
 		fi
 
-		lookfor_segfault
 	done
 	rm "$PREF"*
 
