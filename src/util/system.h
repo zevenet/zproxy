@@ -20,8 +20,11 @@
  */
 #pragma once
 
+#include <fstream>
+#include <strings.h>
 #include <unistd.h>
 #include <memory>
+
 class SystemInfo {
 	ssize_t page_size;
 	ssize_t l1_data_cache_size;
