@@ -50,8 +50,8 @@ enum zcu_log_output {
 #define ZCUTILS_LOG_LEVEL_DEFAULT LOG_NOTICE
 #define ZCUTILS_LOG_OUTPUT_DEFAULT ZCUTILS_LOG_OUTPUT_SYSLOG
 
-static inline int zcu_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
-static inline int zcu_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
+extern inline int zcu_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
+extern inline int zcu_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
 
 static inline void zcu_log_set_level(int loglevel)
 {
@@ -87,7 +87,7 @@ static inline int zcu_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
-#ifndef DEBUG_ZCU_LOG
+#if DEBUG_ZCU_LOG == 0
 	if (loglevel == LOG_DEBUG)
 		return 0;
 #endif
