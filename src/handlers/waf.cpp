@@ -29,8 +29,6 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 		httpPath.data(), httpMethod.data(), httpVersion.data());
 
 	for (int i = 0; i < static_cast<int>(stream.request.num_headers); i++) {
-		if (stream.request.headers[i].header_off)
-			continue;
 		auto name = reinterpret_cast<unsigned char *>(
 			const_cast<char *>(stream.request.headers[i].name));
 		auto value = reinterpret_cast<unsigned char *>(

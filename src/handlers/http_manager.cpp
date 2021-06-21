@@ -414,7 +414,6 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 			}
 		}
 	}
-	// waf
 	if (request.content_length > 0 &&
 	    (request.content_length - request.message_length) > 0) {
 		request.message_bytes_left =
