@@ -49,6 +49,6 @@ DESCRIPTION="Do not deny by X-Forwarded-For"
 CMD=curl
 CL=1
 METHOD="GET"
-URL="/"
+URL="/headers"
 SSL=1
 HEADERS="X-Forwarded-For: 5.21.8.2"
