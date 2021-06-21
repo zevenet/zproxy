@@ -23,3 +23,9 @@ SecRule REQUEST_URI "@beginsWith /redirect" "\
 	status:307,\
 	redirect:'https://github.com'" #
 
+SecRule REQUEST_HEADERS:X-Forwarded-For "@ipMatch 10.1.1.0/24" "\
+	id:4,\
+	msg:'Check x-forwarded-to from client',\
+	phase:1,\
+	deny" #
+

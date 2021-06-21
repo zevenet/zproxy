@@ -1,6 +1,7 @@
 *.bm
 *.tmp
 *.new
+*.dbg
 variables
 */vars.*
 tests/*/vars.*

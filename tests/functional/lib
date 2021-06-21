@@ -400,9 +400,11 @@ exec_curl () {
 		HTTP="https"
 	fi
 	if [[ $HEADERS != "" ]]; then
-		for IT in `echo $HEADERS | tr ";" "\n"`; do
-			H="$H -H $IT"
-		done
+		while read -r IT
+		do
+			H="$H -H \"$IT\""
+		done < <(echo "$HEADERS" | tr ";" "\n")
+
 	fi
 	if [[ $BODY != "" ]]; then
 		B="-d @$BODY"
@@ -425,6 +427,10 @@ exec_curl () {
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
 -s -k --show-error $EXTENDED_OUT \
 -D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F $FG" > $CMD_F
+
+	# cmd to debug
+	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
+-s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL" > ${CMD_F}.dbg
 
 	bash $CMD_F
 
