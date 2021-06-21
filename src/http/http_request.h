@@ -58,7 +58,7 @@ class HttpRequest : public http_parser::HttpData {
 	bool accept_encoding_header{ false };
 	bool host_header_found{ false };
 	std::string virtual_host;
-	std::string_view x_forwarded_for_string;
+	std::string x_forwarded_for_string;
 #ifdef CACHE_ENABLED
 	struct CacheRequestOptions c_opt;
 #endif
