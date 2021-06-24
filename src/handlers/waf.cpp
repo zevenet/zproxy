@@ -3,7 +3,6 @@
 bool Waf::checkRequestWaf(HttpStream &stream)
 {
 	std::string httpVersion = "";
-	std::string httpPath(stream.request.path, stream.request.path_length);
 	std::string httpMethod(stream.request.method,
 			       stream.request.method_len);
 
@@ -25,8 +24,9 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 		stream.client_connection.getLocalAddress().data(),
 		stream.client_connection.getLocalPort());
 
-	stream.modsec_transaction->processURI(
-		httpPath.data(), httpMethod.data(), httpVersion.data());
+	stream.modsec_transaction->processURI(stream.request.path.data(),
+					      httpMethod.data(),
+					      httpVersion.data());
 
 	for (int i = 0; i < static_cast<int>(stream.request.num_headers); i++) {
 		auto name = reinterpret_cast<unsigned char *>(

@@ -61,7 +61,7 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 		"| bck_buff:%lu bck_off:%lu CL:%lu R:%d "
 		"HS:%s CHR:%d CH:%s TP:%s RP:%s - %s",
 		function.c_str(), line, stream->stream_id, debug_str,
-		stream->request.path_length, stream->request.path,
+		stream->request.path.length(), stream->request.path.data(),
 		stream->client_connection.getPeerAddress().c_str(),
 		stream->client_connection.buffer_size,
 		stream->client_connection.buffer_offset,

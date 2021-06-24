@@ -1652,6 +1652,33 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
 				conf_err("HeadDeny bad pattern - aborted");
+		} else if (!regexec(&regex_set::RewriteUrl, lin, 4, matches,
+				    0)) {
+			ReplaceHeader *current{ nullptr };
+			lin[matches[1].rm_eo] = '\0';
+			lin[matches[2].rm_eo] = '\0';
+			lin[matches[3].rm_eo] = '\0';
+
+			if (res->rewr_url) {
+				for (current = res->rewr_url; current->next;
+				     current = current->next)
+					;
+				current->next = new ReplaceHeader();
+				current = current->next;
+			} else {
+				res->rewr_url = new ReplaceHeader();
+				current = res->rewr_url;
+			}
+
+			auto match_ = std::string(lin + matches[1].rm_so);
+			auto replace_ = std::string(lin + matches[2].rm_so);
+			if (regcomp(&current->match, match_.data(),
+				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+				conf_err("Error compiling Match regex ");
+			current->replace = replace_;
+			if (matches[2].rm_eo < matches[3].rm_so) {
+				current->last = 1;
+			}
 		} else if (!regexec(&regex_set::StrictTransportSecurity, lin, 4,
 				    matches, 0)) {
 			res->sts = atoi(lin + matches[1].rm_so);

@@ -269,6 +269,7 @@ Service::Service(ServiceConfig &service_config_)
 	this->sess_start = service_config_.sess_start;
 	this->routing_policy =
 		static_cast<ROUTING_POLICY>(service_config_.routing_policy);
+	this->rewr_url = service_config_.rewr_url;
 #ifdef CACHE_ENABLED
 	// Initialize cache manager
 	if (service_config_.cache_content.re_pcre != nullptr) {
@@ -315,9 +316,10 @@ bool Service::doMatch(HttpRequest &request)
 	int i, found;
 
 	/* check for request */
-	regmatch_t eol{ 0, static_cast<regoff_t>(request.path_length) };
+	regmatch_t eol{ 0, static_cast<regoff_t>(request.path.length()) };
 	for (auto m = service_config.url; m; m = m->next)
-		if (regexec(&m->pat, request.path, 1, &eol, REG_STARTEND) != 0)
+		if (regexec(&m->pat, request.path.data(), 1, &eol,
+			    REG_STARTEND) != 0)
 			return false;
 
 	/* check for required headers */

@@ -52,6 +52,19 @@ struct MATCHER {
 	}
 };
 
+struct ReplaceHeader {
+	regex_t name, /* header name to replace */
+		match; /* header value match, if don't */
+	std::string replace; /* replace formated pattern from patch */
+	int last{ 0 }; /* flag to disrupt the replace checks if this matches*/
+	ReplaceHeader *next{ nullptr };
+	~ReplaceHeader()
+	{
+		::regfree(&name);
+		::regfree(&match);
+		delete next;
+	}
+};
 /* back-end types */
 enum class SESS_TYPE {
 	SESS_NONE,
@@ -103,18 +116,6 @@ class BackendConfig : Counter<BackendConfig> {
 	{
 	}
 };
-struct ReplaceHeader {
-	regex_t name, /* header name to replace */
-		match; /* header value match, if don't */
-	std::string replace; /* replace formated pattern from patch */
-	ReplaceHeader *next{ nullptr };
-	~ReplaceHeader()
-	{
-		::regfree(&name);
-		::regfree(&match);
-		delete next;
-	}
-};
 class ServiceConfig : Counter<ServiceConfig> {
     public:
 	int key_id;
@@ -134,6 +135,7 @@ class ServiceConfig : Counter<ServiceConfig> {
 	std::string sess_id; /* id used to track the session */
 	regex_t sess_start; /* pattern to identify the session data */
 	regex_t sess_pat; /* pattern to match the session data */
+	ReplaceHeader *rewr_url{ nullptr }; /* List of regexp to apply */
 #ifdef CACHE_ENABLED
 	int cache_timeout = -1; /* cached content timeout in seconds */
 	std::string cache_disk_path, cache_ram_path;

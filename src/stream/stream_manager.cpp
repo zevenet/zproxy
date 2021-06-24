@@ -498,6 +498,8 @@ void StreamManager::onRequestEvent(int fd)
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest",
 				    "");
 #endif
+
+	/* Parse HTTP request */
 	size_t parsed = 0;
 	http_parser::PARSE_RESULT parse_result;
 	// do {
@@ -509,17 +511,6 @@ void StreamManager::onRequestEvent(int fd)
 
 	switch (parse_result) {
 	case http_parser::PARSE_RESULT::SUCCESS: {
-		auto valid = http_manager::validateRequest(*stream);
-		if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
-			http_manager::replyError(
-				http::Code::NotImplemented,
-				validation::request_result_reason.at(valid),
-				listener_config_.err501,
-				stream->client_connection,
-				listener_config_.response_stats);
-			this->clearStream(stream);
-			return;
-		}
 		stream->status |=
 			helper::to_underlying(STREAM_STATUS::REQUEST_PENDING);
 		break;
@@ -550,9 +541,36 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
+	/* Select a service */
+	auto service = stream->service_manager->getService(stream->request);
+	if (service == nullptr) {
+		http_manager::replyError(
+			http::Code::ServiceUnavailable,
+			validation::request_result_reason.at(
+				validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
+			listener_config_.err503, stream->client_connection,
+			listener_config_.response_stats);
+		this->clearStream(stream);
+		return;
+	}
+	auto last_service_ptr = stream->request.getService();
+	stream->request.setService(service);
+
+	/* Validate Request and manage (rem/add/mod) HTTP fields */
+	auto valid = http_manager::validateRequest(*stream);
+	if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
+		http_manager::replyError(
+			http::Code::NotImplemented,
+			validation::request_result_reason.at(valid),
+			listener_config_.err501, stream->client_connection,
+			listener_config_.response_stats);
+		this->clearStream(stream);
+		return;
+	}
+
 #if WAF_ENABLED
-	if (stream->waf_rules) { // rule struct is unitializate if no
-		// rulesets are configured
+	if (stream->waf_rules) {
+		// rule struct is unitializate if no rulesets are configured
 		delete stream->modsec_transaction;
 		stream->modsec_transaction = new modsecurity::Transaction(
 			listener_config_.modsec.get(),
@@ -617,21 +635,6 @@ void StreamManager::onRequestEvent(int fd)
 #else
 	stopTimeOut(fd);
 #endif
-	auto service = stream->service_manager->getService(stream->request);
-	if (service == nullptr) {
-		http_manager::replyError(
-			http::Code::ServiceUnavailable,
-			validation::request_result_reason.at(
-				validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
-			listener_config_.err503, stream->client_connection,
-			listener_config_.response_stats);
-		this->clearStream(stream);
-		return;
-	}
-	auto last_service_ptr = stream->request.getService();
-	stream->request.setService(service);
-	// update log info
-	//~ StreamDataLogger::setLogData(stream, listener_config_);
 
 #ifdef CACHE_ENABLED
 	// If the cache is enabled and the request is cached and it is also fresh

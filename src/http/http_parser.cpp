@@ -28,9 +28,9 @@ http_parser::HttpData::HttpData()
 	:
 
 	  buffer(nullptr), buffer_size(0), last_length(0), num_headers(0),
-	  method(nullptr), method_len(0), minor_version(-1), path(nullptr),
-	  path_length(0), http_status_code(0), status_message(nullptr),
-	  message_length(0)
+	  method(nullptr), method_len(0), minor_version(-1), path_ptr(nullptr),
+	  path_ptr_length(0), http_status_code(0), status_message(nullptr),
+	  message_length(0), path("")
 {
 	reset_parser();
 }
@@ -39,8 +39,9 @@ void http_parser::HttpData::reset_parser()
 {
 	method = nullptr;
 	method_len = 0;
-	path = nullptr;
-	path_length = 0;
+	path_ptr = nullptr;
+	path_ptr_length = 0;
+	path = "";
 	minor_version = -1;
 	num_headers = 0;
 	last_length = 0;
@@ -227,10 +228,11 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 	buffer_size = data_size;
 	num_headers = sizeof(headers) / sizeof(headers[0]);
 	const char **method_ = const_cast<const char **>(&method);
-	const char **path_ = const_cast<const char **>(&path);
+	const char **path_ = const_cast<const char **>(&path_ptr);
 	auto pret = phr_parse_request(data, data_size, method_, &method_len,
-				      path_, &path_length, &minor_version,
+				      path_, &path_ptr_length, &minor_version,
 				      headers, &num_headers, last_length);
+	path = std::string(path_ptr, path_ptr_length);
 	last_length = data_size;
 	//  zcu_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
 	if (pret > 0) {
@@ -330,7 +332,7 @@ void http_parser::HttpData::printResponse()
 void http_parser::HttpData::printRequest()
 {
 	zcu_log_print(LOG_DEBUG, "method is %.*s", method_len, method);
-	zcu_log_print(LOG_DEBUG, "path is %.*s", path_length, path);
+	zcu_log_print(LOG_DEBUG, "path is %.*s", path.length(), path.data());
 	zcu_log_print(LOG_DEBUG, "HTTP version is 1.%d", minor_version);
 	zcu_log_print(LOG_DEBUG, "headers:");
 	for (size_t i = 0; i != num_headers; ++i) {

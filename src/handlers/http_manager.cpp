@@ -191,19 +191,55 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 	} else {
 		request.setRequestMethod();
 	}
-	auto request_url = std::string_view(request.path, request.path_length);
-	if (request_url.find("%00") != std::string::npos) {
+
+	// URL
+	if (request.path.find("%00") != std::string::npos) {
 		return validation::REQUEST_RESULT::URL_CONTAIN_NULL;
 	}
 	eol.rm_so = 0;
-	eol.rm_eo = request.path_length;
+	eol.rm_eo = request.path.length();
 	if (listener_config_.has_pat &&
-	    regexec(&listener_config_.url_pat, request.path, 1, &eol,
+	    regexec(&listener_config_.url_pat, request.path.data(), 1, &eol,
 		    REG_STARTEND)) {
 		return validation::REQUEST_RESULT::BAD_URL;
 	}
 
-	// Check reqeuest size .
+	// Rewrite URL
+	auto service = stream.service_manager->getService(stream.request);
+	if (service->rewr_url != nullptr) {
+		/*
+		eol.rm_so = 0;
+		eol.rm_eo = request.path_length;
+	*/
+		std::string path_orig = request.path;
+
+		int flag = 0;
+		for (auto m = service->rewr_url; m; m = m->next) {
+			if (zcu_str_replace_regexp(
+				    buf, request.path.data(),
+				    request.path.length(), &m->match,
+				    const_cast<char *>(m->replace.c_str()))) {
+				flag = 1;
+				request.path = buf;
+				zcu_log_print(LOG_DEBUG,
+					      "URL rewrited \"%s\" -> \"$s\"",
+					      path_orig.data(),
+					      request.path.data());
+
+				if (m->last)
+					break;
+			}
+		}
+		/*
+      // add flag if (rewr_loc_rev == 1)
+        if (flag) {
+            stream.path_rem = request.path - path_orig;
+            zcu_log_print(LOG_DEBUG, "URL for reverse Location\"%s\"", stream.path_rem.data());
+        }
+*/
+	}
+
+	// Check request size .
 	if (UNLIKELY(listener_config_.max_req > 0 &&
 		     request.headers_length >
 			     static_cast<size_t>(listener_config_.max_req) &&
@@ -230,7 +266,6 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 						request.headers[i].value_len);
 
 		/* maybe header to be removed */
-
 		eol.rm_so = 0;
 		eol.rm_eo = request.headers[i].line_size;
 		for (auto m = listener_config_.head_off; m; m = m->next) {
@@ -240,7 +275,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 				break;
 			}
 		}
-		// check for header to be replaced in request
+
+		/* check for header to be replaced in request */
 		for (auto m = listener_config_.replace_header_request; m;
 		     m = m->next) {
 			eol.rm_eo = request.headers[i].line_size;
@@ -813,15 +849,11 @@ bool http_manager::replyRedirect(HttpStream &stream,
 
 	switch (redirect_backend.backend_config->redir_req) {
 	case 1:
-		new_url += std::string(stream.request.path,
-				       stream.request.path_length);
+		new_url += stream.request.path;
 		break;
 	case 2: { // Dynamic redirect
-		std::string request_url(stream.request.path,
-					stream.request.path_length);
-
-		if (zcu_str_replace_regexp(buf, request_url.data(),
-					   request_url.length(),
+		if (zcu_str_replace_regexp(buf, stream.request.path.data(),
+					   stream.request.path.length(),
 					   &service->service_config.url->pat,
 					   new_url.data())) {
 			new_url = buf;

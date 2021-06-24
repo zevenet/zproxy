@@ -67,6 +67,10 @@ class HttpData {
 	bool getHeaderValue(const std::string &, std::string &out_key);
 	void setBuffer(char *ext_buffer, size_t ext_buffer_size);
 
+    private:
+	char *path_ptr; /* Incoming URL string without modifying*/
+	size_t path_ptr_length;
+
     public:
 	std::vector<std::string> extra_headers;
 	std::vector<std::string> permanent_extra_headers;
@@ -89,14 +93,15 @@ class HttpData {
 	char *http_message; // indicate firl line in a http request / response
 	size_t http_message_length;
 	size_t headers_length;
-	// request
+
+	// Olny on request
 	char *method;
 	size_t method_len;
 	int minor_version;
 	std::string http_message_str;
-	char *path;
-	size_t path_length;
-	// response
+	std::string path; /* Incoming URL string without modifying*/
+
+	// Only on response
 	int http_status_code;
 
 	char *status_message;

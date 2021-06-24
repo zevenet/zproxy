@@ -56,7 +56,7 @@ std::string_view HttpRequest::getRequestLine()
 
 std::string HttpRequest::getUrl()
 {
-	return path != nullptr ? std::string(path, path_length) : std::string();
+	return path;
 }
 
 void HttpRequest::setService(void *service)

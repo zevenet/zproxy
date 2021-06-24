@@ -104,6 +104,8 @@ static const Regex
 static const Regex
 	RewriteDestination("^[ \t]*RewriteDestination[ \t]+([01])[ \t]*$");
 static const Regex RewriteHost("^[ \t]*RewriteHost[ \t]+([01])[ \t]*$");
+static const Regex RewriteUrl(
+	"^[ \t]*RewriteUrl[ \t]+\"(.+)\"[ \t]+\"(.+)\"([ \t]+last)?[ \t]*$");
 static const Regex Service("^[ \t]*Service[ \t]*$");
 static const Regex ServiceName("^[ \t]*Service[ \t]+\"(.+)\"[ \t]*$");
 static const Regex URL("^[ \t]*URL[ \t]+\"(.+)\"[ \t]*$");
