@@ -20,10 +20,6 @@
  */
 
 #include "connection.h"
-#include "../util/common.h"
-#include "../../zcutils/zcutils.h"
-#include "../../zcutils/zcu_network.h"
-#include <sys/un.h>
 
 Connection::Connection()
 	:

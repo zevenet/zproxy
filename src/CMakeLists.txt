@@ -40,7 +40,17 @@ add_definitions(-DDEFAULT_MAINTENANCE_INTERVAL=10)
 add_definitions(-DENABLE_CI_HEADERS=1) #enable case insensitive comparator in header map.
 add_definitions(-DUSE_TIMER_FD_TIMEOUT=0)
 
+# Add zcutils
 set(l7core_sources
+    ../zcutils/zcutils.h
+    ../zcutils/zcutils.cpp
+    ../zcutils/zcu_zlib.h
+    ../zcutils/zcu_zlib.cpp
+    ../zcutils/zcu_network.h
+    ../zcutils/zcu_network.cpp
+)
+
+set(l7core_sources ${l7core_sources}
     ssl/ssl_common.h
     ssl/ssl_context.h ssl/ssl_context.cpp
     ssl/ssl_connection_manager.h ssl/ssl_connection_manager.cpp

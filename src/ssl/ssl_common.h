@@ -22,6 +22,9 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <string>
+#include <memory>
+#include "../../zcutils/zcutils.h"
 
 namespace ssl
 {
