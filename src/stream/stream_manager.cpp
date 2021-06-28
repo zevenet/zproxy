@@ -788,13 +788,12 @@ void StreamManager::onRequestEvent(int fd)
 
 		zcu_log_print(
 			LOG_DEBUG,
-			"%s():%d: [%lx][%lu][%s][%s] %s %.*s [%s (%d) -> %s:%d (%d)]",
+			"%s():%d: [%lx][%lu][%s][%s] %s %s [%s (%d) -> %s:%d (%d)]",
 			__FUNCTION__, __LINE__, pthread_self(),
 			stream->stream_id, listener_config_.name.data(),
 			service->name.c_str(),
 			need_new_backend ? "NEW" : "REUSED",
-			stream->request.http_message_length,
-			stream->request.http_message,
+			stream->request.http_message_str.data(),
 			stream->client_connection.getPeerAddress().c_str(),
 			stream->client_connection.getFileDescriptor(),
 			stream->backend_connection.getBackend()->address.c_str(),
@@ -842,12 +841,11 @@ void StreamManager::onRequestEvent(int fd)
 		break;
 	case BACKEND_TYPE::REDIRECT: {
 		zcu_log_print(
-			LOG_INFO, "[%lx][%lu][%s][%s] (%s) %.*s < redirect %s",
+			LOG_INFO, "[%lx][%lu][%s][%s] (%s) %s < redirect %s",
 			pthread_self(), stream->stream_id,
 			listener_config_.name.data(), service->name.c_str(),
 			stream->client_connection.getPeerAddress().c_str(),
-			stream->request.http_message_length,
-			stream->request.http_message,
+			stream->request.http_message_str.data(),
 			bck->backend_config->url.data());
 		if (http_manager::replyRedirect(*stream, *bck))
 			clearStream(stream);
@@ -1296,7 +1294,7 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 		(stream->backend_connection.getBackend() == nullptr) ?
 			      "(null)" :
 			      stream->backend_connection.getBackend()->address.c_str(),
-		stream->request.path,
+		stream->request.path.data(),
 		stream->service_manager->listener_config_->to,
 		stream->client_connection.getPeerAddress().c_str());
 
@@ -1342,7 +1340,7 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 		} else {
 			zcu_log_print(
 				LOG_NOTICE,
-				"[%lx][%lu][%s][%s] e%d %s %.*s from %s",
+				"[%lx][%lu][%s][%s] e%d %s %s from %s",
 				pthread_self(), stream->stream_id,
 				listener_config_.name.data(),
 				service->name.c_str(),
@@ -1351,8 +1349,7 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 					.at(validation::REQUEST_RESULT::
 						    BACKEND_TIMEOUT)
 					.c_str(),
-				stream->request.http_message_length,
-				stream->request.http_message,
+				stream->request.http_message_str.data(),
 				stream->client_connection.getPeerAddress()
 					.c_str());
 		}
@@ -1444,10 +1441,9 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 		stream->backend_connection.reset();
 		stream->response.reset_parser();
 		zcu_log_print(
-			LOG_INFO, "RETRY [%s] %.*s [%s (%d) -> %s (%d)]",
+			LOG_INFO, "RETRY [%s] %s [%s (%d) -> %s (%d)]",
 			service->name.c_str(),
-			stream->request.http_message_length,
-			stream->request.http_message,
+			stream->request.http_message_str.data(),
 			stream->client_connection.getPeerAddress().c_str(),
 			stream->client_connection.getFileDescriptor(),
 			bck->address.c_str(),
@@ -2062,8 +2058,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			__FUNCTION__, __LINE__, pthread_self(),
 			stream->client_connection.getFileDescriptor(),
 			stream->backend_connection.getFileDescriptor(),
-			stream->request.http_message_length,
-			stream->request.http_message,
+			stream->request.http_message_str.data(),
 			stream->backend_connection.buffer_size,
 			stream->response.content_length,
 			stream->response.message_bytes_left,
@@ -2082,12 +2077,11 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		zcu_log_print(
 			LOG_DEBUG,
 			"%s():%d: [%lx]"
-			"OUT EAGAIN  %.*s buffer size: %lu > %8lu \tContent-length: "
+			"OUT EAGAIN  %s buffer size: %lu > %8lu \tContent-length: "
 			"%lu\tleft: "
 			"%lu\tIO: %s",
 			__FUNCTION__, __LINE__, pthread_self(),
-			stream->request.http_message_length,
-			stream->request.http_message, buffer_size_in,
+			stream->request.http_message_str.data(),
 			stream->backend_connection.buffer_size,
 			stream->response.content_length,
 			stream->response.message_bytes_left,

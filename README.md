@@ -474,6 +474,18 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	Match  the  incoming request. If a request fails to match than this service will be skipped and next one tried. If all services fail to match zproxy returns an error. You may define multiple URL conditions per service, in which case all patterns must match. If no URL was defined then all requests match. The matching is by  default  case-sensitive, but this can be overridden by specifying IgnoreCase 1
 
+- **RewriteUrl** "pattern" "replace" [last]
+
+	It checks a pattern in order to get strings from URL and replace them.
+	Several RewriteUrl directives can be added. All of them will be sequentially applied to the incoming URL unless the *last* flag is set that will finish the rewrite url phase.
+
+              Examples: if you specified
+
+                  RewriteUrl "/media/(.+)$" "/svc1/$1" last
+                  RewriteUrl "^(.*)$" "/sub-default$1"
+
+	A regex will be applied only once per directive, I.E, the directive `RewriteUrl "/param" "/p"` for the URL `/param/1/param/2` will produce `/p/1/param/2`.
+
 - **OrURLs**
 
 	Defines a block of URL directives that should be merged into a single pattern, all OR'd together.  This creates a pattern like ((url1)|(url2)|(url3)) for as many URL directives as are specified within the block.  End the block with an End directive.

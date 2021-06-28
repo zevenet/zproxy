@@ -2,21 +2,10 @@
 
 bool Waf::checkRequestWaf(HttpStream &stream)
 {
-	std::string httpVersion = "";
+	std::string httpVersion = stream.request.getHttpVersion();
 	std::string httpMethod(stream.request.method,
 			       stream.request.method_len);
 
-	switch (stream.request.http_version) {
-	case http::HTTP_VERSION::HTTP_1_0:
-		httpVersion = "1.0";
-		break;
-	case http::HTTP_VERSION::HTTP_1_1:
-		httpVersion = "1.1";
-		break;
-	case http::HTTP_VERSION::HTTP_2_0:
-		httpVersion = "2.0";
-		break;
-	}
 	modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
 	stream.modsec_transaction->processConnection(
 		stream.client_connection.getPeerAddress().data(),
@@ -71,19 +60,8 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 
 bool Waf::checkResponseWaf(HttpStream &stream)
 {
-	std::string httpVersion = "";
+	std::string httpVersion = stream.response.getHttpVersion();
 
-	switch (stream.request.http_version) {
-	case http::HTTP_VERSION::HTTP_1_0:
-		httpVersion = "1.0";
-		break;
-	case http::HTTP_VERSION::HTTP_1_1:
-		httpVersion = "1.1";
-		break;
-	case http::HTTP_VERSION::HTTP_2_0:
-		httpVersion = "2.0";
-		break;
-	}
 	modsecurity::intervention::reset(&stream.modsec_transaction->m_it);
 	for (int i = 0; i < static_cast<int>(stream.response.num_headers);
 	     i++) {

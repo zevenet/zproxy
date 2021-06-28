@@ -30,13 +30,14 @@ http_parser::HttpData::HttpData()
 	  buffer(nullptr), buffer_size(0), last_length(0), num_headers(0),
 	  method(nullptr), method_len(0), minor_version(-1), path_ptr(nullptr),
 	  path_ptr_length(0), http_status_code(0), status_message(nullptr),
-	  message_length(0), path("")
+	  message_length(0), path(""), http_message_str("")
 {
 	reset_parser();
 }
 
 void http_parser::HttpData::reset_parser()
 {
+	http_message_str = "";
 	method = nullptr;
 	method_len = 0;
 	path_ptr = nullptr;
@@ -66,8 +67,10 @@ void http_parser::HttpData::setBuffer(char *ext_buffer, size_t ext_buffer_size)
 
 void http_parser::HttpData::prepareToSend()
 {
+	http_message_str += http::CRLF;
 	iov_size = 0;
-	iov[iov_size++] = { http_message, http_message_length + CRLF_LEN };
+	iov[iov_size++] = { http_message_str.data(),
+			    http_message_str.length() };
 
 	for (size_t i = 0; i != num_headers; i++) {
 		if (headers[i].header_off)
@@ -223,6 +226,8 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
 	//  if (LIKELY(reset))
+	char *http_message;
+	int http_message_length;
 	reset_parser();
 	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
@@ -279,6 +284,9 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 				     size_t *used_bytes,
 				     [[maybe_unused]] bool reset)
 {
+	char *http_message;
+	int http_message_length;
+
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
 	//  if (LIKELY(reset))
@@ -349,4 +357,22 @@ bool http_parser::HttpData::hasPendingData()
 	       // so HTTP parsing is needed.
 	       (message_bytes_left > 0 ||
 		chunked_status != http::CHUNKED_STATUS::CHUNKED_DISABLED);
+}
+
+std::string http_parser::HttpData::getHttpVersion()
+{
+	std::string httpVersion = "";
+
+	switch (http_version) {
+	case http::HTTP_VERSION::HTTP_1_0:
+		httpVersion = "1.0";
+		break;
+	case http::HTTP_VERSION::HTTP_1_1:
+		httpVersion = "1.1";
+		break;
+	case http::HTTP_VERSION::HTTP_2_0:
+		httpVersion = "2.0";
+		break;
+	}
+	return httpVersion;
 }

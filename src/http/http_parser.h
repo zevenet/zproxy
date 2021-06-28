@@ -90,15 +90,17 @@ class HttpData {
 	size_t buffer_size;
 	size_t last_length;
 	size_t num_headers;
-	char *http_message; // indicate firl line in a http request / response
+	std::string
+		http_message_str; // indicate firl line in a http request / response
+	/*	char *http_message;
 	size_t http_message_length;
+	*/
 	size_t headers_length;
 
 	// Olny on request
 	char *method;
 	size_t method_len;
 	int minor_version;
-	std::string http_message_str;
 	std::string path; /* Incoming URL string without modifying*/
 
 	// Only on response
@@ -120,6 +122,8 @@ class HttpData {
 	char *getBuffer() const;
 	bool getHeaderSent() const;
 	void setHeaderSent(bool value);
+
+	std::string getHttpVersion();
 
     private:
 	bool headers_sent{ false };

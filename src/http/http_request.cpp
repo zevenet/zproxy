@@ -51,7 +51,7 @@ std::string_view HttpRequest::getMethod()
 
 std::string_view HttpRequest::getRequestLine()
 {
-	return std::string_view(http_message, http_message_length);
+	return std::string_view(http_message_str);
 }
 
 std::string HttpRequest::getUrl()

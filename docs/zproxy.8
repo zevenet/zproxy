@@ -755,6 +755,17 @@ was defined then all requests match. The matching is by default case-sensitive,
 but this can be overridden by specifying
 .B IgnoreCase 1
 .TP
+\fBRewriteUrl\fR "pattern" "replace" [last]
+It checks a pattern in order to get strings from URL and replace them.
+Several RewriteUrl directives can be added. All of them will be sequentially applied to the incoming URL unless the *last* flag is set that will finish the rewrite url phase.
+.br
+              Examples: if you specified
+.br
+                  RewriteUrl "/media/(.+)$" "/svc1/$1" last
+                  RewriteUrl "^(.*)$" "/sub-default$1"
+.br
+A regex will be applied only once per directive, I.E, the directive `RewriteUrl "/param" "/p"` for the URL `/param/1/param/2` will produce `/p/1/param/2`.
+.TP
 \fBOrURLs\fR
 Defines a block of
 .I URL

@@ -174,8 +174,10 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 	std::string header, header_value;
 	auto &listener_config_ = *stream.service_manager->listener_config_;
 	HttpRequest &request = stream.request;
-	regmatch_t eol{ 0, static_cast<regoff_t>(request.http_message_length) };
-	auto res = ::regexec(&listener_config_.verb, request.http_message,
+	regmatch_t eol{ 0, static_cast<regoff_t>(
+				   request.http_message_str.length()) };
+	auto res = ::regexec(&listener_config_.verb,
+			     request.http_message_str.data(),
 			     1, // include validation data package
 			     &eol, REG_STARTEND);
 	if (UNLIKELY(res != 0)) {
@@ -221,8 +223,9 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 				    const_cast<char *>(m->replace.c_str()))) {
 				flag = 1;
 				request.path = buf;
+
 				zcu_log_print(LOG_DEBUG,
-					      "URL rewrited \"%s\" -> \"$s\"",
+					      "URL rewrited \"%s\" -> \"%s\"",
 					      path_orig.data(),
 					      request.path.data());
 
@@ -236,7 +239,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
             stream.path_rem = request.path - path_orig;
             zcu_log_print(LOG_DEBUG, "URL for reverse Location\"%s\"", stream.path_rem.data());
         }
-*/
+        */
+
+		request.http_message_str =
+			std::string_view(request.method, request.method_len);
+		request.http_message_str += " " + request.path + " HTTP/" +
+					    request.getHttpVersion();
 	}
 
 	// Check request size .

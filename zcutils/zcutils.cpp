@@ -265,7 +265,9 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 	zcu_log_print(LOG_DEBUG, "String matches %.*s", ori_len, ori_str);
 #endif
 
-	chptr = buf;
+	memcpy(buf, ori_str, umtch[0].rm_so);
+
+	chptr = buf + umtch[0].rm_so;
 	enptr = buf + ZCU_DEF_BUFFER_SIZE - 1;
 	*enptr = '\0';
 	srcptr = replace_str;
@@ -289,7 +291,15 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 		}
 		*chptr++ = *srcptr++;
 	}
-	*chptr++ = '\0';
+
+	//copy the last part of the string
+	if (umtch[0].rm_eo != umtch[0].rm_so) {
+		memcpy(chptr, ori_str + umtch[0].rm_eo,
+		       ori_len - umtch[0].rm_eo);
+		chptr += ori_len - umtch[0].rm_eo;
+	}
+
+	*chptr = '\0';
 
 	return 1;
 }
