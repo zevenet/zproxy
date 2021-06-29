@@ -144,6 +144,13 @@ class Config : public Counter<Config> {
 	std::string file2str(const char *fname);
 
 	/*
+	 * it parses the replace_header directive
+	 */
+	void parseReplaceHeader(char *lin, regmatch_t *matches,
+				ReplaceHeader **replace_header_request,
+				ReplaceHeader **replace_header_response);
+
+	/*
 	 * parse an HTTP listener
 	 */
 	std::shared_ptr<ListenerConfig> parse_HTTP();

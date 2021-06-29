@@ -125,6 +125,8 @@ class ServiceConfig : Counter<ServiceConfig> {
 	MATCHER *url, /* request matcher */
 		*req_head, /* required headers */
 		*deny_head; /* forbidden headers */
+	ReplaceHeader *replace_header_request{ nullptr };
+	ReplaceHeader *replace_header_response{ nullptr };
 	std::shared_ptr<BackendConfig> backends;
 	std::shared_ptr<BackendConfig> emergency;
 	int abs_pri; /* abs total priority for all back-ends */
@@ -166,6 +168,8 @@ class ServiceConfig : Counter<ServiceConfig> {
 		delete url;
 		delete req_head;
 		delete deny_head;
+		delete replace_header_request;
+		delete replace_header_response;
 		::regfree(&sess_start);
 		::regfree(&sess_pat);
 	}

@@ -305,6 +305,8 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 	if (pret > 0) {
 		*used_bytes = static_cast<size_t>(pret);
 		headers_length = pret;
+		http_version = minor_version == 1 ? HTTP_VERSION::HTTP_1_1 :
+							  HTTP_VERSION::HTTP_1_0;
 		http_message = buffer;
 		// http_message_length = num_headers > 0 ?
 		// static_cast<size_t>(headers[0].name - buffer) : buffer_size - 2;

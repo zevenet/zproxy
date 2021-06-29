@@ -105,7 +105,7 @@ static const Regex
 	RewriteDestination("^[ \t]*RewriteDestination[ \t]+([01])[ \t]*$");
 static const Regex RewriteHost("^[ \t]*RewriteHost[ \t]+([01])[ \t]*$");
 static const Regex RewriteUrl(
-	"^[ \t]*RewriteUrl[ \t]+\"(.+)\"[ \t]+\"(.+)\"([ \t]+last)?[ \t]*$");
+	"^[ \t]*RewriteUrl[ \t]+\"(.+)\"[ \t]+\"(.*)\"([ \t]+last)?[ \t]*$");
 static const Regex Service("^[ \t]*Service[ \t]*$");
 static const Regex ServiceName("^[ \t]*Service[ \t]+\"(.+)\"[ \t]*$");
 static const Regex URL("^[ \t]*URL[ \t]+\"(.+)\"[ \t]*$");
@@ -199,5 +199,5 @@ static const Regex WafRules("^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$");
 #endif
 static const Regex TestServer("^[ \t]*Server[ \t]+([1-9-][0-9]*)[ \t]*$");
 static const Regex ReplaceHeader(
-	"^[ \t]*ReplaceHeader[ \t]+(Request|Response)[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]*$");
+	"^[ \t]*ReplaceHeader[ \t]+(Request|Response)[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]+\"(.*)\"[ \t]*$");
 }; // namespace regex_set

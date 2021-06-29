@@ -168,11 +168,88 @@ void http_manager::setBackendCookie(Service *service, HttpStream *stream)
 	}
 }
 
+void rewriteUrl(HttpStream &stream, Service *service)
+{
+	char buf[ZCU_DEF_BUFFER_SIZE];
+	HttpRequest &request = stream.request;
+
+	if (service->rewr_url != nullptr) {
+		/*
+		eol.rm_so = 0;
+		eol.rm_eo = request.path_length;
+	*/
+		std::string path_orig = request.path;
+
+		int flag = 0;
+		for (auto m = service->rewr_url; m; m = m->next) {
+			if (zcu_str_replace_regexp(
+				    buf, request.path.data(),
+				    request.path.length(), &m->match,
+				    const_cast<char *>(m->replace.c_str()))) {
+				flag = 1;
+				request.path = buf;
+
+				zcu_log_print(LOG_DEBUG,
+					      "URL rewrited \"%s\" -> \"%s\"",
+					      path_orig.data(),
+					      request.path.data());
+
+				if (m->last)
+					break;
+			}
+		}
+		/*
+		// add flag if (rewr_loc_rev == 1)
+		if (flag) {
+			stream.path_rem = request.path - path_orig;
+			zcu_log_print(LOG_DEBUG, "URL for reverse Location\"%s\"", stream.path_rem.data());
+		}
+		*/
+
+		request.http_message_str =
+			std::string_view(request.method, request.method_len);
+		request.http_message_str += " " + request.path + " HTTP/" +
+					    request.getHttpVersion();
+	}
+}
+
+void http_manager::replaceHeaderHttp(http_parser::HttpData *http,
+				     phr_header *header,
+				     ReplaceHeader *replace_header,
+				     regmatch_t *eol)
+{
+	char buf[ZCU_DEF_BUFFER_SIZE];
+
+	if (header->header_off)
+		return;
+
+	for (auto m = replace_header; m; m = m->next) {
+		eol->rm_eo = header->line_size;
+		if (::regexec(&m->name, header->name, 1, eol, REG_STARTEND) ==
+		    0) {
+			if (zcu_str_replace_regexp(
+				    buf, header->value, header->value_len,
+				    &m->match,
+				    const_cast<char *>(m->replace.c_str()))) {
+				auto new_header_value = std::string(
+					header->name, header->name_len);
+				new_header_value += ": ";
+				new_header_value += buf;
+				http->addHeader(new_header_value);
+				header->header_off = true;
+				// Maybe modify for doing several sustitutions over the header
+				break;
+			}
+		}
+	}
+}
+
 validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 {
 	char buf[ZCU_DEF_BUFFER_SIZE];
 	std::string header, header_value;
 	auto &listener_config_ = *stream.service_manager->listener_config_;
+	auto service = static_cast<Service *>(stream.request.getService());
 	HttpRequest &request = stream.request;
 	regmatch_t eol{ 0, static_cast<regoff_t>(
 				   request.http_message_str.length()) };
@@ -207,45 +284,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 	}
 
 	// Rewrite URL
-	auto service = stream.service_manager->getService(stream.request);
-	if (service->rewr_url != nullptr) {
-		/*
-		eol.rm_so = 0;
-		eol.rm_eo = request.path_length;
-	*/
-		std::string path_orig = request.path;
-
-		int flag = 0;
-		for (auto m = service->rewr_url; m; m = m->next) {
-			if (zcu_str_replace_regexp(
-				    buf, request.path.data(),
-				    request.path.length(), &m->match,
-				    const_cast<char *>(m->replace.c_str()))) {
-				flag = 1;
-				request.path = buf;
-
-				zcu_log_print(LOG_DEBUG,
-					      "URL rewrited \"%s\" -> \"%s\"",
-					      path_orig.data(),
-					      request.path.data());
-
-				if (m->last)
-					break;
-			}
-		}
-		/*
-      // add flag if (rewr_loc_rev == 1)
-        if (flag) {
-            stream.path_rem = request.path - path_orig;
-            zcu_log_print(LOG_DEBUG, "URL for reverse Location\"%s\"", stream.path_rem.data());
-        }
-        */
-
-		request.http_message_str =
-			std::string_view(request.method, request.method_len);
-		request.http_message_str += " " + request.path + " HTTP/" +
-					    request.getHttpVersion();
-	}
+	rewriteUrl(stream, service);
 
 	// Check request size .
 	if (UNLIKELY(listener_config_.max_req > 0 &&
@@ -258,6 +297,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 		return validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
 	}
 	bool connection_close_pending = false;
+
 	// Check for correct headers
 	for (size_t i = 0; i != request.num_headers; i++) {
 #if DEBUG_ZCU_LOG
@@ -284,29 +324,13 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 			}
 		}
 
-		/* check for header to be replaced in request */
-		for (auto m = listener_config_.replace_header_request; m;
-		     m = m->next) {
-			eol.rm_eo = request.headers[i].line_size;
-			if (::regexec(&m->name, request.headers[i].name, 1,
-				      &eol, REG_STARTEND) == 0) {
-				if (zcu_str_replace_regexp(
-					    buf, request.headers[i].value,
-					    request.headers[i].value_len,
-					    &m->match,
-					    const_cast<char *>(
-						    m->replace.c_str()))) {
-					auto new_header_value = std::string(
-						request.headers[i].name,
-						request.headers[i].name_len);
-					new_header_value += ": ";
-					new_header_value += buf;
-					request.addHeader(new_header_value);
-					request.headers[i].header_off = true;
-					header_value = buf;
-				}
-			}
-		}
+		// check for header to be replaced in request
+		replaceHeaderHttp(
+			&request, &request.headers[i],
+			service->service_config.replace_header_request, &eol);
+		replaceHeaderHttp(&request, &request.headers[i],
+				  listener_config_.replace_header_request,
+				  &eol);
 
 		// check header values length
 		if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
@@ -514,28 +538,14 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 				break;
 			}
 		}
-		// check for header to be replaced in request
-		for (auto m = listener_config_.replace_header_response; m;
-		     m = m->next) {
-			eol.rm_eo = response.headers[i].line_size;
-			if (::regexec(&m->name, response.headers[i].name, 1,
-				      &eol, REG_STARTEND) == 0) {
-				if (zcu_str_replace_regexp(
-					    buf, response.headers[i].value,
-					    response.headers[i].value_len,
-					    &m->match,
-					    const_cast<char *>(
-						    m->replace.c_str()))) {
-					auto new_header_value = std::string(
-						response.headers[i].name,
-						response.headers[i].name_len);
-					new_header_value += ": ";
-					new_header_value += buf;
-					response.addHeader(new_header_value);
-					response.headers[i].header_off = true;
-				}
-			}
-		}
+
+		// check for header to be replaced in response
+		replaceHeaderHttp(
+			&response, &response.headers[i],
+			service->service_config.replace_header_response, &eol);
+		replaceHeaderHttp(&response, &response.headers[i],
+				  listener_config_.replace_header_response,
+				  &eol);
 
 		if (response.headers[i].header_off)
 			continue;

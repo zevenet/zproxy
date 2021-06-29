@@ -341,7 +341,8 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
 
-	Replace a header in request or response.
+	Replace a header in request or response. If several regex matches in the header, only the first one will apply.
+	The replaceHeader directive in the services has priority over the listener one.
 
 		Example:
 		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
@@ -485,6 +486,15 @@ All configuration directives enclosed between Service and End are specific to a 
                   RewriteUrl "^(.*)$" "/sub-default$1"
 
 	A regex will be applied only once per directive, I.E, the directive `RewriteUrl "/param" "/p"` for the URL `/param/1/param/2` will produce `/p/1/param/2`.
+
+- **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
+
+	Replace a header in request or response. If several regex matches in the header, only the first one will apply.
+	The replaceHeader directive in the services has priority over the listener one.
+
+		Example:
+		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
+		  ReplaceHeader  Response   "^X-Forward-For:"  "(.*)"                 "$1,10.24.5.89"
 
 - **OrURLs**
 

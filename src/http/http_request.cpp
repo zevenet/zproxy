@@ -64,6 +64,8 @@ void HttpRequest::setService(void *service)
 	this->request_service = service;
 }
 
+// How to use when the service already is select
+// auto service = static_cast<Service *>(stream.request.getService());
 void *HttpRequest::getService() const
 {
 	return request_service;

@@ -24,6 +24,7 @@
 #include "../config/config_data.h"
 #include "../http/http.h"
 #include "../http/http_stream.h"
+#include "../http/http_parser.h"
 #include "../service/service.h"
 #include "../util/common.h"
 #ifdef ENABLE_ON_FLY_COMRESSION
@@ -34,6 +35,23 @@ using namespace http;
 
 class http_manager {
     public:
+	/**
+   * @brief replaces the headers
+   *
+   * It uses the configured pattern in order to replace
+   * the headers. It can be used in the request or response
+   * phase
+   *
+   * @param request/response struct.
+   * @param header of the request/response to replace
+   * @param is the replace struct with the pattern and replace strings
+   * @param regexp object pointing to the header.
+   */
+	static void replaceHeaderHttp(http_parser::HttpData *response,
+				      phr_header *header,
+				      ReplaceHeader *replace_header,
+				      regmatch_t *eol);
+
 	/**
    * @brief Validates the request.
    *
@@ -79,8 +97,8 @@ class http_manager {
    * size.
    */
 
-	/**/ static ssize_t handleChunkedData(Connection &connection,
-					      http_parser::HttpData &http_data);
+	static ssize_t handleChunkedData(Connection &connection,
+					 http_parser::HttpData &http_data);
 	/**
    * @brief Get chunk size from buffer
    * if
@@ -91,9 +109,8 @@ class http_manager {
    * @return Chunk size or -1 en case of error.
    */
 
-	/**/ static ssize_t getChunkSize(const std::string &data,
-					 size_t data_size,
-					 int &chunk_size_line_len);
+	static ssize_t getChunkSize(const std::string &data, size_t data_size,
+				    int &chunk_size_line_len);
 	/**
    * @brief Search for last chunk size in buffer data
    *
@@ -107,10 +124,10 @@ class http_manager {
    * @return last chunk size found.
    */
 
-	/**/ static ssize_t getLastChunkSize(const char *data, size_t data_size,
-					     size_t &data_offset,
-					     size_t &chunk_size_bytes_left,
-					     size_t &total_chunks_size);
+	static ssize_t getLastChunkSize(const char *data, size_t data_size,
+					size_t &data_offset,
+					size_t &chunk_size_bytes_left,
+					size_t &total_chunks_size);
 	/**
    * @brief Replies an specified error to the client.
    *
