@@ -517,7 +517,8 @@ in order to remove more than one header, and the header itself may be a regular
 pattern (though this should be used with caution).
 .TP
 \fBReplaceHeader\fR <Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>
-Replace a header in request or response.
+Replace a header in request or response. If several regex matches in the header, only the first one will apply.
+The replaceHeader directive in the services has priority over the listener one.
 .br
 Example:
            ReplaceHeader    Request     ^Cookie:        ^Server=(.*) 	Test=$1
@@ -547,6 +548,12 @@ If 1 force
 .B zproxy
 to change the Destination: header in requests. The header is changed to point
 to the back-end itself with the correct protocol. Default: 0.
+.TP
+\fBRewriteHost\fR 0|1
+If 1 force
+.B zproxy
+to change the Host: header in requests. The header is changed to point to the
+back-end itself using the IP and port (Example: 192.168.200.50:80). Default: 0.
 .TP
 \fBWafRules\fR "file path"
 Apply a WAF ruleset file to the listener. It is possible to add several directives
@@ -765,6 +772,14 @@ Several RewriteUrl directives can be added. All of them will be sequentially app
                   RewriteUrl "^(.*)$" "/sub-default$1"
 .br
 A regex will be applied only once per directive, I.E, the directive `RewriteUrl "/param" "/p"` for the URL `/param/1/param/2` will produce `/p/1/param/2`.
+.TP
+\fBReplaceHeader\fR <Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>
+Replace a header in request or response. If several regex matches in the header, only the first one will apply.
+The replaceHeader directive in the services has priority over the listener one.
+.br
+Example:
+           ReplaceHeader    Request     ^Cookie:        ^Server=(.*) 	Test=$1
+           ReplaceHeader	Response	^X-Powered-By: 	(.*)	        Server($1)
 .TP
 \fBOrURLs\fR
 Defines a block of

@@ -366,6 +366,10 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	If 1 force zproxy to change the Destination: header in requests. The header is changed to point to the back-end itself with the correct protocol. Default: 0.
 
+- **RewriteHost** 0|1
+
+	If 1 force zproxy to change the Host: header in requests. The header is changed to point to the back-end itself using the IP and port (Example: 192.168.200.50:80). Default: 0.
+
 - **WafRules** "file path"
 
 	Apply a WAF ruleset file to the listener. It is possible to add several directives of this type. Those will be analyzed sequentially, in the same order that  they  appear  in the configuration file. The rule file must be compatibility with the Modsecurity syntax (SecLang).
