@@ -157,6 +157,7 @@ DESCRIPTION="Disable the backend 0 in the service 0"
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | BACKGROUND     | If this flag is set with **1** the request will be executed in background. The command **killwrk** can be defined to stop it |
+| FILTER     | The string defined here will be applied as parameter in grep command in order to get a filtered output of the curl -v |
 
 ```
 DESCRIPTION="it executes the curl command 'curl -X GET https//service.test/' in the client 1"

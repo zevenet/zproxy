@@ -343,7 +343,7 @@ get_test_out_dir () {
 
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
-	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND
+	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER
 }
 
 replace_test_out ()
@@ -385,9 +385,10 @@ exec_curl () {
 	local OUT_F="$DIR/body.out.tmp"
 	local EXT_F="$DIR/extended.out.tmp"
 	local ERR_F="$DIR/error.out.tmp"
+	local FILTER_F="$DIR/filter.out.tmp"
 
 	# create files to refresh files if become empty
-	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
+	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F $FILTER_F
 	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
 
 	local EXTENDED_OUT="-w 'HTTP_VERSION: %{http_version}\n'"
@@ -395,9 +396,13 @@ exec_curl () {
 	local H=""
 	local B=""
 	local FG=""
+	local F=""
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
+	fi
+	if [[ filter ]]; then
+		F="-v"
 	fi
 	if [[ $HEADERS != "" ]]; then
 		while read -r IT
@@ -425,7 +430,7 @@ exec_curl () {
 	fi
 
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
--s -k --show-error $EXTENDED_OUT \
+-s -k --show-error $EXTENDED_OUT $F \
 -D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
 	# cmd to debug
@@ -439,6 +444,10 @@ exec_curl () {
 	fi
 	mask_out $OUT_F
 	pretty_json $OUT_F
+
+	if [[ "FILTER" != "" ]]; then
+		grep "$FILTER" $ERR_F > $FILTER_F
+	fi
 }
 
 pretty_json () {

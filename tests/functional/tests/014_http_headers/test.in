@@ -3,3 +3,9 @@ CL=1
 METHOD="GET"
 URL="/headers"
 VHOST=
+##############################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/sv1/headers"
+VHOST=

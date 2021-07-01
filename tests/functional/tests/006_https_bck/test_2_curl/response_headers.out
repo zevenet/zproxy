@@ -3,5 +3,8 @@ Server: nginx
 Content-Type: application/octet-stream
 Transfer-Encoding: chunked
 Connection: keep-alive
-Backend: bck-2
+Request-Uri: /bck-non-https
+Loc-raw: http://10.2.1.2/bck-non-https
+Location: http://10.1.2.1/bck-non-https
+Content-Location: http://10.1.2.1/bck-non-https/app
 

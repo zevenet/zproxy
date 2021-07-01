@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Request-Uri: /t/s1/path/1
+Loc-raw: http://10.2.1.1/t/s1/path/1
+Location: http://10.1.2.1/t/s1/path/1
+Content-Location: http://10.1.2.1/t/s1/path/1/app
+

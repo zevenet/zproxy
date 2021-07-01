@@ -1,0 +1,26 @@
+DESCRIPTION="get the 'test' certificate"
+CMD=curl
+CL=1
+SSL=1
+FILTER="OU="
+VHOST="test.zproxy"
+METHOD="GET"
+URL="/"
+##################################
+DESCRIPTION="get the 'wild' certificate"
+CMD=curl
+CL=1
+SSL=1
+FILTER="OU="
+VHOST="zone.zproxy"
+METHOD="GET"
+URL="/"
+##################################
+DESCRIPTION="get the 'all' certificate"
+CMD=curl
+CL=1
+SSL=1
+FILTER="OU="
+VHOST="subzone.test.zproxy"
+METHOD="GET"
+URL="/"

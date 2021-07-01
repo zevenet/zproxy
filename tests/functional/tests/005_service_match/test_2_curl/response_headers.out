@@ -3,5 +3,8 @@ Server: nginx
 Content-Type: application/octet-stream
 Transfer-Encoding: chunked
 Connection: keep-alive
-Backend: bck-2
+Request-Uri: /service2
+Loc-raw: http://10.2.1.2/service2
+Location: http://10.1.2.1/service2
+Content-Location: http://10.1.2.1/service2/app
 
