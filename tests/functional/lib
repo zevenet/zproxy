@@ -401,7 +401,7 @@ exec_curl () {
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
 	fi
-	if [[ filter ]]; then
+	if [[ $FILTER != "" ]]; then
 		F="-v"
 	fi
 	if [[ $HEADERS != "" ]]; then

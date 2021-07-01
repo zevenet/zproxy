@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Backend: bck-1
+Request-Uri: /s1/init/3/mid/param3/end
+Loc-raw: http://10.2.1.1/s1/init/3/mid/param3/end
+Location: http://10.1.2.1/s1/init/param3/mid/param3/end
+Content-Location: http://10.1.2.1/s1/init/param3/mid/param3/end/app
+
