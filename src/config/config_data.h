@@ -151,6 +151,12 @@ class ServiceConfig : Counter<ServiceConfig> {
 		*becdomain, /* Backend Cookie domain */
 		*becpath; /* Backend cookie path */
 	int becage; /* Backend cookie age */
+	int rewr_loc_path{
+		-1
+	}; /* overwrite the RewriteLocation (Path) parameter in the service, -1 is that was not defind in the service */
+	int rewr_loc{
+		-1
+	}; /* overwrite the RewriteLocation parameter in the service, -1 is that was not defind in the service */
 	bool dynscale; /* true if the back-ends should be dynamically rescaled */
 	bool disabled; /* true if the service is disabled */
 	int sts; /* strict transport security */
@@ -227,6 +233,9 @@ struct ListenerConfig : Counter<ListenerConfig> {
 		nullptr
 	}; /* headers to remove  from response */
 	std::string ssl_config_file; /* OpenSSL config file path */
+	int rewr_loc_path{
+		0
+	}; /* rewrite the path in the location response header */
 	int rewr_loc{ 0 }; /* rewrite location response */
 	int rewr_dest{ 0 }; /* rewrite destination header */
 	int rewr_host{ 0 }; /* rewrite host header */

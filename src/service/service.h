@@ -137,6 +137,7 @@ class Service : public sessions::HttpSessionManager,
 	bool pinned_connection;
 	ROUTING_POLICY routing_policy;
 	ReplaceHeader *rewr_url{ nullptr };
+	int rewr_loc, rewr_loc_path;
 
     private:
 	bool addBackend(JsonObject *json_object);

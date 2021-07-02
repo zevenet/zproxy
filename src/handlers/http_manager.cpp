@@ -172,45 +172,50 @@ void rewriteUrl(HttpStream &stream, Service *service)
 {
 	char buf[ZCU_DEF_BUFFER_SIZE];
 	HttpRequest &request = stream.request;
+	bool rewr =
+		(service->rewr_loc_path == 1 ||
+		 service->rewr_loc_path == -1 &&
+			 stream.service_manager->listener_config_->rewr_loc ==
+				 1);
+	int offset = 0, ori_size = ZCU_DEF_BUFFER_SIZE;
+	if (service->rewr_url == nullptr)
+		return;
 
-	if (service->rewr_url != nullptr) {
-		/*
-		eol.rm_so = 0;
-		eol.rm_eo = request.path_length;
-	*/
-		std::string path_orig = request.path;
+	std::string path_orig = request.path;
 
-		int flag = 0;
-		for (auto m = service->rewr_url; m; m = m->next) {
-			if (zcu_str_replace_regexp(
-				    buf, request.path.data(),
-				    request.path.length(), &m->match,
-				    const_cast<char *>(m->replace.c_str()))) {
-				flag = 1;
-				request.path = buf;
+	int flag = 0;
+	for (auto m = service->rewr_url; m; m = m->next) {
+		offset = zcu_str_replace_regexp(
+			buf, request.path.data(), request.path.length(),
+			&m->match, const_cast<char *>(m->replace.c_str()));
+		if (offset != -1) {
+			request.path = buf;
+			zcu_log_print(LOG_DEBUG,
+				      "URL rewrited \"%s\" -> \"%s\"",
+				      path_orig.data(), request.path.data());
 
-				zcu_log_print(LOG_DEBUG,
-					      "URL rewrited \"%s\" -> \"%s\"",
-					      path_orig.data(),
-					      request.path.data());
-
-				if (m->last)
-					break;
+			if (ori_size > request.path.length() - offset) {
+				ori_size = request.path.length() - offset;
 			}
-		}
-		/*
-		// add flag if (rewr_loc_rev == 1)
-		if (flag) {
-			stream.path_rem = request.path - path_orig;
-			zcu_log_print(LOG_DEBUG, "URL for reverse Location\"%s\"", stream.path_rem.data());
-		}
-		*/
 
-		request.http_message_str =
-			std::string_view(request.method, request.method_len);
-		request.http_message_str += " " + request.path + " HTTP/" +
-					    request.getHttpVersion();
+			if (m->last)
+				break;
+		}
 	}
+
+	if (ori_size != ZCU_DEF_BUFFER_SIZE && rewr) {
+		stream.rewr_loc_str_repl = std::string(
+			request.path.data(), request.path.length() - ori_size);
+		stream.rewr_loc_str_ori = std::string(
+			path_orig.data(), path_orig.length() - ori_size);
+		zcu_log_print(LOG_DEBUG, "URL for reverse Location\"%s\"",
+			      stream.rewr_loc_str_repl.data());
+	}
+
+	request.http_message_str =
+		std::string_view(request.method, request.method_len);
+	request.http_message_str +=
+		" " + request.path + " HTTP/" + request.getHttpVersion();
 }
 
 void http_manager::replaceHeaderHttp(http_parser::HttpData *http,
@@ -230,7 +235,8 @@ void http_manager::replaceHeaderHttp(http_parser::HttpData *http,
 			if (zcu_str_replace_regexp(
 				    buf, header->value, header->value_len,
 				    &m->match,
-				    const_cast<char *>(m->replace.c_str()))) {
+				    const_cast<char *>(m->replace.c_str())) !=
+			    -1) {
 				auto new_header_value = std::string(
 					header->name, header->name_len);
 				new_header_value += ": ";
@@ -498,6 +504,116 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 	return validation::REQUEST_RESULT::OK;
 }
 
+int rewriteHeaderLocation(phr_header *header,
+			  http::HTTP_HEADER_NAME header_name,
+			  HttpStream &stream, ListenerConfig *listener_config_,
+			  Service *service)
+{
+	auto header_value = std::string_view(header->value, header->value_len);
+	int rewr_loc = (service->rewr_loc != -1) ? service->rewr_loc :
+							 listener_config_->rewr_loc;
+	int rewr_loc_path = (service->rewr_loc_path != -1) ?
+					  service->rewr_loc_path :
+					  listener_config_->rewr_loc_path;
+
+	if (stream.rewr_loc_str_repl == "")
+		rewr_loc_path = 0;
+
+	if (rewr_loc == 0 && rewr_loc_path == 0)
+		return 0;
+
+	auto backend_addr =
+		stream.backend_connection.getBackend()->address_info;
+	if (backend_addr->ai_family != AF_INET &&
+	    backend_addr->ai_family != AF_INET6)
+		return 0;
+	// Rewrite location
+	std::string location_header_value(header->value, header->value_len);
+	regmatch_t matches[4];
+	//std::memset(matches,0,4);
+	matches[0].rm_so = 0;
+	matches[0].rm_eo = header->value_len;
+	if (regexec(&regex_set::LOCATION, header->value, 4, matches,
+		    REG_STARTEND)) {
+		return 0;
+	}
+
+	std::string proto(
+		location_header_value.data() + matches[1].rm_so,
+		static_cast<size_t>(matches[1].rm_eo - matches[1].rm_so));
+	std::string host(
+		location_header_value.data() + matches[2].rm_so,
+		static_cast<size_t>(matches[2].rm_eo - matches[2].rm_so));
+
+	//          if (location_header_value[matches[3].rm_so] == '/') {
+	//            matches[3].rm_so++;
+	//          }
+	std::string path(
+		location_header_value.data() + matches[3].rm_so,
+		static_cast<size_t>(matches[3].rm_eo - matches[3].rm_so));
+	std::string header_value_ = "";
+
+	if (rewr_loc != 0) {
+		int port = 0;
+		std::string host_addr;
+		auto port_it = host.find(':');
+		if (port_it != std::string::npos) {
+			port = std::stoul(
+				host.substr(port_it + 1, host.length()));
+			host_addr = host.substr(0, port_it);
+		} else {
+			port = proto == "https" ? 443 : 80;
+		}
+		auto in_addr = zcu_net_get_address(host_addr, port);
+		if (in_addr == nullptr) {
+			zcu_log_print(LOG_WARNING, "Couldn't get host ip");
+			return 0;
+		}
+
+		/* rewrite location if it points to the backend */
+		if (zcu_net_equal_sockaddr(in_addr.get(), backend_addr)) {
+			header_value_ = proto;
+
+			/* or the listener address with different port */
+		} else if (rewr_loc == 1 && listener_config_->port != port &&
+			   zcu_net_equal_sockaddr(
+				   in_addr.get(),
+				   stream.service_manager->listener_config_
+					   ->addr_info,
+				   false)) {
+			header_value_ = (proto == "https") ? "http" : "https";
+		}
+
+		if (header_value_ != "") {
+			header_value_ += "://";
+			header_value_ += stream.request.virtual_host;
+			if ((stream.service_manager->listener_config_->ctx !=
+				     nullptr &&
+			     listener_config_->port != 443) ||
+			    (listener_config_->port != 80)) {
+				if (header_value.find(':') ==
+				    std::string::npos) {
+					header_value_ += ":";
+					header_value_ += std::to_string(
+						listener_config_->port);
+				}
+			}
+		}
+	}
+
+	if (stream.rewr_loc_str_repl != "" || stream.rewr_loc_str_ori != "") {
+		// the string to remove must be at the begining
+		if (path.find(stream.rewr_loc_str_repl.data()) == 0)
+			path.replace(0, stream.rewr_loc_str_repl.length(),
+				     stream.rewr_loc_str_ori);
+	}
+
+	header_value_ += path;
+	stream.response.addHeader(header_name, header_value_);
+	header->header_off = true;
+	return 1;
+}
+
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 {
 	auto &listener_config_ = *stream.service_manager->listener_config_;
@@ -575,102 +691,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			}
 			case http::HTTP_HEADER_NAME::CONTENT_LOCATION:
 			case http::HTTP_HEADER_NAME::LOCATION: {
-				if (listener_config_.rewr_loc == 0)
-					continue;
-				auto backend_addr =
-					stream.backend_connection.getBackend()
-						->address_info;
-				if (backend_addr->ai_family != AF_INET &&
-				    backend_addr->ai_family != AF_INET6)
-					continue;
-				// Rewrite location
-				std::string location_header_value(
-					response.headers[i].value,
-					response.headers[i].value_len);
-				regmatch_t matches[4];
-				//std::memset(matches,0,4);
-				matches[0].rm_so = 0;
-				matches[0].rm_eo =
-					response.headers[i].value_len;
-				if (regexec(&regex_set::LOCATION,
-					    response.headers[i].value, 4,
-					    matches, REG_STARTEND)) {
-					continue;
-				}
-
-				std::string proto(
-					location_header_value.data() +
-						matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-				std::string host(
-					location_header_value.data() +
-						matches[2].rm_so,
-					static_cast<size_t>(matches[2].rm_eo -
-							    matches[2].rm_so));
-
-				//          if (location_header_value[matches[3].rm_so] == '/') {
-				//            matches[3].rm_so++;
-				//          }
-				std::string path(
-					location_header_value.data() +
-						matches[3].rm_so,
-					static_cast<size_t>(matches[3].rm_eo -
-							    matches[3].rm_so));
-				int port = 0;
-				auto port_it = host.find(':');
-				if (port_it != std::string::npos) {
-					port = std::stoul(host.substr(
-						port_it + 1, host.length()));
-					host = host.substr(0, port_it);
-				} else {
-					port = proto == "https" ? 443 : 80;
-				}
-				auto in_addr = zcu_net_get_address(host, port);
-				if (in_addr == nullptr) {
-					zcu_log_print(LOG_WARNING,
-						      "Couldn't get host ip");
-					continue;
-				}
-
-				std::string header_value_;
-				/*rewrite location if it points to the backend */
-				if (zcu_net_equal_sockaddr(in_addr.get(),
-							   backend_addr)) {
-					header_value_ = proto;
-
-					/* or the listener address with different port */
-				} else if (listener_config_.rewr_loc == 1 &&
-					   listener_config_.port != port &&
-					   zcu_net_equal_sockaddr(
-						   in_addr.get(),
-						   stream.service_manager
-							   ->listener_config_
-							   ->addr_info,
-						   false)) {
-					header_value_ = (proto == "https") ?
-								      "http" :
-								      "https";
-				} else
-					continue;
-
-				header_value_ += "://";
-				header_value_ += stream.request.virtual_host;
-				if ((stream.service_manager->listener_config_
-						     ->ctx != nullptr &&
-				     listener_config_.port != 443) ||
-				    (listener_config_.port != 80)) {
-					if (header_value.find(':') ==
-					    std::string::npos) {
-						header_value_ += ":";
-						header_value_ += std::to_string(
-							listener_config_.port);
-					}
-				}
-				header_value_ += path;
-				response.addHeader(header_name, header_value_);
-				response.headers[i].header_off = true;
-
+				rewriteHeaderLocation(&response.headers[i],
+						      header_name, stream,
+						      &listener_config_,
+						      service);
 				break;
 			}
 			case http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY:
@@ -873,7 +897,7 @@ bool http_manager::replyRedirect(HttpStream &stream,
 		if (zcu_str_replace_regexp(buf, stream.request.path.data(),
 					   stream.request.path.length(),
 					   &service->service_config.url->pat,
-					   new_url.data())) {
+					   new_url.data()) != -1) {
 			new_url = buf;
 		}
 		break;

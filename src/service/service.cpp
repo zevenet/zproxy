@@ -270,6 +270,8 @@ Service::Service(ServiceConfig &service_config_)
 	this->routing_policy =
 		static_cast<ROUTING_POLICY>(service_config_.routing_policy);
 	this->rewr_url = service_config_.rewr_url;
+	this->rewr_loc = service_config_.rewr_loc;
+	this->rewr_loc_path = service_config_.rewr_loc_path;
 #ifdef CACHE_ENABLED
 	// Initialize cache manager
 	if (service_config_.cache_content.re_pcre != nullptr) {

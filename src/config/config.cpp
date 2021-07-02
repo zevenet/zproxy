@@ -535,6 +535,8 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
 				    matches, 0)) {
 			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
+			res->rewr_loc_path =
+				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
 		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
 				    matches, 0)) {
 			if (res->response_head_off) {
@@ -893,8 +895,9 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				std::atoi(lin + matches[1].rm_so) == 1;
 		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
 				    matches, 0)) {
-			res->rewr_loc = atoi(lin + matches[1].rm_so);
-
+			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
+			res->rewr_loc_path =
+				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
 		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
 				    matches, 0)) {
 			if (res->response_head_off) {
@@ -1429,6 +1432,7 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 		if ((pc->server_name = strdup(server_.data())) == nullptr)
 			conf_err(
 				"ListenHTTPS: could not set certificate subject");
+
 	} else
 		zcu_log_print(LOG_WARNING,
 			      "ListenHTTPS: could not get certificate CN");
@@ -1659,6 +1663,11 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 			if (matches[2].rm_eo < matches[3].rm_so) {
 				current->last = 1;
 			}
+		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
+				    matches, 0)) {
+			res->rewr_loc = atoi(lin + matches[1].rm_so);
+			res->rewr_loc_path =
+				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
 		} else if (!regexec(&regex_set::StrictTransportSecurity, lin, 4,
 				    matches, 0)) {
 			res->sts = atoi(lin + matches[1].rm_so);

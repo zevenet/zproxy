@@ -242,8 +242,8 @@ int zcu_buf_concat(struct zcu_buffer *buf, char *fmt, ...)
 
 /*
  * It replaces a chain in the original string.
- *    Returns :  1 if the function did some action
- *               0 if it didn't do anything
+ *    Returns :  n, offset where the replacement finished
+ *               0,  if it didn't do anything
 */
 int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 			   regex_t *match, char *replace_str)
@@ -251,6 +251,7 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 	//memset(buf.get(), 0, ZCU_DEF_BUFFER_SIZE);
 	regmatch_t umtch[10];
 	char *chptr, *enptr, *srcptr;
+	int offset = -1;
 	umtch[0].rm_so = 0;
 	umtch[0].rm_eo = ori_len;
 	if (regexec(match, ori_str, 10, umtch, REG_STARTEND)) {
@@ -258,7 +259,7 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 		zcu_log_print(LOG_DEBUG, "String didn't match %.*s", ori_len,
 			      ori_str);
 #endif
-		return 0;
+		return -1;
 	}
 
 #if DEBUG_ZCU_LOG
@@ -292,6 +293,8 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 		*chptr++ = *srcptr++;
 	}
 
+	offset = chptr - buf;
+
 	//copy the last part of the string
 	if (umtch[0].rm_eo != umtch[0].rm_so) {
 		memcpy(chptr, ori_str + umtch[0].rm_eo,
@@ -301,7 +304,7 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 
 	*chptr = '\0';
 
-	return 1;
+	return offset;
 }
 
 /**

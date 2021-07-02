@@ -100,6 +100,11 @@ class HttpStream : public Counter<HttpStream> {
 	uint32_t options{ 0x0 };
 	uint32_t stream_id{ 0 };
 
+	/* sub-string from the URL that was removed in a rewriteurl action */
+	std::string rewr_loc_str_ori{ "" };
+	/* sub-string from the URL that was added in a rewriteurl action */
+	std::string rewr_loc_str_repl{ "" };
+
 	/* Params:
 	 *	- macro to look for and replace
 	 *  - string where replace the macro. This same string will be replaced

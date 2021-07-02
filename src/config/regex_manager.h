@@ -99,8 +99,8 @@ static const Regex
 	AddResponseHeader("^[ \t]*AddResponseHead(?:er)?[ \t]+\"(.+)\"[ \t]*$");
 static const Regex RemoveResponseHeader(
 	"^[ \t]*RemoveResponseHead(?:er)?[ \t]+\"(.+)\"[ \t]*$");
-static const Regex
-	RewriteLocation("^[ \t]*RewriteLocation[ \t]+([012])[ \t]*$");
+static const Regex RewriteLocation(
+	"^[ \t]*RewriteLocation[ \t]+([012])([ \t]+path)?[ \t]*$");
 static const Regex
 	RewriteDestination("^[ \t]*RewriteDestination[ \t]+([01])[ \t]*$");
 static const Regex RewriteHost("^[ \t]*RewriteHost[ \t]+([01])[ \t]*$");
