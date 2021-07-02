@@ -33,6 +33,7 @@
 #undef NULL
 #undef SYSLOG_NAMES
 #include "config.h"
+#include <iostream>
 #include "regex_manager.h"
 #include "../../zcutils/zcutils.h"
 #include "../../zcutils/zcu_network.h"
@@ -1350,9 +1351,18 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
 	if (result == nullptr)
 		conf_err("out of memory");
 	for (i = 0; i < local_count; i++) {
-		result[i] = reinterpret_cast<unsigned char *>(strndup(
-			reinterpret_cast<const char *>(temp[i]),
-			::strlen(reinterpret_cast<const char *>(temp[i])) + 1));
+		if (temp[i][0] == '*' && temp[i][1] == '.') {
+			result[i] = reinterpret_cast<unsigned char *>(strndup(
+				reinterpret_cast<const char *>("^[^\\.]"), 6));
+			std::strcat(reinterpret_cast<char *>(result[i]),
+				    reinterpret_cast<const char *>(temp[i]));
+		} else {
+			result[i] = reinterpret_cast<unsigned char *>(
+				strndup(reinterpret_cast<const char *>(temp[i]),
+					::strlen(reinterpret_cast<const char *>(
+						temp[i])) +
+						1));
+		}
 		if (result[i] == nullptr)
 			conf_err("out of memory");
 		free(temp[i]);
@@ -1411,8 +1421,12 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 		get_subjectaltnames(x509.get(), &(pc->subjectAltNameCount));
 	if (!regexec(&regex_set::CNName, server_name, 4, matches, 0)) {
 		server_name[matches[1].rm_eo] = '\0';
-		if ((pc->server_name =
-			     strdup(server_name + matches[1].rm_so)) == nullptr)
+		std::string server_ = "";
+		if (server_name[matches[1].rm_so] == '*' &&
+		    server_name[matches[1].rm_so + 1] == '.')
+			server_.append("^[^\\.]");
+		server_.append(server_name + matches[1].rm_so);
+		if ((pc->server_name = strdup(server_.data())) == nullptr)
 			conf_err(
 				"ListenHTTPS: could not set certificate subject");
 	} else
