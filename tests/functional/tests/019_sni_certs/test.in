@@ -21,6 +21,15 @@ CMD=curl
 CL=1
 SSL=1
 FILTER="OU="
+VHOST="zproxy"
+METHOD="GET"
+URL="/"
+##################################
+DESCRIPTION="get the default certificate"
+CMD=curl
+CL=1
+SSL=1
+FILTER="OU="
 VHOST="subzone.test.zproxy"
 METHOD="GET"
 URL="/"

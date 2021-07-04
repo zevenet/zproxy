@@ -1,2 +1,2 @@
-*  subject: C=SP; ST=Sevilla; O=zproxy; OU=wild; CN=*
-*  issuer: C=SP; ST=Sevilla; O=zproxy; OU=wild; CN=*
+*  subject: C=SP; ST=Sevilla; O=zproxy; OU=wild; CN=*.zproxy
+*  issuer: C=SP; ST=Sevilla; O=zproxy; OU=wild; CN=*.zproxy

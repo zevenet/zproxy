@@ -445,8 +445,12 @@ exec_curl () {
 	mask_out $OUT_F
 	pretty_json $OUT_F
 
-	if [[ "FILTER" != "" ]]; then
+	if [[ "$FILTER" != "" ]]; then
 		grep "$FILTER" $ERR_F > $FILTER_F
+		rm $ERR_F
+		touch $ERR_F
+	else
+		touch $FILTER_F
 	fi
 }
 

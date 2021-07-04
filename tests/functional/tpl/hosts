@@ -10,6 +10,7 @@
 #{PROXY_VIP}	www.zevenet.com
 
 # test 019
+#{PROXY_VIP}	zproxy
 #{PROXY_VIP}	test.zproxy
 #{PROXY_VIP}	zone.zproxy
 #{PROXY_VIP}	subzone.test.zproxy

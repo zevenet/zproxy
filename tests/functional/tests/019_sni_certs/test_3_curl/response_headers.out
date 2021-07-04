@@ -6,6 +6,6 @@ Connection: keep-alive
 Backend: bck-1
 Request-Uri: /
 Loc-raw: http://10.2.1.1/
-Location: http://subzone.test.zproxy/
-Content-Location: http://subzone.test.zproxy//app
+Location: http://zproxy/
+Content-Location: http://zproxy//app
 
