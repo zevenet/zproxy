@@ -160,7 +160,7 @@ class Config : public Counter<Config> {
 	 */
 	std::shared_ptr<ListenerConfig> parse_HTTPS();
 
-	unsigned char **get_subjectaltnames(X509 *x509, unsigned int *count);
+	regex_t **get_subjectaltnames(X509 *x509, unsigned int *count);
 
 	void load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 		       char *filename);

@@ -172,11 +172,10 @@ void rewriteUrl(HttpStream &stream, Service *service)
 {
 	char buf[ZCU_DEF_BUFFER_SIZE];
 	HttpRequest &request = stream.request;
-	bool rewr =
-		(service->rewr_loc_path == 1 ||
-		 service->rewr_loc_path == -1 &&
-			 stream.service_manager->listener_config_->rewr_loc ==
-				 1);
+	bool rewr = (service->rewr_loc_path == 1 ||
+		     service->rewr_loc_path == -1 &&
+			     stream.service_manager->listener_config_
+					     ->rewr_loc_path == 1);
 	int offset = 0, ori_size = ZCU_DEF_BUFFER_SIZE;
 	if (service->rewr_url == nullptr)
 		return;
@@ -555,7 +554,7 @@ int rewriteHeaderLocation(phr_header *header,
 
 	if (rewr_loc != 0) {
 		int port = 0;
-		std::string host_addr;
+		std::string host_addr = host;
 		auto port_it = host.find(':');
 		if (port_it != std::string::npos) {
 			port = std::stoul(
@@ -567,39 +566,44 @@ int rewriteHeaderLocation(phr_header *header,
 		auto in_addr = zcu_net_get_address(host_addr, port);
 		if (in_addr == nullptr) {
 			zcu_log_print(LOG_WARNING, "Couldn't get host ip");
-			return 0;
-		}
+		} else {
+			/* rewrite location if it points to the backend */
+			if (zcu_net_equal_sockaddr(in_addr.get(),
+						   backend_addr)) {
+				header_value_ = proto;
 
-		/* rewrite location if it points to the backend */
-		if (zcu_net_equal_sockaddr(in_addr.get(), backend_addr)) {
-			header_value_ = proto;
+				/* or the listener address with different port */
+			} else if (rewr_loc == 1 &&
+				   listener_config_->port != port &&
+				   zcu_net_equal_sockaddr(
+					   in_addr.get(),
+					   stream.service_manager
+						   ->listener_config_->addr_info,
+					   false)) {
+				header_value_ =
+					(proto == "https") ? "http" : "https";
+			}
 
-			/* or the listener address with different port */
-		} else if (rewr_loc == 1 && listener_config_->port != port &&
-			   zcu_net_equal_sockaddr(
-				   in_addr.get(),
-				   stream.service_manager->listener_config_
-					   ->addr_info,
-				   false)) {
-			header_value_ = (proto == "https") ? "http" : "https";
-		}
-
-		if (header_value_ != "") {
-			header_value_ += "://";
-			header_value_ += stream.request.virtual_host;
-			if ((stream.service_manager->listener_config_->ctx !=
-				     nullptr &&
-			     listener_config_->port != 443) ||
-			    (listener_config_->port != 80)) {
-				if (header_value.find(':') ==
-				    std::string::npos) {
-					header_value_ += ":";
-					header_value_ += std::to_string(
-						listener_config_->port);
+			if (header_value_ != "") {
+				header_value_ += "://";
+				header_value_ += stream.request.virtual_host;
+				if ((stream.service_manager->listener_config_
+						     ->ctx != nullptr &&
+				     listener_config_->port != 443) ||
+				    (listener_config_->port != 80)) {
+					if (header_value.find(':') ==
+					    std::string::npos) {
+						header_value_ += ":";
+						header_value_ += std::to_string(
+							listener_config_->port);
+					}
 				}
 			}
 		}
 	}
+
+	if (header_value_ == "")
+		header_value_ = proto + "://" + host;
 
 	if (stream.rewr_loc_str_repl != "" || stream.rewr_loc_str_ori != "") {
 		// the string to remove must be at the begining

@@ -225,6 +225,7 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SNI_CERTS_CTX *ctx)
 {
 	const char *server_name;
 	SNI_CERTS_CTX *pc;
+	regmatch_t matches;
 
 	if ((server_name = SSL_get_servername(
 		     ssl, TLSEXT_NAMETYPE_host_name)) == nullptr)
@@ -235,7 +236,7 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SNI_CERTS_CTX *ctx)
 
 	SSL_set_SSL_CTX(ssl, nullptr);
 	for (pc = ctx; pc; pc = pc->next.get()) {
-		if (fnmatch(pc->server_name, server_name, 0) == 0) {
+		if (!regexec(&pc->server_name, server_name, 0, &matches, 0)) {
 			/* logmsg(LOG_DEBUG, "Found cert for %s", servername); */
 			SSL_set_SSL_CTX(ssl, pc->ctx.get());
 			return SSL_TLSEXT_ERR_OK;
@@ -243,9 +244,8 @@ int SSLContext::SNIServerName(SSL *ssl, int dummy, SNI_CERTS_CTX *ctx)
 			   pc->subjectAltNames != nullptr) {
 			size_t i;
 			for (i = 0; i < pc->subjectAltNameCount; i++) {
-				if (fnmatch(reinterpret_cast<char *>(
-						    pc->subjectAltNames[i]),
-					    server_name, 0) == 0) {
+				if (!regexec(pc->subjectAltNames[i],
+					     server_name, 0, &matches, 0)) {
 					SSL_set_SSL_CTX(ssl, pc->ctx.get());
 					return SSL_TLSEXT_ERR_OK;
 				}

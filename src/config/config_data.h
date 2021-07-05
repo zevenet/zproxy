@@ -183,16 +183,18 @@ class ServiceConfig : Counter<ServiceConfig> {
 
 struct SNI_CERTS_CTX {
 	std::shared_ptr<SSL_CTX> ctx;
-	char *server_name{ nullptr };
-	unsigned char **subjectAltNames{ nullptr };
+	regex_t server_name{ nullptr };
+	regex_t **subjectAltNames{ nullptr };
 	unsigned int subjectAltNameCount;
 	std::shared_ptr<SNI_CERTS_CTX> next;
 	~SNI_CERTS_CTX()
 	{
-		if (server_name != nullptr)
-			free(server_name);
-		if (subjectAltNames != nullptr)
-			free(subjectAltNames);
+		::regfree(&server_name);
+		if (subjectAltNames != nullptr) {
+			for (int i = 0; i < subjectAltNameCount; i++) {
+				::regfree(*(subjectAltNames + i));
+			}
+		}
 	}
 };
 

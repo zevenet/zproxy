@@ -1314,10 +1314,53 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 	return nullptr;
 }
 
-unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
+// return false on success
+bool parseCertCN(regex_t *pattern, char *server_name)
+{
+	char server_[ZCU_DEF_BUFFER_SIZE];
+	int len = 0, nlen = 0;
+
+	server_[len++] = '^';
+	do {
+		// add: "[-a-z0-1]*"
+		if (server_name[nlen] == '*') {
+			server_[len++] = '[';
+			server_[len++] = '-';
+			server_[len++] = 'a';
+			server_[len++] = '-';
+			server_[len++] = 'z';
+			server_[len++] = '0';
+			server_[len++] = '-';
+			server_[len++] = '9';
+			server_[len++] = ']';
+			server_[len++] = '*';
+		} else if (server_name[nlen] == '.') {
+			server_[len++] = '\\';
+			server_[len++] = '.';
+		} else
+			server_[len++] = server_name[nlen];
+		nlen++;
+
+	} while (server_name[nlen] != '\0' && len < ZCU_DEF_BUFFER_SIZE);
+
+	if (len >= ZCU_DEF_BUFFER_SIZE) {
+		// log
+		return true;
+	}
+
+	server_[len++] = '$';
+	server_[len++] = '\0';
+
+	if (regcomp(pattern, server_, REG_NEWLINE))
+		return true;
+
+	return false;
+}
+
+regex_t **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
 {
 	size_t local_count;
-	unsigned char **result;
+	regex_t **result;
 	STACK_OF(GENERAL_NAME) *san_stack =
 		static_cast<STACK_OF(GENERAL_NAME) *>(X509_get_ext_d2i(
 			x509, NID_subject_alt_name, nullptr, nullptr));
@@ -1349,24 +1392,13 @@ unsigned char **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
 		GENERAL_NAME_free(name__);
 	}
 
-	result = static_cast<unsigned char **>(
-		std::malloc(sizeof(unsigned char *) * local_count));
+	result = static_cast<regex_t **>(
+		std::malloc(sizeof(regex_t) * local_count));
 	if (result == nullptr)
 		conf_err("out of memory");
+
 	for (i = 0; i < local_count; i++) {
-		if (temp[i][0] == '*' && temp[i][1] == '.') {
-			result[i] = reinterpret_cast<unsigned char *>(strndup(
-				reinterpret_cast<const char *>("^[^\\.]"), 6));
-			std::strcat(reinterpret_cast<char *>(result[i]),
-				    reinterpret_cast<const char *>(temp[i]));
-		} else {
-			result[i] = reinterpret_cast<unsigned char *>(
-				strndup(reinterpret_cast<const char *>(temp[i]),
-					::strlen(reinterpret_cast<const char *>(
-						temp[i])) +
-						1));
-		}
-		if (result[i] == nullptr)
+		if (parseCertCN(result[i], reinterpret_cast<char *>(temp[i])))
 			conf_err("out of memory");
 		free(temp[i]);
 	}
@@ -1401,7 +1433,6 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 	}
 	pc->ctx = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()),
 					   &::__SSL_CTX_free);
-	pc->server_name = nullptr;
 	pc->next = nullptr;
 	if (SSL_CTX_use_certificate_chain_file(pc->ctx.get(), filename) != 1)
 		conf_err("SSL_CTX_use_certificate_chain_file failed - aborted");
@@ -1424,15 +1455,10 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 		get_subjectaltnames(x509.get(), &(pc->subjectAltNameCount));
 	if (!regexec(&regex_set::CNName, server_name, 4, matches, 0)) {
 		server_name[matches[1].rm_eo] = '\0';
-		std::string server_ = "";
-		if (server_name[matches[1].rm_so] == '*' &&
-		    server_name[matches[1].rm_so + 1] == '.')
-			server_.append("^[^\\.]");
-		server_.append(server_name + matches[1].rm_so);
-		if ((pc->server_name = strdup(server_.data())) == nullptr)
+		if (parseCertCN(&pc->server_name,
+				server_name + matches[1].rm_so))
 			conf_err(
 				"ListenHTTPS: could not set certificate subject");
-
 	} else
 		zcu_log_print(LOG_WARNING,
 			      "ListenHTTPS: could not get certificate CN");
