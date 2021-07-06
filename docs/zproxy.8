@@ -524,8 +524,8 @@ Example:
            ReplaceHeader    Request     ^Cookie:        ^Server=(.*) 	Test=$1
            ReplaceHeader	Response	^X-Powered-By: 	(.*)	        Server($1)
 .TP
-\fBRewriteLocation\fR 0|1|2
-This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request. It can apply the rewrite in two modes:
+\fBRewriteLocation\fR 0|1|2 [path]
+This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request. This directive can be defined in a service in order to overwrite the listener value. It can apply the rewrite in two modes:
 .br
 .B 	Backend.
 The rewrite is applied if the location header points to the backend itself. This is useful to mask and hide the backend address.
@@ -539,9 +539,12 @@ The value 1 (by default) enables the backend and listener rewrites.
 .br
 The value 2 only enables the backend rewrites.
 .br
-.INote: if the URL location contains a hostname,
-.Bzproxy
-.I should be able to resolve it or the rewrite will be skipped.
+.I Note:
+if the URL location contains a hostname, should be able to resolve it or the rewrite will be skipped.
+.br
+The path applies if the
+.B RewriteUrl
+directive modified the request URL. This flag forces to revert the URL transformation that RewriteUrl did. Example: if rewrite modified `/svc1/app` to `/svc2/app`, if the response location header is `/svc2/app` will be replaced to `/svc1/app`
 .TP
 \fBRewriteDestination\fR 0|1
 If 1 force
@@ -780,6 +783,28 @@ The replaceHeader directive in the services has priority over the listener one.
 Example:
            ReplaceHeader    Request     ^Cookie:        ^Server=(.*) 	Test=$1
            ReplaceHeader	Response	^X-Powered-By: 	(.*)	        Server($1)
+.TP
+\fBRewriteLocation\fR 0|1|2 [path]
+This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request. This directive can be defined in a service in order to overwrite the listener value. It can apply the rewrite in two modes:
+.br
+.B 	Backend.
+The rewrite is applied if the location header points to the backend itself. This is useful to mask and hide the backend address.
+.br
+.B 	Listener.
+It rewrites the header if it points to the listener but with  the  wrong  protocol. It is useful for redirecting a request to an HTTPS listener on the same server as the HTTP listener.
+.br
+The value 0 disables this directive.
+.br
+The value 1 (by default) enables the backend and listener rewrites.
+.br
+The value 2 only enables the backend rewrites.
+.br
+.I Note:
+if the URL location contains a hostname, should be able to resolve it or the rewrite will be skipped.
+.br
+The path applies if the
+.B RewriteUrl
+directive modified the request URL. This flag forces to revert the URL transformation that RewriteUrl did. Example: if rewrite modified `/svc1/app` to `/svc2/app`, if the response location header is `/svc2/app` will be replaced to `/svc1/app`
 .TP
 \fBOrURLs\fR
 Defines a block of

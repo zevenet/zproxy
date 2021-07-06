@@ -348,9 +348,10 @@ Global directives may appear anywhere within the configuration file, though it i
 		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
 		  ReplaceHeader  Response   "^X-Forward-For:"  "(.*)"                 "$1,10.24.5.89"
 
-- **RewriteLocation** 0|1|2
+- **RewriteLocation** 0|1|2 [path]
 
 	This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request.
+	This directive can be defined in a service in order to overwrite its value.
 	It can apply the rewrite in two modes:
 
 	Backend. The rewrite is applied if the location header points to the backend itself. This is useful to mask and hide the backend address.
@@ -361,6 +362,8 @@ Global directives may appear anywhere within the configuration file, though it i
 	The value 2 only enables the backend rewrites.
 
 	*Note: if the URL location contains a hostname, zproxy should be able to resolve it or the rewrite will be skipped.*
+
+	the *path* applies if the **RewriteUrl** directive modified the request URL. This flag forces to revert the URL transformation that RewriteUrl did. Example: if rewrite modified `/svc1/app` to `/svc2/app`, if the response location header is `/svc2/app` will be replaced to `/svc1/app`
 
 - **RewriteDestination** 0|1
 
@@ -499,6 +502,23 @@ All configuration directives enclosed between Service and End are specific to a 
 		Example:
 		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
 		  ReplaceHeader  Response   "^X-Forward-For:"  "(.*)"                 "$1,10.24.5.89"
+
+- **RewriteLocation** 0|1|2 [path]
+
+	This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request.
+	This directive can be defined in a service in order to overwrite the listener value.
+	It can apply the rewrite in two modes:
+
+	Backend. The rewrite is applied if the location header points to the backend itself. This is useful to mask and hide the backend address.
+	Listener. It rewrites the header if it points to the listener but with  the  wrong  protocol. It is useful for redirecting a request to an HTTPS listener on the same server as the HTTP listener.
+
+	The value 0 disables this directive.
+	The value 1 (by default) enables the backend and listener rewrites.
+	The value 2 only enables the backend rewrites.
+
+	*Note: if the URL location contains a hostname, zproxy should be able to resolve it or the rewrite will be skipped.*
+
+	the *path* applies if the **RewriteUrl** directive modified the request URL. This flag forces to revert the URL transformation that RewriteUrl did. Example: if rewrite modified `/svc1/app` to `/svc2/app`, if the response location header is `/svc2/app` will be replaced to `/svc1/app`
 
 - **OrURLs**
 
