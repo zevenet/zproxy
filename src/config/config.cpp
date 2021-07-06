@@ -320,7 +320,7 @@ bool Config::init(const global::StartOptions &start_options)
 	parse_file();
 
 	if (start_options.check_only) {
-		zcu_log_print(LOG_INFO, "Config file %s is OK",
+		fprintf(stdout, "Config file %s is OK",
 			      conf_file_name.data());
 		return true;
 	}
