@@ -185,7 +185,7 @@ struct SNI_CERTS_CTX {
 	std::shared_ptr<SSL_CTX> ctx;
 	regex_t server_name{ nullptr };
 	regex_t **subjectAltNames{ nullptr };
-	unsigned int subjectAltNameCount;
+	unsigned int subjectAltNameCount{ 0 };
 	std::shared_ptr<SNI_CERTS_CTX> next;
 	~SNI_CERTS_CTX()
 	{
@@ -193,7 +193,9 @@ struct SNI_CERTS_CTX {
 		if (subjectAltNames != nullptr) {
 			for (int i = 0; i < subjectAltNameCount; i++) {
 				::regfree(*(subjectAltNames + i));
+				free(*(subjectAltNames + i));
 			}
+			free(subjectAltNames);
 		}
 	}
 };

@@ -320,8 +320,7 @@ bool Config::init(const global::StartOptions &start_options)
 	parse_file();
 
 	if (start_options.check_only) {
-		fprintf(stdout, "Config file %s is OK",
-			      conf_file_name.data());
+		fprintf(stdout, "Config file %s is OK", conf_file_name.data());
 		return true;
 	}
 
@@ -1344,7 +1343,10 @@ bool parseCertCN(regex_t *pattern, char *server_name)
 	} while (server_name[nlen] != '\0' && len < ZCU_DEF_BUFFER_SIZE);
 
 	if (len >= ZCU_DEF_BUFFER_SIZE) {
-		// log
+		zcu_log_print(
+			LOG_ERR,
+			"Error parsing certificate server name, buffer full %s",
+			server_name);
 		return true;
 	}
 
@@ -1392,15 +1394,22 @@ regex_t **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
 		GENERAL_NAME_free(name__);
 	}
 
-	result = static_cast<regex_t **>(
-		std::malloc(sizeof(regex_t) * local_count));
-	if (result == nullptr)
-		conf_err("out of memory");
-
-	for (i = 0; i < local_count; i++) {
-		if (parseCertCN(result[i], reinterpret_cast<char *>(temp[i])))
+	if (local_count > 0) {
+		result = static_cast<regex_t **>(
+			std::malloc(sizeof(regex_t *) * local_count));
+		if (result == nullptr)
 			conf_err("out of memory");
-		free(temp[i]);
+
+		for (i = 0; i < local_count; i++) {
+			result[i] = static_cast<regex_t *>(
+				std::malloc(sizeof(regex_t)));
+			if (result[i] == nullptr)
+				conf_err("out of memory");
+			if (parseCertCN(result[i],
+					reinterpret_cast<char *>(temp[i])))
+				conf_err("out of memory");
+			free(temp[i]);
+		}
 	}
 	*count_ = static_cast<unsigned int>(local_count);
 
