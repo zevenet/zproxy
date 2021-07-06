@@ -37,16 +37,22 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 
 	// Checking interaction
 	if (stream.modsec_transaction->m_it.disruptive) {
-		// log event?
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			zcu_log_print(LOG_WARNING, "[WAF] (%lx) %s",
-				      pthread_self(),
-				      stream.modsec_transaction->m_it.log);
+			zcu_log_print(
+				LOG_WARNING,
+				"%s, [WAF,service %s,backend null] (%lx) %s",
+				stream.service_manager->listener_config_->name
+					.data(),
+				static_cast<Service *>(
+					stream.request.getService())
+					->name.c_str(),
+				pthread_self(),
+				stream.modsec_transaction->m_it.log);
 		}
 
 		// redirect returns disruptive=1
 
-		// process is going to be cut. Execute the logging phase
+		// process is going to be cut. Executing the logging phase
 		if (!stream.modsec_transaction->processLogging())
 			zcu_log_print(LOG_WARNING,
 				      "(%lx) WAF, error processing the log",
@@ -91,11 +97,18 @@ bool Waf::checkResponseWaf(HttpStream &stream)
 	stream.modsec_transaction->processLogging();
 	// Checking interaction
 	if (stream.modsec_transaction->m_it.disruptive) {
-		// log event?
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			zcu_log_print(LOG_WARNING, "[WAF] (%lx) %s",
-				      pthread_self(),
-				      stream.modsec_transaction->m_it.log);
+			auto bck = stream.backend_connection.getBackend();
+			zcu_log_print(
+				LOG_WARNING,
+				"%s, [WAF,service %s,backend %s:%d] (%lx) %s",
+				stream.service_manager->listener_config_->name
+					.data(),
+				static_cast<Service *>(
+					stream.request.getService())
+					->name.c_str(),
+				bck->address.data(), bck->port, pthread_self(),
+				stream.modsec_transaction->m_it.log);
 		}
 		stream.modsec_transaction
 			->processLogging(); // TODO:: is it necessary??
