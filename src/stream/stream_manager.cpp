@@ -502,7 +502,7 @@ void StreamManager::onRequestEvent(int fd)
 	/* Parse HTTP request */
 	size_t parsed = 0;
 	http_parser::PARSE_RESULT parse_result;
-	// do {
+
 	parse_result = stream->request.parseRequest(
 		stream->client_connection.buffer +
 			stream->client_connection.buffer_offset,
@@ -522,22 +522,31 @@ void StreamManager::onRequestEvent(int fd)
 			__FUNCTION__, __LINE__, pthread_self(),
 			stream->stream_id, listener_config_.name.data(),
 			stream->client_connection.getPeerAddress().c_str());
-		[[fallthrough]];
+		http_manager::replyError(
+			http::Code::URITooLong,
+			http::reasonPhrase(http::Code::URITooLong),
+			listener_config_.err414, stream->client_connection,
+			listener_config_.response_stats);
+		this->clearStream(stream);
+		return;
+	case http_parser::PARSE_RESULT::INCOMPLETE:
 	case http_parser::PARSE_RESULT::FAILED:
+		zcu_log_print(
+			LOG_INFO,
+			"%s():%d: [%lx][%lu][%s] http parser %s from %s",
+			__FUNCTION__, __LINE__, pthread_self(),
+			stream->stream_id, listener_config_.name.data(),
+			(http_parser::PARSE_RESULT::INCOMPLETE ==
+			 parse_result) ?
+				      "INCOMPLETE" :
+				      "FAILED",
+			stream->client_connection.getPeerAddress().c_str());
 		http_manager::replyError(
 			http::Code::BadRequest,
 			http::reasonPhrase(http::Code::BadRequest),
 			listener_config_.err501, stream->client_connection,
 			listener_config_.response_stats);
 		this->clearStream(stream);
-		return;
-	case http_parser::PARSE_RESULT::INCOMPLETE:
-		zcu_log_print(
-			LOG_DEBUG,
-			"%s():%d: [%lx][%lu][%s] http parser INCOMPLETE from %s",
-			__FUNCTION__, __LINE__, pthread_self(),
-			stream->stream_id, listener_config_.name.data(),
-			stream->client_connection.getPeerAddress().c_str());
 		return;
 	}
 
@@ -1075,15 +1084,19 @@ void StreamManager::onResponseEvent(int fd)
 			break;
 		}
 		case http_parser::PARSE_RESULT::TOOLONG:
+		case http_parser::PARSE_RESULT::INCOMPLETE:
 		case http_parser::PARSE_RESULT::FAILED: {
 			zcu_log_print(
-				LOG_DEBUG,
-				"%s():%d: [%lx][%lu][%s][%s] HTTP PARSE FAILED from backend %s to client %s - Response data in buffer ",
-				"size:%lu Content length:%lu "
-				"left:%lu %.*s header sent:%s ",
-				__FUNCTION__, __LINE__, pthread_self(),
-				stream->stream_id, listener_config_.name.data(),
+				LOG_INFO,
+				"[%lx][%lu][%s][%s] HTTP PARSE %s from backend %s to client %s - Response data in buffer size:%lu, Content length:%lu, left:%lu",
+				pthread_self(), stream->stream_id,
+				listener_config_.name.data(),
 				service->name.c_str(),
+				(ret == http_parser::PARSE_RESULT::INCOMPLETE) ?
+					      "INCOMPLETE" :
+				(ret == http_parser::PARSE_RESULT::TOOLONG) ?
+					      "TOOLONG" :
+					      "FAILED",
 				stream->backend_connection.getBackend()
 					->address.c_str(),
 				stream->client_connection.getPeerAddress()
@@ -1091,16 +1104,17 @@ void StreamManager::onResponseEvent(int fd)
 				stream->backend_connection.buffer_size,
 				stream->response.content_length,
 				stream->response.message_bytes_left,
-				stream->backend_connection.buffer_size,
-				stream->backend_connection.buffer,
-				stream->response.getHeaderSent() ? "true" :
-									 "false");
+				stream->backend_connection.buffer_size);
+			http_manager::replyError(
+				http::Code::InternalServerError,
+				http::reasonPhrase(
+					http::Code::InternalServerError),
+				listener_config_.err503,
+				stream->client_connection,
+				listener_config_.response_stats);
 			clearStream(stream);
 			return;
 		}
-		case http_parser::PARSE_RESULT::INCOMPLETE:
-			stream->backend_connection.enableReadEvent();
-			return;
 		}
 		auto latency =
 			Time::getElapsed(stream->backend_connection.time_start);
@@ -2369,6 +2383,7 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 		onResponseTimeoutEvent(fd);
 		break;
 	case TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT:
+	case TIMEOUT_TYPE::INACTIVE_TIMEOUT:
 		break;
 	}
 }

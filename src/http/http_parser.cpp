@@ -238,6 +238,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 				      path_, &path_ptr_length, &minor_version,
 				      headers, &num_headers, last_length);
 	path = std::string(path_ptr, path_ptr_length);
+
 	last_length = data_size;
 	//  zcu_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
 	if (pret > 0) {
@@ -266,7 +267,10 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 		//    }
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
 	} else if (pret == -2) { /* request is incomplete, continue the loop */
-		return PARSE_RESULT::INCOMPLETE;
+		if (num_headers == 0)
+			return PARSE_RESULT::TOOLONG;
+		else
+			return PARSE_RESULT::INCOMPLETE;
 	}
 	return PARSE_RESULT::FAILED;
 }
