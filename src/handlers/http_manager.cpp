@@ -574,12 +574,17 @@ int rewriteHeaderLocation(phr_header *header,
 
 				/* or the listener address with different port */
 			} else if (rewr_loc == 1 &&
-				   listener_config_->port != port &&
-				   zcu_net_equal_sockaddr(
-					   in_addr.get(),
-					   stream.service_manager
-						   ->listener_config_->addr_info,
-					   false)) {
+				   (listener_config_->port != port ||
+				    ((listener_config_->ctx == nullptr) ?
+						   "http" :
+						   "https") != proto) &&
+				   (zcu_net_equal_sockaddr(
+					    in_addr.get(),
+					    stream.service_manager
+						    ->listener_config_
+						    ->addr_info,
+					    false) ||
+				    host == stream.request.virtual_host)) {
 				header_value_ =
 					(proto == "https") ? "http" : "https";
 			}
