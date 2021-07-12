@@ -69,3 +69,11 @@ CL=1
 METHOD="GET"
 VHOST="zevenet.com"
 URL="/resp-headers/location/https/www.zevenet.com"
+
+##############################
+DESCRIPTION="Regresion test, rewrite when host is using a bad port"
+CMD=curl
+CL=1
+METHOD="GET"
+VHOST="zevenet.com"
+URL="/resp-headers/location/https/www.zevenet.com:80"
