@@ -2384,7 +2384,6 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 		break;
 	case TIMEOUT_TYPE::INACTIVE_TIMEOUT:
 	case TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT:
-	case TIMEOUT_TYPE::INACTIVE_TIMEOUT:
 		break;
 	}
 }
