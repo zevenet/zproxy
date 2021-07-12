@@ -2382,6 +2382,7 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 	case TIMEOUT_TYPE::SERVER_READ_TIMEOUT:
 		onResponseTimeoutEvent(fd);
 		break;
+	case TIMEOUT_TYPE::INACTIVE_TIMEOUT:
 	case TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT:
 	case TIMEOUT_TYPE::INACTIVE_TIMEOUT:
 		break;
