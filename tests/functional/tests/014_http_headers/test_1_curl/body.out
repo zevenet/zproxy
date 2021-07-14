@@ -1,5 +1,6 @@
 GET /headers HTTP/1.1
 Accept: */*
+head-1: client-header
 Host: ip_src:10.1.2.1
 X-Forwarded-For: 10.1.1.1
 Cookie: asdfgh

@@ -3,9 +3,10 @@ CL=1
 METHOD="GET"
 URL="/headers"
 VHOST=
+HEADERS="head-1: client-header"
 ##############################
 CMD=curl
 CL=1
 METHOD="GET"
 URL="/sv1/headers"
-VHOST=
+HEADERS="head-1: client-header"

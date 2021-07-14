@@ -2,6 +2,6 @@ GET /headers HTTP/1.1
 Accept: */*
 Host: from-svc-ip_src:10.1.2.1
 X-Forwarded-For: 10.1.1.1
-Cookie: asdfgh
+Custom-req-header: true
 
 
