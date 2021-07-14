@@ -125,6 +125,14 @@ class ServiceConfig : Counter<ServiceConfig> {
 	MATCHER *url, /* request matcher */
 		*req_head, /* required headers */
 		*deny_head; /* forbidden headers */
+	std::string add_head_req; /* extra request headers */
+	std::string add_head_resp; /* extra response headers */
+	MATCHER *head_off_req{
+		nullptr
+	}; /* headers to remove from the client request*/
+	MATCHER *head_off_resp{
+		nullptr
+	}; /* headers to remove  from backned response */
 	ReplaceHeader *replace_header_request{ nullptr };
 	ReplaceHeader *replace_header_response{ nullptr };
 	std::shared_ptr<BackendConfig> backends;
@@ -216,8 +224,6 @@ struct ListenerConfig : Counter<ListenerConfig> {
 		nullptr
 	}; /* User Agent Patterns to force HTTP 1.0 mode */
 	MATCHER *ssl_uncln_shutdn; /* User Agent Patterns to enable ssl unclean shutdown */
-	std::string add_head; /* extra SSL header */
-	std::string response_add_head; /* extra response headers */
 	regex_t verb; /* pattern to match the request verb against */
 	int to; /* client time-out */
 	int has_pat; /* was a URL pattern defined? */
@@ -232,10 +238,14 @@ struct ListenerConfig : Counter<ListenerConfig> {
 				   redirect them to this url */
 	int nossl_redir; /* Code to use for redirect (301 302 307) */
 	long max_req; /* max. request size */
-	MATCHER *head_off{ nullptr }; /* headers to remove */
-	MATCHER *response_head_off{
+	std::string add_head_req; /* extra request headers */
+	std::string add_head_resp; /* extra response headers */
+	MATCHER *head_off_req{
 		nullptr
-	}; /* headers to remove  from response */
+	}; /* headers to remove from the client request*/
+	MATCHER *head_off_resp{
+		nullptr
+	}; /* headers to remove  from backned response */
 	std::string ssl_config_file; /* OpenSSL config file path */
 	int rewr_loc_path{
 		0
@@ -277,8 +287,8 @@ struct ListenerConfig : Counter<ListenerConfig> {
 		delete ssl_uncln_shutdn;
 		::regfree(&verb);
 		::regfree(&url_pat);
-		delete head_off;
-		delete response_head_off;
+		delete head_off_req;
+		delete head_off_resp;
 		::freeaddrinfo(addr_info);
 	}
 };

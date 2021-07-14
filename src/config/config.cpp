@@ -320,7 +320,8 @@ bool Config::init(const global::StartOptions &start_options)
 	parse_file();
 
 	if (start_options.check_only) {
-		fprintf(stdout, "Config file %s is OK", conf_file_name.data());
+		fprintf(stdout, "Config file %s is OK\n",
+			conf_file_name.data());
 		return true;
 	}
 
@@ -498,81 +499,23 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
 				    0)) {
 			res->max_req = atoll(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::HeadRemove, lin, 4, matches,
-				    0)) {
-			if (res->head_off) {
-				for (m = res->head_off; m->next; m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"HeadRemove config: out of memory - aborted");
-				m = m->next;
-			} else {
-				res->head_off = new MATCHER();
-				m = res->head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("HeadRemove bad pattern - aborted");
-		} else if (!regexec(&regex_set::AddHeader, lin, 4, matches,
-				    0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->add_head.empty()) {
-				res->add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->add_head += "\r\n";
-				res->add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			}
 		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
 				    matches, 0)) {
 			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
 			res->rewr_loc_path =
 				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
-		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
 				    matches, 0)) {
-			if (res->response_head_off) {
-				for (m = res->response_head_off; m->next;
-				     m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = m->next;
-			} else {
-				if ((res->response_head_off = new MATCHER()) ==
-				    nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = res->response_head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err(
-					"RemoveResponseHead bad pattern - aborted");
+			parseAddHeader(&res->add_head_req, lin, matches);
 		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
 				    matches, 0)) {
-			if (res->response_add_head.empty()) {
-				res->response_add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->response_add_head += "\r\n";
-				res->response_add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			}
+			parseAddHeader(&res->add_head_resp, lin, matches);
+		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_req, lin, matches);
+		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_resp, lin, matches);
 		} else if (!regexec(&regex_set::RewriteDestination, lin, 4,
 				    matches, 0)) {
 			res->rewr_dest = atoi(lin + matches[1].rm_so);
@@ -686,6 +629,47 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 
 	conf_err("ListenHTTP premature EOF");
 	return nullptr;
+}
+
+void Config::parseAddHeader(std::string *add_head, char *lin,
+			    regmatch_t *matches)
+{
+	lin[matches[1].rm_eo] = '\0';
+	if (add_head->empty()) {
+		*add_head = std::string(lin + matches[1].rm_so,
+					static_cast<size_t>(matches[1].rm_eo -
+							    matches[1].rm_so));
+	} else {
+		*add_head += "\r\n";
+		*add_head += std::string(lin + matches[1].rm_so,
+					 static_cast<size_t>(matches[1].rm_eo -
+							     matches[1].rm_so));
+	}
+}
+
+void Config::parseRemoveHeader(MATCHER **head_off, char *lin,
+			       regmatch_t *matches)
+{
+	MATCHER *m;
+
+	if (*head_off) {
+		for (m = *head_off; m->next; m = m->next)
+			;
+		if ((m->next = new MATCHER()) == nullptr)
+			conf_err(
+				"RemoveHeader config: out of memory - aborted");
+		m = m->next;
+	} else {
+		if ((*head_off = new MATCHER()) == nullptr)
+			conf_err(
+				"RemoveHeader config: out of memory - aborted");
+		m = *head_off;
+	}
+	memset(m, 0, sizeof(MATCHER));
+	lin[matches[1].rm_eo] = '\0';
+	if (regcomp(&m->pat, lin + matches[1].rm_so,
+		    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+		conf_err("RemoveHeader bad pattern - aborted");
 }
 
 std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
@@ -868,26 +852,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
 				    0)) {
 			res->max_req = atoll(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::HeadRemove, lin, 4, matches,
-				    0)) {
-			if (res->head_off) {
-				for (m = res->head_off; m->next; m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"HeadRemove config: out of memory - aborted");
-				m = m->next;
-			} else {
-				if ((res->head_off = new MATCHER()) == nullptr)
-					conf_err(
-						"HeadRemove config: out of memory - aborted");
-				m = res->head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("HeadRemove bad pattern - aborted");
 		} else if (!regexec(&regex_set::ForwardSNI, lin, 4, matches,
 				    0)) {
 			res->ssl_forward_sni_server_name =
@@ -897,44 +861,18 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
 			res->rewr_loc_path =
 				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
-		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
 				    matches, 0)) {
-			if (res->response_head_off) {
-				for (m = res->response_head_off; m->next;
-				     m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = m->next;
-			} else {
-				if ((res->response_head_off = new MATCHER()) ==
-				    nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = res->response_head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err(
-					"RemoveResponseHead bad pattern - aborted");
+			parseAddHeader(&res->add_head_req, lin, matches);
 		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
 				    matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->response_add_head.empty()) {
-				res->response_add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->response_add_head += "\r\n";
-				res->response_add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			}
+			parseAddHeader(&res->add_head_resp, lin, matches);
+		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_req, lin, matches);
+		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_resp, lin, matches);
 		} else if (!regexec(&regex_set::RewriteDestination, lin, 4,
 				    matches, 0)) {
 			res->rewr_dest = atoi(lin + matches[1].rm_so);
@@ -1004,21 +942,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 						atoi(lin + matches[2].rm_so));
 				}
 				break;
-			}
-		} else if (!regexec(&regex_set::AddHeader, lin, 4, matches,
-				    0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->add_head.empty()) {
-				res->add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->add_head += "\r\n";
-				res->add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
 			}
 		} else if (!regexec(&regex_set::DisableProto, lin, 4, matches,
 				    0)) {
@@ -1703,6 +1626,18 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 			res->rewr_loc = atoi(lin + matches[1].rm_so);
 			res->rewr_loc_path =
 				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
+		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseAddHeader(&res->add_head_req, lin, matches);
+		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseAddHeader(&res->add_head_resp, lin, matches);
+		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_req, lin, matches);
+		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_resp, lin, matches);
 		} else if (!regexec(&regex_set::StrictTransportSecurity, lin, 4,
 				    matches, 0)) {
 			res->sts = atoi(lin + matches[1].rm_so);

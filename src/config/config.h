@@ -151,6 +151,18 @@ class Config : public Counter<Config> {
 				ReplaceHeader **replace_header_response);
 
 	/*
+	 * parse the AddRequestHeader and AddResponseHeader directives
+	 */
+	void parseAddHeader(std::string *add_head, char *lin,
+			    regmatch_t *matches);
+
+	/*
+	 * parse the RemoveRequestHeader and RemoveResponseHeader directives
+	 */
+	void parseRemoveHeader(MATCHER **head_off, char *lin,
+			       regmatch_t *matches);
+
+	/*
 	 * parse an HTTP listener
 	 */
 	std::shared_ptr<ListenerConfig> parse_HTTP();

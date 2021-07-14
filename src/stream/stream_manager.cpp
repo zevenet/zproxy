@@ -279,15 +279,7 @@ void StreamManager::addStream(int fd,
 					       EVENT_GROUP::CLIENT);
 	//increment connections
 	stream->service_manager->conns_stats.established_connection++;
-	// Add requested header to the stream permanent header set, not cleared during
-	// the http stream lifetime
-	if (!listener_config.add_head.empty()) {
-		stream->request.addHeader(listener_config.add_head, true);
-	}
-	if (!listener_config.response_add_head.empty()) {
-		stream->response.addHeader(listener_config.response_add_head,
-					   true);
-	}
+
 	if (stream->service_manager->is_https_listener) {
 		stream->client_connection.ssl_conn_status =
 			ssl::SSL_STATUS::NEED_HANDSHAKE;
@@ -575,6 +567,15 @@ void StreamManager::onRequestEvent(int fd)
 			listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
+	}
+
+	// Add the headers configured (addXheader direcitves). Service context has more
+	// priority. These headers are not removed for removeheader directive
+	if (!service->service_config.add_head_req.empty()) {
+		stream->request.addHeader(service->service_config.add_head_req,
+					  true);
+	} else if (!listener_config_.add_head_req.empty()) {
+		stream->request.addHeader(listener_config_.add_head_req, true);
 	}
 
 #if WAF_ENABLED
@@ -1161,6 +1162,15 @@ void StreamManager::onResponseEvent(int fd)
 		}
 		stream->status |=
 			helper::to_underlying(STREAM_STATUS::RESPONSE_PENDING);
+
+		// Add custom headers
+		if (!service->service_config.add_head_resp.empty()) {
+			stream->response.addHeader(
+				service->service_config.add_head_resp, true);
+		} else if (!listener_config_.add_head_resp.empty()) {
+			stream->response.addHeader(
+				listener_config_.add_head_resp, true);
+		}
 
 #if WAF_ENABLED
 		if (stream->modsec_transaction != nullptr) {

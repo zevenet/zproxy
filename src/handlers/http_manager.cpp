@@ -256,6 +256,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 	auto &listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast<Service *>(stream.request.getService());
 	HttpRequest &request = stream.request;
+	MATCHER *m = nullptr;
 	regmatch_t eol{ 0, static_cast<regoff_t>(
 				   request.http_message_str.length()) };
 	auto res = ::regexec(&listener_config_.verb,
@@ -321,7 +322,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 		/* maybe header to be removed */
 		eol.rm_so = 0;
 		eol.rm_eo = request.headers[i].line_size;
-		for (auto m = listener_config_.head_off; m; m = m->next) {
+		if (service->service_config.head_off_req != nullptr) {
+			m = service->service_config.head_off_req;
+		} else if (listener_config_.head_off_req != nullptr) {
+			m = listener_config_.head_off_req;
+		}
+		for (; m; m = m->next) {
 			if (::regexec(&m->pat, request.headers[i].name, 1, &eol,
 				      REG_STARTEND) == 0) {
 				request.headers[i].header_off = true;
@@ -629,6 +635,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 	auto service = static_cast<Service *>(stream.request.getService());
 	HttpResponse &response = stream.response;
 	char buf[ZCU_DEF_BUFFER_SIZE];
+	MATCHER *m = nullptr;
 
 	/* If the response is 100 continue we need to enable chunked transfer. */
 	if (response.http_status_code < 200) {
@@ -655,8 +662,12 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 		/* maybe header to be removed from response */
 		regmatch_t eol{ 0, static_cast<regoff_t>(
 					   response.headers[i].line_size) };
-		for (auto m = listener_config_.response_head_off; m;
-		     m = m->next) {
+		if (service->service_config.head_off_resp != nullptr) {
+			m = service->service_config.head_off_resp;
+		} else if (listener_config_.head_off_resp != nullptr) {
+			m = listener_config_.head_off_resp;
+		}
+		for (; m; m = m->next) {
 			if (::regexec(&m->pat, response.headers[i].name, 1,
 				      &eol, REG_STARTEND) == 0) {
 				response.headers[i].header_off = true;

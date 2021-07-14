@@ -94,7 +94,10 @@ static const Regex NoSslRedirect(
 static const Regex
 	SSLConfigSection("^[ \t]*SSLConfigSection[ \t]+([^ \t]+)[ \t]*$");
 static const Regex MaxRequest("^[ \t]*MaxRequest[ \t]+([1-9][0-9]*)[ \t]*$");
-static const Regex HeadRemove("^[ \t]*HeadRemove[ \t]+\"(.+)\"[ \t]*$");
+static const Regex AddRequestHeader(
+	"^[ \t]*(?:AddHeader|AddRequestHeader)[ \t]+\"(.+)\"[ \t]*$");
+static const Regex RemoveRequestHeader(
+	"^[ \t]*(?:HeadRemove|RemoveRequestHeader)[ \t]+\"(.+)\"[ \t]*$");
 static const Regex
 	AddResponseHeader("^[ \t]*AddResponseHead(?:er)?[ \t]+\"(.+)\"[ \t]*$");
 static const Regex RemoveResponseHeader(
@@ -138,7 +141,6 @@ static const Regex
 static const Regex RoutingPolicy("^[ \t]*RoutingPolicy[ \t]+([^ \t]+)[ \t]*$");
 static const Regex
 	ClientCert("^[ \t]*ClientCert[ \t]+([0-3])[ \t]+([1-9])[ \t]*$");
-static const Regex AddHeader("^[ \t]*AddHeader[ \t]+\"(.+)\"[ \t]*$");
 static const Regex SSLAllowClientRenegotiation(
 	"^[ \t]*SSLAllowClientRenegotiation[ \t]+([012])[ \t]*$");
 static const Regex DisableProto(
