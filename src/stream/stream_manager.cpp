@@ -1287,14 +1287,14 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 	auto service = stream->service_manager->getService(stream->request);
 	zcu_log_print(
-		LOG_WARNING,
+		LOG_NOTICE,
 		"[%lx][%lu][%s][%s] backend %s request %s timeout after %d seconds from client %s",
 		pthread_self(), stream->stream_id, listener_config_.name.data(),
-		service->name.c_str(),
+		(service != nullptr) ? service->name.c_str() : "null",
 		(stream->backend_connection.getBackend() == nullptr) ?
 			      "(null)" :
 			      stream->backend_connection.getBackend()->address.c_str(),
-		stream->request.path.data(),
+		(service != nullptr) ? stream->request.path.data() : "(null)",
 		stream->service_manager->listener_config_->to,
 		stream->client_connection.getPeerAddress().c_str());
 
