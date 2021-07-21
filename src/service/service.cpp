@@ -297,7 +297,8 @@ Service::Service(ServiceConfig &service_config_)
 			// this->addBackend(bck->address, bck->port, backend_id++);
 		} else {
 			zcu_log_print(LOG_NOTICE, "Backend %s:%s disabled",
-				      bck->address, std::to_string(bck->port));
+				      bck->address.data(),
+				      std::to_string(bck->port).data());
 		}
 	}
 	for (auto bck = service_config_.emergency; bck != nullptr;
@@ -308,7 +309,8 @@ Service::Service(ServiceConfig &service_config_)
 		} else {
 			zcu_log_print(LOG_NOTICE,
 				      "Emergency Backend %s:%s disabled",
-				      bck->address, std::to_string(bck->port));
+				      bck->address.data(),
+				      std::to_string(bck->port).data());
 		}
 	}
 }
@@ -623,7 +625,8 @@ Backend *Service::getNextBackend()
 
 		for (int i = 0; i < bck_size; i++) {
 			selected_backend = backend_set[backend_id];
-
+			if (selected_backend == nullptr)
+				continue;
 			if (!checkBackendAvailable(selected_backend))
 				getNextBackendIndex(&backend_id,
 						    &backend_counter, bck_size);
@@ -642,6 +645,8 @@ Backend *Service::getNextBackend()
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS: {
 		Backend *selected_backend = nullptr;
 		for (auto &it : backend_set) {
+			if (it == nullptr)
+				continue;
 			if (!checkBackendAvailable(it))
 				continue;
 			if (selected_backend == nullptr) {
@@ -663,6 +668,8 @@ Backend *Service::getNextBackend()
 	case ROUTING_POLICY::RESPONSE_TIME: {
 		Backend *selected_backend = nullptr;
 		for (auto &it : backend_set) {
+			if (it == nullptr)
+				continue;
 			if (!checkBackendAvailable(it))
 				continue;
 			if (selected_backend == nullptr) {
@@ -685,6 +692,8 @@ Backend *Service::getNextBackend()
 		Backend *selected_backend = nullptr;
 
 		for (auto &it : backend_set) {
+			if (it == nullptr)
+				continue;
 			if (!checkBackendAvailable(it))
 				continue;
 			if (selected_backend == nullptr) {
