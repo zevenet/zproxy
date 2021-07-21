@@ -69,7 +69,7 @@ using namespace ssl;
 class Backend : public CtlObserver<ctl::CtlTask, std::string>,
 		public BackendInfo {
 	/** Backend status using the Backend::BACKEND_STATUS enum. */
-	std::atomic<BACKEND_STATUS> status;
+	std::atomic<BACKEND_STATUS> status{ BACKEND_STATUS::BACKEND_UP };
 
     public:
 	Backend();
