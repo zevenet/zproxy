@@ -1259,7 +1259,7 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 
 		zcu_log_print(
 			LOG_WARNING,
-			"[%lx][%lu][%s][%s] backend %s connection timeout after %d seconds from client %s",
+			"[%lx][%lu][%s][%s] onConnectTimeoutEvent backend %s connection timeout after %d seconds from client %s",
 			pthread_self(), stream->stream_id,
 			listener_config_.name.data(), service->name.c_str(),
 			stream->backend_connection.getBackend()->address.c_str(),
@@ -1285,10 +1285,10 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 	}
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
-	auto service = stream->service_manager->getService(stream->request);
+	auto service = static_cast<Service *>(stream->request.getService());
 	zcu_log_print(
 		LOG_NOTICE,
-		"[%lx][%lu][%s][%s] backend %s request %s timeout after %d seconds from client %s",
+		"[%lx][%lu][%s][%s] onRequestTimeoutEvent backend %s request \"%s\" timeout after %d seconds from client %s",
 		pthread_self(), stream->stream_id, listener_config_.name.data(),
 		(service != nullptr) ? service->name.c_str() : "null",
 		(stream->backend_connection.getBackend() == nullptr) ?
