@@ -617,25 +617,35 @@ Backend *Service::getNextBackend()
 	switch (routing_policy) {
 	default:
 	case ROUTING_POLICY::ROUND_ROBIN: {
-		static int backend_id = 0;
-		static int backend_counter = 0;
-
+		static int backend_id_glob = 0;
+		static int backend_counter_glob = 0;
+		int backend_id = backend_id_glob;
+		int backend_counter = backend_counter_glob;
 		Backend *selected_backend = nullptr;
-		int bck_size = static_cast<int>(backend_set.size());
+		int i;
 
-		for (int i = 0; i < bck_size; i++) {
+		if (backend_id >= backend_set.size())
+			backend_id = 0;
+
+		for (i = 0; i < backend_set.size(); i++) {
 			selected_backend = backend_set[backend_id];
 			if (selected_backend == nullptr)
-				continue;
+				break;
+
 			if (!checkBackendAvailable(selected_backend))
 				getNextBackendIndex(&backend_id,
-						    &backend_counter, bck_size);
+						    &backend_counter,
+						    backend_set.size());
 			else {
+				selected_backend = selected_backend;
 				backend_counter++;
 				if (selected_backend->weight <= backend_counter)
 					getNextBackendIndex(&backend_id,
 							    &backend_counter,
-							    bck_size);
+							    backend_set.size());
+
+				backend_id_glob = backend_id;
+				backend_counter_glob = backend_counter;
 				return selected_backend;
 			}
 		}
@@ -661,7 +671,8 @@ Backend *Service::getNextBackend()
 					selected_backend = it;
 			}
 		}
-		return selected_backend;
+		if (selected_backend != nullptr)
+			return selected_backend;
 		break;
 	}
 
@@ -684,7 +695,8 @@ Backend *Service::getNextBackend()
 					selected_backend = it;
 			}
 		}
-		return selected_backend;
+		if (selected_backend != nullptr)
+			return selected_backend;
 		break;
 	}
 
@@ -708,7 +720,8 @@ Backend *Service::getNextBackend()
 					selected_backend = it;
 			}
 		}
-		return selected_backend;
+		if (selected_backend != nullptr)
+			return selected_backend;
 		break;
 	}
 	}

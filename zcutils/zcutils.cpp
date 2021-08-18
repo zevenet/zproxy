@@ -105,9 +105,10 @@ void zcu_bt_print()
 		exit(EXIT_FAILURE);
 	}
 
-	zcu_log_print(LOG_ERR, "Backtrace: ");
 	for (i = 0; i < calls; i++)
-		zcu_log_print(LOG_ERR, "%s", str[i]);
+		zcu_log_print(LOG_ERR, "(%lx) Backtrace: %s", pthread_self(),
+			      str[i]);
+
 	free(str);
 
 	exit(EXIT_FAILURE);

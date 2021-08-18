@@ -1,4 +1,4 @@
-ï »¿ /*
+/*
 				 *    Zevenet zproxy Load Balancer Software License
 				 *    This file is part of the Zevenet zproxy Load Balancer software package.
 				 *
@@ -21,9 +21,8 @@
 #include "http_cache.h"
 #include "../handlers/cache_manager.h"
 #include "../../zcutils/zcutils.h"
-	// Returns the cache content with all the information stored
-	cache_commons::CacheObject *
-	HttpCache::getCacheObject(HttpRequest request)
+// Returns the cache content with all the information stored
+cache_commons::CacheObject *HttpCache::getCacheObject(HttpRequest request)
 {
 	return getCacheObject(std::hash<std::string>()(request.getUrl()));
 }
