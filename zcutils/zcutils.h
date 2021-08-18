@@ -32,6 +32,7 @@
 #include <pcreposix.h>
 #include <ctype.h>
 #include <string.h>
+#include <pthread.h>
 
 /****  LOG  ****/
 
