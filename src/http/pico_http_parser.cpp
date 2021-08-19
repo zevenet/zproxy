@@ -283,7 +283,6 @@ static const char *parse_headers(const char *buf, const char *buf_end,
 				 int *ret)
 {
 	for (;; ++*num_headers) {
-		headers[*num_headers].reset();
 		CHECK_EOF();
 		if (*buf == '\015') {
 			++buf;
@@ -297,6 +296,7 @@ static const char *parse_headers(const char *buf, const char *buf_end,
 			*ret = -1;
 			return NULL;
 		}
+		headers[*num_headers].reset();
 		if (!(*num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
 			/* parsing name, but do not discard SP before colon, see
 			 * http://www.mozilla.org/security/announce/2006/mfsa2006-33.html */
