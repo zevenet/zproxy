@@ -522,21 +522,24 @@ void StreamManager::onRequestEvent(int fd)
 		this->clearStream(stream);
 		return;
 	case http_parser::PARSE_RESULT::INCOMPLETE:
+		zcu_log_print(
+			LOG_DEBUG,
+			"%s():%d: [%lx][%lu][%s] http parser INCOMPLETE from %s",
+			__FUNCTION__, __LINE__, pthread_self(),
+			stream->stream_id, listener_config_.name.data(),
+			stream->client_connection.getPeerAddress().c_str());
+		return;
 	case http_parser::PARSE_RESULT::FAILED:
 		zcu_log_print(
 			LOG_INFO,
-			"%s():%d: [%lx][%lu][%s] http parser %s from %s",
+			"%s():%d: [%lx][%lu][%s] http parser FAILED from %s",
 			__FUNCTION__, __LINE__, pthread_self(),
 			stream->stream_id, listener_config_.name.data(),
-			(http_parser::PARSE_RESULT::INCOMPLETE ==
-			 parse_result) ?
-				      "INCOMPLETE" :
-				      "FAILED",
 			stream->client_connection.getPeerAddress().c_str());
 		http_manager::replyError(
 			http::Code::BadRequest,
 			http::reasonPhrase(http::Code::BadRequest),
-			listener_config_.err501, stream->client_connection,
+			listener_config_.errreq, stream->client_connection,
 			listener_config_.response_stats);
 		this->clearStream(stream);
 		return;
@@ -1085,7 +1088,6 @@ void StreamManager::onResponseEvent(int fd)
 			break;
 		}
 		case http_parser::PARSE_RESULT::TOOLONG:
-		case http_parser::PARSE_RESULT::INCOMPLETE:
 		case http_parser::PARSE_RESULT::FAILED: {
 			zcu_log_print(
 				LOG_INFO,
@@ -1093,8 +1095,6 @@ void StreamManager::onResponseEvent(int fd)
 				pthread_self(), stream->stream_id,
 				listener_config_.name.data(),
 				service->name.c_str(),
-				(ret == http_parser::PARSE_RESULT::INCOMPLETE) ?
-					      "INCOMPLETE" :
 				(ret == http_parser::PARSE_RESULT::TOOLONG) ?
 					      "TOOLONG" :
 					      "FAILED",
@@ -1116,6 +1116,9 @@ void StreamManager::onResponseEvent(int fd)
 			clearStream(stream);
 			return;
 		}
+		case http_parser::PARSE_RESULT::INCOMPLETE:
+			stream->backend_connection.enableReadEvent();
+			return;
 		}
 		auto latency =
 			Time::getElapsed(stream->backend_connection.time_start);

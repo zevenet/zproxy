@@ -229,7 +229,7 @@ struct ListenerConfig : Counter<ListenerConfig> {
 	int has_pat; /* was a URL pattern defined? */
 	regex_t url_pat; /* pattern to match the request URL against */
 	std::string err414, /* error messages */
-		err500, err501, err503, errnossl;
+		err500, err501, err503, errnossl, errreq;
 	http::Code codenossl;
 #if WAF_ENABLED
 	std::string errwaf;

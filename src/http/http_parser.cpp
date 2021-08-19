@@ -231,7 +231,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 	reset_parser();
 	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
-	num_headers = sizeof(headers) / sizeof(headers[0]);
+	num_headers = MAX_HEADERS_SIZE;
 	const char **method_ = const_cast<const char **>(&method);
 	const char **path_ = const_cast<const char **>(&path_ptr);
 	auto pret = phr_parse_request(data, data_size, method_, &method_len,
@@ -267,7 +267,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 		//    }
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
 	} else if (pret == -2) { /* request is incomplete, continue the loop */
-		if (num_headers == 0)
+		if (minor_version == -1)
 			return PARSE_RESULT::TOOLONG;
 		else
 			return PARSE_RESULT::INCOMPLETE;
@@ -297,7 +297,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 	reset_parser();
 	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
-	num_headers = sizeof(headers) / sizeof(headers[0]);
+	num_headers = MAX_HEADERS_SIZE;
 	const char **status_message_ =
 		const_cast<const char **>(&status_message);
 	auto pret = phr_parse_response(data, data_size, &minor_version,

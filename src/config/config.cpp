@@ -419,6 +419,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 #if WAF_ENABLED
 	res->errwaf = "The request was rejected by the server.";
 #endif
+	res->errreq = "Invalid request.";
 	res->err414 = "Request URI is too long.";
 	res->err500 =
 		"An internal server error occurred. Please try again later.";
@@ -703,6 +704,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 #if WAF_ENABLED
 	res->errwaf = "The request was rejected by the server.";
 #endif
+	res->errreq = "Invalid request.";
 	res->err414 = "Request URI is too long.";
 	res->err500 =
 		"An internal server error occurred. Please try again later.";
