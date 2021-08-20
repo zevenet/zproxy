@@ -415,7 +415,7 @@ void StreamManager::onRequestEvent(int fd)
 						.getPeerAddress()
 						.c_str());
 				http_manager::replyError(
-					listener_config_.codenossl,
+					stream, listener_config_.codenossl,
 					http::reasonPhrase(
 						listener_config_.codenossl),
 					listener_config_.errnossl,
@@ -515,7 +515,7 @@ void StreamManager::onRequestEvent(int fd)
 			stream->stream_id, listener_config_.name.data(),
 			stream->client_connection.getPeerAddress().c_str());
 		http_manager::replyError(
-			http::Code::URITooLong,
+			stream, http::Code::URITooLong,
 			http::reasonPhrase(http::Code::URITooLong),
 			listener_config_.err414, stream->client_connection,
 			listener_config_.response_stats);
@@ -549,7 +549,7 @@ void StreamManager::onRequestEvent(int fd)
 	auto service = stream->service_manager->getService(stream->request);
 	if (service == nullptr) {
 		http_manager::replyError(
-			http::Code::ServiceUnavailable,
+			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
 				validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
 			listener_config_.err503, stream->client_connection,
@@ -564,7 +564,7 @@ void StreamManager::onRequestEvent(int fd)
 	auto valid = http_manager::validateRequest(*stream);
 	if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
 		http_manager::replyError(
-			http::Code::NotImplemented,
+			stream, http::Code::NotImplemented,
 			validation::request_result_reason.at(valid),
 			listener_config_.err501, stream->client_connection,
 			listener_config_.response_stats);
@@ -613,7 +613,7 @@ void StreamManager::onRequestEvent(int fd)
 				auto code = static_cast<http::Code>(
 					stream->modsec_transaction->m_it.status);
 				http_manager::replyError(
-					code, reasonPhrase(code),
+					stream, code, reasonPhrase(code),
 					listener_config_.errwaf,
 					stream->client_connection,
 					listener_config_.response_stats);
@@ -658,7 +658,7 @@ void StreamManager::onRequestEvent(int fd)
 		// If the directive only-if-cached is in the request and the content
 		// is not cached, reply an error 504 as stated in the rfc7234
 		http_manager::replyError(
-			http::Code::GatewayTimeout,
+			stream, http::Code::GatewayTimeout,
 			http::reasonPhrase(http::Code::GatewayTimeout), "",
 			stream->client_connection, this->ssl_manager);
 		this->clearStream(stream);
@@ -675,7 +675,7 @@ void StreamManager::onRequestEvent(int fd)
 	if (bck == nullptr) {
 		// No backend available
 		http_manager::replyError(
-			http::Code::ServiceUnavailable,
+			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
 				validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 			listener_config_.err503, stream->client_connection,
@@ -764,6 +764,7 @@ void StreamManager::onRequestEvent(int fd)
 				if (stream->backend_connection.getBackend()
 					    ->isConnectionLimit()) {
 					http_manager::replyError(
+						stream,
 						http::Code::ServiceUnavailable,
 						validation::request_result_reason
 							.at(validation::REQUEST_RESULT::
@@ -977,7 +978,7 @@ void StreamManager::onResponseEvent(int fd)
 				service->name.c_str(),
 				stream->backend_connection.address_str.c_str());
 			http_manager::replyError(
-				http::Code::ServiceUnavailable,
+				stream, http::Code::ServiceUnavailable,
 				http::reasonPhrase(
 					http::Code::ServiceUnavailable),
 				listener_config_.err503,
@@ -1154,7 +1155,7 @@ void StreamManager::onResponseEvent(int fd)
 				stream->backend_connection.buffer_size,
 				stream->backend_connection.buffer);
 			http_manager::replyError(
-				http::Code::ServiceUnavailable,
+				stream, http::Code::ServiceUnavailable,
 				http::reasonPhrase(
 					http::Code::ServiceUnavailable),
 				listener_config_.err503,
@@ -1209,7 +1210,8 @@ void StreamManager::onResponseEvent(int fd)
 						stream->modsec_transaction->m_it
 							.status);
 					http_manager::replyError(
-						code, reasonPhrase(code),
+						stream, code,
+						reasonPhrase(code),
 						listener_config_.errwaf,
 						stream->client_connection,
 						listener_config_.response_stats);
@@ -1381,7 +1383,7 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 					.c_str());
 		}
 		http_manager::replyError(
-			http::Code::GatewayTimeout,
+			stream, http::Code::GatewayTimeout,
 			http::reasonPhrase(http::Code::GatewayTimeout),
 			http::reasonPhrase(http::Code::GatewayTimeout),
 			stream->client_connection,
@@ -1407,7 +1409,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 		service = stream->service_manager->getService(stream->request);
 		if (service == nullptr) {
 			http_manager::replyError(
-				http::Code::ServiceUnavailable,
+				stream, http::Code::ServiceUnavailable,
 				validation::request_result_reason.at(
 					validation::REQUEST_RESULT::
 						SERVICE_NOT_FOUND),
@@ -1425,7 +1427,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 		// No backend available
 		zcu_log_print(LOG_WARNING, "service connection limit reached");
 		http_manager::replyError(
-			http::Code::ServiceUnavailable,
+			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
 				validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 			listener_config_.err503, stream->client_connection,
@@ -1454,7 +1456,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 	if (bck == nullptr) {
 		// No backend available
 		http_manager::replyError(
-			http::Code::ServiceUnavailable,
+			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
 				validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 			listener_config_.err503, stream->client_connection,
@@ -1517,6 +1519,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 				if (stream->backend_connection.getBackend()
 					    ->isConnectionLimit()) {
 					http_manager::replyError(
+						stream,
 						http::Code::ServiceUnavailable,
 						validation::request_result_reason
 							.at(validation::REQUEST_RESULT::
@@ -1623,7 +1626,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		if (stream->backend_connection.getBackend()
 			    ->isConnectionLimit()) {
 			http_manager::replyError(
-				http::Code::ServiceUnavailable,
+				stream, http::Code::ServiceUnavailable,
 				validation::request_result_reason.at(
 					validation::REQUEST_RESULT::
 						BACKEND_NOT_FOUND),
@@ -1685,7 +1688,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 					stream->backend_connection.getBackend()
 						->address.data());
 				http_manager::replyError(
-					http::Code::ServiceUnavailable,
+					stream, http::Code::ServiceUnavailable,
 					http::reasonPhrase(
 						http::Code::ServiceUnavailable),
 					listener_config_.err503,
@@ -2028,6 +2031,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 							.getPeerAddress()
 							.c_str());
 					http_manager::replyError(
+						stream,
 						listener_config_.codenossl,
 						http::reasonPhrase(
 							listener_config_
@@ -2337,7 +2341,7 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 			return;
 		} else if (!stream->response.getHeaderSent()) {
 			http_manager::replyError(
-				http::Code::InternalServerError,
+				stream, http::Code::InternalServerError,
 				http::reasonPhrase(
 					http::Code::InternalServerError),
 				listener_config_.err503,
@@ -2422,7 +2426,7 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 	setStreamBackend(stream);
 
 	//  // No backend available
-	//  http_manager::replyError(http::Code::ServiceUnavailable,
+	//  http_manager::replyError(stream,http::Code::ServiceUnavailable,
 	//                           validation::request_result_reason.at(
 	//                               validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
 	//                           listener_config_.err503,
