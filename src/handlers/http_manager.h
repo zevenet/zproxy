@@ -143,7 +143,8 @@ class http_manager {
    * @param httpResponseHits is the stats struct where increase the response code
    * client connection.
    */
-	static void replyError(http::Code code, const std::string &code_string,
+	static void replyError(HttpStream *stream, http::Code code,
+			       const std::string &code_string,
 			       const std::string &str, Connection &target,
 			       Statistics::HttpResponseHits &stats);
 

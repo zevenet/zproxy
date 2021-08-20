@@ -838,23 +838,38 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 	return validation::REQUEST_RESULT::OK;
 }
 
-void http_manager::replyError(http::Code code, const std::string &code_string,
+void http_manager::replyError(HttpStream *stream, http::Code code,
+			      const std::string &code_string,
 			      const std::string &str, Connection &target,
 			      Statistics::HttpResponseHits &resp_stats)
 {
 	char caddr[200];
+	auto service = static_cast<Service *>(stream->request.getService());
+	std::string bck_str("null");
+
+	if (stream->backend_connection.getBackend() != nullptr) {
+		bck_str = std::string(
+			stream->backend_connection.getBackend()->address.c_str() +
+			stream->backend_connection.getBackend()->port);
+	}
 
 	if (UNLIKELY(zcu_soc_get_peer_address(target.getFileDescriptor(), caddr,
 					      200) == nullptr)) {
 		zcu_log_print(LOG_DEBUG, "Error getting peer address");
-	} else {
-		auto request_data_len =
-			std::string_view(target.buffer).find('\r');
-		zcu_log_print(LOG_INFO, "(%lx) e%d %s %.*s from %s",
-			      std::this_thread::get_id(),
-			      static_cast<int>(code), code_string.data(),
-			      request_data_len, target.buffer, caddr);
+		caddr[0] = '-';
+		caddr[1] = '\0';
 	}
+
+	auto request_data_len = std::string_view(target.buffer).find('\r');
+	zcu_log_print(LOG_INFO,
+		      "[failed][%lx][%lu][%s][%s][%s] e%d %s \"%.*s\" from %s",
+		      pthread_self(), stream->stream_id,
+		      stream->service_manager->listener_config_->name.data(),
+		      (service != nullptr) ? service->name.c_str() : "null",
+		      bck_str.data(), static_cast<int>(code),
+		      code_string.data(), request_data_len, target.buffer,
+		      caddr);
+
 	auto response_ = http::getHttpResponse(code, code_string, str);
 	size_t written = 0;
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
