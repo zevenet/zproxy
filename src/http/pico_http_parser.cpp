@@ -373,11 +373,14 @@ static const char *parse_request(const char *buf, const char *buf_end,
 {
 	/* skip first empty line (some clients add CRLF after POST content) */
 	CHECK_EOF();
-	if (*buf == '\015') {
-		++buf;
-		EXPECT_CHAR('\012');
-	} else if (*buf == '\012') {
-		++buf;
+	while ( *buf == '\015' || *buf == '\012' ) {
+		if (*buf == '\015') {
+			++buf;
+			EXPECT_CHAR('\012');
+		} else if (*buf == '\012') {
+			++buf;
+		}
+		CHECK_EOF();
 	}
 
 	/* parse request line */
