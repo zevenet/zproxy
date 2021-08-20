@@ -267,7 +267,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 		//    }
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
 	} else if (pret == -2) { /* request is incomplete, continue the loop */
-		if (minor_version == -1)
+		if (method != nullptr && minor_version == -1)
 			return PARSE_RESULT::TOOLONG;
 		else
 			return PARSE_RESULT::INCOMPLETE;
