@@ -537,7 +537,7 @@ void StreamManager::onRequestEvent(int fd)
 			stream->stream_id, listener_config_.name.data(),
 			stream->client_connection.getPeerAddress().c_str());
 		http_manager::replyError(
-			http::Code::BadRequest,
+			stream, http::Code::BadRequest,
 			http::reasonPhrase(http::Code::BadRequest),
 			listener_config_.errreq, stream->client_connection,
 			listener_config_.response_stats);
@@ -854,13 +854,6 @@ void StreamManager::onRequestEvent(int fd)
 
 		break;
 	case BACKEND_TYPE::REDIRECT: {
-		zcu_log_print(
-			LOG_INFO, "[%lx][%lu][%s][%s] (%s) %s < redirect %s",
-			pthread_self(), stream->stream_id,
-			listener_config_.name.data(), service->name.c_str(),
-			stream->client_connection.getPeerAddress().c_str(),
-			stream->request.http_message_str.data(),
-			bck->backend_config->url.data());
 		if (http_manager::replyRedirect(*stream, *bck))
 			clearStream(stream);
 		return;
@@ -1108,7 +1101,7 @@ void StreamManager::onResponseEvent(int fd)
 				stream->response.message_bytes_left,
 				stream->backend_connection.buffer_size);
 			http_manager::replyError(
-				http::Code::InternalServerError,
+				stream, http::Code::InternalServerError,
 				http::reasonPhrase(
 					http::Code::InternalServerError),
 				listener_config_.err503,

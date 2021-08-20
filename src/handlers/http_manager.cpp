@@ -959,6 +959,16 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 	auto response_ =
 		http::getRedirectResponse(static_cast<http::Code>(code), url);
 
+	auto service = static_cast<Service *>(stream.request.getService());
+	zcu_log_print(
+		LOG_INFO,
+		"[redirect][%lx][%lu][%s][%s] the request \"%s\" from %s was redirected to \"%s\"",
+		pthread_self(), stream.stream_id,
+		stream.service_manager->listener_config_->name.data(),
+		(service != nullptr) ? service->name.c_str() : "null",
+		stream.request.http_message_str.data(),
+		stream.client_connection.getPeerAddress().c_str(), url.data());
+
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	size_t sent = 0;
 	if (!stream.client_connection.ssl_connected) {
