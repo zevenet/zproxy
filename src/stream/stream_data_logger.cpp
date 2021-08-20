@@ -28,10 +28,10 @@ void StreamDataLogger::logTransaction(HttpStream &stream)
 		      stream.backend_connection.getBackend()->port,
 		      !host.empty() ? host.c_str() : "-",
 		      stream.client_connection.getPeerAddress().c_str(),
+			   /* -2 is to remove the CLRF characters */
 		      stream.request.http_message_str.length() - 2,
 		      stream.request.http_message_str.data(),
-		      stream.response.http_message_str.data(),
-		      /* -2 is to remove the CLRF characters */
+		      stream.response.http_message_str.data(),		     
 		      stream.response.content_length, referer.c_str(),
 		      agent.c_str(), latency);
 }
