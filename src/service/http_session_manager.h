@@ -42,16 +42,28 @@ struct SessionInfo {
 	{
 		last_seen = Time::getTimeSec();
 	}
+
+	// last_seen is used to calculate if the session has expired.
+	// If it has the value 0 means that the session does not expired, it is permanent
 	time_t last_seen;
 	Backend *assigned_backend{ nullptr };
+
+	bool isStatic()
+	{
+		return last_seen == 0 ? true : false;
+	}
+
 	bool hasExpired(unsigned int ttl)
 	{
 		// check if has not reached ttl
+		if (last_seen == 0)
+			return false;
 		return Time::getTimeSec() - last_seen > ttl;
 	}
 	void update()
 	{
-		last_seen = Time::getTimeSec();
+		if (!this->isStatic())
+			last_seen = Time::getTimeSec();
 	}
 	long getTimeStamp()
 	{

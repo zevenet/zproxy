@@ -171,7 +171,11 @@ bool HttpSessionManager::addSession(JsonObject *json_object,
 {
 	if (json_object == nullptr)
 		return false;
-	std::unique_ptr<SessionInfo> new_session(new SessionInfo());
+
+	std::string key_json;
+	long last_seen_json = 0;
+	Backend *bck_json{ nullptr };
+
 	if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() &&
 	    json_object->at(JSON_KEYS::ID)->isValue()) {
 		auto session_json_backend_id =
@@ -181,23 +185,34 @@ bool HttpSessionManager::addSession(JsonObject *json_object,
 		for (auto backend : backend_set) {
 			if (backend->backend_id != session_json_backend_id)
 				continue;
-			new_session->assigned_backend = backend;
+			bck_json = backend;
 		}
-		if (new_session->assigned_backend == nullptr)
+		if (bck_json == nullptr)
 			return false;
 		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
-		std::string key = dynamic_cast<JsonDataValue *>(
-					  json_object->at(JSON_KEYS::ID).get())
-					  ->string_value;
+		key_json = dynamic_cast<JsonDataValue *>(
+				   json_object->at(JSON_KEYS::ID).get())
+				   ->string_value;
 		if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 &&
 		    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
-			new_session->setTimeStamp(
+			last_seen_json =
 				dynamic_cast<JsonDataValue *>(
 					json_object->at(JSON_KEYS::LAST_SEEN_TS)
 						.get())
-					->number_value);
-		sessions_set.emplace(
-			std::make_pair(key, new_session.release()));
+					->number_value;
+		auto session_it = sessions_set.find(key_json);
+		if (session_it == sessions_set.end()) {
+			std::unique_ptr<SessionInfo> new_session(
+				new SessionInfo());
+			new_session->setTimeStamp(last_seen_json);
+			new_session->assigned_backend = bck_json;
+			sessions_set.emplace(std::make_pair(
+				key_json, new_session.release()));
+		} else {
+			session_it->second->setTimeStamp(last_seen_json);
+			session_it->second->assigned_backend = bck_json;
+		}
+
 		return true;
 	} else {
 		return false;

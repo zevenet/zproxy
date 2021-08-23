@@ -32,6 +32,8 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request)
 	if (session_type != sessions::SESS_NONE) {
 		auto session = getSession(source, request);
 		if (session != nullptr) {
+			if (session->isStatic())
+				return session->assigned_backend;
 			if (session->assigned_backend->getStatus() !=
 			    BACKEND_STATUS::BACKEND_UP) {
 				// invalidate all sessions backend is down
