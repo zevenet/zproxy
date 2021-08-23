@@ -1,0 +1,1 @@
+ip netns exec cl-ns-1 /usr/bin/curl -X GET   --connect-timeout 2 -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n'  -D test_7_ctl_dump/response_headers.out.tmp -o test_7_ctl_dump/body.out.tmp --unix-socket /tmp/functional-tests/env_proxy.socket http://localhost/listener/0/services >test_7_ctl_dump/extended.out.tmp 2>test_7_ctl_dump/error.out.tmp 
