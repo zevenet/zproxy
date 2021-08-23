@@ -1,0 +1,13 @@
+      4 
+      2 Backend: bck-1
+      2 Backend: bck-2
+      4 Connection: keep-alive
+      4 Content-Location: http://10.1.2.1//app
+      4 Content-Type: application/octet-stream
+      4 HTTP/1.1 200 OK
+      4 Location: http://10.1.2.1/
+      2 Loc-raw: http://10.2.1.1/
+      2 Loc-raw: http://10.2.1.2/
+      4 Request-Uri: /
+      4 Server: nginx
+      4 Transfer-Encoding: chunked
