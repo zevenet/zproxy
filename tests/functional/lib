@@ -447,8 +447,8 @@ exec_curl () {
 	if [[ "$BACKGROUND" -ne 1 ]]; then
 		mask_headers $HEAD_F
 	fi
-	mask_out $OUT_F
 	pretty_json $OUT_F
+	mask_out $OUT_F
 
 	if [[ "$FILTER" != "" ]]; then
 		grep "$FILTER" $ERR_F > $FILTER_F
@@ -484,8 +484,9 @@ mask_out () {
 	local FILE=$1
 	# remove bonding headers uploading files
 	sed -Ei "s/--------------------------\w+/--------------------------################/g" $FILE
-	sed -Ei "s/\"connect-time\"\s*:\s*[0-9\.]+,/\"connect-time\": \"#######\",/g" $FILE
-	sed -Ei "s/\"response-time\"\s*:\s*[0-9\.]+,/\"response-time\": \"#######\",/g" $FILE
+	sed -Ei "s/\"connect-time\"\s*:\s*([0-9\.]+|[1-9]+[-\.0-9e]+),?/\"connect-time\": \"#######\",/g" $FILE
+	sed -Ei "s/\"response-time\"\s*:\s*([0-9\.]+|[1-9]+[-\.0-9e]+),?/\"response-time\": \"#######\",/g" $FILE
+	sed -Ei 's/"last-seen":\s*0?[1-9][0-9]*.*$/"last-seen": #######/g' $FILE
 }
 
 exec_average () {

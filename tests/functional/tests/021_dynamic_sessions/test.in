@@ -69,9 +69,9 @@ CMD=wait
 TIMEOUT=4
 
 #########################
-DESCRIPTION="test PARAM persistence"
+DESCRIPTION="test URL persistence"
 CMD=reload
-FILE=zproxy_header.cfg
+FILE=zproxy_url.cfg
 #########################
 DESCRIPTION="do requests"
 CMD=average
@@ -99,7 +99,7 @@ TIMEOUT=4
 #########################
 DESCRIPTION="test COOKIE persistence"
 CMD=reload
-FILE=zproxy_header.cfg
+FILE=zproxy_cookie.cfg
 #########################
 DESCRIPTION="do requests"
 CMD=average
@@ -124,10 +124,10 @@ METHOD="GET"
 #########################
 DESCRIPTION="wait for the expiration of the session"
 CMD=wait
-TIMEOUT=4
+TIMEOUT=5
 
 #########################
-DESCRIPTION="Get stats"
+DESCRIPTION="check that session does not exists"
 CMD=ctl
 URL="/listener/0"
 METHOD="GET"
