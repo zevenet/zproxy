@@ -270,16 +270,22 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request)
 			str += ",";
 		}
 	}
+
+	if (str.empty() || str == JSON_OP_RESULT::ERROR) {
+		auto response = http::getHttpResponse(
+			http::Code::BadRequest, "", JSON_OP_RESULT::ERROR);
+		return response;
+	}
+
 	std::string res;
 	if (multiple) {
 		res = "[";
 		res += str;
 		res += "]";
 	} else {
-		res += str;
+		res = str;
 	}
-	if (res.empty())
-		res = JSON_OP_RESULT::ERROR;
+
 	auto response = http::getHttpResponse(http::Code::OK, "", res);
 	return response;
 }
