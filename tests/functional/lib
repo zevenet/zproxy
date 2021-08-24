@@ -153,6 +153,11 @@ reload_proxy () {
 	apply_proxy_api $1
 	ERR=$?
 
+	local OUT=`cat $1/body.out.tmp | grep '"result"' | grep '"error"' 2>/dev/null`
+	if [[ $OUT != "" ]]; then
+		ERR=1
+	fi
+
 	wait $PROXY_GRACETIME
 	return $ERR
 }
