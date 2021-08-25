@@ -22,6 +22,7 @@
 #pragma once
 
 #include <string>
+#include "../config/macro.h"
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
 #include "../event/epoll_manager.h"
@@ -36,8 +37,6 @@
 #include <modsecurity/rules.h>
 #include <modsecurity/transaction.h>
 #endif
-
-static const std::string MACRO_VHOST("${VHOST}");
 
 enum class STREAM_OPTION : uint32_t {
 	NO_OPT = 0x0,
@@ -106,19 +105,23 @@ class HttpStream : public Counter<HttpStream> {
 	std::string rewr_loc_str_repl{ "" };
 
 	/* Params:
-	 *	- macro to look for and replace
 	 *  - string where replace the macro. This same string will be replaced
+	 *	- string to replace
+	 *  - string to replace length
+	 *  - flag to enable or disable the replacement
 	 *
 	 *  Returns:
-	 *		1 if the
+	 *		1 if the replacement was applied, 0 in other case
 	 *
 	*/
-	inline int replaceVhostMacro(char *buf, char *ori_str,
-				     int ori_len) const
+	inline int replaceVhostMacro(char *buf, char *ori_str, int ori_len,
+				     bool enabled = true) const
 	{
+		if (!enabled)
+			return 0;
 		return zcu_str_replace_str(
-			buf, ori_str, ori_len, MACRO_VHOST.data(),
-			MACRO_VHOST.length(),
+			buf, ori_str, ori_len, MACRO::VHOST_STR,
+			MACRO::VHOST_LEN,
 			const_cast<char *>(this->request.virtual_host.data()),
 			this->request.virtual_host.length());
 	}

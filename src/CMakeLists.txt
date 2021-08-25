@@ -74,6 +74,7 @@ set(l7core_sources ${l7core_sources}
     service/http_session_manager.h service/http_session_manager.cpp
     service/service.h service/service.cpp
     service/service_manager.h service/service_manager.cpp
+    config/macro.h
     config/config_node.h
     config/config_data.h
     config/config.h config/config.cpp

@@ -1698,6 +1698,8 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 			if ((matches[3].rm_eo - matches[3].rm_so) ==
 			    1) /* the path is a single '/', so remove it */
 				be->url.pop_back();
+			if (strstr(be->url.c_str(), MACRO::VHOST_STR))
+				be->redir_macro = true;
 		} else if (!regexec(&regex_set::BackEnd, lin, 4, matches, 0)) {
 			if (res->backends) {
 				for (be = res->backends; be->next;

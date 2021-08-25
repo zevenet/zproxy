@@ -46,6 +46,7 @@
 #include <mutex>
 #include <string>
 #include <fstream>
+#include "macro.h"
 #include "../stats/counter.h"
 #include "../version.h"
 #include "config_data.h"

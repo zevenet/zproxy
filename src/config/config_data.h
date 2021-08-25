@@ -94,6 +94,9 @@ class BackendConfig : Counter<BackendConfig> {
 	int redir_req; /* 0 - redirect is absolute, 1 - the redirect should include
 				   the request path, or 2 if it should use perl dynamic
 				   replacement */
+	bool redir_macro{
+		false
+	}; /* If it is 1 the redirect requires an expand of the vhost macro */
 	std::string bekey; /* Backend Key for Cookie */
 	std::shared_ptr<SSL_CTX> ctx = nullptr; /* CTX for SSL connections */
 	std::string ssl_config_file; /* ssl config file path */

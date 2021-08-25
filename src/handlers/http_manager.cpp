@@ -921,7 +921,8 @@ bool http_manager::replyRedirect(HttpStream &stream,
 
 	if (stream.replaceVhostMacro(
 		    buf, redirect_backend.backend_config->url.data(),
-		    redirect_backend.backend_config->url.length()))
+		    redirect_backend.backend_config->url.length()),
+	    redirect_backend.backend_config->redir_macro)
 		new_url = buf;
 
 	switch (redirect_backend.backend_config->redir_req) {
