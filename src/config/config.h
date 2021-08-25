@@ -182,6 +182,9 @@ class Config : public Counter<Config> {
 			  std::weak_ptr<ListenerConfig> listener_,
 			  const std::string &dir_path);
 
+	void parseRedirect(char *lin, regmatch_t *matches,
+			   std::shared_ptr<BackendConfig> be, MATCHER *url);
+
 	/*
 	 * parse a service
 	 */

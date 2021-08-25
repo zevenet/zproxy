@@ -1488,6 +1488,37 @@ void Config::load_certdir(int has_other,
 	closedir(dp);
 }
 
+void Config::parseRedirect(char *lin, regmatch_t *matches,
+			   std::shared_ptr<BackendConfig> be,
+			   MATCHER *url = nullptr)
+{
+	// 1 - Dynamic or not, 2 - Request Redirect #, 3 - Destination URL
+	be->be_type = 302;
+	be->redir_req = 0;
+	if (matches[1].rm_eo != matches[1].rm_so) {
+		if ((lin[matches[1].rm_so] & ~0x20) == 'D') {
+			be->redir_req = 2;
+			if (!url || url->next)
+				conf_err(
+					"Dynamic Redirect must be preceeded by a URL line");
+		} else if ((lin[matches[1].rm_so] & ~0x20) == 'A')
+			be->redir_req = 1;
+	}
+	if (matches[2].rm_eo != matches[2].rm_so)
+		be->be_type = atoi(lin + matches[2].rm_so);
+	pthread_mutex_init(&be->mut, nullptr);
+	lin[matches[3].rm_eo] = '\0';
+	be->url = std::string(lin + matches[3].rm_so);
+	/* split the URL into its fields */
+	if (regexec(&regex_set::LOCATION, be->url.data(), 4, matches, 0))
+		conf_err("Redirect bad URL - aborted");
+	if ((matches[3].rm_eo - matches[3].rm_so) ==
+	    1) /* the path is a single '/', so remove it */
+		be->url.pop_back();
+	if (strstr(be->url.c_str(), MACRO::VHOST_STR))
+		be->redir_macro = true;
+}
+
 std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
@@ -1671,35 +1702,7 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 					std::make_shared<BackendConfig>();
 				be = res->backends;
 			}
-			// 1 - Dynamic or not, 2 - Request Redirect #, 3 - Destination URL
-			be->be_type = 302;
-			be->redir_req = 0;
-			if (matches[1].rm_eo != matches[1].rm_so) {
-				if ((lin[matches[1].rm_so] & ~0x20) == 'D') {
-					be->redir_req = 2;
-					if (!res->url || res->url->next)
-						conf_err(
-							"Dynamic Redirect must be preceeded by a URL line");
-				} else if ((lin[matches[1].rm_so] & ~0x20) ==
-					   'A')
-					be->redir_req = 1;
-			}
-			if (matches[2].rm_eo != matches[2].rm_so)
-				be->be_type = atoi(lin + matches[2].rm_so);
-			be->weight = 1;
-			be->alive = 1;
-			pthread_mutex_init(&be->mut, nullptr);
-			lin[matches[3].rm_eo] = '\0';
-			be->url = std::string(lin + matches[3].rm_so);
-			/* split the URL into its fields */
-			if (regexec(&regex_set::LOCATION, be->url.data(), 4,
-				    matches, 0))
-				conf_err("Redirect bad URL - aborted");
-			if ((matches[3].rm_eo - matches[3].rm_so) ==
-			    1) /* the path is a single '/', so remove it */
-				be->url.pop_back();
-			if (strstr(be->url.c_str(), MACRO::VHOST_STR))
-				be->redir_macro = true;
+			parseRedirect(lin, matches, be, res->url);
 		} else if (!regexec(&regex_set::BackEnd, lin, 4, matches, 0)) {
 			if (res->backends) {
 				for (be = res->backends; be->next;
