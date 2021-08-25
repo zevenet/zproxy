@@ -851,6 +851,8 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			if ((matches[3].rm_eo - matches[3].rm_so) ==
 			    1) /* the path is a single '/', so remove it */
 				res->nossl_url.data()[matches[3].rm_so] = '\0';
+			if (strstr(res->nossl_url.c_str(), MACRO::VHOST_STR))
+				conf_err("The macro cannot be used here");
 		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
 				    0)) {
 			res->max_req = atoll(lin + matches[1].rm_so);
