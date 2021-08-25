@@ -333,7 +333,7 @@ bool Service::doMatch(HttpRequest &request)
 		for (found = i = 0;
 		     i < static_cast<int>(request.num_headers) && !found; i++) {
 			eol.rm_so = 0;
-			eol.rm_eo = request.headers[i].line_size;
+			eol.rm_eo = request.headers[i].line_size - 2;
 			if (regexec(&m->pat, request.headers[i].name, 1, &eol,
 				    REG_STARTEND) == 0)
 				found = 1;
@@ -347,7 +347,7 @@ bool Service::doMatch(HttpRequest &request)
 		for (found = i = 0; i < static_cast<int>(request.num_headers);
 		     i++) {
 			eol.rm_so = 0;
-			eol.rm_eo = request.headers[i].line_size;
+			eol.rm_eo = request.headers[i].line_size - 2;
 			if (regexec(&m->pat, request.headers[i].name, 1, &eol,
 				    REG_STARTEND) == 0)
 				return false;
