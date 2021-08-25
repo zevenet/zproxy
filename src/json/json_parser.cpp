@@ -164,6 +164,10 @@ std::unique_ptr<json::Json> json::JsonParser::parseValue(char current_char,
 			next_char = static_cast<char>(ss.peek());
 			int num;
 			if (next_char == '.') {
+				// bugfix: a dot already was found.
+				// example: "id": 127.0.0.2
+				if (is_double)
+					return nullptr;
 				number += ss.get();
 				is_double = true;
 			} else if (::isdigit(next_char)) {
