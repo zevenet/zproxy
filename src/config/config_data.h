@@ -110,6 +110,7 @@ class BackendConfig : Counter<BackendConfig> {
 	int disabled; /* true if the back-end is disabled */
 	int connections;
 	int connection_limit; /* It is the limit of established connection that can manage simultanoausly*/
+	Statistics::HttpResponseHits response_stats;
 	int ecdh_curve_nid{ 0 };
 	std::shared_ptr<BackendConfig> next = nullptr;
 	int key_id;

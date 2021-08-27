@@ -158,7 +158,7 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
 					 BACKEND_STATUS::BACKEND_DISABLED :
 					 BACKEND_STATUS::BACKEND_UP);
 	if (backend_config->be_type == 0) {
-		backend->address = std::move(backend_config->address);
+		backend->address = backend_config->address;
 		backend->port = backend_config->port;
 		backend->backend_type = BACKEND_TYPE::REMOTE;
 		backend->nf_mark = backend_config->nf_mark;

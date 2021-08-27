@@ -1231,7 +1231,7 @@ void StreamManager::onResponseEvent(int fd)
 		auto code = static_cast<http::Code>(
 			stream->response.http_status_code);
 		stream->backend_connection.getBackend()
-			->response_stats.increaseCode(code);
+			->backend_config->response_stats.increaseCode(code);
 
 #ifdef CACHE_ENABLED
 		if (service->cache_enabled) {

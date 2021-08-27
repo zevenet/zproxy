@@ -103,7 +103,6 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>,
 	int connection_limit{};
 	/** Response timeout time parameter. */
 	int response_timeout{};
-	Statistics::HttpResponseHits response_stats;
 	/** SSL_CTX if the Backend is HTTPS. */
 	std::shared_ptr<SSL_CTX> ctx{ nullptr };
 	bool cut;

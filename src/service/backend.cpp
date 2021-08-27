@@ -213,18 +213,22 @@ std::unique_ptr<JsonObject> Backend::getBackendJson()
 		root->emplace(
 			JSON_KEYS::CONNECT_TIME,
 			std::make_unique<JsonDataValue>(this->avg_conn_time));
-		root->emplace(JSON_KEYS::CODE_200_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_2xx));
-		root->emplace(JSON_KEYS::CODE_300_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_3xx));
-		root->emplace(JSON_KEYS::CODE_400_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_4xx));
-		root->emplace(JSON_KEYS::CODE_500_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_5xx));
+		root->emplace(
+			JSON_KEYS::CODE_200_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_2xx));
+		root->emplace(
+			JSON_KEYS::CODE_300_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_3xx));
+		root->emplace(
+			JSON_KEYS::CODE_400_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_4xx));
+		root->emplace(
+			JSON_KEYS::CODE_500_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_5xx));
 	}
 	return root;
 }
