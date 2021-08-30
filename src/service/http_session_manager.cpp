@@ -166,59 +166,66 @@ void HttpSessionManager::doMaintenance()
 	}
 }
 
+bool HttpSessionManager::addSession(std::string key, int backend_id,
+				    long last_seen,
+				    std::vector<Backend *> backend_set)
+{
+	Backend *bck_ptr{ nullptr };
+
+	if (key == "")
+		return false;
+
+	for (auto backend : backend_set) {
+		if (backend->backend_id != backend_id)
+			continue;
+		bck_ptr = backend;
+	}
+	if (bck_ptr == nullptr)
+		return false;
+
+	auto session_it = sessions_set.find(key);
+	if (session_it == sessions_set.end()) {
+		std::unique_ptr<SessionInfo> new_session(new SessionInfo());
+		new_session->setTimeStamp(last_seen);
+		new_session->assigned_backend = bck_ptr;
+		sessions_set.emplace(
+			std::make_pair(key, new_session.release()));
+	} else {
+		session_it->second->setTimeStamp(last_seen);
+		session_it->second->assigned_backend = bck_ptr;
+	}
+
+	return true;
+}
+
 bool HttpSessionManager::addSession(JsonObject *json_object,
 				    std::vector<Backend *> backend_set)
 {
+	long last_seen = 0;
+
 	if (json_object == nullptr)
 		return false;
 
-	std::string key_json;
-	long last_seen_json = 0;
-	Backend *bck_json{ nullptr };
+	if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 &&
+	    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
+		last_seen =
+			dynamic_cast<JsonDataValue *>(
+				json_object->at(JSON_KEYS::LAST_SEEN_TS).get())
+				->number_value;
 
 	if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() &&
 	    json_object->at(JSON_KEYS::ID)->isValue()) {
-		auto session_json_backend_id =
+		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
+		return addSession(
+			dynamic_cast<JsonDataValue *>(
+				json_object->at(JSON_KEYS::ID).get())
+				->string_value,
 			dynamic_cast<JsonDataValue *>(
 				json_object->at(JSON_KEYS::BACKEND_ID).get())
-				->number_value;
-		for (auto backend : backend_set) {
-			if (backend->backend_id != session_json_backend_id)
-				continue;
-			bck_json = backend;
-		}
-		if (bck_json == nullptr)
-			return false;
-		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
-		key_json = dynamic_cast<JsonDataValue *>(
-				   json_object->at(JSON_KEYS::ID).get())
-				   ->string_value;
-		if (key_json == "")
-			return false;
-		if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 &&
-		    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
-			last_seen_json =
-				dynamic_cast<JsonDataValue *>(
-					json_object->at(JSON_KEYS::LAST_SEEN_TS)
-						.get())
-					->number_value;
-		auto session_it = sessions_set.find(key_json);
-		if (session_it == sessions_set.end()) {
-			std::unique_ptr<SessionInfo> new_session(
-				new SessionInfo());
-			new_session->setTimeStamp(last_seen_json);
-			new_session->assigned_backend = bck_json;
-			sessions_set.emplace(std::make_pair(
-				key_json, new_session.release()));
-		} else {
-			session_it->second->setTimeStamp(last_seen_json);
-			session_it->second->assigned_backend = bck_json;
-		}
-
-		return true;
-	} else {
-		return false;
+				->number_value,
+			last_seen, backend_set);
 	}
+	return false;
 }
 
 bool HttpSessionManager::deleteSession(const JsonObject &json_object)

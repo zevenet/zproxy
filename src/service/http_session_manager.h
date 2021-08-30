@@ -27,6 +27,7 @@
 
 namespace sessions
 {
+
 struct SessionInfo {
 	SessionInfo() : assigned_backend(nullptr)
 	{
@@ -82,10 +83,8 @@ class HttpSessionManager {
 	unsigned int ttl{};
 	HttpSessionManager();
 	virtual ~HttpSessionManager();
-	// may exist, so which one is going to release
-	// the map resources!!
-	// return the created SessionInfo
-	// must check if it already exist !!!
+	bool addSession(std::string key, int backend_id, long last_seen,
+			std::vector<Backend *> backend_set);
 	bool addSession(JsonObject *json_object,
 			std::vector<Backend *> backend_set);
 	SessionInfo *addSession(Connection &source, HttpRequest &request,
