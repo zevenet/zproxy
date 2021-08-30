@@ -460,6 +460,47 @@ bool ListenerManager::addListener(
 	return true;
 }
 
+// it gets the stats from the old backend and they are saved in the new one
+void restoreConnections(std::shared_ptr<ListenerConfig> old_cfg,
+			std::shared_ptr<ListenerConfig> new_cfg)
+{
+	// Restore the vip stats
+	new_cfg->response_stats.set(&old_cfg->response_stats);
+
+	// Restore the backend stats
+	BackendConfig *old_bck_pool;
+	// create a backend list to mark the backends that were analyzed
+	for (auto svc = new_cfg->services; svc != nullptr; svc = svc->next) {
+		// getting svc
+		old_bck_pool = nullptr;
+		for (auto old_svc = old_cfg->services; old_svc != nullptr;
+		     old_svc = old_svc->next) {
+			if (old_svc->name == svc->name) {
+				old_bck_pool = old_svc->backends.get();
+				break; // not found the svc
+			}
+		}
+		if (old_bck_pool == nullptr)
+			continue;
+
+		// The others backend counter == -1 is used to mark the backend stats were copied
+		for (auto bck = svc->backends; bck != nullptr;
+		     bck = bck->next) {
+			for (auto old_bck = old_bck_pool; old_bck != nullptr;
+			     old_bck = old_bck->next.get()) {
+				if (old_bck->address == bck->address &&
+				    old_bck->port == bck->port &&
+				    !old_bck->response_stats.disable) {
+					old_bck->response_stats.disable = true;
+					bck->response_stats.set(
+						&old_bck->response_stats);
+					break;
+				}
+			}
+		}
+	}
+}
+
 bool ListenerManager::reloadConfigFile()
 {
 	Config config;
@@ -471,16 +512,25 @@ bool ListenerManager::reloadConfigFile()
 				      .config_file_name.data());
 		return false;
 	}
-	// register new listeners
 	if (config.listeners == nullptr) {
 		zcu_log_print(LOG_ERR,
 			      "%s():%d: error getting listener configurations",
 			      __FUNCTION__, __LINE__);
 		return false;
 	}
+
 	// clear and stop old config
 	auto &sm_set = ServiceManager::getInstance();
 	for (auto it = sm_set.begin(); it != sm_set.end();) {
+		// copy the stats from the old obj if it exists
+		for (auto lc = config.listeners; lc != nullptr; lc = lc->next) {
+			if (lc->id == (it->second)->id &&
+			    lc->name == (it->second)->name) {
+				restoreConnections(it->second->listener_config_,
+						   lc);
+				break;
+			}
+		}
 		// stop the listener in all stream workers
 		it->second->disabled = true;
 		for (auto &[sm_id, sm] : stream_manager_set) {

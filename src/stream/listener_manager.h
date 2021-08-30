@@ -122,4 +122,7 @@ class ListenerManager : public EpollManager,
  * @return true if reload succeded compeletely.
  */
 	bool reloadConfigFile();
+
+	void restoreStats(std::shared_ptr<ListenerConfig> old_cfg,
+			  std::shared_ptr<ListenerConfig> new_cfg);
 };
