@@ -1,7 +1,7 @@
 {
     "3xx-code-hits": 0,
     "4xx-code-hits": 0,
-    "5xx-code-hits": 0,
+    "5xx-code-hits": 1,
     "address": "0.0.0.0",
     "connections": 0,
     "https": true,
