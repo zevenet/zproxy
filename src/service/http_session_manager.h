@@ -27,16 +27,6 @@
 
 namespace sessions
 {
-enum HttpSessionType {
-	SESS_NONE,
-	SESS_IP,
-	SESS_COOKIE,
-	SESS_URL,
-	SESS_PARM,
-	SESS_HEADER,
-	SESS_BASIC
-};
-
 struct SessionInfo {
 	SessionInfo() : assigned_backend(nullptr)
 	{
@@ -83,7 +73,7 @@ class HttpSessionManager {
 	std::unordered_map<std::string, SessionInfo *>
 		sessions_set; // key can be anything, depending on the session type
     public:
-	HttpSessionType session_type;
+	SESS_TYPE session_type;
 	std::string sess_id; /* id to construct the pattern */
 	regex_t sess_start{}; /* pattern to identify the session data */
 	regex_t sess_pat{}; /* pattern to match the session data */

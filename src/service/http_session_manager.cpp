@@ -22,7 +22,7 @@
 
 using namespace sessions;
 
-HttpSessionManager::HttpSessionManager() : session_type(SESS_NONE)
+HttpSessionManager::HttpSessionManager() : session_type(SESS_TYPE::SESS_NONE)
 {
 }
 
@@ -37,7 +37,7 @@ SessionInfo *HttpSessionManager::addSession(Connection &source,
 					    HttpRequest &request,
 					    Backend &backend_to_assign)
 {
-	if (this->session_type == sessions::SESS_NONE)
+	if (this->session_type == SESS_TYPE::SESS_NONE)
 		return nullptr;
 	std::string key = getSessionKey(source, request);
 	// check if we have a new key to insert,
@@ -57,7 +57,7 @@ bool sessions::HttpSessionManager::updateSession(
 {
 	std::string request_session_id = getSessionKey(source, request);
 	std::string session_id = new_session_id;
-	if (this->session_type == sessions::SESS_COOKIE) {
+	if (this->session_type == SESS_TYPE::SESS_COOKIE) {
 		session_id = getCookieValue(new_session_id, this->sess_id);
 	}
 	if (request_session_id == new_session_id)
@@ -314,13 +314,13 @@ std::string HttpSessionManager::getSessionKey(Connection &source,
 {
 	std::string session_key;
 	switch (session_type) {
-	case sessions::SESS_NONE:
+	case SESS_TYPE::SESS_NONE:
 		break;
-	case sessions::SESS_IP: {
+	case SESS_TYPE::SESS_IP: {
 		session_key = source.getPeerAddress();
 		break;
 	}
-	case sessions::SESS_COOKIE: {
+	case SESS_TYPE::SESS_COOKIE: {
 		if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE,
 					    session_key)) {
 			session_key = "";
@@ -329,23 +329,23 @@ std::string HttpSessionManager::getSessionKey(Connection &source,
 		}
 		break;
 	}
-	case sessions::SESS_URL: {
+	case SESS_TYPE::SESS_URL: {
 		std::string url = request.getUrl();
 		session_key = getQueryParameter(url, sess_id);
 		break;
 	}
-	case sessions::SESS_PARM: {
+	case SESS_TYPE::SESS_PARM: {
 		std::string url = request.getUrl();
 		session_key = getUrlParameter(url);
 		break;
 	}
-	case sessions::SESS_HEADER: {
+	case SESS_TYPE::SESS_HEADER: {
 		if (!request.getHeaderValue(sess_id, session_key)) {
 			session_key = "";
 		}
 		break;
 	}
-	case sessions::SESS_BASIC: {
+	case SESS_TYPE::SESS_BASIC: {
 		if (!request.getHeaderValue(
 			    http::HTTP_HEADER_NAME::AUTHORIZATION,
 			    session_key)) {

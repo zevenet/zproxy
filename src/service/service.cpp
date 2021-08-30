@@ -29,7 +29,7 @@ Backend *Service::getBackend(Connection &source, HttpRequest &request)
 	if (backend_set.empty())
 		return getEmergencyBackend();
 
-	if (session_type != sessions::SESS_NONE) {
+	if (session_type != SESS_TYPE::SESS_NONE) {
 		auto session = getSession(source, request);
 		if (session != nullptr) {
 			if (session->isStatic())
@@ -261,11 +261,10 @@ Service::Service(ServiceConfig &service_config_)
 	if (service_config.becpath != nullptr)
 		becpath = std::string(service_config.becpath);
 	becage = service_config.becage;
-	this->session_type = static_cast<sessions::HttpSessionType>(
-		service_config_.sess_type);
+	this->session_type = static_cast<SESS_TYPE>(service_config_.sess_type);
 	this->ttl = static_cast<unsigned int>(service_config_.sess_ttl);
 	this->sess_id = service_config_.sess_id;
-	if (this->session_type != sessions::HttpSessionType::SESS_HEADER)
+	if (this->session_type != SESS_TYPE::SESS_HEADER)
 		this->sess_id += '=';
 	this->sess_pat = service_config_.sess_pat;
 	this->sess_start = service_config_.sess_start;

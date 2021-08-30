@@ -808,7 +808,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 				break;
 			case http::HTTP_HEADER_NAME::SET_COOKIE: {
 				if (service->session_type ==
-				    sessions::HttpSessionType::SESS_COOKIE) {
+				    SESS_TYPE::SESS_COOKIE) {
 					service->updateSession(
 						stream.client_connection,
 						stream.request,
@@ -826,8 +826,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			}
 		}
 
-		if (service->session_type ==
-			    sessions::HttpSessionType::SESS_HEADER &&
+		if (service->session_type == SESS_TYPE::SESS_HEADER &&
 		    service->sess_id == header) {
 			service->updateSession(
 				stream.client_connection, stream.request,
