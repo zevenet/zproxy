@@ -193,6 +193,8 @@ bool HttpSessionManager::addSession(JsonObject *json_object,
 		key_json = dynamic_cast<JsonDataValue *>(
 				   json_object->at(JSON_KEYS::ID).get())
 				   ->string_value;
+		if (key_json == "")
+			return false;
 		if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 &&
 		    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
 			last_seen_json =

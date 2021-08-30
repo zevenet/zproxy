@@ -115,6 +115,8 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task)
 			if (service->isHandler(task))
 				return service->handleTask(task);
 		}
+		zcu_log_print(LOG_ERR, "The service %d is not found",
+			      task.service_id);
 		return JSON_OP_RESULT::ERROR;
 	}
 
