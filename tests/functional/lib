@@ -734,5 +734,7 @@ add_etc_hosts () {
 }
 
 del_etc_hosts() {
-	cp $ETC_FILE_SAVED $ETC_FILE
+	if [[ -f $ETC_FILE_SAVED ]]; then
+		cp $ETC_FILE_SAVED $ETC_FILE
+	fi
 }
