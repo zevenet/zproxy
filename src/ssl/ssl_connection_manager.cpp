@@ -752,7 +752,7 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 #if DEBUG_ZCU_LOG
 	zcu_log_print(
 		LOG_DEBUG,
-		"%s():%d: in buffer size: %d - buffer offset: %d - out buffer size: %d - content length: %d - message length: %d - message bytes left: %d",
+		"%s():%d: in buffer size: %d - buffer offset: %d - out buffer size: %d - content length: %lu - message length: %d - message bytes left: %d",
 		__FUNCTION__, __LINE__, ssl_connection.buffer_size,
 		ssl_connection.buffer_offset, ssl_connection.buffer_size,
 		http_data.content_length, http_data.message_length,

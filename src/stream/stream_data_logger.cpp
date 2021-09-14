@@ -18,7 +18,7 @@ void StreamDataLogger::logTransaction(HttpStream &stream)
 	// "curl/7.64.0"
 	static const std::string str_fmt =
 		"[completed][%lx][%lu][%s][%s][%s:%d] host:%s client:%s - \"%.*s\" \"%s\" "
-		"%d \"%s\" "
+		"%lu \"%s\" "
 		"\"%s\" %lf";
 	zcu_log_print(LOG_INFO, str_fmt.c_str(), pthread_self(),
 		      stream.stream_id,

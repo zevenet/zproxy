@@ -690,7 +690,8 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
 				stream.response.content_length =
 					static_cast<size_t>(
-						std::atoi(header_value.data()));
+						strtol(header_value.data(),
+						       nullptr, 10));
 				continue;
 			}
 			case http::HTTP_HEADER_NAME::CONTENT_LOCATION:
