@@ -4,5 +4,6 @@
 #include "../service/service.h"
 
 struct StreamDataLogger {
+	static std::string logTag(HttpStream *stream, const char *tag);
 	static void logTransaction(HttpStream &stream);
 };

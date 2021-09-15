@@ -1085,7 +1085,8 @@ void StreamManager::onResponseEvent(int fd)
 		case http_parser::PARSE_RESULT::FAILED: {
 			zcu_log_print(
 				LOG_INFO,
-				"[%lx][%lu][%s][%s] HTTP PARSE %s from backend %s to client %s - Response data in buffer size:%lu, Content length:%lu, left:%lu",
+				"%s():%d: [%lx][%lu][%s][%s] HTTP PARSE FAILED from backend %s to client %s - Response data in buffer ",
+				"(size:%luB): %.*s", __FUNCTION__, __LINE__,
 				pthread_self(), stream->stream_id,
 				listener_config_.name.data(),
 				service->name.c_str(),
@@ -1097,16 +1098,8 @@ void StreamManager::onResponseEvent(int fd)
 				stream->client_connection.getPeerAddress()
 					.c_str(),
 				stream->backend_connection.buffer_size,
-				stream->response.content_length,
-				stream->response.message_bytes_left,
-				stream->backend_connection.buffer_size);
-			http_manager::replyError(
-				stream, http::Code::InternalServerError,
-				http::reasonPhrase(
-					http::Code::InternalServerError),
-				listener_config_.err503,
-				stream->client_connection,
-				listener_config_.response_stats);
+				stream->backend_connection.buffer_size,
+				stream->backend_connection.buffer);
 			clearStream(stream);
 			return;
 		}
@@ -1418,7 +1411,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 	if (stream->backend_connection.connection_retries >=
 	    service->getBackendSetSize()) {
 		// No backend available
-		zcu_log_print(LOG_WARNING, "service connection limit reached");
+		//zcu_log_print(LOG_WARNING, "service connection limit reached");
 		http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
@@ -2333,6 +2326,10 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 			stream->client_connection.enableWriteEvent();
 			return;
 		} else if (!stream->response.getHeaderSent()) {
+			auto tag = StreamDataLogger::logTag(stream, "failed");
+			zcu_log_print(LOG_NOTICE, "%s Backend disconnected",
+				      tag.data());
+
 			http_manager::replyError(
 				stream, http::Code::InternalServerError,
 				http::reasonPhrase(

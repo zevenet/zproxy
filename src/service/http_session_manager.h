@@ -27,7 +27,6 @@
 
 namespace sessions
 {
-
 struct SessionInfo {
 	SessionInfo() : assigned_backend(nullptr)
 	{
