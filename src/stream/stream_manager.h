@@ -63,7 +63,7 @@ struct StreamWatcher {
 			      "\n\t\tBytes left: %d"
 			      "\n\tResponse"
 			      "\n\t\tBuffer size: %d"
-			      "\n\t\tContent-length: %d"
+			      "\n\t\tContent-length: %lu"
 			      "\n\t\tMessage bytes: %d"
 			      "\n\t\tBytes left: %d",
 			      __FUNCTION__, __LINE__,
