@@ -291,6 +291,15 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 	auto i = BIO_do_handshake(ssl_connection.io);
 	if (i <= 0) {
 		auto errno__ = errno;
+		unsigned long err = ERR_peek_error();
+		if (err) {
+			zcu_log_print(
+				LOG_NOTICE,
+				"handshake error for host %s:%d. Error %lu: %s",
+				ssl_connection.getPeerAddress().c_str(),
+				ssl_connection.getPeerPort(), err,
+				ERR_error_string(err, NULL));
+		}
 		if (!BIO_should_retry(ssl_connection.io)) {
 			if (SSL_in_init(ssl_connection.ssl)) {
 #if DEBUG_ZCU_LOG
