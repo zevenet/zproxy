@@ -859,12 +859,7 @@ void http_manager::replyError(HttpStream *stream, http::Code code,
 			      const std::string &str, Connection &target,
 			      Statistics::HttpResponseHits &resp_stats)
 {
-	auto tag = StreamDataLogger::logTag(stream, "error");
-	auto request_data_len = std::string_view(target.buffer).find('\r');
-
-	zcu_log_print(LOG_INFO, "%s e%d %s \"%.*s\"", tag.data(),
-		      static_cast<int>(code), code_string.data(),
-		      request_data_len, target.buffer);
+	stream->logError(code, code_string, target);
 
 	auto response_ = http::getHttpResponse(code, code_string, str);
 	size_t written = 0;
@@ -940,15 +935,7 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 	auto response_ =
 		http::getRedirectResponse(static_cast<http::Code>(code), url);
 
-	auto service = static_cast<Service *>(stream.request.getService());
-	zcu_log_print(
-		LOG_INFO,
-		"[redirect][%lx][%lu][%s][%s] the request \"%s\" from %s was redirected to \"%s\"",
-		pthread_self(), stream.stream_id,
-		stream.service_manager->listener_config_->name.data(),
-		(service != nullptr) ? service->name.c_str() : "null",
-		stream.request.http_message_str.data(),
-		stream.client_connection.getPeerAddress().c_str(), url.data());
+	stream.logRedirect(url.c_str());
 
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	size_t sent = 0;
@@ -970,6 +957,7 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 		stream.response.chunked_status =
 			CHUNKED_STATUS::CHUNKED_ENABLED;
 		stream.client_connection.enableWriteEvent();
+		stream.logMessage("Redirect: DONE_TRY_AGAIN");
 		return false;
 	}
 

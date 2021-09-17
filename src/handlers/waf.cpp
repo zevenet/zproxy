@@ -54,7 +54,7 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 
 		// process is going to be cut. Executing the logging phase
 		if (!stream.modsec_transaction->processLogging())
-			zcu_log_print(LOG_WARNING,
+			zcu_log_print(LOG_ERR,
 				      "(%lx) WAF, error processing the log",
 				      pthread_self());
 
@@ -112,8 +112,6 @@ bool Waf::checkResponseWaf(HttpStream &stream)
 		}
 		stream.modsec_transaction
 			->processLogging(); // TODO:: is it necessary??
-		zcu_log_print(LOG_DEBUG,
-			      "WAF wants to apply an action for the REQUEST");
 
 		return true;
 	}
@@ -130,7 +128,7 @@ std::shared_ptr<Rules> Waf::reloadRules()
 	Config config;
 	config.init(global::StartOptions::getCurrent());
 	auto rules = std::make_shared<Rules>();
-	zcu_log_print(LOG_WARNING, "file to update %s",
+	zcu_log_print(LOG_NOTICE, "file to update %s",
 		      global::StartOptions::getCurrent().conf_file_name.data());
 
 	if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",

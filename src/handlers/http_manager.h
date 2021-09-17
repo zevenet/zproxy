@@ -27,7 +27,6 @@
 #include "../http/http_parser.h"
 #include "../service/service.h"
 #include "../util/common.h"
-#include "../stream/stream_data_logger.h"
 #ifdef ENABLE_ON_FLY_COMRESSION
 #include "../../zcutils/zcu_zlib.h"
 #endif

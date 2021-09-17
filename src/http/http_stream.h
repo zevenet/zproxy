@@ -22,6 +22,7 @@
 #pragma once
 
 #include <string>
+#include <stdarg.h>
 #include "../config/macro.h"
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
@@ -151,4 +152,20 @@ class HttpStream : public Counter<HttpStream> {
 	static void debugBufferData(const std::string &function, int line,
 				    HttpStream *stream, const char *debug_str,
 				    const char *data);
+
+	std::string logTag(const char *tag = nullptr);
+	void logSuccess();
+	void logError(http::Code code, const std::string &code_string,
+		      Connection &target);
+	void logRedirect(const char *url);
+	void logNoResponse(const char *fmt, ...);
+	void logMessage(const char *fmt, ...);
+	void logWaf(const char *fmt, ...);
+	//void logDebug(HttpStream *stream, const char *fmt, ...);
+
+	static void _logDebug(HttpStream *stream, char const *function,
+			      int line, const char *fmt, ...);
 };
+
+#define streamLogDebug(args...)                                                \
+	HttpStream::_logDebug(stream, __FUNCTION__, __LINE__, args)
