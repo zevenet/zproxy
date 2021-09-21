@@ -45,7 +45,7 @@ void httpsHeaders(HttpStream *stream, int clnt_check)
 	/** client check less than maximum */
 	if (x509 != nullptr && clnt_check < 3 &&
 	    SSL_get_verify_result(stream->client_connection.ssl) != X509_V_OK) {
-		stream->logMessage("Bad certificate from client");
+		streamLogMessage(stream, "Bad certificate from client");
 	}
 
 	if ((cipher = SSL_get_current_cipher(stream->client_connection.ssl)) !=

@@ -146,75 +146,15 @@ void HttpStream::logSuccess()
 	// 192.168.100.241:8080 192.168.0.186 - - "GET / HTTP/1.1" 200 11383 ""
 	// "curl/7.64.0"
 
-	static const std::string str_fmt = "%s host:%s - \"%.*s\" \"%s\" "
-					   "%lu \"%s\" "
-					   "\"%s\" %lf";
-	auto tag = logTag("completed");
+	auto tag = logTag("established");
 
-	zcu_log_print(LOG_INFO, str_fmt.c_str(), tag.data(),
-		      !host.empty() ? host.c_str() : "-",
+	zcu_log_print(LOG_INFO,
+		      "%s host:%s - \"%.*s\" \"%s\" %lu \"%s\" \"%s\" %lf",
+		      tag.data(), !host.empty() ? host.c_str() : "-",
 		      /* -2 is to remove the CLRF characters */
 		      this->request.http_message_str.length() - 2,
 		      this->request.http_message_str.data(),
 		      this->response.http_message_str.data(),
 		      this->response.content_length, referer.c_str(),
 		      agent.c_str(), latency);
-}
-
-void HttpStream::logError(http::Code code, const std::string &code_string,
-			  Connection &target)
-{
-	auto tag = logTag("error");
-	auto request_data_len = std::string_view(target.buffer).find('\r');
-	zcu_log_print(LOG_INFO, "%s e%d %s \"%.*s\"", tag.data(),
-		      static_cast<int>(code), code_string.data(),
-		      request_data_len, target.buffer);
-}
-void HttpStream::logRedirect(const char *url)
-{
-	auto tag = logTag("redirected");
-	zcu_log_print(LOG_INFO,
-		      "%s the request \"%s\" was redirected to \"%s\"",
-		      tag.data(), this->request.http_message_str.data(), url);
-}
-
-void HttpStream::logNoResponse(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	auto tag = logTag("no-response");
-	zcu_log_print(LOG_NOTICE, "%s %s", tag.data(), fmt, args);
-	va_end(args);
-}
-
-void HttpStream::logMessage(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	auto tag = logTag();
-	zcu_log_print(LOG_NOTICE, "%s %s", tag.data(), fmt, args);
-	va_end(args);
-}
-
-void HttpStream::logWaf(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	auto tag = logTag("waf");
-	zcu_log_print(LOG_WARNING, "%s %s", tag.data(), fmt, args);
-	va_end(args);
-}
-
-void HttpStream::_logDebug(HttpStream *stream, char const *function, int line,
-			   const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	std::string msg("caller:");
-	msg.append(function);
-	msg.append(":");
-	msg.append(std::to_string(line));
-	auto tag = stream->logTag(msg.data());
-	zcu_log_print(LOG_DEBUG, "%s %s", tag.data(), fmt, args);
-	va_end(args);
 }

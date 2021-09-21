@@ -54,7 +54,7 @@ void zcu_log_set_output(int output)
 	return;
 }
 
-int zcu_log_print(int loglevel, const char *fmt, ...)
+int _zcu_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
@@ -81,14 +81,7 @@ int zcu_log_print(int loglevel, const char *fmt, ...)
 
 	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_SYSLOG) {
 		va_start(args, fmt);
-#if DEBUG_ZCU_LOG != 0
-		char msg[MAXBUF];
-		sprintf(msg, "(th:%x) %s",
-			static_cast<unsigned int>(pthread_self()), fmt);
-		vsyslog(loglevel, msg, args);
-#else
 		vsyslog(loglevel, fmt, args);
-#endif
 		va_end(args);
 	}
 
@@ -113,8 +106,7 @@ void zcu_bt_print()
 	}
 
 	for (i = 0; i < calls; i++)
-		zcu_log_print(LOG_ERR, "(%lx) Backtrace: %s", pthread_self(),
-			      str[i]);
+		zcu_log_print(LOG_ERR, "Backtrace: %s", str[i]);
 
 	free(str);
 

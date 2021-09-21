@@ -256,7 +256,7 @@ void StreamManager::addStream(int fd,
 #if SM_HANDLE_ACCEPT
 	HttpStream *stream = cl_streams_set[fd];
 	if (UNLIKELY(stream != nullptr)) {
-		stream->logMessage("recycling stream");
+		streamLogMessage(stream, "recycling stream");
 		clearStream(stream);
 	}
 	stream = new HttpStream();
@@ -312,7 +312,7 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
-	streamLogDebug("onRequestEvent");
+	streamLogDebug(stream, "onRequestEvent");
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 #if DEBUG_ZCU_LOG
@@ -355,7 +355,8 @@ void StreamManager::onRequestEvent(int fd)
 						    stream, "OnRequest",
 						    "HANDSHAKE");
 
-			stream->logNoResponse("handshake error with client");
+			streamLogNoResponse(stream,
+					    "handshake error with client");
 			clearStream(stream);
 			return;
 		}
@@ -373,7 +374,8 @@ void StreamManager::onRequestEvent(int fd)
 			    SSL_R_HTTP_REQUEST) &&
 			   (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
 			/* the client speaks plain HTTP on our HTTPS port */
-			stream->logMessage(
+			streamLogMessage(
+				stream,
 				"The client sent a plain HTTP message to an SSL port");
 			if (listener_config_.nossl_redir > 0) {
 				if (http_manager::replyRedirect(
@@ -404,7 +406,7 @@ void StreamManager::onRequestEvent(int fd)
 	case IO::IO_RESULT::ERROR:
 	case IO::IO_RESULT::CANCELLED:
 	default: {
-		stream->logNoResponse("Error reading the request");
+		streamLogNoResponse(stream, "Error reading the request");
 		clearStream(stream);
 		return;
 	}
@@ -474,7 +476,7 @@ void StreamManager::onRequestEvent(int fd)
 		break;
 	}
 	case http_parser::PARSE_RESULT::TOOLONG:
-		stream->logMessage("http request parser TOOLONG");
+		streamLogMessage(stream, "http request parser TOOLONG");
 		http_manager::replyError(
 			stream, http::Code::URITooLong,
 			http::reasonPhrase(http::Code::URITooLong),
@@ -483,10 +485,10 @@ void StreamManager::onRequestEvent(int fd)
 		this->clearStream(stream);
 		return;
 	case http_parser::PARSE_RESULT::INCOMPLETE:
-		streamLogDebug("http request parser INCOMPLETE");
+		streamLogDebug(stream, "http request parser INCOMPLETE");
 		return;
 	case http_parser::PARSE_RESULT::FAILED:
-		stream->logMessage("http request parser FAILED");
+		streamLogMessage(stream, "http request parser FAILED");
 		http_manager::replyError(
 			stream, http::Code::BadRequest,
 			http::reasonPhrase(http::Code::BadRequest),
@@ -542,7 +544,8 @@ void StreamManager::onRequestEvent(int fd)
 		if (Waf::checkRequestWaf(*stream)) {
 			listener_config_.response_stats.increaseWaf();
 			if (stream->modsec_transaction->m_it.url != nullptr) {
-				stream->logWaf("WAF redirected a request");
+				streamLogWaf(stream,
+					     "WAF redirected a request");
 				if (http_manager::replyRedirect(
 					    stream->modsec_transaction->m_it
 						    .status,
@@ -551,7 +554,7 @@ void StreamManager::onRequestEvent(int fd)
 					clearStream(stream);
 				return;
 			} else {
-				stream->logWaf("WAF rejected a request");
+				streamLogWaf(stream, "WAF rejected a request");
 				auto code = static_cast<http::Code>(
 					stream->modsec_transaction->m_it.status);
 				http_manager::replyError(
@@ -657,7 +660,8 @@ void StreamManager::onRequestEvent(int fd)
 				bck->nf_mark);
 			switch (op_state) {
 			case IO::IO_OP::OP_ERROR: {
-				stream->logMessage(
+				streamLogMessage(
+					stream,
 					"error connecting to the backend %s",
 					bck->address.data());
 				onBackendConnectionError(stream);
@@ -706,7 +710,8 @@ void StreamManager::onRequestEvent(int fd)
 			auto bck_stream = bck_streams_set.find(
 				stream->backend_connection.getFileDescriptor());
 			if (bck_stream != bck_streams_set.end()) {
-				streamLogDebug("bck stream exists in set");
+				streamLogDebug(stream,
+					       "bck stream exists in set");
 				// delete bck_stream->second;
 			}
 			bck_streams_set[stream->backend_connection
@@ -715,7 +720,8 @@ void StreamManager::onRequestEvent(int fd)
 				this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
 		}
 
-		streamLogDebug("%s %s", need_new_backend ? "NEW" : "REUSED",
+		streamLogDebug(stream, "%s %s",
+			       need_new_backend ? "NEW" : "REUSED",
 			       stream->request.http_message_str.data());
 
 		// Rewrite destination
@@ -781,7 +787,7 @@ void StreamManager::onResponseEvent(int fd)
 		return;
 	}
 
-	streamLogDebug("");
+	streamLogDebug(stream, "");
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
@@ -813,7 +819,8 @@ void StreamManager::onResponseEvent(int fd)
 		    /*&& stream->response.transfer_encoding_header */) {
 			result = stream->backend_connection.zeroRead();
 			if (result == IO::IO_RESULT::ERROR) {
-				stream->logNoResponse(
+				streamLogNoResponse(
+					stream,
 					"error reading response from backend");
 				clearStream(stream);
 				return;
@@ -825,7 +832,8 @@ void StreamManager::onResponseEvent(int fd)
 			switch (result) {
 			case IO::IO_RESULT::FD_CLOSED:
 			case IO::IO_RESULT::ERROR: {
-				stream->logNoResponse(
+				streamLogNoResponse(
+					stream,
 					"error writing response from backend");
 				clearStream(stream);
 				return;
@@ -852,7 +860,8 @@ void StreamManager::onResponseEvent(int fd)
 		if (!ssl::SSLConnectionManager::handleHandshake(
 			    stream->backend_connection.getBackend()->ctx.get(),
 			    stream->backend_connection, true)) {
-			stream->logMessage(
+			streamLogMessage(
+				stream,
 				"SSL_NEED_HANDSHAKE, error in backend handshake on request");
 			http_manager::replyError(
 				stream, http::Code::ServiceUnavailable,
@@ -882,7 +891,7 @@ void StreamManager::onResponseEvent(int fd)
 	case IO::IO_RESULT::ERROR:
 	case IO::IO_RESULT::CANCELLED:
 	default: {
-		stream->logMessage("backend read error");
+		streamLogMessage(stream, "backend read error");
 		clearStream(stream);
 		return;
 	}
@@ -960,7 +969,8 @@ void StreamManager::onResponseEvent(int fd)
 		}
 		case http_parser::PARSE_RESULT::TOOLONG:
 		case http_parser::PARSE_RESULT::FAILED: {
-			stream->logMessage(
+			streamLogMessage(
+				stream,
 				"HTTP response parser %s - Response data in buffer ",
 				"(size:%luB): %.*s",
 				(ret == http_parser::PARSE_RESULT::TOOLONG) ?
@@ -978,7 +988,7 @@ void StreamManager::onResponseEvent(int fd)
 		}
 		auto latency =
 			Time::getElapsed(stream->backend_connection.time_start);
-		streamLogDebug("backend response: %s -> %s, %lf",
+		streamLogDebug(stream, "backend response: %s -> %s, %lf",
 			       stream->response.http_message_str.data(),
 			       stream->request.http_message_str.data(),
 			       latency);
@@ -988,7 +998,8 @@ void StreamManager::onResponseEvent(int fd)
 
 		if (http_manager::validateResponse(*stream) !=
 		    validation::REQUEST_RESULT::OK) {
-			stream->logMessage(
+			streamLogMessage(
+				stream,
 				"error validating the backend response - %.*s",
 				stream->backend_connection.buffer_size,
 				stream->backend_connection.buffer);
@@ -1020,7 +1031,8 @@ void StreamManager::onResponseEvent(int fd)
 				listener_config_.response_stats.increaseWaf();
 				if (stream->modsec_transaction->m_it.url !=
 				    nullptr) {
-					stream->logWaf(
+					streamLogWaf(
+						stream,
 						"WAF redirected a response from the backend");
 					// send redirect
 					if (http_manager::replyRedirect(
@@ -1042,7 +1054,8 @@ void StreamManager::onResponseEvent(int fd)
 						listener_config_.errwaf,
 						stream->client_connection,
 						listener_config_.response_stats);
-					stream->logWaf(
+					streamLogWaf(
+						stream,
 						"WAF rejected a response from the backend");
 				}
 				clearStream(stream);
@@ -1099,13 +1112,9 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 #endif
 	) {
 
-		std::string msg(
-			"onConnectTimeoutEvent after " +
-			std::to_string(stream->backend_connection.getBackend()
-					       ->conn_timeout) +
-			" seconds");
-		stream->logNoResponse(msg.data());
-
+		streamLogNoResponse(
+			stream, "onConnectTimeoutEvent after %d seconds",
+			stream->backend_connection.getBackend()->conn_timeout);
 		onBackendConnectionError(stream);
 		return;
 	}
@@ -1128,8 +1137,8 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 #if USE_TIMER_FD_TIMEOUT
 	if (stream->timer_fd.isTriggered()) {
 #endif
-		stream->logNoResponse(
-			"onRequestTimeoutEvent after %d seconds",
+		streamLogNoResponse(
+			stream, "onRequestTimeoutEvent after %d seconds",
 			stream->service_manager->listener_config_->to);
 		clearStream(stream);
 #if USE_TIMER_FD_TIMEOUT
@@ -1154,8 +1163,8 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 	}
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
-	stream->logMessage(
-		"timeout on backend response after %d seconds",
+	streamLogMessage(
+		stream, "timeout on backend response after %d seconds",
 		stream->backend_connection.getBackend()->response_timeout);
 
 #if USE_TIMER_FD_TIMEOUT
@@ -1169,8 +1178,9 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 				stream->client_connection,
 				listener_config_.response_stats);
 		else
-			stream->logNoResponse(
-				"timeout reached between backend response frames %d",
+			streamLogNoResponse(
+				stream,
+				"timeout (%d seconds) reached in the backend response",
 				stream->backend_connection.getBackend()
 					->response_timeout);
 
@@ -1211,7 +1221,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 	if (stream->backend_connection.connection_retries >=
 	    service->getBackendSetSize()) {
 		// No backend available
-		//stream->logMessage("service connection limit reached");
+		//streamLogMessage(stream,"service connection limit reached");
 		http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
@@ -1254,9 +1264,9 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 		IO::IO_OP op_state;
 		stream->backend_connection.reset();
 		stream->response.reset_parser();
-		stream->logMessage("RETRY \"%s\" -> %s",
-				   stream->request.http_message_str.data(),
-				   bck->address.c_str());
+		streamLogMessage(stream, "RETRY \"%s\" -> %s",
+				 stream->request.http_message_str.data(),
+				 bck->address.c_str());
 
 		switch (bck->backend_type) {
 		case BACKEND_TYPE::REMOTE: {
@@ -1269,7 +1279,8 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 				bck->nf_mark);
 			switch (op_state) {
 			case IO::IO_OP::OP_ERROR: {
-				stream->logMessage(
+				streamLogMessage(
+					stream,
 					"OP_ERROR error connecting to the backend %s",
 					bck->address.data());
 				onBackendConnectionError(stream);
@@ -1385,7 +1396,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 	DEBUG_COUNTER_HIT(debug__::on_send_request);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
-	streamLogDebug("");
+	streamLogDebug(stream, "");
 
 	int fd = stream->backend_connection.getFileDescriptor();
 	// Send client request to backend server
@@ -1459,7 +1470,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 				    stream->backend_connection.getBackend()
 					    ->ctx.get(),
 				    stream->backend_connection, true)) {
-				stream->logMessage(
+				streamLogMessage(
+					stream,
 					"SSL_NEED_HANDSHAKE, error while the handshake with the backend");
 				http_manager::replyError(
 					stream, http::Code::ServiceUnavailable,
@@ -1480,8 +1492,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		case IO::IO_RESULT::FULL_BUFFER:
 		case IO::IO_RESULT::ERROR:
 		default:
-			stream->logNoResponse(
-				"error sending request to the backend");
+			streamLogNoResponse(
+				stream, "error sending request to the backend");
 			clearStream(stream);
 			return;
 		case IO::IO_RESULT::SUCCESS:
@@ -1539,7 +1551,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		if (!ssl::SSLConnectionManager::handleHandshake(
 			    stream->backend_connection.getBackend()->ctx.get(),
 			    stream->backend_connection, true)) {
-			stream->logNoResponse(
+			streamLogNoResponse(
+				stream,
 				"error while the handshake witht the backend");
 			clearStream(stream);
 			return;
@@ -1556,7 +1569,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 	case IO::IO_RESULT::CANCELLED:
 	case IO::IO_RESULT::FULL_BUFFER:
 	case IO::IO_RESULT::ERROR:
-		stream->logNoResponse("error sending request to backend");
+		streamLogNoResponse(stream, "error sending request to backend");
 		clearStream(stream);
 		return;
 	case IO::IO_RESULT::SUCCESS:
@@ -1567,7 +1580,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		}
 		break;
 	default:
-		stream->logNoResponse("error sending data to backend server");
+		streamLogNoResponse(stream,
+				    "error sending data to backend server");
 		clearStream(stream);
 		return;
 	}
@@ -1583,7 +1597,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		   stream->backend_connection.getBackend()->response_timeout);
 #endif
 #if DEBUG_ZCU_LOG
-	streamLogDebug("OUT buffer size: %8lu\tContent-length: %lu\tleft: "
+	streamLogDebug(stream,
+		       "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
 		       "%lu\tIO: %s",
 		       stream->client_connection.buffer_size,
 		       stream->request.content_length,
@@ -1609,13 +1624,14 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 	if (stream == nullptr)
 		return;
 
-	streamLogDebug("");
+	streamLogDebug(stream, "");
 
 	DEBUG_COUNTER_HIT(debug__::on_send_response);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 #if DEBUG_ZCU_LOG
-	streamLogDebug("IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
+	streamLogDebug(stream,
+		       "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
 		       stream->backend_connection.buffer_size,
 		       stream->response.content_length,
 		       stream->response.message_bytes_left);
@@ -1661,7 +1677,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			if (!ssl::SSLConnectionManager::handleHandshake(
 				    *stream->service_manager->ssl_context,
 				    stream->client_connection)) {
-				stream->logNoResponse(
+				streamLogNoResponse(
+					stream,
 					"error in the handshake with the client");
 				clearStream(stream);
 			}
@@ -1687,8 +1704,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			HttpStream::debugBufferData(__FUNCTION__, __LINE__,
 						    stream, "onServerW-ERROR",
 						    error.data());
-			stream->logMessage("Error sending response: %s",
-					   error.data());
+			streamLogMessage(stream, "Error sending response: %s",
+					 error.data());
 			clearStream(stream);
 			return;
 		}
@@ -1723,7 +1740,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			return;
 		}
 		if (stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)) {
-			streamLogDebug("closing connection");
+			streamLogDebug(stream, "closing connection");
 			clearStream(stream);
 			return;
 		}
@@ -1758,7 +1775,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			     SSL_R_HTTP_REQUEST) &&
 			    (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
 				/* the client speaks plain HTTP on our HTTPS port */
-				stream->logMessage(
+				streamLogMessage(
+					stream,
 					"the client sent a plain HTTP message to an SSL port");
 				if (listener_config_.nossl_redir > 0) {
 					if (http_manager::replyRedirect(
@@ -1779,7 +1797,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 						listener_config_.response_stats);
 				}
 			} else {
-				stream->logMessage(
+				streamLogMessage(
+					stream,
 					"fd: %d:%d error in the client while the handshake",
 					stream->client_connection
 						.getFileDescriptor(),
@@ -1801,8 +1820,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 	case IO::IO_RESULT::CANCELLED:
 	case IO::IO_RESULT::FULL_BUFFER:
 	case IO::IO_RESULT::ERROR:
-		stream->logNoResponse("error sending response: %s",
-				      IO::getResultString(result).data());
+		streamLogNoResponse(stream, "error sending response: %s",
+				    IO::getResultString(result).data());
 		clearStream(stream);
 		return;
 	case IO::IO_RESULT::SUCCESS:
@@ -1814,7 +1833,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		}
 		break;
 	default:
-		stream->logNoResponse(
+		streamLogNoResponse(
+			stream,
 			"fd: %d:%d %.*s Error sending response IN\tbuffer size: "
 			"%8lu\tContent-length: %lu\tleft: %lu "
 			"header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
@@ -1837,6 +1857,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 #if DEBUG_ZCU_LOG
 	if (stream->backend_connection.buffer_size != 0)
 		streamLogDebug(
+			stream,
 			"OUT EAGAIN  %s buffer size: %lu > %8lu \tContent-length: "
 			"%lu\tleft: "
 			"%lu\tIO: %s",
@@ -1890,7 +1911,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		return;
 	}
 	if (stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)) {
-		streamLogDebug("the writing in the client finished");
+		streamLogDebug(stream, "the writing in the client finished");
 		clearStream(stream);
 		return;
 	}
@@ -1928,7 +1949,7 @@ void StreamManager::clearStream(HttpStream *stream)
 	if (stream == nullptr) {
 		return;
 	}
-	streamLogDebug("clearStream");
+	streamLogDebug(stream, "clearStream");
 
 #ifdef CACHE_ENABLED
 	CacheManager::handleStreamClose(stream);
@@ -1986,7 +2007,7 @@ void StreamManager::onClientDisconnect(HttpStream *stream)
 	if (stream == nullptr)
 		return;
 	DEBUG_COUNTER_HIT(debug__::on_client_disconnect);
-	streamLogDebug("Client Disconnected");
+	streamLogDebug(stream, "Client Disconnected");
 	clearStream(stream);
 }
 
@@ -2076,7 +2097,7 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 			stream->client_connection.enableWriteEvent();
 			return;
 		} else if (!stream->response.getHeaderSent()) {
-			stream->logMessage("Backend disconnected");
+			streamLogMessage(stream, "Backend disconnected");
 			http_manager::replyError(
 				stream, http::Code::InternalServerError,
 				http::reasonPhrase(

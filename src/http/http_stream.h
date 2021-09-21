@@ -155,17 +155,54 @@ class HttpStream : public Counter<HttpStream> {
 
 	std::string logTag(const char *tag = nullptr);
 	void logSuccess();
-	void logError(http::Code code, const std::string &code_string,
-		      Connection &target);
-	void logRedirect(const char *url);
-	void logNoResponse(const char *fmt, ...);
-	void logMessage(const char *fmt, ...);
-	void logWaf(const char *fmt, ...);
-	//void logDebug(HttpStream *stream, const char *fmt, ...);
-
-	static void _logDebug(HttpStream *stream, char const *function,
-			      int line, const char *fmt, ...);
 };
 
-#define streamLogDebug(args...)                                                \
-	HttpStream::_logDebug(stream, __FUNCTION__, __LINE__, args)
+#define streamLogDebug(s, fmt, ...)                                            \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("debug");       \
+		zcu_log_print(LOG_DEBUG, "%s[caller/%s:%d]" fmt, tag.data(),   \
+			      __FUNCTION__, __LINE__, ##__VA_ARGS__);          \
+	}
+
+#define streamLogMessage(s, fmt, ...)                                          \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag();              \
+		zcu_log_print(LOG_NOTICE, "%s " fmt, tag.data(),               \
+			      ##__VA_ARGS__);                                  \
+	}
+
+#define streamLogRedirect(s, url)                                              \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("responded");   \
+		zcu_log_print(                                                 \
+			LOG_INFO,                                              \
+			"%s the request \"%s\" was redirected to \"%s\"",      \
+			tag.data(),                                            \
+			const_cast<HttpStream *>(s)                            \
+				->request.http_message_str.data(),             \
+			url);                                                  \
+	}
+
+#define streamLogError(s, code, code_string, target)                           \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("error");       \
+		auto request_data_len =                                        \
+			std::string_view(target.buffer).find('\r');            \
+		zcu_log_print(LOG_INFO, "%s e%d %s \"%.*s\"", tag.data(),      \
+			      static_cast<int>(code), code_string.data(),      \
+			      request_data_len, target.buffer);                \
+	}
+
+#define streamLogWaf(s, fmt, ...)                                              \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("waf");         \
+		zcu_log_print(LOG_WARNING, "%s %s", fmt, tag.data(),           \
+			      ##__VA_ARGS__);                                  \
+	}
+
+#define streamLogNoResponse(s, fmt, ...)                                       \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("no-response"); \
+		zcu_log_print(LOG_NOTICE, "%s " fmt, tag.data(),               \
+			      ##__VA_ARGS__);                                  \
+	}

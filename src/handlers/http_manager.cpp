@@ -859,7 +859,7 @@ void http_manager::replyError(HttpStream *stream, http::Code code,
 			      const std::string &str, Connection &target,
 			      Statistics::HttpResponseHits &resp_stats)
 {
-	stream->logError(code, code_string, target);
+	streamLogError(stream, code, code_string, target);
 
 	auto response_ = http::getHttpResponse(code, code_string, str);
 	size_t written = 0;
@@ -935,7 +935,7 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 	auto response_ =
 		http::getRedirectResponse(static_cast<http::Code>(code), url);
 
-	stream.logRedirect(url.c_str());
+	streamLogRedirect(&stream, url.c_str());
 
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	size_t sent = 0;
@@ -957,7 +957,7 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 		stream.response.chunked_status =
 			CHUNKED_STATUS::CHUNKED_ENABLED;
 		stream.client_connection.enableWriteEvent();
-		stream.logMessage("Redirect: DONE_TRY_AGAIN");
+		streamLogMessage(&stream, "Redirect: DONE_TRY_AGAIN");
 		return false;
 	}
 

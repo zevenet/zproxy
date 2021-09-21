@@ -58,7 +58,11 @@ void zcu_log_set_level(int loglevel);
 
 void zcu_log_set_output(int output);
 
-int zcu_log_print(int loglevel, const char *fmt, ...);
+int _zcu_log_print(int loglevel, const char *fmt, ...);
+#define zcu_log_print(loglevel, fmt, ...)                                      \
+	_zcu_log_print(loglevel, "[th:%lx] " fmt,                              \
+		       static_cast<unsigned int>(pthread_self()),              \
+		       ##__VA_ARGS__)
 
 /****  BACKTRACE  ****/
 
