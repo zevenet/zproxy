@@ -376,9 +376,6 @@ void StreamManager::onRequestEvent(int fd)
 			stream->logMessage(
 				"The client sent a plain HTTP message to an SSL port");
 			if (listener_config_.nossl_redir > 0) {
-				stream->logMessage(
-					"errNoSsl redirecting to \"%s\"",
-					listener_config_.nossl_url.data());
 				if (http_manager::replyRedirect(
 					    listener_config_.nossl_redir,
 					    listener_config_.nossl_url,
@@ -386,7 +383,6 @@ void StreamManager::onRequestEvent(int fd)
 					clearStream(stream);
 				return;
 			} else {
-				stream->logMessage("errNoSsl sending error");
 				http_manager::replyError(
 					stream, listener_config_.codenossl,
 					http::reasonPhrase(
@@ -982,7 +978,7 @@ void StreamManager::onResponseEvent(int fd)
 		}
 		auto latency =
 			Time::getElapsed(stream->backend_connection.time_start);
-		streamLogDebug("backen response: %s -> %s, %lf",
+		streamLogDebug("backend response: %s -> %s, %lf",
 			       stream->response.http_message_str.data(),
 			       stream->request.http_message_str.data(),
 			       latency);
@@ -1158,15 +1154,26 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 	}
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
+	stream->logMessage(
+		"timeout on backend response after %d seconds",
+		stream->backend_connection.getBackend()->response_timeout);
+
 #if USE_TIMER_FD_TIMEOUT
 	if (stream->timer_fd.isTriggered()) {
 #endif
-		http_manager::replyError(
-			stream, http::Code::GatewayTimeout,
-			http::reasonPhrase(http::Code::GatewayTimeout),
-			http::reasonPhrase(http::Code::GatewayTimeout),
-			stream->client_connection,
-			listener_config_.response_stats);
+		if (!stream->response.getHeaderSent())
+			http_manager::replyError(
+				stream, http::Code::GatewayTimeout,
+				http::reasonPhrase(http::Code::GatewayTimeout),
+				http::reasonPhrase(http::Code::GatewayTimeout),
+				stream->client_connection,
+				listener_config_.response_stats);
+		else
+			stream->logNoResponse(
+				"timeout reached between backend response frames %d",
+				stream->backend_connection.getBackend()
+					->response_timeout);
+
 		this->clearStream(stream);
 #if USE_TIMER_FD_TIMEOUT
 	}
@@ -1883,14 +1890,18 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		return;
 	}
 	if (stream->hasStatus(STREAM_STATUS::CLOSE_CONNECTION)) {
-		streamLogDebug("the write in the client finished");
+		streamLogDebug("the writing in the client finished");
 		clearStream(stream);
 		return;
 	}
 #ifdef CACHE_ENABLED
 	if (!stream->response.isCached())
 #endif
-		stream->backend_connection.enableReadEvent();
+		setTimeOut(stream->backend_connection.getFileDescriptor(),
+			   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
+			   stream->backend_connection.getBackend()
+				   ->response_timeout);
+	stream->backend_connection.enableReadEvent();
 }
 
 bool StreamManager::registerListener(
