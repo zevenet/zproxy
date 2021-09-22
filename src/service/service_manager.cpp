@@ -156,6 +156,13 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task)
 				std::make_unique<JsonDataValue>(
 					conns_stats.established_connection -
 					conns_stats.total_connections));
+
+			auto sm = this->weak_from_this();
+			auto count = this->disabled ? sm.use_count() :
+							    sm.use_count() - 1;
+			root->emplace("object_ref",
+				      std::make_unique<JsonDataValue>(count));
+
 			root->emplace(
 				JSON_KEYS::CONNECTIONS,
 				std::make_unique<JsonDataValue>(

@@ -99,6 +99,7 @@ class HttpStream : public Counter<HttpStream> {
 	uint32_t status{ 0x0 };
 	uint32_t options{ 0x0 };
 	uint32_t stream_id{ 0 };
+	int managed_requests{ 0 };
 
 	/* sub-string from the URL that was removed in a rewriteurl action */
 	std::string rewr_loc_str_ori{ "" };

@@ -949,6 +949,8 @@ void StreamManager::onResponseEvent(int fd)
 	} else {
 		if (stream->backend_connection.buffer_size == 0)
 			return;
+		streamLogDebug(stream, "managed requests: %d",
+			       ++stream->managed_requests);
 		size_t parsed = 0;
 		auto ret = stream->response.parseResponse(
 			stream->backend_connection.buffer +
@@ -971,8 +973,7 @@ void StreamManager::onResponseEvent(int fd)
 		case http_parser::PARSE_RESULT::FAILED: {
 			streamLogMessage(
 				stream,
-				"HTTP response parser %s - Response data in buffer ",
-				"(size:%luB): %.*s",
+				"HTTP response parser %s - Response data in buffer (size:%luB): %.*s",
 				(ret == http_parser::PARSE_RESULT::TOOLONG) ?
 					      "TOOLONG" :
 					      "FAILED",
