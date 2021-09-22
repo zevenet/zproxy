@@ -980,6 +980,13 @@ void StreamManager::onResponseEvent(int fd)
 				stream->backend_connection.buffer_size,
 				stream->backend_connection.buffer_size,
 				stream->backend_connection.buffer);
+			http_manager::replyError(
+				stream, http::Code::InternalServerError,
+				http::reasonPhrase(
+					http::Code::InternalServerError),
+				listener_config_.err500,
+				stream->client_connection,
+				listener_config_.response_stats);
 			clearStream(stream);
 			return;
 		}
