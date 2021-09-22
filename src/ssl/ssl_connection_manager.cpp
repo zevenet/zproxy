@@ -610,7 +610,7 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 
 IO::IO_RESULT
 SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
-				    const iovec *__iovec, int count,
+				    const iovec *__iovec, size_t count,
 				    size_t &nwritten)
 {
 	size_t written = 0;
@@ -646,6 +646,7 @@ SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
 		if (result != IO::IO_RESULT::SUCCESS)
 			break;
 	}
+
 	zcu_log_print(LOG_DEBUG, "%s():%d: [%lx] result: %s errno: %d = %s",
 		      __FUNCTION__, __LINE__, pthread_self(),
 		      IO::getResultString(result).data(), errno,
@@ -663,11 +664,11 @@ SSLConnectionManager::handleWriteIOvec(Connection &target_ssl_connection,
 	auto nvec = iovec_size;
 	nwritten = 0;
 	iovec_written = 0;
+
 	do {
-		result = sslWriteIOvec(target_ssl_connection,
-				       &(iov[iovec_written]),
-				       static_cast<int>(nvec - iovec_written),
-				       count);
+		result = sslWriteIOvec(
+			target_ssl_connection, &(iov[iovec_written]),
+			static_cast<size_t>(nvec - iovec_written), count);
 		zcu_log_print(
 			LOG_DEBUG,
 			"%s():%d: [%lx] result: %s written %d iovecwritten %d",
@@ -725,6 +726,9 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 {
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
+	size_t nwritten = 0;
+	size_t iovec_written = 0;
+
 	if (!target_ssl_connection.ssl_connected) {
 		return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
 	}
@@ -733,9 +737,15 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 		http_data.prepareToSend();
 	}
 
-	size_t nwritten = 0;
-	size_t iovec_written = 0;
-
+	// check that number of header did not is greater than maximum after
+	// adding the customized headers
+	if (http_data.iov_size > MAX_HEADERS_SIZE + 2) {
+		zcu_log_print(
+			LOG_NOTICE,
+			"%s():%d: the data to send overload the writting buffer",
+			__FUNCTION__, __LINE__);
+		return IO::IO_RESULT::FULL_BUFFER;
+	}
 	auto result =
 		handleWriteIOvec(target_ssl_connection, &http_data.iov[0],
 				 http_data.iov_size, iovec_written, nwritten);
