@@ -173,16 +173,15 @@ void rewriteUrl(HttpStream &stream, Service *service)
 	char buf[ZCU_DEF_BUFFER_SIZE];
 	HttpRequest &request = stream.request;
 	bool rewr = (service->rewr_loc_path == 1 ||
-		     service->rewr_loc_path == -1 &&
-			     stream.service_manager->listener_config_
-					     ->rewr_loc_path == 1);
+		     (service->rewr_loc_path == -1 &&
+		      stream.service_manager->listener_config_->rewr_loc_path ==
+			      1));
 	int offset = 0, ori_size = ZCU_DEF_BUFFER_SIZE;
 	if (service->rewr_url == nullptr)
 		return;
 
 	std::string path_orig = request.path;
 
-	int flag = 0;
 	for (auto m = service->rewr_url; m; m = m->next) {
 		offset = zcu_str_replace_regexp(
 			buf, request.path.data(), request.path.length(),
@@ -193,8 +192,11 @@ void rewriteUrl(HttpStream &stream, Service *service)
 				      "URL rewrited \"%s\" -> \"%s\"",
 				      path_orig.data(), request.path.data());
 
-			if (ori_size > request.path.length() - offset) {
-				ori_size = request.path.length() - offset;
+			if (ori_size >
+			    static_cast<int>(request.path.length()) - offset) {
+				ori_size = static_cast<int>(
+						   request.path.length()) -
+					   offset;
 			}
 
 			if (m->last)
@@ -251,7 +253,6 @@ void http_manager::replaceHeaderHttp(http_parser::HttpData *http,
 
 validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 {
-	char buf[ZCU_DEF_BUFFER_SIZE];
 	std::string header, header_value;
 	auto &listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast<Service *>(stream.request.getService());
@@ -634,7 +635,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 	auto &listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast<Service *>(stream.request.getService());
 	HttpResponse &response = stream.response;
-	char buf[ZCU_DEF_BUFFER_SIZE];
 	MATCHER *m = nullptr;
 
 	/* If the response is 100 continue we need to enable chunked transfer. */

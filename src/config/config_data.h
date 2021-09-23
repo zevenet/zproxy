@@ -203,7 +203,7 @@ struct SNI_CERTS_CTX {
 	{
 		::regfree(&server_name);
 		if (subjectAltNames != nullptr) {
-			for (int i = 0; i < subjectAltNameCount; i++) {
+			for (unsigned int i = 0; i < subjectAltNameCount; i++) {
 				::regfree(*(subjectAltNames + i));
 				free(*(subjectAltNames + i));
 			}

@@ -25,12 +25,13 @@ namespace json
 {
 class JsonDataValue : public Json {
     public:
-	JSON_VALUE_TYPE json_type = JSON_VALUE_TYPE::JSON_T_NULL;
 	//  union {
 	std::string string_value;
-	bool bool_value;
-	long number_value;
 	double double_value;
+	long number_value;
+	bool bool_value;
+	JSON_VALUE_TYPE json_type = JSON_VALUE_TYPE::JSON_T_NULL;
+
 	std::unique_ptr<JsonArray> array_value;
 	std::unique_ptr<JsonObject> object_value;
 	//  };

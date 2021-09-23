@@ -683,6 +683,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener)
 
 void PoundClient::showError(std::string error)
 {
-	zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
+	zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
+		      error.data());
 	exit(EXIT_FAILURE);
 }

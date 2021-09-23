@@ -360,7 +360,6 @@ int zcu_str_replace_str(char *buf, const char *ori_str, int ori_len,
 {
 	int offst = -1, offend = -1, offcopy = 0,
 	    buf_len = ori_len - match_len + replace_len;
-	char *chptr, *enptr, *srcptr;
 
 	if (!zcu_str_find_str(&offst, &offend, ori_str, ori_len, match_str,
 			      match_len)) {

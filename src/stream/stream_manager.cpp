@@ -1393,6 +1393,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 				clearStream(stream);
 			return;
 		}
+		case BACKEND_TYPE::TEST_SERVER:
 		case BACKEND_TYPE::CACHE_SYSTEM:
 			break;
 		}

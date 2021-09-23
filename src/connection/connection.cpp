@@ -24,8 +24,8 @@
 Connection::Connection()
 	:
 
-	  buffer_size(0), buffer_offset(0), address(nullptr), address_str(""),
-	  local_address_str(""), port(-1), local_port(-1), ssl(nullptr),
+	  address_str(""), local_address_str(""), port(-1), local_port(-1),
+	  address(nullptr), buffer_size(0), buffer_offset(0), ssl(nullptr),
 	  ssl_connected(false)
 {
 }

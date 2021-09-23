@@ -619,7 +619,7 @@ SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
 		      "%s():%d: [%lx] count: %d written: %d totol_written: %d",
 		      __FUNCTION__, __LINE__, pthread_self(), count, written,
 		      nwritten);
-	for (auto it = 0; it < count; it++) {
+	for (size_t it = 0; it < count; it++) {
 		if (__iovec[it].iov_len == 0)
 			continue;
 		zcu_log_print(LOG_DEBUG,

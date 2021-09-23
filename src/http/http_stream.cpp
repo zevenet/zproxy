@@ -92,9 +92,8 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 
 std::string HttpStream::logTag(const char *tag)
 {
-	int total_b, size = MAXBUF;
+	int total_b;
 	char ret[MAXBUF];
-	char caddr[200];
 
 	total_b = sprintf(ret, "[st:%d][f:%s]", this->stream_id,
 			  this->service_manager->listener_config_->name.data());
@@ -138,7 +137,6 @@ void HttpStream::logSuccess()
 	std::string agent;
 	std::string referer;
 	std::string host;
-	auto service = static_cast<Service *>(this->request.getService());
 	this->request.getHeaderValue(http::HTTP_HEADER_NAME::REFERER, referer);
 	this->request.getHeaderValue(http::HTTP_HEADER_NAME::USER_AGENT, agent);
 	this->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host);

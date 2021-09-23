@@ -408,8 +408,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 	std::shared_ptr<ServiceConfig> svc;
 	MATCHER *m;
 	int has_addr, has_port;
-	sockaddr_in in{};
-	sockaddr_in6 in6{};
 	regmatch_t matches[5];
 
 	res->name = name;
@@ -681,10 +679,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 	MATCHER *m;
 	int has_addr, has_port, has_other;
 	unsigned long ssl_op_enable, ssl_op_disable;
-	struct sockaddr_in in {
-	};
-	struct sockaddr_in6 in6 {
-	};
 	std::shared_ptr<SNI_CERTS_CTX> pc;
 	regmatch_t matches[5];
 	bool openssl_file_exists = false;
@@ -1863,11 +1857,11 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
 	regmatch_t matches[5];
+#ifdef CACHE_ENABLED
 	char *cp;
+#endif
 	auto res = std::make_shared<BackendConfig>();
 	int has_addr, has_port;
-	sockaddr_in in{};
-	sockaddr_in6 in6{};
 
 	res->f_name = name;
 	res->srv_name = svc_name;

@@ -538,11 +538,13 @@ std::vector<int> Service::sortBackendsByPrio()
 {
 	std::vector<int> sorted_index;
 
-	for (int index = 0; index < backend_set.size(); index++) {
+	for (int index = 0; index < static_cast<int>(backend_set.size());
+	     index++) {
 		if (sorted_index.empty())
 			sorted_index.insert(sorted_index.begin(), index);
 		else {
-			for (int index2 = 0; index2 < sorted_index.size();
+			for (int index2 = 0;
+			     index2 < static_cast<int>(sorted_index.size());
 			     index2++) {
 				if (backend_set[sorted_index[index2]]->priority >
 				    backend_set[index]->priority) {
@@ -551,7 +553,8 @@ std::vector<int> Service::sortBackendsByPrio()
 						index);
 					break;
 				} else if (index2 ==
-					   sorted_index.size() -
+					   static_cast<int>(
+						   sorted_index.size()) -
 						   1) { // last item and the greater
 					sorted_index.emplace_back(index);
 					break;
@@ -578,7 +581,8 @@ void Service::updateBackendPriority()
 
 	sort_bcks = sortBackendsByPrio();
 	// set the minimum value
-	for (int index = 0; index < backend_set.size(); index++) {
+	for (int index = 0; index < static_cast<int>(backend_set.size());
+	     index++) {
 		if (backend_set[sort_bcks[index]]->priority <=
 			    enabled_priority &&
 		    backend_set[sort_bcks[index]]->getStatus() !=
@@ -625,10 +629,10 @@ Backend *Service::getNextBackend()
 		Backend *selected_backend = nullptr;
 		int i;
 
-		if (backend_id >= backend_set.size())
+		if (backend_id >= static_cast<int>(backend_set.size()))
 			backend_id = 0;
 
-		for (i = 0; i < backend_set.size(); i++) {
+		for (i = 0; i < static_cast<int>(backend_set.size()); i++) {
 			selected_backend = backend_set[backend_id];
 			if (selected_backend == nullptr)
 				break;
@@ -638,7 +642,6 @@ Backend *Service::getNextBackend()
 						    &backend_counter,
 						    backend_set.size());
 			else {
-				selected_backend = selected_backend;
 				backend_counter++;
 				if (selected_backend->weight <= backend_counter)
 					getNextBackendIndex(&backend_id,

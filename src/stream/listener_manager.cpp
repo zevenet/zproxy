@@ -394,7 +394,7 @@ void ListenerManager::start()
 		global::run_options::getCurrent().num_threads != 0 ?
 			      global::run_options::getCurrent().num_threads :
 			      concurrency_level;
-	for (int sm = 0; sm < num_threads; sm++) {
+	for (size_t sm = 0; sm < num_threads; sm++) {
 		stream_manager_set[sm] = new StreamManager();
 	}
 #ifdef ENABLE_HEAP_PROFILE

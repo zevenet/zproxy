@@ -33,7 +33,7 @@ TimerFd::TimerFd(int timeout_ms, bool one_shot)
 		std::string error = "timerfd_create() failed: ";
 		error += std::strerror(errno);
 		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
-			      error);
+			      error.data());
 		throw std::system_error(errno, std::system_category());
 	}
 	if (timeout_ms > 0)
@@ -70,7 +70,7 @@ bool TimerFd::set(int timeout_ms, bool one_shot)
 		std::string error = "timerfd_settime() failed: ";
 		error += std::strerror(errno);
 		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
-			      error);
+			      error.data());
 		//    throw std::system_error(errno, std::system_category());
 		return false;
 	}

@@ -27,8 +27,8 @@
 
 using namespace events;
 class TimerFd : public Descriptor {
-	bool one_shot_;
 	int timeout_ms_;
+	bool one_shot_;
 
     public:
 	virtual ~TimerFd();

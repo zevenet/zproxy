@@ -25,12 +25,10 @@
 #include "http.h"
 
 http_parser::HttpData::HttpData()
-	:
-
-	  buffer(nullptr), buffer_size(0), last_length(0), num_headers(0),
-	  method(nullptr), method_len(0), minor_version(-1), path_ptr(nullptr),
-	  path_ptr_length(0), http_status_code(0), status_message(nullptr),
-	  message_length(0), path(""), http_message_str("")
+	: path_ptr(nullptr), path_ptr_length(0), buffer(nullptr),
+	  buffer_size(0), last_length(0), num_headers(0), http_message_str(""),
+	  method(nullptr), method_len(0), minor_version(-1), path(""),
+	  http_status_code(0), status_message(nullptr), message_length(0)
 {
 	reset_parser();
 }
@@ -227,7 +225,7 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 
 	//  if (LIKELY(reset))
 	char *http_message;
-	int http_message_length;
+	size_t http_message_length;
 	reset_parser();
 	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
@@ -289,7 +287,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 				     [[maybe_unused]] bool reset)
 {
 	char *http_message;
-	int http_message_length;
+	size_t http_message_length;
 
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
