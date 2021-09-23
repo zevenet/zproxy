@@ -83,6 +83,7 @@ void Config::parse_file()
 				lin + matches[1].rm_so,
 				static_cast<size_t>(matches[1].rm_eo -
 						    matches[1].rm_so));
+			zcu_log_set_prefix(const_cast<char *>(name.data()));
 		} else if (!regexec(&regex_set::RootJail, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			root_jail = std::string(
@@ -313,6 +314,7 @@ bool Config::init(const global::StartOptions &start_options)
 	ignore_100 = 1;
 	services = nullptr;
 	listeners = nullptr;
+	zcu_log_set_prefix("");
 #ifdef CACHE_ENABLED
 	cache_s = 0;
 	cache_thr = 0;
@@ -2476,6 +2478,7 @@ bool Config::init(const std::string &file_name)
 	ignore_100 = 1;
 	services = nullptr;
 	listeners = nullptr;
+	zcu_log_set_prefix("");
 #ifdef CACHE_ENABLED
 	cache_s = 0;
 	cache_thr = 0;

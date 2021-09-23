@@ -21,8 +21,20 @@
 
 #include "zcutils.h"
 
+char zcu_log_prefix[LOG_PREFIX_BUFSIZE] = "";
 int zcu_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
 int zcu_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
+
+void zcu_log_set_prefix(const char *string)
+{
+	if (strlen(string) >= LOG_PREFIX_BUFSIZE)
+		zcu_log_print(
+			LOG_ERR,
+			"The farm name is greater than the prefix log: %d >= %d",
+			strlen(string), LOG_PREFIX_BUFSIZE);
+	else
+		memcpy(zcu_log_prefix, string, strlen(string) + 1);
+}
 
 void zcu_log_set_level(int loglevel)
 {

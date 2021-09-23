@@ -36,6 +36,8 @@
 
 /****  LOG  ****/
 
+#define LOG_PREFIX_BUFSIZE 100
+
 #define ZCUTILS_LOG_OUTPUT_SYSLOG (1 << 0)
 #define ZCUTILS_LOG_OUTPUT_STDOUT (1 << 1)
 #define ZCUTILS_LOG_OUTPUT_STDERR (1 << 2)
@@ -51,8 +53,11 @@ enum zcu_log_output {
 #define ZCUTILS_LOG_LEVEL_DEFAULT LOG_NOTICE
 #define ZCUTILS_LOG_OUTPUT_DEFAULT ZCUTILS_LOG_OUTPUT_SYSLOG
 
+extern char zcu_log_prefix[LOG_PREFIX_BUFSIZE];
 extern int zcu_log_level;
 extern int zcu_log_output;
+
+void zcu_log_set_prefix(const char *string);
 
 void zcu_log_set_level(int loglevel);
 
@@ -60,7 +65,7 @@ void zcu_log_set_output(int output);
 
 int _zcu_log_print(int loglevel, const char *fmt, ...);
 #define zcu_log_print(loglevel, fmt, ...)                                      \
-	_zcu_log_print(loglevel, "[th:%lx] " fmt,                              \
+	_zcu_log_print(loglevel, "[f:%s][th:%lx] " fmt, zcu_log_prefix,        \
 		       static_cast<unsigned int>(pthread_self()),              \
 		       ##__VA_ARGS__)
 

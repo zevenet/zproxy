@@ -95,8 +95,7 @@ std::string HttpStream::logTag(const char *tag)
 	int total_b;
 	char ret[MAXBUF];
 
-	total_b = sprintf(ret, "[st:%d][f:%s]", this->stream_id,
-			  this->service_manager->listener_config_->name.data());
+	total_b = sprintf(ret, "[st:%d]", this->stream_id);
 
 	auto service = static_cast<Service *>(this->request.getService());
 	if (service == nullptr) {
