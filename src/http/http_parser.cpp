@@ -35,6 +35,8 @@ http_parser::HttpData::HttpData()
 
 void http_parser::HttpData::reset_parser()
 {
+	extra_headers.clear();
+	permanent_extra_headers.clear();
 	http_message_str = "";
 	method = nullptr;
 	method_len = 0;
