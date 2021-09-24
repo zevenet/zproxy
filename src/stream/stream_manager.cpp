@@ -1644,7 +1644,6 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		       stream->backend_connection.buffer_size,
 		       stream->response.content_length,
 		       stream->response.message_bytes_left);
-	auto buffer_size_in = stream->backend_connection.buffer_size;
 #endif
 #if USE_TIMER_FD_TIMEOUT
 	this->deleteFd(stream->timer_fd.getFileDescriptor());
@@ -2033,8 +2032,7 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 		return JSON_OP_RESULT::OK;
 	}
 #if DEBUG_ZCU_LOG
-	switch (task.subject) {
-	case ctl::CTL_SUBJECT::DEBUG: {
+	if (task.subject == ctl::CTL_SUBJECT::DEBUG) {
 		std::unique_ptr<JsonObject> root{ new JsonObject() };
 		std::unique_ptr<JsonObject> status{ new JsonObject() };
 		status->emplace("HttpSteam", std::make_unique<JsonDataValue>(
@@ -2050,7 +2048,6 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 		root->emplace("W_" + std::to_string(this->getWorkerId()),
 			      std::move(status));
 		return root->stringify();
-	}
 	}
 #endif
 	return JSON_OP_RESULT::ERROR;
