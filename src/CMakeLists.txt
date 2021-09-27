@@ -22,7 +22,7 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
-add_definitions(-DDEBUG_ZCU_LOG=0)
+add_definitions(-DDEBUG_ZCU_LOG=1)
 add_definitions(-DHELLO_WORLD_SERVER=0)
 add_definitions(-DMAXBUF=4096)
 add_definitions(-DMAX_URI_SIZE=16500)
