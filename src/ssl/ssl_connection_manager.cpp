@@ -117,9 +117,15 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 						  ssl_connection.buffer_size -
 						  ssl_connection.buffer_offset),
 				 &bytes_read);
-		//    zcu_log_print(LOG_DEBUG,
-		//                   "BIO_read return code %d buffer size %d bytes_read %d",
-		//                   rc, ssl_connection.buffer_size, bytes_read);
+		zcu_log_print(
+			LOG_DEBUG,
+			"%s()%d: BIO_read(%d): ssl_status = %s, rc = %d, buffer_size = %d, total_bytes_read = %d, bytes_read = %d",
+			__FUNCTION__, __LINE__,
+			ssl_connection.getFileDescriptor(),
+			ssl::getSslStatusString(ssl_connection.ssl_conn_status)
+				.data(),
+			rc, ssl_connection.buffer_size, total_bytes_read,
+			bytes_read);
 
 		if (rc == 0) {
 			if (total_bytes_read > 0)
@@ -143,8 +149,10 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 				     ssl_connection.buffer_size -
 				     ssl_connection.buffer_offset) == 0)
 			return IO::IO_RESULT::FULL_BUFFER;
-		// return IO::IO_RESULT::SUCCESS;
 	}
+	zcu_log_print(LOG_NOTICE,
+		      "%s()%d: Buffer read finish with unknown status",
+		      __FUNCTION__, __LINE__);
 }
 
 IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,

@@ -312,13 +312,7 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
-	streamLogDebug(stream, "onRequestEvent");
-
 	auto &listener_config_ = *stream->service_manager->listener_config_;
-#if DEBUG_ZCU_LOG
-	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest",
-				    "init");
-#endif
 
 	if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
 		DEBUG_COUNTER_HIT(debug__::on_request);
@@ -332,18 +326,19 @@ void StreamManager::onRequestEvent(int fd)
 	}
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	if (stream->service_manager->is_https_listener) {
-		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
-					    "OnRequest", "HTTPS");
 		result = ssl::SSLConnectionManager::handleDataRead(
 			stream->client_connection);
 	} else {
-		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
-					    "OnRequest", "HTTP");
 		result = stream->client_connection.read();
 	}
 
-	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest",
-				    IO::getResultString(result).data());
+	streamLogDebug(
+		stream,
+		"OnRequest %s fd: %d - remote port %d - buffer result: %s",
+		(stream->service_manager->is_https_listener) ? "HTTPS" : "HTTP",
+		stream->client_connection.getFileDescriptor(),
+		stream->client_connection.getPeerPort(),
+		IO::getResultString(result).data());
 
 	switch (result) {
 	case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
@@ -353,8 +348,7 @@ void StreamManager::onRequestEvent(int fd)
 			    stream->client_connection)) {
 			HttpStream::debugBufferData(__FUNCTION__, __LINE__,
 						    stream, "OnRequest",
-						    "HANDSHAKE");
-
+						    "HANDSHAKE-FAILED");
 			streamLogNoResponse(stream,
 					    "handshake error with client");
 			clearStream(stream);
@@ -363,11 +357,12 @@ void StreamManager::onRequestEvent(int fd)
 		if (stream->client_connection.ssl_connected) {
 			HttpStream::debugBufferData(__FUNCTION__, __LINE__,
 						    stream, "OnRequest",
-						    "HANDSHAKE");
+						    "HANDSHAKE-COMPLETED");
 			DEBUG_COUNTER_HIT(debug__::on_handshake);
 			httpsHeaders(stream, listener_config_.clnt_check);
 			stream->backend_connection.server_name =
 				stream->client_connection.server_name;
+
 			onRequestEvent(fd);
 			return;
 		} else if ((ERR_GET_REASON(ERR_peek_error()) ==
@@ -383,7 +378,6 @@ void StreamManager::onRequestEvent(int fd)
 					    listener_config_.nossl_url,
 					    *stream))
 					clearStream(stream);
-				return;
 			} else {
 				http_manager::replyError(
 					stream, listener_config_.codenossl,
@@ -394,7 +388,10 @@ void StreamManager::onRequestEvent(int fd)
 					listener_config_.response_stats);
 				clearStream(stream);
 			}
+			return;
 		}
+
+		streamLogDebug(stream, "HANDSHAKE-CONTINUE");
 		return;
 	}
 	case IO::IO_RESULT::SUCCESS:
@@ -414,9 +411,11 @@ void StreamManager::onRequestEvent(int fd)
 
 	DEBUG_COUNTER_HIT(debug__::on_request);
 	if (stream->client_connection.buffer_size == 0) {
+		streamLogDebug(stream, "enabling buffer event");
 		stream->client_connection.enableReadEvent();
 		return;
 	}
+	streamLogDebug(stream, "reading buffer");
 	this->stopTimeOut(stream->client_connection.getFileDescriptor());
 	if (result == IO::IO_RESULT::FULL_BUFFER) {
 		stream->status |=
