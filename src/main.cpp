@@ -39,7 +39,7 @@ void cleanExit()
 
 void handleInterrupt(int sig)
 {
-	zcu_log_print(LOG_DEBUG, "[%s] received", ::strsignal(sig));
+	zcu_log_print(LOG_ERR, "[%s] received", ::strsignal(sig));
 	switch (sig) {
 	case SIGQUIT:
 	case SIGTERM:
@@ -53,6 +53,7 @@ void handleInterrupt(int sig)
 		break;
 	}
 	case SIGABRT:
+		zcu_bt_print();
 		::_exit(EXIT_FAILURE);
 	case SIGSEGV: {
 		zcu_bt_print();
