@@ -411,6 +411,8 @@ void StreamManager::onRequestEvent(int fd)
 
 	DEBUG_COUNTER_HIT(debug__::on_request);
 	if (stream->client_connection.buffer_size == 0) {
+		// it is waiting a new request when several requests are sent
+		// in the same connection
 		streamLogDebug(stream, "enabling buffer event");
 		stream->client_connection.enableReadEvent();
 		return;
@@ -1637,13 +1639,12 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 	DEBUG_COUNTER_HIT(debug__::on_send_response);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
-#if DEBUG_ZCU_LOG
 	streamLogDebug(stream,
 		       "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
 		       stream->backend_connection.buffer_size,
 		       stream->response.content_length,
 		       stream->response.message_bytes_left);
-#endif
+
 #if USE_TIMER_FD_TIMEOUT
 	this->deleteFd(stream->timer_fd.getFileDescriptor());
 	stream->timer_fd.unset();
@@ -1752,6 +1753,14 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			return;
 		}
 		stream->backend_connection.buffer_offset = 0;
+
+		// waiting part of the response
+		setTimeOut(stream->backend_connection.getFileDescriptor(),
+			   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
+			   stream->backend_connection.getBackend()
+				   ->response_timeout);
+		stream->backend_connection.enableReadEvent();
+
 		stream->backend_connection.enableReadEvent();
 		return;
 	}
@@ -1907,13 +1916,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		return;
 	}
 	stream->clearStatus(STREAM_STATUS::RESPONSE_PENDING);
-	stream->client_connection.enableReadEvent();
+
 	if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
-#if DEBUG_ZCU_LOG
 		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 					    "ClientW-ReadPending", "PENDING ");
-#endif
-		//stream->backend_connection.enableReadEvent();
 		onResponseEvent(stream->backend_connection.getFileDescriptor());
 		return;
 	}
@@ -1925,11 +1931,20 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 #ifdef CACHE_ENABLED
 	if (!stream->response.isCached())
 #endif
-		setTimeOut(stream->backend_connection.getFileDescriptor(),
-			   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
-			   stream->backend_connection.getBackend()
-				   ->response_timeout);
+
+		// waiting a new request
+		setTimeOut(stream->client_connection.getFileDescriptor(),
+			   TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
+			   listener_config_.to);
+	stream->client_connection.enableReadEvent();
+
+	// or waiting part of the response
+	setTimeOut(stream->backend_connection.getFileDescriptor(),
+		   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
+		   stream->backend_connection.getBackend()->response_timeout);
 	stream->backend_connection.enableReadEvent();
+
+	streamLogDebug(stream, "part of the response sent");
 }
 
 bool StreamManager::registerListener(
@@ -2102,7 +2117,6 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 			stream->client_connection.enableWriteEvent();
 			return;
 		} else if (!stream->response.getHeaderSent()) {
-			streamLogMessage(stream, "Backend disconnected");
 			http_manager::replyError(
 				stream, http::Code::InternalServerError,
 				http::reasonPhrase(
@@ -2112,6 +2126,7 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 				listener_config_.response_stats);
 		}
 	}
+	streamLogMessage(stream, "Backend disconnected");
 	clearStream(stream);
 }
 
@@ -2152,6 +2167,8 @@ void StreamManager::stopListener(int listener_id, bool cut_connection)
 #if USE_TIMER_FD_TIMEOUT == 0
 void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 {
+	zcu_log_print(LOG_DEBUG, "FD %d, ontimeout", fd);
+
 	switch (type) {
 	case TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT:
 		onConnectTimeoutEvent(fd);

@@ -285,6 +285,8 @@ bool EpollManager::stopAccept(int listener_fd)
 #if USE_TIMER_FD_TIMEOUT == 0
 void EpollManager::setTimeOut(int fd, TIMEOUT_TYPE type, int timeout_sec)
 {
+	zcu_log_print(LOG_DEBUG, "FD %d, Setting timeout %d", fd, timeout_sec);
+
 	if (timeout_sec > 0) {
 		auto it = timeouts.find(fd);
 		if (it != timeouts.end()) {
