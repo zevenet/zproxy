@@ -52,6 +52,10 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 				 HttpStream *stream, const char *debug_str,
 				 const char *data)
 {
+#if DEBUG_ZCU_LOG == 0
+	return;
+#endif
+
 	if (stream == nullptr)
 		return;
 	zcu_log_print(

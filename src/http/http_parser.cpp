@@ -77,10 +77,8 @@ void http_parser::HttpData::prepareToSend()
 			continue; // skip unwanted headers
 		iov[iov_size++] = { const_cast<char *>(headers[i].name),
 				    headers[i].line_size };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", headers[i].line_size - 2,
 			      headers[i].name);
-#endif
 	}
 
 	for (const auto &header :
@@ -88,10 +86,8 @@ void http_parser::HttpData::prepareToSend()
 		// it's copied it invalidate c_str() reference.
 		iov[iov_size++] = { const_cast<char *>(header.c_str()),
 				    header.length() };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
 			      header.c_str());
-#endif
 	}
 
 	for (const auto &header :
@@ -100,18 +96,14 @@ void http_parser::HttpData::prepareToSend()
 		// it's copied it invalidate c_str() reference.
 		iov[iov_size++] = { const_cast<char *>(header.c_str()),
 				    header.length() };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
 			      header.c_str());
-#endif
 	}
 	iov[iov_size++] = { const_cast<char *>(http::CRLF), http::CRLF_LEN };
 
 	if (message_length > 0) {
 		iov[iov_size++] = { message, message_length };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "[%d bytes Content]", message_length);
-#endif
 	}
 }
 

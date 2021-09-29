@@ -267,16 +267,12 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 	umtch[0].rm_so = 0;
 	umtch[0].rm_eo = ori_len;
 	if (regexec(match, ori_str, 10, umtch, REG_STARTEND)) {
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "String didn't match %.*s", ori_len,
 			      ori_str);
-#endif
 		return -1;
 	}
 
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "String matches %.*s", ori_len, ori_str);
-#endif
 
 	memcpy(buf, ori_str, umtch[0].rm_so);
 

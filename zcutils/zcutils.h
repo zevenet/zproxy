@@ -64,6 +64,9 @@ void zcu_log_set_level(int loglevel);
 void zcu_log_set_output(int output);
 
 int _zcu_log_print(int loglevel, const char *fmt, ...);
+#if DEBUG_ZCU_LOG == 0
+#define zcu_log_print(LOG_DEBUG, ...)
+#endif
 #define zcu_log_print(loglevel, fmt, ...)                                      \
 	_zcu_log_print(loglevel, "[f:%s][th:%lx] " fmt, zcu_log_prefix,        \
 		       static_cast<unsigned int>(pthread_self()),              \

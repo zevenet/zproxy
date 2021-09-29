@@ -149,7 +149,6 @@ std::string ListenerManager::handleTask(ctl::CtlTask &task)
 				      Counter<TimeOut>::count));
 
 #if DEBUG_ZCU_LOG
-
 		clients_stats->emplace(
 			"on_client_connect",
 			std::make_unique<JsonDataValue>(

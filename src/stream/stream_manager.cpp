@@ -444,10 +444,9 @@ void StreamManager::onRequestEvent(int fd)
 			}
 		}
 #endif
-#if DEBUG_ZCU_LOG
 		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 					    "OnRequestContinue", "");
-#endif
+
 #if ENABLE_QUICK_RESPONSE
 		onServerWriteEvent(stream);
 #else
@@ -455,10 +454,8 @@ void StreamManager::onRequestEvent(int fd)
 #endif
 		return;
 	}
-#if DEBUG_ZCU_LOG
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream, "OnRequest",
 				    "");
-#endif
 
 	/* Parse HTTP request */
 	size_t parsed = 0;
@@ -800,10 +797,8 @@ void StreamManager::onResponseEvent(int fd)
 		return;
 	}
 
-#if DEBUG_ZCU_LOG
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 				    "OnResponse", "RESPONSE_PENDING");
-#endif
 	DEBUG_COUNTER_HIT(debug__::on_response);
 	IO::IO_RESULT result;
 
@@ -914,11 +909,9 @@ void StreamManager::onResponseEvent(int fd)
 	} else {
 		stream->clearStatus(STREAM_STATUS::BCK_READ_PENDING);
 	}
-#if DEBUG_ZCU_LOG
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 				    "OnResponse",
 				    IO::getResultString(result).data());
-#endif
 
 	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
 	    stream->response.hasPendingData()) {
@@ -1531,12 +1524,10 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		stream->backend_connection.enableReadEvent();
 		stream->client_connection.enableReadEvent();
 		if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
-#if DEBUG_ZCU_LOG
 			HttpStream::debugBufferData(__FUNCTION__, __LINE__,
 						    stream,
 						    "ClientW-ReadPending",
 						    "WROTE REQ PENDING ");
-#endif
 			//stream->client_connection.enableReadEvent();
 			onRequestEvent(
 				stream->client_connection.getFileDescriptor());
@@ -1606,7 +1597,6 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
 		   stream->backend_connection.getBackend()->response_timeout);
 #endif
-#if DEBUG_ZCU_LOG
 	streamLogDebug(stream,
 		       "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
 		       "%lu\tIO: %s",
@@ -1614,17 +1604,14 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		       stream->request.content_length,
 		       stream->request.message_bytes_left,
 		       IO::getResultString(result).data());
-#endif
 	Time::getTime(stream->backend_connection.time_start);
 	stream->client_connection.enableReadEvent();
 	stream->backend_connection.enableReadEvent();
 	stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
 	if (stream->hasStatus(STREAM_STATUS::CL_READ_PENDING)) {
-#if DEBUG_ZCU_LOG
 		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 					    "ClientW-ReadPending",
 					    "WROTE REQ PENDING ");
-#endif
 		onRequestEvent(stream->client_connection.getFileDescriptor());
 	}
 }
@@ -1736,12 +1723,10 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		stream->client_connection.enableReadEvent();
 
 		if (stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {
-#if DEBUG_ZCU_LOG
 			HttpStream::debugBufferData(__FUNCTION__, __LINE__,
 						    stream,
 						    "ClientW-ReadPending",
 						    "WROTE RESP PENDING ");
-#endif
 			//stream->backend_connection.enableReadEvent();
 			onResponseEvent(
 				stream->backend_connection.getFileDescriptor());
@@ -2081,10 +2066,8 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
 	//~ StreamDataLogger logger(stream, listener_config_);
-#if DEBUG_ZCU_LOG
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 				    "onServerDisconnect", "DISCONNECT");
-#endif
 
 	if (stream->backend_connection.getFileDescriptor() > 0 &&
 	    !stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING)) {

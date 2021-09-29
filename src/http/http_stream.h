@@ -158,12 +158,18 @@ class HttpStream : public Counter<HttpStream> {
 	void logSuccess();
 };
 
+#if DEBUG_ZCU_LOG == 0
+#define streamLogDebug(s, fmt, ...)                                            \
+	{                                                                      \
+	}
+#else
 #define streamLogDebug(s, fmt, ...)                                            \
 	{                                                                      \
 		auto tag = const_cast<HttpStream *>(s)->logTag("debug");       \
 		zcu_log_print(LOG_DEBUG, "%s[caller/%s:%d]" fmt, tag.data(),   \
 			      __FUNCTION__, __LINE__, ##__VA_ARGS__);          \
 	}
+#endif
 
 #define streamLogMessage(s, fmt, ...)                                          \
 	{                                                                      \
