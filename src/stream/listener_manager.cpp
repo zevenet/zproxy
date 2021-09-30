@@ -500,9 +500,76 @@ void restoreConnections(std::shared_ptr<ListenerConfig> old_cfg,
 	}
 }
 
+void ListenerManager::exportSessions(sessions::DataSet **session_list,
+				     int listener_id, Service *svc_ptr)
+{
+	sessions::DataSet *new_set, *s;
+	int index = 0;
+
+	if (svc_ptr->sessions_set.empty())
+		return;
+	new_set = new sessions::DataSet(listener_id, svc_ptr->name);
+
+	if (*session_list != nullptr) {
+		for (s = *session_list; s->next != nullptr; s = s->next)
+			;
+		s->next = new_set;
+	} else
+		*session_list = new_set;
+
+	for (auto it = svc_ptr->sessions_set.begin();
+	     it != svc_ptr->sessions_set.end(); it++, index++) {
+		if (it->second->hasExpired(svc_ptr->ttl))
+			continue;
+		new_set->session_list.push_back(sessions::Data());
+		new_set->session_list[index].key = it->first.data();
+		new_set->session_list[index].last_seen = it->second->last_seen;
+		new_set->session_list[index].backend_ip =
+			it->second->assigned_backend->address;
+		new_set->session_list[index].backend_port =
+			it->second->assigned_backend->port;
+	}
+}
+
+void ListenerManager::restoreSessions(sessions::DataSet *sessions_list,
+				      int listener_id,
+				      std::vector<Service *> svc_list)
+{
+	sessions::DataSet *session = nullptr;
+
+	for (auto svc : svc_list) {
+		session = nullptr;
+		for (auto it = sessions_list;
+		     session == nullptr && it != nullptr; it = it->next)
+			if (it->listener_id == listener_id &&
+			    it->service_name == svc->name &&
+			    !it->session_list.empty())
+				session = it;
+		if (session == nullptr)
+			continue;
+
+		for (auto s : session->session_list) {
+			for (auto bck : svc->getBackends()) {
+				if (bck->address == s.backend_ip &&
+				    bck->port == s.backend_port) {
+					svc->addSession(s.key, s.last_seen, bck,
+							true);
+					// could be deleted the item from the list
+					break;
+				}
+			}
+			// could be delete the dataset strucut
+		}
+	}
+}
+
 bool ListenerManager::reloadConfigFile()
 {
 	Config config;
+	sessions::DataSet *sessionSet = nullptr;
+
+	zcu_log_print(LOG_DEBUG, "Reloading configuration");
+
 	if (!config.init(global::run_options::getCurrent().config_file_name)) {
 		zcu_log_print(LOG_ERR,
 			      "%s():%d: Error loading configuration file %s",
@@ -530,6 +597,12 @@ bool ListenerManager::reloadConfigFile()
 				break;
 			}
 		}
+		// get the sessions from the old listener
+		for (auto svc_ptr : it->second->getServices()) {
+			exportSessions(&sessionSet,
+				       it->second->listener_config_->id,
+				       svc_ptr);
+		}
 		// stop the listener in all stream workers
 		it->second->disabled = true;
 		for (auto &[sm_id, sm] : stream_manager_set) {
@@ -539,13 +612,15 @@ bool ListenerManager::reloadConfigFile()
 		sm_set[(it->second)->id] = nullptr;
 		it = sm_set.erase(it);
 	}
+
 	// create new instances with new configuration, connections may be lost during
 	// this switch
 	for (auto lc = config.listeners; lc != nullptr; lc = lc->next) {
 		if (lc->disabled)
 			continue;
-		auto listener_config = std::shared_ptr<ListenerConfig>(lc);
-		this->addListener(listener_config);
+		this->addListener(lc);
+		auto &lm = ServiceManager::getInstance(lc);
+		restoreSessions(sessionSet, lc->id, lm->getServices());
 	}
 
 	for (size_t i = 0; i < stream_manager_set.size(); i++) {
@@ -572,6 +647,17 @@ bool ListenerManager::reloadConfigFile()
 				__FUNCTION__, __LINE__, i);
 		}
 	}
+
+	// delete the sessions that are not used more
+	for (auto it = sessionSet; sessionSet != nullptr;) {
+		it = sessionSet;
+		sessionSet = sessionSet->next;
+		delete it;
+	}
+
+	auto check =
+		ServiceManager::getInstance().begin()->second->getServices();
+	//check.begin()->second->getServices().begin()
 	// update maintenance timeouts
 	this->deleteFd(timer_maintenance.getFileDescriptor());
 	global::run_options::getCurrent().backend_resurrect_timeout =
@@ -582,5 +668,6 @@ bool ListenerManager::reloadConfigFile()
 			      1000);
 	addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,
 	      EVENT_GROUP::MAINTENANCE);
+
 	return true;
 }

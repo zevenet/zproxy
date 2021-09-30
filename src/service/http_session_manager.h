@@ -27,6 +27,29 @@
 
 namespace sessions
 {
+struct Data {
+	std::string key;
+	std::string backend_ip;
+	int backend_port;
+	time_t last_seen;
+};
+
+struct DataSet {
+	int listener_id;
+	std::string service_name;
+	std::vector<Data> session_list;
+	DataSet *next{ nullptr };
+	DataSet(int listener, std::string service)
+	{
+		listener_id = listener;
+		service_name = service;
+	}
+	~DataSet()
+	{
+		session_list.clear();
+	}
+};
+
 struct SessionInfo {
 	SessionInfo() : assigned_backend(nullptr)
 	{
@@ -46,7 +69,7 @@ struct SessionInfo {
 	bool hasExpired(unsigned int ttl)
 	{
 		// check if has not reached ttl
-		if (last_seen == 0)
+		if (this->isStatic())
 			return false;
 		return Time::getTimeSec() - last_seen > ttl;
 	}
@@ -68,20 +91,22 @@ struct SessionInfo {
 };
 
 class HttpSessionManager {
-	// used
 	std::recursive_mutex lock_mtx;
+
+    public:
 	std::unordered_map<std::string, SessionInfo *>
 		sessions_set; // key can be anything, depending on the session type
-    public:
 	SESS_TYPE session_type;
 	std::string sess_id; /* id to construct the pattern */
 	regex_t sess_start{}; /* pattern to identify the session data */
 	regex_t sess_pat{}; /* pattern to match the session data */
-
-    public:
 	unsigned int ttl{};
+
 	HttpSessionManager();
 	virtual ~HttpSessionManager();
+
+	bool addSession(std::string key, long last_seen, Backend *bck_ptr,
+			bool copy_lastseen = false);
 	bool addSession(std::string key, int backend_id, long last_seen,
 			std::vector<Backend *> backend_set);
 	bool addSession(JsonObject *json_object,

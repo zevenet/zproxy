@@ -172,9 +172,6 @@ bool HttpSessionManager::addSession(std::string key, int backend_id,
 {
 	Backend *bck_ptr{ nullptr };
 
-	if (key == "")
-		return false;
-
 	for (auto backend : backend_set) {
 		if (backend->backend_id != backend_id)
 			continue;
@@ -183,16 +180,33 @@ bool HttpSessionManager::addSession(std::string key, int backend_id,
 	if (bck_ptr == nullptr)
 		return false;
 
+	return addSession(key, last_seen, bck_ptr);
+}
+
+bool HttpSessionManager::addSession(std::string key, long last_seen,
+				    Backend *bck_ptr, bool copy_lastseen)
+{
+	if (key == "")
+		return false;
+
 	auto session_it = sessions_set.find(key);
 	if (session_it == sessions_set.end()) {
 		std::unique_ptr<SessionInfo> new_session(new SessionInfo());
-		new_session->setTimeStamp(last_seen);
+		if (!copy_lastseen)
+			new_session->setTimeStamp(last_seen);
+		else
+			new_session->last_seen = last_seen;
 		new_session->assigned_backend = bck_ptr;
 		sessions_set.emplace(
 			std::make_pair(key, new_session.release()));
+		zcu_log_print(LOG_DEBUG, "New session: session %s -> bck %d",
+			      key.data(), bck_ptr->backend_id);
 	} else {
 		session_it->second->setTimeStamp(last_seen);
 		session_it->second->assigned_backend = bck_ptr;
+		zcu_log_print(LOG_DEBUG,
+			      "Session updated: session %s -> bck %d",
+			      key.data(), bck_ptr->backend_id);
 	}
 
 	return true;

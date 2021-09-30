@@ -147,6 +147,11 @@ class Service : public sessions::HttpSessionManager,
 	ServiceConfig &service_config;
 
 	/**
+   * @brief it returns a vector with the service backends
+   */
+	std::vector<Backend *> getBackends();
+
+	/**
    * @brief It updates the maximum backend priority for the service
    *
    * This values does as limit, the backends that have a priority as this

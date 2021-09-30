@@ -38,6 +38,15 @@ ServiceManager::getInstance(std::shared_ptr<ListenerConfig> listener_config)
 	return instance[listener_config->id];
 }
 
+std::shared_ptr<ServiceManager> &ServiceManager::getInstance(int listener_id)
+{
+	auto it = instance.find(listener_id);
+	/*if (it == instance.end())
+		instance[listener_config->id] =
+			std::make_shared<ServiceManager>(listener_config);*/
+	return instance[listener_id];
+}
+
 std::map<int, std::shared_ptr<ServiceManager> > &ServiceManager::getInstance()
 {
 	return instance;
@@ -54,12 +63,6 @@ ServiceManager::ServiceManager(std::shared_ptr<ListenerConfig> listener_config)
 		ssl_context = new SSLContext();
 		is_https_listener = ssl_context->init(listener_config_);
 	}
-#if WAF_ENABLED
-	listener_config_->modsec = std::make_shared<modsecurity::ModSecurity>();
-	listener_config_->modsec->setConnectorInformation(
-		"zproxy_" + listener_config_->name + "_connector");
-	listener_config_->modsec->setServerLogCb(Waf::logModsec);
-#endif
 	ctl_manager = ctl::ControlManager::getInstance();
 	ctl_manager->attach(std::ref(*this));
 }

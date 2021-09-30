@@ -48,6 +48,7 @@ class ServiceManager : public CtlObserver<ctl::CtlTask, std::string>,
 	static std::shared_ptr<ServiceManager> &
 	getInstance(std::shared_ptr<ListenerConfig> listener_config);
 	static std::map<int, std::shared_ptr<ServiceManager> > &getInstance();
+	static std::shared_ptr<ServiceManager> &getInstance(int listener_id);
 	explicit ServiceManager(std::shared_ptr<ListenerConfig> listener_config);
 	~ServiceManager() final;
 

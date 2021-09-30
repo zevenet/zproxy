@@ -24,6 +24,11 @@
 #include "../../zcutils/zcutils.h"
 #include "../../zcutils/zcu_network.h"
 
+std::vector<Backend *> Service::getBackends()
+{
+	return this->backend_set;
+}
+
 Backend *Service::getBackend(Connection &source, HttpRequest &request)
 {
 	if (backend_set.empty())
