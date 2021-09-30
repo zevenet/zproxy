@@ -159,15 +159,6 @@ std::shared_ptr<Rules> Waf::reloadRules()
 	return rules;
 }
 
-void Waf::logModsec(void *data, const void *message)
-{
-	if (data != nullptr)
-		zcu_log_print(LOG_WARNING, "%s", static_cast<char *>(data));
-	if (message != nullptr)
-		zcu_log_print(LOG_WARNING, "[WAF] %s",
-			      static_cast<char *>(const_cast<void *>(message)));
-}
-
 void Waf::dumpRules(modsecurity::Rules &rules)
 {
 	zcu_log_print(LOG_DEBUG, "Rules: ");

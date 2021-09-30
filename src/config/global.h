@@ -27,6 +27,9 @@
 #include <memory>
 #include <getopt.h>
 #include <string>
+#if WAF_ENABLED
+#include <modsecurity/modsecurity.h>
+#endif
 
 namespace global
 {
@@ -52,7 +55,11 @@ struct run_options {
 	int grace_time{ 30 }; /* Grace time before forcing shutdown */
 	std::string root_jail; /* directory to chroot to */
 	std::string config_file_name;
-
+#if WAF_ENABLED
+	modsecurity::ModSecurity *modsec_api{
+		nullptr
+	}; /* API connector with Modsecurity */
+#endif
     private:
 	static struct run_options current;
 };

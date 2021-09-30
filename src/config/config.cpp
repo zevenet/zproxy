@@ -2434,6 +2434,17 @@ void Config::include_dir(const char *conf_path)
 	closedir(dp);
 }
 
+#if WAF_ENABLED
+void Config::logModsec(void *data, const void *message)
+{
+	if (data != nullptr)
+		zcu_log_print(LOG_WARNING, "%s", static_cast<char *>(data));
+	if (message != nullptr)
+		zcu_log_print(LOG_WARNING, "[WAF] %s",
+			      static_cast<char *>(const_cast<void *>(message)));
+}
+#endif
+
 void Config::setAsCurrent()
 {
 	if (found_parse_error)
@@ -2455,6 +2466,13 @@ void Config::setAsCurrent()
 	global::run_options::getCurrent().root_jail = root_jail;
 	global::run_options::getCurrent().config_file_name = conf_file_name;
 	global::StartOptions::getCurrent().conf_file_name = conf_file_name;
+#if WAF_ENABLED
+	global::run_options::getCurrent().modsec_api =
+		new modsecurity::ModSecurity();
+	global::run_options::getCurrent().modsec_api->setConnectorInformation(
+		"zproxy_" + name + "_connector");
+	global::run_options::getCurrent().modsec_api->setServerLogCb(logModsec);
+#endif
 }
 
 bool Config::init(const std::string &file_name)
@@ -2489,7 +2507,6 @@ bool Config::init(const std::string &file_name)
 			      __FUNCTION__, __LINE__);
 		return false;
 	}
-
 	/* set the facility only here to ensure the syslog gets opened if necessary
 	 */
 	log_facility = def_facility;

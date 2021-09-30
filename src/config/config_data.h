@@ -271,9 +271,6 @@ struct ListenerConfig : Counter<ListenerConfig> {
 				   https backends, param ForwardSNI */
 	Statistics::HttpResponseHits response_stats;
 #if WAF_ENABLED
-	std::shared_ptr<modsecurity::ModSecurity> modsec{
-		nullptr
-	}; /* API connector with Modsecurity */
 	std::shared_ptr<modsecurity::Rules> rules{
 		nullptr
 	}; /* Rules of modsecurity */

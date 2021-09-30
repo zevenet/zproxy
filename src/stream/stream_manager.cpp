@@ -537,7 +537,7 @@ void StreamManager::onRequestEvent(int fd)
 		// rule struct is unitializate if no rulesets are configured
 		delete stream->modsec_transaction;
 		stream->modsec_transaction = new modsecurity::Transaction(
-			listener_config_.modsec.get(),
+			global::run_options::getCurrent().modsec_api,
 			listener_config_.rules.get(), nullptr);
 		if (Waf::checkRequestWaf(*stream)) {
 			listener_config_.response_stats.increaseWaf();

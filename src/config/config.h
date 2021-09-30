@@ -234,4 +234,12 @@ class Config : public Counter<Config> {
 	bool init(const std::string &file_name);
 	bool found_parse_error{ false };
 	void setAsCurrent();
+#if WAF_ENABLED
+	/**
+   * @brief is the log callback function used by the modsec library
+   * @param non used
+   * @param is the message is going to be logged
+   */
+	static void logModsec(void *log = nullptr, const void *data = nullptr);
+#endif
 };
