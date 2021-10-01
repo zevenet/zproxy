@@ -34,9 +34,18 @@ CMD=ctl
 URL="/listener/0"
 METHOD="GET"
 #########################
+DESCRIPTION="reload to check that sessions are not removed"
+CMD=reload
+FILE=zproxy_ip.cfg
+#########################
 DESCRIPTION="wait for the expiration of the session"
 CMD=wait
 TIMEOUT=4
+#########################
+DESCRIPTION="Get stats to check that sessions expired"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
 
 #########################
 DESCRIPTION="test header persistence"
@@ -63,10 +72,6 @@ DESCRIPTION="Get stats"
 CMD=ctl
 URL="/listener/0"
 METHOD="GET"
-#########################
-DESCRIPTION="wait for the expiration of the session"
-CMD=wait
-TIMEOUT=4
 
 #########################
 DESCRIPTION="test URL persistence"
@@ -91,10 +96,6 @@ DESCRIPTION="Get stats"
 CMD=ctl
 URL="/listener/0"
 METHOD="GET"
-#########################
-DESCRIPTION="wait for the expiration of the session"
-CMD=wait
-TIMEOUT=4
 
 #########################
 DESCRIPTION="test COOKIE persistence"
@@ -121,13 +122,4 @@ DESCRIPTION="Get stats"
 CMD=ctl
 URL="/listener/0"
 METHOD="GET"
-#########################
-DESCRIPTION="wait for the expiration of the session"
-CMD=wait
-TIMEOUT=5
 
-#########################
-DESCRIPTION="check that session does not exists"
-CMD=ctl
-URL="/listener/0"
-METHOD="GET"

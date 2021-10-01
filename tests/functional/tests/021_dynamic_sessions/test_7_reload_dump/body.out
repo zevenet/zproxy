@@ -14,12 +14,12 @@
         {
             "backends": [
                 {
-                    "2xx-code-hits": 10,
+                    "2xx-code-hits": 4,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
                     "address": "10.2.1.1",
-                    "connect-time": "#######",
+                    "connect-time": -1.0,
                     "connections": 0,
                     "connections-limit": 0,
                     "https": false,
@@ -28,18 +28,18 @@
                     "pending-connections": 0,
                     "port": 80,
                     "priority": 1,
-                    "response-time": "#######",
+                    "response-time": -1.0,
                     "status": "active",
                     "type": 0,
                     "weight": 1
                 },
                 {
-                    "2xx-code-hits": 10,
+                    "2xx-code-hits": 4,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
                     "address": "10.2.1.2",
-                    "connect-time": "#######",
+                    "connect-time": -1.0,
                     "connections": 0,
                     "connections-limit": 0,
                     "https": false,
@@ -48,7 +48,7 @@
                     "pending-connections": 0,
                     "port": 80,
                     "priority": 1,
-                    "response-time": "#######",
+                    "response-time": -1.0,
                     "status": "active",
                     "type": 0,
                     "weight": 1
@@ -57,7 +57,18 @@
             "id": 0,
             "name": "virtualhost",
             "priority": 1,
-            "sessions": [],
+            "sessions": [
+                {
+                    "backend-id": 0,
+                    "id": "10.1.1.1",
+                    "last-seen": #######
+                },
+                {
+                    "backend-id": 1,
+                    "id": "10.1.1.2",
+                    "last-seen": #######
+                }
+            ],
             "status": "active"
         }
     ],
