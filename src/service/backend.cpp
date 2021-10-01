@@ -243,12 +243,10 @@ void Backend::doMaintenance()
 
 	switch (res) {
 	case IO::IO_OP::OP_SUCCESS: {
-		zcu_log_print(
-			LOG_NOTICE,
-			"BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
-			this->address.data(), this->port,
-			this->backend_config->f_name.data(),
-			this->backend_config->srv_name.data());
+		zcu_log_print(LOG_NOTICE,
+			      "[svc:%s][bck:%s:%d] The backend resurrected",
+			      this->backend_config->srv_name.data(),
+			      this->address.data(), this->port);
 		this->setStatus(BACKEND_STATUS::BACKEND_UP);
 		break;
 	}

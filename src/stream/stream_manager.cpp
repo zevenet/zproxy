@@ -2172,19 +2172,16 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 void StreamManager::onBackendConnectionError(HttpStream *stream)
 {
 	DEBUG_COUNTER_HIT(debug__::on_backend_connect_error);
-	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 	stream->backend_connection.getBackend()->setStatus(
 		BACKEND_STATUS::BACKEND_DOWN);
-	zcu_log_print(
-		LOG_NOTICE,
-		"(%lx) BackEnd %s:%d dead (killed) in farm: '%s', service: '%s'",
-		pthread_self(),
-		stream->backend_connection.getBackend()->address.data(),
-		stream->backend_connection.getBackend()->port,
-		listener_config_.name.data(),
-		stream->backend_connection.getBackend()
-			->backend_config->srv_name.data());
+
+	zcu_log_print(LOG_NOTICE,
+		      "[svc:%s][bk:%s:%d] The backend dead (killed)",
+		      stream->backend_connection.getBackend()
+			      ->backend_config->srv_name.data(),
+		      stream->backend_connection.getBackend()->address.data(),
+		      stream->backend_connection.getBackend()->port);
 
 	stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
 	setStreamBackend(stream);
