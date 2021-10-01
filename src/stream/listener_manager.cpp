@@ -508,7 +508,8 @@ void ListenerManager::exportSessions(sessions::DataSet **session_list,
 
 	if (svc_ptr->sessions_set.empty())
 		return;
-	new_set = new sessions::DataSet(listener_id, svc_ptr->name);
+	new_set = new sessions::DataSet(listener_id, svc_ptr->name,
+					svc_ptr->session_type);
 
 	if (*session_list != nullptr) {
 		for (s = *session_list; s->next != nullptr; s = s->next)
@@ -543,6 +544,7 @@ void ListenerManager::restoreSessions(sessions::DataSet *sessions_list,
 		     session == nullptr && it != nullptr; it = it->next)
 			if (it->listener_id == listener_id &&
 			    it->service_name == svc->name &&
+			    it->type == svc->session_type &&
 			    !it->session_list.empty())
 				session = it;
 		if (session == nullptr)

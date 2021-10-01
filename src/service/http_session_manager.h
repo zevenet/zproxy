@@ -37,12 +37,14 @@ struct Data {
 struct DataSet {
 	int listener_id;
 	std::string service_name;
+	SESS_TYPE type{ SESS_TYPE::SESS_NONE };
 	std::vector<Data> session_list;
 	DataSet *next{ nullptr };
-	DataSet(int listener, std::string service)
+	DataSet(int listener, std::string service, SESS_TYPE s_type)
 	{
 		listener_id = listener;
 		service_name = service;
+		type = s_type;
 	}
 	~DataSet()
 	{
