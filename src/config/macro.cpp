@@ -19,12 +19,7 @@
  *
  */
 
-#pragma once
+#include "macro.h"
 
-#include <string>
-
-namespace MACRO
-{
-extern const char *VHOST_STR;
-extern const int VHOST_LEN;
-} // namespace MACRO
+const char *MACRO::VHOST_STR = "${VHOST}";
+const int MACRO::VHOST_LEN = 8;

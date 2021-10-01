@@ -30,6 +30,10 @@
 #define SSL23_ST_SR_CLNT_HELLO_A (0x210 | SSL_ST_ACCEPT)
 #endif
 
+std::mutex global::RSA_mut; /*Mutex for RSA keygen */
+RSA *global::RSA512_keys[global::N_RSA_KEYS]; /* ephemeral RSA keys */
+RSA *global::RSA1024_keys[global::N_RSA_KEYS]; /* ephemeral RSA keys */
+
 DH *global::SslHelper::DH512_params{ nullptr };
 #if DH_LEN == 1024
 DH *global::Config::DH1024_params{ nullptr };

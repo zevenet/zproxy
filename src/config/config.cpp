@@ -666,7 +666,6 @@ void Config::parseRemoveHeader(MATCHER **head_off, char *lin,
 				"RemoveHeader config: out of memory - aborted");
 		m = *head_off;
 	}
-	memset(m, 0, sizeof(MATCHER));
 	lin[matches[1].rm_eo] = '\0';
 	if (regcomp(&m->pat, lin + matches[1].rm_so,
 		    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -1112,7 +1111,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				    matches, 0)) {
 			if ((m = new MATCHER()) == nullptr)
 				conf_err("out of memory");
-			memset(m, 0, sizeof(MATCHER));
 			m->next = res->ssl_uncln_shutdn;
 			res->ssl_uncln_shutdn = m;
 			lin[matches[1].rm_eo] = '\0';
@@ -1554,7 +1552,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"URL config: out of memory - aborted");
 				m = res->url;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_NEWLINE | REG_EXTENDED |
@@ -1579,7 +1576,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"URL config: out of memory - aborted");
 				m = res->url;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			ptr = parse_orurls();
 			if (regcomp(&m->pat, ptr,
 				    REG_NEWLINE | REG_EXTENDED |
@@ -1601,7 +1597,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"HeadRequire config: out of memory - aborted");
 				m = res->req_head;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -1620,7 +1615,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"HeadDeny config: out of memory - aborted");
 				m = res->deny_head;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))

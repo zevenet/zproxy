@@ -59,6 +59,7 @@ inline std::string getSslStatusString(SSL_STATUS status)
 	case SSL_STATUS::SSL_ERROR:
 		return "SSL_ERROR";
 	}
+	return "";
 }
 
 typedef void (*SslInfoCallback)();

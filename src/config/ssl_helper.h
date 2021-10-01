@@ -42,9 +42,9 @@ constexpr int N_RSA_KEYS = 11;
 #ifndef T_RSA_KEYS /* Timeout for RSA ephemeral keys generation */
 constexpr int T_RSA_KEYS = 7200;
 #endif
-static std::mutex RSA_mut; /*Mutex for RSA keygen */
-static RSA *RSA512_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
-static RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
+extern std::mutex RSA_mut; /*Mutex for RSA keygen */
+extern RSA *RSA512_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
+extern RSA *RSA1024_keys[N_RSA_KEYS]; /* ephemeral RSA keys */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 #define general_name_string(n)                                                 \

@@ -40,8 +40,8 @@ ServiceManager::getInstance(std::shared_ptr<ListenerConfig> listener_config)
 
 std::shared_ptr<ServiceManager> &ServiceManager::getInstance(int listener_id)
 {
-	auto it = instance.find(listener_id);
-	/*if (it == instance.end())
+	/* auto it = instance.find(listener_id);
+	if (it == instance.end())
 		instance[listener_config->id] =
 			std::make_shared<ServiceManager>(listener_config);*/
 	return instance[listener_id];
