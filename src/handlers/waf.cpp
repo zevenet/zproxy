@@ -38,17 +38,12 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 	// Checking interaction
 	if (stream.modsec_transaction->m_it.disruptive) {
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			zcu_log_print(
-				LOG_WARNING,
-				"%s, [WAF,service %s,backend null] (%lx) %s",
-				stream.service_manager->listener_config_->name
-					.data(),
-				static_cast<Service *>(
-					stream.request.getService())
-					->name.c_str(),
-				pthread_self(),
-				stream.modsec_transaction->m_it.log);
-		}
+			streamLogWaf(&stream, "%s",
+				     stream.modsec_transaction->m_it.log);
+		} else
+			streamLogWaf(
+				&stream,
+				"WAF in request disrupted the HTTP transaction");
 
 		// redirect returns disruptive=1
 
@@ -98,18 +93,12 @@ bool Waf::checkResponseWaf(HttpStream &stream)
 	// Checking interaction
 	if (stream.modsec_transaction->m_it.disruptive) {
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			auto bck = stream.backend_connection.getBackend();
-			zcu_log_print(
-				LOG_WARNING,
-				"%s, [WAF,service %s,backend %s:%d] (%lx) %s",
-				stream.service_manager->listener_config_->name
-					.data(),
-				static_cast<Service *>(
-					stream.request.getService())
-					->name.c_str(),
-				bck->address.data(), bck->port, pthread_self(),
-				stream.modsec_transaction->m_it.log);
-		}
+			streamLogWaf(&stream, "%s",
+				     stream.modsec_transaction->m_it.log);
+		} else
+			streamLogWaf(
+				&stream,
+				"WAF in response disrupted the HTTP transaction");
 		stream.modsec_transaction
 			->processLogging(); // TODO:: is it necessary??
 

@@ -117,15 +117,17 @@ std::string HttpStream::logTag(const char *tag)
 				this->backend_connection.getBackend()->port);
 	}
 
-	if (this->client_connection.getPeerAddress() == "") {
-		total_b += sprintf(ret + total_b, "[cl:-]");
-	} else
-		total_b += sprintf(
-			ret + total_b, "[cl:%s]",
-			this->client_connection.getPeerAddress().c_str());
-
-	if (tag != nullptr)
-		total_b += sprintf(ret + total_b, "(%s)", tag);
+	if (strcmp(tag, "waf")) {
+		if (this->client_connection.getPeerAddress() == "") {
+			total_b += sprintf(ret + total_b, "[cl:-]");
+		} else
+			total_b +=
+				sprintf(ret + total_b, "[cl:%s]",
+					this->client_connection.getPeerAddress()
+						.c_str());
+		if (tag != nullptr)
+			total_b += sprintf(ret + total_b, "(%s)", tag);
+	}
 
 	ret[total_b++] = '\0';
 

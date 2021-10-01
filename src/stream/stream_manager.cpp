@@ -542,8 +542,6 @@ void StreamManager::onRequestEvent(int fd)
 		if (Waf::checkRequestWaf(*stream)) {
 			listener_config_.response_stats.increaseWaf();
 			if (stream->modsec_transaction->m_it.url != nullptr) {
-				streamLogWaf(stream,
-					     "WAF redirected a request");
 				if (http_manager::replyRedirect(
 					    stream->modsec_transaction->m_it
 						    .status,
@@ -552,7 +550,6 @@ void StreamManager::onRequestEvent(int fd)
 					clearStream(stream);
 				return;
 			} else {
-				streamLogWaf(stream, "WAF rejected a request");
 				auto code = static_cast<http::Code>(
 					stream->modsec_transaction->m_it.status);
 				http_manager::replyError(
@@ -1033,10 +1030,6 @@ void StreamManager::onResponseEvent(int fd)
 				listener_config_.response_stats.increaseWaf();
 				if (stream->modsec_transaction->m_it.url !=
 				    nullptr) {
-					streamLogWaf(
-						stream,
-						"WAF redirected a response from the backend");
-					// send redirect
 					if (http_manager::replyRedirect(
 						    stream->modsec_transaction
 							    ->m_it.status,
@@ -1056,9 +1049,6 @@ void StreamManager::onResponseEvent(int fd)
 						listener_config_.errwaf,
 						stream->client_connection,
 						listener_config_.response_stats);
-					streamLogWaf(
-						stream,
-						"WAF rejected a response from the backend");
 				}
 				clearStream(stream);
 				return;

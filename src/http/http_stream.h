@@ -203,7 +203,7 @@ class HttpStream : public Counter<HttpStream> {
 #define streamLogWaf(s, fmt, ...)                                              \
 	{                                                                      \
 		auto tag = const_cast<HttpStream *>(s)->logTag("waf");         \
-		zcu_log_print(LOG_WARNING, "%s %s", fmt, tag.data(),           \
+		zcu_log_print(LOG_WARNING, "%s" fmt, tag.data(),               \
 			      ##__VA_ARGS__);                                  \
 	}
 
