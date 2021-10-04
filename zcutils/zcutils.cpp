@@ -75,16 +75,17 @@ int _zcu_log_print(int loglevel, const char *fmt, ...)
 		return 0;
 #endif
 
-	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT &&
-	    loglevel <= zcu_log_level) {
+	if (loglevel > zcu_log_level)
+		return 0;
+
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT) {
 		va_start(args, fmt);
 		vfprintf(stdout, fmt, args);
 		fprintf(stdout, "\n");
 		va_end(args);
 	}
 
-	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR &&
-	    loglevel <= zcu_log_level) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR) {
 		va_start(args, fmt);
 		vfprintf(stderr, fmt, args);
 		fprintf(stderr, "\n");
