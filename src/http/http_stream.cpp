@@ -117,7 +117,7 @@ std::string HttpStream::logTag(const char *tag)
 				this->backend_connection.getBackend()->port);
 	}
 
-	if (strcmp(tag, "waf")) {
+	if (tag == nullptr || strcmp(tag, "waf")) {
 		if (this->client_connection.getPeerAddress() == "") {
 			total_b += sprintf(ret + total_b, "[cl:-]");
 		} else
