@@ -132,6 +132,7 @@ apply_proxy_api () {
 		mkdir -p $DUMP_DIR
 
 		# Dump the CTL configuration and compare the saved one
+		clean_test
 		METHOD="$PROXY_CTL_DUMP_METHOD"
 		URL="$PROXY_CTL_DUMP_URL"
 		exec_curl "$DUMP_DIR"
