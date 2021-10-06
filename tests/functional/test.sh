@@ -281,7 +281,7 @@ benchmark_report)
 	;;
 all)
 	if [[ $2 =~ ^- ]]; then
-		if [[ $2 =~ ^-[dfb]+$ ]]; then
+		if [[ $2 =~ ^-[defb]+$ ]]; then
 			if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
 			if [[ $2 =~ "e" ]]; then ERROR_FLAG=1; fi
 			if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
