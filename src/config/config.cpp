@@ -1308,7 +1308,7 @@ regex_t **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
 			break;
 		default:
 			zcu_log_print(
-				LOG_WARNING,
+				LOG_ERR,
 				"unsupported subjectAltName type encountered: %i",
 				name__->type);
 		}
@@ -1390,7 +1390,7 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 			conf_err(
 				"ListenHTTPS: could not set certificate subject");
 	} else
-		zcu_log_print(LOG_WARNING,
+		zcu_log_print(LOG_ERR,
 			      "ListenHTTPS: could not get certificate CN");
 
 // conf_err("ListenHTTPS: could not get certificate CN");

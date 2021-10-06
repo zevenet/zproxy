@@ -75,7 +75,7 @@ void HttpCache::handleResponse(HttpResponse &response, HttpRequest request)
 		DEBUG_COUNTER_HIT(cache_stats__::cache_not_stored);
 		this->stats.cache_not_stored++;
 		zcu_log_print(
-			LOG_WARNING, "Not caching response with %d bytes size",
+			LOG_ERR, "Not caching response with %d bytes size",
 			response.content_length + response.headers_length);
 		return;
 	}
@@ -101,20 +101,20 @@ void HttpCache::updateResponse(HttpResponse response, HttpRequest request)
 {
 	auto c_object = getCacheObject(request);
 	if (response.content_length == 0) {
-		zcu_log_print(LOG_WARNING,
+		zcu_log_print(LOG_ERR,
 			      "Content-Length header with 0 value when trying "
 			      "to update content in the cache");
 	}
 	if (response.content_length != c_object->content_length) {
 		zcu_log_print(
-			LOG_WARNING,
+			LOG_ERR,
 			"Content-Length in response and Content-Length cached missmatch for %s",
 			request.getUrl().data());
 		return;
 	}
 	if (response.etag.compare(c_object->etag) != 0) {
 		zcu_log_print(
-			LOG_WARNING,
+			LOG_ERR,
 			"ETag in response and ETag cached missmatch for %s",
 			request.getUrl().data());
 		return;
@@ -481,7 +481,7 @@ void HttpCache::addData(HttpResponse &response, std::string_view data,
 	}
 	if (err != storage_commons::STORAGE_STATUS::SUCCESS) {
 		zcu_log_print(
-			LOG_WARNING,
+			LOG_ERR,
 			"There was an unexpected error result while appending data "
 			"to the cache content %s",
 			url.data());
@@ -802,7 +802,7 @@ void HttpCache::recoverCache(const string &svc, st::STORAGE_TYPE st_type)
 						stored_response.headers_length;
 					break;
 				default:
-					zcu_log_print(LOG_WARNING,
+					zcu_log_print(LOG_ERR,
 						      "Wrong storage type");
 					break;
 				}
@@ -835,7 +835,7 @@ int HttpCache::deleteEntry(size_t hashed_url)
 	auto c_object = getCacheObject(hashed_url);
 	if (c_object == nullptr) {
 		zcu_log_print(
-			LOG_WARNING,
+			LOG_ERR,
 			"Trying to discard a non existing entry from the cache");
 		return -1;
 	}
@@ -868,7 +868,7 @@ int HttpCache::deleteEntry(size_t hashed_url)
 	}
 	free(c_object);
 	if (cache.erase(hashed_url) != 1) {
-		zcu_log_print(LOG_WARNING, "Error deleting cache entry");
+		zcu_log_print(LOG_ERR, "Error deleting cache entry");
 		return -1;
 	}
 	return 0;

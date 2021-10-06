@@ -251,7 +251,7 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request)
 
 	if (!setTaskTarget(request, task) &&
 	    task.target == CTL_HANDLER_TYPE::NONE) {
-		zcu_log_print(LOG_WARNING, "%s():%d: bad API request : %s",
+		zcu_log_print(LOG_ERR, "%s():%d: bad API request : %s",
 			      __FUNCTION__, __LINE__, request.getUrl().c_str());
 		return http::getHttpResponse(http::Code::BadRequest, "", "");
 	}

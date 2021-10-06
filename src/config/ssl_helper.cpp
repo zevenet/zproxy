@@ -75,7 +75,7 @@ void global::SslHelper::SSLINFO_callback(const SSL *ssl, int where,
 		    state == SSL23_ST_SR_CLNT_HELLO_A) {
 			*reneg_state = RENEG_STATE::RENEG_ABORT;
 			zcu_log_print(
-				LOG_WARNING,
+				LOG_ERR,
 				"rejecting client initiated renegotiation");
 		}
 	} else if (where & SSL_CB_HANDSHAKE_DONE &&
@@ -91,7 +91,7 @@ DH *global::SslHelper::load_dh_params(char *file)
 	BIO *bio;
 
 	if ((bio = BIO_new_file(file, "r")) == nullptr) {
-		zcu_log_print(LOG_WARNING, "unable to open DH file - %s", file);
+		zcu_log_print(LOG_ERR, "unable to open DH file - %s", file);
 		return nullptr;
 	}
 
@@ -167,13 +167,13 @@ void global::SslHelper::initDhParams()
 	 */
 	for (n = 0; n < N_RSA_KEYS; n++) {
 		if (!generate_key(&RSA512_keys[n], 512)) {
-			zcu_log_print(LOG_WARNING,
+			zcu_log_print(LOG_ERR,
 				      "%s():%d: RSA_generate(%d, 512) failed",
 				      __FUNCTION__, __LINE__, n);
 			return;
 		}
 		if (!generate_key(&RSA1024_keys[n], 1024)) {
-			zcu_log_print(LOG_WARNING,
+			zcu_log_print(LOG_ERR,
 				      "%s():%d: RSA_generate(%d, 1024) failed",
 				      __FUNCTION__, __LINE__, n);
 			return;

@@ -381,7 +381,7 @@ int zcu_str_replace_str(char *buf, const char *ori_str, int ori_len,
 
 	if (buf_len > ZCU_DEF_BUFFER_SIZE) {
 		zcu_log_print(
-			LOG_WARNING,
+			LOG_ERR,
 			"String could not be replaced, the buffer size is not enought - %.*s",
 			ori_len, ori_str);
 		return 0;

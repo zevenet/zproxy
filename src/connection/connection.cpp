@@ -604,7 +604,7 @@ int Connection::doAccept(int listener_fd)
 		return new_fd;
 	} else {
 		::close(new_fd);
-		zcu_log_print(LOG_WARNING,
+		zcu_log_print(LOG_ERR,
 			      "HTTP connection prematurely closed by peer");
 	}
 	return -1;
