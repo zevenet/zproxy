@@ -158,8 +158,9 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			connection.closeConnection();
 			return;
 		}
-		zcu_log_print(LOG_DEBUG, "%s():%d: CTL API Request: %s",
-			      __FUNCTION__, __LINE__, connection.buffer);
+		zcu_log_print(LOG_DEBUG, "%s():%d: CTL API Request: %.*s",
+			      __FUNCTION__, __LINE__, connection.buffer_size,
+			      connection.buffer);
 		std::string response = handleCommand(request);
 		size_t written = 0;
 		if (!response.empty()) {
@@ -173,7 +174,11 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					written += sent;
 			} while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
 				 written < response.length());
-		}
+		} else
+			zcu_log_print(
+				LOG_NOTICE,
+				"%s():%d: error CTL API could not create a response",
+				__FUNCTION__, __LINE__);
 
 		deleteFd(fd);
 		connection.closeConnection();
