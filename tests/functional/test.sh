@@ -30,14 +30,16 @@ if [[ $DEBUG -gt 0 ]]; then
 fi
 print_help_test () {
 	echo "Usage: $0 [start|stop|save_out|bck_benchmark|benchmark_report|exec [-dkfb] <test_dir>|all [-dfb]]"
-	echo "  * all: it prepares the lab, launch all tests and remove the lab"
+	echo "  * all [-defb]: it prepares the lab, launch all tests and remove the lab"
 	echo "	    the -d (debug) parameter stop the tests after each command and it wait an enter to continue"
+	echo "	    the -e (error) stop the test if an error is found"
 	echo "	    the -f (functional) parameter executes only the functional tests, don't the benchmark ones"
 	echo "	    the -b (benchmark) parameter executes only the benchmark tests, don't the functional ones"
 	echo "  * start: it prepares the lab for testing"
 	echo "  * stop: it cleans the lab, removing the process and deleting the net namespaces"
-	echo "  * exec [-dktb] <test_directory>: it executes a test"
+	echo "  * exec [-dekfb] <test_directory>: it executes a test"
 	echo "	    the -d (debug) parameter stop the tests after each command and it wait an enter to continue"
+	echo "	    the -e (error) stop the test if an error is found"
 	echo "	    the -k (keep running)parameter keeps zproxy running before the test finishes"
 	echo "	    the -f (functional) parameter executes only the functional tests, don't the benchmark ones"
 	echo "	    the -b (benchmark) parameter executes only the benchmark tests, don't the functional ones"
@@ -142,6 +144,10 @@ exec_test () {
 		if [[ -s $DIFF_OUT ]]; then
 			TEST_ERR=1
 			print_report "$TEST_F" "$OUT_DIR" "$DIFF_OUT"
+			if [[ $ERROR_FLAG -ne 0 ]]; then
+				cat "$OUT_DIR/cmd.out.tmp.dbg"
+				dev
+			fi
 		fi
 
 		lookfor_segfault
@@ -232,14 +238,18 @@ save)
 exec)
 	LOCAL_PWD="$PWD"
 
-	if [[ $2 =~ ^-[dkfb]+$ ]]; then
-		if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
-		if [[ $2 =~ ^[^kfb]$ ]]; then error "An option was not expected"; fi
-		if [[ $2 =~ "k" ]]; then ZPROXY_KEEP_RUNNING=1; fi
-		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
-		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
-		if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
-		shift;
+	if [[ $2 =~ ^- ]]; then
+		if [[ $2 =~ ^-[dekfb]+$ ]]; then
+			if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
+			if [[ $2 =~ "e" ]]; then ERROR_FLAG=1; fi
+			if [[ $2 =~ "k" ]]; then ZPROXY_KEEP_RUNNING=1; fi
+			if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
+			if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
+			if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
+			shift;
+		else
+			error "An option was not expected"
+		fi
 	fi
 
 	if [ ! -d "$2" ]; then
@@ -270,13 +280,17 @@ benchmark_report)
 	create_benchmark_report
 	;;
 all)
-	if [[ $2 =~ ^-[dfb]+$ ]]; then
-		if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
-		if [[ $2 =~ ^[^fb]$ ]]; then error "An option was not expected"; fi
-		if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
-		if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
-		if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
-		shift;
+	if [[ $2 =~ ^- ]]; then
+		if [[ $2 =~ ^-[dfb]+$ ]]; then
+			if [[ $2 =~ "d" ]]; then DEBUG_FLAG=1; fi
+			if [[ $2 =~ "e" ]]; then ERROR_FLAG=1; fi
+			if [[ $2 =~ "f" ]]; then BENCHMARK_FLAG=0; msg "Benchmark tests were disabled"; fi
+			if [[ $2 =~ "b" ]]; then FUNCTIONAL_FLAG=0; msg "Functional tests were disabled"; fi
+			if [[ $BENCHMARK_FLAG == 0 && $FUNCTIONAL_FLAG == 0 ]]; then exit 0; fi
+			shift;
+		else
+			error "An option was not expected"
+		fi
 	fi
 
 	start_test
