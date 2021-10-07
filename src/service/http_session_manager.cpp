@@ -148,7 +148,8 @@ void HttpSessionManager::deleteBackendSessions(int backend_id)
 	std::lock_guard<std::recursive_mutex> locker(lock_mtx);
 	for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
 		if (it->second != nullptr &&
-		    it->second->assigned_backend->backend_id == backend_id) {
+		    it->second->assigned_backend->backend_id == backend_id &&
+		    !it->second->isStatic()) {
 			sessions_set.erase(it++);
 		} else
 			it++;
