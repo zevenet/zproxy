@@ -241,17 +241,12 @@ void Backend::doMaintenance()
 	Connection checkOut;
 	auto res = checkOut.doConnect(*address_info, 5, false, this->nf_mark);
 
-	switch (res) {
-	case IO::IO_OP::OP_SUCCESS: {
+	if (res == IO::IO_OP::OP_SUCCESS) {
 		zcu_log_print(LOG_NOTICE,
 			      "[svc:%s][bck:%s:%d] The backend resurrected",
 			      this->backend_config->srv_name.data(),
 			      this->address.data(), this->port);
 		this->setStatus(BACKEND_STATUS::BACKEND_UP);
-		break;
-	}
-	default:
-		this->setStatus(BACKEND_STATUS::BACKEND_DOWN);
 	}
 }
 

@@ -586,18 +586,18 @@ void Service::updateBackendPriority()
 
 	sort_bcks = sortBackendsByPrio();
 	// set the minimum value
-	for (int index = 0; index < static_cast<int>(backend_set.size());
+	for (int index = 0; index < static_cast<int>(sort_bcks.size());
 	     index++) {
 		if (backend_set[sort_bcks[index]]->priority <=
 			    enabled_priority &&
 		    backend_set[sort_bcks[index]]->getStatus() !=
-			    BACKEND_STATUS::BACKEND_UP) {
+			    BACKEND_STATUS::BACKEND_UP)
 			enabled_priority++;
-		} else
-			break;
 	}
 
 	backend_priority = enabled_priority;
+	zcu_log_print(LOG_DEBUG, "The service %s changed the priority to %d",
+		      this->name.data(), enabled_priority);
 }
 
 void Service::getNextBackendIndex(int *bck_id, int *bck_counter,
