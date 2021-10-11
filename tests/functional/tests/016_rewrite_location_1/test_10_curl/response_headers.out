@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Backend: bck-1
+Loc-raw: https://www.zevenet.com:80/
+Location: http://zevenet.com/
+Content-Location: http://zevenet.com/alt
+Proxy: zproxy
+

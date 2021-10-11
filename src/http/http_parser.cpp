@@ -25,18 +25,18 @@
 #include "http.h"
 
 http_parser::HttpData::HttpData()
-	:
-
-	  buffer(nullptr), buffer_size(0), last_length(0), num_headers(0),
-	  method(nullptr), method_len(0), minor_version(-1), path_ptr(nullptr),
-	  path_ptr_length(0), http_status_code(0), status_message(nullptr),
-	  message_length(0), path(""), http_message_str("")
+	: path_ptr(nullptr), path_ptr_length(0), buffer(nullptr),
+	  buffer_size(0), last_length(0), num_headers(0), http_message_str(""),
+	  method(nullptr), method_len(0), minor_version(-1), path(""),
+	  http_status_code(0), status_message(nullptr), message_length(0)
 {
 	reset_parser();
 }
 
 void http_parser::HttpData::reset_parser()
 {
+	extra_headers.clear();
+	permanent_extra_headers.clear();
 	http_message_str = "";
 	method = nullptr;
 	method_len = 0;
@@ -77,10 +77,8 @@ void http_parser::HttpData::prepareToSend()
 			continue; // skip unwanted headers
 		iov[iov_size++] = { const_cast<char *>(headers[i].name),
 				    headers[i].line_size };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", headers[i].line_size - 2,
 			      headers[i].name);
-#endif
 	}
 
 	for (const auto &header :
@@ -88,10 +86,8 @@ void http_parser::HttpData::prepareToSend()
 		// it's copied it invalidate c_str() reference.
 		iov[iov_size++] = { const_cast<char *>(header.c_str()),
 				    header.length() };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
 			      header.c_str());
-#endif
 	}
 
 	for (const auto &header :
@@ -100,18 +96,14 @@ void http_parser::HttpData::prepareToSend()
 		// it's copied it invalidate c_str() reference.
 		iov[iov_size++] = { const_cast<char *>(header.c_str()),
 				    header.length() };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%.*s", header.length() - 2,
 			      header.c_str());
-#endif
 	}
 	iov[iov_size++] = { const_cast<char *>(http::CRLF), http::CRLF_LEN };
 
 	if (message_length > 0) {
 		iov[iov_size++] = { message, message_length };
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "[%d bytes Content]", message_length);
-#endif
 	}
 }
 
@@ -227,17 +219,18 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 
 	//  if (LIKELY(reset))
 	char *http_message;
-	int http_message_length;
+	size_t http_message_length;
 	reset_parser();
 	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
-	num_headers = sizeof(headers) / sizeof(headers[0]);
+	num_headers = MAX_HEADERS_SIZE;
 	const char **method_ = const_cast<const char **>(&method);
 	const char **path_ = const_cast<const char **>(&path_ptr);
 	auto pret = phr_parse_request(data, data_size, method_, &method_len,
 				      path_, &path_ptr_length, &minor_version,
 				      headers, &num_headers, last_length);
 	path = std::string(path_ptr, path_ptr_length);
+
 	last_length = data_size;
 	//  zcu_log_print(LOG_DEBUG, "request is %d bytes long\n", pret);
 	if (pret > 0) {
@@ -266,7 +259,10 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 		//    }
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
 	} else if (pret == -2) { /* request is incomplete, continue the loop */
-		return PARSE_RESULT::INCOMPLETE;
+		if (method != nullptr && minor_version == -1)
+			return PARSE_RESULT::TOOLONG;
+		else
+			return PARSE_RESULT::INCOMPLETE;
 	}
 	return PARSE_RESULT::FAILED;
 }
@@ -285,7 +281,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 				     [[maybe_unused]] bool reset)
 {
 	char *http_message;
-	int http_message_length;
+	size_t http_message_length;
 
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
@@ -293,7 +289,7 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 	reset_parser();
 	buffer = const_cast<char *>(data);
 	buffer_size = data_size;
-	num_headers = sizeof(headers) / sizeof(headers[0]);
+	num_headers = MAX_HEADERS_SIZE;
 	const char **status_message_ =
 		const_cast<const char **>(&status_message);
 	auto pret = phr_parse_response(data, data_size, &minor_version,

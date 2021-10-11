@@ -1,19 +1,20 @@
 {
     "3xx-code-hits": 0,
-    "4xx-code-hits": 0,
+    "4xx-code-hits": 1,
     "5xx-code-hits": 0,
     "address": "0.0.0.0",
     "connections": 0,
     "https": true,
     "id": 0,
     "name": "env",
+    "object_ref": 0,
     "pending-connections": 0,
     "port": 80,
     "services": [
         {
             "backends": [
                 {
-                    "2xx-code-hits": 0,
+                    "2xx-code-hits": 2,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,
@@ -41,5 +42,5 @@
         }
     ],
     "status": "active",
-    "waf-hits": 0
+    "waf-hits": 1
 }

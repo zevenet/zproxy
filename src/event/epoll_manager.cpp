@@ -32,7 +32,7 @@ EpollManager::EpollManager() : accept_fd_set()
 		std::string error = "epoll_create(2) failed: ";
 		error += std::strerror(errno);
 		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
-			      error);
+			      error.data());
 		throw std::system_error(errno, std::system_category());
 	}
 }
@@ -40,11 +40,10 @@ EpollManager::EpollManager() : accept_fd_set()
 /** Handles the connect events. */
 void EpollManager::onConnectEvent(epoll_event &event)
 {
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONConnectEvent fd: %d",
 		      __FUNCTION__, __LINE__,
 		      static_cast<int>(event.data.u64 >> CHAR_BIT));
-#endif
+
 	HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT),
 		    EVENT_TYPE::CONNECT,
 		    static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -53,10 +52,9 @@ void EpollManager::onConnectEvent(epoll_event &event)
 /** Handles the write events. */
 void EpollManager::onWriteEvent(epoll_event &event)
 {
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONWriteEvent fd: %d", __FUNCTION__,
 		      __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
-#endif
+
 	HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT),
 		    EVENT_TYPE::WRITE,
 		    static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -65,10 +63,9 @@ void EpollManager::onWriteEvent(epoll_event &event)
 /** Handles the read events. */
 void EpollManager::onReadEvent(epoll_event &event)
 {
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONReadEvent fd: %d", __FUNCTION__,
 		      __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
-#endif
+
 	HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT),
 		    EVENT_TYPE::READ,
 		    static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -86,7 +83,7 @@ bool EpollManager::deleteFd(int fd)
 		std::string error = "epoll_ctl(delete) failed ";
 		error += std::strerror(errno);
 		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
-			      error);
+			      error.data());
 		return false;
 	}
 #if USE_TIMER_FD_TIMEOUT == 0
@@ -183,14 +180,13 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group,
 			std::string error = "epoll_ctl(add) failed ";
 			error += std::strerror(errno);
 			zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
-				      __LINE__, error);
+				      __LINE__, error.data());
 			return false;
 		}
 	}
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "%s():%d: Epoll::AddFD %d To EpollFD: %d",
 		      __FUNCTION__, __LINE__, fd, epoll_fd);
-#endif
+
 	if (time_out != 0) {
 		switch (event_type) {
 		case EVENT_TYPE::READ:
@@ -220,10 +216,9 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
 			    EVENT_GROUP event_group, int time_out)
 {
 	//  std::lock_guard<std::mutex> loc(epoll_mutex);
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "%s():%d: Epoll::UpdateFd %d", __FUNCTION__,
 		      __LINE__, fd);
-#endif
+
 	struct epoll_event epevent = {};
 	epevent.events = static_cast<uint32_t>(event_type);
 	epevent.data.u64 = static_cast<uint64_t>(fd);
@@ -235,13 +230,13 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
 				"epoll_ctl(update) failed, fd reopened, adding .. ";
 			error += std::strerror(errno);
 			zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
-				      __LINE__, error);
+				      __LINE__, error.data());
 			return addFd(fd, event_type, event_group);
 		} else {
 			std::string error = "epoll_ctl(update) failed ";
 			error += std::strerror(errno);
 			zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
-				      __LINE__, error);
+				      __LINE__, error.data());
 			return false;
 		}
 	}
@@ -285,6 +280,8 @@ bool EpollManager::stopAccept(int listener_fd)
 #if USE_TIMER_FD_TIMEOUT == 0
 void EpollManager::setTimeOut(int fd, TIMEOUT_TYPE type, int timeout_sec)
 {
+	zcu_log_print(LOG_DEBUG, "FD %d, Setting timeout %d", fd, timeout_sec);
+
 	if (timeout_sec > 0) {
 		auto it = timeouts.find(fd);
 		if (it != timeouts.end()) {

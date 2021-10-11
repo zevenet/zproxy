@@ -1,7 +1,7 @@
 HTTP/1.1 200 OK
+Server: nginx
 Content-Type: application/octet-stream
 Transfer-Encoding: chunked
-Connection: keep-alive
 Backend: from-svc-1-bck
-Custom-header: added by zproxy
+Custom-resp-header: added by zproxy
 

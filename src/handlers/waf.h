@@ -40,12 +40,6 @@ class Waf {
    */
 	static std::shared_ptr<modsecurity::Rules> reloadRules();
 	/**
-   * @brief is the log callback function used by the modsec library
-   * @param non used
-   * @param is the message is going to be logged
-   */
-	static void logModsec(void *log = nullptr, const void *data = nullptr);
-	/**
    * @brief Print to log a human readable rule list provided.
    * @param rules to be printed.
    */

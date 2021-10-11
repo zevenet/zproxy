@@ -41,32 +41,6 @@ enum class PARSE_RESULT : uint8_t { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
 using namespace http;
 
 class HttpData {
-    public:
-	HttpData();
-	virtual ~HttpData()
-	{
-		extra_headers.clear();
-		permanent_extra_headers.clear();
-	}
-	PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes,
-				  bool reset = true);
-	PARSE_RESULT parseRequest(const char *data, size_t data_size,
-				  size_t *used_bytes, bool reset = true);
-
-	PARSE_RESULT parseResponse(const std::string &data, size_t *used_bytes,
-				   bool reset = true);
-	PARSE_RESULT parseResponse(const char *data, size_t data_size,
-				   size_t *used_bytes, bool reset = true);
-
-	void printRequest();
-	void printResponse();
-	void reset_parser();
-
-	bool getHeaderValue(http::HTTP_HEADER_NAME header_name,
-			    std::string &out_key);
-	bool getHeaderValue(const std::string &, std::string &out_key);
-	void setBuffer(char *ext_buffer, size_t ext_buffer_size);
-
     private:
 	char *path_ptr; /* Incoming URL string without modifying*/
 	size_t path_ptr_length;
@@ -76,11 +50,7 @@ class HttpData {
 	std::vector<std::string> permanent_extra_headers;
 	std::array<iovec, MAX_HEADERS_SIZE + 2> iov;
 	size_t iov_size;
-	void prepareToSend();
-	void addHeader(http::HTTP_HEADER_NAME header_name,
-		       const std::string &header_value, bool permanent = false);
-	void addHeader(const std::string &header_value, bool permanent = false);
-	void removeHeader(http::HTTP_HEADER_NAME header_name);
+
 #ifdef CACHE_ENABLED
 	bool pragma = false;
 	bool cache_control = false;
@@ -117,6 +87,39 @@ class HttpData {
 	http::HTTP_VERSION http_version;
 	http::REQUEST_METHOD request_method;
 	http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
+
+	// Methods
+	HttpData();
+	virtual ~HttpData()
+	{
+		extra_headers.clear();
+		permanent_extra_headers.clear();
+	}
+
+	PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes,
+				  bool reset = true);
+	PARSE_RESULT parseRequest(const char *data, size_t data_size,
+				  size_t *used_bytes, bool reset = true);
+
+	PARSE_RESULT parseResponse(const std::string &data, size_t *used_bytes,
+				   bool reset = true);
+	PARSE_RESULT parseResponse(const char *data, size_t data_size,
+				   size_t *used_bytes, bool reset = true);
+
+	void printRequest();
+	void printResponse();
+	void reset_parser();
+
+	bool getHeaderValue(http::HTTP_HEADER_NAME header_name,
+			    std::string &out_key);
+	bool getHeaderValue(const std::string &, std::string &out_key);
+	void setBuffer(char *ext_buffer, size_t ext_buffer_size);
+
+	void prepareToSend();
+	void addHeader(http::HTTP_HEADER_NAME header_name,
+		       const std::string &header_value, bool permanent = false);
+	void addHeader(const std::string &header_value, bool permanent = false);
+	void removeHeader(http::HTTP_HEADER_NAME header_name);
 
 	bool hasPendingData();
 	char *getBuffer() const;

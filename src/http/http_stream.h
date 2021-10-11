@@ -22,6 +22,8 @@
 #pragma once
 
 #include <string>
+#include <stdarg.h>
+#include "../config/macro.h"
 #include "../connection/backend_connection.h"
 #include "../connection/client_connection.h"
 #include "../event/epoll_manager.h"
@@ -36,8 +38,6 @@
 #include <modsecurity/rules.h>
 #include <modsecurity/transaction.h>
 #endif
-
-static const std::string MACRO_VHOST("${VHOST}");
 
 enum class STREAM_OPTION : uint32_t {
 	NO_OPT = 0x0,
@@ -99,6 +99,7 @@ class HttpStream : public Counter<HttpStream> {
 	uint32_t status{ 0x0 };
 	uint32_t options{ 0x0 };
 	uint32_t stream_id{ 0 };
+	int managed_requests{ 0 };
 
 	/* sub-string from the URL that was removed in a rewriteurl action */
 	std::string rewr_loc_str_ori{ "" };
@@ -106,19 +107,23 @@ class HttpStream : public Counter<HttpStream> {
 	std::string rewr_loc_str_repl{ "" };
 
 	/* Params:
-	 *	- macro to look for and replace
 	 *  - string where replace the macro. This same string will be replaced
+	 *	- string to replace
+	 *  - string to replace length
+	 *  - flag to enable or disable the replacement
 	 *
 	 *  Returns:
-	 *		1 if the
+	 *		1 if the replacement was applied, 0 in other case
 	 *
 	*/
-	inline int replaceVhostMacro(char *buf, char *ori_str,
-				     int ori_len) const
+	inline int replaceVhostMacro(char *buf, char *ori_str, int ori_len,
+				     bool enabled = true) const
 	{
+		if (!enabled)
+			return 0;
 		return zcu_str_replace_str(
-			buf, ori_str, ori_len, MACRO_VHOST.data(),
-			MACRO_VHOST.length(),
+			buf, ori_str, ori_len, MACRO::VHOST_STR,
+			MACRO::VHOST_LEN,
 			const_cast<char *>(this->request.virtual_host.data()),
 			this->request.virtual_host.length());
 	}
@@ -148,4 +153,63 @@ class HttpStream : public Counter<HttpStream> {
 	static void debugBufferData(const std::string &function, int line,
 				    HttpStream *stream, const char *debug_str,
 				    const char *data);
+
+	std::string logTag(const char *tag = nullptr);
+	void logSuccess();
 };
+
+#if DEBUG_ZCU_LOG == 0
+#define streamLogDebug(s, fmt, ...)                                            \
+	{                                                                      \
+	}
+#else
+#define streamLogDebug(s, fmt, ...)                                            \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("debug");       \
+		zcu_log_print(LOG_DEBUG, "%s[caller/%s:%d]" fmt, tag.data(),   \
+			      __FUNCTION__, __LINE__, ##__VA_ARGS__);          \
+	}
+#endif
+
+#define streamLogMessage(s, fmt, ...)                                          \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag();              \
+		zcu_log_print(LOG_NOTICE, "%s " fmt, tag.data(),               \
+			      ##__VA_ARGS__);                                  \
+	}
+
+#define streamLogRedirect(s, url)                                              \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("responded");   \
+		zcu_log_print(                                                 \
+			LOG_INFO,                                              \
+			"%s the request \"%s\" was redirected to \"%s\"",      \
+			tag.data(),                                            \
+			const_cast<HttpStream *>(s)                            \
+				->request.http_message_str.data(),             \
+			url);                                                  \
+	}
+
+#define streamLogError(s, code, code_string, target)                           \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("error");       \
+		auto request_data_len =                                        \
+			std::string_view(target.buffer).find('\r');            \
+		zcu_log_print(LOG_INFO, "%s e%d %s \"%.*s\"", tag.data(),      \
+			      static_cast<int>(code), code_string.data(),      \
+			      request_data_len, target.buffer);                \
+	}
+
+#define streamLogWaf(s, fmt, ...)                                              \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("waf");         \
+		zcu_log_print(LOG_WARNING, "%s" fmt, tag.data(),               \
+			      ##__VA_ARGS__);                                  \
+	}
+
+#define streamLogNoResponse(s, fmt, ...)                                       \
+	{                                                                      \
+		auto tag = const_cast<HttpStream *>(s)->logTag("no-response"); \
+		zcu_log_print(LOG_NOTICE, "%s " fmt, tag.data(),               \
+			      ##__VA_ARGS__);                                  \
+	}

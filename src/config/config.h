@@ -46,6 +46,7 @@
 #include <mutex>
 #include <string>
 #include <fstream>
+#include "macro.h"
 #include "../stats/counter.h"
 #include "../version.h"
 #include "config_data.h"
@@ -151,6 +152,18 @@ class Config : public Counter<Config> {
 				ReplaceHeader **replace_header_response);
 
 	/*
+	 * parse the AddRequestHeader and AddResponseHeader directives
+	 */
+	void parseAddHeader(std::string *add_head, char *lin,
+			    regmatch_t *matches);
+
+	/*
+	 * parse the RemoveRequestHeader and RemoveResponseHeader directives
+	 */
+	void parseRemoveHeader(MATCHER **head_off, char *lin,
+			       regmatch_t *matches);
+
+	/*
 	 * parse an HTTP listener
 	 */
 	std::shared_ptr<ListenerConfig> parse_HTTP();
@@ -168,6 +181,9 @@ class Config : public Counter<Config> {
 	void load_certdir(int has_other,
 			  std::weak_ptr<ListenerConfig> listener_,
 			  const std::string &dir_path);
+
+	void parseRedirect(char *lin, regmatch_t *matches,
+			   std::shared_ptr<BackendConfig> be, MATCHER *url);
 
 	/*
 	 * parse a service
@@ -218,4 +234,12 @@ class Config : public Counter<Config> {
 	bool init(const std::string &file_name);
 	bool found_parse_error{ false };
 	void setAsCurrent();
+#if WAF_ENABLED
+	/**
+   * @brief is the log callback function used by the modsec library
+   * @param non used
+   * @param is the message is going to be logged
+   */
+	static void logModsec(void *log = nullptr, const void *data = nullptr);
+#endif
 };

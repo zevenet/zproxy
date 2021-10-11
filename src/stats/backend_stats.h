@@ -48,6 +48,22 @@ class HttpResponseHits {
 	std::atomic<int> waf{ 0 };
 #endif
 
+	// This flag is used to mark the stats as disbled while are been migrated
+	// to the new one
+	bool disable{ false };
+
+	inline void set(HttpResponseHits *new_val)
+	{
+		this->code_2xx = static_cast<int>(new_val->code_2xx);
+		this->code_3xx = static_cast<int>(new_val->code_3xx);
+		this->code_4xx = static_cast<int>(new_val->code_4xx);
+		this->code_5xx = static_cast<int>(new_val->code_5xx);
+		this->others = static_cast<int>(new_val->others);
+#if WAF_ENABLED
+		this->waf = static_cast<int>(new_val->waf);
+#endif
+	}
+
 	inline void increaseCode(http::Code codeName)
 	{
 		int code = helper::to_underlying(codeName) / 100;

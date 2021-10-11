@@ -24,8 +24,8 @@
 Connection::Connection()
 	:
 
-	  buffer_size(0), buffer_offset(0), address(nullptr), address_str(""),
-	  local_address_str(""), port(-1), local_port(-1), ssl(nullptr),
+	  address_str(""), local_address_str(""), port(-1), local_port(-1),
+	  address(nullptr), buffer_size(0), buffer_offset(0), ssl(nullptr),
 	  ssl_connected(false)
 {
 }
@@ -341,6 +341,7 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 
 	auto result = writeIOvec(target_fd, &http_data.iov[0],
 				 http_data.iov_size, iovec_written, nwritten);
+
 	zcu_log_print(
 		LOG_DEBUG,
 		"%s():%d: IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n",
@@ -354,14 +355,14 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 		buffer_offset = 0;
 	http_data.message_length = 0;
 	http_data.setHeaderSent(true);
-#if DEBUG_ZCU_LOG
+
 	zcu_log_print(
 		LOG_DEBUG,
 		"%s():%d: Buffer offset: %d, Out buffer size: %d, Content length: %d, Message length: %d, Message bytes left: %d",
 		__FUNCTION__, __LINE__, buffer_offset, buffer_size,
 		http_data.content_length, http_data.message_length,
 		http_data.message_bytes_left);
-#endif
+
 	return IO::IO_RESULT::SUCCESS;
 }
 
@@ -426,13 +427,12 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
 				return IO::IO_RESULT::DONE_TRY_AGAIN;
 			else
 				result = IO::IO_RESULT::SUCCESS;
-#if DEBUG_ZCU_LOG
+
 			zcu_log_print(
 				LOG_DEBUG,
 				"%s():%d: headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
 				__FUNCTION__, __LINE__, nvec, iovec_written,
 				nwritten, IO::getResultString(result).data());
-#endif
 		}
 	} while (iovec_written < nvec);
 
@@ -604,7 +604,7 @@ int Connection::doAccept(int listener_fd)
 		return new_fd;
 	} else {
 		::close(new_fd);
-		zcu_log_print(LOG_WARNING,
+		zcu_log_print(LOG_ERR,
 			      "HTTP connection prematurely closed by peer");
 	}
 	return -1;

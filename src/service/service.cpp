@@ -24,14 +24,21 @@
 #include "../../zcutils/zcutils.h"
 #include "../../zcutils/zcu_network.h"
 
+std::vector<Backend *> Service::getBackends()
+{
+	return this->backend_set;
+}
+
 Backend *Service::getBackend(Connection &source, HttpRequest &request)
 {
 	if (backend_set.empty())
 		return getEmergencyBackend();
 
-	if (session_type != sessions::SESS_NONE) {
+	if (session_type != SESS_TYPE::SESS_NONE) {
 		auto session = getSession(source, request);
 		if (session != nullptr) {
+			if (session->isStatic())
+				return session->assigned_backend;
 			if (session->assigned_backend->getStatus() !=
 			    BACKEND_STATUS::BACKEND_UP) {
 				// invalidate all sessions backend is down
@@ -156,7 +163,7 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
 					 BACKEND_STATUS::BACKEND_DISABLED :
 					 BACKEND_STATUS::BACKEND_UP);
 	if (backend_config->be_type == 0) {
-		backend->address = std::move(backend_config->address);
+		backend->address = backend_config->address;
 		backend->port = backend_config->port;
 		backend->backend_type = BACKEND_TYPE::REMOTE;
 		backend->nf_mark = backend_config->nf_mark;
@@ -259,11 +266,10 @@ Service::Service(ServiceConfig &service_config_)
 	if (service_config.becpath != nullptr)
 		becpath = std::string(service_config.becpath);
 	becage = service_config.becage;
-	this->session_type = static_cast<sessions::HttpSessionType>(
-		service_config_.sess_type);
+	this->session_type = static_cast<SESS_TYPE>(service_config_.sess_type);
 	this->ttl = static_cast<unsigned int>(service_config_.sess_ttl);
 	this->sess_id = service_config_.sess_id;
-	if (this->session_type != sessions::HttpSessionType::SESS_HEADER)
+	if (this->session_type != SESS_TYPE::SESS_HEADER)
 		this->sess_id += '=';
 	this->sess_pat = service_config_.sess_pat;
 	this->sess_start = service_config_.sess_start;
@@ -331,7 +337,7 @@ bool Service::doMatch(HttpRequest &request)
 		for (found = i = 0;
 		     i < static_cast<int>(request.num_headers) && !found; i++) {
 			eol.rm_so = 0;
-			eol.rm_eo = request.headers[i].line_size;
+			eol.rm_eo = request.headers[i].line_size - 2;
 			if (regexec(&m->pat, request.headers[i].name, 1, &eol,
 				    REG_STARTEND) == 0)
 				found = 1;
@@ -345,7 +351,7 @@ bool Service::doMatch(HttpRequest &request)
 		for (found = i = 0; i < static_cast<int>(request.num_headers);
 		     i++) {
 			eol.rm_so = 0;
-			eol.rm_eo = request.headers[i].line_size;
+			eol.rm_eo = request.headers[i].line_size - 2;
 			if (regexec(&m->pat, request.headers[i].name, 1, &eol,
 				    REG_STARTEND) == 0)
 				return false;
@@ -537,11 +543,13 @@ std::vector<int> Service::sortBackendsByPrio()
 {
 	std::vector<int> sorted_index;
 
-	for (int index = 0; index < backend_set.size(); index++) {
+	for (int index = 0; index < static_cast<int>(backend_set.size());
+	     index++) {
 		if (sorted_index.empty())
 			sorted_index.insert(sorted_index.begin(), index);
 		else {
-			for (int index2 = 0; index2 < sorted_index.size();
+			for (int index2 = 0;
+			     index2 < static_cast<int>(sorted_index.size());
 			     index2++) {
 				if (backend_set[sorted_index[index2]]->priority >
 				    backend_set[index]->priority) {
@@ -550,7 +558,8 @@ std::vector<int> Service::sortBackendsByPrio()
 						index);
 					break;
 				} else if (index2 ==
-					   sorted_index.size() -
+					   static_cast<int>(
+						   sorted_index.size()) -
 						   1) { // last item and the greater
 					sorted_index.emplace_back(index);
 					break;
@@ -577,17 +586,18 @@ void Service::updateBackendPriority()
 
 	sort_bcks = sortBackendsByPrio();
 	// set the minimum value
-	for (int index = 0; index < backend_set.size(); index++) {
+	for (int index = 0; index < static_cast<int>(sort_bcks.size());
+	     index++) {
 		if (backend_set[sort_bcks[index]]->priority <=
 			    enabled_priority &&
 		    backend_set[sort_bcks[index]]->getStatus() !=
-			    BACKEND_STATUS::BACKEND_UP) {
+			    BACKEND_STATUS::BACKEND_UP)
 			enabled_priority++;
-		} else
-			break;
 	}
 
 	backend_priority = enabled_priority;
+	zcu_log_print(LOG_DEBUG, "The service %s changed the priority to %d",
+		      this->name.data(), enabled_priority);
 }
 
 void Service::getNextBackendIndex(int *bck_id, int *bck_counter,
@@ -624,10 +634,10 @@ Backend *Service::getNextBackend()
 		Backend *selected_backend = nullptr;
 		int i;
 
-		if (backend_id >= backend_set.size())
+		if (backend_id >= static_cast<int>(backend_set.size()))
 			backend_id = 0;
 
-		for (i = 0; i < backend_set.size(); i++) {
+		for (i = 0; i < static_cast<int>(backend_set.size()); i++) {
 			selected_backend = backend_set[backend_id];
 			if (selected_backend == nullptr)
 				break;
@@ -637,7 +647,6 @@ Backend *Service::getNextBackend()
 						    &backend_counter,
 						    backend_set.size());
 			else {
-				selected_backend = selected_backend;
 				backend_counter++;
 				if (selected_backend->weight <= backend_counter)
 					getNextBackendIndex(&backend_id,

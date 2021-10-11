@@ -83,6 +83,7 @@ void Config::parse_file()
 				lin + matches[1].rm_so,
 				static_cast<size_t>(matches[1].rm_eo -
 						    matches[1].rm_so));
+			zcu_log_set_prefix(const_cast<char *>(name.data()));
 		} else if (!regexec(&regex_set::RootJail, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			root_jail = std::string(
@@ -313,6 +314,7 @@ bool Config::init(const global::StartOptions &start_options)
 	ignore_100 = 1;
 	services = nullptr;
 	listeners = nullptr;
+	zcu_log_set_prefix("");
 #ifdef CACHE_ENABLED
 	cache_s = 0;
 	cache_thr = 0;
@@ -320,7 +322,8 @@ bool Config::init(const global::StartOptions &start_options)
 	parse_file();
 
 	if (start_options.check_only) {
-		fprintf(stdout, "Config file %s is OK", conf_file_name.data());
+		fprintf(stdout, "Config file %s is OK\n",
+			conf_file_name.data());
 		return true;
 	}
 
@@ -407,8 +410,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 	std::shared_ptr<ServiceConfig> svc;
 	MATCHER *m;
 	int has_addr, has_port;
-	sockaddr_in in{};
-	sockaddr_in6 in6{};
 	regmatch_t matches[5];
 
 	res->name = name;
@@ -418,6 +419,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 #if WAF_ENABLED
 	res->errwaf = "The request was rejected by the server.";
 #endif
+	res->errreq = "Invalid request.";
 	res->err414 = "Request URI is too long.";
 	res->err500 =
 		"An internal server error occurred. Please try again later.";
@@ -498,81 +500,23 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
 				    0)) {
 			res->max_req = atoll(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::HeadRemove, lin, 4, matches,
-				    0)) {
-			if (res->head_off) {
-				for (m = res->head_off; m->next; m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"HeadRemove config: out of memory - aborted");
-				m = m->next;
-			} else {
-				res->head_off = new MATCHER();
-				m = res->head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("HeadRemove bad pattern - aborted");
-		} else if (!regexec(&regex_set::AddHeader, lin, 4, matches,
-				    0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->add_head.empty()) {
-				res->add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->add_head += "\r\n";
-				res->add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			}
 		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
 				    matches, 0)) {
 			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
 			res->rewr_loc_path =
 				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
-		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
 				    matches, 0)) {
-			if (res->response_head_off) {
-				for (m = res->response_head_off; m->next;
-				     m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = m->next;
-			} else {
-				if ((res->response_head_off = new MATCHER()) ==
-				    nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = res->response_head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err(
-					"RemoveResponseHead bad pattern - aborted");
+			parseAddHeader(&res->add_head_req, lin, matches);
 		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
 				    matches, 0)) {
-			if (res->response_add_head.empty()) {
-				res->response_add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->response_add_head += "\r\n";
-				res->response_add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			}
+			parseAddHeader(&res->add_head_resp, lin, matches);
+		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_req, lin, matches);
+		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_resp, lin, matches);
 		} else if (!regexec(&regex_set::RewriteDestination, lin, 4,
 				    matches, 0)) {
 			res->rewr_dest = atoi(lin + matches[1].rm_so);
@@ -688,6 +632,46 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTP()
 	return nullptr;
 }
 
+void Config::parseAddHeader(std::string *add_head, char *lin,
+			    regmatch_t *matches)
+{
+	lin[matches[1].rm_eo] = '\0';
+	if (add_head->empty()) {
+		*add_head = std::string(lin + matches[1].rm_so,
+					static_cast<size_t>(matches[1].rm_eo -
+							    matches[1].rm_so));
+	} else {
+		*add_head += "\r\n";
+		*add_head += std::string(lin + matches[1].rm_so,
+					 static_cast<size_t>(matches[1].rm_eo -
+							     matches[1].rm_so));
+	}
+}
+
+void Config::parseRemoveHeader(MATCHER **head_off, char *lin,
+			       regmatch_t *matches)
+{
+	MATCHER *m;
+
+	if (*head_off) {
+		for (m = *head_off; m->next; m = m->next)
+			;
+		if ((m->next = new MATCHER()) == nullptr)
+			conf_err(
+				"RemoveHeader config: out of memory - aborted");
+		m = m->next;
+	} else {
+		if ((*head_off = new MATCHER()) == nullptr)
+			conf_err(
+				"RemoveHeader config: out of memory - aborted");
+		m = *head_off;
+	}
+	lin[matches[1].rm_eo] = '\0';
+	if (regcomp(&m->pat, lin + matches[1].rm_so,
+		    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
+		conf_err("RemoveHeader bad pattern - aborted");
+}
+
 std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
@@ -696,10 +680,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 	MATCHER *m;
 	int has_addr, has_port, has_other;
 	unsigned long ssl_op_enable, ssl_op_disable;
-	struct sockaddr_in in {
-	};
-	struct sockaddr_in6 in6 {
-	};
 	std::shared_ptr<SNI_CERTS_CTX> pc;
 	regmatch_t matches[5];
 	bool openssl_file_exists = false;
@@ -719,6 +699,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 #if WAF_ENABLED
 	res->errwaf = "The request was rejected by the server.";
 #endif
+	res->errreq = "Invalid request.";
 	res->err414 = "Request URI is too long.";
 	res->err500 =
 		"An internal server error occurred. Please try again later.";
@@ -865,29 +846,11 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			if ((matches[3].rm_eo - matches[3].rm_so) ==
 			    1) /* the path is a single '/', so remove it */
 				res->nossl_url.data()[matches[3].rm_so] = '\0';
+			if (strstr(res->nossl_url.c_str(), MACRO::VHOST_STR))
+				conf_err("The macro cannot be used here");
 		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
 				    0)) {
 			res->max_req = atoll(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::HeadRemove, lin, 4, matches,
-				    0)) {
-			if (res->head_off) {
-				for (m = res->head_off; m->next; m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"HeadRemove config: out of memory - aborted");
-				m = m->next;
-			} else {
-				if ((res->head_off = new MATCHER()) == nullptr)
-					conf_err(
-						"HeadRemove config: out of memory - aborted");
-				m = res->head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("HeadRemove bad pattern - aborted");
 		} else if (!regexec(&regex_set::ForwardSNI, lin, 4, matches,
 				    0)) {
 			res->ssl_forward_sni_server_name =
@@ -897,44 +860,18 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
 			res->rewr_loc_path =
 				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
-		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
 				    matches, 0)) {
-			if (res->response_head_off) {
-				for (m = res->response_head_off; m->next;
-				     m = m->next)
-					;
-				if ((m->next = new MATCHER()) == nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = m->next;
-			} else {
-				if ((res->response_head_off = new MATCHER()) ==
-				    nullptr)
-					conf_err(
-						"RemoveResponseHead config: out of memory - aborted");
-				m = res->response_head_off;
-			}
-			memset(m, 0, sizeof(MATCHER));
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err(
-					"RemoveResponseHead bad pattern - aborted");
+			parseAddHeader(&res->add_head_req, lin, matches);
 		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
 				    matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->response_add_head.empty()) {
-				res->response_add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->response_add_head += "\r\n";
-				res->response_add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			}
+			parseAddHeader(&res->add_head_resp, lin, matches);
+		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_req, lin, matches);
+		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_resp, lin, matches);
 		} else if (!regexec(&regex_set::RewriteDestination, lin, 4,
 				    matches, 0)) {
 			res->rewr_dest = atoi(lin + matches[1].rm_so);
@@ -1004,21 +941,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 						atoi(lin + matches[2].rm_so));
 				}
 				break;
-			}
-		} else if (!regexec(&regex_set::AddHeader, lin, 4, matches,
-				    0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->add_head.empty()) {
-				res->add_head = std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
-			} else {
-				res->add_head += "\r\n";
-				res->add_head += std::string(
-					lin + matches[1].rm_so,
-					static_cast<size_t>(matches[1].rm_eo -
-							    matches[1].rm_so));
 			}
 		} else if (!regexec(&regex_set::DisableProto, lin, 4, matches,
 				    0)) {
@@ -1189,7 +1111,6 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				    matches, 0)) {
 			if ((m = new MATCHER()) == nullptr)
 				conf_err("out of memory");
-			memset(m, 0, sizeof(MATCHER));
 			m->next = res->ssl_uncln_shutdn;
 			res->ssl_uncln_shutdn = m;
 			lin[matches[1].rm_eo] = '\0';
@@ -1387,7 +1308,7 @@ regex_t **Config::get_subjectaltnames(X509 *x509, unsigned int *count_)
 			break;
 		default:
 			zcu_log_print(
-				LOG_WARNING,
+				LOG_ERR,
 				"unsupported subjectAltName type encountered: %i",
 				name__->type);
 		}
@@ -1469,7 +1390,7 @@ void Config::load_cert(int has_other, std::weak_ptr<ListenerConfig> listener_,
 			conf_err(
 				"ListenHTTPS: could not set certificate subject");
 	} else
-		zcu_log_print(LOG_WARNING,
+		zcu_log_print(LOG_ERR,
 			      "ListenHTTPS: could not get certificate CN");
 
 // conf_err("ListenHTTPS: could not get certificate CN");
@@ -1563,6 +1484,37 @@ void Config::load_certdir(int has_other,
 	closedir(dp);
 }
 
+void Config::parseRedirect(char *lin, regmatch_t *matches,
+			   std::shared_ptr<BackendConfig> be,
+			   MATCHER *url = nullptr)
+{
+	// 1 - Dynamic or not, 2 - Request Redirect #, 3 - Destination URL
+	be->be_type = 302;
+	be->redir_req = 0;
+	if (matches[1].rm_eo != matches[1].rm_so) {
+		if ((lin[matches[1].rm_so] & ~0x20) == 'D') {
+			be->redir_req = 2;
+			if (!url || url->next)
+				conf_err(
+					"Dynamic Redirect must be preceeded by a URL line");
+		} else if ((lin[matches[1].rm_so] & ~0x20) == 'A')
+			be->redir_req = 1;
+	}
+	if (matches[2].rm_eo != matches[2].rm_so)
+		be->be_type = atoi(lin + matches[2].rm_so);
+	pthread_mutex_init(&be->mut, nullptr);
+	lin[matches[3].rm_eo] = '\0';
+	be->url = std::string(lin + matches[3].rm_so);
+	/* split the URL into its fields */
+	if (regexec(&regex_set::LOCATION, be->url.data(), 4, matches, 0))
+		conf_err("Redirect bad URL - aborted");
+	if ((matches[3].rm_eo - matches[3].rm_so) ==
+	    1) /* the path is a single '/', so remove it */
+		be->url.pop_back();
+	if (strstr(be->url.c_str(), MACRO::VHOST_STR))
+		be->redir_macro = true;
+}
+
 std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
@@ -1600,7 +1552,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"URL config: out of memory - aborted");
 				m = res->url;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_NEWLINE | REG_EXTENDED |
@@ -1625,7 +1576,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"URL config: out of memory - aborted");
 				m = res->url;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			ptr = parse_orurls();
 			if (regcomp(&m->pat, ptr,
 				    REG_NEWLINE | REG_EXTENDED |
@@ -1647,7 +1597,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"HeadRequire config: out of memory - aborted");
 				m = res->req_head;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -1666,7 +1615,6 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 						"HeadDeny config: out of memory - aborted");
 				m = res->deny_head;
 			}
-			memset(m, 0, sizeof(MATCHER));
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
@@ -1703,6 +1651,18 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 			res->rewr_loc = atoi(lin + matches[1].rm_so);
 			res->rewr_loc_path =
 				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
+		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseAddHeader(&res->add_head_req, lin, matches);
+		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseAddHeader(&res->add_head_resp, lin, matches);
+		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_req, lin, matches);
+		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
+				    matches, 0)) {
+			parseRemoveHeader(&res->head_off_resp, lin, matches);
 		} else if (!regexec(&regex_set::StrictTransportSecurity, lin, 4,
 				    matches, 0)) {
 			res->sts = atoi(lin + matches[1].rm_so);
@@ -1734,33 +1694,7 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 					std::make_shared<BackendConfig>();
 				be = res->backends;
 			}
-			// 1 - Dynamic or not, 2 - Request Redirect #, 3 - Destination URL
-			be->be_type = 302;
-			be->redir_req = 0;
-			if (matches[1].rm_eo != matches[1].rm_so) {
-				if ((lin[matches[1].rm_so] & ~0x20) == 'D') {
-					be->redir_req = 2;
-					if (!res->url || res->url->next)
-						conf_err(
-							"Dynamic Redirect must be preceeded by a URL line");
-				} else if ((lin[matches[1].rm_so] & ~0x20) ==
-					   'A')
-					be->redir_req = 1;
-			}
-			if (matches[2].rm_eo != matches[2].rm_so)
-				be->be_type = atoi(lin + matches[2].rm_so);
-			be->weight = 1;
-			be->alive = 1;
-			pthread_mutex_init(&be->mut, nullptr);
-			lin[matches[3].rm_eo] = '\0';
-			be->url = std::string(lin + matches[3].rm_so);
-			/* split the URL into its fields */
-			if (regexec(&regex_set::LOCATION, be->url.data(), 4,
-				    matches, 0))
-				conf_err("Redirect bad URL - aborted");
-			if ((matches[3].rm_eo - matches[3].rm_so) ==
-			    1) /* the path is a single '/', so remove it */
-				be->url.pop_back();
+			parseRedirect(lin, matches, be, res->url);
 		} else if (!regexec(&regex_set::BackEnd, lin, 4, matches, 0)) {
 			if (res->backends) {
 				for (be = res->backends; be->next;
@@ -1919,11 +1853,11 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
 	regmatch_t matches[5];
+#ifdef CACHE_ENABLED
 	char *cp;
+#endif
 	auto res = std::make_shared<BackendConfig>();
 	int has_addr, has_port;
-	sockaddr_in in{};
-	sockaddr_in6 in6{};
 
 	res->f_name = name;
 	res->srv_name = svc_name;
@@ -2494,6 +2428,17 @@ void Config::include_dir(const char *conf_path)
 	closedir(dp);
 }
 
+#if WAF_ENABLED
+void Config::logModsec(void *data, const void *message)
+{
+	if (data != nullptr)
+		zcu_log_print(LOG_WARNING, "%s", static_cast<char *>(data));
+	if (message != nullptr)
+		zcu_log_print(LOG_WARNING, "[WAF] %s",
+			      static_cast<char *>(const_cast<void *>(message)));
+}
+#endif
+
 void Config::setAsCurrent()
 {
 	if (found_parse_error)
@@ -2515,6 +2460,13 @@ void Config::setAsCurrent()
 	global::run_options::getCurrent().root_jail = root_jail;
 	global::run_options::getCurrent().config_file_name = conf_file_name;
 	global::StartOptions::getCurrent().conf_file_name = conf_file_name;
+#if WAF_ENABLED
+	global::run_options::getCurrent().modsec_api =
+		new modsecurity::ModSecurity();
+	global::run_options::getCurrent().modsec_api->setConnectorInformation(
+		"zproxy_" + name + "_connector");
+	global::run_options::getCurrent().modsec_api->setServerLogCb(logModsec);
+#endif
 }
 
 bool Config::init(const std::string &file_name)
@@ -2538,6 +2490,7 @@ bool Config::init(const std::string &file_name)
 	ignore_100 = 1;
 	services = nullptr;
 	listeners = nullptr;
+	zcu_log_set_prefix("");
 #ifdef CACHE_ENABLED
 	cache_s = 0;
 	cache_thr = 0;
@@ -2548,7 +2501,6 @@ bool Config::init(const std::string &file_name)
 			      __FUNCTION__, __LINE__);
 		return false;
 	}
-
 	/* set the facility only here to ensure the syslog gets opened if necessary
 	 */
 	log_facility = def_facility;

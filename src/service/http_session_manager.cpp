@@ -22,7 +22,7 @@
 
 using namespace sessions;
 
-HttpSessionManager::HttpSessionManager() : session_type(SESS_NONE)
+HttpSessionManager::HttpSessionManager() : session_type(SESS_TYPE::SESS_NONE)
 {
 }
 
@@ -37,7 +37,7 @@ SessionInfo *HttpSessionManager::addSession(Connection &source,
 					    HttpRequest &request,
 					    Backend &backend_to_assign)
 {
-	if (this->session_type == sessions::SESS_NONE)
+	if (this->session_type == SESS_TYPE::SESS_NONE)
 		return nullptr;
 	std::string key = getSessionKey(source, request);
 	// check if we have a new key to insert,
@@ -57,7 +57,7 @@ bool sessions::HttpSessionManager::updateSession(
 {
 	std::string request_session_id = getSessionKey(source, request);
 	std::string session_id = new_session_id;
-	if (this->session_type == sessions::SESS_COOKIE) {
+	if (this->session_type == SESS_TYPE::SESS_COOKIE) {
 		session_id = getCookieValue(new_session_id, this->sess_id);
 	}
 	if (request_session_id == new_session_id)
@@ -148,7 +148,8 @@ void HttpSessionManager::deleteBackendSessions(int backend_id)
 	std::lock_guard<std::recursive_mutex> locker(lock_mtx);
 	for (auto it = sessions_set.cbegin(); it != sessions_set.cend();) {
 		if (it->second != nullptr &&
-		    it->second->assigned_backend->backend_id == backend_id) {
+		    it->second->assigned_backend->backend_id == backend_id &&
+		    !it->second->isStatic()) {
 			sessions_set.erase(it++);
 		} else
 			it++;
@@ -166,42 +167,80 @@ void HttpSessionManager::doMaintenance()
 	}
 }
 
+bool HttpSessionManager::addSession(std::string key, int backend_id,
+				    long last_seen,
+				    std::vector<Backend *> backend_set)
+{
+	Backend *bck_ptr{ nullptr };
+
+	for (auto backend : backend_set) {
+		if (backend->backend_id != backend_id)
+			continue;
+		bck_ptr = backend;
+	}
+	if (bck_ptr == nullptr)
+		return false;
+
+	return addSession(key, last_seen, bck_ptr);
+}
+
+bool HttpSessionManager::addSession(std::string key, long last_seen,
+				    Backend *bck_ptr, bool copy_lastseen)
+{
+	if (key == "")
+		return false;
+
+	auto session_it = sessions_set.find(key);
+	if (session_it == sessions_set.end()) {
+		std::unique_ptr<SessionInfo> new_session(new SessionInfo());
+		if (!copy_lastseen)
+			new_session->setTimeStamp(last_seen);
+		else
+			new_session->last_seen = last_seen;
+		new_session->assigned_backend = bck_ptr;
+		sessions_set.emplace(
+			std::make_pair(key, new_session.release()));
+		zcu_log_print(LOG_DEBUG, "New session: session %s -> bck %d",
+			      key.data(), bck_ptr->backend_id);
+	} else {
+		session_it->second->setTimeStamp(last_seen);
+		session_it->second->assigned_backend = bck_ptr;
+		zcu_log_print(LOG_DEBUG,
+			      "Session updated: session %s -> bck %d",
+			      key.data(), bck_ptr->backend_id);
+	}
+
+	return true;
+}
+
 bool HttpSessionManager::addSession(JsonObject *json_object,
 				    std::vector<Backend *> backend_set)
 {
+	long last_seen = 0;
+
 	if (json_object == nullptr)
 		return false;
-	std::unique_ptr<SessionInfo> new_session(new SessionInfo());
+
+	if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 &&
+	    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
+		last_seen =
+			dynamic_cast<JsonDataValue *>(
+				json_object->at(JSON_KEYS::LAST_SEEN_TS).get())
+				->number_value;
+
 	if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() &&
 	    json_object->at(JSON_KEYS::ID)->isValue()) {
-		auto session_json_backend_id =
+		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
+		return addSession(
+			dynamic_cast<JsonDataValue *>(
+				json_object->at(JSON_KEYS::ID).get())
+				->string_value,
 			dynamic_cast<JsonDataValue *>(
 				json_object->at(JSON_KEYS::BACKEND_ID).get())
-				->number_value;
-		for (auto backend : backend_set) {
-			if (backend->backend_id != session_json_backend_id)
-				continue;
-			new_session->assigned_backend = backend;
-		}
-		if (new_session->assigned_backend == nullptr)
-			return false;
-		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
-		std::string key = dynamic_cast<JsonDataValue *>(
-					  json_object->at(JSON_KEYS::ID).get())
-					  ->string_value;
-		if (json_object->count(JSON_KEYS::LAST_SEEN_TS) > 0 &&
-		    json_object->at(JSON_KEYS::LAST_SEEN_TS)->isValue())
-			new_session->setTimeStamp(
-				dynamic_cast<JsonDataValue *>(
-					json_object->at(JSON_KEYS::LAST_SEEN_TS)
-						.get())
-					->number_value);
-		sessions_set.emplace(
-			std::make_pair(key, new_session.release()));
-		return true;
-	} else {
-		return false;
+				->number_value,
+			last_seen, backend_set);
 	}
+	return false;
 }
 
 bool HttpSessionManager::deleteSession(const JsonObject &json_object)
@@ -297,13 +336,13 @@ std::string HttpSessionManager::getSessionKey(Connection &source,
 {
 	std::string session_key;
 	switch (session_type) {
-	case sessions::SESS_NONE:
+	case SESS_TYPE::SESS_NONE:
 		break;
-	case sessions::SESS_IP: {
+	case SESS_TYPE::SESS_IP: {
 		session_key = source.getPeerAddress();
 		break;
 	}
-	case sessions::SESS_COOKIE: {
+	case SESS_TYPE::SESS_COOKIE: {
 		if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE,
 					    session_key)) {
 			session_key = "";
@@ -312,23 +351,23 @@ std::string HttpSessionManager::getSessionKey(Connection &source,
 		}
 		break;
 	}
-	case sessions::SESS_URL: {
+	case SESS_TYPE::SESS_URL: {
 		std::string url = request.getUrl();
 		session_key = getQueryParameter(url, sess_id);
 		break;
 	}
-	case sessions::SESS_PARM: {
+	case SESS_TYPE::SESS_PARM: {
 		std::string url = request.getUrl();
 		session_key = getUrlParameter(url);
 		break;
 	}
-	case sessions::SESS_HEADER: {
+	case SESS_TYPE::SESS_HEADER: {
 		if (!request.getHeaderValue(sess_id, session_key)) {
 			session_key = "";
 		}
 		break;
 	}
-	case sessions::SESS_BASIC: {
+	case SESS_TYPE::SESS_BASIC: {
 		if (!request.getHeaderValue(
 			    http::HTTP_HEADER_NAME::AUTHORIZATION,
 			    session_key)) {

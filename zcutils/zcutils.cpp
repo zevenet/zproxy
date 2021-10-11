@@ -21,8 +21,20 @@
 
 #include "zcutils.h"
 
+char zcu_log_prefix[LOG_PREFIX_BUFSIZE] = "";
 int zcu_log_level = ZCUTILS_LOG_LEVEL_DEFAULT;
 int zcu_log_output = ZCUTILS_LOG_OUTPUT_DEFAULT;
+
+void zcu_log_set_prefix(const char *string)
+{
+	if (strlen(string) >= LOG_PREFIX_BUFSIZE)
+		zcu_log_print(
+			LOG_ERR,
+			"The farm name is greater than the prefix log: %d >= %d",
+			strlen(string), LOG_PREFIX_BUFSIZE);
+	else
+		memcpy(zcu_log_prefix, string, strlen(string) + 1);
+}
 
 void zcu_log_set_level(int loglevel)
 {
@@ -54,7 +66,7 @@ void zcu_log_set_output(int output)
 	return;
 }
 
-int zcu_log_print(int loglevel, const char *fmt, ...)
+int _zcu_log_print(int loglevel, const char *fmt, ...)
 {
 	va_list args;
 
@@ -63,16 +75,17 @@ int zcu_log_print(int loglevel, const char *fmt, ...)
 		return 0;
 #endif
 
-	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT &&
-	    loglevel <= zcu_log_level) {
+	if (loglevel > zcu_log_level)
+		return 0;
+
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDOUT) {
 		va_start(args, fmt);
 		vfprintf(stdout, fmt, args);
 		fprintf(stdout, "\n");
 		va_end(args);
 	}
 
-	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR &&
-	    loglevel <= zcu_log_level) {
+	if (zcu_log_output & ZCUTILS_LOG_OUTPUT_STDERR) {
 		va_start(args, fmt);
 		vfprintf(stderr, fmt, args);
 		fprintf(stderr, "\n");
@@ -106,8 +119,7 @@ void zcu_bt_print()
 	}
 
 	for (i = 0; i < calls; i++)
-		zcu_log_print(LOG_ERR, "(%lx) Backtrace: %s", pthread_self(),
-			      str[i]);
+		zcu_log_print(LOG_ERR, "Backtrace: %s", str[i]);
 
 	free(str);
 
@@ -256,16 +268,12 @@ int zcu_str_replace_regexp(char *buf, const char *ori_str, int ori_len,
 	umtch[0].rm_so = 0;
 	umtch[0].rm_eo = ori_len;
 	if (regexec(match, ori_str, 10, umtch, REG_STARTEND)) {
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "String didn't match %.*s", ori_len,
 			      ori_str);
-#endif
 		return -1;
 	}
 
-#if DEBUG_ZCU_LOG
 	zcu_log_print(LOG_DEBUG, "String matches %.*s", ori_len, ori_str);
-#endif
 
 	memcpy(buf, ori_str, umtch[0].rm_so);
 
@@ -361,7 +369,6 @@ int zcu_str_replace_str(char *buf, const char *ori_str, int ori_len,
 {
 	int offst = -1, offend = -1, offcopy = 0,
 	    buf_len = ori_len - match_len + replace_len;
-	char *chptr, *enptr, *srcptr;
 
 	if (!zcu_str_find_str(&offst, &offend, ori_str, ori_len, match_str,
 			      match_len)) {
@@ -374,7 +381,7 @@ int zcu_str_replace_str(char *buf, const char *ori_str, int ori_len,
 
 	if (buf_len > ZCU_DEF_BUFFER_SIZE) {
 		zcu_log_print(
-			LOG_WARNING,
+			LOG_ERR,
 			"String could not be replaced, the buffer size is not enought - %.*s",
 			ori_len, ori_str);
 		return 0;

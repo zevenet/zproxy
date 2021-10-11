@@ -117,9 +117,15 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 						  ssl_connection.buffer_size -
 						  ssl_connection.buffer_offset),
 				 &bytes_read);
-		//    zcu_log_print(LOG_DEBUG,
-		//                   "BIO_read return code %d buffer size %d bytes_read %d",
-		//                   rc, ssl_connection.buffer_size, bytes_read);
+		zcu_log_print(
+			LOG_DEBUG,
+			"%s()%d: BIO_read(%d): ssl_status = %s, rc = %d, buffer_size = %d, total_bytes_read = %d, bytes_read = %d",
+			__FUNCTION__, __LINE__,
+			ssl_connection.getFileDescriptor(),
+			ssl::getSslStatusString(ssl_connection.ssl_conn_status)
+				.data(),
+			rc, ssl_connection.buffer_size, total_bytes_read,
+			bytes_read);
 
 		if (rc == 0) {
 			if (total_bytes_read > 0)
@@ -143,8 +149,10 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 				     ssl_connection.buffer_size -
 				     ssl_connection.buffer_offset) == 0)
 			return IO::IO_RESULT::FULL_BUFFER;
-		// return IO::IO_RESULT::SUCCESS;
 	}
+	zcu_log_print(LOG_NOTICE,
+		      "%s()%d: Buffer read finish with unknown status",
+		      __FUNCTION__, __LINE__);
 }
 
 IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
@@ -291,9 +299,17 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 	auto i = BIO_do_handshake(ssl_connection.io);
 	if (i <= 0) {
 		auto errno__ = errno;
+		unsigned long err = ERR_peek_error();
+		if (err) {
+			zcu_log_print(
+				LOG_NOTICE,
+				"handshake error for host %s:%d. Error %lu: %s",
+				ssl_connection.getPeerAddress().c_str(),
+				ssl_connection.getPeerPort(), err,
+				ERR_error_string(err, NULL));
+		}
 		if (!BIO_should_retry(ssl_connection.io)) {
 			if (SSL_in_init(ssl_connection.ssl)) {
-#if DEBUG_ZCU_LOG
 				zcu_log_print(
 					LOG_DEBUG,
 					"%s():%d: [%lx] >>PROGRESS>> fd:%d BIO_do_handshake "
@@ -304,11 +320,9 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 					ssl_connection.getPeerAddress().data(),
 					errno__, std::strerror(errno__),
 					ssl_connection.getPeerAddress().c_str());
-#endif
 				return true;
 			}
 			if (SSL_is_init_finished(ssl_connection.ssl)) {
-#if DEBUG_ZCU_LOG
 				zcu_log_print(
 					LOG_DEBUG,
 					"%s():%d: [%lx] >>FINISHED>> fd:%d BIO_do_handshake "
@@ -319,10 +333,8 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 					ssl_connection.getPeerAddress().data(),
 					errno__, std::strerror(errno__),
 					ssl_connection.getPeerAddress().c_str());
-#endif
 				return true;
 			}
-#if DEBUG_ZCU_LOG
 			zcu_log_print(LOG_DEBUG,
 				      "%s():%d: [%lx] fd:%d BIO_do_handshake "
 				      "return:%d error: with %s errno: %d:%s "
@@ -332,7 +344,6 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 				      ssl_connection.getPeerAddress().data(),
 				      errno__, std::strerror(errno__),
 				      ssl_connection.getPeerAddress().c_str());
-#endif
 			ssl_connection.ssl_conn_status =
 				SSL_STATUS::HANDSHAKE_ERROR;
 			SSL_clear(ssl_connection.ssl);
@@ -347,21 +358,18 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 			ssl_connection.ssl_conn_status = SSL_STATUS::WANT_READ;
 			return true;
 		} else {
-#if DEBUG_ZCU_LOG
 			zcu_log_print(
 				LOG_DEBUG,
 				"%s():%d: [%lx] fd:%d BIO_do_handshake - BIO_should_XXX failed from %s",
 				__FUNCTION__, __LINE__, pthread_self(),
 				ssl_connection.getFileDescriptor(),
 				ssl_connection.getPeerAddress().c_str());
-#endif
 			return false;
 		}
 	}
 #else
 	int r = SSL_do_handshake(ssl_connection.ssl);
 	if (r == 0) {
-#if DEBUG_ZCU_LOG
 		zcu_log_print(
 			LOG_DEBUG,
 			"%s():%d: [%lx] fd:%d SSL_do_handshake return:%d error: with %s Ossl errors: %s from %s",
@@ -370,7 +378,6 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 			ssl_connection.getPeerAddress().data(),
 			ossGetErrorStackString().get(),
 			ssl_connection.getPeerAddress().c_str());
-#endif
 		ssl_connection.ssl_conn_status = SSL_STATUS::HANDSHAKE_ERROR;
 		SSL_clear(ssl_connection.ssl);
 		return false;
@@ -601,7 +608,7 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 
 IO::IO_RESULT
 SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
-				    const iovec *__iovec, int count,
+				    const iovec *__iovec, size_t count,
 				    size_t &nwritten)
 {
 	size_t written = 0;
@@ -610,7 +617,7 @@ SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
 		      "%s():%d: [%lx] count: %d written: %d totol_written: %d",
 		      __FUNCTION__, __LINE__, pthread_self(), count, written,
 		      nwritten);
-	for (auto it = 0; it < count; it++) {
+	for (size_t it = 0; it < count; it++) {
 		if (__iovec[it].iov_len == 0)
 			continue;
 		zcu_log_print(LOG_DEBUG,
@@ -637,6 +644,7 @@ SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,
 		if (result != IO::IO_RESULT::SUCCESS)
 			break;
 	}
+
 	zcu_log_print(LOG_DEBUG, "%s():%d: [%lx] result: %s errno: %d = %s",
 		      __FUNCTION__, __LINE__, pthread_self(),
 		      IO::getResultString(result).data(), errno,
@@ -654,11 +662,11 @@ SSLConnectionManager::handleWriteIOvec(Connection &target_ssl_connection,
 	auto nvec = iovec_size;
 	nwritten = 0;
 	iovec_written = 0;
+
 	do {
-		result = sslWriteIOvec(target_ssl_connection,
-				       &(iov[iovec_written]),
-				       static_cast<int>(nvec - iovec_written),
-				       count);
+		result = sslWriteIOvec(
+			target_ssl_connection, &(iov[iovec_written]),
+			static_cast<size_t>(nvec - iovec_written), count);
 		zcu_log_print(
 			LOG_DEBUG,
 			"%s():%d: [%lx] result: %s written %d iovecwritten %d",
@@ -695,14 +703,12 @@ SSLConnectionManager::handleWriteIOvec(Connection &target_ssl_connection,
 			return IO::IO_RESULT::DONE_TRY_AGAIN;
 		else
 			result = IO::IO_RESULT::SUCCESS;
-#if DEBUG_ZCU_LOG
 		zcu_log_print(
 			LOG_DEBUG,
 			"%s():%d: [%lx] headers sent, size: %d iovec_written: %d nwritten: %d IO::RES %s",
 			__FUNCTION__, __LINE__, pthread_self(), nvec,
 			iovec_written, nwritten,
 			IO::getResultString(result).data());
-#endif
 
 	} while (iovec_written < nvec && result == IO::IO_RESULT::SUCCESS);
 
@@ -716,6 +722,9 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 {
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
+	size_t nwritten = 0;
+	size_t iovec_written = 0;
+
 	if (!target_ssl_connection.ssl_connected) {
 		return IO::IO_RESULT::SSL_NEED_HANDSHAKE;
 	}
@@ -724,9 +733,15 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 		http_data.prepareToSend();
 	}
 
-	size_t nwritten = 0;
-	size_t iovec_written = 0;
-
+	// check that number of header did not is greater than maximum after
+	// adding the customized headers
+	if (http_data.iov_size > MAX_HEADERS_SIZE + 2) {
+		zcu_log_print(
+			LOG_NOTICE,
+			"%s():%d: the data to send overload the writting buffer",
+			__FUNCTION__, __LINE__);
+		return IO::IO_RESULT::FULL_BUFFER;
+	}
 	auto result =
 		handleWriteIOvec(target_ssl_connection, &http_data.iov[0],
 				 http_data.iov_size, iovec_written, nwritten);
@@ -749,7 +764,6 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 	http_data.setHeaderSent(true);
 	http_data.iov_size = 0;
 
-#if DEBUG_ZCU_LOG
 	zcu_log_print(
 		LOG_DEBUG,
 		"%s():%d: in buffer size: %d - buffer offset: %d - out buffer size: %d - content length: %lu - message length: %d - message bytes left: %d",
@@ -757,7 +771,6 @@ SSLConnectionManager::handleDataWrite(Connection &target_ssl_connection,
 		ssl_connection.buffer_offset, ssl_connection.buffer_size,
 		http_data.content_length, http_data.message_length,
 		http_data.message_bytes_left);
-#endif
 	return IO::IO_RESULT::SUCCESS;
 }
 

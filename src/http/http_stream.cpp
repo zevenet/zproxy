@@ -1,4 +1,4 @@
-/*
+﻿/*
  *    Zevenet zproxy Load Balancer Software License
  *    This file is part of the Zevenet zproxy Load Balancer software package.
  *
@@ -52,6 +52,10 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 				 HttpStream *stream, const char *debug_str,
 				 const char *data)
 {
+#if DEBUG_ZCU_LOG == 0
+	return;
+#endif
+
 	if (stream == nullptr)
 		return;
 	zcu_log_print(
@@ -88,4 +92,72 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 		stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING) ? "T" : "F",
 		stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING) ? "T" : "F",
 		data);
+}
+
+std::string HttpStream::logTag(const char *tag)
+{
+	int total_b;
+	char ret[MAXBUF];
+
+	total_b = sprintf(ret, "[st:%d]", this->stream_id);
+
+	auto service = static_cast<Service *>(this->request.getService());
+	if (service == nullptr) {
+		total_b += sprintf(ret + total_b, "[svc:-][bk:-]");
+	} else {
+		if (this->backend_connection.getBackend() == nullptr)
+			total_b += sprintf(ret + total_b, "[svc:%s][bk:-]",
+					   service->name.c_str());
+		else
+			total_b += sprintf(
+				ret + total_b, "[svc:%s][bk:%s:%d]",
+				service->name.c_str(),
+				this->backend_connection.getBackend()
+					->address.c_str(),
+				this->backend_connection.getBackend()->port);
+	}
+
+	if (tag == nullptr || strcmp(tag, "waf")) {
+		if (this->client_connection.getPeerAddress() == "") {
+			total_b += sprintf(ret + total_b, "[cl:-]");
+		} else
+			total_b +=
+				sprintf(ret + total_b, "[cl:%s]",
+					this->client_connection.getPeerAddress()
+						.c_str());
+		if (tag != nullptr)
+			total_b += sprintf(ret + total_b, "(%s)", tag);
+	}
+
+	ret[total_b++] = '\0';
+
+	std::string ret_st(ret);
+	return ret_st;
+}
+
+void HttpStream::logSuccess()
+{
+	if (zcu_log_level < LOG_INFO)
+		return;
+	std::string agent;
+	std::string referer;
+	std::string host;
+	this->request.getHeaderValue(http::HTTP_HEADER_NAME::REFERER, referer);
+	this->request.getHeaderValue(http::HTTP_HEADER_NAME::USER_AGENT, agent);
+	this->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host);
+	auto latency = Time::getElapsed(this->backend_connection.time_start);
+	// 192.168.100.241:8080 192.168.0.186 - - "GET / HTTP/1.1" 200 11383 ""
+	// "curl/7.64.0"
+
+	auto tag = logTag("established");
+
+	zcu_log_print(LOG_INFO,
+		      "%s host:%s - \"%.*s\" \"%s\" %lu \"%s\" \"%s\" %lf",
+		      tag.data(), !host.empty() ? host.c_str() : "-",
+		      /* -2 is to remove the CLRF characters */
+		      this->request.http_message_str.length() - 2,
+		      this->request.http_message_str.data(),
+		      this->response.http_message_str.data(),
+		      this->response.content_length, referer.c_str(),
+		      agent.c_str(), latency);
 }

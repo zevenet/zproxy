@@ -94,6 +94,9 @@ class BackendConfig : Counter<BackendConfig> {
 	int redir_req; /* 0 - redirect is absolute, 1 - the redirect should include
 				   the request path, or 2 if it should use perl dynamic
 				   replacement */
+	bool redir_macro{
+		false
+	}; /* If it is 1 the redirect requires an expand of the vhost macro */
 	std::string bekey; /* Backend Key for Cookie */
 	std::shared_ptr<SSL_CTX> ctx = nullptr; /* CTX for SSL connections */
 	std::string ssl_config_file; /* ssl config file path */
@@ -107,6 +110,7 @@ class BackendConfig : Counter<BackendConfig> {
 	int disabled; /* true if the back-end is disabled */
 	int connections;
 	int connection_limit; /* It is the limit of established connection that can manage simultanoausly*/
+	Statistics::HttpResponseHits response_stats;
 	int ecdh_curve_nid{ 0 };
 	std::shared_ptr<BackendConfig> next = nullptr;
 	int key_id;
@@ -125,6 +129,14 @@ class ServiceConfig : Counter<ServiceConfig> {
 	MATCHER *url, /* request matcher */
 		*req_head, /* required headers */
 		*deny_head; /* forbidden headers */
+	std::string add_head_req; /* extra request headers */
+	std::string add_head_resp; /* extra response headers */
+	MATCHER *head_off_req{
+		nullptr
+	}; /* headers to remove from the client request*/
+	MATCHER *head_off_resp{
+		nullptr
+	}; /* headers to remove  from backned response */
 	ReplaceHeader *replace_header_request{ nullptr };
 	ReplaceHeader *replace_header_response{ nullptr };
 	std::shared_ptr<BackendConfig> backends;
@@ -191,7 +203,7 @@ struct SNI_CERTS_CTX {
 	{
 		::regfree(&server_name);
 		if (subjectAltNames != nullptr) {
-			for (int i = 0; i < subjectAltNameCount; i++) {
+			for (unsigned int i = 0; i < subjectAltNameCount; i++) {
 				::regfree(*(subjectAltNames + i));
 				free(*(subjectAltNames + i));
 			}
@@ -216,14 +228,12 @@ struct ListenerConfig : Counter<ListenerConfig> {
 		nullptr
 	}; /* User Agent Patterns to force HTTP 1.0 mode */
 	MATCHER *ssl_uncln_shutdn; /* User Agent Patterns to enable ssl unclean shutdown */
-	std::string add_head; /* extra SSL header */
-	std::string response_add_head; /* extra response headers */
 	regex_t verb; /* pattern to match the request verb against */
 	int to; /* client time-out */
 	int has_pat; /* was a URL pattern defined? */
 	regex_t url_pat; /* pattern to match the request URL against */
 	std::string err414, /* error messages */
-		err500, err501, err503, errnossl;
+		err500, err501, err503, errnossl, errreq;
 	http::Code codenossl;
 #if WAF_ENABLED
 	std::string errwaf;
@@ -232,10 +242,14 @@ struct ListenerConfig : Counter<ListenerConfig> {
 				   redirect them to this url */
 	int nossl_redir; /* Code to use for redirect (301 302 307) */
 	long max_req; /* max. request size */
-	MATCHER *head_off{ nullptr }; /* headers to remove */
-	MATCHER *response_head_off{
+	std::string add_head_req; /* extra request headers */
+	std::string add_head_resp; /* extra response headers */
+	MATCHER *head_off_req{
 		nullptr
-	}; /* headers to remove  from response */
+	}; /* headers to remove from the client request*/
+	MATCHER *head_off_resp{
+		nullptr
+	}; /* headers to remove  from backned response */
 	std::string ssl_config_file; /* OpenSSL config file path */
 	int rewr_loc_path{
 		0
@@ -257,9 +271,6 @@ struct ListenerConfig : Counter<ListenerConfig> {
 				   https backends, param ForwardSNI */
 	Statistics::HttpResponseHits response_stats;
 #if WAF_ENABLED
-	std::shared_ptr<modsecurity::ModSecurity> modsec{
-		nullptr
-	}; /* API connector with Modsecurity */
 	std::shared_ptr<modsecurity::Rules> rules{
 		nullptr
 	}; /* Rules of modsecurity */
@@ -277,8 +288,8 @@ struct ListenerConfig : Counter<ListenerConfig> {
 		delete ssl_uncln_shutdn;
 		::regfree(&verb);
 		::regfree(&url_pat);
-		delete head_off;
-		delete response_head_off;
+		delete head_off_req;
+		delete head_off_resp;
 		::freeaddrinfo(addr_info);
 	}
 };

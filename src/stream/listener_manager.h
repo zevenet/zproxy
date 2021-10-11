@@ -122,4 +122,33 @@ class ListenerManager : public EpollManager,
  * @return true if reload succeded compeletely.
  */
 	bool reloadConfigFile();
+
+	/**
+ * @brief get the stats from the old listener and apply them to the new one.
+ *
+ * @param ptr to the old listener.
+ * @param ptr to the new listener.
+ */
+	void restoreStats(std::shared_ptr<ListenerConfig> old_cfg,
+			  std::shared_ptr<ListenerConfig> new_cfg);
+
+	/**
+ * @brief copy the sessions to move them to the new config in the reload process.
+ *
+ * @param ptr to the list to save the alived sessions
+ * @param listener id
+ * @param ptr to service
+ */
+	void exportSessions(sessions::DataSet **session_list, int listener_id,
+			    Service *svc_ptr);
+
+	/**
+ * @brief Restore the sessions in the new listener.
+ *
+ * @param object with the list of saved sessions
+ * @param listener id
+ * @param vector with ptr to the services
+ */
+	void restoreSessions(sessions::DataSet *sessions_list, int listener_id,
+			     std::vector<Service *> svc_list);
 };

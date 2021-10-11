@@ -60,10 +60,8 @@ ssize_t http_manager::handleChunkedData(Connection &connection,
 			http_data.chunk_size_left = 0;
 			http_data.chunked_status =
 				CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
-#if DEBUG_ZCU_LOG
 			zcu_log_print(LOG_DEBUG, "%s():%d: last chunk",
 				      __FUNCTION__, __LINE__);
-#endif
 			return 0;
 		} else {
 			http_data.chunk_size_left = new_chunk_left;
@@ -89,10 +87,8 @@ ssize_t http_manager::getChunkSize(const std::string &data, size_t data_size,
 				data_size, 10, data.data());
 			return -1;
 		} else {
-#if DEBUG_ZCU_LOG
 			zcu_log_print(LOG_DEBUG, "CHUNK found size %s => %d ",
 				      hex.data(), chunk_length);
-#endif
 			return static_cast<ssize_t>(chunk_length);
 		}
 	}
@@ -173,16 +169,15 @@ void rewriteUrl(HttpStream &stream, Service *service)
 	char buf[ZCU_DEF_BUFFER_SIZE];
 	HttpRequest &request = stream.request;
 	bool rewr = (service->rewr_loc_path == 1 ||
-		     service->rewr_loc_path == -1 &&
-			     stream.service_manager->listener_config_
-					     ->rewr_loc_path == 1);
+		     (service->rewr_loc_path == -1 &&
+		      stream.service_manager->listener_config_->rewr_loc_path ==
+			      1));
 	int offset = 0, ori_size = ZCU_DEF_BUFFER_SIZE;
 	if (service->rewr_url == nullptr)
 		return;
 
 	std::string path_orig = request.path;
 
-	int flag = 0;
 	for (auto m = service->rewr_url; m; m = m->next) {
 		offset = zcu_str_replace_regexp(
 			buf, request.path.data(), request.path.length(),
@@ -193,8 +188,11 @@ void rewriteUrl(HttpStream &stream, Service *service)
 				      "URL rewrited \"%s\" -> \"%s\"",
 				      path_orig.data(), request.path.data());
 
-			if (ori_size > request.path.length() - offset) {
-				ori_size = request.path.length() - offset;
+			if (ori_size >
+			    static_cast<int>(request.path.length()) - offset) {
+				ori_size = static_cast<int>(
+						   request.path.length()) -
+					   offset;
 			}
 
 			if (m->last)
@@ -251,11 +249,11 @@ void http_manager::replaceHeaderHttp(http_parser::HttpData *http,
 
 validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 {
-	char buf[ZCU_DEF_BUFFER_SIZE];
 	std::string header, header_value;
 	auto &listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast<Service *>(stream.request.getService());
 	HttpRequest &request = stream.request;
+	MATCHER *m = nullptr;
 	regmatch_t eol{ 0, static_cast<regoff_t>(
 				   request.http_message_str.length()) };
 	auto res = ::regexec(&listener_config_.verb,
@@ -305,13 +303,11 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 
 	// Check for correct headers
 	for (size_t i = 0; i != request.num_headers; i++) {
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%s():%d: %.*s", __FUNCTION__,
 			      __LINE__,
 			      request.headers[i].name_len +
 				      request.headers[i].value_len + 2,
 			      request.headers[i].name);
-#endif
 
 		header = std::string_view(request.headers[i].name,
 					  request.headers[i].name_len);
@@ -321,7 +317,12 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 		/* maybe header to be removed */
 		eol.rm_so = 0;
 		eol.rm_eo = request.headers[i].line_size;
-		for (auto m = listener_config_.head_off; m; m = m->next) {
+		if (service->service_config.head_off_req != nullptr) {
+			m = service->service_config.head_off_req;
+		} else if (listener_config_.head_off_req != nullptr) {
+			m = listener_config_.head_off_req;
+		}
+		for (; m; m = m->next) {
 			if (::regexec(&m->pat, request.headers[i].name, 1, &eol,
 				      REG_STARTEND) == 0) {
 				request.headers[i].header_off = true;
@@ -398,7 +399,6 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 								data_offset,
 								new_chunk_left,
 								request.content_length);
-#if DEBUG_ZCU_LOG
 							zcu_log_print(
 								LOG_DEBUG,
 								"%s():%d: >>>> Chunk size %d left %d ",
@@ -406,19 +406,16 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 								__LINE__,
 								chunk_size,
 								new_chunk_left);
-#endif
 							request.content_length +=
 								static_cast<
 									size_t>(
 									chunk_size);
 							if (chunk_size == 0) {
-#if DEBUG_ZCU_LOG
 								zcu_log_print(
 									LOG_DEBUG,
 									"%s():%d: set last chunk",
 									__FUNCTION__,
 									__LINE__);
-#endif
 								request.chunk_size_left =
 									0;
 								request.chunked_status =
@@ -565,7 +562,7 @@ int rewriteHeaderLocation(phr_header *header,
 		}
 		auto in_addr = zcu_net_get_address(host_addr, port);
 		if (in_addr == nullptr) {
-			zcu_log_print(LOG_WARNING, "Couldn't get host ip");
+			zcu_log_print(LOG_ERR, "Couldn't get host ip");
 		} else {
 			/* rewrite location if it points to the backend */
 			if (zcu_net_equal_sockaddr(in_addr.get(),
@@ -574,12 +571,17 @@ int rewriteHeaderLocation(phr_header *header,
 
 				/* or the listener address with different port */
 			} else if (rewr_loc == 1 &&
-				   listener_config_->port != port &&
-				   zcu_net_equal_sockaddr(
-					   in_addr.get(),
-					   stream.service_manager
-						   ->listener_config_->addr_info,
-					   false)) {
+				   (listener_config_->port != port ||
+				    ((listener_config_->ctx == nullptr) ?
+						   "http" :
+						   "https") != proto) &&
+				   (zcu_net_equal_sockaddr(
+					    in_addr.get(),
+					    stream.service_manager
+						    ->listener_config_
+						    ->addr_info,
+					    false) ||
+				    host == stream.request.virtual_host)) {
 				header_value_ =
 					(proto == "https") ? "http" : "https";
 			}
@@ -623,7 +625,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 	auto &listener_config_ = *stream.service_manager->listener_config_;
 	auto service = static_cast<Service *>(stream.request.getService());
 	HttpResponse &response = stream.response;
-	char buf[ZCU_DEF_BUFFER_SIZE];
+	MATCHER *m = nullptr;
 
 	/* If the response is 100 continue we need to enable chunked transfer. */
 	if (response.http_status_code < 200) {
@@ -639,19 +641,21 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 #endif
 	bool connection_close_pending = false;
 	for (size_t i = 0; i != response.num_headers; i++) {
-#if DEBUG_ZCU_LOG
 		zcu_log_print(LOG_DEBUG, "%s():%d: %.*s", __FUNCTION__,
 			      __LINE__,
 			      response.headers[i].name_len +
 				      response.headers[i].value_len + 2,
 			      response.headers[i].name);
-#endif
 
 		/* maybe header to be removed from response */
 		regmatch_t eol{ 0, static_cast<regoff_t>(
 					   response.headers[i].line_size) };
-		for (auto m = listener_config_.response_head_off; m;
-		     m = m->next) {
+		if (service->service_config.head_off_resp != nullptr) {
+			m = service->service_config.head_off_resp;
+		} else if (listener_config_.head_off_resp != nullptr) {
+			m = listener_config_.head_off_resp;
+		}
+		for (; m; m = m->next) {
 			if (::regexec(&m->pat, response.headers[i].name, 1,
 				      &eol, REG_STARTEND) == 0) {
 				response.headers[i].header_off = true;
@@ -734,7 +738,6 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 								data_offset,
 								new_chunk_left,
 								response.content_length);
-#if DEBUG_ZCU_LOG
 							zcu_log_print(
 								LOG_DEBUG,
 								"%s():%d: >>>> Chunk size %d left %d",
@@ -742,20 +745,17 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 								__LINE__,
 								chunk_size,
 								new_chunk_left);
-#endif
 							stream.response
 								.content_length +=
 								static_cast<
 									size_t>(
 									chunk_size);
 							if (chunk_size == 0) {
-#if DEBUG_ZCU_LOG
 								zcu_log_print(
 									LOG_DEBUG,
 									"%s():%d: set last chunk",
 									__FUNCTION__,
 									__LINE__);
-#endif
 								stream.response
 									.chunk_size_left =
 									0;
@@ -793,7 +793,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 				break;
 			case http::HTTP_HEADER_NAME::SET_COOKIE: {
 				if (service->session_type ==
-				    sessions::HttpSessionType::SESS_COOKIE) {
+				    SESS_TYPE::SESS_COOKIE) {
 					service->updateSession(
 						stream.client_connection,
 						stream.request,
@@ -811,8 +811,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			}
 		}
 
-		if (service->session_type ==
-			    sessions::HttpSessionType::SESS_HEADER &&
+		if (service->session_type == SESS_TYPE::SESS_HEADER &&
 		    service->sess_id == header) {
 			service->updateSession(
 				stream.client_connection, stream.request,
@@ -844,32 +843,7 @@ void http_manager::replyError(HttpStream *stream, http::Code code,
 			      const std::string &str, Connection &target,
 			      Statistics::HttpResponseHits &resp_stats)
 {
-	char caddr[200];
-	auto service = static_cast<Service *>(stream->request.getService());
-	std::string bck_str("null");
-
-	if (stream->backend_connection.getBackend() != nullptr) {
-		bck_str = std::string(
-			stream->backend_connection.getBackend()->address.c_str() +
-			stream->backend_connection.getBackend()->port);
-	}
-
-	if (UNLIKELY(zcu_soc_get_peer_address(target.getFileDescriptor(), caddr,
-					      200) == nullptr)) {
-		zcu_log_print(LOG_DEBUG, "Error getting peer address");
-		caddr[0] = '-';
-		caddr[1] = '\0';
-	}
-
-	auto request_data_len = std::string_view(target.buffer).find('\r');
-	zcu_log_print(LOG_INFO,
-		      "[failed][%lx][%lu][%s][%s][%s] e%d %s \"%.*s\" from %s",
-		      pthread_self(), stream->stream_id,
-		      stream->service_manager->listener_config_->name.data(),
-		      (service != nullptr) ? service->name.c_str() : "null",
-		      bck_str.data(), static_cast<int>(code),
-		      code_string.data(), request_data_len, target.buffer,
-		      caddr);
+	streamLogError(stream, code, code_string, target);
 
 	auto response_ = http::getHttpResponse(code, code_string, str);
 	size_t written = 0;
@@ -906,7 +880,8 @@ bool http_manager::replyRedirect(HttpStream &stream,
 
 	if (stream.replaceVhostMacro(
 		    buf, redirect_backend.backend_config->url.data(),
-		    redirect_backend.backend_config->url.length()))
+		    redirect_backend.backend_config->url.length()),
+	    redirect_backend.backend_config->redir_macro)
 		new_url = buf;
 
 	switch (redirect_backend.backend_config->redir_req) {
@@ -944,6 +919,8 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 	auto response_ =
 		http::getRedirectResponse(static_cast<http::Code>(code), url);
 
+	streamLogRedirect(&stream, url.c_str());
+
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	size_t sent = 0;
 	if (!stream.client_connection.ssl_connected) {
@@ -964,6 +941,7 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 		stream.response.chunked_status =
 			CHUNKED_STATUS::CHUNKED_ENABLED;
 		stream.client_connection.enableWriteEvent();
+		streamLogMessage(&stream, "Redirect: DONE_TRY_AGAIN");
 		return false;
 	}
 

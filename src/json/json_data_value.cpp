@@ -109,6 +109,9 @@ void json::JsonDataValue::setValue(const json::JsonDataValue &value)
 	case JSON_VALUE_TYPE::JSON_T_NUMBER:
 		setValue(value.number_value);
 		break;
+	case JSON_VALUE_TYPE::JSON_T_DOUBLE:
+		setValue(value.double_value);
+		break;
 	case JSON_VALUE_TYPE::JSON_T_OBJECT:
 		setValue(*value.object_value);
 		break;

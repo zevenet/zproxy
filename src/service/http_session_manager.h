@@ -27,14 +27,29 @@
 
 namespace sessions
 {
-enum HttpSessionType {
-	SESS_NONE,
-	SESS_IP,
-	SESS_COOKIE,
-	SESS_URL,
-	SESS_PARM,
-	SESS_HEADER,
-	SESS_BASIC
+struct Data {
+	std::string key;
+	std::string backend_ip;
+	int backend_port;
+	time_t last_seen;
+};
+
+struct DataSet {
+	int listener_id;
+	std::string service_name;
+	SESS_TYPE type{ SESS_TYPE::SESS_NONE };
+	std::vector<Data> session_list;
+	DataSet *next{ nullptr };
+	DataSet(int listener, std::string service, SESS_TYPE s_type)
+	{
+		listener_id = listener;
+		service_name = service;
+		type = s_type;
+	}
+	~DataSet()
+	{
+		session_list.clear();
+	}
 };
 
 struct SessionInfo {
@@ -42,16 +57,28 @@ struct SessionInfo {
 	{
 		last_seen = Time::getTimeSec();
 	}
+
+	// last_seen is used to calculate if the session has expired.
+	// If it has the value 0 means that the session does not expired, it is permanent
 	time_t last_seen;
 	Backend *assigned_backend{ nullptr };
+
+	bool isStatic()
+	{
+		return last_seen == 0 ? true : false;
+	}
+
 	bool hasExpired(unsigned int ttl)
 	{
 		// check if has not reached ttl
+		if (this->isStatic())
+			return false;
 		return Time::getTimeSec() - last_seen > ttl;
 	}
 	void update()
 	{
-		last_seen = Time::getTimeSec();
+		if (!this->isStatic())
+			last_seen = Time::getTimeSec();
 	}
 	long getTimeStamp()
 	{
@@ -66,24 +93,24 @@ struct SessionInfo {
 };
 
 class HttpSessionManager {
-	// used
 	std::recursive_mutex lock_mtx;
+
+    public:
 	std::unordered_map<std::string, SessionInfo *>
 		sessions_set; // key can be anything, depending on the session type
-    public:
-	HttpSessionType session_type;
+	SESS_TYPE session_type;
 	std::string sess_id; /* id to construct the pattern */
 	regex_t sess_start{}; /* pattern to identify the session data */
 	regex_t sess_pat{}; /* pattern to match the session data */
-
-    public:
 	unsigned int ttl{};
+
 	HttpSessionManager();
 	virtual ~HttpSessionManager();
-	// may exist, so which one is going to release
-	// the map resources!!
-	// return the created SessionInfo
-	// must check if it already exist !!!
+
+	bool addSession(std::string key, long last_seen, Backend *bck_ptr,
+			bool copy_lastseen = false);
+	bool addSession(std::string key, int backend_id, long last_seen,
+			std::vector<Backend *> backend_set);
 	bool addSession(JsonObject *json_object,
 			std::vector<Backend *> backend_set);
 	SessionInfo *addSession(Connection &source, HttpRequest &request,

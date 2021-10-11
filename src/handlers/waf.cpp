@@ -38,23 +38,18 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 	// Checking interaction
 	if (stream.modsec_transaction->m_it.disruptive) {
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			zcu_log_print(
-				LOG_WARNING,
-				"%s, [WAF,service %s,backend null] (%lx) %s",
-				stream.service_manager->listener_config_->name
-					.data(),
-				static_cast<Service *>(
-					stream.request.getService())
-					->name.c_str(),
-				pthread_self(),
-				stream.modsec_transaction->m_it.log);
-		}
+			streamLogWaf(&stream, "%s",
+				     stream.modsec_transaction->m_it.log);
+		} else
+			streamLogWaf(
+				&stream,
+				"WAF in request disrupted the HTTP transaction");
 
 		// redirect returns disruptive=1
 
 		// process is going to be cut. Executing the logging phase
 		if (!stream.modsec_transaction->processLogging())
-			zcu_log_print(LOG_WARNING,
+			zcu_log_print(LOG_ERR,
 				      "(%lx) WAF, error processing the log",
 				      pthread_self());
 
@@ -98,22 +93,14 @@ bool Waf::checkResponseWaf(HttpStream &stream)
 	// Checking interaction
 	if (stream.modsec_transaction->m_it.disruptive) {
 		if (stream.modsec_transaction->m_it.log != nullptr) {
-			auto bck = stream.backend_connection.getBackend();
-			zcu_log_print(
-				LOG_WARNING,
-				"%s, [WAF,service %s,backend %s:%d] (%lx) %s",
-				stream.service_manager->listener_config_->name
-					.data(),
-				static_cast<Service *>(
-					stream.request.getService())
-					->name.c_str(),
-				bck->address.data(), bck->port, pthread_self(),
-				stream.modsec_transaction->m_it.log);
-		}
+			streamLogWaf(&stream, "%s",
+				     stream.modsec_transaction->m_it.log);
+		} else
+			streamLogWaf(
+				&stream,
+				"WAF in response disrupted the HTTP transaction");
 		stream.modsec_transaction
 			->processLogging(); // TODO:: is it necessary??
-		zcu_log_print(LOG_DEBUG,
-			      "WAF wants to apply an action for the REQUEST");
 
 		return true;
 	}
@@ -130,7 +117,7 @@ std::shared_ptr<Rules> Waf::reloadRules()
 	Config config;
 	config.init(global::StartOptions::getCurrent());
 	auto rules = std::make_shared<Rules>();
-	zcu_log_print(LOG_WARNING, "file to update %s",
+	zcu_log_print(LOG_NOTICE, "file to update %s",
 		      global::StartOptions::getCurrent().conf_file_name.data());
 
 	if (regcomp(&WafRules, "^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$",
@@ -159,15 +146,6 @@ std::shared_ptr<Rules> Waf::reloadRules()
 	// dumpRules(*rules);
 	zcu_log_print(LOG_INFO, "The WAF rulesets waf reloaded properly");
 	return rules;
-}
-
-void Waf::logModsec(void *data, const void *message)
-{
-	if (data != nullptr)
-		zcu_log_print(LOG_WARNING, "%s", static_cast<char *>(data));
-	if (message != nullptr)
-		zcu_log_print(LOG_WARNING, "[WAF] %s",
-			      static_cast<char *>(const_cast<void *>(message)));
 }
 
 void Waf::dumpRules(modsecurity::Rules &rules)

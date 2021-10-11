@@ -21,7 +21,7 @@
 
 #include "backend_connection.h"
 
-BackendConnection::BackendConnection() : connection_retries(0), backend(nullptr)
+BackendConnection::BackendConnection() : backend(nullptr), connection_retries(0)
 {
 }
 

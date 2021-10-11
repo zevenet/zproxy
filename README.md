@@ -323,19 +323,19 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	Request maximal size. All requests will be limited to these many bytes. If a request contains more data than allowed an error 414 is returned. Default: unlimited.
 
-- **HeadRemove** "header pattern"
+- **AddRequestHeader** "header: to add"
+
+	Add the defined header to the request passed to the back-end server. The header is added verbatim. Use multiple AddRequestHeader directives if you need to add more than one header.
+
+- **RemoveRequestHeader** "header pattern"
 
 	Remove  certain  headers  from  the incoming requests. All occurences of the matching specified header will be removed. Please note that this filtering is done prior to other checks (such as HeadRequire or HeadDeny), so you should not try to check for these headers in later matches. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
-- **AddHeader** "header: to add"
-
-	Add the defined header to the request passed to the back-end server. The header is added verbatim. Use multiple AddHeader directives if you need to add more than one header.
-
 - **AddResponseHeader** "header: to add"
 
-	Add the defined header to the response passed to the clients. The header is added verbatim. Use multiple AddHeader directives if you need to add more than one header.
+	Add the defined header to the response passed to the clients. The header is added verbatim. Use multiple AddResponseHeader directives if you need to add more than one header.
 
-- **RemoveResponseHead** "header pattern"
+- **RemoveResponseHeader** "header pattern"
 
 	Remove  certain  headers  from  the outcomming response, the header sent by the backend is not sent to the client. All occurences of the matching specified header will be removed. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
@@ -494,15 +494,6 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	A regex will be applied only once per directive, I.E, the directive `RewriteUrl "/param" "/p"` for the URL `/param/1/param/2` will produce `/p/1/param/2`.
 
-- **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
-
-	Replace a header in request or response. If several regex matches in the header, only the first one will apply.
-	The replaceHeader directive in the services has priority over the listener one.
-
-		Example:
-		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
-		  ReplaceHeader  Response   "^X-Forward-For:"  "(.*)"                 "$1,10.24.5.89"
-
 - **RewriteLocation** 0|1|2 [path]
 
 	This directive changes the Location and Content-Location headers in the responses to show the virtual host that was sent in the request.
@@ -540,7 +531,32 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	The request may not contain any header matching the given pattern.  Multiple HeadDeny directives may be defined per service, in which case all of them must be satisfied.
 
-	Please note: if the listener defined a HeadRemove directive, the matching headers are removed before the service matching is attempted.
+	Please note: if the listener or service defined a *HeadRequestRemove* directive, the matching headers are removed before the service matching is attempted.
+
+- **AddRequestHeader** "header: to add"
+
+	This directive overwrites the listener *AdddrequestHeader*. Add the defined header to the request passed to the back-end server. The header is added verbatim. Use multiple AddRequestHeader directives if you need to add more than one header.
+
+- **RemoveRequestHeader** "header pattern"
+
+	This directive overwrites the listener *RemoveRequestHeader*. Remove  certain  headers  from  the incoming requests. All occurences of the matching specified header will be removed. Please note that this filtering is done prior to other checks (such as HeadRequire or HeadDeny), so you should not try to check for these headers in later matches. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
+
+- **AddResponseHeader** "header: to add"
+
+	This directive overwrites the listener *AddResponseHeader*. Add the defined header to the response passed to the clients. The header is added verbatim. Use multiple AddResponseHeader directives if you need to add more than one header.
+
+- **RemoveResponseHeader** "header pattern"
+
+	This directive overwrites the listener *RemoveResponseHeader*. Remove  certain  headers  from  the outcomming response, the header sent by the backend is not sent to the client. All occurences of the matching specified header will be removed. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
+
+- **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
+
+	Replace a header in request or response. If several regex matches in the header, only the first one will apply.
+	The replaceHeader directive in the services has priority over the listener one.
+
+		Example:
+		  ReplaceHeader  Request    "^Cookie:"         "^COOKIESESSION=(.*)"  "COOKIEUSER=$1"
+		  ReplaceHeader  Response   "^X-Forward-For:"  "(.*)"                 "$1,10.24.5.89"
 
 - **RoutingPolicy** ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
 

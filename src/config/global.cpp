@@ -130,7 +130,7 @@ global::StartOptions::parsePoundOption(int argc, char **argv,
 	}
 
 	if (optind < argc) {
-		zcu_log_print(LOG_WARNING, "unknown extra arguments (%s...)",
+		zcu_log_print(LOG_ERR, "unknown extra arguments (%s...)",
 			      argv[optind]);
 		exit(EXIT_FAILURE);
 	}

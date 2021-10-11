@@ -213,18 +213,22 @@ std::unique_ptr<JsonObject> Backend::getBackendJson()
 		root->emplace(
 			JSON_KEYS::CONNECT_TIME,
 			std::make_unique<JsonDataValue>(this->avg_conn_time));
-		root->emplace(JSON_KEYS::CODE_200_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_2xx));
-		root->emplace(JSON_KEYS::CODE_300_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_3xx));
-		root->emplace(JSON_KEYS::CODE_400_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_4xx));
-		root->emplace(JSON_KEYS::CODE_500_HITS,
-			      std::make_unique<JsonDataValue>(
-				      this->response_stats.code_5xx));
+		root->emplace(
+			JSON_KEYS::CODE_200_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_2xx));
+		root->emplace(
+			JSON_KEYS::CODE_300_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_3xx));
+		root->emplace(
+			JSON_KEYS::CODE_400_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_4xx));
+		root->emplace(
+			JSON_KEYS::CODE_500_HITS,
+			std::make_unique<JsonDataValue>(
+				this->backend_config->response_stats.code_5xx));
 	}
 	return root;
 }
@@ -237,19 +241,12 @@ void Backend::doMaintenance()
 	Connection checkOut;
 	auto res = checkOut.doConnect(*address_info, 5, false, this->nf_mark);
 
-	switch (res) {
-	case IO::IO_OP::OP_SUCCESS: {
-		zcu_log_print(
-			LOG_NOTICE,
-			"BackEnd %s:%d resurrect in farm: '%s', service: '%s'",
-			this->address.data(), this->port,
-			this->backend_config->f_name.data(),
-			this->backend_config->srv_name.data());
+	if (res == IO::IO_OP::OP_SUCCESS) {
+		zcu_log_print(LOG_NOTICE,
+			      "[svc:%s][bck:%s:%d] The backend resurrected",
+			      this->backend_config->srv_name.data(),
+			      this->address.data(), this->port);
 		this->setStatus(BACKEND_STATUS::BACKEND_UP);
-		break;
-	}
-	default:
-		this->setStatus(BACKEND_STATUS::BACKEND_DOWN);
 	}
 }
 

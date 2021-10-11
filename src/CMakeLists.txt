@@ -22,7 +22,7 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.6)
 
-add_definitions(-DDEBUG_ZCU_LOG=0)
+add_definitions(-DDEBUG_ZCU_LOG=1)
 add_definitions(-DHELLO_WORLD_SERVER=0)
 add_definitions(-DMAXBUF=4096)
 add_definitions(-DMAX_URI_SIZE=16500)
@@ -69,11 +69,12 @@ set(l7core_sources ${l7core_sources}
     connection/backend_connection.h connection/backend_connection.cpp
     stream/stream_manager.h stream/stream_manager.cpp
 	stream/listener_manager.h stream/listener_manager.cpp
-    stream/stream_data_logger.h stream/stream_data_logger.cpp
     service/backend.h service/backend.cpp
     service/http_session_manager.h service/http_session_manager.cpp
     service/service.h service/service.cpp
     service/service_manager.h service/service_manager.cpp
+    config/macro.cpp
+    config/macro.h
     config/config_node.h
     config/config_data.h
     config/config.h config/config.cpp

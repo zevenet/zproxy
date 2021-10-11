@@ -152,7 +152,7 @@ class SSLConnectionManager {
 				      size_t &written);
 
 	static IO::IO_RESULT sslWriteIOvec(Connection &target_ssl_connection,
-					   const iovec *__iovec, int count,
+					   const iovec *__iovec, size_t count,
 					   size_t &nwritten);
 	static IO::IO_RESULT handleWriteIOvec(Connection &target_ssl_connection,
 					      iovec *iov, size_t &iovec_size,
