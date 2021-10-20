@@ -167,9 +167,8 @@ void HttpSessionManager::doMaintenance()
 	}
 }
 
-bool HttpSessionManager::addSession(std::string key, int backend_id,
-				    long last_seen,
-				    std::vector<Backend *> backend_set)
+Backend *HttpSessionManager::getBackend(int backend_id,
+					std::vector<Backend *> backend_set)
 {
 	Backend *bck_ptr{ nullptr };
 
@@ -178,14 +177,11 @@ bool HttpSessionManager::addSession(std::string key, int backend_id,
 			continue;
 		bck_ptr = backend;
 	}
-	if (bck_ptr == nullptr)
-		return false;
-
-	return addSession(key, last_seen, bck_ptr);
+	return bck_ptr;
 }
 
-bool HttpSessionManager::addSession(std::string key, long last_seen,
-				    Backend *bck_ptr, bool copy_lastseen)
+bool HttpSessionManager::copySession(std::string key, long last_seen,
+				     Backend *bck_ptr)
 {
 	if (key == "")
 		return false;
@@ -193,17 +189,14 @@ bool HttpSessionManager::addSession(std::string key, long last_seen,
 	auto session_it = sessions_set.find(key);
 	if (session_it == sessions_set.end()) {
 		std::unique_ptr<SessionInfo> new_session(new SessionInfo());
-		if (!copy_lastseen)
-			new_session->setTimeStamp(last_seen);
-		else
-			new_session->last_seen = last_seen;
+		new_session->last_seen = last_seen;
 		new_session->assigned_backend = bck_ptr;
 		sessions_set.emplace(
 			std::make_pair(key, new_session.release()));
 		zcu_log_print(LOG_DEBUG, "New session: session %s -> bck %d",
 			      key.data(), bck_ptr->backend_id);
 	} else {
-		session_it->second->setTimeStamp(last_seen);
+		session_it->second->last_seen = last_seen;
 		session_it->second->assigned_backend = bck_ptr;
 		zcu_log_print(LOG_DEBUG,
 			      "Session updated: session %s -> bck %d",
@@ -213,10 +206,11 @@ bool HttpSessionManager::addSession(std::string key, long last_seen,
 	return true;
 }
 
-bool HttpSessionManager::addSession(JsonObject *json_object,
-				    std::vector<Backend *> backend_set)
+bool HttpSessionManager::copySessionJson(JsonObject *json_object,
+					 std::vector<Backend *> backend_set)
 {
 	long last_seen = 0;
+	int backend_id;
 
 	if (json_object == nullptr)
 		return false;
@@ -230,15 +224,16 @@ bool HttpSessionManager::addSession(JsonObject *json_object,
 
 	if (json_object->at(JSON_KEYS::BACKEND_ID)->isValue() &&
 	    json_object->at(JSON_KEYS::ID)->isValue()) {
-		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
-		return addSession(
-			dynamic_cast<JsonDataValue *>(
-				json_object->at(JSON_KEYS::ID).get())
-				->string_value,
+		backend_id =
 			dynamic_cast<JsonDataValue *>(
 				json_object->at(JSON_KEYS::BACKEND_ID).get())
-				->number_value,
-			last_seen, backend_set);
+				->number_value;
+		auto backend_ptr = getBackend(backend_id, backend_set);
+		std::lock_guard<std::recursive_mutex> locker(lock_mtx);
+		return copySession(dynamic_cast<JsonDataValue *>(
+					   json_object->at(JSON_KEYS::ID).get())
+					   ->string_value,
+				   last_seen, backend_ptr);
 	}
 	return false;
 }

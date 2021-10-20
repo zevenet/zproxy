@@ -554,8 +554,8 @@ void ListenerManager::restoreSessions(sessions::DataSet *sessions_list,
 			for (auto bck : svc->getBackends()) {
 				if (bck->address == s.backend_ip &&
 				    bck->port == s.backend_port) {
-					svc->addSession(s.key, s.last_seen, bck,
-							true);
+					svc->copySession(s.key, s.last_seen,
+							 bck);
 					// could be deleted the item from the list
 					break;
 				}

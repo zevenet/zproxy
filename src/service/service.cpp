@@ -406,7 +406,8 @@ std::string Service::handleTask(ctl::CtlTask &task)
 			switch (task.subject) {
 			case ctl::CTL_SUBJECT::SESSION: {
 				auto json_data = JsonParser::parse(task.data);
-				if (!addSession(json_data.get(), backend_set))
+				if (!copySessionJson(json_data.get(),
+						     backend_set))
 					return JSON_OP_RESULT::ERROR;
 				return JSON_OP_RESULT::OK;
 			}

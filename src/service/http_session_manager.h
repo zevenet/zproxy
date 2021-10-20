@@ -107,14 +107,12 @@ class HttpSessionManager {
 	HttpSessionManager();
 	virtual ~HttpSessionManager();
 
-	bool addSession(std::string key, long last_seen, Backend *bck_ptr,
-			bool copy_lastseen = false);
-	bool addSession(std::string key, int backend_id, long last_seen,
-			std::vector<Backend *> backend_set);
-	bool addSession(JsonObject *json_object,
-			std::vector<Backend *> backend_set);
+	Backend *getBackend(int backend_id, std::vector<Backend *> backend_set);
 	SessionInfo *addSession(Connection &source, HttpRequest &request,
 				Backend &backend_to_assign);
+	bool copySession(std::string key, long last_seen, Backend *bck_ptr);
+	bool copySessionJson(JsonObject *json_object,
+			     std::vector<Backend *> backend_set);
 	bool updateSession(Connection &source, HttpRequest &request,
 			   const std::string &new_session_id,
 			   Backend &backend_to_assign);
