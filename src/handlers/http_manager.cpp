@@ -357,14 +357,16 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 
 				break;
 			case http::HTTP_HEADER_NAME::CONNECTION: {
-				if (http_info::connection_values.count(
-					    std::string(header_value)) > 0 &&
-				    http_info::connection_values.at(
-					    std::string(header_value)) ==
-					    CONNECTION_VALUES::UPGRADE)
+				if (header_value.find(
+					    http_info::connection_values_strings
+						    .at(CONNECTION_VALUES::
+								UPGRADE)))
 					request.connection_header_upgrade =
 						true;
-				else if (header_value.find("close") !=
+				else if (header_value.find(
+						 http_info::connection_values_strings
+							 .at(CONNECTION_VALUES::
+								     CLOSE)) !=
 					 std::string::npos) {
 					connection_close_pending = true;
 				}
@@ -685,7 +687,10 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			const auto header_name = it->second;
 			switch (header_name) {
 			case http::HTTP_HEADER_NAME::CONNECTION: {
-				if (header_value.find("close") !=
+				if (header_value.find(
+					    http_info::connection_values_strings
+						    .at(CONNECTION_VALUES::
+								CLOSE)) !=
 				    std::string::npos) {
 					connection_close_pending = true;
 				}

@@ -384,6 +384,13 @@ const std::map<std::string, UPGRADE_PROTOCOLS, std::less<> >
 		{ "tls", UPGRADE_PROTOCOLS::TLS },
 	};
 
+const std::unordered_map<http::CONNECTION_VALUES, const std::string>
+	http_info::connection_values_strings = {
+		{ http::CONNECTION_VALUES::UPGRADE, "Upgrade" },
+		{ http::CONNECTION_VALUES::CLOSE, "close" },
+		{ http::CONNECTION_VALUES::KEEP_ALIVE, "Keep-Alive" },
+	};
+
 const std::map<std::string, CONNECTION_VALUES, std::less<> >
 	http_info::connection_values = {
 		{ "Upgrade", CONNECTION_VALUES::UPGRADE },

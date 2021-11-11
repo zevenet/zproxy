@@ -363,6 +363,9 @@ struct http_info {
 		upgrade_protocols;
 	static const std::unordered_map<UPGRADE_PROTOCOLS, const std::string>
 		upgrade_protocols_strings;
+	static const std::unordered_map<http::CONNECTION_VALUES,
+					const std::string>
+		connection_values_strings;
 	static const std::map<std::string, CONNECTION_VALUES, std::less<> >
 		connection_values;
 	static const std::unordered_map<TRANSFER_ENCODING_TYPE,
