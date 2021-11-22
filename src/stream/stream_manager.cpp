@@ -1616,11 +1616,12 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 	DEBUG_COUNTER_HIT(debug__::on_send_response);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
-	streamLogDebug(stream,
-		       "IN\tbuffer size: %8lu\tContent-length: %lu\tleft: %lu",
-		       stream->backend_connection.buffer_size,
-		       stream->response.content_length,
-		       stream->response.message_bytes_left);
+	streamLogDebug(
+		stream,
+		"IN buffer_size %lu bytes, Content-length: %lu, left: %lu",
+		stream->backend_connection.buffer_size,
+		stream->response.content_length,
+		stream->response.message_bytes_left);
 
 #if USE_TIMER_FD_TIMEOUT
 	this->deleteFd(stream->timer_fd.getFileDescriptor());
@@ -1655,6 +1656,8 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 					stream->response);
 #endif
 		}
+		streamLogDebug(stream, "Buffer left %lu bytes",
+			       stream->backend_connection.buffer_size);
 
 		switch (result) {
 		case IO::IO_RESULT::SSL_HANDSHAKE_ERROR:
