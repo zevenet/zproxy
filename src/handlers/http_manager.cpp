@@ -360,7 +360,8 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 				if (header_value.find(
 					    http_info::connection_values_strings
 						    .at(CONNECTION_VALUES::
-								UPGRADE)))
+								UPGRADE)) !=
+				    std::string::npos)
 					request.connection_header_upgrade =
 						true;
 				else if (header_value.find(
