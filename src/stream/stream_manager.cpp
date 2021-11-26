@@ -523,6 +523,10 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
+	if (stream->request.message_length == 0 && stream->request.content_length > 0)
+		stream->status |=
+			helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+
 	// Add the headers configured (addXheader direcitves). Service context has more
 	// priority. These headers are not removed for removeheader directive
 	if (!service->service_config.add_head_req.empty()) {
@@ -793,6 +797,10 @@ void StreamManager::onResponseEvent(int fd)
 		stream->backend_connection.disableEvents();
 		return;
 	}
+
+	// clean request status
+	stream->request.message_bytes_left = 0;
+	stream->request.reset_parser();
 
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 				    "OnResponse", "RESPONSE_PENDING");
@@ -1588,8 +1596,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		   stream->backend_connection.getBackend()->response_timeout);
 #endif
 	streamLogDebug(stream,
-		       "OUT buffer size: %8lu\tContent-length: %lu\tleft: "
-		       "%lu\tIO: %s",
+		       "OUT buffer size: %8lu, Content-length: %lu, left: "
+		       "%lu, IO: %s",
 		       stream->client_connection.buffer_size,
 		       stream->request.content_length,
 		       stream->request.message_bytes_left,

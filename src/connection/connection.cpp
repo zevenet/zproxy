@@ -74,6 +74,10 @@ IO::IO_RESULT Connection::read()
 			done = true;
 		}
 	}
+
+	zcu_log_print(LOG_DEBUG,"%s():%d: Reading buffer %d bytes!",
+					__FUNCTION__, __LINE__, buffer_size);
+
 	return result;
 }
 

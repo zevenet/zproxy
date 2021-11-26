@@ -492,6 +492,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 		request.message_bytes_left =
 			request.content_length - request.message_length;
 	}
+
 	if (connection_close_pending && request.content_length == 0 &&
 	    request.chunked_status == http::CHUNKED_STATUS::CHUNKED_DISABLED) {
 		//we have unknown amount of body data pending, wait until connection is closed
