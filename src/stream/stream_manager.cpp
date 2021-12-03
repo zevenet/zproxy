@@ -1039,8 +1039,10 @@ void StreamManager::onResponseEvent(int fd)
 				listener_config_.add_head_resp, true);
 		}
 
+		// after this response a new request is expected
 		if (stream->response.http_status_code != 100) {
 			stream->request.reset_parser();
+			stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
 		}
 
 #if WAF_ENABLED

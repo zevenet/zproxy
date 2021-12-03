@@ -55,7 +55,9 @@ enum class STREAM_STATUS : uint32_t {
 	BCK_WRITE_PENDING = 0x1 << 3,
 	CL_READ_PENDING = 0x1 << 4,
 	CL_WRITE_PENDING = 0x1 << 5,
-	REQUEST_PENDING = 0x1 << 6,
+	REQUEST_PENDING =
+		0x1
+		<< 6, // Request is complete and it is pending to be sent to the backend
 	RESPONSE_PENDING = 0x1 << 7,
 	CLOSE_CONNECTION = 0x1 << 8
 };
