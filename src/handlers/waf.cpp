@@ -28,19 +28,6 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 	}
 	stream.modsec_transaction->processRequestHeaders();
 
-	if (stream.request.message_length == 0 &&
-	    stream.request.content_length != 0) {
-		if (MAX_DATA_SIZE - stream.client_connection.buffer_size < 0) {
-			streamLogMessage(
-				&stream,
-				"the request body is not checked because it could overload the connection buffer");
-		} else {
-			stream.client_connection.read();
-			stream.request.message_length =
-				stream.request.content_length;
-		}
-	}
-
 	if (stream.request.message_length > 0) {
 		stream.modsec_transaction->appendRequestBody(
 			(unsigned char *)stream.request.message,

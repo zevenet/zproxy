@@ -27,6 +27,8 @@
 #include <string>
 #include <sys/uio.h>
 
+#define MAX_DATA_SIZE (1024 * 64)
+
 #define cmp_header_name(header, val)                                           \
 	header->name_len == strlen(val) &&                                     \
 		strncasecmp(header->name, val, header->name_len) == 0
@@ -122,6 +124,7 @@ class HttpData {
 	void removeHeader(http::HTTP_HEADER_NAME header_name);
 
 	bool hasPendingData();
+	bool hasPendingBody();
 	char *getBuffer() const;
 	bool getHeaderSent() const;
 	void setHeaderSent(bool value);

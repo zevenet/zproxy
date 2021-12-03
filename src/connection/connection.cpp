@@ -53,6 +53,9 @@ IO::IO_RESULT Connection::read()
 					      std::strerror(errno));
 				result = IO::IO_RESULT::ERROR;
 			} else {
+				zcu_log_print(LOG_ERR, "%s():%d: read(): egain",
+					      __FUNCTION__, __LINE__,
+					      std::strerror(errno));
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
 			}
 			done = true;
@@ -75,8 +78,8 @@ IO::IO_RESULT Connection::read()
 		}
 	}
 
-	zcu_log_print(LOG_DEBUG,"%s():%d: Reading buffer %d bytes!",
-					__FUNCTION__, __LINE__, buffer_size);
+	zcu_log_print(LOG_DEBUG, "%s():%d: Reading buffer %d bytes!",
+		      __FUNCTION__, __LINE__, buffer_size);
 
 	return result;
 }

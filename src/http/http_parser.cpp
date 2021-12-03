@@ -257,6 +257,9 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 		//      message_bytes_left =
 		//      static_cast<size_t>(std::atoi(headers[i].value)); break;
 		//    }
+
+		if (hasPendingBody())
+			return PARSE_RESULT::INCOMPLETE;
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
 	} else if (pret == -2) { /* request is incomplete, continue the loop */
 		if (method != nullptr && minor_version == -1)
@@ -346,6 +349,17 @@ void http_parser::HttpData::printRequest()
 			      headers[i].name, headers[i].value_len,
 			      headers[i].value);
 	}
+}
+
+bool http_parser::HttpData::hasPendingBody()
+{
+	bool pending = false;
+
+	if (message_length == 0 && content_length != 0 &&
+	    MAX_DATA_SIZE > content_length)
+		pending = true;
+
+	return pending;
 }
 
 bool http_parser::HttpData::hasPendingData()

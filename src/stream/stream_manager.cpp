@@ -427,8 +427,9 @@ void StreamManager::onRequestEvent(int fd)
 		stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
 	}
 
-	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
-	    stream->request.hasPendingData()) {
+	if ((stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
+	     stream->request.hasPendingData()) &&
+	    !stream->request.hasPendingBody()) {
 #ifdef CACHE_ENABLED
 		if (stream->request.chunked_status !=
 		    CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -461,12 +462,17 @@ void StreamManager::onRequestEvent(int fd)
 	size_t parsed = 0;
 	http_parser::PARSE_RESULT parse_result;
 
-	parse_result = stream->request.parseRequest(
-		stream->client_connection.buffer +
-			stream->client_connection.buffer_offset,
-		stream->client_connection.buffer_size,
-		&parsed); // parsing http data as response structured
-
+	if (stream->request.hasPendingBody()) {
+		stream->request.message = stream->request.buffer;
+		stream->request.message_length = stream->request.buffer_size;
+		parse_result = http_parser::PARSE_RESULT::SUCCESS;
+	} else {
+		parse_result = stream->request.parseRequest(
+			stream->client_connection.buffer +
+				stream->client_connection.buffer_offset,
+			stream->client_connection.buffer_size,
+			&parsed); // parsing http data as response structured
+	}
 	switch (parse_result) {
 	case http_parser::PARSE_RESULT::SUCCESS: {
 		stream->status |=
@@ -483,6 +489,7 @@ void StreamManager::onRequestEvent(int fd)
 		this->clearStream(stream);
 		return;
 	case http_parser::PARSE_RESULT::INCOMPLETE:
+		stream->client_connection.enableReadEvent();
 		streamLogDebug(stream, "http request parser INCOMPLETE");
 		return;
 	case http_parser::PARSE_RESULT::FAILED:
@@ -523,11 +530,15 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
-	if (stream->request.message_length == 0 && stream->request.content_length > 0)
+	if (stream->request.hasPendingBody()) {
+		streamLogMessage(
+			stream,
+			"the stream needs a second read to get the body");
 		stream->status |=
 			helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
+	}
 
-	// Add the headers configured (addXheader direcitves). Service context has more
+	// Add the headers configured (addXheader directives). Service context has more
 	// priority. These headers are not removed for removeheader directive
 	if (!service->service_config.add_head_req.empty()) {
 		stream->request.addHeader(service->service_config.add_head_req,
@@ -537,7 +548,7 @@ void StreamManager::onRequestEvent(int fd)
 	}
 
 #if WAF_ENABLED
-	if (stream->waf_rules) {
+	if (stream->waf_rules && stream->request.hasPendingBody()) {
 		// rule struct is unitializate if no rulesets are configured
 		delete stream->modsec_transaction;
 		stream->modsec_transaction = new modsecurity::Transaction(
@@ -798,10 +809,6 @@ void StreamManager::onResponseEvent(int fd)
 		return;
 	}
 
-	// clean request status
-	stream->request.message_bytes_left = 0;
-	stream->request.reset_parser();
-
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 				    "OnResponse", "RESPONSE_PENDING");
 	DEBUG_COUNTER_HIT(debug__::on_response);
@@ -1030,6 +1037,10 @@ void StreamManager::onResponseEvent(int fd)
 		} else if (!listener_config_.add_head_resp.empty()) {
 			stream->response.addHeader(
 				listener_config_.add_head_resp, true);
+		}
+
+		if (stream->response.http_status_code != 100) {
+			stream->request.reset_parser();
 		}
 
 #if WAF_ENABLED
@@ -1430,7 +1441,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		stream->backend_connection.getBackend()->setAvgConnTime(
 			stream->backend_connection.time_start);
 	}
-	/*Check if the buffer has data to be send */
+	/* Check if the buffer has data to be sent */
 	if (stream->client_connection.buffer_size == 0) {
 		stream->client_connection.enableReadEvent();
 		stream->backend_connection.enableReadEvent();
