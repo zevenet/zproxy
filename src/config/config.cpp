@@ -709,6 +709,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 	res->codenossl = http::Code::BadRequest;
 	res->nossl_url = "";
 	res->nossl_redir = 0;
+	res->ignore100continue = ignore_100;
 	res->allow_client_reneg = 0;
 	res->log_level = log_level;
 	res->alive_to = alive_to;
