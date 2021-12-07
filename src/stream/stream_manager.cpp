@@ -548,7 +548,7 @@ void StreamManager::onRequestEvent(int fd)
 	}
 
 #if WAF_ENABLED
-	if (stream->waf_rules && stream->request.hasPendingBody()) {
+	if (stream->waf_rules && !stream->request.hasPendingBody()) {
 		// rule struct is unitializate if no rulesets are configured
 		delete stream->modsec_transaction;
 		stream->modsec_transaction = new modsecurity::Transaction(
