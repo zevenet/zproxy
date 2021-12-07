@@ -158,6 +158,11 @@ DESCRIPTION="Disable the backend 0 in the service 0"
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | BACKGROUND     | If this flag is set with **1** the request will be executed in background. The command **killwrk** can be defined to stop it |
 | FILTER     | The string defined here will be applied as parameter in grep command in order to get a filtered output of the curl -v |
+| NEXT_METHOD | It sets the HTTP method to send another request in the same connection
+| NEXT_VHOST | It sets the virtual host to send another request in the same connection. If this variable is not set, the same VHOST will be used
+| NEXT_URL | It sets the HTTP URL to send another request in the same connection.
+| NEXT_BODY | It sets the HTTP request body to send another request in the same connection.
+| NEXT_FILE | It sets a file to be sent in another request in the same connection.
 
 ```
 DESCRIPTION="it executes the curl command 'curl -X GET https//service.test/' in the client 1"

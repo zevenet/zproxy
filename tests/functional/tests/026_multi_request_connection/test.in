@@ -1,0 +1,30 @@
+DESCRIPTION="This request is allowed, the rules are not applied yet"
+CMD=curl
+SSL=1
+CL=1
+METHOD="POST"
+BODY="file.txt"
+URL="/echo"
+HEADERS="Content-Type: text/xml"
+NEXT_METHOD="GET"
+NEXT_URL="/"
+########################
+DESCRIPTION="Send two GETs in the same connection"
+CMD=curl
+SSL=1
+CL=1
+METHOD="GET"
+URL="/"
+NEXT_METHOD="GET"
+NEXT_URL="/"
+########################
+DESCRIPTION="Send two GETs in the same connection"
+CMD=curl
+SSL=1
+CL=1
+METHOD="GET"
+BODY="file.txt"
+URL="/"
+HEADERS="Content-Type: text/xml"
+NEXT_METHOD="GET"
+NEXT_URL="/"

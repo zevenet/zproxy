@@ -1,0 +1,1 @@
+ip netns exec proxy-ns /usr/bin/curl -X PATCH   --connect-timeout 2 -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n'  -D test_6_reload/response_headers.out.tmp -o test_6_reload/body.out.tmp --unix-socket /tmp/functional-tests/env_proxy.socket http://localhost/config  >test_6_reload/extended.out.tmp 2>test_6_reload/error.out.tmp 

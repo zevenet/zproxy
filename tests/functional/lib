@@ -349,7 +349,8 @@ get_test_out_dir () {
 
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
-	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER
+	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER \
+	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL
 }
 
 replace_test_out ()
@@ -426,7 +427,7 @@ exec_curl () {
 	if [[ $SOCKET_UNIX -ne 0 ]]; then
 		SOCKET="--unix-socket $PROXY_CTL_SOCKET"
 		VHOST_LOC="${PROXY_SOCKET_IP}"
-	elif [[ "$VHOST_LOC" = "" ]]; then
+	elif [[ "$VHOST_LOC" == "" ]]; then
 		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
 	fi
 	if [[ "$BACKGROUND" -eq 1 ]]; then
@@ -435,21 +436,43 @@ exec_curl () {
 		HEAD_F="/dev/null"
 	fi
 
+	local NEXT=""
+	if [[ $NEXT_METHOD != "" ]]; then
+		NEXT="-: -X $NEXT_METHOD"
+		if [[ $NEXT_BODY != "" ]]; then
+			NEXT="$NEXT -d @$NEXT_BODY"
+		elif [[ $NEXT_FILE != "" ]]; then
+			NEXT="$NEXT -F 'file=@$NEXT_FILE'"
+		fi
+
+		if [[ $SSL -eq 1 ]]; then NEXT="$NEXT -k https";
+		else NEXT="$NEXT http"; fi
+
+		if [[ $NEXT_VHOST == "" ]]; then
+			NEXT="$NEXT://${VHOST_LOC}$NEXT_URL"
+		else
+			NEXT="$NEXT://${NEXT_VHOST}$NEXT_URL"
+		fi
+		OUT_F="-"
+	fi
+
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
 -s -k --show-error $EXTENDED_OUT $F \
--D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL >$EXT_F 2>$ERR_F $FG" > $CMD_F
+-D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
 	# cmd to debug
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
--s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL" > ${CMD_F}.dbg
+-s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT" > ${CMD_F}.dbg
 
 	bash $CMD_F
 
 	if [[ "$BACKGROUND" -ne 1 ]]; then
 		mask_headers $HEAD_F
 	fi
-	pretty_json $OUT_F
-	mask_out $OUT_F
+	if [[ NEXT == "" ]]; then
+		pretty_json $OUT_F
+		mask_out $OUT_F
+	fi
 
 	if [[ "$FILTER" != "" ]]; then
 		grep "$FILTER" $ERR_F > $FILTER_F

@@ -1,0 +1,33 @@
+## begin conf
+SecRequestBodyAccess on
+SecRuleEngine on
+SecDefaultAction "pass,log,phase:3"
+SecDefaultAction "pass,log,phase:4"
+## end conf
+
+SecDebugLog /tmp/debug.log
+SecDebugLogLevel 9
+
+SecDefaultAction "phase:1,log,auditlog,pass"
+SecDefaultAction "phase:2,log,auditlog,pass"
+
+SecAction \
+  "id:900000,\
+   phase:1,\
+   nolog,\
+   pass,\
+   t:none,\
+   setvar:tx.paranoia_level=1"
+
+SecCollectionTimeout 600
+
+
+SecAction \
+ "id:900990,\
+  phase:1,\
+  nolog,\
+  pass,\
+  t:none,\
+  setvar:tx.crs_setup_version=320"
+
+
