@@ -468,6 +468,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 			}
 			case http::HTTP_HEADER_NAME::EXPECT: {
 				if (header_value == "100-continue") {
+					request.expect_100_cont_header = true;
 					zcu_log_print(
 						LOG_DEBUG,
 						"%s():%d: client Expects 100 continue",
