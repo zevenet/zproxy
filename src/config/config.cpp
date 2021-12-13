@@ -204,22 +204,22 @@ void Config::parse_file()
 		} else if (!regexec(&regex_set::ListenHTTP, lin, 4, matches,
 				    0)) {
 			if (listeners == nullptr)
-				listeners = parse_HTTP();
+				listeners = parse_HTTP(false);
 			else {
 				for (lstn = listeners; lstn->next;
 				     lstn = lstn->next)
 					;
-				lstn->next = parse_HTTP();
+				lstn->next = parse_HTTP(false);
 			}
 		} else if (!regexec(&regex_set::ListenHTTPS, lin, 4, matches,
 				    0)) {
 			if (listeners == nullptr)
-				listeners = parse_HTTPS();
+				listeners = parse_HTTP(true);
 			else {
 				for (lstn = listeners; lstn->next;
 				     lstn = lstn->next)
 					;
-				lstn->next = parse_HTTPS();
+				lstn->next = parse_HTTP(true);
 			}
 		} else if (!regexec(&regex_set::Service, lin, 4, matches, 0)) {
 			if (services == nullptr)
@@ -403,235 +403,6 @@ void Config::parseReplaceHeader(char *lin, regmatch_t *matches,
 	current->replace = replace_;
 }
 
-std::shared_ptr<ListenerConfig> Config::parse_HTTP()
-{
-	char lin[ZCU_DEF_BUFFER_SIZE];
-	auto res = std::make_shared<ListenerConfig>();
-	std::shared_ptr<ServiceConfig> svc;
-	MATCHER *m;
-	int has_addr, has_port;
-	regmatch_t matches[5];
-
-	res->name = name;
-	res->id = listener_id_counter++;
-	res->to = clnt_to;
-	res->rewr_loc = 1;
-#if WAF_ENABLED
-	res->errwaf = "The request was rejected by the server.";
-#endif
-	res->errreq = "Invalid request.";
-	res->err414 = "Request URI is too long.";
-	res->err500 =
-		"An internal server error occurred. Please try again later.";
-	res->err501 = "This method may not be used.";
-	res->err503 = "The service is not available. Please try again later.";
-	res->log_level = log_level;
-	res->alive_to = alive_to;
-	res->ignore100continue = ignore_100;
-
-	res->ssl_forward_sni_server_name = false;
-	if (regcomp(&res->verb, xhttp[0],
-		    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-		conf_err("xHTTP bad default pattern - aborted");
-	has_addr = has_port = 0;
-	while (conf_fgets(lin, ZCU_DEF_BUFFER_SIZE)) {
-		if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
-			lin[strlen(lin) - 1] = '\0';
-		if (!regexec(&regex_set::Address, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			addrinfo addr{};
-			if (zcu_net_get_host(lin + matches[1].rm_so, &addr,
-					     PF_UNSPEC))
-				conf_err("Unknown Listener address");
-			if (addr.ai_family != AF_INET &&
-			    addr.ai_family != AF_INET6)
-				conf_err("Unknown Listener address family");
-			free(addr.ai_addr);
-			has_addr = 1;
-			res->address = lin + matches[1].rm_so;
-		} else if (!regexec(&regex_set::Name, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->name = std::string(
-				lin + matches[1].rm_so,
-				static_cast<size_t>(matches[1].rm_eo -
-						    matches[1].rm_so));
-		} else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
-			has_port = 1;
-			lin[matches[1].rm_eo] = '\0';
-			res->port = std::atoi(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::Disabled, lin, 4, matches, 0)) {
-			res->disabled = atoi(lin + matches[1].rm_so) == 1;
-		} else if (!regexec(&regex_set::xHTTP, lin, 4, matches, 0)) {
-			int n;
-
-			n = atoi(lin + matches[1].rm_so);
-			regfree(&res->verb);
-			if (regcomp(&res->verb, xhttp[n],
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("xHTTP bad pattern - aborted");
-		} else if (!regexec(&regex_set::Client, lin, 4, matches, 0)) {
-			res->to = atoi(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::CheckURL, lin, 4, matches, 0)) {
-			if (res->has_pat)
-				conf_err("CheckURL multiple pattern - aborted");
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&res->url_pat, lin + matches[1].rm_so,
-				    REG_NEWLINE | REG_EXTENDED |
-					    (ignore_case ? REG_ICASE : 0)))
-				conf_err("CheckURL bad pattern - aborted");
-			res->has_pat = 1;
-#if WAF_ENABLED
-		} else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->errwaf = file2str(lin + matches[1].rm_so);
-#endif
-		} else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->err414 = file2str(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::Err500, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->err500 = file2str(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::Err501, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->err501 = file2str(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::Err503, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->err503 = file2str(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
-				    0)) {
-			res->max_req = atoll(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
-				    matches, 0)) {
-			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
-			res->rewr_loc_path =
-				(matches[1].rm_eo <= matches[2].rm_so) ? 1 : 0;
-		} else if (!regexec(&regex_set::AddRequestHeader, lin, 4,
-				    matches, 0)) {
-			parseAddHeader(&res->add_head_req, lin, matches);
-		} else if (!regexec(&regex_set::AddResponseHeader, lin, 4,
-				    matches, 0)) {
-			parseAddHeader(&res->add_head_resp, lin, matches);
-		} else if (!regexec(&regex_set::RemoveRequestHeader, lin, 4,
-				    matches, 0)) {
-			parseRemoveHeader(&res->head_off_req, lin, matches);
-		} else if (!regexec(&regex_set::RemoveResponseHeader, lin, 4,
-				    matches, 0)) {
-			parseRemoveHeader(&res->head_off_resp, lin, matches);
-		} else if (!regexec(&regex_set::RewriteDestination, lin, 4,
-				    matches, 0)) {
-			res->rewr_dest = atoi(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::RewriteHost, lin, 4, matches,
-				    0)) {
-			res->rewr_host = atoi(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::LogLevel, lin, 4, matches, 0)) {
-			res->log_level = atoi(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::SSLConfigFile, lin, 4, matches,
-				    0)) {
-			conf_err(
-				"SSLConfigFile directive not allowed in HTTP listeners.");
-		} else if (!regexec(&regex_set::SSLConfigSection, lin, 4,
-				    matches, 0)) {
-			conf_err(
-				"SSLConfigSection directive not allowed in HTTP listeners.");
-		} else if (!regexec(&regex_set::ForceHTTP10, lin, 4, matches,
-				    0)) {
-			m = new MATCHER();
-			m->next = res->forcehttp10;
-			res->forcehttp10 = m;
-			lin[matches[1].rm_eo] = '\0';
-			if (regcomp(&m->pat, lin + matches[1].rm_so,
-				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("ForceHTTP10 bad pattern");
-		} else if (!regexec(&regex_set::Service, lin, 4, matches, 0)) {
-			if (res->services == nullptr) {
-				res->services = parseService(nullptr);
-				if (res->services->sts >= 0)
-					conf_err(
-						"StrictTransportSecurity not allowed in HTTP listener - "
-						"aborted");
-			} else {
-				for (svc = res->services; svc->next;
-				     svc = svc->next)
-					;
-				svc->next = parseService(nullptr);
-				if (svc->next->sts >= 0)
-					conf_err(
-						"StrictTransportSecurity not allowed in HTTP listener - "
-						"aborted");
-			}
-		} else if (!regexec(&regex_set::ServiceName, lin, 4, matches,
-				    0)) {
-			lin[matches[1].rm_eo] = '\0';
-			if (res->services == nullptr)
-				res->services =
-					parseService(lin + matches[1].rm_so);
-			else {
-				for (svc = res->services; svc->next;
-				     svc = svc->next)
-					;
-				svc->next =
-					parseService(lin + matches[1].rm_so);
-			}
-		} else if (!regexec(&regex_set::ReplaceHeader, lin, 5, matches,
-				    0)) {
-			parseReplaceHeader(lin, matches,
-					   &res->replace_header_request,
-					   &res->replace_header_response);
-		} else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
-			if (!has_addr || !has_port)
-				conf_err(
-					"ListenHTTP missing Address or Port - aborted");
-			return res;
-#if WAF_ENABLED
-		} else if (!regexec(&regex_set::WafRules, lin, 4, matches, 0)) {
-			auto file = std::string(lin + matches[1].rm_so,
-						matches[1].rm_eo -
-							matches[1].rm_so);
-			if (!res->rules) {
-				res->rules =
-					std::make_shared<modsecurity::Rules>();
-			}
-			auto err = res->rules->loadFromUri(file.data());
-			if (err == -1) {
-				fprintf(stderr,
-					"error loading waf ruleset file %s: %s",
-					file.data(),
-					res->rules->getParserError().data());
-				conf_err("Error loading waf ruleset");
-				break;
-			}
-			if (!res->rules) {
-				res->rules =
-					std::make_shared<modsecurity::Rules>();
-			}
-			zcu_log_print(LOG_DEBUG, "Rules: ");
-			for (int i = 0;
-			     i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
-				auto rule = res->rules->getRulesForPhase(i);
-				if (rule) {
-					zcu_log_print(LOG_DEBUG,
-						      "Phase: %d ( %d rules )",
-						      i, rule->size());
-					for (auto &x : *rule) {
-						zcu_log_print(
-							LOG_DEBUG,
-							"\tRule Id: %d From %s at %d ",
-							x->m_ruleId,
-							x->m_fileName.data(),
-							x->m_lineNumber);
-					}
-				}
-			}
-#endif
-		} else {
-			conf_err("unknown directive - aborted");
-		}
-	}
-
-	conf_err("ListenHTTP premature EOF");
-	return nullptr;
-}
-
 void Config::parseAddHeader(std::string *add_head, char *lin,
 			    regmatch_t *matches)
 {
@@ -672,25 +443,14 @@ void Config::parseRemoveHeader(MATCHER **head_off, char *lin,
 		conf_err("RemoveHeader bad pattern - aborted");
 }
 
-std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
+std::shared_ptr<ListenerConfig> Config::parse_HTTP(bool ssl)
 {
 	char lin[ZCU_DEF_BUFFER_SIZE];
 	auto res = std::make_shared<ListenerConfig>();
 	std::shared_ptr<ServiceConfig> svc;
 	MATCHER *m;
-	int has_addr, has_port, has_other;
-	unsigned long ssl_op_enable, ssl_op_disable;
-	std::shared_ptr<SNI_CERTS_CTX> pc;
+	int has_addr, has_port;
 	regmatch_t matches[5];
-	bool openssl_file_exists = false;
-
-	ssl_op_enable = SSL_OP_ALL;
-#ifdef SSL_OP_NO_COMPRESSION
-	ssl_op_enable |= SSL_OP_NO_COMPRESSION;
-#endif
-	ssl_op_disable = SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION |
-			 SSL_OP_LEGACY_SERVER_CONNECT |
-			 SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
 	res->to = clnt_to;
 	res->rewr_loc = 1;
@@ -705,15 +465,32 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 		"An internal server error occurred. Please try again later.";
 	res->err501 = "This method may not be used.";
 	res->err503 = "The service is not available. Please try again later.";
+	res->log_level = log_level;
+	res->alive_to = alive_to;
+	res->ignore100continue = ignore_100;
+
+	// SSL params
+	int has_other;
+	unsigned long ssl_op_enable, ssl_op_disable;
+	std::shared_ptr<SNI_CERTS_CTX> pc;
+	bool openssl_file_exists = false;
+	ssl_op_enable = SSL_OP_ALL;
+#ifdef SSL_OP_NO_COMPRESSION
+	ssl_op_enable |= SSL_OP_NO_COMPRESSION;
+#endif
+	ssl_op_disable = SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION |
+			 SSL_OP_LEGACY_SERVER_CONNECT |
+			 SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+	res->ssl_forward_sni_server_name = (ssl) ? true : false;
+
 	res->errnossl = "Please use HTTPS.";
 	res->codenossl = http::Code::BadRequest;
 	res->nossl_url = "";
 	res->nossl_redir = 0;
 	res->allow_client_reneg = 0;
-	res->log_level = log_level;
-	res->alive_to = alive_to;
 	res->engine_id = engine_id;
-	res->ssl_forward_sni_server_name = true;
+
 	if (regcomp(&res->verb, xhttp[0],
 		    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
 		conf_err("xHTTP bad default pattern - aborted");
@@ -751,6 +528,10 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				conf_err("Error loading waf ruleset");
 				break;
 			}
+			if (!res->rules) {
+				res->rules =
+					std::make_shared<modsecurity::Rules>();
+			}
 			zcu_log_print(LOG_DEBUG, "Rules: ");
 			for (int i = 0;
 			     i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
@@ -777,9 +558,11 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				static_cast<size_t>(matches[1].rm_eo -
 						    matches[1].rm_so));
 		} else if (!regexec(&regex_set::Port, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
 			has_port = 1;
-			res->port = atoi(lin + matches[1].rm_so);
+			lin[matches[1].rm_eo] = '\0';
+			res->port = std::atoi(lin + matches[1].rm_so);
+		} else if (!regexec(&regex_set::Disabled, lin, 4, matches, 0)) {
+			res->disabled = atoi(lin + matches[1].rm_so) == 1;
 		} else if (!regexec(&regex_set::xHTTP, lin, 4, matches, 0)) {
 			int n;
 
@@ -790,8 +573,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				conf_err("xHTTP bad pattern - aborted");
 		} else if (!regexec(&regex_set::Client, lin, 4, matches, 0)) {
 			res->to = atoi(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::Disabled, lin, 4, matches, 0)) {
-			res->disabled = atoi(lin + matches[1].rm_so) == 1;
+
 		} else if (!regexec(&regex_set::CheckURL, lin, 4, matches, 0)) {
 			if (res->has_pat)
 				conf_err("CheckURL multiple pattern - aborted");
@@ -801,6 +583,11 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 					    (ignore_case ? REG_ICASE : 0)))
 				conf_err("CheckURL bad pattern - aborted");
 			res->has_pat = 1;
+#if WAF_ENABLED
+		} else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
+			lin[matches[1].rm_eo] = '\0';
+			res->errwaf = file2str(lin + matches[1].rm_so);
+#endif
 		} else if (!regexec(&regex_set::Err414, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			res->err414 = file2str(lin + matches[1].rm_so);
@@ -814,6 +601,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			lin[matches[1].rm_eo] = '\0';
 			res->err503 = file2str(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::ErrNoSsl, lin, 4, matches, 0)) {
+			require_ssl();
 			res->codenossl = http::Code::BadRequest;
 			if (matches[1].rm_eo != matches[1].rm_so) {
 				res->codenossl = static_cast<http::Code>(
@@ -825,13 +613,10 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			}
 			lin[matches[2].rm_eo] = '\0';
 			res->errnossl = file2str(lin + matches[2].rm_so);
-#if WAF_ENABLED
-		} else if (!regexec(&regex_set::ErrWAF, lin, 4, matches, 0)) {
-			lin[matches[1].rm_eo] = '\0';
-			res->errwaf = file2str(lin + matches[1].rm_so);
-#endif
+
 		} else if (!regexec(&regex_set::NoSslRedirect, lin, 4, matches,
 				    0)) {
+			require_ssl();
 			res->nossl_redir = 302;
 			if (matches[1].rm_eo != matches[1].rm_so)
 				res->nossl_redir = atoi(lin + matches[1].rm_so);
@@ -848,13 +633,15 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				res->nossl_url.data()[matches[3].rm_so] = '\0';
 			if (strstr(res->nossl_url.c_str(), MACRO::VHOST_STR))
 				conf_err("The macro cannot be used here");
+		} else if (!regexec(&regex_set::ForwardSNI, lin, 4, matches,
+				    0)) {
+			require_ssl();
+			res->ssl_forward_sni_server_name =
+				std::atoi(lin + matches[1].rm_so) == 1;
 		} else if (!regexec(&regex_set::MaxRequest, lin, 4, matches,
 				    0)) {
 			res->max_req = atoll(lin + matches[1].rm_so);
-		} else if (!regexec(&regex_set::ForwardSNI, lin, 4, matches,
-				    0)) {
-			res->ssl_forward_sni_server_name =
-				std::atoi(lin + matches[1].rm_so) == 1;
+
 		} else if (!regexec(&regex_set::RewriteLocation, lin, 4,
 				    matches, 0)) {
 			res->rewr_loc = std::atoi(lin + matches[1].rm_so);
@@ -881,13 +668,16 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 		} else if (!regexec(&regex_set::LogLevel, lin, 4, matches, 0)) {
 			res->log_level = atoi(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::Cert, lin, 4, matches, 0)) {
+			require_ssl();
 			lin[matches[1].rm_eo] = '\0';
 			load_cert(has_other, res, lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::CertDir, lin, 4, matches, 0)) {
+			require_ssl();
 			lin[matches[1].rm_eo] = '\0';
 			load_certdir(has_other, res, lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::ClientCert, lin, 4, matches,
 				    0)) {
+			require_ssl();
 			has_other = 1;
 			if (res->ctx == nullptr)
 				conf_err(
@@ -944,6 +734,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			}
 		} else if (!regexec(&regex_set::DisableProto, lin, 4, matches,
 				    0)) {
+			require_ssl();
 			lin[matches[1].rm_eo] = '\0';
 			if (strcasecmp(lin + matches[1].rm_so, "SSLv2") == 0)
 				ssl_op_enable |= SSL_OP_NO_SSLv2;
@@ -992,6 +783,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 #endif
 		} else if (!regexec(&regex_set::SSLAllowClientRenegotiation,
 				    lin, 4, matches, 0)) {
+			require_ssl();
 			res->allow_client_reneg = atoi(lin + matches[1].rm_so);
 			if (res->allow_client_reneg == 2) {
 				ssl_op_enable |=
@@ -1006,6 +798,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			}
 		} else if (!regexec(&regex_set::SSLHonorCipherOrder, lin, 4,
 				    matches, 0)) {
+			require_ssl();
 			if (std::atoi(lin + matches[1].rm_so)) {
 				ssl_op_enable |=
 					SSL_OP_CIPHER_SERVER_PREFERENCE;
@@ -1018,6 +811,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 					~SSL_OP_CIPHER_SERVER_PREFERENCE;
 			}
 		} else if (!regexec(&regex_set::Ciphers, lin, 4, matches, 0)) {
+			require_ssl();
 			has_other = 1;
 			if (res->ctx == nullptr)
 				conf_err(
@@ -1027,6 +821,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 				SSL_CTX_set_cipher_list(pc->ctx.get(),
 							lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::CAlist, lin, 4, matches, 0)) {
+			require_ssl();
 			STACK_OF(X509_NAME) * cert_names;
 
 			has_other = 1;
@@ -1043,6 +838,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 							   cert_names);
 		} else if (!regexec(&regex_set::VerifyList, lin, 4, matches,
 				    0)) {
+			require_ssl();
 			has_other = 1;
 			if (res->ctx == nullptr)
 				conf_err(
@@ -1057,15 +853,18 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 						"SSL_CTX_load_verify_locations failed - aborted");
 		} else if (!regexec(&regex_set::SSLConfigFile, lin, 4, matches,
 				    0)) {
+			require_ssl();
 			lin[matches[1].rm_eo] = '\0';
 			res->ssl_config_file =
 				std::string(lin + matches[1].rm_so);
 			openssl_file_exists = true;
 		} else if (!regexec(&regex_set::SSLConfigSection, lin, 4,
 				    matches, 0)) {
+			require_ssl();
 			lin[matches[1].rm_eo] = '\0';
 			res->ssl_config_section = lin + matches[1].rm_so;
 		} else if (!regexec(&regex_set::CRLlist, lin, 4, matches, 0)) {
+			require_ssl();
 			X509_STORE *store;
 			X509_LOOKUP *lookup;
 
@@ -1097,6 +896,7 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			//#endif
 		} else if (!regexec(&regex_set::NoHTTPS11, lin, 4, matches,
 				    0)) {
+			require_ssl();
 			res->noHTTPS11 = std::atoi(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::ForceHTTP10, lin, 4, matches,
 				    0)) {
@@ -1106,9 +906,11 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 			lin[matches[1].rm_eo] = '\0';
 			if (regcomp(&m->pat, lin + matches[1].rm_so,
 				    REG_ICASE | REG_NEWLINE | REG_EXTENDED))
-				conf_err("bad pattern");
+				conf_err("ForceHTTP10 bad pattern");
+
 		} else if (!regexec(&regex_set::SSLUncleanShutdown, lin, 4,
 				    matches, 0)) {
+			require_ssl();
 			if ((m = new MATCHER()) == nullptr)
 				conf_err("out of memory");
 			m->next = res->ssl_uncln_shutdn;
@@ -1120,11 +922,19 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 		} else if (!regexec(&regex_set::Service, lin, 4, matches, 0)) {
 			if (res->services == nullptr) {
 				res->services = parseService(nullptr);
+				if (!ssl && res->services->sts >= 0)
+					conf_err(
+						"StrictTransportSecurity not allowed in HTTP listener - "
+						"aborted");
 			} else {
 				for (svc = res->services; svc->next;
 				     svc = svc->next)
 					;
 				svc->next = parseService(nullptr);
+				if (!ssl && svc->next->sts >= 0)
+					conf_err(
+						"StrictTransportSecurity not allowed in HTTP listener - "
+						"aborted");
 			}
 		} else if (!regexec(&regex_set::ServiceName, lin, 4, matches,
 				    0)) {
@@ -1145,92 +955,106 @@ std::shared_ptr<ListenerConfig> Config::parse_HTTPS()
 					   &res->replace_header_request,
 					   &res->replace_header_response);
 		} else if (!regexec(&regex_set::End, lin, 4, matches, 0)) {
-			if (openssl_file_exists) {
-				res->ctx = std::make_shared<SNI_CERTS_CTX>();
-				res->ctx->ctx = std::shared_ptr<SSL_CTX>(
-					SSL_CTX_new(SSLv23_server_method()),
-					&::__SSL_CTX_free);
-			}
-			if ((!has_addr || !has_port || res->ctx == nullptr) &&
-			    !openssl_file_exists)
+			if (!has_addr || !has_port)
 				conf_err(
-					"ListenHTTPS missing Address, Port, SSL Config file or Certificate "
-					"- aborted");
-			if (!openssl_file_exists) {
-				for (pc = res->ctx; pc; pc = pc->next) {
-					SSL_CTX_set_app_data(pc->ctx.get(),
-							     res.get());
-					SSL_CTX_set_mode(
-						pc->ctx.get(),
-						SSL_MODE_RELEASE_BUFFERS);
-					SSL_CTX_set_options(pc->ctx.get(),
-							    ssl_op_enable);
-					SSL_CTX_clear_options(pc->ctx.get(),
-							      ssl_op_disable);
-					sprintf(lin, "%d-zproxy-%ld", getpid(),
-						random());
-					SSL_CTX_set_session_id_context(
-						pc->ctx.get(),
-						reinterpret_cast<unsigned char *>(
-							lin),
-						static_cast<unsigned int>(
-							strlen(lin)));
-					SSL_CTX_set_tmp_rsa_callback(
-						pc->ctx,
-						global::SslHelper::
-							RSA_tmp_callback);
-					SSL_CTX_set_info_callback(
-						pc->ctx.get(),
-						global::SslHelper::
-							SSLINFO_callback);
-					if (nullptr == DHCustom_params)
-						SSL_CTX_set_tmp_dh_callback(
-							pc->ctx.get(),
-							global::SslHelper::
-								DH_tmp_callback);
-					else
-						SSL_CTX_set_tmp_dh(
-							pc->ctx.get(),
-							DHCustom_params);
+					"ListenHTTP missing Address or Port - aborted");
+			if (ssl) {
+				if (openssl_file_exists) {
+					res->ctx =
+						std::make_shared<SNI_CERTS_CTX>();
+					res->ctx->ctx = std::shared_ptr<SSL_CTX>(
+						SSL_CTX_new(
+							SSLv23_server_method()),
+						&::__SSL_CTX_free);
+				}
 
-#ifndef OPENSSL_NO_ECDH
-					/* This generates a EC_KEY structure with no key, but a group defined
-					 */
+				if (res->ctx == nullptr && !openssl_file_exists)
+					conf_err(
+						"ListenHTTPS missing SSL Config file or Certificate "
+						"- aborted");
 
-					if (res->ecdh_curve_nid != 0 ||
-					    EC_nid != 0) {
-						if (res->ecdh_curve_nid == 0)
-							res->ecdh_curve_nid =
-								EC_nid;
-						EC_KEY *ecdh;
-						if ((ecdh = EC_KEY_new_by_curve_name(
-							     res->ecdh_curve_nid)) ==
-						    nullptr)
-							conf_err(
-								"Unable to generate Listener temp ECDH key");
-						SSL_CTX_set_tmp_ecdh(
-							pc->ctx.get(), ecdh);
+				if (!openssl_file_exists) {
+					for (pc = res->ctx; pc; pc = pc->next) {
+						SSL_CTX_set_app_data(
+							pc->ctx.get(),
+							res.get());
+						SSL_CTX_set_mode(
+							pc->ctx.get(),
+							SSL_MODE_RELEASE_BUFFERS);
 						SSL_CTX_set_options(
 							pc->ctx.get(),
-							SSL_OP_SINGLE_ECDH_USE);
-						EC_KEY_free(ecdh);
-					}
+							ssl_op_enable);
+						SSL_CTX_clear_options(
+							pc->ctx.get(),
+							ssl_op_disable);
+						sprintf(lin, "%d-zproxy-%ld",
+							getpid(), random());
+						SSL_CTX_set_session_id_context(
+							pc->ctx.get(),
+							reinterpret_cast<
+								unsigned char *>(
+								lin),
+							static_cast<unsigned int>(
+								strlen(lin)));
+						SSL_CTX_set_tmp_rsa_callback(
+							pc->ctx,
+							global::SslHelper::
+								RSA_tmp_callback);
+						SSL_CTX_set_info_callback(
+							pc->ctx.get(),
+							global::SslHelper::
+								SSLINFO_callback);
+						if (nullptr == DHCustom_params)
+							SSL_CTX_set_tmp_dh_callback(
+								pc->ctx.get(),
+								global::SslHelper::
+									DH_tmp_callback);
+						else
+							SSL_CTX_set_tmp_dh(
+								pc->ctx.get(),
+								DHCustom_params);
+
+#ifndef OPENSSL_NO_ECDH
+						/* This generates a EC_KEY structure with no key, but a group defined
+					 */
+
+						if (res->ecdh_curve_nid != 0 ||
+						    EC_nid != 0) {
+							if (res->ecdh_curve_nid ==
+							    0)
+								res->ecdh_curve_nid =
+									EC_nid;
+							EC_KEY *ecdh;
+							if ((ecdh = EC_KEY_new_by_curve_name(
+								     res->ecdh_curve_nid)) ==
+							    nullptr)
+								conf_err(
+									"Unable to generate Listener temp ECDH key");
+							SSL_CTX_set_tmp_ecdh(
+								pc->ctx.get(),
+								ecdh);
+							SSL_CTX_set_options(
+								pc->ctx.get(),
+								SSL_OP_SINGLE_ECDH_USE);
+							EC_KEY_free(ecdh);
+						}
 #if defined(SSL_CTX_set_ecdh_auto)
-					else {
-						SSL_CTX_set_ecdh_auto(res->ctx,
-								      1);
+						else {
+							SSL_CTX_set_ecdh_auto(
+								res->ctx, 1);
+						}
+#endif
+#endif
 					}
-#endif
-#endif
 				}
 			}
 			return res;
 		} else {
-			conf_err("unknown directive");
+			conf_err("unknown directive - aborted");
 		}
 	}
 
-	conf_err("ListenHTTPS premature EOF");
+	conf_err("ListenHTTP premature EOF");
 	return nullptr;
 }
 

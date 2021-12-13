@@ -469,7 +469,8 @@ exec_curl () {
 	if [[ "$BACKGROUND" -ne 1 ]]; then
 		mask_headers $HEAD_F
 	fi
-	if [[ NEXT == "" ]]; then
+
+	if [[ $NEXT == "" ]]; then
 		pretty_json $OUT_F
 		mask_out $OUT_F
 	fi
