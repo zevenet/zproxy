@@ -86,6 +86,8 @@ class HttpData {
 	size_t chunk_size_left;
 	/** This enumerate indicates the chunked mechanism status. */
 	http::CHUNKED_STATUS chunked_status{ CHUNKED_STATUS::CHUNKED_DISABLED };
+	bool expect_100_cont_header{ false };
+
 	http::HTTP_VERSION http_version;
 	http::REQUEST_METHOD request_method;
 	http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
