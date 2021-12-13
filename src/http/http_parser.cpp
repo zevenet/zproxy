@@ -56,6 +56,7 @@ void http_parser::HttpData::reset_parser()
 	extra_headers.clear();
 	iov_size = 0;
 	chunk_size_left = 0;
+	expect_100_cont_header = false;
 	http_message_str.clear();
 }
 
