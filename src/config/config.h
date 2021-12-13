@@ -61,6 +61,10 @@ constexpr auto F_PID = "/var/run/zproxy.pid";
 constexpr int MAX_FIN = 100;
 constexpr int UNIX_PATH_MAX = 108;
 
+#define require_ssl()                                                          \
+	if (!ssl)                                                              \
+	conf_err("directive for HTTPS listener")
+
 void __SSL_CTX_free(SSL_CTX *ssl_ctx);
 class Config : public Counter<Config> {
 	const char *xhttp[6] = {
@@ -166,12 +170,7 @@ class Config : public Counter<Config> {
 	/*
 	 * parse an HTTP listener
 	 */
-	std::shared_ptr<ListenerConfig> parse_HTTP();
-
-	/*
-	 * parse an HTTPS listener
-	 */
-	std::shared_ptr<ListenerConfig> parse_HTTPS();
+	std::shared_ptr<ListenerConfig> parse_HTTP(bool ssl);
 
 	regex_t **get_subjectaltnames(X509 *x509, unsigned int *count);
 
