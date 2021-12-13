@@ -153,7 +153,7 @@ DESCRIPTION="Disable the backend 0 in the service 0"
 | URL      | It is the HTTP URL used for the request (/, /svc...)       | True
 | VHOST      | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
-| HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'       |
+| HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'. A file with the headers can be defined if the value begins with '@'       |
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | BACKGROUND     | If this flag is set with **1** the request will be executed in background. The command **killwrk** can be defined to stop it |

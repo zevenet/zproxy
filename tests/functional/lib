@@ -412,11 +412,23 @@ exec_curl () {
 		F="-v"
 	fi
 	if [[ $HEADERS != "" ]]; then
-		while read -r IT
-		do
-			H="$H -H \"$IT\""
-		done < <(echo "$HEADERS" | tr ";" "\n")
-
+		if [[ $HEADERS =~ ^@ ]]; then
+			HEADERS=`cut -c2- <<< $HEADERS`
+			while read -r IT
+			do
+				H="$H -H \"$IT\""
+			done < <(cat $HEADERS)
+			#~ for LINE in `cat $HEADERS`
+			#~ do
+				#~ echo "$LINE"
+				#~ H="$H -H \"$LINE\""
+			#~ done
+		else
+			while read -r IT
+			do
+				H="$H -H \"$IT\""
+			done < <(echo "$HEADERS" | tr ";" "\n")
+		fi
 	fi
 	if [[ $BODY != "" ]]; then
 		B="-d @$BODY"

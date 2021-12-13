@@ -1,0 +1,6 @@
+DESCRIPTION="Send 65 headers with 1024 character. It should return an error"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+HEADERS="@req_headers.txt"
