@@ -218,7 +218,6 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 {
 	zcu_log_print(LOG_DEBUG, "%s():%d: ", __FUNCTION__, __LINE__);
 
-	//  if (LIKELY(reset))
 	char *http_message;
 	size_t http_message_length;
 	reset_parser();
@@ -262,10 +261,16 @@ http_parser::HttpData::parseRequest(const char *data, const size_t data_size,
 		if (hasPendingBody())
 			return PARSE_RESULT::INCOMPLETE;
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
-	} else if (pret == -2) { /* request is incomplete, continue the loop */
+	} else if (pret == -2) {
 		if (method != nullptr && minor_version == -1)
 			return PARSE_RESULT::TOOLONG;
-		else
+		else if (MAX_DATA_SIZE <= data_size) {
+			zcu_log_print(
+				LOG_INFO,
+				"the request cannot be parsed, buffer is complete (%d Bytes)",
+				MAX_DATA_SIZE);
+			return PARSE_RESULT::FAILED;
+		} else /* request is incomplete, continue the loop */
 			return PARSE_RESULT::INCOMPLETE;
 	}
 	return PARSE_RESULT::FAILED;
@@ -321,8 +326,15 @@ http_parser::HttpData::parseResponse(const char *data, const size_t data_size,
 		printResponse();
 #endif
 		return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
-	} else if (pret == -2) { /* response is incomplete, continue the loop */
-		return PARSE_RESULT::INCOMPLETE;
+	} else if (pret == -2) {
+		if (MAX_DATA_SIZE <= data_size) {
+			zcu_log_print(
+				LOG_INFO,
+				"the response cannot be parsed, buffer is complete (%d Bytes)",
+				MAX_DATA_SIZE);
+			return PARSE_RESULT::TOOLONG;
+		} else /* response is incomplete, continue the loop */
+			return PARSE_RESULT::INCOMPLETE;
 	}
 	return PARSE_RESULT::FAILED;
 }

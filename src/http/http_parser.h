@@ -20,14 +20,13 @@
  */
 #pragma once
 
+#include "../util/common.h"
 #include "http.h"
 #include "pico_http_parser.h"
 #include "regex"
 #include <map>
 #include <string>
 #include <sys/uio.h>
-
-#define MAX_DATA_SIZE (1024 * 64)
 
 #define cmp_header_name(header, val)                                           \
 	header->name_len == strlen(val) &&                                     \

@@ -36,10 +36,6 @@
 #include <sys/un.h>
 #include <sys/uio.h>
 
-#ifndef MAX_DATA_SIZE
-#define MAX_DATA_SIZE (1024 * 64)
-#endif
-
 #define FAKE_ZERO_COPY 0
 
 #if ENABLE_ZERO_COPY

@@ -26,3 +26,9 @@
 #define UNIQUE_NAME_I(a, b) UNIQUE_NAME_II(~, a##b)
 #define UNIQUE_NAME_II(p, res) res
 #define UNIQUE_NAME(base) UNIQUE_NAME_0(base, __COUNTER__)
+
+// Maximum buffer data. The requet or response headers can't be bigger
+// than this value
+#ifndef MAX_DATA_SIZE
+#define MAX_DATA_SIZE (1024 * 64)
+#endif
