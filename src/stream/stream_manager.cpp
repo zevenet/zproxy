@@ -1521,8 +1521,10 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 				stream->request.reset_parser();
 			} else if (stream->request.message_bytes_left > 0) {
 				stream->request.message_bytes_left -= written;
-				if (stream->request.message_bytes_left == 0) {
+				if (stream->request.message_bytes_left <= 0) {
 					stream->request.reset_parser();
+					stream->clearStatus(
+						STREAM_STATUS::REQUEST_PENDING);
 				}
 			}
 		}
