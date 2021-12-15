@@ -1,0 +1,5 @@
+HTTP/1.0 302 Found
+Content-Type: text/html
+Content-Length: 167
+Location: https://waf.action/phase0
+

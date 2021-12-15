@@ -1,0 +1,44 @@
+DESCRIPTION="This request is allowed"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+SSL=1
+########################
+DESCRIPTION="This request is denied due to URI"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/phase0"
+SSL=1
+########################
+DESCRIPTION="This request is denied due to request header"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+SSL=1
+HEADERS="head: phase1"
+########################
+DESCRIPTION="This request is denied due to request body"
+CMD=curl
+CL=1
+METHOD="POST"
+URL="/"
+SSL=1
+BODY="phase2_body"
+########################
+DESCRIPTION="This request is denied due to response header"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/resp-headers/location/phase3"
+SSL=1
+########################
+DESCRIPTION="This request is denied due to response body"
+CMD=curl
+CL=1
+METHOD="POST"
+URL="/echo"
+SSL=1
+BODY="phase4_body"

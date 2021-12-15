@@ -825,11 +825,3 @@ SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 4" "id:941018,phase:2,pass,nolog,skipAf
 
 
 SecMarker "END-REQUEST-941-APPLICATION-ATTACK-XSS"
-
-
-SecRule REQUEST_URI "@beginsWith /deny" "\
-	id:2,\
-	msg:'asdf',\
-	phase:1,\
-	status:401,\
-	deny" #

@@ -5,6 +5,9 @@ SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:2"
 SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:3"
 SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:4"
 
+SecRequestBodyAccess on
+SecResponseBodyAccess on
+
 SecDebugLog /tmp/debug.log
 SecDebugLogLevel 4
 
@@ -28,4 +31,37 @@ SecRule REQUEST_HEADERS:X-Forwarded-For "@ipMatch 10.1.1.0/24" "\
 	msg:'Check x-forwarded-to from client',\
 	phase:1,\
 	deny" #
+
+
+# check all modsecurity phases:
+
+SecRule REQUEST_URI "@contains phase0" "\
+	id:5,\
+	msg:'reject uri',\
+	phase:1,\
+	redirect:'https://waf.action/phase0'" #
+
+SecRule REQUEST_HEADERS "@contains phase1" "\
+	id:6,\
+	msg:'reject request headers',\
+	phase:1,\
+	redirect:'https://waf.action/phase1'" #
+
+SecRule REQUEST_BODY "@contains phase2" "\
+	id:7,\
+	msg:'reject request body',\
+	phase:2,\
+	redirect:'https://waf.action/phase2'" #
+
+SecRule RESPONSE_HEADERS "@contains phase3" "\
+	id:8,\
+	msg:'reject response headers',\
+	phase:3,\
+	redirect:'https://waf.action/phase3'" #
+
+SecRule RESPONSE_BODY "@contains phase4" "\
+	id:9,\
+	msg:'reject response body',\
+	phase:4,\
+	redirect:'https://waf.action/phase4'" #
 
