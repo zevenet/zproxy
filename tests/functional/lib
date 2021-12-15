@@ -418,11 +418,6 @@ exec_curl () {
 			do
 				H="$H -H \"$IT\""
 			done < <(cat $HEADERS)
-			#~ for LINE in `cat $HEADERS`
-			#~ do
-				#~ echo "$LINE"
-				#~ H="$H -H \"$LINE\""
-			#~ done
 		else
 			while read -r IT
 			do
