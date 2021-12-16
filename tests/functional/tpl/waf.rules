@@ -65,7 +65,7 @@ SecRule RESPONSE_BODY "@contains phase4" "\
 	phase:4,\
 	redirect:'https://waf.action/phase4'" #
 
-SecRule RESPONSE_BODY "@rx body\s2" "\
+SecRule RESPONSE_BODY "@contains body_finish" "\
 	id:10,\
 	msg:'reject response body in two frames',\
 	phase:4,\
