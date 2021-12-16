@@ -25,6 +25,16 @@ CMD=curl
 CL=1
 METHOD="POST"
 URL="/"
+HEADERS="Expect: "
+SSL=1
+BODY="phase2_body"
+########################
+DESCRIPTION="This request is denied due to request body. The client sends expect 100 continue header"
+CMD=curl
+CL=1
+METHOD="POST"
+URL="/echo"
+HEADERS="Expect: 100-continue"
 SSL=1
 BODY="phase2_body"
 ########################
@@ -42,3 +52,10 @@ METHOD="POST"
 URL="/echo"
 SSL=1
 BODY="phase4_body"
+########################
+DESCRIPTION="This request is denied due to response body, but server will write the response in two frames"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/sleep-body/5"
+SSL=1
