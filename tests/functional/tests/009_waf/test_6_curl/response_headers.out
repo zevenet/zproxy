@@ -1,8 +1,0 @@
-HTTP/1.0 403 Forbidden
-Content-Type: text/html
-Content-Length: 40
-Expires: now
-Pragma: no-cache
-Server: zproxy/0.2.5-0
-Cache-control: no-cache,no-store
-
