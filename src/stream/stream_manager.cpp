@@ -1030,7 +1030,6 @@ void StreamManager::onResponseEvent(int fd)
 	if (stream->response.http_status_code != 100) {
 		if (stream->request.expect_100_cont_header)
 			stream->response.addHeader("Connection: close");
-		stream->request.reset_parser();
 		stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
 	}
 
