@@ -124,8 +124,9 @@ class HttpData {
 	void addHeader(const std::string &header_value, bool permanent = false);
 	void removeHeader(http::HTTP_HEADER_NAME header_name);
 
+	/* There are pending data to receive */
 	bool hasPendingData();
-	bool hasPendingBody();
+
 	char *getBuffer() const;
 	bool getHeaderSent() const;
 	void setHeaderSent(bool value);

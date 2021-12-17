@@ -42,6 +42,8 @@ HttpStream::~HttpStream()
 {
 #if WAF_ENABLED
 	if (modsec_transaction != nullptr) {
+		// process the logging phase if there is something pending
+		modsec_transaction->processLogging();
 		modsecurity::intervention::free(&modsec_transaction->m_it);
 	}
 	delete this->modsec_transaction;

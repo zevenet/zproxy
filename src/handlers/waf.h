@@ -23,7 +23,7 @@ class Waf {
    * @return true if the modsec intervention is distruptive for the request
    * given.
    */
-	static bool checkRequestWaf(HttpStream &stream);
+	static bool checkRequestHeaders(HttpStream &stream);
 	/**
    * @brief passes the backend HTTP information from the proxy to the modsec
    * lib, gets the modsec resolution and logs it.
@@ -31,7 +31,12 @@ class Waf {
    * @return true if the modsec intervention is distruptive for the response
    * given.
    */
-	static bool checkResponseWaf(HttpStream &stream);
+	static bool checkResponseHeaders(HttpStream &stream);
+
+	static bool checkRequestBody(HttpStream &stream);
+
+	static bool checkResponseBody(HttpStream &stream);
+
 	/**
    * @brief reloads the ruleset of the listener, parsing the configuration file
    * and creating a new ruleset with all the WafRules directives

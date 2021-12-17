@@ -331,4 +331,12 @@ class StreamManager : public EpollManager,
 	void onTimeOut(int fd, TIMEOUT_TYPE type) override;
 #endif
 	void onBackendConnectionError(HttpStream *stream);
+#if WAF_ENABLED
+	/**
+   * @brief It responds to the client with an HTTP error or redirection depending on the
+   * waf disruption
+   * @param is the stream which was disrupted
+   */
+	void wafResponse(HttpStream *stream);
+#endif
 };

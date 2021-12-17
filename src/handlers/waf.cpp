@@ -1,6 +1,6 @@
 #include "waf.h"
 
-bool Waf::checkRequestWaf(HttpStream &stream)
+bool Waf::checkRequestHeaders(HttpStream &stream)
 {
 	std::string httpVersion = stream.request.getHttpVersion();
 	std::string httpMethod(stream.request.method,
@@ -36,30 +36,29 @@ bool Waf::checkRequestWaf(HttpStream &stream)
 	stream.modsec_transaction->processRequestBody();
 
 	// Checking interaction
-	if (stream.modsec_transaction->m_it.disruptive) {
-		if (stream.modsec_transaction->m_it.log != nullptr) {
-			streamLogWaf(&stream, "%s",
-				     stream.modsec_transaction->m_it.log);
-		} else
-			streamLogWaf(
-				&stream,
-				"WAF in request disrupted the HTTP transaction");
-
-		// redirect returns disruptive=1
-
-		// process is going to be cut. Executing the logging phase
-		if (!stream.modsec_transaction->processLogging())
-			zcu_log_print(LOG_ERR,
-				      "(%lx) WAF, error processing the log",
-				      pthread_self());
-
-		return true;
-	}
-
-	return false;
+	return (stream.modsec_transaction->m_it.disruptive);
 }
 
-bool Waf::checkResponseWaf(HttpStream &stream)
+bool Waf::checkRequestBody(HttpStream &stream)
+{
+	if (stream.modsec_transaction != nullptr &&
+	    !stream.hasOption(STREAM_OPTION::PINNED_CONNECTION) &&
+	    // TODO: support chunked mode
+	    stream.request.chunked_status ==
+		    http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK)
+		return false;
+
+	if (stream.request.message_length > 0) {
+		stream.modsec_transaction->appendRequestBody(
+			(unsigned char *)stream.request.message,
+			stream.request.message_length);
+	}
+	stream.modsec_transaction->processRequestBody();
+
+	return (stream.modsec_transaction->m_it.disruptive);
+}
+
+bool Waf::checkResponseHeaders(HttpStream &stream)
 {
 	std::string httpVersion = stream.response.getHttpVersion();
 
@@ -102,22 +101,28 @@ bool Waf::checkResponseWaf(HttpStream &stream)
 
 	stream.modsec_transaction->processResponseBody();
 
-	stream.modsec_transaction->processLogging();
-	// Checking interaction
-	if (stream.modsec_transaction->m_it.disruptive) {
-		if (stream.modsec_transaction->m_it.log != nullptr) {
-			streamLogWaf(&stream, "%s",
-				     stream.modsec_transaction->m_it.log);
-		} else
-			streamLogWaf(
-				&stream,
-				"WAF in response disrupted the HTTP transaction");
-		stream.modsec_transaction
-			->processLogging(); // TODO:: is it necessary??
+	return (stream.modsec_transaction->m_it.disruptive);
+}
 
-		return true;
+bool Waf::checkResponseBody(HttpStream &stream)
+{
+	if (stream.modsec_transaction != nullptr &&
+	    !stream.hasOption(STREAM_OPTION::PINNED_CONNECTION) &&
+	    // TODO: support chunked mode
+	    stream.response.chunked_status ==
+		    http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK)
+		return false;
+
+	if (stream.response.message_length > 0) {
+		stream.modsec_transaction->appendResponseBody(
+			reinterpret_cast<unsigned char *>(
+				stream.response.message),
+			stream.response.message_length);
 	}
-	return false;
+
+	stream.modsec_transaction->processResponseBody();
+
+	return (stream.modsec_transaction->m_it.disruptive);
 }
 
 // todo: parse only the directives of a listener

@@ -324,6 +324,8 @@ void StreamManager::onRequestEvent(int fd)
 					    "OnRequest", "REQUEST_PENDING");
 		return;
 	}
+
+	// Reading request
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	if (stream->service_manager->is_https_listener) {
 		result = ssl::SSLConnectionManager::handleDataRead(
@@ -427,9 +429,8 @@ void StreamManager::onRequestEvent(int fd)
 		stream->clearStatus(STREAM_STATUS::CL_READ_PENDING);
 	}
 
-	if ((stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
-	     stream->request.hasPendingData()) &&
-	    !stream->request.hasPendingBody()) {
+	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
+	    stream->request.hasPendingData()) {
 #ifdef CACHE_ENABLED
 		if (stream->request.chunked_status !=
 		    CHUNKED_STATUS::CHUNKED_DISABLED) {
@@ -445,6 +446,18 @@ void StreamManager::onRequestEvent(int fd)
 			}
 		}
 #endif
+		// we need to catch the body content
+		if (stream->request.hasPendingData()) {
+			// TODO: support chunked for WAF
+			if (stream->request.chunked_status ==
+			    http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+				stream->request.message =
+					stream->request.buffer;
+				stream->request.message_length =
+					stream->request.buffer_size;
+			}
+		}
+
 		HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 					    "OnRequestContinue", "");
 
@@ -462,17 +475,12 @@ void StreamManager::onRequestEvent(int fd)
 	size_t parsed = 0;
 	http_parser::PARSE_RESULT parse_result;
 
-	if (stream->request.hasPendingBody()) {
-		stream->request.message = stream->request.buffer;
-		stream->request.message_length = stream->request.buffer_size;
-		parse_result = http_parser::PARSE_RESULT::SUCCESS;
-	} else {
-		parse_result = stream->request.parseRequest(
-			stream->client_connection.buffer +
-				stream->client_connection.buffer_offset,
-			stream->client_connection.buffer_size,
-			&parsed); // parsing http data as response structured
-	}
+	parse_result = stream->request.parseRequest(
+		stream->client_connection.buffer +
+			stream->client_connection.buffer_offset,
+		stream->client_connection.buffer_size,
+		&parsed); // parsing http data as response structured
+
 	switch (parse_result) {
 	case http_parser::PARSE_RESULT::SUCCESS: {
 		stream->status |=
@@ -530,14 +538,6 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
-	if (stream->request.hasPendingBody()) {
-		streamLogMessage(
-			stream,
-			"the stream needs a second read to get the body");
-		stream->status |=
-			helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
-	}
-
 	// Add the headers configured (addXheader directives). Service context has more
 	// priority. These headers are not removed for removeheader directive
 	if (!service->service_config.add_head_req.empty()) {
@@ -548,31 +548,14 @@ void StreamManager::onRequestEvent(int fd)
 	}
 
 #if WAF_ENABLED
-	if (stream->waf_rules && !stream->request.hasPendingBody()) {
+	if (stream->waf_rules) {
 		// rule struct is unitializate if no rulesets are configured
 		delete stream->modsec_transaction;
 		stream->modsec_transaction = new modsecurity::Transaction(
 			global::run_options::getCurrent().modsec_api,
 			listener_config_.rules.get(), nullptr);
-		if (Waf::checkRequestWaf(*stream)) {
-			listener_config_.response_stats.increaseWaf();
-			if (stream->modsec_transaction->m_it.url != nullptr) {
-				if (http_manager::replyRedirect(
-					    stream->modsec_transaction->m_it
-						    .status,
-					    stream->modsec_transaction->m_it.url,
-					    *stream))
-					clearStream(stream);
-				return;
-			} else {
-				auto code = static_cast<http::Code>(
-					stream->modsec_transaction->m_it.status);
-				http_manager::replyError(
-					stream, code, reasonPhrase(code),
-					listener_config_.errwaf,
-					stream->client_connection,
-					listener_config_.response_stats);
-			}
+		if (Waf::checkRequestHeaders(*stream)) {
+			wafResponse(stream);
 			clearStream(stream);
 			return;
 		}
@@ -945,6 +928,17 @@ void StreamManager::onResponseEvent(int fd)
 			CacheManager::handleResponse(stream, service);
 		}
 #endif
+		// we need to catch the body content
+		if (stream->response.hasPendingData()) {
+			// TODO: support chunked for WAF
+			if (stream->response.chunked_status ==
+			    http::CHUNKED_STATUS::CHUNKED_DISABLED) {
+				stream->response.message =
+					stream->response.buffer;
+				stream->response.message_length =
+					stream->response.buffer_size;
+			}
+		}
 
 #if ENABLE_QUICK_RESPONSE
 		onClientWriteEvent(stream);
@@ -952,158 +946,127 @@ void StreamManager::onResponseEvent(int fd)
 		stream->client_connection.enableWriteEvent();
 #endif
 		return;
-	} else {
-		if (stream->backend_connection.buffer_size == 0)
-			return;
-		streamLogDebug(stream, "managed requests: %d",
-			       ++stream->managed_requests);
-		size_t parsed = 0;
-		auto ret = stream->response.parseResponse(
-			stream->backend_connection.buffer +
-				stream->backend_connection.buffer_offset,
-			stream->backend_connection.buffer_size, &parsed);
+	}
 
-		switch (ret) {
-		case http_parser::PARSE_RESULT::SUCCESS: {
-			stream->backend_connection.getBackend()
-				->calculateLatency(
-					stream->backend_connection.time_start);
-			stream->request.chunked_status =
-				CHUNKED_STATUS::CHUNKED_DISABLED;
-			stream->backend_connection.buffer_offset = 0;
-			stream->client_connection.buffer_offset = 0;
-			stream->client_connection.buffer_size = 0;
-			break;
-		}
-		case http_parser::PARSE_RESULT::TOOLONG:
-		case http_parser::PARSE_RESULT::FAILED: {
-			streamLogMessage(
-				stream,
-				"HTTP response parser %s - Response data in buffer (size:%luB): %.*s",
-				(ret == http_parser::PARSE_RESULT::TOOLONG) ?
-					      "TOOLONG" :
-					      "FAILED",
-				stream->backend_connection.buffer_size,
-				stream->backend_connection.buffer_size,
-				stream->backend_connection.buffer);
-			http_manager::replyError(
-				stream, http::Code::InternalServerError,
-				http::reasonPhrase(
-					http::Code::InternalServerError),
-				listener_config_.err500,
-				stream->client_connection,
-				listener_config_.response_stats);
+	if (stream->backend_connection.buffer_size == 0)
+		return;
+	streamLogDebug(stream, "managed requests: %d",
+		       ++stream->managed_requests);
+	size_t parsed = 0;
+	auto ret = stream->response.parseResponse(
+		stream->backend_connection.buffer +
+			stream->backend_connection.buffer_offset,
+		stream->backend_connection.buffer_size, &parsed);
+
+	switch (ret) {
+	case http_parser::PARSE_RESULT::SUCCESS: {
+		stream->backend_connection.getBackend()->calculateLatency(
+			stream->backend_connection.time_start);
+		stream->request.chunked_status =
+			CHUNKED_STATUS::CHUNKED_DISABLED;
+		stream->backend_connection.buffer_offset = 0;
+		stream->client_connection.buffer_offset = 0;
+		stream->client_connection.buffer_size = 0;
+		break;
+	}
+	case http_parser::PARSE_RESULT::TOOLONG:
+	case http_parser::PARSE_RESULT::FAILED: {
+		streamLogMessage(
+			stream,
+			"HTTP response parser %s - Response data in buffer (size:%luB): %.*s",
+			(ret == http_parser::PARSE_RESULT::TOOLONG) ?
+				      "TOOLONG" :
+				      "FAILED",
+			stream->backend_connection.buffer_size,
+			stream->backend_connection.buffer_size,
+			stream->backend_connection.buffer);
+		http_manager::replyError(
+			stream, http::Code::InternalServerError,
+			http::reasonPhrase(http::Code::InternalServerError),
+			listener_config_.err500, stream->client_connection,
+			listener_config_.response_stats);
+		clearStream(stream);
+		return;
+	}
+	case http_parser::PARSE_RESULT::INCOMPLETE:
+		stream->backend_connection.enableReadEvent();
+		return;
+	}
+	auto latency = Time::getElapsed(stream->backend_connection.time_start);
+	streamLogDebug(stream, "backend response: %s -> %s, %lf",
+		       stream->response.http_message_str.data(),
+		       stream->request.http_message_str.data(), latency);
+
+	stream->backend_connection.getBackend()->setAvgTransferTime(
+		stream->backend_connection.time_start);
+
+	if (http_manager::validateResponse(*stream) !=
+	    validation::REQUEST_RESULT::OK) {
+		streamLogMessage(stream,
+				 "error validating the backend response - %.*s",
+				 stream->backend_connection.buffer_size,
+				 stream->backend_connection.buffer);
+		http_manager::replyError(
+			stream, http::Code::ServiceUnavailable,
+			http::reasonPhrase(http::Code::ServiceUnavailable),
+			listener_config_.err503, stream->client_connection,
+			listener_config_.response_stats);
+		this->clearStream(stream);
+		return;
+	}
+	stream->status |=
+		helper::to_underlying(STREAM_STATUS::RESPONSE_PENDING);
+
+	// Add custom headers
+	if (!service->service_config.add_head_resp.empty()) {
+		stream->response.addHeader(
+			service->service_config.add_head_resp, true);
+	} else if (!listener_config_.add_head_resp.empty()) {
+		stream->response.addHeader(listener_config_.add_head_resp,
+					   true);
+	}
+
+	// after this response a new request is expected
+	if (stream->response.http_status_code != 100) {
+		if (stream->request.expect_100_cont_header)
+			stream->response.addHeader("Connection: close");
+		stream->request.reset_parser();
+		stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
+	}
+
+#if WAF_ENABLED
+	if (stream->modsec_transaction != nullptr) {
+		if (Waf::checkResponseHeaders(*stream)) {
+			wafResponse(stream);
 			clearStream(stream);
 			return;
 		}
-		case http_parser::PARSE_RESULT::INCOMPLETE:
-			stream->backend_connection.enableReadEvent();
-			return;
-		}
-		auto latency =
-			Time::getElapsed(stream->backend_connection.time_start);
-		streamLogDebug(stream, "backend response: %s -> %s, %lf",
-			       stream->response.http_message_str.data(),
-			       stream->request.http_message_str.data(),
-			       latency);
-
-		stream->backend_connection.getBackend()->setAvgTransferTime(
-			stream->backend_connection.time_start);
-
-		if (http_manager::validateResponse(*stream) !=
-		    validation::REQUEST_RESULT::OK) {
-			streamLogMessage(
-				stream,
-				"error validating the backend response - %.*s",
-				stream->backend_connection.buffer_size,
-				stream->backend_connection.buffer);
-			http_manager::replyError(
-				stream, http::Code::ServiceUnavailable,
-				http::reasonPhrase(
-					http::Code::ServiceUnavailable),
-				listener_config_.err503,
-				stream->client_connection,
-				listener_config_.response_stats);
-			this->clearStream(stream);
-			return;
-		}
-		stream->status |=
-			helper::to_underlying(STREAM_STATUS::RESPONSE_PENDING);
-
-		// Add custom headers
-		if (!service->service_config.add_head_resp.empty()) {
-			stream->response.addHeader(
-				service->service_config.add_head_resp, true);
-		} else if (!listener_config_.add_head_resp.empty()) {
-			stream->response.addHeader(
-				listener_config_.add_head_resp, true);
-		}
-
-		// after this response a new request is expected
-		if (stream->response.http_status_code != 100) {
-			if (stream->request.expect_100_cont_header)
-				stream->response.addHeader("Connection: close");
-			stream->request.reset_parser();
-			stream->clearStatus(STREAM_STATUS::REQUEST_PENDING);
-		}
-
-#if WAF_ENABLED
-		if (stream->modsec_transaction != nullptr) {
-			if (Waf::checkResponseWaf(*stream)) {
-				listener_config_.response_stats.increaseWaf();
-				if (stream->modsec_transaction->m_it.url !=
-				    nullptr) {
-					if (http_manager::replyRedirect(
-						    stream->modsec_transaction
-							    ->m_it.status,
-						    stream->modsec_transaction
-							    ->m_it.url,
-						    *stream))
-						clearStream(stream);
-					return;
-				} else {
-					// reject the request
-					auto code = static_cast<http::Code>(
-						stream->modsec_transaction->m_it
-							.status);
-					http_manager::replyError(
-						stream, code,
-						reasonPhrase(code),
-						listener_config_.errwaf,
-						stream->client_connection,
-						listener_config_.response_stats);
-				}
-				clearStream(stream);
-				return;
-			}
-		}
+	}
 #endif
-		// increase stat for backend response code
-		auto code = static_cast<http::Code>(
-			stream->response.http_status_code);
-		stream->backend_connection.getBackend()
-			->backend_config->response_stats.increaseCode(code);
+	// increase stat for backend response code
+	auto code = static_cast<http::Code>(stream->response.http_status_code);
+	stream->backend_connection.getBackend()
+		->backend_config->response_stats.increaseCode(code);
 
 #ifdef CACHE_ENABLED
-		if (service->cache_enabled) {
-			CacheManager::handleResponse(stream, service);
-		}
+	if (service->cache_enabled) {
+		CacheManager::handleResponse(stream, service);
+	}
 #endif
-		http_manager::setBackendCookie(service, stream);
-		setStrictTransportSecurity(service, stream);
+	http_manager::setBackendCookie(service, stream);
+	setStrictTransportSecurity(service, stream);
 #if ON_FLY_COMRESSION
-		if (!this->is_https_listener) {
-			Compression::applyCompression(service, stream);
-		}
+	if (!this->is_https_listener) {
+		Compression::applyCompression(service, stream);
+	}
 #endif
-		stream->logSuccess();
+	stream->logSuccess();
 
 #if ENABLE_QUICK_RESPONSE
-		onClientWriteEvent(stream);
+	onClientWriteEvent(stream);
 #else
-		stream->client_connection.enableWriteEvent();
+	stream->client_connection.enableWriteEvent();
 #endif
-	}
 }
 
 void StreamManager::onConnectTimeoutEvent(int fd)
@@ -1422,6 +1385,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 #else
 	stopTimeOut(fd);
 #endif
+
+	/* Complete the connection with the backend*/
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
 		DEBUG_COUNTER_HIT(debug__::on_backend_connect);
 		stream->clearStatus(STREAM_STATUS::BCK_CONN_PENDING);
@@ -1445,12 +1410,22 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		stream->backend_connection.getBackend()->setAvgConnTime(
 			stream->backend_connection.time_start);
 	}
+
 	/* Check if the buffer has data to be sent */
 	if (stream->client_connection.buffer_size == 0) {
 		stream->client_connection.enableReadEvent();
 		stream->backend_connection.enableReadEvent();
 		return;
 	}
+
+#if WAF_ENABLED
+	if (Waf::checkRequestBody(*stream)) {
+		wafResponse(stream);
+		clearStream(stream);
+		return;
+	}
+#endif
+
 	/* If the connection is pinned or we have content length remaining to send
 	 * , then we need to write the buffer content without
 	 * applying any kind of modification. */
@@ -1550,6 +1525,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		return;
 	}
 
+	/* If the connection is not pinned... */
 	if (stream->backend_connection.getBackend()->isHttps()) {
 		result = ssl::SSLConnectionManager::handleDataWrite(
 			stream->backend_connection, stream->client_connection,
@@ -1654,8 +1630,16 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 #else
 	stopTimeOut(stream->client_connection.getFileDescriptor());
 #endif
-	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
+#if WAF_ENABLED
+	if (Waf::checkResponseBody(*stream)) {
+		wafResponse(stream);
+		clearStream(stream);
+		return;
+	}
+#endif
+
+	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 	/* If the connection is pinned, then we need to write the buffer
 	 * content without applying any kind of modification. */
 	if (stream->hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
@@ -1768,6 +1752,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		return;
 	}
 
+	/* If there are not a connection pinned */
 	if (stream->backend_connection.buffer_size == 0
 #ifdef CACHE_ENABLED
 	    && !stream->response.isCached()
@@ -2213,3 +2198,31 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 	//                           listener_config_.response_stats);
 	//  this->clearStream(stream);
 }
+
+#if WAF_ENABLED
+void StreamManager::wafResponse(HttpStream *stream)
+{
+	auto &listener_config_ = *stream->service_manager->listener_config_;
+
+	if (stream->modsec_transaction->m_it.log != nullptr) {
+		streamLogWaf(stream, "%s",
+			     stream->modsec_transaction->m_it.log);
+	} else
+		streamLogWaf(stream,
+			     "WAF in request disrupted the HTTP transaction");
+
+	listener_config_.response_stats.increaseWaf();
+	if (stream->modsec_transaction->m_it.url != nullptr) {
+		http_manager::replyRedirect(
+			stream->modsec_transaction->m_it.status,
+			stream->modsec_transaction->m_it.url, *stream);
+	} else {
+		auto code = static_cast<http::Code>(
+			stream->modsec_transaction->m_it.status);
+		http_manager::replyError(stream, code, reasonPhrase(code),
+					 listener_config_.errwaf,
+					 stream->client_connection,
+					 listener_config_.response_stats);
+	}
+}
+#endif
