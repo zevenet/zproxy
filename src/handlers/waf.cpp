@@ -41,11 +41,11 @@ bool Waf::checkRequestHeaders(HttpStream &stream)
 
 bool Waf::checkRequestBody(HttpStream &stream)
 {
-	if (stream.modsec_transaction != nullptr &&
-	    !stream.hasOption(STREAM_OPTION::PINNED_CONNECTION) &&
+	if (stream.modsec_transaction == nullptr ||
+	    stream.hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
 	    // TODO: support chunked mode
-	    stream.request.chunked_status ==
-		    http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK)
+	    stream.request.chunked_status !=
+		    http::CHUNKED_STATUS::CHUNKED_DISABLED)
 		return false;
 
 	if (stream.request.message_length > 0) {
@@ -106,11 +106,11 @@ bool Waf::checkResponseHeaders(HttpStream &stream)
 
 bool Waf::checkResponseBody(HttpStream &stream)
 {
-	if (stream.modsec_transaction != nullptr &&
-	    !stream.hasOption(STREAM_OPTION::PINNED_CONNECTION) &&
+	if (stream.modsec_transaction == nullptr ||
+	    stream.hasOption(STREAM_OPTION::PINNED_CONNECTION) ||
 	    // TODO: support chunked mode
-	    stream.response.chunked_status ==
-		    http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK)
+	    stream.response.chunked_status !=
+		    http::CHUNKED_STATUS::CHUNKED_DISABLED)
 		return false;
 
 	if (stream.response.message_length > 0) {
