@@ -23,4 +23,9 @@
 #include "connection.h"
 
 class ClientConnection : public Connection, public Counter<ClientConnection> {
+    public:
+	inline ClientConnection()
+	{
+		peer = CLIENT;
+	}
 };

@@ -84,6 +84,26 @@ void Config::parse_file()
 				static_cast<size_t>(matches[1].rm_eo -
 						    matches[1].rm_so));
 			zcu_log_set_prefix(const_cast<char *>(name.data()));
+		} else if (!regexec(&regex_set::HTTPTracerDir, lin, 4, matches,
+				    0)) {
+			lin[matches[1].rm_eo] = '\0';
+			http_tracer_dir = std::string(
+				lin + matches[1].rm_so,
+				static_cast<size_t>(matches[1].rm_eo -
+						    matches[1].rm_so));
+			DIR *dir = opendir(http_tracer_dir.data());
+			if (!dir)
+				conf_err(
+					"HTTPTracerDir directory does not exist");
+			closedir(dir);
+
+			http_tracer_dir.append(
+				std::to_string(Time::getTimeSec()));
+			if (mkdir(http_tracer_dir.data(),
+				  S_IRWXU | S_IRWXG | S_IRWXO) == -1) {
+				conf_err("traceDir could not be created");
+			}
+
 		} else if (!regexec(&regex_set::RootJail, lin, 4, matches, 0)) {
 			lin[matches[1].rm_eo] = '\0';
 			root_jail = std::string(
@@ -315,6 +335,7 @@ bool Config::init(const global::StartOptions &start_options)
 	services = nullptr;
 	listeners = nullptr;
 	zcu_log_set_prefix("");
+	http_tracer_dir = "";
 #ifdef CACHE_ENABLED
 	cache_s = 0;
 	cache_thr = 0;
@@ -2281,6 +2302,7 @@ void Config::setAsCurrent()
 	global::run_options::getCurrent().daemonize = daemonize;
 	global::run_options::getCurrent().backend_resurrect_timeout = alive_to;
 	global::run_options::getCurrent().grace_time = grace;
+	global::run_options::getCurrent().http_tracer_dir = http_tracer_dir;
 	global::run_options::getCurrent().root_jail = root_jail;
 	global::run_options::getCurrent().config_file_name = conf_file_name;
 	global::StartOptions::getCurrent().conf_file_name = conf_file_name;
@@ -2315,6 +2337,7 @@ bool Config::init(const std::string &file_name)
 	services = nullptr;
 	listeners = nullptr;
 	zcu_log_set_prefix("");
+	http_tracer_dir = "";
 #ifdef CACHE_ENABLED
 	cache_s = 0;
 	cache_thr = 0;

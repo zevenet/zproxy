@@ -48,6 +48,8 @@ HttpStream::~HttpStream()
 	}
 	delete this->modsec_transaction;
 #endif
+	if (tracer_fh != nullptr)
+		fclose(tracer_fh);
 }
 
 void HttpStream::debugBufferData(const std::string &function, int line,
@@ -162,4 +164,18 @@ void HttpStream::logSuccess()
 		      this->response.http_message_str.data(),
 		      this->response.content_length, referer.c_str(),
 		      agent.c_str(), latency);
+}
+
+void HttpStream::initTracer(std::string dir, int id, std::string client_addr)
+{
+	std::string path = dir;
+	path.append("/st_");
+	path.append(std::to_string(id));
+	path.append("-");
+	path.append(client_addr);
+
+	tracer_fh = fopen(path.data(), "w");
+	if (tracer_fh == nullptr)
+		zcu_log_print(LOG_WARNING,
+			      "Tracer for %d stream could not be opened", id);
 }

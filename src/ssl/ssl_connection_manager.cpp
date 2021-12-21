@@ -105,7 +105,9 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 	//  zcu_log_print(LOG_DEBUG, "> handleRead");
 	int rc = -1;
 	size_t total_bytes_read = 0;
-	for (;;) {
+	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+	int done = 0;
+	while (!done) {
 		BIO_clear_retry_flags(ssl_connection.io);
 		ERR_clear_error();
 		size_t bytes_read = 0;
@@ -129,30 +131,41 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 
 		if (rc == 0) {
 			if (total_bytes_read > 0)
-				return IO::IO_RESULT::SUCCESS;
+				result = IO::IO_RESULT::SUCCESS;
 			else {
-				return IO::IO_RESULT::ZERO_DATA;
+				result = IO::IO_RESULT::ZERO_DATA;
 			}
+			done = 1;
 		} else if (rc < 0) {
 			if (BIO_should_retry(ssl_connection.io)) {
-				if (total_bytes_read > 0)
-					return IO::IO_RESULT::SUCCESS;
-				else {
-					return IO::IO_RESULT::DONE_TRY_AGAIN;
+				if (total_bytes_read > 0) {
+					result = IO::IO_RESULT::SUCCESS;
+				} else {
+					result = IO::IO_RESULT::DONE_TRY_AGAIN;
 				}
-			}
-			return IO::IO_RESULT::ERROR;
+			} else
+				return IO::IO_RESULT::ERROR;
+			done = 1;
 		}
 		total_bytes_read += bytes_read;
 		ssl_connection.buffer_size += static_cast<size_t>(bytes_read);
 		if (static_cast<int>(MAX_DATA_SIZE -
 				     ssl_connection.buffer_size -
-				     ssl_connection.buffer_offset) == 0)
-			return IO::IO_RESULT::FULL_BUFFER;
+				     ssl_connection.buffer_offset) == 0) {
+			result = IO::IO_RESULT::FULL_BUFFER;
+			done = 1;
+		}
 	}
-	zcu_log_print(LOG_NOTICE,
-		      "%s()%d: Buffer read finish with unknown status",
-		      __FUNCTION__, __LINE__);
+
+	if (total_bytes_read > 0 &&
+	    (result == IO::IO_RESULT::SUCCESS ||
+	     result == IO::IO_RESULT::FULL_BUFFER) &&
+	    ssl_connection.tracer_fh != nullptr)
+		ssl_connection.writeTracer(true, ssl_connection.peer,
+					   ssl_connection.buffer,
+					   total_bytes_read);
+
+	return result;
 }
 
 IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
@@ -214,6 +227,13 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 			break;
 		}
 	}
+
+	if (total_written > 0 && result == IO::IO_RESULT::SUCCESS &&
+	    ssl_connection.tracer_fh != nullptr)
+		ssl_connection.writeTracer(false, ssl_connection.peer,
+					   const_cast<char *>(data),
+					   total_written);
+
 	if (flush_data && result == IO::IO_RESULT::SUCCESS) {
 		zcu_log_print(LOG_DEBUG, "%s():%d: [%lx] flushing for %s",
 			      __FUNCTION__, __LINE__, pthread_self(),
@@ -552,6 +572,7 @@ IO::IO_RESULT SSLConnectionManager::sslRead(Connection &ssl_connection)
 	return result;
 }
 
+#if USE_SSL_BIO_BUFFER == 0
 IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 					     const char *data, size_t data_size,
 					     size_t &written)
@@ -605,6 +626,7 @@ IO::IO_RESULT SSLConnectionManager::sslWrite(Connection &ssl_connection,
 	}
 	return IO::IO_RESULT::ERROR;
 }
+#endif
 
 IO::IO_RESULT
 SSLConnectionManager::sslWriteIOvec(Connection &target_ssl_connection,

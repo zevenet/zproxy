@@ -147,10 +147,11 @@ class SSLConnectionManager {
    * @param written is the amount of data written.
    * @return the result of the write operation with a IO:IO_RESULT format.
    */
+#if USE_SSL_BIO_BUFFER == 0
 	static IO::IO_RESULT sslWrite(Connection &ssl_connection,
 				      const char *data, size_t data_size,
 				      size_t &written);
-
+#endif
 	static IO::IO_RESULT sslWriteIOvec(Connection &target_ssl_connection,
 					   const iovec *__iovec, size_t count,
 					   size_t &nwritten);

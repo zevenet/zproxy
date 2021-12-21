@@ -130,7 +130,11 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **Name** SortName
 
-	Specify a Sort name without blank spaces for the Process, this information will shown in logs
+	Specify a Sort name without blank spaces for the Process, this information will shown in logs.
+
+- **HTTPTracerDir** "directory_path"
+
+	If this directive is set, the zproxy will log to this directory for each request/response that is read/written. This directive is useful to trace HTTP issues, but is not recommended in production environment due to reducing the performance.
 
 - **RootJail** "directory_path_and_name"
 

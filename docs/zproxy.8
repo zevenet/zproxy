@@ -197,6 +197,9 @@ will run as (must be defined in \fI/etc/group\fR).
 \fBName\fR SortName
 Specify a Sort name without blank spaces for the Process, this information will shown in logs
 .TP
+\fBHTTPTracerDir\fR "directory_path"
+If this directive is set, the zproxy will log to this directory for each request/response that is read/written. This directive is useful to trace HTTP issues, but is not recommended in production environment due to reducing the performance.
+.TP
 \fBRootJail\fR "directory_path_and_name"
 Specify the directory that
 .B zproxy

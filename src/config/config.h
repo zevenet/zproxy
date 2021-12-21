@@ -109,6 +109,7 @@ class Config : public Counter<Config> {
 	std::string user, /* user to run as */
 		group, /* group to run as */
 		name, /* farm name to run as */
+		http_tracer_dir, /* directory to save http input/ouput */
 		root_jail, /* directory to chroot to */
 		pid_name, /* file to record pid in */
 		ctrl_name, /* control socket name */

@@ -265,6 +265,15 @@ void StreamManager::addStream(int fd,
 		std::move(service_manager); // TODO::benchmark!!
 	cl_streams_set[fd] = stream;
 	auto &listener_config = *stream->service_manager->listener_config_;
+
+	if (!global::run_options::getCurrent().http_tracer_dir.empty()) {
+		stream->initTracer(
+			global::run_options::getCurrent().http_tracer_dir,
+			stream->stream_id,
+			stream->client_connection.getPeerAddress());
+		stream->client_connection.tracer_fh = stream->tracer_fh;
+	}
+
 	stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
 #if USE_TIMER_FD_TIMEOUT
 	stream->timer_fd.set(listener_config.to * 1000);
@@ -1409,6 +1418,9 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		stream->backend_connection.getBackend()->setAvgConnTime(
 			stream->backend_connection.time_start);
 	}
+
+	/* Set the tracer file description in the backend */
+	stream->backend_connection.tracer_fh = stream->tracer_fh;
 
 	/* Check if the buffer has data to be sent */
 	if (stream->client_connection.buffer_size == 0) {

@@ -59,6 +59,10 @@ struct SplicePipe {
 };
 
 #endif
+
+enum CONNECTION_PEER { NONE, CLIENT, BACKEND };
+enum TRACER_STATUS { CONN, REQ_IN, REQ_OUT, RESP_IN, RESP_OUT };
+
 using namespace events;
 class Connection : public Descriptor {
     protected:
@@ -79,6 +83,7 @@ class Connection : public Descriptor {
 	int port{ -1 }; // the remote socket port
 	int local_port{ -1 }; // the local socket port
 	addrinfo *address;
+	CONNECTION_PEER conn_peer;
 
 	// StringBuffer string_buffer;
 	char buffer[MAX_DATA_SIZE];
@@ -132,4 +137,14 @@ class Connection : public Descriptor {
 	BIO *ssl_bio{ nullptr };
 	const char *server_name{ nullptr };
 	std::atomic<bool> ssl_connected;
+
+	// tracer
+	FILE *tracer_fh{ nullptr };
+	CONNECTION_PEER peer{ NONE };
+	inline void setTracer(FILE *fh)
+	{
+		tracer_fh = fh;
+	};
+	void writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
+			 int buf_size);
 };

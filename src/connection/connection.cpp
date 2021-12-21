@@ -22,9 +22,7 @@
 #include "connection.h"
 
 Connection::Connection()
-	:
-
-	  address_str(""), local_address_str(""), port(-1), local_port(-1),
+	: address_str(""), local_address_str(""), port(-1), local_port(-1),
 	  address(nullptr), buffer_size(0), buffer_offset(0), ssl(nullptr),
 	  ssl_connected(false)
 {
@@ -71,12 +69,19 @@ IO::IO_RESULT Connection::read()
 					LOG_DEBUG,
 					"%s():%d: Buffer maximum size reached !",
 					__FUNCTION__, __LINE__);
-				return IO::IO_RESULT::FULL_BUFFER;
+				result = IO::IO_RESULT::FULL_BUFFER;
 			} else
 				result = IO::IO_RESULT::SUCCESS;
 			done = true;
 		}
 	}
+
+	if (buffer_size > 0 &&
+	    (result == IO::IO_RESULT::SUCCESS ||
+	     result == IO::IO_RESULT::FULL_BUFFER) &&
+	    tracer_fh != nullptr)
+		writeTracer(true, peer, const_cast<char *>(buffer),
+			    buffer_size);
 
 	zcu_log_print(LOG_DEBUG, "%s():%d: Reading buffer %d bytes!",
 		      __FUNCTION__, __LINE__, buffer_size);
@@ -318,10 +323,8 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
 			}
 			done = true;
-			break;
 		} else if (count == 0) {
 			done = true;
-			break;
 		} else {
 			sent += static_cast<size_t>(count);
 			result = IO::IO_RESULT::SUCCESS;
@@ -330,6 +333,13 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 	if (sent > 0 && result != IO::IO_RESULT::ERROR) {
 		buffer_size -= sent;
 	}
+
+	// Add to tracer
+	if (sent > 0 && result == IO::IO_RESULT::SUCCESS &&
+	    tracer_fh != nullptr)
+		writeTracer(false, (peer == CLIENT) ? BACKEND : CLIENT, buffer,
+			    sent);
+
 	//  PRINT_BUFFER_SIZE
 	return result;
 }
@@ -346,8 +356,25 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 	size_t nwritten = 0;
 	size_t iovec_written = 0;
 
+	// Add to tracer
+	std::string buf_print = "";
+	if (tracer_fh != nullptr) {
+		for (size_t i = 0; i < http_data.iov_size; i++) {
+			buf_print.append(
+				static_cast<char *>(http_data.iov[i].iov_base),
+				http_data.iov[i].iov_len);
+		}
+	}
+
 	auto result = writeIOvec(target_fd, &http_data.iov[0],
 				 http_data.iov_size, iovec_written, nwritten);
+
+	// Add to tracer
+	if (nwritten > 0 && result == IO::IO_RESULT::SUCCESS &&
+	    tracer_fh != nullptr) {
+		writeTracer(false, (peer == CLIENT) ? BACKEND : CLIENT,
+			    buf_print.data(), buf_print.length());
+	}
 
 	zcu_log_print(
 		LOG_DEBUG,
@@ -474,15 +501,18 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
 			}
 			done = true;
-			break;
 		} else if (count == 0) {
 			done = true;
-			break;
 		} else {
 			sent += static_cast<size_t>(count);
 			result = IO::IO_RESULT::SUCCESS;
 		}
 	}
+	// Add to tracer
+	if (sent > 0 && result == IO::IO_RESULT::SUCCESS &&
+	    tracer_fh != nullptr)
+		writeTracer(false, peer, const_cast<char *>(data), sent);
+
 	//  PRINT_BUFFER_SIZE
 	return result;
 }
@@ -692,4 +722,44 @@ bool Connection::listen(const std::string &af_unix_name)
 	::listen(fd_, SOMAXCONN);
 
 	return false;
+}
+
+void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
+			     int buf_size)
+{
+	std::string tag;
+	static TRACER_STATUS prev_st = CONN;
+	TRACER_STATUS new_st;
+
+	switch (type) {
+	case CLIENT:
+		if (read_flag) {
+			new_st = REQ_IN;
+			tag = "->";
+		} else {
+			new_st = REQ_OUT;
+			tag = "<<";
+		}
+		break;
+	case BACKEND:
+		if (read_flag) {
+			tag = "<-";
+			new_st = RESP_IN;
+		} else {
+			tag = ">>";
+			new_st = RESP_OUT;
+		}
+		break;
+	default:
+		new_st = CONN;
+		zcu_log_print(LOG_ERR, "connection peer was not recoignized");
+	}
+	if (new_st != prev_st) {
+		fprintf(tracer_fh,
+			"/ %s / --------------------------------------------\n%.*s",
+			tag.data(), buf_size, buf);
+		prev_st = new_st;
+	} else {
+		fprintf(tracer_fh, "%.*s", buf_size, buf);
+	}
 }

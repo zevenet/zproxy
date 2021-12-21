@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <string>
 #include <stdarg.h>
 #include "../config/macro.h"
@@ -158,6 +160,9 @@ class HttpStream : public Counter<HttpStream> {
 
 	std::string logTag(const char *tag = nullptr);
 	void logSuccess();
+
+	FILE *tracer_fh{ nullptr };
+	void initTracer(std::string dir, int id, std::string client_addr);
 };
 
 #if DEBUG_ZCU_LOG == 0

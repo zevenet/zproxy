@@ -53,6 +53,7 @@ static const Regex Comment("^[ \t]*#.*$");
 static const Regex User("^[ \t]*User[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Group("^[ \t]*Group[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Name("^[ \t]*Name[ \t]+(.+)[ \t]*$");
+static const Regex HTTPTracerDir("^[ \t]*HTTPTracerDir[ \t]+\"(.+)\"[ \t]*$");
 static const Regex RootJail("^[ \t]*RootJail[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Daemon("^[ \t]*Daemon[ \t]+([01])[ \t]*$");
 static const Regex Threads("^[ \t]*Threads[ \t]+([1-9][0-9]*)[ \t]*$");

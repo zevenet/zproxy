@@ -53,6 +53,7 @@ struct run_options {
 	}; /* time in seconds for backend resurrection check */
 	// TODO::To implement
 	int grace_time{ 30 }; /* Grace time before forcing shutdown */
+	std::string http_tracer_dir; /* directory to save http input/output */
 	std::string root_jail; /* directory to chroot to */
 	std::string config_file_name;
 #if WAF_ENABLED

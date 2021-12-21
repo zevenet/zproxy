@@ -23,6 +23,7 @@
 
 BackendConnection::BackendConnection() : backend(nullptr), connection_retries(0)
 {
+	peer = BACKEND;
 }
 
 Backend *BackendConnection::getBackend() const
