@@ -4,8 +4,8 @@
      12 Content-Location: http://10.1.2.1//app
      12 Content-Type: application/octet-stream
      12 HTTP/1.1 200 OK
-     12 Location: http://10.1.2.1/
      12 Loc-raw: http://10.2.1.2/
+     12 Location: http://10.1.2.1/
      12 Request-Uri: /
      12 Server: nginx
      12 Transfer-Encoding: chunked
