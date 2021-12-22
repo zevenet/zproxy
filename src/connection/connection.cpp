@@ -724,10 +724,25 @@ bool Connection::listen(const std::string &af_unix_name)
 	return false;
 }
 
+#define ASCII_NEWLINE '\n'
+#define ASCII_RETLINE '\r'
+#define ASCII_FIRST ' '
+#define ASCII_LAST '~'
+
+char encode_char(char c, char &rc)
+{
+	rc = c;
+	if (!((c >= ASCII_FIRST && c <= ASCII_LAST) || c == ASCII_NEWLINE ||
+	      c == ASCII_RETLINE))
+		rc = '-';
+	return rc;
+}
+
 void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 			     int buf_size)
 {
 	std::string tag;
+	static char last_char = 0;
 	static TRACER_STATUS prev_st = CONN;
 	TRACER_STATUS new_st;
 
@@ -756,10 +771,17 @@ void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 	}
 	if (new_st != prev_st) {
 		fprintf(tracer_fh,
-			"/ %s / --------------------------------------------\n%.*s",
-			tag.data(), buf_size, buf);
+			"%s/ %s / ###########################################\n",
+			(last_char == ASCII_NEWLINE ||
+			 last_char == ASCII_RETLINE) ?
+				      "#" :
+				      "\n-",
+			tag.data());
 		prev_st = new_st;
-	} else {
-		fprintf(tracer_fh, "%.*s", buf_size, buf);
+	}
+
+	for (int i = 0; i < buf_size; i++) {
+		encode_char(buf[i], last_char);
+		fprintf(tracer_fh, "%c", last_char);
 	}
 }

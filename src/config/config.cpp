@@ -97,6 +97,7 @@ void Config::parse_file()
 					"HTTPTracerDir directory does not exist");
 			closedir(dir);
 
+			http_tracer_dir.append("/");
 			http_tracer_dir.append(
 				std::to_string(Time::getTimeSec()));
 			if (mkdir(http_tracer_dir.data(),
