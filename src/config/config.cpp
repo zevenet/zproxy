@@ -97,12 +97,20 @@ void Config::parse_file()
 					"HTTPTracerDir directory does not exist");
 			closedir(dir);
 
-			http_tracer_dir.append("/");
-			http_tracer_dir.append(
-				std::to_string(Time::getTimeSec()));
-			if (mkdir(http_tracer_dir.data(),
-				  S_IRWXU | S_IRWXG | S_IRWXO) == -1) {
-				conf_err("traceDir could not be created");
+			if (!global::StartOptions::getCurrent().check_only) {
+				http_tracer_dir.append(
+					"/" + name + "_" +
+					std::to_string(Time::getTimeSec()));
+
+				if (mkdir(http_tracer_dir.data(),
+					  S_IRWXU | S_IRWXG | S_IRWXO) == -1) {
+					zcu_log_print(
+						LOG_ERR,
+						"the path could not be created: %s",
+						http_tracer_dir.data());
+					conf_err(
+						"HTTPTracerDir could not be created");
+				}
 			}
 
 		} else if (!regexec(&regex_set::RootJail, lin, 4, matches, 0)) {
