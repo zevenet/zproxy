@@ -1726,13 +1726,15 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 					STREAM_STATUS::RESPONSE_PENDING);
 			} else if (stream->response.message_bytes_left > 0) {
 				stream->response.message_bytes_left -= written;
-				if (stream->response.message_bytes_left <= 0) {
-					stream->response.reset_parser();
-					stream->clearStatus(
-						STREAM_STATUS::RESPONSE_PENDING);
-				}
+			}
+
+			if (stream->response.message_bytes_left <= 0) {
+				//stream->response.reset_parser();
+				stream->clearStatus(
+					STREAM_STATUS::RESPONSE_PENDING);
 			}
 		}
+
 		if (stream->backend_connection.buffer_size > 0) {
 			stream->backend_connection.buffer_offset += written;
 			stream->client_connection.enableWriteEvent();
