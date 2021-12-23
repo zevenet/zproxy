@@ -271,7 +271,7 @@ void StreamManager::addStream(int fd,
 			global::run_options::getCurrent().http_tracer_dir,
 			stream->stream_id,
 			stream->client_connection.getPeerAddress());
-		stream->client_connection.tracer_fh = stream->tracer_fh;
+		stream->setTracerClient();
 	}
 
 	stream->status |= helper::to_underlying(STREAM_STATUS::CL_READ_PENDING);
@@ -1420,7 +1420,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 	}
 
 	/* Set the tracer file description in the backend */
-	stream->backend_connection.tracer_fh = stream->tracer_fh;
+	stream->setTracerBackend();
 
 	/* Check if the buffer has data to be sent */
 	if (stream->client_connection.buffer_size == 0) {

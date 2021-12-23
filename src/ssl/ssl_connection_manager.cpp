@@ -144,7 +144,7 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 					result = IO::IO_RESULT::DONE_TRY_AGAIN;
 				}
 			} else
-				return IO::IO_RESULT::ERROR;
+				result = IO::IO_RESULT::ERROR;
 			done = 1;
 		}
 		total_bytes_read += bytes_read;
@@ -165,6 +165,10 @@ IO::IO_RESULT SSLConnectionManager::handleDataRead(Connection &ssl_connection)
 					   ssl_connection.buffer,
 					   total_bytes_read);
 
+	zcu_log_print(LOG_DEBUG, "%s():%d: Reading buffer %s, %d bytes!",
+		      __FUNCTION__, __LINE__,
+		      IO::getResultString(result).data(), total_bytes_read);
+
 	return result;
 }
 
@@ -181,8 +185,7 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 		return IO::IO_RESULT::SUCCESS;
 	IO::IO_RESULT result;
 	int rc = -1;
-	//  // FIXME: Buggy, used just for test
-	//  zcu_log_print(LOG_DEBUG, "### IN handleWrite data size %d", data_size);
+
 	total_written = 0;
 	ERR_clear_error();
 	for (;;) {
@@ -233,6 +236,10 @@ IO::IO_RESULT SSLConnectionManager::handleWrite(Connection &ssl_connection,
 		ssl_connection.writeTracer(false, ssl_connection.peer,
 					   const_cast<char *>(data),
 					   total_written);
+
+	zcu_log_print(LOG_DEBUG, "%s():%d: writting buffer %s, %d bytes!",
+		      __FUNCTION__, __LINE__,
+		      IO::getResultString(result).data(), total_written);
 
 	if (flush_data && result == IO::IO_RESULT::SUCCESS) {
 		zcu_log_print(LOG_DEBUG, "%s():%d: [%lx] flushing for %s",

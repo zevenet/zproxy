@@ -162,7 +162,19 @@ class HttpStream : public Counter<HttpStream> {
 	void logSuccess();
 
 	FILE *tracer_fh{ nullptr };
+	TRACER_STATUS tracer_status;
+	char tracer_last_char;
 	void initTracer(std::string dir, int id, std::string client_addr);
+	inline void setTracerClient()
+	{
+		client_connection.setTracer(tracer_fh, &tracer_status,
+					    &tracer_last_char);
+	};
+	inline void setTracerBackend()
+	{
+		backend_connection.setTracer(tracer_fh, &tracer_status,
+					     &tracer_last_char);
+	};
 };
 
 #if DEBUG_ZCU_LOG == 0

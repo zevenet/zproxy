@@ -83,8 +83,9 @@ IO::IO_RESULT Connection::read()
 		writeTracer(true, peer, const_cast<char *>(buffer),
 			    buffer_size);
 
-	zcu_log_print(LOG_DEBUG, "%s():%d: Reading buffer %d bytes!",
-		      __FUNCTION__, __LINE__, buffer_size);
+	zcu_log_print(LOG_DEBUG, "%s():%d: Reading buffer %s, %d bytes!",
+		      __FUNCTION__, __LINE__,
+		      IO::getResultString(result).data(), buffer_size);
 
 	return result;
 }
@@ -339,6 +340,9 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 	    tracer_fh != nullptr)
 		writeTracer(false, (peer == CLIENT) ? BACKEND : CLIENT, buffer,
 			    sent);
+	zcu_log_print(LOG_DEBUG, "%s():%d: Writting buffer %s, %d bytes!",
+		      __FUNCTION__, __LINE__,
+		      IO::getResultString(result).data(), buffer_size);
 
 	//  PRINT_BUFFER_SIZE
 	return result;
@@ -375,12 +379,10 @@ IO::IO_RESULT Connection::writeTo(int target_fd,
 		writeTracer(false, (peer == CLIENT) ? BACKEND : CLIENT,
 			    buf_print.data(), buf_print.length());
 	}
+	zcu_log_print(LOG_DEBUG, "%s():%d: Writting buffer %s, %d bytes!",
+		      __FUNCTION__, __LINE__,
+		      IO::getResultString(result).data(), iovec_written);
 
-	zcu_log_print(
-		LOG_DEBUG,
-		"%s():%d: IOV size: %d iov written %d bytes_written: %d IO RESULT: %s\n",
-		__FUNCTION__, __LINE__, http_data.iov.size(), iovec_written,
-		nwritten, IO::getResultString(result).data());
 	if (result != IO::IO_RESULT::SUCCESS)
 		return result;
 
@@ -512,6 +514,9 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 	if (sent > 0 && result == IO::IO_RESULT::SUCCESS &&
 	    tracer_fh != nullptr)
 		writeTracer(false, peer, const_cast<char *>(data), sent);
+	zcu_log_print(LOG_DEBUG, "%s():%d: Writting buffer %s, %d bytes!",
+		      __FUNCTION__, __LINE__,
+		      IO::getResultString(result).data(), sent);
 
 	//  PRINT_BUFFER_SIZE
 	return result;
@@ -729,22 +734,20 @@ bool Connection::listen(const std::string &af_unix_name)
 #define ASCII_FIRST ' '
 #define ASCII_LAST '~'
 
-char encode_char(char c, char &rc)
+char encode_char(char c, char *rc)
 {
-	rc = c;
+	*rc = c;
 	if (!((c >= ASCII_FIRST && c <= ASCII_LAST) || c == ASCII_NEWLINE ||
 	      c == ASCII_RETLINE))
-		rc = '-';
-	return rc;
+		*rc = '-';
+	return *rc;
 }
 
 void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 			     int buf_size)
 {
 	std::string tag;
-	static char last_char = 0;
-	static TRACER_STATUS prev_st = CONN;
-	TRACER_STATUS new_st;
+	TRACER_STATUS new_st = CONN;
 
 	switch (type) {
 	case CLIENT:
@@ -769,19 +772,18 @@ void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 		new_st = CONN;
 		zcu_log_print(LOG_ERR, "connection peer was not recoignized");
 	}
-	if (new_st != prev_st) {
+	if (new_st != *tracer_status) {
 		fprintf(tracer_fh,
-			"%s/ %s / ###########################################\n",
-			(last_char == ASCII_NEWLINE ||
-			 last_char == ASCII_RETLINE) ?
-				      "#" :
-				      "\n-",
+			"%s########################################### / %s\n",
+			(*tracer_last_char == ASCII_NEWLINE ||
+			 *tracer_last_char == ASCII_RETLINE) ?
+				      "/    " :
+				      "\n|-> ",
 			tag.data());
-		prev_st = new_st;
+		*tracer_status = new_st;
 	}
 
 	for (int i = 0; i < buf_size; i++) {
-		encode_char(buf[i], last_char);
-		fprintf(tracer_fh, "%c", last_char);
+		fprintf(tracer_fh, "%c", encode_char(buf[i], tracer_last_char));
 	}
 }

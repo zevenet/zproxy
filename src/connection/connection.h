@@ -140,10 +140,14 @@ class Connection : public Descriptor {
 
 	// tracer
 	FILE *tracer_fh{ nullptr };
+	TRACER_STATUS *tracer_status;
+	char *tracer_last_char;
 	CONNECTION_PEER peer{ NONE };
-	inline void setTracer(FILE *fh)
+	inline void setTracer(FILE *fh, TRACER_STATUS *status, char *last_char)
 	{
 		tracer_fh = fh;
+		tracer_status = status;
+		tracer_last_char = last_char;
 	};
 	void writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 			 int buf_size);
