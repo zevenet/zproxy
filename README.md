@@ -343,7 +343,7 @@ Global directives may appear anywhere within the configuration file, though it i
 
 	Remove  certain  headers  from  the outcomming response, the header sent by the backend is not sent to the client. All occurences of the matching specified header will be removed. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
-- **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
+- **ReplaceHeader** `<Request|Response> "<header-name-regex>" "<header-value-match>" "<formated-value-replace>"`
 
 	Replace a header in request or response. If several regex matches in the header, only the first one will apply.
 	The replaceHeader directive in the services has priority over the listener one.
@@ -553,7 +553,7 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	This directive overwrites the listener *RemoveResponseHeader*. Remove  certain  headers  from  the outcomming response, the header sent by the backend is not sent to the client. All occurences of the matching specified header will be removed. Multiple directives may be specified in order to remove more than one header, and the header itself may be a regular pattern (though this should be used with caution).
 
-- **ReplaceHeader** `<Request|Response> <header-name-regex> <header-value-match> <formated-value-replace>`
+- **ReplaceHeader** `<Request|Response> "<header-name-regex>" "<header-value-match>" "<formated-value-replace>"`
 
 	Replace a header in request or response. If several regex matches in the header, only the first one will apply.
 	The replaceHeader directive in the services has priority over the listener one.
