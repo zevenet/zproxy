@@ -5,7 +5,7 @@ METHOD="PUT"
 URL="/listener/0/services/0/sessions"
 BODY=static_session.cfg
 #########################
-DESCRIPTION="wait for check the session does not disappear"
+DESCRIPTION="wait for checking the session does not disappear"
 CMD=wait
 TIMEOUT=10
 #########################

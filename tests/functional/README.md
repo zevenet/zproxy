@@ -296,21 +296,16 @@ The following requests are available:
 
 | Method      | URL      | Description
 | ----------- | ----------- | -----------
-| GET, POST	      			| /					| The server will respond backend ID ignoring the request body
-| GET		      			| /download/`<file>`	| The server will respond a static file saved in the tpl download directory
-| GET		      			| /body-size/`<tiny,large>`	| **TBI**. The server will respond a static body with a large or tiny size. It is useful to trigger the HTTP fragmented response
+| GET, POST	      			| /					| The server will respond backend ID ignoring the request body.
+| GET		      			| /download/`<file>`	| The server will respond a static file saved in the tpl download directory.
+| GET		      			| /body-size/`<tiny,large>`	| **TBI**. The server will respond a static body with a large or tiny size. It is useful to trigger the HTTP fragmented response.
 | GET		      			| /body-size/`<size>`/chunked	| The server will respond a body of "size" bytes. The response is chunked encoding.
-| GET		      			| /client-ip		| The server will respond the client IP
-| GET		      			| /sleep-response/`<seconds>`	| The server will wait N seconds before responding
-| GET		      			| /sleep-body/`<seconds>`		| The server will send the first body part, will wait N seconds and later will continue sending the body
-| GET, POST, PUT, DELETE	| /status/`<code>`	| The server will respond with the code required. The possible codes are: 200, 201, 301, 302, 400, 401, 403, 404, 405, 500, 503
-| GET      					| /echo				| The server will add to its body the GET arguments
-| POST, PUT 				| /echo				| The server will return the body and content-type that the request send
+| GET		      			| /client-ip		| The server will respond the client IP.
+| GET		      			| /sleep-response/`<seconds>`	| The server will wait N seconds before responding.
+| GET		      			| /sleep-body/`<seconds>`		| The server will send the first body part, will wait N seconds and later will continue sending the body.
+| GET, POST, PUT, DELETE	| /status/`<code>`	| The server will respond with the code required. The possible codes are: 200, 201, 301, 302, 400, 401, 403, 404, 405, 500, 503.
+| GET      					| /echo				| The server will add to its body the GET arguments.
+| POST, PUT 				| /echo				| The server will return the body and content-type that the request send.
 | GET 						| /headers			| The server will return the request headers in the body.
-| POST 						| /headers			| **TBI**.
-| DELETE					| /headers/`<header>`	| **TBI**. It deletes the "header" of the response
-| GET						| /resp-headers/location/`<value>`	| It adds the location and content-location headers in the backend response
-| GET 						| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
-| POST	 					| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
-| DELETE 					| /cookie			| **TBI**. Use CGI or the backend id to build the cookie? backend_id+date?
-
+| GET						| /resp-headers/location/`<value>`	| It adds the location and content-location headers in the backend response.
+| GET						| /resp-headers/set-cookie/`<value>`	| It adds the set-cookie header with the value set in the value field of the URI.
