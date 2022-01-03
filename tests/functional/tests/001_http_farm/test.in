@@ -24,6 +24,13 @@ METHOD=POST
 URL=/echo
 FILE=file.txt
 #########################
+DESCRIPTION="Upload a file"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+BODY=file.txt
+#########################
 DESCRIPTION="Download a file"
 CMD=curl
 CL=1

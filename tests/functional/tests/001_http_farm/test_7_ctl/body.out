@@ -14,7 +14,7 @@
         {
             "backends": [
                 {
-                    "2xx-code-hits": 13,
+                    "2xx-code-hits": 14,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
                     "5xx-code-hits": 0,

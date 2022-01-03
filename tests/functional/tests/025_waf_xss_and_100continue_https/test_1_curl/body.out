@@ -1,1 +1,40 @@
-<Message xmlns="http://schema.virtualhost.com/message/v1" xmlns:ns2="http://schema.virtualhost.com/common/v1" xmlns:ns4="http://schema.virtualhost.com/deploymentengine/integration/v1" xmlns:ns3="http://schema.virtualhost.com/deploymentengine/query/v1">    <Version>1.0</Version>    <Header>        <Details>            <Source>shopping cart</Source>            <Destination>deploymentEngine</Destination>            <Command>PE_InitiateAsyncTransaction</Command>            <Qualifier>Request</Qualifier>        </Details>        <Sender>            <SenderId>MCIT-RCOR-PACEMARKS2</SenderId>            <Authentication>                <Method>SHA256</Method>                <Value>9iiGjiHIdN/VcURpvYyAdhjyqVfN5U9nKeAh7eVwlos=</Value>                <HashMode>Simple</HashMode>            </Authentication>        </Sender>    </Header>    <Errors xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>    <Body>        <ns4:InitiateAsyncTransaction_Request>            <ns4:CreateToken>false</ns4:CreateToken>            <ns4:Info>                <ns4:Citizen>                    <ns4:Individual>                        <ns2:Code>0000000712488301</ns2:Code>                        <ns2:Name>Samuel M. Jackson</ns2:Name>                        <ns2:UniqueIdentifier>0000000712488301</ns2:UniqueIdentifier>                    </ns4:Individual>                </ns4:Citizen>                <ns4:deploymentMethodCode>DM-0001</ns4:deploymentMethodCode>                <ns4:Amount>1.50</ns4:Amount>                <ns4:CurrencyIsoAlphaCode>EUR</ns4:CurrencyIsoAlphaCode>                <ns4:LanguageCode>en</ns4:LanguageCode>                <ns4:ClientTransactionNo>31c78a07-fd1a-4fff-b922-ca5a2f8534a5</ns4:ClientTransactionNo>                <ns4:IpAddress>127.0.0.1</ns4:IpAddress>            </ns4:Info>        </ns4:InitiateAsyncTransaction_Request>    </Body></Message>
+<Message xmlns="http://schema.virtualhost.com/message/v1" xmlns:ns2="http://schema.virtualhost.com/common/v1" xmlns:ns4="http://schema.virtualhost.com/deploymentengine/integration/v1" xmlns:ns3="http://schema.virtualhost.com/deploymentengine/query/v1">
+    <Version>1.0</Version>
+    <Header>
+        <Details>
+            <Source>shopping cart</Source>
+            <Destination>deploymentEngine</Destination>
+            <Command>PE_InitiateAsyncTransaction</Command>
+            <Qualifier>Request</Qualifier>
+        </Details>
+        <Sender>
+            <SenderId>MCIT-RCOR-PACEMARKS2</SenderId>
+            <Authentication>
+                <Method>SHA256</Method>
+                <Value>9iiGjiHIdN/VcURpvYyAdhjyqVfN5U9nKeAh7eVwlos=</Value>
+                <HashMode>Simple</HashMode>
+            </Authentication>
+        </Sender>
+    </Header>
+    <Errors xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+    <Body>
+        <ns4:InitiateAsyncTransaction_Request>
+            <ns4:CreateToken>false</ns4:CreateToken>
+            <ns4:Info>
+                <ns4:Citizen>
+                    <ns4:Individual>
+                        <ns2:Code>0000000712488301</ns2:Code>
+                        <ns2:Name>Samuel M. Jackson</ns2:Name>
+                        <ns2:UniqueIdentifier>0000000712488301</ns2:UniqueIdentifier>
+                    </ns4:Individual>
+                </ns4:Citizen>
+                <ns4:deploymentMethodCode>DM-0001</ns4:deploymentMethodCode>
+                <ns4:Amount>1.50</ns4:Amount>
+                <ns4:CurrencyIsoAlphaCode>EUR</ns4:CurrencyIsoAlphaCode>
+                <ns4:LanguageCode>en</ns4:LanguageCode>
+                <ns4:ClientTransactionNo>31c78a07-fd1a-4fff-b922-ca5a2f8534a5</ns4:ClientTransactionNo>
+                <ns4:IpAddress>127.0.0.1</ns4:IpAddress>
+            </ns4:Info>
+        </ns4:InitiateAsyncTransaction_Request>
+    </Body>
+</Message>

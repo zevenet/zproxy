@@ -426,7 +426,7 @@ exec_curl () {
 		fi
 	fi
 	if [[ $BODY != "" ]]; then
-		B="-d @$BODY"
+		B="--data-binary @$BODY"
 	elif [[ $FILE != "" ]]; then
 		B="-F 'file=@$FILE'"
 	fi
@@ -447,7 +447,7 @@ exec_curl () {
 	if [[ $NEXT_METHOD != "" ]]; then
 		NEXT="-: -X $NEXT_METHOD"
 		if [[ $NEXT_BODY != "" ]]; then
-			NEXT="$NEXT -d @$NEXT_BODY"
+			NEXT="$NEXT --data-binary @$NEXT_BODY"
 		elif [[ $NEXT_FILE != "" ]]; then
 			NEXT="$NEXT -F 'file=@$NEXT_FILE'"
 		fi
