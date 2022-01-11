@@ -693,15 +693,17 @@ Backend *Service::getNextBackend()
 				continue;
 			if (!checkBackendAvailable(it))
 				continue;
+			if (it->getAvgLatency() < 0)
+				return it;
 			if (selected_backend == nullptr) {
 				selected_backend = it;
 			} else {
 				if (selected_backend->getAvgLatency() < 0)
 					return selected_backend;
 				if (it->getAvgLatency() *
-					    selected_backend->weight >
+					    selected_backend->weight <
 				    selected_backend->getAvgLatency() *
-					    selected_backend->weight)
+					    it->weight)
 					selected_backend = it;
 			}
 		}
