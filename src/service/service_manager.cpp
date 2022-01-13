@@ -150,7 +150,7 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task)
 				JSON_KEYS::STATUS,
 				std::make_unique<JsonDataValue>(
 					this->disabled ?
-						      JSON_KEYS::STATUS_DOWN :
+						JSON_KEYS::STATUS_DOWN :
 						      JSON_KEYS::STATUS_ACTIVE));
 			root->emplace(JSON_KEYS::NAME,
 				      std::make_unique<JsonDataValue>(name));

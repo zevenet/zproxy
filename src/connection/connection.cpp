@@ -777,7 +777,7 @@ void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 			"%s########################################### / %s\n",
 			(*tracer_last_char == ASCII_NEWLINE ||
 			 *tracer_last_char == ASCII_RETLINE) ?
-				      "/    " :
+				"/    " :
 				      "\n|-> ",
 			tag.data());
 		*tracer_status = new_st;

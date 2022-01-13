@@ -140,7 +140,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					"Remote backend \"%s\" closed connection prematurely",
 					zcu_soc_get_peer_address(
 						fd, addr, 150) != nullptr ?
-						      addr :
+						addr :
 						      "");
 				deleteFd(fd);
 				::close(fd);
@@ -159,7 +159,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					"Remote client \"%s\" closed connection prematurely",
 					zcu_soc_get_peer_address(
 						fd, addr, 150) != nullptr ?
-						      addr :
+						addr :
 						      "");
 				deleteFd(fd);
 				::close(fd);
@@ -731,7 +731,7 @@ void StreamManager::onRequestEvent(int fd)
 			std::string header_value =
 				stream->backend_connection.getBackend()
 						->isHttps() ?
-					      "https://" :
+					"https://" :
 					      "http://";
 			header_value +=
 				stream->backend_connection.getPeerAddress();
@@ -984,7 +984,7 @@ void StreamManager::onResponseEvent(int fd)
 			stream,
 			"HTTP response parser %s - Response data in buffer (size:%luB): %.*s",
 			(ret == http_parser::PARSE_RESULT::TOOLONG) ?
-				      "TOOLONG" :
+				"TOOLONG" :
 				      "FAILED",
 			stream->backend_connection.buffer_size,
 			stream->backend_connection.buffer_size,
@@ -1328,7 +1328,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 				std::string header_value =
 					stream->backend_connection.getBackend()
 							->isHttps() ?
-						      "https://" :
+						"https://" :
 						      "http://";
 				header_value += stream->backend_connection
 							.getPeerAddress();
@@ -1871,7 +1871,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			IO::getResultString(result).data(),
 			stream->response.chunked_status !=
 					CHUNKED_STATUS::CHUNKED_DISABLED ?
-				      "T" :
+				"T" :
 				      "F");
 		clearStream(stream);
 		return;

@@ -103,17 +103,17 @@ class Descriptor {
 		    current_event != events::EVENT_TYPE::READ && fd_ > 0) {
 			auto res =
 				current_event == events::EVENT_TYPE::NONE ?
-					      event_manager_->addFd(
+					event_manager_->addFd(
 						fd_,
 						!one_shot ?
-							      events::EVENT_TYPE::READ :
+							events::EVENT_TYPE::READ :
 							      events::EVENT_TYPE::
 								READ_ONESHOT,
 						event_group_) :
 					      event_manager_->updateFd(
 						fd_,
 						!one_shot ?
-							      events::EVENT_TYPE::READ :
+							events::EVENT_TYPE::READ :
 							      events::EVENT_TYPE::
 								READ_ONESHOT,
 						event_group_);

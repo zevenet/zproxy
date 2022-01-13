@@ -320,10 +320,10 @@ void Config::parse_file()
 bool Config::init(const global::StartOptions &start_options)
 {
 	conf_file_name = start_options.conf_file_name.empty() ?
-				       F_CONF :
+				 F_CONF :
 				       start_options.conf_file_name;
 	pid_name = start_options.pid_file_name.empty() ?
-				 F_PID :
+			   F_PID :
 				 start_options.pid_file_name;
 
 	// init configuration file lists.
@@ -2239,7 +2239,7 @@ void Config::include_dir(const char *conf_path)
 			      5))) {
 			snprintf(buf, sizeof(buf), "%s%s%s", conf_path,
 				 (conf_path[strlen(conf_path) - 1] == '/') ?
-					       "" :
+					 "" :
 					       "/",
 				 de->d_name);
 			buf[sizeof(buf) - 1] = 0;

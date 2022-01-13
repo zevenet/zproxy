@@ -169,7 +169,7 @@ bool PoundClient::executeCommand()
 			std::unique_ptr<
 				json::JsonDataValue>(new json::JsonDataValue(
 				ctl_command == CTL_ACTION::ENABLE ?
-					      json::JSON_KEYS::STATUS_ACTIVE :
+					json::JSON_KEYS::STATUS_ACTIVE :
 					      json::JSON_KEYS::STATUS_DISABLED)));
 		method = http::REQUEST_METHOD::PATCH;
 		switch (ctl_command_subject) {

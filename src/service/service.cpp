@@ -160,7 +160,7 @@ void Service::addBackend(std::shared_ptr<BackendConfig> backend_config,
 	backend->priority = backend_config->priority;
 	backend->name = "bck_" + std::to_string(backend_id);
 	backend->setStatus(backend_config->disabled ?
-					 BACKEND_STATUS::BACKEND_DISABLED :
+				   BACKEND_STATUS::BACKEND_DISABLED :
 					 BACKEND_STATUS::BACKEND_UP);
 	if (backend_config->be_type == 0) {
 		backend->address = backend_config->address;
@@ -436,7 +436,7 @@ std::string Service::handleTask(ctl::CtlTask &task)
 					JSON_KEYS::STATUS,
 					std::make_unique<JsonDataValue>(
 						this->disabled ?
-							      JSON_KEYS::STATUS_DOWN :
+							JSON_KEYS::STATUS_DOWN :
 							      JSON_KEYS::
 								STATUS_ACTIVE));
 				return status.stringify();
@@ -445,7 +445,7 @@ std::string Service::handleTask(ctl::CtlTask &task)
 			default:
 				auto response = getServiceJson();
 				return response != nullptr ?
-						     response->stringify() :
+					       response->stringify() :
 						     "";
 			}
 		case ctl::CTL_COMMAND::UPDATE:
@@ -534,7 +534,7 @@ bool Service::checkBackendAvailable(Backend *bck)
 		 bck->weight <= 0 /* This line maybe is not required */
 		 || bck->isConnectionLimit() /* This is an early check */
 		 ) ?
-			      false :
+			false :
 			      true;
 
 	return valid;
@@ -620,7 +620,7 @@ Backend *Service::getNextBackend()
 	else if (backend_set.size() == 1)
 		return backend_set[0]->getStatus() !=
 				       BACKEND_STATUS::BACKEND_UP ?
-				     nullptr :
+			       nullptr :
 				     backend_set[0];
 
 	updateBackendPriority();

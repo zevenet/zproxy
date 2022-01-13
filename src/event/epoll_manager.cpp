@@ -193,14 +193,14 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group,
 		case EVENT_TYPE::READ_ONESHOT:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
 				   time_out);
 			break;
 		case EVENT_TYPE::WRITE:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
 				   time_out);
 			break;
@@ -246,14 +246,14 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
 		case EVENT_TYPE::READ_ONESHOT:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
 				   time_out);
 			break;
 		case EVENT_TYPE::WRITE:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
 				   time_out);
 			break;

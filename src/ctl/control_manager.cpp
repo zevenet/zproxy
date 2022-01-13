@@ -52,7 +52,7 @@ bool ctl::ControlManager::init(Config &configuration,
 	} else {
 		ctl_listener_mode =
 			ctl::CTL_INTERFACE_MODE::CTL_UNIX != listener_mode ?
-				      listener_mode :
+				listener_mode :
 				      ctl_listener_mode;
 	}
 	if (listener_mode == CTL_INTERFACE_MODE::CTL_UNIX) {

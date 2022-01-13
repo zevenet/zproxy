@@ -383,7 +383,7 @@ void HttpCache::createResponseEntry(HttpResponse response,
 	if (response.c_opt.max_age >= 0 && this->cache_timeout != 0) {
 		// Set the most restrictive value
 		response.c_opt.max_age > this->cache_timeout ?
-			      c_object->max_age = this->cache_timeout :
+			c_object->max_age = this->cache_timeout :
 			      c_object->max_age = response.c_opt.max_age;
 	} else if (this->cache_timeout >= 0) {
 		// Store the config file timeout
@@ -655,7 +655,7 @@ int HttpCache::getResponseFromCache(HttpRequest request,
 			http::HTTP_HEADER_NAME::AGE,
 			std::to_string(
 				now >= 0 ?
-					      now :
+					now :
 					      0)); // ensure that it is greater or equal than 0
 	}
 	this->stats.cache_match++;
