@@ -287,7 +287,8 @@ bool PoundClient::executeCommand()
 		std::move(json_object_ptr));
 	if (ctl_command == CTL_ACTION::NONE)
 		outputStatus(json_response.get());
-	return true;
+	return (response.http_status_code >= 200 &&
+		response.http_status_code < 300);
 }
 
 bool PoundClient::init(int argc, char *argv[])
@@ -451,8 +452,7 @@ bool PoundClient::init(int argc, char *argv[])
 		//    for (int i = 0; i < argc; i++) std::cout << argv[i] << " ";
 		std::cout << "\n" << action_message << std::endl;
 	}
-	executeCommand();
-	return true;
+	return executeCommand();
 }
 
 bool PoundClient::doRequest(http::REQUEST_METHOD request_method,
