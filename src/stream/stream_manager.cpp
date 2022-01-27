@@ -31,6 +31,11 @@
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				EVENT_GROUP event_group)
 {
+	zcu_log_print(LOG_ERR, "%s():%d: fd=%d, event_type=%s, event_group=%s",
+		      __FUNCTION__, __LINE__, fd,
+		      getEventType(event_type).data(),
+		      getEventGroup(event_group).data());
+
 	switch (event_type) {
 #if SM_HANDLE_ACCEPT
 	case EVENT_TYPE::CONNECT: {
@@ -133,6 +138,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		case EVENT_GROUP::SERVER: {
 			DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
 			auto stream = bck_streams_set[fd];
+
 			if (stream == nullptr) {
 				char addr[150];
 				zcu_log_print(
@@ -2121,10 +2127,13 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 			stream->client_connection.enableWriteEvent();
 			return;
 		} else if (!stream->response.getHeaderSent()) {
+			streamLogMessage(
+				stream,
+				"Premature backend disconnect before getting response");
 			http_manager::replyError(
-				stream, http::Code::InternalServerError,
+				stream, http::Code::ServiceUnavailable,
 				http::reasonPhrase(
-					http::Code::InternalServerError),
+					http::Code::ServiceUnavailable),
 				listener_config_.err503,
 				stream->client_connection,
 				listener_config_.response_stats);
