@@ -79,7 +79,7 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 		stream->request.chunk_size_left,
 		stream->request.chunked_status !=
 				http::CHUNKED_STATUS::CHUNKED_DISABLED ?
-			      "T" :
+			"T" :
 			      "F",
 		stream->hasStatus(STREAM_STATUS::REQUEST_PENDING) ? "T" : "F",
 		stream->hasStatus(STREAM_STATUS::CL_READ_PENDING) ? "T" : "F",
@@ -91,7 +91,7 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 		stream->response.chunk_size_left,
 		stream->response.chunked_status !=
 				http::CHUNKED_STATUS::CHUNKED_DISABLED ?
-			      "T" :
+			"T" :
 			      "F",
 		stream->hasStatus(STREAM_STATUS::RESPONSE_PENDING) ? "T" : "F",
 		stream->hasStatus(STREAM_STATUS::BCK_READ_PENDING) ? "T" : "F",

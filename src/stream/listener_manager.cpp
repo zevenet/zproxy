@@ -391,7 +391,7 @@ void ListenerManager::start()
 	auto concurrency_level = std::thread::hardware_concurrency() * 2;
 	auto num_threads =
 		global::run_options::getCurrent().num_threads != 0 ?
-			      global::run_options::getCurrent().num_threads :
+			global::run_options::getCurrent().num_threads :
 			      concurrency_level;
 	for (size_t sm = 0; sm < num_threads; sm++) {
 		stream_manager_set[sm] = new StreamManager();
@@ -665,7 +665,7 @@ bool ListenerManager::reloadConfigFile()
 	global::run_options::getCurrent().backend_resurrect_timeout =
 		config.alive_to;
 	timer_maintenance.set((config.alive_to > 0 ?
-					     config.alive_to :
+				       config.alive_to :
 					     DEFAULT_MAINTENANCE_INTERVAL) *
 			      1000);
 	addFd(timer_maintenance.getFileDescriptor(), EVENT_TYPE::READ_ONESHOT,

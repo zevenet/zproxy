@@ -514,7 +514,7 @@ int rewriteHeaderLocation(phr_header *header,
 	int rewr_loc = (service->rewr_loc != -1) ? service->rewr_loc :
 							 listener_config_->rewr_loc;
 	int rewr_loc_path = (service->rewr_loc_path != -1) ?
-					  service->rewr_loc_path :
+				    service->rewr_loc_path :
 					  listener_config_->rewr_loc_path;
 
 	if (stream.rewr_loc_str_repl == "")
@@ -578,7 +578,7 @@ int rewriteHeaderLocation(phr_header *header,
 			} else if (rewr_loc == 1 &&
 				   (listener_config_->port != port ||
 				    ((listener_config_->ctx == nullptr) ?
-						   "http" :
+					     "http" :
 						   "https") != proto) &&
 				   (zcu_net_equal_sockaddr(
 					    in_addr.get(),

@@ -55,6 +55,33 @@ enum class EVENT_GROUP : char {
 	NONE,
 };
 
+inline std::string getEventGroup(EVENT_GROUP event)
+{
+	switch (event) {
+	case EVENT_GROUP::ACCEPTOR:
+		return "ACCEPTOR";
+	case EVENT_GROUP::SERVER:
+		return "SERVER";
+	case EVENT_GROUP::CLIENT:
+		return "CLIENT";
+	case EVENT_GROUP::CONNECT_TIMEOUT:
+		return "CONNECT_TIMEOUT";
+	case EVENT_GROUP::REQUEST_TIMEOUT:
+		return "REQUEST_TIMEOUT";
+	case EVENT_GROUP::RESPONSE_TIMEOUT:
+		return "RESPONSE_TIMEOUT";
+	case EVENT_GROUP::SIGNAL:
+		return "SIGNAL";
+	case EVENT_GROUP::MAINTENANCE:
+		return "MAINTENANCE";
+	case EVENT_GROUP::CTL_INTERFACE:
+		return "CTL_INTERFACE";
+	case EVENT_GROUP::NONE:
+		return "NONE";
+	}
+	return "UNDEFINED";
+};
+
 /** The enum EVENT_TYPE defines the different event types. */
 enum class EVENT_TYPE : uint32_t {
 	/** Timeout reached. */
@@ -87,6 +114,32 @@ enum class EVENT_TYPE : uint32_t {
 	DISCONNECT,
 	NONE
 };
+
+inline std::string getEventType(EVENT_TYPE event)
+{
+	switch (event) {
+	case EVENT_TYPE::ACCEPT:
+		return "ACCEPT";
+	case EVENT_TYPE::TIMEOUT:
+		return "TIMEOUT";
+	case EVENT_TYPE::READ:
+		return "READ";
+	case EVENT_TYPE::READ_ONESHOT:
+		return "READ_ONESHOT";
+	case EVENT_TYPE::WRITE:
+		return "WRITE";
+	case EVENT_TYPE::ANY:
+		return "ANY";
+	case EVENT_TYPE::CONNECT:
+		return "CONNECT";
+	case EVENT_TYPE::DISCONNECT:
+		return "DISCONNECT";
+	case EVENT_TYPE::NONE:
+		return "NONE";
+	}
+	return "UNDEFINED";
+};
+
 #if USE_TIMER_FD_TIMEOUT == 0
 enum class TIMEOUT_TYPE : uint8_t {
 	INACTIVE_TIMEOUT,
@@ -120,6 +173,7 @@ class EpollManager {
     protected:
 	virtual void HandleEvent(int fd, EVENT_TYPE event_type,
 				 EVENT_GROUP event_group) = 0;
+	inline void onDisconnectEvent(epoll_event &event);
 	inline void onReadEvent(epoll_event &event);
 	inline void onWriteEvent(epoll_event &event);
 	inline void onConnectEvent(epoll_event &event);

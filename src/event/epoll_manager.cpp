@@ -37,6 +37,17 @@ EpollManager::EpollManager() : accept_fd_set()
 	}
 }
 
+/** Handles the disconnect events. */
+void EpollManager::onDisconnectEvent(epoll_event &event)
+{
+	/* zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONDisconnect fd: %d", __FUNCTION__,
+		      __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
+*/
+	HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT),
+		    EVENT_TYPE::DISCONNECT,
+		    static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
+}
+
 /** Handles the connect events. */
 void EpollManager::onConnectEvent(epoll_event &event)
 {
@@ -116,13 +127,18 @@ int EpollManager::loopOnce(int time_out)
 		return ev_count;
 	for (i = 0; i < ev_count; ++i) {
 		fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
-		auto event_group =
-			static_cast<EVENT_GROUP>(events[i].data.u64 & 0xff);
 		if ((events[i].events & EPOLLERR) != 0u) {
-			HandleEvent(fd, EVENT_TYPE::DISCONNECT, event_group);
+			zcu_log_print(
+				LOG_DEBUG,
+				"%s():%d: ~~ONDisconnect error fd: %d. Errno: %d - %s",
+				__FUNCTION__, __LINE__, fd, errno,
+				strerror(errno));
+			onDisconnectEvent(events[i]);
 			continue;
 		} else {
 			if ((events[i].events & EPOLLIN) != 0u) {
+				auto event_group = static_cast<EVENT_GROUP>(
+					events[i].data.u64 & 0xff);
 				if (event_group == EVENT_GROUP::ACCEPTOR) {
 					for (auto accept_fd : accept_fd_set) {
 						if (fd == accept_fd) {
@@ -135,10 +151,20 @@ int EpollManager::loopOnce(int time_out)
 					onReadEvent(events[i]);
 				}
 			}
-			if ((events[i].events & (EPOLLRDHUP | EPOLLHUP)) !=
-			    0u) {
-				HandleEvent(fd, EVENT_TYPE::DISCONNECT,
-					    event_group);
+			if ((events[i].events & EPOLLRDHUP) != 0u) {
+				zcu_log_print(
+					LOG_DEBUG,
+					"%s():%d: ~~ONDisconnect EPOLLRDHUP fd: %d",
+					__FUNCTION__, __LINE__, fd);
+				onDisconnectEvent(events[i]);
+				continue;
+			}
+			if ((events[i].events & EPOLLHUP) != 0u) {
+				zcu_log_print(
+					LOG_DEBUG,
+					"%s():%d: ~~ONDisconnect EPOLLHUP fd: %d",
+					__FUNCTION__, __LINE__, fd);
+				onDisconnectEvent(events[i]);
 				continue;
 			}
 			if ((events[i].events & EPOLLOUT) != 0u) {
@@ -193,14 +219,14 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group,
 		case EVENT_TYPE::READ_ONESHOT:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
 				   time_out);
 			break;
 		case EVENT_TYPE::WRITE:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
 				   time_out);
 			break;
@@ -246,14 +272,14 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
 		case EVENT_TYPE::READ_ONESHOT:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_READ_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
 				   time_out);
 			break;
 		case EVENT_TYPE::WRITE:
 			setTimeOut(fd,
 				   event_group == EVENT_GROUP::SERVER ?
-						 TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
+					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT :
 						 TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT,
 				   time_out);
 			break;
