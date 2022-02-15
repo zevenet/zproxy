@@ -342,10 +342,6 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 				listener_config_.replace_header_request, &eol);
 		}
 
-		// check header values length
-		if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
-			return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
-
 		auto it = http::http_info::headers_names.find(header);
 		if (it != http::http_info::headers_names.end()) {
 			auto header_name = it->second;

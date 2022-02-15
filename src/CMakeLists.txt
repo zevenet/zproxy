@@ -25,8 +25,6 @@ cmake_minimum_required(VERSION 3.6)
 add_definitions(-DDEBUG_ZCU_LOG=1)
 add_definitions(-DHELLO_WORLD_SERVER=0)
 add_definitions(-DMAXBUF=4096)
-add_definitions(-DMAX_URI_SIZE=16500)
-add_definitions(-DMAX_HEADER_VALUE_SIZE=16500)
 add_definitions(-DMAX_NUM_HEADERS=50)
 add_definitions(-DSM_HANDLE_ACCEPT=1) #StreamManager handle accept connections
 #SSL stuff
