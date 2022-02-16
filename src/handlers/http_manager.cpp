@@ -331,16 +331,16 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 		}
 
 		// check for header to be replaced in request
-		replaceHeaderHttp(
-			&request, &request.headers[i],
-			service->service_config.replace_header_request, &eol);
-		replaceHeaderHttp(&request, &request.headers[i],
-				  listener_config_.replace_header_request,
-				  &eol);
-
-		// check header values length
-		if (request.headers[i].value_len > MAX_HEADER_VALUE_SIZE)
-			return http::validation::REQUEST_RESULT::REQUEST_TOO_LARGE;
+		if (service->service_config.replace_header_request != nullptr) {
+			replaceHeaderHttp(
+				&request, &request.headers[i],
+				service->service_config.replace_header_request,
+				&eol);
+		} else if (listener_config_.replace_header_request != nullptr) {
+			replaceHeaderHttp(
+				&request, &request.headers[i],
+				listener_config_.replace_header_request, &eol);
+		}
 
 		auto it = http::http_info::headers_names.find(header);
 		if (it != http::http_info::headers_names.end()) {

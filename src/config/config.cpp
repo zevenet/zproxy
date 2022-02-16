@@ -97,6 +97,7 @@ void Config::parse_file()
 					"HTTPTracerDir directory does not exist");
 			closedir(dir);
 
+			Time::updateTime();
 			if (!global::StartOptions::getCurrent().check_only) {
 				http_tracer_dir.append(
 					"/" + name + "_" +
@@ -111,6 +112,8 @@ void Config::parse_file()
 					conf_err(
 						"HTTPTracerDir could not be created");
 				}
+				zcu_log_print(LOG_INFO, "Created directory: %s",
+					      http_tracer_dir.data());
 			}
 
 		} else if (!regexec(&regex_set::RootJail, lin, 4, matches, 0)) {

@@ -79,19 +79,6 @@ bool Waf::checkResponseHeaders(HttpStream &stream)
 	stream.modsec_transaction->processResponseHeaders(
 		stream.response.http_status_code, httpVersion);
 
-	if (stream.response.message_length == 0 &&
-	    stream.response.content_length != 0) {
-		if (MAX_DATA_SIZE - stream.backend_connection.buffer_size < 0) {
-			streamLogMessage(
-				&stream,
-				"the response body is not checked because it could overload the connection buffer");
-		} else {
-			stream.backend_connection.read();
-			stream.response.message_length =
-				stream.response.content_length;
-		}
-	}
-
 	if (stream.response.message_length > 0) {
 		stream.modsec_transaction->appendResponseBody(
 			reinterpret_cast<unsigned char *>(

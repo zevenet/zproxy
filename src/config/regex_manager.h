@@ -132,7 +132,7 @@ static const Regex Redirect(
 	"^[ \t]*Redirect(Append|Dynamic|)[ \t]+(30[127][ \t]+|)\"(.+)\"[ \t]*$");
 static const Regex Session("^[ \t]*Session[ \t]*$");
 static const Regex Type("^[ \t]*Type[ \t]+([^ \t]+)[ \t]*$");
-static const Regex TTL("^[ \t]*TTL[ \t]+([1-9-][0-9]*)[ \t]*$");
+static const Regex TTL("^[ \t]*TTL[ \t]+([1-9][0-9]*)[ \t]*$");
 static const Regex ID("^[ \t]*ID[ \t]+\"(.+)\"[ \t]*$");
 static const Regex DynScale("^[ \t]*DynScale[ \t]+([01])[ \t]*$");
 static const Regex CompressionAlgorithm(

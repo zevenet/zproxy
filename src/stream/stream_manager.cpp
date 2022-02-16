@@ -31,7 +31,8 @@
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				EVENT_GROUP event_group)
 {
-	zcu_log_print(LOG_ERR, "%s():%d: fd=%d, event_type=%s, event_group=%s",
+	zcu_log_print(LOG_DEBUG,
+		      "%s():%d: fd=%d, event_type=%s, event_group=%s",
 		      __FUNCTION__, __LINE__, fd,
 		      getEventType(event_type).data(),
 		      getEventGroup(event_group).data());
