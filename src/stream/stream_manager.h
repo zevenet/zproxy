@@ -330,6 +330,7 @@ class StreamManager : public EpollManager,
 #if USE_TIMER_FD_TIMEOUT == 0
 	void onTimeOut(int fd, TIMEOUT_TYPE type) override;
 #endif
+	void onBackendconnection(HttpStream *stream, Backend *bck);
 	void onBackendConnectionError(HttpStream *stream);
 #if WAF_ENABLED
 	/**
