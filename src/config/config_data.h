@@ -120,6 +120,22 @@ class BackendConfig : Counter<BackendConfig> {
 	{
 	}
 };
+
+/** The enum Service::LOAD_POLICY defines the different types of load
+* balancing available. All the methods are weighted except the Round Robin
+* one.
+*/
+enum class ROUTING_POLICY {
+	/** Selects the next backend following the Round Robin algorithm. */
+	ROUND_ROBIN,
+	/** Selects the backend with less stablished connections. */
+	W_LEAST_CONNECTIONS,
+	/** Selects the backend with less response time. */
+	RESPONSE_TIME,
+	/** Selects the backend with less pending connections. */
+	PENDING_CONNECTIONS,
+};
+
 class ServiceConfig : Counter<ServiceConfig> {
     public:
 	int key_id;
@@ -173,7 +189,8 @@ class ServiceConfig : Counter<ServiceConfig> {
 	bool disabled; /* true if the service is disabled */
 	int sts; /* strict transport security */
 	int max_headers_allowed;
-	int routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
+	ROUTING_POLICY
+		routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
 	int pinned_connection; /* Pin the connection by default */
 	std::string compression_algorithm; /* Compression algorithm */
 	std::shared_ptr<ServiceConfig> next;

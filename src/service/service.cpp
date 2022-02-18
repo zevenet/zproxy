@@ -273,8 +273,7 @@ Service::Service(ServiceConfig &service_config_)
 		this->sess_id += '=';
 	this->sess_pat = service_config_.sess_pat;
 	this->sess_start = service_config_.sess_start;
-	this->routing_policy =
-		static_cast<ROUTING_POLICY>(service_config_.routing_policy);
+	this->routing_policy = service_config_.routing_policy;
 	this->rewr_url = service_config_.rewr_url;
 	this->rewr_loc = service_config_.rewr_loc;
 	this->rewr_loc_path = service_config_.rewr_loc_path;

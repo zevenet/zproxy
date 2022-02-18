@@ -1611,13 +1611,17 @@ std::shared_ptr<ServiceConfig> Config::parseService(const char *svc_name)
 			lin[matches[1].rm_eo] = '\0';
 			std::string cp = lin + matches[1].rm_so;
 			if (cp == "ROUND_ROBIN")
-				res->routing_policy = 0;
+				res->routing_policy =
+					ROUTING_POLICY::ROUND_ROBIN;
 			else if (cp == "LEAST_CONNECTIONS")
-				res->routing_policy = 1;
+				res->routing_policy =
+					ROUTING_POLICY::W_LEAST_CONNECTIONS;
 			else if (cp == "RESPONSE_TIME")
-				res->routing_policy = 2;
+				res->routing_policy =
+					ROUTING_POLICY::RESPONSE_TIME;
 			else if (cp == "PENDING_CONNECTIONS")
-				res->routing_policy = 3;
+				res->routing_policy =
+					ROUTING_POLICY::PENDING_CONNECTIONS;
 			else
 				conf_err("Unknown routing policy");
 		} else if (!regexec(&regex_set::CompressionAlgorithm, lin, 4,
