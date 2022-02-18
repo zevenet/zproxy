@@ -230,7 +230,8 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task)
 		case ctl::CTL_SUBJECT::STATUS: {
 			std::unique_ptr<JsonObject> status(
 				JsonParser::parse(task.data));
-			if (status == nullptr)
+			if (status == nullptr ||
+			    status->find(JSON_KEYS::STATUS) == status->end())
 				return JSON_OP_RESULT::ERROR;
 			if (status->at(JSON_KEYS::STATUS)->isValue()) {
 				auto value =

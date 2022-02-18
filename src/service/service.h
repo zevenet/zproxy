@@ -95,20 +95,6 @@ class Service : public sessions::HttpSessionManager,
 	Backend *getNextBackend();
 
 	std::mutex mtx_lock;
-	/** The enum Service::LOAD_POLICY defines the different types of load
-   * balancing available. All the methods are weighted except the Round Robin
-   * one.
-   */
-	enum class ROUTING_POLICY {
-		/** Selects the next backend following the Round Robin algorithm. */
-		ROUND_ROBIN,
-		/** Selects the backend with less stablished connections. */
-		W_LEAST_CONNECTIONS, // we are using weighted
-		/** Selects the backend with less response time. */
-		RESPONSE_TIME,
-		/** Selects the backend with less pending connections. */
-		PENDING_CONNECTIONS,
-	};
 
     public:
 	/** True if the Service is disabled, false if it is enabled. */

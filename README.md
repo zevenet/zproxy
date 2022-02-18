@@ -325,7 +325,9 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **MaxRequest** nnn
 
-	Request maximal size. All requests will be limited to these many bytes. If a request contains more data than allowed an error 414 is returned. Default: unlimited.
+	Request maximal size. It limits the total request header length, this includes request line (HTTP verb, HTTP URL and HTTP version), the sum of headers and the CLRN characters to end each header.
+	If a request contains more data than allowed an error 414 is returned.
+	If MaxRequest is not defined, it is "unlimited", but really it has a size of 64KB which is the connection buffer size. This value cannot be modified and it is set in compilation time.
 
 - **AddRequestHeader** "header: to add"
 

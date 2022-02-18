@@ -90,6 +90,10 @@ std::string Backend::handleTask(ctl::CtlTask &task)
 			// TODO:: update  config (timeouts, headers)
 			break;
 		case ctl::CTL_SUBJECT::STATUS: {
+			if (status_object->find(JSON_KEYS::STATUS) ==
+			    status_object->end())
+				return JSON_OP_RESULT::ERROR;
+
 			if (status_object->at(JSON_KEYS::STATUS)->isValue()) {
 				auto value =
 					dynamic_cast<JsonDataValue *>(
@@ -116,6 +120,9 @@ std::string Backend::handleTask(ctl::CtlTask &task)
 			break;
 		}
 		case ctl::CTL_SUBJECT::WEIGHT: {
+			if (status_object->find(JSON_KEYS::WEIGHT) ==
+			    status_object->end())
+				return JSON_OP_RESULT::ERROR;
 			if (status_object->at(JSON_KEYS::WEIGHT)->isValue()) {
 				auto value =
 					dynamic_cast<JsonDataValue *>(

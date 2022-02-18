@@ -489,9 +489,9 @@ Example:
 NoSslRedirect "https://thishost:port"
 .TP
 \fBMaxRequest\fR nnn
-Request maximal size. All requests will be limited to these many bytes. If
-a request contains more data than allowed an error 414 is returned. Default:
-unlimited.
+Request maximal size. It limits the total request header length, this includes request line (HTTP verb, HTTP URL and HTTP version), the sum of headers and the CLRN characters to end each header.
+If a request contains more data than allowed an error 414 is returned.
+If MaxRequest is not defined, it is "unlimited", but really it has a size of 64KB which is the connection buffer size. This value cannot be modified and it is set in compilation time.
 .TP
 \fBAddRequestHeader\fR "header: to add"
 Add the defined header to the request passed to the back-end server. The header

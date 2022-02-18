@@ -628,7 +628,7 @@ void StreamManager::onRequestEvent(int fd)
 		this->clearStream(stream);
 		return;
 	}
-	IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
+
 	stream->response.reset_parser();
 	switch (bck->backend_type) {
 	case BACKEND_TYPE::REMOTE: {
@@ -644,120 +644,13 @@ void StreamManager::onRequestEvent(int fd)
 			}
 		}
 		if (need_new_backend) {
-			// null
-			if (stream->backend_connection.getFileDescriptor() >
-			    0) {
-				deleteFd(
-					stream->backend_connection
-						.getFileDescriptor()); // Client cannot
-				// Client cannot  be connected to more than one backend at
-				// time
-				bck_streams_set.erase(
-					stream->backend_connection
-						.getFileDescriptor());
-				if (stream->backend_connection.isConnected() &&
-				    stream->backend_connection.getBackend() !=
-					    nullptr)
-					stream->backend_connection.getBackend()
-						->decreaseConnection();
-			}
-			stream->backend_connection.reset();
-			stream->backend_connection.setBackend(bck);
-			Time::getTime(stream->backend_connection.time_start);
-			op_state = stream->backend_connection.doConnect(
-				*bck->address_info, bck->conn_timeout, true,
-				bck->nf_mark);
-			switch (op_state) {
-			case IO::IO_OP::OP_ERROR: {
-				streamLogMessage(
-					stream,
-					"error connecting to the backend %s",
-					bck->address.data());
-				onBackendConnectionError(stream);
-				return;
-			}
-			case IO::IO_OP::OP_IN_PROGRESS: {
-				stream->status |= helper::to_underlying(
-					STREAM_STATUS::BCK_CONN_PENDING);
-#if USE_TIMER_FD_TIMEOUT
-				stream->timer_fd.set(bck->conn_timeout * 1000);
-				this->addFd(
-					stream->timer_fd.getFileDescriptor(),
-					EVENT_TYPE::READ_ONESHOT,
-					EVENT_GROUP::CONNECT_TIMEOUT);
-#else
-				setTimeOut(stream->backend_connection
-						   .getFileDescriptor(),
-					   events::TIMEOUT_TYPE::
-						   SERVER_WRITE_TIMEOUT,
-					   bck->conn_timeout);
-#endif
-				stream->backend_connection.getBackend()
-					->increaseConnTimeoutAlive();
-				break;
-			}
-			case IO::IO_OP::OP_SUCCESS: {
-				DEBUG_COUNTER_HIT(debug__::on_backend_connect);
-				if (stream->backend_connection.getBackend()
-					    ->isConnectionLimit()) {
-					http_manager::replyError(
-						stream,
-						http::Code::ServiceUnavailable,
-						validation::request_result_reason
-							.at(validation::REQUEST_RESULT::
-								    BACKEND_NOT_FOUND),
-						listener_config_.err503,
-						stream->client_connection,
-						listener_config_.response_stats);
-					this->clearStream(stream);
-				}
-				stream->backend_connection.getBackend()
-					->increaseConnection();
-				break;
-			}
-			}
-			auto bck_stream = bck_streams_set.find(
-				stream->backend_connection.getFileDescriptor());
-			if (bck_stream != bck_streams_set.end()) {
-				streamLogDebug(stream,
-					       "bck stream exists in set");
-				// delete bck_stream->second;
-			}
-			bck_streams_set[stream->backend_connection
-						.getFileDescriptor()] = stream;
-			stream->backend_connection.enableEvents(
-				this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
+			onBackendconnection(stream, bck);
 		}
 
 		streamLogDebug(stream, "%s %s",
 			       need_new_backend ? "NEW" : "REUSED",
 			       stream->request.http_message_str.data());
 
-		// Rewrite destination
-		if (stream->request.add_destination_header) {
-			std::string header_value =
-				stream->backend_connection.getBackend()
-						->isHttps() ?
-					"https://" :
-					      "http://";
-			header_value +=
-				stream->backend_connection.getPeerAddress();
-			header_value += ':';
-			header_value += stream->request.path;
-			stream->request.addHeader(
-				http::HTTP_HEADER_NAME::DESTINATION,
-				header_value);
-		}
-		if (!stream->request.host_header_found) {
-			std::string header_value;
-			header_value +=
-				stream->backend_connection.getBackend()->address;
-			header_value += ':';
-			header_value += std::to_string(
-				stream->backend_connection.getBackend()->port);
-			stream->request.addHeader(http::HTTP_HEADER_NAME::HOST,
-						  header_value);
-		}
 		/* After setting the backend and the service in the first request,
 			 * pin the connection if the PinnedConnection service config
 			 * parameter is true. Note: The first request must be HTTP. */
@@ -766,11 +659,11 @@ void StreamManager::onRequestEvent(int fd)
 				STREAM_OPTION::PINNED_CONNECTION);
 		}
 		stream->backend_connection.enableWriteEvent();
+		stream->status |=
+			helper::to_underlying(STREAM_STATUS::BCK_WRITE_PENDING);
 		break;
 	}
-
 	case BACKEND_TYPE::EMERGENCY_SERVER:
-
 		break;
 	case BACKEND_TYPE::REDIRECT: {
 		if (http_manager::replyRedirect(*stream, *bck))
@@ -1401,6 +1294,8 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 	stopTimeOut(fd);
 #endif
 
+	stream->clearStatus(STREAM_STATUS::BCK_WRITE_PENDING);
+
 	/* Complete the connection with the backend*/
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
 		DEBUG_COUNTER_HIT(debug__::on_backend_connect);
@@ -1424,6 +1319,34 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 		stream->backend_connection.getBackend()->increaseConnection();
 		stream->backend_connection.getBackend()->setAvgConnTime(
 			stream->backend_connection.time_start);
+	}
+
+	// add backend headers
+	if (!stream->request.getHeaderSent()) {
+		if (stream->request.add_destination_header) {
+			std::string header_value =
+				stream->backend_connection.getBackend()
+						->isHttps() ?
+					"https://" :
+					      "http://";
+			header_value +=
+				stream->backend_connection.getPeerAddress();
+			header_value += ':';
+			header_value += stream->request.path;
+			stream->request.addHeader(
+				http::HTTP_HEADER_NAME::DESTINATION,
+				header_value);
+		}
+		if (!stream->request.host_header_found) {
+			std::string header_value;
+			header_value +=
+				stream->backend_connection.getBackend()->address;
+			header_value += ':';
+			header_value += std::to_string(
+				stream->backend_connection.getBackend()->port);
+			stream->request.addHeader(http::HTTP_HEADER_NAME::HOST,
+						  header_value);
+		}
 	}
 
 	/* Set the tracer file description in the backend */
@@ -2086,6 +2009,90 @@ bool StreamManager::isHandler(ctl::CtlTask &task)
 	       task.target == ctl::CTL_HANDLER_TYPE::STREAM_MANAGER;
 }
 
+void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
+{
+	IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
+
+	if (bck->backend_type != BACKEND_TYPE::REMOTE)
+		return;
+
+	stream->response.reset_parser();
+
+	if (stream->backend_connection.getFileDescriptor() > 0) {
+		deleteFd(stream->backend_connection
+				 .getFileDescriptor()); // Client cannot
+		// Client cannot  be connected to more than one backend at
+		// time
+		bck_streams_set.erase(
+			stream->backend_connection.getFileDescriptor());
+		if (stream->backend_connection.isConnected() &&
+		    stream->backend_connection.getBackend() != nullptr)
+			stream->backend_connection.getBackend()
+				->decreaseConnection();
+	}
+	stream->backend_connection.reset();
+	stream->backend_connection.setBackend(bck);
+	Time::getTime(stream->backend_connection.time_start);
+	op_state = stream->backend_connection.doConnect(
+		*bck->address_info, bck->conn_timeout, true, bck->nf_mark);
+	switch (op_state) {
+	case IO::IO_OP::OP_ERROR: {
+		streamLogMessage(stream, "error connecting to the backend %s",
+				 bck->address.data());
+		onBackendConnectionError(stream);
+		return;
+	}
+	case IO::IO_OP::OP_IN_PROGRESS: {
+		stream->status |=
+			helper::to_underlying(STREAM_STATUS::BCK_CONN_PENDING);
+#if USE_TIMER_FD_TIMEOUT
+		stream->timer_fd.set(bck->conn_timeout * 1000);
+		this->addFd(stream->timer_fd.getFileDescriptor(),
+			    EVENT_TYPE::READ_ONESHOT,
+			    EVENT_GROUP::CONNECT_TIMEOUT);
+#else
+		setTimeOut(stream->backend_connection.getFileDescriptor(),
+			   events::TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT,
+			   bck->conn_timeout);
+#endif
+		stream->backend_connection.getBackend()
+			->increaseConnTimeoutAlive();
+		break;
+	}
+	case IO::IO_OP::OP_SUCCESS: {
+		DEBUG_COUNTER_HIT(debug__::on_backend_connect);
+		if (stream->backend_connection.getBackend()
+			    ->isConnectionLimit()) {
+			streamLogDebug(stream,
+				       "backend reached the connection limit");
+			http_manager::replyError(
+				stream, http::Code::ServiceUnavailable,
+				validation::request_result_reason.at(
+					validation::REQUEST_RESULT::
+						BACKEND_NOT_FOUND),
+				stream->service_manager->listener_config_
+					->err503,
+				stream->client_connection,
+				stream->service_manager->listener_config_
+					->response_stats);
+			this->clearStream(stream);
+		}
+		stream->backend_connection.getBackend()->increaseConnection();
+		break;
+	}
+	}
+	auto bck_stream = bck_streams_set.find(
+		stream->backend_connection.getFileDescriptor());
+	if (bck_stream != bck_streams_set.end()) {
+		streamLogDebug(stream, "bck stream exists in set");
+		// delete bck_stream->second;
+	}
+	bck_streams_set[stream->backend_connection.getFileDescriptor()] =
+		stream;
+	stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE,
+						EVENT_GROUP::SERVER);
+}
+
 void StreamManager::onServerDisconnect(HttpStream *stream)
 {
 	if (stream == nullptr)
@@ -2114,6 +2121,33 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 	    stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
 		onBackendConnectionError(stream);
 		return;
+		// if request was not sent to the backend, try to select a new one
+	} else if (stream->hasStatus(STREAM_STATUS::BCK_WRITE_PENDING) &&
+		   !stream->hasOption(STREAM_OPTION::PINNED_CONNECTION)) {
+		streamLogMessage(
+			stream,
+			"backend disconnected, trying to get a new backend for %s",
+			stream->request.http_message_str.data());
+		auto service =
+			static_cast<Service *>(stream->request.getService());
+		auto bck = service->getBackend(stream->client_connection,
+					       stream->request);
+		if (bck == nullptr) {
+			// No backend available
+			http_manager::replyError(
+				stream, http::Code::ServiceUnavailable,
+				validation::request_result_reason.at(
+					validation::REQUEST_RESULT::
+						BACKEND_NOT_FOUND),
+				listener_config_.err503,
+				stream->client_connection,
+				listener_config_.response_stats);
+			this->clearStream(stream);
+			return;
+		}
+		onBackendconnection(stream, bck);
+		return;
+
 	} else {
 		if (stream->backend_connection.getBackend() != nullptr)
 			stream->backend_connection.getBackend()
