@@ -190,7 +190,7 @@ class ServiceConfig : Counter<ServiceConfig> {
 	int sts; /* strict transport security */
 	int max_headers_allowed;
 	ROUTING_POLICY
-		routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
+	routing_policy; /* load policy (from 0 to 3) defined in the LOAD_POLICY enum */
 	int pinned_connection; /* Pin the connection by default */
 	std::string compression_algorithm; /* Compression algorithm */
 	std::shared_ptr<ServiceConfig> next;

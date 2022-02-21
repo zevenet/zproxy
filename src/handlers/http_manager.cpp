@@ -502,6 +502,26 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 			TRANSFER_ENCODING_TYPE::CHUNKED;
 		request.chunked_status = http::CHUNKED_STATUS::CHUNKED_ENABLED;
 	}
+
+	// Add the headers configured (addXheader directives). Service context has more
+	// priority. These headers are not removed for removeheader directive
+	if (!service->service_config.add_head_req.empty()) {
+		stream.request.addHeader(service->service_config.add_head_req,
+					 true);
+	} else if (!listener_config_.add_head_req.empty()) {
+		stream.request.addHeader(listener_config_.add_head_req, true);
+	}
+
+	std::string x_forwarded_for_header;
+	if (!stream.request.x_forwarded_for_string.empty()) {
+		// set extra header to forward to the backends
+		x_forwarded_for_header = stream.request.x_forwarded_for_string;
+		x_forwarded_for_header += ", ";
+	}
+	x_forwarded_for_header += stream.client_connection.getPeerAddress();
+	stream.request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
+				 x_forwarded_for_header);
+
 	return validation::REQUEST_RESULT::OK;
 }
 
