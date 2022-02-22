@@ -21,7 +21,9 @@
 
 #ifndef _ZCUTILS_H_
 #define _ZCUTILS_H_
-
+#include <execinfo.h>
+#include <link.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <syslog.h>
