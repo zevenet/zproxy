@@ -530,6 +530,7 @@ void StreamManager::onRequestEvent(int fd)
 	/* Select a service */
 	auto service = stream->service_manager->getService(stream->request);
 	if (service == nullptr) {
+		stream->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, stream->request.virtual_host);
 		http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
@@ -1067,10 +1068,14 @@ void StreamManager::onSignalEvent([[maybe_unused]] int fd)
 void StreamManager::setStreamBackend(HttpStream *stream)
 {
 	auto service = static_cast<Service *>(stream->request.getService());
+	zcu_log_print(LOG_DEBUG, "setStreamBackend: init");
+
 	this->stopTimeOut(stream->client_connection.getFileDescriptor());
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
+
 	if (service == nullptr) {
+		zcu_log_print(LOG_DEBUG, "setStreamBackend: getting Service");
 		service = stream->service_manager->getService(stream->request);
 		if (service == nullptr) {
 			http_manager::replyError(
