@@ -213,9 +213,13 @@ class HttpStream : public Counter<HttpStream> {
 	{                                                                      \
 		auto tag = const_cast<HttpStream *>(s)->logTag("error");       \
 		auto request_data_len =                                        \
-			std::string_view(target.buffer).find('\r');            \
-		zcu_log_print(LOG_INFO, "%s e%d %s \"%.*s\"", tag.data(),      \
+			std::string_view(target.buffer).find('\r'); \
+		auto req = const_cast<HttpStream *>(s)->request;	\
+		auto host = req.virtual_host;	\
+		zcu_log_print(LOG_INFO, "%s e%d %s \"Host:%s\" \"%.*s\"",  \
+				tag.data(),      \
 			      static_cast<int>(code), code_string.data(),      \
+			      host.data(),				\
 			      request_data_len, target.buffer);                \
 	}
 
