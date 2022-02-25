@@ -327,7 +327,6 @@ void StreamManager::onRequestEvent(int fd)
 		::close(fd);
 		return;
 	}
-
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 	if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
@@ -530,7 +529,8 @@ void StreamManager::onRequestEvent(int fd)
 	/* Select a service */
 	auto service = stream->service_manager->getService(stream->request);
 	if (service == nullptr) {
-		stream->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, stream->request.virtual_host);
+		stream->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST,
+					       stream->request.virtual_host);
 		http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
