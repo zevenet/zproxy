@@ -73,6 +73,8 @@ int _zcu_log_print(int loglevel, const char *fmt, ...);
 
 /****  BACKTRACE  ****/
 
+void zcu_bt_print_symbols();
+
 void zcu_bt_print();
 
 /****  STRING  ****/
