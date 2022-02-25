@@ -103,6 +103,27 @@ int _zcu_log_print(int loglevel, const char *fmt, ...)
 
 /****  BACKTRACE  ****/
 
+void zcu_bt_print_symbols()
+{
+	void *buffer[255];
+	char **str;
+	int i;
+	const int calls = backtrace(buffer, sizeof(buffer) / sizeof(void *));
+
+	backtrace_symbols_fd(buffer, calls, 1);
+
+	str = backtrace_symbols(buffer, calls);
+	if (!str) {
+		zcu_log_print(LOG_ERR, "No backtrace strings found!");
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0; i < calls; i++)
+		zcu_log_print(LOG_ERR, "Backtrace_symbol: %s", str[i]);
+
+	free(str);
+}
+
 size_t ConvertToVMA(size_t addr)
 {
 	Dl_info info;
