@@ -148,13 +148,18 @@ class Environment {
 		return false;
 	}
 
+	/*
+	If a second paratemer is passed, it is added in the pid file in a new line
+	*/
 	static bool createPidFile(const std::string &pid_file_name,
-				  int pid = -1)
+				  int pid = -1, int child_pid = -1)
 	{
 		auto pid_file_hl = ::fopen(pid_file_name.c_str(), "wt");
 		if (pid_file_hl != nullptr) {
 			fprintf(pid_file_hl, "%d\n",
 				pid != -1 ? pid : getpid());
+			if (child_pid != -1)
+				fprintf(pid_file_hl, "%d\n", child_pid);
 			fclose(pid_file_hl);
 			return true;
 		} else

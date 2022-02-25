@@ -27,6 +27,7 @@
 #include "stream/listener_manager.h"
 #include "util/system.h"
 #include "../zcutils/zcutils.h"
+#include <sys/wait.h>
 
 static jmp_buf jmpbuf;
 
@@ -53,9 +54,11 @@ void handleInterrupt(int sig)
 		break;
 	}
 	case SIGABRT:
+		zcu_bt_print_symbols();
 		zcu_bt_print();
 		::_exit(EXIT_FAILURE);
 	case SIGSEGV: {
+		zcu_bt_print_symbols();
 		zcu_bt_print();
 		::_exit(EXIT_FAILURE);
 	}
@@ -76,6 +79,10 @@ void handleInterrupt(int sig)
 
 int main(int argc, char *argv[])
 {
+	/* worker pid */
+	static pid_t son = 0;
+	int parent_pid;
+
 	//  debug::EnableBacktraceOnTerminate();
 	Time::updateTime();
 	static ListenerManager listener;
@@ -138,7 +145,8 @@ int main(int argc, char *argv[])
 
 	/* record pid in file */
 	if (!config.pid_name.empty()) {
-		Environment::createPidFile(config.pid_name, ::getpid());
+		parent_pid = ::getpid();
+		Environment::createPidFile(config.pid_name, parent_pid, -1);
 	}
 	/* chroot if necessary */
 	if (!config.root_jail.empty()) {
@@ -154,20 +162,52 @@ int main(int argc, char *argv[])
 		Environment::setGid(std::string(config.group));
 	}
 
-	if (!config.ctrl_name.empty() || !config.ctrl_ip.empty()) {
-		control_manager->init(config);
-		control_manager->start();
-	}
-	for (auto listener_conf = config.listeners; listener_conf != nullptr;
-	     listener_conf = listener_conf->next) {
-		if (!listener.addListener(listener_conf)) {
-			zcu_log_print(LOG_ERR,
-				      "error initializing listener socket");
-			return EXIT_FAILURE;
+	for (;;) {
+		if (config.daemonize) {
+			if ((son = fork()) > 0) {
+				// add pid to the file
+				if (!config.pid_name.empty()) {
+					Environment::createPidFile(
+						config.pid_name, parent_pid,
+						son);
+				}
+
+				int status;
+				wait(&status);
+				if (WIFEXITED(status)) {
+					zcu_log_print(
+						LOG_ERR,
+						"MONITOR: worker exited %d, restarting...",
+						WEXITSTATUS(status));
+					// force reload to get the latest changes of the config file
+					listener.reloadConfigFile();
+				}
+			}
+		}
+		if (son == 0) {
+			if (!config.ctrl_name.empty() ||
+			    !config.ctrl_ip.empty()) {
+				control_manager->init(config);
+				control_manager->start();
+			}
+			zcu_log_print(LOG_DEBUG, "initializing listeners");
+			for (auto listener_conf = config.listeners;
+			     listener_conf != nullptr;
+			     listener_conf = listener_conf->next) {
+				if (!listener.addListener(listener_conf)) {
+					zcu_log_print(
+						LOG_ERR,
+						"error initializing listener socket");
+					return EXIT_FAILURE;
+				}
+			}
+			listener.start();
+			// execute the loop once if it is not working in daemonize mode
+			if (!config.daemonize)
+				break;
 		}
 	}
 
-	listener.start();
 	listener.stop();
 	control_manager->stop();
 	cleanExit();
