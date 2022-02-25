@@ -21,7 +21,9 @@
 
 #ifndef _ZCUTILS_H_
 #define _ZCUTILS_H_
-
+#include <execinfo.h>
+#include <link.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <syslog.h>
@@ -70,6 +72,8 @@ int _zcu_log_print(int loglevel, const char *fmt, ...);
 		       ##__VA_ARGS__)
 
 /****  BACKTRACE  ****/
+
+void zcu_bt_print_symbols();
 
 void zcu_bt_print();
 

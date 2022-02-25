@@ -327,7 +327,6 @@ void StreamManager::onRequestEvent(int fd)
 		::close(fd);
 		return;
 	}
-
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 	if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
@@ -530,6 +529,8 @@ void StreamManager::onRequestEvent(int fd)
 	/* Select a service */
 	auto service = stream->service_manager->getService(stream->request);
 	if (service == nullptr) {
+		stream->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST,
+					       stream->request.virtual_host);
 		http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
@@ -554,15 +555,6 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
-	// Add the headers configured (addXheader directives). Service context has more
-	// priority. These headers are not removed for removeheader directive
-	if (!service->service_config.add_head_req.empty()) {
-		stream->request.addHeader(service->service_config.add_head_req,
-					  true);
-	} else if (!listener_config_.add_head_req.empty()) {
-		stream->request.addHeader(listener_config_.add_head_req, true);
-	}
-
 #if WAF_ENABLED
 	if (stream->waf_rules) {
 		// rule struct is unitializate if no rulesets are configured
@@ -577,15 +569,7 @@ void StreamManager::onRequestEvent(int fd)
 		}
 	}
 #endif
-	std::string x_forwarded_for_header;
-	if (!stream->request.x_forwarded_for_string.empty()) {
-		// set extra header to forward to the backends
-		x_forwarded_for_header = stream->request.x_forwarded_for_string;
-		x_forwarded_for_header += ", ";
-	}
-	x_forwarded_for_header += stream->client_connection.getPeerAddress();
-	stream->request.addHeader(http::HTTP_HEADER_NAME::X_FORWARDED_FOR,
-				  x_forwarded_for_header);
+
 #if USE_TIMER_FD_TIMEOUT
 	stream->timer_fd.unset();
 	deleteFd(stream->timer_fd.getFileDescriptor());
@@ -1084,10 +1068,14 @@ void StreamManager::onSignalEvent([[maybe_unused]] int fd)
 void StreamManager::setStreamBackend(HttpStream *stream)
 {
 	auto service = static_cast<Service *>(stream->request.getService());
+	zcu_log_print(LOG_DEBUG, "setStreamBackend: init");
+
 	this->stopTimeOut(stream->client_connection.getFileDescriptor());
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
+
 	if (service == nullptr) {
+		zcu_log_print(LOG_DEBUG, "setStreamBackend: getting Service");
 		service = stream->service_manager->getService(stream->request);
 		if (service == nullptr) {
 			http_manager::replyError(

@@ -103,7 +103,7 @@ int _zcu_log_print(int loglevel, const char *fmt, ...)
 
 /****  BACKTRACE  ****/
 
-void zcu_bt_print()
+void zcu_bt_print_symbols()
 {
 	void *buffer[255];
 	char **str;
@@ -119,11 +119,66 @@ void zcu_bt_print()
 	}
 
 	for (i = 0; i < calls; i++)
-		zcu_log_print(LOG_ERR, "Backtrace: %s", str[i]);
+		zcu_log_print(LOG_ERR, "Backtrace_symbol: %s", str[i]);
 
 	free(str);
+}
 
-	exit(EXIT_FAILURE);
+size_t ConvertToVMA(size_t addr)
+{
+	Dl_info info;
+	link_map *link_map;
+	dladdr1((void *)addr, &info, (void **)&link_map, RTLD_DL_LINKMAP);
+	return addr - link_map->l_addr;
+}
+
+void zcu_bt_print()
+{
+	void *callstack[128];
+	int frame_count =
+		backtrace(callstack, sizeof(callstack) / sizeof(callstack[0]));
+	FILE *fp;
+	char path[ZCU_DEF_BUFFER_SIZE];
+
+	if (!frame_count) {
+		zcu_log_print(LOG_ERR, "No backtrace strings found!");
+		exit(EXIT_FAILURE);
+	} else {
+		for (int i = 0; i < frame_count; i++) {
+			Dl_info info;
+			if (dladdr(callstack[i], &info)) {
+				char command[256];
+				size_t VMA_addr =
+					ConvertToVMA((size_t)callstack[i]);
+				VMA_addr -=
+					1; // https://stackoverflow.com/questions/11579509/wrong-line-numbers-from-addr2line/63841497#63841497
+				snprintf(command, sizeof(command),
+					 "addr2line -e %s -Ci %zx",
+					 info.dli_fname, VMA_addr);
+
+				/* Open the command for reading. */
+				fp = popen(command, "r");
+				if (fp == NULL) {
+					zcu_log_print(LOG_ERR,
+						      "Failed to run: %s",
+						      command);
+					exit(EXIT_FAILURE);
+				} else {
+					/* Read the output a line at a time - output it. */
+					while (fgets(path, sizeof(path), fp) !=
+					       NULL) {
+						printf("%s", path);
+					}
+
+					zcu_log_print(LOG_ERR, "Backtrace: %s",
+						      path);
+
+					/* close */
+					pclose(fp);
+				}
+			}
+		}
+	}
 }
 
 /****  STRING  ****/
