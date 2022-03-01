@@ -245,7 +245,7 @@ class Environment {
 		zcu_log_print(LOG_DEBUG,
 			      "%s():%d: \tRLIMIT_NOFILE\tSetCurrent %s",
 			      __FUNCTION__, __LINE__,
-			      std::to_string(r.rlim_cur));
+			      std::to_string(r.rlim_cur).data());
 		return true;
 	}
 
