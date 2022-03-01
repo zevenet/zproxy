@@ -233,6 +233,7 @@ class Config : public Counter<Config> {
 	bool init(const global::StartOptions &start_options);
 	bool init(const std::string &file_name);
 	bool found_parse_error{ false };
+	void setAsCurrentRuntime();
 	void setAsCurrent();
 #if WAF_ENABLED
 	/**
