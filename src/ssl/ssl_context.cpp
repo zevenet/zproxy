@@ -30,27 +30,29 @@ bool SSLContext::init(const std::string &cert_file, const std::string &key_file)
 	ssl_ctx = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_method()),
 					   &::SSL_CTX_free);
 	if (ssl_ctx == nullptr) {
-		zcu_log_print(LOG_ERR, "SSL_CTX_new failed");
+		zcu_log_print(LOG_NOTICE, "SSL_CTX_new failed");
 		return false;
 	}
 	int r = SSL_CTX_use_certificate_file(ssl_ctx.get(), cert_file.c_str(),
 					     SSL_FILETYPE_PEM);
 	if (r <= 0) {
-		zcu_log_print(LOG_ERR, "SSL_CTX_use_certificate_file %s failed",
+		zcu_log_print(LOG_NOTICE,
+			      "SSL_CTX_use_certificate_file %s failed",
 			      cert_file.c_str());
 		return false;
 	}
 	r = SSL_CTX_use_PrivateKey_file(ssl_ctx.get(), key_file.c_str(),
 					SSL_FILETYPE_PEM);
 	if (r <= 0) {
-		zcu_log_print(LOG_ERR, "SSL_CTX_use_PrivateKey_file %s failed",
+		zcu_log_print(LOG_NOTICE,
+			      "SSL_CTX_use_PrivateKey_file %s failed",
 			      key_file.c_str());
 		return false;
 	}
 
 	r = SSL_CTX_check_private_key(ssl_ctx.get());
 	if (!r) {
-		zcu_log_print(LOG_ERR, "SSL_CTX_check_private_key failed");
+		zcu_log_print(LOG_NOTICE, "SSL_CTX_check_private_key failed");
 		return false;
 	}
 

@@ -31,7 +31,7 @@ EpollManager::EpollManager() : accept_fd_set()
 	if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
 		std::string error = "epoll_create(2) failed: ";
 		error += std::strerror(errno);
-		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
+		zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__, __LINE__,
 			      error.data());
 		throw std::system_error(errno, std::system_category());
 	}
@@ -88,12 +88,12 @@ bool EpollManager::deleteFd(int fd)
 		if (errno == ENOENT || errno == EBADF || errno == EPERM) {
 			//      std::string error = "epoll_ctl(delete) unnecessary. ";
 			//      error += std::strerror(errno);
-			//        zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__, error);
+			//        zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__, __LINE__, error);
 			return true;
 		}
 		std::string error = "epoll_ctl(delete) failed ";
 		error += std::strerror(errno);
-		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
+		zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__, __LINE__,
 			      error.data());
 		return false;
 	}
@@ -205,7 +205,7 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group,
 		} else {
 			std::string error = "epoll_ctl(add) failed ";
 			error += std::strerror(errno);
-			zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
+			zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__,
 				      __LINE__, error.data());
 			return false;
 		}
@@ -255,13 +255,13 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type,
 			std::string error =
 				"epoll_ctl(update) failed, fd reopened, adding .. ";
 			error += std::strerror(errno);
-			zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
+			zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__,
 				      __LINE__, error.data());
 			return addFd(fd, event_type, event_group);
 		} else {
 			std::string error = "epoll_ctl(update) failed ";
 			error += std::strerror(errno);
-			zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__,
+			zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__,
 				      __LINE__, error.data());
 			return false;
 		}

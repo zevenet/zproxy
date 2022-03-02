@@ -2229,7 +2229,7 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 	stream->backend_connection.getBackend()->setStatus(
 		BACKEND_STATUS::BACKEND_DOWN);
 
-	zcu_log_print(LOG_NOTICE,
+	zcu_log_print(LOG_WARNING,
 		      "[svc:%s][bk:%s:%d] The backend dead (killed)",
 		      stream->backend_connection.getBackend()
 			      ->backend_config->srv_name.data(),

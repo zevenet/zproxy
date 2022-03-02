@@ -242,13 +242,25 @@ negotiations.  Generate such a file with \fBopenssl dhparam\fR.
 This can be used to do 2048bit DHE.
 .TP
 \fBLogLevel\fR value
-Specify the logging level following the syslog scheme, 0 for no logging,
-1 (default) for regular information about the
-.I Service
-and
-.I BackEnd
-used).
-This value can be overridden for specific listeners.
+Specify the logging level following the scheme:
+.IP
+.I 0-2
+No logs
+.IP
+.I 3
+Break points: Something was bad and the binary is going to exit. Parsing configuration file, segfault...
+.IP
+.I 4
+Alerts: WAF logs and backend events (dead/resurrect).
+.IP
+.I 5
+Errors: HTTP issues, connection issues, timeouts.
+.IP
+.I 6
+Info: HTTP transaction summary: stream id, service, client, backend, request host, request line...
+.IP
+.I 7
+Debug: Higher log level, it is useful to trace issues.
 .TP
 \fBIgnoreCase\fR 0|1
 Ignore case when matching URLs (default: 0). This value can be

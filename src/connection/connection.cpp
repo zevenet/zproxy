@@ -45,13 +45,14 @@ IO::IO_RESULT Connection::read()
 			       (MAX_DATA_SIZE - buffer_size - buffer_offset));
 		if (count < 0) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK) {
-				zcu_log_print(LOG_ERR,
+				zcu_log_print(LOG_NOTICE,
 					      "%s():%d: read() failed: %s",
 					      __FUNCTION__, __LINE__,
 					      std::strerror(errno));
 				result = IO::IO_RESULT::ERROR;
 			} else {
-				zcu_log_print(LOG_ERR, "%s():%d: read(): egain",
+				zcu_log_print(LOG_NOTICE,
+					      "%s():%d: read(): egain",
 					      __FUNCTION__, __LINE__,
 					      std::strerror(errno));
 				result = IO::IO_RESULT::DONE_TRY_AGAIN;
@@ -315,7 +316,7 @@ IO::IO_RESULT Connection::writeTo(int fd, size_t &sent)
 		if (count < 0) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK	/* && errno != EPIPE &&
 									   errno != ECONNRESET */ ) {
-				zcu_log_print(LOG_ERR,
+				zcu_log_print(LOG_NOTICE,
 					      "%s():%d: write() failed %s",
 					      __FUNCTION__, __LINE__,
 					      std::strerror(errno));
@@ -425,7 +426,7 @@ IO::IO_RESULT Connection::writeIOvec(int target_fd, iovec *iov,
 				result = IO::IO_RESULT::
 					DONE_TRY_AGAIN; // do not persist changes
 			} else {
-				zcu_log_print(LOG_ERR,
+				zcu_log_print(LOG_NOTICE,
 					      "%s():%d: writev() failed: %s",
 					      __FUNCTION__, __LINE__,
 					      std::strerror(errno));
@@ -494,7 +495,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 		if (count < 0) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK	/* && errno != EPIPE &&
 									   errno != ECONNRESET */ ) {
-				zcu_log_print(LOG_ERR,
+				zcu_log_print(LOG_NOTICE,
 					      "%s():%d: write() failed: %s",
 					      __FUNCTION__, __LINE__,
 					      std::strerror(errno));
@@ -535,8 +536,8 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async,
 {
 	int result = -1;
 	if ((fd_ = socket(address_.ai_family, SOCK_STREAM, 0)) < 0) {
-		zcu_log_print(LOG_ERR, "%s():%d: socket() failed", __FUNCTION__,
-			      __LINE__);
+		zcu_log_print(LOG_NOTICE, "%s():%d: socket() failed",
+			      __FUNCTION__, __LINE__);
 		return IO::IO_OP::OP_ERROR;
 	}
 	zcu_soc_set_tcpnodelayoption(fd_);
@@ -566,7 +567,7 @@ IO::IO_OP Connection::doConnect(addrinfo &address_, int timeout, bool async,
 					hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
 					NI_NUMERICHOST | NI_NUMERICSERV) == 0)
 				zcu_log_print(
-					LOG_ERR,
+					LOG_NOTICE,
 					"%s():%d: connect(%s:%s) failed: %s",
 					__FUNCTION__, __LINE__, hbuf, sbuf,
 					strerror(errno));
@@ -582,8 +583,8 @@ IO::IO_OP Connection::doConnect(const std::string &af_unix_socket_path,
 {
 	int result = -1;
 	if ((fd_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-		zcu_log_print(LOG_ERR, "%s():%d: socket() failed", __FUNCTION__,
-			      __LINE__);
+		zcu_log_print(LOG_NOTICE, "%s():%d: socket() failed",
+			      __FUNCTION__, __LINE__);
 		return IO::IO_OP::OP_ERROR;
 	}
 	zcu_soc_set_tcpnodelayoption(fd_);
@@ -631,7 +632,7 @@ int Connection::doAccept(int listener_fd)
 		if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
 			return 0; // We have processed all incoming connections.
 		}
-		zcu_log_print(LOG_ERR, "%s():%d: accept() failed %s",
+		zcu_log_print(LOG_NOTICE, "%s():%d: accept() failed %s",
 			      __FUNCTION__, __LINE__, std::strerror(errno));
 		// break;
 		return -1;
@@ -646,7 +647,7 @@ int Connection::doAccept(int listener_fd)
 		return new_fd;
 	} else {
 		::close(new_fd);
-		zcu_log_print(LOG_ERR,
+		zcu_log_print(LOG_NOTICE,
 			      "HTTP connection prematurely closed by peer");
 	}
 	return -1;
@@ -671,7 +672,7 @@ int Connection::listen(const addrinfo &address_)
 		if ((listen_fd = socket(rp->ai_family, rp->ai_socktype,
 					rp->ai_protocol)) < 0) {
 			zcu_log_print(
-				LOG_ERR,
+				LOG_NOTICE,
 				"%s():%d: socket () failed %s s - aborted",
 				__FUNCTION__, __LINE__, strerror(errno));
 			continue;
@@ -684,7 +685,7 @@ int Connection::listen(const addrinfo &address_)
 
 		if (::bind(listen_fd, rp->ai_addr,
 			   static_cast<socklen_t>(rp->ai_addrlen)) < 0) {
-			zcu_log_print(LOG_ERR,
+			zcu_log_print(LOG_NOTICE,
 				      "%s():%d: bind () failed %s - aborted",
 				      __FUNCTION__, __LINE__, strerror(errno));
 			::close(listen_fd);
@@ -712,14 +713,14 @@ bool Connection::listen(const std::string &af_unix_name)
 		  sizeof(ctrl.sun_path) - 1);
 
 	if ((fd_ = ::socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-		zcu_log_print(LOG_ERR, "%s():%d: control \"%s\" create: %s",
+		zcu_log_print(LOG_NOTICE, "%s():%d: control \"%s\" create: %s",
 			      __FUNCTION__, __LINE__, ctrl.sun_path,
 			      strerror(errno));
 		return false;
 	}
 	if (::bind(fd_, (struct sockaddr *)&ctrl, (socklen_t)sizeof(ctrl)) <
 	    0) {
-		zcu_log_print(LOG_ERR, "%s():%d: control \"%s\" bind: %s",
+		zcu_log_print(LOG_NOTICE, "%s():%d: control \"%s\" bind: %s",
 			      __FUNCTION__, __LINE__, ctrl.sun_path,
 			      strerror(errno));
 		return false;
@@ -770,7 +771,8 @@ void Connection::writeTracer(bool read_flag, CONNECTION_PEER type, char *buf,
 		break;
 	default:
 		new_st = CONN;
-		zcu_log_print(LOG_ERR, "connection peer was not recoignized");
+		zcu_log_print(LOG_NOTICE,
+			      "connection peer was not recoignized");
 	}
 	if (new_st != *tracer_status) {
 		fprintf(tracer_fh,

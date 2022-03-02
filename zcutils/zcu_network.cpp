@@ -156,7 +156,7 @@ bool zcu_soc_set_socket_non_blocking(int fd, bool blocking)
 		std::string error = "fcntl(2) failed";
 		error += std::strerror(errno);
 		zcu_log_print(LOG_ERR, "%s():%d: %s", __FUNCTION__, __LINE__,
-			      error);
+			      error.data());
 		return false;
 	}
 	return true;

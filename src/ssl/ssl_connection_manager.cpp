@@ -37,7 +37,7 @@ bool SSLConnectionManager::initSslConnection(SSL_CTX *ssl_ctx,
 	}
 	ssl_connection.ssl = SSL_new(ssl_ctx);
 	if (ssl_connection.ssl == nullptr) {
-		zcu_log_print(LOG_ERR, "SSL_new failed");
+		zcu_log_print(LOG_NOTICE, "SSL_new failed");
 		return false;
 	}
 
@@ -58,7 +58,7 @@ bool SSLConnectionManager::initSslConnection(SSL_CTX *ssl_ctx,
 	int r = SSL_set_fd(ssl_connection.ssl,
 			   ssl_connection.getFileDescriptor());
 	if (!r) {
-		zcu_log_print(LOG_ERR, "SSL_set_fd failed");
+		zcu_log_print(LOG_NOTICE, "SSL_set_fd failed");
 		return false;
 	}
 #endif
@@ -414,7 +414,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 #ifdef DEBUG_PRINT_SSL_SESSION_INFO
 	SSL_SESSION *session = SSL_get_session(ssl_connection.ssl);
 	auto session_info = ssl::ossGetSslSessionInfo(session);
-	zcu_log_print(LOG_ERR, "%s():%d: [%lx] %s from %s", __FUNCTION__,
+	zcu_log_print(LOG_NOTICE, "%s():%d: [%lx] %s from %s", __FUNCTION__,
 		      __LINE__, pthread_self(), session_info.get(),
 		      ssl_connection.getPeerAddress().c_str());
 #endif

@@ -158,7 +158,19 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **LogLevel** value
 
-	Specify  the logging level following the syslog scheme, 0 for no logging, 1 (default) for regular information about the Service and BackEnd used).  This value can be overridden for specific listeners.
+	Specify the logging level following the scheme:
+
+	- 0-2: No logs
+
+	- 3: Break points: Something was bad and the binary is going to exit. Parsing configuration file, segfault...
+
+	- 4: Alerts: WAF logs and backend events (dead/resurrect).
+
+	- 5: Errors: HTTP issues, connection issues, timeouts.
+
+	- 6: Info: HTTP transaction summary: stream id, service, client, backend, request host, request line...
+
+	- 7: Debug: Higher log level, it is useful to trace issues.
 
 - **IgnoreCase** 0|1
 
