@@ -31,12 +31,18 @@ class Timer {
 	void start(int timeout_sec)
 	{
 		std::chrono::milliseconds interval =
-			std::chrono::seconds(timeout_sec);
+			std::chrono::milliseconds(CTL_TO_INTERVAL);
 		running = true;
 
 		th = std::thread([=]() {
-			while (running == true) {
+			int milliseconds = timeout_sec * 1000;
+
+			while (running && milliseconds > 0) {
 				std::this_thread::sleep_for(interval);
+				milliseconds -= CTL_TO_INTERVAL;
+			}
+
+			if (running) {
 				zcu_log_print(
 					LOG_ERR,
 					"Error: zproxyctl reached the timeout %d",
@@ -495,6 +501,7 @@ bool PoundClient::init(int argc, char *argv[])
 
 	timeout.start(ms_to);
 	auto rt = executeCommand();
+	timeout.stop();
 	return rt;
 }
 

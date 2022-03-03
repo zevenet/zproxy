@@ -32,6 +32,7 @@
 #include <thread>
 #include <chrono>
 
+#define CTL_TO_INTERVAL 100
 #define DEFAULT_CTL_TIMEOUT 20
 #define NO_VALUE -1
 using namespace ctl;
