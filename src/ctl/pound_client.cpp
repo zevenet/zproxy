@@ -495,7 +495,6 @@ bool PoundClient::init(int argc, char *argv[])
 
 	timeout.start(ms_to);
 	auto rt = executeCommand();
-	timeout.stop();
 	return rt;
 }
 
