@@ -2172,22 +2172,10 @@ void StreamManager::stopListener(int listener_id, bool cut_connection)
 		auto spt = lc.second.lock();
 		if (spt && listener_id == spt->id) {
 			this->stopAccept(lc.first);
-
 			::close(lc.first);
 		}
 	}
-	for (auto it = service_manager_set.begin();
-	     it != service_manager_set.end();) {
-		auto spt = it->second.lock();
-		if (spt && listener_id == spt->id) {
-			this->stopAccept(it->first);
-			::close(it->first);
-			//      it = listener_config_set.erase(it);
-			break;
-		} else {
-			it++;
-		}
-	}
+
 	if (cut_connection) {
 		for (auto it = cl_streams_set.begin();
 		     it != cl_streams_set.end();) {
@@ -2229,7 +2217,7 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 	stream->backend_connection.getBackend()->setStatus(
 		BACKEND_STATUS::BACKEND_DOWN);
 
-	zcu_log_print(LOG_NOTICE,
+	zcu_log_print(LOG_WARNING,
 		      "[svc:%s][bk:%s:%d] The backend dead (killed)",
 		      stream->backend_connection.getBackend()
 			      ->backend_config->srv_name.data(),

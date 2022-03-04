@@ -570,7 +570,7 @@ bool ListenerManager::reloadConfigFile()
 	Config config;
 	sessions::DataSet *sessionSet = nullptr;
 
-	zcu_log_print(LOG_DEBUG, "Reloading configuration");
+	zcu_log_print(LOG_NOTICE, "Reloading configuration");
 
 	if (!config.init(global::run_options::getCurrent().config_file_name)) {
 		zcu_log_print(LOG_ERR,
@@ -586,6 +586,9 @@ bool ListenerManager::reloadConfigFile()
 			      __FUNCTION__, __LINE__);
 		return false;
 	}
+
+	// reload global params
+	config.setAsCurrentRuntime();
 
 	// clear and stop old config
 	auto &sm_set = ServiceManager::getInstance();

@@ -3,7 +3,7 @@
 zproxyctl \- control the zproxy(8) daemon
 .SH SYNOPSIS
 .TP
-.B zproxyctl \fI-c /path/to/socket\fR [\fI-L/-l\fR] [\fI-S/-s\fR] [\fI-B/-b\fR] [\fI-N/-n\fR] [\fI-H\fR] [\fI-X\fR]
+.B zproxyctl [\fI-t timeout\fR] \fI-c /path/to/socket\fR [\fI-L/-l\fR] [\fI-S/-s\fR] [\fI-B/-b\fR] [\fI-N/-n\fR] [\fI-H\fR] [\fI-X\fR]
 .SH DESCRIPTION
 .PP
 .B zproxyctl
@@ -28,6 +28,10 @@ to work.
 The ip address and port that
 .B zproxy
 was configured to listen on for control.
+.TP
+\fB\-t timeout\fR
+timeout to execute the command. The zproxyctl process will exit with error on
+timeout event. 20 is the default value.
 .TP
 \fB\-L/-l n\fR
 Enable/disable a listener. A disabled listener will stop accepting connection

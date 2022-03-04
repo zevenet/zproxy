@@ -22,6 +22,43 @@
 #include "../service/backend.h"
 #include "../../zcutils/zcu_network.h"
 #include "../../zcutils/zcutils.h"
+
+class Timer {
+	std::thread th;
+	bool running = false;
+
+    public:
+	void start(int timeout_sec)
+	{
+		std::chrono::milliseconds interval =
+			std::chrono::milliseconds(CTL_TO_INTERVAL);
+		running = true;
+
+		th = std::thread([=]() {
+			int milliseconds = timeout_sec * 1000;
+
+			while (running && milliseconds > 0) {
+				std::this_thread::sleep_for(interval);
+				milliseconds -= CTL_TO_INTERVAL;
+			}
+
+			if (running) {
+				zcu_log_print(
+					LOG_ERR,
+					"Error: zproxyctl reached the timeout %d",
+					timeout_sec);
+				exit(EXIT_FAILURE);
+			}
+		});
+	}
+
+	void stop()
+	{
+		running = false;
+		th.join();
+	}
+};
+
 bool PoundClient::trySetTargetId(int &target_id, char *possible_value)
 {
 	if (possible_value) // throw error and show help
@@ -79,10 +116,11 @@ void PoundClient::showHelp(const std::string error, bool exit_on_error)
 		std::cout << "ERROR: " << error << std::endl;
 	std::cout << "Usage: " << std::endl;
 	std::cout << "\tProxy control interface in:\n\t\tLocal mode:\t"
-		  << binary_name << " -c /control/socket [ -X ] cmd"
+		  << binary_name
+		  << " [-t <timeout>] -c /control/socket [ -X ] cmd"
 		  << std::endl;
 	std::cout << "\t\tTCP mode:\t" << binary_name
-		  << " -a IP:PORT [ -X ] cmd\n"
+		  << " [-t <timeout>] -a IP:PORT [ -X ] cmd\n"
 		  << std::endl;
 	std::cout << "\twhere cmd is one of:" << std::endl;
 	std::cout << "\t-L n - enable listener n" << std::endl;
@@ -293,6 +331,8 @@ bool PoundClient::executeCommand()
 
 bool PoundClient::init(int argc, char *argv[])
 {
+	Timer timeout;
+	int ms_to = DEFAULT_CTL_TIMEOUT;
 	int opt = 0;
 	int option_index = 0;
 
@@ -300,6 +340,12 @@ bool PoundClient::init(int argc, char *argv[])
 	while ((opt = getopt_long(argc, argv, options_string, long_options,
 				  &option_index)) != -1) {
 		switch (opt) {
+		case 't': {
+			ms_to = atoi(optarg);
+			if (ms_to <= 0)
+				showHelp("The timeout must be bigger than 0");
+			break;
+		}
 		case 'c': {
 			if (interface_mode != CTL_INTERFACE_MODE::CTL_NONE)
 				showHelp(
@@ -452,7 +498,11 @@ bool PoundClient::init(int argc, char *argv[])
 		//    for (int i = 0; i < argc; i++) std::cout << argv[i] << " ";
 		std::cout << "\n" << action_message << std::endl;
 	}
-	return executeCommand();
+
+	timeout.start(ms_to);
+	auto rt = executeCommand();
+	timeout.stop();
+	return rt;
 }
 
 bool PoundClient::doRequest(http::REQUEST_METHOD request_method,

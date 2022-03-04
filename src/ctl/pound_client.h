@@ -28,7 +28,12 @@
 #include "ctl.h"
 #include <getopt.h>
 #include <set>
+#include <iostream>
+#include <thread>
+#include <chrono>
 
+#define CTL_TO_INTERVAL 100
+#define DEFAULT_CTL_TIMEOUT 20
 #define NO_VALUE -1
 using namespace ctl;
 
@@ -68,7 +73,7 @@ struct OptionArgs {
 
 class PoundClient /*: public EpollManager */
 {
-	const char *options_string = "a:vc:LlRSsBbNnfXH";
+	const char *options_string = "t:a:vc:LlRSsBbNnfXH";
 	std::string binary_name; /*argv[0] */
 	std::string control_socket; /* -c option */
 	std::string session_key; /* -k option */

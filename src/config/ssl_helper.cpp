@@ -75,7 +75,7 @@ void global::SslHelper::SSLINFO_callback(const SSL *ssl, int where,
 		    state == SSL23_ST_SR_CLNT_HELLO_A) {
 			*reneg_state = RENEG_STATE::RENEG_ABORT;
 			zcu_log_print(
-				LOG_ERR,
+				LOG_NOTICE,
 				"rejecting client initiated renegotiation");
 		}
 	} else if (where & SSL_CB_HANDSHAKE_DONE &&

@@ -2300,12 +2300,17 @@ void Config::logModsec(void *data, const void *message)
 }
 #endif
 
+void Config::setAsCurrentRuntime()
+{
+	global::run_options::getCurrent().log_level = log_level;
+	zcu_log_set_level(listeners->log_level);
+}
+
 void Config::setAsCurrent()
 {
 	if (found_parse_error)
 		return;
 	global::run_options::getCurrent().num_threads = numthreads;
-	global::run_options::getCurrent().log_level = log_level;
 	global::run_options::getCurrent().log_facility = log_facility;
 	global::run_options::getCurrent().user = user;
 	global::run_options::getCurrent().group = group;
@@ -2329,6 +2334,8 @@ void Config::setAsCurrent()
 		"zproxy_" + name + "_connector");
 	global::run_options::getCurrent().modsec_api->setServerLogCb(logModsec);
 #endif
+
+	Config::setAsCurrentRuntime();
 }
 
 bool Config::init(const std::string &file_name)

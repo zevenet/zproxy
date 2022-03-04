@@ -112,8 +112,6 @@ int main(int argc, char *argv[])
 		std::exit(EXIT_SUCCESS);
 	}
 
-	zcu_log_set_level(config.listeners->log_level);
-
 	config.setAsCurrent();
 
 	// Syslog initialization
