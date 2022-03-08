@@ -65,8 +65,9 @@ set(l7core_sources ${l7core_sources}
     connection/client_connection.h
     connection/connection.h connection/connection.cpp
     connection/backend_connection.h connection/backend_connection.cpp
+    stream/stream_locker.h stream/stream_locker.cpp
     stream/stream_manager.h stream/stream_manager.cpp
-	stream/listener_manager.h stream/listener_manager.cpp
+    stream/listener_manager.h stream/listener_manager.cpp
     service/backend.h service/backend.cpp
     service/http_session_manager.h service/http_session_manager.cpp
     service/service.h service/service.cpp

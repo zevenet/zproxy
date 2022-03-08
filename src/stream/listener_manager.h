@@ -26,6 +26,7 @@
 #include "../event/epoll_manager.h"
 #include "../event/signal_fd.h"
 #include "stream_manager.h"
+#include "stream_locker.h"
 #include <thread>
 #include <vector>
 #if WAF_ENABLED

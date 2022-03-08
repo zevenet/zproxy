@@ -31,6 +31,7 @@
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				EVENT_GROUP event_group)
 {
+	stream_locker_increase();
 	zcu_log_print(LOG_DEBUG,
 		      "%s():%d: fd=%d, event_type=%s, event_group=%s",
 		      __FUNCTION__, __LINE__, fd,
@@ -51,7 +52,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					deleteFd(
 						fd); // remove listener from epoll manager.
 					::close(fd); // we close the listening socket
-					return;
+					goto end_stream_handleevent;
 				}
 				addStream(new_fd, std::move(spt));
 			} else {
@@ -59,7 +60,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			}
 		} while (new_fd > 0);
 
-		return;
+		goto end_stream_handleevent;
 	}
 #endif
 	case EVENT_TYPE::READ:
@@ -96,7 +97,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			close(fd);
 			break;
 		}
-		return;
+		goto end_stream_handleevent;
 	}
 	case EVENT_TYPE::WRITE: {
 		switch (event_group) {
@@ -108,7 +109,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			if (stream == nullptr) {
 				deleteFd(fd);
 				::close(fd);
-				return;
+				goto end_stream_handleevent;
 			}
 			onServerWriteEvent(stream);
 			break;
@@ -119,7 +120,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			if (stream == nullptr) {
 				deleteFd(fd);
 				::close(fd);
-				return;
+				goto end_stream_handleevent;
 			}
 			onClientWriteEvent(stream);
 			break;
@@ -130,7 +131,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		}
 		}
 
-		return;
+		goto end_stream_handleevent;
 	}
 	case EVENT_TYPE::DISCONNECT: {
 		DEBUG_COUNTER_HIT(debug__::event_disconnect);
@@ -151,10 +152,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 						      "");
 				deleteFd(fd);
 				::close(fd);
-				return;
+				goto end_stream_handleevent;
 			}
 			onServerDisconnect(stream);
-			return;
+			goto end_stream_handleevent;
 		}
 		case EVENT_GROUP::CLIENT: {
 			DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
@@ -170,15 +171,15 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 						      "");
 				deleteFd(fd);
 				::close(fd);
-				return;
+				goto end_stream_handleevent;
 			}
 			onClientDisconnect(stream);
-			return;
+			goto end_stream_handleevent;
 		}
 		default:
 			deleteFd(fd);
 			::close(fd);
-			return;
+			goto end_stream_handleevent;
 		}
 		break;
 	}
@@ -188,6 +189,9 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		deleteFd(fd);
 		::close(fd);
 	}
+
+end_stream_handleevent:
+	stream_locker_decrease();
 }
 
 void StreamManager::stop()

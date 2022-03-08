@@ -30,6 +30,7 @@
 #include "../service/service_manager.h"
 #include "../ssl/ssl_connection_manager.h"
 #include "../stats/counter.h"
+#include "stream_locker.h"
 #include "../../zcutils/zcutils.h"
 #if WAF_ENABLED
 #include "../handlers/waf.h"

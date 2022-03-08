@@ -27,6 +27,9 @@
 #include "../http/http_request.h"
 #include "../json/json.h"
 #include "../util/environment.h"
+#include "../../zcutils/zcutils.h"
+#include "../stream/stream_locker.h"
+#include <memory>
 #include "ctl.h"
 #include "observer.h"
 #include <atomic>

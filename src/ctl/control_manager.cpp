@@ -20,8 +20,6 @@
  */
 
 #include "control_manager.h"
-#include "../../zcutils/zcutils.h"
-#include <memory>
 
 /* Not used right now */
 #define CTL_DEFAULT_IP "127.0.0.1"
@@ -260,9 +258,12 @@ std::string ctl::ControlManager::handleCommand(HttpRequest &request)
 	    task.command == CTL_COMMAND::DELETE) {
 		task.data =
 			std::string(request.message, request.message_length);
+		stream_locker_enable();
 	}
 
 	auto result = notify(task, false);
+	stream_locker_disable();
+
 	std::string str;
 	bool multiple = false;
 	for (auto it = result.begin(); it < result.end(); it++) {

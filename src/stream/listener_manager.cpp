@@ -42,6 +42,7 @@ void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				  EVENT_GROUP event_group)
 {
 	if (event_group == EVENT_GROUP::MAINTENANCE) {
+		stream_locker_increase();
 		if (fd == timer_maintenance.getFileDescriptor()) {
 			// general maintenance timer
 			for (auto &[sm_id, sm] :
@@ -79,6 +80,7 @@ void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				 EVENT_GROUP::MAINTENANCE);
 		}
 #endif
+		stream_locker_decrease();
 		return;
 	} else if (event_group == EVENT_GROUP::SIGNAL &&
 		   fd == signal_fd.getFileDescriptor()) {
