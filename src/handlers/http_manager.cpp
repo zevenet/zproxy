@@ -586,9 +586,7 @@ int rewriteHeaderLocation(phr_header *header,
 			port = proto == "https" ? 443 : 80;
 		}
 		auto in_addr = zcu_net_get_address(host_addr, port);
-		if (in_addr == nullptr) {
-			zcu_log_print(LOG_NOTICE, "Couldn't get host ip");
-		} else {
+		if (in_addr != nullptr) {
 			/* rewrite location if it points to the backend */
 			if (zcu_net_equal_sockaddr(in_addr.get(),
 						   backend_addr)) {

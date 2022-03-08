@@ -45,7 +45,7 @@ bool zcu_soc_equal_sockaddr(sockaddr *addr1, sockaddr *addr2, bool compare_port)
 		auto a2_un = reinterpret_cast<sockaddr_un *>(addr2);
 		int r = strcmp(a1_un->sun_path, a2_un->sun_path);
 		if (r != 0)
-			return r;
+			return true;
 	} else if (addr1->sa_family == AF_INET) {
 		auto a1_in = reinterpret_cast<sockaddr_in *>(addr1);
 		auto a2_in = reinterpret_cast<sockaddr_in *>(addr2);
@@ -343,10 +343,10 @@ zcu_net_get_address(const std::string &address, int port)
 			  port > 0 ? std::to_string(port).data() : nullptr,
 			  &hints, &result);
 	if (sfd != 0) {
-		zcu_log_print(LOG_ERR, "%s():%d: getaddrinfo: %s", __FUNCTION__,
-			      __LINE__, gai_strerror(sfd));
+		zcu_log_print(LOG_NOTICE, "%s():%d: getaddrinfo: %s",
+			      __FUNCTION__, __LINE__, gai_strerror(sfd));
 		return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(
-			nullptr, freeaddrinfo);
+			nullptr, &freeaddrinfo);
 	}
 	return std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)>(
 		result, &freeaddrinfo);
