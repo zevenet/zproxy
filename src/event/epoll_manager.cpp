@@ -128,12 +128,15 @@ int EpollManager::loopOnce(int time_out)
 	for (i = 0; i < ev_count; ++i) {
 		fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
 		if ((events[i].events & EPOLLERR) != 0u) {
-			zcu_log_print(
-				LOG_DEBUG,
-				"%s():%d: ~~ONDisconnect error fd: %d. Errno: %d - %s",
-				__FUNCTION__, __LINE__, fd, errno,
-				strerror(errno));
-			onDisconnectEvent(events[i]);
+			// continue waiting timeout if error == EINPROGRESS
+			if (errno != EINPROGRESS) {
+				zcu_log_print(
+					LOG_DEBUG,
+					"%s():%d: ~~ONDisconnect error fd: %d. Errno: %d - %s",
+					__FUNCTION__, __LINE__, fd, errno,
+					strerror(errno));
+				onDisconnectEvent(events[i]);
+			}
 			continue;
 		} else {
 			if ((events[i].events & EPOLLIN) != 0u) {

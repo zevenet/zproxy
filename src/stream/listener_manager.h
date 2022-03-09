@@ -99,7 +99,7 @@ class ListenerManager : public EpollManager,
 	void HandleEvent(int fd, EVENT_TYPE event_type,
 			 EVENT_GROUP event_group) override;
 
-   /**
+	/**
    * @brief Handles the needed operations for tiemouts.
    *
    * Depending on the @p event_type, it calls the proper
