@@ -240,21 +240,25 @@ std::unique_ptr<JsonObject> Backend::getBackendJson()
 	return root;
 }
 
-void Backend::doMaintenance()
+void Backend::onBackendResurrected()
 {
-	if (this->status != BACKEND_STATUS::BACKEND_DOWN)
-		return;
+	zcu_log_print(LOG_WARNING, "[svc:%s][bk:%s:%d] The backend resurrected",
+		      this->backend_config->srv_name.data(),
+		      this->address.data(), this->port);
+	this->setStatus(BACKEND_STATUS::BACKEND_UP);
+}
 
-	Connection checkOut;
-	auto res = checkOut.doConnect(*address_info, 5, false, this->nf_mark);
+IO::IO_OP Backend::doMaintenance()
+{
+	if (this->status != BACKEND_STATUS::BACKEND_DOWN ||
+	    this->backend_type != BACKEND_TYPE::REMOTE)
+		return IO::IO_OP::OP_SUCCESS;
 
-	if (res == IO::IO_OP::OP_SUCCESS) {
-		zcu_log_print(LOG_WARNING,
-			      "[svc:%s][bk:%s:%d] The backend resurrected",
-			      this->backend_config->srv_name.data(),
-			      this->address.data(), this->port);
-		this->setStatus(BACKEND_STATUS::BACKEND_UP);
-	}
+	auto res = this->maintenance.doConnect(
+		*address_info, this->conn_timeout, true, this->nf_mark);
+	if (res == IO::IO_OP::OP_SUCCESS)
+		onBackendResurrected();
+	return res;
 }
 
 bool Backend::isHttps()

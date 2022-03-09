@@ -38,21 +38,55 @@
 #define MALLOC_TRIM_TIMER_INTERVAL 3600
 #endif
 
+void ListenerManager::doMaintenance()
+{
+	for (auto &[sm_id, sm] : ServiceManager::getInstance()) {
+		if (sm->disabled)
+			continue;
+		zcu_log_print(LOG_DEBUG, "Maintenance task");
+
+		for (auto service : sm->getServices()) {
+			service->doMaintenance();
+			// set events
+			for (Backend *bck : service->getBackends()) {
+				auto res = bck->doMaintenance();
+				if (res == IO::IO_OP::OP_IN_PROGRESS) {
+					bck_maintenance_set
+						[bck->maintenance
+							 .getFileDescriptor()] =
+							bck;
+					setTimeOut(
+						bck->maintenance
+							.getFileDescriptor(),
+						events::TIMEOUT_TYPE::
+							BCK_MAINTENANCE_TIMEOUT,
+						bck->conn_timeout);
+					bck->maintenance.enableEvents(
+						this, EVENT_TYPE::WRITE,
+						EVENT_GROUP::BACKEND_MAINTENANCE);
+				}
+			}
+		}
+	}
+}
+
+void ListenerManager::onTimeOut(int fd, TIMEOUT_TYPE type)
+{
+	if (type == events::TIMEOUT_TYPE::BCK_MAINTENANCE_TIMEOUT) {
+		deleteFd(fd);
+		bck_maintenance_set.erase(fd);
+		::close(fd);
+	}
+}
+
 void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				  EVENT_GROUP event_group)
 {
 	if (event_group == EVENT_GROUP::MAINTENANCE) {
 		stream_locker_increase();
 		if (fd == timer_maintenance.getFileDescriptor()) {
+			doMaintenance();
 			// general maintenance timer
-			for (auto &[sm_id, sm] :
-			     ServiceManager::getInstance()) {
-				if (sm->disabled)
-					continue;
-				for (auto service : sm->getServices()) {
-					service->doMaintenance();
-				}
-			}
 			timer_maintenance.set(
 				global::run_options::getCurrent()
 					.backend_resurrect_timeout *
@@ -82,6 +116,15 @@ void ListenerManager::HandleEvent(int fd, EVENT_TYPE event_type,
 #endif
 		stream_locker_decrease();
 		return;
+	} else if (event_group == EVENT_GROUP::BACKEND_MAINTENANCE &&
+		   event_type == events::EVENT_TYPE::WRITE) {
+		stream_locker_increase();
+		deleteTimeOut(fd);
+		auto bck = bck_maintenance_set[fd];
+		if (bck != nullptr)
+			bck_maintenance_set[fd]->onBackendResurrected();
+		bck_maintenance_set.erase(fd);
+		stream_locker_decrease();
 	} else if (event_group == EVENT_GROUP::SIGNAL &&
 		   fd == signal_fd.getFileDescriptor()) {
 		zcu_log_print(LOG_DEBUG, "%s():%d: Received signal %x",

@@ -747,12 +747,10 @@ void Service::doMaintenance()
 	for (Backend *bck : this->backend_set) {
 		if (bck->backend_type != BACKEND_TYPE::REMOTE)
 			continue;
-		if (setBackendHostInfo(bck)) {
-			bck->doMaintenance();
-		}
 		if (bck->getStatus() == BACKEND_STATUS::BACKEND_DOWN) {
 			deleteBackendSessions(bck->backend_id);
 		}
+		setBackendHostInfo(bck);
 	}
 #ifdef CACHE_ENABLED
 	if (this->cache_enabled) {

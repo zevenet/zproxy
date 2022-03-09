@@ -75,6 +75,9 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>,
 	Backend();
 	~Backend();
 
+	/** This connection is used to save the connection status while is checked the backend
+	 *  status in the maintenance process */
+	Connection maintenance;
 	/** This flag is used to update the service priority if the backend changed of status **/
 	std::atomic<bool> *status_flag{ nullptr };
 	/** Backend type using the Backend::BACKEND_TYPE enum. */
@@ -106,10 +109,22 @@ class Backend : public CtlObserver<ctl::CtlTask, std::string>,
 	/** SSL_CTX if the Backend is HTTPS. */
 	std::shared_ptr<SSL_CTX> ctx{ nullptr };
 	bool cut;
+
 	/**
    * @brief Checks if the Backend still alive.
    */
-	void doMaintenance();
+	IO::IO_OP doMaintenance();
+
+	/**
+   * @brief This method is used to reset the maintenance socket after a connection timeout.
+   */
+	void connTimeOut(int fd, TIMEOUT_TYPE type);
+
+	/**
+   * @brief This method is used to resurrect a backend when the backend
+   * connection is completed while the maintenance check.
+   */
+	void onBackendResurrected();
 
 	/**
    * @brief This function handles the @p tasks received with the API format.

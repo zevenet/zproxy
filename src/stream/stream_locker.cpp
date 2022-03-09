@@ -41,6 +41,7 @@ void stream_locker_increase()
 {
 	while (ctl_locker == LOCKER_STATUS::PENDING ||
 	       ctl_locker == LOCKER_STATUS::ENABLED) {
+		// add sleep?
 	}
 	ctl_bussy_processes++;
 }

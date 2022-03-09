@@ -46,6 +46,7 @@
  */
 class ListenerManager : public EpollManager,
 			public CtlObserver<ctl::CtlTask, std::string> {
+	std::unordered_map<int, Backend *> bck_maintenance_set;
 	std::thread worker_thread;
 	std::atomic<bool> is_running;
 	std::map<int, StreamManager *> stream_manager_set;
@@ -98,6 +99,17 @@ class ListenerManager : public EpollManager,
 	void HandleEvent(int fd, EVENT_TYPE event_type,
 			 EVENT_GROUP event_group) override;
 
+   /**
+   * @brief Handles the needed operations for tiemouts.
+   *
+   * Depending on the @p event_type, it calls the proper
+   * functions on the @p fd.
+   *
+   * @param fd is the file descriptor from the event comes from.
+   * @param event_type is the type of the event.
+   */
+	void onTimeOut(int fd, TIMEOUT_TYPE type) override;
+
 	/**
    * @brief This function handles the tasks received with the API format.
    *
@@ -123,6 +135,11 @@ class ListenerManager : public EpollManager,
  * @return true if reload succeded compeletely.
  */
 	bool reloadConfigFile();
+
+	/**
+ * @brief It executes all maintenance tasks in the listener: sessions, backends...
+ */
+	void doMaintenance();
 
 	/**
  * @brief get the stats from the old listener and apply them to the new one.

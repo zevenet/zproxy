@@ -985,7 +985,6 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 	    && stream->timer_fd.isTriggered()
 #endif
 	) {
-
 		streamLogNoResponse(
 			stream, "onConnectTimeoutEvent after %d seconds",
 			stream->backend_connection.getBackend()->conn_timeout);
@@ -2209,6 +2208,7 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 		break;
 	case TIMEOUT_TYPE::INACTIVE_TIMEOUT:
 	case TIMEOUT_TYPE::CLIENT_WRITE_TIMEOUT:
+	case TIMEOUT_TYPE::BCK_MAINTENANCE_TIMEOUT:
 		break;
 	}
 }
@@ -2230,15 +2230,6 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 
 	stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
 	setStreamBackend(stream);
-
-	//  // No backend available
-	//  http_manager::replyError(stream,http::Code::ServiceUnavailable,
-	//                           validation::request_result_reason.at(
-	//                               validation::REQUEST_RESULT::BACKEND_NOT_FOUND),
-	//                           listener_config_.err503,
-	//                           stream->client_connection
-	//                           listener_config_.response_stats);
-	//  this->clearStream(stream);
 }
 
 #if WAF_ENABLED

@@ -54,6 +54,8 @@ enum class EVENT_GROUP : char {
 	/** This groups handles the CTL events. */
 	CTL_INTERFACE,
 	NONE,
+	/** This group handles the backend resurrect events. */
+	BACKEND_MAINTENANCE
 };
 
 inline std::string getEventGroup(EVENT_GROUP event)
@@ -77,6 +79,8 @@ inline std::string getEventGroup(EVENT_GROUP event)
 		return "MAINTENANCE";
 	case EVENT_GROUP::CTL_INTERFACE:
 		return "CTL_INTERFACE";
+	case EVENT_GROUP::BACKEND_MAINTENANCE:
+		return "BACKEND_MAINTENANCE";
 	case EVENT_GROUP::NONE:
 		return "NONE";
 	}
@@ -148,6 +152,7 @@ enum class TIMEOUT_TYPE : uint8_t {
 	SERVER_READ_TIMEOUT,
 	CLIENT_WRITE_TIMEOUT,
 	SERVER_WRITE_TIMEOUT,
+	BCK_MAINTENANCE_TIMEOUT
 };
 struct TimeOut : public Counter<TimeOut> {
 	TIMEOUT_TYPE type;
