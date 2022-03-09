@@ -1809,6 +1809,9 @@ std::shared_ptr<BackendConfig> Config::parseBackend(const char *svc_name,
 				std::atoi(lin + matches[1].rm_so);
 		} else if (!regexec(&regex_set::ConnTO, lin, 4, matches, 0)) {
 			res->conn_to = std::atoi(lin + matches[1].rm_so);
+			if (res->conn_to >= alive_to) {
+				conf_err("AliveTO must be greater than ConnTo");
+			}
 		} else if (!regexec(&regex_set::HAport, lin, 4, matches, 0)) {
 			if (is_emergency)
 				conf_err(
