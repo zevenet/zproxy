@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export LC_COLLATE=C
 DIR=$(dirname $0)
 
 cd $DIR
