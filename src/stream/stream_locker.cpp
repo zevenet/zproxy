@@ -21,13 +21,13 @@
 
 #include "stream_locker.h"
 
-LOCKER_STATUS ctl_locker = LOCKER_STATUS::DISABLED;
-int ctl_bussy_processes = 0;
+std::atomic<LOCKER_STATUS> ctl_locker = LOCKER_STATUS::DISABLED;
+std::atomic<int> ctl_bussy_processes = 0;
 
 void stream_locker_enable()
 {
 	ctl_locker = LOCKER_STATUS::PENDING;
-	while (ctl_bussy_processes != 0) {
+	while (ctl_bussy_processes > 0) {
 		// add sleep?
 	}
 	ctl_locker = LOCKER_STATUS::ENABLED;

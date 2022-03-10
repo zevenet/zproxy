@@ -23,6 +23,7 @@
 #define _STREAM_LOCKER_
 
 #include "../../zcutils/zcutils.h"
+#include <atomic>
 
 enum class LOCKER_STATUS : int {
 	/** The ctl is waiting to apply some action */
@@ -33,7 +34,8 @@ enum class LOCKER_STATUS : int {
 	DISABLED
 };
 
-extern LOCKER_STATUS ctl_locker;
+extern std::atomic<LOCKER_STATUS> ctl_locker;
+extern std::atomic<int> ctl_bussy_processes;
 
 void stream_locker_enable();
 void stream_locker_disable();
