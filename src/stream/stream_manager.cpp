@@ -759,6 +759,7 @@ void StreamManager::onResponseEvent(int fd)
 				stream->client_connection,
 				listener_config_.response_stats);
 			clearStream(stream);
+			return;
 		}
 		if (stream->backend_connection.ssl_connected) {
 			stream->backend_connection.enableWriteEvent();
