@@ -122,6 +122,78 @@ using namespace events;
 using namespace http;
 
 /**
+ * @class StreamSet StreamManager.h "src/stream/StreamManager.h"
+ * @brief It is a thread protected set for link file description socket with
+ * the streams that they are managing
+ */
+class StreamSet {
+	std::unordered_map<int, HttpStream *> streams_set;
+	std::mutex m_mutex;
+
+    public:
+	inline HttpStream *get(int key)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		return streams_set[key];
+	}
+	inline void add(int key, HttpStream *val)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		streams_set[key] = val;
+	}
+	inline void del(int key)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (streams_set.erase(key) == 0)
+			zcu_log_print(LOG_DEBUG,
+				      "%s():%d: key:%d could not be deleted",
+				      __FUNCTION__, __LINE__, key,
+				      zcu_soc_get_local_port(key),
+				      zcu_soc_get_peer_port(key));
+	}
+	inline void clean()
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		for (auto &key_pair : streams_set) {
+			delete key_pair.second;
+		}
+	}
+	inline void doMaintenance()
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+	reset_maintenance:
+		for (auto key_pair : streams_set) {
+			if (key_pair.second == nullptr) {
+				streams_set.erase(key_pair.first);
+				goto reset_maintenance;
+			}
+		}
+	}
+
+	// Set public some map methods
+	inline auto size()
+	{
+		return streams_set.size();
+	}
+	inline auto begin()
+	{
+		return streams_set.begin();
+	}
+	inline auto end()
+	{
+		return streams_set.end();
+	}
+	inline auto find(int key)
+	{
+		return streams_set.find(key);
+	}
+	inline auto count(int key)
+	{
+		return streams_set.count(key);
+	}
+};
+
+/**
  * @class StreamManager StreamManager.h "src/stream/StreamManager.h"
  * @brief Manage the streams and the operations related with them.CtlObserver
  *
@@ -148,8 +220,10 @@ class StreamManager : public EpollManager,
 	std::thread worker;
 	std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
 	std::atomic<bool> is_running{};
-	std::unordered_map<int, HttpStream *> cl_streams_set;
-	std::unordered_map<int, HttpStream *> bck_streams_set;
+
+	StreamSet cl_streams_set;
+	StreamSet bck_streams_set;
+
 #if USE_TIMER_FD_TIMEOUT
 	std::unordered_map<int, HttpStream *> timers_set;
 #endif
@@ -161,6 +235,15 @@ class StreamManager : public EpollManager,
 	StreamManager();
 	StreamManager(const StreamManager &) = delete;
 	~StreamManager() final;
+
+	/**
+   * @brief do maintenance task regarding the streams status
+   */
+	void inline doMaintenance()
+	{
+		cl_streams_set.doMaintenance();
+		bck_streams_set.doMaintenance();
+	}
 
 	/**
    * @brief Adds a HttpStream to the stream set of the StreamManager.registerListener

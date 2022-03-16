@@ -40,10 +40,15 @@
 
 void ListenerManager::doMaintenance()
 {
+	zcu_log_print(LOG_DEBUG, "Maintenance task");
+
+	for (auto &stream_manager : stream_manager_set) {
+		stream_manager.second->doMaintenance();
+	}
+
 	for (auto &[sm_id, sm] : ServiceManager::getInstance()) {
 		if (sm->disabled)
 			continue;
-		zcu_log_print(LOG_DEBUG, "Maintenance task");
 
 		for (auto service : sm->getServices()) {
 			service->doMaintenance();

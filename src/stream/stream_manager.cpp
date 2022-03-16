@@ -24,9 +24,28 @@
 #include <thread>
 #include "../handlers/https_manager.h"
 #include "../../zcutils/zcu_network.h"
+#include "../../zcutils/zcutils.h"
+
 #ifdef ON_FLY_COMRESSION
 #include "../handlers/compression.h"
 #endif
+
+#define closeSecureFd(fd)                                                      \
+	{                                                                      \
+		int errorfd = 0;                                               \
+		if (cl_streams_set.count(fd) > 0)                              \
+			cl_streams_set.del(fd);                                \
+		if (bck_streams_set.count(fd) > 0)                             \
+			bck_streams_set.del(fd);                               \
+		socklen_t len = sizeof(errorfd);                               \
+		int retval =                                                   \
+			getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd, &len);  \
+		if (errorfd == 0 || retval == 0) {                             \
+			zcu_net_print_socket(fd, "closing socket");            \
+			deleteFd(fd);                                          \
+			::close(fd);                                           \
+		}                                                              \
+	}
 
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				EVENT_GROUP event_group)
@@ -49,9 +68,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			if (new_fd > 0) {
 				auto spt = service_manager_set[fd].lock();
 				if (!spt) {
-					deleteFd(
-						fd); // remove listener from epoll manager.
-					::close(fd); // we close the listening socket
+					closeSecureFd(fd);
 					goto end_stream_handleevent;
 				}
 				addStream(new_fd, std::move(spt));
@@ -93,8 +110,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		case EVENT_GROUP::MAINTENANCE:
 			break;
 		default:
-			deleteFd(fd);
-			close(fd);
+			zcu_log_print(
+				LOG_ERR,
+				"The stream event group does not recoignized");
+			closeSecureFd(fd);
 			break;
 		}
 		goto end_stream_handleevent;
@@ -105,10 +124,9 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			break;
 		case EVENT_GROUP::SERVER: {
 			DEBUG_COUNTER_HIT(debug__::event_backend_write);
-			auto stream = bck_streams_set[fd];
+			auto stream = bck_streams_set.get(fd);
 			if (stream == nullptr) {
-				deleteFd(fd);
-				::close(fd);
+				closeSecureFd(fd);
 				goto end_stream_handleevent;
 			}
 			onServerWriteEvent(stream);
@@ -116,18 +134,16 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		}
 		case EVENT_GROUP::CLIENT: {
 			DEBUG_COUNTER_HIT(debug__::event_client_write);
-			auto stream = cl_streams_set[fd];
+			auto stream = cl_streams_set.get(fd);
 			if (stream == nullptr) {
-				deleteFd(fd);
-				::close(fd);
+				closeSecureFd(fd);
 				goto end_stream_handleevent;
 			}
 			onClientWriteEvent(stream);
 			break;
 		}
 		default: {
-			deleteFd(fd);
-			::close(fd);
+			closeSecureFd(fd);
 		}
 		}
 
@@ -139,19 +155,19 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		switch (event_group) {
 		case EVENT_GROUP::SERVER: {
 			DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
-			auto stream = bck_streams_set[fd];
+			auto stream = bck_streams_set.get(fd);
 
 			if (stream == nullptr) {
 				char addr[150];
-				zcu_log_print(
-					LOG_NOTICE,
-					"Remote backend \"%s\" closed connection prematurely",
-					zcu_soc_get_peer_address(
-						fd, addr, 150) != nullptr ?
-						addr :
-						      "");
-				deleteFd(fd);
-				::close(fd);
+				auto ret =
+					zcu_soc_get_peer_address(fd, addr, 150);
+				if (ret != nullptr) {
+					zcu_log_print(
+						LOG_NOTICE,
+						"Remote backend \"%s\" closed connection prematurely",
+						addr);
+					closeSecureFd(fd);
+				}
 				goto end_stream_handleevent;
 			}
 			onServerDisconnect(stream);
@@ -159,26 +175,25 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		}
 		case EVENT_GROUP::CLIENT: {
 			DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
-			auto stream = cl_streams_set[fd];
+			auto stream = cl_streams_set.get(fd);
 			if (stream == nullptr) {
 				char addr[150];
-				zcu_log_print(
-					LOG_NOTICE,
-					"Remote client \"%s\" closed connection prematurely",
-					zcu_soc_get_peer_address(
-						fd, addr, 150) != nullptr ?
-						addr :
-						      "");
-				deleteFd(fd);
-				::close(fd);
+				auto ret =
+					zcu_soc_get_peer_address(fd, addr, 150);
+				if (ret != nullptr) {
+					zcu_log_print(
+						LOG_NOTICE,
+						"Client backend \"%s\" closed connection prematurely",
+						addr);
+					closeSecureFd(fd);
+				}
 				goto end_stream_handleevent;
 			}
 			onClientDisconnect(stream);
 			goto end_stream_handleevent;
 		}
 		default:
-			deleteFd(fd);
-			::close(fd);
+			closeSecureFd(fd);
 			goto end_stream_handleevent;
 		}
 		break;
@@ -186,8 +201,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 	default:
 		zcu_log_print(LOG_ERR, "%s():%d: unexpected event type",
 			      __FUNCTION__, __LINE__);
-		deleteFd(fd);
-		::close(fd);
+		closeSecureFd(fd);
 	}
 
 end_stream_handleevent:
@@ -241,12 +255,8 @@ StreamManager::~StreamManager()
 	stop();
 	if (worker.joinable())
 		worker.join();
-	for (auto &key_pair : cl_streams_set) {
-		delete key_pair.second;
-	}
-	for (auto &key_pair : bck_streams_set) {
-		delete key_pair.second;
-	}
+	cl_streams_set.clean();
+	bck_streams_set.clean();
 }
 
 void StreamManager::doWork()
@@ -265,16 +275,17 @@ void StreamManager::addStream(int fd,
 {
 	DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
-	HttpStream *stream = cl_streams_set[fd];
+	HttpStream *stream = cl_streams_set.get(fd);
 	if (UNLIKELY(stream != nullptr)) {
-		streamLogMessage(stream, "recycling stream");
+		streamLogMessage(stream, "recycling fd:%d", fd);
 		clearStream(stream);
 	}
 	stream = new HttpStream();
 	stream->client_connection.setFileDescriptor(fd);
 	stream->service_manager =
 		std::move(service_manager); // TODO::benchmark!!
-	cl_streams_set[fd] = stream;
+	cl_streams_set.add(fd, stream);
+
 	auto &listener_config = *stream->service_manager->listener_config_;
 
 	if (!global::run_options::getCurrent().http_tracer_dir.empty()) {
@@ -295,8 +306,12 @@ void StreamManager::addStream(int fd,
 	this->setTimeOut(fd, TIMEOUT_TYPE::CLIENT_READ_TIMEOUT,
 			 listener_config.to);
 #endif
-	stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
-					       EVENT_GROUP::CLIENT);
+	if (!stream->client_connection.enableEvents(this, EVENT_TYPE::READ,
+						    EVENT_GROUP::CLIENT)) {
+		streamLogMessage(stream, "Error enabling client event");
+		clearStream(stream);
+	}
+
 	//increment connections
 	stream->service_manager->conns_stats.established_connection++;
 
@@ -324,11 +339,10 @@ int StreamManager::getWorkerId()
 
 void StreamManager::onRequestEvent(int fd)
 {
-	HttpStream *stream = cl_streams_set[fd];
+	HttpStream *stream = cl_streams_set.get(fd);
 
 	if (stream == nullptr) {
-		deleteFd(fd);
-		::close(fd);
+		closeSecureFd(fd);
 		return;
 	}
 	auto &listener_config_ = *stream->service_manager->listener_config_;
@@ -669,11 +683,10 @@ void StreamManager::onRequestEvent(int fd)
 
 void StreamManager::onResponseEvent(int fd)
 {
-	HttpStream *stream = bck_streams_set[fd];
+	HttpStream *stream = bck_streams_set.get(fd);
 
 	if (stream == nullptr) {
-		deleteFd(fd);
-		::close(fd);
+		closeSecureFd(fd);
 		return;
 	}
 
@@ -972,13 +985,12 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 #if USE_TIMER_FD_TIMEOUT
 	HttpStream *stream = timers_set[fd];
 #else
-	HttpStream *stream = bck_streams_set[fd];
+	HttpStream *stream = bck_streams_set.get(fd);
 #endif
 	if (stream == nullptr) {
 		zcu_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
 			      __FUNCTION__, __LINE__);
-		deleteFd(fd);
-		::close(fd);
+		closeSecureFd(fd);
 		return;
 	}
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)
@@ -1000,11 +1012,10 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 #if USE_TIMER_FD_TIMEOUT
 	HttpStream *stream = timers_set[fd];
 #else
-	HttpStream *stream = cl_streams_set[fd];
+	HttpStream *stream = cl_streams_set.get(fd);
 #endif
 	if (stream == nullptr) {
-		deleteFd(fd);
-		::close(fd);
+		closeSecureFd(fd);
 		return;
 	}
 
@@ -1026,13 +1037,12 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 #if USE_TIMER_FD_TIMEOUT
 	HttpStream *stream = timers_set[fd];
 #else
-	HttpStream *stream = bck_streams_set[fd];
+	HttpStream *stream = bck_streams_set.get(fd);
 #endif
 	if (stream == nullptr) {
 		zcu_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
 			      __FUNCTION__, __LINE__);
-		deleteFd(fd);
-		::close(fd);
+		closeSecureFd(fd);
 		return;
 	}
 	auto &listener_config_ = *stream->service_manager->listener_config_;
@@ -1117,11 +1127,8 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 			stream->backend_connection.getBackend()
 				->decreaseConnection();
 		}
-		deleteFd(stream->backend_connection.getFileDescriptor());
-		bck_streams_set[stream->backend_connection.getFileDescriptor()] =
-			nullptr;
-		bck_streams_set.erase(
-			stream->backend_connection.getFileDescriptor());
+		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
+		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
 	stream->backend_connection.reset();
@@ -1201,8 +1208,9 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 				break;
 			}
 			}
-			bck_streams_set[stream->backend_connection
-						.getFileDescriptor()] = stream;
+			bck_streams_set.add(
+				stream->backend_connection.getFileDescriptor(),
+				stream);
 			stream->backend_connection.enableEvents(
 				this, EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
 			if (stream->backend_connection.getBackend()->nf_mark >
@@ -1916,11 +1924,8 @@ void StreamManager::clearStream(HttpStream *stream)
 	}
 #endif
 	if (stream->client_connection.getFileDescriptor() > 0) {
-		deleteFd(stream->client_connection.getFileDescriptor());
-		cl_streams_set[stream->client_connection.getFileDescriptor()] =
-			nullptr;
-		cl_streams_set.erase(
-			stream->client_connection.getFileDescriptor());
+		//cl_streams_set.del(stream->client_connection.getFileDescriptor());
+		closeSecureFd(stream->client_connection.getFileDescriptor());
 		stream->client_connection.closeConnection();
 #if DEBUG_ZCU_LOG
 		clear_client++;
@@ -1937,11 +1942,8 @@ void StreamManager::clearStream(HttpStream *stream)
 #if DEBUG_ZCU_LOG
 		clear_backend++;
 #endif
-		deleteFd(stream->backend_connection.getFileDescriptor());
-		bck_streams_set[stream->backend_connection.getFileDescriptor()] =
-			nullptr;
-		bck_streams_set.erase(
-			stream->backend_connection.getFileDescriptor());
+		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
+		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
 #if DEBUG_ZCU_LOG
@@ -2011,12 +2013,10 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 	stream->response.reset_parser();
 
 	if (stream->backend_connection.getFileDescriptor() > 0) {
-		deleteFd(stream->backend_connection
-				 .getFileDescriptor()); // Client cannot
-		// Client cannot  be connected to more than one backend at
-		// time
-		bck_streams_set.erase(
-			stream->backend_connection.getFileDescriptor());
+		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
+		closeSecureFd(stream->backend_connection.getFileDescriptor());
+		stream->backend_connection.closeConnection();
+
 		if (stream->backend_connection.isConnected() &&
 		    stream->backend_connection.getBackend() != nullptr)
 			stream->backend_connection.getBackend()
@@ -2079,8 +2079,8 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 		streamLogDebug(stream, "bck stream exists in set");
 		// delete bck_stream->second;
 	}
-	bck_streams_set[stream->backend_connection.getFileDescriptor()] =
-		stream;
+	bck_streams_set.add(stream->backend_connection.getFileDescriptor(),
+			    stream);
 	stream->backend_connection.enableEvents(this, EVENT_TYPE::WRITE,
 						EVENT_GROUP::SERVER);
 }
@@ -2101,11 +2101,8 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 #if DEBUG_ZCU_LOG
 		clear_backend++;
 #endif
-		deleteFd(stream->backend_connection.getFileDescriptor());
-		bck_streams_set[stream->backend_connection.getFileDescriptor()] =
-			nullptr;
-		bck_streams_set.erase(
-			stream->backend_connection.getFileDescriptor());
+		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
+		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
 

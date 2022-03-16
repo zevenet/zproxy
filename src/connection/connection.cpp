@@ -526,7 +526,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size, size_t &sent)
 void Connection::closeConnection()
 {
 	if (fd_ > 0) {
-		::close(fd_);
+		// the close is done previously to this function: macro closeSecureFd
 		fd_ = -1;
 	}
 }

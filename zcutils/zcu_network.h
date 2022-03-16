@@ -110,4 +110,19 @@ void zcu_net_addr2str(char *const res, size_t res_len,
 
 bool zcu_net_equal_sockaddr(addrinfo *x, addrinfo *y, bool compare_port = true);
 
+/*
+ *  macro to print socket information:
+ *  params:
+ *	- socket file description
+ *	- string to print in the log message
+ */
+
+#define zcu_net_print_socket(fd, str)                                          \
+	{                                                                      \
+		zcu_log_print(LOG_DEBUG, "[%s():%d] fd:%d (%d->%d) - %s",      \
+			      __FUNCTION__, __LINE__, fd,                      \
+			      zcu_soc_get_local_port(fd),                      \
+			      zcu_soc_get_peer_port(fd), str);                 \
+	}
+
 #endif /* _ZCU_NETWORK_H_ */
