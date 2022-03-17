@@ -549,6 +549,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener)
 	buffer += "Requests in queue: 0\n";
 	std::string protocol = "HTTP";
 	std::string listener_status = "a";
+	int backend_counter = 0;
 
 	//  Use this if we have multiple listeners
 	//  if(dynamic_cast<json::JsonDataValue*>(json_response_listener->at(json::JSON_KEYS::STATUS))->string_value
@@ -618,14 +619,10 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener)
 		buffer += std::to_string(total_weight);
 		buffer += ")\n";
 
+		backend_counter = 0;
 		for (const auto &backend : *backends) {
 			auto backend_json =
 				dynamic_cast<json::JsonObject *>(backend.get());
-			auto backend_counter =
-				dynamic_cast<json::JsonDataValue *>(
-					backend_json->at(json::JSON_KEYS::ID)
-						.get())
-					->number_value;
 			auto backend_type =
 				dynamic_cast<json::JsonDataValue *>(
 					backend_json->at(json::JSON_KEYS::TYPE)
@@ -680,7 +677,7 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener)
 
 			buffer += "      ";
 			buffer += std::to_string(
-				static_cast<int>(backend_counter));
+				static_cast<int>(backend_counter++));
 			buffer += ". Backend ";
 			buffer += backend_address;
 			buffer += ":";
