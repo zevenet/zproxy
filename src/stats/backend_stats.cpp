@@ -71,11 +71,11 @@ Statistics::BackendInfo::~BackendInfo()
 {
 }
 
-void Statistics::BackendInfo::increaseConnection()
+void Statistics::BackendInfo::increaseEstablishedConn()
 {
 	established_conn++;
 	if (listener_stats != nullptr) {
-		listener_stats->total_connections++;
+		listener_stats->increaseTotalBackendConns();
 	}
 }
 

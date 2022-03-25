@@ -313,7 +313,7 @@ void StreamManager::addStream(int fd,
 	}
 
 	//increment connections
-	stream->service_manager->conns_stats.established_connection++;
+	stream->updateStats(NEW_CONN);
 
 	if (stream->service_manager->is_https_listener) {
 		stream->client_connection.ssl_conn_status =
@@ -1120,13 +1120,8 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 		return;
 	}
 	if (stream->backend_connection.getFileDescriptor() > 0) { //TODO::
-		if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
-			stream->backend_connection.getBackend()
-				->decreaseConnTimeoutAlive();
-		} else {
-			stream->backend_connection.getBackend()
-				->decreaseConnection();
-		}
+		stream->updateStats(NEW_CONN);
+
 		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
 		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
@@ -1185,8 +1180,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT,
 					   bck->conn_timeout);
 #endif
-				stream->backend_connection.getBackend()
-					->increaseConnTimeoutAlive();
+				stream->updateStats(BCK_CONN);
 			} break;
 			case IO::IO_OP::OP_SUCCESS: {
 				DEBUG_COUNTER_HIT(debug__::on_backend_connect);
@@ -1203,8 +1197,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 						listener_config_.response_stats);
 					this->clearStream(stream);
 				}
-				stream->backend_connection.getBackend()
-					->increaseConnection();
+				stream->updateStats(ESTABLISHED);
 				break;
 			}
 			}
@@ -1300,8 +1293,7 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
 		DEBUG_COUNTER_HIT(debug__::on_backend_connect);
 		stream->clearStatus(STREAM_STATUS::BCK_CONN_PENDING);
-		stream->backend_connection.getBackend()
-			->decreaseConnTimeoutAlive();
+		stream->updateStats(ESTABLISHED);
 
 		if (stream->backend_connection.getBackend()
 			    ->isConnectionLimit()) {
@@ -1316,7 +1308,6 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 			clearStream(stream);
 			return;
 		}
-		stream->backend_connection.getBackend()->increaseConnection();
 		stream->backend_connection.getBackend()->setAvgConnTime(
 			stream->backend_connection.time_start);
 	}
@@ -1908,6 +1899,7 @@ void StreamManager::clearStream(HttpStream *stream)
 		return;
 	}
 	streamLogDebug(stream, "clearStream");
+	stream->clearStats();
 
 #ifdef CACHE_ENABLED
 	CacheManager::handleStreamClose(stream);
@@ -1932,13 +1924,6 @@ void StreamManager::clearStream(HttpStream *stream)
 #endif
 	}
 	if (stream->backend_connection.getFileDescriptor() > 0) {
-		if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)) {
-			stream->backend_connection.getBackend()
-				->decreaseConnTimeoutAlive();
-		} else {
-			stream->backend_connection.getBackend()
-				->decreaseConnection();
-		}
 #if DEBUG_ZCU_LOG
 		clear_backend++;
 #endif
@@ -1950,7 +1935,6 @@ void StreamManager::clearStream(HttpStream *stream)
 	clear_stream++;
 #endif
 	DEBUG_COUNTER_HIT(debug__::on_clear_stream);
-	stream->service_manager->conns_stats.established_connection--;
 	delete stream;
 }
 
@@ -2013,14 +1997,10 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 	stream->response.reset_parser();
 
 	if (stream->backend_connection.getFileDescriptor() > 0) {
+		stream->updateStats(NEW_CONN);
 		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
 		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
-
-		if (stream->backend_connection.isConnected() &&
-		    stream->backend_connection.getBackend() != nullptr)
-			stream->backend_connection.getBackend()
-				->decreaseConnection();
 	}
 	stream->backend_connection.reset();
 	stream->backend_connection.setBackend(bck);
@@ -2047,8 +2027,7 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 			   events::TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT,
 			   bck->conn_timeout);
 #endif
-		stream->backend_connection.getBackend()
-			->increaseConnTimeoutAlive();
+		stream->updateStats(BCK_CONN);
 		break;
 	}
 	case IO::IO_OP::OP_SUCCESS: {
@@ -2069,7 +2048,8 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 					->response_stats);
 			this->clearStream(stream);
 		}
-		stream->backend_connection.getBackend()->increaseConnection();
+		stream->updateStats(ESTABLISHED);
+
 		break;
 	}
 	}
@@ -2138,9 +2118,7 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 		return;
 
 	} else {
-		if (stream->backend_connection.getBackend() != nullptr)
-			stream->backend_connection.getBackend()
-				->decreaseConnection();
+		stream->updateStats(NEW_CONN);
 		if (stream->backend_connection.buffer_size > 0
 #if ENABLE_ZERO_COPY
 		    || stream->backend_connection.splice_pipe.bytes > 0
@@ -2226,7 +2204,7 @@ void StreamManager::onBackendConnectionError(HttpStream *stream)
 		      stream->backend_connection.getBackend()->address.data(),
 		      stream->backend_connection.getBackend()->port);
 
-	stream->backend_connection.getBackend()->decreaseConnTimeoutAlive();
+	stream->updateStats(NEW_CONN);
 	setStreamBackend(stream);
 }
 

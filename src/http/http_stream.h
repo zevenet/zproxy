@@ -64,6 +64,19 @@ enum class STREAM_STATUS : uint32_t {
 	CLOSE_CONNECTION = 0x1 << 8
 };
 
+// these are the possible status where
+// a connection changes of pending to established
+enum STREAM_STATS {
+	// stats did not increase
+	UNDEF,
+	// New conn received
+	NEW_CONN,
+	// Connecting with a backend
+	BCK_CONN,
+	// Connection established with the backend
+	ESTABLISHED
+};
+
 /**
  * @class HttpStream http_stream.h "src/http/http_stream.h"
  *
@@ -92,6 +105,7 @@ class HttpStream : public Counter<HttpStream> {
 	ClientConnection client_connection;
 	/** Connection between zproxy and the backend. */
 	BackendConnection backend_connection;
+	STREAM_STATS stats_state{ STREAM_STATS::UNDEF };
 #if USE_TIMER_FD_TIMEOUT
 	/** Timer descriptor used for the stream timeouts. */
 	TimerFd timer_fd;
@@ -109,6 +123,23 @@ class HttpStream : public Counter<HttpStream> {
 	std::string rewr_loc_str_ori{ "" };
 	/* sub-string from the URL that was added in a rewriteurl action */
 	std::string rewr_loc_str_repl{ "" };
+
+	/**
+   * @brief modify the farm stats changing the connection status. The flow is:
+   *  - UNDEF -> NEW_CONN: vip_established++, vip_pending++
+   *  - NEW_CONN-> BCK_CONN: vip_pending--, bck_pending++
+   *  - BCK_CONN -> ESTABLISHED: bck_pending--, bck_established++
+   *
+   * @param the next stat state
+   * @return false on success or true on error
+   */
+	bool updateStats(STREAM_STATS state);
+
+	/**
+   * @brief the connection was disrupted or finished and the stream stats should clean
+   *  it clears the stream connection depending on the current status
+   */
+	void clearStats();
 
 	/* Params:
 	 *  - string where replace the macro. This same string will be replaced

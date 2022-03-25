@@ -89,11 +89,56 @@ class HttpResponseHits {
 };
 
 class ListenerInfo {
-    public:
-	std::atomic<int> total_connections{
-		0
-	}; // sumatory of backend connections
+    protected:
+	// sumatory of backend connections
+	std::atomic<int> total_connections{ 0 };
+	// established connections in the vip
 	std::atomic<int> established_connection{ 0 };
+	// pending connection to be sent to the backends
+	std::atomic<int> pending_connection{ 0 };
+
+    public:
+	inline int getEstablishedConn()
+	{
+		return established_connection;
+	}
+	inline void increaseEstablishedConn()
+	{
+		established_connection++;
+	}
+	inline void decreaseEstablishedConn()
+	{
+		if (established_connection > 0)
+			established_connection--;
+	}
+
+	inline int getPendingConn()
+	{
+		return pending_connection;
+	}
+	inline void increasePendingConn()
+	{
+		pending_connection++;
+	}
+	inline void decreasePendingConn()
+	{
+		if (pending_connection)
+			pending_connection--;
+	}
+
+	inline int getTotalBackendConns()
+	{
+		return total_connections;
+	}
+	inline void increaseTotalBackendConns()
+	{
+		total_connections++;
+	}
+	inline void decreaseTotalBackendConns()
+	{
+		if (total_connections > 0)
+			total_connections--;
+	}
 };
 
 class BackendInfo {
@@ -128,17 +173,16 @@ class BackendInfo {
 
 	~BackendInfo();
 
-	void increaseConnection();
+	void increaseEstablishedConn();
 
 	void setAvgTransferTime(const timeval &start_time);
 
-	inline void decreaseConnection()
+	inline void decreaseEstablishedConn()
 	{
 		if (established_conn.load() > 0) {
 			established_conn--;
-			if (listener_stats != nullptr &&
-			    listener_stats->total_connections > 0)
-				listener_stats->total_connections--;
+			if (listener_stats != nullptr)
+				listener_stats->decreaseTotalBackendConns();
 		}
 	}
 
