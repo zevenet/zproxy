@@ -1,0 +1,36 @@
+DESCRIPTION="Upload a file using Content-length"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS=@headers.txt
+BODY=file.txt
+#########################
+DESCRIPTION="Upload a big file (bigger than zproxy buffer) using Content-length"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS=@headers.txt
+BODY=$TEST_TPL/$BIG_FILE
+#########################
+DESCRIPTION="Upload a big file using Content-length and 100-continue"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS=Transfer-Encoding:
+BODY=file.txt
+#########################
+DESCRIPTION="Upload a big file using Content-length and 100-continue"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS=Transfer-Encoding:
+BODY=$TEST_TPL/$BIG_FILE
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
