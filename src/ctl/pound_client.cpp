@@ -123,6 +123,10 @@ void PoundClient::showHelp(const std::string error, bool exit_on_error)
 		  << " [-t <timeout>] -a IP:PORT [ -X ] cmd\n"
 		  << std::endl;
 	std::cout << "\twhere cmd is one of:" << std::endl;
+	std::cout
+		<< "\t-C - this option will only retrieve the connections when "
+		   "the process status is listed (no the sessions in the table)"
+		<< std::endl;
 	std::cout << "\t-L n - enable listener n" << std::endl;
 	std::cout << "\t-l n - disable listener n" << std::endl;
 	std::cout << "\t-R n - reload the listener configuration from file"
@@ -323,6 +327,7 @@ bool PoundClient::executeCommand()
 		showError("Error parsing response json");
 	std::unique_ptr<json::JsonObject> json_response(
 		std::move(json_object_ptr));
+
 	if (ctl_command == CTL_ACTION::NONE)
 		outputStatus(json_response.get());
 	return (response.http_status_code >= 200 &&
@@ -335,11 +340,16 @@ bool PoundClient::init(int argc, char *argv[])
 	int ms_to = DEFAULT_CTL_TIMEOUT;
 	int opt = 0;
 	int option_index = 0;
+	session_flag = true;
 
 	binary_name = std::string(argv[0]);
 	while ((opt = getopt_long(argc, argv, options_string, long_options,
 				  &option_index)) != -1) {
 		switch (opt) {
+		case 'C': {
+			session_flag = false;
+			break;
+		}
 		case 't': {
 			ms_to = atoi(optarg);
 			if (ms_to <= 0)
@@ -697,31 +707,37 @@ void PoundClient::outputStatus(json::JsonObject *json_response_listener)
 			buffer += ")\n";
 		}
 
-		auto sessions = dynamic_cast<json::JsonArray *>(
-			service_json->at(json::JSON_KEYS::SESSIONS).get());
-		int session_counter = 0;
-		for (const auto &session : *sessions) {
-			auto session_json =
-				dynamic_cast<json::JsonObject *>(session.get());
-			std::string session_id =
-				dynamic_cast<json::JsonDataValue *>(
-					session_json->at(json::JSON_KEYS::ID)
-						.get())
-					->string_value;
-			auto session_backend =
-				dynamic_cast<json::JsonDataValue *>(
-					session_json
-						->at(json::JSON_KEYS::BACKEND_ID)
-						.get())
-					->number_value;
-			buffer += "      ";
-			buffer += std::to_string(session_counter);
-			buffer += ". Session ";
-			buffer += session_id;
-			buffer += " -> ";
-			buffer += std::to_string(session_backend);
-			buffer += "\n";
-			session_counter++;
+		if (session_flag) {
+			auto sessions = dynamic_cast<json::JsonArray *>(
+				service_json->at(json::JSON_KEYS::SESSIONS)
+					.get());
+			int session_counter = 0;
+			for (const auto &session : *sessions) {
+				auto session_json =
+					dynamic_cast<json::JsonObject *>(
+						session.get());
+				std::string session_id =
+					dynamic_cast<json::JsonDataValue *>(
+						session_json
+							->at(json::JSON_KEYS::ID)
+							.get())
+						->string_value;
+				auto session_backend =
+					dynamic_cast<json::JsonDataValue *>(
+						session_json
+							->at(json::JSON_KEYS::
+								     BACKEND_ID)
+							.get())
+						->number_value;
+				buffer += "      ";
+				buffer += std::to_string(session_counter);
+				buffer += ". Session ";
+				buffer += session_id;
+				buffer += " -> ";
+				buffer += std::to_string(session_backend);
+				buffer += "\n";
+				session_counter++;
+			}
 		}
 	}
 

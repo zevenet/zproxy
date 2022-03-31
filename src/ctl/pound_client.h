@@ -73,7 +73,7 @@ struct OptionArgs {
 
 class PoundClient /*: public EpollManager */
 {
-	const char *options_string = "t:a:vc:LlRSsBbNnfXH";
+	const char *options_string = "Ct:a:vc:LlRSsBbNnfXH";
 	std::string binary_name; /*argv[0] */
 	std::string control_socket; /* -c option */
 	std::string session_key; /* -k option */
@@ -90,6 +90,7 @@ class PoundClient /*: public EpollManager */
 	bool xml_output;
 	bool resolve_hosts;
 	bool verbose;
+	bool session_flag{ true };
 	Connection connection;
 	OptionArgs global_args;
 	bool trySetTargetId(int &target_id, char *possible_value);
