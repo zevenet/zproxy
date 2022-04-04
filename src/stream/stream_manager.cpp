@@ -33,11 +33,11 @@
 #define closeSecureFd(fd)                                                      \
 	{                                                                      \
 		int errorfd = 0;                                               \
+		socklen_t len = sizeof(errorfd);                               \
 		if (cl_streams_set.count(fd) > 0)                              \
 			cl_streams_set.del(fd);                                \
 		if (bck_streams_set.count(fd) > 0)                             \
 			bck_streams_set.del(fd);                               \
-		socklen_t len = sizeof(errorfd);                               \
 		int retval =                                                   \
 			getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd, &len);  \
 		if (errorfd == 0 || retval == 0) {                             \
@@ -345,6 +345,8 @@ void StreamManager::onRequestEvent(int fd)
 		closeSecureFd(fd);
 		return;
 	}
+	stream->latest_state = STATE_DEBUG::on_request_ev;
+
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 	if (stream->hasStatus(STREAM_STATUS::REQUEST_PENDING)) {
@@ -684,11 +686,11 @@ void StreamManager::onRequestEvent(int fd)
 void StreamManager::onResponseEvent(int fd)
 {
 	HttpStream *stream = bck_streams_set.get(fd);
-
 	if (stream == nullptr) {
 		closeSecureFd(fd);
 		return;
 	}
+	stream->latest_state = STATE_DEBUG::on_response_ev;
 
 	streamLogDebug(stream, "");
 
@@ -993,6 +995,7 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 		closeSecureFd(fd);
 		return;
 	}
+	stream->latest_state = STATE_DEBUG::connect_to;
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)
 #if USE_TIMER_FD_TIMEOUT
 	    && stream->timer_fd.isTriggered()
@@ -1018,6 +1021,7 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 		closeSecureFd(fd);
 		return;
 	}
+	stream->latest_state = STATE_DEBUG::request_to;
 
 #if USE_TIMER_FD_TIMEOUT
 	if (stream->timer_fd.isTriggered()) {
@@ -1045,6 +1049,8 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 		closeSecureFd(fd);
 		return;
 	}
+	stream->latest_state = STATE_DEBUG::response_to;
+
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 	streamLogMessage(
@@ -1081,6 +1087,7 @@ void StreamManager::onSignalEvent([[maybe_unused]] int fd)
 
 void StreamManager::setStreamBackend(HttpStream *stream)
 {
+	stream->latest_state = STATE_DEBUG::set_stream_backend;
 	auto service = static_cast<Service *>(stream->request.getService());
 	zcu_log_print(LOG_DEBUG, "setStreamBackend: init");
 
@@ -1273,6 +1280,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 
 void StreamManager::onServerWriteEvent(HttpStream *stream)
 {
+	stream->latest_state = STATE_DEBUG::on_server_write;
 	DEBUG_COUNTER_HIT(debug__::on_send_request);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
@@ -1543,6 +1551,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 {
 	if (stream == nullptr)
 		return;
+	stream->latest_state = STATE_DEBUG::on_client_write;
 
 	streamLogDebug(stream, "");
 
@@ -1898,6 +1907,7 @@ void StreamManager::clearStream(HttpStream *stream)
 	if (stream == nullptr) {
 		return;
 	}
+	stream->latest_state = STATE_DEBUG::clear_stream;
 	streamLogDebug(stream, "clearStream");
 	stream->clearStats();
 
@@ -1942,6 +1952,7 @@ void StreamManager::onClientDisconnect(HttpStream *stream)
 {
 	if (stream == nullptr)
 		return;
+	stream->latest_state = STATE_DEBUG::client_disconnect;
 	DEBUG_COUNTER_HIT(debug__::on_client_disconnect);
 	streamLogDebug(stream, "Client Disconnected");
 	clearStream(stream);
@@ -1962,6 +1973,32 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 #if DEBUG_ZCU_LOG
 	if (task.subject == ctl::CTL_SUBJECT::DEBUG) {
 		std::unique_ptr<JsonObject> root{ new JsonObject() };
+
+		std::unique_ptr<JsonArray> streams{ new JsonArray() };
+		for (auto st : cl_streams_set) {
+			std::unique_ptr<JsonObject> stream{ new JsonObject() };
+			stream->emplace("id", std::make_unique<JsonDataValue>(
+						      st.second->stream_id));
+			stream->emplace("connection_state",
+					std::make_unique<JsonDataValue>(
+						st.second->stats_state));
+			stream->emplace(
+				"stream_state",
+				std::make_unique<JsonDataValue>(
+					static_cast<int>(
+						st.second->latest_state)));
+			stream->emplace("backend_fd",
+					std::make_unique<JsonDataValue>(
+						st.second->backend_connection
+							.getFileDescriptor()));
+			stream->emplace("client_fd",
+					std::make_unique<JsonDataValue>(
+						st.second->client_connection
+							.getFileDescriptor()));
+			streams->emplace_back(std::move(stream));
+		}
+		root->emplace("streams", std::move(streams));
+
 		std::unique_ptr<JsonObject> status{ new JsonObject() };
 		status->emplace("HttpSteam", std::make_unique<JsonDataValue>(
 						     cl_streams_set.size()));
@@ -1973,8 +2010,8 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 				std::make_unique<JsonDataValue>(clear_backend));
 		status->emplace("clear_timer",
 				std::make_unique<JsonDataValue>(clear_timer));
-		root->emplace("W_" + std::to_string(this->getWorkerId()),
-			      std::move(status));
+
+		root->emplace("counters", std::move(status));
 		return root->stringify();
 	}
 #endif
@@ -1989,6 +2026,7 @@ bool StreamManager::isHandler(ctl::CtlTask &task)
 
 void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 {
+	stream->latest_state = STATE_DEBUG::backend_connection;
 	IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
 
 	if (bck->backend_type != BACKEND_TYPE::REMOTE)
@@ -2069,6 +2107,7 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 {
 	if (stream == nullptr)
 		return;
+	stream->latest_state = STATE_DEBUG::server_disconnect;
 	DEBUG_COUNTER_HIT(debug__::on_backend_disconnect);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
@@ -2141,7 +2180,7 @@ void StreamManager::onServerDisconnect(HttpStream *stream)
 				listener_config_.response_stats);
 		}
 	}
-	streamLogMessage(stream, "Backend disconnected");
+	streamLogDebug(stream, "Backend disconnected");
 	clearStream(stream);
 }
 
@@ -2193,6 +2232,7 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 void StreamManager::onBackendConnectionError(HttpStream *stream)
 {
 	DEBUG_COUNTER_HIT(debug__::on_backend_connect_error);
+	stream->latest_state = STATE_DEBUG::backend_error;
 
 	stream->backend_connection.getBackend()->setStatus(
 		BACKEND_STATUS::BACKEND_DOWN);

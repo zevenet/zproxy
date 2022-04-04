@@ -40,9 +40,9 @@ EpollManager::EpollManager() : accept_fd_set()
 /** Handles the disconnect events. */
 void EpollManager::onDisconnectEvent(epoll_event &event)
 {
-	/* zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONDisconnect fd: %d", __FUNCTION__,
+	zcu_log_print(LOG_DEBUG, "%s():%d: ~~ONDisconnect fd: %d", __FUNCTION__,
 		      __LINE__, static_cast<int>(event.data.u64 >> CHAR_BIT));
-*/
+
 	HandleEvent(static_cast<int>(event.data.u64 >> CHAR_BIT),
 		    EVENT_TYPE::DISCONNECT,
 		    static_cast<EVENT_GROUP>(event.data.u64 & 0xff));
@@ -128,6 +128,10 @@ int EpollManager::loopOnce(int time_out)
 	for (i = 0; i < ev_count; ++i) {
 		fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
 		if ((events[i].events & EPOLLERR) != 0u) {
+			int errorfd = 0;
+			socklen_t len = sizeof(errorfd);
+			getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd, &len);
+
 			// continue waiting timeout if error == EINPROGRESS
 			if (errno != EINPROGRESS) {
 				zcu_log_print(

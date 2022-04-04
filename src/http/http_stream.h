@@ -64,6 +64,25 @@ enum class STREAM_STATUS : uint32_t {
 	CLOSE_CONNECTION = 0x1 << 8
 };
 
+// debug status
+enum class STATE_DEBUG : int {
+	undef,
+	add_stream,
+	clear_stream,
+	on_request_ev,
+	on_response_ev,
+	on_server_write,
+	on_client_write,
+	server_disconnect,
+	client_disconnect,
+	connect_to,
+	request_to,
+	response_to,
+	set_stream_backend,
+	backend_connection,
+	backend_error
+};
+
 // these are the possible status where
 // a connection changes of pending to established
 enum STREAM_STATS {
@@ -123,6 +142,8 @@ class HttpStream : public Counter<HttpStream> {
 	std::string rewr_loc_str_ori{ "" };
 	/* sub-string from the URL that was added in a rewriteurl action */
 	std::string rewr_loc_str_repl{ "" };
+
+	STATE_DEBUG latest_state = { STATE_DEBUG::undef };
 
 	/**
    * @brief modify the farm stats changing the connection status. The flow is:

@@ -183,7 +183,8 @@ void HttpStream::initTracer(std::string dir, int id, std::string client_addr)
 bool HttpStream::updateStats(STREAM_STATS new_state)
 {
 	int err = 0;
-
+	streamLogDebug(this, "Changing stats: %d -> %d", stats_state,
+		       new_state);
 	// increase: new conn on vip
 	if (stats_state == UNDEF && new_state == NEW_CONN) {
 		service_manager->conns_stats.increaseEstablishedConn();
@@ -206,7 +207,7 @@ bool HttpStream::updateStats(STREAM_STATS new_state)
 		backend_connection.getBackend()->decreaseEstablishedConn();
 		// decrease: connecting failed
 	} else if (stats_state == BCK_CONN && new_state == NEW_CONN) {
-		service_manager->conns_stats.decreasePendingConn();
+		service_manager->conns_stats.increasePendingConn();
 		backend_connection.getBackend()->decreaseConnTimeoutAlive();
 	} else {
 		err = 1;
@@ -224,6 +225,7 @@ bool HttpStream::updateStats(STREAM_STATS new_state)
 
 void HttpStream::clearStats()
 {
+	streamLogDebug(this, "Cleaning stats: %d", stats_state);
 	switch (stats_state) {
 	case NEW_CONN:
 		service_manager->conns_stats.decreaseEstablishedConn();
