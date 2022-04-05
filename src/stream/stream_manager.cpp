@@ -1976,9 +1976,19 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 
 		std::unique_ptr<JsonArray> streams{ new JsonArray() };
 		for (auto st : cl_streams_set) {
+			auto service = static_cast<Service *>(
+				st.second->request.getService());
+			auto bck = st.second->backend_connection.getBackend();
+			std::string bck_str;
+			if (bck != nullptr) {
+				bck_str = bck->address;
+				bck_str.append(":" + std::to_string(bck->port));
+			}
+
 			std::unique_ptr<JsonObject> stream{ new JsonObject() };
-			stream->emplace("id", std::make_unique<JsonDataValue>(
-						      st.second->stream_id));
+			stream->emplace("stream_id",
+					std::make_unique<JsonDataValue>(
+						st.second->stream_id));
 			stream->emplace("connection_state",
 					std::make_unique<JsonDataValue>(
 						st.second->stats_state));
@@ -1987,14 +1997,40 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 				std::make_unique<JsonDataValue>(
 					static_cast<int>(
 						st.second->latest_state)));
-			stream->emplace("backend_fd",
-					std::make_unique<JsonDataValue>(
-						st.second->backend_connection
-							.getFileDescriptor()));
 			stream->emplace("client_fd",
 					std::make_unique<JsonDataValue>(
 						st.second->client_connection
 							.getFileDescriptor()));
+			stream->emplace(
+				"client_addr",
+				std::make_unique<JsonDataValue>(
+					st.second->client_connection.address_str +
+					":" +
+					std::to_string(
+						st.second->client_connection
+							.port)));
+			stream->emplace("backend_fd",
+					std::make_unique<JsonDataValue>(
+						st.second->backend_connection
+							.getFileDescriptor()));
+			stream->emplace("backend_addr",
+					std::make_unique<JsonDataValue>(
+						bck_str.data()));
+			stream->emplace(
+				"service",
+				std::make_unique<JsonDataValue>(
+					service->service_config.name.data()));
+
+			std::string req_line =
+				st.second->request.getRequestLine().data();
+
+			stream->emplace(
+				"latest_request",
+				std::make_unique<JsonDataValue>(req_line.substr(
+					0, req_line.size() - 2)));
+			stream->emplace("managed_requests",
+					std::make_unique<JsonDataValue>(
+						st.second->managed_requests));
 			streams->emplace_back(std::move(stream));
 		}
 		root->emplace("streams", std::move(streams));
