@@ -72,7 +72,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 					goto end_stream_handleevent;
 				}
 				addStream(new_fd, std::move(spt));
-			} else {
+			} else if (new_fd < 0) {
 				DEBUG_COUNTER_HIT(debug__::event_connect_fail);
 			}
 		} while (new_fd > 0);
@@ -2016,10 +2016,12 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 			stream->emplace("backend_addr",
 					std::make_unique<JsonDataValue>(
 						bck_str.data()));
-			stream->emplace(
-				"service",
-				std::make_unique<JsonDataValue>(
-					service->service_config.name.data()));
+			stream->emplace("service",
+					std::make_unique<JsonDataValue>(
+						(service != nullptr) ?
+							service->service_config
+								.name.data() :
+							      ""));
 
 			std::string req_line =
 				st.second->request.getRequestLine().data();
@@ -2046,8 +2048,23 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 				std::make_unique<JsonDataValue>(clear_backend));
 		status->emplace("clear_timer",
 				std::make_unique<JsonDataValue>(clear_timer));
-
 		root->emplace("counters", std::move(status));
+
+		auto sm = ServiceManager::getInstance().begin()->second;
+		std::unique_ptr<JsonObject> listener{ new JsonObject() };
+		listener->emplace(
+			"total_backend_conn",
+			std::make_unique<JsonDataValue>(
+				sm->conns_stats.getTotalBackendConns()));
+		listener->emplace(
+			"established_conn",
+			std::make_unique<JsonDataValue>(
+				sm->conns_stats.getEstablishedConn()));
+		listener->emplace("pending_conn",
+				  std::make_unique<JsonDataValue>(
+					  sm->conns_stats.getPendingConn()));
+		root->emplace("listener", std::move(listener));
+
 		return root->stringify();
 	}
 #endif
