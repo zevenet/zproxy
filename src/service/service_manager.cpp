@@ -154,20 +154,22 @@ std::string ServiceManager::handleTask(ctl::CtlTask &task)
 						      JSON_KEYS::STATUS_ACTIVE));
 			root->emplace(JSON_KEYS::NAME,
 				      std::make_unique<JsonDataValue>(name));
-			root->emplace(JSON_KEYS::PENDING_CONNS,
-				      std::make_unique<JsonDataValue>(
-					      conns_stats.getPendingConn()));
 
 			auto sm = this->weak_from_this();
 			auto count = this->disabled ? sm.use_count() :
 							    sm.use_count() - 1;
+			auto established = conns_stats.getEstablishedConn();
 			root->emplace("object_ref",
 				      std::make_unique<JsonDataValue>(count));
 
 			root->emplace(
-				JSON_KEYS::CONNECTIONS,
+				JSON_KEYS::PENDING_CONNS,
 				std::make_unique<JsonDataValue>(
-					conns_stats.getEstablishedConn()));
+					established -
+					conns_stats.getTotalBackendConns()));
+			root->emplace(
+				JSON_KEYS::CONNECTIONS,
+				std::make_unique<JsonDataValue>(established));
 			auto services_array = std::make_unique<JsonArray>();
 			for (auto service : services)
 				services_array->emplace_back(

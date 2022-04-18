@@ -180,46 +180,30 @@ void HttpStream::initTracer(std::string dir, int id, std::string client_addr)
 			      "Tracer for %d stream could not be opened", id);
 }
 
-bool HttpStream::updateStats(STREAM_STATS new_state)
+bool HttpStream::setStats(STREAM_STATS new_state)
 {
 	int err = 0;
-	streamLogDebug(this, "Changing stats: %d -> %d", stats_state,
-		       new_state);
-	// increase: new conn on vip
-	if (stats_state == UNDEF && new_state == NEW_CONN) {
+
+	switch (new_state) {
+	case NEW_CONN:
 		service_manager->conns_stats.increaseEstablishedConn();
 		service_manager->conns_stats.increasePendingConn();
-		// increase: new backend assigned, try to connect
-	} else if (stats_state == NEW_CONN && new_state == BCK_CONN) {
-		service_manager->conns_stats.decreasePendingConn();
+		break;
+	case BCK_CONN:
+		service_manager->conns_stats.increaseEstablishedConn();
 		backend_connection.getBackend()->increaseConnTimeoutAlive();
-		// increase: backend connection established inmediately (sync mode)
-	} else if (stats_state == NEW_CONN && new_state == ESTABLISHED) {
-		service_manager->conns_stats.decreasePendingConn();
+		break;
+	case ESTABLISHED:
+		service_manager->conns_stats.increaseEstablishedConn();
 		backend_connection.getBackend()->increaseEstablishedConn();
-		// increase: the connection is marked as established
-	} else if (stats_state == BCK_CONN && new_state == ESTABLISHED) {
-		backend_connection.getBackend()->decreaseConnTimeoutAlive();
-		backend_connection.getBackend()->increaseEstablishedConn();
-		// decrease: connection closed
-	} else if (stats_state == ESTABLISHED && new_state == NEW_CONN) {
-		service_manager->conns_stats.increasePendingConn();
-		backend_connection.getBackend()->decreaseEstablishedConn();
-		// decrease: connecting failed
-	} else if (stats_state == BCK_CONN && new_state == NEW_CONN) {
-		service_manager->conns_stats.increasePendingConn();
-		backend_connection.getBackend()->decreaseConnTimeoutAlive();
-	} else {
+		break;
+	default:
 		err = 1;
-		streamLogMessage(this, "The stream stats cannot pass %d -> %d",
-				 stats_state, new_state);
-		clearStats();
 	}
 
 	if (!err) {
 		stats_state = new_state;
 	}
-
 	return err;
 }
 
@@ -239,8 +223,32 @@ void HttpStream::clearStats()
 		service_manager->conns_stats.decreaseEstablishedConn();
 		backend_connection.getBackend()->decreaseEstablishedConn();
 		break;
+	case UNDEF:
+		streamLogDebug(this, "The stream stats are not defined");
+		break;
 	default:
-		streamLogMessage(this, "The stream stats are not defined");
+		streamLogMessage(this, "The stream stats are not defined: %d",
+				 stats_state);
 	}
 	stats_state = UNDEF;
+}
+
+bool HttpStream::updateStats(STREAM_STATS new_state)
+{
+	int err = 0;
+	streamLogDebug(this, "Changing stats: %d -> %d", stats_state,
+		       new_state);
+
+	if (new_state == stats_state)
+		return err;
+
+	clearStats();
+
+	err = setStats(new_state);
+	if (err)
+		streamLogMessage(this,
+				 "Error setting stats for state: %d -> %d",
+				 stats_state, new_state);
+
+	return err;
 }

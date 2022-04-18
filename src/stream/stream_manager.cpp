@@ -47,10 +47,25 @@
 		}                                                              \
 	}
 
+#define validateStream(set)                                                    \
+	{                                                                      \
+		stream = set.get(fd);                                          \
+		if (stream == nullptr) {                                       \
+			zcu_log_print(LOG_NOTICE,                              \
+				      "no stream for fd:%d in this thread",    \
+				      fd);                                     \
+			set.del(fd);                                           \
+			deleteFd(fd);                                          \
+			goto end_stream_handleevent;                           \
+		}                                                              \
+	}
+
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				EVENT_GROUP event_group)
 {
+	HttpStream *stream = nullptr;
 	stream_locker_increase();
+
 	zcu_log_print(LOG_DEBUG,
 		      "%s():%d: fd=%d, event_type=%s, event_group=%s",
 		      __FUNCTION__, __LINE__, fd,
@@ -87,21 +102,26 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			break;
 		case EVENT_GROUP::SERVER: {
 			DEBUG_COUNTER_HIT(debug__::event_backend_read);
+			validateStream(bck_streams_set);
 			onResponseEvent(fd);
 			break;
 		}
 		case EVENT_GROUP::CLIENT: {
 			DEBUG_COUNTER_HIT(debug__::event_client_read);
+			validateStream(cl_streams_set);
 			onRequestEvent(fd);
 			break;
 		}
 		case EVENT_GROUP::CONNECT_TIMEOUT:
+			validateStream(bck_streams_set);
 			onConnectTimeoutEvent(fd);
 			break;
 		case EVENT_GROUP::REQUEST_TIMEOUT:
+			validateStream(cl_streams_set);
 			onRequestTimeoutEvent(fd);
 			break;
 		case EVENT_GROUP::RESPONSE_TIMEOUT:
+			validateStream(bck_streams_set);
 			onResponseTimeoutEvent(fd);
 			break;
 		case EVENT_GROUP::SIGNAL:
@@ -124,21 +144,13 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 			break;
 		case EVENT_GROUP::SERVER: {
 			DEBUG_COUNTER_HIT(debug__::event_backend_write);
-			auto stream = bck_streams_set.get(fd);
-			if (stream == nullptr) {
-				closeSecureFd(fd);
-				goto end_stream_handleevent;
-			}
+			validateStream(bck_streams_set);
 			onServerWriteEvent(stream);
 			break;
 		}
 		case EVENT_GROUP::CLIENT: {
 			DEBUG_COUNTER_HIT(debug__::event_client_write);
-			auto stream = cl_streams_set.get(fd);
-			if (stream == nullptr) {
-				closeSecureFd(fd);
-				goto end_stream_handleevent;
-			}
+			validateStream(cl_streams_set);
 			onClientWriteEvent(stream);
 			break;
 		}
@@ -155,40 +167,13 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type,
 		switch (event_group) {
 		case EVENT_GROUP::SERVER: {
 			DEBUG_COUNTER_HIT(debug__::event_backend_disconnect);
-			auto stream = bck_streams_set.get(fd);
-
-			if (stream == nullptr) {
-				char addr[150];
-				auto ret =
-					zcu_soc_get_peer_address(fd, addr, 150);
-				if (ret != nullptr) {
-					zcu_log_print(
-						LOG_NOTICE,
-						"Remote backend \"%s\" closed connection prematurely",
-						addr);
-					closeSecureFd(fd);
-				}
-				goto end_stream_handleevent;
-			}
+			validateStream(bck_streams_set);
 			onServerDisconnect(stream);
 			goto end_stream_handleevent;
 		}
 		case EVENT_GROUP::CLIENT: {
 			DEBUG_COUNTER_HIT(debug__::event_client_disconnect);
-			auto stream = cl_streams_set.get(fd);
-			if (stream == nullptr) {
-				char addr[150];
-				auto ret =
-					zcu_soc_get_peer_address(fd, addr, 150);
-				if (ret != nullptr) {
-					zcu_log_print(
-						LOG_NOTICE,
-						"Client backend \"%s\" closed connection prematurely",
-						addr);
-					closeSecureFd(fd);
-				}
-				goto end_stream_handleevent;
-			}
+			validateStream(cl_streams_set);
 			onClientDisconnect(stream);
 			goto end_stream_handleevent;
 		}
@@ -275,6 +260,7 @@ void StreamManager::addStream(int fd,
 {
 	DEBUG_COUNTER_HIT(debug__::on_client_connect);
 #if SM_HANDLE_ACCEPT
+	zcu_net_print_socket(fd, "new client socket");
 	HttpStream *stream = cl_streams_set.get(fd);
 	if (UNLIKELY(stream != nullptr)) {
 		streamLogMessage(stream, "recycling fd:%d", fd);
@@ -310,6 +296,7 @@ void StreamManager::addStream(int fd,
 						    EVENT_GROUP::CLIENT)) {
 		streamLogMessage(stream, "Error enabling client event");
 		clearStream(stream);
+		return;
 	}
 
 	//increment connections
@@ -1128,7 +1115,6 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 	}
 	if (stream->backend_connection.getFileDescriptor() > 0) { //TODO::
 		stream->updateStats(NEW_CONN);
-
 		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
 		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
@@ -1187,6 +1173,7 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 					   TIMEOUT_TYPE::SERVER_WRITE_TIMEOUT,
 					   bck->conn_timeout);
 #endif
+
 				stream->updateStats(BCK_CONN);
 			} break;
 			case IO::IO_OP::OP_SUCCESS: {
@@ -1944,6 +1931,7 @@ void StreamManager::clearStream(HttpStream *stream)
 #if DEBUG_ZCU_LOG
 	clear_stream++;
 #endif
+
 	DEBUG_COUNTER_HIT(debug__::on_clear_stream);
 	delete stream;
 }
@@ -2093,11 +2081,16 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
+
 	stream->backend_connection.reset();
 	stream->backend_connection.setBackend(bck);
 	Time::getTime(stream->backend_connection.time_start);
 	op_state = stream->backend_connection.doConnect(
 		*bck->address_info, bck->conn_timeout, true, bck->nf_mark);
+
+	zcu_net_print_socket(stream->backend_connection.getFileDescriptor(),
+			     "new backend socket");
+
 	switch (op_state) {
 	case IO::IO_OP::OP_ERROR: {
 		streamLogMessage(stream, "error connecting to the backend %s",

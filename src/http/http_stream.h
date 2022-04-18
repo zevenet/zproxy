@@ -147,9 +147,13 @@ class HttpStream : public Counter<HttpStream> {
 
 	/**
    * @brief modify the farm stats changing the connection status. The flow is:
-   *  - UNDEF -> NEW_CONN: vip_established++, vip_pending++
-   *  - NEW_CONN-> BCK_CONN: vip_pending--, bck_pending++
-   *  - BCK_CONN -> ESTABLISHED: bck_pending--, bck_established++
+   * @param the stats state to set
+   * @return false on success or true on error
+   */
+	bool setStats(STREAM_STATS state);
+
+	/**
+   * @brief it clears the current stats and set a new state updating the stats
    *
    * @param the next stat state
    * @return false on success or true on error
@@ -162,16 +166,16 @@ class HttpStream : public Counter<HttpStream> {
    */
 	void clearStats();
 
-	/* Params:
-	 *  - string where replace the macro. This same string will be replaced
-	 *	- string to replace
-	 *  - string to replace length
-	 *  - flag to enable or disable the replacement
-	 *
-	 *  Returns:
-	 *		1 if the replacement was applied, 0 in other case
-	 *
-	*/
+	/**
+   * @brief it replaces the virtual host macro for the request header value
+   *
+   * @param string where replace the macro. This same string will be replaced
+   * @param string to replace
+   * @param string to replace length
+   * @param flag to enable or disable the replacement
+   * @return 1 if the replacement was applied, 0 in other case
+   */
+
 	inline int replaceVhostMacro(char *buf, char *ori_str, int ori_len,
 				     bool enabled = true) const
 	{
