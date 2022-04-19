@@ -51,7 +51,7 @@
 	{                                                                      \
 		stream = set.get(fd);                                          \
 		if (stream == nullptr) {                                       \
-			zcu_log_print(LOG_NOTICE,                              \
+			zcu_log_print(LOG_DEBUG,                               \
 				      "no stream for fd:%d in this thread",    \
 				      fd);                                     \
 			set.del(fd);                                           \
