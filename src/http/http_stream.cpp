@@ -22,6 +22,7 @@
 #include "http_stream.h"
 #include "../service/service.h"
 #include "../util/common.h"
+#include <chrono>
 
 HttpStream::HttpStream()
 	: client_connection(), backend_connection(),
@@ -32,6 +33,15 @@ HttpStream::HttpStream()
 {
 	static std::atomic<uint32_t> stream_id_counter;
 	this->stream_id = stream_id_counter++;
+
+	std::array<char, 64> buffer;
+	buffer.fill(0);
+	time_t rawtime;
+	time(&rawtime);
+	const auto timeinfo = localtime(&rawtime);
+	strftime(buffer.data(), sizeof(buffer), "%d/%m %H:%M:%S", timeinfo);
+	init_time = buffer.data();
+
 #ifdef CACHE_ENABLED
 	this->current_time = time_helper::gmtTimeNow();
 	this->prev_time = std::chrono::steady_clock::now();

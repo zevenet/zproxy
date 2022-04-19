@@ -2013,11 +2013,13 @@ std::string StreamManager::handleTask(ctl::CtlTask &task)
 
 			std::string req_line =
 				st.second->request.getRequestLine().data();
-
 			stream->emplace(
 				"latest_request",
 				std::make_unique<JsonDataValue>(req_line.substr(
 					0, req_line.size() - 2)));
+			stream->emplace("init_time",
+					std::make_unique<JsonDataValue>(
+						st.second->init_time));
 			stream->emplace("managed_requests",
 					std::make_unique<JsonDataValue>(
 						st.second->managed_requests));
