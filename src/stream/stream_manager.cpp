@@ -272,6 +272,8 @@ void StreamManager::addStream(int fd,
 		std::move(service_manager); // TODO::benchmark!!
 	cl_streams_set.add(fd, stream);
 
+	streamLogDebug(stream, "stream_tracer");
+
 	auto &listener_config = *stream->service_manager->listener_config_;
 
 	if (!global::run_options::getCurrent().http_tracer_dir.empty()) {
@@ -328,10 +330,8 @@ void StreamManager::onRequestEvent(int fd)
 {
 	HttpStream *stream = cl_streams_set.get(fd);
 
-	if (stream == nullptr) {
-		closeSecureFd(fd);
-		return;
-	}
+	streamLogDebug(stream, "stream_tracer");
+
 	stream->latest_state = STATE_DEBUG::on_request_ev;
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
@@ -673,13 +673,8 @@ void StreamManager::onRequestEvent(int fd)
 void StreamManager::onResponseEvent(int fd)
 {
 	HttpStream *stream = bck_streams_set.get(fd);
-	if (stream == nullptr) {
-		closeSecureFd(fd);
-		return;
-	}
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::on_response_ev;
-
-	streamLogDebug(stream, "");
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
@@ -976,12 +971,7 @@ void StreamManager::onConnectTimeoutEvent(int fd)
 #else
 	HttpStream *stream = bck_streams_set.get(fd);
 #endif
-	if (stream == nullptr) {
-		zcu_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
-			      __FUNCTION__, __LINE__);
-		closeSecureFd(fd);
-		return;
-	}
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::connect_to;
 	if (stream->hasStatus(STREAM_STATUS::BCK_CONN_PENDING)
 #if USE_TIMER_FD_TIMEOUT
@@ -1004,10 +994,7 @@ void StreamManager::onRequestTimeoutEvent(int fd)
 #else
 	HttpStream *stream = cl_streams_set.get(fd);
 #endif
-	if (stream == nullptr) {
-		closeSecureFd(fd);
-		return;
-	}
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::request_to;
 
 #if USE_TIMER_FD_TIMEOUT
@@ -1030,12 +1017,7 @@ void StreamManager::onResponseTimeoutEvent(int fd)
 #else
 	HttpStream *stream = bck_streams_set.get(fd);
 #endif
-	if (stream == nullptr) {
-		zcu_log_print(LOG_DEBUG, "%s():%d: stream null pointer",
-			      __FUNCTION__, __LINE__);
-		closeSecureFd(fd);
-		return;
-	}
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::response_to;
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
@@ -1074,16 +1056,16 @@ void StreamManager::onSignalEvent([[maybe_unused]] int fd)
 
 void StreamManager::setStreamBackend(HttpStream *stream)
 {
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::set_stream_backend;
 	auto service = static_cast<Service *>(stream->request.getService());
-	zcu_log_print(LOG_DEBUG, "setStreamBackend: init");
 
 	this->stopTimeOut(stream->client_connection.getFileDescriptor());
 
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
 	if (service == nullptr) {
-		zcu_log_print(LOG_DEBUG, "setStreamBackend: getting Service");
+		streamLogDebug(stream, "getting Service");
 		service = stream->service_manager->getService(stream->request);
 		if (service == nullptr) {
 			http_manager::replyError(
@@ -1267,11 +1249,10 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 
 void StreamManager::onServerWriteEvent(HttpStream *stream)
 {
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::on_server_write;
 	DEBUG_COUNTER_HIT(debug__::on_send_request);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
-
-	streamLogDebug(stream, "");
 
 	int fd = stream->backend_connection.getFileDescriptor();
 	// Send client request to backend server
@@ -1536,12 +1517,9 @@ void StreamManager::onServerWriteEvent(HttpStream *stream)
 
 void StreamManager::onClientWriteEvent(HttpStream *stream)
 {
-	if (stream == nullptr)
-		return;
+	streamLogDebug(stream, "stream_tracer");
+
 	stream->latest_state = STATE_DEBUG::on_client_write;
-
-	streamLogDebug(stream, "");
-
 	DEBUG_COUNTER_HIT(debug__::on_send_response);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 
@@ -1894,8 +1872,8 @@ void StreamManager::clearStream(HttpStream *stream)
 	if (stream == nullptr) {
 		return;
 	}
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::clear_stream;
-	streamLogDebug(stream, "clearStream");
 	stream->clearStats();
 
 #ifdef CACHE_ENABLED
@@ -1938,11 +1916,9 @@ void StreamManager::clearStream(HttpStream *stream)
 
 void StreamManager::onClientDisconnect(HttpStream *stream)
 {
-	if (stream == nullptr)
-		return;
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::client_disconnect;
 	DEBUG_COUNTER_HIT(debug__::on_client_disconnect);
-	streamLogDebug(stream, "Client Disconnected");
 	clearStream(stream);
 }
 
@@ -2069,6 +2045,7 @@ bool StreamManager::isHandler(ctl::CtlTask &task)
 
 void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 {
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::backend_connection;
 	IO::IO_OP op_state = IO::IO_OP::OP_ERROR;
 
@@ -2153,13 +2130,11 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 
 void StreamManager::onServerDisconnect(HttpStream *stream)
 {
-	if (stream == nullptr)
-		return;
+	streamLogDebug(stream, "stream_tracer");
 	stream->latest_state = STATE_DEBUG::server_disconnect;
 	DEBUG_COUNTER_HIT(debug__::on_backend_disconnect);
 	auto &listener_config_ = *stream->service_manager->listener_config_;
 	// update log info
-	//~ StreamDataLogger logger(stream, listener_config_);
 	HttpStream::debugBufferData(__FUNCTION__, __LINE__, stream,
 				    "onServerDisconnect", "DISCONNECT");
 
@@ -2279,6 +2254,7 @@ void StreamManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 
 void StreamManager::onBackendConnectionError(HttpStream *stream)
 {
+	streamLogDebug(stream, "stream_tracer");
 	DEBUG_COUNTER_HIT(debug__::on_backend_connect_error);
 	stream->latest_state = STATE_DEBUG::backend_error;
 

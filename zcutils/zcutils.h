@@ -28,7 +28,6 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <cstdlib>
-#include <execinfo.h>
 #include <cassert>
 #include <sys/resource.h>
 #include <pcreposix.h>

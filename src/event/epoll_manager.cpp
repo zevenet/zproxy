@@ -86,9 +86,10 @@ bool EpollManager::deleteFd(int fd)
 {
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
 		if (errno == ENOENT || errno == EBADF || errno == EPERM) {
-			//      std::string error = "epoll_ctl(delete) unnecessary. ";
-			//      error += std::strerror(errno);
-			//        zcu_log_print(LOG_NOTICE, "%s():%d: %s", __FUNCTION__, __LINE__, error);
+			std::string error = "epoll_ctl(delete) unnecessary. ";
+			error += std::strerror(errno);
+			zcu_log_print(LOG_DEBUG, "%s():%d: %s", __FUNCTION__,
+				      __LINE__, error.data());
 			return true;
 		}
 		std::string error = "epoll_ctl(delete) failed ";
@@ -100,6 +101,9 @@ bool EpollManager::deleteFd(int fd)
 #if USE_TIMER_FD_TIMEOUT == 0
 	deleteTimeOut(fd);
 #endif
+	zcu_log_print(LOG_DEBUG, "%s():%d deleted success: fd=%d", __FUNCTION__,
+		      __LINE__, fd);
+
 	return true;
 }
 
@@ -242,6 +246,7 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group,
 				   time_out);
 		}
 	}
+
 	return true;
 }
 
