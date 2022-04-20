@@ -137,6 +137,7 @@ void Connection::reset()
 		// drain connecition socket data
 		while (::recv(fd_, buffer, MAX_DATA_SIZE, MSG_DONTWAIT) > 0)
 			;
+		::close(fd_);
 		this->closeConnection();
 	}
 	fd_ = -1;

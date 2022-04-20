@@ -153,6 +153,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 
 		if (parse_result != http_parser::PARSE_RESULT::SUCCESS) {
 			deleteFd(fd);
+			::close(fd);
 			connection.closeConnection();
 			return;
 		}
@@ -179,6 +180,7 @@ void ctl::ControlManager::HandleEvent(int fd, EVENT_TYPE event_type,
 				__FUNCTION__, __LINE__);
 
 		deleteFd(fd);
+		::close(fd);
 		connection.closeConnection();
 		return;
 	}

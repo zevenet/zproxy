@@ -38,11 +38,11 @@
 			cl_streams_set.del(fd);                                \
 		if (bck_streams_set.count(fd) > 0)                             \
 			bck_streams_set.del(fd);                               \
+		deleteFd(fd);                                                  \
 		int retval =                                                   \
 			getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd, &len);  \
 		if (errorfd == 0 || retval == 0) {                             \
 			zcu_net_print_socket(fd, "closing socket");            \
-			deleteFd(fd);                                          \
 			::close(fd);                                           \
 		}                                                              \
 	}
