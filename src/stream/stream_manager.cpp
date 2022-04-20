@@ -266,6 +266,12 @@ void StreamManager::addStream(int fd,
 		streamLogMessage(stream, "recycling fd:%d", fd);
 		clearStream(stream);
 	}
+
+	// bugfix: confirm that fd is not a old event fd
+	// TODO: this is valid only for this thread, it shoould be
+	// checked in others threads
+	deleteFd(fd);
+
 	stream = new HttpStream();
 	stream->client_connection.setFileDescriptor(fd);
 	stream->service_manager =
@@ -1097,7 +1103,6 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 	}
 	if (stream->backend_connection.getFileDescriptor() > 0) { //TODO::
 		stream->updateStats(NEW_CONN);
-		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
 		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
@@ -1117,6 +1122,11 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 	} else {
 		// update log info
 		IO::IO_OP op_state;
+		if (stream->backend_connection.getFileDescriptor() > 0) {
+			stream->updateStats(NEW_CONN);
+			closeSecureFd(stream->backend_connection.getFileDescriptor());
+			stream->backend_connection.closeConnection();
+		}
 		stream->backend_connection.reset();
 		stream->response.reset_parser();
 		streamLogMessage(stream, "RETRY \"%s\" -> %s",
@@ -2056,7 +2066,6 @@ void StreamManager::onBackendconnection(HttpStream *stream, Backend *bck)
 
 	if (stream->backend_connection.getFileDescriptor() > 0) {
 		stream->updateStats(NEW_CONN);
-		// bck_streams_set.del(stream->backend_connection.getFileDescriptor());
 		closeSecureFd(stream->backend_connection.getFileDescriptor());
 		stream->backend_connection.closeConnection();
 	}
