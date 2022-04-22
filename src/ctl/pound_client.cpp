@@ -288,35 +288,40 @@ bool PoundClient::executeCommand()
 	std::string str;
 	do {
 		read_result = client.read();
-		switch (read_result) {
-		case IO::IO_RESULT::SUCCESS: {
+		if (client.buffer_size > 0) {
 			str += std::string(client.buffer, client.buffer_size);
 			client.buffer_size = 0;
-			done = true;
-			break;
 		}
-		case IO::IO_RESULT::FULL_BUFFER:
-		case IO::IO_RESULT::DONE_TRY_AGAIN:
-		case IO::IO_RESULT::ZERO_DATA: {
-			str += std::string(client.buffer, client.buffer_size);
-			client.buffer_size = 0;
+
+		if (read_result == IO::IO_RESULT::FD_CLOSED ||
+		    read_result == IO::IO_RESULT::ERROR ||
+		    read_result == IO::IO_RESULT::CANCELLED)
 			break;
-		}
-		default:
-			if (client.buffer_size > 0) {
-				str += std::string(client.buffer,
-						   client.buffer_size);
-				client.buffer_size = 0;
-			}
-			done = true;
-			break;
-		}
 	} while (!done);
 
-	if (read_result != IO::IO_RESULT::SUCCESS)
+	if (read_result == IO::IO_RESULT::ERROR)
 		showError("Error: Response reading failed.");
 	HttpResponse response;
 	size_t used_bytes;
+
+	if (!str.empty()) {
+		size_t array_op =
+			std::count_if(str.begin(), str.end(),
+				      [](char c) { return c == '{'; });
+		size_t array_cl =
+			std::count_if(str.begin(), str.end(),
+				      [](char c) { return c == '}'; });
+		size_t hash_op = std::count_if(str.begin(), str.end(),
+					       [](char c) { return c == '['; });
+		size_t hash_cl = std::count_if(str.begin(), str.end(),
+					       [](char c) { return c == ']'; });
+		if (array_op != array_cl || hash_op != hash_cl ||
+		    (!hash_op && !array_op)) {
+			std::cout << str << std::endl; // ?????
+
+			showError("Error: JSON is not completed.");
+		}
+	}
 
 	auto parse_result = response.parseResponse(str, &used_bytes);
 	if (parse_result != http_parser::PARSE_RESULT::SUCCESS)
