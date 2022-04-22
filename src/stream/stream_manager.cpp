@@ -1124,7 +1124,8 @@ void StreamManager::setStreamBackend(HttpStream *stream)
 		IO::IO_OP op_state;
 		if (stream->backend_connection.getFileDescriptor() > 0) {
 			stream->updateStats(NEW_CONN);
-			closeSecureFd(stream->backend_connection.getFileDescriptor());
+			closeSecureFd(
+				stream->backend_connection.getFileDescriptor());
 			stream->backend_connection.closeConnection();
 		}
 		stream->backend_connection.reset();

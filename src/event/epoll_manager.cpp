@@ -110,8 +110,74 @@ bool EpollManager::deleteFd(int fd)
 int EpollManager::loopOnce(int time_out)
 {
 	int fd, i, ev_count = 0;
+
 	ev_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENT, time_out);
 	Time::updateTime();
+
+	if (ev_count > 0) {
+		zcu_log_print(LOG_DEBUG, "%s():%d ev_count=%d", __FUNCTION__,
+			      __LINE__, ev_count);
+		for (i = 0; i < ev_count; ++i) {
+			fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
+			if ((events[i].events & EPOLLERR) != 0u) {
+				int errorfd = 0;
+				socklen_t len = sizeof(errorfd);
+				getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd,
+					   &len);
+
+				// continue waiting timeout if error == EINPROGRESS
+				if (errno != EINPROGRESS) {
+					zcu_log_print(
+						LOG_DEBUG,
+						"%s():%d: ~~ONDisconnect error fd: %d. Errno: %d - %s",
+						__FUNCTION__, __LINE__, fd,
+						errno, strerror(errno));
+					onDisconnectEvent(events[i]);
+				}
+				continue;
+			} else {
+				if ((events[i].events & EPOLLIN) != 0u) {
+					auto event_group =
+						static_cast<EVENT_GROUP>(
+							events[i].data.u64 &
+							0xff);
+					if (event_group ==
+					    EVENT_GROUP::ACCEPTOR) {
+						for (auto accept_fd :
+						     accept_fd_set) {
+							if (fd == accept_fd) {
+								onConnectEvent(
+									events[i]);
+								continue;
+							}
+						}
+					} else {
+						onReadEvent(events[i]);
+					}
+				}
+				if ((events[i].events & EPOLLRDHUP) != 0u) {
+					zcu_log_print(
+						LOG_DEBUG,
+						"%s():%d: ~~ONDisconnect EPOLLRDHUP fd: %d",
+						__FUNCTION__, __LINE__, fd);
+					onDisconnectEvent(events[i]);
+					continue;
+				}
+				if ((events[i].events & EPOLLHUP) != 0u) {
+					zcu_log_print(
+						LOG_DEBUG,
+						"%s():%d: ~~ONDisconnect EPOLLHUP fd: %d",
+						__FUNCTION__, __LINE__, fd);
+					onDisconnectEvent(events[i]);
+					continue;
+				}
+				if ((events[i].events & EPOLLOUT) != 0u) {
+					onWriteEvent(events[i]);
+				}
+			}
+		}
+	}
+
 #if USE_TIMER_FD_TIMEOUT == 0
 	for (auto it = timeouts.begin(); it != timeouts.end();) {
 		if (it->second.timeout > 0) {
@@ -126,63 +192,6 @@ int EpollManager::loopOnce(int time_out)
 		}
 	}
 #endif
-
-	if (ev_count <= 0)
-		return ev_count;
-	for (i = 0; i < ev_count; ++i) {
-		fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
-		if ((events[i].events & EPOLLERR) != 0u) {
-			int errorfd = 0;
-			socklen_t len = sizeof(errorfd);
-			getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd, &len);
-
-			// continue waiting timeout if error == EINPROGRESS
-			if (errno != EINPROGRESS) {
-				zcu_log_print(
-					LOG_DEBUG,
-					"%s():%d: ~~ONDisconnect error fd: %d. Errno: %d - %s",
-					__FUNCTION__, __LINE__, fd, errno,
-					strerror(errno));
-				onDisconnectEvent(events[i]);
-			}
-			continue;
-		} else {
-			if ((events[i].events & EPOLLIN) != 0u) {
-				auto event_group = static_cast<EVENT_GROUP>(
-					events[i].data.u64 & 0xff);
-				if (event_group == EVENT_GROUP::ACCEPTOR) {
-					for (auto accept_fd : accept_fd_set) {
-						if (fd == accept_fd) {
-							onConnectEvent(
-								events[i]);
-							continue;
-						}
-					}
-				} else {
-					onReadEvent(events[i]);
-				}
-			}
-			if ((events[i].events & EPOLLRDHUP) != 0u) {
-				zcu_log_print(
-					LOG_DEBUG,
-					"%s():%d: ~~ONDisconnect EPOLLRDHUP fd: %d",
-					__FUNCTION__, __LINE__, fd);
-				onDisconnectEvent(events[i]);
-				continue;
-			}
-			if ((events[i].events & EPOLLHUP) != 0u) {
-				zcu_log_print(
-					LOG_DEBUG,
-					"%s():%d: ~~ONDisconnect EPOLLHUP fd: %d",
-					__FUNCTION__, __LINE__, fd);
-				onDisconnectEvent(events[i]);
-				continue;
-			}
-			if ((events[i].events & EPOLLOUT) != 0u) {
-				onWriteEvent(events[i]);
-			}
-		}
-	}
 
 	return ev_count;
 }
