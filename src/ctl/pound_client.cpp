@@ -317,8 +317,6 @@ bool PoundClient::executeCommand()
 					       [](char c) { return c == ']'; });
 		if (array_op != array_cl || hash_op != hash_cl ||
 		    (!hash_op && !array_op)) {
-			std::cout << str << std::endl; // ?????
-
 			showError("Error: JSON is not completed.");
 		}
 	}
