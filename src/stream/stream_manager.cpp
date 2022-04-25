@@ -54,8 +54,6 @@
 			zcu_log_print(LOG_DEBUG,                               \
 				      "no stream for fd:%d in this thread",    \
 				      fd);                                     \
-			set.del(fd);                                           \
-			deleteFd(fd);                                          \
 			goto end_stream_handleevent;                           \
 		}                                                              \
 	}
