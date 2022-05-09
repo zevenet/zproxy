@@ -192,7 +192,7 @@ static const Regex CHUNK_HEAD("^([0-9a-f]+).*$");
 static const Regex RESP_SKIP("^HTTP/1.1 100.*$");
 static const Regex
 	RESP_IGN("^HTTP/1.[01] (10[1-9]|1[1-9][0-9]|204|30[456]).*$");
-static const Regex LOCATION("(http|https)://([^/]+)(.*)");
+static const Regex LOCATION("^(http|https)://([^/]+)(.*)");
 static const Regex
 	AUTHORIZATION("Authorization:[ \t]*Basic[ \t]*\"?([^ \t]*)\"?[ \t]*");
 
