@@ -52,7 +52,7 @@ static const Regex Empty("^[ \t]*$");
 static const Regex Comment("^[ \t]*#.*$");
 static const Regex User("^[ \t]*User[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Group("^[ \t]*Group[ \t]+\"(.+)\"[ \t]*$");
-static const Regex Name("^[ \t]*Name[ \t]+(.+)[ \t]*$");
+static const Regex Name("^[ \t]*Name[ \t]+\"?([a-zA-Z0-9_-]+)\"?[ \t]*$");
 static const Regex HTTPTracerDir("^[ \t]*HTTPTracerDir[ \t]+\"(.+)\"[ \t]*$");
 static const Regex RootJail("^[ \t]*RootJail[ \t]+\"(.+)\"[ \t]*$");
 static const Regex Daemon("^[ \t]*Daemon[ \t]+([01])[ \t]*$");
