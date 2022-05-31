@@ -11,7 +11,6 @@ Zproxy main features:
 * Load balancing algorithms: Round Robin, Least Connections, Response Time, Pending Connections
 * Connection pinning.
 * Backend output traffic marking.
-* Simple HTTP Caching - WIP
 * Pound control interface like binary (zproxyctl)
 
 ## Table of Contents
@@ -24,7 +23,6 @@ Zproxy main features:
 	- [HTTP Listener](#http-listener)
 	- [HTTPS Listener](#https-listener)
 	- [Service](#service)
-	- [Cache](#cache)
 	- [Backend](#backend)
 	- [Session](#session)
 - [API Description](#api-description)
@@ -199,22 +197,6 @@ Global directives may appear anywhere within the configuration file, though it i
 - **ConnTO** value
 
 	How long should zproxy wait for a connection to the back-end (in seconds). Default: the TimeOut value. This value can be overridden for specific back-ends.
-
-- **CacheRamSize** value
-
-	The  maximum size (in bytes by default) that the cache will use from RAM. It is allowed to us some byte modifiers as k, K, m, M, g and G, pay attention not to set higher values than the available RAM free.
-
-- **CacheRamPath** "path"
-
-	Indicate the path to an existing directory to use as the root point where the RAM cache storage will be mounted using ramfs filesystem.
-
-- **CacheDiskPath** "path"
-
-	Path to an existing directory which will be used as the root point for the on disk cache storage.
-
-- **CacheThreshold** value
-
-	Percentage of the total size that the cache will use to determine whether an entry should go to ram or to disk.
 
 - **WSTimeOut** value
 
@@ -602,10 +584,6 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	Start zproxy with this service disabled (1) or enabled (0). If started as disabled, the service can be later enabled with zproxyctl (8).
 
-- **Cache**
-
-	Directives enclosed between a Cache and the following End directives enable and define an HTTP1.1 Cache mechanism and its behaviour for the current Service. See below for details.
-
 - **BackEnd**
 
 	Directives enclosed between a BackEnd and the following End directives define a single back-end server (see below for details). You may define multiple back-ends per service, in which case zproxy will attempt to load-balance between them.
@@ -650,23 +628,6 @@ All configuration directives enclosed between Service and End are specific to a 
 - **Session**
 
 	Directives enclosed between a Session and the following End directives define a session-tracking mechanism for the current service. See below for details.
-
-### Cache
-
-The zproxy HTTP1.1 Cache mechanism is based on RFC 7234 and uses regular expressions and HTTP headers in order to determine if a HTTP response should be put in cache or not. The following directives determine how the Cache will behave:
-
-- **Content** "PCRE regular expression"
-
-	Regular expression following PCRE format, determines which kind of resources will be put in Cache depending on its URI.
-
-- **CacheTO** Seconds
-
-	Time in seconds that the cache will use to determine whether a cache entry is staled or not. This value may change for specific entries depending on HTTP cache related headers.
-
-- **MaxSize** Bytes
-
-	The maximum number of bytes that a response can have in order to be put on the cache system. Any entry with higher Content-Length header won't be stored in the cache.
-
 
 ### BackEnd
 

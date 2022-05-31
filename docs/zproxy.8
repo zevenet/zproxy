@@ -307,23 +307,6 @@ wait for a connection to the back-end (in seconds). Default: the
 .B TimeOut
 value. This value can be overridden for specific back-ends.
 .TP
-\fBCacheRamSize\fR value
-The maximum size (in bytes by default) that the cache will use from RAM. It is allowed to
-us some byte modifiers as k, K, m, M, g and G, pay attention not to set higher values than
-the available RAM free.
-.TP
-\fBCacheRamPath\fR "path"
-Indicate the path to an existing directory to use as the root point where
-the RAM cache storage will be mounted using ramfs filesystem.
-.TP
-\fBCacheDiskPath\fR "path"
-Path to an existing directory which will be used as the root point for the
-on disk cache storage.
-.TP
-\fBCacheThreshold\fR value
-Percentage of the total size that the cache will use to determine whether
-an entry should go to ram or to disk.
-.TP
 \fBWSTimeOut\fR value
 How long should
 .B zproxy
@@ -933,13 +916,6 @@ service can be later enabled with
 .I zproxyctl
 (8).
 .TP
-\fBCache\fR
-Directives enclosed between a
-.I Cache
-and the following
-.I End
-directives enable and define an HTTP1.1 Cache mechanism and its behaviour for the current Service. See below for details.
-.TP
 \fBBackEnd\fR
 Directives enclosed between a
 .I BackEnd
@@ -1041,26 +1017,6 @@ the following
 .I End
 directives define a session-tracking mechanism for the current service. See below
 for details.
-.SH "Cache"
-The
-.I zproxy
-HTTP1.1 Cache mechanism is based on
-.I RFC 7234
-and uses regular expressions and HTTP headers in order to determine
-if a HTTP response should be put in cache or not. The following directives determine how the
-.I Cache
- will behave:
-.TP
-\fBContent\fR "PCRE regular expression"
-Regular expression following PCRE format, determines which kind of resources will be put in
-.I Cache
-depending on its URI.
-.TP
-\fBCacheTO\fR Seconds
-Time in seconds that the cache will use to determine whether a cache entry is staled or not. This value may change for specific entries depending on HTTP cache related headers.
-.TP
-\fBMaxSize\fR Bytes
-The maximum number of bytes that a response can have in order to be put on the cache system. Any entry with higher Content-Length header won't be stored in the cache.
 .SH "BackEnd"
 A back-end is a definition of a single back-end server
 .B zproxy
