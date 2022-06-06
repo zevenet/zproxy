@@ -88,13 +88,13 @@ start_proxy () {
 	fi
 
 	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
-	CMD_OUT=`$CMD_LOC 2>&1`
+
+	$CMD_LOC >/dev/null
 	if [[ $? -ne 0 ]]; then
 		echo "command: $CMD_LOC"
 		echo "$CMD_OUT"
 		error "The zproxy process couldn't start"
 	fi
-
 	wait $PROXY_GRACETIME
 
 	SYSLOG_ZPROXY_START=`tail -1 $SYSLOG`
