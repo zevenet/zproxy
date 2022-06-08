@@ -350,7 +350,7 @@ get_test_out_dir () {
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
 	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER \
-	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL
+	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL DISABLE
 }
 
 replace_test_out ()
