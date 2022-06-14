@@ -38,7 +38,9 @@ debug () {
 }
 
 wait () {
-	echo "Waiting for '$1' seconds..."
+	if [[ $DEBUG -ge 1 ]]; then
+		echo "Waiting for '$1' seconds..."
+	fi
 	sleep $1
 }
 
