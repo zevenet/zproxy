@@ -100,6 +100,11 @@ exec_test () {
 		clean_test
 		source $V
 
+		if [[ "$DISABLE" == "true" ]]; then
+			msg "Test $CMD_NUMB disabled"
+			continue
+		fi
+
 		# output
 		local OUT_DIR=$(get_test_out_dir $CMD_NUMB $CMD)
 		mkdir -p $OUT_DIR

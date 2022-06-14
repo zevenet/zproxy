@@ -1,12 +1,17 @@
 CMD=curl
 CL=1
 METHOD="GET"
+URL="/bck-non-https"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
 URL="/bck-https"
 #########################
 CMD=curl
 CL=1
 METHOD="GET"
-URL="/bck-non-https"
+URL="/bck-bad-configured"
 #########################
 DESCRIPTION="Get stats to check counters"
 CMD=ctl

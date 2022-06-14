@@ -14,35 +14,6 @@
         {
             "backends": [
                 {
-                    "2xx-code-hits": 0,
-                    "3xx-code-hits": 0,
-                    "4xx-code-hits": 1,
-                    "5xx-code-hits": 0,
-                    "address": "10.2.1.1",
-                    "connect-time": "#######",
-                    "connections": 0,
-                    "connections-limit": 0,
-                    "https": false,
-                    "id": 0,
-                    "name": "bck_0",
-                    "pending-connections": 0,
-                    "port": 443,
-                    "priority": 1,
-                    "response-time": "#######",
-                    "status": "active",
-                    "type": 0,
-                    "weight": 1
-                }
-            ],
-            "id": 0,
-            "name": "virtualhost",
-            "priority": 1,
-            "sessions": [],
-            "status": "active"
-        },
-        {
-            "backends": [
-                {
                     "2xx-code-hits": 1,
                     "3xx-code-hits": 0,
                     "4xx-code-hits": 0,
@@ -63,8 +34,66 @@
                     "weight": 1
                 }
             ],
+            "id": 0,
+            "name": "http",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "2xx-code-hits": 1,
+                    "3xx-code-hits": 0,
+                    "4xx-code-hits": 0,
+                    "5xx-code-hits": 0,
+                    "address": "10.2.1.1",
+                    "connect-time": "#######",
+                    "connections": 0,
+                    "connections-limit": 0,
+                    "https": true,
+                    "id": 0,
+                    "name": "bck_0",
+                    "pending-connections": 0,
+                    "port": 443,
+                    "priority": 1,
+                    "response-time": "#######",
+                    "status": "active",
+                    "type": 0,
+                    "weight": 1
+                }
+            ],
             "id": 1,
-            "name": "url",
+            "name": "https",
+            "priority": 1,
+            "sessions": [],
+            "status": "active"
+        },
+        {
+            "backends": [
+                {
+                    "2xx-code-hits": 0,
+                    "3xx-code-hits": 0,
+                    "4xx-code-hits": 1,
+                    "5xx-code-hits": 0,
+                    "address": "10.2.1.1",
+                    "connect-time": "#######",
+                    "connections": 0,
+                    "connections-limit": 0,
+                    "https": false,
+                    "id": 0,
+                    "name": "bck_0",
+                    "pending-connections": 0,
+                    "port": 443,
+                    "priority": 1,
+                    "response-time": "#######",
+                    "status": "active",
+                    "type": 0,
+                    "weight": 1
+                }
+            ],
+            "id": 2,
+            "name": "badconfig",
             "priority": 1,
             "sessions": [],
             "status": "active"

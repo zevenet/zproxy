@@ -38,7 +38,9 @@ debug () {
 }
 
 wait () {
-	echo "Waiting for '$1' seconds..."
+	if [[ $DEBUG -ge 1 ]]; then
+		echo "Waiting for '$1' seconds..."
+	fi
 	sleep $1
 }
 
@@ -88,13 +90,13 @@ start_proxy () {
 	fi
 
 	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
-	CMD_OUT=`$CMD_LOC 2>&1`
+
+	$CMD_LOC >/dev/null
 	if [[ $? -ne 0 ]]; then
 		echo "command: $CMD_LOC"
 		echo "$CMD_OUT"
 		error "The zproxy process couldn't start"
 	fi
-
 	wait $PROXY_GRACETIME
 
 	SYSLOG_ZPROXY_START=`tail -1 $SYSLOG`
@@ -350,7 +352,7 @@ get_test_out_dir () {
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
 	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER \
-	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL
+	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL DISABLE
 }
 
 replace_test_out ()
@@ -416,6 +418,7 @@ exec_curl () {
 			HEADERS=`cut -c2- <<< $HEADERS`
 			while read -r IT
 			do
+				if [[ "$IT" == "" ]]; then continue; fi
 				H="$H -H \"$IT\""
 			done < <(cat $HEADERS)
 		else
