@@ -86,7 +86,7 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 		stream->request.content_length,
 		stream->request.message_bytes_left,
 		stream->request.getHeaderSent() ? "T" : "F",
-		stream->request.chunk_size_left,
+		stream->request.chunked_bytes_left,
 		stream->request.chunked_status !=
 				http::CHUNKED_STATUS::CHUNKED_DISABLED ?
 			"T" :
@@ -98,7 +98,7 @@ void HttpStream::debugBufferData(const std::string &function, int line,
 		stream->response.content_length,
 		stream->response.message_bytes_left,
 		stream->response.getHeaderSent() ? "T" : "F",
-		stream->response.chunk_size_left,
+		stream->response.chunked_bytes_left,
 		stream->response.chunked_status !=
 				http::CHUNKED_STATUS::CHUNKED_DISABLED ?
 			"T" :
