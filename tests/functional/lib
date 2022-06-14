@@ -416,6 +416,7 @@ exec_curl () {
 			HEADERS=`cut -c2- <<< $HEADERS`
 			while read -r IT
 			do
+				if [[ "$IT" == "" ]]; then continue; fi
 				H="$H -H \"$IT\""
 			done < <(cat $HEADERS)
 		else
