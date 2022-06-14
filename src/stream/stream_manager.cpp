@@ -861,8 +861,6 @@ void StreamManager::onResponseEvent(int fd)
 	case http_parser::PARSE_RESULT::SUCCESS: {
 		stream->backend_connection.getBackend()->calculateLatency(
 			stream->backend_connection.time_start);
-		stream->request.chunked_status =
-			CHUNKED_STATUS::CHUNKED_DISABLED;
 		stream->backend_connection.buffer_offset = 0;
 		stream->client_connection.buffer_offset = 0;
 		stream->client_connection.buffer_size = 0;
@@ -1763,7 +1761,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			stream,
 			"fd: %d:%d %.*s Error sending response IN\tbuffer size: "
 			"%8lu\tContent-length: %lu\tleft: %lu "
-			"header_sent: %s chunk_size_left: %d IO RESULT: %s CH= %s",
+			"header_sent: %s chunked_bytes_left: %d IO RESULT: %s CH= %s",
 			stream->client_connection.getFileDescriptor(),
 			stream->backend_connection.getFileDescriptor(),
 			stream->request.http_message_str.data(),
@@ -1771,7 +1769,7 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 			stream->response.content_length,
 			stream->response.message_bytes_left,
 			stream->response.getHeaderSent() ? "true" : "false",
-			stream->response.chunk_size_left,
+			stream->response.chunked_bytes_left,
 			IO::getResultString(result).data(),
 			stream->response.chunked_status !=
 					CHUNKED_STATUS::CHUNKED_DISABLED ?
@@ -1853,6 +1851,9 @@ void StreamManager::onClientWriteEvent(HttpStream *stream)
 		   TIMEOUT_TYPE::SERVER_READ_TIMEOUT,
 		   stream->backend_connection.getBackend()->response_timeout);
 	stream->backend_connection.enableReadEvent();
+
+	if (stream->response.http_status_code == 100)
+		stream->response.reset_parser();
 
 	streamLogDebug(stream, "part of the response sent");
 }

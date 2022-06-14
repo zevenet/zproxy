@@ -82,7 +82,7 @@ class HttpData {
 	size_t message_length; // body data lenght in current received message
 	ssize_t message_bytes_left; // content-lenght
 	size_t content_length;
-	size_t chunk_size_left;
+	size_t chunked_bytes_left;
 	/** This enumerate indicates the chunked mechanism status. */
 	http::CHUNKED_STATUS chunked_status{ CHUNKED_STATUS::CHUNKED_DISABLED };
 	bool expect_100_cont_header{ false };
@@ -126,6 +126,8 @@ class HttpData {
 
 	/* There are pending data to receive */
 	bool hasPendingData();
+	ssize_t parseChunk(const std::string & data, size_t data_size);
+	ssize_t handleChunkedData(void);
 
 	char *getBuffer() const;
 	bool getHeaderSent() const;
