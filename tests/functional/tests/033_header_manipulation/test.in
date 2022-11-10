@@ -1,0 +1,17 @@
+DESCRIPTION="Test replace header 5XX proxy errors"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/down"
+#########################
+DESCRIPTION="Test replace header on normal connection"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Test replace header on 3XX proxy redirect"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/redirect"

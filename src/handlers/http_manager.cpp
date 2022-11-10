@@ -425,9 +425,9 @@ int rewriteHeaderLocation(phr_header *header,
 			  Service *service)
 {
 	auto header_value = std::string_view(header->value, header->value_len);
-	int rewr_loc = (service->rewr_loc != -1) ? service->rewr_loc :
+	int rewr_loc = (service && service->rewr_loc != -1) ? service->rewr_loc :
 							 listener_config_->rewr_loc;
-	int rewr_loc_path = (service->rewr_loc_path != -1) ?
+	int rewr_loc_path = (service && service->rewr_loc_path != -1) ?
 				    service->rewr_loc_path :
 					  listener_config_->rewr_loc_path;
 
@@ -437,11 +437,14 @@ int rewriteHeaderLocation(phr_header *header,
 	if (rewr_loc == 0 && rewr_loc_path == 0)
 		return 0;
 
-	auto backend_addr =
-		stream.backend_connection.getBackend()->address_info;
-	if (backend_addr->ai_family != AF_INET &&
-	    backend_addr->ai_family != AF_INET6)
-		return 0;
+	addrinfo *backend_addr = nullptr;
+	if (stream.backend_connection.getBackend()) {
+		backend_addr =
+			stream.backend_connection.getBackend()->address_info;
+		if (backend_addr->ai_family != AF_INET &&
+			backend_addr->ai_family != AF_INET6)
+			return 0;
+	}
 	// Rewrite location
 	std::string location_header_value(header->value, header->value_len);
 	regmatch_t matches[4];
@@ -482,7 +485,7 @@ int rewriteHeaderLocation(phr_header *header,
 		auto in_addr = zcu_net_get_address(host_addr, port);
 		if (in_addr != nullptr) {
 			/* rewrite location if it points to the backend */
-			if (zcu_net_equal_sockaddr(in_addr.get(),
+			if (backend_addr && zcu_net_equal_sockaddr(in_addr.get(),
 						   backend_addr)) {
 				header_value_ = proto;
 
@@ -540,7 +543,8 @@ int rewriteHeaderLocation(phr_header *header,
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 {
 	auto &listener_config_ = *stream.service_manager->listener_config_;
-	auto service = static_cast<Service *>(stream.request.getService());
+	//auto service = static_cast<Service *>(stream.request.getService());
+	auto service = ((Service*)stream.request.getService());
 	HttpResponse &response = stream.response;
 	MATCHER *m = nullptr;
 
@@ -567,7 +571,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 		/* maybe header to be removed from response */
 		regmatch_t eol{ 0, static_cast<regoff_t>(
 					   response.headers[i].line_size) };
-		if (service->service_config.head_off_resp != nullptr) {
+		if (service && service->service_config.head_off_resp != nullptr) {
 			m = service->service_config.head_off_resp;
 		} else if (listener_config_.head_off_resp != nullptr) {
 			m = listener_config_.head_off_resp;
@@ -581,9 +585,11 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 		}
 
 		// check for header to be replaced in response
-		replaceHeaderHttp(
-			&response, &response.headers[i],
-			service->service_config.replace_header_response, &eol);
+		if(service) {
+			replaceHeaderHttp(
+				&response, &response.headers[i],
+				service->service_config.replace_header_response, &eol);
+		}
 		replaceHeaderHttp(&response, &response.headers[i],
 				  listener_config_.replace_header_response,
 				  &eol);
@@ -620,6 +626,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			}
 			case http::HTTP_HEADER_NAME::CONTENT_LOCATION:
 			case http::HTTP_HEADER_NAME::LOCATION: {
+				// FIXME
 				rewriteHeaderLocation(&response.headers[i],
 						      header_name, stream,
 						      &listener_config_,
@@ -627,8 +634,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 				break;
 			}
 			case http::HTTP_HEADER_NAME::STRICT_TRANSPORT_SECURITY:
-				if (static_cast<Service *>(
-					    stream.request.getService())
+				if (service && ((Service*)stream.request.getService())
 					    ->service_config.sts > 0)
 					response.headers[i].header_off = true;
 				break;
@@ -712,7 +718,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 				}
 				break;
 			case http::HTTP_HEADER_NAME::SET_COOKIE: {
-				if (service->session_type ==
+				if (service && service->session_type ==
 				    SESS_TYPE::SESS_COOKIE) {
 					service->updateSession(
 						stream.client_connection,
@@ -731,7 +737,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream &stream)
 			}
 		}
 
-		if (service->session_type == SESS_TYPE::SESS_HEADER &&
+		if (service && service->session_type == SESS_TYPE::SESS_HEADER &&
 		    service->sess_id == header) {
 			service->updateSession(
 				stream.client_connection, stream.request,
@@ -764,26 +770,46 @@ void http_manager::replyError(HttpStream *stream, http::Code code,
 			      Statistics::HttpResponseHits &resp_stats)
 {
 	streamLogError(stream, code, code_string, target);
-
 	auto response_ = http::getHttpResponse(code, code_string, str);
+	size_t used_bytes;
 	size_t written = 0;
 	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
 
+	stream->response.parseResponse(response_, &used_bytes);
+	if (validateResponse(*stream) != validation::REQUEST_RESULT::OK) {
+		streamLogMessage(stream,
+				"Failed to validating proxy %d error response", code);
+		return;
+	}
+	// Add custom headers
+	auto service = ((Service*)stream->request.getService());
+	auto &listener_config_ = *stream->service_manager->listener_config_;
+	if (service && !service->service_config.add_head_resp.empty()) {
+		stream->response.addHeader(
+			service->service_config.add_head_resp, true);
+	} else if (!listener_config_.add_head_resp.empty()) {
+		stream->response.addHeader(listener_config_.add_head_resp,
+					   true);
+	}
+	stream->response.prepareToSend();
+
 	do {
 		size_t sent = 0;
+		size_t nwritten;
 		if (!target.ssl_connected) {
-			result = target.write(response_.c_str() + written,
-					      response_.length() - written,
-					      sent);
+			result = target.writeIOvec(target.getFileDescriptor(),
+					stream->response.iov.data(), stream->response.iov_size,
+					written, nwritten);
 		} else if (target.ssl != nullptr) {
-			result = ssl::SSLConnectionManager::handleWrite(
-				target, response_.c_str() + written,
-				response_.length() - written, written, true);
+			result = ssl::SSLConnectionManager::handleWriteIOvec(target,
+					stream->response.iov.data(),
+					stream->response.iov_size,
+					written, nwritten);
 		}
 		if (sent > 0)
 			written += sent;
 	} while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
-		 written < response_.length());
+		 written < used_bytes);
 
 	resp_stats.increaseCode(code);
 }
@@ -838,32 +864,49 @@ bool http_manager::replyRedirect(int code, const std::string &url,
 {
 	auto response_ =
 		http::getRedirectResponse(static_cast<http::Code>(code), url);
+	size_t used_bytes;
+	size_t nwritten;
+	size_t written = 0;
 
 	streamLogRedirect(&stream, url.c_str());
 
-	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
-	size_t sent = 0;
-	if (!stream.client_connection.ssl_connected) {
-		result = stream.client_connection.write(
-			response_.c_str(), response_.length(), sent);
-	} else if (stream.client_connection.ssl != nullptr) {
-		result = ssl::SSLConnectionManager::handleWrite(
-			stream.client_connection, response_.c_str(),
-			response_.length(), sent, true);
-	}
-
-	if (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
-	    sent < response_.length()) {
-		std::strncpy(stream.backend_connection.buffer,
-			     response_.data() + sent, response_.size() - sent);
-		stream.backend_connection.buffer_size = response_.size() - sent;
-		stream.response.setHeaderSent(true);
-		stream.response.chunked_status =
-			CHUNKED_STATUS::CHUNKED_ENABLED;
-		stream.client_connection.enableWriteEvent();
-		streamLogMessage(&stream, "Redirect: DONE_TRY_AGAIN");
+	stream.response.parseResponse(response_, &used_bytes);
+	if (validateResponse(stream) != validation::REQUEST_RESULT::OK) {
+		streamLogMessage(&stream,
+				"Failed to validating proxy 500 error response");
 		return false;
 	}
+	// Add custom headers
+	auto service = ((Service*)stream.request.getService());
+	auto &listener_config_ = *stream.service_manager->listener_config_;
+	if (service && !service->service_config.add_head_resp.empty()) {
+		stream.response.addHeader(
+			service->service_config.add_head_resp, true);
+	} else if (!listener_config_.add_head_resp.empty()) {
+		stream.response.addHeader(listener_config_.add_head_resp,
+					   true);
+	}
+	stream.response.prepareToSend();
+
+	IO::IO_RESULT result = IO::IO_RESULT::ERROR;
+	do {
+		size_t sent = 0;
+		if (!stream.client_connection.ssl_connected) {
+			result = stream.client_connection.writeIOvec(
+					stream.client_connection.getFileDescriptor(),
+					stream.response.iov.data(), stream.response.iov_size,
+					sent, nwritten);
+		} else if (stream.client_connection.ssl != nullptr) {
+			result = ssl::SSLConnectionManager::handleWriteIOvec(
+					stream.client_connection,
+					stream.response.iov.data(),
+					stream.response.iov_size,
+					sent, nwritten);
+		}
+		if (sent > 0)
+			written += sent;
+	} while (result == IO::IO_RESULT::DONE_TRY_AGAIN &&
+			written < used_bytes);
 
 	stream.service_manager->listener_config_->response_stats.increaseCode(
 		static_cast<http::Code>(code));
