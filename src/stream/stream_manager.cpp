@@ -537,6 +537,17 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
+	auto valid = http_manager::validateMethod(*stream);
+	if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
+		http_manager::replyError(
+			stream, http::Code::MethodNotAllowed,
+			validation::request_result_reason.at(valid),
+			listener_config_.err501, stream->client_connection,
+			listener_config_.response_stats);
+		this->clearStream(stream);
+		return;
+	}
+
 	/* Select a service */
 	auto service = stream->service_manager->getService(stream->request);
 	if (service == nullptr) {
@@ -555,7 +566,7 @@ void StreamManager::onRequestEvent(int fd)
 	stream->request.setService(service);
 
 	/* Validate Request and manage (rem/add/mod) HTTP fields */
-	auto valid = http_manager::validateRequest(*stream);
+	valid = http_manager::validateRequest(*stream);
 	if (UNLIKELY(validation::REQUEST_RESULT::OK != valid)) {
 		http_manager::replyError(
 			stream, http::Code::NotImplemented,

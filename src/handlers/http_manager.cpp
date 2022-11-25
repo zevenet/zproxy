@@ -141,13 +141,10 @@ void http_manager::replaceHeaderHttp(http_parser::HttpData *http,
 	}
 }
 
-validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
+validation::REQUEST_RESULT http_manager::validateMethod(HttpStream &stream)
 {
-	std::string header, header_value;
 	auto &listener_config_ = *stream.service_manager->listener_config_;
-	auto service = static_cast<Service *>(stream.request.getService());
 	HttpRequest &request = stream.request;
-	MATCHER *m = nullptr;
 	regmatch_t eol{ 0, static_cast<regoff_t>(
 				   request.http_message_str.length()) };
 	auto res = ::regexec(&listener_config_.verb,
@@ -167,6 +164,18 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
 	} else {
 		request.setRequestMethod();
 	}
+	return validation::REQUEST_RESULT::OK;
+}
+
+validation::REQUEST_RESULT http_manager::validateRequest(HttpStream &stream)
+{
+	std::string header, header_value;
+	auto &listener_config_ = *stream.service_manager->listener_config_;
+	auto service = static_cast<Service *>(stream.request.getService());
+	HttpRequest &request = stream.request;
+	MATCHER *m = nullptr;
+	regmatch_t eol{ 0, static_cast<regoff_t>(
+				   request.http_message_str.length()) };
 
 	// URL
 	if (request.path.find("%00") != std::string::npos) {

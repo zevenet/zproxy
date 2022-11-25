@@ -53,6 +53,11 @@ class http_manager {
 				      regmatch_t *eol);
 
 	/**
+	 * @brief Validate the request method.
+	 */
+	static validation::REQUEST_RESULT validateMethod(HttpStream &stream);
+
+	/**
    * @brief Validates the request.
    *
    * It checks that all the headers are well formed and mark the headers off if
