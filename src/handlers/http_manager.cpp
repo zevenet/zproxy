@@ -480,7 +480,7 @@ int rewriteHeaderLocation(phr_header *header,
 		static_cast<size_t>(matches[3].rm_eo - matches[3].rm_so));
 	std::string header_value_ = "";
 
-	if (rewr_loc != 0) {
+	if (backend_addr && rewr_loc != 0) {
 		int port = 0;
 		std::string host_addr = host;
 		auto port_it = host.find(':');
