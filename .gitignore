@@ -11,3 +11,4 @@ wrkdir/
 src/config/dh*
 tests/data
 QtCreatorDeployment.txt
+tags
