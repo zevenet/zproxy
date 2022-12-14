@@ -153,12 +153,6 @@ void HttpStream::logSuccess()
 {
 	if (zcu_log_level < LOG_INFO)
 		return;
-	std::string agent;
-	std::string referer;
-	std::string host;
-	this->request.getHeaderValue(http::HTTP_HEADER_NAME::REFERER, referer);
-	this->request.getHeaderValue(http::HTTP_HEADER_NAME::USER_AGENT, agent);
-	this->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST, host);
 	auto latency = Time::getElapsed(this->backend_connection.time_start);
 	// 192.168.100.241:8080 192.168.0.186 - - "GET / HTTP/1.1" 200 11383 ""
 	// "curl/7.64.0"
@@ -166,14 +160,13 @@ void HttpStream::logSuccess()
 	auto tag = logTag("established");
 
 	zcu_log_print(LOG_INFO,
-		      "%s host:%s - \"%.*s\" \"%s\" %lu \"%s\" \"%s\" %lf",
-		      tag.data(), !host.empty() ? host.c_str() : "-",
+		      "%s host:%s - \"%s\" \"%s\" %lu \"%s\" \"%s\" %lf", tag.data(),
+		      !this->req_host.empty() ? this->req_host.c_str() : "-",
 		      /* -2 is to remove the CLRF characters */
-		      this->request.http_message_str.length() - 2,
-		      this->request.http_message_str.data(),
+		      this->req_http_msg.c_str(),
 		      this->response.http_message_str.data(),
-		      this->response.content_length, referer.c_str(),
-		      agent.c_str(), latency);
+		      this->response.content_length, this->req_refer.c_str(),
+		      this->req_agent.c_str(), latency);
 }
 
 void HttpStream::initTracer(std::string dir, int id, std::string client_addr)

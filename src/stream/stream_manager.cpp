@@ -548,6 +548,16 @@ void StreamManager::onRequestEvent(int fd)
 		return;
 	}
 
+	// See note in http_stream.h regarding these variables
+	stream->req_http_msg =
+		std::string(stream->request.http_message_str);
+	stream->request.getHeaderValue(http::HTTP_HEADER_NAME::REFERER,
+				       stream->req_refer);
+	stream->request.getHeaderValue(http::HTTP_HEADER_NAME::USER_AGENT,
+				       stream->req_agent);
+	stream->request.getHeaderValue(http::HTTP_HEADER_NAME::HOST,
+				       stream->req_host);
+
 	/* Select a service */
 	auto service = stream->service_manager->getService(stream->request);
 	if (service == nullptr) {

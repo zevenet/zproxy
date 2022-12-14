@@ -131,6 +131,15 @@ class HttpStream : public Counter<HttpStream> {
 #endif
 	/** HttpRequest containing the request sent by the client. */
 	HttpRequest request;
+
+	/**
+	 * These fields are for the HTTP Request which are used later in the
+	 * logSuccess() function. We've observed that they get overwritten in
+	 * the HttpRequest object, and so these have been created to maintain
+	 * them persistently.
+	 */
+	std::string req_host, req_agent, req_refer, req_http_msg;
+
 	/** HttpResponse containing the response sent by the backend. */
 	HttpResponse response;
 	uint32_t status{ 0x0 };
