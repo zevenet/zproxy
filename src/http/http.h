@@ -445,7 +445,7 @@ static inline std::string getRedirectResponse(Code code,
 	for (auto c : redirect_url) {
 		if (isalnum(c) || c == '_' || c == '.' || c == ':' ||
 		    c == '/' || c == '?' || c == '&' || c == ';' || c == '-' ||
-		    c == '=')
+		    c == '=' || c == '%')
 			safe_url[j++] = c;
 		else {
 			sprintf(safe_url.get() + j, "%%%02x", c);
