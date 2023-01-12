@@ -347,7 +347,7 @@ bool SSLConnectionManager::handleHandshake(SSL_CTX *ssl_ctx,
 					ssl_connection.getPeerAddress().data(),
 					errno__, std::strerror(errno__),
 					ssl_connection.getPeerAddress().c_str());
-				return true;
+				return false;
 			}
 			if (SSL_is_init_finished(ssl_connection.ssl)) {
 				zcu_log_print(

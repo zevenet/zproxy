@@ -189,16 +189,16 @@ bool HttpStream::setStats(STREAM_STATS new_state)
 
 	switch (new_state) {
 	case NEW_CONN:
-		service_manager->conns_stats.increaseEstablishedConn();
-		service_manager->conns_stats.increasePendingConn();
+		//~ service_manager->conns_stats.increaseEstablishedConn();
+		//~ service_manager->conns_stats.increasePendingConn();
 		break;
 	case BCK_CONN:
-		service_manager->conns_stats.increaseEstablishedConn();
-		backend_connection.getBackend()->increaseConnTimeoutAlive();
+		//~ service_manager->conns_stats.increaseEstablishedConn();
+		//~ backend_connection.getBackend()->increaseConnTimeoutAlive();
 		break;
 	case ESTABLISHED:
-		service_manager->conns_stats.increaseEstablishedConn();
-		backend_connection.getBackend()->increaseEstablishedConn();
+		//~ service_manager->conns_stats.increaseEstablishedConn();
+		//~ backend_connection.getBackend()->increaseEstablishedConn();
 		break;
 	default:
 		err = 1;
@@ -215,16 +215,16 @@ void HttpStream::clearStats()
 	streamLogDebug(this, "Cleaning stats: %d", stats_state);
 	switch (stats_state) {
 	case NEW_CONN:
-		service_manager->conns_stats.decreaseEstablishedConn();
-		service_manager->conns_stats.decreasePendingConn();
+		//~ service_manager->conns_stats.decreaseEstablishedConn();
+		//~ service_manager->conns_stats.decreasePendingConn();
 		break;
 	case BCK_CONN:
-		service_manager->conns_stats.decreaseEstablishedConn();
-		backend_connection.getBackend()->decreaseConnTimeoutAlive();
+		//~ service_manager->conns_stats.decreaseEstablishedConn();
+		//~ backend_connection.getBackend()->decreaseConnTimeoutAlive();
 		break;
 	case ESTABLISHED:
-		service_manager->conns_stats.decreaseEstablishedConn();
-		backend_connection.getBackend()->decreaseEstablishedConn();
+		//~ service_manager->conns_stats.decreaseEstablishedConn();
+		//~ backend_connection.getBackend()->decreaseEstablishedConn();
 		break;
 	case UNDEF:
 		streamLogDebug(this, "The stream stats are not defined");
@@ -232,6 +232,7 @@ void HttpStream::clearStats()
 	default:
 		streamLogMessage(this, "The stream stats are not defined: %d",
 				 stats_state);
+		break;
 	}
 	stats_state = UNDEF;
 }
@@ -242,16 +243,16 @@ bool HttpStream::updateStats(STREAM_STATS new_state)
 	streamLogDebug(this, "Changing stats: %d -> %d", stats_state,
 		       new_state);
 
-	if (new_state == stats_state)
-		return err;
+	//~ if (new_state == stats_state)
+		//~ return err;
 
-	clearStats();
+	//~ clearStats();
 
-	err = setStats(new_state);
-	if (err)
-		streamLogMessage(this,
-				 "Error setting stats for state: %d -> %d",
-				 stats_state, new_state);
+	//~ err = setStats(new_state);
+	//~ if (err)
+		//~ streamLogMessage(this,
+				 //~ "Error setting stats for state: %d -> %d",
+				 //~ stats_state, new_state);
 
 	return err;
 }

@@ -221,9 +221,6 @@ class StreamManager : public EpollManager,
 	std::map<int, std::weak_ptr<ServiceManager> > service_manager_set;
 	std::atomic<bool> is_running{};
 
-	StreamSet cl_streams_set;
-	StreamSet bck_streams_set;
-
 #if USE_TIMER_FD_TIMEOUT
 	std::unordered_map<int, HttpStream *> timers_set;
 #endif
@@ -232,6 +229,9 @@ class StreamManager : public EpollManager,
 	void doWork();
 
     public:
+	StreamSet cl_streams_set;
+	StreamSet bck_streams_set;
+
 	StreamManager();
 	StreamManager(const StreamManager &) = delete;
 	~StreamManager() final;

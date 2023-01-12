@@ -75,10 +75,29 @@ void ListenerManager::doMaintenance()
 	}
 }
 
+#define closeSecureFdTO(fd)                                                      \
+	{                                                                      \
+		int errorfd = 0;                                               \
+		socklen_t len = sizeof(errorfd);                               \
+		if (sm->cl_streams_set.count(fd) > 0)                              \
+			sm->cl_streams_set.del(fd);                                \
+		if (sm->bck_streams_set.count(fd) > 0)                             \
+			sm->bck_streams_set.del(fd);                               \
+		deleteFd(fd);                                                  \
+		int retval =                                                   \
+			getsockopt(fd, SOL_SOCKET, SO_ERROR, &errorfd, &len);  \
+		if (errorfd == 0 || retval == 0) {                             \
+			zcu_net_print_socket(fd, "closing socket");            \
+			::close(fd);                                           \
+		}                                                              \
+	}
+
 void ListenerManager::onTimeOut(int fd, TIMEOUT_TYPE type)
 {
+	StreamManager *sm;
 	if (type == events::TIMEOUT_TYPE::BCK_MAINTENANCE_TIMEOUT) {
-		deleteFd(fd);
+		sm = getManager(fd);
+		closeSecureFdTO(fd);
 		bck_maintenance_set.erase(fd);
 		::close(fd);
 	}
