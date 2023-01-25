@@ -25,63 +25,24 @@
 
 class HttpStream;
 
-namespace Waf {
-
-static void logModsec(void *data, const void *message)
+inline int zproxy_waf_parse_conf(const std::string &file, void **rules)
 {
+	printf("The proxy is not compiled with WAF options\n");
+	return -1;
 }
+inline void zproxy_waf_destroy_rules(void *rules) { return; }
+inline void zproxy_waf_dump_rules(void *rules) { return; }
+inline void *zproxy_waf_init_api(void) { return NULL; }
+inline void zproxy_waf_destroy_api(void *modsec) { return; }
 
-static int parse_conf(const std::string &file, void **rules)
-{
-    printf("The proxy is not compiled with WAF options\n");
-    return -1;
-}
+struct zproxy_waf_stream {};
 
-static void destroy_rules(void *rules)
-{
-}
-
-static void dump_rules(void *rules)
-{
-}
-
-static void *init_api(void)
-{
-    return nullptr;
-}
-
-static void destroy_api(void *modsec)
-{
-}
-
-class Stream {
-    public:
-
-   Stream(void *api, void *rules) {}
-    ~Stream() {}
-
-    bool checkRequestHeaders(HttpStream *stream) {
-        return WAF_PASS;
-    }
-
-    bool checkResponseHeaders(HttpStream *stream) {
-        return WAF_PASS;
-    }
-
-    bool checkRequestBody(HttpStream *stream) {
-        return WAF_PASS;
-    }
-
-    bool checkResponseBody(HttpStream *stream) {
-        return WAF_PASS;
-    }
-
-    char *response(HttpStream *stream) {
-        return nullptr;
-    }
-
-};
-
-};
+inline struct zproxy_waf_stream *zproxy_waf_stream_init(void *api, void *rules) { return NULL; }
+inline void zproxy_waf_stream_destroy(struct zproxy_waf_stream *waf_stream) { return; }
+inline bool zproxy_waf_stream_checkrequestheaders(struct zproxy_waf_stream *waf_stream, HttpStream *stream) { return WAF_PASS; }
+inline bool zproxy_waf_stream_checkresponseheaders(struct zproxy_waf_stream *waf_stream, HttpStream *stream) { return WAF_PASS; }
+inline bool zproxy_waf_stream_checkrequestbody(struct zproxy_waf_stream *waf_stream, HttpStream *stream) { return WAF_PASS; }
+inline bool zproxy_waf_stream_responsebody(struct zproxy_waf_stream *waf_stream, HttpStream *stream) { return WAF_PASS; }
+inline char *zproxy_waf_stream_response(struct zproxy_waf_stream *waf_stream, HttpStream *stream) { return nullptr; }
 
 #endif

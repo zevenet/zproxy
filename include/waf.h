@@ -19,49 +19,40 @@
 #define _ZPROXY_WAF_H
 
 #include <modsecurity/modsecurity.h>
-#include <modsecurity/rules.h>
 #include <modsecurity/transaction.h>
+#include <modsecurity/rules.h>
+#include <modsecurity/intervention.h>
+
+#include <string>
 
 #define WAF_PASS    0
 
 class HttpStream;
 
-namespace Waf {
+int zproxy_waf_parse_conf(const std::string &file, void **rules);
+void zproxy_waf_destroy_rules(void *rules);
+void zproxy_waf_dump_rules(void *rules);
+void *zproxy_waf_init_api(void);
+void zproxy_waf_destroy_api(void *modsec);
 
-void logModsec(void *data, const void *message);
-
-int parse_conf(const std::string &file, void **rules);
-
-void destroy_rules(void *rules);
-
-void dump_rules(void *rules);
-
-void *init_api(void);
-
-void destroy_api(void *modsec);
-
-
-class Stream {
-private:
+struct zproxy_waf_stream {
 	modsecurity::Rules *waf_rules;
 	modsecurity::ModSecurity *waf_api;
 	modsecurity::Transaction *modsec_transaction{nullptr};
-	bool waf_enable{false};
-
-	void initTransaction();
-	void resetTransaction();
-
-public:
-	Stream(void *api, void *rules);
-	~Stream();
-
-	bool checkRequestHeaders(HttpStream *stream);
-	bool checkResponseHeaders(HttpStream *stream);
-	bool checkRequestBody(HttpStream *stream);
-	bool checkResponseBody(HttpStream *stream);
-	char *response(HttpStream *stream);
+	bool waf_enable;
 };
 
-};
+struct zproxy_waf_stream *zproxy_waf_stream_init(void *api, void *rules);
+void zproxy_waf_stream_destroy(struct zproxy_waf_stream *waf_stream);
+bool zproxy_waf_stream_checkrequestheaders(struct zproxy_waf_stream *waf_stream,
+					   HttpStream *stream);
+bool zproxy_waf_stream_checkresponseheaders(struct zproxy_waf_stream *waf_stream,
+					    HttpStream *stream);
+bool zproxy_waf_stream_checkrequestbody(struct zproxy_waf_stream *waf_stream,
+					HttpStream *stream);
+bool zproxy_waf_stream_responsebody(struct zproxy_waf_stream *waf_stream,
+				    HttpStream *stream);
+char *zproxy_waf_stream_response(struct zproxy_waf_stream *waf_stream,
+				 HttpStream *stream);
 
 #endif

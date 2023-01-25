@@ -173,7 +173,7 @@ public:
 	 */
 	int updateStats(const STREAM_STATE new_state);
 
-	Waf::Stream waf;
+	struct zproxy_waf_stream *waf;
 
 	bool isTunnel()
 	{
