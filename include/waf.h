@@ -42,28 +42,24 @@ void destroy_api(void *modsec);
 
 
 class Stream {
-
+private:
 	modsecurity::Rules *waf_rules;
 	modsecurity::ModSecurity *waf_api;
 	modsecurity::Transaction *modsec_transaction{nullptr};
 	bool waf_enable{false};
 
-    void initTransaction();
-    void resetTransaction();
+	void initTransaction();
+	void resetTransaction();
 
-    public:
-    Stream(void *api, void *rules);
-    ~Stream();
+public:
+	Stream(void *api, void *rules);
+	~Stream();
 
-    bool checkRequestHeaders(HttpStream *stream);
-
-    bool checkResponseHeaders(HttpStream *stream);
-
-    bool checkRequestBody(HttpStream *stream);
-
-    bool checkResponseBody(HttpStream *stream);
-
-    char *response(HttpStream *stream);
+	bool checkRequestHeaders(HttpStream *stream);
+	bool checkResponseHeaders(HttpStream *stream);
+	bool checkRequestBody(HttpStream *stream);
+	bool checkResponseBody(HttpStream *stream);
+	char *response(HttpStream *stream);
 };
 
 };
