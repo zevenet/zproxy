@@ -1,0 +1,7 @@
+HTTP/1.1 100 Continue
+
+HTTP/1.0 302 Found
+Content-Type: text/html
+Content-Length: #######
+Location: https://waf.action/phase2
+

@@ -1,0 +1,19 @@
+DESCRIPTION="the backend will return the set-cookie header"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/resp-headers/set-cookie/bck_cookie=cookie_token_1"
+######################################
+DESCRIPTION="the client will send the token that the backend returned"
+CMD=curl
+CL=2
+METHOD="GET"
+URL="/"
+HEADERS="Cookie: bck_cookie=cookie_token_1"
+######################################
+DESCRIPTION="the client sends another token that will be balanced to another backend"
+CMD=curl
+CL=2
+METHOD="GET"
+URL="/"
+HEADERS="Cookie: bck_cookie=cookie_token_2"

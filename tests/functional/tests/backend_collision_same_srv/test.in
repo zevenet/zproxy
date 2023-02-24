@@ -1,0 +1,6 @@
+DESCRIPTION="The proxy should not load the configuration of the same backend in the same services"
+CMD=curl
+CL=1
+REQUESTS=1
+METHOD="GET"
+URL="/"

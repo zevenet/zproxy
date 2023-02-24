@@ -1,0 +1,6 @@
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/headers"
+VHOST=
+HEADERS="X-Forwarded-For: 10.10.23.21"

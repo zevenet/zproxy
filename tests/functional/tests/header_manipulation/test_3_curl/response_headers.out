@@ -1,0 +1,6 @@
+HTTP/1.0 302 Found
+Content-Type: text/html
+Content-Length: #######
+Location: http://example.com/
+X-Test: test
+

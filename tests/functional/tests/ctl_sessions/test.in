@@ -1,0 +1,40 @@
+DESCRIPTION="Add session"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="PUT"
+BODY=session0.json
+#########################
+DESCRIPTION="Add session"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="PUT"
+BODY=session1.json
+#########################
+DESCRIPTION="Add session"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="PUT"
+BODY=session2.json
+#########################
+DESCRIPTION="Modify session by ID"
+CMD=ctl
+URL="/listener/0/service/default/session/sess1"
+METHOD="PATCH"
+BODY=mod-session1.json
+#########################
+DESCRIPTION="Delete session by ID"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="DELETE"
+BODY=del-session1.json
+#########################
+DESCRIPTION="Delete session by backend ID"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="DELETE"
+BODY=del-session0.json
+#########################
+DESCRIPTION="Delete session by backend ID"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="DELETE"

@@ -1,0 +1,47 @@
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s1/path/1/name"
+DESCRIPTION="Expect: /sub-default/t/s1/path/1"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s1/app/v1/depart/media2/set"
+DESCRIPTION="Expect: /sub-default/s1/version/1/media/put"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s1/anywhere"
+DESCRIPTION="Expect: /sub-default/sub-default/s1/anywhere"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s2/asdf"
+DESCRIPTION="Expect: /asdf"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s3/asdf"
+DESCRIPTION="Expect: /s3/asdf"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s1/init/param1/mid/param2/end"
+DESCRIPTION="Expect: /sub-default/s1/init/param-1/mid/param-2/end"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/s1/init/param3/mid/param3/end"
+DESCRIPTION="Expect: /sub-default/s1/init/3/mid/param3/end, only one replace is supported"
+#########################
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/removeme/"
+DESCRIPTION="Expect: /"

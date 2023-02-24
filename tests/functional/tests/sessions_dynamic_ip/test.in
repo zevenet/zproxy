@@ -1,0 +1,25 @@
+DESCRIPTION="do requests"
+CMD=average
+CL=1
+METHOD="GET"
+URL="/"
+REQUESTS=2
+#########################
+DESCRIPTION="do requests"
+CMD=average
+CL=2
+METHOD="GET"
+URL="/"
+REQUESTS=2
+#########################
+DESCRIPTION="wait for the expiration of the session"
+CMD=wait
+TIMEOUT=4
+#########################
+DESCRIPTION="The session should be expired, and the first backend should be assigned no"
+CMD=average
+CL=2
+METHOD="GET"
+URL="/"
+REQUESTS=2
+

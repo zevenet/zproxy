@@ -1,0 +1,51 @@
+{
+    "3xx-code-hits": 6,
+    "4xx-code-hits": 0,
+    "5xx-code-hits": 0,
+    "address": "0.0.0.0",
+    "connections": 0,
+    "https": false,
+    "id": 0,
+    "name": "env",
+    "pending-connections": 0,
+    "port": 80,
+    "services": [
+        {
+            "backends": [],
+            "name": "default",
+            "priority": 1,
+            "sessions": []
+        },
+        {
+            "backends": [],
+            "name": "append",
+            "priority": 1,
+            "sessions": []
+        },
+        {
+            "backends": [],
+            "name": "dynamic",
+            "priority": 1,
+            "sessions": []
+        },
+        {
+            "backends": [],
+            "name": "replace",
+            "priority": 1,
+            "sessions": []
+        },
+        {
+            "backends": [],
+            "name": "replace-append",
+            "priority": 1,
+            "sessions": []
+        },
+        {
+            "backends": [],
+            "name": "replace-dynamic",
+            "priority": 1,
+            "sessions": []
+        }
+    ],
+    "waf-hits": 0
+}

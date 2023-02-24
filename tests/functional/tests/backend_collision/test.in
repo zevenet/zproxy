@@ -1,0 +1,11 @@
+DESCRIPTION="The proxy should load the configuration of the same backend in different services"
+CMD=curl
+CL=1
+REQUESTS=1
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Get config"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"

@@ -1,0 +1,24 @@
+DESCRIPTION="do requests"
+CMD=wrk
+CL=1
+URL="/"
+TIMEOUT=20
+CONNS=10
+THREADS=2
+BACKGROUND=1
+#########################
+DESCRIPTION="Wait for some requests to be sent"
+CMD=wait
+TIMEOUT=2
+#########################
+DESCRIPTION="Reload the configuration file"
+CMD=stress-reload
+TIMEOUT=10
+INTERVAL=.1s
+#########################
+DESCRIPTION="Wait for some requests to be sent"
+CMD=wait
+TIMEOUT=2
+#########################
+DESCRIPTION="Kill the wrk process"
+CMD=killwrk

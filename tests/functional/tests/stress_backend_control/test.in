@@ -1,0 +1,27 @@
+DESCRIPTION="Execute background noise"
+CMD=wrk
+BACKGROUND=1
+CL=1
+URL="/"
+TIMEOUT=20
+CONNS=10
+THREADS=2
+#########################
+DESCRIPTION="Disable a backend"
+CMD=ctl
+METHOD=PATCH
+URL=/listener/0/service/default/backend/10.2.1.1-80/status
+BODY=disable.json
+#########################
+DESCRIPTION="Wait for the backend check to occur"
+CMD=wait
+TIMEOUT=3
+#########################
+DESCRIPTION="Enable a backend"
+CMD=ctl
+METHOD=PATCH
+URL=/listener/0/service/default/backend/10.2.1.1-80/status
+BODY=enable.json
+#########################
+DESCRIPTION="End the background noise"
+CMD=killwrk

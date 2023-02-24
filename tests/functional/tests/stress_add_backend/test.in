@@ -1,0 +1,31 @@
+DESCRIPTION="Execute background noise"
+CMD=wrk
+BACKGROUND=1
+CL=1
+URL="/"
+TIMEOUT=20
+CONNS=10
+THREADS=2
+#########################
+DESCRIPTION="Wait for some noise to filter through"
+CMD=wait
+TIMEOUT=1
+#########################
+DESCRIPTION="Add backend"
+CMD=ctl
+METHOD=PUT
+URL=/listener/0/service/default/backends
+BODY=add-backend.json
+#########################
+DESCRIPTION="Wait for some noise to filter through"
+CMD=wait
+TIMEOUT=1
+#########################
+DESCRIPTION="Delete backend"
+CMD=ctl
+METHOD=DELETE
+URL=/listener/0/service/default/backend/10.2.1.2-80
+DISABLE=true
+#########################
+DESCRIPTION="End the background noise"
+CMD=killwrk

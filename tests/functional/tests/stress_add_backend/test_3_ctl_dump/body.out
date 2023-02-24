@@ -1,0 +1,49 @@
+[
+    {
+        "backends": [
+            {
+                "2xx-code-hits": #######,
+                "3xx-code-hits": #######,
+                "4xx-code-hits": #######,
+                "5xx-code-hits": #######,
+                "address": "10.2.1.1",
+                "connect-time": "#######",
+                "connections": #######,
+                "connections-limit": 0,
+                "https": false,
+                "id": "10.2.1.1-80",
+                "pending-connections": #######,
+                "port": 80,
+                "priority": 1,
+                "response-time": "#######",
+                "status": "active",
+                "type": 0,
+                "nfmark": 0,
+                "weight": 1
+            },
+            {
+                "2xx-code-hits": #######,
+                "3xx-code-hits": #######,
+                "4xx-code-hits": #######,
+                "5xx-code-hits": #######,
+                "address": "10.2.1.2",
+                "connect-time": "#######",
+                "connections": #######,
+                "connections-limit": 0,
+                "https": false,
+                "id": "10.2.1.2-80",
+                "pending-connections": #######,
+                "port": 80,
+                "priority": 1,
+                "response-time": "#######",
+                "status": "active",
+                "type": 0,
+                "nfmark": 0,
+                "weight": 1
+            }
+        ],
+        "name": "default",
+        "priority": 1,
+        "sessions": []
+    }
+]

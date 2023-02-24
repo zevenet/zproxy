@@ -1,0 +1,53 @@
+DESCRIPTION="This request is allowed"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+########################
+DESCRIPTION="This request is denied due to URI"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/phase0"
+########################
+DESCRIPTION="This request is denied due to request header"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+HEADERS="head: phase1"
+########################
+DESCRIPTION="This request is denied due to request body"
+CMD=curl
+CL=1
+METHOD="POST"
+URL="/"
+HEADERS="Expect: "
+BODY="phase2_body"
+########################
+DESCRIPTION="This request is denied due to request body. The client sends expect 100 continue header"
+CMD=curl
+CL=1
+METHOD="POST"
+URL="/echo"
+HEADERS="Expect: 100-continue"
+BODY="phase2_body"
+########################
+DESCRIPTION="This request is denied due to response header"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/resp-headers/location/phase3"
+########################
+DESCRIPTION="This request is denied due to response body"
+CMD=curl
+CL=1
+METHOD="POST"
+URL="/echo"
+BODY="phase4_body"
+########################
+DESCRIPTION="This request is denied due to response body, but server will write the response in two frames"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/sleep-response/2"

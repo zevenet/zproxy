@@ -1,0 +1,6 @@
+HTTP/1.1 405 Method Not Allowed
+Expires: now
+Pragma: no-cache
+Server: zproxy/VERSION
+Cache-control: no-cache,no-store
+

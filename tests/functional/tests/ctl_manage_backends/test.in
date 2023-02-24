@@ -1,0 +1,11 @@
+DESCRIPTION="Add backend"
+CMD=ctl
+METHOD=PUT
+URL=/listener/0/service/default/backends
+BODY=add-backend.json
+#########################
+DESCRIPTION="Delete backend"
+CMD=ctl
+METHOD=DELETE
+URL=/listener/0/service/default/backend/10.2.1.2-80
+DISABLE=true

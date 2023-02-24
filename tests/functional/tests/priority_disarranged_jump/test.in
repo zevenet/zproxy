@@ -1,0 +1,10 @@
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
+#########################
+DESCRIPTION="Disable the third backend"
+CMD=ctl
+METHOD=PATCH
+URL=/listener/0/service/default/backend/10.2.1.2-80/status
+BODY=disable.json

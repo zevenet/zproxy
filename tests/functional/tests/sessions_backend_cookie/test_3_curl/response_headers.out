@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Backend: bck-2
+Set-Cookie: bck_cookie=cookie_token_1
+Set-Cookie: bck_token=4-0a020102-500000; Domain=zproxy.dom; Path=/; Max-Age=220000
+

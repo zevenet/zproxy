@@ -1,7 +1,0 @@
-HTTP/1.1 200 OK
-Content-Type: application/octet-stream
-Transfer-Encoding: chunked
-Connection: keep-alive
-Backend: undefined-1-bck
-Custom-header: added by zproxy
-

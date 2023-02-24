@@ -1,0 +1,14 @@
+DESCRIPTION="Give time for backend to be marked as down"
+CMD=wait
+TIMEOUT=3
+#########################
+DESCRIPTION="Firstly, the first backend is ignored and try with the second, this fails and go again to the first that is chosen"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/priority-recheck"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"

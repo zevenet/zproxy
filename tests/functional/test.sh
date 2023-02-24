@@ -94,6 +94,11 @@ exec_test () {
 	csplit "test.in" -f "$PREF" '/^###/' '{*}' >/dev/null
 	CMD_NUMB=0
 
+	if [[ $DEBUG_FLAG -ne 0 ]]; then
+		debug  "zproxy is running"
+		dev
+	fi
+
 	for V in `ls $PREF*`
 	do
 		CMD_NUMB=$(expr $CMD_NUMB + 1)
@@ -120,6 +125,8 @@ exec_test () {
 				print_report "$TEST_F" "Reloading_CFG" "$TMP_ERR"
 				return 1
 			fi
+		elif [[ "$CMD" == "stress-reload" ]]; then
+			exec_stress_reload $OUT_DIR
 		elif [[ "$CMD" == "ctl" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			apply_proxy_api $OUT_DIR
@@ -139,7 +146,7 @@ exec_test () {
 			exec_benchmark $OUT_DIR
 		else
 			rm "$PREF"*
-			error "CMD variable '$CMD' is not recoignized"
+			error "CMD variable '$CMD' is not recognized"
 		fi
 
 		find_diff_errors $OUT_DIR >$DIFF_OUT
@@ -160,8 +167,9 @@ exec_test () {
 
 		if [[ $DEBUG_FLAG -ne 0 ]]; then
 			if [[ ! -f "$OUT_DIR/cmd.out.tmp" && -f "$OUT_DIR/cmd.out" ]]; then
+				msg "description: $DESCRIPTION"
 				msg "command executed: $OUT_DIR"
-				cat "$OUT_DIR/cmd.out"
+				cat "$OUT_DIR/cmd.out.tmp.dbg"
 				echo ""
 			fi
 			dev
@@ -181,6 +189,10 @@ exec_all_test () {
 	ERRORS=0
 	local LOCAL_PWD="$PWD"
 
+	if [[ $VALGRIND -ne 0 ]]; then
+		clean_valgrind
+	fi
+
 	for LOC_DIR in `ls $TEST_DIR`; do
 
 		if [ ! -d "$TEST_DIR/$LOC_DIR" ]; then
@@ -195,6 +207,11 @@ exec_all_test () {
 		else
 			echo -e "[${COLOR_SUC}OK${COLOR_NON}] $LOC_DIR"
 		fi
+
+		if [[ $VALGRIND -ne 0 ]]; then
+			recollect_valgrind $LOC_DIR
+		fi
+
 		echo ""
 		echo "##########################################################################################"
 
@@ -206,14 +223,21 @@ exec_all_test () {
 		echo -e "[${COLOR_ERR}FAILED${COLOR_NON}] There were '$ERRORS' tests that failed"
 		echo "The report can be checked in the file '$REPORT_F'"
 	else
-		echo -e "[${COLOR_SUC}OK${COLOR_NON}] All tests were successfull"
+		echo -e "[${COLOR_SUC}OK${COLOR_NON}] All tests were successful"
+	fi
+
+	if [[ $VALGRIND -ne 0 ]]; then
+		echo "Valgrind summary: $VALGRIND_OUT_ALL"
 	fi
 
 	return $ERRORS
 }
 
-if [[ "$BENCH_WITHOUT_PROXY" == "" && "$1" =~ "exec|all" ]]; then
-	error "The variable 'BENCH_WITHOUT_PROXY' is not set. Please, execute '$0 bck_benchmark' and set the output value"
+
+if [[ "$BENCH_WITHOUT_PROXY" == "" ]]; then
+	if [[ "$1" == "exec" || "$1" == "all" ]]; then
+		error "The variable 'BENCH_WITHOUT_PROXY' is not set. Please, execute '$0 bck_benchmark' and set the output value"
+	fi
 fi
 
 check_dependencies

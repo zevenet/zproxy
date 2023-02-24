@@ -1,0 +1,18 @@
+SecRuleEngine on
+#SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:1"
+SecDefaultAction "deny,log,logdata:'client:%{REMOTE_ADDR}',phase:1"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:2"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:3"
+SecDefaultAction "pass,log,logdata:'client:%{REMOTE_ADDR}',phase:4"
+
+SecRequestBodyAccess on
+SecResponseBodyAccess on
+
+SecDebugLog /tmp/debug.log
+SecDebugLogLevel 4
+
+SecRule RESPONSE_BODY "1.*finish" "\
+	id:10,\
+	msg:'reject response body in two frames',\
+	phase:4,\
+	redirect:'https://waf.action/phase4'" #

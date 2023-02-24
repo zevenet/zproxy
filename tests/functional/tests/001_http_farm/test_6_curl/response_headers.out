@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-Server: nginx
-Content-Type: text/plain
-Content-Length: 63
-Connection: keep-alive
-Backend: bck-1
-Accept-Ranges: bytes
-

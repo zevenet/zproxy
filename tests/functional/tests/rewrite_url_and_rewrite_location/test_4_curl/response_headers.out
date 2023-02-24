@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/octet-stream
+Transfer-Encoding: chunked
+Connection: keep-alive
+Backend: bck-2
+Request-Uri: /asdf
+Loc-raw: http://10.2.1.2/asdf
+Location: http://10.1.2.1/asdf
+Content-Location: http://10.1.2.1/asdf/app
+

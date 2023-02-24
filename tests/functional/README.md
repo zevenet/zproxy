@@ -142,6 +142,25 @@ FILE="zproxy_new.cfg"
 DESCRIPTION="Disable the backend 0 in the service 0"
 ```
 
+### stress-reload
+
+This command runs reloads continuously at a set interval until a given timeout.
+It does this by means of sending the proxy the SIGUSR1 signal.
+
+| Parameter | Description | Required |
+| --------- | ----------- | -------- |
+| DESCRIPTION | Commentary to give information on why the command is executed in the test. | |
+| CMD | Specifies the *stress-reload* command. | True |
+| TIMEOUT | How long to run the test for. | True |
+| INTERVAL | How much time between each reload. | True |
+
+```
+DESCRIPTION="Run a bunch of reloads continuously"
+CMD=stress-reload
+TIMEOUT=10
+INTERVAL=.1s
+```
+
 ### curl
 
 | Parameter      | Description     | Required |
@@ -153,6 +172,7 @@ DESCRIPTION="Disable the backend 0 in the service 0"
 | URL      | It is the HTTP URL used for the request (/, /svc...)       | True
 | VHOST      | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
+| PORT      | It is the port where proxy is listening. The default value is 80 or 443 if the request is HTTPS |
 | HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'. A file with the headers can be defined if the value begins with '@'       |
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
@@ -163,6 +183,7 @@ DESCRIPTION="Disable the backend 0 in the service 0"
 | NEXT_URL | It sets the HTTP URL to send another request in the same connection.
 | NEXT_BODY | It sets the HTTP request body to send another request in the same connection.
 | NEXT_FILE | It sets a file to be sent in another request in the same connection.
+| TIMEOUT100CONT | It sets the client timeout to wait for 100 continue response.
 
 ```
 DESCRIPTION="it executes the curl command 'curl -X GET https//service.test/' in the client 1"
@@ -188,6 +209,7 @@ It executes the curls sequentially.
 | URL     | It is the HTTP URL used for the request (/, /svc...)       | True
 | VHOST   | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
 | SSL      | If this flag is set with **1** the request will use the HTTPS protocol |
+| PORT      | It is the port where proxy is listening. The default value is 80 or 443 if the request is HTTPS |
 | HEADERS     | It is a list of headers to add in the request. If more than one headers will be added, they should be separated by the character comma ';'       |
 | BODY      | They are the data to send in the HTTP body. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |
 | FILE      | It is a file that will be upload. It should be a file in the same directory. *FILE* and *BODY* parameters are not compatible       |

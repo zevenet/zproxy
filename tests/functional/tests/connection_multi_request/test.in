@@ -1,0 +1,32 @@
+DESCRIPTION="Send two GETs in the same connection, the first with body"
+CMD=curl
+SSL=1
+CL=1
+METHOD="GET"
+BODY="file.txt"
+URL="/echo"
+HEADERS="Content-Type: text/xml;Expect: 100-continue"
+NEXT_METHOD="GET"
+NEXT_URL="/"
+#########################
+DESCRIPTION="Send a POST and next a GET in the same connection"
+CMD=curl
+SSL=1
+CL=1
+METHOD="POST"
+BODY="file.txt"
+URL="/url1"
+HEADERS="Content-Type: text/xml;Expect: 100-continue"
+NEXT_METHOD="GET"
+NEXT_URL="/url2"
+#########################
+DESCRIPTION="Send a POST and next a GET with body request in the same connection"
+CMD=curl
+SSL=1
+CL=1
+METHOD="GET"
+BODY="file.txt"
+URL="/url1"
+HEADERS="Content-Type: text/xml;Expect: 100-continue"
+NEXT_METHOD="GET"
+NEXT_URL="/url2"

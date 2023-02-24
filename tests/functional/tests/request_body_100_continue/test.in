@@ -1,0 +1,51 @@
+DESCRIPTION="Upload a file using Content-length"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS="Expect: 100-continue;Transfer-Encoding:"
+BODY=$TEST_TPL/$BIG_FILE
+TIMEOUT_100CONT=100
+#########################
+DESCRIPTION="Upload a file using chunk encoding"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS="Expect: 100-continue;Content-Length:;Transfer-Encoding: chunked"
+BODY=$TEST_TPL/$BIG_FILE
+TIMEOUT_100CONT=100
+#########################
+DESCRIPTION="Upload a file but the service does not have backends configured"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/no-backend
+HEADERS="Expect: 100-continue"
+BODY=$TEST_TPL/$BIG_FILE
+TIMEOUT_100CONT=100
+#########################
+DESCRIPTION="Upload a file but the service does not have backends availables"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/backend-down
+HEADERS="Expect: 100-continue"
+BODY=$TEST_TPL/$BIG_FILE
+TIMEOUT_100CONT=100
+#########################
+DESCRIPTION="Send 2 requests in the same connection"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS="Expect: 100-continue"
+BODY=$TEST_TPL/$BIG_FILE
+NEXT_URL=/
+NEXT_METHOD=GET
+TIMEOUT_100CONT=100
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"

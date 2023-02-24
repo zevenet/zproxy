@@ -1,0 +1,9 @@
+GET /headers HTTP/1.1
+Host: virtual-host
+User-Agent: curl/VERSION
+Accept: */*
+Destination: http://10.1.2.1:80/url
+Other-header: header-value
+X-Forwarded-For: 10.1.1.1
+
+

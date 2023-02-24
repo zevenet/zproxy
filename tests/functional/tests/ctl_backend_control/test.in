@@ -1,0 +1,32 @@
+DESCRIPTION="Disable a backend"
+CMD=ctl
+METHOD=PATCH
+URL=/listener/0/service/default/backend/10.2.1.1-80/status
+BODY=disable.json
+#########################
+DESCRIPTION=""
+CMD=average
+CL=1
+REQUESTS=12
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0/service/default"
+METHOD="GET"
+#########################
+DESCRIPTION="Enable a backend"
+CMD=ctl
+METHOD=PATCH
+URL=/listener/0/service/default/backend/10.2.1.1-80/status
+BODY=enable.json
+#########################
+DESCRIPTION="Wait for the backend check to occur"
+CMD=wait
+TIMEOUT=5
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0/service/default"
+METHOD="GET"

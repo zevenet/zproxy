@@ -1,0 +1,18 @@
+DESCRIPTION="Do request"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+#########################
+DESCRIPTION="Get stats"
+CMD=ctl
+METHOD=GET
+URL="/listener/0"
+#########################
+CMD=wait
+TIMEOUT=4
+#########################
+DESCRIPTION="Get stats"
+CMD=ctl
+METHOD=GET
+URL="/listener/0"

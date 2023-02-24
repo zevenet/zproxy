@@ -1,0 +1,9 @@
+DESCRIPTION="Reload zproxy configuration."
+CMD=ctl
+METHOD=PATCH
+URL=/config
+#########################
+DESCRIPTION="Get listener statistics."
+CMD=ctl
+METHOD=GET
+URL=/listener/0

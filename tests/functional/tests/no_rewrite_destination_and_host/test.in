@@ -1,0 +1,6 @@
+DESCRIPTION="ensure that destination and virtual hosts are replaced"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/headers"
+HEADERS="Destination: http://${PROXY_VIP}:${PROXY_VPORT}/url;Host: virtual-host;Other-header: header-value"

@@ -1,0 +1,6 @@
+DESCRIPTION="This request is denied due to response body, but server will respond with chunked"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/sleep-body/2"
+SSL=1

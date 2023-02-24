@@ -1,0 +1,8 @@
+HTTP/1.0 400 Bad Request
+Content-Type: text/html
+Content-Length: #######
+Expires: now
+Pragma: no-cache
+Server: zproxy
+Cache-control: no-cache,no-store
+

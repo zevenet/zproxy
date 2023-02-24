@@ -3,6 +3,8 @@
 DIR="."
 source "$DIR/variables"
 
+WRK_MASK=0
+
 error () {
 	echo "ERROR: $1"
 	exit 1
@@ -76,7 +78,7 @@ lookfor_segfault () {
 		SYSLOG_ZPROXY_START=`tac $SYSLOG | grep -m1 "zproxy start..."`
 	fi
 
-	LOGS_SEGFAULT=`grep -A10000 "$SYSLOG_ZPROXY_START" $SYSLOG | grep -E "$PROXY_BIN\(\+0x[0-9a-f]+\) \[0x[0-9a-f]+\]"`
+	LOGS_SEGFAULT=`grep -A10000 -F "$SYSLOG_ZPROXY_START" $SYSLOG | grep -E "$PROXY_BIN\(\+0x[0-9a-f]+\) \[0x[0-9a-f]+\]"`
 	if [[ "$LOGS_SEGFAULT" != "" ]]; then
 		echo "$LOGS_SEGFAULT"
 		error "There was an zproxy SEGFAULT"
@@ -89,14 +91,18 @@ start_proxy () {
 		deploy_tpl "$1" $PROXY_CFG_F
 	fi
 
-	local CMD_LOC="ip netns exec $PROXY_NS $PROXY_BIN -p $PROXY_PID_F -f $PROXY_CFG_F"
-
-	$CMD_LOC >/dev/null
-	if [[ $? -ne 0 ]]; then
-		echo "command: $CMD_LOC"
-		echo "$CMD_OUT"
-		error "The zproxy process couldn't start"
+	local NO_DAEMON=""
+	if [[ $VALGRIND -ne 0 ]]; then
+		NO_DAEMON="-D"
+	else
+		VALGRIND_CMD=""
 	fi
+
+	if [[ $DEBUG_FLAG -ne 0 ]]; then
+		echo "ip netns exec $PROXY_NS $VALGRIND_CMD $PROXY_BIN $NO_DAEMON -p $PROXY_PID_F -C $PROXY_CTL_SOCKET -f $PROXY_CFG_F &"
+	fi
+
+	ip netns exec $PROXY_NS $VALGRIND_CMD $PROXY_BIN $NO_DAEMON -p $PROXY_PID_F -C $PROXY_CTL_SOCKET -f $PROXY_CFG_F &
 	wait $PROXY_GRACETIME
 
 	SYSLOG_ZPROXY_START=`tail -1 $SYSLOG`
@@ -104,8 +110,17 @@ start_proxy () {
 }
 
 stop_proxy () {
-	if [[ -f $PROXY_PID_F ]]; then
-		cmd "ip netns exec $PROXY_NS kill -9 `cat $PROXY_PID_F`"
+	if [[ VALGRIND -eq 0 ]]; then
+		if [[ -f $PROXY_PID_F ]]; then
+			cmd "ip netns exec $PROXY_NS kill -15 `cat $PROXY_PID_F`"
+		fi
+	else
+		local OUT=`ps aux | grep valgrind | grep -Ev grep | awk '{print $2}'`
+
+		if [[ "$OUT" != "" ]]; then
+			kill -15 $OUT
+			wait $PROXY_GRACETIME
+		fi
 	fi
 }
 
@@ -352,7 +367,7 @@ get_test_out_dir () {
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
 	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER \
-	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL DISABLE
+	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL DISABLE TIMEOUT_100CONT PORT
 }
 
 replace_test_out ()
@@ -406,10 +421,21 @@ exec_curl () {
 	local B=""
 	local FG=""
 	local F=""
+	local P="${PROXY_VPORT}"
+
+	local TIMEOUT100CONT_=""
+	if [[ $TIMEOUT100CONT_ != "" ]]; then
+		TIMEOUT100CONT_="--expect100-timeout $TIMEOUT_100CONT "
+	fi
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
+		P="${PROXY_VPORT_SSL}"
 	fi
+	if [[ "$PORT" != "" ]]; then
+		P="${PORT}"
+	fi
+
 	if [[ $FILTER != "" ]]; then
 		F="-v"
 	fi
@@ -438,7 +464,7 @@ exec_curl () {
 		SOCKET="--unix-socket $PROXY_CTL_SOCKET"
 		VHOST_LOC="${PROXY_SOCKET_IP}"
 	elif [[ "$VHOST_LOC" == "" ]]; then
-		VHOST_LOC="$PROXY_VIP:${PROXY_VPORT}"
+		VHOST_LOC="$PROXY_VIP:${P}"
 	fi
 	if [[ "$BACKGROUND" -eq 1 ]]; then
 		FG="&"
@@ -467,7 +493,7 @@ exec_curl () {
 	fi
 
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
--s -k --show-error $EXTENDED_OUT $F \
+${TIMEOUT100CONT_}-s -k --show-error $EXTENDED_OUT $F \
 -D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
 	# mask tpl dir
@@ -475,7 +501,7 @@ exec_curl () {
 
 	# cmd to debug
 	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
--s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT" > ${CMD_F}.dbg
+${TIMEOUT100CONT_}-s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT" > ${CMD_F}.dbg
 
 	bash $CMD_F
 
@@ -515,6 +541,7 @@ mask_headers () {
 	if [[ "$1" == "" ]]; then error_param "file"; fi
 	local FILE=$1
 	sed -Ei 's/Server: zproxy\/.*$/Server: zproxy\/VERSION/g' $FILE
+	sed -Ei 's/^Content-Length: [0-9]+/Content-Length: #######/g' $FILE
 }
 
 mask_out () {
@@ -522,9 +549,18 @@ mask_out () {
 	local FILE=$1
 	# remove bonding headers uploading files
 	sed -Ei "s/--------------------------\w+/--------------------------################/g" $FILE
-	sed -Ei "s/\"connect-time\"\s*:\s*([0-9\.]+|[1-9]+[-\.0-9e]+),?/\"connect-time\": \"#######\",/g" $FILE
-	sed -Ei "s/\"response-time\"\s*:\s*([0-9\.]+|[1-9]+[-\.0-9e]+),?/\"response-time\": \"#######\",/g" $FILE
+	sed -Ei "s/\"connect-time\"\s*:\s*([0-9\.]+|[1-9]+[-\.0-9e]+|-1.0),?/\"connect-time\": \"#######\",/g" $FILE
+	sed -Ei "s/\"response-time\"\s*:\s*([0-9\.]+|[1-9]+[-\.0-9e]+|-1.0),?/\"response-time\": \"#######\",/g" $FILE
 	sed -Ei 's/"last-seen":\s*0?[1-9][0-9]*.*$/"last-seen": #######/g' $FILE
+	sed -Ei 's/^User-Agent: curl\/[0-9\.]+/User-Agent: curl\/VERSION/g' $FILE
+	sed -Ei 's/zproxy\/[0-9]+\.[0-9]+\.[0-9]+ \([a-z0-9]+\)/zproxy\/VERSION/g' $FILE
+	sed -Ei 's/zproxy\/[0-9]+\.[0-9]+\.[0-9]+/zproxy\/VERSION/g' $FILE
+	if [[ $WRK_MASK == 1 ]]
+	then
+		sed -Ei 's/("[0-9]xx-code-hits":) [0-9]+/\1 #######/g' $FILE
+		sed -Ei 's/("connections":) [0-9]+/\1 #######/g' $FILE
+		sed -Ei 's/("pending-connections":) [0-9]+/\1 #######/g' $FILE
+	fi
 }
 
 exec_average () {
@@ -550,6 +586,37 @@ exec_average () {
 	done
 }
 
+exec_stress_reload() {
+	if [[ "$1" == "" ]]; then error_param "directory"; fi
+	local DIR=$1
+	if [[ "$TIMEOUT" == "" ]]; then error_param "timeout"; fi
+	if [[ "$INTERVAL" == "" ]]; then error_param "interval"; fi
+
+	URL="$PROXY_CTL_RELOAD_URL"
+	METHOD="$PROXY_CTL_RELOAD_METHOD"
+
+	PID=""
+	if [[ VALGRIND -eq 0 ]] && [[ -f $PROXY_PID_F ]]
+	then
+		PID="$(cat $PROXY_PID_F)"
+	else
+		PID=$(ps aux | grep valgrind | grep -Ev grep | awk '{print $2}')
+	fi
+
+	while [ 1 ]
+	do
+		kill -SIGUSR1 $PID
+		sleep $INTERVAL
+	done &
+	local LOOP_PID=$!
+
+	sleep $TIMEOUT
+	if kill -0 "$LOOP_PID";
+	then
+		kill "$LOOP_PID"
+	fi
+}
+
 # exec_stress $CL $CONNS $TIMEOUT $THREADS
 exec_wrk() {
 	if [[ "$1" == "" ]]; then error_param "directory"; fi
@@ -563,6 +630,7 @@ exec_wrk() {
 	if [[ "$TIMEOUT" == "" ]]; then error_param "timeout"; fi
 	if [[ "$THREADS" == "" ]]; then error_param "threads"; fi
 	if [[ "$BACKGROUND" == "1" ]]; then BG="&"; fi;
+	local P="${PROXY_VPORT}"
 
 	local TMP="$TMP_DIR/bm"
 	local BM_OUT="$DIR/benchmark.out.tmp"
@@ -571,9 +639,14 @@ exec_wrk() {
 	HTTP="http"
 	if [[ $SSL -eq 1 ]]; then
 		HTTP="https"
+		P="$PROXY_VPORT_SSL"
 	fi
+	if [[ "$PORT" != "" ]]; then
+		P="${PORT}"
+	fi
+
 	if [[ "$VHOST" = "" ]]; then
-		VHOST="$PROXY_VIP:${PROXY_VPORT}"
+		VHOST="$PROXY_VIP:${P}"
 	fi
 
 	local COMMAND="ip netns exec $NS $WRK_BIN -c $CONNS -d $TIMEOUT -t $THREADS $HTTP://${VHOST}$URL $BG"
@@ -584,9 +657,12 @@ exec_wrk() {
 	if [[ "$BACKGROUND" == "" ]]; then
 		grep 'Requests/sec:' $TMP | sed -E 's/Requests\/sec:\s*//' >$BM_OUT
 	fi
+
+	WRK_MASK=1
 }
 
 clean_wrk() {
+	WRK_MASK=0
 	pkill wrk
 }
 
@@ -649,8 +725,6 @@ check_dependencies () {
 		error "The 'ngnix' binary was not found, try to configure the variable 'HTTPD_BIN'"
 	elif [[ ! -f "$PROXY_BIN" ]]; then
 		error "The 'zproxy' binary was not found, try to configure the variable 'PROXY_BIN'"
-	elif [[ ! -f "$PROXYCTL_BIN" ]]; then
-		error "The 'zproxyctl' binary was not found, try to configure the variable 'PROXYCTL_BIN'"
 	elif [[ ! -f "$NGINX_MODULE_ECHO" ]]; then
 		error "The 'echo' nginx module was not found, try to install the package 'libnginx-mod-http-echo'"
 	elif [[ ! -f "$NGINX_MODULE_HEADER" ]]; then
@@ -776,3 +850,17 @@ del_etc_hosts() {
 		cp $ETC_FILE_SAVED $ETC_FILE
 	fi
 }
+
+clean_valgrind() {
+	rm -rf $VALGRIND_OUT_ALL
+}
+
+recollect_valgrind() {
+	echo ">>>>>>>>> $1" >>$VALGRIND_OUT_ALL
+	cat $VALGRIND_OUT >>$VALGRIND_OUT_ALL
+	echo "" >>$VALGRIND_OUT_ALL
+	echo "" >>$VALGRIND_OUT_ALL
+	echo "" >>$VALGRIND_OUT_ALL
+
+}
+

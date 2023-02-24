@@ -1,0 +1,49 @@
+DESCRIPTION="Check for bad method"
+CMD=ctl
+URL="/listener/0"
+METHOD="PEST"
+#########################
+DESCRIPTION="Check for bad API call"
+CMD=ctl
+URL="/bad-api-call"
+METHOD="GET"
+#########################
+DESCRIPTION="Get listener stats"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
+#########################
+DESCRIPTION="Get invalid listener"
+CMD=ctl
+URL="/listener/99"
+METHOD="GET"
+#########################
+DESCRIPTION="Get listener services"
+CMD=ctl
+URL="/listener/0/services/"
+METHOD="GET"
+#########################
+DESCRIPTION="Get service stats"
+CMD=ctl
+URL="/listener/0/service/default"
+METHOD="GET"
+#########################
+DESCRIPTION="Get invalid service"
+CMD=ctl
+URL="/listener/0/service/bad-service"
+METHOD="GET"
+#########################
+DESCRIPTION="Get service backends"
+CMD=ctl
+URL="/listener/0/service/default/backends"
+METHOD="GET"
+#########################
+DESCRIPTION="Get backend stats"
+CMD=ctl
+URL="/listener/0/service/default/backend/10.2.1.1-80"
+METHOD="GET"
+#########################
+DESCRIPTION="Get invalid backend"
+CMD=ctl
+URL="/listener/0/service/default/backend/0.0.0.0-9999"
+METHOD="GET"
