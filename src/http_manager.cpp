@@ -181,8 +181,8 @@ void http_manager::rewriteUrl(HttpStream *stream)
 		" " + request.path + " HTTP/" + request.getHttpVersion();
 }
 
-void getHostAndPort(std::string vhost, std::string proto, std::string &host_addr,
-	int &port)
+static void getHostAndPort(const std::string &vhost, const std::string &proto,
+			   std::string &host_addr, int &port)
 {
 	host_addr = vhost;
 	port = 0;
@@ -279,16 +279,58 @@ void http_manager::setHeadersRewrBck(HttpStream *stream) {
 		rewriteHeaderDestination(stream->request, stream->listener_config, stream->backend_config);
 }
 
-std::string _rewriteHeaderLocation(std::string &header_value,
-		std::string &proto, std::string &vhost,
-		std::string vhost_header)
+static std::string _rewriteHeaderLocation(const std::string &header_value,
+					  const std::string &proto,
+					  const std::string &vhost,
+					  const std::string &vhost_header,
+					  const struct zproxy_proxy_cfg *listener_config,
+					  int rewr_loc_vhost,
+					  const struct zproxy_backend_cfg *backend)
 {
-	std::string new_header_value;
+	std::string new_header_value = "";
 	std::string host_addr;
 	int port;
 
 	getHostAndPort(vhost, proto, host_addr, port);
-	new_header_value = proto + "://" + vhost_header;
+	struct addrinfo *in_addr = zcu_net_get_address(host_addr.c_str(), port);
+
+	if (in_addr) {
+		struct addrinfo *backend_addr =
+			zcu_net_get_address(backend->address, backend->port);
+		struct addrinfo *listener_addr =
+			zcu_net_get_address(listener_config->address, listener_config->port);
+
+		// rewrite location if it points to the backend
+		if (zcu_soc_equal_sockaddr(in_addr->ai_addr, backend_addr->ai_addr, 1)) {
+			new_header_value = proto;
+		// or the listener address with different port
+		} else if (rewr_loc_vhost == 1 &&
+			   (listener_config->port != port ||
+			    ((listener_config->runtime.ssl_enabled == false) ? "http" : "https") != proto) &&
+			   (zcu_soc_equal_sockaddr(in_addr->ai_addr, listener_addr->ai_addr, 0) || vhost == vhost_header)) {
+			new_header_value = (proto == "https") ? "http" : "https";
+		}
+
+		if (!new_header_value.empty()) {
+			new_header_value += "://";
+			new_header_value += vhost_header;
+
+			if ((listener_config->runtime.ssl_enabled == false && listener_config->port != 443) ||
+			    (listener_config->port != 80)) {
+				if (header_value.find(':') == std::string::npos) {
+					new_header_value += ":";
+					new_header_value += std::to_string(listener_config->port);
+				}
+			}
+		}
+
+		freeaddrinfo(backend_addr);
+		freeaddrinfo(listener_addr);
+		freeaddrinfo(in_addr);
+	}
+
+	if (new_header_value.empty() && !proto.empty() && !vhost.empty())
+		new_header_value = proto + "://" + vhost;
 
 	return new_header_value;
 }
@@ -318,9 +360,14 @@ int rewriteHeaderLocation(HttpStream *stream, http::HTTP_HEADER_NAME header_name
 
 	parseUrl(header_value, matches, proto, host, path, host_addr, port);
 
-	if (rw_location != 0)
+	if (stream->backend_config && rw_location != 0) {
 		new_header_value = _rewriteHeaderLocation(header_value,
-			proto, host, stream->request.virtual_host);
+			proto, host, stream->request.virtual_host, stream->listener_config,
+			rw_location, stream->backend_config);
+	}
+
+	if (new_header_value.empty() && !proto.empty() && !host.empty())
+		new_header_value = proto + "://" + host;
 
 	if (stream->request.path_mod && rw_url_rev) {
 		// the string to remove must be at the begining
