@@ -823,7 +823,7 @@ Example:
            ReplaceHeader    Request     ^Cookie:        ^Server=(.*) 	Test=$1
            ReplaceHeader	Response	^X-Powered-By: 	(.*)	        Server($1)
 .TP
-\fBRoutingPolicy\fR ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME|PENDING_CONNECTIONS
+\fBRoutingPolicy\fR ROUND_ROBIN|LEAST_CONNECTIONS|RESPONSE_TIME
 Specify the routing policy. All the algorithms are weighted with all the
 weights set in each backend.
 
@@ -835,8 +835,6 @@ weights set in each backend.
     \fBRESPONSE_TIME\fR select the backend with the lowest response time using
     as a proportion the weights set.
 
-    \fBPENDING_CONNECTIONS\fR select the backend with least pending connections
-    using as a proportion the weights set.
 .TP
 \fBBackEnd\fR
 Directives enclosed between a

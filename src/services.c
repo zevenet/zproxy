@@ -334,39 +334,6 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 }
 
 static const struct zproxy_backend_cfg *
-zproxy_service_least_pending(const struct zproxy_service_cfg *service_config,
-			     struct zproxy_http_state *http_state)
-{
-	struct zproxy_backend_cfg *selected_backend = NULL;
-	struct zproxy_backend_cfg *backend = NULL;
-	bool selected_stalling = true;
-	int selected_pending = 0;
-	bool stalling, avail;
-	int conns, pending;
-
-	list_for_each_entry(backend, &service_config->backend_list, list) {
-		conns = zproxy_stats_backend_get_established(http_state, backend);
-		pending = zproxy_stats_backend_get_pending(http_state, backend);
-		stalling = pending > 1 && conns == 0;
-		avail = zproxy_backend_is_available(service_config, backend, http_state);
-		if ((!selected_backend || pending * selected_backend->weight < selected_pending * backend->weight)
-				&& (selected_stalling || !stalling)
-				&& avail) {
-			/* pending was incremented in zproxy_backend_is_available() */
-			if(selected_backend)
-				zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
-			selected_backend = backend;
-			selected_pending = pending;
-		} else {
-			/* pending was incremented in zproxy_backend_is_available() */
-			zproxy_stats_backend_dec_conn_pending(http_state, backend);
-		}
-	}
-
-	return selected_backend;
-}
-
-static const struct zproxy_backend_cfg *
 zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 			     struct zproxy_http_state *http_state)
 {
@@ -429,9 +396,6 @@ zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 		break;
 	case ROUTING_POLICY::W_LEAST_CONNECTIONS:
 		selected_backend = zproxy_service_least_conn(service_config, http_state);
-		break;
-	case ROUTING_POLICY::PENDING_CONNECTIONS:
-		selected_backend = zproxy_service_least_pending(service_config, http_state);
 		break;
 	case ROUTING_POLICY::RESPONSE_TIME:
 		selected_backend = zproxy_service_response_time(service_config, http_state);

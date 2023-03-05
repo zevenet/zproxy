@@ -1073,7 +1073,7 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 			else if (cp == "RESPONSE_TIME")
 				service->routing_policy = ROUTING_POLICY::RESPONSE_TIME;
 			else if (cp == "PENDING_CONNECTIONS")
-				service->routing_policy = ROUTING_POLICY::PENDING_CONNECTIONS;
+				service->routing_policy = ROUTING_POLICY::W_LEAST_CONNECTIONS;
 			else
 				parse_error("Unknown routing policy");
 		} else if (zproxy_regex_exec(CONFIG_REGEX_CompressionAlgorithm, lin, matches)) { // NOT USED

@@ -86,8 +86,6 @@ enum class ROUTING_POLICY {
 	W_LEAST_CONNECTIONS,
 	/* Selects the backend with less response time. */
 	RESPONSE_TIME,
-	/* Selects the backend with less pending connections. */
-	PENDING_CONNECTIONS,
 };
 
 /** The enum Backend::BACKEND_STATUS defines the status of the Backend. */
