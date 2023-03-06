@@ -214,18 +214,19 @@ static bool zproxy_backend_is_available(const struct zproxy_service_cfg *service
 	struct zproxy_monitor_backend_state monitor_backend = {};
 	struct zproxy_monitor_service_state *monitor_service;
 	int pending, bck_conns;
-	bool atConnLimit;
+	bool over_connlimit;
 
 	pending = zproxy_stats_backend_inc_conn_pending(http_state, bck);
 	bck_conns = zproxy_stats_backend_get_established(http_state, bck) + pending;
 
 	/* if connection_limit > 0, because at 0 there is no limit */
-	atConnLimit = bck->connection_limit > 0 && bck->connection_limit < bck_conns;
-	if (atConnLimit) {
+	over_connlimit = bck->connection_limit > 0 && bck->connection_limit < bck_conns;
+	if (over_connlimit) {
 		zcu_log_print_th(LOG_DEBUG,
 				 "Connection limit %d hit in backend %s:%d",
 				 bck->connection_limit, bck->address,
 				 bck->runtime.addr.sin_port);
+		return false;
 	}
 
 	monitor_service = zproxy_monitor_service_state_lookup(service_config->name);
@@ -238,8 +239,11 @@ static bool zproxy_backend_is_available(const struct zproxy_service_cfg *service
 					  service_config->name, &monitor_backend))
 		return false;
 
-	return monitor_backend.status == ZPROXY_MONITOR_UP &&
-		bck->priority <= monitor_service->priority && !atConnLimit;
+	if (monitor_backend.status != ZPROXY_MONITOR_UP ||
+	    bck->priority > monitor_service->priority)
+		return false;
+
+	return true;
 }
 
 static const struct zproxy_backend_cfg *
