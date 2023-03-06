@@ -78,10 +78,6 @@ struct zproxy_backend_cfg *Service::selectBackend(
 	if (list_empty(&service_config->backend_list))
 		return nullptr;
 
-	selected_backend = zproxy_service_singleton_backend(service_config, http_state);
-	if (selected_backend)
-		return selected_backend;
-
 	// check if session exists
 	bck_addr = session->getBackend(client_addr, request,
 				       service_config->name, true);

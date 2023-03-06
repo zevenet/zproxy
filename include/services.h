@@ -24,10 +24,6 @@ int zproxy_service_state_init(struct zproxy_cfg *cfg);
 int zproxy_service_state_refresh(struct zproxy_cfg *cfg);
 void zproxy_service_state_fini(void);
 
-struct zproxy_backend_cfg *
-zproxy_service_singleton_backend(struct zproxy_service_cfg *service_config,
-				 struct zproxy_http_state *http_state);
-
 const struct zproxy_backend_cfg *
 zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 			struct zproxy_http_state *http_state);

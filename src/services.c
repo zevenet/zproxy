@@ -380,30 +380,8 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 	return selected_backend;
 }
 
-const struct zproxy_backend_cfg *
-zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
-			struct zproxy_http_state *http_state)
-{
-	const struct zproxy_backend_cfg *selected_backend;
-
-	switch (service_config->routing_policy) {
-	default:
-	case ROUTING_POLICY::ROUND_ROBIN:
-		selected_backend = zproxy_service_round_robin(service_config, http_state);
-		break;
-	case ROUTING_POLICY::W_LEAST_CONNECTIONS:
-		selected_backend = zproxy_service_least_conn(service_config, http_state);
-		break;
-	case ROUTING_POLICY::RESPONSE_TIME:
-		selected_backend = zproxy_service_response_time(service_config, http_state);
-		break;
-	}
-
-	return selected_backend;
-}
-
-struct zproxy_backend_cfg *
-zproxy_service_singleton_backend(struct zproxy_service_cfg *service_config,
+static struct zproxy_backend_cfg *
+zproxy_service_singleton_backend(const struct zproxy_service_cfg *service_config,
 				 struct zproxy_http_state *http_state)
 {
 	struct zproxy_backend_cfg *selected_backend;
@@ -419,6 +397,32 @@ zproxy_service_singleton_backend(struct zproxy_service_cfg *service_config,
 	zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
 
 	return NULL;
+}
+
+const struct zproxy_backend_cfg *
+zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
+			struct zproxy_http_state *http_state)
+{
+	const struct zproxy_backend_cfg *selected_backend;
+
+	selected_backend = zproxy_service_singleton_backend(service_config, http_state);
+	if (selected_backend)
+		return selected_backend;
+
+	switch (service_config->routing_policy) {
+	default:
+	case ROUTING_POLICY::ROUND_ROBIN:
+		selected_backend = zproxy_service_round_robin(service_config, http_state);
+		break;
+	case ROUTING_POLICY::W_LEAST_CONNECTIONS:
+		selected_backend = zproxy_service_least_conn(service_config, http_state);
+		break;
+	case ROUTING_POLICY::RESPONSE_TIME:
+		selected_backend = zproxy_service_response_time(service_config, http_state);
+		break;
+	}
+
+	return selected_backend;
 }
 
 struct zproxy_backend_cfg *
