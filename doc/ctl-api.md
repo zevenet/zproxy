@@ -120,6 +120,10 @@ components of Zproxy.
   be used*.
 - **response-time** "floating": The average time that a backend takes to respond
   a request in seconds.
+- **cookie-key** "string": Key used in a cookie to associate sessions with a
+  backend. It's format is `4-<address>-<port>` where `<address>` and `<port>`
+  are the address and port respectively of the backend, formatted in the network
+  byte order long integer hexidecimal format.
 - **status** "string": Informs about the backend status. It can be *active*,
   *down*, or *disabled*:
   - *active*: The backend is up and running.
