@@ -111,7 +111,6 @@ void HttpStream::clearStats()
 			break;
 		case BCK_CONN:
 			zproxy_stats_listener_dec_conn_established(http_state);
-			zproxy_stats_backend_dec_conn_pending(http_state, backend_config);
 			break;
 		case ESTABLISHED:
 			zproxy_stats_listener_dec_conn_established(http_state);

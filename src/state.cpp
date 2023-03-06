@@ -60,15 +60,6 @@ struct zproxy_stats *zproxy_stats_backend_get(
 		->backend_stats;
 }
 
-int zproxy_stats_backend_get_pending(
-		const struct zproxy_http_state *http_state,
-		const struct zproxy_backend_cfg *backend_cfg)
-{
-	return http_state->services.at(backend_cfg->service->name)
-		->backends.at(backend_cfg->runtime.id)
-		->backend_stats.conn_pending;
-}
-
 int zproxy_stats_backend_get_established(
 		const struct zproxy_http_state *http_state,
 		const struct zproxy_backend_cfg *backend_cfg)
@@ -115,24 +106,6 @@ void zproxy_stats_backend_dec_conn_established(
 	http_state->services.at(backend_cfg->service->name)
 		->backends.at(backend_cfg->runtime.id)
 		->backend_stats.conn_established--;
-}
-
-int zproxy_stats_backend_inc_conn_pending(
-		struct zproxy_http_state *http_state,
-		const struct zproxy_backend_cfg *backend_cfg)
-{
-	return ++http_state->services.at(backend_cfg->service->name)
-		->backends.at(backend_cfg->runtime.id)
-		->backend_stats.conn_pending;
-}
-
-int zproxy_stats_backend_dec_conn_pending(
-		struct zproxy_http_state *http_state,
-		const struct zproxy_backend_cfg *backend_cfg)
-{
-	return --http_state->services.at(backend_cfg->service->name)
-		->backends.at(backend_cfg->runtime.id)
-		->backend_stats.conn_pending;
 }
 
 struct zproxy_backend_state *zproxy_state_get_backend(

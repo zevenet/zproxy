@@ -213,11 +213,10 @@ static bool zproxy_backend_is_available(const struct zproxy_service_cfg *service
 {
 	struct zproxy_monitor_backend_state monitor_backend = {};
 	struct zproxy_monitor_service_state *monitor_service;
-	int pending, bck_conns;
 	bool over_connlimit;
+	int bck_conns;
 
-	pending = zproxy_stats_backend_inc_conn_pending(http_state, bck);
-	bck_conns = zproxy_stats_backend_get_established(http_state, bck) + pending;
+	bck_conns = zproxy_stats_backend_get_established(http_state, bck);
 
 	/* if connection_limit > 0, because at 0 there is no limit */
 	over_connlimit = bck->connection_limit > 0 && bck->connection_limit < bck_conns;
@@ -256,8 +255,6 @@ zproxy_service_round_robin(const struct zproxy_service_cfg *service_cfg,
 	struct zproxy_service *service_state;
 	int round = 0;
 
-	pthread_mutex_lock(&service_state_mutex);
-
 	service_state = zproxy_service_lookup(service_cfg->name);
 	if (!service_state)
 		goto err;
@@ -286,9 +283,6 @@ zproxy_service_round_robin(const struct zproxy_service_cfg *service_cfg,
 			return backend_cfg;
 		}
 
-		/* zproxy_backend_is_available bumps this, restore it. */
-		zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
-
 skip_stale:
 		service_state->rr.used = 0;
 		if (list_is_last(&backend->list, &service_state->backend_list)) {
@@ -310,25 +304,18 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 	struct zproxy_backend_cfg *selected_backend = NULL;
 	struct zproxy_backend_cfg *backend_cfg;
 	int selected_conns = 0;
-	int conns, pending;
 	bool avail;
+	int conns;
 
 	list_for_each_entry(backend_cfg, &service_config->backend_list, list) {
 		conns = zproxy_stats_backend_get_established(http_state, backend_cfg);
-		pending = zproxy_stats_backend_get_pending(http_state, backend_cfg);
 		avail = zproxy_backend_is_available(service_config, backend_cfg, http_state);
 		if ((!selected_backend ||
-		    selected_conns * selected_backend->weight < (conns + pending) * backend_cfg->weight) && avail) {
-			/* pending was incremented in zproxy_backend_is_available() */
-			if (selected_backend)
-				zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
+		    selected_conns * selected_backend->weight < conns * backend_cfg->weight) && avail) {
 			selected_backend = backend_cfg;
-			selected_conns = conns + pending;
+			selected_conns = conns;
 			continue;
 		}
-
-		/* pending was incremented in zproxy_backend_is_available() */
-		zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
 	}
 
 	return selected_backend;
@@ -366,15 +353,10 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 		selected_weighted_latency.tv_usec = selected_avg_latency->tv_usec * backend_cfg->weight;
 
 		if (timercmp(&weighted_latency, &selected_weighted_latency, <) && avail) {
-			/* pending was incremented in zproxy_backend_is_available() */
-			zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
 			selected_backend = backend_cfg;
 			selected_avg_latency = avg_latency;
 			continue;
 		}
-
-		/* pending was incremented in zproxy_backend_is_available() */
-		zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
 	}
 
 	return selected_backend;
@@ -393,9 +375,6 @@ zproxy_service_singleton_backend(const struct zproxy_service_cfg *service_config
 	if (zproxy_backend_is_available(service_config, selected_backend, http_state))
 		return selected_backend;
 
-	/* pending was incremented in zproxy_backend_is_available() */
-	zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
-
 	return NULL;
 }
 
@@ -409,6 +388,8 @@ zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 	if (selected_backend)
 		return selected_backend;
 
+	pthread_mutex_lock(&service_state_mutex);
+
 	switch (service_config->routing_policy) {
 	default:
 	case ROUTING_POLICY::ROUND_ROBIN:
@@ -421,6 +402,8 @@ zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 		selected_backend = zproxy_service_response_time(service_config, http_state);
 		break;
 	}
+
+	pthread_mutex_unlock(&service_state_mutex);
 
 	return selected_backend;
 }
@@ -444,8 +427,6 @@ zproxy_service_backend_session(struct zproxy_service_cfg *service_config,
 		zcu_log_print(LOG_DEBUG, "Session backend is not up. Choosing a new one.");
 		return NULL;
 	}
-
-	zproxy_stats_backend_inc_conn_pending(http_state, selected_backend);
 
 	return selected_backend;
 }
