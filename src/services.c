@@ -304,14 +304,15 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 	struct zproxy_backend_cfg *selected_backend = NULL;
 	struct zproxy_backend_cfg *backend_cfg;
 	int selected_conns = 0;
-	bool avail;
 	int conns;
 
 	list_for_each_entry(backend_cfg, &service_config->backend_list, list) {
+		if (!zproxy_backend_is_available(service_config, backend_cfg, http_state))
+			continue;
+
 		conns = zproxy_stats_backend_get_established(http_state, backend_cfg);
-		avail = zproxy_backend_is_available(service_config, backend_cfg, http_state);
-		if ((!selected_backend ||
-		    selected_conns * selected_backend->weight < conns * backend_cfg->weight) && avail) {
+		if (!selected_backend ||
+		    selected_conns * selected_backend->weight < conns * backend_cfg->weight) {
 			selected_backend = backend_cfg;
 			selected_conns = conns;
 			continue;
@@ -332,10 +333,9 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 	const struct timeval *selected_avg_latency = NULL;
 	struct zproxy_backend_cfg *backend_cfg;
 	const struct timeval *avg_latency;
-	bool avail;
 
 	list_for_each_entry(backend_cfg, &service_config->backend_list, list) {
-		if (!zproxy_monitor_backend_state(&backend_cfg->runtime.addr, service_config->name, &monitor_backend))
+		if (!zproxy_backend_is_available(service_config, backend_cfg, http_state))
 			continue;
 
 		avg_latency = &monitor_backend.latency;
@@ -345,14 +345,13 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 			selected_avg_latency = avg_latency;
 			continue;
 		}
-		avail = zproxy_backend_is_available(service_config, backend_cfg, http_state);
 		weighted_latency.tv_sec = avg_latency->tv_sec * selected_backend->weight;
 		weighted_latency.tv_usec = avg_latency->tv_usec * selected_backend->weight;
 
 		selected_weighted_latency.tv_sec = selected_avg_latency->tv_sec * backend_cfg->weight;
 		selected_weighted_latency.tv_usec = selected_avg_latency->tv_usec * backend_cfg->weight;
 
-		if (timercmp(&weighted_latency, &selected_weighted_latency, <) && avail) {
+		if (timercmp(&weighted_latency, &selected_weighted_latency, <)) {
 			selected_backend = backend_cfg;
 			selected_avg_latency = avg_latency;
 			continue;
