@@ -342,7 +342,7 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 	struct zproxy_monitor_backend_state monitor_backend = {};
 	struct zproxy_backend_cfg *selected_backend = NULL;
 	const struct timeval *selected_avg_latency = NULL;
-	struct zproxy_backend_cfg *backend_cfg = NULL;
+	struct zproxy_backend_cfg *backend_cfg;
 	const struct timeval *avg_latency;
 	bool selected_stalling = true;
 	bool stalling, avail;
