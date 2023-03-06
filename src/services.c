@@ -328,10 +328,11 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 			selected_backend = backend_cfg;
 			selected_conns = conns;
 			selected_stalling = stalling;
-		} else {
-			/* pending was incremented in zproxy_backend_is_available() */
-			zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
+			continue;
 		}
+
+		/* pending was incremented in zproxy_backend_is_available() */
+		zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
 	}
 
 	return selected_backend;
@@ -379,10 +380,11 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 			zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
 			selected_backend = backend_cfg;
 			selected_avg_latency = avg_latency;
-		} else {
-			/* pending was incremented in zproxy_backend_is_available() */
-			zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
+			continue;
 		}
+
+		/* pending was incremented in zproxy_backend_is_available() */
+		zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
 	}
 
 	return selected_backend;
