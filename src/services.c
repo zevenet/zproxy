@@ -315,7 +315,7 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 		pending = zproxy_stats_backend_get_pending(http_state, backend);
 		stalling = pending > 1 && conns == 0;
 		avail = zproxy_backend_is_available(service_config, backend, http_state);
-		if ((!selected_backend || conns * selected_backend->weight < selected_conns * backend->weight)
+		if ((!selected_backend || selected_conns * selected_backend->weight < conns * backend->weight)
 				&& (selected_stalling || !stalling)
 				&& avail) {
 			/* pending was incremented in zproxy_backend_is_available() */
