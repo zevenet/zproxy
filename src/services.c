@@ -309,25 +309,21 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 {
 	struct zproxy_backend_cfg *selected_backend = NULL;
 	struct zproxy_backend_cfg *backend_cfg;
-	bool selected_stalling = true;
 	int selected_conns = 0;
-	bool stalling, avail;
 	int conns, pending;
+	bool avail;
 
 	list_for_each_entry(backend_cfg, &service_config->backend_list, list) {
 		conns = zproxy_stats_backend_get_established(http_state, backend_cfg);
 		pending = zproxy_stats_backend_get_pending(http_state, backend_cfg);
-		stalling = pending > 1 && conns == 0;
 		avail = zproxy_backend_is_available(service_config, backend_cfg, http_state);
-		if ((!selected_backend || selected_conns * selected_backend->weight < conns * backend_cfg->weight)
-				&& (selected_stalling || !stalling)
-				&& avail) {
+		if ((!selected_backend ||
+		    selected_conns * selected_backend->weight < (conns + pending) * backend_cfg->weight) && avail) {
 			/* pending was incremented in zproxy_backend_is_available() */
 			if (selected_backend)
 				zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
 			selected_backend = backend_cfg;
-			selected_conns = conns;
-			selected_stalling = stalling;
+			selected_conns = conns + pending;
 			continue;
 		}
 
@@ -349,9 +345,7 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 	const struct timeval *selected_avg_latency = NULL;
 	struct zproxy_backend_cfg *backend_cfg;
 	const struct timeval *avg_latency;
-	bool selected_stalling = true;
-	bool stalling, avail;
-	int conns, pending;
+	bool avail;
 
 	list_for_each_entry(backend_cfg, &service_config->backend_list, list) {
 		if (!zproxy_monitor_backend_state(&backend_cfg->runtime.addr, service_config->name, &monitor_backend))
@@ -364,9 +358,6 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 			selected_avg_latency = avg_latency;
 			continue;
 		}
-		conns = zproxy_stats_backend_get_established(http_state, backend_cfg);
-		pending = zproxy_stats_backend_get_pending(http_state, backend_cfg);
-		stalling = pending > 1 && conns == 0;
 		avail = zproxy_backend_is_available(service_config, backend_cfg, http_state);
 		weighted_latency.tv_sec = avg_latency->tv_sec * selected_backend->weight;
 		weighted_latency.tv_usec = avg_latency->tv_usec * selected_backend->weight;
@@ -374,8 +365,7 @@ zproxy_service_response_time(const struct zproxy_service_cfg *service_config,
 		selected_weighted_latency.tv_sec = selected_avg_latency->tv_sec * backend_cfg->weight;
 		selected_weighted_latency.tv_usec = selected_avg_latency->tv_usec * backend_cfg->weight;
 
-		if (timercmp(&weighted_latency, &selected_weighted_latency, <)
-		    && (selected_stalling || !stalling) && avail) {
+		if (timercmp(&weighted_latency, &selected_weighted_latency, <) && avail) {
 			/* pending was incremented in zproxy_backend_is_available() */
 			zproxy_stats_backend_dec_conn_pending(http_state, selected_backend);
 			selected_backend = backend_cfg;
