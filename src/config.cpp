@@ -32,6 +32,7 @@
 #include "macro.h"
 #include "config.h"
 #include "list.h"
+#include "zcu_common.h"
 #include "zcu_network.h"
 #include "ssl.h"
 #include "state.h"
@@ -548,25 +549,27 @@ static char *conf_fgets(struct zproxy_cfg *cfg, char *buf, const int max, FILE *
 	}
 }
 
-static int parseRedirect(zproxy_cfg *cfg, zproxy_backend_redirect * be, char *lin, regmatch_t *matches,
-			   struct list_head *url)
+static int parseRedirect(struct zproxy_backend_redirect * be, char *lin,
+			 regmatch_t *matches, bool empty_req_url)
 {
-	// 1 - Dynamic or not, 2 - Request Redirect #, 3 - Destination URL
 	be->enabled = true;
 	be->be_type = 302;
-	be->redir_req = 0;
+	be->dynamic = false;
 
-	if (matches[1].rm_eo != matches[1].rm_so) {
-		if ((lin[matches[1].rm_so] & ~0x20) == 'D') {
-			be->redir_req = 2;
-			if (list_empty(url))
-				parse_error("Dynamic Redirect must be preceeded by a URL line");
-		} else if ((lin[matches[1].rm_so] & ~0x20) == 'A')
-			be->redir_req = 1;
+	const size_t lin_size = strlen(lin);
+	for (int i = 0; lin[i] != '\0'; ++i) {
+		if (lin[i] == '$' &&
+		    i+1 < lin_size && // to avoid a segfault in the next condition
+		    IN_RANGE(lin[i+1], '1', '9')) {
+			if (empty_req_url)
+				parse_error("Regex replace redirect requires prior definition of URL line");
+			be->dynamic = true;
+		}
 	}
 
 	if (matches[2].rm_eo != matches[2].rm_so)
 		be->be_type = atoi(lin + matches[2].rm_so);
+
 	lin[matches[3].rm_eo] = '\0';
 	snprintf(be->url, CONFIG_MAXBUF, "%s", lin + matches[3].rm_so);
 
@@ -1054,7 +1057,8 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 		} else if (zproxy_regex_exec(CONFIG_REGEX_StrictTransportSecurity, lin, matches)) {
 			service->header.sts = atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Redirect, lin, matches)) {
-			if (parseRedirect(cfg, &service->redirect, lin, matches, &service->runtime.req_url) == -1)
+			if (parseRedirect(&service->redirect, lin, matches,
+					  (bool)list_empty(&service->runtime.req_url)) == -1)
 				return -1;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_BackEnd, lin, matches)) {
 			if (zproxy_backend_cfg_file(cfg, service, fd) == -1)

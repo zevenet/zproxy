@@ -27,6 +27,7 @@
 #define UNIQUE_NAME_I(a, b) UNIQUE_NAME_II(~, a##b)
 #define UNIQUE_NAME_II(p, res) res
 #define UNIQUE_NAME(base) UNIQUE_NAME_0(base, __COUNTER__)
+#define IN_RANGE(var, min, max) (var >= min && var <= max)
 
 // Maximum buffer data. The requet or response headers can't be bigger
 // than this value

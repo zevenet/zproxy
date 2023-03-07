@@ -717,28 +717,18 @@ char *http_manager::replyRedirectBackend(HttpStream &stream,
 			stream.request.virtual_host.length());
 		new_url = buf;
 	}
-	/* 0 - redirect is absolute,
-	 * 1 - the redirect should include the request path, or
-	 * 2 if it should use perl dynamic replacement */
-	switch (redirect.redir_req) {
-	case 1:
-		new_url += stream.request.path;
-		break;
-	case 2: { // Dynamic redirect
+
+	if (redirect.dynamic) {
 		list_for_each_entry_safe(current, next, &stream.service_config->runtime.req_url, list) {
 			if (str_replace_regexp(buf, stream.request.path.data(),
-						   stream.request.path.length(),
-						   &current->pat,
-						   new_url.data()) != -1) {
+					       stream.request.path.length(),
+					       &current->pat, new_url.data()) != -1) {
 				new_url = buf;
 			}
 		}
-		break;
 	}
-	case 0:
-	default:
-		break;
-	}
+
 	int redirect_code = redirect.be_type;
+
 	return replyRedirect(redirect_code, new_url, stream);
 }

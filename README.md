@@ -440,26 +440,22 @@ All configuration directives enclosed between Service and End are specific to a 
 
 	Directives enclosed between a BackEnd and the following End directives define a single back-end server (see below for details). You may define multiple back-ends per service, in which case Zproxy will attempt to load-balance between them.
 
-- **[Redirect]** [code] "url"
+- **Redirect** [http code] "URL"
 
-	Defines a special type of back-end. Instead of sending the request to a back-end Zproxy replies immediately with a redirection to the given URL. You may define multiple redirectors in a service, as well as mixing them with regular back-ends.
+	With this directive zproxy will generate an HTTP response with the given http code or 302 by default, including in the "Location" header the URL provided. The new URL redirected could be an absolute including complete URI or relative path. In the case that the redirected URL doesn't match with the scheme `<protocol>://<something>`, then it would be considered a relative path and it would be appended to the original path given by the client.  Some regular expressions would be available for replacements from `$1` to `$9` to compound the redirected URI, according to the "URL" service matcher.  Also, `${VHOST}` variable is available which will use the "Host" header included in the client request. If no "Host" is provided, then the Listener IP and port would be used.
 
-	The address the client is redirected to is determined by the command you specify.  If you specify Redirect, the url is taken as an absolute host and path to redirect to. If you use RedirectAppend, the original request path will be appended to the host and path you specified. If you use RedirectDynamic, then url can contain RegEx replacements in the form $1 through $9 which indicate expression captured from the original request path. You must have a URL directive, and the first URL directive for the  service  is  the one used for capturing expressions.
+	Examples: if you specify in the configuration
 
-              Examples: if you specify in the configuration
+	  Redirect "http://abc.example"
 
-                  Redirect "http://abc.example"
+	and the client requested http://xyz/a/b/c then it will be redirected to http://abc.example
 
-              and the client requested http://xyz/a/b/c then it will be redirected to http://abc.example
+	if you specify in the configuration
 
-	There is a token "${VHOST}" that will be replaced by the "Host" header field when composing the redirect URL. This is useful to use just one service to redirect several domains to HTTPS mode:
+	  Redirect 301 "https://${VHOST}"
 
-              Examples: if you specify in the configuration
-
-                  Redirect 301 "https://${VHOST}"
-
-              and the client requested http://abc.example then it will be redirected to https://abc.example
-              if the client requested http://xyz.example then it will be redirected to https://xyz.example
+	and the client requested http://abc.example then it will be redirected to https://abc.example
+	if the client requested http://xyz.example then it will be redirected to https://xyz.example
 
 	Technical note: in an ideal world Zproxy should reply with a "307 Temporary Redirect" status. Unfortunately, that is not yet supported by all clients (in particular HTTP 1.0 ones), so Zproxy currently replies by default with a "302 Found" instead. You may override this behaviour by specifying the code to be used (301, 302 or 307).
 
