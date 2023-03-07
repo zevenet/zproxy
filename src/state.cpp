@@ -60,13 +60,30 @@ struct zproxy_stats *zproxy_stats_backend_get(
 		->backend_stats;
 }
 
-int zproxy_stats_backend_get_established(
+static int __zproxy_stats_backend_get_pending(
+		const struct zproxy_http_state *http_state,
+		const struct zproxy_backend_cfg *backend_cfg)
+{
+	return http_state->services.at(backend_cfg->service->name)
+		->backends.at(backend_cfg->runtime.id)
+		->backend_stats.conn_pending;
+}
+
+static int __zproxy_stats_backend_get_established(
 		const struct zproxy_http_state *http_state,
 		const struct zproxy_backend_cfg *backend_cfg)
 {
 	return http_state->services.at(backend_cfg->service->name)
 		->backends.at(backend_cfg->runtime.id)
 		->backend_stats.conn_established;
+}
+
+int zproxy_stats_backend_get_established(
+		const struct zproxy_http_state *http_state,
+		const struct zproxy_backend_cfg *backend_cfg)
+{
+	return __zproxy_stats_backend_get_pending(http_state, backend_cfg) +
+	       __zproxy_stats_backend_get_established(http_state, backend_cfg);
 }
 
 int zproxy_stats_backend_inc_code(struct zproxy_http_state *http_state,
