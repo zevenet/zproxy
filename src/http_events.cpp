@@ -15,11 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdlib>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "http.h"
 #include "http_log.h"
@@ -28,6 +30,8 @@
 #include "service.h"
 #include "session.h"
 #include "state.h"
+#include "config.h"
+#include "zcu_http.h"
 
 
 static void zproxy_set_backend(zproxy_backend_cfg *backend, zproxy_http_ctx *ctx, HttpStream *stream)
@@ -490,5 +494,20 @@ int zproxy_http_event_timeout(struct zproxy_http_ctx *ctx)
 
 int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
 {
-	return -1;
+	ctx->resp_buf = (char*)calloc(SRV_MAX_HEADER + CONFIG_MAXBUF, sizeof(char));
+	if (!ctx->resp_buf)
+		return -1;
+	snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
+		 "%s%s%s%zu%s%s%s%s%s%s%s",
+		 ws_str_responses[WS_HTTP_400],
+		 HTTP_HEADER_CONTENT_HTML,
+		 HTTP_HEADER_CONTENTLEN, strlen(ctx->cfg->runtime.errnossl_msg), HTTP_LINE_END,
+		 HTTP_HEADER_EXPIRES,
+		 HTTP_HEADER_PRAGMA_NO_CACHE,
+		 HTTP_HEADER_SERVER,
+		 HTTP_HEADER_CACHE_CONTROL,
+		 HTTP_LINE_END,
+		 ctx->cfg->runtime.errnossl_msg);
+
+	return 1;
 }

@@ -25,7 +25,9 @@
 #define HTTP_HEADER_KEY			"Key: "
 #define HTTP_HEADER_CONTENT_PLAIN "Content-Type: text/plain" HTTP_LINE_END
 #define HTTP_HEADER_CONTENT_JSON "Content-Type: application/json" HTTP_LINE_END
+#define HTTP_HEADER_CONTENT_HTML "Content-Type: text/html" HTTP_LINE_END
 #define HTTP_HEADER_EXPIRES "Expires: now" HTTP_LINE_END
+#define HTTP_HEADER_SERVER "Server: zproxy/" HTTP_LINE_END
 #define HTTP_HEADER_PRAGMA_NO_CACHE "Pragma: no-cache" HTTP_LINE_END
 #define HTTP_HEADER_CACHE_CONTROL "Cache-control: no-cache,no-store" HTTP_LINE_END
 

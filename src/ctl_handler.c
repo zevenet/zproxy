@@ -21,8 +21,6 @@
 #include "zcu_log.h"
 #include "json.h"
 
-#define HTTP_HEADER_SERVER "Server: zproxy/" HTTP_LINE_END
-
 #define API_REGEX_SELECT_LISTENER           "^[/]+listener[/]+([0-9]+)[/]*$"
 #define API_REGEX_SELECT_LISTENER_SERVICES  "^[/]+listener[/]+([0-9]+)[/]+services[/]*$"
 #define API_REGEX_SELECT_SERVICE            "^[/]+listener[/]+([0-9]+)[/]+service[/]+([a-zA-Z0-9-_. ]+)[/]*$"

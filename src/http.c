@@ -37,6 +37,7 @@
 #include "http.h"
 #include "list.h"
 #include "state.h"
+#include "zcu_log.h"
 
 static uint32_t client_resp_buflen(const struct zproxy_conn *conn)
 {
@@ -649,6 +650,8 @@ static int zproxy_http_nossl(struct ev_loop *loop, struct zproxy_conn *conn,
 		.from		= ZPROXY_HTTP_CLIENT,
 		.addr		= &conn->client.addr,
 	};
+
+	zcu_log_print_th(LOG_WARNING, "HTTP client tried connecting to HTTPS listener.");
 
 	if (zproxy_http_event_nossl(&ctx) < 0)
 		return -1;

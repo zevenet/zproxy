@@ -1207,9 +1207,14 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 				   proxy->runtime.err503_msg) < 0)
 		return -1;
 
-	if (zproxy_cfg_errmsg_file(proxy->error.nossl_url_path,
-				   proxy->runtime.errnossl_msg) < 0)
-		return -1;
+	if (proxy->error.errnossl_path[0] == '\0') {
+		snprintf(proxy->runtime.errnossl_msg, CONFIG_MAXBUF, "%s",
+			 CONFIG_DEFAULT_ErrNoSsl);
+	} else {
+		if (zproxy_cfg_errmsg_file(proxy->error.errnossl_path,
+					   proxy->runtime.errnossl_msg) < 0)
+			return -1;
+	}
 
 	if (zproxy_cfg_errmsg_file(proxy->error.nossl_url_path,
 				   proxy->runtime.nossl_url_msg) < 0)
@@ -1394,7 +1399,16 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Err503, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
 			snprintf(proxy->error.err503_path, PATH_MAX, "%s", lin + matches[1].rm_so);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrNoSsl, lin, matches)) { // NOT USED
+		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrNoSsl, lin, matches)) {
+			if (matches[1].rm_eo != matches[1].rm_so) {
+				lin[matches[1].rm_eo] = '\0';
+				proxy->runtime.errnossl_code = atoi(lin + matches[1].rm_so);
+			} else {
+				proxy->runtime.errnossl_code = CONFIG_DEFAULT_ErrNoSsl_Code;
+			}
+			lin[matches[2].rm_eo] = '\0';
+			snprintf(proxy->error.errnossl_path, PATH_MAX, "%s",
+				 lin + matches[2].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_NoSslRedirect, lin, matches)) {  // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ForwardSNI, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_MaxRequest, lin, matches)) {
