@@ -20,6 +20,7 @@
 
 #include "list.h"
 #include "http_protocol.h"
+#include "zcu_http.h"
 #include <stdbool.h>
 #include <pcreposix.h>
 #include <string>
@@ -338,7 +339,8 @@ struct zproxy_proxy_cfg {
 		char			err501_path[PATH_MAX];
 		char			err503_path[PATH_MAX];
 		char			errnossl_path[PATH_MAX];
-		char			nossl_url_path[PATH_MAX];
+		char			nosslredirect_url[PATH_MAX];
+		enum ws_responses       nosslredirect_code;
 		char			errwaf_path[PATH_MAX];
 	} error;
 
@@ -351,7 +353,6 @@ struct zproxy_proxy_cfg {
 		char			err503_msg[CONFIG_MAXBUF];
 		char			errnossl_msg[CONFIG_MAXBUF];
 		int                     errnossl_code;
-		char			nossl_url_msg[CONFIG_MAXBUF];
 		char			errwaf_msg[CONFIG_MAXBUF];
 		void                    *waf_rules;
 		regex_t			req_url_pat_reg;

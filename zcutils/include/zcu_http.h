@@ -28,6 +28,7 @@
 #define HTTP_HEADER_CONTENT_HTML "Content-Type: text/html" HTTP_LINE_END
 #define HTTP_HEADER_EXPIRES "Expires: now" HTTP_LINE_END
 #define HTTP_HEADER_SERVER "Server: zproxy/" HTTP_LINE_END
+#define HTTP_HEADER_LOCATION "Location: "
 #define HTTP_HEADER_PRAGMA_NO_CACHE "Pragma: no-cache" HTTP_LINE_END
 #define HTTP_HEADER_CACHE_CONTROL "Cache-control: no-cache,no-store" HTTP_LINE_END
 
@@ -38,6 +39,9 @@ enum ws_responses {
 	WS_HTTP_404,    // not found
 	WS_HTTP_405,    // method not allowed
 	WS_HTTP_409,    // conflict
+	WS_HTTP_301,    // moved permanently
+	WS_HTTP_302,    // found
+	WS_HTTP_307,    // temporary redirect
 	WS_HTTP_200,    // ok
 	WS_HTTP_201,    // created
 	WS_HTTP_204,    // no content
@@ -50,6 +54,9 @@ static const char *ws_str_responses[] = {
 	HTTP_PROTO "404 Not Found" HTTP_LINE_END,
 	HTTP_PROTO "405 Method Not Allowed" HTTP_LINE_END,
 	HTTP_PROTO "409 Conflict" HTTP_LINE_END,
+	HTTP_PROTO "301 Moved Permanently" HTTP_LINE_END,
+	HTTP_PROTO "302 Found" HTTP_LINE_END,
+	HTTP_PROTO "307 Temporary Redirect" HTTP_LINE_END,
 	HTTP_PROTO "200 OK" HTTP_LINE_END,
 	HTTP_PROTO "201 Created" HTTP_LINE_END,
 	HTTP_PROTO "204 No Content" HTTP_LINE_END,

@@ -494,20 +494,36 @@ int zproxy_http_event_timeout(struct zproxy_http_ctx *ctx)
 
 int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
 {
+	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
+	if (!proxy)
+		return -1;
+
 	ctx->resp_buf = (char*)calloc(SRV_MAX_HEADER + CONFIG_MAXBUF, sizeof(char));
 	if (!ctx->resp_buf)
 		return -1;
-	snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
-		 "%s%s%s%zu%s%s%s%s%s%s%s",
-		 ws_str_responses[WS_HTTP_400],
-		 HTTP_HEADER_CONTENT_HTML,
-		 HTTP_HEADER_CONTENTLEN, strlen(ctx->cfg->runtime.errnossl_msg), HTTP_LINE_END,
-		 HTTP_HEADER_EXPIRES,
-		 HTTP_HEADER_PRAGMA_NO_CACHE,
-		 HTTP_HEADER_SERVER,
-		 HTTP_HEADER_CACHE_CONTROL,
-		 HTTP_LINE_END,
-		 ctx->cfg->runtime.errnossl_msg);
+
+	if (proxy->error.nosslredirect_url[0]) {
+		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER,
+			 "%s%s%s%s%s%s%s%s",
+			 ws_str_responses[proxy->error.nosslredirect_code],
+			 HTTP_HEADER_EXPIRES,
+			 HTTP_HEADER_PRAGMA_NO_CACHE,
+			 HTTP_HEADER_LOCATION, proxy->error.nosslredirect_url, HTTP_LINE_END,
+			 HTTP_HEADER_SERVER,
+			 HTTP_HEADER_CACHE_CONTROL);
+	} else {
+		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
+			 "%s%s%s%zu%s%s%s%s%s%s%s",
+			 ws_str_responses[WS_HTTP_400],
+			 HTTP_HEADER_CONTENT_HTML,
+			 HTTP_HEADER_CONTENTLEN, strlen(ctx->cfg->runtime.errnossl_msg), HTTP_LINE_END,
+			 HTTP_HEADER_EXPIRES,
+			 HTTP_HEADER_PRAGMA_NO_CACHE,
+			 HTTP_HEADER_SERVER,
+			 HTTP_HEADER_CACHE_CONTROL,
+			 HTTP_LINE_END,
+			 ctx->cfg->runtime.errnossl_msg);
+	}
 
 	return 1;
 }

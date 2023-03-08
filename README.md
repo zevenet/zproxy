@@ -236,7 +236,7 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **ErrNoSsl** [code] "filename"
 
-	A file with the text to be displayed if a user connects to a HTTPS listener with HTTP.  Default: "Please use HTTPS.".
+	A file with the text to be displayed if a user connects to a HTTPS listener with HTTP. If NoSslRedirect is defined, it takes precedence over this directive. Default: "Please use HTTPS.".
 
 	The optional parameter "code" is the HTTP response code, it expects an 4xx or 5xx value. Default: "400".
 
@@ -244,10 +244,11 @@ Global directives may appear anywhere within the configuration file, though it i
 
 - **NoSslRedirect** [code] "url"
 
-	A url that the user will be redirected to if the user connects to a HTTPS listener with HTTP. The code here is just like the code in Redirect blocks. It defaults to 302, but could be 301 or 307. Only valid for HTTPS listeners.
+	A url that the user will be redirected to if the user connects to a HTTPS listener with HTTP. The code here is just like the code in Redirect blocks. It defaults to 302, but could be 301 or 307. Only valid for HTTPS listeners. If ErrNoSsl is defined also it will be ignored.
 
-		Example:
-		*NoSslRedirect "https://thishost:port"*
+	Example:
+
+	  NoSslRedirect "https://thishost:port"
 
 - **MaxRequest** nnn
 

@@ -681,8 +681,10 @@ static int zproxy_http_nossl(struct ev_loop *loop, struct zproxy_conn *conn,
 
 	zcu_log_print_th(LOG_WARNING, "HTTP client tried connecting to HTTPS listener.");
 
-	if (zproxy_http_event_nossl(&ctx) < 0)
+	if (zproxy_http_event_nossl(&ctx) < 0) {
+		zcu_log_print_th(LOG_WARNING, "Failed to generate NoSSL response");
 		return -1;
+	}
 
 	zproxy_http_error_response(&ctx, loop, conn);
 

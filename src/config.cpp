@@ -1216,10 +1216,6 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 			return -1;
 	}
 
-	if (zproxy_cfg_errmsg_file(proxy->error.nossl_url_path,
-				   proxy->runtime.nossl_url_msg) < 0)
-		return -1;
-
 	if (zproxy_cfg_errmsg_file(proxy->error.errwaf_path,
 				   proxy->runtime.errwaf_msg) < 0)
 		return -1;
@@ -1409,7 +1405,30 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 			lin[matches[2].rm_eo] = '\0';
 			snprintf(proxy->error.errnossl_path, PATH_MAX, "%s",
 				 lin + matches[2].rm_so);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_NoSslRedirect, lin, matches)) {  // NOT USED
+		} else if (zproxy_regex_exec(CONFIG_REGEX_NoSslRedirect, lin, matches)) {
+			if (matches[1].rm_eo != matches[1].rm_so) {
+				lin[matches[1].rm_eo] = '\0';
+				const int code = atoi(lin + matches[1].rm_so);
+				switch (code) {
+				case 301:
+					proxy->error.nosslredirect_code = WS_HTTP_301;
+					break;
+				case 302:
+					proxy->error.nosslredirect_code = WS_HTTP_302;
+					break;
+				case 307:
+					proxy->error.nosslredirect_code = WS_HTTP_307;
+					break;
+				default:
+					parse_error("Invalid redirect code.");
+					break;
+				}
+			} else {
+				proxy->error.nosslredirect_code = WS_HTTP_302;
+			}
+			lin[matches[2].rm_eo] = '\0';
+			snprintf(proxy->error.nosslredirect_url, PATH_MAX, "%s",
+				 lin + matches[2].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ForwardSNI, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_MaxRequest, lin, matches)) {
 			proxy->max_req = atoll(lin + matches[1].rm_so);

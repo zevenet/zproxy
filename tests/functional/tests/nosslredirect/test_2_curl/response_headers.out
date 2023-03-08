@@ -1,0 +1,6 @@
+HTTP/1.1 301 Moved Permanently
+Expires: now
+Pragma: no-cache
+Location: https://example.com/
+Server: zproxy/VERSION
+Cache-control: no-cache,no-store
