@@ -626,6 +626,28 @@ static int zproxy_http_timeout(struct ev_loop *loop, struct zproxy_conn *conn,
 	return __zproxy_http_timeout(loop, conn);
 }
 
+static int zproxy_http_nossl(struct ev_loop *loop, struct zproxy_conn *conn,
+			     int events)
+{
+	struct zproxy_http_ctx ctx = {
+		.cfg		= conn->proxy->cfg,
+		.stream		= conn->stream,
+		.state		= conn->proxy->state,
+		.buf		= conn->client.buf,
+		.buf_len	= conn->client.buf_len,
+		.buf_siz	= conn->client.buf_siz,
+		.from		= ZPROXY_HTTP_CLIENT,
+		.addr		= &conn->client.addr,
+	};
+
+	if (zproxy_http_event_nossl(&ctx) < 0)
+		return -1;
+
+	zproxy_http_error_response(&ctx, loop, conn);
+
+	return 0;
+}
+
 static void *zproxy_http_init(struct zproxy_proxy *proxy)
 {
 	return zproxy_state_init(proxy->cfg);
@@ -644,4 +666,5 @@ struct zproxy_handler http_proxy = {
 	.backend	= zproxy_http_backend,
 	.reconnect	= zproxy_http_backend_reconnect,
 	.timeout	= zproxy_http_timeout,
+	.nossl		= zproxy_http_nossl,
 };

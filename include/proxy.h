@@ -130,6 +130,8 @@ struct zproxy_handler {
 			 int events, struct zproxy_backend *backend);
 	int (*timeout)(struct ev_loop *loop, struct zproxy_conn *conn,
 		       int events);
+	int (*nossl)(struct ev_loop *loop, struct zproxy_conn *conn,
+		      int events);
 };
 
 struct zproxy_proxy {

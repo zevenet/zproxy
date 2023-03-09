@@ -488,3 +488,8 @@ int zproxy_http_event_timeout(struct zproxy_http_ctx *ctx)
 
 	return 0;
 }
+
+int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
+{
+	return -1;
+}

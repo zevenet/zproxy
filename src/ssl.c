@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <arpa/inet.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h>
 #include <errno.h>
 #include <unistd.h>
@@ -377,9 +378,10 @@ SSL *zproxy_ssl_client_init(zproxy_proxy_cfg *cfg, int sd)
 	return ssl;
 }
 
-static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop, struct zproxy_conn *conn)
+static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop,
+					    struct zproxy_conn *conn, int *err)
 {
-	int ret, err, events;
+	int ret, events;
 
 	ret = SSL_do_handshake(conn->client.ssl);
 	if (ret == 1) {
@@ -392,6 +394,7 @@ static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop, struct zproxy_
 			break;
 		default:
 			syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+			*err = EINVAL;
 			return -1;
 		}
 
@@ -401,8 +404,8 @@ static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop, struct zproxy_
 		return 0;
 	}
 
-	err = SSL_get_error(conn->client.ssl, ret);
-	switch (err) {
+	ret = SSL_get_error(conn->client.ssl, ret);
+	switch (ret) {
 	case SSL_ERROR_WANT_READ:
 		ev_io_stop(loop, &conn->client.io);
 		ev_io_set(&conn->client.io, conn->client.io.fd, EV_READ);
@@ -414,6 +417,12 @@ static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop, struct zproxy_
 		ev_io_start(loop, &conn->client.io);
 		break;
 	default:
+		if (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL &&
+		    ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST)
+			*err = EPROTO;
+		else
+			*err = EINVAL;
+
 		return -1;
 	}
 
@@ -423,7 +432,7 @@ static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop, struct zproxy_
 void zproxy_client_ssl_cb(struct ev_loop *loop, struct ev_io *io, int events)
 {
 	struct zproxy_conn *conn;
-	int ret;
+	int ret, err;
 
 	if (events & EV_ERROR)
 		return;
@@ -431,17 +440,21 @@ void zproxy_client_ssl_cb(struct ev_loop *loop, struct ev_io *io, int events)
 	conn = container_of(io, struct zproxy_conn, client.io);
 
 	if (conn->client.ssl_handshake) {
-		ret = -1;
+		err = -EINVAL;
 		goto err_close;
 	}
 
-	ret = zproxy_conn_client_ssl_handshake(loop, conn);
+	ret = zproxy_conn_client_ssl_handshake(loop, conn, &err);
 	if (ret < 0)
 		goto err_close;
 
 	return;
 err_close:
-	zproxy_conn_release(loop, conn, ret);
+	if (err == EPROTO &&
+	    conn->proxy->handler->nossl(loop, conn, events) >= 0)
+		return;
+
+	zproxy_conn_release(loop, conn, err);
 }
 
 int __zproxy_conn_ssl_client_recv(struct ev_loop *loop,
