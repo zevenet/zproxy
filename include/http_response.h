@@ -38,7 +38,7 @@ class HttpResponse : public http_parser::HttpData {
 
     void manageHeaders(phr_header *header,
 			const struct zproxy_service_cfg *service,
-			std::string &session_key);
+			std::string &session_key, bool enabled_continue);
 };
 
 #endif

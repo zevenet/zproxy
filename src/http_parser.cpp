@@ -331,7 +331,6 @@ void http_parser::HttpData::setHeaderContentLength(std::string &header_value)
 	content_length = static_cast<size_t>(
 					strtol(header_value.data(),
 						   nullptr, 10));
-	message_bytes_left = content_length;
 }
 
 /** If the StrictTransportSecurity is set then adds the header. */
