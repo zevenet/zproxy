@@ -560,6 +560,25 @@ static int zproxy_http_backend_reconnect(struct ev_loop *loop,
 	return 1;
 }
 
+static void zproxy_http_error_response(struct zproxy_http_ctx *ctx,
+				       struct ev_loop *loop,
+				       struct zproxy_conn *conn)
+{
+	/* Ignore ctx.http_close, always close this connection, do not allow to
+	 * recycle the existing connection if request has timeout or speaks no ssl.
+	 */
+	conn->client.close = true;
+
+	assert(ctx->resp_buf);
+	conn->client.resp_buf = ctx->resp_buf;
+	conn->client.resp_buf_len = strlen(ctx->resp_buf);
+	conn->state = ZPROXY_CONN_SEND_HTTP_RESP;
+
+	ev_io_stop(loop, &conn->client.io);
+	ev_io_set(&conn->client.io, conn->client.io.fd, EV_WRITE);
+	ev_io_start(loop, &conn->client.io);
+}
+
 static int __zproxy_http_timeout(struct ev_loop *loop, struct zproxy_conn *conn)
 {
 	struct zproxy_http_ctx ctx = {
@@ -576,19 +595,7 @@ static int __zproxy_http_timeout(struct ev_loop *loop, struct zproxy_conn *conn)
 	if (zproxy_http_event_timeout(&ctx) < 0)
 		return -1;
 
-	/* Ignore ctx.http_close, always close this connection, do not allow to
-	 * recycle the existing connection if request has timeout.
-	 */
-	conn->client.close = true;
-
-	assert(ctx.resp_buf);
-	conn->client.resp_buf = ctx.resp_buf;
-	conn->client.resp_buf_len = strlen(ctx.resp_buf);
-	conn->state = ZPROXY_CONN_SEND_HTTP_RESP;
-
-	ev_io_stop(loop, &conn->client.io);
-	ev_io_set(&conn->client.io, conn->client.io.fd, EV_WRITE);
-	ev_io_start(loop, &conn->client.io);
+	zproxy_http_error_response(&ctx, loop, conn);
 
 	/* Stop backend, it might interfer with our custom timeout response. */
 	if (conn->backend.connected &&
