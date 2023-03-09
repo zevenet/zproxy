@@ -59,7 +59,7 @@ public:
 	std::string getUrl(void) const;
 
 	void manageHeaders(const struct zproxy_proxy_cfg &listener,
-		phr_header *header, bool enabled_continue);
+		phr_header *header);
 
 	void setHeaderHost(struct zproxy_backend_cfg *bck);
 };

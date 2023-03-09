@@ -438,8 +438,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream *stream)
 
 		_replaceHeaderHttp(&request, &request.headers[i], repl_ptr, &eol);
 
-		stream->request.manageHeaders(*stream->listener_config, &request.headers[i],
-									  stream->request.expect_100_cont_header);
+		stream->request.manageHeaders(*stream->listener_config, &request.headers[i]);
 	}
 
 	// Add the headers configured (addXheader directives). Service context has more
@@ -495,8 +494,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream *stream)
 		if (response.headers[i].header_off)
 			continue;
 
-		stream->response.manageHeaders(&response.headers[i], stream->service_config, session_key,
-									   stream->request.expect_100_cont_header);
+		stream->response.manageHeaders(&response.headers[i], stream->service_config, session_key);
 	}
 
 	// backend cookie insert

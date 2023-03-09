@@ -145,7 +145,7 @@ std::string HttpRequest::getUrl() const
 }
 
 void HttpRequest::manageHeaders(const struct zproxy_proxy_cfg &listener,
-		phr_header *header, bool enabled_continue)
+		phr_header *header)
 {
 	std::string header_name, header_value;
 	header_name = std::string_view(header->name, header->name_len);
@@ -176,8 +176,6 @@ void HttpRequest::manageHeaders(const struct zproxy_proxy_cfg &listener,
 			break;
 		case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
 			setHeaderContentLength(header_value);
-			if (enabled_continue)
-				message_bytes_left = content_length;
 			break;
 		}
 		case http::HTTP_HEADER_NAME::HOST: {

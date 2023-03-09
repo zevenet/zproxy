@@ -90,8 +90,7 @@ void HttpResponse::print() const
 }
 
 void HttpResponse::manageHeaders(phr_header *header,
-		const struct zproxy_service_cfg *service, std::string &session,
-		bool enabled_continue){
+		const struct zproxy_service_cfg *service, std::string &session){
 	std::string header_name, header_value;
 	header_name = std::string_view(header->name, header->name_len);
 	header_value = std::string_view(header->value, header->value_len);
@@ -112,8 +111,6 @@ void HttpResponse::manageHeaders(phr_header *header,
 			}
 			case http::HTTP_HEADER_NAME::CONTENT_LENGTH: {
 				setHeaderContentLength(header_value);
-				if (enabled_continue)
-					message_bytes_left = content_length;
 				break;
 			}
 			case http::HTTP_HEADER_NAME::CONTENT_LOCATION:
