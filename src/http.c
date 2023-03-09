@@ -201,7 +201,7 @@ static int zproxy_http_backend(struct ev_loop *loop, struct zproxy_conn *conn,
 		break;
 	case ZPROXY_CONN_SPLICE_HTTP_RESP:
 		ret = splice(conn->backend.io.fd, NULL, conn->splice_fds[1],
-			     NULL, 30000, SPLICE_F_MOVE);
+			     NULL, 30000, SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
 		if (ret > 0) {
 			conn->backend.pending += ret;
 			conn->backend.recv += ret;
@@ -458,7 +458,7 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 		break;
 	case ZPROXY_CONN_SPLICE_HTTP_RESP:
 		ret = splice(conn->splice_fds[0], NULL, conn->client.io.fd,
-			     NULL, 30000, SPLICE_F_MOVE);
+			     NULL, 30000, SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
 		if (ret <= 0) {
 			/* This should not ever happen: the client write side
 			 * should not be awaken if there is no data in the pipe
