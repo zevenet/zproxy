@@ -557,7 +557,7 @@ static int parseRedirect(struct zproxy_backend_redirect * be, char *lin,
 	be->dynamic = false;
 
 	const size_t lin_size = strlen(lin);
-	for (int i = 0; lin[i] != '\0'; ++i) {
+	for (size_t i = 0; lin[i] != '\0'; ++i) {
 		if (lin[i] == '$' &&
 		    i+1 < lin_size && // to avoid a segfault in the next condition
 		    IN_RANGE(lin[i+1], '1', '9')) {
