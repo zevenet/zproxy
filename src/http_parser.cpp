@@ -41,7 +41,7 @@ void http_parser::HttpData::resetParser()
 	message_undefined = false;
 	headers_sent = false;
 	header_length_new = 0;
-	chunked_bytes_left = 0;
+	partial_last_chunk = 0;
 	chunked_status = CHUNKED_STATUS::CHUNKED_DISABLED;
 	extra_headers.clear();
 	http_message_str.clear();
@@ -344,67 +344,71 @@ void http_parser::HttpData::setHeaderStrictTransportSecurity(int sts)
 		sts_header_value);
 }
 
-ssize_t http_parser::HttpData::parseChunk(const char *data, size_t data_size, bool *end)
+static int naive_search(const char *stack, int stack_size,
+                        const char *needle, int needle_len, int *partial)
 {
-	size_t frame_len = 0;
-	std::string len_str;
-	auto _data = std::string_view({data, data_size});
-	auto chunk_len = _data.find(http::CRLF);
-	char *n_str;
+	int i = 0, j = *partial;
 
-	if (chunk_len == std::string::npos) {
-		zcu_log_print_th(LOG_ERR, "Malformed chunk, size was not found");
-		return -1;
+	while (i < stack_size) {
+
+		/* matching, keep looking ahead. */
+		if (stack[i] == needle[j]) {
+			j++;
+			i++;
+
+			/* full match! */
+			if (j == needle_len)
+				break;
+
+			continue;
+		}
+		/* backtrack */
+		if (j > 0) {
+			i -= j;
+			j = 0;
+		}
+
+		if (i < 0)
+			i = 0;
+		else
+			i++;
 	}
 
-	auto hex = _data.substr(0, chunk_len);
-	auto chunk_size = ::strtol(hex.data(), &n_str, 16);
+	/* full match! */
+	if (j == needle_len)
+		return j;
 
-	if (chunk_size == 0) {
-		// chunk_size_left = 0;
-		*end = true;
-		chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
+	*partial = j;
+
+	return -1;
+}
+
+static const char chunk_trailer[] = "\r\n0\r\n\r\n";
+#define CHUNK_TRAILER_SIZE	7
+
+static bool http_last_chunk(const char *data, size_t data_size, int *partial)
+{
+	int match;
+
+	match = naive_search(data, data_size, chunk_trailer, CHUNK_TRAILER_SIZE, partial);
+	if (match == CHUNK_TRAILER_SIZE) {
 		zcu_log_print_th(LOG_DEBUG, "%s():%d: last chunk",
-					  __FUNCTION__, __LINE__);
+				 __FUNCTION__, __LINE__);
+		return true;
 	}
+	zcu_log_print_th(LOG_DEBUG, "last chunk not yet seen");
 
-	frame_len += chunk_len + http::CRLF_LEN + chunk_size + http::CRLF_LEN;
-
-	if (frame_len > data_size) {
-		chunked_bytes_left = frame_len - data_size;
-		zcu_log_print_th(LOG_DEBUG, "The frame length is bigger than the buffer length");
-		return -1;
-	}
-
-	return frame_len;
+	return false;
 }
 
 ssize_t http_parser::HttpData::handleChunkedData(void)
 {
-	ssize_t chunk_len = 0;
-	ssize_t frame_len = 0;
-	bool end = 0;
+	if (!http_last_chunk(message, message_length, &partial_last_chunk))
+		return -1;
 
-	// if there is chunked remains from the previus frame:
-	if (chunked_bytes_left) {
-		if (message_length <= chunked_bytes_left) {
-			chunked_bytes_left -= message_length;
-			return message_length;
-		} else
-			chunk_len += chunked_bytes_left;
-	}
+	chunked_status = CHUNKED_STATUS::CHUNKED_LAST_CHUNK;
 
-	while (message_length - chunk_len > 0 && ! end) {
-		frame_len = parseChunk(message + chunk_len, message_length - chunk_len, &end);
-		if (frame_len < 0)
-			return frame_len;
-
-		chunk_len += frame_len;
-	}
-
-	// message_total_bytes += chunk_len;
-
-	return chunk_len;
+	return 0;
 }
 
 void http_parser::HttpData::manageBody(char *buf, int buf_len)

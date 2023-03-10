@@ -80,7 +80,7 @@ public:
 	std::string x_forwarded_for_header{""};
 
 	/* This enumerate indicates the chunked mechanism status. */
-	size_t chunked_bytes_left{0};
+	int partial_last_chunk{0};
 	http::CHUNKED_STATUS chunked_status{ CHUNKED_STATUS::CHUNKED_DISABLED };
 
 	http::HTTP_VERSION http_version{HTTP_VERSION::NONE};
