@@ -151,6 +151,10 @@ static int zproxy_http_backend(struct ev_loop *loop, struct zproxy_conn *conn,
 			}
 			conn->backend.buf_sent = 0;
 			conn->client.buf_len = 0;
+
+			ev_io_stop(loop, &conn->backend.io);
+			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_READ);
+			ev_io_start(loop, &conn->backend.io);
 		}
 
 		conn->backend.sent += numbytes;
@@ -358,6 +362,8 @@ static void zproxy_client_read(struct ev_loop *loop, struct zproxy_conn *conn, i
 				conn->client.stopped = true;
 				ev_io_stop(loop, &conn->client.io);
 			}
+
+			ev_io_stop(loop, &conn->backend.io);
 			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_WRITE);
 			ev_io_start(loop, &conn->backend.io);
 		}
