@@ -51,6 +51,7 @@ struct zproxy_conn {
 		uint32_t		buf_siz;
 		uint32_t		buf_len;
 		uint32_t		buf_sent;
+		uint64_t		sent;
 		bool			ssl_enabled;
 		bool			ssl_handshake;
 		const char		*resp_buf;

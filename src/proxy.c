@@ -211,6 +211,7 @@ void zproxy_conn_reset_state(struct ev_loop *loop, struct zproxy_conn *conn)
 	conn->client.buf_stash = NULL;
 	conn->client.buf_stash_len = 0;
 	conn->client.req_len = 0;
+	conn->client.sent = 0;
 
 	conn->backend.buf_len = 0;
 	conn->backend.buf_sent = 0;

@@ -450,7 +450,9 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 				conn->state = ZPROXY_CONN_SPLICE_HTTP_RESP;
 		}
 
-		if (conn->backend.recv >= conn->backend.resp_len) {
+		conn->client.sent += numbytes;
+
+		if (conn->client.sent >= conn->backend.resp_len) {
 			if (conn->client.close) {
 				ret = 0;
 				goto err_close;
