@@ -1129,7 +1129,7 @@ static void zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 
 	if (proxy->runtime.waf_rules != nullptr && cfg->runtime.waf_refs > 0) {
 		zcu_log_print(LOG_DEBUG, "Destroying WAF rules.");
-		zproxy_waf_destroy_rules(proxy->runtime.waf_rules);
+		Waf::destroy_rules(proxy->runtime.waf_rules);
 		cfg->runtime.waf_refs--;
 	}
 
@@ -1266,11 +1266,11 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 		struct zproxy_cfg *cfg = (struct zproxy_cfg*)proxy->cfg;
 		// initialize WAF if we haven't already
 		if (cfg->runtime.waf_refs == 0) {
-			cfg->runtime.waf_api = zproxy_waf_init_api();
+			cfg->runtime.waf_api = Waf::init_api();
 		}
 		cfg->runtime.waf_refs++;
 
-		if (zproxy_waf_parse_conf(proxy->waf_rules_path,
+		if (Waf::parse_conf(proxy->waf_rules_path,
 				    &proxy->runtime.waf_rules) < 0) {
 			zcu_log_print(LOG_ERR, "Failed to load WAF Rules");
 			return -1;
@@ -1511,7 +1511,7 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 				if (zproxy_proxy_ctx_start(proxy) == -1)
 					parse_error("Error creating SSL context");
 			}
-			zproxy_waf_dump_rules(proxy->runtime.waf_rules);
+			Waf::dump_rules(proxy->runtime.waf_rules);
 			list_add_tail(&proxy->list, &cfg->proxy_list);
 			return 0;
 		} else
@@ -1684,7 +1684,7 @@ void zproxy_cfg_free(const struct zproxy_cfg *cfg)
 		DH_free(cfg->runtime.ssl_dh_params);
 		if (_cfg->runtime.waf_api != nullptr && _cfg->runtime.waf_refs == 0) {
 			zcu_log_print(LOG_DEBUG, "Destroying WAF API");
-			zproxy_waf_destroy_api(cfg->runtime.waf_api);
+			Waf::destroy_api(cfg->runtime.waf_api);
 		}
 
 		free(_cfg);

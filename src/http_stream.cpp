@@ -16,28 +16,25 @@
  */
 
 #include "http_stream.h"
-#include "waf.h"
 
 static int id = 0;
 
 HttpStream::HttpStream(zproxy_proxy_cfg *listener, const sockaddr_in *cl,
 		struct zproxy_http_state *http_state):
 	stats_state(STREAM_STATE::UNDEF),
-	request(), response(), http_state(http_state)
+	request(), response(), http_state(http_state),
+	waf(listener->cfg->runtime.waf_api, listener->runtime.waf_rules)
 {
 	stream_id = ++id;
 	state = HTTP_STATE::REQ_HEADER_RCV;
 	listener_config = listener;
 	client_addr = inet_ntoa((in_addr)cl->sin_addr);
 	client_port = ntohs(cl->sin_port);
-	waf = zproxy_waf_stream_init(listener->cfg->runtime.waf_api,
-				     listener->runtime.waf_rules);
 }
 
 HttpStream::~HttpStream()
 {
 	clearStats();
-	zproxy_waf_stream_destroy(waf);
 }
 
 bool HttpStream::expectNewRequest()
