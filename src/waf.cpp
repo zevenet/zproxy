@@ -15,50 +15,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <modsecurity/modsecurity.h>
-#include <modsecurity/rules.h>
-#include <modsecurity/transaction.h>
-#include <unistd.h>
-
 #include "waf.h"
+
+#include "config.h"
 #include "http_log.h"
+#include "http_manager.h"
 #include "http_request.h"
 #include "http_response.h"
-#include "http_manager.h"
 #include "state.h"
+#include "zcu_log.h"
+#include <string>
+#include <sys/syslog.h>
+#include <unistd.h>
 
-void Waf::logModsec(void *data, const void *message)
+static void zproxy_waf_logmodsec(void *data, const void *message)
 {
 	if (data != nullptr)
-		zcu_log_print_th(LOG_WARNING, "%s", static_cast<char *>(data));
+		zcu_log_print(LOG_WARNING, "%s", (char*)data);
 	if (message != nullptr)
-		zcu_log_print_th(LOG_WARNING, "[WAF] %s",
-				  static_cast<char *>(const_cast<void *>(message)));
+		zcu_log_print(LOG_WARNING, "[WAF] %s", (char*)message);
 }
 
-void *Waf::init_api(void)
+void *zproxy_waf_init_api(void)
 {
-	auto modsec_api = new modsecurity::ModSecurity();
-	char pidstr[6];
+	char conn_str[32];
+	zcu_log_print(LOG_INFO, "Initializing ModSecurity API");
+	modsecurity::ModSecurity *modsec_api = modsecurity::msc_init();
 
-	sprintf(pidstr, "%d", getpid());
-	modsec_api->setConnectorInformation("zproxy_" + std::string(pidstr) + "_connector");
-	modsec_api->setServerLogCb(logModsec);
+	sprintf(conn_str, "zproxy_%d_connector", getpid());
+	msc_set_connector_info(modsec_api, conn_str);
+	msc_set_log_cb(modsec_api, zproxy_waf_logmodsec);
+
 	return (void *) modsec_api;
 }
 
-void Waf::destroy_api(void *modsec)
+void zproxy_waf_destroy_api(void *modsec)
 {
-	if (modsec != nullptr)
-		delete static_cast<modsecurity::ModSecurity*>(modsec);
+	if (modsec) {
+		zcu_log_print(LOG_INFO, "Cleaning up ModSecurity API");
+		msc_cleanup((modsecurity::ModSecurity*)modsec);
+	}
 }
 
-void Waf::dump_rules(void *rules_ptr)
+void zproxy_waf_dump_rules(void *rules_ptr)
 {
-	if (rules_ptr == nullptr)
+	if (!rules_ptr)
 		return;
 
-	auto rules = static_cast<modsecurity::Rules*>(rules_ptr);
+	modsecurity::Rules *rules = (modsecurity::Rules*)rules_ptr;
 
 	zcu_log_print(LOG_DEBUG, "Rules: ");
 	for (int i = 0; i <= modsecurity::Phases::NUMBER_OF_PHASES; i++) {
@@ -74,180 +78,240 @@ void Waf::dump_rules(void *rules_ptr)
 	}
 }
 
-void Waf::destroy_rules(void *rules)
+void zproxy_waf_destroy_rules(void *rules)
 {
-	if(rules == nullptr)
-		return;
-	delete static_cast<modsecurity::Rules*>(rules);
+	if (rules) {
+		zcu_log_print(LOG_DEBUG, "Cleaning up WAF Rules");
+		msc_rules_cleanup((modsecurity::Rules*)rules);
+	}
 }
 
-int Waf::parse_conf(const std::string &file, void **rules)
+int zproxy_waf_parse_conf(const char *file, void **rules)
 {
-	if (*rules == nullptr)
-		*rules = new modsecurity::Rules();
+	int err;
+	const char *err_str;
+	if (!*rules) {
+		zcu_log_print(LOG_INFO, "Loading WAF Rules from %s", file);
+		*rules = modsecurity::msc_create_rules_set();
+	}
 
-	auto waf_rules = static_cast<modsecurity::Rules*>(*rules);
+	modsecurity::Rules *waf_rules = (modsecurity::Rules*)*rules;
 
-	auto err = waf_rules->loadFromUri(file.data());
+	err = msc_rules_add_file(waf_rules, file, &err_str);
 	if (err == -1) {
-		fprintf(stderr,
-			"error loading waf ruleset file %s: %s",
-			file.data(),
-			waf_rules->getParserError().data());
+		fprintf(stderr, "error loading waf ruleset file %s: %s",
+			file, err_str);
 		return -1;
 	}
 	return 0;
 }
 
-Waf::Stream::Stream(void *api, void *rules)
+static enum WAF_ACTION waf_resolution(struct zproxy_waf_stream *waf_stream)
 {
-	waf_rules = static_cast<modsecurity::Rules*>(rules);
-	if (waf_rules != nullptr)
-		waf_enable = true;
-	waf_api =  reinterpret_cast<modsecurity::ModSecurity *>(api);
+	modsecurity::Transaction *t = waf_stream->modsec_transaction;
+	modsecurity::ModSecurityIntervention *it = &waf_stream->last_it;
+	it->status = 200;
+	it->url = NULL;
+	it->log = NULL;
+	it->disruptive = 0;
+	enum WAF_ACTION waf_action = WAF_PASS;
 
+	if (msc_intervention(t, it)) {
+		// log if any error was found
+		if (!msc_process_logging(t)) {
+			zcu_log_print_th(LOG_WARNING,
+					 "(%lx) WAF, error processing the log",
+					 pthread_self());
+		}
+		if (it->url) {
+			waf_action = WAF_REDIRECTION;
+			if (it->status == 200)
+				it->status = 302;
+		} else if (it->disruptive) {
+			waf_action = WAF_BLOCK;
+			if (it->status == 200)
+				it->status = 403;
+		}
+	}
+
+	if (it->log)
+		zcu_log_print_th(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
+				 it->log);
+
+	return waf_action;
 }
 
-Waf::Stream::~Stream()
+struct zproxy_waf_stream *zproxy_waf_stream_init(void *api, void *rules)
 {
-	if(modsec_transaction != nullptr)
-		delete modsec_transaction;
+	struct zproxy_waf_stream *waf_stream =
+		(struct zproxy_waf_stream*)calloc(1, sizeof(struct zproxy_waf_stream));
+	if (!waf_stream)
+		return NULL;
+
+	waf_stream->waf_rules = (modsecurity::Rules*)rules;
+	waf_stream->waf_api = (modsecurity::ModSecurity*)api;
+	waf_stream->modsec_transaction = NULL;
+	waf_stream->waf_enable = waf_stream->waf_rules ? true : false;
+
+	return waf_stream;
 }
 
-void Waf::Stream::resetTransaction()
+void zproxy_waf_stream_destroy(struct zproxy_waf_stream *waf_stream)
 {
-	if(modsec_transaction != nullptr)
-		delete modsec_transaction;
-	initTransaction();
+	if (waf_stream->modsec_transaction)
+		msc_transaction_cleanup(waf_stream->modsec_transaction);
+	free(waf_stream);
 }
 
-void Waf::Stream::initTransaction()
+static void zproxy_waf_stream_inittransaction(struct zproxy_waf_stream *waf_stream)
 {
-	if (waf_enable)
-		modsec_transaction = new modsecurity::Transaction(waf_api, waf_rules, (void*)logModsec);
+	if (waf_stream->waf_enable) {
+		waf_stream->modsec_transaction =
+			msc_new_transaction(waf_stream->waf_api, waf_stream->waf_rules,
+					    (void*)zproxy_waf_logmodsec);
+	}
 }
 
-char *Waf::Stream::response(HttpStream *stream)
+static void zproxy_waf_stream_resettransaction(struct zproxy_waf_stream *waf_stream)
+{
+	if (waf_stream->modsec_transaction)
+		msc_transaction_cleanup(waf_stream->modsec_transaction);
+	zproxy_waf_stream_inittransaction(waf_stream);
+}
+
+char *zproxy_waf_stream_response(struct zproxy_waf_stream *waf_stream,
+				 HttpStream *stream)
 {
 	char *resp = nullptr;
+	modsecurity::ModSecurityIntervention *it = &waf_stream->last_it;
 
 	streamLogWaf(stream, "WAF in request disrupted the HTTP transaction");
 
 	zproxy_stats_listener_inc_waf(stream->http_state);
-	if (modsec_transaction->m_it.url != nullptr) {
-		resp = http_manager::replyRedirect(modsec_transaction->m_it.status,
-			modsec_transaction->m_it.url, *stream);
+	if (it->url) {
+		resp = http_manager::replyRedirect(it->status, it->url, *stream);
+		free(it->url);
 	} else {
-		auto code = static_cast<http::Code>(modsec_transaction->m_it.status);
-		resp = http_manager::replyError(
-			stream,
-			code,
-			http_info::http_status_code_strings.at(code),
-			stream->listener_config->runtime.errwaf_msg);
+		http::Code code = (http::Code)it->status;
+		resp = http_manager::replyError(stream, code,
+						http_info::http_status_code_strings.at(code),
+						stream->listener_config->runtime.errwaf_msg);
 	}
+
+	if (it->log)
+		free(it->log);
 
 	return resp;
 }
 
-bool Waf::Stream::checkRequestHeaders(HttpStream *stream)
+bool zproxy_waf_stream_checkrequestheaders(struct zproxy_waf_stream *waf_stream,
+					   HttpStream *stream)
 {
-	if (!waf_enable)
+	enum WAF_ACTION waf_action;
+
+	if (!waf_stream->waf_enable)
 		return WAF_PASS;
 
-	std::string httpVersion = stream->request.getHttpVersion();
-	std::string httpMethod(stream->request.method, stream->request.method_len);
+	const std::string httpVersion = stream->request.getHttpVersion();
+	const std::string httpMethod(stream->request.method,
+				     stream->request.method_len);
 
-	resetTransaction();
-	modsecurity::intervention::reset(&modsec_transaction->m_it);
+	zproxy_waf_stream_resettransaction(waf_stream);
 
-	modsec_transaction->processConnection(stream->client_addr.data(), stream->client_port,
-			stream->listener_config->address, stream->listener_config->port);
-	modsec_transaction->processURI(stream->request.path.data(), httpMethod.data(), httpVersion.data());
+	msc_process_connection(waf_stream->modsec_transaction,
+			       stream->client_addr.data(),
+			       stream->client_port,
+			       stream->listener_config->address,
+			       stream->listener_config->port);
+	msc_process_uri(waf_stream->modsec_transaction,
+			stream->request.path.data(),
+			httpMethod.data(), httpVersion.data());
 
-	for (int i = 0; i < static_cast<int>(stream->request.num_headers); i++) {
-		auto name = reinterpret_cast<unsigned char *>(
-			const_cast<char *>(stream->request.headers[i].name));
-		auto value = reinterpret_cast<unsigned char *>(
-			const_cast<char *>(stream->request.headers[i].value));
-		modsec_transaction->addRequestHeader(
-			name, stream->request.headers[i].name_len, value,
-			stream->request.headers[i].value_len);
+	for (int i = 0; i < (int)stream->request.num_headers; i++) {
+		unsigned char *name =
+			(unsigned char*)stream->request.headers[i].name;
+		size_t name_len = stream->request.headers[i].name_len;
+		unsigned char *value =
+			(unsigned char*)stream->request.headers[i].value;
+		size_t value_len = stream->request.headers[i].value_len;
+		msc_add_n_request_header(waf_stream->modsec_transaction, name,
+					 name_len, value, value_len);
 	}
-	modsec_transaction->processRequestHeaders();
+	msc_process_request_headers(waf_stream->modsec_transaction);
 
-	if (modsec_transaction->m_it.log != nullptr) {
-		streamLogWaf(stream, "%s", modsec_transaction->m_it.log);
-	}
+	waf_action = waf_resolution(waf_stream);
 
-	return (modsec_transaction->m_it.disruptive);
+	return waf_action != WAF_PASS;
 }
 
-bool Waf::Stream::checkRequestBody(HttpStream *stream)
+bool zproxy_waf_stream_checkrequestbody(struct zproxy_waf_stream *waf_stream,
+					HttpStream *stream)
 {
-	if (!waf_enable)
-		return WAF_PASS;
+	enum WAF_ACTION waf_action;
 
-	modsecurity::intervention::reset(&modsec_transaction->m_it);
+	if (!waf_stream->waf_enable)
+		return WAF_PASS;
 
 	if (stream->request.message_length > 0) {
-		modsec_transaction->appendRequestBody(
-			(unsigned char *)stream->request.message,
-			stream->request.message_length);
+		msc_append_request_body(waf_stream->modsec_transaction,
+					(unsigned char*)stream->request.message,
+					stream->request.message_length);
 	}
 
-	if (stream->response.expectBody() == false)
-		modsec_transaction->processRequestBody();
+	if (!stream->response.expectBody())
+		msc_process_request_body(waf_stream->modsec_transaction);
 
-	if (modsec_transaction->m_it.log != nullptr)
-		streamLogWaf(stream, "%s", modsec_transaction->m_it.log);
+	waf_action = waf_resolution(waf_stream);
 
-	return (modsec_transaction->m_it.disruptive);
+	return waf_action != WAF_PASS;
 }
 
-bool Waf::Stream::checkResponseHeaders(HttpStream *stream)
+bool zproxy_waf_stream_checkresponseheaders(struct zproxy_waf_stream *waf_stream,
+					    HttpStream *stream)
 {
-	if (!waf_enable)
+	enum WAF_ACTION waf_action;
+
+	if (!waf_stream->waf_enable)
 		return WAF_PASS;
 
-	modsecurity::intervention::reset(&modsec_transaction->m_it);
-	for (int i = 0; i < static_cast<int>(stream->response.num_headers);
-	     i++) {
+	for (int i = 0; i < (int)stream->response.num_headers; i++) {
 		if (stream->response.headers[i].header_off)
 			continue;
-		auto name = reinterpret_cast<unsigned char *>(
-			const_cast<char *>(stream->response.headers[i].name));
-		auto value = reinterpret_cast<unsigned char *>(
-			const_cast<char *>(stream->response.headers[i].value));
-		modsec_transaction->addResponseHeader(
-			name, stream->response.headers[i].name_len, value,
-			stream->response.headers[i].value_len);
+		unsigned char *name = (unsigned char*)stream->response.headers[i].name;
+		size_t name_len = stream->response.headers[i].name_len;
+		unsigned char *value = (unsigned char*)stream->response.headers[i].value;
+		size_t value_len = stream->response.headers[i].value_len;
+		msc_add_n_response_header(waf_stream->modsec_transaction, name,
+					  name_len, value, value_len);
 	}
 
-	modsec_transaction->processResponseHeaders(
-		stream->response.http_status_code, stream->response.getHttpVersion());
+	msc_process_response_headers(waf_stream->modsec_transaction,
+				     stream->response.http_status_code,
+				     stream->response.getHttpVersion().data());
 
-	if (modsec_transaction->m_it.log != nullptr)
-		streamLogWaf(stream, "%s", modsec_transaction->m_it.log);
+	waf_action = waf_resolution(waf_stream);
 
-	return (modsec_transaction->m_it.disruptive);
+	return waf_action != WAF_PASS;
 }
 
-bool Waf::Stream::checkResponseBody(HttpStream *stream)
+bool zproxy_waf_stream_checkresponsebody(struct zproxy_waf_stream *waf_stream,
+					 HttpStream *stream)
 {
-	if (!waf_enable)
+	enum WAF_ACTION waf_action;
+
+	if (!waf_stream->waf_enable)
 		return WAF_PASS;
 
 	if (stream->response.message_length > 0) {
-		modsec_transaction->appendResponseBody(
-			reinterpret_cast<unsigned char *>(stream->response.message),
-			stream->response.message_length);
+		msc_append_response_body(waf_stream->modsec_transaction,
+					 (unsigned char*)stream->response.message,
+					 stream->response.message_length);
 	}
 
-	if (stream->response.expectBody() == false)
-		modsec_transaction->processResponseBody();
+	if (!stream->response.expectBody())
+		msc_process_response_body(waf_stream->modsec_transaction);
 
-	if (modsec_transaction->m_it.log != nullptr)
-		streamLogWaf(stream, "%s", modsec_transaction->m_it.log);
+	waf_action = waf_resolution(waf_stream);
 
-	return (modsec_transaction->m_it.disruptive);
+	return waf_action != WAF_PASS;
 }

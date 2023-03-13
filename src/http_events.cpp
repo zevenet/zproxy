@@ -33,7 +33,6 @@
 #include "config.h"
 #include "zcu_http.h"
 
-
 static void zproxy_set_backend(zproxy_backend_cfg *backend, zproxy_http_ctx *ctx, HttpStream *stream)
 {
 	stream->new_backend = nullptr;
@@ -187,8 +186,8 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 		return -1;
 	}
 
-	if (stream->waf.checkRequestHeaders(stream)) {
-		ctx->resp_buf = stream->waf.response(stream);
+	if (zproxy_waf_stream_checkrequestheaders(stream->waf, stream)) {
+		ctx->resp_buf = zproxy_waf_stream_response(stream->waf, stream);
 		return -1;
 	}
 
@@ -237,9 +236,9 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 
 	if (ctx->stream->request.message_length > 0) {
 		ctx->stream->request.manageBody(ctx->stream->request.message, ctx->stream->request.message_length);
-		if (stream->waf.checkRequestBody(stream)) {
+		if (zproxy_waf_stream_checkrequestbody(stream->waf, stream)) {
 			free(buf);
-			ctx->resp_buf = stream->waf.response(stream);
+			ctx->resp_buf = zproxy_waf_stream_response(stream->waf, stream);
 			return -1;
 		}
 	}
@@ -278,9 +277,9 @@ static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
 
 	ctx->stream->request.manageBody(ctx->stream->request.message, ctx->stream->request.message_length);
 
-	if (ctx->stream->waf.checkRequestBody(ctx->stream)) {
+	if (zproxy_waf_stream_checkrequestbody(ctx->stream->waf, ctx->stream)) {
 		free(buf);
-		ctx->resp_buf = ctx->stream->waf.response(ctx->stream);
+		ctx->resp_buf = zproxy_waf_stream_response(ctx->stream->waf, ctx->stream);
 		return -1;
 	}
 	ctx->buf = buf;
@@ -303,8 +302,8 @@ static int zproxy_http_request_body_rcv(struct zproxy_http_ctx *ctx)
 
 	stream->request.manageBody(&ctx->buf[ctx->buf_len - ctx->buf_tail_len], ctx->buf_tail_len);
 
-	if (stream->waf.checkRequestBody(stream)) {
-		ctx->resp_buf = stream->waf.response(stream);
+	if (zproxy_waf_stream_checkrequestbody(stream->waf, stream)) {
+		ctx->resp_buf = zproxy_waf_stream_response(stream->waf, stream);
 		return -1;
 	}
 
@@ -404,8 +403,8 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 
 		http_manager::validateResponse(stream);
 
-		if (stream->waf.checkResponseHeaders(stream)) {
-			ctx->resp_buf = stream->waf.response(stream);
+		if (zproxy_waf_stream_checkresponseheaders(stream->waf, stream)) {
+			ctx->resp_buf = zproxy_waf_stream_response(stream->waf, stream);
 			return -1;
 		}
 
@@ -435,10 +434,10 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 
 	stream->response.manageBody(&ctx->buf[ctx->buf_len - ctx->buf_tail_len], ctx->buf_tail_len);
 
-	if (stream->waf.checkResponseBody(stream)) {
+	if (zproxy_waf_stream_checkresponsebody(stream->waf, stream)) {
 		if (buf)
 			free(buf);
-		ctx->resp_buf = stream->waf.response(stream);
+		ctx->resp_buf = zproxy_waf_stream_response(stream->waf, stream);
 		return -1;
 	}
 
