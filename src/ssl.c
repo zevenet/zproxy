@@ -451,8 +451,11 @@ void zproxy_client_ssl_cb(struct ev_loop *loop, struct ev_io *io, int events)
 	return;
 err_close:
 	if (err == EPROTO &&
-	    conn->proxy->handler->nossl(loop, conn, events) >= 0)
+	    conn->proxy->handler->nossl(loop, conn, events) >= 0) {
+		conn->client.ssl_enabled = false;
+		zproxy_io_update(loop, &conn->client.io, zproxy_client_cb, EV_WRITE);
 		return;
+	}
 
 	zproxy_conn_release(loop, conn, err);
 }
