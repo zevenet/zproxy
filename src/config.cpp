@@ -554,16 +554,21 @@ static int parseRedirect(struct zproxy_backend_redirect * be, char *lin,
 {
 	be->enabled = true;
 	be->be_type = 302;
-	be->dynamic = false;
+	be->redir_type = 0;
 
-	const size_t lin_size = strlen(lin);
-	for (size_t i = 0; lin[i] != '\0'; ++i) {
-		if (lin[i] == '$' &&
-		    i+1 < lin_size && // to avoid a segfault in the next condition
-		    IN_RANGE(lin[i+1], '1', '9')) {
-			if (empty_req_url)
-				parse_error("Regex replace redirect requires prior definition of URL line");
-			be->dynamic = true;
+	if (matches[1].rm_eo != matches[1].rm_so &&
+	    (lin[matches[1].rm_so] & ~0x20) == 'A') {
+		be->redir_type = 2;
+	} else {
+		const size_t lin_size = strlen(lin);
+		for (size_t i = 0; lin[i] != '\0'; ++i) {
+			if (lin[i] == '$' &&
+			    i+1 < lin_size && // to avoid a segfault in the next condition
+			    IN_RANGE(lin[i+1], '1', '9')) {
+				if (empty_req_url)
+					parse_error("Regex replace redirect requires prior definition of URL line");
+				be->redir_type = 1;
+			}
 		}
 	}
 

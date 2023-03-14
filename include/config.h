@@ -162,7 +162,7 @@ struct zproxy_backend_redirect {
 	char url[CONFIG_MAXBUF];
 	bool redir_macro;
 	int be_type;
-	bool dynamic;
+	int redir_type = 0; // 0: static; 1: dynamic; 2: append
 };
 
 /**

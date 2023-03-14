@@ -704,7 +704,8 @@ char *http_manager::replyRedirectBackend(HttpStream &stream,
 		new_url = buf;
 	}
 
-	if (redirect.dynamic) {
+	switch (redirect.redir_type) {
+	case 1: // dynamic
 		list_for_each_entry_safe(current, next, &stream.service_config->runtime.req_url, list) {
 			if (str_replace_regexp(buf, stream.request.path.data(),
 					       stream.request.path.length(),
@@ -712,6 +713,12 @@ char *http_manager::replyRedirectBackend(HttpStream &stream,
 				new_url = buf;
 			}
 		}
+		break;
+	case 2: // append
+		new_url += stream.request.path;
+		break;
+	default:
+		break;
 	}
 
 	int redirect_code = redirect.be_type;
