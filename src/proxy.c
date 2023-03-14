@@ -58,7 +58,7 @@ int zproxy_conn_client_send(struct ev_loop *loop,
 			    const char *buf, uint32_t buflen,
 			    uint32_t *numbytes, struct zproxy_conn *conn)
 {
-	if (conn->client.ssl)
+	if (conn->client.ssl_enabled)
 		return zproxy_conn_ssl_client_send(loop, buf, buflen, numbytes, conn);
 
 	return zproxy_conn_raw_client_send(loop, buf, buflen, numbytes, conn);
@@ -86,7 +86,7 @@ static int __zproxy_conn_client_recv(struct ev_loop *loop,
 int zproxy_conn_client_recv(struct ev_loop *loop, struct zproxy_conn *conn,
 			    uint32_t *numbytes)
 {
-	if (conn->client.ssl)
+	if (conn->client.ssl_enabled)
 		return __zproxy_conn_ssl_client_recv(loop, conn, numbytes);
 
 	return __zproxy_conn_client_recv(loop, conn, numbytes);
@@ -110,7 +110,7 @@ static int __zproxy_conn_backend_send(struct ev_loop *loop,
 int zproxy_conn_backend_send(struct ev_loop *loop, struct zproxy_conn *conn,
 			     uint32_t *numbytes)
 {
-	if (conn->backend.ssl)
+	if (conn->backend.ssl_enabled)
 		return __zproxy_conn_ssl_backend_send(loop, conn, numbytes);
 
 	return __zproxy_conn_backend_send(loop, conn, numbytes);
@@ -138,7 +138,7 @@ static int __zproxy_conn_backend_recv(struct ev_loop *loop,
 int zproxy_conn_backend_recv(struct ev_loop *loop, struct zproxy_conn *conn,
 			     uint32_t *numbytes)
 {
-	if (conn->backend.ssl)
+	if (conn->backend.ssl_enabled)
 		return __zproxy_conn_ssl_backend_recv(loop, conn, numbytes);
 
 	return __zproxy_conn_backend_recv(loop, conn, numbytes);
