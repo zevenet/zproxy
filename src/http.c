@@ -122,8 +122,7 @@ static int zproxy_conn_recv_http_resp(struct ev_loop *loop,
 	return ret;
 }
 
-static int zproxy_http_backend(struct ev_loop *loop, struct zproxy_conn *conn,
-			       int events)
+static int zproxy_backend_read(struct ev_loop *loop, struct zproxy_conn *conn, int events)
 {
 	uint32_t numbytes;
 	int ret = 0;
@@ -131,42 +130,6 @@ static int zproxy_http_backend(struct ev_loop *loop, struct zproxy_conn *conn,
 	ev_timer_again(loop, &conn->backend.timer);
 
 	switch (conn->state) {
-	case ZPROXY_CONN_RECV_HTTP_REQ:
-		ret = zproxy_conn_backend_send(loop, conn, &numbytes);
-		if (ret < 0)
-			return ret;
-		else if (ret == 0)
-			return 1;
-
-		conn->backend.buf_sent += numbytes;
-
-		if (conn->backend.buf_sent < conn->client.buf_len) {
-			if (!conn->client.stopped) {
-				conn->client.stopped = true;
-				ev_io_stop(loop, &conn->client.io);
-			}
-		} else {
-			if (conn->client.stopped) {
-				conn->client.stopped = false;
-				ev_io_start(loop, &conn->client.io);
-			}
-			conn->backend.buf_sent = 0;
-			conn->client.buf_len = 0;
-
-			ev_io_stop(loop, &conn->backend.io);
-			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_READ);
-			ev_io_start(loop, &conn->backend.io);
-		}
-
-		conn->backend.sent += numbytes;
-
-		if (conn->backend.sent >= conn->client.req_len) {
-			conn->state = ZPROXY_CONN_RECV_HTTP_RESP;
-			ev_io_stop(loop, &conn->backend.io);
-			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_READ);
-			ev_io_start(loop, &conn->backend.io);
-		}
-		break;
 	case ZPROXY_CONN_RECV_HTTP_RESP:
 		ret = zproxy_conn_backend_recv(loop, conn, &numbytes);
 		if (ret < 0)
@@ -235,7 +198,72 @@ static int zproxy_http_backend(struct ev_loop *loop, struct zproxy_conn *conn,
 	}
 
 	return ret;
+
 }
+
+static int zproxy_backend_write(struct ev_loop *loop, struct zproxy_conn *conn, int events)
+{
+	uint32_t numbytes;
+	int ret = 0;
+
+	ev_timer_again(loop, &conn->backend.timer);
+
+	switch (conn->state) {
+	case ZPROXY_CONN_RECV_HTTP_REQ:
+		ret = zproxy_conn_backend_send(loop, conn, &numbytes);
+		if (ret < 0)
+			return ret;
+		else if (ret == 0)
+			return 1;
+
+		conn->backend.buf_sent += numbytes;
+
+		if (conn->backend.buf_sent < conn->client.buf_len) {
+			if (!conn->client.stopped) {
+				conn->client.stopped = true;
+				ev_io_stop(loop, &conn->client.io);
+			}
+		} else {
+			if (conn->client.stopped) {
+				conn->client.stopped = false;
+				ev_io_start(loop, &conn->client.io);
+			}
+			conn->backend.buf_sent = 0;
+			conn->client.buf_len = 0;
+
+			ev_io_stop(loop, &conn->backend.io);
+			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_READ);
+			ev_io_start(loop, &conn->backend.io);
+		}
+
+		conn->backend.sent += numbytes;
+
+		if (conn->backend.sent >= conn->client.req_len) {
+			conn->state = ZPROXY_CONN_RECV_HTTP_RESP;
+			ev_io_stop(loop, &conn->backend.io);
+			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_READ);
+			ev_io_start(loop, &conn->backend.io);
+		}
+		break;
+	default:
+		syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+		break;
+	}
+
+	return ret;
+}
+
+static int zproxy_http_backend(struct ev_loop *loop, struct zproxy_conn *conn,
+			       int events)
+{
+	if (events & EV_READ)
+		return zproxy_backend_read(loop, conn, events);
+	if (events & EV_WRITE)
+		return zproxy_backend_write(loop, conn, events);
+
+	return 0;
+}
+
 /*
  * zproxy_http_request_parser() is the HTTP request parser:
  *
