@@ -309,7 +309,7 @@ zproxy_service_least_conn(const struct zproxy_service_cfg *service_config,
 
 		conns = zproxy_stats_backend_get_established(http_state, backend_cfg);
 		if (!selected_backend ||
-		    selected_conns * selected_backend->weight < conns * backend_cfg->weight) {
+		    conns * selected_backend->weight < selected_conns * backend_cfg->weight) {
 			selected_backend = backend_cfg;
 			selected_conns = conns;
 			continue;
