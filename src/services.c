@@ -278,10 +278,8 @@ zproxy_service_round_robin(const struct zproxy_service_cfg *service_cfg,
 			goto skip_stale;
 
 		if (zproxy_backend_is_available(service_cfg, backend_cfg, http_state) &&
-		    ++service_state->rr.used <= backend->rr.weight) {
-			pthread_mutex_unlock(&service_state_mutex);
+		    ++service_state->rr.used <= backend->rr.weight)
 			return backend_cfg;
-		}
 
 skip_stale:
 		service_state->rr.used = 0;
@@ -292,7 +290,6 @@ skip_stale:
 		}
 	}
 err:
-	pthread_mutex_unlock(&service_state_mutex);
 
 	return NULL;
 }
