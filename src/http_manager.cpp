@@ -292,27 +292,41 @@ static std::string _rewriteHeaderLocation(const std::string &header_value,
 	int port;
 
 	getHostAndPort(vhost, proto, host_addr, port);
+	struct addrinfo *in_addr = zcu_net_get_address(host_addr.c_str(), port);
 
-	if (host_addr == backend->address && port == backend->port) {
-		new_header_value = proto;
-	} else if (rewr_loc_vhost == 1 &&
-		   (listener_config->port != port ||
-		    ((listener_config->runtime.ssl_enabled) ? "https" : "http") != proto) &&
-		   (host_addr == listener_config->address || vhost == vhost_header)) {
-		new_header_value = (proto == "https") ? "http" : "https";
-	}
+	if (in_addr) {
+		struct addrinfo *backend_addr =
+			zcu_net_get_address(backend->address, backend->port);
+		struct addrinfo *listener_addr =
+			zcu_net_get_address(listener_config->address, listener_config->port);
 
-	if (!new_header_value.empty()) {
-		new_header_value += "://";
-		new_header_value += vhost_header;
+		// rewrite location if it points to the backend
+		if (zcu_soc_equal_sockaddr(in_addr->ai_addr, backend_addr->ai_addr, 1)) {
+			new_header_value = proto;
+		// or the listener address with different port
+		} else if (rewr_loc_vhost == 1 &&
+			   (listener_config->port != port ||
+			    ((listener_config->runtime.ssl_enabled == false) ? "http" : "https") != proto) &&
+			   (zcu_soc_equal_sockaddr(in_addr->ai_addr, listener_addr->ai_addr, 0) || vhost == vhost_header)) {
+			new_header_value = (proto == "https") ? "http" : "https";
+		}
 
-		if ((!listener_config->runtime.ssl_enabled && listener_config->port != 443) ||
-		    (listener_config->port != 80)) {
-			if (header_value.find(':') == std::string::npos) {
-				new_header_value += ":";
-				new_header_value += std::to_string(listener_config->port);
+		if (!new_header_value.empty()) {
+			new_header_value += "://";
+			new_header_value += vhost_header;
+
+			if ((listener_config->runtime.ssl_enabled == false && listener_config->port != 443) ||
+			    (listener_config->port != 80)) {
+				if (header_value.find(':') == std::string::npos) {
+					new_header_value += ":";
+					new_header_value += std::to_string(listener_config->port);
+				}
 			}
 		}
+
+		freeaddrinfo(backend_addr);
+		freeaddrinfo(listener_addr);
+		freeaddrinfo(in_addr);
 	}
 
 	if (new_header_value.empty() && !proto.empty() && !vhost.empty())
