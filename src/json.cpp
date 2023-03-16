@@ -15,11 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdio>
+#include <cstring>
+#include <jansson.h>
 #include <stdlib.h>
+#include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include "json.h"
+#include "zcu_log.h"
 #include "zcu_network.h"
 #include "ctl.h"
 #include "state.h"
@@ -82,6 +87,8 @@ static json_t *serialize_backend(const struct zproxy_backend_cfg *backend_cfg,
 		break;
 	case ZPROXY_MONITOR_DISABLED:
 		json_object_set_new(backend, "status", json_string("disabled"));
+		break;
+	default:
 		break;
 	}
 	json_object_set_new(backend, "type", json_integer(backend_cfg->type));
@@ -170,552 +177,278 @@ static json_t *serialize_proxy(const struct zproxy_proxy_cfg *proxy_cfg,
 	return proxy;
 }
 
-static struct zproxy_proxy_cfg *
-find_listener(const struct zproxy_cfg *cfg, uint32_t listener_id)
+char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy)
 {
-	struct zproxy_proxy_cfg *proxy;
-
-	list_for_each_entry(proxy, &cfg->proxy_list, list) {
-		if (proxy->id == listener_id)
-			return proxy;
-	}
-
-	return NULL;
-}
-
-static struct zproxy_service_cfg *
-find_service(const struct zproxy_cfg *cfg, uint32_t listener_id,
-	     const char *service_id)
-{
-	const struct zproxy_proxy_cfg *proxy_cfg;
-	struct zproxy_service_cfg *service_cfg;
-
-	proxy_cfg = find_listener(cfg, listener_id);
-	if (!proxy_cfg)
-		return NULL;
-
-	list_for_each_entry(service_cfg, &proxy_cfg->service_list, list) {
-		if (strcmp(service_id, service_cfg->name) == 0)
-			return service_cfg;
-	}
-
-	return NULL;
-}
-
-static struct zproxy_backend_cfg *
-find_backend(const struct zproxy_cfg *cfg, uint32_t listener_id,
-	     const char *service_id, const char *backend_id)
-{
-	const struct zproxy_service_cfg *service_cfg;
-	struct zproxy_backend_cfg *backend_cfg;
-
-	service_cfg = find_service(cfg, listener_id, service_id);
-	if (!service_cfg)
-		return NULL;
-
-	list_for_each_entry(backend_cfg, &service_cfg->backend_list, list) {
-		if (strcmp(backend_id, backend_cfg->runtime.id) == 0)
-			return backend_cfg;
-	}
-
-	return NULL;
-}
-
-int zproxy_json_encode(const struct zproxy_cfg *cfg, const uint32_t listener_id,
-		  const char *service_name, const char *backend_id,
-		  enum json_obj_type type, char **buf)
-{
-	const struct zproxy_proxy_cfg *proxy;
 	struct zproxy_http_state *state = NULL;
-	const struct zproxy_service_cfg *service;
-	const struct zproxy_backend_cfg *backend;
 	json_t *json_obj;
-	int ret = 1;
+	char *buf = NULL;
 
-	proxy = find_listener(cfg, listener_id);
-	if (!proxy) {
-		*buf = (char*)calloc(ERR_BUF_MAX_SIZE, sizeof(char));
-		snprintf(*buf, ERR_BUF_MAX_SIZE, "Listener %d not found.", listener_id);
-		ret = -1;
-		goto encode_err;
-	}
 	state = zproxy_state_lookup(proxy->id);
 	if (!state) {
-		*buf = (char*)calloc(ERR_BUF_MAX_SIZE, sizeof(char));
-		snprintf(*buf, ERR_BUF_MAX_SIZE,
-				"Could not find state for listener %d.", listener_id);
-		ret = -1;
-		goto encode_err;
+		zcu_log_print(LOG_WARNING,
+			      "Failed to find state for listener %d",
+			      proxy->id);
+		return NULL;
 	}
 
-	switch (type) {
-	case ENCODE_PROXY:
-		json_obj = serialize_proxy(proxy, state);
-		break;
-	case ENCODE_PROXY_SERVICES:
-		json_obj = serialize_proxy_services(proxy, state);
-		break;
-	case ENCODE_SERVICE:
-		service = find_service(cfg, listener_id, service_name);
-		if (!service) {
-			*buf = (char*)calloc(ERR_BUF_MAX_SIZE, sizeof(char));
-			snprintf(*buf, ERR_BUF_MAX_SIZE,
-				 "Service %s in listener %d not found.",
-				 service_name, listener_id);
-			ret = -1;
-			goto encode_err;
-		}
-		json_obj = serialize_service(service, state);
-		break;
-	case ENCODE_SERVICE_BACKENDS:
-		service = find_service(cfg, listener_id, service_name);
-		if (!service) {
-			*buf = (char*)calloc(ERR_BUF_MAX_SIZE, sizeof(char));
-			snprintf(*buf, ERR_BUF_MAX_SIZE,
-				 "Service %s in listener %d not found.",
-				 service_name, listener_id);
-			ret = -1;
-			goto encode_err;
-		}
-		json_obj = serialize_service_backends(service, state);
-		break;
-	case ENCODE_BACKEND:
-		backend = find_backend(cfg, listener_id, service_name,
-				       backend_id);
-		if (!backend) {
-			*buf = (char*)calloc(ERR_BUF_MAX_SIZE, sizeof(char));
-			snprintf(*buf, ERR_BUF_MAX_SIZE,
-				 "Backend %s in service %s in listener %d not found.",
-				 backend_id, service_name, listener_id);
-			ret = -1;
-			goto encode_err;
-		}
-		json_obj = serialize_backend(backend, state);
-		break;
-	}
-
-	*buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_obj = serialize_proxy(proxy, state);
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
 	json_decref(json_obj);
 
-	if (!*buf) {
-		*buf = (char*)calloc(ERR_BUF_MAX_SIZE, sizeof(char));
-		zcu_log_print(LOG_WARNING, "Failed to encode CTL request to JSON.");
-		snprintf(*buf, ERR_BUF_MAX_SIZE, "Failed to encode object to JSON.");
-		ret = -2;
-		goto encode_err;
-	}
+	zproxy_state_release(&state);
 
-encode_err:
-	if (state)
-		zproxy_state_release(&state);
-	return ret;
+	return buf;
 }
 
-static void get_json_err_res(json_t *res, const char *reason)
-{
-	json_object_set_new(res, "result", json_string("error"));
-	json_object_set_new(res, "reason", json_string(reason));
-}
-
-/*
- * Return guide:
- *  1  = Success
- *  -1 = Not found
- *  -2 = Bad request
- *  -3 = Conflict
- *  -4 = Internal error
- */
-int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
-		     const char *service_name, const char *lvl_3_id,
-		     enum zproxy_json_cmd cmd, const char *buf, char **res)
+char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy)
 {
 	struct zproxy_http_state *state = NULL;
-	struct zproxy_backend_cfg *backend;
-	json_t *json_req, *req_var, *json_res = json_object();
+	json_t *json_obj;
+	char *buf = NULL;
+
+	state = zproxy_state_lookup(proxy->id);
+	if (!state) {
+		zcu_log_print(LOG_WARNING,
+			      "Failed to find state for listener %d",
+			      proxy->id);
+		return NULL;
+	}
+
+	json_obj = serialize_proxy_services(proxy, state);
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(json_obj);
+
+	zproxy_state_release(&state);
+
+	return buf;
+}
+
+char *zproxy_json_encode_service(const struct zproxy_service_cfg *service)
+{
+	struct zproxy_http_state *state = NULL;
+	json_t *json_obj;
+	char *buf = NULL;
+
+	state = zproxy_state_lookup(service->proxy->id);
+	if (!state) {
+		zcu_log_print(LOG_WARNING,
+			      "Failed to find state for listener %d",
+			      service->proxy->id);
+		return NULL;
+	}
+
+	json_obj = serialize_service(service, state);
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(json_obj);
+
+	zproxy_state_release(&state);
+
+	return buf;
+}
+
+char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service)
+{
+	struct zproxy_http_state *state = NULL;
+	json_t *json_obj;
+	char *buf = NULL;
+
+	state = zproxy_state_lookup(service->proxy->id);
+	if (!state) {
+		zcu_log_print(LOG_WARNING,
+			      "Failed to find state for listener %d",
+			      service->proxy->id);
+		return NULL;
+	}
+
+	json_obj = serialize_service_backends(service, state);
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(json_obj);
+
+	zproxy_state_release(&state);
+
+	return buf;
+}
+
+char *zproxy_json_encode_backend(const struct zproxy_backend_cfg *backend)
+{
+	struct zproxy_http_state *state = NULL;
+	json_t *json_obj;
+	char *buf = NULL;
+
+	state = zproxy_state_lookup(backend->service->proxy->id);
+	if (!state) {
+		zcu_log_print(LOG_WARNING,
+			      "Failed to find state for listener %d",
+			      backend->service->proxy->id);
+		return NULL;
+	}
+
+	json_obj = serialize_backend(backend, state);
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(json_obj);
+
+	zproxy_state_release(&state);
+
+	return buf;
+}
+
+int zproxy_json_decode_status(const char *buf, enum zproxy_status *status)
+{
 	json_error_t json_err;
+	json_t *obj, *req_var;
 	const char *req_value;
-	char err_str[ERR_BUF_MAX_SIZE];
-	int ret = 1;
+	*status = ZPROXY_MONITOR_UNDEFINED;
 
-	if (buf && strlen(buf) > 0) {
-		json_req = json_loads(buf, 0, &json_err);
-		if (!json_req) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE, "%s (%d:%d)",
-				 json_err.text, json_err.line, json_err.column);
-			get_json_err_res(json_res, err_str);
-			ret = -2;
-			goto exec_err;
-		}
+	if (!buf) {
+		zcu_log_print(LOG_WARNING, "Empty JSON string buffer. Failed to decode.");
+		return -1;
 	}
 
-	switch (cmd) {
-	case JSON_CMD_BACKEND_STATUS: {
-		backend = find_backend(cfg, listener_id, service_name,
-				       lvl_3_id);
-		if (!backend) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Backend %s in service %s in listener %d not found.",
-				 lvl_3_id, service_name, listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_req_err;
-		}
-
-		if (!(req_var = json_object_get(json_req, "status"))) {
-			get_json_err_res(json_res, "Invalid JSON format. Expected 'status' variable.");
-			ret = -2;
-			goto exec_req_err;
-		}
-		req_value = json_string_value(req_var);
-		if (strcmp(req_value, "disabled") == 0)
-			ret = zproxy_monitor_backend_set_enabled(&backend->runtime.addr, service_name, false);
-		else if (strcmp(req_value, "active") == 0)
-			ret = zproxy_monitor_backend_set_enabled(&backend->runtime.addr, service_name, true);
-		else {
-			get_json_err_res(json_res, "Invalid backend status.");
-			ret = -2;
-			goto exec_req_err;
-		}
-
-		if (ret < 0) {
-			get_json_err_res(json_res, "Failed to set backend status.");
-			ret = -4;
-			goto exec_req_err;
-		}
-
-		break;
+	if (!(obj = json_loads(buf, 0, &json_err))) {
+		zcu_log_print(LOG_WARNING, "Failed to decode JSON buffer.");
+		return -1;
 	}
-	case JSON_CMD_FLUSH_SESSIONS: {
-		state = zproxy_state_lookup(listener_id);
-		if (!state) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Listener %d not found.", listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_err;
-		}
-		sessions::Set *sessions =
-			zproxy_state_get_session(service_name, &state->services);
-		if (!sessions) {
-			zproxy_state_release(&state);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Service %s not found.", service_name);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_err;
-		}
 
-		if (strlen(buf) <= 0) {
-			zcu_log_print(LOG_DEBUG, "Manually flushing sessions.");
-			sessions->flushSessions();
-		} else if ((req_var = json_object_get(json_req, "backend-id"))) {
-			req_value = json_string_value(req_var);
-			zcu_log_print(LOG_DEBUG, "Manually flushing sessions with backend ID %s",
-				      req_value);
-			backend = find_backend(cfg, listener_id, service_name,
-					       req_value);
-			if (!backend) {
-				zproxy_state_release(&state);
-				snprintf(err_str, ERR_BUF_MAX_SIZE,
-					 "Backend %s in service %s in listener %d not found.",
-					 req_value, service_name, listener_id);
-				get_json_err_res(json_res, err_str);
-				ret = -1;
-				goto exec_req_err;
-			}
-			sessions->deleteBackendSessions(backend, true);
-		} else if ((req_var = json_object_get(json_req, "id"))) {
-			req_value = json_string_value(req_var);
-			zcu_log_print(LOG_DEBUG,
-				      "Manually flushing sessions with ID %s",
-				      req_value);
-			ret = sessions->deleteSessionByKey(req_value) ? 1 : -1;
-			if (ret < 0) {
-				zproxy_state_release(&state);
-				snprintf(err_str, ERR_BUF_MAX_SIZE,
-					 "Could not find session with ID %s",
-					 req_value);
-				get_json_err_res(json_res, err_str);
-				ret = -1;
-				goto exec_req_err;
-			}
+	if (!(req_var = json_object_get(obj, "status"))) {
+		zcu_log_print(LOG_WARNING, "No 'status' variable found.");
+		return -1;
+	}
+
+	req_value = json_string_value(req_var);
+	if (strcmp(req_value, "disabled") == 0) {
+		*status = ZPROXY_MONITOR_DISABLED;
+	} else if (strcmp(req_value, "active") == 0) {
+		*status = ZPROXY_MONITOR_UP;
+	} else {
+		zcu_log_print(LOG_WARNING, "Invalid status '%s' given.",
+			      req_value);
+		return -1;
+	}
+
+	json_decref(obj);
+
+	return 1;
+}
+
+int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_len,
+			       char *backend_id, size_t backend_id_len,
+			       time_t *last_seen)
+{
+	json_error_t json_err;
+	json_t *obj, *req_var;
+	const char *bck_id;
+	const char *id;
+
+	if (!buf)
+		return -1;
+
+	if (!(obj = json_loads(buf, 0, &json_err))) {
+		zcu_log_print(LOG_WARNING, "Failed to decode JSON buffer.");
+		return -1;
+	}
+
+	if (sess_id) {
+		if ((req_var = json_object_get(obj, "id"))) {
+			id = json_string_value(req_var);
+			snprintf(sess_id, sess_id_len, "%s", id);
 		} else {
-			zproxy_state_release(&state);
-			get_json_err_res(json_res, "Invalid flush command.");
-			ret = -2;
-			goto exec_req_err;
+			sess_id[0] = '\0';
 		}
-
-		ret = 1;
-		zproxy_state_release(&state);
-		break;
 	}
-	case JSON_CMD_MODIFY_SESSION: {
-		state = zproxy_state_lookup(listener_id);
-		if (!state) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Listener %d not found.", listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_err;
-		}
-		sessions::Set *sessions =
-			zproxy_state_get_session(service_name, &state->services);
-		if (!sessions) {
-			zproxy_state_release(&state);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Service %s not found.", service_name);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_err;
-		}
 
-		if (!(req_var = json_object_get(json_req, "backend-id"))) {
-			zproxy_state_release(&state);
-			get_json_err_res(json_res, "Invalid JSON format. Expected 'backend-id' variable.");
-			ret = -2;
-			goto exec_req_err;
+	if (backend_id) {
+		if ((req_var = json_object_get(obj, "backend-id"))) {
+			bck_id = json_string_value(req_var);
+			snprintf(backend_id, backend_id_len, "%s", bck_id);
+		} else {
+			backend_id[0] = '\0';
 		}
-		req_value = json_string_value(req_var);
-		backend = find_backend(cfg, listener_id, service_name,
-				       req_value);
-		if (!backend) {
-			zproxy_state_release(&state);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Backend %s in service %s in listener %d not found.",
-				 req_value, service_name, listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_req_err;
-		}
-
-		if (!(req_var = json_object_get(json_req, "last-seen"))) {
-			zproxy_state_release(&state);
-			get_json_err_res(json_res,
-					 "Invalid JSON format. Expected 'last-seen' variable.");
-			ret = -2;
-			goto exec_req_err;
-		}
-		const time_t last_seen = (time_t)json_integer_value(req_var);
-		ret = sessions->updateSession(lvl_3_id, backend, last_seen);
-		if (ret < 0) {
-			zproxy_state_release(&state);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Could not find session with ID %s.",
-				 lvl_3_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_req_err;
-		}
-		zproxy_state_release(&state);
-		break;
 	}
-	case JSON_CMD_ADD_SESSION: {
-		state = zproxy_state_lookup(listener_id);
-		if (!state) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Listener %d not found.", listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_err;
-		}
-		sessions::Set *sessions =
-			zproxy_state_get_session(service_name, &state->services);
-		if (!sessions) {
-			zproxy_state_release(&state);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Service %s not found.", service_name);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_err;
-		}
 
-		if (!(req_var = json_object_get(json_req, "backend-id"))) {
-			zproxy_state_release(&state);
-			get_json_err_res(json_res, "Invalid JSON format. Expected 'backend-id' variable.");
-			ret = -2;
-			goto exec_req_err;
+	if (last_seen) {
+		if ((req_var = json_object_get(obj, "last-seen"))) {
+			*last_seen = (time_t)json_integer_value(req_var);
+		} else {
+			*last_seen = -1;
 		}
-		req_value = json_string_value(req_var);
-		backend = find_backend(cfg, listener_id, service_name,
-				       req_value);
-		if (!backend) {
-			zproxy_state_release(&state);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Backend %s in service %s in listener %d not found.",
-				 lvl_3_id, service_name, listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_req_err;
-		}
+	}
 
-		if (!(req_var = json_object_get(json_req, "id"))) {
-			zproxy_state_release(&state);
-			get_json_err_res(json_res, "Invalid JSON format. Expected 'id' variable.");
-			ret = -2;
-			goto exec_req_err;
-		}
-		const std::string key = std::string(json_string_value(req_var));
+	json_decref(obj);
 
-		time_t last_seen;
-		if ((req_var = json_object_get(json_req, "last-seen")))
-			last_seen = (time_t)json_integer_value(req_var);
+	return 1;
+}
 
-		sessions::Info *session = sessions->addSession(key, backend);
-		if (!session) {
-			zproxy_state_release(&state);
-			get_json_err_res(json_res,
-					 "Unable to create session. Perhaps it already exists.");
-			ret = -3;
-			goto exec_req_err;
+int zproxy_json_decode_backend(const char *buf, char *id, size_t id_len,
+			       char *address, size_t address_len, int *port,
+			       int *https, int *weight, int *priority,
+			       int *connlimit)
+{
+	json_error_t json_err;
+	json_t *obj, *req_var;
+	const char *bck_id, *bck_addr;
+
+	if (!buf)
+		return -1;
+
+	if (!(obj = json_loads(buf, 0, &json_err))) {
+		zcu_log_print(LOG_WARNING, "Failed to decode JSON buffer.");
+		return -1;
+	}
+
+	if (id) {
+		if ((req_var = json_object_get(obj, "id"))) {
+			bck_id = json_string_value(req_var);
+			snprintf(id, id_len, "%s", bck_id);
+		} else {
+			id[0] = '\0';
 		}
-		if (req_var)
-			session->last_seen = last_seen;
+	}
+
+	if (address) {
+		if ((req_var = json_object_get(obj, "address"))) {
+			bck_addr = json_string_value(req_var);
+			snprintf(address, address_len, "%s", bck_addr);
+		} else {
+			address[0] = '\0';
+		}
+	}
+
+	if (port) {
+		if ((req_var = json_object_get(obj, "port")))
+			*port = json_integer_value(req_var);
 		else
-			session->update();
-		break;
-		zproxy_state_release(&state);
-	}
-	case JSON_CMD_ADD_BACKEND: {
-		struct zproxy_backend_cfg *new_backend;
-		struct zproxy_cfg *new_cfg;
-		struct zproxy_service_cfg *service;
-
-		new_backend = zproxy_backend_cfg_alloc();
-		if (!new_backend) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Could not create a new backend. (Maybe Out of Memory)");
-			get_json_err_res(json_res, err_str);
-			ret = -4;
-			goto exec_req_err;
-		}
-
-		new_cfg = zproxy_cfg_clone(cfg);
-		if (!new_cfg) {
-			free(new_backend);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Could not clone new configuration. (Maybe Out of Memory)");
-			get_json_err_res(json_res, err_str);
-			ret = -4;
-			goto exec_req_err;
-		}
-
-		service = find_service(new_cfg, listener_id, service_name);
-		if (!service) {
-			free(new_backend);
-			zproxy_cfg_free(new_cfg);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Service %s in listener %d not found.",
-				 service_name, listener_id);
-			get_json_err_res(json_res, err_str);
-			ret = -1;
-			goto exec_req_err;
-		}
-
-		zproxy_backend_cfg_init(cfg, service, new_backend);
-
-		if (!(req_var = json_object_get(json_req, "address"))) {
-			free(new_backend);
-			zproxy_cfg_free(new_cfg);
-			get_json_err_res(json_res, "Invalid JSON format. Expected 'address' variable.");
-			ret = -2;
-			goto exec_req_err;
-		}
-		req_value = json_string_value(req_var);
-		struct addrinfo addr;
-		if (zcu_net_get_host(req_value, &addr, PF_UNSPEC, 0)) {
-			// if we can't resolve it, maybe this is a UNIX domain socket
-			if (strstr(req_value, "/")) {
-				if ((strlen(req_value) + 1) > CONFIG_UNIX_PATH_MAX) {
-					free(new_backend);
-					zproxy_cfg_free(new_cfg);
-					get_json_err_res(json_res, "Invalid JSON format. Expected 'backend-id' variable.");
-					ret = -2;
-					goto exec_req_err;
-				}
-			} else { // maybe the new_backend still not available, we set it as down
-				zcu_log_print(LOG_WARNING, "Could not resolve new backend.");
-			}
-		}
-		free(addr.ai_addr);
-		snprintf(new_backend->address, CONFIG_MAX_FIN, "%s", req_value);
-		new_backend->runtime.addr.sin_addr.s_addr = inet_addr(new_backend->address);
-		new_backend->runtime.addr.sin_family = AF_INET;
-
-		if (!(req_var = json_object_get(json_req, "port"))) {
-			free(new_backend);
-			zproxy_cfg_free(new_cfg);
-			get_json_err_res(json_res, "Invalid JSON format. Expected 'port' variable.");
-			ret = -2;
-			goto exec_req_err;
-		}
-		new_backend->port = json_integer_value(req_var);
-		new_backend->runtime.addr.sin_port = htons(new_backend->port);
-
-		if ((req_var = json_object_get(json_req, "priority")))
-			new_backend->priority = json_integer_value(req_var);
-
-		if ((req_var = json_object_get(json_req, "weight")))
-			new_backend->weight = json_integer_value(req_var);
-
-		if ((req_var = json_object_get(json_req, "connection-limit")))
-			new_backend->connection_limit = json_integer_value(req_var);
-
-		if ((req_var = json_object_get(json_req, "https")))
-			new_backend->runtime.ssl_enabled = json_integer_value(req_var);
-
-		if (new_backend->runtime.ssl_enabled)
-			zproxy_backend_ctx_start(new_backend);
-
-		snprintf(new_backend->runtime.id, CONFIG_IDENT_MAX, "%s-%d",
-			 new_backend->address, new_backend->port);
-
-		list_add_tail(&new_backend->list, &service->backend_list);
-		service->backend_list_size++;
-		if (service->session.sess_type == SESS_TYPE::SESS_BCK_COOKIE) {
-			setBackendCookieHeader(service, new_backend,
-					       new_backend->cookie_set_header);
-		}
-
-		if (zproxy_cfg_reload(new_cfg) < 0) {
-			free(new_backend);
-			zproxy_cfg_free(new_cfg);
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Failed to load new configuration.");
-			get_json_err_res(json_res, err_str);
-			ret = -4;
-			goto exec_req_err;
-		}
-		state = zproxy_state_lookup(listener_id);
-		zproxy_state_backend_add(state, new_backend);
-		zproxy_state_release(&state);
-		break;
-	}
-	case JSON_CMD_RELOAD_CONFIG: {
-		if (zproxy_cfg_file_reload() < 0) {
-			snprintf(err_str, ERR_BUF_MAX_SIZE,
-				 "Failed to reload configuration.");
-			get_json_err_res(json_res, err_str);
-			ret = -4;
-			goto exec_req_err;
-		}
-		break;
-	}
+			*port = -1;
 	}
 
-	json_object_set_new(json_res, "result", json_string("ok"));
+	if (https) {
+		if ((req_var = json_object_get(obj, "https")))
+			*https = json_boolean_value(req_var) ? 1 : 0;
+		else
+			*https = -1;
+	}
 
-exec_req_err:
-	if (buf && strlen(buf) > 0)
-		json_decref(json_req);
+	if (weight) {
+		if ((req_var = json_object_get(obj, "weight")))
+			*weight = json_integer_value(req_var);
+		else
+			*weight = -1;
+	}
 
-exec_err:
-	*res = json_dumps(json_res, JSON_INDENT(0) | JSON_COMPACT);
-	json_decref(json_res);
+	if (priority) {
+		if ((req_var = json_object_get(obj, "priority")))
+			*priority = json_integer_value(req_var);
+		else
+			*priority = -1;
+	}
 
+	if (connlimit) {
+		if ((req_var = json_object_get(obj, "connlimit")))
+			*connlimit = json_integer_value(req_var);
+		else
+			*connlimit = -1;
+	}
 
-	if (state)
-		zproxy_state_release(&state);
+	json_decref(obj);
 
-	return ret;
+	return 1;
 }

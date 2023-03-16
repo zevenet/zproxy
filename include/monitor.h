@@ -21,9 +21,10 @@
 #include <sys/time.h>
 
 enum zproxy_status {
-	ZPROXY_MONITOR_DOWN	= 0,
+	ZPROXY_MONITOR_DOWN	    = 0,
 	ZPROXY_MONITOR_UP,
 	ZPROXY_MONITOR_DISABLED,
+	ZPROXY_MONITOR_UNDEFINED,
 };
 
 int zproxy_monitor_create(const struct zproxy_cfg *cfg);

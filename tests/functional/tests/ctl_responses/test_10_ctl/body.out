@@ -1,1 +1,4 @@
-Backend 0.0.0.0-9999 in service default in listener 0 not found.
+{
+    "result": "error",
+    "reason": "Backend 0.0.0.0-9999 in service default in listener 0 not found."
+}

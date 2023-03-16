@@ -1,1 +1,4 @@
-Listener 99 not found.
+{
+    "result": "error",
+    "reason": "Listener 99 not found."
+}

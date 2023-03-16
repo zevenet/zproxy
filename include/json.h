@@ -18,41 +18,60 @@
 #ifndef _ZPROXY_JSON_H_
 #define _ZPROXY_JSON_H_
 
+#include <cstdio>
 #include <jansson.h>
+#include <stdarg.h>
 #include "config.h"
 #include "state.h"
+#include "monitor.h"
 #include "proxy.h"
+#include "ctl.h"
 
-enum json_obj_type {
-	ENCODE_PROXY,
-	ENCODE_PROXY_SERVICES,
-	ENCODE_SERVICE,
-	ENCODE_SERVICE_BACKENDS,
-	ENCODE_BACKEND,
-};
+/* QUICK JSON RESPONSES */
+inline char *zproxy_json_return_ok(void)
+{
+	char *buf;
+	json_t *res = json_object();
 
-enum zproxy_json_cmd {
-	JSON_CMD_BACKEND_STATUS,
-	JSON_CMD_FLUSH_SESSIONS,
-	JSON_CMD_MODIFY_SESSION,
-	JSON_CMD_ADD_SESSION,
-	JSON_CMD_RELOAD_CONFIG,
-	JSON_CMD_ADD_BACKEND,
-};
+	json_object_set_new(res, "result", json_string("ok"));
+	buf = json_dumps(res, JSON_INDENT(0) | JSON_COMPACT);
+	json_decref(res);
 
-int zproxy_json_encode(
-		const struct zproxy_cfg *cfg,
-		const uint32_t listener_id,
-		const char *service_name,
-		const char *backend_id,
-		enum json_obj_type type,
-		char **buf);
+	return buf;
+}
+inline char *zproxy_json_return_err(const char *format, ...)
+{
+	char *buf, reason[ERR_BUF_MAX_SIZE];
+	va_list args;
+	json_t *res = json_object();
 
-/**
- * Execute command from CTL.
- */
-int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
-		     const char *service_name, const char *lvl_3_id,
-		     enum zproxy_json_cmd cmd, const char *buf, char **res);
+	va_start(args, format);
+	vsnprintf(reason, ERR_BUF_MAX_SIZE, format, args);
+	va_end(args);
+
+	json_object_set_new(res, "result", json_string("error"));
+	json_object_set_new(res, "reason", json_string(reason));
+	buf = json_dumps(res, JSON_INDENT(0) | JSON_COMPACT);
+	json_decref(res);
+
+	return buf;
+}
+
+/* ENCODING */
+char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy);
+char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy);
+char *zproxy_json_encode_service(const struct zproxy_service_cfg *service);
+char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service);
+char *zproxy_json_encode_backend(const struct zproxy_backend_cfg *backend);
+
+/* DECODING */
+int zproxy_json_decode_status(const char *buf, enum zproxy_status *status);
+int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_len,
+			       char *backend_id, size_t backend_id_len,
+			       time_t *last_seen);
+int zproxy_json_decode_backend(const char *buf, char *id, size_t id_len,
+			       char *address, size_t address_len, int *port,
+			       int *https, int *weight, int *priority,
+			       int *connlimit);
 
 #endif //_ZPROXY_JSON_H_

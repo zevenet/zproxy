@@ -1,1 +1,4 @@
-Service bad-service in listener 0 not found.
+{
+    "result": "error",
+    "reason": "Service bad-service in listener 0 not found."
+}
