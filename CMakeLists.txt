@@ -37,7 +37,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
 project(zproxy-ng)
-set(PROJECT_VERSION "0.9.1")
+set(PROJECT_VERSION "0.9.2")
 set(PROJECT_DESCRIPTION "High-performance multithreaded and event-driven reverse proxy and load balancer")
 set(PROJECT_GENERICNAME "zproxy")
 set(TARGET_NAME "zproxy")
