@@ -465,7 +465,7 @@ static int parseReplaceHeader(struct zproxy_cfg *cfg,
 				struct list_head *replace_header_req,
 				struct list_head *replace_header_res)
 {
-	for (int i = 1; i <= CONFIG_MAX_PARAMS; i++)
+	for (int i = 1; i < CONFIG_MAX_PARAMS; i++)
 		lin[matches[i].rm_eo] = '\0';
 	auto type_ = std::string(lin + matches[1].rm_so);
 	auto name_ = std::string(lin + matches[2].rm_so);
