@@ -1,0 +1,17 @@
+DESCRIPTION="This request is allowed"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+########################
+DESCRIPTION="Reload the configuration file"
+CMD=reload
+FILE=zproxy.cfg
+########################
+DESCRIPTION="Reload the configuration file"
+CMD=reload
+FILE=zproxy_new.cfg
+########################
+DESCRIPTION="Reload the configuration file"
+CMD=reload
+FILE=zproxy_empty.cfg

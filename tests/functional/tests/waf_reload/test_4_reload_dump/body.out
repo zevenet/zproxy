@@ -1,0 +1,8 @@
+[
+    {
+        "backends": [],
+        "name": "default",
+        "priority": 1,
+        "sessions": []
+    }
+]
