@@ -18,6 +18,10 @@
 #ifndef _ZCU_HTTP_H_
 #define _ZCU_HTTP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SRV_MAX_HEADER			300
 #define HTTP_PROTO			"HTTP/1.1 "
 #define HTTP_LINE_END			"\r\n"
@@ -45,21 +49,13 @@ enum ws_responses {
 	WS_HTTP_200,    // ok
 	WS_HTTP_201,    // created
 	WS_HTTP_204,    // no content
+	WS_HTTP_MAX,
 };
 
-static const char *ws_str_responses[] = {
-	HTTP_PROTO "500 Internal Server Error" HTTP_LINE_END,
-	HTTP_PROTO "400 Bad Request" HTTP_LINE_END,
-	HTTP_PROTO "401 Unauthorized" HTTP_LINE_END,
-	HTTP_PROTO "404 Not Found" HTTP_LINE_END,
-	HTTP_PROTO "405 Method Not Allowed" HTTP_LINE_END,
-	HTTP_PROTO "409 Conflict" HTTP_LINE_END,
-	HTTP_PROTO "301 Moved Permanently" HTTP_LINE_END,
-	HTTP_PROTO "302 Found" HTTP_LINE_END,
-	HTTP_PROTO "307 Temporary Redirect" HTTP_LINE_END,
-	HTTP_PROTO "200 OK" HTTP_LINE_END,
-	HTTP_PROTO "201 Created" HTTP_LINE_END,
-	HTTP_PROTO "204 No Content" HTTP_LINE_END,
-};
+extern const char *ws_str_responses[WS_HTTP_MAX];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZCU_HTTP_H_ */

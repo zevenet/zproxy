@@ -503,24 +503,22 @@ int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
 		return -1;
 
 	if (proxy->error.nosslredirect_url[0]) {
-		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER,
-			 "%s%s%s%s%s%s%s%s",
+		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
+			 "%s%s%s%s%s",
 			 ws_str_responses[proxy->error.nosslredirect_code],
-			 HTTP_HEADER_EXPIRES,
-			 HTTP_HEADER_PRAGMA_NO_CACHE,
+			 HTTP_HEADER_EXPIRES HTTP_HEADER_PRAGMA_NO_CACHE
 			 HTTP_HEADER_LOCATION, proxy->error.nosslredirect_url, HTTP_LINE_END,
-			 HTTP_HEADER_SERVER,
-			 HTTP_HEADER_CACHE_CONTROL);
+			 HTTP_HEADER_SERVER HTTP_HEADER_CACHE_CONTROL);
 	} else {
 		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
-			 "%s%s%s%zu%s%s%s%s%s%s%s",
+			 "%s%s%zu%s%s%s",
 			 ws_str_responses[WS_HTTP_400],
-			 HTTP_HEADER_CONTENT_HTML,
+			 HTTP_HEADER_CONTENT_HTML
 			 HTTP_HEADER_CONTENTLEN, strlen(ctx->cfg->runtime.errnossl_msg), HTTP_LINE_END,
-			 HTTP_HEADER_EXPIRES,
-			 HTTP_HEADER_PRAGMA_NO_CACHE,
-			 HTTP_HEADER_SERVER,
-			 HTTP_HEADER_CACHE_CONTROL,
+			 HTTP_HEADER_EXPIRES
+			 HTTP_HEADER_PRAGMA_NO_CACHE
+			 HTTP_HEADER_SERVER
+			 HTTP_HEADER_CACHE_CONTROL
 			 HTTP_LINE_END,
 			 ctx->cfg->runtime.errnossl_msg);
 	}

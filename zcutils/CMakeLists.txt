@@ -61,6 +61,7 @@ set(sources
 	src/zcu_log.c
 	src/zcu_network.c
 	src/zcu_backtrace.c
+	src/zcu_http.c
 	src/zcu_sbuffer.c
 	src/zcu_string.c
 
