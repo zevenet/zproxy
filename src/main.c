@@ -42,7 +42,7 @@
 #else
 #define ZPROXY_VERSION		PROJECT_VERSION
 #endif
-#define ZPROXY_COPYRIGHT	"Copyright (C) 2022 ZEVENET S.L."
+#define ZPROXY_COPYRIGHT	"Copyright (C) 2023 ZEVENET S.L."
 #define ZPROXY_PROG_NAME	"zproxy"
 
 static struct zproxy_args zproxy_args;
