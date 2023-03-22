@@ -23,7 +23,7 @@ cmake_minimum_required(VERSION 3.6)
 set(CMAKE_CXX_STANDARD 17)
 
 if(EXISTS CMakeLists.txt)
-	message(FATAL_ERROR"Please create a cmake build directory, running cmake from source tree root is not allowed\n")
+	message(FATAL_ERROR "Please create a cmake build directory, running cmake from source tree root is not allowed\n")
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -36,7 +36,7 @@ set(CMAKE_ENABLE_EXPORTS TRUE)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
-project(zproxy-ng)
+project(zproxy)
 set(PROJECT_VERSION "0.9.2")
 set(PROJECT_DESCRIPTION "High-performance multithreaded and event-driven reverse proxy and load balancer")
 set(PROJECT_GENERICNAME "zproxy")
@@ -69,71 +69,69 @@ endif ()
 add_subdirectory(zcutils)
 
 set(sources_h
-	include/macro.h
-	include/list.h
-	include/jhash.h
-	include/json.h
-	include/config.h
-	include/ctl.h
-	include/djb_hash.h
-	include/proxy.h
-	include/services.h
-	include/socket.h
-	include/ssl.h
-	include/worker.h
-	include/monitor.h
-	include/service.h
-	include/session.h
-	include/state.h
-	include/http.h
-	include/http_log.h
-	include/http_protocol.h
-	include/pico_http_parser.h
-	include/http_parser.h
-	include/http_request.h
-	include/http_response.h
-	include/http_stream.h
-	include/http_manager.h
-	include/zproxy.h
+	"include/macro.h"
+	"include/list.h"
+	"include/jhash.h"
+	"include/json.h"
+	"include/config.h"
+	"include/ctl.h"
+	"include/djb_hash.h"
+	"include/proxy.h"
+	"include/services.h"
+	"include/socket.h"
+	"include/ssl.h"
+	"include/worker.h"
+	"include/monitor.h"
+	"include/service.h"
+	"include/session.h"
+	"include/state.h"
+	"include/http.h"
+	"include/http_log.h"
+	"include/http_protocol.h"
+	"include/pico_http_parser.h"
+	"include/http_parser.h"
+	"include/http_request.h"
+	"include/http_response.h"
+	"include/http_stream.h"
+	"include/http_manager.h"
+	"include/zproxy.h"
 )
 set(sources_c
-	src/config.cpp
-	src/ctl.c
-	src/ctl_handler.c
-	src/proxy.c
-	src/worker.c
-	src/monitor.c
-	src/socket.c
-	src/ssl.c
-	src/services.c
-	src/service.cpp
-	src/session.cpp
-	src/state.cpp
-	src/json.cpp
-	src/http.c
-	src/http_protocol.cpp
-	src/http_events.cpp
-	src/pico_http_parser.cpp
-	src/http_parser.cpp
-	src/http_request.cpp
-	src/http_response.cpp
-	src/http_stream.cpp
-	src/http_manager.cpp
+	"src/main.c"
+	"src/config.cpp"
+	"src/ctl.c"
+	"src/ctl_handler.c"
+	"src/proxy.c"
+	"src/worker.c"
+	"src/monitor.c"
+	"src/socket.c"
+	"src/ssl.c"
+	"src/services.c"
+	"src/service.cpp"
+	"src/session.cpp"
+	"src/state.cpp"
+	"src/json.cpp"
+	"src/http.c"
+	"src/http_protocol.cpp"
+	"src/http_events.cpp"
+	"src/pico_http_parser.cpp"
+	"src/http_parser.cpp"
+	"src/http_request.cpp"
+	"src/http_response.cpp"
+	"src/http_stream.cpp"
+	"src/http_manager.cpp"
 )
 
-set(source_main src/main.c)
-
-if(ENABLE_WAF)
+if (ENABLE_WAF)
 	set(sources_h ${sources_h} include/waf.h)
 	set(sources_c ${sources_c} src/waf.cpp)
 	add_definitions(-DENABLE_WAF)
-else()
+else ()
 	set(sources_h ${sources_h} include/waf_dummy.h)
-endif()
+endif ()
 
 # force to manage sources files as c++
-set(sources_cpp ${sources_c} ${source_main})
-set_source_files_properties(${sources_cpp} PROPERTIES LANGUAGE CXX )
+set_source_files_properties(${sources_c} PROPERTIES LANGUAGE CXX )
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/zcutils/include)
@@ -146,20 +144,9 @@ pkg_search_module(JANSSON REQUIRED jansson)
 
 # system libs
 set(linked_libs "-ldl ${JANSSON_LDFLAGS} -lev -lpcreposix")
-if(ENABLE_WAF)
+if (ENABLE_WAF)
 	set(linked_libs "${linked_libs} -lmodsecurity")
-endif()
-
-add_library(proxy ${sources_h} ${sources_c})
-target_link_libraries(proxy
-	PRIVATE ${linked_libs}
-	PRIVATE Threads::Threads
-	PRIVATE OpenSSL::SSL
-	PRIVATE OpenSSL::Crypto
-	PRIVATE zcutils)
-
-# create bin
-add_executable(${TARGET_NAME} ${source_main})
+endif ()
 
 # gcc flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -pipe -Wall -Wno-unused-function")
@@ -170,27 +157,31 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -Os")
 
 if (ENABLE_HEAP_PROFILER)
 	add_definitions(-DENABLE_HEAP_PROFILE)
-	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc
-		-fno-builtin-realloc -fno-builtin-free")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ltcmalloc -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 endif ()
 if (ENABLE_ADDRESS_SANITIZER)
-	message("Building with -fsanitize=address ")
-	set(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS}	-fsanitize=address -fno-omit-frame-pointer")
+	message("Building with -fsanitize=address")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
-elseif(ENABLE_LEAK_SANITIZER)
+elseif (ENABLE_LEAK_SANITIZER)
 	message("Building with -fsanitize=leak ")
-	set(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS}	-fsanitize=leak -fno-omit-frame-pointer ")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak -fno-omit-frame-pointer ")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer ")
-endif()
+endif ()
+
+# create bin
+add_executable(${TARGET_NAME} ${sources_c} ${sources_h})
+
+set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 # add lib deps
-add_dependencies(${TARGET_NAME} zcutils proxy)
+add_dependencies(${TARGET_NAME} zcutils)
 target_link_libraries(${TARGET_NAME}
 	PRIVATE ${linked_libs}
 	PRIVATE Threads::Threads
 	PRIVATE OpenSSL::SSL
-	PRIVATE OpenSSL::Crypto)
-target_link_libraries(${TARGET_NAME} PRIVATE zcutils PRIVATE proxy)
+	PRIVATE OpenSSL::Crypto
+	PRIVATE zcutils)
 
 if (BUILD_DOC)
 	find_package(Doxygen REQUIRED)
@@ -198,9 +189,9 @@ if (BUILD_DOC)
 	if (NOT EXISTS ${BUILD_DOC_DIR})
 		message("Creating ${BUILD_DOC_DIR} directory.")
 		file(MAKE_DIRECTORY ${BUILD_DOC_DIR})
-	else()
+	else ()
 		message("Found ${BUILD_DOC_DIR}.")
-	endif()
+	endif ()
 	set(DOXYGEN_IN "${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile")
 	set(DOXYGEN_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 	configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
@@ -210,7 +201,7 @@ if (BUILD_DOC)
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Generating API documentation with Doxygen"
 		VERBATIM)
-endif()
+endif ()
 
 # install
 install(TARGETS "${TARGET_NAME}" DESTINATION bin COMPONENT binaries)

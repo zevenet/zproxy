@@ -22,15 +22,15 @@
 cmake_minimum_required(VERSION 3.6)
 set(CMAKE_CXX_STANDARD 17)
 
-if(EXISTS CMakeLists.txt)
+if (EXISTS CMakeLists.txt)
     message(FATAL_ERROR"Please create a cmake build directory, running cmake form source tree root is not allowed\n")
-endif()
+endif ()
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ()
 
-set (CMAKE_ENABLE_EXPORTS TRUE)
+set(CMAKE_ENABLE_EXPORTS TRUE)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MAINFOLDER ${PROJECT_SOURCE_DIR})
 
