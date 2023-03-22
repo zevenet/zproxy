@@ -81,6 +81,10 @@ include_directories(${PROJECT_SOURCE_DIR}/zcutils/include)
 
 add_library(zcutils ${sources})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -pipe -g -Wno-unused-function -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -pipe -Wno-unused-function -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -g -O3")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -Os")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
