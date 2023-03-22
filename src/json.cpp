@@ -397,6 +397,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		sessions::Set *sessions =
 			zproxy_state_get_session(service_name, &state->services);
 		if (!sessions) {
+			zproxy_state_release(&state);
 			snprintf(err_str, ERR_BUF_MAX_SIZE,
 				 "Service %s not found.", service_name);
 			get_json_err_res(json_res, err_str);
@@ -414,6 +415,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 			backend = find_backend(cfg, listener_id, service_name,
 					       req_value);
 			if (!backend) {
+				zproxy_state_release(&state);
 				snprintf(err_str, ERR_BUF_MAX_SIZE,
 					 "Backend %s in service %s in listener %d not found.",
 					 req_value, service_name, listener_id);
@@ -429,6 +431,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 				      req_value);
 			ret = sessions->deleteSessionByKey(req_value) ? 1 : -1;
 			if (ret < 0) {
+				zproxy_state_release(&state);
 				snprintf(err_str, ERR_BUF_MAX_SIZE,
 					 "Could not find session with ID %s",
 					 req_value);
@@ -437,12 +440,14 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 				goto exec_req_err;
 			}
 		} else {
+			zproxy_state_release(&state);
 			get_json_err_res(json_res, "Invalid flush command.");
 			ret = -2;
 			goto exec_req_err;
 		}
 
 		ret = 1;
+		zproxy_state_release(&state);
 		break;
 	}
 	case JSON_CMD_MODIFY_SESSION: {
@@ -457,6 +462,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		sessions::Set *sessions =
 			zproxy_state_get_session(service_name, &state->services);
 		if (!sessions) {
+			zproxy_state_release(&state);
 			snprintf(err_str, ERR_BUF_MAX_SIZE,
 				 "Service %s not found.", service_name);
 			get_json_err_res(json_res, err_str);
@@ -465,6 +471,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		}
 
 		if (!(req_var = json_object_get(json_req, "backend-id"))) {
+			zproxy_state_release(&state);
 			get_json_err_res(json_res, "Invalid JSON format. Expected 'backend-id' variable.");
 			ret = -2;
 			goto exec_req_err;
@@ -473,6 +480,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		backend = find_backend(cfg, listener_id, service_name,
 				       req_value);
 		if (!backend) {
+			zproxy_state_release(&state);
 			snprintf(err_str, ERR_BUF_MAX_SIZE,
 				 "Backend %s in service %s in listener %d not found.",
 				 req_value, service_name, listener_id);
@@ -482,6 +490,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		}
 
 		if (!(req_var = json_object_get(json_req, "last-seen"))) {
+			zproxy_state_release(&state);
 			get_json_err_res(json_res,
 					 "Invalid JSON format. Expected 'last-seen' variable.");
 			ret = -2;
@@ -490,6 +499,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		const time_t last_seen = (time_t)json_integer_value(req_var);
 		ret = sessions->updateSession(lvl_3_id, backend, last_seen);
 		if (ret < 0) {
+			zproxy_state_release(&state);
 			snprintf(err_str, ERR_BUF_MAX_SIZE,
 				 "Could not find session with ID %s.",
 				 lvl_3_id);
@@ -497,6 +507,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 			ret = -1;
 			goto exec_req_err;
 		}
+		zproxy_state_release(&state);
 		break;
 	}
 	case JSON_CMD_ADD_SESSION: {
@@ -511,6 +522,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		sessions::Set *sessions =
 			zproxy_state_get_session(service_name, &state->services);
 		if (!sessions) {
+			zproxy_state_release(&state);
 			snprintf(err_str, ERR_BUF_MAX_SIZE,
 				 "Service %s not found.", service_name);
 			get_json_err_res(json_res, err_str);
@@ -519,6 +531,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		}
 
 		if (!(req_var = json_object_get(json_req, "backend-id"))) {
+			zproxy_state_release(&state);
 			get_json_err_res(json_res, "Invalid JSON format. Expected 'backend-id' variable.");
 			ret = -2;
 			goto exec_req_err;
@@ -527,6 +540,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		backend = find_backend(cfg, listener_id, service_name,
 				       req_value);
 		if (!backend) {
+			zproxy_state_release(&state);
 			snprintf(err_str, ERR_BUF_MAX_SIZE,
 				 "Backend %s in service %s in listener %d not found.",
 				 lvl_3_id, service_name, listener_id);
@@ -536,6 +550,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		}
 
 		if (!(req_var = json_object_get(json_req, "id"))) {
+			zproxy_state_release(&state);
 			get_json_err_res(json_res, "Invalid JSON format. Expected 'id' variable.");
 			ret = -2;
 			goto exec_req_err;
@@ -548,6 +563,7 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 
 		sessions::Info *session = sessions->addSession(key, backend);
 		if (!session) {
+			zproxy_state_release(&state);
 			get_json_err_res(json_res,
 					 "Unable to create session. Perhaps it already exists.");
 			ret = -3;
@@ -558,12 +574,12 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 		else
 			session->update();
 		break;
+		zproxy_state_release(&state);
 	}
 	case JSON_CMD_ADD_BACKEND: {
 		struct zproxy_backend_cfg *new_backend;
 		struct zproxy_cfg *new_cfg;
 		struct zproxy_service_cfg *service;
-		state = zproxy_state_lookup(listener_id);
 
 		new_backend = zproxy_backend_cfg_alloc();
 		if (!new_backend) {
@@ -670,7 +686,9 @@ int zproxy_json_exec(const struct zproxy_cfg *cfg, const uint32_t listener_id,
 			ret = -4;
 			goto exec_req_err;
 		}
+		state = zproxy_state_lookup(listener_id);
 		zproxy_state_backend_add(state, new_backend);
+		zproxy_state_release(&state);
 		break;
 	}
 	case JSON_CMD_RELOAD_CONFIG: {
