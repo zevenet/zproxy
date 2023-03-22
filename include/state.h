@@ -213,7 +213,23 @@ struct zproxy_stats *zproxy_stats_backend_get(
 
 void zproxy_state_purge(struct zproxy_proxy_cfg *proxy);
 struct zproxy_http_state *zproxy_state_init(const struct zproxy_proxy_cfg *proxy);
+/**
+ * @brief Looks up the corresponding zproxy_http_state for a given proxy ID.
+ *
+ * @param proxy_id ID of the proxy corresponding to the state.
+ *
+ * @return Pointer to the zproxy_http_state object. NULL if failure.
+ *
+ * @warning This operation locks a mutex which impedes other threads from
+ * accessing the state. zproxy_state_release must be called to free this mutex.
+ */
 struct zproxy_http_state *zproxy_state_lookup(uint32_t proxy_id);
+/**
+ * @brief Releases the mutex to the provided state, and sets the pointer to NULL
+ * for good measure.
+ *
+ * @param http_state The state to release the mutex for.
+ */
 void zproxy_state_release(struct zproxy_http_state **http_state);
 void zproxy_state_cfg_update(struct zproxy_cfg *cfg);
 void zproxy_state_backend_add(struct zproxy_http_state *http_state,
