@@ -23,3 +23,12 @@ DESCRIPTION="Get stats to check counters"
 CMD=ctl
 URL="/listener/0"
 METHOD="GET"
+#########################
+DESCRIPTION="Post chunked"
+CMD=curl
+CL=1
+METHOD=POST
+URL=/echo
+HEADERS=@headers.txt
+BODY=$TEST_TPL/$BIG_FILE
+SSL=1
